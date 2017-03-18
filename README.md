@@ -170,6 +170,13 @@
         example to issue the command "status" you would enter the "generator: status" at
         the ">" prompt when running ClientInterface.py.
 
+        The genmon.py appplication supports a a socket interface for communication with 
+        exeternal applications. In addition the the above mentioned ClientInterface.py 
+        application, genmon.py supports communicating via the socket interface so the 
+        application and generator can be monitored by network monitoring tools like Nagios.
+        The program check_monitor_system.py can be used with as a Nagios Plugin to monitor
+        genmon.py. See https://www.nagios.org/ for Nagios details.
+    
     server/genserv.py (optional)
         genserv.py is a python application that uses the Flask library/framework.
         (http://flask.pocoo.org/). This approach allows a quick and simple python socket
