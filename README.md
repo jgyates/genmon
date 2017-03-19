@@ -82,10 +82,10 @@
         port using the MODBUS protocol. The application will allow the display and
         monitoring of the generator much like the Generac Mobile Link product.
 
-        Once setup the genmon.py program will send you and email when your generator does
+        Once setup the genmon.py program will send an email when your generator does
         interesting things (power goes out, alarm on the generator, weekly exercise, etc).
         The program will also allow emails to be sent to an IMAP email folder. The program
-        monitors the IMAP folder and takes commands from the email subject. The formate of
+        monitors the IMAP folder and takes commands from the email subject. The format of
         the subject of the email should have "generator:"  followed by one or more of the
         following commands:
 
@@ -109,9 +109,9 @@
         The program uses the file genmon.conf to for configuration data. Edit this file
         place it in the /etc directory before running the program.
         genmon.py uses the following modules so they are external dependancies
-        of the program so they will need to be install before running the program:
+        of the program and they will need to be install before running the program:
 
-        crcmod - https://pypi.python.org/pypi/crcmod, used for CRC MODBUS calculation
+        crcmod - https://pypi.python.org/pypi/crcmod, used for MODBUS CRC calculation
         pyserial - https://pypi.python.org/pypi/pyserial/2.7, used for serial. Download
             the source and follow the instructions at https://github.com/gsutil-mirrors/crcmod
             communication. This can be installed via the following command:
@@ -140,7 +140,9 @@
         email account. For example, gmail supports email filters that if emails arrive
         from specific people with specific words in the subject, move them ot specific
         folders. You could then have genmon.py monitor the specific folder used in your
-        filter to only allow specific emails to send commands to genmon.py
+        filter to only allow specific emails to send commands to genmon.py. If this approach 
+        is used then genmon.py can be configured (via mymail.com) to monitor a specific 
+        IMAP folder.
 
         Gmail IMAP has been tested with this application. It should be easy to test this
         other email providers. All mail processing is contained in mymail.py and
@@ -175,14 +177,15 @@
         application, genmon.py supports communicating via the socket interface so the 
         application and generator can be monitored by network monitoring tools like Nagios.
         The program check_monitor_system.py can be used with as a Nagios Plugin to monitor
-        genmon.py. See https://www.nagios.org/ for Nagios details.
+        genmon.py. See https://www.nagios.org/ for Nagios details. check_monitor_system.py 
+        is the name of the supplied nagios plug-in.
     
     server/genserv.py (optional)
         genserv.py is a python application that uses the Flask library/framework.
         (http://flask.pocoo.org/). This approach allows a quick and simple python socket
         interface to be translated to a javascript based web interface. The genserv.py app,
-        when run will serve up a simple web page that will display the status of the
-        generator. Both the genserv.py app and the genmon.py app are hosted on a single
+        when executed, will serve up a simple web page that will display the status of the
+        generator. Both the genserv.py app and the genmon.py app can be hosted on a single
         Raspberry Pi although you should be able to move the genserv.py program to another
         system with little modification. The web application provides all most of the
         information supplied by genmon.py. The "registers" and "settime" commands are not
@@ -195,10 +198,10 @@
         pages since security concerns would be heightened on a public web server.
 
         The genserv.py program also uses the mylog.py module. Genserv.py also uses the
-        same configuration file /etc/genmon.py. The file /var/log/genserv.py is used for
+        same configuration file /etc/genmon.py. The file /var/log/genserv.log is used for
         logging errors. The flask library serve up static HTML, CSS and javascript files
         which are stored in a directory below the genserv.py app named static. Below are
-        files for genserv.py
+        files and locations for genserv.py
 
         ./genserv.py                        - main app
         ./template/command_template.html    - used for error processing in flask
@@ -220,7 +223,7 @@
     Since the serial port and network are the only external ports used, the program could
     be used on other platforms with minor modifications and testing.
 
-    In development and testing I used the Raspberry Pi3 built in WiFi. Depending on your
+    In development and testing I used the Raspberry Pi3 with built in WiFi. Depending on your
     WiFi signal and your generator proximity to the access point your results may vary.
 
     Below is a list of hardware that I used. Since your generator may be different and
@@ -228,13 +231,15 @@
 
 Raspberry PI 3 and SD Card
 
-Power supply attached to battery. Note, this is needed to ensure the raspberry Pi and the
-controller share a common ground. If you use a two prong wall adapter to power your pi you
-will likely see CRC errors since  the controller cable does not include a ground wire for
-the serial device.
+Power supply for the Raspberry Pi is attached to battery. Note, this is needed to ensure the 
+raspberry Pi and the generator controller share a common ground. If you use a two prong wall 
+adapter to power your pi you will likely see CRC errors since the controller cable does not 
+include a ground wire for the serial device.
+
+This is the power supply I used, which allows the Pi to be powered from the generator battery:
 https://smile.amazon.com/gp/product/B01DYE54LI/ref=oh_aui_detailpage_o00_s00?ie=UTF8&psc=1
 
-Enclosure
+The enclosure I used. This may be to large for some smaller air-cooled generators:
 https://smile.amazon.com/gp/product/B005UPAN0W/ref=oh_aui_detailpage_o01_s00?ie=UTF8&psc=1
 
 Internal Panel for Enclosure. This may be to large for some smaller air-cooled generators.
@@ -250,13 +255,17 @@ https://smile.amazon.com/gp/product/B00INVEWJ8/ref=oh_aui_detailpage_o04_s00?ie=
 Tubing for cable (not recommended, possibly use a smaller diameter tube)
 https://smile.amazon.com/gp/product/B00542XWXG/ref=oh_aui_detailpage_o04_s00?ie=UTF8&psc=1
 
+The cable I used connects the Molex connector on the Evolution Controller to a DB-9 break-out
+connector. The DB-9 break-out connector is then attached to the RS-232 to TTL converter for the
+Raspberry Pi. Below are the links for the items used in cabeling:
+
 Crimp tool for cable
 https://smile.amazon.com/gp/product/B00OMM4YUY/ref=oh_aui_detailpage_o06_s00?ie=UTF8&psc=1
 
 3.3v TTL to RS232 for RPi
 https://smile.amazon.com/gp/product/B00EJ9NAKA/ref=oh_aui_detailpage_o03_s00?ie=UTF8&psc=1
 
-Break out db-9
+Break out db-9 (male or female, depending on the above level converter you use)
 https://smile.amazon.com/gp/product/B014FM8MNK/ref=oh_aui_detailpage_o05_s00?ie=UTF8&psc=1
 https://smile.amazon.com/gp/product/B014FKU5W8/ref=oh_aui_detailpage_o06_s00?ie=UTF8&psc=1
 
