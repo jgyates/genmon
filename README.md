@@ -43,6 +43,8 @@
         - Switch state change
         - Critical or Warning messages from the generator
     Web based application for viewing status of the generator
+    Command Line application (all the functionality of email plus set generator time)
+    Ability to set exercise time and set generator time (email and command line only)
 
 ## Testing
     This software was written by one person with access to one generator. The model used
@@ -55,9 +57,9 @@
     transfer switch, however this is highly experimental. Additional work is needed before
     this functionality is fully enabled.
 
-    The ability to determine the hours the generator has exercised vs backup vs total run
-    hours is enabled however the total run hours is the value with the most confidence.
-    More time and data points are needed to increase the confidence in this metric.
+    The ability to determine the hours the generator has run is enabled in the code, 
+    however the ability to read the backup vs exercise time (backup + exercise = total 
+    run hours) is not implimented.
 
     The Controller contains a register that should hold details about the model of the
     generator. My controller was replaced and as a result, the register on my system has
