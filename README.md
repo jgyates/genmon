@@ -1,13 +1,13 @@
 # genmon
 # Generator Monitoring Application
 
-    This project will monitor a backup generator that utilized the Generac Evolution
-    Controller. The project is based on a python application and has been tested with a
-    Raspberry Pi3. Ideally you would need to create a physical enclosure for your
-    raspberry pi and possibly make a cable to connect the raspberry pi to the Evolution
-    controller. If you are comfortable doing these things and you have a backup generator
-    that has an Evolution controller then this project may be of interest to you.
-
+    This project will monitor a backup generator that utilizes the Generac Evolution 
+    Controller. The project is written mostly in python and has been tested with a 
+    Raspberry Pi 3. Ideally you would need to create a physical enclosure for your 
+    raspberry pi and possibly make a cable to connect the raspberry pi to the Evolution 
+    controller. If you are comfortable doing these things and you have a backup generator 
+    that has an Generac Evolution controller then this project may be of interest to you.
+    
 ## Functionality
    The software supports the following features:
 
