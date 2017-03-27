@@ -389,4 +389,9 @@ The following is a description of the options contained in mymail.conf, which is
     I used a molex connector on my enclosure and routed the two wires to a break-out box that
     a DB-9 (see link above)
 
+## Creating a Cable
+The above links include part numbers for the Molex connector and a link for the Molex crimp tool which are both needed to create a cable to interface to the Evolution Controller. If you are new to using crimp tools to create cable connectors, I would suggest YouTube.com as a resource. There are many "How To" videos that should help with any learning curve. I searched on "Molex Crimping Tool" and found a few.
+
+[Molex Crimping How To Video](https://www.youtube.com/watch?v=ofh998RCBY0&t=150s)
+
 
