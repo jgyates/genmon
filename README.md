@@ -1,12 +1,7 @@
 # genmon
 # Generator Monitoring Application
 
-    This project will monitor a backup generator that utilizes the Generac Evolution 
-    Controller. The project is written mostly in python and has been tested with a 
-    Raspberry Pi 3. Ideally you would need to create a physical enclosure for your 
-    raspberry pi and possibly make a cable to connect the raspberry pi to the Evolution 
-    controller. If you are comfortable doing these things and you have a backup generator 
-    that has an Generac Evolution controller then this project may be of interest to you.
+This project will monitor a backup generator that utilizes the Generac Evolution Controller. The project is written mostly in python and has been tested with a Raspberry Pi 3. Ideally you would need to create a physical enclosure for your raspberry pi and possibly make a cable to connect the raspberry pi to the Evolution controller. If you are comfortable doing these things and you have a backup generator that has an Generac Evolution controller then this project may be of interest to you.
     
 ## Functionality
    The software supports the following features:
@@ -47,30 +42,17 @@
     Ability to set exercise time and set generator time (email and command line only)
 
 ## Testing
-    This software was written by one person with access to one generator. The model used
-    for testing and development is a liquid cooled model. The software was written with
-    every intention of working on liquid and air-cooled models with the Evolution
-    controller however the author has not tested all scenarios.
+This software was written by one person with access to one generator. The model used for testing and development is a liquid cooled model. The software was written with every intention of working on liquid and air-cooled models with the Evolution controller however the author has not tested all scenarios.
 
 ## Known Issues:
-    Some code exist for remotely starting the generator and remotely activating the
-    transfer switch, however this is highly experimental. Additional work is needed before
-    this functionality is fully enabled.
+Some code exist for remotely starting the generator and remotely activating the transfer switch, however this is highly experimental. Additional work is needed before this functionality is fully enabled.
 
-    The ability to determine the hours the generator has run is enabled in the code, 
-    however the ability to read the backup vs exercise time (backup + exercise = total 
-    run hours) is not implimented.
+The ability to determine the hours the generator has run is enabled in the code, however the ability to read the backup vs exercise time (backup + exercise = total run hours) is not implimented.
 
-    The Controller contains a register that should hold details about the model of the
-    generator. My controller was replaced and as a result, the register on my system has
-    not been properly initialized. I would need feedback from other people to determine
-    the format of this register.
+The Controller contains a register that should hold details about the model of the generator. My controller was replaced and as a result, the register on my system has not been properly initialized. I would need feedback from other people to determine the format of this register.
 
 ## Connectivity
-    This application was written to be agnostic of the underlying network media (i.e. WiFi,
-    Ethernet, etc). Testing and development was performed with WiFi. WiFi access points
-    were connected to an uninterruptible power supply (UPS) so connectivity is not lost
-    power is transferred from the utility to the generator.
+This application was written to be agnostic of the underlying network media (i.e. WiFi, Ethernet, etc). Testing and development was performed with WiFi. WiFi access points were connected to an uninterruptible power supply (UPS) so connectivity is not lost power is transferred from the utility to the generator.
 
 ## Setting Up Your Raspberry Pi (Serial Port)
 Since there are several version of the raspberry Pi out and also several options regarding the operating system, I will leave this section somewhat minimal. I used a Raspberry Pi 3 with Raspbian Jessie Lite. There are many resources on the web for setting up a Raspberry Pi so I will only include links for setting up the serial port. The Linux device name of the serial port changed or at least the symbolic link changed from /dev/ttyAMA0 to /dev/serial0 so if you are using the on board serial port you will want to validate the device name and make sure genmon.conf reflects the serial device name of your Raspberry Pi and Linux distribution. The following two links are helpful in setting up the serial port on the Raspberry Pi:
