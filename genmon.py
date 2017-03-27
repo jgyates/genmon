@@ -8,19 +8,6 @@
 #
 # MODIFICATIONS:
 #------------------------------------------------------------
-#
-# This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
-#
-#    You should have received a copy of the GNU General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 ## Notes:
@@ -68,10 +55,10 @@ class SerialDevice:
             try:
                 self.SerialDevice.open()
             except Exception, e:
-                FatalError( "Error on open serial port %s: " % self.DeviceName + str(e))
+                self.FatalError( "Error on open serial port %s: " % self.DeviceName + str(e))
                 return None
         else:
-            FatalError( "Serial port already open: %s" % self.DeviceName)
+            self.FatalError( "Serial port already open: %s" % self.DeviceName)
             return None
 
         self.Flush()
@@ -203,6 +190,8 @@ class GeneratorDevice:
         self.CommAccessLock = threading.RLock()  # lock to synchronize access to the serial port comms
         self.UtilityVoltsMin = 0    # Minimum reported utility voltage above threshold
         self.UtilityVoltsMax = 0    # Maximum reported utility voltage above pickup
+        self.MailInit = False       # set to true once mail is init
+        self.SerialInit = False     # set to true once serial is init
 
         self.DaysOfWeek = { 0: "Sunday",    # decode for register values with day of week
                             1: "Monday",
@@ -328,6 +317,7 @@ class GeneratorDevice:
         try:
             #Starting serial connection
             self.Slave = SerialDevice(self.SerialPort, self.BaudRate)
+            self.SerialInit = True
             self.ThreadList.append(self.Slave.StartReadThread())
 
         except Exception, e1:
@@ -336,6 +326,7 @@ class GeneratorDevice:
 
         # init mail, start processing incoming email
         self.mail = mymail.MyMail(monitor=True, incoming_folder = self.IncomingEmailFolder, processed_folder =self.ProcessedEmailFolder,incoming_callback = self.ProcessCommand)
+        self.MailInit = True
 
         # send mail to tell we are starting
         self.mail.sendEmail("Generator Monitor Starting at " + self.SiteName, "Generator Monitor Starting at " + self.SiteName )
@@ -2431,7 +2422,8 @@ class GeneratorDevice:
     #---------------------GeneratorDevice::Close------------------------
     def Close(self):
 
-        self.mail.sendEmail("Generator Monitor Stopping at " + self.SiteName, "Generator Monitor Stopping at " + self.SiteName )
+        if self.MailInit:
+            self.mail.sendEmail("Generator Monitor Stopping at " + self.SiteName, "Generator Monitor Stopping at " + self.SiteName )
 
         for item in self.ConnectionList:
             try:
@@ -2444,7 +2436,8 @@ class GeneratorDevice:
             self.ServerSocket.shutdown(socket.SHUT_RDWR)
             self.ServerSocket.close()
 
-        self.Slave.Close()
+        if self.SerialInit:
+            self.Slave.Close()
 
     #------------ GeneratorDevice::BitIsEqual -----------------------------------------
     def BitIsEqual(self, value, mask, bits):
