@@ -72,6 +72,13 @@
     were connected to an uninterruptible power supply (UPS) so connectivity is not lost
     power is transferred from the utility to the generator.
 
+## Setting Up Your Raspberry Pi (Serial Port)
+Since there are several version of the raspberry Pi out and also several options regarding the operating system, I will leave this section somewhat minimal. I used a Raspberry Pi 3 with Raspbian Jessie Lite. There are many resources on the web for setting up a Raspberry Pi so I will only include links for setting up the serial port. The Linux device name of the serial port changed or at least the symbolic link changed from /dev/ttyAMA0 to /dev/serial0 so if you are using the on board serial port you will want to validate the device name and make sure genmon.conf reflects the serial device name of your Raspberry Pi and Linux distribution. The following two links are helpful in setting up the serial port on the Raspberry Pi:
+
+[General Setup of the serial port for a Raspberry Pi](http://elinux.org/RPi_Serial_Connection)
+
+[An updated serial port setup instructions based on the Raspberry Pi 3](http://spellfoundry.com/2016/05/29/configuring-gpio-serial-port-raspbian-jessie-including-pi-3/) 
+
 ## Software
 
     genmon.py (required)
