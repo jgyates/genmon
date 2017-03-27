@@ -82,9 +82,9 @@ Since there are several version of the raspberry Pi out and also several options
 One important step is to validate your serial port is working properly. You can validate the serial port is working properly by using the Linux program minicom (see minicom man page for full reference). minicom is a console based terminal program. To validate you serial port connect RS-232 transmit to RS-232 receive, start minicom and select the serial port you will be using to communicate with the generator controller. Then type on the keyboard. If you serial port is working properly you should see what you typed on the screen. Also, you can validate your cable by connecting your cable to your serial port and connecting transmit to receive at the far end of the cable so you will be looping back through your cable, then repeat the minicom test described above.
 
 
-## Software
+# Software
 
-    genmon.py (required)
+## genmon.py (required)
 
         genmon.py is a python program to communicate with the Generac Evolution Controller
         used in some liquid and air cooled stand by generators. The program is writen
@@ -172,7 +172,7 @@ One important step is to validate your serial port is working properly. You can 
         background process on boot by launching a bash script via crontab. The script loads
         the app via the "python genmon.py &" command.
 
-# Configuring and Debugging genmon.py
+## Configuring and Debugging genmon.py
 The configuration file genmon.conf is used to set options for the genmon.py program. These options are used for configuration and enabling debugging. genmon.conf has the following options:
 
     [GenMon]
@@ -234,7 +234,7 @@ The configuration file genmon.conf is used to set options for the genmon.py prog
       # associated with sensors of some type, for example one register outputs almost 
       # half of the frequency. I assume this is used internally by the controller.
 
-# Configuring mymail.py
+## Configuring mymail.py
 
 The following is a description of the options contained in mymail.conf, which is used to configure the mail support in mymail.py.
 
@@ -256,6 +256,9 @@ The following is a description of the options contained in mymail.conf, which is
 
     smtp_port = 587
       # the SMTP port used on the SMTP server for sending email
+      
+## ClientInterface.py
+
         The program ClientInterface.py is a test application for communicating with
         genmon.py via sockets. The ClientInterface.py program uses the supplied python module
         mylog.py so this the two files (mylog.py and ClientInterface.py must be in the same 
@@ -279,7 +282,7 @@ The following is a description of the options contained in mymail.conf, which is
         genmon.py. See https://www.nagios.org/ for Nagios details. check_monitor_system.py 
         is the name of the supplied nagios plug-in.
     
-    server/genserv.py (optional)
+ ## server/genserv.py (optional)
         genserv.py is a python application that uses the Flask library/framework.
         (http://flask.pocoo.org/). This approach allows a quick and simple python socket
         interface to be translated to a javascript based web interface. The genserv.py app,
@@ -316,7 +319,7 @@ The following is a description of the options contained in mymail.conf, which is
         Internally, the javascript, calls to the genserv.py app, which communicates with
         genmon.py via private socket calls.
 
-## Hardware
+# Hardware
 
     This project has been developed and tested with a Raspberry Pi 3 as the base platform.
     Since the serial port and network are the only external ports used, the program could
