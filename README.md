@@ -242,60 +242,40 @@ In development and testing I used the Raspberry Pi3 with built in WiFi. Dependin
 
 Below is a list of hardware that I used. Since your generator may be different and your network will be different you will need to validate these for your setup.
 
-    - Raspberry PI 3 and SD Card
+* Raspberry PI 3 and SD Card
+* [Battery to USB Power Supply](https://smile.amazon.com/gp/product/B01DYE54LI/ref=oh_aui_detailpage_o00_s00?ie=UTF8&psc=1)
+      
+     Power supply for the Raspberry Pi is attached to battery on the generator. Note, this is needed to ensure the raspberry Pi and the generator controller share a common ground. If you use a two prong wall adapter to power your pi you will likely see CRC errors since the controller cable does not include a ground wire for the serial device.
+This is the power supply I used, which allows the Pi to be powered from the generator battery:
 
-    Power supply for the Raspberry Pi is attached to battery on the generator. Note, this is 
-    needed to ensure the raspberry Pi and the generator controller share a common ground. 
-    If you use a two prong wall adapter to power your pi you will likely see CRC errors since 
-    the controller cable does not include a ground wire for the serial device.
-
-    This is the power supply I used, which allows the Pi to be powered from the generator battery:
-    https://smile.amazon.com/gp/product/B01DYE54LI/ref=oh_aui_detailpage_o00_s00?ie=UTF8&psc=1
-
-    The enclosure I used. This may be to large for some smaller air-cooled generators:
-    https://smile.amazon.com/gp/product/B005UPAN0W/ref=oh_aui_detailpage_o01_s00?ie=UTF8&psc=1
-
-    Internal Panel for Enclosure. This may be to large for some smaller air-cooled generators.
-    https://smile.amazon.com/gp/product/B005UPE614/ref=od_aui_detailpages01?ie=UTF8&psc=1
-
-    Adhesive Magnets from Hobby Lobby (used to attach enclosure to generator). I attached the
+* [This is the enclosure that is used.](https://smile.amazon.com/gp/product/B005UPAN0W/ref=oh_aui_detailpage_o01_s00?ie=UTF8&psc=1)
+    This may be to large for some smaller air-cooled generators:
+* [Internal Panel for Enclosure](https://smile.amazon.com/gp/product/B005UPE614/ref=od_aui_detailpages01?ie=UTF8&psc=1)
+    This may be to large for some smaller air-cooled generators.
+* [Adhesive Magnets from Hobby Lobby](http://www.hobbylobby.com/Crafts-Hobbies/Basic-Crafts/Magnets/1%22---8-Pieces-Square-Magnets-with-Foam-Adhesive/p/25089) (used to attach enclosure to generator). I attached the
     enclosure to the inside of my generator housing but your generator may be different.
-    http://www.hobbylobby.com/Crafts-Hobbies/Basic-Crafts/Magnets/1%22---8-Pieces-Square-Magnets-with-Foam-Adhesive/p/25089
-
-    Wire (for cable)
-    https://smile.amazon.com/gp/product/B00INVEWJ8/ref=oh_aui_detailpage_o04_s00?ie=UTF8&psc=1
-
-    Tubing for cable (not recommended, possibly use a smaller diameter tube)
-    https://smile.amazon.com/gp/product/B00542XWXG/ref=oh_aui_detailpage_o04_s00?ie=UTF8&psc=1
+* [Wire (for cable)](https://smile.amazon.com/gp/product/B00INVEWJ8/ref=oh_aui_detailpage_o04_s00?ie=UTF8&psc=1)
+* [Tubing for cable](https://smile.amazon.com/gp/product/B00542XWXG/ref=oh_aui_detailpage_o04_s00?ie=UTF8&psc=1)  (not recommended, possibly use a smaller diameter tube)
+    
 
     The cable I used connects the Molex connector on the Evolution Controller to a DB-9 break-out
     connector. The DB-9 break-out connector is then attached to the RS-232 to TTL converter for the
     Raspberry Pi. Below are the links for the items used in cabeling:
 
-    Crimp tool for cable
-    https://smile.amazon.com/gp/product/B00OMM4YUY/ref=oh_aui_detailpage_o06_s00?ie=UTF8&psc=1
+* [Molex Crimp tool for cable](https://smile.amazon.com/gp/product/B00OMM4YUY/ref=oh_aui_detailpage_o06_s00?ie=UTF8&psc=1)
+* [3.3v TTL to RS232 for RPi](https://smile.amazon.com/gp/product/B00EJ9NAKA/ref=oh_aui_detailpage_o03_s00?ie=UTF8&psc=1)
+* Break out db-9 ([male](https://smile.amazon.com/gp/product/B014FKU5W8/ref=oh_aui_detailpage_o06_s00?ie=UTF8&psc=1
+) or [female](https://smile.amazon.com/gp/product/B014FM8MNK/ref=oh_aui_detailpage_o05_s00?ie=UTF8&psc=1), depending on the above level converter you use)
 
-    3.3v TTL to RS232 for RPi
-    https://smile.amazon.com/gp/product/B00EJ9NAKA/ref=oh_aui_detailpage_o03_s00?ie=UTF8&psc=1
+* I used the following Digi-key part numbers for the molex connectors for the cable. The evolution controller uses a molex type receptacle:
+   * Plug = WM3603-ND
+   * Male pin = WM2500CT-ND
 
-    Break out db-9 (male or female, depending on the above level converter you use)
-    https://smile.amazon.com/gp/product/B014FM8MNK/ref=oh_aui_detailpage_o05_s00?ie=UTF8&psc=1
-    https://smile.amazon.com/gp/product/B014FKU5W8/ref=oh_aui_detailpage_o06_s00?ie=UTF8&psc=1
-
-    I used the following Digi-key part numbers for the molex connectors for the cable. The
-    evolution controller uses a molex type receptacle:
-
-    Plug = WM3603-ND
-    Male pin = WM2500CT-ND
-
-    Receptacle = WM3703-DN
-    Female pin = WM3279CT-DN
+    * Receptacle = WM3703-DN
+    * Female pin = WM3279CT-DN
 
 
-    Evolution Controller has Receptacle so cable should look like this:
-
-    To make inline cable extension from Controller to Raspberry Pi:
-    Controller + Plug + Cable length + Receptacle + ML
+    Evolution Controller has Receptacle.
 
     I used a molex connector on my enclosure and routed the two wires to a break-out box that
     a DB-9 (see link above)
