@@ -170,9 +170,12 @@ Since there are several version of the raspberry Pi out and also several options
         the app via the "python genmon.py &" command.
 
         The program ClientInterface.py is a test application for communicating with
-        genmon.py via sockets. The ClientInterface.py app takes one command line argument,
-        the IP address of the computer running genmon.py. To issues commands to an instance
-        genmon.py on a system at IP address of 192.168.11.100 you would do the following:
+        genmon.py via sockets. The ClientInterface.py program uses the supplied python module
+        mylog.py so this the two files (mylog.py and ClientInterface.py must be in the same 
+        directory of you are opting to usie ClientInterface.py. The ClientInterface.py app 
+        takes one command line argument, the IP address of the computer running genmon.py. 
+        To issues commands to an instance genmon.py on a system at IP address of 
+        192.168.11.100 you would do the following:
 
             python ClientInterface.py 192.168.11.100
 
