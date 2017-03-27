@@ -204,51 +204,22 @@ The following is a description of the options contained in mymail.conf, which is
       
 ## ClientInterface.py
 
-        The program ClientInterface.py is a test application for communicating with
-        genmon.py via sockets. The ClientInterface.py program uses the supplied python module
-        mylog.py so this the two files (mylog.py and ClientInterface.py must be in the same 
-        directory of you are opting to usie ClientInterface.py. The ClientInterface.py app 
-        takes one command line argument, the IP address of the computer running genmon.py. 
-        To issues commands to an instance genmon.py on a system at IP address of 
-        192.168.11.100 you would do the following:
+The program ClientInterface.py is a test application for communicating with genmon.py via sockets. The ClientInterface.py program uses the supplied python module mylog.py so this the two files (mylog.py and ClientInterface.py must be in the same  directory of you are opting to usie ClientInterface.py. The ClientInterface.py app takes one command line argument, the IP address of the computer running genmon.py. To issues commands to an instance genmon.py on a system at IP address of 192.168.11.100 you would do the following:
 
             python ClientInterface.py 192.168.11.100
 
-        Once the app is executed you should be faced with a prompt ">". From this prompt
-        you can send commands to genmon.py. Commands are prefaced with "generator:". For
-        example to issue the command "status" you would enter the "generator: status" at
-        the ">" prompt when running ClientInterface.py.
+Once the app is executed you should be faced with a prompt ">". From this prompt you can send commands to genmon.py. Commands are prefaced with "generator:". For example to issue the command "status" you would enter the "generator: status" at the ">" prompt when running ClientInterface.py.
 
-        The genmon.py appplication supports a a socket interface for communication with 
-        exeternal applications. In addition the the above mentioned ClientInterface.py 
-        application, genmon.py supports communicating via the socket interface so the 
-        application and generator can be monitored by network monitoring tools like Nagios.
-        The program check_monitor_system.py can be used with as a Nagios Plugin to monitor
-        genmon.py. See https://www.nagios.org/ for Nagios details. check_monitor_system.py 
-        is the name of the supplied nagios plug-in.
+The genmon.py application supports a a socket interface for communication with external applications. 
+
+## check_monitor_system.py
+
+In addition the the above mentioned ClientInterface.py application, genmon.py supports communicating via the socket interface so the application and generator can be monitored by network monitoring tools like Nagios. The program check_monitor_system.py can be used with as a Nagios Plugin to monitor genmon.py. See https://www.nagios.org/ for Nagios details. check_monitor_system.py is the name of the supplied nagios plug-in.
     
  ## server/genserv.py (optional)
-        genserv.py is a python application that uses the Flask library/framework.
-        (http://flask.pocoo.org/). This approach allows a quick and simple python socket
-        interface to be translated to a javascript based web interface. The genserv.py app,
-        when executed, will serve up a simple web page that will display the status of the
-        generator. Both the genserv.py app and the genmon.py app can be hosted on a single
-        Raspberry Pi although you should be able to move the genserv.py program to another
-        system with little modification. The web application provides all most of the
-        information supplied by genmon.py. The "registers" and "settime" commands are not
-        supported by the web interface (decided to keep it simple).
-        The setup for flask is detailed at http://flask.pocoo.org/. I did not used a
-        virtual environment since this is a single purpose and low traffic web app (i.e.
-        I do not expose the web app to the internet, only my local network). If you want
-        expose the web app to the internet I would recommend adding authentication, using
-        virtual environment and possibly a full web server to actually serve up the web
-        pages since security concerns would be heightened on a public web server.
+genserv.py is a python application that uses the Flask library/framework (http://flask.pocoo.org/). This approach allows a quick and simple python socket interface to be translated to a javascript based web interface. The genserv.py app, when executed, will serve up a simple web page that will display the status of the generator. Both the genserv.py app and the genmon.py app can be hosted on a single Raspberry Pi although you should be able to move the genserv.py program to another system with little modification. The web application provides all most of the information supplied by genmon.py. The "registers" and "settime" commands are not supported by the web interface (decided to keep it simple). The setup for flask is detailed at http://flask.pocoo.org/. I did not used a virtual environment since this is a single purpose and low traffic web app (i.e. I do not expose the web app to the internet, only my local network). If you want expose the web app to the internet I would recommend adding authentication, using virtual environment and possibly a full web server to actually serve up the web pages since security concerns would be heightened on a public web server.
 
-        The genserv.py program also uses the mylog.py module. Genserv.py also uses the
-        same configuration file /etc/genmon.py. The file /var/log/genserv.log is used for
-        logging errors. The flask library serve up static HTML, CSS and javascript files
-        which are stored in a directory below the genserv.py app named static. Below are
-        files and locations for genserv.py
+The genserv.py program also uses the mylog.py module. Genserv.py also uses the same configuration file /etc/genmon.py. The file /var/log/genserv.log is used for logging errors. The flask library serve up static HTML, CSS and javascript files which are stored in a directory below the genserv.py app named static. Below are files and locations for genserv.py
 
         ./genserv.py                        - main app
         ./template/command_template.html    - used for error processing in flask
@@ -261,20 +232,15 @@ The following is a description of the options contained in mymail.conf, which is
 
           Example: http://YourIPAddressGoesHere:8000
 
-        Internally, the javascript, calls to the genserv.py app, which communicates with
-        genmon.py via private socket calls.
+Internally, the javascript, calls to the genserv.py app, which communicates with genmon.py via private socket calls.
 
 # Hardware
 
-    This project has been developed and tested with a Raspberry Pi 3 as the base platform.
-    Since the serial port and network are the only external ports used, the program could
-    be used on other platforms with minor modifications and testing.
+This project has been developed and tested with a Raspberry Pi 3 as the base platform. Since the serial port and network are the only external ports used, the program could be used on other platforms with minor modifications and testing.
 
-    In development and testing I used the Raspberry Pi3 with built in WiFi. Depending on your
-    WiFi signal and your generator proximity to the access point your results may vary.
+In development and testing I used the Raspberry Pi3 with built in WiFi. Depending on your WiFi signal and your generator proximity to the access point your results may vary.
 
-    Below is a list of hardware that I used. Since your generator may be different and
-    your network will be different you will need to validate these for your setup.
+Below is a list of hardware that I used. Since your generator may be different and your network will be different you will need to validate these for your setup.
 
     - Raspberry PI 3 and SD Card
 
