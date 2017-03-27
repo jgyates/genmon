@@ -161,7 +161,7 @@ The configuration file genmon.conf is used to set options for the genmon.py prog
     sitename = SiteName     
        # name of the site, used in the web interface and email output
 
-    port = /dev/serial0 .   
+    port = /dev/serial0   
       # the serial device name of your serial port. Normally  /dev/serial0 or 
       # /dev/ttyAMA0 for onboard Raspberry Pi Serial ports
 
@@ -176,7 +176,7 @@ The configuration file genmon.conf is used to set options for the genmon.py prog
       # The TCP port used for communicating with the other apps like ClientInterface.py 
       # and the web interface
 
-    address = 9d .         
+    address = 9d         
       # the Modbus slave address. This *should* not need to be changed from 9d
 
     displayoutput = False  
@@ -189,7 +189,7 @@ The configuration file genmon.conf is used to set options for the genmon.py prog
     displayregisters = False  
       # display controller register contents to the console
 
-    displaystatus = False .   
+    displaystatus = False   
       # display generator status to the console
 
     displaymaintenance = False 
