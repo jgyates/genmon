@@ -172,6 +172,90 @@ One important step is to validate your serial port is working properly. You can 
         background process on boot by launching a bash script via crontab. The script loads
         the app via the "python genmon.py &" command.
 
+# Configuring and Debugging genmon.py
+The configuration file genmon.conf is used to set options for the genmon.py program. These options are used for configuration and enabling debugging. genmon.conf has the following options:
+
+    [GenMon]
+    sitename = SiteName     
+       # name of the site, used in the web interface and email output
+
+    port = /dev/serial0 .   
+      # the serial device name of your serial port. Normally  /dev/serial0 or 
+      # /dev/ttyAMA0 for onboard Raspberry Pi Serial ports
+
+    incoming_mail_folder = Generator   
+      # the name of the folder in the mailbox for searching for incoming email commands
+
+    processed_mail_folder = Generator/Processed .  
+      # once an email command has been processed by genmon.py the email is moved to 
+      # this mailbox folder
+
+    server_port = 9082     
+      # The TCP port used for communicating with the other apps like ClientInterface.py 
+      # and the web interface
+
+    address = 9d .         
+      # the Modbus slave address. This *should* not need to be changed from 9d
+
+    displayoutput = False  
+      # enable genmon.py to output to the console if True. If this is false the other 
+      # display* commands below are ignored
+
+    displaymonitor = False 
+      # display information about genmon.py to the console 
+
+    displayregisters = False  
+      # display controller register contents to the console
+
+    displaystatus = False .   
+      # display generator status to the console
+
+    displaymaintenance = False 
+      # display maintenance information to the console
+
+    loglocation = /var/log/    
+       # location of log files
+
+    alarmfile = /home/pi/ALARMS.txt  
+       # location of the text file containing descriptions of alarm codes
+
+    enabledebug = False        
+       # enable enable code to support reverse engineering of registers. This option, 
+       # when True creates a thread that will monitor registers in the controller and 
+       # send notifications of changed registers. Not used in normal operation
+
+    liquidcooled = True        
+       # True if monitoring a liquid cooled generator, False if air cooled. This option 
+       # is for monitoring active relays in the controller, which are different for 
+       # liquid vs air cooled generators
+
+    displayunknown = False     
+      # This option will display the contents of additional registers that appear to be 
+      # associated with sensors of some type, for example one register outputs almost 
+      # half of the frequency. I assume this is used internally by the controller.
+
+# Configuring mymail.py
+
+The following is a description of the options contained in mymail.conf, which is used to configure the mail support in mymail.py.
+
+    [MyMail]
+    email_pw = password
+      # The password for the email account used for sending and receiving email
+
+    email_account = myaccunt@gmail.com
+      # the email account email address (sender email address)
+
+    email_recipient = recipient@gmail.com
+      # address that email are sent to
+
+    smtp_server = smtp.gmail.com
+      # the SMTP mail server used for sending email
+
+    imap_server = imap.gmail.com
+      # the IMAP server address used for receiving email
+
+    smtp_port = 587
+      # the SMTP port used on the SMTP server for sending email
         The program ClientInterface.py is a test application for communicating with
         genmon.py via sockets. The ClientInterface.py program uses the supplied python module
         mylog.py so this the two files (mylog.py and ClientInterface.py must be in the same 
