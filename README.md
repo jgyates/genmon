@@ -79,6 +79,9 @@ Since there are several version of the raspberry Pi out and also several options
 
 [An updated serial port setup instructions based on the Raspberry Pi 3](http://spellfoundry.com/2016/05/29/configuring-gpio-serial-port-raspbian-jessie-including-pi-3/) 
 
+One important step is to validate your serial port is working properly. You can validate the serial port is working properly by using the Linux program minicom (see minicom man page for full reference). minicom is a console based terminal program. To validate you serial port connect RS-232 transmit to RS-232 receive, start minicom and select the serial port you will be using to communicate with the generator controller. Then type on the keyboard. If you serial port is working properly you should see what you typed on the screen. Also, you can validate your cable by connecting your cable to your serial port and connecting transmit to receive at the far end of the cable so you will be looping back through your cable, then repeat the minicom test described above.
+
+
 ## Software
 
     genmon.py (required)
