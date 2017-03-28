@@ -180,6 +180,13 @@ The configuration file genmon.conf is used to set options for the genmon.py prog
       # This option will display the contents of additional registers that appear to be 
       # associated with sensors of some type, for example one register outputs almost 
       # half of the frequency. I assume this is used internally by the controller.
+      
+    uselegacysetexercise = False
+      # This option enables using and alternate method for writing the exercise time. 
+      # Some version of the Evolution firmware only support the legacy method of writing
+      # the exercise time. The legacy method is a bit more convoluted and the current 
+      # implementation may result in the exercise time being off by one or two minutes 
+      # from the request set value. 
 
 ## Configuring mymail.py
 
