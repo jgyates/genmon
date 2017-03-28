@@ -1347,7 +1347,7 @@ class GeneratorDevice:
 
         outstring += self.printToScreen("To clear the Alarm/Warning message, press OFF on the control panel keypad followed by the ENTER key.\n", ToString)
         outstring += self.printToScreen("To access Dealer Menu on the controller, from the top menu selection (SYSTEM, DATE/TIME, BATTERY, SUB-MENUS)", ToString)
-        outstring += self.printToScreen("enter UP UP ESC DOWN UP ESC UP, then naviagte to the dealer menu and press enter.", ToString)
+        outstring += self.printToScreen("enter UP UP ESC DOWN UP ESC UP, then navigate to the dealer menu and press enter.", ToString)
         outstring += self.printToScreen("For liquid cooled models a level 2 dealer code can be entered, ESC UP UP DOWN DOWN ESC ESC, then naviagte to ", ToString)
         outstring += self.printToScreen("the dealer menu and press enter.", ToString)
 
