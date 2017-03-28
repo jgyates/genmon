@@ -272,6 +272,7 @@ class GeneratorDevice:
             self.EnableDebug = False
             self.bDisplayUnknownSensors = False
             self.bDisplayMaintenance = False
+            self.bUseLegacyWrite = False
 
             # getfloat() raises an exception if the value is not a float
             # getint() and getboolean() also do this for their respective types
@@ -300,6 +301,8 @@ class GeneratorDevice:
                 self.EnableDebug = config.getboolean('GenMon', 'enabledebug')
             if config.has_option('GenMon', 'displayunknown'):
                 self.bDisplayUnknownSensors = config.getboolean('GenMon', 'displayunknown')
+            if config.has_option('GenMon', 'uselegacysetexercise'):
+                self.bUseLegacyWrite = config.getboolean('GenMon', 'uselegacysetexercise')
         except Exception, e1:
             raise Exception("Missing config file or config file entries: " + str(e1))
             return None
@@ -686,8 +689,159 @@ class GeneratorDevice:
             if self.EnableDebug:
                 self.RegistersUnderTestData += "Register %s changed from %s to %s\n" % (Register, FromValue, ToValue)
 
+    #----------  GeneratorDevice::CalculateExerciseTime-------------------------------
+    # helper routine for AltSetGeneratorExerciseTime
+    def CalculateExerciseTime(self,MinutesFromNow):
+
+        ReturnedValue = 0x00
+        Remainder = MinutesFromNow
+        # convert minutes from now to weighted bit value
+        if Remainder >= 8738:
+            ReturnedValue |= 0x1000
+            Remainder -=  8738
+        if Remainder >= 4369:
+            ReturnedValue |= 0x0800
+            Remainder -=  4369
+        if Remainder >= 2184:
+            ReturnedValue |= 0x0400
+            Remainder -=  2185
+        if Remainder >= 1092:
+            ReturnedValue |= 0x0200
+            Remainder -=  1092
+        if Remainder >= 546:
+            ReturnedValue |= 0x0100
+            Remainder -=  546
+        if Remainder >= 273:
+            ReturnedValue |= 0x0080
+            Remainder -=  273
+        if Remainder >= 136:
+            ReturnedValue |= 0x0040
+            Remainder -=  137
+        if Remainder >= 68:
+            ReturnedValue |= 0x0020
+            Remainder -=  68
+        if Remainder >= 34:
+            ReturnedValue |= 0x0010
+            Remainder -=  34
+        if Remainder >= 17:
+            ReturnedValue |= 0x0008
+            Remainder -=  17
+        if Remainder >= 8:
+            ReturnedValue |= 0x0004
+            Remainder -=  8
+        if Remainder >= 4:
+            ReturnedValue |= 0x0002
+            Remainder -=  4
+        if Remainder >= 2:
+            ReturnedValue |= 0x0001
+            Remainder -=  2
+
+        self.printToScreen("%x, %x %x" % (MinutesFromNow, Remainder, ReturnedValue))
+        return ReturnedValue
+
+    #----------  GeneratorDevice::AltSetGeneratorExerciseTime-------------------------------
+    # Note: This method is a bit odd but it is how ML does it. It can result in being off by
+    # a min or two
+    def AltSetGeneratorExerciseTime(self, CmdString):
+
+        # extract time of day and day of week from command string
+        # format is day:hour:min  Monday:15:00
+        msgsubject = "Generator Command Notice at " + self.SiteName
+        msgbody = "Invalid command syntax for command setexercise"
+        try:
+            #Format we are looking for is "setexercise=Monday,12:20"
+            marker0 = CmdString.lower().find("setexercise")
+            marker1 = CmdString.find("=", marker0)
+            marker2 = CmdString.find(",",marker1)
+            marker3 = CmdString.find(":",marker2+1)
+            marker4 = CmdString.find(" ",marker3+1)
+
+            if -1 in [marker0, marker1, marker2, marker3]:
+                self.LogError("Validation Error: Error parsing command string in AltSetGeneratorExerciseTime (parse): " + CmdString)
+                self.mail.sendEmail(msgsubject, msgbody)
+                return
+
+            DayStr = CmdString[marker1+1:marker2]
+            HourStr = CmdString[marker2+1:marker3]
+            if marker4 == -1:       # was this the last char in the string or now space given?
+                MinuteStr = CmdString[marker3+1:]
+            else:
+                MinuteStr = CmdString[marker3+1:marker4]
+
+            Minute = int(MinuteStr)
+            Hour = int(HourStr)
+
+            DayOfWeek =  {  "monday": 0,        # decode for register values with day of week
+                            "tuesday": 1,       # NOTE: This decodes for datetime i.e. Monday=0
+                            "wednesday": 2,     # the generator firmware programs Sunday = 0, but
+                            "thursday": 3,      # this is OK since we are calculating delta minutes
+                            "friday": 4,        # since time of day to set exercise time
+                            "saturday": 5,
+                            "sunday": 6}
+
+            Day = DayOfWeek.get(DayStr.lower(), -1)
+            if Day == -1:
+                self.LogError("Validation Error: Error parsing command string in AltSetGeneratorExerciseTime (day of week): " + CmdString)
+                self.mail.sendEmail(msgsubject, msgbody)
+                return
+
+        except Exception, e1:
+            self.LogError("Validation Error: Error parsing command string in AltSetGeneratorExerciseTime: " + CmdString)
+            self.LogError( str(e1))
+            self.mail.sendEmail(msgsubject, msgbody)
+            return
+
+
+        if Minute >59 or Hour > 23 or Day > 6:     # validate minute
+            self.LogError("Validation Error: Error parsing command string in AltSetGeneratorExerciseTime (v1): " + CmdString)
+            self.mail.sendEmail(msgsubject, msgbody)
+            return
+
+        # Get System time and create a new datatime item with the target exercise time
+        GeneratorTime = datetime.datetime.strptime(self.GetDateTime(), "%A %B %d, %Y %H:%M")
+        self.printToScreen("Generato Time: %s" % self.GetDateTime())
+        # fix hours and min in gen time to the requested exercise time
+        TargetExerciseTime = GeneratorTime.replace(hour = Hour, minute = Minute, day = GeneratorTime.day)
+        # now change day of week
+        while TargetExerciseTime.weekday() != Day:
+            TargetExerciseTime += datetime.timedelta(1)
+
+        # convert total minutes between two datetime objects
+        DeltaTime =  TargetExerciseTime - GeneratorTime
+
+        days, seconds = DeltaTime.days, DeltaTime.seconds
+        delta_hours = days * 24 + seconds // 3600
+        delta_minutes = (seconds % 3600) // 60
+
+        total_delta_min = (delta_hours * 60 + delta_minutes)
+
+        WriteValue = self.CalculateExerciseTime(total_delta_min)
+
+        self.printToScreen("Writing %04X" % total_delta_min)
+        with self.CommAccessLock:
+            #  have seen the following values 0cf6,0f8c,0f5e
+            Last = WriteValue & 0x00FF
+            First = WriteValue >> 8
+            Data= []
+            Data.append(First)             # Hour 0 - 23
+            Data.append(Last)             # Min 0 - 59
+
+            self.ProcessMasterSlaveWriteTransaction("0004", len(Data) / 2, Data)
+
+            #
+            Data= []
+            Data.append(0)                  # The value for reg 0003 is always 0006. This appears
+            Data.append(6)                  # to be an indexed register
+
+            self.ProcessMasterSlaveWriteTransaction("0003", len(Data) / 2, Data)
+        return  "Set Exercise Time Command sent (using legacy write)"
+
     #----------  GeneratorDevice::SetGeneratorExerciseTime-------------------------------
     def SetGeneratorExerciseTime(self, CmdString):
+
+        # use older style write to set exercise time if this flag is set
+        if self.bUseLegacyWrite:
+            return self.AltSetGeneratorExerciseTime(CmdString)
 
         # extract time of day and day of week from command string
         # format is day:hour:min  Monday:15:00
