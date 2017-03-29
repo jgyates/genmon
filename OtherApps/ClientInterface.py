@@ -137,7 +137,7 @@ def signal_handler(signal, frame):
 
 #------------------- Command-line interface for monitor -----------------#
 if __name__=='__main__': # usage program.py [server_address]
-    address='192.168.11.15' if len(sys.argv)<2 else sys.argv[1]
+    address='"127.0.0.1' if len(sys.argv)<2 else sys.argv[1]
 
 
     # Set the signal handler
