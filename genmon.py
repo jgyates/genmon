@@ -166,7 +166,8 @@ SERVICE_LOG_END_REG     = ((SERVICE_LOG_STARTING_REG + (SERVICE_LOG_STRIDE * LOG
 MODEL_REG               = 0x01f4
 MODEL_REG_LENGTH        = 5
 
-
+DEFAULT_THRESHOLD_VOLTAGE = 143
+DEFAULT_PICKUP_VOLTAGE = 215
 #------------ GeneratorDevice class --------------------------------------------
 class GeneratorDevice:
 
@@ -238,8 +239,20 @@ class GeneratorDevice:
                                 "05ed" : [2, 0],     # Unknown sensor 4, changes between 35, 37, 39
                                 "0059" : [2, 0],     # Set Voltage from Dealer Menu (not currently used)
                                 "023b" : [2, 0],     # Pick Up Voltage
-                                "023e" : [2, 0]}     # Exercise time duration
-
+                                "023e" : [2, 0],     # Exercise time duration
+                                "000b" : [2, 0],     # Unknown, possibly used in Air cooled model
+                                "000d" : [2, 0],     # Unknown, possibly used in Air cooled model
+                                "0019" : [2, 0],     # Unknown, possibly used in Air cooled model
+                                "001b" : [2, 0],     # Unknown, possibly used in Air cooled model
+                                "001c" : [2, 0],     # Unknown, possibly used in Air cooled model
+                                "001d" : [2, 0],     # Unknown, possibly used in Air cooled model
+                                "001e" : [2, 0],     # Unknown, possibly used in Air cooled model
+                                "001f" : [2, 0],     # Unknown, possibly used in Air cooled model
+                                "0020" : [2, 0],     # Unknown, possibly used in Air cooled model
+                                "0021" : [2, 0],     # Unknown, possibly used in Air cooled model
+                                "0022" : [2, 0],     # Unknown, possibly used in Air cooled model
+                                "05f4" : [2, 0],     # Unknown, possibly used in Air cooled model
+                                "05f5" : [2, 0]}     # Unknown, possibly used in Air cooled model
 
         # registers that need updating more frequently than others to make things more responsive
         self.PrimeRegisters = {
@@ -1355,6 +1368,12 @@ class GeneratorDevice:
             return ""           # we don't have a value for this register yet
         PickupVoltage = int(Value, 16)
 
+        # if something is wrong then we use some sensible values here
+        if PickupVoltage == 0:
+            PickupVoltage = DEFAULT_PICKUP_VOLTAGE
+        if ThresholdVoltage == 0:
+            ThresholdVoltage = DEFAULT_THRESHOLD_VOLTAGE
+
         # first time thru set the values to the same voltage level
         if self.UtilityVoltsMin == 0 and self.UtilityVoltsMax == 0:
             self.UtilityVoltsMin = UtilityVolts
@@ -2323,6 +2342,9 @@ class GeneratorDevice:
             return ""
         PickupVoltage = int(Value,16)
 
+        # Note: we do not put a default value here because we want to know if
+        # we are reading zeros for either of these values and this returns
+        # a string to the user interface
         return "Low Voltage: %dV, Pickup Voltage: %dV" % (ThresholdVoltage, PickupVoltage)
 
     #------------ GeneratorDevice::GetUtilityVoltage --------------------------
