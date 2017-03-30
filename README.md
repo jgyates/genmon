@@ -124,7 +124,7 @@ The configuration file genmon.conf is used to set options for the genmon.py prog
 
     [GenMon]
     # name of the site, used in the web interface and email output (required)
-    sitename = Sandalwood
+    sitename = SiteName
 
     # the serial device name of your serial port. Normally  /dev/serial0 or
     # /dev/ttyAMA0 for onboard Raspberry Pi Serial ports (required)
