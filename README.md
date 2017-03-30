@@ -1,13 +1,13 @@
 # genmon
 # Generator Monitoring Application
 
-This project will monitor a backup generator that utilizes the Generac Evolution Controller. The project is written mostly in python and has been tested with a Raspberry Pi 3. Ideally you would need to create a physical enclosure for your raspberry pi and possibly make a cable to connect the raspberry pi to the Evolution controller. If you are comfortable doing these things and you have a backup generator that has an Generac Evolution controller then this project may be of interest to you.
+This project will monitor a backup generator that utilizes the Generac Evolution or Nexus Controllers. The project is written mostly in python and has been tested with a Raspberry Pi 3. Ideally you would need to create a physical enclosure for your raspberry pi and possibly make a cable to connect the raspberry pi to the Evolution or Nexus controller. If you are comfortable doing these things and you have a backup generator that has an Generac Evolution or Nexus controller then this project may be of interest to you.
     
 ## Functionality
    The software supports the following features:
 
     Monitoring of the generator to to detect and report the following:
-        - Maintenance, Start / Stop and Alarm Logs
+        - Maintenance, Start / Stop and Alarm Logs (Nexus only supports Start / Stop Log)
         - Generator warnings and faults (Wiring Error, High Temp on air cooled models, Low Oil Pressure,
                 low coolant on liquid cooled models)
         - Generator Status:
@@ -42,14 +42,16 @@ This project will monitor a backup generator that utilizes the Generac Evolution
     Ability to set exercise time and set generator time (email and command line only)
 
 ## Testing
-This software was written by one person with access to one generator. The model used for testing and development is a liquid cooled model. The software was written with every intention of working on liquid and air-cooled models with the Evolution controller however the author has not tested all scenarios.
+This software was written by one person with access to one generator. The model used for testing and development is a liquid cooled model. The software was written with every intention of working on liquid and air-cooled models with the Evolution or Nexus controller however the author has not tested all scenarios.
 
 ## Known Issues:
 Some code exist for remotely starting the generator and remotely activating the transfer switch, however this is highly experimental. Additional work is needed before this functionality is fully enabled.
 
 The ability to determine the hours the generator has run is enabled in the code, however the ability to read the backup vs exercise time (backup + exercise = total run hours) is not implimented.
 
-The Controller contains a register that should hold details about the model of the generator. My controller was replaced and as a result, the register on my system has not been properly initialized. I would need feedback from other people to determine the format of this register.
+The Evolution Controller contains a register that should hold details about the model of the generator. My controller was replaced and as a result, the register on my system has not been properly initialized. I would need feedback from other people to determine the format of this register.
+
+Nexus Controllers are currently supported however the functionality is reduced due to the Nexus Controller supporting fewer features and I have not fully reverse engineered the Nexus Modbus Registers. On Nexus Controllers the ability to detect battery charging, transfer switch state, read the alarm log, and set the exercise time is not functional. All other functionality support by the genmon.py and the Nexus controller should work as expected.
 
 While a large amount of functionality is included in this software, some items may be missing. The Evolution Controller has the concept of alarm log entries and alarm codes. Alarm log entries are the collection of the time, date and a description of a give alarm along with an alarm code. Alarm codes are a 4 digit number that corresponds to a specific alarm condition. The alarm codes and the alarm log may not display every alarm log entry properly in the user interface. I have attempted to decode these values and according to the documentation I have decoded many, if not most, of them. If you run into a situation where the one of the logs entries or values returned reports and unknown value feel free to let me know. Generally this can be easily resolved by sending the decoded log values supplied in the email or web interface and a picture of the corresponding log entry (match the time and date and alarm code) from the Evolution Controller. This really comes down to a list of numbers that correspond to displayed strings in the Evolution Controller firmware. My generator only has a finite set of alarm log entries so not every string displayed may be decoded my genmon.py. The alarm conditions and alarm codes are in the file ALARMS.txt. The list of alarm codes was taken from the Generac documentation so this list is likely close to complete however the short description of the alarm contained in the alarm log may need input from others to complete.
 
@@ -70,7 +72,7 @@ One important step is to validate your serial port is working properly. You can 
 
 ## genmon.py (required)
 
-genmon.py is a python program to communicate with the Generac Evolution Controller used in some liquid and air cooled stand by generators. The program is writen using python 2.7 but earlier versions should work. Python 3.x has not been tested. This program will communicate with the Evolution Controller over the serial port using the MODBUS protocol. The application will allow the display and monitoring of the generator much like the Generac Mobile Link product.
+genmon.py is a python program to communicate with the Generac Evolution or Nexus Controller used in some liquid and air cooled stand by generators. The program is writen using python 2.7 but earlier versions should work. Python 3.x has not been tested. This program will communicate with the Evolution or Nexus Controller over the serial port using the MODBUS protocol. The application will allow the display and monitoring of the generator much like the Generac Mobile Link product.
 
 Once setup the genmon.py program will send an email when your generator does interesting things (power goes out, alarm on the generator, weekly exercise, etc). The program will also allow emails to be sent to an IMAP email folder. The program monitors the IMAP folder and takes commands from the email subject. The format of the subject of the email should have "generator:"  followed by one or more of the following commands:
 
@@ -273,7 +275,7 @@ This is the power supply I used, which allows the Pi to be powered from the gene
 * [Tubing for cable](https://smile.amazon.com/gp/product/B00542XWXG/ref=oh_aui_detailpage_o04_s00?ie=UTF8&psc=1)  (not recommended, possibly use a smaller diameter tube)
     
 
-    The cable I used connects the Molex connector on the Evolution Controller to a DB-9 break-out
+    The cable I used connects the Molex connector on the Evolution /Nexus Controller to a DB-9 break-out
     connector. The DB-9 break-out connector is then attached to the RS-232 to TTL converter for the
     Raspberry Pi. Below are the links for the items used in cabeling:
 
@@ -290,13 +292,13 @@ This is the power supply I used, which allows the Pi to be powered from the gene
     * Female pin = WM3279CT-DN
 
 
-    Evolution Controller has Receptacle.
+    Evolution / Nexus Controller has Receptacle.
 
     I used a molex connector on my enclosure and routed the two wires to a break-out box that
     a DB-9 (see link above)
 
 ## Creating a Cable
-The above links include part numbers for the Molex connector and a link for the Molex crimp tool which are both needed to create a cable to interface to the Evolution Controller. If you are new to using crimp tools to create cable connectors, I would suggest YouTube.com as a resource. There are many "How To" videos that should help with any learning curve. I searched on "Molex Crimping Tool" and found a few.
+The above links include part numbers for the Molex connector and a link for the Molex crimp tool which are both needed to create a cable to interface to the Evolution /Nexus Controller. If you are new to using crimp tools to create cable connectors, I would suggest YouTube.com as a resource. There are many "How To" videos that should help with any learning curve. I searched on "Molex Crimping Tool" and found a few.
 
 [Molex Crimping How To Video](https://www.youtube.com/watch?v=ofh998RCBY0&t=150s)
 
