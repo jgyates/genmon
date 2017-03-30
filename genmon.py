@@ -1144,7 +1144,8 @@ class GeneratorDevice:
             elif RegValue != Value:
                 # don't print values of registers we have validated the purpose
                 if not self.RegisterIsLog(Register):
-                    self.printToScreen("*Replacing %s:%s with %s" % (Register, RegValue, Value))
+                    if self.MonitorRegister(Register):
+                        self.printToScreen("*Replacing %s:%s with %s" % (Register, RegValue, Value))
                     self.MonitorUnknownRegisters(Register,RegValue, Value)
                 self.Registers[Register] = Value
                 self.Changed += 1
