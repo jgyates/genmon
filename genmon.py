@@ -299,6 +299,8 @@ class GeneratorDevice:
             self.LogLocation = config.get('GenMon', 'loglocation')
             self.AlarmFile = config.get('GenMon', 'alarmfile')
             self.LiquidCooled = config.getboolean('GenMon', 'liquidcooled')
+            self.EvolutionController = config.getboolean('GenMon', 'evolutioncontroller')
+
             # optional config parameters
             if config.has_option('GenMon', 'displayoutput'):
                 self.bDisplayOutput = config.getboolean('GenMon', 'displayoutput')
@@ -483,14 +485,19 @@ class GeneratorDevice:
 
         self.ProcessMasterSlaveTransaction("%04x" % MODEL_REG, MODEL_REG_LENGTH)
 
-        self.ProcessMasterSlaveTransaction("%04x" % ALARM_LOG_STARTING_REG, ALARM_LOG_STRIDE)
-        self.ProcessMasterSlaveTransaction("%04x" % START_LOG_STARTING_REG, START_LOG_STRIDE)
-        self.ProcessMasterSlaveTransaction("%04x" % SERVICE_LOG_STARTING_REG, SERVICE_LOG_STRIDE)
+        if self.EvolutionController:
+            self.ProcessMasterSlaveTransaction("%04x" % ALARM_LOG_STARTING_REG, ALARM_LOG_STRIDE)
 
-        if self.LiquidCooled:
+        self.ProcessMasterSlaveTransaction("%04x" % START_LOG_STARTING_REG, START_LOG_STRIDE)
+
+        if self.EvolutionController:
+            self.ProcessMasterSlaveTransaction("%04x" % SERVICE_LOG_STARTING_REG, SERVICE_LOG_STRIDE)
+
+        if self.EvolutionController:
             Value = 1
         else:
-            Value = 3
+            Value = 3       # not sure why, but the Nexus controller appears to require a few reads
+                            # before settling to a known value
 
         for count in range(0, Value):
             for PrimeReg, PrimeInfo in self.PrimeRegisters.items():
@@ -644,17 +651,18 @@ class GeneratorDevice:
             if not self.ProcessMasterSlaveTransaction(RegStr, START_LOG_STRIDE):
                 break
 
-        # Service Log
-        for Register in self.LogRange(SERVICE_LOG_STARTING_REG , LOG_DEPTH, SERVICE_LOG_STRIDE):
-            RegStr = "%04x" % Register
-            if not self.ProcessMasterSlaveTransaction(RegStr, SERVICE_LOG_STRIDE):
-                break
+        if self.EvolutionController:
+            # Service Log
+            for Register in self.LogRange(SERVICE_LOG_STARTING_REG , LOG_DEPTH, SERVICE_LOG_STRIDE):
+                RegStr = "%04x" % Register
+                if not self.ProcessMasterSlaveTransaction(RegStr, SERVICE_LOG_STRIDE):
+                    break
 
-        # Alarm Log
-        for Register in self.LogRange(ALARM_LOG_STARTING_REG , LOG_DEPTH, ALARM_LOG_STRIDE):
-            RegStr = "%04x" % Register
-            if not self.ProcessMasterSlaveTransaction(RegStr, ALARM_LOG_STRIDE):
-                break
+            # Alarm Log
+            for Register in self.LogRange(ALARM_LOG_STARTING_REG , LOG_DEPTH, ALARM_LOG_STRIDE):
+                RegStr = "%04x" % Register
+                if not self.ProcessMasterSlaveTransaction(RegStr, ALARM_LOG_STRIDE):
+                    break
 
     # ---------- GeneratorDevice::MillisecondsElapsed------------------
     def MillisecondsElapsed(self, ReferenceTime):
@@ -1466,7 +1474,8 @@ class GeneratorDevice:
         if len(Value):                          #
             msgbody += self.printToScreen("Engine State: " + Value, True)
 
-        msgbody += self.printToScreen("Active Relays: " + self.GetDigitalOutputs(), True)
+        if self.EvolutionController:
+            msgbody += self.printToScreen("Active Relays: " + self.GetDigitalOutputs(), True)
 
         msgsubject += "Generator Alert at " + self.SiteName + ": "
 
@@ -1484,11 +1493,11 @@ class GeneratorDevice:
                 if len(AlarmState):
                     msgbody += self.printToScreen("\nCurrent Alarm: " + AlarmState, True)
                 # if in alarm get Last Error Code
-                Value = self.GetRegisterValueFromList("05f1")
-                if len(Value) != 4:
-                    return ""           # we don't have a value for this register yet
+                if self.EvolutoinController:
+                    Value = self.GetRegisterValueFromList("05f1")
+                    if len(Value) == 4:
+                        msgbody += self.printToScreen("Last Alarm Code: \n%s" % self.GetAlarmInfo(Value), True)
 
-                msgbody += self.printToScreen("Last Alarm Code: \n%s" % self.GetAlarmInfo(Value), True)
                 if not self.BitIsEqual(RegVal,   0xFFF0FFE0, 0x00000000):
                     msgbody += self.printToScreen("\nUnhandled Alert: Register 0001:%08x" % RegVal, True)
 
@@ -1547,10 +1556,11 @@ class GeneratorDevice:
         Value = self.GetExerciseTime()
         if len(Value):
             outstring += self.printToScreen("Exercise Time: " + Value, ToString, spacer = True)
-        # get exercise duration
-        Value = self.GetExerciseDuration()
-        if len(Value):
-            outstring += self.printToScreen("Exercise Duration: " + Value, ToString, spacer = True)
+        if self.EvolutionController:
+            # get exercise duration
+            Value = self.GetExerciseDuration()
+            if len(Value):
+                outstring += self.printToScreen("Exercise Duration: " + Value, ToString, spacer = True)
 
         outstring += self.printToScreen("\nService:", ToString)
         # get next schedule service if available
@@ -1578,9 +1588,9 @@ class GeneratorDevice:
         else:
             if self.ProgramStartTime != self.OutageStartTime:
                 OutageStr = str(self.LastOutageDuration).split(".")[0]  # remove microseconds from string
-                outstr += self.printToScreen("Last outage occured at %s and lasted %s." % (self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"), OutageStr), ToString, spacer = True)
+                outstr += self.printToScreen("Last outage occurred at %s and lasted %s." % (self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"), OutageStr), ToString, spacer = True)
             else:
-                outstr += self.printToScreen("No outage has occured since program launched.", ToString, spacer = True)
+                outstr += self.printToScreen("No outage has occurred since program launched.", ToString, spacer = True)
 
          # get utility voltage
         Value = self.GetUtilityVoltage()
@@ -1596,6 +1606,19 @@ class GeneratorDevice:
 
         outstring = "\n"
         outstring += self.printToScreen("Monitor Health: " + self.GetSystemHealth(), ToString, spacer = True)
+
+        GeneratorType = ""
+        if self.EvolutionController:
+            GeneratorType += "Evolution Controller, "
+        else:
+            GeneratorType += "Nexus Controller, "
+
+        if self.LiquidCooled:
+            GeneratorType += "Liquid Cooled"
+        else:
+            GeneratorType += "Air Cooled"
+
+        outstring += self.printToScreen("Generator Type Selected : " + GeneratorType, ToString, spacer = True)
 
         outstring += self.printToScreen("PacketCount M:%d: S:%d Buffer Count:%d" % (self.Slave.TxPacketCount, self.Slave.RxPacketCount, len(self.Slave.Buffer)), ToString, spacer = True)
 
@@ -1633,13 +1656,14 @@ class GeneratorDevice:
         if len(Value):
             outstring += self.printToScreen("Engine State: " + Value, ToString, spacer = True)
 
-        Value = self.GetDigitalOutputs()
-        if len(Value):
-            outstring += self.printToScreen("Active Relays: " + Value, True, spacer= True)
+        if self.EvolutionController:
+            Value = self.GetDigitalOutputs()
+            if len(Value):
+                outstring += self.printToScreen("Active Relays: " + Value, True, spacer= True)
 
-        Value = self.GetAlarmState()
-        if len(Value):
-            outstring += self.printToScreen("Current Alarm(s): " + Value, True, spacer= True)
+            Value = self.GetAlarmState()
+            if len(Value):
+                outstring += self.printToScreen("Current Alarm(s): " + Value, True, spacer= True)
 
         # get battery voltage
         Value = self.GetBatteryVoltage()
@@ -1676,10 +1700,11 @@ class GeneratorDevice:
                 outstring += self.printToScreen("Unknown Sensor 4: " + Value, ToString, spacer = True)
 
         outstring += self.printToScreen("\nLine State:", ToString)
-        # get transfer switch status
-        Value = self.GetTransferStatus()
-        if len(Value):
-            outstring += self.printToScreen("Transfer Switch Status: " + Value, ToString, spacer = True)
+        if self.EvolutionController:
+            # get transfer switch status
+            Value = self.GetTransferStatus()
+            if len(Value):
+                outstring += self.printToScreen("Transfer Switch Status: " + Value, ToString, spacer = True)
         # get utility voltage
         Value = self.GetUtilityVoltage()
         if len(Value):
@@ -1733,25 +1758,26 @@ class GeneratorDevice:
                 if len(LogStr):             # if the register is there but no log entry exist
                     outstring += self.printToScreen(LogStr, ToString, spacer = True)
 
-            outstring += self.printToScreen("Service Log:   ", ToString)
-            for Register in self.LogRange(SERVICE_LOG_STARTING_REG , LOG_DEPTH, SERVICE_LOG_STRIDE):
-                RegStr = "%04x" % Register
-                Value = self.GetRegisterValueFromList(RegStr)
-                if len(Value) == 0:
-                    break
-                LogStr = self.ParseLogEntry(Value)
-                if len(LogStr):             # if the register is there but no log entry exist
-                    outstring += self.printToScreen(LogStr, ToString, spacer = True)
+            if self.EvolutionController:
+                outstring += self.printToScreen("Service Log:   ", ToString)
+                for Register in self.LogRange(SERVICE_LOG_STARTING_REG , LOG_DEPTH, SERVICE_LOG_STRIDE):
+                    RegStr = "%04x" % Register
+                    Value = self.GetRegisterValueFromList(RegStr)
+                    if len(Value) == 0:
+                        break
+                    LogStr = self.ParseLogEntry(Value)
+                    if len(LogStr):             # if the register is there but no log entry exist
+                        outstring += self.printToScreen(LogStr, ToString, spacer = True)
 
-            outstring += self.printToScreen("Alarm Log:     ", ToString)
-            for Register in self.LogRange(ALARM_LOG_STARTING_REG , LOG_DEPTH, ALARM_LOG_STRIDE):
-                RegStr = "%04x" % Register
-                Value = self.GetRegisterValueFromList(RegStr)
-                if len(Value) == 0:
-                    break
-                LogStr = self.ParseLogEntry(Value)
-                if len(LogStr):             # if the register is there but no log entry exist
-                    outstring += self.printToScreen(LogStr, ToString, spacer = True)
+                outstring += self.printToScreen("Alarm Log:     ", ToString)
+                for Register in self.LogRange(ALARM_LOG_STARTING_REG , LOG_DEPTH, ALARM_LOG_STRIDE):
+                    RegStr = "%04x" % Register
+                    Value = self.GetRegisterValueFromList(RegStr)
+                    if len(Value) == 0:
+                        break
+                    LogStr = self.ParseLogEntry(Value)
+                    if len(LogStr):             # if the register is there but no log entry exist
+                        outstring += self.printToScreen(LogStr, ToString, spacer = True)
 
         else:   # only print last entry in log
             RegStr = "%04x" % START_LOG_STARTING_REG
@@ -1759,22 +1785,22 @@ class GeneratorDevice:
             if len(Value):
                 outstring += self.printToScreen("Start Stop Log: " + self.ParseLogEntry(Value), ToString, spacer = True)
 
-            RegStr = "%04x" % SERVICE_LOG_STARTING_REG
-            Value = self.GetRegisterValueFromList(RegStr)
-            if len(Value):
-                outstring += self.printToScreen("Service Log:    " + self.ParseLogEntry(Value), ToString, spacer = True)
+            if self.EvolutionController:
+                RegStr = "%04x" % SERVICE_LOG_STARTING_REG
+                Value = self.GetRegisterValueFromList(RegStr)
+                if len(Value):
+                    outstring += self.printToScreen("Service Log:    " + self.ParseLogEntry(Value), ToString, spacer = True)
 
-            RegStr = "%04x" % ALARM_LOG_STARTING_REG
-            Value = self.GetRegisterValueFromList(RegStr)
-            if len(Value):
-                outstring += self.printToScreen("Alarm Log:      " + self.ParseLogEntry(Value), ToString, spacer = True)
+                RegStr = "%04x" % ALARM_LOG_STARTING_REG
+                Value = self.GetRegisterValueFromList(RegStr)
+                if len(Value):
+                    outstring += self.printToScreen("Alarm Log:      " + self.ParseLogEntry(Value), ToString, spacer = True)
 
         # Get Last Error Code
-        Value = self.GetRegisterValueFromList("05f1")
-        if len(Value) != 4:
-            return ""           # we don't have a value for this register yet
-
-        outstring += "\nLast Alarm Code: %s" % self.GetAlarmInfo(Value)
+        if self.EvolutionController:
+            Value = self.GetRegisterValueFromList("05f1")
+            if len(Value) == 4:
+                outstring += "\nLast Alarm Code: %s" % self.GetAlarmInfo(Value)
 
         return outstring
 
@@ -1963,10 +1989,10 @@ class GeneratorDevice:
      #------------ GeneratorDevice::GetTransferStatus --------------------------------------
     def GetTransferStatus(self):
 
-        if not self.LiquidCooled:
-            Register = "UNK"        # Air Cooled
+        if not self.EvolutionController:
+            Register = "UNK"        # Nexus
         else:
-            Register = "0053"       # Liquid Cooled
+            Register = "0053"       # Evolution
 
         Value = self.GetRegisterValueFromList(Register)
         if len(Value) != 4:
@@ -1999,10 +2025,10 @@ class GeneratorDevice:
                                 0x40: "Low Oil Pressure",
                                 0x80: "Not Used"}
 
-        if not self.LiquidCooled:
-            Register = "UNK"        # Air Cooled
+        if not self.EvolutionController:
+            Register = "UNK"        # Nexus
         else:
-            Register = "0057"       # Liquid Cooled
+            Register = "0057"       # Evolution
 
         # get the inputs registes
         Value = self.GetRegisterValueFromList("Register")
@@ -2068,10 +2094,10 @@ class GeneratorDevice:
     #------------ GeneratorDevice::GetDigitalOutputs --------------------------------------
     def GetDigitalOutputs(self):
 
-        if not self.LiquidCooled:
-            Register = "UNK"        # Air Cooled
+        if not self.EvolutionController:
+            Register = "UNK"        # Nexus
         else:
-            Register = "0053"       # Liquid Cooled
+            Register = "0053"       # Evolution
 
         # Liquid cooled
         DigitalOutputs_LC = {   0x01: "Transfer Switch Activated",
@@ -2401,10 +2427,10 @@ class GeneratorDevice:
     #------------ GeneratorDevice::GetBatteryStatus -------------------------
     def GetBatteryStatus(self):
 
-        if not self.LiquidCooled:
-            Register = "UNK"        # Air Cooled
+        if not self.EvolutionController:
+            Register = "UNK"        # Nexus
         else:
-            Register = "0053"       # Liquid Cooled
+            Register = "0053"       # Evolution
 
         # get Battery Charging Voltage
         Value = self.GetRegisterValueFromList(Register)
