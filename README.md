@@ -123,70 +123,76 @@ Installation of genmon.py is simple. All python source files (*.py) can be put i
 The configuration file genmon.conf is used to set options for the genmon.py program. These options are used for configuration and enabling debugging. genmon.conf has the following options:
 
     [GenMon]
-    sitename = SiteName     
-       # name of the site, used in the web interface and email output
+    # name of the site, used in the web interface and email output (required)
+    sitename = Sandalwood
 
-    port = /dev/serial0   
-      # the serial device name of your serial port. Normally  /dev/serial0 or 
-      # /dev/ttyAMA0 for onboard Raspberry Pi Serial ports
+    # the serial device name of your serial port. Normally  /dev/serial0 or
+    # /dev/ttyAMA0 for onboard Raspberry Pi Serial ports (required)
+    port = /dev/serial0
 
-    incoming_mail_folder = Generator   
-      # the name of the folder in the mailbox for searching for incoming email commands
+    # the name of the folder in the mailbox for searching for incoming email
+    # commands (required)
+    incoming_mail_folder = Generator
 
-    processed_mail_folder = Generator/Processed .  
-      # once an email command has been processed by genmon.py the email is moved to 
-      # this mailbox folder
+    # once an email command has been processed by genmon.py the email is moved to
+    # this mailbox folder (required)
+    processed_mail_folder = Generator/Processed
 
-    server_port = 9082     
-      # The TCP port used for communicating with the other apps like ClientInterface.py 
-      # and the web interface
+    # The TCP port used for communicating with the other apps like ClientInterface.py
+    # and the web interface (required)
+    server_port = 9082
 
-    address = 9d         
-      # the Modbus slave address. This *should* not need to be changed from 9d
+    # the Modbus slave address. This *should* not need to be changed from 9d (required)
+    address = 9d
 
-    displayoutput = False  
-      # enable genmon.py to output to the console if True. If this is false the other 
-      # display* commands below are ignored
+    # True for Evolution controller, False for Nexus Controller (required)
+    evolutioncontroller = True
 
-    displaymonitor = False 
-      # display information about genmon.py to the console 
+    # True if monitoring a liquid cooled generator, False if air cooled. This option
+    # is for monitoring active relays in the controller, which are different for
+    # liquid vs air cooled generators (required)
+    liquidcooled = True
 
-    displayregisters = False  
-      # display controller register contents to the console
+    # location of log files (required)
+    loglocation = /var/log/
 
-    displaystatus = False   
-      # display generator status to the console
+    # location of the text file containing descriptions of alarm codes (required)
+    alarmfile = /home/pi/ALARMS.txt
 
-    displaymaintenance = False 
-      # display maintenance information to the console
+    # enable genmon.py to output to the console if True. If this is false the other
+    # display* commands below are ignored (optional, default False)
+    displayoutput = False
 
-    loglocation = /var/log/    
-       # location of log files
+    # display information about genmon.py to the console (optional, default False)
+    displaymonitor = False
 
-    alarmfile = /home/pi/ALARMS.txt  
-       # location of the text file containing descriptions of alarm codes
+    # display controller register contents to the console (optional, default False)
+    displayregisters = False
 
-    enabledebug = False        
-       # enable enable code to support reverse engineering of registers. This option, 
-       # when True creates a thread that will monitor registers in the controller and 
-       # send notifications of changed registers. Not used in normal operation
+    # display generator status to the console (optional, default False)
+    displaystatus = False
 
-    liquidcooled = True        
-       # True if monitoring a liquid cooled generator, False if air cooled. This option 
-       # is for monitoring active relays in the controller, which are different for 
-       # liquid vs air cooled generators
+    # display maintenance information to the console (optional, default False)
+    displaymaintenance = False
 
-    displayunknown = False     
-      # This option will display the contents of additional registers that appear to be 
-      # associated with sensors of some type, for example one register outputs almost 
-      # half of the frequency. I assume this is used internally by the controller.
-      
+    # enable enable code to support reverse engineering of registers. This option,
+    # when True creates a thread that will monitor registers in the controller and
+    # send notifications of changed registers. Not used in normal operation (optional,
+    # default False)
+    enabledebug = False
+
+    # This option will display the contents of additional registers that appear to be
+    # associated with sensors of some type, for example one register outputs almost
+    # half of the frequency. I assume this is used internally by the controller. (optional,
+    # default False)
+    displayunknown = False
+
+    # This option enables (when True) using and alternate method for writing the
+    # exercise time. Some version of the Evolution firmware only support the legacy
+    # method of writing the exercise time. The legacy method is a bit more convoluted
+    # and the current implementation may result in the exercise time being off by one
+    # or two minutes from the request set value. (optional, default False)
     uselegacysetexercise = False
-      # This option enables (when True) using and alternate method for writing the 
-      # exercise time. Some version of the Evolution firmware only support the legacy 
-      # method of writing the exercise time. The legacy method is a bit more convoluted 
-      # and the current implementation may result in the exercise time being off by one 
-      # or two minutes from the request set value. 
 
 ## Configuring mymail.py
 
