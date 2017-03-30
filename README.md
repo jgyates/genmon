@@ -277,7 +277,7 @@ This is the power supply I used, which allows the Pi to be powered from the gene
 
     The cable I used connects the Molex connector on the Evolution /Nexus Controller to a DB-9 break-out
     connector. The DB-9 break-out connector is then attached to the RS-232 to TTL converter for the
-    Raspberry Pi. Below are the links for the items used in cabeling:
+    Raspberry Pi. Below are the links for the items used in cabling:
 
 * [Molex Crimp tool for cable](https://smile.amazon.com/gp/product/B00OMM4YUY/ref=oh_aui_detailpage_o06_s00?ie=UTF8&psc=1)
 * [3.3v TTL to RS232 for RPi](https://smile.amazon.com/gp/product/B00EJ9NAKA/ref=oh_aui_detailpage_o03_s00?ie=UTF8&psc=1)
