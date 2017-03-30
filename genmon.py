@@ -487,15 +487,21 @@ class GeneratorDevice:
         self.ProcessMasterSlaveTransaction("%04x" % START_LOG_STARTING_REG, START_LOG_STRIDE)
         self.ProcessMasterSlaveTransaction("%04x" % SERVICE_LOG_STARTING_REG, SERVICE_LOG_STRIDE)
 
-        for PrimeReg, PrimeInfo in self.PrimeRegisters.items():
-            self.ProcessMasterSlaveTransaction(PrimeReg, PrimeInfo[self.REGLEN] / 2)
+        if self.LiquidCooled:
+            Value = 1
+        else:
+            Value = 3
 
-        for Reg, Info in self.BaseRegisters.items():
+        for count in range(0, Value):
+            for PrimeReg, PrimeInfo in self.PrimeRegisters.items():
+                self.ProcessMasterSlaveTransaction(PrimeReg, PrimeInfo[self.REGLEN] / 2)
 
-            #The divide by 2 is due to the diference in the values in our dict are bytes
-            # but modbus makes register request in word increments so the request needs to
-            # in word multiples, not bytes
-            self.ProcessMasterSlaveTransaction(Reg, Info[self.REGLEN] / 2)
+            for Reg, Info in self.BaseRegisters.items():
+
+                #The divide by 2 is due to the diference in the values in our dict are bytes
+                # but modbus makes register request in word increments so the request needs to
+                # in word multiples, not bytes
+                self.ProcessMasterSlaveTransaction(Reg, Info[self.REGLEN] / 2)
 
         self.CheckForAlarms()   # check for unknown events (i.e. events we are not decoded) and send an email if they occur
 
@@ -1389,16 +1395,18 @@ class GeneratorDevice:
                 self.UtilityVoltsMin = UtilityVolts
 
         TransferStatus = self.GetTransferStatus()
-        if self.TransferActive:
-            if TransferStatus == "Utility":
-                self.TransferActive = False
-                msgbody = "\nPower is being supplied by the utility line. "
-                self.mail.sendEmail("Transfer Switch Changed State Notice at " + self.SiteName, msgbody)
-        else:
-            if TransferStatus == "Generator":
-                self.TransferActive = True
-                msgbody = "\nPower is being supplied by the generator. "
-                self.mail.sendEmail("Transfer Switch Changed State Notice at " + self.SiteName, msgbody)
+
+        if len(TransferStatus):
+            if self.TransferActive:
+                if TransferStatus == "Utility":
+                    self.TransferActive = False
+                    msgbody = "\nPower is being supplied by the utility line. "
+                    self.mail.sendEmail("Transfer Switch Changed State Notice at " + self.SiteName, msgbody)
+            else:
+                if TransferStatus == "Generator":
+                    self.TransferActive = True
+                    msgbody = "\nPower is being supplied by the generator. "
+                    self.mail.sendEmail("Transfer Switch Changed State Notice at " + self.SiteName, msgbody)
 
         # Check for outage
         # are we in an outage now
@@ -1932,7 +1940,7 @@ class GeneratorDevice:
         except Exception, e1:
             self.LogError("Error in  GetAlarmInfo " + str(e1))
 
-        return "Error Code Unknown: " + ErrorCode
+        return "Error Code Unknown: " + ErrorCode + "\n"
 
     #------------ GeneratorDevice::GetVersions --------------------------------------
     def GetVersions(self):
@@ -1955,9 +1963,14 @@ class GeneratorDevice:
      #------------ GeneratorDevice::GetTransferStatus --------------------------------------
     def GetTransferStatus(self):
 
-        Value = self.GetRegisterValueFromList("0053")
+        if not self.LiquidCooled:
+            Register = "UNK"        # Air Cooled
+        else:
+            Register = "0053"       # Liquid Cooled
+
+        Value = self.GetRegisterValueFromList(Register)
         if len(Value) != 4:
-            return ""
+            return "Unknown"
         RegVal = int(Value, 16)
 
         if self.BitIsEqual(RegVal, 0x01, 0x01):
@@ -1986,8 +1999,13 @@ class GeneratorDevice:
                                 0x40: "Low Oil Pressure",
                                 0x80: "Not Used"}
 
+        if not self.LiquidCooled:
+            Register = "UNK"        # Air Cooled
+        else:
+            Register = "0057"       # Liquid Cooled
+
         # get the inputs registes
-        Value = self.GetRegisterValueFromList("0057")
+        Value = self.GetRegisterValueFromList("Register")
         if len(Value) != 4:
             return ""
 
@@ -2049,6 +2067,12 @@ class GeneratorDevice:
 
     #------------ GeneratorDevice::GetDigitalOutputs --------------------------------------
     def GetDigitalOutputs(self):
+
+        if not self.LiquidCooled:
+            Register = "UNK"        # Air Cooled
+        else:
+            Register = "0053"       # Liquid Cooled
+
         # Liquid cooled
         DigitalOutputs_LC = {   0x01: "Transfer Switch Activated",
                                 0x02: "Cold Start",
@@ -2068,7 +2092,7 @@ class GeneratorDevice:
                                 0x40: "Not Used",
                                 0x80: "Not Used"}
 
-        Value = self.GetRegisterValueFromList("0053")
+        Value = self.GetRegisterValueFromList(Register)
         if len(Value) != 4:
             return ""
         RegVal = int(Value, 16)
@@ -2377,8 +2401,13 @@ class GeneratorDevice:
     #------------ GeneratorDevice::GetBatteryStatus -------------------------
     def GetBatteryStatus(self):
 
+        if not self.LiquidCooled:
+            Register = "UNK"        # Air Cooled
+        else:
+            Register = "0053"       # Liquid Cooled
+
         # get Battery Charging Voltage
-        Value = self.GetRegisterValueFromList("0053")
+        Value = self.GetRegisterValueFromList(Register)
         if len(Value) != 4:
             return "Unknown"
 
