@@ -665,6 +665,7 @@ class GeneratorDevice:
         # extract quiet mode setting from Command String
         # format is setquiet=yes or setquiet=no
         msgbody = "Invalid command syntax for command setremote (1)"
+
         try:
             #Format we are looking for is "setremote=RemoteStart"
             marker0 = CmdString.lower().find("setremote")
@@ -690,16 +691,16 @@ class GeneratorDevice:
         Register = 0
         Value = 0
 
-        if Command == "RemoteStart":
+        if Command == "remotestart":
             Register = 0x0001
             Value = 0x0000          # Unverified
-        elif Command == "RemoteStop":
+        elif Command == "remotestop":
             Register = 0x0001       # Unverified
             Value = 0x0001          # Unverified
-        elif Command == "TransferGenerator":
+        elif Command == "transfergenerator":
             Register = 0x0002       # Unverified
             Value = 0x0000          # Unverified
-        elif Command == "TransferUtility":
+        elif Command == "transferutility":
             Register = 0x0002       # Unverified
             Value = 0x0001          # Unverified
         else:
@@ -713,7 +714,7 @@ class GeneratorDevice:
             Data.append(HighByte)           # Value for indexed register (High byte)
             Data.append(LowByte)            # Value for indexed register (Low byte)
 
-            self.ProcessMasterSlaveWriteTransaction("0004", len(Data) / 2, Data)
+           # self.ProcessMasterSlaveWriteTransaction("0004", len(Data) / 2, Data)
 
             LowByte = Register & 0x00FF
             HighByte = Register >> 8
@@ -721,7 +722,7 @@ class GeneratorDevice:
             Data.append(HighByte)           # indexed register to be written (High byte)
             Data.append(LowByte)            # indexed register to be written (Low byte)
 
-            self.ProcessMasterSlaveWriteTransaction("0003", len(Data) / 2, Data)
+            #self.ProcessMasterSlaveWriteTransaction("0003", len(Data) / 2, Data)
 
         return "Remote command sent successfully"
 
