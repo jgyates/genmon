@@ -244,7 +244,7 @@ class GeneratorDevice:
 
         # registers that need updating more frequently than others to make things more responsive
         self.PrimeRegisters = {
-                                "0001" : [4, 1],     # Alarm and status register
+                                "0001" : [4, 0],     # Alarm and status register
                                 "0053" : [2, 0],     # Output relay status register (battery charging, transfer switch, Change at startup and stop
                                 "0057" : [2, 0],     # Input status registes
                                 "0009" : [2, 0],     # Utility voltage
