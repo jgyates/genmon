@@ -199,7 +199,9 @@ Also, if you generator has as radiator then it is liquid cooled, otherwise it is
     # exercise time. Some version of the Evolution firmware only support the legacy
     # method of writing the exercise time. The legacy method is a bit more convoluted
     # and the current implementation may result in the exercise time being off by one
-    # or two minutes from the request set value. (optional, default False)
+    # or two minutes from the request set value. (optional, default False). Note
+    # this option is forced True if evolutioncontroller = False (e.g. use legacy 
+    # exercise write if using a Nexus controller)
     uselegacysetexercise = False
 
 ## Configuring mymail.py
