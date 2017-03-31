@@ -239,24 +239,12 @@ class GeneratorDevice:
                                 "05ed" : [2, 0],     # Unknown sensor 4, changes between 35, 37, 39
                                 "0059" : [2, 0],     # Set Voltage from Dealer Menu (not currently used)
                                 "023b" : [2, 0],     # Pick Up Voltage
-                                "023e" : [2, 0],     # Exercise time duration
-                                "000b" : [2, 0],     # Unknown, possibly used in Air cooled model
-                                "000d" : [2, 0],     # Unknown, possibly used in Air cooled model
-                                "0019" : [2, 0],     # Unknown, possibly used in Air cooled model
-                                "001b" : [2, 0],     # Unknown, possibly used in Air cooled model
-                                "001c" : [2, 0],     # Unknown, possibly used in Air cooled model
-                                "001d" : [2, 0],     # Unknown, possibly used in Air cooled model
-                                "001e" : [2, 0],     # Unknown, possibly used in Air cooled model
-                                "001f" : [2, 0],     # Unknown, possibly used in Air cooled model
-                                "0020" : [2, 0],     # Unknown, possibly used in Air cooled model
-                                "0021" : [2, 0],     # Unknown, possibly used in Air cooled model
-                                "0022" : [2, 0],     # Unknown, possibly used in Air cooled model
-                                "05f4" : [2, 0],     # Unknown, possibly used in Air cooled model
-                                "05f5" : [2, 0]}     # Unknown, possibly used in Air cooled model
+                                "023e" : [2, 0]}     # Exercise time duration
+
 
         # registers that need updating more frequently than others to make things more responsive
         self.PrimeRegisters = {
-                                "0001" : [4, 0],     # Alarm and status register
+                                "0001" : [4, 1],     # Alarm and status register
                                 "0053" : [2, 0],     # Output relay status register (battery charging, transfer switch, Change at startup and stop
                                 "0057" : [2, 0],     # Input status registes
                                 "0009" : [2, 0],     # Utility voltage
@@ -321,6 +309,9 @@ class GeneratorDevice:
         except Exception, e1:
             raise Exception("Missing config file or config file entries: " + str(e1))
             return None
+
+        if not self.EvolutionController:        # if we are using a Nexus Controller, force legacy writes
+            self.bUseLegacyWrite = True
 
                         # log errors in this module to a file
         self.log = mylog.SetupLogger("genmon", self.LogLocation + "genmon.log")
@@ -493,22 +484,15 @@ class GeneratorDevice:
         if self.EvolutionController:
             self.ProcessMasterSlaveTransaction("%04x" % SERVICE_LOG_STARTING_REG, SERVICE_LOG_STRIDE)
 
-        if self.EvolutionController:
-            Value = 1
-        else:
-            Value = 3       # not sure why, but the Nexus controller appears to require a few reads
-                            # before settling to a known value
+        for PrimeReg, PrimeInfo in self.PrimeRegisters.items():
+            self.ProcessMasterSlaveTransaction(PrimeReg, PrimeInfo[self.REGLEN] / 2)
 
-        for count in range(0, Value):
-            for PrimeReg, PrimeInfo in self.PrimeRegisters.items():
-                self.ProcessMasterSlaveTransaction(PrimeReg, PrimeInfo[self.REGLEN] / 2)
+        for Reg, Info in self.BaseRegisters.items():
 
-            for Reg, Info in self.BaseRegisters.items():
-
-                #The divide by 2 is due to the diference in the values in our dict are bytes
-                # but modbus makes register request in word increments so the request needs to
-                # in word multiples, not bytes
-                self.ProcessMasterSlaveTransaction(Reg, Info[self.REGLEN] / 2)
+            #The divide by 2 is due to the diference in the values in our dict are bytes
+            # but modbus makes register request in word increments so the request needs to
+            # in word multiples, not bytes
+            self.ProcessMasterSlaveTransaction(Reg, Info[self.REGLEN] / 2)
 
         self.CheckForAlarms()   # check for unknown events (i.e. events we are not decoded) and send an email if they occur
 
@@ -672,29 +656,74 @@ class GeneratorDevice:
         return Delta.microseconds / 1000
 
      #----------  GeneratorDevice::SetGeneratorRemoteStartStop-------------------------------
-    def SetGeneratorRemoteStartStop(self, Start):
+    def SetGeneratorRemoteStartStop(self, CmdString):
 
         # WARNING: THIS IS HIGHLY EXPERIMENTAL, writing zero or x0203 to indexed register 0001
         # will remote start the generator. Apparently register index 0002 register controls the transfer
         # switch in some way
 
-        # TODO  if Start: else:
-        # Wr 0004:0000 then 0003:0001 radio start    ,
-        #  0x00 01, 0x02, 0x03 Radio start
+        # extract quiet mode setting from Command String
+        # format is setquiet=yes or setquiet=no
+        msgbody = "Invalid command syntax for command setremote (1)"
+        try:
+            #Format we are looking for is "setremote=RemoteStart"
+            marker0 = CmdString.lower().find("setremote")
+            marker1 = CmdString.find("=", marker0)
+            marker2 = CmdString.find(" ",marker1+1)
+
+            if -1 in [marker0, marker1]:
+                self.LogError("Validation Error: Error parsing command string in SetGeneratorRemoteStartStop (parse): " + CmdString)
+                return msgbody
+
+            if marker2 == -1:       # was this the last char in the string or now space given?
+                Command = CmdString[marker1+1:]
+            else:
+                Command = CmdString[marker1+1:marker2]
+
+        except Exception, e1:
+            self.LogError("Validation Error: Error parsing command string in SetGeneratorRemoteStartStop: " + CmdString)
+            self.LogError( str(e1))
+            return msgbody
+
+        # Index register 0001 controls remote start (data written 0001 to start,I believe ).
+        # Index register 0002 controls remote transfer switch (Not sure of the data here )
+        Register = 0
+        Value = 0
+
+        if Command == "RemoteStart":
+            Register = 0x0001
+            Value = 0x0000          # Unverified
+        elif Command == "RemoteStop":
+            Register = 0x0001       # Unverified
+            Value = 0x0001          # Unverified
+        elif Command == "TransferGenerator":
+            Register = 0x0002       # Unverified
+            Value = 0x0000          # Unverified
+        elif Command == "TransferUtility":
+            Register = 0x0002       # Unverified
+            Value = 0x0001          # Unverified
+        else:
+            return "Invalid command syntax for command setremote (2)"
+
         with self.CommAccessLock:
             #
+            LowByte = Value & 0x00FF
+            HighByte = Value >> 8
             Data= []
-            Data.append(0x00)               #
-            Data.append(0x00)               #  Value for indexed register
+            Data.append(HighByte)           # Value for indexed register (High byte)
+            Data.append(LowByte)            # Value for indexed register (Low byte)
 
             self.ProcessMasterSlaveWriteTransaction("0004", len(Data) / 2, Data)
 
-            #
+            LowByte = Register & 0x00FF
+            HighByte = Register >> 8
             Data= []
-            Data.append(0)                  #
-            Data.append(0x01)               # indexed register to be written
+            Data.append(HighByte)           # indexed register to be written (High byte)
+            Data.append(LowByte)            # indexed register to be written (Low byte)
 
             self.ProcessMasterSlaveWriteTransaction("0003", len(Data) / 2, Data)
+
+        return "Remote command sent successfully"
 
     #-------------MonitorUnknownRegisters--------------------------------------------------------
     def MonitorUnknownRegisters(self,Register, FromValue, ToValue):
@@ -710,7 +739,7 @@ class GeneratorDevice:
             msgbody += "\n"
             msgbody += self.DisplayStatus(True)
 
-            self.mail.sendEmail("Monitor Register Alert", msgbody)
+            self.mail.sendEmail("Monitor Register Alert: " + Register, msgbody)
         else:
             # bulk register monitoring goes here and an email is sent out in a batch
             if self.EnableDebug:
@@ -763,7 +792,6 @@ class GeneratorDevice:
             ReturnedValue |= 0x0001
             Remainder -=  2
 
-        self.printToScreen("%x, %x %x" % (MinutesFromNow, Remainder, ReturnedValue))
         return ReturnedValue
 
     #----------  GeneratorDevice::AltSetGeneratorExerciseTime-------------------------------
@@ -826,7 +854,6 @@ class GeneratorDevice:
 
         # Get System time and create a new datatime item with the target exercise time
         GeneratorTime = datetime.datetime.strptime(self.GetDateTime(), "%A %B %d, %Y %H:%M")
-        self.printToScreen("Generato Time: %s" % self.GetDateTime())
         # fix hours and min in gen time to the requested exercise time
         TargetExerciseTime = GeneratorTime.replace(hour = Hour, minute = Minute, day = GeneratorTime.day)
         # now change day of week
@@ -844,7 +871,6 @@ class GeneratorDevice:
 
         WriteValue = self.CalculateExerciseTime(total_delta_min)
 
-        self.printToScreen("Writing %04X" % total_delta_min)
         with self.CommAccessLock:
             #  have seen the following values 0cf6,0f8c,0f5e
             Last = WriteValue & 0x00FF
@@ -1158,8 +1184,6 @@ class GeneratorDevice:
             elif RegValue != Value:
                 # don't print values of registers we have validated the purpose
                 if not self.RegisterIsLog(Register):
-                    if self.MonitorRegister(Register):
-                        self.printToScreen("*Replacing %s:%s with %s" % (Register, RegValue, Value))
                     self.MonitorUnknownRegisters(Register,RegValue, Value)
                 self.Registers[Register] = Value
                 self.Changed += 1
@@ -1292,7 +1316,7 @@ class GeneratorDevice:
             if "logs" in item.lower():
                 self.printToScreen("GET LOGS")           # display all logs
                 msgbody += "Logs:\n"
-                msgbody += self.DisplayLogs(True, True)
+                msgbody += self.DisplayLogs(AllLogs = True, PrintToString = True)
                 continue
             if "status" in item.lower():            # display decoded generator info
                 self.printToScreen("STATUS")
@@ -1352,6 +1376,9 @@ class GeneratorDevice:
                     continue
                 if "getdebug" in item.lower():
                     msgbody += self.GetDeadThreadName()
+                    continue
+                if "setremote" in item.lower():
+                    msgbody += self.SetGeneratorRemoteStartStop(command.lower())
                     continue
             if not fromsocket:
                 msgbody += "\n\n"
@@ -1514,7 +1541,7 @@ class GeneratorDevice:
         msgbody += self.printToScreen("\nLast Log Entries:", True)
 
         # display last log entries
-        msgbody += self.DisplayLogs(False, True)     # if false don't display full logs
+        msgbody += self.DisplayLogs(AllLogs = False, PrintToString = True)     # if false don't display full logs
 
         if self.GeneratorInAlarm:
             msgbody += self.printToScreen("To clear the Alarm/Warning message, press OFF on the control panel keypad followed by the ENTER key.", True)
@@ -1718,7 +1745,7 @@ class GeneratorDevice:
         outstring += self.printToScreen("\nLast Log Entries:", ToString)
 
         # display last log entries
-        outstring += self.DisplayLogs(False, ToString)     # if false don't display full logs
+        outstring += self.DisplayLogs(AllLogs = False, PrintToString = ToString)     # if false don't display full logs
 
         outstring += self.printToScreen("\nGeneral:", ToString)
         # display info decoded from the registers
@@ -1740,7 +1767,7 @@ class GeneratorDevice:
             Counter += 1
 
     #------------ GeneratorDevice::DisplayLogs --------------------------------------------
-    def DisplayLogs(self, AllLogs = False, ToString = False):
+    def DisplayLogs(self, AllLogs = False, PrintToString = False):
 
         if AllLogs == False:
             outstring = ""
@@ -1748,7 +1775,7 @@ class GeneratorDevice:
             outstring = "\n"
 
         if AllLogs:
-            outstring += self.printToScreen("Start Stop Log:", ToString)
+            outstring += self.printToScreen("Start Stop Log:", PrintToString)
             for Register in self.LogRange(START_LOG_STARTING_REG , LOG_DEPTH,START_LOG_STRIDE):
                 RegStr = "%04x" % Register
                 Value = self.GetRegisterValueFromList(RegStr)
@@ -1756,10 +1783,10 @@ class GeneratorDevice:
                     break
                 LogStr = self.ParseLogEntry(Value)
                 if len(LogStr):             # if the register is there but no log entry exist
-                    outstring += self.printToScreen(LogStr, ToString, spacer = True)
+                    outstring += self.printToScreen(LogStr, PrintToString, spacer = True)
 
             if self.EvolutionController:
-                outstring += self.printToScreen("Service Log:   ", ToString)
+                outstring += self.printToScreen("Service Log:   ", PrintToString)
                 for Register in self.LogRange(SERVICE_LOG_STARTING_REG , LOG_DEPTH, SERVICE_LOG_STRIDE):
                     RegStr = "%04x" % Register
                     Value = self.GetRegisterValueFromList(RegStr)
@@ -1767,9 +1794,9 @@ class GeneratorDevice:
                         break
                     LogStr = self.ParseLogEntry(Value)
                     if len(LogStr):             # if the register is there but no log entry exist
-                        outstring += self.printToScreen(LogStr, ToString, spacer = True)
+                        outstring += self.printToScreen(LogStr, PrintToString, spacer = True)
 
-                outstring += self.printToScreen("Alarm Log:     ", ToString)
+                outstring += self.printToScreen("Alarm Log:     ", PrintToString)
                 for Register in self.LogRange(ALARM_LOG_STARTING_REG , LOG_DEPTH, ALARM_LOG_STRIDE):
                     RegStr = "%04x" % Register
                     Value = self.GetRegisterValueFromList(RegStr)
@@ -1777,24 +1804,24 @@ class GeneratorDevice:
                         break
                     LogStr = self.ParseLogEntry(Value)
                     if len(LogStr):             # if the register is there but no log entry exist
-                        outstring += self.printToScreen(LogStr, ToString, spacer = True)
+                        outstring += self.printToScreen(LogStr, PrintToString, spacer = True)
 
         else:   # only print last entry in log
             RegStr = "%04x" % START_LOG_STARTING_REG
             Value = self.GetRegisterValueFromList(RegStr)
             if len(Value):
-                outstring += self.printToScreen("Start Stop Log: " + self.ParseLogEntry(Value), ToString, spacer = True)
+                outstring += self.printToScreen("Start Stop Log: " + self.ParseLogEntry(Value), PrintToString, spacer = True)
 
             if self.EvolutionController:
                 RegStr = "%04x" % SERVICE_LOG_STARTING_REG
                 Value = self.GetRegisterValueFromList(RegStr)
                 if len(Value):
-                    outstring += self.printToScreen("Service Log:    " + self.ParseLogEntry(Value), ToString, spacer = True)
+                    outstring += self.printToScreen("Service Log:    " + self.ParseLogEntry(Value), PrintToString, spacer = True)
 
                 RegStr = "%04x" % ALARM_LOG_STARTING_REG
                 Value = self.GetRegisterValueFromList(RegStr)
                 if len(Value):
-                    outstring += self.printToScreen("Alarm Log:      " + self.ParseLogEntry(Value), ToString, spacer = True)
+                    outstring += self.printToScreen("Alarm Log:      " + self.ParseLogEntry(Value), PrintToString, spacer = True)
 
         # Get Last Error Code
         if self.EvolutionController:
@@ -2361,7 +2388,10 @@ class GeneratorDevice:
             return ""
 
         IntTemp = int(Value,16)
-        FloatTemp = IntTemp / 10.0
+        if self.EvolutionController:
+            FloatTemp = IntTemp / 10.0      # Evolution
+        else:
+            FloatTemp = IntTemp / 1.0       # Nexus
         FreqValue = "%2.1f Hz" % FloatTemp
 
         return FreqValue
