@@ -122,7 +122,7 @@ Due to the location of log files and conf files, root privileges are needed to e
 Installation of genmon.py is simple. All python source files (*.py) can be put in a single directory, all config files (*.conf) go in /etc. Edit the *.conf files so they are specific to your installation (email user name and password, etc). You can launch the program as a background application if needed, i.e. "python genmon.py &". Also I use crontab to load the application as a background process on boot by launching a bash script via crontab. The script loads the app via the "python genmon.py &" command.
 
 ## Configuring and Debugging genmon.py
-The configuration file genmon.conf is used to set options for the genmon.py program. If you do not know what type of controller you have on your generator there are picures in Diagrams folder in this repository of both Evolution and Nexus controller front panels. 
+The configuration file genmon.conf is used to set options for the genmon.py program. If you do not know what type of controller you have on your generator there are pictures in Diagrams folder in this repository of both Evolution and Nexus controller front panels. 
 
 [Evolution Controller Front Panel](https://github.com/jgyates/genmon/blob/master/Diagrams/Evolution_Controller.jpg)
 
