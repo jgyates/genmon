@@ -203,7 +203,7 @@ Also, if you generator has as radiator then it is liquid cooled, otherwise it is
     # generator time.
     #uselegacysetexercise = False
 
-    # (optional). The software will auto-detect the conlroller type. The auto-detect
+    # (optional). The software will auto-detect the controller type. The auto-detect
     # can be overridden with this setting. True for Evolution controller, False for
     # Nexus Controller.
     #evolutioncontroller = True
