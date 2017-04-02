@@ -274,6 +274,7 @@ class GeneratorDevice:
             self.bDisplayUnknownSensors = False
             self.bDisplayMaintenance = False
             self.bUseLegacyWrite = False
+            self.EvolutionController = None
 
             # getfloat() raises an exception if the value is not a float
             # getint() and getboolean() also do this for their respective types
@@ -287,9 +288,12 @@ class GeneratorDevice:
             self.LogLocation = config.get('GenMon', 'loglocation')
             self.AlarmFile = config.get('GenMon', 'alarmfile')
             self.LiquidCooled = config.getboolean('GenMon', 'liquidcooled')
-            self.EvolutionController = config.getboolean('GenMon', 'evolutioncontroller')
+
 
             # optional config parameters
+            if config.has_option('GenMon', 'evolutioncontroller'):
+                self.EvolutionController = config.getboolean('GenMon', 'evolutioncontroller')
+
             if config.has_option('GenMon', 'displayoutput'):
                 self.bDisplayOutput = config.getboolean('GenMon', 'displayoutput')
             if config.has_option('GenMon', 'displaymonitor'):
@@ -310,8 +314,6 @@ class GeneratorDevice:
             raise Exception("Missing config file or config file entries: " + str(e1))
             return None
 
-        if not self.EvolutionController:        # if we are using a Nexus Controller, force legacy writes
-            self.bUseLegacyWrite = True
 
                         # log errors in this module to a file
         self.log = mylog.SetupLogger("genmon", self.LogLocation + "genmon.log")
@@ -476,6 +478,8 @@ class GeneratorDevice:
 
         self.ProcessMasterSlaveTransaction("%04x" % MODEL_REG, MODEL_REG_LENGTH)
 
+        self.DetectController()
+
         if self.EvolutionController:
             self.ProcessMasterSlaveTransaction("%04x" % ALARM_LOG_STARTING_REG, ALARM_LOG_STRIDE)
 
@@ -495,6 +499,30 @@ class GeneratorDevice:
             self.ProcessMasterSlaveTransaction(Reg, Info[self.REGLEN] / 2)
 
         self.CheckForAlarms()   # check for unknown events (i.e. events we are not decoded) and send an email if they occur
+
+    #-------------GeneratorDevice::DetectController------------------------------------
+    def DetectController(self):
+
+        if self.EvolutionController == None:
+            # issue modbus read
+            self.ProcessMasterSlaveTransaction("023b", 1)
+
+            # read register from cached list. get Utility Voltage Pickup Voltage
+            Value = self.GetRegisterValueFromList("023b")
+            if len(Value) != 4:
+                return ""
+            PickupVoltage = int(Value,16)
+
+            # if pickup voltage register 023b is zero then assume we have a Nexus Controller
+            if PickupVoltage == 0:
+                self.EvolutionController = False    #"Nexus"
+                self.printToScreen("Nexus Controller Detected")
+            else:
+                self.EvolutionController = True     #"Evolution"
+                self.printToScreen("Evolution Controller Detected")
+
+        if not self.EvolutionController:        # if we are using a Nexus Controller, force legacy writes
+            self.bUseLegacyWrite = True
 
     #-------------GeneratorDevice::DebugRegisters------------------------------------
     def DebugRegisters(self):
@@ -691,18 +719,18 @@ class GeneratorDevice:
         Register = 0
         Value = 0
 
-        if Command == "remotestart":
+        if Command == "start":
             Register = 0x0001
-            Value = 0x0000          # Unverified
-        elif Command == "remotestop":
-            Register = 0x0001       # Unverified
-            Value = 0x0001          # Unverified
-        elif Command == "transfergenerator":
-            Register = 0x0002       # Unverified
-            Value = 0x0000          # Unverified
-        elif Command == "transferutility":
-            Register = 0x0002       # Unverified
-            Value = 0x0001          # Unverified
+            Value = 0x0000          # writing any value to index register 0001 will remote start (radio start)
+        elif Command == "stop":
+            Register = 0x0000       #
+            Value = 0x0000          # writing any value to index register 0000 will remote stop (radio stop)
+        elif Command == "starttransfer":
+            Register = 0x0002       #
+            Value = 0x0000          # writing any value to index register 0002 will start the generator, then engage the transfer transfer switch
+        elif Command == "startexercise":
+            Register = 0x0003       #
+            Value = 0x0000          # writing any value to index register 0003 will remote run in quiet mode (exercise)
         else:
             return "Invalid command syntax for command setremote (2)"
 
@@ -714,7 +742,7 @@ class GeneratorDevice:
             Data.append(HighByte)           # Value for indexed register (High byte)
             Data.append(LowByte)            # Value for indexed register (Low byte)
 
-           # self.ProcessMasterSlaveWriteTransaction("0004", len(Data) / 2, Data)
+            self.ProcessMasterSlaveWriteTransaction("0004", len(Data) / 2, Data)
 
             LowByte = Register & 0x00FF
             HighByte = Register >> 8
@@ -722,7 +750,7 @@ class GeneratorDevice:
             Data.append(HighByte)           # indexed register to be written (High byte)
             Data.append(LowByte)            # indexed register to be written (Low byte)
 
-            #self.ProcessMasterSlaveWriteTransaction("0003", len(Data) / 2, Data)
+            self.ProcessMasterSlaveWriteTransaction("0003", len(Data) / 2, Data)
 
         return "Remote command sent successfully"
 
@@ -2181,6 +2209,8 @@ class GeneratorDevice:
             return "Exercising"
         elif self.BitIsEqual(RegVal, 0x000F0000, 0x00090000):
             return "Stopped"
+        elif self.BitIsEqual(RegVal, 0x000F0000, 0x00010000):
+            return "Cranking"
         elif self.BitIsEqual(RegVal, 0x000F0000, 0x00020000):
             return "Starting"
         elif self.BitIsEqual(RegVal, 0x000F0000, 0x00050000):
