@@ -153,9 +153,6 @@ Also, if you generator has as radiator then it is liquid cooled, otherwise it is
     # the Modbus slave address. This *should* not need to be changed from 9d (required)
     address = 9d
 
-    # True for Evolution controller, False for Nexus Controller (required)
-    evolutioncontroller = True
-
     # True if monitoring a liquid cooled generator, False if air cooled. This option
     # is for monitoring active relays in the controller, which are different for
     # liquid vs air cooled generators (required)
@@ -195,15 +192,22 @@ Also, if you generator has as radiator then it is liquid cooled, otherwise it is
     # default False)
     displayunknown = False
 
-    # This option enables (when True) using and alternate method for writing the
-    # exercise time. Some version of the Evolution firmware only support the legacy
+    # (optional) This option enables (when True) using and alternate method for writing
+    # the exercise time. Some version of the Evolution firmware only support the legacy
     # method of writing the exercise time. The legacy method is a bit more convoluted
     # and the current implementation may result in the exercise time being off by one
-    # or two minutes from the request set value. (optional, default False). Note
-    # this option is forced True if evolutioncontroller = False (e.g. use legacy 
-    # exercise write if using a Nexus controller). When using this method the exercise
-    # time must be at least three minutes or more from the current generator time. 
-    uselegacysetexercise = False
+    # or two minutes from the request set value. (optional, default False).  Note
+    # this option is forced True if a Nexus controller is detected or selected.
+    # (e.g. use legacy exercise write if using a Nexus controller). When using this
+    # method the exercise time must be at least three minutes or more from the current
+    # generator time.
+    #uselegacysetexercise = False
+
+    # (optional). The software will auto-detect the conlroller type. The auto-detect
+    # can be overridden with this setting. True for Evolution controller, False for
+    # Nexus Controller.
+    #evolutioncontroller = True
+
 
 ## Configuring mymail.py
 
