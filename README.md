@@ -201,7 +201,8 @@ Also, if you generator has as radiator then it is liquid cooled, otherwise it is
     # and the current implementation may result in the exercise time being off by one
     # or two minutes from the request set value. (optional, default False). Note
     # this option is forced True if evolutioncontroller = False (e.g. use legacy 
-    # exercise write if using a Nexus controller)
+    # exercise write if using a Nexus controller). When using this method the exercise
+    # time must be at least three minutes or more from the current generator time. 
     uselegacysetexercise = False
 
 ## Configuring mymail.py
