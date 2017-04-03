@@ -41,7 +41,9 @@ This project will monitor a backup generator that utilizes the Generac Evolution
     Command Line application (all the functionality of email plus set generator time)
     Ability to set exercise time (via web, command line and email)
     Ability to set generator time (email and command line only)
-    Ability to start, stop, exercise and start / active the transfer switch (i.e. power your house off the generator) remotely. This feature is command line and email only.
+    Ability to start, stop, exercise and start / active the transfer switch 
+         (i.e. power your house off the generator) remotely. This feature is command 
+          line and email only.
 
 
 ## Testing
