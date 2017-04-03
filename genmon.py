@@ -1398,7 +1398,7 @@ class GeneratorDevice:
                 if "getsitename" in item.lower():       # used in web interface
                     msgbody += self.SiteName
                     continue
-                if "getbase" in item.lower():           # base status, used in web interface
+                if "getbase" in item.lower():           # base status, used in web interface (UI changes color based on exercise, running , ready status)
                     msgbody += self.GetBaseStatus()
                     continue
                 if "getexercise" in item.lower():
