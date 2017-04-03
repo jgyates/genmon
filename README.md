@@ -77,16 +77,21 @@ genmon.py is a python program to communicate with the Generac Evolution or Nexus
 Once setup the genmon.py program will send an email when your generator does interesting things (power goes out, alarm on the generator, weekly exercise, etc). The program will also allow emails to be sent to an IMAP email folder. The program monitors the IMAP folder and takes commands from the email subject. The format of the subject of the email should have "generator:"  followed by one or more of the following commands:
 
         Commands:
-           status      - display engine and line information
-           maint       - display maintenance and service information
-           outage      - display current and last outage (since program launched) info,
-                            also shows utility min and max values
-           monitor     - display communication statistics and monitor (genmon.py) health
-           logs        - display all alarm, on/off, and maintenance logs
-           registers   - display contents of registers being monitored
-           settime     - set generator time to system time
-           setexercise - set the exercise time of the generator. i.e. setexercise=Monday,13:30
-           setquiet    - enable or disable exercise quiet mode, i.e.  setquiet=on or setquiet=off
+          status      - display engine and line information
+          maint       - display maintenance and service information
+          outage      - display current and last outage (since program launched)
+                       info, also shows utility min and max values
+          monitor     - display communication statistics and monitor health
+          logs        - display all alarm, on/off, and maintenance logs
+          registers   - display contents of registers being monitored
+          settime     - set generator time to system time
+          setexercise - set the exercise time of the generator. 
+                          i.e. setexercise=Monday,13:30
+          setquiet    - enable or disable exercise quiet mode, 
+                          i.e.  setquiet=on or setquiet=off
+          setremote   - issue remote command. format is setremote=command, 
+                         where command is start, stop, starttransfer,
+                         startexercise. i.e. setremote=start
 
          Example subject:
             generator: status maint
