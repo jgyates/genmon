@@ -1597,6 +1597,7 @@ class GeneratorDevice:
         outstring += self.printToScreen("   setremote   - issue remote command. format is setremote=command, ", ToString)
         outstring += self.printToScreen("                      where command is start, stop, starttransfer,", ToString)
         outstring += self.printToScreen("                      startexercise. i.e. setremote=start", ToString)
+        outstring += self.printToScreen("   help        - Display help on commands", ToString)
         outstring += self.printToScreen("\n", ToString)
 
         outstring += self.printToScreen("To clear the Alarm/Warning message, press OFF on the control panel keypad followed by the ENTER key.\n", ToString)
