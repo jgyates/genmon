@@ -1389,25 +1389,26 @@ class GeneratorDevice:
                 msgbody += "Outage:\n"
                 msgbody += self.DisplayOutage(True)
                 continue
+            if "setremote" in item.lower():
+                self.printToScreen("SETREMOTE")
+                msgbody += self.SetGeneratorRemoteStartStop(command.lower())
+                continue
             ## These commands are used by the web / socket interface only
             if fromsocket:
-                if "getsitename" in item.lower():
+                if "getsitename" in item.lower():       # used in web interface
                     msgbody += self.SiteName
                     continue
-                if "getbase" in item.lower():       # base status
+                if "getbase" in item.lower():           # base status, used in web interface
                     msgbody += self.GetBaseStatus()
                     continue
                 if "getexercise" in item.lower():
-                    msgbody += self.GetParsedExerciseTime()
+                    msgbody += self.GetParsedExerciseTime() # used in web interface
                     continue
-                if "getregvalue" in item.lower():
+                if "getregvalue" in item.lower():           # only used for debug purposes, read a cached register value
                     msgbody += self.GetRegValue(command.lower())
                     continue
-                if "getdebug" in item.lower():
+                if "getdebug" in item.lower():              # only used for debug purposes. If a thread crashes it tells you the thread name
                     msgbody += self.GetDeadThreadName()
-                    continue
-                if "setremote" in item.lower():
-                    msgbody += self.SetGeneratorRemoteStartStop(command.lower())
                     continue
             if not fromsocket:
                 msgbody += "\n\n"
@@ -1583,13 +1584,19 @@ class GeneratorDevice:
         outstring = self.printToScreen("\nCommands:", ToString)
         outstring += self.printToScreen("   status      - display engine and line information", ToString)
         outstring += self.printToScreen("   maint       - display maintenance and service information", ToString)
-        outstring += self.printToScreen("   outage      - display current and last outage (since program launched) info, also shows utility min and max values", ToString)
+        outstring += self.printToScreen("   outage      - display current and last outage (since program launched)", ToString)
+        outstring += self.printToScreen("                       info, also shows utility min and max values", ToString)
         outstring += self.printToScreen("   monitor     - display communication statistics and monitor health", ToString)
         outstring += self.printToScreen("   logs        - display all alarm, on/off, and maintenance logs", ToString)
         outstring += self.printToScreen("   registers   - display contents of registers being monitored", ToString)
         outstring += self.printToScreen("   settime     - set generator time to system time", ToString)
-        outstring += self.printToScreen("   setexercise - set the exercise time of the generator. i.e. setexercise=Monday,13:30", ToString)
-        outstring += self.printToScreen("   setquiet    - enable or disable exercise quiet mode, i.e.  setquiet=on or setquiet=off", ToString)
+        outstring += self.printToScreen("   setexercise - set the exercise time of the generator. ", ToString)
+        outstring += self.printToScreen("                      i.e. setexercise=Monday,13:30", ToString)
+        outstring += self.printToScreen("   setquiet    - enable or disable exercise quiet mode, ", ToString)
+        outstring += self.printToScreen("                      i.e.  setquiet=on or setquiet=off", ToString)
+        outstring += self.printToScreen("   setremote   - issue remote command. format is setremote=command, ", ToString)
+        outstring += self.printToScreen("                      where command is start, stop, starttransfer,", ToString)
+        outstring += self.printToScreen("                      startexercise. i.e. setremote=start", ToString)
         outstring += self.printToScreen("\n", ToString)
 
         outstring += self.printToScreen("To clear the Alarm/Warning message, press OFF on the control panel keypad followed by the ENTER key.\n", ToString)
