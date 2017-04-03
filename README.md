@@ -95,6 +95,7 @@ Once setup the genmon.py program will send an email when your generator does int
           setremote   - issue remote command. format is setremote=command, 
                          where command is start, stop, starttransfer,
                          startexercise. i.e. setremote=start
+          help        - Display help on commands
 
          Example subject:
             generator: status maint
