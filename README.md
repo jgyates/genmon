@@ -100,9 +100,10 @@ Once setup the genmon.py program will send an email when your generator does int
 
 A few notes about commands: 
 
-The setremote command issues commands directly to the controller. Start and stop commands should be back to back (i.e. is is not recommended to issue start followed by starttransfer, you should have a stop after each start command. Also, when the starttransfer command is used, once a stop command is issued the controller will set the transfer switch back to "utility" but the generator will continue to run in "cool down" mode for few minutes. This is normal and the behavior is controlled by the controller.
+The setremote command issues commands directly to the controller. Start and stop commands should be back to back, i.e. is is not recommended to issue start followed by starttransfer, you should have a stop after each start command. Also, when the starttransfer command is used, once a stop command is issued the controller will set the transfer switch back to "utility" but the generator will continue to run in "cool down" mode for few minutes. This is normal and the behavior is controlled by the controller.
 
-The setexercise command can not set an exercise time that is withing a few minutes of the current generator time. This is a limitation of the controller.
+The setexercise command can not set an exercise time that is within a few minutes of the current generator time. This is a limitation of the controller.
+
 
 The program uses the file genmon.conf to for configuration data. Edit this file place it in the /etc directory before running the program. genmon.py uses the following modules so they are external dependancies of the program and they will need to be install before running the program:
 
