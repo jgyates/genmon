@@ -39,7 +39,9 @@ This project will monitor a backup generator that utilizes the Generac Evolution
         - Critical or Warning messages from the generator
     Web based application for viewing status of the generator
     Command Line application (all the functionality of email plus set generator time)
-    Ability to set exercise time and set generator time (email and command line only)
+    - Ability to set exercise time (via web, command line and email)
+    - Ability to set generator time (email and command line only)
+    - Ability to start, stop, exercise and start / active the transfer switch (i.e. power your house off the generator). This feature is command line only.
 
 ## Testing
 This software was written by one person with access to one generator. The model used for testing and development is a liquid cooled model. The software was written with every intention of working on liquid and air-cooled models with the Evolution or Nexus controller however the author has not tested all scenarios.
