@@ -282,6 +282,8 @@ The genserv.py program also uses the mylog.py module. Genserv.py also uses the s
 
 Internally, the javascript, calls to the genserv.py app, which communicates with genmon.py via private socket calls.
 
+The highlight colors in the web interface will change color based on the generator status (running, ready, exercise).
+
 # Hardware
 
 This project has been developed and tested with a Raspberry Pi 3 as the base platform. Since the serial port and network are the only external ports used, the program could be used on other platforms with minor modifications and testing.
