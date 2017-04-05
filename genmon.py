@@ -686,16 +686,10 @@ class GeneratorDevice:
      #----------  GeneratorDevice::SetGeneratorRemoteStartStop-------------------------------
     def SetGeneratorRemoteStartStop(self, CmdString):
 
-        # WARNING: THIS IS HIGHLY EXPERIMENTAL, writing zero or x0203 to indexed register 0001
-        # will remote start the generator. Apparently register index 0002 register controls the transfer
-        # switch in some way
-
-        # extract quiet mode setting from Command String
-        # format is setquiet=yes or setquiet=no
         msgbody = "Invalid command syntax for command setremote (1)"
 
         try:
-            #Format we are looking for is "setremote=RemoteStart"
+            #Format we are looking for is "setremote=start"
             marker0 = CmdString.lower().find("setremote")
             marker1 = CmdString.find("=", marker0)
             marker2 = CmdString.find(" ",marker1+1)
@@ -1669,6 +1663,8 @@ class GeneratorDevice:
     def DisplayMonitor(self, ToString = False):
 
         outstring = "\n"
+        outstring += self.printToScreen("Genmon Stats: ", ToString)
+
         outstring += self.printToScreen("Monitor Health: " + self.GetSystemHealth(), ToString, spacer = True)
 
         GeneratorType = ""
@@ -1684,6 +1680,11 @@ class GeneratorDevice:
 
         outstring += self.printToScreen("Generator Type Selected : " + GeneratorType, ToString, spacer = True)
 
+        ProgramRunTime = datetime.datetime.now() - self.ProgramStartTime
+        outstr = str(ProgramRunTime).split(".")[0]  # remove microseconds from string
+        outstring += self.printToScreen(self.ProgramName + " running for " + outstr + ".", ToString, spacer = True)
+
+        outstring += self.printToScreen("\nSerial Stats: ", ToString)
         outstring += self.printToScreen("PacketCount M:%d: S:%d Buffer Count:%d" % (self.Slave.TxPacketCount, self.Slave.RxPacketCount, len(self.Slave.Buffer)), ToString, spacer = True)
 
         if self.Slave.CrcError == 0:
@@ -1699,10 +1700,6 @@ class GeneratorDevice:
         Delta = CurrentTime - self.ProgramStartTime        # yields a timedelta object
         PacketsPerSecond = float((self.Slave.TxPacketCount + self.Slave.RxPacketCount)) / float(Delta.total_seconds())
         outstring += self.printToScreen("Packets per second:%.2f" % (PacketsPerSecond), ToString, spacer = True)
-
-        ProgramRunTime = datetime.datetime.now() - self.ProgramStartTime
-        outstr = str(ProgramRunTime).split(".")[0]  # remove microseconds from string
-        outstring += self.printToScreen(self.ProgramName + " running for " + outstr + ".", ToString, spacer = True)
 
         return outstring
     #------------ GeneratorDevice::DisplayStatus ----------------------------------------
@@ -2519,6 +2516,9 @@ class GeneratorDevice:
         if self.GeneratorInAlarm:
             return "ALARM"
 
+        if self.ServiceIsDue():
+            return "SERVICEDUE"
+
         Value = self.GetEngineState()
         if "Exercising" in Value:
             return "EXERCISING"
@@ -2526,6 +2526,28 @@ class GeneratorDevice:
             return "RUNNING"
         else:
             return "READY"
+
+        #------------ GeneratorDevice::ServiceIsDue ------------------------------------
+    def ServiceIsDue(self):
+
+        # get Hours until next service
+        Value = self.GetRegisterValueFromList("0001")
+        if len(Value) != 8:
+            return ""
+
+        HexValue = int(Value,16)
+
+        if self.BitIsEqual(HexValue,   0xFFF0FFF0, 0x00000010):
+                return True
+
+        # get Hours until next service
+        Value = self.GetRegisterValueFromList("001a")
+        if len(Value) != 4:
+            return ""
+
+        HexValue = int(Value, 16)
+        if (HexValue <= 1):
+            return True
 
     #------------ GeneratorDevice::GetServiceInfo ------------------------------------
     def GetServiceInfo(self):
