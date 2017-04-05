@@ -13,7 +13,6 @@ document.getElementById("navMenu").innerHTML =
       '<li ><a id="monitor" >Monitor</a></li> ' +
     '</ul>' ;
 
-
 // global base state
 var baseState = "READY";        // updated on a time
 var currentbaseState = "READY"; // menus change on this var
@@ -360,6 +359,8 @@ function GetBaseStatus()
                 currentClass = "activeexercise";
             if(baseState === "RUNNING")
                 currentClass = "activerun";
+            if(baseState === "SERVICEDUE")
+                currentClass = "activealarm";
 
             currentbaseState = baseState;
 

@@ -156,6 +156,11 @@ li a.activerun {
     color: white;
 }
 
+li a.activeservice {
+    background-color: #d6b744;
+    color: white;
+}
+
 li a:hover:not(.active) {
     background-color: #555;
     color: white;
