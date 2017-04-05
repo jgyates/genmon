@@ -258,7 +258,6 @@ The program ClientInterface.py is a test application for communicating with genm
 
 Once the app is executed you should be faced with a prompt ">". From this prompt you can send commands to genmon.py. Commands are prefaced with "generator:". For example to issue the command "status" you would enter the "generator: status" at the ">" prompt when running ClientInterface.py. The commands accepted are listed in the genmon.py section and they match the email based commands.
 
-The genmon.py application supports a a socket interface for communication with external applications. 
 
 ## check_monitor_system.py
 
