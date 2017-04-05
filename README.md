@@ -111,7 +111,7 @@ The setremote command issues commands directly to the controller. Start and stop
 The setexercise command can not set an exercise time that is within a few minutes of the current generator time. This is a limitation of the controller.
 
 
-The program uses the file genmon.conf to for configuration data. Edit this file place it in the /etc directory before running the program. genmon.py uses the following modules so they are external dependancies of the program and they will need to be install before running the program:
+The program uses the file genmon.conf to for configuration data. Edit this file place it in the /etc directory before running the program. genmon.py uses the following modules so they are external dependencies of the program and they will need to be install before running the program:
 
         crcmod - https://pypi.python.org/pypi/crcmod, used for MODBUS CRC calculation
         pyserial - https://pypi.python.org/pypi/pyserial/2.7, used for serial. Download
@@ -119,7 +119,7 @@ The program uses the file genmon.conf to for configuration data. Edit this file 
             communication. This can be installed via the following command:
                 sudo apt-get install python-serial
 
-In addition the the external dependancies there are additional python modules included in this project that are used:
+In addition the the external dependencies there are additional python modules included in this project that are used:
 
         mymail.py - This module provides support for sending email and monitoring an IMAP
         email folder for incoming mail. The mail module can be configured by modifying the
