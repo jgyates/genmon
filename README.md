@@ -1,5 +1,5 @@
 # genmon
-# Generator Monitoring Application
+# Generator Monitoring Application using a Raspberry Pi and WiFi
 
 This project will monitor a backup generator that utilizes the Generac Evolution or Nexus Controllers over a WiFi or wired connection. The project is written mostly in python and has been tested with a Raspberry Pi 3. Ideally you would need to create a physical enclosure for your raspberry pi and possibly make a cable to connect the raspberry pi to the Evolution or Nexus controller. If you are comfortable doing these things and you have a backup generator that has an Generac Evolution or Nexus controller then this project may be of interest to you.
     
