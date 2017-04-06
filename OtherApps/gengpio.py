@@ -49,7 +49,7 @@ if __name__=='__main__': # usage program.py [server_address]
         # https://www.element14.com/community/servlet/JiveServlet/previewBody/73950-102-10-339300/pi3_gpio.png
         LED_GREEN = 16      # READY GPIO 23
         LED_RED = 18        # ALARM GPIO 24
-        LED_YELLOW = 22     # SERVICE DUE GPIO 24
+        LED_YELLOW = 22     # SERVICE DUE GPIO 25
 
         GPIO.setup(LED_GREEN, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(LED_RED, GPIO.OUT, initial=GPIO.LOW)
