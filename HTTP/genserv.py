@@ -28,7 +28,7 @@ def root():
 @app.route("/cmd/<command>")
 def command(command):
 
-    if command in ["status", "outage", "maint", "logs", "monitor", "getbase", "getsitename", "setexercise", "setquiet", "getexercise","setremote"]:
+    if command in ["status", "outage", "maint", "logs", "monitor", "getbase", "getsitename", "setexercise", "setquiet", "getexercise","setremote", "settime"]:
         finalcommand = "generator: " + command
         try:
             if command == "setexercise":
@@ -37,6 +37,9 @@ def command(command):
             if command == "setquiet":
                 setquietstr = request.args.get('setquiet', 0, type=str)
                 finalcommand += "=" + setquietstr
+            if command == "setremote":
+                setremotestr = request.args.get('setquiet', 0, type=str)
+                finalcommand += "=" + setremotestr
                 #print finalcommand
 
             data = MyClientInterface.ProcessMonitorCommand(finalcommand)
