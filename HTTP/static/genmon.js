@@ -96,7 +96,7 @@ function CreateSelectLists(){
     var option = document.createElement("p");
     option.id = "setexercise";
     myDiv.appendChild(option);
-    document.getElementById("setexercise").innerHTML = "<br>Select Exercise Time: ";
+    document.getElementById("setexercise").innerHTML = "<br>Generator Exercise Time: ";
 
     //Create array of options to be added
     var array = ["Sunday","Monday","Tuesday","Wednesday", "Thursday", "Friday", "Saturday"];
@@ -181,7 +181,7 @@ function CreateSelectLists(){
     var option = document.createElement("p");
     option.id = "settime";
     myDiv.appendChild(option);
-    document.getElementById("settime").innerHTML = "<br>Select Generator Time: ";
+    document.getElementById("settime").innerHTML = "<br>Generator Time: ";
 
     var option = document.createElement("button");
     option.id = "settimebutton";
