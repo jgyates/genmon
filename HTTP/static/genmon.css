@@ -76,11 +76,25 @@ div {
     height: 1000px;
 }
 
-#setexercise{
+#setexercise,#settime{
         font-weight: bold;
         font-family: Arial;
         font-size: 18px;
         display:block;
+}
+
+
+#settimebutton{
+        font-weight: bold;
+        font-family: Arial;
+        font-size: 16px;
+        display:block;
+        clear:both;
+        border-radius: 6px;
+        background-color: #f1f1f1;
+        box-shadow: 3px 3px 10px 0 rgba(0,0,0,0.2);
+        margin-left: 15px;
+        margin-top: 10px;
 }
 
 #setexercisebutton{
@@ -94,8 +108,8 @@ div {
         box-shadow: 3px 3px 10px 0 rgba(0,0,0,0.2);
         margin-left: 15px;
         margin-top: 45px;
-
 }
+
 #days{
         margin-left: 15px;
         font-size: 16px;

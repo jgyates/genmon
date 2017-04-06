@@ -22,8 +22,11 @@ var menuElementID = 0;
 window.onload = init;
 var pathname = ""
 var baseurl = ""
+
+//*****************************************************************************
 // called on window.onload
 //      sets up listener events (click menu) and inits the default page
+//*****************************************************************************
 function init(){
     // the code to be called when the dom has loaded
 
@@ -32,8 +35,8 @@ function init(){
     GetHeaderValues();
     menuElementID = document.getElementById("status");
     menuElementID.classList.add(GetCurrentClass());
-    setInterval(GetBaseStatus, 3000);
-    setInterval(UpdateDisplay, 5000);
+    setInterval(GetBaseStatus, 3000);       // Called every 3 sec
+    setInterval(UpdateDisplay, 5000);       // Called every 5 sec
     document.getElementById("mydisplay").innerHTML = GetDisplayValues("status");
     var ul = document.getElementById('navMenu');  // Parent
     CreateSelectLists()
@@ -43,6 +46,9 @@ function init(){
 
 }
 
+//*****************************************************************************
+//  Set the visibility of lists and buttons
+//*****************************************************************************
 function SetVisibilityOfMaintList(){
 
     var visStr;
@@ -64,16 +70,24 @@ function SetVisibilityOfMaintList(){
     document.getElementById("modesep").style.visibility = visStr;
     document.getElementById("quietmode").style.visibility = visStr;
     document.getElementById("setexercisebutton").style.visibility = visStr;
+    document.getElementById("settime").style.visibility = visStr;
+    document.getElementById("settimebutton").style.visibility = visStr;
 
 
 }
 
+//*****************************************************************************
+//
+//*****************************************************************************
 Number.prototype.pad = function(size) {
       var s = String(this);
       while (s.length < (size || 2)) {s = "0" + s;}
       return s;
     }
 
+//*****************************************************************************
+//  Create menu lists and buttons
+//*****************************************************************************
 function CreateSelectLists(){
 
     var myDiv = document.getElementById("myDiv");
@@ -163,7 +177,43 @@ function CreateSelectLists(){
     myDiv.appendChild(option);
     document.getElementById("setexercisebutton").innerHTML = "Set Exercise Time";
 
+    //Create and append select list
+    var option = document.createElement("p");
+    option.id = "settime";
+    myDiv.appendChild(option);
+    document.getElementById("settime").innerHTML = "<br>Select Generator Time: ";
+
+    var option = document.createElement("button");
+    option.id = "settimebutton";
+    option.onclick = SetTimeClick;
+    myDiv.appendChild(option);
+    document.getElementById("settimebutton").innerHTML = "Set Generator Time";
+
 }
+
+//*****************************************************************************
+// called when Set Time is clicked
+//*****************************************************************************
+function SetTimeClick(){
+
+    var DisplayStr = "Set generator time to monitor time? Note: This operation may take up to one minute to complete";
+
+    var r = confirm(DisplayStr);
+    if (r == false) {
+        return
+    }
+
+    // set exercise time
+    var url = baseurl.concat("settime");
+    $.getJSON(  url,
+                {settime: 0},
+                function(result){
+   });
+
+}
+//*****************************************************************************
+// called when Set Exercise is clicked
+//*****************************************************************************
 function SetExerciseClick(){
 
     var e = document.getElementById("days");
@@ -200,7 +250,7 @@ function SetExerciseClick(){
     // set exercise time
     var url = baseurl.concat("setexercise");
     $.getJSON(  url,
-                {settime: strExerciseTime},
+                {setexercise: strExerciseTime},
                 function(result){
    });
 
@@ -212,7 +262,10 @@ function SetExerciseClick(){
    });
 
 }
-//
+
+//*****************************************************************************
+// sets the setexerise control with the current settings
+//*****************************************************************************
 function SetExerciseChoice(){
 
     var url = baseurl.concat("getexercise");
@@ -238,7 +291,10 @@ function SetExerciseChoice(){
    });
 
 }
-// called when menu is clicked
+
+//*****************************************************************************
+//  called when menu is clicked
+//*****************************************************************************
 function MenuClick(e)
 {
     RemoveClass();  // remove class from menu items
@@ -268,7 +324,9 @@ function MenuClick(e)
     }
 }
 
+//*****************************************************************************
 // removes the current class from the menu anchor list
+//*****************************************************************************
 function RemoveClass() {
 
     var myNodelist = document.getElementsByTagName("a");
@@ -280,22 +338,32 @@ function RemoveClass() {
         myNodelist[i].classList.remove(GetCurrentClass());
     }
 }
+
+//*****************************************************************************
 // returns current CSS class for menu
+//*****************************************************************************
 function GetCurrentClass() {
 
     return currentClass
 }
 
+//*****************************************************************************
 // escapeRegExp - helper function for replaceAll
+//*****************************************************************************
 function escapeRegExp(str) {
     return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
 }
+
+//*****************************************************************************
 // javascript implementation of java function replaceAll
+//*****************************************************************************
 function replaceAll(str, find, replace) {
     return str.replace(new RegExp(escapeRegExp(find), 'g'), replace);
 }
 
-//GetDisplayValues - updates display based on menu selection (command)
+//*****************************************************************************
+// GetDisplayValues - updates display based on menu selection (command)
+//*****************************************************************************
 function GetDisplayValues(command)
 {
     var url = baseurl.concat(command);
@@ -313,8 +381,9 @@ function GetDisplayValues(command)
     return
 }
 
-
-//GetHeaderValues - updates header to display site name
+//*****************************************************************************
+// GetHeaderValues - updates header to display site name
+//*****************************************************************************
 function GetHeaderValues()
 {
     url = baseurl.concat("getsitename");
@@ -331,13 +400,18 @@ function GetHeaderValues()
 
     return
 }
+
+//*****************************************************************************
 // UpdateDisplay
+//*****************************************************************************
 function UpdateDisplay()
 {
     GetDisplayValues(menuElementID.id);
 }
 
-//GetBaseStatus - updates menu background color based on the state of the generator
+//*****************************************************************************
+// GetBaseStatus - updates menu background color based on the state of the generator
+//*****************************************************************************
 function GetBaseStatus()
 {
     url = baseurl.concat("getbase");
