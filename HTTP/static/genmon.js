@@ -205,7 +205,6 @@ function SetExerciseClick(){
    });
 
     // set quite mode
-    baseurl = "http://192.168.11.15:8000/cmd/";
     var url = baseurl.concat("setquiet");
     $.getJSON(  url,
                 {setquiet: strQuiet},
