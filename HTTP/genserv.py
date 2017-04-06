@@ -32,7 +32,7 @@ def command(command):
         finalcommand = "generator: " + command
         try:
             if command == "setexercise":
-                settimestr = request.args.get('settime', 0, type=str)
+                settimestr = request.args.get('setexercise', 0, type=str)
                 finalcommand += "=" + settimestr
             if command == "setquiet":
                 setquietstr = request.args.get('setquiet', 0, type=str)
