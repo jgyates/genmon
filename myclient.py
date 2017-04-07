@@ -72,7 +72,9 @@ class ClientInterface:
                     if data.endswith(self.EndOfMessage):
                         data = data[:-len(self.EndOfMessage)]
                         RetStatus = True
-
+            else:
+                self.Connect()
+                return False, data
         except Exception, e1:
             self.LogError( "Error: RX:" + str(e1))
             self.Close()
