@@ -39,11 +39,10 @@ This project will monitor a backup generator that utilizes the Generac Evolution
         - Critical or Warning messages from the generator
     Web based application for viewing status of the generator
     Command Line application (all the functionality of email plus set generator time)
-    Ability to set exercise time (via web, command line and email)
-    Ability to set generator time (via web, command line and email)
+    Ability to set exercise time 
+    Ability to set generator time
     Ability to start, stop, exercise and start / active the transfer switch 
-         (i.e. power your house off the generator) remotely. This feature is command 
-          line and email only.
+         (i.e. power your house off the generator) remotely. 
 
 
 ## Testing
@@ -268,7 +267,7 @@ The program gengpio.py is a console python application that will communicate wit
 In addition the the above mentioned ClientInterface.py application, genmon.py supports communicating via the socket interface so the application and generator can be monitored by network monitoring tools like Nagios. The program check_monitor_system.py can be used with as a Nagios Plugin to monitor genmon.py. See https://www.nagios.org/ for Nagios details. check_monitor_system.py is the name of the supplied nagios plug-in.
     
  ## server/genserv.py (optional)
-genserv.py is a python application that uses the Flask library/framework (http://flask.pocoo.org/). This approach allows a quick and simple python socket interface to be translated to a javascript based web interface. The genserv.py app, when executed, will serve up a simple web page that will display the status of the generator. Both the genserv.py app and the genmon.py app can be hosted on a single Raspberry Pi although you should be able to move the genserv.py program to another system with little modification. The web application provides all most of the information supplied by genmon.py. The "registers" and "setremote" commands are not supported by the web interface (decided to keep it simple). The setup for flask is detailed at http://flask.pocoo.org/. I did not used a virtual environment since this is a single purpose and low traffic web app (i.e. I do not expose the web app to the internet, only my local network). If you want expose the web app to the internet I would recommend adding authentication, using virtual environment and possibly a full web server to actually serve up the web pages since security concerns would be heightened on a public web server.
+genserv.py is a python application that uses the Flask library/framework (http://flask.pocoo.org/). This approach allows a quick and simple python socket interface to be translated to a javascript based web interface. The genserv.py app, when executed, will serve up a simple web page that will display the status of the generator. Both the genserv.py app and the genmon.py app can be hosted on a single Raspberry Pi although you should be able to move the genserv.py program to another system with little modification. The web application provides all most of the information supplied by genmon.py. The "registers" command is not supported by the web interface (decided to keep it simple). The setup for flask is detailed at http://flask.pocoo.org/. I did not used a virtual environment since this is a single purpose and low traffic web app (i.e. I do not expose the web app to the internet, only my local network). If you want expose the web app to the internet I would recommend adding authentication, using virtual environment and possibly a full web server to actually serve up the web pages since security concerns would be heightened on a public web server.
 
 The genserv.py program uses the mylog.py and myclient.py modules so they must be in the same directory as genserv.py when it is executed. Genserv.py also uses the same configuration file /etc/genmon.py. The file /var/log/genserv.log is used for logging errors. The flask library serve up static HTML, CSS and javascript files which are stored in a directory below the genserv.py app named static. Below are files and locations for genserv.py
 
