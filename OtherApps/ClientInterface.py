@@ -18,7 +18,7 @@ def signal_handler(signal, frame):
 
 #------------------- Command-line interface for monitor -----------------#
 if __name__=='__main__': # usage program.py [server_address]
-    address='192.168.11.15' if len(sys.argv)<2 else sys.argv[1]
+    address='localhost' if len(sys.argv)<2 else sys.argv[1]
 
     # log errors in this module to a file
     log = mylog.SetupLogger("client", "client.log")
