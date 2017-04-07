@@ -38,9 +38,8 @@ def command(command):
                 setquietstr = request.args.get('setquiet', 0, type=str)
                 finalcommand += "=" + setquietstr
             if command == "setremote":
-                setremotestr = request.args.get('setquiet', 0, type=str)
+                setremotestr = request.args.get('setremote', 0, type=str)
                 finalcommand += "=" + setremotestr
-                #print finalcommand
 
             data = MyClientInterface.ProcessMonitorCommand(finalcommand)
         except Exception, e1:
