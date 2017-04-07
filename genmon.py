@@ -396,7 +396,7 @@ class GeneratorDevice:
                     if self.EnableDebug:
                         self.DebugRegisters()
                 except Exception, e1:
-                    self.LogError("Error in GeneratorDevice:ProcessThread, contiue: " + str(e1))
+                    self.LogError("Error in GeneratorDevice:ProcessThread, continue: " + str(e1))
         except Exception, e1:
             self.FatalError("Exiting GeneratorDevice:ProcessThread " + str(e1))
 
@@ -424,6 +424,10 @@ class GeneratorDevice:
         self.Slave.Flush()
 
     # ---------- GeneratorDevice::GetPacketFromSlave------------------
+    #  This function returns two values, the first is boolean. The seconds is
+    #  a packet (list). If the return value is True and an empty packet, then
+    #  keep looking because the data has not arrived yet, if return is False there
+    #  is and error. If True and a non empty packet then it is valid data
     def GetPacketFromSlave(self):
 
         LocalErrorCount = 0
@@ -433,11 +437,13 @@ class GeneratorDevice:
         if len(self.Slave.Buffer) < MIN_PACKET_LENGTH_RES:
             return True, EmptyPacket
 
-        while len(self.Slave.Buffer) >= MIN_PACKET_LENGTH_RES:
-            if self.Slave.Buffer[MBUS_ADDRESS] == self.Address and self.Slave.Buffer[MBUS_COMMAND] in [0x01, 0x02, MBUS_CMD_READ_REGS, 0x04]:
-                length = self.Slave.Buffer[MBUS_RESPONSE_LEN]
+        if len(self.Slave.Buffer) >= MIN_PACKET_LENGTH_RES:
+            if self.Slave.Buffer[MBUS_ADDRESS] == self.Address and self.Slave.Buffer[MBUS_COMMAND] in [MBUS_CMD_READ_REGS]:
+                # it must be a read command response
+                length = self.Slave.Buffer[MBUS_RESPONSE_LEN]   # our packet tells us the length of the payload
+                # if the full length of the packet has not arrived, return and try again
                 if (length + MBUS_RES_PAYLOAD_SIZE_MINUS_LENGTH) > len(self.Slave.Buffer):
-                    continue
+                    return True, EmptyPacket
 
                 for i in range(0, length + MBUS_RES_PAYLOAD_SIZE_MINUS_LENGTH):
                     Packet.append(self.Slave.Buffer.pop(0))  # pop Address, Function, Length, message and CRC
@@ -449,8 +455,9 @@ class GeneratorDevice:
                     self.Slave.CrcError += 1
                     return False, EmptyPacket
             elif self.Slave.Buffer[MBUS_ADDRESS] == self.Address and self.Slave.Buffer[MBUS_COMMAND] in [MBUS_CMD_WRITE_REGS]:
+                # it must be a write command response
                 if len(self.Slave.Buffer) < MIN_PACKET_LENGTH_WR_RES:
-                    continue
+                    return True, EmptyPacket
                 for i in range(0, MIN_PACKET_LENGTH_WR_RES):
                     Packet.append(self.Slave.Buffer.pop(0))    # address, function, address hi, address low, quantity hi, quantity low, CRC high, crc low
 
@@ -461,14 +468,9 @@ class GeneratorDevice:
                     self.Slave.CrcError += 1
                     return False, EmptyPacket
             else:
-                LocalErrorCount += 1
                 self.DiscardByte()
-                if LocalErrorCount >= MIN_PACKET_LENGTH_RES:
-                    self.LogError("Validation Error: simulated CRC error (Slave)")
-                    # if we get here then there was a bit dropped in the address field and
-                    #  we never assemble the packet to check the CRC
-                    self.Slave.CrcError += 1
-                    return False, EmptyPacket
+                self.Flush()
+                return False, EmptyPacket
 
         return True, EmptyPacket   # technically not a CRC error, we really should never get here
 
@@ -586,15 +588,19 @@ class GeneratorDevice:
                 # be kind to other processes, we know we are going to have to wait for the packet to arrive
                 # so let's sleep for a bit before we start polling
                 time.sleep(0.01)
+
                 RetVal, SlavePacket = self.GetPacketFromSlave()
 
                 if RetVal == True and len(SlavePacket) != 0:    # we receive a packet
                     break
                 if RetVal == False:
                     self.LogError("Error Receiving slave packet for register %x%x" % (MasterPacket[2],MasterPacket[3]) )
+                    self.Flush()
                     return False
                 msElapsed = self.MillisecondsElapsed(SentTime)
-                # todo test this, it should probably be lower, like 25 or 30 (depending on the response from the controller)
+                # This normally takes about 30 ms however in some instances it can take up to 950ms
+                # the theory is this is either a delay due to how python does threading, or
+                # delay caused by the generator controller.
                 # each char time is about 1 millisecond so assuming a 10 byte packet transmitted
                 # and a 10 byte received with about 5 char times of silence in between should give
                 # us about 25ms
@@ -681,7 +687,7 @@ class GeneratorDevice:
 
         CurrentTime = datetime.datetime.now()
         Delta = CurrentTime - ReferenceTime
-        return Delta.microseconds / 1000
+        return Delta.total_seconds() * 1000
 
      #----------  GeneratorDevice::SetGeneratorRemoteStartStop-------------------------------
     def SetGeneratorRemoteStartStop(self, CmdString):
@@ -2627,6 +2633,7 @@ class GeneratorDevice:
 
         self.CommunicationsActive = False
         LastRxPacketCount = self.Slave.RxPacketCount
+
         while True:
 
             if LastRxPacketCount == self.Slave.RxPacketCount:
@@ -2634,7 +2641,8 @@ class GeneratorDevice:
             else:
                 self.CommunicationsActive = True
                 LastRxPacketCount = self.Slave.RxPacketCount
-            time.sleep(5)
+            time.sleep(2)
+
 
     #---------- GeneratorDevice:: AreThreadsAlive----------------------------------
     # ret true if all threads are alive
