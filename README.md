@@ -38,7 +38,7 @@ This project will monitor a backup generator that utilizes the Generac Evolution
         - Switch state change
         - Critical or Warning messages from the generator
     Web based application for viewing status of the generator
-    Command Line application (all the functionality of email plus set generator time)
+    Command Line application (all the functionality of email commands)
     Ability to set exercise time 
     Ability to set generator time
     Ability to start, stop, exercise and start / active the transfer switch 
