@@ -254,7 +254,7 @@ The following is a description of the options contained in mymail.conf, which is
       
 ## ClientInterface.py
 
-The program ClientInterface.py is a test application for communicating with genmon.py via sockets. The ClientInterface.py program uses the supplied python module mylog.py and myclient.py so this the three files (mylog.py, myclient.py and ClientInterface.py must be in the same  directory of you are opting to usie ClientInterface.py. The ClientInterface.py app takes one command line argument, the IP address of the computer running genmon.py. To issues commands to an instance genmon.py on a system at IP address of 192.168.11.100 you would do the following:
+The program ClientInterface.py is a test application for communicating with genmon.py via sockets. The ClientInterface.py program uses the supplied python module mylog.py and myclient.py so this the three files (mylog.py, myclient.py and ClientInterface.py must be in the same  directory of you are opting to usie ClientInterface.py. The ClientInterface.py app takes one command line argument, the IP address of the computer running genmon.py (the default is localhost). To issues commands to an instance genmon.py on a system at IP address of 192.168.11.100 you would do the following:
 
             python ClientInterface.py 192.168.11.100
 
