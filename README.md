@@ -49,11 +49,13 @@ This project will monitor a backup generator that utilizes the Generac Evolution
 This software was written by one person with full time access to one generator. The primary model used for testing and development is a liquid cooled model with an evolution controller. The software was written with every intention of working on liquid and air-cooled models with the Evolution or Nexus controller however the author has not tested all scenarios. Some testing has been done with an air cooled Nexus controller, however not all firmware versions and models have been tested.
 
 ## Known Issues:
-The ability to determine the hours the generator has run is enabled in the code, however the ability to read the backup vs exercise time (backup + exercise = total run hours) is not implimented.
+The ability to determine the hours the generator has run is enabled in the code, however the ability to read the backup vs exercise time (backup + exercise = total run hours) is not implemented.
 
 The Evolution Controller contains a register that should hold details about the model of the generator. My controller was replaced and as a result, the register on my system has not been properly initialized. I would need feedback from other people to determine the format of this register.
 
 Nexus Controllers are currently supported however the functionality is reduced due to the Nexus Controller supporting fewer features. On Nexus Controllers the ability to detect battery charging, transfer switch state, read the alarm log, and set the quiet mode is not functional. All other functionality support by the genmon.py and the Nexus controller should work as expected.
+
+When testing, at times, I have seen CRC or other errors in the serial communications when the generator starts or is running. The software will detect these errors, log them and continue. Since the software continuously polls the generator the registers are updated around once per seconds. These errors are likely caused by poor shielding on the cable I created however the errors do not appear to hamper the operation of the program since a more robust error detection and recovery method was implemented. A properly shielded cable should remedy these errors.
 
 If the legacy method of setting the exercise time is used (it is used on all Nexus controllers) then you can only set a future time on the current day of the week. You can set the exercise time to any day and time, except earlier in the day on the current day of the week.
 
