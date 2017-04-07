@@ -76,7 +76,7 @@ div {
     height: 1000px;
 }
 
-#setexercise,#settime{
+#setexercise,#settime, #remotecommands{
         font-weight: bold;
         font-family: Arial;
         font-size: 18px;
@@ -84,7 +84,7 @@ div {
 }
 
 
-#settimebutton{
+#settimebutton, #remotestop, #remotestart, #remotetransfer{
         font-weight: bold;
         font-family: Arial;
         font-size: 16px;

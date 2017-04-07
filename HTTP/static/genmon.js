@@ -72,7 +72,10 @@ function SetVisibilityOfMaintList(){
     document.getElementById("setexercisebutton").style.visibility = visStr;
     document.getElementById("settime").style.visibility = visStr;
     document.getElementById("settimebutton").style.visibility = visStr;
-
+    document.getElementById("remotecommands").style.visibility = visStr;
+    document.getElementById("remotestop").style.visibility = visStr;
+    document.getElementById("remotestart").style.visibility = visStr;
+    document.getElementById("remotetransfer").style.visibility = visStr;
 
 }
 
@@ -189,6 +192,88 @@ function CreateSelectLists(){
     myDiv.appendChild(option);
     document.getElementById("settimebutton").innerHTML = "Set Generator Time";
 
+    //Create and append select list
+    var option = document.createElement("p");
+    option.id = "remotecommands";
+    myDiv.appendChild(option);
+    document.getElementById("remotecommands").innerHTML = "<br>Remote Commands: ";
+
+    var option = document.createElement("button");
+    option.id = "remotestop";
+    option.onclick = SetStopClick;
+    myDiv.appendChild(option);
+    document.getElementById("remotestop").innerHTML = "Stop Generator";
+
+    var option = document.createElement("button");
+    option.id = "remotestart";
+    option.onclick = SetStartClick;
+    myDiv.appendChild(option);
+    document.getElementById("remotestart").innerHTML = "Start Generator";
+
+    var option = document.createElement("button");
+    option.id = "remotetransfer";
+    option.onclick = SetTransferClick;
+    myDiv.appendChild(option);
+    document.getElementById("remotetransfer").innerHTML = "Start Generator and Transfer";
+}
+
+//*****************************************************************************
+// called when setting a remote command
+//*****************************************************************************
+function SetRemoteCommand(command){
+
+    // set remote command
+    var url = baseurl.concat("setremote");
+    $.getJSON(  url,
+                {setremote: command},
+                function(result){
+   });
+
+}
+
+//*****************************************************************************
+// called when Set Remote Stop is clicked
+//*****************************************************************************
+function SetStopClick(){
+
+    var DisplayStr = "Stop generator? Note: If the generator is powering a load there will be a cool down period of a few minutes.";
+
+    var r = confirm(DisplayStr);
+    if (r == false) {
+        return
+    }
+
+    SetRemoteCommand("stop")
+}
+
+//*****************************************************************************
+// called when Set Remote Start is clicked
+//*****************************************************************************
+function SetStartClick(){
+
+    var DisplayStr = "Start generator?";
+
+    var r = confirm(DisplayStr);
+    if (r == false) {
+        return
+    }
+
+    SetRemoteCommand("start")
+}
+
+//*****************************************************************************
+// called when Set Remote Tansfer is clicked
+//*****************************************************************************
+function SetTransferClick(){
+
+    var DisplayStr = "Start generator and activate transfer switch? Generator will start, warm up, the activate switch.";
+
+    var r = confirm(DisplayStr);
+    if (r == false) {
+        return
+    }
+
+    SetRemoteCommand("starttransfer")
 }
 
 //*****************************************************************************
@@ -206,7 +291,7 @@ function SetTimeClick(){
     // set exercise time
     var url = baseurl.concat("settime");
     $.getJSON(  url,
-                {settime: 0},
+                {settime: " "},
                 function(result){
    });
 
@@ -418,6 +503,18 @@ function GetBaseStatus()
     $.getJSON(url,function(result){
 
         baseState = result;
+
+        if((baseState === "EXERCISING") || (baseState === "RUNNING")) {
+            document.getElementById("remotestop").disabled = false;
+            document.getElementById("remotestart").disabled = true;
+            document.getElementById("remotetransfer").disabled = true;
+        }
+        else {
+            document.getElementById("remotestop").disabled = true;
+            document.getElementById("remotestart").disabled = false;
+            document.getElementById("remotetransfer").disabled = false;
+        }
+
         // active, activealarm, activeexercise
         if (baseState != currentbaseState) {
 
