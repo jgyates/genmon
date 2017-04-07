@@ -52,7 +52,7 @@ def command(command):
 
 #------------------------------------------------------------
 if __name__ == "__main__":
-
+    address='localhost' if len(sys.argv)<2 else sys.argv[1]
 
     clientport = 0
     try:
@@ -67,7 +67,7 @@ if __name__ == "__main__":
     except Exception, e1:
         log.error("Missing config file or config file entries: " + str(e1))
 
-    MyClientInterface = myclient.ClientInterface(port=clientport, log = log)
+    MyClientInterface = myclient.ClientInterface(host = address,port=clientport, log = log)
     while True:
         try:
             app.run(host="0.0.0.0", port=8000)
