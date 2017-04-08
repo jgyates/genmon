@@ -764,9 +764,9 @@ class GeneratorDevice:
 
             msgbody = "%s changed from %s to %s" % (Register, FromValue, ToValue)
             msgbody += "\n"
-            msgbody += self.DisplayRegisters(True)
+            msgbody += self.DisplayRegisters(ToString = True)
             msgbody += "\n"
-            msgbody += self.DisplayStatus(True)
+            msgbody += self.DisplayStatus(ToString = True)
 
             self.mail.sendEmail("Monitor Register Alert: " + Register, msgbody)
         else:
@@ -1279,7 +1279,7 @@ class GeneratorDevice:
         return msgbody
 
     #------------ GeneratorDevice::DisplayRegisters --------------------------------------------
-    def DisplayRegisters(self, ToString = False):
+    def DisplayRegisters(self, AllRegs = False, ToString = False):
 
         outstring = ""
         outstring += self.printToScreen("Num Regs: %d " % len(self.Registers), ToString)
@@ -1311,6 +1311,14 @@ class GeneratorDevice:
         if count & 0x01:
             outstring += self.printToScreen("\n", ToString, nonewline = True)
 
+        Register = "%04x" % MODEL_REG
+        Value = self.GetRegisterValueFromList(Register)
+        if len(Value) != 0:
+            outstring += self.printToScreen("%s:%s\n" % (Register, Value), ToString)
+
+        if AllRegs:
+            outstring += self.DisplayLogs(AllLogs = True, RawOutput = True, PrintToString = ToString)
+
         return outstring
 
      #---------- process command from email and socket -------------------------------
@@ -1340,7 +1348,12 @@ class GeneratorDevice:
             if "registers" in item.lower():         # display registers
                 self.printToScreen("GET REGISTERS")
                 msgbody += "Registers:\n"
-                msgbody += self.DisplayRegisters(True)
+                msgbody += self.DisplayRegisters(ToString = True)
+                continue
+            if "allregs" in item.lower():         # display registers
+                self.printToScreen("GET ALLREGS")
+                msgbody += "All Registers:\n"
+                msgbody += self.DisplayRegisters(AllRegs = True, ToString = True)
                 continue
             if "logs" in item.lower():
                 self.printToScreen("GET LOGS")           # display all logs
@@ -1811,7 +1824,7 @@ class GeneratorDevice:
             Counter += 1
 
     #------------ GeneratorDevice::DisplayLogs --------------------------------------------
-    def DisplayLogs(self, AllLogs = False, PrintToString = False):
+    def DisplayLogs(self, AllLogs = False, RawOutput = False, PrintToString = False):
 
         if AllLogs == False:
             outstring = ""
@@ -1825,9 +1838,13 @@ class GeneratorDevice:
                 Value = self.GetRegisterValueFromList(RegStr)
                 if len(Value) == 0:
                     break
-                LogStr = self.ParseLogEntry(Value)
-                if len(LogStr):             # if the register is there but no log entry exist
-                    outstring += self.printToScreen(LogStr, PrintToString, spacer = True)
+
+                if not RawOutput:
+                    LogStr = self.ParseLogEntry(Value)
+                    if len(LogStr):             # if the register is there but no log entry exist
+                        outstring += self.printToScreen(LogStr, PrintToString, spacer = True)
+                else:
+                    outstring += self.printToScreen("%s:%s" % (RegStr, Value), PrintToString, spacer = True)
 
             if self.EvolutionController:
                 outstring += self.printToScreen("Service Log:   ", PrintToString)
@@ -1836,9 +1853,12 @@ class GeneratorDevice:
                     Value = self.GetRegisterValueFromList(RegStr)
                     if len(Value) == 0:
                         break
-                    LogStr = self.ParseLogEntry(Value)
-                    if len(LogStr):             # if the register is there but no log entry exist
-                        outstring += self.printToScreen(LogStr, PrintToString, spacer = True)
+                    if not RawOutput:
+                        LogStr = self.ParseLogEntry(Value)
+                        if len(LogStr):             # if the register is there but no log entry exist
+                            outstring += self.printToScreen(LogStr, PrintToString, spacer = True)
+                    else:
+                        outstring += self.printToScreen("%s:%s" % (RegStr, Value), PrintToString, spacer = True)
 
                 outstring += self.printToScreen("Alarm Log:     ", PrintToString)
                 for Register in self.LogRange(ALARM_LOG_STARTING_REG , LOG_DEPTH, ALARM_LOG_STRIDE):
@@ -1846,9 +1866,13 @@ class GeneratorDevice:
                     Value = self.GetRegisterValueFromList(RegStr)
                     if len(Value) == 0:
                         break
-                    LogStr = self.ParseLogEntry(Value)
-                    if len(LogStr):             # if the register is there but no log entry exist
-                        outstring += self.printToScreen(LogStr, PrintToString, spacer = True)
+                    if not RawOutput:
+                        LogStr = self.ParseLogEntry(Value)
+                        if len(LogStr):             # if the register is there but no log entry exist
+                            outstring += self.printToScreen(LogStr, PrintToString, spacer = True)
+                    else:
+                        outstring += self.printToScreen("%s:%s" % (RegStr, Value), PrintToString, spacer = True)
+
 
         else:   # only print last entry in log
             RegStr = "%04x" % START_LOG_STARTING_REG
@@ -1868,10 +1892,11 @@ class GeneratorDevice:
                     outstring += self.printToScreen("Alarm Log:      " + self.ParseLogEntry(Value), PrintToString, spacer = True)
 
         # Get Last Error Code
-        if self.EvolutionController:
-            Value = self.GetRegisterValueFromList("05f1")
-            if len(Value) == 4:
-                outstring += "\nLast Alarm Code: %s" % self.GetAlarmInfo(Value)
+        if not RawOutput:
+            if self.EvolutionController:
+                Value = self.GetRegisterValueFromList("05f1")
+                if len(Value) == 4:
+                    outstring += "\nLast Alarm Code: %s" % self.GetAlarmInfo(Value)
 
         return outstring
 
@@ -2039,7 +2064,7 @@ class GeneratorDevice:
 
         return "Error Code Unknown: " + ErrorCode + "\n"
 
-     #------------ GeneratorDevice::GetVersions --------------------------------------
+    #------------ GeneratorDevice::GetVersions --------------------------------------
     def GetSerialNumber(self):
 
         # serial number format:
