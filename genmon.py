@@ -1615,6 +1615,10 @@ class GeneratorDevice:
 
         outstring = "\n"
 
+        Value = self.GetSerialNumber()
+        if len(Value):
+            outstring += self.printToScreen("Generator Serial Number : " + Value + "\n", ToString)
+
         outstring += self.printToScreen("Exercise:", ToString)
         # exercise time
         Value = self.GetExerciseTime()
@@ -2034,6 +2038,33 @@ class GeneratorDevice:
             self.LogError("Error in  GetAlarmInfo " + str(e1))
 
         return "Error Code Unknown: " + ErrorCode + "\n"
+
+     #------------ GeneratorDevice::GetVersions --------------------------------------
+    def GetSerialNumber(self):
+
+        # serial number format:
+        # Hex Register Values:  30 30 30 37 37 32 32 39 38 37 -> High part of each byte = 3, low part is SN
+        #                       decode as s/n 7722987
+
+        RegStr = "%04x" % MODEL_REG
+        Value = self.GetRegisterValueFromList(RegStr)       # Serial Number Register
+        if len(Value) != 20:
+            return ""
+
+        SerialNumberHex = 0x00
+        BitPosition = 0
+        for Index in range(len(Value) -1 , 0, -1):
+            TempVal = Value[Index]
+            if (Index & 0x01 == 0):
+                if TempVal == '3':
+                    continue
+                else:
+                    return ""
+            HexVal = int(TempVal, 16)
+            SerialNumberHex = SerialNumberHex | ((HexVal) << (BitPosition))
+            BitPosition += 4
+
+        return "%x" % SerialNumberHex
 
     #------------ GeneratorDevice::GetVersions --------------------------------------
     def GetVersions(self):
