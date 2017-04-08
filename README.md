@@ -301,6 +301,10 @@ The genserv.py program uses the mylog.py and myclient.py modules so they must be
 
 Internally, the javascript, calls to the genserv.py app, which communicates with genmon.py via private socket calls.
 
+To execute genserv.py as a background process type:
+
+     sudo python genserv.py &
+
 The highlight colors in the web interface will change color based on the generator status (running, ready, exercise).
 
 # Hardware
