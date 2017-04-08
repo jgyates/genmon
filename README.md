@@ -8,6 +8,7 @@ This project will monitor a backup generator that utilizes the Generac Evolution
 
     Monitoring of the generator to to detect and report the following:
         - Maintenance, Start / Stop and Alarm Logs (Nexus only supports Start / Stop Log)
+        - Display Generator Serial Number
         - Generator warnings and faults (Wiring Error, High Temp on air cooled models, Low Oil Pressure,
                 low coolant on liquid cooled models)
         - Generator Status:
