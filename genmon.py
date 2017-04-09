@@ -2089,7 +2089,7 @@ class GeneratorDevice:
             SerialNumberHex = SerialNumberHex | ((HexVal) << (BitPosition))
             BitPosition += 4
 
-        return "%x" % SerialNumberHex
+        return "%010x" % SerialNumberHex
 
     #------------ GeneratorDevice::GetVersions --------------------------------------
     def GetVersions(self):
