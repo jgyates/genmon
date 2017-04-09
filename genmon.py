@@ -166,6 +166,10 @@ SERVICE_LOG_END_REG     = ((SERVICE_LOG_STARTING_REG + (SERVICE_LOG_STRIDE * LOG
 MODEL_REG               = 0x01f4
 MODEL_REG_LENGTH        = 5
 
+NEXUS_ALARM_LOG_STARTING_REG    = 0x060
+NEXUS_ALARM_LOG_STRIDE          = 4
+NEXUS_ALARM_LOG_END_REG         = ((NEXUS_ALARM_LOG_STARTING_REG + (NEXUS_ALARM_LOG_STRIDE * LOG_DEPTH)) - NEXUS_ALARM_LOG_STRIDE)
+
 DEFAULT_THRESHOLD_VOLTAGE = 143
 DEFAULT_PICKUP_VOLTAGE = 215
 #------------ GeneratorDevice class --------------------------------------------
@@ -484,6 +488,8 @@ class GeneratorDevice:
 
         if self.EvolutionController:
             self.ProcessMasterSlaveTransaction("%04x" % ALARM_LOG_STARTING_REG, ALARM_LOG_STRIDE)
+        else:
+            self.ProcessMasterSlaveTransaction("%04x" % NEXUS_ALARM_LOG_STARTING_REG, NEXUS_ALARM_LOG_STRIDE)
 
         self.ProcessMasterSlaveTransaction("%04x" % START_LOG_STARTING_REG, START_LOG_STRIDE)
 
@@ -669,17 +675,24 @@ class GeneratorDevice:
             if not self.ProcessMasterSlaveTransaction(RegStr, START_LOG_STRIDE):
                 break
 
-        # Service Log
-        for Register in self.LogRange(SERVICE_LOG_STARTING_REG , LOG_DEPTH, SERVICE_LOG_STRIDE):
-            RegStr = "%04x" % Register
-            if not self.ProcessMasterSlaveTransaction(RegStr, SERVICE_LOG_STRIDE):
-                break
+        if self.EvolutionController:
+            # Service Log
+            for Register in self.LogRange(SERVICE_LOG_STARTING_REG , LOG_DEPTH, SERVICE_LOG_STRIDE):
+                RegStr = "%04x" % Register
+                if not self.ProcessMasterSlaveTransaction(RegStr, SERVICE_LOG_STRIDE):
+                    break
 
-        # Alarm Log
-        for Register in self.LogRange(ALARM_LOG_STARTING_REG , LOG_DEPTH, ALARM_LOG_STRIDE):
-            RegStr = "%04x" % Register
-            if not self.ProcessMasterSlaveTransaction(RegStr, ALARM_LOG_STRIDE):
-                break
+            # Alarm Log
+            for Register in self.LogRange(ALARM_LOG_STARTING_REG , LOG_DEPTH, ALARM_LOG_STRIDE):
+                RegStr = "%04x" % Register
+                if not self.ProcessMasterSlaveTransaction(RegStr, ALARM_LOG_STRIDE):
+                    break
+        else:
+            # Alarm Log
+            for Register in self.LogRange(NEXUS_ALARM_LOG_STARTING_REG , LOG_DEPTH, NEXUS_ALARM_LOG_STRIDE):
+                RegStr = "%04x" % Register
+                if not self.ProcessMasterSlaveTransaction(RegStr, NEXUS_ALARM_LOG_STRIDE):
+                    break
 
     # ---------- GeneratorDevice::MillisecondsElapsed------------------
     def MillisecondsElapsed(self, ReferenceTime):
@@ -1171,6 +1184,10 @@ class GeneratorDevice:
             if len(Value) != 20:      # length appears to indicate this is an alarm log register
                 self.LogError("Validation Error: Invalid register length (Alarm) %s %s" % (Register, Value))
                 ValidationOK = False
+        elif int(Register,16) >=  NEXUS_ALARM_LOG_STARTING_REG and int(Register,16) <= NEXUS_ALARM_LOG_END_REG:
+            if len(Value) != 20:      # length appears to indicate this is an alarm log register
+                self.LogError("Validation Error: Invalid register length (Nexus Alarm) %s %s" % (Register, Value))
+                ValidationOK = False
         elif int(Register,16) == MODEL_REG:
             if len(Value) != 20:
                 self.LogError("Validation Error: Invalid register length (Model) %s %s" % (Register, Value))
@@ -1191,6 +1208,8 @@ class GeneratorDevice:
         elif int(Register,16) >=  START_LOG_STARTING_REG and int(Register,16) <= START_LOG_END_REG:
             return True
         elif int(Register,16) >=  ALARM_LOG_STARTING_REG and int(Register,16) <= ALARM_LOG_END_REG:
+            return True
+        elif int(Register,16) >=  NEXUS_ALARM_LOG_STARTING_REG and int(Register,16) <= NEXUS_ALARM_LOG_END_REG:
             return True
         elif int(Register,16) == MODEL_REG:
             return True
@@ -1299,6 +1318,8 @@ class GeneratorDevice:
             elif int(Register,16) >=  START_LOG_STARTING_REG and int(Register,16) <= START_LOG_END_REG:
                 continue
             elif int(Register,16) >=  ALARM_LOG_STARTING_REG and int(Register,16) <= ALARM_LOG_END_REG:
+                continue
+            elif int(Register,16) >=  NEXUS_ALARM_LOG_STARTING_REG and int(Register,16) <= NEXUS_ALARM_LOG_END_REG:
                 continue
             elif int(Register,16) == MODEL_REG:
                 continue
@@ -1872,7 +1893,19 @@ class GeneratorDevice:
                             outstring += self.printToScreen(LogStr, PrintToString, spacer = True)
                     else:
                         outstring += self.printToScreen("%s:%s" % (RegStr, Value), PrintToString, spacer = True)
-
+            else:
+                outstring += self.printToScreen("Alarm Log:     ", PrintToString)
+                for Register in self.LogRange(NEXUS_ALARM_LOG_STARTING_REG , LOG_DEPTH, NEXUS_ALARM_LOG_STRIDE):
+                    RegStr = "%04x" % Register
+                    Value = self.GetRegisterValueFromList(RegStr)
+                    if len(Value) == 0:
+                        break
+                    if not RawOutput:
+                        LogStr = self.ParseLogEntry(Value, NexusAlarm = True)
+                        if len(LogStr):             # if the register is there but no log entry exist
+                            outstring += self.printToScreen(LogStr, PrintToString, spacer = True)
+                    else:
+                        outstring += self.printToScreen("%s:%s" % (RegStr, Value), PrintToString, spacer = True)
 
         else:   # only print last entry in log
             RegStr = "%04x" % START_LOG_STARTING_REG
@@ -1890,6 +1923,11 @@ class GeneratorDevice:
                 Value = self.GetRegisterValueFromList(RegStr)
                 if len(Value):
                     outstring += self.printToScreen("Alarm Log:      " + self.ParseLogEntry(Value), PrintToString, spacer = True)
+            else:
+                RegStr = "%04x" % NEXUS_ALARM_LOG_STARTING_REG
+                Value = self.GetRegisterValueFromList(RegStr)
+                if len(Value):
+                    outstring += self.printToScreen("Alarm Log:      " + self.ParseLogEntry(Value, NexusAlarm = True), PrintToString, spacer = True)
 
         # Get Last Error Code
         if not RawOutput:
@@ -1915,7 +1953,7 @@ class GeneratorDevice:
     #       HH = Unknown
     #       IIJJ = Alarm Code for Alarm Log only
     #---------------------------------------------------------------------------
-    def ParseLogEntry(self, Value):
+    def ParseLogEntry(self, Value, NexusAlarm = False):
 
         LogDecoder = {
         0x28: "Switched Off",               # Start / Stop Log
@@ -1937,6 +1975,9 @@ class GeneratorDevice:
         0x49: "Hall Calibration Error"      # 2810  Alarm
         }
 
+        NexusLogDecoder = {
+        0x1b: "CheckBattery"
+        }
         # other known log entries that we do not know the codes for:
         ### Maint Log
         # *Schedule Service A
@@ -2020,7 +2061,10 @@ class GeneratorDevice:
         LogCode = int(TempVal, 16)
 
         # Get the readable string, if we have one
-        LogStr = LogDecoder.get(LogCode, "Unknown 0x%02X" % LogCode)
+        if not NexusAlarm:
+            LogStr = LogDecoder.get(LogCode, "Unknown 0x%02X" % LogCode)
+        else:
+            LogStr = NexusLogDecoder.get(LogCode, "Unknown 0x%02X" % LogCode)
 
         # This is a numeric value that increments for each new log entry
         TempVal = Value[2:4]
