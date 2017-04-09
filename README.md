@@ -49,6 +49,8 @@ This project will monitor a backup generator that utilizes the Generac Evolution
 ## Testing
 This software was written by one person with full time access to one generator. The primary model used for testing and development is a liquid cooled model with an evolution controller. The software was written with every intention of working on liquid and air-cooled models with the Evolution or Nexus controller however the author has not tested all scenarios. Some testing has been done with an air cooled Nexus controller, however not all firmware versions and models have been tested.
 
+In an effort to expand compatibility and functionality, from time to time I may use the [issue tracker](https://github.com/jgyates/genmon/issues) of this project to request input from people using the software. This input will will allow greater compatibility and new features to be added.
+
 ## Known Issues:
 The ability to determine the hours the generator has run is enabled in the code, however the ability to read the backup vs exercise time (backup + exercise = total run hours) is not implemented.
 
