@@ -2044,6 +2044,12 @@ class GeneratorDevice:
         if Hour > 23:                   # validate hour
             return ""
 
+        # Seconds
+        TempVal = Value[10:12]
+        Seconds = int(TempVal, 16)
+        if Seconds > 59:
+            return ""
+
         TempVal = Value[8:10]
         Month = int(TempVal, 16)
         if Month == 0 or Month > 12:    # validate month
@@ -2070,11 +2076,8 @@ class GeneratorDevice:
         TempVal = Value[2:4]
         EntryNumber = int(TempVal, 16)
 
-        # Unknown Value, likely internal housekeeping of controller
-        TempVal = Value[10:12]
-        LastVal = int(TempVal, 16)
 
-        RetStr = "%02d/%02d/%02d %02d:%02d %s " % (Month,Day,Year,Hour,Min, LogStr)
+        RetStr = "%02d/%02d/%02d %02d:%02d:%02d %s " % (Month,Day,Year,Hour,Min, Seconds, LogStr)
         if len(Value) > 16:
             TempVal = Value[16:20]
             AlarmCode = int(TempVal,16)
