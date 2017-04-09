@@ -7,7 +7,7 @@ This project will monitor a backup generator that utilizes the Generac Evolution
    The software supports the following features:
 
     Monitoring of the generator to to detect and report the following:
-        - Maintenance, Start / Stop and Alarm Logs (Nexus only supports Start / Stop and Alarm Log)
+        - Maintenance, Start / Stop and Alarm Logs (No Maintenance log exist on Nexus)
         - Display Generator Serial Number
         - Generator warnings and faults (Wiring Error, High Temp on air cooled models, Low Oil Pressure,
                 low coolant on liquid cooled models)
@@ -54,7 +54,7 @@ In an effort to expand compatibility and functionality, from time to time I may 
 ## Known Issues:
 The ability to determine the hours the generator has run is enabled in the code, however the ability to read the backup vs exercise time (backup + exercise = total run hours) is not implemented.
 
-The Evolution Controller contains a register that should hold details about the model of the generator. I belive I have decoded this register however I need additional data points to fully validate. My controller was replaced and as a result, the register on my system has not been properly initialized. Please see the project issue tracker issue on [this topic](https://github.com/jgyates/genmon/issues/10).
+The Evolution Controller contains a register that should hold details about the model of the generator. I believe I have decoded this register however I need additional data points to fully validate. My controller was replaced and as a result, the register on my system has not been properly initialized. Please see the project issue tracker issue on [this topic](https://github.com/jgyates/genmon/issues/10).
 
 Nexus Controllers are currently supported however the functionality is reduced due to the Nexus Controller supporting fewer features. On Nexus Controllers the ability to detect battery charging, transfer switch state and set the quiet mode is not functional. All other functionality support by the genmon.py and the Nexus controller should work as expected.
 
