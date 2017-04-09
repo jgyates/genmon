@@ -7,7 +7,7 @@ This project will monitor a backup generator that utilizes the Generac Evolution
    The software supports the following features:
 
     Monitoring of the generator to to detect and report the following:
-        - Maintenance, Start / Stop and Alarm Logs (Nexus only supports Start / Stop Log)
+        - Maintenance, Start / Stop and Alarm Logs (Nexus only supports Start / Stop and Alarm Log)
         - Display Generator Serial Number
         - Generator warnings and faults (Wiring Error, High Temp on air cooled models, Low Oil Pressure,
                 low coolant on liquid cooled models)
@@ -56,7 +56,7 @@ The ability to determine the hours the generator has run is enabled in the code,
 
 The Evolution Controller contains a register that should hold details about the model of the generator. I belive I have decoded this register however I need additional data points to fully validate. My controller was replaced and as a result, the register on my system has not been properly initialized. Please see the project issue tracker issue on [this topic](https://github.com/jgyates/genmon/issues/10).
 
-Nexus Controllers are currently supported however the functionality is reduced due to the Nexus Controller supporting fewer features. On Nexus Controllers the ability to detect battery charging, transfer switch state, read the alarm log, and set the quiet mode is not functional. All other functionality support by the genmon.py and the Nexus controller should work as expected.
+Nexus Controllers are currently supported however the functionality is reduced due to the Nexus Controller supporting fewer features. On Nexus Controllers the ability to detect battery charging, transfer switch state and set the quiet mode is not functional. All other functionality support by the genmon.py and the Nexus controller should work as expected.
 
 When testing, at times, I have seen CRC or other errors in the serial communications when the generator starts or is running. The software will detect these errors, log them and continue. Since the software continuously polls the generator the registers are updated around once or twice per seconds. These errors are likely caused by poor shielding on the cable I created, the fact that I have a large generator (48kw), and the placement of my cable, however the errors do not appear to hamper the operation of the program since a more robust error detection and recovery method was implemented. A properly shielded cable should remedy these errors.
 
