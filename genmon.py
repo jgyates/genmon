@@ -1846,7 +1846,7 @@ class GeneratorDevice:
                 else:
                     outstring += self.printToScreen("%s:%s" % (RegStr, Value), PrintToString, spacer = True)
 
-            if self.EvolutionController:
+            if self.EvolutionController or RawOutput:
                 outstring += self.printToScreen("Service Log:   ", PrintToString)
                 for Register in self.LogRange(SERVICE_LOG_STARTING_REG , LOG_DEPTH, SERVICE_LOG_STRIDE):
                     RegStr = "%04x" % Register
