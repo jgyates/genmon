@@ -669,18 +669,17 @@ class GeneratorDevice:
             if not self.ProcessMasterSlaveTransaction(RegStr, START_LOG_STRIDE):
                 break
 
-        if self.EvolutionController:
-            # Service Log
-            for Register in self.LogRange(SERVICE_LOG_STARTING_REG , LOG_DEPTH, SERVICE_LOG_STRIDE):
-                RegStr = "%04x" % Register
-                if not self.ProcessMasterSlaveTransaction(RegStr, SERVICE_LOG_STRIDE):
-                    break
+        # Service Log
+        for Register in self.LogRange(SERVICE_LOG_STARTING_REG , LOG_DEPTH, SERVICE_LOG_STRIDE):
+            RegStr = "%04x" % Register
+            if not self.ProcessMasterSlaveTransaction(RegStr, SERVICE_LOG_STRIDE):
+                break
 
-            # Alarm Log
-            for Register in self.LogRange(ALARM_LOG_STARTING_REG , LOG_DEPTH, ALARM_LOG_STRIDE):
-                RegStr = "%04x" % Register
-                if not self.ProcessMasterSlaveTransaction(RegStr, ALARM_LOG_STRIDE):
-                    break
+        # Alarm Log
+        for Register in self.LogRange(ALARM_LOG_STARTING_REG , LOG_DEPTH, ALARM_LOG_STRIDE):
+            RegStr = "%04x" % Register
+            if not self.ProcessMasterSlaveTransaction(RegStr, ALARM_LOG_STRIDE):
+                break
 
     # ---------- GeneratorDevice::MillisecondsElapsed------------------
     def MillisecondsElapsed(self, ReferenceTime):
@@ -1031,6 +1030,7 @@ class GeneratorDevice:
             self.ProcessMasterSlaveWriteTransaction("002f", len(Data) / 2, Data)
 
         return "Set Quiet Mode Command sent"
+
 
     #----------  GeneratorDevice::SetGeneratorTimeDate-------------------------------
     def SetGeneratorTimeDate(self):
@@ -2069,7 +2069,7 @@ class GeneratorDevice:
 
         # serial number format:
         # Hex Register Values:  30 30 30 37 37 32 32 39 38 37 -> High part of each byte = 3, low part is SN
-        #                       decode as s/n 7722987
+        #                       decode as s/n 0007722987
 
         RegStr = "%04x" % MODEL_REG
         Value = self.GetRegisterValueFromList(RegStr)       # Serial Number Register
