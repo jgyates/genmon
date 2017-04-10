@@ -1181,11 +1181,11 @@ class GeneratorDevice:
                 self.LogError("Validation Error: Invalid register length (Start) %s %s" % (Register, Value))
                 ValidationOK = False
         elif int(Register,16) >=  ALARM_LOG_STARTING_REG and int(Register,16) <= ALARM_LOG_END_REG:
-            if len(Value) != 20:      # length appears to indicate this is an alarm log register
+            if len(Value) != 20:      #
                 self.LogError("Validation Error: Invalid register length (Alarm) %s %s" % (Register, Value))
                 ValidationOK = False
         elif int(Register,16) >=  NEXUS_ALARM_LOG_STARTING_REG and int(Register,16) <= NEXUS_ALARM_LOG_END_REG:
-            if len(Value) != 20:      # length appears to indicate this is an alarm log register
+            if len(Value) != 16:      # Nexus alarm reg is 16 chars, no alarm codes
                 self.LogError("Validation Error: Invalid register length (Nexus Alarm) %s %s" % (Register, Value))
                 ValidationOK = False
         elif int(Register,16) == MODEL_REG:
@@ -2074,7 +2074,7 @@ class GeneratorDevice:
 
         # Get the readable string, if we have one
         if LogBase == NEXUS_ALARM_LOG_STARTING_REG:
-            if not self.EvolutionContrtoller:
+            if not self.EvolutionController:
                 LogStr = NexusAlarmLogDecoder.get(LogCode, "Unknown 0x%02X" % LogCode)
             else:
                 self.LogError("Error in ParseLog: Invalid controller or log address (Nexus Alarm)")
