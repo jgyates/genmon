@@ -1861,7 +1861,7 @@ class GeneratorDevice:
                     break
 
                 if not RawOutput:
-                    LogStr = self.ParseLogEntry(Value)
+                    LogStr = self.ParseLogEntry(Value, LogBase = START_LOG_STARTING_REG)
                     if len(LogStr):             # if the register is there but no log entry exist
                         outstring += self.printToScreen(LogStr, PrintToString, spacer = True)
                 else:
@@ -1875,7 +1875,7 @@ class GeneratorDevice:
                     if len(Value) == 0:
                         break
                     if not RawOutput:
-                        LogStr = self.ParseLogEntry(Value)
+                        LogStr = self.ParseLogEntry(Value, LogBase = SERVICE_LOG_STARTING_REG)
                         if len(LogStr):             # if the register is there but no log entry exist
                             outstring += self.printToScreen(LogStr, PrintToString, spacer = True)
                     else:
@@ -1888,7 +1888,7 @@ class GeneratorDevice:
                     if len(Value) == 0:
                         break
                     if not RawOutput:
-                        LogStr = self.ParseLogEntry(Value)
+                        LogStr = self.ParseLogEntry(Value, LogBase = ALARM_LOG_STARTING_REG)
                         if len(LogStr):             # if the register is there but no log entry exist
                             outstring += self.printToScreen(LogStr, PrintToString, spacer = True)
                     else:
@@ -1901,7 +1901,7 @@ class GeneratorDevice:
                     if len(Value) == 0:
                         break
                     if not RawOutput:
-                        LogStr = self.ParseLogEntry(Value, NexusAlarm = True)
+                        LogStr = self.ParseLogEntry(Value, LogBase = NEXUS_ALARM_LOG_STARTING_REG)
                         if len(LogStr):             # if the register is there but no log entry exist
                             outstring += self.printToScreen(LogStr, PrintToString, spacer = True)
                     else:
@@ -1911,23 +1911,23 @@ class GeneratorDevice:
             RegStr = "%04x" % START_LOG_STARTING_REG
             Value = self.GetRegisterValueFromList(RegStr)
             if len(Value):
-                outstring += self.printToScreen("Start Stop Log: " + self.ParseLogEntry(Value), PrintToString, spacer = True)
+                outstring += self.printToScreen("Start Stop Log: " + self.ParseLogEntry(Value, LogBase = START_LOG_STARTING_REG), PrintToString, spacer = True)
 
             if self.EvolutionController:
                 RegStr = "%04x" % SERVICE_LOG_STARTING_REG
                 Value = self.GetRegisterValueFromList(RegStr)
                 if len(Value):
-                    outstring += self.printToScreen("Service Log:    " + self.ParseLogEntry(Value), PrintToString, spacer = True)
+                    outstring += self.printToScreen("Service Log:    " + self.ParseLogEntry(Value, LogBase = SERVICE_LOG_STARTING_REG), PrintToString, spacer = True)
 
                 RegStr = "%04x" % ALARM_LOG_STARTING_REG
                 Value = self.GetRegisterValueFromList(RegStr)
                 if len(Value):
-                    outstring += self.printToScreen("Alarm Log:      " + self.ParseLogEntry(Value), PrintToString, spacer = True)
+                    outstring += self.printToScreen("Alarm Log:      " + self.ParseLogEntry(Value, LogBase = ALARM_LOG_STARTING_REG), PrintToString, spacer = True)
             else:
                 RegStr = "%04x" % NEXUS_ALARM_LOG_STARTING_REG
                 Value = self.GetRegisterValueFromList(RegStr)
                 if len(Value):
-                    outstring += self.printToScreen("Alarm Log:      " + self.ParseLogEntry(Value, NexusAlarm = True), PrintToString, spacer = True)
+                    outstring += self.printToScreen("Alarm Log:      " + self.ParseLogEntry(Value, LogBase = NEXUS_ALARM_LOG_STARTING_REG), PrintToString, spacer = True)
 
         # Get Last Error Code
         if not RawOutput:
@@ -1953,33 +1953,25 @@ class GeneratorDevice:
     #       HH = Unknown
     #       IIJJ = Alarm Code for Alarm Log only
     #---------------------------------------------------------------------------
-    def ParseLogEntry(self, Value, NexusAlarm = False):
+    def ParseLogEntry(self, Value, LogBase = None):
 
-        LogDecoder = {
+        StartLogDecoder = {
         0x28: "Switched Off",               # Start / Stop Log
         0x29: "Running - Manual",           # Start / Stop Log
         0x2A: "Stopped - Auto",             # Start / Stop Log
         0x2B: "Running - Utility Loss",     # Start / Stop Log
-        0x2D: "Running - Radio Start",      # Start / Stop Log
+        0x2C: "Running - 2 Wire Start",     # Start / Stop Log
+        0x2D: "Running - Remote Start",     # Start / Stop Log
         0x2E: "Running - Exercise",         # Start / Stop Log
-        0x3D: "Stopped - Warning",          # Start / Stop Log
-        # Running 2 Wire Start
-        # Running Remote Start
+        0x2F: "Stopped - Warning"           # Start / Stop Log
         # Stopped Alarm
-        0x17: "Service Schedule A",         # Maint
-        0x3D: "Schedule A Serviced",        # Maint
-        # Maintenance Reset
-        0x06: "Low Coolant Level",          # 2720  Alarm
-        0x47: "Low Fuel Level",             # 2700A Alarm
-        0x1B: "Low Fuel Level",             # 2680W Alarm
-        0x49: "Hall Calibration Error"      # 2810  Alarm
         }
 
-        NexusLogDecoder = {
-        0x1b: "CheckBattery"
-        }
-        # other known log entries that we do not know the codes for:
-        ### Maint Log
+
+        ServiceLogDecoder = {
+        0x17: "Service Schedule A",         # Maint
+        0x3D: "Schedule A Serviced"         # Maint
+        # Maintenance Reset
         # *Schedule Service A
         # Schedule Service B
         # Schedule Service C
@@ -1989,14 +1981,14 @@ class GeneratorDevice:
         # Inspect Battery
         # Maintenance Reset
         # Battery Maintained
-
-        ### Start / Stop Log
-        # Running - Remote Start
-        # Running - Two Wire Start
-        # Stopped - Alarm
+        }
 
 
-        ### Alarm Log
+        AlarmLogDecoder = {
+        0x06: "Low Coolant Level",          # 2720  Alarm
+        0x47: "Low Fuel Level",             # 2700A Alarm
+        0x1B: "Low Fuel Level",             # 2680W Alarm
+        0x49: "Hall Calibration Error"      # 2810  Alarm
         # Low Oil Pressure
         # High Engine Temperature
         # Overcrank
@@ -2013,7 +2005,6 @@ class GeneratorDevice:
         # Fuse Problem
         # Ruptured Basin
         # Canbus Error
-
         ####Warning Displays
         # Low Battery
         # Maintenance Periods
@@ -2025,6 +2016,13 @@ class GeneratorDevice:
         # USB Warning
         # Download Failure
         # FIRMWARE ERROR-9
+        }
+
+        NexusAlarmLogDecoder = {
+        #0x00: "UNKNOWN"
+        #0x01: "UNKNOWN"
+        0x1b: "CheckBattery"
+        }
 
         # Service Schedule log and Start/Stop Log are 16 chars long
         # error log is 20 chars log
@@ -2066,11 +2064,23 @@ class GeneratorDevice:
         TempVal = Value[0:2]
         LogCode = int(TempVal, 16)
 
+
         # Get the readable string, if we have one
-        if not NexusAlarm:
-            LogStr = LogDecoder.get(LogCode, "Unknown 0x%02X" % LogCode)
+        if LogBase == NEXUS_ALARM_LOG_STARTING_REG:
+            if not self.EvolutionContrtoller:
+                LogStr = NexusAlarmLogDecoder.get(LogCode, "Unknown 0x%02X" % LogCode)
+            else:
+                self.LogError("Error in ParseLog: Invalid controller or log address (Nexus Alarm)")
+                return "Error Parsing Log Entry"
+        elif LogBase == ALARM_LOG_STARTING_REG:
+            LogStr = AlarmLogDecoder.get(LogCode, "Unknown 0x%02X" % LogCode)
+        elif LogBase == START_LOG_STARTING_REG:
+            LogStr = StartLogDecoder.get(LogCode, "Unknown 0x%02X" % LogCode)
+        elif LogBase == SERVICE_LOG_STARTING_REG:
+            LogStr = ServiceLogDecoder.get(LogCode, "Unknown 0x%02X" % LogCode)
         else:
-            LogStr = NexusLogDecoder.get(LogCode, "Unknown 0x%02X" % LogCode)
+            self.LogError("Error in ParseLog: Invalid log address")
+            return "Error Parsing Log Entry"
 
         # This is a numeric value that increments for each new log entry
         TempVal = Value[2:4]
@@ -2117,7 +2127,7 @@ class GeneratorDevice:
         # serial number format:
         # Hex Register Values:  30 30 30 37 37 32 32 39 38 37 -> High part of each byte = 3, low part is SN
         #                       decode as s/n 0007722987
-
+        # at present I am guessing that the 3 that is interleaved in this data is the line of gensets (air cooled may be 03?)
         RegStr = "%04x" % MODEL_REG
         Value = self.GetRegisterValueFromList(RegStr)       # Serial Number Register
         if len(Value) != 20:
@@ -2128,10 +2138,8 @@ class GeneratorDevice:
         for Index in range(len(Value) -1 , 0, -1):
             TempVal = Value[Index]
             if (Index & 0x01 == 0):
-                if TempVal == '3':
-                    continue
-                else:
-                    return ""
+                continue
+
             HexVal = int(TempVal, 16)
             SerialNumberHex = SerialNumberHex | ((HexVal) << (BitPosition))
             BitPosition += 4
