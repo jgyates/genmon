@@ -2021,7 +2021,7 @@ class GeneratorDevice:
         NexusAlarmLogDecoder = {
         #0x00: "UNKNOWN"
         #0x01: "UNKNOWN"
-        0x1b: "CheckBattery"
+        0x1b: "Check Battery"
         }
 
         # Service Schedule log and Start/Stop Log are 16 chars long
