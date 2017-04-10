@@ -1867,7 +1867,7 @@ class GeneratorDevice:
                 else:
                     outstring += self.printToScreen("%s:%s" % (RegStr, Value), PrintToString, spacer = True)
 
-            if self.EvolutionController or RawOutput:
+            if self.EvolutionController:
                 outstring += self.printToScreen("Service Log:   ", PrintToString)
                 for Register in self.LogRange(SERVICE_LOG_STARTING_REG , LOG_DEPTH, SERVICE_LOG_STRIDE):
                     RegStr = "%04x" % Register
@@ -2027,35 +2027,42 @@ class GeneratorDevice:
         # Service Schedule log and Start/Stop Log are 16 chars long
         # error log is 20 chars log
         if len(Value) < 16:
+            self.LogError("Error in  ParseLogEntry length check (16)")
             return ""
 
         if len(Value) > 20:
+            self.LogError("Error in  ParseLogEntry length check (20)")
+            return ""
+
+        TempVal = Value[8:10]
+        Month = int(TempVal, 16)
+        if Month == 0 or Month > 12:    # validate month
+            # This is the normal return path for an empty log entry
             return ""
 
         TempVal = Value[4:6]
         Min = int(TempVal, 16)
         if Min >59:                     # validate minute
+            self.LogError("Error in  ParseLogEntry minutes check")
             return ""
 
         TempVal = Value[6:8]
         Hour = int(TempVal, 16)
         if Hour > 23:                   # validate hour
+            self.LogError("Error in  ParseLogEntry hours check")
             return ""
 
         # Seconds
         TempVal = Value[10:12]
         Seconds = int(TempVal, 16)
         if Seconds > 59:
-            return ""
-
-        TempVal = Value[8:10]
-        Month = int(TempVal, 16)
-        if Month == 0 or Month > 12:    # validate month
+            self.LogError("Error in  ParseLogEntry seconds check")
             return ""
 
         TempVal = Value[14:16]
         Day = int(TempVal, 16)
         if Day == 0 or Day > 31:        # validate day
+            self.LogError("Error in  ParseLogEntry day check")
             return ""
 
         TempVal = Value[12:14]
@@ -2092,6 +2099,7 @@ class GeneratorDevice:
             TempVal = Value[16:20]
             AlarmCode = int(TempVal,16)
             RetStr += ": Alarm Code: %04d" % AlarmCode
+
         return RetStr
 
     #------------------- GeneratorDevice::GetAlarmInfo -----------------
