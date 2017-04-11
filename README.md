@@ -292,16 +292,15 @@ The program gengpio.py is a console python application that will communicate wit
 
 ## gengpioin.py (optional)
 
-The program gengpioin.py is a console python application that will communicate with genmon.py and issue remote commands based on Raspberry Pi GPIO input pin. The application requires the supplied python module mylog.py and myclient.py so these files will need to be in the same directory as gengpio.py. The program takes one command line argument of the IP address of the system that genmon.py is running (localhost is default). The program uses the internal pull up resistors in the Broadcom chipset on the Raspberry Pi. The program also uses the python module RPI.GPIO which comes already installed on most raspberry Pi distrubitions. 
+The program gengpioin.py is a console python application that will communicate with genmon.py and issue remote commands based on Raspberry Pi GPIO input pin. The application requires the supplied python module mylog.py and myclient.py so these files will need to be in the same directory as gengpio.py. The program takes one command line argument of the IP address of the system that genmon.py is running (localhost is default). The program uses the internal pull up resistors in the Broadcom chipset on the Raspberry Pi. The program also uses the python module RPI.GPIO which comes already installed on most raspberry Pi distributions. 
 
-    If GPIO 17 (pin 11 on the header) makes a high to low transtion, the remote stop command is issued
-    If GPIO 27 (pin 13 on the header) makes a high to low transtion, the remote start command is issued
-    If GPIO 22 (pin 15 on the header) makes a high to low transtion, the remote start/transfer command is issued
+    If GPIO 17 (pin 11 on the header) makes a high to low transition, the remote stop command is issued
+    If GPIO 27 (pin 13 on the header) makes a high to low transition, the remote start command is issued
+    If GPIO 22 (pin 15 on the header) makes a high to low transition, the remote start/transfer command is issued
 
 To execute gengpioin.py type:
 
     python gengpioin.py <IP Address of your Pi running genmon.py or omit for localhost>
-
 
 ## check_monitor_system.py (optional)
 
