@@ -282,9 +282,9 @@ Once the app is executed you should be faced with a prompt ">". From this prompt
 
 The program gengpio.py is a console python application that will communicate with genmon.py and set or reset GPIO pins on the Raspberry Pi.The application requires the supplied python module mylog.py and myclient.py so these files will need to be in the same directory as gengpio.py. The program takes one command line argument of the IP address of the system that genmon.py is running (localhost is default). 
 
-    If the generator is ready then GPIO 23 (pin 16) will be high
-    If the generator is in alarm then GPIO 24 (pin 18) will be high
-    If service is due on the generator then GPIO 25 (pin 22) will be high.
+* If the generator is ready then GPIO 23 (pin 16) will be high
+* If the generator is in alarm then GPIO 24 (pin 18) will be high
+* If service is due on the generator then GPIO 25 (pin 22) will be high.
     
 [Example of LED circuit connected to Raspberry Pi GPIO](http://raspi.tv/2013/rpi-gpio-basics-4-setting-up-rpi-gpio-numbering-systems-and-inputs). To execute gengpio.py type:
 
@@ -294,13 +294,14 @@ The program gengpio.py is a console python application that will communicate wit
 
 The program gengpioin.py is a console python application that will communicate with genmon.py and issue remote commands based on Raspberry Pi GPIO input pin. The application requires the supplied python module mylog.py and myclient.py so these files will need to be in the same directory as gengpio.py. The program takes one command line argument of the IP address of the system that genmon.py is running (localhost is default). The program uses the internal pull up resistors in the Broadcom chipset on the Raspberry Pi. The program also uses the python module RPI.GPIO which comes already installed on most raspberry Pi distributions. 
 
-    If GPIO 17 (pin 11 on the header) makes a high to low transition, the remote stop command is issued
-    If GPIO 27 (pin 13 on the header) makes a high to low transition, the remote start command is issued
-    If GPIO 22 (pin 15 on the header) makes a high to low transition, the remote start/transfer command is issued
+* If GPIO 17 (header pin 11) makes a high to low transition, the remote stop command is issued
+* If GPIO 27 (header pin 13) makes a high to low transition, the remote start command is issued
+* If GPIO 22 (header pin 15) makes a high to low transition, the remote start/transfer command is issued
 
 To execute gengpioin.py type:
 
     python gengpioin.py <IP Address of your Pi running genmon.py or omit for localhost>
+
 
 ## check_monitor_system.py (optional)
 
