@@ -302,6 +302,7 @@ To execute gengpioin.py type:
 
     python gengpioin.py <IP Address of your Pi running genmon.py or omit for localhost>
 
+[Example GPIO input circuit](http://elinux.org/RPi_GPIO_Interface_Circuits). Note: external pull up resistor is not needed as it is handled by the chipset.
 
 ## check_monitor_system.py (optional)
 
