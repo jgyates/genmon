@@ -1935,6 +1935,11 @@ class GeneratorDevice:
                 Value = self.GetRegisterValueFromList("05f1")
                 if len(Value) == 4:
                     outstring += "\nLast Alarm Code: %s" % self.GetAlarmInfo(Value)
+            if AllLogs:
+                if PrintToString:
+                    if "Unknown" in outstring:
+                        outstring += "\NOTE: Your logs appear to have unknown values. Please see the following thread:"
+                        outstring += "\n        https://github.com/jgyates/genmon/issues/12"
 
         return outstring
 
