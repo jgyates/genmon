@@ -11,7 +11,7 @@
 #------------------------------------------------------------
 
 import datetime, time, sys, signal, os, threading, socket
-import atexit, ConfigParser
+import atexit
 import myclient, mylog
 import RPi.GPIO as GPIO
 
@@ -29,12 +29,10 @@ if __name__=='__main__': # usage program.py [server_address]
     address='127.0.0.1' if len(sys.argv)<2 else sys.argv[1]
 
 
-    log = mylog.SetupLogger("client", "gengpio.log")
-    # Set the signal handler
-    signal.signal(signal.SIGINT, signal_handler)
-
-
     try:
+        log = mylog.SetupLogger("client", "gengpio.log")
+        # Set the signal handler
+        signal.signal(signal.SIGINT, signal_handler)
 
         MyClientInterface = myclient.ClientInterface(host = address, log = log)
 
@@ -80,6 +78,7 @@ if __name__=='__main__': # usage program.py [server_address]
             time.sleep(3)
 
     except Exception, e1:
+        log.error("Error: " + str(e1))
         print "Error: " + str(e1)
 
 
