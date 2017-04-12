@@ -400,9 +400,9 @@ class GeneratorDevice:
                     if self.EnableDebug:
                         self.DebugRegisters()
                 except Exception, e1:
-                    self.LogError("Error in GeneratorDevice:ProcessThread, continue: " + str(e1))
+                    self.LogError("Error in GeneratorDevice:ProcessThread (1), continue: " + str(e1))
         except Exception, e1:
-            self.FatalError("Exiting GeneratorDevice:ProcessThread " + str(e1))
+            self.FatalError("Exiting GeneratorDevice:ProcessThread (2)" + str(e1))
 
     # ---------- GeneratorDevice::MonitorThread------------------
     # This thread will analyze the cached registers. It should not write to the serial port(s)
@@ -2418,7 +2418,10 @@ class GeneratorDevice:
             elif self.BitIsEqual(RegVal, 0x0FFFF, 0x06):
                 return "Manual"
             else:
-                return "Stopped in Alarm"           # This string value is check for the work 'alarm' in another function
+                return "UNKNOWN: %08x" % RegVal
+        else:
+            return "Stopped in Alarm"               # This string value is check for the work 'alarm' in another function
+
 
     #------------ GeneratorDevice::GetDateTime -----------------------------------------
     def GetDateTime(self):
