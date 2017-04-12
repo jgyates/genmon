@@ -367,16 +367,15 @@ This is the power supply I used, which allows the Pi to be powered from the gene
 * I used the following Digi-key part numbers for the molex connectors for the cable. The evolution controller uses a molex type receptacle:
 
 
-This is the part number of the connector that you will use on your cable.
+This is the part number of the connector that you will use on your cable (plug). This is required.
    * Receptacle = WM3703-DN
    * Female pin = WM3279CT-DN
 
-This is the part number of the connector on the controller.
+This is the part number of the connector on the controller (receptical). This is for infomational purposes and is not required.
    * Plug = WM3603-ND
    * Male pin = WM2500CT-ND
 
 
-    Evolution / Nexus Controller has Receptacle.
 
 I used a molex connector on my enclosure and routed the two wires to a break-out box that a DB-9 (see link above)
 
