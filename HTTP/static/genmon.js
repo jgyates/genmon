@@ -382,14 +382,13 @@ function SetExerciseChoice(){
 //*****************************************************************************
 function MenuClick(e)
 {
-    RemoveClass();  // remove class from menu items
 
     // is this an anchor
     if (e.target.tagName == 'A'){
-        // add class active to the clicked itme
-        e.target.classList.add(GetCurrentClass());
-        menuElementID = e.target;
 
+        RemoveClass();  // remove class from menu items
+        // add class active to the clicked item
+        e.target.classList.add(GetCurrentClass());
         // update the display
         switch (e.target.id){
             case "status":
@@ -397,6 +396,7 @@ function MenuClick(e)
             case "outage":
             case "logs":
             case "monitor":
+                menuElementID = e.target;
                 GetDisplayValues(e.target.id);
                 if (e.target.id == "maint") {
                     SetExerciseChoice()
@@ -414,6 +414,7 @@ function MenuClick(e)
 //*****************************************************************************
 function RemoveClass() {
 
+    console.log('remote class')
     var myNodelist = document.getElementsByTagName("a");
 
     var i;
@@ -530,10 +531,10 @@ function GetBaseStatus()
             if(baseState === "RUNNING")
                 currentClass = "activerun";
             if(baseState === "SERVICEDUE")
-                currentClass = "activealarm";
+                currentClass = "activeservice";
 
             currentbaseState = baseState;
-
+            // Added active to selected class
             menuElementID.classList.add(GetCurrentClass());
 
         }
