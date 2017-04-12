@@ -1,4 +1,6 @@
 
+
+
 # Format: items are delimited by !, each line must have 5 items
 #AlarmCode! Type (ALARM, WARNING)! AlarmName! Condition! Additional Info
 
@@ -7,6 +9,7 @@
 1205!ALARM!Overspeed (Instantaneous)!Over 75Hz for 0.1 second (100 milliseconds).!Possible cause: Stepper motor/mixer body assembly issue.
 1300!ALARM!Low Oil Pressure (While Running)!The default extended alarm for low oil pressure.!Check oil level and pressure.
 1400!ALARM!High Temperature!Air Flow Impeded / Flow Issue!Check the inlet/outlet for debris.
+1500!ALARM!RPM Sense Loss ! Not detecting RPM during cranking ! Possible bad sensor if generator turns over. Air pocket in fuel line. Starter Issue.
 1501!ALARM!RPM Sensor (Twin Cylinder+Running)!Twin Cylinder Running faults to RPM Sensor Loss.!Possible Causes: air pocket in fuel line, dirty fuel, missing ignition pulse (loss of one of the primary coils).
 1505!ALARM!RPM Sensor (Twin Cylinder+Cranking)!Twin Cylinder Cranking faults to RPM sensor loss!Possible Cause: starter motor issue, missing ignition pulse (loss of one of the primary coils).
 1511!ALARM!RPM Sensor (Single Cylinder+Running)!Single Cylinder Running with Low Fuel Pressure faults to RPM sensor loss!Possible Causes: air pocket in fuel line, dirty fuel.
@@ -27,7 +30,7 @@
 2720!ALARM!Low Coolant Level!Coolant level is low!Add coolant, check for leak
 2700!ALARM!Low Fuel Level!Fuel Pressure is low!Add fuel or check sensor
 2680!ALARM!Low Fuel Level!Fuel Pressure is low!Add fuel or check sensor
-2810!ALARM!Hall Calibration Error!Unknown!Unknown
+2810!ALARM!Hall Calibration Error!Incorrect calibration!Possible installation or setup problem
 
 # These are error codes I picked up on the internet, need more info...
 #(2502A) 2502!ALARM!Governor in closed position!Unknown!Unknown
