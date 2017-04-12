@@ -365,17 +365,20 @@ This is the power supply I used, which allows the Pi to be powered from the gene
 ) or [female](https://smile.amazon.com/gp/product/B014FM8MNK/ref=oh_aui_detailpage_o05_s00?ie=UTF8&psc=1), depending on the above level converter you use)
 
 * I used the following Digi-key part numbers for the molex connectors for the cable. The evolution controller uses a molex type receptacle:
+
+
+This is the part number of the connector that you will use on your cable.
+   * Receptacle = WM3703-DN
+   * Female pin = WM3279CT-DN
+
+This is the part number of the connector on the controller.
    * Plug = WM3603-ND
    * Male pin = WM2500CT-ND
-
-    * Receptacle = WM3703-DN
-    * Female pin = WM3279CT-DN
 
 
     Evolution / Nexus Controller has Receptacle.
 
-    I used a molex connector on my enclosure and routed the two wires to a break-out box that
-    a DB-9 (see link above)
+I used a molex connector on my enclosure and routed the two wires to a break-out box that a DB-9 (see link above)
 
 ## Creating a Cable
 The above links include part numbers for the Molex connector and a link for the Molex crimp tool which are both needed to create a cable to interface to the Evolution /Nexus Controller. If you are new to using crimp tools to create cable connectors, I would suggest YouTube.com as a resource. There are many "How To" videos that should help with any learning curve. I searched on "Molex Crimping Tool" and found a few.
