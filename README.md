@@ -371,13 +371,11 @@ This is the part number of the connector that you will use on your cable (plug).
    * Receptacle = WM3703-DN
    * Female pin = WM3279CT-DN
 
-This is the part number of the connector on the controller (receptical). This is for infomational purposes and is not required.
+This is the part number of the connector on the controller (receptacle). This is for informational purposes and is not required.
    * Plug = WM3603-ND
    * Male pin = WM2500CT-ND
 
-
-
-I used a molex connector on my enclosure and routed the two wires to a break-out box that a DB-9 (see link above)
+I used a molex connector on my enclosure and routed the two wires to a break-out box that a DB-9 (see link above) however there are endless ways to make the connection to your enclosure on the Pi.
 
 ## Creating a Cable
 The above links include part numbers for the Molex connector and a link for the Molex crimp tool which are both needed to create a cable to interface to the Evolution /Nexus Controller. If you are new to using crimp tools to create cable connectors, I would suggest YouTube.com as a resource. There are many "How To" videos that should help with any learning curve. I searched on "Molex Crimping Tool" and found a few.
