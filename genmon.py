@@ -1570,33 +1570,18 @@ class GeneratorDevice:
 
         msgsubject += "Generator Alert at " + self.SiteName + ": "
 
-        AlarmState = self.GetAlarmState()
+        if self.SystemInAlarm():        # Update Alarm Status global flag, returns True if system in alarm
+            AlarmState = self.GetAlarmState()
 
-        if len(AlarmState) or (not self.BitIsEqual(RegVal,   0xFFF0FFF0, 0x00000000)):
-            self.GeneratorInAlarm = True
-            # check specific alarm bits in Reg 0001
-            # if we get here we do not know the alarm bit
-            if self.BitIsEqual(RegVal,   0xFFF0FFF0, 0x00000010):
-                msgsubject += "WARNING "
-                msgbody += self.printToScreen("\nWARNING: Check Maintenance and Alarm Log", True)
+            msgsubject += "CRITICAL "
+            if len(AlarmState):
+                msgbody += self.printToScreen("\nCurrent Alarm: " + AlarmState , True)
             else:
-                msgsubject += "CRITICAL "
-                if len(AlarmState):
-                    msgbody += self.printToScreen("\nCurrent Alarm: " + AlarmState, True)
-                # if in alarm get Last Error Code
-                if self.EvolutoinController:
-                    Value = self.GetRegisterValueFromList("05f1")
-                    if len(Value) == 4:
-                        msgbody += self.printToScreen("Last Alarm Code: \n%s" % self.GetAlarmInfo(Value), True)
+                msgbody += self.printToScreen("\nSystem In Alarm! Please check alarm log", True)
 
-                if not self.BitIsEqual(RegVal,   0xFFF0FFE0, 0x00000000):
-                    msgbody += self.printToScreen("\nUnhandled Alert: Register 0001:%08x" % RegVal, True)
+            msgbody += self.printToScreen("System In Alarm: 0001:%08x" % RegVal, True)
+        else:
 
-        # set this flag to let the heartbeat thread notify Nagios
-        elif len(AlarmState) == 0:
-            self.GeneratorInAlarm = False
-
-            # Reg 0001 is now zero again
             msgsubject = "Generator Notice: " + self.SiteName
             msgbody += self.printToScreen("\nNo Alarms: 0001:%08x" % RegVal, True)
 
@@ -1608,7 +1593,7 @@ class GeneratorDevice:
         msgbody += self.DisplayLogs(AllLogs = False, PrintToString = True)     # if false don't display full logs
 
         if self.GeneratorInAlarm:
-            msgbody += self.printToScreen("To clear the Alarm/Warning message, press OFF on the control panel keypad followed by the ENTER key.", True)
+            msgbody += self.printToScreen("\nTo clear the Alarm/Warning message, press OFF on the control panel keypad followed by the ENTER key.", True)
 
         self.mail.sendEmail(msgsubject , msgbody)
 
@@ -1766,9 +1751,12 @@ class GeneratorDevice:
             if len(Value):
                 outstring += self.printToScreen("Active Relays: " + Value, True, spacer= True)
 
-            Value = self.GetAlarmState()
-            if len(Value):
-                outstring += self.printToScreen("Current Alarm(s): " + Value, True, spacer= True)
+            if self.SystemInAlarm():
+                Value = self.GetAlarmState()
+                if len(Value):
+                    outstring += self.printToScreen("Sysetm In Alarm : " + Value, True, spacer= True)
+                else:
+                    outstring += self.printToScreen("System In Alarm! Check alarm and maintenance logs.", True, spacer= True)
 
         # get battery voltage
         Value = self.GetBatteryVoltage()
@@ -1938,7 +1926,7 @@ class GeneratorDevice:
             if AllLogs:
                 if PrintToString:
                     if "Unknown" in outstring:
-                        outstring += "\NOTE: Your logs appear to have unknown values. Please see the following thread:"
+                        outstring += "\nNOTE: Your logs appear to have unknown values. Please see the following thread:"
                         outstring += "\n        https://github.com/jgyates/genmon/issues/12"
 
         return outstring
@@ -1990,9 +1978,11 @@ class GeneratorDevice:
 
 
         AlarmLogDecoder = {
+        0x04: "RPM Sense Loss",             # 1500 Alarm
         0x06: "Low Coolant Level",          # 2720  Alarm
         0x47: "Low Fuel Level",             # 2700A Alarm
         0x1B: "Low Fuel Level",             # 2680W Alarm
+        0x46: "Ruptured Tank",              # 2710 Alarm
         0x49: "Hall Calibration Error"      # 2810  Alarm
         # Low Oil Pressure
         # High Engine Temperature
@@ -2132,7 +2122,8 @@ class GeneratorDevice:
         except Exception, e1:
             self.LogError("Error in  GetAlarmInfo " + str(e1))
 
-        return "Error Code Unknown: " + ErrorCode + "\n"
+        AlarmCode = int(ErrorCode,16)
+        return "Error Code Unknown: %04d\n" % AlarmCode
 
     #------------ GeneratorDevice::GetVersions --------------------------------------
     def GetSerialNumber(self):
@@ -2195,6 +2186,27 @@ class GeneratorDevice:
         else:
             return "Utility"
 
+
+    ##------------ GeneratorDevice::SystemInAlarm --------------------------------------
+    def SystemInAlarm(self):
+
+        # this is a valid way of detecting an alarm with a liquid cooled Evolution system
+        Value = self.GetDigitalOutputs()
+
+        if "Alarm" in Value:
+            self.GeneratorInAlarm = True
+            return True
+
+        AlarmState = self.GetAlarmState()
+
+        if len(AlarmState):
+            self.GeneratorInAlarm = True
+            return True
+
+
+        self.GeneratorInAlarm = False
+        return False
+
     ##------------ GeneratorDevice::GetAlarmState --------------------------------------
     def GetAlarmState(self):
 
@@ -2216,36 +2228,67 @@ class GeneratorDevice:
                                 0x40: "Low Oil Pressure",
                                 0x80: "Not Used"}
 
-        if not self.EvolutionController:
-            Register = "UNK"        # Nexus
-        else:
-            Register = "0057"       # Evolution
+        strSwitch = self.GetSwitchState()
 
-        # get the inputs registes
-        Value = self.GetRegisterValueFromList("Register")
-        if len(Value) != 4:
+        if len(strSwitch) == 0:
             return ""
 
-        RegVal = int(Value, 16)
+        outString = ""
 
-        if self.LiquidCooled:
-            Lookup = DigitalInputs_LC
-        else:
-            Lookup = DigitalInputs_AC
+        if "alarm" in strSwitch.lower():
 
-        outvalue = ""
-        counter = 0x01
+            Value = self.GetRegisterValueFromList("0001")
+            if len(Value) != 8:
+                return ""
+            RegVal = int(Value, 16)
 
-        while counter <= 0x80:
-            Name = Lookup.get(counter, "")
-            if len(Name) and Name != "Not Used":
-                if self.BitIsEqual(RegVal, counter, counter):
-                    outvalue += Name + ", "
-            counter = counter << 1
+            # These codes indicate an alarm needs to be reset before the generator will run again
+            if self.BitIsEqual(RegVal, 0x0FFFF, 0x08):          #  occurred when forced low coolant
+                outString += "Low Coolant"
+            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x0d):        #  occurred when forcing RPM sense loss from manual start
+                outString += "RPM Sense Loss"
+            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x0F):        #  occurred when forced service due
+                outString += "Service Due"
+            elif self.BitIsEqual(RegVal, 0xFFFFF, 0x30):        #  occurred when forced ruptured tank
+                outString += "Ruptured Tank"
+            else:
+                outString += "UNKNOWN ALARM: %08x" % RegVal
 
-        # take of the last comma
-        ret = outvalue.rsplit(",", 1)
-        return ret[0]
+        if self.EvolutionController:
+            Register = "0057"       # Evolution
+
+            # get the inputs registes
+            Value = self.GetRegisterValueFromList(Register)
+            if len(Value) != 4:
+                return ""
+
+            RegVal = int(Value, 16)
+
+            if self.LiquidCooled:
+                Lookup = DigitalInputs_LC
+            else:
+                Lookup = DigitalInputs_AC
+
+            outvalue = ""
+            counter = 0x01
+
+            while counter <= 0x80:
+                Name = Lookup.get(counter, "")
+                if len(Name) and Name != "Not Used":
+                    if self.BitIsEqual(RegVal, counter, counter):
+                        outvalue += Name + ", "
+                counter = counter << 1
+
+            # take of the last comma
+            ret = outvalue.rsplit(",", 1)
+
+            if len(outString):
+                outString += " " + ret[0]
+            else:
+                outString = ret[0]
+
+        return outString
+
     ##------------ GeneratorDevice::GetTwoWireStartState --------------------------------------
     def GetTwoWireStartState(self):
 
@@ -2367,18 +2410,15 @@ class GeneratorDevice:
             return ""
         RegVal = int(Value, 16)
 
-        if self.BitIsEqual(RegVal, 0x0F, 0x00):
-            return "Auto"
-        elif self.BitIsEqual(RegVal, 0x0F, 0x7):
-            return "Off"
-        elif self.BitIsEqual(RegVal, 0x0F, 0x06):
-            return "Manual"
-        elif self.BitIsEqual(RegVal, 0x0F, 0x0F):
-            return "Stopped Warning"
-        elif self.BitIsEqual(RegVal, 0x0F, 0x08):
-            return "Stopped Alarm"
-        else:
-            return "UNKNOWN %08x" % RegVal
+        if not self.BitIsEqual(RegVal, 0x000F0000, 0x00080000):     # if not stopped in alarm
+            if self.BitIsEqual(RegVal, 0x0FFFF, 0x00):
+                return "Auto"
+            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x07):
+                return "Off"
+            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x06):
+                return "Manual"
+            else:
+                return "Stopped in Alarm"           # This string value is check for the work 'alarm' in another function
 
     #------------ GeneratorDevice::GetDateTime -----------------------------------------
     def GetDateTime(self):
@@ -2668,7 +2708,7 @@ class GeneratorDevice:
         HexValue = int(Value,16)
 
         if self.BitIsEqual(HexValue,   0xFFF0FFF0, 0x00000010):
-                return True
+            return True
 
         # get Hours until next service
         Value = self.GetRegisterValueFromList("001a")
