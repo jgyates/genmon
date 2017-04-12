@@ -27,6 +27,7 @@
 2400!ALARM!Fuse Problem!Missing / Damaged Fuse!The 7.5 amp Controller Fuse is missing or blown (open).(Firmware v.1.11 and older only)
 
 #These were added empirically
+2710!ALARM!Ruptured Tank!Leak Detector Sensor Triggered!Ruptured or leaky tank or bad sensor
 2720!ALARM!Low Coolant Level!Coolant level is low!Add coolant, check for leak
 2700!ALARM!Low Fuel Level!Fuel Pressure is low!Add fuel or check sensor
 2680!ALARM!Low Fuel Level!Fuel Pressure is low!Add fuel or check sensor
