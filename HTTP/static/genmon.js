@@ -414,7 +414,6 @@ function MenuClick(e)
 //*****************************************************************************
 function RemoveClass() {
 
-    console.log('remote class')
     var myNodelist = document.getElementsByTagName("a");
 
     var i;
