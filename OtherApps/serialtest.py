@@ -10,7 +10,7 @@
 #------------------------------------------------------------
 
 
-import sys, serial
+import sys, time, serial
 
 
 #------------ printToScreen --------------------------------------------
@@ -70,7 +70,7 @@ if __name__=='__main__': # usage SerialTest.py [baud_rate]
 
         if (serialPort == 0):
             print "Error opening Serial Port " + device
-            return
+            sys.exit(1)
 
         TestString = "Testing 1 2 3\n"
 
@@ -90,6 +90,6 @@ if __name__=='__main__': # usage SerialTest.py [baud_rate]
         printToScreen( "error communicating...: " + str(e1))
 
 
-    return
+    sys.exit(1)
 
 
