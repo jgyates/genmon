@@ -137,7 +137,7 @@ This can be installed via the following command:
 In addition the the external dependencies there are additional python modules included in this project that are used:
 
         mymail.py - This module provides support for sending email and monitoring an IMAP
-        email folder for incoming mail. The mail module can be configured by modifying the
+            email folder for incoming mail. The mail module can be configured by modifying the
         mymail.conf file and placing it in the /etc directory.
         mylog.py - This modules provides logging support to the other modules.
         ALARMS.txt - This text file contains generator error codes with descriptions and
