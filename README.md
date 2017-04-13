@@ -347,7 +347,7 @@ The program serialtest.py is a simple application that transmits test data out t
 
 To test a USB based serial port type:
 
-     python serialtest.py /debv/ttyUSB0
+     python serialtest.py /dev/ttyUSB0
 
 The program will output success or failure depending on the results of the serial test.
 
