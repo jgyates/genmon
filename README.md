@@ -116,17 +116,23 @@ The setremote command issues commands directly to the controller. Start and stop
 
 The setexercise command can not set an exercise time that is within a few minutes of the current generator time. This is a limitation of the controller.
 
-The settime command will set the generator time to the time of the Raspberry Pi. If you Raspberry Pi is setup to your correct time zone and your Linux distribution (e.i. Raspbian ) uses network time protocol (NTP) then this will set your generator time to the accurate time. Since the register interface to the generator controller does not expose seconds, genmon.py will wait until the Raspberry Pi time seconds are zero before setting the command. This allow the time to be accurate with in a minute and the seconds that are off from the exact time are consistent. For this reason the time may not be update for one minute when this command is used.
+The settime command will set the generator time to the time of the Raspberry Pi. If you Raspberry Pi is setup to your correct time zone and your Linux distribution (e.i. Raspbian ) uses network time protocol (NTP) then this will set your generator time to the accurate time. Since the register interface to the generator controller does not expose seconds, genmon.py will wait until the Raspberry Pi time seconds are zero before setting the command. This allow the time to be accurate within a minute and the seconds that are off from the exact time are consistent. For this reason the time may not be update for one minute when this command is used.
 
-The program uses the file genmon.conf to for configuration data. Edit this file place it in the /etc directory before running the program. genmon.py uses the following modules so they are external dependencies of the program and they will need to be install before running the program:
+The program uses the file genmon.conf to for configuration data. Edit this file place it in the /etc directory before running the program. genmon.py uses the following modules so they are external dependencies of the program and they will need to be installed before running the program:
 
-        crcmod - https://pypi.python.org/pypi/crcmod, used for MODBUS CRC calculation
-            Install via the following command: 
-                sudo pip install crcmod
-        pyserial - https://pypi.python.org/pypi/pyserial/2.7, used for serial. Download
-            the source and follow the instructions at https://github.com/gsutil-mirrors/crcmod
-            communication. This can be installed via the following command:
-                sudo apt-get install python-serial
+* [crcmod](https://pypi.python.org/pypi/crcmod) - used for MODBUS CRC calculation. 
+
+Install via the following command: 
+
+    sudo pip install crcmod
+
+
+* [pyserial](https://pypi.python.org/pypi/pyserial/2.7) - used for serial communication. 
+
+This can be installed via the following command:
+
+     sudo apt-get install python-serial
+
 
 In addition the the external dependencies there are additional python modules included in this project that are used:
 
