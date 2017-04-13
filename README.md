@@ -121,6 +121,8 @@ The settime command will set the generator time to the time of the Raspberry Pi.
 The program uses the file genmon.conf to for configuration data. Edit this file place it in the /etc directory before running the program. genmon.py uses the following modules so they are external dependencies of the program and they will need to be install before running the program:
 
         crcmod - https://pypi.python.org/pypi/crcmod, used for MODBUS CRC calculation
+            Install via the following command: 
+                sudo pip install crcmod
         pyserial - https://pypi.python.org/pypi/pyserial/2.7, used for serial. Download
             the source and follow the instructions at https://github.com/gsutil-mirrors/crcmod
             communication. This can be installed via the following command:
