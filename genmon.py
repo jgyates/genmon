@@ -353,8 +353,10 @@ class GeneratorDevice:
         except Exception, e1:
             self.FatalError("Unable to open alarm file: " + str(e1))
 
-        self.ThreadList.append(self.mail.GetSendEmailThreadObject())
-        self.ThreadList.append(self.mail.GetEmailMonitorThreadObject())
+        if self.mail.GetSendEmailThreadObject():
+            self.ThreadList.append(self.mail.GetSendEmailThreadObject())
+        if self.mail.GetEmailMonitorThreadObject():
+            self.ThreadList.append(self.mail.GetEmailMonitorThreadObject())
 
         try:
             # CRCMOD library, used for CRC calculations
