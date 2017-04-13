@@ -272,6 +272,10 @@ The following is a description of the options contained in mymail.conf, which is
 
     smtp_port = 587
       # the SMTP port used on the SMTP server for sending email
+     
+    #disableemail = false
+      # optionally disable email use by the program. set to true to disable email 
+
       
 ## /OtherApps/ClientInterface.py
 
