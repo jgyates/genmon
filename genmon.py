@@ -1624,7 +1624,7 @@ class GeneratorDevice:
         outstring += self.printToScreen("To clear the Alarm/Warning message, press OFF on the control panel keypad followed by the ENTER key.\n", ToString)
         outstring += self.printToScreen("To access Dealer Menu on the controller, from the top menu selection (SYSTEM, DATE/TIME, BATTERY, SUB-MENUS)", ToString)
         outstring += self.printToScreen("enter UP UP ESC DOWN UP ESC UP, then navigate to the dealer menu and press enter.", ToString)
-        outstring += self.printToScreen("For liquid cooled models a level 2 dealer code can be entered, ESC UP UP DOWN DOWN ESC ESC, then naviagte to ", ToString)
+        outstring += self.printToScreen("For liquid cooled models a level 2 dealer code can be entered, ESC UP UP DOWN DOWN ESC ESC, then navigate to ", ToString)
         outstring += self.printToScreen("the dealer menu and press enter.", ToString)
 
         outstring += self.printToScreen("\n", ToString)
@@ -2212,7 +2212,7 @@ class GeneratorDevice:
     ##------------ GeneratorDevice::GetAlarmState --------------------------------------
     def GetAlarmState(self):
 
-        DigitalInputs_LC = {    #0x01: "Manual",
+        DigitalInputs_LC = {    #0x01: "Manual",            # Bits 0 and 1 are only momentary (i.e. only set if the button is being pushed)
                                 #0x02: "Auto",
                                 #0x04: "Two Wire Start",
                                 0x08: "Wiring Error",
@@ -2221,7 +2221,7 @@ class GeneratorDevice:
                                 0x40: "Not Used",
                                 0x80: "Low Oil Pressure"}
         # Air cooled
-        DigitalInputs_AC = {    #0x01: "Manual",
+        DigitalInputs_AC = {    #0x01: "Manual",         # Bits 0 and 1 are only momentary (i.e. only set if the button is being pushed)
                                 #0x02: "Auto",
                                 0x04: "No Used",
                                 0x08: "Wiring Error",
@@ -2249,7 +2249,7 @@ class GeneratorDevice:
                 outString += "Low Coolant"
             elif self.BitIsEqual(RegVal, 0x0FFFF, 0x0d):        #  occurred when forcing RPM sense loss from manual start
                 outString += "RPM Sense Loss"
-            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x0F):        #  occurred when forced service due
+            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x1F):        #  occurred when forced service due
                 outString += "Service Due"
             elif self.BitIsEqual(RegVal, 0xFFFFF, 0x30):        #  occurred when forced ruptured tank
                 outString += "Ruptured Tank"
@@ -2404,7 +2404,7 @@ class GeneratorDevice:
         else:
             return "UNKNOWN: %08x" % RegVal
 
-     #------------ GeneratorDevice::GetSwitchState --------------------------------------
+    #------------ GeneratorDevice::GetSwitchState --------------------------------------
     def GetSwitchState(self):
 
         Value = self.GetRegisterValueFromList("0001")
@@ -2419,11 +2419,15 @@ class GeneratorDevice:
                 return "Off"
             elif self.BitIsEqual(RegVal, 0x0FFFF, 0x06):
                 return "Manual"
+            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x1F):
+                return "WARNING: Service Due - Check Logs"
             else:
+            # if we get here then we have an unknown value and the engine is not stopped in alarm
+            # we, tell the user to check the logs
+            # likely condition is
                 return "UNKNOWN: %08x" % RegVal
         else:
             return "Stopped in Alarm"               # This string value is check for the work 'alarm' in another function
-
 
     #------------ GeneratorDevice::GetDateTime -----------------------------------------
     def GetDateTime(self):
@@ -2708,17 +2712,18 @@ class GeneratorDevice:
         # get Hours until next service
         Value = self.GetRegisterValueFromList("0001")
         if len(Value) != 8:
-            return ""
+            return False
 
         HexValue = int(Value,16)
 
-        if self.BitIsEqual(HexValue,   0xFFF0FFF0, 0x00000010):
+        # service due alarm?
+        if self.BitIsEqual(HexValue,   0xFFF0FFFF, 0x0000001F):
             return True
 
         # get Hours until next service
         Value = self.GetRegisterValueFromList("001a")
         if len(Value) != 4:
-            return ""
+            return False
 
         HexValue = int(Value, 16)
         if (HexValue <= 1):
