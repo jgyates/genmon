@@ -277,15 +277,15 @@ The following is a description of the options contained in mymail.conf, which is
       # optionally disable email use by the program. set to true to disable email 
 
       
-## /OtherApps/ClientInterface.py
+## ClientInterface.py
 
-The program ClientInterface.py is a test application for communicating with genmon.py via sockets. The ClientInterface.py program uses the supplied python module mylog.py and myclient.py so this the three files (mylog.py, myclient.py and ClientInterface.py must be in the same  directory of you are opting to usie ClientInterface.py. The ClientInterface.py app takes one command line argument, the IP address of the computer running genmon.py (the default is localhost). To issues commands to an instance genmon.py on a system at IP address of 192.168.11.100 you would do the following:
+The program ClientInterface.py is a test application for communicating with genmon.py via sockets. The ClientInterface.py program uses the supplied python module mylog.py and myclient.py so this the three files (mylog.py, myclient.py and ClientInterface.py must be in the same  directory of you are opting to usie ClientInterface.py). The ClientInterface.py app takes one command line argument, the IP address of the computer running genmon.py (the default is localhost). To issues commands to an instance genmon.py on a system at IP address of 192.168.11.100 you would do the following:
 
             python ClientInterface.py 192.168.11.100
 
 Once the app is executed you should be faced with a prompt ">". From this prompt you can send commands to genmon.py. Commands are prefaced with "generator:". For example to issue the command "status" you would enter the "generator: status" at the ">" prompt when running ClientInterface.py. The commands accepted are listed in the genmon.py section and they match the email based commands.
 
-## /OtherApps/gengpio.py (optional)
+## gengpio.py (optional)
 
 The program gengpio.py is a console python application that will communicate with genmon.py and set or reset GPIO pins on the Raspberry Pi.The application requires the supplied python module mylog.py and myclient.py so these files will need to be in the same directory as gengpio.py. The program takes one command line argument of the IP address of the system that genmon.py is running (localhost is default). 
 
@@ -297,7 +297,7 @@ The program gengpio.py is a console python application that will communicate wit
 
      python gengpio.py <IP Address of your Pi running genmon.py or omit for localhost>
 
-## /OtherApps/gengpioin.py (optional)
+## gengpioin.py (optional)
 
 The program gengpioin.py is a console python application that will communicate with genmon.py and issue remote commands based on Raspberry Pi GPIO input pin. The application requires the supplied python module mylog.py and myclient.py so these files will need to be in the same directory as gengpio.py. The program takes one command line argument of the IP address of the system that genmon.py is running (localhost is default). The program uses the internal pull up resistors in the Broadcom chipset on the Raspberry Pi. The program also uses the python module RPI.GPIO which comes already installed on most raspberry Pi distributions. 
 
