@@ -34,6 +34,7 @@ class MyMail:
         self.IncomingCallback = incoming_callback       # called back with mail subject as a parameter
         self.Mailbox = 0
         self.EmailSendQueue = []                        # queue for email to send
+        self.DisableEmail = False
 
         # log errors in this module to a file
         if localinit == True:
@@ -58,34 +59,43 @@ class MyMail:
             self.SMTPServer = config.get('MyMail', 'smtp_server')
             self.IMAPServer = config.get('MyMail', 'imap_server')
             self.SMTPPort = config.getint('MyMail', 'smtp_port')
+            if config.has_option('MyMail', 'disableemail'):
+                self.DisableEmail = config.getboolean('MyMail', 'disableemail')
         except Exception, e1:
             self.FatalError("ERROR: Unable to read config file" + str(e1))
 
 
         atexit.register(self.Cleanup)
 
-        self.threadSendEmail = threading.Thread(target=self.SendMailThread, name = "SendMailThread")
-        self.threadSendEmail.daemon = True
-        self.threadSendEmail.start()       # start server thread
+        if not self.DisableEmail:
+            self.threadSendEmail = threading.Thread(target=self.SendMailThread, name = "SendMailThread")
+            self.threadSendEmail.daemon = True
+            self.threadSendEmail.start()       # start server thread
 
-        if monitor:     # if True then we will have an IMAP monitor thread
-            if incoming_callback and incoming_folder and processed_folder:
-                self.threadEmail = threading.Thread(target=self.EmailCommandThread, name = "EmailCommandThread")
-                self.threadEmail.daemon = True
-                self.threadEmail.start()       # start server thread
-            else:
-                self.FatalError("ERROR: incoming_callback, incoming_folder and processed_folder are required if receive IMAP is used")
+            if monitor:     # if True then we will have an IMAP monitor thread
+                if incoming_callback and incoming_folder and processed_folder:
+                    self.threadEmail = threading.Thread(target=self.EmailCommandThread, name = "EmailCommandThread")
+                    self.threadEmail.daemon = True
+                    self.threadEmail.start()       # start server thread
+                else:
+                    self.FatalError("ERROR: incoming_callback, incoming_folder and processed_folder are required if receive IMAP is used")
 
     #---------- MyMail.GetSendEmailThreadObject -------------------------
     def GetSendEmailThreadObject(self):
 
-        return self.threadSendEmail
+        if not self.DisableEmail:
+            return self.threadSendEmail
+        else:
+            return 0
 
     #---------- MyMail.GetEmailMonitorThreadObject -------------------------
     def GetEmailMonitorThreadObject(self):
 
-        if self.Monitor:
-            return self.threadEmail
+        if not self.DisableEmail:
+            if self.Monitor:
+                return self.threadEmail
+            else:
+                return 0
         else:
             return 0
 
@@ -221,7 +231,8 @@ class MyMail:
     #------------MyMail::sendEmail-----------------------
     def sendEmail(self, subjectstr, msgstr, recipient = None, files = None, deletefile = False):
 
-        self.EmailSendQueue.insert(0,[subjectstr,msgstr,recipient, files, deletefile])
+        if not self.DisableEmail:
+            self.EmailSendQueue.insert(0,[subjectstr,msgstr,recipient, files, deletefile])
 
     #---------------------SecurityMonitor::FatalError------------------------
     def LogError(self, Message):
