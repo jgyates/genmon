@@ -1287,7 +1287,7 @@ class GeneratorDevice:
 
             if RegValue == "":
                 self.LogError("Validation Error: Register  not known:" + Register)
-                msgbody = "Unknown Register: " + Register
+                msgbody = "Unsupported Register: " + Register
                 return msgbody
 
             msgbody = RegValue
@@ -1785,19 +1785,19 @@ class GeneratorDevice:
             # get UKS
             Value = self.GetUnknownSensor1()
             if len(Value):
-                outstring += self.printToScreen("Unknown Sensor 1: " + Value, ToString, spacer = True)
+                outstring += self.printToScreen("Unsupported Sensor 1: " + Value, ToString, spacer = True)
             # get UKS
             Value = self.GetUnknownSensor2()
             if len(Value):
-                outstring += self.printToScreen("Unknown Sensor 2: " + Value, ToString, spacer = True)
+                outstring += self.printToScreen("Unsupported Sensor 2: " + Value, ToString, spacer = True)
             # get UKS
             Value = self.GetUnknownSensor3()
             if len(Value):
-                outstring += self.printToScreen("Unknown Sensor 3: " + Value, ToString, spacer = True)
+                outstring += self.printToScreen("Unsupported Sensor 3: " + Value, ToString, spacer = True)
              # get UKS
             Value = self.GetUnknownSensor4()
             if len(Value):
-                outstring += self.printToScreen("Unknown Sensor 4: " + Value, ToString, spacer = True)
+                outstring += self.printToScreen("Unsupported Sensor 4: " + Value, ToString, spacer = True)
 
         outstring += self.printToScreen("\nLine State:", ToString)
         if self.EvolutionController:
@@ -1945,7 +1945,7 @@ class GeneratorDevice:
     #       EE = Month
     #       FF = Date
     #       GG = year
-    #       HH = Unknown
+    #       HH = seconds
     #       IIJJ = Alarm Code for Alarm Log only
     #---------------------------------------------------------------------------
     def ParseLogEntry(self, Value, LogBase = None):
@@ -2183,13 +2183,13 @@ class GeneratorDevice:
     def GetTransferStatus(self):
 
         if not self.EvolutionController:
-            Register = "UNK"        # Nexus
+            Register = "Not Available"        # Nexus
         else:
             Register = "0053"       # Evolution
 
         Value = self.GetRegisterValueFromList(Register)
         if len(Value) != 4:
-            return "Unknown"
+            return ""
         RegVal = int(Value, 16)
 
         if self.BitIsEqual(RegVal, 0x01, 0x01):
@@ -2682,14 +2682,14 @@ class GeneratorDevice:
     def GetBatteryStatus(self):
 
         if not self.EvolutionController:
-            Register = "UNK"        # Nexus
+            return "Not Available"     # Nexus
         else:
             Register = "0053"       # Evolution
 
         # get Battery Charging Voltage
         Value = self.GetRegisterValueFromList(Register)
         if len(Value) != 4:
-            return "Unknown"
+            return ""
 
         Outputs = int(Value,16)
 
