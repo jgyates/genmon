@@ -1449,6 +1449,11 @@ class GeneratorDevice:
             if not fromsocket:
                 msgbody += "\n\n"
 
+        if "unknown" in msgbody.lower():
+            msgbody += "\nNOTE: The output appears to have unknown values. Please see the following threads to resolve these issues:"
+            msgbody += "\n        https://github.com/jgyates/genmon/issues/12"
+            msgbody += "\n        https://github.com/jgyates/genmon/issues/13"
+
         if not fromsocket:
             self.mail.sendEmail(msgsubject, msgbody)
             return ""       # ignored by email module
@@ -1925,11 +1930,6 @@ class GeneratorDevice:
                 Value = self.GetRegisterValueFromList("05f1")
                 if len(Value) == 4:
                     outstring += "\nLast Alarm Code: %s" % self.GetAlarmInfo(Value)
-            if AllLogs:
-                if PrintToString:
-                    if "Unknown" in outstring:
-                        outstring += "\nNOTE: Your logs appear to have unknown values. Please see the following thread:"
-                        outstring += "\n        https://github.com/jgyates/genmon/issues/12"
 
         return outstring
 

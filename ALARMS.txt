@@ -35,7 +35,7 @@
 2720!ALARM!Low Coolant Level!Coolant level is low!Add coolant, check for leak
 2700!ALARM!Low Fuel Level!Fuel Pressure is low!Add fuel or check sensor
 2680!ALARM!Low Fuel Level!Fuel Pressure is low!Add fuel or check sensor
-2810!ALARM!Hall Calibration Error!Incorrect calibration!Possible installation or setup problem
+2810!ALARM!Hall Calibration Error!The system detected on power up that Hall Calibration was not performed and has triggered the alarm. !Possible installation or setup problem
 
 # These are error codes I picked up on the internet, need more info...
 2502!ALARM!Governor in closed position!Unknown!Unknown
