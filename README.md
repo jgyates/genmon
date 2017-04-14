@@ -158,7 +158,7 @@ To run as a background app:
 
     sudo python genmon.py &
    
-To stop genmon.py as a forground application type Ctrl+C. The following command will stop the running instance of genmon.py:
+To stop genmon.py as a foreground application type Ctrl+C. The following command will stop the running instance of genmon.py:
 
     sudo pkill -f genmon.py
 
