@@ -203,7 +203,7 @@ Also, if you generator has as radiator then it is liquid cooled, otherwise it is
     loglocation = /var/log/
 
     # location of the text file containing descriptions of alarm codes (required)
-    alarmfile = /home/pi/ALARMS.txt
+    alarmfile = ./ALARMS.txt
 
     # enable genmon.py to output to the console if True. If this is false the other
     # display* commands below are ignored (optional, default False)
