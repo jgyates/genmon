@@ -5,6 +5,7 @@
 #AlarmCode! Type (ALARM, WARNING)! AlarmName! Condition! Additional Info
 
 1100!ALARM!Overcrank!Engine cranks but will not start.! Unit turns over but will not start. Controller is receiving signal on Wire 18.
+1101!ALARM!Overcrank!Engine/Starter Problem. Limiting number of cranking cycles to protect the starter motor.!If the engine has tried to crank for 10 times unsuccessfully, this will trigger.
 1200!ALARM!Overspeed (Prolonged)!Over 72 Hz for 3 seconds.!Possible cause: Stepper motor/mixer body assembly issue.
 1205!ALARM!Overspeed (Instantaneous)!Over 75Hz for 0.1 second (100 milliseconds).!Possible cause: Stepper motor/mixer body assembly issue.
 1300!ALARM!Low Oil Pressure (While Running)!The default extended alarm for low oil pressure.!Check oil level and pressure.
@@ -15,6 +16,7 @@
 1511!ALARM!RPM Sensor (Single Cylinder+Running)!Single Cylinder Running with Low Fuel Pressure faults to RPM sensor loss!Possible Causes: air pocket in fuel line, dirty fuel.
 1515!ALARM!RPM Sensor (Single Cylinder+Cranking)!Single Cylinder Cranking faults to RPM sensor loss!Possible Cause: starter motor issue.
 1600!ALARM!Underspeed!Condition - Unit is Overloaded!Unit is Overloaded slowing engine speed, fuel supply low or throttle control problem.
+1603!ALARM!Underspeed!Underspeed!The engine never comes up to 3700 RPM.!Check fuel selection and fuel supply
 1800!ALARM!Overvoltage (Prolonged)!Over-Voltage!Unknown
 1900!ALARM!Undervoltage (Prolonged)!Under-Voltage!Under-voltage due to loss of voltage for some time (10+ seconds).
 1901!ALARM!Undervoltage (Instantaneous)!Undervoltage due to sudden loss of voltage.!Unknown
@@ -22,6 +24,8 @@
 1906!ALARM!Undervoltage (Single Zero Cross missing)!Undervoltage due to faulty excitation winding, zero cross circuit, or circuit in general.!Possible cause: field boost hardware failure
 2099!ALARM!Wiring Error!Connection low voltage and high voltage wires are crossed.!Check connection in generator
 2100!ALARM!Overload Remove Load (Default, Output Current Method)!Unit is overloaded, one of the two CTs is detecting an overload condition.!Check transfer switch loadshed functionality. (Change load dynamics or utilize loadshed). Remove Load
+2102!ALARM!Overload Remove Load!Overloaded!Unit recranks 5 times when load is applied, engine dies (0 RPM) and has low voltage (< 180V)!Check for Overloaded condition on unit. Inspect stepper motor operation.
+2103!ALARM!Overloaded!Unit has run and attempted to accept load 10 times, could not accept due to overload condition!Check for Overloaded condition on unit
 2299!ALARM!Undervoltage Overload!Unit was overloaded and attempted to start with a large load connected. The unit can not ramp up the generator voltage to its normal target voltage value if it starts with a large load connected!Remove Load
 2399!ALARM!Stepper Overcurrent!Current flow in stepper coil(s) above specification!Unknown
 2400!ALARM!Fuse Problem!Missing / Damaged Fuse!The 7.5 amp Controller Fuse is missing or blown (open).(Firmware v.1.11 and older only)
@@ -34,7 +38,7 @@
 2810!ALARM!Hall Calibration Error!Incorrect calibration!Possible installation or setup problem
 
 # These are error codes I picked up on the internet, need more info...
-#(2502A) 2502!ALARM!Governor in closed position!Unknown!Unknown
+2502!ALARM!Governor in closed position!Unknown!Unknown
 
 #The following do not appear to have an Error Code
 Low Battery WARNING
