@@ -103,8 +103,9 @@ class MyMail:
     def Cleanup(self):
 
         if self.Monitor:
-            self.Mailbox.close()
-            self.Mailbox.logout()
+            if self.Mailbox:
+                self.Mailbox.close()
+                self.Mailbox.logout()
 
     #---------- MyMail.EmailCommandThread -----------------------------------
     def EmailCommandThread(self):
