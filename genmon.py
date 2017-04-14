@@ -2090,6 +2090,12 @@ class GeneratorDevice:
         TempVal = Value[2:4]
         EntryNumber = int(TempVal, 16)
 
+        # this will attempt to find a description for the log entry based on the info in ALARMS.txt
+        if LogBase == ALARM_LOG_STARTING_REG and "Unknown" in LogStr and  self.EvolutionController and len(Value) > 16:
+            TempVal = Value[16:20]
+            AlarmStr = self.GetAlarmInfo(TempVal, ReturnNameOnly = True)
+            if not "unknown" in AlarmStr.lower():
+                LogStr = AlarmStr + " : " + LogStr
 
         RetStr = "%02d/%02d/%02d %02d:%02d:%02d %s " % (Month,Day,Year,Hour,Min, Seconds, LogStr)
         if len(Value) > 16:
@@ -2102,7 +2108,7 @@ class GeneratorDevice:
     #------------------- GeneratorDevice::GetAlarmInfo -----------------
     # Read file alarm file and get more info on alarm if we have it
     # passes ErrorCode as string of hex values
-    def GetAlarmInfo(self, ErrorCode):
+    def GetAlarmInfo(self, ErrorCode, ReturnNameOnly = False):
 
         try:
             with open(self.AlarmFile,"r") as AlarmFile:     #opens file
@@ -2118,7 +2124,10 @@ class GeneratorDevice:
                     if len(Items) != 5:
                         continue
                     if Items[0] == str(int(ErrorCode,16)):
-                        outstr =  Items[2] + ", Error Code: " + Items[0] + "\n" + "    Description: " + Items[3] + "\n" + "    Additional Info: " + Items[4] + "\n"
+                        if ReturnNameOnly:
+                            outstr = Items[2]
+                        else:
+                            outstr =  Items[2] + ", Error Code: " + Items[0] + "\n" + "    Description: " + Items[3] + "\n" + "    Additional Info: " + Items[4] + "\n"
                         return outstr
 
         except Exception, e1:
