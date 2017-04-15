@@ -355,6 +355,19 @@ To test a USB based serial port type:
 
 The program will output success or failure depending on the results of the serial test.
 
+## startgenmon.sh
+
+startgenmon.sh is a Linux script that is designed to be called at system boot from a crontab job. This script can also be called to manually start or stop genmon and genserv. This script assumes that the project files are located in the /home/pi/genmon directory. To start genmon and genserv use the following command:
+
+     /home/pi/genmon/startgenmon.sh start
+
+To stop genmon and genserv use:
+
+     /home/pi/genmon/startgenmon.sh stop
+
+Note that this file may be edited to change the file system location and it may be edited to make other supplied programs start or stop (i.e. gengpio.py and gengpioin.py).
+
+
 # Hardware
 
 This project has been developed and tested with a Raspberry Pi 3 as the base platform. Since the serial port and network are the only external ports used, the program could be used on other platforms with minor modifications and testing.
