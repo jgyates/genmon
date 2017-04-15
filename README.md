@@ -285,6 +285,8 @@ The program ClientInterface.py is a test application for communicating with genm
 
 Once the app is executed you should be faced with a prompt ">". From this prompt you can send commands to genmon.py. Commands are prefaced with "generator:". For example to issue the command "status" you would enter the "generator: status" at the ">" prompt when running ClientInterface.py. The commands accepted are listed in the genmon.py section and they match the email based commands.
 
+ClientInterface.py logs errors to client.log in the current directory.
+
 ## gengpio.py (optional)
 
 The program gengpio.py is a console python application that will communicate with genmon.py and set or reset GPIO pins on the Raspberry Pi.The application requires the supplied python module mylog.py and myclient.py so these files will need to be in the same directory as gengpio.py. The program takes one command line argument of the IP address of the system that genmon.py is running (localhost is default). 
