@@ -32,12 +32,12 @@ if __name__=='__main__': # usage program.py [server_address]
 
         while True:
             line = raw_input(">")
-            #print line
+
             if line.lower() == "exit":
                 break
-            data = MyClientInterface.ProcessMonitorCommand(line)
-
-            print data
+            if len(line):
+                data = MyClientInterface.ProcessMonitorCommand(line)
+                print data
 
     except Exception, e1:
         print "Error: " + str(e1)
