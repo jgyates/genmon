@@ -330,6 +330,7 @@ The genserv.py program uses the mylog.py and myclient.py modules so they must be
         ./static/genmon.css                 - main site style sheet
         ./static/genmon.js                  - main site javascript
         ./static/favicon.ico                - icon for html file
+        ./static/jquery-1.12.4.min.js .     - jquery runtime support
 
         The default settings provide for hosting the web app on port 8000:
 
