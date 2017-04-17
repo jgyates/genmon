@@ -243,8 +243,9 @@ class GeneratorDevice:
                                 "05ed" : [2, 0],     # Unknown sensor 4, changes between 35, 37, 39
                                 "0059" : [2, 0],     # Set Voltage from Dealer Menu (not currently used)
                                 "023b" : [2, 0],     # Pick Up Voltage
-                                "023e" : [2, 0]}     # Exercise time duration
-
+                                "023e" : [2, 0],     # Exercise time duration
+                                "01f1" : [2, 0],     # Unknown Status (WIP)
+                                "01f2" : [2, 0]}     # Unknown Status (WIP)
 
         # registers that need updating more frequently than others to make things more responsive
         self.PrimeRegisters = {
@@ -1347,20 +1348,35 @@ class GeneratorDevice:
      #---------- process command from email and socket -------------------------------
     def ProcessCommand(self, command, fromsocket = False):
 
-        if(len(command)) == 0:
-            return ""
-
-        if(not command.lower().startswith( 'generator:' )):
-            self.printToScreen("Invalid GENERATOR command")
-            return ""
-
-        CommandList = command.split(" ")
+        LocalError = False
 
         msgsubject = "Generator Command Response at " + self.SiteName
         if not fromsocket:
             msgbody = "\n"
         else:
             msgbody = ""
+
+        if(len(command)) == 0:
+            msgsubject = "Error in Generator Command (Lenght is zero)"
+            msgbody += "Invalid GENERATOR command: zero length command. All commands must be prefixed by \"generator: \""
+            LocalError = True
+
+        if not LocalError:
+            if(not command.lower().startswith( 'generator:' )):
+                msgsubject = "Error in Generator Command (no generator: prefix)"
+                self.printToScreen("Invalid GENERATOR command")
+                msgbody += "Invalid GENERATOR command: all commands must be prefixed by \"generator: \""
+                LocalError = True
+
+        if LocalError:
+            if not fromsocket:
+                self.mail.sendEmail(msgsubject, msgbody)
+                return ""       # ignored by email module
+            else:
+                msgbody += "EndOfMessage"
+                return msgbody
+
+        CommandList = command.split(" ")
 
 
         for item in CommandList:
@@ -2874,13 +2890,8 @@ class GeneratorDevice:
                 try:
                     data = conn.recv(1024)
 
-                    if(data.lower().startswith( 'generator:' )):
-                        outstr = self.ProcessCommand(data, True)
-                        conn.sendall(outstr)
-                    else:
-                        self.ConnectionList.remove(conn)
-                        conn.close()
-                        break
+                    outstr = self.ProcessCommand(data, True)
+                    conn.sendall(outstr)
                 except socket.timeout:
                     continue
                 except socket.error as msg:
