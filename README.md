@@ -248,6 +248,12 @@ Also, if you generator has as radiator then it is liquid cooled, otherwise it is
     # can be overridden with this setting. True for Evolution controller, False for
     # Nexus Controller.
     #evolutioncontroller = True
+    
+    # This parameter is only valid for liquid cooled Evolution generators, ignored for others.
+    # True if your generator uses diesel or gasoline, false if you use propane or natural gas
+    # (optional) default True
+    #petroleumfuel = True
+
 
 
 ## Configuring mymail.py
