@@ -59,15 +59,6 @@ def StartTransferCallBack():
     except Exception, e1:
         log.error("Error: " + str(e1))
 
-#------------------- StartTransferCallBack -----------------#
-def TestCallBack():
-
-    try:
-        data = MyClientInterface.ProcessMonitorCommand("generator: maint")
-        print data
-    except Exception, e1:
-        log.error("Error: " + str(e1))
-
 #------------------- Command-line interface for gengpioin -----------------#
 if __name__=='__main__': # usage program.py [server_address]
     address='127.0.0.1' if len(sys.argv)<2 else sys.argv[1]
@@ -98,7 +89,6 @@ if __name__=='__main__': # usage program.py [server_address]
         GPIO.add_event_detect(INPUT_START_TRANSFER, GPIO.FALLING)               # detect falling edge
         GPIO.add_event_callback(INPUT_START_TRANSFER, callback = StartTransferCallBack) #, bouncetime=1000)
 
-        TestCallBack()
 
         while True:
             time.sleep(3)
