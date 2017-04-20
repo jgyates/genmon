@@ -223,7 +223,7 @@ class GeneratorDevice:
         # and due to the magic of python, we often deal with the response in string values
         #   dict format  Register: [ Length in bytes: monitor change 0 - no, 1 = yes]
         self.BaseRegisters = {                  # base registers read by master
-                                "0000" : [2, 0],     # Unknown
+                                "0000" : [2, 0],     # Unknown, possibly product line code
                                 "0005" : [2, 0],     # Exercise Time Hi Byte = Hour, Lo Byte = Min (Read Only)
                                 "0006" : [2, 0],     # Exercise Time Hi Byte = Day of Week 00=Sunday 01=Monday, Low Byte = 00=quiet=no, 01=yes
                                 "0007" : [2, 0],     # Engine RPM
@@ -244,14 +244,30 @@ class GeneratorDevice:
                                 "0059" : [2, 0],     # Set Voltage from Dealer Menu (not currently used)
                                 "023b" : [2, 0],     # Pick Up Voltage
                                 "023e" : [2, 0],     # Exercise time duration
+                                "0054" : [2, 0],     # Hours since generator activation (hours of protection)
+                                "005f" : [2, 0],     # Total engine time in minutes
                                 "01f1" : [2, 0],     # Unknown Status (WIP)
-                                "01f2" : [2, 0]}     # Unknown Status (WIP)
+                                "01f2" : [2, 0],     # Unknown Status (WIP)
+                                "001b" : [2, 0],     # Unknown Read by ML
+                                "001c" : [2, 0],     # Unknown Read by ML
+                                "001d" : [2, 0],     # Unknown Read by ML
+                                "001e" : [2, 0],     # Unknown Read by ML
+                                "001f" : [2, 0],     # Unknown Read by ML
+                                "0020" : [2, 0],     # Unknown Read by ML
+                                "0021" : [2, 0],     # Unknown Read by ML
+                                "0019" : [2, 0],     # Unknown Read by ML
+                                "0057" : [2, 0],     # Unknown Looks like some status bits (changes when engine starts / stops)
+                                "0055" : [2, 0],     # Unknown
+                                "0056" : [2, 0],     # Unknown Looks like some status bits (changes when engine starts / stops)
+                                "005a" : [2, 0],
+                                "005c" : [2, 0]}
+
 
         # registers that need updating more frequently than others to make things more responsive
         self.PrimeRegisters = {
                                 "0001" : [4, 0],     # Alarm and status register
                                 "0053" : [2, 0],     # Output relay status register (battery charging, transfer switch, Change at startup and stop
-                                "0057" : [2, 0],     # Input status registes
+                                "0052" : [2, 0],     # Input status register (sensors) only tested on liquid cooled Evo
                                 "0009" : [2, 0],     # Utility voltage
                                 "05f1" : [2, 0]}     # Last Alarm Code
 
@@ -280,6 +296,7 @@ class GeneratorDevice:
             self.bDisplayMaintenance = False
             self.bUseLegacyWrite = False
             self.EvolutionController = None
+            self.PetroleumFuel = True
 
             # getfloat() raises an exception if the value is not a float
             # getint() and getboolean() also do this for their respective types
@@ -295,9 +312,13 @@ class GeneratorDevice:
             self.LiquidCooled = config.getboolean('GenMon', 'liquidcooled')
 
 
-            # optional config parameters
+            # optional config parameters, by default the software will attempt to auto-detect the controller
+            # this setting will override the auto detect
             if config.has_option('GenMon', 'evolutioncontroller'):
                 self.EvolutionController = config.getboolean('GenMon', 'evolutioncontroller')
+
+            if config.has_option('GenMon', 'petroleumfuel'):
+                self.PetroleumFuel = config.getboolean('GenMon', 'petroleumfuel')
 
             if config.has_option('GenMon', 'displayoutput'):
                 self.bDisplayOutput = config.getboolean('GenMon', 'displayoutput')
@@ -349,8 +370,9 @@ class GeneratorDevice:
 
         # check for ALARM.txt file present
         try:
-            with open(self.AlarmFile,"r") as AlarmFile:     #
-                self.printToScreen("Validated alarm file present")
+            if self.EvolutionController:
+                with open(self.AlarmFile,"r") as AlarmFile:     #
+                    self.printToScreen("Validated alarm file present")
         except Exception, e1:
             self.FatalError("Unable to open alarm file: " + str(e1))
 
@@ -1593,10 +1615,13 @@ class GeneratorDevice:
 
         if self.EvolutionController:
             msgbody += self.printToScreen("Active Relays: " + self.GetDigitalOutputs(), True)
+            if self.LiquidCooled:
+                msgbody += self.printToScreen("Active Sensors: " + self.GetSensorInputs(), True)
 
-        msgsubject += "Generator Alert at " + self.SiteName + ": "
 
         if self.SystemInAlarm():        # Update Alarm Status global flag, returns True if system in alarm
+
+            msgsubject += "Generator Alert at " + self.SiteName + ": "
             AlarmState = self.GetAlarmState()
 
             msgsubject += "CRITICAL "
@@ -1618,7 +1643,7 @@ class GeneratorDevice:
         # display last log entries
         msgbody += self.DisplayLogs(AllLogs = False, PrintToString = True)     # if false don't display full logs
 
-        if self.GeneratorInAlarm:
+        if self.SystemInAlarm():
             msgbody += self.printToScreen("\nTo clear the Alarm/Warning message, press OFF on the control panel keypad followed by the ENTER key.", True)
 
         self.mail.sendEmail(msgsubject , msgbody)
@@ -1645,11 +1670,14 @@ class GeneratorDevice:
         outstring += self.printToScreen("   help        - Display help on commands", ToString)
         outstring += self.printToScreen("\n", ToString)
 
-        outstring += self.printToScreen("To clear the Alarm/Warning message, press OFF on the control panel keypad followed by the ENTER key.\n", ToString)
-        outstring += self.printToScreen("To access Dealer Menu on the controller, from the top menu selection (SYSTEM, DATE/TIME, BATTERY, SUB-MENUS)", ToString)
-        outstring += self.printToScreen("enter UP UP ESC DOWN UP ESC UP, then navigate to the dealer menu and press enter.", ToString)
-        outstring += self.printToScreen("For liquid cooled models a level 2 dealer code can be entered, ESC UP UP DOWN DOWN ESC ESC, then navigate to ", ToString)
-        outstring += self.printToScreen("the dealer menu and press enter.", ToString)
+        outstring += self.printToScreen("To clear the Alarm/Warning message, press OFF on the control panel keypad", ToString)
+        outstring += self.printToScreen("followed by the ENTER key. To access Dealer Menu on the Evolution", ToString)
+        outstring += self.printToScreen("controller, from the top menu selection (SYSTEM, DATE/TIME,BATTERY, SUB-MENUS)", ToString)
+        outstring += self.printToScreen("enter UP UP ESC DOWN UP ESC UP, then go to the dealer menu and press enter.", ToString)
+        outstring += self.printToScreen("For liquid cooled models a level 2 dealer code can be entered, ESC UP UP DOWN", ToString)
+        outstring += self.printToScreen("DOWN ESC ESC, then navigate to the dealer menu and press enter.", ToString)
+        outstring += self.printToScreen("For Nexus use the following use ESC, UP, UP ESC, DOWN, UP, ESC, UP, UP, ENTER", ToString)
+        outstring += self.printToScreen("for the passcode.", ToString)
 
         outstring += self.printToScreen("\n", ToString)
 
@@ -1777,6 +1805,10 @@ class GeneratorDevice:
             if len(Value):
                 outstring += self.printToScreen("Active Relays: " + Value, True, spacer= True)
 
+            Value = self.GetSensorInputs()
+            if len(Value):
+                outstring += self.printToScreen("Active Sensors: " + Value, True, spacer= True)
+
             if self.SystemInAlarm():
                 Value = self.GetAlarmState()
                 if len(Value):
@@ -1787,7 +1819,10 @@ class GeneratorDevice:
         # get battery voltage
         Value = self.GetBatteryVoltage()
         if len(Value):
-            outstring += self.printToScreen("Battery Voltage: " + Value + ", Status: " + self.GetBatteryStatus(), ToString, spacer = True)
+            if self.EvolutionController:
+                outstring += self.printToScreen("Battery Voltage: " + Value + ", Status: " + self.GetBatteryStatus(), ToString, spacer = True)
+            else:
+                outstring += self.printToScreen("Battery Voltage: " + Value , ToString, spacer = True)
         # Get the RPM
         Value = self.GetRPM()
         if len(Value):
@@ -2110,7 +2145,7 @@ class GeneratorDevice:
         EntryNumber = int(TempVal, 16)
 
         # this will attempt to find a description for the log entry based on the info in ALARMS.txt
-        if LogBase == ALARM_LOG_STARTING_REG and "Unknown" in LogStr and  self.EvolutionController and len(Value) > 16:
+        if LogBase == ALARM_LOG_STARTING_REG and "unknown" in LogStr.lower() and  self.EvolutionController and len(Value) > 16:
             TempVal = Value[16:20]
             AlarmStr = self.GetAlarmInfo(TempVal, ReturnNameOnly = True)
             if not "unknown" in AlarmStr.lower():
@@ -2129,6 +2164,8 @@ class GeneratorDevice:
     # passes ErrorCode as string of hex values
     def GetAlarmInfo(self, ErrorCode, ReturnNameOnly = False):
 
+        if not self.EvolutionController:
+            return ""
         try:
             with open(self.AlarmFile,"r") as AlarmFile:     #opens file
 
@@ -2220,43 +2257,17 @@ class GeneratorDevice:
     ##------------ GeneratorDevice::SystemInAlarm --------------------------------------
     def SystemInAlarm(self):
 
-        # this is a valid way of detecting an alarm with a liquid cooled Evolution system
-        Value = self.GetDigitalOutputs()
-
-        if "Alarm" in Value:
-            self.GeneratorInAlarm = True
-            return True
-
         AlarmState = self.GetAlarmState()
 
         if len(AlarmState):
             self.GeneratorInAlarm = True
             return True
 
-
         self.GeneratorInAlarm = False
         return False
 
     ##------------ GeneratorDevice::GetAlarmState --------------------------------------
     def GetAlarmState(self):
-
-        DigitalInputs_LC = {    #0x01: "Manual",            # Bits 0 and 1 are only momentary (i.e. only set if the button is being pushed)
-                                #0x02: "Auto",
-                                #0x04: "Two Wire Start",
-                                0x08: "Wiring Error",
-                                0x10: "Low Fuel Pressure",
-                                0x20: "Low Coolant Level",
-                                0x40: "Not Used",
-                                0x80: "Low Oil Pressure"}
-        # Air cooled
-        DigitalInputs_AC = {    #0x01: "Manual",         # Bits 0 and 1 are only momentary (i.e. only set if the button is being pushed)
-                                #0x02: "Auto",
-                                0x04: "No Used",
-                                0x08: "Wiring Error",
-                                0x10: "Not Used",
-                                0x20: "High Temprature",
-                                0x40: "Low Oil Pressure",
-                                0x80: "Not Used"}
 
         strSwitch = self.GetSwitchState()
 
@@ -2265,13 +2276,19 @@ class GeneratorDevice:
 
         outString = ""
 
-        if "alarm" in strSwitch.lower():
+        Value = self.GetRegisterValueFromList("0001")
+        if len(Value) != 8:
+            return ""
+        RegVal = int(Value, 16)
 
-            Value = self.GetRegisterValueFromList("0001")
-            if len(Value) != 8:
-                return ""
-            RegVal = int(Value, 16)
+        if "alarm" in strSwitch.lower() and self.EvolutionController:
+            Value = self.GetRegisterValueFromList("05f1")   # get last error code
+            if len(Value) == 4:
+                AlarmStr = self.GetAlarmInfo(Value, ReturnNameOnly = True)
+                if not "unknown" in AlarmStr.lower():
+                    outString = AlarmStr
 
+        if "alarm" in strSwitch.lower() and len(outString) == 0:        # is system in alarm/warning
             # These codes indicate an alarm needs to be reset before the generator will run again
             if self.BitIsEqual(RegVal, 0x0FFFF, 0x08):          #  occurred when forced low coolant
                 outString += "Low Coolant"
@@ -2284,58 +2301,7 @@ class GeneratorDevice:
             else:
                 outString += "UNKNOWN ALARM: %08x" % RegVal
 
-        if self.EvolutionController:
-            Register = "0057"       # Evolution
-
-            # get the inputs registes
-            Value = self.GetRegisterValueFromList(Register)
-            if len(Value) != 4:
-                return ""
-
-            RegVal = int(Value, 16)
-
-            if self.LiquidCooled:
-                Lookup = DigitalInputs_LC
-            else:
-                Lookup = DigitalInputs_AC
-
-            outvalue = ""
-            counter = 0x01
-
-            while counter <= 0x80:
-                Name = Lookup.get(counter, "")
-                if len(Name) and Name != "Not Used":
-                    if self.BitIsEqual(RegVal, counter, counter):
-                        outvalue += Name + ", "
-                counter = counter << 1
-
-            # take of the last comma
-            ret = outvalue.rsplit(",", 1)
-
-            if len(outString):
-                outString += " " + ret[0]
-            else:
-                outString = ret[0]
-
         return outString
-
-    ##------------ GeneratorDevice::GetTwoWireStartState --------------------------------------
-    def GetTwoWireStartState(self):
-
-        if not self.LiquidCooled:
-            return ""
-
-        # get the inputs registes
-        Value = self.GetRegisterValueFromList("0057")
-        if len(Value) != 4:
-            return ""
-
-        RegVal = int(Value, 16)
-
-        if self.BitIsEqual(RegVal, 0x04,0x04):
-            return "Two Wire Start Active "
-        else:
-            return ""
 
     #------------ GeneratorDevice::GetDigitalValues --------------------------------------
     def GetDigitalValues(self, RegVal, LookUp):
@@ -2343,46 +2309,86 @@ class GeneratorDevice:
         outvalue = ""
         counter = 0x01
 
-        while counter <= 0x80:
-            Name = LookUp.get(counter, "")
-            if len(Name) and Name != "Not Used":
-                if self.BitIsEqual(RegVal, counter, counter):
-                    outvalue += "%s, " % Name
-            counter = counter << 1
-
+        for BitMask, Items in LookUp.items():
+            if len(Items[1]):
+                if self.BitIsEqual(RegVal, BitMask, BitMask):
+                    if Items[0]:
+                        outvalue += "%s, " % Items[1]
+                else:
+                    if not Items[0]:
+                        outvalue += "%s, " % Items[1]
         # take of the last comma
         ret = outvalue.rsplit(",", 1)
         return ret[0]
 
+    ##------------ GeneratorDevice::GetSensorInputs --------------------------------------
+    def GetSensorInputs(self):
+
+        # at the moment this has only been validated on an Evolution Liquid cooled generator
+        # so we will disallow any others from this status
+        if not self.EvolutionController:
+            return ""        # Nexus
+
+
+        # Air cooled
+        DealerInputs_Evo_AC = { 0x0001: [True, "Manual"],         # Bits 0 and 1 are only momentary (i.e. only set if the button is being pushed)
+                                0x0002: [True, "Auto"],
+                                0x0008: [True, "Wiring Error"],
+                                0x0020: [True, "High Temperature"],
+                                0x0040: [True, "Low Oil Pressure"]}
+
+        DealerInputs_Evo_LC = {
+                                0x0001: [True, "Manual Button"],
+                                0x0002: [True, "Auto Button"],
+                                0x0004: [True, "Off Button"],
+                                0x0008: [True, "2 Wire Start"],
+                                0x0010: [True, "Wiring Error"],
+                                0x0020: [True, "Ruptured Basin"],
+                                0x0040: [False, "E-Stop Activated"],
+                                0x0080: [True, "Oil below 8 PSI"],
+                                0x0100: [True, "Low Coolant"],
+                                #0x0200: [False, "Fuel below 5 inch"]}          # Propane/NG
+                                0x0200: [True, "Fuel Pressure / Level Low"]}     # Gasoline / Diesel
+
+        if not self.PetroleumFuel:
+            DealerInputs_Evo_LC[0x0080] = [False, "Fuel below 5 inch"]
+
+
+        # get the inputs registes
+        Value = self.GetRegisterValueFromList("0052")
+        if len(Value) != 4:
+            return ""
+
+        RegVal = int(Value, 16)
+
+        if self.LiquidCooled:
+            return self.GetDigitalValues(RegVal, DealerInputs_Evo_LC)
+        else:
+            return self.GetDigitalValues(RegVal, DealerInputs_Evo_AC)
 
     #------------ GeneratorDevice::GetDigitalOutputs --------------------------------------
     def GetDigitalOutputs(self):
 
         if not self.EvolutionController:
-            Register = "UNK"        # Nexus
-        else:
-            Register = "0053"       # Evolution
+            return ""        # Nexus
 
         # Liquid cooled
-        DigitalOutputs_LC = {   0x01: "Transfer Switch Activated",
-                                0x02: "Cold Start",
-                                0x04: "Starter On",
-                                0x08: "Fuel Relay On",
-                                0x10: "Battery Charger On",
-                                0x20: "Alarm Active",
-                                0x40: "Bosch Governor On",
-                                0x80: "Air/Fuel Relay On"}
+        DigitalOutputs_LC = {   0x01: [True, "Transfer Switch Activated"],
+                                0x02: [True, "Fuel Enrichment On"],
+                                0x04: [True, "Starter On"],
+                                0x08: [True, "Fuel Relay On"],
+                                0x10: [True, "Battery Charger On"],
+                                0x20: [True, "Alarm Active"],
+                                0x40: [True, "Bosch Governor On"],
+                                0x80: [True, "Air/Fuel Relay On"]}
         # Air cooled
-        DigitalOutputs_AC = {   0x01: "Transfer Switch Activated",
-                                0x02: "Ignition On",
-                                0x04: "Starter On",
-                                0x08: "Fuel Relay On",
-                                0x10: "Battery Charger On",
-                                0x20: "Not Used",
-                                0x40: "Not Used",
-                                0x80: "Not Used"}
+        DigitalOutputs_AC = {   0x01: [True, "Transfer Switch Activated"],
+                                0x02: [True, "Ignition On"],
+                                0x04: [True, "Starter On"],
+                                0x08: [True, "Fuel Relay On"],
+                                0x10: [True, "Battery Charger On"]}
 
-        Value = self.GetRegisterValueFromList(Register)
+        Value = self.GetRegisterValueFromList("0053")
         if len(Value) != 4:
             return ""
         RegVal = int(Value, 16)
@@ -2403,6 +2409,7 @@ class GeneratorDevice:
         else:
             RegVal = Reg0001Value
 
+
         # other values that are possible:
         # Running in Warning
         # Running in Alarm
@@ -2418,13 +2425,24 @@ class GeneratorDevice:
         elif self.BitIsEqual(RegVal, 0x000F0000, 0x00090000):
             return "Stopped"
         elif self.BitIsEqual(RegVal, 0x000F0000, 0x00010000):
-            return "Cranking"
+            if self.SystemInAlarm():
+                return "Cranking in Alarm"
+            else:
+                return "Cranking"
         elif self.BitIsEqual(RegVal, 0x000F0000, 0x00020000):
-            return "Starting"
+            if self.SystemInAlarm():
+                return "Starting in Alarm"
+            else:
+                return "Starting"
         elif self.BitIsEqual(RegVal, 0x000F0000, 0x00050000):
             return "Cooling Down"
         elif self.BitIsEqual(RegVal, 0x000F0000, 0x00030000):
-            return "Running"
+            if self.SystemInAlarm():
+                return "Running in Alarm"
+            else:
+                return "Running"
+        elif self.BitIsEqual(RegVal, 0x000F0000, 0x00060000):
+            return "Running in Warning"
         elif self.BitIsEqual(RegVal, 0x000F0000, 0x00080000):
             return "Stopped in Alarm"
         elif self.BitIsEqual(RegVal, 0x000F0000, 0x00000000):
@@ -2440,22 +2458,14 @@ class GeneratorDevice:
             return ""
         RegVal = int(Value, 16)
 
-        if not self.BitIsEqual(RegVal, 0x000F0000, 0x00080000):     # if not stopped in alarm
-            if self.BitIsEqual(RegVal, 0x0FFFF, 0x00):
-                return "Auto"
-            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x07):
-                return "Off"
-            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x06):
-                return "Manual"
-            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x1F):
-                return "WARNING: Service Due - Check Logs"
-            else:
-            # if we get here then we have an unknown value and the engine is not stopped in alarm
-            # we, tell the user to check the logs
-            # likely condition is
-                return "UNKNOWN: %08x" % RegVal
+        if self.BitIsEqual(RegVal, 0x0FFFF, 0x00):
+            return "Auto"
+        elif self.BitIsEqual(RegVal, 0x0FFFF, 0x07):
+            return "Off"
+        elif self.BitIsEqual(RegVal, 0x0FFFF, 0x06):
+            return "Manual"
         else:
-            return "Stopped in Alarm"               # This string value is check for the work 'alarm' in another function
+            return "System in Alarm"
 
     #------------ GeneratorDevice::GetDateTime -----------------------------------------
     def GetDateTime(self):
@@ -2611,6 +2621,7 @@ class GeneratorDevice:
 
         return SensorValue
 
+
     #------------ GeneratorDevice::GetRPM --------------------------------------------
     def GetRPM(self):
 
@@ -2720,7 +2731,7 @@ class GeneratorDevice:
     #------------ GeneratorDevice::GetBaseStatus ------------------------------------
     def GetBaseStatus(self):
 
-        if self.GeneratorInAlarm:
+        if self.SystemInAlarm():
             return "ALARM"
 
         if self.ServiceIsDue():
@@ -2770,26 +2781,37 @@ class GeneratorDevice:
     #------------ GeneratorDevice::GetRunTimes ----------------------------------------
     def GetRunTimes(self):
 
-        # get total hours running
-        Value = self.GetRegisterValueFromList("000c")
-        if len(Value) != 4:
-            return ""
+        if not self.EvolutionController:
+            # get total hours running
+            Value = self.GetRegisterValueFromList("000c")
+            if len(Value) != 4:
+                return ""
 
-        TotalRunTime = int(Value,16)
+            TotalRunTime = int(Value,16)
 
-        # removed since this does not appear to be accurate
-        # get total exercise hours
-        #Value = self.GetRegisterValueFromList("0000")
-        #if len(Value) != 4:
-        #    return ""
+            RunTimes = "Total Engine Run Hours: %d " % (TotalRunTime)
+        else:
+            # total engine run time in minutes
+            Value = self.GetRegisterValueFromList("005f")
+            if len(Value) != 4:
+                return ""
 
-        #ExerciseTime = int(Value,16)
+            TotalRunTime = int(Value,16)
 
+            #hours, min = divmod(TotalRunTime, 60)
+            #RunTimes = "Total Engine Run Time: %d:%d " % (hours, min)
+            TotalRunTime = TotalRunTime / 60.0
+            RunTimes = "Total Engine Run Hours: %.2f " % (TotalRunTime)
 
-        #BackUpHours = TotalRunTime - ExerciseTime
+        if self.EvolutionController:
+            # get total hours since activation
+            Value = self.GetRegisterValueFromList("0054")
+            if len(Value) != 4:
+                return ""
 
-        #RunTimes = "Total Run Hours: %d, Backup: %d, Exercise: %d " % (TotalRunTime, BackUpHours,  ExerciseTime)
-        RunTimes = "Total Run Hours: %d " % (TotalRunTime)
+            TotalRunTime = int(Value,16)
+
+            RunTimes += ", \"Hours of Protection\": %d H " % TotalRunTime
 
         return RunTimes
 
@@ -2879,7 +2901,7 @@ class GeneratorDevice:
             conn.settimeout(2)   # only blok on recv for a small amount of time
 
             statusstr = ""
-            if self.GeneratorInAlarm:
+            if self.SystemInAlarm():
                 statusstr += "CRITICAL: System in alarm! "
             HealthStr = self.GetSystemHealth()
             if HealthStr != "OK":
