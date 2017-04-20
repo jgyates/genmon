@@ -313,6 +313,18 @@ To execute gengpioin.py type:
 
 [Example GPIO input circuit](http://elinux.org/RPi_GPIO_Interface_Circuits). Note: external pull up resistor is not needed as it is handled by the chipset.
 
+## genlog.py (optional)
+
+This program will log the state of the generator (RUNNING, EXERCISE,READY, ALARM, SERVICE) along with a date/time to a comma delimited text file (.csv). This file can be opened by Excel. The date/time entry can be formated to an Excel date/time data type. This will allow an analysis to be performed on your generator usage. The program has the following command line syntax:
+
+     python genlog.py -a <IP Address or localhost> -o <outputfile>
+
+Example:
+
+     python genlog.py -a 192.168.1.50 -o logfile.csv
+
+This program requires myclient.py and mylog.py. This program can be executed remotely (not on the Raspberry Pi) if the IP address of the Raspberry Pi is provided on the command line. If this program is executed as at boot from a crontab job you musty specify the full path of the output file (i.e. /home/pi/out.csv. If you execute this program locally you can use a relative path (i.e. ./out.csv).
+
 ## /OtherApps/check_monitor_system.py (optional)
 
 In addition the the above mentioned ClientInterface.py application, genmon.py supports communicating via the socket interface so the application and generator can be monitored by network monitoring tools like Nagios. The program check_monitor_system.py can be used with as a Nagios Plugin to monitor genmon.py. See https://www.nagios.org/ for Nagios details. check_monitor_system.py is the name of the supplied nagios plug-in.
