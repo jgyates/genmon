@@ -7,6 +7,7 @@ case "$1" in
     sudo python /home/pi/genmon/genserv.py  &
     #sudo python /home/pi/genmon/gengpio.py  &
     #sudo python /home/pi/genmon/gengpioin.py  &
+    #sudo python /home/pi/genmon/genlog.py -o /home/pi/genmon/LogFile.csv
     ;;
   stop)
     echo "Stopping genmon python scripts"
@@ -14,6 +15,7 @@ case "$1" in
     sudo pkill -f genserv.py
     #sudo pkill -f gengpio.py
     #sudo pkill -f gengpioin.py
+    #sudo pkill -f genlog.py
     ;;
   *)
     #
