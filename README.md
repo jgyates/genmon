@@ -437,8 +437,6 @@ This is the part number of the connector on the controller (receptacle). This is
 I used a molex connector on my enclosure and routed the two wires to a break-out box that a DB-9 (see link above) however there are endless ways to make the connection to your enclosure on the Pi.
 
 ## Creating a Cable
-The above links include part numbers for the Molex connector and a link for the Molex crimp tool which are both needed to create a cable to interface to the Evolution /Nexus Controller. If you are new to using crimp tools to create cable connectors, I would suggest YouTube.com as a resource. There are many "How To" videos that should help with any learning curve. I searched on "Molex Crimping Tool" and found a few.
 
-[Molex Crimping How To Video](https://www.youtube.com/watch?v=ofh998RCBY0&t=150s)
-
+See the [project wiki](https://github.com/jgyates/genmon/wiki/Making-a-Cable) for info on creating a cable.
 
