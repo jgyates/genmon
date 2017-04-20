@@ -249,11 +249,13 @@ Also, if you generator has as radiator then it is liquid cooled, otherwise it is
     # Nexus Controller.
     #evolutioncontroller = True
     
-    # This parameter is only valid for liquid cooled Evolution generators, ignored for others.
-    # True if your generator uses diesel or gasoline, false if you use propane or natural gas
-    # (optional) default True. This value is used to change how some register values are 
-    # interpreted and displayed based on the fuel type
+    # (optional) default True. This parameter is only valid for liquid cooled
+    # Evolution generators, ignored for others. True if your generator uses diesel
+    # or gasoline, false if you use  propane or natural gas. This value is used
+    # to change how some register values are interpreted and displayed based on
+    # the fuel type
     #petroleumfuel = True
+
 
 
 
