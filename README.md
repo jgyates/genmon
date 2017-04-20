@@ -229,8 +229,8 @@ Also, if you generator has as radiator then it is liquid cooled, otherwise it is
 
     # This option will display the contents of additional registers that appear to be
     # associated with sensors of some type, for example one register outputs almost
-    # half of the frequency. I assume this is used internally by the controller. (optional,
-    # default False)
+    # half of the frequency. I assume this is used internally by the controller.
+    # (optional, default False)
     displayunknown = False
 
     # (optional) This option enables (when True) using and alternate method for writing
