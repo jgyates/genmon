@@ -46,7 +46,7 @@ if __name__=='__main__':
     address = '127.0.0.1'
     fileName = ""
 
-    HelpStr = '\npython genlog.py -a <IP Address or localhost> -o <outputfile>\n'
+    HelpStr = '\npython genlog.py -a <IP Address or localhost> -f <outputfile>\n'
 
     try:
         opts, args = getopt.getopt(sys.argv[1:],"ha:f:",["address=","filename="])
