@@ -1678,7 +1678,7 @@ class GeneratorDevice:
         outstring += self.printToScreen("DOWN ESC ESC, then navigate to the dealer menu and press enter.", ToString)
         outstring += self.printToScreen("For Nexus use the following use ESC, UP, UP ESC, DOWN, UP, ESC, UP, UP, ENTER", ToString)
         outstring += self.printToScreen("for the passcode.", ToString)
-
+        outstring += self.printToScreen("Passcode for Nexus controller is ESC, UP, UP ESC, DOWN, UP, ESC, UP, UP, ENTER.", ToString)
         outstring += self.printToScreen("\n", ToString)
 
         return outstring
@@ -2070,8 +2070,9 @@ class GeneratorDevice:
         }
 
         NexusAlarmLogDecoder = {
-        #0x00: "UNKNOWN"
-        #0x01: "UNKNOWN"
+        #0x00: "UNKNOWN",        # TBD
+        #0x01: "UNKNOWN",        # TBD
+        0x14: "Low Battery",     #
         0x1b: "Check Battery"
         }
 
