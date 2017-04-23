@@ -297,6 +297,7 @@ class GeneratorDevice:
             self.bUseLegacyWrite = False
             self.EvolutionController = None
             self.PetroleumFuel = True
+            self.OutageLog = ""
 
             # getfloat() raises an exception if the value is not a float
             # getint() and getboolean() also do this for their respective types
@@ -336,6 +337,8 @@ class GeneratorDevice:
                 self.bDisplayUnknownSensors = config.getboolean('GenMon', 'displayunknown')
             if config.has_option('GenMon', 'uselegacysetexercise'):
                 self.bUseLegacyWrite = config.getboolean('GenMon', 'uselegacysetexercise')
+            if config.has_option('GenMon', 'outagelog'):
+                self.OutageLog = config.get('GenMon', 'outagelog')
         except Exception, e1:
             raise Exception("Missing config file or config file entries: " + str(e1))
             return None
@@ -1567,12 +1570,67 @@ class GeneratorDevice:
                 OutageStr = str(self.LastOutageDuration).split(".")[0]  # remove microseconds from string
                 msgbody = "\nUtility Power Restored. Duration of outage " + OutageStr
                 self.mail.sendEmail("Outage Recovery Notice at " + self.SiteName, msgbody)
+                # log outage to file
+                self.LogOutageToFile(self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"), OutageStr)
         else:
             if UtilityVolts < ThresholdVoltage:
                 self.SystemInOutage = True
                 self.OutageStartTime = datetime.datetime.now()
                 msgbody = "\nUtility Power Out at " + self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S")
                 self.mail.sendEmail("Outage Notice at " + self.SiteName, msgbody)
+
+    #------------ GeneratorDevice::LogOutageToFile-------------------------
+    def LogOutageToFile(self, TimeDate, Duration):
+
+        if not len(self.OutageLog):
+            return ""
+
+        try:
+            with open(self.OutageLog,"a") as LogFile:     #opens file
+                LogFile.write(TimeDate + "," + Duration + "\n")
+                LogFile.flush()
+        except Exception, e1:
+            self.LogError("Error in  LogOutageToFile: " + str(e1))
+
+    #------------ GeneratorDevice::DisplayOutageHistory-------------------------
+    def DisplayOutageHistory(self, ToString = False):
+
+        if not len(self.OutageLog):
+            return ""
+        try:
+            # check to see if a log file exist yet
+            if not os.path.isfile(self.OutageLog):
+                return ""
+
+            outstr = ""
+            outstr += self.printToScreen("\nOutage Log: ", ToString)
+            OutageLog = []
+
+            with open(self.OutageLog,"r") as OutageFile:     #opens file
+
+                for line in OutageFile:
+                    line = line.rstrip()                   # remove newline at end and trailing whitespace
+                    line = line.lstrip()                   # remove any leading whitespace
+
+                    if not len(line):
+                        continue
+                    if line[0] == "#":              # comment?
+                        continue
+                    Items = line.split(",")
+                    if len(Items) != 2:
+                        continue
+                    OutageLog.insert(0, [Items[0], Items[1]])
+                    if len(OutageLog) > 50:     # limit log to 50 entries
+                        OutageLog.pop()
+
+            for Items in OutageLog:
+                outstr += self.printToScreen(Items[0] + ", Duration: " + Items[1] , ToString, spacer = True)
+
+            return outstr
+
+        except Exception, e1:
+            self.LogError("Error in  DisplayOutageHistory: " + str(e1))
+            return ""
 
     #------------ GeneratorDevice::CheckForAlarms ----------------------------------------
     # Note this must be called from the Process thread since it queries the log registers
@@ -1740,7 +1798,10 @@ class GeneratorDevice:
             outstr += self.printToScreen("Utility Voltage Minimum : %dV " % (self.UtilityVoltsMin), ToString, spacer = True)
             outstr += self.printToScreen("Utility Voltage Maximum : %dV " % (self.UtilityVoltsMax), ToString, spacer = True)
 
+        outstr += self.DisplayOutageHistory(ToString)
+
         return outstr
+
 
     #------------ GeneratorDevice::DisplayMonitor --------------------------------------------
     def DisplayMonitor(self, ToString = False):
