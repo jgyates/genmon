@@ -541,16 +541,16 @@ class GeneratorDevice:
 
         if self.EvolutionController == None:
             # issue modbus read
-            self.ProcessMasterSlaveTransaction("023b", 1)
+            self.ProcessMasterSlaveTransaction("0000", 1)
 
-            # read register from cached list. get Utility Voltage Pickup Voltage
-            Value = self.GetRegisterValueFromList("023b")
+            # read register from cached list.
+            Value = self.GetRegisterValueFromList("0000")
             if len(Value) != 4:
                 return ""
-            PickupVoltage = int(Value,16)
+            ProductModel = int(Value,16)
 
-            # if pickup voltage register 023b is zero then assume we have a Nexus Controller
-            if PickupVoltage == 0:
+            # if reg 000 is 3 or less then assume we have a Nexus Controller
+            if ProductModel <= 0x03:
                 self.EvolutionController = False    #"Nexus"
                 self.printToScreen("Nexus Controller Detected")
             else:
