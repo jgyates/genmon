@@ -327,7 +327,9 @@ The following GPIO will be activated on Evolution Controllers:
 * Overload (alarm 2100-2103) GPIO 20 (pin 38)
 * Governor (alarm 2500-2502) GPIO 16 (pin 36)
 * Warning (alarm 0000, Evolution Air Cooled Only) GPIO 12 (pin 32)
-    
+ 
+ All outputs are high when active.
+ 
 [Example of LED circuit connected to Raspberry Pi GPIO](http://raspi.tv/2013/rpi-gpio-basics-4-setting-up-rpi-gpio-numbering-systems-and-inputs). To execute gengpio.py type:
 
      python gengpio.py <IP Address of your Pi running genmon.py or omit for localhost>
