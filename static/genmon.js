@@ -396,6 +396,7 @@ function MenuClick(e)
             case "outage":
             case "logs":
             case "monitor":
+                window.scrollTo(0,0);
                 menuElementID = e.target;
                 GetDisplayValues(e.target.id);
                 if (e.target.id == "maint") {
