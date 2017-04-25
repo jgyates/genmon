@@ -310,9 +310,23 @@ ClientInterface.py logs errors to client.log in the current directory.
 
 The program gengpio.py is a console python application that will communicate with genmon.py and set or reset GPIO pins on the Raspberry Pi.The application requires the supplied python module mylog.py and myclient.py so these files will need to be in the same directory as gengpio.py. The program takes one command line argument of the IP address of the system that genmon.py is running (localhost is default). 
 
-* If the generator is ready then GPIO 23 (pin 16) will be high
-* If the generator is in alarm then GPIO 24 (pin 18) will be high
-* If service is due on the generator then GPIO 25 (pin 22) will be high.
+* Generator READY GPIO 23 (pin 16)
+* Generator ALARM GPIO 24 (pin 18)
+* Generator SERVICE DUE GPIO 25 (pin 22)
+* Generator EXERCISING GPIO 8 (pin 24)
+* Generator RUNNING GPIO 7 (pin 26)
+
+The following GPIO will be activated on Evolution Controllers:
+
+* Overspeed/Underspeed (alarms 1200-1206, 1600-1603) GPIO 5 (pin 29)
+* Low Oil (alarm 1300) GPIO 6 (pin 31)
+* High Temp (alarm 1400) GPIO 13 (pin 33
+* RPM Sensor (alarm 1500-1521) GPIO 19 (pin 35)
+* Overvoltage/Undervoltage (alarm 1800-1803, 1900-1906) GPIO 26 (pin 37)
+* Overcrank (alarm 1100-1101) GPIO 21 (pin 40)
+* Overload (alarm 2100-2103) GPIO 20 (pin 38)
+* Governor (alarm 2500-2502) GPIO 16 (pin 36)
+* Warning (alarm 0000, Evolution Air Cooled Only) GPIO 12 (pin 32)
     
 [Example of LED circuit connected to Raspberry Pi GPIO](http://raspi.tv/2013/rpi-gpio-basics-4-setting-up-rpi-gpio-numbering-systems-and-inputs). To execute gengpio.py type:
 
