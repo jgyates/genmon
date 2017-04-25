@@ -421,6 +421,8 @@ The program gensms.py is a program that will send mobile text (SMS) messages whe
 
 The SMS implementation utilizes a [Twilio](www.twilio.com) account for sending SMS messages. A free trial account is available and pricing for a non-trial account information is on the Twilio site. 
 
+The program will send a short text message when the generator enters the following states: READY, RUNNING, EXERCISING, ALARM, SERVICEDUE.
+
 To install the Twilio support library type:
 
      sudo pip install twilio
