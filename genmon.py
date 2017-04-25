@@ -171,7 +171,7 @@ NEXUS_ALARM_LOG_STRIDE          = 4
 NEXUS_ALARM_LOG_END_REG         = ((NEXUS_ALARM_LOG_STARTING_REG + (NEXUS_ALARM_LOG_STRIDE * LOG_DEPTH)) - NEXUS_ALARM_LOG_STRIDE)
 
 DEFAULT_THRESHOLD_VOLTAGE = 143
-DEFAULT_PICKUP_VOLTAGE = 215
+DEFAULT_PICKUP_VOLTAGE = 190
 #------------ GeneratorDevice class --------------------------------------------
 class GeneratorDevice:
 
@@ -223,58 +223,72 @@ class GeneratorDevice:
         # and due to the magic of python, we often deal with the response in string values
         #   dict format  Register: [ Length in bytes: monitor change 0 - no, 1 = yes]
         self.BaseRegisters = {                  # base registers read by master
-                                "0000" : [2, 0],     # Unknown, possibly product line code
-                                "0005" : [2, 0],     # Exercise Time Hi Byte = Hour, Lo Byte = Min (Read Only)
-                                "0006" : [2, 0],     # Exercise Time Hi Byte = Day of Week 00=Sunday 01=Monday, Low Byte = 00=quiet=no, 01=yes
-                                "0007" : [2, 0],     # Engine RPM
-                                "0008" : [2, 0],     # Freq - value includes Hz to the tenths place i.e. 59.9 Hz
-                                "000a" : [2, 0],     # battery voltage Volts to  tenths place i.e. 13.9V
-                                "000c" : [2, 0],     # engine run time hours
-                                "000e" : [2, 0],     # Read / Write: Generator Time Hi byte = hours, Lo byte = min
-                                "000f" : [2, 0],     # Read / Write: Generator Time Hi byte = month, Lo byte = day of the month
-                                "0010" : [2, 0],     # Read / Write: Generator Time = Hi byte Day of Week 00=Sunday 01=Monday, Lo byte = last 2 digits of year
-                                "0011" : [2, 0],     # Utility Threshold, ML Does not read this
-                                "0012" : [2, 0],     # Gen output voltage
-                                "001a" : [2, 0],     # Hours until next service
-                                "002a" : [2, 0],     # hardware (high byte) (Hardware V1.04 = 0x68) and firmware version (low byte) (Firmware V1.33 = 0x85)
-                                "003c" : [2, 0],     # Unknown sensor 1 ramps up to 300 (30.0 ?)
-                                "0058" : [2, 0],     # Unknown sensor 2, once engine starts ramps up to 1600 decimal (160.0?)
-                                "005d" : [2, 0],     # Unknown sensor 3, Moves between 0x55 - 0x58 continuously even when engine off
-                                "05ed" : [2, 0],     # Unknown sensor 4, changes between 35, 37, 39
-                                "0059" : [2, 0],     # Set Voltage from Dealer Menu (not currently used)
-                                "023b" : [2, 0],     # Pick Up Voltage
-                                "023e" : [2, 0],     # Exercise time duration
-                                "0054" : [2, 0],     # Hours since generator activation (hours of protection)
-                                "005f" : [2, 0],     # Total engine time in minutes
-                                "01f1" : [2, 0],     # Unknown Status (WIP)
-                                "01f2" : [2, 0],     # Unknown Status (WIP)
-                                "001b" : [2, 0],     # Unknown Read by ML
-                                "001c" : [2, 0],     # Unknown Read by ML
-                                "001d" : [2, 0],     # Unknown Read by ML
-                                "001e" : [2, 0],     # Unknown Read by ML
-                                "001f" : [2, 0],     # Unknown Read by ML
-                                "0020" : [2, 0],     # Unknown Read by ML
-                                "0021" : [2, 0],     # Unknown Read by ML
-                                "0019" : [2, 0],     # Unknown Read by ML
-                                "0057" : [2, 0],     # Unknown Looks like some status bits (changes when engine starts / stops)
-                                "0055" : [2, 0],     # Unknown
-                                "0056" : [2, 0],     # Unknown Looks like some status bits (changes when engine starts / stops)
-                                "005a" : [2, 0],
-                                "005c" : [2, 0]}
+                    "0000" : [2, 0],     # Unknown, possibly product line code (Nexus, EvoAQ, EvoLQ)
+                    "0005" : [2, 0],     # Exercise Time Hi Byte = Hour, Lo Byte = Min (Read Only) (Nexus, EvoAQ, EvoLQ)
+                    "0006" : [2, 0],     # Exercise Time Hi Byte = Day of Week 00=Sunday 01=Monday, Low Byte = 00=quiet=no, 01=yes (Nexus, EvoAQ, EvoLQ)
+                    "0007" : [2, 0],     # Engine RPM  (Nexus, EvoAQ, EvoLQ)
+                    "0008" : [2, 0],     # Freq - value includes Hz to the tenths place i.e. 59.9 Hz (Nexus, EvoAQ, EvoLQ)
+                    "000a" : [2, 0],     # battery voltage Volts to  tenths place i.e. 13.9V (Nexus, EvoAQ, EvoLQ)
+                    "000c" : [2, 0],     # engine run time hours
+                    "000e" : [2, 0],     # Read / Write: Generator Time Hi byte = hours, Lo byte = min (Nexus, EvoAQ, EvoLQ)
+                    "000f" : [2, 0],     # Read / Write: Generator Time Hi byte = month, Lo byte = day of the month (Nexus, EvoAQ, EvoLQ)
+                    "0010" : [2, 0],     # Read / Write: Generator Time = Hi byte Day of Week 00=Sunday 01=Monday, Lo byte = last 2 digits of year (Nexus, EvoAQ, EvoLQ)
+                    "0011" : [2, 0],     # Utility Threshold, ML Does not read this  (Nexus, EvoAQ, EvoLQ)
+                    "0012" : [2, 0],     # Gen output voltage (Nexus, EvoAQ, EvoLQ)
+                    "001a" : [2, 0],     # Hours until next service (Nexus, EvoAQ, EvoLQ)
+                    "002a" : [2, 0],     # hardware (high byte) (Hardware V1.04 = 0x68) and firmware version (low byte) (Firmware V1.33 = 0x85) (Nexus, EvoAQ, EvoLQ)
+                    "0059" : [2, 0],     # Set Voltage from Dealer Menu (not currently used)
+                    "023b" : [2, 0],     # Pick Up Voltage (Evo LQ only)
+                    "023e" : [2, 0],     # Exercise time duration (Evo LQ only)
+                    "0054" : [2, 0],     # Hours since generator activation (hours of protection)
+                    "005f" : [2, 0],     # Total engine time in minutes
+                    "01f1" : [2, 0],     # Unknown Status (WIP)
+                    "01f2" : [2, 0],     # Unknown Status (WIP)
+                    "001b" : [2, 0],     # Unknown Read by ML
+                    "001c" : [2, 0],     # Unknown Read by ML
+                    "001d" : [2, 0],     # Unknown Read by ML
+                    "001e" : [2, 0],     # Unknown Read by ML
+                    "001f" : [2, 0],     # Unknown Read by ML
+                    "0020" : [2, 0],     # Unknown Read by ML
+                    "0021" : [2, 0],     # Unknown Read by ML
+                    "0019" : [2, 0],     # Unknown Read by ML
+                    "0057" : [2, 0],     # Unknown Looks like some status bits (changes when engine starts / stops)
+                    "0055" : [2, 0],     # Unknown
+                    "0056" : [2, 0],     # Unknown Looks like some status bits (changes when engine starts / stops)
+                    "005a" : [2, 0],
+                    "000d" : [2, 0],     # Bit changes when the controller is updating registers.
+                    "003c" : [2, 0],     # Unknown sensor 1 ramps up to 300 on Evo LC, 260 on Evo AC(30.0 ?)
+                    "0058" : [2, 0],     # Unknown sensor 2, once engine starts ramps up to 1600 decimal (160.0?)
+                    "005d" : [2, 0],     # Unknown sensor 3, Moves between 0x55 - 0x58 continuously even when engine off
+                    "05ed" : [2, 0],     # Unknown sensor 4, changes between 35, 37, 39
+                    "05f4" : [2, 0],     # Evo AC   (Status?) 0000 0007 0005 0000 (Evo AQ Status Reg)
+                    "05f5" : [2, 0],     # Evo AC   (Status?) 0000 * 0005 0000
+                    "05fa" : [2, 0],     # Evo AC   (Status?)
+                    "0034" : [2, 0],     # Evo AC   (Status?) Goes from FFFF 0000 00001 (Nexus and Evo AC)
+                    "0032" : [2, 0],     # Evo AC   (Sensor?) starts  0x4000 ramps up to ~0x02f0
+                    "0037" : [2, 0],     # Evo AC   (Sensor?) only moves while running goes up to ~0x1350
+                    "0038" : [2, 0],     # Evo AC   (Sensor?)       FFFE, FFFF, 0001, 0002 random - not linear
+                    "003b" : [2, 0],     # Evo AC   (Sensor?)  Nexus and Evo AC
+                    "002b" : [2, 0],     # Evo AC   (Ambient Temp Sensor for Evo AC?)
+                    "0208" : [2, 0],     # Evo AC   (Time in minutes? or something else) did not move in last test
+                    "002e" : [2, 0],     # Evo AC   (Exercise Time)
+                    "002c" : [2, 0],     # Evo AC   (Exercise Time)
+                    "002f" : [2, 0],     # Evo AC   (Quite Mode)
+                    "005c" : [2, 0]}
 
 
         # registers that need updating more frequently than others to make things more responsive
         self.PrimeRegisters = {
-                                "0001" : [4, 0],     # Alarm and status register
-                                "0053" : [2, 0],     # Output relay status register (battery charging, transfer switch, Change at startup and stop
-                                "0052" : [2, 0],     # Input status register (sensors) only tested on liquid cooled Evo
-                                "0009" : [2, 0],     # Utility voltage
-                                "05f1" : [2, 0]}     # Last Alarm Code
+                    "0001" : [4, 0],     # Alarm and status register
+                    "0053" : [2, 0],     # Evo LC Output relay status register (battery charging, transfer switch, Change at startup and stop
+                    "0052" : [2, 0],     # Evo LC Input status register (sensors) only tested on liquid cooled Evo
+                    "0009" : [2, 0],     # Utility voltage
+                    "05f1" : [2, 0]}     # Last Alarm Code
 
         self.WriteRegisters = {  # 0003 and 0004 are index registers, used to write exercise time and other unknown stuff (remote start, stop and transfer)
-                                "002c" : 2,     # Read / Write: Exercise Time HH:MM
-                                "002e" : 2,     # Read / Write: Exercise Day Sunday =0, Monday=1
-                                "002f" : 2}     # Read / Write: Exercise Quite Mode=1 Not Quiet Mode = 0
+                    "002c" : 2,     # Read / Write: Exercise Time HH:MM
+                    "002e" : 2,     # Read / Write: Exercise Day Sunday =0, Monday=1
+                    "002f" : 2}     # Read / Write: Exercise Quite Mode=1 Not Quiet Mode = 0
 
         self.REGLEN = 0
         self.REGMONITOR = 1
@@ -410,7 +424,7 @@ class GeneratorDevice:
 
         ThreadObj = threading.Thread(target=ThreadFunction, name = Name)
         ThreadObj.daemon = True
-        ThreadObj.start()       # start monitor thread
+        ThreadObj.start()       # start thread
         self.ThreadList.append(ThreadObj)
 
     # ---------- GeneratorDevice::ProcessThread------------------
@@ -556,6 +570,21 @@ class GeneratorDevice:
             else:
                 self.EvolutionController = True     #"Evolution"
                 self.printToScreen("Evolution Controller Detected")
+
+            # 0x0c  Evolution, Liquid Cooled
+            # 0x09  Evolution, Air Cooled
+            # 0x03  Nexus, Air Cooled
+            if not ProductModel in [0x03, 0x09, 0x0c]:
+                self.LogError("Warning in DetectController:  Unverified value detected in model register (%04x)" %  ProductModel)
+                msgbody = "\nThis email is a notification informing you that the software has detected a generator "
+                msgbody += "model variant that has not been validated by the authors of this sofrware. "
+                msgbody += "The software has made it's best effort to identify your generator controller type however since "
+                msgbody += "your generator is one that we have not validated, your generator controller may be incorrectly identified. "
+                msgbody += "To validate this variant, please submit the output of the following command (generator: registers)"
+                msgbody += "and your model numbert to the following project thread: https://github.com/jgyates/genmon/issues/10. "
+                msgbody += "Once your feedback is receivd we an add your model product code and controller type to the list in the software."
+                self.mail.sendEmail("Generator Monitor : Warning at " + self.SiteName, msgbody )
+
 
         if not self.EvolutionController:        # if we are using a Nexus Controller, force legacy writes
             self.bUseLegacyWrite = True
@@ -1231,13 +1260,13 @@ class GeneratorDevice:
     def RegisterIsLog(self, Register):
 
         ## Is this a log register
-        if int(Register,16) >=  SERVICE_LOG_STARTING_REG and int(Register,16) <= SERVICE_LOG_END_REG:
+        if int(Register,16) >=  SERVICE_LOG_STARTING_REG and int(Register,16) <= SERVICE_LOG_END_REG and self.EvolutionController:
             return True
         elif int(Register,16) >=  START_LOG_STARTING_REG and int(Register,16) <= START_LOG_END_REG:
             return True
-        elif int(Register,16) >=  ALARM_LOG_STARTING_REG and int(Register,16) <= ALARM_LOG_END_REG:
+        elif int(Register,16) >=  ALARM_LOG_STARTING_REG and int(Register,16) <= ALARM_LOG_END_REG and self.EvolutionController:
             return True
-        elif int(Register,16) >=  NEXUS_ALARM_LOG_STARTING_REG and int(Register,16) <= NEXUS_ALARM_LOG_END_REG:
+        elif int(Register,16) >=  NEXUS_ALARM_LOG_STARTING_REG and int(Register,16) <= NEXUS_ALARM_LOG_END_REG and (not self.EvolutionController):
             return True
         elif int(Register,16) == MODEL_REG:
             return True
@@ -1880,10 +1909,10 @@ class GeneratorDevice:
         # get battery voltage
         Value = self.GetBatteryVoltage()
         if len(Value):
-            if self.EvolutionController:
-                outstring += self.printToScreen("Battery Voltage: " + Value + ", Status: " + self.GetBatteryStatus(), ToString, spacer = True)
-            else:
+            if not self.EvolutionController or not self.LiquidCooled:
                 outstring += self.printToScreen("Battery Voltage: " + Value , ToString, spacer = True)
+            else:
+                outstring += self.printToScreen("Battery Voltage: " + Value + ", Status: " + self.GetBatteryStatus(), ToString, spacer = True)
         # Get the RPM
         Value = self.GetRPM()
         if len(Value):
@@ -1896,23 +1925,10 @@ class GeneratorDevice:
         Value = self.GetVoltageOutput()
         if len(Value):
             outstring += self.printToScreen("Output Voltage: " + Value, ToString, spacer = True)
-        if self.bDisplayUnknownSensors:
-            # get UKS
-            Value = self.GetUnknownSensor1()
-            if len(Value):
-                outstring += self.printToScreen("Unsupported Sensor 1: " + Value, ToString, spacer = True)
-            # get UKS
-            Value = self.GetUnknownSensor2()
-            if len(Value):
-                outstring += self.printToScreen("Unsupported Sensor 2: " + Value, ToString, spacer = True)
-            # get UKS
-            Value = self.GetUnknownSensor3()
-            if len(Value):
-                outstring += self.printToScreen("Unsupported Sensor 3: " + Value, ToString, spacer = True)
-             # get UKS
-            Value = self.GetUnknownSensor4()
-            if len(Value):
-                outstring += self.printToScreen("Unsupported Sensor 4: " + Value, ToString, spacer = True)
+
+        Value = self.DisplayUnknownSensors(ToString)
+        if len(Value):
+            outstring += Value
 
         outstring += self.printToScreen("\nLine State:", ToString)
         if self.EvolutionController:
@@ -1942,6 +1958,71 @@ class GeneratorDevice:
         Value = self.GetDateTime()
         if len(Value):
             outstring += self.printToScreen("Generator Time: " + Value, ToString, spacer = True)
+
+        return outstring
+
+    #------------ GeneratorDevice::signed16-------------------------------
+    def signed16(self, value):
+        return -(value & 0x8000) | (value & 0x7fff)
+
+    #------------ GeneratorDevice::DisplayUnknownSensors-------------------------------
+    def DisplayUnknownSensors(self, ToString):
+
+        outstring = ""
+
+        if not self.bDisplayUnknownSensors:
+            return ""
+
+        # Evo Liquid Cooled: ramps up to 300 decimal (1800 RPM)
+        # Nexus and Evo Air Cooled: ramps up to 600 decimal on LP/NG   (3600 RPM)
+        # this is possibly raw data from RPM sensor
+        Value = self.GetUnknownSensor("003c")
+        if len(Value):
+            outstring += self.printToScreen("Raw RPM Sensor Data: " + Value, ToString, spacer = True)
+
+        if self.EvolutionController and self.LiquidCooled:
+
+            # get UKS
+            Value = self.GetUnknownSensor("0058", RequiresRunning = True)
+            if len(Value):
+                outstring += self.printToScreen("Unsupported Sensor 2 " + Value, ToString, spacer = True)
+            # get UKS
+            Value = self.GetUnknownSensor("005d")
+            if len(Value):
+                outstring += self.printToScreen("Unsupported Sensor 3: " + Value, ToString, spacer = True)
+             # get UKS
+            Value = self.GetUnknownSensor("05ed")
+            if len(Value):
+                outstring += self.printToScreen("Battery Ambient Temp Thermistor Value: " + Value, ToString, spacer = True)
+
+        if not self.LiquidCooled:       # Nexus AC and Evo AC
+
+            # starts  0x4000 when idle, ramps up to ~0x2e6a while running
+            Value = self.GetUnknownSensor("0032", RequiresRunning = True)
+            if len(Value):
+                outstring += self.printToScreen("Unsupported Sensor 2: " + Value, ToString, spacer = True)
+
+            # only moves while running goes up to ~0x1350
+            Value = self.GetUnknownSensor("0037", RequiresRunning = True)
+            if len(Value):
+                outstring += self.printToScreen("Unsupported Sensor 3: " + Value, ToString, spacer = True)
+
+            # only moves while running goes up to ~0x1350
+            Value = self.GetUnknownSensor("003b", RequiresRunning = True)
+            if len(Value):
+                outstring += self.printToScreen("Unsupported Sensor 4: " + Value, ToString, spacer = True)
+
+            # return -2 thru 2
+            Value = self.GetUnknownSensor("0034", RequiresRunning = True)
+            if len(Value):
+                SignedStr = str(self.signed16( int(Value)))
+                outstring += self.printToScreen("Unsupported Sensor 5: " + SignedStr, ToString, spacer = True)
+
+             # return -2 thru 2
+            Value = self.GetUnknownSensor("0038", RequiresRunning = True)
+            if len(Value):
+                SignedStr = str(self.signed16( int(Value)))
+                outstring += self.printToScreen("Unsupported Sensor 6: " + SignedStr, ToString, spacer = True)
 
         return outstring
 
@@ -2043,8 +2124,8 @@ class GeneratorDevice:
         if not RawOutput:
             if self.EvolutionController:
                 Value = self.GetRegisterValueFromList("05f1")
-                if len(Value) == 4:
-                    outstring += "\nLast Alarm Code: %s" % self.GetAlarmInfo(Value)
+                if len(Value) == 4 :
+                        outstring += "\nLast Alarm Code: %s" % self.GetAlarmInfo(Value)
 
         return outstring
 
@@ -2130,6 +2211,11 @@ class GeneratorDevice:
         # FIRMWARE ERROR-9
         }
 
+        # Evolution Air Cooled Decoder
+        # NOTE: Warnings on Evolution Air Cooled have an error code of zero
+        AlarmLogDecoder_EvoAC = {
+        0x21: "Charger Missing AC"
+        }
         NexusAlarmLogDecoder = {
         #0x00: "UNKNOWN",        # TBD
         #0x01: "UNKNOWN",        # TBD
@@ -2181,7 +2267,7 @@ class GeneratorDevice:
         TempVal = Value[12:14]
         Year = int(TempVal, 16)         # year
 
-        TempVal = Value[0:2]
+        TempVal = Value[0:2]            # this value represents a unique display string
         LogCode = int(TempVal, 16)
 
 
@@ -2193,7 +2279,10 @@ class GeneratorDevice:
                 self.LogError("Error in ParseLog: Invalid controller or log address (Nexus Alarm)")
                 return "Error Parsing Log Entry"
         elif LogBase == ALARM_LOG_STARTING_REG:
-            LogStr = AlarmLogDecoder.get(LogCode, "Unknown 0x%02X" % LogCode)
+            if self.LiquidCooled:
+                LogStr = AlarmLogDecoder.get(LogCode, "Unknown 0x%02X" % LogCode)
+            else:
+                LogStr = AlarmLogDecoder_EvoAC.get(LogCode, "Unknown 0x%02X" % LogCode)
         elif LogBase == START_LOG_STARTING_REG:
             LogStr = StartLogDecoder.get(LogCode, "Unknown 0x%02X" % LogCode)
         elif LogBase == SERVICE_LOG_STARTING_REG:
@@ -2208,10 +2297,10 @@ class GeneratorDevice:
 
         # this will attempt to find a description for the log entry based on the info in ALARMS.txt
         if LogBase == ALARM_LOG_STARTING_REG and "unknown" in LogStr.lower() and  self.EvolutionController and len(Value) > 16:
-            TempVal = Value[16:20]
+            TempVal = Value[16:20]      # get alarm code
             AlarmStr = self.GetAlarmInfo(TempVal, ReturnNameOnly = True)
             if not "unknown" in AlarmStr.lower():
-                LogStr = AlarmStr + " : " + LogStr
+                LogStr = AlarmStr
 
         RetStr = "%02d/%02d/%02d %02d:%02d:%02d %s " % (Month,Day,Year,Hour,Min, Seconds, LogStr)
         if len(Value) > 16:
@@ -2229,6 +2318,13 @@ class GeneratorDevice:
         if not self.EvolutionController:
             return ""
         try:
+            # Evolution Air Cooled will give a code of 0000 for warnings
+            if ErrorCode == "0000":
+                if ReturnNameOnly:
+                    return "Warning Code Unknown: %d" % int(ErrorCode,16)  # returning unknown here is OK since ParseLogEntry will look up a code also
+                else:
+                    return "Warning Code 0000: Please see alarm log for warning details"
+
             with open(self.AlarmFile,"r") as AlarmFile:     #opens file
 
                 for line in AlarmFile:
@@ -2301,9 +2397,12 @@ class GeneratorDevice:
     def GetTransferStatus(self):
 
         if not self.EvolutionController:
-            Register = "Not Available"        # Nexus
+            return ""                           # Nexus
         else:
-            Register = "0053"       # Evolution
+            if self.LiquidCooled:               # Evolution
+                Register = "0053"
+            else:
+                return ""
 
         Value = self.GetRegisterValueFromList(Register)
         if len(Value) != 4:
@@ -2391,7 +2490,8 @@ class GeneratorDevice:
         if not self.EvolutionController:
             return ""        # Nexus
 
-
+        if not self.LiquidCooled:
+            return ""
         # Air cooled
         DealerInputs_Evo_AC = { 0x0001: [True, "Manual"],         # Bits 0 and 1 are only momentary (i.e. only set if the button is being pushed)
                                 0x0002: [True, "Auto"],
@@ -2413,7 +2513,7 @@ class GeneratorDevice:
                                 0x0200: [True, "Fuel Pressure / Level Low"]}     # Gasoline / Diesel
 
         if not self.PetroleumFuel:
-            DealerInputs_Evo_LC[0x0080] = [False, "Fuel below 5 inch"]
+            DealerInputs_Evo_LC[0x0200] = [False, "Fuel below 5 inch"]
 
 
         # get the inputs registes
@@ -2444,13 +2544,18 @@ class GeneratorDevice:
                                 0x40: [True, "Bosch Governor On"],
                                 0x80: [True, "Air/Fuel Relay On"]}
         # Air cooled
-        DigitalOutputs_AC = {   0x01: [True, "Transfer Switch Activated"],
-                                0x02: [True, "Ignition On"],
-                                0x04: [True, "Starter On"],
-                                0x08: [True, "Fuel Relay On"],
-                                0x10: [True, "Battery Charger On"]}
+        DigitalOutputs_AC = {   #0x10: [True, "Transfer Switch Activated"],  # Bit Position in Display 0x01
+                                0x01: [True, "Ignition On"],                # Bit Position in Display 0x02
+                                0x02: [True, "Starter On"],                 # Bit Position in Display 0x04
+                                0x04: [True, "Fuel Relay On"],              # Bit Position in Display 0x08
+                                #0x08: [True, "Battery Charger On"]         # Bit Position in Display 0x10
+                                }
+        if self.LiquidCooled:
+            Register = "0053"
+        else:
+            Register = "05f4"
 
-        Value = self.GetRegisterValueFromList("0053")
+        Value = self.GetRegisterValueFromList(Register)
         if len(Value) != 4:
             return ""
         RegVal = int(Value, 16)
@@ -2572,6 +2677,10 @@ class GeneratorDevice:
     #------------ GeneratorDevice::GetExerciseDuration --------------------------------------------
     def GetExerciseDuration(self):
 
+        if not self.EvolutionController:
+            return ""                       # Not supported on Nexus
+        if not self.LiquidCooled:
+            return ""                       # Not supported on Air Cooled
         # get exercise time of day
         Value = self.GetRegisterValueFromList("023e")
         if len(Value) != 4:
@@ -2623,66 +2732,27 @@ class GeneratorDevice:
 
         return ExerciseTime
 
-    #------------ GeneratorDevice::GetUnknownSensor2-------------------------------------
-    # Note: this value only appears to update if the engine is running
-    def GetUnknownSensor2(self):
-
-        EngineState = self.GetEngineState()
-        # report null if engine is not running
-        if "Stopped" in EngineState or "Off" in EngineState:
-            return ""
-
-        # get value
-        Value = self.GetRegisterValueFromList("0058")
-        if len(Value) != 4:
-            return ""
-
-        IntTemp = int(Value,16)
-        FloatTemp = IntTemp / 10.0
-        SensorValue = "%3.1f F" % FloatTemp     #don't know the weighted value so may need to remove the decimal place
-
-        return SensorValue
-
     #------------ GeneratorDevice::GetUnknownSensor1-------------------------------------
-    def GetUnknownSensor1(self):
+    def GetUnknownSensor(self, Register, RequiresRunning = False):
+
+        if not len(Register):
+            return ""
+
+        if RequiresRunning:
+            EngineState = self.GetEngineState()
+            # report null if engine is not running
+            if "Stopped" in EngineState or "Off" in EngineState:
+                return ""
 
         # get value
-        Value = self.GetRegisterValueFromList("003c")
+        Value = self.GetRegisterValueFromList(Register)
         if len(Value) != 4:
             return ""
 
         IntTemp = int(Value,16)
-        FloatTemp = IntTemp / 10.0
-        SensorValue = "%2.1f" % FloatTemp   # don't know the weighted value so may need to remove the decimal place
+        SensorValue = "%d" % IntTemp
 
         return SensorValue
-
-    #------------ GeneratorDevice::GetUnknownSensor3-------------------------------------
-    def GetUnknownSensor3(self):
-
-        # get value
-        Value = self.GetRegisterValueFromList("005d")
-        if len(Value) != 4:
-            return ""
-
-        IntTemp = int(Value,16)
-        SensorValue = "%d" % IntTemp   #
-
-        return SensorValue
-
-    #------------ GeneratorDevice::GetUnknownSensor4-------------------------------------
-    def GetUnknownSensor4(self):
-
-        # get value
-        Value = self.GetRegisterValueFromList("05ed")
-        if len(Value) != 4:
-            return ""
-
-        IntTemp = int(Value,16)
-        SensorValue = "%d" % IntTemp   #
-
-        return SensorValue
-
 
     #------------ GeneratorDevice::GetRPM --------------------------------------------
     def GetRPM(self):
@@ -2704,10 +2774,10 @@ class GeneratorDevice:
             return ""
 
         IntTemp = int(Value,16)
-        if self.EvolutionController:
+        if self.EvolutionController and self.LiquidCooled:
             FloatTemp = IntTemp / 10.0      # Evolution
         else:
-            FloatTemp = IntTemp / 1.0       # Nexus
+            FloatTemp = IntTemp / 1.0       # Nexus and Evolution Air Cooled
         FreqValue = "%2.1f Hz" % FloatTemp
 
         return FreqValue
@@ -2739,10 +2809,11 @@ class GeneratorDevice:
             return ""
         PickupVoltage = int(Value,16)
 
-        # Note: we do not put a default value here because we want to know if
-        # we are reading zeros for either of these values and this returns
-        # a string to the user interface
-        return "Low Voltage: %dV, Pickup Voltage: %dV" % (ThresholdVoltage, PickupVoltage)
+        # Pickup only appears to be read-able on Evo LC
+        if PickupVoltage == 0:
+            return "Low Voltage: %dV" % (ThresholdVoltage)
+        else:
+            return "Low Voltage: %dV, Pickup Voltage: %dV" % (ThresholdVoltage, PickupVoltage)
 
     #------------ GeneratorDevice::GetUtilityVoltage --------------------------
     def GetUtilityVoltage(self):
@@ -2775,8 +2846,11 @@ class GeneratorDevice:
 
         if not self.EvolutionController:
             return "Not Available"     # Nexus
-        else:
-            Register = "0053"       # Evolution
+        else:                           # Evolution
+            if self.LiquidCooled:
+                Register = "0053"
+            else:
+                return "Not Available"
 
         # get Battery Charging Voltage
         Value = self.GetRegisterValueFromList(Register)
@@ -2843,7 +2917,7 @@ class GeneratorDevice:
     #------------ GeneratorDevice::GetRunTimes ----------------------------------------
     def GetRunTimes(self):
 
-        if not self.EvolutionController:
+        if not self.EvolutionController or not self.LiquidCooled:
             # get total hours running
             Value = self.GetRegisterValueFromList("000c")
             if len(Value) != 4:
@@ -2865,15 +2939,15 @@ class GeneratorDevice:
             TotalRunTime = TotalRunTime / 60.0
             RunTimes = "Total Engine Run Hours: %.2f " % (TotalRunTime)
 
-        if self.EvolutionController:
-            # get total hours since activation
-            Value = self.GetRegisterValueFromList("0054")
-            if len(Value) != 4:
-                return ""
+        #if self.EvolutionController:
+        #    # get total hours since activation
+        #    Value = self.GetRegisterValueFromList("0054")
+        #    if len(Value) != 4:
+        #        return ""
 
-            TotalRunTime = int(Value,16)
+        #    TotalRunTime = int(Value,16)
 
-            RunTimes += ", \"Hours of Protection\": %d H " % TotalRunTime
+        #    RunTimes += ", \"Hours of Protection\": %d H " % TotalRunTime
 
         return RunTimes
 
