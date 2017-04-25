@@ -399,6 +399,42 @@ To stop genmon and genserv use:
 
 Note that this file may be edited to change the file system location and it may be edited to make other supplied programs start or stop (i.e. gengpio.py and gengpioin.py).
 
+## gensms.py (optional)
+
+The program gensms.py is a program that will send mobile text (SMS) messages when the generator changes state. If you only want simple message notifications from genmon you can use this option and disable email in [mymail.conf](https://github.com/jgyates/genmon/wiki/Software#configuring-mymailpy). gensms.py takes only one command line option but also has a configuraiton file that must reside in the /etc directory. The name of the configuration file is gensms.conf. This program requires the myclient.py, mylog.py and mynotify.py python modules to be in the same directory as gensms.py.
+
+The SMS implementation utilizes a [Twilio](www.twilio.com) account for sending SMS messages. A free trial account is available and pricing for a non-trial account information is on the Twilio site. 
+
+The following entries must be present in the gensms.conf file:
+
+
+     [gensms]
+     # Twilio account SID. This can be obtained from a valid Twilio
+     # account
+     accountsid = ACXXXXXXXXXXXXXXXXXXXXXXX
+
+     # Twilio authentication token. This can be obtained from a valid
+     #  Twilio account
+     authtoken = XXXXXXXXXXXXXXXXXX
+
+     # Mobile number to send SMS message to. This can be any mobile
+     #  number.
+     to_number = +15551234567
+
+     # Number to send SMS message from. This should be a twilio phone
+     #  number
+     from_number = +1555XXXXXXX
+     
+To run gensms.py as a background application type:
+
+     python gensms.py <IP Address or localhost> &
+     
+To stop gensms.py type:
+
+     sudo pkill -f gensms.py
+     
+Any errors will be logged to /etc/gensms.log
+
 
 # Hardware
 
