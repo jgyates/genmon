@@ -21,13 +21,13 @@ This project will monitor a backup generator that utilizes the Generac Evolution
                 - Generator Controller Time
             - Line State
                 - Utility Voltage Level
-                - Transfer Switch State
+                - Transfer Switch State (Evolution liquid cooled models only)
         - Outage Information
             - Time since last outage
             - Current Utility Voltage
             - Min and Max Utility Voltage since program started
         - Maintenance Information
-            - Weekly Exercise time, day and duration
+            - Weekly Exercise time, day
             - Hours till next scheduled service
             - Total Run Hours
             - Firmware and Hardware versions
