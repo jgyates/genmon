@@ -530,8 +530,14 @@ function GetBaseStatus()
                 currentClass = "activeexercise";
             if(baseState === "RUNNING")
                 currentClass = "activerun";
+            if(baseState === "RUNNING-MANUAL")
+                currentClass = "activerunmanual";
             if(baseState === "SERVICEDUE")
                 currentClass = "activeservice";
+            if(baseState === "OFF")
+                currentClass = "activeoff";
+            if(baseState === "MANUAL")
+                currentClass = "activemanual";
 
             currentbaseState = baseState;
             // Added active to selected class

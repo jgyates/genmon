@@ -165,8 +165,21 @@ li a.activeexercise {
     color: white;
 }
 
+li a.activeoff {
+    background-color: #160101;
+    color: white;
+}
+
+li a.activemanual {
+    background-color: #BAADAD;
+    color: white;
+}
 li a.activerun {
     background-color: #2E5D5A;
+    color: white;
+}
+li a.activerunmanual {
+    background-color: #14423F;
     color: white;
 }
 
