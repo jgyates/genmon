@@ -314,7 +314,8 @@ The program gengpio.py is a console python application that will communicate wit
 * Generator ALARM GPIO 24 (pin 18)
 * Generator SERVICE DUE GPIO 25 (pin 22)
 * Generator EXERCISING GPIO 8 (pin 24)
-* Generator RUNNING GPIO 7 (pin 26)
+* Generator RUNNING GPIO 7 (pin 26) (Running in Manual or Auto)
+* Generator OFF GPIO 9 (pin 21)   (Off with Switch Off or Manual) 
 
 The following GPIO will be activated on Evolution Controllers:
 
@@ -417,11 +418,11 @@ Note that this file may be edited to change the file system location and it may 
 
 ## gensms.py (optional)
 
-The program gensms.py is a program that will send mobile text (SMS) messages when the generator changes state. If you only want simple message notifications from genmon you can use this option and disable email in [mymail.conf](https://github.com/jgyates/genmon/wiki/Software#configuring-mymailpy). gensms.py takes only one command line option but also has a configuraiton file that must reside in the /etc directory. The name of the configuration file is gensms.conf. This program requires the myclient.py, mylog.py and mynotify.py python modules to be in the same directory as gensms.py.
+The program gensms.py is a program that will send mobile text (SMS) messages when the generator changes state. If you only want simple message notifications from genmon you can use this option and disable email in [mymail.conf](https://github.com/jgyates/genmon/wiki/Software#configuring-mymailpy). gensms.py takes only one command line option but also has a configuration file that must reside in the /etc directory. The name of the configuration file is gensms.conf. This program requires the myclient.py, mylog.py and mynotify.py python modules to be in the same directory as gensms.py.
 
 The SMS implementation utilizes a [Twilio](www.twilio.com) account for sending SMS messages. A free trial account is available and pricing for a non-trial account information is on the Twilio site. 
 
-The program will send a short text message when the generator enters the following states: READY, RUNNING, EXERCISING, ALARM, SERVICEDUE.
+The program will send a short text message when the generator enters the following states: READY, RUNNING, RUNNING in MANUAL Mode, EXERCISING, ALARM, SERVICEDUE, OFF, OFF in MANUAL MODE.
 
 To install the Twilio support library type:
 
