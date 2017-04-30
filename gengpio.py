@@ -51,6 +51,7 @@ if __name__=='__main__': # usage program.py [server_address]
         STATUS_SERVICE = 22     # SERVICE DUE GPIO 25 (pin 22)
         STATUS_RUNNING = 26     # RUNNING GPIO 7 (pin 26)
         STATUS_EXERCISING = 24  # EXERCISING GPIO 8 (pin 24)
+        STATUS_OFF = 21         # OFF GPIO 9   (pin 21)
 
         # Set additional GPIO based on these error codes
 
@@ -78,6 +79,7 @@ if __name__=='__main__': # usage program.py [server_address]
         GPIO.setup(STATUS_SERVICE, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(STATUS_RUNNING, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(STATUS_EXERCISING, GPIO.OUT, initial=GPIO.LOW)
+        GPIO.setup(STATUS_OFF, GPIO.OUT, initial=GPIO.LOW)
 
         GPIO.setup(ER_SPEED, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(ER_LOW_OIL, GPIO.OUT, initial=GPIO.LOW)
@@ -119,7 +121,7 @@ if __name__=='__main__': # usage program.py [server_address]
                 else:
                     GPIO.output(STATUS_EXERCISING,GPIO.LOW)
 
-                 if data == "RUNNING":
+                if data == "RUNNING" or data == "RUNNING-MANUAL":
                     GPIO.output(STATUS_RUNNING,GPIO.HIGH)
                 else:
                     GPIO.output(STATUS_RUNNING,GPIO.LOW)
@@ -133,6 +135,12 @@ if __name__=='__main__': # usage program.py [server_address]
                     GPIO.output(STATUS_SERVICE,GPIO.HIGH)
                 else:
                     GPIO.output(STATUS_SERVICE, GPIO.LOW)
+
+                if data == "OFF" or data == "MANUAL":
+                    GPIO.output(STATUS_OFF,GPIO.HIGH)
+                else:
+                    GPIO.output(STATUS_OFF, GPIO.LOW)
+
 
                 if data == "ALARM" and Evolution:     # Last Error Code not supported by Nexus
 
@@ -192,7 +200,6 @@ if __name__=='__main__': # usage program.py [server_address]
     except Exception, e1:
         log.error("Error: " + str(e1))
         print "Error: " + str(e1)
-
 
 
 
