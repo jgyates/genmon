@@ -2873,13 +2873,22 @@ class GeneratorDevice:
         if self.ServiceIsDue():
             return "SERVICEDUE"
 
-        Value = self.GetEngineState()
-        if "Exercising" in Value:
+        EngineValue = self.GetEngineState()
+        SwitchValue = self.GetSwitchState()
+        if "exercising" in EngineValue.lower():
             return "EXERCISING"
-        elif "Running" in Value:
-            return "RUNNING"
+        elif "running" in EngineValue.lower():
+            if "auto" in SwitchValue.lower():
+                return "RUNNING"
+            else:
+                return "RUNNING-MANUAL"
         else:
-            return "READY"
+            if "off" in SwitchValue.lower():
+                return "OFF"
+            elif "manual" in SwitchValue.lower():
+                return "MANUAL"
+            else:
+                return "READY"
 
         #------------ GeneratorDevice::ServiceIsDue ------------------------------------
     def ServiceIsDue(self):

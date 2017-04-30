@@ -32,7 +32,16 @@ def OnRun(Active):
     else:
         print "Generator Running End"
 
-#----------  OnRun ------------------------------------------
+#----------  OnRunManual ------------------------------------------
+def OnRunManual(Active):
+
+    if Active:
+        print "Generator Running in Manual Mode"
+        SendNotice("Generator Running in Manual Mode")
+    else:
+        print "Generator Running in Manual Mode End"
+
+#----------  OnExercise ------------------------------------------
 def OnExercise(Active):
 
     if Active:
@@ -41,7 +50,7 @@ def OnExercise(Active):
     else:
         print "Generator Exercising End"
 
-#----------  OnRun ------------------------------------------
+#----------  OnReady ------------------------------------------
 def OnReady(Active):
 
     if Active:
@@ -50,7 +59,25 @@ def OnReady(Active):
     else:
         print "Generator Ready End"
 
-#----------  OnRun ------------------------------------------
+#----------  OnOff ------------------------------------------
+def OnOff(Active):
+
+    if Active:
+        print "Generator Off"
+        SendNotice("Generator Off")
+    else:
+        print "Generator Off End"
+
+#----------  OnManual ------------------------------------------
+def OnManual(Active):
+
+    if Active:
+        print "Generator Manual"
+        SendNotice("Generator Manual")
+    else:
+        print "Generator Manual End"
+
+#----------  OnAlarm ------------------------------------------
 def OnAlarm(Active):
 
     if Active:
@@ -59,7 +86,7 @@ def OnAlarm(Active):
     else:
         print "Generator Alarm End"
 
-#----------  OnRun ------------------------------------------
+#----------  OnService ------------------------------------------
 def OnService(Active):
 
     if Active:
@@ -106,7 +133,17 @@ if __name__=='__main__': # usage program.py [server_address]
         to_number = config.get('gensms', 'to_number')
         from_number = config.get('gensms', 'from_number')
 
-        GenNotify = mynotify.GenNotify(host=address, onready = OnReady, onexercise = OnExercise, onrun = OnRun, onalarm = OnAlarm, onservice = OnService, log = log)
+        GenNotify = mynotify.GenNotify(
+                                        host = address,
+                                        onready = OnReady,
+                                        onexercise = OnExercise,
+                                        onrun = OnRun,
+                                        onrunmanual = OnRunManual,
+                                        onalarm = OnAlarm,
+                                        onservice = OnService,
+                                        onoff = OnOff,
+                                        onmanual = OnManual,
+                                        log = log)
 
         while True:
             time.sleep(1)

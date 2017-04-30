@@ -12,7 +12,7 @@ import myclient, mylog
 
 #----------  GenNotify::init--- ------------------------------------------
 class GenNotify:
-    def __init__(self, host="127.0.0.1", port=9082, log = None, onready = None, onexercise = None, onrun = None, onalarm = None, onservice = None):
+    def __init__(self, host="127.0.0.1", port=9082, log = None, onready = None, onexercise = None, onrun = None, onrunmanual = None, onalarm = None, onservice = None, onoff = None, onmanual = None):
 
         self.ThreadList = []
         self.LastEvent = None
@@ -27,15 +27,20 @@ class GenNotify:
         # init event callbacks
         if onready != None:
             self.Events["READY"] = onready
-        if onready != None:
+        if onexercise != None:
             self.Events["EXERCISING"] = onexercise
-        if onready != None:
+        if onrun != None:
             self.Events["RUNNING"] = onrun
-        if onready != None:
+        if onrunmanual != None:
+            self.Events["RUNNING-MANUAL"] = onrunmanual
+        if onalarm != None:
             self.Events["ALARM"] = onalarm
-        if onready != None:
+        if onservice != None:
             self.Events["SERVICEDUE"] = onservice
-
+        if onoff != None:
+            self.Events["OFF"] = onoff
+        if onmanual != None:
+            self.Events["MANUAL"] = onmanual
 
         self.Generator = myclient.ClientInterface(host = host, log = log)
 
