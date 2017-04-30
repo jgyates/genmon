@@ -38,6 +38,7 @@ This project will monitor a backup generator that utilizes the Generac Evolution
         - Switch state change
         - Critical or Warning messages from the generator
     Web based application for viewing status of the generator
+    SMS notifications of Generator state (via Twilio SMS API)
     Command Line application (all the functionality of email commands)
     Ability to set exercise time 
     Ability to set generator time
