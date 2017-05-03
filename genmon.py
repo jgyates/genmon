@@ -30,6 +30,7 @@ class SerialDevice:
 
         self.RxPacketCount = 0
         self.TxPacketCount = 0
+        self.TotalElapsedPacketeTime = 0
         self.CrcError = 0
         self.DiscardedBytes = 0
         self.Restarts = 0
@@ -655,6 +656,7 @@ class GeneratorDevice:
                 RetVal, SlavePacket = self.GetPacketFromSlave()
 
                 if RetVal == True and len(SlavePacket) != 0:    # we receive a packet
+                    self.Slave.TotalElapsedPacketeTime += (self.MillisecondsElapsed(SentTime) / 1000)
                     break
                 if RetVal == False:
                     self.LogError("Error Receiving slave packet for register %x%x" % (MasterPacket[2],MasterPacket[3]) )
@@ -786,20 +788,16 @@ class GeneratorDevice:
         # Index register 0001 controls remote start (data written 0001 to start,I believe ).
         # Index register 0002 controls remote transfer switch (Not sure of the data here )
         Register = 0
-        Value = 0
+        Value = 0x000               # writing any value to index register is valid for remote start / stop commands
 
         if Command == "start":
-            Register = 0x0001
-            Value = 0x0000          # writing any value to index register 0001 will remote start (radio start)
+            Register = 0x0001       # remote start (radio start)
         elif Command == "stop":
-            Register = 0x0000       #
-            Value = 0x0000          # writing any value to index register 0000 will remote stop (radio stop)
+            Register = 0x0000       # remote stop (radio stop)
         elif Command == "starttransfer":
-            Register = 0x0002       #
-            Value = 0x0000          # writing any value to index register 0002 will start the generator, then engage the transfer transfer switch
+            Register = 0x0002       # start the generator, then engage the transfer transfer switch
         elif Command == "startexercise":
-            Register = 0x0003       #
-            Value = 0x0000          # writing any value to index register 0003 will remote run in quiet mode (exercise)
+            Register = 0x0003       # remote run in quiet mode (exercise)
         else:
             return "Invalid command syntax for command setremote (2)"
 
@@ -1858,21 +1856,24 @@ class GeneratorDevice:
         outstring += self.printToScreen(self.ProgramName + " running for " + outstr + ".", ToString, spacer = True)
 
         outstring += self.printToScreen("\nSerial Stats: ", ToString)
-        outstring += self.printToScreen("PacketCount M:%d: S:%d Buffer Count:%d" % (self.Slave.TxPacketCount, self.Slave.RxPacketCount, len(self.Slave.Buffer)), ToString, spacer = True)
+        outstring += self.printToScreen("PacketCount M: %d, S: %d, Buffer Count: %d" % (self.Slave.TxPacketCount, self.Slave.RxPacketCount, len(self.Slave.Buffer)), ToString, spacer = True)
 
         if self.Slave.CrcError == 0:
             PercentErrors = 0.0
         else:
             PercentErrors = float(self.Slave.CrcError) / float(self.Slave.RxPacketCount)
 
-        outstring += self.printToScreen("CRC Errors :%d  Percent :%.2f" % (self.Slave.CrcError, PercentErrors), ToString, spacer = True)
-        outstring += self.printToScreen("Discarded  :%d  Restarts:%s" %  (self.Slave.DiscardedBytes,self.Slave.Restarts), ToString, spacer = True)
+        outstring += self.printToScreen("CRC Errors : %d  Percent : %.2f" % (self.Slave.CrcError, PercentErrors), ToString, spacer = True)
+        outstring += self.printToScreen("Discarded  : %d  Restarts: %s" %  (self.Slave.DiscardedBytes,self.Slave.Restarts), ToString, spacer = True)
 
         CurrentTime = datetime.datetime.now()
 
         Delta = CurrentTime - self.ProgramStartTime        # yields a timedelta object
         PacketsPerSecond = float((self.Slave.TxPacketCount + self.Slave.RxPacketCount)) / float(Delta.total_seconds())
-        outstring += self.printToScreen("Packets per second:%.2f" % (PacketsPerSecond), ToString, spacer = True)
+        outstring += self.printToScreen("Packets per second: %.2f" % (PacketsPerSecond), ToString, spacer = True)
+
+        AvgTransactionTime = float(self.Slave.TotalElapsedPacketeTime / self.Slave.RxPacketCount)
+        outstring += self.printToScreen("Average Transaction Time: %.4f sec" % (AvgTransactionTime), ToString, spacer = True)
 
         return outstring
     #------------ GeneratorDevice::DisplayStatus ----------------------------------------
