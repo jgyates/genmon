@@ -12,7 +12,18 @@ import myclient, mylog
 
 #----------  GenNotify::init--- ------------------------------------------
 class GenNotify:
-    def __init__(self, host="127.0.0.1", port=9082, log = None, onready = None, onexercise = None, onrun = None, onrunmanual = None, onalarm = None, onservice = None, onoff = None, onmanual = None):
+    def __init__(self,
+                host="127.0.0.1",
+                port=9082,
+                log = None,
+                onready = None,
+                onexercise = None,
+                onrun = None,
+                onrunmanual = None,
+                onalarm = None,
+                onservice = None,
+                onoff = None,
+                onmanual = None):
 
         self.ThreadList = []
         self.LastEvent = None
