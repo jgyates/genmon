@@ -86,7 +86,7 @@ class GenNotify:
 
             time.sleep(3)
 
-    #----------  GenNotify::Close ---------------------------------
+    #----------  GenNotify::CallEventHandler ---------------------------------
     def CallEventHandler(self, Status):
 
         EventCallback = self.Events.get(self.LastEvent, None)
@@ -94,6 +94,14 @@ class GenNotify:
         if EventCallback != None:
             EventCallback(Status)
 
+
+    #----------  GenNotify::SendCommand ---------------------------------
+    def SendCommand(self, Command):
+
+        if len(Command) == 0:
+            return "Invalid Command"
+
+        return self.Generator.ProcessMonitorCommand(Command)
 
     #----------  GenNotify::Close ---------------------------------
     def Close(self):
