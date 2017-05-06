@@ -25,6 +25,7 @@ class GenNotify:
                 onoff = None,
                 onmanual = None):
 
+        self.AccessLock = threading.Lock()
         self.ThreadList = []
         self.LastEvent = None
         self.Events = {}            # Dict for handling events
@@ -72,12 +73,14 @@ class GenNotify:
 
         while True:
 
-            data = self.Generator.ProcessMonitorCommand("generator: getbase")
+            with self.AccessLock:
+                data = self.Generator.ProcessMonitorCommand("generator: getbase")
 
             if self.LastEvent == data:
                 time.sleep(3)
                 continue
-
+            if self.LastEvent != None:
+                print "Last : <" + self.LastEvent + ">, New : <" + data + ">"
             self.CallEventHandler(False)     # end last event
 
             self.LastEvent = data
@@ -101,7 +104,10 @@ class GenNotify:
         if len(Command) == 0:
             return "Invalid Command"
 
-        return self.Generator.ProcessMonitorCommand(Command)
+        with self.AccessLock:
+            data = self.Generator.ProcessMonitorCommand(Command)
+
+        return data
 
     #----------  GenNotify::Close ---------------------------------
     def Close(self):
