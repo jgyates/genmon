@@ -616,7 +616,7 @@ class GeneratorDevice:
             self.ProcessMasterSlaveTransaction(Reg, Info[self.REGLEN] / 2)
             counter += 1
 
-    #-------------GeneratorDevice::ProcessMasterSlaveTransaction--------------------
+    #-------------GeneratorDevice::ProcessMasterSlaveWriteTransaction--------------------
     def ProcessMasterSlaveWriteTransaction(self, Register, Length, Data):
 
         MasterPacket = []
@@ -669,7 +669,7 @@ class GeneratorDevice:
                 # each char time is about 1 millisecond so assuming a 10 byte packet transmitted
                 # and a 10 byte received with about 5 char times of silence in between should give
                 # us about 25ms
-                if msElapsed > 1000:
+                if msElapsed > 3000:
                     self.LogError("Error: timeout receiving slave packet for register %x%x Buffer:%d" % (MasterPacket[2],MasterPacket[3], len(self.Slave.Buffer)) )
                     return False
 
@@ -732,26 +732,26 @@ class GeneratorDevice:
         for Register in self.LogRange(START_LOG_STARTING_REG , LOG_DEPTH,START_LOG_STRIDE):
             RegStr = "%04x" % Register
             if not self.ProcessMasterSlaveTransaction(RegStr, START_LOG_STRIDE):
-                break
+                continue
 
         if self.EvolutionController:
             # Service Log
             for Register in self.LogRange(SERVICE_LOG_STARTING_REG , LOG_DEPTH, SERVICE_LOG_STRIDE):
                 RegStr = "%04x" % Register
                 if not self.ProcessMasterSlaveTransaction(RegStr, SERVICE_LOG_STRIDE):
-                    break
+                    continue
 
             # Alarm Log
             for Register in self.LogRange(ALARM_LOG_STARTING_REG , LOG_DEPTH, ALARM_LOG_STRIDE):
                 RegStr = "%04x" % Register
                 if not self.ProcessMasterSlaveTransaction(RegStr, ALARM_LOG_STRIDE):
-                    break
+                    continue
         else:
             # Alarm Log
             for Register in self.LogRange(NEXUS_ALARM_LOG_STARTING_REG , LOG_DEPTH, NEXUS_ALARM_LOG_STRIDE):
                 RegStr = "%04x" % Register
                 if not self.ProcessMasterSlaveTransaction(RegStr, NEXUS_ALARM_LOG_STRIDE):
-                    break
+                    continue
 
     # ---------- GeneratorDevice::MillisecondsElapsed------------------
     def MillisecondsElapsed(self, ReferenceTime):
