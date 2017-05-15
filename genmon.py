@@ -30,6 +30,7 @@ class SerialDevice:
 
         self.RxPacketCount = 0
         self.TxPacketCount = 0
+        self.ComTimoutError = 0
         self.TotalElapsedPacketeTime = 0
         self.CrcError = 0
         self.DiscardedBytes = 0
@@ -405,8 +406,6 @@ class GeneratorDevice:
         except Exception, e1:
             self.FatalError("Unable to find crcmod package: " + str(e1))
 
-        # start read thread to process incoming data commands
-        self.StartThread(self.ProcessThread, Name = "ProcessThread")
 
         # start read thread to monitor registers as they change
         self.StartThread(self.MonitorThread, Name = "MonitorThread")
@@ -416,6 +415,9 @@ class GeneratorDevice:
 
         # start thread to accept incoming sockets for nagios heartbeat
         self.StartThread(self.ComWatchDog, Name = "ComWatchDog")
+
+        # start read thread to process incoming data commands
+        self.StartThread(self.ProcessThread, Name = "ProcessThread")
 
         if self.EnableDebug:
             self.StartThread(self.DebugThread, Name = "DebugThread")      # for debugging registers
@@ -660,6 +662,7 @@ class GeneratorDevice:
                     break
                 if RetVal == False:
                     self.LogError("Error Receiving slave packet for register %x%x" % (MasterPacket[2],MasterPacket[3]) )
+                    # Errors returned here are logged in GetPacketFromSlave
                     self.Flush()
                     return False
                 msElapsed = self.MillisecondsElapsed(SentTime)
@@ -670,6 +673,7 @@ class GeneratorDevice:
                 # and a 10 byte received with about 5 char times of silence in between should give
                 # us about 25ms
                 if msElapsed > 3000:
+                    self.Slave.ComTimoutError += 1
                     self.LogError("Error: timeout receiving slave packet for register %x%x Buffer:%d" % (MasterPacket[2],MasterPacket[3], len(self.Slave.Buffer)) )
                     return False
 
@@ -731,27 +735,23 @@ class GeneratorDevice:
         # Start / Stop Log
         for Register in self.LogRange(START_LOG_STARTING_REG , LOG_DEPTH,START_LOG_STRIDE):
             RegStr = "%04x" % Register
-            if not self.ProcessMasterSlaveTransaction(RegStr, START_LOG_STRIDE):
-                continue
+            self.ProcessMasterSlaveTransaction(RegStr, START_LOG_STRIDE)
 
         if self.EvolutionController:
             # Service Log
             for Register in self.LogRange(SERVICE_LOG_STARTING_REG , LOG_DEPTH, SERVICE_LOG_STRIDE):
                 RegStr = "%04x" % Register
-                if not self.ProcessMasterSlaveTransaction(RegStr, SERVICE_LOG_STRIDE):
-                    continue
+                self.ProcessMasterSlaveTransaction(RegStr, SERVICE_LOG_STRIDE)
 
             # Alarm Log
             for Register in self.LogRange(ALARM_LOG_STARTING_REG , LOG_DEPTH, ALARM_LOG_STRIDE):
                 RegStr = "%04x" % Register
-                if not self.ProcessMasterSlaveTransaction(RegStr, ALARM_LOG_STRIDE):
-                    continue
+                self.ProcessMasterSlaveTransaction(RegStr, ALARM_LOG_STRIDE)
         else:
             # Alarm Log
             for Register in self.LogRange(NEXUS_ALARM_LOG_STARTING_REG , LOG_DEPTH, NEXUS_ALARM_LOG_STRIDE):
                 RegStr = "%04x" % Register
-                if not self.ProcessMasterSlaveTransaction(RegStr, NEXUS_ALARM_LOG_STRIDE):
-                    continue
+                self.ProcessMasterSlaveTransaction(RegStr, NEXUS_ALARM_LOG_STRIDE)
 
     # ---------- GeneratorDevice::MillisecondsElapsed------------------
     def MillisecondsElapsed(self, ReferenceTime):
@@ -1864,7 +1864,7 @@ class GeneratorDevice:
             PercentErrors = float(self.Slave.CrcError) / float(self.Slave.RxPacketCount)
 
         outstring += self.printToScreen("CRC Errors : %d  Percent : %.2f" % (self.Slave.CrcError, PercentErrors), ToString, spacer = True)
-        outstring += self.printToScreen("Discarded  : %d  Restarts: %s" %  (self.Slave.DiscardedBytes,self.Slave.Restarts), ToString, spacer = True)
+        outstring += self.printToScreen("Discarded  : %d  Restarts: %d  TimeOut: %d" %  (self.Slave.DiscardedBytes,self.Slave.Restarts, self.Slave.ComTimoutError), ToString, spacer = True)
 
         CurrentTime = datetime.datetime.now()
 
