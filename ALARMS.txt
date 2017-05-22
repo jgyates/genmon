@@ -1,55 +1,55 @@
 
 
 
-# Format: items are delimited by !, each line must have 5 items
-#AlarmCode! Type (ALARM, WARNING)! AlarmName! Condition! Additional Info
+# Format: items are delimited by !, each line must have 6 items
+#AlarmCode! Type (ALARM, WARNING)! AlarmName! Condition! HAI Trigger Number! Additional Info
 
-1001!ALARM!Controller Harness!Internal Harness Loop Broken - Internal Harness connecting external display board to main board has become disconnected.!Triggered when main board does not see communication from display board
-1100!ALARM!Overcrank!Engine cranks but will not start.! Unit turns over but will not start. Controller is receiving signal on Wire 18. because of the nature of Cranking there is almost no insight into the cause of an Overcrank Alarm with the current Sensors.
-1101!ALARM!Overcrank!Engine/Starter Problem. Limiting number of cranking cycles to protect the starter motor.!If the engine has tried to crank for 10 times unsuccessfully, this will trigger. For Liquid Cooled models: Low to No fuel pressure while cranking. To set fuel pressure has to be measured as low for at least 1200ms before the overcrank alarm is set
-1200!ALARM!Overspeed (Prolonged)!Over 72 Hz for 3 seconds.!Possible cause: Stepper motor/mixer body assembly issue.
-1201!ALARM!Overspeed (Prolonged-Throttle stuck open.)!Over 72Hz for 3 seconds with the throttle stuck open.!Possible cause: Stuck Throttle
-1204!ALARM!Overspeed!External Ignition Overspeed!CAN alarm from external ignition, threshold is >30% over nominal
-1205!ALARM!Overspeed (Instantaneous)!Over 75Hz for 0.1 second (100 milliseconds).!Possible cause: Stepper motor/mixer body assembly issue.
-1206!ALARM!Overspeed (Instantaneous with Throttle stuck open)!Over 75 Hz for 1 second with the throttle stuck open, total loss of control! Possible Causes: Stuck Throttle
-1300!ALARM!Low Oil Pressure (While Running)!The default extended alarm for low oil pressure.!Check oil level and pressure.
-1400!ALARM!High Temperature!Air Flow Impeded - Flow Issue!Check the inlet and outlet for debris.
-1500!ALARM!RPM Sense Loss ! Not detecting RPM during cranking, Missing Mag Pickup Pulses !Possible bad sensor if generator turns over. Air pocket in fuel line. Starter Issue.
-1501!ALARM!RPM Sensor (Twin Cylinder+Running)!Twin Cylinder Running faults to RPM Sensor Loss.!Possible Causes: air pocket in fuel line, dirty fuel, missing ignition pulse (loss of one of the primary coils).
-1505!ALARM!RPM Sensor (Twin Cylinder+Cranking)!Twin Cylinder Cranking faults to RPM sensor loss!Possible Cause: starter motor issue, missing ignition pulse (loss of one of the primary coils).
-1511!ALARM!RPM Sensor (Single Cylinder+Running)!Single Cylinder Running with Low Fuel Pressure faults to RPM sensor loss!Possible Causes: air pocket in fuel line, dirty fuel.
-1515!ALARM!RPM Sensor (Single Cylinder+Cranking)!Single Cylinder Cranking faults to RPM sensor loss!Possible Cause: starter motor issue.
-1516!ALARM!RPM Sensor(Cranking - Low Fuel)!Cranking with Low Fuel Pressure faults to RPM sensor loss!Possible Causes: Low Fuel Pressure for at least 1200ms, ignition fault. Possible Other Causes: air pocket in fuel line, dirty fuel.
-1517!ALARM!RPM Sensor (Running - Low Fuel)!Running with Low Fuel Pressure faults to RPM sensor loss!Possible Causes: Low Fuel Pressure for 1200ms, ignition fault. Possible Other Causes: air pocket in fuel line, dirty fuel.
-1518!ALARM!RPM Sensor (No Pulse during Cranking)!RPM Sensor loss, no tooth pulses sensed for 75 consecutive milliseconds while starter active!Possible Cause: starter motor issue, RPM sensor.
-1519!ALARM!RPM Sensor (No Pulse during Running)!Cranking faults to RPM sensor loss!Possible Cause: starter motor issue, RPM sensor.
-1520!ALARM!RPM Sensor (Missing Pulses during Cranking)!Cranking faults to RPM sensor loss. Starter engaged, no tooth pulses for 75 ms!Possible Cause: starter motor issue, RPM sensor align- ment, low battery.
-1521!ALARM!RPM Sensor (Missing Pulses during Running)!While running, no tooth pulses for 75 consecutive milliseconds!Possible Cause: starter motor issue, RPM sensor align- ment, low battery.
-1600!ALARM!Underspeed!Unit is Overloaded slowing engine speed, fuel supply low or throttle control problem. Usually undervoltage comes first!Causes: highly inductive loads.
-1601!ALARM!Underspeed (Low Fuel Pressure)!Low Fuel Pressure starves the engine, slowing it. Low fuel pressure detected for 1200ms before underspeed condition detected!Other Sources: Selected wrong fuel type.
-1602!ALARM!Underspeed! Throttle Stuck Closed/near Closed.!The throttle is stuck closed or stuck near closed limiting the fuel to the engine, slowing it down. Stuck closed must be detected for 1 second with underspeed to set E-Code
-1603!ALARM!Underspeed!The engine never comes up to 3700 RPM.!Check fuel selection and fuel supply
-1800!ALARM!Overvoltage (Prolonged)!Over-Voltage!Prolonged 3 seconds of over 10% above nominal
-1801!ALARM!Overvoltage (Instantaneous)!Over-Voltage!Set by an instantaneous measurement 30% over nominal
-1803!ALARM!Overvoltage (Overspeed)!Over-Voltage!Generator running at higher speed (25% over nominal RPMs)causing overvoltage
-1900!ALARM!Undervoltage (Prolonged)!Under-Voltage!Under-voltage due to loss of voltage for some time (10+ seconds). Generator voltage below 80% of nominal for 10+ seconds
-1901!ALARM!Undervoltage (Instantaneous)!Undervoltage due to sudden loss of voltage.!Generator Voltage less than 15V. Hold off time of 2 seconds
-1902!ALARM!Undervoltage (Both Zero Crosses missing)!Undervoltage due to faulty excitation winding, or zero cross circuit, or circuit ingeneral. Both zero crosses must be missing for 1.5 seconds.!Possible cause: loose wiring, field boost hardware failure
-1903!ALARM!Undervoltage (Little / No Voltage)!Little / No Voltage (<120 V)!Controller measuring no voltage resulting in Undervoltage. Generator voltage less than 120 V when undervoltage set
-1904!ALARM!Undervoltage (No Field Current)!No Field Current but have DPE. No field current during undervoltage alarm.!Possible cause: Wire loose, brush failure
-1905!ALARM!Undervoltage (Low Speed)!Generator running underspeed for > 30 seconds when undervoltage alarm set!Possible cause: fuel injectors, air intake blocked, fuel supply, other engine failures
-1906!ALARM!Undervoltage (Single Zero Cross missing)!Undervoltage due to faulty excitation winding, zero cross circuit, or circuit in general. One zero cross missing for greater than 1.5 seconds!Possible cause: field boost hardware failure
-2099!ALARM!Wiring Error!Connection low voltage and high voltage wires are crossed. Incorrect DC AC wiring hook up. !Check connection in generator
-2100!ALARM!Overload Remove Load (Default, Output Current Method)!Unit is overloaded, one of the two CTs is detecting an overload condition.!Check transfer switch loadshed functionality. (Change load dynamics or utilize loadshed). Remove Load
-2101!ALARM!Overload (Remove Load)!Overload (DPE Style Field Current Method) Field Current measured value is above threshold! Possible cause: Overload
-2102!ALARM!Overload (Remove Load)!Unit recranks 5 times when load is applied, engine dies (0 RPM) and has low voltage (< 180V)!Check for Overloaded condition on unit. Inspect stepper motor operation.
-2103!ALARM!Overloaded!Unit has run and attempted to accept load 10 times, could not accept due to overload condition!Check for Overloaded condition on unit
-2299!ALARM!Undervoltage Overload!Unit was overloaded and attempted to start with a large load connected. The unit can not ramp up the generator voltage to its normal target voltage value if it starts with a large load connected!Remove Load
-2399!ALARM!Stepper Overcurrent!Current flow in stepper coil(s) above specification!Unknown
-2400!ALARM!Fuse Problem!Missing or Damaged Fuse!The 7.5 amp Controller Fuse is missing or blown (open).Fuse problem must be detected for 1.5 seconds
-2500!ALARM!Bosch Governor!Command and position feedback not matching or tak- ing too much time to achieve.!Possible cause: Governor wire loose, Governor module
-2501!ALARM!Bosch Governor (Stuck Open)!Command and position feedback not matching or taking too much time to achieve. Governor in open position for greater than 1 second!Possible cause: Governor wire loose, Governor module
-2502!ALARM!Bosch Governor (Stuck Closed)!Command and position feedback not matching or taking too much time to achieve. Governor in closed position (commanded otherwise) for greater than 1 second!Possible cause: Governor wire loose, Governor module
+1001!ALARM!Controller Harness!Internal Harness Loop Broken - Internal Harness connecting external display board to main board has become disconnected.!HAI1!Triggered when main board does not see communication from display board
+1100!ALARM!Overcrank!Engine cranks but will not start.!HAI2! Unit turns over but will not start. Controller is receiving signal on Wire 18. because of the nature of Cranking there is almost no insight into the cause of an Overcrank Alarm with the current Sensors.
+1101!ALARM!Overcrank!Engine/Starter Problem. Limiting number of cranking cycles to protect the starter motor.!HAI3!If the engine has tried to crank for 10 times unsuccessfully, this will trigger. For Liquid Cooled models: Low to No fuel pressure while cranking. To set fuel pressure has to be measured as low for at least 1200ms before the overcrank alarm is set
+1200!ALARM!Overspeed (Prolonged)!Over 72 Hz for 3 seconds.!HAI4!Possible cause: Stepper motor/mixer body assembly issue.
+1201!ALARM!Overspeed (Prolonged-Throttle stuck open.)!Over 72Hz for 3 seconds with the throttle stuck open.!HAI5!Possible cause: Stuck Throttle
+1204!ALARM!Overspeed!External Ignition Overspeed!HAI6!CAN alarm from external ignition, threshold is >30% over nominal
+1205!ALARM!Overspeed (Instantaneous)!Over 75Hz for 0.1 second (100 milliseconds).!HAI7!Possible cause: Stepper motor/mixer body assembly issue.
+1206!ALARM!Overspeed (Instantaneous with Throttle stuck open)!Over 75 Hz for 1 second with the throttle stuck open, total loss of control!HAI8! Possible Causes: Stuck Throttle
+1300!ALARM!Low Oil Pressure (While Running)!The default extended alarm for low oil pressure.!HAI9!Check oil level and pressure.
+1400!ALARM!High Temperature!Air Flow Impeded - Flow Issue!HAI10!Check the inlet and outlet for debris.
+1500!ALARM!RPM Sense Loss ! Not detecting RPM during cranking, Missing Mag Pickup Pulses !HAI11!Possible bad sensor if generator turns over. Air pocket in fuel line. Starter Issue.
+1501!ALARM!RPM Sensor (Twin Cylinder+Running)!Twin Cylinder Running faults to RPM Sensor Loss.!HAI12!Possible Causes: air pocket in fuel line, dirty fuel, missing ignition pulse (loss of one of the primary coils).
+1505!ALARM!RPM Sensor (Twin Cylinder+Cranking)!Twin Cylinder Cranking faults to RPM sensor loss!HAI13!Possible Cause: starter motor issue, missing ignition pulse (loss of one of the primary coils).
+1511!ALARM!RPM Sensor (Single Cylinder+Running)!Single Cylinder Running with Low Fuel Pressure faults to RPM sensor loss!HAI14!Possible Causes: air pocket in fuel line, dirty fuel.
+1515!ALARM!RPM Sensor (Single Cylinder+Cranking)!Single Cylinder Cranking faults to RPM sensor loss!HAI15!Possible Cause: starter motor issue.
+1516!ALARM!RPM Sensor(Cranking - Low Fuel)!Cranking with Low Fuel Pressure faults to RPM sensor loss!HAI16!Possible Causes: Low Fuel Pressure for at least 1200ms, ignition fault. Possible Other Causes: air pocket in fuel line, dirty fuel.
+1517!ALARM!RPM Sensor (Running - Low Fuel)!Running with Low Fuel Pressure faults to RPM sensor loss!HAI17!Possible Causes: Low Fuel Pressure for 1200ms, ignition fault. Possible Other Causes: air pocket in fuel line, dirty fuel.
+1518!ALARM!RPM Sensor (No Pulse during Cranking)!RPM Sensor loss, no tooth pulses sensed for 75 consecutive milliseconds while starter active!HAI18!Possible Cause: starter motor issue, RPM sensor.
+1519!ALARM!RPM Sensor (No Pulse during Running)!Cranking faults to RPM sensor loss!HAI19!Possible Cause: starter motor issue, RPM sensor.
+1520!ALARM!RPM Sensor (Missing Pulses during Cranking)!Cranking faults to RPM sensor loss. Starter engaged, no tooth pulses for 75 ms!HAI20!Possible Cause: starter motor issue, RPM sensor align- ment, low battery.
+1521!ALARM!RPM Sensor (Missing Pulses during Running)!While running, no tooth pulses for 75 consecutive milliseconds!HAI21!Possible Cause: starter motor issue, RPM sensor align- ment, low battery.
+1600!ALARM!Underspeed!Unit is Overloaded slowing engine speed, fuel supply low or throttle control problem. Usually undervoltage comes first!HAI22!Causes: highly inductive loads.
+1601!ALARM!Underspeed (Low Fuel Pressure)!HAI23!Low Fuel Pressure starves the engine, slowing it. Low fuel pressure detected for 1200ms before underspeed condition detected!Other Sources: Selected wrong fuel type.
+1602!ALARM!Underspeed! Throttle Stuck Closed/near Closed.!HAI24!The throttle is stuck closed or stuck near closed limiting the fuel to the engine, slowing it down. Stuck closed must be detected for 1 second with underspeed to set E-Code
+1603!ALARM!Underspeed!The engine never comes up to 3700 RPM.!HAI25!Check fuel selection and fuel supply
+1800!ALARM!Overvoltage (Prolonged)!Over-Voltage!HAI26!Prolonged 3 seconds of over 10% above nominal
+1801!ALARM!Overvoltage (Instantaneous)!Over-Voltage!HAI27!Set by an instantaneous measurement 30% over nominal
+1803!ALARM!Overvoltage (Overspeed)!Over-Voltage!HAI28!Generator running at higher speed (25% over nominal RPMs)causing overvoltage
+1900!ALARM!Undervoltage (Prolonged)!Under-Voltage!HAI29!Under-voltage due to loss of voltage for some time (10+ seconds). Generator voltage below 80% of nominal for 10+ seconds
+1901!ALARM!Undervoltage (Instantaneous)!Undervoltage due to sudden loss of voltage.!HAI30!Generator Voltage less than 15V. Hold off time of 2 seconds
+1902!ALARM!Undervoltage (Both Zero Crosses missing)!Undervoltage due to faulty excitation winding, or zero cross circuit, or circuit ingeneral. Both zero crosses must be missing for 1.5 seconds.!HAI31!Possible cause: loose wiring, field boost hardware failure
+1903!ALARM!Undervoltage (Little / No Voltage)!Little / No Voltage (<120 V)!HAI32!Controller measuring no voltage resulting in Undervoltage. Generator voltage less than 120 V when undervoltage set
+1904!ALARM!Undervoltage (No Field Current)!No Field Current but have DPE. No field current during undervoltage alarm.!HAI33!Possible cause: Wire loose, brush failure
+1905!ALARM!Undervoltage (Low Speed)!Generator running underspeed for > 30 seconds when undervoltage alarm set!HAI34!Possible cause: fuel injectors, air intake blocked, fuel supply, other engine failures
+1906!ALARM!Undervoltage (Single Zero Cross missing)!Undervoltage due to faulty excitation winding, zero cross circuit, or circuit in general. One zero cross missing for greater than 1.5 seconds!HAI35!Possible cause: field boost hardware failure
+2099!ALARM!Wiring Error!Connection low voltage and high voltage wires are crossed. Incorrect DC AC wiring hook up. !HAI36!Check connection in generator
+2100!ALARM!Overload Remove Load (Default, Output Current Method)!Unit is overloaded, one of the two CTs is detecting an overload condition.!HAI37!Check transfer switch loadshed functionality. (Change load dynamics or utilize loadshed). Remove Load
+2101!ALARM!Overload (Remove Load)!Overload (DPE Style Field Current Method) Field Current measured value is above threshold!HAI38! Possible cause: Overload
+2102!ALARM!Overload (Remove Load)!Unit recranks 5 times when load is applied, engine dies (0 RPM) and has low voltage (< 180V)!HAI39!Check for Overloaded condition on unit. Inspect stepper motor operation.
+2103!ALARM!Overloaded!Unit has run and attempted to accept load 10 times, could not accept due to overload condition!HAI40!Check for Overloaded condition on unit
+2299!ALARM!Undervoltage Overload!Unit was overloaded and attempted to start with a large load connected. The unit can not ramp up the generator voltage to its normal target voltage value if it starts with a large load connected!HAI41!Remove Load
+2399!ALARM!Stepper Overcurrent!Current flow in stepper coil(s) above specification!HAI42!Unknown
+2400!ALARM!Fuse Problem!Missing or Damaged Fuse!HAI43!The 7.5 amp Controller Fuse is missing or blown (open).Fuse problem must be detected for 1.5 seconds
+2500!ALARM!Bosch Governor!Command and position feedback not matching or tak- ing too much time to achieve.!HAI44!Possible cause: Governor wire loose, Governor module
+2501!ALARM!Bosch Governor (Stuck Open)!Command and position feedback not matching or taking too much time to achieve. Governor in open position for greater than 1 second!HAI45!Possible cause: Governor wire loose, Governor module
+2502!ALARM!Bosch Governor (Stuck Closed)!Command and position feedback not matching or taking too much time to achieve. Governor in closed position (commanded otherwise) for greater than 1 second!HAI46!Possible cause: Governor wire loose, Governor module
 
 ######## Gas Only##############################
 2600!ALARM!Ignition!Default Ignition Error! No further description
