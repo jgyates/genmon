@@ -1099,10 +1099,8 @@ class GeneratorDevice:
 
         return "Set Quiet Mode Command sent"
 
-
     #----------  GeneratorDevice::SetGeneratorTimeDate-------------------------------
     def SetGeneratorTimeDate(self):
-
 
         # get system time
         d = datetime.datetime.now()
@@ -2161,7 +2159,9 @@ class GeneratorDevice:
 
 
         ServiceLogDecoder = {
+        0x16: "Service Schedule B",         # Maint
         0x17: "Service Schedule A",         # Maint
+        0x3C: "Schedule B Serviced",         # Maint
         0x3D: "Schedule A Serviced"         # Maint
         # Maintenance Reset
         # *Schedule Service A
@@ -2299,7 +2299,7 @@ class GeneratorDevice:
         # this will attempt to find a description for the log entry based on the info in ALARMS.txt
         if LogBase == ALARM_LOG_STARTING_REG and "unknown" in LogStr.lower() and  self.EvolutionController and len(Value) > 16:
             TempVal = Value[16:20]      # get alarm code
-            AlarmStr = self.GetAlarmInfo(TempVal, ReturnNameOnly = True)
+            AlarmStr = self.GetAlarmInfo(TempVal, ReturnNameOnly = True, FromLog = True)
             if not "unknown" in AlarmStr.lower():
                 LogStr = AlarmStr
 
@@ -2314,7 +2314,7 @@ class GeneratorDevice:
     #------------------- GeneratorDevice::GetAlarmInfo -----------------
     # Read file alarm file and get more info on alarm if we have it
     # passes ErrorCode as string of hex values
-    def GetAlarmInfo(self, ErrorCode, ReturnNameOnly = False):
+    def GetAlarmInfo(self, ErrorCode, ReturnNameOnly = False, FromLog = False):
 
         if not self.EvolutionController:
             return ""
@@ -2324,7 +2324,7 @@ class GeneratorDevice:
                 if ReturnNameOnly:
                     return "Warning Code Unknown: %d" % int(ErrorCode,16)  # returning unknown here is OK since ParseLogEntry will look up a code also
                 else:
-                    return "Warning Code 0000: Please see alarm log for warning details"
+                    return "Warning Code 0000: Please see alarm or maintenance log for warning details"
 
             with open(self.AlarmFile,"r") as AlarmFile:     #opens file
 
@@ -2458,6 +2458,8 @@ class GeneratorDevice:
                 outString += "RPM Sense Loss"
             elif self.BitIsEqual(RegVal, 0x0FFFF, 0x1F):        #  occurred when forced service due
                 outString += "Service Due"
+            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x20):        #  occurred when forced service due
+                outString += "Service Complete"
             elif self.BitIsEqual(RegVal, 0xFFFFF, 0x30):        #  occurred when forced ruptured tank
                 outString += "Ruptured Tank"
             else:
