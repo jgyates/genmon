@@ -2324,7 +2324,7 @@ class GeneratorDevice:
                 if ReturnNameOnly:
                     return "Warning Code Unknown: %d" % int(ErrorCode,16)  # returning unknown here is OK since ParseLogEntry will look up a code also
                 else:
-                    return "Warning Code 0000: Please see alarm or maintenance log for warning details"
+                    return "Warning Code 0000: Please see alarm or maintenance log for warning details\n"
 
             with open(self.AlarmFile,"r") as AlarmFile:     #opens file
 
