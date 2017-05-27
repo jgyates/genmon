@@ -2217,9 +2217,13 @@ class GeneratorDevice:
         AlarmLogDecoder_EvoAC = {
         0x21: "Charger Missing AC"
         }
+
         NexusAlarmLogDecoder = {
         #0x00: "UNKNOWN",        # TBD
         #0x01: "UNKNOWN",        # TBD
+        0x02: "Overcrank",
+        0x03: "Overspeed",
+        0x04: "RPM Sense Loss",
         0x14: "Low Battery",     #
         0x1b: "Check Battery"
         }
