@@ -7,8 +7,8 @@ case "$1" in
     sudo python /home/pi/genmon/genserv.py  &
     #sudo python /home/pi/genmon/gengpio.py  &
     #sudo python /home/pi/genmon/gengpioin.py  &
-    #sudo python /home/pi/genmon/genlog.py -f /home/pi/genmon/LogFile.csv
-    #sudo python /home/pi/genmon/gensms.py
+    #sudo python /home/pi/genmon/genlog.py -f /home/pi/genmon/LogFile.csv &
+    #sudo python /home/pi/genmon/gensms.py &
     ;;
   stop)
     echo "Stopping genmon python scripts"
