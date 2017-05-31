@@ -257,7 +257,7 @@ class GeneratorDevice:
                     "0057" : [2, 0],     # Unknown Looks like some status bits (changes when engine starts / stops)
                     "0055" : [2, 0],     # Unknown
                     "0056" : [2, 0],     # Unknown Looks like some status bits (changes when engine starts / stops)
-                    "005a" : [2, 0],
+                    "005a" : [2, 0],     # Unknown
                     "000d" : [2, 0],     # Bit changes when the controller is updating registers.
                     "003c" : [2, 0],     # Unknown sensor 1 ramps up to 300 on Evo LC, 260 on Evo AC(30.0 ?)
                     "0058" : [2, 0],     # Unknown sensor 2, once engine starts ramps up to 1600 decimal (160.0?)
@@ -2324,11 +2324,15 @@ class GeneratorDevice:
             return ""
         try:
             # Evolution Air Cooled will give a code of 0000 for warnings
+            # Note: last error code can be zero if controller was power cycled
             if ErrorCode == "0000":
                 if ReturnNameOnly:
-                    return "Warning Code Unknown: %d" % int(ErrorCode,16)  # returning unknown here is OK since ParseLogEntry will look up a code also
+                    # We should not see a zero in the alarm log, this would indicate a true UNKNOWN
+                    # returning unknown here is OK since ParseLogEntry will look up a code also
+                    return "Warning Code Unknown: %d" % int(ErrorCode,16)
                 else:
-                    return "Warning Code 0000: Please see alarm or maintenance log for warning details\n"
+                    # This can occur if the controller was power cycled and not alarms have occurred since power applied
+                    return "Error Code 0000: No alarms occured since controller has been power cycled.\n"
 
             with open(self.AlarmFile,"r") as AlarmFile:     #opens file
 
@@ -2466,6 +2470,10 @@ class GeneratorDevice:
                 outString += "Service Complete"
             elif self.BitIsEqual(RegVal, 0xFFFFF, 0x30):        #  occurred when forced ruptured tank
                 outString += "Ruptured Tank"
+            elif self.BitIsEqual(RegVal, 0xFFFFF, 0x31):        #  occurred when Low Fuel Level
+                outString += "Low Fuel Level"
+            elif self.BitIsEqual(RegVal, 0xFFFFF, 0x34):        #  occurred when E-Stop
+                outString += "Emergency Stop"
             else:
                 outString += "UNKNOWN ALARM: %08x" % RegVal
 
