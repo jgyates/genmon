@@ -109,7 +109,7 @@ def SendNotice(Message):
 
         print(message.sid)
 
-    except Exception, e1:
+    except Exception as e1:
         log.error("Error: " + str(e1))
         print "Error: " + str(e1)
 
@@ -148,7 +148,7 @@ if __name__=='__main__': # usage program.py [server_address]
         while True:
             time.sleep(1)
 
-    except Exception, e1:
+    except Exception as e1:
         log.error("Error: " + str(e1))
         print "Error: " + str(e1)
 

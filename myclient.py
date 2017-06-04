@@ -38,7 +38,7 @@ class ClientInterface:
             self.Socket.connect((self.host, self.port))
             sRetData, data = self.Receive(noeom = True)       # Get initial status before commands are sent
             print data
-        except Exception, e1:
+        except Exception as e1:
             self.FatalError("Error: Connect" + str(e1))
 
 
@@ -47,7 +47,7 @@ class ClientInterface:
 
         try:
             self.Socket.sendall(cmd)
-        except Exception, e1:
+        except Exception as e1:
             self.LogError( "Error: TX:" + str(e1))
             self.Close()
             self.Connect()
@@ -75,7 +75,7 @@ class ClientInterface:
             else:
                 self.Connect()
                 return False, data
-        except Exception, e1:
+        except Exception as e1:
             self.LogError( "Error: RX:" + str(e1))
             self.Close()
             self.Connect()
@@ -106,7 +106,7 @@ class ClientInterface:
             while RetStatus == False:
                 self.SendCommand(cmd)
                 RetStatus, data = self.Receive()
-        except Exception, e1:
+        except Exception as e1:
             self.LogError("Error in ProcessMonitorCommand:" + str(e1))
         return data
 

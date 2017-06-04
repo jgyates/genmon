@@ -39,7 +39,7 @@ if __name__=='__main__': # usage program.py [server_address]
                 data = MyClientInterface.ProcessMonitorCommand(line)
                 print data
 
-    except Exception, e1:
+    except Exception as e1:
         print "Error: " + str(e1)
     MyClientInterface.Close()
 

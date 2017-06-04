@@ -61,7 +61,7 @@ class MyMail:
             self.SMTPPort = config.getint('MyMail', 'smtp_port')
             if config.has_option('MyMail', 'disableemail'):
                 self.DisableEmail = config.getboolean('MyMail', 'disableemail')
-        except Exception, e1:
+        except Exception as e1:
             self.FatalError("ERROR: Unable to read config file" + str(e1))
 
 
@@ -155,7 +155,7 @@ class MyMail:
                         #result = M.store(num, '-X-GM-LABELS', "Gate")  # oddly this will not remove the label
                         self.Mailbox.store(num, '+FLAGS', '\\Deleted')     # this is needed to remove the original label
                     time.sleep(15)
-                except Exception, e1:
+                except Exception as e1:
                     self.LogError("Resetting email thread" + str(e1))
                     time.sleep(60)
                     break
@@ -198,7 +198,7 @@ class MyMail:
                 if deletefile:
                     os.remove(f)
 
-        except Exception, e1:
+        except Exception as e1:
             self.LogError("Error attaching file in sendEmailDirectMIME: " + str(e1))
 
         session = smtplib.SMTP(self.SMTPServer, self.SMTPPort)
@@ -221,7 +221,7 @@ class MyMail:
                 EmailItems = self.EmailSendQueue.pop()
                 try:
                     self.sendEmailDirectMIME(EmailItems[0], EmailItems[1], EmailItems[2], EmailItems[3], EmailItems[4])
-                except Exception, e1:
+                except Exception as e1:
                     # put the time back at the end of the queue
                     self.LogError("Error in SendMailThread, retrying: " + str(e1))
                     self.EmailSendQueue.insert(len(self.EmailSendQueue),EmailItems)

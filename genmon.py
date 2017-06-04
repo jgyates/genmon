@@ -56,7 +56,7 @@ class SerialDevice:
         if (self.SerialDevice.isOpen() == False):
             try:
                 self.SerialDevice.open()
-            except Exception, e:
+            except Exception as e:
                 self.FatalError( "Error on open serial port %s: " % self.DeviceName + str(e))
                 return None
         else:
@@ -85,7 +85,7 @@ class SerialDevice:
                         with self.BufferLock:
                             self.Buffer.append(ord(c))
 
-            except Exception, e1:
+            except Exception as e1:
                 self.LogError( "Resetting SerialDevice:ReadThread Error: " + self.DeviceName + ":"+ str(e1))
                 # if we get here then this is likely due to the following exception:
                 #  "device reports readiness to read but returned no data (device disconnected?)"
@@ -115,7 +115,7 @@ class SerialDevice:
             with self.BufferLock:               # will block if lock is already held
                 del self.Buffer[:]
 
-        except Exception, e1:
+        except Exception as e1:
             self.FatalError( "Error in SerialDevice:Flush : " + self.DeviceName + ":" + str(e1))
 
     # ---------- SerialDevice::Read------------------
@@ -355,7 +355,7 @@ class GeneratorDevice:
                 self.bUseLegacyWrite = config.getboolean('GenMon', 'uselegacysetexercise')
             if config.has_option('GenMon', 'outagelog'):
                 self.OutageLog = config.get('GenMon', 'outagelog')
-        except Exception, e1:
+        except Exception as e1:
             raise Exception("Missing config file or config file entries: " + str(e1))
             return None
 
@@ -376,7 +376,7 @@ class GeneratorDevice:
             self.SerialInit = True
             self.ThreadList.append(self.Slave.StartReadThread())
 
-        except Exception, e1:
+        except Exception as e1:
             self.FatalError("Error opening serial device: " + str(e1))
             return None
 
@@ -392,7 +392,7 @@ class GeneratorDevice:
             if self.EvolutionController:
                 with open(self.AlarmFile,"r") as AlarmFile:     #
                     self.printToScreen("Validated alarm file present")
-        except Exception, e1:
+        except Exception as e1:
             self.FatalError("Unable to open alarm file: " + str(e1))
 
         if self.mail.GetSendEmailThreadObject():
@@ -403,7 +403,7 @@ class GeneratorDevice:
         try:
             # CRCMOD library, used for CRC calculations
             self.ModbusCrc = crcmod.predefined.mkCrcFun('modbus')
-        except Exception, e1:
+        except Exception as e1:
             self.FatalError("Unable to find crcmod package: " + str(e1))
 
 
@@ -444,9 +444,9 @@ class GeneratorDevice:
                     self.MasterEmulation()
                     if self.EnableDebug:
                         self.DebugRegisters()
-                except Exception, e1:
+                except Exception as e1:
                     self.LogError("Error in GeneratorDevice:ProcessThread (1), continue: " + str(e1))
-        except Exception, e1:
+        except Exception as e1:
             self.FatalError("Exiting GeneratorDevice:ProcessThread (2)" + str(e1))
 
     # ---------- GeneratorDevice::MonitorThread------------------
@@ -464,7 +464,7 @@ class GeneratorDevice:
                     self.DisplayStatus()        # display generator engine status
                 if self.bDisplayMaintenance:
                     self.DisplayMaintenance()   # display Maintenance
-            except Exception, e1:
+            except Exception as e1:
                 self.LogError("Error in GeneratorDevice:MonitorThread " + str(e1))
 
     #------------GeneratorDevice::Flush-----------------------
@@ -780,7 +780,7 @@ class GeneratorDevice:
             else:
                 Command = CmdString[marker1+1:marker2]
 
-        except Exception, e1:
+        except Exception as e1:
             self.LogError("Validation Error: Error parsing command string in SetGeneratorRemoteStartStop: " + CmdString)
             self.LogError( str(e1))
             return msgbody
@@ -936,7 +936,7 @@ class GeneratorDevice:
                 self.mail.sendEmail(msgsubject, msgbody)
                 return
 
-        except Exception, e1:
+        except Exception as e1:
             self.LogError("Validation Error: Error parsing command string in AltSetGeneratorExerciseTime: " + CmdString)
             self.LogError( str(e1))
             self.mail.sendEmail(msgsubject, msgbody)
@@ -1031,7 +1031,7 @@ class GeneratorDevice:
                 self.LogError("Validation Error: Error parsing command string in SetGeneratorExerciseTime (day of week): " + CmdString)
                 return msgbody
 
-        except Exception, e1:
+        except Exception as e1:
             self.LogError("Validation Error: Error parsing command string in SetGeneratorExerciseTime: " + CmdString)
             self.LogError( str(e1))
             return msgbody
@@ -1086,7 +1086,7 @@ class GeneratorDevice:
                 self.LogError("Validation Error: Error parsing command string in SetGeneratorQuietMode (value): " + CmdString)
                 return msgbody
 
-        except Exception, e1:
+        except Exception as e1:
             self.LogError("Validation Error: Error parsing command string in SetGeneratorQuietMode: " + CmdString)
             self.LogError( str(e1))
             return msgbody
@@ -1343,7 +1343,7 @@ class GeneratorDevice:
 
             msgbody = RegValue
 
-        except Exception, e1:
+        except Exception as e1:
             self.LogError("Validation Error: Error parsing command string in GetRegValue: " + CmdString)
             self.LogError( str(e1))
             return msgbody
@@ -1614,7 +1614,7 @@ class GeneratorDevice:
             with open(self.OutageLog,"a") as LogFile:     #opens file
                 LogFile.write(TimeDate + "," + Duration + "\n")
                 LogFile.flush()
-        except Exception, e1:
+        except Exception as e1:
             self.LogError("Error in  LogOutageToFile: " + str(e1))
 
     #------------ GeneratorDevice::DisplayOutageHistory-------------------------
@@ -1653,7 +1653,7 @@ class GeneratorDevice:
 
             return outstr
 
-        except Exception, e1:
+        except Exception as e1:
             self.LogError("Error in  DisplayOutageHistory: " + str(e1))
             return ""
 
@@ -2359,7 +2359,7 @@ class GeneratorDevice:
                             outstr =  Items[2] + ", Error Code: " + Items[0] + "\n" + "    Description: " + Items[3] + "\n" + "    Additional Info: " + Items[4] + "\n"
                         return outstr
 
-        except Exception, e1:
+        except Exception as e1:
             self.LogError("Error in  GetAlarmInfo " + str(e1))
 
         AlarmCode = int(ErrorCode,16)
@@ -3109,7 +3109,7 @@ class GeneratorDevice:
                 SocketThread = threading.Thread(target=self.SocketWorkThread, args = (conn,), name = "SocketWorkThread")
                 SocketThread.daemon = True
                 SocketThread.start()       # start server thread
-            except Exception, e1:
+            except Exception as e1:
                 self.LogError("Excpetion in InterfaceServerThread" + str(e1))
                 time.sleep(0.5)
                 continue
