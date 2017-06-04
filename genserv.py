@@ -42,7 +42,7 @@ def command(command):
                 finalcommand += "=" + setremotestr
 
             data = MyClientInterface.ProcessMonitorCommand(finalcommand)
-        except Exception, e1:
+        except Exception as e1:
             data = "Retry"
             log.error("Error on command function" + str(e1))
         return jsonify(data)
@@ -64,12 +64,12 @@ if __name__ == "__main__":
         # heartbeat server port, must match value in check_generator_system.py and any calling client apps
         if config.has_option('GenMon', 'server_port'):
             clientport = config.getint('GenMon', 'server_port')
-    except Exception, e1:
+    except Exception as e1:
         log.error("Missing config file or config file entries: " + str(e1))
 
     MyClientInterface = myclient.ClientInterface(host = address,port=clientport, log = log)
     while True:
         try:
             app.run(host="0.0.0.0", port=8000)
-        except Exception, e1:
+        except Exception as e1:
             log.error("Error in app.run:" + str(e1))
