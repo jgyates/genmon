@@ -42,7 +42,7 @@ def OpenSerialPort(name, rate):
         try:
             NewSerialPort.open()
             printToScreen( "Serial port opened")
-        except Exception, e:
+        except Exception as e:
             printToScreen( "error open serial port: " + str(e))
             return 0
     else:
@@ -86,7 +86,7 @@ if __name__=='__main__': # usage SerialTest.py [baud_rate]
             printToScreen("PASSED! Loopback successful")
         serialPort.close()
 
-    except Exception, e1:
+    except Exception as e1:
         printToScreen( "error communicating...: " + str(e1))
 
 
