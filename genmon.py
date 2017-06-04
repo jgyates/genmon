@@ -242,7 +242,7 @@ class GeneratorDevice:
                     "0059" : [2, 0],     # Set Voltage from Dealer Menu (not currently used)
                     "023b" : [2, 0],     # Pick Up Voltage (Evo LQ only)
                     "023e" : [2, 0],     # Exercise time duration (Evo LQ only)
-                    "0054" : [2, 0],     # Hours since generator activation (hours of protection)
+                    "0054" : [2, 0],     # Hours since generator activation (hours of protection) (Evo LQ only)
                     "005f" : [2, 0],     # Total engine time in minutes
                     "01f1" : [2, 0],     # Unknown Status (WIP)
                     "01f2" : [2, 0],     # Unknown Status (WIP)
@@ -1994,6 +1994,12 @@ class GeneratorDevice:
             if len(Value):
                 outstring += self.printToScreen("Battery Ambient Temp Thermistor Value: " + Value, ToString, spacer = True)
 
+            # get total hours since activation
+            Value = self.GetRegisterValueFromList("0054")
+            if len(Value):
+                outstring += self.printToScreen("Hours of Protection: %d H" % int(Value,16), ToString, spacer = True)
+
+
         if not self.LiquidCooled:       # Nexus AC and Evo AC
 
             # starts  0x4000 when idle, ramps up to ~0x2e6a while running
@@ -2962,16 +2968,6 @@ class GeneratorDevice:
             #RunTimes = "Total Engine Run Time: %d:%d " % (hours, min)
             TotalRunTime = TotalRunTime / 60.0
             RunTimes = "Total Engine Run Hours: %.2f " % (TotalRunTime)
-
-        #if self.EvolutionController:
-        #    # get total hours since activation
-        #    Value = self.GetRegisterValueFromList("0054")
-        #    if len(Value) != 4:
-        #        return ""
-
-        #    TotalRunTime = int(Value,16)
-
-        #    RunTimes += ", \"Hours of Protection\": %d H " % TotalRunTime
 
         return RunTimes
 
