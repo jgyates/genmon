@@ -38,7 +38,7 @@ def StopCallBack():
 
     try:
         MyClientInterface.ProcessMonitorCommand("generator: setremote=stop")
-    except Exception, e1:
+    except Exception as e1:
         log.error("Error: " + str(e1))
 
 
@@ -47,7 +47,7 @@ def StartCallBack():
 
     try:
         MyClientInterface.ProcessMonitorCommand("generator: setremote=start")
-    except Exception, e1:
+    except Exception as e1:
         log.error("Error: " + str(e1))
 
 
@@ -56,7 +56,7 @@ def StartTransferCallBack():
 
     try:
         MyClientInterface.ProcessMonitorCommand("generator: setremote=starttransfer")
-    except Exception, e1:
+    except Exception as e1:
         log.error("Error: " + str(e1))
 
 #------------------- Command-line interface for gengpioin -----------------#
@@ -93,7 +93,7 @@ if __name__=='__main__': # usage program.py [server_address]
         while True:
             time.sleep(3)
 
-    except Exception, e1:
+    except Exception as e1:
         log.error("Error: " + str(e1))
         print "Error: " + str(e1)
 

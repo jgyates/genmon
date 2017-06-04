@@ -88,7 +88,7 @@ if __name__=='__main__':
 
             time.sleep(3)
 
-    except Exception, e1:
+    except Exception as e1:
         log.error("Error: " + str(e1))
         print "Error: " + str(e1)
 
