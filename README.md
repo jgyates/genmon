@@ -497,8 +497,8 @@ This is the power supply I used, which allows the Pi to be powered from the gene
 
 
 This is the part number of the connector that you will use on your cable (plug). This is required.
-   * Receptacle = WM3703-DN
-   * Female pin = WM3279CT-DN
+   * Receptacle = WM3703-ND
+   * Female pin = WM3279CT-ND
 
 This is the part number of the connector on the controller (receptacle). This is for informational purposes and is not required.
    * Plug = WM3603-ND
