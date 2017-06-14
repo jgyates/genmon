@@ -68,12 +68,13 @@ class MyMail:
         atexit.register(self.Cleanup)
 
         if not self.DisableEmail:
-            self.threadSendEmail = threading.Thread(target=self.SendMailThread, name = "SendMailThread")
-            self.threadSendEmail.daemon = True
-            self.threadSendEmail.start()       # start server thread
+            if self.SMTPServer != "":
+                self.threadSendEmail = threading.Thread(target=self.SendMailThread, name = "SendMailThread")
+                self.threadSendEmail.daemon = True
+                self.threadSendEmail.start()       # start server thread
 
             if monitor:     # if True then we will have an IMAP monitor thread
-                if incoming_callback and incoming_folder and processed_folder:
+                if incoming_callback and incoming_folder and processed_folder and self.IMAPServer != "":
                     self.threadEmail = threading.Thread(target=self.EmailCommandThread, name = "EmailCommandThread")
                     self.threadEmail.daemon = True
                     self.threadEmail.start()       # start server thread
