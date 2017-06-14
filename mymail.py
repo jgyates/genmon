@@ -73,8 +73,8 @@ class MyMail:
                 self.threadSendEmail.daemon = True
                 self.threadSendEmail.start()       # start server thread
 
-            if monitor:     # if True then we will have an IMAP monitor thread
-                if incoming_callback and incoming_folder and processed_folder and self.IMAPServer != "":
+            if monitor and self.IMAPServer != "":     # if True then we will have an IMAP monitor thread
+                if incoming_callback and incoming_folder and processed_folder:
                     self.threadEmail = threading.Thread(target=self.EmailCommandThread, name = "EmailCommandThread")
                     self.threadEmail.daemon = True
                     self.threadEmail.start()       # start server thread
@@ -93,7 +93,7 @@ class MyMail:
     def GetEmailMonitorThreadObject(self):
 
         if not self.DisableEmail:
-            if self.Monitor:
+            if self.Monitor and self.IMAPServer != "":
                 return self.threadEmail
             else:
                 return 0
