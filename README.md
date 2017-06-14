@@ -285,11 +285,13 @@ The following is a description of the options contained in mymail.conf, which is
       # address that email are sent to
 
     smtp_server = smtp.gmail.com
-      # the SMTP mail server used for sending email
-
+      # the SMTP mail server used for sending email, leave emtpy to disable 
+      # SMTP, i.e. "smtp_server ="
+      
     imap_server = imap.gmail.com
-      # the IMAP server address used for receiving email
-
+      # the IMAP server address used for receiving email, leave emtpy to disable 
+      # IMAP, i.e. "imap_server ="
+      
     smtp_port = 587
       # the SMTP port used on the SMTP server for sending email
      
