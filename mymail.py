@@ -210,7 +210,12 @@ class MyMail:
         # this allows support for simple TLS
         if self.EmailPassword != "":
             session.login(self.EmailAccount, self.EmailPassword)
-        session.sendmail(self.EmailAccount, recipient, msg.as_string())
+
+        if "," in recipient:
+            multiple_recipients = recipient.split(",")
+            session.sendmail(self.EmailAccount, multiple_recipients, msg.as_string())
+        else:
+            session.sendmail(self.EmailAccount, recipient, msg.as_string())
         session.quit()
        # end sendEmail()
 
