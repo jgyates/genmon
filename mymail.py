@@ -204,8 +204,11 @@ class MyMail:
         session = smtplib.SMTP(self.SMTPServer, self.SMTPPort)
         session.ehlo()
         session.starttls()
+
         session.ehlo
-        session.login(self.EmailAccount, self.EmailPassword)
+        # this allows support for simple TLS
+        if self.EmailPassword != "":
+            session.login(self.EmailAccount, self.EmailPassword)
         session.sendmail(self.EmailAccount, recipient, msg.as_string())
         session.quit()
        # end sendEmail()
