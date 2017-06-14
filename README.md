@@ -282,7 +282,7 @@ The following is a description of the options contained in mymail.conf, which is
       # the email account email address (sender email address)
 
     email_recipient = recipient@gmail.com
-      # address that email are sent to
+      # address that email are sent to. Multiple addresses are separated by commas
 
     smtp_server = smtp.gmail.com
       # the SMTP mail server used for sending email, leave empty to disable 
