@@ -2167,8 +2167,10 @@ class GeneratorDevice:
         ServiceLogDecoder = {
         0x16: "Service Schedule B",         # Maint
         0x17: "Service Schedule A",         # Maint
-        0x3C: "Schedule B Serviced",         # Maint
-        0x3D: "Schedule A Serviced"         # Maint
+        0x3C: "Schedule B Serviced",        # Maint
+        0x3D: "Schedule A Serviced",         # Maint
+        0x18: "Inspect Battery",
+        0x3E: "Battery Maintained"
         # Maintenance Reset
         # *Schedule Service A
         # Schedule Service B
@@ -2221,9 +2223,7 @@ class GeneratorDevice:
         # Evolution Air Cooled Decoder
         # NOTE: Warnings on Evolution Air Cooled have an error code of zero
         AlarmLogDecoder_EvoAC = {
-        0x21: "Charger Missing AC",
-        0x18: "Inspect Battery",
-        0x3E: "Battery Maintained"
+        0x21: "Charger Missing AC"
 
         }
 
