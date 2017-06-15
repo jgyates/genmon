@@ -2221,7 +2221,10 @@ class GeneratorDevice:
         # Evolution Air Cooled Decoder
         # NOTE: Warnings on Evolution Air Cooled have an error code of zero
         AlarmLogDecoder_EvoAC = {
-        0x21: "Charger Missing AC"
+        0x21: "Charger Missing AC",
+        0x18: "Inspect Battery",
+        0x3E: "Battery Maintained"
+
         }
 
         NexusAlarmLogDecoder = {
