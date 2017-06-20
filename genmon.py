@@ -2190,7 +2190,9 @@ class GeneratorDevice:
         0x47: "Low Fuel Level",             # 2700A Alarm
         0x1B: "Low Fuel Level",             # 2680W Alarm
         0x46: "Ruptured Tank",              # 2710 Alarm
-        0x49: "Hall Calibration Error"      # 2810  Alarm
+        0x49: "Hall Calibration Error",     # 2810  Alarm
+        0x14: "Low Battery",                # Warning
+        0x20: "Charger Warning"             # Warning
         # Low Oil Pressure
         # High Engine Temperature
         # Overcrank
