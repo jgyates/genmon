@@ -2190,9 +2190,7 @@ class GeneratorDevice:
         0x47: "Low Fuel Level",             # 2700A Alarm
         0x1B: "Low Fuel Level",             # 2680W Alarm
         0x46: "Ruptured Tank",              # 2710 Alarm
-        0x49: "Hall Calibration Error",     # 2810  Alarm
-        0x14: "Low Battery",                # Warning
-        0x20: "Charger Warning"             # Warning
+        0x49: "Hall Calibration Error"     # 2810  Alarm
         # Low Oil Pressure
         # High Engine Temperature
         # Overcrank
@@ -2225,7 +2223,9 @@ class GeneratorDevice:
         # Evolution Air Cooled Decoder
         # NOTE: Warnings on Evolution Air Cooled have an error code of zero
         AlarmLogDecoder_EvoAC = {
-        0x21: "Charger Missing AC"
+        0x21: "Charger Missing AC",
+        0x14: "Low Battery",                # Warning
+        0x20: "Charger Warning"             # Warning
 
         }
 
