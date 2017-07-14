@@ -263,7 +263,6 @@ class GeneratorDevice:
                     "0058" : [2, 0],     # Unknown sensor 2, once engine starts ramps up to 1600 decimal (160.0?)
                     "005d" : [2, 0],     # Unknown sensor 3, Moves between 0x55 - 0x58 continuously even when engine off
                     "05ed" : [2, 0],     # Unknown sensor 4, changes between 35, 37, 39
-                    "05f4" : [2, 0],     # Evo AC   (Status?) 0000 0007 0005 0000 (Evo AQ Status Reg)
                     "05f5" : [2, 0],     # Evo AC   (Status?) 0000 * 0005 0000
                     "05fa" : [2, 0],     # Evo AC   (Status?)
                     "0034" : [2, 0],     # Evo AC   (Status?) Goes from FFFF 0000 00001 (Nexus and Evo AC)
@@ -282,6 +281,7 @@ class GeneratorDevice:
         # registers that need updating more frequently than others to make things more responsive
         self.PrimeRegisters = {
                     "0001" : [4, 0],     # Alarm and status register
+                    "05f4" : [2, 0],     # Evo AC   Output relay status register
                     "0053" : [2, 0],     # Evo LC Output relay status register (battery charging, transfer switch, Change at startup and stop
                     "0052" : [2, 0],     # Evo LC Input status register (sensors) only tested on liquid cooled Evo
                     "0009" : [2, 0],     # Utility voltage
