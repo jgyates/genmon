@@ -2620,7 +2620,7 @@ class GeneratorDevice:
         # Note: this appears to define the state where the generator should start, it defines
         # the initiation of the start delay timer, This only appears in Nexus and Air Cooled Evo
         elif self.BitIsEqual(RegVal, 0x000F0000, 0x00010000):
-                return "Startup Delay Timer Initiated"
+                return "Startup Delay Timer Activated"
         elif self.BitIsEqual(RegVal, 0x000F0000, 0x00020000):
             if self.SystemInAlarm():
                 return "Cranking in Alarm"
