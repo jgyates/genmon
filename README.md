@@ -2,7 +2,7 @@
 # Generator Monitoring Application using a Raspberry Pi and WiFi
 
 This project will monitor a backup generator that utilizes the Generac Evolution or Nexus Controllers over a WiFi or wired connection. Generac, Eaton, Honeywell and Siemens Home Backup Generators use these Generac controllers. Honeywell and Eaton call the controllers Sync 1.0 (Nexus) and Sync 2.0 (Evolution) in their documentation however all of these companies sell generators that use the controllers supported by this project. The project is written mostly in python and has been tested with a Raspberry Pi 3 (Pi Zero and Pi 2 has also been validated). Ideally you would need to create a physical enclosure for your raspberry pi and possibly [make a cable](https://github.com/jgyates/genmon/wiki/Making-a-Cable) to connect the raspberry pi to the Evolution or Nexus controller. If you are comfortable doing these things and you have a backup generator that has an Generac Evolution or Nexus controller then this project may be of interest to you.
-    
+ 
 ## Functionality
    The software supports the following features:
 
@@ -44,6 +44,12 @@ This project will monitor a backup generator that utilizes the Generac Evolution
     Ability to set generator time
     Ability to start, stop, exercise and start / active the transfer switch 
          (i.e. power your house off the generator) remotely. 
+
+
+## Support
+This project is free to use under the posted license agreement. It was written and is supported by one person with testing and some documentation supported by users of the software. I originally created this project for my personal use however I decided to make the project available to anyone interested, however I do accept tips via paypal:
+
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=8Z4TSR22RLMWQ&lc=US&item_name=jgyates&item_number=jgyates&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_LG%2egif%3aNonHosted)
 
 
 ## Testing
