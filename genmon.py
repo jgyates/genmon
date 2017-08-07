@@ -1535,15 +1535,22 @@ class GeneratorDevice:
     def CheckForOutage(self):
 
         # get utility Voltage
-        Value = self.GetRegisterValueFromList("0009")
+        if not self.EvolutionController and self.LiquidCooled:
+            Register = "0009"       # Nexus Liquid Cooled
+        else:
+            Register = "0009"       # Nexus Air Cooled and Evolution
+
+        Value = self.GetRegisterValueFromList(Register)
         if len(Value) != 4:
             return ""           # we don't have a value for this register yet
         UtilityVolts = int(Value, 16)
+
         # Get threshold voltage
         Value = self.GetRegisterValueFromList("0011")
         if len(Value) != 4:
             return ""           # we don't have a value for this register yet
         ThresholdVoltage = int(Value, 16)
+
         # get pickup voltage
         Value = self.GetRegisterValueFromList("023b")
         if len(Value) != 4:
@@ -2229,14 +2236,17 @@ class GeneratorDevice:
 
         }
 
+
         NexusAlarmLogDecoder = {
-        #0x00: "UNKNOWN",        # TBD
-        #0x01: "UNKNOWN",        # TBD
-        0x02: "Overcrank",
-        0x03: "Overspeed",
-        0x04: "RPM Sense Loss",
-        0x14: "Low Battery",     #
-        0x1b: "Check Battery"
+        0x01: "Low Oil Pressure",          # Validated on Nexus Liquid Cooled
+        0x0B: "Low Cooling Fluid",          # Validated on Nexus Liquid Cooled
+        0x17:"Inspect Air Filter",          # Validated on Nexus Liquid Cooled
+        0x21: "Service Schedule A",         # Validated on Nexus Liquid Cooled
+        0x02: "Overcrank",                  # Validated on Nexus Air Cooled
+        0x03: "Overspeed",                  # Validated on Nexus Air Cooled
+        0x04: "RPM Sense Loss",             # Validated on Nexus Liquid Cooled and Air Cooled
+        0x14: "Low Battery",                # Validated on Nexus Air Cooled
+        0x1b: "Check Battery"               # Validated on Nexus Air Cooled
         }
 
         # Service Schedule log and Start/Stop Log are 16 chars long
@@ -2843,8 +2853,13 @@ class GeneratorDevice:
     #------------ GeneratorDevice::GetUtilityVoltage --------------------------
     def GetUtilityVoltage(self):
 
+        if not self.EvolutionController and self.LiquidCooled:
+            Register = "0009"       # Nexus Liquid Cooled
+        else:
+            Register = "0009"       # Nexus Air Cooled and Evolution
+
         # get Battery Charging Voltage
-        Value = self.GetRegisterValueFromList("0009")
+        Value = self.GetRegisterValueFromList(Register)
         if len(Value) != 4:
             return ""
 
