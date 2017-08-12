@@ -488,7 +488,7 @@ This is the power supply I used, which allows the Pi to be powered from the gene
     This may be to large for some smaller air-cooled generators.
 * [Adhesive Magnets from Hobby Lobby](http://www.hobbylobby.com/Crafts-Hobbies/Basic-Crafts/Magnets/1%22---8-Pieces-Square-Magnets-with-Foam-Adhesive/p/25089) (used to attach enclosure to generator). I attached the
     enclosure to the inside of my generator housing but your generator may be different.
-* [Wire (for cable)](https://smile.amazon.com/gp/product/B00INVEWJ8/ref=oh_aui_detailpage_o04_s00?ie=UTF8&psc=1)
+* [Wire (for cable) 18 or 20 AWG](https://smile.amazon.com/dp/B01LH1FQJ0/ref=sr_1_3?ie=UTF8&qid=1502552173&sr=8-3&keywords=18+awg+wire)
 * [Tubing for cable](https://smile.amazon.com/gp/product/B00542XWXG/ref=oh_aui_detailpage_o04_s00?ie=UTF8&psc=1)  (not recommended, possibly use a smaller diameter tube)
     
 
