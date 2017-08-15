@@ -202,17 +202,12 @@ Also, if you generator has as radiator then it is liquid cooled, otherwise it is
     # the Modbus slave address. This *should* not need to be changed from 9d (required)
     address = 9d
 
-    # True if monitoring a liquid cooled generator, False if air cooled. This option
-    # is for monitoring active relays in the controller, which are different for
-    # liquid vs air cooled generators (required)
-    liquidcooled = True
-
     # location of log files (required)
     loglocation = /var/log/
 
     # location of the text file containing descriptions of alarm codes (required)
     alarmfile = /home/pi/genmon/ALARMS.txt
-
+    
     # enable genmon.py to output to the console if True. If this is false the other
     # display* commands below are ignored (optional, default False)
     displayoutput = False
@@ -251,7 +246,23 @@ Also, if you generator has as radiator then it is liquid cooled, otherwise it is
     # method the exercise time must be at least three minutes or more from the current
     # generator time.
     #uselegacysetexercise = False
+    
+    # (optional) Disable the monitoring of the utility line voltage for detecting 
+    # power outages. This will disable the sending of emails when a power outage is 
+    # detected. If you have a Transfer Switch that monitors the utility line and starts 
+    # your generator you may need to set this to true. Most transfer switches requires 
+    # the generator controller to monitor the utility line voltage and notify the switch
+    # to activate so in most cases this will not be needed. If you software is reading 
+    # zero volts for the utility voltage and you are getting false emails regarding an
+    # outage then enable this setting.
+    #disableoutagecheck = False
 
+    # (optional) True if monitoring a liquid cooled generator, False if air cooled. 
+    # This option is for monitoring active relays in the controller, which are different 
+    # for liquid vs air cooled generators. The software will auto-detect the type of 
+    # generator cooling
+    #liquidcooled = True
+    
     # (optional). The software will auto-detect the controller type. The auto-detect
     # can be overridden with this setting. True for Evolution controller, False for
     # Nexus Controller.
