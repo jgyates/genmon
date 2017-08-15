@@ -312,8 +312,10 @@ class GeneratorDevice:
             self.bDisplayMaintenance = False
             self.bUseLegacyWrite = False
             self.EvolutionController = None
+            self.LiquidCooled = None
             self.PetroleumFuel = True
             self.OutageLog = ""
+            self.DisableOutageCheck = False
 
             # getfloat() raises an exception if the value is not a float
             # getint() and getboolean() also do this for their respective types
@@ -326,13 +328,16 @@ class GeneratorDevice:
             self.Address = int(config.get('GenMon', 'address'),16)                      # modbus address
             self.LogLocation = config.get('GenMon', 'loglocation')
             self.AlarmFile = config.get('GenMon', 'alarmfile')
-            self.LiquidCooled = config.getboolean('GenMon', 'liquidcooled')
 
 
             # optional config parameters, by default the software will attempt to auto-detect the controller
             # this setting will override the auto detect
             if config.has_option('GenMon', 'evolutioncontroller'):
                 self.EvolutionController = config.getboolean('GenMon', 'evolutioncontroller')
+            if config.has_option('GenMon', 'liquidcooled'):
+                self.LiquidCooled = config.getboolean('GenMon', 'liquidcooled')
+            if config.has_option('GenMon', 'disableoutagecheck'):
+                self.DisableOutageCheck = config.getboolean('GenMon', 'disableoutagecheck')
 
             if config.has_option('GenMon', 'petroleumfuel'):
                 self.PetroleumFuel = config.getboolean('GenMon', 'petroleumfuel')
@@ -556,38 +561,59 @@ class GeneratorDevice:
     #-------------GeneratorDevice::DetectController------------------------------------
     def DetectController(self):
 
-        if self.EvolutionController == None:
-            # issue modbus read
-            self.ProcessMasterSlaveTransaction("0000", 1)
+        # issue modbus read
+        self.ProcessMasterSlaveTransaction("0000", 1)
 
-            # read register from cached list.
-            Value = self.GetRegisterValueFromList("0000")
-            if len(Value) != 4:
-                return ""
-            ProductModel = int(Value,16)
+        # read register from cached list.
+        Value = self.GetRegisterValueFromList("0000")
+        if len(Value) != 4:
+            return ""
+        ProductModel = int(Value,16)
+
+        # 0x03  Nexus, Air Cooled
+        # 0x06  Nexus, Liquid Cooled
+        # 0x09  Evolution, Air Cooled
+        # 0x0c  Evolution, Liquid Cooled
+
+        msgbody = "\nThis email is a notification informing you that the software has detected a generator "
+        msgbody += "model variant that has not been validated by the authors of this sofrware. "
+        msgbody += "The software has made it's best effort to identify your generator controller type however since "
+        msgbody += "your generator is one that we have not validated, your generator controller may be incorrectly identified. "
+        msgbody += "To validate this variant, please submit the output of the following command (generator: registers)"
+        msgbody += "and your model numbert to the following project thread: https://github.com/jgyates/genmon/issues/10. "
+        msgbody += "Once your feedback is receivd we an add your model product code and controller type to the list in the software."
+
+        if self.EvolutionController == None:
 
             # if reg 000 is 3 or less then assume we have a Nexus Controller
-            if ProductModel <= 0x03:
+            if ProductModel == 0x03 or ProductModel == 0x06:
                 self.EvolutionController = False    #"Nexus"
                 self.printToScreen("Nexus Controller Detected")
-            else:
+            elif ProductModel == 0x09 or ProductModel == 0x0c:
                 self.EvolutionController = True     #"Evolution"
                 self.printToScreen("Evolution Controller Detected")
+            else:
+                # set a reasonable default
+                if ProductModel <= 0x06:
+                    self.EvolutionController = False
+                else:
+                    self.EvolutionController = True
 
-            # 0x0c  Evolution, Liquid Cooled
-            # 0x09  Evolution, Air Cooled
-            # 0x03  Nexus, Air Cooled
-            if not ProductModel in [0x03, 0x09, 0x0c]:
-                self.LogError("Warning in DetectController:  Unverified value detected in model register (%04x)" %  ProductModel)
-                msgbody = "\nThis email is a notification informing you that the software has detected a generator "
-                msgbody += "model variant that has not been validated by the authors of this sofrware. "
-                msgbody += "The software has made it's best effort to identify your generator controller type however since "
-                msgbody += "your generator is one that we have not validated, your generator controller may be incorrectly identified. "
-                msgbody += "To validate this variant, please submit the output of the following command (generator: registers)"
-                msgbody += "and your model numbert to the following project thread: https://github.com/jgyates/genmon/issues/10. "
-                msgbody += "Once your feedback is receivd we an add your model product code and controller type to the list in the software."
-                self.mail.sendEmail("Generator Monitor : Warning at " + self.SiteName, msgbody )
+                self.LogError("Warning in DetectController (Nexus / Evolution):  Unverified value detected in model register (%04x)" %  ProductModel)
+                self.mail.sendEmail("Generator Monitor (Nexus / Evolution): Warning at " + self.SiteName, msgbody )
 
+        if self.LiquidCooled == None:
+            if ProductModel == 0x03 or ProductModel == 0x09:
+                self.LiquidCooled = False    # Air Cooled
+                self.printToScreen("Air Cooled Model Detected")
+            elif ProductModel == 0x06 or ProductModel == 0x0c:
+                self.LiquidCooled = True     # Liquid Cooled
+                self.printToScreen("Liquid Cooled Model Detected")
+            else:
+                # set a reasonable default
+                self.LiquidCooled = False
+                self.LogError("Warning in DetectController (liquid / air cooled):  Unverified value detected in model register (%04x)" %  ProductModel)
+                self.mail.sendEmail("Generator Monitor (liquid / air cooled: Warning at " + self.SiteName, msgbody )
 
         if not self.EvolutionController:        # if we are using a Nexus Controller, force legacy writes
             self.bUseLegacyWrite = True
@@ -1534,13 +1560,11 @@ class GeneratorDevice:
     # also update min and max utility voltage
     def CheckForOutage(self):
 
-        # get utility Voltage
-        if not self.EvolutionController and self.LiquidCooled:
-            Register = "0009"       # Nexus Liquid Cooled
-        else:
-            Register = "0009"       # Nexus Air Cooled and Evolution
+        if not self.DisableOutageCheck:
+            # do not check for outage
+            return ""
 
-        Value = self.GetRegisterValueFromList(Register)
+        Value = self.GetRegisterValueFromList("0009")
         if len(Value) != 4:
             return ""           # we don't have a value for this register yet
         UtilityVolts = int(Value, 16)
@@ -1863,7 +1887,7 @@ class GeneratorDevice:
         outstring += self.printToScreen("\nSerial Stats: ", ToString)
         outstring += self.printToScreen("PacketCount M: %d, S: %d, Buffer Count: %d" % (self.Slave.TxPacketCount, self.Slave.RxPacketCount, len(self.Slave.Buffer)), ToString, spacer = True)
 
-        if self.Slave.CrcError == 0:
+        if self.Slave.CrcError == 0 or self.Slave.RxPacketCount == 0:
             PercentErrors = 0.0
         else:
             PercentErrors = float(self.Slave.CrcError) / float(self.Slave.RxPacketCount)
@@ -1877,8 +1901,9 @@ class GeneratorDevice:
         PacketsPerSecond = float((self.Slave.TxPacketCount + self.Slave.RxPacketCount)) / float(Delta.total_seconds())
         outstring += self.printToScreen("Packets per second: %.2f" % (PacketsPerSecond), ToString, spacer = True)
 
-        AvgTransactionTime = float(self.Slave.TotalElapsedPacketeTime / self.Slave.RxPacketCount)
-        outstring += self.printToScreen("Average Transaction Time: %.4f sec" % (AvgTransactionTime), ToString, spacer = True)
+        if self.Slave.RxPacketCount:
+            AvgTransactionTime = float(self.Slave.TotalElapsedPacketeTime / self.Slave.RxPacketCount)
+            outstring += self.printToScreen("Average Transaction Time: %.4f sec" % (AvgTransactionTime), ToString, spacer = True)
 
         return outstring
     #------------ GeneratorDevice::DisplayStatus ----------------------------------------
@@ -2551,6 +2576,27 @@ class GeneratorDevice:
         if not self.PetroleumFuel:
             DealerInputs_Evo_LC[0x0200] = [False, "Fuel below 5 inch"]
 
+        # Nexus Liquid Cooled
+        #   Position    Digital inputs      Digital Outputs
+        #   1           Low Oil Pressure    air/Fuel Relay
+        #   2           Not used            Bosch Enable
+        #   3           Low Coolant Level   alarm Relay
+        #   4           Low Fuel Pressure   Battery Charge Relay
+        #   5           Wiring Error        Fuel Relay
+        #   6           two Wire Start      Starter Relay
+        #   7           auto Position       Cold Start Relay
+        #   8           Manual Position     transfer Relay
+
+        # Nexus Air Cooled
+        #   Position    Digital Inputs      Digital Outputs
+        #   1           Not Used            Not Used
+        #   2           Low Oil Pressure    Not Used
+        #   3           High Temperature    Not Used
+        #   4           Not Used            Battery Charger Relay
+        #   5           Wiring Error Detect Fuel
+        #   6           Not Used            Starter
+        #   7           Auto                Ignition
+        #   8           Manual              Transfer
 
         # get the inputs registes
         Value = self.GetRegisterValueFromList("0052")
@@ -2666,6 +2712,9 @@ class GeneratorDevice:
             return "Off"
         elif self.BitIsEqual(RegVal, 0x0FFFF, 0x06):
             return "Manual"
+        elif self.BitIsEqual(RegVal, 0x0FFFF, 0x17):
+            # This occurs momentarily when stopping via two wire method
+            return "Two Wire Stop"
         else:
             return "System in Alarm"
 
@@ -2853,13 +2902,8 @@ class GeneratorDevice:
     #------------ GeneratorDevice::GetUtilityVoltage --------------------------
     def GetUtilityVoltage(self):
 
-        if not self.EvolutionController and self.LiquidCooled:
-            Register = "0009"       # Nexus Liquid Cooled
-        else:
-            Register = "0009"       # Nexus Air Cooled and Evolution
-
         # get Battery Charging Voltage
-        Value = self.GetRegisterValueFromList(Register)
+        Value = self.GetRegisterValueFromList("0009")
         if len(Value) != 4:
             return ""
 
