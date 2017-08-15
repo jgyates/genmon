@@ -1560,7 +1560,7 @@ class GeneratorDevice:
     # also update min and max utility voltage
     def CheckForOutage(self):
 
-        if not self.DisableOutageCheck:
+        if self.DisableOutageCheck:
             # do not check for outage
             return ""
 
