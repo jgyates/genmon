@@ -2514,12 +2514,14 @@ class GeneratorDevice:
                 outString += "Service Due"
             elif self.BitIsEqual(RegVal, 0x0FFFF, 0x20):        #  occurred when forced service due
                 outString += "Service Complete"
-            elif self.BitIsEqual(RegVal, 0xFFFFF, 0x30):        #  occurred when forced ruptured tank
+            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x30):        #  occurred when forced ruptured tank
                 outString += "Ruptured Tank"
-            elif self.BitIsEqual(RegVal, 0xFFFFF, 0x31):        #  occurred when Low Fuel Level
+            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x31):        #  occurred when Low Fuel Level
                 outString += "Low Fuel Level"
-            elif self.BitIsEqual(RegVal, 0xFFFFF, 0x34):        #  occurred when E-Stop
+            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x34):        #  occurred when E-Stop
                 outString += "Emergency Stop"
+            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x14):        #  occurred when E-Stop
+                outString += "Check Battery"
             else:
                 outString += "UNKNOWN ALARM: %08x" % RegVal
 
