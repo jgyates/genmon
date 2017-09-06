@@ -2263,15 +2263,18 @@ class GeneratorDevice:
 
 
         NexusAlarmLogDecoder = {
-        0x01: "Low Oil Pressure",          # Validated on Nexus Liquid Cooled
-        0x0B: "Low Cooling Fluid",          # Validated on Nexus Liquid Cooled
-        0x17:"Inspect Air Filter",          # Validated on Nexus Liquid Cooled
-        0x21: "Service Schedule A",         # Validated on Nexus Liquid Cooled
+        0x01: "Low Oil Pressure",           # Validated on Nexus Liquid Cooled
         0x02: "Overcrank",                  # Validated on Nexus Air Cooled
         0x03: "Overspeed",                  # Validated on Nexus Air Cooled
         0x04: "RPM Sense Loss",             # Validated on Nexus Liquid Cooled and Air Cooled
+        0x0B: "Low Cooling Fluid",          # Validated on Nexus Liquid Cooled
+        0x0F: "Govenor Fault",              # Validated on Nexus Liquid Cooled
         0x14: "Low Battery",                # Validated on Nexus Air Cooled
-        0x1b: "Check Battery"               # Validated on Nexus Air Cooled
+        0x17: "Inspect Air Filter",         # Validated on Nexus Liquid Cooled
+        0x1b: "Check Battery",              # Validated on Nexus Air Cooled
+        0x1E: "Low Fuel Pressure",          # Validated on Nexus Liquid Cooled
+        0x21: "Service Schedule A",         # Validated on Nexus Liquid Cooled
+        0x22: "Service Schedule B"          # Validated on Nexus Liquid Cooled
         }
 
         # Service Schedule log and Start/Stop Log are 16 chars long
