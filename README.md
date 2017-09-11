@@ -478,6 +478,34 @@ To stop gensms.py type:
      
 Any errors will be logged to /etc/gensms.log
 
+## genpushover.py (Optional)
+
+The genpushover.py module, provided by @sjbader, will send push notifications via the Pushover Application Framework to a mobile device with the Pushover Application installed. To use this module:
+
+Create an account at [pushover.net](https://pushover.net).
+
+Install chump on your raspberry pi:
+
+    sudo pip install chump
+
+Copy genpushover.py to the root directory where all your other genmon files are since this modules uses other support modules in the genmon project.
+
+Copy genpushover.conf to /etc and configure as following:
+
+  * appid - This is generated when you log into pushover.net and at the bottom next to "Your applications" click on "Create Application/API Token". Once you create your app, you're provided with a long and unique application/API token. Add this token to the appid value in the genpushover.conf file
+
+  * userid - This is your user key and is provided when you log into pushover.net.
+
+  * pushsound - This is the custom sound field. I want my genmon to sound different than other alerts, so I don't choose the default. There is a link to the list of options in the .conf file.
+
+Modify the startgenmon.sh script to uncomment the following lines to start the app:
+
+    sudo python /home/pi/genmon/genpushover.py &
+
+Modify the startgenmon.sh script to uncomment the following line to stop the app:
+
+    sudo pkill -f genpushover.py
+
 
 # Hardware
 
