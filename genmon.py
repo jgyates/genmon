@@ -1673,9 +1673,14 @@ class GeneratorDevice:
                     if line[0] == "#":              # comment?
                         continue
                     Items = line.split(",")
-                    if len(Items) != 2:
+                    if len(Items) != 2 and len(Items) != 3:
                         continue
-                    OutageLog.insert(0, [Items[0], Items[1]])
+                    if len(Items) == 3:
+                        strDuration = Items[1] + "," + Items[2]
+                    else:
+                        strDuration = Items[1]
+
+                    OutageLog.insert(0, [Items[0], strDuration])
                     if len(OutageLog) > 50:     # limit log to 50 entries
                         OutageLog.pop()
 
