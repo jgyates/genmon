@@ -10,7 +10,6 @@
 import datetime, time, sys, smtplib, signal, os, threading, socket
 import mylog
 
-
 #----------  ClientInterface::init--- ------------------------------------------
 class ClientInterface:
     def __init__(self, host="127.0.0.1", port=9082, log = None):
@@ -37,7 +36,7 @@ class ClientInterface:
             #now connect to the server on our port
             self.Socket.connect((self.host, self.port))
             sRetData, data = self.Receive(noeom = True)       # Get initial status before commands are sent
-            print data
+            print(data)
         except Exception as e1:
             self.FatalError("Error: Connect" + str(e1))
 
@@ -46,7 +45,7 @@ class ClientInterface:
     def SendCommand(self, cmd):
 
         try:
-            self.Socket.sendall(cmd)
+            self.Socket.sendall(cmd.encode())
         except Exception as e1:
             self.LogError( "Error: TX:" + str(e1))
             self.Close()
@@ -57,11 +56,13 @@ class ClientInterface:
 
         RetStatus = True
         try:
-            data = self.Socket.recv(self.rxdatasize)
+            bytedata = self.Socket.recv(self.rxdatasize)
+            data = bytedata.decode()
             if len(data):
                 if not self.CheckForStarupMessage(data) or not noeom:
                     while not self.EndOfMessage in data:
-                        more = self.Socket.recv(self.rxdatasize)
+                        morebytes = self.Socket.recv(self.rxdatasize)
+                        more = morebytes.decode()
                         if len(more):
                             if self.CheckForStarupMessage(more):
                                 data = ""

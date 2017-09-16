@@ -31,16 +31,21 @@ if __name__=='__main__': # usage program.py [server_address]
     try:
 
         while True:
-            line = raw_input(">")
+            try:
+                line = raw_input(">")
+            except NameError:
+                pass
+                line = input(">")
+
 
             if line.lower() == "exit":
                 break
             if len(line):
                 data = MyClientInterface.ProcessMonitorCommand(line)
-                print data
+                print(data)
 
     except Exception as e1:
-        print "Error: " + str(e1)
+        print ("Error: " + str(e1))
     MyClientInterface.Close()
 
 
