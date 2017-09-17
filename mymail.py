@@ -18,7 +18,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import COMMASPACE, formatdate
 
-import atexit, ConfigParser
+import atexit, configparser
 import mylog
 
 #imaplib.Debug = 4
@@ -48,7 +48,7 @@ class MyMail:
 
         atexit.register(self.Cleanup)
         try:
-            config = ConfigParser.RawConfigParser()
+            config = configparser.RawConfigParser()
             # config parser reads from current directory, when running form a cron tab this is
             # not defined so we specify the full path
             config.read(configfile)
