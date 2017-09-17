@@ -51,12 +51,12 @@ if __name__=='__main__':
     try:
         opts, args = getopt.getopt(sys.argv[1:],"ha:f:",["address=","filename="])
     except getopt.GetoptError:
-        print HelpStr
+        print (HelpStr)
         sys.exit(2)
 
     for opt, arg in opts:
         if opt == '-h':
-            print HelpStr
+            print (HelpStr)
             sys.exit()
         elif opt in ("-a", "--address"):
             address = arg
@@ -66,7 +66,7 @@ if __name__=='__main__':
     print 'Address is "', address
     print 'Output file is "', fileName
     if not len(fileName):
-        print HelpStr
+        print (HelpStr)
         sys.exit(2)
 
     try:
@@ -90,7 +90,7 @@ if __name__=='__main__':
 
     except Exception as e1:
         log.error("Error: " + str(e1))
-        print "Error: " + str(e1)
+        print ("Error: " + str(e1))
 
 
 
