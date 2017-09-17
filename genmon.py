@@ -1207,6 +1207,7 @@ class GeneratorDevice:
         if len(Packet) == 0:
             return False
         ByteArray = bytearray(Packet)
+        ## PYTHON3 Decode issue
         results = self.ModbusCrc(str(ByteArray))
 
         return results
@@ -3240,7 +3241,11 @@ class GeneratorDevice:
 
         if outstr == False:
             if self.bDisplayOutput:
+                # PYTHON3
+                # python 2.x
                 print MessageStr.format(msgstr),
+                #python 3.x
+                #print (MessageStr.format(msgstr), end='')
             return ""
         else:
             newtpl = MessageStr.format(msgstr),
