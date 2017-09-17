@@ -95,7 +95,7 @@ if __name__=='__main__': # usage program.py [server_address]
 
     except Exception as e1:
         log.error("Error: " + str(e1))
-        print "Error: " + str(e1)
+        print ("Error: " + str(e1))
 
 
 
