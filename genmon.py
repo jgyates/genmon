@@ -16,6 +16,8 @@
 
 # http://modbus.rapidscada.net/
 
+from __future__ import print_function       # For python 3.x compatibility with print function
+
 import datetime, time, sys, smtplib, signal, os, threading, socket, serial
 import crcmod.predefined, crcmod, mymail, atexit, configparser
 import mymail, mylog
@@ -547,14 +549,14 @@ class GeneratorDevice:
             self.ProcessMasterSlaveTransaction("%04x" % SERVICE_LOG_STARTING_REG, SERVICE_LOG_STRIDE)
 
         for PrimeReg, PrimeInfo in self.PrimeRegisters.items():
-            self.ProcessMasterSlaveTransaction(PrimeReg, PrimeInfo[self.REGLEN] / 2)
+            self.ProcessMasterSlaveTransaction(PrimeReg, int(PrimeInfo[self.REGLEN] / 2))
 
         for Reg, Info in self.BaseRegisters.items():
 
             #The divide by 2 is due to the diference in the values in our dict are bytes
             # but modbus makes register request in word increments so the request needs to
             # in word multiples, not bytes
-            self.ProcessMasterSlaveTransaction(Reg, Info[self.REGLEN] / 2)
+            self.ProcessMasterSlaveTransaction(Reg, int(Info[self.REGLEN] / 2))
 
         self.CheckForAlarms()   # check for unknown events (i.e. events we are not decoded) and send an email if they occur
 
@@ -635,13 +637,13 @@ class GeneratorDevice:
 
             if counter % 6 == 0:
                 for PrimeReg, PrimeInfo in self.PrimeRegisters.items():
-                    self.ProcessMasterSlaveTransaction(PrimeReg, PrimeInfo[self.REGLEN] / 2)
+                    self.ProcessMasterSlaveTransaction(PrimeReg, int(PrimeInfo[self.REGLEN] / 2))
                 self.CheckForAlarms()   # check for unknown events (i.e. events we are not decoded) and send an email if they occur
 
             #The divide by 2 is due to the diference in the values in our dict are bytes
             # but modbus makes register request in word increments so the request needs to
             # in word multiples, not bytes
-            self.ProcessMasterSlaveTransaction(Reg, Info[self.REGLEN] / 2)
+            self.ProcessMasterSlaveTransaction(Reg, int(Info[self.REGLEN] / 2))
             counter += 1
 
     #-------------GeneratorDevice::ProcessMasterSlaveWriteTransaction--------------------
@@ -1194,6 +1196,7 @@ class GeneratorDevice:
         if len(Packet) == 0:
             return False
         ByteArray = bytearray(Packet[:len(Packet)-2])
+        # PYTHON3 issue
         results = self.ModbusCrc(str(ByteArray))
         CRCValue = ( ( Packet[-1] & 0xFF ) << 8 ) | ( Packet[ -2] & 0xFF )
         if results != CRCValue:
@@ -3243,9 +3246,9 @@ class GeneratorDevice:
             if self.bDisplayOutput:
                 # PYTHON3
                 # python 2.x
-                print MessageStr.format(msgstr),
+                #print MessageStr.format(msgstr),
                 #python 3.x
-                #print (MessageStr.format(msgstr), end='')
+                print (MessageStr.format(msgstr), end='')
             return ""
         else:
             newtpl = MessageStr.format(msgstr),
