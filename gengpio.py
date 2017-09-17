@@ -97,10 +97,10 @@ if __name__=='__main__': # usage program.py [server_address]
 
         if "evolution" in data.lower():
             Evolution = True
-            print "Evolution Controller Detected\n"
+            print ("Evolution Controller Detected\n")
         else:
             Evolution = False
-            print "Nexus Controller Detected\n"
+            print ("Nexus Controller Detected\n")
 
         while True:
 
@@ -109,7 +109,7 @@ if __name__=='__main__': # usage program.py [server_address]
 
             if LastEvent != data:
                 LastEvent = data
-                print "State: " + data
+                print ("State: " + data)
 
                 if data == "READY":
                     GPIO.output(STATUS_READY,GPIO.HIGH)
@@ -199,7 +199,7 @@ if __name__=='__main__': # usage program.py [server_address]
 
     except Exception as e1:
         log.error("Error: " + str(e1))
-        print "Error: " + str(e1)
+        print ("Error: " + str(e1))
 
 
 
