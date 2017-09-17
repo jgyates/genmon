@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 #------------------------------------------------------------
-#    FILE: gengpio.py
-# PURPOSE: genmon.py support program to allow GPIO pints to drive
-# status LEDs
+#    FILE: gensms.py
+# PURPOSE: genmon.py support program to allow SMS (txt messages)
+# to be sent when the generator status changes
 #
 #  AUTHOR: Jason G Yates
 #    DATE: 05-Apr-2016
@@ -13,7 +13,7 @@
 import datetime, time, sys, signal, os, threading, socket
 import atexit
 import mynotify, mylog
-import ConfigParser
+import configparser
 from twilio.rest import Client
 
 
@@ -111,7 +111,7 @@ def SendNotice(Message):
 
     except Exception as e1:
         log.error("Error: " + str(e1))
-        print "Error: " + str(e1)
+        print ("Error: " + str(e1))
 
 #------------------- Command-line interface for gengpio -----------------#
 if __name__=='__main__': # usage program.py [server_address]
@@ -123,7 +123,7 @@ if __name__=='__main__': # usage program.py [server_address]
         log = mylog.SetupLogger("client", "/var/log/gensms.log")
 
         # read config file
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         # config parser reads from current directory, when running form a cron tab this is
         # not defined so we specify the full path
         config.read('/etc/gensms.conf')
@@ -150,5 +150,5 @@ if __name__=='__main__': # usage program.py [server_address]
 
     except Exception as e1:
         log.error("Error: " + str(e1))
-        print "Error: " + str(e1)
+        print ("Error: " + str(e1))
 
