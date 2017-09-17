@@ -12,7 +12,7 @@
 import datetime, time, sys, signal, os, threading, socket
 import atexit
 import mynotify, mylog
-import ConfigParser
+import configparser
 from chump import Application
 
 
@@ -26,73 +26,73 @@ def signal_handler(signal, frame):
 def OnRun(Active):
 
     if Active:
-        print "Generator Running"
+        print ("Generator Running")
         SendNotice("Generator Running")
     else:
-        print "Generator Running End"
+        print ("Generator Running End")
 
 #----------  OnRunManual ------------------------------------------
 def OnRunManual(Active):
 
     if Active:
-        print "Generator Running in Manual Mode"
+        print ("Generator Running in Manual Mode")
         SendNotice("Generator Running in Manual Mode")
     else:
-        print "Generator Running in Manual Mode End"
+        print ("Generator Running in Manual Mode End")
 
 #----------  OnExercise ------------------------------------------
 def OnExercise(Active):
 
     if Active:
-        print "Generator Exercising"
+        print ("Generator Exercising")
         SendNotice("Generator Exercising")
     else:
-        print "Generator Exercising End"
+        print ("Generator Exercising End")
 
 #----------  OnReady ------------------------------------------
 def OnReady(Active):
 
     if Active:
-        print "Generator Ready"
+        print ("Generator Ready")
         SendNotice("Generator Ready")
     else:
-        print "Generator Ready End"
+        print ("Generator Ready End")
 
 #----------  OnOff ------------------------------------------
 def OnOff(Active):
 
     if Active:
-        print "Generator Off"
+        print ("Generator Off")
         SendNotice("Generator Off")
     else:
-        print "Generator Off End"
+        print ("Generator Off End")
 
 #----------  OnManual ------------------------------------------
 def OnManual(Active):
 
     if Active:
-        print "Generator Manual"
+        print ("Generator Manual")
         SendNotice("Generator Manual")
     else:
-        print "Generator Manual End"
+        print ("Generator Manual End")
 
 #----------  OnAlarm ------------------------------------------
 def OnAlarm(Active):
 
     if Active:
-        print "Generator Alarm"
+        print ("Generator Alarm")
         SendNotice("Generator Alarm")
     else:
-        print "Generator Alarm End"
+        print ("Generator Alarm End")
 
 #----------  OnService ------------------------------------------
 def OnService(Active):
 
     if Active:
-        print "Generator Service Due"
+        print ("Generator Service Due")
         SendNotice("Generator Service Due")
     else:
-        print "Generator Servcie Due End"
+        print ("Generator Servcie Due End")
 
 #----------  SendNotice ------------------------------------------
 def SendNotice(Message):
@@ -111,7 +111,7 @@ def SendNotice(Message):
 
     except Exception as e1:
         log.error("Error: " + str(e1))
-        print "Error: " + str(e1)
+        print ("Error: " + str(e1))
 
 #------------------- Command-line interface for gengpio -----------------#
 if __name__=='__main__': # usage program.py [server_address]
@@ -123,7 +123,7 @@ if __name__=='__main__': # usage program.py [server_address]
         log = mylog.SetupLogger("client", "/var/log/genpushover.log")
 
         # read config file
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         # config parser reads from current directory, when running form a cron tab this is
         # not defined so we specify the full path
         config.read('/etc/genpushover.conf')
@@ -149,5 +149,5 @@ if __name__=='__main__': # usage program.py [server_address]
 
     except Exception as e1:
         log.error("Error: " + str(e1))
-        print "Error: " + str(e1)
+        print ("Error: " + str(e1))
 
