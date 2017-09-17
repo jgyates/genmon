@@ -10,7 +10,7 @@
 #------------------------------------------------------------
 
 from flask import Flask, render_template, request, jsonify
-import sys, signal, os, socket, atexit, ConfigParser
+import sys, signal, os, socket, atexit, configparser
 import mylog, myclient
 
 #------------------------------------------------------------
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     clientport = 0
     try:
 
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         # config parser reads from current directory, when running form a cron tab this is
         # not defined so we specify the full path
         config.read('/etc/genmon.conf')

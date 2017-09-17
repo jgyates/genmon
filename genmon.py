@@ -17,7 +17,7 @@
 # http://modbus.rapidscada.net/
 
 import datetime, time, sys, smtplib, signal, os, threading, socket, serial
-import crcmod.predefined, crcmod, mymail, atexit, ConfigParser
+import crcmod.predefined, crcmod, mymail, atexit, configparser
 import mymail, mylog
 
 #------------ SerialDevice class --------------------------------------------
@@ -297,7 +297,7 @@ class GeneratorDevice:
 
         try:
             # read config file
-            config = ConfigParser.RawConfigParser()
+            config = configparser.RawConfigParser()
             # config parser reads from current directory, when running form a cron tab this is
             # not defined so we specify the full path
             config.read('/etc/genmon.conf')
