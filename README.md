@@ -141,6 +141,13 @@ This can be installed via the following command:
 
      sudo apt-get install python-serial
 
+* [configparser](https://docs.python.org/3/library/configparser.html) - used for parsing configuration file
+
+This can be installed via the following command: 
+
+     sudo pip install configparser
+
+Note: Python 2.7 includes the ConfigParser (mixed case) library, however for better python 3.x compatibility this project uses the configparser (lower case) library.
 
 In addition the the external dependencies there are additional python modules included in this project that are used:
 
