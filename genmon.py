@@ -1196,8 +1196,12 @@ class GeneratorDevice:
         if len(Packet) == 0:
             return False
         ByteArray = bytearray(Packet[:len(Packet)-2])
-        # PYTHON3 issue
-        results = self.ModbusCrc(str(ByteArray))
+
+        if sys.version_info[0] < 3:
+            results = self.ModbusCrc(str(ByteArray))
+        else:
+            results = self.ModbusCrc(ByteArray)
+
         CRCValue = ( ( Packet[-1] & 0xFF ) << 8 ) | ( Packet[ -2] & 0xFF )
         if results != CRCValue:
             self.LogError("Data Error: CRC check failed: %04x  %04x" % (results, CRCValue))
@@ -1210,8 +1214,11 @@ class GeneratorDevice:
         if len(Packet) == 0:
             return False
         ByteArray = bytearray(Packet)
-        ## PYTHON3 Decode issue
-        results = self.ModbusCrc(str(ByteArray))
+
+        if sys.version_info[0] < 3:
+            results = self.ModbusCrc(str(ByteArray))
+        else:
+            results = self.ModbusCrc(ByteArray)
 
         return results
 
@@ -1442,7 +1449,7 @@ class GeneratorDevice:
             LocalError = True
 
         if not LocalError:
-            if(not command.lower().startswith( 'generator:' )):
+            if(not command.lower().startswith( 'generator:' )):         # PYTHON3
                 msgsubject = "Error in Generator Command (no generator: prefix)"
                 self.printToScreen("Invalid GENERATOR command")
                 msgbody += "Invalid GENERATOR command: all commands must be prefixed by \"generator: \""
@@ -3141,7 +3148,7 @@ class GeneratorDevice:
                 statusstr += "WARNING: " + HealthStr
             if statusstr == "":
                 statusstr = "OK "
-
+            # PYTHON3
             conn.sendall(statusstr + ": "+ self.GetSwitchState() + ", " + self.GetEngineState())
 
             while True:
@@ -3149,7 +3156,7 @@ class GeneratorDevice:
                     data = conn.recv(1024)
 
                     outstr = self.ProcessCommand(data, True)
-                    conn.sendall(outstr)
+                    conn.sendall(outstr)        # PYTHON3
                 except socket.timeout:
                     continue
                 except socket.error as msg:
@@ -3244,10 +3251,6 @@ class GeneratorDevice:
 
         if outstr == False:
             if self.bDisplayOutput:
-                # PYTHON3
-                # python 2.x
-                #print MessageStr.format(msgstr),
-                #python 3.x
                 print (MessageStr.format(msgstr), end='')
             return ""
         else:
