@@ -91,7 +91,7 @@ The project [wiki](https://github.com/jgyates/genmon/wiki/Setting-up-your-Pi-and
 
 ## genmon.py (required)
 
-genmon.py is a python program to communicate with the Generac Evolution or Nexus Controller used in some liquid and air cooled standby generators. The program is written using python 2.7, earlier versions have not been tested. Python 3.x has not been tested. This program will communicate with the Evolution or Nexus Controller over the serial port using the MODBUS protocol. The application will allow the display and monitoring of the generator much like the Generac Mobile Link product.
+genmon.py is a python program to communicate with the Generac Evolution or Nexus Controller used in some liquid and air cooled standby generators. The program is written using python 2.7, earlier versions have not been tested. Python 3.x has been minimally tested (v3.4). This program will communicate with the Evolution or Nexus Controller over the serial port using the MODBUS protocol. The application will allow the display and monitoring of the generator much like the Generac Mobile Link product.
 
 Once setup the genmon.py program will send an email when your generator does interesting things (power goes out, alarm on the generator, weekly exercise, etc). The program will also allow emails to be sent to an IMAP email folder. The program monitors the IMAP folder and takes commands from the email subject. The format of the subject of the email should have "generator:"  followed by one or more of the following commands:
 
