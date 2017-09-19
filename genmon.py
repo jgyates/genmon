@@ -85,7 +85,10 @@ class SerialDevice:
                 while True:
                     for c in self.Read():
                         with self.BufferLock:
-                            self.Buffer.append(ord(c))
+                            if sys.version_info[0] < 3:
+                                self.Buffer.append(ord(c))      # PYTHON2
+                            else:
+                                self.Buffer.append(c)      # PYTHON3
 
             except Exception as e1:
                 self.LogError( "Resetting SerialDevice:ReadThread Error: " + self.DeviceName + ":"+ str(e1))
@@ -1199,7 +1202,7 @@ class GeneratorDevice:
 
         if sys.version_info[0] < 3:
             results = self.ModbusCrc(str(ByteArray))
-        else:
+        else:   # PYTHON3
             results = self.ModbusCrc(ByteArray)
 
         CRCValue = ( ( Packet[-1] & 0xFF ) << 8 ) | ( Packet[ -2] & 0xFF )
@@ -1217,7 +1220,7 @@ class GeneratorDevice:
 
         if sys.version_info[0] < 3:
             results = self.ModbusCrc(str(ByteArray))
-        else:
+        else:   # PYTHON3
             results = self.ModbusCrc(ByteArray)
 
         return results
