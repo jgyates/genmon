@@ -1449,7 +1449,7 @@ class GeneratorDevice:
             LocalError = True
 
         if not LocalError:
-            if(not command.lower().startswith( 'generator:' )):         # PYTHON3
+            if(not command.lower().startswith( b'generator:' )):         # PYTHON3
                 msgsubject = "Error in Generator Command (no generator: prefix)"
                 self.printToScreen("Invalid GENERATOR command")
                 msgbody += "Invalid GENERATOR command: all commands must be prefixed by \"generator: \""
@@ -1463,48 +1463,48 @@ class GeneratorDevice:
                 msgbody += "EndOfMessage"
                 return msgbody
 
-        if command.lower().startswith('generator:'):
+        if command.lower().startswith(b'generator:'):
             command = command[len('generator:'):]
 
-        CommandList = command.split(" ")
+        CommandList = command.split(b' ')    # PYTHON3
 
 
         for item in CommandList:
             item = item.lstrip()
             item = item.rstrip()
-            if "generator:" in item.lower():
+            if b"generator:" in item.lower():
                 continue
-            if "registers" in item.lower():         # display registers
+            if b"registers" in item.lower():         # display registers
                 self.printToScreen("GET REGISTERS")
                 msgbody += "Registers:\n"
                 msgbody += self.DisplayRegisters(ToString = True)
                 continue
-            if "allregs" in item.lower():         # display registers
+            if b"allregs" in item.lower():         # display registers
                 self.printToScreen("GET ALLREGS")
                 msgbody += "All Registers:\n"
                 msgbody += self.DisplayRegisters(AllRegs = True, ToString = True)
                 continue
-            if "logs" in item.lower():
+            if b"logs" in item.lower():
                 self.printToScreen("GET LOGS")           # display all logs
                 msgbody += "Logs:\n"
                 msgbody += self.DisplayLogs(AllLogs = True, PrintToString = True)
                 continue
-            if "status" in item.lower():            # display decoded generator info
+            if b"status" in item.lower():            # display decoded generator info
                 self.printToScreen("STATUS")
                 msgbody += "Status:\n"
                 msgbody += self.DisplayStatus(True)
                 continue
-            if "maint" in item.lower():
+            if b"maint" in item.lower():
                 self.printToScreen("MAINT")
                 msgbody += "Maintenance:\n"
                 msgbody += self.DisplayMaintenance(True)
                 continue
-            if "monitor" in item.lower():
+            if b"monitor" in item.lower():
                 self.printToScreen("MONITOR")
                 msgbody += "Monitor:\n"
                 msgbody += self.DisplayMonitor(True)
                 continue
-            if "settime" in item.lower():           # set time and date
+            if b"settime" in item.lower():           # set time and date
                 self.printToScreen("SETTIME")
                 # This is done is a separate thread as not to block any return email processing
                 # since we attempt to sync with generator time
@@ -1513,43 +1513,43 @@ class GeneratorDevice:
                 SetTimeThread.start()               # start settime thread
                 msgbody += "Time Set: Command Sent\n"
                 continue
-            if "setexercise" in item.lower():
+            if b"setexercise" in item.lower():
                 self.printToScreen("SETEXERCISE")
                 msgbody += self.SetGeneratorExerciseTime( command.lower())
                 continue
-            if "setquiet" in item.lower():
+            if b"setquiet" in item.lower():
                 self.printToScreen("SETQUIET")
                 msgbody += self.SetGeneratorQuietMode( command.lower())
                 continue
-            if "help" in item.lower():              # display help screen
+            if b"help" in item.lower():              # display help screen
                 self.printToScreen("HELP")
                 msgbody += "Help:\n"
                 msgbody += self.DisplayHelp(True)
                 continue
-            if "outage" in item.lower():              # display help screen
+            if b"outage" in item.lower():              # display help screen
                 self.printToScreen("OUTAGE")
                 msgbody += "Outage:\n"
                 msgbody += self.DisplayOutage(True)
                 continue
-            if "setremote" in item.lower():
+            if b"setremote" in item.lower():
                 self.printToScreen("SETREMOTE")
                 msgbody += self.SetGeneratorRemoteStartStop(command.lower())
                 continue
             ## These commands are used by the web / socket interface only
             if fromsocket:
-                if "getsitename" in item.lower():       # used in web interface
+                if b"getsitename" in item.lower():       # used in web interface
                     msgbody += self.SiteName
                     continue
-                if "getbase" in item.lower():           # base status, used in web interface (UI changes color based on exercise, running , ready status)
+                if b"getbase" in item.lower():           # base status, used in web interface (UI changes color based on exercise, running , ready status)
                     msgbody += self.GetBaseStatus()
                     continue
-                if "getexercise" in item.lower():
+                if b"getexercise" in item.lower():
                     msgbody += self.GetParsedExerciseTime() # used in web interface
                     continue
-                if "getregvalue" in item.lower():           # only used for debug purposes, read a cached register value
+                if b"getregvalue" in item.lower():           # only used for debug purposes, read a cached register value
                     msgbody += self.GetRegValue(command.lower())
                     continue
-                if "getdebug" in item.lower():              # only used for debug purposes. If a thread crashes it tells you the thread name
+                if b"getdebug" in item.lower():              # only used for debug purposes. If a thread crashes it tells you the thread name
                     msgbody += self.GetDeadThreadName()
                     continue
             if not fromsocket:
@@ -3148,15 +3148,16 @@ class GeneratorDevice:
                 statusstr += "WARNING: " + HealthStr
             if statusstr == "":
                 statusstr = "OK "
-            # PYTHON3
-            conn.sendall(statusstr + ": "+ self.GetSwitchState() + ", " + self.GetEngineState())
+
+            outstr = statusstr + ": "+ self.GetSwitchState() + ", " + self.GetEngineState()
+            conn.sendall(outstr.encode())
 
             while True:
                 try:
                     data = conn.recv(1024)
 
                     outstr = self.ProcessCommand(data, True)
-                    conn.sendall(outstr)        # PYTHON3
+                    conn.sendall(outstr.encode())
                 except socket.timeout:
                     continue
                 except socket.error as msg:
