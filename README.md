@@ -536,6 +536,8 @@ This is the power supply I used, which allows the Pi to be powered from the gene
     enclosure to the inside of my generator housing but your generator may be different.
 * [Wire (for cable) 18 or 20 AWG](https://smile.amazon.com/dp/B01LH1FQJ0/ref=sr_1_3?ie=UTF8&qid=1502552173&sr=8-3&keywords=18+awg+wire)
 * [Tubing for cable](https://smile.amazon.com/gp/product/B00542XWXG/ref=oh_aui_detailpage_o04_s00?ie=UTF8&psc=1)  (not recommended, possibly use a smaller diameter tube)
+* [Alternate cable Tubing](https://www.amazon.com/gp/product/B06VYFGKKY/ref=crt_ewc_title_huc_11?ie=UTF8&psc=1&smid=A38Z015AJ7I755)
+* [Another cable tubing choice](https://www.amazon.com/gp/product/B071WF5K2X/ref=crt_ewc_title_dp_1?ie=UTF8&psc=1&smid=A2N7NRZ9X3BHHN)
     
 
     The cable I used connects the Molex connector on the Evolution /Nexus Controller to a DB-9 break-out
