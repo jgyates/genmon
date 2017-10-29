@@ -20,6 +20,7 @@ class ClientInterface:
             # log errors in this module to a file
             self.log = mylog.SetupLogger("client", "/var/log/myclient.log")
 
+        self.AccessLock = threading.RLock()
         self.EndOfMessage = "EndOfMessage"
         self.rxdatasize = 2000
         self.host = host
@@ -54,36 +55,37 @@ class ClientInterface:
     #----------  ClientInterface::Receive ---------------------------------
     def Receive(self, noeom = False):
 
-        RetStatus = True
-        try:
-            bytedata = self.Socket.recv(self.rxdatasize)
-            data = bytedata.decode()
-            if len(data):
-                if not self.CheckForStarupMessage(data) or not noeom:
-                    while not self.EndOfMessage in data:
-                        morebytes = self.Socket.recv(self.rxdatasize)
-                        more = morebytes.decode()
-                        if len(more):
-                            if self.CheckForStarupMessage(more):
-                                data = ""
-                                RetStatus = False
-                                break
-                            data += more
+        with self.AccessLock:
+            RetStatus = True
+            try:
+                bytedata = self.Socket.recv(self.rxdatasize)
+                data = bytedata.decode()
+                if len(data):
+                    if not self.CheckForStarupMessage(data) or not noeom:
+                        while not self.EndOfMessage in data:
+                            morebytes = self.Socket.recv(self.rxdatasize)
+                            more = morebytes.decode()
+                            if len(more):
+                                if self.CheckForStarupMessage(more):
+                                    data = ""
+                                    RetStatus = False
+                                    break
+                                data += more
 
-                    if data.endswith(self.EndOfMessage):
-                        data = data[:-len(self.EndOfMessage)]
-                        RetStatus = True
-            else:
+                        if data.endswith(self.EndOfMessage):
+                            data = data[:-len(self.EndOfMessage)]
+                            RetStatus = True
+                else:
+                    self.Connect()
+                    return False, data
+            except Exception as e1:
+                self.LogError( "Error: RX:" + str(e1))
+                self.Close()
                 self.Connect()
-                return False, data
-        except Exception as e1:
-            self.LogError( "Error: RX:" + str(e1))
-            self.Close()
-            self.Connect()
-            RetStatus = False
-            data = "Retry"
+                RetStatus = False
+                data = "Retry"
 
-        return RetStatus, data
+            return RetStatus, data
 
     #----------  ClientInterface::CheckForStarupMessage ---------------------------------
     def CheckForStarupMessage(self, data):
@@ -103,10 +105,11 @@ class ClientInterface:
 
         data = ""
         try:
-            RetStatus = False
-            while RetStatus == False:
-                self.SendCommand(cmd)
-                RetStatus, data = self.Receive()
+            with self.AccessLock:
+                RetStatus = False
+                while RetStatus == False:
+                    self.SendCommand(cmd)
+                    RetStatus, data = self.Receive()
         except Exception as e1:
             self.LogError("Error in ProcessMonitorCommand:" + str(e1))
         return data
