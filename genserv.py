@@ -70,6 +70,6 @@ if __name__ == "__main__":
     MyClientInterface = myclient.ClientInterface(host = address,port=clientport, log = log)
     while True:
         try:
-            app.run(host="0.0.0.0", port=8000)
+            app.run(host="0.0.0.0", port=8000, threaded = True)
         except Exception as e1:
             log.error("Error in app.run:" + str(e1))
