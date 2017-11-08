@@ -18,7 +18,7 @@
 
 from __future__ import print_function       # For python 3.x compatibility with print function
 
-import datetime, time, sys, smtplib, signal, os, threading, socket, serial
+import datetime, time, sys, smtplib, signal, os, threading, socket, serial, pytz
 import crcmod.predefined, crcmod, mymail, atexit, configparser
 import mymail, mylog
 
@@ -321,6 +321,9 @@ class GeneratorDevice:
             self.PetroleumFuel = True
             self.OutageLog = ""
             self.DisableOutageCheck = False
+            self.bSyncTime = False          # Sync gen to system time
+            self.bSyncDST = False           # sync time at DST change
+            self.bDST = False               # Daylight Savings Time active if True
 
             # getfloat() raises an exception if the value is not a float
             # getint() and getboolean() also do this for their respective types
@@ -365,6 +368,11 @@ class GeneratorDevice:
                 self.bUseLegacyWrite = config.getboolean('GenMon', 'uselegacysetexercise')
             if config.has_option('GenMon', 'outagelog'):
                 self.OutageLog = config.get('GenMon', 'outagelog')
+            if config.has_option('GenMon', 'syncdst'):
+                self.bSyncDST = config.getboolean('GenMon', 'syncdst')
+            if config.has_option('GenMon', 'synctime'):
+                self.bSyncTime = config.getboolean('GenMon', 'synctime')
+
         except Exception as e1:
             raise Exception("Missing config file or config file entries: " + str(e1))
             return None
@@ -428,6 +436,9 @@ class GeneratorDevice:
 
         # start read thread to process incoming data commands
         self.StartThread(self.ProcessThread, Name = "ProcessThread")
+
+        if self.bSyncDST or self.bSyncTime:
+            self.StartThread(self.SyncGenTime, Name = "TimeSyncThread")   # Sync time thread
 
         if self.EnableDebug:
             self.StartThread(self.DebugThread, Name = "DebugThread")      # for debugging registers
@@ -3093,6 +3104,45 @@ class GeneratorDevice:
             msgbody = ""
 
             time.sleep(60*10)
+
+    #----------  GeneratorDevice::SyncGenTime-------------------------------------
+    def SyncGenTime(self):
+
+        self.bDST = self.is_dst()   # set initial DST state
+
+        # if we are not always syncing, then set the time once
+        if not self.bSyncTime:
+            SetTimeThread = threading.Thread(target=self.SetGeneratorTimeDate, name = "SetTimeThread")
+            SetTimeThread.daemon = True
+            SetTimeThread.start()               # start settime thread
+
+        while True:
+
+            if self.bSyncDST:
+                if self.bDST != self.is_dst():  # has DST changed?
+                    self.bDST = self.is_dst()   # update Flag
+                    # set new time
+                    SetTimeThread = threading.Thread(target=self.SetGeneratorTimeDate, name = "SetTimeThread")
+                    SetTimeThread.daemon = True
+                    SetTimeThread.start()               # start settime thread
+
+            if self.bSyncTime:
+                # update gen time
+                SetTimeThread = threading.Thread(target=self.SetGeneratorTimeDate, name = "SetTimeThread")
+                SetTimeThread.daemon = True
+                SetTimeThread.start()               # start settime thread
+
+            time.sleep(60*60)       # sleep an hour
+
+    #----------  GeneratorDevice::is_dst-------------------------------------
+    def is_dst(self):
+        #Determine whether or not Daylight Savings Time (DST) is currently in effect
+
+        x = datetime.datetime(datetime.datetime.now().year, 1, 1, 0, 0, 0, tzinfo=pytz.timezone('US/Eastern')) # Jan 1 of this year
+        y = datetime.datetime.now(pytz.timezone('US/Eastern'))
+
+        # if DST is in effect, their offsets will be different
+        return not (y.utcoffset() == x.utcoffset())
 
     #----------  GeneratorDevice::ComWatchDog-------------------------------------
     #----------  monitors receive data status to make sure we are still communicating
