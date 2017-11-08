@@ -141,6 +141,12 @@ This can be installed via the following command:
 
      sudo apt-get install python-serial
 
+* [pytz](https://pypi.python.org/pypi/pytz) - Helper library for timezone parsing, which is used for determining Daylight Savings Time. 
+
+This can installed via the following command:
+
+     sudo pip install pytz
+     
 * [configparser](https://docs.python.org/3/library/configparser.html) - used for parsing configuration file
 
 This can be installed via the following command: 
@@ -293,6 +299,15 @@ Also, if you generator has as radiator then it is liquid cooled, otherwise it is
     # (e.g. "sudo rm /home/pi/genmon/outage.txt" )
     outagelog = /home/pi/genmon/outage.txt
 
+    # (optional) This parameter will sync the generator time to the system time
+    # if there is a change in Daylight Savings Time. This does not change the system
+    # time, only the generator time.
+    #syncdst = True
+
+    # (optional) This parameter will sync the generator time to the system time
+    # once every hour. This does not change the system time, only the generator
+    # time.
+    #synctime = True
 
 ## Configuring mymail.py
 
