@@ -670,10 +670,10 @@ class GeneratorDevice:
         if len(MasterPacket) == 0:
             return
 
-        return self.ProcessOneTransaction(MasterPacket, True)   # True to skip writing results to cached reg values
+        return self.ProcessOneTransaction(MasterPacket, skiplog = True)   # True to skip writing results to cached reg values
 
     #-------------GeneratorDevice::ProcessMasterSlaveTransaction--------------------
-    def ProcessMasterSlaveTransaction(self, Register, Length):
+    def ProcessMasterSlaveTransaction(self, Register, Length, ReturnValue = False):
 
         MasterPacket = []
 
@@ -682,10 +682,13 @@ class GeneratorDevice:
         if len(MasterPacket) == 0:
             return
 
+        if ReturnValue:
+            return self.ProcessOneTransaction(MasterPacket, skiplog = True, ReturnValue = True)     # don't log
+
         return self.ProcessOneTransaction(MasterPacket)
 
     #------------GeneratorDevice::ProcessOneTransaction
-    def ProcessOneTransaction(self, MasterPacket, skiplog = False):
+    def ProcessOneTransaction(self, MasterPacket, skiplog = False, ReturnValue = False):
 
         with self.CommAccessLock:       # this lock should allow calls from multiple threads
 
@@ -720,8 +723,9 @@ class GeneratorDevice:
                     return False
 
         # update our cached register dict
-        if not skiplog:
-            self.UpdateRegistersFromPacket(MasterPacket, SlavePacket)
+        ReturnRegValue = self.UpdateRegistersFromPacket(MasterPacket, SlavePacket, SkipUpdate = skiplog)
+        if ReturnValue:
+            return ReturnRegValue
 
         return True
 
@@ -942,27 +946,6 @@ class GeneratorDevice:
         msgsubject = "Generator Command Notice at " + self.SiteName
         msgbody = "Invalid command syntax for command setexercise"
         try:
-            #Format we are looking for is "setexercise=Monday,12:20"
-            marker0 = CmdString.lower().find("setexercise")
-            marker1 = CmdString.find("=", marker0)
-            marker2 = CmdString.find(",",marker1)
-            marker3 = CmdString.find(":",marker2+1)
-            marker4 = CmdString.find(" ",marker3+1)
-
-            if -1 in [marker0, marker1, marker2, marker3]:
-                self.LogError("Validation Error: Error parsing command string in AltSetGeneratorExerciseTime (parse): " + CmdString)
-                self.mail.sendEmail(msgsubject, msgbody)
-                return
-
-            DayStr = CmdString[marker1+1:marker2]
-            HourStr = CmdString[marker2+1:marker3]
-            if marker4 == -1:       # was this the last char in the string or now space given?
-                MinuteStr = CmdString[marker3+1:]
-            else:
-                MinuteStr = CmdString[marker3+1:marker4]
-
-            Minute = int(MinuteStr)
-            Hour = int(HourStr)
 
             DayOfWeek =  {  "monday": 0,        # decode for register values with day of week
                             "tuesday": 1,       # NOTE: This decodes for datetime i.e. Monday=0
@@ -972,23 +955,20 @@ class GeneratorDevice:
                             "saturday": 5,
                             "sunday": 6}
 
-            Day = DayOfWeek.get(DayStr.lower(), -1)
-            if Day == -1:
-                self.LogError("Validation Error: Error parsing command string in AltSetGeneratorExerciseTime (day of week): " + CmdString)
-                self.mail.sendEmail(msgsubject, msgbody)
-                return
+            Day, Hour, Minute = self.ParseExerciseString(CmdString, DayOfWeek)
 
         except Exception as e1:
             self.LogError("Validation Error: Error parsing command string in AltSetGeneratorExerciseTime: " + CmdString)
             self.LogError( str(e1))
-            self.mail.sendEmail(msgsubject, msgbody)
-            return
+            return msgbody
 
-
-        if Minute >59 or Hour > 23 or Day > 6:     # validate minute
+        if Minute < 0 or Hour < 0 or Day < 0:     # validate settings
             self.LogError("Validation Error: Error parsing command string in AltSetGeneratorExerciseTime (v1): " + CmdString)
-            self.mail.sendEmail(msgsubject, msgbody)
-            return
+            return msgbody
+
+        if Minute >59 or Hour > 23 or Day > 6:     # validate settings
+            self.LogError("Validation Error: Error parsing command string in AltSetGeneratorExerciseTime (v2): " + CmdString)
+            return msgbody
 
         # Get System time and create a new datatime item with the target exercise time
         GeneratorTime = datetime.datetime.strptime(self.GetDateTime(), "%A %B %d, %Y %H:%M")
@@ -1034,30 +1014,11 @@ class GeneratorDevice:
         if self.bUseLegacyWrite:
             return self.AltSetGeneratorExerciseTime(CmdString)
 
+
         # extract time of day and day of week from command string
         # format is day:hour:min  Monday:15:00
         msgbody = "Invalid command syntax for command setexercise"
         try:
-            #Format we are looking for is "setexercise=Monday,12:20"
-            marker0 = CmdString.lower().find("setexercise")
-            marker1 = CmdString.find("=", marker0)
-            marker2 = CmdString.find(",",marker1)
-            marker3 = CmdString.find(":",marker2+1)
-            marker4 = CmdString.find(" ",marker3+1)
-
-            if -1 in [marker0, marker1, marker2, marker3]:
-                self.LogError("Validation Error: Error parsing command string in SetGeneratorExerciseTime (parse): " + CmdString)
-                return msgbody
-
-            DayStr = CmdString[marker1+1:marker2]
-            HourStr = CmdString[marker2+1:marker3]
-            if marker4 == -1:       # was this the last char in the string or now space given?
-                MinuteStr = CmdString[marker3+1:]
-            else:
-                MinuteStr = CmdString[marker3+1:marker4]
-
-            Minute = int(MinuteStr)
-            Hour = int(HourStr)
 
             DayOfWeek =  {  "sunday": 0,
                             "monday": 1,        # decode for register values with day of week
@@ -1068,19 +1029,19 @@ class GeneratorDevice:
                             "saturday": 6,
                             }
 
-            Day = DayOfWeek.get(DayStr.lower(), -1)
-            if Day == -1:
-                self.LogError("Validation Error: Error parsing command string in SetGeneratorExerciseTime (day of week): " + CmdString)
-                return msgbody
+            Day, Hour, Minute = self.ParseExerciseString(CmdString, DayOfWeek)
 
         except Exception as e1:
             self.LogError("Validation Error: Error parsing command string in SetGeneratorExerciseTime: " + CmdString)
             self.LogError( str(e1))
             return msgbody
 
+        if Minute < 0 or Hour < 0 or Day < 0:     # validate settings
+            self.LogError("Validation Error: Error parsing command string in SetGeneratorExerciseTime (v1): " + CmdString)
+            return msgbody
 
         if Minute >59 or Hour > 23 or Day > 6:     # validate minute
-            self.LogError("Validation Error: Error parsing command string in SetGeneratorExerciseTime (v1): " + CmdString)
+            self.LogError("Validation Error: Error parsing command string in SetGeneratorExerciseTime (v2): " + CmdString)
             return msgbody
 
         with self.CommAccessLock:
@@ -1098,6 +1059,47 @@ class GeneratorDevice:
             self.ProcessMasterSlaveWriteTransaction("002c", len(Data) / 2, Data)
 
         return  "Set Exercise Time Command sent"
+
+     #----------  GeneratorDevice::ParseExerciseString-------------------------------
+    def ParseExerciseString(self, CmdString, DayDict):
+
+        Day = -1
+        Hour = -1
+        Minute = -1
+
+        try:
+            #Format we are looking for is "setexercise=Monday,12:20"
+            marker0 = CmdString.lower().find("setexercise")
+            marker1 = CmdString.find("=", marker0)
+            marker2 = CmdString.find(",",marker1)
+            marker3 = CmdString.find(":",marker2+1)
+            marker4 = CmdString.find(" ",marker3+1)
+
+            if -1 in [marker0, marker1, marker2, marker3]:
+                self.LogError("Validation Error: Error parsing command string in ParseExerciseString (parse): " + CmdString)
+                return Day, Hour, Minute
+
+            DayStr = CmdString[marker1+1:marker2]
+            HourStr = CmdString[marker2+1:marker3]
+            if marker4 == -1:       # was this the last char in the string or now space given?
+                MinuteStr = CmdString[marker3+1:]
+            else:
+                MinuteStr = CmdString[marker3+1:marker4]
+
+            Minute = int(MinuteStr)
+            Hour = int(HourStr)
+
+            Day = DayDict.get(DayStr.lower(), -1)
+            if Day == -1:
+                self.LogError("Validation Error: Error parsing command string in ParseExerciseString (day of week): " + CmdString)
+                return Day, Hour, Minute
+
+        except Exception as e1:
+            self.LogError("Validation Error: Error parsing command string in ParseExerciseString: " + CmdString)
+            self.LogError( str(e1))
+            return -1, -1, -1
+
+        return Day, Hour, Minute
 
      #----------  GeneratorDevice::SetGeneratorTimeDate-------------------------------
     def SetGeneratorQuietMode(self, CmdString):
@@ -1175,10 +1177,10 @@ class GeneratorDevice:
 
    # ---------- GeneratorDevice::UpdateRegistersFromPacket------------------
    #    Update our internal register list based on the request/response packet
-    def UpdateRegistersFromPacket(self, MasterPacket, SlavePacket):
+    def UpdateRegistersFromPacket(self, MasterPacket, SlavePacket, SkipUpdate = False):
 
         if len(MasterPacket) < MIN_PACKET_LENGTH_RES or len(SlavePacket) < MIN_PACKET_LENGTH_RES:
-            return
+            return ""
 
         if MasterPacket[MBUS_ADDRESS] != self.Address:
             self.LogError("Validation Error:: Invalid address in UpdateRegistersFromPacket (Master)")
@@ -1197,12 +1199,16 @@ class GeneratorDevice:
         # get value from slave packet
         length = SlavePacket[MBUS_RESPONSE_LEN]
         if (length + MBUS_RES_PAYLOAD_SIZE_MINUS_LENGTH) > len(SlavePacket):
-                return False
+                return ""
+
         RegisterValue = ""
         for i in range(3, length+3):
             RegisterValue += "%02x" % SlavePacket[i]
         # update register list
-        self.UpdateRegisterList(Register, RegisterValue)
+        if not SkipUpdate:
+            self.UpdateRegisterList(Register, RegisterValue)
+
+        return RegisterValue
 
     #------------GeneratorDevice::CheckCrc---------------------
     def CheckCRC(self, Packet):
@@ -1401,6 +1407,43 @@ class GeneratorDevice:
 
         return msgbody
 
+
+    #------------ GeneratorDevice::ReadRegValue ------------------------------------
+    def ReadRegValue(self, CmdString):
+
+        # extract quiet mode setting from Command String
+        # format is setquiet=yes or setquiet=no
+        msgbody = "Invalid command syntax for command readregvalue"
+        try:
+            #Format we are looking for is "readregvalue=01f4"
+            marker0 = CmdString.lower().find("readregvalue")
+            marker1 = CmdString.find("=", marker0)
+            marker2 = CmdString.find(" ",marker1+1)
+
+            if -1 in [marker0, marker1]:
+                self.LogError("Validation Error: Error parsing command string in ReadRegValue (parse): " + CmdString)
+                return msgbody
+
+            if marker2 == -1:       # was this the last char in the string or now space given?
+                Register = CmdString[marker1+1:]
+            else:
+                Register = CmdString[marker1+1:marker2]
+
+            RegValue = self.ProcessMasterSlaveTransaction( Register, 1, ReturnValue = True)
+
+            if RegValue == "":
+                self.LogError("Validation Error: Register  not known (ReadRegValue):" + Register)
+                msgbody = "Unsupported Register: " + Register
+                return msgbody
+
+            msgbody = RegValue
+
+        except Exception as e1:
+            self.LogError("Validation Error: Error parsing command string in ReadRegValue: " + CmdString)
+            self.LogError( str(e1))
+            return msgbody
+
+        return msgbody
     #------------ GeneratorDevice::DisplayRegisters --------------------------------------------
     def DisplayRegisters(self, AllRegs = False, ToString = False):
 
@@ -1551,17 +1594,20 @@ class GeneratorDevice:
                 continue
             ## These commands are used by the web / socket interface only
             if fromsocket:
-                if b"getsitename" in item.lower():       # used in web interface
+                if b"getsitename" in item.lower():          # used in web interface
                     msgbody += self.SiteName
                     continue
-                if b"getbase" in item.lower():           # base status, used in web interface (UI changes color based on exercise, running , ready status)
+                if b"getbase" in item.lower():      # base status, used in web interface (UI changes color based on exercise, running , ready status)
                     msgbody += self.GetBaseStatus()
                     continue
                 if b"getexercise" in item.lower():
                     msgbody += self.GetParsedExerciseTime() # used in web interface
                     continue
-                if b"getregvalue" in item.lower():           # only used for debug purposes, read a cached register value
+                if b"getregvalue" in item.lower():          # only used for debug purposes, read a cached register value
                     msgbody += self.GetRegValue(command.lower())
+                    continue
+                if b"readregvalue" in item.lower():         # only used for debug purposes, Read Register Non Cached
+                    msgbody += self.ReadRegValue(command.lower())
                     continue
                 if b"getdebug" in item.lower():              # only used for debug purposes. If a thread crashes it tells you the thread name
                     msgbody += self.GetDeadThreadName()
