@@ -1954,7 +1954,7 @@ class GeneratorDevice:
         outstring += self.printToScreen("   registers   - display contents of registers being monitored", ToString)
         outstring += self.printToScreen("   settime     - set generator time to system time", ToString)
         outstring += self.printToScreen("   setexercise - set the exercise time of the generator. ", ToString)
-        outstring += self.printToScreen("                      i.e. setexercise=Monday,13:30", ToString)
+        outstring += self.printToScreen("                      i.e. setexercise=Monday,13:30,Weekly", ToString)
         outstring += self.printToScreen("   setquiet    - enable or disable exercise quiet mode, ", ToString)
         outstring += self.printToScreen("                      i.e.  setquiet=on or setquiet=off", ToString)
         outstring += self.printToScreen("   setremote   - issue remote command. format is setremote=command, ", ToString)
