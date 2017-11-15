@@ -18,10 +18,12 @@ var baseState = "READY";        // updated on a time
 var currentbaseState = "READY"; // menus change on this var
 var currentClass = "active";    // CSS class for menu color
 var menuElementID = 0;
+var EnhancedExerciseEnabled = false;
 // on page load call init
 window.onload = init;
 var pathname = ""
 var baseurl = ""
+var DaysOfWeekArray = ["Sunday","Monday","Tuesday","Wednesday", "Thursday", "Friday", "Saturday"];
 
 //*****************************************************************************
 // called on window.onload
@@ -39,8 +41,8 @@ function init(){
     setInterval(UpdateDisplay, 5000);       // Called every 5 sec
     document.getElementById("mydisplay").innerHTML = GetDisplayValues("status");
     var ul = document.getElementById('navMenu');  // Parent
-    CreateSelectLists()
-    SetVisibilityOfMaintList()
+    CreateSelectLists();
+    SetVisibilityOfMaintList();
     // Add event handler for click events
     ul.addEventListener('click', MenuClick);
 
@@ -71,6 +73,9 @@ function SetVisibilityOfMaintList(){
     document.getElementById("quietmode").style.visibility = visStr;
     document.getElementById("setexercisebutton").style.visibility = visStr;
     document.getElementById("settime").style.visibility = visStr;
+    if (EnhancedExerciseEnabled == true) {
+        document.getElementById("freqsep").style.visibility = visStr;
+    }
     document.getElementById("settimebutton").style.visibility = visStr;
     document.getElementById("remotecommands").style.visibility = visStr;
     document.getElementById("remotestop").style.visibility = visStr;
@@ -102,18 +107,50 @@ function CreateSelectLists(){
     document.getElementById("setexercise").innerHTML = "<br>Generator Exercise Time: ";
 
     //Create array of options to be added
-    var array = ["Sunday","Monday","Tuesday","Wednesday", "Thursday", "Friday", "Saturday"];
+    var FreqArray = ["Weekly", "Biweekly", "Monthly"];
+
+    //
+    if (EnhancedExerciseEnabled == true) {
+
+        var option = document.createElement("p");
+        option.id = "freqsep";
+        myDiv.appendChild(option);
+        document.getElementById("freqsep").innerHTML = "Mode:    ";
+
+        for(var i = 0; i < FreqArray.length; i++)  {
+
+            var choiceSelection = document.createElement('input');
+            var label = document.createElement("label");
+            choiceSelection.setAttribute('type', 'radio');
+            choiceSelection.setAttribute('name', 'choice');
+            choiceSelection.setAttribute('value', FreqArray[i]);
+            choiceSelection.setAttribute('id', FreqArray[i]);
+            choiceSelection.innerHTML = FreqArray[i];
+            label.appendChild(choiceSelection);
+            label.appendChild(document.createTextNode(FreqArray[i]));
+            document.getElementById("freqsep").appendChild(label);
+        }
+
+        var ex1 = document.getElementById('Weekly');
+        var ex2 = document.getElementById('Biweekly');
+        var ex3 = document.getElementById('Monthly');
+
+        ex1.onclick = WeeklyAndBiWeerklyHandlerClick;
+        ex2.onclick = WeeklyAndBiWeerklyHandlerClick;
+        ex3.onclick = MonthlyHandlerClick;
+
+    }
 
     //Create and append select list
     var selectList = document.createElement("select");
     selectList.id = "days";
     myDiv.appendChild(selectList);
 
-    //Create and append the options
-    for (var i = 0; i < array.length; i++) {
+    //Create and append the options, days
+    for (var i = 0; i < DaysOfWeekArray.length; i++) {
         var option = document.createElement("option");
-        option.value = array[i];
-        option.text = array[i];
+        option.value = DaysOfWeekArray[i];
+        option.text = DaysOfWeekArray[i];
         selectList.appendChild(option);
     }
 
@@ -128,7 +165,7 @@ function CreateSelectLists(){
     selectList.id = "hours";
     myDiv.appendChild(selectList);
 
-    //Create and append the options
+    //Create and append the options, hours
     for (var i = 0; i < 24; i++) {
         var option = document.createElement("option");
         option.value = i.pad();
@@ -146,7 +183,7 @@ function CreateSelectLists(){
     selectList.id = "minutes";
     myDiv.appendChild(selectList);
 
-    //Create and append the options
+    //Create and append the options, minute
     for (var i = 0; i < 60; i++) {
         var option = document.createElement("option");
         option.value = i.pad();
@@ -232,6 +269,48 @@ function SetRemoteCommand(command){
 }
 
 //*****************************************************************************
+// called when Monthly is clicked
+//*****************************************************************************
+function MonthlyHandlerClick(){
+
+    var oldSel = document.getElementById('days');
+
+    while (oldSel.options.length > 0) {
+        oldSel.remove(oldSel.options.length - 1);
+    }
+
+    //Create and append the options, days
+    for (var i = 1; i <= 28; i++) {
+        var option = document.createElement("option");
+        option.value = i.pad()
+        option.text = i.pad();
+        oldSel.appendChild(option);
+    }
+    SetExerciseChoice(false)
+}
+//*****************************************************************************
+// called when Monthly is clicked
+//*****************************************************************************
+function WeeklyAndBiWeerklyHandlerClick(){
+
+    var oldSel = document.getElementById('days');
+
+    while (oldSel.options.length > 0) {
+        oldSel.remove(oldSel.options.length - 1);
+    }
+
+    //Create and append the options, days
+    for (var i = 0; i < DaysOfWeekArray.length; i++) {
+        var option = document.createElement("option");
+        option.value = DaysOfWeekArray[i];
+        option.text = DaysOfWeekArray[i];
+        oldSel.appendChild(option);
+    }
+
+    SetExerciseChoice(false)
+}
+
+//*****************************************************************************
 // called when Set Remote Stop is clicked
 //*****************************************************************************
 function SetStopClick(){
@@ -301,69 +380,92 @@ function SetTimeClick(){
 //*****************************************************************************
 function SetExerciseClick(){
 
-    var e = document.getElementById("days");
-    var strDays = e.options[e.selectedIndex].value;
+    try {
+        var e = document.getElementById("days");
+        var strDays = e.options[e.selectedIndex].value;
 
-    var e = document.getElementById("hours");
-    var strHours = e.options[e.selectedIndex].value;
+        var e = document.getElementById("hours");
+        var strHours = e.options[e.selectedIndex].value;
 
-    var e = document.getElementById("minutes");
-    var strMinutes = e.options[e.selectedIndex].value;
+        var e = document.getElementById("minutes");
+        var strMinutes = e.options[e.selectedIndex].value;
 
-    var e = document.getElementById("quietmode");
-    var strQuiet = e.options[e.selectedIndex].value;
+        var e = document.getElementById("quietmode");
+        var strQuiet = e.options[e.selectedIndex].value;
 
-    var strExerciseTime = strDays.concat(",")
-    strExerciseTime = strExerciseTime.concat(strHours)
-    strExerciseTime = strExerciseTime.concat(":")
-    strExerciseTime = strExerciseTime.concat(strMinutes)
+        var strExerciseTime = strDays.concat(",")
+        strExerciseTime = strExerciseTime.concat(strHours)
+        strExerciseTime = strExerciseTime.concat(":")
+        strExerciseTime = strExerciseTime.concat(strMinutes)
 
-    var DisplayStr = "Set exercise time to ";
-    DisplayStr = DisplayStr.concat(strDays)
-    DisplayStr = DisplayStr.concat(", ")
-    DisplayStr = DisplayStr.concat(strHours)
-    DisplayStr = DisplayStr.concat(":")
-    DisplayStr = DisplayStr.concat(strMinutes)
-    DisplayStr = DisplayStr.concat("  ")
-    DisplayStr = DisplayStr.concat(strQuiet)
-    DisplayStr = DisplayStr.concat("?")
+        if (EnhancedExerciseEnabled == true) {
+            /* TODO change this */
+            if(document.getElementById("Monthly").checked == true) {
+                strExerciseTime = strExerciseTime.concat(",Monthly")
+            }
+            else if(document.getElementById("Biweekly").checked == true) {
+                strExerciseTime = strExerciseTime.concat(",Biweekly")
+            }
+            else {
+                strExerciseTime = strExerciseTime.concat(",Weekly")
+            }
+        }
+        else {
+            strExerciseTime = strExerciseTime.concat(",Weekly")
+        }
+        var DisplayStr = "Set exercise time to ";
 
-    var r = confirm(DisplayStr);
-    if (r == false) {
-        return
+        DisplayStr = strExerciseTime.concat(", ")
+        DisplayStr = DisplayStr.concat(strQuiet)
+        DisplayStr = DisplayStr.concat("?")
+
+        var r = confirm(DisplayStr);
+        if (r == false) {
+            return
+        }
+        // set exercise time
+        var url = baseurl.concat("setexercise");
+        $.getJSON(  url,
+                    {setexercise: strExerciseTime},
+                    function(result){
+       });
+
+        // set quite mode
+        var url = baseurl.concat("setquiet");
+        $.getJSON(  url,
+                    {setquiet: strQuiet},
+                    function(result){
+       });
     }
-    // set exercise time
-    var url = baseurl.concat("setexercise");
-    $.getJSON(  url,
-                {setexercise: strExerciseTime},
-                function(result){
-   });
-
-    // set quite mode
-    var url = baseurl.concat("setquiet");
-    $.getJSON(  url,
-                {setquiet: strQuiet},
-                function(result){
-   });
-
+    catch(err) {
+        alert("Error: invalid selection");
+    }
 }
 
 //*****************************************************************************
 // sets the setexerise control with the current settings
 //*****************************************************************************
-function SetExerciseChoice(){
+function SetExerciseChoice(bSetRadio){
 
     var url = baseurl.concat("getexercise");
     $.getJSON(url,function(result){
 
-        // should return str in this format: Saturday!13!30!On
+        // should return str in this format:
+        // Saturday!13!30!On!Weekly!True
+        // Saturday!13!30!On!Biweekly!Falze
+        // Day-2!13!30!On!Monthly!False
+        // NOTE: Last param (True or False) is if enhanced exercise freq is enabled
         var resultsArray = result.split("!")
 
-        if (resultsArray.length == 4){
+        if (resultsArray.length == 6){
 
-            var element = document.getElementById('days');
-            element.value = resultsArray[0];
+            try {
+                var element = document.getElementById('days');
+                element.value = resultsArray[0];
+            }
+            catch(err) {
 
+            }
             element = document.getElementById('hours');
             element.value = resultsArray[1];
 
@@ -372,6 +474,29 @@ function SetExerciseChoice(){
 
             element = document.getElementById('quietmode');
             element.value = "QuietMode=".concat(resultsArray[3]);
+
+
+            if (EnhancedExerciseEnabled == true) {
+
+                if( bSetRadio == true) {
+                    document.getElementById(resultsArray[4]).checked = true;
+                }
+
+                if (resultsArray[5] === "False") {
+                    document.getElementById("freqsep").style.visibility = "hidden";
+                    document.getElementById("Weekly").disabled = true;
+                    document.getElementById("Biweekly").disabled = true;
+                    document.getElementById("Monthly").disabled = true;
+                    EnhancedExerciseEnabled = false;
+                }
+                else {
+                    document.getElementById("freqsep").style.visibility = "visible"
+                    document.getElementById("Weekly").disabled = false;
+                    document.getElementById("Biweekly").disabled = false;
+                    document.getElementById("Monthly").disabled = false;
+                    EnhancedExerciseEnabled = true
+                }
+            }
         }
    });
 
@@ -400,7 +525,7 @@ function MenuClick(e)
                 menuElementID = e.target;
                 GetDisplayValues(e.target.id);
                 if (e.target.id == "maint") {
-                    SetExerciseChoice()
+                    SetExerciseChoice(true)
                 }
                 break;
             default:
@@ -472,6 +597,30 @@ function GetDisplayValues(command)
 //*****************************************************************************
 function GetHeaderValues()
 {
+
+    /* Make this call synchronous */
+    var url = baseurl.concat("getexercise");
+
+    $.ajax({dataType:"json",url: url, success: function(result){
+
+        // should return str in this format:
+        // Saturday!13!30!On!Weekly!True
+        // Saturday!13!30!On!Biweekly!Falze
+        // Day-2!13!30!On!Monthly!False
+        // NOTE: Last param (True or False) is if enhanced exercise freq is enabled
+        var resultsArray = result.split("!")
+
+        if (resultsArray.length == 6){
+
+            if (resultsArray[5] === "False") {
+                EnhancedExerciseEnabled = false;
+            }
+            else {
+                EnhancedExerciseEnabled = true
+            }
+        }
+    }, async: false});
+
     url = baseurl.concat("getsitename");
     $.getJSON(url,function(result){
 
@@ -482,8 +631,7 @@ function GetHeaderValues()
         var HeaderStr = "Generator Monitor at "
         HeaderStr = HeaderStr.concat(outstr);
         document.getElementById("myheader").innerHTML = HeaderStr
-   });
-
+    });
     return
 }
 
@@ -501,6 +649,7 @@ function UpdateDisplay()
 function GetBaseStatus()
 {
     url = baseurl.concat("getbase");
+
     $.getJSON(url,function(result){
 
         baseState = result;
