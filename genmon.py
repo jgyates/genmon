@@ -279,6 +279,7 @@ class GeneratorDevice:
                     "0208" : [2, 0],     # Evo AC   (Time in minutes? or something else) did not move in last test
                     "002e" : [2, 0],     # Evo AC   (Exercise Time)
                     "002c" : [2, 0],     # Evo AC   (Exercise Time)
+                    "002d" : [2, 0],     # Evo AC   (Weekly, Biweekly, Monthly)
                     "002f" : [2, 0],     # Evo AC   (Quite Mode)
                     "005c" : [2, 0]}
 
@@ -324,6 +325,7 @@ class GeneratorDevice:
             self.bSyncTime = False          # Sync gen to system time
             self.bSyncDST = False           # sync time at DST change
             self.bDST = False               # Daylight Savings Time active if True
+            self.bEnhancedExerciseFrequency = False     # True if controller supports biweekly and monthly exercise times
 
             # getfloat() raises an exception if the value is not a float
             # getint() and getboolean() also do this for their respective types
@@ -372,6 +374,8 @@ class GeneratorDevice:
                 self.bSyncDST = config.getboolean('GenMon', 'syncdst')
             if config.has_option('GenMon', 'synctime'):
                 self.bSyncTime = config.getboolean('GenMon', 'synctime')
+            if config.has_option('GenMon', 'enhancedexercise'):
+                self.bEnhancedExerciseFrequency = config.getboolean('GenMon', 'enhancedexercise')
 
         except Exception as e1:
             raise Exception("Missing config file or config file entries: " + str(e1))
@@ -1029,30 +1033,60 @@ class GeneratorDevice:
                             "saturday": 6,
                             }
 
-            Day, Hour, Minute = self.ParseExerciseString(CmdString, DayOfWeek)
+            Day, Hour, Minute, ModeStr = self.ParseExerciseStringEx(CmdString, DayOfWeek)
 
         except Exception as e1:
             self.LogError("Validation Error: Error parsing command string in SetGeneratorExerciseTime: " + CmdString)
             self.LogError( str(e1))
             return msgbody
 
-        if Minute < 0 or Hour < 0 or Day < 0:     # validate settings
+        if ModeStr not in ["weekly", "biweekly", "monthly"]:
+            self.LogError("Validation Error: Error parsing command string in SetGeneratorExerciseTime (v3): " + CmdString)
+            return msgbody
+
+        if Minute < 0 or Hour < 0 or Day < 0:     # validate Settings
             self.LogError("Validation Error: Error parsing command string in SetGeneratorExerciseTime (v1): " + CmdString)
             return msgbody
 
-        if Minute >59 or Hour > 23 or Day > 6:     # validate minute
-            self.LogError("Validation Error: Error parsing command string in SetGeneratorExerciseTime (v2): " + CmdString)
-            return msgbody
+        if ModeStr.lower in ["weekly", "biweekly"]:
+            if Minute >59 or Hour > 23 or Day > 6:     # validate Settings
+                self.LogError("Validation Error: Error parsing command string in SetGeneratorExerciseTime (v2): " + CmdString)
+                return msgbody
+        else:
+            if Minute >59 or Hour > 23 or Day > 28:    # validate Settings
+                self.LogError("Validation Error: Error parsing command string in SetGeneratorExerciseTime (v2): " + CmdString)
+                return msgbody
+
+        # validate conf file option
+        if not self.bEnhancedExerciseFrequency:
+            if ModeStr.lower() in ["biweekly", "monthly"]:
+                self.LogError("Validation Error: Biweekly and Monthly Exercises are not supported. " + CmdString)
+                return msgbody
 
         with self.CommAccessLock:
-            Data= []
+
+            if self.bEnhancedExerciseFrequency:
+                Data = []
+                Data.append(0x00)
+                if ModeStr.lower() == "weekly":
+                    Data.append(0x00)
+                elif ModeStr.lower() == "biweekly":
+                    Data.append(0x01)
+                elif ModeStr.lower() == "monthly":
+                    Data.append(0x02)
+                else:
+                    self.LogError("Validation Error: Invalid exercise frequency. " + CmdString)
+                    return msgbody
+                self.ProcessMasterSlaveWriteTransaction("002d", len(Data) / 2, Data)
+
+            Data = []
             Data.append(0x00)               #
             Data.append(Day)                # Day
 
             self.ProcessMasterSlaveWriteTransaction("002e", len(Data) / 2, Data)
 
             #
-            Data= []
+            Data = []
             Data.append(Hour)                  #
             Data.append(Minute)                #
 
@@ -1100,6 +1134,75 @@ class GeneratorDevice:
             return -1, -1, -1
 
         return Day, Hour, Minute
+
+    #----------  GeneratorDevice::ParseExerciseStringEx-------------------------------
+    def ParseExerciseStringEx(self, CmdString, DayDict):
+
+        Day = -1
+        Hour = -1
+        Minute = -1
+        ModeStr = ""
+        try:
+
+            #Format we are looking for is :
+            # "setexercise=Monday,12:20"  (weekly default)
+            # "setexercise=Monday,12:20,weekly"
+            # "setexercise=Monday,12:20,biweekly"
+            # "setexercise=15,12:20,monthly"
+
+            if "setexercise" not in  CmdString.lower():
+                return Day, Hour, Minute, ModeStr
+
+            Items = CmdString.split(b"=")
+
+            if len(Items) != 2:
+                return Day, Hour, Minute, ModeStr
+
+            ParsedItems = Items[1].split(b",")
+
+            if len(ParsedItems) < 2 or len(ParsedItems) > 3:
+                return Day, Hour, Minute, ModeStr
+
+            DayStr = ParsedItems[0].lstrip()
+            DayStr = DayStr.rstrip()
+
+            if len(ParsedItems) == 3:
+                ModeStr = ParsedItems[2].lstrip()
+                ModeStr = ModeStr.rstrip()
+            else:
+                ModeStr = "weekly"
+
+            if ModeStr.lower() not in ["weekly", "biweekly", "monthly"]:
+                return Day, Hour, Minute, ModeStr
+
+            TimeItems = ParsedItems[1].split(b":")
+
+            if len(TimeItems) != 2:
+                return Day, Hour, Minute, ModeStr
+
+            HourStr = TimeItems[0].lstrip()
+            HourStr = HourStr.rstrip()
+
+            MinuteStr = TimeItems[1].lstrip()
+            MinuteStr = MinuteStr.rstrip()
+
+            Minute = int(MinuteStr)
+            Hour = int(HourStr)
+
+            if ModeStr.lower != "monthly":
+                Day = DayDict.get(DayStr.lower(), -1)
+                if Day == -1:
+                    self.LogError("Validation Error: Error parsing command string in ParseExerciseStringEx (day of week): " + CmdString)
+                    return -1, -1, -1, ""
+            else:
+                Day = int(DayStr.lower())
+
+        except Exception as e1:
+            self.LogError("Validation Error: Error parsing command string in ParseExerciseStringEx: " + CmdString)
+            self.LogError( str(e1))
+            return -1, -1, -1, ""
+
+        return Day, Hour, Minute, ModeStr
 
      #----------  GeneratorDevice::SetGeneratorTimeDate-------------------------------
     def SetGeneratorQuietMode(self, CmdString):
@@ -1188,10 +1291,10 @@ class GeneratorDevice:
         if SlavePacket[MBUS_ADDRESS] != self.Address:
             self.LogError("Validation Error:: Invalid address in UpdateRegistersFromPacket (Slave)")
 
-        if not SlavePacket[MBUS_COMMAND] in [MBUS_CMD_READ_REGS]:
+        if not SlavePacket[MBUS_COMMAND] in [MBUS_CMD_READ_REGS, MBUS_CMD_WRITE_REGS]:
             self.LogError("UpdateRegistersFromPacket: Unknown Function slave %02x %02x" %  (SlavePacket[0],SlavePacket[1]))
 
-        if not MasterPacket[MBUS_COMMAND] in [MBUS_CMD_READ_REGS]:
+        if not MasterPacket[MBUS_COMMAND] in [MBUS_CMD_READ_REGS, MBUS_CMD_WRITE_REGS]:
             self.LogError("UpdateRegistersFromPacket: Unknown Function master %02x %02x" %  (MasterPacket[0],MasterPacket[1]))
 
         # get register from master packet
@@ -1981,6 +2084,7 @@ class GeneratorDevice:
             AvgTransactionTime = float(self.Slave.TotalElapsedPacketeTime / self.Slave.RxPacketCount)
             outstring += self.printToScreen("Average Transaction Time: %.4f sec" % (AvgTransactionTime), ToString, spacer = True)
 
+        # TODOTODO
         return outstring
     #------------ GeneratorDevice::DisplayStatus ----------------------------------------
     def DisplayStatus(self, ToString = False):
@@ -2851,20 +2955,48 @@ class GeneratorDevice:
         if len(Value) != 4:
             return ""
         return "%d min" % int(Value,16)
-    #------------ GeneratorDevice::GetExerciseTime --------------------------------------------
+    #------------ GeneratorDevice::GetParsedExerciseTime --------------------------------------------
     def GetParsedExerciseTime(self):
 
         retstr = self.GetExerciseTime()
         if not len(retstr):
             return ""
-        #should return this format: "Saturday 13:30 Quite Mode On"
+        #should return this format:
+        # "Weekly Saturday 13:30 Quite Mode On"
+        # "Biweekly Saturday 13:30 Quite Mode On"
+        # "Monthly Day-1 13:30 Quite Mode On"
         Items = retstr.split(" ")
-        Time = Items[1]
-        HoursMin = Items[1].split(":")
-        retstr = Items[0] + "!" + HoursMin[0] + "!" + HoursMin[1] + "!" + Items[4]
+        HoursMin = Items[2].split(":")
+
+        if self.bEnhancedExerciseFrequency:
+            ModeStr = "True"
+        else:
+            ModeStr = "False"
+
+        retstr = Items[1] + "!" + HoursMin[0] + "!" + HoursMin[1] + "!" + Items[5] + "!" + Items[0] + "!" + ModeStr
         return retstr
     #------------ GeneratorDevice::GetExerciseTime --------------------------------------------
     def GetExerciseTime(self):
+
+        ExerciseFreq = ""   # Weekly
+        FreqVal = 0
+        DayOfMonth = 0
+
+        if self.bEnhancedExerciseFrequency:
+            # get frequency:  00 = weekly, 01= biweekly, 02=monthly
+            Value = self.GetRegisterValueFromList("002d")
+            if len(Value) != 4:
+                return ""
+
+            FreqValStr = Value[:2]
+            FreqVal = int(FreqValStr,16)
+            if FreqVal > 2:
+                return ""
+
+            if FreqVal == 1:
+                ExerciseFreq = "Biweekly"
+            elif FreqVal == 2:
+                ExerciseFreq = "Monthly"
 
         # get exercise time of day
         Value = self.GetRegisterValueFromList("0005")
@@ -2876,18 +3008,44 @@ class GeneratorDevice:
         Minute = Value[2:]
         if int(Minute,16) >= 60:
             return ""
+
         # Get exercise day of week
         Value = self.GetRegisterValueFromList("0006")
         if len(Value) != 4:
             return ""
-        DayOfWeek = Value[:2]       # Mon = 1
-        if int(DayOfWeek,16) > 7:
-            return ""
 
-        Type = Value[2:]    # Quite Mode 00=no 01=yes This value may be weekly, bi weekly or monthly 01=weekly
+        if FreqVal == 0 or FreqVal == 1:
 
-        ExerciseTime =  self.DaysOfWeek.get(int(DayOfWeek,16),"") + " "
+            DayOfWeek = Value[:2]       # Mon = 1
+            if int(DayOfWeek,16) > 7:
+                return ""
+        elif FreqVal == 2:      # Monthly
+            # Get exercise day of month
+            AltValue = self.GetRegisterValueFromList("002e")
+            if len(AltValue) != 4:
+                return ""
+            DayOfMonth = AltVal[:2]
+            if int(DayOfMonth,16) > 28:
+                return ""
+
+        Type = Value[2:]    # Quite Mode 00=no 01=yes
+
+        ExerciseTime = ""
+        if FreqVal == 0:
+            ExerciseTime += "Weekly "
+        elif FreqVal == 1:
+            ExerciseTime += "Biweekly "
+        elif FreqVal == 2:
+            ExerciseTime += "Monthly "
+
+        if FreqVal == 0 or FreqVal == 1:
+            ExerciseTime +=  self.DaysOfWeek.get(int(DayOfWeek,16),"") + " "
+        elif FreqVal == 2:
+            ExerciseTime +=  "Day-%d" % (int(DayOfMonth,16),"") + " "
+
         ExerciseTime += "%02d:%02d" %  (int(Hour,16), int(Minute,16))
+
+
         if Type == "00":
             ExerciseTime += " Quite Mode Off"
         elif Type == "01":
