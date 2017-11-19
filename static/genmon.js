@@ -286,7 +286,7 @@ function MonthlyHandlerClick(){
         option.text = i.pad();
         oldSel.appendChild(option);
     }
-    SetExerciseChoice(false)
+
 }
 //*****************************************************************************
 // called when Monthly is clicked
@@ -294,6 +294,10 @@ function MonthlyHandlerClick(){
 function WeeklyAndBiWeerklyHandlerClick(){
 
     var oldSel = document.getElementById('days');
+
+    if (oldSel.options.length == 7) {
+        return
+    }
 
     while (oldSel.options.length > 0) {
         oldSel.remove(oldSel.options.length - 1);
@@ -307,7 +311,6 @@ function WeeklyAndBiWeerklyHandlerClick(){
         oldSel.appendChild(option);
     }
 
-    SetExerciseChoice(false)
 }
 
 //*****************************************************************************
@@ -453,11 +456,18 @@ function SetExerciseChoice(bSetRadio){
         // should return str in this format:
         // Saturday!13!30!On!Weekly!True
         // Saturday!13!30!On!Biweekly!Falze
-        // Day-2!13!30!On!Monthly!False
+        // 2!13!30!On!Monthly!False
         // NOTE: Last param (True or False) is if enhanced exercise freq is enabled
         var resultsArray = result.split("!")
 
         if (resultsArray.length == 6){
+
+            if (resultsArray[4] == "Monthly") {
+                MonthlyHandlerClick(false);
+            }
+            else {
+                WeeklyAndBiWeerklyHandlerClick(false);
+            }
 
             try {
                 var element = document.getElementById('days');
