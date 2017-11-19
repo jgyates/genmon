@@ -1955,6 +1955,9 @@ class GeneratorDevice:
         outstring += self.printToScreen("   settime     - set generator time to system time", ToString)
         outstring += self.printToScreen("   setexercise - set the exercise time of the generator. ", ToString)
         outstring += self.printToScreen("                      i.e. setexercise=Monday,13:30,Weekly", ToString)
+        if self.bEnhancedExerciseFrequency:
+            outstring += self.printToScreen("                      i.e. setexercise=Monday,13:30,BiWeekly", ToString)
+            outstring += self.printToScreen("                      i.e. setexercise=15,13:30,Monthly", ToString)
         outstring += self.printToScreen("   setquiet    - enable or disable exercise quiet mode, ", ToString)
         outstring += self.printToScreen("                      i.e.  setquiet=on or setquiet=off", ToString)
         outstring += self.printToScreen("   setremote   - issue remote command. format is setremote=command, ", ToString)
@@ -2084,7 +2087,6 @@ class GeneratorDevice:
             AvgTransactionTime = float(self.Slave.TotalElapsedPacketeTime / self.Slave.RxPacketCount)
             outstring += self.printToScreen("Average Transaction Time: %.4f sec" % (AvgTransactionTime), ToString, spacer = True)
 
-        # TODOTODO
         return outstring
     #------------ GeneratorDevice::DisplayStatus ----------------------------------------
     def DisplayStatus(self, ToString = False):
@@ -2437,12 +2439,14 @@ class GeneratorDevice:
         AlarmLogDecoder_EvoAC = {
         0x21: "Charger Missing AC",
         0x14: "Low Battery",                # Warning
-        0x20: "Charger Warning"             # Warning
+        0x20: "Charger Warning",            # Warning
+        0x21:" Charger Missing AC"
 
         }
 
 
         NexusAlarmLogDecoder = {
+        0x00: "High Engine Temperature",    # Validated on Nexus Air Cooled
         0x01: "Low Oil Pressure",           # Validated on Nexus Liquid Cooled
         0x02: "Overcrank",                  # Validated on Nexus Air Cooled
         0x03: "Overspeed",                  # Validated on Nexus Air Cooled
@@ -2973,6 +2977,11 @@ class GeneratorDevice:
         else:
             ModeStr = "False"
 
+        if "monthly" in retstr.lower():
+            Items[1] = ''.join(x for x in Items[1] if x.isdigit())
+            Day = int(Items[1])
+            Items[1] = "%02d" % Day
+
         retstr = Items[1] + "!" + HoursMin[0] + "!" + HoursMin[1] + "!" + Items[5] + "!" + Items[0] + "!" + ModeStr
         return retstr
     #------------ GeneratorDevice::GetExerciseTime --------------------------------------------
@@ -2988,15 +2997,11 @@ class GeneratorDevice:
             if len(Value) != 4:
                 return ""
 
-            FreqValStr = Value[:2]
+            FreqValStr = Value[2:]
             FreqVal = int(FreqValStr,16)
             if FreqVal > 2:
                 return ""
 
-            if FreqVal == 1:
-                ExerciseFreq = "Biweekly"
-            elif FreqVal == 2:
-                ExerciseFreq = "Monthly"
 
         # get exercise time of day
         Value = self.GetRegisterValueFromList("0005")
@@ -3014,17 +3019,17 @@ class GeneratorDevice:
         if len(Value) != 4:
             return ""
 
-        if FreqVal == 0 or FreqVal == 1:
+        if FreqVal == 0 or FreqVal == 1:        # weekly or biweekly
 
             DayOfWeek = Value[:2]       # Mon = 1
             if int(DayOfWeek,16) > 7:
                 return ""
-        elif FreqVal == 2:      # Monthly
+        elif FreqVal == 2:                      # Monthly
             # Get exercise day of month
             AltValue = self.GetRegisterValueFromList("002e")
             if len(AltValue) != 4:
                 return ""
-            DayOfMonth = AltVal[:2]
+            DayOfMonth = AltValue[2:]
             if int(DayOfMonth,16) > 28:
                 return ""
 
@@ -3041,7 +3046,7 @@ class GeneratorDevice:
         if FreqVal == 0 or FreqVal == 1:
             ExerciseTime +=  self.DaysOfWeek.get(int(DayOfWeek,16),"") + " "
         elif FreqVal == 2:
-            ExerciseTime +=  "Day-%d" % (int(DayOfMonth,16),"") + " "
+            ExerciseTime +=  ("Day-%d" % (int(DayOfMonth,16))) + " "
 
         ExerciseTime += "%02d:%02d" %  (int(Hour,16), int(Minute,16))
 
