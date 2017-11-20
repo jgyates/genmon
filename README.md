@@ -27,7 +27,7 @@ This project will monitor a backup generator that utilizes the Generac Evolution
             - Current Utility Voltage
             - Min and Max Utility Voltage since program started
         - Maintenance Information
-            - Weekly Exercise time, day
+            - Weekly Exercise time, day (biweekly and monthly if supported by your generator)
             - Hours till next scheduled service
             - Total Run Hours
             - Firmware and Hardware versions
@@ -105,7 +105,7 @@ Once setup the genmon.py program will send an email when your generator does int
           registers   - display contents of registers being monitored
           settime     - set generator time to system time
           setexercise - set the exercise time of the generator. 
-                          i.e. setexercise=Monday,13:30
+                          i.e. setexercise=Monday,13:30,Weekly
           setquiet    - enable or disable exercise quiet mode, 
                           i.e.  setquiet=on or setquiet=off
           setremote   - issue remote command. format is setremote=command, 
@@ -308,6 +308,11 @@ Also, if you generator has as radiator then it is liquid cooled, otherwise it is
     # once every hour. This does not change the system time, only the generator
     # time.
     #synctime = True
+
+    # (optional) This parameter will enable the functionality to support biweekly
+    # and monthly exercise times (weekly is the default). Note, your generator
+    # controller  must support this functionality before enabling this option.
+    enhancedexercise = True
 
 ## Configuring mymail.py
 
