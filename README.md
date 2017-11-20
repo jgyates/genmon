@@ -116,7 +116,7 @@ Once setup the genmon.py program will send an email when your generator does int
          Example subject:
             generator: status maint
 
-            generator: setexercise=Tuesday,23:45 setquiet=on
+            generator: setexercise=Tuesday,23:45,Weekly setquiet=on
 
 A few notes about commands: 
 
