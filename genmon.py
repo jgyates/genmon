@@ -1189,7 +1189,7 @@ class GeneratorDevice:
             Minute = int(MinuteStr)
             Hour = int(HourStr)
 
-            if ModeStr.lower != "monthly":
+            if ModeStr.lower() != "monthly":
                 Day = DayDict.get(DayStr.lower(), -1)
                 if Day == -1:
                     self.LogError("Validation Error: Error parsing command string in ParseExerciseStringEx (day of week): " + CmdString)
