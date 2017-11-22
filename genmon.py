@@ -2263,21 +2263,21 @@ class GeneratorDevice:
             outstring = "\n"
 
         if AllLogs:
-            outstring += self.printToScreen("Start Stop Log:", PrintToString)
-            for Register in self.LogRange(START_LOG_STARTING_REG , LOG_DEPTH,START_LOG_STRIDE):
-                RegStr = "%04x" % Register
-                Value = self.GetRegisterValueFromList(RegStr)
-                if len(Value) == 0:
-                    break
-
-                if not RawOutput:
-                    LogStr = self.ParseLogEntry(Value, LogBase = START_LOG_STARTING_REG)
-                    if len(LogStr):             # if the register is there but no log entry exist
-                        outstring += self.printToScreen(LogStr, PrintToString, spacer = True)
-                else:
-                    outstring += self.printToScreen("%s:%s" % (RegStr, Value), PrintToString, spacer = True)
 
             if self.EvolutionController:
+                outstring += self.printToScreen("Alarm Log:     ", PrintToString)
+                for Register in self.LogRange(ALARM_LOG_STARTING_REG , LOG_DEPTH, ALARM_LOG_STRIDE):
+                    RegStr = "%04x" % Register
+                    Value = self.GetRegisterValueFromList(RegStr)
+                    if len(Value) == 0:
+                        break
+                    if not RawOutput:
+                        LogStr = self.ParseLogEntry(Value, LogBase = ALARM_LOG_STARTING_REG)
+                        if len(LogStr):             # if the register is there but no log entry exist
+                            outstring += self.printToScreen(LogStr, PrintToString, spacer = True)
+                    else:
+                        outstring += self.printToScreen("%s:%s" % (RegStr, Value), PrintToString, spacer = True)
+
                 outstring += self.printToScreen("Service Log:   ", PrintToString)
                 for Register in self.LogRange(SERVICE_LOG_STARTING_REG , LOG_DEPTH, SERVICE_LOG_STRIDE):
                     RegStr = "%04x" % Register
@@ -2291,18 +2291,6 @@ class GeneratorDevice:
                     else:
                         outstring += self.printToScreen("%s:%s" % (RegStr, Value), PrintToString, spacer = True)
 
-                outstring += self.printToScreen("Alarm Log:     ", PrintToString)
-                for Register in self.LogRange(ALARM_LOG_STARTING_REG , LOG_DEPTH, ALARM_LOG_STRIDE):
-                    RegStr = "%04x" % Register
-                    Value = self.GetRegisterValueFromList(RegStr)
-                    if len(Value) == 0:
-                        break
-                    if not RawOutput:
-                        LogStr = self.ParseLogEntry(Value, LogBase = ALARM_LOG_STARTING_REG)
-                        if len(LogStr):             # if the register is there but no log entry exist
-                            outstring += self.printToScreen(LogStr, PrintToString, spacer = True)
-                    else:
-                        outstring += self.printToScreen("%s:%s" % (RegStr, Value), PrintToString, spacer = True)
             else:
                 outstring += self.printToScreen("Alarm Log:     ", PrintToString)
                 for Register in self.LogRange(NEXUS_ALARM_LOG_STARTING_REG , LOG_DEPTH, NEXUS_ALARM_LOG_STRIDE):
@@ -2316,6 +2304,20 @@ class GeneratorDevice:
                             outstring += self.printToScreen(LogStr, PrintToString, spacer = True)
                     else:
                         outstring += self.printToScreen("%s:%s" % (RegStr, Value), PrintToString, spacer = True)
+
+            outstring += self.printToScreen("Start Stop Log:", PrintToString)
+            for Register in self.LogRange(START_LOG_STARTING_REG , LOG_DEPTH,START_LOG_STRIDE):
+                RegStr = "%04x" % Register
+                Value = self.GetRegisterValueFromList(RegStr)
+                if len(Value) == 0:
+                    break
+
+                if not RawOutput:
+                    LogStr = self.ParseLogEntry(Value, LogBase = START_LOG_STARTING_REG)
+                    if len(LogStr):             # if the register is there but no log entry exist
+                        outstring += self.printToScreen(LogStr, PrintToString, spacer = True)
+                else:
+                    outstring += self.printToScreen("%s:%s" % (RegStr, Value), PrintToString, spacer = True)
 
         else:   # only print last entry in log
             RegStr = "%04x" % START_LOG_STARTING_REG
@@ -2404,7 +2406,7 @@ class GeneratorDevice:
         0x47: "Low Fuel Level",             # 2700A Alarm
         0x1B: "Low Fuel Level",             # 2680W Alarm
         0x46: "Ruptured Tank",              # 2710 Alarm
-        0x49: "Hall Calibration Error"     # 2810  Alarm
+        0x49: "Hall Calibration Error"      # 2810  Alarm
         # Low Oil Pressure
         # High Engine Temperature
         # Overcrank
