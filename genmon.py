@@ -2701,21 +2701,23 @@ class GeneratorDevice:
 
         if "alarm" in strSwitch.lower() and len(outString) == 0:        # is system in alarm/warning
             # These codes indicate an alarm needs to be reset before the generator will run again
-            if self.BitIsEqual(RegVal, 0x0FFFF, 0x08):          #  occurred when forced low coolant
+            if self.BitIsEqual(RegVal, 0x0FFFF, 0x01):          #  Validate on Nexus, occurred when Low Battery Alarm
+                outString += "Low Battery"
+            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x08):        #  Validate on Evolution, occurred when forced low coolant
                 outString += "Low Coolant"
-            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x0d):        #  occurred when forcing RPM sense loss from manual start
+            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x0d):        #  Validate on Evolution, occurred when forcing RPM sense loss from manual start
                 outString += "RPM Sense Loss"
-            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x1F):        #  occurred when forced service due
+            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x1F):        #  Validate on Evolution, occurred when forced service due
                 outString += "Service Due"
-            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x20):        #  occurred when forced service due
+            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x20):        #  Validate on Evolution, occurred when service reset
                 outString += "Service Complete"
-            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x30):        #  occurred when forced ruptured tank
+            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x30):        #  Validate on Evolution, occurred when forced ruptured tank
                 outString += "Ruptured Tank"
-            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x31):        #  occurred when Low Fuel Level
+            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x31):        #  Validate on Evolution, occurred when Low Fuel Level
                 outString += "Low Fuel Level"
-            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x34):        #  occurred when E-Stop
+            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x34):        #  Validate on Evolution, occurred when E-Stop
                 outString += "Emergency Stop"
-            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x14):        #  occurred when E-Stop
+            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x14):        #  Validate on Nexus, occurred when Check Battery Alarm
                 outString += "Check Battery"
             else:
                 outString += "UNKNOWN ALARM: %08x" % RegVal
