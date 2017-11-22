@@ -2278,6 +2278,8 @@ class GeneratorDevice:
                     else:
                         outstring += self.printToScreen("%s:%s" % (RegStr, Value), PrintToString, spacer = True)
 
+                outstring += self.printToScreen("\n", PrintToString)
+
                 outstring += self.printToScreen("Service Log:   ", PrintToString)
                 for Register in self.LogRange(SERVICE_LOG_STARTING_REG , LOG_DEPTH, SERVICE_LOG_STRIDE):
                     RegStr = "%04x" % Register
@@ -2290,6 +2292,8 @@ class GeneratorDevice:
                             outstring += self.printToScreen(LogStr, PrintToString, spacer = True)
                     else:
                         outstring += self.printToScreen("%s:%s" % (RegStr, Value), PrintToString, spacer = True)
+
+                outstring += self.printToScreen("\n", PrintToString)
 
             else:
                 outstring += self.printToScreen("Alarm Log:     ", PrintToString)
@@ -2304,6 +2308,8 @@ class GeneratorDevice:
                             outstring += self.printToScreen(LogStr, PrintToString, spacer = True)
                     else:
                         outstring += self.printToScreen("%s:%s" % (RegStr, Value), PrintToString, spacer = True)
+
+                outstring += self.printToScreen("\n", PrintToString)
 
             outstring += self.printToScreen("Start Stop Log:", PrintToString)
             for Register in self.LogRange(START_LOG_STARTING_REG , LOG_DEPTH,START_LOG_STRIDE):
