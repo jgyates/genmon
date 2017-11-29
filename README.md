@@ -316,6 +316,22 @@ Also, if you generator has as radiator then it is liquid cooled, otherwise it is
     # controller  must support this functionality before enabling this option.
     enhancedexercise = True
 
+    # (ptional) This parameter, if true will enable the use of HTTPS 
+    # (secure HTTP) in the Flask web app. This option is only applicable to the 
+    # web app.
+    #usehttps=true
+
+    # optional) This parameter is used with usehttps. If 
+    # userhttps is true, then this option will signal the type of certificate 
+    # to use. If this option is true  a self signed certificate (supplied by 
+    # Flask library) will be used. If false, then the a key file (key.pem) and 
+    # a certificate file (cert.pem) must be created and placed in the same 
+    # folder as genserv.py. For information on how to create your own 
+    # certificate please see this site: 
+    #     https://workaround.org/ispmail/jessie/create-certificate 
+    #useselfsignedcert=true
+
+
 ## Configuring mymail.py
 
 The following is a description of the options contained in mymail.conf, which is used to configure the mail support in mymail.py.
