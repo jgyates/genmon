@@ -57,6 +57,10 @@ if __name__ == "__main__":
     clientport = 0
     try:
 
+        bUseSecureHTTP = False
+        bUseSelfSignedCert = True
+        SSLContext = None
+        
         config = configparser.RawConfigParser()
         # config parser reads from current directory, when running form a cron tab this is
         # not defined so we specify the full path
@@ -64,12 +68,35 @@ if __name__ == "__main__":
         # heartbeat server port, must match value in check_generator_system.py and any calling client apps
         if config.has_option('GenMon', 'server_port'):
             clientport = config.getint('GenMon', 'server_port')
+            
+        if config.has_option('GenMon', 'usehttps'):
+            bUseSecureHTTP = config.getboolean('GenMon', 'usehttps')
+
+        if bUseSecureHTTP:
+            HTTPPort = 443
+            if config.has_option('GenMon', 'useselfsignedcert'):
+                bUseSelfSignedCert = config.getboolean('GenMon', 'useselfsignedcert')
+                
+                if bUseSelfSignedCert:
+                    SSLContext = 'adhoc'
+                else:
+                    SSLContext = ('cert.pem', 'key.pem')
+            else:
+                # if we get here then usehttps is enabled but not option for useselfsignedcert
+                # so revert to HTTP
+                HTTPPort = 8000
+            
+        else:
+            HTTPPort = 8000
+            
     except Exception as e1:
         log.error("Missing config file or config file entries: " + str(e1))
 
     MyClientInterface = myclient.ClientInterface(host = address,port=clientport, log = log)
     while True:
         try:
-            app.run(host="0.0.0.0", port=8000, threaded = True)
+            
+            app.run(host="0.0.0.0", port=HTTPPort, threaded = True, ssl_context=SSLContext)
+            
         except Exception as e1:
             log.error("Error in app.run:" + str(e1))
