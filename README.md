@@ -316,7 +316,7 @@ Also, if you generator has as radiator then it is liquid cooled, otherwise it is
     # controller  must support this functionality before enabling this option.
     enhancedexercise = True
 
-    # (ptional) This parameter, if true will enable the use of HTTPS 
+    # (optional) This parameter, if true will enable the use of HTTPS 
     # (secure HTTP) in the Flask web app. This option is only applicable to the 
     # web app.
     #usehttps=true
