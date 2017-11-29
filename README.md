@@ -39,6 +39,8 @@ This project will monitor a backup generator that utilizes the Generac Evolution
         - Critical or Warning messages from the generator
     Web based application for viewing status of the generator
     SMS notifications of Generator state (via Twilio SMS API)
+    Push notifications (via pushover.net)
+    syslog logging of generator events
     Command Line application (all the functionality of email commands)
     Ability to set exercise time 
     Ability to set generator time
@@ -532,6 +534,20 @@ Modify the startgenmon.sh script to uncomment the following lines to start the a
 Modify the startgenmon.sh script to uncomment the following line to stop the app:
 
     sudo pkill -f genpushover.py
+
+## gensyslog.py (Optional)
+
+The gensyslog.py module will send generator notifications to the system log (syslog).
+
+Copy gensyslog.py to the directory where all your other genmon files are since this modules uses other support modules in the genmon project.
+
+Modify the startgenmon.sh script to uncomment the following lines to start the app:
+
+    sudo python /home/pi/genmon/gensyslog.py &
+
+Modify the startgenmon.sh script to uncomment the following line to stop the app:
+
+    sudo pkill -f gensyslog.py
 
 
 # Hardware
