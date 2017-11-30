@@ -319,7 +319,7 @@ Also, if you generator has as radiator then it is liquid cooled, otherwise it is
     # (optional) This parameter, if true will enable the use of HTTPS 
     # (secure HTTP) in the Flask web app. This option is only applicable to the 
     # web app.
-    #usehttps=true
+    #usehttps = True
 
     # optional) This parameter is used with usehttps. If 
     # userhttps is true, then this option will signal the type of certificate 
@@ -329,7 +329,19 @@ Also, if you generator has as radiator then it is liquid cooled, otherwise it is
     # folder as genserv.py. For information on how to create your own 
     # certificate please see this site: 
     #     https://workaround.org/ispmail/jessie/create-certificate 
-    #useselfsignedcert=true
+    #useselfsignedcert = True
+
+    # (Optional) This parameter will allow a simple authentication to be used
+    # and it sets the username of the simple authentication. usehttps must
+    # be True to use this feature.
+    # This option is only applicable to the web app.
+    #http_user = admin
+
+    # (Optional) This parameter will allow a simple authentication to be used
+    # and it sets the password of the simple authentication. usehttps must
+    # be True to use this feature.
+    # This option is only applicable to the web app.
+    #http_pass = password
 
 
 ## Configuring mymail.py
