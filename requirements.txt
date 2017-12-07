@@ -1,0 +1,4 @@
+Flask
+pytz
+configparser
+pyserial
