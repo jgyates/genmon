@@ -959,7 +959,7 @@ class GeneratorDevice:
                             "saturday": 5,
                             "sunday": 6}
 
-            Day, Hour, Minute = self.ParseExerciseString(CmdString, DayOfWeek)
+            Day, Hour, Minute, ModeStr = self.ParseExerciseStringEx(CmdString, DayOfWeek)
 
         except Exception as e1:
             self.LogError("Validation Error: Error parsing command string in AltSetGeneratorExerciseTime: " + CmdString)
@@ -968,10 +968,6 @@ class GeneratorDevice:
 
         if Minute < 0 or Hour < 0 or Day < 0:     # validate settings
             self.LogError("Validation Error: Error parsing command string in AltSetGeneratorExerciseTime (v1): " + CmdString)
-            return msgbody
-
-        if Minute >59 or Hour > 23 or Day > 6:     # validate settings
-            self.LogError("Validation Error: Error parsing command string in AltSetGeneratorExerciseTime (v2): " + CmdString)
             return msgbody
 
         # Get System time and create a new datatime item with the target exercise time
@@ -1040,22 +1036,10 @@ class GeneratorDevice:
             self.LogError( str(e1))
             return msgbody
 
-        if ModeStr not in ["weekly", "biweekly", "monthly"]:
-            self.LogError("Validation Error: Error parsing command string in SetGeneratorExerciseTime (v3): " + CmdString)
-            return msgbody
-
         if Minute < 0 or Hour < 0 or Day < 0:     # validate Settings
             self.LogError("Validation Error: Error parsing command string in SetGeneratorExerciseTime (v1): " + CmdString)
             return msgbody
 
-        if ModeStr.lower in ["weekly", "biweekly"]:
-            if Minute >59 or Hour > 23 or Day > 6:     # validate Settings
-                self.LogError("Validation Error: Error parsing command string in SetGeneratorExerciseTime (v2): " + CmdString)
-                return msgbody
-        else:
-            if Minute >59 or Hour > 23 or Day > 28:    # validate Settings
-                self.LogError("Validation Error: Error parsing command string in SetGeneratorExerciseTime (v2): " + CmdString)
-                return msgbody
 
         # validate conf file option
         if not self.bEnhancedExerciseFrequency:
@@ -1094,47 +1078,6 @@ class GeneratorDevice:
 
         return  "Set Exercise Time Command sent"
 
-     #----------  GeneratorDevice::ParseExerciseString-------------------------------
-    def ParseExerciseString(self, CmdString, DayDict):
-
-        Day = -1
-        Hour = -1
-        Minute = -1
-
-        try:
-            #Format we are looking for is "setexercise=Monday,12:20"
-            marker0 = CmdString.lower().find("setexercise")
-            marker1 = CmdString.find("=", marker0)
-            marker2 = CmdString.find(",",marker1)
-            marker3 = CmdString.find(":",marker2+1)
-            marker4 = CmdString.find(" ",marker3+1)
-
-            if -1 in [marker0, marker1, marker2, marker3]:
-                self.LogError("Validation Error: Error parsing command string in ParseExerciseString (parse): " + CmdString)
-                return Day, Hour, Minute
-
-            DayStr = CmdString[marker1+1:marker2]
-            HourStr = CmdString[marker2+1:marker3]
-            if marker4 == -1:       # was this the last char in the string or now space given?
-                MinuteStr = CmdString[marker3+1:]
-            else:
-                MinuteStr = CmdString[marker3+1:marker4]
-
-            Minute = int(MinuteStr)
-            Hour = int(HourStr)
-
-            Day = DayDict.get(DayStr.lower(), -1)
-            if Day == -1:
-                self.LogError("Validation Error: Error parsing command string in ParseExerciseString (day of week): " + CmdString)
-                return Day, Hour, Minute
-
-        except Exception as e1:
-            self.LogError("Validation Error: Error parsing command string in ParseExerciseString: " + CmdString)
-            self.LogError( str(e1))
-            return -1, -1, -1
-
-        return Day, Hour, Minute
-
     #----------  GeneratorDevice::ParseExerciseStringEx-------------------------------
     def ParseExerciseStringEx(self, CmdString, DayDict):
 
@@ -1151,16 +1094,19 @@ class GeneratorDevice:
             # "setexercise=15,12:20,monthly"
 
             if "setexercise" not in  CmdString.lower():
+                self.LogError("Validation Error: Error parsing command string in ParseExerciseStringEx (setexercise): " + CmdString)
                 return Day, Hour, Minute, ModeStr
 
             Items = CmdString.split(b"=")
 
             if len(Items) != 2:
+                self.LogError("Validation Error: Error parsing command string in ParseExerciseStringEx (command): " + CmdString)
                 return Day, Hour, Minute, ModeStr
 
             ParsedItems = Items[1].split(b",")
 
             if len(ParsedItems) < 2 or len(ParsedItems) > 3:
+                self.LogError("Validation Error: Error parsing command string in ParseExerciseStringEx (items): " + CmdString)
                 return Day, Hour, Minute, ModeStr
 
             DayStr = ParsedItems[0].lstrip()
@@ -1173,6 +1119,7 @@ class GeneratorDevice:
                 ModeStr = "weekly"
 
             if ModeStr.lower() not in ["weekly", "biweekly", "monthly"]:
+                self.LogError("Validation Error: Error parsing command string in ParseExerciseStringEx (Mode): " + CmdString)
                 return Day, Hour, Minute, ModeStr
 
             TimeItems = ParsedItems[1].split(b":")
@@ -1201,6 +1148,23 @@ class GeneratorDevice:
             self.LogError("Validation Error: Error parsing command string in ParseExerciseStringEx: " + CmdString)
             self.LogError( str(e1))
             return -1, -1, -1, ""
+
+        if not ModeStr.lower() in ["weekly", "biweekly", "monthly"]:
+            self.LogError("Validation Error: Error parsing command string in ParseExerciseStringEx (v2): " + CmdString)
+            return -1, -1, -1, ""
+
+        if Minute < 0 or Hour < 0 or Day < 0:     # validate Settings
+            self.LogError("Validation Error: Error parsing command string in ParseExerciseStringEx (v3): " + CmdString)
+            return -1, -1, -1, ""
+
+        if ModeStr.lower() in ["weekly", "biweekly"]:
+            if Minute >59 or Hour > 23 or Day > 6:     # validate Settings
+                self.LogError("Validation Error: Error parsing command string in ParseExerciseStringEx (v4): " + CmdString)
+                return -1, -1, -1, ""
+        else:
+            if Minute >59 or Hour > 23 or Day > 28:    # validate Settings
+                self.LogError("Validation Error: Error parsing command string in ParseExerciseStringEx (v5): " + CmdString)
+                return -1, -1, -1, ""
 
         return Day, Hour, Minute, ModeStr
 
