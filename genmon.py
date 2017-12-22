@@ -970,6 +970,10 @@ class GeneratorDevice:
             self.LogError("Validation Error: Error parsing command string in AltSetGeneratorExerciseTime (v1): " + CmdString)
             return msgbody
 
+        if not ModeStr.lower() in ["weekly"]:
+            self.LogError("Validation Error: Error parsing command string in AltSetGeneratorExerciseTime (v2): " + CmdString)
+            return msgbody
+
         # Get System time and create a new datatime item with the target exercise time
         GeneratorTime = datetime.datetime.strptime(self.GetDateTime(), "%A %B %d, %Y %H:%M")
         # fix hours and min in gen time to the requested exercise time
@@ -2353,11 +2357,11 @@ class GeneratorDevice:
         ServiceLogDecoder = {
         0x16: "Service Schedule B",         # Maint
         0x17: "Service Schedule A",         # Maint
-        0x3C: "Schedule B Serviced",        # Maint
-        0x3D: "Schedule A Serviced",         # Maint
         0x18: "Inspect Battery",
-        0x3E: "Battery Maintained"
-        # Maintenance Reset
+        0x3C: "Schedule B Serviced",        # Maint
+        0x3D: "Schedule A Serviced",        # Maint
+        0x3E: "Battery Maintained",
+        0x3F: "Maintenance Reset"
         # *Schedule Service A
         # Schedule Service B
         # Schedule Service C
