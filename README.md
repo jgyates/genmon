@@ -342,8 +342,6 @@ Also, if you generator has as radiator then it is liquid cooled, otherwise it is
 
 ## Configuring mymail.py
 
-A note about email and security: The genmon.py app monitors folder on an IMAP email account for emails with a subject containing "generator:". If this is found, the remaining characters of the subject filed are parsed for commands for the monitor program. Since commands are sent to genmon.py via the subject  line of an email, is is suggested that some level of email filtering occur on the receiving email account. For example, gmail supports email filters that if emails arrive from specific people with specific words in the subject, move them to specific folders. You could then have genmon.py monitor the specific folder used in your filter to only allow specific emails to send commands to genmon.py. If this approach is used then genmon.py can be configured (via mymail.com) to monitor a specific IMAP folder.
-
 Gmail IMAP has been tested with this application. It should be easy to test this other email providers. All mail processing is contained in mymail.py and mymail.conf.
 
 The following is a description of the options contained in mymail.conf, which is used to configure the mail support in mymail.py.
@@ -374,7 +372,9 @@ The following is a description of the options contained in mymail.conf, which is
       
     smtp_port = 587
       # the SMTP port used on the SMTP server for sending email
-     
+      
+A note about email and security: The genmon.py app monitors folder on an IMAP email account for emails with a subject containing "generator:". If this is found, the remaining characters of the subject filed are parsed for commands for the monitor program. Since commands are sent to genmon.py via the subject  line of an email, is is suggested that some level of email filtering occur on the receiving email account. For example, gmail supports email filters that if emails arrive from specific people with specific words in the subject, move them to specific folders. You could then have genmon.py monitor the specific folder used in your filter to only allow specific emails to send commands to genmon.py. If this approach is used then genmon.py can be configured (via mymail.com) to monitor a specific IMAP folder.
+
       
 ## ClientInterface.py
 
