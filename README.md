@@ -372,7 +372,9 @@ The following is a description of the options contained in mymail.conf, which is
       
     smtp_port = 587
       # the SMTP port used on the SMTP server for sending email
-      
+ 
+Please note that if you use IMAP to receive email (i.e. allow genmon to receive commands via email) you will need to also set the incoming_mail_folder and processed_mail_folder options in genmon.conf.
+
 A note about email and security: The genmon.py app monitors folder on an IMAP email account for emails with a subject containing "generator:". If this is found, the remaining characters of the subject filed are parsed for commands for the monitor program. Since commands are sent to genmon.py via the subject  line of an email, is is suggested that some level of email filtering occur on the receiving email account. For example, gmail supports email filters that if emails arrive from specific people with specific words in the subject, move them to specific folders. You could then have genmon.py monitor the specific folder used in your filter to only allow specific emails to send commands to genmon.py. If this approach is used then genmon.py can be configured (via mymail.com) to monitor a specific IMAP folder.
 
       
