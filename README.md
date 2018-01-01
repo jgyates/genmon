@@ -321,11 +321,17 @@ Also, if you generator has as radiator then it is liquid cooled, otherwise it is
     # userhttps is true, then this option will signal the type of certificate 
     # to use. If this option is true  a self signed certificate (supplied by 
     # Flask library) will be used. If false, then the a key file (key.pem) and 
-    # a certificate file (cert.pem) must be created and placed in the same 
-    # folder as genserv.py. For information on how to create your own 
+    # a certificate file (cert.pem) must be created and specified in the 
+    # following entries (keyfile, certfile) below.
+    # For information on how to create your own 
     # certificate please see this site: 
     #     https://workaround.org/ispmail/jessie/create-certificate 
     #useselfsignedcert = True
+
+    # (Optional) These parameters are used if useselfsignedcert is False. They 
+    # specifi the path and name of the key file and certificate file.
+    #keyfile = /home/pi/genmon/key.pem
+    #certfile = /home/pi/genmon/cert.pem
 
     # (Optional) This parameter will allow a simple authentication to be used
     # and it sets the username of the simple authentication. usehttps must
