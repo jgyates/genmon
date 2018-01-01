@@ -329,7 +329,7 @@ Also, if you generator has as radiator then it is liquid cooled, otherwise it is
     #useselfsignedcert = True
 
     # (Optional) These parameters are used if useselfsignedcert is False. They 
-    # specifi the path and name of the key file and certificate file.
+    # specify the path and name of the key file and certificate file.
     #keyfile = /home/pi/genmon/key.pem
     #certfile = /home/pi/genmon/cert.pem
 
