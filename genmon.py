@@ -2428,6 +2428,7 @@ class GeneratorDevice:
         0x03: "Overspeed",                  # Validated on Nexus Air Cooled
         0x04: "RPM Sense Loss",             # Validated on Nexus Liquid Cooled and Air Cooled
         0x0B: "Low Cooling Fluid",          # Validated on Nexus Liquid Cooled
+        0x0C: "Canbus Error",               # Validated on Nexus Liquid Cooled
         0x0F: "Govenor Fault",              # Validated on Nexus Liquid Cooled
         0x14: "Low Battery",                # Validated on Nexus Air Cooled
         0x17: "Inspect Air Filter",         # Validated on Nexus Liquid Cooled
