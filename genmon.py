@@ -3083,6 +3083,9 @@ class GeneratorDevice:
         IntTemp = int(Value,16)
         if self.EvolutionController and self.LiquidCooled:
             FloatTemp = IntTemp / 10.0      # Evolution
+        elif not self.EvolutionController and self.LiquidCooled:
+            FloatTemp = IntTemp / 1.0       # Nexus Liquid Cooled
+            FloatTemp = FloatTemp * 2.0
         else:
             FloatTemp = IntTemp / 1.0       # Nexus and Evolution Air Cooled
         FreqValue = "%2.1f Hz" % FloatTemp
