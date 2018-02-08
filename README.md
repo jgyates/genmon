@@ -314,7 +314,7 @@ Also, if you generator has as radiator then it is liquid cooled, otherwise it is
 
     # (optional) This parameter, if true will enable the use of HTTPS 
     # (secure HTTP) in the Flask web app. This option is only applicable to the 
-    # web app.
+    # web app. This option requires python-openssl library to be installed
     #usehttps = True
 
     # optional) This parameter is used with usehttps. If 
