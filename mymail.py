@@ -35,6 +35,7 @@ class MyMail:
         self.Mailbox = 0
         self.EmailSendQueue = []                        # queue for email to send
         self.DisableEmail = False
+        self.SSLEnabled = False
 
         # log errors in this module to a file
         if localinit == True:
@@ -55,12 +56,18 @@ class MyMail:
 
             self.EmailPassword = config.get('MyMail', 'email_pw')
             self.EmailAccount = config.get('MyMail', 'email_account')
+            if config.has_option('MyMail', 'sender_account'):
+                self.SenderAccount = config.get('MyMail', 'sender_account')
+            else:
+                self.SenderAccount = self.EmailAccount
             self.EmailRecipient = config.get('MyMail', 'email_recipient')
             self.SMTPServer = config.get('MyMail', 'smtp_server')
             self.IMAPServer = config.get('MyMail', 'imap_server')
             self.SMTPPort = config.getint('MyMail', 'smtp_port')
             if config.has_option('MyMail', 'disableemail'):
                 self.DisableEmail = config.getboolean('MyMail', 'disableemail')
+            if config.has_option('MyMail', 'ssl_enabled'):
+                self.SSLEnabled = config.getboolean('MyMail', 'ssl_enabled')
         except Exception as e1:
             self.FatalError("ERROR: Unable to read config file" + str(e1))
 
@@ -176,7 +183,7 @@ class MyMail:
         tmstamp=datetime.datetime.now().strftime('%I:%M:%S %p')
 
         msg = MIMEMultipart()
-        msg['From'] = self.EmailAccount
+        msg['From'] = self.SenderAccount
         msg['To'] = recipient
         msg['Date'] = formatdate(localtime=True)
         msg['Subject'] = subjectstr
@@ -202,20 +209,24 @@ class MyMail:
         except Exception as e1:
             self.LogError("Error attaching file in sendEmailDirectMIME: " + str(e1))
 
-        session = smtplib.SMTP(self.SMTPServer, self.SMTPPort)
-        session.ehlo()
-        session.starttls()
+        self.LogError("Loggin in 0 "+self.SMTPServer+":"+str(self.SMTPPort))
+        if self.SSLEnabled:
+             session = smtplib.SMTP_SSL(self.SMTPServer, self.SMTPPort)
+             session.ehlo()
+        else:
+             session = smtplib.SMTP(self.SMTPServer, self.SMTPPort)
+             session.starttls()
+             session.ehlo
+             # this allows support for simple TLS
 
-        session.ehlo
-        # this allows support for simple TLS
         if self.EmailPassword != "":
             session.login(self.EmailAccount, self.EmailPassword)
 
         if "," in recipient:
             multiple_recipients = recipient.split(",")
-            session.sendmail(self.EmailAccount, multiple_recipients, msg.as_string())
+            session.sendmail(self.SenderAccount, multiple_recipients, msg.as_string())
         else:
-            session.sendmail(self.EmailAccount, recipient, msg.as_string())
+            session.sendmail(self.SenderAccount, recipient, msg.as_string())
         session.quit()
        # end sendEmail()
 

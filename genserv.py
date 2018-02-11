@@ -12,6 +12,8 @@
 from flask import Flask, render_template, request, jsonify, session
 import sys, signal, os, socket, atexit, configparser
 import mylog, myclient
+import urlparse
+import re
 
 #------------------------------------------------------------
 app = Flask(__name__,static_url_path='')
@@ -77,9 +79,88 @@ def ProcessCommand(command):
                 log.error("Error on command function" + str(e1))
             return jsonify(data)
 
+    elif command in ["settings"]:
+            data = GetSettings()
+            return jsonify(data)
+
+    elif command in ["setsettings"]:
+            # SaveSettings((request.args.get('setsettings', 0, type=str)));
+            SaveSettings(request.args.get('setsettings', 0, type=str));
+            return "OK"
+
     else:
         return render_template('command_template.html', command = command)
 
+#------------------------------------------------------------
+def GetSettings():
+
+    allSettings = {"disableemail" : ['boolean', 'Disable Email usage', 1], "email_pw" : ['string', 'Email Password', 3], "email_account" : ['string', 'Email Account', 2], "sender_account" : ['string', 'Sender Account', 4], "email_recipient" : ['string', 'Email Recepient<br><small>(comma delimited)</small>', 5], "smtp_server" : ['string', 'SMTP Server <br><small>(leave emtpy to disable)</small>', 6], "imap_server" : ['string', 'IMAP Server <br><small>(leave emtpy to disable)</small>', 7], "smtp_port" : ['int', 'SMTP Port', 8], "ssl_enabled" : ['boolean', 'SSL Enabled', 9]}
+
+    settings = configparser.RawConfigParser()
+    # config parser reads from current directory, when running form a cron tab this is
+    # not defined so we specify the full path
+    settings.read('/etc/mymail.conf')
+
+    # heartbeat server port, must match value in check_generator_system.py and any calling client apps
+    for setting in allSettings.keys():
+         if settings.has_option('MyMail', setting):
+             allSettings[setting].append(settings.get('MyMail', setting))
+
+    return allSettings
+
+#------------------------------------------------------------
+def SaveSettings(query_string):
+    settings = dict(urlparse.parse_qs(query_string, 1))
+
+    try:
+        # Read contents from file as a single string
+        file_handle = open("/etc/mymail.conf", 'r')
+        file_string = file_handle.read()
+        file_handle.close()
+
+        # Write contents to file.
+        # Using mode 'w' truncates the file.
+        file_handle = open("/etc/mymail.conf", 'w')
+        for line in file_string.splitlines():
+           if not line.isspace():
+              for setting in settings.keys():
+                 parts = findConfigLine(line)
+                 if (parts and (len(parts) > 4) and (parts[1] == setting)):
+                     if (len(parts[3]) >= 3):
+                       line = line.replace(parts[3], settings[setting][0], 1)
+                     else:
+                       myList = list(parts)
+                       myList[3] = settings[setting][0]
+                       line = "".join(myList)
+           file_handle.write(line+"\n")
+        file_handle.close()
+
+    except Exception as e1:
+        print "Error Update Config File: " + str(e1)
+        log.error("Error Update Config File: " + str(e1))
+
+def findConfigLine(line):
+    match = re.search(
+        r"""^          # Anchor to start of line
+        (\s*)          # $1: Zero or more leading ws chars
+        (?:            # Begin group for optional var=value.
+          (\S+)        # $2: Variable name. One or more non-spaces.
+          (\s*=\s*)    # $3: Assignment operator, optional ws
+          (            # $4: Everything up to comment or EOL.
+            [^#\\]*    # Unrolling the loop 1st normal*.
+            (?:        # Begin (special normal*)* construct.
+              \\.      # special is backslash-anything.
+              [^#\\]*  # More normal*.
+            )*         # End (special normal*)* construct.
+          )            # End $4: Value.
+        )?             # End group for optional var=value.
+        ((?:\#.*)?)    # $5: Optional comment.
+        $              # Anchor to end of line""",
+        line, re.MULTILINE | re.VERBOSE)
+    if match :
+      return match.groups()
+    else:
+      return []
 
 #------------------------------------------------------------
 if __name__ == "__main__":
@@ -141,3 +222,4 @@ if __name__ == "__main__":
 
         except Exception as e1:
             log.error("Error in app.run:" + str(e1))
+
