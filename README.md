@@ -344,6 +344,11 @@ Also, if you generator has as radiator then it is liquid cooled, otherwise it is
     # be True to use this feature.
     # This option is only applicable to the web app.
     #http_pass = password
+    
+    # (Optional) This parameter will allow the HTTP port to be set by the web 
+    # interface. The default is 8000, but this setting will override that 
+    # value. This option is only applicable to the web app.
+    #http_port = 80
 
 
 ## Configuring mymail.py
