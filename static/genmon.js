@@ -11,6 +11,7 @@ document.getElementById("navMenu").innerHTML =
       '<li><a id="outage" >Outage</a></li> ' +
       '<li><a id="logs" >Logs</a></li> ' +
       '<li ><a id="monitor" >Monitor</a></li> ' +
+      '<li ><a id="settings" >Settings</a></li> ' +
     '</ul>' ;
 
 // global base state
@@ -513,6 +514,90 @@ function SetExerciseChoice(bSetRadio){
 }
 
 //*****************************************************************************
+// Display the Settings Tab
+//*****************************************************************************
+function DisplaySettings(){
+
+    var url = baseurl.concat("settings");
+    $.getJSON(url,function(result){
+
+        var outstr = "Settings:<br><br><form id=\"formSettings\"><table border=\"0\">";
+        // var outstr = JSON.stringify(result, null, 4);
+        // outstr = replaceAll(outstr,'\n','<br/>')
+        // outstr = replaceAll(outstr,' ','&nbsp')
+        var settings =  getSortedKeys(result);
+        for (var index = 0; index < settings.length; ++index) {
+            var key = settings[index];
+            outstr += "<tr><td style=\"padding: 5px;\"> "+result[key][1]+"</td><td style=\"padding: 5px;\">";
+            switch (result[key][0]) {
+              case "string":
+                outstr += "<input style=\"width: 400px;\" name=\"" + key + "\" type=\"text\" value=\"" + result[key][3] + "\">";
+                break;
+              case "int":
+                outstr += "<input name=\"" + key + "\" type=\"text\" value=\"" + result[key][3] + "\">";
+                break;
+              case "boolean":
+                outstr += "<input name=\"" + key + "\" type=\"checkbox\" value=\"true\" " + ((typeof result[key][3] !== 'undefined') && (result[key][3].toLowerCase() == "true") ? "checked" : "") + ">";
+                break;
+              default:
+                break;
+            }
+            outstr += "</td>";
+        }
+        outstr += "</table></form>";
+        outstr += "<button id=\"setsettingsbutton\" onClick=\"saveSettings()\">Save</button>";
+        document.getElementById("mydisplay").innerHTML = outstr;
+
+   });
+
+}
+
+function getSortedKeys(obj) {
+    var keys = []; for (var key in obj) keys.push(key);
+    return keys.sort(function(a,b){return obj[a][2]-obj[b][2]});
+}
+
+//*****************************************************************************
+// called when Save Settings is clicked
+//*****************************************************************************
+function saveSettings(){
+
+    var DisplayStr = "Save settings? Note: Genmon must be restarted for this change to take effect.";
+
+    var r = confirm(DisplayStr);
+    if (r == false) {
+        return
+    }
+
+    try {
+        var fields = $('#formSettings').serialize();
+
+        // include unchecked checkboxes. use filter to only include unchecked boxes.
+        $.each($('#formSettings input[type=checkbox]').filter(function(idx){
+                 return $(this).prop('checked') === false
+              }),
+             function(idx, el){
+                  // attach matched element names to the formData with a chosen value.
+               var emptyVal = "false";
+               fields += '&' + $(el).attr('name') + '=' + emptyVal;
+             }
+        );
+
+        // save settings
+        var url = baseurl.concat("setsettings");
+        $.getJSON(  url,
+                    {setsettings: fields},
+                    function(result){
+       });
+
+    }
+    catch(err) {
+        alert("Error: invalid selection");
+    }
+}
+
+
+//*****************************************************************************
 //  called when menu is clicked
 //*****************************************************************************
 function MenuClick(e)
@@ -538,6 +623,10 @@ function MenuClick(e)
                     SetExerciseChoice(true)
                 }
                 break;
+            case "settings":
+                window.scrollTo(0,0);
+                menuElementID = e.target;
+                DisplaySettings();
             default:
                 break;
         }
@@ -650,7 +739,9 @@ function GetHeaderValues()
 //*****************************************************************************
 function UpdateDisplay()
 {
-    GetDisplayValues(menuElementID.id);
+    if (menuElementID.id != "settings") {
+        GetDisplayValues(menuElementID.id);
+    }
 }
 
 //*****************************************************************************
