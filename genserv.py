@@ -185,6 +185,9 @@ if __name__ == "__main__":
         if config.has_option('GenMon', 'usehttps'):
             bUseSecureHTTP = config.getboolean('GenMon', 'usehttps')
 
+        if config.has_option('GenMon', 'http_port'):
+            HTTPPort = config.getint('GenMon', 'http_port')
+
         # user name and password require usehttps = True
         if bUseSecureHTTP:
             if config.has_option('GenMon', 'http_user'):
@@ -195,6 +198,7 @@ if __name__ == "__main__":
 
         if bUseSecureHTTP:
             app.secret_key = os.urandom(12)
+            OldHTTPPort = HTTPPort
             HTTPPort = 443
             if config.has_option('GenMon', 'useselfsignedcert'):
                 bUseSelfSignedCert = config.getboolean('GenMon', 'useselfsignedcert')
@@ -206,10 +210,8 @@ if __name__ == "__main__":
             else:
                 # if we get here then usehttps is enabled but not option for useselfsignedcert
                 # so revert to HTTP
-                HTTPPort = 8000
+                HTTPPort = OldHTTPPort
 
-        else:
-            HTTPPort = 8000
 
     except Exception as e1:
         log.error("Missing config file or config file entries: " + str(e1))
