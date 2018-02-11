@@ -640,5 +640,5 @@ I used a molex connector on my enclosure and routed the two wires to a break-out
 
 ## Creating a Cable
 
-See the [project wiki](https://github.com/jgyates/genmon/wiki/Making-a-Cable) for info on creating a cable.
+See the [project wiki](https://github.com/jgyates/genmon/wiki/Making-a-Cable) for info on creating a cable, including alternate methods that do not require using a crimping tool.
 
