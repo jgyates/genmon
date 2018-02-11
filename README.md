@@ -352,32 +352,36 @@ Gmail IMAP has been tested with this application. It should be easy to test this
 
 The following is a description of the options contained in mymail.conf, which is used to configure the mail support in mymail.py.
 
-    [MyMail]
+        [MyMail]
+    
+    # optionally disable email use by the program. set to true to disable 
+    # all email functionality
     #disableemail = false
-      # optionally disable email use by the program. set to true to disable all
-      # email functionality 
-
-    email_pw = password
-      # The password for the email account used for sending and receiving email
-
-    email_account = myaccunt@gmail.com
-      # the email account email address (sender email address)
-
-    email_recipient = recipient@gmail.com
-      # address that email are sent to. Multiple addresses are separated by commas
-
+    
+    # The password for the email account used for sending and receiving email
+    email_pw = mypassword
+    
+    # the email account email address (sender email address)
+    email_account = mysender@gmail.com
+    
+    # address that email are sent to
+    email_recipient = myrecipent@gmail.com
+    
+    # the SMTP mail server used for sending email, leave emtpy to disable SMTP, 
+    # i.e. "smtp_server ="
     smtp_server = smtp.gmail.com
-      # the SMTP mail server used for sending email, leave empty to disable 
-      # sending email
-      # SMTP, i.e. "smtp_server ="
-      
+    
+    # the IMAP server address used for receiving email, leave emtpy to disable 
+    # IMAP, i.e. "imap_server ="
     imap_server = imap.gmail.com
-      # the IMAP server address used for receiving email, leave empty to disable 
-      # receiving email
-      # IMAP, i.e. "imap_server ="
-      
+    
+    # the SMTP port used on the SMTP server for sending email
+    # Note about ports and email security: typically port 587 is used for 
+    #  TLS and port 465 is used for SSL
     smtp_port = 587
-      # the SMTP port used on the SMTP server for sending email
+    
+    # use SSL encryption to send emails
+    ssl_enabled = false
  
 Please note that if you use IMAP to receive email (i.e. allow genmon to receive commands via email) you will need to also set the incoming_mail_folder and processed_mail_folder options in genmon.conf.
 
