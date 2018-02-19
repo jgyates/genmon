@@ -94,7 +94,15 @@ def ProcessCommand(command):
 #------------------------------------------------------------
 def GetSettings():
 
-    allSettings = {"disableemail" : ['boolean', 'Disable Email usage', 1], "email_pw" : ['string', 'Email Password', 3], "email_account" : ['string', 'Email Account', 2], "sender_account" : ['string', 'Sender Account', 4], "email_recipient" : ['string', 'Email Recepient<br><small>(comma delimited)</small>', 5], "smtp_server" : ['string', 'SMTP Server <br><small>(leave emtpy to disable)</small>', 6], "imap_server" : ['string', 'IMAP Server <br><small>(leave emtpy to disable)</small>', 7], "smtp_port" : ['int', 'SMTP Port', 8], "ssl_enabled" : ['boolean', 'SSL Enabled', 9]}
+    allSettings = { "disableemail" : ['boolean', 'Disable Email usage', 1],
+                    "email_pw" : ['string', 'Email Password', 3],
+                    "email_account" : ['string', 'Email Account', 2],
+                    "sender_account" : ['string', 'Sender Account', 4],
+                    "email_recipient" : ['string', 'Email Recepient<br><small>(comma delimited)</small>', 5],
+                    "smtp_server" : ['string', 'SMTP Server <br><small>(leave emtpy to disable)</small>', 6],
+                    "imap_server" : ['string', 'IMAP Server <br><small>(leave emtpy to disable)</small>', 7],
+                    "smtp_port" : ['int', 'SMTP Port', 8],
+                    "ssl_enabled" : ['boolean', 'SSL Enabled', 9]}
 
     settings = configparser.RawConfigParser()
     # config parser reads from current directory, when running form a cron tab this is
