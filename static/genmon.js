@@ -627,6 +627,7 @@ function MenuClick(e)
                 window.scrollTo(0,0);
                 menuElementID = e.target;
                 DisplaySettings();
+                SetVisibilityOfMaintList();
             default:
                 break;
         }
@@ -741,6 +742,9 @@ function UpdateDisplay()
 {
     if (menuElementID.id != "settings") {
         GetDisplayValues(menuElementID.id);
+    }
+    else {
+         SetVisibilityOfMaintList();
     }
 }
 
