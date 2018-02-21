@@ -263,10 +263,11 @@ class MyMail:
         # once sendMail is called email messages are queued and then sent from this thread
 
         while True:
-            MailError = False
+
             time.sleep(2)
 
             while self.EmailSendQueue != []:
+                MailError = False
                 EmailItems = self.EmailSendQueue.pop()
                 try:
                     if not (self.sendEmailDirectMIME(EmailItems[0], EmailItems[1], EmailItems[2], EmailItems[3], EmailItems[4])):
