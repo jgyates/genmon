@@ -37,6 +37,7 @@ class MyMail:
         self.DisableEmail = False
         self.SSLEnabled = False
 
+
         # log errors in this module to a file
         if localinit == True:
             logfile = "mymail.log"
@@ -61,8 +62,18 @@ class MyMail:
             else:
                 self.SenderAccount = self.EmailAccount
             self.EmailRecipient = config.get('MyMail', 'email_recipient')
-            self.SMTPServer = config.get('MyMail', 'smtp_server')
-            self.IMAPServer = config.get('MyMail', 'imap_server')
+            # SMTP Server
+            if config.has_option('MyMail', 'smtp_server'):
+                self.SMTPServer = config.get('MyMail', 'smtp_server')
+                self.SMTPServer = self.SMTPServer.strip()
+            else:
+                self.SMTPServer = ""
+            # IMAP Server
+            if config.has_option('MyMail', 'imap_server'):
+                self.IMAPServer = config.get('MyMail', 'imap_server')
+                self.IMAPServer = self.IMAPServer.strip()
+            else:
+                self.IMAPServer = ""
             self.SMTPPort = config.getint('MyMail', 'smtp_port')
             if config.has_option('MyMail', 'disableemail'):
                 self.DisableEmail = config.getboolean('MyMail', 'disableemail')
@@ -78,23 +89,28 @@ class MyMail:
             if self.SMTPServer != "":
                 self.threadSendEmail = threading.Thread(target=self.SendMailThread, name = "SendMailThread")
                 self.threadSendEmail.daemon = True
-                self.threadSendEmail.start()       # start server thread
+                self.threadSendEmail.start()       # start SMTP thread
+            else:
+                self.LogError("SMTP disabled")
 
             if monitor and self.IMAPServer != "":     # if True then we will have an IMAP monitor thread
                 if incoming_callback and incoming_folder and processed_folder:
                     self.threadEmail = threading.Thread(target=self.EmailCommandThread, name = "EmailCommandThread")
                     self.threadEmail.daemon = True
-                    self.threadEmail.start()       # start server thread
+                    self.threadEmail.start()       # start IMAP thread
                 else:
                     self.FatalError("ERROR: incoming_callback, incoming_folder and processed_folder are required if receive IMAP is used")
+            else:
+                self.LogError("IMAP disabled")
+
 
     #---------- MyMail.GetSendEmailThreadObject -------------------------
     def GetSendEmailThreadObject(self):
 
         if not self.DisableEmail:
-            return self.threadSendEmail
-        else:
-            return 0
+            if self.SMTPServer != "":
+                return self.threadSendEmail
+        return 0
 
     #---------- MyMail.GetEmailMonitorThreadObject -------------------------
     def GetEmailMonitorThreadObject(self):
@@ -102,10 +118,8 @@ class MyMail:
         if not self.DisableEmail:
             if self.Monitor and self.IMAPServer != "":
                 return self.threadEmail
-            else:
-                return 0
-        else:
-            return 0
+
+        return 0
 
     #---------- MyMail.EmailCommandThread -----------------------------------
     def Cleanup(self):
@@ -209,7 +223,7 @@ class MyMail:
         except Exception as e1:
             self.LogError("Error attaching file in sendEmailDirectMIME: " + str(e1))
 
-        self.LogError("Loggin in 0 "+self.SMTPServer+":"+str(self.SMTPPort))
+        self.LogError("Logging in: SMTP Server <"+self.SMTPServer+">:Port <"+str(self.SMTPPort) + ">")
         if self.SSLEnabled:
              session = smtplib.SMTP_SSL(self.SMTPServer, self.SMTPPort)
              session.ehlo()
@@ -252,8 +266,9 @@ class MyMail:
     #------------MyMail::sendEmail-----------------------
     def sendEmail(self, subjectstr, msgstr, recipient = None, files = None, deletefile = False):
 
-        if not self.DisableEmail:
-            self.EmailSendQueue.insert(0,[subjectstr,msgstr,recipient, files, deletefile])
+        if not self.DisableEmail:       # if all email disabled, do not queue
+            if self.SMTPServer != ""    # if only sending is disabled, do not queue
+                self.EmailSendQueue.insert(0,[subjectstr,msgstr,recipient, files, deletefile])
 
     #---------------------SecurityMonitor::FatalError------------------------
     def LogError(self, Message):
