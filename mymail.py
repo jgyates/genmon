@@ -224,40 +224,60 @@ class MyMail:
             self.LogError("Error attaching file in sendEmailDirectMIME: " + str(e1))
 
         self.LogError("Logging in: SMTP Server <"+self.SMTPServer+">:Port <"+str(self.SMTPPort) + ">")
-        if self.SSLEnabled:
-             session = smtplib.SMTP_SSL(self.SMTPServer, self.SMTPPort)
-             session.ehlo()
-        else:
-             session = smtplib.SMTP(self.SMTPServer, self.SMTPPort)
-             session.starttls()
-             session.ehlo
-             # this allows support for simple TLS
 
-        if self.EmailPassword != "":
-            session.login(self.EmailAccount, self.EmailPassword)
+        try:
+            if self.SSLEnabled:
+                 session = smtplib.SMTP_SSL(self.SMTPServer, self.SMTPPort)
+                 session.ehlo()
+            else:
+                 session = smtplib.SMTP(self.SMTPServer, self.SMTPPort)
+                 session.starttls()
+                 session.ehlo
+                 # this allows support for simple TLS
+        except Exception as e1:
+            self.LogError("Error SMTP Init : SSL:<" + str(self.SSLEnabled)  + ">: " + str(e1))
+            return False
 
-        if "," in recipient:
-            multiple_recipients = recipient.split(",")
-            session.sendmail(self.SenderAccount, multiple_recipients, msg.as_string())
-        else:
-            session.sendmail(self.SenderAccount, recipient, msg.as_string())
+        try:
+            if self.EmailPassword != "":
+                session.login(str(self.EmailAccount), str(self.EmailPassword))
+
+            if "," in recipient:
+                multiple_recipients = recipient.split(",")
+                session.sendmail(self.SenderAccount, multiple_recipients, msg.as_string())
+            else:
+                session.sendmail(self.SenderAccount, recipient, msg.as_string())
+        except Exception as e1:
+            self.LogError("Error SMTP sendmail: " + str(e1))
+            session.quit()
+            return False
+
         session.quit()
+
+        return True
        # end sendEmail()
 
     #------------MyMail::SendMailThread-----------------------
     def SendMailThread(self):
 
         # once sendMail is called email messages are queued and then sent from this thread
+
         while True:
+            MailError = False
             time.sleep(2)
 
             while self.EmailSendQueue != []:
                 EmailItems = self.EmailSendQueue.pop()
                 try:
-                    self.sendEmailDirectMIME(EmailItems[0], EmailItems[1], EmailItems[2], EmailItems[3], EmailItems[4])
+                    if not (self.sendEmailDirectMIME(EmailItems[0], EmailItems[1], EmailItems[2], EmailItems[3], EmailItems[4])):
+                        self.LogError("Error in SendMailThread, sendEmailDirectMIME failed, retrying")
+                        MailError = True
                 except Exception as e1:
                     # put the time back at the end of the queue
-                    self.LogError("Error in SendMailThread, retrying: " + str(e1))
+                    self.LogError("Error in SendMailThread, retrying (2): " + str(e1))
+                    MailError = True
+
+                if MailError:
                     self.EmailSendQueue.insert(len(self.EmailSendQueue),EmailItems)
                     # sleep for 2 min and try again
                     time.sleep(120)
