@@ -267,7 +267,7 @@ class MyMail:
     def sendEmail(self, subjectstr, msgstr, recipient = None, files = None, deletefile = False):
 
         if not self.DisableEmail:       # if all email disabled, do not queue
-            if self.SMTPServer != ""    # if only sending is disabled, do not queue
+            if self.SMTPServer != "":    # if only sending is disabled, do not queue
                 self.EmailSendQueue.insert(0,[subjectstr,msgstr,recipient, files, deletefile])
 
     #---------------------SecurityMonitor::FatalError------------------------
