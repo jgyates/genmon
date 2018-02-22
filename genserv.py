@@ -10,10 +10,15 @@
 #------------------------------------------------------------
 
 from flask import Flask, render_template, request, jsonify, session
-import sys, signal, os, socket, atexit, configparser
+import sys, signal, os, socket, atexit
 import mylog, myclient
 import urlparse
 import re
+
+try:
+    from ConfigParser import RawConfigParser
+except ImportError as e:
+    from configparser import RawConfigParser
 
 #------------------------------------------------------------
 app = Flask(__name__,static_url_path='')
@@ -104,7 +109,7 @@ def GetSettings():
                     "smtp_port" : ['int', 'SMTP Port', 8],
                     "ssl_enabled" : ['boolean', 'SSL Enabled', 9]}
 
-    settings = configparser.RawConfigParser()
+    settings = RawConfigParser()
     # config parser reads from current directory, when running form a cron tab this is
     # not defined so we specify the full path
     settings.read('/etc/mymail.conf')
@@ -182,7 +187,7 @@ if __name__ == "__main__":
         SSLContext = None
         HTTPPort = 8000
 
-        config = configparser.RawConfigParser()
+        config = RawConfigParser()
         # config parser reads from current directory, when running form a cron tab this is
         # not defined so we specify the full path
         config.read('/etc/genmon.conf')

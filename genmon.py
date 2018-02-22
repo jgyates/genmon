@@ -20,6 +20,12 @@ from __future__ import print_function       # For python 3.x compatibility with 
 
 import datetime, time, sys, smtplib, signal, os, threading, socket, serial, pytz
 import crcmod.predefined, crcmod, mymail, atexit, configparser
+
+try:
+    from ConfigParser import RawConfigParser
+except ImportError as e:
+    from configparser import RawConfigParser
+
 import mymail, mylog
 
 #------------ SerialDevice class --------------------------------------------
@@ -303,7 +309,7 @@ class GeneratorDevice:
 
         try:
             # read config file
-            config = configparser.RawConfigParser()
+            config = RawConfigParser()
             # config parser reads from current directory, when running form a cron tab this is
             # not defined so we specify the full path
             config.read('/etc/genmon.conf')
