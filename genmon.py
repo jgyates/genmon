@@ -19,7 +19,7 @@
 from __future__ import print_function       # For python 3.x compatibility with print function
 
 import datetime, time, sys, smtplib, signal, os, threading, socket, serial, pytz
-import crcmod.predefined, crcmod, mymail, atexit, configparser
+import crcmod.predefined, crcmod, mymail, atexit
 
 try:
     from ConfigParser import RawConfigParser
@@ -388,7 +388,7 @@ class GeneratorDevice:
             return None
 
 
-                        # log errors in this module to a file
+        # log errors in this module to a file
         self.log = mylog.SetupLogger("genmon", self.LogLocation + "genmon.log")
 
         self.ProgramStartTime = datetime.datetime.now()     # used for com metrics
