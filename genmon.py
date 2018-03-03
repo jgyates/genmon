@@ -19,7 +19,7 @@
 from __future__ import print_function       # For python 3.x compatibility with print function
 
 import datetime, time, sys, smtplib, signal, os, threading, socket, serial, pytz
-import crcmod.predefined, crcmod, mymail, atexit
+import crcmod.predefined, crcmod, atexit, json, collections
 
 try:
     from ConfigParser import RawConfigParser
@@ -27,6 +27,8 @@ except ImportError as e:
     from configparser import RawConfigParser
 
 import mymail, mylog
+
+GENMON_VERSION = "V1.5.0"
 
 #------------ SerialDevice class --------------------------------------------
 class SerialDevice:
@@ -643,6 +645,27 @@ class GeneratorDevice:
 
         if not self.EvolutionController:        # if we are using a Nexus Controller, force legacy writes
             self.bUseLegacyWrite = True
+
+    #----------  GeneratorDevice:GetController  ---------------------------------
+    def GetController(self):
+
+        outstr = ""
+
+        ControllerDecoder = {
+            0x03 :  "Nexus, Air Cooled",
+            0x06 :  "Nexus, Liquid Cooled",
+            0x09 :  "Evolution, Air Cooled",
+            0x0c :  "Evolution, Liquid Cooled"
+        }
+
+        Value = self.GetRegisterValueFromList("0000")
+        if len(Value) != 4:
+            return ""
+        ProductModel = int(Value,16)
+
+        return ControllerDecoder.get(ProductModel, "Unknown 0x%02X" % ProductModel)
+
+        return outstr
 
     #-------------GeneratorDevice::DebugRegisters------------------------------------
     def DebugRegisters(self):
@@ -1522,49 +1545,45 @@ class GeneratorDevice:
 
         return msgbody
     #------------ GeneratorDevice::DisplayRegisters --------------------------------------------
-    def DisplayRegisters(self, AllRegs = False, ToString = False):
+    def DisplayRegisters(self, AllRegs = False, ToString = False, DictOut = False):
 
-        outstring = ""
-        outstring += self.printToScreen("Num Regs: %d " % len(self.Registers), ToString)
+        Registers = collections.OrderedDict()
+        Regs = collections.OrderedDict()
+        Registers["Registers"] = Regs
+
+        RegList = []
+
+        Regs["Num Regs"] = "%d" % len(self.Registers)
         if self.NotChanged == 0:
             self.TotalChanged = 0.0
         else:
             self.TotalChanged =  float(self.Changed)/float(self.NotChanged)
-        outstring += self.printToScreen("Not Changed: %d Changed %d Total Changed %.2f" % (self.NotChanged, self.Changed, self.TotalChanged), ToString)
+        Regs["Not Changed"] = "%d" % self.NotChanged
+        Regs["Changed"] = "%d" % self.Changed
+        Regs["Total Changed"] = "%.2f" % self.TotalChanged
 
+        Regs["Base Registers"] = RegList
         # print all the registers
-        count = 0
         for Register, Value in self.Registers.items():
 
             # do not display log registers or model register
-            if int(Register,16) >=  SERVICE_LOG_STARTING_REG and int(Register,16) <= SERVICE_LOG_END_REG:
-                continue
-            elif int(Register,16) >=  START_LOG_STARTING_REG and int(Register,16) <= START_LOG_END_REG:
-                continue
-            elif int(Register,16) >=  ALARM_LOG_STARTING_REG and int(Register,16) <= ALARM_LOG_END_REG:
-                continue
-            elif int(Register,16) >=  NEXUS_ALARM_LOG_STARTING_REG and int(Register,16) <= NEXUS_ALARM_LOG_END_REG:
-                continue
-            elif int(Register,16) == MODEL_REG:
+            if self.RegisterIsLog(Register):
                 continue
             ##
-            if count & 0x01:
-                outstring += self.printToScreen("%s:%s\n" % (Register, Value), ToString, nonewline = True)
-            else:
-                outstring += self.printToScreen("%s:%s\t\t\t" % (Register, Value), ToString, nonewline = True)
-            count += 1
-        if count & 0x01:
-            outstring += self.printToScreen("\n", ToString, nonewline = True)
+            RegList.append({Register:Value})
 
         Register = "%04x" % MODEL_REG
         Value = self.GetRegisterValueFromList(Register)
         if len(Value) != 0:
-            outstring += self.printToScreen("%s:%s\n" % (Register, Value), ToString)
+            RegList.append({Register:Value})
 
         if AllRegs:
-            outstring += self.DisplayLogs(AllLogs = True, RawOutput = True, PrintToString = ToString)
+            Regs["Log Registers"]= self.DisplayLogs(AllLogs = True, RawOutput = True, DictOut = True)
 
-        return outstring
+        if not DictOut:
+            return self.printToScreen(self.ProcessDispatch(Registers,""), ToString)
+
+        return Registers
 
      #---------- process command from email and socket -------------------------------
     def ProcessCommand(self, command, fromsocket = False):
@@ -1604,42 +1623,54 @@ class GeneratorDevice:
 
 
         for item in CommandList:
-            item = item.lstrip()
-            item = item.rstrip()
-            if b"generator:" in item.lower():
+            item = item.strip()
+
+            if b"generator:" == item.lower():
                 continue
-            if b"registers" in item.lower():         # display registers
-                self.printToScreen("GET REGISTERS")
-                msgbody += "Registers:\n"
+
+            elif b"registers" == item.lower():         # display registers
                 msgbody += self.DisplayRegisters(ToString = True)
                 continue
-            if b"allregs" in item.lower():         # display registers
-                self.printToScreen("GET ALLREGS")
-                msgbody += "All Registers:\n"
+            elif b"registers_json" == item.lower():         # display registers
+                msgbody = json.dumps(self.DisplayRegisters(DictOut = True), sort_keys=False)
+                continue
+            elif b"allregs" == item.lower():         # display registers
                 msgbody += self.DisplayRegisters(AllRegs = True, ToString = True)
                 continue
-            if b"logs" in item.lower():
-                self.printToScreen("GET LOGS")           # display all logs
-                msgbody += "Logs:\n"
-                msgbody += self.DisplayLogs(AllLogs = True, PrintToString = True)
+            elif b"allregs_json" == item.lower():         # display registers
+                msgbody = json.dumps(self.DisplayRegisters(AllRegs = True, DictOut = True), sort_keys=False)
                 continue
-            if b"status" in item.lower():            # display decoded generator info
-                self.printToScreen("STATUS")
-                msgbody += "Status:\n"
+            elif b"logs" == item.lower():
+                msgbody += self.DisplayLogs(AllLogs = True, ToString = True)
+                continue
+            elif b"logs_json" == item.lower():
+                msgbody = json.dumps(self.DisplayLogs(AllLogs = True, DictOut = True), sort_keys=False)
+                continue
+            elif b"status" == item.lower():            # display decoded generator info
                 msgbody += self.DisplayStatus(True)
                 continue
-            if b"maint" in item.lower():
-                self.printToScreen("MAINT")
-                msgbody += "Maintenance:\n"
+            elif b"status_json" == item.lower():            # display decoded generator info
+                msgbody = json.dumps(self.DisplayStatus(DictOut = True), sort_keys=False)
+                continue
+            elif b"maint" == item.lower():
                 msgbody += self.DisplayMaintenance(True)
                 continue
-            if b"monitor" in item.lower():
-                self.printToScreen("MONITOR")
-                msgbody += "Monitor:\n"
+            elif b"maint_json" == item.lower():
+                msgbody = json.dumps(self.DisplayMaintenance(DictOut = True), sort_keys=False)
+                continue
+            elif b"monitor" == item.lower():
                 msgbody += self.DisplayMonitor(True)
                 continue
-            if b"settime" in item.lower():           # set time and date
-                self.printToScreen("SETTIME")
+            elif b"monitor_json" == item.lower():
+                msgbody = json.dumps(self.DisplayMonitor(DictOut = True), sort_keys=False)
+                continue
+            elif b"outage" == item.lower():              # display help screen
+                msgbody += self.DisplayOutage(True)
+                continue
+            elif b"outage_json" == item.lower():              # display help screen
+                msgbody = json.dumps(self.DisplayOutage(DictOut = True), sort_keys=False)
+                continue
+            elif b"settime" == item.lower():           # set time and date
                 # This is done is a separate thread as not to block any return email processing
                 # since we attempt to sync with generator time
                 SetTimeThread = threading.Thread(target=self.SetGeneratorTimeDate, name = "SetTimeThread")
@@ -1647,46 +1678,37 @@ class GeneratorDevice:
                 SetTimeThread.start()               # start settime thread
                 msgbody += "Time Set: Command Sent\n"
                 continue
-            if b"setexercise" in item.lower():
-                self.printToScreen("SETEXERCISE")
+            elif b"setexercise" in item.lower():
                 msgbody += self.SetGeneratorExerciseTime( command.lower())
                 continue
-            if b"setquiet" in item.lower():
-                self.printToScreen("SETQUIET")
+            elif b"setquiet" in item.lower():
                 msgbody += self.SetGeneratorQuietMode( command.lower())
                 continue
-            if b"help" in item.lower():              # display help screen
-                self.printToScreen("HELP")
+            elif b"help" == item.lower():              # display help screen
                 msgbody += "Help:\n"
                 msgbody += self.DisplayHelp(True)
                 continue
-            if b"outage" in item.lower():              # display help screen
-                self.printToScreen("OUTAGE")
-                msgbody += "Outage:\n"
-                msgbody += self.DisplayOutage(True)
-                continue
-            if b"setremote" in item.lower():
-                self.printToScreen("SETREMOTE")
+            elif b"setremote" in item.lower():
                 msgbody += self.SetGeneratorRemoteStartStop(command.lower())
                 continue
             ## These commands are used by the web / socket interface only
             if fromsocket:
-                if b"getsitename" in item.lower():          # used in web interface
+                if b"getsitename" == item.lower():          # used in web interface
                     msgbody += self.SiteName
                     continue
-                if b"getbase" in item.lower():      # base status, used in web interface (UI changes color based on exercise, running , ready status)
+                elif b"getbase" == item.lower():      # base status, used in web interface (UI changes color based on exercise, running , ready status)
                     msgbody += self.GetBaseStatus()
                     continue
-                if b"getexercise" in item.lower():
+                elif b"getexercise" == item.lower():
                     msgbody += self.GetParsedExerciseTime() # used in web interface
                     continue
-                if b"getregvalue" in item.lower():          # only used for debug purposes, read a cached register value
+                elif b"getregvalue" in item.lower():          # only used for debug purposes, read a cached register value
                     msgbody += self.GetRegValue(command.lower())
                     continue
-                if b"readregvalue" in item.lower():         # only used for debug purposes, Read Register Non Cached
+                elif b"readregvalue" in item.lower():         # only used for debug purposes, Read Register Non Cached
                     msgbody += self.ReadRegValue(command.lower())
                     continue
-                if b"getdebug" in item.lower():              # only used for debug purposes. If a thread crashes it tells you the thread name
+                elif b"getdebug" == item.lower():              # only used for debug purposes. If a thread crashes it tells you the thread name
                     msgbody += self.GetDeadThreadName()
                     continue
             if not fromsocket:
@@ -1796,51 +1818,6 @@ class GeneratorDevice:
         except Exception as e1:
             self.LogError("Error in  LogOutageToFile: " + str(e1))
 
-    #------------ GeneratorDevice::DisplayOutageHistory-------------------------
-    def DisplayOutageHistory(self, ToString = False):
-
-        if not len(self.OutageLog):
-            return ""
-        try:
-            # check to see if a log file exist yet
-            if not os.path.isfile(self.OutageLog):
-                return ""
-
-            outstr = ""
-            outstr += self.printToScreen("\nOutage Log: ", ToString)
-            OutageLog = []
-
-            with open(self.OutageLog,"r") as OutageFile:     #opens file
-
-                for line in OutageFile:
-                    line = line.rstrip()                   # remove newline at end and trailing whitespace
-                    line = line.lstrip()                   # remove any leading whitespace
-
-                    if not len(line):
-                        continue
-                    if line[0] == "#":              # comment?
-                        continue
-                    Items = line.split(",")
-                    if len(Items) != 2 and len(Items) != 3:
-                        continue
-                    if len(Items) == 3:
-                        strDuration = Items[1] + "," + Items[2]
-                    else:
-                        strDuration = Items[1]
-
-                    OutageLog.insert(0, [Items[0], strDuration])
-                    if len(OutageLog) > 50:     # limit log to 50 entries
-                        OutageLog.pop()
-
-            for Items in OutageLog:
-                outstr += self.printToScreen(Items[0] + ", Duration: " + Items[1] , ToString, spacer = True)
-
-            return outstr
-
-        except Exception as e1:
-            self.LogError("Error in  DisplayOutageHistory: " + str(e1))
-            return ""
-
     #------------ GeneratorDevice::CheckForAlarms ----------------------------------------
     # Note this must be called from the Process thread since it queries the log registers
     # when in master emulation mode
@@ -1908,7 +1885,7 @@ class GeneratorDevice:
         msgbody += self.printToScreen("\nLast Log Entries:", True)
 
         # display last log entries
-        msgbody += self.DisplayLogs(AllLogs = False, PrintToString = True)     # if false don't display full logs
+        msgbody += self.DisplayLogs(AllLogs = False, ToString = True)     # if false don't display full logs
 
         if self.SystemInAlarm():
             msgbody += self.printToScreen("\nTo clear the Alarm/Warning message, press OFF on the control panel keypad followed by the ENTER key.", True)
@@ -1953,209 +1930,308 @@ class GeneratorDevice:
 
         return outstring
 
-     #------------ GeneratorDevice::DisplayMaintenance ----------------------------------------
-    def DisplayMaintenance (self, ToString = False):
+    #------------ GeneratorDevice::GetDispatchItem ------------------------------------
+    def GetDispatchItem(self, item):
 
-        outstring = "\n"
+        if isinstance(item, str):
+            return item
+        elif callable(item):
+            return item()
+        elif isinstance(item, (int, long)):
+            return str(item)
+        else:
+            self.LogError("Unable to convert type %s in GetDispatchItem" % type(item))
+            return ""
 
-        Value = self.GetSerialNumber()
-        if len(Value):
-            outstring += self.printToScreen("Generator Serial Number : " + Value + "\n", ToString)
+    #------------ GeneratorDevice::ProcessDispatch ------------------------------------
+    # This function is recursive, it will turn a dict with callable functions into
+    # all of the callable functions resolved to stings (by calling the functions).
+    # If string output is needed instead of a dict output, ProcessDispatchToString
+    # is called
+    def ProcessDispatch(self, node, InputBuffer, indent=0):
 
-        outstring += self.printToScreen("Exercise:", ToString)
-        # exercise time
-        Value = self.GetExerciseTime()
-        if len(Value):
-            outstring += self.printToScreen("Exercise Time: " + Value, ToString, spacer = True)
-        if self.EvolutionController:
-            # get exercise duration
-            Value = self.GetExerciseDuration()
-            if len(Value):
-                outstring += self.printToScreen("Exercise Duration: " + Value, ToString, spacer = True)
+        if isinstance(InputBuffer, str):
+            return self.ProcessDispatchToString(node, InputBuffer, indent)
 
-        outstring += self.printToScreen("\nService:", ToString)
-        # get next schedule service if available
-        Value = self.GetServiceInfo()
-        if len(Value):
-            outstring += self.printToScreen("Service Scheduled: " + Value, ToString, spacer = True)
-        # get run times if available
-        Value = self.GetRunTimes()
-        if len(Value):
-            outstring += self.printToScreen(Value, ToString, spacer = True)
+        if isinstance(node, dict):
+            for key, item in node.items():
+                if isinstance(item, dict):
+                    NewDict = collections.OrderedDict()
+                    InputBuffer[key] = self.ProcessDispatch(item, NewDict)
+                elif isinstance(item, list):
+                    InputBuffer[key] = []
+                    for listitem in item:
+                        if isinstance(listitem, dict):
+                            NewDict2 = collections.OrderedDict()
+                            InputBuffer[key].append(self.ProcessDispatch(listitem, NewDict2))
+                        else:
+                            self.LogError("Invalid type in ProcessDispatch %s " % type(node))
+                else:
+                    InputBuffer[key] = self.GetDispatchItem(item)
+        else:
+            self.LogError("Invalid type in ProcessDispatch %s " % type(node))
 
-        # HW and Firmware versions
-        Value = self.GetVersions()
-        if len(Value):
-            outstring += self.printToScreen(Value, ToString, spacer = True)
+        return InputBuffer
 
-        return outstring
+     #------------ GeneratorDevice::ProcessDispatchToString -----------------------------
+     # This function is recursive, it will turn a dict with callable functions into
+     # a printable string with indentation and formatting
+    def ProcessDispatchToString(self, node, InputBuffer, indent = 0):
+
+        if not isinstance(InputBuffer, str):
+            return ""
+
+        if isinstance(node, dict):
+            for key, item in node.items():
+                if isinstance(item, dict):
+                    InputBuffer += "\n" + ("    " * indent) + key + " : \n"
+                    InputBuffer = self.ProcessDispatchToString(item, InputBuffer, indent + 1)
+                elif isinstance(item, list):
+                    InputBuffer += "\n" + ("    " * indent) + key + " : \n"
+                    for listitem in item:
+                        if isinstance(listitem, dict):
+                            InputBuffer = self.ProcessDispatchToString(listitem, InputBuffer, indent + 1)
+                        elif isinstance(listitem, str):
+                            InputBuffer += (("    " * (indent +1)) +  self.GetDispatchItem(listitem) + "\n")
+                        else:
+                            self.LogError("Invalid type in ProcessDispatchToString %s %s (2)" % (key, type(listitem)))
+                else:
+                    InputBuffer += (("    " * indent) + key + " : " +  self.GetDispatchItem(item) + "\n")
+        else:
+            self.LogError("Invalid type in ProcessDispatchToString %s " % type(node))
+        return InputBuffer
 
     #------------------- GeneratorDevice::DisplayOutage -----------------
-    def DisplayOutage(self, ToString = False):
+    def DisplayOutage(self, ToString = False, DictOut = False):
 
-        outstr = "\n"
+        Outage = collections.OrderedDict()
+        OutageData = collections.OrderedDict()
+        Outage["Outage"] = OutageData
+
+
         if self.SystemInOutage:
-            outstr += self.printToScreen("System in outage since %s" % self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"), ToString, spacer = True)
+            outstr = "System in outage since %s" % self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S")
         else:
             if self.ProgramStartTime != self.OutageStartTime:
                 OutageStr = str(self.LastOutageDuration).split(".")[0]  # remove microseconds from string
-                outstr += self.printToScreen("Last outage occurred at %s and lasted %s." % (self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"), OutageStr), ToString, spacer = True)
+                outstr = "Last outage occurred at %s and lasted %s." % (self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"), OutageStr)
             else:
-                outstr += self.printToScreen("No outage has occurred since program launched.", ToString, spacer = True)
+                outstr = "No outage has occurred since program launched."
+
+        OutageData["Status"] = outstr
 
          # get utility voltage
         Value = self.GetUtilityVoltage()
         if len(Value):
-            outstr += self.printToScreen("Utility Voltage : " + Value, ToString, spacer = True)
-            outstr += self.printToScreen("Utility Voltage Minimum : %dV " % (self.UtilityVoltsMin), ToString, spacer = True)
-            outstr += self.printToScreen("Utility Voltage Maximum : %dV " % (self.UtilityVoltsMax), ToString, spacer = True)
+            OutageData["Utility Voltage"] = Value
 
-        outstr += self.DisplayOutageHistory(ToString)
+        OutageData["Utility Voltage Minimum"] = "%dV " % (self.UtilityVoltsMin)
+        OutageData["Utility Voltage Maximum"] = "%dV " % (self.UtilityVoltsMax)
 
-        return outstr
+        OutageData["Outage Log"] = self.DisplayOutageHistory()
 
+        if not DictOut:
+            return self.printToScreen(self.ProcessDispatch(Outage,""), ToString)
+
+        return Outage
+
+    #------------ GeneratorDevice::DisplayOutageHistory-------------------------
+    def DisplayOutageHistory(self):
+
+        OutageHistory = []
+
+        if not len(self.OutageLog):
+            return ""
+        try:
+            # check to see if a log file exist yet
+            if not os.path.isfile(self.OutageLog):
+                return ""
+
+            OutageLog = []
+
+            with open(self.OutageLog,"r") as OutageFile:     #opens file
+
+                for line in OutageFile:
+                    line = line.rstrip()                   # remove newline at end and trailing whitespace
+                    line = line.lstrip()                   # remove any leading whitespace
+
+                    if not len(line):
+                        continue
+                    if line[0] == "#":              # comment?
+                        continue
+                    Items = line.split(",")
+                    if len(Items) != 2 and len(Items) != 3:
+                        continue
+                    if len(Items) == 3:
+                        strDuration = Items[1] + "," + Items[2]
+                    else:
+                        strDuration = Items[1]
+
+                    OutageLog.insert(0, [Items[0], strDuration])
+                    if len(OutageLog) > 50:     # limit log to 50 entries
+                        OutageLog.pop()
+
+            for Items in OutageLog:
+                OutageHistory.append("%s, Duration: %s" % (Items[0], Items[1]))
+
+            return OutageHistory
+
+        except Exception as e1:
+            self.LogError("Error in  DisplayOutageHistory: " + str(e1))
+            return ""
 
     #------------ GeneratorDevice::DisplayMonitor --------------------------------------------
-    def DisplayMonitor(self, ToString = False):
+    def DisplayMonitor(self, ToString = False, DictOut = False):
 
-        outstring = "\n"
-        outstring += self.printToScreen("Genmon Stats: ", ToString)
+        Monitor = collections.OrderedDict()
+        MonitorData = collections.OrderedDict()
+        Monitor["Monitor"] = MonitorData
+        GenMonStats = collections.OrderedDict()
+        SerialStats = collections.OrderedDict()
+        MonitorData["Generator Monitor Stats"] = GenMonStats
+        MonitorData["Serial Stats"] = SerialStats
 
-        outstring += self.printToScreen("Monitor Health: " + self.GetSystemHealth(), ToString, spacer = True)
+        GenMonStats["Monitor Health"] =  self.GetSystemHealth()
+        GenMonStats["Detected Controller"] = self.GetController()
 
-        GeneratorType = ""
-        if self.EvolutionController:
-            GeneratorType += "Evolution Controller, "
-        else:
-            GeneratorType += "Nexus Controller, "
-
-        if self.LiquidCooled:
-            GeneratorType += "Liquid Cooled"
-        else:
-            GeneratorType += "Air Cooled"
-
-        outstring += self.printToScreen("Generator Type Selected : " + GeneratorType, ToString, spacer = True)
 
         ProgramRunTime = datetime.datetime.now() - self.ProgramStartTime
         outstr = str(ProgramRunTime).split(".")[0]  # remove microseconds from string
-        outstring += self.printToScreen(self.ProgramName + " running for " + outstr + ".", ToString, spacer = True)
+        GenMonStats["Run time"] = self.ProgramName + " running for " + outstr + "."
+        GenMonStats["Generator Monitor Version"] = GENMON_VERSION
 
-        outstring += self.printToScreen("\nSerial Stats: ", ToString)
-        outstring += self.printToScreen("PacketCount M: %d, S: %d, Buffer Count: %d" % (self.Slave.TxPacketCount, self.Slave.RxPacketCount, len(self.Slave.Buffer)), ToString, spacer = True)
+
+        SerialStats["Packet Count"] = "M: %d, S: %d, Buffer Count: %d" % (self.Slave.TxPacketCount, self.Slave.RxPacketCount, len(self.Slave.Buffer))
 
         if self.Slave.CrcError == 0 or self.Slave.RxPacketCount == 0:
             PercentErrors = 0.0
         else:
             PercentErrors = float(self.Slave.CrcError) / float(self.Slave.RxPacketCount)
 
-        outstring += self.printToScreen("CRC Errors : %d  Percent : %.2f" % (self.Slave.CrcError, PercentErrors), ToString, spacer = True)
-        outstring += self.printToScreen("Discarded  : %d  Restarts: %d  TimeOut: %d" %  (self.Slave.DiscardedBytes,self.Slave.Restarts, self.Slave.ComTimoutError), ToString, spacer = True)
+        SerialStats["CRC Errors"] = "%d " % self.Slave.CrcError
+        SerialStats["CRC Percent Errors"] = "%.2f" % PercentErrors
+        SerialStats["Discarded Bytes"] = "%d" % self.Slave.DiscardedBytes
+        SerialStats["Serial Restarts"] = "%d" % self.Slave.Restarts
+        SerialStats["Serial Timeouts"] = "%d" %  self.Slave.ComTimoutError
 
         CurrentTime = datetime.datetime.now()
 
         Delta = CurrentTime - self.ProgramStartTime        # yields a timedelta object
         PacketsPerSecond = float((self.Slave.TxPacketCount + self.Slave.RxPacketCount)) / float(Delta.total_seconds())
-        outstring += self.printToScreen("Packets per second: %.2f" % (PacketsPerSecond), ToString, spacer = True)
+        SerialStats["Packets Per Second"] = "%.2f" % (PacketsPerSecond)
 
         if self.Slave.RxPacketCount:
             AvgTransactionTime = float(self.Slave.TotalElapsedPacketeTime / self.Slave.RxPacketCount)
-            outstring += self.printToScreen("Average Transaction Time: %.4f sec" % (AvgTransactionTime), ToString, spacer = True)
+            SerialStats["Average Transaction Time"] = "%.4f sec" % (AvgTransactionTime)
 
-        return outstring
+        if not DictOut:
+            return self.printToScreen(self.ProcessDispatch(Monitor,""), ToString)
+
+        return Monitor
+
     #------------ GeneratorDevice::DisplayStatus ----------------------------------------
-    def DisplayStatus(self, ToString = False):
+    def DisplayStatus(self, ToString = False, DictOut = False):
 
-        outstring = "\n"
 
-        outstring += self.printToScreen("Engine State:", ToString)
-        # get switch state
-        Value = self.GetSwitchState()
-        if len(Value):
-            outstring += self.printToScreen("Switch State: " + Value, ToString, spacer = True)
-        #get Engine state
-        Value = self.GetEngineState()
-        if len(Value):
-            outstring += self.printToScreen("Engine State: " + Value, ToString, spacer = True)
+        if DictOut:
+            ToString = True
+
+        Status = collections.OrderedDict()
+        Stat = collections.OrderedDict()
+        Status["Status"] = Stat
+        Engine = collections.OrderedDict()
+        Stat["Engine"] = Engine
+        Line = collections.OrderedDict()
+        Stat["Line State"] = Line
+        LastLog = collections.OrderedDict()
+        Stat["Last Log Entries"] = self.DisplayLogs(AllLogs = False, DictOut = True)
+        Time = collections.OrderedDict()
+        Stat["Time"] = Time
+
+
+        Engine["Switch State"] = self.GetSwitchState
+        Engine["Engine State"] = self.GetEngineState
+        if self.EvolutionController:
+            Engine["Active Relays"] = self.GetDigitalOutputs
+            Engine["Active Sensors"] = self.GetSensorInputs
+
+        if self.SystemInAlarm():
+            Engine["Sysetm In Alarm"] = self.GetAlarmState
+
+        Engine["Battery Voltage"] = self.GetBatteryVoltage
+        if self.EvolutionController and self.LiquidCooled:
+            Engine["Battery Status"] = self.GetBatteryStatus
+
+        Engine["RPM"] = self.GetRPM
+        Engine["Frequency"] = self.GetFrequency
+        Engine["Output Voltage"] = self.GetVoltageOutput
+        if self.bDisplayUnknownSensors:
+            Engine["Unknown Sensors"] = self.DisplayUnknownSensors()
+
 
         if self.EvolutionController:
-            Value = self.GetDigitalOutputs()
-            if len(Value):
-                outstring += self.printToScreen("Active Relays: " + Value, True, spacer= True)
+            Line["Transfer Switch State"] = self.GetTransferStatus
+        Line["Utility Voltage"] = self.GetUtilityVoltage
+        # TODO
+        Line["Utility Voltage Max"] = "%dV " % (self.UtilityVoltsMax)
+        Line["Utility Voltage Min"] = "%dV " % (self.UtilityVoltsMin)
+        Line["Utility Threshold Voltage"] = self.GetThresholdVoltage
 
-            Value = self.GetSensorInputs()
-            if len(Value):
-                outstring += self.printToScreen("Active Sensors: " + Value, True, spacer= True)
+        if self.EvolutionController and self.LiquidCooled:
+            Line["Utility Pickup Voltage"] = self.GetPickUpVoltage
 
-            if self.SystemInAlarm():
-                Value = self.GetAlarmState()
-                if len(Value):
-                    outstring += self.printToScreen("Sysetm In Alarm : " + Value, True, spacer= True)
-                else:
-                    outstring += self.printToScreen("System In Alarm! Check alarm and maintenance logs.", True, spacer= True)
-
-        # get battery voltage
-        Value = self.GetBatteryVoltage()
-        if len(Value):
-            if not self.EvolutionController or not self.LiquidCooled:
-                outstring += self.printToScreen("Battery Voltage: " + Value , ToString, spacer = True)
-            else:
-                outstring += self.printToScreen("Battery Voltage: " + Value + ", Status: " + self.GetBatteryStatus(), ToString, spacer = True)
-        # Get the RPM
-        Value = self.GetRPM()
-        if len(Value):
-            outstring += self.printToScreen("RPM: " + Value, ToString, spacer = True)
-        # get the frequency
-        Value = self.GetFrequency()
-        if len(Value):
-            outstring += self.printToScreen("Frequency: " + Value, ToString, spacer = True)
-        # get the generator output voltage, don't display if zero
-        Value = self.GetVoltageOutput()
-        if len(Value):
-            outstring += self.printToScreen("Output Voltage: " + Value, ToString, spacer = True)
-
-        Value = self.DisplayUnknownSensors(ToString)
-        if len(Value):
-            outstring += Value
-
-        outstring += self.printToScreen("\nLine State:", ToString)
-        if self.EvolutionController:
-            # get transfer switch status
-            Value = self.GetTransferStatus()
-            if len(Value):
-                outstring += self.printToScreen("Transfer Switch Status: " + Value, ToString, spacer = True)
-        # get utility voltage
-        Value = self.GetUtilityVoltage()
-        if len(Value):
-            MinMax = ", Min: %dV, Max: %dV" % (self.UtilityVoltsMin, self.UtilityVoltsMax)
-            outstring += self.printToScreen("Utility Voltage: " + Value + MinMax, ToString, spacer = True)
-        # get Utility Threshold Voltage
-        Value = self.GetThresholdVoltage()
-        if len(Value):
-            outstring += self.printToScreen("Utility Threshold Voltage: " + Value, ToString, spacer = True)
-
-        outstring += self.printToScreen("\nLast Log Entries:", ToString)
-
-        # display last log entries
-        outstring += self.DisplayLogs(AllLogs = False, PrintToString = ToString)     # if false don't display full logs
-
-        outstring += self.printToScreen("\nGeneral:", ToString)
-        # display info decoded from the registers
-        outstring += self.printToScreen("Monitor Time:   " + datetime.datetime.now().strftime("%A %B %-d, %Y %H:%M:%S"), ToString, spacer = True)
         # Generator time
-        Value = self.GetDateTime()
-        if len(Value):
-            outstring += self.printToScreen("Generator Time: " + Value, ToString, spacer = True)
+        Time["Monitor Time"] = datetime.datetime.now().strftime("%A %B %-d, %Y %H:%M:%S")
+        Time["Generator Time"] = self.GetDateTime()
 
-        return outstring
+        if DictOut:
+            ReturnValue = collections.OrderedDict()
+            ReturnValue = self.ProcessDispatch(Status, ReturnValue)
+        else:
+            ReturnValue = self.printToScreen(self.ProcessDispatch(Status,""), ToString)
+
+        return ReturnValue
+
+
+     #------------ GeneratorDevice::DisplayMaintenance ----------------------------------------
+    def DisplayMaintenance (self, ToString = False, DictOut = False):
+
+        if DictOut:
+            ToString = True
+        # use ordered dict to maintain order of output
+        # ordered dict to handle evo vs nexus functions
+        Maintenance = collections.OrderedDict()
+        Maint = collections.OrderedDict()
+        Maintenance["Maintenance"] = Maint
+        Maint["Controller"] = self.GetController
+        Maint["Generator Serial Number"] = self.GetSerialNumber
+        Exercise = collections.OrderedDict()
+        Exercise["Exercise Time"] = self.GetExerciseTime
+        if self.EvolutionController and self.LiquidCooled:
+            Exercise["Exercise Duration"] = self.GetExerciseDuration
+        Maint["Exercise"] = Exercise
+        Service = collections.OrderedDict()
+        Service["Total Run Hours"] = self.GetRunTimes
+        Service["Hardware Version"] = self.GetHardwareVersion
+        Service["Firmware Version"] = self.GetFirmwareVersion
+        Maint["Service"] = Service
+
+        if DictOut:
+            ReturnValue = collections.OrderedDict()
+            ReturnValue = self.ProcessDispatch(Maintenance, ReturnValue)
+        else:
+            ReturnValue = self.printToScreen(self.ProcessDispatch(Maintenance,""), ToString)
+
+        return ReturnValue
 
     #------------ GeneratorDevice::signed16-------------------------------
     def signed16(self, value):
         return -(value & 0x8000) | (value & 0x7fff)
 
     #------------ GeneratorDevice::DisplayUnknownSensors-------------------------------
-    def DisplayUnknownSensors(self, ToString):
+    def DisplayUnknownSensors(self):
 
-        outstring = ""
+        Sensors = collections.OrderedDict()
 
         if not self.bDisplayUnknownSensors:
             return ""
@@ -2165,27 +2241,30 @@ class GeneratorDevice:
         # this is possibly raw data from RPM sensor
         Value = self.GetUnknownSensor("003c")
         if len(Value):
-            outstring += self.printToScreen("Raw RPM Sensor Data: " + Value, ToString, spacer = True)
+            Sensors["Raw RPM Sensor Data"] = Value
 
         if self.EvolutionController and self.LiquidCooled:
 
             # get UKS
             Value = self.GetUnknownSensor("0058", RequiresRunning = True)
             if len(Value):
-                outstring += self.printToScreen("Unsupported Sensor 2 " + Value, ToString, spacer = True)
+                Sensors["Unsupported Sensor 2"] = Value
+
             # get UKS
             Value = self.GetUnknownSensor("005d")
             if len(Value):
-                outstring += self.printToScreen("Unsupported Sensor 3: " + Value, ToString, spacer = True)
+                Sensors["Unsupported Sensor 3"] = Value
+
              # get UKS
             Value = self.GetUnknownSensor("05ed")
             if len(Value):
-                outstring += self.printToScreen("Battery Ambient Temp Thermistor Value: " + Value, ToString, spacer = True)
+                Sensors["Battery Ambient Temp Thermistor"] = Value
 
             # get total hours since activation
             Value = self.GetRegisterValueFromList("0054")
             if len(Value):
-                outstring += self.printToScreen("Hours of Protection: %d H" % int(Value,16), ToString, spacer = True)
+                StrVal = "%d H" % int(Value,16)
+                Sensors["Hours of Protection"] = StrVal
 
 
         if not self.LiquidCooled:       # Nexus AC and Evo AC
@@ -2193,31 +2272,31 @@ class GeneratorDevice:
             # starts  0x4000 when idle, ramps up to ~0x2e6a while running
             Value = self.GetUnknownSensor("0032", RequiresRunning = True)
             if len(Value):
-                outstring += self.printToScreen("Unsupported Sensor 2: " + Value, ToString, spacer = True)
+                Sensors["Unsupported Sensor 2"] = Value
 
             # only moves while running goes up to ~0x1350
             Value = self.GetUnknownSensor("0037", RequiresRunning = True)
             if len(Value):
-                outstring += self.printToScreen("Unsupported Sensor 3: " + Value, ToString, spacer = True)
+                Sensors["Unsupported Sensor 3"] = Value
 
             # only moves while running goes up to ~0x1350
             Value = self.GetUnknownSensor("003b", RequiresRunning = True)
             if len(Value):
-                outstring += self.printToScreen("Unsupported Sensor 4: " + Value, ToString, spacer = True)
+                Sensors["Unsupported Sensor 4"] = Value
 
             # return -2 thru 2
             Value = self.GetUnknownSensor("0034", RequiresRunning = True)
             if len(Value):
                 SignedStr = str(self.signed16( int(Value)))
-                outstring += self.printToScreen("Unsupported Sensor 5: " + SignedStr, ToString, spacer = True)
+                Sensors["Unsupported Sensor 5"] = SignedStr
 
              # return -2 thru 2
             Value = self.GetUnknownSensor("0038", RequiresRunning = True)
             if len(Value):
                 SignedStr = str(self.signed16( int(Value)))
-                outstring += self.printToScreen("Unsupported Sensor 6: " + SignedStr, ToString, spacer = True)
+                Sensors["Unsupported Sensor 5"] = SignedStr
 
-        return outstring
+        return Sensors
 
     #------------ GeneratorDevice::LogRange --------------------------------------------
     # used for iterating log registers
@@ -2228,107 +2307,83 @@ class GeneratorDevice:
             start += step
             Counter += 1
 
-    #------------ GeneratorDevice::DisplayLogs --------------------------------------------
-    def DisplayLogs(self, AllLogs = False, RawOutput = False, PrintToString = False):
+    #------------ GeneratorDevice::GetOneLogEntry --------------------------------------------
+    def GetOneLogEntry(self, Register, LogBase, RawOutput = False):
 
-        if AllLogs == False:
-            outstring = ""
+        outstring = ""
+        RegStr = "%04x" % Register
+        Value = self.GetRegisterValueFromList(RegStr)
+        if len(Value) == 0:
+            return False, ""
+        if not RawOutput:
+            LogStr = self.ParseLogEntry(Value, LogBase = LogBase)
+            if len(LogStr):             # if the register is there but no log entry exist
+                outstring += self.printToScreen(LogStr, outstr = True, nonewline = True)
         else:
-            outstring = "\n"
+            outstring += self.printToScreen("%s:%s" % (RegStr, Value), outstr = True, nonewline = True)
+
+        return True, outstring
+
+    #------------ GeneratorDevice::GetLogs --------------------------------------------
+    def GetLogs(self, Title, StartReg, Stride, AllLogs = False, RawOutput = False):
+
+        # The output will be a Python Dictionary with a key (Title) and
+        # the entry will be a list of strings (or one string if not AllLogs,
+
+        RetValue = collections.OrderedDict()
+        LogList = []
+        Title = Title.strip()
+        Title = Title.replace(":","")
 
         if AllLogs:
-
-            if self.EvolutionController:
-                outstring += self.printToScreen("Alarm Log:     ", PrintToString)
-                for Register in self.LogRange(ALARM_LOG_STARTING_REG , LOG_DEPTH, ALARM_LOG_STRIDE):
-                    RegStr = "%04x" % Register
-                    Value = self.GetRegisterValueFromList(RegStr)
-                    if len(Value) == 0:
-                        break
-                    if not RawOutput:
-                        LogStr = self.ParseLogEntry(Value, LogBase = ALARM_LOG_STARTING_REG)
-                        if len(LogStr):             # if the register is there but no log entry exist
-                            outstring += self.printToScreen(LogStr, PrintToString, spacer = True)
-                    else:
-                        outstring += self.printToScreen("%s:%s" % (RegStr, Value), PrintToString, spacer = True)
-
-                outstring += self.printToScreen("\n", PrintToString)
-
-                outstring += self.printToScreen("Service Log:   ", PrintToString)
-                for Register in self.LogRange(SERVICE_LOG_STARTING_REG , LOG_DEPTH, SERVICE_LOG_STRIDE):
-                    RegStr = "%04x" % Register
-                    Value = self.GetRegisterValueFromList(RegStr)
-                    if len(Value) == 0:
-                        break
-                    if not RawOutput:
-                        LogStr = self.ParseLogEntry(Value, LogBase = SERVICE_LOG_STARTING_REG)
-                        if len(LogStr):             # if the register is there but no log entry exist
-                            outstring += self.printToScreen(LogStr, PrintToString, spacer = True)
-                    else:
-                        outstring += self.printToScreen("%s:%s" % (RegStr, Value), PrintToString, spacer = True)
-
-                outstring += self.printToScreen("\n", PrintToString)
-
-            else:
-                outstring += self.printToScreen("Alarm Log:     ", PrintToString)
-                for Register in self.LogRange(NEXUS_ALARM_LOG_STARTING_REG , LOG_DEPTH, NEXUS_ALARM_LOG_STRIDE):
-                    RegStr = "%04x" % Register
-                    Value = self.GetRegisterValueFromList(RegStr)
-                    if len(Value) == 0:
-                        break
-                    if not RawOutput:
-                        LogStr = self.ParseLogEntry(Value, LogBase = NEXUS_ALARM_LOG_STARTING_REG)
-                        if len(LogStr):             # if the register is there but no log entry exist
-                            outstring += self.printToScreen(LogStr, PrintToString, spacer = True)
-                    else:
-                        outstring += self.printToScreen("%s:%s" % (RegStr, Value), PrintToString, spacer = True)
-
-                outstring += self.printToScreen("\n", PrintToString)
-
-            outstring += self.printToScreen("Start Stop Log:", PrintToString)
-            for Register in self.LogRange(START_LOG_STARTING_REG , LOG_DEPTH,START_LOG_STRIDE):
-                RegStr = "%04x" % Register
-                Value = self.GetRegisterValueFromList(RegStr)
-                if len(Value) == 0:
+            for Register in self.LogRange(StartReg , LOG_DEPTH, Stride):
+                bSuccess, LogEntry = self.GetOneLogEntry(Register, StartReg, RawOutput)
+                if not bSuccess or len(LogEntry) == 0:
                     break
+                LogList.append(LogEntry)
 
-                if not RawOutput:
-                    LogStr = self.ParseLogEntry(Value, LogBase = START_LOG_STARTING_REG)
-                    if len(LogStr):             # if the register is there but no log entry exist
-                        outstring += self.printToScreen(LogStr, PrintToString, spacer = True)
-                else:
-                    outstring += self.printToScreen("%s:%s" % (RegStr, Value), PrintToString, spacer = True)
+            RetValue[Title] = LogList
+            return RetValue
+        else:
+            bSuccess, LogEntry = self.GetOneLogEntry(StartReg, StartReg, RawOutput)
+            if bSuccess:
+                RetValue[Title] = LogEntry
+            return RetValue
 
-        else:   # only print last entry in log
-            RegStr = "%04x" % START_LOG_STARTING_REG
-            Value = self.GetRegisterValueFromList(RegStr)
-            if len(Value):
-                outstring += self.printToScreen("Start Stop Log: " + self.ParseLogEntry(Value, LogBase = START_LOG_STARTING_REG), PrintToString, spacer = True)
+    #------------ GeneratorDevice::DisplayLogs --------------------------------------------
+    def DisplayLogs(self, AllLogs = False, RawOutput = False, ToString = False, DictOut = False):
 
-            if self.EvolutionController:
-                RegStr = "%04x" % SERVICE_LOG_STARTING_REG
-                Value = self.GetRegisterValueFromList(RegStr)
-                if len(Value):
-                    outstring += self.printToScreen("Service Log:    " + self.ParseLogEntry(Value, LogBase = SERVICE_LOG_STARTING_REG), PrintToString, spacer = True)
+        # if DictOut is True, return a dictionary with a list of Dictionaries (one for each log)
+        # Each dict in the list is a log (alarm, start/stop). For Example:
+        #
+        #       Dict[Logs] = [ {"Alarm Log" : [Log Entry1, LogEntry2, ...]},
+        #                      {"Start Stop Log" : [Log Entry3, Log Entry 4, ...]}...]
 
-                RegStr = "%04x" % ALARM_LOG_STARTING_REG
-                Value = self.GetRegisterValueFromList(RegStr)
-                if len(Value):
-                    outstring += self.printToScreen("Alarm Log:      " + self.ParseLogEntry(Value, LogBase = ALARM_LOG_STARTING_REG), PrintToString, spacer = True)
-            else:
-                RegStr = "%04x" % NEXUS_ALARM_LOG_STARTING_REG
-                Value = self.GetRegisterValueFromList(RegStr)
-                if len(Value):
-                    outstring += self.printToScreen("Alarm Log:      " + self.ParseLogEntry(Value, LogBase = NEXUS_ALARM_LOG_STARTING_REG), PrintToString, spacer = True)
+        ALARMLOG     = "Alarm Log:     "
+        SERVICELOG   = "Service Log:   "
+        STARTSTOPLOG = "Start Stop Log:"
 
-        # Get Last Error Code
-        if not RawOutput:
-            if self.EvolutionController:
-                Value = self.GetRegisterValueFromList("05f1")
-                if len(Value) == 4 :
-                        outstring += "\nLast Alarm Code: %s" % self.GetAlarmInfo(Value)
+        EvolutionLog = [[ALARMLOG, ALARM_LOG_STARTING_REG, ALARM_LOG_STRIDE],
+                        [SERVICELOG, SERVICE_LOG_STARTING_REG, SERVICE_LOG_STRIDE],
+                        [STARTSTOPLOG, START_LOG_STARTING_REG, START_LOG_STRIDE]]
+        NexusLog     = [[ALARMLOG, NEXUS_ALARM_LOG_STARTING_REG, NEXUS_ALARM_LOG_STRIDE],
+                        [STARTSTOPLOG, START_LOG_STARTING_REG, START_LOG_STRIDE]]
 
-        return outstring
+        LogParams = EvolutionLog if self.EvolutionController else NexusLog
+
+        RetValue = collections.OrderedDict()
+        LogList = []
+
+        for Params in LogParams:
+            LogOutput = self.GetLogs(Params[0], Params[1], Params[2], AllLogs, RawOutput)
+            LogList.append(LogOutput)
+
+        RetValue["Logs"] = LogList
+
+        if not DictOut:
+            return self.printToScreen(self.ProcessDispatch(RetValue,""), ToString)
+
+        return RetValue
 
 
     #----------  GeneratorDevice::ParseLogEntry-------------------------------
@@ -2491,26 +2546,23 @@ class GeneratorDevice:
         TempVal = Value[0:2]            # this value represents a unique display string
         LogCode = int(TempVal, 16)
 
+        DecoderLookup = { ALARM_LOG_STARTING_REG : AlarmLogDecoder,
+                          START_LOG_STARTING_REG : StartLogDecoder,
+                          SERVICE_LOG_STARTING_REG : ServiceLogDecoder,
+                          NEXUS_ALARM_LOG_STARTING_REG : NexusAlarmLogDecoder }
+
+        if LogBase == NEXUS_ALARM_LOG_STARTING_REG and self.EvolutionController:
+            self.LogError("Error in ParseLog: Invalid Base Register %X", LogBase)
+            return "Error Parsing Log Entry"
+
+        Decoder = DecoderLookup.get(LogBase, "Error Parsing Log Entry")
+
+        if isinstance(Decoder, str):
+            self.LogError("Error in ParseLog: Invalid Base Register %X", ALARM_LOG_STARTING_REG)
+            return Decoder
 
         # Get the readable string, if we have one
-        if LogBase == NEXUS_ALARM_LOG_STARTING_REG:
-            if not self.EvolutionController:
-                LogStr = NexusAlarmLogDecoder.get(LogCode, "Unknown 0x%02X" % LogCode)
-            else:
-                self.LogError("Error in ParseLog: Invalid controller or log address (Nexus Alarm)")
-                return "Error Parsing Log Entry"
-        elif LogBase == ALARM_LOG_STARTING_REG:
-            if self.LiquidCooled:
-                LogStr = AlarmLogDecoder.get(LogCode, "Unknown 0x%02X" % LogCode)
-            else:
-                LogStr = AlarmLogDecoder_EvoAC.get(LogCode, "Unknown 0x%02X" % LogCode)
-        elif LogBase == START_LOG_STARTING_REG:
-            LogStr = StartLogDecoder.get(LogCode, "Unknown 0x%02X" % LogCode)
-        elif LogBase == SERVICE_LOG_STARTING_REG:
-            LogStr = ServiceLogDecoder.get(LogCode, "Unknown 0x%02X" % LogCode)
-        else:
-            self.LogError("Error in ParseLog: Invalid log address")
-            return "Error Parsing Log Entry"
+        LogStr = Decoder.get(LogCode, "Unknown 0x%02X" % LogCode)
 
         # This is a numeric value that increments for each new log entry
         TempVal = Value[2:4]
@@ -2575,7 +2627,7 @@ class GeneratorDevice:
         AlarmCode = int(ErrorCode,16)
         return "Error Code Unknown: %04d\n" % AlarmCode
 
-    #------------ GeneratorDevice::GetVersions --------------------------------------
+    #------------ GeneratorDevice::GetSerialNumber --------------------------------------
     def GetSerialNumber(self):
 
         # serial number format:
@@ -2600,9 +2652,20 @@ class GeneratorDevice:
 
         return "%010x" % SerialNumberHex
 
-    #------------ GeneratorDevice::GetVersions --------------------------------------
-    def GetVersions(self):
+    #----------  ParseRegisters:GetHardwareVersion  ---------------------------------
+    def GetHardwareVersion(self):
 
+        Value = self.GetRegisterValueFromList("002a")
+        if len(Value) != 4:
+            return ""
+        RegVal = int(Value, 16)
+
+        IntTemp = RegVal >> 8           # high byte is firmware version
+        FloatTemp = IntTemp / 100.0
+        return "V%2.2f" % FloatTemp     #
+
+    #----------  ParseRegisters:GetFirmwareVersion  ---------------------------------
+    def GetFirmwareVersion(self):
         Value = self.GetRegisterValueFromList("002a")
         if len(Value) != 4:
             return ""
@@ -2610,13 +2673,7 @@ class GeneratorDevice:
 
         IntTemp = RegVal & 0xff         # low byte is firmware version
         FloatTemp = IntTemp / 100.0
-        FirmwareVersion = "V%2.2f" % FloatTemp     #
-
-        IntTemp = RegVal >> 8           # high byte is firmware version
-        FloatTemp = IntTemp / 100.0
-        HardwareVersion = "V%2.2f" % FloatTemp     #
-
-        return "Firmware : %s, Hardware : %s" % (FirmwareVersion, HardwareVersion)
+        return "V%2.2f" % FloatTemp     #
 
      #------------ GeneratorDevice::GetTransferStatus --------------------------------------
     def GetTransferStatus(self):
@@ -2944,6 +3001,7 @@ class GeneratorDevice:
         if len(Value) != 4:
             return ""
         return "%d min" % int(Value,16)
+
     #------------ GeneratorDevice::GetParsedExerciseTime --------------------------------------------
     def GetParsedExerciseTime(self):
 
@@ -2969,6 +3027,7 @@ class GeneratorDevice:
 
         retstr = Items[1] + "!" + HoursMin[0] + "!" + HoursMin[1] + "!" + Items[5] + "!" + Items[0] + "!" + ModeStr
         return retstr
+
     #------------ GeneratorDevice::GetExerciseTime --------------------------------------------
     def GetExerciseTime(self):
 
@@ -2986,7 +3045,6 @@ class GeneratorDevice:
             FreqVal = int(FreqValStr,16)
             if FreqVal > 2:
                 return ""
-
 
         # get exercise time of day
         Value = self.GetRegisterValueFromList("0005")
@@ -3110,6 +3168,17 @@ class GeneratorDevice:
 
         return VolatageValue
 
+    #------------ GeneratorDevice::GetPickUpVoltage --------------------------
+    def GetPickUpVoltage(self):
+
+         # get Utility Voltage Pickup Voltage
+        Value = self.GetRegisterValueFromList("023b")
+        if len(Value) != 4:
+            return ""
+        PickupVoltage = int(Value,16)
+
+        return "%dV" % PickupVoltage
+
     #------------ GeneratorDevice::GetThresholdVoltage --------------------------
     def GetThresholdVoltage(self):
 
@@ -3119,22 +3188,12 @@ class GeneratorDevice:
             return ""
         ThresholdVoltage = int(Value,16)
 
-        # get Utility Voltage Pickup Voltage
-        Value = self.GetRegisterValueFromList("023b")
-        if len(Value) != 4:
-            return ""
-        PickupVoltage = int(Value,16)
-
-        # Pickup only appears to be read-able on Evo LC
-        if PickupVoltage == 0:
-            return "Low Voltage: %dV" % (ThresholdVoltage)
-        else:
-            return "Low Voltage: %dV, Pickup Voltage: %dV" % (ThresholdVoltage, PickupVoltage)
+        return "%dV" % ThresholdVoltage
 
     #------------ GeneratorDevice::GetUtilityVoltage --------------------------
     def GetUtilityVoltage(self):
 
-        # get Battery Charging Voltage
+        # get Utility Voltage
         Value = self.GetRegisterValueFromList("0009")
         if len(Value) != 4:
             return ""
@@ -3229,6 +3288,39 @@ class GeneratorDevice:
         if (HexValue <= 1):
             return True
 
+     #------------ GeneratorDevice::GetServiceDue ------------------------------------
+    def GetServiceDue(self):
+
+        # get Hours until next service
+        Value = self.GetRegisterValueFromList("001a")
+        if len(Value) != 4:
+            return ""
+        ServiceValue = "%d hours" % int(Value,16)
+        return ServiceValue
+
+    #----------  GeneratorDevice:GetHardwareVersion  ---------------------------------
+    def GetHardwareVersion(self):
+
+        Value = self.GetRegisterValueFromList("002a")
+        if len(Value) != 4:
+            return ""
+        RegVal = int(Value, 16)
+
+        IntTemp = RegVal >> 8           # high byte is firmware version
+        FloatTemp = IntTemp / 100.0
+        return "V%2.2f" % FloatTemp     #
+
+    #----------  GeneratorDevice:GetFirmwareVersion  ---------------------------------
+    def GetFirmwareVersion(self):
+        Value = self.GetRegisterValueFromList("002a")
+        if len(Value) != 4:
+            return ""
+        RegVal = int(Value, 16)
+
+        IntTemp = RegVal & 0xff         # low byte is firmware version
+        FloatTemp = IntTemp / 100.0
+        return "V%2.2f" % FloatTemp     #
+
     #------------ GeneratorDevice::GetServiceInfo ------------------------------------
     def GetServiceInfo(self):
 
@@ -3236,7 +3328,7 @@ class GeneratorDevice:
         Value = self.GetRegisterValueFromList("001a")
         if len(Value) != 4:
             return ""
-        ServiceValue = "Next service in %d hours" % int(Value,16)
+        ServiceValue = "%d hours" % int(Value,16)
         return ServiceValue
 
     #------------ GeneratorDevice::GetRunTimes ----------------------------------------
@@ -3250,7 +3342,7 @@ class GeneratorDevice:
 
             TotalRunTime = int(Value,16)
 
-            RunTimes = "Total Engine Run Hours: %d " % (TotalRunTime)
+            RunTimes = "%d " % (TotalRunTime)
         else:
             # total engine run time in minutes
             Value = self.GetRegisterValueFromList("005f")
@@ -3262,7 +3354,7 @@ class GeneratorDevice:
             #hours, min = divmod(TotalRunTime, 60)
             #RunTimes = "Total Engine Run Time: %d:%d " % (hours, min)
             TotalRunTime = TotalRunTime / 60.0
-            RunTimes = "Total Engine Run Hours: %.2f " % (TotalRunTime)
+            RunTimes = "%.2f " % (TotalRunTime)
 
         return RunTimes
 

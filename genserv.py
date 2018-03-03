@@ -41,6 +41,18 @@ def root():
         return app.send_static_file('index.html')
 
 #------------------------------------------------------------
+@app.route('/internal', methods=['GET'])
+def display_internal():
+
+    if HTTPAuthUser != None and HTTPAuthPass != None:
+        if not session.get('logged_in'):
+            return render_template('login.html')
+        else:
+            return app.send_static_file('internal.html')
+    else:
+        return app.send_static_file('internal.html')
+
+#------------------------------------------------------------
 @app.route('/', methods=['POST'])
 def do_admin_login():
 
@@ -65,7 +77,7 @@ def command(command):
 #------------------------------------------------------------
 def ProcessCommand(command):
 
-    if command in ["status", "outage", "maint", "logs", "monitor", "getbase", "getsitename", "setexercise", "setquiet", "getexercise","setremote", "settime"]:
+    if command in ["status", "status_json", "outage", "outage_json", "maint", "maint_json", "logs", "logs_json", "monitor", "monitor_json", "registers_json", "allregs_json", "getbase", "getsitename", "setexercise", "setquiet", "getexercise","setremote", "settime"]:
             finalcommand = "generator: " + command
             try:
                 if command == "setexercise":
@@ -82,6 +94,8 @@ def ProcessCommand(command):
             except Exception as e1:
                 data = "Retry"
                 log.error("Error on command function" + str(e1))
+            if command in ["status_json", "outage_json", "maint_json", "monitor_json", "logs_json", "registers_json", "allregs_json"]:
+                return data
             return jsonify(data)
 
     elif command in ["settings"]:
