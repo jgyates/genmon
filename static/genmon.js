@@ -253,6 +253,27 @@ function CreateSelectLists(){
     option.onclick = SetTransferClick;
     myDiv.appendChild(option);
     document.getElementById("remotetransfer").innerHTML = "Start Generator and Transfer";
+
+    // Create Footer Links
+    var myFooter = document.getElementById("footer");
+    var a = document.createElement('a');
+    a.href = "https://github.com/jgyates/genmon";
+    a.innerHTML = "GenMon Project on GitHub";
+    myFooter.appendChild(a);
+
+    var option = document.createElement("p");
+    option.id = "linksep";
+    myFooter.appendChild(option);
+    document.getElementById("linksep").innerHTML = " ";
+
+
+    var myFooter = document.getElementById("footer");
+    var a = document.createElement('a');
+    var PathName = window.location.href;
+    a.href = PathName.concat("internal");
+    a.innerHTML = "Generator Registers";
+    myFooter.appendChild(a);
+
 }
 
 //*****************************************************************************
@@ -521,7 +542,7 @@ function DisplaySettings(){
     var url = baseurl.concat("settings");
     $.getJSON(url,function(result){
 
-        var outstr = "Settings:<br><br><form id=\"formSettings\"><table border=\"0\">";
+        var outstr = "<br>Settings:<br><br><form id=\"formSettings\"><table border=\"0\">";
         // var outstr = JSON.stringify(result, null, 4);
         // outstr = replaceAll(outstr,'\n','<br/>')
         // outstr = replaceAll(outstr,' ','&nbsp')
