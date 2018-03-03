@@ -10,7 +10,8 @@ var InitOK = false;
 
 var BLACK = '<font color="black">';
 var RED = '<font color="red">';
-var ORANGE = '<font color="ORANGE">';
+var ORANGE = '<font color="orange">';
+var BROWN = '<font color="brown">';
 var ColorInfo = [];
 
 
@@ -124,7 +125,7 @@ function AgeEntries()
 
         if (ColorInfo[i].Color == ORANGE) {
             if (secondsDifference > 10) {
-                ColorInfo[i].Color = BLACK;
+                ColorInfo[i].Color = BROWN;
             }
         }
         if (ColorInfo[i].Color == RED) {
