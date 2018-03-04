@@ -32,6 +32,7 @@ function init(){
     var myFooter = document.getElementById("footer");
     var a = document.createElement('a');
     a.href = "https://github.com/jgyates/genmon";
+    a.target = "_blank";
     a.innerHTML = "GenMon Project on GitHub";
     myFooter.appendChild(a);
 
@@ -39,7 +40,6 @@ function init(){
     option.id = "linksep";
     myFooter.appendChild(option);
     document.getElementById("linksep").innerHTML = " ";
-
 
     var myFooter = document.getElementById("footer");
     var a = document.createElement('a');
