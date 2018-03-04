@@ -228,7 +228,7 @@ def GetSettings():
     allSettings =  {
                     "sitename" : ['string', 'Site Name', 1],
                     "port" : ['string', 'Port for Serial Communication', 2],
-                    "incoming_mail_folder" : ['string', 'Incomming Mail forder<br><small>(if IMAP enabled)</small>', 151],
+                    "incoming_mail_folder" : ['string', 'Incoming Mail folder<br><small>(if IMAP enabled)</small>', 151],
                     "processed_mail_folder" : ['string', 'Mail Processed folder<br><small>(if IMAP enabled)</small>', 152],
                     "server_port" : ['int', 'Server Port', 5],
                     # this option is not displayed as this will break the modbus comms, only for debugging
