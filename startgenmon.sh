@@ -1,27 +1,52 @@
+#!/bin/bash
+
+genmondir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 case "$1" in
   start)
     echo "Starting genmon python scripts"
-    sudo python /home/pi/genmon/genmon.py  &
+    sudo python "$genmondir/genmon.py"  &
     sleep 2
-    sudo python /home/pi/genmon/genserv.py  &
-    #sudo python /home/pi/genmon/gengpio.py  &
-    #sudo python /home/pi/genmon/gengpioin.py  &
-    #sudo python /home/pi/genmon/genlog.py -f /home/pi/genmon/LogFile.csv &
-    #sudo python /home/pi/genmon/gensms.py &
-    #sudo python /home/pi/genmon/genpushover.py &
-    #sudo python /home/pi/genmon/gensyslog.py &
+    sudo python "$genmondir/genserv.py"  &
+    #sudo python "$genmondir/gengpio.py"  &
+    #sudo python "$genmondir/gengpioin.py"  &
+    #sudo python "$genmondir/genlog.py" -f "$genmondir/LogFile.csv" &
+    #sudo python "$genmondir/gensms.py" &
+    #sudo python "$genmondir/genpushover.py" &
+    #sudo python "$genmondir/gensyslog.py" &
     ;;
   stop)
     echo "Stopping genmon python scripts"
-    sudo pkill -f genmon.py
-    sudo pkill -f genserv.py
-    #sudo pkill -f gengpio.py
-    #sudo pkill -f gengpioin.py
-    #sudo pkill -f genlog.py
-    #sudo pkill -f gensms.py
-    #sudo pkill -f genpushover.py
-    #sudo pkill -f gensyslog.py
+    sudo pkill -u root -f genmon.py
+    sudo pkill -u root -f genserv.py
+    #sudo pkill -u root -f gengpio.py
+    #sudo pkill -u root -f gengpioin.py
+    #sudo pkill -u root -f genlog.py
+    #sudo pkill -u root -f gensms.py
+    #sudo pkill -u root -f genpushover.py
+    #sudo pkill -u root -f gensyslog.py
+    ;;
+  restart)
+    echo "Stopping genmon python scripts"
+    sudo pkill -u root -f genmon.py
+    sudo pkill -u root -f genserv.py
+    #sudo pkill -u root -f gengpio.py
+    #sudo pkill -u root -f gengpioin.py
+    #sudo pkill -u root -f genlog.py
+    #sudo pkill -u root -f gensms.py
+    #sudo pkill -u root -f genpushover.py
+    #sudo pkill -u root -f gensyslog.py
+    sleep 1
+    echo "Starting genmon python scripts"
+    sudo python "$genmondir/genmon.py"  &
+    sleep 2
+    sudo python "$genmondir/genserv.py"  &
+    #sudo python "$genmondir/gengpio.py"  &
+    #sudo python "$genmondir/gengpioin.py"  &
+    #sudo python "$genmondir/genlog.py" -f "$genmondir/LogFile.csv" &
+    #sudo python "$genmondir/gensms.py" &
+    #sudo python "$genmondir/genpushover.py" &
+    #sudo python "$genmondir/gensyslog.py" &
     ;;
   *)
     #
