@@ -32,7 +32,7 @@ GENMON_VERSION = "V1.5.1"
 
 #------------ SerialDevice class --------------------------------------------
 class SerialDevice:
-    def __init__(self, name, rate=9600):
+    def __init__(self, name, rate=9600, loglocation = "/var/log/"):
         self.DeviceName = name
         self.BaudRate = rate
         self.Buffer = []
@@ -47,7 +47,7 @@ class SerialDevice:
         self.Restarts = 0
 
         # log errors in this module to a file
-        self.log = mylog.SetupLogger("myserial", "/var/log/myserial.log")
+        self.log = mylog.SetupLogger("myserial", loglocation + "myserial.log")
 
         #Starting serial connection
         self.SerialDevice = serial.Serial()
@@ -402,7 +402,7 @@ class GeneratorDevice:
 
         try:
             #Starting serial connection
-            self.Slave = SerialDevice(self.SerialPort, self.BaudRate)
+            self.Slave = SerialDevice(self.SerialPort, self.BaudRate, loglocation = self.LogLocation)
             self.SerialInit = True
             self.ThreadList.append(self.Slave.StartReadThread())
 

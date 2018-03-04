@@ -242,7 +242,7 @@ def GetSettings():
                     "displaymaintenance" : ['boolean', 'Display Maintenance', 54],
                     "enabledebug" : ['boolean', 'Enable Debug', 14],
                     "displayunknown" : ['boolean', 'Display Unknown Sensors', 15],
-                    "disableoutagecheck" : ['boolean', 'Disable Emails at Outage', 17],
+                    "disableoutagecheck" : ['boolean', 'Do not check for outages', 17],
                     # These settings are not displayed as the auto-detect controller will set these
                     # these are only to be used to override the auto-detect
                     #"uselegacysetexercise" : ['boolean', 'Use Legacy Excercise Time', 43],
