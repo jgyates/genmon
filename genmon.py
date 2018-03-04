@@ -28,7 +28,7 @@ except ImportError as e:
 
 import mymail, mylog
 
-GENMON_VERSION = "V1.5.0"
+GENMON_VERSION = "V1.5.1"
 
 #------------ SerialDevice class --------------------------------------------
 class SerialDevice:
@@ -415,7 +415,7 @@ class GeneratorDevice:
         self.MailInit = True
 
         # send mail to tell we are starting
-        self.mail.sendEmail("Generator Monitor Starting at " + self.SiteName, "Generator Monitor Starting at " + self.SiteName )
+        self.mail.sendEmail("Generator Monitor Starting at " + self.SiteName, "Generator Monitor Starting at " + self.SiteName , msgtype = "info")
 
         # check for ALARM.txt file present
         try:
@@ -628,7 +628,7 @@ class GeneratorDevice:
                     self.EvolutionController = True
 
                 self.LogError("Warning in DetectController (Nexus / Evolution):  Unverified value detected in model register (%04x)" %  ProductModel)
-                self.mail.sendEmail("Generator Monitor (Nexus / Evolution): Warning at " + self.SiteName, msgbody )
+                self.mail.sendEmail("Generator Monitor (Nexus / Evolution): Warning at " + self.SiteName, msgbody, msgtype = "warn" )
 
         if self.LiquidCooled == None:
             if ProductModel == 0x03 or ProductModel == 0x09:
@@ -641,7 +641,7 @@ class GeneratorDevice:
                 # set a reasonable default
                 self.LiquidCooled = False
                 self.LogError("Warning in DetectController (liquid / air cooled):  Unverified value detected in model register (%04x)" %  ProductModel)
-                self.mail.sendEmail("Generator Monitor (liquid / air cooled: Warning at " + self.SiteName, msgbody )
+                self.mail.sendEmail("Generator Monitor (liquid / air cooled: Warning at " + self.SiteName, msgbody, msgtype = "warn" )
 
         if not self.EvolutionController:        # if we are using a Nexus Controller, force legacy writes
             self.bUseLegacyWrite = True
@@ -914,7 +914,7 @@ class GeneratorDevice:
             msgbody += "\n"
             msgbody += self.DisplayStatus(ToString = True)
 
-            self.mail.sendEmail("Monitor Register Alert: " + Register, msgbody)
+            self.mail.sendEmail("Monitor Register Alert: " + Register, msgbody, msgtype = "warn")
         else:
             # bulk register monitoring goes here and an email is sent out in a batch
             if self.EnableDebug:
@@ -1610,7 +1610,7 @@ class GeneratorDevice:
 
         if LocalError:
             if not fromsocket:
-                self.mail.sendEmail(msgsubject, msgbody)
+                self.mail.sendEmail(msgsubject, msgbody, msgtype = "error")
                 return ""       # ignored by email module
             else:
                 msgbody += "EndOfMessage"
@@ -1720,7 +1720,7 @@ class GeneratorDevice:
             msgbody += "\n        https://github.com/jgyates/genmon/issues/13"
 
         if not fromsocket:
-            self.mail.sendEmail(msgsubject, msgbody)
+            self.mail.sendEmail(msgsubject, msgbody, msgtype = "warn")
             return ""       # ignored by email module
         else:
             msgbody += "EndOfMessage"
@@ -1777,12 +1777,12 @@ class GeneratorDevice:
                 if TransferStatus == "Utility":
                     self.TransferActive = False
                     msgbody = "\nPower is being supplied by the utility line. "
-                    self.mail.sendEmail("Transfer Switch Changed State Notice at " + self.SiteName, msgbody)
+                    self.mail.sendEmail("Transfer Switch Changed State Notice at " + self.SiteName, msgbody, msgtype = "outage")
             else:
                 if TransferStatus == "Generator":
                     self.TransferActive = True
                     msgbody = "\nPower is being supplied by the generator. "
-                    self.mail.sendEmail("Transfer Switch Changed State Notice at " + self.SiteName, msgbody)
+                    self.mail.sendEmail("Transfer Switch Changed State Notice at " + self.SiteName, msgbody, msgtype = "outage")
 
         # Check for outage
         # are we in an outage now
@@ -1795,7 +1795,7 @@ class GeneratorDevice:
                 self.LastOutageDuration = datetime.datetime.now() - self.OutageStartTime
                 OutageStr = str(self.LastOutageDuration).split(".")[0]  # remove microseconds from string
                 msgbody = "\nUtility Power Restored. Duration of outage " + OutageStr
-                self.mail.sendEmail("Outage Recovery Notice at " + self.SiteName, msgbody)
+                self.mail.sendEmail("Outage Recovery Notice at " + self.SiteName, msgbody, msgtype = "outage")
                 # log outage to file
                 self.LogOutageToFile(self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"), OutageStr)
         else:
@@ -1803,7 +1803,7 @@ class GeneratorDevice:
                 self.SystemInOutage = True
                 self.OutageStartTime = datetime.datetime.now()
                 msgbody = "\nUtility Power Out at " + self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S")
-                self.mail.sendEmail("Outage Notice at " + self.SiteName, msgbody)
+                self.mail.sendEmail("Outage Notice at " + self.SiteName, msgbody, msgtype = "outage")
 
     #------------ GeneratorDevice::LogOutageToFile-------------------------
     def LogOutageToFile(self, TimeDate, Duration):
@@ -1890,7 +1890,7 @@ class GeneratorDevice:
         if self.SystemInAlarm():
             msgbody += self.printToScreen("\nTo clear the Alarm/Warning message, press OFF on the control panel keypad followed by the ENTER key.", True)
 
-        self.mail.sendEmail(msgsubject , msgbody)
+        self.mail.sendEmail(msgsubject , msgbody, msgtype = "warn")
 
     #------------ GeneratorDevice::DisplayHelp ----------------------------------------
     def DisplayHelp(self, ToString = False):
@@ -3389,7 +3389,7 @@ class GeneratorDevice:
             for Register, Value in self.RegistersUnderTest.items():
                 msgbody += self.printToScreen("%s:%s" % (Register, Value), True)
 
-            self.mail.sendEmail("Register Under Test", msgbody)
+            self.mail.sendEmail("Register Under Test", msgbody, msgtype = "info")
             msgbody = ""
 
             time.sleep(60*10)
@@ -3556,7 +3556,7 @@ class GeneratorDevice:
     def Close(self):
 
         if self.MailInit:
-            self.mail.sendEmail("Generator Monitor Stopping at " + self.SiteName, "Generator Monitor Stopping at " + self.SiteName )
+            self.mail.sendEmail("Generator Monitor Stopping at " + self.SiteName, "Generator Monitor Stopping at " + self.SiteName, msgtype = "info" )
 
         for item in self.ConnectionList:
             try:

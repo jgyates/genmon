@@ -61,7 +61,19 @@ class MyMail:
                 self.SenderAccount = config.get('MyMail', 'sender_account')
             else:
                 self.SenderAccount = self.EmailAccount
+            # SMTP Recepients
             self.EmailRecipient = config.get('MyMail', 'email_recipient')
+            self.EmailRecipientByType = {}
+            for type in ["outage", "error", "warn", "info"]:
+                tempList = []
+                for email in self.EmailRecipient.split(','):
+                    if config.has_option('MyMail', email):
+                       if type in config.get('MyMail', email).split(','):
+                          tempList.append(email)
+                    else:
+                       tempList.append(email)
+                # print "Inverted List: " + type + " -> " + ",".join(tempList)
+                self.EmailRecipientByType[type] = ",".join(tempList)
             # SMTP Server
             if config.has_option('MyMail', 'smtp_server'):
                 self.SMTPServer = config.get('MyMail', 'smtp_server')
@@ -80,7 +92,7 @@ class MyMail:
             if config.has_option('MyMail', 'ssl_enabled'):
                 self.SSLEnabled = config.getboolean('MyMail', 'ssl_enabled')
         except Exception as e1:
-            self.FatalError("ERROR: Unable to read config file" + str(e1))
+            self.FatalError("ERROR: Unable to read config file " + str(e1))
 
 
         atexit.register(self.Cleanup)
@@ -186,10 +198,12 @@ class MyMail:
 
     #------------ MyMail.sendEmailDirectMIME --------------------------------------------
     # send email, bypass queue
-    def sendEmailDirectMIME(self, subjectstr, msgstr, recipient = None, files=None, deletefile = False):
+    def sendEmailDirectMIME(self, msgtype, subjectstr, msgstr, recipient = None, files=None, deletefile = False):
 
         if recipient == None:
-            recipient = self.EmailRecipient
+            # recipient = self.EmailRecipient
+            recipient = self.EmailRecipientByType[msgtype]
+
 
         # update date
         dtstamp=datetime.datetime.now().strftime('%a %d-%b-%Y')
@@ -255,7 +269,7 @@ class MyMail:
         session.quit()
 
         return True
-       # end sendEmail()
+       # end sendEmailDirectMIME()
 
     #------------MyMail::SendMailThread-----------------------
     def SendMailThread(self):
@@ -270,7 +284,7 @@ class MyMail:
                 MailError = False
                 EmailItems = self.EmailSendQueue.pop()
                 try:
-                    if not (self.sendEmailDirectMIME(EmailItems[0], EmailItems[1], EmailItems[2], EmailItems[3], EmailItems[4])):
+                    if not (self.sendEmailDirectMIME(EmailItems[0], EmailItems[1], EmailItems[2], EmailItems[3], EmailItems[4], EmailItems[5])):
                         self.LogError("Error in SendMailThread, sendEmailDirectMIME failed, retrying")
                         MailError = True
                 except Exception as e1:
@@ -285,11 +299,12 @@ class MyMail:
 
 
     #------------MyMail::sendEmail-----------------------
-    def sendEmail(self, subjectstr, msgstr, recipient = None, files = None, deletefile = False):
+    # msg type must be one of "outage", "error", "warn", "info"
+    def sendEmail(self, subjectstr, msgstr, recipient = None, files = None, deletefile = False, msgtype = "error"):
 
         if not self.DisableEmail:       # if all email disabled, do not queue
             if self.SMTPServer != "":    # if only sending is disabled, do not queue
-                self.EmailSendQueue.insert(0,[subjectstr,msgstr,recipient, files, deletefile])
+                self.EmailSendQueue.insert(0,[msgtype,subjectstr,msgstr,recipient, files, deletefile])
 
     #---------------------SecurityMonitor::FatalError------------------------
     def LogError(self, Message):

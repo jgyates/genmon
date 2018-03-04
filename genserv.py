@@ -98,9 +98,17 @@ def ProcessCommand(command):
                 return data
             return jsonify(data)
 
+    elif command in ["notifications"]:
+            data = GetNotifications()
+            return jsonify(data)
+
     elif command in ["settings"]:
             data = GetSettings()
             return jsonify(data)
+
+    elif command in ["setnotifications"]:
+            SaveNotifications(request.args.get('setnotifications', 0, type=str));
+            return "OK"
 
     elif command in ["setsettings"]:
             # SaveSettings((request.args.get('setsettings', 0, type=str)));
@@ -111,27 +119,187 @@ def ProcessCommand(command):
         return render_template('command_template.html', command = command)
 
 #------------------------------------------------------------
+def GetNotifications():
+
+    ### array containing information on the parameters
+    ## 1st: email address
+    ## 2nd: sort order, aka row number
+    ## 3rd: comma delimited list of notidications that are enabled
+
+    allEmails = []
+    allNotifications = {}
+
+    try:
+        # Read contents from file as a single string
+        file_handle = open("/etc/mymail.conf", 'r')
+        file_string = file_handle.read()
+        file_handle.close()
+
+        for line in file_string.splitlines():
+           if not line.isspace():
+              parts = findConfigLine(line)
+              if (parts and (len(parts) >= 5) and parts[3] and (not parts[3].isspace()) and parts[2] and (parts[2] == "email_recipient")):
+                 allEmails = parts[4].split(',')
+                 i = 0
+                 while i < len(allEmails):
+                    allNotifications[allEmails[i]] = [i+1]
+                    i += 1
+              elif ((len(allEmails) > 0) and parts and (len(parts) >= 5) and parts[3] and (not parts[3].isspace()) and parts[2] and (parts[2] in allEmails)):
+                 allNotifications[parts[2]].append(parts[4])
+
+    except Exception as e1:
+        print "Error Reading Config File: " + str(e1)
+        log.error("Error Reading Config File: " + str(e1))
+
+    return allNotifications
+
+#------------------------------------------------------------
+def SaveNotifications(query_string):
+    notifications = dict(urlparse.parse_qs(query_string, 1))
+    oldEmails = []
+
+    notifications_order_string = ",".join([v[0] for v in urlparse.parse_qsl(query_string, 1)])
+
+    try:
+        # Read contents from file as a single string
+        file_handle = open("/etc/mymail.conf", 'r')
+        file_string = file_handle.read()
+        file_handle.close()
+
+        for line in file_string.splitlines():
+           if not line.isspace():
+              parts = findConfigLine(line)
+              if (parts and (len(parts) >= 5) and parts[3] and (not parts[3].isspace()) and parts[2] and (parts[2] == "email_recipient")):
+                 oldEmails = parts[4].split(",")
+
+        activeSection = 0;
+        skip = 0;
+        # Write contents to file.
+        # Using mode 'w' truncates the file.
+        file_handle = open("/etc/mymail.conf", 'w')
+        for line in file_string.splitlines():
+           if not line.isspace():
+              parts = findConfigLine(line)
+              if (activeSection == 1):
+                  if (parts and (len(parts) >= 5) and parts[3] and (not parts[3].isspace()) and parts[2] and (parts[2] in oldEmails)):
+                      #skip line to delete previous configuration
+                      skip = 1
+                  else:
+                      #lets write the new configuration
+                      for email in notifications.keys():
+                          if (notifications[email][0].strip() != ""):
+                             line = email + " = " + notifications[email][0] + "\n" + line
+                      activeSection = 0
+              elif (parts and (len(parts) >= 5) and parts[3] and (not parts[3].isspace()) and parts[2] and (parts[2] == "email_recipient")):
+                  myList = list(parts)
+                  myList[1] = ""
+                  myList[4] = notifications_order_string
+                  line = "".join(myList)
+                  activeSection = 1;
+           else:
+              if (activeSection == 1):
+                 for email in notifications.keys():
+                    if (notifications[email][0].strip() != ""):
+                       line = email + " = " + notifications[email][0] + "\n" + line
+                 activeSection = 0
+
+           if (skip == 0):
+             file_handle.write(line+"\n")
+           skip = 0
+
+        file_handle.close()
+
+    except Exception as e1:
+        print "Error Update Config File: " + str(e1)
+        log.error("Error Update Config File: " + str(e1))
+
+
+#------------------------------------------------------------
 def GetSettings():
 
-    allSettings = { "disableemail" : ['boolean', 'Disable Email usage', 1],
-                    "email_pw" : ['string', 'Email Password', 3],
-                    "email_account" : ['string', 'Email Account', 2],
-                    "sender_account" : ['string', 'Sender Account', 4],
-                    "email_recipient" : ['string', 'Email Recepient<br><small>(comma delimited)</small>', 5],
-                    "smtp_server" : ['string', 'SMTP Server <br><small>(leave emtpy to disable)</small>', 6],
-                    "imap_server" : ['string', 'IMAP Server <br><small>(leave emtpy to disable)</small>', 7],
-                    "smtp_port" : ['int', 'SMTP Port', 8],
-                    "ssl_enabled" : ['boolean', 'SSL Enabled', 9]}
+    ### array containing information on the parameters
+    ## 1st: type of attribute
+    ## 2nd: Attribute title
+    ## 3rd: Sort Key
+    ## 4th: current value (will be populated further below)
+    ## 5th: tooltip (will be populated further below)
+    ## 6th: parameter is currently disabled (will be populated further below)
 
-    settings = RawConfigParser()
-    # config parser reads from current directory, when running form a cron tab this is
-    # not defined so we specify the full path
-    settings.read('/etc/mymail.conf')
+    allSettings =  {
+                    "sitename" : ['string', 'Site Name', 1],
+                    "port" : ['string', 'Port for Serial Communication', 2],
+                    "incoming_mail_folder" : ['string', 'Incomming Mail forder<br><small>(if IMAP enabled)</small>', 151],
+                    "processed_mail_folder" : ['string', 'Mail Processed folder<br><small>(if IMAP enabled)</small>', 152],
+                    "server_port" : ['int', 'Server Port', 5],
+                    # this option is not displayed as this will break the modbus comms, only for debugging
+                    #"address" : ['string', 'Modbus slave address', 6],
+                    "loglocation" : ['string', 'Log Directory', 7],
+                    "alarmfile" : ['string', 'Alarm Descriptions', 9],
+                    "displayoutput" : ['boolean', 'Output to Console', 50],
+                    "displaymonitor" : ['boolean', 'Display Monitor Status', 51],
+                    "displayregisters" : ['boolean', 'Display Register Status', 52],
+                    "displaystatus" : ['boolean', 'Display Status', 53],
+                    "displaymaintenance" : ['boolean', 'Display Maintenance', 54],
+                    "enabledebug" : ['boolean', 'Enable Debug', 14],
+                    "displayunknown" : ['boolean', 'Display Unknown Sensors', 15],
+                    "disableoutagecheck" : ['boolean', 'Disable Emails at Outage', 17],
+                    # These settings are not displayed as the auto-detect controller will set these
+                    # these are only to be used to override the auto-detect
+                    #"uselegacysetexercise" : ['boolean', 'Use Legacy Excercise Time', 43],
+                    #"liquidcooled" : ['boolean', 'Liquid Cooled', 41],
+                    #"evolutioncontroller" : ['boolean', 'Evolution Controler', 42],
+                    "petroleumfuel" : ['boolean', 'Petroleum Fuel', 40],
+                    "outagelog" : ['string', 'Outage Log', 8],
+                    "syncdst" : ['boolean', 'Sync Daylight Savings Time', 22],
+                    "synctime" : ['boolean', 'Sync Time', 23],
+                    "enhancedexercise" : ['boolean', 'Enhanced Excercise Time', 44],
+                    "usehttps" : ['boolean', 'Use https instead of http', 25],
+                    "useselfsignedcert" : ['boolean', 'Use Self-signed Certificate', 26],
+                    "keyfile" : ['string', 'https key file', 27],
+                    "certfile" : ['string', 'https certificate File', 28],
+                    "http_user" : ['string', 'Web user name', 29],
+                    "http_pass" : ['string', 'Web password', 30],
+                    "http_port" : ['int', 'Port of WebServer', 24],
 
-    # heartbeat server port, must match value in check_generator_system.py and any calling client apps
-    for setting in allSettings.keys():
-         if settings.has_option('MyMail', setting):
-             allSettings[setting].append(settings.get('MyMail', setting))
+                    "disableemail" : ['boolean', 'Disable Email usage', 101],
+                    "email_pw" : ['string', 'Email Password', 103],
+                    "email_account" : ['string', 'Email Account', 102],
+                    "sender_account" : ['string', 'Sender Account', 104],
+                    # "email_recipient" : ['string', 'Email Recepient<br><small>(comma delimited)</small>', 105], # will be handled on the notification screen
+                    "smtp_server" : ['string', 'SMTP Server <br><small>(leave emtpy to disable)</small>', 106],
+                    "imap_server" : ['string', 'IMAP Server <br><small>(leave emtpy to disable)</small>', 150],
+                    "smtp_port" : ['int', 'SMTP Server Port', 107],
+                    "ssl_enabled" : ['boolean', 'SMTP Server SSL Enabled', 108]}
+
+    try:
+       for configFile in ["/etc/mymail.conf", "/etc/genmon.conf"]:
+           # Read contents from file as a single string
+           file_handle = open(configFile, 'r')
+           file_string = file_handle.read()
+           file_handle.close()
+
+           tooltip = ""
+
+           for line in file_string.splitlines():
+              if not line.isspace():
+                 parts = findConfigLine(line)
+                 if (parts and (len(parts) >= 5) and parts[3] and (not parts[3].isspace())):
+                    if parts[2] in allSettings:
+                       allSettings[parts[2]].append(parts[4])
+                       allSettings[parts[2]].append(tooltip)
+                       tooltip = ""
+                       if ((parts[1] is not None) and (not parts[1].isspace())):
+                          allSettings[parts[2]].append(1)
+                       else:
+                          allSettings[parts[2]].append(0)
+                 else:
+                    parts = findCommentLine(line)
+                    if (parts and (len(parts) >= 2)):
+                       tooltip += parts[1] + " "
+
+    except Exception as e1:
+        print "Error Reading Config File: " + str(e1)
+        log.error("Error Reading Config File: " + str(e1))
 
     return allSettings
 
@@ -140,27 +308,30 @@ def SaveSettings(query_string):
     settings = dict(urlparse.parse_qs(query_string, 1))
 
     try:
-        # Read contents from file as a single string
-        file_handle = open("/etc/mymail.conf", 'r')
-        file_string = file_handle.read()
-        file_handle.close()
+       for configFile in ["/etc/mymail.conf", "/etc/genmon.conf"]:
+           # Read contents from file as a single string
+           file_handle = open(configFile, 'r')
+           file_string = file_handle.read()
+           file_handle.close()
 
-        # Write contents to file.
-        # Using mode 'w' truncates the file.
-        file_handle = open("/etc/mymail.conf", 'w')
-        for line in file_string.splitlines():
-           if not line.isspace():
-              for setting in settings.keys():
+           # Write contents to file.
+           # Using mode 'w' truncates the file.
+           file_handle = open(configFile, 'w')
+           for line in file_string.splitlines():
+              if not line.isspace():
                  parts = findConfigLine(line)
-                 if (parts and (len(parts) > 4) and (parts[1] == setting)):
-                     if (len(parts[3]) >= 3):
-                       line = line.replace(parts[3], settings[setting][0], 1)
-                     else:
-                       myList = list(parts)
-                       myList[3] = settings[setting][0]
-                       line = "".join(myList)
-           file_handle.write(line+"\n")
-        file_handle.close()
+                 for setting in settings.keys():
+                    if (parts and (len(parts) >= 5) and parts[3] and (not parts[3].isspace()) and parts[2] and (parts[2] == setting)):
+                          myList = list(parts)
+                          if ((parts[1] is not None) and (not parts[1].isspace())):
+                             # remove comment
+                             myList[1] = ""
+                          elif (parts[1] is None):
+                             myList[1] = ""
+                          myList[4] = settings[setting][0]
+                          line = "".join(myList)
+              file_handle.write(line+"\n")
+           file_handle.close()
 
     except Exception as e1:
         print "Error Update Config File: " + str(e1)
@@ -170,20 +341,28 @@ def findConfigLine(line):
     match = re.search(
         r"""^          # Anchor to start of line
         (\s*)          # $1: Zero or more leading ws chars
+        (?:(\#\s*)?)   # $2: is it commented out
         (?:            # Begin group for optional var=value.
-          (\S+)        # $2: Variable name. One or more non-spaces.
-          (\s*=\s*)    # $3: Assignment operator, optional ws
-          (            # $4: Everything up to comment or EOL.
+          (\S+)        # $3: Variable name. One or more non-spaces.
+          (\s*=\s*)    # $4: Assignment operator, optional ws
+          (            # $5: Everything up to comment or EOL.
             [^#\\]*    # Unrolling the loop 1st normal*.
             (?:        # Begin (special normal*)* construct.
               \\.      # special is backslash-anything.
               [^#\\]*  # More normal*.
             )*         # End (special normal*)* construct.
-          )            # End $4: Value.
+          )            # End $5: Value.
         )?             # End group for optional var=value.
-        ((?:\#.*)?)    # $5: Optional comment.
+        ((?:\#.*)?)    # $6: Optional comment.
         $              # Anchor to end of line""",
         line, re.MULTILINE | re.VERBOSE)
+    if match :
+      return match.groups()
+    else:
+      return []
+
+def findCommentLine(line):
+    match = re.search("^(\s*#\s*)(.*)$", line)
     if match :
       return match.groups()
     else:
