@@ -55,12 +55,17 @@ body {
     background-color: white;
     margin: 0;
 }
-header,
-footer {
+header {
     background-color: #f1f1f1;
     clear: left;
     text-align: center;
     font-size: 20px
+}
+footer {
+    background-color: #f1f1f1;
+    clear: left;
+    text-align: center;
+    font-size: 15px
 }
 a {
     font-style: italic;
