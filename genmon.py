@@ -2485,9 +2485,7 @@ class GeneratorDevice:
         AlarmLogDecoder_EvoAC = {
         0x21: "Charger Missing AC",
         0x14: "Low Battery",                # Warning
-        0x20: "Charger Warning",            # Warning
-        0x21:" Charger Missing AC"
-
+        0x20: "Charger Warning"             # Warning
         }
 
 
@@ -2555,7 +2553,7 @@ class GeneratorDevice:
         TempVal = Value[0:2]            # this value represents a unique display string
         LogCode = int(TempVal, 16)
 
-        DecoderLookup = { }
+        DecoderLookup = {}
 
         if self.EvolutionController and not self.LiquidCooled:
             DecoderLookup[ALARM_LOG_STARTING_REG] = AlarmLogDecoder_EvoAC
