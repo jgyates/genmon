@@ -28,7 +28,7 @@ except ImportError as e:
 
 import mymail, mylog
 
-GENMON_VERSION = "V1.5.1"
+GENMON_VERSION = "V1.5.2"
 
 #------------ SerialDevice class --------------------------------------------
 class SerialDevice:
@@ -309,86 +309,28 @@ class GeneratorDevice:
         self.REGLEN = 0
         self.REGMONITOR = 1
 
-        try:
-            # read config file
-            config = RawConfigParser()
-            # config parser reads from current directory, when running form a cron tab this is
-            # not defined so we specify the full path
-            config.read('/etc/genmon.conf')
+        # set defaults for optional parameters
+        self.bDisplayOutput = False
+        self.bDisplayMonitor = False
+        self.bDisplayRegisters = False
+        self.bDisplayStatus = False
+        self.EnableDebug = False
+        self.bDisplayUnknownSensors = False
+        self.bDisplayMaintenance = False
+        self.bUseLegacyWrite = False
+        self.EvolutionController = None
+        self.LiquidCooled = None
+        self.PetroleumFuel = True
+        self.OutageLog = ""
+        self.DisableOutageCheck = False
+        self.bSyncTime = False          # Sync gen to system time
+        self.bSyncDST = False           # sync time at DST change
+        self.bDST = False               # Daylight Savings Time active if True
+        self.bEnhancedExerciseFrequency = False     # True if controller supports biweekly and monthly exercise times
 
-            # set defaults for optional parameters
-            self.bDisplayOutput = False
-            self.bDisplayMonitor = False
-            self.bDisplayRegisters = False
-            self.bDisplayStatus = False
-            self.EnableDebug = False
-            self.bDisplayUnknownSensors = False
-            self.bDisplayMaintenance = False
-            self.bUseLegacyWrite = False
-            self.EvolutionController = None
-            self.LiquidCooled = None
-            self.PetroleumFuel = True
-            self.OutageLog = ""
-            self.DisableOutageCheck = False
-            self.bSyncTime = False          # Sync gen to system time
-            self.bSyncDST = False           # sync time at DST change
-            self.bDST = False               # Daylight Savings Time active if True
-            self.bEnhancedExerciseFrequency = False     # True if controller supports biweekly and monthly exercise times
-
-            # getfloat() raises an exception if the value is not a float
-            # getint() and getboolean() also do this for their respective types
-            self.SiteName = config.get('GenMon', 'sitename')
-            self.SerialPort = config.get('GenMon', 'port')
-            self.IncomingEmailFolder = config.get('GenMon', 'incoming_mail_folder')     # imap folder for incoming mail
-            self.ProcessedEmailFolder = config.get('GenMon', 'processed_mail_folder')   # imap folder for processed mail
-            # heartbeat server port, must match value in check_monitor_system.py and any calling client apps
-            self.ServerSocketPort = config.getint('GenMon', 'server_port')
-            self.Address = int(config.get('GenMon', 'address'),16)                      # modbus address
-            self.LogLocation = config.get('GenMon', 'loglocation')
-            self.AlarmFile = config.get('GenMon', 'alarmfile')
-
-
-            # optional config parameters, by default the software will attempt to auto-detect the controller
-            # this setting will override the auto detect
-            if config.has_option('GenMon', 'evolutioncontroller'):
-                self.EvolutionController = config.getboolean('GenMon', 'evolutioncontroller')
-            if config.has_option('GenMon', 'liquidcooled'):
-                self.LiquidCooled = config.getboolean('GenMon', 'liquidcooled')
-            if config.has_option('GenMon', 'disableoutagecheck'):
-                self.DisableOutageCheck = config.getboolean('GenMon', 'disableoutagecheck')
-
-            if config.has_option('GenMon', 'petroleumfuel'):
-                self.PetroleumFuel = config.getboolean('GenMon', 'petroleumfuel')
-
-            if config.has_option('GenMon', 'displayoutput'):
-                self.bDisplayOutput = config.getboolean('GenMon', 'displayoutput')
-            if config.has_option('GenMon', 'displaymonitor'):
-                self.bDisplayMonitor = config.getboolean('GenMon', 'displaymonitor')
-            if config.has_option('GenMon', 'displayregisters'):
-                self.bDisplayRegisters = config.getboolean('GenMon', 'displayregisters')
-            if config.has_option('GenMon', 'displaystatus'):
-                self.bDisplayStatus = config.getboolean('GenMon', 'displaystatus')
-            if config.has_option('GenMon', 'displaymaintenance'):
-                self.bDisplayMaintenance = config.getboolean('GenMon', 'displaymaintenance')
-            if config.has_option('GenMon', 'enabledebug'):
-                self.EnableDebug = config.getboolean('GenMon', 'enabledebug')
-            if config.has_option('GenMon', 'displayunknown'):
-                self.bDisplayUnknownSensors = config.getboolean('GenMon', 'displayunknown')
-            if config.has_option('GenMon', 'uselegacysetexercise'):
-                self.bUseLegacyWrite = config.getboolean('GenMon', 'uselegacysetexercise')
-            if config.has_option('GenMon', 'outagelog'):
-                self.OutageLog = config.get('GenMon', 'outagelog')
-            if config.has_option('GenMon', 'syncdst'):
-                self.bSyncDST = config.getboolean('GenMon', 'syncdst')
-            if config.has_option('GenMon', 'synctime'):
-                self.bSyncTime = config.getboolean('GenMon', 'synctime')
-            if config.has_option('GenMon', 'enhancedexercise'):
-                self.bEnhancedExerciseFrequency = config.getboolean('GenMon', 'enhancedexercise')
-
-        except Exception as e1:
-            raise Exception("Missing config file or config file entries: " + str(e1))
+        # read config file
+        if not self.GetConfig():
             return None
-
 
         # log errors in this module to a file
         self.log = mylog.SetupLogger("genmon", self.LogLocation + "genmon.log")
@@ -454,6 +396,73 @@ class GeneratorDevice:
 
         if self.EnableDebug:
             self.StartThread(self.DebugThread, Name = "DebugThread")      # for debugging registers
+
+    # ---------- GeneratorDevice::GetConfig------------------
+    def GetConfig(self):
+
+        ConfigSection = "GenMon"
+        try:
+            # read config file
+            config = RawConfigParser()
+            # config parser reads from current directory, when running form a cron tab this is
+            # not defined so we specify the full path
+            config.read('/etc/genmon.conf')
+
+            # getfloat() raises an exception if the value is not a float
+            # getint() and getboolean() also do this for their respective types
+
+            self.SiteName = config.get(ConfigSection, 'sitename')
+            self.SerialPort = config.get(ConfigSection, 'port')
+            self.IncomingEmailFolder = config.get(ConfigSection, 'incoming_mail_folder')     # imap folder for incoming mail
+            self.ProcessedEmailFolder = config.get(ConfigSection, 'processed_mail_folder')   # imap folder for processed mail
+            # heartbeat server port, must match value in check_monitor_system.py and any calling client apps
+            self.ServerSocketPort = config.getint(ConfigSection, 'server_port')
+            self.Address = int(config.get(ConfigSection, 'address'),16)                      # modbus address
+            self.LogLocation = config.get(ConfigSection, 'loglocation')
+            self.AlarmFile = config.get(ConfigSection, 'alarmfile')
+
+            # optional config parameters, by default the software will attempt to auto-detect the controller
+            # this setting will override the auto detect
+            if config.has_option(ConfigSection, 'evolutioncontroller'):
+                self.EvolutionController = config.getboolean(ConfigSection, 'evolutioncontroller')
+            if config.has_option(ConfigSection, 'liquidcooled'):
+                self.LiquidCooled = config.getboolean(ConfigSection, 'liquidcooled')
+            if config.has_option(ConfigSection, 'disableoutagecheck'):
+                self.DisableOutageCheck = config.getboolean(ConfigSection, 'disableoutagecheck')
+
+            if config.has_option(ConfigSection, 'petroleumfuel'):
+                self.PetroleumFuel = config.getboolean(ConfigSection, 'petroleumfuel')
+
+            if config.has_option(ConfigSection, 'displayoutput'):
+                self.bDisplayOutput = config.getboolean(ConfigSection, 'displayoutput')
+            if config.has_option(ConfigSection, 'displaymonitor'):
+                self.bDisplayMonitor = config.getboolean(ConfigSection, 'displaymonitor')
+            if config.has_option(ConfigSection, 'displayregisters'):
+                self.bDisplayRegisters = config.getboolean(ConfigSection, 'displayregisters')
+            if config.has_option(ConfigSection, 'displaystatus'):
+                self.bDisplayStatus = config.getboolean(ConfigSection, 'displaystatus')
+            if config.has_option(ConfigSection, 'displaymaintenance'):
+                self.bDisplayMaintenance = config.getboolean(ConfigSection, 'displaymaintenance')
+            if config.has_option(ConfigSection, 'enabledebug'):
+                self.EnableDebug = config.getboolean(ConfigSection, 'enabledebug')
+            if config.has_option(ConfigSection, 'displayunknown'):
+                self.bDisplayUnknownSensors = config.getboolean(ConfigSection, 'displayunknown')
+            if config.has_option(ConfigSection, 'uselegacysetexercise'):
+                self.bUseLegacyWrite = config.getboolean(ConfigSection, 'uselegacysetexercise')
+            if config.has_option(ConfigSection, 'outagelog'):
+                self.OutageLog = config.get(ConfigSection, 'outagelog')
+            if config.has_option(ConfigSection, 'syncdst'):
+                self.bSyncDST = config.getboolean(ConfigSection, 'syncdst')
+            if config.has_option(ConfigSection, 'synctime'):
+                self.bSyncTime = config.getboolean(ConfigSection, 'synctime')
+            if config.has_option(ConfigSection, 'enhancedexercise'):
+                self.bEnhancedExerciseFrequency = config.getboolean(ConfigSection, 'enhancedexercise')
+
+        except Exception as e1:
+            raise Exception("Missing config file or config file entries: " + str(e1))
+            return False
+
+        return True
 
     # ---------- GeneratorDevice::StartThread------------------
     def StartThread(self, ThreadFunction, Name = None):
@@ -2546,10 +2555,16 @@ class GeneratorDevice:
         TempVal = Value[0:2]            # this value represents a unique display string
         LogCode = int(TempVal, 16)
 
-        DecoderLookup = { ALARM_LOG_STARTING_REG : AlarmLogDecoder,
-                          START_LOG_STARTING_REG : StartLogDecoder,
-                          SERVICE_LOG_STARTING_REG : ServiceLogDecoder,
-                          NEXUS_ALARM_LOG_STARTING_REG : NexusAlarmLogDecoder }
+        DecoderLookup = { }
+
+        if self.EvolutionController and not self.LiquidCooled:
+            DecoderLookup[ALARM_LOG_STARTING_REG] = AlarmLogDecoder_EvoAC
+        else:
+            DecoderLookup[ALARM_LOG_STARTING_REG] = AlarmLogDecoder
+
+        DecoderLookup[START_LOG_STARTING_REG] = StartLogDecoder
+        DecoderLookup[SERVICE_LOG_STARTING_REG] = ServiceLogDecoder
+        DecoderLookup[NEXUS_ALARM_LOG_STARTING_REG] = NexusAlarmLogDecoder
 
         if LogBase == NEXUS_ALARM_LOG_STARTING_REG and self.EvolutionController:
             self.LogError("Error in ParseLog: Invalid Base Register %X", LogBase)
