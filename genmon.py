@@ -3534,6 +3534,7 @@ class GeneratorDevice:
                     SetTimeThread = threading.Thread(target=self.SetGeneratorTimeDate, name = "SetTimeThread")
                     SetTimeThread.daemon = True
                     SetTimeThread.start()               # start settime thread
+                    self.mail.sendEmail("Generator Time Update at " + self.SiteName, "Time updated due to daylight savings time change", msgtype = "info")
 
             if self.bSyncTime:
                 # update gen time
