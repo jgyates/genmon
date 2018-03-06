@@ -23,11 +23,16 @@ except ImportError as e:
 #------------------------------------------------------------
 app = Flask(__name__,static_url_path='')
 
-# log errors in this module to a file
-log = mylog.SetupLogger("genserv", "/var/log/genserv.log")
 HTTPAuthUser = None
 HTTPAuthPass = None
-
+bUseSecureHTTP = False
+bUseSelfSignedCert = True
+SSLContext = None
+HTTPPort = 8000
+loglocation = "/var/log/"
+clientport = 0
+log = None
+AppPath = ""
 #------------------------------------------------------------
 @app.route('/', methods=['GET'])
 def root():
@@ -77,7 +82,7 @@ def command(command):
 #------------------------------------------------------------
 def ProcessCommand(command):
 
-    if command in ["status", "status_json", "outage", "outage_json", "maint", "maint_json", "logs", "logs_json", "monitor", "monitor_json", "registers_json", "allregs_json", "getbase", "getsitename", "setexercise", "setquiet", "getexercise","setremote", "settime"]:
+    if command in ["status", "status_json", "outage", "outage_json", "maint", "maint_json", "logs", "logs_json", "monitor", "monitor_json", "registers_json", "allregs_json", "getbase", "getsitename", "setexercise", "setquiet", "getexercise","setremote", "settime", "reload"]:
             finalcommand = "generator: " + command
             try:
                 if command == "setexercise":
@@ -91,9 +96,15 @@ def ProcessCommand(command):
                     finalcommand += "=" + setremotestr
 
                 data = MyClientInterface.ProcessMonitorCommand(finalcommand)
+
+
             except Exception as e1:
                 data = "Retry"
                 log.error("Error on command function" + str(e1))
+
+            if command == "reload":
+                    Reload()                # reload Flask App
+
             if command in ["status_json", "outage_json", "maint_json", "monitor_json", "logs_json", "registers_json", "allregs_json"]:
                 return data
             return jsonify(data)
@@ -230,7 +241,8 @@ def GetSettings():
                     "port" : ['string', 'Port for Serial Communication', 2],
                     "incoming_mail_folder" : ['string', 'Incoming Mail folder<br><small>(if IMAP enabled)</small>', 151],
                     "processed_mail_folder" : ['string', 'Mail Processed folder<br><small>(if IMAP enabled)</small>', 152],
-                    "server_port" : ['int', 'Server Port', 5],
+                    # This option is not displayed as it will break the link between genmon and genserv
+                    #"server_port" : ['int', 'Server Port', 5],
                     # this option is not displayed as this will break the modbus comms, only for debugging
                     #"address" : ['string', 'Modbus slave address', 6],
                     "loglocation" : ['string', 'Log Directory', 7],
@@ -253,7 +265,7 @@ def GetSettings():
                     "syncdst" : ['boolean', 'Sync Daylight Savings Time', 22],
                     "synctime" : ['boolean', 'Sync Time', 23],
                     "enhancedexercise" : ['boolean', 'Enhanced Excercise Time', 44],
-                    "usehttps" : ['boolean', 'Use https instead of http', 25],
+                    "usehttps" : ['boolean', 'Use Secure Web Settings', 25],
                     "useselfsignedcert" : ['boolean', 'Use Self-signed Certificate', 26],
                     "keyfile" : ['string', 'https key file', 27],
                     "certfile" : ['string', 'https certificate File', 28],
@@ -360,7 +372,7 @@ def findConfigLine(line):
       return match.groups()
     else:
       return []
-
+#------------------------------------------------------------
 def findCommentLine(line):
     match = re.search("^(\s*#\s*)(.*)$", line)
     if match :
@@ -369,17 +381,40 @@ def findCommentLine(line):
       return []
 
 #------------------------------------------------------------
-if __name__ == "__main__":
-    address='localhost' if len(sys.argv)<2 else sys.argv[1]
+# This will reload the Flask App if use_reloader = True is enabled on the app.run command
+def Reload():
 
-    clientport = 0
+    os.system('touch ' + AppPath)
+
+#------------------------------------------------------------
+# return False if File not present
+def CheckCertFiles(CertFile, KeyFile):
+
     try:
+        with open(CertFile,"r") as MyCertFile:
+            with open(self.KeyFile,"r") as MyKeyFile:
+                return True
+    except Exception as e1:
+        self.FatalError("Unable to open Cert or Key file: " + str(e1))
+        return False
 
-        bUseSecureHTTP = False
-        bUseSelfSignedCert = True
-        SSLContext = None
-        HTTPPort = 8000
+    return True
+#------------------------------------------------------------
+def LoadConfig():
 
+    global log
+    global clientport
+    global loglocation
+    global bUseSecureHTTP
+    global HTTPPort
+    global HTTPAuthUser
+    global HTTPAuthPass
+    global SSLContext
+
+    HTTPAuthPass = None
+    HTTPAuthUser = None
+    SSLContext = None
+    try:
         config = RawConfigParser()
         # config parser reads from current directory, when running form a cron tab this is
         # not defined so we specify the full path
@@ -387,6 +422,12 @@ if __name__ == "__main__":
         # heartbeat server port, must match value in check_generator_system.py and any calling client apps
         if config.has_option('GenMon', 'server_port'):
             clientport = config.getint('GenMon', 'server_port')
+
+        if config.has_option('GenMon', 'loglocation'):
+            loglocation = config.get("GenMon", 'loglocation')
+
+        # log errors in this module to a file
+        log = mylog.SetupLogger("genserv", loglocation + "genserv.log")
 
         if config.has_option('GenMon', 'usehttps'):
             bUseSecureHTTP = config.getboolean('GenMon', 'usehttps')
@@ -402,6 +443,14 @@ if __name__ == "__main__":
             if config.has_option('GenMon', 'http_pass'):
                 HTTPAuthPass = config.get('GenMon', 'http_pass')
 
+            # remove any leading or trailing whitespade
+            HTTPAuthUser = HTTPAuthUser.strip()
+            HTTPAuthPass = HTTPAuthPass.strip()
+            # No user name or pass specified, disable
+            if HTTPAuthUser == "":
+                HTTPAuthUser = None
+                HTTPAuthPass = None
+
         if bUseSecureHTTP:
             app.secret_key = os.urandom(12)
             OldHTTPPort = HTTPPort
@@ -412,21 +461,34 @@ if __name__ == "__main__":
                 if bUseSelfSignedCert:
                     SSLContext = 'adhoc'
                 else:
-                    SSLContext = (config.get('GenMon', 'certfile'), config.get('GenMon', 'keyfile'))
+                    if config.has_option('GenMon', 'certfile') and config.has_option('GenMon', 'keyfile'):
+                        CertFile = config.get('GenMon', 'certfile')
+                        KeyFile = config.get('GenMon', 'keyfile')
+                        if CheckCertFiles(CertFile, KeyFile):
+                            SSLContext = (CertFile, KeyFile)    # tuple
+                        else:
+                            HTTPPort = OldHTTPPort
+                            SSLContext = None
             else:
                 # if we get here then usehttps is enabled but not option for useselfsignedcert
                 # so revert to HTTP
                 HTTPPort = OldHTTPPort
-
-
     except Exception as e1:
         log.error("Missing config file or config file entries: " + str(e1))
+
+#------------------------------------------------------------
+if __name__ == "__main__":
+    address='localhost' if len(sys.argv)<2 else sys.argv[1]
+
+    AppPath = sys.argv[0]
+    LoadConfig()
+
+    log.error("Starting " + AppPath)
 
     MyClientInterface = myclient.ClientInterface(host = address,port=clientport, log = log)
     while True:
         try:
-
-            app.run(host="0.0.0.0", port=HTTPPort, threaded = True, ssl_context=SSLContext)
+            app.run(host="0.0.0.0", port=HTTPPort, threaded = True, ssl_context=SSLContext, use_reloader = True)
 
         except Exception as e1:
             log.error("Error in app.run:" + str(e1))

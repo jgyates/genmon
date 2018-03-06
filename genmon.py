@@ -26,9 +26,9 @@ try:
 except ImportError as e:
     from configparser import RawConfigParser
 
-import mymail, mylog
+import mymail, mylog, mythread
 
-GENMON_VERSION = "V1.5.2"
+GENMON_VERSION = "V1.5.3"
 
 #------------ SerialDevice class --------------------------------------------
 class SerialDevice:
@@ -45,6 +45,7 @@ class SerialDevice:
         self.CrcError = 0
         self.DiscardedBytes = 0
         self.Restarts = 0
+        self.SerialStartTime = datetime.datetime.now()     # used for com metrics
 
         # log errors in this module to a file
         self.log = mylog.SetupLogger("myserial", loglocation + "myserial.log")
@@ -56,7 +57,7 @@ class SerialDevice:
         self.SerialDevice.bytesize = serial.EIGHTBITS     #number of bits per bytes
         self.SerialDevice.parity = serial.PARITY_NONE     #set parity check: no parity
         self.SerialDevice.stopbits = serial.STOPBITS_ONE  #number of stop bits
-        self.SerialDevice.timeout = None                  # should be blocking to help with CPU load
+        self.SerialDevice.timeout =  0.05                 # small timeout so we can check if the thread should exit
         self.SerialDevice.xonxoff = False                 #disable software flow control
         self.SerialDevice.rtscts = False                  #disable hardware (RTS/CTS) flow control
         self.SerialDevice.dsrdtr = False                  #disable hardware (DSR/DTR) flow control
@@ -78,12 +79,10 @@ class SerialDevice:
     # ---------- SerialDevice::StartReadThread------------------
     def StartReadThread(self):
 
-         # start read thread to monitor incoming data commands
-        self.ReadThreadObj = threading.Thread(target=self.ReadThread, name = "SerialReadThread")
-        self.ReadThreadObj.daemon = True
-        self.ReadThreadObj.start()       # start Read thread
+        # start read thread to monitor incoming data commands
+        self.Thread = mythread.MyThread(self.ReadThread, Name = "SerialReadThread")
 
-        return self.ReadThreadObj
+        return self.Thread
 
     # ---------- SerialDevice::ReadThread------------------
     def ReadThread(self):
@@ -96,7 +95,13 @@ class SerialDevice:
                             if sys.version_info[0] < 3:
                                 self.Buffer.append(ord(c))      # PYTHON2
                             else:
-                                self.Buffer.append(c)      # PYTHON3
+                                self.Buffer.append(c)           # PYTHON3
+                        # first check for SignalStopped is when we are receiving
+                        if self.Thread.StopSignaled():
+                            return
+                    # second check for SignalStopped is when we are not receiving
+                    if self.Thread.StopSignaled():
+                            return
 
             except Exception as e1:
                 self.LogError( "Resetting SerialDevice:ReadThread Error: " + self.DeviceName + ":"+ str(e1))
@@ -118,8 +123,12 @@ class SerialDevice:
 
     # ---------- SerialDevice::Close------------------
     def Close(self):
+        if self.SerialDevice.isOpen():
+            if self.Thread.IsAlive():
+                self.Thread.Stop()
+                self.Thread.WaitForThreadToEnd()
+            self.SerialDevice.close()
 
-        self.SerialDevice.close()
     # ---------- SerialDevice::Flush------------------
     def Flush(self):
         try:
@@ -133,7 +142,7 @@ class SerialDevice:
 
     # ---------- SerialDevice::Read------------------
     def Read(self):
-        return  self.SerialDevice.read()
+        return  self.SerialDevice.read()        # self.SerialDevice.inWaiting returns number of bytes ready
 
     # ---------- SerialDevice::Write-----------------
     def Write(self, data):
@@ -202,7 +211,7 @@ class GeneratorDevice:
         self.LastAlarmValue = 0xFF  # Last Value of the Alarm Register
         self.ConnectionList = []    # list of incoming connections for heartbeat
         self.ServerSocket = 0       # server socket for nagios heartbeat and command/status
-        self.ThreadList = []     # list of thread objects
+        self.Threads = {}           # Dict of mythread objects
         self.GeneratorInAlarm = False       # Flag to let the heartbeat thread know there is a problem
         self.SystemInOutage = False         # Flag to signal utility power is out
         self.TransferActive = False         # Flag to signal transfer switch is allowing gen supply power
@@ -346,7 +355,7 @@ class GeneratorDevice:
             #Starting serial connection
             self.Slave = SerialDevice(self.SerialPort, self.BaudRate, loglocation = self.LogLocation)
             self.SerialInit = True
-            self.ThreadList.append(self.Slave.StartReadThread())
+            self.Threads["SerialReadThread"] = self.Slave.StartReadThread()
 
         except Exception as e1:
             self.FatalError("Error opening serial device: " + str(e1))
@@ -368,9 +377,9 @@ class GeneratorDevice:
             self.FatalError("Unable to open alarm file: " + str(e1))
 
         if self.mail.GetSendEmailThreadObject():
-            self.ThreadList.append(self.mail.GetSendEmailThreadObject())
+            self.Threads["SendMailThread"] = self.mail.GetSendEmailThreadObject()
         if self.mail.GetEmailMonitorThreadObject():
-            self.ThreadList.append(self.mail.GetEmailMonitorThreadObject())
+            self.Threads["EmailCommandThread"] = self.mail.GetEmailMonitorThreadObject()
 
         try:
             # CRCMOD library, used for CRC calculations
@@ -379,26 +388,119 @@ class GeneratorDevice:
             self.FatalError("Unable to find crcmod package: " + str(e1))
 
 
-        # start read thread to monitor registers as they change
-        self.StartThread(self.MonitorThread, Name = "MonitorThread")
+        self.StartThreads()
 
-        # start thread to accept incoming sockets for nagios heartbeat and command / status clients
-        self.StartThread(self.InterfaceServerThread, Name = "InterfaceServerThread")
+        self.LogError("GenMon Loadded for site: " + self.SiteName)
+
+    # ---------- GeneratorDevice::StartThreads------------------
+    def StartThreads(self, reload = False):
+
+        # start read thread to monitor registers as they change
+        self.Threads["MonitorThread"] = mythread.MyThread(self.MonitorThread, Name = "MonitorThread")
+
+        if not reload:
+            # This thread remains open during a reload
+            # start thread to accept incoming sockets for nagios heartbeat and command / status clients
+            self.Threads["InterfaceServerThread"] = mythread.MyThread(self.InterfaceServerThread, Name = "InterfaceServerThread")
 
         # start thread to accept incoming sockets for nagios heartbeat
-        self.StartThread(self.ComWatchDog, Name = "ComWatchDog")
+        self.Threads["ComWatchDog"] = mythread.MyThread(self.ComWatchDog, Name = "ComWatchDog")
 
         # start read thread to process incoming data commands
-        self.StartThread(self.ProcessThread, Name = "ProcessThread")
+        self.Threads["ProcessThread"] = mythread.MyThread(self.ProcessThread, Name = "ProcessThread")
 
-        if self.bSyncDST or self.bSyncTime:
-            self.StartThread(self.SyncGenTime, Name = "TimeSyncThread")   # Sync time thread
+        if self.bSyncDST or self.bSyncTime:     # Sync time thread
+            self.Threads["TimeSyncThread"] = mythread.MyThread(self.SyncGenTime, Name = "TimeSyncThread")
 
-        if self.EnableDebug:
-            self.StartThread(self.DebugThread, Name = "DebugThread")      # for debugging registers
+        if self.EnableDebug:        # for debugging registers
+            self.Threads["DebugThread"] = mythread.MyThread(self.DebugThread, Name = "DebugThread")
+
+    # ---------- GeneratorDevice::KillThread------------------
+    def KillThread(self, Name):
+
+        MyThreadObj = self.Threads.get(Name, None)
+        if MyThreadObj == None:
+            self.LogError("Error getting thread name in KillThread: " + Name)
+            return False
+
+        MyThreadObj.Stop()
+        MyThreadObj.WaitForThreadToEnd()
+        del self.Threads[Name]
+
+    # ---------- GeneratorDevice::KillReloadThread------------------
+    def IsStopSignaled(self, Name):
+
+        Thread = self.Threads.get(Name, None)
+        if Thread == None:
+            self.LogError("Error getting thread name in IsStopSignaled: " + Name)
+            return False
+
+        return Thread.StopSignaled()
 
     # ---------- GeneratorDevice::GetConfig------------------
-    def GetConfig(self):
+    def Reload(self):
+
+        try:
+            RetStr = ""
+
+            self.KillThread("ProcessThread")
+            self.KillThread("MonitorThread")
+            self.KillThread("ComWatchDog")
+            if self.bSyncDST or self.bSyncTime:
+                self.KillThread("TimeSyncThread")
+            if self.EnableDebug:
+                self.KillThread("DebugThread")
+
+            if self.MailInit:
+                self.mail.Cleanup()
+
+            self.MailInit = False
+
+            if self.SerialInit:
+                self.Slave.Close()
+
+            self.SerialInit = False
+
+            if not self.GetConfig(reload = True):
+                RetStr =  "Error reloading, error reading config file"
+
+            # log errors in this module to a file
+            self.log = mylog.SetupLogger("genmon", self.LogLocation + "genmon.log")
+            try:
+                # reload serial port
+                self.Slave = SerialDevice(self.SerialPort, self.BaudRate, loglocation = self.LogLocation)
+                self.SerialInit = True
+                self.Threads["SerialReadThread"] = self.Slave.StartReadThread()
+            except Exception as e1:
+                self.LogError("Error in Reload (serial): " + str(e1))
+                RetStr = "Failed to reload serial port."
+
+            # init mail, start processing incoming email
+            self.mail = mymail.MyMail(monitor=True, incoming_folder = self.IncomingEmailFolder, processed_folder =self.ProcessedEmailFolder,incoming_callback = self.ProcessCommand)
+            self.MailInit = True
+
+            if self.mail.GetSendEmailThreadObject():
+                self.Threads["SendMailThread"] = self.mail.GetSendEmailThreadObject()
+            if self.mail.GetEmailMonitorThreadObject():
+                self.Threads["EmailCommandThread"] = self.mail.GetEmailMonitorThreadObject()
+
+            # send mail to tell we are starting again
+            self.mail.sendEmail("Generator Monitor Reload at " + self.SiteName, "Generator Monitor Reload at " + self.SiteName , msgtype = "info")
+
+            self.StartThreads(reload = True)
+            self.LogError("RELOAD COMPLETE")
+
+            if RetStr == "":
+                return "Genmon reloaded"
+            else:
+                return RetStr
+
+        except Exception as e1:
+            self.LogError("Error in Reload: " + str(e1))
+            return "Genmon failed to reload"
+
+    # ---------- GeneratorDevice::GetConfig------------------
+    def GetConfig(self, reload = False):
 
         ConfigSection = "GenMon"
         try:
@@ -459,18 +561,13 @@ class GeneratorDevice:
                 self.bEnhancedExerciseFrequency = config.getboolean(ConfigSection, 'enhancedexercise')
 
         except Exception as e1:
-            raise Exception("Missing config file or config file entries: " + str(e1))
+            if not reload:
+                raise Exception("Missing config file or config file entries: " + str(e1))
+            else:
+                self.LogError("Error reloading config file" + str(e1))
             return False
 
         return True
-
-    # ---------- GeneratorDevice::StartThread------------------
-    def StartThread(self, ThreadFunction, Name = None):
-
-        ThreadObj = threading.Thread(target=ThreadFunction, name = Name)
-        ThreadObj.daemon = True
-        ThreadObj.start()       # start thread
-        self.ThreadList.append(ThreadObj)
 
     # ---------- GeneratorDevice::ProcessThread------------------
     #  remove items from Buffer, form packets
@@ -482,6 +579,8 @@ class GeneratorDevice:
             self.Flush()
             self.InitDevice()
             while True:
+                if self.IsStopSignaled("ProcessThread"):
+                    break
                 try:
                     self.MasterEmulation()
                     if self.EnableDebug:
@@ -498,6 +597,8 @@ class GeneratorDevice:
         while True:
             try:
                 time.sleep(5)
+                if self.IsStopSignaled("MonitorThread"):
+                    break
                 if self.bDisplayMonitor:
                     self.DisplayMonitor()       # display communication stats
                 if self.bDisplayRegisters:
@@ -1720,6 +1821,8 @@ class GeneratorDevice:
                 elif b"getdebug" == item.lower():              # only used for debug purposes. If a thread crashes it tells you the thread name
                     msgbody += self.GetDeadThreadName()
                     continue
+                elif b"reload" == item.lower():
+                    msgbody += self.Reload()
             if not fromsocket:
                 msgbody += "\n\n"
 
@@ -2125,7 +2228,7 @@ class GeneratorDevice:
 
         CurrentTime = datetime.datetime.now()
 
-        Delta = CurrentTime - self.ProgramStartTime        # yields a timedelta object
+        Delta = CurrentTime - self.Slave.SerialStartTime        # yields a timedelta object
         PacketsPerSecond = float((self.Slave.TxPacketCount + self.Slave.RxPacketCount)) / float(Delta.total_seconds())
         SerialStats["Packets Per Second"] = "%.2f" % (PacketsPerSecond)
 
@@ -3405,7 +3508,11 @@ class GeneratorDevice:
             self.mail.sendEmail("Register Under Test", msgbody, msgtype = "info")
             msgbody = ""
 
-            time.sleep(60*10)
+            for x in range(0, 60):
+                for y in range(0, 10):
+                    time.sleep(1)
+                    if self.IsStopSignaled("DebugThread"):
+                        return
 
     #----------  GeneratorDevice::SyncGenTime-------------------------------------
     def SyncGenTime(self):
@@ -3434,7 +3541,11 @@ class GeneratorDevice:
                 SetTimeThread.daemon = True
                 SetTimeThread.start()               # start settime thread
 
-            time.sleep(60*60)       # sleep an hour
+            for x in range(0, 60):
+                for y in range(0, 60):
+                    time.sleep(1)
+                    if self.IsStopSignaled("TimeSyncThread"):
+                        return
 
     #----------  GeneratorDevice::is_dst-------------------------------------
     def is_dst(self):
@@ -3462,24 +3573,27 @@ class GeneratorDevice:
                 LastRxPacketCount = self.Slave.RxPacketCount
             time.sleep(2)
 
+            if self.IsStopSignaled("ComWatchDog"):
+                break
 
     #---------- GeneratorDevice:: AreThreadsAlive----------------------------------
     # ret true if all threads are alive
     def AreThreadsAlive(self):
 
-        for t in self.ThreadList:
-            if not t.is_alive():
+        for Name, MyThreadObj in self.Threads.items():
+            if not MyThreadObj.IsAlive():
                 return False
+
         return True
 
-     #---------- GeneratorDevice::GetDeadThreadName----------------------------------
-    # ret true if all threads are alive
+    #---------- GeneratorDevice::GetDeadThreadName----------------------------------
     def GetDeadThreadName(self):
 
         RetStr = ""
-        for t in self.ThreadList:
-            if not t.is_alive():
-                RetStr += t.name + " "
+
+        for Name, MyThreadObj in self.Threads.items():
+            if not MyThreadObj.IsAlive():
+                RetStr += MyThreadObj.Name() + " "
 
         if RetStr == "":
             RetStr = "None"

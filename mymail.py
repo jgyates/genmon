@@ -19,14 +19,14 @@ from email.mime.text import MIMEText
 from email.utils import COMMASPACE, formatdate
 
 import atexit, configparser
-import mylog
+import mylog, mythread
 
 #imaplib.Debug = 4
 
 
 #------------ MyMail class --------------------------------------------
 class MyMail:
-    def __init__(self, monitor = False, incoming_folder = None, processed_folder = None, incoming_callback = None, localinit = False):
+    def __init__(self, monitor = False, incoming_folder = None, processed_folder = None, incoming_callback = None, localinit = False, loglocation = "/var/log/"):
 
         self.Monitor = monitor                          # true if we receive IMAP email
         self.IncomingFolder = incoming_folder           # folder to look for incoming email
@@ -40,20 +40,40 @@ class MyMail:
 
         # log errors in this module to a file
         if localinit == True:
-            logfile = "mymail.log"
-            configfile = "mymail.conf"
+            self.logfile = "mymail.log"
+            self.configfile = "mymail.conf"
         else:
-            logfile = "/var/log/mymail.log"
-            configfile = "/etc/mymail.conf"
+            self.logfile = loglocation + "mymail.log"
+            self.configfile = "/etc/mymail.conf"
 
-        self.log = mylog.SetupLogger("mymail", logfile)
+        self.log = mylog.SetupLogger("mymail", self.logfile)
+
+        self.GetConfig()
 
         atexit.register(self.Cleanup)
+
+        if not self.DisableEmail:
+            if self.SMTPServer != "":
+                self.threadSendEmail = mythread.MyThread(self.SendMailThread, Name = "SendMailThread")
+            else:
+                self.LogError("SMTP disabled")
+
+            if self.Monitor and self.IMAPServer != "":     # if True then we will have an IMAP monitor thread
+                if incoming_callback and incoming_folder and processed_folder:
+                    self.threadReceiveEmail = mythread.MyThread(self.EmailCommandThread, Name = "EmailCommandThread")
+                else:
+                    self.FatalError("ERROR: incoming_callback, incoming_folder and processed_folder are required if receive IMAP is used")
+            else:
+                self.LogError("IMAP disabled")
+
+    #---------- MyMail.GetConfig ----------------------
+    def GetConfig(self, reload = False):
+
         try:
             config = configparser.RawConfigParser()
             # config parser reads from current directory, when running form a cron tab this is
             # not defined so we specify the full path
-            config.read(configfile)
+            config.read(self.configfile)
 
             self.EmailPassword = config.get('MyMail', 'email_pw')
             self.EmailAccount = config.get('MyMail', 'email_account')
@@ -92,29 +112,13 @@ class MyMail:
             if config.has_option('MyMail', 'ssl_enabled'):
                 self.SSLEnabled = config.getboolean('MyMail', 'ssl_enabled')
         except Exception as e1:
-            self.FatalError("ERROR: Unable to read config file " + str(e1))
-
-
-        atexit.register(self.Cleanup)
-
-        if not self.DisableEmail:
-            if self.SMTPServer != "":
-                self.threadSendEmail = threading.Thread(target=self.SendMailThread, name = "SendMailThread")
-                self.threadSendEmail.daemon = True
-                self.threadSendEmail.start()       # start SMTP thread
+            if reload:
+                self.FatalError("ERROR: Unable to read config file " + str(e1))
+                return False
             else:
-                self.LogError("SMTP disabled")
+                self.FatalError("ERROR: Unable to read config file " + str(e1))
 
-            if monitor and self.IMAPServer != "":     # if True then we will have an IMAP monitor thread
-                if incoming_callback and incoming_folder and processed_folder:
-                    self.threadEmail = threading.Thread(target=self.EmailCommandThread, name = "EmailCommandThread")
-                    self.threadEmail.daemon = True
-                    self.threadEmail.start()       # start IMAP thread
-                else:
-                    self.FatalError("ERROR: incoming_callback, incoming_folder and processed_folder are required if receive IMAP is used")
-            else:
-                self.LogError("IMAP disabled")
-
+        return True
 
     #---------- MyMail.GetSendEmailThreadObject -------------------------
     def GetSendEmailThreadObject(self):
@@ -129,12 +133,15 @@ class MyMail:
 
         if not self.DisableEmail:
             if self.Monitor and self.IMAPServer != "":
-                return self.threadEmail
-
+                if self.IncomingCallback != None and self.IncomingFolder != None and self.ProcessedFolder != None:
+                    return self.threadReceiveEmail
         return 0
 
     #---------- MyMail.EmailCommandThread -----------------------------------
     def Cleanup(self):
+
+        self.threadSendEmail.Stop()
+        self.threadReceiveEmail.Stop()
 
         if self.Monitor:
             if self.Mailbox:
@@ -193,6 +200,9 @@ class MyMail:
                     self.LogError("Resetting email thread" + str(e1))
                     time.sleep(60)
                     break
+
+            if self.threadReceiveEmail.StopSignaled():
+                return
             time.sleep(15)
             ## end of outer loop
 
@@ -279,6 +289,8 @@ class MyMail:
         while True:
 
             time.sleep(2)
+            if self.threadSendEmail.StopSignaled():
+                return
 
             while self.EmailSendQueue != []:
                 MailError = False
