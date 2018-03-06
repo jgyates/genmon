@@ -514,6 +514,10 @@ To stop genmon and genserv use:
 
      /home/pi/genmon/startgenmon.sh stop
 
+To restart genmon and genserv use:
+
+     /home/pi/genmon/startgenmon.sh restart
+    
 Note that this file may be edited to change the file system location and it may be edited to make other supplied programs start or stop (i.e. gengpio.py and gengpioin.py).
 
 ## gensms.py (optional)
