@@ -506,7 +506,11 @@ The program will output success or failure depending on the results of the seria
 
 ## startgenmon.sh
 
-startgenmon.sh is a Linux script that is designed to be called at system boot from a crontab job. This script can also be called to manually start or stop genmon and genserv. This script assumes that the project files are located in the /home/pi/genmon directory. To start genmon and genserv use the following command:
+startgenmon.sh is a Linux script that is designed to be called at system boot from a crontab job. This script can also be called to manually start or stop genmon and genserv. The first time you use this script you must change the permissions of the file to make it executable with the following command:
+
+     sudo chmod 775 startgenmon.sh
+
+To start genmon and genserv use the following command:
 
      /home/pi/genmon/startgenmon.sh start
 
@@ -518,7 +522,17 @@ To restart genmon and genserv use:
 
      /home/pi/genmon/startgenmon.sh restart
     
-Note that this file may be edited to change the file system location and it may be edited to make other supplied programs start or stop (i.e. gengpio.py and gengpioin.py).
+Note that this file may be edited make other supplied programs start or stop (i.e. gengpio.py and gengpioin.py).
+
+## updategenmon.sh
+
+updategenmon.sh is a Linux script that is designed to be called by a user to update genmon.sh to the lastest version. The first time you use this script you must change the permissions of the file to make it executable with the following command:
+
+     sudo chmod 775 updategenmon.sh
+
+To update to the latest version of genmon, from the directory where genmon was downloaded via the "git" command, type:
+  
+    ./updategenmon.sh
 
 ## gensms.py (optional)
 
