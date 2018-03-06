@@ -313,12 +313,14 @@ Also, if you generator has as radiator then it is liquid cooled, otherwise it is
     # controller  must support this functionality before enabling this option.
     enhancedexercise = True
 
-    # (optional) This parameter, if true will enable the use of HTTPS 
-    # (secure HTTP) in the Flask web app. This option is only applicable to the 
-    # web app. This option requires python-openssl library to be installed
+    # (Optional) This parameter, if true will enable the use of HTTPS 
+    # (secure HTTP) in the Flask web app or user name and password
+    # authentication, depending on the options below. This option is only 
+    # applicable to the web app. This option requires python-openssl library 
+    # to be installed
     #usehttps = True
 
-    # optional) This parameter is used with usehttps. If 
+    # (optional) This parameter is used with usehttps. If 
     # userhttps is true, then this option will signal the type of certificate 
     # to use. If this option is true  a self signed certificate (supplied by 
     # Flask library) will be used. If false, then the a key file (key.pem) and 
