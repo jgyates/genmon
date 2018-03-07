@@ -952,7 +952,8 @@ var BaseRegistersDescription = { "0000" : "Product line",
                                  "0053" : "Output relay status register (EvoLC)",
                                  "0052" : "Input status register (sensors) (Evo LC)",
                                  "0009" : "Utility Voltage",
-                                 "05f1" : "Last Alarm Code (Evo)"};
+                                 "05f1" : "Last Alarm Code (Evo)",
+                                 "01f4" : "Serial Number"};
 
 function DisplayRegisters()
 {
