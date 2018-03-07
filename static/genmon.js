@@ -1,28 +1,25 @@
 // genmon.js - javascrip source for generator monitor
 // Define header
-document.getElementById("myheader").innerHTML =
-    '<header>Generator Monitor</header>';
+$("#myheader").html('<header>Generator Monitor</header>');
 
 // Define main menu
-document.getElementById("navMenu").innerHTML =
-    '<ul>' +
-      '<li><a id="status" >Status</a></li>' +
-      '<li><a id="maint" >Maintenance</a></li>' +
-      '<li><a id="outage" >Outage</a></li> ' +
-      '<li><a id="logs" >Logs</a></li> ' +
-      '<li ><a id="monitor" >Monitor</a></li> ' +
-      '<li ><a id="notifications" >Notifications</a></li> ' +
-      '<li ><a id="settings" >Settings</a></li> ' +
-    '</ul>' ;
+$("#navMenu").html('<ul>' +
+      '<li id="status"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img src=\"images/status.png\" width=\"20px\" height=\"20px\"></td><td valign="middle">&nbsp;Status</td></tr></table></a></li>' +
+      '<li id="maint"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img src=\"images/maintenance.png\" width=\"20px\" height=\"20px\"></td><td valign="middle">&nbsp;Maintenance</td></tr></table></a></li>' +
+      '<li id="outage"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img src=\"images/outage.png\" width=\"20px\" height=\"20px\"></td><td valign="middle">&nbsp;Outage</td></tr></table></a></li>' +
+      '<li id="logs"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img src=\"images/log.png\" width=\"20px\" height=\"20px\"></td><td valign="middle">&nbsp;Logs</td></tr></table></a></li>' +
+      '<li id="monitor"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img src=\"images/monitor.png\" width=\"20px\" height=\"20px\"></td><td valign="middle">&nbsp;Monitor</td></tr></table></a></li>' +
+      '<li id="notifications"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img src=\"images/notifications.png\" width=\"20px\" height=\"20px\"></td><td valign="middle">&nbsp;Notifications</td></tr></table></a></li>' +
+      '<li id="settings"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img src=\"images/settings.png\" width=\"20px\" height=\"20px\"></td><td valign="middle">&nbsp;Settings</td></tr></table></a></li>' +
+    '</ul>') ;
 
 // global base state
 var baseState = "READY";        // updated on a time
 var currentbaseState = "READY"; // menus change on this var
 var currentClass = "active";    // CSS class for menu color
-var menuElementID = 0;
+var menuElement = 0;
 var EnhancedExerciseEnabled = false;
 // on page load call init
-window.onload = init;
 var pathname = ""
 var baseurl = ""
 var DaysOfWeekArray = ["Sunday","Monday","Tuesday","Wednesday", "Thursday", "Friday", "Saturday"];
@@ -31,24 +28,18 @@ var DaysOfWeekArray = ["Sunday","Monday","Tuesday","Wednesday", "Thursday", "Fri
 // called on window.onload
 //      sets up listener events (click menu) and inits the default page
 //*****************************************************************************
-function init(){
-    // the code to be called when the dom has loaded
-
+$(document).ready(function() {
     pathname = window.location.href;
     baseurl = pathname.concat("cmd/")
     GetHeaderValues();
-    menuElementID = document.getElementById("status");
-    menuElementID.classList.add(GetCurrentClass());
+    $("#status").find("a").addClass(GetCurrentClass());
     setInterval(GetBaseStatus, 3000);       // Called every 3 sec
     setInterval(UpdateDisplay, 5000);       // Called every 5 sec
-    document.getElementById("mydisplay").innerHTML = GetDisplayValues("status");
-    var ul = document.getElementById('navMenu');  // Parent
+    $("#mydisplay").html(GetDisplayValues("status"));
     CreateSelectLists();
     SetVisibilityOfMaintList();
-    // Add event handler for click events
-    ul.addEventListener('click', MenuClick);
-
-}
+    $("li").on('click',  function() {  MenuClick($(this));});
+});
 
 //*****************************************************************************
 //  Set the visibility of lists and buttons
@@ -56,7 +47,7 @@ function init(){
 function SetVisibilityOfMaintList(){
 
     var visStr;
-    if (menuElementID.id == "maint")
+    if (menuElement == "maint")
     {
         visStr = "visible";
         // set controls to current setting
@@ -256,23 +247,8 @@ function CreateSelectLists(){
     document.getElementById("remotetransfer").innerHTML = "Start Generator and Transfer";
 
     // Create Footer Links
-    var myFooter = document.getElementById("footer");
-    var a = document.createElement('a');
-    a.href = "https://github.com/jgyates/genmon";
-    a.target = "_blank";
-    a.innerHTML = "GenMon Project on GitHub";
-    myFooter.appendChild(a);
-
-    var option = document.createElement("p");
-    option.id = "linksep";
-    myFooter.appendChild(option);
-    document.getElementById("linksep").innerHTML = " ";
-
-    var a = document.createElement('a');
-    var PathName = window.location.href;
-    a.href = PathName.concat("internal");
-    a.innerHTML = "Generator Registers";
-    myFooter.appendChild(a);
+    var FooterStr = "<table border=\"0\" width=\"100%\" height=\"30px\"><tr><td width=\"90%\" style=\"vertical-align:middle\"><a href=\"https://github.com/jgyates/genmon\" target=\"_blank\">GenMon Project on GitHub</a></td></tr></table>";
+    $("#footer").html(FooterStr);
 
 }
 
@@ -543,7 +519,7 @@ function DisplayNotifications(){
     $.getJSON(url,function(result){
 
         var  outstr = "Notification Recepients:<br><br>";
-        outstr += "<button value=\"+Add\" id=\"addRow\"/>+Add</button><br><br>";
+        outstr += "<button value=\"+Add\" id=\"addRow\">+Add</button><br><br>";
         outstr += "<form id=\"formNotifications\">";
         // outstr += "<input type=\"hidden\" name=\"deleted_rows\" id=\"deleted_rows\" value=\"\">";
         // outstr += "<input type=\"hidden\" name=\"rowcount\" id=\"rowcount\" value=\"0\">";
@@ -582,7 +558,7 @@ function DisplayNotifications(){
         }
         outstr += "</tbody></table></form><br>";
         outstr += "<button id=\"setnotificationsbutton\" onClick=\"saveNotifications()\">Save</button>";
-        document.getElementById("mydisplay").innerHTML = outstr;
+        $("#mydisplay").html(outstr);
         rowcount++;
         $('#rowcount').val(rowcount);
 
@@ -763,7 +739,7 @@ function DisplaySettings(){
         }
         outstr += "</table></form>";
         outstr += "<button id=\"setsettingsbutton\" onClick=\"saveSettings()\">Save</button>";
-        document.getElementById("mydisplay").innerHTML = outstr;
+        $("#mydisplay").html(outstr);
         $('.tooltip').tooltipster({
            animation: 'fade',
            delay: 100,
@@ -911,51 +887,182 @@ function saveSettings(){
     }
 }
 
+//*****************************************************************************
+// DisplayRegisters - Shows the raw register data.
+//*****************************************************************************
+var GlobalOldRegKeys;
+var InitOK = false;
+var UpdateTime = {};
+var fadeOffTime = 60;
 
+var BaseRegistersDescription = { "0000" : "Product line",
+                                 "0005" : "Exercise Time HH:MM (Read Only)",
+                                 "0006" : "Exercise Time Hi Byte = Day of Week 00=Sunday 01=Monday, Low Byte = 00=quiet=no, 01=yes",
+                                 "0007" : "Engine RPM",
+                                 "0008" : "Engine Frequency Hz",
+                                 "000a" : "Battery Voltage",
+                                 "000c" : "Engine Run Hours (Nexus, EvoAC)",
+                                 "000e" : "Generator Time HH:MM",
+                                 "000f" : "Generator Time Hi = month, Lo = day of the month",
+                                 "0010" : "Generator Time Hi Day of Week, Lo = year",
+                                 "0011" : "Utility Threshold",
+                                 "0012" : "Output voltage",
+                                 "001a" : "Hours until next service",
+                                 "002a" : "Hardware  Version (high byte), Firmware version (low byte)",
+                                 "0059" : "Set Voltage from Dealer Menu (not currently used) (EvoLC)",
+                                 "023b" : "Pick Up Voltage (EvoLC)",
+                                 "023e" : "Exercise time duration (EvoLC)",
+                                 "0054" : "Hours since generator activation (hours of protection) (EvoLC)",
+                                 "005f" : "Engine Run Minutes (EvoLC)",
+                                 "01f1" : "Unknown Status ",
+                                 "01f2" : "Unknown Status",
+                                 "001b" : "Unknown",
+                                 "001c" : "Unknown",
+                                 "001d" : "Unknown",
+                                 "001e" : "Unknown",
+                                 "001f" : "Unknown",
+                                 "0020" : "Unknown",
+                                 "0021" : "Unknown",
+                                 "0019" : "Unknown",
+                                 "0057" : "Unknown Status",
+                                 "0055" : "Unknown",
+                                 "0056" : "Unknown Status",
+                                 "005a" : "Unknown",
+                                 "000d" : "Bit changes when the controller is updating registers.",
+                                 "003c" : "Raw RPM Sensor",
+                                 "0058" : "Unknown Sensor (EvoLC)",
+                                 "005d" : "Unknown Sensor (EvoLC)",
+                                 "05ed" : "Ambient Temp Sensor (EvoAC)",
+                                 "05f5" : "Unknown Status (EvoAC, Nexus)",
+                                 "05fa" : "Unknown Status (EvoAC, Nexus)",
+                                 "0034" : "Unknown Sensor (Nexus, EvoAC)",
+                                 "0032" : "Unknown Sensor (Nexus, EvoAC)",
+                                 "0037" : "Unknown Sensor (Nexus, EvoAC)",
+                                 "0038" : "Unknown Sensor (Nexus, EvoAC)",
+                                 "003b" : "Unknown Sensor (Nexus, EvoAC)",
+                                 "002b" : "UnknownSensor (Temp?) (EvoAC)",
+                                 "0208" : "Unknown (EvoAC)",
+                                 "002e" : "Exercise Day",
+                                 "002c" : "Exercise Time HH:MM",
+                                 "002d" : "Weekly, Biweekly, Monthly Exercise (EvoAC)",
+                                 "002f" : "Quite Mode (EvoAC)",
+                                 "005c" : "Unknown",
+                                 "0001" : "Switch, Engine and Alarm Status",
+                                 "05f4" : "Output relay status register (EvoAC)",
+                                 "0053" : "Output relay status register (EvoLC)",
+                                 "0052" : "Input status register (sensors) (Evo LC)",
+                                 "0009" : "Utility Voltage",
+                                 "05f1" : "Last Alarm Code (Evo)"};
+
+function DisplayRegisters()
+{
+    var url = baseurl.concat("registers_json");
+    $.getJSON(url,function(result){
+
+        var RegData = result;
+
+        var textOut = "Live Register View:<br><br>";
+        textOut += "<center><table width=\"80%\" border=\"5\" style=\"border: 5px solid white;\"><tr>";
+        var reg_keys = {};
+        $.each(RegData.Registers["Base Registers"], function(i, item) {
+            reg_keys[Object.keys(item)[0]] = item[Object.keys(item)[0]]
+        });
+        $.each(Object.keys(reg_keys).sort(), function(i, reg_key) {
+            if ((i % 4) == 0){
+                textOut += "</tr><tr>";
+            }
+
+            var reg_val = reg_keys[reg_key];
+            if (InitOK == true) {
+                var old_reg_val = GlobalOldRegKeys[reg_key];
+                if (reg_val != old_reg_val) {
+                    UpdateTime[reg_key] = new Date().getTime();
+                }
+            } else {
+                UpdateTime[reg_key] = 0;
+            }
+            textOut += "<td width=\"25%\" style=\"border:5px solid white; background-color: #AAAAAA; vertical-align:bottom\">";
+            textOut +=     "<table width=\"100%\" heigth=\"100%\" style=\"border:2px solid #AAAAAA;\" id=\"val_"+reg_key+"\">";
+            textOut +=         "<tr><td align=\"center\" style=\"border-bottom: 1px solid #444444; font-size:12px;\">" + BaseRegistersDescription[reg_key] + "</td></tr>";
+            textOut +=         "<tr><td align=\"center\" style=\"border-bottom: 1px solid #444444; font-size:11px;\">(" + reg_key + ")</td></tr>";
+            textOut +=         "<tr><td align=\"center\" id=\"content_"+reg_key+"\">HEX: " + reg_val + "<br><span style=\"font-size:11px\">DEC: " + parseInt(reg_val, 16) + " | HI:LO: "+parseInt(reg_val.substring(0,2), 16)+":"+parseInt(reg_val.substring(2,4), 16)+"</span></td></tr>";
+            textOut +=     "</table>";
+            textOut += "</td>";
+        });
+        for (var i = (RegData.Registers["Base Registers"].length % 4); i < 4; i++) {
+             textOut += "<td width=\"25%\" style=\"border: 10px;\"></td>";
+        }
+        textOut += "</tr></table></center>";
+
+        $("#mydisplay").html(textOut);
+
+        var CurrentTime = new Date().getTime();
+        $.each(UpdateTime, function( reg_key, update_time ){
+            var difference = CurrentTime - update_time;
+            var secondsDifference = Math.floor(difference/1000);
+            if ((update_time > 0) && (secondsDifference >= fadeOffTime)) {
+               $("#val_"+reg_key).css("background-color", "#AAAAAA");
+               $("#content_"+reg_key).css("color", "red");
+            } else if ((update_time > 0) && (secondsDifference <= fadeOffTime)) {
+               var hexShadeR = toHex(255-Math.floor(secondsDifference*85/fadeOffTime));
+               var hexShadeG = toHex(Math.floor(secondsDifference*170/fadeOffTime));
+               var hexShadeB = toHex(Math.floor(secondsDifference*170/fadeOffTime));
+               $("#val_"+reg_key).css("background-color", "#"+hexShadeR+hexShadeG+hexShadeB);
+               $("#content_"+reg_key).css("color", "black");
+            }
+        });
+
+        GlobalOldRegKeys = reg_keys;
+        InitOK = true;
+    });
+}
+
+function toHex(d) {
+    return  ("0"+(Number(d).toString(16))).slice(-2).toUpperCase()
+}
 
 //*****************************************************************************
 //  called when menu is clicked
 //*****************************************************************************
-function MenuClick(e)
+function MenuClick(target)
 {
-
-    // is this an anchor
-    if (e.target.tagName == 'A'){
 
         RemoveClass();  // remove class from menu items
         // add class active to the clicked item
-        e.target.classList.add(GetCurrentClass());
+        target.find("a").addClass(GetCurrentClass());
         // update the display
-        switch (e.target.id){
+        menuElement = target.attr("id");
+        switch (target.attr("id")){
             case "status":
             case "maint":
             case "outage":
             case "logs":
             case "monitor":
                 window.scrollTo(0,0);
-                menuElementID = e.target;
-                GetDisplayValues(e.target.id);
-                if (e.target.id == "maint") {
+                GetDisplayValues(target.attr("id"));
+                if (target.attr("id") == "maint") {
                     SetExerciseChoice(true)
                 }
                 break;
             case "notifications":
                 window.scrollTo(0,0);
-                menuElementID = e.target;
                 DisplayNotifications();
                 SetVisibilityOfMaintList();
                 break;
             case "settings":
                 window.scrollTo(0,0);
-                menuElementID = e.target;
                 DisplaySettings();
+                SetVisibilityOfMaintList();
+                break;
+            case "registers":
+                window.scrollTo(0,0);
+                DisplayRegisters();
                 SetVisibilityOfMaintList();
                 break;
             default:
                 break;
         }
 
-    }
 }
 
 //*****************************************************************************
@@ -1007,7 +1114,7 @@ function GetDisplayValues(command)
         var outstr = replaceAll(result,'\n','<br/>')
         // replace space with html friendly &nbsp
         outstr = replaceAll(outstr,' ','&nbsp')
-        document.getElementById("mydisplay").innerHTML = outstr;
+        $("#mydisplay").html(outstr);
         SetVisibilityOfMaintList();
 
    });
@@ -1051,9 +1158,9 @@ function GetHeaderValues()
         var outstr = replaceAll(result,'\n','<br/>')
         // replace space with html friendly &nbsp
         outstr = replaceAll(outstr,' ','&nbsp')
-        var HeaderStr = "Generator Monitor at "
-        HeaderStr = HeaderStr.concat(outstr);
-        document.getElementById("myheader").innerHTML = HeaderStr
+        var HeaderStr = "<table border=\"0\" width=\"100%\" height=\"30px\"><tr><td width=\"30px\"></td><td width=\"90%\" style=\"vertical-align:middle\">Generator Monitor at " + outstr + "</td><td width=\"30px\" style=\"vertical-align:middle\"><img id=\"registers\" src=\"images/registers.png\" width=\"20px\" height=\"20px\"></td></tr></table>";
+        $("#myheader").html(HeaderStr);
+        $("#registers").on('click',  function() {  MenuClick($(this));});
     });
     return
 }
@@ -1063,11 +1170,12 @@ function GetHeaderValues()
 //*****************************************************************************
 function UpdateDisplay()
 {
-    if ((menuElementID.id != "settings") && (menuElementID.id != "notifications")) {
-        GetDisplayValues(menuElementID.id);
-    }
-    else {
-         SetVisibilityOfMaintList();
+    if (menuElement == "registers") {
+        DisplayRegisters();
+    } else if ((menuElement != "settings") && (menuElement != "notifications")) {
+        GetDisplayValues(menuElement);
+    } else {
+        SetVisibilityOfMaintList();
     }
 }
 
@@ -1118,7 +1226,7 @@ function GetBaseStatus()
 
             currentbaseState = baseState;
             // Added active to selected class
-            menuElementID.classList.add(GetCurrentClass());
+            $("#"+menuElement).find("a").addClass(GetCurrentClass());
 
         }
         return

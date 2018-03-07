@@ -7,7 +7,7 @@ strike, strong, sub, sup, tt, var,
 b, u, i, center,
 dl, dt, dd, ol, ul, li,
 fieldset, form, label, legend,
-table, caption, tbody, tfoot, thead, tr, th, td,
+table, caption, td, tr, 
 article, aside, canvas, details, embed,
 figure, figcaption, footer, header, hgroup,
 menu, nav, output, ruby, section, summary,
@@ -17,7 +17,6 @@ time, mark, audio, video {
     border: 0;
     font-size: 100%;
     font: inherit;
-    vertical-align: baseline;
 }
 /* HTML5 display-role reset for older browsers */
 article, aside, details, figcaption, figure,
@@ -45,8 +44,9 @@ table {
 input {
     font-size: 100%;
     font: inherit;
-    vertical-align: baseline;
+    vertical-align: middle;
 }
+
 /* END RESET*/
 body {
     font-size: 18px;
@@ -195,11 +195,15 @@ p {
 ul {
     list-style-type: none;
 }
+li:hover img{
+    -webkit-filter: invert(100%) !important; 
+}
 li a {
     display: block;
     color: #000;
     padding: 8px 8px;
     text-decoration: none;
+    vertical-align: middle;
 }
 li a.active {
     background-color: #4CAF50;
