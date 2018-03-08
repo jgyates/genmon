@@ -247,7 +247,7 @@ class GeneratorDevice:
         # and due to the magic of python, we often deal with the response in string values
         #   dict format  Register: [ Length in bytes: monitor change 0 - no, 1 = yes]
         self.BaseRegisters = {                  # base registers read by master
-                    "0000" : [2, 0],     # Unknown, possibly product line code (Nexus, EvoAQ, EvoLQ)
+                    "0000" : [2, 0],     # possibly product line code (Nexus, EvoAQ, EvoLQ)
                     "0005" : [2, 0],     # Exercise Time Hi Byte = Hour, Lo Byte = Min (Read Only) (Nexus, EvoAQ, EvoLQ)
                     "0006" : [2, 0],     # Exercise Time Hi Byte = Day of Week 00=Sunday 01=Monday, Low Byte = 00=quiet=no, 01=yes (Nexus, EvoAQ, EvoLQ)
                     "0007" : [2, 0],     # Engine RPM  (Nexus, EvoAQ, EvoLQ)
@@ -2284,7 +2284,7 @@ class GeneratorDevice:
         Engine["Frequency"] = self.GetFrequency
         Engine["Output Voltage"] = self.GetVoltageOutput
         if self.bDisplayUnknownSensors:
-            Engine["Unknown Sensors"] = self.DisplayUnknownSensors()
+            Engine["Unsupported Sensors"] = self.DisplayUnknownSensors()
 
 
         if self.EvolutionController:
