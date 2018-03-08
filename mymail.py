@@ -140,8 +140,14 @@ class MyMail:
     #---------- MyMail.EmailCommandThread -----------------------------------
     def Cleanup(self):
 
-        self.threadSendEmail.Stop()
-        self.threadReceiveEmail.Stop()
+        if not self.DisableEmail:
+            if self.SMTPServer != "":
+                self.threadSendEmail.Stop()
+
+        if not self.DisableEmail:
+            if self.Monitor and self.IMAPServer != "":
+                if self.IncomingCallback != None and self.IncomingFolder != None and self.ProcessedFolder != None:
+                    self.threadReceiveEmail.Stop()
 
         if self.Monitor:
             if self.Mailbox:
