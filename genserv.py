@@ -219,6 +219,9 @@ def SaveNotifications(query_string):
            skip = 0
 
         file_handle.close()
+        MyClientInterface.ProcessMonitorCommand("generator: reload")
+        Reload()
+
 
     except Exception as e1:
         print "Error Update Config File: " + str(e1)
@@ -344,10 +347,14 @@ def SaveSettings(query_string):
                           line = "".join(myList)
               file_handle.write(line+"\n")
            file_handle.close()
+       MyClientInterface.ProcessMonitorCommand("generator: reload")           
+       Reload()
 
     except Exception as e1:
         print "Error Update Config File: " + str(e1)
         log.error("Error Update Config File: " + str(e1))
+        
+        
 
 def findConfigLine(line):
     match = re.search(
@@ -383,7 +390,6 @@ def findCommentLine(line):
 #------------------------------------------------------------
 # This will reload the Flask App if use_reloader = True is enabled on the app.run command
 def Reload():
-
     os.system('touch ' + AppPath)
 
 #------------------------------------------------------------
