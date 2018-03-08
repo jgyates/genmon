@@ -28,7 +28,7 @@ except ImportError as e:
 
 import mymail, mylog, mythread
 
-GENMON_VERSION = "V1.5.3"
+GENMON_VERSION = "V1.5.4"
 
 #------------ SerialDevice class --------------------------------------------
 class SerialDevice:
@@ -453,6 +453,12 @@ class GeneratorDevice:
 
             if self.MailInit:
                 self.mail.Cleanup()
+                try:
+                    del self.Threads["SendMailThread"]
+                    del self.Threads["EmailCommandThread"]
+                except Exception as e1:
+                    RetStr = ""     # no error to report, using exception if send or rx email was disabled.
+
 
             self.MailInit = False
 
