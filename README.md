@@ -62,8 +62,6 @@ This software was written by one person with full time access to one generator. 
 In an effort to expand compatibility and functionality, from time to time I may use the [issue tracker](https://github.com/jgyates/genmon/issues) of this project to request input from people using the software. This input will will allow greater compatibility and new features to be added.
 
 ## Known Issues:
-The Evolution Controller contains a register that should hold details about the model of the generator. I believe I have decoded this register however I need additional data points to fully validate. My controller was replaced and as a result, the register on my system has not been properly initialized. Please see the project issue tracker issue on [this topic](https://github.com/jgyates/genmon/issues/10).
-
 Nexus Controllers are currently supported however the functionality is reduced due to the Nexus Controller supporting fewer features. On Nexus Controllers the ability to detect battery charging, transfer switch relay state and set the quiet mode is not functional. All other functionality support by the genmon.py and the Nexus controller should work as expected.
 
 If the legacy method of setting the exercise time is used (it is used on all Nexus controllers) then you can only set a future time on the current day of the week. You can set the exercise time to any day and time, except earlier in the day on the current day of the week.
