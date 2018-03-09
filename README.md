@@ -48,6 +48,8 @@ This project will monitor a backup generator that utilizes the Generac Evolution
          (i.e. power your house off the generator) remotely. 
 
 
+![Generator Monitor Web Interface](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/Web_UI_Status.png)
+
 ## Support
 This project is free to use under the posted license agreement. It was written and is supported by one person with testing and some documentation supported by users of the software. I originally created this project for my personal use however I decided to make the project available to anyone interested, however I do accept tips via paypal:
 
