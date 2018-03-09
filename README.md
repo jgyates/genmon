@@ -37,7 +37,7 @@ This project will monitor a backup generator that utilizes the Generac Evolution
         - Engine state change
         - Switch state change
         - Critical or Warning messages from the generator
-    Web based application for viewing status of the generator
+    Web based application for viewing status of the generator and changing settings
     SMS notifications of Generator state (via Twilio SMS API)
     Push notifications (via pushover.net)
     syslog logging of generator events
@@ -470,17 +470,9 @@ genserv.py is a python application that uses the Flask library/framework (http:/
 
      pip install Flask
 
-The genserv.py program uses the mylog.py and myclient.py modules so they must be in the same directory as genserv.py when it is executed. Genserv.py also uses the same configuration file /etc/genmon.py. The file /var/log/genserv.log is used for logging errors. The program genserv.py has one optional command line argument of the IP address of the system genserv.py is hosted. The default value is localhost, so if no command line argument is supplied the program assumes that genmon.py and genserv.py are on the same system. The flask library serve up static HTML, CSS and javascript files which are stored in a directory below the genserv.py app named static. Below are files and locations for genserv.py:
+The genserv.py program uses the mylog.py and myclient.py modules so they must be in the same directory as genserv.py when it is executed. Genserv.py also uses the same configuration file /etc/genmon.py. The file /var/log/genserv.log is used for logging errors. The program genserv.py has one optional command line argument of the IP address of the system genserv.py is hosted. The default value is localhost, so if no command line argument is supplied the program assumes that genmon.py and genserv.py are on the same system. The flask library serve up static HTML, CSS and javascript files which are stored in a directory below the genserv.py app named static. 
 
-        ./genserv.py                        - main app
-        ./template/command_template.html    - used for error processing in flask
-        ./static/index.html                 - main site page
-        ./static/genmon.css                 - main site style sheet
-        ./static/genmon.js                  - main site javascript
-        ./static/favicon.ico                - icon for html file
-        ./static/jquery-1.12.4.min.js .     - jquery runtime support
-
-        The default settings provide for hosting the web app on port 8000:
+ The default settings provide for hosting the web app on port 8000 however you can change the port number via the settings:
 
           Example: http://YourIPAddressGoesHere:8000
 
