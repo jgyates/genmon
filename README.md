@@ -472,7 +472,7 @@ genserv.py is a python application that uses the Flask library/framework (http:/
 
 The genserv.py program uses the mylog.py and myclient.py modules so they must be in the same directory as genserv.py when it is executed. Genserv.py also uses the same configuration file /etc/genmon.py. The file /var/log/genserv.log is used for logging errors. The program genserv.py has one optional command line argument of the IP address of the system genserv.py is hosted. The default value is localhost, so if no command line argument is supplied the program assumes that genmon.py and genserv.py are on the same system. The flask library serve up static HTML, CSS and javascript files which are stored in a directory below the genserv.py app named static. 
 
- The default settings provide for hosting the web app on port 8000 however you can change the port number via the settings:
+The default settings provide for hosting the web app on port 8000 however you can change the port number via the settings. Once genmon.py and genserv.py are running, from your internet browser use the following format for the web address:
 
           Example: http://YourIPAddressGoesHere:8000
 
