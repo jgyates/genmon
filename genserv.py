@@ -268,13 +268,16 @@ def GetSettings():
                     "syncdst" : ['boolean', 'Sync Daylight Savings Time', 22],
                     "synctime" : ['boolean', 'Sync Time', 23],
                     "enhancedexercise" : ['boolean', 'Enhanced Excercise Time', 44],
-                    "usehttps" : ['boolean', 'Use Secure Web Settings', 25],
-                    "useselfsignedcert" : ['boolean', 'Use Self-signed Certificate', 26],
-                    "keyfile" : ['string', 'https key file', 27],
-                    "certfile" : ['string', 'https certificate File', 28],
-                    "http_user" : ['string', 'Web user name', 29],
-                    "http_pass" : ['string', 'Web password', 30],
-                    "http_port" : ['int', 'Port of WebServer', 24],
+
+                    # These do not appear to work on reload, some issue with Flask
+                    #"usehttps" : ['boolean', 'Use Secure Web Settings', 25],
+                    #"useselfsignedcert" : ['boolean', 'Use Self-signed Certificate', 26],
+                    #"keyfile" : ['string', 'https key file', 27],
+                    #"certfile" : ['string', 'https certificate File', 28],
+                    #"http_user" : ['string', 'Web user name', 29],
+                    #"http_pass" : ['string', 'Web password', 30],
+                    # This does not appear to work on reload, some issue with Flask
+                    #"http_port" : ['int', 'Port of WebServer', 24],
 
                     "disableemail" : ['boolean', 'Disable Email usage', 101],
                     "email_pw" : ['string', 'Email Password', 103],
@@ -347,14 +350,14 @@ def SaveSettings(query_string):
                           line = "".join(myList)
               file_handle.write(line+"\n")
            file_handle.close()
-       MyClientInterface.ProcessMonitorCommand("generator: reload")           
+       MyClientInterface.ProcessMonitorCommand("generator: reload")
        Reload()
 
     except Exception as e1:
         print "Error Update Config File: " + str(e1)
         log.error("Error Update Config File: " + str(e1))
-        
-        
+
+
 
 def findConfigLine(line):
     match = re.search(
@@ -489,11 +492,12 @@ if __name__ == "__main__":
     AppPath = sys.argv[0]
     LoadConfig()
 
-    log.error("Starting " + AppPath)
+    log.error("Starting " + AppPath + " Port:" + str(HTTPPort))
 
     MyClientInterface = myclient.ClientInterface(host = address,port=clientport, log = log)
     while True:
         try:
+
             app.run(host="0.0.0.0", port=HTTPPort, threaded = True, ssl_context=SSLContext, use_reloader = True)
 
         except Exception as e1:
