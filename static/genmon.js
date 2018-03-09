@@ -214,7 +214,7 @@ function CreateSelectLists(){
     var option = document.createElement("p");
     option.id = "settime";
     myDiv.appendChild(option);
-    document.getElementById("settime").innerHTML = "<br>Generator Time: ";
+    document.getElementById("settime").innerHTML = "<br>Generator Time: <br><br>";
 
     var option = document.createElement("button");
     option.id = "settimebutton";
@@ -226,7 +226,7 @@ function CreateSelectLists(){
     var option = document.createElement("p");
     option.id = "remotecommands";
     myDiv.appendChild(option);
-    document.getElementById("remotecommands").innerHTML = "<br>Remote Commands: ";
+    document.getElementById("remotecommands").innerHTML = "<br>Remote Commands: <br><br>";
 
     var option = document.createElement("button");
     option.id = "remotestop";
@@ -234,11 +234,21 @@ function CreateSelectLists(){
     myDiv.appendChild(option);
     document.getElementById("remotestop").innerHTML = "Stop Generator";
 
+    var option = document.createElement("p");
+    option.id = "p1";
+    myDiv.appendChild(option);
+    document.getElementById("p1").innerHTML = "<br>";
+
     var option = document.createElement("button");
     option.id = "remotestart";
     option.onclick = SetStartClick;
     myDiv.appendChild(option);
     document.getElementById("remotestart").innerHTML = "Start Generator";
+
+    var option = document.createElement("p");
+    option.id = "p2";
+    myDiv.appendChild(option);
+    document.getElementById("p2").innerHTML = "<br>";
 
     var option = document.createElement("button");
     option.id = "remotetransfer";
@@ -619,7 +629,28 @@ function DisplayNotifications(){
 //*****************************************************************************
 function saveNotifications(){
 
-    var DisplayStr = "Save notifications? Note: Genmon must be restarted for this change to take effect.";
+    var DisplayStr = "Save notifications? Are you sure?";
+    var DisplayStrAnswer = false;
+    var DisplayStrButtons = { 
+        NO: {
+          text: 'Cancel',
+          type: 'button',
+          className: 'vex-dialog-button-secondary',
+          click: function noClick () {
+            DisplayStrAnswer = false
+            this.close()
+          }
+        },
+        YES: {
+          text: 'OK',
+          type: 'submit',
+          className: 'vex-dialog-button-primary',
+          click: function yesClick () {
+            DisplayStrAnswer = true
+          }
+        }
+    }
+
 
     var blankEmails = 0;
     $.each($('#formNotifications input[type=text]'), function( index, type ){
@@ -631,12 +662,31 @@ function saveNotifications(){
        alert("Emails cannot be blank. You have "+blankEmails+" blank lines");
        return
     }
+  
+    vex.dialog.open({
+        unsafeMessage: DisplayStr,
+        overlayClosesOnClick: false,
+        buttons: [
+           DisplayStrButtons.NO,
+           DisplayStrButtons.YES
+        ],
+        onSubmit: function(e) {
+           if (DisplayStrAnswer) {
+             DisplayStrAnswer = false; // Prevent recursive calls.
+             e.preventDefault();
+             saveNotificationsJSON();
+             var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
+             $('.vex-dialog-buttons').html(DisplayStr2);
+             $('.progress-bar-fill').queue(function () {
+                  $(this).css('width', '100%')
+             });
+             setTimeout(function(){ vex.closeAll(); }, 10000);
+           }
+        }
+    })
+}
 
-    var r = confirm(DisplayStr);
-    if (r == false) {
-        return
-    }
-
+function saveNotificationsJSON(){
     try {
         var fields = {};
 
@@ -674,8 +724,6 @@ function saveNotifications(){
         alert("Error: invalid selection");
     }
 }
-
-
 
 //*****************************************************************************
 // Display the Settings Tab
@@ -804,13 +852,13 @@ function DisplaySettings(){
                      $("#displayregisters").removeAttr("disabled");
                      $("#displaystatus").removeAttr("disabled");
                      $("#displaymaintenance").removeAttr("disabled");
-                     $("#displayunknown").removeAttr("disabled");
+                    // $("#displayunknown").removeAttr("disabled");
                  } else {
                      $("#displaymonitor").attr("disabled", "disabled");
                      $("#displayregisters").attr("disabled", "disabled");
                      $("#displaystatus").attr("disabled", "disabled");
                      $("#displaymaintenance").attr("disabled", "disabled");
-                     $("#displayunknown").attr("disabled", "disabled");
+                    // $("#displayunknown").attr("disabled", "disabled");
                  }
             });
             $("#usehttps").change(function () {
@@ -857,13 +905,52 @@ function getSortedKeys(obj, index) {
 //*****************************************************************************
 function saveSettings(){
 
-    var DisplayStr = "Save settings? Note: Genmon must be restarted for this change to take effect.";
-
-    var r = confirm(DisplayStr);
-    if (r == false) {
-        return
+    var DisplayStr = "Save settings? Are you sure?";
+    var DisplayStrAnswer = false;
+    var DisplayStrButtons = { 
+        NO: {
+          text: 'Cancel',
+          type: 'button',
+          className: 'vex-dialog-button-secondary',
+          click: function noClick () {
+            DisplayStrAnswer = false
+            this.close()
+          }
+        },
+        YES: {
+          text: 'OK',
+          type: 'submit',
+          className: 'vex-dialog-button-primary',
+          click: function yesClick () {
+            DisplayStrAnswer = true
+          }
+        }
     }
 
+    vex.dialog.open({
+        unsafeMessage: DisplayStr,
+        overlayClosesOnClick: false,
+        buttons: [
+           DisplayStrButtons.NO,
+           DisplayStrButtons.YES
+        ],
+        onSubmit: function(e) {
+           if (DisplayStrAnswer) {
+             DisplayStrAnswer = false; // Prevent recursive calls.
+             e.preventDefault();
+             saveSettingsJSON();
+             var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
+             $('.vex-dialog-buttons').html(DisplayStr2);
+             $('.progress-bar-fill').queue(function () {
+                  $(this).css('width', '100%')
+             });
+             setTimeout(function(){ vex.closeAll(); }, 10000);
+           }
+        }
+    })
+}
+
+function saveSettingsJSON() {
     try {
         var fields = {};
 
@@ -1070,22 +1157,13 @@ function MenuClick(target)
 // removes the current class from the menu anchor list
 //*****************************************************************************
 function RemoveClass() {
-
-    var myNodelist = document.getElementsByTagName("a");
-
-    var i;
-    // remove all "active" class items (should only be one in the list)
-    for (i = 0; i < myNodelist.length; i++)
-    {
-        myNodelist[i].classList.remove(GetCurrentClass());
-    }
+    $("li").find("a").removeClass(GetCurrentClass());
 }
 
 //*****************************************************************************
 // returns current CSS class for menu
 //*****************************************************************************
 function GetCurrentClass() {
-
     return currentClass
 }
 

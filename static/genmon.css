@@ -125,31 +125,14 @@ p {
 
 
 #settimebutton, #remotestop, #remotestart, #remotetransfer{
-        font-weight: bold;
-        font-family: Arial;
-        font-size: 16px;
         display:block;
         clear:both;
-        border-radius: 6px;
-        background-color: #f1f1f1;
-        box-shadow: 3px 3px 10px 0 rgba(0,0,0,0.2);
-        margin-left: 15px;
-        margin-top: 10px;
 }
 
 #setexercisebutton, #setsettingsbutton{
-        font-weight: bold;
-        font-family: Arial;
-        font-size: 16px;
         display:block;
         position:relative;
         clear:both;
-        padding: 5px;
-        border-radius: 6px;
-        background-color: #f1f1f1;
-        box-shadow: 3px 3px 10px 0 rgba(0,0,0,0.2);
-        margin-left: 15px;
-        margin-top: 25px;
 }
 
 #days{
@@ -245,4 +228,34 @@ li a.activeservice {
 li a:hover:not(.active) {
     background-color: #555;
     color: white;
+}
+/* Custom JQUERY classes */
+.progress-bar {
+    width: calc(100% - 6px);
+    height: 13px;
+    background: #e0e0e0;
+    padding: 3px;
+    border-radius: 3px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, .2);
+}
+
+.progress-bar-fill {
+    display: block;
+    height: 6px;
+    background: #4CAF50;
+    border-radius: 3px;
+    /*transition: width 250ms ease-in-out;*/
+    transition: width 10s ease-in-out;
+}
+button {
+    font-weight: bold;
+    font-family: Arial;
+    font-size: 16px;
+    border-radius: 3px;
+    border: 0;
+    margin: 0 0 0 .5em;
+    font-family: inherit;
+    line-height: 1em;
+    padding: .75em .75em;
+    background: #bbbbbb;
 }
