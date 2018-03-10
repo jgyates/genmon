@@ -218,9 +218,9 @@ def SaveNotifications(query_string):
            skip = 0
 
         file_handle.close()
-        MyClientInterface.ProcessMonitorCommand("generator: reload")
-        Reload()
-        #Restart()
+        #MyClientInterface.ProcessMonitorCommand("generator: reload")
+        #Reload()
+        Restart()
 
     except Exception as e1:
         log.error("Error Update Config File: " + str(e1))
@@ -268,14 +268,14 @@ def GetSettings():
                     "enhancedexercise" : ['boolean', 'Enhanced Excercise Time', 44],
 
                     # These do not appear to work on reload, some issue with Flask
-                    #"usehttps" : ['boolean', 'Use Secure Web Settings', 25],
-                    #"useselfsignedcert" : ['boolean', 'Use Self-signed Certificate', 26],
-                    #"keyfile" : ['string', 'https key file', 27],
-                    #"certfile" : ['string', 'https certificate File', 28],
-                    #"http_user" : ['string', 'Web user name', 29],
-                    #"http_pass" : ['string', 'Web password', 30],
+                    "usehttps" : ['boolean', 'Use Secure Web Settings', 25],
+                    "useselfsignedcert" : ['boolean', 'Use Self-signed Certificate', 26],
+                    "keyfile" : ['string', 'https key file', 27],
+                    "certfile" : ['string', 'https certificate File', 28],
+                    "http_user" : ['string', 'Web user name', 29],
+                    "http_pass" : ['string', 'Web password', 30],
                     # This does not appear to work on reload, some issue with Flask
-                    #"http_port" : ['int', 'Port of WebServer', 24],
+                    "http_port" : ['int', 'Port of WebServer', 24],
 
                     "disableemail" : ['boolean', 'Disable Email usage', 101],
                     "email_pw" : ['string', 'Email Password', 103],
@@ -347,14 +347,14 @@ def SaveSettings(query_string):
                             line = "".join(myList)
                 file_handle.write(line+"\n")
             file_handle.close()
-        MyClientInterface.ProcessMonitorCommand("generator: reload")
-        Reload()
-        #Restart()
+        #MyClientInterface.ProcessMonitorCommand("generator: reload")
+        #Reload()
+        Restart()
     except Exception as e1:
         log.error("Error Update Config File (SaveSettings): " + str(e1))
 
 
-
+#------------------------------------------------------------
 def findConfigLine(line):
     match = re.search(
         r"""^          # Anchor to start of line
@@ -389,12 +389,12 @@ def findCommentLine(line):
 #------------------------------------------------------------
 # This will reload the Flask App if use_reloader = True is enabled on the app.run command
 def Reload():
-    os.system('touch ' + AppPath)
-    #try:
-    #    log.error("Reloading: " + sys.executable + " " + __file__ )
-    #    os.execl(sys.executable, 'python', __file__, *sys.argv[1:])
-    #except Exception as e1:
-    #    log.error("Error in Reload: " + str(e1))
+    #os.system('touch ' + AppPath)
+    try:
+        log.error("Reloading: " + sys.executable + " " + __file__ )
+        os.execl(sys.executable, 'python', __file__, *sys.argv[1:])
+    except Exception as e1:
+        log.error("Error in Reload: " + str(e1))
 
 #------------------------------------------------------------
 # This will restart the Flask App
@@ -404,9 +404,8 @@ def Restart():
         pathtoscript = os.path.dirname(os.path.realpath(__file__))
         command = "/startgenmon.sh"
         arg = " restart"
-        log.error(pathtoscript + command + arg)
+        log.error("Restarting: " + pathtoscript + command + arg)
         subprocess.call(pathtoscript + command + arg, shell=True)
-        #os.system(pathtoscript + command + arg)
         return
 
     except Exception as e1:
@@ -510,11 +509,12 @@ if __name__ == "__main__":
     LoadConfig()
 
     log.error("Starting " + AppPath + " Port:" + str(HTTPPort))
+
     MyClientInterface = myclient.ClientInterface(host = address,port=clientport, log = log)
 
     while True:
         try:
-            app.run(host="0.0.0.0", port=HTTPPort, threaded = True, ssl_context=SSLContext, use_reloader = False)
+            app.run(host="0.0.0.0", port=HTTPPort, threaded = True, ssl_context=SSLContext, use_reloader = False, debug = False)
 
         except Exception as e1:
             log.error("Error in app.run:" + str(e1))
