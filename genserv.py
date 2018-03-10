@@ -10,8 +10,8 @@
 #------------------------------------------------------------
 
 from flask import Flask, render_template, request, jsonify, session
-import sys, signal, os, socket, atexit
-import mylog, myclient
+import sys, signal, os, socket, atexit, time, subprocess
+import mylog, myclient, mythread
 import urlparse
 import re
 
@@ -159,7 +159,6 @@ def GetNotifications():
                  allNotifications[parts[2]].append(parts[4])
 
     except Exception as e1:
-        print "Error Reading Config File: " + str(e1)
         log.error("Error Reading Config File: " + str(e1))
 
     return allNotifications
@@ -221,10 +220,9 @@ def SaveNotifications(query_string):
         file_handle.close()
         MyClientInterface.ProcessMonitorCommand("generator: reload")
         Reload()
-
+        #Restart()
 
     except Exception as e1:
-        print "Error Update Config File: " + str(e1)
         log.error("Error Update Config File: " + str(e1))
 
 
@@ -316,8 +314,7 @@ def GetSettings():
                        tooltip += parts[1] + " "
 
     except Exception as e1:
-        print "Error Reading Config File: " + str(e1)
-        log.error("Error Reading Config File: " + str(e1))
+        log.error("Error Reading Config File (GetSettings): " + str(e1))
 
     return allSettings
 
@@ -326,36 +323,35 @@ def SaveSettings(query_string):
     settings = dict(urlparse.parse_qs(query_string, 1))
 
     try:
-       for configFile in ["/etc/mymail.conf", "/etc/genmon.conf"]:
-           # Read contents from file as a single string
-           file_handle = open(configFile, 'r')
-           file_string = file_handle.read()
-           file_handle.close()
+        for configFile in ["/etc/mymail.conf", "/etc/genmon.conf"]:
+            # Read contents from file as a single string
+            file_handle = open(configFile, 'r')
+            file_string = file_handle.read()
+            file_handle.close()
 
-           # Write contents to file.
-           # Using mode 'w' truncates the file.
-           file_handle = open(configFile, 'w')
-           for line in file_string.splitlines():
-              if not line.isspace():
-                 parts = findConfigLine(line)
-                 for setting in settings.keys():
-                    if (parts and (len(parts) >= 5) and parts[3] and (not parts[3].isspace()) and parts[2] and (parts[2] == setting)):
-                          myList = list(parts)
-                          if ((parts[1] is not None) and (not parts[1].isspace())):
-                             # remove comment
-                             myList[1] = ""
-                          elif (parts[1] is None):
-                             myList[1] = ""
-                          myList[4] = settings[setting][0]
-                          line = "".join(myList)
-              file_handle.write(line+"\n")
-           file_handle.close()
-       MyClientInterface.ProcessMonitorCommand("generator: reload")
-       Reload()
-
+            # Write contents to file.
+            # Using mode 'w' truncates the file.
+            file_handle = open(configFile, 'w')
+            for line in file_string.splitlines():
+                if not line.isspace():
+                    parts = findConfigLine(line)
+                    for setting in settings.keys():
+                        if (parts and (len(parts) >= 5) and parts[3] and (not parts[3].isspace()) and parts[2] and (parts[2] == setting)):
+                            myList = list(parts)
+                            if ((parts[1] is not None) and (not parts[1].isspace())):
+                                # remove comment
+                                myList[1] = ""
+                            elif (parts[1] is None):
+                                myList[1] = ""
+                            myList[4] = settings[setting][0]
+                            line = "".join(myList)
+                file_handle.write(line+"\n")
+            file_handle.close()
+        MyClientInterface.ProcessMonitorCommand("generator: reload")
+        Reload()
+        #Restart()
     except Exception as e1:
-        print "Error Update Config File: " + str(e1)
-        log.error("Error Update Config File: " + str(e1))
+        log.error("Error Update Config File (SaveSettings): " + str(e1))
 
 
 
@@ -394,6 +390,27 @@ def findCommentLine(line):
 # This will reload the Flask App if use_reloader = True is enabled on the app.run command
 def Reload():
     os.system('touch ' + AppPath)
+    #try:
+    #    log.error("Reloading: " + sys.executable + " " + __file__ )
+    #    os.execl(sys.executable, 'python', __file__, *sys.argv[1:])
+    #except Exception as e1:
+    #    log.error("Error in Reload: " + str(e1))
+
+#------------------------------------------------------------
+# This will restart the Flask App
+def Restart():
+
+    try:
+        pathtoscript = os.path.dirname(os.path.realpath(__file__))
+        command = "/startgenmon.sh"
+        arg = " restart"
+        log.error(pathtoscript + command + arg)
+        subprocess.call(pathtoscript + command + arg, shell=True)
+        #os.system(pathtoscript + command + arg)
+        return
+
+    except Exception as e1:
+        log.error("Error in Restart: " + str(e1))
 
 #------------------------------------------------------------
 # return False if File not present
@@ -401,10 +418,10 @@ def CheckCertFiles(CertFile, KeyFile):
 
     try:
         with open(CertFile,"r") as MyCertFile:
-            with open(self.KeyFile,"r") as MyKeyFile:
+            with open(KeyFile,"r") as MyKeyFile:
                 return True
     except Exception as e1:
-        self.FatalError("Unable to open Cert or Key file: " + str(e1))
+        log.error("Unable to open Cert or Key file: " + str(e1))
         return False
 
     return True
@@ -493,13 +510,14 @@ if __name__ == "__main__":
     LoadConfig()
 
     log.error("Starting " + AppPath + " Port:" + str(HTTPPort))
-
     MyClientInterface = myclient.ClientInterface(host = address,port=clientport, log = log)
+
     while True:
         try:
-
-            app.run(host="0.0.0.0", port=HTTPPort, threaded = True, ssl_context=SSLContext, use_reloader = True)
+            app.run(host="0.0.0.0", port=HTTPPort, threaded = True, ssl_context=SSLContext, use_reloader = False)
 
         except Exception as e1:
             log.error("Error in app.run:" + str(e1))
+            time.sleep(2)
+            Restart()
 
