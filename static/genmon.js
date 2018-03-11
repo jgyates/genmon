@@ -864,8 +864,10 @@ function DisplaySettings(){
             $("#usehttps").change(function () {
                  if(($(this).is(":checked")) & (!$("#usehttps_disabled").is(":visible"))) {
                      $("#useselfsignedcert").removeAttr("disabled");
-                     $("#keyfile").removeAttr("disabled");
-                     $("#certfile").removeAttr("disabled");
+                     if (!$("#useselfsignedcert").is(":checked")) {
+                       $("#keyfile").removeAttr("disabled");
+                       $("#certfile").removeAttr("disabled");
+                     }
                      $("#http_user").removeAttr("disabled");
                      $("#http_pass").removeAttr("disabled");
                  } else {
@@ -874,6 +876,15 @@ function DisplaySettings(){
                      $("#certfile").attr("disabled", "disabled");
                      $("#http_user").attr("disabled", "disabled");
                      $("#http_pass").attr("disabled", "disabled");
+                 }
+            });
+            $("#useselfsignedcert").change(function () {
+                 if ($(this).is(":checked")) {
+                     $("#keyfile").attr("disabled", "disabled");
+                     $("#certfile").attr("disabled", "disabled");
+                 } else {
+                     $("#keyfile").removeAttr("disabled");
+                     $("#certfile").removeAttr("disabled");
                  }
             });
             $("#imap_server").change(function () {
@@ -889,6 +900,7 @@ function DisplaySettings(){
             $("#displayoutput").trigger("change");
             $("#usehttps").trigger("change");
             $("#imap_server").trigger("change");
+            $("#useselfsignedcert").trigger("change");
         });
 
    });
@@ -944,7 +956,7 @@ function saveSettings(){
              $('.progress-bar-fill').queue(function () {
                   $(this).css('width', '100%')
              });
-             setTimeout(function(){ vex.closeAll(); }, 10000);
+             setTimeout(function(){ vex.closeAll(); if ($('#sitename').val() != $('#sitename').attr('oldValue')) { GetHeaderValues() }}, 10000);
            }
         }
     })
@@ -1070,10 +1082,13 @@ function DisplayRegisters()
                 UpdateTime[reg_key] = 0;
             }
             textOut += "<td width=\"25%\" style=\"border:5px solid white; background-color: #AAAAAA; vertical-align:bottom\">";
-            textOut +=     "<table width=\"100%\" heigth=\"100%\" style=\"border:2px solid #AAAAAA;\" id=\"val_"+reg_key+"\">";
+            textOut +=     "<table width=\"100%\" heigth=\"100%\" style=\"border:2px solid #AAAAAA; height:100%;\" id=\"val_"+reg_key+"\">";
             textOut +=         "<tr><td align=\"center\" style=\"border-bottom: 1px solid #444444; font-size:12px;\">" + BaseRegistersDescription[reg_key] + "</td></tr>";
             textOut +=         "<tr><td align=\"center\" style=\"border-bottom: 1px solid #444444; font-size:11px;\">(" + reg_key + ")</td></tr>";
-            textOut +=         "<tr><td align=\"center\" id=\"content_"+reg_key+"\">HEX: " + reg_val + "<br><span style=\"font-size:11px\">DEC: " + parseInt(reg_val, 16) + " | HI:LO: "+parseInt(reg_val.substring(0,2), 16)+":"+parseInt(reg_val.substring(2,4), 16)+"</span></td></tr>";
+            textOut +=         "<tr><td align=\"center\" id=\"content_"+reg_key+"\">";
+            textOut +=            ((reg_key == "01f4") ? "<span style=\"font-size:14px\">HEX:<br>" + reg_val + "</font>" : "HEX: "+reg_val) + "<br>";
+            textOut +=            ((reg_key == "01f4") ? "" : "<span style=\"font-size:11px\">DEC: " + parseInt(reg_val, 16) + " | HI:LO: "+parseInt(reg_val.substring(0,2), 16)+":"+parseInt(reg_val.substring(2,4), 16)+"</span>");
+            textOut +=         "</td></tr>";
             textOut +=     "</table>";
             textOut += "</td>";
         });
