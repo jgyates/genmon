@@ -28,7 +28,7 @@ except ImportError as e:
 
 import mymail, mylog, mythread
 
-GENMON_VERSION = "V1.5.4"
+GENMON_VERSION = "V1.5.5"
 
 #------------ SerialDevice class --------------------------------------------
 class SerialDevice:
@@ -76,6 +76,13 @@ class SerialDevice:
 
         self.Flush()
 
+    # ---------- SerialDevice::ResetSerialStats------------------
+    def ResetSerialStats(self):
+        # resets status that are time based (affected by a time change)
+        self.SerialStartTime = datetime.datetime.now()     # used for com metrics
+        self.RxPacketCount = 0
+        self.TxPacketCount = 0
+        self.TotalElapsedPacketeTime = 0
     # ---------- SerialDevice::StartReadThread------------------
     def StartReadThread(self):
 
@@ -1317,7 +1324,7 @@ class GeneratorDevice:
 
         return Day, Hour, Minute, ModeStr
 
-     #----------  GeneratorDevice::SetGeneratorTimeDate-------------------------------
+     #----------  GeneratorDevice::SetGeneratorQuietMode-------------------------------
     def SetGeneratorQuietMode(self, CmdString):
 
         # extract quiet mode setting from Command String
@@ -1384,6 +1391,8 @@ class GeneratorDevice:
         Data.append(d.year - 2000)
 
         self.ProcessMasterSlaveWriteTransaction("000e", len(Data) / 2, Data)
+
+        self.Slave.ResetSerialStats()
 
     # ---------- GeneratorDevice::DiscardByte------------------
     def DiscardByte(self):
@@ -2234,6 +2243,7 @@ class GeneratorDevice:
 
         CurrentTime = datetime.datetime.now()
 
+        # TODO: Daylight Savings time messes up this calculation
         Delta = CurrentTime - self.Slave.SerialStartTime        # yields a timedelta object
         PacketsPerSecond = float((self.Slave.TxPacketCount + self.Slave.RxPacketCount)) / float(Delta.total_seconds())
         SerialStats["Packets Per Second"] = "%.2f" % (PacketsPerSecond)
@@ -3557,12 +3567,9 @@ class GeneratorDevice:
     #----------  GeneratorDevice::is_dst-------------------------------------
     def is_dst(self):
         #Determine whether or not Daylight Savings Time (DST) is currently in effect
-
-        x = datetime.datetime(datetime.datetime.now().year, 1, 1, 0, 0, 0, tzinfo=pytz.timezone('US/Eastern')) # Jan 1 of this year
-        y = datetime.datetime.now(pytz.timezone('US/Eastern'))
-
-        # if DST is in effect, their offsets will be different
-        return not (y.utcoffset() == x.utcoffset())
+        t = time.localtime()
+        isdst = t.tm_isdst
+        return (isdst != 0)
 
     #----------  GeneratorDevice::ComWatchDog-------------------------------------
     #----------  monitors receive data status to make sure we are still communicating
