@@ -83,48 +83,53 @@ def command(command):
 def ProcessCommand(command):
 
     if command in ["status", "status_json", "outage", "outage_json", "maint", "maint_json", "logs", "logs_json", "monitor", "monitor_json", "registers_json", "allregs_json", "getbase", "getsitename", "setexercise", "setquiet", "getexercise","setremote", "settime", "reload"]:
-            finalcommand = "generator: " + command
-            try:
-                if command == "setexercise":
-                    settimestr = request.args.get('setexercise', 0, type=str)
-                    finalcommand += "=" + settimestr
-                if command == "setquiet":
-                    setquietstr = request.args.get('setquiet', 0, type=str)
-                    finalcommand += "=" + setquietstr
-                if command == "setremote":
-                    setremotestr = request.args.get('setremote', 0, type=str)
-                    finalcommand += "=" + setremotestr
+        finalcommand = "generator: " + command
+        try:
+            if command == "setexercise":
+                settimestr = request.args.get('setexercise', 0, type=str)
+                finalcommand += "=" + settimestr
+            if command == "setquiet":
+                setquietstr = request.args.get('setquiet', 0, type=str)
+                finalcommand += "=" + setquietstr
+            if command == "setremote":
+                setremotestr = request.args.get('setremote', 0, type=str)
+                finalcommand += "=" + setremotestr
 
-                data = MyClientInterface.ProcessMonitorCommand(finalcommand)
+            data = MyClientInterface.ProcessMonitorCommand(finalcommand)
 
 
-            except Exception as e1:
-                data = "Retry"
-                log.error("Error on command function" + str(e1))
+        except Exception as e1:
+            data = "Retry"
+            log.error("Error on command function" + str(e1))
 
-            if command == "reload":
-                    Reload()                # reload Flask App
+        if command == "reload":
+                Reload()                # reload Flask App
 
-            if command in ["status_json", "outage_json", "maint_json", "monitor_json", "logs_json", "registers_json", "allregs_json"]:
-                return data
-            return jsonify(data)
+        if command in ["status_json", "outage_json", "maint_json", "monitor_json", "logs_json", "registers_json", "allregs_json"]:
+            return data
+        return jsonify(data)
+    elif command in ["update"]:
+        if (Update()):
+            return "OK"
+        else:
+            return "FAIL"
 
     elif command in ["notifications"]:
-            data = GetNotifications()
-            return jsonify(data)
+        data = GetNotifications()
+        return jsonify(data)
 
     elif command in ["settings"]:
-            data = GetSettings()
-            return jsonify(data)
+        data = GetSettings()
+        return jsonify(data)
 
     elif command in ["setnotifications"]:
-            SaveNotifications(request.args.get('setnotifications', 0, type=str));
-            return "OK"
+        SaveNotifications(request.args.get('setnotifications', 0, type=str));
+        return "OK"
 
     elif command in ["setsettings"]:
-            # SaveSettings((request.args.get('setsettings', 0, type=str)));
-            SaveSettings(request.args.get('setsettings', 0, type=str));
-            return "OK"
+        # SaveSettings((request.args.get('setsettings', 0, type=str)));
+        SaveSettings(request.args.get('setsettings', 0, type=str));
+        return "OK"
 
     else:
         return render_template('command_template.html', command = command)
@@ -400,17 +405,26 @@ def Reload():
 # This will restart the Flask App
 def Restart():
 
+    if not RunBashScript("/startgenmon.sh restart"):
+        log.error("Error in Restart")
+
+#------------------------------------------------------------
+def Update():
+    if not RunBashScript("/genmonmaint.sh update"):
+        log.error("Error in Update")
+
+#------------------------------------------------------------
+def RunBashScript(ScriptName):
     try:
         pathtoscript = os.path.dirname(os.path.realpath(__file__))
         command = "/bin/bash "
-        arg = "/startgenmon.sh restart"
-        log.error("Restarting: " + command + pathtoscript + arg)
+        log.error("Script: " + command + pathtoscript + "/" + arg)
         subprocess.call(command + pathtoscript + arg, shell=True)
-        return
+        return True
 
     except Exception as e1:
-        log.error("Error in Restart: " + str(e1))
-
+        log.error("Error in RunBashScript: " + str(e1))
+        return False
 #------------------------------------------------------------
 # return False if File not present
 def CheckCertFiles(CertFile, KeyFile):
@@ -500,6 +514,15 @@ def LoadConfig():
         log.error("Missing config file or config file entries: " + str(e1))
 
 #------------------------------------------------------------
+def ValidateFilePresent(FileName):
+    try:
+        with open(FileName,"r") as TestFile:     #
+            return True
+    except Exception as e1:
+            log.error("File (%s) not present." % FileName)
+            return False
+
+#------------------------------------------------------------
 if __name__ == "__main__":
     address='localhost' if len(sys.argv)<2 else sys.argv[1]
 
@@ -507,6 +530,15 @@ if __name__ == "__main__":
     LoadConfig()
 
     log.error("Starting " + AppPath + ", Port:" + str(HTTPPort) + ", Secure HTTP: " + str(bUseSecureHTTP) + ", SelfSignedCert: " + str(bUseSelfSignedCert))
+
+    # validate needed files are present
+    file = os.path.dirname(os.path.realpath(__file__)) + "/startgenmon.sh"
+    if not ValidateFilePresent(file):
+        log.error("Required file missing")
+
+    file = os.path.dirname(os.path.realpath(__file__)) + "/genmonmaint.sh"
+    if not ValidateFilePresent(file):
+        log.error("Required file missing")
 
     MyClientInterface = myclient.ClientInterface(host = address,port=clientport, log = log)
 
