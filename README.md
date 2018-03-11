@@ -90,12 +90,12 @@ One important step is to validate your serial port is working properly. You can 
 The project [wiki](https://github.com/jgyates/genmon/wiki/Setting-up-your-Pi-and-genmon) also has a description of setting up the Pi with genmon.py.
 
 # Detailed Documentation
-[Genmon Introduction](https://github.com/jgyates/genmon/wiki)
-[Software Overview](https://github.com/jgyates/genmon/wiki/Software)
-[Hardware Needed](https://github.com/jgyates/genmon/wiki/Hardware)
-[Making a Cable](https://github.com/jgyates/genmon/wiki/Making-a-Cable)
-[Setting Up Your Pi and Genmon](https://github.com/jgyates/genmon/wiki/Setting-up-your-Pi-and-genmon)
-[Updating Genmon to the Latest Version](https://github.com/jgyates/genmon/wiki/Updating-to-the-Latest-Version)
-[Software Design](https://github.com/jgyates/genmon/wiki/Design)
+* [Genmon Introduction](https://github.com/jgyates/genmon/wiki)
+* [Software Overview](https://github.com/jgyates/genmon/wiki/Software)
+* [Hardware Needed](https://github.com/jgyates/genmon/wiki/Hardware)
+* [Making a Cable](https://github.com/jgyates/genmon/wiki/Making-a-Cable)
+* [Setting Up Your Pi and Genmon](https://github.com/jgyates/genmon/wiki/Setting-up-your-Pi-and-genmon)
+* [Updating Genmon to the Latest Version](https://github.com/jgyates/genmon/wiki/Updating-to-the-Latest-Version)
+* [Software Design](https://github.com/jgyates/genmon/wiki/Design)
 
 
