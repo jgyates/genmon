@@ -89,7 +89,7 @@ One important step is to validate your serial port is working properly. You can 
 
 The project [wiki](https://github.com/jgyates/genmon/wiki/Setting-up-your-Pi-and-genmon) also has a description of setting up the Pi with genmon.py.
 
-# Detailed Documentation
+# Documentation
 * [Genmon Introduction](https://github.com/jgyates/genmon/wiki)
 * [Software Overview](https://github.com/jgyates/genmon/wiki/Software)
 * [Hardware Needed](https://github.com/jgyates/genmon/wiki/Hardware)
