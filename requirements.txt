@@ -2,3 +2,4 @@ Flask
 pytz
 configparser
 pyserial
+crcmod
