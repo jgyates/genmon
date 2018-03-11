@@ -402,10 +402,10 @@ def Restart():
 
     try:
         pathtoscript = os.path.dirname(os.path.realpath(__file__))
-        command = "/startgenmon.sh"
-        arg = " restart"
-        log.error("Restarting: " + pathtoscript + command + arg)
-        subprocess.call(pathtoscript + command + arg, shell=True)
+        command = "/bin/bash "
+        arg = "/startgenmon.sh restart"
+        log.error("Restarting: " + command + pathtoscript + arg)
+        subprocess.call(command + pathtoscript + arg, shell=True)
         return
 
     except Exception as e1:
@@ -506,7 +506,7 @@ if __name__ == "__main__":
     AppPath = sys.argv[0]
     LoadConfig()
 
-    log.error("Starting " + AppPath + " Port:" + str(HTTPPort))
+    log.error("Starting " + AppPath + ", Port:" + str(HTTPPort) + ", Secure HTTP: " + str(bUseSecureHTTP) + ", SelfSignedCert: " + str(bUseSelfSignedCert))
 
     MyClientInterface = myclient.ClientInterface(host = address,port=clientport, log = log)
 
