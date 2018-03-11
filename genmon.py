@@ -1392,7 +1392,6 @@ class GeneratorDevice:
 
         self.ProcessMasterSlaveWriteTransaction("000e", len(Data) / 2, Data)
 
-        self.Slave.ResetSerialStats()
 
     # ---------- GeneratorDevice::DiscardByte------------------
     def DiscardByte(self):
@@ -2243,7 +2242,7 @@ class GeneratorDevice:
 
         CurrentTime = datetime.datetime.now()
 
-        # TODO: Daylight Savings time messes up this calculation
+        #
         Delta = CurrentTime - self.Slave.SerialStartTime        # yields a timedelta object
         PacketsPerSecond = float((self.Slave.TxPacketCount + self.Slave.RxPacketCount)) / float(Delta.total_seconds())
         SerialStats["Packets Per Second"] = "%.2f" % (PacketsPerSecond)
@@ -2300,7 +2299,7 @@ class GeneratorDevice:
         if self.EvolutionController:
             Line["Transfer Switch State"] = self.GetTransferStatus
         Line["Utility Voltage"] = self.GetUtilityVoltage
-        # TODO
+        #
         Line["Utility Voltage Max"] = "%dV " % (self.UtilityVoltsMax)
         Line["Utility Voltage Min"] = "%dV " % (self.UtilityVoltsMin)
         Line["Utility Threshold Voltage"] = self.GetThresholdVoltage
@@ -3546,6 +3545,8 @@ class GeneratorDevice:
             if self.bSyncDST:
                 if self.bDST != self.is_dst():  # has DST changed?
                     self.bDST = self.is_dst()   # update Flag
+                    # time changed so some serial stats may be off
+                    self.Slave.ResetSerialStats()
                     # set new time
                     SetTimeThread = threading.Thread(target=self.SetGeneratorTimeDate, name = "SetTimeThread")
                     SetTimeThread.daemon = True
