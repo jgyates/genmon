@@ -108,11 +108,10 @@ def ProcessCommand(command):
         if command in ["status_json", "outage_json", "maint_json", "monitor_json", "logs_json", "registers_json", "allregs_json"]:
             return data
         return jsonify(data)
+
     elif command in ["update"]:
-        if (Update()):
-            return "OK"
-        else:
-            return "FAIL"
+        Update()
+        return "OK"
 
     elif command in ["notifications"]:
         data = GetNotifications()
@@ -410,8 +409,11 @@ def Restart():
 
 #------------------------------------------------------------
 def Update():
+    # update
     if not RunBashScript("/genmonmaint.sh update"):
         log.error("Error in Update")
+    # now restart
+    Restart()
 
 #------------------------------------------------------------
 def RunBashScript(ScriptName):
