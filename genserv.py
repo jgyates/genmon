@@ -97,7 +97,6 @@ def ProcessCommand(command):
 
             data = MyClientInterface.ProcessMonitorCommand(finalcommand)
 
-
         except Exception as e1:
             data = "Retry"
             log.error("Error on command function" + str(e1))
@@ -228,7 +227,6 @@ def SaveNotifications(query_string):
 
     except Exception as e1:
         log.error("Error Update Config File: " + str(e1))
-
 
 #------------------------------------------------------------
 def GetSettings():
@@ -410,7 +408,7 @@ def Restart():
 #------------------------------------------------------------
 def Update():
     # update
-    if not RunBashScript("/genmonmaint.sh update"):
+    if not RunBashScript("/genmonmaint.sh updatenp"):   # update no prompt
         log.error("Error in Update")
     # now restart
     Restart()
