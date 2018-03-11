@@ -389,7 +389,7 @@ def findCommentLine(line):
 #------------------------------------------------------------
 # This will reload the Flask App if use_reloader = True is enabled on the app.run command
 def Reload():
-    #os.system('touch ' + AppPath)
+    #os.system('touch ' + AppPath)      # reloader must be set to True to use this
     try:
         log.error("Reloading: " + sys.executable + " " + __file__ )
         os.execl(sys.executable, 'python', __file__, *sys.argv[1:])
@@ -464,17 +464,14 @@ def LoadConfig():
         if bUseSecureHTTP:
             if config.has_option('GenMon', 'http_user'):
                 HTTPAuthUser = config.get('GenMon', 'http_user')
-
-            if config.has_option('GenMon', 'http_pass'):
-                HTTPAuthPass = config.get('GenMon', 'http_pass')
-
-            # remove any leading or trailing whitespade
-            HTTPAuthUser = HTTPAuthUser.strip()
-            HTTPAuthPass = HTTPAuthPass.strip()
-            # No user name or pass specified, disable
-            if HTTPAuthUser == "":
-                HTTPAuthUser = None
-                HTTPAuthPass = None
+                HTTPAuthUser = HTTPAuthUser.strip()
+                 # No user name or pass specified, disable
+                if HTTPAuthUser == "":
+                    HTTPAuthUser = None
+                    HTTPAuthPass = None
+                elif config.has_option('GenMon', 'http_pass'):
+                    HTTPAuthPass = config.get('GenMon', 'http_pass')
+                    HTTPAuthPass = HTTPAuthPass.strip()
 
         if bUseSecureHTTP:
             app.secret_key = os.urandom(12)
@@ -498,6 +495,7 @@ def LoadConfig():
                 # if we get here then usehttps is enabled but not option for useselfsignedcert
                 # so revert to HTTP
                 HTTPPort = OldHTTPPort
+
     except Exception as e1:
         log.error("Missing config file or config file entries: " + str(e1))
 
