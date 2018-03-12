@@ -28,7 +28,7 @@ except ImportError as e:
 
 import mymail, mylog, mythread
 
-GENMON_VERSION = "V1.5.5"
+GENMON_VERSION = "V1.5.6"
 
 #------------ SerialDevice class --------------------------------------------
 class SerialDevice:
@@ -304,7 +304,7 @@ class GeneratorDevice:
                     "002e" : [2, 0],     # Evo AC   (Exercise Time)
                     "002c" : [2, 0],     # Evo AC   (Exercise Time)
                     "002d" : [2, 0],     # Evo AC   (Weekly, Biweekly, Monthly)
-                    "002f" : [2, 0],     # Evo AC   (Quite Mode)
+                    "002f" : [2, 0],     # Evo AC   (Quiet Mode)
                     "005c" : [2, 0]}
 
 
@@ -320,7 +320,7 @@ class GeneratorDevice:
         self.WriteRegisters = {  # 0003 and 0004 are index registers, used to write exercise time and other unknown stuff (remote start, stop and transfer)
                     "002c" : 2,     # Read / Write: Exercise Time HH:MM
                     "002e" : 2,     # Read / Write: Exercise Day Sunday =0, Monday=1
-                    "002f" : 2}     # Read / Write: Exercise Quite Mode=1 Not Quiet Mode = 0
+                    "002f" : 2}     # Read / Write: Exercise Quiet Mode=1 Not Quiet Mode = 0
 
         self.REGLEN = 0
         self.REGMONITOR = 1
@@ -331,6 +331,14 @@ class GeneratorDevice:
         self.bDisplayRegisters = False
         self.bDisplayStatus = False
         self.EnableDebug = False
+
+        ## BatteryChargerTest
+        self.bBatteryChargerTest = False
+        self.ChargerOnValues = {}
+        self.ChargerOffValues = {}
+        self.BatteryStateChanges = 0
+        self.BatteryState = False
+        ##
         self.bDisplayUnknownSensors = False
         self.bDisplayMaintenance = False
         self.bUseLegacyWrite = False
@@ -560,6 +568,11 @@ class GeneratorDevice:
                 self.bDisplayMaintenance = config.getboolean(ConfigSection, 'displaymaintenance')
             if config.has_option(ConfigSection, 'enabledebug'):
                 self.EnableDebug = config.getboolean(ConfigSection, 'enabledebug')
+
+            ## BatteryChargerTest
+            if config.has_option(ConfigSection, 'testcharger'):
+                self.bBatteryChargerTest = config.getboolean(ConfigSection, 'testcharger')
+            ## BatteryChargerTest
             if config.has_option(ConfigSection, 'displayunknown'):
                 self.bDisplayUnknownSensors = config.getboolean(ConfigSection, 'displayunknown')
             if config.has_option(ConfigSection, 'uselegacysetexercise'):
@@ -1025,6 +1038,7 @@ class GeneratorDevice:
 
     #-------------MonitorUnknownRegisters--------------------------------------------------------
     def MonitorUnknownRegisters(self,Register, FromValue, ToValue):
+
 
         msgbody = ""
         if self.RegisterIsKnown(Register):
@@ -1555,6 +1569,9 @@ class GeneratorDevice:
         # Validate Register by length
         if len(Register) != 4 or len(Value) < 4:
             self.LogError("Validation Error: Invalid data in UpdateRegisterList: %s %s" % (Register, Value))
+
+        ## BatteryChargerTest
+        self.DebugBatteryCharging(Register, Value)
 
         if self.RegisterIsKnown(Register):
             if not self.ValidateRegister(Register, Value):
@@ -3140,9 +3157,9 @@ class GeneratorDevice:
         if not len(retstr):
             return ""
         #should return this format:
-        # "Weekly Saturday 13:30 Quite Mode On"
-        # "Biweekly Saturday 13:30 Quite Mode On"
-        # "Monthly Day-1 13:30 Quite Mode On"
+        # "Weekly Saturday 13:30 Quiet Mode On"
+        # "Biweekly Saturday 13:30 Quiet Mode On"
+        # "Monthly Day-1 13:30 Quiet Mode On"
         Items = retstr.split(" ")
         HoursMin = Items[2].split(":")
 
@@ -3207,7 +3224,7 @@ class GeneratorDevice:
             if int(DayOfMonth,16) > 28:
                 return ""
 
-        Type = Value[2:]    # Quite Mode 00=no 01=yes
+        Type = Value[2:]    # Quiet Mode 00=no 01=yes
 
         ExerciseTime = ""
         if FreqVal == 0:
@@ -3226,11 +3243,11 @@ class GeneratorDevice:
 
 
         if Type == "00":
-            ExerciseTime += " Quite Mode Off"
+            ExerciseTime += " Quiet Mode Off"
         elif Type == "01":
-            ExerciseTime += " Quite Mode On"
+            ExerciseTime += " Quiet Mode On"
         else:
-            ExerciseTime += " Quite Mode Unknown"
+            ExerciseTime += " Quiet Mode Unknown"
 
         return ExerciseTime
 
@@ -3528,6 +3545,55 @@ class GeneratorDevice:
                     time.sleep(1)
                     if self.IsStopSignaled("DebugThread"):
                         return
+    #----------  GeneratorDevice::SyncGenTime-------------------------------------
+    def DebugBatteryCharging(self, Register, Value):
+
+        try:
+            if not self.bBatteryChargerTest:
+                return
+            ## BatteryChargerTest
+            self.CandidateRegs = ["01f1", "01f2","001b","001c","001d","001e",
+                        "001f","0020","0021","0019","0057","0055","0056",
+                        "005a","000d","003c","0058","005d","05ed","05f5",
+                        "05fa","0034","0032","0037","0038","003b","002b",
+                        "0208","002e","002c","002d","002f","005c","05f4",
+                        "0053","0052"]
+            # 0053 is charger status reg for EvoLC
+
+            if not Register in self.CandidateRegs:
+                return
+
+            MyStr = self.GetBatteryVoltage()
+            if MyStr == "":
+                return
+            MyStr = MyStr.replace("V", "")
+            Voltage = float(MyStr)
+
+            if Voltage > 13.5:
+                if not self.BatteryState:
+                    self.BatteryState = True
+                    self.BatteryStateChanges += 1
+                self.ChargerOnValues[Register] = Value
+            else:
+                if self.BatteryState:
+                    self.BatteryState = False
+                    self.BatteryStateChanges += 1
+                self.ChargerOffValues[Register] = Value
+
+            if (len(self.ChargerOnValues) == len(self.ChargerOffValues)) and (len(self.ChargerOnValues) > 1):
+            #if self.BatteryStateChanges >= 4:
+                OutStr = ""
+                for Reg, Val in self.ChargerOnValues.items():
+                    TempInt = int(Val,16) ^ int(self.ChargerOffValues[Reg],16)
+                    if not TempInt == 0:
+                        OutStr += "Reg: $s, Value: %x\n" %(Reg, TempInt)
+                self.ChargerOnValues.clear()
+                self.ChargerOffValues.clear()
+                self.BatteryStateChanges = 0
+                self.mail.sendEmail("Generator Battery Charger Test at " + self.SiteName, OutStr, msgtype = "info")
+
+        except Exception as e1:
+            self.LogError("Excpetion in DebugBatteryCharging: " + str(e1))
 
     #----------  GeneratorDevice::SyncGenTime-------------------------------------
     def SyncGenTime(self):

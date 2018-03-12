@@ -260,14 +260,14 @@ def GetSettings():
                     "disableoutagecheck" : ['boolean', 'Do not check for outages', 17],
                     # These settings are not displayed as the auto-detect controller will set these
                     # these are only to be used to override the auto-detect
-                    #"uselegacysetexercise" : ['boolean', 'Use Legacy Excercise Time', 43],
+                    #"uselegacysetexercise" : ['boolean', 'Use Legacy Exercise Time', 43],
                     #"liquidcooled" : ['boolean', 'Liquid Cooled', 41],
                     #"evolutioncontroller" : ['boolean', 'Evolution Controler', 42],
                     "petroleumfuel" : ['boolean', 'Petroleum Fuel', 40],
                     "outagelog" : ['string', 'Outage Log', 8],
                     "syncdst" : ['boolean', 'Sync Daylight Savings Time', 22],
                     "synctime" : ['boolean', 'Sync Time', 23],
-                    "enhancedexercise" : ['boolean', 'Enhanced Excercise Time', 44],
+                    "enhancedexercise" : ['boolean', 'Enhanced Exercise Time', 44],
 
                     # These do not appear to work on reload, some issue with Flask
                     "usehttps" : ['boolean', 'Use Secure Web Settings', 25],
@@ -402,13 +402,13 @@ def Reload():
 # This will restart the Flask App
 def Restart():
 
-    if not RunBashScript("/startgenmon.sh restart"):
+    if not RunBashScript("startgenmon.sh restart"):
         log.error("Error in Restart")
 
 #------------------------------------------------------------
 def Update():
     # update
-    if not RunBashScript("/genmonmaint.sh updatenp"):   # update no prompt
+    if not RunBashScript("genmonmaint.sh updatenp"):   # update no prompt
         log.error("Error in Update")
     # now restart
     Restart()
@@ -418,8 +418,8 @@ def RunBashScript(ScriptName):
     try:
         pathtoscript = os.path.dirname(os.path.realpath(__file__))
         command = "/bin/bash "
-        log.error("Script: " + command + pathtoscript + "/" + arg)
-        subprocess.call(command + pathtoscript + arg, shell=True)
+        log.error("Script: " + command + pathtoscript + "/" + ScriptName)
+        subprocess.call(command + pathtoscript + "/" + ScriptName, shell=True)
         return True
 
     except Exception as e1:
