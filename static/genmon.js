@@ -17,7 +17,7 @@ $("#navMenu").html('<ul>' +
 var baseState = "READY";        // updated on a time
 var currentbaseState = "READY"; // menus change on this var
 var currentClass = "active";    // CSS class for menu color
-var menuElement = 0;
+var menuElement = "status";
 var EnhancedExerciseEnabled = false;
 // on page load call init
 var pathname = ""
@@ -39,6 +39,7 @@ $(document).ready(function() {
     CreateSelectLists();
     SetVisibilityOfMaintList();
     $("li").on('click',  function() {  MenuClick($(this));});
+
 });
 
 //*****************************************************************************
@@ -631,7 +632,7 @@ function saveNotifications(){
 
     var DisplayStr = "Save notifications? Are you sure?";
     var DisplayStrAnswer = false;
-    var DisplayStrButtons = { 
+    var DisplayStrButtons = {
         NO: {
           text: 'Cancel',
           type: 'button',
@@ -662,7 +663,7 @@ function saveNotifications(){
        alert("Emails cannot be blank. You have "+blankEmails+" blank lines");
        return
     }
-  
+
     vex.dialog.open({
         unsafeMessage: DisplayStr,
         overlayClosesOnClick: false,
@@ -919,7 +920,7 @@ function saveSettings(){
 
     var DisplayStr = "Save settings? Are you sure?";
     var DisplayStrAnswer = false;
-    var DisplayStrButtons = { 
+    var DisplayStrButtons = {
         NO: {
           text: 'Cancel',
           type: 'button',
