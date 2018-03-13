@@ -22,6 +22,7 @@ except ImportError as e:
 
 #------------------------------------------------------------
 app = Flask(__name__,static_url_path='')
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 300
 
 HTTPAuthUser = None
 HTTPAuthPass = None
@@ -33,6 +34,18 @@ loglocation = "/var/log/"
 clientport = 0
 log = None
 AppPath = ""
+
+#------------------------------------------------------------
+@app.after_request
+def add_header(r):
+    """
+    Force cache header
+    """
+    r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, public, max-age=0"
+    r.headers["Pragma"] = "no-cache"
+    r.headers["Expires"] = "0"
+
+    return r
 #------------------------------------------------------------
 @app.route('/', methods=['GET'])
 def root():
