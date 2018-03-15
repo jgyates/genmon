@@ -35,6 +35,9 @@ clientport = 0
 log = None
 AppPath = ""
 
+MAIL_CONFIG = "/etc/mymail.conf"
+GENMON_CONFIG = "/etc/genmon.conf"
+
 #------------------------------------------------------------
 @app.after_request
 def add_header(r):
@@ -126,11 +129,11 @@ def ProcessCommand(command):
         return "OK"
 
     elif command in ["notifications"]:
-        data = GetNotifications()
+        data = ReadNotificationsFromFile()
         return jsonify(data)
 
     elif command in ["settings"]:
-        data = GetSettings()
+        data =  ReadSettingsFromFile()
         return jsonify(data)
 
     elif command in ["setnotifications"]:
@@ -146,40 +149,6 @@ def ProcessCommand(command):
         return render_template('command_template.html', command = command)
 
 #------------------------------------------------------------
-def GetNotifications():
-
-    ### array containing information on the parameters
-    ## 1st: email address
-    ## 2nd: sort order, aka row number
-    ## 3rd: comma delimited list of notidications that are enabled
-
-    allEmails = []
-    allNotifications = {}
-
-    try:
-        # Read contents from file as a single string
-        file_handle = open("/etc/mymail.conf", 'r')
-        file_string = file_handle.read()
-        file_handle.close()
-
-        for line in file_string.splitlines():
-           if not line.isspace():
-              parts = findConfigLine(line)
-              if (parts and (len(parts) >= 5) and parts[3] and (not parts[3].isspace()) and parts[2] and (parts[2] == "email_recipient")):
-                 allEmails = parts[4].split(',')
-                 i = 0
-                 while i < len(allEmails):
-                    allNotifications[allEmails[i]] = [i+1]
-                    i += 1
-              elif ((len(allEmails) > 0) and parts and (len(parts) >= 5) and parts[3] and (not parts[3].isspace()) and parts[2] and (parts[2] in allEmails)):
-                 allNotifications[parts[2]].append(parts[4])
-
-    except Exception as e1:
-        log.error("Error Reading Config File: " + str(e1))
-
-    return allNotifications
-
-#------------------------------------------------------------
 def SaveNotifications(query_string):
     notifications = dict(urlparse.parse_qs(query_string, 1))
     oldEmails = []
@@ -188,7 +157,7 @@ def SaveNotifications(query_string):
 
     try:
         # Read contents from file as a single string
-        file_handle = open("/etc/mymail.conf", 'r')
+        file_handle = open(MAIL_CONFIG, 'r')
         file_string = file_handle.read()
         file_handle.close()
 
@@ -202,7 +171,7 @@ def SaveNotifications(query_string):
         skip = 0;
         # Write contents to file.
         # Using mode 'w' truncates the file.
-        file_handle = open("/etc/mymail.conf", 'w')
+        file_handle = open(MAIL_CONFIG, 'w')
         for line in file_string.splitlines():
            if not line.isspace():
               parts = findConfigLine(line)
@@ -242,7 +211,105 @@ def SaveNotifications(query_string):
         log.error("Error Update Config File: " + str(e1))
 
 #------------------------------------------------------------
-def GetSettings():
+def ReadSingleConfigValue(file, section, type, entry, default):
+
+    try:
+        config = RawConfigParser()
+        # config parser reads from current directory, when running form a cron tab this is
+        # not defined so we specify the full path
+        config.read(file)
+
+        if not config.has_option(section, entry):
+            return default
+
+        if type == "string":
+            return config.get(section, entry)
+        elif type == "boolean":
+            return config.getboolean(section, entry)
+        elif type == "int":
+            return config.getint(section, entry)
+        else:
+            return default
+
+    except Exception as e1:
+        log.error("Error Reading Config File (ReadSingleConfigValue): " + str(e1))
+        return default
+
+#------------------------------------------------------------
+def WriteSignleConfigValue(file, section, entry, value, remove = False):
+
+    try:
+        config = RawConfigParser()
+        config.read(file)
+
+        if remove:
+            if config.has_option(section, entry):
+                config.remove_option(section, entry)
+        else:
+            config.set(section, entry, str(value))
+
+        # Writing our configuration file disk
+        with open(file, 'wb') as configfile:
+            config.write(configfile)
+
+    except Exception as e1:
+        log.error("Error Writing Config File (WriteSignleConfigValue): " + str(e1))
+
+#------------------------------------------------------------
+def WriteNotificationsToFile(query_string):
+
+    # TODO merge query_string
+    # e.g. {'displayunknown': ['true']}
+    settings = dict(urlparse.parse_qs(query_string, 1))
+
+    NotificationSettings = ReadNotificationsFromFile()
+
+    EmailList = []
+    for email, Notifications in NotificationSettings.items():
+        EmailList.append(email)
+        if len(Notifications):
+            NoticeString = ",".join(Notifications )
+            WriteSignleConfigValue(MAIL_CONFIG, "MyMail", email, NoticeString)
+        else:
+            # if no explicit notification, remove the notification entry (all notifications)
+            WriteSignleConfigValue(MAIL_CONFIG, "MyMail", email, "", remove = True)
+
+    EmailsString = ",".join(EmailList )
+
+    WriteSignleConfigValue(MAIL_CONFIG, "MyMail", "email_recipient", EmailsString)
+
+#------------------------------------------------------------
+def ReadNotificationsFromFile():
+
+    ### array containing information on the parameters
+    ## 1st: email address
+    ## 2nd: sort order, aka row number
+    ## 3rd: comma delimited list of notidications that are enabled
+    NotificationSettings = {}
+    # e.g. {'myemail@gmail.com': [1]}
+    # e.g. {'myemail@gmail.com': [1, 'error,warn,info']}
+
+    EmailsToNotify = []
+
+    # There should be only one "email_recipient" entry
+    EmailsStr = ReadSingleConfigValue(MAIL_CONFIG, "MyMail", "string", "email_recipient", "")
+
+    for email in EmailsStr.split(","):
+        email = email.strip()
+        EmailsToNotify.append(email)
+
+    SortOrder = 1
+    for email in EmailsToNotify:
+        Notify = ReadSingleConfigValue(MAIL_CONFIG, "MyMail", "string", email, "")
+        if Notify == "":
+            NotificationSettings[email] = [SortOrder]
+        else:
+            NotificationSettings[email] = [SortOrder, Notify]
+
+    return NotificationSettings
+
+#------------------------------------------------------------
+def ReadSettingsFromFile():
 
     ### array containing information on the parameters
     ## 1st: type of attribute
@@ -251,94 +318,102 @@ def GetSettings():
     ## 4th: current value (will be populated further below)
     ## 5th: tooltip (will be populated further below)
     ## 6th: parameter is currently disabled (will be populated further below)
+    ConfigSettings =  {
+                "sitename" : ['string', 'Site Name', 1, "SiteName", "", 0],
+                "port" : ['string', 'Port for Serial Communication', 2, "/dev/serial0", "", 0],
+                "incoming_mail_folder" : ['string', 'Incoming Mail folder<br><small>(if IMAP enabled)</small>', 151, "Generator", "", 0],
+                "processed_mail_folder" : ['string', 'Mail Processed folder<br><small>(if IMAP enabled)</small>', 152, "Generator/Processed","", 0],
+                # This option is not displayed as it will break the link between genmon and genserv
+                #"server_port" : ['int', 'Server Port', 5, 9082, "", 0],
+                # this option is not displayed as this will break the modbus comms, only for debugging
+                #"address" : ['string', 'Modbus slave address', 6, "9d", "", 0 ],
+                "loglocation" : ['string', 'Log Directory', 7, "/var/log/", "", 0],
+                #"displayoutput" : ['boolean', 'Output to Console', 50, False, "", 0],
+                #"displaymonitor" : ['boolean', 'Display Monitor Status', 51, False, "", 0],
+                #"displayregisters" : ['boolean', 'Display Register Status', 52, False, "", 0],
+                #"displaystatus" : ['boolean', 'Display Status', 53, False, "", 0],
+                #"displaymaintenance" : ['boolean', 'Display Maintenance', 54, False, "", 0],
+                #"enabledebug" : ['boolean', 'Enable Debug', 14, False, "", 0],
+                "displayunknown" : ['boolean', 'Display Unknown Sensors', 15, False, "", 0],
+                "disableoutagecheck" : ['boolean', 'Do not check for outages', 17, False, "", 0],
+                # These settings are not displayed as the auto-detect controller will set these
+                # these are only to be used to override the auto-detect
+                #"uselegacysetexercise" : ['boolean', 'Use Legacy Exercise Time', 43, False, "", 0],
+                #"liquidcooled" : ['boolean', 'Liquid Cooled', 41, False, "", 0],
+                #"evolutioncontroller" : ['boolean', 'Evolution Controler', 42, True, "", 0],
+                "petroleumfuel" : ['boolean', 'Petroleum Fuel', 40, False, "", 0],
+                "outagelog" : ['string', 'Outage Log', 8, "/home/pi/genmon/outage.txt", "", 0],
+                "syncdst" : ['boolean', 'Sync Daylight Savings Time', 22, False, "", 0],
+                "synctime" : ['boolean', 'Sync Time', 23, False, "", 0],
+                "enhancedexercise" : ['boolean', 'Enhanced Exercise Time', 44, False, "", 0],
 
-    allSettings =  {
-                    "sitename" : ['string', 'Site Name', 1],
-                    "port" : ['string', 'Port for Serial Communication', 2],
-                    "incoming_mail_folder" : ['string', 'Incoming Mail folder<br><small>(if IMAP enabled)</small>', 151],
-                    "processed_mail_folder" : ['string', 'Mail Processed folder<br><small>(if IMAP enabled)</small>', 152],
-                    # This option is not displayed as it will break the link between genmon and genserv
-                    #"server_port" : ['int', 'Server Port', 5],
-                    # this option is not displayed as this will break the modbus comms, only for debugging
-                    #"address" : ['string', 'Modbus slave address', 6],
-                    "loglocation" : ['string', 'Log Directory', 7],
-                    #"alarmfile" : ['string', 'Alarm Descriptions', 9],
-                    "displayoutput" : ['boolean', 'Output to Console', 50],
-                    "displaymonitor" : ['boolean', 'Display Monitor Status', 51],
-                    "displayregisters" : ['boolean', 'Display Register Status', 52],
-                    "displaystatus" : ['boolean', 'Display Status', 53],
-                    "displaymaintenance" : ['boolean', 'Display Maintenance', 54],
-                    "enabledebug" : ['boolean', 'Enable Debug', 14],
-                    "displayunknown" : ['boolean', 'Display Unknown Sensors', 15],
-                    "disableoutagecheck" : ['boolean', 'Do not check for outages', 17],
-                    # These settings are not displayed as the auto-detect controller will set these
-                    # these are only to be used to override the auto-detect
-                    #"uselegacysetexercise" : ['boolean', 'Use Legacy Exercise Time', 43],
-                    #"liquidcooled" : ['boolean', 'Liquid Cooled', 41],
-                    #"evolutioncontroller" : ['boolean', 'Evolution Controler', 42],
-                    "petroleumfuel" : ['boolean', 'Petroleum Fuel', 40],
-                    "outagelog" : ['string', 'Outage Log', 8],
-                    "syncdst" : ['boolean', 'Sync Daylight Savings Time', 22],
-                    "synctime" : ['boolean', 'Sync Time', 23],
-                    "enhancedexercise" : ['boolean', 'Enhanced Exercise Time', 44],
+                # These do not appear to work on reload, some issue with Flask
+                "usehttps" : ['boolean', 'Use Secure Web Settings', 25, False, "", 0],
+                "useselfsignedcert" : ['boolean', 'Use Self-signed Certificate', 26, True, "", 0],
+                "keyfile" : ['string', 'https key file', 27, "", "", 0],
+                "certfile" : ['string', 'https certificate File', 28, "", "", 0],
+                "http_user" : ['string', 'Web user name', 29, "", "", 0],
+                "http_pass" : ['string', 'Web password', 30, "", "", 0],
+                # This does not appear to work on reload, some issue with Flask
+                "http_port" : ['int', 'Port of WebServer', 24, 8000, "", 0],
 
-                    # These do not appear to work on reload, some issue with Flask
-                    "usehttps" : ['boolean', 'Use Secure Web Settings', 25],
-                    "useselfsignedcert" : ['boolean', 'Use Self-signed Certificate', 26],
-                    "keyfile" : ['string', 'https key file', 27],
-                    "certfile" : ['string', 'https certificate File', 28],
-                    "http_user" : ['string', 'Web user name', 29],
-                    "http_pass" : ['string', 'Web password', 30],
-                    # This does not appear to work on reload, some issue with Flask
-                    "http_port" : ['int', 'Port of WebServer', 24],
+                "disableemail" : ['boolean', 'Disable Email usage', 101, True, "", 0],
+                "email_pw" : ['string', 'Email Password', 103, "password", "", 0],
+                "email_account" : ['string', 'Email Account', 102, "myemail@gmail.com", "", 0],
+                "sender_account" : ['string', 'Sender Account', 104, "no-reply@gmail.com", "", 0],
+                # "email_recipient" : ['string', 'Email Recepient<br><small>(comma delimited)</small>', 105], # will be handled on the notification screen
+                "smtp_server" : ['string', 'SMTP Server <br><small>(leave emtpy to disable)</small>', 106, "smtp.gmail.com", "", 0],
+                "imap_server" : ['string', 'IMAP Server <br><small>(leave emtpy to disable)</small>', 150, "imap.gmail.com", "", 0],
+                "smtp_port" : ['int', 'SMTP Server Port', 107, 587, "", 0],
+                "ssl_enabled" : ['boolean', 'SMTP Server SSL Enabled', 108, False, "", 0]}
 
-                    "disableemail" : ['boolean', 'Disable Email usage', 101],
-                    "email_pw" : ['string', 'Email Password', 103],
-                    "email_account" : ['string', 'Email Account', 102],
-                    "sender_account" : ['string', 'Sender Account', 104],
-                    # "email_recipient" : ['string', 'Email Recepient<br><small>(comma delimited)</small>', 105], # will be handled on the notification screen
-                    "smtp_server" : ['string', 'SMTP Server <br><small>(leave emtpy to disable)</small>', 106],
-                    "imap_server" : ['string', 'IMAP Server <br><small>(leave emtpy to disable)</small>', 150],
-                    "smtp_port" : ['int', 'SMTP Server Port', 107],
-                    "ssl_enabled" : ['boolean', 'SMTP Server SSL Enabled', 108]}
 
-    try:
-       for configFile in ["/etc/mymail.conf", "/etc/genmon.conf"]:
-           # Read contents from file as a single string
-           file_handle = open(configFile, 'r')
-           file_string = file_handle.read()
-           file_handle.close()
+    for entry, List in ConfigSettings.items():
+        (ConfigSettings[entry])[3] = ReadSingleConfigValue(GENMON_CONFIG, "GenMon", List[0], entry, List[3])
 
-           tooltip = ""
+    for entry, List in ConfigSettings.items():
+        (ConfigSettings[entry])[3] = ReadSingleConfigValue(MAIL_CONFIG, "MyMail", List[0], entry, List[3])
 
-           for line in file_string.splitlines():
-              if not line.isspace():
-                 parts = findConfigLine(line)
-                 if (parts and (len(parts) >= 5) and parts[3] and (not parts[3].isspace())):
-                    if parts[2] in allSettings:
-                       allSettings[parts[2]].append(parts[4])
-                       allSettings[parts[2]].append(tooltip)
-                       tooltip = ""
-                       if ((parts[1] is not None) and (not parts[1].isspace())):
-                          allSettings[parts[2]].append(1)
-                       else:
-                          allSettings[parts[2]].append(0)
-                 else:
-                    parts = findCommentLine(line)
-                    if (parts and (len(parts) >= 2)):
-                       tooltip += parts[1] + " "
+    GetToolTips(ConfigSettings)
 
-    except Exception as e1:
-        log.error("Error Reading Config File (GetSettings): " + str(e1))
+    return ConfigSettings
 
-    return allSettings
+#------------------------------------------------------------
+def WriteSettingsToFile(query_string):
+
+    #TODO merge query string
+    # e.g. {'displayunknown': ['true']}
+    settings = dict(urlparse.parse_qs(query_string, 1))
+
+    ConfigSettings = ReadSettingsFromFile()
+
+    MailSettings = ["ssl_enabled", "smtp_port", "imap_server", "smtp_server", "sender_account", "email_recipient", "email_account", "email_pw", "disableemail"]
+
+    File = ""
+    Section = ""
+    for entry, List in ConfigSettings.items():
+        File = GENMON_CONFIG
+        Section = "GenMon"
+        if entry in MailSettings:
+            File = MAIL_CONFIG
+            Section = "MyMail"
+        WriteSignleConfigValue(File, Section, entry, List[3])
+
+#------------------------------------------------------------
+def GetToolTips(ConfigSettings):
+
+    pathtofile = os.path.dirname(os.path.realpath(__file__))
+    for entry, List in ConfigSettings.items():
+        (ConfigSettings[entry])[4] = ReadSingleConfigValue(pathtofile + "/tooltips.txt", "ToolTips", "string", entry, "")
 
 #------------------------------------------------------------
 def SaveSettings(query_string):
+
+    # e.g. {'displayunknown': ['true']}
     settings = dict(urlparse.parse_qs(query_string, 1))
 
     try:
-        for configFile in ["/etc/mymail.conf", "/etc/genmon.conf"]:
+        for configFile in [MAIL_CONFIG, GENMON_CONFIG]:
             # Read contents from file as a single string
             file_handle = open(configFile, 'r')
             file_string = file_handle.read()
@@ -389,13 +464,6 @@ def findConfigLine(line):
         ((?:\#.*)?)    # $6: Optional comment.
         $              # Anchor to end of line""",
         line, re.MULTILINE | re.VERBOSE)
-    if match :
-      return match.groups()
-    else:
-      return []
-#------------------------------------------------------------
-def findCommentLine(line):
-    match = re.search("^(\s*#\s*)(.*)$", line)
     if match :
       return match.groups()
     else:
