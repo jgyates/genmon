@@ -18,7 +18,7 @@
 
 from __future__ import print_function       # For python 3.x compatibility with print function
 
-import datetime, time, sys, smtplib, signal, os, threading, socket, serial, pytz
+import datetime, time, sys, smtplib, signal, os, threading, socket, serial
 import crcmod.predefined, crcmod, atexit, json, collections
 
 try:
