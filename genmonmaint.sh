@@ -26,7 +26,6 @@ function installgenmon() {
     sudo apt-get update
     sudo apt-get install python-pip
     sudo pip install crcmod
-    sudo pip install pytz
     sudo pip install configparser
     sudo apt-get install python-serial
     sudo pip install Flask
