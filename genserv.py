@@ -443,7 +443,6 @@ def SaveSettings(query_string):
     except Exception as e1:
         log.error("Error Update Config File (SaveSettings): " + str(e1))
 
-
 #------------------------------------------------------------
 def findConfigLine(line):
     match = re.search(
