@@ -338,6 +338,12 @@ class GeneratorDevice:
         self.ChargerOffValues = {}
         self.BatteryStateChanges = 0
         self.BatteryState = False
+        self.ChargerTestStart = None
+        ## TransferSwitchTest
+        self.bTransferSwitchTest = False
+        self.TSwitchOffValues = {}
+        self.TSwitchOnValues = {}
+        self.TransferTestStart = None
         ##
         self.bDisplayUnknownSensors = False
         self.bDisplayMaintenance = False
@@ -385,9 +391,9 @@ class GeneratorDevice:
 
         # check for ALARM.txt file present
         try:
-            if self.EvolutionController:
-                with open(self.AlarmFile,"r") as AlarmFile:     #
-                    self.printToScreen("Validated alarm file present")
+            self.AlarmFile = os.path.dirname(os.path.realpath(__file__)) + "/ALARMS.txt"
+            with open(self.AlarmFile,"r") as AlarmFile:     #
+                self.printToScreen("Validated alarm file present")
         except Exception as e1:
             self.FatalError("Unable to open alarm file: " + str(e1))
 
@@ -542,7 +548,6 @@ class GeneratorDevice:
             self.ServerSocketPort = config.getint(ConfigSection, 'server_port')
             self.Address = int(config.get(ConfigSection, 'address'),16)                      # modbus address
             self.LogLocation = config.get(ConfigSection, 'loglocation')
-            self.AlarmFile = config.get(ConfigSection, 'alarmfile')
 
             # optional config parameters, by default the software will attempt to auto-detect the controller
             # this setting will override the auto detect
@@ -573,6 +578,11 @@ class GeneratorDevice:
             if config.has_option(ConfigSection, 'testcharger'):
                 self.bBatteryChargerTest = config.getboolean(ConfigSection, 'testcharger')
             ## BatteryChargerTest
+
+            ## TransferSwitchTest
+            if config.has_option(ConfigSection, 'testtransferswitch'):
+                self.bTransferSwitchTest = config.getboolean(ConfigSection, 'testtransferswitch')
+            ## TransferSwitchTest
             if config.has_option(ConfigSection, 'displayunknown'):
                 self.bDisplayUnknownSensors = config.getboolean(ConfigSection, 'displayunknown')
             if config.has_option(ConfigSection, 'uselegacysetexercise'):
@@ -1279,12 +1289,10 @@ class GeneratorDevice:
                 self.LogError("Validation Error: Error parsing command string in ParseExerciseStringEx (items): " + CmdString)
                 return Day, Hour, Minute, ModeStr
 
-            DayStr = ParsedItems[0].lstrip()
-            DayStr = DayStr.rstrip()
+            DayStr = ParsedItems[0].strip()
 
             if len(ParsedItems) == 3:
-                ModeStr = ParsedItems[2].lstrip()
-                ModeStr = ModeStr.rstrip()
+                ModeStr = ParsedItems[2].strip()
             else:
                 ModeStr = "weekly"
 
@@ -1297,11 +1305,9 @@ class GeneratorDevice:
             if len(TimeItems) != 2:
                 return Day, Hour, Minute, ModeStr
 
-            HourStr = TimeItems[0].lstrip()
-            HourStr = HourStr.rstrip()
+            HourStr = TimeItems[0].strip()
 
-            MinuteStr = TimeItems[1].lstrip()
-            MinuteStr = MinuteStr.rstrip()
+            MinuteStr = TimeItems[1].strip()
 
             Minute = int(MinuteStr)
             Hour = int(HourStr)
@@ -1571,7 +1577,9 @@ class GeneratorDevice:
             self.LogError("Validation Error: Invalid data in UpdateRegisterList: %s %s" % (Register, Value))
 
         ## BatteryChargerTest
-        self.DebugBatteryCharging(Register, Value)
+        self.DebugBatteryCharger(Register, Value)
+        ## TransferSwitchTest
+        self.DebugTransferSwitch(Register, Value)
 
         if self.RegisterIsKnown(Register):
             if not self.ValidateRegister(Register, Value):
@@ -2195,8 +2203,7 @@ class GeneratorDevice:
             with open(self.OutageLog,"r") as OutageFile:     #opens file
 
                 for line in OutageFile:
-                    line = line.rstrip()                   # remove newline at end and trailing whitespace
-                    line = line.lstrip()                   # remove any leading whitespace
+                    line = line.strip()                   # remove whitespace at beginning and end
 
                     if not len(line):
                         continue
@@ -2753,8 +2760,7 @@ class GeneratorDevice:
             with open(self.AlarmFile,"r") as AlarmFile:     #opens file
 
                 for line in AlarmFile:
-                    line = line.rstrip()                   # remove newline at end and trailing whitespace
-                    line = line.lstrip()                   # remove any leading whitespace
+                    line = line.strip()                   # remove newline at beginning / end and trailing whitespace
                     if not len(line):
                         continue
                     if line[0] == "#":              # comment?
@@ -3545,14 +3551,77 @@ class GeneratorDevice:
                     time.sleep(1)
                     if self.IsStopSignaled("DebugThread"):
                         return
-    #----------  GeneratorDevice::SyncGenTime-------------------------------------
-    def DebugBatteryCharging(self, Register, Value):
+    #----------  GeneratorDevice::removeAlpha--------------------------
+    # used to remove alpha characters from string so the string contains a
+    # float value (leaves all special characters)
+    def removeAlpha(self, inputStr):
+        answer = "0"
+        for char in inputStr:
+            if not char.isalpha():
+                answer += char
+        return answer
+
+    #----------  GeneratorDevice::DebugTransferSwitch--------------------------
+    # To perform this test you must start genmon then set the generator to "Start and Transfer"
+    def DebugTransferSwitch(self, Register, Value):
+
+        try:
+            if not self.bTransferSwitchTest:
+                return
+
+            ## TransferSwitchTest
+            self.TSwitchCandidateRegs = ["01f1", "01f2","001b","001c","001d","001e",
+                        "001f","0020","0021","0019","0057","0055","0056",
+                        "005a","000d","003c","0058","005d","05ed","05f5",
+                        "05fa","0034","0032","0037","0038","003b","002b",
+                        "0208","002e","002c","002d","002f","005c","05f4",
+                        "0053","0052"]
+            # 0053 is TS status on Evo LC
+
+            if not Register in self.TSwitchCandidateRegs:
+                return
+
+            # Get Generator Voltage
+            MyStr = self.GetVoltageOutput()
+            if MyStr == "":
+                return
+            MyStr = self.removeAlpha(MyStr)
+            OutuptVoltage = float(MyStr)
+
+            if OutuptVoltage == 0:
+                self.TSwitchOffValues[Register] = Value
+            elif OutputVoltage > 230:
+                # Let time elapse so engine starts
+                if self.TransferTestStart == None:
+                    self.TransferTestStart = datetime.datetime.now()
+
+                DeltaTime = datetime.datetime.now() - self.TransferTestStart
+                if DeltaTime.seconds > 20:
+                    self.TSwitchOnValues[Register] = Value
+
+            if (len(self.TSwitchOffValues) == len(self.TSwitchOnValues)) and (len(self.TSwitchOnValues) == len(self.TSwitchCandidateRegs)):
+                OutStr = ""
+                for Reg, Val in self.TSwitchOffValues.items():
+                    TempInt = int(Val,16) ^ int(self.TSwitchOnValues[Reg],16)
+                    if not TempInt == 0:
+                        OutStr += "Reg: %s, Value: %x\n" %(Reg, TempInt)
+                self.TSwitchOnValues.clear()
+                self.TSwitchOffValues.clear()
+                self.TransferTestStart == None
+
+                self.mail.sendEmail("Generator Transfer Switch Test at " + self.SiteName, OutStr, msgtype = "info")
+
+        except Exception as e1:
+            self.LogError("Excpetion in DebugTransferSwitch: " + str(e1))
+
+    #----------  GeneratorDevice::DebugBatteryCharger-------------------------------------
+    def DebugBatteryCharger(self, Register, Value):
 
         try:
             if not self.bBatteryChargerTest:
                 return
             ## BatteryChargerTest
-            self.CandidateRegs = ["01f1", "01f2","001b","001c","001d","001e",
+            self.ChargerCandidateRegs = ["01f1", "01f2","001b","001c","001d","001e",
                         "001f","0020","0021","0019","0057","0055","0056",
                         "005a","000d","003c","0058","005d","05ed","05f5",
                         "05fa","0034","0032","0037","0038","003b","002b",
@@ -3560,40 +3629,50 @@ class GeneratorDevice:
                         "0053","0052"]
             # 0053 is charger status reg for EvoLC
 
-            if not Register in self.CandidateRegs:
+            if not Register in self.ChargerCandidateRegs:
+                return
+
+            # make sure engine is off
+            if not self.GetEngineState() == "READY":
                 return
 
             MyStr = self.GetBatteryVoltage()
             if MyStr == "":
                 return
-            MyStr = MyStr.replace("V", "")
+            MyStr = self.removeAlpha(MyStr)
             Voltage = float(MyStr)
 
-            if Voltage > 13.5:
+            if Voltage > 13.8:
                 if not self.BatteryState:
                     self.BatteryState = True
                     self.BatteryStateChanges += 1
                 self.ChargerOnValues[Register] = Value
-            else:
+            elif Voltaber < 12.8:
                 if self.BatteryState:
                     self.BatteryState = False
                     self.BatteryStateChanges += 1
-                self.ChargerOffValues[Register] = Value
+                # Let time elapse so registers are updated
+                if self.ChargerTestStart == None:
+                    self.ChargerTestStart = datetime.datetime.now()
 
-            if (len(self.ChargerOnValues) == len(self.ChargerOffValues)) and (len(self.ChargerOnValues) > 1):
-            #if self.BatteryStateChanges >= 4:
+                DeltaTime = datetime.datetime.now() - self.ChargerTestStart
+                if DeltaTime.seconds > 10:
+                    self.ChargerOffValues[Register] = Value
+
+            if (len(self.ChargerOnValues) == len(self.ChargerOffValues)) and (len(self.ChargerOnValues) == len(self.ChargerCandidateRegs)):
                 OutStr = ""
                 for Reg, Val in self.ChargerOnValues.items():
                     TempInt = int(Val,16) ^ int(self.ChargerOffValues[Reg],16)
                     if not TempInt == 0:
-                        OutStr += "Reg: $s, Value: %x\n" %(Reg, TempInt)
+                        OutStr += "Reg: %s, Value: %x\n" %(Reg, TempInt)
                 self.ChargerOnValues.clear()
                 self.ChargerOffValues.clear()
                 self.BatteryStateChanges = 0
+                self.ChargerTestStart = None
                 self.mail.sendEmail("Generator Battery Charger Test at " + self.SiteName, OutStr, msgtype = "info")
 
         except Exception as e1:
-            self.LogError("Excpetion in DebugBatteryCharging: " + str(e1))
+            self.LogError("Excpetion in DebugBatteryCharger: " + str(e1))
 
     #----------  GeneratorDevice::SyncGenTime-------------------------------------
     def SyncGenTime(self):
