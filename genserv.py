@@ -262,7 +262,7 @@ def GetSettings():
                     # this option is not displayed as this will break the modbus comms, only for debugging
                     #"address" : ['string', 'Modbus slave address', 6],
                     "loglocation" : ['string', 'Log Directory', 7],
-                    "alarmfile" : ['string', 'Alarm Descriptions', 9],
+                    #"alarmfile" : ['string', 'Alarm Descriptions', 9],
                     "displayoutput" : ['boolean', 'Output to Console', 50],
                     "displaymonitor" : ['boolean', 'Display Monitor Status', 51],
                     "displayregisters" : ['boolean', 'Display Register Status', 52],
