@@ -746,7 +746,7 @@ function DisplaySettings(){
             } else if (result[key][2] == 50) {
               outstr += "<tr><td style=\"padding: 5px;\" colspan=\"2\"><br><br>Console Settings:</td></tr>";
             } else if (result[key][2] == 40) {
-              outstr += "<tr><td style=\"padding: 5px;\" colspan=\"2\"><br><br>Generator Model Settings:</td></tr>";
+              outstr += "<tr><td style=\"padding: 5px;\" colspan=\"2\"><br><br>Generator Model Specific Settings:</td></tr>";
             } else if (result[key][2] == 25) {
               outstr += "<tr><td style=\"padding: 5px;\" colspan=\"2\"><br><br>Webserver Security Settings:</td></tr>";
             } else if (result[key][2] == 101) {
@@ -769,15 +769,21 @@ function DisplaySettings(){
                 break;
               case "int":
                 outstr += "<input id=\"" + key + "\" name=\"" + key + "\" type=\"text\" " +
-                           (typeof result[key][3] === 'undefined' ? "" : "value=\"" + replaceAll(result[key][3], '"', '&quot;') + "\" ") +
-                           (typeof result[key][3] === 'undefined' ? "" : "oldValue=\"" + replaceAll(result[key][3], '"', '&quot;') + "\" ") +
+                          // TODO, here ints were converted to strings
+                          // (typeof result[key][3] === 'undefined' ? "" : "value=\"" + replaceAll(result[key][3], '"', '&quot;') + "\" ") +
+                           (typeof result[key][3] === 'undefined' ? "" : "value=\"" + result[key][3].toString() + "\" ") +
+                         //  (typeof result[key][3] === 'undefined' ? "" : "oldValue=\"" + replaceAll(result[key][3], '"', '&quot;') + "\" ") +
+                           (typeof result[key][3] === 'undefined' ? "" : "oldValue=\"" + result[key][3].toString() + "\" ") +
                            (typeof result[key][4] === 'undefined' ? "" : "title=\"" + replaceAll(result[key][4], '"', '&quot;') + "\" ") +
                           " class=\"tooltip\">";
                 break;
               case "boolean":
                 outstr += "<span id=\"" + key + "_bg\"><input id=\"" + key + "\" name=\"" + key + "\" type=\"checkbox\" " +
-                           (((typeof result[key][3] !== 'undefined' ) && (result[key][3].toLowerCase() == "true")) ? " checked " : "") +
-                           (((typeof result[key][3] !== 'undefined' ) && (result[key][3].toLowerCase() == "true")) ? " oldValue=\"true\" " : " oldValue=\"false\" ") +
+                          // TODO, here boolean values were converted to strings
+                          // (((typeof result[key][3] !== 'undefined' ) && (result[key][3].toLowerCase() == "true")) ? " checked " : "") +
+                          (((typeof result[key][3] !== 'undefined' ) && (result[key][3].toString() == "true")) ? " checked " : "") +
+                          // (((typeof result[key][3] !== 'undefined' ) && (result[key][3].toLowerCase() == "true")) ? " oldValue=\"true\" " : " oldValue=\"false\" ") +
+                          (((typeof result[key][3] !== 'undefined' ) && (result[key][3].toString() == "true")) ? " oldValue=\"true\" " : " oldValue=\"false\" ") +
                            (typeof result[key][4] === 'undefined' ? "" : " title=\"" + replaceAll(result[key][4], '"', '&quot;') + "\" ") +
                           " class=\"tooltip\"></span>";
                 break;
