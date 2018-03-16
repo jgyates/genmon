@@ -1,3 +1,5 @@
+Use the template below if you have an issue or want to report a bug. If you have a question or a feature request you can ignore the questions below.
+
 ### Expected Behavior
 
 {Please write here}
