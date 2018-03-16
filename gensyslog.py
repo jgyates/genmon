@@ -13,7 +13,11 @@
 import datetime, time, sys, signal, os, threading, socket
 import atexit
 import mynotify, mylog
-import configparser
+try:
+    from ConfigParser import RawConfigParser
+except ImportError as e:
+    from configparser import RawConfigParser
+
 import syslog
 
 
@@ -103,7 +107,7 @@ def SendNotice(Message):
         syslog.openlog("genmon")
         syslog.syslog("%s" % Message)
         syslog.closelog()
-        
+
     except Exception as e1:
         log.error("Error: " + str(e1))
         print ("Error: " + str(e1))

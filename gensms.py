@@ -13,7 +13,12 @@
 import datetime, time, sys, signal, os, threading, socket
 import atexit
 import mynotify, mylog
-import configparser
+
+try:
+    from ConfigParser import RawConfigParser
+except ImportError as e:
+    from configparser import RawConfigParser
+
 from twilio.rest import Client
 
 
@@ -123,7 +128,7 @@ if __name__=='__main__': # usage program.py [server_address]
         log = mylog.SetupLogger("client", "/var/log/gensms.log")
 
         # read config file
-        config = configparser.RawConfigParser()
+        config = RawConfigParser()
         # config parser reads from current directory, when running form a cron tab this is
         # not defined so we specify the full path
         config.read('/etc/gensms.conf')
