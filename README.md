@@ -4,49 +4,46 @@
 This project will monitor a backup generator that utilizes the Generac Evolution or Nexus Controllers over a WiFi or wired connection. Generac, Eaton, Honeywell and Siemens Home Backup Generators use these Generac controllers. Honeywell and Eaton call the controllers Sync 1.0 (Nexus) and Sync 2.0 (Evolution) in their documentation however all of these companies sell generators that use the controllers supported by this project. The project is written mostly in python and has been tested with a Raspberry Pi 3 (Pi Zero and Pi 2 has also been validated). Ideally you would need to create a physical enclosure for your raspberry pi and possibly [make a cable](https://github.com/jgyates/genmon/wiki/Making-a-Cable) to connect the raspberry pi to the Evolution or Nexus controller. If you are comfortable doing these things and you have a backup generator that has an Generac Evolution or Nexus controller then this project may be of interest to you.
  
 ## Functionality
-   The software supports the following features:
+The software supports the following features:
 
-    Monitoring of the generator to to detect and report the following:
-        - Maintenance, Start / Stop and Alarm Logs (No Maintenance log exist on Nexus)
-        - Display Generator Serial Number
-        - Generator warnings and faults 
-        - Generator Status:
-            - Engine State
-                - Generator Switch State (Auto, On, Off)
-                - Generator Engine State (Stopped, Starting, Exercising, Running Manual,
-                    Running Utility Loss, Stopped due to Alarm, Cooling Down)
-                - Battery Voltage and Charging Status
-                - Relay Output State: (Starter, Fuel Relay, Battery Charger, others for liquid cooled models)
-                - Engine RPM, Hz and Voltage Output
-                - Generator Controller Time
+* Monitoring of the generator to to detect and report the following:
+    * Maintenance, Start / Stop and Alarm Logs (No Maintenance log exist on Nexus)
+    * Display Generator Serial Number
+    * Generator warnings and faults 
+    * Generator Status:
+        * Engine State
+            - Generator Switch State (Auto, On, Off)
+            - Generator Engine State (Stopped, Starting, Exercising, Running Manual, Running Utility Loss, Stopped due to Alarm, Cooling Down)
+            - Battery Voltage and Charging Status
+            - Relay Output State: (Starter, Fuel Relay, Battery Charger, others for liquid cooled models)
+            - Engine RPM, Hz and Voltage Output
+            - Generator Controller Time
             - Line State
                 - Utility Voltage Level
                 - Transfer Switch State (Evolution liquid cooled models only)
-        - Outage Information
+        * Outage Information
             - Time since last outage
             - Current Utility Voltage
             - Min and Max Utility Voltage since program started
-        - Maintenance Information
+        * Maintenance Information
             - Weekly Exercise time, day (biweekly and monthly if supported by your generator)
             - Hours till next scheduled service
             - Total Run Hours
             - Firmware and Hardware versions
-        - Various statics from the generator monitor including time since program launched,
+        * Various statics from the generator monitor including time since program launched,
               MODBUS / serial communications health and program health.
-    Email notification of :
-        - Engine state change
-        - Switch state change
-        - Critical or Warning messages from the generator
-    Web based application for viewing status of the generator and changing settings
-    SMS notifications of Generator state (via Twilio SMS API)
-    Push notifications (via pushover.net)
-    syslog logging of generator events
-    Command Line application (all the functionality of email commands)
-    Ability to set exercise time 
-    Ability to set generator time
-    Ability to start, stop, exercise and start / active the transfer switch 
-         (i.e. power your house off the generator) remotely. 
-
+* Email notification of :
+    - Engine state change
+    - Switch state change
+    - Critical or Warning messages from the generator
+- Web based application for viewing status of the generator 
+- SMS notifications of Generator state (via Twilio SMS API)
+- Push notifications (via pushover.net)
+- syslog logging of generator events
+- Command Line application (all the functionality of email). 
+- Ability to set exercise time 
+- Ability to set generator time
+- Ability to start, stop, exercise and start / active the transfer switch (i.e. power your house off the generator) remotely. 
 
 ![Generator Monitor Web Interface](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/Web_UI_Status.png)
 
