@@ -321,8 +321,8 @@ def ReadSettingsFromFile():
     ConfigSettings =  {
                 "sitename" : ['string', 'Site Name', 1, "SiteName", "", 0],
                 "port" : ['string', 'Port for Serial Communication', 2, "/dev/serial0", "", 0],
-                "incoming_mail_folder" : ['string', 'Incoming Mail folder<br><small>(if IMAP enabled)</small>', 151, "Generator", "", 0],
-                "processed_mail_folder" : ['string', 'Mail Processed folder<br><small>(if IMAP enabled)</small>', 152, "Generator/Processed","", 0],
+                "incoming_mail_folder" : ['string', 'Incoming Mail Folder<br><small>(if IMAP enabled)</small>', 151, "Generator", "", 0],
+                "processed_mail_folder" : ['string', 'Mail Processed Folder<br><small>(if IMAP enabled)</small>', 152, "Generator/Processed","", 0],
                 # This option is not displayed as it will break the link between genmon and genserv
                 #"server_port" : ['int', 'Server Port', 5, 9082, "", 0],
                 # this option is not displayed as this will break the modbus comms, only for debugging
@@ -335,7 +335,7 @@ def ReadSettingsFromFile():
                 #"displaymaintenance" : ['boolean', 'Display Maintenance', 54, False, "", 0],
                 #"enabledebug" : ['boolean', 'Enable Debug', 14, False, "", 0],
                 "displayunknown" : ['boolean', 'Display Unknown Sensors', 15, False, "", 0],
-                "disableoutagecheck" : ['boolean', 'Do not check for outages', 17, False, "", 0],
+                "disableoutagecheck" : ['boolean', 'Do Not Check for Outages', 17, False, "", 0],
                 # These settings are not displayed as the auto-detect controller will set these
                 # these are only to be used to override the auto-detect
                 #"uselegacysetexercise" : ['boolean', 'Use Legacy Exercise Time', 43, False, "", 0],
@@ -350,14 +350,14 @@ def ReadSettingsFromFile():
                 # These do not appear to work on reload, some issue with Flask
                 "usehttps" : ['boolean', 'Use Secure Web Settings', 25, False, "", 0],
                 "useselfsignedcert" : ['boolean', 'Use Self-signed Certificate', 26, True, "", 0],
-                "keyfile" : ['string', 'https key file', 27, "", "", 0],
-                "certfile" : ['string', 'https certificate File', 28, "", "", 0],
-                "http_user" : ['string', 'Web user name', 29, "", "", 0],
-                "http_pass" : ['string', 'Web password', 30, "", "", 0],
+                "keyfile" : ['string', 'https Key File', 27, "", "", 0],
+                "certfile" : ['string', 'https Certificate File', 28, "", "", 0],
+                "http_user" : ['string', 'Web Username', 29, "", "", 0],
+                "http_pass" : ['string', 'Web Password', 30, "", "", 0],
                 # This does not appear to work on reload, some issue with Flask
                 "http_port" : ['int', 'Port of WebServer', 24, 8000, "", 0],
 
-                "disableemail" : ['boolean', 'Disable Email usage', 101, True, "", 0],
+                "disableemail" : ['boolean', 'Disable Email Usage', 101, True, "", 0],
                 "email_pw" : ['string', 'Email Password', 103, "password", "", 0],
                 "email_account" : ['string', 'Email Account', 102, "myemail@gmail.com", "", 0],
                 "sender_account" : ['string', 'Sender Account', 104, "no-reply@gmail.com", "", 0],
