@@ -28,7 +28,7 @@ except ImportError as e:
 
 import mymail, mylog, mythread
 
-GENMON_VERSION = "V1.5.7"
+GENMON_VERSION = "V1.5.8"
 
 #------------ SerialDevice class --------------------------------------------
 class SerialDevice:
@@ -275,14 +275,14 @@ class GeneratorDevice:
                     "005f" : [2, 0],     # Total engine time in minutes
                     "01f1" : [2, 0],     # Unknown Status (WIP)
                     "01f2" : [2, 0],     # Unknown Status (WIP)
-                    "001b" : [2, 0],     # Unknown Read by ML
-                    "001c" : [2, 0],     # Unknown Read by ML
-                    "001d" : [2, 0],     # Unknown Read by ML
-                    "001e" : [2, 0],     # Unknown Read by ML
-                    "001f" : [2, 0],     # Unknown Read by ML
-                    "0020" : [2, 0],     # Unknown Read by ML
-                    "0021" : [2, 0],     # Unknown Read by ML
-                    "0019" : [2, 0],     # Unknown Read by ML
+                    "001b" : [2, 0],     # Unknown Read by ML All
+                    "001c" : [2, 0],     # Unknown Read by ML Nexus
+                    "001d" : [2, 0],     # Unknown Read by ML Nexus
+                    "001e" : [2, 0],     # Unknown Read by ML All
+                    "001f" : [2, 0],     # Unknown Read by ML High value on Evo and Nexus LC, low on Nexus AC
+                    "0020" : [2, 0],     # Unknown Read by ML zero except NexusAC
+                    "0021" : [2, 0],     # Unknown Read by ML zero except Nexus AC
+                    "0019" : [2, 0],     # Unknown Read by ML zero except Nexus AC (Status Bits)
                     "0057" : [2, 0],     # Unknown Looks like some status bits (changes when engine starts / stops)
                     "0055" : [2, 0],     # Unknown
                     "0056" : [2, 0],     # Unknown Looks like some status bits (changes when engine starts / stops)
@@ -292,7 +292,8 @@ class GeneratorDevice:
                     "0058" : [2, 0],     # Unknown sensor 2, once engine starts ramps up to 1600 decimal (160.0?)
                     "005d" : [2, 0],     # Unknown sensor 3, Moves between 0x55 - 0x58 continuously even when engine off
                     "05ed" : [2, 0],     # Unknown sensor 4, changes between 35, 37, 39
-                    "05f5" : [2, 0],     # Evo AC   (Status?) 0000 * 0005 0000
+                    "05ee" : [2, 0],     # Unknown sensor 5
+                    "05f5" : [2, 0],     # Evo AC   (Status?) 0000 * 0005 0007
                     "05fa" : [2, 0],     # Evo AC   (Status?)
                     "0034" : [2, 0],     # Evo AC   (Status?) Goes from FFFF 0000 00001 (Nexus and Evo AC)
                     "0032" : [2, 0],     # Evo AC   (Sensor?) starts  0x4000 ramps up to ~0x02f0
@@ -301,8 +302,8 @@ class GeneratorDevice:
                     "003b" : [2, 0],     # Evo AC   (Sensor?)  Nexus and Evo AC
                     "002b" : [2, 0],     # Evo AC   (Ambient Temp Sensor for Evo AC?)
                     "0208" : [2, 0],     # Evo AC   (Time in minutes? or something else) did not move in last test
-                    "002e" : [2, 0],     # Evo AC   (Exercise Time)
-                    "002c" : [2, 0],     # Evo AC   (Exercise Time)
+                    "002e" : [2, 0],     # Evo AC   (Exercise Time) Exercise Day Sunday =0, Monday=1
+                    "002c" : [2, 0],     # Evo AC   (Exercise Time) Exercise Time HH:MM
                     "002d" : [2, 0],     # Evo AC   (Weekly, Biweekly, Monthly)
                     "002f" : [2, 0],     # Evo AC   (Quiet Mode)
                     "005c" : [2, 0]}
@@ -336,8 +337,8 @@ class GeneratorDevice:
         self.bBatteryChargerTest = False
         self.ChargerOnValues = {}
         self.ChargerOffValues = {}
-        self.BatteryStateChanges = 0
-        self.BatteryState = False
+        self.BatteryMaxVolts = 0
+        self.BatteryMinVolts = 0
         self.ChargerTestStart = None
         ## TransferSwitchTest
         self.bTransferSwitchTest = False
@@ -817,7 +818,7 @@ class GeneratorDevice:
     def DebugRegisters(self):
 
         # reg 200 - -3e7 and 4af - 4e2 and 5af - 600 (already got 5f1 5f4 and 5f5?
-        for Reg in range(0x05 , 0x600):
+        for Reg in range(0x05 , 0x700):
             RegStr = "%04x" % Reg
             if not self.RegisterIsKnown(RegStr):
                 self.ProcessMasterSlaveTransaction(RegStr, 1)
@@ -1065,7 +1066,20 @@ class GeneratorDevice:
         else:
             # bulk register monitoring goes here and an email is sent out in a batch
             if self.EnableDebug:
-                self.RegistersUnderTestData += "Register %s changed from %s to %s\n" % (Register, FromValue, ToValue)
+                BitsChanged, Mask = self.GetNumBitsChanged(FromValue, ToValue)
+                self.RegistersUnderTestData += "Reg %s changed from %s to %s, Bits Changed: %d, Mask: %x\n" % (Register, FromValue, ToValue, BitsChanged, Mask)
+
+    #----------  GeneratorDevice::GetNumBitsChanged-------------------------------
+    def GetNumBitsChanged(self, FromValue, ToValue):
+
+        MaskBitsChanged = int(FromValue, 16) ^ int(ToValue, 16)
+        NumBitsChanged = MaskBitsChanged
+        count = 0
+        while (NumBitsChanged):
+            count += NumBitsChanged & 1
+            NumBitsChanged >>= 1
+
+        return count, MaskBitsChanged
 
     #----------  GeneratorDevice::CalculateExerciseTime-------------------------------
     # helper routine for AltSetGeneratorExerciseTime
@@ -2407,6 +2421,11 @@ class GeneratorDevice:
                 Sensors["Unsupported Sensor 3"] = Value
 
              # get UKS
+            Value = self.GetUnknownSensor("05ee")
+            if len(Value):
+                Sensors["Unsupported Sensor 4"] = Value
+
+             # get UKS
             Value = self.GetUnknownSensor("05ed")
             if len(Value):
                 Sensors["Battery Ambient Temp Thermistor"] = Value
@@ -2938,16 +2957,18 @@ class GeneratorDevice:
 
         if not self.LiquidCooled:
             return ""
+
+        # Dict format { bit position : [ Polarity, Label]}
         # Air cooled
         DealerInputs_Evo_AC = { 0x0001: [True, "Manual"],         # Bits 0 and 1 are only momentary (i.e. only set if the button is being pushed)
-                                0x0002: [True, "Auto"],
+                                0x0002: [True, "Auto"],           # Bits 0 and 1 are only set in the controller Dealer Test Menu
                                 0x0008: [True, "Wiring Error"],
                                 0x0020: [True, "High Temperature"],
                                 0x0040: [True, "Low Oil Pressure"]}
 
         DealerInputs_Evo_LC = {
-                                0x0001: [True, "Manual Button"],
-                                0x0002: [True, "Auto Button"],
+                                0x0001: [True, "Manual Button"],    # Bits 0, 1 and 2 are momentary and only set in the controller
+                                0x0002: [True, "Auto Button"],      #  Dealer Test Menu, not in this register
                                 0x0004: [True, "Off Button"],
                                 0x0008: [True, "2 Wire Start"],
                                 0x0010: [True, "Wiring Error"],
@@ -3001,6 +3022,7 @@ class GeneratorDevice:
         if not self.EvolutionController:
             return ""        # Nexus
 
+        # Dict format { bit position : [ Polarity, Label]}
         # Liquid cooled
         DigitalOutputs_LC = {   0x01: [True, "Transfer Switch Activated"],
                                 0x02: [True, "Fuel Enrichment On"],
@@ -3575,7 +3597,7 @@ class GeneratorDevice:
                         "005a","000d","003c","0058","005d","05ed","05f5",
                         "05fa","0034","0032","0037","0038","003b","002b",
                         "0208","002e","002c","002d","002f","005c","05f4",
-                        "0053","0052"]
+                        "0053","0052", "05ee"]
             # 0053 is TS status on Evo LC
 
             if not Register in self.TSwitchCandidateRegs:
@@ -3596,7 +3618,7 @@ class GeneratorDevice:
                     self.TransferTestStart = datetime.datetime.now()
 
                 DeltaTime = datetime.datetime.now() - self.TransferTestStart
-                if DeltaTime.seconds > 20:
+                if DeltaTime.seconds > 10:
                     self.TSwitchOnValues[Register] = Value
 
             if (len(self.TSwitchOffValues) == len(self.TSwitchOnValues)) and (len(self.TSwitchOnValues) == len(self.TSwitchCandidateRegs)):
@@ -3605,6 +3627,8 @@ class GeneratorDevice:
                     TempInt = int(Val,16) ^ int(self.TSwitchOnValues[Reg],16)
                     if not TempInt == 0:
                         OutStr += "Reg: %s, Value: %x\n" %(Reg, TempInt)
+                OutStr += "\n On Values  : " + str(self.TSwitchOnValues)
+                OutStr += "\n Off Values : " + str(self.TSwitchOffValues)
                 self.TSwitchOnValues.clear()
                 self.TSwitchOffValues.clear()
                 self.TransferTestStart == None
@@ -3618,6 +3642,7 @@ class GeneratorDevice:
     def DebugBatteryCharger(self, Register, Value):
 
         try:
+
             if not self.bBatteryChargerTest:
                 return
             ## BatteryChargerTest
@@ -3626,14 +3651,12 @@ class GeneratorDevice:
                         "005a","000d","003c","0058","005d","05ed","05f5",
                         "05fa","0034","0032","0037","0038","003b","002b",
                         "0208","002e","002c","002d","002f","005c","05f4",
-                        "0053","0052"]
+                        "0053","0052","05ee"]
             # 0053 is charger status reg for EvoLC
-
             if not Register in self.ChargerCandidateRegs:
                 return
-
             # make sure engine is off
-            if not self.GetEngineState() == "READY":
+            if not self.GetBaseStatus() == "READY":
                 return
 
             MyStr = self.GetBatteryVoltage()
@@ -3642,22 +3665,29 @@ class GeneratorDevice:
             MyStr = self.removeAlpha(MyStr)
             Voltage = float(MyStr)
 
-            if Voltage > 13.8:
-                if not self.BatteryState:
-                    self.BatteryState = True
-                    self.BatteryStateChanges += 1
-                self.ChargerOnValues[Register] = Value
-            elif Voltaber < 12.8:
-                if self.BatteryState:
-                    self.BatteryState = False
-                    self.BatteryStateChanges += 1
-                # Let time elapse so registers are updated
-                if self.ChargerTestStart == None:
-                    self.ChargerTestStart = datetime.datetime.now()
+            if self.BatteryMaxVolts == 0:
+                self.BatteryMaxVolts = Voltage
+                self.BatteryMinVolts = Voltage
 
-                DeltaTime = datetime.datetime.now() - self.ChargerTestStart
-                if DeltaTime.seconds > 10:
-                    self.ChargerOffValues[Register] = Value
+            if Voltage > self.BatteryMaxVolts:
+                self.BatteryMaxVolts = Voltage
+            if Voltage < self.BatteryMinVolts:
+                self.BatteryMinVolts = Voltage
+
+            if Voltage == self.BatteryMaxVolts:
+                self.ChargerOnValues[Register] = Value
+            elif Voltage <= (self.BatteryMinVolts + (self.BatteryMinVolts * 0.02)):
+                self.ChargerOffValues[Register] = Value
+
+            if (self.BatteryMaxVolts - self.BatteryMinVolts) < 0.5:
+                return
+            # Let time elapse so registers are updated starts
+            if self.ChargerTestStart == None:
+                self.ChargerTestStart = datetime.datetime.now()
+
+            DeltaTime = datetime.datetime.now() - self.ChargerTestStart
+            if DeltaTime.seconds < 10:
+                return
 
             if (len(self.ChargerOnValues) == len(self.ChargerOffValues)) and (len(self.ChargerOnValues) == len(self.ChargerCandidateRegs)):
                 OutStr = ""
@@ -3665,10 +3695,14 @@ class GeneratorDevice:
                     TempInt = int(Val,16) ^ int(self.ChargerOffValues[Reg],16)
                     if not TempInt == 0:
                         OutStr += "Reg: %s, Value: %x\n" %(Reg, TempInt)
+                OutStr += "\n Max: %f, Min: %f\n" % (self.BatteryMaxVolts, self.BatteryMinVolts)
+                OutStr += "\n On Values  : " + str(self.ChargerOnValues)
+                OutStr += "\n Off Values : " + str(self.ChargerOffValues)
                 self.ChargerOnValues.clear()
                 self.ChargerOffValues.clear()
-                self.BatteryStateChanges = 0
                 self.ChargerTestStart = None
+                self.BatteryMaxVolts = 0
+                self.BatteryMinVolts = 0
                 self.mail.sendEmail("Generator Battery Charger Test at " + self.SiteName, OutStr, msgtype = "info")
 
         except Exception as e1:
