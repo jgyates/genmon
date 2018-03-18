@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #------------------------------------------------------------
 #    FILE: genserv.py
 # PURPOSE: Flask app for generator monitor web app
@@ -34,6 +33,7 @@ loglocation = "/var/log/"
 clientport = 0
 log = None
 AppPath = ""
+favicon = "favicon.ico"
 
 MAIL_CONFIG = "/etc/mymail.conf"
 GENMON_CONFIG = "/etc/genmon.conf"
@@ -127,6 +127,9 @@ def ProcessCommand(command):
     elif command in ["update"]:
         Update()
         return "OK"
+
+    elif command in ["getfavicon"]:
+        return jsonify(favicon);
 
     elif command in ["notifications"]:
         data = ReadNotificationsFromFile()
@@ -348,14 +351,15 @@ def ReadSettingsFromFile():
                 "enhancedexercise" : ['boolean', 'Enhanced Exercise Time', 44, False, "", 0],
 
                 # These do not appear to work on reload, some issue with Flask
-                "usehttps" : ['boolean', 'Use Secure Web Settings', 25, False, "", 0],
-                "useselfsignedcert" : ['boolean', 'Use Self-signed Certificate', 26, True, "", 0],
-                "keyfile" : ['string', 'https Key File', 27, "", "", 0],
-                "certfile" : ['string', 'https Certificate File', 28, "", "", 0],
-                "http_user" : ['string', 'Web Username', 29, "", "", 0],
-                "http_pass" : ['string', 'Web Password', 30, "", "", 0],
+                "usehttps" : ['boolean', 'Use Secure Web Settings', 26, False, "", 0],
+                "useselfsignedcert" : ['boolean', 'Use Self-signed Certificate', 27, True, "", 0],
+                "keyfile" : ['string', 'https Key File', 28, "", "", 0],
+                "certfile" : ['string', 'https Certificate File', 29, "", "", 0],
+                "http_user" : ['string', 'Web Username', 30, "", "", 0],
+                "http_pass" : ['string', 'Web Password', 31, "", "", 0],
                 # This does not appear to work on reload, some issue with Flask
                 "http_port" : ['int', 'Port of WebServer', 24, 8000, "", 0],
+                "favicon" : ['string', 'FavIcon', 25, "", "", 0],
 
                 "disableemail" : ['boolean', 'Disable Email Usage', 101, True, "", 0],
                 "email_pw" : ['string', 'Email Password', 103, "password", "", 0],
@@ -529,6 +533,7 @@ def LoadConfig():
     global HTTPAuthUser
     global HTTPAuthPass
     global SSLContext
+    global favicon
 
     HTTPAuthPass = None
     HTTPAuthUser = None
@@ -538,6 +543,7 @@ def LoadConfig():
         # config parser reads from current directory, when running form a cron tab this is
         # not defined so we specify the full path
         config.read('/etc/genmon.conf')
+
         # heartbeat server port, must match value in check_generator_system.py and any calling client apps
         if config.has_option('GenMon', 'server_port'):
             clientport = config.getint('GenMon', 'server_port')
@@ -554,6 +560,9 @@ def LoadConfig():
         if config.has_option('GenMon', 'http_port'):
             HTTPPort = config.getint('GenMon', 'http_port')
 
+        if config.has_option('GenMon', 'favicon'):
+            favicon = config.get('GenMon', 'favicon')
+        
         # user name and password require usehttps = True
         if bUseSecureHTTP:
             if config.has_option('GenMon', 'http_user'):
