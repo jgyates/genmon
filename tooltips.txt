@@ -38,3 +38,4 @@ certfile = If Use 'Self-signed Certificate' is disabled, denotes the path and fi
 http_user = Simple authentication will be used. Sets the username of the simple authentication. Leave blank to disable. 'Use Secure Web Settings' must be enabled to use this feature.
 http_pass = Simple authentication will be used. Sets the password of the simple authentication. Leave blank to disable. 'Use Secure Web Settings' must be enabled to use this feature.
 http_port = HTTP port to be used by the web server.
+favicon = favicon for website. This is an optional paramater and default is "favicon.ico". This may not work in older browers
