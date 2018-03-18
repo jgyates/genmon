@@ -80,9 +80,9 @@ function DisplayMaintenance(){
         outstr = replaceAll(outstr,' ','&nbsp')
 
         var myDiv = document.getElementById("myDiv");
-    
+
         outstr += "<br>Generator Exercise Time:<br><br>";
-    
+
         //Create array of options to be added
         var FreqArray = ["Weekly", "Biweekly", "Monthly"];
         if (ExerciseParameters['EnhancedExerciseEnabled'] == true) {
@@ -97,7 +97,7 @@ function DisplayMaintenance(){
         }
 
         //Create and append the options, days
-        outstr += "<br><br>&nbsp;&nbsp;&nbsp;&nbsp;<select style=\"width:200px;\" id=\"days\"></select> , ";     
+        outstr += "<br><br>&nbsp;&nbsp;&nbsp;&nbsp;<select style=\"width:200px;\" id=\"days\"></select> , ";
         //Create and append the options, hours
         outstr += "<select id=\"hours\">";
         for (var i = 0; i < 24; i++) {
@@ -111,23 +111,23 @@ function DisplayMaintenance(){
             outstr += "<option value=\"" + i.pad() + "\">" + i.pad() + "</option>";
         }
         outstr += "</select>&nbsp;&nbsp;";
-    
+
         //Create and append select list
         outstr += "&nbsp;&nbsp;&nbsp;&nbsp;<select id=\"quietmode\">";
         outstr += "<option value=\"QuietMode=On\" " + (ExerciseParameters['QuietMode'] == "On"  ? " selected=\"selected\" " : "") + ">Quiet Mode On </option>";
         outstr += "<option value=\"QuietMode=Off\"" + (ExerciseParameters['QuietMode'] == "Off" ? " selected=\"selected\" " : "") + ">Quiet Mode Off</option>";
         outstr += "</select><br><br>";
-        
+
         outstr += "&nbsp;&nbsp;<button id=\"setexercisebutton\" onClick=\"saveMaintenance();\">Set Exercise Time</button>";
-    
+
         outstr += "<br><br>Generator Time:<br><br>";
         outstr += "&nbsp;&nbsp;<button id=\"settimebutton\" onClick=\"SetTimeClick();\">Set Generator Time</button>";
-    
+
         outstr += "<br><br>Remote Commands:<br><br>";
         outstr += "&nbsp;&nbsp;<button id=\"remotestop\" onClick=\"SetStopClick();\">Stop Generator</button><br><br>";
         outstr += "&nbsp;&nbsp;<button id=\"remotestart\" onClick=\"SetStartClick();\">Start Generator</button><br><br>";
         outstr += "&nbsp;&nbsp;<button id=\"remotetransfer\" onClick=\"SetTransferClick();\">Start Generator and Transfer</button><br><br>";
-    
+
         $("#mydisplay").html(outstr);
 
         if ((ExerciseParameters['EnhancedExerciseEnabled'] == true) && ($("#Monthly").is(":checked") == true)) {
@@ -138,7 +138,7 @@ function DisplayMaintenance(){
         $("#days").val(ExerciseParameters['ExerciseDay']);
         $("#hours").val(ExerciseParameters['ExerciseHour']);
         $("#minutes").val(ExerciseParameters['ExerciseMinute']);
-        
+
         if((baseState === "EXERCISING") || (baseState === "RUNNING")) {
             $("#remotestop").prop("disabled",false);
             $("#remotestart").prop("disabled",true);
@@ -278,7 +278,7 @@ function saveMaintenance(){
                     $.getJSON(  url,
                                 {setexercise: strExerciseTime},
                                 function(result){});
-            
+
                     // set quite mode
                     var url = baseurl.concat("setquiet");
                     $.getJSON(  url,
@@ -734,7 +734,7 @@ function saveSettings(){
                   $(this).css('width', '100%')
              });
              setTimeout(function(){
-                vex.closeAll(); 
+                vex.closeAll();
                 if ($('#sitename').val() != $('#sitename').attr('oldValue')) { SetHeaderValues(); }
                 if ($('#favicon').val() != $('#favicon').attr('oldValue')) { changeFavicon($('#favicon').val()); }
                 if (($('#enhancedexercise').prop('checked')  === true ? "true" : "false") != $('#enhancedexercise').attr('oldValue')) { ExerciseParameters['EnhancedExerciseEnabled'] = ($('#enhancedexercise').prop('checked')  === true ? "true" : "false") }
@@ -813,7 +813,7 @@ var BaseRegistersDescription = { "0000" : "Product line",
                                  "003c" : "Raw RPM Sensor",
                                  "0058" : "Unknown Sensor (EvoLC)",
                                  "005d" : "Unknown Sensor (EvoLC)",
-                                 "05ed" : "Ambient Temp Sensor (EvoAC)",
+                                 "05ed" : "Ambient Temp Sensor (EvoLC)",
                                  "05ee" : "Unknown Sensor (EvoLC)",
                                  "05f5" : "Unknown Status (EvoAC, Nexus)",
                                  "05fa" : "Unknown Status (EvoAC, Nexus)",
@@ -1125,7 +1125,7 @@ function GetBaseStatus()
             // Added active to selected class
             $("#"+menuElement).find("a").addClass(GetCurrentClass());
 
-            if (menuElement == "maint") { 
+            if (menuElement == "maint") {
                  if((baseState === "EXERCISING") || (baseState === "RUNNING")) {
                      $("#remotestop").prop("disabled",false);
                      $("#remotestart").prop("disabled",true);
