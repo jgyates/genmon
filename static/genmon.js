@@ -18,7 +18,8 @@ var baseState = "READY";        // updated on a time
 var currentbaseState = "READY"; // menus change on this var
 var currentClass = "active";    // CSS class for menu color
 var menuElement = "status";
-var EnhancedExerciseEnabled = false;
+var ExerciseParameters = {};
+    ExerciseParameters['EnhancedExerciseEnabled']  = false;
 // on page load call init
 var pathname = ""
 var baseurl = ""
@@ -31,52 +32,16 @@ var DaysOfWeekArray = ["Sunday","Monday","Tuesday","Wednesday", "Thursday", "Fri
 $(document).ready(function() {
     pathname = window.location.href;
     baseurl = pathname.concat("cmd/")
-    GetHeaderValues();
+    SetHeaderValues();
+    $("#footer").html("<table border=\"0\" width=\"100%\" height=\"30px\"><tr><td width=\"90%\" style=\"vertical-align:middle\"><a href=\"https://github.com/jgyates/genmon\" target=\"_blank\">GenMon Project on GitHub</a></td></tr></table>");
+    SetFavIcon();
+    GetExerciseValues();
     $("#status").find("a").addClass(GetCurrentClass());
     setInterval(GetBaseStatus, 3000);       // Called every 3 sec
     setInterval(UpdateDisplay, 5000);       // Called every 5 sec
-    $("#mydisplay").html(GetDisplayValues("status"));
-    CreateSelectLists();
-    SetVisibilityOfMaintList();
+    GetDisplayValues("status");
     $("li").on('click',  function() {  MenuClick($(this));});
-
 });
-
-//*****************************************************************************
-//  Set the visibility of lists and buttons
-//*****************************************************************************
-function SetVisibilityOfMaintList(){
-
-    var visStr;
-    if (menuElement == "maint")
-    {
-        visStr = "visible";
-        // set controls to current setting
-    }
-    else
-    {
-        visStr = "hidden";
-    }
-    document.getElementById("setexercise").style.visibility = visStr;
-    document.getElementById("days").style.visibility = visStr;
-    document.getElementById("daysep").style.visibility = visStr;
-    document.getElementById("hours").style.visibility = visStr;
-    document.getElementById("timesep").style.visibility = visStr;
-    document.getElementById("minutes").style.visibility = visStr;
-    document.getElementById("modesep").style.visibility = visStr;
-    document.getElementById("quietmode").style.visibility = visStr;
-    document.getElementById("setexercisebutton").style.visibility = visStr;
-    document.getElementById("settime").style.visibility = visStr;
-    if (EnhancedExerciseEnabled == true) {
-        document.getElementById("freqsep").style.visibility = visStr;
-    }
-    document.getElementById("settimebutton").style.visibility = visStr;
-    document.getElementById("remotecommands").style.visibility = visStr;
-    document.getElementById("remotestop").style.visibility = visStr;
-    document.getElementById("remotestart").style.visibility = visStr;
-    document.getElementById("remotetransfer").style.visibility = visStr;
-
-}
 
 //*****************************************************************************
 //
@@ -86,182 +51,6 @@ Number.prototype.pad = function(size) {
       while (s.length < (size || 2)) {s = "0" + s;}
       return s;
     }
-
-//*****************************************************************************
-//  Create menu lists and buttons
-//*****************************************************************************
-function CreateSelectLists(){
-
-    var myDiv = document.getElementById("myDiv");
-
-    //Create and append select list
-    var option = document.createElement("p");
-    option.id = "setexercise";
-    myDiv.appendChild(option);
-    document.getElementById("setexercise").innerHTML = "<br>Generator Exercise Time: ";
-
-    //Create array of options to be added
-    var FreqArray = ["Weekly", "Biweekly", "Monthly"];
-
-    //
-    if (EnhancedExerciseEnabled == true) {
-
-        var option = document.createElement("p");
-        option.id = "freqsep";
-        myDiv.appendChild(option);
-        document.getElementById("freqsep").innerHTML = "Mode:    ";
-
-        for(var i = 0; i < FreqArray.length; i++)  {
-
-            var choiceSelection = document.createElement('input');
-            var label = document.createElement("label");
-            choiceSelection.setAttribute('type', 'radio');
-            choiceSelection.setAttribute('name', 'choice');
-            choiceSelection.setAttribute('value', FreqArray[i]);
-            choiceSelection.setAttribute('id', FreqArray[i]);
-            choiceSelection.innerHTML = FreqArray[i];
-            label.appendChild(choiceSelection);
-            label.appendChild(document.createTextNode(FreqArray[i]));
-            document.getElementById("freqsep").appendChild(label);
-        }
-
-        var ex1 = document.getElementById('Weekly');
-        var ex2 = document.getElementById('Biweekly');
-        var ex3 = document.getElementById('Monthly');
-
-        ex1.onclick = WeeklyAndBiWeerklyHandlerClick;
-        ex2.onclick = WeeklyAndBiWeerklyHandlerClick;
-        ex3.onclick = MonthlyHandlerClick;
-
-    }
-
-    //Create and append select list
-    var selectList = document.createElement("select");
-    selectList.id = "days";
-    myDiv.appendChild(selectList);
-
-    //Create and append the options, days
-    for (var i = 0; i < DaysOfWeekArray.length; i++) {
-        var option = document.createElement("option");
-        option.value = DaysOfWeekArray[i];
-        option.text = DaysOfWeekArray[i];
-        selectList.appendChild(option);
-    }
-
-    var option = document.createElement("p");
-    option.id = "daysep";
-    myDiv.appendChild(option);
-    document.getElementById("daysep").innerHTML = ", ";
-
-
-    //Create and append select list
-    var selectList = document.createElement("select");
-    selectList.id = "hours";
-    myDiv.appendChild(selectList);
-
-    //Create and append the options, hours
-    for (var i = 0; i < 24; i++) {
-        var option = document.createElement("option");
-        option.value = i.pad();
-        option.text = i.pad();
-        selectList.appendChild(option);
-    }
-
-    var option = document.createElement("p");
-    option.id = "timesep";
-    myDiv.appendChild(option);
-    document.getElementById("timesep").innerHTML = ":";
-
-    //Create and append select list
-    var selectList = document.createElement("select");
-    selectList.id = "minutes";
-    myDiv.appendChild(selectList);
-
-    //Create and append the options, minute
-    for (var i = 0; i < 60; i++) {
-        var option = document.createElement("option");
-        option.value = i.pad();
-        option.text = i.pad();
-        selectList.appendChild(option);
-    }
-
-    var option = document.createElement("p");
-    option.id = "modesep";
-    myDiv.appendChild(option);
-    document.getElementById("modesep").innerHTML = "&nbsp&nbsp&nbsp&nbsp";
-
-    //Create and append select list
-    var selectList = document.createElement("select");
-    selectList.id = "quietmode";
-    myDiv.appendChild(selectList);
-
-    var option = document.createElement("option");
-    option.value = "QuietMode=On";
-    option.text = "Quiet Mode On";
-    selectList.appendChild(option);
-
-    var option = document.createElement("option");
-    option.value = "QuietMode=Off";
-    option.text = "Quiet Mode Off";
-    selectList.appendChild(option);
-
-    var option = document.createElement("button");
-    option.id = "setexercisebutton";
-    option.onclick = SetExerciseClick;
-    myDiv.appendChild(option);
-    document.getElementById("setexercisebutton").innerHTML = "Set Exercise Time";
-
-    //Create and append select list
-    var option = document.createElement("p");
-    option.id = "settime";
-    myDiv.appendChild(option);
-    document.getElementById("settime").innerHTML = "<br>Generator Time: <br><br>";
-
-    var option = document.createElement("button");
-    option.id = "settimebutton";
-    option.onclick = SetTimeClick;
-    myDiv.appendChild(option);
-    document.getElementById("settimebutton").innerHTML = "Set Generator Time";
-
-    //Create and append select list
-    var option = document.createElement("p");
-    option.id = "remotecommands";
-    myDiv.appendChild(option);
-    document.getElementById("remotecommands").innerHTML = "<br>Remote Commands: <br><br>";
-
-    var option = document.createElement("button");
-    option.id = "remotestop";
-    option.onclick = SetStopClick;
-    myDiv.appendChild(option);
-    document.getElementById("remotestop").innerHTML = "Stop Generator";
-
-    var option = document.createElement("p");
-    option.id = "p1";
-    myDiv.appendChild(option);
-    document.getElementById("p1").innerHTML = "<br>";
-
-    var option = document.createElement("button");
-    option.id = "remotestart";
-    option.onclick = SetStartClick;
-    myDiv.appendChild(option);
-    document.getElementById("remotestart").innerHTML = "Start Generator";
-
-    var option = document.createElement("p");
-    option.id = "p2";
-    myDiv.appendChild(option);
-    document.getElementById("p2").innerHTML = "<br>";
-
-    var option = document.createElement("button");
-    option.id = "remotetransfer";
-    option.onclick = SetTransferClick;
-    myDiv.appendChild(option);
-    document.getElementById("remotetransfer").innerHTML = "Start Generator and Transfer";
-
-    // Create Footer Links
-    var FooterStr = "<table border=\"0\" width=\"100%\" height=\"30px\"><tr><td width=\"90%\" style=\"vertical-align:middle\"><a href=\"https://github.com/jgyates/genmon\" target=\"_blank\">GenMon Project on GitHub</a></td></tr></table>";
-    $("#footer").html(FooterStr);
-
-}
 
 //*****************************************************************************
 // called when setting a remote command
@@ -278,48 +67,115 @@ function SetRemoteCommand(command){
 }
 
 //*****************************************************************************
+// Display the Maintenance Tab
+//*****************************************************************************
+function DisplayMaintenance(){
+
+    var url = baseurl.concat("maint");
+    $.getJSON(url,function(result){
+
+        // replace /n with html friendly <br/>
+        var outstr = replaceAll(result,'\n','<br/>')
+        // replace space with html friendly &nbsp
+        outstr = replaceAll(outstr,' ','&nbsp')
+
+        var myDiv = document.getElementById("myDiv");
+    
+        outstr += "<br>Generator Exercise Time:<br><br>";
+    
+        //Create array of options to be added
+        var FreqArray = ["Weekly", "Biweekly", "Monthly"];
+        if (ExerciseParameters['EnhancedExerciseEnabled'] == true) {
+            outstr += "&nbsp;&nbsp;&nbsp;&nbsp;Mode: ";
+            for(var i = 0; i < FreqArray.length; i++)  {
+                outstr += "<label for=\"" + FreqArray[i] + "\">" + FreqArray[i] + "</label>";
+                outstr += "<input type=\"radio\" name=\"choice\" value=\"" + FreqArray[i] + "\" id=\"" + FreqArray[i] + "\" ";
+                outstr += ((ExerciseParameters['ExerciseFrequency'] == FreqArray[i]) ? " checked " : "");
+                outstr += ((FreqArray[i] == "Monthly") ? " onClick=\"MonthlyExerciseSelection();\" " : " onClick=\"WeekdayExerciseSelection();\" ");
+                outstr += ">";
+            }
+        }
+
+        //Create and append the options, days
+        outstr += "<br><br>&nbsp;&nbsp;&nbsp;&nbsp;<select style=\"width:200px;\" id=\"days\"></select> , ";     
+        //Create and append the options, hours
+        outstr += "<select id=\"hours\">";
+        for (var i = 0; i < 24; i++) {
+            outstr += "<option value=\"" + i.pad() + "\">" + i.pad() + "</option>";
+        }
+        outstr += "</select> : ";
+
+        //Create and append the options, minute
+        outstr += "<select id=\"minutes\">";
+        for (var i = 0; i < 60; i++) {
+            outstr += "<option value=\"" + i.pad() + "\">" + i.pad() + "</option>";
+        }
+        outstr += "</select>&nbsp;&nbsp;";
+    
+        //Create and append select list
+        outstr += "&nbsp;&nbsp;&nbsp;&nbsp;<select id=\"quietmode\">";
+        outstr += "<option value=\"QuietMode=On\" " + (ExerciseParameters['QuietMode'] == "On"  ? " selected=\"selected\" " : "") + ">Quiet Mode On </option>";
+        outstr += "<option value=\"QuietMode=Off\"" + (ExerciseParameters['QuietMode'] == "Off" ? " selected=\"selected\" " : "") + ">Quiet Mode Off</option>";
+        outstr += "</select><br><br>";
+        
+        outstr += "&nbsp;&nbsp;<button id=\"setexercisebutton\" onClick=\"saveMaintenance();\">Set Exercise Time</button>";
+    
+        outstr += "<br><br>Generator Time:<br><br>";
+        outstr += "&nbsp;&nbsp;<button id=\"settimebutton\" onClick=\"SetTimeClick();\">Set Generator Time</button>";
+    
+        outstr += "<br><br>Remote Commands:<br><br>";
+        outstr += "&nbsp;&nbsp;<button id=\"remotestop\" onClick=\"SetStopClick();\">Stop Generator</button><br><br>";
+        outstr += "&nbsp;&nbsp;<button id=\"remotestart\" onClick=\"SetStartClick();\">Start Generator</button><br><br>";
+        outstr += "&nbsp;&nbsp;<button id=\"remotetransfer\" onClick=\"SetTransferClick();\">Start Generator and Transfer</button><br><br>";
+    
+        $("#mydisplay").html(outstr);
+
+        if ((ExerciseParameters['EnhancedExerciseEnabled'] == true) && ($("#Monthly").is(":checked") == true)) {
+           MonthlyExerciseSelection();
+        } else {
+           WeekdayExerciseSelection();
+        }
+        $("#days").val(ExerciseParameters['ExerciseDay']);
+        $("#hours").val(ExerciseParameters['ExerciseHour']);
+        $("#minutes").val(ExerciseParameters['ExerciseMinute']);
+        
+        if((baseState === "EXERCISING") || (baseState === "RUNNING")) {
+            $("#remotestop").prop("disabled",false);
+            $("#remotestart").prop("disabled",true);
+            $("#remotetransfer").prop("disabled",true);
+        }
+        else {
+            $("#remotestop").prop("disabled",true);
+            $("#remotestart").prop("disabled",false);
+            $("#remotetransfer").prop("disabled",false);
+        }
+
+   });
+}
+
+//*****************************************************************************
 // called when Monthly is clicked
 //*****************************************************************************
-function MonthlyHandlerClick(){
-
-    var oldSel = document.getElementById('days');
-
-    while (oldSel.options.length > 0) {
-        oldSel.remove(oldSel.options.length - 1);
+function MonthlyExerciseSelection(){
+    if (($('#days option')).lenghth != 28) {
+       $("#days").find('option').remove();
+       for (var i = 1; i <= 28; i++) {
+           $("#days").append("<option value=\"" + i.pad() + "\">" + i.pad() + "</option>");
+       }
     }
-
-    //Create and append the options, days
-    for (var i = 1; i <= 28; i++) {
-        var option = document.createElement("option");
-        option.value = i.pad()
-        option.text = i.pad();
-        oldSel.appendChild(option);
-    }
-
+    $("#days").val(ExerciseParameters['ExerciseDay']);
 }
 //*****************************************************************************
 // called when Monthly is clicked
 //*****************************************************************************
-function WeeklyAndBiWeerklyHandlerClick(){
-
-    var oldSel = document.getElementById('days');
-
-    if (oldSel.options.length == 7) {
-        return
+function WeekdayExerciseSelection(){
+    if ($('#days option').lenghth != 7) {
+       $("#days").find('option').remove();
+       for (var i = 0; i < DaysOfWeekArray.length; i++) {
+           $("#days").append("<option value=\"" + DaysOfWeekArray[i]+ "\">" + DaysOfWeekArray[i]+ "</option>");
+       }
     }
-
-    while (oldSel.options.length > 0) {
-        oldSel.remove(oldSel.options.length - 1);
-    }
-
-    //Create and append the options, days
-    for (var i = 0; i < DaysOfWeekArray.length; i++) {
-        var option = document.createElement("option");
-        option.value = DaysOfWeekArray[i];
-        option.text = DaysOfWeekArray[i];
-        oldSel.appendChild(option);
-    }
-
+    $("#days").val(ExerciseParameters['ExerciseDay']);
 }
 
 //*****************************************************************************
@@ -327,14 +183,17 @@ function WeeklyAndBiWeerklyHandlerClick(){
 //*****************************************************************************
 function SetStopClick(){
 
-    var DisplayStr = "Stop generator? Note: If the generator is powering a load there will be a cool down period of a few minutes.";
-
-    var r = confirm(DisplayStr);
-    if (r == false) {
-        return
-    }
-
-    SetRemoteCommand("stop")
+    vex.dialog.confirm({
+        unsafeMessage: "Stop generator?<br><span style=\"font-size:12px\">Note: If the generator is powering a load there will be a cool down period of a few minutes.</span>",
+        overlayClosesOnClick: false,
+        callback: function (value) {
+             if (value == false) {
+                return;
+             } else {
+                SetRemoteCommand("stop")
+             }
+        }
+    });
 }
 
 //*****************************************************************************
@@ -342,14 +201,17 @@ function SetStopClick(){
 //*****************************************************************************
 function SetStartClick(){
 
-    var DisplayStr = "Start generator?";
-
-    var r = confirm(DisplayStr);
-    if (r == false) {
-        return
-    }
-
-    SetRemoteCommand("start")
+    vex.dialog.confirm({
+        unsafeMessage: "Start generator?<br><span style=\"font-size:12px\">Generator will start, warm up and run idle (without activating the transfer switch).</span>",
+        overlayClosesOnClick: false,
+        callback: function (value) {
+             if (value == false) {
+                return;
+             } else {
+                SetRemoteCommand("start")
+             }
+        }
+    });
 }
 
 //*****************************************************************************
@@ -357,14 +219,17 @@ function SetStartClick(){
 //*****************************************************************************
 function SetTransferClick(){
 
-    var DisplayStr = "Start generator and activate transfer switch? Generator will start, warm up, the activate switch.";
-
-    var r = confirm(DisplayStr);
-    if (r == false) {
-        return
-    }
-
-    SetRemoteCommand("starttransfer")
+    vex.dialog.confirm({
+        unsafeMessage: "Start generator and activate transfer switch?<br><span style=\"font-size:12px\">Generator will start, warm up, the activate switch.</span>",
+        overlayClosesOnClick: false,
+        callback: function (value) {
+             if (value == false) {
+                return;
+             } else {
+                SetRemoteCommand("starttransfer")
+             }
+        }
+    });
 }
 
 //*****************************************************************************
@@ -372,154 +237,62 @@ function SetTransferClick(){
 //*****************************************************************************
 function SetTimeClick(){
 
-    var DisplayStr = "Set generator time to monitor time? Note: This operation may take up to one minute to complete";
-
-    var r = confirm(DisplayStr);
-    if (r == false) {
-        return
-    }
-
-    // set exercise time
-    var url = baseurl.concat("settime");
-    $.getJSON(  url,
-                {settime: " "},
-                function(result){
-   });
-
+    vex.dialog.confirm({
+        unsafeMessage: "Set generator time to monitor time?<br><span style=\"font-size:12px\">Note: This operation may take up to one minute to complete.</span>",
+        overlayClosesOnClick: false,
+        callback: function (value) {
+             if (value == false) {
+                return;
+             } else {
+                // set exercise time
+                var url = baseurl.concat("settime");
+                $.getJSON(  url,
+                   {settime: " "},
+                   function(result){});
+             }
+        }
+    });
 }
 //*****************************************************************************
 // called when Set Exercise is clicked
 //*****************************************************************************
-function SetExerciseClick(){
+function saveMaintenance(){
 
     try {
-        var e = document.getElementById("days");
-        var strDays = e.options[e.selectedIndex].value;
+        var strDays         = $("#days").val();
+        var strHours        = $("#hours").val();
+        var strMinutes      = $("#minutes").val();
+        var strQuiet        = $("#quietmode").val();
+        var strChoice       = ((ExerciseParameters['EnhancedExerciseEnabled'] == true) ? $('input[name=choice]:checked').val() : "Weekly");
+        var strExerciseTime = strDays + "," + strHours + ":" + strMinutes + "," + strChoice;
 
-        var e = document.getElementById("hours");
-        var strHours = e.options[e.selectedIndex].value;
-
-        var e = document.getElementById("minutes");
-        var strMinutes = e.options[e.selectedIndex].value;
-
-        var e = document.getElementById("quietmode");
-        var strQuiet = e.options[e.selectedIndex].value;
-
-        var strExerciseTime = strDays.concat(",")
-        strExerciseTime = strExerciseTime.concat(strHours)
-        strExerciseTime = strExerciseTime.concat(":")
-        strExerciseTime = strExerciseTime.concat(strMinutes)
-
-        if (EnhancedExerciseEnabled == true) {
-            /* TODO change this */
-            if(document.getElementById("Monthly").checked == true) {
-                strExerciseTime = strExerciseTime.concat(",Monthly")
+        vex.dialog.confirm({
+            unsafeMessage: "Set exercise time to<br>" + strExerciseTime + ", " + strQuiet + "?",
+            overlayClosesOnClick: false,
+            callback: function (value) {
+                 if (value == false) {
+                    return;
+                 } else {
+                    // set exercise time
+                    var url = baseurl.concat("setexercise");
+                    $.getJSON(  url,
+                                {setexercise: strExerciseTime},
+                                function(result){});
+            
+                    // set quite mode
+                    var url = baseurl.concat("setquiet");
+                    $.getJSON(  url,
+                                {setquiet: strQuiet},
+                                function(result){});
+                 }
             }
-            else if(document.getElementById("Biweekly").checked == true) {
-                strExerciseTime = strExerciseTime.concat(",Biweekly")
-            }
-            else {
-                strExerciseTime = strExerciseTime.concat(",Weekly")
-            }
-        }
-        else {
-            strExerciseTime = strExerciseTime.concat(",Weekly")
-        }
-        var DisplayStr = "Set exercise time to ";
-
-        DisplayStr = strExerciseTime.concat(", ")
-        DisplayStr = DisplayStr.concat(strQuiet)
-        DisplayStr = DisplayStr.concat("?")
-
-        var r = confirm(DisplayStr);
-        if (r == false) {
-            return
-        }
-        // set exercise time
-        var url = baseurl.concat("setexercise");
-        $.getJSON(  url,
-                    {setexercise: strExerciseTime},
-                    function(result){
-       });
-
-        // set quite mode
-        var url = baseurl.concat("setquiet");
-        $.getJSON(  url,
-                    {setquiet: strQuiet},
-                    function(result){
-       });
+        });
     }
     catch(err) {
-        alert("Error: invalid selection");
+        GenmonAlert("Error: invalid selection");
     }
 }
 
-//*****************************************************************************
-// sets the setexerise control with the current settings
-//*****************************************************************************
-function SetExerciseChoice(bSetRadio){
-
-    var url = baseurl.concat("getexercise");
-    $.getJSON(url,function(result){
-
-        // should return str in this format:
-        // Saturday!13!30!On!Weekly!True
-        // Saturday!13!30!On!Biweekly!Falze
-        // 2!13!30!On!Monthly!False
-        // NOTE: Last param (True or False) is if enhanced exercise freq is enabled
-        var resultsArray = result.split("!")
-
-        if (resultsArray.length == 6){
-
-            if (resultsArray[4] == "Monthly") {
-                MonthlyHandlerClick(false);
-            }
-            else {
-                WeeklyAndBiWeerklyHandlerClick(false);
-            }
-
-            try {
-                var element = document.getElementById('days');
-                element.value = resultsArray[0];
-            }
-            catch(err) {
-
-            }
-            element = document.getElementById('hours');
-            element.value = resultsArray[1];
-
-            element = document.getElementById('minutes');
-            element.value = resultsArray[2];
-
-            element = document.getElementById('quietmode');
-            element.value = "QuietMode=".concat(resultsArray[3]);
-
-
-            if (EnhancedExerciseEnabled == true) {
-
-                if( bSetRadio == true) {
-                    document.getElementById(resultsArray[4]).checked = true;
-                }
-
-                if (resultsArray[5] === "False") {
-                    document.getElementById("freqsep").style.visibility = "hidden";
-                    document.getElementById("Weekly").disabled = true;
-                    document.getElementById("Biweekly").disabled = true;
-                    document.getElementById("Monthly").disabled = true;
-                    EnhancedExerciseEnabled = false;
-                }
-                else {
-                    document.getElementById("freqsep").style.visibility = "visible"
-                    document.getElementById("Weekly").disabled = false;
-                    document.getElementById("Biweekly").disabled = false;
-                    document.getElementById("Monthly").disabled = false;
-                    EnhancedExerciseEnabled = true
-                }
-            }
-        }
-   });
-
-}
 
 //*****************************************************************************
 // Display the Notification Tab
@@ -603,7 +376,6 @@ function DisplayNotifications(){
            $("#allnotifications tbody").on('change', 'input:checkbox', function(){
               var ids = $(this).attr("id").split('_');
               var myval = ($(this).prop('checked') === true ? "true" : "false");
-              // alert ('Row: '+ids[1]+', field: '+ids[0]+', value: '+myval);
               if ((ids[0] == "all") && (myval == "true")) {
                  $.each( ["outage", "error", "warn", "info"], function( index, type ){
                      $('#'+type+'_'+ids[1]).prop('checked', true);
@@ -660,7 +432,7 @@ function saveNotifications(){
         }
     });
     if (blankEmails > 0) {
-       alert("Emails cannot be blank. You have "+blankEmails+" blank lines");
+       GenmonAlert("Emails cannot be blank.<br>You have "+blankEmails+" blank lines.");
        return
     }
 
@@ -722,7 +494,7 @@ function saveNotificationsJSON(){
         });
 
     } catch(err) {
-        alert("Error: invalid selection");
+        GenmonAlert("Error: invalid selection");
     }
 }
 
@@ -747,7 +519,7 @@ function DisplaySettings(){
               outstr += "<tr><td style=\"padding: 5px;\" colspan=\"2\"><br><br>Console Settings:</td></tr>";
             } else if (result[key][2] == 40) {
               outstr += "<tr><td style=\"padding: 5px;\" colspan=\"2\"><br><br>Generator Model Specific Settings:</td></tr>";
-            } else if (result[key][2] == 25) {
+            } else if (result[key][2] == 26) {
               outstr += "<tr><td style=\"padding: 5px;\" colspan=\"2\"><br><br>Webserver Security Settings:</td></tr>";
             } else if (result[key][2] == 101) {
               outstr += "<tr><td style=\"padding: 5px;\" colspan=\"2\"><br><br>Email Settings:</td></tr>";
@@ -764,27 +536,21 @@ function DisplaySettings(){
                 outstr += "<input id=\"" + key + "\" style=\"width: 400px;\" name=\"" + key + "\" type=\"text\" " +
                            (typeof result[key][3] === 'undefined' ? "" : "value=\"" + replaceAll(result[key][3], '"', '&quot;') + "\" ") +
                            (typeof result[key][3] === 'undefined' ? "" : "oldValue=\"" + replaceAll(result[key][3], '"', '&quot;') + "\" ") +
-                           (typeof result[key][4] === 'undefined' ? "" : "title=\"" + replaceAll(result[key][4], '"', '&quot;') + "\" ") +
+                           (((typeof result[key][4] === 'undefined' ) || (result[key][4].trim() == "")) ? "" : "title=\"" + replaceAll(result[key][4], "\"", '&quot;') + "\" ") +
                           " class=\"tooltip\">";
                 break;
               case "int":
                 outstr += "<input id=\"" + key + "\" name=\"" + key + "\" type=\"text\" " +
-                          // TODO, here ints were converted to strings
-                          // (typeof result[key][3] === 'undefined' ? "" : "value=\"" + replaceAll(result[key][3], '"', '&quot;') + "\" ") +
                            (typeof result[key][3] === 'undefined' ? "" : "value=\"" + result[key][3].toString() + "\" ") +
-                         //  (typeof result[key][3] === 'undefined' ? "" : "oldValue=\"" + replaceAll(result[key][3], '"', '&quot;') + "\" ") +
                            (typeof result[key][3] === 'undefined' ? "" : "oldValue=\"" + result[key][3].toString() + "\" ") +
-                           (typeof result[key][4] === 'undefined' ? "" : "title=\"" + replaceAll(result[key][4], '"', '&quot;') + "\" ") +
+                           (((typeof result[key][4] === 'undefined' ) || (result[key][4].trim() == "")) ? "" : "title=\"" + replaceAll(result[key][4], "\"", '&quot;') + "\" ") +
                           " class=\"tooltip\">";
                 break;
               case "boolean":
                 outstr += "<span id=\"" + key + "_bg\"><input id=\"" + key + "\" name=\"" + key + "\" type=\"checkbox\" " +
-                          // TODO, here boolean values were converted to strings
-                          // (((typeof result[key][3] !== 'undefined' ) && (result[key][3].toLowerCase() == "true")) ? " checked " : "") +
-                          (((typeof result[key][3] !== 'undefined' ) && (result[key][3].toString() == "true")) ? " checked " : "") +
-                          // (((typeof result[key][3] !== 'undefined' ) && (result[key][3].toLowerCase() == "true")) ? " oldValue=\"true\" " : " oldValue=\"false\" ") +
-                          (((typeof result[key][3] !== 'undefined' ) && (result[key][3].toString() == "true")) ? " oldValue=\"true\" " : " oldValue=\"false\" ") +
-                           (typeof result[key][4] === 'undefined' ? "" : " title=\"" + replaceAll(result[key][4], '"', '&quot;') + "\" ") +
+                           (((typeof result[key][3] !== 'undefined' ) && (result[key][3].toString() == "true")) ? " checked " : "") +
+                           (((typeof result[key][3] !== 'undefined' ) && (result[key][3].toString() == "true")) ? " oldValue=\"true\" " : " oldValue=\"false\" ") +
+                           (((typeof result[key][4] === 'undefined' ) || (result[key][4].trim() == "")) ? "" : "title=\"" + replaceAll(result[key][4], "\"", '&quot;') + "\" ") +
                           " class=\"tooltip\"></span>";
                 break;
               default:
@@ -801,7 +567,7 @@ function DisplaySettings(){
            trigger: 'click',
            side: ['bottom', 'left']
         });
-        $("#disableemail").trigger("change");
+	$("#disableemail").trigger("change");
         $("#displayoutput").trigger("change");
         $("#usehttps").trigger("change");
         $("#imap_server").trigger("change");
@@ -817,13 +583,15 @@ function DisplaySettings(){
                     $(this).attr("oldValue", "")
                  }
                  if ($(this).attr('type') == "checkbox") {
-                   $("#"+name+"_bg").css("background-color","#FFB");
+                   // $("#"+name+"_bg").css("background-color","#FFB");
+                   $(this).parent().find(".lcs_switch").addClass("lcs_changed");
                  } else {
                    $(this).css("background-color","#FFB");
                  }
                } else {
                  $(this).css("background-color","#FFF");
-                 $("#"+name+"_bg").css("background-color","#FFF");
+                 // $("#"+name+"_bg").css("background-color","#FFF");
+                 $(this).parent().find(".lcs_switch").removeClass("lcs_changed");
                }
             });
             $("#disableemail").change(function () {
@@ -958,12 +726,19 @@ function saveSettings(){
              DisplayStrAnswer = false; // Prevent recursive calls.
              e.preventDefault();
              saveSettingsJSON();
+             var DisplayStr1 = 'Saving...';
              var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
+             $('.vex-dialog-message').html(DisplayStr1);
              $('.vex-dialog-buttons').html(DisplayStr2);
              $('.progress-bar-fill').queue(function () {
                   $(this).css('width', '100%')
              });
-             setTimeout(function(){ vex.closeAll(); if ($('#sitename').val() != $('#sitename').attr('oldValue')) { GetHeaderValues() }}, 10000);
+             setTimeout(function(){
+                vex.closeAll(); 
+                if ($('#sitename').val() != $('#sitename').attr('oldValue')) { SetHeaderValues(); }
+                if ($('#favicon').val() != $('#favicon').attr('oldValue')) { changeFavicon($('#favicon').val()); }
+                if (($('#enhancedexercise').prop('checked')  === true ? "true" : "false") != $('#enhancedexercise').attr('oldValue')) { ExerciseParameters['EnhancedExerciseEnabled'] = ($('#enhancedexercise').prop('checked')  === true ? "true" : "false") }
+             }, 10000);
            }
         }
     })
@@ -989,7 +764,7 @@ function saveSettingsJSON() {
         });
 
     } catch(err) {
-        alert("Error: invalid selection");
+        GenmonAlert("Error: invalid selection");
     }
 }
 
@@ -1145,30 +920,27 @@ function MenuClick(target)
         menuElement = target.attr("id");
         switch (target.attr("id")){
             case "status":
-            case "maint":
             case "outage":
             case "logs":
             case "monitor":
                 window.scrollTo(0,0);
                 GetDisplayValues(target.attr("id"));
-                if (target.attr("id") == "maint") {
-                    SetExerciseChoice(true)
-                }
+                break;
+            case "maint":
+                window.scrollTo(0,0);
+                DisplayMaintenance();
                 break;
             case "notifications":
                 window.scrollTo(0,0);
                 DisplayNotifications();
-                SetVisibilityOfMaintList();
                 break;
             case "settings":
                 window.scrollTo(0,0);
                 DisplaySettings();
-                SetVisibilityOfMaintList();
                 break;
             case "registers":
                 window.scrollTo(0,0);
                 DisplayRegisters();
-                SetVisibilityOfMaintList();
                 break;
             default:
                 break;
@@ -1217,7 +989,6 @@ function GetDisplayValues(command)
         // replace space with html friendly &nbsp
         outstr = replaceAll(outstr,' ','&nbsp')
         $("#mydisplay").html(outstr);
-        SetVisibilityOfMaintList();
 
    });
 
@@ -1225,37 +996,39 @@ function GetDisplayValues(command)
 }
 
 //*****************************************************************************
-// GetHeaderValues - updates header to display site name
+// Get the Excercise current settings
 //*****************************************************************************
-function GetHeaderValues()
-{
+function GetExerciseValues(){
 
-    /* Make this call synchronous */
     var url = baseurl.concat("getexercise");
-
-    $.ajax({dataType:"json",url: url, success: function(result){
+    $.getJSON(url,function(result){
 
         // should return str in this format:
         // Saturday!13!30!On!Weekly!True
         // Saturday!13!30!On!Biweekly!Falze
-        // Day-2!13!30!On!Monthly!False
+        // 2!13!30!On!Monthly!False
         // NOTE: Last param (True or False) is if enhanced exercise freq is enabled
-        var resultsArray = result.split("!")
+        resultsArray = result.split("!");
 
         if (resultsArray.length == 6){
-
-            if (resultsArray[5] === "False") {
-                EnhancedExerciseEnabled = false;
-            }
-            else {
-                EnhancedExerciseEnabled = true
-            }
+            ExerciseParameters['ExerciseDay'] = resultsArray[0];
+            ExerciseParameters['ExerciseHour'] = resultsArray[1];
+            ExerciseParameters['ExerciseMinute'] = resultsArray[2];
+            ExerciseParameters['QuietMode'] = resultsArray[3];
+            ExerciseParameters['ExerciseFrequency'] = resultsArray[4];
+            ExerciseParameters['EnhancedExerciseEnabled'] = ((resultsArray[5] === "False") ? false : true);
         }
-    }, async: false});
+   });
+}
 
+
+//*****************************************************************************
+// SetHeaderValues - updates header to display site name
+//*****************************************************************************
+function SetHeaderValues()
+{
     url = baseurl.concat("getsitename");
     $.getJSON(url,function(result){
-
         // replace /n with html friendly <br/>
         var outstr = replaceAll(result,'\n','<br/>')
         // replace space with html friendly &nbsp
@@ -1264,7 +1037,43 @@ function GetHeaderValues()
         $("#myheader").html(HeaderStr);
         $("#registers").on('click',  function() {  MenuClick($(this));});
     });
+}
+
+
+//*****************************************************************************
+// Set Favicon
+//*****************************************************************************
+
+document.head = document.head || document.getElementsByTagName('head')[0];
+
+function changeFavicon(src) {
+   var link = document.createElement('link'),
+       oldLink = document.getElementById('dynamic-favicon');
+   link.id = 'dynamic-favicon';
+   link.rel = 'shortcut icon';
+   link.href = src;
+   if (oldLink) {
+       document.head.removeChild(oldLink);
+   }
+   document.head.appendChild(link);
+}
+
+function SetFavIcon()
+{
+    url = baseurl.concat("getfavicon");
+    $.getJSON(url,function(result){
+        changeFavicon(result);
+    });
     return
+}
+
+//*****************************************************************************
+// Show nice Alert Box (modal)
+//*****************************************************************************
+function GenmonAlert(msg)
+{
+       vex.closeAll();
+       vex.dialog.alert({ unsafeMessage: "<table><tr><td valign=\"middle\" width=\"200px\" align=\"center\"><img src=\"images/alert.png\" width=\"64px\" height=\"64px\"></td><td valign=\"middle\" width=\"70%\">"+msg+"</td></tr></table>"});
 }
 
 //*****************************************************************************
@@ -1274,10 +1083,8 @@ function UpdateDisplay()
 {
     if (menuElement == "registers") {
         DisplayRegisters();
-    } else if ((menuElement != "settings") && (menuElement != "notifications")) {
+    } else if ((menuElement != "settings") && (menuElement != "notifications") && (menuElement != "maint")) {
         GetDisplayValues(menuElement);
-    } else {
-        SetVisibilityOfMaintList();
     }
 }
 
@@ -1291,18 +1098,6 @@ function GetBaseStatus()
     $.getJSON(url,function(result){
 
         baseState = result;
-
-        if((baseState === "EXERCISING") || (baseState === "RUNNING")) {
-            document.getElementById("remotestop").disabled = false;
-            document.getElementById("remotestart").disabled = true;
-            document.getElementById("remotetransfer").disabled = true;
-        }
-        else {
-            document.getElementById("remotestop").disabled = true;
-            document.getElementById("remotestart").disabled = false;
-            document.getElementById("remotetransfer").disabled = false;
-        }
-
         // active, activealarm, activeexercise
         if (baseState != currentbaseState) {
 
@@ -1330,9 +1125,21 @@ function GetBaseStatus()
             // Added active to selected class
             $("#"+menuElement).find("a").addClass(GetCurrentClass());
 
+            if (menuElement == "maint") { 
+                 if((baseState === "EXERCISING") || (baseState === "RUNNING")) {
+                     $("#remotestop").prop("disabled",false);
+                     $("#remotestart").prop("disabled",true);
+                     $("#remotetransfer").prop("disabled",true);
+                 } else {
+                     $("#remotestop").prop("disabled",true);
+                     $("#remotestart").prop("disabled",false);
+                     $("#remotetransfer").prop("disabled",false);
+                 }
+            }
         }
         return
    });
 
     return
 }
+
