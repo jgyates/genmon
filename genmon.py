@@ -995,18 +995,18 @@ class GeneratorDevice:
 
         try:
             #Format we are looking for is "setremote=start"
-            marker0 = CmdString.lower().find("setremote")
-            marker1 = CmdString.find("=", marker0)
-            marker2 = CmdString.find(" ",marker1+1)
-
-            if -1 in [marker0, marker1]:
+            CmdList = CmdString.split("=")
+            if len(CmdList) != 2:
                 self.LogError("Validation Error: Error parsing command string in SetGeneratorRemoteStartStop (parse): " + CmdString)
                 return msgbody
 
-            if marker2 == -1:       # was this the last char in the string or now space given?
-                Command = CmdString[marker1+1:]
-            else:
-                Command = CmdString[marker1+1:marker2]
+            CmdList[0] = CmdList[0].strip()
+
+            if not CmdList[0].lower() == "setremote":
+                self.LogError("Validation Error: Error parsing command string in SetGeneratorRemoteStartStop (parse2): " + CmdString)
+                return msgbody
+
+            Command = CmdList[1].strip()
 
         except Exception as e1:
             self.LogError("Validation Error: Error parsing command string in SetGeneratorRemoteStartStop: " + CmdString)
