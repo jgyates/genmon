@@ -4,13 +4,13 @@ $("#myheader").html('<header>Generator Monitor</header>');
 
 // Define main menu
 $("#navMenu").html('<ul>' +
-      '<li id="status"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img src=\"images/status.png\" width=\"20px\" height=\"20px\"></td><td valign="middle">&nbsp;Status</td></tr></table></a></li>' +
-      '<li id="maint"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img src=\"images/maintenance.png\" width=\"20px\" height=\"20px\"></td><td valign="middle">&nbsp;Maintenance</td></tr></table></a></li>' +
-      '<li id="outage"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img src=\"images/outage.png\" width=\"20px\" height=\"20px\"></td><td valign="middle">&nbsp;Outage</td></tr></table></a></li>' +
-      '<li id="logs"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img src=\"images/log.png\" width=\"20px\" height=\"20px\"></td><td valign="middle">&nbsp;Logs</td></tr></table></a></li>' +
-      '<li id="monitor"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img src=\"images/monitor.png\" width=\"20px\" height=\"20px\"></td><td valign="middle">&nbsp;Monitor</td></tr></table></a></li>' +
-      '<li id="notifications"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img src=\"images/notifications.png\" width=\"20px\" height=\"20px\"></td><td valign="middle">&nbsp;Notifications</td></tr></table></a></li>' +
-      '<li id="settings"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img src=\"images/settings.png\" width=\"20px\" height=\"20px\"></td><td valign="middle">&nbsp;Settings</td></tr></table></a></li>' +
+      '<li id="status"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img src="images/status.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Status</td></tr></table></a></li>' +
+      '<li id="maint"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img src="images/maintenance.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Maintenance</td></tr></table></a></li>' +
+      '<li id="outage"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img src="images/outage.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Outage</td></tr></table></a></li>' +
+      '<li id="logs"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img src="images/log.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Logs</td></tr></table></a></li>' +
+      '<li id="monitor"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img src="images/monitor.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Monitor</td></tr></table></a></li>' +
+      '<li id="notifications"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img src="images/notifications.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Notifications</td></tr></table></a></li>' +
+      '<li id="settings"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img src="images/settings.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Settings</td></tr></table></a></li>' +
     '</ul>') ;
 
 // global base state
@@ -21,8 +21,8 @@ var menuElement = "status";
 var ExerciseParameters = {};
     ExerciseParameters['EnhancedExerciseEnabled']  = false;
 // on page load call init
-var pathname = ""
-var baseurl = ""
+var pathname = "";
+var baseurl = "";
 var DaysOfWeekArray = ["Sunday","Monday","Tuesday","Wednesday", "Thursday", "Friday", "Saturday"];
 
 //*****************************************************************************
@@ -33,13 +33,13 @@ $(document).ready(function() {
     pathname = window.location.href;
     baseurl = pathname.concat("cmd/")
     SetHeaderValues();
-    $("#footer").html("<table border=\"0\" width=\"100%\" height=\"30px\"><tr><td width=\"90%\" style=\"vertical-align:middle\"><a href=\"https://github.com/jgyates/genmon\" target=\"_blank\">GenMon Project on GitHub</a></td></tr></table>");
+    $("#footer").html('<table border="0" width="100%" height="30px"><tr><td width="90%"><a href="https://github.com/jgyates/genmon" target="_blank">GenMon Project on GitHub</a></td></tr></table>');
     SetFavIcon();
     GetExerciseValues();
     $("#status").find("a").addClass(GetCurrentClass());
     setInterval(GetBaseStatus, 3000);       // Called every 3 sec
     setInterval(UpdateDisplay, 5000);       // Called every 5 sec
-    GetDisplayValues("status");
+    DisplayStatusFull();
     $("li").on('click',  function() {  MenuClick($(this));});
 });
 
@@ -66,6 +66,206 @@ function SetRemoteCommand(command){
 
 }
 
+
+//*****************************************************************************
+// DisplayStatusFull - show the status page at the beginning or when switching
+// from another page
+//*****************************************************************************
+var gaugeBatteryVoltage;
+var gaugeUtilityVoltage;
+var gaugeOutputVoltage;
+var gaugeBatteryFrequency;
+
+function DisplayStatusFull()
+{
+    var url = baseurl.concat("status_json");
+    $.getJSON(url,function(result){
+        var outstr = 'Dashboard:<br><br>';
+        outstr += '<center><table width="80%" border="0"><tr>';
+        outstr += '<td width="25%" class="gaugeTD" align="center">';
+        outstr += 'Battery Voltage<br><canvas class="gaugeCanvas" id="gaugeBatteryVoltage"></canvas><br><div id="textBatteryVoltage" class="gaugeDiv"></div>V';
+        outstr += '</td>';
+        outstr += '<td width="25%" class="gaugeTD" align="center">';
+        outstr += 'Utility Voltage<br><canvas class="gaugeCanvas" id="gaugeUtilityVoltage"></canvas><br><div id="textUtilityVoltage" class="gaugeDiv"></div>V';
+        outstr += '</td>';
+        outstr += '<td width="25%" class="gaugeTD" align="center">';
+        outstr += 'Output Voltage<br><canvas class="gaugeCanvas" id="gaugeOutputVoltage"></canvas><br><div id="textOutputVoltage" class="gaugeDiv"></div>V';
+        outstr += '</td>';
+        outstr += '<td width="25%" class="gaugeTD" align="center">';
+        outstr += 'Frequency<br><canvas class="gaugeCanvas" id="gaugeFrequency"></canvas><br><div id="textFrequency" class="gaugeDiv"></div>Hz';
+        outstr += '</td>';
+        outstr += '</tr></table></center><br>';
+
+        $("#mydisplay").html(outstr + json2html(result, "", "root"));
+
+        gaugeBatteryVoltage = createGauge($("#gaugeBatteryVoltage"), $("#textBatteryVoltage"), 1, 10, 16, [10, 11, 12, 13, 14, 15, 16],
+                                          [{strokeStyle: "#F03E3E", min: 10, max: 11},
+                                           {strokeStyle: "#FFDD00", min: 11, max: 12},
+                                           {strokeStyle: "#30B32D", min: 12, max: 15},
+                                           {strokeStyle: "#FFDD00", min: 15, max: 15.5},
+                                           {strokeStyle: "#F03E3E", min: 15.5, max: 16}], 6, 10);
+        gaugeBatteryVoltage.set(result["Status"]["Engine"]["Battery Voltage"].replace(/V/g, '')); // set current value
+
+        gaugeUtilityVoltage = createGauge($("#gaugeUtilityVoltage"), $("#textUtilityVoltage"), 0, 0, 260, [0, 100, 156, 220, 240, 260],
+                                          [{strokeStyle: "#F03E3E", min: 0, max: 220},
+                                           {strokeStyle: "#FFDD00", min: 220, max: 235},
+                                           {strokeStyle: "#30B32D", min: 235, max: 245},
+                                           {strokeStyle: "#FFDD00", min: 245, max: 255},
+                                           {strokeStyle: "#F03E3E", min: 255, max: 260}], 26, 0);
+        gaugeUtilityVoltage.set(result["Status"]["Line State"]["Utility Voltage"].replace(/V/g, '')); // set actual value
+
+        gaugeOutputVoltage = createGauge($("#gaugeOutputVoltage"), $("#textOutputVoltage"), 0, 0, 260, [0, 100, 156, 220, 240, 260],
+                                          [{strokeStyle: "#F03E3E", min: 0, max: 220},
+                                           {strokeStyle: "#FFDD00", min: 220, max: 235},
+                                           {strokeStyle: "#30B32D", min: 235, max: 245},
+                                           {strokeStyle: "#FFDD00", min: 245, max: 255},
+                                           {strokeStyle: "#F03E3E", min: 255, max: 260}], 26, 0);
+        gaugeOutputVoltage.set(result["Status"]["Engine"]["Output Voltage"].replace(/V/g, '')); // set actual value
+
+        gaugeFrequency = createGauge($("#gaugeFrequency"), $("#textFrequency"), 1, 0, 70, [10, 20, 30, 40, 50, 60, 70],
+                                          [{strokeStyle: "#F03E3E", min: 0, max: 57},
+                                           {strokeStyle: "#FFDD00", min: 57, max: 59},
+                                           {strokeStyle: "#30B32D", min: 59, max: 61},
+                                           {strokeStyle: "#FFDD00", min: 61, max: 63},
+                                           {strokeStyle: "#F03E3E", min: 63, max: 70}], 7, 10);
+        gaugeFrequency.set(result["Status"]["Engine"]["Frequency"].replace(/Hz/g, '')); // set actual value
+    });
+    return;
+}
+
+function json2html(json, intent, parentkey) {
+    var outstr = '';
+    if (typeof json === 'string') {
+      outstr += '<div class="jsonVal" id="'+parentkey.replace(/ /g, '_')+'">' + json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div><br>';
+    } else if (typeof json === 'number') {
+      outstr += '<div class="jsonVal" id="'+parentkey.replace(/ /g, '_')+'">' + json + '</div><br>';
+    } else if (typeof json === 'boolean') {
+      outstr += '<div class="jsonVal" id="'+parentkey.replace(/ /g, '_')+'">' + json + '</div><br>';
+    } else if (json === null) {
+      outstr += '<div class="jsonVal" id="'+parentkey.replace(/ /g, '_')+'">null</div><br>';
+    }
+    else if (json instanceof Array) {
+      if (json.length > 0) {
+        intent += "&nbsp;&nbsp;&nbsp;&nbsp;";
+        for (var i = 0; i < json.length; ++i) {
+          outstr += json2html(json[i], intent, parentkey+"_"+i);
+        }
+      }
+    }
+    else if (typeof json === 'object') {
+      var key_count = Object.keys(json).length;
+      if (key_count > 0) {
+        intent += "&nbsp;&nbsp;&nbsp;&nbsp;";
+        for (var key in json) {
+          if (json.hasOwnProperty(key)) {
+            if ((typeof json[key] === 'string') || (typeof json[key] === 'number') || (typeof json[key] === 'boolean') || (typeof json[key] === null)) {
+               outstr += intent + key + ' : ' + json2html(json[key], intent, key);
+            } else {
+               outstr += "<br>" + intent + key + ' :<br>' + json2html(json[key], intent, key);
+            }
+          }
+        }
+      }
+    }
+    return outstr;
+}
+
+function createGauge(pCanvas, pText, pTextPrecision, pMin, pMax, pLabels, pZones, pDiv, pSubDiv) {
+    var opts = {
+      angle: -0.2, // The span of the gauge arc
+      lineWidth: 0.2, // The line thickness
+      radiusScale: 0.73, // Relative radius
+      pointer: {
+        length: 0.6, // // Relative to gauge radius
+        strokeWidth: 0.038, // The thickness
+        color: '#000000' // Fill color
+      },
+      limitMax: false,     // If false, max value increases automatically if value > maxValue
+      limitMin: false,     // If true, the min value of the gauge will be fixed
+      colorStart: '#6FADCF',   // Colors
+      colorStop: '#8FC0DA',    // just experiment with them
+      strokeColor: '#E0E0E0',  // to see which ones work best for you
+      generateGradient: true,
+      highDpiSupport: true,     // High resolution support
+      staticLabels: {
+        font: "10px sans-serif",  // Specifies font
+        labels: pLabels,  // Print labels at these values
+        color: "#000000",  // Optional: Label text color
+        fractionDigits: 0  // Optional: Numerical precision. 0=round off.
+      },
+      staticZones: pZones,
+      // renderTicks is Optional
+      renderTicks: {
+        divisions: pDiv,
+        divWidth: 0.1,
+        divLength: 0.48,
+        divColor: '#333333',
+        subDivisions: pSubDiv,
+        subLength: 0.17,
+        subWidth: 0.1,
+        subColor: '#666666'
+      }
+    };
+
+    var gauge = new Gauge(pCanvas[0]).setOptions(opts);
+    gauge.minValue = pMin; // set max gauge value
+    gauge.maxValue = pMax; // set max gauge value
+    gauge.setTextField(pText[0], pTextPrecision);
+    gauge.animationSpeed = 1;
+    gauge.set(pMin); // setting starting point
+    gauge.animationSpeed = 128; // set animation speed (32 is default value)
+
+    return gauge;
+}
+
+//*****************************************************************************
+// DisplayStatusUpdate - updates the status page at every interval
+//*****************************************************************************
+function DisplayStatusUpdate()
+{
+    var url = baseurl.concat("status_json");
+    $.getJSON(url,function(result){
+        json2updates(result, "root");
+
+        gaugeBatteryVoltage.set(result["Status"]["Engine"]["Battery Voltage"].replace(/V/g, '')); // set actual value
+        gaugeUtilityVoltage.set(result["Status"]["Line State"]["Utility Voltage"].replace(/V/g, '')); // set actual value
+        gaugeOutputVoltage.set(result["Status"]["Engine"]["Output Voltage"].replace(/V/g, '')); // set actual value
+        gaugeFrequency.set(result["Status"]["Engine"]["Frequency"].replace(/Hz/g, '')); // set actual value
+    });
+    return;
+}
+
+function json2updates(json, parentkey) {
+    if ((typeof json === 'string') && ($("#"+parentkey.replace(/ /g, '_')).html() != json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'))) {
+      $("#"+parentkey.replace(/ /g, '_')).html(json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+      // $("#"+parentkey.replace(/ /g, '_')).css("color", "red");
+    } else if ((typeof json === 'number') && ($("#"+parentkey.replace(/ /g, '_')).html() != json)) {
+      $("#"+parentkey.replace(/ /g, '_')).html(json);
+    } else if ((typeof json === 'boolean') && ($("#"+parentkey.replace(/ /g, '_')).html() != json)) {
+      $("#"+parentkey.replace(/ /g, '_')).html(json);
+    } else if ((json === null) && ($("#"+parentkey.replace(/ /g, '_')).html() != "null")) {
+      $("#"+parentkey.replace(/ /g, '_')).html('null');
+    }
+    else if (json instanceof Array) {
+      if (json.length > 0) {
+        for (var i = 0; i < json.length; ++i) {
+          json2updates(json[i], parentkey+"_"+i);
+        }
+      }
+    }
+    else if (typeof json === 'object') {
+      var key_count = Object.keys(json).length;
+      if (key_count > 0) {
+        for (var key in json) {
+          if (json.hasOwnProperty(key)) {
+            json2updates(json[key], key);
+          }
+        }
+      }
+    }
+}
+
+
 //*****************************************************************************
 // Display the Maintenance Tab
 //*****************************************************************************
@@ -79,8 +279,6 @@ function DisplayMaintenance(){
         // replace space with html friendly &nbsp
         outstr = replaceAll(outstr,' ','&nbsp')
 
-        var myDiv = document.getElementById("myDiv");
-
         outstr += "<br>Generator Exercise Time:<br><br>";
 
         //Create array of options to be added
@@ -88,45 +286,45 @@ function DisplayMaintenance(){
         if (ExerciseParameters['EnhancedExerciseEnabled'] == true) {
             outstr += "&nbsp;&nbsp;&nbsp;&nbsp;Mode: ";
             for(var i = 0; i < FreqArray.length; i++)  {
-                outstr += "<label for=\"" + FreqArray[i] + "\">" + FreqArray[i] + "</label>";
-                outstr += "<input type=\"radio\" name=\"choice\" value=\"" + FreqArray[i] + "\" id=\"" + FreqArray[i] + "\" ";
-                outstr += ((ExerciseParameters['ExerciseFrequency'] == FreqArray[i]) ? " checked " : "");
-                outstr += ((FreqArray[i] == "Monthly") ? " onClick=\"MonthlyExerciseSelection();\" " : " onClick=\"WeekdayExerciseSelection();\" ");
-                outstr += ">";
+                outstr += '<label for="' + FreqArray[i] + '">' + FreqArray[i] + '</label>';
+                outstr += '<input type="radio" name="choice" value="' + FreqArray[i] + '" id="' + FreqArray[i] + '" ';
+                outstr += ((ExerciseParameters['ExerciseFrequency'] == FreqArray[i]) ? ' checked ' : '');
+                outstr += ((FreqArray[i] == "Monthly") ? ' onClick="MonthlyExerciseSelection();" ' : ' onClick="WeekdayExerciseSelection();" ');
+                outstr += '>';
             }
         }
 
         //Create and append the options, days
-        outstr += "<br><br>&nbsp;&nbsp;&nbsp;&nbsp;<select style=\"width:200px;\" id=\"days\"></select> , ";
+        outstr += '<br><br>&nbsp;&nbsp;&nbsp;&nbsp;<select style="width:200px;" id="days"></select> , ';
         //Create and append the options, hours
-        outstr += "<select id=\"hours\">";
+        outstr += '<select id="hours">';
         for (var i = 0; i < 24; i++) {
-            outstr += "<option value=\"" + i.pad() + "\">" + i.pad() + "</option>";
+            outstr += '<option value="' + i.pad() + '">' + i.pad() + '</option>';
         }
-        outstr += "</select> : ";
+        outstr += '</select> : ';
 
         //Create and append the options, minute
-        outstr += "<select id=\"minutes\">";
+        outstr += '<select id="minutes">';
         for (var i = 0; i < 60; i++) {
-            outstr += "<option value=\"" + i.pad() + "\">" + i.pad() + "</option>";
+            outstr += '<option value="' + i.pad() + '">' + i.pad() + '</option>';
         }
-        outstr += "</select>&nbsp;&nbsp;";
+        outstr += '</select>&nbsp;&nbsp;';
 
         //Create and append select list
-        outstr += "&nbsp;&nbsp;&nbsp;&nbsp;<select id=\"quietmode\">";
-        outstr += "<option value=\"QuietMode=On\" " + (ExerciseParameters['QuietMode'] == "On"  ? " selected=\"selected\" " : "") + ">Quiet Mode On </option>";
-        outstr += "<option value=\"QuietMode=Off\"" + (ExerciseParameters['QuietMode'] == "Off" ? " selected=\"selected\" " : "") + ">Quiet Mode Off</option>";
-        outstr += "</select><br><br>";
+        outstr += '&nbsp;&nbsp;&nbsp;&nbsp;<select id="quietmode">';
+        outstr += '<option value="QuietMode=On" ' + (ExerciseParameters['QuietMode'] == "On"  ? ' selected="selected" ' : '') + '>Quiet Mode On </option>';
+        outstr += '<option value="QuietMode=Off"' + (ExerciseParameters['QuietMode'] == "Off" ? ' selected="selected" ' : '') + '>Quiet Mode Off</option>';
+        outstr += '</select><br><br>';
 
-        outstr += "&nbsp;&nbsp;<button id=\"setexercisebutton\" onClick=\"saveMaintenance();\">Set Exercise Time</button>";
+        outstr += '&nbsp;&nbsp;<button id="setexercisebutton" onClick="saveMaintenance();">Set Exercise Time</button>';
 
-        outstr += "<br><br>Generator Time:<br><br>";
-        outstr += "&nbsp;&nbsp;<button id=\"settimebutton\" onClick=\"SetTimeClick();\">Set Generator Time</button>";
+        outstr += '<br><br>Generator Time:<br><br>';
+        outstr += '&nbsp;&nbsp;<button id="settimebutton" onClick="SetTimeClick();">Set Generator Time</button>';
 
-        outstr += "<br><br>Remote Commands:<br><br>";
-        outstr += "&nbsp;&nbsp;<button id=\"remotestop\" onClick=\"SetStopClick();\">Stop Generator</button><br><br>";
-        outstr += "&nbsp;&nbsp;<button id=\"remotestart\" onClick=\"SetStartClick();\">Start Generator</button><br><br>";
-        outstr += "&nbsp;&nbsp;<button id=\"remotetransfer\" onClick=\"SetTransferClick();\">Start Generator and Transfer</button><br><br>";
+        outstr += '<br><br>Remote Commands:<br><br>';
+        outstr += '&nbsp;&nbsp;<button id="remotestop" onClick="SetStopClick();">Stop Generator</button><br><br>';
+        outstr += '&nbsp;&nbsp;<button id="remotestart" onClick="SetStartClick();">Start Generator</button><br><br>';
+        outstr += '&nbsp;&nbsp;<button id="remotetransfer" onClick="SetTransferClick();">Start Generator and Transfer</button><br><br>';
 
         $("#mydisplay").html(outstr);
 
@@ -160,7 +358,7 @@ function MonthlyExerciseSelection(){
     if (($('#days option')).lenghth != 28) {
        $("#days").find('option').remove();
        for (var i = 1; i <= 28; i++) {
-           $("#days").append("<option value=\"" + i.pad() + "\">" + i.pad() + "</option>");
+           $("#days").append('<option value="' + i.pad() + '">' + i.pad() + '</option>');
        }
     }
     $("#days").val(ExerciseParameters['ExerciseDay']);
@@ -172,7 +370,7 @@ function WeekdayExerciseSelection(){
     if ($('#days option').lenghth != 7) {
        $("#days").find('option').remove();
        for (var i = 0; i < DaysOfWeekArray.length; i++) {
-           $("#days").append("<option value=\"" + DaysOfWeekArray[i]+ "\">" + DaysOfWeekArray[i]+ "</option>");
+           $("#days").append('<option value="' + DaysOfWeekArray[i]+ '">' + DaysOfWeekArray[i]+ '</option>');
        }
     }
     $("#days").val(ExerciseParameters['ExerciseDay']);
@@ -184,7 +382,7 @@ function WeekdayExerciseSelection(){
 function SetStopClick(){
 
     vex.dialog.confirm({
-        unsafeMessage: "Stop generator?<br><span style=\"font-size:12px\">Note: If the generator is powering a load there will be a cool down period of a few minutes.</span>",
+        unsafeMessage: 'Stop generator?<br><span class="confirmSmall">Note: If the generator is powering a load there will be a cool down period of a few minutes.</span>',
         overlayClosesOnClick: false,
         callback: function (value) {
              if (value == false) {
@@ -202,7 +400,7 @@ function SetStopClick(){
 function SetStartClick(){
 
     vex.dialog.confirm({
-        unsafeMessage: "Start generator?<br><span style=\"font-size:12px\">Generator will start, warm up and run idle (without activating the transfer switch).</span>",
+        unsafeMessage: 'Start generator?<br><span class="confirmSmall">Generator will start, warm up and run idle (without activating the transfer switch).</span>',
         overlayClosesOnClick: false,
         callback: function (value) {
              if (value == false) {
@@ -220,7 +418,7 @@ function SetStartClick(){
 function SetTransferClick(){
 
     vex.dialog.confirm({
-        unsafeMessage: "Start generator and activate transfer switch?<br><span style=\"font-size:12px\">Generator will start, warm up, then activate the transfer switch.</span>",
+        unsafeMessage: 'Start generator and activate transfer switch?<br><span class="confirmSmall">Generator will start, warm up, then activate the transfer switch.</span>',
         overlayClosesOnClick: false,
         callback: function (value) {
              if (value == false) {
@@ -238,7 +436,7 @@ function SetTransferClick(){
 function SetTimeClick(){
 
     vex.dialog.confirm({
-        unsafeMessage: "Set generator time to monitor time?<br><span style=\"font-size:12px\">Note: This operation may take up to one minute to complete.</span>",
+        unsafeMessage: 'Set generator time to monitor time?<br><span class="confirmSmall">Note: This operation may take up to one minute to complete.</span>',
         overlayClosesOnClick: false,
         callback: function (value) {
              if (value == false) {
@@ -302,14 +500,12 @@ function DisplayNotifications(){
     var url = baseurl.concat("notifications");
     $.getJSON(url,function(result){
 
-        var  outstr = "Notification Recepients:<br><br>";
-        outstr += "<button value=\"+Add\" id=\"addRow\">+Add</button><br><br>";
-        outstr += "<form id=\"formNotifications\">";
-        // outstr += "<input type=\"hidden\" name=\"deleted_rows\" id=\"deleted_rows\" value=\"\">";
-        // outstr += "<input type=\"hidden\" name=\"rowcount\" id=\"rowcount\" value=\"0\">";
-        outstr += "<table id=\"allnotifications\" border=\"0\"><tbody>";
+        var  outstr = 'Notification Recepients:<br><br>';
+        outstr += '<button value="+Add" id="addRow">+Add</button><br><br>';
+        outstr += '<form id="formNotifications">';
+        outstr += '<table id="allnotifications" border="0"><tbody>';
 
-        outstr += "<tr id=\"row_0\"><td style=\"padding: 5px;\">&nbsp;&nbsp;&nbsp;&nbsp;</td><td style=\"padding: 5px;\">&nbsp;&nbsp;&nbsp;&nbsp;</td><td width=\"15%\" align=\"center\" style=\"padding: 5px;\">All:</td><td width=\"15%\" align=\"center\" style=\"padding: 5px;\">Outages:</td><td width=\"15%\" align=\"center\" style=\"padding: 5px;\">Errors:</td><td width=\"15%\" align=\"center\" style=\"padding: 5px;\">Warning:</td><td width=\"15%\" align=\"center\" style=\"padding: 5px;\">Information:</td><td></td></tr>";
+        outstr += '<tr id="row_0"><td>&nbsp;&nbsp;&nbsp;&nbsp;</td><td>&nbsp;&nbsp;&nbsp;&nbsp;</td><td width="15%" align="center">All:</td><td width="15%" align="center">Outages:</td><td width="15%" align="center">Errors:</td><td width="15%" align="center">Warning:</td><td width="15%" align="center">Information:</td><td></td></tr>';
 
         var rowcount;
         var emails =  getSortedKeys(result, 0);
@@ -327,21 +523,21 @@ function DisplayNotifications(){
                });
             }
 
-            outstr += "<tr id=\"row_" + rowcount + "\"><td style=\"padding: 5px;\">&nbsp;&nbsp;&nbsp;&nbsp;</td>";
-            outstr += "<td style=\"padding: 5px;\"> "+email+"<input type=\"hidden\" name=\"email_" + rowcount + "\" id=\"email_" + rowcount + "\" value=\""+email+"\"></td>";
+            outstr += '<tr id="row_' + rowcount + '"><td>&nbsp;&nbsp;&nbsp;&nbsp;</td>';
+            outstr += '<td>'+email+'<input type="hidden" name="email_' + rowcount + '" id="email_' + rowcount + '" value="'+email+'"></td>';
 
             $.each( ["all", "outage", "error", "warn", "info"], function( index, type ){
-               outstr += "<td width=\"15%\" align=\"center\" style=\"padding: 5px;\">"
-               outstr += "<span id=\"bg_"+rowcount+"\"><input id=\"" + type + "_" + rowcount + "\" name=\"" + type + "_" + rowcount + "\" type=\"checkbox\" value=\"true\" " +
-                          (((typeof permissions[type] !== 'undefined' ) && (permissions[type].toLowerCase() == "true")) ? " checked " : "") +
-                          (((typeof permissions[type] !== 'undefined' ) && (permissions[type].toLowerCase() == "true")) ? " oldValue=\"true\" " : " oldValue=\"false\" ") +
-                         "></span>";
-               outstr += "</td>";
+               outstr += '<td width="15%" align="center">';
+               outstr += '<span id="bg_'+rowcount+'"><input id="' + type + '_' + rowcount + '" name="' + type + '_' + rowcount + '" type="checkbox" value="true" ' +
+                          (((typeof permissions[type] !== 'undefined' ) && (permissions[type].toLowerCase() == "true")) ? ' checked ' : '') +
+                          (((typeof permissions[type] !== 'undefined' ) && (permissions[type].toLowerCase() == "true")) ? ' oldValue="true" ' : ' oldValue="false" ') +
+                         '></span>';
+               outstr += '</td>';
             });
-            outstr += "<td width=\"15%\" align=\"center\" style=\"padding: 5px;\" width=\"15%\"><button type=\"button\" rowcount=" + rowcount + " id=\"removeRow\">Remove</button></td></tr>";
+            outstr += '<td width="15%" align="center"><button type="button" rowcount="' + rowcount + '" id="removeRow">Remove</button></td></tr>';
         }
-        outstr += "</tbody></table></form><br>";
-        outstr += "<button id=\"setnotificationsbutton\" onClick=\"saveNotifications()\">Save</button>";
+        outstr += '</tbody></table></form><br>';
+        outstr += '<button id="setnotificationsbutton" onClick="saveNotifications()">Save</button>';
         $("#mydisplay").html(outstr);
         rowcount++;
         $('#rowcount').val(rowcount);
@@ -349,27 +545,25 @@ function DisplayNotifications(){
         $(document).ready(function() {
            $("#addRow").click(function () {
               $("#allnotifications").each(function () {
-                  var tds = "<tr id=\"row_" + rowcount + "\"><td style=\"padding: 5px;\">&nbsp;&nbsp;&nbsp;&nbsp;</td>";
-                  tds += "<td style=\"padding: 5px;\"><input id=\"email_" + rowcount + "\" style=\"width: 300px;\" name=\"email_" + rowcount + "\" type=\"text\"></td>";
+                  var outstr = '<tr id="row_' + rowcount + '"><td>&nbsp;&nbsp;&nbsp;&nbsp;</td>';
+                  outstr += '<td><input id="email_' + rowcount + '" style="width: 300px;" name="email_' + rowcount + '" type="text"></td>';
 
                   $.each( ["all", "outage", "error", "warn", "info"], function( index, type ){
-                     tds += "<td width=\"15%\" align=\"center\" style=\"padding: 5px;\">"
-                     tds += "<span id=\"bg_"+rowcount+"\"><input id=\"" + type + "_" + rowcount + "\" name=\"" + type + "_" + rowcount + "\" type=\"checkbox\" value=\"true\" ></span>";
-                     tds += "</td>";
+                     outstr += '<td width="15%" align="center">';
+                     outstr += '<span id="bg_'+rowcount+'"><input id="' + type + '_' + rowcount + '" name="' + type + '_' + rowcount + '" type="checkbox" value="true" ></span>';
+                     outstr += '</td>';
                   });
-                  tds += "<td width=\"15%\" align=\"center\" style=\"padding: 5px;\" width=\"15%\"><button type=\"button\" rowcount=" + rowcount + " id=\"removeRow\">Remove</button></td></tr>";
+                  outstr += '<td width="15%" align="center"><button type="button" rowcount="' + rowcount + '" id="removeRow">Remove</button></td></tr>';
                   rowcount++;
-                  // $('#rowcount').val(rowcount);
                   if ($('tbody', this).length > 0) {
-                      $('tbody', this).append(tds);
+                      $('tbody', this).append(outstr);
                   } else {
-                      $(this).append(tds);
+                      $(this).append(outstr);
                   }
               });
            });
 
            $("#allnotifications tbody").on('click', 'button', function(){
-              // $('#deleted_rows').val($('#deleted_rows').val()+$(this).attr("rowcount")+","+$('#email_'+$(this).attr("rowcount")).val()+",");
               $('table#allnotifications tr#row_'+$(this).attr("rowcount")).remove();
            });
 
@@ -506,60 +700,57 @@ function DisplaySettings(){
     var url = baseurl.concat("settings");
     $.getJSON(url,function(result){
 
-        var outstr = "<form id=\"formSettings\"><table border=\"0\">";
-        // var outstr = JSON.stringify(result, null, 4);
-        // outstr = replaceAll(outstr,'\n','<br/>')
-        // outstr = replaceAll(outstr,' ','&nbsp')
+        var outstr = '<form id="formSettings"><table id="allsettings" border="0">';
         var settings =  getSortedKeys(result, 2);
         for (var index = 0; index < settings.length; ++index) {
             var key = settings[index];
             if (result[key][2] == 1) {
-              outstr += "<tr><td style=\"padding: 5px;\" colspan=\"2\">General Settings:</td></tr>";
+              outstr += '<tr><td colspan="2">General Settings:</td></tr>';
             } else if (result[key][2] == 50) {
-              outstr += "<tr><td style=\"padding: 5px;\" colspan=\"2\"><br><br>Console Settings:</td></tr>";
+              outstr += '<tr><td colspan="2"><br><br>Console Settings:</td></tr>';
             } else if (result[key][2] == 40) {
-              outstr += "<tr><td style=\"padding: 5px;\" colspan=\"2\"><br><br>Generator Model Specific Settings:</td></tr>";
+              outstr += '<tr><td colspan="2"><br><br>Generator Model Specific Settings:</td></tr>';
             } else if (result[key][2] == 26) {
-              outstr += "<tr><td style=\"padding: 5px;\" colspan=\"2\"><br><br>Webserver Security Settings:</td></tr>";
+              outstr += '<tr><td colspan="2"><br><br>Webserver Security Settings:</td></tr>';
             } else if (result[key][2] == 101) {
-              outstr += "<tr><td style=\"padding: 5px;\" colspan=\"2\"><br><br>Email Settings:</td></tr>";
+              outstr += '<tr><td colspan="2"><br><br>Email Settings:</td></tr>';
             } else if (result[key][2] == 150) {
-              outstr += "<tr><td style=\"padding: 5px;\" colspan=\"2\"><br><br>Email Commands Processing:</td></tr>";
+              outstr += '<tr><td colspan="2"><br><br>Email Commands Processing:</td></tr>';
             }
-            outstr += "<tr><td style=\"padding: 5px;\">&nbsp;&nbsp;&nbsp;&nbsp;</td><td style=\"padding: 5px;\"> "+result[key][1]
+            outstr += '<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;</td><td> '+result[key][1];
             if ((typeof result[key][5] !== 'undefined' ) && (result[key][5] == 1)) {
-              outstr += "<div id=\"" + key + "_disabled\"><font size=\"-3\">(disabled)</font></div>";
+              outstr += '<div id="' + key + '_disabled"><font size="-3">(disabled)</font></div>';
             }
-            outstr += "</td><td style=\"padding: 5px;\">";
+            outstr += '</td><td>';
             switch (result[key][0]) {
               case "string":
-                outstr += "<input id=\"" + key + "\" style=\"width: 400px;\" name=\"" + key + "\" type=\"text\" " +
-                           (typeof result[key][3] === 'undefined' ? "" : "value=\"" + replaceAll(result[key][3], '"', '&quot;') + "\" ") +
-                           (typeof result[key][3] === 'undefined' ? "" : "oldValue=\"" + replaceAll(result[key][3], '"', '&quot;') + "\" ") +
-                           (((typeof result[key][4] === 'undefined' ) || (result[key][4].trim() == "")) ? "" : "title=\"" + replaceAll(result[key][4], "\"", '&quot;') + "\" ") +
-                          " class=\"tooltip\">";
+                outstr += '<input id="' + key + '" style="width: 400px;" name="' + key + '" type="text" ' +
+                           (typeof result[key][3] === 'undefined' ? '' : 'value="' + replaceAll(result[key][3], '"', '&quot;') + '" ') +
+                           (typeof result[key][3] === 'undefined' ? '' : 'oldValue="' + replaceAll(result[key][3], '"', '&quot;') + '" ') +
+                           (((typeof result[key][4] === 'undefined' ) || (result[key][4].trim() == "")) ? '' : 'title="' + replaceAll(result[key][4], '"', '&quot;') + '" ') +
+                          ' class="tooltip">';
                 break;
               case "int":
-                outstr += "<input id=\"" + key + "\" name=\"" + key + "\" type=\"text\" " +
-                           (typeof result[key][3] === 'undefined' ? "" : "value=\"" + result[key][3].toString() + "\" ") +
-                           (typeof result[key][3] === 'undefined' ? "" : "oldValue=\"" + result[key][3].toString() + "\" ") +
-                           (((typeof result[key][4] === 'undefined' ) || (result[key][4].trim() == "")) ? "" : "title=\"" + replaceAll(result[key][4], "\"", '&quot;') + "\" ") +
-                          " class=\"tooltip\">";
+                outstr += '<input id="' + key + '" name="' + key + '" type="text" ' +
+                           (typeof result[key][3] === 'undefined' ? '' : 'value="' + result[key][3].toString() + '" ') +
+                           (typeof result[key][3] === 'undefined' ? '' : 'oldValue="' + result[key][3].toString() + '" ') +
+                           (((typeof result[key][4] === 'undefined' ) || (result[key][4].trim() == "")) ? '' : 'title="' + replaceAll(result[key][4], '"', '&quot;') + '" ') +
+                          ' class="tooltip">';
                 break;
               case "boolean":
-                outstr += "<span id=\"" + key + "_bg\"><input id=\"" + key + "\" name=\"" + key + "\" type=\"checkbox\" " +
-                           (((typeof result[key][3] !== 'undefined' ) && (result[key][3].toString() == "true")) ? " checked " : "") +
-                           (((typeof result[key][3] !== 'undefined' ) && (result[key][3].toString() == "true")) ? " oldValue=\"true\" " : " oldValue=\"false\" ") +
-                           (((typeof result[key][4] === 'undefined' ) || (result[key][4].trim() == "")) ? "" : "title=\"" + replaceAll(result[key][4], "\"", '&quot;') + "\" ") +
-                          " class=\"tooltip\"></span>";
+                outstr += '<span id="' + key + '_bg"><input id="' + key + '" name="' + key + '" type="checkbox" ' +
+                           (((typeof result[key][3] !== 'undefined' ) && (result[key][3].toString() == "true")) ? ' checked ' : '') +
+                           (((typeof result[key][3] !== 'undefined' ) && (result[key][3].toString() == "true")) ? ' oldValue="true" ' : ' oldValue="false" ') +
+                           (((typeof result[key][4] === 'undefined' ) || (result[key][4].trim() == "")) ? '' : 'title="' + replaceAll(result[key][4], '"', '&quot;') + '" ') +
+                          ' class="tooltip"></span>';
                 break;
               default:
                 break;
             }
-            outstr += "</td>";
+            outstr += '</td>';
         }
-        outstr += "</table></form>";
-        outstr += "<button id=\"setsettingsbutton\" onClick=\"saveSettings()\">Save</button>";
+        outstr += '</table></form>';
+        outstr += '<button id="setsettingsbutton" onClick="saveSettings()">Save</button>';
         $("#mydisplay").html(outstr);
         $('.tooltip').tooltipster({
            animation: 'fade',
@@ -797,6 +988,7 @@ var BaseRegistersDescription = { "0000" : "Product line",
                                  "005f" : "Engine Run Minutes (EvoLC)",
                                  "01f1" : "Unknown Status ",
                                  "01f2" : "Unknown Status",
+                                 "01f3" : "Unknown Status (EvoAC)",
                                  "001b" : "Unknown",
                                  "001c" : "Unknown",
                                  "001d" : "Unknown",
@@ -819,6 +1011,7 @@ var BaseRegistersDescription = { "0000" : "Product line",
                                  "05fa" : "Unknown Status (EvoAC, Nexus)",
                                  "0034" : "Unknown Sensor (Nexus, EvoAC)",
                                  "0032" : "Unknown Sensor (Nexus, EvoAC)",
+                                 "0033" : "Unknown Sensor (EvoAC)",
                                  "0037" : "Unknown Sensor (Nexus, EvoAC)",
                                  "0038" : "Unknown Sensor (Nexus, EvoAC)",
                                  "003b" : "Unknown Sensor (Nexus, EvoAC)",
@@ -837,22 +1030,20 @@ var BaseRegistersDescription = { "0000" : "Product line",
                                  "05f1" : "Last Alarm Code (Evo)",
                                  "01f4" : "Serial Number"};
 
-function DisplayRegisters()
+function DisplayRegistersFull()
 {
     var url = baseurl.concat("registers_json");
-    $.getJSON(url,function(result){
+    $.getJSON(url,function(RegData){
 
-        var RegData = result;
-
-        var textOut = "Live Register View:<br><br>";
-        textOut += "<center><table width=\"80%\" border=\"5\" style=\"border: 5px solid white;\"><tr>";
+        var outstr = 'Live Register View:<br><br>';
+        outstr += '<center><table width="80%" border="0"><tr>';
         var reg_keys = {};
         $.each(RegData.Registers["Base Registers"], function(i, item) {
             reg_keys[Object.keys(item)[0]] = item[Object.keys(item)[0]]
         });
         $.each(Object.keys(reg_keys).sort(), function(i, reg_key) {
             if ((i % 4) == 0){
-                textOut += "</tr><tr>";
+                outstr += '</tr><tr>';
             }
 
             var reg_val = reg_keys[reg_key];
@@ -864,42 +1055,65 @@ function DisplayRegisters()
             } else {
                 UpdateTime[reg_key] = 0;
             }
-            textOut += "<td width=\"25%\" style=\"border:5px solid white; background-color: #AAAAAA; vertical-align:bottom\">";
-            textOut +=     "<table width=\"100%\" heigth=\"100%\" style=\"border:2px solid #AAAAAA; height:100%;\" id=\"val_"+reg_key+"\">";
-            textOut +=         "<tr><td align=\"center\" style=\"border-bottom: 1px solid #444444; font-size:12px;\">" + BaseRegistersDescription[reg_key] + "</td></tr>";
-            textOut +=         "<tr><td align=\"center\" style=\"border-bottom: 1px solid #444444; font-size:11px;\">(" + reg_key + ")</td></tr>";
-            textOut +=         "<tr><td align=\"center\" id=\"content_"+reg_key+"\">";
-            textOut +=            ((reg_key == "01f4") ? "<span style=\"font-size:14px\">HEX:<br>" + reg_val + "</font>" : "HEX: "+reg_val) + "<br>";
-            textOut +=            ((reg_key == "01f4") ? "" : "<span style=\"font-size:11px\">DEC: " + parseInt(reg_val, 16) + " | HI:LO: "+parseInt(reg_val.substring(0,2), 16)+":"+parseInt(reg_val.substring(2,4), 16)+"</span>");
-            textOut +=         "</td></tr>";
-            textOut +=     "</table>";
-            textOut += "</td>";
+            outstr += '<td width="25%" class="registerTD">';
+            outstr +=     '<table width="100%" heigth="100%" id="val_'+reg_key+'">';
+            outstr +=         '<tr><td align="center" class="registerTDtitle">' + BaseRegistersDescription[reg_key] + '</td></tr>';
+            outstr +=         '<tr><td align="center" class="registerTDsubtitle">(' + reg_key + ')</td></tr>';
+            outstr +=         '<tr><td align="center" id="content_'+reg_key+'">';
+            outstr +=            ((reg_key == "01f4") ? '<span class="registerTDvalMedium">HEX:<br>' + reg_val + '</span>' : 'HEX: '+reg_val) + '<br>';
+            outstr +=            ((reg_key == "01f4") ? '' : '<span class="registerTDvalSmall">DEC: ' + parseInt(reg_val, 16) + ' | HI:LO: '+parseInt(reg_val.substring(0,2), 16)+':'+parseInt(reg_val.substring(2,4), 16)+'</span>');
+            outstr +=         '</td></tr>';
+            outstr +=     '</table>';
+            outstr += '</td>';
         });
-        for (var i = (RegData.Registers["Base Registers"].length % 4); i < 4; i++) {
-             textOut += "<td width=\"25%\" style=\"border: 10px;\"></td>";
+        if ((RegData.Registers["Base Registers"].length % 4) > 0) {
+          for (var i = (RegData.Registers["Base Registers"].length % 4); i < 4; i++) {
+             outstr += '<td width="25%" class="registerTD"></td>';
+          }
         }
-        textOut += "</tr></table></center>";
+        outstr += '</tr></table></center>';
 
-        $("#mydisplay").html(textOut);
+        $("#mydisplay").html(outstr);
+        GlobalOldRegKeys = reg_keys;
+        InitOK = true;
+    });
+}
 
+function DisplayRegistersUpdate()
+{
+    var url = baseurl.concat("registers_json");
+    $.getJSON(url,function(RegData){
+
+        var reg_keys = {};
+        $.each(RegData.Registers["Base Registers"], function(i, item) {
+            reg_keys[Object.keys(item)[0]] = item[Object.keys(item)[0]]
+        });
+        $.each(Object.keys(reg_keys).sort(), function(i, reg_key) {
+            var reg_val = reg_keys[reg_key];
+            var old_reg_val = GlobalOldRegKeys[reg_key];
+            if (reg_val != old_reg_val) {
+                UpdateTime[reg_key] = new Date().getTime();
+                var outstr  = ((reg_key == "01f4") ? '<span class="registerTDvalMedium">HEX:<br>' + reg_val + '</span>' : 'HEX: '+reg_val) + '<br>';
+                    outstr += ((reg_key == "01f4") ? '' : '<span class="registerTDvalSmall">DEC: ' + parseInt(reg_val, 16) + ' | HI:LO: '+parseInt(reg_val.substring(0,2), 16)+':'+parseInt(reg_val.substring(2,4), 16)+'</span>');
+                $("#content_"+reg_key).html(outstr)
+            }
+        });
         var CurrentTime = new Date().getTime();
         $.each(UpdateTime, function( reg_key, update_time ){
             var difference = CurrentTime - update_time;
             var secondsDifference = Math.floor(difference/1000);
             if ((update_time > 0) && (secondsDifference >= fadeOffTime)) {
-               $("#val_"+reg_key).css("background-color", "#AAAAAA");
+               $("#content_"+reg_key).css("background-color", "#AAAAAA");
                $("#content_"+reg_key).css("color", "red");
             } else if ((update_time > 0) && (secondsDifference <= fadeOffTime)) {
                var hexShadeR = toHex(255-Math.floor(secondsDifference*85/fadeOffTime));
                var hexShadeG = toHex(Math.floor(secondsDifference*170/fadeOffTime));
                var hexShadeB = toHex(Math.floor(secondsDifference*170/fadeOffTime));
-               $("#val_"+reg_key).css("background-color", "#"+hexShadeR+hexShadeG+hexShadeB);
+               $("#content_"+reg_key).css("background-color", "#"+hexShadeR+hexShadeG+hexShadeB);
                $("#content_"+reg_key).css("color", "black");
             }
         });
-
         GlobalOldRegKeys = reg_keys;
-        InitOK = true;
     });
 }
 
@@ -918,29 +1132,27 @@ function MenuClick(target)
         target.find("a").addClass(GetCurrentClass());
         // update the display
         menuElement = target.attr("id");
-        switch (target.attr("id")){
-            case "status":
+        window.scrollTo(0,0);
+        switch (menuElement) {
             case "outage":
             case "logs":
             case "monitor":
-                window.scrollTo(0,0);
-                GetDisplayValues(target.attr("id"));
+                GetDisplayValues(menuElement);
+                break;
+            case "status":
+                DisplayStatusFull();
                 break;
             case "maint":
-                window.scrollTo(0,0);
                 DisplayMaintenance();
                 break;
             case "notifications":
-                window.scrollTo(0,0);
                 DisplayNotifications();
                 break;
             case "settings":
-                window.scrollTo(0,0);
                 DisplaySettings();
                 break;
             case "registers":
-                window.scrollTo(0,0);
-                DisplayRegisters();
+                DisplayRegistersFull();
                 break;
             default:
                 break;
@@ -992,7 +1204,7 @@ function GetDisplayValues(command)
 
    });
 
-    return
+    return;
 }
 
 //*****************************************************************************
@@ -1033,7 +1245,7 @@ function SetHeaderValues()
         var outstr = replaceAll(result,'\n','<br/>')
         // replace space with html friendly &nbsp
         outstr = replaceAll(outstr,' ','&nbsp')
-        var HeaderStr = "<table border=\"0\" width=\"100%\" height=\"30px\"><tr><td width=\"30px\"></td><td width=\"90%\" style=\"vertical-align:middle\">Generator Monitor at " + outstr + "</td><td width=\"30px\" style=\"vertical-align:middle\"><img id=\"registers\" src=\"images/registers.png\" width=\"20px\" height=\"20px\"></td></tr></table>";
+        var HeaderStr = '<table border="0" width="100%" height="30px"><tr><td width="30px"></td><td width="90%">Generator Monitor at ' + outstr + '</td><td width="30px"><img id="registers" src="images/registers.png" width="20px" height="20px"></td></tr></table>';
         $("#myheader").html(HeaderStr);
         $("#registers").on('click',  function() {  MenuClick($(this));});
     });
@@ -1073,7 +1285,7 @@ function SetFavIcon()
 function GenmonAlert(msg)
 {
        vex.closeAll();
-       vex.dialog.alert({ unsafeMessage: "<table><tr><td valign=\"middle\" width=\"200px\" align=\"center\"><img src=\"images/alert.png\" width=\"64px\" height=\"64px\"></td><td valign=\"middle\" width=\"70%\">"+msg+"</td></tr></table>"});
+       vex.dialog.alert({ unsafeMessage: '<table><tr><td valign="middle" width="200px" align="center"><img src="images/alert.png" width="64px" height="64px"></td><td valign="middle" width="70%">'+msg+'</td></tr></table>'});
 }
 
 //*****************************************************************************
@@ -1082,7 +1294,9 @@ function GenmonAlert(msg)
 function UpdateDisplay()
 {
     if (menuElement == "registers") {
-        DisplayRegisters();
+        DisplayRegistersUpdate();
+    } else if (menuElement == "status") {
+        DisplayStatusUpdate();
     } else if ((menuElement != "settings") && (menuElement != "notifications") && (menuElement != "maint")) {
         GetDisplayValues(menuElement);
     }
@@ -1142,4 +1356,3 @@ function GetBaseStatus()
 
     return
 }
-
