@@ -275,6 +275,7 @@ class GeneratorDevice:
                     "005f" : [2, 0],     # Total engine time in minutes
                     "01f1" : [2, 0],     # Unknown Status (WIP)
                     "01f2" : [2, 0],     # Unknown Status (WIP)
+                    "01f3" : [2, 0],     # Unknown Status (WIP)
                     "001b" : [2, 0],     # Unknown Read by ML All
                     "001c" : [2, 0],     # Unknown Read by ML Nexus
                     "001d" : [2, 0],     # Unknown Read by ML Nexus
@@ -295,6 +296,7 @@ class GeneratorDevice:
                     "05ee" : [2, 0],     # Unknown sensor 5
                     "05f5" : [2, 0],     # Evo AC   (Status?) 0000 * 0005 0007
                     "05fa" : [2, 0],     # Evo AC   (Status?)
+                    "0033" : [2, 0],     # Evo AC   (Status?)
                     "0034" : [2, 0],     # Evo AC   (Status?) Goes from FFFF 0000 00001 (Nexus and Evo AC)
                     "0032" : [2, 0],     # Evo AC   (Sensor?) starts  0x4000 ramps up to ~0x02f0
                     "0037" : [2, 0],     # Evo AC   (Sensor?) only moves while running goes up to ~0x1350
@@ -1366,19 +1368,19 @@ class GeneratorDevice:
         # format is setquiet=yes or setquiet=no
         msgbody = "Invalid command syntax for command setquiet"
         try:
-            #Format we are looking for is "setexercise=Monday,12:20"
-            marker0 = CmdString.lower().find("setquiet")
-            marker1 = CmdString.find("=", marker0)
-            marker2 = CmdString.find(" ",marker1+1)
-
-            if -1 in [marker0, marker1]:
+            # format is setquiet=yes or setquiet=no
+            CmdList = CmdString.split("=")
+            if len(CmdList) != 2:
                 self.LogError("Validation Error: Error parsing command string in SetGeneratorQuietMode (parse): " + CmdString)
                 return msgbody
 
-            if marker2 == -1:       # was this the last char in the string or now space given?
-                Mode = CmdString[marker1+1:]
-            else:
-                Mode = CmdString[marker1+1:marker2]
+            CmdList[0] = CmdList[0].strip()
+
+            if not CmdList[0].lower() == "setquiet":
+                self.LogError("Validation Error: Error parsing command string in SetGeneratorQuietMode (parse2): " + CmdString)
+                return msgbody
+
+            Mode = CmdList[1].strip()
 
             if "on" in Mode.lower():
                 ModeValue = 0x01
@@ -1642,18 +1644,18 @@ class GeneratorDevice:
         msgbody = "Invalid command syntax for command getregvalue"
         try:
             #Format we are looking for is "getregvalue=01f4"
-            marker0 = CmdString.lower().find("getregvalue")
-            marker1 = CmdString.find("=", marker0)
-            marker2 = CmdString.find(" ",marker1+1)
-
-            if -1 in [marker0, marker1]:
+            CmdList = CmdString.split("=")
+            if len(CmdList) != 2:
                 self.LogError("Validation Error: Error parsing command string in GetRegValue (parse): " + CmdString)
                 return msgbody
 
-            if marker2 == -1:       # was this the last char in the string or now space given?
-                Register = CmdString[marker1+1:]
-            else:
-                Register = CmdString[marker1+1:marker2]
+            CmdList[0] = CmdList[0].strip()
+
+            if not CmdList[0].lower() == "getregvalue":
+                self.LogError("Validation Error: Error parsing command string in GetRegValue (parse2): " + CmdString)
+                return msgbody
+
+            Register = CmdList[1].strip()
 
             RegValue = self.GetRegisterValueFromList(Register)
 
@@ -1676,22 +1678,22 @@ class GeneratorDevice:
     def ReadRegValue(self, CmdString):
 
         # extract quiet mode setting from Command String
-        # format is setquiet=yes or setquiet=no
+        #Format we are looking for is "readregvalue=01f4"
         msgbody = "Invalid command syntax for command readregvalue"
         try:
-            #Format we are looking for is "readregvalue=01f4"
-            marker0 = CmdString.lower().find("readregvalue")
-            marker1 = CmdString.find("=", marker0)
-            marker2 = CmdString.find(" ",marker1+1)
 
-            if -1 in [marker0, marker1]:
+            CmdList = CmdString.split("=")
+            if len(CmdList) != 2:
                 self.LogError("Validation Error: Error parsing command string in ReadRegValue (parse): " + CmdString)
                 return msgbody
 
-            if marker2 == -1:       # was this the last char in the string or now space given?
-                Register = CmdString[marker1+1:]
-            else:
-                Register = CmdString[marker1+1:marker2]
+            CmdList[0] = CmdList[0].strip()
+
+            if not CmdList[0].lower() == "readregvalue":
+                self.LogError("Validation Error: Error parsing command string in ReadRegValue (parse2): " + CmdString)
+                return msgbody
+
+            Register = CmdList[1].strip()
 
             RegValue = self.ProcessMasterSlaveTransaction( Register, 1, ReturnValue = True)
 
@@ -2455,31 +2457,39 @@ class GeneratorDevice:
         if not self.LiquidCooled:       # Nexus AC and Evo AC
 
             # starts  0x4000 when idle, ramps up to ~0x2e6a while running
-            Value = self.GetUnknownSensor("0032", RequiresRunning = True)
+            Value = self.GetUnknownSensor("0032")
             if len(Value):
                 Sensors["Unsupported Sensor 2"] = Value
 
-            # only moves while running goes up to ~0x1350
-            Value = self.GetUnknownSensor("0037", RequiresRunning = True)
+            Value = self.GetUnknownSensor("0033")
             if len(Value):
                 Sensors["Unsupported Sensor 3"] = Value
 
-            # only moves while running goes up to ~0x1350
-            Value = self.GetUnknownSensor("003b", RequiresRunning = True)
-            if len(Value):
-                Sensors["Unsupported Sensor 4"] = Value
-
             # return -2 thru 2
-            Value = self.GetUnknownSensor("0034", RequiresRunning = True)
+            Value = self.GetUnknownSensor("0034")
             if len(Value):
                 SignedStr = str(self.signed16( int(Value)))
-                Sensors["Unsupported Sensor 5"] = SignedStr
+                Sensors["Unsupported Sensor 4"] = SignedStr
+
+            # only moves while running goes up to ~0x1350
+            Value = self.GetUnknownSensor("0037")
+            if len(Value):
+                Sensors["Unsupported Sensor 5"] = Value
 
              # return -2 thru 2
-            Value = self.GetUnknownSensor("0038", RequiresRunning = True)
+            Value = self.GetUnknownSensor("0038")
             if len(Value):
                 SignedStr = str(self.signed16( int(Value)))
-                Sensors["Unsupported Sensor 5"] = SignedStr
+                Sensors["Unsupported Sensor 6"] = SignedStr
+
+            # only moves while running goes up to ~0x1350
+            Value = self.GetUnknownSensor("003b")
+            if len(Value):
+                Sensors["Unsupported Sensor 7"] = Value
+
+            Value = self.GetUnknownSensor("01f3")
+            if len(Value):
+                Sensors["Unsupported Sensor 8"] = Value
 
         return Sensors
 
@@ -3615,7 +3625,7 @@ class GeneratorDevice:
                         "005a","000d","003c","0058","005d","05ed","05f5",
                         "05fa","0034","0032","0037","0038","003b","002b",
                         "0208","002e","002c","002d","002f","005c","05f4",
-                        "0053","0052", "05ee"]
+                        "0053","0052", "05ee","01f3","0033"]
             # 0053 is TS status on Evo LC
 
             if not Register in self.TSwitchCandidateRegs:
@@ -3673,7 +3683,7 @@ class GeneratorDevice:
                         "005a","000d","003c","0058","005d","05ed","05f5",
                         "05fa","0034","0032","0037","0038","003b","002b",
                         "0208","002e","002c","002d","002f","005c","05f4",
-                        "0053","0052","05ee"]
+                        "0053","0052","05ee","01f3","0033"]
             # 0053 is charger status reg for EvoLC
             if not Register in self.ChargerCandidateRegs:
                 return
