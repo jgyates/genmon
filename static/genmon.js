@@ -220,7 +220,7 @@ function SetStartClick(){
 function SetTransferClick(){
 
     vex.dialog.confirm({
-        unsafeMessage: "Start generator and activate transfer switch?<br><span style=\"font-size:12px\">Generator will start, warm up, the activate switch.</span>",
+        unsafeMessage: "Start generator and activate transfer switch?<br><span style=\"font-size:12px\">Generator will start, warm up, then activate the transfer switch.</span>",
         overlayClosesOnClick: false,
         callback: function (value) {
              if (value == false) {
