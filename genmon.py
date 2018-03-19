@@ -1067,7 +1067,8 @@ class GeneratorDevice:
             # bulk register monitoring goes here and an email is sent out in a batch
             if self.EnableDebug:
                 BitsChanged, Mask = self.GetNumBitsChanged(FromValue, ToValue)
-                self.RegistersUnderTestData += "Reg %s changed from %s to %s, Bits Changed: %d, Mask: %x\n" % (Register, FromValue, ToValue, BitsChanged, Mask)
+                self.RegistersUnderTestData += "Reg %s changed from %s to %s, Bits Changed: %d, Mask: %x, Engine State: %s\n" % \
+                        (Register, FromValue, ToValue, BitsChanged, Mask, self.GetEngineState())
 
     #----------  GeneratorDevice::GetNumBitsChanged-------------------------------
     def GetNumBitsChanged(self, FromValue, ToValue):
@@ -2411,7 +2412,7 @@ class GeneratorDevice:
         if self.EvolutionController and self.LiquidCooled:
 
             # get UKS
-            Value = self.GetUnknownSensor("0058", RequiresRunning = True)
+            Value = self.GetUnknownSensor("0058", Hex = True)
             if len(Value):
                 Sensors["Unsupported Sensor 2"] = Value
 
@@ -2420,15 +2421,29 @@ class GeneratorDevice:
             if len(Value):
                 Sensors["Unsupported Sensor 3"] = Value
 
-             # get UKS
-            Value = self.GetUnknownSensor("05ee")
+            # get UKS
+            Value = self.GetUnknownSensor("01f1", Hex = True)
             if len(Value):
                 Sensors["Unsupported Sensor 4"] = Value
 
              # get UKS
+            Value = self.GetUnknownSensor("05ee")
+            if len(Value):
+                # Fahrenheit = 9.0/5.0 * Celsius + 32
+                FloatTemp = int(Value) / 10.0
+                FloatStr = "%2.1fV" % FloatTemp
+                Sensors["Battery Charger Voltage"] = FloatStr
+
+             # get UKS
             Value = self.GetUnknownSensor("05ed")
             if len(Value):
-                Sensors["Battery Ambient Temp Thermistor"] = Value
+                # Fahrenheit = 9.0/5.0 * Celsius + 32
+                SensorValue = int(Value)
+                Celsius = (SensorValue - 77.45) * -1.0
+                Fahrenheit = 9.0/5.0 * Celsius + 32
+                CStr = "%.1f" % Celsius
+                FStr = "%.1f" % Fahrenheit
+                Sensors["Ambient Temp Thermistor"] = "Sensor: " + Value + ", " + CStr + "C, " + FStr + "F"
 
             # get total hours since activation
             Value = self.GetRegisterValueFromList("0054")
@@ -3280,7 +3295,7 @@ class GeneratorDevice:
         return ExerciseTime
 
     #------------ GeneratorDevice::GetUnknownSensor1-------------------------------------
-    def GetUnknownSensor(self, Register, RequiresRunning = False):
+    def GetUnknownSensor(self, Register, RequiresRunning = False, Hex = False):
 
         if not len(Register):
             return ""
@@ -3297,7 +3312,10 @@ class GeneratorDevice:
             return ""
 
         IntTemp = int(Value,16)
-        SensorValue = "%d" % IntTemp
+        if not Hex:
+            SensorValue = "%d" % IntTemp
+        else:
+            SensorValue = "%x" % IntTemp
 
         return SensorValue
 
@@ -3335,7 +3353,7 @@ class GeneratorDevice:
     #------------ GeneratorDevice::GetVoltageOutput --------------------------
     def GetVoltageOutput(self):
 
-        # get Battery Charging Voltage
+        # get Output Voltage
         Value = self.GetRegisterValueFromList("0012")
         if len(Value) != 4:
             return ""
@@ -3604,13 +3622,15 @@ class GeneratorDevice:
                 return
 
             # Get Generator Voltage
+            # Force a read of the generator output voltage via modbus
+            self.ProcessMasterSlaveTransaction("0012", 1)
             MyStr = self.GetVoltageOutput()
             if MyStr == "":
                 return
             MyStr = self.removeAlpha(MyStr)
-            OutuptVoltage = float(MyStr)
+            OutputVoltage = float(MyStr)
 
-            if OutuptVoltage == 0:
+            if OutputVoltage == 0:
                 self.TSwitchOffValues[Register] = Value
             elif OutputVoltage > 230:
                 # Let time elapse so engine starts
@@ -3618,7 +3638,7 @@ class GeneratorDevice:
                     self.TransferTestStart = datetime.datetime.now()
 
                 DeltaTime = datetime.datetime.now() - self.TransferTestStart
-                if DeltaTime.seconds > 10:
+                if DeltaTime.seconds > 20:
                     self.TSwitchOnValues[Register] = Value
 
             if (len(self.TSwitchOffValues) == len(self.TSwitchOnValues)) and (len(self.TSwitchOnValues) == len(self.TSwitchCandidateRegs)):
@@ -3626,7 +3646,7 @@ class GeneratorDevice:
                 for Reg, Val in self.TSwitchOffValues.items():
                     TempInt = int(Val,16) ^ int(self.TSwitchOnValues[Reg],16)
                     if not TempInt == 0:
-                        OutStr += "Reg: %s, Value: %x\n" %(Reg, TempInt)
+                        OutStr += "Reg: %s, Bit Changed: %x\n" %(Reg, TempInt)
                 OutStr += "\n On Values  : " + str(self.TSwitchOnValues)
                 OutStr += "\n Off Values : " + str(self.TSwitchOffValues)
                 self.TSwitchOnValues.clear()
@@ -3659,6 +3679,8 @@ class GeneratorDevice:
             if not self.GetBaseStatus() == "READY":
                 return
 
+            # Force a read of the battery voltage via modbus
+            self.ProcessMasterSlaveTransaction("000a", 1)
             MyStr = self.GetBatteryVoltage()
             if MyStr == "":
                 return
@@ -3674,19 +3696,12 @@ class GeneratorDevice:
             if Voltage < self.BatteryMinVolts:
                 self.BatteryMinVolts = Voltage
 
-            if Voltage == self.BatteryMaxVolts:
+            if Voltage == self.BatteryMaxVolts and Voltage > 13.4:
                 self.ChargerOnValues[Register] = Value
-            elif Voltage <= (self.BatteryMinVolts + (self.BatteryMinVolts * 0.02)):
+            elif Voltage == self.BatteryMinVolts and Voltage < 12.8:
                 self.ChargerOffValues[Register] = Value
 
             if (self.BatteryMaxVolts - self.BatteryMinVolts) < 0.5:
-                return
-            # Let time elapse so registers are updated starts
-            if self.ChargerTestStart == None:
-                self.ChargerTestStart = datetime.datetime.now()
-
-            DeltaTime = datetime.datetime.now() - self.ChargerTestStart
-            if DeltaTime.seconds < 10:
                 return
 
             if (len(self.ChargerOnValues) == len(self.ChargerOffValues)) and (len(self.ChargerOnValues) == len(self.ChargerCandidateRegs)):
@@ -3694,7 +3709,7 @@ class GeneratorDevice:
                 for Reg, Val in self.ChargerOnValues.items():
                     TempInt = int(Val,16) ^ int(self.ChargerOffValues[Reg],16)
                     if not TempInt == 0:
-                        OutStr += "Reg: %s, Value: %x\n" %(Reg, TempInt)
+                        OutStr += "Reg: %s, Bit Changed: %x\n" %(Reg, TempInt)
                 OutStr += "\n Max: %f, Min: %f\n" % (self.BatteryMaxVolts, self.BatteryMinVolts)
                 OutStr += "\n On Values  : " + str(self.ChargerOnValues)
                 OutStr += "\n Off Values : " + str(self.ChargerOffValues)
