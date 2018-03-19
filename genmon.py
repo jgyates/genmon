@@ -28,7 +28,7 @@ except ImportError as e:
 
 import mymail, mylog, mythread
 
-GENMON_VERSION = "V1.5.8"
+GENMON_VERSION = "V1.5.9"
 
 #------------ SerialDevice class --------------------------------------------
 class SerialDevice:
@@ -2431,8 +2431,8 @@ class GeneratorDevice:
             if len(Value):
                 # Fahrenheit = 9.0/5.0 * Celsius + 32
                 FloatTemp = int(Value) / 10.0
-                FloatStr = "%2.1fV" % FloatTemp
-                Sensors["Battery Charger Voltage"] = FloatStr
+                FloatStr = "%2.1f" % FloatTemp
+                Sensors["Battery Charger Sensor"] = FloatStr
 
              # get UKS
             Value = self.GetUnknownSensor("05ed")
@@ -3647,6 +3647,8 @@ class GeneratorDevice:
                     TempInt = int(Val,16) ^ int(self.TSwitchOnValues[Reg],16)
                     if not TempInt == 0:
                         OutStr += "Reg: %s, Bit Changed: %x\n" %(Reg, TempInt)
+
+                OutStr += "\nOutput Voltage is : %f" % OutputVoltage
                 OutStr += "\n On Values  : " + str(self.TSwitchOnValues)
                 OutStr += "\n Off Values : " + str(self.TSwitchOffValues)
                 self.TSwitchOnValues.clear()
@@ -3710,6 +3712,8 @@ class GeneratorDevice:
                     TempInt = int(Val,16) ^ int(self.ChargerOffValues[Reg],16)
                     if not TempInt == 0:
                         OutStr += "Reg: %s, Bit Changed: %x\n" %(Reg, TempInt)
+
+                OutStr += "\nBattery Voltage is : %2.1f" % Voltage
                 OutStr += "\n Max: %f, Min: %f\n" % (self.BatteryMaxVolts, self.BatteryMinVolts)
                 OutStr += "\n On Values  : " + str(self.ChargerOnValues)
                 OutStr += "\n Off Values : " + str(self.ChargerOffValues)
