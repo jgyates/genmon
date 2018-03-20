@@ -2324,7 +2324,7 @@ class GeneratorDevice:
             Engine["Active Sensors"] = self.GetSensorInputs
 
         if self.SystemInAlarm():
-            Engine["Sysetm In Alarm"] = self.GetAlarmState
+            Engine["System In Alarm"] = self.GetAlarmState
 
         Engine["Battery Voltage"] = self.GetBatteryVoltage
         if self.EvolutionController and self.LiquidCooled:
