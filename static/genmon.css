@@ -71,6 +71,19 @@ h1 {
 p {
     font-size: 18px;
 }
+button {
+    font-weight: bold;
+    font-family: Arial;
+    font-size: 16px;
+    border-radius: 3px;
+    border: 0;
+    margin: 0 0 0 .5em;
+    font-family: inherit;
+    line-height: 1em;
+    padding: .75em .75em;
+    background: #bbbbbb;
+}
+
 /* */
 
 
@@ -131,12 +144,84 @@ p {
     padding: 5px;
 }
 
-.gaugeTD {
-    border:15px solid white; 
+.gauge-grid {
+    display:table;
+}
+
+/* For tablets & smart phones */
+@media (max-width: 900px) {
+  .gauge-breakpoint .gauge-block-a,
+  .gauge-breakpoint .gauge-block-b,
+  .gauge-breakpoint .gauge-block-c,
+  .gauge-breakpoint .gauge-block-d,
+  .gauge-breakpoint .gauge-block-e {
+     width: 200px;
+     height: 220px;
+     float:none;
+  }
+  .gauge-breakpoint .gauge-block-f {
+     display: none;
+  }
+}
+
+/* For smaller displays like laptops */
+@media (min-width: 900px) and (max-width: 1400px) {
+  .gauge-breakpoint .gauge-block-a,
+  .gauge-breakpoint .gauge-block-b,
+  .gauge-breakpoint .gauge-block-c,
+  .gauge-breakpoint .gauge-block-d,
+  .gauge-breakpoint .gauge-block-e {
+     width: 200px;
+     height: 220px;
+     float: left;
+  }
+  .gauge-breakpoint .gauge-block-f {
+     width: 200px;
+     height: 220px;
+     float: left;
+     display: block;
+  }
+  .gauge-lb {
+     width:100%;
+     float:none
+  }
+
+
+}
+
+/* For larger displays */
+@media (min-width: 1400px) {
+  .gauge-breakpoint .gauge-block-a,
+  .gauge-breakpoint .gauge-block-b,
+  .gauge-breakpoint .gauge-block-c,
+  .gauge-breakpoint .gauge-block-d,
+  .gauge-breakpoint .gauge-block-e {
+     width: 200px;
+     height: 220px;
+     float: left;
+  }
+  .gauge-breakpoint .gauge-block-f {
+     display: none;
+  }
+  .gauge-lb {
+     width:0px;
+     float:left;
+  }
+
+}
+
+.gaugeField {
+    text-align: center;
+    /* border:15px solid white;  */
+    padding-top:10px;
     background-color: #e1e1e1;
     vertical-align:bottom;
     background-clip: padding-box; /* this has been added in CSS3 */
     border-radius: 20px;
+    margin-left: 40px;
+    margin-bottom: 40px;
+    width: 180px;
+    height: 200px;
 }
 
 .gaugeCanvas {
@@ -260,16 +345,4 @@ li a:hover:not(.active) {
     border-radius: 3px;
     /*transition: width 250ms ease-in-out;*/
     transition: width 10s ease-in-out;
-}
-button {
-    font-weight: bold;
-    font-family: Arial;
-    font-size: 16px;
-    border-radius: 3px;
-    border: 0;
-    margin: 0 0 0 .5em;
-    font-family: inherit;
-    line-height: 1em;
-    padding: .75em .75em;
-    background: #bbbbbb;
 }

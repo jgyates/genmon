@@ -20,7 +20,13 @@ var currentClass = "active";    // CSS class for menu color
 var menuElement = "status";
 var ExerciseParameters = {};
     ExerciseParameters['EnhancedExerciseEnabled']  = false;
-// on page load call init
+var OldExerciseParameters = {};
+var RegisterHistory1 = {};
+var RegisterHistory2 = {};
+var RegisterHistory3 = {};
+var RegisterHistory2_temp = {}; 
+var RegisterHistory3_temp = {}; 
+var RegisterUpdateTime = {};
 var pathname = "";
 var baseurl = "";
 var DaysOfWeekArray = ["Sunday","Monday","Tuesday","Wednesday", "Thursday", "Friday", "Saturday"];
@@ -36,6 +42,7 @@ $(document).ready(function() {
     $("#footer").html('<table border="0" width="100%" height="30px"><tr><td width="90%"><a href="https://github.com/jgyates/genmon" target="_blank">GenMon Project on GitHub</a></td></tr></table>');
     SetFavIcon();
     GetExerciseValues();
+    UpdateRegisters(true, false);
     $("#status").find("a").addClass(GetCurrentClass());
     setInterval(GetBaseStatus, 3000);       // Called every 3 sec
     setInterval(UpdateDisplay, 5000);       // Called every 5 sec
@@ -81,22 +88,17 @@ function DisplayStatusFull()
     var url = baseurl.concat("status_json");
     $.getJSON(url,function(result){
         var outstr = 'Dashboard:<br><br>';
-        outstr += '<center><table width="80%" border="0"><tr>';
-        outstr += '<td width="25%" class="gaugeTD" align="center">';
-        outstr += 'Battery Voltage<br><canvas class="gaugeCanvas" id="gaugeBatteryVoltage"></canvas><br><div id="textBatteryVoltage" class="gaugeDiv"></div>V';
-        outstr += '</td>';
-        outstr += '<td width="25%" class="gaugeTD" align="center">';
-        outstr += 'Utility Voltage<br><canvas class="gaugeCanvas" id="gaugeUtilityVoltage"></canvas><br><div id="textUtilityVoltage" class="gaugeDiv"></div>V';
-        outstr += '</td>';
-        outstr += '<td width="25%" class="gaugeTD" align="center">';
-        outstr += 'Output Voltage<br><canvas class="gaugeCanvas" id="gaugeOutputVoltage"></canvas><br><div id="textOutputVoltage" class="gaugeDiv"></div>V';
-        outstr += '</td>';
-        outstr += '<td width="25%" class="gaugeTD" align="center">';
-        outstr += 'Frequency<br><canvas class="gaugeCanvas" id="gaugeFrequency"></canvas><br><div id="textFrequency" class="gaugeDiv"></div>Hz';
-        outstr += '</td>';
-        outstr += '</tr></table></center><br>';
+        outstr += '<center><div class="gauge-grid gauge-breakpoint">';
+        outstr += '<div class="gauge-block-a"><div class="gaugeField">Battery Voltage<br><canvas class="gaugeCanvas" id="gaugeBatteryVoltage"></canvas><br><div id="textBatteryVoltage" class="gaugeDiv"></div>V</div></div>';
+        outstr += '<div class="gauge-block-b"><div class="gaugeField">Utility Voltage<br><canvas class="gaugeCanvas" id="gaugeUtilityVoltage"></canvas><br><div id="textUtilityVoltage" class="gaugeDiv"></div>V</div></div>';
+        outstr += '<div class="gauge-block-c"><div class="gaugeField">Output Voltage<br><canvas class="gaugeCanvas" id="gaugeOutputVoltage"></canvas><br><div id="textOutputVoltage" class="gaugeDiv"></div>V</div></div>';
+        outstr += '<div class="gauge-lb"></div>';
+        outstr += '<div class="gauge-block-d"><div class="gaugeField">Frequency<br><canvas class="gaugeCanvas" id="gaugeFrequency"></canvas><br><div id="textFrequency" class="gaugeDiv"></div>Hz</div></div>';
+        outstr += '<div class="gauge-block-e"><div class="gaugeField">Rotation/Min<br><canvas class="gaugeCanvas" id="gaugeRPM"></canvas><br><div id="textRPM" class="gaugeDiv"></div> RPM</div></div>';
+        outstr += '<div class="gauge-block-f"><div class="gaugeField"></div></div>';
+        outstr += '</div></center><br>';
 
-        $("#mydisplay").html(outstr + json2html(result, "", "root"));
+        $("#mydisplay").html(outstr + '<div id="statusText">' + json2html(result, "", "root") + '</div>');
 
         gaugeBatteryVoltage = createGauge($("#gaugeBatteryVoltage"), $("#textBatteryVoltage"), 1, 10, 16, [10, 11, 12, 13, 14, 15, 16],
                                           [{strokeStyle: "#F03E3E", min: 10, max: 11},
@@ -129,6 +131,14 @@ function DisplayStatusFull()
                                            {strokeStyle: "#FFDD00", min: 61, max: 63},
                                            {strokeStyle: "#F03E3E", min: 63, max: 70}], 7, 10);
         gaugeFrequency.set(result["Status"]["Engine"]["Frequency"].replace(/Hz/g, '')); // set actual value
+
+        gaugeRPM = createGauge($("#gaugeRPM"), $("#textRPM"), 0, 0, 4000, [1000, 2000, 3000, 3600, 4000],
+                                          [{strokeStyle: "#F03E3E", min: 0, max: 3500},
+                                           {strokeStyle: "#FFDD00", min: 3500, max: 3590},
+                                           {strokeStyle: "#30B32D", min: 3590, max: 3610},
+                                           {strokeStyle: "#FFDD00", min: 3610, max: 3700},
+                                           {strokeStyle: "#F03E3E", min: 3700, max: 4000}], 4, 10);
+        gaugeRPM.set(result["Status"]["Engine"]["RPM"]); // set actual value
     });
     return;
 }
@@ -225,12 +235,14 @@ function DisplayStatusUpdate()
 {
     var url = baseurl.concat("status_json");
     $.getJSON(url,function(result){
-        json2updates(result, "root");
+        $("#statusText").html(json2html(result, "", "root"));
+        // json2updates(result, "root");
 
         gaugeBatteryVoltage.set(result["Status"]["Engine"]["Battery Voltage"].replace(/V/g, '')); // set actual value
         gaugeUtilityVoltage.set(result["Status"]["Line State"]["Utility Voltage"].replace(/V/g, '')); // set actual value
         gaugeOutputVoltage.set(result["Status"]["Engine"]["Output Voltage"].replace(/V/g, '')); // set actual value
         gaugeFrequency.set(result["Status"]["Engine"]["Frequency"].replace(/Hz/g, '')); // set actual value
+        gaugeRPM.set(result["Status"]["Engine"]["RPM"]); // set actual value
     });
     return;
 }
@@ -271,13 +283,10 @@ function json2updates(json, parentkey) {
 //*****************************************************************************
 function DisplayMaintenance(){
 
-    var url = baseurl.concat("maint");
+    var url = baseurl.concat("maint_json");
     $.getJSON(url,function(result){
 
-        // replace /n with html friendly <br/>
-        var outstr = replaceAll(result,'\n','<br/>')
-        // replace space with html friendly &nbsp
-        outstr = replaceAll(outstr,' ','&nbsp')
+        outstr = json2html(result, "", "root");
 
         outstr += "<br>Generator Exercise Time:<br><br>";
 
@@ -347,6 +356,7 @@ function DisplayMaintenance(){
             $("#remotestart").prop("disabled",false);
             $("#remotetransfer").prop("disabled",false);
         }
+        OldExerciseParameters = ExerciseParameters;
 
    });
 }
@@ -451,6 +461,52 @@ function SetTimeClick(){
         }
     });
 }
+
+//*****************************************************************************
+// Display the Maintenance Tab
+//*****************************************************************************
+function DisplayMaintenanceUpdate(){
+
+    GetExerciseValues(function(){
+        $("#Exercise_Time").html(ExerciseParameters['ExerciseFrequency'] + ' ' + 
+                                 ExerciseParameters['ExerciseDay'] + ' ' + ExerciseParameters['ExerciseHour'] + ':' + ExerciseParameters['ExerciseMinute'] +
+                                 ' Quiet Mode ' + ExerciseParameters['QuietMode']);
+
+
+        if ((ExerciseParameters['EnhancedExerciseEnabled'] == true) && (ExerciseParameters['ExerciseFrequency'] != OldExerciseParameters['ExerciseFrequency'])) {
+           $("#"+ExerciseParameters['ExerciseFrequency']).prop('checked',true);
+           if (ExerciseParameters['ExerciseFrequency'] == "Monthly") {
+              MonthlyExerciseSelection();
+           } else {
+              WeekdayExerciseSelection();
+           }
+        }
+        
+        if (ExerciseParameters['ExerciseDay'] != OldExerciseParameters['ExerciseDay'])
+           $("#days").val(ExerciseParameters['ExerciseDay']);
+        if (ExerciseParameters['ExerciseHour'] != OldExerciseParameters['ExerciseHour'])
+           $("#hours").val(ExerciseParameters['ExerciseHour']);
+        if (ExerciseParameters['ExerciseMinute'] != OldExerciseParameters['ExerciseMinute'])
+           $("#minutes").val(ExerciseParameters['ExerciseMinute']);
+        if (ExerciseParameters['QuietMode'] != OldExerciseParameters['QuietMode'])
+           $("#quietmode").val('QuietMode='+ExerciseParameters['QuietMode']);
+
+        if((baseState === "EXERCISING") || (baseState === "RUNNING")) {
+            $("#remotestop").prop("disabled",false);
+            $("#remotestart").prop("disabled",true);
+            $("#remotetransfer").prop("disabled",true);
+        }
+        else {
+            $("#remotestop").prop("disabled",true);
+            $("#remotestart").prop("disabled",false);
+            $("#remotetransfer").prop("disabled",false);
+        }
+
+        OldExerciseParameters = ExerciseParameters;
+   });
+}
+
+
 //*****************************************************************************
 // called when Set Exercise is clicked
 //*****************************************************************************
@@ -962,11 +1018,7 @@ function saveSettingsJSON() {
 //*****************************************************************************
 // DisplayRegisters - Shows the raw register data.
 //*****************************************************************************
-var GlobalOldRegKeys;
-var InitOK = false;
-var UpdateTime = {};
 var fadeOffTime = 60;
-
 var BaseRegistersDescription = { "0000" : "Product line",
                                  "0005" : "Exercise Time HH:MM (Read Only)",
                                  "0006" : "Exercise Time Hi Byte = Day of Week 00=Sunday 01=Monday, Low Byte = 00=quiet=no, 01=yes",
@@ -1032,88 +1084,210 @@ var BaseRegistersDescription = { "0000" : "Product line",
 
 function DisplayRegistersFull()
 {
-    var url = baseurl.concat("registers_json");
-    $.getJSON(url,function(RegData){
+    var outstr = 'Live Register View:<br><br>';
+    outstr += '<center><table width="80%" border="0"><tr>';
 
-        var outstr = 'Live Register View:<br><br>';
-        outstr += '<center><table width="80%" border="0"><tr>';
-        var reg_keys = {};
-        $.each(RegData.Registers["Base Registers"], function(i, item) {
-            reg_keys[Object.keys(item)[0]] = item[Object.keys(item)[0]]
-        });
-        $.each(Object.keys(reg_keys).sort(), function(i, reg_key) {
-            if ((i % 4) == 0){
-                outstr += '</tr><tr>';
-            }
-
-            var reg_val = reg_keys[reg_key];
-            if (InitOK == true) {
-                var old_reg_val = GlobalOldRegKeys[reg_key];
-                if (reg_val != old_reg_val) {
-                    UpdateTime[reg_key] = new Date().getTime();
-                }
-            } else {
-                UpdateTime[reg_key] = 0;
-            }
-            outstr += '<td width="25%" class="registerTD">';
-            outstr +=     '<table width="100%" heigth="100%" id="val_'+reg_key+'">';
-            outstr +=         '<tr><td align="center" class="registerTDtitle">' + BaseRegistersDescription[reg_key] + '</td></tr>';
-            outstr +=         '<tr><td align="center" class="registerTDsubtitle">(' + reg_key + ')</td></tr>';
-            outstr +=         '<tr><td align="center" id="content_'+reg_key+'">';
-            outstr +=            ((reg_key == "01f4") ? '<span class="registerTDvalMedium">HEX:<br>' + reg_val + '</span>' : 'HEX: '+reg_val) + '<br>';
-            outstr +=            ((reg_key == "01f4") ? '' : '<span class="registerTDvalSmall">DEC: ' + parseInt(reg_val, 16) + ' | HI:LO: '+parseInt(reg_val.substring(0,2), 16)+':'+parseInt(reg_val.substring(2,4), 16)+'</span>');
-            outstr +=         '</td></tr>';
-            outstr +=     '</table>';
-            outstr += '</td>';
-        });
-        if ((RegData.Registers["Base Registers"].length % 4) > 0) {
-          for (var i = (RegData.Registers["Base Registers"].length % 4); i < 4; i++) {
-             outstr += '<td width="25%" class="registerTD"></td>';
-          }
+    $.each(Object.keys(RegisterHistory1).sort(), function(i, reg_key) {
+        if ((i % 4) == 0){
+        outstr += '</tr><tr>';
         }
-        outstr += '</tr></table></center>';
 
-        $("#mydisplay").html(outstr);
-        GlobalOldRegKeys = reg_keys;
-        InitOK = true;
+        var reg_val = RegisterHistory1[reg_key][0];
+
+        outstr += '<td width="25%" class="registerTD">';
+        outstr +=     '<table width="100%" heigth="100%" id="val_'+reg_key+'">';
+        outstr +=     '<tr><td align="center" class="registerTDtitle">' + BaseRegistersDescription[reg_key] + '</td></tr>';
+        outstr +=     '<tr><td align="center" class="registerTDsubtitle">(' + reg_key + ')</td></tr>';
+        outstr +=     '<tr><td align="center" class="tooltip" id="content_'+reg_key+'">';
+        outstr +=        ((reg_key == "01f4") ? '<span class="registerTDvalMedium">HEX:<br>' + reg_val + '</span>' : 'HEX: '+reg_val) + '<br>';
+        outstr +=        ((reg_key == "01f4") ? '' : '<span class="registerTDvalSmall">DEC: ' + parseInt(reg_val, 16) + ' | HI:LO: '+parseInt(reg_val.substring(0,2), 16)+':'+parseInt(reg_val.substring(2,4), 16)+'</span>');
+        outstr +=     '</td></tr>';
+        outstr +=     '</table>';
+        outstr += '</td>';
     });
+    if ((RegisterHistory1.length % 4) > 0) {
+      for (var i = (RegisterHistory1.length % 4); i < 4; i++) {
+         outstr += '<td width="25%" class="registerTD"></td>';
+      }
+    }
+    outstr += '</tr></table></center>';
+
+    $("#mydisplay").html(outstr);
+    UpdateRegistersColor();
+    $('.tooltip').tooltipster({
+        minWidth: '280px',
+        maxWidth: '280px',
+        animation: 'fade',
+        updateAnimation: 'fade', 
+        contentAsHTML: 'true',
+        delay: 100,
+        animationDuration: 200, 
+        interactive: true,
+        content: '<div style="height:280px;width:250px;overflow-x:hidden;overflow-y:hidden;"></div>', 
+        side: ['top', 'left'],
+        functionReady: function(instance, helper) {
+            var regId = $(helper.origin).attr('id').replace(/content_/g, '');
+            instance.content('<div style="height:280px;width:250px;overflow-x:hidden;overflow-y:hidden;"><table><tr><td style="height:250px;width:250px;vertical-align:top;">' +
+                             '  <div id="'+regId+'_graph1" style="height:250px;width:250px;overflow-x:hidden;overflow-y:hidden;"></div>' +
+                             '  <div id="'+regId+'_graph2" style="height:250px;width:250px;overflow-x:hidden;overflow-y:hidden;"></div>' +
+                             '  <div id="'+regId+'_graph3" style="height:250px;width:250px;overflow-x:hidden;overflow-y:hidden;"></div>' + 
+                             '</td></tr><tr><td style="height:30px;width:250px;vertical-align:bottom;"><center>' +
+                             '  <u style="cursor: pointer;" onClick="$(\'#'+regId+'_graph1\').css(\'display\', \'block\');$(\'#'+regId+'_graph2\').css(\'display\', \'none\');$(\'#'+regId+'_graph3\').css(\'display\', \'none\');">10 min</u> | ' +
+                             '  <u style="cursor: pointer;" onClick="$(\'#'+regId+'_graph1\').css(\'display\', \'none\');$(\'#'+regId+'_graph2\').css(\'display\', \'block\');$(\'#'+regId+'_graph3\').css(\'display\', \'none\');">1 hr</u> | ' +
+                             '  <u style="cursor: pointer;" onClick="$(\'#'+regId+'_graph1\').css(\'display\', \'none\');$(\'#'+regId+'_graph2\').css(\'display\', \'none\');$(\'#'+regId+'_graph3\').css(\'display\', \'block\');">24 hr</u>' +
+                             '</center></td></tr></table></div>');  
+            var plot_data1 = [];
+            var plot_data2 = [];
+            var plot_data3 = [];
+            for (var i = 120; i >= 0; --i) {
+               if (RegisterHistory1[regId].length > i) 
+                   plot_data1.push([-i/12, parseInt(RegisterHistory1[regId][i], 16)]);
+               if (RegisterHistory2[regId].length > i) 
+                   plot_data2.push([-i/2, parseInt(RegisterHistory2[regId][i], 16)]);
+               if (RegisterHistory3[regId].length > i) 
+                   plot_data3.push([-i/5, parseInt(RegisterHistory3[regId][i], 16)]);
+            }
+            var plot1 = $.jqplot(regId+'_graph1', [plot_data1], {
+                               axesDefaults: { tickOptions: { textColor: '#999999', fontSize: '8pt' }}, 
+                               axes: { xaxis: { label: "Time (Minutes ago)", labelOptions: { fontFamily: 'Arial', textColor: '#AAAAAA', fontSize: '9pt' }, min:-10, max:0 } } 
+                             });
+            var plot2 = $.jqplot(regId+'_graph2', [plot_data2], {
+                               axesDefaults: { tickOptions: { textColor: '#999999', fontSize: '8pt' }}, 
+                               axes: { xaxis: { label: "Time (Minutes ago)", labelOptions: { fontFamily: 'Arial', textColor: '#AAAAAA', fontSize: '9pt' }, min:-60, max:0 } } 
+                             });
+            var plot3 = $.jqplot(regId+'_graph3', [plot_data3], {
+                               axesDefaults: { tickOptions: { textColor: '#999999', fontSize: '8pt' }}, 
+                               axes: { xaxis: { label: "Time (Hours ago)", labelOptions: { fontFamily: 'Arial', textColor: '#AAAAAA', fontSize: '9pt' }, min:-24, max:0 } } 
+                             });
+            $('#'+regId+'_graph2').css('display', 'none');
+            $('#'+regId+'_graph3').css('display', 'none');
+        }
+    });
+    
 }
 
-function DisplayRegistersUpdate()
+function UpdateRegisters(init, printToScreen)
 {
     var url = baseurl.concat("registers_json");
     $.getJSON(url,function(RegData){
 
         var reg_keys = {};
         $.each(RegData.Registers["Base Registers"], function(i, item) {
-            reg_keys[Object.keys(item)[0]] = item[Object.keys(item)[0]]
-        });
-        $.each(Object.keys(reg_keys).sort(), function(i, reg_key) {
-            var reg_val = reg_keys[reg_key];
-            var old_reg_val = GlobalOldRegKeys[reg_key];
-            if (reg_val != old_reg_val) {
-                UpdateTime[reg_key] = new Date().getTime();
-                var outstr  = ((reg_key == "01f4") ? '<span class="registerTDvalMedium">HEX:<br>' + reg_val + '</span>' : 'HEX: '+reg_val) + '<br>';
-                    outstr += ((reg_key == "01f4") ? '' : '<span class="registerTDvalSmall">DEC: ' + parseInt(reg_val, 16) + ' | HI:LO: '+parseInt(reg_val.substring(0,2), 16)+':'+parseInt(reg_val.substring(2,4), 16)+'</span>');
-                $("#content_"+reg_key).html(outstr)
+            var reg_key = Object.keys(item)[0]
+            var reg_val = item[Object.keys(item)[0]];
+            if (init) {
+                RegisterUpdateTime[reg_key] = 0;
+                RegisterHistory1[reg_key] = [];
+                
+                RegisterHistory2[reg_key] = [reg_val, reg_val];
+                RegisterHistory2_temp[reg_key] = {};
+                RegisterHistory2_temp[reg_key]["counter"] = 0;
+                RegisterHistory2_temp[reg_key]["min"] = reg_val;
+                RegisterHistory2_temp[reg_key]["minCounter"] = 0;
+                RegisterHistory2_temp[reg_key]["max"] = reg_val;
+                RegisterHistory2_temp[reg_key]["maxCounter"] = 0;
+                
+                RegisterHistory3[reg_key] = [reg_val, reg_val];
+                RegisterHistory3_temp[reg_key] = {};
+                RegisterHistory3_temp[reg_key]["counter"] = 0;
+                RegisterHistory3_temp[reg_key]["min"] = reg_val;
+                RegisterHistory3_temp[reg_key]["minCounter"] = 0;
+                RegisterHistory3_temp[reg_key]["max"] = reg_val;
+                RegisterHistory3_temp[reg_key]["maxCounter"] = 0;
+                
+            } else {
+               RegisterHistory2_temp[reg_key]["counter"] =  RegisterHistory2_temp[reg_key]["counter"]+1;
+               if (RegisterHistory2_temp[reg_key]["min"] > reg_val) {
+                  RegisterHistory2_temp[reg_key]["min"] = reg_val;
+                  RegisterHistory2_temp[reg_key]["minCounter"] = RegisterHistory2_temp[reg_key]["counter"];
+               } else if (RegisterHistory2_temp[reg_key]["max"] < reg_val) {
+                  RegisterHistory2_temp[reg_key]["max"] = reg_val;
+                  RegisterHistory2_temp[reg_key]["maxCounter"] = RegisterHistory2_temp[reg_key]["counter"];
+               }
+
+               RegisterHistory3_temp[reg_key]["counter"] =  RegisterHistory3_temp[reg_key]["counter"]+1;
+               if (RegisterHistory3_temp[reg_key]["min"] > reg_val) {
+                  RegisterHistory3_temp[reg_key]["min"] = reg_val;
+                  RegisterHistory3_temp[reg_key]["minCounter"] = RegisterHistory3_temp[reg_key]["counter"];
+               } else if (RegisterHistory3_temp[reg_key]["max"] < reg_val) {
+                  RegisterHistory3_temp[reg_key]["max"] = reg_val;
+                  RegisterHistory3_temp[reg_key]["maxCounter"] = RegisterHistory3_temp[reg_key]["counter"];
+               }
+               var old_reg_val = RegisterHistory1[reg_key][0];
+               if (reg_val != old_reg_val) {
+                  RegisterUpdateTime[reg_key] = new Date().getTime();
+                  
+                  if (printToScreen) {
+                    var outstr  = ((reg_key == "01f4") ? '<span class="registerTDvalMedium">HEX:<br>' + reg_val + '</span>' : 'HEX: '+reg_val) + '<br>';
+                        outstr += ((reg_key == "01f4") ? '' : '<span class="registerTDvalSmall">DEC: ' + parseInt(reg_val, 16) + ' | HI:LO: '+parseInt(reg_val.substring(0,2), 16)+':'+parseInt(reg_val.substring(2,4), 16)+'</span>');
+                    $("#content_"+reg_key).html(outstr)
+                  }
+               }
+            }
+            RegisterHistory1[reg_key].unshift(reg_val);
+            if  (RegisterHistory1[reg_key].length > 120) {
+               RegisterHistory1[reg_key].pop  // remove the last element
+            }
+            
+            if (RegisterHistory2_temp[reg_key]["counter"] >= 12) {
+               if (RegisterHistory2_temp[reg_key]["minCounter"] <= RegisterHistory2_temp[reg_key]["maxCounter"]) {
+                  RegisterHistory2[reg_key].unshift(RegisterHistory2_temp[reg_key]["min"]);
+                  RegisterHistory2[reg_key].unshift(RegisterHistory2_temp[reg_key]["max"]);
+               } else {
+                  RegisterHistory2[reg_key].unshift(RegisterHistory2_temp[reg_key]["max"]);
+                  RegisterHistory2[reg_key].unshift(RegisterHistory2_temp[reg_key]["min"]);
+               }
+               RegisterHistory2_temp[reg_key]["counter"] = 0;
+               RegisterHistory2_temp[reg_key]["min"] = reg_val;
+               RegisterHistory2_temp[reg_key]["minCounter"] = 0;
+               RegisterHistory2_temp[reg_key]["max"] = reg_val;
+               RegisterHistory2_temp[reg_key]["maxCounter"] = 0;
+               if  (RegisterHistory2[reg_key].length > 120) {
+                 RegisterHistory2[reg_key].pop  // remove the last element
+                 RegisterHistory2[reg_key].pop  // remove the last element
+               }
+            }
+
+            if (RegisterHistory3_temp[reg_key]["counter"] >= 288) {
+               if (RegisterHistory3_temp[reg_key]["minCounter"] <= RegisterHistory3_temp[reg_key]["maxCounter"]) {
+                  RegisterHistory3[reg_key].unshift(RegisterHistory3_temp[reg_key]["min"]);
+                  RegisterHistory3[reg_key].unshift(RegisterHistory3_temp[reg_key]["max"]);
+               } else {
+                  RegisterHistory3[reg_key].unshift(RegisterHistory3_temp[reg_key]["max"]);
+                  RegisterHistory3[reg_key].unshift(RegisterHistory3_temp[reg_key]["min"]);
+               }
+               RegisterHistory3_temp[reg_key]["counter"] = 0;
+               RegisterHistory3_temp[reg_key]["min"] = reg_val;
+               RegisterHistory3_temp[reg_key]["minCounter"] = 0;
+               RegisterHistory3_temp[reg_key]["max"] = reg_val;
+               RegisterHistory3_temp[reg_key]["maxCounter"] = 0;
+               if  (RegisterHistory3[reg_key].length > 120) {
+                 RegisterHistory3[reg_key].pop  // remove the last element
+                 RegisterHistory3[reg_key].pop  // remove the last element
+               }
             }
         });
-        var CurrentTime = new Date().getTime();
-        $.each(UpdateTime, function( reg_key, update_time ){
-            var difference = CurrentTime - update_time;
-            var secondsDifference = Math.floor(difference/1000);
-            if ((update_time > 0) && (secondsDifference >= fadeOffTime)) {
-               $("#content_"+reg_key).css("background-color", "#AAAAAA");
-               $("#content_"+reg_key).css("color", "red");
-            } else if ((update_time > 0) && (secondsDifference <= fadeOffTime)) {
-               var hexShadeR = toHex(255-Math.floor(secondsDifference*85/fadeOffTime));
-               var hexShadeG = toHex(Math.floor(secondsDifference*170/fadeOffTime));
-               var hexShadeB = toHex(Math.floor(secondsDifference*170/fadeOffTime));
-               $("#content_"+reg_key).css("background-color", "#"+hexShadeR+hexShadeG+hexShadeB);
-               $("#content_"+reg_key).css("color", "black");
-            }
-        });
-        GlobalOldRegKeys = reg_keys;
+        
+        if (printToScreen) 
+           UpdateRegistersColor();
+    });
+}
+
+function UpdateRegistersColor() {
+    var CurrentTime = new Date().getTime();
+    $.each(RegisterUpdateTime, function( reg_key, update_time ){
+        var difference = CurrentTime - update_time;
+        var secondsDifference = Math.floor(difference/1000);
+        if ((update_time > 0) && (secondsDifference >= fadeOffTime)) {
+           $("#content_"+reg_key).css("background-color", "#AAAAAA");
+           $("#content_"+reg_key).css("color", "red");
+        } else if ((update_time > 0) && (secondsDifference <= fadeOffTime)) {
+           var hexShadeR = toHex(255-Math.floor(secondsDifference*85/fadeOffTime));
+           var hexShadeG = toHex(Math.floor(secondsDifference*170/fadeOffTime));
+           var hexShadeB = toHex(Math.floor(secondsDifference*170/fadeOffTime));
+           $("#content_"+reg_key).css("background-color", "#"+hexShadeR+hexShadeG+hexShadeB);
+           $("#content_"+reg_key).css("color", "black");
+        }
     });
 }
 
@@ -1210,7 +1384,7 @@ function GetDisplayValues(command)
 //*****************************************************************************
 // Get the Excercise current settings
 //*****************************************************************************
-function GetExerciseValues(){
+function GetExerciseValues(callbackFunction){
 
     var url = baseurl.concat("getexercise");
     $.getJSON(url,function(result){
@@ -1229,6 +1403,9 @@ function GetExerciseValues(){
             ExerciseParameters['QuietMode'] = resultsArray[3];
             ExerciseParameters['ExerciseFrequency'] = resultsArray[4];
             ExerciseParameters['EnhancedExerciseEnabled'] = ((resultsArray[5] === "False") ? false : true);
+        }
+        if (callbackFunction) {
+           callbackFunction();
         }
    });
 }
@@ -1294,11 +1471,17 @@ function GenmonAlert(msg)
 function UpdateDisplay()
 {
     if (menuElement == "registers") {
-        DisplayRegistersUpdate();
+        UpdateRegisters(false, true);
     } else if (menuElement == "status") {
         DisplayStatusUpdate();
-    } else if ((menuElement != "settings") && (menuElement != "notifications") && (menuElement != "maint")) {
+    } else if (menuElement == "maint") {
+        DisplayMaintenanceUpdate();
+    } else if ((menuElement != "settings") && (menuElement != "notifications")) {
         GetDisplayValues(menuElement);
+    }
+    
+    if (menuElement != "registers") {  // regresh the registers every time to keep history
+        UpdateRegisters(false, false);
     }
 }
 
@@ -1338,18 +1521,6 @@ function GetBaseStatus()
             currentbaseState = baseState;
             // Added active to selected class
             $("#"+menuElement).find("a").addClass(GetCurrentClass());
-
-            if (menuElement == "maint") {
-                 if((baseState === "EXERCISING") || (baseState === "RUNNING")) {
-                     $("#remotestop").prop("disabled",false);
-                     $("#remotestart").prop("disabled",true);
-                     $("#remotetransfer").prop("disabled",true);
-                 } else {
-                     $("#remotestop").prop("disabled",true);
-                     $("#remotestart").prop("disabled",false);
-                     $("#remotetransfer").prop("disabled",false);
-                 }
-            }
         }
         return
    });
