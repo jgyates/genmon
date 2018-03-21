@@ -24,8 +24,8 @@ var OldExerciseParameters = {};
 var RegisterHistory1 = {};
 var RegisterHistory2 = {};
 var RegisterHistory3 = {};
-var RegisterHistory2_temp = {}; 
-var RegisterHistory3_temp = {}; 
+var RegisterHistory2_temp = {};
+var RegisterHistory3_temp = {};
 var RegisterUpdateTime = {};
 var pathname = "";
 var baseurl = "";
@@ -132,12 +132,8 @@ function DisplayStatusFull()
                                            {strokeStyle: "#F03E3E", min: 63, max: 70}], 7, 10);
         gaugeFrequency.set(result["Status"]["Engine"]["Frequency"].replace(/Hz/g, '')); // set actual value
 
-        gaugeRPM = createGauge($("#gaugeRPM"), $("#textRPM"), 0, 0, 4000, [1000, 2000, 3000, 3600, 4000],
-                                          [{strokeStyle: "#F03E3E", min: 0, max: 3500},
-                                           {strokeStyle: "#FFDD00", min: 3500, max: 3590},
-                                           {strokeStyle: "#30B32D", min: 3590, max: 3610},
-                                           {strokeStyle: "#FFDD00", min: 3610, max: 3700},
-                                           {strokeStyle: "#F03E3E", min: 3700, max: 4000}], 4, 10);
+        gaugeRPM = createGauge($("#gaugeRPM"), $("#textRPM"), 0, 0, 4000, [900, 1800, 2700, 3600],
+                                          [{strokeStyle: "#888888", min: 0, max: 4000}], 4, 10);
         gaugeRPM.set(result["Status"]["Engine"]["RPM"]); // set actual value
     });
     return;
@@ -468,7 +464,7 @@ function SetTimeClick(){
 function DisplayMaintenanceUpdate(){
 
     GetExerciseValues(function(){
-        $("#Exercise_Time").html(ExerciseParameters['ExerciseFrequency'] + ' ' + 
+        $("#Exercise_Time").html(ExerciseParameters['ExerciseFrequency'] + ' ' +
                                  ExerciseParameters['ExerciseDay'] + ' ' + ExerciseParameters['ExerciseHour'] + ':' + ExerciseParameters['ExerciseMinute'] +
                                  ' Quiet Mode ' + ExerciseParameters['QuietMode']);
 
@@ -481,7 +477,7 @@ function DisplayMaintenanceUpdate(){
               WeekdayExerciseSelection();
            }
         }
-        
+
         if (ExerciseParameters['ExerciseDay'] != OldExerciseParameters['ExerciseDay'])
            $("#days").val(ExerciseParameters['ExerciseDay']);
         if (ExerciseParameters['ExerciseHour'] != OldExerciseParameters['ExerciseHour'])
@@ -1118,52 +1114,52 @@ function DisplayRegistersFull()
         minWidth: '280px',
         maxWidth: '280px',
         animation: 'fade',
-        updateAnimation: 'fade', 
+        updateAnimation: 'fade',
         contentAsHTML: 'true',
         delay: 100,
-        animationDuration: 200, 
+        animationDuration: 200,
         interactive: true,
-        content: '<div style="height:280px;width:250px;overflow-x:hidden;overflow-y:hidden;"></div>', 
+        content: '<div style="height:280px;width:250px;overflow-x:hidden;overflow-y:hidden;"></div>',
         side: ['top', 'left'],
         functionReady: function(instance, helper) {
             var regId = $(helper.origin).attr('id').replace(/content_/g, '');
             instance.content('<div style="height:280px;width:250px;overflow-x:hidden;overflow-y:hidden;"><table><tr><td style="height:250px;width:250px;vertical-align:top;">' +
                              '  <div id="'+regId+'_graph1" style="height:250px;width:250px;overflow-x:hidden;overflow-y:hidden;"></div>' +
                              '  <div id="'+regId+'_graph2" style="height:250px;width:250px;overflow-x:hidden;overflow-y:hidden;"></div>' +
-                             '  <div id="'+regId+'_graph3" style="height:250px;width:250px;overflow-x:hidden;overflow-y:hidden;"></div>' + 
+                             '  <div id="'+regId+'_graph3" style="height:250px;width:250px;overflow-x:hidden;overflow-y:hidden;"></div>' +
                              '</td></tr><tr><td style="height:30px;width:250px;vertical-align:bottom;"><center>' +
                              '  <u style="cursor: pointer;" onClick="$(\'#'+regId+'_graph1\').css(\'display\', \'block\');$(\'#'+regId+'_graph2\').css(\'display\', \'none\');$(\'#'+regId+'_graph3\').css(\'display\', \'none\');">10 min</u> | ' +
                              '  <u style="cursor: pointer;" onClick="$(\'#'+regId+'_graph1\').css(\'display\', \'none\');$(\'#'+regId+'_graph2\').css(\'display\', \'block\');$(\'#'+regId+'_graph3\').css(\'display\', \'none\');">1 hr</u> | ' +
                              '  <u style="cursor: pointer;" onClick="$(\'#'+regId+'_graph1\').css(\'display\', \'none\');$(\'#'+regId+'_graph2\').css(\'display\', \'none\');$(\'#'+regId+'_graph3\').css(\'display\', \'block\');">24 hr</u>' +
-                             '</center></td></tr></table></div>');  
+                             '</center></td></tr></table></div>');
             var plot_data1 = [];
             var plot_data2 = [];
             var plot_data3 = [];
             for (var i = 120; i >= 0; --i) {
-               if (RegisterHistory1[regId].length > i) 
+               if (RegisterHistory1[regId].length > i)
                    plot_data1.push([-i/12, parseInt(RegisterHistory1[regId][i], 16)]);
-               if (RegisterHistory2[regId].length > i) 
+               if (RegisterHistory2[regId].length > i)
                    plot_data2.push([-i/2, parseInt(RegisterHistory2[regId][i], 16)]);
-               if (RegisterHistory3[regId].length > i) 
+               if (RegisterHistory3[regId].length > i)
                    plot_data3.push([-i/5, parseInt(RegisterHistory3[regId][i], 16)]);
             }
             var plot1 = $.jqplot(regId+'_graph1', [plot_data1], {
-                               axesDefaults: { tickOptions: { textColor: '#999999', fontSize: '8pt' }}, 
-                               axes: { xaxis: { label: "Time (Minutes ago)", labelOptions: { fontFamily: 'Arial', textColor: '#AAAAAA', fontSize: '9pt' }, min:-10, max:0 } } 
+                               axesDefaults: { tickOptions: { textColor: '#999999', fontSize: '8pt' }},
+                               axes: { xaxis: { label: "Time (Minutes ago)", labelOptions: { fontFamily: 'Arial', textColor: '#AAAAAA', fontSize: '9pt' }, min:-10, max:0 } }
                              });
             var plot2 = $.jqplot(regId+'_graph2', [plot_data2], {
-                               axesDefaults: { tickOptions: { textColor: '#999999', fontSize: '8pt' }}, 
-                               axes: { xaxis: { label: "Time (Minutes ago)", labelOptions: { fontFamily: 'Arial', textColor: '#AAAAAA', fontSize: '9pt' }, min:-60, max:0 } } 
+                               axesDefaults: { tickOptions: { textColor: '#999999', fontSize: '8pt' }},
+                               axes: { xaxis: { label: "Time (Minutes ago)", labelOptions: { fontFamily: 'Arial', textColor: '#AAAAAA', fontSize: '9pt' }, min:-60, max:0 } }
                              });
             var plot3 = $.jqplot(regId+'_graph3', [plot_data3], {
-                               axesDefaults: { tickOptions: { textColor: '#999999', fontSize: '8pt' }}, 
-                               axes: { xaxis: { label: "Time (Hours ago)", labelOptions: { fontFamily: 'Arial', textColor: '#AAAAAA', fontSize: '9pt' }, min:-24, max:0 } } 
+                               axesDefaults: { tickOptions: { textColor: '#999999', fontSize: '8pt' }},
+                               axes: { xaxis: { label: "Time (Hours ago)", labelOptions: { fontFamily: 'Arial', textColor: '#AAAAAA', fontSize: '9pt' }, min:-24, max:0 } }
                              });
             $('#'+regId+'_graph2').css('display', 'none');
             $('#'+regId+'_graph3').css('display', 'none');
         }
     });
-    
+
 }
 
 function UpdateRegisters(init, printToScreen)
@@ -1178,7 +1174,7 @@ function UpdateRegisters(init, printToScreen)
             if (init) {
                 RegisterUpdateTime[reg_key] = 0;
                 RegisterHistory1[reg_key] = [];
-                
+
                 RegisterHistory2[reg_key] = [reg_val, reg_val];
                 RegisterHistory2_temp[reg_key] = {};
                 RegisterHistory2_temp[reg_key]["counter"] = 0;
@@ -1186,7 +1182,7 @@ function UpdateRegisters(init, printToScreen)
                 RegisterHistory2_temp[reg_key]["minCounter"] = 0;
                 RegisterHistory2_temp[reg_key]["max"] = reg_val;
                 RegisterHistory2_temp[reg_key]["maxCounter"] = 0;
-                
+
                 RegisterHistory3[reg_key] = [reg_val, reg_val];
                 RegisterHistory3_temp[reg_key] = {};
                 RegisterHistory3_temp[reg_key]["counter"] = 0;
@@ -1194,7 +1190,7 @@ function UpdateRegisters(init, printToScreen)
                 RegisterHistory3_temp[reg_key]["minCounter"] = 0;
                 RegisterHistory3_temp[reg_key]["max"] = reg_val;
                 RegisterHistory3_temp[reg_key]["maxCounter"] = 0;
-                
+
             } else {
                RegisterHistory2_temp[reg_key]["counter"] =  RegisterHistory2_temp[reg_key]["counter"]+1;
                if (RegisterHistory2_temp[reg_key]["min"] > reg_val) {
@@ -1216,7 +1212,7 @@ function UpdateRegisters(init, printToScreen)
                var old_reg_val = RegisterHistory1[reg_key][0];
                if (reg_val != old_reg_val) {
                   RegisterUpdateTime[reg_key] = new Date().getTime();
-                  
+
                   if (printToScreen) {
                     var outstr  = ((reg_key == "01f4") ? '<span class="registerTDvalMedium">HEX:<br>' + reg_val + '</span>' : 'HEX: '+reg_val) + '<br>';
                         outstr += ((reg_key == "01f4") ? '' : '<span class="registerTDvalSmall">DEC: ' + parseInt(reg_val, 16) + ' | HI:LO: '+parseInt(reg_val.substring(0,2), 16)+':'+parseInt(reg_val.substring(2,4), 16)+'</span>');
@@ -1228,7 +1224,7 @@ function UpdateRegisters(init, printToScreen)
             if  (RegisterHistory1[reg_key].length > 120) {
                RegisterHistory1[reg_key].pop  // remove the last element
             }
-            
+
             if (RegisterHistory2_temp[reg_key]["counter"] >= 12) {
                if (RegisterHistory2_temp[reg_key]["minCounter"] <= RegisterHistory2_temp[reg_key]["maxCounter"]) {
                   RegisterHistory2[reg_key].unshift(RegisterHistory2_temp[reg_key]["min"]);
@@ -1267,8 +1263,8 @@ function UpdateRegisters(init, printToScreen)
                }
             }
         });
-        
-        if (printToScreen) 
+
+        if (printToScreen)
            UpdateRegistersColor();
     });
 }
@@ -1479,7 +1475,7 @@ function UpdateDisplay()
     } else if ((menuElement != "settings") && (menuElement != "notifications")) {
         GetDisplayValues(menuElement);
     }
-    
+
     if (menuElement != "registers") {  // regresh the registers every time to keep history
         UpdateRegisters(false, false);
     }
