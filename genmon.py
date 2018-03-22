@@ -2466,17 +2466,17 @@ class GeneratorDevice:
             if len(Value):
                 FloatTemp = int(Value) / 100.0
                 FloatStr = "%.2f" % FloatTemp
-                Sensors["Unsupported Sensor 2"] = FloatStr
+                Sensors["Unsupported Sensor 1"] = FloatStr
 
             Value = self.GetUnknownSensor("0033")
             if len(Value):
-                Sensors["Unsupported Sensor 3"] = Value
+                Sensors["Unsupported Sensor 2"] = Value
 
             # return -2 thru 2
             Value = self.GetUnknownSensor("0034")
             if len(Value):
                 SignedStr = str(self.signed16( int(Value)))
-                Sensors["Unsupported Sensor 4"] = SignedStr
+                Sensors["Unsupported Sensor 3"] = SignedStr
 
             #
             Value = self.GetUnknownSensor("003b")
