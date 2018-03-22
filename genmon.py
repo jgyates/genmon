@@ -2430,16 +2430,17 @@ class GeneratorDevice:
             Sensors["Current Out"] = self.GetCurrentOutput()
             Sensors["Power Out (Single Phase)"] = self.GetPowerOutput()
             Sensors["Active Rotor Poles"] = self.GetActiveRotorPoles()
+            Sensors["Battery Status (Sensor)"] = self.GetBatteryStatusAlternate()
 
-        if self.EvolutionController and self.LiquidCooled:
-
-             # get UKS
+                         # get UKS
             Value = self.GetUnknownSensor("05ee")
             if len(Value):
                 # Fahrenheit = 9.0/5.0 * Celsius + 32
                 FloatTemp = int(Value) / 10.0
                 FloatStr = "%2.1f" % FloatTemp
                 Sensors["Battery Charger Sensor"] = FloatStr
+
+        if self.EvolutionController and self.LiquidCooled:
 
              # get UKS
             Value = self.GetUnknownSensor("05ed")
@@ -3305,7 +3306,7 @@ class GeneratorDevice:
         if RequiresRunning:
             EngineState = self.GetEngineState()
             # report null if engine is not running
-            if "Stopped" in EngineState or "Off" in EngineState:
+            if "Stopped" in EngineState or "Off" in EngineState or not len(EngineState):
                 return "0"
 
         # get value
@@ -3340,7 +3341,7 @@ class GeneratorDevice:
 
         EngineState = self.GetEngineState()
         # report null if engine is not running
-        if "Stopped" in EngineState or "Off" in EngineState:
+        if "Stopped" in EngineState or "Off" in EngineState or not len(EngineState):
             return "0A"
 
         CurrentFloat = 0.0
@@ -3383,7 +3384,7 @@ class GeneratorDevice:
 
         EngineState = self.GetEngineState()
         # report null if engine is not running
-        if "Stopped" in EngineState or "Off" in EngineState:
+        if "Stopped" in EngineState or "Off" in EngineState or not len(EngineState):
             return "0kW"
 
         CurrentStr = self.removeAlpha(self.GetCurrentOutput())
@@ -3476,6 +3477,27 @@ class GeneratorDevice:
         VoltageValue = "%2.1fV" % FloatTemp
 
         return VoltageValue
+
+    #------------ GeneratorDevice::GetBatteryStatusAlternate -------------------------
+    def GetBatteryStatusAlternate(self):
+
+        if not self.EvolutionController:
+            return "Not Available"     # Nexus
+
+        EngineState = self.GetEngineState()
+        if  not len(EngineState):
+            return "Not Charging"
+        if not "Stopped" in EngineState and not "Off" in EngineState:
+            return "Not Charging"
+
+        Value = self.GetRegisterValueFromList("05ee")
+        if len(Value):
+            FloatTemp = int(Value,16) / 10.0
+            if FloatTemp > 5:
+                return "Charging"
+            else:
+                return "Not Charging"
+        return ""
 
     #------------ GeneratorDevice::GetBatteryStatus -------------------------
     def GetBatteryStatus(self):
