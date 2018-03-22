@@ -28,7 +28,7 @@ except ImportError as e:
 
 import mymail, mylog, mythread
 
-GENMON_VERSION = "V1.5.9"
+GENMON_VERSION = "V1.5.10"
 
 #------------ SerialDevice class --------------------------------------------
 class SerialDevice:
@@ -273,33 +273,33 @@ class GeneratorDevice:
                     "023e" : [2, 0],     # Exercise time duration (Evo LQ only)
                     "0054" : [2, 0],     # Hours since generator activation (hours of protection) (Evo LQ only)
                     "005f" : [2, 0],     # Total engine time in minutes
-                    "01f1" : [2, 0],     # Unknown Status (WIP)
-                    "01f2" : [2, 0],     # Unknown Status (WIP)
-                    "01f3" : [2, 0],     # Unknown Status (WIP)
-                    "001b" : [2, 0],     # Unknown Read by ML All
+                    "01f1" : [2, 0],     # Unknown Status (WIP) (Changes from 000e to 0d0e on EvoLC when running and back to 000e when stopped)
+                    "01f2" : [2, 0],     # Unknown Status (WIP) (Changes from 0c02 to 0c0c on EvoLC when running and back to 0c02 when stopped)
+                    "01f3" : [2, 0],     # Unknown Status (WIP) (appears to be updated after a run cycle, number increases) (EvoLC, EvoAC)
+                    "001b" : [2, 0],     # Unknown Read by ML All (identifier of some type)
                     "001c" : [2, 0],     # Unknown Read by ML Nexus
                     "001d" : [2, 0],     # Unknown Read by ML Nexus
-                    "001e" : [2, 0],     # Unknown Read by ML All
-                    "001f" : [2, 0],     # Unknown Read by ML High value on Evo and Nexus LC, low on Nexus AC
+                    "001e" : [2, 0],     # Unknown Read by ML All   (status of some type) (looks like a factor of average RPM (Evo reg value *9 ~= average RPM)
+                    "001f" : [2, 0],     # Unknown Read by ML High value on Evo and Nexus LC, low on Nexus AC (some type of identifier)
                     "0020" : [2, 0],     # Unknown Read by ML zero except NexusAC
                     "0021" : [2, 0],     # Unknown Read by ML zero except Nexus AC
                     "0019" : [2, 0],     # Unknown Read by ML zero except Nexus AC (Status Bits)
-                    "0057" : [2, 0],     # Unknown Looks like some status bits (changes when engine starts / stops)
+                    "0057" : [2, 0],     # Unknown Looks like some status bits (0002 to 0005 when engine starts, back to 0002 on stop)
                     "0055" : [2, 0],     # Unknown
-                    "0056" : [2, 0],     # Unknown Looks like some status bits (changes when engine starts / stops)
+                    "0056" : [2, 0],     # Unknown Looks like some status bits (0000 to 0003, back to 0000 on stop)
                     "005a" : [2, 0],     # Unknown
                     "000d" : [2, 0],     # Bit changes when the controller is updating registers.
-                    "003c" : [2, 0],     # Unknown sensor 1 ramps up to 300 on Evo LC, 260 on Evo AC(30.0 ?)
-                    "0058" : [2, 0],     # Unknown sensor 2, once engine starts ramps up to 1600 decimal (160.0?)
+                    "003c" : [2, 0],     # Raw RPM Sensor Data (Hall Sensor)
+                    "0058" : [2, 0],     # CT Sensor (EvoLC)
                     "005d" : [2, 0],     # Unknown sensor 3, Moves between 0x55 - 0x58 continuously even when engine off
-                    "05ed" : [2, 0],     # Unknown sensor 4, changes between 35, 37, 39
-                    "05ee" : [2, 0],     # Unknown sensor 5
+                    "05ed" : [2, 0],     # Unknown sensor 4, changes between 35, 37, 39 (Ambient Temp Sensor) EvoLC
+                    "05ee" : [2, 0],     # Unknown sensor 5 (Battery Charging Sensor)
                     "05f5" : [2, 0],     # Evo AC   (Status?) 0000 * 0005 0007
                     "05fa" : [2, 0],     # Evo AC   (Status?)
                     "0033" : [2, 0],     # Evo AC   (Status?)
                     "0034" : [2, 0],     # Evo AC   (Status?) Goes from FFFF 0000 00001 (Nexus and Evo AC)
                     "0032" : [2, 0],     # Evo AC   (Sensor?) starts  0x4000 ramps up to ~0x02f0
-                    "0037" : [2, 0],     # Evo AC   (Sensor?) only moves while running goes up to ~0x1350
+                    "0037" : [2, 0],     # CT Sensor (EvoAC)
                     "0038" : [2, 0],     # Evo AC   (Sensor?)       FFFE, FFFF, 0001, 0002 random - not linear
                     "003b" : [2, 0],     # Evo AC   (Sensor?)  Nexus and Evo AC
                     "002b" : [2, 0],     # Evo AC   (Ambient Temp Sensor for Evo AC?)
@@ -2395,6 +2395,15 @@ class GeneratorDevice:
     #------------ GeneratorDevice::signed16-------------------------------
     def signed16(self, value):
         return -(value & 0x8000) | (value & 0x7fff)
+    #------------ GeneratorDevice::RoundInt-------------------------------
+    def RoundInt(self, number, roundto):
+
+        rem = number % roundto
+        if rem < (roundto/2):
+            number = int(number / roundto) * roundto
+        else:
+            number = int((number + roundto) / roundto) * roundto
+        return number
 
     #------------ GeneratorDevice::DisplayUnknownSensors-------------------------------
     def DisplayUnknownSensors(self):
@@ -2411,22 +2420,18 @@ class GeneratorDevice:
         if len(Value):
             Sensors["Raw RPM Sensor Data"] = Value
 
+        if self.EvolutionController:
+            Value = self.GetUnknownSensor("001e")
+            if len(Value):
+                IntValue = int(Value)
+                IntValue = self.RoundInt((IntValue * 9 ),100)
+                Sensors["Nominal RPM"] = str(IntValue)
+
+            Sensors["Current Out"] = self.GetCurrentOutput()
+            Sensors["Power Out"] = self.GetPowerOutput()
+            Sensors["Active Rotor Poles"] = self.GetActiveRotorPoles()
+
         if self.EvolutionController and self.LiquidCooled:
-
-            # get UKS
-            Value = self.GetUnknownSensor("0058", Hex = True)
-            if len(Value):
-                Sensors["Unsupported Sensor 2"] = Value
-
-            # get UKS
-            Value = self.GetUnknownSensor("005d")
-            if len(Value):
-                Sensors["Unsupported Sensor 3"] = Value
-
-            # get UKS
-            Value = self.GetUnknownSensor("01f1", Hex = True)
-            if len(Value):
-                Sensors["Unsupported Sensor 4"] = Value
 
              # get UKS
             Value = self.GetUnknownSensor("05ee")
@@ -2457,9 +2462,11 @@ class GeneratorDevice:
         if not self.LiquidCooled:       # Nexus AC and Evo AC
 
             # starts  0x4000 when idle, ramps up to ~0x2e6a while running
-            Value = self.GetUnknownSensor("0032")
+            Value = self.GetUnknownSensor("0032", RequiresRunning = True)
             if len(Value):
-                Sensors["Unsupported Sensor 2"] = Value
+                FloatTemp = int(Value) / 100.0
+                FloatStr = "%.2f" % FloatTemp
+                Sensors["Unsupported Sensor 2"] = FloatStr
 
             Value = self.GetUnknownSensor("0033")
             if len(Value):
@@ -2471,25 +2478,10 @@ class GeneratorDevice:
                 SignedStr = str(self.signed16( int(Value)))
                 Sensors["Unsupported Sensor 4"] = SignedStr
 
-            # only moves while running goes up to ~0x1350
-            Value = self.GetUnknownSensor("0037")
-            if len(Value):
-                Sensors["Unsupported Sensor 5"] = Value
-
-             # return -2 thru 2
-            Value = self.GetUnknownSensor("0038")
-            if len(Value):
-                SignedStr = str(self.signed16( int(Value)))
-                Sensors["Unsupported Sensor 6"] = SignedStr
-
-            # only moves while running goes up to ~0x1350
+            #
             Value = self.GetUnknownSensor("003b")
             if len(Value):
-                Sensors["Unsupported Sensor 7"] = Value
-
-            Value = self.GetUnknownSensor("01f3")
-            if len(Value):
-                Sensors["Unsupported Sensor 8"] = Value
+                Sensors["Unsupported Sensor 4"] = Value
 
         return Sensors
 
@@ -3314,7 +3306,7 @@ class GeneratorDevice:
             EngineState = self.GetEngineState()
             # report null if engine is not running
             if "Stopped" in EngineState or "Off" in EngineState:
-                return ""
+                return "0"
 
         # get value
         Value = self.GetRegisterValueFromList(Register)
@@ -3339,6 +3331,71 @@ class GeneratorDevice:
 
         RPMValue = "%5d" % int(Value,16)
         return RPMValue
+
+    #------------ GeneratorDevice::GetCurrentOutput ---------------------------------------
+    def GetCurrentOutput(self):
+
+        if not self.EvolutionController:
+            return ""
+
+        EngineState = self.GetEngineState()
+        # report null if engine is not running
+        if "Stopped" in EngineState or "Off" in EngineState:
+            return "0A"
+
+        CurrentFloat = 0.0
+        if self.LiquidCooled:
+            Value = self.GetRegisterValueFromList("0058")
+            if len(Value):
+                CurrentFloat = int(Value,16) / 10.0
+        else:
+            Value = self.GetRegisterValueFromList("0037")
+            if len(Value):
+                CurrentFloat = int(Value,16) / 100.0
+
+        return "%.2fA" % CurrentFloat
+
+     ##------------ GeneratorDevice::GetActiveRotorPoles ---------------------------------------
+    def GetActiveRotorPoles(self):
+        # (2 * 60 * Freq) / RPM = Num Rotor Poles
+
+        if not self.EvolutionController:
+            return ""
+
+        FreqStr = self.removeAlpha(self.GetFrequency())
+        RPMStr = self.removeAlpha(self.GetRPM().strip())
+
+        RotorPoles = "0"
+        if len(FreqStr) and len(RPMStr):
+            RPMInt = int(RPMStr)
+            if RPMInt:
+                FreqFloat = float(FreqStr)
+                RotorPoles = str(int(round((2 * 60 * FreqFloat) / RPMInt)))
+
+        return RotorPoles
+
+
+    #------------ GeneratorDevice::GetPowerOutput ---------------------------------------
+    def GetPowerOutput(self):
+
+        if not self.EvolutionController:
+            return ""
+
+        EngineState = self.GetEngineState()
+        # report null if engine is not running
+        if "Stopped" in EngineState or "Off" in EngineState:
+            return "0kW"
+
+        CurrentStr = self.removeAlpha(self.GetCurrentOutput())
+        VoltageStr = self.removeAlpha(self.GetVoltageOutput())
+
+        PowerOut = 0.0
+
+        if len(CurrentStr) and len(VoltageStr):
+            PowerOut = float(VoltageStr) * float(CurrentStr)
+
+        return "%.2fkW" % (PowerOut / 1000.0)
+
 
     #------------ GeneratorDevice::GetFrequency ---------------------------------------
     def GetFrequency(self):
