@@ -2428,7 +2428,7 @@ class GeneratorDevice:
                 Sensors["Nominal RPM"] = str(IntValue)
 
             Sensors["Current Out"] = self.GetCurrentOutput()
-            Sensors["Power Out"] = self.GetPowerOutput()
+            Sensors["Power Out (Single Phase)"] = self.GetPowerOutput()
             Sensors["Active Rotor Poles"] = self.GetActiveRotorPoles()
 
         if self.EvolutionController and self.LiquidCooled:
