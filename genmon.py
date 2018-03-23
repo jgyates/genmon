@@ -287,7 +287,7 @@ class GeneratorDevice:
                     "0057" : [2, 0],     # Unknown Looks like some status bits (0002 to 0005 when engine starts, back to 0002 on stop)
                     "0055" : [2, 0],     # Unknown
                     "0056" : [2, 0],     # Unknown Looks like some status bits (0000 to 0003, back to 0000 on stop)
-                    "005a" : [2, 0],     # Unknown
+                    "005a" : [2, 0],     # Unknown (zero except Nexus)
                     "000d" : [2, 0],     # Bit changes when the controller is updating registers.
                     "003c" : [2, 0],     # Raw RPM Sensor Data (Hall Sensor)
                     "0058" : [2, 0],     # CT Sensor (EvoLC)
@@ -2430,17 +2430,18 @@ class GeneratorDevice:
             Sensors["Current Out"] = self.GetCurrentOutput()
             Sensors["Power Out (Single Phase)"] = self.GetPowerOutput()
             Sensors["Active Rotor Poles"] = self.GetActiveRotorPoles()
+
+        if self.EvolutionController and self.LiquidCooled:
+
             Sensors["Battery Status (Sensor)"] = self.GetBatteryStatusAlternate()
 
-                         # get UKS
+            # get UKS
             Value = self.GetUnknownSensor("05ee")
             if len(Value):
                 # Fahrenheit = 9.0/5.0 * Celsius + 32
                 FloatTemp = int(Value) / 10.0
                 FloatStr = "%2.1f" % FloatTemp
                 Sensors["Battery Charger Sensor"] = FloatStr
-
-        if self.EvolutionController and self.LiquidCooled:
 
              # get UKS
             Value = self.GetUnknownSensor("05ed")
