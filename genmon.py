@@ -2424,9 +2424,16 @@ class GeneratorDevice:
             Value = self.GetUnknownSensor("001e")
             if len(Value):
                 IntValue = int(Value)
+                # 50Hz = 1500/3000 RPM or 60Hz = 1800/3600 RPM
                 IntValue = self.RoundInt((IntValue * 9 ),100)
-                if IntValue > 3000:
+                if IntValue > 3200:
                     IntValue = 3600
+                elif IntValue > 2500:
+                    IntValue = 3000
+                elif IntValue > 1600:
+                    IntValue = 1800
+                else:
+                    IntValue = 1500
                 Sensors["Nominal RPM"] = str(IntValue)
 
             Sensors["Current Out"] = self.GetCurrentOutput()
@@ -2998,7 +3005,7 @@ class GeneratorDevice:
                                 0x0010: [True, "Wiring Error"],
                                 0x0020: [True, "Ruptured Basin"],
                                 0x0040: [False, "E-Stop Activated"],
-                                0x0080: [True, "Oil below 8 PSI"],
+                                0x0080: [True, "Oil below 8 psi"],
                                 0x0100: [True, "Low Coolant"],
                                 #0x0200: [False, "Fuel below 5 inch"]}          # Propane/NG
                                 0x0200: [True, "Fuel Pressure / Level Low"]}     # Gasoline / Diesel
