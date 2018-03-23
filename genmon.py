@@ -2445,9 +2445,12 @@ class GeneratorDevice:
              # get UKS
             Value = self.GetUnknownSensor("05ed")
             if len(Value):
+                import math
                 # Fahrenheit = 9.0/5.0 * Celsius + 32
                 SensorValue = int(Value)
-                Celsius = (SensorValue - 77.45) * -1.0
+                Celsius = math.sqrt(  (SensorValue-10)*125) * -1 - (-88)
+                # =SQRT(((SensorValue-10)*125))*-1-(-88)
+                #Celsius = (SensorValue - 77.45) * -1.0
                 Fahrenheit = 9.0/5.0 * Celsius + 32
                 CStr = "%.1f" % Celsius
                 FStr = "%.1f" % Fahrenheit
@@ -3493,13 +3496,52 @@ class GeneratorDevice:
         Value = self.GetRegisterValueFromList("05ee")
         if len(Value):
             FloatTemp = int(Value,16) / 10.0
-            if FloatTemp > 5:
+            if self.LiquidCooled:
+                CompValue = 5.0
+            else:
+                CompValue = 0
+            if FloatTemp > CompValue:
                 return "Charging"
             else:
                 return "Not Charging"
         return ""
 
     #------------ GeneratorDevice::GetBatteryStatus -------------------------
+    # The charger operates at one of three battery charging voltage
+    # levels depending on ambient temperature.
+    #  - 13.5VDC at High Temperature
+    #  - 14.1VDC at Normal Temperature
+    #  - 14.6VDC at Low Temperature
+    # The battery charger is powered from a 120 VAC Load connection
+    # through a fuse (F3) in the transfer switch. This 120 VAC source
+    # must be connected to the Generator in order to operate the
+    # charger.
+    # During a Utility failure, the charger will momentarily be turned
+    # off until the Generator is connected to the Load. During normal
+    # operation, the battery charger supplies all the power to the
+    # controller; the Generator battery is not used to supply power.
+    # The battery charger will begin its charge cycle when battery
+    # voltage drops below approximately 12.6V. The charger provides
+    # current directly to the battery dependant on temperature, and the
+    # battery is charged at the appropriate voltage level for 18 hours.
+    # At the end of the 18 hour charge period battery charge current
+    # is measured when the Generator is off. If battery charge current
+    # at the end of the 18 hour charge time is greater than a pre-set
+    # level, or the battery open-circuit voltage is less than approximately
+    # 12.5V, an Inspect Battery warning is raised. If the engine cranks
+    # during the 18 hour charge period, then the 18 hour charge timer
+    # is restarted.
+    # At the end of the 18 hour charge period the charger does one of
+    # two things. If the temperature is less than approximately 40F
+    # the battery is continuously charged at a voltage of 14.1V (i.e. the
+    # charge voltage is changed from 14.6V to 14.1V after 18 hours). If
+    # the temperature is above approximately 40F then the charger will
+    # stop charging the battery after 18 hours.
+    # The battery has a similar role as that found in an automobile
+    # application. It sits doing nothing until it either self-discharges below
+    # 12.6V or an engine crank occurs (i.e. such as occurs during the
+    # weekly exercise cycle). If either condition occurs the battery charge
+    # will begin its 18 hour charge cycle.
     def GetBatteryStatus(self):
 
         if not self.EvolutionController:
