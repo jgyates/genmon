@@ -2321,7 +2321,8 @@ class GeneratorDevice:
         Engine["Engine State"] = self.GetEngineState
         if self.EvolutionController:
             Engine["Active Relays"] = self.GetDigitalOutputs
-            Engine["Active Sensors"] = self.GetSensorInputs
+            if self.EvolutionController and self.LiquidCooled:
+                Engine["Active Sensors"] = self.GetSensorInputs
 
         if self.SystemInAlarm():
             Engine["System In Alarm"] = self.GetAlarmState
@@ -2379,6 +2380,7 @@ class GeneratorDevice:
             Exercise["Exercise Duration"] = self.GetExerciseDuration
         Maint["Exercise"] = Exercise
         Service = collections.OrderedDict()
+        Service["Next Service Scheduled"] = self.GetServiceDue
         Service["Total Run Hours"] = self.GetRunTimes
         Service["Hardware Version"] = self.GetHardwareVersion
         Service["Firmware Version"] = self.GetFirmwareVersion
@@ -3630,7 +3632,7 @@ class GeneratorDevice:
         Value = self.GetRegisterValueFromList("001a")
         if len(Value) != 4:
             return ""
-        ServiceValue = "%d hours" % int(Value,16)
+        ServiceValue = "%dH" % int(Value,16)
         return ServiceValue
 
     #----------  GeneratorDevice:GetHardwareVersion  ---------------------------------
@@ -3655,16 +3657,6 @@ class GeneratorDevice:
         IntTemp = RegVal & 0xff         # low byte is firmware version
         FloatTemp = IntTemp / 100.0
         return "V%2.2f" % FloatTemp     #
-
-    #------------ GeneratorDevice::GetServiceInfo ------------------------------------
-    def GetServiceInfo(self):
-
-        # get Hours until next service
-        Value = self.GetRegisterValueFromList("001a")
-        if len(Value) != 4:
-            return ""
-        ServiceValue = "%d hours" % int(Value,16)
-        return ServiceValue
 
     #------------ GeneratorDevice::GetRunTimes ----------------------------------------
     def GetRunTimes(self):
