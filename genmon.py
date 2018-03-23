@@ -2426,7 +2426,7 @@ class GeneratorDevice:
                 IntValue = int(Value)
                 IntValue = self.RoundInt((IntValue * 9 ),100)
                 if IntValue > 3000:
-                    IntValue = 3600:
+                    IntValue = 3600
                 Sensors["Nominal RPM"] = str(IntValue)
 
             Sensors["Current Out"] = self.GetCurrentOutput()
