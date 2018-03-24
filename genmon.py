@@ -224,6 +224,7 @@ class GeneratorDevice:
         self.TransferActive = False         # Flag to signal transfer switch is allowing gen supply power
         self.CommunicationsActive = False   # Flag to let the heartbeat thread know we are communicating
         self.CommAccessLock = threading.RLock()  # lock to synchronize access to the serial port comms
+        self.CheckForAlarmEvent = threading.Event() # Event to signal checking for alarm
         self.UtilityVoltsMin = 0    # Minimum reported utility voltage above threshold
         self.UtilityVoltsMax = 0    # Maximum reported utility voltage above pickup
         self.MailInit = False       # set to true once mail is init
@@ -427,6 +428,8 @@ class GeneratorDevice:
             # start thread to accept incoming sockets for nagios heartbeat and command / status clients
             self.Threads["InterfaceServerThread"] = mythread.MyThread(self.InterfaceServerThread, Name = "InterfaceServerThread")
 
+        self.Threads["CheckForAlarmThread"] = mythread.MyThread(self.CheckForAlarmThread, Name = "CheckForAlarmThread")
+
         # start thread to accept incoming sockets for nagios heartbeat
         self.Threads["ComWatchDog"] = mythread.MyThread(self.ComWatchDog, Name = "ComWatchDog")
 
@@ -469,6 +472,7 @@ class GeneratorDevice:
 
             self.KillThread("ProcessThread")
             self.KillThread("MonitorThread")
+            self.KillThread("CheckForAlarmThread")
             self.KillThread("ComWatchDog")
             if self.bSyncDST or self.bSyncTime:
                 self.KillThread("TimeSyncThread")
@@ -607,6 +611,21 @@ class GeneratorDevice:
             return False
 
         return True
+    # ---------- GeneratorDevice::CheckForAlarmThread------------------
+    #  When signaled, this thread will check for alarms
+    def CheckForAlarmThread(self):
+
+        while True:
+            try:
+                if self.IsStopSignaled("CheckForAlarmThread"):
+                    break
+                if self.CheckForAlarmEvent.is_set():
+                    self.CheckForAlarms()
+                    self.CheckForAlarmEvent.clear()
+                time.sleep(0.25)
+
+            except Exception as e1:
+                self.FatalError("Error in  CheckForAlarmThread" + str(e1))
 
     # ---------- GeneratorDevice::ProcessThread------------------
     #  remove items from Buffer, form packets
@@ -733,7 +752,8 @@ class GeneratorDevice:
             # in word multiples, not bytes
             self.ProcessMasterSlaveTransaction(Reg, int(Info[self.REGLEN] / 2))
 
-        self.CheckForAlarms()   # check for unknown events (i.e. events we are not decoded) and send an email if they occur
+         # check for unknown events (i.e. events we are not decoded) and send an email if they occur
+        self.CheckForAlarmEvent.set()
 
     #-------------GeneratorDevice::DetectController------------------------------------
     def DetectController(self):
@@ -834,7 +854,8 @@ class GeneratorDevice:
             if counter % 6 == 0:
                 for PrimeReg, PrimeInfo in self.PrimeRegisters.items():
                     self.ProcessMasterSlaveTransaction(PrimeReg, int(PrimeInfo[self.REGLEN] / 2))
-                self.CheckForAlarms()   # check for unknown events (i.e. events we are not decoded) and send an email if they occur
+                # check for unknown events (i.e. events we are not decoded) and send an email if they occur
+                self.CheckForAlarmEvent.set()
 
             #The divide by 2 is due to the diference in the values in our dict are bytes
             # but modbus makes register request in word increments so the request needs to
