@@ -3384,7 +3384,11 @@ class GeneratorDevice:
         if self.LiquidCooled:
             Value = self.GetRegisterValueFromList("0058")
             if len(Value):
-                CurrentFloat = int(Value,16) / 10.0
+                CurrentFloat = int(Value,16)
+                CurrentFloat = (CurrentFloat * .2248) - 303.268
+                if CurrentFloat < 0:
+                    CurrentFloat = 0
+
         else:
             Value = self.GetRegisterValueFromList("0037")
             if len(Value):
