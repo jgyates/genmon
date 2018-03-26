@@ -28,7 +28,7 @@ except ImportError as e:
 
 import mymail, mylog, mythread
 
-GENMON_VERSION = "V1.5.10"
+GENMON_VERSION = "V1.5.11"
 
 #------------ SerialDevice class --------------------------------------------
 class SerialDevice:
@@ -3434,7 +3434,10 @@ class GeneratorDevice:
             RPMInt = int(RPMStr)
             if RPMInt:
                 FreqFloat = float(FreqStr)
-                RotorPoles = str(int(round((2 * 60 * FreqFloat) / RPMInt)))
+                NumRotorPoles = int(round((2 * 60 * FreqFloat) / RPMInt))
+                if NumRotorPoles > 4:
+                    NumRotorPoles = 0
+                RotorPoles = str(NumRotorPoles)
 
         return RotorPoles
 
