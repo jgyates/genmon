@@ -605,7 +605,7 @@ function DisplayLogs(){
         outstr += replaceAll(replaceAll(result,'\n','<br/>'),' ','&nbsp');  // replace space with html friendly &nbsp
 
         $("#mydisplay").html(outstr);
-        
+
         var date = new Date();
         var data_helper = {};
         var months = 1;
@@ -629,7 +629,7 @@ function DisplayLogs(){
                       }
                   } else {
                       data_helper[matches.slice(1,3).join("/")]["title"] = data_helper[matches.slice(1,3).join("/")]["title"] + "<br>" + matches[5].trim();
-                      if (data_helper[matches.slice(1,3).join("/")]["count"] < severity) 
+                      if (data_helper[matches.slice(1,3).join("/")]["count"] < severity)
                          data_helper[matches.slice(1,3).join("/")]["count"] = severity;
                   }
                }
@@ -1151,7 +1151,7 @@ var BaseRegistersDescription = { "0000" : "Product line",
                                  "005a" : "Unknown",
                                  "000d" : "Bit changes when the controller is updating registers.",
                                  "003c" : "Raw RPM Sensor",
-                                 "0058" : "Unknown Sensor (EvoLC)",
+                                 "0058" : "CT Output (EvoLC)",
                                  "005d" : "Unknown Sensor (EvoLC)",
                                  "05ed" : "Ambient Temp Sensor (EvoLC)",
                                  "05ee" : "Battery Charger Sensor (EvoLC)",
@@ -1160,7 +1160,7 @@ var BaseRegistersDescription = { "0000" : "Product line",
                                  "0034" : "Unknown Sensor (Nexus, EvoAC)",
                                  "0032" : "Unknown Sensor (Nexus, EvoAC)",
                                  "0033" : "Unknown Sensor (EvoAC)",
-                                 "0037" : "Unknown Sensor (Nexus, EvoAC)",
+                                 "0037" : "CT Output (EvoAC)",
                                  "0038" : "Unknown Sensor (Nexus, EvoAC)",
                                  "003b" : "Unknown Sensor (Nexus, EvoAC)",
                                  "002b" : "UnknownSensor (Temp?) (EvoAC)",
@@ -1513,7 +1513,7 @@ function MenuClick(target)
                 break;
             case "logs":
                 DisplayLogs();
-                break;    
+                break;
             case "status":
                 DisplayStatusFull();
                 break;
