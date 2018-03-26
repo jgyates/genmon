@@ -3445,7 +3445,12 @@ class GeneratorDevice:
         else:
             Value = self.GetRegisterValueFromList("0037")
             if len(Value):
-                CurrentFloat = int(Value,16) / 100.0
+                CurrentFloat = int(Value,16)
+                CurrentFloat = (CurrentFloat * 0.0689) - 291.6
+
+                if CurrentFloat < 0:
+                    CurrentFloat = 0
+
 
         return "%.2fA" % CurrentFloat
 
