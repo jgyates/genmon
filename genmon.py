@@ -2462,7 +2462,7 @@ class GeneratorDevice:
 
             Sensors["Current Out"] = self.GetCurrentOutput()
             Sensors["Power Out (Single Phase)"] = self.GetPowerOutput()
-
+            Sensors["Frequency (Calculated)"] = self.GetFrequency(Calculate = True)
 
         if self.EvolutionController and self.LiquidCooled:
 
@@ -3500,23 +3500,33 @@ class GeneratorDevice:
 
 
     #------------ GeneratorDevice::GetFrequency ---------------------------------------
-    def GetFrequency(self):
+    def GetFrequency(self, Calculate = False):
 
         # get Frequency
-        Value = self.GetRegisterValueFromList("0008")
-        if len(Value) != 4:
-            return ""
+        FloatTemp = 0.0
 
-        IntTemp = int(Value,16)
-        if self.EvolutionController and self.LiquidCooled:
-            FloatTemp = IntTemp / 10.0      # Evolution
-        elif not self.EvolutionController and self.LiquidCooled:
-            FloatTemp = IntTemp / 1.0       # Nexus Liquid Cooled
-            FloatTemp = FloatTemp * 2.0
+        if not Calculate:
+            Value = self.GetRegisterValueFromList("0008")
+            if len(Value) != 4:
+                return ""
+
+            IntTemp = int(Value,16)
+            if self.EvolutionController and self.LiquidCooled:
+                FloatTemp = IntTemp / 10.0      # Evolution
+            elif not self.EvolutionController and self.LiquidCooled:
+                FloatTemp = IntTemp / 1.0       # Nexus Liquid Cooled
+                FloatTemp = FloatTemp * 2.0
+            else:
+                FloatTemp = IntTemp / 1.0       # Nexus and Evolution Air Cooled
+
         else:
-            FloatTemp = IntTemp / 1.0       # Nexus and Evolution Air Cooled
-        FreqValue = "%2.1f Hz" % FloatTemp
+            # (RPM * Poles) / 2 * 60
+            RPM = self.GetRPM()
+            Poles = self.GetActiveRotorPoles()
+            if len(RPM) and len(Poles):
+                FloatTemp = (float(RPM) * float(Poles)) / (2*60)
 
+        FreqValue = "%2.1f Hz" % FloatTemp
         return FreqValue
 
     #------------ GeneratorDevice::GetVoltageOutput --------------------------
