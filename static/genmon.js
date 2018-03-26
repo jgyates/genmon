@@ -157,7 +157,7 @@ function DisplayStatusFull()
            gaugekW = createGauge($("#gaugekW"), $("#textkW"), 0, 0, 20, [0, 5, 10, 15, 20],
                                              [{strokeStyle: "#888888", min: 0, max: 1000}], 4, 5);
            gaugekW.set(result["Status"]["Engine"]["Unsupported Sensors"]["Power Out (Single Phase)"].replace(/kW/g, '')); // set actual value
-   
+
            var plot_data4 = [];
            for (var i = 720; i >= 0; --i) {
               if (kWHistory.length > i)
@@ -170,7 +170,7 @@ function DisplayStatusFull()
                                 axes: { xaxis: { label: "Time (Minutes ago)", min:-60, max:0, numberTicks:7, tickOptions: {formatString: "%#.0f" } },
                                         yaxis: { label: "kW", min:0 } }
                                 });
-        }                        
+        }
     });
     return;
 }
@@ -275,17 +275,19 @@ function DisplayStatusUpdate()
         gaugeOutputVoltage.set(result["Status"]["Engine"]["Output Voltage"].replace(/V/g, '')); // set actual value
         gaugeFrequency.set(result["Status"]["Engine"]["Frequency"].replace(/Hz/g, '')); // set actual value
         gaugeRPM.set(result["Status"]["Engine"]["RPM"]); // set actual value
-        gaugekW.set(result["Status"]["Engine"]["Unsupported Sensors"]["Power Out (Single Phase)"].replace(/kW/g, '')); // set actual value
+        if (result["Status"]["Engine"]["Unsupported Sensors"] != undefined) {
+            gaugekW.set(result["Status"]["Engine"]["Unsupported Sensors"]["Power Out (Single Phase)"].replace(/kW/g, '')); // set actual value
 
-        var plot_data4 = [];
-        for (var i = 720; i >= 0; --i) {
-           if (kWHistory.length > i)
-               plot_data4.push([-i/12, kWHistory[i]]);
+            var plot_data4 = [];
+            for (var i = 720; i >= 0; --i) {
+               if (kWHistory.length > i)
+                   plot_data4.push([-i/12, kWHistory[i]]);
+            }
+            kWplot.series[0].data = (plot_data4.length > 0) ? plot_data4 : [0,0];
+            kWplot.replot();
         }
-        kWplot.series[0].data = (plot_data4.length > 0) ? plot_data4 : [0,0];
-        kWplot.replot();
     });
-    
+
 }
 
 function json2updates(json, parentkey) {
@@ -1225,7 +1227,7 @@ function UpdateRegisters(init, printToScreen)
                tkWEngineStateOff = (((parseInt(reg_val, 16) & 0x000F0000) == 0x00000000) || ((parseInt(reg_val, 16) & 0x000F0000) == 0x00080000) || ((parseInt(reg_val, 16) & 0x000F0000) == 0x00090000)) ? true : false;
             } else if (reg_key == "0012") {
                tkWVoltage = parseInt(((reg_val != "0000") ? reg_val : 0), 16);
-            } else if (reg_key == "0058")  {                   
+            } else if (reg_key == "0058")  {
                tkWCurrentLC = parseInt(reg_val, 16)/10;
             } else if (reg_key == "0037")  {
                tkWCurrentAC = parseInt(reg_val, 16)/100;
@@ -1274,7 +1276,7 @@ function UpdateRegisters(init, printToScreen)
             }
 
             if (RegisterHistory2_temp[reg_key]["counter"] >= 12) {
-               if (RegisterHistory2_temp[reg_key]["minCounter"] > RegisterHistory2_temp[reg_key]["maxCounter"]) { 
+               if (RegisterHistory2_temp[reg_key]["minCounter"] > RegisterHistory2_temp[reg_key]["maxCounter"]) {
                   RegisterHistory2[reg_key].unshift(RegisterHistory2_temp[reg_key]["min"], RegisterHistory2_temp[reg_key]["max"]);
                } else {
                   RegisterHistory2[reg_key].unshift(RegisterHistory2_temp[reg_key]["max"], RegisterHistory2_temp[reg_key]["min"]);
@@ -1286,7 +1288,7 @@ function UpdateRegisters(init, printToScreen)
             }
 
             if (RegisterHistory3_temp[reg_key]["counter"] >= 288) {
-               if (RegisterHistory3_temp[reg_key]["minCounter"] > RegisterHistory3_temp[reg_key]["maxCounter"]) { 
+               if (RegisterHistory3_temp[reg_key]["minCounter"] > RegisterHistory3_temp[reg_key]["maxCounter"]) {
                   RegisterHistory3[reg_key].unshift(RegisterHistory3_temp[reg_key]["min"], RegisterHistory3_temp[reg_key]["max"]);
                } else {
                   RegisterHistory3[reg_key].unshift(RegisterHistory3_temp[reg_key]["max"], RegisterHistory3_temp[reg_key]["min"]);
@@ -1303,7 +1305,7 @@ function UpdateRegisters(init, printToScreen)
             RegisterSince = new Date();
         } else {
             var reg_val = (tkWEngineStateOff) ? 0 : (tkWVoltage * ((tkWCurrentLC != 0) ? tkWCurrentLC : tkWCurrentAC) / 1000);
-            // console.log(tkWEngineStateOff + " -> " + tkWVoltage + " * " + ((tkWCurrentLC != 0) ? tkWCurrentLC : tkWCurrentAC) + " = " + reg_val); 
+            // console.log(tkWEngineStateOff + " -> " + tkWVoltage + " * " + ((tkWCurrentLC != 0) ? tkWCurrentLC : tkWCurrentAC) + " = " + reg_val);
             kWHistory.unshift(reg_val);
             if  (kWHistory.length > 720) {
                kWHistory.pop  // remove the last element
@@ -1340,7 +1342,7 @@ function printRegisters (type) {
     var pageHeight = 20;
     var rowHeight = 15;
     var dataDivider;
-    
+
     if (type == 10) {
       data = RegisterHistory1;
       labelTitle = "last 10 minutes";
@@ -1352,7 +1354,7 @@ function printRegisters (type) {
       data = RegisterHistory2;
       labelMin = -60;
       labelText = "Time (Minutes ago)";
-      dataDivider = 2; 
+      dataDivider = 2;
     } else if (type == 24) {
      labelTitle = "last 24 hours";
       data = RegisterHistory3;
@@ -1360,8 +1362,8 @@ function printRegisters (type) {
       labelText = "Time (hours ago)";
       dataDivider = 5;
     }
-   
-    
+
+
     $('<div id="printRegisterFrame" style="width:1000px"></div>').appendTo("#mydisplay");
 
     var date = new Date();
@@ -1380,7 +1382,7 @@ function printRegisters (type) {
            if (data[reg_key][j] < min)
               min = data[reg_key][j];
         }
-        
+
         if ((i % 3) == 0){
           pageHeight += rowHeight;
           if (pageHeight < 100) {
@@ -1417,8 +1419,8 @@ function printRegisters (type) {
     }
     outstr += '</tr></table></center>';
     $("#printRegisterFrame").html(outstr);
-    
-    
+
+
     for (var i = 0; i < plots.length; i++) {
         var reg_key = plots[i];
         var plot_data = [];
