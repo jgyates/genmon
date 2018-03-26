@@ -470,6 +470,7 @@ class GeneratorDevice:
         try:
             RetStr = ""
 
+
             self.KillThread("ProcessThread")
             self.KillThread("MonitorThread")
             self.KillThread("CheckForAlarmThread")
@@ -617,12 +618,12 @@ class GeneratorDevice:
 
         while True:
             try:
+                time.sleep(0.25)
                 if self.IsStopSignaled("CheckForAlarmThread"):
                     break
                 if self.CheckForAlarmEvent.is_set():
                     self.CheckForAlarms()
                     self.CheckForAlarmEvent.clear()
-                time.sleep(0.25)
 
             except Exception as e1:
                 self.FatalError("Error in  CheckForAlarmThread" + str(e1))
@@ -2353,8 +2354,14 @@ class GeneratorDevice:
             Engine["Battery Status"] = self.GetBatteryStatus
 
         Engine["RPM"] = self.GetRPM
+        if self.EvolutionController:
+            Engine["Nominal RPM"] = self.GetNominalRPM()
+
         Engine["Frequency"] = self.GetFrequency
         Engine["Output Voltage"] = self.GetVoltageOutput
+        if self.EvolutionController:
+            Engine["Active Rotor Poles"] = self.GetActiveRotorPoles()
+
         if self.bDisplayUnknownSensors:
             Engine["Unsupported Sensors"] = self.DisplayUnknownSensors()
 
@@ -2443,25 +2450,9 @@ class GeneratorDevice:
         if len(Value):
             Sensors["Raw RPM Sensor Data"] = Value
 
-        if self.EvolutionController:
-            Value = self.GetUnknownSensor("001e")
-            if len(Value):
-                IntValue = int(Value)
-                # 50Hz = 1500/3000 RPM or 60Hz = 1800/3600 RPM
-                IntValue = self.RoundInt((IntValue * 9 ),100)
-                if IntValue > 3200:
-                    IntValue = 3600
-                elif IntValue > 2500:
-                    IntValue = 3000
-                elif IntValue > 1600:
-                    IntValue = 1800
-                else:
-                    IntValue = 1500
-                Sensors["Nominal RPM"] = str(IntValue)
-
             Sensors["Current Out"] = self.GetCurrentOutput()
             Sensors["Power Out (Single Phase)"] = self.GetPowerOutput()
-            Sensors["Active Rotor Poles"] = self.GetActiveRotorPoles()
+
 
         if self.EvolutionController and self.LiquidCooled:
 
@@ -3368,6 +3359,38 @@ class GeneratorDevice:
 
         RPMValue = "%5d" % int(Value,16)
         return RPMValue
+
+    #------------ GeneratorDevice::GetNominalRPM ---------------------------------------
+    def GetNominalRPM(self):
+
+        Value = self.GetRegisterValueFromList("001e")
+        if not len(Value):
+            return ""
+        IntValue = int(Value,16)
+
+        if self.EvolutionController:
+            IntValue = self.RoundInt((IntValue * 9 ),100)
+
+        if not self.EvolutionController:
+            if self.LiquidCooled:
+                IntValue = self.RoundInt((IntValue * 7 ),100)
+                # 001e * 7 for Nexus LC
+            else:
+                # TODO this needs to be fixed
+                IntValue = 3600
+
+        # 50Hz = 1500/3000 RPM or 60Hz = 1800/3600 RPM,
+        if IntValue > 3200:
+            IntValue = 3600         # 3600  60Hz
+        elif IntValue > 2500:
+            IntValue = 3000         # 3000  50Hz
+        elif IntValue > 2200:
+            IntValue = 2300         # 2300
+        elif IntValue > 1600:
+            IntValue = 1800         # 1800 60Hz
+        else:
+            IntValue = 1500         # 1500 50Hz
+        return str(IntValue)
 
     #------------ GeneratorDevice::GetCurrentOutput ---------------------------------------
     def GetCurrentOutput(self):
