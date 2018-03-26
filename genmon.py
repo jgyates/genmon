@@ -799,6 +799,8 @@ class GeneratorDevice:
 
                 self.LogError("Warning in DetectController (Nexus / Evolution):  Unverified value detected in model register (%04x)" %  ProductModel)
                 self.mail.sendEmail("Generator Monitor (Nexus / Evolution): Warning at " + self.SiteName, msgbody, msgtype = "warn" )
+        else:
+            self.LogError("DetectController auto-detect override (controller). EvolutionController now is %s" % str(self.EvolutionController))
 
         if self.LiquidCooled == None:
             if ProductModel == 0x03 or ProductModel == 0x09:
@@ -812,28 +814,42 @@ class GeneratorDevice:
                 self.LiquidCooled = False
                 self.LogError("Warning in DetectController (liquid / air cooled):  Unverified value detected in model register (%04x)" %  ProductModel)
                 self.mail.sendEmail("Generator Monitor (liquid / air cooled: Warning at " + self.SiteName, msgbody, msgtype = "warn" )
+        else:
+            self.LogError("DetectController auto-detect override (Liquid Cooled). Liquid Cooled now is %s" % str(self.LiquidCooled))
 
         if not self.EvolutionController:        # if we are using a Nexus Controller, force legacy writes
             self.bUseLegacyWrite = True
 
     #----------  GeneratorDevice:GetController  ---------------------------------
-    def GetController(self):
+    def GetController(self, Actual = True):
 
         outstr = ""
 
-        ControllerDecoder = {
-            0x03 :  "Nexus, Air Cooled",
-            0x06 :  "Nexus, Liquid Cooled",
-            0x09 :  "Evolution, Air Cooled",
-            0x0c :  "Evolution, Liquid Cooled"
-        }
+        if Actual:
 
-        Value = self.GetRegisterValueFromList("0000")
-        if len(Value) != 4:
-            return ""
-        ProductModel = int(Value,16)
+            ControllerDecoder = {
+                0x03 :  "Nexus, Air Cooled",
+                0x06 :  "Nexus, Liquid Cooled",
+                0x09 :  "Evolution, Air Cooled",
+                0x0c :  "Evolution, Liquid Cooled"
+            }
 
-        return ControllerDecoder.get(ProductModel, "Unknown 0x%02X" % ProductModel)
+            Value = self.GetRegisterValueFromList("0000")
+            if len(Value) != 4:
+                return ""
+            ProductModel = int(Value,16)
+
+            return ControllerDecoder.get(ProductModel, "Unknown 0x%02X" % ProductModel)
+        else:
+
+            if self.EvolutionController:
+                outstr = "Evolution, "
+            else:
+                outstr = "Nexus, "
+            if self.LiquidCooled:
+                outstr += "Liquid Cooled"
+            else:
+                outstr += "Air Cooled"
 
         return outstr
 
@@ -2281,7 +2297,7 @@ class GeneratorDevice:
         MonitorData["Serial Stats"] = SerialStats
 
         GenMonStats["Monitor Health"] =  self.GetSystemHealth()
-        GenMonStats["Detected Controller"] = self.GetController()
+        GenMonStats["Controller"] = self.GetController(Actual = False)
 
 
         ProgramRunTime = datetime.datetime.now() - self.ProgramStartTime
@@ -2360,7 +2376,7 @@ class GeneratorDevice:
         Engine["Frequency"] = self.GetFrequency
         Engine["Output Voltage"] = self.GetVoltageOutput
         if self.EvolutionController:
-            Engine["Active Rotor Poles"] = self.GetActiveRotorPoles()
+            Engine["Active Rotor Poles (Calculated)"] = self.GetActiveRotorPoles()
 
         if self.bDisplayUnknownSensors:
             Engine["Unsupported Sensors"] = self.DisplayUnknownSensors()
