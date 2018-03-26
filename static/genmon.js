@@ -14,6 +14,7 @@ $("#navMenu").html('<ul>' +
     '</ul>') ;
 
 // global base state
+var GeneratorModel = "";
 var baseState = "READY";        // updated on a time
 var currentbaseState = "READY"; // menus change on this var
 var currentClass = "active";    // CSS class for menu color
@@ -33,6 +34,7 @@ var RegisterUpdateTime = {};
 var pathname = "";
 var baseurl = "";
 var DaysOfWeekArray = ["Sunday","Monday","Tuesday","Wednesday", "Thursday", "Friday", "Saturday"];
+var MonthsOfYearArray = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 //*****************************************************************************
 // called on window.onload
@@ -41,10 +43,11 @@ var DaysOfWeekArray = ["Sunday","Monday","Tuesday","Wednesday", "Thursday", "Fri
 $(document).ready(function() {
     pathname = window.location.href;
     baseurl = pathname.concat("cmd/")
-    SetHeaderValues();
-    $("#footer").html('<table border="0" width="100%" height="30px"><tr><td width="90%"><a href="https://github.com/jgyates/genmon" target="_blank">GenMon Project on GitHub</a></td></tr></table>');
+    GetGeneratorModel();
     SetFavIcon();
     GetExerciseValues();
+    SetHeaderValues();
+    $("#footer").html('<table border="0" width="100%" height="30px"><tr><td width="90%"><a href="https://github.com/jgyates/genmon" target="_blank">GenMon Project on GitHub</a></td></tr></table>');
     UpdateRegisters(true, false);
     $("#status").find("a").addClass(GetCurrentClass());
     setInterval(GetBaseStatus, 3000);       // Called every 3 sec
@@ -153,7 +156,7 @@ function DisplayStatusFull()
                                            {strokeStyle: "#F03E3E", min: gaugeRPMnominal/18*19, max: gaugeRPMnominal/9*10}], 4, 10);
         gaugeRPM.set(result["Status"]["Engine"]["RPM"]); // set actual value
 
-        if (result["Status"]["Engine"]["Unsupported Sensors"] != undefined) {
+        if ((result["Status"]["Engine"]["Unsupported Sensors"] != undefined) && (!GeneratorModel.includes("Nexus"))) {
            gaugekW = createGauge($("#gaugekW"), $("#textkW"), 0, 0, 20, [0, 5, 10, 15, 20],
                                              [{strokeStyle: "#888888", min: 0, max: 1000}], 4, 5);
            gaugekW.set(result["Status"]["Engine"]["Unsupported Sensors"]["Power Out (Single Phase)"].replace(/kW/g, '')); // set actual value
@@ -275,7 +278,7 @@ function DisplayStatusUpdate()
         gaugeOutputVoltage.set(result["Status"]["Engine"]["Output Voltage"].replace(/V/g, '')); // set actual value
         gaugeFrequency.set(result["Status"]["Engine"]["Frequency"].replace(/Hz/g, '')); // set actual value
         gaugeRPM.set(result["Status"]["Engine"]["RPM"]); // set actual value
-        if (result["Status"]["Engine"]["Unsupported Sensors"] != undefined) {
+        if ((result["Status"]["Engine"]["Unsupported Sensors"] != undefined) && (!GeneratorModel.includes("Nexus"))) {
             gaugekW.set(result["Status"]["Engine"]["Unsupported Sensors"]["Power Out (Single Phase)"].replace(/kW/g, '')); // set actual value
 
             var plot_data4 = [];
@@ -589,6 +592,56 @@ function saveMaintenance(){
         GenmonAlert("Error: invalid selection");
     }
 }
+
+//*****************************************************************************
+// Display the Logs Tab
+//*****************************************************************************
+function DisplayLogs(){
+
+    var url = baseurl.concat("logs");
+    $.getJSON(url,function(result) {
+
+        var outstr = '<center><div id="annualCalendar"></div></center>';
+        outstr += replaceAll(replaceAll(result,'\n','<br/>'),' ','&nbsp');  // replace space with html friendly &nbsp
+
+        $("#mydisplay").html(outstr);
+        
+        var date = new Date();
+        var data_helper = {};
+        var months = 1;
+        var loglines = result.split('\n');
+        var severity = 0;
+        for(var i = 0;i < loglines.length;i++){
+            if (loglines[i].includes("Alarm Log :")) {
+               severity = 3;
+            } else if (loglines[i].includes("Service Log :")) {
+               severity = 2;
+            } else if (loglines[i].includes("Start Stop Log :")) {
+               severity = 1;
+            } else {
+               var matches = loglines[i].match(/^\s*(\d+)\/(\d+)\/(\d+) (\d+:\d+:\d+) (.*)$/i)
+               if ((matches != undefined) && (matches.length == 6)) {
+                  if ((12*matches[3]+1*matches[1]+12) <  (12*(date.getYear()-100) + date.getMonth() + 1)) {
+                  } else if (data_helper[matches.slice(1,3).join("/")] == undefined) {
+                      data_helper[matches.slice(1,3).join("/")] = {count: severity, date: '20'+matches[3]+'-'+matches[1]+'-'+matches[2], dateFormatted: matches[2]+' '+MonthsOfYearArray[(matches[1] -1)]+' 20'+matches[3], title: matches[5].trim()};
+                      if (((12*(date.getYear()-100) + date.getMonth() + 1)-(12*matches[3]+1*matches[1])) > months) {
+                          months = (12*(date.getYear()-100) + date.getMonth() + 1)-(12*matches[3]+1*matches[1])
+                      }
+                  } else {
+                      data_helper[matches.slice(1,3).join("/")]["title"] = data_helper[matches.slice(1,3).join("/")]["title"] + "<br>" + matches[5].trim();
+                      if (data_helper[matches.slice(1,3).join("/")]["count"] < severity) 
+                         data_helper[matches.slice(1,3).join("/")]["count"] = severity;
+                  }
+               }
+            }
+        }
+        var data = Object.values(data_helper);
+        // console.log(data);
+        var options = {coloring: 'genmon', months: months, labels: { days: true, months: true, custom: {monthLabels: "MMM 'YY"}}, tooltips: { show: true, options: {}}, legend: { show: false}};
+        $("#annualCalendar").CalendarHeatmap(data, options);
+   });
+}
+
 
 
 //*****************************************************************************
@@ -1336,7 +1389,6 @@ function UpdateRegistersColor() {
 }
 
 function printRegisters (type) {
-    var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     var plots = [];
     var data, labelMin, labelText, labelTitle;
     var pageHeight = 20;
@@ -1367,8 +1419,8 @@ function printRegisters (type) {
     $('<div id="printRegisterFrame" style="width:1000px"></div>').appendTo("#mydisplay");
 
     var date = new Date();
-    var dateStr1 = date.getDate() + " " + months[(date.getMonth() + 1)] + " " + date.getFullYear() + ", " +  date.getHours() + ":" + date.getMinutes().pad() + ":" + date.getSeconds().pad();
-    var dateStr2 = RegisterSince.getDate() + " " + months[(RegisterSince.getMonth() + 1)] + " " + RegisterSince.getFullYear() + ", " +  RegisterSince.getHours() + ":" + RegisterSince.getMinutes().pad() + ":" + RegisterSince.getSeconds().pad();
+    var dateStr1 = date.getDate() + " " + MonthsOfYearArray[date.getMonth()] + " " + date.getFullYear() + ", " +  date.getHours() + ":" + date.getMinutes().pad() + ":" + date.getSeconds().pad();
+    var dateStr2 = RegisterSince.getDate() + " " + MonthsOfYearArray[RegisterSince.getMonth()] + " " + RegisterSince.getFullYear() + ", " +  RegisterSince.getHours() + ":" + RegisterSince.getMinutes().pad() + ":" + RegisterSince.getSeconds().pad();
     var outstr = '<br><center><h1>Generator Registers for '+labelTitle+'</h1><br>';
     outstr += '<h2>As of: '+dateStr1+'<br><small>(data avilable since: '+dateStr2+')</small></h2><br>';
     outstr += '<table width="1000px" border="0"><tr>';
@@ -1456,10 +1508,12 @@ function MenuClick(target)
         window.scrollTo(0,0);
         switch (menuElement) {
             case "outage":
-            case "logs":
             case "monitor":
                 GetDisplayValues(menuElement);
                 break;
+            case "logs":
+                DisplayLogs();
+                break;    
             case "status":
                 DisplayStatusFull();
                 break;
@@ -1559,6 +1613,17 @@ function GetExerciseValues(callbackFunction){
 
 
 //*****************************************************************************
+// GetGeneratorModel - Get the current Generator Model and kW Rating
+//*****************************************************************************
+function GetGeneratorModel()
+{
+    url = baseurl.concat("monitor_json");
+    $.getJSON(url,function(result){
+        GeneratorModel = result["Monitor"]["Generator Monitor Stats"]["Controller"];
+    });
+}
+
+//*****************************************************************************
 // SetHeaderValues - updates header to display site name
 //*****************************************************************************
 function SetHeaderValues()
@@ -1623,6 +1688,8 @@ function UpdateDisplay()
         DisplayStatusUpdate();
     } else if (menuElement == "maint") {
         DisplayMaintenanceUpdate();
+    } else if (menuElement == "logs") {
+        DisplayLogs();
     } else if ((menuElement != "settings") && (menuElement != "notifications")) {
         GetDisplayValues(menuElement);
     }
