@@ -149,65 +149,141 @@ button {
 }
 
 /* For tablets & smart phones */
-@media (max-width: 900px) {
+@media (max-width: 700px) {
+  .gauge-breakpoint {
+     width: 210px;
+     clear: both;
+  }
   .gauge-breakpoint .gauge-block-a,
   .gauge-breakpoint .gauge-block-b,
   .gauge-breakpoint .gauge-block-c,
   .gauge-breakpoint .gauge-block-d,
-  .gauge-breakpoint .gauge-block-e {
+  .gauge-breakpoint .gauge-block-e, 
+  .gauge-breakpoint .gauge-block-f {
      width: 200px;
      height: 220px;
      float:none;
   }
-  .gauge-breakpoint .gauge-block-f {
+  .gauge-breakpoint .gauge-block-g {
      display: none;
+  }
+  .gauge-breakpoint .gauge-block-h {
+     width: 180px;
+     height: 220px;
+     float:none;
+  }
+  .gauge-lb2, .gauge-lb3, .gauge-lb5 {
+     width:0px;
+     float:none
   }
 }
 
-/* For smaller displays like laptops */
-@media (min-width: 900px) and (max-width: 1400px) {
+@media (min-width: 700px) and (max-width: 900px) {
+  .gauge-breakpoint {
+     width: 410px;
+     clear: both;
+  }
   .gauge-breakpoint .gauge-block-a,
   .gauge-breakpoint .gauge-block-b,
   .gauge-breakpoint .gauge-block-c,
   .gauge-breakpoint .gauge-block-d,
-  .gauge-breakpoint .gauge-block-e {
+  .gauge-breakpoint .gauge-block-e, 
+  .gauge-breakpoint .gauge-block-f {
+     width: 200px;
+     height: 220px;
+     float:left;
+  }
+  .gauge-breakpoint .gauge-block-g {
+     display: none;
+  }
+  .gauge-breakpoint .gauge-block-h {
+     width: 380px;
+     height: 220px;
+     display: block;
+     float:left;
+  }
+  .gauge-lb2 {
+     width:100%;
+     float:left
+  }
+  .gauge-lb3, .gauge-lb5 {
+     width:0px;
+     float:none
+  }  
+}
+
+/* For smaller displays like laptops */
+@media (min-width: 900px) and (max-width: 1300px) {
+  .gauge-breakpoint {
+     width: 610px;
+     clear: both;
+  }
+  .gauge-breakpoint .gauge-block-a,
+  .gauge-breakpoint .gauge-block-b,
+  .gauge-breakpoint .gauge-block-c,
+  .gauge-breakpoint .gauge-block-d,
+  .gauge-breakpoint .gauge-block-e,
+  .gauge-breakpoint .gauge-block-f {
      width: 200px;
      height: 220px;
      float: left;
   }
-  .gauge-breakpoint .gauge-block-f {
+  .gauge-breakpoint .gauge-block-g {
+     display: none;
+  }
+  /* .gauge-breakpoint .gauge-block-g {
      width: 200px;
      height: 220px;
      float: left;
      display: block;
+  }*/
+  .gauge-breakpoint .gauge-block-h {
+     width: 580px;
+     height: 220px;
+     float: left;
   }
-  .gauge-lb {
+  .gauge-lb3 {
      width:100%;
-     float:none
+     float:left
   }
-
-
+  .gauge-lb2, .gauge-lb5 {
+     width:0px;
+     float:none
+  }  
 }
 
 /* For larger displays */
-@media (min-width: 1400px) {
+@media (min-width: 1300px) {
+  .gauge-breakpoint {
+     width: 1010px;
+     clear: both;
+  }
   .gauge-breakpoint .gauge-block-a,
   .gauge-breakpoint .gauge-block-b,
   .gauge-breakpoint .gauge-block-c,
   .gauge-breakpoint .gauge-block-d,
-  .gauge-breakpoint .gauge-block-e {
+  .gauge-breakpoint .gauge-block-e,
+  .gauge-breakpoint .gauge-block-f {
      width: 200px;
      height: 220px;
      float: left;
   }
-  .gauge-breakpoint .gauge-block-f {
+  .gauge-breakpoint .gauge-block-g {
      display: none;
   }
-  .gauge-lb {
-     width:0px;
+  .gauge-breakpoint .gauge-block-h {
+     width: 780px;
+     height: 220px;
+     float: left;
+  }
+  .gauge-breakpoint .gauge-lb5 {
+     width:100%;
      float:left;
   }
-
+  .gauge-breakpoint .gauge-lb2, .gauge-breakpoint .gauge-lb3 {
+     width:110px;
+     float:none
+  }
 }
 
 .gaugeField {
@@ -221,6 +297,20 @@ button {
     margin-left: 40px;
     margin-bottom: 40px;
     width: 180px;
+    height: 200px;
+}
+
+.plotField {
+    text-align: center;
+    /* border:15px solid white;  */
+    padding-top:10px;
+    background-color: #e1e1e1;
+    vertical-align:bottom;
+    background-clip: padding-box; /* this has been added in CSS3 */
+    border-radius: 20px;
+    margin-left: 40px;
+    margin-bottom: 40px;
+    width: 100%;
     height: 200px;
 }
 

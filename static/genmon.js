@@ -21,6 +21,9 @@ var menuElement = "status";
 var ExerciseParameters = {};
     ExerciseParameters['EnhancedExerciseEnabled']  = false;
 var OldExerciseParameters = {};
+var kWHistory = [];
+var kWplot;
+var RegisterSince;
 var RegisterHistory1 = {};
 var RegisterHistory2 = {};
 var RegisterHistory3 = {};
@@ -82,28 +85,37 @@ var gaugeBatteryVoltage;
 var gaugeUtilityVoltage;
 var gaugeOutputVoltage;
 var gaugeBatteryFrequency;
+var gaugekW;
 
 function DisplayStatusFull()
 {
     var url = baseurl.concat("status_json");
     $.getJSON(url,function(result){
         var outstr = 'Dashboard:<br><br>';
-        outstr += '<center><div class="gauge-grid gauge-breakpoint">';
+        outstr += '<center><div class="gauge-breakpoint">';
         outstr += '<div class="gauge-block-a"><div class="gaugeField">Battery Voltage<br><canvas class="gaugeCanvas" id="gaugeBatteryVoltage"></canvas><br><div id="textBatteryVoltage" class="gaugeDiv"></div>V</div></div>';
         outstr += '<div class="gauge-block-b"><div class="gaugeField">Utility Voltage<br><canvas class="gaugeCanvas" id="gaugeUtilityVoltage"></canvas><br><div id="textUtilityVoltage" class="gaugeDiv"></div>V</div></div>';
+        outstr += '<div class="gauge-lb2"></div>';
         outstr += '<div class="gauge-block-c"><div class="gaugeField">Output Voltage<br><canvas class="gaugeCanvas" id="gaugeOutputVoltage"></canvas><br><div id="textOutputVoltage" class="gaugeDiv"></div>V</div></div>';
-        outstr += '<div class="gauge-lb"></div>';
+        outstr += '<div class="gauge-lb3"></div>';
         outstr += '<div class="gauge-block-d"><div class="gaugeField">Frequency<br><canvas class="gaugeCanvas" id="gaugeFrequency"></canvas><br><div id="textFrequency" class="gaugeDiv"></div>Hz</div></div>';
+        outstr += '<div class="gauge-lb2"></div>';
         outstr += '<div class="gauge-block-e"><div class="gaugeField">Rotation/Min<br><canvas class="gaugeCanvas" id="gaugeRPM"></canvas><br><div id="textRPM" class="gaugeDiv"></div> RPM</div></div>';
-        outstr += '<div class="gauge-block-f"><div class="gaugeField"></div></div>';
+        outstr += '<div class="gauge-lb5"></div>';
+        if (result["Status"]["Engine"]["Unsupported Sensors"] != undefined) {
+           outstr += '<div class="gauge-block-f"><div class="gaugeField"><font size="1px">kW Output (unsupported)</font><br><canvas class="gaugeCanvas" id="gaugekW"></canvas><br><div id="textkW" class="gaugeDiv"></div>kW</div></div>';
+           outstr += '<div class="gauge-lb2 gauge-lb3"></div>';
+           outstr += '<div class="gauge-block-g"></div>';
+           outstr += '<div class="gauge-block-h"><div class="plotField">kW Output (unsupported)<br><div id="plotkW" style="height:170px;width:100%;overflow-x:hidden;overflow-y:hidden;"></div></div></div>';
+        }
         outstr += '</div></center><br>';
 
-        $("#mydisplay").html(outstr + '<div id="statusText">' + json2html(result, "", "root") + '</div>');
+        $("#mydisplay").html(outstr + '<div style="clear:both" id="statusText">' + json2html(result, "", "root") + '</div>');
 
         gaugeBatteryVoltage = createGauge($("#gaugeBatteryVoltage"), $("#textBatteryVoltage"), 1, 10, 16, [10, 11, 12, 13, 14, 15, 16],
-                                          [{strokeStyle: "#F03E3E", min: 10, max: 11},
-                                           {strokeStyle: "#FFDD00", min: 11, max: 12},
-                                           {strokeStyle: "#30B32D", min: 12, max: 15},
+                                          [{strokeStyle: "#F03E3E", min: 10, max: 11.5},
+                                           {strokeStyle: "#FFDD00", min: 11.5, max: 12.5},
+                                           {strokeStyle: "#30B32D", min: 12.5, max: 15},
                                            {strokeStyle: "#FFDD00", min: 15, max: 15.5},
                                            {strokeStyle: "#F03E3E", min: 15.5, max: 16}], 6, 10);
         gaugeBatteryVoltage.set(result["Status"]["Engine"]["Battery Voltage"].replace(/V/g, '')); // set current value
@@ -132,9 +144,33 @@ function DisplayStatusFull()
                                            {strokeStyle: "#F03E3E", min: 63, max: 70}], 7, 10);
         gaugeFrequency.set(result["Status"]["Engine"]["Frequency"].replace(/Hz/g, '')); // set actual value
 
-        gaugeRPM = createGauge($("#gaugeRPM"), $("#textRPM"), 0, 0, 4000, [900, 1800, 2700, 3600],
-                                          [{strokeStyle: "#888888", min: 0, max: 4000}], 4, 10);
+        var gaugeRPMnominal = result["Status"]["Engine"]["Nominal RPM"];
+        gaugeRPM = createGauge($("#gaugeRPM"), $("#textRPM"), 0, 0, parseInt(gaugeRPMnominal/9*10), [parseInt(gaugeRPMnominal/4), parseInt(gaugeRPMnominal/2), parseInt(gaugeRPMnominal/4*3), parseInt(gaugeRPMnominal)],
+                                          [{strokeStyle: "#F03E3E", min: 0, max: gaugeRPMnominal/18*17},
+                                           {strokeStyle: "#FFDD00", min: gaugeRPMnominal/18*17, max: gaugeRPMnominal/36*35},
+                                           {strokeStyle: "#30B32D", min: gaugeRPMnominal/36*35, max: gaugeRPMnominal/36*37},
+                                           {strokeStyle: "#FFDD00", min: gaugeRPMnominal/36*37, max: gaugeRPMnominal/18*19},
+                                           {strokeStyle: "#F03E3E", min: gaugeRPMnominal/18*19, max: gaugeRPMnominal/9*10}], 4, 10);
         gaugeRPM.set(result["Status"]["Engine"]["RPM"]); // set actual value
+
+        if (result["Status"]["Engine"]["Unsupported Sensors"] != undefined) {
+           gaugekW = createGauge($("#gaugekW"), $("#textkW"), 0, 0, 20, [0, 5, 10, 15, 20],
+                                             [{strokeStyle: "#888888", min: 0, max: 1000}], 4, 5);
+           gaugekW.set(result["Status"]["Engine"]["Unsupported Sensors"]["Power Out (Single Phase)"].replace(/kW/g, '')); // set actual value
+   
+           var plot_data4 = [];
+           for (var i = 720; i >= 0; --i) {
+              if (kWHistory.length > i)
+                  plot_data4.push([-i/12, kWHistory[i]]);
+           }
+           kWplot = $.jqplot('plotkW', (plot_data4.length > 0) ? [plot_data4] : [[0,0]], {
+                                axesDefaults: { labelOptions:  { fontFamily: 'Arial', textColor: '#000000', fontSize: '8pt' }, tickOptions: { fontFamily: 'Arial', textColor: '#000000', fontSize: '6pt' }},
+                                grid: { drawGridLines: true, gridLineColor: '#cccccc', background: '#e1e1e1', borderWidth: 0, shadow: false, shadowWidth: 0 },
+                                gridPadding: {right:30, left:45},
+                                axes: { xaxis: { label: "Time (Minutes ago)", min:-60, max:0, numberTicks:7, tickOptions: {formatString: "%#.0f" } },
+                                        yaxis: { label: "kW", min:0 } }
+                                });
+        }                        
     });
     return;
 }
@@ -239,8 +275,17 @@ function DisplayStatusUpdate()
         gaugeOutputVoltage.set(result["Status"]["Engine"]["Output Voltage"].replace(/V/g, '')); // set actual value
         gaugeFrequency.set(result["Status"]["Engine"]["Frequency"].replace(/Hz/g, '')); // set actual value
         gaugeRPM.set(result["Status"]["Engine"]["RPM"]); // set actual value
+        gaugekW.set(result["Status"]["Engine"]["Unsupported Sensors"]["Power Out (Single Phase)"].replace(/kW/g, '')); // set actual value
+
+        var plot_data4 = [];
+        for (var i = 720; i >= 0; --i) {
+           if (kWHistory.length > i)
+               plot_data4.push([-i/12, kWHistory[i]]);
+        }
+        kWplot.series[0].data = (plot_data4.length > 0) ? plot_data4 : [0,0];
+        kWplot.replot();
     });
-    return;
+    
 }
 
 function json2updates(json, parentkey) {
@@ -1106,7 +1151,11 @@ function DisplayRegistersFull()
          outstr += '<td width="25%" class="registerTD"></td>';
       }
     }
-    outstr += '</tr></table></center>';
+    outstr += '</tr></table>';
+    outstr += '<br><img id="print10" style="cursor: pointer;" onClick="printRegisters(10)" src="images/print10.png" width="36px" height="36px">&nbsp;&nbsp;&nbsp;';
+    outstr += '<img id="print60" style="cursor: pointer;" onClick="printRegisters(60)" src="images/print60.png" width="36px" height="36px">&nbsp;&nbsp;&nbsp;';
+    outstr += '<img id="print24" style="cursor: pointer;" onClick="printRegisters(24)" src="images/print24.png" width="36px" height="36px"><br>';
+    outstr += '</center>';
 
     $("#mydisplay").html(outstr);
     UpdateRegistersColor();
@@ -1166,31 +1215,30 @@ function UpdateRegisters(init, printToScreen)
 {
     var url = baseurl.concat("registers_json");
     $.getJSON(url,function(RegData){
-
+        var tkWEngineStateOff, tkWVoltage, tkWCurrentLC, tkWCurrentAC;
         var reg_keys = {};
         $.each(RegData.Registers["Base Registers"], function(i, item) {
             var reg_key = Object.keys(item)[0]
             var reg_val = item[Object.keys(item)[0]];
+
+            if (reg_key == "0001") {
+               tkWEngineStateOff = (((parseInt(reg_val, 16) & 0x000F0000) == 0x00000000) || ((parseInt(reg_val, 16) & 0x000F0000) == 0x00080000) || ((parseInt(reg_val, 16) & 0x000F0000) == 0x00090000)) ? true : false;
+            } else if (reg_key == "0012") {
+               tkWVoltage = parseInt(((reg_val != "0000") ? reg_val : 0), 16);
+            } else if (reg_key == "0058")  {                   
+               tkWCurrentLC = parseInt(reg_val, 16)/10;
+            } else if (reg_key == "0037")  {
+               tkWCurrentAC = parseInt(reg_val, 16)/100;
+            }
             if (init) {
                 RegisterUpdateTime[reg_key] = 0;
                 RegisterHistory1[reg_key] = [];
 
                 RegisterHistory2[reg_key] = [reg_val, reg_val];
-                RegisterHistory2_temp[reg_key] = {};
-                RegisterHistory2_temp[reg_key]["counter"] = 0;
-                RegisterHistory2_temp[reg_key]["min"] = reg_val;
-                RegisterHistory2_temp[reg_key]["minCounter"] = 0;
-                RegisterHistory2_temp[reg_key]["max"] = reg_val;
-                RegisterHistory2_temp[reg_key]["maxCounter"] = 0;
+                RegisterHistory2_temp[reg_key] = {counter: 0, min: reg_val, minCounter: 0, max: reg_val, maxCounter: 0};
 
                 RegisterHistory3[reg_key] = [reg_val, reg_val];
-                RegisterHistory3_temp[reg_key] = {};
-                RegisterHistory3_temp[reg_key]["counter"] = 0;
-                RegisterHistory3_temp[reg_key]["min"] = reg_val;
-                RegisterHistory3_temp[reg_key]["minCounter"] = 0;
-                RegisterHistory3_temp[reg_key]["max"] = reg_val;
-                RegisterHistory3_temp[reg_key]["maxCounter"] = 0;
-
+                RegisterHistory3_temp[reg_key] = {counter: 0, min: reg_val, minCounter: 0, max: reg_val, maxCounter: 0}
             } else {
                RegisterHistory2_temp[reg_key]["counter"] =  RegisterHistory2_temp[reg_key]["counter"]+1;
                if (RegisterHistory2_temp[reg_key]["min"] > reg_val) {
@@ -1226,43 +1274,41 @@ function UpdateRegisters(init, printToScreen)
             }
 
             if (RegisterHistory2_temp[reg_key]["counter"] >= 12) {
-               if (RegisterHistory2_temp[reg_key]["minCounter"] <= RegisterHistory2_temp[reg_key]["maxCounter"]) {
-                  RegisterHistory2[reg_key].unshift(RegisterHistory2_temp[reg_key]["min"]);
-                  RegisterHistory2[reg_key].unshift(RegisterHistory2_temp[reg_key]["max"]);
+               if (RegisterHistory2_temp[reg_key]["minCounter"] > RegisterHistory2_temp[reg_key]["maxCounter"]) { 
+                  RegisterHistory2[reg_key].unshift(RegisterHistory2_temp[reg_key]["min"], RegisterHistory2_temp[reg_key]["max"]);
                } else {
-                  RegisterHistory2[reg_key].unshift(RegisterHistory2_temp[reg_key]["max"]);
-                  RegisterHistory2[reg_key].unshift(RegisterHistory2_temp[reg_key]["min"]);
+                  RegisterHistory2[reg_key].unshift(RegisterHistory2_temp[reg_key]["max"], RegisterHistory2_temp[reg_key]["min"]);
                }
-               RegisterHistory2_temp[reg_key]["counter"] = 0;
-               RegisterHistory2_temp[reg_key]["min"] = reg_val;
-               RegisterHistory2_temp[reg_key]["minCounter"] = 0;
-               RegisterHistory2_temp[reg_key]["max"] = reg_val;
-               RegisterHistory2_temp[reg_key]["maxCounter"] = 0;
+               RegisterHistory2_temp[reg_key] = {counter: 0, min: reg_val, minCounter: 0, max: reg_val, maxCounter: 0};
                if  (RegisterHistory2[reg_key].length > 120) {
-                 RegisterHistory2[reg_key].pop  // remove the last element
-                 RegisterHistory2[reg_key].pop  // remove the last element
+                 RegisterHistory2[reg_key].splice(-2, 2)  // remove the last 2 element
                }
             }
 
             if (RegisterHistory3_temp[reg_key]["counter"] >= 288) {
-               if (RegisterHistory3_temp[reg_key]["minCounter"] <= RegisterHistory3_temp[reg_key]["maxCounter"]) {
-                  RegisterHistory3[reg_key].unshift(RegisterHistory3_temp[reg_key]["min"]);
-                  RegisterHistory3[reg_key].unshift(RegisterHistory3_temp[reg_key]["max"]);
+               if (RegisterHistory3_temp[reg_key]["minCounter"] > RegisterHistory3_temp[reg_key]["maxCounter"]) { 
+                  RegisterHistory3[reg_key].unshift(RegisterHistory3_temp[reg_key]["min"], RegisterHistory3_temp[reg_key]["max"]);
                } else {
-                  RegisterHistory3[reg_key].unshift(RegisterHistory3_temp[reg_key]["max"]);
-                  RegisterHistory3[reg_key].unshift(RegisterHistory3_temp[reg_key]["min"]);
+                  RegisterHistory3[reg_key].unshift(RegisterHistory3_temp[reg_key]["max"], RegisterHistory3_temp[reg_key]["min"]);
                }
-               RegisterHistory3_temp[reg_key]["counter"] = 0;
-               RegisterHistory3_temp[reg_key]["min"] = reg_val;
-               RegisterHistory3_temp[reg_key]["minCounter"] = 0;
-               RegisterHistory3_temp[reg_key]["max"] = reg_val;
-               RegisterHistory3_temp[reg_key]["maxCounter"] = 0;
+               RegisterHistory3_temp[reg_key] = {counter: 0, min: reg_val, minCounter: 0, max: reg_val, maxCounter: 0};
                if  (RegisterHistory3[reg_key].length > 120) {
-                 RegisterHistory3[reg_key].pop  // remove the last element
-                 RegisterHistory3[reg_key].pop  // remove the last element
+                 RegisterHistory3[reg_key].splice(-2, 2)  // remove the last 2 element
                }
             }
         });
+
+        if (init) {
+            kWHistory = [];
+            RegisterSince = new Date();
+        } else {
+            var reg_val = (tkWEngineStateOff) ? 0 : (tkWVoltage * ((tkWCurrentLC != 0) ? tkWCurrentLC : tkWCurrentAC) / 1000);
+            // console.log(tkWEngineStateOff + " -> " + tkWVoltage + " * " + ((tkWCurrentLC != 0) ? tkWCurrentLC : tkWCurrentAC) + " = " + reg_val); 
+            kWHistory.unshift(reg_val);
+            if  (kWHistory.length > 720) {
+               kWHistory.pop  // remove the last element
+            }
+        }
 
         if (printToScreen)
            UpdateRegistersColor();
@@ -1285,6 +1331,109 @@ function UpdateRegistersColor() {
            $("#content_"+reg_key).css("color", "black");
         }
     });
+}
+
+function printRegisters (type) {
+    var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    var plots = [];
+    var data, labelMin, labelText, labelTitle;
+    var pageHeight = 20;
+    var rowHeight = 15;
+    var dataDivider;
+    
+    if (type == 10) {
+      data = RegisterHistory1;
+      labelTitle = "last 10 minutes";
+      labelMin = -10;
+      labelText = "Time (Minutes ago)";
+      dataDivider = 12;
+    } else if (type == 60) {
+      labelTitle = "last 1 hour";
+      data = RegisterHistory2;
+      labelMin = -60;
+      labelText = "Time (Minutes ago)";
+      dataDivider = 2; 
+    } else if (type == 24) {
+     labelTitle = "last 24 hours";
+      data = RegisterHistory3;
+      labelMin = -24;
+      labelText = "Time (hours ago)";
+      dataDivider = 5;
+    }
+   
+    
+    $('<div id="printRegisterFrame" style="width:1000px"></div>').appendTo("#mydisplay");
+
+    var date = new Date();
+    var dateStr1 = date.getDate() + " " + months[(date.getMonth() + 1)] + " " + date.getFullYear() + ", " +  date.getHours() + ":" + date.getMinutes().pad() + ":" + date.getSeconds().pad();
+    var dateStr2 = RegisterSince.getDate() + " " + months[(RegisterSince.getMonth() + 1)] + " " + RegisterSince.getFullYear() + ", " +  RegisterSince.getHours() + ":" + RegisterSince.getMinutes().pad() + ":" + RegisterSince.getSeconds().pad();
+    var outstr = '<br><center><h1>Generator Registers for '+labelTitle+'</h1><br>';
+    outstr += '<h2>As of: '+dateStr1+'<br><small>(data avilable since: '+dateStr2+')</small></h2><br>';
+    outstr += '<table width="1000px" border="0"><tr>';
+
+    $.each(Object.keys(data).sort(), function(i, reg_key) {
+        var max=data[reg_key][0];
+        var min=data[reg_key][0];
+        for (var j = 120; j >= 0; --j) {
+           if (data[reg_key][j] > max)
+              max = data[reg_key][j];
+           if (data[reg_key][j] < min)
+              min = data[reg_key][j];
+        }
+        
+        if ((i % 3) == 0){
+          pageHeight += rowHeight;
+          if (pageHeight < 100) {
+             outstr += '</tr><tr>';
+          } else {
+             outstr += '</tr></table><div class="pagebreak"> </div><table width="1000px" border="0"><tr>';
+             pageHeight = 0;
+          }
+          rowHeight = 15;
+        }
+
+        var reg_val = data[reg_key][0];
+
+        outstr += '<td width="33%" class="registerTD">';
+        outstr +=     '<table width="333px" heigth="100%" id="val_'+reg_key+'">';
+        outstr +=     '<tr><td align="center" class="registerTDsubtitle">' + reg_key + '</td></tr>';
+        outstr +=     '<tr><td align="center" class="registerTDtitle">' + BaseRegistersDescription[reg_key] + '</td></tr>';
+        outstr +=     '<tr><td align="center" class="registerTDsubtitle">Current Value: ' + RegisterHistory1[reg_key][0] + '</td></tr>';
+        if (min != max) {
+          outstr +=     '<tr><td align="center" class="registerTDsubtitle">Minimum Value: '+min+'<br>Maximum Value: '+max+'</td></tr>';
+          outstr +=     '<tr><td align="center" style="height:250px;width:330px;overflow-x:hidden;overflow-y:hidden;"><div id="printPlot_'+reg_key+'"></div></td></tr>';
+          plots.push(reg_key);
+          rowHeight = 45;
+        } else {
+          outstr +=     '<tr><td align="center" class="registerTDvalMedium">no change</td></tr>';
+        }
+        outstr +=     '</table>';
+        outstr += '</td>';
+    });
+    if ((Object.keys(data).length % 3) > 0) {
+      for (var i = (Object.keys(data).length % 3); i < 3; i++) {
+          outstr += '<td width="333px" class="registerTD"></td>';
+       }
+    }
+    outstr += '</tr></table></center>';
+    $("#printRegisterFrame").html(outstr);
+    
+    
+    for (var i = 0; i < plots.length; i++) {
+        var reg_key = plots[i];
+        var plot_data = [];
+        for (var j = 120; j >= 0; --j) {
+           if (data[reg_key].length > j)
+              plot_data.push([-j/dataDivider, parseInt(data[reg_key][j], 16)]);
+        }
+        var plot = $.jqplot('printPlot_'+reg_key, [plot_data], {
+                               axesDefaults: { tickOptions: { textColor: '#000000', fontSize: '8pt' }},
+                               axes: { xaxis: { label: labelText, labelOptions: { fontFamily: 'Arial', textColor: '#000000', fontSize: '9pt' }, min: labelMin, max:0 } }
+                             });
+    }
+
+    $("#printRegisterFrame").printThis({canvas: true, importCSS: false, loadCSS: "print.css", pageTitle:"Genmon Registers", removeScripts: true});
+    setTimeout(() => { $("#printRegisterFrame").remove(); }, 1000);
 }
 
 function toHex(d) {
