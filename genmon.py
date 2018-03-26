@@ -1920,11 +1920,6 @@ class GeneratorDevice:
             if not fromsocket:
                 msgbody += "\n\n"
 
-        if "unknown" in msgbody.lower():
-            msgbody += "\nNOTE: The output appears to have unknown values. Please see the following threads to resolve these issues:"
-            msgbody += "\n        https://github.com/jgyates/genmon/issues/12"
-            msgbody += "\n        https://github.com/jgyates/genmon/issues/13"
-
         if not fromsocket:
             self.mail.sendEmail(msgsubject, msgbody, msgtype = "warn")
             return ""       # ignored by email module
@@ -2370,8 +2365,7 @@ class GeneratorDevice:
             Engine["Battery Status"] = self.GetBatteryStatus
 
         Engine["RPM"] = self.GetRPM
-        if self.EvolutionController:
-            Engine["Nominal RPM"] = self.GetNominalRPM()
+        Engine["Nominal RPM"] = self.GetNominalRPM()
 
         Engine["Frequency"] = self.GetFrequency
         Engine["Output Voltage"] = self.GetVoltageOutput
@@ -2610,6 +2604,26 @@ class GeneratorDevice:
             LogList.append(LogOutput)
 
         RetValue["Logs"] = LogList
+
+        UnknownFound = False
+        List = RetValue.get("Logs", [])
+        for Logs in List:
+            for Key, Entries in Logs.items():
+                if not AllLogs:
+                    if "unknown" in Entries.lower():
+                        UnknownFound = True
+                        break
+                else:
+                    for LogItems in Entries:
+                        print (LogItems)
+                        if "unknown" in LogItems.lower():
+                            UnknownFound = True
+                            break
+        if UnknownFound:
+            msgbody = "\nThe output appears to have unknown values. Please see the following threads to resolve these issues:"
+            msgbody += "\n        https://github.com/jgyates/genmon/issues/12"
+            msgbody += "\n        https://github.com/jgyates/genmon/issues/13"
+            RetValue["Note"] = msgbody
 
         if not DictOut:
             return self.printToScreen(self.ProcessDispatch(RetValue,""), ToString)
@@ -3396,13 +3410,13 @@ class GeneratorDevice:
                 IntValue = 3600
 
         # 50Hz = 1500/3000 RPM or 60Hz = 1800/3600 RPM,
-        if IntValue > 3200:
+        if IntValue >= 3200:
             IntValue = 3600         # 3600  60Hz
-        elif IntValue > 2500:
+        elif IntValue >= 2500:
             IntValue = 3000         # 3000  50Hz
-        elif IntValue > 2200:
+        elif IntValue >= 2200:
             IntValue = 2300         # 2300
-        elif IntValue > 1600:
+        elif IntValue >= 1600:
             IntValue = 1800         # 1800 60Hz
         else:
             IntValue = 1500         # 1500 50Hz
