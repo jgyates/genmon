@@ -36,6 +36,8 @@ var baseurl = "";
 var DaysOfWeekArray = ["Sunday","Monday","Tuesday","Wednesday", "Thursday", "Friday", "Saturday"];
 var MonthsOfYearArray = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
+
+
 //*****************************************************************************
 // called on window.onload
 //      sets up listener events (click menu) and inits the default page
@@ -1487,7 +1489,7 @@ function printRegisters (type) {
     }
 
     $("#printRegisterFrame").printThis({canvas: true, importCSS: false, loadCSS: "print.css", pageTitle:"Genmon Registers", removeScripts: true});
-    setTimeout(() => { $("#printRegisterFrame").remove(); }, 1000);
+    setTimeout(function(){ $("#printRegisterFrame").remove(); }, 1000);
 }
 
 function toHex(d) {
