@@ -2886,11 +2886,15 @@ class GeneratorDevice:
         if len(Value) != 20:
             return ""
 
+        if Value[0] == 'f' and Value[1] == 'f':
+            # this occurs if the controller has been replaced
+            return "None - Controller has been replaced"
+
         SerialNumberHex = 0x00
         BitPosition = 0
         for Index in range(len(Value) -1 , 0, -1):
             TempVal = Value[Index]
-            if (Index & 0x01 == 0):
+            if (Index & 0x01 == 0):     # only odd positions
                 continue
 
             HexVal = int(TempVal, 16)
