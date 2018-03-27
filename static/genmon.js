@@ -438,7 +438,7 @@ function WeekdayExerciseSelection(){
 function SetStopClick(){
 
     vex.dialog.confirm({
-        unsafeMessage: 'Stop generator?<br><span class="confirmSmall">Note: If the generator is powering a load there will be a cool down period of a few minutes.</span>',
+        unsafeMessage: 'Stop generator?<br><span class="confirmSmall">Note: If the generator is powering a load the transfer switch will be deactivated and there will be a cool down period of a few minutes.</span>',
         overlayClosesOnClick: false,
         callback: function (value) {
              if (value == false) {
