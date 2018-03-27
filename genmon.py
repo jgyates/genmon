@@ -2615,7 +2615,6 @@ class GeneratorDevice:
                         break
                 else:
                     for LogItems in Entries:
-                        print (LogItems)
                         if "unknown" in LogItems.lower():
                             UnknownFound = True
                             break
@@ -3438,20 +3437,16 @@ class GeneratorDevice:
             Value = self.GetRegisterValueFromList("0058")
             if len(Value):
                 CurrentFloat = int(Value,16)
-                CurrentFloat = (CurrentFloat * .2248) - 303.268
-                if CurrentFloat < 0:
-                    CurrentFloat = 0
+                CurrentFloat = max((CurrentFloat * .2248) - 303.268, 0)
 
         else:
             Value = self.GetRegisterValueFromList("003B")
             #Value = self.GetRegisterValueFromList("0037")
             if len(Value):
                 CurrentFloat = int(Value,16)
-                CurrentFloat = (CurrentFloat * 0.398) - 233.8
-                #CurrentFloat = (CurrentFloat * 0.0689) - 291.6
+                CurrentFloat = max((CurrentFloat * 0.398) - 233.8, 0)
+                #CurrentFloat = max((CurrentFloat * 0.0689) - 291.6, 0)
 
-                if CurrentFloat < 0:
-                    CurrentFloat = 0
 
 
         return "%.2fA" % CurrentFloat
