@@ -3443,10 +3443,12 @@ class GeneratorDevice:
                     CurrentFloat = 0
 
         else:
-            Value = self.GetRegisterValueFromList("0037")
+            Value = self.GetRegisterValueFromList("003B")
+            #Value = self.GetRegisterValueFromList("0037")
             if len(Value):
                 CurrentFloat = int(Value,16)
-                CurrentFloat = (CurrentFloat * 0.0689) - 291.6
+                CurrentFloat = (CurrentFloat * 0.398) - 233.8
+                #CurrentFloat = (CurrentFloat * 0.0689) - 291.6
 
                 if CurrentFloat < 0:
                     CurrentFloat = 0
