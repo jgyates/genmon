@@ -620,14 +620,37 @@ class GeneratorDevice:
     #------------------------------------------------------------
     def AddItemToConfFile(self, Entry, Value):
 
+        FileName = "/etc/genmon.conf"
         try:
-            with open("/etc/genmon.conf","a") as ConfFile:
-                 ConfFile.write(Entry + " = " + Value + "\n")
+            Found = False
+            ConfigFile = open(FileName,'r')
+            FileString = ConfigFile.read()
+            ConfigFile.close()
 
+            ConfigFile = open(FileName,'w')
+            for line in FileString.splitlines():
+                if not line.isspace():                  # blank lines
+                    newLine = line.strip()              # strip leading spaces
+                    if len(newLine):
+                        if not newLine[0] == "#":           # not a comment
+                            items = newLine.split(' ')      # split items in line by spaces
+                            for strings in items:           # loop thru items
+                                strings = strings.strip()   # strip any whitespace
+                                if Entry == strings or strings.lower().startswith(Entry+"="):        # is this our value?
+                                    line = Entry + " = " + Value    # replace it
+                                    Found = True
+                                    break
+
+                ConfigFile.write(line+"\n")
+            if not Found:
+                ConfigFile.write(Entry + " = " + Value + "\n")
+            ConfigFile.close()
             return True
+
         except Exception as e1:
             self.LogError("Error in AddItemToConfFile: " + str(e1))
             return False
+
 
     # ---------- GeneratorDevice::CheckForAlarmThread------------------
     #  When signaled, this thread will check for alarms
