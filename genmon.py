@@ -622,7 +622,6 @@ class GeneratorDevice:
 
         try:
             with open("/etc/genmon.conf","a") as ConfFile:
-                 ConfFile
                  ConfFile.write(Entry + " = " + Value + "\n")
 
             return True
