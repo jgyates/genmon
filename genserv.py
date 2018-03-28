@@ -9,7 +9,7 @@
 #------------------------------------------------------------
 
 from flask import Flask, render_template, request, jsonify, session
-import sys, signal, os, socket, atexit, time, subprocess
+import sys, signal, os, socket, atexit, time, subprocess, json
 import mylog, myclient, mythread
 import urlparse
 import re
@@ -148,6 +148,10 @@ def ProcessCommand(command):
         SaveSettings(request.args.get('setsettings', 0, type=str));
         return "OK"
 
+    elif command in ["model_info"]:
+        ModelConfig = GetGeneratorSpecificSettings()
+        return jsonify(ModelConfig)
+
     else:
         return render_template('command_template.html', command = command)
 
@@ -206,8 +210,6 @@ def SaveNotifications(query_string):
            skip = 0
 
         file_handle.close()
-        #MyClientInterface.ProcessMonitorCommand("generator: reload")
-        #Reload()
         Restart()
 
     except Exception as e1:
@@ -441,8 +443,6 @@ def SaveSettings(query_string):
                             line = "".join(myList)
                 file_handle.write(line+"\n")
             file_handle.close()
-        #MyClientInterface.ProcessMonitorCommand("generator: reload")
-        #Reload()
         Restart()
     except Exception as e1:
         log.error("Error Update Config File (SaveSettings): " + str(e1))
@@ -475,7 +475,6 @@ def findConfigLine(line):
 #------------------------------------------------------------
 # This will reload the Flask App if use_reloader = True is enabled on the app.run command
 def Reload():
-    #os.system('touch ' + AppPath)      # reloader must be set to True to use this
     try:
         log.error("Reloading: " + sys.executable + " " + __file__ )
         os.execl(sys.executable, 'python', __file__, *sys.argv[1:])
@@ -507,7 +506,110 @@ def RunBashScript(ScriptName):
         return True
 
     except Exception as e1:
-        log.error("Error in RunBashScript: " + str(e1))
+        log.error("Error in RunBashScript: (" + ScriptName + ") : " + str(e1))
+        return False
+
+#------------------------------------------------------------
+def GetGeneratorSpecificSettings():
+
+    ModelConfig = {}
+    try:
+
+        config = RawConfigParser()
+        config.read(GENMON_CONFIG)
+
+        ConfigList = ['nominalfrequency', 'nominalRPM', 'nominalKW', 'fueltype', 'model']
+
+        NotFound = False
+        for entry in ConfigList:
+            if config.has_option('GenMon', entry):
+                ValueStr = config.get('GenMon', entry)  # string
+                ValueStr = ValueStr.strip()
+                if not len(ValueStr):
+                    NotFound = True
+                else:
+                    ModelConfig[entry] = ValueStr
+            else:
+                NotFound = True
+
+            if NotFound:
+                break
+
+        if NotFound:
+            SerialNumber, Controller = GetSerialNumberAndController()
+            ModelConfig = LookUpSNInfo(SerialNumber, Controller)
+
+            for key, item in ModelConfig.items():
+                AddItemToConfFile(key,item)
+
+
+    except Exception as e1:
+        log.error("Error in GetGeneratorSpecificSettings: " + str(e1))
+
+    return ModelConfig
+#------------------------------------------------------------
+def GetSerialNumberAndController():
+
+    SerialNumber = ""
+    Controller = ""
+    try:
+        dataout = MyClientInterface.ProcessMonitorCommand("generator: maint_json")
+        MaintDict = json.loads(dataout)
+        SerialNumber = MaintDict["Maintenance"]["Generator Serial Number"]
+        Controller = MaintDict["Maintenance"]["Controller"]
+    except Exception as e1:
+        log.error("Error in GetSerialNumber: " + str(e1))
+
+    return SerialNumber, Controller
+
+#------------------------------------------------------------
+def LookUpSNInfo(SerialNumber, Controller):
+
+    if not len(SerialNumber) or not len(Controller):
+        log.error("Error in LookUpSNInfo: bad input")
+        return {}
+
+    # set some defaults
+    ModelInfo = {}
+    ModelInfo['nominalRPM'] = ""
+    ModelInfo['nominalfrequency'] = "60"
+    ModelInfo['nominalKW'] = ""
+    ModelInfo['fueltype'] = ""
+    ModelInfo['model'] = "Generic "
+
+    if "evolution" in Controller.lower():
+        ModelInfo['model'] += "Evolution "
+    else:
+        ModelInfo['model'] += "Nexus "
+    if "air cooled" in Controller.lower():
+        ModelInfo['model'] += "Air Cooled"
+        ModelInfo['fueltype'] = "LP"
+        ModelInfo['nominalRPM'] = "3600"
+        ModelInfo['nominalKW'] = "22"
+    else:
+        ModelInfo['model'] += "Liquid Cooled"
+        ModelInfo['fueltype'] = "Diesel"
+        ModelInfo['nominalRPM'] = "1800"
+        ModelInfo['nominalKW'] = "60"
+
+    # Add web based SN lookup here
+    # for diagnostic reasons we will log the internet search
+    log.error("Looking up model info on internet")
+
+    # Add web based SN lookup here
+
+    return ModelInfo
+#------------------------------------------------------------
+def AddItemToConfFile(Entry, Value):
+
+    try:
+        with open(GENMON_CONFIG,"a") as ConfFile:
+             ConfFile
+             ConfFile.write(Entry + " = " + Value + "\n")
+
+        return True
+    except Exception as e1:
+        log.error("Error in AddItemToConfFile: " + str(e1))
         return False
 #------------------------------------------------------------
 # return False if File not present
@@ -518,7 +620,7 @@ def CheckCertFiles(CertFile, KeyFile):
             with open(KeyFile,"r") as MyKeyFile:
                 return True
     except Exception as e1:
-        log.error("Unable to open Cert or Key file: " + str(e1))
+        log.error("Error in CheckCertFiles: Unable to open Cert or Key file: " + CertFile + ", " + KeyFile + " : "+ str(e1))
         return False
 
     return True
@@ -542,7 +644,7 @@ def LoadConfig():
         config = RawConfigParser()
         # config parser reads from current directory, when running form a cron tab this is
         # not defined so we specify the full path
-        config.read('/etc/genmon.conf')
+        config.read(GENMON_CONFIG)
 
         # heartbeat server port, must match value in check_generator_system.py and any calling client apps
         if config.has_option('GenMon', 'server_port'):
@@ -562,7 +664,7 @@ def LoadConfig():
 
         if config.has_option('GenMon', 'favicon'):
             favicon = config.get('GenMon', 'favicon')
-        
+
         # user name and password require usehttps = True
         if bUseSecureHTTP:
             if config.has_option('GenMon', 'http_user'):
@@ -623,11 +725,11 @@ if __name__ == "__main__":
     # validate needed files are present
     file = os.path.dirname(os.path.realpath(__file__)) + "/startgenmon.sh"
     if not ValidateFilePresent(file):
-        log.error("Required file missing")
+        log.error("Required file missing : startgenmon.sh")
 
     file = os.path.dirname(os.path.realpath(__file__)) + "/genmonmaint.sh"
     if not ValidateFilePresent(file):
-        log.error("Required file missing")
+        log.error("Required file missing : genmonmaint.sh")
 
     MyClientInterface = myclient.ClientInterface(host = address,port=clientport, log = log)
 
