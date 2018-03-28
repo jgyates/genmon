@@ -28,7 +28,7 @@ except ImportError as e:
 
 import mymail, mylog, mythread
 
-GENMON_VERSION = "V1.5.11"
+GENMON_VERSION = "V1.5.12"
 
 #------------ SerialDevice class --------------------------------------------
 class SerialDevice:
@@ -3396,33 +3396,10 @@ class GeneratorDevice:
     #------------ GeneratorDevice::GetNominalRPM ---------------------------------------
     def GetNominalRPM(self):
 
-        Value = self.GetRegisterValueFromList("001e")
-        if not len(Value):
-            return ""
-        IntValue = int(Value,16)
-
-        if self.EvolutionController:
-            IntValue = self.RoundInt((IntValue * 9 ),100)
-
-        if not self.EvolutionController:
-            if self.LiquidCooled:
-                IntValue = self.RoundInt((IntValue * 7 ),100)
-                # 001e * 7 for Nexus LC
-            else:
-                # TODO this needs to be fixed
-                IntValue = 3600
-
-        # 50Hz = 1500/3000 RPM or 60Hz = 1800/3600 RPM,
-        if IntValue >= 3200:
-            IntValue = 3600         # 3600  60Hz
-        elif IntValue >= 2500:
-            IntValue = 3000         # 3000  50Hz
-        elif IntValue >= 2200:
-            IntValue = 2300         # 2300
-        elif IntValue >= 1600:
-            IntValue = 1800         # 1800 60Hz
+        if self.LiquidCooled:
+            IntValue = 1800
         else:
-            IntValue = 1500         # 1500 50Hz
+            IntValue = 3600
         return str(IntValue)
 
     #------------ GeneratorDevice::GetCurrentOutput ---------------------------------------
