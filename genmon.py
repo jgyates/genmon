@@ -569,7 +569,7 @@ class GeneratorDevice:
 
             if config.has_option(ConfigSection, 'fueltype'):
                 self.FuelType = config.get(ConfigSection, 'fueltype')
-                if "diesel" in FuelType.lower():
+                if "diesel" in self.FuelType.lower():
                     self.PetroleumFuel = False
                 else:
                     self.PetroleumFuel = True

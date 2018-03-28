@@ -148,7 +148,7 @@ def ProcessCommand(command):
         SaveSettings(request.args.get('setsettings', 0, type=str));
         return "OK"
 
-    elif command in ["model_info"]:
+    elif command in ["startup_info"]:
         ModelConfig = GetGeneratorSpecificSettings()
         return jsonify(ModelConfig)
 
@@ -528,7 +528,7 @@ def GetGeneratorSpecificSettings():
         config = RawConfigParser()
         config.read(GENMON_CONFIG)
 
-        ConfigList = ['nominalfrequency', 'nominalRPM', 'nominalKW', 'fueltype', 'model']
+        ConfigList = ['nominalfrequency', 'nominalRPM', 'nominalKW', 'fueltype', 'model', 'sitename']
 
         NotFound = False
         for entry in ConfigList:
@@ -548,10 +548,10 @@ def GetGeneratorSpecificSettings():
         if NotFound:
             SerialNumber, Controller = GetSerialNumberAndController()
             ModelConfig = LookUpSNInfo(SerialNumber, Controller)
-
             for key, item in ModelConfig.items():
                 AddItemToConfFile(key,item)
-
+            siteName = ReadSingleConfigValue(GENMON_CONFIG, "GenMon", "string", "sitename", "SiteName")
+            ModelConfig["SiteName"] = siteName
 
     except Exception as e1:
         log.error("Error in GetGeneratorSpecificSettings: " + str(e1))
@@ -784,6 +784,8 @@ if __name__ == "__main__":
         log.error("Required file missing : genmonmaint.sh")
 
     MyClientInterface = myclient.ClientInterface(host = address,port=clientport, log = log)
+    # Call on startup so if we are reading the model number off the internet it will not slow the web interface
+    GetGeneratorSpecificSettings()
 
     while True:
         try:
