@@ -12,7 +12,7 @@ from flask import Flask, render_template, request, jsonify, session
 import sys, signal, os, socket, atexit, time, subprocess, json
 import mylog, myclient, mythread
 import urlparse
-import re
+import re, httplib
 
 try:
     from ConfigParser import RawConfigParser
@@ -346,11 +346,20 @@ def ReadSettingsFromFile():
                 #"uselegacysetexercise" : ['boolean', 'Use Legacy Exercise Time', 43, False, "", 0],
                 #"liquidcooled" : ['boolean', 'Liquid Cooled', 41, False, "", 0],
                 #"evolutioncontroller" : ['boolean', 'Evolution Controler', 42, True, "", 0],
-                "petroleumfuel" : ['boolean', 'Petroleum Fuel', 40, False, "", 0],
+
                 "outagelog" : ['string', 'Outage Log', 8, "/home/pi/genmon/outage.txt", "", 0],
                 "syncdst" : ['boolean', 'Sync Daylight Savings Time', 22, False, "", 0],
                 "synctime" : ['boolean', 'Sync Time', 23, False, "", 0],
-                "enhancedexercise" : ['boolean', 'Enhanced Exercise Time', 44, False, "", 0],
+
+                #"model" : ['string', 'Generator Model', 41, "Generic Evolution Air Cooled", "", 0],
+                #"nominalfrequency": ['string', 'Rated Frequency', 42, "60", "", 0],
+                #"nominalRPM" : ['string', 'Nominal RPM', 43, "3600", "", 0],
+                #"nominalKW": ['string', 'Maximum kW Output', 44, "22", "", 0],
+                #"fueltype" : ['string', 'Fuel Type', 45, "NG", "", 0],
+
+                "petroleumfuel" : ['boolean', 'Petroleum Fuel', 40, False, "", 0],
+                "enhancedexercise" : ['boolean', 'Enhanced Exercise Time', 46, False, "", 0],
+
 
                 # These do not appear to work on reload, some issue with Flask
                 "usehttps" : ['boolean', 'Use Secure Web Settings', 26, False, "", 0],
@@ -371,7 +380,8 @@ def ReadSettingsFromFile():
                 "smtp_server" : ['string', 'SMTP Server <br><small>(leave emtpy to disable)</small>', 106, "smtp.gmail.com", "", 0],
                 "imap_server" : ['string', 'IMAP Server <br><small>(leave emtpy to disable)</small>', 150, "imap.gmail.com", "", 0],
                 "smtp_port" : ['int', 'SMTP Server Port', 107, 587, "", 0],
-                "ssl_enabled" : ['boolean', 'SMTP Server SSL Enabled', 108, False, "", 0]}
+                "ssl_enabled" : ['boolean', 'SMTP Server SSL Enabled', 108, False, "", 0]
+                }
 
 
     for entry, List in ConfigSettings.items():
@@ -568,37 +578,79 @@ def LookUpSNInfo(SerialNumber, Controller):
     if not len(SerialNumber) or not len(Controller):
         log.error("Error in LookUpSNInfo: bad input")
         return {}
+    try:
+        # set some defaults
+        ModelInfo = {}
+        ModelInfo['nominalRPM'] = ""
+        ModelInfo['nominalfrequency'] = "60"
+        ModelInfo['nominalKW'] = ""
+        ModelInfo['fueltype'] = ""
+        ModelInfo['model'] = "Generic "
 
-    # set some defaults
-    ModelInfo = {}
-    ModelInfo['nominalRPM'] = ""
-    ModelInfo['nominalfrequency'] = "60"
-    ModelInfo['nominalKW'] = ""
-    ModelInfo['fueltype'] = ""
-    ModelInfo['model'] = "Generic "
+        if "evolution" in Controller.lower():
+            ModelInfo['model'] += "Evolution "
+        else:
+            ModelInfo['model'] += "Nexus "
+        if "air cooled" in Controller.lower():
+            ModelInfo['model'] += "Air Cooled"
+            ModelInfo['fueltype'] = "LP"
+            ModelInfo['nominalRPM'] = "3600"
+            ModelInfo['nominalKW'] = "22"
+        else:
+            ModelInfo['model'] += "Liquid Cooled"
+            ModelInfo['fueltype'] = "Diesel"
+            ModelInfo['nominalRPM'] = "1800"
+            ModelInfo['nominalKW'] = "60"
 
-    if "evolution" in Controller.lower():
-        ModelInfo['model'] += "Evolution "
-    else:
-        ModelInfo['model'] += "Nexus "
-    if "air cooled" in Controller.lower():
-        ModelInfo['model'] += "Air Cooled"
-        ModelInfo['fueltype'] = "LP"
-        ModelInfo['nominalRPM'] = "3600"
-        ModelInfo['nominalKW'] = "22"
-    else:
-        ModelInfo['model'] += "Liquid Cooled"
-        ModelInfo['fueltype'] = "Diesel"
-        ModelInfo['nominalRPM'] = "1800"
-        ModelInfo['nominalKW'] = "60"
+        # for diagnostic reasons we will log the internet search
+        log.error("Looking up model info on internet")
+        myregex = re.compile('<.*?>')
 
-    # Add web based SN lookup here
-    # for diagnostic reasons we will log the internet search
-    log.error("Looking up model info on internet")
+        conn = httplib.HTTPSConnection("www.generac.com", 443, timeout=10)
+        conn.request("GET", "/GeneracCorporate/WebServices/GeneracSelfHelpWebService.asmx/GetSearchResults?query=" + SerialNumber, "",
+                headers={"User-Agent": "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)"})
+        r1 = conn.getresponse()
+        data1 = r1.read()
+        data2 = re.sub(myregex, '', data1)
 
-    # Add web based SN lookup here
+        myresponse1 = json.loads(data2)
+        productId = myresponse1["Results"][0]["Id"]
+
+        conn.request("GET", "/GeneracCorporate/WebServices/GeneracSelfHelpWebService.asmx/GetProductById?productId="+productId, "",
+            headers={"User-Agent": "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)"})
+        r1 = conn.getresponse()
+
+        data1 = r1.read()
+        data2 = re.sub(myregex, '', data1)
+
+        myresponse2 = json.loads(data2)
+        modelNo = myresponse2["ModelNumber"]
+        kWRating = myresponse2["Attributes"][0]["Value"]
+
+        ModelInfo['model'] = modelNo
+
+        if "kw" in kWRating.lower():
+            kWRating = removeAlpha(kWRating)
+        else:
+            kWRating = str(int(kWRating) / 1000)
+        ModelInfo['nominalKW'] = kWRating
+
+        log.error("Found: Model: %s, %skW" % (modelNo, kWRating))
+
+    except Exception as e1:
+        log.error("Error in LookUpSNInfo: " + str(e1))
 
     return ModelInfo
+
+#----------  GeneratorDevice::removeAlpha--------------------------
+# used to remove alpha characters from string so the string contains a
+# numeric value (leaves all special characters)
+def removeAlpha(inputStr):
+    answer = ""
+    for char in inputStr:
+        if not char.isalpha():
+            answer += char
+    return answer
 #------------------------------------------------------------
 def AddItemToConfFile(Entry, Value):
 
