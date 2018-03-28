@@ -28,7 +28,7 @@ except ImportError as e:
 
 import mymail, mylog, mythread
 
-GENMON_VERSION = "V1.5.12"
+GENMON_VERSION = "V1.5.13"
 
 #------------ SerialDevice class --------------------------------------------
 class SerialDevice:
@@ -355,6 +355,7 @@ class GeneratorDevice:
         self.EvolutionController = None
         self.LiquidCooled = None
         self.PetroleumFuel = True
+        self.FuelType = None
         self.OutageLog = ""
         self.DisableOutageCheck = False
         self.bSyncTime = False          # Sync gen to system time
@@ -566,7 +567,13 @@ class GeneratorDevice:
             if config.has_option(ConfigSection, 'disableoutagecheck'):
                 self.DisableOutageCheck = config.getboolean(ConfigSection, 'disableoutagecheck')
 
-            if config.has_option(ConfigSection, 'petroleumfuel'):
+            if config.has_option(ConfigSection, 'fueltype'):
+                self.FuelType = config.get(ConfigSection, 'fueltype')
+                if "diesel" in FuelType.lower():
+                    self.PetroleumFuel = False
+                else:
+                    self.PetroleumFuel = True
+            elif config.has_option(ConfigSection, 'petroleumfuel'):
                 self.PetroleumFuel = config.getboolean(ConfigSection, 'petroleumfuel')
 
             if config.has_option(ConfigSection, 'displayoutput'):
