@@ -355,7 +355,7 @@ def ReadSettingsFromFile():
                 #"nominalfrequency": ['string', 'Rated Frequency', 42, "60", "", 0],
                 #"nominalRPM" : ['string', 'Nominal RPM', 43, "3600", "", 0],
                 #"nominalKW": ['string', 'Maximum kW Output', 44, "22", "", 0],
-                #"fueltype" : ['string', 'Fuel Type', 45, "NG", "", 0],
+                #"fueltype" : ['string', 'Fuel Type', 45, "Natural Gas", "", 0],
 
                 "petroleumfuel" : ['boolean', 'Petroleum Fuel', 40, False, "", 0],
                 "enhancedexercise" : ['boolean', 'Enhanced Exercise Time', 46, False, "", 0],
@@ -593,7 +593,7 @@ def LookUpSNInfo(SerialNumber, Controller):
             ModelInfo['model'] += "Nexus "
         if "air cooled" in Controller.lower():
             ModelInfo['model'] += "Air Cooled"
-            ModelInfo['fueltype'] = "LP"
+            ModelInfo['fueltype'] = "Natural Gas"
             ModelInfo['nominalRPM'] = "3600"
             ModelInfo['nominalKW'] = "22"
         else:
