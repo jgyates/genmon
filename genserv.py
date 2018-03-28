@@ -12,7 +12,7 @@ from flask import Flask, render_template, request, jsonify, session
 import sys, signal, os, socket, atexit, time, subprocess, json
 import mylog, myclient, mythread
 import urlparse
-import re, httplib
+import re, httplib, datetime
 
 try:
     from ConfigParser import RawConfigParser
@@ -98,7 +98,10 @@ def command(command):
 #------------------------------------------------------------
 def ProcessCommand(command):
 
-    if command in ["status", "status_json", "outage", "outage_json", "maint", "maint_json", "logs", "logs_json", "monitor", "monitor_json", "registers_json", "allregs_json", "getbase", "getsitename", "setexercise", "setquiet", "getexercise","setremote", "settime", "reload"]:
+    if command in ["status", "status_json", "outage", "outage_json", "maint", "maint_json",
+        "logs", "logs_json", "monitor", "monitor_json", "registers_json", "allregs_json",
+        "start_info_json", "gui_status_json", "getbase", "getsitename", "setexercise",
+        "setquiet", "getexercise", "setremote", "settime", "reload"]:
         finalcommand = "generator: " + command
         try:
             if command == "setexercise":
@@ -120,7 +123,8 @@ def ProcessCommand(command):
         if command == "reload":
                 Reload()                # reload Flask App
 
-        if command in ["status_json", "outage_json", "maint_json", "monitor_json", "logs_json", "registers_json", "allregs_json"]:
+        if command in ["status_json", "outage_json", "maint_json", "monitor_json", "logs_json",
+            "registers_json", "allregs_json", "start_info_json", "gui_status_json"]:
             return data
         return jsonify(data)
 
@@ -147,10 +151,6 @@ def ProcessCommand(command):
         # SaveSettings((request.args.get('setsettings', 0, type=str)));
         SaveSettings(request.args.get('setsettings', 0, type=str));
         return "OK"
-
-    elif command in ["startup_info"]:
-        ModelConfig = GetGeneratorSpecificSettings()
-        return jsonify(ModelConfig)
 
     else:
         return render_template('command_template.html', command = command)
@@ -241,49 +241,6 @@ def ReadSingleConfigValue(file, section, type, entry, default):
         return default
 
 #------------------------------------------------------------
-def WriteSignleConfigValue(file, section, entry, value, remove = False):
-
-    try:
-        config = RawConfigParser()
-        config.read(file)
-
-        if remove:
-            if config.has_option(section, entry):
-                config.remove_option(section, entry)
-        else:
-            config.set(section, entry, str(value))
-
-        # Writing our configuration file disk
-        with open(file, 'wb') as configfile:
-            config.write(configfile)
-
-    except Exception as e1:
-        log.error("Error Writing Config File (WriteSignleConfigValue): " + str(e1))
-
-#------------------------------------------------------------
-def WriteNotificationsToFile(query_string):
-
-    # TODO merge query_string
-    # e.g. {'displayunknown': ['true']}
-    settings = dict(urlparse.parse_qs(query_string, 1))
-
-    NotificationSettings = ReadNotificationsFromFile()
-
-    EmailList = []
-    for email, Notifications in NotificationSettings.items():
-        EmailList.append(email)
-        if len(Notifications):
-            NoticeString = ",".join(Notifications )
-            WriteSignleConfigValue(MAIL_CONFIG, "MyMail", email, NoticeString)
-        else:
-            # if no explicit notification, remove the notification entry (all notifications)
-            WriteSignleConfigValue(MAIL_CONFIG, "MyMail", email, "", remove = True)
-
-    EmailsString = ",".join(EmailList )
-
-    WriteSignleConfigValue(MAIL_CONFIG, "MyMail", "email_recipient", EmailsString)
-
-#------------------------------------------------------------
 def ReadNotificationsFromFile():
 
     ### array containing information on the parameters
@@ -346,8 +303,8 @@ def ReadSettingsFromFile():
                 #"uselegacysetexercise" : ['boolean', 'Use Legacy Exercise Time', 43, False, "", 0],
                 #"liquidcooled" : ['boolean', 'Liquid Cooled', 41, False, "", 0],
                 #"evolutioncontroller" : ['boolean', 'Evolution Controler', 42, True, "", 0],
-
-                "outagelog" : ['string', 'Outage Log', 8, "/home/pi/genmon/outage.txt", "", 0],
+                # remove outage log, this will always be in the same location
+                #"outagelog" : ['string', 'Outage Log', 8, "/home/pi/genmon/outage.txt", "", 0],
                 "syncdst" : ['boolean', 'Sync Daylight Savings Time', 22, False, "", 0],
                 "synctime" : ['boolean', 'Sync Time', 23, False, "", 0],
 
@@ -393,27 +350,6 @@ def ReadSettingsFromFile():
     GetToolTips(ConfigSettings)
 
     return ConfigSettings
-
-#------------------------------------------------------------
-def WriteSettingsToFile(query_string):
-
-    #TODO merge query string
-    # e.g. {'displayunknown': ['true']}
-    settings = dict(urlparse.parse_qs(query_string, 1))
-
-    ConfigSettings = ReadSettingsFromFile()
-
-    MailSettings = ["ssl_enabled", "smtp_port", "imap_server", "smtp_server", "sender_account", "email_recipient", "email_account", "email_pw", "disableemail"]
-
-    File = ""
-    Section = ""
-    for entry, List in ConfigSettings.items():
-        File = GENMON_CONFIG
-        Section = "GenMon"
-        if entry in MailSettings:
-            File = MAIL_CONFIG
-            Section = "MyMail"
-        WriteSignleConfigValue(File, Section, entry, List[3])
 
 #------------------------------------------------------------
 def GetToolTips(ConfigSettings):
@@ -519,150 +455,6 @@ def RunBashScript(ScriptName):
         log.error("Error in RunBashScript: (" + ScriptName + ") : " + str(e1))
         return False
 
-#------------------------------------------------------------
-def GetGeneratorSpecificSettings():
-
-    ModelConfig = {}
-    try:
-
-        config = RawConfigParser()
-        config.read(GENMON_CONFIG)
-
-        ConfigList = ['nominalfrequency', 'nominalRPM', 'nominalKW', 'fueltype', 'model', 'sitename']
-
-        NotFound = False
-        for entry in ConfigList:
-            if config.has_option('GenMon', entry):
-                ValueStr = config.get('GenMon', entry)  # string
-                ValueStr = ValueStr.strip()
-                if not len(ValueStr):
-                    NotFound = True
-                else:
-                    ModelConfig[entry] = ValueStr
-            else:
-                NotFound = True
-
-            if NotFound:
-                break
-
-        if NotFound:
-            SerialNumber, Controller = GetSerialNumberAndController()
-            ModelConfig = LookUpSNInfo(SerialNumber, Controller)
-            for key, item in ModelConfig.items():
-                AddItemToConfFile(key,item)
-            siteName = ReadSingleConfigValue(GENMON_CONFIG, "GenMon", "string", "sitename", "SiteName")
-            ModelConfig["SiteName"] = siteName
-
-    except Exception as e1:
-        log.error("Error in GetGeneratorSpecificSettings: " + str(e1))
-
-    return ModelConfig
-#------------------------------------------------------------
-def GetSerialNumberAndController():
-
-    SerialNumber = ""
-    Controller = ""
-    try:
-        dataout = MyClientInterface.ProcessMonitorCommand("generator: maint_json")
-        MaintDict = json.loads(dataout)
-        SerialNumber = MaintDict["Maintenance"]["Generator Serial Number"]
-        Controller = MaintDict["Maintenance"]["Controller"]
-    except Exception as e1:
-        log.error("Error in GetSerialNumber: " + str(e1))
-
-    return SerialNumber, Controller
-
-#------------------------------------------------------------
-def LookUpSNInfo(SerialNumber, Controller):
-
-    if not len(SerialNumber) or not len(Controller):
-        log.error("Error in LookUpSNInfo: bad input")
-        return {}
-    try:
-        # set some defaults
-        ModelInfo = {}
-        ModelInfo['nominalRPM'] = ""
-        ModelInfo['nominalfrequency'] = "60"
-        ModelInfo['nominalKW'] = ""
-        ModelInfo['fueltype'] = ""
-        ModelInfo['model'] = "Generic "
-
-        if "evolution" in Controller.lower():
-            ModelInfo['model'] += "Evolution "
-        else:
-            ModelInfo['model'] += "Nexus "
-        if "air cooled" in Controller.lower():
-            ModelInfo['model'] += "Air Cooled"
-            ModelInfo['fueltype'] = "Natural Gas"
-            ModelInfo['nominalRPM'] = "3600"
-            ModelInfo['nominalKW'] = "22"
-        else:
-            ModelInfo['model'] += "Liquid Cooled"
-            ModelInfo['fueltype'] = "Diesel"
-            ModelInfo['nominalRPM'] = "1800"
-            ModelInfo['nominalKW'] = "60"
-
-        # for diagnostic reasons we will log the internet search
-        log.error("Looking up model info on internet")
-        myregex = re.compile('<.*?>')
-
-        conn = httplib.HTTPSConnection("www.generac.com", 443, timeout=10)
-        conn.request("GET", "/GeneracCorporate/WebServices/GeneracSelfHelpWebService.asmx/GetSearchResults?query=" + SerialNumber, "",
-                headers={"User-Agent": "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)"})
-        r1 = conn.getresponse()
-        data1 = r1.read()
-        data2 = re.sub(myregex, '', data1)
-
-        myresponse1 = json.loads(data2)
-        productId = myresponse1["Results"][0]["Id"]
-
-        conn.request("GET", "/GeneracCorporate/WebServices/GeneracSelfHelpWebService.asmx/GetProductById?productId="+productId, "",
-            headers={"User-Agent": "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)"})
-        r1 = conn.getresponse()
-
-        data1 = r1.read()
-        data2 = re.sub(myregex, '', data1)
-
-        myresponse2 = json.loads(data2)
-        modelNo = myresponse2["ModelNumber"]
-        kWRating = myresponse2["Attributes"][0]["Value"]
-
-        ModelInfo['model'] = modelNo
-
-        if "kw" in kWRating.lower():
-            kWRating = removeAlpha(kWRating)
-        else:
-            kWRating = str(int(kWRating) / 1000)
-        ModelInfo['nominalKW'] = kWRating
-
-        log.error("Found: Model: %s, %skW" % (modelNo, kWRating))
-
-    except Exception as e1:
-        log.error("Error in LookUpSNInfo: " + str(e1))
-
-    return ModelInfo
-
-#----------  GeneratorDevice::removeAlpha--------------------------
-# used to remove alpha characters from string so the string contains a
-# numeric value (leaves all special characters)
-def removeAlpha(inputStr):
-    answer = ""
-    for char in inputStr:
-        if not char.isalpha():
-            answer += char
-    return answer
-#------------------------------------------------------------
-def AddItemToConfFile(Entry, Value):
-
-    try:
-        with open(GENMON_CONFIG,"a") as ConfFile:
-             ConfFile
-             ConfFile.write(Entry + " = " + Value + "\n")
-
-        return True
-    except Exception as e1:
-        log.error("Error in AddItemToConfFile: " + str(e1))
-        return False
 #------------------------------------------------------------
 # return False if File not present
 def CheckCertFiles(CertFile, KeyFile):
@@ -784,8 +576,14 @@ if __name__ == "__main__":
         log.error("Required file missing : genmonmaint.sh")
 
     MyClientInterface = myclient.ClientInterface(host = address,port=clientport, log = log)
-    # Call on startup so if we are reading the model number off the internet it will not slow the web interface
-    GetGeneratorSpecificSettings()
+
+    Start = datetime.datetime.now()
+
+    while (Start - datetime.datetime.now()).total_seconds() < 5:
+        data = MyClientInterface.ProcessMonitorCommand("generator: gethealth")
+        if "OK" in data:
+            print("OK - Init complete.\n")
+            break
 
     while True:
         try:

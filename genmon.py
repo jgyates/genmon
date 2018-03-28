@@ -20,6 +20,7 @@ from __future__ import print_function       # For python 3.x compatibility with 
 
 import datetime, time, sys, smtplib, signal, os, threading, socket, serial
 import crcmod.predefined, crcmod, atexit, json, collections
+import httplib, re
 
 try:
     from ConfigParser import RawConfigParser
@@ -28,7 +29,7 @@ except ImportError as e:
 
 import mymail, mylog, mythread
 
-GENMON_VERSION = "V1.5.13"
+GENMON_VERSION = "V1.5.14"
 
 #------------ SerialDevice class --------------------------------------------
 class SerialDevice:
@@ -229,6 +230,7 @@ class GeneratorDevice:
         self.UtilityVoltsMax = 0    # Maximum reported utility voltage above pickup
         self.MailInit = False       # set to true once mail is init
         self.SerialInit = False     # set to true once serial is init
+        self.InitComplete = False   # set to true once init is complete
 
         self.DaysOfWeek = { 0: "Sunday",    # decode for register values with day of week
                             1: "Monday",
@@ -336,27 +338,20 @@ class GeneratorDevice:
         self.bDisplayStatus = False
         self.EnableDebug = False
 
-        ## BatteryChargerTest
-        self.bBatteryChargerTest = False
-        self.ChargerOnValues = {}
-        self.ChargerOffValues = {}
-        self.BatteryMaxVolts = 0
-        self.BatteryMinVolts = 0
-        self.ChargerTestStart = None
-        ## TransferSwitchTest
-        self.bTransferSwitchTest = False
-        self.TSwitchOffValues = {}
-        self.TSwitchOnValues = {}
-        self.TransferTestStart = None
-        ##
         self.bDisplayUnknownSensors = False
         self.bDisplayMaintenance = False
         self.bUseLegacyWrite = False
         self.EvolutionController = None
         self.LiquidCooled = None
         self.PetroleumFuel = True
-        self.FuelType = None
-        self.OutageLog = ""
+        # The values "Unknown" are checked to validate conf file items are found
+        self.FuelType = "Unknown"
+        self.NominalFreq = "Unknown"
+        self.NominalRPM = "Unknown"
+        self.NominalKW = "Unknown"
+        self.Model = "Unknown"
+        self.PowerLog =  os.path.dirname(os.path.realpath(__file__)) + "/kwlog.txt"
+        self.OutageLog = os.path.dirname(os.path.realpath(__file__)) + "/outage.txt"
         self.DisableOutageCheck = False
         self.bSyncTime = False          # Sync gen to system time
         self.bSyncDST = False           # sync time at DST change
@@ -471,7 +466,6 @@ class GeneratorDevice:
         try:
             RetStr = ""
 
-
             self.KillThread("ProcessThread")
             self.KillThread("MonitorThread")
             self.KillThread("CheckForAlarmThread")
@@ -567,15 +561,6 @@ class GeneratorDevice:
             if config.has_option(ConfigSection, 'disableoutagecheck'):
                 self.DisableOutageCheck = config.getboolean(ConfigSection, 'disableoutagecheck')
 
-            if config.has_option(ConfigSection, 'fueltype'):
-                self.FuelType = config.get(ConfigSection, 'fueltype')
-                if "diesel" in self.FuelType.lower():
-                    self.PetroleumFuel = False
-                else:
-                    self.PetroleumFuel = True
-            elif config.has_option(ConfigSection, 'petroleumfuel'):
-                self.PetroleumFuel = config.getboolean(ConfigSection, 'petroleumfuel')
-
             if config.has_option(ConfigSection, 'displayoutput'):
                 self.bDisplayOutput = config.getboolean(ConfigSection, 'displayoutput')
             if config.has_option(ConfigSection, 'displaymonitor'):
@@ -589,27 +574,40 @@ class GeneratorDevice:
             if config.has_option(ConfigSection, 'enabledebug'):
                 self.EnableDebug = config.getboolean(ConfigSection, 'enabledebug')
 
-            ## BatteryChargerTest
-            if config.has_option(ConfigSection, 'testcharger'):
-                self.bBatteryChargerTest = config.getboolean(ConfigSection, 'testcharger')
-            ## BatteryChargerTest
-
-            ## TransferSwitchTest
-            if config.has_option(ConfigSection, 'testtransferswitch'):
-                self.bTransferSwitchTest = config.getboolean(ConfigSection, 'testtransferswitch')
-            ## TransferSwitchTest
             if config.has_option(ConfigSection, 'displayunknown'):
                 self.bDisplayUnknownSensors = config.getboolean(ConfigSection, 'displayunknown')
             if config.has_option(ConfigSection, 'uselegacysetexercise'):
                 self.bUseLegacyWrite = config.getboolean(ConfigSection, 'uselegacysetexercise')
             if config.has_option(ConfigSection, 'outagelog'):
                 self.OutageLog = config.get(ConfigSection, 'outagelog')
+            if config.has_option(ConfigSection, 'kwlog'):
+                self.PowerLog = config.get(ConfigSection, 'kwlog')
+
             if config.has_option(ConfigSection, 'syncdst'):
                 self.bSyncDST = config.getboolean(ConfigSection, 'syncdst')
             if config.has_option(ConfigSection, 'synctime'):
                 self.bSyncTime = config.getboolean(ConfigSection, 'synctime')
             if config.has_option(ConfigSection, 'enhancedexercise'):
                 self.bEnhancedExerciseFrequency = config.getboolean(ConfigSection, 'enhancedexercise')
+
+            if config.has_option(ConfigSection, 'nominalfrequency'):
+                self.NominalFreq = config.get(ConfigSection, 'nominalfrequency')
+            if config.has_option(ConfigSection, 'nominalRPM'):
+                self.NominalRPM = config.get(ConfigSection, 'nominalRPM')
+            if config.has_option(ConfigSection, 'nominalKW'):
+                self.NominalKW = config.get(ConfigSection, 'nominalKW')
+            if config.has_option(ConfigSection, 'model'):
+                self.Model = config.get(ConfigSection, 'model')
+
+            if config.has_option(ConfigSection, 'fueltype'):
+                self.FuelType = config.get(ConfigSection, 'fueltype')
+                if "diesel" in self.FuelType.lower():
+                    self.PetroleumFuel = False
+                else:
+                    self.PetroleumFuel = True
+            elif config.has_option(ConfigSection, 'petroleumfuel'):
+                self.PetroleumFuel = config.getboolean(ConfigSection, 'petroleumfuel')
+
 
         except Exception as e1:
             if not reload:
@@ -619,6 +617,19 @@ class GeneratorDevice:
             return False
 
         return True
+    #------------------------------------------------------------
+    def AddItemToConfFile(self, Entry, Value):
+
+        try:
+            with open("/etc/genmon.conf","a") as ConfFile:
+                 ConfFile
+                 ConfFile.write(Entry + " = " + Value + "\n")
+
+            return True
+        except Exception as e1:
+            self.LogError("Error in AddItemToConfFile: " + str(e1))
+            return False
+
     # ---------- GeneratorDevice::CheckForAlarmThread------------------
     #  When signaled, this thread will check for alarms
     def CheckForAlarmThread(self):
@@ -760,8 +771,96 @@ class GeneratorDevice:
             # in word multiples, not bytes
             self.ProcessMasterSlaveTransaction(Reg, int(Info[self.REGLEN] / 2))
 
+        # check for model specific info in read from conf file, if not there then add some defaults
+        self.CheckModelSpecificInfo()
+
+        self.InitComplete = True
          # check for unknown events (i.e. events we are not decoded) and send an email if they occur
         self.CheckForAlarmEvent.set()
+
+    #------------------------------------------------------------
+    def CheckModelSpecificInfo(self):
+
+        if self.NominalFreq == "Unknown" or not len(self.NominalFreq):
+            self.NominalFreq = "60"
+            self.AddItemToConfFile("nominalfrequency", self.NominalFreq)
+
+        if self.FuelType == "Unknown" or not len(self.FuelType):
+            if self.LiquidCooled and self.EvolutionController:          # EvoLC
+                self.FuelType = "Diesel"
+            else:
+                self.FuelType = "Natural Gas"                           # NexusLC, NexusAC, EvoAC
+            self.AddItemToConfFile("fueltype", self.FuelType)
+
+        if self.NominalRPM == "Unknown" or not len(self.NominalRPM):
+            if self.LiquidCooled:
+                self.NominalRPM = "1800"
+            else:
+                self.NominalRPM = "3600"
+            self.AddItemToConfFile("nominalRPM", self.NominalRPM)
+
+        if self.NominalKW == "Unknown" or self.Model == "Unknown" or not len(self.NominalKW) or not len(self.Model):
+            if not self.LookUpSNInfo():
+                if self.LiquidCooled:
+                    self.Model = "Generic Liquid Cooled"
+                    self.NominalKW = "60"
+                else:
+                    self.Model = "Generic Air Cooled"
+                    self.NominalKW = "22"
+            self.AddItemToConfFile("model", self.Model)
+            self.AddItemToConfFile("nominalKW", self.NominalKW)
+
+    #------------------------------------------------------------
+    def LookUpSNInfo(self):
+
+        SerialNumber = self.GetSerialNumber()
+        Controller = self.GetController()
+        if not len(SerialNumber) or not len(Controller):
+            self.LogError("Error in LookUpSNInfo: bad input")
+            return False
+        try:
+            # for diagnostic reasons we will log the internet search
+            self.LogError("Looking up model info on internet")
+            myregex = re.compile('<.*?>')
+
+            conn = httplib.HTTPSConnection("www.generac.com", 443, timeout=10)
+            conn.request("GET", "/GeneracCorporate/WebServices/GeneracSelfHelpWebService.asmx/GetSearchResults?query=" + SerialNumber, "",
+                    headers={"User-Agent": "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)"})
+            r1 = conn.getresponse()
+            data1 = r1.read()
+            data2 = re.sub(myregex, '', data1)
+
+            myresponse1 = json.loads(data2)
+            productId = myresponse1["Results"][0]["Id"]
+
+            conn.request("GET", "/GeneracCorporate/WebServices/GeneracSelfHelpWebService.asmx/GetProductById?productId="+productId, "",
+                headers={"User-Agent": "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)"})
+            r1 = conn.getresponse()
+
+            data1 = r1.read()
+            data2 = re.sub(myregex, '', data1)
+
+            myresponse2 = json.loads(data2)
+            modelNo = myresponse2["ModelNumber"]
+            kWRating = myresponse2["Attributes"][0]["Value"]
+
+            if "kw" in kWRating.lower():
+                kWRating = self.removeAlpha(kWRating)
+            else:
+                kWRating = str(int(kWRating) / 1000)
+
+            if not len(modelNo) or not len(kWRating):
+                self.LogError("Error in LookUpSNInfo: Model: %s, %skW" % (modelNo, kWRating))
+                return False
+
+            self.Model = modelNo
+            self.NominalKW = kWRating
+            self.LogError("Found: Model: %s, %skW" % (modelNo, kWRating))
+            return True
+        except Exception as e1:
+            self.LogError("Error in LookUpSNInfo: " + str(e1))
+            return False
+
 
     #-------------GeneratorDevice::DetectController------------------------------------
     def DetectController(self):
@@ -1638,11 +1737,6 @@ class GeneratorDevice:
         if len(Register) != 4 or len(Value) < 4:
             self.LogError("Validation Error: Invalid data in UpdateRegisterList: %s %s" % (Register, Value))
 
-        ## BatteryChargerTest
-        self.DebugBatteryCharger(Register, Value)
-        ## TransferSwitchTest
-        self.DebugTransferSwitch(Register, Value)
-
         if self.RegisterIsKnown(Register):
             if not self.ValidateRegister(Register, Value):
                 return
@@ -1838,48 +1932,26 @@ class GeneratorDevice:
 
             if b"generator:" == item.lower():
                 continue
-
             elif b"registers" == item.lower():         # display registers
                 msgbody += self.DisplayRegisters(ToString = True)
-                continue
-            elif b"registers_json" == item.lower():         # display registers
-                msgbody = json.dumps(self.DisplayRegisters(DictOut = True), sort_keys=False)
                 continue
             elif b"allregs" == item.lower():         # display registers
                 msgbody += self.DisplayRegisters(AllRegs = True, ToString = True)
                 continue
-            elif b"allregs_json" == item.lower():         # display registers
-                msgbody = json.dumps(self.DisplayRegisters(AllRegs = True, DictOut = True), sort_keys=False)
-                continue
             elif b"logs" == item.lower():
                 msgbody += self.DisplayLogs(AllLogs = True, ToString = True)
-                continue
-            elif b"logs_json" == item.lower():
-                msgbody = json.dumps(self.DisplayLogs(AllLogs = True, DictOut = True), sort_keys=False)
                 continue
             elif b"status" == item.lower():            # display decoded generator info
                 msgbody += self.DisplayStatus(True)
                 continue
-            elif b"status_json" == item.lower():            # display decoded generator info
-                msgbody = json.dumps(self.DisplayStatus(DictOut = True), sort_keys=False)
-                continue
             elif b"maint" == item.lower():
                 msgbody += self.DisplayMaintenance(True)
-                continue
-            elif b"maint_json" == item.lower():
-                msgbody = json.dumps(self.DisplayMaintenance(DictOut = True), sort_keys=False)
                 continue
             elif b"monitor" == item.lower():
                 msgbody += self.DisplayMonitor(True)
                 continue
-            elif b"monitor_json" == item.lower():
-                msgbody = json.dumps(self.DisplayMonitor(DictOut = True), sort_keys=False)
-                continue
             elif b"outage" == item.lower():              # display help screen
                 msgbody += self.DisplayOutage(True)
-                continue
-            elif b"outage_json" == item.lower():              # display help screen
-                msgbody = json.dumps(self.DisplayOutage(DictOut = True), sort_keys=False)
                 continue
             elif b"settime" == item.lower():           # set time and date
                 # This is done is a separate thread as not to block any return email processing
@@ -1904,11 +1976,41 @@ class GeneratorDevice:
                 continue
             ## These commands are used by the web / socket interface only
             if fromsocket:
+                if b"start_info_json" == item.lower():      # used in web interface
+                    msgbody += json.dumps(self.GetStartInfo())
+                    continue
+                elif b"registers_json" == item.lower():         # display registers
+                    msgbody = json.dumps(self.DisplayRegisters(DictOut = True), sort_keys=False)
+                    continue
+                elif b"allregs_json" == item.lower():         # display registers
+                    msgbody = json.dumps(self.DisplayRegisters(AllRegs = True, DictOut = True), sort_keys=False)
+                    continue
+                elif b"logs_json" == item.lower():
+                    msgbody = json.dumps(self.DisplayLogs(AllLogs = True, DictOut = True), sort_keys=False)
+                    continue
+                elif b"status_json" == item.lower():            # display decoded generator info
+                    msgbody = json.dumps(self.DisplayStatus(DictOut = True), sort_keys=False)
+                    continue
+                elif b"maint_json" == item.lower():
+                    msgbody = json.dumps(self.DisplayMaintenance(DictOut = True), sort_keys=False)
+                    continue
+                elif b"monitor_json" == item.lower():
+                    msgbody = json.dumps(self.DisplayMonitor(DictOut = True), sort_keys=False)
+                    continue
+                elif b"outage_json" == item.lower():              # display help screen
+                    msgbody = json.dumps(self.DisplayOutage(DictOut = True), sort_keys=False)
+                    continue
+                if b"gui_status_json" == item.lower():          # used in web interface
+                    msgbody += json.dumps(self.GetStatusForGUI())
+                    continue
                 if b"getsitename" == item.lower():          # used in web interface
                     msgbody += self.SiteName
                     continue
-                elif b"getbase" == item.lower():      # base status, used in web interface (UI changes color based on exercise, running , ready status)
+                elif b"getbase" == item.lower():            # base status, used in web interface (UI changes color based on exercise, running , ready status)
                     msgbody += self.GetBaseStatus()
+                    continue
+                elif b"gethealth" == item.lower():          # base status, used in web interface (UI changes color based on exercise, running , ready status)
+                    msgbody += self.GetSystemHealth()
                     continue
                 elif b"getexercise" == item.lower():
                     msgbody += self.GetParsedExerciseTime() # used in web interface
@@ -2143,12 +2245,15 @@ class GeneratorDevice:
 
         if isinstance(item, str):
             return item
+        if isinstance(item, unicode):
+            return str(item)
         elif callable(item):
             return item()
         elif isinstance(item, (int, long)):
             return str(item)
         else:
             self.LogError("Unable to convert type %s in GetDispatchItem" % type(item))
+            self.LogError("Item: " + str(item))
             return ""
 
     #------------ GeneratorDevice::ProcessDispatch ------------------------------------
@@ -2372,7 +2477,7 @@ class GeneratorDevice:
             Engine["Battery Status"] = self.GetBatteryStatus
 
         Engine["RPM"] = self.GetRPM
-        Engine["Nominal RPM"] = self.GetNominalRPM()
+        Engine["Nominal RPM"] = self.NominalRPM
 
         Engine["Frequency"] = self.GetFrequency
         Engine["Output Voltage"] = self.GetVoltageOutput
@@ -2407,7 +2512,7 @@ class GeneratorDevice:
         return ReturnValue
 
 
-     #------------ GeneratorDevice::DisplayMaintenance ----------------------------------------
+    #------------ GeneratorDevice::DisplayMaintenance ----------------------------------------
     def DisplayMaintenance (self, ToString = False, DictOut = False):
 
         if DictOut:
@@ -2417,8 +2522,13 @@ class GeneratorDevice:
         Maintenance = collections.OrderedDict()
         Maint = collections.OrderedDict()
         Maintenance["Maintenance"] = Maint
-        Maint["Controller"] = self.GetController
+        Maint["Model"] = self.Model
         Maint["Generator Serial Number"] = self.GetSerialNumber
+        Maint["Controller"] = self.GetController
+        Maint["Nominal RPM"] = self.NominalRPM
+        Maint["Rated kW"] = self.NominalKW
+        Maint["Nominal Frequency"] = self.NominalFreq
+        Maint["Fuel Type"] = self.FuelType
         Exercise = collections.OrderedDict()
         Exercise["Exercise Time"] = self.GetExerciseTime
         if self.EvolutionController and self.LiquidCooled:
@@ -2438,6 +2548,20 @@ class GeneratorDevice:
             ReturnValue = self.printToScreen(self.ProcessDispatch(Maintenance,""), ToString)
 
         return ReturnValue
+
+    #------------ GeneratorDevice::GetStartInfo ----------------------------------------
+    def GetStartInfo(self):
+
+        StartInfo = {}
+
+        StartInfo["sitename"] = self.SiteName
+        StartInfo["fueltype"] = self.FuelType
+        StartInfo["model"] = self.Model
+        StartInfo["nominalKW"] = self.NominalKW
+        StartInfo["nominalRPM"] = self.NominalRPM
+        StartInfo["nominalfrequency"] = self.NominalFreq
+
+        return StartInfo
 
     #------------ GeneratorDevice::signed16-------------------------------
     def signed16(self, value):
@@ -3400,15 +3524,6 @@ class GeneratorDevice:
         RPMValue = "%5d" % int(Value,16)
         return RPMValue
 
-    #------------ GeneratorDevice::GetNominalRPM ---------------------------------------
-    def GetNominalRPM(self):
-
-        if self.LiquidCooled:
-            IntValue = 1800
-        else:
-            IntValue = 3600
-        return str(IntValue)
-
     #------------ GeneratorDevice::GetCurrentOutput ---------------------------------------
     def GetCurrentOutput(self):
 
@@ -3657,6 +3772,16 @@ class GeneratorDevice:
         else:
             return "Not Charging"
 
+    #------------ GeneratorDevice::GetStatusForGUI ------------------------------------
+    def GetStatusForGUI(self):
+
+        Status = {}
+
+        Status["basestatus"] = self.GetBaseStatus()
+        Status["kwOutput"] = self.GetPowerOutput()
+
+        return Status
+
     #------------ GeneratorDevice::GetBaseStatus ------------------------------------
     def GetBaseStatus(self):
 
@@ -3771,6 +3896,8 @@ class GeneratorDevice:
     def GetSystemHealth(self):
 
         outstr = ""
+        if not self.InitComplete:
+            outstr += "System Initializing. "
         if not self.AreThreadsAlive():
             outstr += " Threads are dead. "
         if  not self.CommunicationsActive:
@@ -3809,137 +3936,11 @@ class GeneratorDevice:
     # used to remove alpha characters from string so the string contains a
     # float value (leaves all special characters)
     def removeAlpha(self, inputStr):
-        answer = "0"
+        answer = ""
         for char in inputStr:
             if not char.isalpha():
                 answer += char
         return answer
-
-    #----------  GeneratorDevice::DebugTransferSwitch--------------------------
-    # To perform this test you must start genmon then set the generator to "Start and Transfer"
-    def DebugTransferSwitch(self, Register, Value):
-
-        try:
-            if not self.bTransferSwitchTest:
-                return
-
-            ## TransferSwitchTest
-            self.TSwitchCandidateRegs = ["01f1", "01f2","001b","001c","001d","001e",
-                        "001f","0020","0021","0019","0057","0055","0056",
-                        "005a","000d","003c","0058","005d","05ed","05f5",
-                        "05fa","0034","0032","0037","0038","003b","002b",
-                        "0208","002e","002c","002d","002f","005c","05f4",
-                        "0053","0052", "05ee","01f3","0033"]
-            # 0053 is TS status on Evo LC
-
-            if not Register in self.TSwitchCandidateRegs:
-                return
-
-            # Get Generator Voltage
-            # Force a read of the generator output voltage via modbus
-            self.ProcessMasterSlaveTransaction("0012", 1)
-            MyStr = self.GetVoltageOutput()
-            if MyStr == "":
-                return
-            MyStr = self.removeAlpha(MyStr)
-            OutputVoltage = float(MyStr)
-
-            if OutputVoltage == 0:
-                self.TSwitchOffValues[Register] = Value
-            elif OutputVoltage > 230:
-                # Let time elapse so engine starts
-                if self.TransferTestStart == None:
-                    self.TransferTestStart = datetime.datetime.now()
-
-                DeltaTime = datetime.datetime.now() - self.TransferTestStart
-                if DeltaTime.seconds > 20:
-                    self.TSwitchOnValues[Register] = Value
-
-            if (len(self.TSwitchOffValues) == len(self.TSwitchOnValues)) and (len(self.TSwitchOnValues) == len(self.TSwitchCandidateRegs)):
-                OutStr = ""
-                for Reg, Val in self.TSwitchOffValues.items():
-                    TempInt = int(Val,16) ^ int(self.TSwitchOnValues[Reg],16)
-                    if not TempInt == 0:
-                        OutStr += "Reg: %s, Bit Changed: %x\n" %(Reg, TempInt)
-
-                OutStr += "\nOutput Voltage is : %f" % OutputVoltage
-                OutStr += "\n On Values  : " + str(self.TSwitchOnValues)
-                OutStr += "\n Off Values : " + str(self.TSwitchOffValues)
-                self.TSwitchOnValues.clear()
-                self.TSwitchOffValues.clear()
-                self.TransferTestStart == None
-
-                self.mail.sendEmail("Generator Transfer Switch Test at " + self.SiteName, OutStr, msgtype = "info")
-
-        except Exception as e1:
-            self.LogError("Excpetion in DebugTransferSwitch: " + str(e1))
-
-    #----------  GeneratorDevice::DebugBatteryCharger-------------------------------------
-    def DebugBatteryCharger(self, Register, Value):
-
-        try:
-
-            if not self.bBatteryChargerTest:
-                return
-            ## BatteryChargerTest
-            self.ChargerCandidateRegs = ["01f1", "01f2","001b","001c","001d","001e",
-                        "001f","0020","0021","0019","0057","0055","0056",
-                        "005a","000d","003c","0058","005d","05ed","05f5",
-                        "05fa","0034","0032","0037","0038","003b","002b",
-                        "0208","002e","002c","002d","002f","005c","05f4",
-                        "0053","0052","05ee","01f3","0033"]
-            # 0053 is charger status reg for EvoLC
-            if not Register in self.ChargerCandidateRegs:
-                return
-            # make sure engine is off
-            if not self.GetBaseStatus() == "READY":
-                return
-
-            # Force a read of the battery voltage via modbus
-            self.ProcessMasterSlaveTransaction("000a", 1)
-            MyStr = self.GetBatteryVoltage()
-            if MyStr == "":
-                return
-            MyStr = self.removeAlpha(MyStr)
-            Voltage = float(MyStr)
-
-            if self.BatteryMaxVolts == 0:
-                self.BatteryMaxVolts = Voltage
-                self.BatteryMinVolts = Voltage
-
-            if Voltage > self.BatteryMaxVolts:
-                self.BatteryMaxVolts = Voltage
-            if Voltage < self.BatteryMinVolts:
-                self.BatteryMinVolts = Voltage
-
-            if Voltage == self.BatteryMaxVolts and Voltage > 13.4:
-                self.ChargerOnValues[Register] = Value
-            elif Voltage == self.BatteryMinVolts and Voltage < 12.8:
-                self.ChargerOffValues[Register] = Value
-
-            if (self.BatteryMaxVolts - self.BatteryMinVolts) < 0.5:
-                return
-
-            if (len(self.ChargerOnValues) == len(self.ChargerOffValues)) and (len(self.ChargerOnValues) == len(self.ChargerCandidateRegs)):
-                OutStr = ""
-                for Reg, Val in self.ChargerOnValues.items():
-                    TempInt = int(Val,16) ^ int(self.ChargerOffValues[Reg],16)
-                    if not TempInt == 0:
-                        OutStr += "Reg: %s, Bit Changed: %x\n" %(Reg, TempInt)
-
-                OutStr += "\nBattery Voltage is : %2.1f" % Voltage
-                OutStr += "\n Max: %f, Min: %f\n" % (self.BatteryMaxVolts, self.BatteryMinVolts)
-                OutStr += "\n On Values  : " + str(self.ChargerOnValues)
-                OutStr += "\n Off Values : " + str(self.ChargerOffValues)
-                self.ChargerOnValues.clear()
-                self.ChargerOffValues.clear()
-                self.ChargerTestStart = None
-                self.BatteryMaxVolts = 0
-                self.BatteryMinVolts = 0
-                self.mail.sendEmail("Generator Battery Charger Test at " + self.SiteName, OutStr, msgtype = "info")
-
-        except Exception as e1:
-            self.LogError("Excpetion in DebugBatteryCharger: " + str(e1))
 
     #----------  GeneratorDevice::SyncGenTime-------------------------------------
     def SyncGenTime(self):
