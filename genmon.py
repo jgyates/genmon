@@ -430,7 +430,7 @@ class GeneratorDevice:
             self.Threads["InterfaceServerThread"] = mythread.MyThread(self.InterfaceServerThread, Name = "InterfaceServerThread")
 
         # start thread to accept incoming sockets for nagios heartbeat
-        #self.Threads["PowerMeter"] = mythread.MyThread(self.PowerMeter, Name = "PowerMeter")
+#       self.Threads["PowerMeter"] = mythread.MyThread(self.PowerMeter, Name = "PowerMeter")
 
         # start read thread to monitor registers as they change
         self.Threads["MonitorThread"] = mythread.MyThread(self.MonitorThread, Name = "MonitorThread")
@@ -472,7 +472,7 @@ class GeneratorDevice:
             self.KillThread("ProcessThread")
             self.KillThread("MonitorThread")
             self.KillThread("CheckForAlarmThread")
-            #self.KillThread("PowerMeter")
+#            self.KillThread("PowerMeter")
             self.KillThread("ComWatchDog")
             if self.bSyncDST or self.bSyncTime:
                 self.KillThread("TimeSyncThread")
@@ -1956,10 +1956,8 @@ class GeneratorDevice:
 
         CommandList = command.split(b' ')    # PYTHON3
 
-
         for item in CommandList:
             item = item.strip()
-
             if b"generator:" == item.lower():
                 continue
             elif b"registers" == item.lower():         # display registers
@@ -2006,7 +2004,10 @@ class GeneratorDevice:
                 continue
             ## These commands are used by the web / socket interface only
             if fromsocket:
-                if b"start_info_json" == item.lower():      # used in web interface
+                if b"power_log_json" in item.lower():      # used in web interface
+                    msgbody += json.dumps(self.GetPowerHistory(command.lower()))
+                    continue
+                elif b"start_info_json" == item.lower():      # used in web interface
                     msgbody += json.dumps(self.GetStartInfo())
                     continue
                 elif b"registers_json" == item.lower():         # display registers
@@ -3606,17 +3607,36 @@ class GeneratorDevice:
 
         return RotorPoles
 
-    #------------ GeneratorDevice::DisplayPowerHistory-------------------------
-    def DisplayPowerHistory(self, Minutes):
+    #------------ GeneratorDevice::GetPowerHistory-------------------------
+    def GetPowerHistory(self, CmdString):
 
-        LogHistory = []
-
+        msgbody = "Invalid command syntax for command power_log_json"
         if not len(self.PowerLog):
-            return ""
+            self.LogError("Error in GetPowerHistory: Power log file does not exist")
+            return []
+
+        if not len(CmdString):
+            self.LogError("Error in GetPowerHistory: Invalid input")
+            return []
+
+        #Format we are looking for is "power_log_json=5"
+        CmdList = CmdString.split("=")
+        if len(CmdList) != 2:
+            self.LogError("Validation Error: Error parsing command string in GetPowerHistory (parse): " + CmdString)
+            return msgbody
+
+        CmdList[0] = CmdList[0].strip()
+
+        if not CmdList[0].lower() == "power_log_json":
+            self.LogError("Validation Error: Error parsing command string in GetPowerHistory (parse2): " + CmdString)
+            return msgbody
+
+        Minutes = int(CmdList[1].strip())
+
         try:
             # check to see if a log file exist yet
             if not os.path.isfile(self.PowerLog):
-                return ""
+                return []
 
             PowerList = []
 
@@ -3633,24 +3653,26 @@ class GeneratorDevice:
                     if len(Items) != 2:
                         continue
 
-                    struct_time = time.strptime(Items[1], "%x %X")
+                    struct_time = time.strptime(Items[0], "%x %X")
                     LogEntryTime = datetime.datetime.fromtimestamp(time.mktime(struct_time))
                     Delta = CurrentTime - LogEntryTime
                     if self.GetDeltaTimeMinutes(Delta) < Minutes :
                         PowerList.insert(0, [Items[0], Items[1]])
 
-            for Items in PowerList:
-                LogHistory.append("%s, Duration: %s" % (Items[0], Items[1]))
-
-            return LogHistory
+            return PowerList
 
         except Exception as e1:
-            self.LogError("Error in  DisplayPowerHistory: " + str(e1))
-            return []
+            self.LogError("Error in  GetPowerHistory: " + str(e1))
+            msgbody = "Error in  GetPowerHistory: " + str(e1)
+            return msgbody
 
     #----------  GeneratorDevice::PowerMeter-------------------------------------
     #----------  Monitors Power Output
     def PowerMeter(self):
+
+        if not len(self.PowerLog):
+            self.LogError("Error in PowerMeter: Power log file does not exist")
+            return
 
         while True:
             time.sleep(1)
@@ -3662,7 +3684,7 @@ class GeneratorDevice:
         if not self.EvolutionController:
             return
 
-        LastValue = -1.0
+        LastValue = 0
         while True:
             try:
                 time.sleep(5)
@@ -3676,7 +3698,7 @@ class GeneratorDevice:
 
                 LastValue = KWFloat
                 # Log to file
-                TimeStamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                TimeStamp = datetime.datetime.now().strftime('%x %X')
                 self.LogToFile(self.PowerLog, TimeStamp, str(KWFloat))
 
             except Exception as e1:

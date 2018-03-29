@@ -100,31 +100,35 @@ def ProcessCommand(command):
 
     if command in ["status", "status_json", "outage", "outage_json", "maint", "maint_json",
         "logs", "logs_json", "monitor", "monitor_json", "registers_json", "allregs_json",
-        "start_info_json", "gui_status_json", "getbase", "getsitename", "setexercise",
-        "setquiet", "getexercise", "setremote", "settime", "reload"]:
+        "start_info_json", "gui_status_json", "power_log_json", "getbase", "getsitename",
+        "setexercise", "setquiet", "getexercise", "setremote", "settime", "reload"]:
         finalcommand = "generator: " + command
         try:
             if command == "setexercise":
                 settimestr = request.args.get('setexercise', 0, type=str)
                 finalcommand += "=" + settimestr
             if command == "setquiet":
+                # /cmd/setquiet?setquiet=off
                 setquietstr = request.args.get('setquiet', 0, type=str)
                 finalcommand += "=" + setquietstr
             if command == "setremote":
                 setremotestr = request.args.get('setremote', 0, type=str)
                 finalcommand += "=" + setremotestr
-
+            if command == "power_log_json":
+                # example: /cmd/power_log_json?power_log_json=1440
+                setlogstr = request.args.get('power_log_json', 0, type=str)
+                finalcommand += "=" + setlogstr
             data = MyClientInterface.ProcessMonitorCommand(finalcommand)
 
         except Exception as e1:
             data = "Retry"
-            log.error("Error on command function" + str(e1))
+            log.error("Error on command function: " + str(e1))
 
         if command == "reload":
                 Reload()                # reload Flask App
 
         if command in ["status_json", "outage_json", "maint_json", "monitor_json", "logs_json",
-            "registers_json", "allregs_json", "start_info_json", "gui_status_json"]:
+            "registers_json", "allregs_json", "start_info_json", "gui_status_json", "power_log_json"]:
             return data
         return jsonify(data)
 
