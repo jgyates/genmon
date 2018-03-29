@@ -29,7 +29,7 @@ except ImportError as e:
 
 import mymail, mylog, mythread
 
-GENMON_VERSION = "V1.5.14"
+GENMON_VERSION = "V1.5.15"
 
 #------------ SerialDevice class --------------------------------------------
 class SerialDevice:
@@ -416,24 +416,27 @@ class GeneratorDevice:
     # ---------- GeneratorDevice::StartThreads------------------
     def StartThreads(self, reload = False):
 
-        # start read thread to monitor registers as they change
-        self.Threads["MonitorThread"] = mythread.MyThread(self.MonitorThread, Name = "MonitorThread")
+        self.Threads["CheckForAlarmThread"] = mythread.MyThread(self.CheckForAlarmThread, Name = "CheckForAlarmThread")
+
+        # start read thread to process incoming data commands
+        self.Threads["ProcessThread"] = mythread.MyThread(self.ProcessThread, Name = "ProcessThread")
+
+        # start thread to accept incoming sockets for nagios heartbeat
+        self.Threads["ComWatchDog"] = mythread.MyThread(self.ComWatchDog, Name = "ComWatchDog")
 
         if not reload:
             # This thread remains open during a reload
             # start thread to accept incoming sockets for nagios heartbeat and command / status clients
             self.Threads["InterfaceServerThread"] = mythread.MyThread(self.InterfaceServerThread, Name = "InterfaceServerThread")
 
-        self.Threads["CheckForAlarmThread"] = mythread.MyThread(self.CheckForAlarmThread, Name = "CheckForAlarmThread")
-
         # start thread to accept incoming sockets for nagios heartbeat
-        self.Threads["ComWatchDog"] = mythread.MyThread(self.ComWatchDog, Name = "ComWatchDog")
+        #self.Threads["PowerMeter"] = mythread.MyThread(self.PowerMeter, Name = "PowerMeter")
 
-        # start read thread to process incoming data commands
-        self.Threads["ProcessThread"] = mythread.MyThread(self.ProcessThread, Name = "ProcessThread")
+        # start read thread to monitor registers as they change
+        self.Threads["MonitorThread"] = mythread.MyThread(self.MonitorThread, Name = "MonitorThread")
 
         if self.bSyncDST or self.bSyncTime:     # Sync time thread
-            self.Threads["TimeSyncThread"] = mythread.MyThread(self.SyncGenTime, Name = "TimeSyncThread")
+            self.Threads["TimeSyncThread"] = mythread.MyThread(self.TimeSyncThread, Name = "TimeSyncThread")
 
         if self.EnableDebug:        # for debugging registers
             self.Threads["DebugThread"] = mythread.MyThread(self.DebugThread, Name = "DebugThread")
@@ -469,6 +472,7 @@ class GeneratorDevice:
             self.KillThread("ProcessThread")
             self.KillThread("MonitorThread")
             self.KillThread("CheckForAlarmThread")
+            #self.KillThread("PowerMeter")
             self.KillThread("ComWatchDog")
             if self.bSyncDST or self.bSyncTime:
                 self.KillThread("TimeSyncThread")
@@ -1343,12 +1347,7 @@ class GeneratorDevice:
 
         # convert total minutes between two datetime objects
         DeltaTime =  TargetExerciseTime - GeneratorTime
-
-        days, seconds = DeltaTime.days, DeltaTime.seconds
-        delta_hours = days * 24 + seconds // 3600
-        delta_minutes = (seconds % 3600) // 60
-
-        total_delta_min = (delta_hours * 60 + delta_minutes)
+        total_delta_min = self.GetDeltaTimeMinutes(DeltaTime)
 
         WriteValue = self.CalculateExerciseTime(total_delta_min)
 
@@ -1369,6 +1368,15 @@ class GeneratorDevice:
 
             self.ProcessMasterSlaveWriteTransaction("0003", len(Data) / 2, Data)
         return  "Set Exercise Time Command sent (using legacy write)"
+
+    #----------  GeneratorDevice::GetDeltaTimeMinutes-------------------------------
+    def GetDeltaTimeMinutes(self, DeltaTime):
+
+        days, seconds = DeltaTime.days, DeltaTime.seconds
+        delta_hours = days * 24 + seconds // 3600
+        delta_minutes = (seconds % 3600) // 60
+
+        return (delta_hours * 60 + delta_minutes)
 
     #----------  GeneratorDevice::SetGeneratorExerciseTime-------------------------------
     def SetGeneratorExerciseTime(self, CmdString):
@@ -2129,7 +2137,7 @@ class GeneratorDevice:
                 msgbody = "\nUtility Power Restored. Duration of outage " + OutageStr
                 self.mail.sendEmail("Outage Recovery Notice at " + self.SiteName, msgbody, msgtype = "outage")
                 # log outage to file
-                self.LogOutageToFile(self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"), OutageStr)
+                self.LogToFile(self.OutageLog, self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"), OutageStr)
         else:
             if UtilityVolts < ThresholdVoltage:
                 self.SystemInOutage = True
@@ -2137,18 +2145,18 @@ class GeneratorDevice:
                 msgbody = "\nUtility Power Out at " + self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S")
                 self.mail.sendEmail("Outage Notice at " + self.SiteName, msgbody, msgtype = "outage")
 
-    #------------ GeneratorDevice::LogOutageToFile-------------------------
-    def LogOutageToFile(self, TimeDate, Duration):
+    #------------ GeneratorDevice::LogToFile-------------------------
+    def LogToFile(self, File, TimeDate, Value):
 
-        if not len(self.OutageLog):
+        if not len(File):
             return ""
 
         try:
-            with open(self.OutageLog,"a") as LogFile:     #opens file
-                LogFile.write(TimeDate + "," + Duration + "\n")
+            with open(File,"a") as LogFile:     #opens file
+                LogFile.write(TimeDate + "," + Value + "\n")
                 LogFile.flush()
         except Exception as e1:
-            self.LogError("Error in  LogOutageToFile: " + str(e1))
+            self.LogError("Error in  LogToFile : File: %s: %s " % (File,str(e1)))
 
     #------------ GeneratorDevice::CheckForAlarms ----------------------------------------
     # Note this must be called from the Process thread since it queries the log registers
@@ -2373,7 +2381,7 @@ class GeneratorDevice:
     #------------ GeneratorDevice::DisplayOutageHistory-------------------------
     def DisplayOutageHistory(self):
 
-        OutageHistory = []
+        LogHistory = []
 
         if not len(self.OutageLog):
             return ""
@@ -2406,13 +2414,13 @@ class GeneratorDevice:
                         OutageLog.pop()
 
             for Items in OutageLog:
-                OutageHistory.append("%s, Duration: %s" % (Items[0], Items[1]))
+                LogHistory.append("%s, Duration: %s" % (Items[0], Items[1]))
 
-            return OutageHistory
+            return LogHistory
 
         except Exception as e1:
             self.LogError("Error in  DisplayOutageHistory: " + str(e1))
-            return ""
+            return []
 
     #------------ GeneratorDevice::DisplayMonitor --------------------------------------------
     def DisplayMonitor(self, ToString = False, DictOut = False):
@@ -2503,8 +2511,7 @@ class GeneratorDevice:
 
         Engine["Frequency"] = self.GetFrequency
         Engine["Output Voltage"] = self.GetVoltageOutput
-        if self.EvolutionController:
-            Engine["Active Rotor Poles (Calculated)"] = self.GetActiveRotorPoles()
+        Engine["Active Rotor Poles (Calculated)"] = self.GetActiveRotorPoles()
 
         if self.bDisplayUnknownSensors:
             Engine["Unsupported Sensors"] = self.DisplayUnknownSensors()
@@ -2582,6 +2589,7 @@ class GeneratorDevice:
         StartInfo["nominalKW"] = self.NominalKW
         StartInfo["nominalRPM"] = self.NominalRPM
         StartInfo["nominalfrequency"] = self.NominalFreq
+        StartInfo["Controller"] = self.GetController()
 
         return StartInfo
 
@@ -3598,6 +3606,82 @@ class GeneratorDevice:
 
         return RotorPoles
 
+    #------------ GeneratorDevice::DisplayPowerHistory-------------------------
+    def DisplayPowerHistory(self, Minutes):
+
+        LogHistory = []
+
+        if not len(self.PowerLog):
+            return ""
+        try:
+            # check to see if a log file exist yet
+            if not os.path.isfile(self.PowerLog):
+                return ""
+
+            PowerList = []
+
+            with open(self.PowerLog,"r") as LogFile:     #opens file
+                CurrentTime = datetime.datetime.now()
+                for line in LogFile:
+                    line = line.strip()                  # remove whitespace at beginning and end
+
+                    if not len(line):
+                        continue
+                    if line[0] == "#":                  # comment
+                        continue
+                    Items = line.split(",")
+                    if len(Items) != 2:
+                        continue
+
+                    struct_time = time.strptime(Items[1], "%x %X")
+                    LogEntryTime = datetime.datetime.fromtimestamp(time.mktime(struct_time))
+                    Delta = CurrentTime - LogEntryTime
+                    if self.GetDeltaTimeMinutes(Delta) < Minutes :
+                        PowerList.insert(0, [Items[0], Items[1]])
+
+            for Items in PowerList:
+                LogHistory.append("%s, Duration: %s" % (Items[0], Items[1]))
+
+            return LogHistory
+
+        except Exception as e1:
+            self.LogError("Error in  DisplayPowerHistory: " + str(e1))
+            return []
+
+    #----------  GeneratorDevice::PowerMeter-------------------------------------
+    #----------  Monitors Power Output
+    def PowerMeter(self):
+
+        while True:
+            time.sleep(1)
+            if self.InitComplete:
+                break
+            if self.IsStopSignaled("PowerMeter"):
+                return
+
+        if not self.EvolutionController:
+            return
+
+        LastValue = -1.0
+        while True:
+            try:
+                time.sleep(5)
+                if self.IsStopSignaled("PowerMeter"):
+                    return
+                KWOut = self.removeAlpha(self.GetPowerOutput())
+                KWFloat = float(KWOut)
+
+                if LastValue == KWFloat:
+                    continue
+
+                LastValue = KWFloat
+                # Log to file
+                TimeStamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                self.LogToFile(self.PowerLog, TimeStamp, str(KWFloat))
+
+            except Exception as e1:
+                self.LogError("Error in PowerMeter: " + str(e1))
+
 
     #------------ GeneratorDevice::GetPowerOutput ---------------------------------------
     def GetPowerOutput(self):
@@ -3964,10 +4048,17 @@ class GeneratorDevice:
                 answer += char
         return answer
 
-    #----------  GeneratorDevice::SyncGenTime-------------------------------------
-    def SyncGenTime(self):
+    #----------  GeneratorDevice::TimeSyncThread-------------------------------------
+    def TimeSyncThread(self):
 
         self.bDST = self.is_dst()   # set initial DST state
+
+        while True:
+            time.sleep(1)
+            if self.InitComplete:
+                break
+            if self.IsStopSignaled("TimeSyncThread"):
+                return
 
         # if we are not always syncing, then set the time once
         if not self.bSyncTime:
