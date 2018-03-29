@@ -369,8 +369,8 @@ function DisplayMaintenance(){
 
         //Create and append select list
         outstr += '&nbsp;&nbsp;&nbsp;&nbsp;<select id="quietmode">';
-        outstr += '<option value="QuietMode=On" ' + (ExerciseParameters['QuietMode'] == "On"  ? ' selected="selected" ' : '') + '>Quiet Mode On </option>';
-        outstr += '<option value="QuietMode=Off"' + (ExerciseParameters['QuietMode'] == "Off" ? ' selected="selected" ' : '') + '>Quiet Mode Off</option>';
+        outstr += '<option value="On" ' + (ExerciseParameters['QuietMode'] == "On"  ? ' selected="selected" ' : '') + '>Quiet Mode On </option>';
+        outstr += '<option value="Off"' + (ExerciseParameters['QuietMode'] == "Off" ? ' selected="selected" ' : '') + '>Quiet Mode Off</option>';
         outstr += '</select><br><br>';
 
         outstr += '&nbsp;&nbsp;<button id="setexercisebutton" onClick="saveMaintenance();">Set Exercise Time</button>';
@@ -537,7 +537,7 @@ function DisplayMaintenanceUpdate(){
         if (ExerciseParameters['ExerciseMinute'] != OldExerciseParameters['ExerciseMinute'])
            $("#minutes").val(ExerciseParameters['ExerciseMinute']);
         if (ExerciseParameters['QuietMode'] != OldExerciseParameters['QuietMode'])
-           $("#quietmode").val('QuietMode='+ExerciseParameters['QuietMode']);
+           $("#quietmode").val(ExerciseParameters['QuietMode']);
 
         if((baseState === "EXERCISING") || (baseState === "RUNNING")) {
             $("#remotestop").prop("disabled",false);
