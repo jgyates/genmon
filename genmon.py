@@ -449,9 +449,10 @@ class GeneratorDevice:
             self.LogError("Error getting thread name in KillThread: " + Name)
             return False
 
+        del self.Threads[Name]
         MyThreadObj.Stop()
         MyThreadObj.WaitForThreadToEnd()
-        del self.Threads[Name]
+
 
     # ---------- GeneratorDevice::KillReloadThread------------------
     def IsStopSignaled(self, Name):
@@ -2006,6 +2007,9 @@ class GeneratorDevice:
             if fromsocket:
                 if b"power_log_json" in item.lower():      # used in web interface
                     msgbody += json.dumps(self.GetPowerHistory(command.lower()))
+                    continue
+                elif b"power_log_clear" == item.lower():     # used in web interface
+                    msgbody += self.ClearPowerLog()
                     continue
                 elif b"start_info_json" == item.lower():      # used in web interface
                     msgbody += json.dumps(self.GetStartInfo())
@@ -3607,9 +3611,23 @@ class GeneratorDevice:
 
         return RotorPoles
 
+    #------------ GeneratorDevice::ClearPowerLog-------------------------
+    def ClearPowerLog(self):
+
+        try:
+            if not os.path.isfile(self.PowerLog):
+                return "Power Log is empty"
+            os.remove(self.PowerLog)
+
+            return "Power Log cleared"
+        except Exception as e1:
+            self.LogError("Error in  ClearPowerLog: " + str(e1))
+            return "Error in  ClearPowerLog: " + str(e1)
+
     #------------ GeneratorDevice::GetPowerHistory-------------------------
     def GetPowerHistory(self, CmdString):
 
+        KWHours = False
         msgbody = "Invalid command syntax for command power_log_json"
         if not len(self.PowerLog):
             self.LogError("Error in GetPowerHistory: Power log file does not exist")
@@ -3619,9 +3637,10 @@ class GeneratorDevice:
             self.LogError("Error in GetPowerHistory: Invalid input")
             return []
 
-        #Format we are looking for is "power_log_json=5"
+        #Format we are looking for is "power_log_json=5" or "power_log_json"
         CmdList = CmdString.split("=")
-        if len(CmdList) != 2:
+
+        if len(CmdList) > 2:
             self.LogError("Validation Error: Error parsing command string in GetPowerHistory (parse): " + CmdString)
             return msgbody
 
@@ -3631,7 +3650,20 @@ class GeneratorDevice:
             self.LogError("Validation Error: Error parsing command string in GetPowerHistory (parse2): " + CmdString)
             return msgbody
 
-        Minutes = int(CmdList[1].strip())
+        if len(CmdList) == 2:
+            ParseList = CmdList[1].split(",")
+            if len(ParseList) == 1:
+                Minutes = int(CmdList[1].strip())
+            elif len(ParseList) == 2:
+                Minutes = int(ParseList[0].strip())
+                if ParseList[1].strip().lower() == "kw":
+                    KWHours = True
+            else:
+                self.LogError("Validation Error: Error parsing command string in GetPowerHistory (parse3): " + CmdString)
+                return msgbody
+
+        else:
+            Minutes = 0
 
         try:
             # check to see if a log file exist yet
@@ -3642,22 +3674,47 @@ class GeneratorDevice:
 
             with open(self.PowerLog,"r") as LogFile:     #opens file
                 CurrentTime = datetime.datetime.now()
-                for line in LogFile:
-                    line = line.strip()                  # remove whitespace at beginning and end
+                try:
+                    for line in LogFile:
+                        line = line.strip()                  # remove whitespace at beginning and end
 
-                    if not len(line):
-                        continue
-                    if line[0] == "#":                  # comment
-                        continue
-                    Items = line.split(",")
-                    if len(Items) != 2:
-                        continue
+                        if not len(line):
+                            continue
+                        if line[0] == "#":                  # comment
+                            continue
+                        Items = line.split(",")
+                        if len(Items) != 2:
+                            continue
 
+                        if Minutes:
+                            struct_time = time.strptime(Items[0], "%x %X")
+                            LogEntryTime = datetime.datetime.fromtimestamp(time.mktime(struct_time))
+                            Delta = CurrentTime - LogEntryTime
+                            if self.GetDeltaTimeMinutes(Delta) < Minutes :
+                                PowerList.insert(0, [Items[0], Items[1]])
+                        else:
+                            PowerList.insert(0, [Items[0], Items[1]])
+                except Exception as e1:
+                    self.LogError("Error in  GetPowerHistory (parse file): " + str(e1))
+                    # continue to the next line
+
+            if KWHours:
+                TotalTime = datetime.timedelta(seconds=0)
+                TotalPower = 0
+                LastTime = None
+                for Items in PowerList:
+                    Power = float(Items[1])
                     struct_time = time.strptime(Items[0], "%x %X")
                     LogEntryTime = datetime.datetime.fromtimestamp(time.mktime(struct_time))
-                    Delta = CurrentTime - LogEntryTime
-                    if self.GetDeltaTimeMinutes(Delta) < Minutes :
-                        PowerList.insert(0, [Items[0], Items[1]])
+                    if LastTime == None or Power == 0:
+                        TotalTime += LogEntryTime - LogEntryTime
+                    else:
+                        TotalTime += LastTime - LogEntryTime
+                    LastTime = LogEntryTime
+
+                    TotalPower += Power
+                # return KW Hours
+                return "%.2f" % ((TotalTime.total_seconds() / 3600) * TotalPower)
 
             return PowerList
 
@@ -3672,6 +3729,7 @@ class GeneratorDevice:
 
         if not len(self.PowerLog):
             self.LogError("Error in PowerMeter: Power log file does not exist")
+            self.KillThread("PowerMeter")
             return
 
         while True:
@@ -3682,6 +3740,7 @@ class GeneratorDevice:
                 return
 
         if not self.EvolutionController:
+            self.KillThread("PowerMeter")
             return
 
         LastValue = 0
