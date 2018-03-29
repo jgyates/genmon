@@ -579,7 +579,7 @@ if __name__ == "__main__":
 
     Start = datetime.datetime.now()
 
-    while (Start - datetime.datetime.now()).total_seconds() < 5:
+    while ((datetime.datetime.now() - Start).total_seconds() < 5):
         data = MyClientInterface.ProcessMonitorCommand("generator: gethealth")
         if "OK" in data:
             print("OK - Init complete.\n")
