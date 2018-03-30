@@ -253,7 +253,7 @@ class MyMail:
         except Exception as e1:
             self.LogError("Error attaching file in sendEmailDirectMIME: " + str(e1))
 
-        self.LogError("Logging in: SMTP Server <"+self.SMTPServer+">:Port <"+str(self.SMTPPort) + ">")
+        #self.LogError("Logging in: SMTP Server <"+self.SMTPServer+">:Port <"+str(self.SMTPPort) + ">")
 
         try:
             if self.SSLEnabled:
