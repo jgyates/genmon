@@ -1,0 +1,225 @@
+/*
+ *  calendarheatmap - v0.0.3
+ *  A simple Calendar Heatmap for jQuery.
+ *  https://github.com/SeBassTian23/CalendarHeatmap
+ *
+ *  Made by Sebastian Kuhlgert
+ *  Under MIT License
+ */
+.ch {
+  display: table !important;
+  clear: both;
+}
+.ch-month,
+.ch-week-labels {
+  font-size: 0;
+  display: inline-block;
+  white-space: normal;
+  margin: 0 4px;
+}
+.ch-week,
+.ch-day-labels {
+  display: inline-block;
+  width: 11px;
+  box-sizing: content-box;
+}
+.ch-day-labels {
+  width: inherit;
+}
+.ch-month-label {
+  text-align: center;
+  font-size: 12px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+.ch-day-label {
+  text-align: center;
+  font-size: 10px;
+  display: block;
+  margin: 0;
+  line-height: 11px;
+  box-sizing: content-box;
+}
+.ch-day {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border: 1px solid #f3f6f8;
+  background-color: #f1f1f1;
+  margin: 0;
+  box-sizing: content-box;
+}
+.ch-day.is-outside-month,
+.ch-lvl.is-outside-month,
+.ch-day.is-outside-month:hover,
+.ch-lvl.is-outside-month:hover {
+  background-color: transparent;
+  border-color: transparent;
+}
+.ch-day.lvl-0,
+.ch-lvl.lvl-0 {
+  background-color: #c8d7e1;
+}
+.ch-day.is-after-today,
+.ch-lvl.is-after-today {
+  background-color: #d9e3ea;
+}
+.ch-day.lvl-1,
+.ch-lvl.lvl-1 {
+  background-color: #a6c96a;
+}
+.ch-day.lvl-2,
+.ch-lvl.lvl-2 {
+  background-color: #5cb85c;
+}
+.ch-day.lvl-3,
+.ch-lvl.lvl-3 {
+  background-color: #009e47;
+}
+.ch-day.lvl-4,
+.ch-lvl.lvl-4 {
+  background-color: #00753a;
+}
+.ch-day:hover,
+.ch-lvl:hover {
+  border-color: #89a6ba;
+}
+.ch-legend {
+  padding-top: 10px;
+  text-align: right;
+}
+.ch-legend-left {
+  text-align: left !important;
+}
+.ch-legend-center {
+  text-align: center !important;
+}
+.ch-legend:after {
+  content: ".";
+  display: block;
+  height: 0;
+  width: 0;
+  clear: both;
+  visibility: hidden;
+}
+.ch-lvls {
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+  padding: 2px 9px 0 5px;
+}
+.ch-lvl {
+  width: 10px;
+  height: 10px;
+  float: left;
+  margin-left: 3px;
+}
+.blue-1 {
+  background-color: #ffffcc !important;
+}
+.earth-1 {
+  background-color: #f4ec15 !important;
+}
+.electric-1 {
+  background-color: #f9d824 !important;
+}
+.viridis-1 {
+  background-color: #dde218 !important;
+}
+.picknick-1 {
+  background-color: #dd2a91 !important;
+}
+.green-1 {
+  background-color: #d1be5a !important;
+}
+.teal-1 {
+  background-color: #becfb6 !important;
+}
+.red-1 {
+  background-color: #deb7af !important;
+}
+.blue-2 {
+  background-color: #41b6c4 !important;
+}
+.earth-2 {
+  background-color: #86bf76 !important;
+}
+.electric-2 {
+  background-color: #f38647 !important;
+}
+.viridis-2 {
+  background-color: #42bd70 !important;
+}
+.picknick-2 {
+  background-color: #b14dec !important;
+}
+.green-2 {
+  background-color: #5f900b !important;
+}
+.teal-2 {
+  background-color: #7db28f !important;
+}
+.red-2 {
+  background-color: #cf8371 !important;
+}
+.blue-3 {
+  background-color: #0868ac !important;
+}
+.earth-3 {
+  background-color: #117bd7 !important;
+}
+.electric-3 {
+  background-color: #8e0ca3 !important;
+}
+.viridis-3 {
+  background-color: #355c8c !important;
+}
+.picknick-3 {
+  background-color: #2e8ebf !important;
+}
+.green-3 {
+  background-color: #39811b !important;
+}
+.teal-3 {
+  background-color: #107d79 !important;
+}
+.red-3 {
+  background-color: #b63b25 !important;
+}
+.blue-4 {
+  background-color: #253494 !important;
+}
+.earth-4 {
+  background-color: #363299 !important;
+}
+.electric-4 {
+  background-color: #2e0495 !important;
+}
+.viridis-4 {
+  background-color: #471164 !important;
+}
+.picknick-4 {
+  background-color: #139863 !important;
+}
+.green-4 {
+  background-color: #0d562c !important;
+}
+.teal-4 {
+  background-color: #1c475d !important;
+}
+.red-4 {
+  background-color: #90131c !important;
+}
+.genmon-1 {
+  background-color: #009900 !important;
+}
+.genmon-2 {
+  background-color: #ff9900 !important;
+}
+.genmon-3 {
+  background-color: #cc0000 !important;
+}
+.genmon-4 {
+  background-color: #333333 !important;
+}
