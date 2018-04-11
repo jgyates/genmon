@@ -8,46 +8,30 @@
     <meta http-equiv='pragma' content='no-cache'>
     <title>Generator Monitor</title>
     <script type="text/javascript" src="jquery-3.3.1.min.js"></script>
-    <script type="text/javascript" src="tooltipster.bundle.min.js"></script>
-    <script type="text/javascript" src="vex.combined.min.js"></script>
-    <script>vex.defaultOptions.className = 'vex-theme-os'</script>
-    <script type="text/javascript" src="gauge.min.js"></script>
-    <script type="text/javascript" src="jquery.jqplot.min.js"></script>
-    <script type="text/javascript" src="printThis.js"></script>
-    <script type="text/javascript" src="moment.min.js"></script>
-    <script type="text/javascript" src="jquery.CalendarHeatmapGenmon.js"></script>
+    <script type="text/javascript" src="js/tooltipster.bundle.min.js"></script>
+    <script type="text/javascript" src="js/vex.combined.min.js"></script>
+    <script type="text/javascript" src="js/gauge.min.js"></script>
+    <script type="text/javascript" src="js/jquery.jqplot.min.js"></script>
+    <script type="text/javascript" src="js/jqplot.dateAxisRenderer.js"></script>
+    <script type="text/javascript" src="js/printThis.js"></script>
+    <script type="text/javascript" src="js/moment.min.js"></script>
+    <script type="text/javascript" src="js/jquery.CalendarHeatmap.genmon.js"></script>
+    <script type="text/javascript" src="js/lc_switch.genmon.js"></script>
+    <script type="text/javascript" src="js/jquery.idealforms.genmon.js"></script>
+    <script type="text/javascript" src="js/jquery.dd.min.js"></script>
+    <script type="text/javascript" src="js/jquery.mask.min.js"></script>
+    <script type="text/javascript" src="js/selectize.min.js"></script>
     <link rel="stylesheet" type="text/css" href="genmon.css">
-    <link rel="stylesheet" type="text/css" href="tooltipster.bundle.min.css" />
-    <link rel="stylesheet" href="vex.css" />
-    <link rel="stylesheet" href="vex-theme-os.css" />
-    <link rel="stylesheet" href="jquery.jqplot.min.css" />
-    <link rel="stylesheet" href="jquery.CalendarHeatmap.css" />
+    <link rel="stylesheet" type="text/css" href="css/tooltipster.bundle.min.css" />
+    <link rel="stylesheet" type="text/css" href="css/vex.css" />
+    <link rel="stylesheet" type="text/css" href="css/vex-theme-os.css" />
+    <link rel="stylesheet" type="text/css" href="css/jquery.jqplot.min.css" />
+    <link rel="stylesheet" type="text/css" href="css/jquery.CalendarHeatmap.css" />
+    <link rel="stylesheet" type="text/css" href="css/lc_switch.css">
+    <link rel="stylesheet" type="text/css" href="css/jquery.idealforms.css">
+    <link rel="stylesheet" type="text/css" href="css/dd.css">
+    <link rel="stylesheet" type="text/css" href="css/selectize.default.css">
     <link rel="icon" href="favicon.ico">
-
-    <script type="text/javascript">
-       $(document).ready(function(){
-          resizeDiv();
-       });
-
-       window.onresize = function(event) {
-          resizeDiv();
-       }
-
-       function resizeDiv() {
-          vpw = $(window).width();
-          vph = $(window).height();
-          $('#mytable').css({'height': vph + 'px'});
-          $('#mytable').css({'width': vpw + 'px'});
-          $('#myheader').css({'height': '30px'});
-          $('#myheader').css({'width': vpw + 'px'});
-          $('#myDiv').css({'height': (vph-60) + 'px'});
-          $('#myDiv').css({'width': (vpw-200) + 'px'});
-          $('#navMenu').css({'height': (vph-60) + 'px'});
-          $('#navMenu').css({'width': '200px'});
-          $('#footer').css({'height': '30px'});
-          $('#footer').css({'width': vpw + 'px'});
-       }
-  </script>
 </head>
 
 <body>
@@ -63,7 +47,6 @@
       <tr><td height="30px" colspan="2"><div id="footer"></div></td></tr>
     </table>
     <script type="text/javascript" src="genmon.js"></script>
-
 </body>
 
 

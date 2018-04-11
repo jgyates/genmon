@@ -14,48 +14,110 @@ $("#navMenu").html('<ul>' +
     '</ul>') ;
 
 // global base state
-var GeneratorModel = "";
+var currentVersion = "";
+var showMajorUSMobileCarrierTextEmail = false;
 var baseState = "READY";        // updated on a time
 var currentbaseState = "READY"; // menus change on this var
 var currentClass = "active";    // CSS class for menu color
 var menuElement = "status";
-var ExerciseParameters = {};
-    ExerciseParameters['EnhancedExerciseEnabled']  = false;
-var OldExerciseParameters = {};
-var kWHistory = [];
-var kWplot;
-var RegisterSince;
-var RegisterHistory1 = {};
-var RegisterHistory2 = {};
-var RegisterHistory3 = {};
-var RegisterHistory2_temp = {};
-var RegisterHistory3_temp = {};
-var RegisterUpdateTime = {};
-var pathname = "";
-var baseurl = "";
+var ajaxErrors = {errorCount: 0, lastSuccessTime: 0, log: ""};
+var windowActive = true;
+
+var myGenerator = {sitename: "", nominalRPM: 3600, nominalfrequency: 60, Controller: "", model: "", nominalKW: 22, fueltype: "", EnhancedExerciseEnabled: false, OldExerciseParameters:[-1,-1,-1,-1,-1,-1]};
+var regHistory = {updateTime: {}, _10m: {}, _60m: {}, _24h: {}, historySince: "", count_60m: 0, count_24h: 0};
+var kwHistory = {data: [], plot:"", kwDuration: "h", tickInterval: "10 minutes", formatString: "%H:%M"};
+var pathname = window.location.href;
+var baseurl = pathname.concat("cmd/");
 var DaysOfWeekArray = ["Sunday","Monday","Tuesday","Wednesday", "Thursday", "Friday", "Saturday"];
 var MonthsOfYearArray = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-
+vex.defaultOptions.className = 'vex-theme-os'
 
 //*****************************************************************************
 // called on window.onload
 //      sets up listener events (click menu) and inits the default page
 //*****************************************************************************
+GetGeneratorModel();
+GetBaseStatus();
+SetFavIcon();
+GetkWHistory();
 $(document).ready(function() {
-    pathname = window.location.href;
-    baseurl = pathname.concat("cmd/")
-    GetGeneratorModel();
-    SetFavIcon();
-    GetExerciseValues();
-    SetHeaderValues();
-    $("#footer").html('<table border="0" width="100%" height="30px"><tr><td width="90%"><a href="https://github.com/jgyates/genmon" target="_blank">GenMon Project on GitHub</a></td></tr></table>');
+    $("#footer").html('<table border="0" width="100%" height="30px"><tr><td width="5%"><img class="tooltip" id="ajaxWarning" src="images/alert.png" height="28px" width="28px" style="display: none;"></td><td width="90%"><a href="https://github.com/jgyates/genmon" target="_blank">GenMon Project on GitHub</a></td><td width="5%"></td></tr></table>');
+    $('#ajaxWarning').tooltipster({minWidth: '280px', maxWidth: '480px', animation: 'fade', updateAnimation: 'null', contentAsHTML: 'true', delay: 100, animationDuration: 200, side: ['top', 'left'], content: "No Communicatikon Errors occured"});
     UpdateRegisters(true, false);
-    $("#status").find("a").addClass(GetCurrentClass());
     setInterval(GetBaseStatus, 3000);       // Called every 3 sec
     setInterval(UpdateDisplay, 5000);       // Called every 5 sec
     DisplayStatusFull();
+    $("#status").find("a").addClass(GetCurrentClass());
     $("li").on('click',  function() {  MenuClick($(this));});
+    resizeDiv();
+});
+
+
+window.onresize = function(event) {
+    resizeDiv();
+}
+
+
+//*****************************************************************************
+//  Manage AJAX responsees
+//*****************************************************************************
+function processAjaxSuccess() {
+    var now = new moment();
+    if (ajaxErrors["errorCount"]>5) {
+      ajaxErrors["log"] = ajaxErrors["errorCount"]+" messages missed between "+ajaxErrors["lastSuccessTime"].format("H:mm:ss") + " and " +now.format("H:mm:ss") +"<br>" + ajaxErrors["log"];
+      $("#footer").removeClass("alert");
+      $("#ajaxWarning").hide(2000);
+    }
+    ajaxErrors["errorCount"] = 0;
+    ajaxErrors["lastSuccessTime"] = new moment();
+}
+
+function processAjaxError(xhr, ajaxOptions, thrownError) {
+    // alert(xhr.status);
+    // alert(thrownError);
+    ajaxErrors["errorCount"]++;
+    if (ajaxErrors["errorCount"]>5) {
+      var tempMsg = '<b><span style="font-size:14px">Disconnected from server</span></b><br>'+ajaxErrors["errorCount"]+' messages missed since '+ajaxErrors["lastSuccessTime"].format("H:mm:ss")+"</b><br><br>"+((ajaxErrors["log"].length>500) ? ajaxErrors["log"].substring(0, 500)+"<br>[...]" : ajaxErrors["log"]);
+      $("#footer").addClass("alert");
+      $("#ajaxWarning").show(2000);
+      $('#ajaxWarning').tooltipster('content', tempMsg);
+    }
+}
+
+
+//*****************************************************************************
+//  Make Sure window resize is handled correctly
+//*****************************************************************************
+function resizeDiv() {
+     vpw = $(window).width();
+     vph = $(window).height();
+     $('#mytable').css({'height': vph + 'px'});
+     $('#mytable').css({'width': vpw + 'px'});
+     $('#myheader').css({'height': '30px'});
+     $('#myheader').css({'width': vpw + 'px'});
+     $('#myDiv').css({'height': (vph-60) + 'px'});
+     $('#myDiv').css({'width': (vpw-200) + 'px'});
+     $('#navMenu').css({'height': (vph-60) + 'px'});
+     $('#navMenu').css({'width': '200px'});
+     $('#footer').css({'height': '30px'});
+     $('#footer').css({'width': vpw + 'px'});
+}
+
+//*****************************************************************************
+//  Make sure we stop replots when windows in inactive. Chrome has a bug
+//  that causes crashes otherwise:
+//  https://plumbr.io/blog/performance-blog/leaking-gpu-memory-google-chrome-edition
+//*****************************************************************************
+
+$(window).focus(function() {
+    windowActive = true;
+    // console.log(moment().format("YYYY-MM-DD HH:mm:ss") + " window became active. Starting background replots for jqplot");
+});
+
+$(window).blur(function() {
+    windowActive = false;
+    // console.log(moment().format("YYYY-MM-DD HH:mm:ss") + " window became inactive. Stopping background replots for jqplot");
 });
 
 //*****************************************************************************
@@ -95,7 +157,8 @@ var gaugekW;
 function DisplayStatusFull()
 {
     var url = baseurl.concat("status_json");
-    $.getJSON(url,function(result){
+    $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
+        processAjaxSuccess();
         var outstr = 'Dashboard:<br><br>';
         outstr += '<center><div class="gauge-breakpoint">';
         outstr += '<div class="gauge-block-a"><div class="gaugeField">Battery Voltage<br><canvas class="gaugeCanvas" id="gaugeBatteryVoltage"></canvas><br><div id="textBatteryVoltage" class="gaugeDiv"></div>V</div></div>';
@@ -107,11 +170,11 @@ function DisplayStatusFull()
         outstr += '<div class="gauge-lb2"></div>';
         outstr += '<div class="gauge-block-e"><div class="gaugeField">Rotation/Min<br><canvas class="gaugeCanvas" id="gaugeRPM"></canvas><br><div id="textRPM" class="gaugeDiv"></div> RPM</div></div>';
         outstr += '<div class="gauge-lb5"></div>';
-        if (result["Status"]["Engine"]["Unsupported Sensors"] != undefined) {
-           outstr += '<div class="gauge-block-f"><div class="gaugeField"><font size="1px">kW Output (unsupported)</font><br><canvas class="gaugeCanvas" id="gaugekW"></canvas><br><div id="textkW" class="gaugeDiv"></div>kW</div></div>';
+        if ((myGenerator["Controller"].indexOf("Nexus") == -1) && !((myGenerator["Controller"] == "Evolution, Air Cooled") && (result["Status"]["Engine"]["Unsupported Sensors"] == undefined))) {
+           outstr += '<div class="gauge-block-f"><div class="gaugeField">kW Output<br><canvas class="gaugeCanvas" id="gaugekW"></canvas><br><div id="textkW" class="gaugeDiv"></div>kW</div></div>';
            outstr += '<div class="gauge-lb2 gauge-lb3"></div>';
            outstr += '<div class="gauge-block-g"></div>';
-           outstr += '<div class="gauge-block-h"><div class="plotField">kW Output (unsupported)<br><div id="plotkW" style="height:170px;width:100%;overflow-x:hidden;overflow-y:hidden;"></div></div></div>';
+           outstr += '<div class="gauge-block-h"><div class="plotField">kW Output<br><div id="plotkW" class="kwPlotCanvas"></div><span class="kwPlotText">Time (<div class="kwPlotSelection selection" id="1h">1 hour</div> | <div class="kwPlotSelection" id="1d">1 day</div> | <div class="kwPlotSelection" id="1w">1 week</div> | <div class="kwPlotSelection" id="1m">1 month</div>)</span></div></div>';
         }
         outstr += '</div></center><br>';
 
@@ -141,15 +204,16 @@ function DisplayStatusFull()
                                            {strokeStyle: "#F03E3E", min: 255, max: 260}], 26, 0);
         gaugeOutputVoltage.set(result["Status"]["Engine"]["Output Voltage"].replace(/V/g, '')); // set actual value
 
+        var gaugeNominalFrequency = myGenerator["nominalfrequency"];
         gaugeFrequency = createGauge($("#gaugeFrequency"), $("#textFrequency"), 1, 0, 70, [10, 20, 30, 40, 50, 60, 70],
-                                          [{strokeStyle: "#F03E3E", min: 0, max: 57},
-                                           {strokeStyle: "#FFDD00", min: 57, max: 59},
-                                           {strokeStyle: "#30B32D", min: 59, max: 61},
-                                           {strokeStyle: "#FFDD00", min: 61, max: 63},
-                                           {strokeStyle: "#F03E3E", min: 63, max: 70}], 7, 10);
+                                          [{strokeStyle: "#F03E3E", min: 0, max: gaugeNominalFrequency/100*96},
+                                           {strokeStyle: "#FFDD00", min: gaugeNominalFrequency/100*96, max: gaugeNominalFrequency/100*98},
+                                           {strokeStyle: "#30B32D", min: gaugeNominalFrequency/100*98, max: gaugeNominalFrequency/100*102},
+                                           {strokeStyle: "#FFDD00", min: gaugeNominalFrequency/100*102, max: gaugeNominalFrequency/100*104},
+                                           {strokeStyle: "#F03E3E", min: gaugeNominalFrequency/100*104, max: 70}], 7, 10);
         gaugeFrequency.set(result["Status"]["Engine"]["Frequency"].replace(/Hz/g, '')); // set actual value
 
-        var gaugeRPMnominal = result["Status"]["Engine"]["Nominal RPM"];
+        var gaugeRPMnominal = myGenerator["nominalRPM"];
         gaugeRPM = createGauge($("#gaugeRPM"), $("#textRPM"), 0, 0, parseInt(gaugeRPMnominal/9*10), [parseInt(gaugeRPMnominal/4), parseInt(gaugeRPMnominal/2), parseInt(gaugeRPMnominal/4*3), parseInt(gaugeRPMnominal)],
                                           [{strokeStyle: "#F03E3E", min: 0, max: gaugeRPMnominal/18*17},
                                            {strokeStyle: "#FFDD00", min: gaugeRPMnominal/18*17, max: gaugeRPMnominal/36*35},
@@ -158,25 +222,83 @@ function DisplayStatusFull()
                                            {strokeStyle: "#F03E3E", min: gaugeRPMnominal/18*19, max: gaugeRPMnominal/9*10}], 4, 10);
         gaugeRPM.set(result["Status"]["Engine"]["RPM"]); // set actual value
 
-        if ((result["Status"]["Engine"]["Unsupported Sensors"] != undefined) && (!GeneratorModel.includes("Nexus"))) {
-           gaugekW = createGauge($("#gaugekW"), $("#textkW"), 0, 0, 20, [0, 5, 10, 15, 20],
-                                             [{strokeStyle: "#888888", min: 0, max: 1000}], 4, 5);
-           gaugekW.set(result["Status"]["Engine"]["Unsupported Sensors"]["Power Out (Single Phase)"].replace(/kW/g, '')); // set actual value
-
-           var plot_data4 = [];
-           for (var i = 720; i >= 0; --i) {
-              if (kWHistory.length > i)
-                  plot_data4.push([-i/12, kWHistory[i]]);
+        if ($("#gaugekW").length > 0) {
+           var gaugeNominalKW = myGenerator["nominalKW"];
+           var gaugeNominalKWmarks = [0];
+           for(var i=0;i<=parseInt(gaugeNominalKW/20*23/5);i++){
+             gaugeNominalKWmarks.unshift(5*i);
            }
-           kWplot = $.jqplot('plotkW', (plot_data4.length > 0) ? [plot_data4] : [[0,0]], {
-                                axesDefaults: { labelOptions:  { fontFamily: 'Arial', textColor: '#000000', fontSize: '8pt' }, tickOptions: { fontFamily: 'Arial', textColor: '#000000', fontSize: '6pt' }},
-                                grid: { drawGridLines: true, gridLineColor: '#cccccc', background: '#e1e1e1', borderWidth: 0, shadow: false, shadowWidth: 0 },
-                                gridPadding: {right:30, left:45},
-                                axes: { xaxis: { label: "Time (Minutes ago)", min:-60, max:0, numberTicks:7, tickOptions: {formatString: "%#.0f" } },
-                                        yaxis: { label: "kW", min:0 } }
-                                });
+           gaugekW = createGauge($("#gaugekW"), $("#textkW"), 0, 0, parseInt(gaugeNominalKW/20*23), gaugeNominalKWmarks,
+                                          [{strokeStyle: "#30B32D", min: 0, max: gaugeNominalKW/10*8},
+                                           {strokeStyle: "#FFDD00", min: gaugeNominalKW/10*8, max: gaugeNominalKW/20*19},
+                                           {strokeStyle: "#F03E3E", min: gaugeNominalKW/20*19, max: gaugeNominalKW/20*23}], parseInt(gaugeNominalKW/20*23/5), 5);
+           gaugekW.set(0); // set starting value
+
+           kwHistory["kwDuration"] = "h";
+           kwHistory["tickInterval"] = "10 minutes";
+           kwHistory["formatString"] = "%H:%M";
+           var now = new moment();
+           kwHistory["plot"] =  $.jqplot('plotkW', (kwHistory["data"].length > 0) ? [kwHistory["data"]] : [[[now.format("YYYY-MM-DD H:mm:ss"), 0]]], {
+                axesDefaults: { labelOptions:  { fontFamily: 'Arial', textColor: '#000000', fontSize: '8pt' },
+                tickOptions: { fontFamily: 'Arial', textColor: '#000000', fontSize: '6pt' }},
+                grid: { drawGridLines: true, gridLineColor: '#cccccc', background: '#e1e1e1', borderWidth: 0, shadow: false, shadowWidth: 0 },
+                gridPadding: {right:40, left:55},
+                axes: {
+                    xaxis:{
+                        renderer:$.jqplot.DateAxisRenderer,
+                        tickInterval: kwHistory["tickInterval"],
+                        tickOptions:{formatString:kwHistory["formatString"]},
+                        min: now.add(-1, kwHistory["kwDuration"]).format("YYYY-MM-DD H:mm:ss"),
+                        max: now.format("YYYY-MM-DD H:mm:ss")
+                    },
+                    yaxis:{
+                        label:"kW",
+                        labelRenderer: $.jqplot.CanvasAxisLabelRenderer,
+                        min:0,
+                        max: parseInt(gaugeNominalKW/20*23)
+                    }
+                },
+                highlighter: {
+                    show: true,
+                    sizeAdjust: 7.5
+                },
+                cursor:{
+                    show: true,
+                    zoom:true,
+                    showTooltip:true
+                }
+           });
+           $(".kwPlotSelection").on('click', function() {
+               $(".kwPlotSelection").removeClass("selection");
+               $(this).addClass("selection");
+               switch ($(this).attr("id")) {
+                 case "1h":
+                   kwHistory["kwDuration"] = "h";
+                   kwHistory["tickInterval"] = "10 minutes";
+                   kwHistory["formatString"] = "%H:%M";
+                   break;
+                 case "1d":
+                   kwHistory["kwDuration"] = "d";
+                   kwHistory["tickInterval"] = "1 hour";
+                   kwHistory["formatString"] = "%#I%p";
+                   break;
+                 case "1w":
+                   kwHistory["kwDuration"] = "w";
+                   kwHistory["tickInterval"] = "1 day";
+                   kwHistory["formatString"] = "%d %b";
+                   break;
+                 case "1m":
+                   kwHistory["kwDuration"] = "M";
+                   kwHistory["tickInterval"] = "1 day";
+                   kwHistory["formatString"] = "%d";
+                   break;
+                 default:
+                   break
+               }
+               printKwPlot(gaugekW.value);
+           });
         }
-    });
+    }});
     return;
 }
 
@@ -229,9 +351,6 @@ function createGauge(pCanvas, pText, pTextPrecision, pMin, pMax, pLabels, pZones
       },
       limitMax: false,     // If false, max value increases automatically if value > maxValue
       limitMin: false,     // If true, the min value of the gauge will be fixed
-      colorStart: '#6FADCF',   // Colors
-      colorStop: '#8FC0DA',    // just experiment with them
-      strokeColor: '#E0E0E0',  // to see which ones work best for you
       generateGradient: true,
       highDpiSupport: true,     // High resolution support
       staticLabels: {
@@ -265,13 +384,35 @@ function createGauge(pCanvas, pText, pTextPrecision, pMin, pMax, pLabels, pZones
     return gauge;
 }
 
+function printKwPlot(currenKw) {
+   var now = new moment();
+   if (currenKw == 0)
+     kwHistory["data"].unshift([now.format("YYYY-MM-DD HH:mm:ss"), 0]); /// add a zero to the current point temporarily
+
+   var max = now.format("YYYY-MM-DD H:mm:ss");
+   if (kwHistory["kwDuration"] == "h")
+     max = now.add(1, "m").format("YYYY-MM-DD H:mm:ss")
+   if (kwHistory["kwDuration"] == "d")
+     max = now.add(1, "h").format("YYYY-MM-DD H:mm:ss")
+
+   if (windowActive == true)
+     kwHistory["plot"].replot({data: [kwHistory["data"]], axes:{xaxis:{tickInterval: kwHistory["tickInterval"], tickOptions:{formatString:kwHistory["formatString"]}, max:now.format("YYYY-MM-DD H:mm:ss"), min:now.add(-1, kwHistory["kwDuration"]).format("YYYY-MM-DD H:mm:ss")}}});
+
+   if (currenKw == 0)
+     kwHistory["data"].shift();  /// remove the zero again
+
+   if (kwHistory["data"].length > 2500)
+     GetkWHistory();
+}
+
 //*****************************************************************************
 // DisplayStatusUpdate - updates the status page at every interval
 //*****************************************************************************
 function DisplayStatusUpdate()
 {
     var url = baseurl.concat("status_json");
-    $.getJSON(url,function(result){
+    $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
+        processAjaxSuccess();
         $("#statusText").html(json2html(result, "", "root"));
         // json2updates(result, "root");
 
@@ -280,18 +421,7 @@ function DisplayStatusUpdate()
         gaugeOutputVoltage.set(result["Status"]["Engine"]["Output Voltage"].replace(/V/g, '')); // set actual value
         gaugeFrequency.set(result["Status"]["Engine"]["Frequency"].replace(/Hz/g, '')); // set actual value
         gaugeRPM.set(result["Status"]["Engine"]["RPM"]); // set actual value
-        if ((result["Status"]["Engine"]["Unsupported Sensors"] != undefined) && (!GeneratorModel.includes("Nexus"))) {
-            gaugekW.set(result["Status"]["Engine"]["Unsupported Sensors"]["Power Out (Single Phase)"].replace(/kW/g, '')); // set actual value
-
-            var plot_data4 = [];
-            for (var i = 720; i >= 0; --i) {
-               if (kWHistory.length > i)
-                   plot_data4.push([-i/12, kWHistory[i]]);
-            }
-            kWplot.series[0].data = (plot_data4.length > 0) ? plot_data4 : [0,0];
-            kWplot.replot();
-        }
-    });
+    }});
 
 }
 
@@ -332,27 +462,24 @@ function json2updates(json, parentkey) {
 function DisplayMaintenance(){
 
     var url = baseurl.concat("maint_json");
-    $.getJSON(url,function(result){
+    $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
+        processAjaxSuccess();
 
         outstr = json2html(result, "", "root");
 
         outstr += "<br>Generator Exercise Time:<br><br>";
 
         //Create array of options to be added
-        var FreqArray = ["Weekly", "Biweekly", "Monthly"];
-        if (ExerciseParameters['EnhancedExerciseEnabled'] == true) {
-            outstr += "&nbsp;&nbsp;&nbsp;&nbsp;Mode: ";
-            for(var i = 0; i < FreqArray.length; i++)  {
-                outstr += '<label for="' + FreqArray[i] + '">' + FreqArray[i] + '</label>';
-                outstr += '<input type="radio" name="choice" value="' + FreqArray[i] + '" id="' + FreqArray[i] + '" ';
-                outstr += ((ExerciseParameters['ExerciseFrequency'] == FreqArray[i]) ? ' checked ' : '');
-                outstr += ((FreqArray[i] == "Monthly") ? ' onClick="MonthlyExerciseSelection();" ' : ' onClick="WeekdayExerciseSelection();" ');
-                outstr += '>';
-            }
+        if (myGenerator['EnhancedExerciseEnabled'] == true) {
+           outstr += '&nbsp;&nbsp;&nbsp;&nbsp;<select id="ExerciseFrequency" onChange="setExerciseSelection()">';
+           outstr += '<option value="Weekly" ' + (myGenerator['ExerciseFrequency'] == "Weekly"  ? ' selected="selected" ' : '') + '>Weekly</option>';
+           outstr += '<option value="Biweekly" ' + (myGenerator['ExerciseFrequency'] == "Biweekly"  ? ' selected="selected" ' : '') + '>Biweekly</option>';
+           outstr += '<option value="Monthly" ' + (myGenerator['ExerciseFrequency'] == "Monthly"  ? ' selected="selected" ' : '') + '>Monthly</option>';
+           outstr += '</select>';
         }
 
         //Create and append the options, days
-        outstr += '<br><br>&nbsp;&nbsp;&nbsp;&nbsp;<select style="width:200px;" id="days"></select> , ';
+        outstr += '&nbsp;<select id="days"></select> , ';
         //Create and append the options, hours
         outstr += '<select id="hours">';
         for (var i = 0; i < 24; i++) {
@@ -365,12 +492,12 @@ function DisplayMaintenance(){
         for (var i = 0; i < 60; i++) {
             outstr += '<option value="' + i.pad() + '">' + i.pad() + '</option>';
         }
-        outstr += '</select>&nbsp;&nbsp;';
+        outstr += '</select>';
 
         //Create and append select list
-        outstr += '&nbsp;&nbsp;&nbsp;&nbsp;<select id="quietmode">';
-        outstr += '<option value="On" ' + (ExerciseParameters['QuietMode'] == "On"  ? ' selected="selected" ' : '') + '>Quiet Mode On </option>';
-        outstr += '<option value="Off"' + (ExerciseParameters['QuietMode'] == "Off" ? ' selected="selected" ' : '') + '>Quiet Mode Off</option>';
+        outstr += '&nbsp;&nbsp;<select id="quietmode">';
+        outstr += '<option value="On" ' + (myGenerator['QuietMode'] == "On"  ? ' selected="selected" ' : '') + '>Quiet Mode On </option>';
+        outstr += '<option value="Off"' + (myGenerator['QuietMode'] == "Off" ? ' selected="selected" ' : '') + '>Quiet Mode Off</option>';
         outstr += '</select><br><br>';
 
         outstr += '&nbsp;&nbsp;<button id="setexercisebutton" onClick="saveMaintenance();">Set Exercise Time</button>';
@@ -379,34 +506,36 @@ function DisplayMaintenance(){
         outstr += '&nbsp;&nbsp;<button id="settimebutton" onClick="SetTimeClick();">Set Generator Time</button>';
 
         outstr += '<br><br>Remote Commands:<br><br>';
-        outstr += '&nbsp;&nbsp;<button id="remotestop" onClick="SetStopClick();">Stop Generator</button><br><br>';
-        outstr += '&nbsp;&nbsp;<button id="remotestart" onClick="SetStartClick();">Start Generator</button><br><br>';
-        outstr += '&nbsp;&nbsp;<button id="remotetransfer" onClick="SetTransferClick();">Start Generator and Transfer</button><br><br>';
+
+        outstr += '&nbsp;&nbsp;&nbsp;&nbsp;<button class="tripleButtonLeft" id="remotestop" onClick="SetStopClick();">Stop Generator</button>';
+        outstr += '<button class="tripleButtonCenter" id="remotestart" onClick="SetStartClick();">Start Generator</button>';
+        outstr += '<button class="tripleButtonRight"  id="remotetransfer" onClick="SetTransferClick();">Start Generator and Transfer</button><br><br>';
 
         $("#mydisplay").html(outstr);
 
-        if ((ExerciseParameters['EnhancedExerciseEnabled'] == true) && ($("#Monthly").is(":checked") == true)) {
-           MonthlyExerciseSelection();
-        } else {
-           WeekdayExerciseSelection();
-        }
-        $("#days").val(ExerciseParameters['ExerciseDay']);
-        $("#hours").val(ExerciseParameters['ExerciseHour']);
-        $("#minutes").val(ExerciseParameters['ExerciseMinute']);
 
-        if((baseState === "EXERCISING") || (baseState === "RUNNING")) {
-            $("#remotestop").prop("disabled",false);
-            $("#remotestart").prop("disabled",true);
-            $("#remotetransfer").prop("disabled",true);
-        }
-        else {
-            $("#remotestop").prop("disabled",true);
-            $("#remotestart").prop("disabled",false);
-            $("#remotetransfer").prop("disabled",false);
-        }
-        OldExerciseParameters = ExerciseParameters;
+        setExerciseSelection();
 
-   });
+        $("#days").val(myGenerator['ExerciseDay']);
+        $("#hours").val(myGenerator['ExerciseHour']);
+        $("#minutes").val(myGenerator['ExerciseMinute']);
+
+        startStartStopButtonsState();
+
+        myGenerator["OldExerciseParameters"] = [myGenerator['ExerciseDay'], myGenerator['ExerciseHour'], myGenerator['ExerciseMinute'], myGenerator['QuietMode'], myGenerator['ExerciseFrequency'], myGenerator['EnhancedExerciseEnabled']];
+
+   }});
+}
+
+//*****************************************************************************
+// called when Monthly is clicked
+//*****************************************************************************
+function setExerciseSelection(freq){
+   if ((myGenerator['EnhancedExerciseEnabled'] == true) && ($("#ExerciseFrequency").val() == "Monthly")) {
+      MonthlyExerciseSelection();
+   } else {
+      WeekdayExerciseSelection();
+   }
 }
 
 //*****************************************************************************
@@ -419,7 +548,7 @@ function MonthlyExerciseSelection(){
            $("#days").append('<option value="' + i.pad() + '">' + i.pad() + '</option>');
        }
     }
-    $("#days").val(ExerciseParameters['ExerciseDay']);
+    $("#days").val(myGenerator['ExerciseDay']);
 }
 //*****************************************************************************
 // called when Monthly is clicked
@@ -431,7 +560,7 @@ function WeekdayExerciseSelection(){
            $("#days").append('<option value="' + DaysOfWeekArray[i]+ '">' + DaysOfWeekArray[i]+ '</option>');
        }
     }
-    $("#days").val(ExerciseParameters['ExerciseDay']);
+    $("#days").val(myGenerator['ExerciseDay']);
 }
 
 //*****************************************************************************
@@ -515,45 +644,70 @@ function SetTimeClick(){
 //*****************************************************************************
 function DisplayMaintenanceUpdate(){
 
-    GetExerciseValues(function(){
-        $("#Exercise_Time").html(ExerciseParameters['ExerciseFrequency'] + ' ' +
-                                 ExerciseParameters['ExerciseDay'] + ' ' + ExerciseParameters['ExerciseHour'] + ':' + ExerciseParameters['ExerciseMinute'] +
-                                 ' Quiet Mode ' + ExerciseParameters['QuietMode']);
+    $("#Exercise_Time").html(myGenerator['ExerciseFrequency'] + ' ' +
+                             myGenerator['ExerciseDay'] + ' ' + myGenerator['ExerciseHour'] + ':' + myGenerator['ExerciseMinute'] +
+                             ' Quiet Mode ' + myGenerator['QuietMode']);
 
+    if ((myGenerator['EnhancedExerciseEnabled'] == true) && (myGenerator['ExerciseFrequency'] != myGenerator['OldExerciseParameters'][4])) {
+        $("#ExerciseFrequency").val(myGenerator['ExerciseFrequency']);
+        setExerciseSelection();
+    }
 
-        if ((ExerciseParameters['EnhancedExerciseEnabled'] == true) && (ExerciseParameters['ExerciseFrequency'] != OldExerciseParameters['ExerciseFrequency'])) {
-           $("#"+ExerciseParameters['ExerciseFrequency']).prop('checked',true);
-           if (ExerciseParameters['ExerciseFrequency'] == "Monthly") {
-              MonthlyExerciseSelection();
-           } else {
-              WeekdayExerciseSelection();
-           }
-        }
+    if (myGenerator['ExerciseDay'] !=  myGenerator['OldExerciseParameters'][0])
+       $("#days").val(myGenerator['ExerciseDay']);
+    if (myGenerator['ExerciseHour'] !=  myGenerator['OldExerciseParameters'][1])
+       $("#hours").val(myGenerator['ExerciseHour']);
+    if (myGenerator['ExerciseMinute'] !=  myGenerator['OldExerciseParameters'][2])
+       $("#minutes").val(myGenerator['ExerciseMinute']);
+    if (myGenerator['QuietMode'] !=  myGenerator['OldExerciseParameters'][3])
+       $("#quietmode").val(myGenerator['QuietMode']);
 
-        if (ExerciseParameters['ExerciseDay'] != OldExerciseParameters['ExerciseDay'])
-           $("#days").val(ExerciseParameters['ExerciseDay']);
-        if (ExerciseParameters['ExerciseHour'] != OldExerciseParameters['ExerciseHour'])
-           $("#hours").val(ExerciseParameters['ExerciseHour']);
-        if (ExerciseParameters['ExerciseMinute'] != OldExerciseParameters['ExerciseMinute'])
-           $("#minutes").val(ExerciseParameters['ExerciseMinute']);
-        if (ExerciseParameters['QuietMode'] != OldExerciseParameters['QuietMode'])
-           $("#quietmode").val(ExerciseParameters['QuietMode']);
+    startStartStopButtonsState();
 
-        if((baseState === "EXERCISING") || (baseState === "RUNNING")) {
-            $("#remotestop").prop("disabled",false);
-            $("#remotestart").prop("disabled",true);
-            $("#remotetransfer").prop("disabled",true);
-        }
-        else {
-            $("#remotestop").prop("disabled",true);
-            $("#remotestart").prop("disabled",false);
-            $("#remotetransfer").prop("disabled",false);
-        }
+    myGenerator["OldExerciseParameters"] = [myGenerator['ExerciseDay'], myGenerator['ExerciseHour'], myGenerator['ExerciseMinute'], myGenerator['QuietMode'], myGenerator['ExerciseFrequency'], myGenerator['EnhancedExerciseEnabled']];
 
-        OldExerciseParameters = ExerciseParameters;
-   });
+    var url = baseurl.concat("maint_json");
+    $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
+        processAjaxSuccess();
+
+       $("#Next_Service_Scheduled").html(result["Maintenance"]["Service"]["Next Service Scheduled"]);
+       $("#Total_Run_Hours").html(result["Maintenance"]["Service"]["Total Run Hours"]);
+    }});
+
 }
 
+function startStartStopButtonsState(){
+   if((baseState === "EXERCISING") || (baseState === "RUNNING")) {
+     $("#remotestop").prop("disabled",false);
+     $("#remotestart").prop("disabled",true);
+     $("#remotetransfer").prop("disabled",true);
+   } else {
+     $("#remotestop").prop("disabled",true);
+     $("#remotestart").prop("disabled",false);
+     $("#remotetransfer").prop("disabled",false);
+   }
+
+   $("#remotestop").css("background", "#bbbbbb");
+   $("#remotestart").css("background", "#bbbbbb");
+   $("#remotetransfer").css("background", "#bbbbbb");
+   switch (baseState) {
+    case "EXERCISING" :
+        $("#remotestart").css("background", "#4CAF50");
+        $("#remotestop").css("background", "#bbbbbb");
+        $("#remotetransfer").css("background", "#bbbbbb");
+        break;
+    case "RUNNING":
+        $("#remotetransfer").css("background", "#4CAF50");
+        $("#remotestop").css("background", "#bbbbbb");
+        $("#remotestart").css("background", "#bbbbbb");
+        break;
+     default:
+        $("#remotestop").css("background", "#4CAF50");
+        $("#remotestart").css("background", "#bbbbbb");
+        $("#remotetransfer").css("background", "#bbbbbb");
+        break;
+   }
+}
 
 //*****************************************************************************
 // called when Set Exercise is clicked
@@ -565,7 +719,7 @@ function saveMaintenance(){
         var strHours        = $("#hours").val();
         var strMinutes      = $("#minutes").val();
         var strQuiet        = $("#quietmode").val();
-        var strChoice       = ((ExerciseParameters['EnhancedExerciseEnabled'] == true) ? $('input[name=choice]:checked').val() : "Weekly");
+        var strChoice       = ((myGenerator['EnhancedExerciseEnabled'] == true) ? $("#ExerciseFrequency").val() : "Weekly");
         var strExerciseTime = strDays + "," + strHours + ":" + strMinutes + "," + strChoice;
 
         vex.dialog.confirm({
@@ -601,7 +755,8 @@ function saveMaintenance(){
 function DisplayLogs(){
 
     var url = baseurl.concat("logs");
-    $.getJSON(url,function(result) {
+    $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result) {
+        processAjaxSuccess();
 
         var outstr = '<center><div id="annualCalendar"></div></center>';
         outstr += replaceAll(replaceAll(result,'\n','<br/>'),' ','&nbsp');  // replace space with html friendly &nbsp
@@ -614,11 +769,11 @@ function DisplayLogs(){
         var loglines = result.split('\n');
         var severity = 0;
         for(var i = 0;i < loglines.length;i++){
-            if (loglines[i].includes("Alarm Log :")) {
+            if (loglines[i].indexOf("Alarm Log :") >= 0) {
                severity = 3;
-            } else if (loglines[i].includes("Service Log :")) {
+            } else if (loglines[i].indexOf("Service Log :") >= 0) {
                severity = 2;
-            } else if (loglines[i].includes("Start Stop Log :")) {
+            } else if (loglines[i].indexOf("Start Stop Log :") >= 0) {
                severity = 1;
             } else {
                var matches = loglines[i].match(/^\s*(\d+)\/(\d+)\/(\d+) (\d+:\d+:\d+) (.*)$/i)
@@ -637,112 +792,232 @@ function DisplayLogs(){
                }
             }
         }
-        var data = Object.values(data_helper);
+        var data = Object.keys(data_helper).map(function(itm) { return data_helper[itm]; });
+        // var data = Object.keys(data_helper).map(itm => data_helper[itm]);
+        // var data = Object.values(data_helper);
         // console.log(data);
         var options = {coloring: 'genmon', months: months, labels: { days: true, months: true, custom: {monthLabels: "MMM 'YY"}}, tooltips: { show: true, options: {}}, legend: { show: false}};
         $("#annualCalendar").CalendarHeatmap(data, options);
-   });
+   }});
 }
 
+//*****************************************************************************
+// Display the Monitor Tab
+//*****************************************************************************
+function DisplayMonitor(){
+
+    var url = baseurl.concat("monitor_json");
+    $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result) {
+        processAjaxSuccess();
+
+        var outstr = json2html(result, "", "root");
+        outstr += '<br><br>Update Generator Monitor Software:<br><br>';
+        outstr += '&nbsp;&nbsp;<button id="checkNewVersion" onClick="checkNewVersion();">Upgrade to latest version</button>';
+
+        $("#mydisplay").html(outstr);
+        currentVersion = result["Monitor"]["Generator Monitor Stats"]["Generator Monitor Version"];
+   }});
+}
+
+function checkNewVersion(){
+    var DisplayStr = 'Checking for latest version...<br><br><div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
+    $('.vex-dialog-buttons').html(DisplayStr);
+    $('.progress-bar-fill').queue(function () {
+        $(this).css('width', '100%')
+    });
+    var DisplayStrButtons = {
+        NO: {
+          text: 'Cancel',
+          type: 'button',
+          className: 'vex-dialog-button-secondary',
+          click: function yesClick () { this.close() }
+        },
+        YES: {
+          text: 'Upgrade',
+          type: 'submit',
+          className: 'vex-dialog-button-primary',
+          click: function yesClick () { }
+        }
+    }
+
+    var myDialog = vex.dialog.open({
+        unsafeMessage: DisplayStr,
+        overlayClosesOnClick: false,
+        buttons: [
+           DisplayStrButtons.NO,
+           DisplayStrButtons.YES
+        ],
+        onSubmit: function(e) {
+             e.preventDefault();
+             updateSoftware();
+             var DisplayStr1 = 'Downloading latest version...';
+             var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
+             $('.vex-dialog-message').html(DisplayStr1);
+             $('.vex-dialog-buttons').html(DisplayStr2);
+             $('.progress-bar-fill').queue(function () {
+                  $(this).css('width', '100%')
+             });
+        }
+    });
+
+    // $('.vex-dialog-button-secondary').hide();
+    // $('.vex-dialog-button-primary').hide();
+    // var url = "https://api.github.com/repos/jgyates/genmon/releases";
+    // $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result) {
+    //   processAjaxSuccess();
+    //   var latestVersion = result[0]["tag_name"];
+    //   if (latestVersion != currentVersion) {
+          // $('.vex-dialog-message').html("A new version is available.<br>Current Version:" + currentVersion+"<br>New Version:" + latestVersion);
+    $('.vex-dialog-message').html("Are you sure you want to update to the latest version?");
+    //      $('.vex-dialog-button-secondary').show();
+    //      $('.vex-dialog-button-primary').show();
+    //   } else {
+    //      $('.vex-dialog-message').html("You are runnign the latest version:" + latestVersion);
+    //      $('.vex-dialog-button-secondary').show();
+    //   }
+    // }});
+}
+
+//*****************************************************************************
+// called when requesting upgrade
+//*****************************************************************************
+function updateSoftware(){
+
+    // set remote command
+    var url = baseurl.concat("updatesoftware");
+    $.ajax({
+       type: "GET",
+       url: url,
+       dataType: "json",
+       timeout: 0,
+       success: function(results){
+             /// THIS IS NOT AN EXPECTED RESPONSE!!! genserv.py is expected to restart on it's own before returning a valid value;
+             vex.closeAll();
+             GenmonAlert("An unexepected outcome occured. Genmon might not have been updated. Please verify manually or try again!");
+       },
+       error: function(XMLHttpRequest, textStatus, errorThrown){
+             var DisplayStr1 = 'Restarting...';
+             var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
+             $('.vex-dialog-message').html(DisplayStr1);
+             $('.vex-dialog-buttons').html(DisplayStr2);
+             $('.progress-bar-fill').queue(function () {
+                  $(this).css('width', '100%')
+             });
+             setTimeout(function(){ vex.closeAll(); location.reload();  }, 10000);
+       }
+
+
+    });
+}
 
 
 //*****************************************************************************
 // Display the Notification Tab
 //*****************************************************************************
-function DisplayNotifications(){
 
+// Additional Carriers are listed here: https://teamunify.uservoice.com/knowledgebase/articles/57460-communication-email-to-sms-gateway-list
+var textServers = {s01_email:      ["Email", "images/option1.png", ""],
+                   s02_att:        ["AT&T", "images/option2.png", "@txt.att.net"],
+                   s03_verizon:    ["Verizon", "images/option3.png", "@vtext.com"],
+                   s04_tmobile:    ["T-Mobile USA", "images/option4.png", "@tmomail.net"],
+                   s05_sprint:     ["Sprint", "images/option5.png", "@messaging.sprintpcs.com"],
+                   s06_boost:      ["Boost Mobile", "images/option6.png", "@myboostmobile.com"]};
+
+function DisplayNotifications(){
     var url = baseurl.concat("notifications");
-    $.getJSON(url,function(result){
+    $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
+        processAjaxSuccess();
 
         var  outstr = 'Notification Recepients:<br><br>';
-        outstr += '<button value="+Add" id="addRow">+Add</button><br><br>';
         outstr += '<form id="formNotifications">';
         outstr += '<table id="allnotifications" border="0"><tbody>';
 
-        outstr += '<tr id="row_0"><td>&nbsp;&nbsp;&nbsp;&nbsp;</td><td>&nbsp;&nbsp;&nbsp;&nbsp;</td><td width="15%" align="center">All:</td><td width="15%" align="center">Outages:</td><td width="15%" align="center">Errors:</td><td width="15%" align="center">Warning:</td><td width="15%" align="center">Information:</td><td></td></tr>';
+        outstr += '<tr><td></td><td></td><td align="center">Email Address:</td><td align="center">Notifications:</td></tr>';
 
-        var rowcount;
-        var emails =  getSortedKeys(result, 0);
-        for (var index = 0; index < emails.length; ++index) {
-            rowcount = index+1;
-            var email = emails[index];
-            var permissions = {}
-            if ((typeof result[email][1] !== 'undefined' ) && (result[email][1] != "")) {
-               $.each(result[email][1].split(','), function(index, value) {
-                   permissions[value] = "true"
-               });
-            } else {
-               $.each( ["all", "outage", "error", "warn", "info"], function( index, type ){
-                  permissions[type] = "true"
+        $.each(Object.keys(result), function(i, key) {
+
+            var displayText = key;
+            var displayKey = "s01_email";
+            if (showMajorUSMobileCarrierTextEmail) {
+               $.each(Object.keys(textServers), function(j, service) {
+                  if ((service != "email") && (key.indexOf(textServers[service][2]) > 0)) {
+                     displayKey = service;
+                     displayText = key.replace(textServers[service][2], "");
+                  }
                });
             }
-
-            outstr += '<tr id="row_' + rowcount + '"><td>&nbsp;&nbsp;&nbsp;&nbsp;</td>';
-            outstr += '<td>'+email+'<input type="hidden" name="email_' + rowcount + '" id="email_' + rowcount + '" value="'+email+'"></td>';
-
-            $.each( ["all", "outage", "error", "warn", "info"], function( index, type ){
-               outstr += '<td width="15%" align="center">';
-               outstr += '<span id="bg_'+rowcount+'"><input id="' + type + '_' + rowcount + '" name="' + type + '_' + rowcount + '" type="checkbox" value="true" ' +
-                          (((typeof permissions[type] !== 'undefined' ) && (permissions[type].toLowerCase() == "true")) ? ' checked ' : '') +
-                          (((typeof permissions[type] !== 'undefined' ) && (permissions[type].toLowerCase() == "true")) ? ' oldValue="true" ' : ' oldValue="false" ') +
-                         '></span>';
-               outstr += '</td>';
-            });
-            outstr += '<td width="15%" align="center"><button type="button" rowcount="' + rowcount + '" id="removeRow">Remove</button></td></tr>';
-        }
+            outstr += renderNotificationLine(i, displayKey, displayText, result[key][1]);
+        });
         outstr += '</tbody></table></form><br>';
-        outstr += '<button id="setnotificationsbutton" onClick="saveNotifications()">Save</button>';
+        outstr += '<button value="+Add" id="addRow">+Add</button>&nbsp;&nbsp;&nbsp;&nbsp;<button id="setnotificationsbutton" onClick="saveNotifications()">Save</button>';
+
         $("#mydisplay").html(outstr);
-        rowcount++;
-        $('#rowcount').val(rowcount);
+        $(".msDropDown").msDropDown();
+        $(".dataMask").mask('(000) 000-0000', {placeholder: "(___) ___-____"});
+
+        $('.notificationTypes').selectize({
+            plugins: ['remove_button'],
+            delimiter: ','
+        });
+
+        var rowcount = Object.keys(result).length;
 
         $(document).ready(function() {
            $("#addRow").click(function () {
               $("#allnotifications").each(function () {
-                  var outstr = '<tr id="row_' + rowcount + '"><td>&nbsp;&nbsp;&nbsp;&nbsp;</td>';
-                  outstr += '<td><input id="email_' + rowcount + '" style="width: 300px;" name="email_' + rowcount + '" type="text"></td>';
-
-                  $.each( ["all", "outage", "error", "warn", "info"], function( index, type ){
-                     outstr += '<td width="15%" align="center">';
-                     outstr += '<span id="bg_'+rowcount+'"><input id="' + type + '_' + rowcount + '" name="' + type + '_' + rowcount + '" type="checkbox" value="true" ></span>';
-                     outstr += '</td>';
-                  });
-                  outstr += '<td width="15%" align="center"><button type="button" rowcount="' + rowcount + '" id="removeRow">Remove</button></td></tr>';
-                  rowcount++;
+                  var outstr = renderNotificationLine(rowcount, "", "", "")
                   if ($('tbody', this).length > 0) {
                       $('tbody', this).append(outstr);
                   } else {
                       $(this).append(outstr);
                   }
+                  if (showMajorUSMobileCarrierTextEmail)
+                    $("#type_"+rowcount).msDropDown();
+                  $("#notif_"+rowcount).selectize({
+                      plugins: ['remove_button'],
+                      delimiter: ','
+                    });
+
+                  rowcount++;
+                  $(".removeRow").on('click', function(){
+                     $('table#allnotifications tr#row_'+$(this).attr("rowcount")).remove();
+                  });
               });
            });
 
-           $("#allnotifications tbody").on('click', 'button', function(){
+           $(".removeRow").on('click', function(){
               $('table#allnotifications tr#row_'+$(this).attr("rowcount")).remove();
            });
-
-           $("#allnotifications tbody").on('change', 'input:checkbox', function(){
-              var ids = $(this).attr("id").split('_');
-              var myval = ($(this).prop('checked') === true ? "true" : "false");
-              if ((ids[0] == "all") && (myval == "true")) {
-                 $.each( ["outage", "error", "warn", "info"], function( index, type ){
-                     $('#'+type+'_'+ids[1]).prop('checked', true);
-                 });
-              } else if ((ids[0] != "all") && (myval == "false")) {
-                 $('#all_'+ids[1]).prop('checked', false);
-              } else if ((ids[0] != "all") && (myval == "true")) {
-                 if  ($('#outage_'+ids[1]).is(":checked") &&
-                      $('#error_'+ids[1]).is(":checked") &&
-                      $('#warn_'+ids[1]).is(":checked") &&
-                      $('#info_'+ids[1]).is(":checked")) {
-                   $('#all_'+ids[1]).prop('checked', true);
-                 }
-
-              }
-           });
-
         });
-   });
+   }});
+}
+
+function renderNotificationLine(rowcount, line_type, line_text, line_perms) {
+
+   var outstr = '<tr id="row_' + rowcount + '"><td nowrap><div rowcount="' + rowcount + '" class="removeRow"><img src="images/remove.png" height="24px" width="24px"></div></td>';
+   if (showMajorUSMobileCarrierTextEmail) {
+     outstr += '<td nowrap><select class="msDropDown" name="type_' + rowcount + '" style="width:180px" id="type_' + rowcount + '" onChange="setNotificationFieldValidation('+rowcount+')">';
+     outstr += Object.keys(textServers).sort().map(function(key) { return '<option value="'+key+'" data-image="'+textServers[key][1]+'" '+((key==line_type) ? 'selected' : '')+'>'+textServers[key][0]+'</option>'; }).join();
+     outstr += '</select>&nbsp;&nbsp;</td>';
+   } else {
+     outstr += '<td nowrap><input type="hidden" name="type_' + rowcount + '" value="s01_email">';
+   }
+   outstr += '<td nowrap><input id="email_' + rowcount + '" class="notificationEmail" name="email_' + rowcount + '" type="text" value="'+line_text+'" '+ ((line_type != "s01_email") ? 'class="dataMask"' : '') +' ></td>';
+
+   outstr += '<td width="300px" nowrap><select multiple style="width:290px" class="notificationTypes" name="notif_' + rowcount + '" id="notif_' + rowcount + '" oldValue="'+line_perms+'" placeholder="Select types of notifications...">';
+   outstr += ["outage", "error", "warn", "info"].map(function(key) { return '<option value="'+key+'" '+(((line_perms == undefined) || (line_perms.indexOf(key) != -1) || (line_perms == "")) ? ' selected ' : '')+'>'+key+'</option>'; }).join();
+   outstr += '</select></td>';
+
+   return outstr;
+}
+
+
+function setNotificationFieldValidation(rowcount) {
+    if ($("#type_"+rowcount).val() == "s01_email") {
+       $("#email_"+rowcount).unmask();
+    } else {
+       $("#email_"+rowcount).mask('(000) 000-0000', {placeholder: "(___) ___-____"});
+    }
 }
 
 //*****************************************************************************
@@ -774,13 +1049,13 @@ function saveNotifications(){
 
 
     var blankEmails = 0;
-    $.each($('#formNotifications input[type=text]'), function( index, type ){
+    $.each($("input[name^='email_']"), function( index, type ){
         if ($(this).val().trim() == "") {
            blankEmails++
         }
     });
     if (blankEmails > 0) {
-       GenmonAlert("Emails cannot be blank.<br>You have "+blankEmails+" blank lines.");
+       GenmonAlert("Recepients cannot be blank.<br>You have "+blankEmails+" blank lines.");
        return
     }
 
@@ -811,28 +1086,17 @@ function saveNotificationsJSON(){
     try {
         var fields = {};
 
-        $('#formNotifications input[type=text],#formNotifications input[type=hidden]').each(function() {
+        $("input[name^='email_']").each(function() {
             var thisRow = ($(this).attr('id').split("_"))[1];
-            if ($('#outage_'+thisRow).is(":checked") &&
-                $('#error_'+thisRow).is(":checked") &&
-                $('#warn_'+thisRow).is(":checked") &&
-                $('#info_'+thisRow).is(":checked")) {
-               fields[$(this).val()] = "";
-            } else if (!($('#outage_'+thisRow).is(":checked")) &&
-                       !($('#error_'+thisRow).is(":checked"))&&
-                       !($('#warn_'+thisRow).is(":checked")) &&
-                       !($('#info_'+thisRow).is(":checked"))) {
-              // email will be deleted
-            } else {
-                var val = []
-                $.each( ["outage", "error", "warn", "info"], function( index, type ) {
-                   if ($('#'+type+'_'+thisRow).is(":checked")) {
-                     val.push(type)
-                   }
-                });
-                fields[$(this).val().trim()] = val.join(",");
+            var thisType  = $('#type_'+thisRow).val();
+            var thisEmail = $(this).val();
+            var thisVal   = (($('#notif_'+thisRow).val().length == 4) ? "" : $('#notif_'+thisRow).val().join(","));
+            if ((showMajorUSMobileCarrierTextEmail) && (thisType != "s01_email")) {
+               thisEmail = thisEmail.replace(/\D/g,'')+textServers[thisType][2];
             }
+            fields[thisEmail] = thisVal;
         });
+        // console.log(fields);
 
         // save settings
         var url = baseurl.concat("setnotifications");
@@ -852,179 +1116,193 @@ function saveNotificationsJSON(){
 function DisplaySettings(){
 
     var url = baseurl.concat("settings");
-    $.getJSON(url,function(result){
+    $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
+        processAjaxSuccess();
 
-        var outstr = '<form id="formSettings"><table id="allsettings" border="0">';
+        var outstr = '<form class="idealforms" novalidate  id="formSettings">';
         var settings =  getSortedKeys(result, 2);
         for (var index = 0; index < settings.length; ++index) {
             var key = settings[index];
-            if (result[key][2] == 1) {
-              outstr += '<tr><td colspan="2">General Settings:</td></tr>';
-            } else if (result[key][2] == 50) {
-              outstr += '<tr><td colspan="2"><br><br>Console Settings:</td></tr>';
-            } else if (result[key][2] == 40) {
-              outstr += '<tr><td colspan="2"><br><br>Generator Model Specific Settings:</td></tr>';
-            } else if (result[key][2] == 26) {
-              outstr += '<tr><td colspan="2"><br><br>Webserver Security Settings:</td></tr>';
-            } else if (result[key][2] == 101) {
-              outstr += '<tr><td colspan="2"><br><br>Email Settings:</td></tr>';
-            } else if (result[key][2] == 150) {
-              outstr += '<tr><td colspan="2"><br><br>Email Commands Processing:</td></tr>';
+            if (key == "sitename") {
+              outstr += '</table></fieldset><br>General Settings:<fieldset id="generalSettings"><table id="allsettings" border="0">';
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
+            } else if (key == "nominalfrequency") {
+              outstr += '</table></fieldset><br><br><table width="100%" border="0"><tr><td nowrap>Generator Model Specific Settings&nbsp;&nbsp;</td><td width="80%"><hr></td></tr></table>';
+              outstr += '<fieldset id="modelSettings"><table id="allsettings" border="0">';
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
+            } else if (key == "usehttps") {
+              outstr += '</table></fieldset><br><br><table width="100%" border="0"><tr><td nowrap width="90px">';
+              outstr += printSettingsField(result[key][0], key, result[key][3], "", "", "usehttpsChange(true);");
+              outstr += '</td><td nowrap>&nbsp;&nbsp;Optional - Webserver Security Settings&nbsp;&nbsp;</td><td width="80%"><hr></td></tr></table>';
+              outstr += '<fieldset id="securitySettings"><table id="allsettings" border="0">';
+            } else if (key == "disableemail") {
+              outstr += '</table></fieldset><br><br><table width="100%" border="0"><tr><td nowrap width="90px">';
+              outstr += '<input id="' + key + '" name="' + key + '" type="hidden"' +
+                         (((typeof result[key][3] !== 'undefined' ) && (result[key][3].toString() == "true")) ? ' value="true" ' : ' value="false" ') +
+                         (((typeof result[key][3] !== 'undefined' ) && (result[key][3].toString() == "true")) ? ' oldValue="true" ' : ' oldValue="false" ') + '>';
+              outstr += printSettingsField("boolean", "outboundemail", (((typeof result[key][3] !== 'undefined' ) && (result[key][3].toString() == "true")) ? false : true), "", "", "outboundEmailChange(true);");
+              outstr += '</td><td nowrap>&nbsp;&nbsp;Optional - Outbound Email Settings&nbsp;&nbsp;</td><td width="80%"><hr></td></tr></table>';
+              outstr += '<fieldset id="outboundEmailSettings"><table id="allsettings" border="0">';
+            } else if (key == "imap_server") {
+              outstr += '</table></fieldset><br><br><table width="100%" border="0"><tr><td nowrap width="90px:>';
+              outstr += printSettingsField("boolean", "inboundemail", ((result[key][3] != "") ? true : false), "", "", "inboundemailChange(true);");
+              outstr += '</td><td nowrap>&nbsp;&nbsp;Optional - Inbound Email Commands Processing&nbsp;&nbsp;</td><td width="80%"><hr></td></tr></table>';
+              outstr += '<fieldset id="inboundEmailSettings"><table id="allsettings" border="0">';
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
+            } else if (key == "useselfsignedcert") {
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "useselfsignedcertChange(true);") + '</td></tr>';
+              outstr += '</table><fieldset id="selfsignedSettings"><table id="allsettings" border="0">';
+            } else if (key == "http_user") {
+              outstr += '</table></fieldset><table id="allsettings" border="0">';
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "useselfsignedcertChange(true);") + '</td></tr>';
+            } else if (key == "http_port") {
+              outstr += '</table></fieldset><fieldset id="noneSecuritySettings"><table id="allsettings" border="0">';
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "useselfsignedcertChange(true);") + '</td></tr>';
+            } else if (key == "favicon") {
+              outstr += '</table></fieldset><table id="allsettings" border="0">';
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "useselfsignedcertChange(true);") + '</td></tr>';
+            } else {
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
             }
-            outstr += '<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;</td><td> '+result[key][1];
-            if ((typeof result[key][5] !== 'undefined' ) && (result[key][5] == 1)) {
-              outstr += '<div id="' + key + '_disabled"><font size="-3">(disabled)</font></div>';
-            }
-            outstr += '</td><td>';
-            switch (result[key][0]) {
-              case "string":
-                outstr += '<input id="' + key + '" style="width: 400px;" name="' + key + '" type="text" ' +
-                           (typeof result[key][3] === 'undefined' ? '' : 'value="' + replaceAll(result[key][3], '"', '&quot;') + '" ') +
-                           (typeof result[key][3] === 'undefined' ? '' : 'oldValue="' + replaceAll(result[key][3], '"', '&quot;') + '" ') +
-                           (((typeof result[key][4] === 'undefined' ) || (result[key][4].trim() == "")) ? '' : 'title="' + replaceAll(result[key][4], '"', '&quot;') + '" ') +
-                          ' class="tooltip">';
-                break;
-              case "int":
-                outstr += '<input id="' + key + '" name="' + key + '" type="text" ' +
-                           (typeof result[key][3] === 'undefined' ? '' : 'value="' + result[key][3].toString() + '" ') +
-                           (typeof result[key][3] === 'undefined' ? '' : 'oldValue="' + result[key][3].toString() + '" ') +
-                           (((typeof result[key][4] === 'undefined' ) || (result[key][4].trim() == "")) ? '' : 'title="' + replaceAll(result[key][4], '"', '&quot;') + '" ') +
-                          ' class="tooltip">';
-                break;
-              case "boolean":
-                outstr += '<span id="' + key + '_bg"><input id="' + key + '" name="' + key + '" type="checkbox" ' +
-                           (((typeof result[key][3] !== 'undefined' ) && (result[key][3].toString() == "true")) ? ' checked ' : '') +
-                           (((typeof result[key][3] !== 'undefined' ) && (result[key][3].toString() == "true")) ? ' oldValue="true" ' : ' oldValue="false" ') +
-                           (((typeof result[key][4] === 'undefined' ) || (result[key][4].trim() == "")) ? '' : 'title="' + replaceAll(result[key][4], '"', '&quot;') + '" ') +
-                          ' class="tooltip"></span>';
-                break;
-              default:
-                break;
-            }
-            outstr += '</td>';
         }
-        outstr += '</table></form>';
+        outstr += '</table></fieldset></form><br>';
         outstr += '<button id="setsettingsbutton" onClick="saveSettings()">Save</button>';
+
         $("#mydisplay").html(outstr);
-        $('.tooltip').tooltipster({
-           animation: 'fade',
-           delay: 100,
-           trigger: 'click',
-           side: ['bottom', 'left']
+        $('input').lc_switch();
+        $.extend($.idealforms.rules, {
+           // InternetAddress: /^[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(\/.*)?$/g, /// Warning - this does nto seem to work well.
+           // The rule is added as "ruleFunction:arg1:arg2"
+           InternetAddress: function(input, value, arg1, arg2) {
+             var regex = RegExp("^[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(\/.*)?$", 'g');
+             return regex.test(value);
+           },
+           UnixFile: function(input, value, arg1, arg2) {
+             var regex = RegExp("^(\/[^\/]+)+$", 'g');
+             return regex.test(value);
+           },
+           UnixDir: function(input, value, arg1, arg2) {
+             var regex = RegExp("^(\/[^\/]+)+\/$", 'g');
+             return regex.test(value);
+           },
+           UnixDevice: function(input, value, arg1, arg2) {
+             var regex = RegExp("^\/dev(\/[^\/]+)+$", 'g');
+             return regex.test(value);
+           }
         });
-	$("#disableemail").trigger("change");
-        $("#displayoutput").trigger("change");
-        $("#usehttps").trigger("change");
-        $("#imap_server").trigger("change");
-
-        $(document).ready(function() {
-            $('input').change(function(){
-               var name = $(this).attr("id");
-               var oldValue = $(this).attr('oldValue');
-               var currentValue = (($(this).attr('type') == "checkbox") ? ($(this).prop('checked') === true ? "true" : "false") : $(this).val());
-               if (oldValue != currentValue) {
-                 if ($("#"+name+"_disabled").is(":visible")) {
-                    $("#"+name+"_disabled").hide(500);
-                    $(this).attr("oldValue", "")
-                 }
-                 if ($(this).attr('type') == "checkbox") {
-                   // $("#"+name+"_bg").css("background-color","#FFB");
-                   $(this).parent().find(".lcs_switch").addClass("lcs_changed");
-                 } else {
-                   $(this).css("background-color","#FFB");
-                 }
-               } else {
-                 $(this).css("background-color","#FFF");
-                 // $("#"+name+"_bg").css("background-color","#FFF");
-                 $(this).parent().find(".lcs_switch").removeClass("lcs_changed");
-               }
-            });
-            $("#disableemail").change(function () {
-                 if($(this).is(":checked")) {
-                     $("#smtp_port").attr("disabled", "disabled");
-                     $("#imap_server").attr("disabled", "disabled");
-                     $("#smtp_server").attr("disabled", "disabled");
-                     $("#ssl_enabled").attr("disabled", "disabled");
-                     $("#email_recipient").attr("disabled", "disabled");
-                     $("#sender_account").attr("disabled", "disabled");
-                     $("#email_pw").attr("disabled", "disabled");
-                     $("#email_account").attr("disabled", "disabled");
-                     $("#incoming_mail_folder").attr("disabled", "disabled");
-                     $("#processed_mail_folder").attr("disabled", "disabled");
-                 } else {
-                     $("#smtp_port").removeAttr("disabled");
-                     $("#imap_server").removeAttr("disabled");
-                     $("#smtp_server").removeAttr("disabled");
-                     $("#ssl_enabled").removeAttr("disabled");
-                     $("#email_recipient").removeAttr("disabled");
-                     $("#sender_account").removeAttr("disabled");
-                     $("#email_pw").removeAttr("disabled");
-                     $("#email_account").removeAttr("disabled");
-                     if ($("#imap_server").val() != "") {
-                       $("#incoming_mail_folder").removeAttr("disabled");
-                       $("#processed_mail_folder").removeAttr("disabled");
-                     }
-                 }
-            });
-            $("#displayoutput").change(function () {
-                 if($(this).is(":checked")) {
-                     $("#displaymonitor").removeAttr("disabled");
-                     $("#displayregisters").removeAttr("disabled");
-                     $("#displaystatus").removeAttr("disabled");
-                     $("#displaymaintenance").removeAttr("disabled");
-                    // $("#displayunknown").removeAttr("disabled");
-                 } else {
-                     $("#displaymonitor").attr("disabled", "disabled");
-                     $("#displayregisters").attr("disabled", "disabled");
-                     $("#displaystatus").attr("disabled", "disabled");
-                     $("#displaymaintenance").attr("disabled", "disabled");
-                    // $("#displayunknown").attr("disabled", "disabled");
-                 }
-            });
-            $("#usehttps").change(function () {
-                 if(($(this).is(":checked")) & (!$("#usehttps_disabled").is(":visible"))) {
-                     $("#useselfsignedcert").removeAttr("disabled");
-                     if (!$("#useselfsignedcert").is(":checked")) {
-                       $("#keyfile").removeAttr("disabled");
-                       $("#certfile").removeAttr("disabled");
-                     }
-                     $("#http_user").removeAttr("disabled");
-                     $("#http_pass").removeAttr("disabled");
-                 } else {
-                     $("#useselfsignedcert").attr("disabled", "disabled");
-                     $("#keyfile").attr("disabled", "disabled");
-                     $("#certfile").attr("disabled", "disabled");
-                     $("#http_user").attr("disabled", "disabled");
-                     $("#http_pass").attr("disabled", "disabled");
-                 }
-            });
-            $("#useselfsignedcert").change(function () {
-                 if ($(this).is(":checked")) {
-                     $("#keyfile").attr("disabled", "disabled");
-                     $("#certfile").attr("disabled", "disabled");
-                 } else {
-                     $("#keyfile").removeAttr("disabled");
-                     $("#certfile").removeAttr("disabled");
-                 }
-            });
-            $("#imap_server").change(function () {
-                 if($(this).val() != "") {
-                     $("#incoming_mail_folder").removeAttr("disabled");
-                     $("#processed_mail_folder").removeAttr("disabled");
-                 } else {
-                     $("#incoming_mail_folder").attr("disabled", "disabled");
-                     $("#processed_mail_folder").attr("disabled", "disabled");
-                 }
-            });
-            $("#disableemail").trigger("change");
-            $("#displayoutput").trigger("change");
-            $("#usehttps").trigger("change");
-            $("#imap_server").trigger("change");
-            $("#useselfsignedcert").trigger("change");
+        $.extend($.idealforms.errors, {
+            InternetAddress: 'Must be a valid address from an internet server, eg. mail.google.com',
+            UnixFile: 'Must be a valid UNIX file',
+            UnixDir: 'Must be a valid UNIX path',
+            UnixDevice: 'Must be a valid UNIX file path starting with /dev/'
+        });
+        $('form.idealforms').idealforms({
+           tooltip: '.tooltip',
+           silentLoad: true,
         });
 
-   });
+        usehttpsChange(false);
+        outboundEmailChange(false);
+        inboundemailChange(false);
+        useselfsignedcertChange(false);
+   }});
 
+}
+
+function usehttpsChange(animation) {
+   if ($("#usehttps").is(":checked")) {
+      $("#noneSecuritySettings").hide((animation ? 300 : 0));
+      $("#securitySettings").show((animation ? 300 : 0));
+
+      if (!$("#useselfsignedcert").is(":checked")) {
+         $("#selfsignedSettings").show((animation ? 300 : 0));
+      }
+   } else {
+      $("#securitySettings").hide((animation ? 300 : 0));
+      $("#noneSecuritySettings").show((animation ? 300 : 0));
+   }
+}
+
+function useselfsignedcertChange(animation) {
+   if ($("#useselfsignedcert").is(":checked")) {
+      $("#selfsignedSettings").hide((animation ? 300 : 0));
+   } else {
+      $("#selfsignedSettings").show((animation ? 300 : 0));
+   };
+}
+
+function outboundEmailChange(animation) {
+   if($("#outboundemail").is(":checked")) {
+      $("#outboundEmailSettings").show((animation ? 300 : 0));
+      $("#disableemail").val("false");
+   } else {
+      $("#outboundEmailSettings").hide((animation ? 300 : 0));
+      $("#disableemail").val("true");
+   }
+}
+
+function inboundemailChange(animation) {
+   if($("#inboundemail").is(":checked")) {
+      $("#inboundEmailSettings").show((animation ? 300 : 0));
+   } else {
+      $("#inboundEmailSettings").hide((animation ? 300 : 0));
+   }
+}
+
+function printSettingsField(type, key, value, tooltip, validation, callback) {
+   var outstr = "";
+   switch (type) {
+     case "string":
+       outstr += '<div class="field idealforms-field">' +
+                 '<input id="' + key + '" style="width: 300px;" name="' + key + '" type="text" ' +
+                  (typeof value === 'undefined' ? '' : 'value="' + replaceAll(value, '"', '&quot;') + '" ') +
+                  (typeof value === 'undefined' ? '' : 'oldValue="' + replaceAll(value, '"', '&quot;') + '" ') +
+                  (typeof validation === 'undefined' ? '' : 'data-idealforms-rules="' + validation + '" ') + '>' +
+                 '<span class="error" style="display: none;"></span>' +
+                  (((typeof tooltip === 'undefined' ) || (tooltip.trim() == "")) ? '' : '<span class="tooltip" style="display: none;">' + replaceAll(tooltip, '"', '&quot;') + '</span>') +
+                 '</div>';
+       break;
+     case "int":
+       outstr += '<div class="field idealforms-field">' +
+                 '<input id="' + key + '" style="width: 150px;" name="' + key + '" type="text" ' +
+                  (typeof value === 'undefined' ? '' : 'value="' + value.toString() + '" ') +
+                  (typeof value === 'undefined' ? '' : 'oldValue="' + value.toString() + '" ') +
+                  (typeof validation === 'undefined' ? '' : 'data-idealforms-rules="' + validation + '" ') + '>' +
+                 '<span class="error" style="display: none;"></span>' +
+                  (((typeof tooltip === 'undefined' ) || (tooltip.trim() == "")) ? '' : '<span class="tooltip" style="display: none;">' + replaceAll(tooltip, '"', '&quot;') + '</span>') +
+                 '</div>';
+       break;
+     case "boolean":
+       outstr += '<div class="field idealforms-field" onmouseover="showIdealformTooltip($(this))" onmouseout="hideIdealformTooltip($(this))">' +
+                 '<input id="' + key + '" name="' + key + '" type="checkbox" ' +
+                  ((callback != "") ? ' data-callback="' + callback + ';" ' : "") +
+                  (((typeof value !== 'undefined' ) && (value.toString() == "true")) ? ' checked ' : '') +
+                  (((typeof value !== 'undefined' ) && (value.toString() == "true")) ? ' oldValue="true" ' : ' oldValue="false" ') + '>' +
+                  (((typeof tooltip === 'undefined' ) || (tooltip.trim() == "")) ? '' : '<span class="tooltip" style="display: none;">' + replaceAll(tooltip, '"', '&quot;') + '</span><i class="icon"></i>') +
+                 '</div>';
+       break;
+     case "list":
+       outstr += '<div class="field idealforms-field" onmouseover="showIdealformTooltip($(this))" onmouseout="hideIdealformTooltip($(this))">' +
+                 '<select id="' + key + '" style="width: 300px;" name="' + key + '" ' +
+                  (typeof value === 'undefined' ? '' : 'value="' + replaceAll(value, '"', '&quot;') + '" ') +
+                  (typeof value === 'undefined' ? '' : 'oldValue="' + replaceAll(value, '"', '&quot;') + '" ') + '>' +
+                 $.map(validation.split(","), function( val, i ) { return '<option class="optionClass" name="'+val+'" '+((val==value) ? 'selected' : '')+'>'+val+'</option>'}).join() +
+                 '</select>' +
+                  (((typeof tooltip === 'undefined' ) || (tooltip.trim() == "")) ? '' : '<span class="tooltip" style="display: none;">' + replaceAll(tooltip, '"', '&quot;') + '</span><i class="icon"></i>') +
+                 '</div>';
+       break;
+     default:
+       break;
+   }
+   return outstr;
+}
+
+function showIdealformTooltip(obj) {
+    obj.find(".tooltip").show()
+}
+
+function hideIdealformTooltip(obj) {
+    obj.find(".tooltip").hide()
 }
 
 function getSortedKeys(obj, index) {
@@ -1080,9 +1358,13 @@ function saveSettings(){
              });
              setTimeout(function(){
                 vex.closeAll();
-                if ($('#sitename').val() != $('#sitename').attr('oldValue')) { SetHeaderValues(); }
+                if ($('#sitename').val() != $('#sitename').attr('oldValue')) { myGenerator["sitename"] = $('#sitename').val(); SetHeaderValues(); }
+                if ($('#nominalRPM').val() != $('#nominalRPM').attr('oldValue')) { myGenerator["nominalRPM"] = $('#nominalRPM').val(); }
+                if ($('#nominalfrequency').val() != $('#nominalfrequency').attr('oldValue')) { myGenerator["nominalfrequency"] = $('#sitename').val(); }
+                if ($('#nominalKW').val() != $('#nominalKW').attr('oldValue')) { myGenerator["nominalKW"] = $('#nominalKW').val(); }
+                if ($('#fueltype').val() != $('#fueltype').attr('oldValue')) { myGenerator["fueltype"] = $('#fueltype').val(); }
                 if ($('#favicon').val() != $('#favicon').attr('oldValue')) { changeFavicon($('#favicon').val()); }
-                if (($('#enhancedexercise').prop('checked')  === true ? "true" : "false") != $('#enhancedexercise').attr('oldValue')) { ExerciseParameters['EnhancedExerciseEnabled'] = ($('#enhancedexercise').prop('checked')  === true ? "true" : "false") }
+                if (($('#enhancedexercise').prop('checked')  === true ? "true" : "false") != $('#enhancedexercise').attr('oldValue')) { myGenerator['EnhancedExerciseEnabled'] = ($('#enhancedexercise').prop('checked')  === true ? "true" : "false") }
              }, 10000);
            }
         }
@@ -1096,6 +1378,13 @@ function saveSettingsJSON() {
         $('#formSettings input').each(function() {
             var oldValue = $(this).attr('oldValue');
             var currentValue = (($(this).attr('type') == "checkbox") ? ($(this).prop('checked') === true ? "true" : "false") : $(this).val());
+            if (oldValue != currentValue) {
+               fields[$(this).attr('name')] = currentValue;
+            }
+        });
+        $('#formSettings select').each(function() {
+            var oldValue = $(this).attr('oldValue');
+            var currentValue = $(this).val();
             if (oldValue != currentValue) {
                fields[$(this).attr('name')] = currentValue;
             }
@@ -1146,7 +1435,8 @@ var BaseRegistersDescription = { "0000" : "Product line",
                                  "001f" : "Unknown",
                                  "0020" : "Unknown",
                                  "0021" : "Unknown",
-                                 "0019" : "Unknown",
+                                 "0022" : "Unknown",
+                                 "0019" : "Model Identity (EvoAC)",
                                  "0057" : "Unknown Status",
                                  "0055" : "Unknown",
                                  "0056" : "Unknown Status",
@@ -1162,8 +1452,10 @@ var BaseRegistersDescription = { "0000" : "Product line",
                                  "0034" : "Unknown Sensor (Nexus, EvoAC)",
                                  "0032" : "Unknown Sensor (Nexus, EvoAC)",
                                  "0033" : "Unknown Sensor (EvoAC)",
+                                 "0036" : "Unknown",
                                  "0037" : "CT Output (EvoAC)",
                                  "0038" : "Unknown Sensor (Nexus, EvoAC)",
+                                 "003a" : "Unknown Sensor (Nexus, EvoAC)",
                                  "003b" : "Unknown Sensor (Nexus, EvoAC)",
                                  "002b" : "UnknownSensor (Temp?) (EvoAC)",
                                  "0208" : "Unknown (EvoAC)",
@@ -1173,7 +1465,10 @@ var BaseRegistersDescription = { "0000" : "Product line",
                                  "002f" : "Quite Mode (EvoAC)",
                                  "005c" : "Unknown",
                                  "0001" : "Switch, Engine and Alarm Status",
-                                 "05f4" : "Output relay status register (EvoAC)",
+                                 "05f4" : "Current Output E1 (EvoAC)",
+                                 "05f5" : "Current Output E2 (EvoAC)",
+                                 "05f6" : "Current Calibration E1 (EvoAC)",
+                                 "05f7" : "Current Calibration E2 (EvoAC)",
                                  "0053" : "Output relay status register (EvoLC)",
                                  "0052" : "Input status register (sensors) (Evo LC)",
                                  "0009" : "Utility Voltage",
@@ -1185,38 +1480,38 @@ function DisplayRegistersFull()
     var outstr = 'Live Register View:<br><br>';
     outstr += '<center><table width="80%" border="0"><tr>';
 
-    $.each(Object.keys(RegisterHistory1).sort(), function(i, reg_key) {
+    $.each(Object.keys(regHistory["updateTime"]).sort(), function(i, reg_key) {
         if ((i % 4) == 0){
         outstr += '</tr><tr>';
         }
 
-        var reg_val = RegisterHistory1[reg_key][0];
+        var reg_val = regHistory["_10m"][reg_key][0];
 
         outstr += '<td width="25%" class="registerTD">';
         outstr +=     '<table width="100%" heigth="100%" id="val_'+reg_key+'">';
         outstr +=     '<tr><td align="center" class="registerTDtitle">' + BaseRegistersDescription[reg_key] + '</td></tr>';
         outstr +=     '<tr><td align="center" class="registerTDsubtitle">(' + reg_key + ')</td></tr>';
-        outstr +=     '<tr><td align="center" class="tooltip" id="content_'+reg_key+'">';
+        outstr +=     '<tr><td align="center" class="tooltip registerChart" id="content_'+reg_key+'">';
         outstr +=        ((reg_key == "01f4") ? '<span class="registerTDvalMedium">HEX:<br>' + reg_val + '</span>' : 'HEX: '+reg_val) + '<br>';
         outstr +=        ((reg_key == "01f4") ? '' : '<span class="registerTDvalSmall">DEC: ' + parseInt(reg_val, 16) + ' | HI:LO: '+parseInt(reg_val.substring(0,2), 16)+':'+parseInt(reg_val.substring(2,4), 16)+'</span>');
         outstr +=     '</td></tr>';
         outstr +=     '</table>';
         outstr += '</td>';
     });
-    if ((RegisterHistory1.length % 4) > 0) {
-      for (var i = (RegisterHistory1.length % 4); i < 4; i++) {
+    if ((regHistory["_10m"].length % 4) > 0) {
+      for (var i = (regHistory["_10m"].length % 4); i < 4; i++) {
          outstr += '<td width="25%" class="registerTD"></td>';
       }
     }
     outstr += '</tr></table>';
-    outstr += '<br><img id="print10" style="cursor: pointer;" onClick="printRegisters(10)" src="images/print10.png" width="36px" height="36px">&nbsp;&nbsp;&nbsp;';
-    outstr += '<img id="print60" style="cursor: pointer;" onClick="printRegisters(60)" src="images/print60.png" width="36px" height="36px">&nbsp;&nbsp;&nbsp;';
-    outstr += '<img id="print24" style="cursor: pointer;" onClick="printRegisters(24)" src="images/print24.png" width="36px" height="36px"><br>';
+    outstr += '<br><img id="print10" class="printButton" onClick="printRegisters(10)" src="images/print10.png" width="36px" height="36px">&nbsp;&nbsp;&nbsp;';
+    outstr += '<img id="print60" class="printButton" onClick="printRegisters(60)" src="images/print60.png" width="36px" height="36px">&nbsp;&nbsp;&nbsp;';
+    outstr += '<img id="print24" class="printButton" onClick="printRegisters(24)" src="images/print24.png" width="36px" height="36px"><br>';
     outstr += '</center>';
 
     $("#mydisplay").html(outstr);
     UpdateRegistersColor();
-    $('.tooltip').tooltipster({
+    $('.registerChart').tooltipster({
         minWidth: '280px',
         maxWidth: '280px',
         animation: 'fade',
@@ -1225,29 +1520,29 @@ function DisplayRegistersFull()
         delay: 100,
         animationDuration: 200,
         interactive: true,
-        content: '<div style="height:280px;width:250px;overflow-x:hidden;overflow-y:hidden;"></div>',
+        content: '<div class="regHistoryCanvas"></div>',
         side: ['top', 'left'],
         functionReady: function(instance, helper) {
             var regId = $(helper.origin).attr('id').replace(/content_/g, '');
-            instance.content('<div style="height:280px;width:250px;overflow-x:hidden;overflow-y:hidden;"><table><tr><td style="height:250px;width:250px;vertical-align:top;">' +
-                             '  <div id="'+regId+'_graph1" style="height:250px;width:250px;overflow-x:hidden;overflow-y:hidden;"></div>' +
-                             '  <div id="'+regId+'_graph2" style="height:250px;width:250px;overflow-x:hidden;overflow-y:hidden;"></div>' +
-                             '  <div id="'+regId+'_graph3" style="height:250px;width:250px;overflow-x:hidden;overflow-y:hidden;"></div>' +
-                             '</td></tr><tr><td style="height:30px;width:250px;vertical-align:bottom;"><center>' +
-                             '  <u style="cursor: pointer;" onClick="$(\'#'+regId+'_graph1\').css(\'display\', \'block\');$(\'#'+regId+'_graph2\').css(\'display\', \'none\');$(\'#'+regId+'_graph3\').css(\'display\', \'none\');">10 min</u> | ' +
-                             '  <u style="cursor: pointer;" onClick="$(\'#'+regId+'_graph1\').css(\'display\', \'none\');$(\'#'+regId+'_graph2\').css(\'display\', \'block\');$(\'#'+regId+'_graph3\').css(\'display\', \'none\');">1 hr</u> | ' +
-                             '  <u style="cursor: pointer;" onClick="$(\'#'+regId+'_graph1\').css(\'display\', \'none\');$(\'#'+regId+'_graph2\').css(\'display\', \'none\');$(\'#'+regId+'_graph3\').css(\'display\', \'block\');">24 hr</u>' +
+            instance.content('<div class="regHistoryCanvas"><table><tr><td class="regHistoryCanvasTop">' +
+                             '  <div id="'+regId+'_graph1" class="regHistoryPlot"></div>' +
+                             '  <div id="'+regId+'_graph2" class="regHistoryPlot"></div>' +
+                             '  <div id="'+regId+'_graph3" class="regHistoryPlot"></div>' +
+                             '</td></tr><tr><td class="regHistoryCanvasBottom"><center>' +
+                             '  <div class="regHistory selection" onClick="$(\'.regHistory\').removeClass(\'selection\');$(this).addClass(\'selection\');$(\'#'+regId+'_graph1\').css(\'display\', \'block\');$(\'#'+regId+'_graph2\').css(\'display\', \'none\');$(\'#'+regId+'_graph3\').css(\'display\', \'none\');">10 min</div> | ' +
+                             '  <div class="regHistory" onClick="$(\'.regHistory\').removeClass(\'selection\');$(this).addClass(\'selection\');$(\'#'+regId+'_graph1\').css(\'display\', \'none\');$(\'#'+regId+'_graph2\').css(\'display\', \'block\');$(\'#'+regId+'_graph3\').css(\'display\', \'none\');">1 hr</div> | ' +
+                             '  <div class="regHistory" onClick="$(\'.regHistory\').removeClass(\'selection\');$(this).addClass(\'selection\');$(\'#'+regId+'_graph1\').css(\'display\', \'none\');$(\'#'+regId+'_graph2\').css(\'display\', \'none\');$(\'#'+regId+'_graph3\').css(\'display\', \'block\');">24 hr</div>' +
                              '</center></td></tr></table></div>');
             var plot_data1 = [];
             var plot_data2 = [];
             var plot_data3 = [];
             for (var i = 120; i >= 0; --i) {
-               if (RegisterHistory1[regId].length > i)
-                   plot_data1.push([-i/12, parseInt(RegisterHistory1[regId][i], 16)]);
-               if (RegisterHistory2[regId].length > i)
-                   plot_data2.push([-i/2, parseInt(RegisterHistory2[regId][i], 16)]);
-               if (RegisterHistory3[regId].length > i)
-                   plot_data3.push([-i/5, parseInt(RegisterHistory3[regId][i], 16)]);
+               if (regHistory["_10m"][regId].length > i)
+                   plot_data1.push([-i/12, parseInt(regHistory["_10m"][regId][i], 16)]);
+               if (regHistory["_60m"][regId].length > i)
+                   plot_data2.push([-i/2, parseInt(regHistory["_60m"][regId][i], 16)]);
+               if (regHistory["_24h"][regId].length > i)
+                   plot_data3.push([-i/5, parseInt(regHistory["_24h"][regId][i], 16)]);
             }
             var plot1 = $.jqplot(regId+'_graph1', [plot_data1], {
                                axesDefaults: { tickOptions: { textColor: '#999999', fontSize: '8pt' }},
@@ -1270,111 +1565,83 @@ function DisplayRegistersFull()
 
 function UpdateRegisters(init, printToScreen)
 {
+    if (init) {
+      var now = new moment();
+      regHistory["historySince"] = now.format("D MMMM YYYY H:mm:ss");
+      regHistory["count_60m"] = 0;
+      regHistory["count_24h"] = 0;
+    }
+
     var url = baseurl.concat("registers_json");
-    $.getJSON(url,function(RegData){
-        var tkWEngineStateOff, tkWVoltage, tkWCurrentLC, tkWCurrentAC;
-        var reg_keys = {};
+    $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(RegData){
+        processAjaxSuccess();
+
         $.each(RegData.Registers["Base Registers"], function(i, item) {
             var reg_key = Object.keys(item)[0]
             var reg_val = item[Object.keys(item)[0]];
 
-            if (reg_key == "0001") {
-               tkWEngineStateOff = (((parseInt(reg_val, 16) & 0x000F0000) == 0x00000000) || ((parseInt(reg_val, 16) & 0x000F0000) == 0x00080000) || ((parseInt(reg_val, 16) & 0x000F0000) == 0x00090000)) ? true : false;
-            } else if (reg_key == "0012") {
-               tkWVoltage = parseInt(((reg_val != "0000") ? reg_val : 0), 16);
-            } else if (reg_key == "0058")  {
-               tkWCurrentLC = parseInt(reg_val, 16)/10;
-            } else if (reg_key == "0037")  {
-               tkWCurrentAC = parseInt(reg_val, 16)/100;
-            }
-            if (init) {
-                RegisterUpdateTime[reg_key] = 0;
-                RegisterHistory1[reg_key] = [];
-
-                RegisterHistory2[reg_key] = [reg_val, reg_val];
-                RegisterHistory2_temp[reg_key] = {counter: 0, min: reg_val, minCounter: 0, max: reg_val, maxCounter: 0};
-
-                RegisterHistory3[reg_key] = [reg_val, reg_val];
-                RegisterHistory3_temp[reg_key] = {counter: 0, min: reg_val, minCounter: 0, max: reg_val, maxCounter: 0}
+            if ((init) || (regHistory["_10m"][reg_key] == undefined)) {
+                regHistory["updateTime"][reg_key] = 0;
+                regHistory["_10m"][reg_key] = [reg_val];
+                regHistory["_60m"][reg_key] = [reg_val, reg_val];
+                regHistory["_24h"][reg_key] = [reg_val, reg_val];
             } else {
-               RegisterHistory2_temp[reg_key]["counter"] =  RegisterHistory2_temp[reg_key]["counter"]+1;
-               if (RegisterHistory2_temp[reg_key]["min"] > reg_val) {
-                  RegisterHistory2_temp[reg_key]["min"] = reg_val;
-                  RegisterHistory2_temp[reg_key]["minCounter"] = RegisterHistory2_temp[reg_key]["counter"];
-               } else if (RegisterHistory2_temp[reg_key]["max"] < reg_val) {
-                  RegisterHistory2_temp[reg_key]["max"] = reg_val;
-                  RegisterHistory2_temp[reg_key]["maxCounter"] = RegisterHistory2_temp[reg_key]["counter"];
-               }
-
-               RegisterHistory3_temp[reg_key]["counter"] =  RegisterHistory3_temp[reg_key]["counter"]+1;
-               if (RegisterHistory3_temp[reg_key]["min"] > reg_val) {
-                  RegisterHistory3_temp[reg_key]["min"] = reg_val;
-                  RegisterHistory3_temp[reg_key]["minCounter"] = RegisterHistory3_temp[reg_key]["counter"];
-               } else if (RegisterHistory3_temp[reg_key]["max"] < reg_val) {
-                  RegisterHistory3_temp[reg_key]["max"] = reg_val;
-                  RegisterHistory3_temp[reg_key]["maxCounter"] = RegisterHistory3_temp[reg_key]["counter"];
-               }
-               var old_reg_val = RegisterHistory1[reg_key][0];
-               if (reg_val != old_reg_val) {
-                  RegisterUpdateTime[reg_key] = new Date().getTime();
+               if (reg_val != regHistory["_10m"][reg_key][0]) {
+                  regHistory["updateTime"][reg_key] = new Date().getTime();
 
                   if (printToScreen) {
                     var outstr  = ((reg_key == "01f4") ? '<span class="registerTDvalMedium">HEX:<br>' + reg_val + '</span>' : 'HEX: '+reg_val) + '<br>';
                         outstr += ((reg_key == "01f4") ? '' : '<span class="registerTDvalSmall">DEC: ' + parseInt(reg_val, 16) + ' | HI:LO: '+parseInt(reg_val.substring(0,2), 16)+':'+parseInt(reg_val.substring(2,4), 16)+'</span>');
-                    $("#content_"+reg_key).html(outstr)
+                    $("#content_"+reg_key).html(outstr);
                   }
                }
             }
-            RegisterHistory1[reg_key].unshift(reg_val);
-            if  (RegisterHistory1[reg_key].length > 120) {
-               RegisterHistory1[reg_key].pop  // remove the last element
+            regHistory["_10m"][reg_key].unshift(reg_val);
+            if  (regHistory["_10m"][reg_key].length > 120) {
+               regHistory["_10m"][reg_key].pop  // remove the last element
             }
 
-            if (RegisterHistory2_temp[reg_key]["counter"] >= 12) {
-               if (RegisterHistory2_temp[reg_key]["minCounter"] > RegisterHistory2_temp[reg_key]["maxCounter"]) {
-                  RegisterHistory2[reg_key].unshift(RegisterHistory2_temp[reg_key]["min"], RegisterHistory2_temp[reg_key]["max"]);
-               } else {
-                  RegisterHistory2[reg_key].unshift(RegisterHistory2_temp[reg_key]["max"], RegisterHistory2_temp[reg_key]["min"]);
+            if (regHistory["count_60m"] >= 12) {
+               var min = 0;
+               var max = 0;
+               for (var i = 1; i <12; i++) {
+                   if (regHistory["_10m"][reg_key][i] > regHistory["_10m"][reg_key][max])
+                      max = i;
+                   if (regHistory["_10m"][reg_key][i] < regHistory["_10m"][reg_key][min])
+                      min = i;
                }
-               RegisterHistory2_temp[reg_key] = {counter: 0, min: reg_val, minCounter: 0, max: reg_val, maxCounter: 0};
-               if  (RegisterHistory2[reg_key].length > 120) {
-                 RegisterHistory2[reg_key].splice(-2, 2)  // remove the last 2 element
-               }
+               regHistory["_60m"][reg_key].unshift(regHistory["_10m"][reg_key][((min > max) ? min : max)], regHistory["_10m"][reg_key][((min > max) ? max : min)]);
+
+               if  (regHistory["_60m"][reg_key].length > 120)
+                 regHistory["_60m"][reg_key].splice(-2, 2);  // remove the last 2 element
             }
 
-            if (RegisterHistory3_temp[reg_key]["counter"] >= 288) {
-               if (RegisterHistory3_temp[reg_key]["minCounter"] > RegisterHistory3_temp[reg_key]["maxCounter"]) {
-                  RegisterHistory3[reg_key].unshift(RegisterHistory3_temp[reg_key]["min"], RegisterHistory3_temp[reg_key]["max"]);
-               } else {
-                  RegisterHistory3[reg_key].unshift(RegisterHistory3_temp[reg_key]["max"], RegisterHistory3_temp[reg_key]["min"]);
+            if (regHistory["count_60m"] >= 288) {
+               var min = 0;
+               var max = 0;
+               for (var i = 1; i <24; i++) {
+                   if (regHistory["_60m"][reg_key][i] > regHistory["_60m"][reg_key][max])
+                      max = i;
+                   if (regHistory["_60m"][reg_key][i] < regHistory["_60m"][reg_key][min])
+                      min = i;
                }
-               RegisterHistory3_temp[reg_key] = {counter: 0, min: reg_val, minCounter: 0, max: reg_val, maxCounter: 0};
-               if  (RegisterHistory3[reg_key].length > 120) {
-                 RegisterHistory3[reg_key].splice(-2, 2)  // remove the last 2 element
-               }
+               regHistory["_24h"][reg_key].unshift(regHistory["_60m"][reg_key][((min > max) ? min : max)], regHistory["_60m"][reg_key][((min > max) ? max : min)]);
+
+               if  (regHistory["_24h"][reg_key].length > 120)
+                 regHistory["_24h"][reg_key].splice(-2, 2);  // remove the last 2 element
             }
         });
-
-        if (init) {
-            kWHistory = [];
-            RegisterSince = new Date();
-        } else {
-            var reg_val = (tkWEngineStateOff) ? 0 : (tkWVoltage * ((tkWCurrentLC != 0) ? tkWCurrentLC : tkWCurrentAC) / 1000);
-            // console.log(tkWEngineStateOff + " -> " + tkWVoltage + " * " + ((tkWCurrentLC != 0) ? tkWCurrentLC : tkWCurrentAC) + " = " + reg_val);
-            kWHistory.unshift(reg_val);
-            if  (kWHistory.length > 720) {
-               kWHistory.pop  // remove the last element
-            }
-        }
+        regHistory["count_60m"] = ((regHistory["count_60m"] >= 12) ? 0 : regHistory["count_60m"]+1);
+        regHistory["count_24h"] = ((regHistory["count_24h"] >= 288) ? 0 : regHistory["count_24h"]+1);
 
         if (printToScreen)
            UpdateRegistersColor();
-    });
+    }});
 }
 
 function UpdateRegistersColor() {
     var CurrentTime = new Date().getTime();
-    $.each(RegisterUpdateTime, function( reg_key, update_time ){
+    $.each(regHistory["updateTime"], function( reg_key, update_time ){
         var difference = CurrentTime - update_time;
         var secondsDifference = Math.floor(difference/1000);
         if ((update_time > 0) && (secondsDifference >= fadeOffTime)) {
@@ -1398,20 +1665,20 @@ function printRegisters (type) {
     var dataDivider;
 
     if (type == 10) {
-      data = RegisterHistory1;
+      data = regHistory["_10m"];
       labelTitle = "last 10 minutes";
       labelMin = -10;
       labelText = "Time (Minutes ago)";
       dataDivider = 12;
     } else if (type == 60) {
       labelTitle = "last 1 hour";
-      data = RegisterHistory2;
+      data = regHistory["_60m"];
       labelMin = -60;
       labelText = "Time (Minutes ago)";
       dataDivider = 2;
     } else if (type == 24) {
      labelTitle = "last 24 hours";
-      data = RegisterHistory3;
+      data = regHistory["_24h"];
       labelMin = -24;
       labelText = "Time (hours ago)";
       dataDivider = 5;
@@ -1420,11 +1687,9 @@ function printRegisters (type) {
 
     $('<div id="printRegisterFrame" style="width:1000px"></div>').appendTo("#mydisplay");
 
-    var date = new Date();
-    var dateStr1 = date.getDate() + " " + MonthsOfYearArray[date.getMonth()] + " " + date.getFullYear() + ", " +  date.getHours() + ":" + date.getMinutes().pad() + ":" + date.getSeconds().pad();
-    var dateStr2 = RegisterSince.getDate() + " " + MonthsOfYearArray[RegisterSince.getMonth()] + " " + RegisterSince.getFullYear() + ", " +  RegisterSince.getHours() + ":" + RegisterSince.getMinutes().pad() + ":" + RegisterSince.getSeconds().pad();
+    var now = new moment();
     var outstr = '<br><center><h1>Generator Registers for '+labelTitle+'</h1><br>';
-    outstr += '<h2>As of: '+dateStr1+'<br><small>(data avilable since: '+dateStr2+')</small></h2><br>';
+    outstr += '<h2>As of: '+now.format("D MMMM YYYY H:mm:ss")+'<br><small>(data avilable since: '+regHistory["historySince"]+')</small></h2><br>';
     outstr += '<table width="1000px" border="0"><tr>';
 
     $.each(Object.keys(data).sort(), function(i, reg_key) {
@@ -1454,10 +1719,10 @@ function printRegisters (type) {
         outstr +=     '<table width="333px" heigth="100%" id="val_'+reg_key+'">';
         outstr +=     '<tr><td align="center" class="registerTDsubtitle">' + reg_key + '</td></tr>';
         outstr +=     '<tr><td align="center" class="registerTDtitle">' + BaseRegistersDescription[reg_key] + '</td></tr>';
-        outstr +=     '<tr><td align="center" class="registerTDsubtitle">Current Value: ' + RegisterHistory1[reg_key][0] + '</td></tr>';
+        outstr +=     '<tr><td align="center" class="registerTDsubtitle">Current Value: ' + regHistory["_10m"][reg_key][0] + '</td></tr>';
         if (min != max) {
           outstr +=     '<tr><td align="center" class="registerTDsubtitle">Minimum Value: '+min+'<br>Maximum Value: '+max+'</td></tr>';
-          outstr +=     '<tr><td align="center" style="height:250px;width:330px;overflow-x:hidden;overflow-y:hidden;"><div id="printPlot_'+reg_key+'"></div></td></tr>';
+          outstr +=     '<tr><td align="center" class="regHistoryPlotCell"><div id="printPlot_'+reg_key+'"></div></td></tr>';
           plots.push(reg_key);
           rowHeight = 45;
         } else {
@@ -1488,7 +1753,7 @@ function printRegisters (type) {
                              });
     }
 
-    $("#printRegisterFrame").printThis({canvas: true, importCSS: false, loadCSS: "print.css", pageTitle:"Genmon Registers", removeScripts: true});
+    $("#printRegisterFrame").printThis({canvas: true, importCSS: false, loadCSS: "css/print.css", pageTitle:"Genmon Registers", removeScripts: true});
     setTimeout(function(){ $("#printRegisterFrame").remove(); }, 1000);
 }
 
@@ -1510,8 +1775,10 @@ function MenuClick(target)
         window.scrollTo(0,0);
         switch (menuElement) {
             case "outage":
-            case "monitor":
                 GetDisplayValues(menuElement);
+                break;
+            case "monitor":
+                DisplayMonitor();
                 break;
             case "logs":
                 DisplayLogs();
@@ -1571,7 +1838,8 @@ function replaceAll(str, find, replace) {
 function GetDisplayValues(command)
 {
     var url = baseurl.concat(command);
-    $.getJSON(url,function(result){
+    $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
+        processAjaxSuccess();
 
         // replace /n with html friendly <br/>
         var outstr = replaceAll(result,'\n','<br/>')
@@ -1579,50 +1847,23 @@ function GetDisplayValues(command)
         outstr = replaceAll(outstr,' ','&nbsp')
         $("#mydisplay").html(outstr);
 
-   });
+   }});
 
     return;
 }
-
-//*****************************************************************************
-// Get the Excercise current settings
-//*****************************************************************************
-function GetExerciseValues(callbackFunction){
-
-    var url = baseurl.concat("getexercise");
-    $.getJSON(url,function(result){
-
-        // should return str in this format:
-        // Saturday!13!30!On!Weekly!True
-        // Saturday!13!30!On!Biweekly!Falze
-        // 2!13!30!On!Monthly!False
-        // NOTE: Last param (True or False) is if enhanced exercise freq is enabled
-        resultsArray = result.split("!");
-
-        if (resultsArray.length == 6){
-            ExerciseParameters['ExerciseDay'] = resultsArray[0];
-            ExerciseParameters['ExerciseHour'] = resultsArray[1];
-            ExerciseParameters['ExerciseMinute'] = resultsArray[2];
-            ExerciseParameters['QuietMode'] = resultsArray[3];
-            ExerciseParameters['ExerciseFrequency'] = resultsArray[4];
-            ExerciseParameters['EnhancedExerciseEnabled'] = ((resultsArray[5] === "False") ? false : true);
-        }
-        if (callbackFunction) {
-           callbackFunction();
-        }
-   });
-}
-
 
 //*****************************************************************************
 // GetGeneratorModel - Get the current Generator Model and kW Rating
 //*****************************************************************************
 function GetGeneratorModel()
 {
-    url = baseurl.concat("monitor_json");
-    $.getJSON(url,function(result){
-        GeneratorModel = result["Monitor"]["Generator Monitor Stats"]["Controller"];
-    });
+    url = baseurl.concat("start_info_json");
+    $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
+      processAjaxSuccess();
+
+      myGenerator = result;
+      SetHeaderValues();
+    }});
 }
 
 //*****************************************************************************
@@ -1630,16 +1871,9 @@ function GetGeneratorModel()
 //*****************************************************************************
 function SetHeaderValues()
 {
-    url = baseurl.concat("getsitename");
-    $.getJSON(url,function(result){
-        // replace /n with html friendly <br/>
-        var outstr = replaceAll(result,'\n','<br/>')
-        // replace space with html friendly &nbsp
-        outstr = replaceAll(outstr,' ','&nbsp')
-        var HeaderStr = '<table border="0" width="100%" height="30px"><tr><td width="30px"></td><td width="90%">Generator Monitor at ' + outstr + '</td><td width="30px"><img id="registers" src="images/registers.png" width="20px" height="20px"></td></tr></table>';
-        $("#myheader").html(HeaderStr);
-        $("#registers").on('click',  function() {  MenuClick($(this));});
-    });
+   var HeaderStr = '<table border="0" width="100%" height="30px"><tr><td width="30px"></td><td width="90%">Generator Monitor at ' + myGenerator["sitename"] + '</td><td width="30px"><img id="registers" src="images/registers.png" width="20px" height="20px"></td></tr></table>';
+   $("#myheader").html(HeaderStr);
+   $("#registers").on('click',  function() {  MenuClick($(this));});
 }
 
 
@@ -1664,10 +1898,23 @@ function changeFavicon(src) {
 function SetFavIcon()
 {
     url = baseurl.concat("getfavicon");
-    $.getJSON(url,function(result){
+    $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
+        processAjaxSuccess();
         changeFavicon(result);
-    });
+    }});
     return
+}
+
+//*****************************************************************************
+// GetkWHistory - Get the history of the kW generation
+//*****************************************************************************
+function GetkWHistory()
+{
+    url = baseurl.concat("power_log_json");
+    $.ajax({dataType: "json", url: url, timeout: 20000, error: processAjaxError, data: "power_log_json: 10000", success: function(result){
+        processAjaxSuccess();
+        kwHistory["data"] = result.map(function(itm) { return [moment(itm[0], 'MM/DD/YY HH:mm:ss').format('YYYY-MM-DD HH:mm:ss'), parseFloat(itm[1])]; }).sort().reverse();
+    }});
 }
 
 //*****************************************************************************
@@ -1692,11 +1939,13 @@ function UpdateDisplay()
         DisplayMaintenanceUpdate();
     } else if (menuElement == "logs") {
         DisplayLogs();
+    } else if (menuElement == "monitor") {
+        DisplayMonitor();
     } else if ((menuElement != "settings") && (menuElement != "notifications")) {
         GetDisplayValues(menuElement);
     }
 
-    if (menuElement != "registers") {  // regresh the registers every time to keep history
+    if (menuElement != "registers") {  // refresh the registers every time to keep history
         UpdateRegisters(false, false);
     }
 }
@@ -1706,16 +1955,52 @@ function UpdateDisplay()
 //*****************************************************************************
 function GetBaseStatus()
 {
-    url = baseurl.concat("getbase");
+    url = baseurl.concat("gui_status_json");
+    $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
+        processAjaxSuccess();
 
-    $.getJSON(url,function(result){
+        // should return str in this format:
+        // Saturday!13!30!On!Weekly!True
+        // Saturday!13!30!On!Biweekly!Falze
+        // 2!13!30!On!Monthly!False
+        // NOTE: Last param (True or False) is if enhanced exercise freq is enabled
+        var resultsArray = result['Exercise'].split("!");
 
-        baseState = result;
+        if (resultsArray.length == 6){
+            myGenerator['ExerciseDay'] = resultsArray[0];
+            myGenerator['ExerciseHour'] = resultsArray[1];
+            myGenerator['ExerciseMinute'] = resultsArray[2];
+            myGenerator['QuietMode'] = resultsArray[3];
+            myGenerator['ExerciseFrequency'] = resultsArray[4];
+            myGenerator['EnhancedExerciseEnabled'] = ((resultsArray[5] === "False") ? false : true);
+        }
+
+        if (kwHistory["data"].length > 0) { /// Otherwise initialization has not finished
+
+           if ((result['kwOutput'].replace(/kW/g, '') != 0) && (kwHistory["data"][0][1] == 0)) {
+              // make sure we add a 0 before the graph goes up, to ensure the interpolation works
+              kwHistory["data"].unshift([(new moment()).add(-2, "s").format("YYYY-MM-DD HH:mm:ss"), 0]);
+           }
+
+           if ((result['kwOutput'].replace(/kW/g, '') != 0) || (kwHistory["data"][0][1] != 0)) {
+              kwHistory["data"].unshift([(new moment()).format("YYYY-MM-DD HH:mm:ss"), result['kwOutput'].replace(/kW/g, '')]);
+           }
+           if  (kwHistory["data"].length > 10000) {
+              kwHistory["data"].pop  // remove the last element
+           }
+
+           if ((menuElement == "status") && ($("#gaugekW").length > 0)) {
+              gaugekW.set(result['kwOutput'].replace(/kW/g, ''));
+              printKwPlot(result['kwOutput'].replace(/kW/g, ''));
+           }
+        }
+
+        baseState = result['basestatus'];
         // active, activealarm, activeexercise
         if (baseState != currentbaseState) {
 
             // it changed so remove the old class
-            RemoveClass()
+            RemoveClass();
 
             if(baseState === "READY")
                 currentClass = "active";
@@ -1739,7 +2024,8 @@ function GetBaseStatus()
             $("#"+menuElement).find("a").addClass(GetCurrentClass());
         }
         return
-   });
+   }});
 
     return
 }
+
