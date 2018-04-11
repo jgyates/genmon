@@ -276,7 +276,7 @@
 
                 // Add tooltips to days and steps
                 if ( this.settings.tooltips.show && typeof $.fn.tooltipster === "function" ) {
-                    $('.tooltip').tooltipster({
+                    $('#annualCalendar .tooltip').tooltipster({
                                animation: 'fade',
                                delay: 100,
                                contentAsHTML: 'true',
