@@ -381,7 +381,7 @@ def ReadSettingsFromFile():
 
                 "disableemail" : ['boolean', 'Disable Email Usage', 300, True, "", ""],
                 "email_account" : ['string', 'Email Account', 301, "myemail@gmail.com", "", "minmax:3:50"],
-                "email_pw" : ['string', 'Email Password', 302, "password", "", "max:50"],
+                "email_pw" : ['password', 'Email Password', 302, "password", "", "max:50"],
                 "sender_account" : ['string', 'Sender Account', 303, "no-reply@gmail.com", "", "email"],
                 # "email_recipient" : ['string', 'Email Recepient<br><small>(comma delimited)</small>', 105], # will be handled on the notification screen
                 "smtp_server" : ['string', 'SMTP Server <br><small>(leave emtpy to disable)</small>', 305, "smtp.gmail.com", "", "InternetAddress"],
