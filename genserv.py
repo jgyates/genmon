@@ -107,18 +107,22 @@ def ProcessCommand(command):
         try:
             if command == "setexercise":
                 settimestr = request.args.get('setexercise', 0, type=str)
-                finalcommand += "=" + settimestr
+                if settimestr:
+                    finalcommand += "=" + settimestr
             if command == "setquiet":
                 # /cmd/setquiet?setquiet=off
                 setquietstr = request.args.get('setquiet', 0, type=str)
-                finalcommand += "=" + setquietstr
+                if setquietstr:
+                    finalcommand += "=" + setquietstr
             if command == "setremote":
                 setremotestr = request.args.get('setremote', 0, type=str)
-                finalcommand += "=" + setremotestr
+                if setremotestr:
+                    finalcommand += "=" + setremotestr
             if command == "power_log_json":
                 # example: /cmd/power_log_json?power_log_json=1440
                 setlogstr = request.args.get('power_log_json', 0, type=str)
-                finalcommand += "=" + setlogstr
+                if setlogstr:
+                    finalcommand += "=" + setlogstr
             data = MyClientInterface.ProcessMonitorCommand(finalcommand)
 
         except Exception as e1:
@@ -133,7 +137,7 @@ def ProcessCommand(command):
             return data
         return jsonify(data)
 
-    elif command in ["update"]:
+    elif command in ["updatesoftware"]:
         Update()
         return "OK"
 
@@ -221,7 +225,7 @@ def SaveNotifications(query_string):
         log.error("Error Update Config File: " + str(e1))
 
 #------------------------------------------------------------
-def ReadSingleConfigValue(file, section, type, entry, default):
+def ReadSingleConfigValue(file, section, type, entry, default, bounds = None):
 
     try:
         config = RawConfigParser()
@@ -238,7 +242,20 @@ def ReadSingleConfigValue(file, section, type, entry, default):
             return config.getboolean(section, entry)
         elif type == "int":
             return config.getint(section, entry)
+        elif type == 'list':
+            Value = config.get(section, entry)
+            if bounds != None:
+                DefaultList = bounds.split(",")
+                if Value.lower() in (name.lower() for name in DefaultList):
+                    return Value
+                else:
+                    log.error("Error Reading Config File (value not in list): %s : %s" % (entry,Value))
+                return default
+            else:
+                log.error("Error Reading Config File (bounds not provided): %s : %s" % (entry,Value))
+                return default
         else:
+            log.error("Error Reading Config File (unknown type): %s : %s" % (entry,type))
             return default
 
     except Exception as e1:
@@ -284,25 +301,52 @@ def ReadSettingsFromFile():
     ## 3rd: Sort Key
     ## 4th: current value (will be populated further below)
     ## 5th: tooltip (will be populated further below)
-    ## 6th: parameter is currently disabled (will be populated further below)
+    ## 6th: validation rule if type is string or int (see below). If type is list, this is a comma delimited list of options
+    ##
+    ## Validation Rules:
+    ##         A rule must be in this format rule:param where rule is the name of the rule and param is a rule parameter,
+    ##         for example minmax:10:50 will use the minmax rule with two arguments, 10 and 50.
+    ##             required: The field is required. Only works with text inputs.
+    ##             digits: Only digits.
+    ##             number: Must be a number.
+    ##             username: Must be between 4 and 32 characters long and start with a letter. You may use letters, numbers, underscores, and one dot.
+    ##             email: Must be a valid email.
+    ##             pass: Must be at least 6 characters long, and contain at least one number, one uppercase and one lowercase letter.
+    ##             strongpass: Must be at least 8 characters long and contain at least one uppercase and one lowercase letter and one number or special character.
+    ##             phone: Must be a valid US phone number.
+    ##             zip: Must be a valid US zip code
+    ##             url: Must be a valid URL.
+    ##             range:min:max: Must be a number between min and max. Usually combined with number or digits.
+    ##             min:min: Must be at least min characters long.
+    ##             max:max: Must be no more that max characters long.
+    ##             minmax:min:max: Must be between min and max characters long.
+    ##             minoption:min: Must have at least min checkboxes or radios selected.
+    ##             maxoption:max: Must have no more than max checkboxes or radios selected.
+    ##             select:default: Make a select required, where default is the value of the default option.
+    ##             extension:ext: Validates file inputs. You can have as many ext as you want.
+    ##             equalto:name: Must be equal to another field where name is the name of the field.
+    ##             date:format: Must a valid date in any format. The default is mm/dd/yyyy but you can pass any format with any separator, ie. date:yyyy-mm-dd.
+    ##             InternetAddress: url without http in front.
+    ##             UnixFile: Unix file file.
+    ##             UnixDir: Unix file path.
+    ##             UnixDevice: Unix file path starting with /dev/.
+
+
     ConfigSettings =  {
-                "sitename" : ['string', 'Site Name', 1, "SiteName", "", 0],
-                "port" : ['string', 'Port for Serial Communication', 2, "/dev/serial0", "", 0],
-                "incoming_mail_folder" : ['string', 'Incoming Mail Folder<br><small>(if IMAP enabled)</small>', 151, "Generator", "", 0],
-                "processed_mail_folder" : ['string', 'Mail Processed Folder<br><small>(if IMAP enabled)</small>', 152, "Generator/Processed","", 0],
+                "sitename" : ['string', 'Site Name', 1, "SiteName", "", "required minmax:10:50"],
+                "port" : ['string', 'Port for Serial Communication', 2, "/dev/serial0", "", "required UnixDevice"],
                 # This option is not displayed as it will break the link between genmon and genserv
                 #"server_port" : ['int', 'Server Port', 5, 9082, "", 0],
                 # this option is not displayed as this will break the modbus comms, only for debugging
                 #"address" : ['string', 'Modbus slave address', 6, "9d", "", 0 ],
-                "loglocation" : ['string', 'Log Directory', 7, "/var/log/", "", 0],
+                #"loglocation" : ['string', 'Log Directory', 7, "/var/log/", "", "required UnixDir"],
                 #"displayoutput" : ['boolean', 'Output to Console', 50, False, "", 0],
                 #"displaymonitor" : ['boolean', 'Display Monitor Status', 51, False, "", 0],
                 #"displayregisters" : ['boolean', 'Display Register Status', 52, False, "", 0],
                 #"displaystatus" : ['boolean', 'Display Status', 53, False, "", 0],
                 #"displaymaintenance" : ['boolean', 'Display Maintenance', 54, False, "", 0],
                 #"enabledebug" : ['boolean', 'Enable Debug', 14, False, "", 0],
-                "displayunknown" : ['boolean', 'Display Unknown Sensors', 15, False, "", 0],
-                "disableoutagecheck" : ['boolean', 'Do Not Check for Outages', 17, False, "", 0],
+                "disableoutagecheck" : ['boolean', 'Do Not Check for Outages', 17, False, "", ""],
                 # These settings are not displayed as the auto-detect controller will set these
                 # these are only to be used to override the auto-detect
                 #"uselegacysetexercise" : ['boolean', 'Use Legacy Exercise Time', 43, False, "", 0],
@@ -310,44 +354,48 @@ def ReadSettingsFromFile():
                 #"evolutioncontroller" : ['boolean', 'Evolution Controler', 42, True, "", 0],
                 # remove outage log, this will always be in the same location
                 #"outagelog" : ['string', 'Outage Log', 8, "/home/pi/genmon/outage.txt", "", 0],
-                "syncdst" : ['boolean', 'Sync Daylight Savings Time', 22, False, "", 0],
-                "synctime" : ['boolean', 'Sync Time', 23, False, "", 0],
+                "syncdst" : ['boolean', 'Sync Daylight Savings Time', 22, False, "", ""],
+                "synctime" : ['boolean', 'Sync Time', 23, False, "", ""],
 
-                #"model" : ['string', 'Generator Model', 41, "Generic Evolution Air Cooled", "", 0],
-                #"nominalfrequency": ['string', 'Rated Frequency', 42, "60", "", 0],
-                #"nominalRPM" : ['string', 'Nominal RPM', 43, "3600", "", 0],
-                #"nominalKW": ['string', 'Maximum kW Output', 44, "22", "", 0],
-                #"fueltype" : ['string', 'Fuel Type', 45, "Natural Gas", "", 0],
+                #"model" : ['string', 'Generator Model', 100, "Generic Evolution Air Cooled", "", 0],
+                "nominalfrequency": ['list', 'Rated Frequency', 101, "60", "", "50,60"],
+                "nominalRPM" : ['int', 'Nominal RPM', 102, "3600", "", "required digits range:1500:4000"],
+                "nominalKW": ['int', 'Maximum kW Output', 103, "22", "", "required digits range:0:200"],
+                "fueltype" : ['list', 'Fuel Type', 104, "Natural Gas", "", "Natural Gas,Propane,Diesel,Gasoline"],
 
-                "petroleumfuel" : ['boolean', 'Petroleum Fuel', 40, False, "", 0],
-                "enhancedexercise" : ['boolean', 'Enhanced Exercise Time', 46, False, "", 0],
+                # "petroleumfuel" : ['boolean', 'Petroleum Fuel', 40, False, "", 0],
+                "enhancedexercise" : ['boolean', 'Enhanced Exercise Time', 105, False, "", ""],
+                "displayunknown" : ['boolean', 'Display Unknown Sensors', 106, False, "", ""],
 
 
                 # These do not appear to work on reload, some issue with Flask
-                "usehttps" : ['boolean', 'Use Secure Web Settings', 26, False, "", 0],
-                "useselfsignedcert" : ['boolean', 'Use Self-signed Certificate', 27, True, "", 0],
-                "keyfile" : ['string', 'https Key File', 28, "", "", 0],
-                "certfile" : ['string', 'https Certificate File', 29, "", "", 0],
-                "http_user" : ['string', 'Web Username', 30, "", "", 0],
-                "http_pass" : ['string', 'Web Password', 31, "", "", 0],
+                "usehttps" : ['boolean', 'Use Secure Web Settings', 200, False, "", ""],
+                "useselfsignedcert" : ['boolean', 'Use Self-signed Certificate', 203, True, "", ""],
+                "keyfile" : ['string', 'https Key File', 204, "", "", "UnixFile"],
+                "certfile" : ['string', 'https Certificate File', 205, "", "", "UnixFile"],
+                "http_user" : ['string', 'Web Username', 206, "", "", "minmax:4:50"],
+                "http_pass" : ['string', 'Web Password', 207, "", "", "minmax:4:50"],
+                "http_port" : ['int', 'Port of WebServer', 210, 8000, "", "required digits"],
+                "favicon" : ['string', 'FavIcon', 220, "", "", "minmax:8:255"],
                 # This does not appear to work on reload, some issue with Flask
-                "http_port" : ['int', 'Port of WebServer', 24, 8000, "", 0],
-                "favicon" : ['string', 'FavIcon', 25, "", "", 0],
 
-                "disableemail" : ['boolean', 'Disable Email Usage', 101, True, "", 0],
-                "email_pw" : ['string', 'Email Password', 103, "password", "", 0],
-                "email_account" : ['string', 'Email Account', 102, "myemail@gmail.com", "", 0],
-                "sender_account" : ['string', 'Sender Account', 104, "no-reply@gmail.com", "", 0],
+                "disableemail" : ['boolean', 'Disable Email Usage', 300, True, "", ""],
+                "email_account" : ['string', 'Email Account', 301, "myemail@gmail.com", "", "minmax:3:50"],
+                "email_pw" : ['string', 'Email Password', 302, "password", "", "max:50"],
+                "sender_account" : ['string', 'Sender Account', 303, "no-reply@gmail.com", "", "email"],
                 # "email_recipient" : ['string', 'Email Recepient<br><small>(comma delimited)</small>', 105], # will be handled on the notification screen
-                "smtp_server" : ['string', 'SMTP Server <br><small>(leave emtpy to disable)</small>', 106, "smtp.gmail.com", "", 0],
-                "imap_server" : ['string', 'IMAP Server <br><small>(leave emtpy to disable)</small>', 150, "imap.gmail.com", "", 0],
-                "smtp_port" : ['int', 'SMTP Server Port', 107, 587, "", 0],
-                "ssl_enabled" : ['boolean', 'SMTP Server SSL Enabled', 108, False, "", 0]
+                "smtp_server" : ['string', 'SMTP Server <br><small>(leave emtpy to disable)</small>', 305, "smtp.gmail.com", "", "InternetAddress"],
+                "smtp_port" : ['int', 'SMTP Server Port', 307, 587, "", "digits"],
+                "ssl_enabled" : ['boolean', 'SMTP Server SSL Enabled', 308, False, "", ""],
+
+                "imap_server" : ['string', 'IMAP Server <br><small>(leave emtpy to disable)</small>', 401, "imap.gmail.com", "", "InternetAddress"],
+                "incoming_mail_folder" : ['string', 'Incoming Mail Folder<br><small>(if IMAP enabled)</small>', 402, "Generator", "", "minmax:1:255"],
+                "processed_mail_folder" : ['string', 'Mail Processed Folder<br><small>(if IMAP enabled)</small>', 403, "Generator/Processed","", "minmax:11:50"]
                 }
 
 
     for entry, List in ConfigSettings.items():
-        (ConfigSettings[entry])[3] = ReadSingleConfigValue(GENMON_CONFIG, "GenMon", List[0], entry, List[3])
+        (ConfigSettings[entry])[3] = ReadSingleConfigValue(GENMON_CONFIG, "GenMon", List[0], entry, List[3], List[5])
 
     for entry, List in ConfigSettings.items():
         (ConfigSettings[entry])[3] = ReadSingleConfigValue(MAIL_CONFIG, "MyMail", List[0], entry, List[3])

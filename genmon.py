@@ -19,7 +19,7 @@
 from __future__ import print_function       # For python 3.x compatibility with print function
 
 import datetime, time, sys, smtplib, signal, os, threading, socket, serial
-import crcmod.predefined, crcmod, atexit, json, collections
+import crcmod.predefined, crcmod, atexit, json, collections, random
 import httplib, re
 
 try:
@@ -29,7 +29,7 @@ except ImportError as e:
 
 import mymail, mylog, mythread
 
-GENMON_VERSION = "V1.5.15"
+GENMON_VERSION = "V1.5.17"
 
 #------------ SerialDevice class --------------------------------------------
 class SerialDevice:
@@ -231,6 +231,8 @@ class GeneratorDevice:
         self.MailInit = False       # set to true once mail is init
         self.SerialInit = False     # set to true once serial is init
         self.InitComplete = False   # set to true once init is complete
+        self.NewInstall = False     # True if newly installed or newly upgraded version
+        self.Version = "Unknown"
 
         self.DaysOfWeek = { 0: "Sunday",    # decode for register values with day of week
                             1: "Monday",
@@ -267,7 +269,7 @@ class GeneratorDevice:
                     "000e" : [2, 0],     # Read / Write: Generator Time Hi byte = hours, Lo byte = min (Nexus, EvoAQ, EvoLQ)
                     "000f" : [2, 0],     # Read / Write: Generator Time Hi byte = month, Lo byte = day of the month (Nexus, EvoAQ, EvoLQ)
                     "0010" : [2, 0],     # Read / Write: Generator Time = Hi byte Day of Week 00=Sunday 01=Monday, Lo byte = last 2 digits of year (Nexus, EvoAQ, EvoLQ)
-                    "0011" : [2, 0],     # Utility Threshold, ML Does not read this  (Nexus, EvoAQ, EvoLQ)
+                    "0011" : [2, 0],     # Utility Threshold, ML Does not read this  (Nexus, EvoAQ, EvoLQ) (possibly read / write)
                     "0012" : [2, 0],     # Gen output voltage (Nexus, EvoAQ, EvoLQ)
                     "001a" : [2, 0],     # Hours until next service (Nexus, EvoAQ, EvoLQ)
                     "002a" : [2, 0],     # hardware (high byte) (Hardware V1.04 = 0x68) and firmware version (low byte) (Firmware V1.33 = 0x85) (Nexus, EvoAQ, EvoLQ)
@@ -286,7 +288,8 @@ class GeneratorDevice:
                     "001f" : [2, 0],     # Unknown Read by ML High value on Evo and Nexus LC, low on Nexus AC (some type of identifier)
                     "0020" : [2, 0],     # Unknown Read by ML zero except NexusAC
                     "0021" : [2, 0],     # Unknown Read by ML zero except Nexus AC
-                    "0019" : [2, 0],     # Unknown Read by ML zero except Nexus AC (Status Bits)
+                    "0022" : [2, 0],     # Unknown: Status of some type
+                    "0019" : [2, 0],     # Model ID register, (EvoAC, NexusAC)
                     "0057" : [2, 0],     # Unknown Looks like some status bits (0002 to 0005 when engine starts, back to 0002 on stop)
                     "0055" : [2, 0],     # Unknown
                     "0056" : [2, 0],     # Unknown Looks like some status bits (0000 to 0003, back to 0000 on stop)
@@ -297,27 +300,32 @@ class GeneratorDevice:
                     "005d" : [2, 0],     # Unknown sensor 3, Moves between 0x55 - 0x58 continuously even when engine off
                     "05ed" : [2, 0],     # Unknown sensor 4, changes between 35, 37, 39 (Ambient Temp Sensor) EvoLC
                     "05ee" : [2, 0],     # Unknown sensor 5 (Battery Charging Sensor)
-                    "05f5" : [2, 0],     # Evo AC   (Status?) 0000 * 0005 0007
                     "05fa" : [2, 0],     # Evo AC   (Status?)
                     "0033" : [2, 0],     # Evo AC   (Status?)
                     "0034" : [2, 0],     # Evo AC   (Status?) Goes from FFFF 0000 00001 (Nexus and Evo AC)
                     "0032" : [2, 0],     # Evo AC   (Sensor?) starts  0x4000 ramps up to ~0x02f0
+                    "0036" : [2, 0],     # Evo AC   (Sensor?) Unknown
                     "0037" : [2, 0],     # CT Sensor (EvoAC)
                     "0038" : [2, 0],     # Evo AC   (Sensor?)       FFFE, FFFF, 0001, 0002 random - not linear
+                    "003a" : [2, 0],     # Evo AC   (Sensor?)  Nexus and Evo AC
                     "003b" : [2, 0],     # Evo AC   (Sensor?)  Nexus and Evo AC
                     "002b" : [2, 0],     # Evo AC   (Ambient Temp Sensor for Evo AC?)
-                    "0208" : [2, 0],     # Evo AC   (Time in minutes? or something else) did not move in last test
-                    "002e" : [2, 0],     # Evo AC   (Exercise Time) Exercise Day Sunday =0, Monday=1
-                    "002c" : [2, 0],     # Evo AC   (Exercise Time) Exercise Time HH:MM
+                    "0208" : [2, 0],     # Evo,     Calibrate Volts?
+                    "002e" : [2, 0],     # Evo      (Exercise Time) Exercise Day Sunday =0, Monday=1
+                    "002c" : [2, 0],     # Evo      (Exercise Time) Exercise Time HH:MM
                     "002d" : [2, 0],     # Evo AC   (Weekly, Biweekly, Monthly)
-                    "002f" : [2, 0],     # Evo AC   (Quiet Mode)
-                    "005c" : [2, 0]}
+                    "002f" : [2, 0],     # Evo      (Quiet Mode)
+                    "005c" : [2, 0],     # Unknown , possible model reg on EvoLC
+                    "05f4" : [2, 0],     # Evo AC   Current 1
+                    "05f5" : [2, 0],     # Evo AC   Current 2
+                    "05f6" : [2, 0],     # Evo AC   Current Cal 1
+                    "05f7" : [2, 0],     # Evo AC   Current Cal 1
+                    }
 
 
         # registers that need updating more frequently than others to make things more responsive
         self.PrimeRegisters = {
                     "0001" : [4, 0],     # Alarm and status register
-                    "05f4" : [2, 0],     # Evo AC   Output relay status register
                     "0053" : [2, 0],     # Evo LC Output relay status register (battery charging, transfer switch, Change at startup and stop
                     "0052" : [2, 0],     # Evo LC Input status register (sensors) only tested on liquid cooled Evo
                     "0009" : [2, 0],     # Utility voltage
@@ -331,6 +339,10 @@ class GeneratorDevice:
         self.REGLEN = 0
         self.REGMONITOR = 1
 
+        self.Address = 0x9d
+        self.LogLocation = "/var/log/"
+        self.SiteName = "Home"
+
         # set defaults for optional parameters
         self.bDisplayOutput = False
         self.bDisplayMonitor = False
@@ -343,13 +355,13 @@ class GeneratorDevice:
         self.bUseLegacyWrite = False
         self.EvolutionController = None
         self.LiquidCooled = None
-        self.PetroleumFuel = True
         # The values "Unknown" are checked to validate conf file items are found
         self.FuelType = "Unknown"
         self.NominalFreq = "Unknown"
         self.NominalRPM = "Unknown"
         self.NominalKW = "Unknown"
         self.Model = "Unknown"
+        self.PowerLogMaxSize = 15       # 15 MB max size
         self.PowerLog =  os.path.dirname(os.path.realpath(__file__)) + "/kwlog.txt"
         self.OutageLog = os.path.dirname(os.path.realpath(__file__)) + "/outage.txt"
         self.DisableOutageCheck = False
@@ -364,6 +376,10 @@ class GeneratorDevice:
 
         # log errors in this module to a file
         self.log = mylog.SetupLogger("genmon", self.LogLocation + "genmon.log")
+
+        if self.NewInstall:
+            self.LogError("New version detected: Old = %s, New = %s" % (self.Version, GENMON_VERSION))
+            self.Version = GENMON_VERSION
 
         self.ProgramStartTime = datetime.datetime.now()     # used for com metrics
 
@@ -430,7 +446,7 @@ class GeneratorDevice:
             self.Threads["InterfaceServerThread"] = mythread.MyThread(self.InterfaceServerThread, Name = "InterfaceServerThread")
 
         # start thread to accept incoming sockets for nagios heartbeat
-#       self.Threads["PowerMeter"] = mythread.MyThread(self.PowerMeter, Name = "PowerMeter")
+        self.Threads["PowerMeter"] = mythread.MyThread(self.PowerMeter, Name = "PowerMeter")
 
         # start read thread to monitor registers as they change
         self.Threads["MonitorThread"] = mythread.MyThread(self.MonitorThread, Name = "MonitorThread")
@@ -442,17 +458,21 @@ class GeneratorDevice:
             self.Threads["DebugThread"] = mythread.MyThread(self.DebugThread, Name = "DebugThread")
 
     # ---------- GeneratorDevice::KillThread------------------
-    def KillThread(self, Name):
+    def KillThread(self, Name, CleanupSelf = False):
 
-        MyThreadObj = self.Threads.get(Name, None)
-        if MyThreadObj == None:
-            self.LogError("Error getting thread name in KillThread: " + Name)
-            return False
+        try:
+            MyThreadObj = self.Threads.get(Name, None)
+            if MyThreadObj == None:
+                del self.Threads[Name]
+                self.LogError("Error getting thread name in KillThread: " + Name)
+                return False
 
-        del self.Threads[Name]
-        MyThreadObj.Stop()
-        MyThreadObj.WaitForThreadToEnd()
-
+            del self.Threads[Name]
+            if CleanupSelf:
+                MyThreadObj.Stop()
+                MyThreadObj.WaitForThreadToEnd()
+        except Exception as e1:
+            return
 
     # ---------- GeneratorDevice::KillReloadThread------------------
     def IsStopSignaled(self, Name):
@@ -473,7 +493,7 @@ class GeneratorDevice:
             self.KillThread("ProcessThread")
             self.KillThread("MonitorThread")
             self.KillThread("CheckForAlarmThread")
-#            self.KillThread("PowerMeter")
+            self.KillThread("PowerMeter")
             self.KillThread("ComWatchDog")
             if self.bSyncDST or self.bSyncTime:
                 self.KillThread("TimeSyncThread")
@@ -548,14 +568,17 @@ class GeneratorDevice:
             # getfloat() raises an exception if the value is not a float
             # getint() and getboolean() also do this for their respective types
 
-            self.SiteName = config.get(ConfigSection, 'sitename')
+            if config.has_option(ConfigSection, 'sitename'):
+                self.SiteName = config.get(ConfigSection, 'sitename')
             self.SerialPort = config.get(ConfigSection, 'port')
             self.IncomingEmailFolder = config.get(ConfigSection, 'incoming_mail_folder')     # imap folder for incoming mail
             self.ProcessedEmailFolder = config.get(ConfigSection, 'processed_mail_folder')   # imap folder for processed mail
             # heartbeat server port, must match value in check_monitor_system.py and any calling client apps
             self.ServerSocketPort = config.getint(ConfigSection, 'server_port')
-            self.Address = int(config.get(ConfigSection, 'address'),16)                      # modbus address
-            self.LogLocation = config.get(ConfigSection, 'loglocation')
+            if config.has_option(ConfigSection, 'address'):
+                self.Address = int(config.get(ConfigSection, 'address'),16)                      # modbus address
+            if config.has_option(ConfigSection, 'loglocation'):
+                self.LogLocation = config.get(ConfigSection, 'loglocation')
 
             # optional config parameters, by default the software will attempt to auto-detect the controller
             # this setting will override the auto detect
@@ -587,6 +610,8 @@ class GeneratorDevice:
                 self.OutageLog = config.get(ConfigSection, 'outagelog')
             if config.has_option(ConfigSection, 'kwlog'):
                 self.PowerLog = config.get(ConfigSection, 'kwlog')
+            if config.has_option(ConfigSection, 'kwlogmax'):
+                self.PowerLogMaxSize = config.getint(ConfigSection, 'kwlogmax')
 
             if config.has_option(ConfigSection, 'syncdst'):
                 self.bSyncDST = config.getboolean(ConfigSection, 'syncdst')
@@ -606,13 +631,15 @@ class GeneratorDevice:
 
             if config.has_option(ConfigSection, 'fueltype'):
                 self.FuelType = config.get(ConfigSection, 'fueltype')
-                if "diesel" in self.FuelType.lower():
-                    self.PetroleumFuel = False
-                else:
-                    self.PetroleumFuel = True
-            elif config.has_option(ConfigSection, 'petroleumfuel'):
-                self.PetroleumFuel = config.getboolean(ConfigSection, 'petroleumfuel')
 
+            if config.has_option(ConfigSection, 'version'):
+                self.Version = config.get(ConfigSection, 'version')
+                if not self.Version == GENMON_VERSION:
+                    self.AddItemToConfFile('version', GENMON_VERSION)
+                    self.NewInstall = True
+            else:
+                self.AddItemToConfFile('version', GENMON_VERSION)
+                self.NewInstall = True
 
         except Exception as e1:
             if not reload:
@@ -623,6 +650,7 @@ class GeneratorDevice:
 
         return True
     #------------------------------------------------------------
+    # Add or update config item
     def AddItemToConfFile(self, Entry, Value):
 
         FileName = "/etc/genmon.conf"
@@ -667,8 +695,8 @@ class GeneratorDevice:
                 if self.IsStopSignaled("CheckForAlarmThread"):
                     break
                 if self.CheckForAlarmEvent.is_set():
-                    self.CheckForAlarms()
                     self.CheckForAlarmEvent.clear()
+                    self.CheckForAlarms()
 
             except Exception as e1:
                 self.FatalError("Error in  CheckForAlarmThread" + str(e1))
@@ -808,17 +836,14 @@ class GeneratorDevice:
     #------------------------------------------------------------
     def CheckModelSpecificInfo(self):
 
+
         if self.NominalFreq == "Unknown" or not len(self.NominalFreq):
-            self.NominalFreq = "60"
+            self.NominalFreq = self.GetModelInfo("Frequency")
+            if self.NominalFreq == "Unknown":
+                self.NominalFreq = "60"
             self.AddItemToConfFile("nominalfrequency", self.NominalFreq)
 
-        if self.FuelType == "Unknown" or not len(self.FuelType):
-            if self.LiquidCooled and self.EvolutionController:          # EvoLC
-                self.FuelType = "Diesel"
-            else:
-                self.FuelType = "Natural Gas"                           # NexusLC, NexusAC, EvoAC
-            self.AddItemToConfFile("fueltype", self.FuelType)
-
+        # This is not correct for 50Hz models
         if self.NominalRPM == "Unknown" or not len(self.NominalRPM):
             if self.LiquidCooled:
                 self.NominalRPM = "1800"
@@ -826,63 +851,213 @@ class GeneratorDevice:
                 self.NominalRPM = "3600"
             self.AddItemToConfFile("nominalRPM", self.NominalRPM)
 
-        if self.NominalKW == "Unknown" or self.Model == "Unknown" or not len(self.NominalKW) or not len(self.Model):
-            if not self.LookUpSNInfo():
+        if self.NominalKW == "Unknown" or self.Model == "Unknown" or not len(self.NominalKW) or not len(self.Model) or self.NewInstall:
+
+            self.NominalKW = self.GetModelInfo("KW")
+
+            if not self.LookUpSNInfo(SkipKW = (not self.NominalKW == "Unknown")):
                 if self.LiquidCooled:
                     self.Model = "Generic Liquid Cooled"
-                    self.NominalKW = "60"
+                    if self.NominalKW == "Unknown":
+                        self.NominalKW = "60"
                 else:
                     self.Model = "Generic Air Cooled"
-                    self.NominalKW = "22"
+                    if self.NominalKW == "Unknown":
+                        self.NominalKW = "22"
             self.AddItemToConfFile("model", self.Model)
             self.AddItemToConfFile("nominalKW", self.NominalKW)
 
+        if self.FuelType == "Unknown" or not len(self.FuelType):
+            if self.Model.startswith("RD"):
+                self.FuelType = "Diesel"
+            elif self.Model.startswith("RG") or self.Model.startswith("QT"):
+                self.FuelType = "Natural Gas"
+            elif self.LiquidCooled and self.EvolutionController:          # EvoLC
+                self.FuelType = "Diesel"
+            else:
+                self.FuelType = "Natural Gas"                           # NexusLC, NexusAC, EvoAC
+            self.AddItemToConfFile("fueltype", self.FuelType)
+
+    #------------ GeneratorDevice::GetModelInfo-------------------------------
+    def GetModelInfo(self, Request):
+
+        UnknownList = ["Unknown", "Unknown", "Unknown", "Unknown"]
+
+        # register 0019 model identification only works on EvoAC for now
+        if not (self.EvolutionController and not self.LiquidCooled):
+            return "Unknown"
+
+        # Nexus LQ is the QT line
+        #QT080, QT070,QT100,QT130,QT150
+        ModelLookUp_NexusLC = {}
+
+        # Nexus AC
+        ModelLookUp_NexusAC = {
+                                0 : ["8KW", "60", "120/240", "1"],
+                                2 : ["14KW", "60", "120/240", "1"],
+                                4 : ["20KW", "60", "120/240", "1"]
+                                }
+        # This should cover the guardian line
+        ModelLookUp_EvoAC = { #ID : [KW or KVA Rating, Hz Rating, Voltage Rating, Phase]
+                                1 : ["9KW", "60", "120/240", "1"],
+                                2 : ["14KW", "60", "120/240", "1"],
+                                3 : ["17KW", "60", "120/240", "1"],
+                                4 : ["20KW", "60", "120/240", "1"],
+                                5 : ["8KW", "60", "120/240", "1"],
+                                7 : ["13KW", "60", "120/240", "1"],
+                                8 : ["15KW", "60", "120/240", "1"],
+                                9 : ["16KW", "60", "120/240", "1"],
+                                10 : ["20KW", "VSCF", "120/240", "1"],    #Variable Speed Constant Frequency
+                                11 : ["15KW", "ECOVSCF", "120/240", "1"], # Eco Variable Speed Constant Frequency
+                                12 : ["8KVA", "50", "220,230,240", "1"],         # 3 distinct models 220, 230, 240
+                                13 : ["10KVA", "50", "220,230,240", "1"],         # 3 distinct models 220, 230, 240
+                                14 : ["13KVA", "50", "220,230,240", "1"],        # 3 distinct models 220, 230, 240
+                                15 : ["11KW", "60" ,"240", "1"],
+                                17 : ["22KW", "60", "120/240", "1"],
+                                21 : ["11KW", "60", "240 LS", "1"],
+                                32 : ["Trinity", "60", "208 3Phase", "3"],      # G007077
+                                33 : ["Trinity", "50", "380,400,416", "3"]       # 3 distinct models 380, 400 or 416
+                                }
+
+        # Evolution LC is the Protector series
+        #RG025,RG022,RG030,RG027,RG036,RG032,RG045,RG038,RG048,RG060
+        # RD01523,RD02023,RD03024,RD04834,RD05034
+        ModelLookUp_EvoAC = {}
+
+        if self.EvolutionController and not self.LiquidCooled:
+            Value = self.GetRegisterValueFromList("0019")
+            if not len(Value):
+                return "Unknown"
+
+            ModelInfo = ModelLookUp_EvoAC.get(int(Value,16), UnknownList)
+
+            if Request.lower() == "frequency":
+                if ModelInfo[1] == "60" or ModelInfo[1] == "50":
+                    return ModelInfo[1]
+
+            elif Request.lower() == "kw":
+                if "kw" in ModelInfo[0].lower():
+                    return self.removeAlpha(ModelInfo[0])
+                elif "kva" in ModelInfo[0].lower():
+                    # TODO: This is not right, I think if we take KVA * 0.8 it should equal KW for single phase
+                    return self.removeAlpha(ModelInfo[0])
+                else:
+                    return "Unknown"
+
+            elif Request.lower() == "phase":
+                return ModelInfo[3]
+
+        return "Unknown"
+
+
     #------------------------------------------------------------
-    def LookUpSNInfo(self):
+    def LookUpSNInfo(self, SkipKW = False):
+
+        productId = None
+        ModelNumber = None
 
         SerialNumber = self.GetSerialNumber()
         Controller = self.GetController()
+
         if not len(SerialNumber) or not len(Controller):
             self.LogError("Error in LookUpSNInfo: bad input")
             return False
+
+        if "None" in SerialNumber.lower():      # serial number is not present due to controller being replaced
+            return False
+
         try:
             # for diagnostic reasons we will log the internet search
             self.LogError("Looking up model info on internet")
             myregex = re.compile('<.*?>')
 
-            conn = httplib.HTTPSConnection("www.generac.com", 443, timeout=10)
-            conn.request("GET", "/GeneracCorporate/WebServices/GeneracSelfHelpWebService.asmx/GetSearchResults?query=" + SerialNumber, "",
-                    headers={"User-Agent": "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)"})
-            r1 = conn.getresponse()
-            data1 = r1.read()
-            data2 = re.sub(myregex, '', data1)
-
-            myresponse1 = json.loads(data2)
-            productId = myresponse1["Results"][0]["Id"]
-
-            conn.request("GET", "/GeneracCorporate/WebServices/GeneracSelfHelpWebService.asmx/GetProductById?productId="+productId, "",
-                headers={"User-Agent": "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)"})
-            r1 = conn.getresponse()
-
-            data1 = r1.read()
-            data2 = re.sub(myregex, '', data1)
-
-            myresponse2 = json.loads(data2)
-            modelNo = myresponse2["ModelNumber"]
-            kWRating = myresponse2["Attributes"][0]["Value"]
-
-            if "kw" in kWRating.lower():
-                kWRating = self.removeAlpha(kWRating)
-            else:
-                kWRating = str(int(kWRating) / 1000)
-
-            if not len(modelNo) or not len(kWRating):
-                self.LogError("Error in LookUpSNInfo: Model: %s, %skW" % (modelNo, kWRating))
+            try:
+                conn = httplib.HTTPSConnection("www.generac.com", 443, timeout=10)
+                conn.request("GET", "/GeneracCorporate/WebServices/GeneracSelfHelpWebService.asmx/GetSearchResults?query=" + SerialNumber, "",
+                        headers={"User-Agent": "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)"})
+                r1 = conn.getresponse()
+            except Exception as e1:
+                conn.close()
+                self.LogError("Error in LookUpSNInfo (request 1): " + str(e1))
                 return False
 
-            self.Model = modelNo
-            self.NominalKW = kWRating
-            self.LogError("Found: Model: %s, %skW" % (modelNo, kWRating))
+            try:
+                data1 = r1.read()
+                data2 = re.sub(myregex, '', data1)
+                myresponse1 = json.loads(data2)
+                ModelNumber = myresponse1["SerialNumber"]["ModelNumber"]
+
+                if not len(ModelNumber):
+                    self.LogError("Error in LookUpSNInfo: Model (response1)")
+                    conn.close()
+                    return False
+
+                self.LogError("Found: Model: %s" % str(ModelNumber))
+                self.Model = ModelNumber
+
+            except Exception as e1:
+                self.LogError("Error in LookUpSNInfo (parse request 1): " + str(e1))
+                conn.close()
+                return False
+
+            try:
+                productId = myresponse1["Results"][0]["Id"]
+            except Exception as e1:
+                self.LogError("Note LookUpSNInfo (parse request 1), (product ID not found): " + str(e1))
+                productId = SerialNumber
+
+            if SkipKW:
+                return True
+
+            try:
+                if productId == SerialNumber:
+                    conn.request("GET", "/service-support/product-support-lookup/product-manuals?modelNo="+productId, "",
+                    headers={"User-Agent": "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)"})
+                else:
+                    conn.request("GET", "/GeneracCorporate/WebServices/GeneracSelfHelpWebService.asmx/GetProductById?productId="+productId, "",
+                        headers={"User-Agent": "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)"})
+                r1 = conn.getresponse()
+                data1 = r1.read()
+                conn.close()
+                data2 = re.sub(myregex, '', data1)
+            except Exception as e1:
+                self.LogError("Error in LookUpSNInfo (parse request 2, product ID): " + str(e1))
+
+            try:
+                if productId == SerialNumber:
+                    #within the formatted HTML we are looking for something like this :   "Manuals: 17KW/990 HNYWL+200A SE"
+                    ListData = re.split("<div", data1) #
+                    for Count in range(len(ListData)):
+                        if "Manuals:" in ListData[Count]:
+                            KWStr = re.findall(r"(\d+)KW", ListData[Count])[0]
+                            if len(KWStr) and KWStr.isdigit():
+                                self.NominalKW = KWStr
+
+                else:
+                    myresponse2 = json.loads(data2)
+
+                    kWRating = myresponse2["Attributes"][0]["Value"]
+
+                    if "kw" in kWRating.lower():
+                        kWRating = self.removeAlpha(kWRating)
+                    elif "watts" in kWRating.lower():
+                        kWRating = self.removeAlpha(kWRating)
+                        kWRating = str(int(kWRating) / 1000)
+                    else:
+                        kWRating = str(int(kWRating) / 1000)
+
+                    self.NominalKW = kWRating
+
+                    if not len(kWRating):
+                        self.LogError("Error in LookUpSNInfo: KW")
+                        return False
+
+                    self.LogError("Found: KW: %skW" % str(kWRating))
+
+            except Exception as e1:
+                self.LogError("Error in LookUpSNInfo: (parse KW)" + str(e1))
+                return False
+
             return True
         except Exception as e1:
             self.LogError("Error in LookUpSNInfo: " + str(e1))
@@ -2091,10 +2266,13 @@ class GeneratorDevice:
         ThresholdVoltage = int(Value, 16)
 
         # get pickup voltage
-        Value = self.GetRegisterValueFromList("023b")
-        if len(Value) != 4:
-            return ""           # we don't have a value for this register yet
-        PickupVoltage = int(Value, 16)
+        if self.EvolutionController and self.LiquidCooled:
+            Value = self.GetRegisterValueFromList("023b")
+            if len(Value) != 4:
+                return ""           # we don't have a value for this register yet
+            PickupVoltage = int(Value, 16)
+        else:
+            PickupVoltage = DEFAULT_PICKUP_VOLTAGE
 
         # if something is wrong then we use some sensible values here
         if PickupVoltage == 0:
@@ -2202,11 +2380,9 @@ class GeneratorDevice:
         if len(Value):                          #
             msgbody += self.printToScreen("Engine State: " + Value, True)
 
-        if self.EvolutionController:
+        if self.EvolutionController and self.LiquidCooled:
             msgbody += self.printToScreen("Active Relays: " + self.GetDigitalOutputs(), True)
-            if self.LiquidCooled:
-                msgbody += self.printToScreen("Active Sensors: " + self.GetSensorInputs(), True)
-
+            msgbody += self.printToScreen("Active Sensors: " + self.GetSensorInputs(), True)
 
         if self.SystemInAlarm():        # Update Alarm Status global flag, returns True if system in alarm
 
@@ -2268,8 +2444,6 @@ class GeneratorDevice:
         outstring += self.printToScreen("enter UP UP ESC DOWN UP ESC UP, then go to the dealer menu and press enter.", ToString)
         outstring += self.printToScreen("For liquid cooled models a level 2 dealer code can be entered, ESC UP UP DOWN", ToString)
         outstring += self.printToScreen("DOWN ESC ESC, then navigate to the dealer menu and press enter.", ToString)
-        outstring += self.printToScreen("For Nexus use the following use ESC, UP, UP ESC, DOWN, UP, ESC, UP, UP, ENTER", ToString)
-        outstring += self.printToScreen("for the passcode.", ToString)
         outstring += self.printToScreen("Passcode for Nexus controller is ESC, UP, UP ESC, DOWN, UP, ESC, UP, UP, ENTER.", ToString)
         outstring += self.printToScreen("\n", ToString)
 
@@ -2499,10 +2673,9 @@ class GeneratorDevice:
 
         Engine["Switch State"] = self.GetSwitchState
         Engine["Engine State"] = self.GetEngineState
-        if self.EvolutionController:
+        if self.EvolutionController and self.LiquidCooled:
             Engine["Active Relays"] = self.GetDigitalOutputs
-            if self.EvolutionController and self.LiquidCooled:
-                Engine["Active Sensors"] = self.GetSensorInputs
+            Engine["Active Sensors"] = self.GetSensorInputs
 
         if self.SystemInAlarm():
             Engine["System In Alarm"] = self.GetAlarmState
@@ -2512,10 +2685,14 @@ class GeneratorDevice:
             Engine["Battery Status"] = self.GetBatteryStatus
 
         Engine["RPM"] = self.GetRPM
-        Engine["Nominal RPM"] = self.NominalRPM
 
         Engine["Frequency"] = self.GetFrequency
         Engine["Output Voltage"] = self.GetVoltageOutput
+
+        if self.EvolutionController and self.LiquidCooled:
+            Engine["Output Current"] = self.GetCurrentOutput()
+            Engine["Output Power (Single Phase)"] = self.GetPowerOutput()
+
         Engine["Active Rotor Poles (Calculated)"] = self.GetActiveRotorPoles()
 
         if self.bDisplayUnknownSensors:
@@ -2594,7 +2771,7 @@ class GeneratorDevice:
         StartInfo["nominalKW"] = self.NominalKW
         StartInfo["nominalRPM"] = self.NominalRPM
         StartInfo["nominalfrequency"] = self.NominalFreq
-        StartInfo["Controller"] = self.GetController()
+        StartInfo["Controller"] = self.GetController(Actual = False)
 
         return StartInfo
 
@@ -2624,10 +2801,8 @@ class GeneratorDevice:
         # this is possibly raw data from RPM sensor
         Value = self.GetUnknownSensor("003c")
         if len(Value):
-            Sensors["Raw RPM Sensor Data"] = Value
+            Sensors["Raw RPM Sensor"] = Value
 
-            Sensors["Current Out"] = self.GetCurrentOutput()
-            Sensors["Power Out (Single Phase)"] = self.GetPowerOutput()
             Sensors["Frequency (Calculated)"] = self.GetFrequency(Calculate = True)
 
         if self.EvolutionController and self.LiquidCooled:
@@ -2647,10 +2822,13 @@ class GeneratorDevice:
             if len(Value):
                 import math
                 # Fahrenheit = 9.0/5.0 * Celsius + 32
-                SensorValue = int(Value)
+                SensorValue = float(Value)
+                #=(SQRT((Q17-$P$15)*$Q$15)+$R$15)*-1
+                # 5, 138, -20
                 Celsius = math.sqrt(  (SensorValue-10)*125) * -1 - (-88)
+                #Celsius = (math.sqrt(  (SensorValue-10)*125) + (-88)) * -1
                 # =SQRT(((SensorValue-10)*125))*-1-(-88)
-                #Celsius = (SensorValue - 77.45) * -1.0
+                # V1 = Celsius = (SensorValue - 77.45) * -1.0
                 Fahrenheit = 9.0/5.0 * Celsius + 32
                 CStr = "%.1f" % Celsius
                 FStr = "%.1f" % Fahrenheit
@@ -2662,6 +2840,9 @@ class GeneratorDevice:
                 StrVal = "%d H" % int(Value,16)
                 Sensors["Hours of Protection"] = StrVal
 
+        if self.EvolutionController and not self.LiquidCooled:
+            Sensors["Output Current"] = self.GetCurrentOutput()
+            Sensors["Output Power (Single Phase)"] = self.GetPowerOutput()
 
         if not self.LiquidCooled:       # Nexus AC and Evo AC
 
@@ -3223,7 +3404,7 @@ class GeneratorDevice:
                                 #0x0200: [False, "Fuel below 5 inch"]}          # Propane/NG
                                 0x0200: [True, "Fuel Pressure / Level Low"]}     # Gasoline / Diesel
 
-        if not self.PetroleumFuel:
+        if not "diesel" in self.FuelType.lower():
             DealerInputs_Evo_LC[0x0200] = [False, "Fuel below 5 inch"]
 
         # Nexus Liquid Cooled
@@ -3266,6 +3447,9 @@ class GeneratorDevice:
         if not self.EvolutionController:
             return ""        # Nexus
 
+        if not self.LiquidCooled:
+            return ""
+
         # Dict format { bit position : [ Polarity, Label]}
         # Liquid cooled
         DigitalOutputs_LC = {   0x01: [True, "Transfer Switch Activated"],
@@ -3283,20 +3467,15 @@ class GeneratorDevice:
                                 0x04: [True, "Fuel Relay On"],              # Bit Position in Display 0x08
                                 #0x08: [True, "Battery Charger On"]         # Bit Position in Display 0x10
                                 }
-        if self.LiquidCooled:
-            Register = "0053"
-        else:
-            Register = "05f4"
+
+        Register = "0053"
 
         Value = self.GetRegisterValueFromList(Register)
         if len(Value) != 4:
             return ""
         RegVal = int(Value, 16)
 
-        if self.LiquidCooled:
-            return self.GetDigitalValues(RegVal, DigitalOutputs_LC)
-        else:
-            return self.GetDigitalValues(RegVal, DigitalOutputs_AC)
+        return self.GetDigitalValues(RegVal, DigitalOutputs_LC)
 
     #------------ GeneratorDevice::GetEngineState --------------------------------------
     def GetEngineState(self, Reg0001Value = None):
@@ -3513,7 +3692,6 @@ class GeneratorDevice:
 
         ExerciseTime += "%02d:%02d" %  (int(Hour,16), int(Minute,16))
 
-
         if Type == "00":
             ExerciseTime += " Quiet Mode Off"
         elif Type == "01":
@@ -3563,29 +3741,38 @@ class GeneratorDevice:
     def GetCurrentOutput(self):
 
         if not self.EvolutionController:
-            return ""
+            return "0.00A"
 
         EngineState = self.GetEngineState()
         # report null if engine is not running
         if "Stopped" in EngineState or "Off" in EngineState or not len(EngineState):
-            return "0A"
+            return "0.00A"
 
         CurrentFloat = 0.0
-        if self.LiquidCooled:
+        if self.EvolutionController and self.LiquidCooled:
             Value = self.GetRegisterValueFromList("0058")
             if len(Value):
                 CurrentFloat = int(Value,16)
                 CurrentFloat = max((CurrentFloat * .2248) - 303.268, 0)
 
-        else:
-            Value = self.GetRegisterValueFromList("003B")
-            #Value = self.GetRegisterValueFromList("0037")
+        elif self.EvolutionController and not self.LiquidCooled:
+            E1Current = 0
+            E2Current = 0
+
+            Value = self.GetRegisterValueFromList("05f4")
             if len(Value):
-                CurrentFloat = int(Value,16)
-                CurrentFloat = max((CurrentFloat * 0.398) - 233.8, 0)
-                #CurrentFloat = max((CurrentFloat * 0.0689) - 291.6, 0)
+                E1Current = int(Value,16)
+            Value = self.GetRegisterValueFromList("05f5")
+            if len(Value):
+                E2Current = int(Value,16)
+            CurrentFloat = float(E1Current + E2Current)
+            #Value = self.GetRegisterValueFromList("003B")
+            #if len(Value):
+            #    CurrentFloat = int(Value,16)
+            #    CurrentFloat = max((CurrentFloat * 0.398) - 233.8, 0)
 
-
+            #    # =max(E7 * 0.398) - 223.8),0)
+            #    #CurrentFloat = max((CurrentFloat * 0.0689) - 291.6, 0)
 
         return "%.2fA" % CurrentFloat
 
@@ -3611,59 +3798,237 @@ class GeneratorDevice:
 
         return RotorPoles
 
+
+    #------------ GeneratorDevice::PrunePowerLog-------------------------
+    def PrunePowerLog(self, Minutes):
+
+        if not Minutes:
+            return self.ClearPowerLog()
+
+        try:
+            CmdString = "power_log_json=%d" % Minutes
+            PowerLog = self.GetPowerHistory(CmdString, NoReduce = True)
+
+            LogSize = os.path.getsize(self.PowerLog)
+            self.ClearPowerLog()
+
+            # is the file size too big?
+            if LogSize / (1024*1024) >= self.PowerLogMaxSize:
+                return "OK"
+
+            if LogSize / (1024*1024) >= self.PowerLogMaxSize * 0.8:
+                msgbody = "The kwlog file size is 80% of the maximum. Once the log reaches 100% of the maximum size the log will be reset."
+                self.mail.sendEmail("Notice: Log file size warning" , msgbody, msgtype = "warn")
+
+            # Write oldest log entries first
+            for Items in reversed(PowerLog):
+                self.LogToFile(self.PowerLog, Items[0], Items[1])
+
+            LogSize = os.path.getsize(self.PowerLog)
+            if LogSize == 0:
+                TimeStamp = datetime.datetime.now().strftime('%x %X')
+                self.LogToFile(self.PowerLog, TimeStamp, "0.0")
+
+            return "OK"
+
+        except Exception as e1:
+            self.LogError("Error in  ClearPowerLog: " + str(e1))
+            return "Error in  ClearPowerLog: " + str(e1)
+
     #------------ GeneratorDevice::ClearPowerLog-------------------------
     def ClearPowerLog(self):
 
         try:
+            if not len(self.PowerLog):
+                return "Power Log Disabled"
+
             if not os.path.isfile(self.PowerLog):
                 return "Power Log is empty"
             os.remove(self.PowerLog)
+
+            # add zero entry to note the start of the log
+            TimeStamp = datetime.datetime.now().strftime('%x %X')
+            self.LogToFile(self.PowerLog, TimeStamp, "0.0")
 
             return "Power Log cleared"
         except Exception as e1:
             self.LogError("Error in  ClearPowerLog: " + str(e1))
             return "Error in  ClearPowerLog: " + str(e1)
 
-    #------------ GeneratorDevice::GetPowerHistory-------------------------
-    def GetPowerHistory(self, CmdString):
+    #------------ GeneratorDevice::ReducePowerSamples-------------------------
+    def ReducePowerSamplesOld(self, PowerList, MaxSize):
+
+        if MaxSize == 0:
+            self.LogError("RecducePowerSamples: Error: Max size is zero")
+            return []
+
+        if len(PowerList) < MaxSize:
+            self.LogError("RecducePowerSamples: Error: Can't reduce ")
+            return PowerList
+
+        try:
+            Sample = int(len(PowerList) / MaxSize)
+            Remain = int(len(PowerList) % MaxSize)
+
+            NewList = []
+            Count = 0
+            for Count in range(len(PowerList)):
+                TimeStamp, KWValue = PowerList[Count]
+                if float(KWValue) == 0:
+                        NewList.append([TimeStamp,KWValue])
+                elif ( Count % Sample == 0 ):
+                    NewList.append([TimeStamp,KWValue])
+
+            # if we have too many entries due to a remainder or not removing zero samples, then delete some
+            if len(NewList) > MaxSize:
+                return RemovePowerSamples(NewList, MaxSize)
+        except Exception as e1:
+            self.LogError("Error in RecducePowerSamples: %s" % str(e1))
+            return PowerList
+
+        return NewList
+
+    #------------ GeneratorDevice::RemovePowerSamples-------------------------
+    def RemovePowerSamples(List, MaxSize):
+
+        try:
+            if len(List) <= MaxSize:
+                self.LogError("RemovePowerSamples: Error: Can't remove ")
+                return List
+
+            Extra = len(List) - MaxSize
+            for Count in range(Extra):
+                    # assume first and last sampels are zero samples so don't select thoes
+                    self.MarkNonZeroKwEntry(List, random.randint(1, len(List) - 2))
+
+            TempList = []
+            for TimeStamp, KWValue in List:
+                if not TimeStamp == "X":
+                    TempList.append([TimeStamp, KWValue])
+            return TempList
+        except Exception as e1:
+            self.LogError("Error in RemovePowerSamples: %s" % str(e1))
+            return List
+
+    #------------ GeneratorDevice::MarkNonZeroKwEntry-------------------------
+    #       RECURSIVE
+    def MarkNonZeroKwEntry(self, List, Index):
+
+        try:
+            TimeStamp, KwValue = List[Index]
+            if not KwValue == "X" and not float(KwValue) == 0.0:
+                List[Index] = ["X", "X"]
+                return
+            else:
+                MarkNonZeroKwEntry(List, Index - 1)
+                return
+        except Exception as e1:
+            self.LogError("Error in MarkNonZeroKwEntry: %s" % str(e1))
+        return
+
+    #------------ GeneratorDevice::ReducePowerSamples-------------------------
+    def ReducePowerSamples(self, PowerList, MaxSize):
+
+        if MaxSize == 0:
+            self.LogError("RecducePowerSamples: Error: Max size is zero")
+            return []
+
+        periodMaxSamples = MaxSize
+        NewList = []
+        try:
+            CurrentTime = datetime.datetime.now()
+            secondPerSample = 0
+            prevMax = 0
+            currMax = 0
+            currTime = CurrentTime
+            prevTime = CurrentTime + datetime.timedelta(minutes=1)
+            currSampleTime = CurrentTime
+            prevBucketTime = CurrentTime # prevent a 0 to be written the first time
+            nextBucketTime = CurrentTime - datetime.timedelta(seconds=1)
+
+            for Count in range(len(PowerList)):
+               TimeStamp, KWValue = PowerList[Count]
+               struct_time = time.strptime(TimeStamp, "%x %X")
+               delta_sec = (CurrentTime - datetime.datetime.fromtimestamp(time.mktime(struct_time))).total_seconds()
+               if 0 <= delta_sec <= datetime.timedelta(minutes=60).total_seconds():
+                   secondPerSample = int(datetime.timedelta(minutes=60).total_seconds() / periodMaxSamples)
+               if datetime.timedelta(minutes=60).total_seconds() <= delta_sec <=  datetime.timedelta(hours=24).total_seconds():
+                   secondPerSample = int(datetime.timedelta(hours=23).total_seconds() / periodMaxSamples)
+               if datetime.timedelta(hours=24).total_seconds() <= delta_sec <= datetime.timedelta(days=7).total_seconds():
+                   secondPerSample = int(datetime.timedelta(days=6).total_seconds() / periodMaxSamples)
+               if datetime.timedelta(days=7).total_seconds() <= delta_sec <= datetime.timedelta(days=31).total_seconds():
+                   secondPerSample = int(datetime.timedelta(days=25).total_seconds() / periodMaxSamples)
+
+               currSampleTime = CurrentTime - datetime.timedelta(seconds=(int(delta_sec / secondPerSample)*secondPerSample))
+               if (currSampleTime != currTime):
+                   if ((currMax > 0) and (prevBucketTime != prevTime)):
+                       NewList.append([prevBucketTime.strftime('%x %X'), 0.0])
+                   if ((currMax > 0) or ((currMax == 0) and (prevMax > 0))):
+                       NewList.append([currTime.strftime('%x %X'), currMax])
+                   if ((currMax > 0) and (nextBucketTime != currSampleTime)):
+                       NewList.append([nextBucketTime.strftime('%x %X'), 0.0])
+                   prevMax = currMax
+                   prevTime = currTime
+                   currMax = KWValue
+                   currTime = currSampleTime
+                   prevBucketTime  = CurrentTime - datetime.timedelta(seconds=((int(delta_sec / secondPerSample)+1)*secondPerSample))
+                   nextBucketTime  = CurrentTime - datetime.timedelta(seconds=((int(delta_sec / secondPerSample)-1)*secondPerSample))
+               else:
+                   currMax = max(currMax, KWValue)
+
+
+            NewList.append([currTime.strftime('%x %X'), currMax])
+        except Exception as e1:
+            self.LogError("Error in RecducePowerSamples: %s" % str(e1))
+            return PowerList
+
+        return NewList
+
+    #------------ GeneratorDevice::-------------------------
+    def GetPowerHistory(self, CmdString, NoReduce = False):
 
         KWHours = False
         msgbody = "Invalid command syntax for command power_log_json"
-        if not len(self.PowerLog):
-            self.LogError("Error in GetPowerHistory: Power log file does not exist")
-            return []
 
-        if not len(CmdString):
-            self.LogError("Error in GetPowerHistory: Invalid input")
-            return []
+        try:
+            if not len(self.PowerLog):
+                # power log disabled
+                return []
 
-        #Format we are looking for is "power_log_json=5" or "power_log_json"
-        CmdList = CmdString.split("=")
+            if not len(CmdString):
+                self.LogError("Error in GetPowerHistory: Invalid input")
+                return []
 
-        if len(CmdList) > 2:
-            self.LogError("Validation Error: Error parsing command string in GetPowerHistory (parse): " + CmdString)
-            return msgbody
+            #Format we are looking for is "power_log_json=5" or "power_log_json" or "power_log_json=1000,kw"
+            CmdList = CmdString.split("=")
 
-        CmdList[0] = CmdList[0].strip()
-
-        if not CmdList[0].lower() == "power_log_json":
-            self.LogError("Validation Error: Error parsing command string in GetPowerHistory (parse2): " + CmdString)
-            return msgbody
-
-        if len(CmdList) == 2:
-            ParseList = CmdList[1].split(",")
-            if len(ParseList) == 1:
-                Minutes = int(CmdList[1].strip())
-            elif len(ParseList) == 2:
-                Minutes = int(ParseList[0].strip())
-                if ParseList[1].strip().lower() == "kw":
-                    KWHours = True
-            else:
-                self.LogError("Validation Error: Error parsing command string in GetPowerHistory (parse3): " + CmdString)
+            if len(CmdList) > 2:
+                self.LogError("Validation Error: Error parsing command string in GetPowerHistory (parse): " + CmdString)
                 return msgbody
 
-        else:
-            Minutes = 0
+            CmdList[0] = CmdList[0].strip()
+
+            if not CmdList[0].lower() == "power_log_json":
+                self.LogError("Validation Error: Error parsing command string in GetPowerHistory (parse2): " + CmdString)
+                return msgbody
+
+            if len(CmdList) == 2:
+                ParseList = CmdList[1].split(",")
+                if len(ParseList) == 1:
+                    Minutes = int(CmdList[1].strip())
+                elif len(ParseList) == 2:
+                    Minutes = int(ParseList[0].strip())
+                    if ParseList[1].strip().lower() == "kw":
+                        KWHours = True
+                else:
+                    self.LogError("Validation Error: Error parsing command string in GetPowerHistory (parse3): " + CmdString)
+                    return msgbody
+
+            else:
+                Minutes = 0
+        except Exception as e1:
+            self.LogError("Error in  GetPowerHistory (Parse): %s : %s" % (CmdString,str(e1)))
+            return msgbody
 
         try:
             # check to see if a log file exist yet
@@ -3694,6 +4059,9 @@ class GeneratorDevice:
                                 PowerList.insert(0, [Items[0], Items[1]])
                         else:
                             PowerList.insert(0, [Items[0], Items[1]])
+                    #Shorten list to 1000 if specific duration requested
+                    if not KWHours and len(PowerList) > 500 and Minutes and not NoReduce:
+                        PowerList = self.ReducePowerSamples(PowerList, 500)
                 except Exception as e1:
                     self.LogError("Error in  GetPowerHistory (parse file): " + str(e1))
                     # continue to the next line
@@ -3728,10 +4096,11 @@ class GeneratorDevice:
     def PowerMeter(self):
 
         if not len(self.PowerLog):
-            self.LogError("Error in PowerMeter: Power log file does not exist")
-            self.KillThread("PowerMeter")
+            self.LogError("Power Log Disabled")
+            self.KillThread("PowerMeter", CleanupSelf = True)
             return
 
+        # make sure system is up and running otherwise we will not know which controller is present
         while True:
             time.sleep(1)
             if self.InitComplete:
@@ -3739,14 +4108,33 @@ class GeneratorDevice:
             if self.IsStopSignaled("PowerMeter"):
                 return
 
-        if not self.EvolutionController:
-            self.KillThread("PowerMeter")
+        if not self.EvolutionController:    # Not supported by Nexus at this time
+            self.KillThread("PowerMeter", CleanupSelf = True)
             return
 
-        LastValue = 0
+        # only support EvoAC is Unsupported Sensors is enabled
+        if not self.LiquidCooled and not self.bDisplayUnknownSensors:
+            self.KillThread("PowerMeter", CleanupSelf = True)
+            return
+
+        self.LogError("Power Log Started")
+        # if log file is empty or does not exist, make a zero entry in log to denote start of collection
+        if not os.path.isfile(self.PowerLog) or os.path.getsize(self.PowerLog) == 0:
+            TimeStamp = datetime.datetime.now().strftime('%x %X')
+            self.LogToFile(self.PowerLog, TimeStamp, "0.0")
+
+        LastValue = 0.0
+        LastPruneTime = datetime.datetime.now()
         while True:
             try:
                 time.sleep(5)
+
+                # Housekeeping on kw Log
+                if self.GetDeltaTimeMinutes(datetime.datetime.now() - LastPruneTime) > 1440 :     # check every day
+                    self.PrunePowerLog(43800)   # delete log entries greater than one month
+                    LastPruneTime = datetime.datetime.now()
+
+                # Time to exit?
                 if self.IsStopSignaled("PowerMeter"):
                     return
                 KWOut = self.removeAlpha(self.GetPowerOutput())
@@ -3754,6 +4142,11 @@ class GeneratorDevice:
 
                 if LastValue == KWFloat:
                     continue
+
+                if LastValue == 0:
+                    StartTime = datetime.datetime.now() - datetime.timedelta(seconds=1)
+                    TimeStamp = StartTime.strftime('%x %X')
+                    self.LogToFile(self.PowerLog, TimeStamp, str(LastValue))
 
                 LastValue = KWFloat
                 # Log to file
@@ -3966,6 +4359,7 @@ class GeneratorDevice:
 
         Status["basestatus"] = self.GetBaseStatus()
         Status["kwOutput"] = self.GetPowerOutput()
+        Status["Exercise"] = self.GetParsedExerciseTime()
 
         return Status
 
