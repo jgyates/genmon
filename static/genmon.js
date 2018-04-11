@@ -1253,8 +1253,9 @@ function printSettingsField(type, key, value, tooltip, validation, callback) {
    var outstr = "";
    switch (type) {
      case "string":
+     case "password":
        outstr += '<div class="field idealforms-field">' +
-                 '<input id="' + key + '" style="width: 300px;" name="' + key + '" type="text" ' +
+                 '<input id="' + key + '" style="width: 300px;" name="' + key + '" type="' + ((type == "password") ? "password" : "text") + '" ' +
                   (typeof value === 'undefined' ? '' : 'value="' + replaceAll(value, '"', '&quot;') + '" ') +
                   (typeof value === 'undefined' ? '' : 'oldValue="' + replaceAll(value, '"', '&quot;') + '" ') +
                   (typeof validation === 'undefined' ? '' : 'data-idealforms-rules="' + validation + '" ') + '>' +
