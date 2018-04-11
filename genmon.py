@@ -29,7 +29,7 @@ except ImportError as e:
 
 import mymail, mylog, mythread
 
-GENMON_VERSION = "V1.5.17"
+GENMON_VERSION = "V1.6.0"
 
 #------------ SerialDevice class --------------------------------------------
 class SerialDevice:
