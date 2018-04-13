@@ -29,7 +29,7 @@ except ImportError as e:
 
 import mymail, mylog, mythread
 
-GENMON_VERSION = "V1.6.0"
+GENMON_VERSION = "V1.6.1"
 
 #------------ SerialDevice class --------------------------------------------
 class SerialDevice:
@@ -265,7 +265,8 @@ class GeneratorDevice:
                     "0007" : [2, 0],     # Engine RPM  (Nexus, EvoAQ, EvoLQ)
                     "0008" : [2, 0],     # Freq - value includes Hz to the tenths place i.e. 59.9 Hz (Nexus, EvoAQ, EvoLQ)
                     "000a" : [2, 0],     # battery voltage Volts to  tenths place i.e. 13.9V (Nexus, EvoAQ, EvoLQ)
-                    "000c" : [2, 0],     # engine run time hours
+                    "000b" : [2, 0],     # engine run time hours High
+                    "000c" : [2, 0],     # engine run time hours Low
                     "000e" : [2, 0],     # Read / Write: Generator Time Hi byte = hours, Lo byte = min (Nexus, EvoAQ, EvoLQ)
                     "000f" : [2, 0],     # Read / Write: Generator Time Hi byte = month, Lo byte = day of the month (Nexus, EvoAQ, EvoLQ)
                     "0010" : [2, 0],     # Read / Write: Generator Time = Hi byte Day of Week 00=Sunday 01=Monday, Lo byte = last 2 digits of year (Nexus, EvoAQ, EvoLQ)
@@ -277,15 +278,16 @@ class GeneratorDevice:
                     "023b" : [2, 0],     # Pick Up Voltage (Evo LQ only)
                     "023e" : [2, 0],     # Exercise time duration (Evo LQ only)
                     "0054" : [2, 0],     # Hours since generator activation (hours of protection) (Evo LQ only)
-                    "005f" : [2, 0],     # Total engine time in minutes
+                    "005e" : [2, 0],     # Total engine time in minutes High
+                    "005f" : [2, 0],     # Total engine time in minutes Low
                     "01f1" : [2, 0],     # Unknown Status (WIP) (Changes from 000e to 0d0e on EvoLC when running and back to 000e when stopped)
                     "01f2" : [2, 0],     # Unknown Status (WIP) (Changes from 0c02 to 0c0c on EvoLC when running and back to 0c02 when stopped)
                     "01f3" : [2, 0],     # Unknown Status (WIP) (appears to be updated after a run cycle, number increases) (EvoLC, EvoAC)
                     "001b" : [2, 0],     # Unknown Read by ML All (identifier of some type)
-                    "001c" : [2, 0],     # Unknown Read by ML Nexus
+                    "001c" : [2, 0],     # Hours util Service C (NexusAC,NexusLC)
                     "001d" : [2, 0],     # Unknown Read by ML Nexus
-                    "001e" : [2, 0],     # Unknown Read by ML All   (status of some type) (looks like a factor of average RPM (Evo reg value *9 ~= average RPM)
-                    "001f" : [2, 0],     # Unknown Read by ML High value on Evo and Nexus LC, low on Nexus AC (some type of identifier)
+                    "001e" : [2, 0],     # All, Hours until Service B due
+                    "001f" : [2, 0],     # Hours util Service D (NexusAC)
                     "0020" : [2, 0],     # Unknown Read by ML zero except NexusAC
                     "0021" : [2, 0],     # Unknown Read by ML zero except Nexus AC
                     "0022" : [2, 0],     # Unknown: Status of some type
@@ -309,13 +311,16 @@ class GeneratorDevice:
                     "0038" : [2, 0],     # Evo AC   (Sensor?)       FFFE, FFFF, 0001, 0002 random - not linear
                     "003a" : [2, 0],     # Evo AC   (Sensor?)  Nexus and Evo AC
                     "003b" : [2, 0],     # Evo AC   (Sensor?)  Nexus and Evo AC
-                    "002b" : [2, 0],     # Evo AC   (Ambient Temp Sensor for Evo AC?)
+                    "002b" : [2, 0],     # Startup Delay (Evo AC)
+                    "0239" : [2, 0],     # Startup Delay (Evo AC)
+                    "0237" : [2, 0],     # Set Voltage (Evo LC)
                     "0208" : [2, 0],     # Evo,     Calibrate Volts?
                     "002e" : [2, 0],     # Evo      (Exercise Time) Exercise Day Sunday =0, Monday=1
                     "002c" : [2, 0],     # Evo      (Exercise Time) Exercise Time HH:MM
                     "002d" : [2, 0],     # Evo AC   (Weekly, Biweekly, Monthly)
                     "002f" : [2, 0],     # Evo      (Quiet Mode)
                     "005c" : [2, 0],     # Unknown , possible model reg on EvoLC
+                    "05f3" : [2, 0],     # EvoAC, EvoLC, counter of some type
                     "05f4" : [2, 0],     # Evo AC   Current 1
                     "05f5" : [2, 0],     # Evo AC   Current 2
                     "05f6" : [2, 0],     # Evo AC   Current Cal 1
@@ -2550,6 +2555,14 @@ class GeneratorDevice:
         OutageData["Utility Voltage Minimum"] = "%dV " % (self.UtilityVoltsMin)
         OutageData["Utility Voltage Maximum"] = "%dV " % (self.UtilityVoltsMax)
 
+        OutageData["Utility Threshold Voltage"] = self.GetThresholdVoltage
+
+        if self.EvolutionController and self.LiquidCooled:
+            OutageData["Utility Pickup Voltage"] = self.GetPickUpVoltage
+
+        if self.EvolutionController:
+            OutageData["Startup Delay"] = self.GetStartupDelay
+
         OutageData["Outage Log"] = self.DisplayOutageHistory()
 
         if not DictOut:
@@ -2709,6 +2722,7 @@ class GeneratorDevice:
 
         if self.EvolutionController and self.LiquidCooled:
             Line["Utility Pickup Voltage"] = self.GetPickUpVoltage
+            Line["Set Output Voltage"] = self.GetSetOutputVoltage
 
         # Generator time
         Time["Monitor Time"] = datetime.datetime.now().strftime("%A %B %-d, %Y %H:%M:%S")
@@ -2746,7 +2760,18 @@ class GeneratorDevice:
             Exercise["Exercise Duration"] = self.GetExerciseDuration
         Maint["Exercise"] = Exercise
         Service = collections.OrderedDict()
-        Service["Next Service Scheduled"] = self.GetServiceDue
+        if not self.EvolutionController:
+            # Note: On Nexus AC These represent Air Filter, Oil Filter, and Spark Plugs, possibly 5 all together
+            # The labels are generic for now until I get clarification from someone with a Nexus AC
+            Service["Service A Due"] = self.GetServiceDue("A")
+            Service["Service B Due"] = self.GetServiceDue("B")
+            Service["Service C Due"] = self.GetServiceDue("C")
+            if not self.LiquidCooled:
+                Service["Service D Due"] = self.GetServiceDue("D")
+        else:
+            Service["Service A Due"] = self.GetServiceDue("A")
+            Service["Service B Due"] = self.GetServiceDue("B")
+
         Service["Total Run Hours"] = self.GetRunTimes
         Service["Hardware Version"] = self.GetHardwareVersion
         Service["Firmware Version"] = self.GetFirmwareVersion
@@ -4243,6 +4268,37 @@ class GeneratorDevice:
 
         return "%dV" % ThresholdVoltage
 
+    #------------ GeneratorDevice::GetSetOutputVoltage --------------------------
+    def GetSetOutputVoltage(self):
+
+        # get set output voltage
+        if not self.EvolutionController or not self.LiquidCooled:
+            return ""
+        Value = self.GetRegisterValueFromList("0237")
+        if len(Value) != 4:
+            return ""
+        SetOutputVoltage = int(Value,16)
+
+        return "%dV" % SetOutputVoltage
+
+    #------------ GeneratorDevice::GetStartupDelay --------------------------
+    def GetStartupDelay(self):
+
+        # get Startup Delay
+        StartupDelay = 0
+        Value = ""
+        if self.EvolutionController and not self.LiquidCooled:
+            Value = self.GetRegisterValueFromList("002b")
+        elif self.EvolutionController and self.LiquidCooled:
+            Value = self.GetRegisterValueFromList("0239")
+        else:
+            return ""
+        if len(Value) != 4:
+            return ""
+        StartupDelay = int(Value,16)
+
+        return "%d s" % StartupDelay
+
     #------------ GeneratorDevice::GetUtilityVoltage --------------------------
     def GetUtilityVoltage(self):
 
@@ -4404,22 +4460,64 @@ class GeneratorDevice:
             return True
 
         # get Hours until next service
-        Value = self.GetRegisterValueFromList("001a")
-        if len(Value) != 4:
+        Value = self.GetServiceDue("A", NoUnits = True)
+        if not len(Value):
             return False
 
-        HexValue = int(Value, 16)
-        if (HexValue <= 1):
+        if (int(Value) <= 1):
             return True
 
-     #------------ GeneratorDevice::GetServiceDue ------------------------------------
-    def GetServiceDue(self):
+        # get Hours until next service
+        Value = self.GetServiceDue("B", NoUnits = True)
+        if not len(Value):
+            return False
+
+        if (int(Value) <= 1):
+            return True
+
+        if not self.EvolutionController:
+
+            Value = self.GetServiceDue("C", NoUnits = True)
+            if not len(Value):
+                return False
+
+            if (int(Value) <= 1):
+                return True
+
+            if not self.LiquidCooled:
+                Value = self.GetServiceDue("D", NoUnits = True)
+                if not len(Value):
+                    return False
+
+                if (int(Value) <= 1):
+                    return True
+        return False
+
+    #------------ GeneratorDevice::GetServiceDue ------------------------------------
+    def GetServiceDue(self, serviceType = "A", NoUnits = False):
+
+        ServiceTypeLookup = {
+                                "A": "001a",
+                                "B": "001e",
+                                "C": "001c",
+                                "D": "001f"
+                                }
+
+        Register = ServiceTypeLookup.get(serviceType.upper(), "")
+
+        if not len(Register):
+            return ""
 
         # get Hours until next service
-        Value = self.GetRegisterValueFromList("001a")
+        Value = self.GetRegisterValueFromList(Register)
         if len(Value) != 4:
             return ""
-        ServiceValue = "%dH" % int(Value,16)
+
+        if NoUnits:
+            ServiceValue = "%d" % int(Value,16)
+        else:
+            ServiceValue = "%d hrs" % int(Value,16)
+
         return ServiceValue
 
     #----------  GeneratorDevice:GetHardwareVersion  ---------------------------------
@@ -4454,8 +4552,15 @@ class GeneratorDevice:
             if len(Value) != 4:
                 return ""
 
-            TotalRunTime = int(Value,16)
+            TotalRunTimeLow = int(Value,16)
 
+            # get total hours running
+            Value = self.GetRegisterValueFromList("000b")
+            if len(Value) != 4:
+                return ""
+            TotalRunTimeHigh = int(Value,16)
+
+            TotalRunTime = (TotalRunTimeHigh << 16)| TotalRunTimeLow
             RunTimes = "%d " % (TotalRunTime)
         else:
             # total engine run time in minutes
@@ -4463,8 +4568,15 @@ class GeneratorDevice:
             if len(Value) != 4:
                 return ""
 
-            TotalRunTime = int(Value,16)
+            TotalRunTimeLow = int(Value,16)
 
+            Value = self.GetRegisterValueFromList("005e")
+            if len(Value) != 4:
+                return ""
+
+            TotalRunTimeHigh = int(Value,16)
+
+            TotalRunTime = (TotalRunTimeHigh << 16)| TotalRunTimeLow
             #hours, min = divmod(TotalRunTime, 60)
             #RunTimes = "Total Engine Run Time: %d:%d " % (hours, min)
             TotalRunTime = TotalRunTime / 60.0
