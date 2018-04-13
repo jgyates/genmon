@@ -1,7 +1,7 @@
 #!/bin/bash
 
 genmondir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-linetoadd="@reboot sleep 30 && $genmondir/startgenmon.sh start"
+linetoadd="@reboot sleep 30 && /bin/bash $genmondir/startgenmon.sh start"
 tempfile='/tmp/gmtemp'
 installnotice="This script will install libraries needed by genmon. \
 This script assumes you have already downloaded the genmon project via 'git'. \
