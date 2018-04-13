@@ -2,14 +2,14 @@
 # Generator Monitoring Application using a Raspberry Pi and WiFi
 
 This project will monitor a backup generator that utilizes the Generac [Evolution](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/Evolution_Controller.jpg) or [Nexus](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/Nexus_Controller.jpg) Controllers over a WiFi or wired connection.  Generac, Eaton, Honeywell and Siemens Home Backup Generators use these Generac controllers. Honeywell and Eaton call the controllers Sync 1.0 (Nexus) and Sync 2.0 (Evolution) in their documentation however all of these companies sell generators that use the controllers supported by this project. The project is written mostly in python and has been tested with a Raspberry Pi 3 (Pi Zero and Pi 2 has also been validated). Ideally you would need to create a physical enclosure for your raspberry pi and possibly [make a cable](https://github.com/jgyates/genmon/wiki/Making-a-Cable) to connect the raspberry pi to the Evolution or Nexus controller. If you are comfortable doing these things and you have a backup generator that has an Generac Evolution or Nexus controller then this project may be of interest to you.
- 
+
 ## Functionality
 The software supports the following features:
 
 * Monitoring of the generator to to detect and report the following:
     * Maintenance, Start / Stop and Alarm Logs (No Maintenance log exist on Nexus)
     * Display Generator Serial Number
-    * Generator warnings and faults 
+    * Generator warnings and faults
     * Generator Status:
         * Engine State
             - Generator Switch State (Auto, On, Off)
@@ -36,14 +36,14 @@ The software supports the following features:
     - Engine state change
     - Switch state change
     - Critical or Warning messages from the generator
-- Web based application for viewing status of the generator 
+- Web based application for viewing status of the generator
 - SMS notifications of Generator state (via Twilio SMS API)
 - Push notifications (via pushover.net)
 - syslog logging of generator events
-- Command Line application (all the functionality of email). 
-- Ability to set exercise time 
+- Command Line application (all the functionality of email).
+- Ability to set exercise time
 - Ability to set generator time
-- Ability to start, stop, exercise and start / active the transfer switch (i.e. power your house off the generator) remotely. 
+- Ability to start, stop, exercise and start / active the transfer switch (i.e. power your house off the generator) remotely.
 
 ![Generator Monitor Web Interface](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/Web_UI_Status.png)
 
@@ -70,7 +70,7 @@ For Evolution Controllers, the software will show the state the some active rela
 To summarize, if you see any unknown or things are not working as expected, please open an issue on the project.
 
 ## Placement of your Raspberry Pi
-If you have a large generator, the placement of your Raspberry Pi could be important due to [EMI](https://en.wikipedia.org/wiki/Electromagnetic_interference). Larger generators can produce more EMI when starting. For example a 48kw diesel generator may generate enough EMI to cause CRC errors when the generator starts if the Raspberry Pi enclosure is close to the engine. If you see CRC errors, check the validity of your cable. The errors may be caused by vibration of loose molex connectors in your cable. Also, if the Raspberry Pi enclosure is moved away from the engine and closer to the controller, this will likely reduce EMI if that is causing any CRC errors. EMI may not be an issue with smaller liquid cooled generators. There are several ways to resolve EMI issues however the best solution is dependant on your particular site needs (generator, how much space you need for your Pi, how much space you have available, etc). The project [wiki](https://github.com/jgyates/genmon/wiki/Hardware) has information regarding a typical enclosure for the Raspberry Pi, however the example enclosure is not RF shielded. 
+If you have a large generator, the placement of your Raspberry Pi could be important due to [EMI](https://en.wikipedia.org/wiki/Electromagnetic_interference). Larger generators can produce more EMI when starting. For example a 48kw diesel generator may generate enough EMI to cause CRC errors when the generator starts if the Raspberry Pi enclosure is close to the engine. If you see CRC errors, check the validity of your cable. The errors may be caused by vibration of loose molex connectors in your cable. Also, if the Raspberry Pi enclosure is moved away from the engine and closer to the controller, this will likely reduce EMI if that is causing any CRC errors. EMI may not be an issue with smaller liquid cooled generators. There are several ways to resolve EMI issues however the best solution is dependent on your particular site needs (generator, how much space you need for your Pi, how much space you have available, etc). The project [wiki](https://github.com/jgyates/genmon/wiki/Hardware) has information regarding a typical enclosure for the Raspberry Pi, however the example enclosure is not RF shielded. 
 
 ## Connectivity
 This application was written to be agnostic of the underlying network media (i.e. WiFi, Ethernet, etc). Testing and development was performed with WiFi. WiFi access points were connected to an uninterruptible power supply (UPS) so connectivity is not lost power is transferred from the utility to the generator.
@@ -80,7 +80,7 @@ Since there are several version of the raspberry Pi out and also several options
 
 [General Setup of the serial port for a Raspberry Pi](http://elinux.org/RPi_Serial_Connection)
 
-[An updated serial port setup instructions based on the Raspberry Pi 3](http://spellfoundry.com/2016/05/29/configuring-gpio-serial-port-raspbian-jessie-including-pi-3/) 
+[An updated serial port setup instructions based on the Raspberry Pi 3](http://spellfoundry.com/2016/05/29/configuring-gpio-serial-port-raspbian-jessie-including-pi-3/)
 
 One important step is to validate your serial port is working properly. You can validate the serial port is working properly by using the program serialtest.py in this repository. To validate your serial port connect the RS-232 transmit to RS-232 receive and follow the instructions in the software section on [serialtest.py](https://github.com/jgyates/genmon/wiki/Software#otherappsserialtestpy-optional). Also, you can validate your cable by connecting your cable to your serial port and connecting transmit to receive at the far end of the cable so you will be looping back through your cable, then repeat the serialtest.py test.
 
@@ -94,5 +94,3 @@ The project [wiki](https://github.com/jgyates/genmon/wiki/Setting-up-your-Pi-and
 * [Setting Up Your Pi and Genmon](https://github.com/jgyates/genmon/wiki/Setting-up-your-Pi-and-genmon)
 * [Updating Genmon to the Latest Version](https://github.com/jgyates/genmon/wiki/Updating-to-the-Latest-Version)
 * [Software Design](https://github.com/jgyates/genmon/wiki/Design)
-
-
