@@ -1076,7 +1076,7 @@ function saveNotifications(){
              $('.progress-bar-fill').queue(function () {
                   $(this).css('width', '100%')
              });
-             setTimeout(function(){ vex.closeAll(); }, 10000);
+             setTimeout(function(){ vex.closeAll(); location.reload();}, 10000);
            }
         }
     })
@@ -1366,6 +1366,7 @@ function saveSettings(){
                 if ($('#fueltype').val() != $('#fueltype').attr('oldValue')) { myGenerator["fueltype"] = $('#fueltype').val(); }
                 if ($('#favicon').val() != $('#favicon').attr('oldValue')) { changeFavicon($('#favicon').val()); }
                 if (($('#enhancedexercise').prop('checked')  === true ? "true" : "false") != $('#enhancedexercise').attr('oldValue')) { myGenerator['EnhancedExerciseEnabled'] = ($('#enhancedexercise').prop('checked')  === true ? "true" : "false") }
+                location.reload();
              }, 10000);
            }
         }
