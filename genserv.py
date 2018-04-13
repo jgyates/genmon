@@ -236,13 +236,13 @@ def ReadSingleConfigValue(file, section, type, entry, default, bounds = None):
         if not config.has_option(section, entry):
             return default
 
-        if type == "string":
+        if type.lower() == "string" or type == "password":
             return config.get(section, entry)
-        elif type == "boolean":
+        elif type.lower() == "boolean":
             return config.getboolean(section, entry)
-        elif type == "int":
+        elif type.lower() == "int":
             return config.getint(section, entry)
-        elif type == 'list':
+        elif type.lower() == 'list':
             Value = config.get(section, entry)
             if bounds != None:
                 DefaultList = bounds.split(",")
@@ -646,4 +646,3 @@ if __name__ == "__main__":
             log.error("Error in app.run:" + str(e1))
             time.sleep(2)
             Restart()
-
