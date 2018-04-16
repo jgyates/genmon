@@ -85,4 +85,4 @@ Since there are several version of the raspberry Pi out and also several options
 One important step is to validate your serial port is working properly. You can validate the serial port is working properly by using the program serialtest.py in this repository. To validate your serial port connect the RS-232 transmit to RS-232 receive and follow the instructions in the software section on [serialtest.py](https://github.com/jgyates/genmon/wiki/1:-Software-Overview#otherappsserialtestpy-optional). Also, you can validate your cable by connecting your cable to your serial port and connecting transmit to receive at the far end of the cable so you will be looping back through your cable, then repeat the serialtest.py test.
 
 # Documentation
-* [Genmon Introduction](https://github.com/jgyates/genmon/wiki)
+* [Genmon Project Wiki](https://github.com/jgyates/genmon/wiki)
