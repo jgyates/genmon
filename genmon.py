@@ -29,7 +29,7 @@ except ImportError as e:
 
 import mymail, mylog, mythread
 
-GENMON_VERSION = "V1.6.1"
+GENMON_VERSION = "V1.6.2"
 
 #------------ SerialDevice class --------------------------------------------
 class SerialDevice:
@@ -232,6 +232,9 @@ class GeneratorDevice:
         self.SerialInit = False     # set to true once serial is init
         self.InitComplete = False   # set to true once init is complete
         self.NewInstall = False     # True if newly installed or newly upgraded version
+        self.FeedbackEnabled = False   # True if sending autoated feedback on missing information
+        self.FeedbackMessages = {}
+
         self.Version = "Unknown"
 
         self.DaysOfWeek = { 0: "Sunday",    # decode for register values with day of week
@@ -309,6 +312,7 @@ class GeneratorDevice:
                     "0036" : [2, 0],     # Evo AC   (Sensor?) Unknown
                     "0037" : [2, 0],     # CT Sensor (EvoAC)
                     "0038" : [2, 0],     # Evo AC   (Sensor?)       FFFE, FFFF, 0001, 0002 random - not linear
+                    "0039" : [2, 0],     # Evo AC   (Sensor?)
                     "003a" : [2, 0],     # Evo AC   (Sensor?)  Nexus and Evo AC
                     "003b" : [2, 0],     # Evo AC   (Sensor?)  Nexus and Evo AC
                     "002b" : [2, 0],     # Startup Delay (Evo AC)
@@ -489,7 +493,7 @@ class GeneratorDevice:
 
         return Thread.StopSignaled()
 
-    # ---------- GeneratorDevice::GetConfig------------------
+    # ---------- GeneratorDevice::Reload------------------
     def Reload(self):
 
         try:
@@ -645,6 +649,11 @@ class GeneratorDevice:
             else:
                 self.AddItemToConfFile('version', GENMON_VERSION)
                 self.NewInstall = True
+            if config.has_option(ConfigSection, "autofeedback"):
+                self.FeedbackEnabled = config.getboolean(ConfigSection, 'autofeedback')
+            else:
+                self.AddItemToConfFile('autofeedback', "False")
+                self.FeedbackEnabled = False
 
         except Exception as e1:
             if not reload:
@@ -839,8 +848,28 @@ class GeneratorDevice:
         self.CheckForAlarmEvent.set()
 
     #------------------------------------------------------------
-    def CheckModelSpecificInfo(self):
+    def SendFeedbackInfo(self, Reason, Always = False, Message = None, FullLogs = False):
 
+        if not self.FeedbackEnabled:
+            return
+        if self.NewInstall or Always:
+
+            CheckedSent = self.FeedbackMessages.get(Reason, "NO")
+
+            if CheckedSent == "YES":
+                return
+
+            self.FeedbackMessages[Reason] = "YES"
+
+            msgbody = "Reason = " + Reason + "\n"
+            if Message != None:
+                msgbody += "Message : " + Message + "\n"
+            msgbody += "Version: " + GENMON_VERSION
+            msgbody += self.DisplayRegisters(AllRegs = FullLogs, ToString = True)
+            self.mail.sendEmail("Generator Monitor Submission", msgbody , recipient = "generatormonitor.software@gmail.com", msgtype = "error")
+
+    #------------------------------------------------------------
+    def CheckModelSpecificInfo(self):
 
         if self.NominalFreq == "Unknown" or not len(self.NominalFreq):
             self.NominalFreq = self.GetModelInfo("Frequency")
@@ -855,6 +884,10 @@ class GeneratorDevice:
             else:
                 self.NominalRPM = "3600"
             self.AddItemToConfFile("nominalRPM", self.NominalRPM)
+
+        self.NominalKW = self.GetModelInfo("KW")
+        if self.NominalKW == "Unknown":
+            self.SendFeedbackInfo("ModelID", Message="Model ID register is unknown")
 
         if self.NominalKW == "Unknown" or self.Model == "Unknown" or not len(self.NominalKW) or not len(self.Model) or self.NewInstall:
 
@@ -887,10 +920,6 @@ class GeneratorDevice:
     def GetModelInfo(self, Request):
 
         UnknownList = ["Unknown", "Unknown", "Unknown", "Unknown"]
-
-        # register 0019 model identification only works on EvoAC for now
-        if not (self.EvolutionController and not self.LiquidCooled):
-            return "Unknown"
 
         # Nexus LQ is the QT line
         #QT080, QT070,QT100,QT130,QT150
@@ -925,35 +954,49 @@ class GeneratorDevice:
                                 }
 
         # Evolution LC is the Protector series
-        #RG025,RG022,RG030,RG027,RG036,RG032,RG045,RG038,RG048,RG060
+        #RG022, RG025,RG030,RG027,RG036,RG032,RG045,RG038,RG048,RG060
         # RD01523,RD02023,RD03024,RD04834,RD05034
-        ModelLookUp_EvoAC = {}
+        ModelLookUp_EvoLC = {
+                                13: ["48KW", "60", "120/240", "1"]
+                            }
+        Register = "None"
+        LookUp = None
+        if not self.LiquidCooled:
+            Register = "0019"
+            if self.EvolutionController:
+                LookUp = ModelLookUp_EvoAC
+            else:
+                LookUp = ModelLookUp_NexusAC
+        elif self.EvolutionController and self.LiquidCooled:
+            Register = "005c"
+            LookUp = ModelLookUp_EvoLC
+        else:
+            LookUp = ModelLookUp_NexusLC
+            return "Unknown"    # Nexus LC is not known
 
-        if self.EvolutionController and not self.LiquidCooled:
-            Value = self.GetRegisterValueFromList("0019")
-            if not len(Value):
+        Value = self.GetRegisterValueFromList(Register)
+        if not len(Value):
+            return "Unknown"
+
+        ModelInfo = LookUp.get(int(Value,16), UnknownList)
+
+        if Request.lower() == "frequency":
+            if ModelInfo[1] == "60" or ModelInfo[1] == "50":
+                return ModelInfo[1]
+
+        elif Request.lower() == "kw":
+            if "kw" in ModelInfo[0].lower():
+                return self.removeAlpha(ModelInfo[0])
+            elif "kva" in ModelInfo[0].lower():
+                # TODO: This is not right, I think if we take KVA * 0.8 it should equal KW for single phase
+                return self.removeAlpha(ModelInfo[0])
+            else:
                 return "Unknown"
 
-            ModelInfo = ModelLookUp_EvoAC.get(int(Value,16), UnknownList)
-
-            if Request.lower() == "frequency":
-                if ModelInfo[1] == "60" or ModelInfo[1] == "50":
-                    return ModelInfo[1]
-
-            elif Request.lower() == "kw":
-                if "kw" in ModelInfo[0].lower():
-                    return self.removeAlpha(ModelInfo[0])
-                elif "kva" in ModelInfo[0].lower():
-                    # TODO: This is not right, I think if we take KVA * 0.8 it should equal KW for single phase
-                    return self.removeAlpha(ModelInfo[0])
-                else:
-                    return "Unknown"
-
-            elif Request.lower() == "phase":
-                return ModelInfo[3]
+        elif Request.lower() == "phase":
+            return ModelInfo[3]
 
         return "Unknown"
-
 
     #------------------------------------------------------------
     def LookUpSNInfo(self, SkipKW = False):
@@ -2995,6 +3038,7 @@ class GeneratorDevice:
             msgbody += "\n        https://github.com/jgyates/genmon/issues/12"
             msgbody += "\n        https://github.com/jgyates/genmon/issues/13"
             RetValue["Note"] = msgbody
+            self.SendFeedbackInfo("Logs", FullLogs = True, Always = True, Message="Unknown Entries in Log")
 
         if not DictOut:
             return self.printToScreen(self.ProcessDispatch(RetValue,""), ToString)
@@ -3017,7 +3061,7 @@ class GeneratorDevice:
     #       IIJJ = Alarm Code for Alarm Log only
     #---------------------------------------------------------------------------
     def ParseLogEntry(self, Value, LogBase = None):
-
+        # This should be the same for all models
         StartLogDecoder = {
         0x28: "Switched Off",               # Start / Stop Log
         0x29: "Running - Manual",           # Start / Stop Log
@@ -3026,11 +3070,11 @@ class GeneratorDevice:
         0x2C: "Running - 2 Wire Start",     # Start / Stop Log
         0x2D: "Running - Remote Start",     # Start / Stop Log
         0x2E: "Running - Exercise",         # Start / Stop Log
-        0x2F: "Stopped - Warning"           # Start / Stop Log
+        0x2F: "Stopped - Alarm"             # Start / Stop Log
         # Stopped Alarm
         }
 
-
+        # This should be the same for all Evo models , Not sure about service C, this may be a Nexus thing
         ServiceLogDecoder = {
         0x16: "Service Schedule B",         # Maint
         0x17: "Service Schedule A",         # Maint
@@ -3039,6 +3083,7 @@ class GeneratorDevice:
         0x3D: "Schedule A Serviced",        # Maint
         0x3E: "Battery Maintained",
         0x3F: "Maintenance Reset"
+        # This is from the diagnostic manual.
         # *Schedule Service A
         # Schedule Service B
         # Schedule Service C
@@ -3050,8 +3095,7 @@ class GeneratorDevice:
         # Battery Maintained
         }
 
-
-        AlarmLogDecoder = {
+        AlarmLogDecoder_EvoLC = {
         0x04: "RPM Sense Loss",             # 1500 Alarm
         0x06: "Low Coolant Level",          # 2720  Alarm
         0x47: "Low Fuel Level",             # 2700A Alarm
@@ -3090,11 +3134,47 @@ class GeneratorDevice:
         # Evolution Air Cooled Decoder
         # NOTE: Warnings on Evolution Air Cooled have an error code of zero
         AlarmLogDecoder_EvoAC = {
-        0x21: "Charger Missing AC",
-        0x14: "Low Battery",                # Warning
-        0x20: "Charger Warning"             # Warning
+        0x13 : "FIRMWARE ERROR-25",
+        0x14 : "Low Battery",
+        0x15 : "Exercise Set Error",
+        0x16 : "Service Schedule B",
+        0x17 : "Service Schedule A ",
+        0x18 : "Inspect Battery",
+        0x19 : "SEEPROM ABUSE",
+        0x1c : "Stopping.....",
+        0x1d : "FIRMWARE ERROR-9",
+        0x1e : "Fuel Pressure",
+        0x1f : "Battery Problem",
+        0x20 : "Charger Warning",
+        0x21 : "Charger Missing AC",
+        0x22 : "Overload Warning",
+        0x23 : "Overload Cooldown",
+        0x25 : "VSCF Warning",
+        0x26 : "USB Warning",
+        0x27 : "Download Failure",
+        0x28 : "High Engine Temp",
+        0x29 : "Low Oil Pressure",
+        0x2a : "Overcrank",
+        0x2b : "Overspeed",
+        0x2c : "RPM Sense Loss",
+        0x2d : "Underspeed",
+        0x2e : "Controller Fault",
+        0x2f : "FIRMWARE ERROR-7",
+        0x30 : "WIRING ERROR",
+        0x31 : "Over Voltage",
+        0x32 : "Under Voltage",
+        0x33 : "Overload Remove Load",
+        0x34 : "Low Volts Remove Load",
+        0x35 : "Stepper Over Current",
+        0x36 : "Fuse Problem",
+        0x39 : "Loss of Speed Signal",
+        0x3a : "Loss of Serial Link ",
+        0x3b : "VSCF Alarm",
+        0x3c : "Schedule B Serviced",
+        0x3d : "Schedule A Serviced",
+        0x3e : "Battery Maintained",
+        0x3f : "Maintenance Reset"
         }
-
 
         NexusAlarmLogDecoder = {
         0x00: "High Engine Temperature",    # Validated on Nexus Air Cooled
@@ -3164,11 +3244,12 @@ class GeneratorDevice:
 
         if self.EvolutionController and not self.LiquidCooled:
             DecoderLookup[ALARM_LOG_STARTING_REG] = AlarmLogDecoder_EvoAC
+            DecoderLookup[SERVICE_LOG_STARTING_REG] = AlarmLogDecoder_EvoAC
         else:
-            DecoderLookup[ALARM_LOG_STARTING_REG] = AlarmLogDecoder
+            DecoderLookup[ALARM_LOG_STARTING_REG] = AlarmLogDecoder_EvoLC
+            DecoderLookup[SERVICE_LOG_STARTING_REG] = ServiceLogDecoder
 
         DecoderLookup[START_LOG_STARTING_REG] = StartLogDecoder
-        DecoderLookup[SERVICE_LOG_STARTING_REG] = ServiceLogDecoder
         DecoderLookup[NEXUS_ALARM_LOG_STARTING_REG] = NexusAlarmLogDecoder
 
         if LogBase == NEXUS_ALARM_LOG_STARTING_REG and self.EvolutionController:
@@ -3375,6 +3456,7 @@ class GeneratorDevice:
             elif self.BitIsEqual(RegVal, 0x0FFFF, 0x14):        #  Validate on Nexus, occurred when Check Battery Alarm
                 outString += "Check Battery"
             else:
+                self.SendFeedbackInfo("Alarm", Always = True, Message = "Reg 0001 = %08x" % RegVal)
                 outString += "UNKNOWN ALARM: %08x" % RegVal
 
         return outString
@@ -3551,6 +3633,7 @@ class GeneratorDevice:
         elif self.BitIsEqual(RegVal, 0x000F0000, 0x00000000):
             return "Off - Ready"
         else:
+            self.SendFeedbackInfo("EngineState", Always = True, Message = "Reg 0001 = %08x" % RegVal)
             return "UNKNOWN: %08x" % RegVal
 
     #------------ GeneratorDevice::GetSwitchState --------------------------------------
@@ -4892,5 +4975,3 @@ if __name__=='__main__': # usage SerialTest.py [baud_rate]
 
     while True:
         time.sleep(1)
-
-

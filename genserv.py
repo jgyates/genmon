@@ -356,6 +356,7 @@ def ReadSettingsFromFile():
                 #"outagelog" : ['string', 'Outage Log', 8, "/home/pi/genmon/outage.txt", "", 0],
                 "syncdst" : ['boolean', 'Sync Daylight Savings Time', 22, False, "", ""],
                 "synctime" : ['boolean', 'Sync Time', 23, False, "", ""],
+                "autofeedback" : ['boolean', 'Automated Feedback', 24, False, "", ""],
 
                 #"model" : ['string', 'Generator Model', 100, "Generic Evolution Air Cooled", "", 0],
                 "nominalfrequency": ['list', 'Rated Frequency', 101, "60", "", "50,60"],
