@@ -1,7 +1,7 @@
 # genmon
 # Generator Monitoring Application using a Raspberry Pi and WiFi
 
-This project will monitor a backup generator that utilizes the Generac [Evolution](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/Evolution_Controller.jpg) or [Nexus](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/Nexus_Controller.jpg) Controllers over a WiFi or wired connection.  Generac, Eaton, Honeywell and Siemens Home Backup Generators use these Generac controllers. Honeywell and Eaton call the controllers Sync 1.0 (Nexus) and Sync 2.0 (Evolution) in their documentation however all of these companies sell generators that use the controllers supported by this project. The project is written mostly in python and has been tested with a Raspberry Pi 3 (Pi Zero and Pi 2 has also been validated). Ideally you would need to create a physical enclosure for your raspberry pi and possibly [make a cable](https://github.com/jgyates/genmon/wiki/Making-a-Cable) to connect the raspberry pi to the Evolution or Nexus controller. If you are comfortable doing these things and you have a backup generator that has an Generac Evolution or Nexus controller then this project may be of interest to you.
+This project will monitor a backup generator that utilizes the Generac [Evolution](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/Evolution_Controller.jpg) or [Nexus](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/Nexus_Controller.jpg) Controllers over a WiFi or wired connection.  Generac, Eaton, Honeywell and Siemens Home Backup Generators use these Generac controllers. Honeywell and Eaton call the controllers Sync 1.0 (Nexus) and Sync 2.0 (Evolution) in their documentation however all of these companies sell generators that use the controllers supported by this project. The project is written mostly in python and has been tested with a Raspberry Pi 3 (Pi Zero and Pi 2 has also been validated). Ideally you would need to create a physical enclosure for your raspberry pi and possibly [make a cable](https://github.com/jgyates/genmon/wiki/3.1:-Making-a-Cable) to connect the raspberry pi to the Evolution or Nexus controller. If you are comfortable doing these things and you have a backup generator that has an Generac Evolution or Nexus controller then this project may be of interest to you.
 
 ## Functionality
 The software supports the following features:
@@ -82,15 +82,7 @@ Since there are several version of the raspberry Pi out and also several options
 
 [An updated serial port setup instructions based on the Raspberry Pi 3](http://spellfoundry.com/2016/05/29/configuring-gpio-serial-port-raspbian-jessie-including-pi-3/)
 
-One important step is to validate your serial port is working properly. You can validate the serial port is working properly by using the program serialtest.py in this repository. To validate your serial port connect the RS-232 transmit to RS-232 receive and follow the instructions in the software section on [serialtest.py](https://github.com/jgyates/genmon/wiki/Software#otherappsserialtestpy-optional). Also, you can validate your cable by connecting your cable to your serial port and connecting transmit to receive at the far end of the cable so you will be looping back through your cable, then repeat the serialtest.py test.
-
-The project [wiki](https://github.com/jgyates/genmon/wiki/Setting-up-your-Pi-and-genmon) also has a description of setting up the Pi with genmon.py.
+One important step is to validate your serial port is working properly. You can validate the serial port is working properly by using the program serialtest.py in this repository. To validate your serial port connect the RS-232 transmit to RS-232 receive and follow the instructions in the software section on [serialtest.py](https://github.com/jgyates/genmon/wiki/1:-Software-Overview#otherappsserialtestpy-optional). Also, you can validate your cable by connecting your cable to your serial port and connecting transmit to receive at the far end of the cable so you will be looping back through your cable, then repeat the serialtest.py test.
 
 # Documentation
 * [Genmon Introduction](https://github.com/jgyates/genmon/wiki)
-* [Software Overview](https://github.com/jgyates/genmon/wiki/Software)
-* [Hardware Needed](https://github.com/jgyates/genmon/wiki/Hardware)
-* [Making a Cable](https://github.com/jgyates/genmon/wiki/Making-a-Cable)
-* [Setting Up Your Pi and Genmon](https://github.com/jgyates/genmon/wiki/Setting-up-your-Pi-and-genmon)
-* [Updating Genmon to the Latest Version](https://github.com/jgyates/genmon/wiki/Updating-to-the-Latest-Version)
-* [Software Design](https://github.com/jgyates/genmon/wiki/Design)
