@@ -29,7 +29,7 @@ except ImportError as e:
 
 import mymail, mylog, mythread
 
-GENMON_VERSION = "V1.6.2"
+GENMON_VERSION = "V1.6.3"
 
 #------------ SerialDevice class --------------------------------------------
 class SerialDevice:
@@ -275,26 +275,31 @@ class GeneratorDevice:
                     "0010" : [2, 0],     # Read / Write: Generator Time = Hi byte Day of Week 00=Sunday 01=Monday, Lo byte = last 2 digits of year (Nexus, EvoAQ, EvoLQ)
                     "0011" : [2, 0],     # Utility Threshold, ML Does not read this  (Nexus, EvoAQ, EvoLQ) (possibly read / write)
                     "0012" : [2, 0],     # Gen output voltage (Nexus, EvoAQ, EvoLQ)
-                    "001a" : [2, 0],     # Hours until next service (Nexus, EvoAQ, EvoLQ)
+                    "0019" : [2, 0],     # Model ID register, (EvoAC, NexusAC)
+                    "001a" : [2, 0],     # Hours Until Service A
+                    "001b" : [2, 0],     # Date Service A Due
+                    "001c" : [2, 0],     # Service Info Hours (Nexus)
+                    "001d" : [2, 0],     # Service Info Date (Nexus)
+                    "001e" : [2, 0],     # Hours Until Service B
+                    "001f" : [2, 0],     # Hours util Service (NexusAC), Date Service Due (Evo)
+                    "0020" : [2, 0],     # Service Info Date (NexusAC)
+                    "0021" : [2, 0],     # Service Info Hours (NexusAC)
+                    "0022" : [2, 0],     # Service Info Date (NexusAC, EvoAC)
                     "002a" : [2, 0],     # hardware (high byte) (Hardware V1.04 = 0x68) and firmware version (low byte) (Firmware V1.33 = 0x85) (Nexus, EvoAQ, EvoLQ)
+                    "002b" : [2, 0],     # Startup Delay (Evo AC)
+                    "002c" : [2, 0],     # Evo      (Exercise Time) Exercise Time HH:MM
+                    "002d" : [2, 0],     # Evo AC   (Weekly, Biweekly, Monthly)
+                    "002e" : [2, 0],     # Evo      (Exercise Time) Exercise Day Sunday =0, Monday=1
+                    "002f" : [2, 0],     # Evo      (Quiet Mode)
                     "0059" : [2, 0],     # Set Voltage from Dealer Menu (not currently used)
                     "023b" : [2, 0],     # Pick Up Voltage (Evo LQ only)
                     "023e" : [2, 0],     # Exercise time duration (Evo LQ only)
                     "0054" : [2, 0],     # Hours since generator activation (hours of protection) (Evo LQ only)
-                    "005e" : [2, 0],     # Total engine time in minutes High
-                    "005f" : [2, 0],     # Total engine time in minutes Low
+                    "005e" : [2, 0],     # Total engine time in minutes High (EvoLC)
+                    "005f" : [2, 0],     # Total engine time in minutes Low  (EvoLC)
                     "01f1" : [2, 0],     # Unknown Status (WIP) (Changes from 000e to 0d0e on EvoLC when running and back to 000e when stopped)
                     "01f2" : [2, 0],     # Unknown Status (WIP) (Changes from 0c02 to 0c0c on EvoLC when running and back to 0c02 when stopped)
                     "01f3" : [2, 0],     # Unknown Status (WIP) (appears to be updated after a run cycle, number increases) (EvoLC, EvoAC)
-                    "001b" : [2, 0],     # Unknown Read by ML All (identifier of some type)
-                    "001c" : [2, 0],     # Hours util Service C (NexusAC,NexusLC)
-                    "001d" : [2, 0],     # Unknown Read by ML Nexus
-                    "001e" : [2, 0],     # All, Hours until Service B due
-                    "001f" : [2, 0],     # Hours util Service D (NexusAC)
-                    "0020" : [2, 0],     # Unknown Read by ML zero except NexusAC
-                    "0021" : [2, 0],     # Unknown Read by ML zero except Nexus AC
-                    "0022" : [2, 0],     # Unknown: Status of some type
-                    "0019" : [2, 0],     # Model ID register, (EvoAC, NexusAC)
                     "0057" : [2, 0],     # Unknown Looks like some status bits (0002 to 0005 when engine starts, back to 0002 on stop)
                     "0055" : [2, 0],     # Unknown
                     "0056" : [2, 0],     # Unknown Looks like some status bits (0000 to 0003, back to 0000 on stop)
@@ -315,14 +320,9 @@ class GeneratorDevice:
                     "0039" : [2, 0],     # Evo AC   (Sensor?)
                     "003a" : [2, 0],     # Evo AC   (Sensor?)  Nexus and Evo AC
                     "003b" : [2, 0],     # Evo AC   (Sensor?)  Nexus and Evo AC
-                    "002b" : [2, 0],     # Startup Delay (Evo AC)
                     "0239" : [2, 0],     # Startup Delay (Evo AC)
                     "0237" : [2, 0],     # Set Voltage (Evo LC)
                     "0208" : [2, 0],     # Evo,     Calibrate Volts?
-                    "002e" : [2, 0],     # Evo      (Exercise Time) Exercise Day Sunday =0, Monday=1
-                    "002c" : [2, 0],     # Evo      (Exercise Time) Exercise Time HH:MM
-                    "002d" : [2, 0],     # Evo AC   (Weekly, Biweekly, Monthly)
-                    "002f" : [2, 0],     # Evo      (Quiet Mode)
                     "005c" : [2, 0],     # Unknown , possible model reg on EvoLC
                     "05f3" : [2, 0],     # EvoAC, EvoLC, counter of some type
                     "05f4" : [2, 0],     # Evo AC   Current 1
@@ -373,6 +373,7 @@ class GeneratorDevice:
         self.PowerLogMaxSize = 15       # 15 MB max size
         self.PowerLog =  os.path.dirname(os.path.realpath(__file__)) + "/kwlog.txt"
         self.OutageLog = os.path.dirname(os.path.realpath(__file__)) + "/outage.txt"
+        self.FeedbackLogFile = os.path.dirname(os.path.realpath(__file__)) + "/feedback.json"
         self.DisableOutageCheck = False
         self.bSyncTime = False          # Sync gen to system time
         self.bSyncDST = False           # sync time at DST change
@@ -433,7 +434,7 @@ class GeneratorDevice:
         except Exception as e1:
             self.FatalError("Unable to find crcmod package: " + str(e1))
 
-
+        self.ProcessFeedbackInfo()
         self.StartThreads()
 
         self.LogError("GenMon Loadded for site: " + self.SiteName)
@@ -654,6 +655,10 @@ class GeneratorDevice:
             else:
                 self.AddItemToConfFile('autofeedback', "False")
                 self.FeedbackEnabled = False
+            # Load saved feedback log if log is present
+            if os.path.isfile(self.FeedbackLogFile):
+                with open(self.FeedbackLogFile) as infile:
+                    self.FeedbackMessages = json.load(infile)
 
         except Exception as e1:
             if not reload:
@@ -844,29 +849,45 @@ class GeneratorDevice:
         self.CheckModelSpecificInfo()
 
         self.InitComplete = True
+
          # check for unknown events (i.e. events we are not decoded) and send an email if they occur
         self.CheckForAlarmEvent.set()
 
     #------------------------------------------------------------
+    def ProcessFeedbackInfo(self):
+
+        if self.FeedbackEnabled:
+            for Key, Entry in self.FeedbackMessages.items():
+                self.mail.sendEmail("Generator Monitor Submission", Entry , recipient = "generatormonitor.software@gmail.com", msgtype = "error")
+            # delete unsent Messages
+            if os.path.isfile(self.FeedbackLogFile):
+                os.remove(self.FeedbackLogFile)
+
+    #------------------------------------------------------------
     def SendFeedbackInfo(self, Reason, Always = False, Message = None, FullLogs = False):
+        try:
+            if self.NewInstall or Always:
 
-        if not self.FeedbackEnabled:
-            return
-        if self.NewInstall or Always:
+                CheckedSent = self.FeedbackMessages.get(Reason, "")
 
-            CheckedSent = self.FeedbackMessages.get(Reason, "NO")
+                if not CheckedSent == "":
+                    return
 
-            if CheckedSent == "YES":
-                return
+                msgbody = "Reason = " + Reason + "\n"
+                if Message != None:
+                    msgbody += "Message : " + Message + "\n"
+                msgbody += "Version: " + GENMON_VERSION
+                msgbody += self.DisplayRegisters(AllRegs = FullLogs, ToString = True)
+                if self.FeedbackEnabled:
+                    self.mail.sendEmail("Generator Monitor Submission", msgbody , recipient = "generatormonitor.software@gmail.com", msgtype = "error")
 
-            self.FeedbackMessages[Reason] = "YES"
-
-            msgbody = "Reason = " + Reason + "\n"
-            if Message != None:
-                msgbody += "Message : " + Message + "\n"
-            msgbody += "Version: " + GENMON_VERSION
-            msgbody += self.DisplayRegisters(AllRegs = FullLogs, ToString = True)
-            self.mail.sendEmail("Generator Monitor Submission", msgbody , recipient = "generatormonitor.software@gmail.com", msgtype = "error")
+                self.FeedbackMessages[Reason] = msgbody
+                # if feedback not enabled, save the log to file
+                if not self.FeedbackEnabled:
+                    with open(self.FeedbackLogFile, 'w') as outfile:
+                        json.dump(self.FeedbackMessages, outfile, sort_keys = True, indent = 4, ensure_ascii = False)
+        except Exception as e1:
+            self.LogError("Error in SendFeedbackInfo: " + str(e1))
 
     #------------------------------------------------------------
     def CheckModelSpecificInfo(self):
@@ -880,13 +901,19 @@ class GeneratorDevice:
         # This is not correct for 50Hz models
         if self.NominalRPM == "Unknown" or not len(self.NominalRPM):
             if self.LiquidCooled:
-                self.NominalRPM = "1800"
+                if self.NominalFreq == "50":
+                    self.NominalRPM = "1500"
+                else:
+                    self.NominalRPM = "1800"
             else:
-                self.NominalRPM = "3600"
+                if self.NominalFreq == "50":
+                    self.NominalRPM = "3000"
+                else:
+                    self.NominalRPM = "3600"
             self.AddItemToConfFile("nominalRPM", self.NominalRPM)
 
-        self.NominalKW = self.GetModelInfo("KW")
-        if self.NominalKW == "Unknown":
+        TempStr = self.GetModelInfo("KW")
+        if TempStr == "Unknown":
             self.SendFeedbackInfo("ModelID", Message="Model ID register is unknown")
 
         if self.NominalKW == "Unknown" or self.Model == "Unknown" or not len(self.NominalKW) or not len(self.Model) or self.NewInstall:
@@ -922,7 +949,8 @@ class GeneratorDevice:
         UnknownList = ["Unknown", "Unknown", "Unknown", "Unknown"]
 
         # Nexus LQ is the QT line
-        #QT080, QT070,QT100,QT130,QT150
+        # 50Hz : QT02724MNAX
+        # QT022, QT027, QT036, QT048, QT080, QT070,QT100,QT130,QT150
         ModelLookUp_NexusLC = {}
 
         # Nexus AC
@@ -954,7 +982,8 @@ class GeneratorDevice:
                                 }
 
         # Evolution LC is the Protector series
-        #RG022, RG025,RG030,RG027,RG036,RG032,RG045,RG038,RG048,RG060
+        # 50Hz Models: RG01724MNAX, RG02224MNAX, RG02724RNAX
+        # RG022, RG025,RG030,RG027,RG036,RG032,RG045,RG038,RG048,RG060
         # RD01523,RD02023,RD03024,RD04834,RD05034
         ModelLookUp_EvoLC = {
                                 13: ["48KW", "60", "120/240", "1"]
@@ -2803,17 +2832,20 @@ class GeneratorDevice:
             Exercise["Exercise Duration"] = self.GetExerciseDuration
         Maint["Exercise"] = Exercise
         Service = collections.OrderedDict()
-        if not self.EvolutionController:
+        if not self.EvolutionController and self.LiquidCooled:
+            Service["Air Filter Service Due"] = self.GetServiceDue("AIR") + " or " + self.GetServiceDueDate("AIR")
+            Service["Oil Change and Filter Due"] = self.GetServiceDue("OIL") + " or " + self.GetServiceDueDate("OIL")
+            Service["Spark Plug Change Due"] = self.GetServiceDue("SPARK") + " or " + self.GetServiceDueDate("SPARK")
+        elif not self.EvolutionController and not self.LiquidCooled:
             # Note: On Nexus AC These represent Air Filter, Oil Filter, and Spark Plugs, possibly 5 all together
             # The labels are generic for now until I get clarification from someone with a Nexus AC
-            Service["Service A Due"] = self.GetServiceDue("A")
-            Service["Service B Due"] = self.GetServiceDue("B")
-            Service["Service C Due"] = self.GetServiceDue("C")
-            if not self.LiquidCooled:
-                Service["Service D Due"] = self.GetServiceDue("D")
+            Service["Air Filter Service Due"] = self.GetServiceDue("AIR")  + " or " + self.GetServiceDueDate("AIR")
+            Service["Oil and Oil Filter Service Due"] = self.GetServiceDue("OIL") + " or " + self.GetServiceDueDate("OIL")
+            Service["Spark Plug Service Due"] = self.GetServiceDue("SPARK") + " or " + self.GetServiceDueDate("SPARK")
+            Service["Battery Service Due"] = self.GetServiceDue("BATTERY") + " or " + self.GetServiceDueDate("BATTERY")
         else:
-            Service["Service A Due"] = self.GetServiceDue("A")
-            Service["Service B Due"] = self.GetServiceDue("B")
+            Service["Service A Due"] = self.GetServiceDue("A") + " or " + self.GetServiceDueDate("A")
+            Service["Service B Due"] = self.GetServiceDue("B") + " or " + self.GetServiceDueDate("B")
 
         Service["Total Run Hours"] = self.GetRunTimes
         Service["Hardware Version"] = self.GetHardwareVersion
@@ -4499,6 +4531,7 @@ class GeneratorDevice:
         Status["basestatus"] = self.GetBaseStatus()
         Status["kwOutput"] = self.GetPowerOutput()
         Status["Exercise"] = self.GetParsedExerciseTime()
+        Status["UnsentFeedback"] = str(os.path.isfile(self.FeedbackLogFile))
 
         return Status
 
@@ -4528,7 +4561,7 @@ class GeneratorDevice:
             else:
                 return "READY"
 
-        #------------ GeneratorDevice::ServiceIsDue ------------------------------------
+    #------------ GeneratorDevice::ServiceIsDue ------------------------------------
     def ServiceIsDue(self):
 
         # get Hours until next service
@@ -4543,50 +4576,58 @@ class GeneratorDevice:
             return True
 
         # get Hours until next service
-        Value = self.GetServiceDue("A", NoUnits = True)
-        if not len(Value):
-            return False
+        if self.EvolutionController:
+            ServiceList = ["A","B"]
 
-        if (int(Value) <= 1):
-            return True
-
-        # get Hours until next service
-        Value = self.GetServiceDue("B", NoUnits = True)
-        if not len(Value):
-            return False
-
-        if (int(Value) <= 1):
-            return True
-
-        if not self.EvolutionController:
-
-            Value = self.GetServiceDue("C", NoUnits = True)
-            if not len(Value):
-                return False
-
-            if (int(Value) <= 1):
-                return True
-
-            if not self.LiquidCooled:
-                Value = self.GetServiceDue("D", NoUnits = True)
+            for Service in ServiceList:
+                Value = self.GetServiceDue(Service, NoUnits = True)
                 if not len(Value):
-                    return False
+                    continue
 
                 if (int(Value) <= 1):
                     return True
+
+        if not self.EvolutionController:
+
+            ServiceList = ["OIL","AIR","SPARK","BATTERY","OTHER"]
+
+            for Service in ServiceList:
+                Value = self.GetServiceDue(Service, NoUnits = True)
+                if not len(Value):
+                    continue
+
+                if (int(Value) <= 1):
+                    return True
+
         return False
 
     #------------ GeneratorDevice::GetServiceDue ------------------------------------
     def GetServiceDue(self, serviceType = "A", NoUnits = False):
 
-        ServiceTypeLookup = {
-                                "A": "001a",
-                                "B": "001e",
-                                "C": "001c",
-                                "D": "001f"
+        ServiceTypeLookup_Evo = {
+                                "A" : "001a",
+                                "B" : "001e"
                                 }
+        ServiceTypeLookup_Nexus_AC = {
+                                "SPARK" : "001a",
+                                "OIL" : "001e",
+                                "AIR" : "001c",
+                                "BATTERY" : "001f",
+                                "OTHER" : "0021"        # Do not know the corrposonding Due Date Register for this one
+                                }
+        ServiceTypeLookup_Nexus_LC = {
+                                "OIL" : "001a",
+                                "SPARK" : "001e",
+                                "AIR" : "001c"
+                                }
+        if self.EvolutionController:
+            LookUp = ServiceTypeLookup_Evo
+        elif not self.LiquidCooled:
+            LookUp = ServiceTypeLookup_Nexus_AC
+        else:
+            LookUp = ServiceTypeLookup_Nexus_LC
 
-        Register = ServiceTypeLookup.get(serviceType.upper(), "")
+        Register = LookUp.get(serviceType.upper(), "")
 
         if not len(Register):
             return ""
@@ -4602,6 +4643,76 @@ class GeneratorDevice:
             ServiceValue = "%d hrs" % int(Value,16)
 
         return ServiceValue
+
+    #------------ GeneratorDevice::GetServiceDueDate ------------------------------------
+    def GetServiceDueDate(self, serviceType = "A"):
+
+        # Evolution Air Cooled Maintenance Message Intervals
+        #Inspect Battery"  1 Year
+        #Schedule A       200 Hours or 2 years
+        #Schedule B       400 Hours
+        # Evolution Liquid Cooled Maintenance Message Intervals
+        #Inspect Battery"  1000 Hours
+        #Schedule A       125 Hours or 1 years
+        #Schedule B       250 Hours or 2 years
+        #Schedule C       1000 Hours
+        ServiceTypeLookup_Evo = {
+                                "A" : "001b",
+                                "B" : "001f"
+                                }
+
+        # Nexus Air Cooled Maintenance Message Intervals
+        # Inspect Battery     1 Year
+        #Change Oil & Filter  200 Hours or 2 years
+        #Inspect Air Filter   200 Hours or 2 years
+        #Change Air Filter    200 Hours or 2 years
+        #Inspect Spark Plugs  200 Hours or 2 years
+        #Change spark Plugs   400 Hours or 10 years
+        ServiceTypeLookup_Nexus_AC = {
+                                "SPARK" : "001b",
+                                "OIL" : "0020",
+                                "BATTERY" : "001d",
+                                "AIR": "0022"
+                                }
+        # Nexus Liquid Cooled Maintenance Message Intervals
+        #Change oil & filter alert                  3mo/30hrs break-in 1yr/100hrs
+        #inspect/clean air inlet & exhaust alert    3mo/30hrs break-in 6mo/50hrs
+        #Change / inspect air filter alert          1yr/100hr
+        #inspect spark plugs alert                  1yr/100hrs
+        #Change / inspect spark plugs alert         2yr/250hr
+        #inspect accessory drive alert              3mo/30hrs break-in 1yr/100hrs
+        #Coolant change & flush                     1yr/100hrs
+        #inspect battery alert                      1yr/100hrs
+        ServiceTypeLookup_Nexus_LC = {
+                                "OIL" : "001b",
+                                "SPARK" : "001f",
+                                "AIR" : "001d",
+                                }
+        if self.EvolutionController:
+            LookUp = ServiceTypeLookup_Evo
+        elif not self.LiquidCooled:
+            LookUp = ServiceTypeLookup_Nexus_AC
+        else:
+            LookUp = ServiceTypeLookup_Nexus_LC
+
+        Register = LookUp.get(serviceType.upper(), "")
+
+        if not len(Register):
+            return ""
+
+        # get Hours until next service
+        Value = self.GetRegisterValueFromList(Register)
+        if len(Value) != 4:
+            return ""
+
+        try:
+            time = int(Value,16) * 86400
+            time += 86400
+            Date = datetime.datetime.fromtimestamp(time)
+            return Date.strftime('%m/%d/%Y ')
+        except Exception as e1:
+            self.LogError("Error in GetServiceDueDate: " + str(e1))
+            return ""
 
     #----------  GeneratorDevice:GetHardwareVersion  ---------------------------------
     def GetHardwareVersion(self):
