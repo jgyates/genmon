@@ -4788,7 +4788,7 @@ class GeneratorDevice:
         if not self.AreThreadsAlive():
             outstr += " Threads are dead. "
         if  not self.CommunicationsActive:
-            outstr += "Not receiving data. "
+            outstr += " Not receiving data. "
 
         if len(outstr) == 0:
             outstr = "OK"
