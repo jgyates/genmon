@@ -29,7 +29,7 @@ except ImportError as e:
 
 import mymail, mylog, mythread
 
-GENMON_VERSION = "V1.6.3"
+GENMON_VERSION = "V1.6.4"
 
 #------------ SerialDevice class --------------------------------------------
 class SerialDevice:
@@ -297,9 +297,6 @@ class GeneratorDevice:
                     "0054" : [2, 0],     # Hours since generator activation (hours of protection) (Evo LQ only)
                     "005e" : [2, 0],     # Total engine time in minutes High (EvoLC)
                     "005f" : [2, 0],     # Total engine time in minutes Low  (EvoLC)
-                    "01f1" : [2, 0],     # Unknown Status (WIP) (Changes from 000e to 0d0e on EvoLC when running and back to 000e when stopped)
-                    "01f2" : [2, 0],     # Unknown Status (WIP) (Changes from 0c02 to 0c0c on EvoLC when running and back to 0c02 when stopped)
-                    "01f3" : [2, 0],     # Unknown Status (WIP) (appears to be updated after a run cycle, number increases) (EvoLC, EvoAC)
                     "0057" : [2, 0],     # Unknown Looks like some status bits (0002 to 0005 when engine starts, back to 0002 on stop)
                     "0055" : [2, 0],     # Unknown
                     "0056" : [2, 0],     # Unknown Looks like some status bits (0000 to 0003, back to 0000 on stop)
@@ -322,7 +319,7 @@ class GeneratorDevice:
                     "003b" : [2, 0],     # Evo AC   (Sensor?)  Nexus and Evo AC
                     "0239" : [2, 0],     # Startup Delay (Evo AC)
                     "0237" : [2, 0],     # Set Voltage (Evo LC)
-                    "0208" : [2, 0],     # Evo,     Calibrate Volts?
+                    "0208" : [2, 0],     # Calibrate Volts (Evo)
                     "005c" : [2, 0],     # Unknown , possible model reg on EvoLC
                     "05f3" : [2, 0],     # EvoAC, EvoLC, counter of some type
                     "05f4" : [2, 0],     # Evo AC   Current 1
@@ -2905,6 +2902,11 @@ class GeneratorDevice:
 
             Sensors["Frequency (Calculated)"] = self.GetFrequency(Calculate = True)
 
+        if self.EvolutionController:
+            Value = self.GetUnknownSensor("0208")
+            if len(Value):
+                Sensors["Calibrate Volts Value"] = Value
+
         if self.EvolutionController and self.LiquidCooled:
 
             Sensors["Battery Status (Sensor)"] = self.GetBatteryStatusAlternate()
@@ -2943,6 +2945,14 @@ class GeneratorDevice:
         if self.EvolutionController and not self.LiquidCooled:
             Sensors["Output Current"] = self.GetCurrentOutput()
             Sensors["Output Power (Single Phase)"] = self.GetPowerOutput()
+
+            if self.EvolutionController:
+                Value = self.GetUnknownSensor("05f6")
+                if len(Value):
+                    Sensors["Calibrate Current 1 Value"] = Value
+                Value = self.GetUnknownSensor("05f7")
+                if len(Value):
+                    Sensors["Calibrate Current 2 Value"] = Value
 
         if not self.LiquidCooled:       # Nexus AC and Evo AC
 
@@ -3866,7 +3876,7 @@ class GeneratorDevice:
 
         return SensorValue
 
-    #------------ GeneratorDevice::GetRPM --------------------------------------------
+    #------------ GeneratorDevice::"GetRPM" --------------------------------------------
     def GetRPM(self):
 
         # get RPM
