@@ -13,7 +13,7 @@
 import datetime, time, sys, signal, os, threading, socket
 from datetime import datetime
 import atexit, getopt
-import myclient, mylog
+from genmonlib import myclient, mylog
 
 
 #----------  Signal Handler ------------------------------------------
@@ -91,11 +91,3 @@ if __name__=='__main__':
     except Exception as e1:
         log.error("Error: " + str(e1))
         print ("Error: " + str(e1))
-
-
-
-
-
-
-
-

@@ -18,8 +18,8 @@
 
 from __future__ import print_function       # For python 3.x compatibility with print function
 
-import datetime, time, sys, smtplib, signal, os, threading, socket, serial
-import crcmod.predefined, crcmod, atexit, json, collections, random
+import datetime, time, sys, smtplib, signal, os, threading, socket
+import atexit, json, collections, random
 import httplib, re
 
 try:
@@ -27,161 +27,10 @@ try:
 except ImportError as e:
     from configparser import RawConfigParser
 
-import mymail, mylog, mythread
-
-GENMON_VERSION = "V1.6.4"
-
-#------------ SerialDevice class --------------------------------------------
-class SerialDevice:
-    def __init__(self, name, rate=9600, loglocation = "/var/log/"):
-        self.DeviceName = name
-        self.BaudRate = rate
-        self.Buffer = []
-        self.BufferLock = threading.Lock()
-
-        self.RxPacketCount = 0
-        self.TxPacketCount = 0
-        self.ComTimoutError = 0
-        self.TotalElapsedPacketeTime = 0
-        self.CrcError = 0
-        self.DiscardedBytes = 0
-        self.Restarts = 0
-        self.SerialStartTime = datetime.datetime.now()     # used for com metrics
-
-        # log errors in this module to a file
-        self.log = mylog.SetupLogger("myserial", loglocation + "myserial.log")
-
-        #Starting serial connection
-        self.SerialDevice = serial.Serial()
-        self.SerialDevice.port = name
-        self.SerialDevice.baudrate = rate
-        self.SerialDevice.bytesize = serial.EIGHTBITS     #number of bits per bytes
-        self.SerialDevice.parity = serial.PARITY_NONE     #set parity check: no parity
-        self.SerialDevice.stopbits = serial.STOPBITS_ONE  #number of stop bits
-        self.SerialDevice.timeout =  0.05                 # small timeout so we can check if the thread should exit
-        self.SerialDevice.xonxoff = False                 #disable software flow control
-        self.SerialDevice.rtscts = False                  #disable hardware (RTS/CTS) flow control
-        self.SerialDevice.dsrdtr = False                  #disable hardware (DSR/DTR) flow control
-        self.SerialDevice.writeTimeout = None             #timeout for write, return when packet sent
-
-        #Check if port failed to open
-        if (self.SerialDevice.isOpen() == False):
-            try:
-                self.SerialDevice.open()
-            except Exception as e:
-                self.FatalError( "Error on open serial port %s: " % self.DeviceName + str(e))
-                return None
-        else:
-            self.FatalError( "Serial port already open: %s" % self.DeviceName)
-            return None
-
-        self.Flush()
-
-    # ---------- SerialDevice::ResetSerialStats------------------
-    def ResetSerialStats(self):
-        # resets status that are time based (affected by a time change)
-        self.SerialStartTime = datetime.datetime.now()     # used for com metrics
-        self.RxPacketCount = 0
-        self.TxPacketCount = 0
-        self.TotalElapsedPacketeTime = 0
-    # ---------- SerialDevice::StartReadThread------------------
-    def StartReadThread(self):
-
-        # start read thread to monitor incoming data commands
-        self.Thread = mythread.MyThread(self.ReadThread, Name = "SerialReadThread")
-
-        return self.Thread
-
-    # ---------- SerialDevice::ReadThread------------------
-    def ReadThread(self):
-        while True:
-            try:
-                self.Flush()
-                while True:
-                    for c in self.Read():
-                        with self.BufferLock:
-                            if sys.version_info[0] < 3:
-                                self.Buffer.append(ord(c))      # PYTHON2
-                            else:
-                                self.Buffer.append(c)           # PYTHON3
-                        # first check for SignalStopped is when we are receiving
-                        if self.Thread.StopSignaled():
-                            return
-                    # second check for SignalStopped is when we are not receiving
-                    if self.Thread.StopSignaled():
-                            return
-
-            except Exception as e1:
-                self.LogError( "Resetting SerialDevice:ReadThread Error: " + self.DeviceName + ":"+ str(e1))
-                # if we get here then this is likely due to the following exception:
-                #  "device reports readiness to read but returned no data (device disconnected?)"
-                #  This is believed to be a kernel issue so let's just reset the device and hope
-                #  for the best (actually this works)
-                self.Restarts += 1
-                self.SerialDevice.close()
-                self.SerialDevice.open()
-
-    #------------SerialDevice::DiscardByte------------
-    def DiscardByte(self):
-
-        if len(self.Buffer):
-            discard = self.Buffer.pop(0)
-            self.DiscardedBytes += 1
-            return discard
-
-    # ---------- SerialDevice::Close------------------
-    def Close(self):
-        if self.SerialDevice.isOpen():
-            if self.Thread.IsAlive():
-                self.Thread.Stop()
-                self.Thread.WaitForThreadToEnd()
-            self.SerialDevice.close()
-
-    # ---------- SerialDevice::Flush------------------
-    def Flush(self):
-        try:
-            self.SerialDevice.flushInput()      #flush input buffer, discarding all its contents
-            self.SerialDevice.flushOutput()     #flush output buffer, aborting current output
-            with self.BufferLock:               # will block if lock is already held
-                del self.Buffer[:]
-
-        except Exception as e1:
-            self.FatalError( "Error in SerialDevice:Flush : " + self.DeviceName + ":" + str(e1))
-
-    # ---------- SerialDevice::Read------------------
-    def Read(self):
-        return  self.SerialDevice.read()        # self.SerialDevice.inWaiting returns number of bytes ready
-
-    # ---------- SerialDevice::Write-----------------
-    def Write(self, data):
-        return  self.SerialDevice.write(data)
-
-    #---------------------SerialDevice::FatalError------------------------
-    def LogError(self, Message):
-        self.log.error(Message)
-    #---------------------SerialDevice::FatalError------------------------
-    def FatalError(self, Message):
-
-        self.log.error(Message)
-        raise Exception(Message)
+from genmonlib import myserial, mymail, mylog, mythread, mymodbus
 
 
-#--------------------- MODBUS specific Const defines for Generator class
-MBUS_ADDRESS            = 0x00
-MBUS_ADDRESS_SIZE       = 0x01
-MBUS_COMMAND            = 0x01
-MBUS_COMMAND_SIZE       = 0x01
-MBUS_WR_REQ_BYTE_COUNT  = 0x06
-MBUS_CRC_SIZE           = 0x02
-MBUS_RES_LENGTH_SIZE    = 0x01
-MBUS_RES_PAYLOAD_SIZE_MINUS_LENGTH  = MBUS_ADDRESS_SIZE + MBUS_COMMAND_SIZE + MBUS_RES_LENGTH_SIZE + MBUS_CRC_SIZE
-MBUS_RESPONSE_LEN       = 0x02
-MIN_PACKET_LENGTH_REQ   = 0x08
-MIN_PACKET_LENGTH_WR_REQ= 0x09
-MIN_PACKET_LENGTH_RES   = 0x07
-MIN_PACKET_LENGTH_WR_RES= 0x08
-MBUS_CMD_READ_REGS      = 0x03
-MBUS_CMD_WRITE_REGS     = 0x10
+GENMON_VERSION = "V1.6.5"
 
 #-------------------Generator specific const defines for Generator class
 LOG_DEPTH               = 50
@@ -229,7 +78,6 @@ class GeneratorDevice:
         self.UtilityVoltsMin = 0    # Minimum reported utility voltage above threshold
         self.UtilityVoltsMax = 0    # Maximum reported utility voltage above pickup
         self.MailInit = False       # set to true once mail is init
-        self.SerialInit = False     # set to true once serial is init
         self.InitComplete = False   # set to true once init is complete
         self.NewInstall = False     # True if newly installed or newly upgraded version
         self.FeedbackEnabled = False   # True if sending autoated feedback on missing information
@@ -328,7 +176,6 @@ class GeneratorDevice:
                     "05f7" : [2, 0],     # Evo AC   Current Cal 1
                     }
 
-
         # registers that need updating more frequently than others to make things more responsive
         self.PrimeRegisters = {
                     "0001" : [4, 0],     # Alarm and status register
@@ -396,10 +243,9 @@ class GeneratorDevice:
         atexit.register(self.Close)
 
         try:
-            #Starting serial connection
-            self.Slave = SerialDevice(self.SerialPort, self.BaudRate, loglocation = self.LogLocation)
-            self.SerialInit = True
-            self.Threads["SerialReadThread"] = self.Slave.StartReadThread()
+            #Starting device connection
+            self.ModBus = mymodbus.ModbusProtocol(self.UpdateRegisterList, self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation)
+            self.Threads["SerialReadThread"] = self.ModBus.Slave.StartReadThread()
 
         except Exception as e1:
             self.FatalError("Error opening serial device: " + str(e1))
@@ -424,12 +270,6 @@ class GeneratorDevice:
             self.Threads["SendMailThread"] = self.mail.GetSendEmailThreadObject()
         if self.mail.GetEmailMonitorThreadObject():
             self.Threads["EmailCommandThread"] = self.mail.GetEmailMonitorThreadObject()
-
-        try:
-            # CRCMOD library, used for CRC calculations
-            self.ModbusCrc = crcmod.predefined.mkCrcFun('modbus')
-        except Exception as e1:
-            self.FatalError("Unable to find crcmod package: " + str(e1))
 
         self.ProcessFeedbackInfo()
         self.StartThreads()
@@ -518,10 +358,10 @@ class GeneratorDevice:
 
             self.MailInit = False
 
-            if self.SerialInit:
-                self.Slave.Close()
+            if self.ModBus.DeviceInit:
+                self.ModBus.Slave.Close()
 
-            self.SerialInit = False
+            self.ModBus.DeviceInit = False
 
             if not self.GetConfig(reload = True):
                 RetStr =  "Error reloading, error reading config file"
@@ -529,10 +369,9 @@ class GeneratorDevice:
             # log errors in this module to a file
             self.log = mylog.SetupLogger("genmon", self.LogLocation + "genmon.log")
             try:
-                # reload serial port
-                self.Slave = SerialDevice(self.SerialPort, self.BaudRate, loglocation = self.LogLocation)
-                self.SerialInit = True
-                self.Threads["SerialReadThread"] = self.Slave.StartReadThread()
+                #Starting device connection
+                self.ModBus = mymodbus.ModbusProtocol(self.UpdateRegisterList, self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation)
+                self.Threads["SerialReadThread"] = self.ModBus.Slave.StartReadThread()
             except Exception as e1:
                 self.LogError("Error in Reload (serial): " + str(e1))
                 RetStr = "Failed to reload serial port."
@@ -724,7 +563,7 @@ class GeneratorDevice:
     def ProcessThread(self):
 
         try:
-            self.Flush()
+            self.ModBus.Flush()
             self.InitDevice()
             while True:
                 if self.IsStopSignaled("ProcessThread"):
@@ -758,89 +597,33 @@ class GeneratorDevice:
             except Exception as e1:
                 self.LogError("Error in GeneratorDevice:MonitorThread " + str(e1))
 
-    #------------GeneratorDevice::Flush-----------------------
-    def Flush(self):
-
-        self.Slave.Flush()
-
-    # ---------- GeneratorDevice::GetPacketFromSlave------------------
-    #  This function returns two values, the first is boolean. The seconds is
-    #  a packet (list). If the return value is True and an empty packet, then
-    #  keep looking because the data has not arrived yet, if return is False there
-    #  is and error. If True and a non empty packet then it is valid data
-    def GetPacketFromSlave(self):
-
-        LocalErrorCount = 0
-        Packet = []
-        EmptyPacket = []    # empty packet
-
-        if len(self.Slave.Buffer) < MIN_PACKET_LENGTH_RES:
-            return True, EmptyPacket
-
-        if len(self.Slave.Buffer) >= MIN_PACKET_LENGTH_RES:
-            if self.Slave.Buffer[MBUS_ADDRESS] == self.Address and self.Slave.Buffer[MBUS_COMMAND] in [MBUS_CMD_READ_REGS]:
-                # it must be a read command response
-                length = self.Slave.Buffer[MBUS_RESPONSE_LEN]   # our packet tells us the length of the payload
-                # if the full length of the packet has not arrived, return and try again
-                if (length + MBUS_RES_PAYLOAD_SIZE_MINUS_LENGTH) > len(self.Slave.Buffer):
-                    return True, EmptyPacket
-
-                for i in range(0, length + MBUS_RES_PAYLOAD_SIZE_MINUS_LENGTH):
-                    Packet.append(self.Slave.Buffer.pop(0))  # pop Address, Function, Length, message and CRC
-
-                if self.CheckCRC(Packet):
-                    self.Slave.RxPacketCount += 1
-                    return True, Packet
-                else:
-                    self.Slave.CrcError += 1
-                    return False, EmptyPacket
-            elif self.Slave.Buffer[MBUS_ADDRESS] == self.Address and self.Slave.Buffer[MBUS_COMMAND] in [MBUS_CMD_WRITE_REGS]:
-                # it must be a write command response
-                if len(self.Slave.Buffer) < MIN_PACKET_LENGTH_WR_RES:
-                    return True, EmptyPacket
-                for i in range(0, MIN_PACKET_LENGTH_WR_RES):
-                    Packet.append(self.Slave.Buffer.pop(0))    # address, function, address hi, address low, quantity hi, quantity low, CRC high, crc low
-
-                if self.CheckCRC(Packet):
-                    self.Slave.RxPacketCount += 1
-                    return True,Packet
-                else:
-                    self.Slave.CrcError += 1
-                    return False, EmptyPacket
-            else:
-                self.DiscardByte()
-                self.Flush()
-                return False, EmptyPacket
-
-        return True, EmptyPacket   # technically not a CRC error, we really should never get here
-
     #-------------GeneratorDevice::InitDevice------------------------------------
     # One time reads, and read all registers once
     def InitDevice(self):
 
-        self.ProcessMasterSlaveTransaction("%04x" % MODEL_REG, MODEL_REG_LENGTH)
+        self.ModBus.ProcessMasterSlaveTransaction("%04x" % MODEL_REG, MODEL_REG_LENGTH)
 
         self.DetectController()
 
         if self.EvolutionController:
-            self.ProcessMasterSlaveTransaction("%04x" % ALARM_LOG_STARTING_REG, ALARM_LOG_STRIDE)
+            self.ModBus.ProcessMasterSlaveTransaction("%04x" % ALARM_LOG_STARTING_REG, ALARM_LOG_STRIDE)
         else:
-            self.ProcessMasterSlaveTransaction("%04x" % NEXUS_ALARM_LOG_STARTING_REG, NEXUS_ALARM_LOG_STRIDE)
+            self.ModBus.ProcessMasterSlaveTransaction("%04x" % NEXUS_ALARM_LOG_STARTING_REG, NEXUS_ALARM_LOG_STRIDE)
 
-        self.ProcessMasterSlaveTransaction("%04x" % START_LOG_STARTING_REG, START_LOG_STRIDE)
+        self.ModBus.ProcessMasterSlaveTransaction("%04x" % START_LOG_STARTING_REG, START_LOG_STRIDE)
 
         if self.EvolutionController:
-            self.ProcessMasterSlaveTransaction("%04x" % SERVICE_LOG_STARTING_REG, SERVICE_LOG_STRIDE)
+            self.ModBus.ProcessMasterSlaveTransaction("%04x" % SERVICE_LOG_STARTING_REG, SERVICE_LOG_STRIDE)
 
         for PrimeReg, PrimeInfo in self.PrimeRegisters.items():
-            self.ProcessMasterSlaveTransaction(PrimeReg, int(PrimeInfo[self.REGLEN] / 2))
+            self.ModBus.ProcessMasterSlaveTransaction(PrimeReg, int(PrimeInfo[self.REGLEN] / 2))
 
         for Reg, Info in self.BaseRegisters.items():
 
             #The divide by 2 is due to the diference in the values in our dict are bytes
             # but modbus makes register request in word increments so the request needs to
             # in word multiples, not bytes
-            self.ProcessMasterSlaveTransaction(Reg, int(Info[self.REGLEN] / 2))
+            self.ModBus.ProcessMasterSlaveTransaction(Reg, int(Info[self.REGLEN] / 2))
 
         # check for model specific info in read from conf file, if not there then add some defaults
         self.CheckModelSpecificInfo()
@@ -1142,7 +925,7 @@ class GeneratorDevice:
     def DetectController(self):
 
         # issue modbus read
-        self.ProcessMasterSlaveTransaction("0000", 1)
+        self.ModBus.ProcessMasterSlaveTransaction("0000", 1)
 
         # read register from cached list.
         Value = self.GetRegisterValueFromList("0000")
@@ -1242,7 +1025,7 @@ class GeneratorDevice:
         for Reg in range(0x05 , 0x700):
             RegStr = "%04x" % Reg
             if not self.RegisterIsKnown(RegStr):
-                self.ProcessMasterSlaveTransaction(RegStr, 1)
+                self.ModBus.ProcessMasterSlaveTransaction(RegStr, 1)
 
     #-------------GeneratorDevice::MasterEmulation------------------------------------
     def MasterEmulation(self):
@@ -1252,130 +1035,15 @@ class GeneratorDevice:
 
             if counter % 6 == 0:
                 for PrimeReg, PrimeInfo in self.PrimeRegisters.items():
-                    self.ProcessMasterSlaveTransaction(PrimeReg, int(PrimeInfo[self.REGLEN] / 2))
+                    self.ModBus.ProcessMasterSlaveTransaction(PrimeReg, int(PrimeInfo[self.REGLEN] / 2))
                 # check for unknown events (i.e. events we are not decoded) and send an email if they occur
                 self.CheckForAlarmEvent.set()
 
             #The divide by 2 is due to the diference in the values in our dict are bytes
             # but modbus makes register request in word increments so the request needs to
             # in word multiples, not bytes
-            self.ProcessMasterSlaveTransaction(Reg, int(Info[self.REGLEN] / 2))
+            self.ModBus.ProcessMasterSlaveTransaction(Reg, int(Info[self.REGLEN] / 2))
             counter += 1
-
-    #-------------GeneratorDevice::ProcessMasterSlaveWriteTransaction--------------------
-    def ProcessMasterSlaveWriteTransaction(self, Register, Length, Data):
-
-        MasterPacket = []
-
-        MasterPacket = self.CreateMasterPacket(Register, Length, MBUS_CMD_WRITE_REGS, Data)
-
-        if len(MasterPacket) == 0:
-            return
-
-        return self.ProcessOneTransaction(MasterPacket, skiplog = True)   # True to skip writing results to cached reg values
-
-    #-------------GeneratorDevice::ProcessMasterSlaveTransaction--------------------
-    def ProcessMasterSlaveTransaction(self, Register, Length, ReturnValue = False):
-
-        MasterPacket = []
-
-        MasterPacket = self.CreateMasterPacket(Register, Length)
-
-        if len(MasterPacket) == 0:
-            return
-
-        if ReturnValue:
-            return self.ProcessOneTransaction(MasterPacket, skiplog = True, ReturnValue = True)     # don't log
-
-        return self.ProcessOneTransaction(MasterPacket)
-
-    #------------GeneratorDevice::ProcessOneTransaction
-    def ProcessOneTransaction(self, MasterPacket, skiplog = False, ReturnValue = False):
-
-        with self.CommAccessLock:       # this lock should allow calls from multiple threads
-
-            self.SendPacketAsMaster(MasterPacket)
-
-            SentTime = datetime.datetime.now()
-            while True:
-                # be kind to other processes, we know we are going to have to wait for the packet to arrive
-                # so let's sleep for a bit before we start polling
-                time.sleep(0.01)
-
-                RetVal, SlavePacket = self.GetPacketFromSlave()
-
-                if RetVal == True and len(SlavePacket) != 0:    # we receive a packet
-                    self.Slave.TotalElapsedPacketeTime += (self.MillisecondsElapsed(SentTime) / 1000)
-                    break
-                if RetVal == False:
-                    self.LogError("Error Receiving slave packet for register %x%x" % (MasterPacket[2],MasterPacket[3]) )
-                    # Errors returned here are logged in GetPacketFromSlave
-                    self.Flush()
-                    return False
-                msElapsed = self.MillisecondsElapsed(SentTime)
-                # This normally takes about 30 ms however in some instances it can take up to 950ms
-                # the theory is this is either a delay due to how python does threading, or
-                # delay caused by the generator controller.
-                # each char time is about 1 millisecond so assuming a 10 byte packet transmitted
-                # and a 10 byte received with about 5 char times of silence in between should give
-                # us about 25ms
-                if msElapsed > 3000:
-                    self.Slave.ComTimoutError += 1
-                    self.LogError("Error: timeout receiving slave packet for register %x%x Buffer:%d" % (MasterPacket[2],MasterPacket[3], len(self.Slave.Buffer)) )
-                    return False
-
-        # update our cached register dict
-        ReturnRegValue = self.UpdateRegistersFromPacket(MasterPacket, SlavePacket, SkipUpdate = skiplog)
-        if ReturnValue:
-            return ReturnRegValue
-
-        return True
-
-    # ---------- GeneratorDevice::CreateMasterPacket------------------
-    # the length is the register length in words, as required by modbus
-    # build Packet
-    def CreateMasterPacket(self, Register, Length, command = MBUS_CMD_READ_REGS, Data=[]):
-
-        Packet = []
-        if command == MBUS_CMD_READ_REGS:
-            Packet.append(self.Address)                 # address
-            Packet.append(command)                      # command
-            Packet.append(int(Register,16) >> 8)        # reg hi
-            Packet.append(int(Register,16) & 0x00FF)    # reg low
-            Packet.append(Length >> 8)                  # length hi
-            Packet.append(Length & 0x00FF)              # length low
-            CRCValue = self.GetCRC(Packet)
-            Packet.append(CRCValue & 0x00FF)            # CRC low
-            Packet.append(CRCValue >> 8)                # CRC high
-        elif command == MBUS_CMD_WRITE_REGS:
-            if len(Data) == 0:
-                self.LogError("Validation Error: CreateMasterPacket invalid length (1) %x %x" % (len(Data), Length))
-                return Packet
-            if len(Data)/2 != Length:
-                self.LogError("Validation Error: CreateMasterPacket invalid length (2) %x %x" % (len(Data), Length))
-                return Packet
-            Packet.append(self.Address)                 # address
-            Packet.append(command)                      # command
-            Packet.append(int(Register,16) >> 8)        # reg hi
-            Packet.append(int(Register,16) & 0x00FF)    # reg low
-            Packet.append(Length >> 8)                  # Num of Reg hi
-            Packet.append(Length & 0x00FF)              # Num of Reg low
-            Packet.append(len(Data))                    # byte count
-            for b in range(0, len(Data)):
-                Packet.append(Data[b])                  # data
-            CRCValue = self.GetCRC(Packet)
-            Packet.append(CRCValue & 0x00FF)            # CRC low
-            Packet.append(CRCValue >> 8)                # CRC high
-        else:
-            self.LogError("Validation Error: Invalid command in CreateMasterPacket!")
-        return Packet
-
-    #-------------GeneratorDevice::SendPacketAsMaster---------------------------------
-    def SendPacketAsMaster(self, Packet):
-
-        ByteArray = bytearray(Packet)
-        self.Slave.Write(ByteArray)
-        self.Slave.TxPacketCount += 1
 
      #-------------GeneratorDevice::UpdateLogRegistersAsMaster
     def UpdateLogRegistersAsMaster(self):
@@ -1383,30 +1051,23 @@ class GeneratorDevice:
         # Start / Stop Log
         for Register in self.LogRange(START_LOG_STARTING_REG , LOG_DEPTH,START_LOG_STRIDE):
             RegStr = "%04x" % Register
-            self.ProcessMasterSlaveTransaction(RegStr, START_LOG_STRIDE)
+            self.ModBus.ProcessMasterSlaveTransaction(RegStr, START_LOG_STRIDE)
 
         if self.EvolutionController:
             # Service Log
             for Register in self.LogRange(SERVICE_LOG_STARTING_REG , LOG_DEPTH, SERVICE_LOG_STRIDE):
                 RegStr = "%04x" % Register
-                self.ProcessMasterSlaveTransaction(RegStr, SERVICE_LOG_STRIDE)
+                self.ModBus.ProcessMasterSlaveTransaction(RegStr, SERVICE_LOG_STRIDE)
 
             # Alarm Log
             for Register in self.LogRange(ALARM_LOG_STARTING_REG , LOG_DEPTH, ALARM_LOG_STRIDE):
                 RegStr = "%04x" % Register
-                self.ProcessMasterSlaveTransaction(RegStr, ALARM_LOG_STRIDE)
+                self.ModBus.ProcessMasterSlaveTransaction(RegStr, ALARM_LOG_STRIDE)
         else:
             # Alarm Log
             for Register in self.LogRange(NEXUS_ALARM_LOG_STARTING_REG , LOG_DEPTH, NEXUS_ALARM_LOG_STRIDE):
                 RegStr = "%04x" % Register
-                self.ProcessMasterSlaveTransaction(RegStr, NEXUS_ALARM_LOG_STRIDE)
-
-    # ---------- GeneratorDevice::MillisecondsElapsed------------------
-    def MillisecondsElapsed(self, ReferenceTime):
-
-        CurrentTime = datetime.datetime.now()
-        Delta = CurrentTime - ReferenceTime
-        return Delta.total_seconds() * 1000
+                self.ModBus.ProcessMasterSlaveTransaction(RegStr, NEXUS_ALARM_LOG_STRIDE)
 
      #----------  GeneratorDevice::SetGeneratorRemoteStartStop-------------------------------
     def SetGeneratorRemoteStartStop(self, CmdString):
@@ -1457,7 +1118,7 @@ class GeneratorDevice:
             Data.append(HighByte)           # Value for indexed register (High byte)
             Data.append(LowByte)            # Value for indexed register (Low byte)
 
-            self.ProcessMasterSlaveWriteTransaction("0004", len(Data) / 2, Data)
+            self.ModBus.ProcessMasterSlaveWriteTransaction("0004", len(Data) / 2, Data)
 
             LowByte = Register & 0x00FF
             HighByte = Register >> 8
@@ -1465,7 +1126,7 @@ class GeneratorDevice:
             Data.append(HighByte)           # indexed register to be written (High byte)
             Data.append(LowByte)            # indexed register to be written (Low byte)
 
-            self.ProcessMasterSlaveWriteTransaction("0003", len(Data) / 2, Data)
+            self.ModBus.ProcessMasterSlaveWriteTransaction("0003", len(Data) / 2, Data)
 
         return "Remote command sent successfully"
 
@@ -1609,14 +1270,14 @@ class GeneratorDevice:
             Data.append(First)             # Hour 0 - 23
             Data.append(Last)             # Min 0 - 59
 
-            self.ProcessMasterSlaveWriteTransaction("0004", len(Data) / 2, Data)
+            self.ModBus.ProcessMasterSlaveWriteTransaction("0004", len(Data) / 2, Data)
 
             #
             Data= []
             Data.append(0)                  # The value for reg 0003 is always 0006. This appears
             Data.append(6)                  # to be an indexed register
 
-            self.ProcessMasterSlaveWriteTransaction("0003", len(Data) / 2, Data)
+            self.ModBus.ProcessMasterSlaveWriteTransaction("0003", len(Data) / 2, Data)
         return  "Set Exercise Time Command sent (using legacy write)"
 
     #----------  GeneratorDevice::GetDeltaTimeMinutes-------------------------------
@@ -1682,20 +1343,20 @@ class GeneratorDevice:
                 else:
                     self.LogError("Validation Error: Invalid exercise frequency. " + CmdString)
                     return msgbody
-                self.ProcessMasterSlaveWriteTransaction("002d", len(Data) / 2, Data)
+                self.ModBus.ProcessMasterSlaveWriteTransaction("002d", len(Data) / 2, Data)
 
             Data = []
             Data.append(0x00)               #
             Data.append(Day)                # Day
 
-            self.ProcessMasterSlaveWriteTransaction("002e", len(Data) / 2, Data)
+            self.ModBus.ProcessMasterSlaveWriteTransaction("002e", len(Data) / 2, Data)
 
             #
             Data = []
             Data.append(Hour)                  #
             Data.append(Minute)                #
 
-            self.ProcessMasterSlaveWriteTransaction("002c", len(Data) / 2, Data)
+            self.ModBus.ProcessMasterSlaveWriteTransaction("002c", len(Data) / 2, Data)
 
         return  "Set Exercise Time Command sent"
 
@@ -1823,7 +1484,7 @@ class GeneratorDevice:
         Data.append(0x00)
         Data.append(ModeValue)
         with self.CommAccessLock:
-            self.ProcessMasterSlaveWriteTransaction("002f", len(Data) / 2, Data)
+            self.ModBus.ProcessMasterSlaveWriteTransaction("002f", len(Data) / 2, Data)
 
         return "Set Quiet Mode Command sent"
 
@@ -1851,81 +1512,7 @@ class GeneratorDevice:
         Data.append(0)                  #0010
         Data.append(d.year - 2000)
 
-        self.ProcessMasterSlaveWriteTransaction("000e", len(Data) / 2, Data)
-
-
-    # ---------- GeneratorDevice::DiscardByte------------------
-    def DiscardByte(self):
-
-            discard = self.Slave.DiscardByte()
-            self.LogError("Discarding byte slave: %02x" % (discard))
-
-   # ---------- GeneratorDevice::UpdateRegistersFromPacket------------------
-   #    Update our internal register list based on the request/response packet
-    def UpdateRegistersFromPacket(self, MasterPacket, SlavePacket, SkipUpdate = False):
-
-        if len(MasterPacket) < MIN_PACKET_LENGTH_RES or len(SlavePacket) < MIN_PACKET_LENGTH_RES:
-            return ""
-
-        if MasterPacket[MBUS_ADDRESS] != self.Address:
-            self.LogError("Validation Error:: Invalid address in UpdateRegistersFromPacket (Master)")
-
-        if SlavePacket[MBUS_ADDRESS] != self.Address:
-            self.LogError("Validation Error:: Invalid address in UpdateRegistersFromPacket (Slave)")
-
-        if not SlavePacket[MBUS_COMMAND] in [MBUS_CMD_READ_REGS, MBUS_CMD_WRITE_REGS]:
-            self.LogError("UpdateRegistersFromPacket: Unknown Function slave %02x %02x" %  (SlavePacket[0],SlavePacket[1]))
-
-        if not MasterPacket[MBUS_COMMAND] in [MBUS_CMD_READ_REGS, MBUS_CMD_WRITE_REGS]:
-            self.LogError("UpdateRegistersFromPacket: Unknown Function master %02x %02x" %  (MasterPacket[0],MasterPacket[1]))
-
-        # get register from master packet
-        Register = "%02x%02x" % (MasterPacket[2],MasterPacket[3])
-        # get value from slave packet
-        length = SlavePacket[MBUS_RESPONSE_LEN]
-        if (length + MBUS_RES_PAYLOAD_SIZE_MINUS_LENGTH) > len(SlavePacket):
-                return ""
-
-        RegisterValue = ""
-        for i in range(3, length+3):
-            RegisterValue += "%02x" % SlavePacket[i]
-        # update register list
-        if not SkipUpdate:
-            self.UpdateRegisterList(Register, RegisterValue)
-
-        return RegisterValue
-
-    #------------GeneratorDevice::CheckCrc---------------------
-    def CheckCRC(self, Packet):
-
-        if len(Packet) == 0:
-            return False
-        ByteArray = bytearray(Packet[:len(Packet)-2])
-
-        if sys.version_info[0] < 3:
-            results = self.ModbusCrc(str(ByteArray))
-        else:   # PYTHON3
-            results = self.ModbusCrc(ByteArray)
-
-        CRCValue = ( ( Packet[-1] & 0xFF ) << 8 ) | ( Packet[ -2] & 0xFF )
-        if results != CRCValue:
-            self.LogError("Data Error: CRC check failed: %04x  %04x" % (results, CRCValue))
-            return False
-        return True
-
-    #------------GeneratorDevice::GetCRC---------------------
-    def GetCRC(self, Packet):
-
-        if len(Packet) == 0:
-            return False
-        ByteArray = bytearray(Packet)
-
-        if sys.version_info[0] < 3:
-            results = self.ModbusCrc(str(ByteArray))
-        else:   # PYTHON3
-            results = self.ModbusCrc(ByteArray)
-
-        return results
+        self.ModBus.ProcessMasterSlaveWriteTransaction("000e", len(Data) / 2, Data)
 
     #------------ GeneratorDevice::GetRegisterLength --------------------------------------------
     def GetRegisterLength(self, Register):
@@ -2114,7 +1701,7 @@ class GeneratorDevice:
 
             Register = CmdList[1].strip()
 
-            RegValue = self.ProcessMasterSlaveTransaction( Register, 1, ReturnValue = True)
+            RegValue = self.ModBus.ProcessMasterSlaveTransaction( Register, 1, ReturnValue = True)
 
             if RegValue == "":
                 self.LogError("Validation Error: Register  not known (ReadRegValue):" + Register)
@@ -2704,28 +2291,28 @@ class GeneratorDevice:
         GenMonStats["Generator Monitor Version"] = GENMON_VERSION
 
 
-        SerialStats["Packet Count"] = "M: %d, S: %d, Buffer Count: %d" % (self.Slave.TxPacketCount, self.Slave.RxPacketCount, len(self.Slave.Buffer))
+        SerialStats["Packet Count"] = "M: %d, S: %d, Buffer Count: %d" % (self.ModBus.Slave.TxPacketCount, self.ModBus.Slave.RxPacketCount, len(self.ModBus.Slave.Buffer))
 
-        if self.Slave.CrcError == 0 or self.Slave.RxPacketCount == 0:
+        if self.ModBus.Slave.CrcError == 0 or self.ModBus.Slave.RxPacketCount == 0:
             PercentErrors = 0.0
         else:
-            PercentErrors = float(self.Slave.CrcError) / float(self.Slave.RxPacketCount)
+            PercentErrors = float(self.ModBus.Slave.CrcError) / float(self.ModBus.Slave.RxPacketCount)
 
-        SerialStats["CRC Errors"] = "%d " % self.Slave.CrcError
+        SerialStats["CRC Errors"] = "%d " % self.ModBus.Slave.CrcError
         SerialStats["CRC Percent Errors"] = "%.2f" % PercentErrors
-        SerialStats["Discarded Bytes"] = "%d" % self.Slave.DiscardedBytes
-        SerialStats["Serial Restarts"] = "%d" % self.Slave.Restarts
-        SerialStats["Serial Timeouts"] = "%d" %  self.Slave.ComTimoutError
+        SerialStats["Discarded Bytes"] = "%d" % self.ModBus.Slave.DiscardedBytes
+        SerialStats["Serial Restarts"] = "%d" % self.ModBus.Slave.Restarts
+        SerialStats["Serial Timeouts"] = "%d" %  self.ModBus.Slave.ComTimoutError
 
         CurrentTime = datetime.datetime.now()
 
         #
-        Delta = CurrentTime - self.Slave.SerialStartTime        # yields a timedelta object
-        PacketsPerSecond = float((self.Slave.TxPacketCount + self.Slave.RxPacketCount)) / float(Delta.total_seconds())
+        Delta = CurrentTime - self.ModBus.Slave.SerialStartTime        # yields a timedelta object
+        PacketsPerSecond = float((self.ModBus.Slave.TxPacketCount + self.ModBus.Slave.RxPacketCount)) / float(Delta.total_seconds())
         SerialStats["Packets Per Second"] = "%.2f" % (PacketsPerSecond)
 
-        if self.Slave.RxPacketCount:
-            AvgTransactionTime = float(self.Slave.TotalElapsedPacketeTime / self.Slave.RxPacketCount)
+        if self.ModBus.Slave.RxPacketCount:
+            AvgTransactionTime = float(self.ModBus.Slave.TotalElapsedPacketeTime / self.ModBus.Slave.RxPacketCount)
             SerialStats["Average Transaction Time"] = "%.4f sec" % (AvgTransactionTime)
 
         if not DictOut:
@@ -4863,7 +4450,7 @@ class GeneratorDevice:
                 if self.bDST != self.is_dst():  # has DST changed?
                     self.bDST = self.is_dst()   # update Flag
                     # time changed so some serial stats may be off
-                    self.Slave.ResetSerialStats()
+                    self.ModBus.Slave.ResetSerialStats()
                     # set new time
                     SetTimeThread = threading.Thread(target=self.SetGeneratorTimeDate, name = "SetTimeThread")
                     SetTimeThread.daemon = True
@@ -4894,15 +4481,15 @@ class GeneratorDevice:
     def ComWatchDog(self):
 
         self.CommunicationsActive = False
-        LastRxPacketCount = self.Slave.RxPacketCount
+        LastRxPacketCount = self.ModBus.Slave.RxPacketCount
 
         while True:
 
-            if LastRxPacketCount == self.Slave.RxPacketCount:
+            if LastRxPacketCount == self.ModBus.Slave.RxPacketCount:
                 self.CommunicationsActive = False
             else:
                 self.CommunicationsActive = True
-                LastRxPacketCount = self.Slave.RxPacketCount
+                LastRxPacketCount = self.ModBus.Slave.RxPacketCount
             time.sleep(2)
 
             if self.IsStopSignaled("ComWatchDog"):
@@ -5028,8 +4615,8 @@ class GeneratorDevice:
             self.ServerSocket.shutdown(socket.SHUT_RDWR)
             self.ServerSocket.close()
 
-        if self.SerialInit:
-            self.Slave.Close()
+        if self.ModBus.DeviceInit:
+            self.ModBus.Slave.Close()
 
     #------------ GeneratorDevice::BitIsEqual -----------------------------------------
     def BitIsEqual(self, value, mask, bits):

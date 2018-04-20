@@ -8,7 +8,7 @@
 # MODIFICATIONS:
 #------------------------------------------------------------
 import datetime, time, sys, smtplib, signal, os, threading, socket
-import mylog, myclient
+from genmonlib import mylog, myclient
 
 
 #----------  Signal Handler ------------------------------------------
@@ -47,5 +47,3 @@ if __name__=='__main__': # usage program.py [server_address]
     except Exception as e1:
         print ("Error: " + str(e1))
     MyClientInterface.Close()
-
-

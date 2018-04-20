@@ -10,7 +10,7 @@
 
 from flask import Flask, render_template, request, jsonify, session
 import sys, signal, os, socket, atexit, time, subprocess, json
-import mylog, myclient, mythread
+from genmonlib import mylog, myclient, mythread
 import urlparse
 import re, httplib, datetime
 

@@ -13,7 +13,7 @@
 
 import datetime, time, sys, signal, os, threading, socket
 import atexit
-import myclient, mylog
+from genmonlib import myclient, mylog
 import RPi.GPIO as GPIO
 
 
@@ -96,11 +96,3 @@ if __name__=='__main__': # usage program.py [server_address]
     except Exception as e1:
         log.error("Error: " + str(e1))
         print ("Error: " + str(e1))
-
-
-
-
-
-
-
-
