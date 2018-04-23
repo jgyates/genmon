@@ -102,7 +102,7 @@ def ProcessCommand(command):
         "logs", "logs_json", "monitor", "monitor_json", "registers_json", "allregs_json",
         "start_info_json", "gui_status_json", "power_log_json", "power_log_clear",
         "getbase", "getsitename","setexercise", "setquiet", "getexercise", "setremote",
-        "settime", "reload"]:
+        "settime"]:
         finalcommand = "generator: " + command
         try:
             if command == "setexercise":
@@ -128,9 +128,6 @@ def ProcessCommand(command):
         except Exception as e1:
             data = "Retry"
             log.error("Error on command function: " + str(e1))
-
-        if command == "reload":
-                Reload()                # reload Flask App
 
         if command in ["status_json", "outage_json", "maint_json", "monitor_json", "logs_json",
             "registers_json", "allregs_json", "start_info_json", "gui_status_json", "power_log_json"]:
@@ -340,11 +337,6 @@ def ReadSettingsFromFile():
                 # this option is not displayed as this will break the modbus comms, only for debugging
                 #"address" : ['string', 'Modbus slave address', 6, "9d", "", 0 ],
                 #"loglocation" : ['string', 'Log Directory', 7, "/var/log/", "", "required UnixDir"],
-                #"displayoutput" : ['boolean', 'Output to Console', 50, False, "", 0],
-                #"displaymonitor" : ['boolean', 'Display Monitor Status', 51, False, "", 0],
-                #"displayregisters" : ['boolean', 'Display Register Status', 52, False, "", 0],
-                #"displaystatus" : ['boolean', 'Display Status', 53, False, "", 0],
-                #"displaymaintenance" : ['boolean', 'Display Maintenance', 54, False, "", 0],
                 #"enabledebug" : ['boolean', 'Enable Debug', 14, False, "", 0],
                 "disableoutagecheck" : ['boolean', 'Do Not Check for Outages', 17, False, "", ""],
                 # These settings are not displayed as the auto-detect controller will set these
@@ -471,15 +463,6 @@ def findConfigLine(line):
       return match.groups()
     else:
       return []
-
-#------------------------------------------------------------
-# This will reload the Flask App if use_reloader = True is enabled on the app.run command
-def Reload():
-    try:
-        log.error("Reloading: " + sys.executable + " " + __file__ )
-        os.execl(sys.executable, 'python', __file__, *sys.argv[1:])
-    except Exception as e1:
-        log.error("Error in Reload: " + str(e1))
 
 #------------------------------------------------------------
 # This will restart the Flask App

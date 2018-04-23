@@ -8,10 +8,10 @@
 # MODIFICATIONS:
 #------------------------------------------------------------
 import datetime, time, sys, smtplib, signal, os, threading, socket
-import mylog
+import mylog, mycommon
 
 #----------  ClientInterface::init--- ------------------------------------------
-class ClientInterface:
+class ClientInterface(mycommon.MyCommon):
     def __init__(self, host="127.0.0.1", port=9082, log = None):
 
         if log != None:
@@ -113,14 +113,3 @@ class ClientInterface:
         except Exception as e1:
             self.LogError("Error in ProcessMonitorCommand:" + str(e1))
         return data
-
-    #---------------------ClientInterface::FatalError------------------------
-    def LogError(self, Message):
-        self.log.error(Message)
-
-    #----------  ClientInterface::FatalError ---------------------------------
-    def FatalError(self, Message):
-
-        self.log.error(Message)
-        raise Exception(Message)
-

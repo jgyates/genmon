@@ -12,7 +12,7 @@
 from __future__ import print_function       # For python 3.x compatibility with print function
 
 import datetime, threading, crcmod, sys, time
-import mylog, mythread, myserial
+import mylog, mythread, myserial, mycommon
 
 #--------------------- MODBUS specific Const defines for Generator class
 MBUS_ADDRESS            = 0x00
@@ -32,7 +32,7 @@ MBUS_CMD_READ_REGS      = 0x03
 MBUS_CMD_WRITE_REGS     = 0x10
 
 #------------ ModbusProtocol class --------------------------------------------
-class ModbusProtocol:
+class ModbusProtocol(mycommon.MyCommon):
     def __init__(self, updatecallback, address = 0x9d, name = "/dev/serial", rate=9600, loglocation = "/var/log/"):
 
         self.Address = address
@@ -309,12 +309,3 @@ class ModbusProtocol:
     def Flush(self):
 
         self.Slave.Flush()
-
-    #---------------------SerialDevice::FatalError------------------------
-    def LogError(self, Message):
-        self.log.error(Message)
-    #---------------------SerialDevice::FatalError------------------------
-    def FatalError(self, Message):
-
-        self.log.error(Message)
-        raise Exception(Message)

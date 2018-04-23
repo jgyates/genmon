@@ -1,0 +1,99 @@
+#!/usr/bin/env python
+#-------------------------------------------------------------------------------
+#    FILE: mypipe.py
+# PURPOSE: pipe wrapper
+#
+#  AUTHOR: Jason G Yates
+#    DATE: 21-Apr-2018
+#
+# MODIFICATIONS:
+#-------------------------------------------------------------------------------
+
+import os, sys, time, json 
+import mythread, mycommon
+
+
+#------------ MyPipe class -----------------------------------------------------
+class MyPipe(mycommon.MyCommon):
+    #------------ MyPipe::init--------------------------------------------------
+    def __init__(self, name, callback = None, Reuse = False, log = None):
+        self.log = log
+        self.BasePipeName = name
+        self.PipeName = os.path.dirname(os.path.realpath(__file__)) + "/" + name
+        self.ThreadName = "ReadPipeThread" + self.BasePipeName
+        self.Callback = callback
+        if not Reuse:
+            try:
+                os.remove(self.PipeName)
+            except:
+                pass
+            os.mkfifo(self.PipeName)
+        self.PipeIn = os.open(self.PipeName, os.O_RDONLY | os.O_NONBLOCK)
+        self.PipeInDes = os.fdopen(self.PipeIn, "r")
+        self.PipeOut = os.open(self.PipeName, os.O_WRONLY | os.O_NONBLOCK)
+        self.PipeOutDes = os.fdopen(self.PipeOut, "w")
+        self.Threads = {}
+
+        if not self.Callback == None:
+            self.Threads[self.ThreadName] = mythread.MyThread(self.ReadPipeThread, Name = self.ThreadName)
+
+    #------------ MyPipe::Write-------------------------------------------------
+    def Write(self, data):
+        self.PipeOutDes.write( data + "\n")
+        self.PipeOutDes.flush()
+
+    #------------ MyPipe::Read--------------------------------------------------
+    def Read(self):
+
+        try:
+            return self.PipeInDes.readline()[:-1]
+        except:
+            return ""
+
+    #------------ MyPipe::ReadPipeThread----------------------------------------
+    def ReadPipeThread(self):
+
+        while True:
+            time.sleep(0.5)
+            if self.Threads[self.ThreadName].StopSignaled():
+                return
+
+            Value = self.Read()
+            if len(Value):
+                self.Callback(Value)
+    #----------------MyPipe::SendFeedback---------------------------------------
+    def SendFeedback(self,Reason, Always = False, Message = None, FullLogs = False):
+        try:
+            FeedbackDict = {}
+            FeedbackDict["Reason"] = Reason
+            FeedbackDict["Always"] = Always
+            FeedbackDict["Message"] = Message
+            FeedbackDict["FullLogs"] = FullLogs
+
+            data = json.dumps(FeedbackDict, sort_keys=False)
+            self.Write(data)
+        except Exception as e1:
+            self.LogError('Error on line %d' % self.GetErrorLine())
+            self.LogError("Error in SendFeedback: " + str(e1))
+
+    #----------------MyPipe::SendMessage----------------------------------------
+    def SendMessage(self,subjectstr, msgstr, recipient = None, files = None, deletefile = False, msgtype = "error"):
+        try:
+            MessageDict = {}
+            MessageDict["subjectstr"] = subjectstr
+            MessageDict["msgstr"] = msgstr
+            MessageDict["recipient"] = recipient
+            MessageDict["files"] = files
+            MessageDict["deletefile"] = deletefile
+            MessageDict["msgtype"] = msgtype
+
+            data = json.dumps(MessageDict, sort_keys=False)
+            self.Write(data)
+        except Exception as e1:
+            self.LogError('Error on line %d' % self.GetErrorLine())
+            self.LogError("Error in SendMessage: " + str(e1))
+
+    #------------ MyPipe::Close-------------------------------------------------
+    def Close(self):
+        os.close(self.PipeIn)
+        os.close(self.PipeOut)

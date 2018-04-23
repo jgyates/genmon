@@ -19,13 +19,13 @@ from email.mime.text import MIMEText
 from email.utils import COMMASPACE, formatdate
 
 import atexit, configparser
-import mylog, mythread
+import mylog, mythread, mycommon
 
 #imaplib.Debug = 4
 
 
 #------------ MyMail class --------------------------------------------
-class MyMail:
+class MyMail(mycommon.MyCommon):
     def __init__(self, monitor = False, incoming_folder = None, processed_folder = None, incoming_callback = None, localinit = False, loglocation = "/var/log/"):
 
         self.Monitor = monitor                          # true if we receive IMAP email
@@ -36,7 +36,7 @@ class MyMail:
         self.EmailSendQueue = []                        # queue for email to send
         self.DisableEmail = False
         self.SSLEnabled = False
-
+        self.Threads = {}                               # Dict of mythread objects
 
         # log errors in this module to a file
         if localinit == True:
@@ -54,13 +54,13 @@ class MyMail:
 
         if not self.DisableEmail:
             if self.SMTPServer != "":
-                self.threadSendEmail = mythread.MyThread(self.SendMailThread, Name = "SendMailThread")
+                self.Threads["SendMailThread"] = mythread.MyThread(self.SendMailThread, Name = "SendMailThread")
             else:
                 self.LogError("SMTP disabled")
 
             if self.Monitor and self.IMAPServer != "":     # if True then we will have an IMAP monitor thread
                 if incoming_callback and incoming_folder and processed_folder:
-                    self.threadReceiveEmail = mythread.MyThread(self.EmailCommandThread, Name = "EmailCommandThread")
+                    self.Threads["EmailCommandThread"] = mythread.MyThread(self.EmailCommandThread, Name = "EmailCommandThread")
                 else:
                     self.FatalError("ERROR: incoming_callback, incoming_folder and processed_folder are required if receive IMAP is used")
             else:
@@ -120,34 +120,17 @@ class MyMail:
 
         return True
 
-    #---------- MyMail.GetSendEmailThreadObject -------------------------
-    def GetSendEmailThreadObject(self):
-
-        if not self.DisableEmail:
-            if self.SMTPServer != "":
-                return self.threadSendEmail
-        return 0
-
-    #---------- MyMail.GetEmailMonitorThreadObject -------------------------
-    def GetEmailMonitorThreadObject(self):
-
-        if not self.DisableEmail:
-            if self.Monitor and self.IMAPServer != "":
-                if self.IncomingCallback != None and self.IncomingFolder != None and self.ProcessedFolder != None:
-                    return self.threadReceiveEmail
-        return 0
-
     #---------- MyMail.EmailCommandThread -----------------------------------
     def Cleanup(self):
 
         if not self.DisableEmail:
             if self.SMTPServer != "":
-                self.threadSendEmail.Stop()
+                self.Threads["SendMailThread"].Stop()
 
         if not self.DisableEmail:
             if self.Monitor and self.IMAPServer != "":
                 if self.IncomingCallback != None and self.IncomingFolder != None and self.ProcessedFolder != None:
-                    self.threadReceiveEmail.Stop()
+                    self.Threads["EmailCommandThread"].Stop()
 
         if self.Monitor:
             if self.Mailbox:
@@ -207,7 +190,7 @@ class MyMail:
                     time.sleep(60)
                     break
 
-            if self.threadReceiveEmail.StopSignaled():
+            if self.Threads["EmailCommandThread"].StopSignaled():
                 return
             time.sleep(15)
             ## end of outer loop
@@ -295,7 +278,7 @@ class MyMail:
         while True:
 
             time.sleep(2)
-            if self.threadSendEmail.StopSignaled():
+            if self.Threads["SendMailThread"].StopSignaled():
                 return
 
             while self.EmailSendQueue != []:
@@ -323,13 +306,3 @@ class MyMail:
         if not self.DisableEmail:       # if all email disabled, do not queue
             if self.SMTPServer != "":    # if only sending is disabled, do not queue
                 self.EmailSendQueue.insert(0,[msgtype,subjectstr,msgstr,recipient, files, deletefile])
-
-    #---------------------SecurityMonitor::FatalError------------------------
-    def LogError(self, Message):
-        self.log.error(Message)
-
-    #---------------------SecurityMonitor::FatalError------------------------
-    def FatalError(self, Message):
-
-        self.log.error(Message)
-        raise Exception(Message)

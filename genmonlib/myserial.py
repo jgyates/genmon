@@ -12,17 +12,17 @@
 from __future__ import print_function       # For python 3.x compatibility with print function
 
 import datetime, threading, serial, sys
-import mylog, mythread
+import mylog, mythread, mycommon
 
 
 #------------ SerialDevice class --------------------------------------------
-class SerialDevice:
+class SerialDevice(mycommon.MyCommon):
     def __init__(self, name, rate=9600, loglocation = "/var/log/"):
         self.DeviceName = name
         self.BaudRate = rate
         self.Buffer = []
         self.BufferLock = threading.Lock()
-
+        self.Threads = {}           # Dict of mythread objects
         self.RxPacketCount = 0
         self.TxPacketCount = 0
         self.ComTimoutError = 0
@@ -60,6 +60,7 @@ class SerialDevice:
             return None
 
         self.Flush()
+        self.StartReadThread()
 
     # ---------- SerialDevice::ResetSerialStats------------------
     def ResetSerialStats(self):
@@ -72,9 +73,9 @@ class SerialDevice:
     def StartReadThread(self):
 
         # start read thread to monitor incoming data commands
-        self.Thread = mythread.MyThread(self.ReadThread, Name = "SerialReadThread")
+        self.Threads["SerialReadThread"] = mythread.MyThread(self.ReadThread, Name = "SerialReadThread")
 
-        return self.Thread
+        return self.Threads["SerialReadThread"]
 
     # ---------- SerialDevice::ReadThread------------------
     def ReadThread(self):
@@ -89,10 +90,10 @@ class SerialDevice:
                             else:
                                 self.Buffer.append(c)           # PYTHON3
                         # first check for SignalStopped is when we are receiving
-                        if self.Thread.StopSignaled():
+                        if self.Threads["SerialReadThread"].StopSignaled():
                             return
                     # second check for SignalStopped is when we are not receiving
-                    if self.Thread.StopSignaled():
+                    if self.Threads["SerialReadThread"].StopSignaled():
                             return
 
             except Exception as e1:
@@ -116,9 +117,9 @@ class SerialDevice:
     # ---------- SerialDevice::Close------------------
     def Close(self):
         if self.SerialDevice.isOpen():
-            if self.Thread.IsAlive():
-                self.Thread.Stop()
-                self.Thread.WaitForThreadToEnd()
+            if self.Threads["SerialReadThread"].IsAlive():
+                self.Threads["SerialReadThread"].Stop()
+                self.Threads["SerialReadThread"].WaitForThreadToEnd()
             self.SerialDevice.close()
 
     # ---------- SerialDevice::Flush------------------
@@ -139,12 +140,3 @@ class SerialDevice:
     # ---------- SerialDevice::Write-----------------
     def Write(self, data):
         return  self.SerialDevice.write(data)
-
-    #---------------------SerialDevice::FatalError------------------------
-    def LogError(self, Message):
-        self.log.error(Message)
-    #---------------------SerialDevice::FatalError------------------------
-    def FatalError(self, Message):
-
-        self.log.error(Message)
-        raise Exception(Message)

@@ -27,10 +27,10 @@ try:
 except ImportError as e:
     from configparser import RawConfigParser
 
-from genmonlib import myserial, mymail, mylog, mythread, mymodbus
+from genmonlib import myserial, mymail, mylog, mythread, mymodbus, mypipe, mycommon
 
 
-GENMON_VERSION = "V1.6.5"
+GENMON_VERSION = "V1.6.6"
 
 #-------------------Generator specific const defines for Generator class
 LOG_DEPTH               = 50
@@ -53,8 +53,8 @@ NEXUS_ALARM_LOG_END_REG         = ((NEXUS_ALARM_LOG_STARTING_REG + (NEXUS_ALARM_
 
 DEFAULT_THRESHOLD_VOLTAGE = 143
 DEFAULT_PICKUP_VOLTAGE = 190
-#------------ GeneratorDevice class --------------------------------------------
-class GeneratorDevice:
+#------------ Monitor class --------------------------------------------
+class Monitor(mycommon.MyCommon):
 
     def __init__(self):
         self.ProgramName = "Generator Monitor"
@@ -65,7 +65,9 @@ class GeneratorDevice:
         self.NotChanged = 0         # stats for registers
         self.Changed = 0            # stats for registers
         self.TotalChanged = 0.0     # ratio of changed ragisters
-        self.LastAlarmValue = 0xFF  # Last Value of the Alarm Register
+        self.UtilityVoltsMin = 0    # Minimum reported utility voltage above threshold
+        self.UtilityVoltsMax = 0    # Maximum reported utility voltage above pickup
+
         self.ConnectionList = []    # list of incoming connections for heartbeat
         self.ServerSocket = 0       # server socket for nagios heartbeat and command/status
         self.Threads = {}           # Dict of mythread objects
@@ -75,15 +77,15 @@ class GeneratorDevice:
         self.CommunicationsActive = False   # Flag to let the heartbeat thread know we are communicating
         self.CommAccessLock = threading.RLock()  # lock to synchronize access to the serial port comms
         self.CheckForAlarmEvent = threading.Event() # Event to signal checking for alarm
-        self.UtilityVoltsMin = 0    # Minimum reported utility voltage above threshold
-        self.UtilityVoltsMax = 0    # Maximum reported utility voltage above pickup
         self.MailInit = False       # set to true once mail is init
         self.InitComplete = False   # set to true once init is complete
         self.NewInstall = False     # True if newly installed or newly upgraded version
         self.FeedbackEnabled = False   # True if sending autoated feedback on missing information
         self.FeedbackMessages = {}
-
         self.Version = "Unknown"
+
+        self.LastAlarmValue = 0xFF  # Last Value of the Alarm / Status Register
+
 
         self.DaysOfWeek = { 0: "Sunday",    # decode for register values with day of week
                             1: "Monday",
@@ -184,11 +186,6 @@ class GeneratorDevice:
                     "0009" : [2, 0],     # Utility voltage
                     "05f1" : [2, 0]}     # Last Alarm Code
 
-        self.WriteRegisters = {  # 0003 and 0004 are index registers, used to write exercise time and other unknown stuff (remote start, stop and transfer)
-                    "002c" : 2,     # Read / Write: Exercise Time HH:MM
-                    "002e" : 2,     # Read / Write: Exercise Day Sunday =0, Monday=1
-                    "002f" : 2}     # Read / Write: Exercise Quiet Mode=1 Not Quiet Mode = 0
-
         self.REGLEN = 0
         self.REGMONITOR = 1
 
@@ -197,14 +194,9 @@ class GeneratorDevice:
         self.SiteName = "Home"
 
         # set defaults for optional parameters
-        self.bDisplayOutput = False
-        self.bDisplayMonitor = False
-        self.bDisplayRegisters = False
-        self.bDisplayStatus = False
         self.EnableDebug = False
 
         self.bDisplayUnknownSensors = False
-        self.bDisplayMaintenance = False
         self.bUseLegacyWrite = False
         self.EvolutionController = None
         self.LiquidCooled = None
@@ -242,10 +234,15 @@ class GeneratorDevice:
 
         atexit.register(self.Close)
 
+        self.FeedbackPipe = mypipe.MyPipe("Feedback", self.FeedbackReceiver, log = self.log)
+        self.Threads = self.MergeDicts(self.Threads, self.FeedbackPipe.Threads)
+        self.MessagePipe = mypipe.MyPipe("Message", self.MessageReceiver, log = self.log)
+        self.Threads = self.MergeDicts(self.Threads, self.MessagePipe.Threads)
+
         try:
             #Starting device connection
             self.ModBus = mymodbus.ModbusProtocol(self.UpdateRegisterList, self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation)
-            self.Threads["SerialReadThread"] = self.ModBus.Slave.StartReadThread()
+            self.Threads = self.MergeDicts(self.Threads, self.ModBus.Slave.Threads)
 
         except Exception as e1:
             self.FatalError("Error opening serial device: " + str(e1))
@@ -253,33 +250,28 @@ class GeneratorDevice:
 
         # init mail, start processing incoming email
         self.mail = mymail.MyMail(monitor=True, incoming_folder = self.IncomingEmailFolder, processed_folder =self.ProcessedEmailFolder,incoming_callback = self.ProcessCommand)
+        self.Threads = self.MergeDicts(self.Threads, self.mail.Threads)
         self.MailInit = True
 
         # send mail to tell we are starting
-        self.mail.sendEmail("Generator Monitor Starting at " + self.SiteName, "Generator Monitor Starting at " + self.SiteName , msgtype = "info")
-
+        self.MessagePipe.SendMessage("Generator Monitor Starting at " + self.SiteName, "Generator Monitor Starting at " + self.SiteName , msgtype = "info")
         # check for ALARM.txt file present
         try:
             self.AlarmFile = os.path.dirname(os.path.realpath(__file__)) + "/ALARMS.txt"
             with open(self.AlarmFile,"r") as AlarmFile:     #
-                self.printToScreen("Validated alarm file present")
+                pass
         except Exception as e1:
             self.FatalError("Unable to open alarm file: " + str(e1))
-
-        if self.mail.GetSendEmailThreadObject():
-            self.Threads["SendMailThread"] = self.mail.GetSendEmailThreadObject()
-        if self.mail.GetEmailMonitorThreadObject():
-            self.Threads["EmailCommandThread"] = self.mail.GetEmailMonitorThreadObject()
 
         self.ProcessFeedbackInfo()
         self.StartThreads()
 
         self.LogError("GenMon Loadded for site: " + self.SiteName)
 
-    # ---------- GeneratorDevice::StartThreads------------------
+    # ---------- Monitor::StartThreads------------------
     def StartThreads(self, reload = False):
 
-        self.Threads["CheckForAlarmThread"] = mythread.MyThread(self.CheckForAlarmThread, Name = "CheckForAlarmThread")
+        self.Threads["CheckAlarmThread"] = mythread.MyThread(self.CheckAlarmThread, Name = "CheckAlarmThread")
 
         # start read thread to process incoming data commands
         self.Threads["ProcessThread"] = mythread.MyThread(self.ProcessThread, Name = "ProcessThread")
@@ -295,16 +287,13 @@ class GeneratorDevice:
         # start thread to accept incoming sockets for nagios heartbeat
         self.Threads["PowerMeter"] = mythread.MyThread(self.PowerMeter, Name = "PowerMeter")
 
-        # start read thread to monitor registers as they change
-        self.Threads["MonitorThread"] = mythread.MyThread(self.MonitorThread, Name = "MonitorThread")
-
         if self.bSyncDST or self.bSyncTime:     # Sync time thread
             self.Threads["TimeSyncThread"] = mythread.MyThread(self.TimeSyncThread, Name = "TimeSyncThread")
 
         if self.EnableDebug:        # for debugging registers
             self.Threads["DebugThread"] = mythread.MyThread(self.DebugThread, Name = "DebugThread")
 
-    # ---------- GeneratorDevice::KillThread------------------
+    # ---------- Monitor::KillThread------------------
     def KillThread(self, Name, CleanupSelf = False):
 
         try:
@@ -321,7 +310,7 @@ class GeneratorDevice:
         except Exception as e1:
             return
 
-    # ---------- GeneratorDevice::KillReloadThread------------------
+    # ---------- Monitor::KillReloadThread------------------
     def IsStopSignaled(self, Name):
 
         Thread = self.Threads.get(Name, None)
@@ -331,76 +320,7 @@ class GeneratorDevice:
 
         return Thread.StopSignaled()
 
-    # ---------- GeneratorDevice::Reload------------------
-    def Reload(self):
-
-        try:
-            RetStr = ""
-
-            self.KillThread("ProcessThread")
-            self.KillThread("MonitorThread")
-            self.KillThread("CheckForAlarmThread")
-            self.KillThread("PowerMeter")
-            self.KillThread("ComWatchDog")
-            if self.bSyncDST or self.bSyncTime:
-                self.KillThread("TimeSyncThread")
-            if self.EnableDebug:
-                self.KillThread("DebugThread")
-
-            if self.MailInit:
-                self.mail.Cleanup()
-                try:
-                    del self.Threads["SendMailThread"]
-                    del self.Threads["EmailCommandThread"]
-                except Exception as e1:
-                    RetStr = ""     # no error to report, using exception if send or rx email was disabled.
-
-
-            self.MailInit = False
-
-            if self.ModBus.DeviceInit:
-                self.ModBus.Slave.Close()
-
-            self.ModBus.DeviceInit = False
-
-            if not self.GetConfig(reload = True):
-                RetStr =  "Error reloading, error reading config file"
-
-            # log errors in this module to a file
-            self.log = mylog.SetupLogger("genmon", self.LogLocation + "genmon.log")
-            try:
-                #Starting device connection
-                self.ModBus = mymodbus.ModbusProtocol(self.UpdateRegisterList, self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation)
-                self.Threads["SerialReadThread"] = self.ModBus.Slave.StartReadThread()
-            except Exception as e1:
-                self.LogError("Error in Reload (serial): " + str(e1))
-                RetStr = "Failed to reload serial port."
-
-            # init mail, start processing incoming email
-            self.mail = mymail.MyMail(monitor=True, incoming_folder = self.IncomingEmailFolder, processed_folder =self.ProcessedEmailFolder,incoming_callback = self.ProcessCommand)
-            self.MailInit = True
-
-            if self.mail.GetSendEmailThreadObject():
-                self.Threads["SendMailThread"] = self.mail.GetSendEmailThreadObject()
-            if self.mail.GetEmailMonitorThreadObject():
-                self.Threads["EmailCommandThread"] = self.mail.GetEmailMonitorThreadObject()
-
-            # send mail to tell we are starting again
-            self.mail.sendEmail("Generator Monitor Reload at " + self.SiteName, "Generator Monitor Reload at " + self.SiteName , msgtype = "info")
-
-            self.StartThreads(reload = True)
-            self.LogError("RELOAD COMPLETE")
-
-            if RetStr == "":
-                return "Genmon reloaded"
-            else:
-                return RetStr
-
-        except Exception as e1:
-            self.LogError("Error in Reload: " + str(e1))
-            return "Genmon failed to reload"
-
-    # ---------- GeneratorDevice::GetConfig------------------
+    # ---------- Monitor::GetConfig------------------
     def GetConfig(self, reload = False):
 
         ConfigSection = "GenMon"
@@ -435,16 +355,6 @@ class GeneratorDevice:
             if config.has_option(ConfigSection, 'disableoutagecheck'):
                 self.DisableOutageCheck = config.getboolean(ConfigSection, 'disableoutagecheck')
 
-            if config.has_option(ConfigSection, 'displayoutput'):
-                self.bDisplayOutput = config.getboolean(ConfigSection, 'displayoutput')
-            if config.has_option(ConfigSection, 'displaymonitor'):
-                self.bDisplayMonitor = config.getboolean(ConfigSection, 'displaymonitor')
-            if config.has_option(ConfigSection, 'displayregisters'):
-                self.bDisplayRegisters = config.getboolean(ConfigSection, 'displayregisters')
-            if config.has_option(ConfigSection, 'displaystatus'):
-                self.bDisplayStatus = config.getboolean(ConfigSection, 'displaystatus')
-            if config.has_option(ConfigSection, 'displaymaintenance'):
-                self.bDisplayMaintenance = config.getboolean(ConfigSection, 'displaymaintenance')
             if config.has_option(ConfigSection, 'enabledebug'):
                 self.EnableDebug = config.getboolean(ConfigSection, 'enabledebug')
 
@@ -540,23 +450,23 @@ class GeneratorDevice:
             return False
 
 
-    # ---------- GeneratorDevice::CheckForAlarmThread------------------
+    # ---------- Monitor::CheckAlarmThread------------------
     #  When signaled, this thread will check for alarms
-    def CheckForAlarmThread(self):
+    def CheckAlarmThread(self):
 
         while True:
             try:
                 time.sleep(0.25)
-                if self.IsStopSignaled("CheckForAlarmThread"):
+                if self.IsStopSignaled("CheckAlarmThread"):
                     break
                 if self.CheckForAlarmEvent.is_set():
                     self.CheckForAlarmEvent.clear()
                     self.CheckForAlarms()
 
             except Exception as e1:
-                self.FatalError("Error in  CheckForAlarmThread" + str(e1))
+                self.FatalError("Error in  CheckAlarmThread" + str(e1))
 
-    # ---------- GeneratorDevice::ProcessThread------------------
+    # ---------- Monitor::ProcessThread------------------
     #  remove items from Buffer, form packets
     #  all read and writes to serial port(s) should occur in this thread so we can
     #  serialize access to the ports
@@ -573,31 +483,61 @@ class GeneratorDevice:
                     if self.EnableDebug:
                         self.DebugRegisters()
                 except Exception as e1:
-                    self.LogError("Error in GeneratorDevice:ProcessThread (1), continue: " + str(e1))
+                    self.LogError("Error in Monitor:ProcessThread (1), continue: " + str(e1))
         except Exception as e1:
-            self.FatalError("Exiting GeneratorDevice:ProcessThread (2)" + str(e1))
+            self.FatalError("Exiting Monitor:ProcessThread (2)" + str(e1))
 
-    # ---------- GeneratorDevice::MonitorThread------------------
-    # This thread will analyze the cached registers. It should not write to the serial port(s)
-    def MonitorThread(self):
+    #------------------------------------------------------------
+    def ProcessFeedbackInfo(self):
 
-        while True:
-            try:
-                time.sleep(5)
-                if self.IsStopSignaled("MonitorThread"):
-                    break
-                if self.bDisplayMonitor:
-                    self.DisplayMonitor()       # display communication stats
-                if self.bDisplayRegisters:
-                    self.DisplayRegisters()     # display registers
-                if self.bDisplayStatus:
-                    self.DisplayStatus()        # display generator engine status
-                if self.bDisplayMaintenance:
-                    self.DisplayMaintenance()   # display Maintenance
-            except Exception as e1:
-                self.LogError("Error in GeneratorDevice:MonitorThread " + str(e1))
+        if self.FeedbackEnabled:
+            for Key, Entry in self.FeedbackMessages.items():
+                self.MessagePipe.SendMessage("Generator Monitor Submission", Entry , recipient = "generatormonitor.software@gmail.com", msgtype = "error")
+            # delete unsent Messages
+            if os.path.isfile(self.FeedbackLogFile):
+                os.remove(self.FeedbackLogFile)
 
-    #-------------GeneratorDevice::InitDevice------------------------------------
+    #------------------------------------------------------------
+    def FeedbackReceiver(self, Message):
+
+        FeedbackDict = {}
+        FeedbackDict = json.loads(Message)
+        self.SendFeedbackInfo(FeedbackDict["Reason"], FeedbackDict["Always"], FeedbackDict["Message"], FeedbackDict["FullLogs"])
+
+    #------------------------------------------------------------
+    def MessageReceiver(self, Message):
+
+        MessageDict = {}
+        MessageDict = json.loads(Message)
+        self.mail.sendEmail(MessageDict["subjectstr"], MessageDict["msgstr"], MessageDict["recipient"], MessageDict["files"],MessageDict["deletefile"] ,MessageDict["msgtype"])
+
+    #------------------------------------------------------------
+    def SendFeedbackInfo(self, Reason, Always = False, Message = None, FullLogs = False):
+        try:
+            if self.NewInstall or Always:
+
+                CheckedSent = self.FeedbackMessages.get(Reason, "")
+
+                if not CheckedSent == "":
+                    return
+
+                msgbody = "Reason = " + Reason + "\n"
+                if Message != None:
+                    msgbody += "Message : " + Message + "\n"
+                msgbody += "Version: " + GENMON_VERSION
+                msgbody += self.DisplayRegisters(AllRegs = FullLogs)
+                if self.FeedbackEnabled:
+                    self.MessagePipe.SendMessage("Generator Monitor Submission", msgbody , recipient = "generatormonitor.software@gmail.com", msgtype = "error")
+
+                self.FeedbackMessages[Reason] = msgbody
+                # if feedback not enabled, save the log to file
+                if not self.FeedbackEnabled:
+                    with open(self.FeedbackLogFile, 'w') as outfile:
+                        json.dump(self.FeedbackMessages, outfile, sort_keys = True, indent = 4, ensure_ascii = False)
+        except Exception as e1:
+            self.LogError("Error in SendFeedbackInfo: " + str(e1))
+
+    #-------------Monitor::InitDevice------------------------------------
     # One time reads, and read all registers once
     def InitDevice(self):
 
@@ -634,42 +574,6 @@ class GeneratorDevice:
         self.CheckForAlarmEvent.set()
 
     #------------------------------------------------------------
-    def ProcessFeedbackInfo(self):
-
-        if self.FeedbackEnabled:
-            for Key, Entry in self.FeedbackMessages.items():
-                self.mail.sendEmail("Generator Monitor Submission", Entry , recipient = "generatormonitor.software@gmail.com", msgtype = "error")
-            # delete unsent Messages
-            if os.path.isfile(self.FeedbackLogFile):
-                os.remove(self.FeedbackLogFile)
-
-    #------------------------------------------------------------
-    def SendFeedbackInfo(self, Reason, Always = False, Message = None, FullLogs = False):
-        try:
-            if self.NewInstall or Always:
-
-                CheckedSent = self.FeedbackMessages.get(Reason, "")
-
-                if not CheckedSent == "":
-                    return
-
-                msgbody = "Reason = " + Reason + "\n"
-                if Message != None:
-                    msgbody += "Message : " + Message + "\n"
-                msgbody += "Version: " + GENMON_VERSION
-                msgbody += self.DisplayRegisters(AllRegs = FullLogs, ToString = True)
-                if self.FeedbackEnabled:
-                    self.mail.sendEmail("Generator Monitor Submission", msgbody , recipient = "generatormonitor.software@gmail.com", msgtype = "error")
-
-                self.FeedbackMessages[Reason] = msgbody
-                # if feedback not enabled, save the log to file
-                if not self.FeedbackEnabled:
-                    with open(self.FeedbackLogFile, 'w') as outfile:
-                        json.dump(self.FeedbackMessages, outfile, sort_keys = True, indent = 4, ensure_ascii = False)
-        except Exception as e1:
-            self.LogError("Error in SendFeedbackInfo: " + str(e1))
-
-    #------------------------------------------------------------
     def CheckModelSpecificInfo(self):
 
         if self.NominalFreq == "Unknown" or not len(self.NominalFreq):
@@ -694,7 +598,7 @@ class GeneratorDevice:
 
         TempStr = self.GetModelInfo("KW")
         if TempStr == "Unknown":
-            self.SendFeedbackInfo("ModelID", Message="Model ID register is unknown")
+            self.FeedbackPipe.SendFeedback("ModelID", Message="Model ID register is unknown")
 
         if self.NominalKW == "Unknown" or self.Model == "Unknown" or not len(self.NominalKW) or not len(self.Model) or self.NewInstall:
 
@@ -723,7 +627,7 @@ class GeneratorDevice:
                 self.FuelType = "Natural Gas"                           # NexusLC, NexusAC, EvoAC
             self.AddItemToConfFile("fueltype", self.FuelType)
 
-    #------------ GeneratorDevice::GetModelInfo-------------------------------
+    #------------ Monitor::GetModelInfo-------------------------------
     def GetModelInfo(self, Request):
 
         UnknownList = ["Unknown", "Unknown", "Unknown", "Unknown"]
@@ -921,9 +825,10 @@ class GeneratorDevice:
             return False
 
 
-    #-------------GeneratorDevice::DetectController------------------------------------
+    #-------------Monitor::DetectController------------------------------------
     def DetectController(self):
 
+        UnknownController = False
         # issue modbus read
         self.ModBus.ProcessMasterSlaveTransaction("0000", 1)
 
@@ -951,10 +856,8 @@ class GeneratorDevice:
             # if reg 000 is 3 or less then assume we have a Nexus Controller
             if ProductModel == 0x03 or ProductModel == 0x06:
                 self.EvolutionController = False    #"Nexus"
-                self.printToScreen("Nexus Controller Detected")
             elif ProductModel == 0x09 or ProductModel == 0x0c:
                 self.EvolutionController = True     #"Evolution"
-                self.printToScreen("Evolution Controller Detected")
             else:
                 # set a reasonable default
                 if ProductModel <= 0x06:
@@ -963,29 +866,31 @@ class GeneratorDevice:
                     self.EvolutionController = True
 
                 self.LogError("Warning in DetectController (Nexus / Evolution):  Unverified value detected in model register (%04x)" %  ProductModel)
-                self.mail.sendEmail("Generator Monitor (Nexus / Evolution): Warning at " + self.SiteName, msgbody, msgtype = "warn" )
+                self.MessagePipe.SendMessage("Generator Monitor (Nexus / Evolution): Warning at " + self.SiteName, msgbody, msgtype = "warn" )
         else:
             self.LogError("DetectController auto-detect override (controller). EvolutionController now is %s" % str(self.EvolutionController))
 
         if self.LiquidCooled == None:
             if ProductModel == 0x03 or ProductModel == 0x09:
                 self.LiquidCooled = False    # Air Cooled
-                self.printToScreen("Air Cooled Model Detected")
             elif ProductModel == 0x06 or ProductModel == 0x0c:
                 self.LiquidCooled = True     # Liquid Cooled
-                self.printToScreen("Liquid Cooled Model Detected")
             else:
                 # set a reasonable default
                 self.LiquidCooled = False
                 self.LogError("Warning in DetectController (liquid / air cooled):  Unverified value detected in model register (%04x)" %  ProductModel)
-                self.mail.sendEmail("Generator Monitor (liquid / air cooled: Warning at " + self.SiteName, msgbody, msgtype = "warn" )
+                self.MessagePipe.SendMessage("Generator Monitor (liquid / air cooled: Warning at " + self.SiteName, msgbody, msgtype = "warn" )
         else:
             self.LogError("DetectController auto-detect override (Liquid Cooled). Liquid Cooled now is %s" % str(self.LiquidCooled))
 
         if not self.EvolutionController:        # if we are using a Nexus Controller, force legacy writes
             self.bUseLegacyWrite = True
 
-    #----------  GeneratorDevice:GetController  ---------------------------------
+        if UnknownController:
+            self.FeedbackPipe.SendFeedback("UnknownController", Message="Unknown Controller Found")
+        return "OK"
+
+    #----------  Monitor:GetController  ---------------------------------
     def GetController(self, Actual = True):
 
         outstr = ""
@@ -1018,7 +923,7 @@ class GeneratorDevice:
 
         return outstr
 
-    #-------------GeneratorDevice::DebugRegisters------------------------------------
+    #-------------Monitor::DebugRegisters------------------------------------
     def DebugRegisters(self):
 
         # reg 200 - -3e7 and 4af - 4e2 and 5af - 600 (already got 5f1 5f4 and 5f5?
@@ -1027,7 +932,7 @@ class GeneratorDevice:
             if not self.RegisterIsKnown(RegStr):
                 self.ModBus.ProcessMasterSlaveTransaction(RegStr, 1)
 
-    #-------------GeneratorDevice::MasterEmulation------------------------------------
+    #-------------Monitor::MasterEmulation------------------------------------
     def MasterEmulation(self):
 
         counter = 0
@@ -1045,7 +950,7 @@ class GeneratorDevice:
             self.ModBus.ProcessMasterSlaveTransaction(Reg, int(Info[self.REGLEN] / 2))
             counter += 1
 
-     #-------------GeneratorDevice::UpdateLogRegistersAsMaster
+    #-------------Monitor::UpdateLogRegistersAsMaster
     def UpdateLogRegistersAsMaster(self):
 
         # Start / Stop Log
@@ -1069,7 +974,7 @@ class GeneratorDevice:
                 RegStr = "%04x" % Register
                 self.ModBus.ProcessMasterSlaveTransaction(RegStr, NEXUS_ALARM_LOG_STRIDE)
 
-     #----------  GeneratorDevice::SetGeneratorRemoteStartStop-------------------------------
+    #----------  Monitor::SetGeneratorRemoteStartStop-------------------------------
     def SetGeneratorRemoteStartStop(self, CmdString):
 
         msgbody = "Invalid command syntax for command setremote (1)"
@@ -1141,11 +1046,11 @@ class GeneratorDevice:
 
             msgbody = "%s changed from %s to %s" % (Register, FromValue, ToValue)
             msgbody += "\n"
-            msgbody += self.DisplayRegisters(ToString = True)
+            msgbody += self.DisplayRegisters()
             msgbody += "\n"
-            msgbody += self.DisplayStatus(ToString = True)
+            msgbody += self.DisplayStatus()
 
-            self.mail.sendEmail("Monitor Register Alert: " + Register, msgbody, msgtype = "warn")
+            self.MessagePipe.SendMessage("Monitor Register Alert: " + Register, msgbody, msgtype = "warn")
         else:
             # bulk register monitoring goes here and an email is sent out in a batch
             if self.EnableDebug:
@@ -1153,7 +1058,7 @@ class GeneratorDevice:
                 self.RegistersUnderTestData += "Reg %s changed from %s to %s, Bits Changed: %d, Mask: %x, Engine State: %s\n" % \
                         (Register, FromValue, ToValue, BitsChanged, Mask, self.GetEngineState())
 
-    #----------  GeneratorDevice::GetNumBitsChanged-------------------------------
+    #----------  Monitor::GetNumBitsChanged-------------------------------
     def GetNumBitsChanged(self, FromValue, ToValue):
 
         MaskBitsChanged = int(FromValue, 16) ^ int(ToValue, 16)
@@ -1165,7 +1070,7 @@ class GeneratorDevice:
 
         return count, MaskBitsChanged
 
-    #----------  GeneratorDevice::CalculateExerciseTime-------------------------------
+    #----------  Monitor::CalculateExerciseTime-------------------------------
     # helper routine for AltSetGeneratorExerciseTime
     def CalculateExerciseTime(self,MinutesFromNow):
 
@@ -1214,7 +1119,7 @@ class GeneratorDevice:
 
         return ReturnedValue
 
-    #----------  GeneratorDevice::AltSetGeneratorExerciseTime-------------------------------
+    #----------  Monitor::AltSetGeneratorExerciseTime-------------------------------
     # Note: This method is a bit odd but it is how ML does it. It can result in being off by
     # a min or two
     def AltSetGeneratorExerciseTime(self, CmdString):
@@ -1280,7 +1185,7 @@ class GeneratorDevice:
             self.ModBus.ProcessMasterSlaveWriteTransaction("0003", len(Data) / 2, Data)
         return  "Set Exercise Time Command sent (using legacy write)"
 
-    #----------  GeneratorDevice::GetDeltaTimeMinutes-------------------------------
+    #----------  Monitor::GetDeltaTimeMinutes-------------------------------
     def GetDeltaTimeMinutes(self, DeltaTime):
 
         days, seconds = DeltaTime.days, DeltaTime.seconds
@@ -1289,7 +1194,7 @@ class GeneratorDevice:
 
         return (delta_hours * 60 + delta_minutes)
 
-    #----------  GeneratorDevice::SetGeneratorExerciseTime-------------------------------
+    #----------  Monitor::SetGeneratorExerciseTime-------------------------------
     def SetGeneratorExerciseTime(self, CmdString):
 
         # use older style write to set exercise time if this flag is set
@@ -1360,7 +1265,7 @@ class GeneratorDevice:
 
         return  "Set Exercise Time Command sent"
 
-    #----------  GeneratorDevice::ParseExerciseStringEx-------------------------------
+    #----------  Monitor::ParseExerciseStringEx-------------------------------
     def ParseExerciseStringEx(self, CmdString, DayDict):
 
         Day = -1
@@ -1446,7 +1351,7 @@ class GeneratorDevice:
 
         return Day, Hour, Minute, ModeStr
 
-     #----------  GeneratorDevice::SetGeneratorQuietMode-------------------------------
+    #----------  Monitor::SetGeneratorQuietMode-------------------------------
     def SetGeneratorQuietMode(self, CmdString):
 
         # extract quiet mode setting from Command String
@@ -1488,7 +1393,7 @@ class GeneratorDevice:
 
         return "Set Quiet Mode Command sent"
 
-    #----------  GeneratorDevice::SetGeneratorTimeDate-------------------------------
+    #----------  Monitor::SetGeneratorTimeDate-------------------------------
     def SetGeneratorTimeDate(self):
 
         # get system time
@@ -1514,7 +1419,7 @@ class GeneratorDevice:
 
         self.ModBus.ProcessMasterSlaveWriteTransaction("000e", len(Data) / 2, Data)
 
-    #------------ GeneratorDevice::GetRegisterLength --------------------------------------------
+    #------------ Monitor::GetRegisterLength --------------------------------------------
     def GetRegisterLength(self, Register):
 
         RegInfoReg = self.BaseRegisters.get(Register, [0,0])
@@ -1527,7 +1432,7 @@ class GeneratorDevice:
 
         return RegLength
 
-    #------------ GeneratorDevice::MonitorRegister --------------------------------------------
+    #------------ Monitor::MonitorRegister --------------------------------------------
     # return true if we are monitoring this register
     def MonitorRegister(self, Register):
 
@@ -1543,7 +1448,7 @@ class GeneratorDevice:
             return True
         return False
 
-    #------------ GeneratorDevice::ValidateRegister --------------------------------------------
+    #------------ Monitor::ValidateRegister --------------------------------------------
     def ValidateRegister(self, Register, Value):
 
         ValidationOK = True
@@ -1581,7 +1486,7 @@ class GeneratorDevice:
         return ValidationOK
 
 
-    #------------ GeneratorDevice::RegisterIsLog --------------------------------------------
+    #------------ Monitor::RegisterIsLog --------------------------------------------
     def RegisterIsLog(self, Register):
 
         ## Is this a log register
@@ -1597,7 +1502,7 @@ class GeneratorDevice:
             return True
         return False
 
-    #------------ GeneratorDevice::UpdateRegisterList --------------------------------------------
+    #------------ Monitor::UpdateRegisterList --------------------------------------------
     def UpdateRegisterList(self, Register, Value):
 
         # Validate Register by length
@@ -1627,7 +1532,7 @@ class GeneratorDevice:
                 self.MonitorUnknownRegisters(Register,RegValue, Value)
                 self.RegistersUnderTest[Register] = Value        # update the value
 
-    #------------ GeneratorDevice::RegisterIsKnown ------------------------------------
+    #------------ Monitor::RegisterIsKnown ------------------------------------
     def RegisterIsKnown(self, Register):
 
         RegLength = self.GetRegisterLength(Register)
@@ -1637,12 +1542,12 @@ class GeneratorDevice:
 
         return self.RegisterIsLog(Register)
 
-    #------------ GeneratorDevice::GetRegisterValueFromList ------------------------------------
+    #------------ Monitor::GetRegisterValueFromList ------------------------------------
     def GetRegisterValueFromList(self,Register):
 
         return self.Registers.get(Register, "")
 
-    #------------ GeneratorDevice::RegRegValue ------------------------------------
+    #------------ Monitor::RegRegValue ------------------------------------
     def GetRegValue(self, CmdString):
 
         # extract quiet mode setting from Command String
@@ -1680,7 +1585,7 @@ class GeneratorDevice:
         return msgbody
 
 
-    #------------ GeneratorDevice::ReadRegValue ------------------------------------
+    #------------ Monitor::ReadRegValue ------------------------------------
     def ReadRegValue(self, CmdString):
 
         # extract quiet mode setting from Command String
@@ -1716,8 +1621,8 @@ class GeneratorDevice:
             return msgbody
 
         return msgbody
-    #------------ GeneratorDevice::DisplayRegisters --------------------------------------------
-    def DisplayRegisters(self, AllRegs = False, ToString = False, DictOut = False):
+    #------------ Monitor::DisplayRegisters --------------------------------------------
+    def DisplayRegisters(self, AllRegs = False, DictOut = False):
 
         Registers = collections.OrderedDict()
         Regs = collections.OrderedDict()
@@ -1753,7 +1658,7 @@ class GeneratorDevice:
             Regs["Log Registers"]= self.DisplayLogs(AllLogs = True, RawOutput = True, DictOut = True)
 
         if not DictOut:
-            return self.printToScreen(self.ProcessDispatch(Registers,""), ToString)
+            return self.printToString(self.ProcessDispatch(Registers,""))
 
         return Registers
 
@@ -1776,13 +1681,12 @@ class GeneratorDevice:
         if not LocalError:
             if(not command.lower().startswith( b'generator:' )):         # PYTHON3
                 msgsubject = "Error in Generator Command (no generator: prefix)"
-                self.printToScreen("Invalid GENERATOR command")
                 msgbody += "Invalid GENERATOR command: all commands must be prefixed by \"generator: \""
                 LocalError = True
 
         if LocalError:
             if not fromsocket:
-                self.mail.sendEmail(msgsubject, msgbody, msgtype = "error")
+                self.MessagePipe.SendMessage(msgsubject, msgbody, msgtype = "error")
                 return ""       # ignored by email module
             else:
                 msgbody += "EndOfMessage"
@@ -1791,123 +1695,73 @@ class GeneratorDevice:
         if command.lower().startswith(b'generator:'):
             command = command[len('generator:'):]
 
+        CommandDict = {
+            "registers"     : [self.DisplayRegisters,(False,), False],         # display registers
+            "allregs"       : [self.DisplayRegisters, (True,), False],         # display registers
+            "logs"          : [self.DisplayLogs, (True, False), False],
+            "status"        : [self.DisplayStatus, (), False],                 # display decoded generator info
+            "maint"         : [self.DisplayMaintenance, (), False],
+            "monitor"       : [self.DisplayMonitor, (), False],
+            "outage"        : [self.DisplayOutage, (), False],
+            "settime"       : [self.StartTimeThread, (), False],                  # set time and date
+            "setexercise"   : [self.SetGeneratorExerciseTime, (command.lower(),), False],
+            "setquiet"      : [self.SetGeneratorQuietMode, ( command.lower(),), False],
+            "help"          : [self.DisplayHelp, (), False],                   # display help screen
+            "setremote"     : [self.SetGeneratorRemoteStartStop, (command.lower(),), False],
+            ## These commands are used by the web / socket interface only
+            "power_log_json"    : [self.GetPowerHistory, (command.lower(),), True],
+            "power_log_clear"   : [self.ClearPowerLog, (), True],
+            "start_info_json"   : [self.GetStartInfo, (), True],
+            "registers_json"    : [self.DisplayRegisters, (False, True), True],  # display registers
+            "allregs_json"      : [self.DisplayRegisters, (True, True), True],   # display registers
+            "logs_json"         : [self.DisplayLogs, (True, True), True],
+            "status_json"       : [self.DisplayStatus, (True,), True],
+            "maint_json"        : [self.DisplayMaintenance, (True,), True],
+            "monitor_json"      : [self.DisplayMonitor, (True,), True],
+            "outage_json"       : [self.DisplayOutage, (True,), True],
+            "gui_status_json"   : [self.GetStatusForGUI, (), True],
+            "getsitename"       : [self.GetSiteName, (), True],
+            "getbase"           : [self.GetBaseStatus, (), True],    #  (UI changes color based on exercise, running , ready status)
+            "gethealth"         : [self.GetSystemHealth, (), True],
+            "getexercise"       : [self.GetParsedExerciseTime, (), True],
+            "getregvalue"       : [self.GetRegValue, (command.lower(),), True],     # only used for debug purposes, read a cached register value
+            "readregvalue"      : [self.ReadRegValue, (command.lower(),), True],    # only used for debug purposes, Read Register Non Cached
+            "getdebug"          : [self.GetDeadThreadName, (), True]                # only used for debug purposes. If a thread crashes it tells you the thread name
+        }
+
         CommandList = command.split(b' ')    # PYTHON3
 
-        for item in CommandList:
-            item = item.strip()
-            if b"generator:" == item.lower():
-                continue
-            elif b"registers" == item.lower():         # display registers
-                msgbody += self.DisplayRegisters(ToString = True)
-                continue
-            elif b"allregs" == item.lower():         # display registers
-                msgbody += self.DisplayRegisters(AllRegs = True, ToString = True)
-                continue
-            elif b"logs" == item.lower():
-                msgbody += self.DisplayLogs(AllLogs = True, ToString = True)
-                continue
-            elif b"status" == item.lower():            # display decoded generator info
-                msgbody += self.DisplayStatus(True)
-                continue
-            elif b"maint" == item.lower():
-                msgbody += self.DisplayMaintenance(True)
-                continue
-            elif b"monitor" == item.lower():
-                msgbody += self.DisplayMonitor(True)
-                continue
-            elif b"outage" == item.lower():              # display help screen
-                msgbody += self.DisplayOutage(True)
-                continue
-            elif b"settime" == item.lower():           # set time and date
-                # This is done is a separate thread as not to block any return email processing
-                # since we attempt to sync with generator time
-                SetTimeThread = threading.Thread(target=self.SetGeneratorTimeDate, name = "SetTimeThread")
-                SetTimeThread.daemon = True
-                SetTimeThread.start()               # start settime thread
-                msgbody += "Time Set: Command Sent\n"
-                continue
-            elif b"setexercise" in item.lower():
-                msgbody += self.SetGeneratorExerciseTime( command.lower())
-                continue
-            elif b"setquiet" in item.lower():
-                msgbody += self.SetGeneratorQuietMode( command.lower())
-                continue
-            elif b"help" == item.lower():              # display help screen
-                msgbody += "Help:\n"
-                msgbody += self.DisplayHelp(True)
-                continue
-            elif b"setremote" in item.lower():
-                msgbody += self.SetGeneratorRemoteStartStop(command.lower())
-                continue
-            ## These commands are used by the web / socket interface only
-            if fromsocket:
-                if b"power_log_json" in item.lower():      # used in web interface
-                    msgbody += json.dumps(self.GetPowerHistory(command.lower()))
+        try:
+            for item in CommandList:
+                item = item.strip()
+                ExecList = CommandDict.get(item.lower(),None)
+                if ExecList == None:
                     continue
-                elif b"power_log_clear" == item.lower():     # used in web interface
-                    msgbody += self.ClearPowerLog()
+                if ExecList[0] == None:
                     continue
-                elif b"start_info_json" == item.lower():      # used in web interface
-                    msgbody += json.dumps(self.GetStartInfo())
+                if not fromsocket and ExecList[2]:
                     continue
-                elif b"registers_json" == item.lower():         # display registers
-                    msgbody = json.dumps(self.DisplayRegisters(DictOut = True), sort_keys=False)
-                    continue
-                elif b"allregs_json" == item.lower():         # display registers
-                    msgbody = json.dumps(self.DisplayRegisters(AllRegs = True, DictOut = True), sort_keys=False)
-                    continue
-                elif b"logs_json" == item.lower():
-                    msgbody = json.dumps(self.DisplayLogs(AllLogs = True, DictOut = True), sort_keys=False)
-                    continue
-                elif b"status_json" == item.lower():            # display decoded generator info
-                    msgbody = json.dumps(self.DisplayStatus(DictOut = True), sort_keys=False)
-                    continue
-                elif b"maint_json" == item.lower():
-                    msgbody = json.dumps(self.DisplayMaintenance(DictOut = True), sort_keys=False)
-                    continue
-                elif b"monitor_json" == item.lower():
-                    msgbody = json.dumps(self.DisplayMonitor(DictOut = True), sort_keys=False)
-                    continue
-                elif b"outage_json" == item.lower():              # display help screen
-                    msgbody = json.dumps(self.DisplayOutage(DictOut = True), sort_keys=False)
-                    continue
-                if b"gui_status_json" == item.lower():          # used in web interface
-                    msgbody += json.dumps(self.GetStatusForGUI())
-                    continue
-                if b"getsitename" == item.lower():          # used in web interface
-                    msgbody += self.SiteName
-                    continue
-                elif b"getbase" == item.lower():            # base status, used in web interface (UI changes color based on exercise, running , ready status)
-                    msgbody += self.GetBaseStatus()
-                    continue
-                elif b"gethealth" == item.lower():          # base status, used in web interface (UI changes color based on exercise, running , ready status)
-                    msgbody += self.GetSystemHealth()
-                    continue
-                elif b"getexercise" == item.lower():
-                    msgbody += self.GetParsedExerciseTime() # used in web interface
-                    continue
-                elif b"getregvalue" in item.lower():          # only used for debug purposes, read a cached register value
-                    msgbody += self.GetRegValue(command.lower())
-                    continue
-                elif b"readregvalue" in item.lower():         # only used for debug purposes, Read Register Non Cached
-                    msgbody += self.ReadRegValue(command.lower())
-                    continue
-                elif b"getdebug" == item.lower():              # only used for debug purposes. If a thread crashes it tells you the thread name
-                    msgbody += self.GetDeadThreadName()
-                    continue
-                elif b"reload" == item.lower():
-                    msgbody += self.Reload()
-            if not fromsocket:
-                msgbody += "\n\n"
+                # Execut Command
+                ReturnMessage = ExecList[0](*ExecList[1])
+
+                if item.lower().endswith("_json"):
+                    msgbody += json.dumps(ReturnMessage, sort_keys=False)
+                else:
+                    msgbody += ReturnMessage
+
+                if not fromsocket:
+                    msgbody += "\n\n"
+        except Exception as e1:
+            self.LogError("Error Processing Commands: " + str(e1))
 
         if not fromsocket:
-            self.mail.sendEmail(msgsubject, msgbody, msgtype = "warn")
+            self.MessagePipe.SendMessage(msgsubject, msgbody, msgtype = "warn")
             return ""       # ignored by email module
         else:
             msgbody += "EndOfMessage"
             return msgbody
 
-    #------------ GeneratorDevice::CheckForOutage ----------------------------------------
+    #------------ Monitor::CheckForOutage ----------------------------------------
     # also update min and max utility voltage
     def CheckForOutage(self):
 
@@ -1961,12 +1815,12 @@ class GeneratorDevice:
                 if TransferStatus == "Utility":
                     self.TransferActive = False
                     msgbody = "\nPower is being supplied by the utility line. "
-                    self.mail.sendEmail("Transfer Switch Changed State Notice at " + self.SiteName, msgbody, msgtype = "outage")
+                    self.MessagePipe.SendMessage("Transfer Switch Changed State Notice at " + self.SiteName, msgbody, msgtype = "outage")
             else:
                 if TransferStatus == "Generator":
                     self.TransferActive = True
                     msgbody = "\nPower is being supplied by the generator. "
-                    self.mail.sendEmail("Transfer Switch Changed State Notice at " + self.SiteName, msgbody, msgtype = "outage")
+                    self.MessagePipe.SendMessage("Transfer Switch Changed State Notice at " + self.SiteName, msgbody, msgtype = "outage")
 
         # Check for outage
         # are we in an outage now
@@ -1979,7 +1833,7 @@ class GeneratorDevice:
                 self.LastOutageDuration = datetime.datetime.now() - self.OutageStartTime
                 OutageStr = str(self.LastOutageDuration).split(".")[0]  # remove microseconds from string
                 msgbody = "\nUtility Power Restored. Duration of outage " + OutageStr
-                self.mail.sendEmail("Outage Recovery Notice at " + self.SiteName, msgbody, msgtype = "outage")
+                self.MessagePipe.SendMessage("Outage Recovery Notice at " + self.SiteName, msgbody, msgtype = "outage")
                 # log outage to file
                 self.LogToFile(self.OutageLog, self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"), OutageStr)
         else:
@@ -1987,9 +1841,9 @@ class GeneratorDevice:
                 self.SystemInOutage = True
                 self.OutageStartTime = datetime.datetime.now()
                 msgbody = "\nUtility Power Out at " + self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S")
-                self.mail.sendEmail("Outage Notice at " + self.SiteName, msgbody, msgtype = "outage")
+                self.MessagePipe.SendMessage("Outage Notice at " + self.SiteName, msgbody, msgtype = "outage")
 
-    #------------ GeneratorDevice::LogToFile-------------------------
+    #------------ Monitor::LogToFile-------------------------
     def LogToFile(self, File, TimeDate, Value):
 
         if not len(File):
@@ -2002,7 +1856,7 @@ class GeneratorDevice:
         except Exception as e1:
             self.LogError("Error in  LogToFile : File: %s: %s " % (File,str(e1)))
 
-    #------------ GeneratorDevice::CheckForAlarms ----------------------------------------
+    #------------ Monitor::CheckForAlarms ----------------------------------------
     # Note this must be called from the Process thread since it queries the log registers
     # when in master emulation mode
     def CheckForAlarms(self):
@@ -2028,22 +1882,22 @@ class GeneratorDevice:
         # Create notice email strings
         msgsubject = ""
         msgbody = "\n\n"
-        msgbody += self.printToScreen("Notice from Generator: \n", True)
+        msgbody += self.printToString("Notice from Generator: \n")
 
          # get switch state
         Value = self.GetSwitchState()
         if len(Value):
-            msgbody += self.printToScreen("Switch State: " + Value, True)
+            msgbody += self.printToString("Switch State: " + Value)
         #get Engine state
         # This reports on the state read at the beginning of the routine which fixes a
         # race condition when switching from starting to running
         Value = self.GetEngineState(RegVal)
         if len(Value):                          #
-            msgbody += self.printToScreen("Engine State: " + Value, True)
+            msgbody += self.printToString("Engine State: " + Value)
 
         if self.EvolutionController and self.LiquidCooled:
-            msgbody += self.printToScreen("Active Relays: " + self.GetDigitalOutputs(), True)
-            msgbody += self.printToScreen("Active Sensors: " + self.GetSensorInputs(), True)
+            msgbody += self.printToString("Active Relays: " + self.GetDigitalOutputs())
+            msgbody += self.printToString("Active Sensors: " + self.GetSensorInputs())
 
         if self.SystemInAlarm():        # Update Alarm Status global flag, returns True if system in alarm
 
@@ -2052,65 +1906,67 @@ class GeneratorDevice:
 
             msgsubject += "CRITICAL "
             if len(AlarmState):
-                msgbody += self.printToScreen("\nCurrent Alarm: " + AlarmState , True)
+                msgbody += self.printToString("\nCurrent Alarm: " + AlarmState)
             else:
-                msgbody += self.printToScreen("\nSystem In Alarm! Please check alarm log", True)
+                msgbody += self.printToString("\nSystem In Alarm! Please check alarm log")
 
-            msgbody += self.printToScreen("System In Alarm: 0001:%08x" % RegVal, True)
+            msgbody += self.printToString("System In Alarm: 0001:%08x" % RegVal)
         else:
 
             msgsubject = "Generator Notice: " + self.SiteName
-            msgbody += self.printToScreen("\nNo Alarms: 0001:%08x" % RegVal, True)
+            msgbody += self.printToString("\nNo Alarms: 0001:%08x" % RegVal)
 
 
         # send email notice
-        msgbody += self.printToScreen("\nLast Log Entries:", True)
+        msgbody += self.printToString("\nLast Log Entries:")
 
         # display last log entries
-        msgbody += self.DisplayLogs(AllLogs = False, ToString = True)     # if false don't display full logs
+        msgbody += self.DisplayLogs(AllLogs = False)     # if false don't display full logs
 
         if self.SystemInAlarm():
-            msgbody += self.printToScreen("\nTo clear the Alarm/Warning message, press OFF on the control panel keypad followed by the ENTER key.", True)
+            msgbody += self.printToString("\nTo clear the Alarm/Warning message, press OFF on the control panel keypad followed by the ENTER key.")
 
-        self.mail.sendEmail(msgsubject , msgbody, msgtype = "warn")
+        self.MessagePipe.SendMessage(msgsubject , msgbody, msgtype = "warn")
 
-    #------------ GeneratorDevice::DisplayHelp ----------------------------------------
-    def DisplayHelp(self, ToString = False):
+    #------------ Monitor::DisplayHelp ----------------------------------------
+    def DisplayHelp(self):
 
-        outstring = self.printToScreen("\nCommands:", ToString)
-        outstring += self.printToScreen("   status      - display engine and line information", ToString)
-        outstring += self.printToScreen("   maint       - display maintenance and service information", ToString)
-        outstring += self.printToScreen("   outage      - display current and last outage (since program launched)", ToString)
-        outstring += self.printToScreen("                       info, also shows utility min and max values", ToString)
-        outstring += self.printToScreen("   monitor     - display communication statistics and monitor health", ToString)
-        outstring += self.printToScreen("   logs        - display all alarm, on/off, and maintenance logs", ToString)
-        outstring += self.printToScreen("   registers   - display contents of registers being monitored", ToString)
-        outstring += self.printToScreen("   settime     - set generator time to system time", ToString)
-        outstring += self.printToScreen("   setexercise - set the exercise time of the generator. ", ToString)
-        outstring += self.printToScreen("                      i.e. setexercise=Monday,13:30,Weekly", ToString)
+        outstring = ""
+        outstring += "Help:\n"
+        outstring += self.printToString("\nCommands:")
+        outstring += self.printToString("   status      - display engine and line information")
+        outstring += self.printToString("   maint       - display maintenance and service information")
+        outstring += self.printToString("   outage      - display current and last outage (since program launched)")
+        outstring += self.printToString("                       info, also shows utility min and max values")
+        outstring += self.printToString("   monitor     - display communication statistics and monitor health")
+        outstring += self.printToString("   logs        - display all alarm, on/off, and maintenance logs")
+        outstring += self.printToString("   registers   - display contents of registers being monitored")
+        outstring += self.printToString("   settime     - set generator time to system time")
+        outstring += self.printToString("   setexercise - set the exercise time of the generator. ")
+        outstring += self.printToString("                      i.e. setexercise=Monday,13:30,Weekly")
         if self.bEnhancedExerciseFrequency:
-            outstring += self.printToScreen("                      i.e. setexercise=Monday,13:30,BiWeekly", ToString)
-            outstring += self.printToScreen("                      i.e. setexercise=15,13:30,Monthly", ToString)
-        outstring += self.printToScreen("   setquiet    - enable or disable exercise quiet mode, ", ToString)
-        outstring += self.printToScreen("                      i.e.  setquiet=on or setquiet=off", ToString)
-        outstring += self.printToScreen("   setremote   - issue remote command. format is setremote=command, ", ToString)
-        outstring += self.printToScreen("                      where command is start, stop, starttransfer,", ToString)
-        outstring += self.printToScreen("                      startexercise. i.e. setremote=start", ToString)
-        outstring += self.printToScreen("   help        - Display help on commands", ToString)
-        outstring += self.printToScreen("\n", ToString)
+            outstring += self.printToString("                      i.e. setexercise=Monday,13:30,BiWeekly")
+            outstring += self.printToString("                      i.e. setexercise=15,13:30,Monthly")
+        outstring += self.printToString("   setquiet    - enable or disable exercise quiet mode, ")
+        outstring += self.printToString("                      i.e.  setquiet=on or setquiet=off")
+        outstring += self.printToString("   setremote   - issue remote command. format is setremote=command, ")
+        outstring += self.printToString("                      where command is start, stop, starttransfer,")
+        outstring += self.printToString("                      startexercise. i.e. setremote=start")
+        outstring += self.printToString("   help        - Display help on commands")
+        outstring += self.printToString("\n")
 
-        outstring += self.printToScreen("To clear the Alarm/Warning message, press OFF on the control panel keypad", ToString)
-        outstring += self.printToScreen("followed by the ENTER key. To access Dealer Menu on the Evolution", ToString)
-        outstring += self.printToScreen("controller, from the top menu selection (SYSTEM, DATE/TIME,BATTERY, SUB-MENUS)", ToString)
-        outstring += self.printToScreen("enter UP UP ESC DOWN UP ESC UP, then go to the dealer menu and press enter.", ToString)
-        outstring += self.printToScreen("For liquid cooled models a level 2 dealer code can be entered, ESC UP UP DOWN", ToString)
-        outstring += self.printToScreen("DOWN ESC ESC, then navigate to the dealer menu and press enter.", ToString)
-        outstring += self.printToScreen("Passcode for Nexus controller is ESC, UP, UP ESC, DOWN, UP, ESC, UP, UP, ENTER.", ToString)
-        outstring += self.printToScreen("\n", ToString)
+        outstring += self.printToString("To clear the Alarm/Warning message, press OFF on the control panel keypad")
+        outstring += self.printToString("followed by the ENTER key. To access Dealer Menu on the Evolution")
+        outstring += self.printToString("controller, from the top menu selection (SYSTEM, DATE/TIME,BATTERY, SUB-MENUS)")
+        outstring += self.printToString("enter UP UP ESC DOWN UP ESC UP, then go to the dealer menu and press enter.")
+        outstring += self.printToString("For liquid cooled models a level 2 dealer code can be entered, ESC UP UP DOWN")
+        outstring += self.printToString("DOWN ESC ESC, then navigate to the dealer menu and press enter.")
+        outstring += self.printToString("Passcode for Nexus controller is ESC, UP, UP ESC, DOWN, UP, ESC, UP, UP, ENTER.")
+        outstring += self.printToString("\n")
 
         return outstring
 
-    #------------ GeneratorDevice::GetDispatchItem ------------------------------------
+    #------------ Monitor::GetDispatchItem ------------------------------------
     def GetDispatchItem(self, item):
 
         if isinstance(item, str):
@@ -2126,7 +1982,7 @@ class GeneratorDevice:
             self.LogError("Item: " + str(item))
             return ""
 
-    #------------ GeneratorDevice::ProcessDispatch ------------------------------------
+    #------------ Monitor::ProcessDispatch ------------------------------------
     # This function is recursive, it will turn a dict with callable functions into
     # all of the callable functions resolved to stings (by calling the functions).
     # If string output is needed instead of a dict output, ProcessDispatchToString
@@ -2156,7 +2012,7 @@ class GeneratorDevice:
 
         return InputBuffer
 
-     #------------ GeneratorDevice::ProcessDispatchToString -----------------------------
+     #------------ Monitor::ProcessDispatchToString -----------------------------
      # This function is recursive, it will turn a dict with callable functions into
      # a printable string with indentation and formatting
     def ProcessDispatchToString(self, node, InputBuffer, indent = 0):
@@ -2184,8 +2040,8 @@ class GeneratorDevice:
             self.LogError("Invalid type in ProcessDispatchToString %s " % type(node))
         return InputBuffer
 
-    #------------------- GeneratorDevice::DisplayOutage -----------------
-    def DisplayOutage(self, ToString = False, DictOut = False):
+    #------------------- Monitor::DisplayOutage -----------------
+    def DisplayOutage(self, DictOut = False):
 
         Outage = collections.OrderedDict()
         OutageData = collections.OrderedDict()
@@ -2222,11 +2078,11 @@ class GeneratorDevice:
         OutageData["Outage Log"] = self.DisplayOutageHistory()
 
         if not DictOut:
-            return self.printToScreen(self.ProcessDispatch(Outage,""), ToString)
+            return self.printToString(self.ProcessDispatch(Outage,""))
 
         return Outage
 
-    #------------ GeneratorDevice::DisplayOutageHistory-------------------------
+    #------------ Monitor::DisplayOutageHistory-------------------------
     def DisplayOutageHistory(self):
 
         LogHistory = []
@@ -2270,8 +2126,8 @@ class GeneratorDevice:
             self.LogError("Error in  DisplayOutageHistory: " + str(e1))
             return []
 
-    #------------ GeneratorDevice::DisplayMonitor --------------------------------------------
-    def DisplayMonitor(self, ToString = False, DictOut = False):
+    #------------ Monitor::DisplayMonitor --------------------------------------------
+    def DisplayMonitor(self, DictOut = False):
 
         Monitor = collections.OrderedDict()
         MonitorData = collections.OrderedDict()
@@ -2316,16 +2172,12 @@ class GeneratorDevice:
             SerialStats["Average Transaction Time"] = "%.4f sec" % (AvgTransactionTime)
 
         if not DictOut:
-            return self.printToScreen(self.ProcessDispatch(Monitor,""), ToString)
+            return self.printToString(self.ProcessDispatch(Monitor,""))
 
         return Monitor
 
-    #------------ GeneratorDevice::DisplayStatus ----------------------------------------
-    def DisplayStatus(self, ToString = False, DictOut = False):
-
-
-        if DictOut:
-            ToString = True
+    #------------ Monitor::DisplayStatus ----------------------------------------
+    def DisplayStatus(self, DictOut = False):
 
         Status = collections.OrderedDict()
         Stat = collections.OrderedDict()
@@ -2388,16 +2240,14 @@ class GeneratorDevice:
             ReturnValue = collections.OrderedDict()
             ReturnValue = self.ProcessDispatch(Status, ReturnValue)
         else:
-            ReturnValue = self.printToScreen(self.ProcessDispatch(Status,""), ToString)
+            ReturnValue = self.printToString(self.ProcessDispatch(Status,""))
 
         return ReturnValue
 
 
-    #------------ GeneratorDevice::DisplayMaintenance ----------------------------------------
-    def DisplayMaintenance (self, ToString = False, DictOut = False):
+    #------------ Monitor::DisplayMaintenance ----------------------------------------
+    def DisplayMaintenance (self, DictOut = False):
 
-        if DictOut:
-            ToString = True
         # use ordered dict to maintain order of output
         # ordered dict to handle evo vs nexus functions
         Maintenance = collections.OrderedDict()
@@ -2440,11 +2290,11 @@ class GeneratorDevice:
             ReturnValue = collections.OrderedDict()
             ReturnValue = self.ProcessDispatch(Maintenance, ReturnValue)
         else:
-            ReturnValue = self.printToScreen(self.ProcessDispatch(Maintenance,""), ToString)
+            ReturnValue = self.printToString(self.ProcessDispatch(Maintenance,""))
 
         return ReturnValue
 
-    #------------ GeneratorDevice::GetStartInfo ----------------------------------------
+    #------------ Monitor::GetStartInfo -------------------------------
     def GetStartInfo(self):
 
         StartInfo = {}
@@ -2458,21 +2308,14 @@ class GeneratorDevice:
         StartInfo["Controller"] = self.GetController(Actual = False)
 
         return StartInfo
-
-    #------------ GeneratorDevice::signed16-------------------------------
+    #------------ Monitor::GetSiteName-------------------------------
+    def GetSiteName(self):
+        return self.SiteName
+    #------------ Monitor::signed16-------------------------------
     def signed16(self, value):
         return -(value & 0x8000) | (value & 0x7fff)
-    #------------ GeneratorDevice::RoundInt-------------------------------
-    def RoundInt(self, number, roundto):
 
-        rem = number % roundto
-        if rem < (roundto/2):
-            number = int(number / roundto) * roundto
-        else:
-            number = int((number + roundto) / roundto) * roundto
-        return number
-
-    #------------ GeneratorDevice::DisplayUnknownSensors-------------------------------
+    #------------ Monitor::DisplayUnknownSensors-------------------------------
     def DisplayUnknownSensors(self):
 
         Sensors = collections.OrderedDict()
@@ -2567,7 +2410,7 @@ class GeneratorDevice:
 
         return Sensors
 
-    #------------ GeneratorDevice::LogRange --------------------------------------------
+    #------------ Monitor::LogRange --------------------------------------------
     # used for iterating log registers
     def LogRange(self, start, count, step):
         Counter = 0
@@ -2576,7 +2419,7 @@ class GeneratorDevice:
             start += step
             Counter += 1
 
-    #------------ GeneratorDevice::GetOneLogEntry --------------------------------------------
+    #------------ Monitor::GetOneLogEntry --------------------------------------------
     def GetOneLogEntry(self, Register, LogBase, RawOutput = False):
 
         outstring = ""
@@ -2587,13 +2430,13 @@ class GeneratorDevice:
         if not RawOutput:
             LogStr = self.ParseLogEntry(Value, LogBase = LogBase)
             if len(LogStr):             # if the register is there but no log entry exist
-                outstring += self.printToScreen(LogStr, outstr = True, nonewline = True)
+                outstring += self.printToString(LogStr, nonewline = True)
         else:
-            outstring += self.printToScreen("%s:%s" % (RegStr, Value), outstr = True, nonewline = True)
+            outstring += self.printToString("%s:%s" % (RegStr, Value), nonewline = True)
 
         return True, outstring
 
-    #------------ GeneratorDevice::GetLogs --------------------------------------------
+    #------------ Monitor::GetLogs --------------------------------------------
     def GetLogs(self, Title, StartReg, Stride, AllLogs = False, RawOutput = False):
 
         # The output will be a Python Dictionary with a key (Title) and
@@ -2619,8 +2462,8 @@ class GeneratorDevice:
                 RetValue[Title] = LogEntry
             return RetValue
 
-    #------------ GeneratorDevice::DisplayLogs --------------------------------------------
-    def DisplayLogs(self, AllLogs = False, RawOutput = False, ToString = False, DictOut = False):
+    #------------ Monitor::DisplayLogs --------------------------------------------
+    def DisplayLogs(self, AllLogs = False, DictOut = False, RawOutput = False):
 
         # if DictOut is True, return a dictionary with a list of Dictionaries (one for each log)
         # Each dict in the list is a log (alarm, start/stop). For Example:
@@ -2667,15 +2510,15 @@ class GeneratorDevice:
             msgbody += "\n        https://github.com/jgyates/genmon/issues/12"
             msgbody += "\n        https://github.com/jgyates/genmon/issues/13"
             RetValue["Note"] = msgbody
-            self.SendFeedbackInfo("Logs", FullLogs = True, Always = True, Message="Unknown Entries in Log")
+            self.FeedbackPipe.SendFeedback("Logs", FullLogs = True, Always = True, Message="Unknown Entries in Log")
 
         if not DictOut:
-            return self.printToScreen(self.ProcessDispatch(RetValue,""), ToString)
+            return self.printToString(self.ProcessDispatch(RetValue,""))
 
         return RetValue
 
 
-    #----------  GeneratorDevice::ParseLogEntry-------------------------------
+    #----------  Monitor::ParseLogEntry-------------------------------
     #  Log Entries are in one of two formats, 16 (On off Log, Service Log) or
     #   20 chars (Alarm Log)
     #     AABBCCDDEEFFGGHHIIJJ
@@ -2913,7 +2756,7 @@ class GeneratorDevice:
 
         return RetStr
 
-    #------------------- GeneratorDevice::GetAlarmInfo -----------------
+    #------------------- Monitor::GetAlarmInfo -----------------
     # Read file alarm file and get more info on alarm if we have it
     # passes ErrorCode as string of hex values
     def GetAlarmInfo(self, ErrorCode, ReturnNameOnly = False, FromLog = False):
@@ -2956,7 +2799,7 @@ class GeneratorDevice:
         AlarmCode = int(ErrorCode,16)
         return "Error Code Unknown: %04d\n" % AlarmCode
 
-    #------------ GeneratorDevice::GetSerialNumber --------------------------------------
+    #------------ Monitor::GetSerialNumber --------------------------------------
     def GetSerialNumber(self):
 
         # serial number format:
@@ -3008,7 +2851,7 @@ class GeneratorDevice:
         FloatTemp = IntTemp / 100.0
         return "V%2.2f" % FloatTemp     #
 
-     #------------ GeneratorDevice::GetTransferStatus --------------------------------------
+     #------------ Monitor::GetTransferStatus --------------------------------------
     def GetTransferStatus(self):
 
         if not self.EvolutionController:
@@ -3030,7 +2873,7 @@ class GeneratorDevice:
             return "Utility"
 
 
-    ##------------ GeneratorDevice::SystemInAlarm --------------------------------------
+    ##------------ Monitor::SystemInAlarm --------------------------------------
     def SystemInAlarm(self):
 
         AlarmState = self.GetAlarmState()
@@ -3042,7 +2885,7 @@ class GeneratorDevice:
         self.GeneratorInAlarm = False
         return False
 
-    ##------------ GeneratorDevice::GetAlarmState --------------------------------------
+    ##------------ Monitor::GetAlarmState --------------------------------------
     def GetAlarmState(self):
 
         strSwitch = self.GetSwitchState()
@@ -3085,12 +2928,12 @@ class GeneratorDevice:
             elif self.BitIsEqual(RegVal, 0x0FFFF, 0x14):        #  Validate on Nexus, occurred when Check Battery Alarm
                 outString += "Check Battery"
             else:
-                self.SendFeedbackInfo("Alarm", Always = True, Message = "Reg 0001 = %08x" % RegVal)
+                self.FeedbackPipe.SendFeedback("Alarm", Always = True, Message = "Reg 0001 = %08x" % RegVal)
                 outString += "UNKNOWN ALARM: %08x" % RegVal
 
         return outString
 
-    #------------ GeneratorDevice::GetDigitalValues --------------------------------------
+    #------------ Monitor::GetDigitalValues --------------------------------------
     def GetDigitalValues(self, RegVal, LookUp):
 
         outvalue = ""
@@ -3108,7 +2951,7 @@ class GeneratorDevice:
         ret = outvalue.rsplit(",", 1)
         return ret[0]
 
-    ##------------ GeneratorDevice::GetSensorInputs --------------------------------------
+    ##------------ Monitor::GetSensorInputs --------------------------------------
     def GetSensorInputs(self):
 
         # at the moment this has only been validated on an Evolution Liquid cooled generator
@@ -3177,7 +3020,7 @@ class GeneratorDevice:
         else:
             return self.GetDigitalValues(RegVal, DealerInputs_Evo_AC)
 
-    #------------ GeneratorDevice::GetDigitalOutputs --------------------------------------
+    #------------ Monitor::GetDigitalOutputs --------------------------------------
     def GetDigitalOutputs(self):
 
         if not self.EvolutionController:
@@ -3213,7 +3056,7 @@ class GeneratorDevice:
 
         return self.GetDigitalValues(RegVal, DigitalOutputs_LC)
 
-    #------------ GeneratorDevice::GetEngineState --------------------------------------
+    #------------ Monitor::GetEngineState --------------------------------------
     def GetEngineState(self, Reg0001Value = None):
 
         if Reg0001Value is None:
@@ -3262,10 +3105,10 @@ class GeneratorDevice:
         elif self.BitIsEqual(RegVal, 0x000F0000, 0x00000000):
             return "Off - Ready"
         else:
-            self.SendFeedbackInfo("EngineState", Always = True, Message = "Reg 0001 = %08x" % RegVal)
+            self.FeedbackPipe.SendFeedback("EngineState", Always = True, Message = "Reg 0001 = %08x" % RegVal)
             return "UNKNOWN: %08x" % RegVal
 
-    #------------ GeneratorDevice::GetSwitchState --------------------------------------
+    #------------ Monitor::GetSwitchState --------------------------------------
     def GetSwitchState(self):
 
         Value = self.GetRegisterValueFromList("0001")
@@ -3285,7 +3128,7 @@ class GeneratorDevice:
         else:
             return "System in Alarm"
 
-    #------------ GeneratorDevice::GetDateTime -----------------------------------------
+    #------------ Monitor::GetDateTime -----------------------------------------
     def GetDateTime(self):
 
         #Generator Time Hi byte = hours, Lo byte = min
@@ -3325,7 +3168,7 @@ class GeneratorDevice:
 
         return FullDate
 
-    #------------ GeneratorDevice::GetExerciseDuration --------------------------------------------
+    #------------ Monitor::GetExerciseDuration --------------------------------------------
     def GetExerciseDuration(self):
 
         if not self.EvolutionController:
@@ -3338,7 +3181,7 @@ class GeneratorDevice:
             return ""
         return "%d min" % int(Value,16)
 
-    #------------ GeneratorDevice::GetParsedExerciseTime --------------------------------------------
+    #------------ Monitor::GetParsedExerciseTime --------------------------------------------
     def GetParsedExerciseTime(self):
 
         retstr = self.GetExerciseTime()
@@ -3364,7 +3207,7 @@ class GeneratorDevice:
         retstr = Items[1] + "!" + HoursMin[0] + "!" + HoursMin[1] + "!" + Items[5] + "!" + Items[0] + "!" + ModeStr
         return retstr
 
-    #------------ GeneratorDevice::GetExerciseTime --------------------------------------------
+    #------------ Monitor::GetExerciseTime --------------------------------------------
     def GetExerciseTime(self):
 
         ExerciseFreq = ""   # Weekly
@@ -3438,7 +3281,7 @@ class GeneratorDevice:
 
         return ExerciseTime
 
-    #------------ GeneratorDevice::GetUnknownSensor1-------------------------------------
+    #------------ Monitor::GetUnknownSensor1-------------------------------------
     def GetUnknownSensor(self, Register, RequiresRunning = False, Hex = False):
 
         if not len(Register):
@@ -3463,7 +3306,7 @@ class GeneratorDevice:
 
         return SensorValue
 
-    #------------ GeneratorDevice::"GetRPM" --------------------------------------------
+    #------------ Monitor::"GetRPM" --------------------------------------------
     def GetRPM(self):
 
         # get RPM
@@ -3474,7 +3317,7 @@ class GeneratorDevice:
         RPMValue = "%5d" % int(Value,16)
         return RPMValue
 
-    #------------ GeneratorDevice::GetCurrentOutput ---------------------------------------
+    #------------ Monitor::GetCurrentOutput ---------------------------------------
     def GetCurrentOutput(self):
 
         if not self.EvolutionController:
@@ -3513,7 +3356,7 @@ class GeneratorDevice:
 
         return "%.2fA" % CurrentFloat
 
-     ##------------ GeneratorDevice::GetActiveRotorPoles ---------------------------------------
+     ##------------ Monitor::GetActiveRotorPoles ---------------------------------------
     def GetActiveRotorPoles(self):
         # (2 * 60 * Freq) / RPM = Num Rotor Poles
 
@@ -3536,7 +3379,7 @@ class GeneratorDevice:
         return RotorPoles
 
 
-    #------------ GeneratorDevice::PrunePowerLog-------------------------
+    #------------ Monitor::PrunePowerLog-------------------------
     def PrunePowerLog(self, Minutes):
 
         if not Minutes:
@@ -3555,7 +3398,7 @@ class GeneratorDevice:
 
             if LogSize / (1024*1024) >= self.PowerLogMaxSize * 0.8:
                 msgbody = "The kwlog file size is 80% of the maximum. Once the log reaches 100% of the maximum size the log will be reset."
-                self.mail.sendEmail("Notice: Log file size warning" , msgbody, msgtype = "warn")
+                self.MessagePipe.SendMessage("Notice: Log file size warning" , msgbody, msgtype = "warn")
 
             # Write oldest log entries first
             for Items in reversed(PowerLog):
@@ -3572,7 +3415,7 @@ class GeneratorDevice:
             self.LogError("Error in  ClearPowerLog: " + str(e1))
             return "Error in  ClearPowerLog: " + str(e1)
 
-    #------------ GeneratorDevice::ClearPowerLog-------------------------
+    #------------ Monitor::ClearPowerLog-------------------------
     def ClearPowerLog(self):
 
         try:
@@ -3592,7 +3435,7 @@ class GeneratorDevice:
             self.LogError("Error in  ClearPowerLog: " + str(e1))
             return "Error in  ClearPowerLog: " + str(e1)
 
-    #------------ GeneratorDevice::ReducePowerSamples-------------------------
+    #------------ Monitor::ReducePowerSamples-------------------------
     def ReducePowerSamplesOld(self, PowerList, MaxSize):
 
         if MaxSize == 0:
@@ -3625,7 +3468,7 @@ class GeneratorDevice:
 
         return NewList
 
-    #------------ GeneratorDevice::RemovePowerSamples-------------------------
+    #------------ Monitor::RemovePowerSamples-------------------------
     def RemovePowerSamples(List, MaxSize):
 
         try:
@@ -3647,7 +3490,7 @@ class GeneratorDevice:
             self.LogError("Error in RemovePowerSamples: %s" % str(e1))
             return List
 
-    #------------ GeneratorDevice::MarkNonZeroKwEntry-------------------------
+    #------------ Monitor::MarkNonZeroKwEntry-------------------------
     #       RECURSIVE
     def MarkNonZeroKwEntry(self, List, Index):
 
@@ -3663,7 +3506,7 @@ class GeneratorDevice:
             self.LogError("Error in MarkNonZeroKwEntry: %s" % str(e1))
         return
 
-    #------------ GeneratorDevice::ReducePowerSamples-------------------------
+    #------------ Monitor::ReducePowerSamples-------------------------
     def ReducePowerSamples(self, PowerList, MaxSize):
 
         if MaxSize == 0:
@@ -3721,7 +3564,7 @@ class GeneratorDevice:
 
         return NewList
 
-    #------------ GeneratorDevice::-------------------------
+    #------------ Monitor::-------------------------
     def GetPowerHistory(self, CmdString, NoReduce = False):
 
         KWHours = False
@@ -3828,7 +3671,7 @@ class GeneratorDevice:
             msgbody = "Error in  GetPowerHistory: " + str(e1)
             return msgbody
 
-    #----------  GeneratorDevice::PowerMeter-------------------------------------
+    #----------  Monitor::PowerMeter-------------------------------------
     #----------  Monitors Power Output
     def PowerMeter(self):
 
@@ -3894,7 +3737,7 @@ class GeneratorDevice:
                 self.LogError("Error in PowerMeter: " + str(e1))
 
 
-    #------------ GeneratorDevice::GetPowerOutput ---------------------------------------
+    #------------ Monitor::GetPowerOutput ---------------------------------------
     def GetPowerOutput(self):
 
         if not self.EvolutionController:
@@ -3916,7 +3759,7 @@ class GeneratorDevice:
         return "%.2fkW" % (PowerOut / 1000.0)
 
 
-    #------------ GeneratorDevice::GetFrequency ---------------------------------------
+    #------------ Monitor::GetFrequency ---------------------------------------
     def GetFrequency(self, Calculate = False):
 
         # get Frequency
@@ -3946,7 +3789,7 @@ class GeneratorDevice:
         FreqValue = "%2.1f Hz" % FloatTemp
         return FreqValue
 
-    #------------ GeneratorDevice::GetVoltageOutput --------------------------
+    #------------ Monitor::GetVoltageOutput --------------------------
     def GetVoltageOutput(self):
 
         # get Output Voltage
@@ -3958,7 +3801,7 @@ class GeneratorDevice:
 
         return VolatageValue
 
-    #------------ GeneratorDevice::GetPickUpVoltage --------------------------
+    #------------ Monitor::GetPickUpVoltage --------------------------
     def GetPickUpVoltage(self):
 
          # get Utility Voltage Pickup Voltage
@@ -3969,7 +3812,7 @@ class GeneratorDevice:
 
         return "%dV" % PickupVoltage
 
-    #------------ GeneratorDevice::GetThresholdVoltage --------------------------
+    #------------ Monitor::GetThresholdVoltage --------------------------
     def GetThresholdVoltage(self):
 
         # get Utility Voltage Threshold
@@ -3980,7 +3823,7 @@ class GeneratorDevice:
 
         return "%dV" % ThresholdVoltage
 
-    #------------ GeneratorDevice::GetSetOutputVoltage --------------------------
+    #------------ Monitor::GetSetOutputVoltage --------------------------
     def GetSetOutputVoltage(self):
 
         # get set output voltage
@@ -3993,7 +3836,7 @@ class GeneratorDevice:
 
         return "%dV" % SetOutputVoltage
 
-    #------------ GeneratorDevice::GetStartupDelay --------------------------
+    #------------ Monitor::GetStartupDelay --------------------------
     def GetStartupDelay(self):
 
         # get Startup Delay
@@ -4011,7 +3854,7 @@ class GeneratorDevice:
 
         return "%d s" % StartupDelay
 
-    #------------ GeneratorDevice::GetUtilityVoltage --------------------------
+    #------------ Monitor::GetUtilityVoltage --------------------------
     def GetUtilityVoltage(self):
 
         # get Utility Voltage
@@ -4023,7 +3866,7 @@ class GeneratorDevice:
 
         return VolatageValue
 
-    #------------ GeneratorDevice::GetBatteryVoltage -------------------------
+    #------------ Monitor::GetBatteryVoltage -------------------------
     def GetBatteryVoltage(self):
 
         # get Battery Charging Voltage
@@ -4037,7 +3880,7 @@ class GeneratorDevice:
 
         return VoltageValue
 
-    #------------ GeneratorDevice::GetBatteryStatusAlternate -------------------------
+    #------------ Monitor::GetBatteryStatusAlternate -------------------------
     def GetBatteryStatusAlternate(self):
 
         if not self.EvolutionController:
@@ -4062,7 +3905,7 @@ class GeneratorDevice:
                 return "Not Charging"
         return ""
 
-    #------------ GeneratorDevice::GetBatteryStatus -------------------------
+    #------------ Monitor::GetBatteryStatus -------------------------
     # The charger operates at one of three battery charging voltage
     # levels depending on ambient temperature.
     #  - 13.5VDC at High Temperature
@@ -4120,7 +3963,7 @@ class GeneratorDevice:
         else:
             return "Not Charging"
 
-    #------------ GeneratorDevice::GetStatusForGUI ------------------------------------
+    #------------ Monitor::GetStatusForGUI ------------------------------------
     def GetStatusForGUI(self):
 
         Status = {}
@@ -4132,7 +3975,7 @@ class GeneratorDevice:
 
         return Status
 
-    #------------ GeneratorDevice::GetBaseStatus ------------------------------------
+    #------------ Monitor::GetBaseStatus ------------------------------------
     def GetBaseStatus(self):
 
         if self.SystemInAlarm():
@@ -4158,7 +4001,7 @@ class GeneratorDevice:
             else:
                 return "READY"
 
-    #------------ GeneratorDevice::ServiceIsDue ------------------------------------
+    #------------ Monitor::ServiceIsDue ------------------------------------
     def ServiceIsDue(self):
 
         # get Hours until next service
@@ -4198,7 +4041,7 @@ class GeneratorDevice:
 
         return False
 
-    #------------ GeneratorDevice::GetServiceDue ------------------------------------
+    #------------ Monitor::GetServiceDue ------------------------------------
     def GetServiceDue(self, serviceType = "A", NoUnits = False):
 
         ServiceTypeLookup_Evo = {
@@ -4241,7 +4084,7 @@ class GeneratorDevice:
 
         return ServiceValue
 
-    #------------ GeneratorDevice::GetServiceDueDate ------------------------------------
+    #------------ Monitor::GetServiceDueDate ------------------------------------
     def GetServiceDueDate(self, serviceType = "A"):
 
         # Evolution Air Cooled Maintenance Message Intervals
@@ -4311,7 +4154,7 @@ class GeneratorDevice:
             self.LogError("Error in GetServiceDueDate: " + str(e1))
             return ""
 
-    #----------  GeneratorDevice:GetHardwareVersion  ---------------------------------
+    #----------  Monitor:GetHardwareVersion  ---------------------------------
     def GetHardwareVersion(self):
 
         Value = self.GetRegisterValueFromList("002a")
@@ -4323,7 +4166,7 @@ class GeneratorDevice:
         FloatTemp = IntTemp / 100.0
         return "V%2.2f" % FloatTemp     #
 
-    #----------  GeneratorDevice:GetFirmwareVersion  ---------------------------------
+    #----------  Monitor:GetFirmwareVersion  ---------------------------------
     def GetFirmwareVersion(self):
         Value = self.GetRegisterValueFromList("002a")
         if len(Value) != 4:
@@ -4334,7 +4177,7 @@ class GeneratorDevice:
         FloatTemp = IntTemp / 100.0
         return "V%2.2f" % FloatTemp     #
 
-    #------------ GeneratorDevice::GetRunTimes ----------------------------------------
+    #------------ Monitor::GetRunTimes ----------------------------------------
     def GetRunTimes(self):
 
         if not self.EvolutionController or not self.LiquidCooled:
@@ -4375,7 +4218,7 @@ class GeneratorDevice:
 
         return RunTimes
 
-   #-------------GeneratorDevice::GetSystemHealth--------------------------------
+   #-------------Monitor::GetSystemHealth--------------------------------
     #   returns the health of the monitor program
     def GetSystemHealth(self):
 
@@ -4391,7 +4234,7 @@ class GeneratorDevice:
             outstr = "OK"
         return outstr
 
-    #----------  GeneratorDevice::DebugThread-------------------------------------
+    #----------  Monitor::DebugThread-------------------------------------
     def DebugThread(self):
 
         if not self.EnableDebug:
@@ -4406,9 +4249,9 @@ class GeneratorDevice:
             msgbody += "\n\n"
             count = 0
             for Register, Value in self.RegistersUnderTest.items():
-                msgbody += self.printToScreen("%s:%s" % (Register, Value), True)
+                msgbody += self.printToString("%s:%s" % (Register, Value))
 
-            self.mail.sendEmail("Register Under Test", msgbody, msgtype = "info")
+            self.MessagePipe.SendMessage("Register Under Test", msgbody, msgtype = "info")
             msgbody = ""
 
             for x in range(0, 60):
@@ -4416,17 +4259,15 @@ class GeneratorDevice:
                     time.sleep(1)
                     if self.IsStopSignaled("DebugThread"):
                         return
-    #----------  GeneratorDevice::removeAlpha--------------------------
-    # used to remove alpha characters from string so the string contains a
-    # float value (leaves all special characters)
-    def removeAlpha(self, inputStr):
-        answer = ""
-        for char in inputStr:
-            if not char.isalpha():
-                answer += char
-        return answer
+    #----------  Monitor::StartTimeThread-------------------------------------
+    def StartTimeThread(self):
 
-    #----------  GeneratorDevice::TimeSyncThread-------------------------------------
+        # This is done is a separate thread as not to block any return email processing
+        # since we attempt to sync with generator time
+        mythread.MyThread(self.SetGeneratorTimeDate, Name = "SetTimeThread")
+        return "Time Set: Command Sent\n"
+
+    #----------  Monitor::TimeSyncThread-------------------------------------
     def TimeSyncThread(self):
 
         self.bDST = self.is_dst()   # set initial DST state
@@ -4440,9 +4281,7 @@ class GeneratorDevice:
 
         # if we are not always syncing, then set the time once
         if not self.bSyncTime:
-            SetTimeThread = threading.Thread(target=self.SetGeneratorTimeDate, name = "SetTimeThread")
-            SetTimeThread.daemon = True
-            SetTimeThread.start()               # start settime thread
+            self.StartTimeThread()
 
         while True:
 
@@ -4452,16 +4291,12 @@ class GeneratorDevice:
                     # time changed so some serial stats may be off
                     self.ModBus.Slave.ResetSerialStats()
                     # set new time
-                    SetTimeThread = threading.Thread(target=self.SetGeneratorTimeDate, name = "SetTimeThread")
-                    SetTimeThread.daemon = True
-                    SetTimeThread.start()               # start settime thread
-                    self.mail.sendEmail("Generator Time Update at " + self.SiteName, "Time updated due to daylight savings time change", msgtype = "info")
+                    self.StartTimeThread()           # start settime thread
+                    self.MessagePipe.SendMessage("Generator Time Update at " + self.SiteName, "Time updated due to daylight savings time change", msgtype = "info")
 
             if self.bSyncTime:
                 # update gen time
-                SetTimeThread = threading.Thread(target=self.SetGeneratorTimeDate, name = "SetTimeThread")
-                SetTimeThread.daemon = True
-                SetTimeThread.start()               # start settime thread
+                self.StartTimeThread()
 
             for x in range(0, 60):
                 for y in range(0, 60):
@@ -4469,14 +4304,14 @@ class GeneratorDevice:
                     if self.IsStopSignaled("TimeSyncThread"):
                         return
 
-    #----------  GeneratorDevice::is_dst-------------------------------------
+    #----------  Monitor::is_dst-------------------------------------
     def is_dst(self):
         #Determine whether or not Daylight Savings Time (DST) is currently in effect
         t = time.localtime()
         isdst = t.tm_isdst
         return (isdst != 0)
 
-    #----------  GeneratorDevice::ComWatchDog-------------------------------------
+    #----------  Monitor::ComWatchDog-------------------------------------
     #----------  monitors receive data status to make sure we are still communicating
     def ComWatchDog(self):
 
@@ -4495,7 +4330,7 @@ class GeneratorDevice:
             if self.IsStopSignaled("ComWatchDog"):
                 break
 
-    #---------- GeneratorDevice:: AreThreadsAlive----------------------------------
+    #---------- Monitor:: AreThreadsAlive----------------------------------
     # ret true if all threads are alive
     def AreThreadsAlive(self):
 
@@ -4505,21 +4340,22 @@ class GeneratorDevice:
 
         return True
 
-    #---------- GeneratorDevice::GetDeadThreadName----------------------------------
+    #---------- Monitor::GetDeadThreadName----------------------------------
     def GetDeadThreadName(self):
 
         RetStr = ""
-
+        ThreadNames = ""
         for Name, MyThreadObj in self.Threads.items():
+            ThreadNames += Name + " "
             if not MyThreadObj.IsAlive():
                 RetStr += MyThreadObj.Name() + " "
 
         if RetStr == "":
-            RetStr = "None"
+            RetStr = "All threads alive: " + ThreadNames
 
         return RetStr
 
-    #----------  GeneratorDevice::SocketWorkThread-------------------------------------
+    #----------  Monitor::SocketWorkThread-------------------------------------
     #  This thread spawns for each connection established by a client
     #  in InterfaceServerThread
     def SocketWorkThread(self, conn):
@@ -4576,7 +4412,7 @@ class GeneratorDevice:
         while True:
             try:
                 conn, addr = self.ServerSocket.accept()
-                #self.printToScreen( 'Connected with ' + addr[0] + ':' + str(addr[1]))
+                #self.printToString( 'Connected with ' + addr[0] + ':' + str(addr[1]))
                 conn.settimeout(0.5)
                 self.ConnectionList.append(conn)
                 SocketThread = threading.Thread(target=self.SocketWorkThread, args = (conn,), name = "SocketWorkThread")
@@ -4589,20 +4425,12 @@ class GeneratorDevice:
 
         self.ServerSocket.close()
         #
-    #---------------------GeneratorDevice::FatalError------------------------
-    def LogError(self, Message):
-        self.log.error(Message)
-    #---------------------GeneratorDevice::FatalError------------------------
-    def FatalError(self, Message):
 
-        self.log.error(Message)
-        raise Exception(Message)
-
-    #---------------------GeneratorDevice::Close------------------------
+    #---------------------Monitor::Close------------------------
     def Close(self):
 
         if self.MailInit:
-            self.mail.sendEmail("Generator Monitor Stopping at " + self.SiteName, "Generator Monitor Stopping at " + self.SiteName, msgtype = "info" )
+            self.MessagePipe.SendMessage("Generator Monitor Stopping at " + self.SiteName, "Generator Monitor Stopping at " + self.SiteName, msgtype = "info" )
 
         for item in self.ConnectionList:
             try:
@@ -4618,35 +4446,8 @@ class GeneratorDevice:
         if self.ModBus.DeviceInit:
             self.ModBus.Slave.Close()
 
-    #------------ GeneratorDevice::BitIsEqual -----------------------------------------
-    def BitIsEqual(self, value, mask, bits):
-
-        newval = value & mask
-        if (newval == bits):
-            return True
-        else:
-            return False
-
-    #------------ GeneratorDevice::printToScreen --------------------------------------------
-    def printToScreen(self, msgstr, outstr = False, nonewline = False, spacer = False):
-
-        if spacer:
-            MessageStr = "    {0}"
-        else:
-            MessageStr = "{0}"
-
-        if not nonewline:
-            MessageStr += "\n"
-
-        if outstr == False:
-            if self.bDisplayOutput:
-                print (MessageStr.format(msgstr), end='')
-            return ""
-        else:
-            newtpl = MessageStr.format(msgstr),
-            return newtpl[0]
-
-        # end printToScreen
+        self.FeedbackPipe.Close()
+        self.MessagePipe.Close()
 
 #----------  Signal Handler ------------------------------------------
 def signal_handler(signal, frame):
@@ -4656,20 +4457,6 @@ def signal_handler(signal, frame):
 
     # end signal_handler
 
-#----------  print hex values  ---------------------------------------------
-def printHexValues( buffer, separator1, separator2):
-
-    # print in hex
-    if(len(buffer) == 0):   # don't print if there is no data to print
-        return
-
-    new_str =  separator1
-    for i in buffer:
-        new_str += "%02x " % i
-
-    new_str += separator2
-    self.printToScreen (new_str)
-
 #------------------- Command-line interface for monitor -----------------#
 if __name__=='__main__': # usage SerialTest.py [baud_rate]
 
@@ -4677,9 +4464,8 @@ if __name__=='__main__': # usage SerialTest.py [baud_rate]
     # Set the signal handler
     signal.signal(signal.SIGINT, signal_handler)
 
-
-    #Starting serial connection
-    MyGen = GeneratorDevice()
+    #Start things up
+    MyMonitor = Monitor()
 
     while True:
         time.sleep(1)
