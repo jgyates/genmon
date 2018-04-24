@@ -30,7 +30,7 @@ except ImportError as e:
 from genmonlib import myserial, mymail, mylog, mythread, mymodbus, mypipe, mycommon
 
 
-GENMON_VERSION = "V1.6.6"
+GENMON_VERSION = "V1.6.7"
 
 #-------------------Generator specific const defines for Generator class
 LOG_DEPTH               = 50
@@ -1741,8 +1741,14 @@ class Monitor(mycommon.MyCommon):
 
         try:
             for item in CommandList:
+                if not len(item):
+                    continue
                 item = item.strip()
-                ExecList = CommandDict.get(item.lower(),None)
+                LookUp = item
+                if "=" in item:
+                    BaseCmd = item.split('=')
+                    LookUp = BaseCmd[0]
+                ExecList = CommandDict.get(LookUp.lower(),None)
                 if ExecList == None:
                     continue
                 if ExecList[0] == None:
