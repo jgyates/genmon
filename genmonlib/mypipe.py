@@ -9,7 +9,7 @@
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
 
-import os, sys, time, json 
+import os, sys, time, json, multiprocessing
 import mythread, mycommon
 
 
@@ -22,6 +22,7 @@ class MyPipe(mycommon.MyCommon):
         self.PipeName = os.path.dirname(os.path.realpath(__file__)) + "/" + name
         self.ThreadName = "ReadPipeThread" + self.BasePipeName
         self.Callback = callback
+        self.PipeLock = multiprocessing.Lock()
         if not Reuse:
             try:
                 os.remove(self.PipeName)
@@ -39,8 +40,13 @@ class MyPipe(mycommon.MyCommon):
 
     #------------ MyPipe::Write-------------------------------------------------
     def Write(self, data):
-        self.PipeOutDes.write( data + "\n")
-        self.PipeOutDes.flush()
+        try:
+            self.PipeLock.acquire()
+            self.PipeOutDes.write( data + "\n")
+            self.PipeLock.release()
+            self.PipeOutDes.flush()
+        except Exception as e1:
+            self.LogError("Error in Pipe Write: " + str(e1))
 
     #------------ MyPipe::Read--------------------------------------------------
     def Read(self):
@@ -95,5 +101,12 @@ class MyPipe(mycommon.MyCommon):
 
     #------------ MyPipe::Close-------------------------------------------------
     def Close(self):
+
+        if not self.Callback == None:
+            if self.Threads[self.ThreadName].IsAlive():
+                self.Threads[self.ThreadName].Stop()
+                self.Threads[self.ThreadName].WaitForThreadToEnd()
+                del self.Threads[self.ThreadName]
+
         os.close(self.PipeIn)
         os.close(self.PipeOut)

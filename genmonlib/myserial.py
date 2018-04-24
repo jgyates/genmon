@@ -120,6 +120,7 @@ class SerialDevice(mycommon.MyCommon):
             if self.Threads["SerialReadThread"].IsAlive():
                 self.Threads["SerialReadThread"].Stop()
                 self.Threads["SerialReadThread"].WaitForThreadToEnd()
+                del self.Threads["SerialReadThread"]
             self.SerialDevice.close()
 
     # ---------- SerialDevice::Flush------------------

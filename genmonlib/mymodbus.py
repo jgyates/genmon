@@ -309,3 +309,8 @@ class ModbusProtocol(mycommon.MyCommon):
     def Flush(self):
 
         self.Slave.Flush()
+
+    #------------ModbusProtocol::Close-----------------------
+    def Close(self):
+
+        self.Slave.Close()

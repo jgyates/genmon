@@ -58,6 +58,12 @@ class Monitor(mycommon.MyCommon):
 
     def __init__(self):
         self.ProgramName = "Generator Monitor"
+        self.Version = "Unknown"
+        self.Threads = {}           # Dict of mythread objects
+        self.ConnectionList = []    # list of incoming connections for heartbeat
+        self.ServerSocket = 0       # server socket for nagios heartbeat and command/status
+
+
         self.BaudRate = 9600        # data rate of the serial port (default 9600)
         self.Registers = {}         # dict for registers and values
         self.RegistersUnderTest = {}# dict for registers we are testing
@@ -68,9 +74,6 @@ class Monitor(mycommon.MyCommon):
         self.UtilityVoltsMin = 0    # Minimum reported utility voltage above threshold
         self.UtilityVoltsMax = 0    # Maximum reported utility voltage above pickup
 
-        self.ConnectionList = []    # list of incoming connections for heartbeat
-        self.ServerSocket = 0       # server socket for nagios heartbeat and command/status
-        self.Threads = {}           # Dict of mythread objects
         self.GeneratorInAlarm = False       # Flag to let the heartbeat thread know there is a problem
         self.SystemInOutage = False         # Flag to signal utility power is out
         self.TransferActive = False         # Flag to signal transfer switch is allowing gen supply power
@@ -82,7 +85,7 @@ class Monitor(mycommon.MyCommon):
         self.NewInstall = False     # True if newly installed or newly upgraded version
         self.FeedbackEnabled = False   # True if sending autoated feedback on missing information
         self.FeedbackMessages = {}
-        self.Version = "Unknown"
+
 
         self.LastAlarmValue = 0xFF  # Last Value of the Alarm / Status Register
 
@@ -304,10 +307,11 @@ class Monitor(mycommon.MyCommon):
                 return False
 
             del self.Threads[Name]
-            if CleanupSelf:
+            if not CleanupSelf:
                 MyThreadObj.Stop()
                 MyThreadObj.WaitForThreadToEnd()
         except Exception as e1:
+            self.LoggError("Error in KillThread ( " + Name  + "): " + str(e1))
             return
 
     # ---------- Monitor::KillReloadThread------------------
@@ -500,17 +504,22 @@ class Monitor(mycommon.MyCommon):
     #------------------------------------------------------------
     def FeedbackReceiver(self, Message):
 
-        FeedbackDict = {}
-        FeedbackDict = json.loads(Message)
-        self.SendFeedbackInfo(FeedbackDict["Reason"], FeedbackDict["Always"], FeedbackDict["Message"], FeedbackDict["FullLogs"])
+        try:
+            FeedbackDict = {}
+            FeedbackDict = json.loads(Message)
+            self.SendFeedbackInfo(FeedbackDict["Reason"], FeedbackDict["Always"], FeedbackDict["Message"], FeedbackDict["FullLogs"])
+        except Exception as e1:
+            self.LogError("Error in  FeedbackReceiver: " + str(e1))
 
     #------------------------------------------------------------
     def MessageReceiver(self, Message):
 
-        MessageDict = {}
-        MessageDict = json.loads(Message)
-        self.mail.sendEmail(MessageDict["subjectstr"], MessageDict["msgstr"], MessageDict["recipient"], MessageDict["files"],MessageDict["deletefile"] ,MessageDict["msgtype"])
-
+        try:
+            MessageDict = {}
+            MessageDict = json.loads(Message)
+            self.mail.sendEmail(MessageDict["subjectstr"], MessageDict["msgstr"], MessageDict["recipient"], MessageDict["files"],MessageDict["deletefile"] ,MessageDict["msgtype"])
+        except Exception as e1:
+            self.LogError("Error in  MessageReceiver: " + str(e1))
     #------------------------------------------------------------
     def SendFeedbackInfo(self, Reason, Always = False, Message = None, FullLogs = False):
         try:
@@ -569,7 +578,6 @@ class Monitor(mycommon.MyCommon):
         self.CheckModelSpecificInfo()
 
         self.InitComplete = True
-
          # check for unknown events (i.e. events we are not decoded) and send an email if they occur
         self.CheckForAlarmEvent.set()
 
@@ -4444,7 +4452,7 @@ class Monitor(mycommon.MyCommon):
             self.ServerSocket.close()
 
         if self.ModBus.DeviceInit:
-            self.ModBus.Slave.Close()
+            self.ModBus.Close()
 
         self.FeedbackPipe.Close()
         self.MessagePipe.Close()
