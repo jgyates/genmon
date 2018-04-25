@@ -899,7 +899,7 @@ class Monitor(mysupport.MySupport):
             if statusstr == "":
                 statusstr = "OK "
 
-            outstr = statusstr + ": "+ self.Controller.GetSwitchState() + ", " + self.Controller.GetEngineState()
+            outstr = statusstr + ": "+ self.Controller.GetOneLineStatus()
             conn.sendall(outstr.encode())
 
             while True:

@@ -2756,6 +2756,13 @@ class Evolution(controller.GeneratorController):
             return "Charging"
         else:
             return "Not Charging"
+
+    #------------ Evolution:GetOneLineStatus -------------------------
+    def GetOneLineStatus(self):
+
+        return  self.GetSwitchState() + ", " + self.GetEngineState()
+
+
     #------------ Evolution:GetBaseStatus ------------------------------------
     def GetBaseStatus(self):
 

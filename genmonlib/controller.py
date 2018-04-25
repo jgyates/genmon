@@ -43,25 +43,6 @@ class GeneratorController(mysupport.MySupport):
     def GetPowerOutput(self):
         return ""
 
-    #---------------------GeneratorController::GetParsedExerciseTime------------
-    # return exercise time in string format:
-    #     "Wednesday!14!00!On!Weekly!False"
-    #     "Wednesday!14!00!On!Biweekly!False"
-    def GetParsedExerciseTime(self):
-        pass
-
-    #---------------------GeneratorController::GetSwitchState-------------------
-    def GetSwitchState(self):
-        pass
-
-    #---------------------GeneratorController::GetSwitchState-------------------
-    def GetEngineState(self, Override = None):
-        pass
-
-    #---------------------GeneratorController::GetAlarmState--------------------
-    def GetAlarmState(self):
-        pass
-
     #---------------------GeneratorController::SystemInAlarm--------------------
     def SystemInAlarm(self):
         pass
@@ -78,21 +59,21 @@ class GeneratorController(mysupport.MySupport):
     def GetStatusForGUI(self):
         pass
     #------------ GeneratorController::DisplayMaintenance ----------------------
-    def DisplayMaintenance (self, ToString = False, DictOut = False):
+    def DisplayMaintenance (self, DictOut = False):
         pass
 
     #------------ GeneratorController::DisplayStatus ---------------------------
-    def DisplayStatus(self, ToString = False, DictOut = False):
+    def DisplayStatus(self, DictOut = False):
         pass
     #------------ GeneratorController::DisplayMonitor --------------------------
-    def DisplayMonitor(self, ToString = False, DictOut = False):
+    def DisplayMonitor(self, DictOut = False):
         pass
     #------------------- GeneratorController::DisplayOutage --------------------
-    def DisplayOutage(self, ToString = False, DictOut = False):
+    def DisplayOutage(self, DictOut = False):
         pass
 
     #------------ GeneratorController::DisplayRegisters ------------------------
-    def DisplayRegisters(self, AllRegs = False, ToString = False, DictOut = False):
+    def DisplayRegisters(self, AllRegs = False, DictOut = False):
         pass
 
     #----------  GeneratorController::SetGeneratorTimeDate----------------------
@@ -128,6 +109,13 @@ class GeneratorController(mysupport.MySupport):
 
     #----------  GeneratorController:GetCommStatus  ----------------------------
     def GetCommStatus(self):
+        pass
+    #------------ GeneratorController:GetBaseStatus ----------------------------
+    def GetBaseStatus(self):
+        pass
+
+    #------------ GeneratorController:GetOneLineStatus -------------------------
+    def GetOneLineStatus(self):
         pass
 
     #----------  Controller::Close----------------------------------------------
