@@ -18,11 +18,11 @@ import mylog, mythread, mycommon
 #------------ SerialDevice class --------------------------------------------
 class SerialDevice(mycommon.MyCommon):
     def __init__(self, name, rate=9600, loglocation = "/var/log/"):
+        super(SerialDevice, self).__init__()
         self.DeviceName = name
         self.BaudRate = rate
         self.Buffer = []
         self.BufferLock = threading.Lock()
-        self.Threads = {}           # Dict of mythread objects
         self.RxPacketCount = 0
         self.TxPacketCount = 0
         self.ComTimoutError = 0

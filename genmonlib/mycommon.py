@@ -15,6 +15,7 @@ import os, sys, time
 class MyCommon(object):
     def __init__(self):
         self.log = None
+        self.Threads = {}       # Dict of mythread objects
         pass
 
     #------------ MyCommon::BitIsEqual -----------------------------------------

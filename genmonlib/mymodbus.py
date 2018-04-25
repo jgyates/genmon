@@ -34,10 +34,9 @@ MBUS_CMD_WRITE_REGS     = 0x10
 #------------ ModbusProtocol class --------------------------------------------
 class ModbusProtocol(mycommon.MyCommon):
     def __init__(self, updatecallback, address = 0x9d, name = "/dev/serial", rate=9600, loglocation = "/var/log/"):
-
+        super(ModbusProtocol, self).__init__()
         self.Address = address
-        self.Threads = {}                           # Dict of mythread objects
-        self.DeviceInit = False
+        self.InitComplete = False
         self.CommAccessLock = threading.RLock()     # lock to synchronize access to the serial port comms
         self.UpdateRegisterList = updatecallback
         # log errors in this module to a file
@@ -46,7 +45,8 @@ class ModbusProtocol(mycommon.MyCommon):
         try:
             #Starting serial connection
             self.Slave = myserial.SerialDevice(name, rate, loglocation)
-            self.DeviceInit = True
+            self.Threads = self.MergeDicts(self.Threads, self.Slave.Threads)
+            self.InitComplete = True
 
         except Exception as e1:
             self.FatalError("Error opening serial device: " + str(e1))
