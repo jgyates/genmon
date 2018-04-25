@@ -274,7 +274,7 @@ class Monitor(mysupport.MySupport):
             "logs"          : [self.Controller.DisplayLogs, (True, False), False],
             "status"        : [self.Controller.DisplayStatus, (), False],                 # display decoded generator info
             "maint"         : [self.Controller.DisplayMaintenance, (), False],
-            "monitor"       : [self.Controller.DisplayMonitor, (), False],
+            "monitor"       : [self.DisplayMonitor, (), False],
             "outage"        : [self.Controller.DisplayOutage, (), False],
             "settime"       : [self.StartTimeThread, (), False],                  # set time and date
             "setexercise"   : [self.Controller.SetGeneratorExerciseTime, (command.lower(),), False],
@@ -398,11 +398,8 @@ class Monitor(mysupport.MySupport):
             GenMonStats["Run time"] = self.ProgramName + " running for " + outstr + "."
             GenMonStats["Generator Monitor Version"] = GENMON_VERSION
 
-            if DictOut:
-                ReturnValue = collections.OrderedDict()
-                ReturnValue = self.ProcessDispatch(Monitor, ReturnValue)
-            else:
-                ReturnValue = self.printToString(self.ProcessDispatch(Monitor,""))
+            if not DictOut:
+                return self.printToString(self.ProcessDispatch(Monitor,""))
         except Exception as e1:
             self.LogError("Error in DisplayMonitor: " + str(e1))
         return Monitor

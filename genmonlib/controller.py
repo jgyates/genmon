@@ -14,9 +14,10 @@ import mysupport, mypipe
 
 class GeneratorController(mysupport.MySupport):
     #---------------------GeneratorController::__init__-------------------------
-    def __init__(self, log):
+    def __init__(self, log, newinstall = False):
         super(GeneratorController, self).__init__()
         self.log = log
+        self.NewInstall = newinstall
         self.InitComplete = False
         self.Registers = {}         # dict for registers and values
         self.RegistersUnderTest = {}# dict for registers we are testing
@@ -24,6 +25,15 @@ class GeneratorController(mysupport.MySupport):
         self.NotChanged = 0         # stats for registers
         self.Changed = 0            # stats for registers
         self.TotalChanged = 0.0     # ratio of changed ragisters
+
+        self.SiteName = "Home"
+        # The values "Unknown" are checked to validate conf file items are found
+        self.FuelType = "Unknown"
+        self.NominalFreq = "Unknown"
+        self.NominalRPM = "Unknown"
+        self.NominalKW = "Unknown"
+        self.Model = "Unknown"
+
         self.CommAccessLock = threading.RLock()  # lock to synchronize access to the protocol comms
         self.ProgramStartTime = datetime.datetime.now()     # used for com metrics
         self.OutageStartTime = self.ProgramStartTime        # if these two are the same, no outage has occured
@@ -38,14 +48,15 @@ class GeneratorController(mysupport.MySupport):
 
     #---------------------GeneratorController::GetPowerOutput-------------------
     # returns current kW
-    # rerturn empty string if not supported,
+    # rerturn empty string ("") if not supported,
     # return kW with units i.e. "2.45kW"
     def GetPowerOutput(self):
         return ""
 
     #---------------------GeneratorController::SystemInAlarm--------------------
+    # return True if generator is in alarm, else False
     def SystemInAlarm(self):
-        pass
+        return False
 
     #---------------------GeneratorController::DisplayLogs----------------------
     def DisplayLogs(self, AllLogs = False, ToString = False, DictOut = False, RawOutput = False):
@@ -53,11 +64,38 @@ class GeneratorController(mysupport.MySupport):
 
     #------------ GeneratorController::GetStartInfo ----------------------------
     def GetStartInfo(self):
-        pass
+
+        StartInfo = {}
+
+        StartInfo["sitename"] = self.SiteName
+        StartInfo["fueltype"] = self.FuelType
+        StartInfo["model"] = self.Model
+        StartInfo["nominalKW"] = self.NominalKW
+        StartInfo["nominalRPM"] = self.NominalRPM
+        StartInfo["nominalfrequency"] = self.NominalFreq
+        StartInfo["Controller"] = "Generic Controller Name"
+
+        return StartInfo
 
     #------------ GeneratorController::GetStatusForGUI -------------------------
+    # return dict for GUI
     def GetStatusForGUI(self):
-        pass
+
+        Status = {}
+
+        Status["basestatus"] = self.GetBaseStatus()
+        Status["kwOutput"] = self.GetPowerOutput()
+        # Exercise Info is a dict containing the following:
+        ExerciseInfo = collections.OrderedDict()
+        ExerciseInfo["Frequency"] = "Weekly"    # Biweekly, Weekly or Monthly
+        ExerciseInfo["Hour"] = "14"
+        ExerciseInfo["Minute"] = "00"
+        ExerciseInfo["QuietMode"] = "On"
+        ExerciseInfo["EnhancedExerciseMode"] = False
+        ExerciseInfo["Day"] = "Monday"
+        Status["ExerciseInfo"] = ExerciseInfo
+        return Status
+
     #------------ GeneratorController::DisplayMaintenance ----------------------
     def DisplayMaintenance (self, DictOut = False):
         pass

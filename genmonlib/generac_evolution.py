@@ -52,35 +52,29 @@ class Evolution(controller.GeneratorController):
         # call parent constructor
         super(Evolution, self).__init__(log)
         self.Address = 0x9d
-        self.NewInstall = newinstall
-        self.SiteName = "Home"
         self.SerialPort = "/dev/serial0"
         self.BaudRate = 9600
+        # Controller Type
+        self.EvolutionController = None
+        self.LiquidCooled = None
+        # State Info
         self.GeneratorInAlarm = False       # Flag to let the heartbeat thread know there is a problem
         self.SystemInOutage = False         # Flag to signal utility power is out
         self.TransferActive = False         # Flag to signal transfer switch is allowing gen supply power
         self.UtilityVoltsMin = 0    # Minimum reported utility voltage above threshold
         self.UtilityVoltsMax = 0    # Maximum reported utility voltage above pickup
+        self.LastAlarmValue = 0xFF  # Last Value of the Alarm / Status Register
+        # read from conf file
         self.bDisplayUnknownSensors = False
-        self.bUseLegacyWrite = False
-        self.EvolutionController = None
-        self.LiquidCooled = None
-        self.CommAccessLock = threading.RLock()  # lock to synchronize access to the protocol comms
-        self.CheckForAlarmEvent = threading.Event() # Event to signal checking for alarm
-        # The values "Unknown" are checked to validate conf file items are found
-        self.FuelType = "Unknown"
-        self.NominalFreq = "Unknown"
-        self.NominalRPM = "Unknown"
-        self.NominalKW = "Unknown"
-        self.Model = "Unknown"
-        self.OutageLog = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/outage.txt"
+        self.bUseLegacyWrite = False        # Nexus will set this to True
         self.DisableOutageCheck = False
         self.bEnhancedExerciseFrequency = False     # True if controller supports biweekly and monthly exercise times
+        # Used for housekeeping
+        self.CommAccessLock = threading.RLock()  # lock to synchronize access to the protocol comms
+        self.CheckForAlarmEvent = threading.Event() # Event to signal checking for alarm
+        self.OutageLog = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/outage.txt"
         self.ModBus = None
-        self.NewInstall = False
-        self.UtilityVoltsMin = 0    # Minimum reported utility voltage above threshold
-        self.UtilityVoltsMax = 0    # Maximum reported utility voltage above pickup
-        self.LastAlarmValue = 0xFF  # Last Value of the Alarm / Status Register
+
 
         self.DaysOfWeek = { 0: "Sunday",    # decode for register values with day of week
                             1: "Monday",
@@ -1439,16 +1433,16 @@ class Evolution(controller.GeneratorController):
         Maint = collections.OrderedDict()
         Maintenance["Maintenance"] = Maint
         Maint["Model"] = self.Model
-        Maint["Generator Serial Number"] = self.GetSerialNumber
-        Maint["Controller"] = self.GetController
+        Maint["Generator Serial Number"] = self.GetSerialNumber()
+        Maint["Controller"] = self.GetController()
         Maint["Nominal RPM"] = self.NominalRPM
         Maint["Rated kW"] = self.NominalKW
         Maint["Nominal Frequency"] = self.NominalFreq
         Maint["Fuel Type"] = self.FuelType
         Exercise = collections.OrderedDict()
-        Exercise["Exercise Time"] = self.GetExerciseTime
+        Exercise["Exercise Time"] = self.GetExerciseTime()
         if self.EvolutionController and self.LiquidCooled:
-            Exercise["Exercise Duration"] = self.GetExerciseDuration
+            Exercise["Exercise Duration"] = self.GetExerciseDuration()
         Maint["Exercise"] = Exercise
         Service = collections.OrderedDict()
         if not self.EvolutionController and self.LiquidCooled:
@@ -1466,18 +1460,15 @@ class Evolution(controller.GeneratorController):
             Service["Service A Due"] = self.GetServiceDue("A") + " or " + self.GetServiceDueDate("A")
             Service["Service B Due"] = self.GetServiceDue("B") + " or " + self.GetServiceDueDate("B")
 
-        Service["Total Run Hours"] = self.GetRunTimes
-        Service["Hardware Version"] = self.GetHardwareVersion
-        Service["Firmware Version"] = self.GetFirmwareVersion
+        Service["Total Run Hours"] = self.GetRunTimes()
+        Service["Hardware Version"] = self.GetHardwareVersion()
+        Service["Firmware Version"] = self.GetFirmwareVersion()
         Maint["Service"] = Service
 
-        if DictOut:
-            ReturnValue = collections.OrderedDict()
-            ReturnValue = self.ProcessDispatch(Maintenance, ReturnValue)
-        else:
-            ReturnValue = self.printToString(self.ProcessDispatch(Maintenance,""))
+        if not DictOut:
+            return self.printToString(self.ProcessDispatch(Maintenance,""))
 
-        return ReturnValue
+        return Maintenance
     #------------ Evolution:signed16-------------------------------
     def signed16(self, value):
         return -(value & 0x8000) | (value & 0x7fff)
@@ -3148,13 +3139,13 @@ class Evolution(controller.GeneratorController):
         OutageData["Utility Voltage Minimum"] = "%dV " % (self.UtilityVoltsMin)
         OutageData["Utility Voltage Maximum"] = "%dV " % (self.UtilityVoltsMax)
 
-        OutageData["Utility Threshold Voltage"] = self.GetThresholdVoltage
+        OutageData["Utility Threshold Voltage"] = self.GetThresholdVoltage()
 
         if self.EvolutionController and self.LiquidCooled:
-            OutageData["Utility Pickup Voltage"] = self.GetPickUpVoltage
+            OutageData["Utility Pickup Voltage"] = self.GetPickUpVoltage()
 
         if self.EvolutionController:
-            OutageData["Startup Delay"] = self.GetStartupDelay
+            OutageData["Startup Delay"] = self.GetStartupDelay()
 
         OutageData["Outage Log"] = self.DisplayOutageHistory()
 
@@ -3223,23 +3214,23 @@ class Evolution(controller.GeneratorController):
         Stat["Time"] = Time
 
 
-        Engine["Switch State"] = self.GetSwitchState
-        Engine["Engine State"] = self.GetEngineState
+        Engine["Switch State"] = self.GetSwitchState()
+        Engine["Engine State"] = self.GetEngineState()
         if self.EvolutionController and self.LiquidCooled:
-            Engine["Active Relays"] = self.GetDigitalOutputs
-            Engine["Active Sensors"] = self.GetSensorInputs
+            Engine["Active Relays"] = self.GetDigitalOutputs()
+            Engine["Active Sensors"] = self.GetSensorInputs()
 
         if self.SystemInAlarm():
-            Engine["System In Alarm"] = self.GetAlarmState
+            Engine["System In Alarm"] = self.GetAlarmState()
 
-        Engine["Battery Voltage"] = self.GetBatteryVoltage
+        Engine["Battery Voltage"] = self.GetBatteryVoltage()
         if self.EvolutionController and self.LiquidCooled:
-            Engine["Battery Status"] = self.GetBatteryStatus
+            Engine["Battery Status"] = self.GetBatteryStatus()
 
-        Engine["RPM"] = self.GetRPM
+        Engine["RPM"] = self.GetRPM()
 
-        Engine["Frequency"] = self.GetFrequency
-        Engine["Output Voltage"] = self.GetVoltageOutput
+        Engine["Frequency"] = self.GetFrequency()
+        Engine["Output Voltage"] = self.GetVoltageOutput()
 
         if self.EvolutionController and self.LiquidCooled:
             Engine["Output Current"] = self.GetCurrentOutput()
@@ -3252,28 +3243,25 @@ class Evolution(controller.GeneratorController):
 
 
         if self.EvolutionController:
-            Line["Transfer Switch State"] = self.GetTransferStatus
-        Line["Utility Voltage"] = self.GetUtilityVoltage
+            Line["Transfer Switch State"] = self.GetTransferStatus()
+        Line["Utility Voltage"] = self.GetUtilityVoltage()
         #
         Line["Utility Voltage Max"] = "%dV " % (self.UtilityVoltsMax)
         Line["Utility Voltage Min"] = "%dV " % (self.UtilityVoltsMin)
-        Line["Utility Threshold Voltage"] = self.GetThresholdVoltage
+        Line["Utility Threshold Voltage"] = self.GetThresholdVoltage()
 
         if self.EvolutionController and self.LiquidCooled:
-            Line["Utility Pickup Voltage"] = self.GetPickUpVoltage
-            Line["Set Output Voltage"] = self.GetSetOutputVoltage
+            Line["Utility Pickup Voltage"] = self.GetPickUpVoltage()
+            Line["Set Output Voltage"] = self.GetSetOutputVoltage()
 
         # Generator time
         Time["Monitor Time"] = datetime.datetime.now().strftime("%A %B %-d, %Y %H:%M:%S")
         Time["Generator Time"] = self.GetDateTime()
 
-        if DictOut:
-            ReturnValue = collections.OrderedDict()
-            ReturnValue = self.ProcessDispatch(Status, ReturnValue)
-        else:
-            ReturnValue = self.printToString(self.ProcessDispatch(Status,""))
+        if not DictOut:
+            return self.printToString(self.ProcessDispatch(Status,""))
 
-        return ReturnValue
+        return Status
 
     #------------ Monitor::GetStatusForGUI ------------------------------------
     def GetStatusForGUI(self):
