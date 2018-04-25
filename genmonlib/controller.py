@@ -31,14 +31,22 @@ class GeneratorController(mysupport.MySupport):
         self.MessagePipe = mypipe.MyPipe("Message", Reuse = True, log = log)
 
     #---------------------GeneratorController::GetConfig------------------------
+    # read conf file, used internally, not called by genmon
+    # return True on success, else False
     def GetConfig(self):
-        pass
+        True
 
     #---------------------GeneratorController::GetPowerOutput-------------------
+    # returns current kW
+    # rerturn empty string if not supported,
+    # return kW with units i.e. "2.45kW"
     def GetPowerOutput(self):
-        pass
+        return ""
 
     #---------------------GeneratorController::GetParsedExerciseTime------------
+    # return exercise time in string format:
+    #     "Wednesday!14!00!On!Weekly!False"
+    #     "Wednesday!14!00!On!Biweekly!False"
     def GetParsedExerciseTime(self):
         pass
 

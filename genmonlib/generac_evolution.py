@@ -2326,12 +2326,13 @@ class Evolution(controller.GeneratorController):
         return "%d min" % int(Value,16)
 
     #------------ Evolution:GetParsedExerciseTime --------------------------------------------
-    def GetParsedExerciseTime(self):
+    # Expcected output is # Wednesday!14!00!On!Weekly!False
+    def GetParsedExerciseTime(self, DictOut = False):
 
         retstr = self.GetExerciseTime()
         if not len(retstr):
             return ""
-        #should return this format:
+        # GetExerciseTime should return this format:
         # "Weekly Saturday 13:30 Quiet Mode On"
         # "Biweekly Saturday 13:30 Quiet Mode On"
         # "Monthly Day-1 13:30 Quiet Mode On"
@@ -2348,8 +2349,18 @@ class Evolution(controller.GeneratorController):
             Day = int(Items[1])
             Items[1] = "%02d" % Day
 
-        retstr = Items[1] + "!" + HoursMin[0] + "!" + HoursMin[1] + "!" + Items[5] + "!" + Items[0] + "!" + ModeStr
-        return retstr
+        if DictOut:
+            ExerciseInfo = collections.OrderedDict()
+            ExerciseInfo["Frequency"] = Items[0]
+            ExerciseInfo["Hour"] = HoursMin[0]
+            ExerciseInfo["Minute"] = HoursMin[1]
+            ExerciseInfo["QuietMode"] = Items[5]
+            ExerciseInfo["EnhancedExerciseMode"] = ModeStr
+            ExerciseInfo["Day"] = Items[1]
+            return ExerciseInfo
+        else:
+            retstr = Items[1] + "!" + HoursMin[0] + "!" + HoursMin[1] + "!" + Items[5] + "!" + Items[0] + "!" + ModeStr
+            return retstr
 
     #------------ Evolution:GetExerciseTime --------------------------------------------
     def GetExerciseTime(self):
@@ -3265,6 +3276,7 @@ class Evolution(controller.GeneratorController):
         Status["basestatus"] = self.GetBaseStatus()
         Status["kwOutput"] = self.GetPowerOutput()
         Status["Exercise"] = self.GetParsedExerciseTime()
+        Status["ExerciseInfo"] = self.GetParsedExerciseTime(True)
         return Status
 
     #------------ Evolution:GetStartInfo -------------------------------

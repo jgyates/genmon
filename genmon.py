@@ -296,7 +296,7 @@ class Monitor(mysupport.MySupport):
             "getsitename"       : [self.GetSiteName, (), True],
             "getbase"           : [self.Controller.GetBaseStatus, (), True],    #  (UI changes color based on exercise, running , ready status)
             "gethealth"         : [self.GetSystemHealth, (), True],
-            "getexercise"       : [self.Controller.GetParsedExerciseTime, (), True],
+            #"getexercise"       : [self.Controller.GetParsedExerciseTime, (), True],
             "getregvalue"       : [self.Controller.GetRegValue, (command.lower(),), True],     # only used for debug purposes, read a cached register value
             "readregvalue"      : [self.Controller.ReadRegValue, (command.lower(),), True],    # only used for debug purposes, Read Register Non Cached
             "getdebug"          : [self.GetDeadThreadName, (), True]                # only used for debug purposes. If a thread crashes it tells you the thread name
