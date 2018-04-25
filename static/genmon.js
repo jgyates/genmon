@@ -15,7 +15,6 @@ $("#navMenu").html('<ul>' +
 
 // global base state
 var currentVersion = "";
-var showMajorUSMobileCarrierTextEmail = false;
 var baseState = "READY";        // updated on a time
 var currentbaseState = "READY"; // menus change on this var
 var currentClass = "active";    // CSS class for menu color
@@ -23,7 +22,7 @@ var menuElement = "status";
 var ajaxErrors = {errorCount: 0, lastSuccessTime: 0, log: ""};
 var windowActive = true;
 
-var myGenerator = {sitename: "", nominalRPM: 3600, nominalfrequency: 60, Controller: "", model: "", nominalKW: 22, fueltype: "", EnhancedExerciseEnabled: false, OldExerciseParameters:[-1,-1,-1,-1,-1,-1]};
+var myGenerator = {sitename: "", nominalRPM: 3600, nominalfrequency: 60, Controller: "", model: "", nominalKW: 22, fueltype: "", UnsentFeedback: false, EnhancedExerciseEnabled: false, OldExerciseParameters:[-1,-1,-1,-1,-1,-1]};
 var regHistory = {updateTime: {}, _10m: {}, _60m: {}, _24h: {}, historySince: "", count_60m: 0, count_24h: 0};
 var kwHistory = {data: [], plot:"", kwDuration: "h", tickInterval: "10 minutes", formatString: "%H:%M"};
 var pathname = window.location.href;
@@ -66,8 +65,10 @@ function processAjaxSuccess() {
     var now = new moment();
     if (ajaxErrors["errorCount"]>5) {
       ajaxErrors["log"] = ajaxErrors["errorCount"]+" messages missed between "+ajaxErrors["lastSuccessTime"].format("H:mm:ss") + " and " +now.format("H:mm:ss") +"<br>" + ajaxErrors["log"];
-      $("#footer").removeClass("alert");
-      $("#ajaxWarning").hide(2000);
+      if (myGenerator['UnsentFeedback'] == false) { 
+        $("#footer").removeClass("alert");
+        $("#ajaxWarning").hide(2000);
+      }
     }
     ajaxErrors["errorCount"] = 0;
     ajaxErrors["lastSuccessTime"] = new moment();
@@ -186,7 +187,8 @@ function DisplayStatusFull()
                                            {strokeStyle: "#30B32D", min: 12.5, max: 15},
                                            {strokeStyle: "#FFDD00", min: 15, max: 15.5},
                                            {strokeStyle: "#F03E3E", min: 15.5, max: 16}], 6, 10);
-        gaugeBatteryVoltage.set(result["Status"]["Engine"]["Battery Voltage"].replace(/V/g, '')); // set current value
+        if (result["Status"]["Engine"]["Battery Voltage"].replace(/V/g, '').trim() !== "")
+          gaugeBatteryVoltage.set(result["Status"]["Engine"]["Battery Voltage"].replace(/V/g, '')); // set current value
 
         gaugeUtilityVoltage = createGauge($("#gaugeUtilityVoltage"), $("#textUtilityVoltage"), 0, 0, 260, [0, 100, 156, 220, 240, 260],
                                           [{strokeStyle: "#F03E3E", min: 0, max: 220},
@@ -416,7 +418,8 @@ function DisplayStatusUpdate()
         $("#statusText").html(json2html(result, "", "root"));
         // json2updates(result, "root");
 
-        gaugeBatteryVoltage.set(result["Status"]["Engine"]["Battery Voltage"].replace(/V/g, '')); // set actual value
+        if (result["Status"]["Engine"]["Battery Voltage"].replace(/V/g, '').trim() !== "") 
+          gaugeBatteryVoltage.set(result["Status"]["Engine"]["Battery Voltage"].replace(/V/g, '')); // set actual value
         gaugeUtilityVoltage.set(result["Status"]["Line State"]["Utility Voltage"].replace(/V/g, '')); // set actual value
         gaugeOutputVoltage.set(result["Status"]["Engine"]["Output Voltage"].replace(/V/g, '')); // set actual value
         gaugeFrequency.set(result["Status"]["Engine"]["Frequency"].replace(/Hz/g, '')); // set actual value
@@ -938,14 +941,6 @@ function DisplayNotifications(){
 
             var displayText = key;
             var displayKey = "s01_email";
-            if (showMajorUSMobileCarrierTextEmail) {
-               $.each(Object.keys(textServers), function(j, service) {
-                  if ((service != "email") && (key.indexOf(textServers[service][2]) > 0)) {
-                     displayKey = service;
-                     displayText = key.replace(textServers[service][2], "");
-                  }
-               });
-            }
             outstr += renderNotificationLine(i, displayKey, displayText, result[key][1]);
         });
         outstr += '</tbody></table></form><br>';
@@ -971,8 +966,6 @@ function DisplayNotifications(){
                   } else {
                       $(this).append(outstr);
                   }
-                  if (showMajorUSMobileCarrierTextEmail)
-                    $("#type_"+rowcount).msDropDown();
                   $("#notif_"+rowcount).selectize({
                       plugins: ['remove_button'],
                       delimiter: ','
@@ -995,13 +988,7 @@ function DisplayNotifications(){
 function renderNotificationLine(rowcount, line_type, line_text, line_perms) {
 
    var outstr = '<tr id="row_' + rowcount + '"><td nowrap><div rowcount="' + rowcount + '" class="removeRow"><img src="images/remove.png" height="24px" width="24px"></div></td>';
-   if (showMajorUSMobileCarrierTextEmail) {
-     outstr += '<td nowrap><select class="msDropDown" name="type_' + rowcount + '" style="width:180px" id="type_' + rowcount + '" onChange="setNotificationFieldValidation('+rowcount+')">';
-     outstr += Object.keys(textServers).sort().map(function(key) { return '<option value="'+key+'" data-image="'+textServers[key][1]+'" '+((key==line_type) ? 'selected' : '')+'>'+textServers[key][0]+'</option>'; }).join();
-     outstr += '</select>&nbsp;&nbsp;</td>';
-   } else {
-     outstr += '<td nowrap><input type="hidden" name="type_' + rowcount + '" value="s01_email">';
-   }
+   outstr += '<td nowrap><input type="hidden" name="type_' + rowcount + '" value="s01_email">';
    outstr += '<td nowrap><input id="email_' + rowcount + '" class="notificationEmail" name="email_' + rowcount + '" type="text" value="'+line_text+'" '+ ((line_type != "s01_email") ? 'class="dataMask"' : '') +' ></td>';
 
    outstr += '<td width="300px" nowrap><select multiple style="width:290px" class="notificationTypes" name="notif_' + rowcount + '" id="notif_' + rowcount + '" oldValue="'+line_perms+'" placeholder="Select types of notifications...">';
@@ -1091,9 +1078,6 @@ function saveNotificationsJSON(){
             var thisType  = $('#type_'+thisRow).val();
             var thisEmail = $(this).val();
             var thisVal   = (($('#notif_'+thisRow).val().length == 4) ? "" : $('#notif_'+thisRow).val().join(","));
-            if ((showMajorUSMobileCarrierTextEmail) && (thisType != "s01_email")) {
-               thisEmail = thisEmail.replace(/\D/g,'')+textServers[thisType][2];
-            }
             fields[thisEmail] = thisVal;
         });
         // console.log(fields);
@@ -1161,8 +1145,10 @@ function DisplaySettings(){
             } else if (key == "favicon") {
               outstr += '</table></fieldset><table id="allsettings" border="0">';
               outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "useselfsignedcertChange(true);") + '</td></tr>';
+            } else if ((key == "autofeedback") && (myGenerator['UnsentFeedback'] == true)) {
+              outstr += '<tr><td width="25px">&nbsp;</td><td bgcolor="#ffcccc" width="300px">' + result[key][1] + '</td><td bgcolor="#ffcccc">' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
             } else {
-              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';            
             }
         }
         outstr += '</table></fieldset></form><br>';
@@ -1867,6 +1853,7 @@ function GetGeneratorModel()
       processAjaxSuccess();
 
       myGenerator = result;
+      myGenerator["OldExerciseParameters"] = [-1,-1,-1,-1,-1,-1];
       SetHeaderValues();
     }});
 }
@@ -1998,6 +1985,18 @@ function GetBaseStatus()
               gaugekW.set(result['kwOutput'].replace(/kW/g, ''));
               printKwPlot(result['kwOutput'].replace(/kW/g, ''));
            }
+        }
+        
+        if (result['UnsentFeedback'].toLowerCase() == "true") {
+          myGenerator['UnsentFeedback'] = true;
+          var tempMsg = '<b><span style="font-size:14px">UNKNOWN ERROR OCCURED</span></b><br>The software had encountered unknown status from<br>your generator.<br>This status could be used to improve the software.<br>To send the contents of your generator registers to<br>the software developer please enable "Auto Feedback"<br>on the Settings page.';
+          $("#footer").addClass("alert");
+          $("#ajaxWarning").show(2000);
+          $('#ajaxWarning').tooltipster('content', tempMsg);
+        } else { // Note - this claus only get's executed if the ajax connection worked. Hence no need to check ajaxErrors["errorCount"]
+          myGenerator['UnsentFeedback'] = false;
+          $("#footer").removeClass("alert");
+          $("#ajaxWarning").hide(2000);
         }
 
         baseState = result['basestatus'];
