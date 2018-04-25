@@ -23,7 +23,7 @@ def SetupLogger(logger_name, log_file, level=logging.INFO, stream = False):
 
     if log_file != "":
 
-        rotate = logging.handlers.RotatingFileHandler(log_file, mode='a',maxBytes=10000,backupCount=5)
+        rotate = logging.handlers.RotatingFileHandler(log_file, mode='a',maxBytes=50000,backupCount=5)
         rotate.setFormatter(formatter)
         logger.addHandler(rotate)
 
