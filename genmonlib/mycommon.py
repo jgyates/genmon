@@ -26,7 +26,7 @@ class MyCommon(object):
         else:
             return False
 
-    #------------ MyCommon::printToString --------------------------------------------
+    #------------ MyCommon::printToString --------------------------------------
     def printToString(self, msgstr, nonewline = False, spacer = False):
 
         if spacer:
@@ -43,7 +43,7 @@ class MyCommon(object):
 
         # end printToString
 
-    #----------  MyCommon::removeAlpha--------------------------
+    #----------  MyCommon::removeAlpha------------------------------------------
     # used to remove alpha characters from string so the string contains a
     # float value (leaves all special characters)
     def removeAlpha(self, inputStr):
@@ -59,10 +59,10 @@ class MyCommon(object):
         z.update(y)
         return z
 
-    #---------------------MyCommon::LogError------------------------
+    #---------------------MyCommon::LogError------------------------------------
     def LogError(self, Message):
         self.log.error(Message)
-    #---------------------MyCommon::FatalError------------------------
+    #---------------------MyCommon::FatalError----------------------------------
     def FatalError(self, Message):
 
         self.log.error(Message)
