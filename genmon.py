@@ -24,7 +24,7 @@ except ImportError as e:
 from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution
 
 
-GENMON_VERSION = "V1.6.8"
+GENMON_VERSION = "V1.6.9"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
