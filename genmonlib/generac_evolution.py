@@ -2493,10 +2493,7 @@ class Evolution(controller.GeneratorController):
                 CurrentLow = int(Value,16)
 
             CurrentFloat = float((CurrentHi << 16) | (CurrentLow))
-            CurrentFloat = max((CurrentFloat * 0.398) - 233.8, 0)
-
-            #    # =max(E7 * 0.398) - 223.8),0)
-            #    #CurrentFloat = max((CurrentFloat * 0.0689) - 291.6, 0)
+            CurrentFloat = CurrentFloat / 10.74
 
         return "%.2fA" % CurrentFloat
 
