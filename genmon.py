@@ -248,12 +248,12 @@ class Monitor(mysupport.MySupport):
 
         if(len(command)) == 0:
             msgsubject = "Error in Generator Command (Lenght is zero)"
-            msgbody += "Invalid GENERATOR command: zero length command. All commands must be prefixed by \"generator: \""
+            msgbody += "Invalid GENERATOR command: zero length command."
             LocalError = True
 
         if not LocalError:
             if(not command.lower().startswith( b'generator:' )):         # PYTHON3
-                msgsubject = "Error in Generator Command (no generator: prefix)"
+                msgsubject = "Error in Generator Command (command prefix)"
                 msgbody += "Invalid GENERATOR command: all commands must be prefixed by \"generator: \""
                 LocalError = True
 
