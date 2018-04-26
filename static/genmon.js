@@ -1951,21 +1951,12 @@ function GetBaseStatus()
     $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
         processAjaxSuccess();
 
-        // should return str in this format:
-        // Saturday!13!30!On!Weekly!True
-        // Saturday!13!30!On!Biweekly!Falze
-        // 2!13!30!On!Monthly!False
-        // NOTE: Last param (True or False) is if enhanced exercise freq is enabled
-        var resultsArray = result['Exercise'].split("!");
-
-        if (resultsArray.length == 6){
-            myGenerator['ExerciseDay'] = resultsArray[0];
-            myGenerator['ExerciseHour'] = resultsArray[1];
-            myGenerator['ExerciseMinute'] = resultsArray[2];
-            myGenerator['QuietMode'] = resultsArray[3];
-            myGenerator['ExerciseFrequency'] = resultsArray[4];
-            myGenerator['EnhancedExerciseEnabled'] = ((resultsArray[5] === "False") ? false : true);
-        }
+        myGenerator['ExerciseDay'] = result['ExerciseInfo']['Day'];
+        myGenerator['ExerciseHour'] = result['ExerciseInfo']['Hour'];
+        myGenerator['ExerciseMinute'] = result['ExerciseInfo']['Minute'];
+        myGenerator['QuietMode'] = result['ExerciseInfo']['QuietMode'];
+        myGenerator['ExerciseFrequency'] = result['ExerciseInfo']['Frequency'];
+        myGenerator['EnhancedExerciseEnabled'] = ((result['ExerciseInfo']['EnhancedExerciseMode'] === "False") ? false : true);
 
         if (kwHistory["data"].length > 0) { /// Otherwise initialization has not finished
 

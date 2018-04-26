@@ -9,7 +9,7 @@
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
 
-import os, sys, time
+import os, sys, time, json
 
 #------------ MyCommon class -----------------------------------------------------
 class MyCommon(object):
@@ -17,6 +17,18 @@ class MyCommon(object):
         self.log = None
         self.Threads = {}       # Dict of mythread objects
         pass
+    #------------ MyCommon::StripJson ------------------------------------------
+    def StripJson(self, InputString):
+        for char in '{}[]"':
+            InputString = InputString.replace(char,'')
+        return InputString
+
+    #------------ MyCommon::DictToString ---------------------------------------
+    def DictToString(self, InputDict, ExtraStrip = False):
+        ReturnString = json.dumps(InputDict,sort_keys=False, indent = 4, separators=(' ', ': '))
+        if ExtraStrip:
+            ReturnString = ReturnString.replace("} \n","")
+        return self.StripJson(ReturnString)
 
     #------------ MyCommon::BitIsEqual -----------------------------------------
     def BitIsEqual(self, value, mask, bits):

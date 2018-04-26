@@ -2452,7 +2452,7 @@ class Evolution(controller.GeneratorController):
 
         return SensorValue
 
-    #------------ Evolution:"GetRPM" --------------------------------------------
+    #------------ Evolution:GetRPM ---------------------------------------------
     def GetRPM(self):
 
         # get RPM
@@ -2463,7 +2463,7 @@ class Evolution(controller.GeneratorController):
         RPMValue = "%5d" % int(Value,16)
         return RPMValue
 
-    #------------ Evolution:GetCurrentOutput ---------------------------------------
+    #------------ Evolution:GetCurrentOutput -----------------------------------
     def GetCurrentOutput(self):
 
         if not self.EvolutionController:
@@ -2500,7 +2500,7 @@ class Evolution(controller.GeneratorController):
 
         return "%.2fA" % CurrentFloat
 
-     ##------------ Evolution:GetActiveRotorPoles ---------------------------------------
+     ##------------ Evolution:GetActiveRotorPoles ------------------------------
     def GetActiveRotorPoles(self):
         # (2 * 60 * Freq) / RPM = Num Rotor Poles
 
@@ -3270,7 +3270,6 @@ class Evolution(controller.GeneratorController):
 
         Status["basestatus"] = self.GetBaseStatus()
         Status["kwOutput"] = self.GetPowerOutput()
-        Status["Exercise"] = self.GetParsedExerciseTime()
         Status["ExerciseInfo"] = self.GetParsedExerciseTime(True)
         return Status
 

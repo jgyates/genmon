@@ -329,7 +329,7 @@ class Monitor(mysupport.MySupport):
                     msgbody += ReturnMessage
 
                 if not fromsocket:
-                    msgbody += "\n\n"
+                    msgbody += "\n"
         except Exception as e1:
             self.LogError("Error Processing Commands: " + str(e1))
 

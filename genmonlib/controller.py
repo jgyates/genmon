@@ -7,9 +7,14 @@
 #    DATE: 24-Apr-2018
 #
 # MODIFICATIONS:
+#
+# USAGE: This is the base class of generator controllers. LogError or FatalError
+#   should be used to log errors or fatal errors.
+#
 #-------------------------------------------------------------------------------
 
-import threading, datetime
+import threading, datetime, collections
+# NOTE: collections OrderedDict is used for dicts that are displayed to the UI
 import mysupport, mypipe
 
 class GeneratorController(mysupport.MySupport):
@@ -46,23 +51,13 @@ class GeneratorController(mysupport.MySupport):
     def GetConfig(self):
         True
 
-    #---------------------GeneratorController::GetPowerOutput-------------------
-    # returns current kW
-    # rerturn empty string ("") if not supported,
-    # return kW with units i.e. "2.45kW"
-    def GetPowerOutput(self):
-        return ""
-
     #---------------------GeneratorController::SystemInAlarm--------------------
     # return True if generator is in alarm, else False
     def SystemInAlarm(self):
         return False
 
-    #---------------------GeneratorController::DisplayLogs----------------------
-    def DisplayLogs(self, AllLogs = False, ToString = False, DictOut = False, RawOutput = False):
-        pass
-
     #------------ GeneratorController::GetStartInfo ----------------------------
+    # return a dictionary with startup info for the gui
     def GetStartInfo(self):
 
         StartInfo = {}
@@ -96,6 +91,9 @@ class GeneratorController(mysupport.MySupport):
         Status["ExerciseInfo"] = ExerciseInfo
         return Status
 
+    #---------------------GeneratorController::DisplayLogs----------------------
+    def DisplayLogs(self, AllLogs = False, DictOut = False, RawOutput = False):
+        pass
     #------------ GeneratorController::DisplayMaintenance ----------------------
     def DisplayMaintenance (self, DictOut = False):
         pass
@@ -103,9 +101,7 @@ class GeneratorController(mysupport.MySupport):
     #------------ GeneratorController::DisplayStatus ---------------------------
     def DisplayStatus(self, DictOut = False):
         pass
-    #------------ GeneratorController::DisplayMonitor --------------------------
-    def DisplayMonitor(self, DictOut = False):
-        pass
+
     #------------------- GeneratorController::DisplayOutage --------------------
     def DisplayOutage(self, DictOut = False):
         pass
@@ -115,47 +111,109 @@ class GeneratorController(mysupport.MySupport):
         pass
 
     #----------  GeneratorController::SetGeneratorTimeDate----------------------
+    # set generator time to system time
     def SetGeneratorTimeDate(self):
-        pass
+        return "Not Supported"
 
     #----------  GeneratorController::SetGeneratorQuietMode---------------------
+    # Format of CmdString is "setquiet=yes" or "setquiet=no"
+    # return  "Set Quiet Mode Command sent" or some meaningful error string
     def SetGeneratorQuietMode(self, CmdString):
-        pass
+        return "Not Supported"
 
     #----------  GeneratorController::SetGeneratorExerciseTime------------------
+    # CmdString is in the format:
+    #   setexercise=Monday,13:30,Weekly
+    #   setexercise=Monday,13:30,BiWeekly
+    #   setexercise=15,13:30,Monthly
+    # return  "Set Exercise Time Command sent" or some meaningful error string
     def SetGeneratorExerciseTime(self, CmdString):
-        pass
+        return "Not Supported"
+
     #----------  GeneratorController::SetGeneratorRemoteStartStop---------------
+    # CmdString will be in the format: "setremote=start"
+    # valid commands are start, stop, starttransfer, startexercise
+    # return string "Remote command sent successfully" or some descriptive error
+    # string if failure
     def SetGeneratorRemoteStartStop(self, CmdString):
-        pass
+        return "Not Supported"
 
     #----------  GeneratorController:GetController  ----------------------------
+    # return the name of the controller, if Actual == False then return the
+    # controller name that the software has been instructed to use if overridden
+    # in the conf file
     def GetController(self, Actual = True):
-        pass
+        return "Test Controller"
 
     #----------  GeneratorController:ComminicationsIsActive  -------------------
+    # Called every 2 seconds, if communictions are failing, return False, otherwise
+    # True
     def ComminicationsIsActive(self):
-        pass
+        return False
 
     #----------  GeneratorController:ResetCommStats  ---------------------------
+    # reset communication stats, normally just a call to
+    #   self.ModBus.Slave.ResetSerialStats() if serial modbus is used
     def ResetCommStats(self):
         pass
 
     #----------  GeneratorController:PowerMeterIsSupported  --------------------
+    # return true if GetPowerOutput is supported
     def PowerMeterIsSupported(self):
-        pass
+        False
+
+    #---------------------GeneratorController::GetPowerOutput-------------------
+    # returns current kW
+    # rerturn empty string ("") if not supported,
+    # return kW with units i.e. "2.45kW"
+    def GetPowerOutput(self):
+        return ""
 
     #----------  GeneratorController:GetCommStatus  ----------------------------
+    # return Dict with communication stats
     def GetCommStatus(self):
+        """
+        CommStats = collections.OrderedDict()
+        SerialStats["Packet Count"] = "M: %d, S: %d, Buffer Count: %d" % (self.ModBus.Slave.TxPacketCount, self.ModBus.Slave.RxPacketCount, len(self.ModBus.Slave.Buffer))
+
+        if self.ModBus.Slave.CrcError == 0 or self.ModBus.Slave.RxPacketCount == 0:
+            PercentErrors = 0.0
+        else:
+            PercentErrors = float(self.ModBus.Slave.CrcError) / float(self.ModBus.Slave.RxPacketCount)
+
+        SerialStats["CRC Errors"] = "%d " % self.ModBus.Slave.CrcError
+        SerialStats["CRC Percent Errors"] = "%.2f" % PercentErrors
+        SerialStats["Discarded Bytes"] = "%d" % self.ModBus.Slave.DiscardedBytes
+        SerialStats["Serial Restarts"] = "%d" % self.ModBus.Slave.Restarts
+        SerialStats["Serial Timeouts"] = "%d" %  self.ModBus.Slave.ComTimoutError
+
+        CurrentTime = datetime.datetime.now()
+
+        #
+        Delta = CurrentTime - self.ModBus.Slave.SerialStartTime        # yields a timedelta object
+        PacketsPerSecond = float((self.ModBus.Slave.TxPacketCount + self.ModBus.Slave.RxPacketCount)) / float(Delta.total_seconds())
+        SerialStats["Packets Per Second"] = "%.2f" % (PacketsPerSecond)
+
+        if self.ModBus.Slave.RxPacketCount:
+            AvgTransactionTime = float(self.ModBus.Slave.TotalElapsedPacketeTime / self.ModBus.Slave.RxPacketCount)
+            SerialStats["Average Transaction Time"] = "%.4f sec" % (AvgTransactionTime)
+
+        return SerialStats
+        """
         pass
+
     #------------ GeneratorController:GetBaseStatus ----------------------------
+    # return one of the following: "ALARM", "SERVICEDUE", "EXERCISING", "RUNNING",
+    # "RUNNING-MANUAL", "OFF", "MANUAL", "READY"
     def GetBaseStatus(self):
-        pass
+        return "OFF"
 
     #------------ GeneratorController:GetOneLineStatus -------------------------
+    # returns a one line status for example : switch state and engine state
     def GetOneLineStatus(self):
-        pass
+        return "Unknown"
 
     #----------  Controller::Close----------------------------------------------
+    # Close all communications, cleanup, no return value
     def Close(self):
         pass
