@@ -3386,9 +3386,6 @@ class Evolution(controller.GeneratorController):
         if not self.EvolutionController:    # Not supported by Nexus at this time
             return False
 
-        # only support EvoAC is Unsupported Sensors is enabled
-        if not self.LiquidCooled and not self.bDisplayUnknownSensors:
-            return False
         return True
 
     #----------  Evolution:GetCommStatus  ------------------------------
