@@ -171,7 +171,7 @@ function DisplayStatusFull()
         outstr += '<div class="gauge-lb2"></div>';
         outstr += '<div class="gauge-block-e"><div class="gaugeField">Rotation/Min<br><canvas class="gaugeCanvas" id="gaugeRPM"></canvas><br><div id="textRPM" class="gaugeDiv"></div> RPM</div></div>';
         outstr += '<div class="gauge-lb5"></div>';
-        if ((myGenerator["Controller"].indexOf("Nexus") == -1) && !((myGenerator["Controller"] == "Evolution, Air Cooled") && (result["Status"]["Engine"]["Unsupported Sensors"] == undefined))) {
+        if (myGenerator["Controller"].indexOf("Nexus") == -1) {
            outstr += '<div class="gauge-block-f"><div class="gaugeField">kW Output<br><canvas class="gaugeCanvas" id="gaugekW"></canvas><br><div id="textkW" class="gaugeDiv"></div>kW</div></div>';
            outstr += '<div class="gauge-lb2 gauge-lb3"></div>';
            outstr += '<div class="gauge-block-g"></div>';
@@ -231,7 +231,9 @@ function DisplayStatusFull()
              gaugeNominalKWmarks.unshift(5*i);
            }
            gaugekW = createGauge($("#gaugekW"), $("#textkW"), 0, 0, parseInt(gaugeNominalKW/20*23), gaugeNominalKWmarks,
-                                          [{strokeStyle: "#30B32D", min: 0, max: gaugeNominalKW/10*8},
+                                          [{strokeStyle: "#F03E3E", min: 0, max: gaugeNominalKW/10*2},
+                                           {strokeStyle: "#FFDD00", min: gaugeNominalKW/10*2, max: gaugeNominalKW/10*3},
+                                           {strokeStyle: "#30B32D", min: gaugeNominalKW/10*3, max: gaugeNominalKW/10*8},
                                            {strokeStyle: "#FFDD00", min: gaugeNominalKW/10*8, max: gaugeNominalKW/20*19},
                                            {strokeStyle: "#F03E3E", min: gaugeNominalKW/20*19, max: gaugeNominalKW/20*23}], parseInt(gaugeNominalKW/20*23/5), 5);
            gaugekW.set(0); // set starting value
