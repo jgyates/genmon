@@ -24,7 +24,7 @@ except ImportError as e:
 from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution
 
 
-GENMON_VERSION = "V1.7.0"
+GENMON_VERSION = "V1.7.1"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -33,9 +33,12 @@ class Monitor(mysupport.MySupport):
         super(Monitor, self).__init__()
         self.ProgramName = "Generator Monitor"
         self.Version = "Unknown"
-        self.SiteName = "Home"
         self.ConnectionList = []    # list of incoming connections for heartbeat
-        self.ServerSocket = 0       # server socket for nagios heartbeat and command/status
+        # defautl values
+        self.SiteName = "Home"
+        self.ServerSocket = 9082    # server socket for nagios heartbeat and command/status
+        self.IncomingEmailFolder = "Generator"
+        self.ProcessedEmailFolder = "Generator/Processed"
 
         self.PowerLogMaxSize = 15       # 15 MB max size
         self.PowerLog =  os.path.dirname(os.path.realpath(__file__)) + "/kwlog.txt"
@@ -133,11 +136,15 @@ class Monitor(mysupport.MySupport):
 
             if config.has_option(ConfigSection, 'sitename'):
                 self.SiteName = config.get(ConfigSection, 'sitename')
-            self.SerialPort = config.get(ConfigSection, 'port')
-            self.IncomingEmailFolder = config.get(ConfigSection, 'incoming_mail_folder')     # imap folder for incoming mail
-            self.ProcessedEmailFolder = config.get(ConfigSection, 'processed_mail_folder')   # imap folder for processed mail
-            # heartbeat server port, must match value in check_monitor_system.py and any calling client apps
-            self.ServerSocketPort = config.getint(ConfigSection, 'server_port')
+
+            if config.has_option(ConfigSection, 'incoming_mail_folder'):
+                self.IncomingEmailFolder = config.get(ConfigSection, 'incoming_mail_folder')     # imap folder for incoming mail
+
+            if config.has_option(ConfigSection, 'processed_mail_folder'):
+                self.ProcessedEmailFolder = config.get(ConfigSection, 'processed_mail_folder')   # imap folder for processed mail
+            #  server_port, must match value in myclient.py and check_monitor_system.py and any calling client apps
+            if config.has_option(ConfigSection, 'server_port'):
+                self.ServerSocketPort = config.getint(ConfigSection, 'server_port')
 
             if config.has_option(ConfigSection, 'loglocation'):
                 self.LogLocation = config.get(ConfigSection, 'loglocation')
@@ -222,9 +229,10 @@ class Monitor(mysupport.MySupport):
                 if Message != None:
                     msgbody += "Message : " + Message + "\n"
                 msgbody += "Version: " + GENMON_VERSION
+                msgbody += self.DictToString(self.Controller.GetStartInfo())
                 msgbody += self.Controller.DisplayRegisters(AllRegs = FullLogs)
                 if self.FeedbackEnabled:
-                    self.MessagePipe.SendMessage("Generator Monitor Submission", msgbody , recipient = "generatormonitor.software@gmail.com", msgtype = "error")
+                    self.MessagePipe.SendMessage("Generator Monitor Submission", msgbody , recipient = self.MaintainerAddress, msgtype = "error")
 
                 self.FeedbackMessages[Reason] = msgbody
                 # if feedback not enabled, save the log to file
@@ -234,8 +242,17 @@ class Monitor(mysupport.MySupport):
         except Exception as e1:
             self.LogError("Error in SendFeedbackInfo: " + str(e1))
 
+    #---------- Monitor::SendRegisters------------------------------------------
+    def SendRegisters(self):
 
-     #---------- process command from email and socket -------------------------------
+        msgbody = ""
+        msgbody += "Version: " + GENMON_VERSION
+        msgbody += self.DictToString(self.Controller.GetStartInfo())
+        msgbody += self.Controller.DisplayRegisters()
+        self.MessagePipe.SendMessage("Generator Monitor Register Submission", msgbody , recipient = self.MaintainerAddress, msgtype = "info")
+        return "Registers submitted"
+
+    #---------- process command from email and socket --------------------------
     def ProcessCommand(self, command, fromsocket = False):
 
         LocalError = False
@@ -299,7 +316,8 @@ class Monitor(mysupport.MySupport):
             #"getexercise"       : [self.Controller.GetParsedExerciseTime, (), True],
             "getregvalue"       : [self.Controller.GetRegValue, (command.lower(),), True],     # only used for debug purposes, read a cached register value
             "readregvalue"      : [self.Controller.ReadRegValue, (command.lower(),), True],    # only used for debug purposes, Read Register Non Cached
-            "getdebug"          : [self.GetDeadThreadName, (), True]                # only used for debug purposes. If a thread crashes it tells you the thread name
+            "getdebug"          : [self.GetDeadThreadName, (), True],           # only used for debug purposes. If a thread crashes it tells you the thread name
+            "sendregisters"     : [self.SendRegisters, (), True]
         }
 
         CommandList = command.split(b' ')    # PYTHON3

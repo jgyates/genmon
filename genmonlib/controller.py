@@ -30,6 +30,7 @@ class GeneratorController(mysupport.MySupport):
         self.NotChanged = 0         # stats for registers
         self.Changed = 0            # stats for registers
         self.TotalChanged = 0.0     # ratio of changed ragisters
+        self.EnableDebug = False    # Used for enabeling debugging 
 
         self.SiteName = "Home"
         # The values "Unknown" are checked to validate conf file items are found

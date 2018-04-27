@@ -3301,7 +3301,8 @@ class Evolution(controller.GeneratorController):
             if config.has_option(ConfigSection, 'sitename'):
                 self.SiteName = config.get(ConfigSection, 'sitename')
 
-            self.SerialPort = config.get(ConfigSection, 'port')
+            if config.has_option(ConfigSection, 'port'):
+                self.SerialPort = config.get(ConfigSection, 'port')
             if config.has_option(ConfigSection, 'address'):
                 self.Address = int(config.get(ConfigSection, 'address'),16)                      # modbus address
             if config.has_option(ConfigSection, 'loglocation'):

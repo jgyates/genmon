@@ -16,6 +16,7 @@ class MyCommon(object):
     def __init__(self):
         self.log = None
         self.Threads = {}       # Dict of mythread objects
+        self.MaintainerAddress = "generatormonitor.software@gmail.com"
         pass
     #------------ MyCommon::StripJson ------------------------------------------
     def StripJson(self, InputString):
