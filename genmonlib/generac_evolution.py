@@ -2495,7 +2495,7 @@ class Evolution(controller.GeneratorController):
                 CurrentLow = int(Value,16)
 
             CurrentFloat = float((CurrentHi << 16) | (CurrentLow))
-            CurrentFloat = CurrentFloat / 10.74
+            CurrentFloat = CurrentFloat / 21.48
 
         return "%.2fA" % CurrentFloat
 
