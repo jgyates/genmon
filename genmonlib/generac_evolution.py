@@ -50,7 +50,7 @@ class Evolution(controller.GeneratorController):
 
         #self.log = log
         # call parent constructor
-        super(Evolution, self).__init__(log)
+        super(Evolution, self).__init__(log, newinstall = newinstall)
         self.Address = 0x9d
         self.SerialPort = "/dev/serial0"
         self.BaudRate = 9600
@@ -2062,8 +2062,10 @@ class Evolution(controller.GeneratorController):
                 outString += "Emergency Stop"
             elif self.BitIsEqual(RegVal, 0x0FFFF, 0x14):        #  Validate on Nexus, occurred when Check Battery Alarm
                 outString += "Check Battery"
+            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x2b):        #  Validate on EvoAC, occurred when Charger Missing AC Warning
+                outString += "Charger Missing AC"
             else:
-                self.FeedbackPipe.SendFeedback("Alarm", Always = True, Message = "Reg 0001 = %08x" % RegVal)
+                self.FeedbackPipe.SendFeedback("Alarm", Always = True, Message = "Reg 0001 = %08x" % RegVal, FullLogs = True )
                 outString += "UNKNOWN ALARM: %08x" % RegVal
 
         return outString
