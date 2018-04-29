@@ -16,9 +16,13 @@ import mythread, mycommon
 #------------ MyPipe class -----------------------------------------------------
 class MyPipe(mycommon.MyCommon):
     #------------ MyPipe::init--------------------------------------------------
-    def __init__(self, name, callback = None, Reuse = False, log = None):
+    def __init__(self, name, callback = None, Reuse = False, log = None, simulation = False):
         self.log = log
         self.BasePipeName = name
+        self.Simulation = simulation
+
+        if self.Simulation:
+            return 
         self.PipeName = os.path.dirname(os.path.realpath(__file__)) + "/" + name
         self.ThreadName = "ReadPipeThread" + self.BasePipeName
         self.Callback = callback
@@ -69,6 +73,10 @@ class MyPipe(mycommon.MyCommon):
                 self.Callback(Value)
     #----------------MyPipe::SendFeedback---------------------------------------
     def SendFeedback(self,Reason, Always = False, Message = None, FullLogs = False):
+
+        if self.Simulation:
+            return
+
         try:
             FeedbackDict = {}
             FeedbackDict["Reason"] = Reason
@@ -84,6 +92,9 @@ class MyPipe(mycommon.MyCommon):
 
     #----------------MyPipe::SendMessage----------------------------------------
     def SendMessage(self,subjectstr, msgstr, recipient = None, files = None, deletefile = False, msgtype = "error"):
+
+        if self.Simulation:
+            return
         try:
             MessageDict = {}
             MessageDict["subjectstr"] = subjectstr
@@ -101,6 +112,9 @@ class MyPipe(mycommon.MyCommon):
 
     #------------ MyPipe::Close-------------------------------------------------
     def Close(self):
+
+        if self.Simulation:
+            return
 
         if not self.Callback == None:
             if self.Threads[self.ThreadName].IsAlive():

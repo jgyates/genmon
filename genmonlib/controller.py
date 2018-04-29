@@ -19,10 +19,11 @@ import mysupport, mypipe
 
 class GeneratorController(mysupport.MySupport):
     #---------------------GeneratorController::__init__-------------------------
-    def __init__(self, log, newinstall = False):
+    def __init__(self, log, newinstall = False, simulation = False):
         super(GeneratorController, self).__init__()
         self.log = log
         self.NewInstall = newinstall
+        self.Simulation = simulation
         self.InitComplete = False
         self.Registers = {}         # dict for registers and values
         self.RegistersUnderTest = {}# dict for registers we are testing
@@ -30,7 +31,7 @@ class GeneratorController(mysupport.MySupport):
         self.NotChanged = 0         # stats for registers
         self.Changed = 0            # stats for registers
         self.TotalChanged = 0.0     # ratio of changed ragisters
-        self.EnableDebug = False    # Used for enabeling debugging 
+        self.EnableDebug = False    # Used for enabeling debugging
 
         self.SiteName = "Home"
         # The values "Unknown" are checked to validate conf file items are found
@@ -43,9 +44,9 @@ class GeneratorController(mysupport.MySupport):
         self.CommAccessLock = threading.RLock()  # lock to synchronize access to the protocol comms
         self.ProgramStartTime = datetime.datetime.now()     # used for com metrics
         self.OutageStartTime = self.ProgramStartTime        # if these two are the same, no outage has occured
-        self.FeedbackPipe = mypipe.MyPipe("Feedback", Reuse = True, log = log)
-        self.MessagePipe = mypipe.MyPipe("Message", Reuse = True, log = log)
 
+        self.FeedbackPipe = mypipe.MyPipe("Feedback", Reuse = True, log = log, simulation = self.Simulation)
+        self.MessagePipe = mypipe.MyPipe("Message", Reuse = True, log = log, simulation = self.Simulation)
     #---------------------GeneratorController::GetConfig------------------------
     # read conf file, used internally, not called by genmon
     # return True on success, else False

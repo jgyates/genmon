@@ -46,11 +46,11 @@ DEFAULT_PICKUP_VOLTAGE = 190
 class Evolution(controller.GeneratorController):
 
     #---------------------Evolution::__init__------------------------
-    def __init__(self, log, newinstall = False):
+    def __init__(self, log, newinstall = False, simulation = False):
 
         #self.log = log
         # call parent constructor
-        super(Evolution, self).__init__(log, newinstall = newinstall)
+        super(Evolution, self).__init__(log, newinstall = newinstall, simulation = simulation)
         self.Address = 0x9d
         self.SerialPort = "/dev/serial0"
         self.BaudRate = 9600
@@ -178,6 +178,13 @@ class Evolution(controller.GeneratorController):
         self.REGLEN = 0
         self.REGMONITOR = 1
 
+        self.SetupClass()
+
+
+    #-------------Evolution:SetupClass------------------------------------
+    def SetupClass(self):
+        if self.Simulation:
+            return
         # read config file
         if not self.GetConfig():
             self.FatalError("Failure in Controller GetConfig: " + str(e1))
@@ -206,8 +213,7 @@ class Evolution(controller.GeneratorController):
         except Exception as e1:
             self.FatalError("Error opening modbus device: " + str(e1))
             return None
-
-    #-------------Evolution:InitDevice------------------------------------
+    #-------------Evolution:InitDevice------------------------------------------
     # One time reads, and read all registers once
     def InitDevice(self):
 
@@ -293,7 +299,7 @@ class Evolution(controller.GeneratorController):
                 self.FatalError("Error in  CheckAlarmThread" + str(e1))
 
     #------------------------------------------------------------
-    def CheckModelSpecificInfo(self):
+    def CheckModelSpecificInfo(self, NoLookUp = False):
 
         if self.NominalFreq == "Unknown" or not len(self.NominalFreq):
             self.NominalFreq = self.GetModelInfo("Frequency")
@@ -323,7 +329,7 @@ class Evolution(controller.GeneratorController):
 
             self.NominalKW = self.GetModelInfo("KW")
 
-            if not self.LookUpSNInfo(SkipKW = (not self.NominalKW == "Unknown")):
+            if not self.LookUpSNInfo(SkipKW = (not self.NominalKW == "Unknown"), NoLookUp = NoLookUp):
                 if self.LiquidCooled:
                     self.Model = "Generic Liquid Cooled"
                     if self.NominalKW == "Unknown":
@@ -431,7 +437,10 @@ class Evolution(controller.GeneratorController):
         return "Unknown"
 
     #------------------------------------------------------------
-    def LookUpSNInfo(self, SkipKW = False):
+    def LookUpSNInfo(self, SkipKW = False, NoLookUp = False):
+
+        if NoLookUp:
+            return False
 
         productId = None
         ModelNumber = None
@@ -545,11 +554,12 @@ class Evolution(controller.GeneratorController):
 
 
     #-------------Evolution:DetectController------------------------------------
-    def DetectController(self):
+    def DetectController(self, Simulation = False):
 
         UnknownController = False
         # issue modbus read
-        self.ModBus.ProcessMasterSlaveTransaction("0000", 1)
+        if not self.Simulation:
+            self.ModBus.ProcessMasterSlaveTransaction("0000", 1)
 
         # read register from cached list.
         Value = self.GetRegisterValueFromList("0000")

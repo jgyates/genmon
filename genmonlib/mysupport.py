@@ -15,12 +15,14 @@ from genmonlib import mycommon
 
 #------------ MySupport class -----------------------------------------------------
 class MySupport(mycommon.MyCommon):
-    def __init__(self):
+    def __init__(self, simulation = False):
         super(MySupport, self).__init__()
+        self.Simulation = simulation
 
     #------------ MySupport::LogToFile-------------------------
     def LogToFile(self, File, TimeDate, Value):
-
+        if self.Simulation:
+            return
         if not len(File):
             return ""
 
@@ -63,6 +65,8 @@ class MySupport(mycommon.MyCommon):
     # Add or update config item
     def AddItemToConfFile(self, Entry, Value):
 
+        if self.Simulation:
+            return
         FileName = "/etc/genmon.conf"
         try:
             Found = False
