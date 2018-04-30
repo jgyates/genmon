@@ -11,8 +11,8 @@
 
 from __future__ import print_function       # For python 3.x compatibility with print function
 
-import datetime, threading, crcmod, sys, time
-import mylog, mythread, myserial, mycommon
+import datetime, threading, crcmod, sys, time, collections
+import mylog, mythread, myserial, mycommon, modbusbase
 
 #--------------------- MODBUS specific Const defines for Generator class
 MBUS_ADDRESS            = 0x00
@@ -32,15 +32,9 @@ MBUS_CMD_READ_REGS      = 0x03
 MBUS_CMD_WRITE_REGS     = 0x10
 
 #------------ ModbusProtocol class --------------------------------------------
-class ModbusProtocol(mycommon.MyCommon):
+class ModbusProtocol(modbusbase.ModbusBase):
     def __init__(self, updatecallback, address = 0x9d, name = "/dev/serial", rate=9600, loglocation = "/var/log/"):
-        super(ModbusProtocol, self).__init__()
-        self.Address = address
-        self.InitComplete = False
-        self.CommAccessLock = threading.RLock()     # lock to synchronize access to the serial port comms
-        self.UpdateRegisterList = updatecallback
-        # log errors in this module to a file
-        self.log = mylog.SetupLogger("mymodbus", loglocation + "mymodbus.log")
+        super(ModbusProtocol, self).__init__(updatecallback = updatecallback, address = address, name = name, rate = rate, loglocation = loglocation)
 
         try:
             #Starting serial connection
@@ -84,10 +78,10 @@ class ModbusProtocol(mycommon.MyCommon):
                     Packet.append(self.Slave.Buffer.pop(0))  # pop Address, Function, Length, message and CRC
 
                 if self.CheckCRC(Packet):
-                    self.Slave.RxPacketCount += 1
+                    self.RxPacketCount += 1
                     return True, Packet
                 else:
-                    self.Slave.CrcError += 1
+                    self.CrcError += 1
                     return False, EmptyPacket
             elif self.Slave.Buffer[MBUS_ADDRESS] == self.Address and self.Slave.Buffer[MBUS_COMMAND] in [MBUS_CMD_WRITE_REGS]:
                 # it must be a write command response
@@ -97,10 +91,10 @@ class ModbusProtocol(mycommon.MyCommon):
                     Packet.append(self.Slave.Buffer.pop(0))    # address, function, address hi, address low, quantity hi, quantity low, CRC high, crc low
 
                 if self.CheckCRC(Packet):
-                    self.Slave.RxPacketCount += 1
+                    self.RxPacketCount += 1
                     return True,Packet
                 else:
-                    self.Slave.CrcError += 1
+                    self.CrcError += 1
                     return False, EmptyPacket
             else:
                 self.DiscardByte()
@@ -159,7 +153,7 @@ class ModbusProtocol(mycommon.MyCommon):
                 RetVal, SlavePacket = self.GetPacketFromSlave()
 
                 if RetVal == True and len(SlavePacket) != 0:    # we receive a packet
-                    self.Slave.TotalElapsedPacketeTime += (self.MillisecondsElapsed(SentTime) / 1000)
+                    self.TotalElapsedPacketeTime += (self.MillisecondsElapsed(SentTime) / 1000)
                     break
                 if RetVal == False:
                     self.LogError("Error Receiving slave packet for register %x%x" % (MasterPacket[2],MasterPacket[3]) )
@@ -174,7 +168,7 @@ class ModbusProtocol(mycommon.MyCommon):
                 # and a 10 byte received with about 5 char times of silence in between should give
                 # us about 25ms
                 if msElapsed > 3000:
-                    self.Slave.ComTimoutError += 1
+                    self.ComTimoutError += 1
                     self.LogError("Error: timeout receiving slave packet for register %x%x Buffer:%d" % (MasterPacket[2],MasterPacket[3], len(self.Slave.Buffer)) )
                     return False
 
@@ -185,7 +179,7 @@ class ModbusProtocol(mycommon.MyCommon):
 
         return True
 
-    # ---------- GeneratorDevice::MillisecondsElapsed------------------
+    # ---------- ModbusProtocol::MillisecondsElapsed------------------
     def MillisecondsElapsed(self, ReferenceTime):
 
         CurrentTime = datetime.datetime.now()
@@ -236,7 +230,7 @@ class ModbusProtocol(mycommon.MyCommon):
 
         ByteArray = bytearray(Packet)
         self.Slave.Write(ByteArray)
-        self.Slave.TxPacketCount += 1
+        self.TxPacketCount += 1
 
     # ---------- ModbusProtocol::UpdateRegistersFromPacket------------------
     #    Update our internal register list based on the request/response packet
@@ -304,6 +298,43 @@ class ModbusProtocol(mycommon.MyCommon):
             results = self.ModbusCrc(ByteArray)
 
         return results
+    # ---------- ModbusProtocol::GetCommStats---------------------------------------
+    def GetCommStats(self):
+        SerialStats = collections.OrderedDict()
+
+        SerialStats["Packet Count"] = "M: %d, S: %d" % (self.TxPacketCount, self.RxPacketCount)
+
+        if self.CrcError == 0 or self.RxPacketCount == 0:
+            PercentErrors = 0.0
+        else:
+            PercentErrors = float(self.CrcError) / float(self.RxPacketCount)
+
+        SerialStats["CRC Errors"] = "%d " % self.CrcError
+        SerialStats["CRC Percent Errors"] = "%.2f" % PercentErrors
+        SerialStats["Packet Timeouts"] = "%d" %  self.ComTimoutError
+        # add serial stats
+        SerialStats["Discarded Bytes"] = "%d" % self.Slave.DiscardedBytes
+        SerialStats["Comm Restarts"] = "%d" % self.Slave.Restarts
+
+        CurrentTime = datetime.datetime.now()
+        #
+        Delta = CurrentTime - self.ModbusStartTime        # yields a timedelta object
+        PacketsPerSecond = float((self.TxPacketCount + self.RxPacketCount)) / float(Delta.total_seconds())
+        SerialStats["Packets Per Second"] = "%.2f" % (PacketsPerSecond)
+
+        if self.RxPacketCount:
+            AvgTransactionTime = float(self.TotalElapsedPacketeTime / self.RxPacketCount)
+            SerialStats["Average Transaction Time"] = "%.4f sec" % (AvgTransactionTime)
+
+        return SerialStats
+
+    # ---------- ModbusProtocol::ResetCommStats------------------
+    def ResetCommStats(self):
+        self.RxPacketCount = 0
+        self.TxPacketCount = 0
+        self.TotalElapsedPacketeTime = 0
+        self.ModbusStartTime = datetime.datetime.now()     # used for com metrics
+        self.Slave.ResetSerialStats()
 
     #------------ModbusProtocol::Flush-----------------------
     def Flush(self):

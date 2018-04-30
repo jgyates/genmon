@@ -23,11 +23,6 @@ class SerialDevice(mycommon.MyCommon):
         self.BaudRate = rate
         self.Buffer = []
         self.BufferLock = threading.Lock()
-        self.RxPacketCount = 0
-        self.TxPacketCount = 0
-        self.ComTimoutError = 0
-        self.TotalElapsedPacketeTime = 0
-        self.CrcError = 0
         self.DiscardedBytes = 0
         self.Restarts = 0
         self.SerialStartTime = datetime.datetime.now()     # used for com metrics
@@ -66,9 +61,6 @@ class SerialDevice(mycommon.MyCommon):
     def ResetSerialStats(self):
         # resets status that are time based (affected by a time change)
         self.SerialStartTime = datetime.datetime.now()     # used for com metrics
-        self.RxPacketCount = 0
-        self.TxPacketCount = 0
-        self.TotalElapsedPacketeTime = 0
     # ---------- SerialDevice::StartReadThread------------------
     def StartReadThread(self):
 

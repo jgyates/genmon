@@ -201,7 +201,7 @@ class Evolution(controller.GeneratorController):
             #Starting device connection
             self.ModBus = mymodbus.ModbusProtocol(self.UpdateRegisterList, self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation)
             self.Threads = self.MergeDicts(self.Threads, self.ModBus.Threads)
-            self.LastRxPacketCount = self.ModBus.Slave.RxPacketCount
+            self.LastRxPacketCount = self.ModBus.RxPacketCount
             self.Threads["CheckAlarmThread"] = mythread.MyThread(self.CheckAlarmThread, Name = "CheckAlarmThread")
             # start read thread to process incoming data commands
             self.Threads["ProcessThread"] = mythread.MyThread(self.ProcessThread, Name = "ProcessThread")
@@ -3366,15 +3366,15 @@ class Evolution(controller.GeneratorController):
     # Called every 2 seconds
     def ComminicationsIsActive(self):
 
-        if self.LastRxPacketCount == self.ModBus.Slave.RxPacketCount:
+        if self.LastRxPacketCount == self.ModBus.RxPacketCount:
             return False
         else:
-            self.LastRxPacketCount = self.ModBus.Slave.RxPacketCount
+            self.LastRxPacketCount = self.ModBus.RxPacketCount
             return True
 
     #----------  Evolution::ResetCommStats  --------------------------------------
     def ResetCommStats(self):
-        self.ModBus.Slave.ResetSerialStats()
+        self.ModBus.ResetCommStats()
 
     #----------  Evolution::DebugThreadControllerFunction  ----------------------
     def DebugThreadControllerFunction(self):
@@ -3403,34 +3403,8 @@ class Evolution(controller.GeneratorController):
 
     #----------  Evolution:GetCommStatus  ------------------------------
     def GetCommStatus(self):
-        SerialStats = collections.OrderedDict()
+        return self.ModBus.GetCommStats()
 
-        SerialStats["Packet Count"] = "M: %d, S: %d, Buffer Count: %d" % (self.ModBus.Slave.TxPacketCount, self.ModBus.Slave.RxPacketCount, len(self.ModBus.Slave.Buffer))
-
-        if self.ModBus.Slave.CrcError == 0 or self.ModBus.Slave.RxPacketCount == 0:
-            PercentErrors = 0.0
-        else:
-            PercentErrors = float(self.ModBus.Slave.CrcError) / float(self.ModBus.Slave.RxPacketCount)
-
-        SerialStats["CRC Errors"] = "%d " % self.ModBus.Slave.CrcError
-        SerialStats["CRC Percent Errors"] = "%.2f" % PercentErrors
-        SerialStats["Discarded Bytes"] = "%d" % self.ModBus.Slave.DiscardedBytes
-        SerialStats["Serial Restarts"] = "%d" % self.ModBus.Slave.Restarts
-        SerialStats["Serial Timeouts"] = "%d" %  self.ModBus.Slave.ComTimoutError
-
-        CurrentTime = datetime.datetime.now()
-
-        #
-        Delta = CurrentTime - self.ModBus.Slave.SerialStartTime        # yields a timedelta object
-        PacketsPerSecond = float((self.ModBus.Slave.TxPacketCount + self.ModBus.Slave.RxPacketCount)) / float(Delta.total_seconds())
-        SerialStats["Packets Per Second"] = "%.2f" % (PacketsPerSecond)
-
-        if self.ModBus.Slave.RxPacketCount:
-            AvgTransactionTime = float(self.ModBus.Slave.TotalElapsedPacketeTime / self.ModBus.Slave.RxPacketCount)
-            SerialStats["Average Transaction Time"] = "%.4f sec" % (AvgTransactionTime)
-
-
-        return SerialStats
     #----------  Evolution::Close-------------------------------
     def Close(self):
         if self.ModBus.DeviceInit:
