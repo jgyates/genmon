@@ -12,7 +12,7 @@
 
 from __future__ import print_function       # For python 3.x compatibility with print function
 
-import datetime, time, sys, smtplib, signal, os, threading, socket
+import datetime, time, sys, signal, os, threading, socket
 import atexit, json, collections, random
 import httplib, re
 

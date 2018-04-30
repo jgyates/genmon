@@ -9,8 +9,8 @@
 # MODIFICATIONS:
 #------------------------------------------------------------
 
-import datetime, time, sys, smtplib, signal, os, threading, socket
-import atexit, json, collections, random
+import datetime, time, sys, os, threading, socket
+import json, collections
 import httplib, re
 
 try:
