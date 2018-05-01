@@ -43,7 +43,7 @@ if __name__=='__main__': #
     HelpStr += "\n"
     HelpStr += "\n      -r  Baud rate of serial port (9600, 115300, etc)"
     HelpStr += "\n      -p  Operating System device name of the serail port (/dev/serial0)"
-    HelpStr += "\n      -a  Modbus address to query in hexidecimal. (e.g. 9d, 10, ff)"
+    HelpStr += "\n      -a  Modbus address to query in hexidecimal, 0 - ff. (e.g. 9d, 10, ff)"
     HelpStr += "\n      -s  Starting modbus register to read (decimal number)"
     HelpStr += "\n      -e  Ending modbus register to read (decimal number, must be greater than start register)"
     HelpStr += "\n \n"
@@ -79,7 +79,7 @@ if __name__=='__main__': #
         print HelpStr
         sys.exit(2)
 
-    if device == None or baudrate == None or startregister == None or endregister == None or modbusaddress == None or startregister > endregister:
+    if device == None or baudrate == None or startregister == None or endregister == None or modbusaddress == None or startregister > endregister or modbusaddress > 255:
         print HelpStr
         sys.exit(2)
 
