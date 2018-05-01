@@ -155,7 +155,7 @@ class GeneratorController(mysupport.MySupport):
 
     #----------  GeneratorController:ResetCommStats  ---------------------------
     # reset communication stats, normally just a call to
-    #   self.ModBus.Slave.ResetSerialStats() if serial modbus is used
+    #   self.ModBus.ResetCommStats() if modbus is used
     def ResetCommStats(self):
         pass
 
