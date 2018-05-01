@@ -174,34 +174,6 @@ class GeneratorController(mysupport.MySupport):
     #----------  GeneratorController:GetCommStatus  ----------------------------
     # return Dict with communication stats
     def GetCommStatus(self):
-        """
-        CommStats = collections.OrderedDict()
-        SerialStats["Packet Count"] = "M: %d, S: %d, Buffer Count: %d" % (self.ModBus.Slave.TxPacketCount, self.ModBus.Slave.RxPacketCount, len(self.ModBus.Slave.Buffer))
-
-        if self.ModBus.Slave.CrcError == 0 or self.ModBus.Slave.RxPacketCount == 0:
-            PercentErrors = 0.0
-        else:
-            PercentErrors = float(self.ModBus.Slave.CrcError) / float(self.ModBus.Slave.RxPacketCount)
-
-        SerialStats["CRC Errors"] = "%d " % self.ModBus.Slave.CrcError
-        SerialStats["CRC Percent Errors"] = "%.2f" % PercentErrors
-        SerialStats["Discarded Bytes"] = "%d" % self.ModBus.Slave.DiscardedBytes
-        SerialStats["Serial Restarts"] = "%d" % self.ModBus.Slave.Restarts
-        SerialStats["Serial Timeouts"] = "%d" %  self.ModBus.Slave.ComTimoutError
-
-        CurrentTime = datetime.datetime.now()
-
-        #
-        Delta = CurrentTime - self.ModBus.Slave.SerialStartTime        # yields a timedelta object
-        PacketsPerSecond = float((self.ModBus.Slave.TxPacketCount + self.ModBus.Slave.RxPacketCount)) / float(Delta.total_seconds())
-        SerialStats["Packets Per Second"] = "%.2f" % (PacketsPerSecond)
-
-        if self.ModBus.Slave.RxPacketCount:
-            AvgTransactionTime = float(self.ModBus.Slave.TotalElapsedPacketeTime / self.ModBus.Slave.RxPacketCount)
-            SerialStats["Average Transaction Time"] = "%.4f sec" % (AvgTransactionTime)
-
-        return SerialStats
-        """
         pass
 
     #------------ GeneratorController:GetBaseStatus ----------------------------
