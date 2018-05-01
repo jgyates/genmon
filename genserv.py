@@ -383,7 +383,7 @@ def ReadSettingsFromFile():
 
                 "imap_server" : ['string', 'IMAP Server <br><small>(leave emtpy to disable)</small>', 401, "imap.gmail.com", "", "InternetAddress"],
                 "incoming_mail_folder" : ['string', 'Incoming Mail Folder<br><small>(if IMAP enabled)</small>', 402, "Generator", "", "minmax:1:255"],
-                "processed_mail_folder" : ['string', 'Mail Processed Folder<br><small>(if IMAP enabled)</small>', 403, "Generator/Processed","", "minmax:11:50"]
+                "processed_mail_folder" : ['string', 'Mail Processed Folder<br><small>(if IMAP enabled)</small>', 403, "Generator/Processed","", "minmax:1:255"]
                 }
 
 
