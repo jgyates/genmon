@@ -228,9 +228,13 @@ class ModbusProtocol(modbusbase.ModbusBase):
     #-------------ModbusProtocol::SendPacketAsMaster---------------------------------
     def SendPacketAsMaster(self, Packet):
 
-        ByteArray = bytearray(Packet)
-        self.Slave.Write(ByteArray)
-        self.TxPacketCount += 1
+        try:
+            ByteArray = bytearray(Packet)
+            self.Slave.Write(ByteArray)
+            self.TxPacketCount += 1
+        except Exception as e1:
+            self.LogError("Error in SendPacketAsMaster: " + str(e1))
+            self.LogError("Packet: " + str(Packet))
 
     # ---------- ModbusProtocol::UpdateRegistersFromPacket------------------
     #    Update our internal register list based on the request/response packet
@@ -270,34 +274,43 @@ class ModbusProtocol(modbusbase.ModbusBase):
      #------------ModbusProtocol::CheckCrc---------------------
     def CheckCRC(self, Packet):
 
-        if len(Packet) == 0:
-            return False
-        ByteArray = bytearray(Packet[:len(Packet)-2])
+        try:
+            if len(Packet) == 0:
+                return False
+            ByteArray = bytearray(Packet[:len(Packet)-2])
 
-        if sys.version_info[0] < 3:
-            results = self.ModbusCrc(str(ByteArray))
-        else:   # PYTHON3
-            results = self.ModbusCrc(ByteArray)
+            if sys.version_info[0] < 3:
+                results = self.ModbusCrc(str(ByteArray))
+            else:   # PYTHON3
+                results = self.ModbusCrc(ByteArray)
 
-        CRCValue = ( ( Packet[-1] & 0xFF ) << 8 ) | ( Packet[ -2] & 0xFF )
-        if results != CRCValue:
-            self.LogError("Data Error: CRC check failed: %04x  %04x" % (results, CRCValue))
+            CRCValue = ( ( Packet[-1] & 0xFF ) << 8 ) | ( Packet[ -2] & 0xFF )
+            if results != CRCValue:
+                self.LogError("Data Error: CRC check failed: %04x  %04x" % (results, CRCValue))
+                return False
+            return True
+        except Exception as e1:
+            self.LogError("Error in CheckCRC: " + str(e1))
+            self.LogError("Packet: " + str(Packet))
             return False
-        return True
 
      #------------ModbusProtocol::GetCRC---------------------
     def GetCRC(self, Packet):
+        try:
+            if len(Packet) == 0:
+                return False
+            ByteArray = bytearray(Packet)
 
-        if len(Packet) == 0:
-            return False
-        ByteArray = bytearray(Packet)
+            if sys.version_info[0] < 3:
+                results = self.ModbusCrc(str(ByteArray))
+            else:   # PYTHON3
+                results = self.ModbusCrc(ByteArray)
 
-        if sys.version_info[0] < 3:
-            results = self.ModbusCrc(str(ByteArray))
-        else:   # PYTHON3
-            results = self.ModbusCrc(ByteArray)
-
-        return results
+            return results
+        except Exception as e1:
+            self.LogError("Error in GetCRC: " + str(e1))
+            self.LogError("Packet: " + str(Packet))
+            return 0
     # ---------- ModbusProtocol::GetCommStats---------------------------------------
     def GetCommStats(self):
         SerialStats = collections.OrderedDict()
