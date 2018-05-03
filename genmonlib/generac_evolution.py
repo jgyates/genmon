@@ -2048,6 +2048,7 @@ class Evolution(controller.GeneratorController):
         AlarmValues = {
          0x01 : "Low Battery",          #  Validate on Nexus, occurred when Low Battery Alarm
          0x08 : "Low Coolant",          #  Validate on Evolution, occurred when forced low coolant
+         0x0c : "Overspeed",            #  Validated on Nexus AC
          0x0d : "RPM Sense Loss",       #  Validate on Evolution, occurred when forcing RPM sense loss from manual start
          0x14 : "Check Battery",        #  Validate on Nexus, occurred when Check Battery Alarm
          0x1f : "Service Due",          #  Validate on Evolution, occurred when forced service due
