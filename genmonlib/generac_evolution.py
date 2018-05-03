@@ -67,12 +67,10 @@ class Evolution(controller.GeneratorController):
         # read from conf file
         self.bDisplayUnknownSensors = False
         self.bUseLegacyWrite = False        # Nexus will set this to True
-        self.DisableOutageCheck = False
         self.bEnhancedExerciseFrequency = False     # True if controller supports biweekly and monthly exercise times
+        self.CurrentDivider = None
         # Used for housekeeping
-        self.CommAccessLock = threading.RLock()  # lock to synchronize access to the protocol comms
         self.CheckForAlarmEvent = threading.Event() # Event to signal checking for alarm
-        self.OutageLog = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/outage.txt"
         self.ModBus = None
 
 
@@ -735,7 +733,7 @@ class Evolution(controller.GeneratorController):
         else:
             return "Invalid command syntax for command setremote (2)"
 
-        with self.CommAccessLock:
+        with self.ModBus.CommAccessLock:
             #
             LowByte = Value & 0x00FF
             HighByte = Value >> 8
@@ -875,7 +873,7 @@ class Evolution(controller.GeneratorController):
 
         WriteValue = self.CalculateExerciseTime(total_delta_min)
 
-        with self.CommAccessLock:
+        with self.ModBus.CommAccessLock:
             #  have seen the following values 0cf6,0f8c,0f5e
             Last = WriteValue & 0x00FF
             First = WriteValue >> 8
@@ -933,7 +931,7 @@ class Evolution(controller.GeneratorController):
                 self.LogError("Validation Error: Biweekly and Monthly Exercises are not supported. " + CmdString)
                 return msgbody
 
-        with self.CommAccessLock:
+        with self.ModBus.CommAccessLock:
 
             if self.bEnhancedExerciseFrequency:
                 Data = []
@@ -1087,8 +1085,7 @@ class Evolution(controller.GeneratorController):
         Data= []
         Data.append(0x00)
         Data.append(ModeValue)
-        with self.CommAccessLock:
-            self.ModBus.ProcessMasterSlaveWriteTransaction("002f", len(Data) / 2, Data)
+        self.ModBus.ProcessMasterSlaveWriteTransaction("002f", len(Data) / 2, Data)
 
         return "Set Quiet Mode Command sent"
 
@@ -1115,7 +1112,6 @@ class Evolution(controller.GeneratorController):
         # Note: Day of week should always be zero when setting time
         Data.append(0)                  #0010
         Data.append(d.year - 2000)
-
         self.ModBus.ProcessMasterSlaveWriteTransaction("000e", len(Data) / 2, Data)
 
     #------------ Evolution:GetRegisterLength --------------------------------------------
@@ -1541,9 +1537,6 @@ class Evolution(controller.GeneratorController):
                 Sensors["Hours of Protection"] = StrVal
 
         if self.EvolutionController and not self.LiquidCooled:
-            Sensors["Output Current"] = self.GetCurrentOutput()
-            Sensors["Output Power (Single Phase)"] = self.GetPowerOutput()
-
             if self.EvolutionController:
                 Value = self.GetUnknownSensor("05f6")
                 if len(Value):
@@ -1826,7 +1819,9 @@ class Evolution(controller.GeneratorController):
         0x0C: "Canbus Error",               # Validated on Nexus Liquid Cooled
         0x0F: "Govenor Fault",              # Validated on Nexus Liquid Cooled
         0x14: "Low Battery",                # Validated on Nexus Air Cooled
-        0x17: "Inspect Air Filter",         # Validated on Nexus Liquid Cooled
+        0x16: "Change Oil & Filter",        # Validated on Nexus Air Cooled
+        0x17: "Inspect Air Filter",         # Validated on Nexus Air Cooled
+        0x19: "Inspect Spark Plugs",        # Validated on Nexus Air Cooled
         0x1b: "Check Battery",              # Validated on Nexus Air Cooled
         0x1E: "Low Fuel Pressure",          # Validated on Nexus Liquid Cooled
         0x21: "Service Schedule A",         # Validated on Nexus Liquid Cooled
@@ -2505,7 +2500,12 @@ class Evolution(controller.GeneratorController):
                 CurrentLow = int(Value,16)
 
             CurrentFloat = float((CurrentHi << 16) | (CurrentLow))
-            CurrentFloat = CurrentFloat / 21.48
+            if self.CurrentDivider == None or self.CurrentDivider < 1:
+                Divisor = (22 / self.NominalKW) * 22
+            else:
+                Divisor = self.CurrentDivisor
+            CurrentFloat = CurrentFloat / Divisor
+            #CurrentFloat = CurrentFloat / 21.48
 
         return "%.2fA" % CurrentFloat
 
@@ -3241,7 +3241,7 @@ class Evolution(controller.GeneratorController):
         Engine["Frequency"] = self.GetFrequency()
         Engine["Output Voltage"] = self.GetVoltageOutput()
 
-        if self.EvolutionController and self.LiquidCooled:
+        if self.EvolutionController:
             Engine["Output Current"] = self.GetCurrentOutput()
             Engine["Output Power (Single Phase)"] = self.GetPowerOutput()
 
@@ -3341,6 +3341,9 @@ class Evolution(controller.GeneratorController):
 
             if config.has_option(ConfigSection, 'enhancedexercise'):
                 self.bEnhancedExerciseFrequency = config.getboolean(ConfigSection, 'enhancedexercise')
+
+            if config.has_option(ConfigSection, 'currentdivider'):
+                self.CurrentDivider = config.getfloat(ConfigSection, 'currentdivider')
 
             if config.has_option(ConfigSection, 'nominalfrequency'):
                 self.NominalFreq = config.get(ConfigSection, 'nominalfrequency')

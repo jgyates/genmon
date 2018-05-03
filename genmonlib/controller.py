@@ -13,7 +13,7 @@
 #
 #-------------------------------------------------------------------------------
 
-import threading, datetime, collections
+import threading, datetime, collections, os
 # NOTE: collections OrderedDict is used for dicts that are displayed to the UI
 import mysupport, mypipe
 
@@ -32,7 +32,8 @@ class GeneratorController(mysupport.MySupport):
         self.Changed = 0            # stats for registers
         self.TotalChanged = 0.0     # ratio of changed ragisters
         self.EnableDebug = False    # Used for enabeling debugging
-
+        self.OutageLog = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/outage.txt"
+        self.DisableOutageCheck = False
         self.SiteName = "Home"
         # The values "Unknown" are checked to validate conf file items are found
         self.FuelType = "Unknown"
