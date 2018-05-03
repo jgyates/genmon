@@ -12,10 +12,10 @@
 from __future__ import print_function       # For python 3.x compatibility with print function
 
 import datetime, threading, crcmod, sys, time
-import mylog, mythread, mycommon
+import mylog, mythread, mysupport
 
 #------------ ModbusBase class --------------------------------------------
-class ModbusBase(mycommon.MyCommon):
+class ModbusBase(mysupport.MySupport ):
     def __init__(self, updatecallback, address = 0x9d, name = "/dev/serial", rate=9600, loglocation = "/var/log/"):
         super(ModbusBase, self).__init__()
         self.Address = address
@@ -58,7 +58,7 @@ class ModbusBase(mycommon.MyCommon):
         SerialStats["CRC Errors"] = "%d " % self.CrcError
         SerialStats["CRC Percent Errors"] = "%.2f" % PercentErrors
         SerialStats["Packet Timeouts"] = "%d" %  self.ComTimoutError
-        # Add serial stats here 
+        # Add serial stats here
 
         CurrentTime = datetime.datetime.now()
 

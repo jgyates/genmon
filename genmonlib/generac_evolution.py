@@ -59,10 +59,7 @@ class Evolution(controller.GeneratorController):
         self.LiquidCooled = None
         # State Info
         self.GeneratorInAlarm = False       # Flag to let the heartbeat thread know there is a problem
-        self.SystemInOutage = False         # Flag to signal utility power is out
         self.TransferActive = False         # Flag to signal transfer switch is allowing gen supply power
-        self.UtilityVoltsMin = 0    # Minimum reported utility voltage above threshold
-        self.UtilityVoltsMax = 0    # Maximum reported utility voltage above pickup
         self.LastAlarmValue = 0xFF  # Last Value of the Alarm / Status Register
         # read from conf file
         self.bDisplayUnknownSensors = False
@@ -1991,7 +1988,7 @@ class Evolution(controller.GeneratorController):
 
         return "%010x" % SerialNumberHex
 
-     #------------ Evolution:GetTransferStatus --------------------------------------
+    #------------ Evolution:GetTransferStatus --------------------------------------
     def GetTransferStatus(self):
 
         if not self.EvolutionController:
@@ -2047,31 +2044,25 @@ class Evolution(controller.GeneratorController):
                 if not "unknown" in AlarmStr.lower():
                     outString = AlarmStr
 
+        # These codes indicate an alarm needs to be reset before the generator will run again
+        AlarmValues = {
+         0x01 : "Low Battery",          #  Validate on Nexus, occurred when Low Battery Alarm
+         0x08 : "Low Coolant",          #  Validate on Evolution, occurred when forced low coolant
+         0x0d : "RPM Sense Loss",       #  Validate on Evolution, occurred when forcing RPM sense loss from manual start
+         0x14 : "Check Battery",        #  Validate on Nexus, occurred when Check Battery Alarm
+         0x1f : "Service Due",          #  Validate on Evolution, occurred when forced service due
+         0x20 : "Service Complete",     #  Validate on Evolution, occurred when service reset
+         0x2b : "Charger Missing AC",   #  Validate on EvoAC, occurred when Charger Missing AC Warning
+         0x30 : "Ruptured Tank",        #  Validate on Evolution, occurred when forced ruptured tank
+         0x31 : "Low Fuel Level",       #  Validate on Evolution, occurred when Low Fuel Level
+         0x34 : "Emergency Stop"        #  Validate on Evolution, occurred when E-Stop
+        }
+
         if "alarm" in strSwitch.lower() and len(outString) == 0:        # is system in alarm/warning
-            # These codes indicate an alarm needs to be reset before the generator will run again
-            if self.BitIsEqual(RegVal, 0x0FFFF, 0x01):          #  Validate on Nexus, occurred when Low Battery Alarm
-                outString += "Low Battery"
-            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x08):        #  Validate on Evolution, occurred when forced low coolant
-                outString += "Low Coolant"
-            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x0d):        #  Validate on Evolution, occurred when forcing RPM sense loss from manual start
-                outString += "RPM Sense Loss"
-            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x1F):        #  Validate on Evolution, occurred when forced service due
-                outString += "Service Due"
-            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x20):        #  Validate on Evolution, occurred when service reset
-                outString += "Service Complete"
-            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x30):        #  Validate on Evolution, occurred when forced ruptured tank
-                outString += "Ruptured Tank"
-            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x31):        #  Validate on Evolution, occurred when Low Fuel Level
-                outString += "Low Fuel Level"
-            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x34):        #  Validate on Evolution, occurred when E-Stop
-                outString += "Emergency Stop"
-            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x14):        #  Validate on Nexus, occurred when Check Battery Alarm
-                outString += "Check Battery"
-            elif self.BitIsEqual(RegVal, 0x0FFFF, 0x2b):        #  Validate on EvoAC, occurred when Charger Missing AC Warning
-                outString += "Charger Missing AC"
-            else:
+
+            outString += AlarmValues.get(RegVal & 0x0FFFF, "UNKNOWN ALARM: %08x" % RegVal)
+            if "unknown" in outString.lower():
                 self.FeedbackPipe.SendFeedback("Alarm", Always = True, Message = "Reg 0001 = %08x" % RegVal, FullLogs = True )
-                outString += "UNKNOWN ALARM: %08x" % RegVal
 
         return outString
 

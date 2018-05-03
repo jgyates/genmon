@@ -34,6 +34,9 @@ class GeneratorController(mysupport.MySupport):
         self.EnableDebug = False    # Used for enabeling debugging
         self.OutageLog = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/outage.txt"
         self.DisableOutageCheck = False
+        self.UtilityVoltsMin = 0    # Minimum reported utility voltage above threshold
+        self.UtilityVoltsMax = 0    # Maximum reported utility voltage above pickup
+        self.SystemInOutage = False         # Flag to signal utility power is out
         self.SiteName = "Home"
         # The values "Unknown" are checked to validate conf file items are found
         self.FuelType = "Unknown"
