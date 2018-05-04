@@ -2492,7 +2492,7 @@ class Evolution(controller.GeneratorController):
 
             CurrentFloat = float((CurrentHi << 16) | (CurrentLow))
             if self.CurrentDivider == None or self.CurrentDivider < 1:
-                Divisor = (22 / self.NominalKW) * 22
+                Divisor = (22 / int(self.NominalKW)) * 22
             else:
                 Divisor = self.CurrentDivisor
             CurrentFloat = CurrentFloat / Divisor
@@ -3289,6 +3289,8 @@ class Evolution(controller.GeneratorController):
         StartInfo["nominalRPM"] = self.NominalRPM
         StartInfo["nominalfrequency"] = self.NominalFreq
         StartInfo["Controller"] = self.GetController(Actual = False)
+        StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
+        StartInfo["QuietMode"] = True
 
         return StartInfo
 
