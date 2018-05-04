@@ -139,7 +139,7 @@ def ProcessCommand(command):
         return "OK"
 
     elif command in ["getfavicon"]:
-        return jsonify(favicon);
+        return jsonify(favicon)
 
     elif command in ["notifications"]:
         data = ReadNotificationsFromFile()
@@ -150,12 +150,11 @@ def ProcessCommand(command):
         return jsonify(data)
 
     elif command in ["setnotifications"]:
-        SaveNotifications(request.args.get('setnotifications', 0, type=str));
+        SaveNotifications(request.args.get('setnotifications', 0, type=str))
         return "OK"
 
     elif command in ["setsettings"]:
-        # SaveSettings((request.args.get('setsettings', 0, type=str)));
-        SaveSettings(request.args.get('setsettings', 0, type=str));
+        SaveSettings(request.args.get('setsettings', 0, type=str))
         return "OK"
     elif command in ["getreglabels"]:
         return jsonify(GetRegisterDescriptions("generac_evo_nexus"))
@@ -181,8 +180,8 @@ def SaveNotifications(query_string):
               if (parts and (len(parts) >= 5) and parts[3] and (not parts[3].isspace()) and parts[2] and (parts[2] == "email_recipient")):
                  oldEmails = parts[4].split(",")
 
-        activeSection = 0;
-        skip = 0;
+        activeSection = 0
+        skip = 0
         # Write contents to file.
         # Using mode 'w' truncates the file.
         file_handle = open(MAIL_CONFIG, 'w')
@@ -204,7 +203,7 @@ def SaveNotifications(query_string):
                   myList[1] = ""
                   myList[4] = notifications_order_string
                   line = "".join(myList)
-                  activeSection = 1;
+                  activeSection = 1
            else:
               if (activeSection == 1):
                  for email in notifications.keys():
