@@ -157,7 +157,8 @@ def ProcessCommand(command):
         # SaveSettings((request.args.get('setsettings', 0, type=str)));
         SaveSettings(request.args.get('setsettings', 0, type=str));
         return "OK"
-
+    elif command in ["getreglabels"]:
+        return jsonify(GetRegisterDescriptions("generac_evo_nexus"))
     else:
         return render_template('command_template.html', command = command)
 
@@ -396,6 +397,20 @@ def ReadSettingsFromFile():
     GetToolTips(ConfigSettings)
 
     return ConfigSettings
+
+
+#------------------------------------------------------------
+def GetRegisterDescriptions(config_section):
+
+    pathtofile = os.path.dirname(os.path.realpath(__file__))
+    ReturnDict = {}
+
+    config = RawConfigParser()
+    config.read(pathtofile + "/tooltips.txt")
+    for (key, value) in config.items(config_section):
+        ReturnDict[key] = value
+
+    return ReturnDict
 
 #------------------------------------------------------------
 def GetToolTips(ConfigSettings):
