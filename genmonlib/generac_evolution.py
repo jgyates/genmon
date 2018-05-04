@@ -59,7 +59,6 @@ class Evolution(controller.GeneratorController):
         self.LiquidCooled = None
         # State Info
         self.GeneratorInAlarm = False       # Flag to let the heartbeat thread know there is a problem
-        self.TransferActive = False         # Flag to signal transfer switch is allowing gen supply power
         self.LastAlarmValue = 0xFF  # Last Value of the Alarm / Status Register
         # read from conf file
         self.bDisplayUnknownSensors = False
@@ -3271,6 +3270,10 @@ class Evolution(controller.GeneratorController):
 
         Status["basestatus"] = self.GetBaseStatus()
         Status["kwOutput"] = self.GetPowerOutput()
+        Status["OutputVoltage"] = self.GetVoltageOutput()
+        Status["BatteryVoltage"] = self.GetBatteryVoltage()
+        Status["UtilityVoltage"] = self.GetUtilityVoltage()
+        Status["RPM"] = self.GetRPM()
         Status["ExerciseInfo"] = self.GetParsedExerciseTime(True)
         return Status
 

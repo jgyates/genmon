@@ -102,7 +102,7 @@ def ProcessCommand(command):
         "logs", "logs_json", "monitor", "monitor_json", "registers_json", "allregs_json",
         "start_info_json", "gui_status_json", "power_log_json", "power_log_clear",
         "getbase", "getsitename","setexercise", "setquiet", "getexercise", "setremote",
-        "settime"]:
+        "settime", "sendregisters"]:
         finalcommand = "generator: " + command
         try:
             if command == "setexercise":

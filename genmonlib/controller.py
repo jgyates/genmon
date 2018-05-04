@@ -37,6 +37,7 @@ class GeneratorController(mysupport.MySupport):
         self.UtilityVoltsMin = 0    # Minimum reported utility voltage above threshold
         self.UtilityVoltsMax = 0    # Maximum reported utility voltage above pickup
         self.SystemInOutage = False         # Flag to signal utility power is out
+        self.TransferActive = False         # Flag to signal transfer switch is allowing gen supply power
         self.SiteName = "Home"
         # The values "Unknown" are checked to validate conf file items are found
         self.FuelType = "Unknown"
