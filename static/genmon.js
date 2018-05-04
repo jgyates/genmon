@@ -818,6 +818,8 @@ function DisplayMonitor(){
         var outstr = json2html(result, "", "root");
         outstr += '<br><br>Update Generator Monitor Software:<br><br>';
         outstr += '&nbsp;&nbsp;<button id="checkNewVersion" onClick="checkNewVersion();">Upgrade to latest version</button>';
+        outstr += '<br><br>Submit Registers to Developers:<br><br>';
+        outstr += '&nbsp;&nbsp;<button id="submitRegisters" onClick="submitRegisters();">Submit Registers</button>';
 
         $("#mydisplay").html(outstr);
         currentVersion = result["Monitor"]["Generator Monitor Stats"]["Generator Monitor Version"];
@@ -915,18 +917,28 @@ function updateSoftware(){
     });
 }
 
+function submitRegisters(){
+    vex.dialog.confirm({
+        unsafeMessage: 'Send the contents of your generator registers to the developer for compatibility testing?<br>',
+        overlayClosesOnClick: false,
+        callback: function (value) {
+             if (value == false) {
+                return;
+             } else {
+                var url = baseurl.concat("sendregisters");
+                $.getJSON(  url,
+                   {},
+                   function(result){});
+             }
+        }
+    });
+}
 
 //*****************************************************************************
 // Display the Notification Tab
 //*****************************************************************************
 
 // Additional Carriers are listed here: https://teamunify.uservoice.com/knowledgebase/articles/57460-communication-email-to-sms-gateway-list
-var textServers = {s01_email:      ["Email", "images/option1.png", ""],
-                   s02_att:        ["AT&T", "images/option2.png", "@txt.att.net"],
-                   s03_verizon:    ["Verizon", "images/option3.png", "@vtext.com"],
-                   s04_tmobile:    ["T-Mobile USA", "images/option4.png", "@tmomail.net"],
-                   s05_sprint:     ["Sprint", "images/option5.png", "@messaging.sprintpcs.com"],
-                   s06_boost:      ["Boost Mobile", "images/option6.png", "@myboostmobile.com"]};
 
 function DisplayNotifications(){
     var url = baseurl.concat("notifications");
