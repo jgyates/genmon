@@ -56,6 +56,7 @@ class Monitor(mysupport.MySupport):
         self.bSyncTime = False          # Sync gen to system time
         self.bSyncDST = False           # sync time at DST change
         self.bDST = False               # Daylight Savings Time active if True
+        self.bSimulation = False
 
         # read config file
         if not self.GetConfig():
@@ -83,7 +84,9 @@ class Monitor(mysupport.MySupport):
 
         try:
             #Starting device connection
-            self.Controller = generac_evolution.Evolution(self.log, self.NewInstall)
+            if self.bSimulation:
+                self.LogError("Simulation Running")
+            self.Controller = generac_evolution.Evolution(self.log, self.NewInstall, simulation = self.bSimulation)
             self.Threads = self.MergeDicts(self.Threads, self.Controller.Threads)
 
         except Exception as e1:
@@ -119,7 +122,7 @@ class Monitor(mysupport.MySupport):
 
         if self.bSyncDST or self.bSyncTime:     # Sync time thread
             self.Threads["TimeSyncThread"] = mythread.MyThread(self.TimeSyncThread, Name = "TimeSyncThread")
-        
+
     # -------------------- Monitor::GetConfig-----------------------------------
     def GetConfig(self, reload = False):
 
@@ -159,6 +162,9 @@ class Monitor(mysupport.MySupport):
             if config.has_option(ConfigSection, 'synctime'):
                 self.bSyncTime = config.getboolean(ConfigSection, 'synctime')
 
+            if config.has_option(ConfigSection, 'simulation'):
+                self.bSimulation = config.getboolean(ConfigSection, 'simulation')
+
             if config.has_option(ConfigSection, 'version'):
                 self.Version = config.get(ConfigSection, 'version')
                 if not self.Version == GENMON_VERSION:
@@ -179,7 +185,7 @@ class Monitor(mysupport.MySupport):
 
         except Exception as e1:
             if not reload:
-                self.FatalError("Missing config file or config file entries: " + str(e1))
+                raise Exception("Missing config file or config file entries: " + str(e1))
             else:
                 self.LogErrorLine("Error reloading config file" + str(e1))
             return False
@@ -248,7 +254,7 @@ class Monitor(mysupport.MySupport):
         msgbody = ""
         msgbody += "Version: " + GENMON_VERSION
         msgbody += self.DictToString(self.Controller.GetStartInfo())
-        msgbody += self.Controller.DisplayRegisters()
+        msgbody += self.Controller.DisplayRegisters(AllRegs = True)
         self.MessagePipe.SendMessage("Generator Monitor Register Submission", msgbody , recipient = self.MaintainerAddress, msgtype = "info")
         return "Registers submitted"
 

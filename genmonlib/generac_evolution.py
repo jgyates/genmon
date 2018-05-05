@@ -10,7 +10,7 @@
 #------------------------------------------------------------
 
 import datetime, time, sys, os, threading, socket
-import json, collections, math 
+import json, collections, math
 import httplib, re
 
 try:
@@ -18,7 +18,7 @@ try:
 except ImportError as e:
     from configparser import RawConfigParser
 
-import controller, mymodbus, mythread
+import controller, mymodbus, mythread, modbus_file
 
 
 #-------------------Generator specific const defines for Generator class
@@ -177,8 +177,7 @@ class Evolution(controller.GeneratorController):
 
     #-------------Evolution:SetupClass------------------------------------
     def SetupClass(self):
-        if self.Simulation:
-            return
+
         # read config file
         if not self.GetConfig():
             self.FatalError("Failure in Controller GetConfig: " + str(e1))
@@ -193,7 +192,10 @@ class Evolution(controller.GeneratorController):
 
         try:
             #Starting device connection
-            self.ModBus = mymodbus.ModbusProtocol(self.UpdateRegisterList, self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation)
+            if self.Simulation:
+                self.ModBus = modbus_file.ModbusFile(self.UpdateRegisterList, self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation)
+            else:
+                self.ModBus = mymodbus.ModbusProtocol(self.UpdateRegisterList, self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation)
             self.Threads = self.MergeDicts(self.Threads, self.ModBus.Threads)
             self.LastRxPacketCount = self.ModBus.RxPacketCount
             self.Threads["CheckAlarmThread"] = mythread.MyThread(self.CheckAlarmThread, Name = "CheckAlarmThread")
@@ -317,7 +319,7 @@ class Evolution(controller.GeneratorController):
 
         TempStr = self.GetModelInfo("KW")
         if TempStr == "Unknown":
-            self.FeedbackPipe.SendFeedback("ModelID", Message="Model ID register is unknown")
+            self.FeedbackPipe.SendFeedback("ModelID", Message="Model ID register is unknown", FullLogs = True )
 
         if self.NominalKW == "Unknown" or self.Model == "Unknown" or not len(self.NominalKW) or not len(self.Model) or self.NewInstall:
 
@@ -610,7 +612,7 @@ class Evolution(controller.GeneratorController):
             self.bUseLegacyWrite = True
 
         if UnknownController:
-            self.FeedbackPipe.SendFeedback("UnknownController", Message="Unknown Controller Found")
+            self.FeedbackPipe.SendFeedback("UnknownController", Message="Unknown Controller Found", FullLogs = True)
         return "OK"
 
     #----------  ControllerGetController  ---------------------------------
@@ -2233,7 +2235,7 @@ class Evolution(controller.GeneratorController):
         elif self.BitIsEqual(RegVal, 0x000F0000, 0x00000000):
             return "Off - Ready"
         else:
-            self.FeedbackPipe.SendFeedback("EngineState", Always = True, Message = "Reg 0001 = %08x" % RegVal)
+            self.FeedbackPipe.SendFeedback("EngineState", Always = True, Message = "Reg 0001 = %08x" % RegVal, FullLogs = True)
             return "UNKNOWN: %08x" % RegVal
 
     #------------ Evolution:GetSwitchState --------------------------------------
