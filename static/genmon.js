@@ -1545,7 +1545,7 @@ function UpdateRegisters(init, printToScreen)
                  regHistory["_60m"][reg_key].splice(-2, 2);  // remove the last 2 element
             }
 
-            if (regHistory["count_60m"] >= 288) {
+            if (regHistory["count_24h"] >= 288) {
                var min = 0;
                var max = 0;
                for (var i = 1; i <24; i++) {
