@@ -78,10 +78,16 @@ class MyCommon(object):
         self.log.error(Message)
     #---------------------MyCommon::FatalError----------------------------------
     def FatalError(self, Message):
-
         self.log.error(Message)
         raise Exception(Message)
+    #---------------------MyCommon::LogErrorLine--------------------------------
+    def LogErrorLine(self, Message):
 
-    #---------------------MyCommon::GetErrorLine------------------------
+        self.log.error(Message + " : " + self.GetErrorLine())
+
+    #---------------------MyCommon::GetErrorLine--------------------------------
     def GetErrorLine(self):
-        return sys.exc_info()[-1].tb_lineno
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        lineno = exc_tb.tb_lineno
+        return fname + ":" + str(lineno)

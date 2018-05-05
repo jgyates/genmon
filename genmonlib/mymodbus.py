@@ -233,7 +233,7 @@ class ModbusProtocol(modbusbase.ModbusBase):
             self.Slave.Write(ByteArray)
             self.TxPacketCount += 1
         except Exception as e1:
-            self.LogError("Error in SendPacketAsMaster: " + str(e1))
+            self.LogErrorLine("Error in SendPacketAsMaster: " + str(e1))
             self.LogError("Packet: " + str(Packet))
 
     # ---------- ModbusProtocol::UpdateRegistersFromPacket------------------
@@ -267,7 +267,8 @@ class ModbusProtocol(modbusbase.ModbusBase):
             RegisterValue += "%02x" % SlavePacket[i]
         # update register list
         if not SkipUpdate:
-            self.UpdateRegisterList(Register, RegisterValue)
+            if not self.UpdateRegisterList == None:
+                self.UpdateRegisterList(Register, RegisterValue)
 
         return RegisterValue
 
@@ -290,7 +291,7 @@ class ModbusProtocol(modbusbase.ModbusBase):
                 return False
             return True
         except Exception as e1:
-            self.LogError("Error in CheckCRC: " + str(e1))
+            self.LogErrorLine("Error in CheckCRC: " + str(e1))
             self.LogError("Packet: " + str(Packet))
             return False
 
@@ -308,7 +309,7 @@ class ModbusProtocol(modbusbase.ModbusBase):
 
             return results
         except Exception as e1:
-            self.LogError("Error in GetCRC: " + str(e1))
+            self.LogErrorLine("Error in GetCRC: " + str(e1))
             self.LogError("Packet: " + str(Packet))
             return 0
     # ---------- ModbusProtocol::GetCommStats---------------------------------------

@@ -24,7 +24,7 @@ except ImportError as e:
 from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution
 
 
-GENMON_VERSION = "V1.7.6"
+GENMON_VERSION = "V1.7.7"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -103,7 +103,7 @@ class Monitor(mysupport.MySupport):
 
         self.LogError("GenMon Loadded for site: " + self.SiteName)
 
-    # ---------- Monitor::StartThreads------------------
+    # ------------------------ Monitor::StartThreads----------------------------
     def StartThreads(self, reload = False):
 
         # start thread to accept incoming sockets for nagios heartbeat
@@ -119,8 +119,8 @@ class Monitor(mysupport.MySupport):
 
         if self.bSyncDST or self.bSyncTime:     # Sync time thread
             self.Threads["TimeSyncThread"] = mythread.MyThread(self.TimeSyncThread, Name = "TimeSyncThread")
-
-    # ---------- Monitor::GetConfig------------------
+        
+    # -------------------- Monitor::GetConfig-----------------------------------
     def GetConfig(self, reload = False):
 
         ConfigSection = "GenMon"
@@ -179,9 +179,9 @@ class Monitor(mysupport.MySupport):
 
         except Exception as e1:
             if not reload:
-                raise Exception("Missing config file or config file entries: " + str(e1))
+                self.FatalError("Missing config file or config file entries: " + str(e1))
             else:
-                self.LogError("Error reloading config file" + str(e1))
+                self.LogErrorLine("Error reloading config file" + str(e1))
             return False
 
         return True
@@ -204,7 +204,7 @@ class Monitor(mysupport.MySupport):
             FeedbackDict = json.loads(Message)
             self.SendFeedbackInfo(FeedbackDict["Reason"], FeedbackDict["Always"], FeedbackDict["Message"], FeedbackDict["FullLogs"])
         except Exception as e1:
-            self.LogError("Error in  FeedbackReceiver: " + str(e1))
+            self.LogErrorLine("Error in  FeedbackReceiver: " + str(e1))
 
     #------------------------------------------------------------
     def MessageReceiver(self, Message):
@@ -214,7 +214,7 @@ class Monitor(mysupport.MySupport):
             MessageDict = json.loads(Message)
             self.mail.sendEmail(MessageDict["subjectstr"], MessageDict["msgstr"], MessageDict["recipient"], MessageDict["files"],MessageDict["deletefile"] ,MessageDict["msgtype"])
         except Exception as e1:
-            self.LogError("Error in  MessageReceiver: " + str(e1))
+            self.LogErrorLine("Error in  MessageReceiver: " + str(e1))
     #------------------------------------------------------------
     def SendFeedbackInfo(self, Reason, Always = False, Message = None, FullLogs = False):
         try:
@@ -240,7 +240,7 @@ class Monitor(mysupport.MySupport):
                     with open(self.FeedbackLogFile, 'w') as outfile:
                         json.dump(self.FeedbackMessages, outfile, sort_keys = True, indent = 4, ensure_ascii = False)
         except Exception as e1:
-            self.LogError("Error in SendFeedbackInfo: " + str(e1))
+            self.LogErrorLine("Error in SendFeedbackInfo: " + str(e1))
 
     #---------- Monitor::SendRegisters------------------------------------------
     def SendRegisters(self):
@@ -349,7 +349,7 @@ class Monitor(mysupport.MySupport):
                 if not fromsocket:
                     msgbody += "\n"
         except Exception as e1:
-            self.LogError("Error Processing Commands: " + str(e1))
+            self.LogErrorLine("Error Processing Commands: " + str(e1))
 
         if not fromsocket:
             self.MessagePipe.SendMessage(msgsubject, msgbody, msgtype = "warn")
@@ -419,7 +419,7 @@ class Monitor(mysupport.MySupport):
             if not DictOut:
                 return self.printToString(self.ProcessDispatch(Monitor,""))
         except Exception as e1:
-            self.LogError("Error in DisplayMonitor: " + str(e1))
+            self.LogErrorLine("Error in DisplayMonitor: " + str(e1))
         return Monitor
 
     #------------ Monitor::GetSiteName-------------------------------
@@ -459,7 +459,7 @@ class Monitor(mysupport.MySupport):
             return "OK"
 
         except Exception as e1:
-            self.LogError("Error in  ClearPowerLog: " + str(e1))
+            self.LogErrorLine("Error in  ClearPowerLog: " + str(e1))
             return "Error in  ClearPowerLog: " + str(e1)
 
     #------------ Monitor::ClearPowerLog-------------------------
@@ -479,7 +479,7 @@ class Monitor(mysupport.MySupport):
 
             return "Power Log cleared"
         except Exception as e1:
-            self.LogError("Error in  ClearPowerLog: " + str(e1))
+            self.LogErrorLine("Error in  ClearPowerLog: " + str(e1))
             return "Error in  ClearPowerLog: " + str(e1)
 
     #------------ Monitor::ReducePowerSamples-------------------------
@@ -510,7 +510,7 @@ class Monitor(mysupport.MySupport):
             if len(NewList) > MaxSize:
                 return RemovePowerSamples(NewList, MaxSize)
         except Exception as e1:
-            self.LogError("Error in RecducePowerSamples: %s" % str(e1))
+            self.LogErrorLine("Error in RecducePowerSamples: %s" % str(e1))
             return PowerList
 
         return NewList
@@ -534,7 +534,7 @@ class Monitor(mysupport.MySupport):
                     TempList.append([TimeStamp, KWValue])
             return TempList
         except Exception as e1:
-            self.LogError("Error in RemovePowerSamples: %s" % str(e1))
+            self.LogErrorLine("Error in RemovePowerSamples: %s" % str(e1))
             return List
 
     #------------ Monitor::MarkNonZeroKwEntry-------------------------
@@ -550,7 +550,7 @@ class Monitor(mysupport.MySupport):
                 MarkNonZeroKwEntry(List, Index - 1)
                 return
         except Exception as e1:
-            self.LogError("Error in MarkNonZeroKwEntry: %s" % str(e1))
+            self.LogErrorLine("Error in MarkNonZeroKwEntry: %s" % str(e1))
         return
 
     #------------ Monitor::ReducePowerSamples-------------------------
@@ -606,7 +606,7 @@ class Monitor(mysupport.MySupport):
 
             NewList.append([currTime.strftime('%x %X'), currMax])
         except Exception as e1:
-            self.LogError("Error in RecducePowerSamples: %s" % str(e1))
+            self.LogErrorLine("Error in RecducePowerSamples: %s" % str(e1))
             return PowerList
 
         return NewList
@@ -654,7 +654,7 @@ class Monitor(mysupport.MySupport):
             else:
                 Minutes = 0
         except Exception as e1:
-            self.LogError("Error in  GetPowerHistory (Parse): %s : %s" % (CmdString,str(e1)))
+            self.LogErrorLine("Error in  GetPowerHistory (Parse): %s : %s" % (CmdString,str(e1)))
             return msgbody
 
         try:
@@ -690,7 +690,7 @@ class Monitor(mysupport.MySupport):
                     if not KWHours and len(PowerList) > 500 and Minutes and not NoReduce:
                         PowerList = self.ReducePowerSamples(PowerList, 500)
                 except Exception as e1:
-                    self.LogError("Error in  GetPowerHistory (parse file): " + str(e1))
+                    self.LogErrorLine("Error in  GetPowerHistory (parse file): " + str(e1))
                     # continue to the next line
 
             if KWHours:
@@ -714,7 +714,7 @@ class Monitor(mysupport.MySupport):
             return PowerList
 
         except Exception as e1:
-            self.LogError("Error in  GetPowerHistory: " + str(e1))
+            self.LogErrorLine("Error in  GetPowerHistory: " + str(e1))
             msgbody = "Error in  GetPowerHistory: " + str(e1)
             return msgbody
 
@@ -776,7 +776,7 @@ class Monitor(mysupport.MySupport):
                 self.LogToFile(self.PowerLog, TimeStamp, str(KWFloat))
 
             except Exception as e1:
-                self.LogError("Error in PowerMeter: " + str(e1))
+                self.LogErrorLine("Error in PowerMeter: " + str(e1))
 
 
     #------------ Monitor::GetStatusForGUI ------------------------------------
@@ -960,7 +960,7 @@ class Monitor(mysupport.MySupport):
                 SocketThread.daemon = True
                 SocketThread.start()       # start server thread
             except Exception as e1:
-                self.LogError("Excpetion in InterfaceServerThread" + str(e1))
+                self.LogErrorLine("Excpetion in InterfaceServerThread" + str(e1))
                 time.sleep(0.5)
                 continue
 

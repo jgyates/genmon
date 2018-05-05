@@ -10,7 +10,7 @@
 #------------------------------------------------------------
 
 import datetime, time, sys, os, threading, socket
-import json, collections
+import json, collections, math 
 import httplib, re
 
 try:
@@ -272,7 +272,7 @@ class Evolution(controller.GeneratorController):
                     if self.EnableDebug:
                         self.DebugRegisters()
                 except Exception as e1:
-                    self.LogError("Error in Controller ProcessThread (1), continue: " + str(e1))
+                    self.LogErrorLine("Error in Controller ProcessThread (1), continue: " + str(e1))
         except Exception as e1:
             self.FatalError("Exiting Controller ProcessThread (2)" + str(e1))
 
@@ -461,7 +461,7 @@ class Evolution(controller.GeneratorController):
                 r1 = conn.getresponse()
             except Exception as e1:
                 conn.close()
-                self.LogError("Error in LookUpSNInfo (request 1): " + str(e1))
+                self.LogErrorLine("Error in LookUpSNInfo (request 1): " + str(e1))
                 return False
 
             try:
@@ -479,14 +479,14 @@ class Evolution(controller.GeneratorController):
                 self.Model = ModelNumber
 
             except Exception as e1:
-                self.LogError("Error in LookUpSNInfo (parse request 1): " + str(e1))
+                self.LogErrorLine("Error in LookUpSNInfo (parse request 1): " + str(e1))
                 conn.close()
                 return False
 
             try:
                 productId = myresponse1["Results"][0]["Id"]
             except Exception as e1:
-                self.LogError("Note LookUpSNInfo (parse request 1), (product ID not found): " + str(e1))
+                self.LogErrorLine("Note LookUpSNInfo (parse request 1), (product ID not found): " + str(e1))
                 productId = SerialNumber
 
             if SkipKW:
@@ -504,7 +504,7 @@ class Evolution(controller.GeneratorController):
                 conn.close()
                 data2 = re.sub(myregex, '', data1)
             except Exception as e1:
-                self.LogError("Error in LookUpSNInfo (parse request 2, product ID): " + str(e1))
+                self.LogErrorLine("Error in LookUpSNInfo (parse request 2, product ID): " + str(e1))
 
             try:
                 if productId == SerialNumber:
@@ -538,12 +538,12 @@ class Evolution(controller.GeneratorController):
                     self.LogError("Found: KW: %skW" % str(kWRating))
 
             except Exception as e1:
-                self.LogError("Error in LookUpSNInfo: (parse KW)" + str(e1))
+                self.LogErrorLine("Error in LookUpSNInfo: (parse KW)" + str(e1))
                 return False
 
             return True
         except Exception as e1:
-            self.LogError("Error in LookUpSNInfo: " + str(e1))
+            self.LogErrorLine("Error in LookUpSNInfo: " + str(e1))
             return False
 
 
@@ -709,7 +709,7 @@ class Evolution(controller.GeneratorController):
             Command = CmdList[1].strip()
 
         except Exception as e1:
-            self.LogError("Validation Error: Error parsing command string in SetGeneratorRemoteStartStop: " + CmdString)
+            self.LogErrorLine("Validation Error: Error parsing command string in SetGeneratorRemoteStartStop: " + CmdString)
             self.LogError( str(e1))
             return msgbody
 
@@ -843,7 +843,7 @@ class Evolution(controller.GeneratorController):
             Day, Hour, Minute, ModeStr = self.ParseExerciseStringEx(CmdString, DayOfWeek)
 
         except Exception as e1:
-            self.LogError("Validation Error: Error parsing command string in AltSetGeneratorExerciseTime: " + CmdString)
+            self.LogErrorLine("Validation Error: Error parsing command string in AltSetGeneratorExerciseTime: " + CmdString)
             self.LogError( str(e1))
             return msgbody
 
@@ -912,7 +912,7 @@ class Evolution(controller.GeneratorController):
             Day, Hour, Minute, ModeStr = self.ParseExerciseStringEx(CmdString, DayOfWeek)
 
         except Exception as e1:
-            self.LogError("Validation Error: Error parsing command string in SetGeneratorExerciseTime: " + CmdString)
+            self.LogErrorLine("Validation Error: Error parsing command string in SetGeneratorExerciseTime: " + CmdString)
             self.LogError( str(e1))
             return msgbody
 
@@ -1021,7 +1021,7 @@ class Evolution(controller.GeneratorController):
                 Day = int(DayStr.lower())
 
         except Exception as e1:
-            self.LogError("Validation Error: Error parsing command string in ParseExerciseStringEx: " + CmdString)
+            self.LogErrorLine("Validation Error: Error parsing command string in ParseExerciseStringEx: " + CmdString)
             self.LogError( str(e1))
             return -1, -1, -1, ""
 
@@ -1074,7 +1074,7 @@ class Evolution(controller.GeneratorController):
                 return msgbody
 
         except Exception as e1:
-            self.LogError("Validation Error: Error parsing command string in SetGeneratorQuietMode: " + CmdString)
+            self.LogErrorLine("Validation Error: Error parsing command string in SetGeneratorQuietMode: " + CmdString)
             self.LogError( str(e1))
             return msgbody
 
@@ -1512,15 +1512,10 @@ class Evolution(controller.GeneratorController):
              # get UKS
             Value = self.GetUnknownSensor("05ed")
             if len(Value):
-                import math
-                # Fahrenheit = 9.0/5.0 * Celsius + 32
                 SensorValue = float(Value)
-                #=(SQRT((Q17-$P$15)*$Q$15)+$R$15)*-1
-                # 5, 138, -20
-                Celsius = math.sqrt(  (SensorValue-10)*125) * -1 - (-88)
-                #Celsius = (math.sqrt(  (SensorValue-10)*125) + (-88)) * -1
-                # =SQRT(((SensorValue-10)*125))*-1-(-88)
-                # V1 = Celsius = (SensorValue - 77.45) * -1.0
+                # This forumla is based on an Omgeo Thermistor with the model number 44005.
+                Celsius = 1/(0.001403+0.0002373*(math.log(SensorValue*100))+0.00000009827*((math.log(SensorValue*100))**3))-273.15
+
                 Fahrenheit = 9.0/5.0 * Celsius + 32
                 CStr = "%.1f" % Celsius
                 FStr = "%.1f" % Fahrenheit
@@ -1953,7 +1948,7 @@ class Evolution(controller.GeneratorController):
                         return outstr
 
         except Exception as e1:
-            self.LogError("Error in  GetAlarmInfo " + str(e1))
+            self.LogErrorLine("Error in  GetAlarmInfo " + str(e1))
 
         AlarmCode = int(ErrorCode,16)
         return "Error Code Unknown: %04d\n" % AlarmCode
@@ -2930,7 +2925,7 @@ class Evolution(controller.GeneratorController):
             Date = datetime.datetime.fromtimestamp(time)
             return Date.strftime('%m/%d/%Y ')
         except Exception as e1:
-            self.LogError("Error in GetServiceDueDate: " + str(e1))
+            self.LogErrorLine("Error in GetServiceDueDate: " + str(e1))
             return ""
 
     #----------  ControllerGetHardwareVersion  ---------------------------------
@@ -3068,7 +3063,7 @@ class Evolution(controller.GeneratorController):
             msgbody = RegValue
 
         except Exception as e1:
-            self.LogError("Validation Error: Error parsing command string in GetRegValue: " + CmdString)
+            self.LogErrorLine("Validation Error: Error parsing command string in GetRegValue: " + CmdString)
             self.LogError( str(e1))
             return msgbody
 
@@ -3106,7 +3101,7 @@ class Evolution(controller.GeneratorController):
             msgbody = RegValue
 
         except Exception as e1:
-            self.LogError("Validation Error: Error parsing command string in ReadRegValue: " + CmdString)
+            self.LogErrorLine("Validation Error: Error parsing command string in ReadRegValue: " + CmdString)
             self.LogError( str(e1))
             return msgbody
 
@@ -3195,7 +3190,7 @@ class Evolution(controller.GeneratorController):
             return LogHistory
 
         except Exception as e1:
-            self.LogError("Error in  DisplayOutageHistory: " + str(e1))
+            self.LogErrorLine("Error in  DisplayOutageHistory: " + str(e1))
             return []
 
     #------------ Evolution:DisplayStatus ----------------------------------------
@@ -3273,6 +3268,7 @@ class Evolution(controller.GeneratorController):
         Status["OutputVoltage"] = self.GetVoltageOutput()
         Status["BatteryVoltage"] = self.GetBatteryVoltage()
         Status["UtilityVoltage"] = self.GetUtilityVoltage()
+        Status["Frequency"] = self.GetFrequency()
         Status["RPM"] = self.GetRPM()
         Status["ExerciseInfo"] = self.GetParsedExerciseTime(True)
         return Status
@@ -3356,9 +3352,9 @@ class Evolution(controller.GeneratorController):
 
         except Exception as e1:
             if not reload:
-                raise Exception("Missing config file or config file entries: " + str(e1))
+                self.FatalError("Missing config file or config file entries: " + str(e1))
             else:
-                self.LogError("Error reloading config file" + str(e1))
+                self.LogErrorLine("Error reloading config file" + str(e1))
             return False
 
         return True

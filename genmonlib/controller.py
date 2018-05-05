@@ -68,15 +68,16 @@ class GeneratorController(mysupport.MySupport):
     def GetStartInfo(self):
 
         StartInfo = {}
-
-        StartInfo["sitename"] = self.SiteName
-        StartInfo["fueltype"] = self.FuelType
-        StartInfo["model"] = self.Model
-        StartInfo["nominalKW"] = self.NominalKW
-        StartInfo["nominalRPM"] = self.NominalRPM
-        StartInfo["nominalfrequency"] = self.NominalFreq
-        StartInfo["Controller"] = "Generic Controller Name"
-
+        try:
+            StartInfo["sitename"] = self.SiteName
+            StartInfo["fueltype"] = self.FuelType
+            StartInfo["model"] = self.Model
+            StartInfo["nominalKW"] = self.NominalKW
+            StartInfo["nominalRPM"] = self.NominalRPM
+            StartInfo["nominalfrequency"] = self.NominalFreq
+            StartInfo["Controller"] = "Generic Controller Name"
+        except Exception as e1:
+            self.LogErrorLine("Error in GetStartInfo: " + str(e1))
         return StartInfo
 
     #------------ GeneratorController::GetStatusForGUI -------------------------
@@ -84,48 +85,77 @@ class GeneratorController(mysupport.MySupport):
     def GetStatusForGUI(self):
 
         Status = {}
-
-        Status["basestatus"] = self.GetBaseStatus()
-        Status["kwOutput"] = self.GetPowerOutput()
-        # Exercise Info is a dict containing the following:
-        ExerciseInfo = collections.OrderedDict()
-        ExerciseInfo["Frequency"] = "Weekly"    # Biweekly, Weekly or Monthly
-        ExerciseInfo["Hour"] = "14"
-        ExerciseInfo["Minute"] = "00"
-        ExerciseInfo["QuietMode"] = "On"
-        ExerciseInfo["EnhancedExerciseMode"] = False
-        ExerciseInfo["Day"] = "Monday"
-        Status["ExerciseInfo"] = ExerciseInfo
+        try:
+            Status["basestatus"] = self.GetBaseStatus()
+            Status["kwOutput"] = self.GetPowerOutput()
+            # Exercise Info is a dict containing the following:
+            ExerciseInfo = collections.OrderedDict()
+            ExerciseInfo["Frequency"] = "Weekly"    # Biweekly, Weekly or Monthly
+            ExerciseInfo["Hour"] = "14"
+            ExerciseInfo["Minute"] = "00"
+            ExerciseInfo["QuietMode"] = "On"
+            ExerciseInfo["EnhancedExerciseMode"] = False
+            ExerciseInfo["Day"] = "Monday"
+            Status["ExerciseInfo"] = ExerciseInfo
+        except Exception as e1:
+            self.LogErrorLine("Error in GetStatusForGUI: " + str(e1))
         return Status
 
     #---------------------GeneratorController::DisplayLogs----------------------
     def DisplayLogs(self, AllLogs = False, DictOut = False, RawOutput = False):
-        pass
+        try:
+            pass
+        except Exception as e1:
+            self.LogErrorLine("Error in DisplayLogs: " + str(e1))
+
     #------------ GeneratorController::DisplayMaintenance ----------------------
     def DisplayMaintenance (self, DictOut = False):
-        pass
+        try:
+            pass
+        except Exception as e1:
+            self.LogErrorLine("Error in DisplayMaintenance: " + str(e1))
 
     #------------ GeneratorController::DisplayStatus ---------------------------
     def DisplayStatus(self, DictOut = False):
-        pass
+        try:
+            pass
+        except Exception as e1:
+            self.LogErrorLine("Error in DisplayStatus: " + str(e1))
 
     #------------------- GeneratorController::DisplayOutage --------------------
     def DisplayOutage(self, DictOut = False):
-        pass
+        try:
+            pass
+        except Exception as e1:
+            self.LogErrorLine("Error in DisplayOutage: " + str(e1))
 
     #------------ GeneratorController::DisplayRegisters ------------------------
     def DisplayRegisters(self, AllRegs = False, DictOut = False):
-        pass
+        try:
+            pass
+        except Exception as e1:
+            self.LogErrorLine("Error in DisplayRegisters: " + str(e1))
 
     #----------  GeneratorController::SetGeneratorTimeDate----------------------
     # set generator time to system time
     def SetGeneratorTimeDate(self):
+
+        try:
+            pass
+        except Exception as e1:
+            self.LogErrorLine("Error in SetGeneratorTimeDate: " + str(e1))
+
         return "Not Supported"
 
     #----------  GeneratorController::SetGeneratorQuietMode---------------------
     # Format of CmdString is "setquiet=yes" or "setquiet=no"
     # return  "Set Quiet Mode Command sent" or some meaningful error string
     def SetGeneratorQuietMode(self, CmdString):
+        try:
+            pass
+        except Exception as e1:
+            self.LogErrorLine("Error in SetGeneratorQuietMode: " + str(e1))
+
         return "Not Supported"
 
     #----------  GeneratorController::SetGeneratorExerciseTime------------------
@@ -135,6 +165,11 @@ class GeneratorController(mysupport.MySupport):
     #   setexercise=15,13:30,Monthly
     # return  "Set Exercise Time Command sent" or some meaningful error string
     def SetGeneratorExerciseTime(self, CmdString):
+        try:
+            pass
+        except Exception as e1:
+            self.LogErrorLine("Error in SetGeneratorExerciseTime: " + str(e1))
+
         return "Not Supported"
 
     #----------  GeneratorController::SetGeneratorRemoteStartStop---------------
@@ -143,6 +178,11 @@ class GeneratorController(mysupport.MySupport):
     # return string "Remote command sent successfully" or some descriptive error
     # string if failure
     def SetGeneratorRemoteStartStop(self, CmdString):
+        try:
+            pass
+        except Exception as e1:
+            self.LogErrorLine("Error in SetGeneratorRemoteStartStop: " + str(e1))
+
         return "Not Supported"
 
     #----------  GeneratorController:GetController  ----------------------------

@@ -14,7 +14,7 @@ $("#navMenu").html('<ul>' +
     '</ul>') ;
 
 // global base state
-var currentVersion = "";
+// var currentVersion = "";
 var baseState = "READY";        // updated on a time
 var currentbaseState = "READY"; // menus change on this var
 var currentClass = "active";    // CSS class for menu color
@@ -29,6 +29,7 @@ var pathname = window.location.href;
 var baseurl = pathname.concat("cmd/");
 var DaysOfWeekArray = ["Sunday","Monday","Tuesday","Wednesday", "Thursday", "Friday", "Saturday"];
 var MonthsOfYearArray = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+var BaseRegistersDescription = {};
 
 vex.defaultOptions.className = 'vex-theme-os'
 
@@ -40,6 +41,7 @@ GetGeneratorModel();
 GetBaseStatus();
 SetFavIcon();
 GetkWHistory();
+GetRegisterNames();
 $(document).ready(function() {
     $("#footer").html('<table border="0" width="100%" height="30px"><tr><td width="5%"><img class="tooltip" id="ajaxWarning" src="images/alert.png" height="28px" width="28px" style="display: none;"></td><td width="90%"><a href="https://github.com/jgyates/genmon" target="_blank">GenMon Project on GitHub</a></td><td width="5%"></td></tr></table>');
     $('#ajaxWarning').tooltipster({minWidth: '280px', maxWidth: '480px', animation: 'fade', updateAnimation: 'null', contentAsHTML: 'true', delay: 100, animationDuration: 200, side: ['top', 'left'], content: "No Communicatikon Errors occured"});
@@ -419,13 +421,6 @@ function DisplayStatusUpdate()
         processAjaxSuccess();
         $("#statusText").html(json2html(result, "", "root"));
         // json2updates(result, "root");
-
-        if (result["Status"]["Engine"]["Battery Voltage"].replace(/V/g, '').trim() !== "") 
-          gaugeBatteryVoltage.set(result["Status"]["Engine"]["Battery Voltage"].replace(/V/g, '')); // set actual value
-        gaugeUtilityVoltage.set(result["Status"]["Line State"]["Utility Voltage"].replace(/V/g, '')); // set actual value
-        gaugeOutputVoltage.set(result["Status"]["Engine"]["Output Voltage"].replace(/V/g, '')); // set actual value
-        gaugeFrequency.set(result["Status"]["Engine"]["Frequency"].replace(/Hz/g, '')); // set actual value
-        gaugeRPM.set(result["Status"]["Engine"]["RPM"]); // set actual value
     }});
 
 }
@@ -470,7 +465,7 @@ function DisplayMaintenance(){
     $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
         processAjaxSuccess();
 
-        outstr = json2html(result, "", "root");
+        outstr = '<div style="clear:both" id="maintText">' + json2html(result, "", "root") + '</div>';
 
         outstr += "<br>Generator Exercise Time:<br><br>";
 
@@ -674,9 +669,9 @@ function DisplayMaintenanceUpdate(){
     var url = baseurl.concat("maint_json");
     $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
         processAjaxSuccess();
-
-       $("#Next_Service_Scheduled").html(result["Maintenance"]["Service"]["Next Service Scheduled"]);
-       $("#Total_Run_Hours").html(result["Maintenance"]["Service"]["Total Run Hours"]);
+        $("#maintText").html(json2html(result, "", "root"));
+        // $("#Next_Service_Scheduled").html(result["Maintenance"]["Service"]["Next Service Scheduled"]);
+        // $("#Total_Run_Hours").html(result["Maintenance"]["Service"]["Total Run Hours"]);
     }});
 
 }
@@ -822,7 +817,7 @@ function DisplayMonitor(){
         outstr += '&nbsp;&nbsp;<button id="submitRegisters" onClick="submitRegisters();">Submit Registers</button>';
 
         $("#mydisplay").html(outstr);
-        currentVersion = result["Monitor"]["Generator Monitor Stats"]["Generator Monitor Version"];
+        // currentVersion = result["Monitor"]["Generator Monitor Stats"]["Generator Monitor Version"];
    }});
 }
 
@@ -1409,77 +1404,6 @@ function saveSettingsJSON() {
 // DisplayRegisters - Shows the raw register data.
 //*****************************************************************************
 var fadeOffTime = 60;
-var BaseRegistersDescription = { "0000" : "Product line",
-                                 "0001" : "Switch, Engine and Alarm Status",
-                                 "0005" : "Exercise Time HH:MM (Read Only)",
-                                 "0006" : "Exercise Time Hi Byte = Day of Week 00=Sunday 01=Monday, Low Byte = 00=quiet=no, 01=yes",
-                                 "0007" : "Engine RPM",
-                                 "0008" : "Engine Frequency Hz",
-                                 "000a" : "Battery Voltage",
-                                 "000b" : "Engine Run Hours High (Nexus, EvoAC)",
-                                 "000c" : "Engine Run Hours Low (Nexus, EvoAC)",
-                                 "000e" : "Generator Time HH:MM",
-                                 "000f" : "Generator Time Hi = month, Lo = day of the month",
-                                 "0010" : "Generator Time Hi Day of Week, Lo = year",
-                                 "0011" : "Utility Threshold",
-                                 "0012" : "Output voltage",
-                                 "0019" : "Model Identity (EvoAC)",
-                                 "001a" : "Hours Until Service A",
-                                 "001b" : "Date Service A Due",
-                                 "001c" : "Service Info Hours (Nexus)",
-                                 "001d" : "Service Info Date (Nexus)",
-                                 "001e" : "Hours Until Service B",
-                                 "001f" : "Hours util Service (NexusAC), Date Service Due (Evo)",
-                                 "0020" : "Service Info Date (NexusAC)",
-                                 "0021" : "Service Info Hours (NexusAC)",
-                                 "0022" : "Service Info Date (NexusAC, EvoAC)",
-                                 "002a" : "Hardware  Version (high byte), Firmware version (low byte)",
-                                 "002b" : "Startup Delay (EvoAC)",
-                                 "002c" : "Exercise Time HH:MM",
-                                 "002d" : "Weekly, Biweekly, Monthly Exercise (EvoAC)",
-                                 "002e" : "Exercise Day",
-                                 "002f" : "Quite Mode (EvoAC)",
-                                 "0059" : "Set Voltage from Dealer Menu (not currently used) (EvoLC)",
-                                 "023b" : "Pick Up Voltage (EvoLC)",
-                                 "023e" : "Exercise time duration (EvoLC)",
-                                 "0054" : "Hours since generator activation (hours of protection) (EvoLC)",
-                                 "005e" : "Engine Run Minutes High (EvoLC)",
-                                 "005f" : "Engine Run Minutes Low (EvoLC)",
-                                 "0057" : "Unknown Status",
-                                 "0055" : "Unknown",
-                                 "0056" : "Unknown Status",
-                                 "005a" : "Unknown",
-                                 "000d" : "Bit changes when the controller is updating registers.",
-                                 "003c" : "Raw RPM Sensor",
-                                 "0058" : "CT Output (EvoLC)",
-                                 "005d" : "Unknown Sensor (EvoLC)",
-                                 "05ed" : "Ambient Temp Sensor (EvoLC)",
-                                 "05ee" : "Battery Charger Sensor (EvoLC)",
-                                 "05f5" : "Unknown Status (EvoAC, Nexus)",
-                                 "05fa" : "Unknown Status (EvoAC, Nexus)",
-                                 "0034" : "Unknown Sensor (Nexus, EvoAC)",
-                                 "0032" : "Unknown Sensor (Nexus, EvoAC)",
-                                 "0033" : "Unknown Sensor (EvoAC)",
-                                 "0036" : "Unknown",
-                                 "0037" : "CT Output (EvoAC)",
-                                 "0038" : "Unknown Sensor (Nexus, EvoAC)",
-                                 "003a" : "Unknown Sensor (Nexus, EvoAC)",
-                                 "003b" : "Unknown Sensor (Nexus, EvoAC)",
-                                 "0237" : "Set Output Voltage (EvoLC)",
-                                 "0239" : "Startup Delay (EvoLC)",
-                                 "0208" : "Calibrate Volts (Evo)",
-                                 "005c" : "Unknown",
-                                 "05f3" : "Unknown",
-                                 "05f4" : "Current Output E1 (EvoAC)",
-                                 "05f5" : "Current Output E2 (EvoAC)",
-                                 "05f6" : "Current Calibration E1 (EvoAC)",
-                                 "05f7" : "Current Calibration E2 (EvoAC)",
-                                 "0053" : "Output relay status register (EvoLC)",
-                                 "0052" : "Input status register (sensors) (Evo LC)",
-                                 "0009" : "Utility Voltage",
-                                 "05f1" : "Last Alarm Code (Evo)",
-                                 "01f4" : "Serial Number"};
-
 function DisplayRegistersFull()
 {
     var outstr = 'Live Register View:<br><br>';
@@ -1924,6 +1848,19 @@ function GetkWHistory()
 }
 
 //*****************************************************************************
+// GetRegisterNames - Get the current Generator Model and kW Rating
+//*****************************************************************************
+function GetRegisterNames()
+{
+    url = baseurl.concat("getreglabels");
+    $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
+      processAjaxSuccess();
+
+      BaseRegistersDescription = result;
+    }});
+}
+
+//*****************************************************************************
 // Show nice Alert Box (modal)
 //*****************************************************************************
 function GenmonAlert(msg)
@@ -1990,6 +1927,15 @@ function GetBaseStatus()
               gaugekW.set(result['kwOutput'].replace(/kW/g, ''));
               printKwPlot(result['kwOutput'].replace(/kW/g, ''));
            }
+        }
+        
+        if ((menuElement == "status") && ($("#gaugeBatteryVoltage").length > 0)) {
+           if (result["BatteryVoltage"].replace(/V/g, '').trim() !== "") 
+             gaugeBatteryVoltage.set(result["BatteryVoltage"].replace(/V/g, '')); // set actual value
+           gaugeUtilityVoltage.set(result["UtilityVoltage"].replace(/V/g, '')); // set actual value
+           gaugeOutputVoltage.set(result["OutputVoltage"].replace(/V/g, '')); // set actual value
+           gaugeFrequency.set(result["Frequency"].replace(/Hz/g, '')); // set actual value
+           gaugeRPM.set(result["RPM"]); // set actual value
         }
         
         if (result['UnsentFeedback'].toLowerCase() == "true") {

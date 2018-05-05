@@ -89,7 +89,7 @@ class SerialDevice(mycommon.MyCommon):
                             return
 
             except Exception as e1:
-                self.LogError( "Resetting SerialDevice:ReadThread Error: " + self.DeviceName + ":"+ str(e1))
+                self.LogErrorLine( "Resetting SerialDevice:ReadThread Error: " + self.DeviceName + ":"+ str(e1))
                 # if we get here then this is likely due to the following exception:
                 #  "device reports readiness to read but returned no data (device disconnected?)"
                 #  This is believed to be a kernel issue so let's just reset the device and hope
@@ -124,7 +124,7 @@ class SerialDevice(mycommon.MyCommon):
                 del self.Buffer[:]
 
         except Exception as e1:
-            self.FatalError( "Error in SerialDevice:Flush : " + self.DeviceName + ":" + str(e1))
+            self.FatalErrorLine( "Error in SerialDevice:Flush : " + self.DeviceName + ":" + str(e1))
 
     # ---------- SerialDevice::Read------------------
     def Read(self):

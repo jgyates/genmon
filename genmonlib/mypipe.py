@@ -22,7 +22,7 @@ class MyPipe(mycommon.MyCommon):
         self.Simulation = simulation
 
         if self.Simulation:
-            return 
+            return
         self.PipeName = os.path.dirname(os.path.realpath(__file__)) + "/" + name
         self.ThreadName = "ReadPipeThread" + self.BasePipeName
         self.Callback = callback
@@ -50,7 +50,7 @@ class MyPipe(mycommon.MyCommon):
             self.PipeLock.release()
             self.PipeOutDes.flush()
         except Exception as e1:
-            self.LogError("Error in Pipe Write: " + str(e1))
+            self.LogErrorLine("Error in Pipe Write: " + str(e1))
 
     #------------ MyPipe::Read--------------------------------------------------
     def Read(self):
@@ -87,8 +87,7 @@ class MyPipe(mycommon.MyCommon):
             data = json.dumps(FeedbackDict, sort_keys=False)
             self.Write(data)
         except Exception as e1:
-            self.LogError('Error on line %d' % self.GetErrorLine())
-            self.LogError("Error in SendFeedback: " + str(e1))
+            self.LogErrorLine("Error in SendFeedback: " + str(e1))
 
     #----------------MyPipe::SendMessage----------------------------------------
     def SendMessage(self,subjectstr, msgstr, recipient = None, files = None, deletefile = False, msgtype = "error"):
@@ -107,8 +106,7 @@ class MyPipe(mycommon.MyCommon):
             data = json.dumps(MessageDict, sort_keys=False)
             self.Write(data)
         except Exception as e1:
-            self.LogError('Error on line %d' % self.GetErrorLine())
-            self.LogError("Error in SendMessage: " + str(e1))
+            self.LogErrorLine("Error in SendMessage: " + str(e1))
 
     #------------ MyPipe::Close-------------------------------------------------
     def Close(self):
