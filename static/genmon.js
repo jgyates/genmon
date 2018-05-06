@@ -183,12 +183,13 @@ function DisplayStatusFull()
 
         $("#mydisplay").html(outstr + '<div style="clear:both" id="statusText">' + json2html(result, "", "root") + '</div>');
 
-        gaugeBatteryVoltage = createGauge($("#gaugeBatteryVoltage"), $("#textBatteryVoltage"), 1, 10, 16, [10, 11, 12, 13, 14, 15, 16],
-                                          [{strokeStyle: "#F03E3E", min: 10, max: 11.5},
-                                           {strokeStyle: "#FFDD00", min: 11.5, max: 12.5},
-                                           {strokeStyle: "#30B32D", min: 12.5, max: 15},
-                                           {strokeStyle: "#FFDD00", min: 15, max: 15.5},
-                                           {strokeStyle: "#F03E3E", min: 15.5, max: 16}], 6, 10);
+        var gaugeNB = myGenerator["NominalBatteryVolts"];
+        gaugeBatteryVoltage = createGauge($("#gaugeBatteryVoltage"), $("#textBatteryVoltage"), 1, gaugeNB/6*5, gaugeNB/6*8, [gaugeNB/12*10, gaugeNB/12*11, gaugeNB/12*12, gaugeNB/12*13, gaugeNB/12*14, gaugeNB/12*15, gaugeNB/12*16],
+                                          [{strokeStyle: "#F03E3E", min: gaugeNB/12*10,   max: gaugeNB/12*11.5},
+                                           {strokeStyle: "#FFDD00", min: gaugeNB/12*11.5, max: gaugeNB/12*12.5},
+                                           {strokeStyle: "#30B32D", min: gaugeNB/12*12.5, max: gaugeNB/12*15},
+                                           {strokeStyle: "#FFDD00", min: gaugeNB/12*15,   max: gaugeNB/12*15.5},
+                                           {strokeStyle: "#F03E3E", min: gaugeNB/12*15.5, max: gaugeNB/12*16}], 6, 10);
         if (result["Status"]["Engine"]["Battery Voltage"].replace(/V/g, '').trim() !== "")
           gaugeBatteryVoltage.set(result["Status"]["Engine"]["Battery Voltage"].replace(/V/g, '')); // set current value
 
