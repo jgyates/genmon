@@ -1516,8 +1516,8 @@ class Evolution(controller.GeneratorController):
             if len(Value):
                 SensorValue = float(Value)
                 # This forumla is based on an Omgeo Thermistor with the model number 44005.
-                Celsius = 1/(0.001403+0.0002373*(math.log(SensorValue*100))+0.00000009827*((math.log(SensorValue*100))**3))-273.15
-
+                #Celsius = 1/(0.001403+0.0002373*(math.log(SensorValue*100))+0.00000009827*((math.log(SensorValue*100))**3))-273.15
+                Celsius =1/(0.0013923+0.0002373*(math.log(SensorValue*70))+0.00000009827*((math.log(SensorValue*70))**3))-273.15
                 Fahrenheit = 9.0/5.0 * Celsius + 32
                 CStr = "%.1f" % Celsius
                 FStr = "%.1f" % Fahrenheit
@@ -3288,6 +3288,7 @@ class Evolution(controller.GeneratorController):
         StartInfo["nominalfrequency"] = self.NominalFreq
         StartInfo["Controller"] = self.GetController(Actual = False)
         StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
+        StartInfo["NominalBatteryVolts"] = "12"
         StartInfo["QuietMode"] = True
 
         return StartInfo
