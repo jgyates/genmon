@@ -21,10 +21,10 @@ try:
 except ImportError as e:
     from configparser import RawConfigParser
 
-from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution
+from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel
 
 
-GENMON_VERSION = "V1.7.7"
+GENMON_VERSION = "V1.7.8"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -51,6 +51,7 @@ class Monitor(mysupport.MySupport):
         self.MailInit = False       # set to true once mail is init
         self.CommunicationsActive = False   # Flag to let the heartbeat thread know we are communicating
         self.Controller = None
+        self.ControllerSelected = None
 
         # Time Sync Related Data
         self.bSyncTime = False          # Sync gen to system time
@@ -86,7 +87,15 @@ class Monitor(mysupport.MySupport):
             #Starting device connection
             if self.bSimulation:
                 self.LogError("Simulation Running")
-            self.Controller = generac_evolution.Evolution(self.log, self.NewInstall, simulation = self.bSimulation)
+            if not self.ControllerSelected == None:
+                self.LogError("Selected Controller: " + str(self.ControllerSelected))
+            else:
+                self.ControllerSelected = "evo_nexus"
+
+            if self.ControllerSelected.lower() == "h_100" :
+                self.Controller = generac_HPanel.HPanel(self.log, newinstall = self.NewInstall, simulation = self.bSimulation)
+            else:
+                self.Controller = generac_evolution.Evolution(self.log, self.NewInstall, simulation = self.bSimulation)
             self.Threads = self.MergeDicts(self.Threads, self.Controller.Threads)
 
         except Exception as e1:
@@ -164,6 +173,9 @@ class Monitor(mysupport.MySupport):
 
             if config.has_option(ConfigSection, 'simulation'):
                 self.bSimulation = config.getboolean(ConfigSection, 'simulation')
+
+            if config.has_option(ConfigSection, 'controllertype'):
+                self.ControllerSelected = config.get(ConfigSection, 'controllertype')
 
             if config.has_option(ConfigSection, 'version'):
                 self.Version = config.get(ConfigSection, 'version')

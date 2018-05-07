@@ -231,6 +231,80 @@ class GeneratorController(mysupport.MySupport):
     # returns a one line status for example : switch state and engine state
     def GetOneLineStatus(self):
         return "Unknown"
+    #------------ Evolution:RegRegValue ------------------------------------
+    def GetRegValue(self, CmdString):
+
+        # extract quiet mode setting from Command String
+        # format is setquiet=yes or setquiet=no
+        msgbody = "Invalid command syntax for command getregvalue"
+        try:
+            #Format we are looking for is "getregvalue=01f4"
+            CmdList = CmdString.split("=")
+            if len(CmdList) != 2:
+                self.LogError("Validation Error: Error parsing command string in GetRegValue (parse): " + CmdString)
+                return msgbody
+
+            CmdList[0] = CmdList[0].strip()
+
+            if not CmdList[0].lower() == "getregvalue":
+                self.LogError("Validation Error: Error parsing command string in GetRegValue (parse2): " + CmdString)
+                return msgbody
+
+            Register = CmdList[1].strip()
+
+            RegValue = self.GetRegisterValueFromList(Register)
+
+            if RegValue == "":
+                self.LogError("Validation Error: Register  not known:" + Register)
+                msgbody = "Unsupported Register: " + Register
+                return msgbody
+
+            msgbody = RegValue
+
+        except Exception as e1:
+            self.LogErrorLine("Validation Error: Error parsing command string in GetRegValue: " + CmdString)
+            self.LogError( str(e1))
+            return msgbody
+
+        return msgbody
+
+
+    #------------ Evolution:ReadRegValue ------------------------------------
+    def ReadRegValue(self, CmdString):
+
+        # extract quiet mode setting from Command String
+        #Format we are looking for is "readregvalue=01f4"
+        msgbody = "Invalid command syntax for command readregvalue"
+        try:
+
+            CmdList = CmdString.split("=")
+            if len(CmdList) != 2:
+                self.LogError("Validation Error: Error parsing command string in ReadRegValue (parse): " + CmdString)
+                return msgbody
+
+            CmdList[0] = CmdList[0].strip()
+
+            if not CmdList[0].lower() == "readregvalue":
+                self.LogError("Validation Error: Error parsing command string in ReadRegValue (parse2): " + CmdString)
+                return msgbody
+
+            Register = CmdList[1].strip()
+
+            RegValue = self.ModBus.ProcessMasterSlaveTransaction( Register, 1, ReturnValue = True)
+
+            if RegValue == "":
+                self.LogError("Validation Error: Register  not known (ReadRegValue):" + Register)
+                msgbody = "Unsupported Register: " + Register
+                return msgbody
+
+            msgbody = RegValue
+
+        except Exception as e1:
+            self.LogErrorLine("Validation Error: Error parsing command string in ReadRegValue: " + CmdString)
+            self.LogError( str(e1))
+            return msgbody
+
+        return msgbody
 
     #----------  Controller::Close----------------------------------------------
     # Close all communications, cleanup, no return value
