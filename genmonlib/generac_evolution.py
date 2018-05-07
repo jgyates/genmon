@@ -2494,6 +2494,9 @@ class Evolution(controller.GeneratorController):
             else:
                 Divisor = self.CurrentDivisor
             CurrentFloat = CurrentFloat / Divisor
+            # Note: 22kw - 21.46
+            #       11kw - 56.24
+            
             #CurrentFloat = CurrentFloat / 21.48
 
         return "%.2fA" % CurrentFloat
@@ -3076,50 +3079,6 @@ class Evolution(controller.GeneratorController):
 
         return Outage
 
-    #------------ Evolution:DisplayOutageHistory-------------------------
-    def DisplayOutageHistory(self):
-
-        LogHistory = []
-
-        if not len(self.OutageLog):
-            return ""
-        try:
-            # check to see if a log file exist yet
-            if not os.path.isfile(self.OutageLog):
-                return ""
-
-            OutageLog = []
-
-            with open(self.OutageLog,"r") as OutageFile:     #opens file
-
-                for line in OutageFile:
-                    line = line.strip()                   # remove whitespace at beginning and end
-
-                    if not len(line):
-                        continue
-                    if line[0] == "#":              # comment?
-                        continue
-                    Items = line.split(",")
-                    if len(Items) != 2 and len(Items) != 3:
-                        continue
-                    if len(Items) == 3:
-                        strDuration = Items[1] + "," + Items[2]
-                    else:
-                        strDuration = Items[1]
-
-                    OutageLog.insert(0, [Items[0], strDuration])
-                    if len(OutageLog) > 50:     # limit log to 50 entries
-                        OutageLog.pop()
-
-            for Items in OutageLog:
-                LogHistory.append("%s, Duration: %s" % (Items[0], Items[1]))
-
-            return LogHistory
-
-        except Exception as e1:
-            self.LogErrorLine("Error in  DisplayOutageHistory: " + str(e1))
-            return []
-
     #------------ Evolution:DisplayStatus ----------------------------------------
     def DisplayStatus(self, DictOut = False):
 
@@ -3296,10 +3255,6 @@ class Evolution(controller.GeneratorController):
             self.LastRxPacketCount = self.ModBus.RxPacketCount
             return True
 
-    #----------  Evolution::ResetCommStats  --------------------------------------
-    def ResetCommStats(self):
-        self.ModBus.ResetCommStats()
-
     #----------  Evolution::DebugThreadControllerFunction  ----------------------
     def DebugThreadControllerFunction(self):
 
@@ -3324,15 +3279,3 @@ class Evolution(controller.GeneratorController):
             return False
 
         return True
-
-    #----------  Evolution:GetCommStatus  ------------------------------
-    def GetCommStatus(self):
-        return self.ModBus.GetCommStats()
-
-    #----------  Evolution::Close-------------------------------
-    def Close(self):
-        if self.ModBus.DeviceInit:
-            self.ModBus.Close()
-
-        self.FeedbackPipe.Close()
-        self.MessagePipe.Close()

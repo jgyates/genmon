@@ -202,7 +202,7 @@ class GeneratorController(mysupport.MySupport):
     # reset communication stats, normally just a call to
     #   self.ModBus.ResetCommStats() if modbus is used
     def ResetCommStats(self):
-        pass
+        self.ModBus.ResetCommStats()
 
     #----------  GeneratorController:PowerMeterIsSupported  --------------------
     # return true if GetPowerOutput is supported
@@ -219,7 +219,7 @@ class GeneratorController(mysupport.MySupport):
     #----------  GeneratorController:GetCommStatus  ----------------------------
     # return Dict with communication stats
     def GetCommStatus(self):
-        pass
+        return self.ModBus.GetCommStats()
 
     #------------ GeneratorController:GetBaseStatus ----------------------------
     # return one of the following: "ALARM", "SERVICEDUE", "EXERCISING", "RUNNING",
@@ -231,7 +231,7 @@ class GeneratorController(mysupport.MySupport):
     # returns a one line status for example : switch state and engine state
     def GetOneLineStatus(self):
         return "Unknown"
-    #------------ Evolution:RegRegValue ------------------------------------
+    #------------ GeneratorController:RegRegValue ------------------------------
     def GetRegValue(self, CmdString):
 
         # extract quiet mode setting from Command String
@@ -269,7 +269,7 @@ class GeneratorController(mysupport.MySupport):
         return msgbody
 
 
-    #------------ Evolution:ReadRegValue ------------------------------------
+    #------------ GeneratorController:ReadRegValue -----------------------------
     def ReadRegValue(self, CmdString):
 
         # extract quiet mode setting from Command String
@@ -305,8 +305,55 @@ class GeneratorController(mysupport.MySupport):
             return msgbody
 
         return msgbody
+    #------------ GeneratorController:DisplayOutageHistory----------------------
+    def DisplayOutageHistory(self):
 
-    #----------  Controller::Close----------------------------------------------
-    # Close all communications, cleanup, no return value
+        LogHistory = []
+
+        if not len(self.OutageLog):
+            return ""
+        try:
+            # check to see if a log file exist yet
+            if not os.path.isfile(self.OutageLog):
+                return ""
+
+            OutageLog = []
+
+            with open(self.OutageLog,"r") as OutageFile:     #opens file
+
+                for line in OutageFile:
+                    line = line.strip()                   # remove whitespace at beginning and end
+
+                    if not len(line):
+                        continue
+                    if line[0] == "#":              # comment?
+                        continue
+                    Items = line.split(",")
+                    if len(Items) != 2 and len(Items) != 3:
+                        continue
+                    if len(Items) == 3:
+                        strDuration = Items[1] + "," + Items[2]
+                    else:
+                        strDuration = Items[1]
+
+                    OutageLog.insert(0, [Items[0], strDuration])
+                    if len(OutageLog) > 50:     # limit log to 50 entries
+                        OutageLog.pop()
+
+            for Items in OutageLog:
+                LogHistory.append("%s, Duration: %s" % (Items[0], Items[1]))
+
+            return LogHistory
+
+        except Exception as e1:
+            self.LogErrorLine("Error in  DisplayOutageHistory: " + str(e1))
+            return []
+
+    #----------  GeneratorController::Close-------------------------------------
     def Close(self):
-        pass
+
+        if self.ModBus.DeviceInit:
+            self.ModBus.Close()
+
+        self.FeedbackPipe.Close()
+        self.MessagePipe.Close()

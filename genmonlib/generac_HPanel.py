@@ -20,8 +20,9 @@ except ImportError as e:
 
 import controller, mymodbus, mythread, modbus_file
 
+#---------------------RegisterEnum::RegisterEnum--------------------------------
 class RegisterEnum(object):
-    INPUT_1                 = "0080"            # Input 2
+    INPUT_1                 = "0080"            # Input 1
     INPUT_2                 = "0081"            # Input 2
     OUTPUT_1                = "0082"            # Output 1
     OUTPUT_2                = "0083"            # Output 2
@@ -64,7 +65,7 @@ class RegisterEnum(object):
     GEN_TIME_8              = "00e7"            # Unknown
     ENGINE_HOURS_HI         = "0130"            # Engine Hours High
     ENGINE_HOURS_LO         = "0131"            # Engine Hours Low
-
+    #---------------------RegisterEnum::GetRegList------------------------------
     @staticmethod
     def GetRegList():
         RetList = []
@@ -74,6 +75,8 @@ class RegisterEnum(object):
 
         return RetList
 
+#---------------------Input1::Input1--------------------------------------------
+# Enum for register Input1
 class Input1(object):
     AUTO_SWITCH         = 0x8000
     MANUAL_SWITCH       = 0x4000
@@ -92,6 +95,8 @@ class Input1(object):
     HUIO_1_CFG_15       = 0x0002
     HUIO_2_CFG_16       = 0x0001
 
+#---------------------Input2::Input2--------------------------------------------
+# Enum for register Input2
 class Input2(object):
     HUIO_2_CFG_17       = 0x8000
     HUIO_2_CFG_18       = 0x4000
@@ -105,6 +110,8 @@ class Input2(object):
     HUIO_4_CFG_26       = 0x0040
     HUIO_4_CFG_27       = 0x0020
 
+#---------------------Output1::Output1------------------------------------------
+# Enum for register Output1
 class Output1(object):
     COMMON_ALARM        = 0x8000
     COMMON_WARNING      = 0x4000
@@ -123,6 +130,8 @@ class Output1(object):
     OIL_TEMP_HI_ALRM    = 0x0002
     OIL_TEMP_LO_ALRM    = 0x0001
 
+#---------------------Output2::Output2------------------------------------------
+# Enum for register Output2
 class Output2(object):
     OIL_TEMP_HI_WARN    = 0x8000
     OIL_TEMP_LO_WARN    = 0x4000
@@ -141,6 +150,8 @@ class Output2(object):
     COOL_LVL_LO_ALRM    = 0x0002
     COOL_LVL_HI_WARN    = 0x0001
 
+#---------------------Output3::Output3------------------------------------------
+# Enum for register Output3
 class Output3(object):
     COOL_LVL_LO_WARN    = 0x8000
     COOL_LVL_FAULT      = 0x4000
@@ -159,6 +170,8 @@ class Output3(object):
     GOV_POS_HI_WARN     = 0x0002
     GOV_POS_LO_WARN     = 0x0001
 
+#---------------------Output4::Output4------------------------------------------
+# Enum for register Output4
 class Output4(object):
     GOV_POS_FAULT       = 0x8000
     OXYGEN_HI_ALARM     = 0x4000        # Analog Input #8 (Emissions Sensor or Fluid Basin).
@@ -177,6 +190,8 @@ class Output4(object):
     BAT_VOLT_LO_WARN    = 0x0002
     AVG_CURR_HI_ALRM    = 0x0001
 
+#---------------------Output5::Output5------------------------------------------
+# Enum for register Output5
 class Output5(object):
     AVG_CURR_LO_ALRM    = 0x8000
     AVG_CURR_HI_WARN    = 0x4000
@@ -195,6 +210,8 @@ class Output5(object):
     GEN_FREQ_LO_WARN    = 0x0002
     GEN_FREQ_FAULT      = 0x0001
 
+#---------------------Output6::Output6------------------------------------------
+# Enum for register Output6
 class Output6(object):
     ENG_RPM_HI_ALARM    = 0x8000
     ENG_RPM_LO_ALARM    = 0x4000
@@ -213,6 +230,8 @@ class Output6(object):
     GEN_POWER           = 0x0002        #
     ILC_ALR_WRN_1       = 0x0001        # Integrated Logic Controller Warning 1
 
+#---------------------Output7::Output7------------------------------------------
+# Enum for register Output7
 class Output7(object):
     ILC_ALR_WRN_2       = 0x8000       # Integrated Logic Controller Warning 2
     IN_WARM_UP          = 0x4000
@@ -231,6 +250,8 @@ class Output7(object):
     USR_CONFIG_111      = 0x0002
     USR_CONFIG_112      = 0x0001
 
+#---------------------Output8::Output8------------------------------------------
+# Enum for register Output8
 class Output8(object):
     USR_CONFIG_113      = 0x8000
     USR_CONFIG_114      = 0x4000
@@ -281,7 +302,6 @@ class HPanel(controller.GeneratorController):
                               11: "November",
                               12: "December"}
 
-        self.BaseRegisters = { RegisterEnum.INPUT_1: "Input Register"  }
         self.SetupClass()
 
         while not self.InitComplete:
@@ -398,13 +418,6 @@ class HPanel(controller.GeneratorController):
             if not self.GetConfig():
                 self.FatalError("Failure in Controller GetConfig: " + str(e1))
                 return None
-            try:
-                self.AlarmFile = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/ALARMS.txt"
-                with open(self.AlarmFile,"r") as AlarmFile:     #
-                    pass
-            except Exception as e1:
-                self.FatalError("Unable to open alarm file: " + str(e1))
-                return None
         else:
             self.LogLocation = "./"
         try:
@@ -422,7 +435,6 @@ class HPanel(controller.GeneratorController):
             # TODO Add this back in later
             #if self.EnableDebug:        # for debugging registers
             #    self.Threads["DebugThread"] = mythread.MyThread(self.DebugThread, Name = "DebugThread")
-
 
         except Exception as e1:
             self.FatalError("Error opening modbus device: " + str(e1))
@@ -518,7 +530,7 @@ class HPanel(controller.GeneratorController):
                 try:
                     self.MasterEmulation()
                     if self.EnableDebug:
-                        self.DebugRegisters()
+                        self.DebugRegisters()   #TODO
                 except Exception as e1:
                     self.LogErrorLine("Error in Controller ProcessThread (1), continue: " + str(e1))
         except Exception as e1:
@@ -837,7 +849,6 @@ class HPanel(controller.GeneratorController):
 
         return Register in RegisterEnum.GetRegList()
 
-
     #------------ HPanel:UpdateRegisterList ------------------------------------
     def UpdateRegisterList(self, Register, Value):
 
@@ -905,6 +916,7 @@ class HPanel(controller.GeneratorController):
             EngineState += "Exercising. "
 
         if not len(EngineState):
+            self.FeedbackPipe.SendFeedback("Engine State", FullLogs = True, Always = True, Message="Unknown Engine State")
             return "Unknown"
         return EngineState
 
@@ -1205,49 +1217,6 @@ class HPanel(controller.GeneratorController):
             self.LogErrorLine("Error in DisplayOutage: " + str(e1))
             return ""
 
-    #------------ Evolution:DisplayOutageHistory-------------------------
-    def DisplayOutageHistory(self):
-
-        LogHistory = []
-
-        if not len(self.OutageLog):
-            return ""
-        try:
-            # check to see if a log file exist yet
-            if not os.path.isfile(self.OutageLog):
-                return ""
-
-            OutageLog = []
-
-            with open(self.OutageLog,"r") as OutageFile:     #opens file
-
-                for line in OutageFile:
-                    line = line.strip()                   # remove whitespace at beginning and end
-
-                    if not len(line):
-                        continue
-                    if line[0] == "#":              # comment?
-                        continue
-                    Items = line.split(",")
-                    if len(Items) != 2 and len(Items) != 3:
-                        continue
-                    if len(Items) == 3:
-                        strDuration = Items[1] + "," + Items[2]
-                    else:
-                        strDuration = Items[1]
-
-                    OutageLog.insert(0, [Items[0], strDuration])
-                    if len(OutageLog) > 50:     # limit log to 50 entries
-                        OutageLog.pop()
-
-            for Items in OutageLog:
-                LogHistory.append("%s, Duration: %s" % (Items[0], Items[1]))
-
-            return LogHistory
-
-        except Exception as e1:
-            self.LogErrorLine("Error in  DisplayOutageHistory: " + str(e1))
-            return []
 
     #------------ HPanel::DisplayRegisters -------------------------------------
     def DisplayRegisters(self, AllRegs = False, DictOut = False):
@@ -1347,11 +1316,6 @@ class HPanel(controller.GeneratorController):
             self.LastRxPacketCount = self.ModBus.RxPacketCount
             return True
 
-    #----------  HPanel:ResetCommStats  ---------------------------
-    # reset communication stats
-    def ResetCommStats(self):
-        self.ModBus.ResetCommStats()
-
     #----------  HPanel:PowerMeterIsSupported  --------------------
     # return true if GetPowerOutput is supported
     def PowerMeterIsSupported(self):
@@ -1392,6 +1356,7 @@ class HPanel(controller.GeneratorController):
             elif self.GetSwitchState().lower() == "off":
                 return "OFF"
             else:
+                self.FeedbackPipe.SendFeedback("Base State", FullLogs = True, Always = True, Message="Unknown Base State")
                 return "UNKNOWN"
         except Exception as e1:
             self.LogErrorLine("Error in GetBaseStatus: " + str(e1))
@@ -1401,13 +1366,3 @@ class HPanel(controller.GeneratorController):
     # returns a one line status for example : switch state and engine state
     def GetOneLineStatus(self):
         return self.GetSwitchState() + " : " + self.GetEngineState()
-
-    #----------  HPanel::Close----------------------------------------------
-    # Close all communications, cleanup, no return value
-    def Close(self):
-
-        if self.ModBus.DeviceInit:
-            self.ModBus.Close()
-
-        self.FeedbackPipe.Close()
-        self.MessagePipe.Close()

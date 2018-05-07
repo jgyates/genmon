@@ -90,7 +90,7 @@ class Monitor(mysupport.MySupport):
             if not self.ControllerSelected == None:
                 self.LogError("Selected Controller: " + str(self.ControllerSelected))
             else:
-                self.ControllerSelected = "evo_nexus"
+                self.ControllerSelected = "generac_evo_nexus"
 
             if self.ControllerSelected.lower() == "h_100" :
                 self.Controller = generac_HPanel.HPanel(self.log, newinstall = self.NewInstall, simulation = self.bSimulation)
