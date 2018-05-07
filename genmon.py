@@ -61,7 +61,7 @@ class Monitor(mysupport.MySupport):
 
         # read config file
         if not self.GetConfig():
-            self.FatalError("Failure in Monitor GetConfig: " + str(e1))
+            raise Exception("Failure in Monitor GetConfig: " + str(e1))
             return None
 
         # log errors in this module to a file
