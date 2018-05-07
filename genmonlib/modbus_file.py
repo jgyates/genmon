@@ -66,6 +66,7 @@ class ModbusFile(modbusbase.ModbusBase):
                     self.UpdateRegisterList(Register, RegValue)
                 self.TxPacketCount += 1
                 self.RxPacketCount += 1
+                time.sleep(.03)
         return
 
     #----------  GeneratorDevice:ReadInputFile  ---------------------------------

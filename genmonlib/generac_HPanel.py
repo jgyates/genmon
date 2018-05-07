@@ -1025,6 +1025,10 @@ class HPanel(controller.GeneratorController):
             SERVICELOG   = "Service Log:   "
             STARTSTOPLOG = "Start Stop Log:"
 
+            LogList = [ {"Alarm Log": ["Not Implimented"]},
+                        {"Start Stop Log": ["Not Implimented"]}]
+
+            RetValue["Logs"] = LogList
             if UnknownFound:
                 msgbody = "\nThe output appears to have unknown values. Please see the following threads to resolve these issues:"
                 msgbody += "\n        https://github.com/jgyates/genmon/issues/12"
@@ -1035,7 +1039,7 @@ class HPanel(controller.GeneratorController):
             if not DictOut:
                 return self.printToString(self.ProcessDispatch(RetValue,""))
 
-                return RetValue
+            return RetValue
 
         except Exception as e1:
             self.LogErrorLine("Error in DisplayLogs: " + str(e1))
