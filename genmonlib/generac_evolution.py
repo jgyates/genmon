@@ -1803,22 +1803,23 @@ class Evolution(controller.GeneratorController):
         }
 
         NexusAlarmLogDecoder = {
-        0x00: "High Engine Temperature",    # Validated on Nexus Air Cooled
-        0x01: "Low Oil Pressure",           # Validated on Nexus Liquid Cooled
-        0x02: "Overcrank",                  # Validated on Nexus Air Cooled
-        0x03: "Overspeed",                  # Validated on Nexus Air Cooled
-        0x04: "RPM Sense Loss",             # Validated on Nexus Liquid Cooled and Air Cooled
-        0x0B: "Low Cooling Fluid",          # Validated on Nexus Liquid Cooled
-        0x0C: "Canbus Error",               # Validated on Nexus Liquid Cooled
-        0x0F: "Govenor Fault",              # Validated on Nexus Liquid Cooled
-        0x14: "Low Battery",                # Validated on Nexus Air Cooled
-        0x16: "Change Oil & Filter",        # Validated on Nexus Air Cooled
-        0x17: "Inspect Air Filter",         # Validated on Nexus Air Cooled
-        0x19: "Inspect Spark Plugs",        # Validated on Nexus Air Cooled
-        0x1b: "Check Battery",              # Validated on Nexus Air Cooled
-        0x1E: "Low Fuel Pressure",          # Validated on Nexus Liquid Cooled
-        0x21: "Service Schedule A",         # Validated on Nexus Liquid Cooled
-        0x22: "Service Schedule B"          # Validated on Nexus Liquid Cooled
+        0x00 : "High Engine Temperature",    # Validated on Nexus Air Cooled
+        0x01 : "Low Oil Pressure",           # Validated on Nexus Liquid Cooled
+        0x02 : "Overcrank",                  # Validated on Nexus Air Cooled
+        0x03 : "Overspeed",                  # Validated on Nexus Air Cooled
+        0x04 : "RPM Sense Loss",             # Validated on Nexus Liquid Cooled and Air Cooled
+        0x0a : "Under Voltage",             #  Validated on Nexus AC
+        0x0B : "Low Cooling Fluid",          # Validated on Nexus Liquid Cooled
+        0x0C : "Canbus Error",               # Validated on Nexus Liquid Cooled
+        0x0F : "Govenor Fault",              # Validated on Nexus Liquid Cooled
+        0x14 : "Low Battery",                # Validated on Nexus Air Cooled
+        0x16 : "Change Oil & Filter",        # Validated on Nexus Air Cooled
+        0x17 : "Inspect Air Filter",         # Validated on Nexus Air Cooled
+        0x19 : "Inspect Spark Plugs",        # Validated on Nexus Air Cooled
+        0x1b : "Check Battery",              # Validated on Nexus Air Cooled
+        0x1E : "Low Fuel Pressure",          # Validated on Nexus Liquid Cooled
+        0x21 : "Service Schedule A",         # Validated on Nexus Liquid Cooled
+        0x22 : "Service Schedule B"          # Validated on Nexus Liquid Cooled
         }
 
         # Service Schedule log and Start/Stop Log are 16 chars long
@@ -2044,7 +2045,6 @@ class Evolution(controller.GeneratorController):
         AlarmValues = {
          0x01 : "Low Battery",          #  Validate on Nexus, occurred when Low Battery Alarm
          0x08 : "Low Coolant",          #  Validate on Evolution, occurred when forced low coolant
-         0x0a : "Under Voltage",        #  Validated on Nexus AC
          0x0c : "Overspeed",            #  Validated on Nexus AC
          0x0d : "RPM Sense Loss",       #  Validate on Evolution, occurred when forcing RPM sense loss from manual start
          0x14 : "Check Battery",        #  Validate on Nexus, occurred when Check Battery Alarm
