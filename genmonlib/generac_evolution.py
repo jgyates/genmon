@@ -2488,16 +2488,40 @@ class Evolution(controller.GeneratorController):
             if len(Value):
                 CurrentLow = int(Value,16)
 
+            ModelLookUp_EvoAC = { #ID : [KW or KVA Rating, Hz Rating, Voltage Rating, Phase]
+                                    1 : None,      #["9KW", "60", "120/240", "1"],
+                                    2 : None,      #["14KW", "60", "120/240", "1"],
+                                    3 : None,      #["17KW", "60", "120/240", "1"],
+                                    4 : None,      #["20KW", "60", "120/240", "1"],
+                                    5 : None,      #["8KW", "60", "120/240", "1"],
+                                    7 : None,      #["13KW", "60", "120/240", "1"],
+                                    8 : None,      #["15KW", "60", "120/240", "1"],
+                                    9 : None,      #["16KW", "60", "120/240", "1"],
+                                    10 : None,      #["20KW", "VSCF", "120/240", "1"],      #Variable Speed Constant Frequency
+                                    11 : None,      #["15KW", "ECOVSCF", "120/240", "1"],   # Eco Variable Speed Constant Frequency
+                                    12 : None,      #["8KVA", "50", "220,230,240", "1"],    # 3 distinct models 220, 230, 240
+                                    13 : None,      #["10KVA", "50", "220,230,240", "1"],   # 3 distinct models 220, 230, 240
+                                    14 : None,      #["13KVA", "50", "220,230,240", "1"],   # 3 distinct models 220, 230, 240
+                                    15 : 56.24,     #["11KW", "60" ,"240", "1"],
+                                    17 : 21.48,     #["22KW", "60", "120/240", "1"],
+                                    21 : None,      #["11KW", "60", "240 LS", "1"],
+                                    32 : None,      #["Trinity", "60", "208 3Phase", "3"],  # G007077
+                                    33 : None,      #["Trinity", "50", "380,400,416", "3"]  # 3 distinct models 380, 400 or 416
+                                    }
             CurrentFloat = float((CurrentHi << 16) | (CurrentLow))
             if self.CurrentDivider == None or self.CurrentDivider < 1:
-                Divisor = (22 / int(self.NominalKW)) * 22
+
+                Value = self.GetRegisterValueFromList("0019")
+                if not len(Value):
+                    return "Unknown"
+
+                Divisor = ModelLookUp_EvoAC.get(int(Value,16), None)
+                if Divisor == None:
+                    Divisor = (22 / int(self.NominalKW)) * 22
             else:
                 Divisor = self.CurrentDivisor
+
             CurrentFloat = CurrentFloat / Divisor
-            # Note: 22kw - 21.46
-            #       11kw - 56.24
-            
-            #CurrentFloat = CurrentFloat / 21.48
 
         return "%.2fA" % CurrentFloat
 
