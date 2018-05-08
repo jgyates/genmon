@@ -42,7 +42,10 @@ class GeneratorController(mysupport.MySupport):
         self.TotalChanged = 0.0     # ratio of changed ragisters
         self.EnableDebug = False    # Used for enabeling debugging
         self.OutageLog = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/outage.txt"
-        self.LogLocation = "/var/log/"
+        if self.Simulation:
+            self.LogLocation = "./"
+        else:
+            self.LogLocation = "/var/log/"
         self.DisableOutageCheck = False
         self.bDisplayUnknownSensors = False
         self.UtilityVoltsMin = 0    # Minimum reported utility voltage above threshold
@@ -80,7 +83,7 @@ class GeneratorController(mysupport.MySupport):
 
             if config.has_option(ConfigSection, 'loglocation'):
                 self.LogLocation = config.get(ConfigSection, 'loglocation')
-                
+
             # optional config parameters, by default the software will attempt to auto-detect the controller
             # this setting will override the auto detect
             if config.has_option(ConfigSection, 'disableoutagecheck'):

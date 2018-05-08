@@ -22,6 +22,22 @@ import controller, mymodbus, mythread, modbus_file
 
 #---------------------RegisterEnum::RegisterEnum--------------------------------
 class RegisterEnum(object):
+    UNK_2                   = "0002"            # UNKNOWN Bit 0100 change on power loss
+    UNK_8                   = "0008"            # UNKNOWN
+    UNK_31                  = "0031"            # UNKNOWN
+    UNK_32                  = "0032"            # UNKNOWN
+    UNK_48                  = "0048"            # UNKNOWN
+    UNK_49                  = "0049"            # UNKNOWN
+    UNK_53                  = "0053"            # UNKNOWN
+    UNK_54                  = "0054"            # UNKNOWN
+    UNK_55                  = "0055"            # UNKNOWN
+    UNK_56                  = "0056"            # UNKNOWN
+    UNK_57                  = "0057"            # UNKNOWN
+    UNK_58                  = "0058"            # UNKNOWN
+    UNK_59                  = "0059"            # UNKNOWN
+    UNK_5A                  = "005a"            # UNKNOWN
+    UNK_65                  = "0065"            # UNKNOWN
+    UNK_66                  = "0066"            # UNKNOWN
     INPUT_1                 = "0080"            # Input 1
     INPUT_2                 = "0081"            # Input 2
     OUTPUT_1                = "0082"            # Output 1
@@ -55,16 +71,44 @@ class RegisterEnum(object):
     OUTPUT_FREQUENCY        = "00b3"            # Output Frequency
     OUTPUT_RPM              = "00b5"            # Output RPM
     A_F_DUTY_CYCLE          = "00b7"            # Air Fuel Duty Cycle
+    UNK_B7                  = "00b9"            # Unknown (changes on power loss)
+    UNK_DC                  = "00dc"            # UNKNOWN
+    UNK_DD                  = "00dd"            # UNKNOWN
     GEN_TIME_HR_MIN         = "00e0"            # Time HR:MIN
     GEN_TIME_SEC_DYWK       = "00e1"            # Time SEC:DayOfWeek
     GEN_TIME_MONTH_DAY      = "00e2"            # Time Month:DayofMonth
     GEN_TIME_YR             = "00e3"            # Time YR:UNK
-    GEN_TIME_5              = "00e4"            # Unknown
-    GEN_TIME_6              = "00e5"            # Unknown
+    GEN_TIME_5              = "00e4"            # Unknown (changes while running)
+    GEN_TIME_6              = "00e5"            # Unknown (changes while running)
     GEN_TIME_7              = "00e6"            # Unknown
     GEN_TIME_8              = "00e7"            # Unknown
+    UNK_EF                  = "00ef"            # Unknown (changes while running)
+    UNK_F0                  = "00f0"            # Unknown (not used)
+    UNK_F1                  = "00f1"            # Unknown (changes while running)
+    UNK_F2                  = "00f2"            # Unknown (changes while running)
+    UNK_F3                  = "00f3"            # Unknown (changes while running)
+    UNK_104                 = "0104"            # UNKNOWN
+    UNK_105                 = "0105"            # UNKNOWN
+    UNK_106                 = "0106"            # UNKNOWN
+    UNK_107                 = "0107"            # UNKNOWN
+    UNK_108                 = "0108"            # UNKNOWN
+    UNK_109                 = "0109"            # UNKNOWN
+    UNK_10A                 = "010a"            # UNKNOWN
+    UNK_10B                 = "010b"            # UNKNOWN 
+    UNK_110                 = "0110"            # UNKNOWN (change when running)
     ENGINE_HOURS_HI         = "0130"            # Engine Hours High
     ENGINE_HOURS_LO         = "0131"            # Engine Hours Low
+    UNK_132                 = "0132"            # UNKNOWN
+    UNK_133                 = "0133"            # UNKNOWN
+    UNK_134                 = "0134"            # UNKNOWN
+    UNK_135                 = "0135"            # UNKNOWN
+    UNK_136                 = "0136"            # UNKNOWN
+    UNK_137                 = "0137"            # UNKNOWN
+    UNK_138                 = "0138"            # UNKNOWN
+    UNK_139                 = "0139"            # UNKNOWN
+    UNK_13A                 = "013a"            # UNKNOWN
+    UNK_13B                 = "013b"            # UNKNOWN
+    UNK_13C                 = "013c"            # UNKNOWN
     #---------------------RegisterEnum::GetRegList------------------------------
     @staticmethod
     def GetRegList():
@@ -74,6 +118,7 @@ class RegisterEnum(object):
                 RetList.append(value)
 
         return RetList
+
 
 #---------------------Input1::Input1--------------------------------------------
 # Enum for register Input1

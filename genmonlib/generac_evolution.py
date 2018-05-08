@@ -234,7 +234,7 @@ class Evolution(controller.GeneratorController):
             self.ModBus.ProcessMasterSlaveTransaction(Reg, int(Info[self.REGLEN] / 2))
 
         # check for model specific info in read from conf file, if not there then add some defaults
-        self.CheckModelSpecificInfo()
+        self.CheckModelSpecificInfo(NoLookUp = self.Simulation)
         # check for unknown events (i.e. events we are not decoded) and send an email if they occur
         self.CheckForAlarmEvent.set()
         self.InitComplete = True
