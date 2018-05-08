@@ -36,6 +36,7 @@ class RegisterEnum(object):
     UNK_58                  = "0058"            # UNKNOWN
     UNK_59                  = "0059"            # UNKNOWN
     UNK_5A                  = "005a"            # UNKNOWN
+    UNK_64                  = "0064"            # UNKNOWN
     UNK_65                  = "0065"            # UNKNOWN
     UNK_66                  = "0066"            # UNKNOWN
     INPUT_1                 = "0080"            # Input 1
@@ -94,7 +95,7 @@ class RegisterEnum(object):
     UNK_108                 = "0108"            # UNKNOWN
     UNK_109                 = "0109"            # UNKNOWN
     UNK_10A                 = "010a"            # UNKNOWN
-    UNK_10B                 = "010b"            # UNKNOWN 
+    UNK_10B                 = "010b"            # UNKNOWN
     UNK_110                 = "0110"            # UNKNOWN (change when running)
     ENGINE_HOURS_HI         = "0130"            # Engine Hours High
     ENGINE_HOURS_LO         = "0131"            # Engine Hours Low
@@ -109,6 +110,7 @@ class RegisterEnum(object):
     UNK_13A                 = "013a"            # UNKNOWN
     UNK_13B                 = "013b"            # UNKNOWN
     UNK_13C                 = "013c"            # UNKNOWN
+    
     #---------------------RegisterEnum::GetRegList------------------------------
     @staticmethod
     def GetRegList():

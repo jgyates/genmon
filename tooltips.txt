@@ -136,8 +136,8 @@ autofeedback = If enabled, an email will be sent to the software maintainer if c
 008d=Coolant Temp
 008f=Oil Pressure
 0091=Coolant Level
-0093=USER CFG 05/Fuel Level =147
-0095=USER CFG 06 = 149
+0093=USER CFG 05/Fuel Level
+0095=USER CFG 06
 0097=Throttle Position
 0099=O2 Sensor
 009b=Battery Charge Current
@@ -158,7 +158,7 @@ autofeedback = If enabled, an email will be sent to the software maintainer if c
 00e0=Time HR:MIN
 00e1=Time SEC:DayOfWeek
 00e2=Time Month:DayofMonth
-00e3=Time YR:UNK
+00e3=Time YR:Zero
 00e4=Unknown
 00e5=Unknown
 00e6=Unknown
