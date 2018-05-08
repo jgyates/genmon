@@ -110,7 +110,7 @@ class RegisterEnum(object):
     UNK_13A                 = "013a"            # UNKNOWN
     UNK_13B                 = "013b"            # UNKNOWN
     UNK_13C                 = "013c"            # UNKNOWN
-    
+
     #---------------------RegisterEnum::GetRegList------------------------------
     @staticmethod
     def GetRegList():
@@ -1135,7 +1135,7 @@ class HPanel(controller.GeneratorController):
             Time = collections.OrderedDict()
             Stat["Time"] = Time
 
-            Battery["Battery Volts"] = self.GetParameter(RegisterEnum.BATTERY_VOLTS, "V", 100.0)
+            Battery["Battery Voltage"] = self.GetParameter(RegisterEnum.BATTERY_VOLTS, "V", 100.0)
             Battery["Battery Charger Current"] = self.GetParameter(RegisterEnum.BATTERY_CHARGE_CURRNT, "A", 10.0)
 
             Engine["Switch State"] = self.GetSwitchState()

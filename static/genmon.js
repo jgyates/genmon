@@ -23,7 +23,7 @@ var ajaxErrors = {errorCount: 0, lastSuccessTime: 0, log: ""};
 var windowActive = true;
 
 var myGenerator = {PowerGraph: false, sitename: "", nominalRPM: 3600, nominalfrequency: 60, Controller: "", model: "", nominalKW: 22, fueltype: "", UnsentFeedback: false, EnhancedExerciseEnabled: false, OldExerciseParameters:[-1,-1,-1,-1,-1,-1]};
-var prevStatusValues = {};
+var prevStatusValues = {BatteryVoltage: "12V", UnsentFeedback: "False", OutputVoltage: "0V", Frequency: "0.0 Hz", UtilityVoltage: "240V", kwOutput: "0kW", RPM: " 0", basestatus: "READY"};
 var regHistory = {updateTime: {}, _10m: {}, _60m: {}, _24h: {}, historySince: "", count_60m: 0, count_24h: 0};
 var kwHistory = {data: [], plot:"", kwDuration: "h", tickInterval: "10 minutes", formatString: "%H:%M"};
 var pathname = window.location.href;
@@ -231,13 +231,13 @@ function DisplayStatusFull()
         if ($("#gaugekW").length > 0) {
            var gaugeNominalKW = myGenerator["nominalKW"];
            var gaugeNominalKWmarks = [0];
-           for(var i=0;i<=parseInt(gaugeNominalKW/20*23/5);i++){
-             gaugeNominalKWmarks.unshift(5*i);
+           for(var i=0;i<=5;i++){
+             gaugeNominalKWmarks.unshift(parseInt(gaugeNominalKW/5*i));
            }
-           gaugekW = createGauge($("#gaugekW"), $("#textkW"), 0, 0, parseInt(gaugeNominalKW/20*23), gaugeNominalKWmarks,
+           gaugekW = createGauge($("#gaugekW"), $("#textkW"), 0, 0, parseInt(gaugeNominalKW/20*24), gaugeNominalKWmarks,
                                           [{strokeStyle: "#30B32D", min: 0, max: gaugeNominalKW/10*8},
                                            {strokeStyle: "#FFDD00", min: gaugeNominalKW/10*8, max: gaugeNominalKW/20*19},
-                                           {strokeStyle: "#F03E3E", min: gaugeNominalKW/20*19, max: gaugeNominalKW/20*23}], parseInt(gaugeNominalKW/20*23/5), 5);
+                                           {strokeStyle: "#F03E3E", min: gaugeNominalKW/20*19, max: gaugeNominalKW/20*24}], 12, 5);
            gaugekW.set(0); // set starting value
 
            kwHistory["kwDuration"] = "h";
