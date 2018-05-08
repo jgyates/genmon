@@ -157,7 +157,7 @@ def ProcessCommand(command):
         SaveSettings(request.args.get('setsettings', 0, type=str))
         return "OK"
     elif command in ["getreglabels"]:
-        return jsonify(GetRegisterDescriptions("generac_evo_nexus"))
+        return jsonify(GetRegisterDescriptions())
     else:
         return render_template('command_template.html', command = command)
 
@@ -399,16 +399,27 @@ def ReadSettingsFromFile():
 
 
 #------------------------------------------------------------
-def GetRegisterDescriptions(config_section):
+def GetRegisterDescriptions():
 
-    pathtofile = os.path.dirname(os.path.realpath(__file__))
     ReturnDict = {}
+    try:
+        config_section = "generac_evo_nexus"
+        pathtofile = os.path.dirname(os.path.realpath(__file__))
 
-    config = RawConfigParser()
-    config.read(pathtofile + "/tooltips.txt")
-    for (key, value) in config.items(config_section):
-        ReturnDict[key] = value
+        # get controller used
+        config = RawConfigParser()
+        config.read(GENMON_CONFIG)
+        if config.has_option("GenMon", 'controllertype'):
+            config_section = config.get("GenMon", 'controllertype')
+        else:
+            config_section = "generac_evo_nexus"
 
+        config = RawConfigParser()
+        config.read(pathtofile + "/tooltips.txt")
+        for (key, value) in config.items(config_section):
+            ReturnDict[key] = value
+    except Exception as e1:
+        log.error("Error in GetRegisterDescriptions: " + str(e1))
     return ReturnDict
 
 #------------------------------------------------------------
