@@ -463,7 +463,6 @@ class HPanel(controller.GeneratorController):
         self.MasterEmulation()
         self.CheckModelSpecificInfo()
         self.InitComplete = True
-        self.LogError("Init Complete")
 
     #-------------HPanel:CheckModelSpecificInfo---------------------------------
     # check for model specific info in read from conf file, if not there then add some defaults
