@@ -15,6 +15,12 @@
 
 import threading, datetime, collections, os
 # NOTE: collections OrderedDict is used for dicts that are displayed to the UI
+
+try:
+    from ConfigParser import RawConfigParser
+except ImportError as e:
+    from configparser import RawConfigParser
+
 import mysupport, mypipe
 
 class GeneratorController(mysupport.MySupport):
@@ -24,6 +30,9 @@ class GeneratorController(mysupport.MySupport):
         self.log = log
         self.NewInstall = newinstall
         self.Simulation = simulation
+        self.Address = None
+        self.SerialPort = "/dev/serial0"
+        self.BaudRate = 9600
         self.InitComplete = False
         self.Registers = {}         # dict for registers and values
         self.RegistersUnderTest = {}# dict for registers we are testing
@@ -33,7 +42,9 @@ class GeneratorController(mysupport.MySupport):
         self.TotalChanged = 0.0     # ratio of changed ragisters
         self.EnableDebug = False    # Used for enabeling debugging
         self.OutageLog = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/outage.txt"
+        self.LogLocation = "/var/log/"
         self.DisableOutageCheck = False
+        self.bDisplayUnknownSensors = False
         self.UtilityVoltsMin = 0    # Minimum reported utility voltage above threshold
         self.UtilityVoltsMax = 0    # Maximum reported utility voltage above pickup
         self.SystemInOutage = False         # Flag to signal utility power is out
@@ -49,6 +60,57 @@ class GeneratorController(mysupport.MySupport):
         self.CommAccessLock = threading.RLock()  # lock to synchronize access to the protocol comms
         self.ProgramStartTime = datetime.datetime.now()     # used for com metrics
         self.OutageStartTime = self.ProgramStartTime        # if these two are the same, no outage has occured
+
+        # Read conf entries common to all controllers
+        ConfigSection = "GenMon"
+        try:
+            # read config file
+            config = RawConfigParser()
+            # config parser reads from current directory, when running form a cron tab this is
+            # not defined so we specify the full path
+            config.read('/etc/genmon.conf')
+
+            # getfloat() raises an exception if the value is not a float
+            # getint() and getboolean() also do this for their respective types
+            if config.has_option(ConfigSection, 'sitename'):
+                self.SiteName = config.get(ConfigSection, 'sitename')
+
+            if config.has_option(ConfigSection, 'port'):
+                self.SerialPort = config.get(ConfigSection, 'port')
+
+            if config.has_option(ConfigSection, 'loglocation'):
+                self.LogLocation = config.get(ConfigSection, 'loglocation')
+                
+            # optional config parameters, by default the software will attempt to auto-detect the controller
+            # this setting will override the auto detect
+            if config.has_option(ConfigSection, 'disableoutagecheck'):
+                self.DisableOutageCheck = config.getboolean(ConfigSection, 'disableoutagecheck')
+
+            if config.has_option(ConfigSection, 'enabledebug'):
+                self.EnableDebug = config.getboolean(ConfigSection, 'enabledebug')
+
+            if config.has_option(ConfigSection, 'displayunknown'):
+                self.bDisplayUnknownSensors = config.getboolean(ConfigSection, 'displayunknown')
+            if config.has_option(ConfigSection, 'outagelog'):
+                self.OutageLog = config.get(ConfigSection, 'outagelog')
+
+            if config.has_option(ConfigSection, 'nominalfrequency'):
+                self.NominalFreq = config.get(ConfigSection, 'nominalfrequency')
+            if config.has_option(ConfigSection, 'nominalRPM'):
+                self.NominalRPM = config.get(ConfigSection, 'nominalRPM')
+            if config.has_option(ConfigSection, 'nominalKW'):
+                self.NominalKW = config.get(ConfigSection, 'nominalKW')
+            if config.has_option(ConfigSection, 'model'):
+                self.Model = config.get(ConfigSection, 'model')
+
+            if config.has_option(ConfigSection, 'fueltype'):
+                self.FuelType = config.get(ConfigSection, 'fueltype')
+
+        except Exception as e1:
+            if not reload:
+                self.FatalError("Missing config file or config file entries: " + str(e1))
+            else:
+                self.LogErrorLine("Error reloading config file" + str(e1))
 
         self.FeedbackPipe = mypipe.MyPipe("Feedback", Reuse = True, log = log, simulation = self.Simulation)
         self.MessagePipe = mypipe.MyPipe("Message", Reuse = True, log = log, simulation = self.Simulation)

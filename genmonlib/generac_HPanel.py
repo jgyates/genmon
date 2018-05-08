@@ -272,12 +272,6 @@ class HPanel(controller.GeneratorController):
 
         # call parent constructor
         super(HPanel, self).__init__(log, newinstall = newinstall, simulation = simulation)
-        self.Address = 0x64
-        self.SerialPort = "/dev/serial0"
-        self.BaudRate = 9600
-        # read from conf file
-        self.bDisplayUnknownSensors = False
-        self.DisableOutageCheck = False
 
         self.CommAccessLock = threading.RLock()  # lock to synchronize access to the protocol comms
         self.CheckForAlarmEvent = threading.Event() # Event to signal checking for alarm
@@ -449,42 +443,10 @@ class HPanel(controller.GeneratorController):
             # not defined so we specify the full path
             config.read('/etc/genmon.conf')
 
-            # getfloat() raises an exception if the value is not a float
-            # getint() and getboolean() also do this for their respective types
-            if config.has_option(ConfigSection, 'sitename'):
-                self.SiteName = config.get(ConfigSection, 'sitename')
-
-            if config.has_option(ConfigSection, 'port'):
-                self.SerialPort = config.get(ConfigSection, 'port')
             if config.has_option(ConfigSection, 'address'):
                 self.Address = int(config.get(ConfigSection, 'address'),16)                      # modbus address
-            if config.has_option(ConfigSection, 'loglocation'):
-                self.LogLocation = config.get(ConfigSection, 'loglocation')
-
-            # optional config parameters, by default the software will attempt to auto-detect the controller
-            # this setting will override the auto detect
-            if config.has_option(ConfigSection, 'disableoutagecheck'):
-                self.DisableOutageCheck = config.getboolean(ConfigSection, 'disableoutagecheck')
-
-            if config.has_option(ConfigSection, 'enabledebug'):
-                self.EnableDebug = config.getboolean(ConfigSection, 'enabledebug')
-
-            if config.has_option(ConfigSection, 'displayunknown'):
-                self.bDisplayUnknownSensors = config.getboolean(ConfigSection, 'displayunknown')
-            if config.has_option(ConfigSection, 'outagelog'):
-                self.OutageLog = config.get(ConfigSection, 'outagelog')
-
-            if config.has_option(ConfigSection, 'nominalfrequency'):
-                self.NominalFreq = config.get(ConfigSection, 'nominalfrequency')
-            if config.has_option(ConfigSection, 'nominalRPM'):
-                self.NominalRPM = config.get(ConfigSection, 'nominalRPM')
-            if config.has_option(ConfigSection, 'nominalKW'):
-                self.NominalKW = config.get(ConfigSection, 'nominalKW')
-            if config.has_option(ConfigSection, 'model'):
-                self.Model = config.get(ConfigSection, 'model')
-
-            if config.has_option(ConfigSection, 'fueltype'):
-                self.FuelType = config.get(ConfigSection, 'fueltype')
+            else:
+                self.Address = 0x64
 
         except Exception as e1:
             if not reload:
@@ -499,7 +461,22 @@ class HPanel(controller.GeneratorController):
     # One time reads, and read all registers once
     def InitDevice(self):
         self.MasterEmulation()
+        self.CheckModelSpecificInfo()
         self.InitComplete = True
+        self.LogError("Init Complete")
+
+    #-------------HPanel:CheckModelSpecificInfo---------------------------------
+    # check for model specific info in read from conf file, if not there then add some defaults
+    def CheckModelSpecificInfo(self):
+
+        # TODO
+        self.NominalFreq = "60"
+        self.NominalRPM = "1800"
+        self.Model = "Generac Generic H-100 Industrial Generator"
+        self.FuelType = "Unknown"
+        self.NominalKW = "550"
+
+        return
 
     #-------------HPanel:MasterEmulation----------------------------------------
     def MasterEmulation(self):
@@ -517,7 +494,6 @@ class HPanel(controller.GeneratorController):
     def ProcessThread(self):
 
         try:
-            time.sleep(0.01)
             self.ModBus.Flush()
             self.InitDevice()
 
@@ -977,9 +953,9 @@ class HPanel(controller.GeneratorController):
             StartInfo["sitename"] = self.SiteName
             StartInfo["fueltype"] = self.FuelType
             StartInfo["model"] = self.Model
-            StartInfo["nominalKW"] = "400kW" #self.NominalKW
-            StartInfo["nominalRPM"] = "1800" #self.NominalRPM
-            StartInfo["nominalfrequency"] = "60" #self.NominalFreq
+            StartInfo["nominalKW"] = self.NominalKW
+            StartInfo["nominalRPM"] = self.NominalRPM
+            StartInfo["nominalfrequency"] = self.NominalFreq
             StartInfo["NominalBatteryVolts"] = "24"
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
             StartInfo["Controller"] = self.GetController()

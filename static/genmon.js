@@ -22,7 +22,7 @@ var menuElement = "status";
 var ajaxErrors = {errorCount: 0, lastSuccessTime: 0, log: ""};
 var windowActive = true;
 
-var myGenerator = {sitename: "", nominalRPM: 3600, nominalfrequency: 60, Controller: "", model: "", nominalKW: 22, fueltype: "", UnsentFeedback: false, EnhancedExerciseEnabled: false, OldExerciseParameters:[-1,-1,-1,-1,-1,-1]};
+var myGenerator = {PowerGraph: false, sitename: "", nominalRPM: 3600, nominalfrequency: 60, Controller: "", model: "", nominalKW: 22, fueltype: "", UnsentFeedback: false, EnhancedExerciseEnabled: false, OldExerciseParameters:[-1,-1,-1,-1,-1,-1]};
 var prevStatusValues = {};
 var regHistory = {updateTime: {}, _10m: {}, _60m: {}, _24h: {}, historySince: "", count_60m: 0, count_24h: 0};
 var kwHistory = {data: [], plot:"", kwDuration: "h", tickInterval: "10 minutes", formatString: "%H:%M"};
@@ -68,7 +68,7 @@ function processAjaxSuccess() {
     var now = new moment();
     if (ajaxErrors["errorCount"]>5) {
       ajaxErrors["log"] = ajaxErrors["errorCount"]+" messages missed between "+ajaxErrors["lastSuccessTime"].format("H:mm:ss") + " and " +now.format("H:mm:ss") +"<br>" + ajaxErrors["log"];
-      if (myGenerator['UnsentFeedback'] == false) {
+      if (myGenerator['UnsentFeedback'] == false) { 
         $("#footer").removeClass("alert");
         $("#ajaxWarning").hide(2000);
       }
@@ -235,9 +235,7 @@ function DisplayStatusFull()
              gaugeNominalKWmarks.unshift(5*i);
            }
            gaugekW = createGauge($("#gaugekW"), $("#textkW"), 0, 0, parseInt(gaugeNominalKW/20*23), gaugeNominalKWmarks,
-                                          [{strokeStyle: "#F03E3E", min: 0, max: gaugeNominalKW/10*2},
-                                           {strokeStyle: "#FFDD00", min: gaugeNominalKW/10*2, max: gaugeNominalKW/10*3},
-                                           {strokeStyle: "#30B32D", min: gaugeNominalKW/10*3, max: gaugeNominalKW/10*8},
+                                          [{strokeStyle: "#30B32D", min: 0, max: gaugeNominalKW/10*8},
                                            {strokeStyle: "#FFDD00", min: gaugeNominalKW/10*8, max: gaugeNominalKW/20*19},
                                            {strokeStyle: "#F03E3E", min: gaugeNominalKW/20*19, max: gaugeNominalKW/20*23}], parseInt(gaugeNominalKW/20*23/5), 5);
            gaugekW.set(0); // set starting value
@@ -1159,7 +1157,7 @@ function DisplaySettings(){
             } else if ((key == "autofeedback") && (myGenerator['UnsentFeedback'] == true)) {
               outstr += '<tr><td width="25px">&nbsp;</td><td bgcolor="#ffcccc" width="300px">' + result[key][1] + '</td><td bgcolor="#ffcccc">' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
             } else {
-              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';            
             }
         }
         outstr += '</table></fieldset></form><br>';
@@ -1930,16 +1928,16 @@ function GetBaseStatus()
               printKwPlot(result['kwOutput'].replace(/kW/g, ''));
            }
         }
-
+        
         if ((menuElement == "status") && ($("#gaugeBatteryVoltage").length > 0)) {
-           if (result["BatteryVoltage"].replace(/V/g, '').trim() !== "")
+           if (result["BatteryVoltage"].replace(/V/g, '').trim() !== "") 
              gaugeBatteryVoltage.set(result["BatteryVoltage"].replace(/V/g, '')); // set actual value
            gaugeUtilityVoltage.set(result["UtilityVoltage"].replace(/V/g, '')); // set actual value
            gaugeOutputVoltage.set(result["OutputVoltage"].replace(/V/g, '')); // set actual value
            gaugeFrequency.set(result["Frequency"].replace(/Hz/g, '')); // set actual value
            gaugeRPM.set(result["RPM"]); // set actual value
         }
-
+        
         if (result['UnsentFeedback'].toLowerCase() == "true") {
           myGenerator['UnsentFeedback'] = true;
           var tempMsg = '<b><span style="font-size:14px">UNKNOWN ERROR OCCURED</span></b><br>The software had encountered unknown status from<br>your generator.<br>This status could be used to improve the software.<br>To send the contents of your generator registers to<br>the software developer please enable "Auto Feedback"<br>on the Settings page.';
@@ -1980,7 +1978,7 @@ function GetBaseStatus()
             // Added active to selected class
             $("#"+menuElement).find("a").addClass(GetCurrentClass());
         }
-
+        
         prevStatusValues = result;
         return
    }});

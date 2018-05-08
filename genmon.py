@@ -43,7 +43,7 @@ class Monitor(mysupport.MySupport):
         self.PowerLogMaxSize = 15       # 15 MB max size
         self.PowerLog =  os.path.dirname(os.path.realpath(__file__)) + "/kwlog.txt"
         self.FeedbackLogFile = os.path.dirname(os.path.realpath(__file__)) + "/feedback.json"
-
+        self.LogLocation = "/var/log/"
         # set defaults for optional parameters
         self.NewInstall = False         # True if newly installed or newly upgraded version
         self.FeedbackEnabled = False    # True if sending autoated feedback on missing information

@@ -51,17 +51,13 @@ class Evolution(controller.GeneratorController):
         #self.log = log
         # call parent constructor
         super(Evolution, self).__init__(log, newinstall = newinstall, simulation = simulation)
-        self.Address = 0x9d
-        self.SerialPort = "/dev/serial0"
-        self.BaudRate = 9600
+
         # Controller Type
         self.EvolutionController = None
         self.LiquidCooled = None
         # State Info
         self.GeneratorInAlarm = False       # Flag to let the heartbeat thread know there is a problem
         self.LastAlarmValue = 0xFF  # Last Value of the Alarm / Status Register
-        # read from conf file
-        self.bDisplayUnknownSensors = False
         self.bUseLegacyWrite = False        # Nexus will set this to True
         self.bEnhancedExerciseFrequency = False     # True if controller supports biweekly and monthly exercise times
         self.CurrentDivider = None
@@ -3211,18 +3207,10 @@ class Evolution(controller.GeneratorController):
             # not defined so we specify the full path
             config.read('/etc/genmon.conf')
 
-            # getfloat() raises an exception if the value is not a float
-            # getint() and getboolean() also do this for their respective types
-            if config.has_option(ConfigSection, 'sitename'):
-                self.SiteName = config.get(ConfigSection, 'sitename')
-
-            if config.has_option(ConfigSection, 'port'):
-                self.SerialPort = config.get(ConfigSection, 'port')
             if config.has_option(ConfigSection, 'address'):
                 self.Address = int(config.get(ConfigSection, 'address'),16)                      # modbus address
-            if config.has_option(ConfigSection, 'loglocation'):
-                self.LogLocation = config.get(ConfigSection, 'loglocation')
-
+            else:
+                self.Address = 0x9d
             # optional config parameters, by default the software will attempt to auto-detect the controller
             # this setting will override the auto detect
             if config.has_option(ConfigSection, 'evolutioncontroller'):
@@ -3232,33 +3220,12 @@ class Evolution(controller.GeneratorController):
             if config.has_option(ConfigSection, 'disableoutagecheck'):
                 self.DisableOutageCheck = config.getboolean(ConfigSection, 'disableoutagecheck')
 
-            if config.has_option(ConfigSection, 'enabledebug'):
-                self.EnableDebug = config.getboolean(ConfigSection, 'enabledebug')
-
-            if config.has_option(ConfigSection, 'displayunknown'):
-                self.bDisplayUnknownSensors = config.getboolean(ConfigSection, 'displayunknown')
-            if config.has_option(ConfigSection, 'uselegacysetexercise'):
-                self.bUseLegacyWrite = config.getboolean(ConfigSection, 'uselegacysetexercise')
-            if config.has_option(ConfigSection, 'outagelog'):
-                self.OutageLog = config.get(ConfigSection, 'outagelog')
 
             if config.has_option(ConfigSection, 'enhancedexercise'):
                 self.bEnhancedExerciseFrequency = config.getboolean(ConfigSection, 'enhancedexercise')
 
             if config.has_option(ConfigSection, 'currentdivider'):
                 self.CurrentDivider = config.getfloat(ConfigSection, 'currentdivider')
-
-            if config.has_option(ConfigSection, 'nominalfrequency'):
-                self.NominalFreq = config.get(ConfigSection, 'nominalfrequency')
-            if config.has_option(ConfigSection, 'nominalRPM'):
-                self.NominalRPM = config.get(ConfigSection, 'nominalRPM')
-            if config.has_option(ConfigSection, 'nominalKW'):
-                self.NominalKW = config.get(ConfigSection, 'nominalKW')
-            if config.has_option(ConfigSection, 'model'):
-                self.Model = config.get(ConfigSection, 'model')
-
-            if config.has_option(ConfigSection, 'fueltype'):
-                self.FuelType = config.get(ConfigSection, 'fueltype')
 
         except Exception as e1:
             if not reload:
