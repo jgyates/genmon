@@ -412,14 +412,11 @@ class HPanel(controller.GeneratorController):
 
     #-------------HPanel:SetupClass---------------------------------------------
     def SetupClass(self):
-        if not self.Simulation:
 
-            # read config file
-            if not self.GetConfig():
-                self.FatalError("Failure in Controller GetConfig: " + str(e1))
-                return None
-        else:
-            self.LogLocation = "./"
+        # read config file
+        if not self.GetConfig():
+            self.FatalError("Failure in Controller GetConfig: " + str(e1))
+            return None
         try:
             #Starting device connection
             if self.Simulation:
@@ -980,10 +977,11 @@ class HPanel(controller.GeneratorController):
             StartInfo["sitename"] = self.SiteName
             StartInfo["fueltype"] = self.FuelType
             StartInfo["model"] = self.Model
-            StartInfo["nominalKW"] = self.NominalKW
-            StartInfo["nominalRPM"] = self.NominalRPM
-            StartInfo["nominalfrequency"] = self.NominalFreq
+            StartInfo["nominalKW"] = "400kW" #self.NominalKW
+            StartInfo["nominalRPM"] = "1800" #self.NominalRPM
+            StartInfo["nominalfrequency"] = "60" #self.NominalFreq
             StartInfo["NominalBatteryVolts"] = "24"
+            StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
             StartInfo["Controller"] = self.GetController()
 
             return StartInfo
@@ -1001,8 +999,9 @@ class HPanel(controller.GeneratorController):
             Status["kwOutput"] = self.GetPowerOutput()
             Status["OutputVoltage"] = self.GetParameter(RegisterEnum.AVG_VOLTAGE,"V")
             Status["BatteryVoltage"] = self.GetParameter(RegisterEnum.BATTERY_VOLTS, "V", 100.0)
-            Status["UtilityVoltage"] = self.GetParameter(RegisterEnum.AVG_VOLTAGE,"V")
+            Status["UtilityVoltage"] = self.GetUtilityVoltage()
             Status["RPM"] = self.GetParameter(RegisterEnum.OUTPUT_RPM)
+            Status["Frequency"] = self.GetParameter(RegisterEnum.OUTPUT_FREQUENCY, "Hz", 10.0)
             # Exercise Info is a dict containing the following:
             # TODO
             ExerciseInfo = collections.OrderedDict()
@@ -1319,7 +1318,7 @@ class HPanel(controller.GeneratorController):
     #----------  HPanel:PowerMeterIsSupported  --------------------
     # return true if GetPowerOutput is supported
     def PowerMeterIsSupported(self):
-        True
+        return True
 
     #---------------------HPanel::GetPowerOutput-------------------
     # returns current kW

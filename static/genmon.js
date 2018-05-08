@@ -23,6 +23,7 @@ var ajaxErrors = {errorCount: 0, lastSuccessTime: 0, log: ""};
 var windowActive = true;
 
 var myGenerator = {sitename: "", nominalRPM: 3600, nominalfrequency: 60, Controller: "", model: "", nominalKW: 22, fueltype: "", UnsentFeedback: false, EnhancedExerciseEnabled: false, OldExerciseParameters:[-1,-1,-1,-1,-1,-1]};
+var prevStatusValues = {};
 var regHistory = {updateTime: {}, _10m: {}, _60m: {}, _24h: {}, historySince: "", count_60m: 0, count_24h: 0};
 var kwHistory = {data: [], plot:"", kwDuration: "h", tickInterval: "10 minutes", formatString: "%H:%M"};
 var pathname = window.location.href;
@@ -173,7 +174,7 @@ function DisplayStatusFull()
         outstr += '<div class="gauge-lb2"></div>';
         outstr += '<div class="gauge-block-e"><div class="gaugeField">Rotation/Min<br><canvas class="gaugeCanvas" id="gaugeRPM"></canvas><br><div id="textRPM" class="gaugeDiv"></div> RPM</div></div>';
         outstr += '<div class="gauge-lb5"></div>';
-        if (myGenerator["Controller"].indexOf("Nexus") == -1) {
+        if (myGenerator["PowerGraph"] == "true") {
            outstr += '<div class="gauge-block-f"><div class="gaugeField">kW Output<br><canvas class="gaugeCanvas" id="gaugekW"></canvas><br><div id="textkW" class="gaugeDiv"></div>kW</div></div>';
            outstr += '<div class="gauge-lb2 gauge-lb3"></div>';
            outstr += '<div class="gauge-block-g"></div>';
@@ -190,8 +191,8 @@ function DisplayStatusFull()
                                            {strokeStyle: "#30B32D", min: gaugeNB/12*12.5, max: gaugeNB/12*15},
                                            {strokeStyle: "#FFDD00", min: gaugeNB/12*15,   max: gaugeNB/12*15.5},
                                            {strokeStyle: "#F03E3E", min: gaugeNB/12*15.5, max: gaugeNB/12*16}], 6, 10);
-        if (result["Status"]["Engine"]["Battery Voltage"].replace(/V/g, '').trim() !== "")
-          gaugeBatteryVoltage.set(result["Status"]["Engine"]["Battery Voltage"].replace(/V/g, '')); // set current value
+        if (prevStatusValues["BatteryVoltage"].replace(/V/g, '').trim() !== "")
+          gaugeBatteryVoltage.set(prevStatusValues["BatteryVoltage"].replace(/V/g, '')); // set current value
 
         gaugeUtilityVoltage = createGauge($("#gaugeUtilityVoltage"), $("#textUtilityVoltage"), 0, 0, 260, [0, 100, 156, 220, 240, 260],
                                           [{strokeStyle: "#F03E3E", min: 0, max: 220},
@@ -199,7 +200,7 @@ function DisplayStatusFull()
                                            {strokeStyle: "#30B32D", min: 235, max: 245},
                                            {strokeStyle: "#FFDD00", min: 245, max: 255},
                                            {strokeStyle: "#F03E3E", min: 255, max: 260}], 26, 0);
-        gaugeUtilityVoltage.set(result["Status"]["Line State"]["Utility Voltage"].replace(/V/g, '')); // set actual value
+        gaugeUtilityVoltage.set(prevStatusValues["UtilityVoltage"].replace(/V/g, '')); // set actual value
 
         gaugeOutputVoltage = createGauge($("#gaugeOutputVoltage"), $("#textOutputVoltage"), 0, 0, 260, [0, 100, 156, 220, 240, 260],
                                           [{strokeStyle: "#F03E3E", min: 0, max: 220},
@@ -207,7 +208,7 @@ function DisplayStatusFull()
                                            {strokeStyle: "#30B32D", min: 235, max: 245},
                                            {strokeStyle: "#FFDD00", min: 245, max: 255},
                                            {strokeStyle: "#F03E3E", min: 255, max: 260}], 26, 0);
-        gaugeOutputVoltage.set(result["Status"]["Engine"]["Output Voltage"].replace(/V/g, '')); // set actual value
+        gaugeOutputVoltage.set(prevStatusValues["OutputVoltage"].replace(/V/g, '')); // set actual value
 
         var gaugeNominalFrequency = myGenerator["nominalfrequency"];
         gaugeFrequency = createGauge($("#gaugeFrequency"), $("#textFrequency"), 1, 0, 70, [10, 20, 30, 40, 50, 60, 70],
@@ -216,7 +217,7 @@ function DisplayStatusFull()
                                            {strokeStyle: "#30B32D", min: gaugeNominalFrequency/100*98, max: gaugeNominalFrequency/100*102},
                                            {strokeStyle: "#FFDD00", min: gaugeNominalFrequency/100*102, max: gaugeNominalFrequency/100*104},
                                            {strokeStyle: "#F03E3E", min: gaugeNominalFrequency/100*104, max: 70}], 7, 10);
-        gaugeFrequency.set(result["Status"]["Engine"]["Frequency"].replace(/Hz/g, '')); // set actual value
+        gaugeFrequency.set(prevStatusValues["Frequency"].replace(/Hz/g, '')); // set actual value
 
         var gaugeRPMnominal = myGenerator["nominalRPM"];
         gaugeRPM = createGauge($("#gaugeRPM"), $("#textRPM"), 0, 0, parseInt(gaugeRPMnominal/9*10), [parseInt(gaugeRPMnominal/4), parseInt(gaugeRPMnominal/2), parseInt(gaugeRPMnominal/4*3), parseInt(gaugeRPMnominal)],
@@ -225,7 +226,7 @@ function DisplayStatusFull()
                                            {strokeStyle: "#30B32D", min: gaugeRPMnominal/36*35, max: gaugeRPMnominal/36*37},
                                            {strokeStyle: "#FFDD00", min: gaugeRPMnominal/36*37, max: gaugeRPMnominal/18*19},
                                            {strokeStyle: "#F03E3E", min: gaugeRPMnominal/18*19, max: gaugeRPMnominal/9*10}], 4, 10);
-        gaugeRPM.set(result["Status"]["Engine"]["RPM"]); // set actual value
+        gaugeRPM.set(prevStatusValues["RPM"]); // set actual value
 
         if ($("#gaugekW").length > 0) {
            var gaugeNominalKW = myGenerator["nominalKW"];
@@ -1979,6 +1980,8 @@ function GetBaseStatus()
             // Added active to selected class
             $("#"+menuElement).find("a").addClass(GetCurrentClass());
         }
+        
+        prevStatusValues = result;
         return
    }});
 
