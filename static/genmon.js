@@ -68,7 +68,7 @@ function processAjaxSuccess() {
     var now = new moment();
     if (ajaxErrors["errorCount"]>5) {
       ajaxErrors["log"] = ajaxErrors["errorCount"]+" messages missed between "+ajaxErrors["lastSuccessTime"].format("H:mm:ss") + " and " +now.format("H:mm:ss") +"<br>" + ajaxErrors["log"];
-      if (myGenerator['UnsentFeedback'] == false) { 
+      if (myGenerator['UnsentFeedback'] == false) {
         $("#footer").removeClass("alert");
         $("#ajaxWarning").hide(2000);
       }
@@ -174,7 +174,7 @@ function DisplayStatusFull()
         outstr += '<div class="gauge-lb2"></div>';
         outstr += '<div class="gauge-block-e"><div class="gaugeField">Rotation/Min<br><canvas class="gaugeCanvas" id="gaugeRPM"></canvas><br><div id="textRPM" class="gaugeDiv"></div> RPM</div></div>';
         outstr += '<div class="gauge-lb5"></div>';
-        if (myGenerator["PowerGraph"] == "true") {
+        if (myGenerator["PowerGraph"] == true) {
            outstr += '<div class="gauge-block-f"><div class="gaugeField">kW Output<br><canvas class="gaugeCanvas" id="gaugekW"></canvas><br><div id="textkW" class="gaugeDiv"></div>kW</div></div>';
            outstr += '<div class="gauge-lb2 gauge-lb3"></div>';
            outstr += '<div class="gauge-block-g"></div>';
@@ -1159,7 +1159,7 @@ function DisplaySettings(){
             } else if ((key == "autofeedback") && (myGenerator['UnsentFeedback'] == true)) {
               outstr += '<tr><td width="25px">&nbsp;</td><td bgcolor="#ffcccc" width="300px">' + result[key][1] + '</td><td bgcolor="#ffcccc">' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
             } else {
-              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';            
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
             }
         }
         outstr += '</table></fieldset></form><br>';
@@ -1930,16 +1930,16 @@ function GetBaseStatus()
               printKwPlot(result['kwOutput'].replace(/kW/g, ''));
            }
         }
-        
+
         if ((menuElement == "status") && ($("#gaugeBatteryVoltage").length > 0)) {
-           if (result["BatteryVoltage"].replace(/V/g, '').trim() !== "") 
+           if (result["BatteryVoltage"].replace(/V/g, '').trim() !== "")
              gaugeBatteryVoltage.set(result["BatteryVoltage"].replace(/V/g, '')); // set actual value
            gaugeUtilityVoltage.set(result["UtilityVoltage"].replace(/V/g, '')); // set actual value
            gaugeOutputVoltage.set(result["OutputVoltage"].replace(/V/g, '')); // set actual value
            gaugeFrequency.set(result["Frequency"].replace(/Hz/g, '')); // set actual value
            gaugeRPM.set(result["RPM"]); // set actual value
         }
-        
+
         if (result['UnsentFeedback'].toLowerCase() == "true") {
           myGenerator['UnsentFeedback'] = true;
           var tempMsg = '<b><span style="font-size:14px">UNKNOWN ERROR OCCURED</span></b><br>The software had encountered unknown status from<br>your generator.<br>This status could be used to improve the software.<br>To send the contents of your generator registers to<br>the software developer please enable "Auto Feedback"<br>on the Settings page.';
@@ -1980,7 +1980,7 @@ function GetBaseStatus()
             // Added active to selected class
             $("#"+menuElement).find("a").addClass(GetCurrentClass());
         }
-        
+
         prevStatusValues = result;
         return
    }});
