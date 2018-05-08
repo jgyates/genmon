@@ -340,6 +340,7 @@ class Monitor(mysupport.MySupport):
 
         CommandList = command.split(b' ')    # PYTHON3
 
+        ValidCommand = False
         try:
             for item in CommandList:
                 if not len(item):
@@ -359,6 +360,7 @@ class Monitor(mysupport.MySupport):
                 # Execut Command
                 ReturnMessage = ExecList[0](*ExecList[1])
 
+                ValidCommand = True
                 if item.lower().endswith("_json"):
                     msgbody += json.dumps(ReturnMessage, sort_keys=False)
                 else:
@@ -369,6 +371,8 @@ class Monitor(mysupport.MySupport):
         except Exception as e1:
             self.LogErrorLine("Error Processing Commands: " + str(e1))
 
+        if not ValidCommand:
+            msgbody += "No valid command recognized."
         if not fromsocket:
             self.MessagePipe.SendMessage(msgsubject, msgbody, msgtype = "warn")
             return ""       # ignored by email module
