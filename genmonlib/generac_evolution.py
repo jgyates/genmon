@@ -2515,7 +2515,7 @@ class Evolution(controller.GeneratorController):
                 if Divisor == None:
                     Divisor = (22 / int(self.NominalKW)) * 22
             else:
-                Divisor = self.CurrentDivisor
+                Divisor = self.CurrentDivider
 
             CurrentFloat = CurrentFloat / Divisor
 
