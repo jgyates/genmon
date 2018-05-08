@@ -382,7 +382,7 @@ def ReadSettingsFromFile():
                 "ssl_enabled" : ['boolean', 'SMTP Server SSL Enabled', 308, False, "", ""],
 
                 "imap_server" : ['string', 'IMAP Server <br><small>(leave emtpy to disable)</small>', 401, "imap.gmail.com", "", "InternetAddress"],
-                "incoming_mail_folder" : ['string', 'Incoming Mail Folder<br><small>(if IMAP enabled)</small>', 402, "Generator", "", "minmax:1:255"],
+                "incoming_mail_folder" : ['string', 'Incoming Mail Folder<br><small>(if IMAP enabled)</small>', 402, "Generator", "", "minmax:1:1500"],
                 "processed_mail_folder" : ['string', 'Mail Processed Folder<br><small>(if IMAP enabled)</small>', 403, "Generator/Processed","", "minmax:1:255"]
                 }
 
