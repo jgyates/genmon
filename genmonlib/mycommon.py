@@ -30,7 +30,7 @@ class MyCommon(object):
         if ExtraStrip:
             ReturnString = ReturnString.replace("} \n","")
         return self.StripJson(ReturnString)
-
+            
     #------------ MyCommon::BitIsEqual -----------------------------------------
     def BitIsEqual(self, value, mask, bits):
 
