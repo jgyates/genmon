@@ -1433,10 +1433,11 @@ class Evolution(controller.GeneratorController):
             if len(Value):
                 Sensors["Calibrate Volts Value"] = Value
 
+            Sensors["kW Hours in last 30 days"] = self.GetPowerHistory("power_log_json=43200,kw", NoReduce = True)
+
         if self.EvolutionController and self.LiquidCooled:
 
             Sensors["Battery Status (Sensor)"] = self.GetBatteryStatusAlternate()
-            Sensors["kW Hours in last 30 days"] = self.GetPowerHistory("power_log_json=43200,kw", NoReduce = True)
 
             # get UKS
             Value = self.GetUnknownSensor("05ee")
