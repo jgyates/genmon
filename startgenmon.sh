@@ -6,7 +6,7 @@ case "$1" in
   start)
     echo "Starting genmon python scripts"
     sudo python "$genmondir/genmon.py"  &
-    sleep 2
+    sleep 4
     sudo python "$genmondir/genserv.py"  &
     #sudo python "$genmondir/gengpio.py"  &
     #sudo python "$genmondir/gengpioin.py"  &
@@ -39,7 +39,7 @@ case "$1" in
     sleep 1
     echo "Starting genmon python scripts"
     sudo python "$genmondir/genmon.py"  &
-    sleep 2
+    sleep 4
     sudo python "$genmondir/genserv.py"  &
     #sudo python "$genmondir/gengpio.py"  &
     #sudo python "$genmondir/gengpioin.py"  &
@@ -54,4 +54,3 @@ case "$1" in
 esac
 
 exit 0
-

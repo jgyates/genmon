@@ -22,8 +22,8 @@ var menuElement = "status";
 var ajaxErrors = {errorCount: 0, lastSuccessTime: 0, log: ""};
 var windowActive = true;
 
-var myGenerator = {PowerGraph: false, sitename: "", nominalRPM: 3600, nominalfrequency: 60, Controller: "", model: "", nominalKW: 22, fueltype: "", UnsentFeedback: false, EnhancedExerciseEnabled: false, OldExerciseParameters:[-1,-1,-1,-1,-1,-1]};
-var prevStatusValues = {BatteryVoltage: "12V", UnsentFeedback: "False", OutputVoltage: "0V", Frequency: "0.0 Hz", UtilityVoltage: "240V", kwOutput: "0kW", RPM: " 0", basestatus: "READY"};
+var myGenerator = {PowerGraph: false, sitename: "", nominalRPM: 3600, nominalfrequency: 60, Controller: "", model: "", nominalKW: 22, fueltype: "", UnsentFeedback: false, SystemHealth: false, EnhancedExerciseEnabled: false, OldExerciseParameters:[-1,-1,-1,-1,-1,-1]};
+var prevStatusValues = {BatteryVoltage: "12V", UnsentFeedback: "False", SystemHealth: "OK", OutputVoltage: "0V", Frequency: "0.0 Hz", UtilityVoltage: "240V", kwOutput: "0kW", RPM: " 0", basestatus: "READY"};
 var regHistory = {updateTime: {}, _10m: {}, _60m: {}, _24h: {}, historySince: "", count_60m: 0, count_24h: 0};
 var kwHistory = {data: [], plot:"", kwDuration: "h", tickInterval: "10 minutes", formatString: "%H:%M"};
 var pathname = window.location.href;
@@ -68,7 +68,7 @@ function processAjaxSuccess() {
     var now = new moment();
     if (ajaxErrors["errorCount"]>5) {
       ajaxErrors["log"] = ajaxErrors["errorCount"]+" messages missed between "+ajaxErrors["lastSuccessTime"].format("H:mm:ss") + " and " +now.format("H:mm:ss") +"<br>" + ajaxErrors["log"];
-      if (myGenerator['UnsentFeedback'] == false) { 
+      if ((myGenerator['UnsentFeedback'] == false) && (myGenerator['SystemHealth'] == false)) { 
         $("#footer").removeClass("alert");
         $("#ajaxWarning").hide(2000);
       }
@@ -1938,7 +1938,13 @@ function GetBaseStatus()
            gaugeRPM.set(result["RPM"]); // set actual value
         }
         
-        if (result['UnsentFeedback'].toLowerCase() == "true") {
+        if (result['SystemHealth'].toUpperCase() != "OK") {
+          myGenerator['SystemHealth'] = true;
+          var tempMsg = '<b><span style="font-size:14px">GENMON SYSTEM WARNING</span></b><br>'+result['SystemHealth'];
+          $("#footer").addClass("alert");
+          $("#ajaxWarning").show(2000);
+          $('#ajaxWarning').tooltipster('content', tempMsg);
+        } else if (result['UnsentFeedback'].toLowerCase() == "true") {
           myGenerator['UnsentFeedback'] = true;
           var tempMsg = '<b><span style="font-size:14px">UNKNOWN ERROR OCCURED</span></b><br>The software had encountered unknown status from<br>your generator.<br>This status could be used to improve the software.<br>To send the contents of your generator registers to<br>the software developer please enable "Auto Feedback"<br>on the Settings page.';
           $("#footer").addClass("alert");
@@ -1946,6 +1952,7 @@ function GetBaseStatus()
           $('#ajaxWarning').tooltipster('content', tempMsg);
         } else { // Note - this claus only get's executed if the ajax connection worked. Hence no need to check ajaxErrors["errorCount"]
           myGenerator['UnsentFeedback'] = false;
+          myGenerator['SystemHealth'] = false;
           $("#footer").removeClass("alert");
           $("#ajaxWarning").hide(2000);
         }
