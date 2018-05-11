@@ -637,7 +637,17 @@ if __name__ == "__main__":
     if not ValidateFilePresent(file):
         log.error("Required file missing : genmonmaint.sh")
 
-    MyClientInterface = myclient.ClientInterface(host = address,port=clientport, log = log)
+    startcount = 0
+    while startcount <= 2:
+        try:
+            MyClientInterface = myclient.ClientInterface(host = address,port=clientport, log = log)
+            break
+        except Exception as e1:
+            startcount += 1
+            if startcount >= 2:
+                print("genmon not loaded.")
+                sys.exit(1)
+            continue
 
     Start = datetime.datetime.now()
 

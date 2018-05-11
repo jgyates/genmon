@@ -103,27 +103,25 @@ class Monitor(mysupport.MySupport):
             self.FatalError("Error opening controller device: " + str(e1))
             return None
 
+        self.StartThreads()
+
         # init mail, start processing incoming email
         self.mail = mymail.MyMail(monitor=True, incoming_folder = self.IncomingEmailFolder, processed_folder =self.ProcessedEmailFolder,incoming_callback = self.ProcessCommand)
         self.Threads = self.MergeDicts(self.Threads, self.mail.Threads)
         self.MailInit = True
 
-        self.StartThreads()
+        self.ProcessFeedbackInfo()
 
         # send mail to tell we are starting
         self.MessagePipe.SendMessage("Generator Monitor Starting at " + self.SiteName, "Generator Monitor Starting at " + self.SiteName , msgtype = "info")
-
-        self.ProcessFeedbackInfo()
 
         self.LogError("GenMon Loadded for site: " + self.SiteName)
 
     # ------------------------ Monitor::StartThreads----------------------------
     def StartThreads(self, reload = False):
 
-        if not reload:
-            # This thread remains open during a reload
-            # start thread to accept incoming sockets for nagios heartbeat and command / status clients
-            self.Threads["InterfaceServerThread"] = mythread.MyThread(self.InterfaceServerThread, Name = "InterfaceServerThread")
+        # start thread to accept incoming sockets for nagios heartbeat and command / status clients
+        self.Threads["InterfaceServerThread"] = mythread.MyThread(self.InterfaceServerThread, Name = "InterfaceServerThread")
 
         # start thread to accept incoming sockets for nagios heartbeat
         self.Threads["ComWatchDog"] = mythread.MyThread(self.ComWatchDog, Name = "ComWatchDog")
@@ -565,6 +563,13 @@ class Monitor(mysupport.MySupport):
     def ComWatchDog(self):
 
         self.CommunicationsActive = False
+
+        while True:
+            time.sleep(1)
+            if self.Controller.InitComplete:
+                break
+            if self.IsStopSignaled("ComWatchDog"):
+                return
 
         while True:
 
