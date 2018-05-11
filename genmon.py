@@ -24,7 +24,7 @@ except ImportError as e:
 from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel
 
 
-GENMON_VERSION = "V1.7.8"
+GENMON_VERSION = "V1.7.9"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -40,10 +40,10 @@ class Monitor(mysupport.MySupport):
         self.IncomingEmailFolder = "Generator"
         self.ProcessedEmailFolder = "Generator/Processed"
 
-        self.PowerLogMaxSize = 15       # 15 MB max size
-        self.PowerLog =  os.path.dirname(os.path.realpath(__file__)) + "/kwlog.txt"
         self.FeedbackLogFile = os.path.dirname(os.path.realpath(__file__)) + "/feedback.json"
         self.LogLocation = "/var/log/"
+        self.LastLogFileSize = 0
+        self.NumberOfLogSizeErrors = 0
         # set defaults for optional parameters
         self.NewInstall = False         # True if newly installed or newly upgraded version
         self.FeedbackEnabled = False    # True if sending autoated feedback on missing information
@@ -57,7 +57,8 @@ class Monitor(mysupport.MySupport):
         self.bSyncTime = False          # Sync gen to system time
         self.bSyncDST = False           # sync time at DST change
         self.bDST = False               # Daylight Savings Time active if True
-        self.bSimulation = False
+        self.Simulation = False
+        self.SimulationFile = None
 
         # read config file
         if not self.GetConfig():
@@ -85,7 +86,7 @@ class Monitor(mysupport.MySupport):
 
         try:
             #Starting device connection
-            if self.bSimulation:
+            if self.Simulation:
                 self.LogError("Simulation Running")
             if not self.ControllerSelected == None:
                 self.LogError("Selected Controller: " + str(self.ControllerSelected))
@@ -93,9 +94,9 @@ class Monitor(mysupport.MySupport):
                 self.ControllerSelected = "generac_evo_nexus"
 
             if self.ControllerSelected.lower() == "h_100" :
-                self.Controller = generac_HPanel.HPanel(self.log, newinstall = self.NewInstall, simulation = self.bSimulation)
+                self.Controller = generac_HPanel.HPanel(self.log, newinstall = self.NewInstall, simulation = self.Simulation, simulationfile = self.SimulationFile, message = self.MessagePipe, feedback = self.FeedbackPipe)
             else:
-                self.Controller = generac_evolution.Evolution(self.log, self.NewInstall, simulation = self.bSimulation)
+                self.Controller = generac_evolution.Evolution(self.log, self.NewInstall, simulation = self.Simulation, simulationfile = self.SimulationFile, message = self.MessagePipe, feedback = self.FeedbackPipe)
             self.Threads = self.MergeDicts(self.Threads, self.Controller.Threads)
 
         except Exception as e1:
@@ -107,19 +108,17 @@ class Monitor(mysupport.MySupport):
         self.Threads = self.MergeDicts(self.Threads, self.mail.Threads)
         self.MailInit = True
 
+        self.StartThreads()
+
         # send mail to tell we are starting
         self.MessagePipe.SendMessage("Generator Monitor Starting at " + self.SiteName, "Generator Monitor Starting at " + self.SiteName , msgtype = "info")
 
         self.ProcessFeedbackInfo()
-        self.StartThreads()
 
         self.LogError("GenMon Loadded for site: " + self.SiteName)
 
     # ------------------------ Monitor::StartThreads----------------------------
     def StartThreads(self, reload = False):
-
-        # start thread to accept incoming sockets for nagios heartbeat
-        self.Threads["ComWatchDog"] = mythread.MyThread(self.ComWatchDog, Name = "ComWatchDog")
 
         if not reload:
             # This thread remains open during a reload
@@ -127,7 +126,7 @@ class Monitor(mysupport.MySupport):
             self.Threads["InterfaceServerThread"] = mythread.MyThread(self.InterfaceServerThread, Name = "InterfaceServerThread")
 
         # start thread to accept incoming sockets for nagios heartbeat
-        self.Threads["PowerMeter"] = mythread.MyThread(self.PowerMeter, Name = "PowerMeter")
+        self.Threads["ComWatchDog"] = mythread.MyThread(self.ComWatchDog, Name = "ComWatchDog")
 
         if self.bSyncDST or self.bSyncTime:     # Sync time thread
             self.Threads["TimeSyncThread"] = mythread.MyThread(self.TimeSyncThread, Name = "TimeSyncThread")
@@ -161,18 +160,16 @@ class Monitor(mysupport.MySupport):
             if config.has_option(ConfigSection, 'loglocation'):
                 self.LogLocation = config.get(ConfigSection, 'loglocation')
 
-            if config.has_option(ConfigSection, 'kwlog'):
-                self.PowerLog = config.get(ConfigSection, 'kwlog')
-            if config.has_option(ConfigSection, 'kwlogmax'):
-                self.PowerLogMaxSize = config.getint(ConfigSection, 'kwlogmax')
-
             if config.has_option(ConfigSection, 'syncdst'):
                 self.bSyncDST = config.getboolean(ConfigSection, 'syncdst')
             if config.has_option(ConfigSection, 'synctime'):
                 self.bSyncTime = config.getboolean(ConfigSection, 'synctime')
 
             if config.has_option(ConfigSection, 'simulation'):
-                self.bSimulation = config.getboolean(ConfigSection, 'simulation')
+                self.Simulation = config.getboolean(ConfigSection, 'simulation')
+
+            if config.has_option(ConfigSection, 'simulationfile'):
+                self.SimulationFile = config.get(ConfigSection, 'simulationfile')
 
             if config.has_option(ConfigSection, 'controllertype'):
                 self.ControllerSelected = config.get(ConfigSection, 'controllertype')
@@ -220,10 +217,11 @@ class Monitor(mysupport.MySupport):
         try:
             FeedbackDict = {}
             FeedbackDict = json.loads(Message)
-            self.SendFeedbackInfo(FeedbackDict["Reason"], FeedbackDict["Always"], FeedbackDict["Message"], FeedbackDict["FullLogs"])
+            self.SendFeedbackInfo(FeedbackDict["Reason"], FeedbackDict["Always"], FeedbackDict["Message"], FeedbackDict["FullLogs"], FeedbackDict["NoCheck"])
         except Exception as e1:
             self.LogErrorLine("Error in  FeedbackReceiver: " + str(e1))
-
+            self.LogError("Size : " + str(len(Message)))
+            self.LogError("Message : " + str(Message))
     #------------------------------------------------------------
     def MessageReceiver(self, Message):
 
@@ -234,13 +232,13 @@ class Monitor(mysupport.MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in  MessageReceiver: " + str(e1))
     #------------------------------------------------------------
-    def SendFeedbackInfo(self, Reason, Always = False, Message = None, FullLogs = False):
+    def SendFeedbackInfo(self, Reason, Always = False, Message = None, FullLogs = False, NoCheck = False):
         try:
             if self.NewInstall or Always:
 
                 CheckedSent = self.FeedbackMessages.get(Reason, "")
 
-                if not CheckedSent == "":
+                if not CheckedSent == "" and not NoCheck:
                     return
 
                 msgbody = "Reason = " + Reason + "\n"
@@ -260,8 +258,19 @@ class Monitor(mysupport.MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in SendFeedbackInfo: " + str(e1))
 
+    #---------- Monitor::EmailSendIsEnabled-------------------------------------
+    def EmailSendIsEnabled(self):
+
+        EmailThread = self.Threads.get("SendMailThread",None)
+        if EmailThread == None:
+            return False
+        return True
+
     #---------- Monitor::SendRegisters------------------------------------------
     def SendRegisters(self):
+
+        if not self.EmailSendIsEnabled():
+            return "Send Email is not enabled."
 
         msgbody = ""
         msgbody += "Version: " + GENMON_VERSION
@@ -269,6 +278,26 @@ class Monitor(mysupport.MySupport):
         msgbody += self.Controller.DisplayRegisters(AllRegs = True)
         self.MessagePipe.SendMessage("Generator Monitor Register Submission", msgbody , recipient = self.MaintainerAddress, msgtype = "info")
         return "Registers submitted"
+
+    #---------- Monitor::SendLogFiles------------------------------------------
+    def SendLogFiles(self):
+
+        if not self.EmailSendIsEnabled():
+            return "Send Email is not enabled."
+
+        msgbody = ""
+        msgbody += "Version: " + GENMON_VERSION
+        msgbody += self.DictToString(self.Controller.GetStartInfo())
+        msgbody += self.Controller.DisplayRegisters(AllRegs = True)
+
+        LogList = []
+        FilesToSend = ["genmon.log", "genserv.log", "mymail.log", "myserial.log", "mymodbus.log"]
+        for File in FilesToSend:
+            LogFile = self.LogLocation + File
+            if os.path.isfile(LogFile):
+                LogList.append(LogFile)
+        self.MessagePipe.SendMessage("Generator Monitor Log File Submission", msgbody , recipient = self.MaintainerAddress, files = LogList, msgtype = "info")
+        return "Log files submitted"
 
     #---------- process command from email and socket --------------------------
     def ProcessCommand(self, command, fromsocket = False):
@@ -317,8 +346,8 @@ class Monitor(mysupport.MySupport):
             "help"          : [self.DisplayHelp, (), False],                   # display help screen
             "setremote"     : [self.Controller.SetGeneratorRemoteStartStop, (command.lower(),), False],
             ## These commands are used by the web / socket interface only
-            "power_log_json"    : [self.GetPowerHistory, (command.lower(),), True],
-            "power_log_clear"   : [self.ClearPowerLog, (), True],
+            "power_log_json"    : [self.Controller.GetPowerHistory, (command.lower(),), True],
+            "power_log_clear"   : [self.Controller.ClearPowerLog, (), True],
             "start_info_json"   : [self.Controller.GetStartInfo, (), True],
             "registers_json"    : [self.Controller.DisplayRegisters, (False, True), True],  # display registers
             "allregs_json"      : [self.Controller.DisplayRegisters, (True, True), True],   # display registers
@@ -335,7 +364,8 @@ class Monitor(mysupport.MySupport):
             "getregvalue"       : [self.Controller.GetRegValue, (command.lower(),), True],     # only used for debug purposes, read a cached register value
             "readregvalue"      : [self.Controller.ReadRegValue, (command.lower(),), True],    # only used for debug purposes, Read Register Non Cached
             "getdebug"          : [self.GetDeadThreadName, (), True],           # only used for debug purposes. If a thread crashes it tells you the thread name
-            "sendregisters"     : [self.SendRegisters, (), True]
+            "sendregisters"     : [self.SendRegisters, (), True],
+            "sendlogfiles"      : [self.SendLogFiles, (), True]
         }
 
         CommandList = command.split(b' ')    # PYTHON3
@@ -361,7 +391,8 @@ class Monitor(mysupport.MySupport):
                 ReturnMessage = ExecList[0](*ExecList[1])
 
                 ValidCommand = True
-                if item.lower().endswith("_json"):
+
+                if LookUp.lower().endswith("_json") and not isinstance(ReturnMessage, str):
                     msgbody += json.dumps(ReturnMessage, sort_keys=False)
                 else:
                     msgbody += ReturnMessage
@@ -448,364 +479,12 @@ class Monitor(mysupport.MySupport):
     def GetSiteName(self):
         return self.SiteName
 
-    #------------ Monitor::PrunePowerLog-------------------------
-    def PrunePowerLog(self, Minutes):
-
-        if not Minutes:
-            return self.ClearPowerLog()
-
-        try:
-            CmdString = "power_log_json=%d" % Minutes
-            PowerLog = self.GetPowerHistory(CmdString, NoReduce = True)
-
-            LogSize = os.path.getsize(self.PowerLog)
-            self.ClearPowerLog()
-
-            # is the file size too big?
-            if LogSize / (1024*1024) >= self.PowerLogMaxSize:
-                return "OK"
-
-            if LogSize / (1024*1024) >= self.PowerLogMaxSize * 0.8:
-                msgbody = "The kwlog file size is 80% of the maximum. Once the log reaches 100% of the maximum size the log will be reset."
-                self.MessagePipe.SendMessage("Notice: Log file size warning" , msgbody, msgtype = "warn")
-
-            # Write oldest log entries first
-            for Items in reversed(PowerLog):
-                self.LogToFile(self.PowerLog, Items[0], Items[1])
-
-            LogSize = os.path.getsize(self.PowerLog)
-            if LogSize == 0:
-                TimeStamp = datetime.datetime.now().strftime('%x %X')
-                self.LogToFile(self.PowerLog, TimeStamp, "0.0")
-
-            return "OK"
-
-        except Exception as e1:
-            self.LogErrorLine("Error in  ClearPowerLog: " + str(e1))
-            return "Error in  ClearPowerLog: " + str(e1)
-
-    #------------ Monitor::ClearPowerLog-------------------------
-    def ClearPowerLog(self):
-
-        try:
-            if not len(self.PowerLog):
-                return "Power Log Disabled"
-
-            if not os.path.isfile(self.PowerLog):
-                return "Power Log is empty"
-            os.remove(self.PowerLog)
-
-            # add zero entry to note the start of the log
-            TimeStamp = datetime.datetime.now().strftime('%x %X')
-            self.LogToFile(self.PowerLog, TimeStamp, "0.0")
-
-            return "Power Log cleared"
-        except Exception as e1:
-            self.LogErrorLine("Error in  ClearPowerLog: " + str(e1))
-            return "Error in  ClearPowerLog: " + str(e1)
-
-    #------------ Monitor::ReducePowerSamples-------------------------
-    def ReducePowerSamplesOld(self, PowerList, MaxSize):
-
-        if MaxSize == 0:
-            self.LogError("RecducePowerSamples: Error: Max size is zero")
-            return []
-
-        if len(PowerList) < MaxSize:
-            self.LogError("RecducePowerSamples: Error: Can't reduce ")
-            return PowerList
-
-        try:
-            Sample = int(len(PowerList) / MaxSize)
-            Remain = int(len(PowerList) % MaxSize)
-
-            NewList = []
-            Count = 0
-            for Count in range(len(PowerList)):
-                TimeStamp, KWValue = PowerList[Count]
-                if float(KWValue) == 0:
-                        NewList.append([TimeStamp,KWValue])
-                elif ( Count % Sample == 0 ):
-                    NewList.append([TimeStamp,KWValue])
-
-            # if we have too many entries due to a remainder or not removing zero samples, then delete some
-            if len(NewList) > MaxSize:
-                return RemovePowerSamples(NewList, MaxSize)
-        except Exception as e1:
-            self.LogErrorLine("Error in RecducePowerSamples: %s" % str(e1))
-            return PowerList
-
-        return NewList
-
-    #------------ Monitor::RemovePowerSamples-------------------------
-    def RemovePowerSamples(List, MaxSize):
-
-        try:
-            if len(List) <= MaxSize:
-                self.LogError("RemovePowerSamples: Error: Can't remove ")
-                return List
-
-            Extra = len(List) - MaxSize
-            for Count in range(Extra):
-                    # assume first and last sampels are zero samples so don't select thoes
-                    self.MarkNonZeroKwEntry(List, random.randint(1, len(List) - 2))
-
-            TempList = []
-            for TimeStamp, KWValue in List:
-                if not TimeStamp == "X":
-                    TempList.append([TimeStamp, KWValue])
-            return TempList
-        except Exception as e1:
-            self.LogErrorLine("Error in RemovePowerSamples: %s" % str(e1))
-            return List
-
-    #------------ Monitor::MarkNonZeroKwEntry-------------------------
-    #       RECURSIVE
-    def MarkNonZeroKwEntry(self, List, Index):
-
-        try:
-            TimeStamp, KwValue = List[Index]
-            if not KwValue == "X" and not float(KwValue) == 0.0:
-                List[Index] = ["X", "X"]
-                return
-            else:
-                MarkNonZeroKwEntry(List, Index - 1)
-                return
-        except Exception as e1:
-            self.LogErrorLine("Error in MarkNonZeroKwEntry: %s" % str(e1))
-        return
-
-    #------------ Monitor::ReducePowerSamples-------------------------
-    def ReducePowerSamples(self, PowerList, MaxSize):
-
-        if MaxSize == 0:
-            self.LogError("RecducePowerSamples: Error: Max size is zero")
-            return []
-
-        periodMaxSamples = MaxSize
-        NewList = []
-        try:
-            CurrentTime = datetime.datetime.now()
-            secondPerSample = 0
-            prevMax = 0
-            currMax = 0
-            currTime = CurrentTime
-            prevTime = CurrentTime + datetime.timedelta(minutes=1)
-            currSampleTime = CurrentTime
-            prevBucketTime = CurrentTime # prevent a 0 to be written the first time
-            nextBucketTime = CurrentTime - datetime.timedelta(seconds=1)
-
-            for Count in range(len(PowerList)):
-               TimeStamp, KWValue = PowerList[Count]
-               struct_time = time.strptime(TimeStamp, "%x %X")
-               delta_sec = (CurrentTime - datetime.datetime.fromtimestamp(time.mktime(struct_time))).total_seconds()
-               if 0 <= delta_sec <= datetime.timedelta(minutes=60).total_seconds():
-                   secondPerSample = int(datetime.timedelta(minutes=60).total_seconds() / periodMaxSamples)
-               if datetime.timedelta(minutes=60).total_seconds() <= delta_sec <=  datetime.timedelta(hours=24).total_seconds():
-                   secondPerSample = int(datetime.timedelta(hours=23).total_seconds() / periodMaxSamples)
-               if datetime.timedelta(hours=24).total_seconds() <= delta_sec <= datetime.timedelta(days=7).total_seconds():
-                   secondPerSample = int(datetime.timedelta(days=6).total_seconds() / periodMaxSamples)
-               if datetime.timedelta(days=7).total_seconds() <= delta_sec <= datetime.timedelta(days=31).total_seconds():
-                   secondPerSample = int(datetime.timedelta(days=25).total_seconds() / periodMaxSamples)
-
-               currSampleTime = CurrentTime - datetime.timedelta(seconds=(int(delta_sec / secondPerSample)*secondPerSample))
-               if (currSampleTime != currTime):
-                   if ((currMax > 0) and (prevBucketTime != prevTime)):
-                       NewList.append([prevBucketTime.strftime('%x %X'), 0.0])
-                   if ((currMax > 0) or ((currMax == 0) and (prevMax > 0))):
-                       NewList.append([currTime.strftime('%x %X'), currMax])
-                   if ((currMax > 0) and (nextBucketTime != currSampleTime)):
-                       NewList.append([nextBucketTime.strftime('%x %X'), 0.0])
-                   prevMax = currMax
-                   prevTime = currTime
-                   currMax = KWValue
-                   currTime = currSampleTime
-                   prevBucketTime  = CurrentTime - datetime.timedelta(seconds=((int(delta_sec / secondPerSample)+1)*secondPerSample))
-                   nextBucketTime  = CurrentTime - datetime.timedelta(seconds=((int(delta_sec / secondPerSample)-1)*secondPerSample))
-               else:
-                   currMax = max(currMax, KWValue)
-
-
-            NewList.append([currTime.strftime('%x %X'), currMax])
-        except Exception as e1:
-            self.LogErrorLine("Error in RecducePowerSamples: %s" % str(e1))
-            return PowerList
-
-        return NewList
-
-    #------------ Monitor::-------------------------
-    def GetPowerHistory(self, CmdString, NoReduce = False):
-
-        KWHours = False
-        msgbody = "Invalid command syntax for command power_log_json"
-
-        try:
-            if not len(self.PowerLog):
-                # power log disabled
-                return []
-
-            if not len(CmdString):
-                self.LogError("Error in GetPowerHistory: Invalid input")
-                return []
-
-            #Format we are looking for is "power_log_json=5" or "power_log_json" or "power_log_json=1000,kw"
-            CmdList = CmdString.split("=")
-
-            if len(CmdList) > 2:
-                self.LogError("Validation Error: Error parsing command string in GetPowerHistory (parse): " + CmdString)
-                return msgbody
-
-            CmdList[0] = CmdList[0].strip()
-
-            if not CmdList[0].lower() == "power_log_json":
-                self.LogError("Validation Error: Error parsing command string in GetPowerHistory (parse2): " + CmdString)
-                return msgbody
-
-            if len(CmdList) == 2:
-                ParseList = CmdList[1].split(",")
-                if len(ParseList) == 1:
-                    Minutes = int(CmdList[1].strip())
-                elif len(ParseList) == 2:
-                    Minutes = int(ParseList[0].strip())
-                    if ParseList[1].strip().lower() == "kw":
-                        KWHours = True
-                else:
-                    self.LogError("Validation Error: Error parsing command string in GetPowerHistory (parse3): " + CmdString)
-                    return msgbody
-
-            else:
-                Minutes = 0
-        except Exception as e1:
-            self.LogErrorLine("Error in  GetPowerHistory (Parse): %s : %s" % (CmdString,str(e1)))
-            return msgbody
-
-        try:
-            # check to see if a log file exist yet
-            if not os.path.isfile(self.PowerLog):
-                return []
-
-            PowerList = []
-
-            with open(self.PowerLog,"r") as LogFile:     #opens file
-                CurrentTime = datetime.datetime.now()
-                try:
-                    for line in LogFile:
-                        line = line.strip()                  # remove whitespace at beginning and end
-
-                        if not len(line):
-                            continue
-                        if line[0] == "#":                  # comment
-                            continue
-                        Items = line.split(",")
-                        if len(Items) != 2:
-                            continue
-
-                        if Minutes:
-                            struct_time = time.strptime(Items[0], "%x %X")
-                            LogEntryTime = datetime.datetime.fromtimestamp(time.mktime(struct_time))
-                            Delta = CurrentTime - LogEntryTime
-                            if self.GetDeltaTimeMinutes(Delta) < Minutes :
-                                PowerList.insert(0, [Items[0], Items[1]])
-                        else:
-                            PowerList.insert(0, [Items[0], Items[1]])
-                    #Shorten list to 1000 if specific duration requested
-                    if not KWHours and len(PowerList) > 500 and Minutes and not NoReduce:
-                        PowerList = self.ReducePowerSamples(PowerList, 500)
-                except Exception as e1:
-                    self.LogErrorLine("Error in  GetPowerHistory (parse file): " + str(e1))
-                    # continue to the next line
-
-            if KWHours:
-                TotalTime = datetime.timedelta(seconds=0)
-                TotalPower = 0
-                LastTime = None
-                for Items in PowerList:
-                    Power = float(Items[1])
-                    struct_time = time.strptime(Items[0], "%x %X")
-                    LogEntryTime = datetime.datetime.fromtimestamp(time.mktime(struct_time))
-                    if LastTime == None or Power == 0:
-                        TotalTime += LogEntryTime - LogEntryTime
-                    else:
-                        TotalTime += LastTime - LogEntryTime
-                    LastTime = LogEntryTime
-
-                    TotalPower += Power
-                # return KW Hours
-                return "%.2f" % ((TotalTime.total_seconds() / 3600) * TotalPower)
-
-            return PowerList
-
-        except Exception as e1:
-            self.LogErrorLine("Error in  GetPowerHistory: " + str(e1))
-            msgbody = "Error in  GetPowerHistory: " + str(e1)
-            return msgbody
-
-    #----------  Monitor::PowerMeter-------------------------------------
-    #----------  Monitors Power Output
-    def PowerMeter(self):
-
-        if not len(self.PowerLog):
-            self.LogError("Power Log Disabled")
-            self.KillThread("PowerMeter", CleanupSelf = True)
-            return
-
-        # make sure system is up and running otherwise we will not know which controller is present
-        while True:
-            time.sleep(1)
-            if self.Controller.InitComplete:
-                break
-            if self.IsStopSignaled("PowerMeter"):
-                return
-
-        if not self.Controller.PowerMeterIsSupported():
-            self.KillThread("PowerMeter", CleanupSelf = True)
-            return
-
-        self.LogError("Power Log Started")
-        # if log file is empty or does not exist, make a zero entry in log to denote start of collection
-        if not os.path.isfile(self.PowerLog) or os.path.getsize(self.PowerLog) == 0:
-            TimeStamp = datetime.datetime.now().strftime('%x %X')
-            self.LogToFile(self.PowerLog, TimeStamp, "0.0")
-
-        LastValue = 0.0
-        LastPruneTime = datetime.datetime.now()
-        while True:
-            try:
-                time.sleep(5)
-
-                # Housekeeping on kw Log
-                if self.GetDeltaTimeMinutes(datetime.datetime.now() - LastPruneTime) > 1440 :     # check every day
-                    self.PrunePowerLog(43800)   # delete log entries greater than one month
-                    LastPruneTime = datetime.datetime.now()
-
-                # Time to exit?
-                if self.IsStopSignaled("PowerMeter"):
-                    return
-                KWOut = self.removeAlpha(self.Controller.GetPowerOutput())
-                KWFloat = float(KWOut)
-
-                if LastValue == KWFloat:
-                    continue
-
-                if LastValue == 0:
-                    StartTime = datetime.datetime.now() - datetime.timedelta(seconds=1)
-                    TimeStamp = StartTime.strftime('%x %X')
-                    self.LogToFile(self.PowerLog, TimeStamp, str(LastValue))
-
-                LastValue = KWFloat
-                # Log to file
-                TimeStamp = datetime.datetime.now().strftime('%x %X')
-                self.LogToFile(self.PowerLog, TimeStamp, str(KWFloat))
-
-            except Exception as e1:
-                self.LogErrorLine("Error in PowerMeter: " + str(e1))
-
-
     #------------ Monitor::GetStatusForGUI ------------------------------------
     def GetStatusForGUI(self):
 
         Status = {}
 
+        Status["SystemHealth"] = self.GetSystemHealth()
         Status["UnsentFeedback"] = str(os.path.isfile(self.FeedbackLogFile))
         ReturnDict = self.MergeDicts(Status, self.Controller.GetStatusForGUI())
 
@@ -822,6 +501,8 @@ class Monitor(mysupport.MySupport):
             outstr += " Threads are dead. "
         if  not self.CommunicationsActive:
             outstr += " Not receiving data. "
+        if not self.LogFileIsOK():
+            outstr += " Log file is reporting errors."
 
         if len(outstr) == 0:
             outstr = "OK"
@@ -872,14 +553,14 @@ class Monitor(mysupport.MySupport):
                     if self.IsStopSignaled("TimeSyncThread"):
                         return
 
-    #----------  Monitor::is_dst-------------------------------------
+    #----------  Monitor::is_dst------------------------------------------------
     def is_dst(self):
         #Determine whether or not Daylight Savings Time (DST) is currently in effect
         t = time.localtime()
         isdst = t.tm_isdst
         return (isdst != 0)
 
-    #----------  Monitor::ComWatchDog-------------------------------------
+    #----------  Monitor::ComWatchDog-------------------------------------------
     #----------  monitors receive data status to make sure we are still communicating
     def ComWatchDog(self):
 
@@ -893,7 +574,7 @@ class Monitor(mysupport.MySupport):
             if self.IsStopSignaled("ComWatchDog"):
                 break
 
-    #---------- Monitor:: AreThreadsAlive----------------------------------
+    #---------- Monitor:: AreThreadsAlive---------------------------------------
     # ret true if all threads are alive
     def AreThreadsAlive(self):
 
@@ -903,7 +584,34 @@ class Monitor(mysupport.MySupport):
 
         return True
 
-    #---------- Monitor::GetDeadThreadName----------------------------------
+    #---------- Monitor::LogFileIsOK--------------------------------------------
+    def LogFileIsOK(self):
+
+        try:
+            if not self.Controller.InitComplete:
+                return True
+
+            LogFile = self.LogLocation + "genmon.log"
+
+            LogFileSize = os.path.getsize(LogFile)
+            if LogFileSize <= self.LastLogFileSize:     # log is unchanged or has rotated
+                self.LastLogFileSize = LogFileSize
+                self.NumberOfLogSizeErrors = 0
+                return True
+
+            LogFileSizeDiff = LogFileSize - self.LastLogFileSize
+            self.LastLogFileSize = LogFileSize
+            if LogFileSizeDiff >= 100:
+                self.NumberOfLogSizeErrors += 1
+                if self.NumberOfLogSizeErrors > 3:
+                    return False
+            else:
+                self.NumberOfLogSizeErrors = 0
+            return True
+        except Exception as e1:
+            self.LogErrorLine("Error in LogFileIsOK: " + str(e1))
+        return True
+    #---------- Monitor::GetDeadThreadName--------------------------------------
     def GetDeadThreadName(self):
 
         RetStr = ""

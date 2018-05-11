@@ -46,11 +46,11 @@ DEFAULT_PICKUP_VOLTAGE = 190
 class Evolution(controller.GeneratorController):
 
     #---------------------Evolution::__init__------------------------
-    def __init__(self, log, newinstall = False, simulation = False):
+    def __init__(self, log, newinstall = False, simulation = False, simulationfile = None, message = None, feedback = None):
 
         #self.log = log
         # call parent constructor
-        super(Evolution, self).__init__(log, newinstall = newinstall, simulation = simulation)
+        super(Evolution, self).__init__(log, newinstall = newinstall, simulation = simulation, simulationfile = simulationfile, message = message, feedback = feedback)
 
         # Controller Type
         self.EvolutionController = None
@@ -189,18 +189,13 @@ class Evolution(controller.GeneratorController):
         try:
             #Starting device connection
             if self.Simulation:
-                self.ModBus = modbus_file.ModbusFile(self.UpdateRegisterList, self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation)
+                self.ModBus = modbus_file.ModbusFile(self.UpdateRegisterList, self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation, inputfile = self.SimulationFile)
             else:
                 self.ModBus = mymodbus.ModbusProtocol(self.UpdateRegisterList, self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation)
             self.Threads = self.MergeDicts(self.Threads, self.ModBus.Threads)
             self.LastRxPacketCount = self.ModBus.RxPacketCount
-            self.Threads["CheckAlarmThread"] = mythread.MyThread(self.CheckAlarmThread, Name = "CheckAlarmThread")
-            # start read thread to process incoming data commands
-            self.Threads["ProcessThread"] = mythread.MyThread(self.ProcessThread, Name = "ProcessThread")
 
-            if self.EnableDebug:        # for debugging registers
-                self.Threads["DebugThread"] = mythread.MyThread(self.DebugThread, Name = "DebugThread")
-
+            self.StartCommonThreads()
 
         except Exception as e1:
             self.FatalError("Error opening modbus device: " + str(e1))
@@ -239,57 +234,6 @@ class Evolution(controller.GeneratorController):
         self.CheckForAlarmEvent.set()
         self.InitComplete = True
 
-    #----------  Evolution:DebugThread-------------------------------------
-    def DebugThread(self):
-
-        if not self.EnableDebug:
-            return
-
-        while True:
-            self.DebugThreadControllerFunction()
-
-            for x in range(0, 60):
-                for y in range(0, 10):
-                    time.sleep(1)
-                    if self.IsStopSignaled("DebugThread"):
-                        return
-
-    # ---------- Evolution:ProcessThread------------------
-    #  read registers, remove items from Buffer, form packets, store register data
-    def ProcessThread(self):
-
-        try:
-            self.ModBus.Flush()
-            self.InitDevice()
-
-            while True:
-                if self.IsStopSignaled("ProcessThread"):
-                    break
-                try:
-                    self.MasterEmulation()
-                    if self.EnableDebug:
-                        self.DebugRegisters()
-                except Exception as e1:
-                    self.LogErrorLine("Error in Controller ProcessThread (1), continue: " + str(e1))
-        except Exception as e1:
-            self.FatalError("Exiting Controller ProcessThread (2)" + str(e1))
-
-    # ---------- Evolution:CheckAlarmThread------------------
-    #  When signaled, this thread will check for alarms
-    def CheckAlarmThread(self):
-
-        while True:
-            try:
-                time.sleep(0.25)
-                if self.IsStopSignaled("CheckAlarmThread"):
-                    break
-                if self.CheckForAlarmEvent.is_set():
-                    self.CheckForAlarmEvent.clear()
-                    self.CheckForAlarms()
-
-            except Exception as e1:
-                self.FatalError("Error in  CheckAlarmThread" + str(e1))
-
     #------------------------------------------------------------
     def CheckModelSpecificInfo(self, NoLookUp = False):
 
@@ -325,11 +269,17 @@ class Evolution(controller.GeneratorController):
                 if self.LiquidCooled:
                     self.Model = "Generic Liquid Cooled"
                     if self.NominalKW == "Unknown":
-                        self.NominalKW = "60"
+                        if self.EvolutionController:
+                            self.NominalKW = "60"
+                        else:
+                            self.NominalKW = "36"
                 else:
                     self.Model = "Generic Air Cooled"
                     if self.NominalKW == "Unknown":
-                        self.NominalKW = "22"
+                        if self.EvolutionController:
+                            self.NominalKW = "22"
+                        else:
+                            self.NominalKW = "20"
             self.AddItemToConfFile("model", self.Model)
             self.AddItemToConfFile("nominalKW", self.NominalKW)
 
@@ -550,8 +500,7 @@ class Evolution(controller.GeneratorController):
 
         UnknownController = False
         # issue modbus read
-        if not self.Simulation:
-            self.ModBus.ProcessMasterSlaveTransaction("0000", 1)
+        self.ModBus.ProcessMasterSlaveTransaction("0000", 1)
 
         # read register from cached list.
         Value = self.GetRegisterValueFromList("0000")
@@ -763,12 +712,6 @@ class Evolution(controller.GeneratorController):
             msgbody += self.DisplayStatus()
 
             self.MessagePipe.SendMessage("Monitor Register Alert: " + Register, msgbody, msgtype = "warn")
-        else:
-            # bulk register monitoring goes here and an email is sent out in a batch
-            if self.EnableDebug:
-                BitsChanged, Mask = self.GetNumBitsChanged(FromValue, ToValue)
-                self.RegistersUnderTestData += "Reg %s changed from %s to %s, Bits Changed: %d, Mask: %x, Engine State: %s\n" % \
-                        (Register, FromValue, ToValue, BitsChanged, Mask, self.GetEngineState())
 
     #----------  Evolution:CalculateExerciseTime-------------------------------
     # helper routine for AltSetGeneratorExerciseTime
@@ -1198,28 +1141,23 @@ class Evolution(controller.GeneratorController):
         if len(Register) != 4 or len(Value) < 4:
             self.LogError("Validation Error: Invalid data in UpdateRegisterList: %s %s" % (Register, Value))
 
-        if self.RegisterIsKnown(Register):
-            if not self.ValidateRegister(Register, Value):
-                return
-            RegValue = self.Registers.get(Register, "")
+        if not self.RegisterIsKnown(Register):
+            self.LogError("Unexpected Register received: " + Register)
+            return
+        if not self.ValidateRegister(Register, Value):
+            return
+        RegValue = self.Registers.get(Register, "")
 
-            if RegValue == "":
-                self.Registers[Register] = Value        # first time seeing this register so add it to the list
-            elif RegValue != Value:
-                # don't print values of registers we have validated the purpose
-                if not self.RegisterIsLog(Register):
-                    self.MonitorUnknownRegisters(Register,RegValue, Value)
-                self.Registers[Register] = Value
-                self.Changed += 1
-            else:
-                self.NotChanged += 1
-        else:   # Register Under Test
-            RegValue = self.RegistersUnderTest.get(Register, "")
-            if RegValue == "":
-                self.RegistersUnderTest[Register] = Value        # first time seeing this register so add it to the list
-            elif RegValue != Value:
+        if RegValue == "":
+            self.Registers[Register] = Value        # first time seeing this register so add it to the list
+        elif RegValue != Value:
+            # don't print values of registers we have validated the purpose
+            if not self.RegisterIsLog(Register):
                 self.MonitorUnknownRegisters(Register,RegValue, Value)
-                self.RegistersUnderTest[Register] = Value        # update the value
+            self.Registers[Register] = Value
+            self.Changed += 1
+        else:
+            self.NotChanged += 1
 
     #------------ Evolution:RegisterIsKnown ------------------------------------
     def RegisterIsKnown(self, Register):
@@ -1498,6 +1436,7 @@ class Evolution(controller.GeneratorController):
         if self.EvolutionController and self.LiquidCooled:
 
             Sensors["Battery Status (Sensor)"] = self.GetBatteryStatusAlternate()
+            Sensors["kW Hours in last 30 days"] = self.GetPowerHistory("power_log_json=43200,kw", NoReduce = True)
 
             # get UKS
             Value = self.GetUnknownSensor("05ee")
@@ -1511,13 +1450,14 @@ class Evolution(controller.GeneratorController):
             Value = self.GetUnknownSensor("05ed")
             if len(Value):
                 SensorValue = float(Value)
-                # This forumla is based on an Omgeo Thermistor with the model number 44005.
+                # This forumla is loosely based on an Omgeo Thermistor with the model number 44005.
                 #Celsius = 1/(0.001403+0.0002373*(math.log(SensorValue*100))+0.00000009827*((math.log(SensorValue*100))**3))-273.15
                 Celsius =1/(0.0013923+0.0002373*(math.log(SensorValue*70))+0.00000009827*((math.log(SensorValue*70))**3))-273.15
                 Fahrenheit = 9.0/5.0 * Celsius + 32
                 CStr = "%.1f" % Celsius
                 FStr = "%.1f" % Fahrenheit
                 Sensors["Ambient Temp Thermistor"] = "Sensor: " + Value + ", " + CStr + "C, " + FStr + "F"
+
 
             # get total hours since activation
             Value = self.GetRegisterValueFromList("0054")
@@ -3017,45 +2957,10 @@ class Evolution(controller.GeneratorController):
             RunTimes = "%.2f " % (TotalRunTime)
 
         return RunTimes
-    #----------  Evolution:DebugThread-------------------------------------
-    def DebugThread(self):
-
-        if not self.EnableDebug:
-            return
-        msgbody = "\n"
-        while True:
-            if len(self.RegistersUnderTestData):
-                msgbody = self.RegistersUnderTestData
-                self.RegistersUnderTestData = ""
-            else:
-                msgbody += "Nothing Changed"
-            msgbody += "\n\n"
-            count = 0
-            for Register, Value in self.RegistersUnderTest.items():
-                msgbody += self.printToString("%s:%s" % (Register, Value))
-
-            self.MessagePipe.SendMessage("Register Under Test", msgbody, msgtype = "info")
-            msgbody = ""
-
-            for x in range(0, 60):
-                for y in range(0, 10):
-                    time.sleep(1)
-                    if self.IsStopSignaled("DebugThread"):
-                        return
     #------------ Evolution:GetRegisterValueFromList ------------------------------------
     def GetRegisterValueFromList(self,Register):
 
         return self.Registers.get(Register, "")
-
-
-    #-------------Evolution:DebugRegisters------------------------------------
-    def DebugRegisters(self):
-
-        # reg 200 - -3e7 and 4af - 4e2 and 5af - 600 (already got 5f1 5f4 and 5f5?
-        for Reg in range(0x05 , 0x700):
-            RegStr = "%04x" % Reg
-            if not self.RegisterIsKnown(RegStr):
-                self.ModBus.ProcessMasterSlaveTransaction(RegStr, 1)
 
     #------------------- Evolution:DisplayOutage -----------------
     def DisplayOutage(self, DictOut = False):
@@ -3244,23 +3149,6 @@ class Evolution(controller.GeneratorController):
         else:
             self.LastRxPacketCount = self.ModBus.RxPacketCount
             return True
-
-    #----------  Evolution::DebugThreadControllerFunction  ----------------------
-    def DebugThreadControllerFunction(self):
-
-        msgbody = "\n"
-        if len(self.RegistersUnderTestData):
-            msgbody = self.RegistersUnderTestData
-            self.RegistersUnderTestData = ""
-        else:
-            msgbody += "Nothing Changed"
-        msgbody += "\n\n"
-        count = 0
-        for Register, Value in self.RegistersUnderTest.items():
-            msgbody += self.printToString("%s:%s" % (Register, Value))
-
-        self.MessagePipe.SendMessage("Register Under Test", msgbody, msgtype = "info")
-        msgbody = ""
 
     #----------  Generator:PowerMeterIsSupported  ------------------------------
     def PowerMeterIsSupported(self):

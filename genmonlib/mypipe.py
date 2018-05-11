@@ -9,9 +9,8 @@
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
 
-import os, sys, time, json, multiprocessing
+import os, sys, time, json, threading
 import mythread, mycommon
-
 
 #------------ MyPipe class -----------------------------------------------------
 class MyPipe(mycommon.MyCommon):
@@ -23,56 +22,77 @@ class MyPipe(mycommon.MyCommon):
 
         if self.Simulation:
             return
-        self.PipeName = os.path.dirname(os.path.realpath(__file__)) + "/" + name
+
         self.ThreadName = "ReadPipeThread" + self.BasePipeName
         self.Callback = callback
-        self.PipeLock = multiprocessing.Lock()
-        if not Reuse:
-            try:
-                os.remove(self.PipeName)
-            except:
-                pass
-            os.mkfifo(self.PipeName)
-        self.PipeIn = os.open(self.PipeName, os.O_RDONLY | os.O_NONBLOCK)
-        self.PipeInDes = os.fdopen(self.PipeIn, "r")
-        self.PipeOut = os.open(self.PipeName, os.O_WRONLY | os.O_NONBLOCK)
-        self.PipeOutDes = os.fdopen(self.PipeOut, "w")
+
+        self.FileAccessLock = threading.RLock()
+
+        #self.FileLock = FileLock(os.path.dirname(os.path.realpath(__file__)) + "/" + "lock.file", log = self.log)
+        self.FileName = os.path.dirname(os.path.realpath(__file__)) + "/" + self.BasePipeName + "_dat"
+
+        try:
+            if not Reuse:
+                try:
+                    os.remove(self.FileName)
+                except:
+                    pass
+                with open(self.FileName, 'w') as f: # create empty file
+                    f.write("")
+
+        except Exception as e1:
+            self.LogErrorLine("Error in MyPipe:__init__: " + str(e1))
         self.Threads = {}
 
         if not self.Callback == None:
             self.Threads[self.ThreadName] = mythread.MyThread(self.ReadPipeThread, Name = self.ThreadName)
 
+
     #------------ MyPipe::Write-------------------------------------------------
-    def Write(self, data):
+    def WriteFile(self, data):
         try:
-            self.PipeLock.acquire()
-            self.PipeOutDes.write( data + "\n")
-            self.PipeLock.release()
-            self.PipeOutDes.flush()
+            with self.FileAccessLock:
+                with open(self.FileName, 'a') as f:
+                    f.write(data + "\n")
+                    f.flush()
+
         except Exception as e1:
-            self.LogErrorLine("Error in Pipe Write: " + str(e1))
+            self.LogErrorLine("Error in Pipe WriteFile: " + str(e1))
 
-    #------------ MyPipe::Read--------------------------------------------------
-    def Read(self):
+    #------------ MyPipe::ReadLines---------------------------------------------
+    def ReadLines(self):
 
         try:
-            return self.PipeInDes.readline()[:-1]
-        except:
-            return ""
+            with self.FileAccessLock:
+                with open(self.FileName, 'rw+') as f:
+                    lines = f.readlines()
+                open(self.FileName, 'w').close()
+            return lines
+        except Exception as e1:
+            self.LogErrorLine("Error in mypipe::ReadLines: " + str(e1))
+            return []
 
     #------------ MyPipe::ReadPipeThread----------------------------------------
     def ReadPipeThread(self):
 
         while True:
-            time.sleep(0.5)
-            if self.Threads[self.ThreadName].StopSignaled():
-                return
+            try:
+                time.sleep(0.5)
+                if self.Threads[self.ThreadName].StopSignaled():
+                    return
+                # since realines is blocking, check if the file is non zero before we attempt to read
+                if not os.path.getsize(self.FileName):
+                    continue
+                ValueList = self.ReadLines()
+                if len(ValueList):
+                    for Value in ValueList:
+                        if len(Value):
+                            self.Callback(Value)
+            except Exception as e1:
+                self.LogErrorLine("Error in ReadPipeThread: " + str(e1))
 
-            Value = self.Read()
-            if len(Value):
-                self.Callback(Value)
     #----------------MyPipe::SendFeedback---------------------------------------
-    def SendFeedback(self,Reason, Always = False, Message = None, FullLogs = False):
+    def SendFeedback(self,Reason, Always = False, Message = None, FullLogs = False, NoCheck = False):
 
         if self.Simulation:
             return
@@ -83,9 +103,10 @@ class MyPipe(mycommon.MyCommon):
             FeedbackDict["Always"] = Always
             FeedbackDict["Message"] = Message
             FeedbackDict["FullLogs"] = FullLogs
+            FeedbackDict["NoCheck"] = NoCheck
 
             data = json.dumps(FeedbackDict, sort_keys=False)
-            self.Write(data)
+            self.WriteFile(data)
         except Exception as e1:
             self.LogErrorLine("Error in SendFeedback: " + str(e1))
 
@@ -104,7 +125,7 @@ class MyPipe(mycommon.MyCommon):
             MessageDict["msgtype"] = msgtype
 
             data = json.dumps(MessageDict, sort_keys=False)
-            self.Write(data)
+            self.WriteFile(data)
         except Exception as e1:
             self.LogErrorLine("Error in SendMessage: " + str(e1))
 
@@ -119,6 +140,3 @@ class MyPipe(mycommon.MyCommon):
                 self.Threads[self.ThreadName].Stop()
                 self.Threads[self.ThreadName].WaitForThreadToEnd()
                 del self.Threads[self.ThreadName]
-
-        os.close(self.PipeIn)
-        os.close(self.PipeOut)

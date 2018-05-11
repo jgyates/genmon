@@ -16,11 +16,12 @@ import mylog, mythread, mycommon, modbusbase
 
 #------------ ModbusBase class --------------------------------------------
 class ModbusFile(modbusbase.ModbusBase):
-    def __init__(self, updatecallback, address = 0x9d, name = "/dev/serial", rate=9600, loglocation = "/var/log/"):
+    def __init__(self, updatecallback, address = 0x9d, name = "/dev/serial", rate=9600, loglocation = "/var/log/", inputfile = None):
         super(ModbusFile, self).__init__(updatecallback = updatecallback, address = address, name = name, rate = rate, loglocation = loglocation)
         self.Address = address
         self.Rate = rate
         self.PortName = name
+        self.InputFile = inputfile
         self.InitComplete = False
         self.UpdateRegisterList = updatecallback
         self.RxPacketCount = 0
@@ -29,13 +30,23 @@ class ModbusFile(modbusbase.ModbusBase):
         self.TotalElapsedPacketeTime = 0
         self.ComTimoutError = 0
         self.CrcError = 0
+        self.SimulateTime = True
+
         self.ModbusStartTime = datetime.datetime.now()     # used for com metrics
         self.Registers = {}
+
+        if self.InputFile == None:
+            self.InputFile = os.path.dirname(os.path.realpath(__file__)) + "/modbusregs.txt"
+
         # log errors in this module to a file
         self.log = mylog.SetupLogger("mymodbus", loglocation + "mymodbus.log")
+
+        if not os.path.isfile(self.InputFile):
+            self.LogError("Error: File not present: " + self.InputFile)
         self.CommAccessLock = threading.RLock()     # lock to synchronize access to the serial port comms
         self.UpdateRegisterList = updatecallback
 
+        self.ReadInputFile(self.InputFile)
         self.Threads["ReadInputFileThread"] = mythread.MyThread(self.ReadInputFileThread, Name = "ReadInputFileThread")
 
 
@@ -46,7 +57,7 @@ class ModbusFile(modbusbase.ModbusBase):
         while True:
             if self.IsStopSignaled("ReadInputFileThread"):
                 break
-            self.ReadInputFile(os.path.dirname(os.path.realpath(__file__)) + "/modbusregs.txt")
+            self.ReadInputFile(self.InputFile)
             time.sleep(5)
 
     #-------------ModbusBase::ProcessMasterSlaveWriteTransaction----------------
@@ -66,7 +77,8 @@ class ModbusFile(modbusbase.ModbusBase):
                     self.UpdateRegisterList(Register, RegValue)
                 self.TxPacketCount += 1
                 self.RxPacketCount += 1
-                time.sleep(.03)
+                if self.SimulateTime:
+                    time.sleep(.02)
         return
 
     #----------  GeneratorDevice:ReadInputFile  ---------------------------------
@@ -75,7 +87,7 @@ class ModbusFile(modbusbase.ModbusBase):
         if not len(FileName):
             self.LogError("Error in  ReadInputFile: No Input File")
             return False
-        self.FileName = FileName
+
         try:
 
             with open(FileName,"r") as InputFile:   #opens file

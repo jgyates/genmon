@@ -315,10 +315,10 @@ DEFAULT_PICKUP_VOLTAGE = 190
 class HPanel(controller.GeneratorController):
 
     #---------------------HPanel::__init__--------------------------------------
-    def __init__(self, log, newinstall = False, simulation = False):
+    def __init__(self, log, newinstall = False, simulation = False, simulationfile = None, message = None, feedback = None):
 
         # call parent constructor
-        super(HPanel, self).__init__(log, newinstall = newinstall, simulation = simulation)
+        super(HPanel, self).__init__(log, newinstall = newinstall, simulation = simulation, simulationfile = simulationfile, message = message, feedback = feedback)
 
         self.CommAccessLock = threading.RLock()  # lock to synchronize access to the protocol comms
         self.CheckForAlarmEvent = threading.Event() # Event to signal checking for alarm
@@ -461,18 +461,13 @@ class HPanel(controller.GeneratorController):
         try:
             #Starting device connection
             if self.Simulation:
-                self.ModBus = modbus_file.ModbusFile(self.UpdateRegisterList, self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation)
+                self.ModBus = modbus_file.ModbusFile(self.UpdateRegisterList, self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation, inputfile = self.SimulationFile)
             else:
                 self.ModBus = mymodbus.ModbusProtocol(self.UpdateRegisterList, self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation)
             self.Threads = self.MergeDicts(self.Threads, self.ModBus.Threads)
             self.LastRxPacketCount = self.ModBus.RxPacketCount
-            self.Threads["CheckAlarmThread"] = mythread.MyThread(self.CheckAlarmThread, Name = "CheckAlarmThread")
-            # start read thread to process incoming data commands
-            self.Threads["ProcessThread"] = mythread.MyThread(self.ProcessThread, Name = "ProcessThread")
 
-            # TODO Add this back in later
-            #if self.EnableDebug:        # for debugging registers
-            #    self.Threads["DebugThread"] = mythread.MyThread(self.DebugThread, Name = "DebugThread")
+            self.StartCommonThreads()
 
         except Exception as e1:
             self.FatalError("Error opening modbus device: " + str(e1))
@@ -534,42 +529,6 @@ class HPanel(controller.GeneratorController):
                 self.CheckForAlarmEvent.set()
             except Exception as e1:
                 self.LogErrorLine("Error in MasterEmulation: " + str(e1))
-
-    # ---------- HPanel:ProcessThread------------------
-    #  read registers, remove items from Buffer, form packets, store register data
-    def ProcessThread(self):
-
-        try:
-            self.ModBus.Flush()
-            self.InitDevice()
-
-            while True:
-                if self.IsStopSignaled("ProcessThread"):
-                    break
-                try:
-                    self.MasterEmulation()
-                    if self.EnableDebug:
-                        self.DebugRegisters()   #TODO
-                except Exception as e1:
-                    self.LogErrorLine("Error in Controller ProcessThread (1), continue: " + str(e1))
-        except Exception as e1:
-            self.LogErrorLine("Exiting Controller ProcessThread (2)" + str(e1))
-
-    # ---------- HPanel:CheckAlarmThread------------------
-    #  When signaled, this thread will check for alarms
-    def CheckAlarmThread(self):
-
-        while True:
-            try:
-                time.sleep(0.25)
-                if self.IsStopSignaled("CheckAlarmThread"):
-                    break
-                if self.CheckForAlarmEvent.is_set():
-                    self.CheckForAlarmEvent.clear()
-                    self.CheckForAlarms()
-
-            except Exception as e1:
-                self.LogErrorLine("Error in  CheckAlarmThread" + str(e1))
 
     #------------ Evolution:CheckForOutage ----------------------------------------
     # also update min and max utility voltage
@@ -1340,6 +1299,9 @@ class HPanel(controller.GeneratorController):
     #----------  HPanel:PowerMeterIsSupported  --------------------
     # return true if GetPowerOutput is supported
     def PowerMeterIsSupported(self):
+
+        if self.Simulation:
+            return False
         return True
 
     #---------------------HPanel::GetPowerOutput-------------------
