@@ -84,6 +84,7 @@ class Monitor(mysupport.MySupport):
         self.MessagePipe = mypipe.MyPipe("Message", self.MessageReceiver, log = self.log)
         self.Threads = self.MergeDicts(self.Threads, self.MessagePipe.Threads)
 
+
         try:
             #Starting device connection
             if self.Simulation:
@@ -307,6 +308,11 @@ class Monitor(mysupport.MySupport):
             msgbody = "\n"
         else:
             msgbody = ""
+
+        if not self.Controller.InitComplete:
+            msgsubject = "Error in Generator Command"
+            msgbody += "Generator Monitor not finished starting up."
+            LocalError = True
 
         if(len(command)) == 0:
             msgsubject = "Error in Generator Command (Lenght is zero)"

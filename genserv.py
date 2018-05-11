@@ -647,6 +647,7 @@ if __name__ == "__main__":
             if startcount >= 2:
                 print("genmon not loaded.")
                 sys.exit(1)
+            time.sleep(1)
             continue
 
     Start = datetime.datetime.now()
