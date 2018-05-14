@@ -37,6 +37,8 @@ if __name__=='__main__': #
     startregister = None
     endregister = None
     modbusaddress = None
+    parity = None
+    stopbits = None
 
     HelpStr = '\npython mobusdump.py -r <Baud Rate> -p <serial port> -a <modbus address to query> -s <start modbus register>  -e <end modbus register>\n'
     HelpStr += "\n   Example: python mobusdump.py -r 9600 -p /dev/serial0 -a 9d -s 5 -e 100 \n"
@@ -46,10 +48,12 @@ if __name__=='__main__': #
     HelpStr += "\n      -a  Modbus address to query in hexidecimal, 0 - ff. (e.g. 9d, 10, ff)"
     HelpStr += "\n      -s  Starting modbus register to read (decimal number)"
     HelpStr += "\n      -e  Ending modbus register to read (decimal number, must be greater than start register)"
+    HelpStr += "\n      -b  Stop bits. If omitted 1 stop bit, if present use 1.5 stop bits"
+    HelpStr += "\n      -x  Omit for no parity. -x 1 for odd parity, -x 2 for even parity"
     HelpStr += "\n \n"
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:],"hr:p:s:e:a:",["rate=","port=","start=","end=","address="])
+        opts, args = getopt.getopt(sys.argv[1:],"bhr:p:s:e:a:x:",["rate=","port=","start=","end=","address=", "parity="])
     except getopt.GetoptError:
         print(HelpStr)
         sys.exit(2)
@@ -74,6 +78,12 @@ if __name__=='__main__': #
             elif opt in ("-e", "--end"):
                 endregister =  int(arg)
                 print 'Start Register : ' + str(endregister)
+            elif opt in ("-x", "--parity"):
+                parity =  int(arg)
+                print 'Parity : ' + str(parity)
+            elif opt in ("-b", "--stopbits"):
+                stopbits =  True
+                print '1.5 Stop Bits : ' + str(stopbits)
 
     except Exception as e1:
         print HelpStr
@@ -83,9 +93,20 @@ if __name__=='__main__': #
         print HelpStr
         sys.exit(2)
 
+    if not stopbits == None:
+        OnePointFiveStopBits = True
+    else:
+        OnePointFiveStopBits = False
+
+    if not parity == None:
+        if not parity == 1 and not parity == 2:
+            print HelpStr
+            sys.exit(2)
+
+
     modbus = None
     try:
-        modbus = mymodbus.ModbusProtocol(RegisterResults, modbusaddress, device, baudrate, loglocation = "./")
+        modbus = mymodbus.ModbusProtocol(RegisterResults, modbusaddress, device, baudrate, loglocation = "./", Parity = parity, OnePointFiveStopBits = OnePointFiveStopBits)
         pass
     except Exception as e1:
         printToScreen( "Error opening serial device...: " + str(e1))

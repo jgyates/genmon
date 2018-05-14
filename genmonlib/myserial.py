@@ -17,7 +17,7 @@ import mylog, mythread, mycommon
 
 #------------ SerialDevice class --------------------------------------------
 class SerialDevice(mycommon.MyCommon):
-    def __init__(self, name, rate=9600, loglocation = "/var/log/"):
+    def __init__(self, name, rate=9600, loglocation = "/var/log/", Parity = None, OnePointFiveStopBits = None):
         super(SerialDevice, self).__init__()
         self.DeviceName = name
         self.BaudRate = rate
@@ -35,8 +35,20 @@ class SerialDevice(mycommon.MyCommon):
         self.SerialDevice.port = name
         self.SerialDevice.baudrate = rate
         self.SerialDevice.bytesize = serial.EIGHTBITS     #number of bits per bytes
-        self.SerialDevice.parity = serial.PARITY_NONE     #set parity check: no parity
-        self.SerialDevice.stopbits = serial.STOPBITS_ONE  #number of stop bits
+        if Parity == None:
+            self.SerialDevice.parity = serial.PARITY_NONE    #set parity check: no parity
+        elif Parity == 1:
+            self.SerialDevice.parity = serial.PARITY_ODD     #set parity check: use odd parity
+        else:
+            self.SerialDevice.parity = serial.PARITY_EVEN    #set parity check: use even parity
+
+        if OnePointFiveStopBits == None:
+            self.SerialDevice.stopbits = serial.STOPBITS_ONE  #number of stop bits
+        elif OnePointFiveStopBits:
+            self.SerialDevice.stopbits = serial.STOPBITS_ONE_POINT_FIVE  #number of stop bits
+        else:
+            self.SerialDevice.stopbits = serial.STOPBITS_ONE  #number of stop bits
+
         self.SerialDevice.timeout =  0.05                 # small timeout so we can check if the thread should exit
         self.SerialDevice.xonxoff = False                 #disable software flow control
         self.SerialDevice.rtscts = False                  #disable hardware (RTS/CTS) flow control

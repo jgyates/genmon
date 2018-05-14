@@ -33,12 +33,12 @@ MBUS_CMD_WRITE_REGS     = 0x10
 
 #------------ ModbusProtocol class --------------------------------------------
 class ModbusProtocol(modbusbase.ModbusBase):
-    def __init__(self, updatecallback, address = 0x9d, name = "/dev/serial", rate=9600, loglocation = "/var/log/"):
+    def __init__(self, updatecallback, address = 0x9d, name = "/dev/serial", rate=9600, loglocation = "/var/log/", Parity = None, OnePointFiveStopBits = None):
         super(ModbusProtocol, self).__init__(updatecallback = updatecallback, address = address, name = name, rate = rate, loglocation = loglocation)
 
         try:
             #Starting serial connection
-            self.Slave = myserial.SerialDevice(name, rate, loglocation)
+            self.Slave = myserial.SerialDevice(name, rate, loglocation, Parity = Parity, OnePointFiveStopBits = OnePointFiveStopBits)
             self.Threads = self.MergeDicts(self.Threads, self.Slave.Threads)
             self.InitComplete = True
 
