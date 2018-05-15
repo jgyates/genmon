@@ -37,6 +37,8 @@ class ModbusProtocol(modbusbase.ModbusBase):
         super(ModbusProtocol, self).__init__(updatecallback = updatecallback, address = address, name = name, rate = rate, loglocation = loglocation)
 
         try:
+            # ~3000 for 9600               bit time * 10 bits * 10 char * 2 packets + wait time(3000) (convert to ms * 1000)
+            self.ModBusPacketTimoutMS = (((((1/rate) * 10) * 10 * 2) *1000)  + 3000)     # .00208
             #Starting serial connection
             self.Slave = myserial.SerialDevice(name, rate, loglocation, Parity = Parity, OnePointFiveStopBits = OnePointFiveStopBits)
             self.Threads = self.MergeDicts(self.Threads, self.Slave.Threads)
@@ -164,10 +166,10 @@ class ModbusProtocol(modbusbase.ModbusBase):
                 # This normally takes about 30 ms however in some instances it can take up to 950ms
                 # the theory is this is either a delay due to how python does threading, or
                 # delay caused by the generator controller.
-                # each char time is about 1 millisecond so assuming a 10 byte packet transmitted
-                # and a 10 byte received with about 5 char times of silence in between should give
-                # us about 25ms
-                if msElapsed > 3000:
+                # each char time is about 1 millisecond (at 9600 baud) so assuming a 10 byte packet
+                # transmitted and a 10 byte received with about 5 char times of silence
+                # in between should give us about 25ms
+                if msElapsed > self.ModBusPacketTimoutMS:
                     self.ComTimoutError += 1
                     self.LogError("Error: timeout receiving slave packet for register %x%x Buffer:%d" % (MasterPacket[2],MasterPacket[3], len(self.Slave.Buffer)) )
                     return False
