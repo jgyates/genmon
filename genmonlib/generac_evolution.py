@@ -1407,10 +1407,12 @@ class Evolution(controller.GeneratorController):
             return self.printToString(self.ProcessDispatch(Maintenance,""))
 
         return Maintenance
-    #------------ Evolution:signed16-------------------------------
+    #------------ Evolution:signed16--------------------------------------------
     def signed16(self, value):
         return -(value & 0x8000) | (value & 0x7fff)
-
+    #------------ Evolution:signed32--------------------------------------------
+    def signed32(self, value):
+        return -(value & 0x80000000) | (value & 0x7fffffff)
     #------------ Evolution:DisplayUnknownSensors-------------------------------
     def DisplayUnknownSensors(self):
 
@@ -2399,68 +2401,72 @@ class Evolution(controller.GeneratorController):
     #------------ Evolution:GetCurrentOutput -----------------------------------
     def GetCurrentOutput(self):
 
-        if not self.EvolutionController:
-            return "0.00A"
+        try:
+            if not self.PowerMeterIsSupported():
+                return "0.00A"
 
-        EngineState = self.GetEngineState()
-        # report null if engine is not running
-        if "Stopped" in EngineState or "Off" in EngineState or not len(EngineState):
-            return "0.00A"
+            EngineState = self.GetEngineState()
+            # report null if engine is not running
+            if "Stopped" in EngineState or "Off" in EngineState or not len(EngineState):
+                return "0.00A"
 
-        CurrentFloat = 0.0
-        if self.EvolutionController and self.LiquidCooled:
-            Value = self.GetRegisterValueFromList("0058")
-            if len(Value):
-                CurrentFloat = int(Value,16)
-                CurrentFloat = max((CurrentFloat * .2248) - 303.268, 0)
+            CurrentFloat = 0.0
+            if self.EvolutionController and self.LiquidCooled:
+                Value = self.GetRegisterValueFromList("0058")
+                if len(Value):
+                    CurrentFloat = int(Value,16)
+                    CurrentFloat = max((CurrentFloat * .2248) - 303.268, 0)
 
-        elif self.EvolutionController and not self.LiquidCooled:
-            CurrentHi = 0
-            CurrentLow = 0
+            elif self.EvolutionController and not self.LiquidCooled:
+                CurrentHi = 0
+                CurrentLow = 0
 
-            Value = self.GetRegisterValueFromList("003a")
-            if len(Value):
-                CurrentHi = int(Value,16)
-            Value = self.GetRegisterValueFromList("003b")
-            if len(Value):
-                CurrentLow = int(Value,16)
+                Value = self.GetRegisterValueFromList("003a")
+                if len(Value):
+                    CurrentHi = int(Value,16)
+                Value = self.GetRegisterValueFromList("003b")
+                if len(Value):
+                    CurrentLow = int(Value,16)
 
-            ModelLookUp_EvoAC = { #ID : [KW or KVA Rating, Hz Rating, Voltage Rating, Phase]
-                                    1 : None,      #["9KW", "60", "120/240", "1"],
-                                    2 : None,      #["14KW", "60", "120/240", "1"],
-                                    3 : None,      #["17KW", "60", "120/240", "1"],
-                                    4 : None,      #["20KW", "60", "120/240", "1"],
-                                    5 : None,      #["8KW", "60", "120/240", "1"],
-                                    7 : None,      #["13KW", "60", "120/240", "1"],
-                                    8 : None,      #["15KW", "60", "120/240", "1"],
-                                    9 : None,      #["16KW", "60", "120/240", "1"],
-                                    10 : None,      #["20KW", "VSCF", "120/240", "1"],      #Variable Speed Constant Frequency
-                                    11 : None,      #["15KW", "ECOVSCF", "120/240", "1"],   # Eco Variable Speed Constant Frequency
-                                    12 : None,      #["8KVA", "50", "220,230,240", "1"],    # 3 distinct models 220, 230, 240
-                                    13 : None,      #["10KVA", "50", "220,230,240", "1"],   # 3 distinct models 220, 230, 240
-                                    14 : None,      #["13KVA", "50", "220,230,240", "1"],   # 3 distinct models 220, 230, 240
-                                    15 : 56.24,     #["11KW", "60" ,"240", "1"],
-                                    17 : 21.48,     #["22KW", "60", "120/240", "1"],
-                                    21 : None,      #["11KW", "60", "240 LS", "1"],
-                                    32 : None,      #["Trinity", "60", "208 3Phase", "3"],  # G007077
-                                    33 : None,      #["Trinity", "50", "380,400,416", "3"]  # 3 distinct models 380, 400 or 416
-                                    }
-            CurrentFloat = float((CurrentHi << 16) | (CurrentLow))
-            if self.CurrentDivider == None or self.CurrentDivider < 1:
+                ModelLookUp_EvoAC = { #ID : [KW or KVA Rating, Hz Rating, Voltage Rating, Phase]
+                                        1 : None,      #["9KW", "60", "120/240", "1"],
+                                        2 : None,      #["14KW", "60", "120/240", "1"],
+                                        3 : None,      #["17KW", "60", "120/240", "1"],
+                                        4 : None,      #["20KW", "60", "120/240", "1"],
+                                        5 : None,      #["8KW", "60", "120/240", "1"],
+                                        7 : None,      #["13KW", "60", "120/240", "1"],
+                                        8 : None,      #["15KW", "60", "120/240", "1"],
+                                        9 : None,      #["16KW", "60", "120/240", "1"],
+                                        10 : None,      #["20KW", "VSCF", "120/240", "1"],      #Variable Speed Constant Frequency
+                                        11 : None,      #["15KW", "ECOVSCF", "120/240", "1"],   # Eco Variable Speed Constant Frequency
+                                        12 : None,      #["8KVA", "50", "220,230,240", "1"],    # 3 distinct models 220, 230, 240
+                                        13 : None,      #["10KVA", "50", "220,230,240", "1"],   # 3 distinct models 220, 230, 240
+                                        14 : None,      #["13KVA", "50", "220,230,240", "1"],   # 3 distinct models 220, 230, 240
+                                        15 : 56.24,     #["11KW", "60" ,"240", "1"],
+                                        17 : 21.48,     #["22KW", "60", "120/240", "1"],
+                                        21 : None,      #["11KW", "60", "240 LS", "1"],
+                                        32 : None,      #["Trinity", "60", "208 3Phase", "3"],  # G007077
+                                        33 : None,      #["Trinity", "50", "380,400,416", "3"]  # 3 distinct models 380, 400 or 416
+                                        }
+                CurrentFloat = float(abs(self.signed32((CurrentHi << 16) | (CurrentLow))))
+                if self.CurrentDivider == None or self.CurrentDivider < 1:
 
-                Value = self.GetRegisterValueFromList("0019")
-                if not len(Value):
-                    return "Unknown"
+                    Value = self.GetRegisterValueFromList("0019")
+                    if not len(Value):
+                        return "Unknown"
 
-                Divisor = ModelLookUp_EvoAC.get(int(Value,16), None)
-                if Divisor == None:
-                    Divisor = (22 / int(self.NominalKW)) * 22
-            else:
-                Divisor = self.CurrentDivider
+                    Divisor = ModelLookUp_EvoAC.get(int(Value,16), None)
+                    if Divisor == None:
+                        Divisor = (22 / int(self.NominalKW)) * 22
+                else:
+                    Divisor = self.CurrentDivider
 
-            CurrentFloat = CurrentFloat / Divisor
+                CurrentFloat = CurrentFloat / Divisor
 
-        return "%.2fA" % CurrentFloat
+            return "%.2fA" % CurrentFloat
+        except Exception as e1:
+            self.LogErrorLine("Error in GetCurrentOutput: " + str(e1))
+            return "0.0A"
 
      ##------------ Evolution:GetActiveRotorPoles ------------------------------
     def GetActiveRotorPoles(self):
@@ -2487,7 +2493,7 @@ class Evolution(controller.GeneratorController):
     #------------ Evolution:GetPowerOutput ---------------------------------------
     def GetPowerOutput(self):
 
-        if not self.EvolutionController:
+        if not self.PowerMeterIsSupported():
             return ""
 
         EngineState = self.GetEngineState()
@@ -3039,7 +3045,7 @@ class Evolution(controller.GeneratorController):
         Engine["Frequency"] = self.GetFrequency()
         Engine["Output Voltage"] = self.GetVoltageOutput()
 
-        if self.EvolutionController:
+        if self.PowerMeterIsSupported():
             Engine["Output Current"] = self.GetCurrentOutput()
             Engine["Output Power (Single Phase)"] = self.GetPowerOutput()
 
