@@ -61,6 +61,7 @@ class Evolution(controller.GeneratorController):
         self.bUseLegacyWrite = False        # Nexus will set this to True
         self.bEnhancedExerciseFrequency = False     # True if controller supports biweekly and monthly exercise times
         self.CurrentDivider = None
+        self.CurrentOffset = None
         # Used for housekeeping
         self.CheckForAlarmEvent = threading.Event() # Event to signal checking for alarm
         self.ModBus = None
@@ -2428,6 +2429,7 @@ class Evolution(controller.GeneratorController):
                 if len(Value):
                     CurrentLow = int(Value,16)
 
+                # Dict is formated this way:  ModelID: [ divisor, offset to register]
                 ModelLookUp_EvoAC = { #ID : [KW or KVA Rating, Hz Rating, Voltage Rating, Phase]
                                         1 : None,      #["9KW", "60", "120/240", "1"],
                                         2 : None,      #["14KW", "60", "120/240", "1"],
@@ -2442,28 +2444,43 @@ class Evolution(controller.GeneratorController):
                                         12 : None,      #["8KVA", "50", "220,230,240", "1"],    # 3 distinct models 220, 230, 240
                                         13 : None,      #["10KVA", "50", "220,230,240", "1"],   # 3 distinct models 220, 230, 240
                                         14 : None,      #["13KVA", "50", "220,230,240", "1"],   # 3 distinct models 220, 230, 240
-                                        15 : 56.24,     #["11KW", "60" ,"240", "1"],
-                                        17 : 21.48,     #["22KW", "60", "120/240", "1"],
+                                        15 : 56.24,        #["11KW", "60" ,"240", "1"],
+                                        17 : 21.48,       #["22KW", "60", "120/240", "1"],
                                         21 : None,      #["11KW", "60", "240 LS", "1"],
                                         32 : None,      #["Trinity", "60", "208 3Phase", "3"],  # G007077
-                                        33 : None,      #["Trinity", "50", "380,400,416", "3"]  # 3 distinct models 380, 400 or 416
+                                        33 : None       #["Trinity", "50", "380,400,416", "3"]  # 3 distinct models 380, 400 or 416
                                         }
-                CurrentFloat = float(abs(self.signed32((CurrentHi << 16) | (CurrentLow))))
+
+                CurrentFloat = float(self.signed32((CurrentHi << 16) | (CurrentLow)))
+                # Get Model ID
+                Value = self.GetRegisterValueFromList("0019")
+                if not len(Value):
+                    Value = "0"
+
+                LookUpReturn = ModelLookUp_EvoAC.get(int(Value,16), None)
+
+                Divisor = 1.0
+                CurrentOffset = 0.0
+
                 if self.CurrentDivider == None or self.CurrentDivider < 1:
-
-                    Value = self.GetRegisterValueFromList("0019")
-                    if not len(Value):
-                        return "Unknown"
-
-                    Divisor = ModelLookUp_EvoAC.get(int(Value,16), None)
-                    if Divisor == None:
-                        Divisor = (22 / int(self.NominalKW)) * 22
+                    if LookUpReturn == None:
+                        Divisor = (22.0 / int(self.NominalKW)) * 22       # Default Divisor
+                    else:
+                        Divisor = LookUpReturn
                 else:
                     Divisor = self.CurrentDivider
 
-                CurrentFloat = CurrentFloat / Divisor
+                if not self.CurrentOffset == None:
+                    CurrentOffset = self.CurrentOffset
 
-            return "%.2fA" % CurrentFloat
+                CurrentOutput = (CurrentFloat + CurrentOffset) / Divisor
+
+                # is the current out of bounds?
+                if CurrentOutput > ((int(self.NominalKW) * 1000) / 240) + 2 or CurrentOutput < 0:
+                    msg = "Current Calculation: %f, CurrentFloat: %f, Divisor: %f, Offset %f" % (CurrentOutput, CurrentFloat, Divisor, CurrentOffset)
+                    self.FeedbackPipe.SendFeedback("Current Calculation", Message=msg, FullLogs = True )
+
+            return "%.2fA" % CurrentOutput
         except Exception as e1:
             self.LogErrorLine("Error in GetCurrentOutput: " + str(e1))
             return "0.0A"
@@ -3138,6 +3155,8 @@ class Evolution(controller.GeneratorController):
 
             if config.has_option(ConfigSection, 'currentdivider'):
                 self.CurrentDivider = config.getfloat(ConfigSection, 'currentdivider')
+            if config.has_option(ConfigSection, 'currentoffset'):
+                self.CurrentOffset = config.getfloat(ConfigSection, 'currentoffset')
 
         except Exception as e1:
             if not reload:
