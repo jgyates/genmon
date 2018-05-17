@@ -2416,7 +2416,7 @@ class Evolution(controller.GeneratorController):
                 Value = self.GetRegisterValueFromList("0058")
                 if len(Value):
                     CurrentFloat = int(Value,16)
-                    CurrentFloat = max((CurrentFloat * .2248) - 303.268, 0)
+                    CurrentOutput = max((CurrentFloat * .2248) - 303.268, 0)
 
             elif self.EvolutionController and not self.LiquidCooled:
                 CurrentHi = 0
