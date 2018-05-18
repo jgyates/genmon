@@ -29,12 +29,12 @@ class ModbusBase(mysupport.MySupport ):
         self.TotalElapsedPacketeTime = 0
         self.ComTimoutError = 0
         self.CrcError = 0
+        self.CommAccessLock = threading.RLock()     # lock to synchronize access to the serial port comms
         self.ModbusStartTime = datetime.datetime.now()     # used for com metrics
 
         # log errors in this module to a file
         self.log = mylog.SetupLogger("mymodbus", loglocation + "mymodbus.log")
-        self.CommAccessLock = threading.RLock()     # lock to synchronize access to the serial port comms
-        self.UpdateRegisterList = updatecallback
+
 
     #-------------ModbusBase::ProcessMasterSlaveWriteTransaction--------------------
     def ProcessMasterSlaveWriteTransaction(self, Register, Length, Data):

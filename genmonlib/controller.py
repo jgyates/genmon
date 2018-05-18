@@ -217,7 +217,8 @@ class GeneratorController(mysupport.MySupport):
                     msgbody += self.printToString("%s:%s" % (Register, Value))
 
                 self.FeedbackPipe.SendFeedback("Debug Thread (Registers)", FullLogs = True, Always = True, Message=msgbody, NoCheck = True)
-                self.FeedbackPipe.SendFeedback("Debug Thread (Changes)", FullLogs = True, Always = True, Message=RegistersUnderTestData, NoCheck = True)
+                if len(RegistersUnderTestData):
+                    self.FeedbackPipe.SendFeedback("Debug Thread (Changes)", FullLogs = True, Always = True, Message=RegistersUnderTestData, NoCheck = True)
                 RegistersUnderTestData = ""
                 TotalSent += 1
 

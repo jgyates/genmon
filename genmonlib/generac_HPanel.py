@@ -320,7 +320,6 @@ class HPanel(controller.GeneratorController):
         # call parent constructor
         super(HPanel, self).__init__(log, newinstall = newinstall, simulation = simulation, simulationfile = simulationfile, message = message, feedback = feedback)
 
-        self.CommAccessLock = threading.RLock()  # lock to synchronize access to the protocol comms
         self.CheckForAlarmEvent = threading.Event() # Event to signal checking for alarm
 
         self.DaysOfWeek = { 1: "Sunday",    # decode for register values with day of week
@@ -526,9 +525,9 @@ class HPanel(controller.GeneratorController):
             try:
                 self.ModBus.ProcessMasterSlaveTransaction(Register, 1)
                 # check for unknown events (i.e. events we are not decoded) and send an email if they occur
-                self.CheckForAlarmEvent.set()
             except Exception as e1:
                 self.LogErrorLine("Error in MasterEmulation: " + str(e1))
+        self.CheckForAlarmEvent.set()
 
     #------------ Evolution:CheckForOutage ----------------------------------------
     # also update min and max utility voltage
@@ -1017,8 +1016,8 @@ class HPanel(controller.GeneratorController):
             SERVICELOG   = "Service Log:   "
             STARTSTOPLOG = "Start Stop Log:"
 
-            LogList = [ {"Alarm Log": ["Not Implimented"]},
-                        {"Start Stop Log": ["Not Implimented"]}]
+            LogList = [ {"Alarm Log": ["Not Implemented"]},
+                        {"Start Stop Log": ["Not Implemented"]}]
 
             RetValue["Logs"] = LogList
             if UnknownFound:
