@@ -2402,6 +2402,7 @@ class Evolution(controller.GeneratorController):
     #------------ Evolution:GetCurrentOutput -----------------------------------
     def GetCurrentOutput(self):
 
+        CurrentOutput = 0.0
         try:
             if not self.PowerMeterIsSupported():
                 return "0.00A"
