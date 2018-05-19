@@ -15,6 +15,7 @@ from __future__ import print_function       # For python 3.x compatibility with 
 import datetime, time, sys, signal, os, threading, socket
 import atexit, json, collections, random
 import httplib, re
+from subprocess import PIPE, Popen
 
 try:
     from ConfigParser import RawConfigParser
@@ -24,7 +25,7 @@ except ImportError as e:
 from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel
 
 
-GENMON_VERSION = "V1.8.1"
+GENMON_VERSION = "V1.8.2"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -52,6 +53,7 @@ class Monitor(mysupport.MySupport):
         self.CommunicationsActive = False   # Flag to let the heartbeat thread know we are communicating
         self.Controller = None
         self.ControllerSelected = None
+        self.bDisablePiSpecific = False
 
         # Time Sync Related Data
         self.bSyncTime = False          # Sync gen to system time
@@ -163,6 +165,9 @@ class Monitor(mysupport.MySupport):
                 self.bSyncDST = config.getboolean(ConfigSection, 'syncdst')
             if config.has_option(ConfigSection, 'synctime'):
                 self.bSyncTime = config.getboolean(ConfigSection, 'synctime')
+
+            if config.has_option(ConfigSection, 'disablepispecific'):
+                self.bDisablePiSpecific = config.getboolean(ConfigSection, 'disablepispecific')
 
             if config.has_option(ConfigSection, 'simulation'):
                 self.Simulation = config.getboolean(ConfigSection, 'simulation')
@@ -452,8 +457,26 @@ class Monitor(mysupport.MySupport):
         outstring += self.printToString("\n")
 
         return outstring
+    #------------ Monitor::GetRaspberryPiInfo ----------------------------------
+    def GetRaspberryPiInfo(self):
 
-    #------------ Monitor::DisplayMonitor --------------------------------------------
+        PiInfo = collections.OrderedDict()
+
+        try:
+            process = Popen(['/opt/vc/bin/vcgencmd', 'measure_temp'], stdout=PIPE)
+            output, _error = process.communicate()
+            PiInfo["CPU Temperature"] = "%.2fC" % float(output[output.index('=') + 1:output.rindex("'")])
+
+            CPU_Pct=str(round(float(os.popen('''grep 'cpu ' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage }' ''').readline()),2))
+            if len(CPU_Pct):
+                PiInfo["CPU Utilization"] = CPU_Pct + "%"
+
+        except Exception as e1:
+            self.LogErrorLine("Error in GetRaspberryPiInfo: " + str(e1))
+
+        return PiInfo
+
+    #------------ Monitor::DisplayMonitor --------------------------------------
     def DisplayMonitor(self, DictOut = False):
 
         try:
@@ -472,6 +495,8 @@ class Monitor(mysupport.MySupport):
             outstr = str(ProgramRunTime).split(".")[0]  # remove microseconds from string
             GenMonStats["Run time"] = self.ProgramName + " running for " + outstr + "."
             GenMonStats["Generator Monitor Version"] = GENMON_VERSION
+            if not self.bDisablePiSpecific:
+                MonitorData["Raspberry Pi Stats"] = self.GetRaspberryPiInfo()
 
             if not DictOut:
                 return self.printToString(self.ProcessDispatch(Monitor,""))
