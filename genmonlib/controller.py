@@ -200,9 +200,9 @@ class GeneratorController(mysupport.MySupport):
                 continue
             try:
                 for Reg in range(0x0 , 0x2000):
+                    time.sleep(0.25)
                     Register = "%04x" % Reg
                     NewValue = self.ModBus.ProcessMasterSlaveTransaction(Register, 1, ReturnValue = True)
-
                     OldValue = RegistersUnderTest.get(Register, "")
                     if OldValue == "":
                         RegistersUnderTest[Register] = NewValue        # first time seeing this register so add it to the list
