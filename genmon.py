@@ -25,7 +25,7 @@ except ImportError as e:
 from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel
 
 
-GENMON_VERSION = "V1.8.3"
+GENMON_VERSION = "V1.8.4"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -279,6 +279,8 @@ class Monitor(mysupport.MySupport):
         msgbody = ""
         msgbody += "Version: " + GENMON_VERSION
         msgbody += self.DictToString(self.Controller.GetStartInfo())
+        if not self.bDisablePiSpecific:
+            msgbody +=  self.DictToString(self.GetRaspberryPiInfo())
         msgbody += self.Controller.DisplayRegisters(AllRegs = True)
         self.MessagePipe.SendMessage("Generator Monitor Register Submission", msgbody , recipient = self.MaintainerAddress, msgtype = "info")
         return "Registers submitted"
@@ -292,6 +294,8 @@ class Monitor(mysupport.MySupport):
         msgbody = ""
         msgbody += "Version: " + GENMON_VERSION
         msgbody += self.DictToString(self.Controller.GetStartInfo())
+        if not self.bDisablePiSpecific:
+            msgbody +=  self.DictToString(self.GetRaspberryPiInfo())
         msgbody += self.Controller.DisplayRegisters(AllRegs = True)
 
         LogList = []
@@ -478,6 +482,24 @@ class Monitor(mysupport.MySupport):
             if len(CPU_Pct):
                 PiInfo["CPU Utilization"] = CPU_Pct + "%"
 
+            try:
+                with open("/etc/os-release") as f:
+                    OSReleaseInfo = {}
+                    for line in f:
+                        k,v = line.rstrip().split("=")
+                        # .strip('"') will remove if there or else do nothing
+                        OSReleaseInfo[k] = v.strip('"')
+                    PiInfo["OS Name"] = OSReleaseInfo["NAME"]
+                    PiInfo["OS Version"] = OSReleaseInfo["VERSION"]
+
+            except Exception as e1:
+                pass
+            try:
+                process = Popen(['cat', '/proc/device-tree/model'], stdout=PIPE)
+                output, _error = process.communicate()
+                PiInfo["Pi Model"] = str(output.encode('ascii', 'ignore')).rstrip("\x00")
+            except:
+                pass
         except Exception as e1:
             self.LogErrorLine("Error in GetRaspberryPiInfo: " + str(e1))
 
