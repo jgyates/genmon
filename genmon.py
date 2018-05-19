@@ -463,9 +463,16 @@ class Monitor(mysupport.MySupport):
         PiInfo = collections.OrderedDict()
 
         try:
-            process = Popen(['/opt/vc/bin/vcgencmd', 'measure_temp'], stdout=PIPE)
-            output, _error = process.communicate()
-            PiInfo["CPU Temperature"] = "%.2fC" % float(output[output.index('=') + 1:output.rindex("'")])
+            try:
+                process = Popen(['/opt/vc/bin/vcgencmd', 'measure_temp'], stdout=PIPE)
+                output, _error = process.communicate()
+                PiInfo["CPU Temperature"] = "%.2f C" % float(output[output.index('=') + 1:output.rindex("'")])
+            except Exception as e1:
+                # for non rasbpian based systems
+                process = Popen(['cat', '/sys/class/thermal/thermal_zone0/temp'], stdout=PIPE)
+                output, _error = process.communicate()
+                TempStr = str(float(output) / 1000) + " C"
+                PiInfo["CPU Temperature"] = TempStr
 
             CPU_Pct=str(round(float(os.popen('''grep 'cpu ' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage }' ''').readline()),2))
             if len(CPU_Pct):
@@ -475,6 +482,33 @@ class Monitor(mysupport.MySupport):
             self.LogErrorLine("Error in GetRaspberryPiInfo: " + str(e1))
 
         return PiInfo
+    #------------ Monitor::GetUserDefinedData ----------------------------------
+    def GetUserDefinedData(self):
+
+        try:
+            FileName = os.path.dirname(os.path.realpath(__file__)) + "/userdefined.json"
+
+            if not os.path.isfile(FileName):
+                return None
+
+            with open(FileName,"r") as UserFile:     #
+                ValueList = UserFile.readlines()
+                if len(ValueList):
+                    ReturnList = []
+                    for Value in ValueList:
+                        if len(Value) > 3:
+                            try:
+                                Data = json.loads(Value)
+                            except Exception as e1:
+                                self.LogErrorLine("Error in GetUserDefinedData (parse json): " + str(e1))
+                                continue
+                            ReturnList.append(Data)
+                    return ReturnList
+                else:
+                    return None
+        except Exception as e1:
+            self.LogErrorLine("Error in GetUserDefinedData: " + str(e1))
+        return None
 
     #------------ Monitor::DisplayMonitor --------------------------------------
     def DisplayMonitor(self, DictOut = False):
@@ -497,6 +531,10 @@ class Monitor(mysupport.MySupport):
             GenMonStats["Generator Monitor Version"] = GENMON_VERSION
             if not self.bDisablePiSpecific:
                 MonitorData["Raspberry Pi Stats"] = self.GetRaspberryPiInfo()
+
+            UserData = self.GetUserDefinedData()
+            if not UserData == None:
+                MonitorData["External Data"] = UserData
 
             if not DictOut:
                 return self.printToString(self.ProcessDispatch(Monitor,""))
