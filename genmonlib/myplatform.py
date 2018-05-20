@@ -150,8 +150,6 @@ class MyPlatform(mycommon.MyCommon):
                 try:
                     if "wlan" in adapter:
                         LinuxInfo = self.MergeDicts(LinuxInfo, self.GetWiFiInfo(adapter))
-                        LinuxInfo["WLAN Signal Level"] = "-" + self.GetWiFiSignalStrength(adapter) + " dBm"
-                        LinuxInfo["WLAN Link Quality"] = self.GetWiFiSignalQuality(adapter)
                 except Exception as e1:
                     pass
             except:
