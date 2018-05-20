@@ -22,10 +22,10 @@ try:
 except ImportError as e:
     from configparser import RawConfigParser
 
-from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel
+from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel, myplatform
 
 
-GENMON_VERSION = "V1.8.4"
+GENMON_VERSION = "V1.8.5"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -280,7 +280,7 @@ class Monitor(mysupport.MySupport):
         msgbody += "Version: " + GENMON_VERSION
         msgbody += self.DictToString(self.Controller.GetStartInfo())
         if not self.bDisablePiSpecific:
-            msgbody +=  self.DictToString(self.GetRaspberryPiInfo())
+            msgbody +=  self.DictToString(self.GetPlatformStats())
         msgbody += self.Controller.DisplayRegisters(AllRegs = True)
         self.MessagePipe.SendMessage("Generator Monitor Register Submission", msgbody , recipient = self.MaintainerAddress, msgtype = "info")
         return "Registers submitted"
@@ -295,7 +295,7 @@ class Monitor(mysupport.MySupport):
         msgbody += "Version: " + GENMON_VERSION
         msgbody += self.DictToString(self.Controller.GetStartInfo())
         if not self.bDisablePiSpecific:
-            msgbody +=  self.DictToString(self.GetRaspberryPiInfo())
+            msgbody +=  self.DictToString(self.GetPlatformStats())
         msgbody += self.Controller.DisplayRegisters(AllRegs = True)
 
         LogList = []
@@ -461,49 +461,15 @@ class Monitor(mysupport.MySupport):
         outstring += self.printToString("\n")
 
         return outstring
-    #------------ Monitor::GetRaspberryPiInfo ----------------------------------
-    def GetRaspberryPiInfo(self):
+    #------------ Monitor::GetPlatformStats ----------------------------------
+    def GetPlatformStats(self):
 
-        PiInfo = collections.OrderedDict()
+        PlatformInfo = collections.OrderedDict()
 
-        try:
-            try:
-                process = Popen(['/opt/vc/bin/vcgencmd', 'measure_temp'], stdout=PIPE)
-                output, _error = process.communicate()
-                PiInfo["CPU Temperature"] = "%.2f C" % float(output[output.index('=') + 1:output.rindex("'")])
-            except Exception as e1:
-                # for non rasbpian based systems
-                process = Popen(['cat', '/sys/class/thermal/thermal_zone0/temp'], stdout=PIPE)
-                output, _error = process.communicate()
-                TempStr = str(float(output) / 1000) + " C"
-                PiInfo["CPU Temperature"] = TempStr
+        Platform = myplatform.MyPlatform()
 
-            CPU_Pct=str(round(float(os.popen('''grep 'cpu ' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage }' ''').readline()),2))
-            if len(CPU_Pct):
-                PiInfo["CPU Utilization"] = CPU_Pct + "%"
+        return Platform.GetInfo()
 
-            try:
-                with open("/etc/os-release") as f:
-                    OSReleaseInfo = {}
-                    for line in f:
-                        k,v = line.rstrip().split("=")
-                        # .strip('"') will remove if there or else do nothing
-                        OSReleaseInfo[k] = v.strip('"')
-                    PiInfo["OS Name"] = OSReleaseInfo["NAME"]
-                    PiInfo["OS Version"] = OSReleaseInfo["VERSION"]
-
-            except Exception as e1:
-                pass
-            try:
-                process = Popen(['cat', '/proc/device-tree/model'], stdout=PIPE)
-                output, _error = process.communicate()
-                PiInfo["Pi Model"] = str(output.encode('ascii', 'ignore')).rstrip("\x00")
-            except:
-                pass
-        except Exception as e1:
-            self.LogErrorLine("Error in GetRaspberryPiInfo: " + str(e1))
-
-        return PiInfo
     #------------ Monitor::GetUserDefinedData ----------------------------------
     def GetUserDefinedData(self):
 
@@ -551,8 +517,10 @@ class Monitor(mysupport.MySupport):
             outstr = str(ProgramRunTime).split(".")[0]  # remove microseconds from string
             GenMonStats["Run time"] = self.ProgramName + " running for " + outstr + "."
             GenMonStats["Generator Monitor Version"] = GENMON_VERSION
-            if not self.bDisablePiSpecific:
-                MonitorData["Raspberry Pi Stats"] = self.GetRaspberryPiInfo()
+
+            PlatformStats = self.GetPlatformStats()
+            if not PlatformStats == None:
+                MonitorData["Platform Stats"] = PlatformStats
 
             UserData = self.GetUserDefinedData()
             if not UserData == None:

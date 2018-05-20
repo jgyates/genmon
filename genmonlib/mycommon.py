@@ -26,11 +26,14 @@ class MyCommon(object):
 
     #------------ MyCommon::DictToString ---------------------------------------
     def DictToString(self, InputDict, ExtraStrip = False):
+
+        if InputDict == None:
+            return ""
         ReturnString = json.dumps(InputDict,sort_keys=False, indent = 4, separators=(' ', ': '))
         if ExtraStrip:
             ReturnString = ReturnString.replace("} \n","")
         return self.StripJson(ReturnString)
-            
+
     #------------ MyCommon::BitIsEqual -----------------------------------------
     def BitIsEqual(self, value, mask, bits):
 
