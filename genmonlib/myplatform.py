@@ -145,10 +145,10 @@ class MyPlatform(mycommon.MyCommon):
                 adapter = os.popen("ip link | grep BROADCAST | grep -v NO-CARRIER | grep -m 1 LOWER_UP  | awk -F'[:. ]' '{print $3}'").readline().rstrip("\n")
                 #output, _error = process.communicate()
                 LinuxInfo["Network Interface Used"] = adapter
-
                 try:
                     if "wlan" in adapter:
-                        LinuxInfo["WLAN Signal Strength"] = "-" + self.GetWiFiSignalStrength(adapter) + " dBm"
+                        LinuxInfo["WLAN Signal Level"] = "-" + self.GetWiFiSignalStrength(adapter) + " dBm"
+                        LinuxInfo["WLAN Link Quality"] = self.GetWiFiSignalQuality(adapter)
                 except Exception as e1:
                     pass
             except:
@@ -160,6 +160,12 @@ class MyPlatform(mycommon.MyCommon):
 
     #------------ MyPlatform::GetWiFiSignalStrength ----------------------------
     def GetWiFiSignalStrength(self, adapter):
-      result = subprocess.check_output(['sudo', 'iw', adapter, 'link'])
-      match = re.search('signal: -(\d+) dBm', result)
-      return match.group(1)
+        result = subprocess.check_output(['sudo', 'iw', adapter, 'link'])
+        match = re.search('signal: -(\d+) dBm', result)
+        return match.group(1)
+
+    #------------ MyPlatform::GetWiFiSignalQuality -----------------------------
+    def GetWiFiSignalQuality(self, adapter):
+        result = subprocess.check_output(['sudo', 'iwconfig', adapter])
+        match = re.search('Link Quality=([\s\S]*?) ', result)
+        return match.group(1)
