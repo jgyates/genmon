@@ -2403,6 +2403,9 @@ class Evolution(controller.GeneratorController):
     def GetCurrentOutput(self):
 
         CurrentOutput = 0.0
+        Divisor = 1.0
+        CurrentOffset = 0.0
+        CurrentFloat = 0.0
         try:
             if not self.PowerMeterIsSupported():
                 return "0.00A"
@@ -2412,7 +2415,6 @@ class Evolution(controller.GeneratorController):
             if "Stopped" in EngineState or "Off" in EngineState or not len(EngineState):
                 return "0.00A"
 
-            CurrentFloat = 0.0
             if self.EvolutionController and self.LiquidCooled:
                 Value = self.GetRegisterValueFromList("0058")
                 if len(Value):
@@ -2460,8 +2462,6 @@ class Evolution(controller.GeneratorController):
 
                 LookUpReturn = ModelLookUp_EvoAC.get(int(Value,16), None)
 
-                Divisor = 1.0
-                CurrentOffset = 0.0
 
                 if self.CurrentDivider == None or self.CurrentDivider < 1:
                     if LookUpReturn == None:
@@ -2476,7 +2476,9 @@ class Evolution(controller.GeneratorController):
 
                 CurrentOutput = (CurrentFloat + CurrentOffset) / Divisor
 
-                # is the current out of bounds?
+            # is the current out of bounds?
+            VoltageStr = self.removeAlpha(self.GetVoltageOutput())
+            if float(VoltageStr) > 100:     # only bounds check if the voltage is over 100V to give things a chance to stabalize
                 if CurrentOutput > ((int(self.NominalKW) * 1000) / 240) + 2 or CurrentOutput < 0:
                     msg = "Current Calculation: %f, CurrentFloat: %f, Divisor: %f, Offset %f" % (CurrentOutput, CurrentFloat, Divisor, CurrentOffset)
                     self.FeedbackPipe.SendFeedback("Current Calculation", Message=msg, FullLogs = True )
