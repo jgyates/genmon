@@ -236,7 +236,7 @@ class Monitor(mysupport.MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in  MessageReceiver: " + str(e1))
     #------------------------------------------------------------
-    def SendFeedbackInfo(self, Reason, Always = False, Message = None, FullLogs = False, NoCheck = False):
+    def SendFeedbackInfo(self, Reason, Always = False, Message = None, FullLogs = True, NoCheck = False):
         try:
             if self.NewInstall or Always:
 
