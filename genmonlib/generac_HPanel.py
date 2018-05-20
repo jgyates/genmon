@@ -320,6 +320,8 @@ class HPanel(controller.GeneratorController):
         # call parent constructor
         super(HPanel, self).__init__(log, newinstall = newinstall, simulation = simulation, simulationfile = simulationfile, message = message, feedback = feedback)
 
+        self.LastEngineState = ""
+        self.CurrentAlarmState = False
         self.CheckForAlarmEvent = threading.Event() # Event to signal checking for alarm
 
         self.DaysOfWeek = { 1: "Sunday",    # decode for register values with day of week
@@ -632,191 +634,210 @@ class HPanel(controller.GeneratorController):
             LineState = "Generator"
         return LineState
 
+    #------------ HPanel:GetAlarmlist ------------------------------------------
+    def GetAlarmList(self):
+
+        AlarmList = []
+        # Now check specific alarm conditions
+        if self.GetParameterBit(RegisterEnum.OUTPUT_1, Output1.OVERCRANK_ALARM):
+            AlarmList.append("Overcrank Alarm - Generator has unsuccessfully tried to start the designated number of times.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_1, Output1.OIL_INHIBIT_ALRM):
+            AlarmList.append("Oil Inhibit Alarm - Oil pressure too high for a stopped engine.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_1, Output1.OIL_TEMP_HI_ALRM):
+            AlarmList.append("Oil Temp High Alarm - Oil Temperature has gone above maximum alarm limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_1, Output1.OIL_TEMP_LO_ALRM):
+            AlarmList.append("Oil Temp Low Alarm - Oil Temperature has gone below minimum alarm limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.OIL_TEMP_HI_WARN):
+            AlarmList.append("Oil Temp High Warning - Oil Temperature has gone above maximum warning limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.OIL_TEMP_LO_WARN):
+            AlarmList.append("Oil Temp Low Warning - Oil Temperature has gone below minimum warning limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.OIL_TEMP_FAULT):
+            AlarmList.append("Oil Temp Fault - Oil Temperature sensor exceeds nominal limits for valid sensor reading.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.COOL_TMP_HI_ALRM):
+            AlarmList.append("Coolant Temp High Alarm - Coolant Temperature has gone above maximum alarm limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.COOL_TMP_LO_ALRM):
+            AlarmList.append("Coolant Temp Low Alarm - Coolant Temperature has gone below mimimuim alarm limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.COOL_TMP_HI_WARN):
+            AlarmList.append("Coolant Temp High Warning - Coolant Temperature has gone above maximum warning limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.COOL_TMP_LO_WARN):
+            AlarmList.append("Coolant Temp Low Warning - Coolant Temperature has gone below mimimuim warning limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.COOL_TMP_FAULT):
+            AlarmList.append("Coolant Temp Fault - Coolant Temperature sensor exceeds nominal limits for valid sensor reading.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.OIL_PRES_HI_ALRM):
+            AlarmList.append("Oil Pressure High Alarm - Oil Pressure has gone above maximum alarm limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.OIL_PRES_LO_ALRM):
+            AlarmList.append("Oil Pressure Low Alarm - Oil Pressure has gone below mimimum alarm limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.OIL_PRES_HI_WARN):
+            AlarmList.append("Oil Pressure High Warning - Oil Pressure has gone above maximum warning limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.OIL_PRES_LO_WARN):
+            AlarmList.append("Oil Pressure Low Warning - Oil Pressure has gone below minimum warning limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.OIL_PRES_FAULT):
+            AlarmList.append("Oil Pressure Fault - Oil Pressure sensor exceeds nominal limits for valid sensor reading.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.COOL_LVL_HI_ALRM):
+            AlarmList.append("Coolant Level High Alarm - Coolant Level has gone above maximum alarm limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.COOL_LVL_LO_ALRM):
+            AlarmList.append("Coolant Level Low Alarm - Coolant Level has gone below minimum alarm limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.COOL_LVL_HI_WARN):
+            AlarmList.append("Coolant Level High Warning - Coolant Level has gone above maximum warning limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.COOL_LVL_LO_WARN):
+            AlarmList.append("Coolant Level Low Warning - Coolant Level has gone below mimimum warning limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.COOL_LVL_FAULT):
+            AlarmList.append("Coolant Level Fault - Coolant Level sensor exceeds nominal limits for valid sensor reading.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.FUEL_LVL_HI_ALRM):
+            AlarmList.append("Fuel Level High Alarm - Fuel Level has gone above maximum alarm limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.FUEL_LVL_LO_ALRM):
+            AlarmList.append("Fuel Level Low Alarm - Fuel Level has gone below mimimum alarm limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.FUEL_LVL_HI_WARN):
+            AlarmList.append("Fuel Level High Warning - Fuel Level has gone above maximum warning limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.FUEL_LVL_LO_WARN):
+            AlarmList.append("Fuel Level Low Warning - Fuel Level has gone below mimimum warning limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.FUEL_LVL_FAULT):
+            AlarmList.append("Fuel Level Fault - Fuel Level sensor exceeds nominal limits for valid sensor reading.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.ANALOG_6_HI_ALRM):
+            AlarmList.append("Analog Input 6 High Alarm - Analog Input 6 has gone above maximum alarm limit (Fuel Pressure or Inlet Air Temperature).")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.ANALOG_6_LO_ALRM):
+            AlarmList.append("Analog Input 6 Low Alarm - Analog Input 6 has gone below mimimum alarm limit (Fuel Pressure or Inlet Air Temperature).")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.ANALOG_6_HI_WARN):
+            AlarmList.append("Analog Input 6 High Warning - Analog Input 6 has gone above maximum warning limit (Fuel Pressure or Inlet Air Temperature).")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.ANALOG_6_LO_WARN):
+            AlarmList.append("Analog Input 6 Low Warning - Analog Input 6 has gone below mimimum warning limit (Fuel Pressure or Inlet Air Temperature).")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.ANALOG_6_FAULT):
+            AlarmList.append("Analog Input 6 Fault - Analog Input 6 sensor exceeds nominal limits for valid sensor reading (Fuel Pressure or Inlet Air Temperature).")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.GOV_POS_HI_ALARM):
+            AlarmList.append("Throttle Position High Alarm - Throttle Position has gone above maximum alarm limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.GOV_POS_LO_ALARM):
+            AlarmList.append("Throttle Position Low Alarm - Throttle Position has gone below minimum alarm limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.GOV_POS_HI_WARN):
+            AlarmList.append("Throttle Position High Warning - Throttle Position has gone above maximum warning limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.GOV_POS_LO_WARN):
+            AlarmList.append("Throttle Position Low Warning - Throttle Position has gone below minimum warning limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.GOV_POS_FAULT):
+            AlarmList.append("Throttle Position Fault - Throttle Position sensor exceeds nominal limits for valid sensor reading.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.OXYGEN_HI_ALARM):
+            AlarmList.append("Analog Input 8 High Alarm - Analog Input 8 has gone above maximum alarm limit (Emissions Sensor or Fluid Basin).")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.OXYGEN_LO_ALARM):
+            AlarmList.append("Analog Input 8 Low Alarm - Analog Input 8 has gone below minimum alarm limit (Emissions Sensor or Fluid Basin).")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.OXYGEN_HI_WARN):
+            AlarmList.append("Analog Input 8 High Warning - Analog Input 8 has gone above maximum warning limit (Emissions Sensor or Fluid Basin).")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.OXYGEN_LO_WARN):
+            AlarmList.append("Analog Input 8 Low Warning - Analog Input 8 has gone below minimum warning limit Emissions Sensor or Fluid Basin).")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.OXYGEN_SENSOR_FAULT):
+            AlarmList.append("Analog Input 8 Fault - Analog Input 8 sensor exceeds nominal limits for valid sensor reading (Emissions Sensor or Fluid Basin).")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.CHG_CURR_HI_ALRM):
+            AlarmList.append("Battery Charge Current High Alarm - Battery Charge Current has gone above maximum alarm limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.CHG_CURR_LO_ALRM):
+            AlarmList.append("Battery Charge Current Low Alarm - Battery Charge Current has gone below minimum alarm limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.CHG_CURR_HI_WARN):
+            AlarmList.append("Battery Charge Current High Warning - Battery Charge Current has gone above maximum warning limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.CHG_CURR_LO_WARN):
+            AlarmList.append("Battery Charge Current Low Warning - Battery Charge Current has gone below minimum warning limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.CHG_CURR_FAULT):
+            AlarmList.append("Battery Charge Current Fault - Battery Charge Current sensor exceeds nominal limits for valid sensor reading.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.CHG_CURR_HI_ALRM):
+            AlarmList.append("Battery Charge Current High Alarm - Battery Charge Current has gone above maximum alarm limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.CHG_CURR_LO_ALRM):
+            AlarmList.append("Battery Charge Current Low Alarm - Battery Charge Current has gone below minimum alarm limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.CHG_CURR_HI_WARN):
+            AlarmList.append("Battery Charge Current High Warning - Battery Charge Current has gone above maximum warning limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.CHG_CURR_LO_WARN):
+            AlarmList.append("Battery Charge Current Low Warning - Battery Charge Current has gone below minimum warning limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.AVG_CURR_HI_ALRM):
+            AlarmList.append("Average Current High Alarm - Average Current has gone above maximum alarm limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.AVG_CURR_LO_ALRM):
+            AlarmList.append("Average Current Low Alarm - Average Current has gone below minimum alarm limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.AVG_CURR_HI_WARN):
+            AlarmList.append("Average Current High Warning - Average Current has gone above maximum warning limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.AVG_CURR_LO_WARN):
+            AlarmList.append("Average Current Low Warning - Average Current has gone below minimum warning limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.AVG_VOLT_HI_ALRM):
+            AlarmList.append("Average Voltage High Alarm - Average Voltage has gone above maximum alarm limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.AVG_VOLT_LO_ALRM):
+            AlarmList.append("Average Voltage Low Alarm - Average Voltage has gone below minimum alarm limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.AVG_VOLT_HI_WARN):
+            AlarmList.append("Average Voltage High Warning - Average Voltage has gone above maximum warning limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.AVG_VOLT_LO_WARN):
+            AlarmList.append("Average Voltage Low Warning - Average Voltage has gone below minimum warning limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.TOT_PWR_HI_ALARM):
+            AlarmList.append("Total Real Power High Alarm - Total Real Power has gone above maximum alarm limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.TOT_PWR_LO_ALARM):
+            AlarmList.append("Total Real Power Low Alarm - Total Real Power has gone below minimum alarm limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.AVG_VOLT_HI_WARN):
+            AlarmList.append("Total Real Power High Warning - Total Real Power has gone above maximum warning limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.TOT_PWR_HI_WARN):
+            AlarmList.append("Total Real Power Low Warning - Total Real Power has gone below minimum warning limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.GEN_FREQ_HI_ALRM):
+            AlarmList.append("Generator Frequency High Alarm - Generator Frequency has gone above maximum alarm limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.GEN_FREQ_LO_ALRM):
+            AlarmList.append("Generator Frequency Low Alarm - Generator Frequency has gone below minimum alarm limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.GEN_FREQ_HI_WARN):
+            AlarmList.append("Generator Frequency High Warning - Generator Frequency has gone above maximum warning limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.GEN_FREQ_LO_WARN):
+            AlarmList.append("Generator Frequency Low Warning - Generator Frequency has gone below minimum warning limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.GEN_FREQ_FAULT):
+            AlarmList.append("Generator Frequency Fault - Generator Frequency sensor exceeds nominal limits for valid sensor reading.")
+
+        if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.ENG_RPM_HI_ALARM):
+            AlarmList.append("Engine RPM High Alarm - Engine RPM has gone above maximum alarm limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.ENG_RPM_LO_ALARM):
+            AlarmList.append("Engine RPM Low Alarm - Engine RPM has gone below minimum alarm limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.ENG_RPM_HI_WARN):
+            AlarmList.append("Engine RPM High Warning - Engine RPM has gone above maximum warning limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.ENG_RPM_LO_WARN):
+            AlarmList.append("Engine RPM Low Warning - Engine RPM has gone below minimum warning limit.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.ENG_RPM_FAULT):
+            AlarmList.append("Engine RPM Fault - Engine RPM exceeds nominal limits for valid sensor reading.")
+
+        if self.GetParameterBit(RegisterEnum.INPUT_1, Input1.DI1_BAT_CHRGR_FAIL):
+            if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.BATTERY_CHARGE_FAIL):
+                AlarmList.append("Battery Charger Failure - Digital Input #5 active, Battery Charger Fail digital input active.")
+        if self.GetParameterBit(RegisterEnum.INPUT_1, Input1.DI2_FUEL_PRESSURE):
+            if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.LOW_FUEL_PRS_ACT):
+                AlarmList.append("Fuel Leak or Low Fuel Pressure - Ruptured Basin input active / Propane Gas Leak input active / Low Fuel Pressure digital input active.")
+
+        if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.ILC_ALR_WRN_1):
+            AlarmList.append("Integrated Locic Controller Warning - Warning 1.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_7, Output7.ILC_ALR_WRN_2):
+            AlarmList.append("Integrated Locic Controller Warning - Warning 2.")
+
+        if self.GetParameterBit(RegisterEnum.OUTPUT_7, Output7.CHCK_V_PHS_ROT):
+            AlarmList.append("Detected voltage phase rotation as not being A-B-C.")
+        if self.GetParameterBit(RegisterEnum.OUTPUT_7, Output7.CHCK_C_PHS_ROT):
+            AlarmList.append("Detected current phase rotation as not being A-B-C and not matching voltage.")
+
+        return AlarmList
+
     #------------ HPanel:CheckForAlarms ----------------------------------------
-    def CheckForAlarms(self, ListOutput = False):
+    def CheckForAlarms(self):
 
         try:
+            # Check for outages
             self.CheckForOutage()
 
-            if not self.SystemInAlarm():
-                return
+            # Check for changes in engine state
 
-            if not ListOutput:
+            EngineState = self.GetEngineState()
+            if not EngineState == self.LastEngineState:
+                self.LastEngineState = EngineState
                 # This will trigger a call to CheckForalarms with LisOutput = True
-                msgsubject = "Generator Notice: ALARM at " + self.SiteName
+                msgsubject = "Generator Status Changed at " + self.SiteName
                 msgbody = self.DisplayStatus()
                 self.MessagePipe.SendMessage(msgsubject , msgbody, msgtype = "warn")
-                return
 
-            AlarmList = []
-            # Now check specific alarm conditions
-            if self.GetParameterBit(RegisterEnum.OUTPUT_1, Output1.OVERCRANK_ALARM):
-                AlarmList.append("Overcrank Alarm - Generator has unsuccessfully tried to start the designated number of times.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_1, Output1.OIL_INHIBIT_ALRM):
-                AlarmList.append("Oil Inhibit Alarm - Oil pressure too high for a stopped engine.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_1, Output1.OIL_TEMP_HI_ALRM):
-                AlarmList.append("Oil Temp High Alarm - Oil Temperature has gone above maximum alarm limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_1, Output1.OIL_TEMP_LO_ALRM):
-                AlarmList.append("Oil Temp Low Alarm - Oil Temperature has gone below minimum alarm limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.OIL_TEMP_HI_WARN):
-                AlarmList.append("Oil Temp High Warning - Oil Temperature has gone above maximum warning limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.OIL_TEMP_LO_WARN):
-                AlarmList.append("Oil Temp Low Warning - Oil Temperature has gone below minimum warning limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.OIL_TEMP_FAULT):
-                AlarmList.append("Oil Temp Fault - Oil Temperature sensor exceeds nominal limits for valid sensor reading.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.COOL_TMP_HI_ALRM):
-                AlarmList.append("Coolant Temp High Alarm - Coolant Temperature has gone above maximum alarm limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.COOL_TMP_LO_ALRM):
-                AlarmList.append("Coolant Temp Low Alarm - Coolant Temperature has gone below mimimuim alarm limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.COOL_TMP_HI_WARN):
-                AlarmList.append("Coolant Temp High Warning - Coolant Temperature has gone above maximum warning limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.COOL_TMP_LO_WARN):
-                AlarmList.append("Coolant Temp Low Warning - Coolant Temperature has gone below mimimuim warning limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.COOL_TMP_FAULT):
-                AlarmList.append("Coolant Temp Fault - Coolant Temperature sensor exceeds nominal limits for valid sensor reading.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.OIL_PRES_HI_ALRM):
-                AlarmList.append("Oil Pressure High Alarm - Oil Pressure has gone above maximum alarm limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.OIL_PRES_LO_ALRM):
-                AlarmList.append("Oil Pressure Low Alarm - Oil Pressure has gone below mimimum alarm limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.OIL_PRES_HI_WARN):
-                AlarmList.append("Oil Pressure High Warning - Oil Pressure has gone above maximum warning limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.OIL_PRES_LO_WARN):
-                AlarmList.append("Oil Pressure Low Warning - Oil Pressure has gone below minimum warning limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.OIL_PRES_FAULT):
-                AlarmList.append("Oil Pressure Fault - Oil Pressure sensor exceeds nominal limits for valid sensor reading.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.COOL_LVL_HI_ALRM):
-                AlarmList.append("Coolant Level High Alarm - Coolant Level has gone above maximum alarm limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.COOL_LVL_LO_ALRM):
-                AlarmList.append("Coolant Level Low Alarm - Coolant Level has gone below minimum alarm limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.COOL_LVL_HI_WARN):
-                AlarmList.append("Coolant Level High Warning - Coolant Level has gone above maximum warning limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.COOL_LVL_LO_WARN):
-                AlarmList.append("Coolant Level Low Warning - Coolant Level has gone below mimimum warning limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.COOL_LVL_FAULT):
-                AlarmList.append("Coolant Level Fault - Coolant Level sensor exceeds nominal limits for valid sensor reading.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.FUEL_LVL_HI_ALRM):
-                AlarmList.append("Fuel Level High Alarm - Fuel Level has gone above maximum alarm limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.FUEL_LVL_LO_ALRM):
-                AlarmList.append("Fuel Level Low Alarm - Fuel Level has gone below mimimum alarm limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.FUEL_LVL_HI_WARN):
-                AlarmList.append("Fuel Level High Warning - Fuel Level has gone above maximum warning limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.FUEL_LVL_LO_WARN):
-                AlarmList.append("Fuel Level Low Warning - Fuel Level has gone below mimimum warning limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.FUEL_LVL_FAULT):
-                AlarmList.append("Fuel Level Fault - Fuel Level sensor exceeds nominal limits for valid sensor reading.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.ANALOG_6_HI_ALRM):
-                AlarmList.append("Analog Input #6 High Alarm - Analog Input #6 has gone above maximum alarm limit (Fuel Pressure or Inlet Air Temperature).")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.ANALOG_6_LO_ALRM):
-                AlarmList.append("Analog Input #6 Low Alarm - Analog Input #6 has gone below mimimum alarm limit (Fuel Pressure or Inlet Air Temperature).")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.ANALOG_6_HI_WARN):
-                AlarmList.append("Analog Input #6 High Warning - Analog Input #6 has gone above maximum warning limit (Fuel Pressure or Inlet Air Temperature).")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.ANALOG_6_LO_WARN):
-                AlarmList.append("Analog Input #6 Low Warning - Analog Input #6 has gone below mimimum warning limit (Fuel Pressure or Inlet Air Temperature).")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.ANALOG_6_FAULT):
-                AlarmList.append("Analog Input #6 Fault - Analog Input #6 sensor exceeds nominal limits for valid sensor reading (Fuel Pressure or Inlet Air Temperature).")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.GOV_POS_HI_ALARM):
-                AlarmList.append("Throttle Position High Alarm - Throttle Position has gone above maximum alarm limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.GOV_POS_LO_ALARM):
-                AlarmList.append("Throttle Position Low Alarm - Throttle Position has gone below minimum alarm limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.GOV_POS_HI_WARN):
-                AlarmList.append("Throttle Position High Warning - Throttle Position has gone above maximum warning limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.GOV_POS_LO_WARN):
-                AlarmList.append("Throttle Position Low Warning - Throttle Position has gone below minimum warning limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.GOV_POS_FAULT):
-                AlarmList.append("Throttle Position Fault - Throttle Position sensor exceeds nominal limits for valid sensor reading.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.OXYGEN_HI_ALARM):
-                AlarmList.append("Analog Input #8 High Alarm - Analog Input #8 has gone above maximum alarm limit (Emissions Sensor or Fluid Basin).")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.OXYGEN_LO_ALARM):
-                AlarmList.append("Analog Input #8 Low Alarm - Analog Input #8 has gone below minimum alarm limit (Emissions Sensor or Fluid Basin).")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.OXYGEN_HI_WARN):
-                AlarmList.append("Analog Input #8 High Warning - Analog Input #8 has gone above maximum warning limit (Emissions Sensor or Fluid Basin).")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.OXYGEN_LO_WARN):
-                AlarmList.append("Analog Input #8 Low Warning - Analog Input #8 has gone below minimum warning limit Emissions Sensor or Fluid Basin).")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.OXYGEN_SENSOR_FAULT):
-                AlarmList.append("Analog Input #8 Fault - Analog Input #8 sensor exceeds nominal limits for valid sensor reading (Emissions Sensor or Fluid Basin).")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.CHG_CURR_HI_ALRM):
-                AlarmList.append("Battery Charge Current High Alarm - Battery Charge Current has gone above maximum alarm limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.CHG_CURR_LO_ALRM):
-                AlarmList.append("Battery Charge Current Low Alarm - Battery Charge Current has gone below minimum alarm limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.CHG_CURR_HI_WARN):
-                AlarmList.append("Battery Charge Current High Warning - Battery Charge Current has gone above maximum warning limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.CHG_CURR_LO_WARN):
-                AlarmList.append("Battery Charge Current Low Warning - Battery Charge Current has gone below minimum warning limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.CHG_CURR_FAULT):
-                AlarmList.append("Battery Charge Current Fault - Battery Charge Current sensor exceeds nominal limits for valid sensor reading.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.CHG_CURR_HI_ALRM):
-                AlarmList.append("Battery Charge Current High Alarm - Battery Charge Current has gone above maximum alarm limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.CHG_CURR_LO_ALRM):
-                AlarmList.append("Battery Charge Current Low Alarm - Battery Charge Current has gone below minimum alarm limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.CHG_CURR_HI_WARN):
-                AlarmList.append("Battery Charge Current High Warning - Battery Charge Current has gone above maximum warning limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.CHG_CURR_LO_WARN):
-                AlarmList.append("Battery Charge Current Low Warning - Battery Charge Current has gone below minimum warning limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.AVG_CURR_HI_ALRM):
-                AlarmList.append("Average Current High Alarm - Average Current has gone above maximum alarm limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.AVG_CURR_LO_ALRM):
-                AlarmList.append("Average Current Low Alarm - Average Current has gone below minimum alarm limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.AVG_CURR_HI_WARN):
-                AlarmList.append("Average Current High Warning - Average Current has gone above maximum warning limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.AVG_CURR_LO_WARN):
-                AlarmList.append("Average Current Low Warning - Average Current has gone below minimum warning limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.AVG_VOLT_HI_ALRM):
-                AlarmList.append("Average Voltage High Alarm - Average Voltage has gone above maximum alarm limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.AVG_VOLT_LO_ALRM):
-                AlarmList.append("Average Voltage Low Alarm - Average Voltage has gone below minimum alarm limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.AVG_VOLT_HI_WARN):
-                AlarmList.append("Average Voltage High Warning - Average Voltage has gone above maximum warning limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.AVG_VOLT_LO_WARN):
-                AlarmList.append("Average Voltage Low Warning - Average Voltage has gone below minimum warning limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.TOT_PWR_HI_ALARM):
-                AlarmList.append("Total Real Power High Alarm - Total Real Power has gone above maximum alarm limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.TOT_PWR_LO_ALARM):
-                AlarmList.append("Total Real Power Low Alarm - Total Real Power has gone below minimum alarm limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.AVG_VOLT_HI_WARN):
-                AlarmList.append("Total Real Power High Warning - Total Real Power has gone above maximum warning limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.TOT_PWR_HI_WARN):
-                AlarmList.append("Total Real Power Low Warning - Total Real Power has gone below minimum warning limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.GEN_FREQ_HI_ALRM):
-                AlarmList.append("Generator Frequency High Alarm - Generator Frequency has gone above maximum alarm limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.GEN_FREQ_LO_ALRM):
-                AlarmList.append("Generator Frequency Low Alarm - Generator Frequency has gone below minimum alarm limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.GEN_FREQ_HI_WARN):
-                AlarmList.append("Generator Frequency High Warning - Generator Frequency has gone above maximum warning limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.GEN_FREQ_LO_WARN):
-                AlarmList.append("Generator Frequency Low Warning - Generator Frequency has gone below minimum warning limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.GEN_FREQ_FAULT):
-                AlarmList.append("Generator Frequency Fault - Generator Frequency sensor exceeds nominal limits for valid sensor reading.")
+            # Check for Alarms
 
-            if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.ENG_RPM_HI_ALARM):
-                AlarmList.append("Engine RPM High Alarm - Engine RPM has gone above maximum alarm limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.ENG_RPM_LO_ALARM):
-                AlarmList.append("Engine RPM Low Alarm - Engine RPM has gone below minimum alarm limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.ENG_RPM_HI_WARN):
-                AlarmList.append("Engine RPM High Warning - Engine RPM has gone above maximum warning limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.ENG_RPM_LO_WARN):
-                AlarmList.append("Engine RPM Low Warning - Engine RPM has gone below minimum warning limit.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.ENG_RPM_FAULT):
-                AlarmList.append("Engine RPM Fault - Engine RPM exceeds nominal limits for valid sensor reading.")
+            if self.SystemInAlarm():
+                if not self.CurrentAlarmState:
+                    msgsubject = "Generator Notice: ALARM Active at " + self.SiteName
+                    msgbody = self.DisplayStatus()
+                    self.MessagePipe.SendMessage(msgsubject , msgbody, msgtype = "warn")
+            else:
+                if self.CurrentAlarmState:
+                    msgsubject = "Generator Notice: ALARM Clear at " + self.SiteName
+                    msgbody = self.DisplayStatus()
+                    self.MessagePipe.SendMessage(msgsubject , msgbody, msgtype = "warn")
 
-            if self.GetParameterBit(RegisterEnum.INPUT_1, Input1.DI1_BAT_CHRGR_FAIL):
-                if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.BATTERY_CHARGE_FAIL):
-                    AlarmList.append("Battery Charger Failure - Digital Input #5 active, Battery Charger Fail digital input active.")
-            if self.GetParameterBit(RegisterEnum.INPUT_1, Input1.DI2_FUEL_PRESSURE):
-                if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.LOW_FUEL_PRS_ACT):
-                    AlarmList.append("Fuel Leak or Low Fuel Pressure - Ruptured Basin input active / Propane Gas Leak input active / Low Fuel Pressure digital input active.")
+            self.CurrentAlarmState = self.SystemInAlarm()
 
-            if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.ILC_ALR_WRN_1):
-                AlarmList.append("Integrated Locic Controller Warning - Warning 1.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_7, Output7.ILC_ALR_WRN_2):
-                AlarmList.append("Integrated Locic Controller Warning - Warning 2.")
-
-            if self.GetParameterBit(RegisterEnum.OUTPUT_7, Output7.CHCK_V_PHS_ROT):
-                AlarmList.append("Detected voltage phase rotation as not being A-B-C.")
-            if self.GetParameterBit(RegisterEnum.OUTPUT_7, Output7.CHCK_C_PHS_ROT):
-                AlarmList.append("Detected current phase rotation as not being A-B-C and not matching voltage.")
-
-            if ListOutput:
-                return AlarmList
         except Exception as e1:
             self.LogErrorLine("Error in CheckForAlarms: " + str(e1))
 
@@ -1120,31 +1141,29 @@ class HPanel(controller.GeneratorController):
             Engine["Air Fuel Duty Cycle"] = self.GetParameter(RegisterEnum.A_F_DUTY_CYCLE, Divider = 10.0)
 
             if self.SystemInAlarm():
-                Engine["System In Alarm"] = self.CheckForAlarms(ListOutput = True)
-
+                Engine["System In Alarm"] = self.GetAlarmList()
 
             Line["Transfer Switch State"] = self.GetTransferStatus()
-
 
             # Generator time
             Time["Monitor Time"] = datetime.datetime.now().strftime("%A %B %-d, %Y %H:%M:%S")
             Time["Generator Time"] = self.GetDateTime()
-            '''
 
-            Stat["Last Log Entries"] = self.DisplayLogs(AllLogs = False, DictOut = True)
 
-            Engine["Output Voltage"] = self.GetVoltageOutput()
+            #Stat["Last Log Entries"] = self.DisplayLogs(AllLogs = False, DictOut = True)
 
-            Line["Transfer Switch State"] = self.GetTransferStatus()
-            Line["Utility Voltage"] = self.GetUtilityVoltage()
-            Line["Utility Voltage Max"] = "%dV " % (self.UtilityVoltsMax)
-            Line["Utility Voltage Min"] = "%dV " % (self.UtilityVoltsMin)
-            Line["Utility Threshold Voltage"] = self.GetThresholdVoltage()
+            #Engine["Output Voltage"] = self.GetVoltageOutput()
 
-            Line["Utility Pickup Voltage"] = self.GetPickUpVoltage()
-            Line["Set Output Voltage"] = self.GetSetOutputVoltage()
+            #Line["Transfer Switch State"] = self.GetTransferStatus()
+            #Line["Utility Voltage"] = self.GetUtilityVoltage()
+            #Line["Utility Voltage Max"] = "%dV " % (self.UtilityVoltsMax)
+            #Line["Utility Voltage Min"] = "%dV " % (self.UtilityVoltsMin)
+            #Line["Utility Threshold Voltage"] = self.GetThresholdVoltage()
 
-            '''
+            #Line["Utility Pickup Voltage"] = self.GetPickUpVoltage()
+            #Line["Set Output Voltage"] = self.GetSetOutputVoltage()
+
+
             if not DictOut:
                 return self.printToString(self.ProcessDispatch(Status,""))
 
