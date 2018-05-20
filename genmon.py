@@ -468,7 +468,7 @@ class Monitor(mysupport.MySupport):
 
         PlatformInfo = collections.OrderedDict()
 
-        Platform = myplatform.MyPlatform()
+        Platform = myplatform.MyPlatform(self.log)
 
         return Platform.GetInfo()
 
