@@ -135,6 +135,8 @@ class MyPlatform(mycommon.MyCommon):
             with open("/etc/os-release", "r") as f:
                 OSReleaseInfo = {}
                 for line in f:
+                    if not "=" in line:
+                        continue
                     k,v = line.rstrip().split("=")
                     # .strip('"') will remove if there or else do nothing
                     OSReleaseInfo[k] = v.strip('"')
