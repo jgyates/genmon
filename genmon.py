@@ -25,7 +25,7 @@ except ImportError as e:
 from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel, myplatform
 
 
-GENMON_VERSION = "V1.8.5"
+GENMON_VERSION = "V1.8.6"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -250,6 +250,8 @@ class Monitor(mysupport.MySupport):
                     msgbody += "Message : " + Message + "\n"
                 msgbody += "Version: " + GENMON_VERSION
                 msgbody += self.DictToString(self.Controller.GetStartInfo())
+                if not self.bDisablePlatformStats:
+                    msgbody +=  self.DictToString(self.GetPlatformStats())
                 msgbody += self.Controller.DisplayRegisters(AllRegs = FullLogs)
                 if self.FeedbackEnabled:
                     self.MessagePipe.SendMessage("Generator Monitor Submission", msgbody , recipient = self.MaintainerAddress, msgtype = "error")

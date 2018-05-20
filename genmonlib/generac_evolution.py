@@ -1559,11 +1559,11 @@ class Evolution(controller.GeneratorController):
     #------------ Evolution:DisplayLogs --------------------------------------------
     def DisplayLogs(self, AllLogs = False, DictOut = False, RawOutput = False):
 
-        # if DictOut is True, return a dictionary with a list of Dictionaries (one for each log)
-        # Each dict in the list is a log (alarm, start/stop). For Example:
+        # if DictOut is True, return a dictionary containing a Dictionaries (dict entry for each log)
+        # Each dict item a log (alarm, start/stop). For Example:
         #
-        #       Dict[Logs] = [ {"Alarm Log" : [Log Entry1, LogEntry2, ...]},
-        #                      {"Start Stop Log" : [Log Entry3, Log Entry 4, ...]}...]
+        #       Dict[Logs] =  {"Alarm Log" : [Log Entry1, LogEntry2, ...]},
+        #                     {"Start Stop Log" : [Log Entry3, Log Entry 4, ...]}...
 
         ALARMLOG     = "Alarm Log:     "
         SERVICELOG   = "Service Log:   "
@@ -1578,27 +1578,25 @@ class Evolution(controller.GeneratorController):
         LogParams = EvolutionLog if self.EvolutionController else NexusLog
 
         RetValue = collections.OrderedDict()
-        LogList = []
+        LogDict = collections.OrderedDict()
 
         for Params in LogParams:
             LogOutput = self.GetLogs(Params[0], Params[1], Params[2], AllLogs, RawOutput)
-            LogList.append(LogOutput)
+            LogDict = self.MergeDicts(LogDict,LogOutput)
 
-        RetValue["Logs"] = LogList
+        RetValue["Logs"] = LogDict
 
         UnknownFound = False
-        List = RetValue.get("Logs", [])
-        for Logs in List:
-            for Key, Entries in Logs.items():
-                if not AllLogs:
-                    if "unknown" in Entries.lower():
+        for Key, Entries in RetValue["Logs"].items():
+            if not AllLogs:
+                if "unknown" in Entries.lower():
+                    UnknownFound = True
+                    break
+            else:
+                for LogItems in Entries:
+                    if "unknown" in LogItems.lower():
                         UnknownFound = True
                         break
-                else:
-                    for LogItems in Entries:
-                        if "unknown" in LogItems.lower():
-                            UnknownFound = True
-                            break
         if UnknownFound:
             msgbody = "\nThe output appears to have unknown values. Please see the following threads to resolve these issues:"
             msgbody += "\n        https://github.com/jgyates/genmon/issues/12"
