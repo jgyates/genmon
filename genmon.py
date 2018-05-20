@@ -53,7 +53,7 @@ class Monitor(mysupport.MySupport):
         self.CommunicationsActive = False   # Flag to let the heartbeat thread know we are communicating
         self.Controller = None
         self.ControllerSelected = None
-        self.bDisablePiSpecific = False
+        self.bDisablePlatformStats = False
 
         # Time Sync Related Data
         self.bSyncTime = False          # Sync gen to system time
@@ -166,8 +166,8 @@ class Monitor(mysupport.MySupport):
             if config.has_option(ConfigSection, 'synctime'):
                 self.bSyncTime = config.getboolean(ConfigSection, 'synctime')
 
-            if config.has_option(ConfigSection, 'disablepispecific'):
-                self.bDisablePiSpecific = config.getboolean(ConfigSection, 'disablepispecific')
+            if config.has_option(ConfigSection, 'disableplatformstats'):
+                self.bDisablePlatformStats = config.getboolean(ConfigSection, 'disableplatformstats')
 
             if config.has_option(ConfigSection, 'simulation'):
                 self.Simulation = config.getboolean(ConfigSection, 'simulation')
@@ -279,7 +279,7 @@ class Monitor(mysupport.MySupport):
         msgbody = ""
         msgbody += "Version: " + GENMON_VERSION
         msgbody += self.DictToString(self.Controller.GetStartInfo())
-        if not self.bDisablePiSpecific:
+        if not self.bDisablePlatformStats:
             msgbody +=  self.DictToString(self.GetPlatformStats())
         msgbody += self.Controller.DisplayRegisters(AllRegs = True)
         self.MessagePipe.SendMessage("Generator Monitor Register Submission", msgbody , recipient = self.MaintainerAddress, msgtype = "info")
@@ -294,7 +294,7 @@ class Monitor(mysupport.MySupport):
         msgbody = ""
         msgbody += "Version: " + GENMON_VERSION
         msgbody += self.DictToString(self.Controller.GetStartInfo())
-        if not self.bDisablePiSpecific:
+        if not self.bDisablePlatformStats:
             msgbody +=  self.DictToString(self.GetPlatformStats())
         msgbody += self.Controller.DisplayRegisters(AllRegs = True)
 
@@ -518,9 +518,10 @@ class Monitor(mysupport.MySupport):
             GenMonStats["Run time"] = self.ProgramName + " running for " + outstr + "."
             GenMonStats["Generator Monitor Version"] = GENMON_VERSION
 
-            PlatformStats = self.GetPlatformStats()
-            if not PlatformStats == None:
-                MonitorData["Platform Stats"] = PlatformStats
+            if not self.bDisablePlatformStats:
+                PlatformStats = self.GetPlatformStats()
+                if not PlatformStats == None:
+                    MonitorData["Platform Stats"] = PlatformStats
 
             UserData = self.GetUserDefinedData()
             if not UserData == None:
