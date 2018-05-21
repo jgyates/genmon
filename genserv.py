@@ -330,7 +330,7 @@ def ReadSettingsFromFile():
 
 
     ConfigSettings =  {
-                "sitename" : ['string', 'Site Name', 1, "SiteName", "", "required minmax:10:50"],
+                "sitename" : ['string', 'Site Name', 1, "SiteName", "", "required minmax:4:50"],
                 "port" : ['string', 'Port for Serial Communication', 2, "/dev/serial0", "", "required UnixDevice"],
                 # This option is not displayed as it will break the link between genmon and genserv
                 #"server_port" : ['int', 'Server Port', 5, 9082, "", 0],
