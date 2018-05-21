@@ -46,11 +46,11 @@ DEFAULT_PICKUP_VOLTAGE = 190
 class Evolution(controller.GeneratorController):
 
     #---------------------Evolution::__init__------------------------
-    def __init__(self, log, newinstall = False, simulation = False, simulationfile = None, message = None, feedback = None):
+    def __init__(self, log, newinstall = False, simulation = False, simulationfile = None, message = None, feedback = None, ConfigFilePath = None):
 
         #self.log = log
         # call parent constructor
-        super(Evolution, self).__init__(log, newinstall = newinstall, simulation = simulation, simulationfile = simulationfile, message = message, feedback = feedback)
+        super(Evolution, self).__init__(log, newinstall = newinstall, simulation = simulation, simulationfile = simulationfile, message = message, feedback = feedback, ConfigFilePath = ConfigFilePath)
 
         # Controller Type
         self.EvolutionController = None
@@ -1172,237 +1172,217 @@ class Evolution(controller.GeneratorController):
     #------------ Evolution:DisplayRegisters --------------------------------------------
     def DisplayRegisters(self, AllRegs = False, DictOut = False):
 
-        Registers = collections.OrderedDict()
-        Regs = collections.OrderedDict()
-        Registers["Registers"] = Regs
+        try:
+            Registers = collections.OrderedDict()
+            Regs = collections.OrderedDict()
+            Registers["Registers"] = Regs
 
-        RegList = []
+            RegList = []
 
-        Regs["Num Regs"] = "%d" % len(self.Registers)
-        if self.NotChanged == 0:
-            self.TotalChanged = 0.0
-        else:
-            self.TotalChanged =  float(self.Changed)/float(self.NotChanged)
-        Regs["Not Changed"] = "%d" % self.NotChanged
-        Regs["Changed"] = "%d" % self.Changed
-        Regs["Total Changed"] = "%.2f" % self.TotalChanged
+            Regs["Num Regs"] = "%d" % len(self.Registers)
+            if self.NotChanged == 0:
+                self.TotalChanged = 0.0
+            else:
+                self.TotalChanged =  float(self.Changed)/float(self.NotChanged)
+            Regs["Not Changed"] = "%d" % self.NotChanged
+            Regs["Changed"] = "%d" % self.Changed
+            Regs["Total Changed"] = "%.2f" % self.TotalChanged
 
-        Regs["Base Registers"] = RegList
-        # print all the registers
-        for Register, Value in self.Registers.items():
+            Regs["Base Registers"] = RegList
+            # print all the registers
+            for Register, Value in self.Registers.items():
 
-            # do not display log registers or model register
-            if self.RegisterIsLog(Register):
-                continue
-            ##
-            RegList.append({Register:Value})
+                # do not display log registers or model register
+                if self.RegisterIsLog(Register):
+                    continue
+                ##
+                RegList.append({Register:Value})
 
-        Register = "%04x" % MODEL_REG
-        Value = self.GetRegisterValueFromList(Register)
-        if len(Value) != 0:
-            RegList.append({Register:Value})
+            Register = "%04x" % MODEL_REG
+            Value = self.GetRegisterValueFromList(Register)
+            if len(Value) != 0:
+                RegList.append({Register:Value})
 
-        if AllRegs:
-            Regs["Log Registers"]= self.DisplayLogs(AllLogs = True, RawOutput = True, DictOut = True)
+            if AllRegs:
+                Regs["Log Registers"]= self.DisplayLogs(AllLogs = True, RawOutput = True, DictOut = True)
 
-        if not DictOut:
-            return self.printToString(self.ProcessDispatch(Registers,""))
+            if not DictOut:
+                return self.printToString(self.ProcessDispatch(Registers,""))
+        except Exception as e1:
+            self.LogErrorLine("Error in DisplayOutage: " + str(e1))
 
         return Registers
     #------------ Evolution:CheckForOutage ----------------------------------------
     # also update min and max utility voltage
     def CheckForOutage(self):
 
-        if self.DisableOutageCheck:
-            # do not check for outage
-            return ""
+        try:
+            if self.DisableOutageCheck:
+                # do not check for outage
+                return ""
 
-        Value = self.GetRegisterValueFromList("0009")
-        if len(Value) != 4:
-            return ""           # we don't have a value for this register yet
-        UtilityVolts = int(Value, 16)
+            if not self.InitComplete:
+                return ""
 
-        # Get threshold voltage
-        Value = self.GetRegisterValueFromList("0011")
-        if len(Value) != 4:
-            return ""           # we don't have a value for this register yet
-        ThresholdVoltage = int(Value, 16)
+            UtilityVolts = self.GetUtilityVoltage(ReturnInt = True)
 
-        # get pickup voltage
-        if self.EvolutionController and self.LiquidCooled:
-            Value = self.GetRegisterValueFromList("023b")
-            if len(Value) != 4:
-                return ""           # we don't have a value for this register yet
-            PickupVoltage = int(Value, 16)
-        else:
-            PickupVoltage = DEFAULT_PICKUP_VOLTAGE
+            # Get threshold voltage
+            ThresholdVoltage = self.GetThresholdVoltage(ReturnInt = True)
+            # get pickup voltage
+            PickupVoltage = self.GetPickUpVoltage(ReturnInt = True)
 
-        # if something is wrong then we use some sensible values here
-        if PickupVoltage == 0:
-            PickupVoltage = DEFAULT_PICKUP_VOLTAGE
-        if ThresholdVoltage == 0:
-            ThresholdVoltage = DEFAULT_THRESHOLD_VOLTAGE
+            # if something is wrong then we use some sensible values here
+            if PickupVoltage == 0:
+                PickupVoltage = DEFAULT_PICKUP_VOLTAGE
+            if ThresholdVoltage == 0:
+                ThresholdVoltage = DEFAULT_THRESHOLD_VOLTAGE
 
-        # first time thru set the values to the same voltage level
-        if self.UtilityVoltsMin == 0 and self.UtilityVoltsMax == 0:
-            self.UtilityVoltsMin = UtilityVolts
-            self.UtilityVoltsMax = UtilityVolts
-
-        if UtilityVolts > self.UtilityVoltsMax:
-            if UtilityVolts > PickupVoltage:
+            # first time thru set the values to the same voltage level
+            if self.UtilityVoltsMin == 0 and self.UtilityVoltsMax == 0:
+                self.UtilityVoltsMin = UtilityVolts
                 self.UtilityVoltsMax = UtilityVolts
 
-        if UtilityVolts < self.UtilityVoltsMin:
-            if UtilityVolts > ThresholdVoltage:
-                self.UtilityVoltsMin = UtilityVolts
+            if UtilityVolts > self.UtilityVoltsMax:
+                if UtilityVolts > PickupVoltage:
+                    self.UtilityVoltsMax = UtilityVolts
 
-        TransferStatus = self.GetTransferStatus()
+            if UtilityVolts < self.UtilityVoltsMin:
+                if UtilityVolts > ThresholdVoltage:
+                    self.UtilityVoltsMin = UtilityVolts
 
-        if len(TransferStatus):
-            if self.TransferActive:
-                if TransferStatus == "Utility":
-                    self.TransferActive = False
-                    msgbody = "\nPower is being supplied by the utility line. "
-                    self.MessagePipe.SendMessage("Transfer Switch Changed State Notice at " + self.SiteName, msgbody, msgtype = "outage")
+            TransferStatus = self.GetTransferStatus()
+
+            if len(TransferStatus):
+                if self.TransferActive:
+                    if TransferStatus == "Utility":
+                        self.TransferActive = False
+                        msgbody = "\nPower is being supplied by the utility line. "
+                        self.MessagePipe.SendMessage("Transfer Switch Changed State Notice at " + self.SiteName, msgbody, msgtype = "outage")
+                else:
+                    if TransferStatus == "Generator":
+                        self.TransferActive = True
+                        msgbody = "\nPower is being supplied by the generator. "
+                        self.MessagePipe.SendMessage("Transfer Switch Changed State Notice at " + self.SiteName, msgbody, msgtype = "outage")
+
+            # Check for outage
+            # are we in an outage now
+            # NOTE: for now we are just comparing these numbers, the generator has a programmable delay
+            # that must be met once the voltage passes the threshold. This may cause some "switch bounce"
+            # testing needed
+            if self.SystemInOutage:
+                if UtilityVolts > PickupVoltage:
+                    self.SystemInOutage = False
+                    self.LastOutageDuration = datetime.datetime.now() - self.OutageStartTime
+                    OutageStr = str(self.LastOutageDuration).split(".")[0]  # remove microseconds from string
+                    msgbody = "\nUtility Power Restored. Duration of outage " + OutageStr
+                    self.MessagePipe.SendMessage("Outage Recovery Notice at " + self.SiteName, msgbody, msgtype = "outage")
+                    # log outage to file
+                    self.LogToFile(self.OutageLog, self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"), OutageStr)
             else:
-                if TransferStatus == "Generator":
-                    self.TransferActive = True
-                    msgbody = "\nPower is being supplied by the generator. "
-                    self.MessagePipe.SendMessage("Transfer Switch Changed State Notice at " + self.SiteName, msgbody, msgtype = "outage")
-
-        # Check for outage
-        # are we in an outage now
-        # NOTE: for now we are just comparing these numbers, the generator has a programmable delay
-        # that must be met once the voltage passes the threshold. This may cause some "switch bounce"
-        # testing needed
-        if self.SystemInOutage:
-            if UtilityVolts > PickupVoltage:
-                self.SystemInOutage = False
-                self.LastOutageDuration = datetime.datetime.now() - self.OutageStartTime
-                OutageStr = str(self.LastOutageDuration).split(".")[0]  # remove microseconds from string
-                msgbody = "\nUtility Power Restored. Duration of outage " + OutageStr
-                self.MessagePipe.SendMessage("Outage Recovery Notice at " + self.SiteName, msgbody, msgtype = "outage")
-                # log outage to file
-                self.LogToFile(self.OutageLog, self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"), OutageStr)
-        else:
-            if UtilityVolts < ThresholdVoltage:
-                self.SystemInOutage = True
-                self.OutageStartTime = datetime.datetime.now()
-                msgbody = "\nUtility Power Out at " + self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S")
-                self.MessagePipe.SendMessage("Outage Notice at " + self.SiteName, msgbody, msgtype = "outage")
-
+                if UtilityVolts < ThresholdVoltage:
+                    self.SystemInOutage = True
+                    self.OutageStartTime = datetime.datetime.now()
+                    msgbody = "\nUtility Power Out at " + self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S")
+                    self.MessagePipe.SendMessage("Outage Notice at " + self.SiteName, msgbody, msgtype = "outage")
+        except Exception as e1:
+            self.LogErrorLine("Error in CheckForOutage: " + str(e1))
 
     #------------ Evolution:CheckForAlarms ----------------------------------------
     # Note this must be called from the Process thread since it queries the log registers
     # when in master emulation mode
     def CheckForAlarms(self):
 
-        # update outage time, update utility low voltage and high voltage
-        self.CheckForOutage()
+        try:
+            # update outage time, update utility low voltage and high voltage
+            self.CheckForOutage()
 
-        # now check to see if there is an alarm
-        Value = self.GetRegisterValueFromList("0001")
-        if len(Value) != 8:
-            return ""           # we don't have a value for this register yet
-        RegVal = int(Value, 16)
+            # now check to see if there is an alarm
+            Value = self.GetRegisterValueFromList("0001")
+            if len(Value) != 8:
+                return ""           # we don't have a value for this register yet
+            RegVal = int(Value, 16)
 
-        if RegVal == self.LastAlarmValue:
-            return      # nothing new to report, return
+            if RegVal == self.LastAlarmValue:
+                return      # nothing new to report, return
 
-        # if we get past this point there is something to report, either first time through
-        # or there is an alarm that has been set or reset
-        self.LastAlarmValue = RegVal    # update the stored alarm
+            # if we get past this point there is something to report, either first time through
+            # or there is an alarm that has been set or reset
+            self.LastAlarmValue = RegVal    # update the stored alarm
 
-        self.UpdateLogRegistersAsMaster()       # Update all log registers
+            self.UpdateLogRegistersAsMaster()       # Update all log registers
 
-        # Create notice email strings
-        msgsubject = ""
-        msgbody = "\n\n"
-        msgbody += self.printToString("Notice from Generator: \n")
+            msgsubject = ""
+            msgbody = "\n"
 
-         # get switch state
-        Value = self.GetSwitchState()
-        if len(Value):
-            msgbody += self.printToString("Switch State: " + Value)
-        #get Engine state
-        # This reports on the state read at the beginning of the routine which fixes a
-        # race condition when switching from starting to running
-        Value = self.GetEngineState(RegVal)
-        if len(Value):                          #
-            msgbody += self.printToString("Engine State: " + Value)
+            if self.SystemInAlarm():        # Update Alarm Status global flag, returns True if system in alarm
 
-        if self.EvolutionController and self.LiquidCooled:
-            msgbody += self.printToString("Active Relays: " + self.GetDigitalOutputs())
-            msgbody += self.printToString("Active Sensors: " + self.GetSensorInputs())
+                msgsubject += "Generator Alert at " + self.SiteName + ": "
+                AlarmState = self.GetAlarmState()
 
-        if self.SystemInAlarm():        # Update Alarm Status global flag, returns True if system in alarm
+                msgsubject += "CRITICAL "
+                if len(AlarmState):
+                    msgbody += self.printToString("\nCurrent Alarm: " + AlarmState)
+                else:
+                    msgbody += self.printToString("\nSystem In Alarm! Please check alarm log")
 
-            msgsubject += "Generator Alert at " + self.SiteName + ": "
-            AlarmState = self.GetAlarmState()
-
-            msgsubject += "CRITICAL "
-            if len(AlarmState):
-                msgbody += self.printToString("\nCurrent Alarm: " + AlarmState)
+                msgbody += self.printToString("System In Alarm: 0001:%08x" % RegVal)
             else:
-                msgbody += self.printToString("\nSystem In Alarm! Please check alarm log")
+                msgsubject = "Generator Notice: " + self.SiteName
 
-            msgbody += self.printToString("System In Alarm: 0001:%08x" % RegVal)
-        else:
+            msgbody += self.DisplayStatus()
 
-            msgsubject = "Generator Notice: " + self.SiteName
-            msgbody += self.printToString("\nNo Alarms: 0001:%08x" % RegVal)
+            if self.SystemInAlarm():
+                msgbody += self.printToString("\nTo clear the Alarm/Warning message, press OFF on the control panel keypad followed by the ENTER key.")
+            else:
+                msgbody += self.printToString("\nNo Alarms: 0001:%08x" % RegVal)
 
+            self.MessagePipe.SendMessage(msgsubject , msgbody, msgtype = "warn")
+        except Exception as e1:
+            self.LogErrorLine("Error in CheckForAlarms: " + str(e1))
 
-        # send email notice
-        msgbody += self.printToString("\nLast Log Entries:")
-
-        # display last log entries
-        msgbody += self.DisplayLogs(AllLogs = False)     # if false don't display full logs
-
-        if self.SystemInAlarm():
-            msgbody += self.printToString("\nTo clear the Alarm/Warning message, press OFF on the control panel keypad followed by the ENTER key.")
-
-        self.MessagePipe.SendMessage(msgsubject , msgbody, msgtype = "warn")
     #------------ Evolution:DisplayMaintenance ----------------------------------------
     def DisplayMaintenance (self, DictOut = False):
 
-        # use ordered dict to maintain order of output
-        # ordered dict to handle evo vs nexus functions
-        Maintenance = collections.OrderedDict()
-        Maint = collections.OrderedDict()
-        Maintenance["Maintenance"] = Maint
-        Maint["Model"] = self.Model
-        Maint["Generator Serial Number"] = self.GetSerialNumber()
-        Maint["Controller"] = self.GetController()
-        Maint["Nominal RPM"] = self.NominalRPM
-        Maint["Rated kW"] = self.NominalKW
-        Maint["Nominal Frequency"] = self.NominalFreq
-        Maint["Fuel Type"] = self.FuelType
-        Exercise = collections.OrderedDict()
-        Exercise["Exercise Time"] = self.GetExerciseTime()
-        if self.EvolutionController and self.LiquidCooled:
-            Exercise["Exercise Duration"] = self.GetExerciseDuration()
-        Maint["Exercise"] = Exercise
-        Service = collections.OrderedDict()
-        if not self.EvolutionController and self.LiquidCooled:
-            Service["Air Filter Service Due"] = self.GetServiceDue("AIR") + " or " + self.GetServiceDueDate("AIR")
-            Service["Oil Change and Filter Due"] = self.GetServiceDue("OIL") + " or " + self.GetServiceDueDate("OIL")
-            Service["Spark Plug Change Due"] = self.GetServiceDue("SPARK") + " or " + self.GetServiceDueDate("SPARK")
-        elif not self.EvolutionController and not self.LiquidCooled:
-            # Note: On Nexus AC These represent Air Filter, Oil Filter, and Spark Plugs, possibly 5 all together
-            # The labels are generic for now until I get clarification from someone with a Nexus AC
-            Service["Air Filter Service Due"] = self.GetServiceDue("AIR")  + " or " + self.GetServiceDueDate("AIR")
-            Service["Oil and Oil Filter Service Due"] = self.GetServiceDue("OIL") + " or " + self.GetServiceDueDate("OIL")
-            Service["Spark Plug Service Due"] = self.GetServiceDue("SPARK") + " or " + self.GetServiceDueDate("SPARK")
-            Service["Battery Service Due"] = self.GetServiceDue("BATTERY") + " or " + self.GetServiceDueDate("BATTERY")
-        else:
-            Service["Service A Due"] = self.GetServiceDue("A") + " or " + self.GetServiceDueDate("A")
-            Service["Service B Due"] = self.GetServiceDue("B") + " or " + self.GetServiceDueDate("B")
+        try:
+            # use ordered dict to maintain order of output
+            # ordered dict to handle evo vs nexus functions
+            Maintenance = collections.OrderedDict()
+            Maint = collections.OrderedDict()
+            Maintenance["Maintenance"] = Maint
+            Maint["Model"] = self.Model
+            Maint["Generator Serial Number"] = self.GetSerialNumber()
+            Maint["Controller"] = self.GetController()
+            Maint["Nominal RPM"] = self.NominalRPM
+            Maint["Rated kW"] = self.NominalKW
+            Maint["Nominal Frequency"] = self.NominalFreq
+            Maint["Fuel Type"] = self.FuelType
+            Exercise = collections.OrderedDict()
+            Exercise["Exercise Time"] = self.GetExerciseTime()
+            if self.EvolutionController and self.LiquidCooled:
+                Exercise["Exercise Duration"] = self.GetExerciseDuration()
+            Maint["Exercise"] = Exercise
+            Service = collections.OrderedDict()
+            if not self.EvolutionController and self.LiquidCooled:
+                Service["Air Filter Service Due"] = self.GetServiceDue("AIR") + " or " + self.GetServiceDueDate("AIR")
+                Service["Oil Change and Filter Due"] = self.GetServiceDue("OIL") + " or " + self.GetServiceDueDate("OIL")
+                Service["Spark Plug Change Due"] = self.GetServiceDue("SPARK") + " or " + self.GetServiceDueDate("SPARK")
+            elif not self.EvolutionController and not self.LiquidCooled:
+                # Note: On Nexus AC These represent Air Filter, Oil Filter, and Spark Plugs, possibly 5 all together
+                # The labels are generic for now until I get clarification from someone with a Nexus AC
+                Service["Air Filter Service Due"] = self.GetServiceDue("AIR")  + " or " + self.GetServiceDueDate("AIR")
+                Service["Oil and Oil Filter Service Due"] = self.GetServiceDue("OIL") + " or " + self.GetServiceDueDate("OIL")
+                Service["Spark Plug Service Due"] = self.GetServiceDue("SPARK") + " or " + self.GetServiceDueDate("SPARK")
+                Service["Battery Service Due"] = self.GetServiceDue("BATTERY") + " or " + self.GetServiceDueDate("BATTERY")
+            else:
+                Service["Service A Due"] = self.GetServiceDue("A") + " or " + self.GetServiceDueDate("A")
+                Service["Service B Due"] = self.GetServiceDue("B") + " or " + self.GetServiceDueDate("B")
 
-        Service["Total Run Hours"] = self.GetRunTimes()
-        Service["Hardware Version"] = self.GetHardwareVersion()
-        Service["Firmware Version"] = self.GetFirmwareVersion()
-        Maint["Service"] = Service
+            Service["Total Run Hours"] = self.GetRunTimes()
+            Service["Hardware Version"] = self.GetHardwareVersion()
+            Service["Firmware Version"] = self.GetFirmwareVersion()
+            Maint["Service"] = Service
+        except Exception as e1:
+            self.LogErrorLine("Error in DisplayMaintenance: " + str(e1))
 
         if not DictOut:
             return self.printToString(self.ProcessDispatch(Maintenance,""))
@@ -1559,50 +1539,53 @@ class Evolution(controller.GeneratorController):
     #------------ Evolution:DisplayLogs --------------------------------------------
     def DisplayLogs(self, AllLogs = False, DictOut = False, RawOutput = False):
 
-        # if DictOut is True, return a dictionary containing a Dictionaries (dict entry for each log)
-        # Each dict item a log (alarm, start/stop). For Example:
-        #
-        #       Dict[Logs] =  {"Alarm Log" : [Log Entry1, LogEntry2, ...]},
-        #                     {"Start Stop Log" : [Log Entry3, Log Entry 4, ...]}...
+        try:
+            # if DictOut is True, return a dictionary containing a Dictionaries (dict entry for each log)
+            # Each dict item a log (alarm, start/stop). For Example:
+            #
+            #       Dict[Logs] =  {"Alarm Log" : [Log Entry1, LogEntry2, ...]},
+            #                     {"Start Stop Log" : [Log Entry3, Log Entry 4, ...]}...
 
-        ALARMLOG     = "Alarm Log:     "
-        SERVICELOG   = "Service Log:   "
-        STARTSTOPLOG = "Start Stop Log:"
+            ALARMLOG     = "Alarm Log:     "
+            SERVICELOG   = "Service Log:   "
+            STARTSTOPLOG = "Start Stop Log:"
 
-        EvolutionLog = [[ALARMLOG, ALARM_LOG_STARTING_REG, ALARM_LOG_STRIDE],
-                        [SERVICELOG, SERVICE_LOG_STARTING_REG, SERVICE_LOG_STRIDE],
-                        [STARTSTOPLOG, START_LOG_STARTING_REG, START_LOG_STRIDE]]
-        NexusLog     = [[ALARMLOG, NEXUS_ALARM_LOG_STARTING_REG, NEXUS_ALARM_LOG_STRIDE],
-                        [STARTSTOPLOG, START_LOG_STARTING_REG, START_LOG_STRIDE]]
+            EvolutionLog = [[ALARMLOG, ALARM_LOG_STARTING_REG, ALARM_LOG_STRIDE],
+                            [SERVICELOG, SERVICE_LOG_STARTING_REG, SERVICE_LOG_STRIDE],
+                            [STARTSTOPLOG, START_LOG_STARTING_REG, START_LOG_STRIDE]]
+            NexusLog     = [[ALARMLOG, NEXUS_ALARM_LOG_STARTING_REG, NEXUS_ALARM_LOG_STRIDE],
+                            [STARTSTOPLOG, START_LOG_STARTING_REG, START_LOG_STRIDE]]
 
-        LogParams = EvolutionLog if self.EvolutionController else NexusLog
+            LogParams = EvolutionLog if self.EvolutionController else NexusLog
 
-        RetValue = collections.OrderedDict()
-        LogDict = collections.OrderedDict()
+            RetValue = collections.OrderedDict()
+            LogDict = collections.OrderedDict()
 
-        for Params in LogParams:
-            LogOutput = self.GetLogs(Params[0], Params[1], Params[2], AllLogs, RawOutput)
-            LogDict = self.MergeDicts(LogDict,LogOutput)
+            for Params in LogParams:
+                LogOutput = self.GetLogs(Params[0], Params[1], Params[2], AllLogs, RawOutput)
+                LogDict = self.MergeDicts(LogDict,LogOutput)
 
-        RetValue["Logs"] = LogDict
+            RetValue["Logs"] = LogDict
 
-        UnknownFound = False
-        for Key, Entries in RetValue["Logs"].items():
-            if not AllLogs:
-                if "unknown" in Entries.lower():
-                    UnknownFound = True
-                    break
-            else:
-                for LogItems in Entries:
-                    if "unknown" in LogItems.lower():
+            UnknownFound = False
+            for Key, Entries in RetValue["Logs"].items():
+                if not AllLogs:
+                    if "unknown" in Entries.lower():
                         UnknownFound = True
                         break
-        if UnknownFound:
-            msgbody = "\nThe output appears to have unknown values. Please see the following threads to resolve these issues:"
-            msgbody += "\n        https://github.com/jgyates/genmon/issues/12"
-            msgbody += "\n        https://github.com/jgyates/genmon/issues/13"
-            RetValue["Note"] = msgbody
-            self.FeedbackPipe.SendFeedback("Logs", FullLogs = True, Always = True, Message="Unknown Entries in Log")
+                else:
+                    for LogItems in Entries:
+                        if "unknown" in LogItems.lower():
+                            UnknownFound = True
+                            break
+            if UnknownFound:
+                msgbody = "\nThe output appears to have unknown values. Please see the following threads to resolve these issues:"
+                msgbody += "\n        https://github.com/jgyates/genmon/issues/12"
+                msgbody += "\n        https://github.com/jgyates/genmon/issues/13"
+                RetValue["Note"] = msgbody
+                self.FeedbackPipe.SendFeedback("Logs", FullLogs = True, Always = True, Message="Unknown Entries in Log")
+        except Exception as e1:
+            self.LogErrorLine("Error in DisplayLogs: " + str(e1))
 
         if not DictOut:
             return self.printToString(self.ProcessDispatch(RetValue,""))
@@ -2387,31 +2370,39 @@ class Evolution(controller.GeneratorController):
         return SensorValue
 
     #------------ Evolution:GetRPM ---------------------------------------------
-    def GetRPM(self):
+    def GetRPM(self, ReturnInt = True):
 
         # get RPM
         Value = self.GetRegisterValueFromList("0007")
         if len(Value) != 4:
             return ""
 
+        if ReturnInt:
+            return int(Value,16)
+
         RPMValue = "%5d" % int(Value,16)
         return RPMValue
 
     #------------ Evolution:GetCurrentOutput -----------------------------------
-    def GetCurrentOutput(self):
+    def GetCurrentOutput(self, ReturnFloat = False):
 
         CurrentOutput = 0.0
         Divisor = 1.0
         CurrentOffset = 0.0
         CurrentFloat = 0.0
+
+        if ReturnFloat:
+            DefaultReturn = 0.0
+        else:
+            DefaultReturn = "0.00A"
         try:
             if not self.PowerMeterIsSupported():
-                return "0.00A"
+                return DefaultReturn
 
             EngineState = self.GetEngineState()
             # report null if engine is not running
             if "Stopped" in EngineState or "Off" in EngineState or not len(EngineState):
-                return "0.00A"
+                return DefaultReturn
 
             if self.EvolutionController and self.LiquidCooled:
                 Value = self.GetRegisterValueFromList("0058")
@@ -2475,41 +2466,54 @@ class Evolution(controller.GeneratorController):
                 CurrentOutput = (CurrentFloat + CurrentOffset) / Divisor
 
             # is the current out of bounds?
-            VoltageStr = self.removeAlpha(self.GetVoltageOutput())
-            if float(VoltageStr) > 100:     # only bounds check if the voltage is over 100V to give things a chance to stabalize
+            Voltage = self.GetVoltageOutput(ReturnInt = True)
+            if Voltage > 100:     # only bounds check if the voltage is over 100V to give things a chance to stabalize
                 if CurrentOutput > ((int(self.NominalKW) * 1000) / 240) + 2 or CurrentOutput < 0:
                     msg = "Current Calculation: %f, CurrentFloat: %f, Divisor: %f, Offset %f" % (CurrentOutput, CurrentFloat, Divisor, CurrentOffset)
                     self.FeedbackPipe.SendFeedback("Current Calculation", Message=msg, FullLogs = True )
 
+            if ReturnFloat:
+                return CurrentOutput
+
             return "%.2fA" % CurrentOutput
         except Exception as e1:
             self.LogErrorLine("Error in GetCurrentOutput: " + str(e1))
-            return "0.0A"
+            return DefaultReturn
 
      ##------------ Evolution:GetActiveRotorPoles ------------------------------
-    def GetActiveRotorPoles(self):
+    def GetActiveRotorPoles(self, ReturnInt = True):
         # (2 * 60 * Freq) / RPM = Num Rotor Poles
 
         if not self.EvolutionController:
             return ""
 
-        FreqStr = self.removeAlpha(self.GetFrequency())
-        RPMStr = self.removeAlpha(self.GetRPM().strip())
+        if ReturnInt:
+            DefaultReturn = 0
+        else:
+            DefaultReturn = "0"
 
-        RotorPoles = "0"
-        if len(FreqStr) and len(RPMStr):
-            RPMInt = int(RPMStr)
+        try:
+            FreqFloat = self.GetFrequency(ReturnFloat = True)
+            RPMInt = self.GetRPM(ReturnInt = True)
+
+            RotorPoles = DefaultReturn
+
             if RPMInt:
-                FreqFloat = float(FreqStr)
                 NumRotorPoles = int(round((2 * 60 * FreqFloat) / RPMInt))
                 if NumRotorPoles > 4:
                     NumRotorPoles = 0
-                RotorPoles = str(NumRotorPoles)
+                if ReturnInt:
+                    RotorPoles = NumRotorPoles
+                else:
+                    RotorPoles = str(NumRotorPoles)
 
-        return RotorPoles
+            return RotorPoles
+        except Exception as e1:
+            self.LogErrorLine("Error in GetActiveRotorPoles: " + str(e1))
+            return DefaultReturn
 
     #------------ Evolution:GetPowerOutput ---------------------------------------
-    def GetPowerOutput(self):
+    def GetPowerOutput(self, ReturnFloat = False):
 
         if not self.PowerMeterIsSupported():
             return ""
@@ -2519,72 +2523,86 @@ class Evolution(controller.GeneratorController):
         if "Stopped" in EngineState or "Off" in EngineState or not len(EngineState):
             return "0kW"
 
-        CurrentStr = self.removeAlpha(self.GetCurrentOutput())
-        VoltageStr = self.removeAlpha(self.GetVoltageOutput())
+        Current = self.GetCurrentOutput(ReturnFloat = True)
+        Voltage = self.GetVoltageOutput(ReturnInt = True)
 
         PowerOut = 0.0
 
-        if len(CurrentStr) and len(VoltageStr):
-            PowerOut = float(VoltageStr) * float(CurrentStr)
+        if not Current == 0:
+            PowerOut = Voltage * Current
 
+        if ReturnFloat:
+            return PowerOut / 1000.0
         return "%.2fkW" % (PowerOut / 1000.0)
 
 
     #------------ Evolution:GetFrequency ---------------------------------------
-    def GetFrequency(self, Calculate = False):
+    def GetFrequency(self, Calculate = False, ReturnFloat = False):
 
         # get Frequency
         FloatTemp = 0.0
+        try:
 
-        if not Calculate:
-            Value = self.GetRegisterValueFromList("0008")
-            if len(Value) != 4:
-                return ""
+            if not Calculate:
+                Value = self.GetRegisterValueFromList("0008")
+                if len(Value) != 4:
+                    return ""
 
-            IntTemp = int(Value,16)
-            if self.EvolutionController and self.LiquidCooled:
-                FloatTemp = IntTemp / 10.0      # Evolution
-            elif not self.EvolutionController and self.LiquidCooled:
-                FloatTemp = IntTemp / 1.0       # Nexus Liquid Cooled
-                FloatTemp = FloatTemp * 2.0
+                IntTemp = int(Value,16)
+                if self.EvolutionController and self.LiquidCooled:
+                    FloatTemp = IntTemp / 10.0      # Evolution
+                elif not self.EvolutionController and self.LiquidCooled:
+                    FloatTemp = IntTemp / 1.0       # Nexus Liquid Cooled
+                    FloatTemp = FloatTemp * 2.0
+                else:
+                    FloatTemp = IntTemp / 1.0       # Nexus and Evolution Air Cooled
+
             else:
-                FloatTemp = IntTemp / 1.0       # Nexus and Evolution Air Cooled
-
-        else:
-            # (RPM * Poles) / 2 * 60
-            RPM = self.GetRPM()
-            Poles = self.GetActiveRotorPoles()
-            if len(RPM) and len(Poles):
-                FloatTemp = (float(RPM) * float(Poles)) / (2*60)
+                # (RPM * Poles) / 2 * 60
+                RPM = self.GetRPM(ReturnInt = True)
+                Poles = self.GetActiveRotorPoles(ReturnInt = True)
+                FloatTemp = (RPM * Poles) / (2*60)
+        except Exception as e1:
+            self.LogErrorLine("Error in GetFrequency: " + str(e1))
+        if ReturnFloat:
+            return FloatTemp
 
         FreqValue = "%2.1f Hz" % FloatTemp
         return FreqValue
 
     #------------ Evolution:GetVoltageOutput --------------------------
-    def GetVoltageOutput(self):
+    def GetVoltageOutput(self, ReturnInt = False):
 
         # get Output Voltage
         Value = self.GetRegisterValueFromList("0012")
         if len(Value) != 4:
             return ""
 
+        if ReturnInt:
+            return int(Value,16)
+
         VolatageValue = "%dV" % int(Value,16)
 
         return VolatageValue
 
     #------------ Evolution:GetPickUpVoltage --------------------------
-    def GetPickUpVoltage(self):
+    def GetPickUpVoltage(self, ReturnInt = False):
 
          # get Utility Voltage Pickup Voltage
-        Value = self.GetRegisterValueFromList("023b")
-        if len(Value) != 4:
-            return ""
-        PickupVoltage = int(Value,16)
+        if self.EvolutionController and self.LiquidCooled:
+            Value = self.GetRegisterValueFromList("023b")
+            if len(Value) != 4:
+                return ""           # we don't have a value for this register yet
+            PickupVoltage = int(Value, 16)
+        else:
+            PickupVoltage = DEFAULT_PICKUP_VOLTAGE
 
+        if ReturnInt:
+            return PickupVoltage
         return "%dV" % PickupVoltage
 
     #------------ Evolution:GetThresholdVoltage --------------------------
-    def GetThresholdVoltage(self):
+    def GetThresholdVoltage(self, ReturnInt = False):
 
         # get Utility Voltage Threshold
         Value = self.GetRegisterValueFromList("0011")
@@ -2592,6 +2610,8 @@ class Evolution(controller.GeneratorController):
             return ""
         ThresholdVoltage = int(Value,16)
 
+        if ReturnInt:
+            return ThresholdVoltage
         return "%dV" % ThresholdVoltage
 
     #------------ Evolution:GetSetOutputVoltage --------------------------
@@ -2626,13 +2646,20 @@ class Evolution(controller.GeneratorController):
         return "%d s" % StartupDelay
 
     #------------ Evolution:GetUtilityVoltage --------------------------
-    def GetUtilityVoltage(self):
+    def GetUtilityVoltage(self, ReturnInt = False):
+
+        if ReturnInt:
+            DefaultReturn = 0
+        else:
+            DefaultReturn = "0"
 
         # get Utility Voltage
         Value = self.GetRegisterValueFromList("0009")
         if len(Value) != 4:
-            return ""
+            return DefaultReturn
 
+        if ReturnInt:
+            return int(Value,16)
         VolatageValue = "%dV" % int(Value,16)
 
         return VolatageValue
@@ -3032,63 +3059,66 @@ class Evolution(controller.GeneratorController):
     #------------ Evolution:DisplayStatus ----------------------------------------
     def DisplayStatus(self, DictOut = False):
 
-        Status = collections.OrderedDict()
-        Stat = collections.OrderedDict()
-        Status["Status"] = Stat
-        Engine = collections.OrderedDict()
-        Stat["Engine"] = Engine
-        Line = collections.OrderedDict()
-        Stat["Line State"] = Line
-        LastLog = collections.OrderedDict()
-        Stat["Last Log Entries"] = self.DisplayLogs(AllLogs = False, DictOut = True)
-        Time = collections.OrderedDict()
-        Stat["Time"] = Time
+        try:
+            Status = collections.OrderedDict()
+            Stat = collections.OrderedDict()
+            Status["Status"] = Stat
+            Engine = collections.OrderedDict()
+            Stat["Engine"] = Engine
+            Line = collections.OrderedDict()
+            Stat["Line State"] = Line
+            LastLog = collections.OrderedDict()
+            Stat["Last Log Entries"] = self.DisplayLogs(AllLogs = False, DictOut = True)
+            Time = collections.OrderedDict()
+            Stat["Time"] = Time
 
 
-        Engine["Switch State"] = self.GetSwitchState()
-        Engine["Engine State"] = self.GetEngineState()
-        if self.EvolutionController and self.LiquidCooled:
-            Engine["Active Relays"] = self.GetDigitalOutputs()
-            Engine["Active Sensors"] = self.GetSensorInputs()
+            Engine["Switch State"] = self.GetSwitchState()
+            Engine["Engine State"] = self.GetEngineState()
+            if self.EvolutionController and self.LiquidCooled:
+                Engine["Active Relays"] = self.GetDigitalOutputs()
+                Engine["Active Sensors"] = self.GetSensorInputs()
 
-        if self.SystemInAlarm():
-            Engine["System In Alarm"] = self.GetAlarmState()
+            if self.SystemInAlarm():
+                Engine["System In Alarm"] = self.GetAlarmState()
 
-        Engine["Battery Voltage"] = self.GetBatteryVoltage()
-        if self.EvolutionController and self.LiquidCooled:
-            Engine["Battery Status"] = self.GetBatteryStatus()
+            Engine["Battery Voltage"] = self.GetBatteryVoltage()
+            if self.EvolutionController and self.LiquidCooled:
+                Engine["Battery Status"] = self.GetBatteryStatus()
 
-        Engine["RPM"] = self.GetRPM()
+            Engine["RPM"] = self.GetRPM()
 
-        Engine["Frequency"] = self.GetFrequency()
-        Engine["Output Voltage"] = self.GetVoltageOutput()
+            Engine["Frequency"] = self.GetFrequency()
+            Engine["Output Voltage"] = self.GetVoltageOutput()
 
-        if self.PowerMeterIsSupported():
-            Engine["Output Current"] = self.GetCurrentOutput()
-            Engine["Output Power (Single Phase)"] = self.GetPowerOutput()
+            if self.PowerMeterIsSupported():
+                Engine["Output Current"] = self.GetCurrentOutput()
+                Engine["Output Power (Single Phase)"] = self.GetPowerOutput()
 
-        Engine["Active Rotor Poles (Calculated)"] = self.GetActiveRotorPoles()
+            Engine["Active Rotor Poles (Calculated)"] = self.GetActiveRotorPoles()
 
-        if self.bDisplayUnknownSensors:
-            Engine["Unsupported Sensors"] = self.DisplayUnknownSensors()
+            if self.bDisplayUnknownSensors:
+                Engine["Unsupported Sensors"] = self.DisplayUnknownSensors()
 
 
-        if self.EvolutionController:
-            Line["Transfer Switch State"] = self.GetTransferStatus()
-        Line["Utility Voltage"] = self.GetUtilityVoltage()
-        #
-        Line["Utility Voltage Max"] = "%dV " % (self.UtilityVoltsMax)
-        Line["Utility Voltage Min"] = "%dV " % (self.UtilityVoltsMin)
-        Line["Utility Threshold Voltage"] = self.GetThresholdVoltage()
+            if self.EvolutionController:
+                Line["Transfer Switch State"] = self.GetTransferStatus()
+            Line["Utility Voltage"] = self.GetUtilityVoltage()
+            #
+            Line["Utility Voltage Max"] = "%dV " % (self.UtilityVoltsMax)
+            Line["Utility Voltage Min"] = "%dV " % (self.UtilityVoltsMin)
+            Line["Utility Threshold Voltage"] = self.GetThresholdVoltage()
 
-        if self.EvolutionController and self.LiquidCooled:
-            Line["Utility Pickup Voltage"] = self.GetPickUpVoltage()
-            Line["Set Output Voltage"] = self.GetSetOutputVoltage()
+            if self.EvolutionController and self.LiquidCooled:
+                Line["Utility Pickup Voltage"] = self.GetPickUpVoltage()
+                Line["Set Output Voltage"] = self.GetSetOutputVoltage()
 
-        # Generator time
-        Time["Monitor Time"] = datetime.datetime.now().strftime("%A %B %-d, %Y %H:%M:%S")
-        Time["Generator Time"] = self.GetDateTime()
+            # Generator time
+            Time["Monitor Time"] = datetime.datetime.now().strftime("%A %B %-d, %Y %H:%M:%S")
+            Time["Generator Time"] = self.GetDateTime()
 
+        except Exception as e1:
+            self.LogErrorLine("Error in DisplayStatus: " + str(e1))
         if not DictOut:
             return self.printToString(self.ProcessDispatch(Status,""))
 
@@ -3135,7 +3165,7 @@ class Evolution(controller.GeneratorController):
             config = RawConfigParser()
             # config parser reads from current directory, when running form a cron tab this is
             # not defined so we specify the full path
-            config.read('/etc/genmon.conf')
+            config.read(self.ConfigFilePath + 'genmon.conf')
 
             if config.has_option(ConfigSection, 'address'):
                 self.Address = int(config.get(ConfigSection, 'address'),16)                      # modbus address

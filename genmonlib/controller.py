@@ -25,7 +25,7 @@ import mysupport, mypipe, mythread
 
 class GeneratorController(mysupport.MySupport):
     #---------------------GeneratorController::__init__-------------------------
-    def __init__(self, log, newinstall = False, simulation = False, simulationfile = None, message = None, feedback = None):
+    def __init__(self, log, newinstall = False, simulation = False, simulationfile = None, message = None, feedback = None, ConfigFilePath = None):
         super(GeneratorController, self).__init__()
         self.log = log
         self.NewInstall = newinstall
@@ -33,6 +33,10 @@ class GeneratorController(mysupport.MySupport):
         self.SimulationFile = simulationfile
         self.FeedbackPipe = feedback
         self.MessagePipe = message
+        if ConfigFilePath == None:
+            self.ConfigFilePath = "/etc/"
+        else:
+            self.ConfigFilePath = ConfigFilePath
         self.Address = None
         self.SerialPort = "/dev/serial0"
         self.BaudRate = 9600
@@ -75,7 +79,7 @@ class GeneratorController(mysupport.MySupport):
             config = RawConfigParser()
             # config parser reads from current directory, when running form a cron tab this is
             # not defined so we specify the full path
-            config.read('/etc/genmon.conf')
+            config.read(self.ConfigFilePath + 'genmon.conf')
 
             # getfloat() raises an exception if the value is not a float
             # getint() and getboolean() also do this for their respective types

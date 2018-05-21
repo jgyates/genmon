@@ -34,7 +34,7 @@ clientport = 0
 log = None
 AppPath = ""
 favicon = "favicon.ico"
-
+ConfigFilePath = "/etc/"
 MAIL_CONFIG = "/etc/mymail.conf"
 GENMON_CONFIG = "/etc/genmon.conf"
 
@@ -621,7 +621,12 @@ def ValidateFilePresent(FileName):
 
 #------------------------------------------------------------
 if __name__ == "__main__":
-    address='localhost' if len(sys.argv)<2 else sys.argv[1]
+    address='localhost' if len(sys.argv) <=2 else sys.argv[1]
+
+    ConfigFilePath='/etc/' if len(sys.argv) <=3 else sys.argv[2]
+
+    MAIL_CONFIG = ConfigFilePath + "mymail.conf"
+    GENMON_CONFIG = ConfigFilePath + "genmon.conf"
 
     AppPath = sys.argv[0]
     LoadConfig()

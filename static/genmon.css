@@ -144,7 +144,159 @@ li a:hover:not(.active) {
     color: white;
 }
 
+/* Pictures */
 
+.registers, .alert_small, .validation_ok, .validation_text, .print10, .print24, .print60, .temp1, .temp2, .temp3, .temp4, .wifi1, .wifi2, .wifi3, .wifi4, .status, .settings, .outage, .notifications, .monitor, .log, .maintenance, .remove_bin, .alert{
+	background: url(images/sprites.png) no-repeat;
+}
+
+.registers{
+	background-position: -115px -315px ;
+	width: 20px;
+	height: 20px;
+}
+
+.alert_small{
+	background-position: -161px -61px ;
+	width: 28px;
+	height: 28px;
+}
+
+.validation_ok{
+	background-position: -66px -318px ;
+	width: 16px;
+	height: 16px;
+}
+
+.validation_text{
+	background-position: -20px -317px ;
+	width: 16px;
+	height: 16px;
+}
+
+.print10{
+	background-position: -154px -106px ;
+	width: 36px;
+	height: 36px;
+}
+
+.print24{
+	background-position: -105px -105px ;
+	width: 36px;
+	height: 36px;
+}
+
+.print60{
+	background-position: -56px -105px ;
+	width: 36px;
+	height: 36px;
+}
+
+.temp1{
+	background-position: -14px -158px ;
+	width: 28px;
+	height: 28px;
+}
+
+.temp2{
+	background-position: -61px -158px ;
+	width: 28px;
+	height: 28px;
+}
+
+.temp3{
+	background-position: -111px -162px ;
+	width: 28px;
+	height: 28px;
+}
+
+.temp4{
+	background-position: -160px -161px ;
+	width: 28px;
+	height: 28px;
+}
+
+.wifi1{
+	background-position: -106px -206px ;
+	width: 28px;
+	height: 28px;
+}
+
+.wifi2{
+	background-position: -157px -208px ;
+	width: 28px;
+	height: 28px;
+}
+
+.wifi3{
+	background-position: -110px -261px ;
+	width: 28px;
+	height: 28px;
+}
+
+.wifi4{
+	background-position: -161px -258px ;
+	width: 28px;
+	height: 28px;
+}
+
+.status{
+	background-position: -109px -64px ;
+	width: 20px;
+	height: 20px;
+}
+
+.settings{
+	background-position: -64px -64px ;
+	width: 20px;
+	height: 20px;
+}
+
+.outage{
+	background-position: -14px -65px ;
+	width: 20px;
+	height: 20px;
+}
+
+.notifications{
+	background-position: -164px -18px ;
+	width: 20px;
+	height: 20px;
+}
+
+.monitor{
+	background-position: -113px -16px ;
+	width: 20px;
+	height: 20px;
+}
+
+.log{
+	background-position: -63px -14px ;
+	width: 20px;
+	height: 20px;
+}
+
+.maintenance{
+	background-position: -15px -15px ;
+	width: 20px;
+	height: 20px;
+}
+
+.remove_bin{
+	background-position: -22px -111px ;
+	width: 24px;
+	height: 24px;
+}
+
+.alert{
+	background-position: -14px -211px ;
+	width: 64px;
+	height: 64px;
+}
+
+
+
+/* Classes */
 
 .gauge-grid {
     display:table;

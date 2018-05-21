@@ -26,12 +26,16 @@ import mylog, mythread, mycommon
 
 #------------ MyMail class --------------------------------------------
 class MyMail(mycommon.MyCommon):
-    def __init__(self, monitor = False, incoming_folder = None, processed_folder = None, incoming_callback = None, localinit = False, loglocation = "/var/log/"):
+    def __init__(self, monitor = False, incoming_folder = None, processed_folder = None, incoming_callback = None, localinit = False, loglocation = "/var/log/", ConfigFilePath = None):
 
         self.Monitor = monitor                          # true if we receive IMAP email
         self.IncomingFolder = incoming_folder           # folder to look for incoming email
         self.ProcessedFolder = processed_folder         # folder to move mail to once processed
         self.IncomingCallback = incoming_callback       # called back with mail subject as a parameter
+        if ConfigFilePath == None:
+            self.ConfigFilePath = "/etc/"
+        else:
+            self.ConfigFilePath = ConfigFilePath
         self.Mailbox = 0
         self.EmailSendQueue = []                        # queue for email to send
         self.DisableEmail = False
@@ -44,7 +48,7 @@ class MyMail(mycommon.MyCommon):
             self.configfile = "mymail.conf"
         else:
             self.logfile = loglocation + "mymail.log"
-            self.configfile = "/etc/mymail.conf"
+            self.configfile = self.ConfigFilePath + "mymail.conf"
 
         self.log = mylog.SetupLogger("mymail", self.logfile)
 

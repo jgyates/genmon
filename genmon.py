@@ -25,15 +25,20 @@ except ImportError as e:
 from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel, myplatform
 
 
-GENMON_VERSION = "V1.8.8"
+GENMON_VERSION = "V1.8.9"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
 
-    def __init__(self):
+    def __init__(self, ConfigFilePath = None):
         super(Monitor, self).__init__()
         self.ProgramName = "Generator Monitor"
         self.Version = "Unknown"
+        if ConfigFilePath == None:
+            self.ConfigFilePath = "/etc/"
+        else:
+            self.ConfigFilePath = ConfigFilePath
+
         self.ConnectionList = []    # list of incoming connections for heartbeat
         # defautl values
         self.SiteName = "Home"
@@ -141,7 +146,7 @@ class Monitor(mysupport.MySupport):
             config = RawConfigParser()
             # config parser reads from current directory, when running form a cron tab this is
             # not defined so we specify the full path
-            config.read('/etc/genmon.conf')
+            config.read(self.ConfigFilePath + 'genmon.conf')
 
             # getfloat() raises an exception if the value is not a float
             # getint() and getboolean() also do this for their respective types
@@ -798,13 +803,13 @@ def signal_handler(signal, frame):
 
 #------------------- Command-line interface for monitor -----------------#
 if __name__=='__main__': #
-
+    ConfigFilePath = None if len(sys.argv)<2 else sys.argv[1]
 
     # Set the signal handler
     signal.signal(signal.SIGINT, signal_handler)
 
     #Start things up
-    MyMonitor = Monitor()
+    MyMonitor = Monitor(ConfigFilePath = ConfigFilePath)
 
     while True:
         time.sleep(1)

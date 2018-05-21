@@ -1,16 +1,15 @@
-// genmon.js - javascrip source for generator monitor
 // Define header
 $("#myheader").html('<header>Generator Monitor</header>');
 
 // Define main menu
 $("#navMenu").html('<ul>' +
-      '<li id="status"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img src="images/status.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Status</td></tr></table></a></li>' +
-      '<li id="maint"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img src="images/maintenance.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Maintenance</td></tr></table></a></li>' +
-      '<li id="outage"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img src="images/outage.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Outage</td></tr></table></a></li>' +
-      '<li id="logs"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img src="images/log.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Logs</td></tr></table></a></li>' +
-      '<li id="monitor"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img src="images/monitor.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Monitor</td></tr></table></a></li>' +
-      '<li id="notifications"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img src="images/notifications.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Notifications</td></tr></table></a></li>' +
-      '<li id="settings"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img src="images/settings.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Settings</td></tr></table></a></li>' +
+      '<li id="status"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="status" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Status</td></tr></table></a></li>' +
+      '<li id="maint"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="maintenance" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Maintenance</td></tr></table></a></li>' +
+      '<li id="outage"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="outage" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Outage</td></tr></table></a></li>' +
+      '<li id="logs"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="log" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Logs</td></tr></table></a></li>' +
+      '<li id="monitor"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="monitor" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Monitor</td></tr></table></a></li>' +
+      '<li id="notifications"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="notifications" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Notifications</td></tr></table></a></li>' +
+      '<li id="settings"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="settings" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Settings</td></tr></table></a></li>' +
     '</ul>') ;
 
 // global base state
@@ -21,6 +20,7 @@ var currentClass = "active";    // CSS class for menu color
 var menuElement = "status";
 var ajaxErrors = {errorCount: 0, lastSuccessTime: 0, log: ""};
 var windowActive = true;
+var latestVersion = "";
 
 var myGenerator = {PowerGraph: false, sitename: "", nominalRPM: 3600, nominalfrequency: 60, Controller: "", model: "", nominalKW: 22, fueltype: "", UnsentFeedback: false, SystemHealth: false, EnhancedExerciseEnabled: false, OldExerciseParameters:[-1,-1,-1,-1,-1,-1]};
 var prevStatusValues = {BatteryVoltage: "12V", UnsentFeedback: "False", SystemHealth: "OK", OutputVoltage: "0V", Frequency: "0.0 Hz", UtilityVoltage: "240V", kwOutput: "0kW", RPM: " 0", basestatus: "READY"};
@@ -44,7 +44,7 @@ SetFavIcon();
 GetkWHistory();
 GetRegisterNames();
 $(document).ready(function() {
-    $("#footer").html('<table border="0" width="100%" height="30px"><tr><td width="5%"><img class="tooltip" id="ajaxWarning" src="images/alert.png" height="28px" width="28px" style="display: none;"></td><td width="90%"><a href="https://github.com/jgyates/genmon" target="_blank">GenMon Project on GitHub</a></td><td width="5%"></td></tr></table>');
+    $("#footer").html('<table border="0" width="100%" height="30px"><tr><td width="5%"><img class="tooltip" class="alert_small" id="ajaxWarning" src="images/transparent.png" height="28px" width="28px" style="display: none;"></td><td width="90%"><a href="https://github.com/jgyates/genmon" target="_blank">GenMon Project on GitHub</a></td><td width="5%"></td></tr></table>');
     $('#ajaxWarning').tooltipster({minWidth: '280px', maxWidth: '480px', animation: 'fade', updateAnimation: 'null', contentAsHTML: 'true', delay: 100, animationDuration: 200, side: ['top', 'left'], content: "No Communicatikon Errors occured"});
     UpdateRegisters(true, false);
     setInterval(GetBaseStatus, 3000);       // Called every 3 sec
@@ -323,7 +323,7 @@ function json2html(json, intent, parentkey) {
       if (json.length > 0) {
         intent += "&nbsp;&nbsp;&nbsp;&nbsp;";
         for (var i = 0; i < json.length; ++i) {
-          outstr += json2html(json[i], intent, parentkey+"_"+i);
+          outstr += intent + json2html(json[i], intent, parentkey+"_"+i);
         }
       }
     }
@@ -811,13 +811,57 @@ function DisplayMonitor(){
         processAjaxSuccess();
 
         var outstr = json2html(result, "", "root");
-        outstr += '<br><br>Update Generator Monitor Software:<br><br>';
+        outstr += '<br><br>Update Generator Monitor Software:<br><div id="updateNeeded"><br></div>';
         outstr += '&nbsp;&nbsp;<button id="checkNewVersion" onClick="checkNewVersion();">Upgrade to latest version</button>';
         outstr += '<br><br>Submit Registers to Developers:<br><br>';
         outstr += '&nbsp;&nbsp;<button id="submitRegisters" onClick="submitRegisters();">Submit Registers</button>';
 
         $("#mydisplay").html(outstr);
-        // currentVersion = result["Monitor"]["Generator Monitor Stats"]["Generator Monitor Version"];
+
+        if ($("#CPU_Temperature").length > 0) {
+           temp_img = "temp1";
+           switch (true) {
+              case (parseInt(result["Monitor"]["Platform Stats"]["CPU Temperature"].replace(/C/g, '').trim()) > 85):
+                  temp_img = "temp4";
+                  break;
+              case (parseInt(result["Monitor"]["Platform Stats"]["CPU Temperature"].replace(/C/g, '').trim()) > 75):
+                  temp_img = "temp3";
+                  break;
+              case (parseInt(result["Monitor"]["Platform Stats"]["CPU Temperature"].replace(/C/g, '').trim()) > 50):
+                  temp_img = "temp2";
+                  break;
+           }           
+           $("#CPU_Temperature").html('<div style="display: inline-block; position: relative;">'+result["Monitor"]["Platform Stats"]["CPU Temperature"] + '<img style="position: absolute;top:-10px;left:75px" class="'+ temp_img +'" src="images/transparent.png"></div>');
+        }
+        
+        if ($("#WLAN_Signal_Level").length > 0) {
+           wifi_img = "wifi1";
+           switch (true) {
+              case (parseInt(result["Monitor"]["Platform Stats"]["WLAN Signal Level"].replace(/dBm/g, '').trim()) > -67):
+                  wifi_img = "wifi4";
+                  break;
+              case (parseInt(result["Monitor"]["Platform Stats"]["WLAN Signal Level"].replace(/dBm/g, '').trim()) > -70):
+                  wifi_img = "wifi3";
+                  break;
+              case (parseInt(result["Monitor"]["Platform Stats"]["WLAN Signal Level"].replace(/dBm/g, '').trim()) > -80):
+                  wifi_img = "wifi2";
+                  break;
+           }           
+           $("#WLAN_Signal_Level").html('<div style="display: inline-block; position: relative;">'+result["Monitor"]["Platform Stats"]["WLAN Signal Level"] + '<img style="position: absolute;top:-10px;left:110px" class="'+ wifi_img +'" src="images/transparent.png"></div>');
+        }
+        currentVersion = result["Monitor"]["Generator Monitor Stats"]["Generator Monitor Version"];
+        if (latestVersion == "") {
+          // var url = "https://api.github.com/repos/jgyates/genmon/releases";
+          var url = "https://raw.githubusercontent.com/jgyates/genmon/master/genmon.py";
+          $.ajax({dataType: "html", url: url, timeout: 4000, error: function(result) {console.log("got an error")}, success: function(result) {
+             latestVersion = replaceAll((jQuery.grep(result.split("\n"), function( a ) { return (a.indexOf("GENMON_VERSION") >= 0); }))[0].split(" ")[2], '"', '');
+             if (latestVersion != currentVersion) {
+                $('#updateNeeded').hide().html("<br>&nbsp;&nbsp;&nbsp;&nbsp;You are not running the latest version.<br>&nbsp;&nbsp;&nbsp;&nbsp;Current Version: " + currentVersion+"<br>&nbsp;&nbsp;&nbsp;&nbsp;New Version: " + latestVersion+"<br><br>").fadeIn(1000);
+             }
+          }});
+        } else if (latestVersion != currentVersion) {
+          $('#updateNeeded').html("<br>&nbsp;&nbsp;&nbsp;&nbsp;You are not running the latest version.<br>&nbsp;&nbsp;&nbsp;&nbsp;Current Version: " + currentVersion+"<br>&nbsp;&nbsp;&nbsp;&nbsp;New Version: " + latestVersion+"<br><br>");
+        }
    }});
 }
 
@@ -862,22 +906,13 @@ function checkNewVersion(){
         }
     });
 
-    // $('.vex-dialog-button-secondary').hide();
-    // $('.vex-dialog-button-primary').hide();
-    // var url = "https://api.github.com/repos/jgyates/genmon/releases";
-    // $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result) {
-    //   processAjaxSuccess();
-    //   var latestVersion = result[0]["tag_name"];
-    //   if (latestVersion != currentVersion) {
-          // $('.vex-dialog-message').html("A new version is available.<br>Current Version:" + currentVersion+"<br>New Version:" + latestVersion);
-    $('.vex-dialog-message').html("Are you sure you want to update to the latest version?");
-    //      $('.vex-dialog-button-secondary').show();
-    //      $('.vex-dialog-button-primary').show();
-    //   } else {
-    //      $('.vex-dialog-message').html("You are runnign the latest version:" + latestVersion);
-    //      $('.vex-dialog-button-secondary').show();
-    //   }
-    // }});
+    if (latestVersion != currentVersion) {
+          // $('.vex-dialog-message').html("A new version is available.<br>Current Version: " + currentVersion+"<br>New Version: " + latestVersion);
+          $('.vex-dialog-message').html("Are you sure you want to update to the latest version?");  
+    } else {
+          $('.vex-dialog-message').html("You are runnign the latest version:" + latestVersion);
+          $('.vex-dialog-button-primary').hide();
+    }
 }
 
 //*****************************************************************************
@@ -956,8 +991,6 @@ function DisplayNotifications(){
         outstr += '<button value="+Add" id="addRow">+Add</button>&nbsp;&nbsp;&nbsp;&nbsp;<button id="setnotificationsbutton" onClick="saveNotifications()">Save</button>';
 
         $("#mydisplay").html(outstr);
-        $(".msDropDown").msDropDown();
-        $(".dataMask").mask('(000) 000-0000', {placeholder: "(___) ___-____"});
 
         $('.notificationTypes').selectize({
             plugins: ['remove_button'],
@@ -996,7 +1029,7 @@ function DisplayNotifications(){
 
 function renderNotificationLine(rowcount, line_type, line_text, line_perms) {
 
-   var outstr = '<tr id="row_' + rowcount + '"><td nowrap><div rowcount="' + rowcount + '" class="removeRow"><img src="images/remove.png" height="24px" width="24px"></div></td>';
+   var outstr = '<tr id="row_' + rowcount + '"><td nowrap><div rowcount="' + rowcount + '" class="removeRow"><img class="remove_bin" src="images/transparent.png" height="24px" width="24px"></div></td>';
    outstr += '<td nowrap><input type="hidden" name="type_' + rowcount + '" value="s01_email">';
    outstr += '<td nowrap><input id="email_' + rowcount + '" class="notificationEmail" name="email_' + rowcount + '" type="text" value="'+line_text+'" '+ ((line_type != "s01_email") ? 'class="dataMask"' : '') +' ></td>';
 
@@ -1433,9 +1466,9 @@ function DisplayRegistersFull()
       }
     }
     outstr += '</tr></table>';
-    outstr += '<br><img id="print10" class="printButton" onClick="printRegisters(10)" src="images/print10.png" width="36px" height="36px">&nbsp;&nbsp;&nbsp;';
-    outstr += '<img id="print60" class="printButton" onClick="printRegisters(60)" src="images/print60.png" width="36px" height="36px">&nbsp;&nbsp;&nbsp;';
-    outstr += '<img id="print24" class="printButton" onClick="printRegisters(24)" src="images/print24.png" width="36px" height="36px"><br>';
+    outstr += '<br><img id="print10" class="print10 printButton" onClick="printRegisters(10)" src="images/transparent.png" width="36px" height="36px">&nbsp;&nbsp;&nbsp;';
+    outstr += '<img id="print60" class="print60 printButton" onClick="printRegisters(60)" src="images/transparent.png" width="36px" height="36px">&nbsp;&nbsp;&nbsp;';
+    outstr += '<img id="print24" class="print24 printButton" onClick="printRegisters(24)" src="images/transparent.png" width="36px" height="36px"><br>';
     outstr += '</center>';
 
     $("#mydisplay").html(outstr);
@@ -1644,25 +1677,25 @@ function printRegisters (type) {
 
         var reg_val = data[reg_key][0];
 
-        outstr += '<td width="33%" class="registerTD">';
+        outstr += '<td width="33%" class="printRegisterTD">';
         outstr +=     '<table width="333px" heigth="100%" id="val_'+reg_key+'">';
-        outstr +=     '<tr><td align="center" class="registerTDsubtitle">' + reg_key + '</td></tr>';
-        outstr +=     '<tr><td align="center" class="registerTDtitle">' + BaseRegistersDescription[reg_key] + '</td></tr>';
-        outstr +=     '<tr><td align="center" class="registerTDsubtitle">Current Value: ' + regHistory["_10m"][reg_key][0] + '</td></tr>';
+        outstr +=     '<tr><td align="center" class="printRegisterTDsubtitle">' + reg_key + '</td></tr>';
+        outstr +=     '<tr><td align="center" class="printRegisterTDtitle">' + BaseRegistersDescription[reg_key] + '</td></tr>';
+        outstr +=     '<tr><td align="center" class="printRegisterTDsubtitle">Current Value: ' + regHistory["_10m"][reg_key][0] + '</td></tr>';
         if (min != max) {
-          outstr +=     '<tr><td align="center" class="registerTDsubtitle">Minimum Value: '+min+'<br>Maximum Value: '+max+'</td></tr>';
+          outstr +=     '<tr><td align="center" class="printRegisterTDsubtitle">Minimum Value: '+min+'<br>Maximum Value: '+max+'</td></tr>';
           outstr +=     '<tr><td align="center" class="regHistoryPlotCell"><div id="printPlot_'+reg_key+'"></div></td></tr>';
           plots.push(reg_key);
           rowHeight = 45;
         } else {
-          outstr +=     '<tr><td align="center" class="registerTDvalMedium">no change</td></tr>';
+          outstr +=     '<tr><td align="center" class="printRegisterTDvalMedium">no change</td></tr>';
         }
         outstr +=     '</table>';
         outstr += '</td>';
     });
     if ((Object.keys(data).length % 3) > 0) {
       for (var i = (Object.keys(data).length % 3); i < 3; i++) {
-          outstr += '<td width="333px" class="registerTD"></td>';
+          outstr += '<td width="333px" class="printRegisterTD"></td>';
        }
     }
     outstr += '</tr></table></center>';
@@ -1801,7 +1834,7 @@ function GetGeneratorModel()
 //*****************************************************************************
 function SetHeaderValues()
 {
-   var HeaderStr = '<table border="0" width="100%" height="30px"><tr><td width="30px"></td><td width="90%">Generator Monitor at ' + myGenerator["sitename"] + '</td><td width="30px"><img id="registers" src="images/registers.png" width="20px" height="20px"></td></tr></table>';
+   var HeaderStr = '<table border="0" width="100%" height="30px"><tr><td width="30px"></td><td width="90%">Generator Monitor at ' + myGenerator["sitename"] + '</td><td width="30px"><img id="registers" class="registers" src="images/transparent.png" width="20px" height="20px"></td></tr></table>';
    $("#myheader").html(HeaderStr);
    $("#registers").on('click',  function() {  MenuClick($(this));});
 }
@@ -1866,7 +1899,7 @@ function GetRegisterNames()
 function GenmonAlert(msg)
 {
        vex.closeAll();
-       vex.dialog.alert({ unsafeMessage: '<table><tr><td valign="middle" width="200px" align="center"><img src="images/alert.png" width="64px" height="64px"></td><td valign="middle" width="70%">'+msg+'</td></tr></table>'});
+       vex.dialog.alert({ unsafeMessage: '<table><tr><td valign="middle" width="200px" align="center"><img class="alert" src="images/transparent.png" width="64px" height="64px"></td><td valign="middle" width="70%">'+msg+'</td></tr></table>'});
 }
 
 //*****************************************************************************

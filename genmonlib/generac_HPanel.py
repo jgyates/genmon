@@ -315,10 +315,10 @@ DEFAULT_PICKUP_VOLTAGE = 190
 class HPanel(controller.GeneratorController):
 
     #---------------------HPanel::__init__--------------------------------------
-    def __init__(self, log, newinstall = False, simulation = False, simulationfile = None, message = None, feedback = None):
+    def __init__(self, log, newinstall = False, simulation = False, simulationfile = None, message = None, feedback = None, ConfigFilePath = None):
 
         # call parent constructor
-        super(HPanel, self).__init__(log, newinstall = newinstall, simulation = simulation, simulationfile = simulationfile, message = message, feedback = feedback)
+        super(HPanel, self).__init__(log, newinstall = newinstall, simulation = simulation, simulationfile = simulationfile, message = message, feedback = feedback, ConfigFilePath = ConfigFilePath)
 
         self.LastEngineState = ""
         self.CurrentAlarmState = False
@@ -484,7 +484,7 @@ class HPanel(controller.GeneratorController):
             config = RawConfigParser()
             # config parser reads from current directory, when running form a cron tab this is
             # not defined so we specify the full path
-            config.read('/etc/genmon.conf')
+            config.read(self.ConfigFilePath + 'genmon.conf')
 
             if config.has_option(ConfigSection, 'address'):
                 self.Address = int(config.get(ConfigSection, 'address'),16)                      # modbus address
