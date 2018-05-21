@@ -253,8 +253,7 @@ class Monitor(mysupport.MySupport):
                 msgbody = "Reason = " + Reason + "\n"
                 if Message != None:
                     msgbody += "Message : " + Message + "\n"
-                msgbody += "Version: " + GENMON_VERSION
-                msgbody += self.DictToString(self.Controller.GetStartInfo())
+                msgbody += self.DictToString(self.GetStartInfo())
                 if not self.bDisablePlatformStats:
                     msgbody +=  self.DictToString(self.GetPlatformStats())
                 msgbody += self.Controller.DisplayRegisters(AllRegs = FullLogs)
@@ -284,8 +283,7 @@ class Monitor(mysupport.MySupport):
             return "Send Email is not enabled."
 
         msgbody = ""
-        msgbody += "Version: " + GENMON_VERSION
-        msgbody += self.DictToString(self.Controller.GetStartInfo())
+        msgbody += self.DictToString(self.GetStartInfo())
         if not self.bDisablePlatformStats:
             msgbody +=  self.DictToString(self.GetPlatformStats())
         msgbody += self.Controller.DisplayRegisters(AllRegs = True)
@@ -299,8 +297,7 @@ class Monitor(mysupport.MySupport):
             return "Send Email is not enabled."
 
         msgbody = ""
-        msgbody += "Version: " + GENMON_VERSION
-        msgbody += self.DictToString(self.Controller.GetStartInfo())
+        msgbody += self.DictToString(self.GetStartInfo())
         if not self.bDisablePlatformStats:
             msgbody +=  self.DictToString(self.GetPlatformStats())
         msgbody += self.Controller.DisplayRegisters(AllRegs = True)
@@ -368,7 +365,7 @@ class Monitor(mysupport.MySupport):
             ## These commands are used by the web / socket interface only
             "power_log_json"    : [self.Controller.GetPowerHistory, (command.lower(),), True],
             "power_log_clear"   : [self.Controller.ClearPowerLog, (), True],
-            "start_info_json"   : [self.Controller.GetStartInfo, (), True],
+            "start_info_json"   : [self.GetStartInfo, (), True],
             "registers_json"    : [self.Controller.DisplayRegisters, (False, True), True],  # display registers
             "allregs_json"      : [self.Controller.DisplayRegisters, (True, True), True],   # display registers
             "logs_json"         : [self.Controller.DisplayLogs, (True, True), True],
@@ -540,9 +537,20 @@ class Monitor(mysupport.MySupport):
             self.LogErrorLine("Error in DisplayMonitor: " + str(e1))
         return Monitor
 
-    #------------ Monitor::GetSiteName-------------------------------
+    #------------ Monitor::GetSiteName------------------------------------------
     def GetSiteName(self):
         return self.SiteName
+
+    #------------ Monitor::GetStartInfo-----------------------------------------
+    def GetStartInfo(self):
+
+        StartInfo = collections.OrderedDict()
+        StartInfo["version"] = GENMON_VERSION
+        StartInfo["sitename"] = self.SiteName
+        ControllerStartInfo = self.Controller.GetStartInfo()
+        StartInfo = self.MergeDicts(StartInfo, ControllerStartInfo)
+
+        return StartInfo
 
     #------------ Monitor::GetStatusForGUI ------------------------------------
     def GetStatusForGUI(self):

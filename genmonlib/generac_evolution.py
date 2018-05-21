@@ -2259,6 +2259,7 @@ class Evolution(controller.GeneratorController):
 
         if DictOut:
             ExerciseInfo = collections.OrderedDict()
+            ExerciseInfo["Enabled"] = True 
             ExerciseInfo["Frequency"] = Items[0]
             ExerciseInfo["Hour"] = HoursMin[0]
             ExerciseInfo["Minute"] = HoursMin[1]
@@ -3144,16 +3145,16 @@ class Evolution(controller.GeneratorController):
 
         StartInfo = {}
 
-        StartInfo["sitename"] = self.SiteName
         StartInfo["fueltype"] = self.FuelType
         StartInfo["model"] = self.Model
         StartInfo["nominalKW"] = self.NominalKW
         StartInfo["nominalRPM"] = self.NominalRPM
         StartInfo["nominalfrequency"] = self.NominalFreq
         StartInfo["Controller"] = self.GetController(Actual = False)
-        StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
         StartInfo["NominalBatteryVolts"] = "12"
-        StartInfo["UtilityVoltageDisplayed"] = True 
+        StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
+        StartInfo["UtilityVoltage"] = True
+        StartInfo["RemoteCommands"] = True
 
         return StartInfo
 

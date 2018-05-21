@@ -79,8 +79,8 @@ class RegisterEnum(object):
     GEN_TIME_SEC_DYWK       = "00e1"            # Time SEC:DayOfWeek
     GEN_TIME_MONTH_DAY      = "00e2"            # Time Month:DayofMonth
     GEN_TIME_YR             = "00e3"            # Time YR:UNK
-    GEN_TIME_5              = "00e4"            # Unknown (changes while running)
-    GEN_TIME_6              = "00e5"            # Unknown (changes while running)
+    GEN_TIME_5              = "00e4"            # Unknown (changes while running) High byte 100th of sec?, Low Byte?
+    GEN_TIME_6              = "00e5"            # Unknown (changes while running) High byte incriments every min (0-59) Low Byte incriments every hour.
     GEN_TIME_7              = "00e6"            # Unknown
     GEN_TIME_8              = "00e7"            # Unknown
     UNK_EF                  = "00ef"            # Unknown (changes while running)
@@ -871,16 +871,16 @@ class HPanel(controller.GeneratorController):
         try:
             StartInfo = {}
 
-            StartInfo["sitename"] = self.SiteName
             StartInfo["fueltype"] = self.FuelType
             StartInfo["model"] = self.Model
             StartInfo["nominalKW"] = self.NominalKW
             StartInfo["nominalRPM"] = self.NominalRPM
             StartInfo["nominalfrequency"] = self.NominalFreq
             StartInfo["NominalBatteryVolts"] = "24"
-            StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
             StartInfo["Controller"] = self.GetController()
-            StartInfo["UtilityVoltageDisplayed"] = False
+            StartInfo["UtilityVoltage"] = False
+            StartInfo["RemoteCommands"] = False
+            StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
 
             return StartInfo
         except Exception as e1:
@@ -903,10 +903,11 @@ class HPanel(controller.GeneratorController):
             # Exercise Info is a dict containing the following:
             # TODO
             ExerciseInfo = collections.OrderedDict()
+            ExerciseInfo["Enabled"] = False
             ExerciseInfo["Frequency"] = "Weekly"    # Biweekly, Weekly or Monthly
             ExerciseInfo["Hour"] = "14"
             ExerciseInfo["Minute"] = "00"
-            ExerciseInfo["QuietMode"] = "On"
+            ExerciseInfo["QuietMode"] = "Off"
             ExerciseInfo["EnhancedExerciseMode"] = False
             ExerciseInfo["Day"] = "Monday"
             Status["ExerciseInfo"] = ExerciseInfo

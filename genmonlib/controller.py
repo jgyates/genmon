@@ -246,7 +246,6 @@ class GeneratorController(mysupport.MySupport):
 
         StartInfo = {}
         try:
-            StartInfo["sitename"] = self.SiteName
             StartInfo["fueltype"] = self.FuelType
             StartInfo["model"] = self.Model
             StartInfo["nominalKW"] = self.NominalKW
@@ -276,6 +275,7 @@ class GeneratorController(mysupport.MySupport):
 
             # Exercise Info is a dict containing the following:
             ExerciseInfo = collections.OrderedDict()
+            ExerciseInfo["Enabled"] = False
             ExerciseInfo["Frequency"] = "Weekly"    # Biweekly, Weekly or Monthly
             ExerciseInfo["Hour"] = "14"
             ExerciseInfo["Minute"] = "00"
