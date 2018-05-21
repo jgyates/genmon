@@ -536,16 +536,18 @@ class GeneratorController(mysupport.MySupport):
             PowerLog = self.GetPowerHistory(CmdString, NoReduce = True)
 
             LogSize = os.path.getsize(self.PowerLog)
-            self.ClearPowerLog()
 
-            # is the file size too big?
-            if LogSize / (1024*1024) >= self.PowerLogMaxSize:
-                return "OK"
-
-            if LogSize / (1024*1024) >= self.PowerLogMaxSize * 0.8:
-                msgbody = "The kwlog file size is 80% of the maximum. Once the log reaches 100% of the maximum size the log will be reset."
+            if float(LogSize) / (1024*1024) >= self.PowerLogMaxSize * 0.98:
+                msgbody = "The kwlog file size is 98% of the maximum. Once the log reaches 100% of the maximum size the log will be reset."
                 self.MessagePipe.SendMessage("Notice: Log file size warning" , msgbody, msgtype = "warn")
 
+            # is the file size too big?
+            if float(LogSize) / (1024*1024) >= self.PowerLogMaxSize:
+                self.ClearPowerLog()
+                self.LogError("Power Log entries deleted due to size reaching maximum.")
+                return "OK"
+
+            self.ClearPowerLog(NoCreate = True)
             # Write oldest log entries first
             for Items in reversed(PowerLog):
                 self.LogToFile(self.PowerLog, Items[0], Items[1])
@@ -558,11 +560,11 @@ class GeneratorController(mysupport.MySupport):
             return "OK"
 
         except Exception as e1:
-            self.LogErrorLine("Error in  ClearPowerLog: " + str(e1))
-            return "Error in  ClearPowerLog: " + str(e1)
+            self.LogErrorLine("Error in  PrunePowerLog: " + str(e1))
+            return "Error in  PrunePowerLog: " + str(e1)
 
     #------------ GeneratorController::ClearPowerLog----------------------------
-    def ClearPowerLog(self):
+    def ClearPowerLog(self, NoCreate = False):
 
         try:
             if not len(self.PowerLog):
@@ -570,11 +572,15 @@ class GeneratorController(mysupport.MySupport):
 
             if not os.path.isfile(self.PowerLog):
                 return "Power Log is empty"
-            os.remove(self.PowerLog)
+            try:
+                os.remove(self.PowerLog)
+            except:
+                pass
 
-            # add zero entry to note the start of the log
-            TimeStamp = datetime.datetime.now().strftime('%x %X')
-            self.LogToFile(self.PowerLog, TimeStamp, "0.0")
+            if not NoCreate:
+                # add zero entry to note the start of the log
+                TimeStamp = datetime.datetime.now().strftime('%x %X')
+                self.LogToFile(self.PowerLog, TimeStamp, "0.0")
 
             return "Power Log cleared"
         except Exception as e1:
