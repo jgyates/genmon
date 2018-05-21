@@ -44,7 +44,7 @@ SetFavIcon();
 GetkWHistory();
 GetRegisterNames();
 $(document).ready(function() {
-    $("#footer").html('<table border="0" width="100%" height="30px"><tr><td width="5%"><img class="tooltip" class="alert_small" id="ajaxWarning" src="images/transparent.png" height="28px" width="28px" style="display: none;"></td><td width="90%"><a href="https://github.com/jgyates/genmon" target="_blank">GenMon Project on GitHub</a></td><td width="5%"></td></tr></table>');
+    $("#footer").html('<table border="0" width="100%" height="30px"><tr><td width="5%"><img class="tooltip alert_small" id="ajaxWarning" src="images/transparent.png" height="28px" width="28px" style="display: none;"></td><td width="90%"><a href="https://github.com/jgyates/genmon" target="_blank">GenMon Project on GitHub</a></td><td width="5%"></td></tr></table>');
     $('#ajaxWarning').tooltipster({minWidth: '280px', maxWidth: '480px', animation: 'fade', updateAnimation: 'null', contentAsHTML: 'true', delay: 100, animationDuration: 200, side: ['top', 'left'], content: "No Communicatikon Errors occured"});
     UpdateRegisters(true, false);
     setInterval(GetBaseStatus, 3000);       // Called every 3 sec
@@ -70,7 +70,7 @@ function processAjaxSuccess() {
       ajaxErrors["log"] = ajaxErrors["errorCount"]+" messages missed between "+ajaxErrors["lastSuccessTime"].format("H:mm:ss") + " and " +now.format("H:mm:ss") +"<br>" + ajaxErrors["log"];
       if ((myGenerator['UnsentFeedback'] == false) && (myGenerator['SystemHealth'] == false)) { 
         $("#footer").removeClass("alert");
-        $("#ajaxWarning").hide(2000);
+        $("#ajaxWarning").hide(400);
       }
     }
     ajaxErrors["errorCount"] = 0;
@@ -84,7 +84,7 @@ function processAjaxError(xhr, ajaxOptions, thrownError) {
     if (ajaxErrors["errorCount"]>5) {
       var tempMsg = '<b><span style="font-size:14px">Disconnected from server</span></b><br>'+ajaxErrors["errorCount"]+' messages missed since '+ajaxErrors["lastSuccessTime"].format("H:mm:ss")+"</b><br><br>"+((ajaxErrors["log"].length>500) ? ajaxErrors["log"].substring(0, 500)+"<br>[...]" : ajaxErrors["log"]);
       $("#footer").addClass("alert");
-      $("#ajaxWarning").show(2000);
+      $("#ajaxWarning").show(400);
       $('#ajaxWarning').tooltipster('content', tempMsg);
     }
 }
@@ -1898,7 +1898,7 @@ function GetRegisterNames()
 function GenmonAlert(msg)
 {
        vex.closeAll();
-       vex.dialog.alert({ unsafeMessage: '<table><tr><td valign="middle" width="200px" align="center"><img class="alert" src="images/transparent.png" width="64px" height="64px"></td><td valign="middle" width="70%">'+msg+'</td></tr></table>'});
+       vex.dialog.alert({ unsafeMessage: '<table><tr><td valign="middle" width="200px" align="center"><img class="alert_large" src="images/transparent.png" width="64px" height="64px"></td><td valign="middle" width="70%">'+msg+'</td></tr></table>'});
 }
 
 //*****************************************************************************
@@ -1974,19 +1974,19 @@ function GetBaseStatus()
           myGenerator['SystemHealth'] = true;
           var tempMsg = '<b><span style="font-size:14px">GENMON SYSTEM WARNING</span></b><br>'+result['SystemHealth'];
           $("#footer").addClass("alert");
-          $("#ajaxWarning").show(2000);
+          $("#ajaxWarning").show(400);
           $('#ajaxWarning').tooltipster('content', tempMsg);
         } else if (result['UnsentFeedback'].toLowerCase() == "true") {
           myGenerator['UnsentFeedback'] = true;
           var tempMsg = '<b><span style="font-size:14px">UNKNOWN ERROR OCCURED</span></b><br>The software had encountered unknown status from<br>your generator.<br>This status could be used to improve the software.<br>To send the contents of your generator registers to<br>the software developer please enable "Auto Feedback"<br>on the Settings page.';
           $("#footer").addClass("alert");
-          $("#ajaxWarning").show(2000);
+          $("#ajaxWarning").show(400);
           $('#ajaxWarning').tooltipster('content', tempMsg);
         } else { // Note - this claus only get's executed if the ajax connection worked. Hence no need to check ajaxErrors["errorCount"]
           myGenerator['UnsentFeedback'] = false;
           myGenerator['SystemHealth'] = false;
           $("#footer").removeClass("alert");
-          $("#ajaxWarning").hide(2000);
+          $("#ajaxWarning").hide(400);
         }
 
         baseState = result['basestatus'];

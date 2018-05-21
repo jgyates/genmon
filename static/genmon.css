@@ -146,7 +146,7 @@ li a:hover:not(.active) {
 
 /* Pictures */
 
-.registers, .alert_small, .validation_ok, .validation_text, .print10, .print24, .print60, .temp1, .temp2, .temp3, .temp4, .wifi1, .wifi2, .wifi3, .wifi4, .status, .settings, .outage, .notifications, .monitor, .log, .maintenance, .remove_bin, .alert{
+.registers, .alert_small, .validation_ok, .validation_text, .print10, .print24, .print60, .temp1, .temp2, .temp3, .temp4, .wifi1, .wifi2, .wifi3, .wifi4, .status, .settings, .outage, .notifications, .monitor, .log, .maintenance, .remove_bin, .alert_large{
 	background: url(images/sprites.png) no-repeat;
 }
 
@@ -288,7 +288,7 @@ li a:hover:not(.active) {
 	height: 24px;
 }
 
-.alert{
+.alert_large{
 	background-position: -14px -211px ;
 	width: 64px;
 	height: 64px;
