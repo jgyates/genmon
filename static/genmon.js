@@ -910,8 +910,7 @@ function checkNewVersion(){
           // $('.vex-dialog-message').html("A new version is available.<br>Current Version: " + currentVersion+"<br>New Version: " + latestVersion);
           $('.vex-dialog-message').html("Are you sure you want to update to the latest version?");  
     } else {
-          $('.vex-dialog-message').html("You are runnign the latest version:" + latestVersion);
-          $('.vex-dialog-button-primary').hide();
+          $('.vex-dialog-message').html("Are you sure you want to upgrade?");
     }
 }
 
