@@ -56,7 +56,7 @@ class MyPlatform(mycommon.MyCommon):
     #------------ MyPlatform::IsOSLinux-----------------------------------------
     def IsOSLinux(self):
 
-        if sys.platform == "linux" or sys.platform == "linux2":
+        if "linux" in sys.platform:
             return True
 
     #------------ MyPlatform::IsPlatformRaspberryPi-----------------------------
