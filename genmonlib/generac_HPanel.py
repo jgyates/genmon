@@ -349,19 +349,6 @@ class HPanel(controller.GeneratorController):
         while not self.InitComplete:
             time.sleep(0.01)
 
-        #while True:
-
-            #print RegisterEnum.GetRegList()
-            #print vars(RegisterEnum).items()
-            #print (self.DisplayRegisters())
-            #print (self.DisplayStatus())
-            #print (self.DisplayOutage())
-            #print (self.DisplayMaintenance())
-            #print( self.GetStartInfo())
-            #print( self.GetStatusForGUI())
-        #    print (self.GetOneLineStatus())
-        #    time.sleep(5)
-
     #------------ HPanel:GetRegisterValueFromList ------------------------------
     def GetRegisterValueFromList(self,Register):
 
@@ -532,99 +519,10 @@ class HPanel(controller.GeneratorController):
                 self.LogErrorLine("Error in MasterEmulation: " + str(e1))
         self.CheckForAlarmEvent.set()
 
-    #------------ Evolution:CheckForOutage ----------------------------------------
-    # also update min and max utility voltage
-    def CheckForOutage(self):
-
-        try:
-            if self.DisableOutageCheck:
-                # do not check for outage
-                return ""
-
-            UtilityVolts = self.GetUtilityVoltage(ReturnInt = True)
-
-            PickupVoltage = self.GetPickUpVoltage(ReturnInt = True)
-            ThresholdVoltage = self.GetThresholdVoltage(ReturnInt = True)
-
-            # first time thru set the values to the same voltage level
-            if self.UtilityVoltsMin == 0 and self.UtilityVoltsMax == 0:
-                self.UtilityVoltsMin = UtilityVolts
-                self.UtilityVoltsMax = UtilityVolts
-
-            if UtilityVolts > self.UtilityVoltsMax:
-                if UtilityVolts > PickupVoltage:
-                    self.UtilityVoltsMax = UtilityVolts
-
-            if UtilityVolts < self.UtilityVoltsMin:
-                if UtilityVolts > ThresholdVoltage:
-                    self.UtilityVoltsMin = UtilityVolts
-
-            TransferStatus = self.GetTransferStatus()
-
-            if len(TransferStatus):
-                if self.TransferActive:
-                    if TransferStatus == "Utility":
-                        self.TransferActive = False
-                        msgbody = "\nPower is being supplied by the utility line. "
-                        self.MessagePipe.SendMessage("Transfer Switch Changed State Notice at " + self.SiteName, msgbody, msgtype = "outage")
-                else:
-                    if TransferStatus == "Generator":
-                        self.TransferActive = True
-                        msgbody = "\nPower is being supplied by the generator. "
-                        self.MessagePipe.SendMessage("Transfer Switch Changed State Notice at " + self.SiteName, msgbody, msgtype = "outage")
-
-            # Check for outage
-            # are we in an outage now
-            # NOTE: for now we are just comparing these numbers, the generator has a programmable delay
-            # that must be met once the voltage passes the threshold. This may cause some "switch bounce"
-            # testing needed
-            if self.SystemInOutage:
-                if UtilityVolts > PickupVoltage:
-                    self.SystemInOutage = False
-                    self.LastOutageDuration = datetime.datetime.now() - self.OutageStartTime
-                    OutageStr = str(self.LastOutageDuration).split(".")[0]  # remove microseconds from string
-                    msgbody = "\nUtility Power Restored. Duration of outage " + OutageStr
-                    self.MessagePipe.SendMessage("Outage Recovery Notice at " + self.SiteName, msgbody, msgtype = "outage")
-                    # log outage to file
-                    self.LogToFile(self.OutageLog, self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"), OutageStr)
-            else:
-                if UtilityVolts < ThresholdVoltage:
-                    self.SystemInOutage = True
-                    self.OutageStartTime = datetime.datetime.now()
-                    msgbody = "\nUtility Power Out at " + self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S")
-                    self.MessagePipe.SendMessage("Outage Notice at " + self.SiteName, msgbody, msgtype = "outage")
-        except Exception as e1:
-            self.LogErrorLine("Error in CheckForOutage: " + str(e1))
-
-    #------------ HPanel:GetUtilityVoltage -------------------------------------
-    def GetUtilityVoltage(self, ReturnInt = False):
-
-        # TODO:
-        if ReturnInt:
-            return 240
-        return "240 V"
-
-    #------------ HPanel:GetThresholdVoltage -----------------------------------
-    def GetThresholdVoltage(self, ReturnInt = False):
-
-        # TODO:
-        if ReturnInt:
-            return DEFAULT_THRESHOLD_VOLTAGE
-
-        return "%d V" % DEFAULT_THRESHOLD_VOLTAGE
-
-    #------------ HPanel:GetPickUpVoltage --------------------------------------
-    def GetPickUpVoltage(self, ReturnInt = False):
-
-        # TODO:
-        if ReturnInt:
-            return DEFAULT_PICKUP_VOLTAGE
-        return "%d V" %  DEFAULT_PICKUP_VOLTAGE
-
     #------------ HPanel:GetTransferStatus -------------------------------------
     def GetTransferStatus(self):
 
-        LineState = ""
+        LineState = "Unknown"
         #if self.GetParameterBit(RegisterEnum.INPUT_1, Input1.DI3_LINE_POWER):
         #if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.DI3_LINE_PWR_ACT):
         if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.LINE_POWER):
@@ -811,16 +709,13 @@ class HPanel(controller.GeneratorController):
     def CheckForAlarms(self):
 
         try:
-            # Check for outages
-            self.CheckForOutage()
-
             # Check for changes in engine state
 
             EngineState = self.GetEngineState()
             if not EngineState == self.LastEngineState:
                 self.LastEngineState = EngineState
                 # This will trigger a call to CheckForalarms with LisOutput = True
-                msgsubject = "Generator Status Changed at " + self.SiteName
+                msgsubject = "Generator Notice: " + self.SiteName
                 msgbody = self.DisplayStatus()
                 self.MessagePipe.SendMessage(msgsubject , msgbody, msgtype = "warn")
 
@@ -985,6 +880,7 @@ class HPanel(controller.GeneratorController):
             StartInfo["NominalBatteryVolts"] = "24"
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
             StartInfo["Controller"] = self.GetController()
+            StartInfo["UtilityVoltageDisplayed"] = False
 
             return StartInfo
         except Exception as e1:
@@ -1001,7 +897,7 @@ class HPanel(controller.GeneratorController):
             Status["kwOutput"] = self.GetPowerOutput()
             Status["OutputVoltage"] = self.GetParameter(RegisterEnum.AVG_VOLTAGE,"V")
             Status["BatteryVoltage"] = self.GetParameter(RegisterEnum.BATTERY_VOLTS, "V", 100.0)
-            Status["UtilityVoltage"] = self.GetUtilityVoltage()
+            Status["UtilityVoltage"] = "0"
             Status["RPM"] = self.GetParameter(RegisterEnum.OUTPUT_RPM)
             Status["Frequency"] = self.GetParameter(RegisterEnum.OUTPUT_FREQUENCY, "Hz", 10.0)
             # Exercise Info is a dict containing the following:
@@ -1120,7 +1016,7 @@ class HPanel(controller.GeneratorController):
 
             Engine["Switch State"] = self.GetSwitchState()
             Engine["Engine State"] = self.GetEngineState()
-            Engine["Output Power"] = self.GetParameter(RegisterEnum.TOTAL_POWER_KW, "kW")
+            Engine["Output Power"] = self.GetPowerOutput()
             Engine["Output Power Factor"] = self.GetParameter(RegisterEnum.TOTAL_PF, Divider = 100.0)
             Engine["RPM"] = self.GetParameter(RegisterEnum.OUTPUT_RPM)
             Engine["Frequency"] = self.GetParameter(RegisterEnum.OUTPUT_FREQUENCY, "Hz", 10.0)
@@ -1150,19 +1046,7 @@ class HPanel(controller.GeneratorController):
             Time["Monitor Time"] = datetime.datetime.now().strftime("%A %B %-d, %Y %H:%M:%S")
             Time["Generator Time"] = self.GetDateTime()
 
-
             #Stat["Last Log Entries"] = self.DisplayLogs(AllLogs = False, DictOut = True)
-
-            #Engine["Output Voltage"] = self.GetVoltageOutput()
-
-            #Line["Transfer Switch State"] = self.GetTransferStatus()
-            #Line["Utility Voltage"] = self.GetUtilityVoltage()
-            #Line["Utility Voltage Max"] = "%dV " % (self.UtilityVoltsMax)
-            #Line["Utility Voltage Min"] = "%dV " % (self.UtilityVoltsMin)
-            #Line["Utility Threshold Voltage"] = self.GetThresholdVoltage()
-
-            #Line["Utility Pickup Voltage"] = self.GetPickUpVoltage()
-            #Line["Set Output Voltage"] = self.GetSetOutputVoltage()
 
 
             if not DictOut:
@@ -1182,31 +1066,7 @@ class HPanel(controller.GeneratorController):
             OutageData = collections.OrderedDict()
             Outage["Outage"] = OutageData
 
-
-            if self.SystemInOutage:
-                outstr = "System in outage since %s" % self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S")
-            else:
-                if self.ProgramStartTime != self.OutageStartTime:
-                    OutageStr = str(self.LastOutageDuration).split(".")[0]  # remove microseconds from string
-                    outstr = "Last outage occurred at %s and lasted %s." % (self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"), OutageStr)
-                else:
-                    outstr = "No outage has occurred since program launched."
-
-            OutageData["Status"] = outstr
-
-             # get utility voltage
-            Value = self.GetUtilityVoltage()
-            if len(Value):
-                OutageData["Utility Voltage"] = Value
-
-            OutageData["Utility Voltage Minimum"] = "%dV " % (self.UtilityVoltsMin)
-            OutageData["Utility Voltage Maximum"] = "%dV " % (self.UtilityVoltsMax)
-
-            OutageData["Utility Threshold Voltage"] = self.GetThresholdVoltage()
-
-            OutageData["Utility Pickup Voltage"] = self.GetPickUpVoltage()
-
-            OutageData["Outage Log"] = self.DisplayOutageHistory()
+            OutageData["Status"] = "Not Supported"
 
             if not DictOut:
                 return self.printToString(self.ProcessDispatch(Outage,""))
@@ -1329,7 +1189,7 @@ class HPanel(controller.GeneratorController):
     # return kW with units i.e. "2.45kW"
     def GetPowerOutput(self):
 
-        return self.GetParameter(RegisterEnum.TOTAL_POWER_KW, "kW", 100.0)
+        return self.GetParameter(RegisterEnum.TOTAL_POWER_KW, "kW")
 
     #----------  HPanel:GetCommStatus  ----------------------------
     # return Dict with communication stats

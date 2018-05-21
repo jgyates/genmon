@@ -3153,6 +3153,7 @@ class Evolution(controller.GeneratorController):
         StartInfo["Controller"] = self.GetController(Actual = False)
         StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
         StartInfo["NominalBatteryVolts"] = "12"
+        StartInfo["UtilityVoltageDisplayed"] = True 
 
         return StartInfo
 

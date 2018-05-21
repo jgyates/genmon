@@ -253,6 +253,9 @@ class GeneratorController(mysupport.MySupport):
             StartInfo["nominalRPM"] = self.NominalRPM
             StartInfo["nominalfrequency"] = self.NominalFreq
             StartInfo["Controller"] = "Generic Controller Name"
+            StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
+            StartInfo["NominalBatteryVolts"] = "12"
+            StartInfo["UtilityVoltageDisplayed"] = True
         except Exception as e1:
             self.LogErrorLine("Error in GetStartInfo: " + str(e1))
         return StartInfo
@@ -265,6 +268,12 @@ class GeneratorController(mysupport.MySupport):
         try:
             Status["basestatus"] = self.GetBaseStatus()
             Status["kwOutput"] = self.GetPowerOutput()
+            Status["OutputVoltage"] = "0V"
+            Status["BatteryVoltage"] = "0V"
+            Status["UtilityVoltage"] = "0V"
+            Status["Frequency"] = "0"
+            Status["RPM"] = "0"
+
             # Exercise Info is a dict containing the following:
             ExerciseInfo = collections.OrderedDict()
             ExerciseInfo["Frequency"] = "Weekly"    # Biweekly, Weekly or Monthly
