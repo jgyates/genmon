@@ -525,6 +525,7 @@ class HPanel(controller.GeneratorController):
 
         for Register in RegisterEnum.GetRegList(): #RegisterEnum:
             try:
+                time.sleep(0.01)
                 self.ModBus.ProcessMasterSlaveTransaction(Register, 1)
                 # check for unknown events (i.e. events we are not decoded) and send an email if they occur
             except Exception as e1:
