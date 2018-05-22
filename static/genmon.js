@@ -13,7 +13,6 @@ $("#navMenu").html('<ul>' +
     '</ul>') ;
 
 // global base state
-// var currentVersion = "";
 var baseState = "READY";        // updated on a time
 var currentbaseState = "READY"; // menus change on this var
 var currentClass = "active";    // CSS class for menu color
@@ -849,18 +848,20 @@ function DisplayMonitor(){
            }           
            $("#WLAN_Signal_Level").html('<div style="display: inline-block; position: relative;">'+result["Monitor"]["Platform Stats"]["WLAN Signal Level"] + '<img style="position: absolute;top:-10px;left:110px" class="'+ wifi_img +'" src="images/transparent.png"></div>');
         }
-        currentVersion = result["Monitor"]["Generator Monitor Stats"]["Generator Monitor Version"];
         if (latestVersion == "") {
           // var url = "https://api.github.com/repos/jgyates/genmon/releases";
           var url = "https://raw.githubusercontent.com/jgyates/genmon/master/genmon.py";
-          $.ajax({dataType: "html", url: url, timeout: 4000, error: function(result) {console.log("got an error")}, success: function(result) {
+          $.ajax({dataType: "html", url: url, timeout: 4000, error: function(result) {
+             console.log("got an error when looking up latest version");
+             latestVersion == "unknown";
+          }, success: function(result) {
              latestVersion = replaceAll((jQuery.grep(result.split("\n"), function( a ) { return (a.indexOf("GENMON_VERSION") >= 0); }))[0].split(" ")[2], '"', '');
-             if (latestVersion != currentVersion) {
-                $('#updateNeeded').hide().html("<br>&nbsp;&nbsp;&nbsp;&nbsp;You are not running the latest version.<br>&nbsp;&nbsp;&nbsp;&nbsp;Current Version: " + currentVersion+"<br>&nbsp;&nbsp;&nbsp;&nbsp;New Version: " + latestVersion+"<br><br>").fadeIn(1000);
+             if (latestVersion != myGenerator["version"]) {
+                $('#updateNeeded').hide().html("<br>&nbsp;&nbsp;&nbsp;&nbsp;You are not running the latest version.<br>&nbsp;&nbsp;&nbsp;&nbsp;Current Version: " + myGenerator["version"] +"<br>&nbsp;&nbsp;&nbsp;&nbsp;New Version: " + latestVersion+"<br><br>").fadeIn(1000);
              }
           }});
-        } else if (latestVersion != currentVersion) {
-          $('#updateNeeded').html("<br>&nbsp;&nbsp;&nbsp;&nbsp;You are not running the latest version.<br>&nbsp;&nbsp;&nbsp;&nbsp;Current Version: " + currentVersion+"<br>&nbsp;&nbsp;&nbsp;&nbsp;New Version: " + latestVersion+"<br><br>");
+        } else if ((latestVersion != "unknown") && (latestVersion != myGenerator["version"])) {
+          $('#updateNeeded').html("<br>&nbsp;&nbsp;&nbsp;&nbsp;You are not running the latest version.<br>&nbsp;&nbsp;&nbsp;&nbsp;Current Version: " + myGenerator["version"] +"<br>&nbsp;&nbsp;&nbsp;&nbsp;New Version: " + latestVersion+"<br><br>");
         }
    }});
 }
@@ -906,8 +907,8 @@ function checkNewVersion(){
         }
     });
 
-    if (latestVersion != currentVersion) {
-          // $('.vex-dialog-message').html("A new version is available.<br>Current Version: " + currentVersion+"<br>New Version: " + latestVersion);
+    if (latestVersion != myGenerator["version"]) {
+          // $('.vex-dialog-message').html("A new version is available.<br>Current Version: " + myGenerator["version"] + "<br>New Version: " + latestVersion);
           $('.vex-dialog-message').html("Are you sure you want to update to the latest version?");  
     } else {
           $('.vex-dialog-message').html("Are you sure you want to upgrade?");
