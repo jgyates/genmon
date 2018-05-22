@@ -113,10 +113,52 @@ class MyPlatform(mycommon.MyCommon):
                 PiInfo["Pi Model"] = str(output.encode('ascii', 'ignore')).rstrip("\x00")
             except:
                 pass
+            try:
+                file = open("/sys/devices/platform/soc/soc:firmware/get_throttled")
+                status = file.read()
+                PiInfo["Throttled Status"] = self.ParseThrottleStatus(int(status, 16))
+            except Exception as e1:
+                print(str(e1))
+                pass
+
         except Exception as e1:
             self.LogErrorLine("Error in GetRaspberryPiInfo: " + str(e1))
 
         return PiInfo
+
+    #------------ MyPlatform::ParseThrottleStatus ------------------------------
+    def ParseThrottleStatus(self, status):
+        StatusStr = ""
+
+        if (status & 0x40000):
+            StatusStr += "Throttling has occured. "
+        if (status & 0x20000):
+            StatusStr += "ARM freqency capping has occured. "
+        if (status & 0x10000):
+            StatusStr += "Undervoltage has occured. "
+        if (status & 0x4):
+            StatusStr += "Throttling. "
+        if (status & 0x2):
+            StatusStr += "ARM frequency capped. "
+        if (status & 0x1):
+            StatusStr += "Undervoltage. "
+
+        if StatusStr == "":
+            StatusStr += "OK"
+        return StatusStr
+
+    #------------ MyPlatform::GetThrottledStatus -------------------------------
+    def GetThrottledStatus():
+
+        try:
+            file = open("/sys/devices/platform/soc/soc:firmware/get_throttled")
+            status = file.read()
+
+            get_throttled = int(status, 16)
+            StatusStr = ParseThrottleStatus(get_throttled)
+
+        except:
+            pass
 
     #------------ MyPlatform::GetLinuxInfo -------------------------------------
     def GetLinuxInfo(self):
