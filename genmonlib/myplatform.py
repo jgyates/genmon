@@ -118,7 +118,6 @@ class MyPlatform(mycommon.MyCommon):
                 status = file.read()
                 PiInfo["Throttled Status"] = self.ParseThrottleStatus(int(status, 16))
             except Exception as e1:
-                print(str(e1))
                 pass
 
         except Exception as e1:
