@@ -116,7 +116,7 @@ class MyPlatform(mycommon.MyCommon):
             try:
                 file = open("/sys/devices/platform/soc/soc:firmware/get_throttled")
                 status = file.read()
-                PiInfo["Throttled Status"] = self.ParseThrottleStatus(int(status, 16))
+                PiInfo = self.MergeDicts(PiInfo, self.ParseThrottleStatus(int(status, 16)))
             except Exception as e1:
                 pass
 
@@ -127,24 +127,43 @@ class MyPlatform(mycommon.MyCommon):
 
     #------------ MyPlatform::ParseThrottleStatus ------------------------------
     def ParseThrottleStatus(self, status):
+
+        PiThrottleInfo = collections.OrderedDict()
+
         StatusStr = ""
 
         if (status & 0x40000):
-            StatusStr += "Throttling has occured. "
-        if (status & 0x20000):
-            StatusStr += "ARM freqency capping has occured. "
-        if (status & 0x10000):
-            StatusStr += "Undervoltage has occured. "
+            StatusStr += "Has occured. "
         if (status & 0x4):
-            StatusStr += "Throttling. "
-        if (status & 0x2):
-            StatusStr += "ARM frequency capped. "
-        if (status & 0x1):
-            StatusStr += "Undervoltage. "
+            StatusStr += "Throttling Active. "
 
         if StatusStr == "":
             StatusStr += "OK"
-        return StatusStr
+
+        PiThrottleInfo["Pi CPU Frequecy Throttling"] = StatusStr
+
+        StatusStr = ""
+        if (status & 0x20000):
+            StatusStr += "Has occured. "
+        if (status & 0x2):
+            StatusStr += "ARM frequency capped. "
+
+        if StatusStr == "":
+            StatusStr += "OK"
+
+        PiThrottleInfo["Pi ARM Frequency Cap"] = StatusStr
+
+        StatusStr = ""
+        if (status & 0x10000):
+            StatusStr += "Has occured. "
+        if (status & 0x1):
+            StatusStr += "Undervoltage Detected. "
+
+        if StatusStr == "":
+            StatusStr += "OK"
+
+        PiThrottleInfo["Pi Undervoltage"] = StatusStr
+        return PiThrottleInfo
 
     #------------ MyPlatform::GetThrottledStatus -------------------------------
     def GetThrottledStatus():
