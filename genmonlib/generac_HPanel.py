@@ -111,6 +111,35 @@ class RegisterEnum(object):
     UNK_13B                 = "013b"            # UNKNOWN
     UNK_13C                 = "013c"            # UNKNOWN
 
+    # Register #665: DTC P0134 Fault Active Counter
+    # This is a value between 0 and 5. If it is 5, then the DTC was active during
+    # this Start/Stop cycle. If it is 1 through 4, then the DTC was not active
+    # this Start/Stop cycle, but it was active in a previous cycle and has not
+    # yet cleared. If it is 0, then the DTC is cleared.
+    DTC_FAULT_COUNTER       = "0299"
+    # Register #668: Oxygen Sensor Reading
+    # This is a value between 0 and 1023. The lower the value the leaner the
+    # combustion. The higher the value the richer the combustion. Roughly 450 is
+    # the stoichiometric balance between lean and rich. It is desired that the
+    # Oxygen Sensor tog- gle between rich and lean in order to optimize the
+    # emissions.
+    O2_SENSOR_EX            = "029c"
+    # Register #670: Throttle Position
+    # This is a value between 150 and 850 normally. The lower the number the
+    # less flow there is. At rest, the throttle position is typically around
+    # 150. Full open throttle is about 850.
+    THROTTLE_POSITION_EX    = "029e"
+    # Register #672: Generator Load / Engine Torque
+    # This is the generator load in kW. It represents the engine output torque.
+    GENERATOR_LOAD          = "02a0"
+    # Register #673: Engine Speed
+    # This is the engine speed in RPM * 8. A generator running at 1800 RPM will
+    # show 14,400.
+    ENGINE_SPEED            = "02a1"
+    # Register #674: Engine Coolant Temperature
+    # This is the coolant temperature in Celsius + 40°. A generator with an
+    # engine coolant temperature of 200° F will show 133.
+    COOLANT_TEMP_EX         = "02a2"
     #---------------------RegisterEnum::GetRegList------------------------------
     @staticmethod
     def GetRegList():
@@ -514,7 +543,6 @@ class HPanel(controller.GeneratorController):
             try:
                 time.sleep(0.01)
                 self.ModBus.ProcessMasterSlaveTransaction(Register, 1)
-                # check for unknown events (i.e. events we are not decoded) and send an email if they occur
             except Exception as e1:
                 self.LogErrorLine("Error in MasterEmulation: " + str(e1))
         self.CheckForAlarmEvent.set()
