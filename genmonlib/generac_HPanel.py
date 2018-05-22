@@ -137,8 +137,8 @@ class RegisterEnum(object):
     # show 14,400.
     ENGINE_SPEED            = "02a1"
     # Register #674: Engine Coolant Temperature
-    # This is the coolant temperature in Celsius + 40°. A generator with an
-    # engine coolant temperature of 200° F will show 133.
+    # This is the coolant temperature in Celsius + 40. A generator with an
+    # engine coolant temperature of 200 F will show 133.
     COOLANT_TEMP_EX         = "02a2"
     #---------------------RegisterEnum::GetRegList------------------------------
     @staticmethod
