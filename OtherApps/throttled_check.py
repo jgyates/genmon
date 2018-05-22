@@ -11,7 +11,7 @@ def ParseThrottleStatus(status):
     if (status & 0x20000):
         StatusStr += "ARM freqency capping has occured. "
     if (status & 0x10000):
-        StatusStr += "Underspeed has occured. "
+        StatusStr += "Undervoltage has occured. "
     if (status & 0x4):
         StatusStr += "Active throttling. "
     if (status & 0x2):
