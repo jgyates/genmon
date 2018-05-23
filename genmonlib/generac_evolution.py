@@ -2363,7 +2363,7 @@ class Evolution(controller.GeneratorController):
         if ReturnFloat:
             DefaultReturn = 0.0
         else:
-            DefaultReturn = "0.00A"
+            DefaultReturn = "0.00 A"
         try:
             if not self.PowerMeterIsSupported():
                 return DefaultReturn
@@ -2444,7 +2444,7 @@ class Evolution(controller.GeneratorController):
             if ReturnFloat:
                 return CurrentOutput
 
-            return "%.2fA" % CurrentOutput
+            return "%.2f A" % CurrentOutput
         except Exception as e1:
             self.LogErrorLine("Error in GetCurrentOutput: " + str(e1))
             return DefaultReturn
@@ -2486,7 +2486,7 @@ class Evolution(controller.GeneratorController):
         EngineState = self.GetEngineState()
         # report null if engine is not running
         if "Stopped" in EngineState or "Off" in EngineState or not len(EngineState):
-            return "0kW"
+            return "0 kW"
 
         Current = self.GetCurrentOutput(ReturnFloat = True)
         Voltage = self.GetVoltageOutput(ReturnInt = True)
@@ -2498,7 +2498,7 @@ class Evolution(controller.GeneratorController):
 
         if ReturnFloat:
             return PowerOut / 1000.0
-        return "%.2fkW" % (PowerOut / 1000.0)
+        return "%.2f kW" % (PowerOut / 1000.0)
 
 
     #------------ Evolution:GetFrequency ---------------------------------------
@@ -2543,7 +2543,7 @@ class Evolution(controller.GeneratorController):
 
          # get Utility Voltage Pickup Voltage
         if self.EvolutionController and self.LiquidCooled:
-            return self.GetParameter("023b", ReturnInt = ReturnInt)
+            return self.GetParameter("023b", ReturnInt = ReturnInt, Label = "V")
 
         PickupVoltage = DEFAULT_PICKUP_VOLTAGE
 
