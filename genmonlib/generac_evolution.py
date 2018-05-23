@@ -1911,22 +1911,11 @@ class Evolution(controller.GeneratorController):
 
         if not self.EvolutionController:
             return ""                           # Nexus
-        else:
-            if self.LiquidCooled:               # Evolution
-                Register = "0053"
-            else:
-                return ""
 
-        Value = self.GetRegisterValueFromList(Register)
-        if len(Value) != 4:
+        if not self.LiquidCooled:               # Evolution AC
             return ""
-        RegVal = int(Value, 16)
 
-        if self.BitIsEqual(RegVal, 0x01, 0x01):
-            return "Generator"
-        else:
-            return "Utility"
-
+        return self.GetParameterBit("0053", 0x01, OnLabel = "Generator", OffLabel = "Utility")
 
     ##------------ Evolution:SystemInAlarm --------------------------------------
     def SystemInAlarm(self):
@@ -2227,11 +2216,8 @@ class Evolution(controller.GeneratorController):
             return ""                       # Not supported on Nexus
         if not self.LiquidCooled:
             return ""                       # Not supported on Air Cooled
-        # get exercise time of day
-        Value = self.GetRegisterValueFromList("023e")
-        if len(Value) != 4:
-            return ""
-        return "%d min" % int(Value,16)
+        # get exercise duration
+        return self.GetParameter("023e", Label = "min")
 
     #------------ Evolution:GetParsedExerciseTime --------------------------------------------
     # Expcected output is # Wednesday!14!00!On!Weekly!False
@@ -2259,7 +2245,7 @@ class Evolution(controller.GeneratorController):
 
         if DictOut:
             ExerciseInfo = collections.OrderedDict()
-            ExerciseInfo["Enabled"] = True 
+            ExerciseInfo["Enabled"] = True
             ExerciseInfo["Frequency"] = Items[0]
             ExerciseInfo["Hour"] = HoursMin[0]
             ExerciseInfo["Minute"] = HoursMin[1]
@@ -2358,31 +2344,13 @@ class Evolution(controller.GeneratorController):
                 return "0"
 
         # get value
-        Value = self.GetRegisterValueFromList(Register)
-        if len(Value) != 4:
-            return ""
-
-        IntTemp = int(Value,16)
-        if not Hex:
-            SensorValue = "%d" % IntTemp
-        else:
-            SensorValue = "%x" % IntTemp
-
-        return SensorValue
+        return self.GetParameter(Register, Hex = Hex)
 
     #------------ Evolution:GetRPM ---------------------------------------------
     def GetRPM(self, ReturnInt = True):
 
         # get RPM
-        Value = self.GetRegisterValueFromList("0007")
-        if len(Value) != 4:
-            return ""
-
-        if ReturnInt:
-            return int(Value,16)
-
-        RPMValue = "%5d" % int(Value,16)
-        return RPMValue
+        return self.GetParameter("0007", ReturnInt = ReturnInt)
 
     #------------ Evolution:GetCurrentOutput -----------------------------------
     def GetCurrentOutput(self, ReturnFloat = False):
@@ -2485,9 +2453,6 @@ class Evolution(controller.GeneratorController):
     def GetActiveRotorPoles(self, ReturnInt = True):
         # (2 * 60 * Freq) / RPM = Num Rotor Poles
 
-        if not self.EvolutionController:
-            return ""
-
         if ReturnInt:
             DefaultReturn = 0
         else:
@@ -2496,7 +2461,6 @@ class Evolution(controller.GeneratorController):
         try:
             FreqFloat = self.GetFrequency(ReturnFloat = True)
             RPMInt = self.GetRPM(ReturnInt = True)
-
             RotorPoles = DefaultReturn
 
             if RPMInt:
@@ -2545,11 +2509,8 @@ class Evolution(controller.GeneratorController):
         try:
 
             if not Calculate:
-                Value = self.GetRegisterValueFromList("0008")
-                if len(Value) != 4:
-                    return ""
+                IntTemp = self.GetParameter("0008", ReturnInt = True)
 
-                IntTemp = int(Value,16)
                 if self.EvolutionController and self.LiquidCooled:
                     FloatTemp = IntTemp / 10.0      # Evolution
                 elif not self.EvolutionController and self.LiquidCooled:
@@ -2575,28 +2536,16 @@ class Evolution(controller.GeneratorController):
     def GetVoltageOutput(self, ReturnInt = False):
 
         # get Output Voltage
-        Value = self.GetRegisterValueFromList("0012")
-        if len(Value) != 4:
-            return ""
-
-        if ReturnInt:
-            return int(Value,16)
-
-        VolatageValue = "%dV" % int(Value,16)
-
-        return VolatageValue
+        return self.GetParameter("0012", ReturnInt = ReturnInt, Label = "V")
 
     #------------ Evolution:GetPickUpVoltage --------------------------
     def GetPickUpVoltage(self, ReturnInt = False):
 
          # get Utility Voltage Pickup Voltage
         if self.EvolutionController and self.LiquidCooled:
-            Value = self.GetRegisterValueFromList("023b")
-            if len(Value) != 4:
-                return ""           # we don't have a value for this register yet
-            PickupVoltage = int(Value, 16)
-        else:
-            PickupVoltage = DEFAULT_PICKUP_VOLTAGE
+            return self.GetParameter("023b", ReturnInt = ReturnInt)
+
+        PickupVoltage = DEFAULT_PICKUP_VOLTAGE
 
         if ReturnInt:
             return PickupVoltage
@@ -2606,14 +2555,7 @@ class Evolution(controller.GeneratorController):
     def GetThresholdVoltage(self, ReturnInt = False):
 
         # get Utility Voltage Threshold
-        Value = self.GetRegisterValueFromList("0011")
-        if len(Value) != 4:
-            return ""
-        ThresholdVoltage = int(Value,16)
-
-        if ReturnInt:
-            return ThresholdVoltage
-        return "%dV" % ThresholdVoltage
+        return self.GetParameter("0011", ReturnInt = ReturnInt, Label = "V")
 
     #------------ Evolution:GetSetOutputVoltage --------------------------
     def GetSetOutputVoltage(self):
@@ -2621,63 +2563,30 @@ class Evolution(controller.GeneratorController):
         # get set output voltage
         if not self.EvolutionController or not self.LiquidCooled:
             return ""
-        Value = self.GetRegisterValueFromList("0237")
-        if len(Value) != 4:
-            return ""
-        SetOutputVoltage = int(Value,16)
 
-        return "%dV" % SetOutputVoltage
+        return self.GetParameter("0237", Label = "V")
 
     #------------ Evolution:GetStartupDelay --------------------------
     def GetStartupDelay(self):
 
         # get Startup Delay
-        StartupDelay = 0
-        Value = ""
         if self.EvolutionController and not self.LiquidCooled:
-            Value = self.GetRegisterValueFromList("002b")
+            return self.GetParameter("002b", Label = "s")
         elif self.EvolutionController and self.LiquidCooled:
-            Value = self.GetRegisterValueFromList("0239")
+            return self.GetParameter("0239", Label = "s")
         else:
             return ""
-        if len(Value) != 4:
-            return ""
-        StartupDelay = int(Value,16)
-
-        return "%d s" % StartupDelay
 
     #------------ Evolution:GetUtilityVoltage --------------------------
     def GetUtilityVoltage(self, ReturnInt = False):
 
-        if ReturnInt:
-            DefaultReturn = 0
-        else:
-            DefaultReturn = "0"
-
-        # get Utility Voltage
-        Value = self.GetRegisterValueFromList("0009")
-        if len(Value) != 4:
-            return DefaultReturn
-
-        if ReturnInt:
-            return int(Value,16)
-        VolatageValue = "%dV" % int(Value,16)
-
-        return VolatageValue
+        return self.GetParameter("0009", ReturnInt = ReturnInt, Label = "V")
 
     #------------ Evolution:GetBatteryVoltage -------------------------
     def GetBatteryVoltage(self):
 
         # get Battery Charging Voltage
-        Value = self.GetRegisterValueFromList("000a")
-        if len(Value) != 4:
-            return ""
-
-        IntTemp = int(Value,16)
-        FloatTemp = IntTemp / 10.0
-        VoltageValue = "%2.1fV" % FloatTemp
-
-        return VoltageValue
+        return self.GetParameter("000a", Label = "V", Divider = 10.0)
 
     #------------ Evolution:GetBatteryStatusAlternate -------------------------
     def GetBatteryStatusAlternate(self):
@@ -2742,31 +2651,16 @@ class Evolution(controller.GeneratorController):
     # will begin its 18 hour charge cycle.
     def GetBatteryStatus(self):
 
-        if not self.EvolutionController:
-            return "Not Available"     # Nexus
-        else:                           # Evolution
-            if self.LiquidCooled:
-                Register = "0053"
-            else:
-                return "Not Available"
+        if not self.EvolutionController or not self.LiquidCooled:
+            return "Not Available"     # Nexus or EvoAC not supported
 
         # get Battery Charging Voltage
-        Value = self.GetRegisterValueFromList(Register)
-        if len(Value) != 4:
-            return ""
-
-        Outputs = int(Value,16)
-
-        if self.BitIsEqual(Outputs, 0x10, 0x10):
-            return "Charging"
-        else:
-            return "Not Charging"
+        return self.GetParameterBit("0053", 0x10, OnLabel = "Charging", OffLabel = "Not Charging")
 
     #------------ Evolution:GetOneLineStatus -------------------------
     def GetOneLineStatus(self):
 
         return  self.GetSwitchState() + ", " + self.GetEngineState()
-
 
     #------------ Evolution:GetBaseStatus ------------------------------------
     def GetBaseStatus(self):
@@ -2975,47 +2869,13 @@ class Evolution(controller.GeneratorController):
 
         if not self.EvolutionController or not self.LiquidCooled:
             # get total hours running
-            Value = self.GetRegisterValueFromList("000c")
-            if len(Value) != 4:
-                return ""
-
-            TotalRunTimeLow = int(Value,16)
-
-            # get total hours running
-            Value = self.GetRegisterValueFromList("000b")
-            if len(Value) != 4:
-                return ""
-            TotalRunTimeHigh = int(Value,16)
-
-            TotalRunTime = (TotalRunTimeHigh << 16)| TotalRunTimeLow
-            RunTimes = "%d " % (TotalRunTime)
+            return self.GetParameterLong("000c", "000b")
         else:
-            # total engine run time in minutes
-            Value = self.GetRegisterValueFromList("005f")
-            if len(Value) != 4:
-                return ""
+            # Run minutes / 60
+            return self.GetParameterLong("005f", "005e", Divider = 60.0)
 
-            TotalRunTimeLow = int(Value,16)
 
-            Value = self.GetRegisterValueFromList("005e")
-            if len(Value) != 4:
-                return ""
-
-            TotalRunTimeHigh = int(Value,16)
-
-            TotalRunTime = (TotalRunTimeHigh << 16)| TotalRunTimeLow
-            #hours, min = divmod(TotalRunTime, 60)
-            #RunTimes = "Total Engine Run Time: %d:%d " % (hours, min)
-            TotalRunTime = TotalRunTime / 60.0
-            RunTimes = "%.2f " % (TotalRunTime)
-
-        return RunTimes
-    #------------ Evolution:GetRegisterValueFromList ------------------------------------
-    def GetRegisterValueFromList(self,Register):
-
-        return self.Registers.get(Register, "")
-
-    #------------------- Evolution:DisplayOutage -----------------
+    #------------------- Evolution:DisplayOutage -------------------------------
     def DisplayOutage(self, DictOut = False):
 
         Outage = collections.OrderedDict()
