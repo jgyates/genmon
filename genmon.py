@@ -25,7 +25,7 @@ except ImportError as e:
 from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel, myplatform
 
 
-GENMON_VERSION = "V1.9.2"
+GENMON_VERSION = "V1.9.3"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -253,7 +253,7 @@ class Monitor(mysupport.MySupport):
                 msgbody = "Reason = " + Reason + "\n"
                 if Message != None:
                     msgbody += "Message : " + Message + "\n"
-                msgbody += self.DictToString(self.GetStartInfo())
+                msgbody += self.DictToString(self.GetStartInfo(NoGauge = True))
                 if not self.bDisablePlatformStats:
                     msgbody +=  self.DictToString(self.GetPlatformStats())
                 msgbody += self.Controller.DisplayRegisters(AllRegs = FullLogs)
@@ -283,7 +283,7 @@ class Monitor(mysupport.MySupport):
             return "Send Email is not enabled."
 
         msgbody = ""
-        msgbody += self.DictToString(self.GetStartInfo())
+        msgbody += self.DictToString(self.GetStartInfo(NoGauge = True))
         if not self.bDisablePlatformStats:
             msgbody +=  self.DictToString(self.GetPlatformStats())
         msgbody += self.Controller.DisplayRegisters(AllRegs = True)
@@ -542,12 +542,12 @@ class Monitor(mysupport.MySupport):
         return self.SiteName
 
     #------------ Monitor::GetStartInfo-----------------------------------------
-    def GetStartInfo(self):
+    def GetStartInfo(self, NoGauge = False):
 
         StartInfo = collections.OrderedDict()
         StartInfo["version"] = GENMON_VERSION
         StartInfo["sitename"] = self.SiteName
-        ControllerStartInfo = self.Controller.GetStartInfo()
+        ControllerStartInfo = self.Controller.GetStartInfo(NoGauge = NoGauge)
         StartInfo = self.MergeDicts(StartInfo, ControllerStartInfo)
 
         return StartInfo

@@ -18,7 +18,7 @@ try:
 except ImportError as e:
     from configparser import RawConfigParser
 
-import controller, mymodbus, mythread, modbus_file
+import controller, mymodbus, mythread, modbus_file, mygauge
 
 
 #-------------------Generator specific const defines for Generator class
@@ -233,9 +233,27 @@ class Evolution(controller.GeneratorController):
         self.CheckModelSpecificInfo(NoLookUp = self.Simulation)
         # check for unknown events (i.e. events we are not decoded) and send an email if they occur
         self.CheckForAlarmEvent.set()
+        self.SetupGauges()
         self.InitComplete = True
 
-    #------------------------------------------------------------
+    #---------------------------------------------------------------------------
+    def SetupGauges(self):
+
+        Gauge = mygauge.MyGauge(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = 12, callback = self.GetBatteryVoltage, callbackparameters = (True,))
+        self.GaugeList.append(Gauge)
+        Gauge = mygauge.MyGauge(self.log, title = "Utility Voltage", units = "V", type = "linevolts", nominal = 240, callback = self.GetUtilityVoltage, callbackparameters = (True,))
+        self.GaugeList.append(Gauge)
+        Gauge = mygauge.MyGauge(self.log, title = "Output Voltage", units = "V", type = "linevolts", nominal = 240, callback = self.GetVoltageOutput, callbackparameters = (True,))
+        self.GaugeList.append(Gauge)
+        Gauge = mygauge.MyGauge(self.log, title = "Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq), callback = self.GetFrequency, callbackparameters = (False, True))
+        self.GaugeList.append(Gauge)
+        Gauge = mygauge.MyGauge(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM), callback = self.GetRPM, callbackparameters = (True,))
+        self.GaugeList.append(Gauge)
+        if self.PowerMeterIsSupported():
+            Gauge = mygauge.MyGauge(self.log, title = "Power Output", units = "kW", type = "power", nominal = int(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
+            self.GaugeList.append(Gauge)
+
+    #---------------------------------------------------------------------------
     def CheckModelSpecificInfo(self, NoLookUp = False):
 
         if self.NominalFreq == "Unknown" or not len(self.NominalFreq):
@@ -2509,15 +2527,20 @@ class Evolution(controller.GeneratorController):
         try:
 
             if not Calculate:
-                IntTemp = self.GetParameter("0008", ReturnInt = True)
-
                 if self.EvolutionController and self.LiquidCooled:
-                    FloatTemp = IntTemp / 10.0      # Evolution
+                    return self.GetParameter("0008", ReturnFloat = ReturnFloat, Divider = 10.0, Label = "Hz")
+
                 elif not self.EvolutionController and self.LiquidCooled:
-                    FloatTemp = IntTemp / 1.0       # Nexus Liquid Cooled
+                    # Nexus Liquid Cooled
+                    FloatTemp = self.GetParameter("0008", ReturnFloat = True, Divider = 1.0, Label = "Hz")
                     FloatTemp = FloatTemp * 2.0
+                    if ReturnFloat:
+                        return FloatTemp
+
+                    return "%2.1f Hz" % FloatTemp
                 else:
-                    FloatTemp = IntTemp / 1.0       # Nexus and Evolution Air Cooled
+                    # Nexus and Evolution Air Cooled
+                    return self.GetParameter("0008", ReturnFloat = ReturnFloat, Divider = 1.0, Label = "Hz")
 
             else:
                 # (RPM * Poles) / 2 * 60
@@ -2583,10 +2606,10 @@ class Evolution(controller.GeneratorController):
         return self.GetParameter("0009", ReturnInt = ReturnInt, Label = "V")
 
     #------------ Evolution:GetBatteryVoltage -------------------------
-    def GetBatteryVoltage(self):
+    def GetBatteryVoltage(self, ReturnFloat = False):
 
         # get Battery Charging Voltage
-        return self.GetParameter("000a", Label = "V", Divider = 10.0)
+        return self.GetParameter("000a", Label = "V", ReturnFloat = ReturnFloat, Divider = 10.0)
 
     #------------ Evolution:GetBatteryStatusAlternate -------------------------
     def GetBatteryStatusAlternate(self):
@@ -2990,31 +3013,44 @@ class Evolution(controller.GeneratorController):
 
         Status = {}
 
-        Status["basestatus"] = self.GetBaseStatus()
-        Status["kwOutput"] = self.GetPowerOutput()
-        Status["OutputVoltage"] = self.GetVoltageOutput()
-        Status["BatteryVoltage"] = self.GetBatteryVoltage()
-        Status["UtilityVoltage"] = self.GetUtilityVoltage()
-        Status["Frequency"] = self.GetFrequency()
-        Status["RPM"] = self.GetRPM()
-        Status["ExerciseInfo"] = self.GetParsedExerciseTime(True)
+        try:
+            Status["basestatus"] = self.GetBaseStatus()
+            Status["kwOutput"] = self.GetPowerOutput()
+            Status["OutputVoltage"] = self.GetVoltageOutput()
+            Status["BatteryVoltage"] = self.GetBatteryVoltage()
+            Status["UtilityVoltage"] = self.GetUtilityVoltage()
+            Status["Frequency"] = self.GetFrequency()
+            Status["RPM"] = self.GetRPM()
+            Status["ExerciseInfo"] = self.GetParsedExerciseTime(True)
+            Status["gauges"] = []
+            for Gauge in self.GaugeList:
+                Status["gauges"].append(Gauge.GetGUIInfo())
+        except Exception as e1:
+            self.LogErrorLine("Error in GetStatusForGUI: " + str(e1))
         return Status
 
     #------------ Evolution:GetStartInfo -------------------------------
-    def GetStartInfo(self):
+    def GetStartInfo(self, NoGauge = False):
 
         StartInfo = {}
+        try:
+            StartInfo["fueltype"] = self.FuelType
+            StartInfo["model"] = self.Model
+            StartInfo["nominalKW"] = self.NominalKW
+            StartInfo["nominalRPM"] = self.NominalRPM
+            StartInfo["nominalfrequency"] = self.NominalFreq
+            StartInfo["Controller"] = self.GetController(Actual = False)
+            StartInfo["NominalBatteryVolts"] = "12"
+            StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
+            StartInfo["UtilityVoltage"] = True
+            StartInfo["RemoteCommands"] = True
 
-        StartInfo["fueltype"] = self.FuelType
-        StartInfo["model"] = self.Model
-        StartInfo["nominalKW"] = self.NominalKW
-        StartInfo["nominalRPM"] = self.NominalRPM
-        StartInfo["nominalfrequency"] = self.NominalFreq
-        StartInfo["Controller"] = self.GetController(Actual = False)
-        StartInfo["NominalBatteryVolts"] = "12"
-        StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
-        StartInfo["UtilityVoltage"] = True
-        StartInfo["RemoteCommands"] = True
+            if not NoGauge:
+                StartInfo["gauges"] = []
+                for Gauge in self.GaugeList:
+                    StartInfo["gauges"].append(Gauge.GetStartInfo())
+        except Exception as e1:
+            self.LogErrorLine("Error in GetStartInfo: " + str(e1))
 
         return StartInfo
 

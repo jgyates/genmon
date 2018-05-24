@@ -49,6 +49,7 @@ class GeneratorController(mysupport.MySupport):
         self.OutageLog = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/outage.txt"
         self.PowerLogMaxSize = 15       # 15 MB max size
         self.PowerLog =  os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/kwlog.txt"
+        self.GaugeList = []        # Gauge list for GUI
 
         if self.Simulation:
             self.LogLocation = "./"
@@ -291,13 +292,16 @@ class GeneratorController(mysupport.MySupport):
     #-------------GeneratorController:GetParameter------------------------------
     # Hex assumes no Divider and Label - return Hex string
     # ReturnInt assumes no Divier and Label - Return int
-    def GetParameter(self, Register, Label = None, Divider = None, Hex = False, ReturnInt = False):
+    def GetParameter(self, Register, Label = None, Divider = None, Hex = False, ReturnInt = False, ReturnFloat = False):
 
         try:
             if ReturnInt:
                 DefaultReturn = 0
+            elif ReturnFloat:
+                DefaultReturn = 0.0
             else:
                 DefaultReturn = ""
+
             Value = self.GetRegisterValueFromList(Register)
             if not len(Value):
                 return DefaultReturn
@@ -308,12 +312,16 @@ class GeneratorController(mysupport.MySupport):
             if Divider == None and Label == None:
                 if Hex:
                     return Value
+                elif ReturnFloat:
+                    return float(int(Value,16))
                 else:
                     return str(int(Value,16))
 
             IntValue = int(Value,16)
             if not Divider == None:
                 FloatValue = IntValue / Divider
+                if ReturnFloat:
+                    return FloatValue
                 if not Label == None:
                     return "%.2f %s" % (FloatValue, Label)
                 else:

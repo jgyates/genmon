@@ -18,7 +18,7 @@ try:
 except ImportError as e:
     from configparser import RawConfigParser
 
-import controller, mymodbus, mythread, modbus_file
+import controller, mymodbus, mythread, modbus_file, mygauge
 
 #---------------------RegisterEnum::RegisterEnum--------------------------------
 class RegisterEnum(object):
@@ -431,7 +431,42 @@ class HPanel(controller.GeneratorController):
     def InitDevice(self):
         self.MasterEmulation()
         self.CheckModelSpecificInfo()
+        self.SetupGauges()
         self.InitComplete = True
+
+    #-------------HPanel:SetupGauges---------------------------------------------
+    def SetupGauges(self):
+
+        Gauge = mygauge.MyGauge(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = 12,
+            callback = self.GetParameter,
+            callbackparameters = (RegisterEnum.BATTERY_VOLTS,  None, 100.0, False, False, True))
+        self.GaugeList.append(Gauge)
+
+        Gauge = mygauge.MyGauge(self.log, title = "Output Voltage", units = "V", type = "linevolts", nominal = 240,
+        callback = self.GetParameter,
+        callbackparameters = (RegisterEnum.AVG_VOLTAGE, None, None, False, True, False))
+        self.GaugeList.append(Gauge)
+
+        Gauge = mygauge.MyGauge(self.log, title = "Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq),
+        callback = self.GetParameter,
+        callbackparameters = (RegisterEnum.OUTPUT_FREQUENCY, None, None, False, True, False))
+        self.GaugeList.append(Gauge)
+
+        Gauge = mygauge.MyGauge(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM),
+        callback = self.GetParameter,
+        callbackparameters = (RegisterEnum.OUTPUT_RPM, None, None, False, True, False))
+        self.GaugeList.append(Gauge)
+
+        Gauge = mygauge.MyGauge(self.log, title = "Coolant Temp", units = "F", type = "temperature", nominal = 118, maximum = 300,
+        callback = self.GetParameter,
+        callbackparameters = (RegisterEnum.COOLANT_TEMP, None, None, False, True, False))
+        self.GaugeList.append(Gauge)
+
+        if self.PowerMeterIsSupported():
+            Gauge = mygauge.MyGauge(self.log, title = "Power Output", units = "kW", type = "power", nominal = int(self.NominalKW),
+            callback = self.GetParameter,
+            callbackparameters = (RegisterEnum.TOTAL_POWER_KW, None, None, False, True, False))
+            self.GaugeList.append(Gauge)
 
     #-------------HPanel:CheckModelSpecificInfo---------------------------------
     # check for model specific info in read from conf file, if not there then add some defaults
@@ -804,7 +839,7 @@ class HPanel(controller.GeneratorController):
             return ErrorReturn
     #------------ HPanel::GetStartInfo ----------------------------
     # return a dictionary with startup info for the gui
-    def GetStartInfo(self):
+    def GetStartInfo(self, NoGauge = False):
 
         try:
             StartInfo = {}
@@ -819,6 +854,10 @@ class HPanel(controller.GeneratorController):
             StartInfo["UtilityVoltage"] = False
             StartInfo["RemoteCommands"] = False
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
+            if not NoGauge:
+                StartInfo["gauges"] = []
+                for Gauge in self.GaugeList:
+                    StartInfo["gauges"].append(Gauge.GetStartInfo())
 
             return StartInfo
         except Exception as e1:
@@ -849,6 +888,10 @@ class HPanel(controller.GeneratorController):
             ExerciseInfo["EnhancedExerciseMode"] = False
             ExerciseInfo["Day"] = "Monday"
             Status["ExerciseInfo"] = ExerciseInfo
+
+            Status["gauges"] = []
+            for Gauge in self.GaugeList:
+                Status["gauges"].append(Gauge.GetGUIInfo())
 
             return Status
         except Exception as e1:
