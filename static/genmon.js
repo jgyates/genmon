@@ -22,7 +22,7 @@ var windowActive = true;
 var latestVersion = "";
 
 var myGenerator = {PowerGraph: false, sitename: "", nominalRPM: 3600, nominalfrequency: 60, Controller: "", model: "", nominalKW: 22, fueltype: "", UnsentFeedback: false, SystemHealth: false, EnhancedExerciseEnabled: false, OldExerciseParameters:[-1,-1,-1,-1,-1,-1]};
-var prevStatusValues = {BatteryVoltage: "12V", UnsentFeedback: "False", SystemHealth: "OK", OutputVoltage: "0V", Frequency: "0.0 Hz", UtilityVoltage: "240V", kwOutput: "0kW", RPM: " 0", basestatus: "READY"};
+var prevStatusValues = {BatteryVoltage: "0V", UnsentFeedback: "False", SystemHealth: "OK", OutputVoltage: "0V", Frequency: "0.0 Hz", UtilityVoltage: "0V", kwOutput: "0kW", RPM: " 0", basestatus: "READY"};
 var regHistory = {updateTime: {}, _10m: {}, _60m: {}, _24h: {}, historySince: "", count_60m: 0, count_24h: 0};
 var kwHistory = {data: [], plot:"", kwDuration: "h", tickInterval: "10 minutes", formatString: "%H:%M"};
 var pathname = window.location.href;
@@ -67,7 +67,7 @@ function processAjaxSuccess() {
     var now = new moment();
     if (ajaxErrors["errorCount"]>5) {
       ajaxErrors["log"] = ajaxErrors["errorCount"]+" messages missed between "+ajaxErrors["lastSuccessTime"].format("H:mm:ss") + " and " +now.format("H:mm:ss") +"<br>" + ajaxErrors["log"];
-      if ((myGenerator['UnsentFeedback'] == false) && (myGenerator['SystemHealth'] == false)) { 
+      if ((myGenerator['UnsentFeedback'] == false) && (myGenerator['SystemHealth'] == false)) {
         $("#footer").removeClass("alert");
         $("#ajaxWarning").hide(400);
       }
@@ -829,10 +829,10 @@ function DisplayMonitor(){
               case (parseInt(result["Monitor"]["Platform Stats"]["CPU Temperature"].replace(/C/g, '').trim()) > 50):
                   temp_img = "temp2";
                   break;
-           }           
+           }
            $("#CPU_Temperature").html('<div style="display: inline-block; position: relative;">'+result["Monitor"]["Platform Stats"]["CPU Temperature"] + '<img style="position: absolute;top:-10px;left:75px" class="'+ temp_img +'" src="images/transparent.png"></div>');
         }
-        
+
         if ($("#WLAN_Signal_Level").length > 0) {
            wifi_img = "wifi1";
            switch (true) {
@@ -845,7 +845,7 @@ function DisplayMonitor(){
               case (parseInt(result["Monitor"]["Platform Stats"]["WLAN Signal Level"].replace(/dBm/g, '').trim()) > -80):
                   wifi_img = "wifi2";
                   break;
-           }           
+           }
            $("#WLAN_Signal_Level").html('<div style="display: inline-block; position: relative;">'+result["Monitor"]["Platform Stats"]["WLAN Signal Level"] + '<img style="position: absolute;top:-10px;left:110px" class="'+ wifi_img +'" src="images/transparent.png"></div>');
         }
         if (latestVersion == "") {
@@ -909,7 +909,7 @@ function checkNewVersion(){
 
     if (latestVersion != myGenerator["version"]) {
           // $('.vex-dialog-message').html("A new version is available.<br>Current Version: " + myGenerator["version"] + "<br>New Version: " + latestVersion);
-          $('.vex-dialog-message').html("Are you sure you want to update to the latest version?");  
+          $('.vex-dialog-message').html("Are you sure you want to update to the latest version?");
     } else {
           $('.vex-dialog-message').html("Are you sure you want to upgrade?");
     }
@@ -1190,7 +1190,7 @@ function DisplaySettings(){
             } else if ((key == "autofeedback") && (myGenerator['UnsentFeedback'] == true)) {
               outstr += '<tr><td width="25px">&nbsp;</td><td bgcolor="#ffcccc" width="300px">' + result[key][1] + '</td><td bgcolor="#ffcccc">' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
             } else {
-              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';            
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
             }
         }
         outstr += '</table></fieldset></form><br>';
@@ -1961,16 +1961,16 @@ function GetBaseStatus()
               printKwPlot(result['kwOutput'].replace(/kW/g, ''));
            }
         }
-        
+
         if ((menuElement == "status") && ($("#gaugeBatteryVoltage").length > 0)) {
-           if (result["BatteryVoltage"].replace(/V/g, '').trim() !== "") 
+           if (result["BatteryVoltage"].replace(/V/g, '').trim() !== "")
              gaugeBatteryVoltage.set(result["BatteryVoltage"].replace(/V/g, '')); // set actual value
            gaugeUtilityVoltage.set(result["UtilityVoltage"].replace(/V/g, '')); // set actual value
            gaugeOutputVoltage.set(result["OutputVoltage"].replace(/V/g, '')); // set actual value
            gaugeFrequency.set(result["Frequency"].replace(/Hz/g, '')); // set actual value
            gaugeRPM.set(result["RPM"]); // set actual value
         }
-        
+
         if (result['SystemHealth'].toUpperCase() != "OK") {
           myGenerator['SystemHealth'] = true;
           var tempMsg = '<b><span style="font-size:14px">GENMON SYSTEM WARNING</span></b><br>'+result['SystemHealth'];
@@ -2018,7 +2018,7 @@ function GetBaseStatus()
             // Added active to selected class
             $("#"+menuElement).find("a").addClass(GetCurrentClass());
         }
-        
+
         prevStatusValues = result;
         return
    }});
