@@ -31,15 +31,24 @@ class ClientInterface(mycommon.MyCommon):
     #----------  ClientInterface::Connect ---------------------------------
     def Connect(self):
 
-        try:
-            #create an INET, STREAMing socket
-            self.Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            #now connect to the server on our port
-            self.Socket.connect((self.host, self.port))
-            sRetData, data = self.Receive(noeom = True)       # Get initial status before commands are sent
-            print(data)
-        except Exception as e1:
-            self.FatalError("Error: Connect" + str(e1))
+        retries = 0
+        while True:
+
+            try:
+                #create an INET, STREAMing socket
+                self.Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                #now connect to the server on our port
+                self.Socket.connect((self.host, self.port))
+                sRetData, data = self.Receive(noeom = True)       # Get initial status before commands are sent
+                print(data)
+                return
+            except Exception as e1:
+                retries += 1
+                if retries >= 3:
+                    self.FatalError("Error: Connect : " + str(e1))
+                else:
+                    time.sleep(1)
+                    continue
 
 
     #----------  ClientInterface::SendCommand ---------------------------------
@@ -48,7 +57,7 @@ class ClientInterface(mycommon.MyCommon):
         try:
             self.Socket.sendall(cmd.encode())
         except Exception as e1:
-            self.LogError( "Error: TX:" + str(e1))
+            self.LogError( "Error: TX: " + str(e1))
             self.Close()
             self.Connect()
 

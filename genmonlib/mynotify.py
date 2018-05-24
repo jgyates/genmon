@@ -56,6 +56,19 @@ class GenNotify:
 
         self.Generator = myclient.ClientInterface(host = host, log = log)
 
+        startcount = 0
+        while startcount <= 3:
+            try:
+                self.Generator = myclient.ClientInterface(host = host, log = log)
+                break
+            except Exception as e1:
+                startcount += 1
+                if startcount >= 3:
+                    print("genmon not loaded.")
+                    sys.exit(1)
+                time.sleep(1)
+                continue
+
         # start thread to accept incoming sockets for nagios heartbeat
         self.StartThread(self.MainPollingThread, Name = "PollingThread")
 

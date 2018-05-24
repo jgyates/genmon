@@ -8,6 +8,7 @@ case "$1" in
     sudo python "$genmondir/genmon.py"  &
     sleep 3
     sudo python "$genmondir/genserv.py"  &
+    # sleep 5
     #sudo python "$genmondir/gengpio.py"  &
     #sudo python "$genmondir/gengpioin.py"  &
     #sudo python "$genmondir/genlog.py" -f "$genmondir/LogFile.csv" &
@@ -41,6 +42,7 @@ case "$1" in
     sudo python "$genmondir/genmon.py"  &
     sleep 3
     sudo python "$genmondir/genserv.py"  &
+    #sleep 5
     #sudo python "$genmondir/gengpio.py"  &
     #sudo python "$genmondir/gengpioin.py"  &
     #sudo python "$genmondir/genlog.py" -f "$genmondir/LogFile.csv" &
