@@ -1242,6 +1242,10 @@ class Evolution(controller.GeneratorController):
             if not self.InitComplete:
                 return ""
 
+            UtilityVoltsStr = self.GetUtilityVoltage()
+            if not len(UtilityVoltsStr):
+                return
+                
             UtilityVolts = self.GetUtilityVoltage(ReturnInt = True)
 
             # Get threshold voltage
