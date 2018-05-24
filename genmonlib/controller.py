@@ -198,7 +198,7 @@ class GeneratorController(mysupport.MySupport):
         RegistersUnderTestData = ""
 
         while True:
-            time.sleep(0.25)
+            time.sleep(0.1)
             if self.IsStopSignaled("DebugThread"):
                 return
             if TotalSent >= 5:
