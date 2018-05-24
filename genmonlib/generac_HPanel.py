@@ -472,12 +472,30 @@ class HPanel(controller.GeneratorController):
     # check for model specific info in read from conf file, if not there then add some defaults
     def CheckModelSpecificInfo(self):
 
-        # TODO
-        self.NominalFreq = "60"
-        self.NominalRPM = "1800"
-        self.Model = "Generac Generic H-100 Industrial Generator"
-        self.FuelType = "Unknown"
-        self.NominalKW = "550"
+        # TODO this should be determined by reading the hardware if possible.
+        if self.NominalFreq == "Unknown" or not len(self.NominalFreq):
+            self.NominalFreq = "60"
+            self.AddItemToConfFile("nominalfrequency", self.NominalFreq)
+
+        # This is not correct for 50Hz models
+        if self.NominalRPM == "Unknown" or not len(self.NominalRPM):
+            if self.NominalFreq == "50":
+                self.NominalRPM = "1500"
+            else:
+                self.NominalRPM = "1800"
+            self.AddItemToConfFile("nominalRPM", self.NominalRPM)
+
+        if self.NominalKW == "Unknown" or not len(self.NominalKW):
+            self.NominalKW = "550"
+            self.AddItemToConfFile("nominalKW", self.NominalKW)
+
+        if self.Model == "Unknown" or not len(self.Model):
+            self.Model = "Generac Generic H-100 Industrial Generator"
+            self.AddItemToConfFile("model", self.Model)
+
+        if self.FuelType == "Unknown" or not len(self.FuelType):
+            self.FuelType = "Diesel"
+            self.AddItemToConfFile("fueltype", self.FuelType)
 
         return
 
