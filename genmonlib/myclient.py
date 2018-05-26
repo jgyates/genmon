@@ -40,7 +40,7 @@ class ClientInterface(mycommon.MyCommon):
                 #now connect to the server on our port
                 self.Socket.connect((self.host, self.port))
                 sRetData, data = self.Receive(noeom = True)       # Get initial status before commands are sent
-                print(data)
+                #print(data)
                 return
             except Exception as e1:
                 retries += 1

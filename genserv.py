@@ -8,6 +8,8 @@
 # MODIFICATIONS:
 #------------------------------------------------------------
 
+from __future__ import print_function
+
 from flask import Flask, render_template, request, jsonify, session
 import sys, signal, os, socket, atexit, time, subprocess, json
 from genmonlib import mylog, myclient, mythread
@@ -156,8 +158,12 @@ def ProcessCommand(command):
     elif command in ["setsettings"]:
         SaveSettings(request.args.get('setsettings', 0, type=str))
         return "OK"
+
     elif command in ["getreglabels"]:
         return jsonify(GetRegisterDescriptions())
+
+    elif command in ["restart"]:
+        Restart()
     else:
         return render_template('command_template.html', command = command)
 
@@ -660,7 +666,7 @@ if __name__ == "__main__":
     while ((datetime.datetime.now() - Start).total_seconds() < 5):
         data = MyClientInterface.ProcessMonitorCommand("generator: gethealth")
         if "OK" in data:
-            print("OK - Init complete.\n")
+            #print(" OK - Init complete.")
             break
 
     while True:
