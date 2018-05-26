@@ -72,10 +72,13 @@ function updatecrontab() {
 function updategenmon() {
 
     echo "Updating genmon..."
+    cd $genmondir
     git fetch origin
     git reset --hard origin/master
     sudo chmod 775 "$genmondir/startgenmon.sh"
     sudo chmod 775 "$genmondir/genmonmaint.sh"
+    sudo chown -R `stat -c "%U" $genmondir` $genmondir
+    sudo chgrp -R `stat -c "%G" $genmondir` $genmondir
 }
 
 #-------------------------------------------------------------------
@@ -123,4 +126,3 @@ case "$1" in
 esac
 
 exit 0
-
