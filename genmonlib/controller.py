@@ -348,7 +348,7 @@ class GeneratorController(mysupport.MySupport):
 
     #------------ GeneratorController::GetStartInfo ----------------------------
     # return a dictionary with startup info for the gui
-    def GetStartInfo(self):
+    def GetStartInfo(self, NoGauge = False):
 
         StartInfo = {}
         try:
@@ -361,6 +361,13 @@ class GeneratorController(mysupport.MySupport):
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
             StartInfo["NominalBatteryVolts"] = "12"
             StartInfo["UtilityVoltageDisplayed"] = True
+            StartInfo["RemoteCommands"] = True
+
+            if not NoGauge:
+                StartInfo["gauges"] = []
+                for Gauge in self.GaugeList:
+                    StartInfo["gauges"].append(Gauge.GetStartInfo())
+
         except Exception as e1:
             self.LogErrorLine("Error in GetStartInfo: " + str(e1))
         return StartInfo

@@ -576,7 +576,8 @@ class Evolution(controller.GeneratorController):
             self.bUseLegacyWrite = True
 
         if UnknownController:
-            self.FeedbackPipe.SendFeedback("UnknownController", Message="Unknown Controller Found", FullLogs = True)
+            msg = "Unknown Controller Found: %x" % ProductModel 
+            self.FeedbackPipe.SendFeedback("UnknownController", Message=msg, FullLogs = True)
         return "OK"
 
     #----------  ControllerGetController  ---------------------------------
@@ -1245,7 +1246,7 @@ class Evolution(controller.GeneratorController):
             UtilityVoltsStr = self.GetUtilityVoltage()
             if not len(UtilityVoltsStr):
                 return
-                
+
             UtilityVolts = self.GetUtilityVoltage(ReturnInt = True)
 
             # Get threshold voltage
@@ -2168,7 +2169,7 @@ class Evolution(controller.GeneratorController):
         elif self.BitIsEqual(RegVal, 0x000F0000, 0x00000000):
             return "Off - Ready"
         else:
-            self.FeedbackPipe.SendFeedback("EngineState", Always = True, Message = "Reg 0001 = %08x" % RegVal, FullLogs = True)
+            self.FeedbackPipe.SendFeedback("Unknown EngineState", Always = True, Message = "Reg 0001 = %08x" % RegVal, FullLogs = True)
             return "UNKNOWN: %08x" % RegVal
 
     #------------ Evolution:GetSwitchState --------------------------------------
@@ -2461,7 +2462,7 @@ class Evolution(controller.GeneratorController):
             if Voltage > 100:     # only bounds check if the voltage is over 100V to give things a chance to stabalize
                 if CurrentOutput > ((int(self.NominalKW) * 1000) / 240) + 2 or CurrentOutput < 0:
                     msg = "Current Calculation: %f, CurrentFloat: %f, Divisor: %f, Offset %f" % (CurrentOutput, CurrentFloat, Divisor, CurrentOffset)
-                    self.FeedbackPipe.SendFeedback("Current Calculation", Message=msg, FullLogs = True )
+                    self.FeedbackPipe.SendFeedback("Current Calculation out of range", Message=msg, FullLogs = True )
 
             if ReturnFloat:
                 return CurrentOutput

@@ -25,7 +25,7 @@ except ImportError as e:
 from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel, myplatform
 
 
-GENMON_VERSION = "V1.9.3"
+GENMON_VERSION = "V1.9.4"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -250,6 +250,9 @@ class Monitor(mysupport.MySupport):
                 if not CheckedSent == "" and not NoCheck:
                     return
 
+                if not NoCheck:
+                    self.LogError(Reason + " : " + Message)
+
                 msgbody = "Reason = " + Reason + "\n"
                 if Message != None:
                     msgbody += "Message : " + Message + "\n"
@@ -297,7 +300,7 @@ class Monitor(mysupport.MySupport):
             return "Send Email is not enabled."
 
         msgbody = ""
-        msgbody += self.DictToString(self.GetStartInfo())
+        msgbody += self.DictToString(self.GetStartInfo(NoGauge = True))
         if not self.bDisablePlatformStats:
             msgbody +=  self.DictToString(self.GetPlatformStats())
         msgbody += self.Controller.DisplayRegisters(AllRegs = True)
