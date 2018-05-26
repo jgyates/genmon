@@ -29,7 +29,7 @@ def SetupLogger(logger_name, log_file, level=logging.INFO, stream = False):
 
     if stream:      # print to screen also?
         streamHandler = logging.StreamHandler()
-        streamHandler.setFormatter(formatter)
+        # Dont format stream log messages 
         logger.addHandler(streamHandler)
 
 

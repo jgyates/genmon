@@ -637,7 +637,10 @@ if __name__ == "__main__":
     AppPath = sys.argv[0]
     LoadConfig()
 
-    log.error("Starting " + AppPath + ", Port:" + str(HTTPPort) + ", Secure HTTP: " + str(bUseSecureHTTP) + ", SelfSignedCert: " + str(bUseSelfSignedCert))
+    # log errors in this module to a file
+    console = mylog.SetupLogger("genserv_console", log_file = "", stream = True)
+
+    log.info("Starting " + AppPath + ", Port:" + str(HTTPPort) + ", Secure HTTP: " + str(bUseSecureHTTP) + ", SelfSignedCert: " + str(bUseSelfSignedCert))
 
     # validate needed files are present
     file = os.path.dirname(os.path.realpath(__file__)) + "/startgenmon.sh"
@@ -656,7 +659,7 @@ if __name__ == "__main__":
         except Exception as e1:
             startcount += 1
             if startcount >= 2:
-                print("genmon not loaded.")
+                console.error("Error: genmon not loaded.")
                 sys.exit(1)
             time.sleep(1)
             continue
@@ -666,7 +669,7 @@ if __name__ == "__main__":
     while ((datetime.datetime.now() - Start).total_seconds() < 5):
         data = MyClientInterface.ProcessMonitorCommand("generator: gethealth")
         if "OK" in data:
-            #print(" OK - Init complete.")
+            console.info(" OK - Init complete.")
             break
 
     while True:

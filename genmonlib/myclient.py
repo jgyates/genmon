@@ -20,6 +20,8 @@ class ClientInterface(mycommon.MyCommon):
             # log errors in this module to a file
             self.log = mylog.SetupLogger("client", "/var/log/myclient.log")
 
+        self.console = mylog.SetupLogger("client_console", log_file = "", stream = True)
+
         self.AccessLock = threading.RLock()
         self.EndOfMessage = "EndOfMessage"
         self.rxdatasize = 2000
@@ -40,7 +42,7 @@ class ClientInterface(mycommon.MyCommon):
                 #now connect to the server on our port
                 self.Socket.connect((self.host, self.port))
                 sRetData, data = self.Receive(noeom = True)       # Get initial status before commands are sent
-                #print(data)
+                self.console.info(data)
                 return
             except Exception as e1:
                 retries += 1
