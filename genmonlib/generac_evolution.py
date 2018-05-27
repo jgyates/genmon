@@ -576,7 +576,7 @@ class Evolution(controller.GeneratorController):
             self.bUseLegacyWrite = True
 
         if UnknownController:
-            msg = "Unknown Controller Found: %x" % ProductModel 
+            msg = "Unknown Controller Found: %x" % ProductModel
             self.FeedbackPipe.SendFeedback("UnknownController", Message=msg, FullLogs = True)
         return "OK"
 
@@ -2503,13 +2503,18 @@ class Evolution(controller.GeneratorController):
     #------------ Evolution:GetPowerOutput ---------------------------------------
     def GetPowerOutput(self, ReturnFloat = False):
 
+        if ReturnFloat:
+            DefaultReturn = 0.0
+        else:
+            DefaultReturn = "0 kW"
+
         if not self.PowerMeterIsSupported():
             return ""
 
         EngineState = self.GetEngineState()
         # report null if engine is not running
         if "Stopped" in EngineState or "Off" in EngineState or not len(EngineState):
-            return "0 kW"
+            return DefaultReturn
 
         Current = self.GetCurrentOutput(ReturnFloat = True)
         Voltage = self.GetVoltageOutput(ReturnInt = True)
