@@ -155,10 +155,10 @@ class MySupport(mycommon.MyCommon):
         if isinstance(node, dict):
             for key, item in node.items():
                 if isinstance(item, dict):
-                    InputBuffer += "\n" + ("    " * indent) + key + " : \n"
+                    InputBuffer += "\n" + ("    " * indent) + str(key) + " : \n"
                     InputBuffer = self.ProcessDispatchToString(item, InputBuffer, indent + 1)
                 elif isinstance(item, list):
-                    InputBuffer += "\n" + ("    " * indent) + key + " : \n"
+                    InputBuffer += "\n" + ("    " * indent) + str(key) + " : \n"
                     for listitem in item:
                         if isinstance(listitem, dict):
                             InputBuffer = self.ProcessDispatchToString(listitem, InputBuffer, indent + 1)
@@ -167,7 +167,7 @@ class MySupport(mycommon.MyCommon):
                         else:
                             self.LogError("Invalid type in ProcessDispatchToString %s %s (2)" % (key, type(listitem)))
                 else:
-                    InputBuffer += (("    " * indent) + key + " : " +  self.GetDispatchItem(item) + "\n")
+                    InputBuffer += (("    " * indent) + str(key) + " : " +  self.GetDispatchItem(item) + "\n")
         else:
             self.LogError("Invalid type in ProcessDispatchToString %s " % type(node))
         return InputBuffer

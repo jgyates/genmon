@@ -25,7 +25,7 @@ except ImportError as e:
 from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel, myplatform
 
 
-GENMON_VERSION = "V1.9.4"
+GENMON_VERSION = "V1.9.5"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -490,8 +490,11 @@ class Monitor(mysupport.MySupport):
             if not os.path.isfile(FileName):
                 return None
 
+            if os.path.getsize(FileName) == 0:
+                return None
+
             with open(FileName) as f:
-                data = json.load(f)
+                data = json.load(f,object_pairs_hook=collections.OrderedDict)
             return data
         except Exception as e1:
             self.LogErrorLine("Error in GetUserDefinedData: " + str(e1))
@@ -523,7 +526,7 @@ class Monitor(mysupport.MySupport):
                     MonitorData["Platform Stats"] = PlatformStats
 
             UserData = self.GetUserDefinedData()
-            if not UserData == None:
+            if not UserData == None and len(UserData):
                 MonitorData["External Data"] = UserData
 
             if not DictOut:
