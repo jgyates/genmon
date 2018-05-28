@@ -276,10 +276,6 @@ class Evolution(controller.GeneratorController):
                     self.NominalRPM = "3600"
             self.AddItemToConfFile("nominalRPM", self.NominalRPM)
 
-        TempStr = self.GetModelInfo("KW")
-        if TempStr == "Unknown":
-            self.FeedbackPipe.SendFeedback("ModelID", Message="Model ID register is unknown", FullLogs = True )
-
         if self.NominalKW == "Unknown" or self.Model == "Unknown" or not len(self.NominalKW) or not len(self.Model) or self.NewInstall:
 
             self.NominalKW = self.GetModelInfo("KW")
@@ -378,6 +374,9 @@ class Evolution(controller.GeneratorController):
             return "Unknown"
 
         ModelInfo = LookUp.get(int(Value,16), UnknownList)
+
+        if ModelInfo == UnknownList:
+            self.FeedbackPipe.SendFeedback("ModelID", Message="Model ID register is unknown", FullLogs = True )
 
         if Request.lower() == "frequency":
             if ModelInfo[1] == "60" or ModelInfo[1] == "50":

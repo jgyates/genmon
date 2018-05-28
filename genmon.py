@@ -22,10 +22,10 @@ try:
 except ImportError as e:
     from configparser import RawConfigParser
 
-from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel, myplatform
+from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel, myplatform, myweather
 
 
-GENMON_VERSION = "V1.9.5"
+GENMON_VERSION = "V1.9.6"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -59,6 +59,12 @@ class Monitor(mysupport.MySupport):
         self.Controller = None
         self.ControllerSelected = None
         self.bDisablePlatformStats = False
+        # weather parameters
+        self.WeatherAPIKey = None
+        self.WeatherLocation = None
+        self.WeatherMetric = False
+        self.WeatherMinimum = True
+        self.MyWeather = None
 
         # Time Sync Related Data
         self.bSyncTime = False          # Sync gen to system time
@@ -137,6 +143,11 @@ class Monitor(mysupport.MySupport):
         if self.bSyncDST or self.bSyncTime:     # Sync time thread
             self.Threads["TimeSyncThread"] = mythread.MyThread(self.TimeSyncThread, Name = "TimeSyncThread")
 
+        if not self.WeatherAPIKey == None and len(self.WeatherAPIKey) and not self.WeatherLocation == None and len(self.WeatherLocation):
+            Unit = 'metric' if self.WeatherMetric else 'imperial'
+            self.MyWeather = myweather.MyWeather(self.WeatherAPIKey, location = self.WeatherLocation, unit = Unit, log = self.log)
+            self.Threads = self.MergeDicts(self.Threads, self.MyWeather.Threads)
+
     # -------------------- Monitor::GetConfig-----------------------------------
     def GetConfig(self, reload = False):
 
@@ -182,6 +193,18 @@ class Monitor(mysupport.MySupport):
 
             if config.has_option(ConfigSection, 'controllertype'):
                 self.ControllerSelected = config.get(ConfigSection, 'controllertype')
+
+            if config.has_option(ConfigSection, 'weatherkey'):
+                self.WeatherAPIKey = config.get(ConfigSection, 'weatherkey')
+
+            if config.has_option(ConfigSection, 'weatherlocation'):
+                self.WeatherLocation = config.get(ConfigSection, 'weatherlocation')
+
+            if config.has_option(ConfigSection, 'metricweather'):
+                self.WeatherMetric = config.getboolean(ConfigSection, 'metricweather')
+
+            if config.has_option(ConfigSection, 'minimumweatherinfo'):
+                self.WeatherMinimum = config.getboolean(ConfigSection, 'minimumweatherinfo')
 
             if config.has_option(ConfigSection, 'version'):
                 self.Version = config.get(ConfigSection, 'version')
@@ -479,6 +502,18 @@ class Monitor(mysupport.MySupport):
 
         return Platform.GetInfo()
 
+    #------------ Monitor::GetWeatherData --------------------------------------
+    def GetWeatherData(self):
+
+        if self.MyWeather == None:
+            return None
+
+        ReturnData = self.MyWeather.GetWeather(minimum = self.WeatherMinimum)
+
+        if not len(ReturnData):
+            return None
+        return ReturnData
+
     #------------ Monitor::GetUserDefinedData ----------------------------------
     # this assumes one json object, the file can be formatted (i.e. on multiple
     # lines) or can be on a single line
@@ -524,6 +559,10 @@ class Monitor(mysupport.MySupport):
                 PlatformStats = self.GetPlatformStats()
                 if not PlatformStats == None:
                     MonitorData["Platform Stats"] = PlatformStats
+
+            WeatherData = self.GetWeatherData()
+            if not WeatherData == None and len(WeatherData):
+                MonitorData["Weather"] = WeatherData
 
             UserData = self.GetUserDefinedData()
             if not UserData == None and len(UserData):
