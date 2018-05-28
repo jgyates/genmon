@@ -16,6 +16,7 @@ import mythread, mycommon
 class MyPipe(mycommon.MyCommon):
     #------------ MyPipe::init--------------------------------------------------
     def __init__(self, name, callback = None, Reuse = False, log = None, simulation = False):
+        super(MyPipe, self).__init__()
         self.log = log
         self.BasePipeName = name
         self.Simulation = simulation
@@ -28,7 +29,6 @@ class MyPipe(mycommon.MyCommon):
 
         self.FileAccessLock = threading.RLock()
 
-        #self.FileLock = FileLock(os.path.dirname(os.path.realpath(__file__)) + "/" + "lock.file", log = self.log)
         self.FileName = os.path.dirname(os.path.realpath(__file__)) + "/" + self.BasePipeName + "_dat"
 
         try:
@@ -42,7 +42,6 @@ class MyPipe(mycommon.MyCommon):
 
         except Exception as e1:
             self.LogErrorLine("Error in MyPipe:__init__: " + str(e1))
-        self.Threads = {}
 
         if not self.Callback == None:
             self.Threads[self.ThreadName] = mythread.MyThread(self.ReadPipeThread, Name = self.ThreadName)

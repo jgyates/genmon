@@ -198,9 +198,11 @@ class Monitor(mysupport.MySupport):
                 self.FeedbackEnabled = False
             # Load saved feedback log if log is present
             if os.path.isfile(self.FeedbackLogFile):
-                with open(self.FeedbackLogFile) as infile:
-                    self.FeedbackMessages = json.load(infile)
-
+                try:
+                    with open(self.FeedbackLogFile) as infile:
+                        self.FeedbackMessages = json.load(infile)
+                except Exception as e1:
+                    os.remove(self.FeedbackLogFile)
         except Exception as e1:
             if not reload:
                 raise Exception("Missing config file or config file entries: " + str(e1))
@@ -478,6 +480,8 @@ class Monitor(mysupport.MySupport):
         return Platform.GetInfo()
 
     #------------ Monitor::GetUserDefinedData ----------------------------------
+    # this assumes one json object, the file can be formatted (i.e. on multiple
+    # lines) or can be on a single line
     def GetUserDefinedData(self):
 
         try:
@@ -486,21 +490,9 @@ class Monitor(mysupport.MySupport):
             if not os.path.isfile(FileName):
                 return None
 
-            with open(FileName,"r") as UserFile:     #
-                ValueList = UserFile.readlines()
-                if len(ValueList):
-                    ReturnList = []
-                    for Value in ValueList:
-                        if len(Value) > 3:
-                            try:
-                                Data = json.loads(Value)
-                            except Exception as e1:
-                                self.LogErrorLine("Error in GetUserDefinedData (parse json): " + str(e1))
-                                continue
-                            ReturnList.append(Data)
-                    return ReturnList
-                else:
-                    return None
+            with open(FileName) as f:
+                data = json.load(f)
+            return data
         except Exception as e1:
             self.LogErrorLine("Error in GetUserDefinedData: " + str(e1))
         return None
