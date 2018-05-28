@@ -140,7 +140,7 @@ class MyPlatform(mycommon.MyCommon):
         if StatusStr == "":
             StatusStr += "OK"
 
-        PiThrottleInfo["Pi CPU Frequecy Throttling"] = StatusStr
+        PiThrottleInfo["Pi CPU Frequency Throttling"] = StatusStr
 
         StatusStr = ""
         if (status & 0x20000):
