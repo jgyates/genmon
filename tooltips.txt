@@ -42,6 +42,13 @@ favicon = favicon for website. This is an optional parameter and default is "fav
 kwlogmax = Full path to override the default kW log. If this option is present but empty the kW log will be disabled.
 kwlog = Override the maximum size of the kW log. The default is 15MB.
 currentdivider = This is a value to override the divisor used to calculate the current for Evolution Air Cooled units. This value is expressed in floating point.
+currentoffset = This value provides an offset to compensate for mis-calibrated current transformers in Evolution Air Cooled generators. This may need to be used if you you see a negative current value displayed for Evolution Air Cooled Generators. The default value is zero.
+disableplatformstats = If enabled, platform statistics will not be displayed in the user interface
+weatherkey = Openweathermap.org API Key. This is required to enable weather reporting.
+weatherlocation = The location to report weather. Either enter City,State,Country or a openweathermap.org city ID.
+metricweather = If enabled, metric units will be used to display weather information
+minimumweatherinfo = If enabled the minimum information regarding the weather will be displayed, otherwise the maximum info will be displayed
+
 nominalfrequency = Frequency your generator is running. Either 50Hz or 60Hz. This is used by the web interface.
 nominalRPM = The RPM of your generator. Typically 1800 or 3600 for 60Hz and 1500 or 3000 for 50Hz. Some models run at 2300. This is used by the web interface.
 nominalKW = The maximum kilowatt output of your generator. This is used by the web interface.
