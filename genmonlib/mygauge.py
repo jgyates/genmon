@@ -35,7 +35,8 @@ class MyGauge (mycommon.MyCommon):
         self.CallbackParameters = callbackparameters
         self.Labels = labels
         self.ColorZones = colors
-
+        self.Type = "gauge"
+        self.DefaultSize = 2
         '''
         1.) Text (eg "5 kW")
         2.) Value (eg 5)
@@ -164,7 +165,7 @@ class MyGauge (mycommon.MyCommon):
         if self.Minimum >= self.Maximum:
             self.LogError("Error in MyGauge:init: invalid value, min: %d max:%d" % (self.Minimum,str.Maximum))
             return
-
+    #-------------Gauge:CreatePowerLabels-------------------------------------
     def CreatePowerLabels(self, Minimum, Nominal, Maximum):
 
         ReturnList = []
@@ -247,4 +248,6 @@ class MyGauge (mycommon.MyCommon):
         StartInfo["subdivisions"] = self.SubDivisions
         StartInfo["labels"] = self.Labels
         StartInfo["colorzones"] = self.ColorZones
+        StartInfo["type"] = self.Type
+        StartInfo["default-size"] = self.DefaultSize
         return StartInfo

@@ -233,11 +233,11 @@ class Evolution(controller.GeneratorController):
         self.CheckModelSpecificInfo(NoLookUp = self.Simulation)
         # check for unknown events (i.e. events we are not decoded) and send an email if they occur
         self.CheckForAlarmEvent.set()
-        self.SetupGauges()
+        self.SetupTiles()
         self.InitComplete = True
 
     #---------------------------------------------------------------------------
-    def SetupGauges(self):
+    def SetupTiles(self):
 
         Gauge = mygauge.MyGauge(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = 12, callback = self.GetBatteryVoltage, callbackparameters = (True,))
         self.GaugeList.append(Gauge)
@@ -3031,9 +3031,9 @@ class Evolution(controller.GeneratorController):
             Status["Frequency"] = self.GetFrequency()
             Status["RPM"] = self.GetRPM()
             Status["ExerciseInfo"] = self.GetParsedExerciseTime(True)
-            Status["gauges"] = []
+            Status["tiles"] = []
             for Gauge in self.GaugeList:
-                Status["gauges"].append(Gauge.GetGUIInfo())
+                Status["tiles"].append(Gauge.GetGUIInfo())
         except Exception as e1:
             self.LogErrorLine("Error in GetStatusForGUI: " + str(e1))
         return Status
@@ -3055,9 +3055,9 @@ class Evolution(controller.GeneratorController):
             StartInfo["RemoteCommands"] = True
 
             if not NoGauge:
-                StartInfo["gauges"] = []
+                StartInfo["tiles"] = []
                 for Gauge in self.GaugeList:
-                    StartInfo["gauges"].append(Gauge.GetStartInfo())
+                    StartInfo["tiles"].append(Gauge.GetStartInfo())
         except Exception as e1:
             self.LogErrorLine("Error in GetStartInfo: " + str(e1))
 
