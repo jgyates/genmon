@@ -35,7 +35,7 @@ class MyGauge (mycommon.MyCommon):
         self.CallbackParameters = callbackparameters
         self.Labels = labels
         self.ColorZones = colors
-        self.Type = "gauge"
+        self.TileType = "gauge"
         self.DefaultSize = 2
         '''
         1.) Text (eg "5 kW")
@@ -248,6 +248,6 @@ class MyGauge (mycommon.MyCommon):
         StartInfo["subdivisions"] = self.SubDivisions
         StartInfo["labels"] = self.Labels
         StartInfo["colorzones"] = self.ColorZones
-        StartInfo["type"] = self.Type
+        StartInfo["type"] = self.TileType
         StartInfo["default-size"] = self.DefaultSize
         return StartInfo
