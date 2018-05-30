@@ -28,6 +28,7 @@ class MyWeather(mysupport.MySupport):
         self.Observation = None
         self.WeatherUnit = unit
         self.WeatherData = None
+        self.ObservationLocation = None
         self.DataAccessLock = threading.Lock()     # lock to synchronize access to WeatherData
 
         if not pyowm_installed:
@@ -74,9 +75,10 @@ class MyWeather(mysupport.MySupport):
                 self.Observation = self.OWM.weather_at_id(int(self.Location))
             else:
                 self.Observation = self.OWM.weather_at_place(self.Location)
-            self.Location = self.Observation.get_location()
+            self.ObservationLocation = self.Observation.get_location()
         except Exception as e1:
             self.Observation = None
+            self.ObservationLocation = None
             self.LogErrorLine("Error in InitOWM (location): " + str(e1))
 
     #---------------------WeatherThread-----------------------------------------
@@ -103,7 +105,22 @@ class MyWeather(mysupport.MySupport):
                 time.sleep(10)
                 if self.IsStopSignaled("WeatherThread"):
                         return
+    #---------------------GetLocation-------------------------------------------
+    def GetLocation(self):
 
+        Data = collections.OrderedDict()
+        try:
+            if self.ObservationLocation == None:
+                return None
+
+            Data["City Name"] = self.ObservationLocation.get_name()
+            Data["Latitude"] = self.ObservationLocation.get_lat()
+            Data["Longitude"] = self.ObservationLocation.get_lon()
+            Data["City ID"] = self.ObservationLocation.get_ID()
+        except Exception as e1:
+            self.LogErrorLine("Error in GetLocation: " + str(e1))
+
+        return Data
     #---------------------GetWeather--------------------------------------------
     def GetWeather(self, minimum = True, ForUI = False):
 
@@ -146,6 +163,9 @@ class MyWeather(mysupport.MySupport):
                     UTC = datetime.datetime.fromtimestamp(int(self.WeatherData.get_reference_time()))
                     Local = self.UTC2Local(UTC)
                     Data["Reference Time"] = Local.strftime("%A %B %-d, %Y %H:%M:%S")
+                    LocationData = self.GetLocation()
+                    if LocationData != None and len(LocationData):
+                        Data["Location"] = LocationData
                 if ForUI:
                     Data["code"] = self.WeatherData.get_weather_code()          # Get OWM weather condition code
                     # "http://openweathermap.org/img/w/" + iconCode + ".png";
