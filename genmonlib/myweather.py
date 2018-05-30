@@ -142,12 +142,21 @@ class MyWeather(mysupport.MySupport):
 
                     Data["Sunrise Time"] = datetime.datetime.fromtimestamp(int(self.WeatherData.get_sunrise_time())).strftime("%A %B %-d, %Y %H:%M:%S")
                     Data["Sunset Time"] = datetime.datetime.fromtimestamp(int(self.WeatherData.get_sunset_time())).strftime("%A %B %-d, %Y %H:%M:%S")
-                    Data["Reference Time"] = datetime.datetime.fromtimestamp(int(self.WeatherData.get_reference_time())).strftime("%A %B %-d, %Y %H:%M:%S")
+                    
+                    UTC = datetime.datetime.fromtimestamp(int(self.WeatherData.get_reference_time()))
+                    Local = self.UTC2Local(UTC)
+                    Data["Reference Time"] = Local.strftime("%A %B %-d, %Y %H:%M:%S")
 
             return Data
         except Exception, e1:
             self.LogErrorLine("Error in GetWeather: " + str(e1))
             return Data
+
+    #---------------------UTC2Local---------------------------------------------
+    def UTC2Local(self, utc):
+        epoch = time.mktime(utc.timetuple())
+        offset = datetime.datetime.fromtimestamp (epoch) - datetime.datetime.utcfromtimestamp (epoch)
+        return utc + offset
 
     #---------------------Close-------------------------------------------------
     def Close(self):
