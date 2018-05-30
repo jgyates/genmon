@@ -49,7 +49,7 @@ class GeneratorController(mysupport.MySupport):
         self.OutageLog = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/outage.txt"
         self.PowerLogMaxSize = 15       # 15 MB max size
         self.PowerLog =  os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/kwlog.txt"
-        self.GaugeList = []        # Gauge list for GUI
+        self.TileList = []        # Tile list for GUI
 
         if self.Simulation:
             self.LogLocation = "./"
@@ -365,8 +365,8 @@ class GeneratorController(mysupport.MySupport):
 
             if not NoGauge:
                 StartInfo["gauges"] = []
-                for Gauge in self.GaugeList:
-                    StartInfo["gauges"].append(Gauge.GetStartInfo())
+                for Tile in self.TileList:
+                    StartInfo["gauges"].append(Tile.GetStartInfo())
 
         except Exception as e1:
             self.LogErrorLine("Error in GetStartInfo: " + str(e1))

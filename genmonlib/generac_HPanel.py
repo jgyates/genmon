@@ -18,7 +18,7 @@ try:
 except ImportError as e:
     from configparser import RawConfigParser
 
-import controller, mymodbus, mythread, modbus_file, mygauge
+import controller, mymodbus, mythread, modbus_file, mytile
 
 #---------------------RegisterEnum::RegisterEnum--------------------------------
 class RegisterEnum(object):
@@ -431,42 +431,45 @@ class HPanel(controller.GeneratorController):
     def InitDevice(self):
         self.MasterEmulation()
         self.CheckModelSpecificInfo()
-        self.SetupGauges()
+        self.SetupTiles()
         self.InitComplete = True
 
-    #-------------HPanel:SetupGauges---------------------------------------------
-    def SetupGauges(self):
+    #-------------HPanel:SetupTiles---------------------------------------------
+    def SetupTiles(self):
 
-        Gauge = mygauge.MyGauge(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = 12,
+        Tile = mytile.MyTile(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = 12,
             callback = self.GetParameter,
             callbackparameters = (RegisterEnum.BATTERY_VOLTS,  None, 100.0, False, False, True))
-        self.GaugeList.append(Gauge)
+        self.TileList.append(Tile)
 
-        Gauge = mygauge.MyGauge(self.log, title = "Output Voltage", units = "V", type = "linevolts", nominal = 240,
+        Tile = mytile.MyTile(self.log, title = "Output Voltage", units = "V", type = "linevolts", nominal = 240,
         callback = self.GetParameter,
         callbackparameters = (RegisterEnum.AVG_VOLTAGE, None, None, False, True, False))
-        self.GaugeList.append(Gauge)
+        self.TileList.append(Tile)
 
-        Gauge = mygauge.MyGauge(self.log, title = "Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq),
+        Tile = mytile.MyTile(self.log, title = "Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq),
         callback = self.GetParameter,
         callbackparameters = (RegisterEnum.OUTPUT_FREQUENCY, None, None, False, True, False))
-        self.GaugeList.append(Gauge)
+        self.TileList.append(Tile)
 
-        Gauge = mygauge.MyGauge(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM),
+        Tile = mytile.MyTile(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM),
         callback = self.GetParameter,
         callbackparameters = (RegisterEnum.OUTPUT_RPM, None, None, False, True, False))
-        self.GaugeList.append(Gauge)
+        self.TileList.append(Tile)
 
-        Gauge = mygauge.MyGauge(self.log, title = "Coolant Temp", units = "F", type = "temperature", nominal = 118, maximum = 300,
+        Tile = mytile.MyTile(self.log, title = "Coolant Temp", units = "F", type = "temperature", nominal = 118, maximum = 300,
         callback = self.GetParameter,
         callbackparameters = (RegisterEnum.COOLANT_TEMP, None, None, False, True, False))
-        self.GaugeList.append(Gauge)
+        self.TileList.append(Tile)
 
         if self.PowerMeterIsSupported():
-            Gauge = mygauge.MyGauge(self.log, title = "Power Output", units = "kW", type = "power", nominal = int(self.NominalKW),
+            Tile = mytile.MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = int(self.NominalKW),
             callback = self.GetParameter,
             callbackparameters = (RegisterEnum.TOTAL_POWER_KW, None, None, False, True, False))
-            self.GaugeList.append(Gauge)
+            self.TileList.append(Tile)
+
+            Tile = mytile.MyTile(self.log, title = "kW Output", type = "powergraph", nominal = int(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
+            self.TileList.append(Tile)
 
     #-------------HPanel:CheckModelSpecificInfo---------------------------------
     # check for model specific info in read from conf file, if not there then add some defaults
@@ -874,8 +877,8 @@ class HPanel(controller.GeneratorController):
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
             if not NoGauge:
                 StartInfo["gauges"] = []
-                for Gauge in self.GaugeList:
-                    StartInfo["gauges"].append(Gauge.GetStartInfo())
+                for Tile in self.TileList:
+                    StartInfo["gauges"].append(Tile.GetStartInfo())
 
             return StartInfo
         except Exception as e1:
@@ -908,8 +911,8 @@ class HPanel(controller.GeneratorController):
             Status["ExerciseInfo"] = ExerciseInfo
 
             Status["gauges"] = []
-            for Gauge in self.GaugeList:
-                Status["gauges"].append(Gauge.GetGUIInfo())
+            for Tile in self.TileList:
+                Status["gauges"].append(Tile.GetGUIInfo())
 
             return Status
         except Exception as e1:

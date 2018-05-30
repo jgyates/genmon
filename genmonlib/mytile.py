@@ -1,26 +1,27 @@
 #!/usr/bin/env python
 #-------------------------------------------------------------------------------
-#    FILE: mygauge.py
-# PURPOSE: Gauage Abstraction
+#    FILE: mytile.py
+# PURPOSE: Tile Abstraction
 #
 #  AUTHOR: Jason G Yates
 #    DATE: 22-May-2018
 #
 # MODIFICATIONS:
 #
-# USAGE: This is the base class of generator controllers. LogError or FatalError
-#   should be used to log errors or fatal errors.
+# USAGE: This is the base class of used to abstract gauges and graphs, etc
+# LogError or FatalError should be used to log errors or fatal errors.
 #
 #-------------------------------------------------------------------------------
 
 import mycommon
 
 # See http://bernii.github.io/gauge.js/ for gauage paraeters
-class MyGauge (mycommon.MyCommon):
-    #---------------------Gauge::__init__---------------------------------------
-    def __init__(self, log, title = None, units = None, type = None, nominal = None,
-        minimum = None, maximum = None, divisions = None, subdivisions = None,
-        callback = None, callbackparameters = None, labels = None, colors = None):
+class MyTile (mycommon.MyCommon):
+    #---------------------MyTile::__init__--------------------------------------
+    def __init__(self, log, title = None, units = None, type = None, subtype = None,
+        nominal = None, minimum = None, maximum = None, divisions = None, subdivisions = None,
+        callback = None, callbackparameters = None, labels = None, colors = None,
+        defaultsize = None):
 
         self.log = log
         self.Title = title
@@ -35,8 +36,8 @@ class MyGauge (mycommon.MyCommon):
         self.CallbackParameters = callbackparameters
         self.Labels = labels
         self.ColorZones = colors
-        self.TileType = "gauge"
-        self.DefaultSize = 2
+        self.TileType = subtype
+        self.DefaultSize = defaultsize
         '''
         1.) Text (eg "5 kW")
         2.) Value (eg 5)
@@ -68,6 +69,8 @@ class MyGauge (mycommon.MyCommon):
             values = [self.Minimum, self.Nominal/12*11.5, self.Nominal/12*12.5, self.Nominal/12*15, self.Nominal/12*15.5, self.Maximum]
             colors = [self.RED, self.YELLOW, self.GREEN, self.YELLOW, self.RED]
             self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
+            self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
+            self.TileType = self.SetDefault(self.TileType,"gauge")
 
         elif self.Type.lower() == "linevolts":
             self.Nominal = self.SetDefault(self.Nominal, 240)
@@ -81,6 +84,8 @@ class MyGauge (mycommon.MyCommon):
             values = [self.Minimum, self.Nominal - 10, self.Nominal - 5, self.Nominal + 5, self.Nominal + 15, self.Maximum]
             colors = [self.RED, self.YELLOW, self.GREEN, self.YELLOW, self.RED]
             self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
+            self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
+            self.TileType = self.SetDefault(self.TileType,"gauge")
 
         elif self.Type.lower() == "current":
             self.Nominal = self.SetDefault(self.Nominal, 100)
@@ -92,6 +97,7 @@ class MyGauge (mycommon.MyCommon):
             values = [self.Minimum, int(self.Nominal * 0.8), int(self.Nominal * 0.95), int(self.Nominal * 1.2)]
             colors = [self.GREEN, self.YELLOW, self.RED]
             self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
+            self.TileType = self.SetDefault(self.TileType,"gauge")
         elif self.Type.lower() == "power":
             self.Nominal = self.SetDefault(self.Nominal, 60)
             self.Minimum = self.SetDefault(self.Minimum, 0)
@@ -102,6 +108,8 @@ class MyGauge (mycommon.MyCommon):
             values = [self.Minimum, int(self.Nominal * 0.8), int(self.Nominal * 0.95), int(self.Nominal * 1.2)]
             colors = [self.GREEN, self.YELLOW, self.RED]
             self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
+            self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
+            self.TileType = self.SetDefault(self.TileType,"gauge")
 
         elif self.Type.lower() == "frequency":
             self.Nominal = self.SetDefault(self.Nominal, 60)
@@ -113,6 +121,8 @@ class MyGauge (mycommon.MyCommon):
             values = [self.Minimum, self.Nominal - 6, self.Nominal - 3, self.Nominal + 3, self.Nominal + 6, self.Maximum]
             colors = [self.RED, self.YELLOW, self.GREEN, self.YELLOW, self.RED]
             self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
+            self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
+            self.TileType = self.SetDefault(self.TileType,"gauge")
         elif self.Type.lower() == "rpm":
             self.Nominal = self.SetDefault(self.Nominal, 3600)
             self.Minimum = self.SetDefault(self.Minimum, 0)
@@ -123,6 +133,8 @@ class MyGauge (mycommon.MyCommon):
             values = [self.Minimum, self.Nominal - 75, self.Nominal - 50, self.Nominal + 50, self.Nominal + 75, self.Maximum]
             colors = [self.RED, self.YELLOW, self.GREEN, self.YELLOW, self.RED]
             self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
+            self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
+            self.TileType = self.SetDefault(self.TileType,"gauge")
 
         elif self.Type.lower() == "fuel" or self.Type.lower() == "level" or self.Type.lower() == "position":
             self.Nominal = self.SetDefault(self.Nominal, 100)
@@ -134,6 +146,8 @@ class MyGauge (mycommon.MyCommon):
             values = [self.Minimum, int(self.Nominal * 0.10), int(self.Nominal * 0.25), int(self.Nominal)]
             colors = [self.RED, self.YELLOW, self.GREEN]
             self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
+            self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
+            self.TileType = self.SetDefault(self.TileType,"gauge")
 
         elif self.Type.lower() == "temperature":
             self.Nominal = self.SetDefault(self.Nominal, 100)
@@ -145,6 +159,7 @@ class MyGauge (mycommon.MyCommon):
             values = [self.Minimum, self.Nominal, self.Nominal + int((self.Maximum - self.Nominal) / 2), self.Maximum]
             colors = [self.GREEN, self.YELLOW, self.RED]
             self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
+            self.TileType = self.SetDefault(self.TileType,"gauge")
 
         elif self.Type.lower() == "pressure":
             self.Nominal = self.SetDefault(self.Nominal, 100)
@@ -157,6 +172,15 @@ class MyGauge (mycommon.MyCommon):
             values = [self.Minimum, self.Nominal - 15, self.Nominal - 5, self.Nominal + 5, self.Nominal + 15, self.Maximum]
             colors = [self.RED, self.YELLOW, self.GREEN, self.YELLOW, self.RED]
             self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
+            self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
+            self.TileType = self.SetDefault(self.TileType,"gauge")
+
+        elif self.Type.lower() == "powergraph":
+            self.Nominal = self.SetDefault(self.Nominal, 100)
+            self.Minimum = self.SetDefault(self.Minimum, 0)
+            self.Maximum = self.SetDefault(self.Maximum, self.Nominal + int(self.Nominal * .20))
+            self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
+            self.TileType = self.SetDefault(self.TileType, "graph")
 
         else:
             self.LogError("Error in MyGauge:init: invalid type: " + str(type))
@@ -165,7 +189,7 @@ class MyGauge (mycommon.MyCommon):
         if self.Minimum >= self.Maximum:
             self.LogError("Error in MyGauge:init: invalid value, min: %d max:%d" % (self.Minimum,str.Maximum))
             return
-    #-------------Gauge:CreatePowerLabels-------------------------------------
+    #-------------MyTile:CreatePowerLabels--------------------------------------
     def CreatePowerLabels(self, Minimum, Nominal, Maximum):
 
         ReturnList = []
@@ -180,7 +204,7 @@ class MyGauge (mycommon.MyCommon):
 
         return ReturnList
 
-    #-------------Gauge:CreateColorZoneList-------------------------------------
+    #-------------MyTile:CreateColorZoneList------------------------------------
     def CreateColorZoneList(self, ZoneValueList, ZoneColorList):
 
         if not len(ZoneValueList) == len(ZoneColorList) + 1:
@@ -191,14 +215,14 @@ class MyGauge (mycommon.MyCommon):
             ReturnList.append(self.CreateColorZone(ZoneColorList[x], ZoneValueList[x], ZoneValueList[x+1]))
 
         return ReturnList
-    #-------------Gauge:CreateColorZone-----------------------------------------
+    #-------------MyTile:CreateColorZone----------------------------------------
     def CreateColorZone(self, color, min, max):
 
         ColorZone = {"strokeStyle": color, "min": min, "max": max}
 
         return ColorZone
 
-    #-------------Gauge:SetDefault----------------------------------------------
+    #-------------MyTile:SetDefault---------------------------------------------
     def SetDefault(sefl, Value, Default):
 
         if Value == None:
@@ -206,7 +230,7 @@ class MyGauge (mycommon.MyCommon):
         else:
             return Value
 
-    #-------------Gauge:GetGUIInfo----------------------------------------------
+    #-------------MyTile:GetGUIInfo---------------------------------------------
     def GetGUIInfo(self):
 
         GUIInfo = {}
@@ -236,7 +260,7 @@ class MyGauge (mycommon.MyCommon):
         except Exception as e1:
             self.LogErrorLine("Error in GetGUIInfo: " + str(e1))
         return GUIInfo
-    #-------------Gauge:GetStartInfo--------------------------------------------
+    #-------------MyTile:GetStartInfo-------------------------------------------
     def GetStartInfo(self):
 
         StartInfo = {}

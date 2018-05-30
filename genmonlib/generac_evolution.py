@@ -18,7 +18,7 @@ try:
 except ImportError as e:
     from configparser import RawConfigParser
 
-import controller, mymodbus, mythread, modbus_file, mygauge
+import controller, mymodbus, mythread, modbus_file, mytile
 
 
 #-------------------Generator specific const defines for Generator class
@@ -239,19 +239,21 @@ class Evolution(controller.GeneratorController):
     #---------------------------------------------------------------------------
     def SetupTiles(self):
 
-        Gauge = mygauge.MyGauge(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = 12, callback = self.GetBatteryVoltage, callbackparameters = (True,))
-        self.GaugeList.append(Gauge)
-        Gauge = mygauge.MyGauge(self.log, title = "Utility Voltage", units = "V", type = "linevolts", nominal = 240, callback = self.GetUtilityVoltage, callbackparameters = (True,))
-        self.GaugeList.append(Gauge)
-        Gauge = mygauge.MyGauge(self.log, title = "Output Voltage", units = "V", type = "linevolts", nominal = 240, callback = self.GetVoltageOutput, callbackparameters = (True,))
-        self.GaugeList.append(Gauge)
-        Gauge = mygauge.MyGauge(self.log, title = "Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq), callback = self.GetFrequency, callbackparameters = (False, True))
-        self.GaugeList.append(Gauge)
-        Gauge = mygauge.MyGauge(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM), callback = self.GetRPM, callbackparameters = (True,))
-        self.GaugeList.append(Gauge)
+        Tile = mytile.MyTile(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = 12, callback = self.GetBatteryVoltage, callbackparameters = (True,))
+        self.TileList.append(Tile)
+        Tile = mytile.MyTile(self.log, title = "Utility Voltage", units = "V", type = "linevolts", nominal = 240, callback = self.GetUtilityVoltage, callbackparameters = (True,))
+        self.TileList.append(Tile)
+        Tile = mytile.MyTile(self.log, title = "Output Voltage", units = "V", type = "linevolts", nominal = 240, callback = self.GetVoltageOutput, callbackparameters = (True,))
+        self.TileList.append(Tile)
+        Tile = mytile.MyTile(self.log, title = "Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq), callback = self.GetFrequency, callbackparameters = (False, True))
+        self.TileList.append(Tile)
+        Tile = mytile.MyTile(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM), callback = self.GetRPM, callbackparameters = (True,))
+        self.TileList.append(Tile)
         if self.PowerMeterIsSupported():
-            Gauge = mygauge.MyGauge(self.log, title = "Power Output", units = "kW", type = "power", nominal = int(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
-            self.GaugeList.append(Gauge)
+            Tile = mytile.MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = int(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
+            self.TileList.append(Tile)
+            Tile = mytile.MyTile(self.log, title = "kW Output", type = "powergraph", nominal = int(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
+            self.TileList.append(Tile)
 
     #---------------------------------------------------------------------------
     def CheckModelSpecificInfo(self, NoLookUp = False):
@@ -3032,8 +3034,8 @@ class Evolution(controller.GeneratorController):
             Status["RPM"] = self.GetRPM()
             Status["ExerciseInfo"] = self.GetParsedExerciseTime(True)
             Status["tiles"] = []
-            for Gauge in self.GaugeList:
-                Status["tiles"].append(Gauge.GetGUIInfo())
+            for Tile in self.TileList:
+                Status["tiles"].append(Tile.GetGUIInfo())
         except Exception as e1:
             self.LogErrorLine("Error in GetStatusForGUI: " + str(e1))
         return Status
@@ -3056,8 +3058,8 @@ class Evolution(controller.GeneratorController):
 
             if not NoGauge:
                 StartInfo["tiles"] = []
-                for Gauge in self.GaugeList:
-                    StartInfo["tiles"].append(Gauge.GetStartInfo())
+                for Tile in self.TileList:
+                    StartInfo["tiles"].append(Tile.GetStartInfo())
         except Exception as e1:
             self.LogErrorLine("Error in GetStartInfo: " + str(e1))
 
