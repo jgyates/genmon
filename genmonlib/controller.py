@@ -348,7 +348,7 @@ class GeneratorController(mysupport.MySupport):
 
     #------------ GeneratorController::GetStartInfo ----------------------------
     # return a dictionary with startup info for the gui
-    def GetStartInfo(self, NoGauge = False):
+    def GetStartInfo(self, NoTile = False):
 
         StartInfo = {}
         try:
@@ -363,10 +363,10 @@ class GeneratorController(mysupport.MySupport):
             StartInfo["UtilityVoltageDisplayed"] = True
             StartInfo["RemoteCommands"] = True
 
-            if not NoGauge:
-                StartInfo["gauges"] = []
+            if not NoTile:
+                StartInfo["tiles"] = []
                 for Tile in self.TileList:
-                    StartInfo["gauges"].append(Tile.GetStartInfo())
+                    StartInfo["tiles"].append(Tile.GetStartInfo())
 
         except Exception as e1:
             self.LogErrorLine("Error in GetStartInfo: " + str(e1))
@@ -512,7 +512,7 @@ class GeneratorController(mysupport.MySupport):
     # returns current kW
     # rerturn empty string ("") if not supported,
     # return kW with units i.e. "2.45kW"
-    def GetPowerOutput(self):
+    def GetPowerOutput(self, ReturnFloat = False):
         return ""
 
     #----------  GeneratorController:GetCommStatus  ----------------------------

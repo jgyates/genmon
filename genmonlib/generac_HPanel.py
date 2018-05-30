@@ -437,7 +437,7 @@ class HPanel(controller.GeneratorController):
     #-------------HPanel:SetupTiles---------------------------------------------
     def SetupTiles(self):
 
-        Tile = mytile.MyTile(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = 12,
+        Tile = mytile.MyTile(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = 24,
             callback = self.GetParameter,
             callbackparameters = (RegisterEnum.BATTERY_VOLTS,  None, 100.0, False, False, True))
         self.TileList.append(Tile)
@@ -447,9 +447,14 @@ class HPanel(controller.GeneratorController):
         callbackparameters = (RegisterEnum.AVG_VOLTAGE, None, None, False, True, False))
         self.TileList.append(Tile)
 
+        Tile = mytile.MyTile(self.log, title = "Average Current", units = "A", type = "current", nominal = int((int(self.NominalKW) * 1000) / 240 /3 ),
+        callback = self.GetParameter,
+        callbackparameters = (RegisterEnum.AVG_VOLTAGE, None, None, False, True, False))
+        self.TileList.append(Tile)
+
         Tile = mytile.MyTile(self.log, title = "Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq),
         callback = self.GetParameter,
-        callbackparameters = (RegisterEnum.OUTPUT_FREQUENCY, None, None, False, True, False))
+        callbackparameters = (RegisterEnum.OUTPUT_FREQUENCY, None, 10.0, False, False, True))
         self.TileList.append(Tile)
 
         Tile = mytile.MyTile(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM),
@@ -468,7 +473,10 @@ class HPanel(controller.GeneratorController):
             callbackparameters = (RegisterEnum.TOTAL_POWER_KW, None, None, False, True, False))
             self.TileList.append(Tile)
 
-            Tile = mytile.MyTile(self.log, title = "kW Output", type = "powergraph", nominal = int(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
+            Tile = mytile.MyTile(self.log, title = "kW Output", type = "powergraph", nominal = int(self.NominalKW),
+            callback = self.GetParameter,
+            callbackparameters = (RegisterEnum.TOTAL_POWER_KW, None, None, False, True, False))
+
             self.TileList.append(Tile)
 
     #-------------HPanel:CheckModelSpecificInfo---------------------------------
@@ -860,7 +868,7 @@ class HPanel(controller.GeneratorController):
             return ErrorReturn
     #------------ HPanel::GetStartInfo ----------------------------
     # return a dictionary with startup info for the gui
-    def GetStartInfo(self, NoGauge = False):
+    def GetStartInfo(self, NoTile = False):
 
         try:
             StartInfo = {}
@@ -875,10 +883,10 @@ class HPanel(controller.GeneratorController):
             StartInfo["UtilityVoltage"] = False
             StartInfo["RemoteCommands"] = False
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
-            if not NoGauge:
-                StartInfo["gauges"] = []
+            if not NoTile:
+                StartInfo["tiles"] = []
                 for Tile in self.TileList:
-                    StartInfo["gauges"].append(Tile.GetStartInfo())
+                    StartInfo["tiles"].append(Tile.GetStartInfo())
 
             return StartInfo
         except Exception as e1:
@@ -910,9 +918,9 @@ class HPanel(controller.GeneratorController):
             ExerciseInfo["Day"] = "Monday"
             Status["ExerciseInfo"] = ExerciseInfo
 
-            Status["gauges"] = []
+            Status["tiles"] = []
             for Tile in self.TileList:
-                Status["gauges"].append(Tile.GetGUIInfo())
+                Status["tiles"].append(Tile.GetGUIInfo())
 
             return Status
         except Exception as e1:
@@ -1182,17 +1190,17 @@ class HPanel(controller.GeneratorController):
     # return true if GetPowerOutput is supported
     def PowerMeterIsSupported(self):
 
-        if self.Simulation:
-            return False
+        #if self.Simulation:
+        #    return False
         return True
 
     #---------------------HPanel::GetPowerOutput-------------------
     # returns current kW
     # rerturn empty string ("") if not supported,
     # return kW with units i.e. "2.45kW"
-    def GetPowerOutput(self):
+    def GetPowerOutput(self, ReturnFloat = False):
 
-        return self.GetParameter(RegisterEnum.TOTAL_POWER_KW, "kW")
+        return self.GetParameter(RegisterEnum.TOTAL_POWER_KW, "kW", ReturnFloat = ReturnFloat)
 
     #----------  HPanel:GetCommStatus  ----------------------------
     # return Dict with communication stats

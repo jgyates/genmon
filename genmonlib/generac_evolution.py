@@ -3041,7 +3041,7 @@ class Evolution(controller.GeneratorController):
         return Status
 
     #------------ Evolution:GetStartInfo -------------------------------
-    def GetStartInfo(self, NoGauge = False):
+    def GetStartInfo(self, NoTile = False):
 
         StartInfo = {}
         try:
@@ -3056,7 +3056,7 @@ class Evolution(controller.GeneratorController):
             StartInfo["UtilityVoltage"] = True
             StartInfo["RemoteCommands"] = True
 
-            if not NoGauge:
+            if not NoTile:
                 StartInfo["tiles"] = []
                 for Tile in self.TileList:
                     StartInfo["tiles"].append(Tile.GetStartInfo())

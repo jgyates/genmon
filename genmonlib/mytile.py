@@ -91,20 +91,23 @@ class MyTile (mycommon.MyCommon):
             self.Nominal = self.SetDefault(self.Nominal, 100)
             self.Minimum = self.SetDefault(self.Minimum, 0)
             self.Maximum = self.SetDefault(self.Maximum, int(self.Nominal * 1.2))
+
             self.Divisions = self.SetDefault(self.Divisions, 12)
             self.SubDivisions = self.SetDefault(self.SubDivisions, 5)
-            self.Labels = self.SetDefault( self.Labels, range(self.Minimum, self.Maximum, int(self.Nominal / 10)))
+            self.Labels = self.SetDefault( self.Labels, self.CreateLabels(self.Minimum, self.Nominal , self.Maximum))
+
             values = [self.Minimum, int(self.Nominal * 0.8), int(self.Nominal * 0.95), int(self.Nominal * 1.2)]
             colors = [self.GREEN, self.YELLOW, self.RED]
             self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
             self.TileType = self.SetDefault(self.TileType,"gauge")
+
         elif self.Type.lower() == "power":
             self.Nominal = self.SetDefault(self.Nominal, 60)
             self.Minimum = self.SetDefault(self.Minimum, 0)
             self.Maximum = self.SetDefault(self.Maximum, int(self.Nominal * 1.2))
             self.Divisions = self.SetDefault(self.Divisions, 12)
             self.SubDivisions = self.SetDefault(self.SubDivisions, 5)
-            self.Labels = self.SetDefault( self.Labels, self.CreatePowerLabels(self.Minimum, self.Nominal , self.Maximum))
+            self.Labels = self.SetDefault( self.Labels, self.CreateLabels(self.Minimum, self.Nominal , self.Maximum))
             values = [self.Minimum, int(self.Nominal * 0.8), int(self.Nominal * 0.95), int(self.Nominal * 1.2)]
             colors = [self.GREEN, self.YELLOW, self.RED]
             self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
@@ -189,18 +192,30 @@ class MyTile (mycommon.MyCommon):
         if self.Minimum >= self.Maximum:
             self.LogError("Error in MyGauge:init: invalid value, min: %d max:%d" % (self.Minimum,str.Maximum))
             return
-    #-------------MyTile:CreatePowerLabels--------------------------------------
-    def CreatePowerLabels(self, Minimum, Nominal, Maximum):
+    #-------------MyTile:myround--------------------------------------
+    def myround(self, x, base=5):
+        return int(base * round(float(x)/base))
 
+    #-------------MyTile:CreateLabels--------------------------------------
+    def CreateLabels(self, Minimum, Nominal, Maximum):
+
+        if Maximum - Minimum < 15:
+            return range(self.Minimum, self.Maximum, 2)
+        elif Maximum - Minimum < 30:
+            return range(self.Minimum, self.Maximum, 5)
+        elif Maximum - Minimum < 45:
+            return range(self.Minimum, self.Maximum, 10)
+        else:
+            RoundTo = 5
         ReturnList = []
         Range = Nominal
-        ReturnList.append(Minimum)
-        ReturnList.append(Minimum + int(round(Range * .2)))
-        ReturnList.append(Minimum + int(round(Range * .4)))
-        ReturnList.append(Minimum + int(round(Range * .6)))
-        ReturnList.append(Minimum + int(round(Range * .8)))
-        ReturnList.append(Nominal)
-        ReturnList.append(Maximum)
+        ReturnList.append(int(round(Minimum,1)))
+        ReturnList.append(Minimum + int(self.myround(Range * .2, RoundTo)))
+        ReturnList.append(Minimum + int(self.myround(Range * .4, RoundTo)))
+        ReturnList.append(Minimum + int(self.myround(Range * .6, RoundTo)))
+        ReturnList.append(Minimum + int(self.myround(Range * .8, RoundTo)))
+        ReturnList.append(int(self.myround(Nominal, RoundTo)))
+        ReturnList.append(int(Maximum))
 
         return ReturnList
 

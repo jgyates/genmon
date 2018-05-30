@@ -92,11 +92,15 @@ class Monitor(mysupport.MySupport):
 
         atexit.register(self.Close)
 
+        # init mail, start processing incoming email
+        self.mail = mymail.MyMail(monitor=True, incoming_folder = self.IncomingEmailFolder, processed_folder =self.ProcessedEmailFolder,incoming_callback = self.ProcessCommand)
+        self.Threads = self.MergeDicts(self.Threads, self.mail.Threads)
+        self.MailInit = True
+
         self.FeedbackPipe = mypipe.MyPipe("Feedback", self.FeedbackReceiver, log = self.log)
         self.Threads = self.MergeDicts(self.Threads, self.FeedbackPipe.Threads)
         self.MessagePipe = mypipe.MyPipe("Message", self.MessageReceiver, log = self.log)
         self.Threads = self.MergeDicts(self.Threads, self.MessagePipe.Threads)
-
 
         try:
             #Starting device connection
@@ -118,11 +122,6 @@ class Monitor(mysupport.MySupport):
             return None
 
         self.StartThreads()
-
-        # init mail, start processing incoming email
-        self.mail = mymail.MyMail(monitor=True, incoming_folder = self.IncomingEmailFolder, processed_folder =self.ProcessedEmailFolder,incoming_callback = self.ProcessCommand)
-        self.Threads = self.MergeDicts(self.Threads, self.mail.Threads)
-        self.MailInit = True
 
         self.ProcessFeedbackInfo()
 
@@ -281,7 +280,7 @@ class Monitor(mysupport.MySupport):
                 msgbody = "Reason = " + Reason + "\n"
                 if Message != None:
                     msgbody += "Message : " + Message + "\n"
-                msgbody += self.DictToString(self.GetStartInfo(NoGauge = True))
+                msgbody += self.DictToString(self.GetStartInfo(NoTile = True))
                 if not self.bDisablePlatformStats:
                     msgbody +=  self.DictToString(self.GetPlatformStats())
                 msgbody += self.Controller.DisplayRegisters(AllRegs = FullLogs)
@@ -311,7 +310,7 @@ class Monitor(mysupport.MySupport):
             return "Send Email is not enabled."
 
         msgbody = ""
-        msgbody += self.DictToString(self.GetStartInfo(NoGauge = True))
+        msgbody += self.DictToString(self.GetStartInfo(NoTile = True))
         if not self.bDisablePlatformStats:
             msgbody +=  self.DictToString(self.GetPlatformStats())
         msgbody += self.Controller.DisplayRegisters(AllRegs = True)
@@ -325,7 +324,7 @@ class Monitor(mysupport.MySupport):
             return "Send Email is not enabled."
 
         msgbody = ""
-        msgbody += self.DictToString(self.GetStartInfo(NoGauge = True))
+        msgbody += self.DictToString(self.GetStartInfo(NoTile = True))
         if not self.bDisablePlatformStats:
             msgbody +=  self.DictToString(self.GetPlatformStats())
         msgbody += self.Controller.DisplayRegisters(AllRegs = True)
@@ -579,12 +578,12 @@ class Monitor(mysupport.MySupport):
         return self.SiteName
 
     #------------ Monitor::GetStartInfo-----------------------------------------
-    def GetStartInfo(self, NoGauge = False):
+    def GetStartInfo(self, NoTile = False):
 
         StartInfo = collections.OrderedDict()
         StartInfo["version"] = GENMON_VERSION
         StartInfo["sitename"] = self.SiteName
-        ControllerStartInfo = self.Controller.GetStartInfo(NoGauge = NoGauge)
+        ControllerStartInfo = self.Controller.GetStartInfo(NoTile = NoTile)
         StartInfo = self.MergeDicts(StartInfo, ControllerStartInfo)
 
         return StartInfo
