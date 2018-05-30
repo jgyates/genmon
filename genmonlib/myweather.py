@@ -105,7 +105,7 @@ class MyWeather(mysupport.MySupport):
                         return
 
     #---------------------GetWeather--------------------------------------------
-    def GetWeather(self, minimum = True):
+    def GetWeather(self, minimum = True, ForUI = False):
 
         Data = collections.OrderedDict()
 
@@ -142,10 +142,14 @@ class MyWeather(mysupport.MySupport):
 
                     Data["Sunrise Time"] = datetime.datetime.fromtimestamp(int(self.WeatherData.get_sunrise_time())).strftime("%A %B %-d, %Y %H:%M:%S")
                     Data["Sunset Time"] = datetime.datetime.fromtimestamp(int(self.WeatherData.get_sunset_time())).strftime("%A %B %-d, %Y %H:%M:%S")
-                    
+
                     UTC = datetime.datetime.fromtimestamp(int(self.WeatherData.get_reference_time()))
                     Local = self.UTC2Local(UTC)
                     Data["Reference Time"] = Local.strftime("%A %B %-d, %Y %H:%M:%S")
+                if ForUI:
+                    Data["code"] = self.WeatherData.get_weather_code()          # Get OWM weather condition code
+                    # "http://openweathermap.org/img/w/" + iconCode + ".png";
+                    Data["icon"] = self.WeatherData.get_weather_icon_name()     # Get OWM weather icon code
 
             return Data
         except Exception, e1:

@@ -502,12 +502,12 @@ class Monitor(mysupport.MySupport):
         return Platform.GetInfo()
 
     #------------ Monitor::GetWeatherData --------------------------------------
-    def GetWeatherData(self):
+    def GetWeatherData(self, ForUI = False):
 
         if self.MyWeather == None:
             return None
 
-        ReturnData = self.MyWeather.GetWeather(minimum = self.WeatherMinimum)
+        ReturnData = self.MyWeather.GetWeather(minimum = self.WeatherMinimum, ForUI = ForUI)
 
         if not len(ReturnData):
             return None
@@ -595,6 +595,10 @@ class Monitor(mysupport.MySupport):
 
         Status["SystemHealth"] = self.GetSystemHealth()
         Status["UnsentFeedback"] = str(os.path.isfile(self.FeedbackLogFile))
+
+        WeatherData = self.GetWeatherData(ForUI = True)
+        if not WeatherData == None and len(WeatherData):
+            Status["Weather"] = WeatherData
         ReturnDict = self.MergeDicts(Status, self.Controller.GetStatusForGUI())
 
         return ReturnDict
