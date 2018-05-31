@@ -145,7 +145,13 @@ class MyWeather(mysupport.MySupport):
                     Data["Humidity"] = str(self.WeatherData.get_humidity() ) + " %"
                     Data["Cloud Coverage"] = str(self.WeatherData.get_clouds()) + " %"
                     TempDict = self.WeatherData.get_wind(unit = self.GetUnits("speed")) # unit is meters_sec or miles_hour
-                    Data["Wind"] = str(round(TempDict.get("deg", 0), 2)) + " Degrees, " + str(round(TempDict.get("speed", 0),2)) + " " +self.GetUnits("speed", Label = True)
+                    Degrees = round(TempDict.get("deg", 0), 2)
+                    Cardinal = self.DegreesToCardinal(Degrees)
+                    if len(Cardinal):
+                        WindString = Cardinal + " (" + str(Degrees) + " Degrees), "
+                    else:
+                        WindString = str(Degrees) + " Degrees, "
+                    Data["Wind"] = WindString + str(round(TempDict.get("speed", 0),2)) + " " +self.GetUnits("speed", Label = True)
                     TempDict = self.WeatherData.get_rain()
                     if len(TempDict):
                         Data["Rain in last 3 hours"] = str(TempDict.get("3h", 0))
@@ -175,6 +181,16 @@ class MyWeather(mysupport.MySupport):
         except Exception, e1:
             self.LogErrorLine("Error in GetWeather: " + str(e1))
             return Data
+
+    #---------------------DegreesToCardinal-------------------------------------
+    def DegreesToCardinal(self, Degrees):
+
+        try:
+            Value = int((Degrees / 22.5) + .5)
+            CardinalDirections = ["N","NNE","NE","ENE","E","ESE", "SE", "SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"]
+            return CardinalDirections[(Value % 16)]
+        except:
+            return ""
 
     #---------------------UTC2Local---------------------------------------------
     def UTC2Local(self, utc):
