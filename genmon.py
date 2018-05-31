@@ -25,7 +25,7 @@ except ImportError as e:
 from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel, myplatform, myweather
 
 
-GENMON_VERSION = "V1.9.6"
+GENMON_VERSION = "V1.9.7"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -59,6 +59,7 @@ class Monitor(mysupport.MySupport):
         self.Controller = None
         self.ControllerSelected = None
         self.bDisablePlatformStats = False
+        self.ReadOnlyEmailCommands = False
         # weather parameters
         self.WeatherAPIKey = None
         self.WeatherLocation = None
@@ -70,6 +71,7 @@ class Monitor(mysupport.MySupport):
         self.bSyncTime = False          # Sync gen to system time
         self.bSyncDST = False           # sync time at DST change
         self.bDST = False               # Daylight Savings Time active if True
+        # simulation
         self.Simulation = False
         self.SimulationFile = None
 
@@ -204,6 +206,9 @@ class Monitor(mysupport.MySupport):
 
             if config.has_option(ConfigSection, 'minimumweatherinfo'):
                 self.WeatherMinimum = config.getboolean(ConfigSection, 'minimumweatherinfo')
+
+            if config.has_option(ConfigSection, 'readonlyemailcommands'):
+                self.ReadOnlyEmailCommands = config.getboolean(ConfigSection, 'readonlyemailcommands')
 
             if config.has_option(ConfigSection, 'version'):
                 self.Version = config.get(ConfigSection, 'version')
@@ -387,8 +392,8 @@ class Monitor(mysupport.MySupport):
             "settime"       : [self.StartTimeThread, (), False],                  # set time and date
             "setexercise"   : [self.Controller.SetGeneratorExerciseTime, (command.lower(),), False],
             "setquiet"      : [self.Controller.SetGeneratorQuietMode, ( command.lower(),), False],
-            "help"          : [self.DisplayHelp, (), False],                   # display help screen
             "setremote"     : [self.Controller.SetGeneratorRemoteStartStop, (command.lower(),), False],
+            "help"          : [self.DisplayHelp, (), False],                   # display help screen
             ## These commands are used by the web / socket interface only
             "power_log_json"    : [self.Controller.GetPowerHistory, (command.lower(),), True],
             "power_log_clear"   : [self.Controller.ClearPowerLog, (), True],
@@ -424,6 +429,10 @@ class Monitor(mysupport.MySupport):
                 if "=" in item:
                     BaseCmd = item.split('=')
                     LookUp = BaseCmd[0]
+                # check if we disallow write commands via email
+                if self.ReadOnlyEmailCommands and not fromsocket and LookUp in ["settime", "setexercise", "setquiet", "setremote"]:
+                    continue
+
                 ExecList = CommandDict.get(LookUp.lower(),None)
                 if ExecList == None:
                     continue

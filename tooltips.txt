@@ -48,7 +48,7 @@ weatherkey = Openweathermap.org API Key. This is required to enable weather repo
 weatherlocation = The location to report weather. Either enter City,State,Country or a openweathermap.org city ID.
 metricweather = If enabled, metric units will be used to display weather information
 minimumweatherinfo = If enabled the minimum information regarding the weather will be displayed, otherwise the maximum info will be displayed
-
+readonlyemailcommands= If enabled, email commands that write to the controller will be disabled (settime, setexercise, setremote, etc.)
 nominalfrequency = Frequency your generator is running. Either 50Hz or 60Hz. This is used by the web interface.
 nominalRPM = The RPM of your generator. Typically 1800 or 3600 for 60Hz and 1500 or 3000 for 50Hz. Some models run at 2300. This is used by the web interface.
 nominalKW = The maximum kilowatt output of your generator. This is used by the web interface.
