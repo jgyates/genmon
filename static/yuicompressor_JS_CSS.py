@@ -1,6 +1,7 @@
+#!/usr/bin/python
+
 ### USES YUICOMPRESSOR FROM: 
 ### https://github.com/yui/yuicompressor/releases
-
 
 import os, os.path, shutil
 
@@ -52,6 +53,7 @@ MINIFY_SCRIPTS = [
     'js/selectize.min.js'
     ]
 NON_MINIFY_SCRIPTS = [
+    'js/packery.pkgd.min.js',
     'js/jquery.idealforms.genmon.js',
     'js/jquery.CalendarHeatmap.genmon.js'
     ]

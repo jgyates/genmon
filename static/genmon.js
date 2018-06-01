@@ -20,11 +20,12 @@ var menuElement = "status";
 var ajaxErrors = {errorCount: 0, lastSuccessTime: 0, log: ""};
 var windowActive = true;
 var latestVersion = "";
+var resizeTimeout;
 
-var myGenerator = {PowerGraph: false, sitename: "", nominalRPM: 3600, nominalfrequency: 60, Controller: "", model: "", nominalKW: 22, fueltype: "", UnsentFeedback: false, SystemHealth: false, EnhancedExerciseEnabled: false, OldExerciseParameters:[-1,-1,-1,-1,-1,-1]};
-var prevStatusValues = {BatteryVoltage: "0V", UnsentFeedback: "False", SystemHealth: "OK", OutputVoltage: "0V", Frequency: "0.0 Hz", UtilityVoltage: "0V", kwOutput: "0kW", RPM: " 0", basestatus: "READY"};
+var myGenerator = {sitename: "", nominalRPM: 3600, nominalfrequency: 60, Controller: "", model: "", nominalKW: 22, fueltype: "", UnsentFeedback: false, SystemHealth: false, EnhancedExerciseEnabled: false, OldExerciseParameters:[-1,-1,-1,-1,-1,-1]};
 var regHistory = {updateTime: {}, _10m: {}, _60m: {}, _24h: {}, historySince: "", count_60m: 0, count_24h: 0};
-var kwHistory = {data: [], plot:"", kwDuration: "h", tickInterval: "10 minutes", formatString: "%H:%M"};
+var kwHistory = {data: [], plot:"", kwDuration: "h", tickInterval: "10 minutes", formatString: "%H:%M", defaultPlotWidth: 4, oldDefaultPlotWidth: 4};
+var prevStatusValues = {};
 var pathname = window.location.href;
 var baseurl = pathname.concat("cmd/");
 var DaysOfWeekArray = ["Sunday","Monday","Tuesday","Wednesday", "Thursday", "Friday", "Saturday"];
@@ -48,7 +49,7 @@ $(document).ready(function() {
     UpdateRegisters(true, false);
     setInterval(GetBaseStatus, 3000);       // Called every 3 sec
     setInterval(UpdateDisplay, 5000);       // Called every 5 sec
-    DisplayStatusFull();
+    DisplayStatusFullWhenReady();
     $("#status").find("a").addClass(GetCurrentClass());
     $("li").on('click',  function() {  MenuClick($(this));});
     resizeDiv();
@@ -105,6 +106,29 @@ function resizeDiv() {
      $('#navMenu').css({'width': '200px'});
      $('#footer').css({'height': '30px'});
      $('#footer').css({'width': vpw + 'px'});
+     
+     if ((menuElement == "status") && ($('.packery').length > 0)) {
+        var gridWidth = Math.round((vpw-240)/190);
+            gridWidth = (gridWidth < 1) ? 1 : gridWidth;
+        kwHistory["defaultPlotWidth"] = ((gridWidth > 4) ? 4 : (gridWidth < 1) ? 1 : gridWidth);
+        if (kwHistory["defaultPlotWidth"] != kwHistory["oldDefaultPlotWidth"]) {
+           kwHistory["oldDefaultPlotWidth"] = kwHistory["defaultPlotWidth"];
+           $('.plotField').css({'width': (kwHistory["defaultPlotWidth"] * 180)+((kwHistory["defaultPlotWidth"]-1)*10) + 'px'});
+        
+           if ((windowActive == true) && (typeof kwHistory["plot"].replot !== "undefined")) {
+              var now = new moment();
+              var max = now.format("YYYY-MM-DD H:mm:ss");
+              if (kwHistory["kwDuration"] == "h")
+                 max = now.add(1, "m").format("YYYY-MM-DD H:mm:ss")
+              if (kwHistory["kwDuration"] == "d")
+                 max = now.add(1, "h").format("YYYY-MM-DD H:mm:ss")
+              kwHistory["plot"].replot({data: [kwHistory["data"]], axes:{xaxis:{tickInterval: kwHistory["tickInterval"], tickOptions:{formatString:kwHistory["formatString"]}, max:now.format("YYYY-MM-DD H:mm:ss"), min:now.add(-1, kwHistory["kwDuration"]).format("YYYY-MM-DD H:mm:ss")}}});
+           }
+        }
+
+        $('.packery').css({'width': (vpw - 240) + 'px'});
+     }
+     
 }
 
 //*****************************************************************************
@@ -151,158 +175,113 @@ function SetRemoteCommand(command){
 // DisplayStatusFull - show the status page at the beginning or when switching
 // from another page
 //*****************************************************************************
-var gaugeBatteryVoltage;
-var gaugeUtilityVoltage;
-var gaugeOutputVoltage;
-var gaugeBatteryFrequency;
-var gaugekW;
+var gauge = [];
+
+function DisplayStatusFullWhenReady() {
+    if(myGenerator["tiles"] == undefined) {//we want it to match
+        setTimeout(DisplayStatusFullWhenReady, 50);//wait 50 millisecnds then recheck
+        return false;
+    }
+    DisplayStatusFull();
+    return true;
+}
 
 function DisplayStatusFull()
 {
+    var vpw = $(window).width();
+    var gridWidth = Math.round((vpw-240)/190);
+        gridWidth = (gridWidth < 1) ? 1 : gridWidth;
+    kwHistory["defaultPlotWidth"] = ((gridWidth > 4) ? 4 : (gridWidth < 1) ? 1 : gridWidth);
+    kwHistory["oldDefaultPlotWidth"] = kwHistory["defaultPlotWidth"];
+        
+    var outstr = 'Dashboard:<br><br>';
+    outstr += '<center><div class="packery">';
+    for (var i = 0; i < myGenerator["tiles"].length; ++i) {
+       switch (myGenerator["tiles"][i].type) {
+          case "gauge": 
+             outstr += '<div id="gaugeField_'+i+'" class="grid-item gaugeField"><br>'+myGenerator["tiles"][i].title+'<br><canvas class="gaugeCanvas" id="gauge'+i+'"></canvas><br><div id="text'+i+'" class="gaugeDiv"></div></div>';
+             break;
+          case "graph":
+             outstr += '<div id="plotField" class="grid-item plotField"><br>'+myGenerator["tiles"][i].title+'<br><div id="plotkW" class="kwPlotCanvas"></div><span class="kwPlotText">Time (<div class="kwPlotSelection selection" id="1h">1 hour</div> | <div class="kwPlotSelection" id="1d">1 day</div> | <div class="kwPlotSelection" id="1w">1 week</div> | <div class="kwPlotSelection" id="1m">1 month</div>)</span></div>';
+             break;
+       }
+    }
+    outstr += '</div></center><br>';
+    $("#mydisplay").html(outstr + '<div style="clear:both" id="statusText"></div>');
+    
+    $('.packery').css({'width': (vpw-240) + 'px'});
+    $('.plotField').css({'width': (kwHistory["defaultPlotWidth"] * 180)+((kwHistory["defaultPlotWidth"]-1)*10) + 'px'});
+
+    $('.packery').packery({itemSelector: '.grid-item', gutter: 10, columnWidth: 85, rowHeight: 95, percentPosition: false, originLeft: true, resize: true});
+
+    var $itemElems = $(".grid-item");
+    $itemElems.draggable().resizable();
+    $('.packery').packery( 'bindUIDraggableEvents', $itemElems );
+
+    var resizeTimeout;
+    var $itemElems = $( $('.packery').packery('getItemElements') );
+    $itemElems.on( 'resize', function( event, ui ) {
+           if ( resizeTimeout ) {
+               clearTimeout( resizeTimeout );
+           }
+           resizeTimeout = setTimeout( function() {
+               if (ui == undefined) /// don't know why. but this gets called twice. Once without ui set and we want to avoid that!
+                 return;
+               var newWidth = Math.round(ui.size.width/85)*85 + (Math.round(ui.size.width/85)-1)*10;
+               var newHeight = Math.round(ui.size.height/95)*95 + (Math.round(ui.size.height/95)-1)*10;
+               ui.element[0].style.width =  newWidth + "px";
+               ui.element[0].style.height =  newHeight + "px";
+               if ((newWidth <= 85) || (newHeight <= 95)) {
+                   if (newWidth <= 85)
+                     ui.element[0].style.width = '85px';
+                   if (newHeight <= 95)
+                     ui.element[0].style.height = '95px';
+                   ui.element[0].style.fontSize = '10px';
+                   if (ui.element[0].id == "plotField")
+                     ui.element[0].children[3].style.fontSize = '7px';
+               } else {
+                   ui.element[0].style.fontSize = '18px';
+                   if (ui.element[0].id == "plotField")
+                     ui.element[0].children[3].style.fontSize = '10px';
+               }
+               if (ui.element[0].id.match("^gaugeField_")) {
+                  var curr_i = replaceAll(ui.element[0].id, 'gaugeField_', '');
+                  $('<canvas class="gaugeCanvas" id="gauge'+curr_i+'">').replaceAll($("#gauge"+curr_i));
+                  $("#gauge"+curr_i).css("width", newWidth + "px");
+                  $("#gauge"+curr_i).css("height", newHeight - ((newHeight == 95) ? 35 : 70) + "px");
+                  gauge[curr_i] = createGauge($("#gauge"+curr_i), $("#text"+curr_i), 0, myGenerator["tiles"][curr_i].minimum, myGenerator["tiles"][curr_i].maximum,
+                                           myGenerator["tiles"][curr_i].labels, myGenerator["tiles"][curr_i].colorzones, myGenerator["tiles"][curr_i].divisions, myGenerator["tiles"][curr_i].subdivisions);
+               }
+               if (ui.element[0].id == "plotField") {
+                  $("#plotkW").css("width", newWidth + "px");
+                  $("#plotkW").css("height", newHeight - ((newHeight == 95) ? 35 : 70) + "px");
+                  // $("#plotkW").width = newWidth;
+                  // $("#plotkW").height = newHeight - ((newHeight == 95) ? 35 : 70);
+               }
+               $('.packery').packery( 'fit', ui.element[0] );
+           }, 100 );
+    });
+
+    for (var i = 0; i < myGenerator["tiles"].length; ++i) {
+       switch (myGenerator["tiles"][i].type) {
+          case "gauge":
+             gauge[i] = createGauge($("#gauge"+i), $("#text"+i), 0, myGenerator["tiles"][i].minimum, myGenerator["tiles"][i].maximum,
+                                                myGenerator["tiles"][i].labels, myGenerator["tiles"][i].colorzones, myGenerator["tiles"][i].divisions, myGenerator["tiles"][i].subdivisions);
+             if ((prevStatusValues["tiles"] != undefined) && (prevStatusValues["tiles"].length > i) && (prevStatusValues["tiles"][i].value !== "")) {
+                gauge[i].set(prevStatusValues["tiles"][i].value); // set current value
+                $("#text"+i).html(prevStatusValues["tiles"][i].text);
+             }
+             break;
+          case "graph":
+             createGraph(myGenerator["tiles"][i].title, myGenerator["tiles"][i].minimum, myGenerator["tiles"][i].maximum);
+             break;
+       }     
+    }
+    
     var url = baseurl.concat("status_json");
     $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
         processAjaxSuccess();
-        var outstr = 'Dashboard:<br><br>';
-        outstr += '<center><div class="gauge-breakpoint">';
-        outstr += '<div class="gauge-block-a"><div class="gaugeField">Battery Voltage<br><canvas class="gaugeCanvas" id="gaugeBatteryVoltage"></canvas><br><div id="textBatteryVoltage" class="gaugeDiv"></div>V</div></div>';
-        outstr += '<div class="gauge-block-b"><div class="gaugeField">Utility Voltage<br><canvas class="gaugeCanvas" id="gaugeUtilityVoltage"></canvas><br><div id="textUtilityVoltage" class="gaugeDiv"></div>V</div></div>';
-        outstr += '<div class="gauge-lb2"></div>';
-        outstr += '<div class="gauge-block-c"><div class="gaugeField">Output Voltage<br><canvas class="gaugeCanvas" id="gaugeOutputVoltage"></canvas><br><div id="textOutputVoltage" class="gaugeDiv"></div>V</div></div>';
-        outstr += '<div class="gauge-lb3"></div>';
-        outstr += '<div class="gauge-block-d"><div class="gaugeField">Frequency<br><canvas class="gaugeCanvas" id="gaugeFrequency"></canvas><br><div id="textFrequency" class="gaugeDiv"></div>Hz</div></div>';
-        outstr += '<div class="gauge-lb2"></div>';
-        outstr += '<div class="gauge-block-e"><div class="gaugeField">Rotation/Min<br><canvas class="gaugeCanvas" id="gaugeRPM"></canvas><br><div id="textRPM" class="gaugeDiv"></div> RPM</div></div>';
-        outstr += '<div class="gauge-lb5"></div>';
-        if (myGenerator["PowerGraph"] == true) {
-           outstr += '<div class="gauge-block-f"><div class="gaugeField">kW Output<br><canvas class="gaugeCanvas" id="gaugekW"></canvas><br><div id="textkW" class="gaugeDiv"></div>kW</div></div>';
-           outstr += '<div class="gauge-lb2 gauge-lb3"></div>';
-           outstr += '<div class="gauge-block-g"></div>';
-           outstr += '<div class="gauge-block-h"><div class="plotField">kW Output<br><div id="plotkW" class="kwPlotCanvas"></div><span class="kwPlotText">Time (<div class="kwPlotSelection selection" id="1h">1 hour</div> | <div class="kwPlotSelection" id="1d">1 day</div> | <div class="kwPlotSelection" id="1w">1 week</div> | <div class="kwPlotSelection" id="1m">1 month</div>)</span></div></div>';
-        }
-        outstr += '</div></center><br>';
-
-        $("#mydisplay").html(outstr + '<div style="clear:both" id="statusText">' + json2html(result, "", "root") + '</div>');
-
-        var gaugeNB = myGenerator["NominalBatteryVolts"];
-        gaugeBatteryVoltage = createGauge($("#gaugeBatteryVoltage"), $("#textBatteryVoltage"), 1, gaugeNB/6*5, gaugeNB/6*8, [gaugeNB/12*10, gaugeNB/12*11, gaugeNB/12*12, gaugeNB/12*13, gaugeNB/12*14, gaugeNB/12*15, gaugeNB/12*16],
-                                          [{strokeStyle: "#F03E3E", min: gaugeNB/12*10,   max: gaugeNB/12*11.5},
-                                           {strokeStyle: "#FFDD00", min: gaugeNB/12*11.5, max: gaugeNB/12*12.5},
-                                           {strokeStyle: "#30B32D", min: gaugeNB/12*12.5, max: gaugeNB/12*15},
-                                           {strokeStyle: "#FFDD00", min: gaugeNB/12*15,   max: gaugeNB/12*15.5},
-                                           {strokeStyle: "#F03E3E", min: gaugeNB/12*15.5, max: gaugeNB/12*16}], 6, 10);
-        if (prevStatusValues["BatteryVoltage"].replace(/V/g, '').trim() !== "")
-          gaugeBatteryVoltage.set(prevStatusValues["BatteryVoltage"].replace(/V/g, '')); // set current value
-
-        gaugeUtilityVoltage = createGauge($("#gaugeUtilityVoltage"), $("#textUtilityVoltage"), 0, 0, 260, [0, 100, 156, 220, 240, 260],
-                                          [{strokeStyle: "#F03E3E", min: 0, max: 220},
-                                           {strokeStyle: "#FFDD00", min: 220, max: 235},
-                                           {strokeStyle: "#30B32D", min: 235, max: 245},
-                                           {strokeStyle: "#FFDD00", min: 245, max: 255},
-                                           {strokeStyle: "#F03E3E", min: 255, max: 260}], 26, 0);
-        gaugeUtilityVoltage.set(prevStatusValues["UtilityVoltage"].replace(/V/g, '')); // set actual value
-
-        gaugeOutputVoltage = createGauge($("#gaugeOutputVoltage"), $("#textOutputVoltage"), 0, 0, 260, [0, 100, 156, 220, 240, 260],
-                                          [{strokeStyle: "#F03E3E", min: 0, max: 220},
-                                           {strokeStyle: "#FFDD00", min: 220, max: 235},
-                                           {strokeStyle: "#30B32D", min: 235, max: 245},
-                                           {strokeStyle: "#FFDD00", min: 245, max: 255},
-                                           {strokeStyle: "#F03E3E", min: 255, max: 260}], 26, 0);
-        gaugeOutputVoltage.set(prevStatusValues["OutputVoltage"].replace(/V/g, '')); // set actual value
-
-        var gaugeNominalFrequency = myGenerator["nominalfrequency"];
-        gaugeFrequency = createGauge($("#gaugeFrequency"), $("#textFrequency"), 1, 0, 70, [10, 20, 30, 40, 50, 60, 70],
-                                          [{strokeStyle: "#F03E3E", min: 0, max: gaugeNominalFrequency/100*96},
-                                           {strokeStyle: "#FFDD00", min: gaugeNominalFrequency/100*96, max: gaugeNominalFrequency/100*98},
-                                           {strokeStyle: "#30B32D", min: gaugeNominalFrequency/100*98, max: gaugeNominalFrequency/100*102},
-                                           {strokeStyle: "#FFDD00", min: gaugeNominalFrequency/100*102, max: gaugeNominalFrequency/100*104},
-                                           {strokeStyle: "#F03E3E", min: gaugeNominalFrequency/100*104, max: 70}], 7, 10);
-        gaugeFrequency.set(prevStatusValues["Frequency"].replace(/Hz/g, '')); // set actual value
-
-        var gaugeRPMnominal = myGenerator["nominalRPM"];
-        gaugeRPM = createGauge($("#gaugeRPM"), $("#textRPM"), 0, 0, parseInt(gaugeRPMnominal/9*10), [parseInt(gaugeRPMnominal/4), parseInt(gaugeRPMnominal/2), parseInt(gaugeRPMnominal/4*3), parseInt(gaugeRPMnominal)],
-                                          [{strokeStyle: "#F03E3E", min: 0, max: gaugeRPMnominal/18*17},
-                                           {strokeStyle: "#FFDD00", min: gaugeRPMnominal/18*17, max: gaugeRPMnominal/36*35},
-                                           {strokeStyle: "#30B32D", min: gaugeRPMnominal/36*35, max: gaugeRPMnominal/36*37},
-                                           {strokeStyle: "#FFDD00", min: gaugeRPMnominal/36*37, max: gaugeRPMnominal/18*19},
-                                           {strokeStyle: "#F03E3E", min: gaugeRPMnominal/18*19, max: gaugeRPMnominal/9*10}], 4, 10);
-        gaugeRPM.set(prevStatusValues["RPM"]); // set actual value
-
-        if ($("#gaugekW").length > 0) {
-           var gaugeNominalKW = myGenerator["nominalKW"];
-           var gaugeNominalKWmarks = [0];
-           for(var i=0;i<=5;i++){
-             gaugeNominalKWmarks.unshift(parseInt(gaugeNominalKW/5*i));
-           }
-           gaugekW = createGauge($("#gaugekW"), $("#textkW"), 0, 0, parseInt(gaugeNominalKW/20*24), gaugeNominalKWmarks,
-                                          [{strokeStyle: "#30B32D", min: 0, max: gaugeNominalKW/10*8},
-                                           {strokeStyle: "#FFDD00", min: gaugeNominalKW/10*8, max: gaugeNominalKW/20*19},
-                                           {strokeStyle: "#F03E3E", min: gaugeNominalKW/20*19, max: gaugeNominalKW/20*24}], 12, 5);
-           gaugekW.set(0); // set starting value
-
-           kwHistory["kwDuration"] = "h";
-           kwHistory["tickInterval"] = "10 minutes";
-           kwHistory["formatString"] = "%H:%M";
-           var now = new moment();
-           kwHistory["plot"] =  $.jqplot('plotkW', (kwHistory["data"].length > 0) ? [kwHistory["data"]] : [[[now.format("YYYY-MM-DD H:mm:ss"), 0]]], {
-                axesDefaults: { labelOptions:  { fontFamily: 'Arial', textColor: '#000000', fontSize: '8pt' },
-                tickOptions: { fontFamily: 'Arial', textColor: '#000000', fontSize: '6pt' }},
-                grid: { drawGridLines: true, gridLineColor: '#cccccc', background: '#e1e1e1', borderWidth: 0, shadow: false, shadowWidth: 0 },
-                gridPadding: {right:40, left:55},
-                axes: {
-                    xaxis:{
-                        renderer:$.jqplot.DateAxisRenderer,
-                        tickInterval: kwHistory["tickInterval"],
-                        tickOptions:{formatString:kwHistory["formatString"]},
-                        min: now.add(-1, kwHistory["kwDuration"]).format("YYYY-MM-DD H:mm:ss"),
-                        max: now.format("YYYY-MM-DD H:mm:ss")
-                    },
-                    yaxis:{
-                        label:"kW",
-                        labelRenderer: $.jqplot.CanvasAxisLabelRenderer,
-                        min:0,
-                        max: parseInt(gaugeNominalKW/20*23)
-                    }
-                },
-                highlighter: {
-                    show: true,
-                    sizeAdjust: 7.5
-                },
-                cursor:{
-                    show: true,
-                    zoom:true,
-                    showTooltip:true
-                }
-           });
-           $(".kwPlotSelection").on('click', function() {
-               $(".kwPlotSelection").removeClass("selection");
-               $(this).addClass("selection");
-               switch ($(this).attr("id")) {
-                 case "1h":
-                   kwHistory["kwDuration"] = "h";
-                   kwHistory["tickInterval"] = "10 minutes";
-                   kwHistory["formatString"] = "%H:%M";
-                   break;
-                 case "1d":
-                   kwHistory["kwDuration"] = "d";
-                   kwHistory["tickInterval"] = "1 hour";
-                   kwHistory["formatString"] = "%#I%p";
-                   break;
-                 case "1w":
-                   kwHistory["kwDuration"] = "w";
-                   kwHistory["tickInterval"] = "1 day";
-                   kwHistory["formatString"] = "%d %b";
-                   break;
-                 case "1m":
-                   kwHistory["kwDuration"] = "M";
-                   kwHistory["tickInterval"] = "1 day";
-                   kwHistory["formatString"] = "%d";
-                   break;
-                 default:
-                   break
-               }
-               printKwPlot(gaugekW.value);
-           });
-        }
+        $("#statusText").html(json2html(result, "", "root"));
     }});
     return;
 }
@@ -322,7 +301,7 @@ function json2html(json, intent, parentkey) {
       if (json.length > 0) {
         intent += "&nbsp;&nbsp;&nbsp;&nbsp;";
         for (var i = 0; i < json.length; ++i) {
-          outstr += intent + json2html(json[i], intent, parentkey+"_"+i);
+          outstr += json2html(json[i], intent, parentkey+"_"+i);
         }
       }
     }
@@ -362,7 +341,7 @@ function createGauge(pCanvas, pText, pTextPrecision, pMin, pMax, pLabels, pZones
         font: "10px sans-serif",  // Specifies font
         labels: pLabels,  // Print labels at these values
         color: "#000000",  // Optional: Label text color
-        fractionDigits: 0  // Optional: Numerical precision. 0=round off.
+        fractionDigits: pTextPrecision  // Optional: Numerical precision. 0=round off.
       },
       staticZones: pZones,
       // renderTicks is Optional
@@ -381,17 +360,83 @@ function createGauge(pCanvas, pText, pTextPrecision, pMin, pMax, pLabels, pZones
     var gauge = new Gauge(pCanvas[0]).setOptions(opts);
     gauge.minValue = pMin; // set max gauge value
     gauge.maxValue = pMax; // set max gauge value
-    gauge.setTextField(pText[0], pTextPrecision);
-    gauge.animationSpeed = 1;
+    // gauge.setTextField(pText, pTextPrecision);
+    gauge.animationSpeed = 1; // set animation speed (32 is default value)
     gauge.set(pMin); // setting starting point
-    gauge.animationSpeed = 128; // set animation speed (32 is default value)
+    gauge.animationSpeed = 1000; // set animation speed (32 is default value)
 
     return gauge;
 }
 
-function printKwPlot(currenKw) {
+function createGraph(title, minimum, maximum) {
+    kwHistory["kwDuration"] = "h";
+    kwHistory["tickInterval"] = "10 minutes";
+    kwHistory["formatString"] = "%H:%M";
+    var now = new moment();
+    kwHistory["plot"] =  $.jqplot('plotkW', (kwHistory["data"].length > 0) ? [kwHistory["data"]] : [[[now.format("YYYY-MM-DD H:mm:ss"), 0]]], {
+                axesDefaults: { labelOptions:  { fontFamily: 'Arial', textColor: '#000000', fontSize: '8pt' },
+                tickOptions: { fontFamily: 'Arial', textColor: '#000000', fontSize: '6pt' }},
+                grid: { drawGridLines: true, gridLineColor: '#cccccc', background: '#e1e1e1', borderWidth: 0, shadow: false, shadowWidth: 0 },
+                gridPadding: {right:40, left:55},
+                axes: {
+                    xaxis:{
+                        renderer:$.jqplot.DateAxisRenderer,
+                        tickInterval: kwHistory["tickInterval"],
+                        tickOptions:{formatString:kwHistory["formatString"]},
+                        min: now.add(-1, kwHistory["kwDuration"]).format("YYYY-MM-DD H:mm:ss"),
+                        max: now.format("YYYY-MM-DD H:mm:ss")
+                    },
+                    yaxis:{
+                        label:"kW",
+                        labelRenderer: $.jqplot.CanvasAxisLabelRenderer,
+                        min: minimum,
+                        max: maximum
+                    }
+                },
+                highlighter: {
+                    show: true,
+                    sizeAdjust: 7.5
+                },
+                cursor:{
+                    show: true,
+                    zoom:true,
+                    showTooltip:true
+                }
+    });
+    $(".kwPlotSelection").on('click', function() {
+               $(".kwPlotSelection").removeClass("selection");
+               $(this).addClass("selection");
+               switch ($(this).attr("id")) {
+                 case "1h":
+                   kwHistory["kwDuration"] = "h";
+                   kwHistory["tickInterval"] = "10 minutes";
+                   kwHistory["formatString"] = "%H:%M";
+                   break;
+                 case "1d":
+                   kwHistory["kwDuration"] = "d";
+                   kwHistory["tickInterval"] = "1 hour";
+                   kwHistory["formatString"] = "%#I%p";
+                   break;
+                 case "1w":
+                   kwHistory["kwDuration"] = "w";
+                   kwHistory["tickInterval"] = "1 day";
+                   kwHistory["formatString"] = "%d %b";
+                   break;
+                 case "1m":
+                   kwHistory["kwDuration"] = "M";
+                   kwHistory["tickInterval"] = "1 day";
+                   kwHistory["formatString"] = "%d";
+                   break;
+                 default:
+                   break
+               }
+    });
+
+}
+
+function printKwPlot(currentKw) {
    var now = new moment();
-   if (currenKw == 0)
+   if (currentKw == 0)
      kwHistory["data"].unshift([now.format("YYYY-MM-DD HH:mm:ss"), 0]); /// add a zero to the current point temporarily
 
    var max = now.format("YYYY-MM-DD H:mm:ss");
@@ -400,10 +445,10 @@ function printKwPlot(currenKw) {
    if (kwHistory["kwDuration"] == "d")
      max = now.add(1, "h").format("YYYY-MM-DD H:mm:ss")
 
-   if (windowActive == true)
+   if ((windowActive == true) && (typeof kwHistory["plot"].replot !== "undefined")) 
      kwHistory["plot"].replot({data: [kwHistory["data"]], axes:{xaxis:{tickInterval: kwHistory["tickInterval"], tickOptions:{formatString:kwHistory["formatString"]}, max:now.format("YYYY-MM-DD H:mm:ss"), min:now.add(-1, kwHistory["kwDuration"]).format("YYYY-MM-DD H:mm:ss")}}});
 
-   if (currenKw == 0)
+   if (currentKw == 0)
      kwHistory["data"].shift();  /// remove the zero again
 
    if (kwHistory["data"].length > 2500)
@@ -848,6 +893,10 @@ function DisplayMonitor(){
            }
            $("#WLAN_Signal_Level").html('<div style="display: inline-block; position: relative;">'+result["Monitor"]["Platform Stats"]["WLAN Signal Level"] + '<img style="position: absolute;top:-10px;left:110px" class="'+ wifi_img +'" src="images/transparent.png"></div>');
         }
+        if ($("#Conditions").length > 0) {
+           $("#Conditions").html('<div style="display: inline-block; position: relative;">'+result["Monitor"]["Weather"]["Conditions"] + '<img style="position: absolute;top:-30px;left:160px" src="http://openweathermap.org/img/w/' + prevStatusValues["Weather"]["icon"] + '.png"></div>');
+        }
+
         if (latestVersion == "") {
           // var url = "https://api.github.com/repos/jgyates/genmon/releases";
           var url = "https://raw.githubusercontent.com/jgyates/genmon/master/genmon.py";
@@ -1942,33 +1991,35 @@ function GetBaseStatus()
         myGenerator['ExerciseFrequency'] = result['ExerciseInfo']['Frequency'];
         myGenerator['EnhancedExerciseEnabled'] = ((result['ExerciseInfo']['EnhancedExerciseMode'] === "False") ? false : true);
 
-        if (kwHistory["data"].length > 0) { /// Otherwise initialization has not finished
+        if ((menuElement == "status") && (gauge.length > 0)) {
+           for (var i = 0; i < result.tiles.length; ++i) {
+             switch (myGenerator["tiles"][i].type) {
+                case "gauge":
+                   gauge[i].set(result.tiles[i].value); 
+                   $("#text"+i).html(result.tiles[i].text);
+                   break;
+                case "graph":
+                   if (kwHistory["data"].length > 0) { /// Otherwise initialization has not finished
 
-           if ((result['kwOutput'].replace(/kW/g, '') != 0) && (kwHistory["data"][0][1] == 0)) {
-              // make sure we add a 0 before the graph goes up, to ensure the interpolation works
-              kwHistory["data"].unshift([(new moment()).add(-2, "s").format("YYYY-MM-DD HH:mm:ss"), 0]);
-           }
+                      if ((result.tiles[i].value != 0) && (kwHistory["data"][0][1] == 0)) {
+                         // make sure we add a 0 before the graph goes up, to ensure the interpolation works
+                         kwHistory["data"].unshift([(new moment()).add(-2, "s").format("YYYY-MM-DD HH:mm:ss"), 0]);
+                      }
+  
+                      if ((result.tiles[i].value != 0) || (kwHistory["data"][0][1] != 0)) {
+                         kwHistory["data"].unshift([(new moment()).format("YYYY-MM-DD HH:mm:ss"), result.tiles[i].value]);
+                      }
+                      if  (kwHistory["data"].length > 10000) {
+                         kwHistory["data"].pop  // remove the last element
+                      }
 
-           if ((result['kwOutput'].replace(/kW/g, '') != 0) || (kwHistory["data"][0][1] != 0)) {
-              kwHistory["data"].unshift([(new moment()).format("YYYY-MM-DD HH:mm:ss"), result['kwOutput'].replace(/kW/g, '')]);
+                      if ((menuElement == "status") && (myGenerator["PowerGraph"] == true)) {
+                         printKwPlot(result.tiles[i].value);
+                      }
+                   }
+                   break;
+             }
            }
-           if  (kwHistory["data"].length > 10000) {
-              kwHistory["data"].pop  // remove the last element
-           }
-
-           if ((menuElement == "status") && ($("#gaugekW").length > 0)) {
-              gaugekW.set(result['kwOutput'].replace(/kW/g, ''));
-              printKwPlot(result['kwOutput'].replace(/kW/g, ''));
-           }
-        }
-
-        if ((menuElement == "status") && ($("#gaugeBatteryVoltage").length > 0)) {
-           if (result["BatteryVoltage"].replace(/V/g, '').trim() !== "")
-             gaugeBatteryVoltage.set(result["BatteryVoltage"].replace(/V/g, '')); // set actual value
-           gaugeUtilityVoltage.set(result["UtilityVoltage"].replace(/V/g, '')); // set actual value
-           gaugeOutputVoltage.set(result["OutputVoltage"].replace(/V/g, '')); // set actual value
-           gaugeFrequency.set(result["Frequency"].replace(/Hz/g, '')); // set actual value
-           gaugeRPM.set(result["RPM"]); // set actual value
         }
 
         if (result['SystemHealth'].toUpperCase() != "OK") {
@@ -2022,6 +2073,6 @@ function GetBaseStatus()
         prevStatusValues = result;
         return
    }});
-
-    return
+   
+   return
 }

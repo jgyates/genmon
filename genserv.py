@@ -354,7 +354,12 @@ def ReadSettingsFromFile():
                 #"outagelog" : ['string', 'Outage Log', 8, "/home/pi/genmon/outage.txt", "", 0],
                 "syncdst" : ['boolean', 'Sync Daylight Savings Time', 22, False, "", ""],
                 "synctime" : ['boolean', 'Sync Time', 23, False, "", ""],
-                "autofeedback" : ['boolean', 'Automated Feedback', 24, False, "", ""],
+                "readonlyemailcommands" : ['boolean', 'Disable Email Write Commands', 24, False, "", ""],
+                "weatherkey" : ['string', 'Openweathermap.org API key', 25, "", "", "required minmax:4:50"],
+                "weatherlocation" : ['string', 'Location to report weather', 26, "", "", "required minmax:4:50"],
+                "metricweather"  : ['boolean', 'Use Metric Weather Units', 27, False, "", ""],
+                "minimumweatherinfo"  : ['boolean', 'Display Minimum Weather Info', 28, False, "", ""],
+                "autofeedback" : ['boolean', 'Automated Feedback', 29, False, "", ""],
 
                 #"model" : ['string', 'Generator Model', 100, "Generic Evolution Air Cooled", "", 0],
                 "nominalfrequency": ['list', 'Rated Frequency', 101, "60", "", "50,60"],
@@ -362,7 +367,7 @@ def ReadSettingsFromFile():
                 "nominalKW": ['int', 'Maximum kW Output', 103, "22", "", "required digits range:1:700"],
                 "fueltype" : ['list', 'Fuel Type', 104, "Natural Gas", "", "Natural Gas,Propane,Diesel,Gasoline"],
 
-                # "petroleumfuel" : ['boolean', 'Petroleum Fuel', 40, False, "", 0],
+                #
                 "enhancedexercise" : ['boolean', 'Enhanced Exercise Time', 105, False, "", ""],
                 "displayunknown" : ['boolean', 'Display Unknown Sensors', 106, False, "", ""],
 
