@@ -1238,6 +1238,12 @@ function DisplaySettings(){
               outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "useselfsignedcertChange(true);") + '</td></tr>';
             } else if ((key == "autofeedback") && (myGenerator['UnsentFeedback'] == true)) {
               outstr += '<tr><td width="25px">&nbsp;</td><td bgcolor="#ffcccc" width="300px">' + result[key][1] + '</td><td bgcolor="#ffcccc">' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
+            } else if (key == "weatherkey") {
+              outstr += '</table></fieldset><br><br><table width="100%" border="0"><tr><td nowrap width="90px:>';
+              outstr += printSettingsField("boolean", "weather", ((result[key][3] != "") ? true : false), "", "", "weatherChange(true);");
+              outstr += '</td><td nowrap>&nbsp;&nbsp;Optional - Display Current Weather&nbsp;&nbsp;</td><td width="80%"><hr></td></tr></table>';
+              outstr += '<fieldset id="weatherSettings"><table id="allsettings" border="0">';
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
             } else {
               outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
             }
@@ -1323,6 +1329,14 @@ function inboundemailChange(animation) {
       $("#inboundEmailSettings").show((animation ? 300 : 0));
    } else {
       $("#inboundEmailSettings").hide((animation ? 300 : 0));
+   }
+}
+
+function weatherChange(animation) {
+   if($("#weather").is(":checked")) {
+      $("#weatherSettings").show((animation ? 300 : 0));
+   } else {
+      $("#weatherSettings").hide((animation ? 300 : 0));
    }
 }
 

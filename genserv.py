@@ -354,10 +354,6 @@ def ReadSettingsFromFile():
                 #"outagelog" : ['string', 'Outage Log', 8, "/home/pi/genmon/outage.txt", "", 0],
                 "syncdst" : ['boolean', 'Sync Daylight Savings Time', 22, False, "", ""],
                 "synctime" : ['boolean', 'Sync Time', 23, False, "", ""],
-                "weatherkey" : ['string', 'Openweathermap.org API key', 25, "", "", "required minmax:4:50"],
-                "weatherlocation" : ['string', 'Location to report weather', 26, "", "", "required minmax:4:50"],
-                "metricweather"  : ['boolean', 'Use Metric Weather Units', 27, False, "", ""],
-                "minimumweatherinfo"  : ['boolean', 'Display Minimum Weather Info', 28, False, "", ""],
                 "autofeedback" : ['boolean', 'Automated Feedback', 29, False, "", ""],
 
                 #"model" : ['string', 'Generator Model', 100, "Generic Evolution Air Cooled", "", 0],
@@ -369,7 +365,6 @@ def ReadSettingsFromFile():
                 #
                 "enhancedexercise" : ['boolean', 'Enhanced Exercise Time', 105, False, "", ""],
                 "displayunknown" : ['boolean', 'Display Unknown Sensors', 106, False, "", ""],
-
 
                 # These do not appear to work on reload, some issue with Flask
                 "usehttps" : ['boolean', 'Use Secure Web Settings', 200, False, "", ""],
@@ -392,9 +387,14 @@ def ReadSettingsFromFile():
                 "ssl_enabled" : ['boolean', 'SMTP Server SSL Enabled', 308, False, "", ""],
 
                 "imap_server" : ['string', 'IMAP Server <br><small>(leave emtpy to disable)</small>', 401, "imap.gmail.com", "", "InternetAddress"],
-                "incoming_mail_folder" : ['string', 'Incoming Mail Folder<br><small>(if IMAP enabled)</small>', 402, "Generator", "", "minmax:1:1500"],
-                "processed_mail_folder" : ['string', 'Mail Processed Folder<br><small>(if IMAP enabled)</small>', 403, "Generator/Processed","", "minmax:1:255"],
-                "readonlyemailcommands" : ['boolean', 'Disable Email Write Commands', 404, False, "", ""]
+                "readonlyemailcommands" : ['boolean', 'Disable Email Write Commands',402, False, "", ""],
+                "incoming_mail_folder" : ['string', 'Incoming Mail Folder<br><small>(if IMAP enabled)</small>', 403, "Generator", "", "minmax:1:1500"],
+                "processed_mail_folder" : ['string', 'Mail Processed Folder<br><small>(if IMAP enabled)</small>', 404, "Generator/Processed","", "minmax:1:255"],
+
+                "weatherkey" : ['string', 'Openweathermap.org API key', 501, "", "", "required minmax:4:50"],
+                "weatherlocation" : ['string', 'Location to report weather', 502, "", "", "required minmax:4:50"],
+                "metricweather"  : ['boolean', 'Use Metric Units', 503, False, "", ""],
+                "minimumweatherinfo"  : ['boolean', 'Display Minimum Weather Info', 504, False, "", ""]
                 }
 
 

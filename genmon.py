@@ -25,7 +25,7 @@ except ImportError as e:
 from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel, myplatform, myweather
 
 
-GENMON_VERSION = "V1.9.8"
+GENMON_VERSION = "V1.9.9"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -225,6 +225,7 @@ class Monitor(mysupport.MySupport):
             else:
                 self.AddItemToConfFile('version', GENMON_VERSION)
                 self.NewInstall = True
+                self.Version = GENMON_VERSION
             if config.has_option(ConfigSection, "autofeedback"):
                 self.FeedbackEnabled = config.getboolean(ConfigSection, 'autofeedback')
             else:

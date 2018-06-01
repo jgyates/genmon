@@ -20,8 +20,9 @@ import mycommon
 class MyPlatform(mycommon.MyCommon):
 
     #------------ MyPlatform::init----------------------------------------------
-    def __init__(self, log = None):
+    def __init__(self, log = None, usemetric = True):
         self.log = log
+        self.UseMetric = usemetric
 
     #------------ MyPlatform::GetInfo-------------------------------------------
     def GetInfo(self):
@@ -88,6 +89,11 @@ class MyPlatform(mycommon.MyCommon):
 
         return True
 
+    #------------ MyPlatform::ConvertFahrenheitToCelsius -----------------------
+    def ConvertFahrenheitToCelsius(self, Celsius):
+
+        return (9.0/5.0 * Celsius + 32)
+
     #------------ MyPlatform::GetRaspberryPiInfo -------------------------------
     def GetRaspberryPiInfo(self):
 
@@ -99,12 +105,19 @@ class MyPlatform(mycommon.MyCommon):
             try:
                 process = Popen(['/opt/vc/bin/vcgencmd', 'measure_temp'], stdout=PIPE)
                 output, _error = process.communicate()
-                PiInfo["CPU Temperature"] = "%.2f C" % float(output[output.index('=') + 1:output.rindex("'")])
+                if self.UseMetric:
+                    PiInfo["CPU Temperature"] = "%.2f C" % float(output[output.index('=') + 1:output.rindex("'")])
+                else:
+                    PiInfo["CPU Temperature"] = "%.2f F" % self.ConvertFahrenheitToCelsius(float(output[output.index('=') + 1:output.rindex("'")]))
             except Exception as e1:
+                self.LogError(str(e1))
                 # for non rasbpian based systems
                 process = Popen(['cat', '/sys/class/thermal/thermal_zone0/temp'], stdout=PIPE)
                 output, _error = process.communicate()
-                TempStr = str(float(output) / 1000) + " C"
+                if self.UseMetric:
+                    TempStr = str(float(output) / 1000) + " C"
+                else:
+                    TempStr = str(self.ConvertFahrenheitToCelsius(float(output) / 1000)) + " F"
                 PiInfo["CPU Temperature"] = TempStr
 
             try:
