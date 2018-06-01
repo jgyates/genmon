@@ -67,9 +67,20 @@ class MyWeather(mysupport.MySupport):
     def InitOWM(self):
         try:
             self.OWM = pyowm.OWM(self.APIKey) # You MUST provide a valid API key
+            return True
         except Exception as e1:
             self.OWM = None
             self.LogErrorLine("Error in InitOWM: " + str(e1))
+            return False
+
+
+    #---------------------WeatherThread-----------------------------------------
+    def GetObservation(self):
+
+        if self.OWM == None:
+            self.Observation = None
+            self.ObservationLocation = None
+            return
         try:
             if self.Location.isdigit():
                 self.Observation = self.OWM.weather_at_id(int(self.Location))
@@ -79,19 +90,22 @@ class MyWeather(mysupport.MySupport):
         except Exception as e1:
             self.Observation = None
             self.ObservationLocation = None
-            self.LogErrorLine("Error in InitOWM (location): " + str(e1))
+            self.LogErrorLine("Error in GetObservation: " + str(e1))
 
     #---------------------WeatherThread-----------------------------------------
     def WeatherThread(self):
 
         time.sleep(1)
         while True:
-            if self.OWM == None or self.Observation == None:
-                self.InitOWM()
-            if self.OWM == None or self.Observation == None:
-                time.sleep(60)
-                continue
+            if self.OWM == None:
+                if not self.InitOWM():
+                    time.sleep(60)
+                    continue
             try:
+                self.GetObservation()
+                if self.Observation == None:
+                    self.OWM = None
+                    continue
                 weatherdata = self.Observation.get_weather()
                 with self.DataAccessLock:
                     self.WeatherData = weatherdata
@@ -166,9 +180,8 @@ class MyWeather(mysupport.MySupport):
                     Data["Sunrise Time"] = datetime.datetime.fromtimestamp(int(self.WeatherData.get_sunrise_time())).strftime("%A %B %-d, %Y %H:%M:%S")
                     Data["Sunset Time"] = datetime.datetime.fromtimestamp(int(self.WeatherData.get_sunset_time())).strftime("%A %B %-d, %Y %H:%M:%S")
 
-                    UTC = datetime.datetime.fromtimestamp(int(self.WeatherData.get_reference_time()))
-                    Local = self.UTC2Local(UTC)
-                    Data["Reference Time"] = Local.strftime("%A %B %-d, %Y %H:%M:%S")
+                    ReferenceTime = datetime.datetime.fromtimestamp(int(self.WeatherData.get_reference_time()))
+                    Data["Reference Time"] = ReferenceTime.strftime("%A %B %-d, %Y %H:%M:%S")
                     LocationData = self.GetLocation()
                     if LocationData != None and len(LocationData):
                         Data["Location"] = LocationData
@@ -191,12 +204,6 @@ class MyWeather(mysupport.MySupport):
             return CardinalDirections[(Value % 16)]
         except:
             return ""
-
-    #---------------------UTC2Local---------------------------------------------
-    def UTC2Local(self, utc):
-        epoch = time.mktime(utc.timetuple())
-        offset = datetime.datetime.fromtimestamp (epoch) - datetime.datetime.utcfromtimestamp (epoch)
-        return utc + offset
 
     #---------------------Close-------------------------------------------------
     def Close(self):

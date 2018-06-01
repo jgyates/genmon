@@ -30,6 +30,7 @@ function installgenmon() {
     sudo apt-get install python-serial
     sudo pip install Flask
     sudo pip install pyowm
+    sudo pip install pytz
     sudo chmod 775 "$genmondir/startgenmon.sh"
     sudo chmod 775 "$genmondir/genmonmaint.sh"
 
