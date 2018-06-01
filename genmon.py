@@ -75,6 +75,13 @@ class Monitor(mysupport.MySupport):
         self.Simulation = False
         self.SimulationFile = None
 
+        if not os.path.isfile(self.ConfigFilePath + 'genmon.conf'):
+            print("Missing config file : " + self.ConfigFilePath + 'genmon.conf')
+            sys.exit(1)
+        if not os.path.isfile(self.ConfigFilePath + 'mymail.conf'):
+            print("Missing config file : " + self.ConfigFilePath + 'mymail.conf')
+            sys.exit(1)
+
         # read config file
         if not self.GetConfig():
             raise Exception("Failure in Monitor GetConfig: " + str(e1))
