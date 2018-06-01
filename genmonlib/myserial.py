@@ -136,7 +136,7 @@ class SerialDevice(mycommon.MyCommon):
                 del self.Buffer[:]
 
         except Exception as e1:
-            self.FatalErrorLine( "Error in SerialDevice:Flush : " + self.DeviceName + ":" + str(e1))
+            self.LogErrorLine( "Error in SerialDevice:Flush : " + self.DeviceName + ":" + str(e1))
 
     # ---------- SerialDevice::Read------------------
     def Read(self):
