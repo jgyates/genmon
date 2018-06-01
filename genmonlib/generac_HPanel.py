@@ -516,7 +516,6 @@ class HPanel(controller.GeneratorController):
 
         for Register in RegisterEnum.GetRegList(): #RegisterEnum:
             try:
-                time.sleep(0.01)
                 self.ModBus.ProcessMasterSlaveTransaction(Register, 1)
             except Exception as e1:
                 self.LogErrorLine("Error in MasterEmulation: " + str(e1))

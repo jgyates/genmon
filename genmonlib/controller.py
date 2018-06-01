@@ -198,7 +198,7 @@ class GeneratorController(mysupport.MySupport):
         RegistersUnderTestData = ""
 
         while True:
-            time.sleep(0.1)
+
             if self.IsStopSignaled("DebugThread"):
                 return
             if TotalSent >= 5:
@@ -677,7 +677,7 @@ class GeneratorController(mysupport.MySupport):
             if not os.path.isfile(self.PowerLog):
                 TimeStamp = datetime.datetime.now().strftime('%x %X')
                 self.LogToFile(self.PowerLog, TimeStamp, "0.0")
-                
+
             LogSize = os.path.getsize(self.PowerLog)
             if LogSize == 0:
                 TimeStamp = datetime.datetime.now().strftime('%x %X')
