@@ -812,7 +812,8 @@ class HPanel(controller.GeneratorController):
             EngineState += "Exercising. "
 
         if not len(EngineState):
-            self.FeedbackPipe.SendFeedback("Engine State", FullLogs = True, Always = True, Message="Unknown Engine State")
+            if len(self.Registers):
+                self.FeedbackPipe.SendFeedback("Engine State", FullLogs = True, Always = True, Message="Unknown Engine State")
             return "Unknown"
         return EngineState
 
