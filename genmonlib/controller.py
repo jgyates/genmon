@@ -674,6 +674,10 @@ class GeneratorController(mysupport.MySupport):
             for Items in reversed(PowerLog):
                 self.LogToFile(self.PowerLog, Items[0], Items[1])
 
+            if not os.path.isfile(self.PowerLog):
+                TimeStamp = datetime.datetime.now().strftime('%x %X')
+                self.LogToFile(self.PowerLog, TimeStamp, "0.0")
+                
             LogSize = os.path.getsize(self.PowerLog)
             if LogSize == 0:
                 TimeStamp = datetime.datetime.now().strftime('%x %X')
