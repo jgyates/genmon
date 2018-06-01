@@ -79,7 +79,10 @@ class MyTile (mycommon.MyCommon):
             self.Divisions = self.SetDefault(self.Divisions, int(self.Maximum / 10))
             self.SubDivisions = self.SetDefault(self.SubDivisions, 0)
             # This does not scale
-            self.Labels = self.SetDefault( self.Labels, [self.Minimum, 100, 156, 220, self.Nominal, self.Maximum])
+            if self.Nominal == 240:
+                self.Labels = self.SetDefault( self.Labels, [self.Minimum, 100, 156, 220, self.Nominal, self.Maximum])
+            else:
+                self.Labels = self.SetDefault( self.Labels, self.CreateLabels(self.Minimum, self.Nominal , self.Maximum))
             # This may not scale
             values = [self.Minimum, self.Nominal - 10, self.Nominal - 5, self.Nominal + 5, self.Nominal + 15, self.Maximum]
             colors = [self.RED, self.YELLOW, self.GREEN, self.YELLOW, self.RED]

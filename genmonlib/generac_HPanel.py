@@ -442,14 +442,15 @@ class HPanel(controller.GeneratorController):
             callbackparameters = (RegisterEnum.BATTERY_VOLTS,  None, 100.0, False, False, True))
         self.TileList.append(Tile)
 
-        Tile = mytile.MyTile(self.log, title = "Output Voltage", units = "V", type = "linevolts", nominal = 240,
+        # TODO Nominal Voltage ?
+        Tile = mytile.MyTile(self.log, title = "Output Voltage", units = "V", type = "linevolts", nominal = 600,
         callback = self.GetParameter,
         callbackparameters = (RegisterEnum.AVG_VOLTAGE, None, None, False, True, False))
         self.TileList.append(Tile)
 
-        Tile = mytile.MyTile(self.log, title = "Average Current", units = "A", type = "current", nominal = int((int(self.NominalKW) * 1000) / 240 /3 ),
+        Tile = mytile.MyTile(self.log, title = "Average Current", units = "A", type = "current", nominal = 2051,
         callback = self.GetParameter,
-        callbackparameters = (RegisterEnum.AVG_VOLTAGE, None, None, False, True, False))
+        callbackparameters = (RegisterEnum.AVG_CURRENT, None, None, False, True, False))
         self.TileList.append(Tile)
 
         Tile = mytile.MyTile(self.log, title = "Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq),
@@ -1038,10 +1039,10 @@ class HPanel(controller.GeneratorController):
             Engine["Oil Temp"] = self.GetParameter(RegisterEnum.OIL_TEMP, "F")
             Engine["Fuel Level"] = self.GetParameter(RegisterEnum.FUEL_LEVEL)
             Engine["Oxygen Sensor"] = self.GetParameter(RegisterEnum.O2_SENSOR)
-            Engine["Current Phase A"] = self.GetParameter(RegisterEnum.CURRENT_PHASE_A,"A", 10.0)
-            Engine["Current Phase B"] = self.GetParameter(RegisterEnum.CURRENT_PHASE_B,"A", 10.0)
-            Engine["Current Phase C"] = self.GetParameter(RegisterEnum.CURRENT_PHASE_C,"A", 10.0)
-            Engine["Average Current"] = self.GetParameter(RegisterEnum.AVG_CURRENT,"A", 10.0)
+            Engine["Current Phase A"] = self.GetParameter(RegisterEnum.CURRENT_PHASE_A,"A")
+            Engine["Current Phase B"] = self.GetParameter(RegisterEnum.CURRENT_PHASE_B,"A")
+            Engine["Current Phase C"] = self.GetParameter(RegisterEnum.CURRENT_PHASE_C,"A")
+            Engine["Average Current"] = self.GetParameter(RegisterEnum.AVG_CURRENT,"A")
             Engine["Voltage A-B"] = self.GetParameter(RegisterEnum.VOLTS_PHASE_A_B,"V")
             Engine["Voltage B-C"] = self.GetParameter(RegisterEnum.VOLTS_PHASE_B_C,"V")
             Engine["Voltage C-A"] = self.GetParameter(RegisterEnum.VOLTS_PHASE_C_A,"V")
