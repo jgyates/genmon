@@ -2401,7 +2401,7 @@ class Evolution(controller.GeneratorController):
                 Value = self.GetRegisterValueFromList("0058")
                 if len(Value):
                     CurrentFloat = int(Value,16)
-                    CurrentOutput = max((CurrentFloat * .2248) - 303.268, 0)
+                    CurrentOutput = round(max((CurrentFloat * .2248) - 303.268, 0), 2)
 
             elif self.EvolutionController and not self.LiquidCooled:
                 CurrentHi = 0
@@ -2456,15 +2456,22 @@ class Evolution(controller.GeneratorController):
                 if not self.CurrentOffset == None:
                     CurrentOffset = self.CurrentOffset
 
-                CurrentOutput = (CurrentFloat + CurrentOffset) / Divisor
+                CurrentOutput = round((CurrentFloat + CurrentOffset) / Divisor, 2)
 
             # is the current out of bounds?
+            # NOTE: This occurs if the EvoAC current transformers are not properly calibrated, or so we think.
+            BaseStatus = self.GetBaseStatus()
             Voltage = self.GetVoltageOutput(ReturnInt = True)
             if Voltage > 100:     # only bounds check if the voltage is over 100V to give things a chance to stabalize
                 if CurrentOutput > ((int(self.NominalKW) * 1000) / 240) + 2 or CurrentOutput < 0:
-                    msg = "Current Calculation: %f, CurrentFloat: %f, Divisor: %f, Offset %f" % (CurrentOutput, CurrentFloat, Divisor, CurrentOffset)
-                    self.FeedbackPipe.SendFeedback("Current Calculation out of range", Message=msg, FullLogs = True )
-
+                    # if we are here, then the current is out of range.
+                    if not BaseStatus == "EXERCISING":
+                        msg = "Current Calculation: %f, CurrentFloat: %f, Divisor: %f, Offset %f" % (CurrentOutput, CurrentFloat, Divisor, CurrentOffset)
+                        self.FeedbackPipe.SendFeedback("Current Calculation out of range", Message=msg, FullLogs = True )
+                    if CurrentOutput < 0:
+                        CurrentOutput = 0
+                    else:
+                        CurrentOutput = round((int(self.NominalKW) * 1000) / 240, 2)
             if ReturnFloat:
                 return CurrentOutput
 
