@@ -20,25 +20,70 @@ except ImportError as e:
 
 import controller, mymodbus, mythread, modbus_file, mytile
 
+
 #---------------------RegisterEnum::RegisterEnum--------------------------------
 class RegisterEnum(object):
     UNK_2                   = "0002"            # UNKNOWN Bit 0100 change on power loss
     UNK_8                   = "0008"            # UNKNOWN
-    UNK_31                  = "0031"            # UNKNOWN
-    UNK_32                  = "0032"            # UNKNOWN
-    UNK_48                  = "0048"            # UNKNOWN
-    UNK_49                  = "0049"            # UNKNOWN
-    UNK_53                  = "0053"            # UNKNOWN
-    UNK_54                  = "0054"            # UNKNOWN
-    UNK_55                  = "0055"            # UNKNOWN
-    UNK_56                  = "0056"            # UNKNOWN
-    UNK_57                  = "0057"            # UNKNOWN
-    UNK_58                  = "0058"            # UNKNOWN
-    UNK_59                  = "0059"            # UNKNOWN
-    UNK_5A                  = "005a"            # UNKNOWN
-    UNK_64                  = "0064"            # UNKNOWN
-    UNK_65                  = "0065"            # UNKNOWN
-    UNK_66                  = "0066"            # UNKNOWN
+    CONTROLLER_NAME_START   = "0020"            # reg 0020 - 0035 "H-100 Controller, PM-DCP Release 4.1C , HW00"
+    CONTROLLER_1            = "0021"            # Controller Name
+    CONTROLLER_2            = "0022"            # Controller Name
+    CONTROLLER_3            = "0023"            # Controller Name
+    CONTROLLER_4            = "0024"            # Controller Name
+    CONTROLLER_5            = "0025"            # Controller Name
+    CONTROLLER_6            = "0026"            # Controller Name
+    CONTROLLER_7            = "0027"            # Controller Name
+    CONTROLLER_8            = "0028"            # Controller Name
+    CONTROLLER_9            = "0029"            # Controller Name
+    CONTROLLER_10           = "002a"            # Controller Name
+    CONTROLLER_11           = "002b"            # Controller Name
+    CONTROLLER_12           = "002c"            # Controller Name
+    CONTROLLER_13           = "002d"            # Controller Name
+    CONTROLLER_14           = "002e"            # Controller Name
+    CONTROLLER_15           = "002f"            # Controller Name
+    CONTROLLER_16           = "0030"            # Controller Name
+    CONTROLLER_17           = "0031"            # Controller Name
+    CONTROLLER_18           = "0031"            # Controller Name
+    CONTROLLER_19           = "0033"            # Controller Name
+    CONTROLLER_20           = "0034"            # Controller Name
+    CONTROLLER_NAME_END     = "0035"            # Controller Name
+    PMDCP_INFO_START        = "0040"            # reg 0040 - 005b "PM-DCP Release 4.1C , HW00, $Date: 2015/10/01 15:37:56 $"
+    PMDCP_INFO_1            = "0041"            # PM-DCP Info
+    PMDCP_INFO_2            = "0042"            # PM-DCP Info
+    PMDCP_INFO_3            = "0043"            # PM-DCP Info
+    PMDCP_INFO_4            = "0044"            # PM-DCP Info
+    PMDCP_INFO_5            = "0045"            # PM-DCP Info
+    PMDCP_INFO_6            = "0046"            # PM-DCP Info
+    PMDCP_INFO_7            = "0047"            # PM-DCP Info
+    PMDCP_INFO_8            = "0048"            # PM-DCP Info
+    PMDCP_INFO_9            = "0049"            # PM-DCP Info
+    PMDCP_INFO_10           = "004a"            # PM-DCP Info
+    PMDCP_INFO_11           = "004b"            # PM-DCP Info
+    PMDCP_INFO_12           = "004c"            # PM-DCP Info
+    PMDCP_INFO_13           = "004d"            # PM-DCP Info
+    PMDCP_INFO_14           = "004e"            # PM-DCP Info
+    PMDCP_INFO_15           = "004f"            # PM-DCP Info
+    PMDCP_INFO_16           = "0050"            # PM-DCP Info
+    PMDCP_INFO_17           = "0051"            # PM-DCP Info
+    PMDCP_INFO_18           = "0052"            # PM-DCP Info
+    PMDCP_INFO_19           = "0053"            # PM-DCP Info
+    PMDCP_INFO_20           = "0054"            # PM-DCP Info
+    PMDCP_INFO_21           = "0055"            # PM-DCP Info
+    PMDCP_INFO_22           = "0056"            # PM-DCP Info
+    PMDCP_INFO_23           = "0057"            # PM-DCP Info
+    PMDCP_INFO_24           = "0058"            # PM-DCP Info
+    PMDCP_INFO_25           = "0059"            # PM-DCP Info
+    PMDCP_INFO_26           = "005a"            # PM-DCP Info
+    PMDCP_INFO_END          = "005b"            # PM-DCP Info
+
+    VERSION_INFO_START      = "0060"            # reg 0060 - 0065 "4.0.1, 4.0.0"
+    VERSION_INFO_1          = "0061"            # Version Info
+    VERSION_INFO_2          = "0062"            # Version Info
+    VERSION_INFO_3          = "0063"            # Version Info
+    VERSION_INFO_4          = "0064"            # Version Info
+    VERSION_INFO_5          = "0065"            # Version Info
+    VERSION_INFO_END        = "0066"            # Version Info
+
     INPUT_1                 = "0080"            # Input 1
     INPUT_2                 = "0081"            # Input 2
     OUTPUT_1                = "0082"            # Output 1
@@ -100,16 +145,31 @@ class RegisterEnum(object):
     ENGINE_HOURS_HI         = "0130"            # Engine Hours High
     ENGINE_HOURS_LO         = "0131"            # Engine Hours Low
     UNK_132                 = "0132"            # UNKNOWN
-    UNK_133                 = "0133"            # UNKNOWN
-    UNK_134                 = "0134"            # UNKNOWN
-    UNK_135                 = "0135"            # UNKNOWN
-    UNK_136                 = "0136"            # UNKNOWN
-    UNK_137                 = "0137"            # UNKNOWN
-    UNK_138                 = "0138"            # UNKNOWN
-    UNK_139                 = "0139"            # UNKNOWN
-    UNK_13A                 = "013a"            # UNKNOWN
-    UNK_13B                 = "013b"            # UNKNOWN
-    UNK_13C                 = "013c"            # UNKNOWN
+    STATUS_INFO_START       = "0133"            # reg 0133 - 013c "Running from Manual"
+    STATUS_INFO_1           = "0134"            #
+    STATUS_INFO_2           = "0135"            #
+    STATUS_INFO_3           = "0136"            #
+    STATUS_INFO_4           = "0137"            #
+    STATUS_INFO_5           = "0138"            #
+    STATUS_INFO_6           = "0139"            #
+    STATUS_INFO_7           = "013a"            #
+    STATUS_INFO_8           = "013b"            #
+    STATUS_INFO_END         = "013c"            #
+
+    STATUS_2_INFO_START     = "013f"            # reg 013f - 0148 "Running from 2-Wire"
+    STATUS_2_INFO_1         = "0140"            #
+    STATUS_2_INFO_2         = "0141"            #
+    STATUS_2_INFO_3         = "0142"            #
+    STATUS_2_INFO_4         = "0143"            #
+    STATUS_2_INFO_5         = "0144"            #
+    STATUS_2_INFO_6         = "0145"            #
+    STATUS_2_INFO_7         = "0146"            #
+    STATUS_2_INFO_8         = "0147"            #
+    STATUS_2_INFO_END       = "0148"            #
+
+
+# reg 014b - 015c "Running from serWarmed Up, Alarms On"
+# reg 01e1 - 01e7 "OIL TEMP" or "No ECU Comms"
 
     # Register #665: DTC P0134 Fault Active Counter
     # This is a value between 0 and 5. If it is 5, then the DTC was active during
@@ -375,9 +435,6 @@ class HPanel(controller.GeneratorController):
 
         self.SetupClass()
 
-        while not self.InitComplete:
-            time.sleep(0.01)
-
     #-------------HPanel:SetupClass---------------------------------------------
     def SetupClass(self):
 
@@ -510,6 +567,25 @@ class HPanel(controller.GeneratorController):
             self.AddItemToConfFile("fueltype", self.FuelType)
 
         return
+    #-------------HPanel:GetParameterString-------------------------------------
+    def GetParameterString(self, Start, End):
+
+        try:
+            StartInt = int(Start, 16)
+            EndInt = int(End, 16)
+
+            ByteList = []
+            ReturnString = ""
+            for Register in range(StartInt, EndInt + 1):
+                RegValue = self.GetParameter( "%04x" % Register, ReturnInt = True)
+                if RegValue == 0:
+                    break
+                ByteList.append(RegValue >> 8)
+                ByteList.append(RegValue & 0xFF)
+            return ReturnString.join(map(chr, ByteList))
+        except Exception as e1:
+            self.LogErrorLine("Error in GetStringParameter: " + str(e1))
+            return ""
 
     #-------------HPanel:MasterEmulation----------------------------------------
     def MasterEmulation(self):
@@ -979,6 +1055,8 @@ class HPanel(controller.GeneratorController):
             # TODO
             #Maint["Generator Serial Number"] = self.GetSerialNumber()
             Maint["Controller"] = self.GetController()
+            Maint["PM-DCP"] = self.GetParameterString(RegisterEnum.PMDCP_INFO_START, RegisterEnum.PMDCP_INFO_END)
+            Maint["Version"] = self.GetParameterString(RegisterEnum.VERSION_INFO_START, RegisterEnum.VERSION_INFO_END)
             Maint["Nominal RPM"] = self.NominalRPM
             Maint["Rated kW"] = self.NominalKW
             Maint["Nominal Frequency"] = self.NominalFreq
@@ -1023,9 +1101,12 @@ class HPanel(controller.GeneratorController):
             Time = collections.OrderedDict()
             Stat["Time"] = Time
 
+
             Battery["Battery Voltage"] = self.GetParameter(RegisterEnum.BATTERY_VOLTS, "V", 100.0)
             Battery["Battery Charger Current"] = self.GetParameter(RegisterEnum.BATTERY_CHARGE_CURRNT, "A", 10.0)
 
+            Engine["Current Status"] = self.GetParameterString(RegisterEnum.STATUS_INFO_START, RegisterEnum.STATUS_INFO_END)
+            Engine["Previous Status"] = self.GetParameterString(RegisterEnum.STATUS_2_INFO_START, RegisterEnum.STATUS_2_INFO_END)
             Engine["Switch State"] = self.GetSwitchState()
             Engine["Engine State"] = self.GetEngineState()
             Engine["Output Power"] = self.GetPowerOutput()
@@ -1175,7 +1256,8 @@ class HPanel(controller.GeneratorController):
     # controller name that the software has been instructed to use if overridden
     # in the conf file
     def GetController(self, Actual = True):
-        return "H-100"
+
+        return self.GetParameterString(RegisterEnum.CONTROLLER_NAME_START, RegisterEnum.CONTROLLER_NAME_END)
 
     #----------  HPanel:ComminicationsIsActive  -------------------
     # Called every 2 seconds, if communictions are failing, return False, otherwise

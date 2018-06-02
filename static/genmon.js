@@ -198,8 +198,12 @@ function DisplayStatusFull()
     outstr += '<center><div class="packery">';
     for (var i = 0; i < myGenerator["tiles"].length; ++i) {
        switch (myGenerator["tiles"][i].type) {
-          case "gauge": 
-             outstr += '<div id="gaugeField_'+i+'" class="grid-item gaugeField"><br>'+myGenerator["tiles"][i].title+'<br><canvas class="gaugeCanvas" id="gauge'+i+'"></canvas><br><div id="text'+i+'" class="gaugeDiv"></div></div>';
+          case "gauge":
+             if (myGenerator["tiles"][i].title == "Fuel") { 
+               outstr += '<div id="fuelField_'+i+'" class="grid-item gaugeField"><br>'+myGenerator["tiles"][i].title+'<br><div style="display: inline-block; width:100%; height:65%; position: relative;"><canvas class="gaugeCanvas" id="gauge'+i+'_bg" style="height: 100%; position: absolute; left: 0; top: 0; z-index: 1;"></canvas><canvas class="gaugeCanvas" id="gauge'+i+'" style="height: 100%; position: absolute; left: 0; top: 0; z-index: 0;"></canvas></div><br><div id="text'+i+'" class="gaugeDiv"></div></div>';          
+             } else {
+               outstr += '<div id="gaugeField_'+i+'" class="grid-item gaugeField"><br>'+myGenerator["tiles"][i].title+'<br><canvas class="gaugeCanvas" id="gauge'+i+'"></canvas><br><div id="text'+i+'" class="gaugeDiv"></div></div>';
+             }
              break;
           case "graph":
              outstr += '<div id="plotField" class="grid-item plotField"><br>'+myGenerator["tiles"][i].title+'<br><div id="plotkW" class="kwPlotCanvas"></div><span class="kwPlotText">Time (<div class="kwPlotSelection selection" id="1h">1 hour</div> | <div class="kwPlotSelection" id="1d">1 day</div> | <div class="kwPlotSelection" id="1w">1 week</div> | <div class="kwPlotSelection" id="1m">1 month</div>)</span></div>';
@@ -252,6 +256,15 @@ function DisplayStatusFull()
                   gauge[curr_i] = createGauge($("#gauge"+curr_i), $("#text"+curr_i), 0, myGenerator["tiles"][curr_i].minimum, myGenerator["tiles"][curr_i].maximum,
                                            myGenerator["tiles"][curr_i].labels, myGenerator["tiles"][curr_i].colorzones, myGenerator["tiles"][curr_i].divisions, myGenerator["tiles"][curr_i].subdivisions);
                }
+               if (ui.element[0].id.match("^fuelField_")) {
+                  var curr_i = replaceAll(ui.element[0].id, 'fuelField_', '');
+                  $('<canvas class="gaugeCanvas" id="gauge'+curr_i+'">').replaceAll($("#gauge"+curr_i));
+                  $("#gauge"+curr_i).css("width", newWidth + "px");
+                  $("#gauge"+curr_i).css("height", newHeight - ((newHeight == 95) ? 35 : 70) + "px");
+                  $("#gauge"+curr_i+"_bg").css("width", newWidth + "px");
+                  $("#gauge"+curr_i+"_bg").css("height", newHeight - ((newHeight == 95) ? 35 : 70) + "px");
+                  gauge[curr_i] = createFuel($("#gauge"+curr_i), $("#text"+curr_i), $("#gauge"+curr_i+"_bg"));
+               }
                if (ui.element[0].id == "plotField") {
                   $("#plotkW").css("width", newWidth + "px");
                   $("#plotkW").css("height", newHeight - ((newHeight == 95) ? 35 : 70) + "px");
@@ -265,8 +278,12 @@ function DisplayStatusFull()
     for (var i = 0; i < myGenerator["tiles"].length; ++i) {
        switch (myGenerator["tiles"][i].type) {
           case "gauge":
-             gauge[i] = createGauge($("#gauge"+i), $("#text"+i), 0, myGenerator["tiles"][i].minimum, myGenerator["tiles"][i].maximum,
-                                                myGenerator["tiles"][i].labels, myGenerator["tiles"][i].colorzones, myGenerator["tiles"][i].divisions, myGenerator["tiles"][i].subdivisions);
+             if (myGenerator["tiles"][i].title == "Fuel") {
+                gauge[i] = createFuel($("#gauge"+i), $("#text"+i), $("#gauge"+i+"_bg"));
+             } else {
+                gauge[i] = createGauge($("#gauge"+i), $("#text"+i), 0, myGenerator["tiles"][i].minimum, myGenerator["tiles"][i].maximum,
+                                                   myGenerator["tiles"][i].labels, myGenerator["tiles"][i].colorzones, myGenerator["tiles"][i].divisions, myGenerator["tiles"][i].subdivisions);
+             }
              if ((prevStatusValues["tiles"] != undefined) && (prevStatusValues["tiles"].length > i) && (prevStatusValues["tiles"][i].value !== "")) {
                 gauge[i].set(prevStatusValues["tiles"][i].value); // set current value
                 $("#text"+i).html(prevStatusValues["tiles"][i].text);
@@ -364,6 +381,55 @@ function createGauge(pCanvas, pText, pTextPrecision, pMin, pMax, pLabels, pZones
     gauge.animationSpeed = 1; // set animation speed (32 is default value)
     gauge.set(pMin); // setting starting point
     gauge.animationSpeed = 1000; // set animation speed (32 is default value)
+
+    return gauge;
+}
+
+
+function createFuel(pCanvas, pText, pFG) {
+    var opts = {
+      angle: 0.23, // The span of the gauge arc
+      lineWidth: 0, // The line thickness
+      radiusScale: 1, // Relative radius
+      pointer: {
+        length: 0.4, // // Relative to gauge radius
+        strokeWidth: 0.045, // The thickness
+        color: '#FF0000' // Fill color
+      },
+      limitMax: true,     // If false, max value increases automatically if value > maxValue
+      limitMin: true,     // If true, the min value of the gauge will be fixed
+      colorStart: '#E0E0E0',   // Colors
+      colorStop: '#E0E0E0',    // just experiment with them
+      strokeColor: '#E0E0E0',  // to see which ones work best for you
+      generateGradient: false,
+      highDpiSupport: true,     // High resolution support
+    };
+    
+    var gauge = new Gauge(pCanvas[0]).setOptions(opts);
+    gauge.minValue = 0; // set max gauge value
+    gauge.maxValue = 100; // set max gauge value
+    // gauge.setTextField(pText, pTextPrecision);
+    gauge.animationSpeed = 1; // set animation speed (32 is default value)
+    
+    var w = gauge.canvas.width / 2;
+    var r = gauge.radius * 0.7 ;
+    var h = (gauge.canvas.height * gauge.paddingTop + gauge.availableHeight) - ((gauge.radius + gauge.lineWidth / 2) * gauge.extraPadding);
+    
+    pFG[0].width = gauge.canvas.width;
+    pFG[0].height = gauge.canvas.height;
+    var ctx = pFG[0].getContext('2d');
+
+    ctx.fillStyle = "#363636";
+    ctx.strokeStyle = "#363636";
+    ctx.beginPath();
+    ctx.arc( w, h, Math.round(r/6), 0, 2 * Math.PI);
+    ctx.fill();
+    
+    var bgImage = new Image;
+    bgImage.src = "images/fuel.png";
+    bgImage.onload = function() {
+      ctx.drawImage(bgImage, w-r, 10, 2*r, 2*r * bgImage.height / bgImage.width);
+    };
 
     return gauge;
 }

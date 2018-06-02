@@ -25,7 +25,7 @@ except ImportError as e:
 from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel, myplatform, myweather
 
 
-GENMON_VERSION = "V1.9.10"
+GENMON_VERSION = "V1.9.11"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -63,7 +63,7 @@ class Monitor(mysupport.MySupport):
         # weather parameters
         self.WeatherAPIKey = None
         self.WeatherLocation = None
-        self.WeatherMetric = False
+        self.UseMetric = False
         self.WeatherMinimum = True
         self.MyWeather = None
 
@@ -152,7 +152,7 @@ class Monitor(mysupport.MySupport):
             self.Threads["TimeSyncThread"] = mythread.MyThread(self.TimeSyncThread, Name = "TimeSyncThread")
 
         if not self.WeatherAPIKey == None and len(self.WeatherAPIKey) and not self.WeatherLocation == None and len(self.WeatherLocation):
-            Unit = 'metric' if self.WeatherMetric else 'imperial'
+            Unit = 'metric' if self.UseMetric else 'imperial'
             self.MyWeather = myweather.MyWeather(self.WeatherAPIKey, location = self.WeatherLocation, unit = Unit, log = self.log)
             self.Threads = self.MergeDicts(self.Threads, self.MyWeather.Threads)
 
@@ -209,7 +209,7 @@ class Monitor(mysupport.MySupport):
                 self.WeatherLocation = config.get(ConfigSection, 'weatherlocation')
 
             if config.has_option(ConfigSection, 'metricweather'):
-                self.WeatherMetric = config.getboolean(ConfigSection, 'metricweather')
+                self.UseMetric = config.getboolean(ConfigSection, 'metricweather')
 
             if config.has_option(ConfigSection, 'minimumweatherinfo'):
                 self.WeatherMinimum = config.getboolean(ConfigSection, 'minimumweatherinfo')
@@ -510,11 +510,16 @@ class Monitor(mysupport.MySupport):
 
         return outstring
     #------------ Monitor::GetPlatformStats ----------------------------------
-    def GetPlatformStats(self):
+    def GetPlatformStats(self, usemetric = None):
 
         PlatformInfo = collections.OrderedDict()
 
-        Platform = myplatform.MyPlatform(self.log)
+        if not usemetric == None:
+            bMetric = usemetric
+        else:
+            pass
+            bMetric = True  #self.UseMetric
+        Platform = myplatform.MyPlatform(self.log, bMetric)
 
         return Platform.GetInfo()
 
@@ -613,6 +618,10 @@ class Monitor(mysupport.MySupport):
         Status["SystemHealth"] = self.GetSystemHealth()
         Status["UnsentFeedback"] = str(os.path.isfile(self.FeedbackLogFile))
 
+        if not self.bDisablePlatformStats:
+            PlatformStats = self.GetPlatformStats(usemetric = True)
+            if not PlatformStats == None and len(PlatformStats):
+                Status["PlatformStats"] = PlatformStats
         WeatherData = self.GetWeatherData(ForUI = True)
         if not WeatherData == None and len(WeatherData):
             Status["Weather"] = WeatherData
