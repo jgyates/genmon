@@ -134,8 +134,10 @@ if __name__=='__main__': # usage program.py [server_address]
 
     # Set the signal handler
     signal.signal(signal.SIGINT, signal_handler)
+
+    log = mylog.SetupLogger("client", "/var/log/gensms.log")
+
     try:
-        log = mylog.SetupLogger("client", "/var/log/gensms.log")
 
         # read config file
         config = RawConfigParser()
