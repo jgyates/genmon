@@ -426,9 +426,9 @@ function createFuel(pCanvas, pText, pFG) {
     ctx.fill();
     
     var bgImage = new Image;
-    bgImage.src = "images/fuel.png";
+    bgImage.src = "images/sprites.png";
     bgImage.onload = function() {
-      ctx.drawImage(bgImage, w-r, 10, 2*r, 2*r * bgImage.height / bgImage.width);
+      ctx.drawImage(bgImage, 0, 206, 400, 189, w-r, 10, 2*r, 2*r * 189/400);
     };
 
     return gauge;
@@ -931,13 +931,13 @@ function DisplayMonitor(){
         if ($("#CPU_Temperature").length > 0) {
            temp_img = "temp1";
            switch (true) {
-              case (parseInt(result["Monitor"]["Platform Stats"]["CPU Temperature"].replace(/C/g, '').trim()) > 85):
+              case (parseInt(prevStatusValues["PlatformStats"]["CPU Temperature"].replace(/C/g, '').trim()) > 85):
                   temp_img = "temp4";
                   break;
-              case (parseInt(result["Monitor"]["Platform Stats"]["CPU Temperature"].replace(/C/g, '').trim()) > 75):
+              case (parseInt(prevStatusValues["PlatformStats"]["CPU Temperature"].replace(/C/g, '').trim()) > 75):
                   temp_img = "temp3";
                   break;
-              case (parseInt(result["Monitor"]["Platform Stats"]["CPU Temperature"].replace(/C/g, '').trim()) > 50):
+              case (parseInt(prevStatusValues["PlatformStats"]["CPU Temperature"].replace(/C/g, '').trim()) > 50):
                   temp_img = "temp2";
                   break;
            }
@@ -947,20 +947,20 @@ function DisplayMonitor(){
         if ($("#WLAN_Signal_Level").length > 0) {
            wifi_img = "wifi1";
            switch (true) {
-              case (parseInt(result["Monitor"]["Platform Stats"]["WLAN Signal Level"].replace(/dBm/g, '').trim()) > -67):
+              case (parseInt(prevStatusValues["PlatformStats"]["WLAN Signal Level"].replace(/dBm/g, '').trim()) > -67):
                   wifi_img = "wifi4";
                   break;
-              case (parseInt(result["Monitor"]["Platform Stats"]["WLAN Signal Level"].replace(/dBm/g, '').trim()) > -70):
+              case (parseInt(prevStatusValues["PlatformStats"]["WLAN Signal Level"].replace(/dBm/g, '').trim()) > -70):
                   wifi_img = "wifi3";
                   break;
-              case (parseInt(result["Monitor"]["Platform Stats"]["WLAN Signal Level"].replace(/dBm/g, '').trim()) > -80):
+              case (parseInt(prevStatusValues["PlatformStats"]["WLAN Signal Level"].replace(/dBm/g, '').trim()) > -80):
                   wifi_img = "wifi2";
                   break;
            }
            $("#WLAN_Signal_Level").html('<div style="display: inline-block; position: relative;">'+result["Monitor"]["Platform Stats"]["WLAN Signal Level"] + '<img style="position: absolute;top:-10px;left:110px" class="'+ wifi_img +'" src="images/transparent.png"></div>');
         }
         if ($("#Conditions").length > 0) {
-           $("#Conditions").html('<div style="display: inline-block; position: relative;">'+result["Monitor"]["Weather"]["Conditions"] + '<img style="position: absolute;top:-30px;left:160px" src="http://openweathermap.org/img/w/' + prevStatusValues["Weather"]["icon"] + '.png"></div>');
+           $("#Conditions").html('<div style="display: inline-block; position: relative;">'+result["Monitor"]["Weather"]["Conditions"] + '<img class="greyscale" style="position: absolute;top:-30px;left:160px" src="http://openweathermap.org/img/w/' + prevStatusValues["Weather"]["icon"] + '.png"></div>');
         }
 
         if (latestVersion == "") {

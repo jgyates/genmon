@@ -435,6 +435,13 @@ class HPanel(controller.GeneratorController):
 
         self.SetupClass()
 
+        if self.Simulation:
+            return
+        while True:
+            time.sleep(.001)
+            if self.InitComplete:
+                break
+
     #-------------HPanel:SetupClass---------------------------------------------
     def SetupClass(self):
 

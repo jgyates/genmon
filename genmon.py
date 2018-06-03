@@ -25,7 +25,7 @@ except ImportError as e:
 from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel, myplatform, myweather
 
 
-GENMON_VERSION = "V1.9.11"
+GENMON_VERSION = "V1.9.12"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -95,9 +95,6 @@ class Monitor(mysupport.MySupport):
             self.Version = GENMON_VERSION
 
         self.ProgramStartTime = datetime.datetime.now()     # used for com metrics
-
-        self.OutageStartTime = self.ProgramStartTime    # if these two are the same, no outage has occured
-        self.LastOutageDuration = self.OutageStartTime - self.OutageStartTime
 
         atexit.register(self.Close)
 
@@ -518,7 +515,7 @@ class Monitor(mysupport.MySupport):
             bMetric = usemetric
         else:
             pass
-            bMetric = True  #self.UseMetric
+            bMetric = self.UseMetric
         Platform = myplatform.MyPlatform(self.log, bMetric)
 
         return Platform.GetInfo()

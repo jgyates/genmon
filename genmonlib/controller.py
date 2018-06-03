@@ -72,6 +72,7 @@ class GeneratorController(mysupport.MySupport):
         self.CommAccessLock = threading.RLock()  # lock to synchronize access to the protocol comms
         self.ProgramStartTime = datetime.datetime.now()     # used for com metrics
         self.OutageStartTime = self.ProgramStartTime        # if these two are the same, no outage has occured
+        self.LastOutageDuration = self.OutageStartTime - self.OutageStartTime
 
         # Read conf entries common to all controllers
         ConfigSection = "GenMon"
@@ -148,7 +149,6 @@ class GeneratorController(mysupport.MySupport):
     #  read registers, remove items from Buffer, form packets, store register data
     def ProcessThread(self):
 
-        time.sleep(0.001)
         try:
             self.ModBus.Flush()
             self.InitDevice()

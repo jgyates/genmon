@@ -99,6 +99,16 @@ def OnService(Active):
     else:
         print "Generator Servcie Due End"
 
+#----------  OnUtilityChange -------------------------------------
+def OnUtilityChange(Active):
+
+    if Active:
+        print "Utility Service is Down"
+        SendNotice("Utility Service is Down")
+    else:
+        SendNotice("Utility Service is Up")
+        print "Utility Service is Up"
+
 #----------  SendNotice ------------------------------------------
 def SendNotice(Message):
 
@@ -118,8 +128,9 @@ if __name__=='__main__': # usage program.py [server_address]
 
     # Set the signal handler
     signal.signal(signal.SIGINT, signal_handler)
+
+    log = mylog.SetupLogger("client", "/var/log/gensyslog.log")
     try:
-        log = mylog.SetupLogger("client", "/var/log/gensyslog.log")
 
         GenNotify = mynotify.GenNotify(
                                         host = address,
@@ -131,6 +142,7 @@ if __name__=='__main__': # usage program.py [server_address]
                                         onservice = OnService,
                                         onoff = OnOff,
                                         onmanual = OnManual,
+                                        onutilitychange = OnUtilityChange,
                                         log = log)
 
         while True:

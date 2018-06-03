@@ -1229,7 +1229,7 @@ class Evolution(controller.GeneratorController):
             if not DictOut:
                 return self.printToString(self.ProcessDispatch(Registers,""))
         except Exception as e1:
-            self.LogErrorLine("Error in DisplayOutage: " + str(e1))
+            self.LogErrorLine("Error in DisplayRegisters: " + str(e1))
 
         return Registers
     #------------ Evolution:CheckForOutage ----------------------------------------
@@ -2934,6 +2934,7 @@ class Evolution(controller.GeneratorController):
                 outstr = "No outage has occurred since program launched."
 
         OutageData["Status"] = outstr
+        OutageData["System In Outage"] = "Yes" if self.SystemInOutage else "No"
 
          # get utility voltage
         Value = self.GetUtilityVoltage()

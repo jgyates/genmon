@@ -354,6 +354,7 @@ def ReadSettingsFromFile():
                 #"outagelog" : ['string', 'Outage Log', 8, "/home/pi/genmon/outage.txt", "", 0],
                 "syncdst" : ['boolean', 'Sync Daylight Savings Time', 22, False, "", ""],
                 "synctime" : ['boolean', 'Sync Time', 23, False, "", ""],
+                "metricweather"  : ['boolean', 'Use Metric Units', 24, False, "", ""],
                 "autofeedback" : ['boolean', 'Automated Feedback', 29, False, "", ""],
 
                 #"model" : ['string', 'Generator Model', 100, "Generic Evolution Air Cooled", "", 0],
@@ -393,7 +394,6 @@ def ReadSettingsFromFile():
 
                 "weatherkey" : ['string', 'Openweathermap.org API key', 501, "", "", "required minmax:4:50"],
                 "weatherlocation" : ['string', 'Location to report weather', 502, "", "", "required minmax:4:50"],
-                "metricweather"  : ['boolean', 'Use Metric Units', 503, False, "", ""],
                 "minimumweatherinfo"  : ['boolean', 'Display Minimum Weather Info', 504, False, "", ""]
                 }
 
