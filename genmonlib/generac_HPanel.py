@@ -435,12 +435,6 @@ class HPanel(controller.GeneratorController):
 
         self.SetupClass()
 
-        if self.Simulation:
-            return
-        while True:
-            time.sleep(.001)
-            if self.InitComplete:
-                break
 
     #-------------HPanel:SetupClass---------------------------------------------
     def SetupClass(self):
@@ -794,8 +788,9 @@ class HPanel(controller.GeneratorController):
     def CheckForAlarms(self):
 
         try:
+            if not self.InitComplete:
+                return
             # Check for changes in engine state
-
             EngineState = self.GetEngineState()
             if not EngineState == self.LastEngineState:
                 self.LastEngineState = EngineState
