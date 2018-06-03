@@ -963,6 +963,16 @@ class HPanel(controller.GeneratorController):
             StartInfo["RemoteCommands"] = False
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
             if not NoTile:
+                StartInfo["pages"] = {
+                                "status":True,
+                                "maint":True,
+                                "outage":False,
+                                "logs":False,
+                                "monitor": True,
+                                "notifications": True,
+                                "settings": True
+                                }
+
                 StartInfo["tiles"] = []
                 for Tile in self.TileList:
                     StartInfo["tiles"].append(Tile.GetStartInfo())

@@ -27,6 +27,9 @@ app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 300
 
 HTTPAuthUser = None
 HTTPAuthPass = None
+HTTPAuthUser_RO = None
+HTTPAuthPass_RO = None
+
 bUseSecureHTTP = False
 bUseSelfSignedCert = True
 SSLContext = None
@@ -81,6 +84,13 @@ def do_admin_login():
 
     if request.form['password'] == HTTPAuthPass and request.form['username'] == HTTPAuthUser:
         session['logged_in'] = True
+        session['write_access'] = True
+        log.info("Admin Login")
+        return root()
+    elif request.form['password'] == HTTPAuthPass_RO and request.form['username'] == HTTPAuthUser_RO:
+        session['logged_in'] = True
+        session['write_access'] = False
+        log.info("Limited Rights Login")
         return root()
     else:
         return render_template('login.html')
@@ -106,20 +116,25 @@ def ProcessCommand(command):
         "getbase", "getsitename","setexercise", "setquiet", "getexercise", "setremote",
         "settime", "sendregisters", "sendlogfiles", "getdebug" ]:
         finalcommand = "generator: " + command
+
         try:
+            if command in ["setexercise", "setquiet", "setremote"] and not session.get('write_access', True):
+                return jsonify("Read Only Mode")
+
             if command == "setexercise":
                 settimestr = request.args.get('setexercise', 0, type=str)
                 if settimestr:
                     finalcommand += "=" + settimestr
-            if command == "setquiet":
+            elif command == "setquiet":
                 # /cmd/setquiet?setquiet=off
                 setquietstr = request.args.get('setquiet', 0, type=str)
                 if setquietstr:
                     finalcommand += "=" + setquietstr
-            if command == "setremote":
+            elif command == "setremote":
                 setremotestr = request.args.get('setremote', 0, type=str)
                 if setremotestr:
                     finalcommand += "=" + setremotestr
+
             if command == "power_log_json":
                 # example: /cmd/power_log_json?power_log_json=1440
                 setlogstr = request.args.get('power_log_json', 0, type=str)
@@ -133,11 +148,23 @@ def ProcessCommand(command):
 
         if command in ["status_json", "outage_json", "maint_json", "monitor_json", "logs_json",
             "registers_json", "allregs_json", "start_info_json", "gui_status_json", "power_log_json"]:
+
+            if command in ["start_info_json"]:
+                try:
+                    StartInfo = json.loads(data)
+                    StartInfo["write_access"] = session.get('write_access', True)
+                    if not StartInfo["write_access"]:
+                        StartInfo["pages"]["settings"] = False
+                        StartInfo["pages"]["notifications"] = False
+                    data = json.dumps(StartInfo, sort_keys=False)
+                except Exception as e1:
+                    log.error("Error in JSON parse / decode: " + str(e1))
             return data
         return jsonify(data)
 
     elif command in ["updatesoftware"]:
-        Update()
+        if session.get('write_access', True):
+            Update()
         return "OK"
 
     elif command in ["getfavicon"]:
@@ -152,18 +179,21 @@ def ProcessCommand(command):
         return jsonify(data)
 
     elif command in ["setnotifications"]:
-        SaveNotifications(request.args.get('setnotifications', 0, type=str))
+        if session.get('write_access', True):
+            SaveNotifications(request.args.get('setnotifications', 0, type=str))
         return "OK"
 
     elif command in ["setsettings"]:
-        SaveSettings(request.args.get('setsettings', 0, type=str))
+        if session.get('write_access', True):
+            SaveSettings(request.args.get('setsettings', 0, type=str))
         return "OK"
 
     elif command in ["getreglabels"]:
         return jsonify(GetRegisterDescriptions())
 
     elif command in ["restart"]:
-        Restart()
+        if session.get('write_access', True):
+            Restart()
     else:
         return render_template('command_template.html', command = command)
 
@@ -374,6 +404,8 @@ def ReadSettingsFromFile():
                 "certfile" : ['string', 'https Certificate File', 205, "", "", "UnixFile"],
                 "http_user" : ['string', 'Web Username', 206, "", "", "minmax:4:50"],
                 "http_pass" : ['string', 'Web Password', 207, "", "", "minmax:4:50"],
+                #"http_user_ro" : ['string', 'Limited User Web Username', 208, "", "", "minmax:4:50"],
+                #"http_pass_ro" : ['string', 'Limited User Web Password', 209, "", "", "minmax:4:50"],
                 "http_port" : ['int', 'Port of WebServer', 210, 8000, "", "required digits"],
                 "favicon" : ['string', 'FavIcon', 220, "", "", "minmax:8:255"],
                 # This does not appear to work on reload, some issue with Flask
@@ -551,6 +583,8 @@ def LoadConfig():
     global HTTPPort
     global HTTPAuthUser
     global HTTPAuthPass
+    global HTTPAuthUser_RO
+    global HTTPAuthPass_RO
     global SSLContext
     global favicon
 
@@ -594,6 +628,16 @@ def LoadConfig():
                 elif config.has_option('GenMon', 'http_pass'):
                     HTTPAuthPass = config.get('GenMon', 'http_pass')
                     HTTPAuthPass = HTTPAuthPass.strip()
+                if HTTPAuthUser != None and HTTPAuthPass != None:
+                    if config.has_option('GenMon', 'http_user_ro'):
+                        HTTPAuthUser_RO = config.get('GenMon', 'http_user_ro')
+                        HTTPAuthUser_RO = HTTPAuthUser_RO.strip()
+                        if HTTPAuthUser_RO == "":
+                            HTTPAuthUser_RO = None
+                            HTTPAuthPass_RO = None
+                        elif config.has_option('GenMon', 'http_pass_ro'):
+                            HTTPAuthPass_RO = config.get('GenMon', 'http_pass_ro')
+                            HTTPAuthPass_RO = HTTPAuthPass_RO.strip()
 
         if bUseSecureHTTP:
             app.secret_key = os.urandom(12)

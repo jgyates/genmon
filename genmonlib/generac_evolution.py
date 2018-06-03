@@ -3065,6 +3065,16 @@ class Evolution(controller.GeneratorController):
             StartInfo["RemoteCommands"] = True
 
             if not NoTile:
+                StartInfo["pages"] = {
+                                "status":True,
+                                "maint":True,
+                                "outage":True,
+                                "logs":True,
+                                "monitor": True,
+                                "notifications": True,
+                                "settings": True
+                                }
+
                 StartInfo["tiles"] = []
                 for Tile in self.TileList:
                     StartInfo["tiles"].append(Tile.GetStartInfo())
