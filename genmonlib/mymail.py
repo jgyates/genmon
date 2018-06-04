@@ -54,7 +54,7 @@ class MyMail(mycommon.MyCommon):
 
         self.GetConfig()
 
-        atexit.register(self.Cleanup)
+        atexit.register(self.Close)
 
         if not self.DisableEmail:
             if self.SMTPServer != "":
@@ -124,8 +124,8 @@ class MyMail(mycommon.MyCommon):
 
         return True
 
-    #---------- MyMail.EmailCommandThread -----------------------------------
-    def Cleanup(self):
+    #---------- MyMail.Close -----------------------------------
+    def Close(self):
 
         if not self.DisableEmail:
             if self.SMTPServer != "":

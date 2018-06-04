@@ -35,6 +35,7 @@ class Monitor(mysupport.MySupport):
         self.ProgramName = "Generator Monitor"
         self.Version = "Unknown"
         self.log = None
+        self.Stopping = False
         if ConfigFilePath == None:
             self.ConfigFilePath = "/etc/"
         else:
@@ -99,6 +100,7 @@ class Monitor(mysupport.MySupport):
         self.ProgramStartTime = datetime.datetime.now()     # used for com metrics
 
         atexit.register(self.Close)
+        signal.signal(signal.SIGTERM, self.Close)
 
         # start thread to accept incoming sockets for nagios heartbeat and command / status clients
         self.Threads["InterfaceServerThread"] = mythread.MyThread(self.InterfaceServerThread, Name = "InterfaceServerThread")
@@ -802,8 +804,11 @@ class Monitor(mysupport.MySupport):
                 except socket.timeout:
                     continue
                 except socket.error as msg:
-                    self.ConnectionList.remove(conn)
-                    conn.close()
+                    try:
+                        self.ConnectionList.remove(conn)
+                        conn.close()
+                    except:
+                        pass
                     break
 
         except socket.error as msg:
@@ -836,22 +841,21 @@ class Monitor(mysupport.MySupport):
                 SocketThread.daemon = True
                 SocketThread.start()       # start server thread
             except Exception as e1:
+                if self.Stopping:
+                    break
                 self.LogErrorLine("Excpetion in InterfaceServerThread" + str(e1))
                 time.sleep(0.5)
                 continue
 
-        self.ServerSocket.close()
+        #self.ServerSocket.shutdown(socket.SHUT_RDWR)
+        #self.ServerSocket.close()
         #
 
     #---------------------Monitor::Close------------------------
     def Close(self):
 
         try:
-
-            self.LogError("Shutting Down Generator Monitor")
-
-            if self.MailInit:
-                self.MessagePipe.SendMessage("Generator Monitor Stopping at " + self.SiteName, "Generator Monitor Stopping at " + self.SiteName, msgtype = "info" )
+            self.Stopping = True
 
             for item in self.ConnectionList:
                 try:
@@ -869,30 +873,23 @@ class Monitor(mysupport.MySupport):
 
             self.FeedbackPipe.Close()
             self.MessagePipe.Close()
+
         except Exception as e1:
             self.LogErrorLine("Error Closing Monitor: " + str(e1))
 
         with self.CriticalLock:
-            if self.log:
-                self.LogError("Closing Monitor")
+            self.LogError("Generator Monitor Shutdown")
 
-#----------  Signal Handler ------------------------------------------
-def signal_handler(signal, frame):
-
-
-    sys.exit(0)
-
-    # end signal_handler
 
 #------------------- Command-line interface for monitor -----------------#
 if __name__=='__main__': #
     ConfigFilePath = None if len(sys.argv)<2 else sys.argv[1]
 
-    # Set the signal handler
-    signal.signal(signal.SIGINT, signal_handler)
-
     #Start things up
     MyMonitor = Monitor(ConfigFilePath = ConfigFilePath)
 
-    while True:
-        time.sleep(1)
+    try:
+        while True:
+            time.sleep(1)
+    except:
+        pass

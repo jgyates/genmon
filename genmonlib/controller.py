@@ -163,7 +163,7 @@ class GeneratorController(mysupport.MySupport):
                 except Exception as e1:
                     self.LogErrorLine("Error in Controller ProcessThread (1), continue: " + str(e1))
         except Exception as e1:
-            self.FatalError("Exiting Controller ProcessThread (2)" + str(e1))
+            self.LogErrorLine("Exiting Controller ProcessThread (2)" + str(e1))
 
     # ---------- GeneratorController:CheckAlarmThread---------------------------
     #  When signaled, this thread will check for alarms
@@ -179,7 +179,7 @@ class GeneratorController(mysupport.MySupport):
                     self.CheckForAlarms()
 
             except Exception as e1:
-                self.FatalError("Error in  CheckAlarmThread" + str(e1))
+                self.LogErrorLine("Error in  CheckAlarmThread" + str(e1))
 
     #----------  GeneratorController:DebugThread--------------------------------
     def DebugThread(self):
@@ -1014,12 +1014,8 @@ class GeneratorController(mysupport.MySupport):
             if self.ModBus != None:
                 self.ModBus.Close()
 
-            self.FeedbackPipe.Close()
-            self.MessagePipe.Close()
-
         except Exception as e1:
             self.LogErrorLine("Error Closing Controller: " + str(e1))
 
         with self.CriticalLock:
-            if self.log:
-                self.LogError("Closing Controller")
+            self.InitComplete = False

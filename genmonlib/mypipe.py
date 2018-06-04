@@ -134,8 +134,11 @@ class MyPipe(mycommon.MyCommon):
         if self.Simulation:
             return
 
-        if not self.Callback == None:
-            if self.Threads[self.ThreadName].IsAlive():
-                self.Threads[self.ThreadName].Stop()
-                self.Threads[self.ThreadName].WaitForThreadToEnd()
-                del self.Threads[self.ThreadName]
+        try:
+            if not self.Callback == None:
+                if self.Threads[self.ThreadName].IsAlive():
+                    self.Threads[self.ThreadName].Stop()
+                    self.Threads[self.ThreadName].WaitForThreadToEnd()
+                    del self.Threads[self.ThreadName]
+        except Exception as e1:
+            self.LogErrorLine("Error in mypipe:Close: " + str(e1))
