@@ -874,6 +874,14 @@ class Monitor(mysupport.MySupport):
             self.FeedbackPipe.Close()
             self.MessagePipe.Close()
 
+            # Tell any remaining threads to stop
+            for name, object in self.Threads.items():
+                try:
+                    if self.Threads[name].IsAlive():
+                        self.Threads[name].Stop()
+                except Exception as e1:
+                    self.LogErrorLine("Error killing thread in Monitor Close: " + str(e1))
+
         except Exception as e1:
             self.LogErrorLine("Error Closing Monitor: " + str(e1))
 
