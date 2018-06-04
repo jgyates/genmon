@@ -63,13 +63,13 @@ class GenNotify(mycommon.MyCommon):
             self.Generator = myclient.ClientInterface(host = host, log = log)
 
             startcount = 0
-            while startcount <= 3:
+            while startcount <= 10:
                 try:
                     self.Generator = myclient.ClientInterface(host = host, log = log)
                     break
                 except Exception as e1:
                     startcount += 1
-                    if startcount >= 3:
+                    if startcount >= 10:
                         self.console.info("genmon not loaded.")
                         sys.exit(1)
                     time.sleep(1)

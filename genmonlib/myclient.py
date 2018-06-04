@@ -46,7 +46,7 @@ class ClientInterface(mycommon.MyCommon):
                 return
             except Exception as e1:
                 retries += 1
-                if retries >= 3:
+                if retries >= 5:
                     self.FatalError("Error: Connect : " + str(e1))
                 else:
                     time.sleep(1)

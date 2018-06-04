@@ -26,7 +26,7 @@ import mysupport, mypipe, mythread
 class GeneratorController(mysupport.MySupport):
     #---------------------GeneratorController::__init__-------------------------
     def __init__(self, log, newinstall = False, simulation = False, simulationfile = None, message = None, feedback = None, ConfigFilePath = None):
-        super(GeneratorController, self).__init__()
+        super(GeneratorController, self).__init__(simulation = simulation)
         self.log = log
         self.NewInstall = newinstall
         self.Simulation = simulation
@@ -40,7 +40,10 @@ class GeneratorController(mysupport.MySupport):
         self.Address = None
         self.SerialPort = "/dev/serial0"
         self.BaudRate = 9600
+        self.ModBus = None
         self.InitComplete = False
+        self.InitCompleteEvent = threading.Event() # Event to signal init complete
+        self.CheckForAlarmEvent = threading.Event() # Event to signal checking for alarm
         self.Registers = {}         # dict for registers and values
         self.NotChanged = 0         # stats for registers
         self.Changed = 0            # stats for registers
@@ -69,7 +72,6 @@ class GeneratorController(mysupport.MySupport):
         self.NominalKW = "Unknown"
         self.Model = "Unknown"
 
-        self.CommAccessLock = threading.RLock()  # lock to synchronize access to the protocol comms
         self.ProgramStartTime = datetime.datetime.now()     # used for com metrics
         self.OutageStartTime = self.ProgramStartTime        # if these two are the same, no outage has occured
         self.LastOutageDuration = self.OutageStartTime - self.OutageStartTime
@@ -185,10 +187,8 @@ class GeneratorController(mysupport.MySupport):
         if not self.EnableDebug:
             return
         time.sleep(1)
-        while not self.InitComplete:
-            time.sleep(0.01)
-            if self.IsStopSignaled("DebugThread"):
-                return
+
+        self.InitCompleteEvent.wait()
 
         self.LogError("Debug Enabled")
         self.FeedbackPipe.SendFeedback("Debug Thread Starting", FullLogs = True, Always = True, Message="Starting Debug Thread")
@@ -1010,8 +1010,16 @@ class GeneratorController(mysupport.MySupport):
     #----------  GeneratorController::Close-------------------------------------
     def Close(self):
 
-        if self.ModBus.DeviceInit:
-            self.ModBus.Close()
+        try:
+            if self.ModBus != None:
+                self.ModBus.Close()
 
-        self.FeedbackPipe.Close()
-        self.MessagePipe.Close()
+            self.FeedbackPipe.Close()
+            self.MessagePipe.Close()
+
+        except Exception as e1:
+            self.LogErrorLine("Error Closing Controller: " + str(e1))
+
+        with self.CriticalLock:
+            if self.log:
+                self.LogError("Closing Controller")

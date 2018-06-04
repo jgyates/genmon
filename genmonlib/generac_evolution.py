@@ -62,10 +62,6 @@ class Evolution(controller.GeneratorController):
         self.bEnhancedExerciseFrequency = False     # True if controller supports biweekly and monthly exercise times
         self.CurrentDivider = None
         self.CurrentOffset = None
-        # Used for housekeeping
-        self.CheckForAlarmEvent = threading.Event() # Event to signal checking for alarm
-        self.ModBus = None
-
 
         self.DaysOfWeek = { 0: "Sunday",    # decode for register values with day of week
                             1: "Monday",
@@ -235,6 +231,7 @@ class Evolution(controller.GeneratorController):
         self.CheckForAlarmEvent.set()
         self.SetupTiles()
         self.InitComplete = True
+        self.InitCompleteEvent.set()
 
     #---------------------------------------------------------------------------
     def SetupTiles(self):
@@ -1753,6 +1750,7 @@ class Evolution(controller.GeneratorController):
         0x02 : "Overcrank",                  # Validated on Nexus Air Cooled
         0x03 : "Overspeed",                  # Validated on Nexus Air Cooled
         0x04 : "RPM Sense Loss",             # Validated on Nexus Liquid Cooled and Air Cooled
+        #0x05 : "UNKNOWN",
         0x0a : "Under Voltage",             #  Validated on Nexus AC
         0x0B : "Low Cooling Fluid",          # Validated on Nexus Liquid Cooled
         0x0C : "Canbus Error",               # Validated on Nexus Liquid Cooled

@@ -701,13 +701,13 @@ if __name__ == "__main__":
         log.error("Required file missing : genmonmaint.sh")
 
     startcount = 0
-    while startcount <= 2:
+    while startcount <= 4:
         try:
             MyClientInterface = myclient.ClientInterface(host = address,port=clientport, log = log)
             break
         except Exception as e1:
             startcount += 1
-            if startcount >= 2:
+            if startcount >= 4:
                 console.error("Error: genmon not loaded.")
                 sys.exit(1)
             time.sleep(1)
@@ -715,7 +715,7 @@ if __name__ == "__main__":
 
     Start = datetime.datetime.now()
 
-    while ((datetime.datetime.now() - Start).total_seconds() < 5):
+    while ((datetime.datetime.now() - Start).total_seconds() < 10):
         data = MyClientInterface.ProcessMonitorCommand("generator: gethealth")
         if "OK" in data:
             console.info(" OK - Init complete.")

@@ -411,7 +411,6 @@ class HPanel(controller.GeneratorController):
 
         self.LastEngineState = ""
         self.CurrentAlarmState = False
-        self.CheckForAlarmEvent = threading.Event() # Event to signal checking for alarm
 
         self.DaysOfWeek = { 1: "Sunday",    # decode for register values with day of week
                             2: "Monday",
@@ -491,6 +490,7 @@ class HPanel(controller.GeneratorController):
         self.CheckModelSpecificInfo()
         self.SetupTiles()
         self.InitComplete = True
+        self.InitCompleteEvent.set()
 
     #-------------HPanel:SetupTiles---------------------------------------------
     def SetupTiles(self):

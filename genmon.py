@@ -25,7 +25,7 @@ except ImportError as e:
 from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel, myplatform, myweather
 
 
-GENMON_VERSION = "V1.9.13"
+GENMON_VERSION = "V1.9.14"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -34,6 +34,7 @@ class Monitor(mysupport.MySupport):
         super(Monitor, self).__init__()
         self.ProgramName = "Generator Monitor"
         self.Version = "Unknown"
+        self.log = None
         if ConfigFilePath == None:
             self.ConfigFilePath = "/etc/"
         else:
@@ -42,7 +43,8 @@ class Monitor(mysupport.MySupport):
         self.ConnectionList = []    # list of incoming connections for heartbeat
         # defautl values
         self.SiteName = "Home"
-        self.ServerSocket = 9082    # server socket for nagios heartbeat and command/status
+        self.ServerSocket = None
+        self.ServerSocketPort = 9082    # server socket for nagios heartbeat and command/status
         self.IncomingEmailFolder = "Generator"
         self.ProcessedEmailFolder = "Generator/Processed"
 
@@ -98,6 +100,9 @@ class Monitor(mysupport.MySupport):
 
         atexit.register(self.Close)
 
+        # start thread to accept incoming sockets for nagios heartbeat and command / status clients
+        self.Threads["InterfaceServerThread"] = mythread.MyThread(self.InterfaceServerThread, Name = "InterfaceServerThread")
+
         # init mail, start processing incoming email
         self.mail = mymail.MyMail(monitor=True, incoming_folder = self.IncomingEmailFolder, processed_folder =self.ProcessedEmailFolder,incoming_callback = self.ProcessCommand)
         self.Threads = self.MergeDicts(self.Threads, self.mail.Threads)
@@ -123,6 +128,7 @@ class Monitor(mysupport.MySupport):
                 self.Controller = generac_evolution.Evolution(self.log, self.NewInstall, simulation = self.Simulation, simulationfile = self.SimulationFile, message = self.MessagePipe, feedback = self.FeedbackPipe)
             self.Threads = self.MergeDicts(self.Threads, self.Controller.Threads)
 
+            self.Controller.InitCompleteEvent.wait()
         except Exception as e1:
             self.FatalError("Error opening controller device: " + str(e1))
             return None
@@ -138,9 +144,6 @@ class Monitor(mysupport.MySupport):
 
     # ------------------------ Monitor::StartThreads----------------------------
     def StartThreads(self, reload = False):
-
-        # start thread to accept incoming sockets for nagios heartbeat and command / status clients
-        self.Threads["InterfaceServerThread"] = mythread.MyThread(self.InterfaceServerThread, Name = "InterfaceServerThread")
 
         # start thread to accept incoming sockets for nagios heartbeat
         self.Threads["ComWatchDog"] = mythread.MyThread(self.ComWatchDog, Name = "ComWatchDog")
@@ -843,26 +846,35 @@ class Monitor(mysupport.MySupport):
     #---------------------Monitor::Close------------------------
     def Close(self):
 
-        if self.MailInit:
-            self.MessagePipe.SendMessage("Generator Monitor Stopping at " + self.SiteName, "Generator Monitor Stopping at " + self.SiteName, msgtype = "info" )
+        try:
 
-        for item in self.ConnectionList:
-            try:
-                item.close()
-            except:
-                continue
-            self.ConnectionList.remove(item)
+            self.LogError("Shutting Down Generator Monitor")
 
-        if(self.ServerSocket):
-            self.ServerSocket.shutdown(socket.SHUT_RDWR)
-            self.ServerSocket.close()
+            if self.MailInit:
+                self.MessagePipe.SendMessage("Generator Monitor Stopping at " + self.SiteName, "Generator Monitor Stopping at " + self.SiteName, msgtype = "info" )
 
-        if not self.Controller == None:
-            if self.Controller.InitComplete:
+            for item in self.ConnectionList:
+                try:
+                    item.close()
+                except:
+                    continue
+                self.ConnectionList.remove(item)
+
+            if(self.ServerSocket != None):
+                self.ServerSocket.shutdown(socket.SHUT_RDWR)
+                self.ServerSocket.close()
+
+            if not self.Controller == None:
                 self.Controller.Close()
 
-        self.FeedbackPipe.Close()
-        self.MessagePipe.Close()
+            self.FeedbackPipe.Close()
+            self.MessagePipe.Close()
+        except Exception as e1:
+            self.LogErrorLine("Error Closing Monitor: " + str(e1))
+
+        with self.CriticalLock:
+            if self.log:
+                self.LogError("Closing Monitor")
 
 #----------  Signal Handler ------------------------------------------
 def signal_handler(signal, frame):

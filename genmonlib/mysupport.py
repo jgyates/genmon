@@ -9,7 +9,7 @@
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
 
-import os, sys, time, collections
+import os, sys, time, collections, threading
 
 from genmonlib import mycommon
 
@@ -18,6 +18,7 @@ class MySupport(mycommon.MyCommon):
     def __init__(self, simulation = False):
         super(MySupport, self).__init__()
         self.Simulation = simulation
+        self.CriticalLock = threading.Lock()        # Critical Lock (writing conf file)
 
     #------------ MySupport::LogToFile-------------------------
     def LogToFile(self, File, TimeDate, Value):
@@ -69,29 +70,30 @@ class MySupport(mycommon.MyCommon):
             return
         FileName = "/etc/genmon.conf"
         try:
-            Found = False
-            ConfigFile = open(FileName,'r')
-            FileString = ConfigFile.read()
-            ConfigFile.close()
+            with self.CriticalLock:
+                Found = False
+                ConfigFile = open(FileName,'r')
+                FileString = ConfigFile.read()
+                ConfigFile.close()
 
-            ConfigFile = open(FileName,'w')
-            for line in FileString.splitlines():
-                if not line.isspace():                  # blank lines
-                    newLine = line.strip()              # strip leading spaces
-                    if len(newLine):
-                        if not newLine[0] == "#":           # not a comment
-                            items = newLine.split(' ')      # split items in line by spaces
-                            for strings in items:           # loop thru items
-                                strings = strings.strip()   # strip any whitespace
-                                if Entry == strings or strings.lower().startswith(Entry+"="):        # is this our value?
-                                    line = Entry + " = " + Value    # replace it
-                                    Found = True
-                                    break
+                ConfigFile = open(FileName,'w')
+                for line in FileString.splitlines():
+                    if not line.isspace():                  # blank lines
+                        newLine = line.strip()              # strip leading spaces
+                        if len(newLine):
+                            if not newLine[0] == "#":           # not a comment
+                                items = newLine.split(' ')      # split items in line by spaces
+                                for strings in items:           # loop thru items
+                                    strings = strings.strip()   # strip any whitespace
+                                    if Entry == strings or strings.lower().startswith(Entry+"="):        # is this our value?
+                                        line = Entry + " = " + Value    # replace it
+                                        Found = True
+                                        break
 
-                ConfigFile.write(line+"\n")
-            if not Found:
-                ConfigFile.write(Entry + " = " + Value + "\n")
-            ConfigFile.close()
+                    ConfigFile.write(line+"\n")
+                if not Found:
+                    ConfigFile.write(Entry + " = " + Value + "\n")
+                ConfigFile.close()
             return True
 
         except Exception as e1:
