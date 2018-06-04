@@ -553,7 +553,7 @@ class Evolution(controller.GeneratorController):
                     self.EvolutionController = True
 
                 self.LogError("Warning in DetectController (Nexus / Evolution):  Unverified value detected in model register (%04x)" %  ProductModel)
-                self.MessagePipe.SendMessage("Generator Monitor (Nexus / Evolution): Warning at " + self.SiteName, msgbody, msgtype = "warn" )
+                self.MessagePipe.SendMessage("Generator Monitor (Nexus / Evolution): Warning at " + self.SiteName, msgbody, msgtype = "error" )
         else:
             self.LogError("DetectController auto-detect override (controller). EvolutionController now is %s" % str(self.EvolutionController))
 
@@ -566,7 +566,7 @@ class Evolution(controller.GeneratorController):
                 # set a reasonable default
                 self.LiquidCooled = False
                 self.LogError("Warning in DetectController (liquid / air cooled):  Unverified value detected in model register (%04x)" %  ProductModel)
-                self.MessagePipe.SendMessage("Generator Monitor (liquid / air cooled: Warning at " + self.SiteName, msgbody, msgtype = "warn" )
+                self.MessagePipe.SendMessage("Generator Monitor (liquid / air cooled: Warning at " + self.SiteName, msgbody, msgtype = "error" )
         else:
             self.LogError("DetectController auto-detect override (Liquid Cooled). Liquid Cooled now is %s" % str(self.LiquidCooled))
 
@@ -1347,7 +1347,9 @@ class Evolution(controller.GeneratorController):
                     msgbody += self.printToString("\nSystem In Alarm! Please check alarm log")
 
                 msgbody += self.printToString("System In Alarm: 0001:%08x" % RegVal)
+                MessageType = "warn"
             else:
+                MessageType = "info"
                 msgsubject = "Generator Notice: " + self.SiteName
 
             msgbody += self.DisplayStatus()
@@ -1357,7 +1359,7 @@ class Evolution(controller.GeneratorController):
             else:
                 msgbody += self.printToString("\nNo Alarms: 0001:%08x" % RegVal)
 
-            self.MessagePipe.SendMessage(msgsubject , msgbody, msgtype = "warn")
+            self.MessagePipe.SendMessage(msgsubject , msgbody, msgtype = MessageType)
         except Exception as e1:
             self.LogErrorLine("Error in CheckForAlarms: " + str(e1))
 

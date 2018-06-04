@@ -25,7 +25,7 @@ except ImportError as e:
 from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel, myplatform, myweather
 
 
-GENMON_VERSION = "V1.9.14"
+GENMON_VERSION = "V1.9.15"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -99,7 +99,6 @@ class Monitor(mysupport.MySupport):
 
         self.ProgramStartTime = datetime.datetime.now()     # used for com metrics
 
-        atexit.register(self.Close)
         signal.signal(signal.SIGTERM, self.Close)
 
         # start thread to accept incoming sockets for nagios heartbeat and command / status clients
