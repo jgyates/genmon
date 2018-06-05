@@ -111,96 +111,99 @@ def command(command):
 #------------------------------------------------------------
 def ProcessCommand(command):
 
-    if command in ["status", "status_json", "outage", "outage_json", "maint", "maint_json",
-        "logs", "logs_json", "monitor", "monitor_json", "registers_json", "allregs_json",
-        "start_info_json", "gui_status_json", "power_log_json", "power_log_clear",
-        "getbase", "getsitename","setexercise", "setquiet", "getexercise", "setremote",
-        "settime", "sendregisters", "sendlogfiles", "getdebug" ]:
-        finalcommand = "generator: " + command
+    try:
+        if command in ["status", "status_json", "outage", "outage_json", "maint", "maint_json",
+            "logs", "logs_json", "monitor", "monitor_json", "registers_json", "allregs_json",
+            "start_info_json", "gui_status_json", "power_log_json", "power_log_clear",
+            "getbase", "getsitename","setexercise", "setquiet", "getexercise", "setremote",
+            "settime", "sendregisters", "sendlogfiles", "getdebug" ]:
+            finalcommand = "generator: " + command
 
-        try:
-            if command in ["setexercise", "setquiet", "setremote"] and not session.get('write_access', True):
-                return jsonify("Read Only Mode")
+            try:
+                if command in ["setexercise", "setquiet", "setremote"] and not session.get('write_access', True):
+                    return jsonify("Read Only Mode")
 
-            if command == "setexercise":
-                settimestr = request.args.get('setexercise', 0, type=str)
-                if settimestr:
-                    finalcommand += "=" + settimestr
-            elif command == "setquiet":
-                # /cmd/setquiet?setquiet=off
-                setquietstr = request.args.get('setquiet', 0, type=str)
-                if setquietstr:
-                    finalcommand += "=" + setquietstr
-            elif command == "setremote":
-                setremotestr = request.args.get('setremote', 0, type=str)
-                if setremotestr:
-                    finalcommand += "=" + setremotestr
+                if command == "setexercise":
+                    settimestr = request.args.get('setexercise', 0, type=str)
+                    if settimestr:
+                        finalcommand += "=" + settimestr
+                elif command == "setquiet":
+                    # /cmd/setquiet?setquiet=off
+                    setquietstr = request.args.get('setquiet', 0, type=str)
+                    if setquietstr:
+                        finalcommand += "=" + setquietstr
+                elif command == "setremote":
+                    setremotestr = request.args.get('setremote', 0, type=str)
+                    if setremotestr:
+                        finalcommand += "=" + setremotestr
 
-            if command == "power_log_json":
-                # example: /cmd/power_log_json?power_log_json=1440
-                setlogstr = request.args.get('power_log_json', 0, type=str)
-                if setlogstr:
-                    finalcommand += "=" + setlogstr
-            data = MyClientInterface.ProcessMonitorCommand(finalcommand)
+                if command == "power_log_json":
+                    # example: /cmd/power_log_json?power_log_json=1440
+                    setlogstr = request.args.get('power_log_json', 0, type=str)
+                    if setlogstr:
+                        finalcommand += "=" + setlogstr
+                data = MyClientInterface.ProcessMonitorCommand(finalcommand)
 
-        except Exception as e1:
-            data = "Retry"
-            log.error("Error on command function: " + str(e1))
+            except Exception as e1:
+                data = "Retry"
+                log.error("Error on command function: " + str(e1))
 
-        if command in ["status_json", "outage_json", "maint_json", "monitor_json", "logs_json",
-            "registers_json", "allregs_json", "start_info_json", "gui_status_json", "power_log_json"]:
+            if command in ["status_json", "outage_json", "maint_json", "monitor_json", "logs_json",
+                "registers_json", "allregs_json", "start_info_json", "gui_status_json", "power_log_json"]:
 
-            if command in ["start_info_json"]:
-                try:
-                    StartInfo = json.loads(data)
-                    StartInfo["write_access"] = session.get('write_access', True)
-                    if not StartInfo["write_access"]:
-                        StartInfo["pages"]["settings"] = False
-                        StartInfo["pages"]["notifications"] = False
-                    data = json.dumps(StartInfo, sort_keys=False)
-                except Exception as e1:
-                    log.error("Error in JSON parse / decode: " + str(e1))
-            return data
-        return jsonify(data)
+                if command in ["start_info_json"]:
+                    try:
+                        StartInfo = json.loads(data)
+                        StartInfo["write_access"] = session.get('write_access', True)
+                        if not StartInfo["write_access"]:
+                            StartInfo["pages"]["settings"] = False
+                            StartInfo["pages"]["notifications"] = False
+                        data = json.dumps(StartInfo, sort_keys=False)
+                    except Exception as e1:
+                        log.error("Error in JSON parse / decode: " + str(e1))
+                return data
+            return jsonify(data)
 
-    elif command in ["updatesoftware"]:
-        if session.get('write_access', True):
-            Update()
-        return "OK"
+        elif command in ["updatesoftware"]:
+            if session.get('write_access', True):
+                Update()
+            return "OK"
 
-    elif command in ["getfavicon"]:
-        return jsonify(favicon)
+        elif command in ["getfavicon"]:
+            return jsonify(favicon)
 
-    elif command in ["notifications"]:
-        data = ReadNotificationsFromFile()
-        return jsonify(data)
+        elif command in ["notifications"]:
+            data = ReadNotificationsFromFile()
+            return jsonify(data)
 
-    elif command in ["settings"]:
-        data =  ReadSettingsFromFile()
-        return jsonify(data)
+        elif command in ["settings"]:
+            data =  ReadSettingsFromFile()
+            return jsonify(data)
 
-    elif command in ["setnotifications"]:
-        if session.get('write_access', True):
-            SaveNotifications(request.args.get('setnotifications', 0, type=str))
-        return "OK"
+        elif command in ["setnotifications"]:
+            if session.get('write_access', True):
+                SaveNotifications(request.args.get('setnotifications', 0, type=str))
+            return "OK"
 
-    elif command in ["setsettings"]:
-        if session.get('write_access', True):
-            SaveSettings(request.args.get('setsettings', 0, type=str))
-        return "OK"
+        elif command in ["setsettings"]:
+            if session.get('write_access', True):
+                SaveSettings(request.args.get('setsettings', 0, type=str))
+            return "OK"
 
-    elif command in ["getreglabels"]:
-        return jsonify(GetRegisterDescriptions())
+        elif command in ["getreglabels"]:
+            return jsonify(GetRegisterDescriptions())
 
-    elif command in ["restart"]:
-        if session.get('write_access', True):
-            Restart()
-    elif command in ["stop"]:
-        if session.get('write_access', True):
-            sys.exit(0)
-    else:
+        elif command in ["restart"]:
+            if session.get('write_access', True):
+                Restart()
+        elif command in ["stop"]:
+            if session.get('write_access', True):
+                sys.exit(0)
+        else:
+            return render_template('command_template.html', command = command)
+    except Exception as e1:
+        log.error("Error in Process Command: " + str(e1))
         return render_template('command_template.html', command = command)
-
 #------------------------------------------------------------
 def SaveNotifications(query_string):
     notifications = dict(urlparse.parse_qs(query_string, 1))
