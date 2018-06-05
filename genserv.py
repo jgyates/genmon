@@ -195,6 +195,9 @@ def ProcessCommand(command):
     elif command in ["restart"]:
         if session.get('write_access', True):
             Restart()
+    elif command in ["stop"]:
+        if session.get('write_access', True):
+            sys.exit(0)
     else:
         return render_template('command_template.html', command = command)
 
@@ -299,6 +302,7 @@ def ReadSingleConfigValue(file, section, type, entry, default, bounds = None):
 #------------------------------------------------------------
 def ReadNotificationsFromFile():
 
+
     ### array containing information on the parameters
     ## 1st: email address
     ## 2nd: sort order, aka row number
@@ -308,21 +312,23 @@ def ReadNotificationsFromFile():
     # e.g. {'myemail@gmail.com': [1, 'error,warn,info']}
 
     EmailsToNotify = []
+    try:
+        # There should be only one "email_recipient" entry
+        EmailsStr = ReadSingleConfigValue(MAIL_CONFIG, "MyMail", "string", "email_recipient", "")
 
-    # There should be only one "email_recipient" entry
-    EmailsStr = ReadSingleConfigValue(MAIL_CONFIG, "MyMail", "string", "email_recipient", "")
+        for email in EmailsStr.split(","):
+            email = email.strip()
+            EmailsToNotify.append(email)
 
-    for email in EmailsStr.split(","):
-        email = email.strip()
-        EmailsToNotify.append(email)
-
-    SortOrder = 1
-    for email in EmailsToNotify:
-        Notify = ReadSingleConfigValue(MAIL_CONFIG, "MyMail", "string", email, "")
-        if Notify == "":
-            NotificationSettings[email] = [SortOrder]
-        else:
-            NotificationSettings[email] = [SortOrder, Notify]
+        SortOrder = 1
+        for email in EmailsToNotify:
+            Notify = ReadSingleConfigValue(MAIL_CONFIG, "MyMail", "string", email, "")
+            if Notify == "":
+                NotificationSettings[email] = [SortOrder]
+            else:
+                NotificationSettings[email] = [SortOrder, Notify]
+    except Exception as e1:
+        log.error("Error in ReadNotificationsFromFile: " + str(e1))
 
     return NotificationSettings
 
@@ -430,14 +436,17 @@ def ReadSettingsFromFile():
                 "minimumweatherinfo"  : ['boolean', 'Display Minimum Weather Info', 504, False, "", "", GENMON_CONFIG]
                 }
 
+    try:
 
-    for entry, List in ConfigSettings.items():
-        (ConfigSettings[entry])[3] = ReadSingleConfigValue(GENMON_CONFIG, "GenMon", List[0], entry, List[3], List[5])
+        for entry, List in ConfigSettings.items():
+            (ConfigSettings[entry])[3] = ReadSingleConfigValue(GENMON_CONFIG, "GenMon", List[0], entry, List[3], List[5])
 
-    for entry, List in ConfigSettings.items():
-        (ConfigSettings[entry])[3] = ReadSingleConfigValue(MAIL_CONFIG, "MyMail", List[0], entry, List[3])
+        for entry, List in ConfigSettings.items():
+            (ConfigSettings[entry])[3] = ReadSingleConfigValue(MAIL_CONFIG, "MyMail", List[0], entry, List[3])
 
-    GetToolTips(ConfigSettings)
+        GetToolTips(ConfigSettings)
+    except Exception as e1:
+        log.error("Error in ReadSettingsFromFile: " + str(e1))
 
     return ConfigSettings
 
@@ -469,9 +478,13 @@ def GetRegisterDescriptions():
 #------------------------------------------------------------
 def GetToolTips(ConfigSettings):
 
-    pathtofile = os.path.dirname(os.path.realpath(__file__))
-    for entry, List in ConfigSettings.items():
-        (ConfigSettings[entry])[4] = ReadSingleConfigValue(pathtofile + "/tooltips.txt", "ToolTips", "string", entry, "")
+    try:
+        pathtofile = os.path.dirname(os.path.realpath(__file__))
+        for entry, List in ConfigSettings.items():
+            (ConfigSettings[entry])[4] = ReadSingleConfigValue(pathtofile + "/tooltips.txt", "ToolTips", "string", entry, "")
+
+    except Exception as e1:
+        log.error("Error in GetToolTips: " + str(e1))
 
 #------------------------------------------------------------
 def SaveSettings(query_string):

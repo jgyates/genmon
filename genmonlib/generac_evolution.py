@@ -455,7 +455,7 @@ class Evolution(controller.GeneratorController):
             try:
                 productId = myresponse1["Results"][0]["Id"]
             except Exception as e1:
-                self.LogErrorLine("Error LookUpSNInfo (parse request 1), (product ID not found): " + str(e1))
+                self.LogErrorLine("Notice: product ID not found online. Using serial number to complete lookup." )
                 productId = SerialNumber
 
             if SkipKW:
