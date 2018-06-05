@@ -25,7 +25,7 @@ except ImportError as e:
 from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel, myplatform, myweather
 
 
-GENMON_VERSION = "V1.9.15"
+GENMON_VERSION = "V1.9.16"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -35,7 +35,7 @@ class Monitor(mysupport.MySupport):
         self.ProgramName = "Generator Monitor"
         self.Version = "Unknown"
         self.log = None
-        self.Stopping = False
+        self.IsStopping = False
         if ConfigFilePath == None:
             self.ConfigFilePath = "/etc/"
         else:
@@ -99,6 +99,7 @@ class Monitor(mysupport.MySupport):
 
         self.ProgramStartTime = datetime.datetime.now()     # used for com metrics
 
+        atexit.register(self.Close)
         signal.signal(signal.SIGTERM, self.Close)
 
         # start thread to accept incoming sockets for nagios heartbeat and command / status clients
@@ -661,12 +662,12 @@ class Monitor(mysupport.MySupport):
 
         self.bDST = self.is_dst()   # set initial DST state
 
+        time.sleep(0.25)
         while True:
-            time.sleep(1)
+            if self.WaitForExit("TimeSyncThread", 1):  # ten min
+                return
             if self.Controller.InitComplete:
                 break
-            if self.IsStopSignaled("TimeSyncThread"):
-                return
 
         # if we are not always syncing, then set the time once
         if not self.bSyncTime:
@@ -687,11 +688,9 @@ class Monitor(mysupport.MySupport):
                 # update gen time
                 self.StartTimeThread()
 
-            for x in range(0, 60):
-                for y in range(0, 60):
-                    time.sleep(1)
-                    if self.IsStopSignaled("TimeSyncThread"):
-                        return
+            if self.WaitForExit("TimeSyncThread", 60 * 60):  # 1 hour
+                return
+
 
     #----------  Monitor::is_dst------------------------------------------------
     def is_dst(self):
@@ -705,21 +704,20 @@ class Monitor(mysupport.MySupport):
     def ComWatchDog(self):
 
         self.CommunicationsActive = False
-
+        time.sleep(0.25)
         while True:
-            time.sleep(1)
+            if self.WaitForExit("ComWatchDog", 1):
+                return
             if self.Controller.InitComplete:
                 break
-            if self.IsStopSignaled("ComWatchDog"):
-                return
 
         while True:
 
             self.CommunicationsActive = self.Controller.ComminicationsIsActive()
-            time.sleep(2)
 
-            if self.IsStopSignaled("ComWatchDog"):
-                break
+            if self.WaitForExit("ComWatchDog", 2):
+                return
+
 
     #---------- Monitor:: AreThreadsAlive---------------------------------------
     # ret true if all threads are alive
@@ -823,7 +821,7 @@ class Monitor(mysupport.MySupport):
         self.ServerSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # set some socket options so we can resuse the port
         self.ServerSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
+        self.ServerSocket.settimeout(.5)
         #bind the socket to a host, and a port
         self.ServerSocket.bind(('', self.ServerSocketPort))
         #become a server socket
@@ -839,22 +837,42 @@ class Monitor(mysupport.MySupport):
                 SocketThread = threading.Thread(target=self.SocketWorkThread, args = (conn,), name = "SocketWorkThread")
                 SocketThread.daemon = True
                 SocketThread.start()       # start server thread
-            except Exception as e1:
-                if self.Stopping:
+            except socket.timeout:
+                if self.IsStopping:
                     break
+                continue
+            except Exception as e1:
+                if self.IsStopping:
+                    return
                 self.LogErrorLine("Excpetion in InterfaceServerThread" + str(e1))
                 time.sleep(0.5)
                 continue
 
-        #self.ServerSocket.shutdown(socket.SHUT_RDWR)
-        #self.ServerSocket.close()
+        self.ServerSocket.shutdown(socket.SHUT_RDWR)
+        self.ServerSocket.close()
+        self.ServerSocket = None
         #
 
     #---------------------Monitor::Close------------------------
     def Close(self):
 
         try:
-            self.Stopping = True
+            self.IsStopping = True
+
+            if self.MyWeather != None:
+                self.MyWeather.Close()
+
+            if self.bSyncDST or self.bSyncTime:
+                self.KillThread("TimeSyncThread")
+
+            self.KillThread("ComWatchDog")
+
+            if not self.Controller == None:
+                if not self.Controller.InitComplete:
+                    self.Controller.InitCompleteEvent.wait()
+                self.Controller.Close()
+
+            # Mail should self close
 
             for item in self.ConnectionList:
                 try:
@@ -866,9 +884,6 @@ class Monitor(mysupport.MySupport):
             if(self.ServerSocket != None):
                 self.ServerSocket.shutdown(socket.SHUT_RDWR)
                 self.ServerSocket.close()
-
-            if not self.Controller == None:
-                self.Controller.Close()
 
             self.FeedbackPipe.Close()
             self.MessagePipe.Close()
@@ -886,6 +901,7 @@ class Monitor(mysupport.MySupport):
 
         with self.CriticalLock:
             self.LogError("Generator Monitor Shutdown")
+        MainThreadRunning = False
 
 
 #------------------- Command-line interface for monitor -----------------#
@@ -894,9 +910,10 @@ if __name__=='__main__': #
 
     #Start things up
     MyMonitor = Monitor(ConfigFilePath = ConfigFilePath)
-
+    MainThreadRunning = True
     try:
-        while True:
-            time.sleep(1)
+        while MainThreadRunning:
+            time.sleep(0.5)
     except:
         pass
+    sys.exit(0)

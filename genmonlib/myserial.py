@@ -12,11 +12,11 @@
 from __future__ import print_function       # For python 3.x compatibility with print function
 
 import datetime, threading, serial, sys
-import mylog, mythread, mycommon
+import mylog, mythread, mysupport
 
 
 #------------ SerialDevice class --------------------------------------------
-class SerialDevice(mycommon.MyCommon):
+class SerialDevice(mysupport.MySupport):
     def __init__(self, name, rate=9600, loglocation = "/var/log/", Parity = None, OnePointFiveStopBits = None):
         super(SerialDevice, self).__init__()
         self.DeviceName = name
@@ -94,11 +94,11 @@ class SerialDevice(mycommon.MyCommon):
                             else:
                                 self.Buffer.append(c)           # PYTHON3
                         # first check for SignalStopped is when we are receiving
-                        if self.Threads["SerialReadThread"].StopSignaled():
+                        if self.IsStopSignaled("SerialReadThread"):
                             return
                     # second check for SignalStopped is when we are not receiving
-                    if self.Threads["SerialReadThread"].StopSignaled():
-                            return
+                    if self.IsStopSignaled("SerialReadThread"):
+                        return
 
             except Exception as e1:
                 self.LogErrorLine( "Resetting SerialDevice:ReadThread Error: " + self.DeviceName + ":"+ str(e1))
@@ -121,10 +121,7 @@ class SerialDevice(mycommon.MyCommon):
     # ---------- SerialDevice::Close------------------
     def Close(self):
         if self.SerialDevice.isOpen():
-            if self.Threads["SerialReadThread"].IsAlive():
-                self.Threads["SerialReadThread"].Stop()
-                self.Threads["SerialReadThread"].WaitForThreadToEnd()
-                del self.Threads["SerialReadThread"]
+            self.KillThread("SerialReadThread")
             self.SerialDevice.close()
 
     # ---------- SerialDevice::Flush------------------

@@ -40,19 +40,17 @@ class MySupport(mycommon.MyCommon):
         try:
             MyThreadObj = self.Threads.get(Name, None)
             if MyThreadObj == None:
-                del self.Threads[Name]
                 self.LogError("Error getting thread name in KillThread: " + Name)
                 return False
 
-            del self.Threads[Name]
             if not CleanupSelf:
                 MyThreadObj.Stop()
                 MyThreadObj.WaitForThreadToEnd()
         except Exception as e1:
-            self.LoggError("Error in KillThread ( " + Name  + "): " + str(e1))
+            self.LogError("Error in KillThread ( " + Name  + "): " + str(e1))
             return
 
-    # ---------- MySupport::KillReloadThread------------------
+    # ---------- MySupport::IsStopSignaled------------------
     def IsStopSignaled(self, Name):
 
         Thread = self.Threads.get(Name, None)
@@ -62,6 +60,15 @@ class MySupport(mycommon.MyCommon):
 
         return Thread.StopSignaled()
 
+    # ---------- MySupport::WaitForExit-----------------------------------------
+    def WaitForExit(self, Name, timeout = None):
+
+        Thread = self.Threads.get(Name, None)
+        if Thread == None:
+            self.LogError("Error getting thread name in WaitForExit: " + Name)
+            return False
+
+        return Thread.Wait(timeout)
     #---------------------MySupport::AddItemToConfFile------------------------
     # Add or update config item
     def AddItemToConfFile(self, Entry, Value):

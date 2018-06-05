@@ -24,6 +24,10 @@ class MyThread():
     def GetThreadObject(self):
         return self.ThreadObj
 
+    # ---------- MyThread::Wait------------------
+    def Wait(self, timeout = None):
+        return self.StopEvent.wait(timeout)
+        
     # ---------- MyThread::Stop------------------
     def Stop(self):
         self.StopEvent.set()
@@ -43,4 +47,3 @@ class MyThread():
     # ---------- MyThread::Name------------------
     def WaitForThreadToEnd(self, Timeout = None):
         return self.ThreadObj.join(Timeout)
-

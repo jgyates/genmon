@@ -37,6 +37,7 @@ HTTPPort = 8000
 loglocation = "/var/log/"
 clientport = 0
 log = None
+console = None
 AppPath = ""
 favicon = "favicon.ico"
 ConfigFilePath = "/etc/"
@@ -103,7 +104,7 @@ def command(command):
         return ProcessCommand(command)
 
     if not session.get('logged_in'):
-               return render_template('login.html')
+        return render_template('login.html')
     else:
         return ProcessCommand(command)
 
@@ -335,7 +336,7 @@ def ReadSettingsFromFile():
     ## 4th: current value (will be populated further below)
     ## 5th: tooltip (will be populated further below)
     ## 6th: validation rule if type is string or int (see below). If type is list, this is a comma delimited list of options
-    ##
+    ## 7th: Config file
     ## Validation Rules:
     ##         A rule must be in this format rule:param where rule is the name of the rule and param is a rule parameter,
     ##         for example minmax:10:50 will use the minmax rule with two arguments, 10 and 50.
@@ -366,67 +367,67 @@ def ReadSettingsFromFile():
 
 
     ConfigSettings =  {
-                "sitename" : ['string', 'Site Name', 1, "SiteName", "", "required minmax:4:50"],
-                "port" : ['string', 'Port for Serial Communication', 2, "/dev/serial0", "", "required UnixDevice"],
+                "sitename" : ['string', 'Site Name', 1, "SiteName", "", "required minmax:4:50", GENMON_CONFIG],
+                "port" : ['string', 'Port for Serial Communication', 2, "/dev/serial0", "", "required UnixDevice", GENMON_CONFIG],
                 # This option is not displayed as it will break the link between genmon and genserv
-                #"server_port" : ['int', 'Server Port', 5, 9082, "", 0],
+                #"server_port" : ['int', 'Server Port', 5, 9082, "", 0, GENMON_CONFIG],
                 # this option is not displayed as this will break the modbus comms, only for debugging
-                #"address" : ['string', 'Modbus slave address', 6, "9d", "", 0 ],
-                #"loglocation" : ['string', 'Log Directory', 7, "/var/log/", "", "required UnixDir"],
-                #"enabledebug" : ['boolean', 'Enable Debug', 14, False, "", 0],
-                "disableoutagecheck" : ['boolean', 'Do Not Check for Outages', 17, False, "", ""],
+                #"address" : ['string', 'Modbus slave address', 6, "9d", "", 0 , GENMON_CONFIG],
+                #"loglocation" : ['string', 'Log Directory', 7, "/var/log/", "", "required UnixDir", GENMON_CONFIG],
+                #"enabledebug" : ['boolean', 'Enable Debug', 14, False, "", 0, GENMON_CONFIG],
+                "disableoutagecheck" : ['boolean', 'Do Not Check for Outages', 17, False, "", "", GENMON_CONFIG],
                 # These settings are not displayed as the auto-detect controller will set these
                 # these are only to be used to override the auto-detect
-                #"uselegacysetexercise" : ['boolean', 'Use Legacy Exercise Time', 43, False, "", 0],
-                #"liquidcooled" : ['boolean', 'Liquid Cooled', 41, False, "", 0],
-                #"evolutioncontroller" : ['boolean', 'Evolution Controler', 42, True, "", 0],
+                #"uselegacysetexercise" : ['boolean', 'Use Legacy Exercise Time', 43, False, "", 0, GENMON_CONFIG],
+                #"liquidcooled" : ['boolean', 'Liquid Cooled', 41, False, "", 0, GENMON_CONFIG],
+                #"evolutioncontroller" : ['boolean', 'Evolution Controler', 42, True, "", 0, GENMON_CONFIG],
                 # remove outage log, this will always be in the same location
-                #"outagelog" : ['string', 'Outage Log', 8, "/home/pi/genmon/outage.txt", "", 0],
-                "syncdst" : ['boolean', 'Sync Daylight Savings Time', 22, False, "", ""],
-                "synctime" : ['boolean', 'Sync Time', 23, False, "", ""],
-                "metricweather"  : ['boolean', 'Use Metric Units', 24, False, "", ""],
-                "autofeedback" : ['boolean', 'Automated Feedback', 29, False, "", ""],
+                #"outagelog" : ['string', 'Outage Log', 8, "/home/pi/genmon/outage.txt", "", 0, GENMON_CONFIG],
+                "syncdst" : ['boolean', 'Sync Daylight Savings Time', 22, False, "", "", GENMON_CONFIG],
+                "synctime" : ['boolean', 'Sync Time', 23, False, "", "", GENMON_CONFIG],
+                "metricweather"  : ['boolean', 'Use Metric Units', 24, False, "", "", GENMON_CONFIG],
+                "autofeedback" : ['boolean', 'Automated Feedback', 29, False, "", "", GENMON_CONFIG],
 
                 #"model" : ['string', 'Generator Model', 100, "Generic Evolution Air Cooled", "", 0],
-                "nominalfrequency": ['list', 'Rated Frequency', 101, "60", "", "50,60"],
-                "nominalRPM" : ['int', 'Nominal RPM', 102, "3600", "", "required digits range:1500:4000"],
-                "nominalKW": ['int', 'Maximum kW Output', 103, "22", "", "required digits range:1:700"],
-                "fueltype" : ['list', 'Fuel Type', 104, "Natural Gas", "", "Natural Gas,Propane,Diesel,Gasoline"],
+                "nominalfrequency": ['list', 'Rated Frequency', 101, "60", "", "50,60", GENMON_CONFIG],
+                "nominalRPM" : ['int', 'Nominal RPM', 102, "3600", "", "required digits range:1500:4000", GENMON_CONFIG],
+                "nominalKW": ['int', 'Maximum kW Output', 103, "22", "", "required digits range:1:700", GENMON_CONFIG],
+                "fueltype" : ['list', 'Fuel Type', 104, "Natural Gas", "", "Natural Gas,Propane,Diesel,Gasoline", GENMON_CONFIG],
 
                 #
-                "enhancedexercise" : ['boolean', 'Enhanced Exercise Time', 105, False, "", ""],
-                "displayunknown" : ['boolean', 'Display Unknown Sensors', 106, False, "", ""],
+                "enhancedexercise" : ['boolean', 'Enhanced Exercise Time', 105, False, "", "", GENMON_CONFIG],
+                "displayunknown" : ['boolean', 'Display Unknown Sensors', 106, False, "", "", GENMON_CONFIG],
 
                 # These do not appear to work on reload, some issue with Flask
-                "usehttps" : ['boolean', 'Use Secure Web Settings', 200, False, "", ""],
-                "useselfsignedcert" : ['boolean', 'Use Self-signed Certificate', 203, True, "", ""],
-                "keyfile" : ['string', 'https Key File', 204, "", "", "UnixFile"],
-                "certfile" : ['string', 'https Certificate File', 205, "", "", "UnixFile"],
-                "http_user" : ['string', 'Web Username', 206, "", "", "minmax:4:50"],
-                "http_pass" : ['string', 'Web Password', 207, "", "", "minmax:4:50"],
-                #"http_user_ro" : ['string', 'Limited User Web Username', 208, "", "", "minmax:4:50"],
-                #"http_pass_ro" : ['string', 'Limited User Web Password', 209, "", "", "minmax:4:50"],
-                "http_port" : ['int', 'Port of WebServer', 210, 8000, "", "required digits"],
-                "favicon" : ['string', 'FavIcon', 220, "", "", "minmax:8:255"],
+                "usehttps" : ['boolean', 'Use Secure Web Settings', 200, False, "", "", GENMON_CONFIG],
+                "useselfsignedcert" : ['boolean', 'Use Self-signed Certificate', 203, True, "", "", GENMON_CONFIG],
+                "keyfile" : ['string', 'https Key File', 204, "", "", "UnixFile", GENMON_CONFIG],
+                "certfile" : ['string', 'https Certificate File', 205, "", "", "UnixFile", GENMON_CONFIG],
+                "http_user" : ['string', 'Web Username', 206, "", "", "minmax:4:50", GENMON_CONFIG],
+                "http_pass" : ['string', 'Web Password', 207, "", "", "minmax:4:50", GENMON_CONFIG],
+                #"http_user_ro" : ['string', 'Limited User Web Username', 208, "", "", "minmax:4:50", GENMON_CONFIG],
+                #"http_pass_ro" : ['string', 'Limited User Web Password', 209, "", "", "minmax:4:50", GENMON_CONFIG],
+                "http_port" : ['int', 'Port of WebServer', 210, 8000, "", "required digits", GENMON_CONFIG],
+                "favicon" : ['string', 'FavIcon', 220, "", "", "minmax:8:255", GENMON_CONFIG],
                 # This does not appear to work on reload, some issue with Flask
 
-                "disableemail" : ['boolean', 'Disable Email Usage', 300, True, "", ""],
-                "email_account" : ['string', 'Email Account', 301, "myemail@gmail.com", "", "minmax:3:50"],
-                "email_pw" : ['password', 'Email Password', 302, "password", "", "max:50"],
-                "sender_account" : ['string', 'Sender Account', 303, "no-reply@gmail.com", "", "email"],
+                "disableemail" : ['boolean', 'Disable Email Usage', 300, True, "", "", MAIL_CONFIG],
+                "email_account" : ['string', 'Email Account', 301, "myemail@gmail.com", "", "minmax:3:50", MAIL_CONFIG],
+                "email_pw" : ['password', 'Email Password', 302, "password", "", "max:50", MAIL_CONFIG],
+                "sender_account" : ['string', 'Sender Account', 303, "no-reply@gmail.com", "", "email", MAIL_CONFIG],
                 # "email_recipient" : ['string', 'Email Recepient<br><small>(comma delimited)</small>', 105], # will be handled on the notification screen
-                "smtp_server" : ['string', 'SMTP Server <br><small>(leave emtpy to disable)</small>', 305, "smtp.gmail.com", "", "InternetAddress"],
-                "smtp_port" : ['int', 'SMTP Server Port', 307, 587, "", "digits"],
-                "ssl_enabled" : ['boolean', 'SMTP Server SSL Enabled', 308, False, "", ""],
+                "smtp_server" : ['string', 'SMTP Server <br><small>(leave emtpy to disable)</small>', 305, "smtp.gmail.com", "", "InternetAddress", MAIL_CONFIG],
+                "smtp_port" : ['int', 'SMTP Server Port', 307, 587, "", "digits", MAIL_CONFIG],
+                "ssl_enabled" : ['boolean', 'SMTP Server SSL Enabled', 308, False, "", "", MAIL_CONFIG],
 
-                "imap_server" : ['string', 'IMAP Server <br><small>(leave emtpy to disable)</small>', 401, "imap.gmail.com", "", "InternetAddress"],
-                "readonlyemailcommands" : ['boolean', 'Disable Email Write Commands',402, False, "", ""],
-                "incoming_mail_folder" : ['string', 'Incoming Mail Folder<br><small>(if IMAP enabled)</small>', 403, "Generator", "", "minmax:1:1500"],
-                "processed_mail_folder" : ['string', 'Mail Processed Folder<br><small>(if IMAP enabled)</small>', 404, "Generator/Processed","", "minmax:1:255"],
+                "imap_server" : ['string', 'IMAP Server <br><small>(leave emtpy to disable)</small>', 401, "imap.gmail.com", "", "InternetAddress", MAIL_CONFIG],
+                "readonlyemailcommands" : ['boolean', 'Disable Email Write Commands',402, False, "", "", GENMON_CONFIG],
+                "incoming_mail_folder" : ['string', 'Incoming Mail Folder<br><small>(if IMAP enabled)</small>', 403, "Generator", "", "minmax:1:1500", GENMON_CONFIG],
+                "processed_mail_folder" : ['string', 'Mail Processed Folder<br><small>(if IMAP enabled)</small>', 404, "Generator/Processed","", "minmax:1:255", GENMON_CONFIG],
 
-                "weatherkey" : ['string', 'Openweathermap.org API key', 501, "", "", "required minmax:4:50"],
-                "weatherlocation" : ['string', 'Location to report weather', 502, "", "", "required minmax:4:50"],
-                "minimumweatherinfo"  : ['boolean', 'Display Minimum Weather Info', 504, False, "", ""]
+                "weatherkey" : ['string', 'Openweathermap.org API key', 501, "", "", "required minmax:4:50", GENMON_CONFIG],
+                "weatherlocation" : ['string', 'Location to report weather', 502, "", "", "required minmax:4:50", GENMON_CONFIG],
+                "minimumweatherinfo"  : ['boolean', 'Display Minimum Weather Info', 504, False, "", "", GENMON_CONFIG]
                 }
 
 
@@ -475,6 +476,23 @@ def GetToolTips(ConfigSettings):
 #------------------------------------------------------------
 def SaveSettings(query_string):
 
+    try:
+        # e.g. {'displayunknown': ['true']}
+        settings = dict(urlparse.parse_qs(query_string, 1))
+        if not len(settings):
+            # nothing to change
+            return
+
+        CurrentConfigSettings = ReadSettingsFromFile()
+        for Entry in settings.keys():
+            UpdateConfigFile(CurrentConfigSettings[Entry][6],Entry, settings[Entry][0])
+        Restart()
+    except Exception as e1:
+        log.error("Error Update Config File (SaveSettings): " + str(e1))
+#------------------------------------------------------------
+# THIS CAN BE REMOVED
+def SaveSettings2(query_string):
+
     # e.g. {'displayunknown': ['true']}
     settings = dict(urlparse.parse_qs(query_string, 1))
 
@@ -506,6 +524,41 @@ def SaveSettings(query_string):
         Restart()
     except Exception as e1:
         log.error("Error Update Config File (SaveSettings): " + str(e1))
+
+#---------------------MySupport::UpdateConfigFile------------------------
+# Add or update config item
+def UpdateConfigFile(FileName, Entry, Value):
+
+    try:
+
+        Found = False
+        ConfigFile = open(FileName,'r')
+        FileString = ConfigFile.read()
+        ConfigFile.close()
+
+        ConfigFile = open(FileName,'w')
+        for line in FileString.splitlines():
+            if not line.isspace():                  # blank lines
+                newLine = line.strip()              # strip leading spaces
+                if len(newLine):
+                    if not newLine[0] == "#":           # not a comment
+                        items = newLine.split(' ')      # split items in line by spaces
+                        for strings in items:           # loop thru items
+                            strings = strings.strip()   # strip any whitespace
+                            if Entry == strings or strings.lower().startswith(Entry+"="):        # is this our value?
+                                line = Entry + " = " + Value    # replace it
+                                Found = True
+                                break
+
+            ConfigFile.write(line+"\n")
+        if not Found:
+            ConfigFile.write(Entry + " = " + Value + "\n")
+        ConfigFile.close()
+        return True
+
+    except Exception as e1:
+        log.error("Error in UpdateConfigFile: " + str(e1))
+        return False
 
 #------------------------------------------------------------
 def findConfigLine(line):

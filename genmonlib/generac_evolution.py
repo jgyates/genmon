@@ -201,37 +201,41 @@ class Evolution(controller.GeneratorController):
     # One time reads, and read all registers once
     def InitDevice(self):
 
-        self.ModBus.ProcessMasterSlaveTransaction("%04x" % MODEL_REG, MODEL_REG_LENGTH)
+        try:
+            self.ModBus.ProcessMasterSlaveTransaction("%04x" % MODEL_REG, MODEL_REG_LENGTH)
 
-        self.DetectController()
+            self.DetectController()
 
-        if self.EvolutionController:
-            self.ModBus.ProcessMasterSlaveTransaction("%04x" % ALARM_LOG_STARTING_REG, ALARM_LOG_STRIDE)
-        else:
-            self.ModBus.ProcessMasterSlaveTransaction("%04x" % NEXUS_ALARM_LOG_STARTING_REG, NEXUS_ALARM_LOG_STRIDE)
+            if self.EvolutionController:
+                self.ModBus.ProcessMasterSlaveTransaction("%04x" % ALARM_LOG_STARTING_REG, ALARM_LOG_STRIDE)
+            else:
+                self.ModBus.ProcessMasterSlaveTransaction("%04x" % NEXUS_ALARM_LOG_STARTING_REG, NEXUS_ALARM_LOG_STRIDE)
 
-        self.ModBus.ProcessMasterSlaveTransaction("%04x" % START_LOG_STARTING_REG, START_LOG_STRIDE)
+            self.ModBus.ProcessMasterSlaveTransaction("%04x" % START_LOG_STARTING_REG, START_LOG_STRIDE)
 
-        if self.EvolutionController:
-            self.ModBus.ProcessMasterSlaveTransaction("%04x" % SERVICE_LOG_STARTING_REG, SERVICE_LOG_STRIDE)
+            if self.EvolutionController:
+                self.ModBus.ProcessMasterSlaveTransaction("%04x" % SERVICE_LOG_STARTING_REG, SERVICE_LOG_STRIDE)
 
-        for PrimeReg, PrimeInfo in self.PrimeRegisters.items():
-            self.ModBus.ProcessMasterSlaveTransaction(PrimeReg, int(PrimeInfo[self.REGLEN] / 2))
+            for PrimeReg, PrimeInfo in self.PrimeRegisters.items():
+                self.ModBus.ProcessMasterSlaveTransaction(PrimeReg, int(PrimeInfo[self.REGLEN] / 2))
 
-        for Reg, Info in self.BaseRegisters.items():
+            for Reg, Info in self.BaseRegisters.items():
 
-            #The divide by 2 is due to the diference in the values in our dict are bytes
-            # but modbus makes register request in word increments so the request needs to
-            # in word multiples, not bytes
-            self.ModBus.ProcessMasterSlaveTransaction(Reg, int(Info[self.REGLEN] / 2))
+                #The divide by 2 is due to the diference in the values in our dict are bytes
+                # but modbus makes register request in word increments so the request needs to
+                # in word multiples, not bytes
+                self.ModBus.ProcessMasterSlaveTransaction(Reg, int(Info[self.REGLEN] / 2))
 
-        # check for model specific info in read from conf file, if not there then add some defaults
-        self.CheckModelSpecificInfo(NoLookUp = self.Simulation)
-        # check for unknown events (i.e. events we are not decoded) and send an email if they occur
-        self.CheckForAlarmEvent.set()
-        self.SetupTiles()
-        self.InitComplete = True
-        self.InitCompleteEvent.set()
+            # check for model specific info in read from conf file, if not there then add some defaults
+            if not self.IsStopping:
+                self.CheckModelSpecificInfo(NoLookUp = self.Simulation)
+            # check for unknown events (i.e. events we are not decoded) and send an email if they occur
+            self.CheckForAlarmEvent.set()
+            self.SetupTiles()
+            self.InitComplete = True
+            self.InitCompleteEvent.set()
+        except Exception as e1:
+            self.LogErrorLine("Error in InitDevice: " + str(e1))
 
     #---------------------------------------------------------------------------
     def SetupTiles(self):
@@ -451,7 +455,7 @@ class Evolution(controller.GeneratorController):
             try:
                 productId = myresponse1["Results"][0]["Id"]
             except Exception as e1:
-                self.LogErrorLine("Note LookUpSNInfo (parse request 1), (product ID not found): " + str(e1))
+                self.LogErrorLine("Error LookUpSNInfo (parse request 1), (product ID not found): " + str(e1))
                 productId = SerialNumber
 
             if SkipKW:
@@ -620,9 +624,13 @@ class Evolution(controller.GeneratorController):
             if counter % 6 == 0:
                 for PrimeReg, PrimeInfo in self.PrimeRegisters.items():
                     self.ModBus.ProcessMasterSlaveTransaction(PrimeReg, int(PrimeInfo[self.REGLEN] / 2))
+                    if self.IsStopping:
+                        return
                 # check for unknown events (i.e. events we are not decoded) and send an email if they occur
                 self.CheckForAlarmEvent.set()
 
+            if self.IsStopping:
+                return
             #The divide by 2 is due to the diference in the values in our dict are bytes
             # but modbus makes register request in word increments so the request needs to
             # in word multiples, not bytes
@@ -636,22 +644,29 @@ class Evolution(controller.GeneratorController):
         for Register in self.LogRange(START_LOG_STARTING_REG , LOG_DEPTH,START_LOG_STRIDE):
             RegStr = "%04x" % Register
             self.ModBus.ProcessMasterSlaveTransaction(RegStr, START_LOG_STRIDE)
+            if self.IsStopping:
+                return
 
         if self.EvolutionController:
             # Service Log
             for Register in self.LogRange(SERVICE_LOG_STARTING_REG , LOG_DEPTH, SERVICE_LOG_STRIDE):
                 RegStr = "%04x" % Register
                 self.ModBus.ProcessMasterSlaveTransaction(RegStr, SERVICE_LOG_STRIDE)
-
+                if self.IsStopping:
+                    return
             # Alarm Log
             for Register in self.LogRange(ALARM_LOG_STARTING_REG , LOG_DEPTH, ALARM_LOG_STRIDE):
                 RegStr = "%04x" % Register
                 self.ModBus.ProcessMasterSlaveTransaction(RegStr, ALARM_LOG_STRIDE)
+                if self.IsStopping:
+                    return
         else:
             # Alarm Log
             for Register in self.LogRange(NEXUS_ALARM_LOG_STARTING_REG , LOG_DEPTH, NEXUS_ALARM_LOG_STRIDE):
                 RegStr = "%04x" % Register
                 self.ModBus.ProcessMasterSlaveTransaction(RegStr, NEXUS_ALARM_LOG_STRIDE)
+                if self.IsStopping:
+                    return
 
     #----------  Evolution:SetGeneratorRemoteStartStop-------------------------------
     def SetGeneratorRemoteStartStop(self, CmdString):
@@ -1331,6 +1346,9 @@ class Evolution(controller.GeneratorController):
             self.LastAlarmValue = RegVal    # update the stored alarm
 
             self.UpdateLogRegistersAsMaster()       # Update all log registers
+
+            if self.IsStopping:
+                return
 
             msgsubject = ""
             msgbody = "\n"

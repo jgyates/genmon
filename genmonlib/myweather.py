@@ -99,7 +99,8 @@ class MyWeather(mysupport.MySupport):
         while True:
             if self.OWM == None:
                 if not self.InitOWM():
-                    time.sleep(60)
+                    if self.WaitForExit("WeatherThread", 60 ):  # 60 sec
+                        return
                     continue
             try:
                 self.GetObservation()
@@ -112,13 +113,13 @@ class MyWeather(mysupport.MySupport):
             except Exception as e1:
                 self.LogErrorLine("Error calling Observation.get_weather: " + str(e1))
                 self.WeatherData = None
-                time.sleep(60)
+                if self.WaitForExit("WeatherThread", 60 ):  # 60 sec
+                    return
                 continue
 
-            for x in range(0, 60):
-                time.sleep(10)
-                if self.IsStopSignaled("WeatherThread"):
-                        return
+            if self.WaitForExit("WeatherThread", 60 * 10):  # ten min
+                return
+
     #---------------------GetLocation-------------------------------------------
     def GetLocation(self):
 

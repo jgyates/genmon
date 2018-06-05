@@ -42,6 +42,7 @@ class GeneratorController(mysupport.MySupport):
         self.BaudRate = 9600
         self.ModBus = None
         self.InitComplete = False
+        self.IsStopping = False
         self.InitCompleteEvent = threading.Event() # Event to signal init complete
         self.CheckForAlarmEvent = threading.Event() # Event to signal checking for alarm
         self.Registers = {}         # dict for registers and values
@@ -160,6 +161,8 @@ class GeneratorController(mysupport.MySupport):
                     self.MasterEmulation()
                     if self.IsStopSignaled("ProcessThread"):
                         break
+                    if self.IsStopping:
+                        break
                 except Exception as e1:
                     self.LogErrorLine("Error in Controller ProcessThread (1), continue: " + str(e1))
         except Exception as e1:
@@ -169,11 +172,12 @@ class GeneratorController(mysupport.MySupport):
     #  When signaled, this thread will check for alarms
     def CheckAlarmThread(self):
 
+        time.sleep(.25)
         while True:
             try:
-                time.sleep(0.25)
-                if self.IsStopSignaled("CheckAlarmThread"):
-                    break
+                if self.WaitForExit("CheckAlarmThread", 0.25):  #
+                    return
+
                 if self.CheckForAlarmEvent.is_set():
                     self.CheckForAlarmEvent.clear()
                     self.CheckForAlarms()
@@ -186,7 +190,7 @@ class GeneratorController(mysupport.MySupport):
 
         if not self.EnableDebug:
             return
-        time.sleep(1)
+        time.sleep(.25)
 
         self.InitCompleteEvent.wait()
 
@@ -205,7 +209,8 @@ class GeneratorController(mysupport.MySupport):
                 continue
             try:
                 for Reg in range(0x0 , 0x2000):
-                    time.sleep(0.25)
+                    if self.WaitForExit("DebugThread", 0.25):  # ten min
+                        return
                     Register = "%04x" % Reg
                     NewValue = self.ModBus.ProcessMasterSlaveTransaction(Register, 1, ReturnValue = True)
                     OldValue = RegistersUnderTest.get(Register, "")
@@ -954,19 +959,19 @@ class GeneratorController(mysupport.MySupport):
     def PowerMeter(self):
 
         # make sure system is up and running otherwise we will not know which controller is present
+        time.sleep(1)
         while True:
-            time.sleep(1)
+
             if self.InitComplete:
                 break
-            if self.IsStopSignaled("PowerMeter"):
+            if self.WaitForExit("PowerMeter", 1):
                 return
 
         # if power meter is not supported do nothing.
         # Note: This is done since if we killed the thread here
         while not self.PowerMeterIsSupported() or not len(self.PowerLog):
-            if self.IsStopSignaled("PowerMeter"):
+            if self.WaitForExit("PowerMeter", 60):
                 return
-            time.sleep(1)
 
         # if log file is empty or does not exist, make a zero entry in log to denote start of collection
         if not os.path.isfile(self.PowerLog) or os.path.getsize(self.PowerLog) == 0:
@@ -977,7 +982,8 @@ class GeneratorController(mysupport.MySupport):
         LastPruneTime = datetime.datetime.now()
         while True:
             try:
-                time.sleep(5)
+                if self.WaitForExit("PowerMeter", 10):
+                    return
 
                 # Housekeeping on kw Log
                 if self.GetDeltaTimeMinutes(datetime.datetime.now() - LastPruneTime) > 1440 :     # check every day
@@ -1011,8 +1017,20 @@ class GeneratorController(mysupport.MySupport):
     def Close(self):
 
         try:
+            # Controller
+            self.IsStopping = True
+            if self.EnableDebug:
+                self.KillThread("DebugThread")
+
+            self.KillThread("ProcessThread")
+
+            self.KillThread("CheckAlarmThread")
+
+            self.KillThread("PowerMeter")
+
             if self.ModBus != None:
                 self.ModBus.Close()
+
 
         except Exception as e1:
             self.LogErrorLine("Error Closing Controller: " + str(e1))

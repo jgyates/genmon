@@ -10,16 +10,15 @@
 #-------------------------------------------------------------------------------
 
 import os, sys, time, json, threading
-import mythread, mycommon
+import mythread, mysupport
 
 #------------ MyPipe class -----------------------------------------------------
-class MyPipe(mycommon.MyCommon):
+class MyPipe(mysupport.MySupport):
     #------------ MyPipe::init--------------------------------------------------
     def __init__(self, name, callback = None, Reuse = False, log = None, simulation = False):
-        super(MyPipe, self).__init__()
+        super(MyPipe, self).__init__(simulation = simulation)
         self.log = log
         self.BasePipeName = name
-        self.Simulation = simulation
 
         if self.Simulation:
             return
@@ -43,7 +42,7 @@ class MyPipe(mycommon.MyCommon):
         except Exception as e1:
             self.LogErrorLine("Error in MyPipe:__init__: " + str(e1))
 
-        if not self.Callback == None:
+        if not self.Callback == None or not self.Simulation:
             self.Threads[self.ThreadName] = mythread.MyThread(self.ReadPipeThread, Name = self.ThreadName)
 
 
@@ -74,10 +73,10 @@ class MyPipe(mycommon.MyCommon):
     #------------ MyPipe::ReadPipeThread----------------------------------------
     def ReadPipeThread(self):
 
+        time.sleep(1)
         while True:
             try:
-                time.sleep(0.5)
-                if self.Threads[self.ThreadName].StopSignaled():
+                if self.WaitForExit(self.ThreadName, 0.5):  # ten min
                     return
                 # since realines is blocking, check if the file is non zero before we attempt to read
                 if not os.path.getsize(self.FileName):
@@ -136,9 +135,6 @@ class MyPipe(mycommon.MyCommon):
 
         try:
             if not self.Callback == None:
-                if self.Threads[self.ThreadName].IsAlive():
-                    self.Threads[self.ThreadName].Stop()
-                    self.Threads[self.ThreadName].WaitForThreadToEnd()
-                    del self.Threads[self.ThreadName]
+                self.KillThread(self.ThreadName)
         except Exception as e1:
             self.LogErrorLine("Error in mypipe:Close: " + str(e1))
