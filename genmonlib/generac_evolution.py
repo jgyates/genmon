@@ -143,7 +143,7 @@ class Evolution(controller.GeneratorController):
                     "0039" : [2, 0],     # Evo AC   (Sensor?)
                     "003a" : [2, 0],     # Evo AC   (Sensor?)  Nexus and Evo AC
                     "003b" : [2, 0],     # Evo AC   (Sensor?)  Nexus and Evo AC
-                    "0239" : [2, 0],     # Startup Delay (Evo AC)
+                    "0239" : [2, 0],     # Startup Delay (Evo LC)
                     "0237" : [2, 0],     # Set Voltage (Evo LC)
                     "0208" : [2, 0],     # Calibrate Volts (Evo)
                     "005c" : [2, 0],     # Unknown , possible model reg on EvoLC
@@ -1453,11 +1453,11 @@ class Evolution(controller.GeneratorController):
 
             Sensors["Frequency (Calculated)"] = self.GetFrequency(Calculate = True)
 
-        if self.EvolutionController:
-            Value = self.GetUnknownSensor("0208")
-            if len(Value):
-                Sensors["Calibrate Volts Value"] = Value
 
+        Value = self.GetUnknownSensor("0208")
+        if len(Value):
+            Sensors["Calibrate Volts Value"] = Value
+        if self.EvolutionController:
             Sensors["kW Hours in last 30 days"] = self.GetPowerHistory("power_log_json=43200,kw", NoReduce = True)
 
         if self.EvolutionController and self.LiquidCooled:

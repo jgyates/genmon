@@ -445,7 +445,7 @@ def ReadSettingsFromFile():
 
                 "weatherkey" : ['string', 'Openweathermap.org API key', 501, "", "", "required minmax:4:50", GENMON_CONFIG],
                 "weatherlocation" : ['string', 'Location to report weather', 502, "", "", "required minmax:4:50", GENMON_CONFIG],
-                "minimumweatherinfo"  : ['boolean', 'Display Minimum Weather Info', 504, False, "", "", GENMON_CONFIG]
+                "minimumweatherinfo"  : ['boolean', 'Display Minimum Weather Info', 504, True, "", "", GENMON_CONFIG]
                 }
 
     try:
@@ -530,16 +530,28 @@ def GetToolTips(ConfigSettings):
 def SaveSettings(query_string):
 
     try:
+        console.error("SaveSettings")
         # e.g. {'displayunknown': ['true']}
         settings = dict(urlparse.parse_qs(query_string, 1))
+        console.error("Settings: " + str(settings))
         if not len(settings):
             # nothing to change
+            console.error("Length is " + str(len(settings)))
             return
-
+        console.error("Length is OK: " + str(len(settings)))
         CurrentConfigSettings = ReadSettingsFromFile()
         with CriticalLock:
+            console.error("Start write")
             for Entry in settings.keys():
-                UpdateConfigFile(CurrentConfigSettings[Entry][6],Entry, settings[Entry][0])
+                console.error("write: " + Entry)
+                ConfigEntry = CurrentConfigSettings.get(Entry, None)
+                if ConfigEntry != None:
+                    ConfigFile = CurrentConfigSettings[Entry][6]
+                    Value = settings[Entry][0]
+                else:
+                    log.error("Invalid setting: " + str(Entry))
+                    continue
+                UpdateConfigFile(ConfigFile,Entry, Value)
         Restart()
     except Exception as e1:
         log.error("Error Update Config File (SaveSettings): " + str(e1))
