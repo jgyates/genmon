@@ -34,34 +34,48 @@ class MyWeather(mysupport.MySupport):
         if not pyowm_installed:
             self.LogError("Library pyowm not installed, disabling weather support." )
             return
+        try:
+            if self.APIKey != None:
+                self.APIKey = self.APIKey.strip()
+            if self.Location != None:
+                self.Location = self.Location.strip()
 
-        self.InitOWM()
+            if self.APIKey == None or not len(self.APIKey) or self.Location == None or not len(self.Location):
+                self.LogError("Weather API key invalid or Weather Location invalid")
+                return
 
-        self.Threads["WeatherThread"] = mythread.MyThread(self.WeatherThread, Name = "WeatherThread")
+            self.InitOWM()
+            self.Threads["WeatherThread"] = mythread.MyThread(self.WeatherThread, Name = "WeatherThread")
+        except Exception as e1:
+            self.LogErrorLine("Error on MyWeather:init: " + str(e1))
+
 
     #---------------------GetUnits----------------------------------------------
     def GetUnits(self, measured, Label = False):
 
-        LookUp = {
-                "temp" : [["fahrenheit","F"],["celsius", "C"]],
-                "speed": [["miles_hour", "mph"], ["meters_sec", "m/s"]]
-        }
+        try:
+            LookUp = {
+                    "temp" : [["fahrenheit","F"],["celsius", "C"]],
+                    "speed": [["miles_hour", "mph"], ["meters_sec", "m/s"]]
+            }
 
-        ReturnList = LookUp.get(measured, None)
+            ReturnList = LookUp.get(measured, None)
 
-        if ReturnList == None:
-            self.LogError("Error in GetUnits: Unknown measured value: " + str(measured))
-            return ""
+            if ReturnList == None:
+                self.LogError("Error in GetUnits: Unknown measured value: " + str(measured))
+                return ""
 
-        if self.WeatherUnit.lower() == 'metric':
-            Index = 1
-        else:
-            Index = 0
+            if self.WeatherUnit.lower() == 'metric':
+                Index = 1
+            else:
+                Index = 0
 
-        if Label:
-            return ReturnList[Index][1]
-        else:
-            return ReturnList[Index][0]
+            if Label:
+                return ReturnList[Index][1]
+            else:
+                return ReturnList[Index][0]
+        except Exception as e1:
+            self.LogErrorLine("Error in GetUnits: " + str(e1))
 
     #---------------------InitOWM-----------------------------------------------
     def InitOWM(self):

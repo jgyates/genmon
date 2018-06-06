@@ -25,7 +25,7 @@ except ImportError as e:
 from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel, myplatform, myweather
 
 
-GENMON_VERSION = "V1.9.19"
+GENMON_VERSION = "V1.9.20"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -147,16 +147,19 @@ class Monitor(mysupport.MySupport):
     # ------------------------ Monitor::StartThreads----------------------------
     def StartThreads(self, reload = False):
 
-        # start thread to accept incoming sockets for nagios heartbeat
-        self.Threads["ComWatchDog"] = mythread.MyThread(self.ComWatchDog, Name = "ComWatchDog")
+        try:
+            # start thread to accept incoming sockets for nagios heartbeat
+            self.Threads["ComWatchDog"] = mythread.MyThread(self.ComWatchDog, Name = "ComWatchDog")
 
-        if self.bSyncDST or self.bSyncTime:     # Sync time thread
-            self.Threads["TimeSyncThread"] = mythread.MyThread(self.TimeSyncThread, Name = "TimeSyncThread")
+            if self.bSyncDST or self.bSyncTime:     # Sync time thread
+                self.Threads["TimeSyncThread"] = mythread.MyThread(self.TimeSyncThread, Name = "TimeSyncThread")
 
-        if not self.WeatherAPIKey == None and len(self.WeatherAPIKey) and not self.WeatherLocation == None and len(self.WeatherLocation):
-            Unit = 'metric' if self.UseMetric else 'imperial'
-            self.MyWeather = myweather.MyWeather(self.WeatherAPIKey, location = self.WeatherLocation, unit = Unit, log = self.log)
-            self.Threads = self.MergeDicts(self.Threads, self.MyWeather.Threads)
+            if not self.WeatherAPIKey == None and len(self.WeatherAPIKey) and not self.WeatherLocation == None and len(self.WeatherLocation):
+                Unit = 'metric' if self.UseMetric else 'imperial'
+                self.MyWeather = myweather.MyWeather(self.WeatherAPIKey, location = self.WeatherLocation, unit = Unit, log = self.log)
+                self.Threads = self.MergeDicts(self.Threads, self.MyWeather.Threads)
+        except Exception as e1:
+            self.LogErrorLine("Error in StartThreads: " + str(e1))
 
     # -------------------- Monitor::GetConfig-----------------------------------
     def GetConfig(self, reload = False):
@@ -252,12 +255,15 @@ class Monitor(mysupport.MySupport):
     #------------------------------------------------------------
     def ProcessFeedbackInfo(self):
 
-        if self.FeedbackEnabled:
-            for Key, Entry in self.FeedbackMessages.items():
-                self.MessagePipe.SendMessage("Generator Monitor Submission", Entry , recipient = "generatormonitor.software@gmail.com", msgtype = "error")
-            # delete unsent Messages
-            if os.path.isfile(self.FeedbackLogFile):
-                os.remove(self.FeedbackLogFile)
+        try:
+            if self.FeedbackEnabled:
+                for Key, Entry in self.FeedbackMessages.items():
+                    self.MessagePipe.SendMessage("Generator Monitor Submission", Entry , recipient = "generatormonitor.software@gmail.com", msgtype = "error")
+                # delete unsent Messages
+                if os.path.isfile(self.FeedbackLogFile):
+                    os.remove(self.FeedbackLogFile)
+        except Exception as e1:
+            self.LogErrorLine("Error in ProcessFeedbackInfo: " + str(e1))
 
     #------------------------------------------------------------
     def FeedbackReceiver(self, Message):
@@ -856,37 +862,62 @@ class Monitor(mysupport.MySupport):
     #---------------------Monitor::Close------------------------
     def Close(self):
 
+        # we dont really care about the errors that may be generated on shutdown
         try:
             self.IsStopping = True
 
-            if self.MyWeather != None:
-                self.MyWeather.Close()
+            try:
+                if self.MyWeather != None:
+                    self.MyWeather.Close()
+            except:
+                pass
 
-            if self.bSyncDST or self.bSyncTime:
-                self.KillThread("TimeSyncThread")
+            try:
+                if self.bSyncDST or self.bSyncTime:
+                    self.KillThread("TimeSyncThread")
+            except:
+                pass
 
-            self.KillThread("ComWatchDog")
+            try:
+                self.KillThread("ComWatchDog")
+            except:
+                pass
 
-            if not self.Controller == None:
-                if not self.Controller.InitComplete:
-                    self.Controller.InitCompleteEvent.wait()
-                self.Controller.Close()
+            try:
+                if not self.Controller == None:
+                    if not self.Controller.InitComplete:
+                        self.Controller.InitCompleteEvent.wait()
+                    self.Controller.Close()
+            except:
+                pass
 
             # Mail should self close
+            try:
+                for item in self.ConnectionList:
+                    try:
+                        item.close()
+                    except:
+                        continue
+                    self.ConnectionList.remove(item)
+            except:
+                pass
 
-            for item in self.ConnectionList:
-                try:
-                    item.close()
-                except:
-                    continue
-                self.ConnectionList.remove(item)
+            try:
+                if(self.ServerSocket != None):
+                    self.ServerSocket.shutdown(socket.SHUT_RDWR)
+                    self.ServerSocket.close()
+            except:
+                pass
 
-            if(self.ServerSocket != None):
-                self.ServerSocket.shutdown(socket.SHUT_RDWR)
-                self.ServerSocket.close()
+            try:
+                self.FeedbackPipe.Close()
+            except:
+                pass
+            try:
+                self.MessagePipe.Close()
+            except:
+                pass
 
-            self.FeedbackPipe.Close()
-            self.MessagePipe.Close()
 
             # Tell any remaining threads to stop
             for name, object in self.Threads.items():
@@ -913,7 +944,7 @@ if __name__=='__main__': #
     MainThreadRunning = True
     try:
         while MainThreadRunning:
-            time.sleep(0.5)
+            time.sleep(0.10)
+        sys.exit(0)
     except:
         pass
-    sys.exit(0)
