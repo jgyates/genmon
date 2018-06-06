@@ -11,7 +11,7 @@
 from __future__ import print_function
 
 from flask import Flask, render_template, request, jsonify, session
-import sys, signal, os, socket, atexit, time, subprocess, json
+import sys, signal, os, socket, atexit, time, subprocess, json, threading, signal
 from genmonlib import mylog, myclient, mythread
 import urlparse
 import re, httplib, datetime
@@ -43,6 +43,11 @@ favicon = "favicon.ico"
 ConfigFilePath = "/etc/"
 MAIL_CONFIG = "/etc/mymail.conf"
 GENMON_CONFIG = "/etc/genmon.conf"
+Closing = False
+Restarting = False
+CriticalLock = threading.Lock()
+CachedToolTips = {}
+CachedRegisterDescriptions = {}
 
 #------------------------------------------------------------
 @app.after_request
@@ -100,6 +105,8 @@ def do_admin_login():
 @app.route("/cmd/<command>")
 def command(command):
 
+    if Closing or Restarting:
+        return jsonify("Closing")
     if HTTPAuthUser == None or HTTPAuthPass == None:
         return ProcessCommand(command)
 
@@ -191,7 +198,7 @@ def ProcessCommand(command):
             return "OK"
 
         elif command in ["getreglabels"]:
-            return jsonify(GetRegisterDescriptions())
+            return jsonify(CachedRegisterDescriptions)
 
         elif command in ["restart"]:
             if session.get('write_access', True):
@@ -204,6 +211,7 @@ def ProcessCommand(command):
     except Exception as e1:
         log.error("Error in Process Command: " + str(e1))
         return render_template('command_template.html', command = command)
+
 #------------------------------------------------------------
 def SaveNotifications(query_string):
     notifications = dict(urlparse.parse_qs(query_string, 1))
@@ -212,53 +220,54 @@ def SaveNotifications(query_string):
     notifications_order_string = ",".join([v[0] for v in urlparse.parse_qsl(query_string, 1)])
 
     try:
-        # Read contents from file as a single string
-        file_handle = open(MAIL_CONFIG, 'r')
-        file_string = file_handle.read()
-        file_handle.close()
+        with CriticalLock:
+            # Read contents from file as a single string
+            file_handle = open(MAIL_CONFIG, 'r')
+            file_string = file_handle.read()
+            file_handle.close()
 
-        for line in file_string.splitlines():
-           if not line.isspace():
-              parts = findConfigLine(line)
-              if (parts and (len(parts) >= 5) and parts[3] and (not parts[3].isspace()) and parts[2] and (parts[2] == "email_recipient")):
-                 oldEmails = parts[4].split(",")
+            for line in file_string.splitlines():
+               if not line.isspace():
+                  parts = findConfigLine(line)
+                  if (parts and (len(parts) >= 5) and parts[3] and (not parts[3].isspace()) and parts[2] and (parts[2] == "email_recipient")):
+                     oldEmails = parts[4].split(",")
 
-        activeSection = 0
-        skip = 0
-        # Write contents to file.
-        # Using mode 'w' truncates the file.
-        file_handle = open(MAIL_CONFIG, 'w')
-        for line in file_string.splitlines():
-           if not line.isspace():
-              parts = findConfigLine(line)
-              if (activeSection == 1):
-                  if (parts and (len(parts) >= 5) and parts[3] and (not parts[3].isspace()) and parts[2] and (parts[2] in oldEmails)):
-                      #skip line to delete previous configuration
-                      skip = 1
-                  else:
-                      #lets write the new configuration
-                      for email in notifications.keys():
-                          if (notifications[email][0].strip() != ""):
-                             line = email + " = " + notifications[email][0] + "\n" + line
-                      activeSection = 0
-              elif (parts and (len(parts) >= 5) and parts[3] and (not parts[3].isspace()) and parts[2] and (parts[2] == "email_recipient")):
-                  myList = list(parts)
-                  myList[1] = ""
-                  myList[4] = notifications_order_string
-                  line = "".join(myList)
-                  activeSection = 1
-           else:
-              if (activeSection == 1):
-                 for email in notifications.keys():
-                    if (notifications[email][0].strip() != ""):
-                       line = email + " = " + notifications[email][0] + "\n" + line
-                 activeSection = 0
+            activeSection = 0
+            skip = 0
+            # Write contents to file.
+            # Using mode 'w' truncates the file.
+            file_handle = open(MAIL_CONFIG, 'w')
+            for line in file_string.splitlines():
+               if not line.isspace():
+                  parts = findConfigLine(line)
+                  if (activeSection == 1):
+                      if (parts and (len(parts) >= 5) and parts[3] and (not parts[3].isspace()) and parts[2] and (parts[2] in oldEmails)):
+                          #skip line to delete previous configuration
+                          skip = 1
+                      else:
+                          #lets write the new configuration
+                          for email in notifications.keys():
+                              if (notifications[email][0].strip() != ""):
+                                 line = email + " = " + notifications[email][0] + "\n" + line
+                          activeSection = 0
+                  elif (parts and (len(parts) >= 5) and parts[3] and (not parts[3].isspace()) and parts[2] and (parts[2] == "email_recipient")):
+                      myList = list(parts)
+                      myList[1] = ""
+                      myList[4] = notifications_order_string
+                      line = "".join(myList)
+                      activeSection = 1
+               else:
+                  if (activeSection == 1):
+                     for email in notifications.keys():
+                        if (notifications[email][0].strip() != ""):
+                           line = email + " = " + notifications[email][0] + "\n" + line
+                     activeSection = 0
 
-           if (skip == 0):
-             file_handle.write(line+"\n")
-           skip = 0
+               if (skip == 0):
+                 file_handle.write(line+"\n")
+               skip = 0
 
-        file_handle.close()
+            file_handle.close()
         Restart()
 
     except Exception as e1:
@@ -459,6 +468,18 @@ def GetRegisterDescriptions():
 
     ReturnDict = {}
     try:
+        for (key, value) in CachedRegisterDescriptions.items():
+            ReturnDict[key] = value
+    except Exception as e1:
+        log.error("Error in GetRegisterDescriptions: " + str(e1))
+    return ReturnDict
+
+#------------------------------------------------------------
+def CacheToolTips():
+
+    global CachedToolTips
+
+    try:
         config_section = "generac_evo_nexus"
         pathtofile = os.path.dirname(os.path.realpath(__file__))
 
@@ -473,10 +494,14 @@ def GetRegisterDescriptions():
         config = RawConfigParser()
         config.read(pathtofile + "/tooltips.txt")
         for (key, value) in config.items(config_section):
-            ReturnDict[key] = value
+            CachedRegisterDescriptions[key] = value
+
+        config = RawConfigParser()
+        config.read(pathtofile + "/tooltips.txt")
+        for (key, value) in config.items("ToolTips"):
+            CachedToolTips[key.lower()] = value
     except Exception as e1:
-        log.error("Error in GetRegisterDescriptions: " + str(e1))
-    return ReturnDict
+        log.error("Error reading tooltips.txt " + str(e1) )
 
 #------------------------------------------------------------
 def GetToolTips(ConfigSettings):
@@ -484,7 +509,7 @@ def GetToolTips(ConfigSettings):
     try:
         pathtofile = os.path.dirname(os.path.realpath(__file__))
         for entry, List in ConfigSettings.items():
-            (ConfigSettings[entry])[4] = ReadSingleConfigValue(pathtofile + "/tooltips.txt", "ToolTips", "string", entry, "")
+            (ConfigSettings[entry])[4] = CachedToolTips[entry.lower()]
 
     except Exception as e1:
         log.error("Error in GetToolTips: " + str(e1))
@@ -500,8 +525,9 @@ def SaveSettings(query_string):
             return
 
         CurrentConfigSettings = ReadSettingsFromFile()
-        for Entry in settings.keys():
-            UpdateConfigFile(CurrentConfigSettings[Entry][6],Entry, settings[Entry][0])
+        with CriticalLock:
+            for Entry in settings.keys():
+                UpdateConfigFile(CurrentConfigSettings[Entry][6],Entry, settings[Entry][0])
         Restart()
     except Exception as e1:
         log.error("Error Update Config File (SaveSettings): " + str(e1))
@@ -605,8 +631,27 @@ def findConfigLine(line):
 # This will restart the Flask App
 def Restart():
 
+    global Restarting
+
+    Restarting = True
     if not RunBashScript("startgenmon.sh restart"):
         log.error("Error in Restart")
+
+#------------------------------------------------------------
+def RestartThread():
+
+    time.sleep(0.25)
+    if not RunBashScript("startgenmon.sh restart"):
+        log.error("Error in Restart")
+
+#------------------------------------------------------------
+# This will restart the Flask App
+def StartRestart():
+
+    ThreadObj = threading.Thread(target = RestartThread, name = "RestartThread")
+    ThreadObj.daemon = True
+    ThreadObj.start()       # start thread
+
 
 #------------------------------------------------------------
 def Update():
@@ -742,6 +787,26 @@ def ValidateFilePresent(FileName):
     except Exception as e1:
             log.error("File (%s) not present." % FileName)
             return False
+#------------------------------------------------------------
+def Close(NoExit = False):
+
+    global Closing
+    if Closing:
+        return
+    Closing = True
+    log.error("Close server..")
+    try:
+        with app.app_context():
+            func = request.environ.get('werkzeug.server.shutdown')
+            if func is None:
+                log.error("Not running with the Werkzeug Server")
+            func()
+    except Exception as e1:
+        log.error("Error in close: " + str(e1))
+
+    log.error("Server closed.")
+    if not NoExit:
+        sys.exit(0)
 
 #------------------------------------------------------------
 if __name__ == "__main__":
@@ -751,6 +816,9 @@ if __name__ == "__main__":
 
     MAIL_CONFIG = ConfigFilePath + "mymail.conf"
     GENMON_CONFIG = ConfigFilePath + "genmon.conf"
+
+    #atexit.register(Close)
+    #signal.signal(signal.SIGTERM, Close)
 
     AppPath = sys.argv[0]
     LoadConfig()
@@ -764,10 +832,14 @@ if __name__ == "__main__":
     file = os.path.dirname(os.path.realpath(__file__)) + "/startgenmon.sh"
     if not ValidateFilePresent(file):
         log.error("Required file missing : startgenmon.sh")
+        sys.exit(1)
 
     file = os.path.dirname(os.path.realpath(__file__)) + "/genmonmaint.sh"
     if not ValidateFilePresent(file):
         log.error("Required file missing : genmonmaint.sh")
+        sys.exit(1)
+
+    CacheToolTips()
 
     startcount = 0
     while startcount <= 4:
