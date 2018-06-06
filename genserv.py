@@ -449,6 +449,9 @@ def ReadSettingsFromFile():
                 }
 
     try:
+        # TODO optimize this
+        #MailConfig = GetAllConfigValues(MAIL_CONFIG, "MyMail")
+        #GenmonConfig = GetAllConfigValues(GENMON_CONFIG, "GenMon")
 
         for entry, List in ConfigSettings.items():
             (ConfigSettings[entry])[3] = ReadSingleConfigValue(GENMON_CONFIG, "GenMon", List[0], entry, List[3], List[5])
@@ -475,6 +478,20 @@ def GetRegisterDescriptions():
     return ReturnDict
 
 #------------------------------------------------------------
+def GetAllConfigValues(FileName, section):
+
+    ReturnDict = {}
+    try:
+        config = RawConfigParser()
+        config.read(FileName)
+        for (key, value) in config.items(section):
+            ReturnDict[key.lower()] = value
+    except Exception as e1:
+        log.error("Error GetAllConfigValues: " + FileName + ": "+ str(e1) )
+
+    return ReturnDict
+
+#------------------------------------------------------------
 def CacheToolTips():
 
     global CachedToolTips
@@ -491,15 +508,10 @@ def CacheToolTips():
         else:
             config_section = "generac_evo_nexus"
 
-        config = RawConfigParser()
-        config.read(pathtofile + "/tooltips.txt")
-        for (key, value) in config.items(config_section):
-            CachedRegisterDescriptions[key] = value
+        CachedRegisterDescriptions = GetAllConfigValues(pathtofile + "/tooltips.txt", config_section)
 
-        config = RawConfigParser()
-        config.read(pathtofile + "/tooltips.txt")
-        for (key, value) in config.items("ToolTips"):
-            CachedToolTips[key.lower()] = value
+        CachedToolTips = GetAllConfigValues(pathtofile + "/tooltips.txt", "ToolTips")
+
     except Exception as e1:
         log.error("Error reading tooltips.txt " + str(e1) )
 

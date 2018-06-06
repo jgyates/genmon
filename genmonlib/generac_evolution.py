@@ -326,6 +326,7 @@ class Evolution(controller.GeneratorController):
         ModelLookUp_NexusAC = {
                                 0 : ["8KW", "60", "120/240", "1"],
                                 2 : ["14KW", "60", "120/240", "1"],
+                                3 : ["15KW", "60", "120/240", "1"],
                                 4 : ["20KW", "60", "120/240", "1"]
                                 }
         # This should cover the guardian line
