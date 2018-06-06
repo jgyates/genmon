@@ -530,20 +530,15 @@ def GetToolTips(ConfigSettings):
 def SaveSettings(query_string):
 
     try:
-        console.error("SaveSettings")
+
         # e.g. {'displayunknown': ['true']}
         settings = dict(urlparse.parse_qs(query_string, 1))
-        console.error("Settings: " + str(settings))
         if not len(settings):
             # nothing to change
-            console.error("Length is " + str(len(settings)))
             return
-        console.error("Length is OK: " + str(len(settings)))
         CurrentConfigSettings = ReadSettingsFromFile()
         with CriticalLock:
-            console.error("Start write")
             for Entry in settings.keys():
-                console.error("write: " + Entry)
                 ConfigEntry = CurrentConfigSettings.get(Entry, None)
                 if ConfigEntry != None:
                     ConfigFile = CurrentConfigSettings[Entry][6]
