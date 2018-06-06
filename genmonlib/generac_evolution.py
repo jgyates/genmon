@@ -1770,7 +1770,7 @@ class Evolution(controller.GeneratorController):
         0x02 : "Overcrank",                  # Validated on Nexus Air Cooled
         0x03 : "Overspeed",                  # Validated on Nexus Air Cooled
         0x04 : "RPM Sense Loss",             # Validated on Nexus Liquid Cooled and Air Cooled
-        #0x05 : "UNKNOWN",
+        0x05 : "Underspeed",
         0x0a : "Under Voltage",             #  Validated on Nexus AC
         0x0B : "Low Cooling Fluid",          # Validated on Nexus Liquid Cooled
         0x0C : "Canbus Error",               # Validated on Nexus Liquid Cooled
