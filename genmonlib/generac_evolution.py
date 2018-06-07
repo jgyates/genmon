@@ -632,7 +632,7 @@ class Evolution(controller.GeneratorController):
 
             if self.IsStopping:
                 return
-            #The divide by 2 is due to the diference in the values in our dict are bytes
+            # The divide by 2 is due to the diference in the values in our dict are bytes
             # but modbus makes register request in word increments so the request needs to
             # in word multiples, not bytes
             self.ModBus.ProcessMasterSlaveTransaction(Reg, int(Info[self.REGLEN] / 2))

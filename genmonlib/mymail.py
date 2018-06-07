@@ -145,17 +145,26 @@ class MyMail(mycommon.MyCommon):
         try:
             if not self.DisableEmail:
                 if self.SMTPServer != "" and not self.DisableSMTP:
-                    self.Threads["SendMailThread"].Stop()
+                    try:
+                        self.Threads["SendMailThread"].Stop()
+                    except:
+                        pass
 
             if not self.DisableEmail:
                 if self.Monitor and self.IMAPServer != "" and not self.DisableIMAP:
                     if self.IncomingCallback != None and self.IncomingFolder != None and self.ProcessedFolder != None:
-                        self.Threads["EmailCommandThread"].Stop()
+                        try:
+                            self.Threads["EmailCommandThread"].Stop()
+                        except:
+                            pass
 
             if self.Monitor:
                 if self.Mailbox:
-                    self.Mailbox.close()
-                    self.Mailbox.logout()
+                    try:
+                        self.Mailbox.close()
+                        self.Mailbox.logout()
+                    except:
+                        pass
         except Exception as e1:
             self.LogErrorLine("Error Closing Mail: " + str(e1))
 

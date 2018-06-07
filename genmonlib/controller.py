@@ -1019,17 +1019,32 @@ class GeneratorController(mysupport.MySupport):
         try:
             # Controller
             self.IsStopping = True
-            if self.EnableDebug:
-                self.KillThread("DebugThread")
+            try:
+                if self.EnableDebug:
+                    self.KillThread("DebugThread")
+            except:
+                pass
 
-            self.KillThread("ProcessThread")
+            try:
+                self.KillThread("ProcessThread")
+            except:
+                pass
 
-            self.KillThread("CheckAlarmThread")
+            try:
+                self.KillThread("CheckAlarmThread")
+            except:
+                pass
 
-            self.KillThread("PowerMeter")
+            try:
+                self.KillThread("PowerMeter")
+            except:
+                pass
 
             if self.ModBus != None:
-                self.ModBus.Close()
+                try:
+                    self.ModBus.Close()
+                except:
+                    pass
 
 
         except Exception as e1:

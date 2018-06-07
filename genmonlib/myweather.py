@@ -223,5 +223,8 @@ class MyWeather(mysupport.MySupport):
     #---------------------Close-------------------------------------------------
     def Close(self):
 
-        if not self.OWM == None and not self.Observation == None:
-            self.KillThread("WeatherThread")
+        if self.APIKey != None and len(self.APIKey) and self.Location != None and len(self.Location):
+            try:
+                self.KillThread("WeatherThread")
+            except:
+                pass
