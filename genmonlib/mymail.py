@@ -39,6 +39,8 @@ class MyMail(mycommon.MyCommon):
         self.Mailbox = 0
         self.EmailSendQueue = []                        # queue for email to send
         self.DisableEmail = False
+        self.DisableIMAP = False
+        self.DisableSNMP = False
         self.SSLEnabled = False
         self.Threads = {}                               # Dict of mythread objects
 
@@ -57,12 +59,12 @@ class MyMail(mycommon.MyCommon):
         atexit.register(self.Close)
 
         if not self.DisableEmail:
-            if self.SMTPServer != "":
+            if not self.DisableSMTP and self.SMTPServer != "":
                 self.Threads["SendMailThread"] = mythread.MyThread(self.SendMailThread, Name = "SendMailThread")
             else:
                 self.LogError("SMTP disabled")
 
-            if self.Monitor and self.IMAPServer != "":     # if True then we will have an IMAP monitor thread
+            if not self.DisableIMAP and self.Monitor and self.IMAPServer != "":     # if True then we will have an IMAP monitor thread
                 if incoming_callback and incoming_folder and processed_folder:
                     self.Threads["EmailCommandThread"] = mythread.MyThread(self.EmailCommandThread, Name = "EmailCommandThread")
                 else:
@@ -78,6 +80,21 @@ class MyMail(mycommon.MyCommon):
             # config parser reads from current directory, when running form a cron tab this is
             # not defined so we specify the full path
             config.read(self.configfile)
+
+            if config.has_option('MyMail', 'disableemail'):
+                self.DisableEmail = config.getboolean('MyMail', 'disableemail')
+            else:
+                self.DisableEmail = False
+
+            if config.has_option('MyMail', 'disablesmtp'):
+                self.DisableSMTP = config.getboolean('MyMail', 'disablesmtp')
+            else:
+                self.DisableSMTP = False
+
+            if config.has_option('MyMail', 'disableimap'):
+                self.DisableIMAP = config.getboolean('MyMail', 'disableimap')
+            else:
+                self.DisableIMAP = False
 
             self.EmailPassword = config.get('MyMail', 'email_pw')
             self.EmailAccount = config.get('MyMail', 'email_account')
@@ -111,8 +128,7 @@ class MyMail(mycommon.MyCommon):
             else:
                 self.IMAPServer = ""
             self.SMTPPort = config.getint('MyMail', 'smtp_port')
-            if config.has_option('MyMail', 'disableemail'):
-                self.DisableEmail = config.getboolean('MyMail', 'disableemail')
+
             if config.has_option('MyMail', 'ssl_enabled'):
                 self.SSLEnabled = config.getboolean('MyMail', 'ssl_enabled')
         except Exception as e1:
@@ -128,11 +144,11 @@ class MyMail(mycommon.MyCommon):
     def Close(self):
         try:
             if not self.DisableEmail:
-                if self.SMTPServer != "":
+                if self.SMTPServer != "" and not self.DisableSMTP:
                     self.Threads["SendMailThread"].Stop()
 
             if not self.DisableEmail:
-                if self.Monitor and self.IMAPServer != "":
+                if self.Monitor and self.IMAPServer != "" and not self.DisableIMAP:
                     if self.IncomingCallback != None and self.IncomingFolder != None and self.ProcessedFolder != None:
                         self.Threads["EmailCommandThread"].Stop()
 
@@ -310,5 +326,5 @@ class MyMail(mycommon.MyCommon):
     def sendEmail(self, subjectstr, msgstr, recipient = None, files = None, deletefile = False, msgtype = "error"):
 
         if not self.DisableEmail:       # if all email disabled, do not queue
-            if self.SMTPServer != "":    # if only sending is disabled, do not queue
+            if self.SMTPServer != "" and not self.DisableSMTP:    # if only sending is disabled, do not queue
                 self.EmailSendQueue.insert(0,[msgtype,subjectstr,msgstr,recipient, files, deletefile])

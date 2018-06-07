@@ -1257,7 +1257,7 @@ function saveNotificationsJSON(){
 function DisplaySettings(){
 
     var url = baseurl.concat("settings");
-    $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
+    $.ajax({dataType: "json", url: url, timeout: 12000, error: processAjaxError, success: function(result){
         processAjaxSuccess();
 
         var outstr = '<form class="idealforms" novalidate  id="formSettings">';
@@ -1354,6 +1354,7 @@ function DisplaySettings(){
         outboundEmailChange(false);
         inboundemailChange(false);
         useselfsignedcertChange(false);
+        weatherChange(false);
    }});
 
 }

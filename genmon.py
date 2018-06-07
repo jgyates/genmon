@@ -25,7 +25,7 @@ except ImportError as e:
 from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel, myplatform, myweather
 
 
-GENMON_VERSION = "V1.9.20"
+GENMON_VERSION = "V1.9.21"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -68,6 +68,7 @@ class Monitor(mysupport.MySupport):
         self.WeatherLocation = None
         self.UseMetric = False
         self.WeatherMinimum = True
+        self.DisableWeather = False
         self.MyWeather = None
 
         # Time Sync Related Data
@@ -154,7 +155,7 @@ class Monitor(mysupport.MySupport):
             if self.bSyncDST or self.bSyncTime:     # Sync time thread
                 self.Threads["TimeSyncThread"] = mythread.MyThread(self.TimeSyncThread, Name = "TimeSyncThread")
 
-            if not self.WeatherAPIKey == None and len(self.WeatherAPIKey) and not self.WeatherLocation == None and len(self.WeatherLocation):
+            if not self.DisableWeather and not self.WeatherAPIKey == None and len(self.WeatherAPIKey) and not self.WeatherLocation == None and len(self.WeatherLocation):
                 Unit = 'metric' if self.UseMetric else 'imperial'
                 self.MyWeather = myweather.MyWeather(self.WeatherAPIKey, location = self.WeatherLocation, unit = Unit, log = self.log)
                 self.Threads = self.MergeDicts(self.Threads, self.MyWeather.Threads)
@@ -206,6 +207,11 @@ class Monitor(mysupport.MySupport):
 
             if config.has_option(ConfigSection, 'controllertype'):
                 self.ControllerSelected = config.get(ConfigSection, 'controllertype')
+
+            if config.has_option(ConfigSection, 'disableweather'):
+                self.DisableWeather = config.getboolean(ConfigSection, 'disableweather')
+            else:
+                self.DisableWeather = False
 
             if config.has_option(ConfigSection, 'weatherkey'):
                 self.WeatherAPIKey = config.get(ConfigSection, 'weatherkey')
