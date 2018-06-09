@@ -1,17 +1,4 @@
 // Define header
-$("#myheader").html('<header>Generator Monitor</header>');
-
-// Define main menu
-$("#navMenu").html('<ul>' +
-      '<li id="status"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="status" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Status</td></tr></table></a></li>' +
-      '<li id="maint"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="maintenance" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Maintenance</td></tr></table></a></li>' +
-      '<li id="outage"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="outage" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Outage</td></tr></table></a></li>' +
-      '<li id="logs"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="log" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Logs</td></tr></table></a></li>' +
-      '<li id="monitor"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="monitor" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Monitor</td></tr></table></a></li>' +
-      '<li id="notifications"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="notifications" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Notifications</td></tr></table></a></li>' +
-      '<li id="settings"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="settings" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Settings</td></tr></table></a></li>' +
-    '</ul>') ;
-
 // global base state
 var baseState = "READY";        // updated on a time
 var currentbaseState = "READY"; // menus change on this var
@@ -26,7 +13,7 @@ var myGenerator = {sitename: "", nominalRPM: 3600, nominalfrequency: 60, Control
 var regHistory = {updateTime: {}, _10m: {}, _60m: {}, _24h: {}, historySince: "", count_60m: 0, count_24h: 0};
 var kwHistory = {data: [], plot:"", kwDuration: "h", tickInterval: "10 minutes", formatString: "%H:%M", defaultPlotWidth: 4, oldDefaultPlotWidth: 4};
 var prevStatusValues = {};
-var pathname = window.location.href;
+var pathname = window.location.href.split("/")[0].split("?")[0];
 var baseurl = pathname.concat("cmd/");
 var DaysOfWeekArray = ["Sunday","Monday","Tuesday","Wednesday", "Thursday", "Friday", "Saturday"];
 var MonthsOfYearArray = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -38,20 +25,17 @@ vex.defaultOptions.className = 'vex-theme-os'
 // called on window.onload
 //      sets up listener events (click menu) and inits the default page
 //*****************************************************************************
-GetGeneratorModel();
+GetStartupInfo();
 GetBaseStatus();
 SetFavIcon();
 GetkWHistory();
 GetRegisterNames();
 $(document).ready(function() {
-    $("#footer").html('<table border="0" width="100%" height="30px"><tr><td width="5%"><img class="tooltip alert_small" id="ajaxWarning" src="images/transparent.png" height="28px" width="28px" style="display: none;"></td><td width="90%"><a href="https://github.com/jgyates/genmon" target="_blank">GenMon Project on GitHub</a></td><td width="5%"></td></tr></table>');
     $('#ajaxWarning').tooltipster({minWidth: '280px', maxWidth: '480px', animation: 'fade', updateAnimation: 'null', contentAsHTML: 'true', delay: 100, animationDuration: 200, side: ['top', 'left'], content: "No Communicatikon Errors occured"});
     UpdateRegisters(true, false);
     setInterval(GetBaseStatus, 3000);       // Called every 3 sec
     setInterval(UpdateDisplay, 5000);       // Called every 5 sec
-    DisplayStatusFullWhenReady();
-    $("#status").find("a").addClass(GetCurrentClass());
-    $("li").on('click',  function() {  MenuClick($(this));});
+    CreateMenuWhenReady();
     resizeDiv();
 });
 
@@ -155,6 +139,19 @@ Number.prototype.pad = function(size) {
       while (s.length < (size || 2)) {s = "0" + s;}
       return s;
     }
+    
+//*****************************************************************************
+//  Read QueryString Parameter
+//*****************************************************************************    
+function GetQueryStringParams(sParam) {
+    var sPageURL = window.location.search.substring(1);
+    var sURLVariables = sPageURL.split('&');
+    for (var i = 0; i < sURLVariables.length; i++) {
+	var sParameterName = sURLVariables[i].split('=');
+	if (sParameterName[0] == sParam)
+	   return sParameterName[1];
+    }
+}	
 
 //*****************************************************************************
 // called when setting a remote command
@@ -172,22 +169,56 @@ function SetRemoteCommand(command){
 
 
 //*****************************************************************************
+// Create Main Menu
+//*****************************************************************************
+
+function CreateMenuWhenReady() {
+    if(myGenerator["pages"] == undefined) {//we want it to match
+        setTimeout(CreateMenuWhenReady, 50);//wait 50 millisecnds then recheck
+        return false;
+    }
+    CreateMenu();
+    return true;
+}
+
+function CreateMenu() {
+    var outstr = '';
+    
+    SetHeaderValues();
+    $("#footer").html('<table border="0" width="100%" height="30px"><tr><td width="5%"><img class="tooltip alert_small" id="ajaxWarning" src="images/transparent.png" height="28px" width="28px" style="display: none;"></td><td width="90%"><a href="https://github.com/jgyates/genmon" target="_blank">GenMon Project on GitHub</a></td><td width="5%"></td></tr></table>');
+
+    if (myGenerator["pages"]["status"] == true)
+       outstr += '<li id="status"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="status" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Status</td></tr></table></a></li>';
+    if (myGenerator["pages"]["maint"] == true)
+       outstr += '<li id="maint"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="maintenance" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Maintenance</td></tr></table></a></li>';
+    if (myGenerator["pages"]["outage"] == true)
+       outstr += '<li id="outage"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="outage" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Outage</td></tr></table></a></li>';
+    if (myGenerator["pages"]["logs"] == true)
+       outstr += '<li id="logs"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="log" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Logs</td></tr></table></a></li>';
+    if (myGenerator["pages"]["monitor"] == true)
+       outstr += '<li id="monitor"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="monitor" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Monitor</td></tr></table></a></li>';
+    if (myGenerator["pages"]["notifications"] == true)
+       outstr += '<li id="notifications"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="notifications" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Notifications</td></tr></table></a></li>';
+    if (myGenerator["pages"]["settings"] == true)
+       outstr += '<li id="settings"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="settings" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Settings</td></tr></table></a></li>';
+
+    $("#navMenu").html('<ul>' + outstr + '</ul>');
+    $("li").on('click',  function() {  MenuClick($(this).attr("id"));});
+    
+    var page = GetQueryStringParams('page');
+    
+    MenuClick(((page != undefined) && (jQuery.inArray( page, ["status", "maint", "outage", "logs", "monitor", "notifications", "settings"] ))) ? page : "status");
+    
+    $(".loader").removeClass("is-active");
+}
+
+//*****************************************************************************
 // DisplayStatusFull - show the status page at the beginning or when switching
 // from another page
 //*****************************************************************************
 var gauge = [];
 
-function DisplayStatusFullWhenReady() {
-    if(myGenerator["tiles"] == undefined) {//we want it to match
-        setTimeout(DisplayStatusFullWhenReady, 50);//wait 50 millisecnds then recheck
-        return false;
-    }
-    DisplayStatusFull();
-    return true;
-}
-
-function DisplayStatusFull()
-{
+function DisplayStatusFull() {
     var vpw = $(window).width();
     var gridWidth = Math.round((vpw-240)/190);
         gridWidth = (gridWidth < 1) ? 1 : gridWidth;
@@ -577,62 +608,66 @@ function DisplayMaintenance(){
 
         outstr = '<div style="clear:both" id="maintText">' + json2html(result, "", "root") + '</div>';
 
-        outstr += "<br>Generator Exercise Time:<br><br>";
+        if (myGenerator["write_access"] == true) { 
+            outstr += "<br>Generator Exercise Time:<br><br>";
 
-        //Create array of options to be added
-        if (myGenerator['EnhancedExerciseEnabled'] == true) {
-           outstr += '&nbsp;&nbsp;&nbsp;&nbsp;<select id="ExerciseFrequency" onChange="setExerciseSelection()">';
-           outstr += '<option value="Weekly" ' + (myGenerator['ExerciseFrequency'] == "Weekly"  ? ' selected="selected" ' : '') + '>Weekly</option>';
-           outstr += '<option value="Biweekly" ' + (myGenerator['ExerciseFrequency'] == "Biweekly"  ? ' selected="selected" ' : '') + '>Biweekly</option>';
-           outstr += '<option value="Monthly" ' + (myGenerator['ExerciseFrequency'] == "Monthly"  ? ' selected="selected" ' : '') + '>Monthly</option>';
-           outstr += '</select>';
+            //Create array of options to be added
+            if (myGenerator['EnhancedExerciseEnabled'] == true) {
+                outstr += '&nbsp;&nbsp;&nbsp;&nbsp;<select id="ExerciseFrequency" onChange="setExerciseSelection()">';
+                outstr += '<option value="Weekly" ' + (myGenerator['ExerciseFrequency'] == "Weekly"  ? ' selected="selected" ' : '') + '>Weekly</option>';
+                outstr += '<option value="Biweekly" ' + (myGenerator['ExerciseFrequency'] == "Biweekly"  ? ' selected="selected" ' : '') + '>Biweekly</option>';
+                outstr += '<option value="Monthly" ' + (myGenerator['ExerciseFrequency'] == "Monthly"  ? ' selected="selected" ' : '') + '>Monthly</option>';
+                outstr += '</select>';
+            }
+
+            //Create and append the options, days
+            outstr += '&nbsp;<select id="days"></select> , ';
+            //Create and append the options, hours
+            outstr += '<select id="hours">';
+            for (var i = 0; i < 24; i++) {
+                outstr += '<option value="' + i.pad() + '">' + i.pad() + '</option>';
+            }
+            outstr += '</select> : ';
+    
+            //Create and append the options, minute
+            outstr += '<select id="minutes">';
+            for (var i = 0; i < 60; i++) {
+                outstr += '<option value="' + i.pad() + '">' + i.pad() + '</option>';
+            }
+            outstr += '</select>';
+    
+            //Create and append select list
+            outstr += '&nbsp;&nbsp;<select id="quietmode">';
+            outstr += '<option value="On" ' + (myGenerator['QuietMode'] == "On"  ? ' selected="selected" ' : '') + '>Quiet Mode On </option>';
+            outstr += '<option value="Off"' + (myGenerator['QuietMode'] == "Off" ? ' selected="selected" ' : '') + '>Quiet Mode Off</option>';
+            outstr += '</select><br><br>';
+    
+            outstr += '&nbsp;&nbsp;<button id="setexercisebutton" onClick="saveMaintenance();">Set Exercise Time</button>';
+    
+            outstr += '<br><br>Generator Time:<br><br>';
+            outstr += '&nbsp;&nbsp;<button id="settimebutton" onClick="SetTimeClick();">Set Generator Time</button>';
+    
+            outstr += '<br><br>Remote Commands:<br><br>';
+    
+            outstr += '&nbsp;&nbsp;&nbsp;&nbsp;<button class="tripleButtonLeft" id="remotestop" onClick="SetStopClick();">Stop Generator</button>';
+            outstr += '<button class="tripleButtonCenter" id="remotestart" onClick="SetStartClick();">Start Generator</button>';
+            outstr += '<button class="tripleButtonRight"  id="remotetransfer" onClick="SetTransferClick();">Start Generator and Transfer</button><br><br>';
         }
-
-        //Create and append the options, days
-        outstr += '&nbsp;<select id="days"></select> , ';
-        //Create and append the options, hours
-        outstr += '<select id="hours">';
-        for (var i = 0; i < 24; i++) {
-            outstr += '<option value="' + i.pad() + '">' + i.pad() + '</option>';
+    
+            $("#mydisplay").html(outstr);
+    
+        if (myGenerator["write_access"] == true) { 
+    
+            setExerciseSelection();
+    
+            $("#days").val(myGenerator['ExerciseDay']);
+            $("#hours").val(myGenerator['ExerciseHour']);
+            $("#minutes").val(myGenerator['ExerciseMinute']);
+    
+            startStartStopButtonsState();
+    
+            myGenerator["OldExerciseParameters"] = [myGenerator['ExerciseDay'], myGenerator['ExerciseHour'], myGenerator['ExerciseMinute'], myGenerator['QuietMode'], myGenerator['ExerciseFrequency'], myGenerator['EnhancedExerciseEnabled']];
         }
-        outstr += '</select> : ';
-
-        //Create and append the options, minute
-        outstr += '<select id="minutes">';
-        for (var i = 0; i < 60; i++) {
-            outstr += '<option value="' + i.pad() + '">' + i.pad() + '</option>';
-        }
-        outstr += '</select>';
-
-        //Create and append select list
-        outstr += '&nbsp;&nbsp;<select id="quietmode">';
-        outstr += '<option value="On" ' + (myGenerator['QuietMode'] == "On"  ? ' selected="selected" ' : '') + '>Quiet Mode On </option>';
-        outstr += '<option value="Off"' + (myGenerator['QuietMode'] == "Off" ? ' selected="selected" ' : '') + '>Quiet Mode Off</option>';
-        outstr += '</select><br><br>';
-
-        outstr += '&nbsp;&nbsp;<button id="setexercisebutton" onClick="saveMaintenance();">Set Exercise Time</button>';
-
-        outstr += '<br><br>Generator Time:<br><br>';
-        outstr += '&nbsp;&nbsp;<button id="settimebutton" onClick="SetTimeClick();">Set Generator Time</button>';
-
-        outstr += '<br><br>Remote Commands:<br><br>';
-
-        outstr += '&nbsp;&nbsp;&nbsp;&nbsp;<button class="tripleButtonLeft" id="remotestop" onClick="SetStopClick();">Stop Generator</button>';
-        outstr += '<button class="tripleButtonCenter" id="remotestart" onClick="SetStartClick();">Start Generator</button>';
-        outstr += '<button class="tripleButtonRight"  id="remotetransfer" onClick="SetTransferClick();">Start Generator and Transfer</button><br><br>';
-
-        $("#mydisplay").html(outstr);
-
-
-        setExerciseSelection();
-
-        $("#days").val(myGenerator['ExerciseDay']);
-        $("#hours").val(myGenerator['ExerciseHour']);
-        $("#minutes").val(myGenerator['ExerciseMinute']);
-
-        startStartStopButtonsState();
-
-        myGenerator["OldExerciseParameters"] = [myGenerator['ExerciseDay'], myGenerator['ExerciseHour'], myGenerator['ExerciseMinute'], myGenerator['QuietMode'], myGenerator['ExerciseFrequency'], myGenerator['EnhancedExerciseEnabled']];
 
    }});
 }
@@ -754,28 +789,30 @@ function SetTimeClick(){
 //*****************************************************************************
 function DisplayMaintenanceUpdate(){
 
-    $("#Exercise_Time").html(myGenerator['ExerciseFrequency'] + ' ' +
-                             myGenerator['ExerciseDay'] + ' ' + myGenerator['ExerciseHour'] + ':' + myGenerator['ExerciseMinute'] +
-                             ' Quiet Mode ' + myGenerator['QuietMode']);
-
-    if ((myGenerator['EnhancedExerciseEnabled'] == true) && (myGenerator['ExerciseFrequency'] != myGenerator['OldExerciseParameters'][4])) {
-        $("#ExerciseFrequency").val(myGenerator['ExerciseFrequency']);
-        setExerciseSelection();
+    if (myGenerator["write_access"] == true) {
+        $("#Exercise_Time").html(myGenerator['ExerciseFrequency'] + ' ' +
+                                 myGenerator['ExerciseDay'] + ' ' + myGenerator['ExerciseHour'] + ':' + myGenerator['ExerciseMinute'] +
+                                 ' Quiet Mode ' + myGenerator['QuietMode']);
+    
+        if ((myGenerator['EnhancedExerciseEnabled'] == true) && (myGenerator['ExerciseFrequency'] != myGenerator['OldExerciseParameters'][4])) {
+            $("#ExerciseFrequency").val(myGenerator['ExerciseFrequency']);
+            setExerciseSelection();
+        }
+    
+        if (myGenerator['ExerciseDay'] !=  myGenerator['OldExerciseParameters'][0])
+           $("#days").val(myGenerator['ExerciseDay']);
+        if (myGenerator['ExerciseHour'] !=  myGenerator['OldExerciseParameters'][1])
+           $("#hours").val(myGenerator['ExerciseHour']);
+        if (myGenerator['ExerciseMinute'] !=  myGenerator['OldExerciseParameters'][2])
+           $("#minutes").val(myGenerator['ExerciseMinute']);
+        if (myGenerator['QuietMode'] !=  myGenerator['OldExerciseParameters'][3])
+           $("#quietmode").val(myGenerator['QuietMode']);
+    
+        startStartStopButtonsState();
+    
+        myGenerator["OldExerciseParameters"] = [myGenerator['ExerciseDay'], myGenerator['ExerciseHour'], myGenerator['ExerciseMinute'], myGenerator['QuietMode'], myGenerator['ExerciseFrequency'], myGenerator['EnhancedExerciseEnabled']];
     }
-
-    if (myGenerator['ExerciseDay'] !=  myGenerator['OldExerciseParameters'][0])
-       $("#days").val(myGenerator['ExerciseDay']);
-    if (myGenerator['ExerciseHour'] !=  myGenerator['OldExerciseParameters'][1])
-       $("#hours").val(myGenerator['ExerciseHour']);
-    if (myGenerator['ExerciseMinute'] !=  myGenerator['OldExerciseParameters'][2])
-       $("#minutes").val(myGenerator['ExerciseMinute']);
-    if (myGenerator['QuietMode'] !=  myGenerator['OldExerciseParameters'][3])
-       $("#quietmode").val(myGenerator['QuietMode']);
-
-    startStartStopButtonsState();
-
-    myGenerator["OldExerciseParameters"] = [myGenerator['ExerciseDay'], myGenerator['ExerciseHour'], myGenerator['ExerciseMinute'], myGenerator['QuietMode'], myGenerator['ExerciseFrequency'], myGenerator['EnhancedExerciseEnabled']];
-
+    
     var url = baseurl.concat("maint_json");
     $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
         processAjaxSuccess();
@@ -921,10 +958,13 @@ function DisplayMonitor(){
         processAjaxSuccess();
 
         var outstr = json2html(result, "", "root");
-        outstr += '<br><br>Update Generator Monitor Software:<br><div id="updateNeeded"><br></div>';
-        outstr += '&nbsp;&nbsp;<button id="checkNewVersion" onClick="checkNewVersion();">Upgrade to latest version</button>';
-        outstr += '<br><br>Submit Registers to Developers:<br><br>';
-        outstr += '&nbsp;&nbsp;<button id="submitRegisters" onClick="submitRegisters();">Submit Registers</button>';
+        
+        if (myGenerator["write_access"] == true) {
+            outstr += '<br><br>Update Generator Monitor Software:<br><div id="updateNeeded"><br></div>';
+            outstr += '&nbsp;&nbsp;<button id="checkNewVersion" onClick="checkNewVersion();">Upgrade to latest version</button>';
+            outstr += '<br><br>Submit Registers to Developers:<br><br>';
+            outstr += '&nbsp;&nbsp;<button id="submitRegisters" onClick="submitRegisters();">Submit Registers</button>';
+        }
 
         $("#mydisplay").html(outstr);
 
@@ -963,20 +1003,22 @@ function DisplayMonitor(){
            $("#Conditions").html('<div style="display: inline-block; position: relative;">'+result["Monitor"]["Weather"]["Conditions"] + '<img class="greyscale" style="position: absolute;top:-30px;left:160px" src="http://openweathermap.org/img/w/' + prevStatusValues["Weather"]["icon"] + '.png"></div>');
         }
 
-        if (latestVersion == "") {
-          // var url = "https://api.github.com/repos/jgyates/genmon/releases";
-          var url = "https://raw.githubusercontent.com/jgyates/genmon/master/genmon.py";
-          $.ajax({dataType: "html", url: url, timeout: 4000, error: function(result) {
-             console.log("got an error when looking up latest version");
-             latestVersion == "unknown";
-          }, success: function(result) {
-             latestVersion = replaceAll((jQuery.grep(result.split("\n"), function( a ) { return (a.indexOf("GENMON_VERSION") >= 0); }))[0].split(" ")[2], '"', '');
-             if (latestVersion != myGenerator["version"]) {
-                $('#updateNeeded').hide().html("<br>&nbsp;&nbsp;&nbsp;&nbsp;You are not running the latest version.<br>&nbsp;&nbsp;&nbsp;&nbsp;Current Version: " + myGenerator["version"] +"<br>&nbsp;&nbsp;&nbsp;&nbsp;New Version: " + latestVersion+"<br><br>").fadeIn(1000);
-             }
-          }});
-        } else if ((latestVersion != "unknown") && (latestVersion != myGenerator["version"])) {
-          $('#updateNeeded').html("<br>&nbsp;&nbsp;&nbsp;&nbsp;You are not running the latest version.<br>&nbsp;&nbsp;&nbsp;&nbsp;Current Version: " + myGenerator["version"] +"<br>&nbsp;&nbsp;&nbsp;&nbsp;New Version: " + latestVersion+"<br><br>");
+        if (myGenerator["write_access"] == true) {
+            if (latestVersion == "") {
+              // var url = "https://api.github.com/repos/jgyates/genmon/releases";
+              var url = "https://raw.githubusercontent.com/jgyates/genmon/master/genmon.py";
+              $.ajax({dataType: "html", url: url, timeout: 4000, error: function(result) {
+                 console.log("got an error when looking up latest version");
+                 latestVersion == "unknown";
+              }, success: function(result) {
+                 latestVersion = replaceAll((jQuery.grep(result.split("\n"), function( a ) { return (a.indexOf("GENMON_VERSION") >= 0); }))[0].split(" ")[2], '"', '');
+                 if (latestVersion != myGenerator["version"]) {
+                    $('#updateNeeded').hide().html("<br>&nbsp;&nbsp;&nbsp;&nbsp;You are not running the latest version.<br>&nbsp;&nbsp;&nbsp;&nbsp;Current Version: " + myGenerator["version"] +"<br>&nbsp;&nbsp;&nbsp;&nbsp;New Version: " + latestVersion+"<br><br>").fadeIn(1000);
+                 }
+              }});
+            } else if ((latestVersion != "unknown") && (latestVersion != myGenerator["version"])) {
+              $('#updateNeeded').html("<br>&nbsp;&nbsp;&nbsp;&nbsp;You are not running the latest version.<br>&nbsp;&nbsp;&nbsp;&nbsp;Current Version: " + myGenerator["version"] +"<br>&nbsp;&nbsp;&nbsp;&nbsp;New Version: " + latestVersion+"<br><br>");
+            }
         }
    }});
 }
@@ -1262,6 +1304,7 @@ function DisplaySettings(){
 
         var outstr = '<form class="idealforms" novalidate  id="formSettings">';
         var settings =  getSortedKeys(result, 2);
+        var usehttps = false;
         for (var index = 0; index < settings.length; ++index) {
             var key = settings[index];
             if (key == "sitename") {
@@ -1272,44 +1315,46 @@ function DisplaySettings(){
               outstr += '<fieldset id="modelSettings"><table id="allsettings" border="0">';
               outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
             } else if (key == "usehttps") {
+              usehttps = result[key][3];
               outstr += '</table></fieldset><br><br><table width="100%" border="0"><tr><td nowrap width="90px">';
               outstr += printSettingsField(result[key][0], key, result[key][3], "", "", "usehttpsChange(true);");
               outstr += '</td><td nowrap>&nbsp;&nbsp;Optional - Webserver Security Settings&nbsp;&nbsp;</td><td width="80%"><hr></td></tr></table>';
-              outstr += '<fieldset id="securitySettings"><table id="allsettings" border="0">';
-            } else if (key == "disableemail") {
+              outstr += '<fieldset id="'+key+'Section"><table id="allsettings" border="0">';
+            } else if (key == "disablesmtp") {
               outstr += '</table></fieldset><br><br><table width="100%" border="0"><tr><td nowrap width="90px">';
-              outstr += '<input id="' + key + '" name="' + key + '" type="hidden"' +
-                         (((typeof result[key][3] !== 'undefined' ) && (result[key][3].toString() == "true")) ? ' value="true" ' : ' value="false" ') +
-                         (((typeof result[key][3] !== 'undefined' ) && (result[key][3].toString() == "true")) ? ' oldValue="true" ' : ' oldValue="false" ') + '>';
-              outstr += printSettingsField("boolean", "outboundemail", (((typeof result[key][3] !== 'undefined' ) && (result[key][3].toString() == "true")) ? false : true), "", "", "outboundEmailChange(true);");
+              outstr += printSettingsField(result[key][0], key, !result[key][3], "", "", "toggleSectionInverse(true, '"+key+"');");
               outstr += '</td><td nowrap>&nbsp;&nbsp;Optional - Outbound Email Settings&nbsp;&nbsp;</td><td width="80%"><hr></td></tr></table>';
-              outstr += '<fieldset id="outboundEmailSettings"><table id="allsettings" border="0">';
-            } else if (key == "imap_server") {
-              outstr += '</table></fieldset><br><br><table width="100%" border="0"><tr><td nowrap width="90px:>';
-              outstr += printSettingsField("boolean", "inboundemail", ((result[key][3] != "") ? true : false), "", "", "inboundemailChange(true);");
+              outstr += '<fieldset id="'+key+'Section"><table id="allsettings" border="0">';
+            } else if (key == "disableimap") {
+              outstr += '</table></fieldset><br><br><table width="100%" border="0"><tr><td nowrap width="90px">';
+              outstr += printSettingsField(result[key][0], key, !result[key][3], "", "", "toggleSectionInverse(true, '"+key+"');");
               outstr += '</td><td nowrap>&nbsp;&nbsp;Optional - Inbound Email Commands Processing&nbsp;&nbsp;</td><td width="80%"><hr></td></tr></table>';
-              outstr += '<fieldset id="inboundEmailSettings"><table id="allsettings" border="0">';
-              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
+              outstr += '<fieldset id="'+key+'Section"><table id="allsettings" border="0">';
+            } else if (key == "disableweather") {
+              outstr += '</table></fieldset><br><br><table width="100%" border="0"><tr><td nowrap width="90px">';
+              outstr += printSettingsField(result[key][0], key, !result[key][3], "", "", "toggleSectionInverse(true, '"+key+"');");
+              outstr += '</td><td nowrap>&nbsp;&nbsp;Optional - Display Current Weather&nbsp;&nbsp;</td><td width="80%"><hr></td></tr></table>';
+              outstr += '<fieldset id="'+key+'Section"><table id="allsettings" border="0">';
             } else if (key == "useselfsignedcert") {
-              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "useselfsignedcertChange(true);") + '</td></tr>';
-              outstr += '</table><fieldset id="selfsignedSettings"><table id="allsettings" border="0">';
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "toggleSection(true, 'useselfsignedcert');") + '</td></tr>';
+              outstr += '</table><fieldset id="'+key+'Section"><table id="allsettings" border="0">';
             } else if (key == "http_user") {
               outstr += '</table></fieldset><table id="allsettings" border="0">';
-              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "useselfsignedcertChange(true);") + '</td></tr>';
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "toggleSection(true, 'useselfsignedcert');") + '</td></tr>';
             } else if (key == "http_port") {
               outstr += '</table></fieldset><fieldset id="noneSecuritySettings"><table id="allsettings" border="0">';
-              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "useselfsignedcertChange(true);") + '</td></tr>';
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "toggleSection(true, 'useselfsignedcert');") + '</td></tr>';
             } else if (key == "favicon") {
               outstr += '</table></fieldset><table id="allsettings" border="0">';
-              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "useselfsignedcertChange(true);") + '</td></tr>';
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "toggleSection(true, 'useselfsignedcert');") + '</td></tr>';
             } else if ((key == "autofeedback") && (myGenerator['UnsentFeedback'] == true)) {
               outstr += '<tr><td width="25px">&nbsp;</td><td bgcolor="#ffcccc" width="300px">' + result[key][1] + '</td><td bgcolor="#ffcccc">' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
-            } else if (key == "weatherkey") {
-              outstr += '</table></fieldset><br><br><table width="100%" border="0"><tr><td nowrap width="90px:>';
-              outstr += printSettingsField("boolean", "weather", ((result[key][3] != "") ? true : false), "", "", "weatherChange(true);");
-              outstr += '</td><td nowrap>&nbsp;&nbsp;Optional - Display Current Weather&nbsp;&nbsp;</td><td width="80%"><hr></td></tr></table>';
-              outstr += '<fieldset id="weatherSettings"><table id="allsettings" border="0">';
-              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
+            } else if (key == "weatherlocation") {
+              outstr += '<tr><td width="25px">&nbsp;</td><td valign="top" width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]);
+              if (usehttps == true) { 
+                outstr += '<br><button type="button" id="weathercityname" onclick="lookupLocation()">Look Up</button>';
+              }
+              outstr += '</td></tr>';
             } else {
               outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
             }
@@ -1351,10 +1396,10 @@ function DisplaySettings(){
         });
 
         usehttpsChange(false);
-        outboundEmailChange(false);
-        inboundemailChange(false);
-        useselfsignedcertChange(false);
-        weatherChange(false);
+        toggleSection(false, "useselfsignedcert");
+        toggleSectionInverse(false, "disablesmtp");
+        toggleSectionInverse(false, "disableimap");
+        toggleSectionInverse(false, "disableweather");
    }});
 
 }
@@ -1362,50 +1407,73 @@ function DisplaySettings(){
 function usehttpsChange(animation) {
    if ($("#usehttps").is(":checked")) {
       $("#noneSecuritySettings").hide((animation ? 300 : 0));
-      $("#securitySettings").show((animation ? 300 : 0));
+      $("#usehttpsSection").show((animation ? 300 : 0));
 
       if (!$("#useselfsignedcert").is(":checked")) {
-         $("#selfsignedSettings").show((animation ? 300 : 0));
+         $("#useselfsignedcertSettings").show((animation ? 300 : 0));
       }
    } else {
-      $("#securitySettings").hide((animation ? 300 : 0));
+      $("#usehttpsSection").hide((animation ? 300 : 0));
       $("#noneSecuritySettings").show((animation ? 300 : 0));
    }
 }
 
-function useselfsignedcertChange(animation) {
-   if ($("#useselfsignedcert").is(":checked")) {
-      $("#selfsignedSettings").hide((animation ? 300 : 0));
+function toggleSection(animation, section) {
+   if ($("#"+section).is(":checked")) {
+      $("#"+section+"Section").hide((animation ? 300 : 0));
    } else {
-      $("#selfsignedSettings").show((animation ? 300 : 0));
+      $("#"+section+"Section").show((animation ? 300 : 0));
    };
 }
 
-function outboundEmailChange(animation) {
-   if($("#outboundemail").is(":checked")) {
-      $("#outboundEmailSettings").show((animation ? 300 : 0));
-      $("#disableemail").val("false");
+function toggleSectionInverse(animation, section) {
+   if ($("#"+section).is(":checked")) {
+      $("#"+section+"Section").show((animation ? 300 : 0));
    } else {
-      $("#outboundEmailSettings").hide((animation ? 300 : 0));
-      $("#disableemail").val("true");
-   }
+      $("#"+section+"Section").hide((animation ? 300 : 0));
+   };
 }
 
-function inboundemailChange(animation) {
-   if($("#inboundemail").is(":checked")) {
-      $("#inboundEmailSettings").show((animation ? 300 : 0));
-   } else {
-      $("#inboundEmailSettings").hide((animation ? 300 : 0));
-   }
+function lookupLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(locationSuccess, locationError);
+    } else {
+        GenmonAlert("Your browser does not support Geolocation!");
+    }
+}    
+
+function locationError(error) {
+    switch (error.code) {
+    case error.TIMEOUT:
+        GenmonAlert("A timeout occured! Please try again!");
+        break;
+    case error.POSITION_UNAVAILABLE:
+        GenmonAlert('We can\'t detect your location. Sorry!');
+        break;
+    case error.PERMISSION_DENIED:
+        GenmonAlert('Please allow geolocation access for this to work.');
+        break;
+    case error.UNKNOWN_ERROR:
+        GenmonAlert('An unknown error occured!');
+        break;
+    }
 }
 
-function weatherChange(animation) {
-   if($("#weather").is(":checked")) {
-      $("#weatherSettings").show((animation ? 300 : 0));
-   } else {
-      $("#weatherSettings").hide((animation ? 300 : 0));
-   }
+
+function locationSuccess(position) {
+    try {
+            var weatherAPI = '//api.openweathermap.org/data/2.5/forecast?lat=' + position.coords.latitude + '&lon=' + position.coords.longitude + '&lang=en&APPID='+$('#weatherkey').val();
+            $.getJSON(weatherAPI, function (response) {
+                $('#weatherlocation').val(response.city.id);
+                // $('form.idealforms').idealforms('is:valid', "weatherlocation");
+                $('#weathercityname').replaceWith("  ("+response.city.name+")");
+            });
+    } catch (e) {
+        GenmonAlert("We can't find information about your city!");
+        window.console && console.error(e);
+    }
 }
+
 
 function printSettingsField(type, key, value, tooltip, validation, callback) {
    var outstr = "";
@@ -1549,6 +1617,11 @@ function saveSettingsJSON() {
                fields[$(this).attr('name')] = currentValue;
                $(this).attr('oldValue', currentValue);
             }
+        });
+        
+        jQuery.each( ["disablesmtp", "disableimap", "disableweather"], function( i, val ) {
+          if (fields[val] != undefined) 
+             fields[val] = (fields[val] == "true" ? "false" : "true");
         });
 
         // save settings
@@ -1856,14 +1929,12 @@ function toHex(d) {
 //*****************************************************************************
 //  called when menu is clicked
 //*****************************************************************************
-function MenuClick(target)
+function MenuClick(page)
 {
-
+        menuElement = page;
         RemoveClass();  // remove class from menu items
         // add class active to the clicked item
-        target.find("a").addClass(GetCurrentClass());
-        // update the display
-        menuElement = target.attr("id");
+        $("#"+menuElement).find("a").addClass(GetCurrentClass());
         window.scrollTo(0,0);
         switch (menuElement) {
             case "outage":
@@ -1945,9 +2016,9 @@ function GetDisplayValues(command)
 }
 
 //*****************************************************************************
-// GetGeneratorModel - Get the current Generator Model and kW Rating
+// GetStartupInfo - Get the current Generator Model and kW Rating
 //*****************************************************************************
-function GetGeneratorModel()
+function GetStartupInfo()
 {
     url = baseurl.concat("start_info_json");
     $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
@@ -1955,7 +2026,6 @@ function GetGeneratorModel()
 
       myGenerator = result;
       myGenerator["OldExerciseParameters"] = [-1,-1,-1,-1,-1,-1];
-      SetHeaderValues();
     }});
 }
 
@@ -1966,7 +2036,7 @@ function SetHeaderValues()
 {
    var HeaderStr = '<table border="0" width="100%" height="30px"><tr><td width="30px"></td><td width="90%">Generator Monitor at ' + myGenerator["sitename"] + '</td><td width="30px"><img id="registers" class="registers" src="images/transparent.png" width="20px" height="20px"></td></tr></table>';
    $("#myheader").html(HeaderStr);
-   $("#registers").on('click',  function() {  MenuClick($(this));});
+   $("#registers").on('click',  function() {  MenuClick("registers");});
 }
 
 

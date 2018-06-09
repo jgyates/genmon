@@ -42,6 +42,7 @@ def compress(in_files, out_file, in_type='js', verbose=False,
     os.remove(temp_file)
     
 MINIFY_SCRIPTS = [
+    'js/jquery.ui.touch-punch.min.js',
     'js/tooltipster.bundle.js',
     'js/vex.combined.min.js',
     'js/gauge.min.js',

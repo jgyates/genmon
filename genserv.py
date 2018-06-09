@@ -427,15 +427,15 @@ def ReadSettingsFromFile():
                 "certfile" : ['string', 'https Certificate File', 205, "", "", "UnixFile", GENMON_CONFIG],
                 "http_user" : ['string', 'Web Username', 206, "", "", "minmax:4:50", GENMON_CONFIG],
                 "http_pass" : ['string', 'Web Password', 207, "", "", "minmax:4:50", GENMON_CONFIG],
-                #"http_user_ro" : ['string', 'Limited User Web Username', 208, "", "", "minmax:4:50", GENMON_CONFIG],
-                #"http_pass_ro" : ['string', 'Limited User Web Password', 209, "", "", "minmax:4:50", GENMON_CONFIG],
+                "http_user_ro" : ['string', 'Limited Rights User Username', 208, "", "", "minmax:4:50", GENMON_CONFIG],
+                "http_pass_ro" : ['string', 'Limited Rights User Password', 209, "", "", "minmax:4:50", GENMON_CONFIG],
                 "http_port" : ['int', 'Port of WebServer', 210, 8000, "", "required digits", GENMON_CONFIG],
                 "favicon" : ['string', 'FavIcon', 220, "", "", "minmax:8:255", GENMON_CONFIG],
                 # This does not appear to work on reload, some issue with Flask
 
-                # TODO Michael : remove disableemail, uncomment disablesmtp, disableimap and disablesmtp
-                "disableemail" : ['boolean', 'Disable Email Usage', 300, True, "", "", MAIL_CONFIG],
-                #"disablesmtp"  : ['boolean', 'Disable Sending Email', 300, False, "", "", MAIL_CONFIG],
+                #
+                #"disableemail" : ['boolean', 'Disable Email Usage', 300, True, "", "", MAIL_CONFIG],
+                "disablesmtp"  : ['boolean', 'Disable Sending Email', 300, False, "", "", MAIL_CONFIG],
                 "email_account" : ['string', 'Email Account', 301, "myemail@gmail.com", "", "minmax:3:50", MAIL_CONFIG],
                 "email_pw" : ['password', 'Email Password', 302, "password", "", "max:50", MAIL_CONFIG],
                 "sender_account" : ['string', 'Sender Account', 303, "no-reply@gmail.com", "", "email", MAIL_CONFIG],
@@ -444,7 +444,7 @@ def ReadSettingsFromFile():
                 "smtp_port" : ['int', 'SMTP Server Port', 307, 587, "", "digits", MAIL_CONFIG],
                 "ssl_enabled" : ['boolean', 'SMTP Server SSL Enabled', 308, False, "", "", MAIL_CONFIG],
 
-                #"disableimap"  : ['boolean', 'Disable Receiving Email', 400, False, "", "", MAIL_CONFIG],
+                "disableimap"  : ['boolean', 'Disable Receiving Email', 400, False, "", "", MAIL_CONFIG],
                 "imap_server" : ['string', 'IMAP Server <br><small>(leave emtpy to disable)</small>', 401, "imap.gmail.com", "", "InternetAddress", MAIL_CONFIG],
                 "readonlyemailcommands" : ['boolean', 'Disable Email Write Commands',402, False, "", "", GENMON_CONFIG],
                 "incoming_mail_folder" : ['string', 'Incoming Mail Folder<br><small>(if IMAP enabled)</small>', 403, "Generator", "", "minmax:1:1500", GENMON_CONFIG],
