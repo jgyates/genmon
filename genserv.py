@@ -175,7 +175,9 @@ def ProcessCommand(command):
         elif command in ["updatesoftware"]:
             if session.get('write_access', True):
                 Update()
-            return "OK"
+                return "OK"
+            else:
+                return "Access denied"
 
         elif command in ["getfavicon"]:
             return jsonify(favicon)
@@ -185,8 +187,11 @@ def ProcessCommand(command):
             return jsonify(data)
 
         elif command in ["settings"]:
-            data =  ReadSettingsFromFile()
-            return jsonify(data)
+            if session.get('write_access', True):
+                data =  ReadSettingsFromFile()
+                return jsonify(data)
+            else:
+                return "Access denied"
 
         elif command in ["setnotifications"]:
             if session.get('write_access', True):
@@ -429,8 +434,8 @@ def ReadSettingsFromFile():
                 # This does not appear to work on reload, some issue with Flask
 
                 # TODO Michael : remove disableemail, uncomment disablesmtp, disableimap and disablesmtp
-                "disableemail" : ['boolean', 'Disable Email Usage', 300, True, "", "", MAIL_CONFIG],
-                #"disablesmtp"  : ['boolean', 'Disable Sending Email', 300, True, "", "", MAIL_CONFIG],
+                #"disableemail" : ['boolean', 'Disable Email Usage', 300, True, "", "", MAIL_CONFIG],
+                "disablesmtp"  : ['boolean', 'Disable Sending Email', 300, False, "", "", MAIL_CONFIG],
                 "email_account" : ['string', 'Email Account', 301, "myemail@gmail.com", "", "minmax:3:50", MAIL_CONFIG],
                 "email_pw" : ['password', 'Email Password', 302, "password", "", "max:50", MAIL_CONFIG],
                 "sender_account" : ['string', 'Sender Account', 303, "no-reply@gmail.com", "", "email", MAIL_CONFIG],
@@ -439,13 +444,13 @@ def ReadSettingsFromFile():
                 "smtp_port" : ['int', 'SMTP Server Port', 307, 587, "", "digits", MAIL_CONFIG],
                 "ssl_enabled" : ['boolean', 'SMTP Server SSL Enabled', 308, False, "", "", MAIL_CONFIG],
 
-                #"disableimap"  : ['boolean', 'Disable Receiving Email', 400, True, "", "", MAIL_CONFIG],
+                "disableimap"  : ['boolean', 'Disable Receiving Email', 400, False, "", "", MAIL_CONFIG],
                 "imap_server" : ['string', 'IMAP Server <br><small>(leave emtpy to disable)</small>', 401, "imap.gmail.com", "", "InternetAddress", MAIL_CONFIG],
                 "readonlyemailcommands" : ['boolean', 'Disable Email Write Commands',402, False, "", "", GENMON_CONFIG],
                 "incoming_mail_folder" : ['string', 'Incoming Mail Folder<br><small>(if IMAP enabled)</small>', 403, "Generator", "", "minmax:1:1500", GENMON_CONFIG],
                 "processed_mail_folder" : ['string', 'Mail Processed Folder<br><small>(if IMAP enabled)</small>', 404, "Generator/Processed","", "minmax:1:255", GENMON_CONFIG],
 
-                #"disableweather"  : ['boolean', 'Disable Weather Functionality', 500, True, "", "", GENMON_CONFIG],
+                "disableweather"  : ['boolean', 'Disable Weather Functionality', 500, False, "", "", GENMON_CONFIG],
                 "weatherkey" : ['string', 'Openweathermap.org API key', 501, "", "", "required minmax:4:50", GENMON_CONFIG],
                 "weatherlocation" : ['string', 'Location to report weather', 502, "", "", "required minmax:4:50", GENMON_CONFIG],
                 "minimumweatherinfo"  : ['boolean', 'Display Minimum Weather Info', 504, True, "", "", GENMON_CONFIG]

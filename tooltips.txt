@@ -34,6 +34,8 @@ keyfile = If Use 'Self-signed Certificate' is disabled, denotes the path and fil
 certfile = If Use 'Self-signed Certificate' is disabled, denotes the path and filename of the cert file
 http_user = Simple authentication will be used. Sets the username of the simple authentication. Leave blank to disable. 'Use Secure Web Settings' must be enabled to use this feature.
 http_pass = Simple authentication will be used. Sets the password of the simple authentication. Leave blank to disable. 'Use Secure Web Settings' must be enabled to use this feature.
+http_user_ro = Sets the username of the limited rights user. Leave blank to disable. 'Use Secure Web Settings' and full rights user must be enabled to use this feature.
+http_pass_ro = Sets the password of the limited rights user. Leave blank to disable. 'Use Secure Web Settings' and full rights user must be enabled to use this feature.
 http_port = HTTP port to be used by the web server.
 favicon = favicon for website. This is an optional parameter and default is "favicon.ico". This may not work in older browsers
 kwlogmax = Full path to override the default kW log. If this option is present but empty the kW log will be disabled.
@@ -54,7 +56,7 @@ fueltype = The type of fuel used by your generator (Natural Gas, Propane, Diesel
 model = The model of your generator as detected by the software
 voltageconfiguration = The voltage configuration of the industrial generator.
 nominalbattery = 12 for one battery, 24 for two batteries
-controllertype = Set to h_100 for H-100 mode, otherwise the software will default to Nexus/Evolution Mode 
+controllertype = Set to h_100 for H-100 mode, otherwise the software will default to Nexus/Evolution Mode
 autofeedback = If enabled, an email will be sent to the software maintainer if critical data is missing in the software for your generator. The email will contain the contents of the generator registers. Enabling this option helps support the widest possible set of features and supported generators.
 
 [generac_evo_nexus]
