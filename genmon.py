@@ -120,7 +120,7 @@ class Monitor(mysupport.MySupport):
             #Starting device connection
             if self.Simulation:
                 self.LogError("Simulation Running")
-            if not self.ControllerSelected == None and not len(self.ControllerSelected):
+            if not self.ControllerSelected == None and len(self.ControllerSelected):
                 self.LogError("Selected Controller: " + str(self.ControllerSelected))
             else:
                 self.ControllerSelected = "generac_evo_nexus"
