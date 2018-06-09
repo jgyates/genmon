@@ -75,18 +75,16 @@ class MyTile (mycommon.MyCommon):
                 self.TyleType = "gauge"
 
             elif self.Type.lower() == "linevolts":
+                ToleranceTen =  round(self.Nominal * 0.1)
+                ToleranceFive =  round(self.Nominal * 0.05)
                 self.Nominal = self.SetDefault(self.Nominal, 240)
                 self.Minimum = self.SetDefault(self.Minimum, 0)
-                self.Maximum = self.SetDefault(self.Maximum, self.Nominal + 20)
+                #self.Maximum = self.SetDefault(self.Maximum, self.Nominal + 20)
+                self.Maximum = self.SetDefault(self.Maximum, self.Nominal + self.myround(self.Nominal * 0.15, 10))
                 self.Divisions = self.SetDefault(self.Divisions, 10 )#int(self.Maximum / 10))
                 self.SubDivisions = self.SetDefault(self.SubDivisions, 0)
-                # This does not scale
-                if self.Nominal == 240:
-                    self.Labels = self.SetDefault( self.Labels, [self.Minimum, 100, 156, 220, self.Nominal, self.Maximum])
-                else:
-                    self.Labels = self.SetDefault( self.Labels, self.CreateLabels(self.Minimum, self.Nominal , self.Maximum))
-                # This may not scale
-                values = [self.Minimum, self.Nominal - 10, self.Nominal - 5, self.Nominal + 5, self.Nominal + 15, self.Maximum]
+                self.Labels = self.SetDefault( self.Labels, self.CreateLabels(self.Minimum, self.Nominal , self.Maximum))
+                values = [self.Minimum, self.Nominal - ToleranceTen, self.Nominal - ToleranceFive, self.Nominal + ToleranceFive, self.Nominal + ToleranceTen, self.Maximum]
                 colors = [self.RED, self.YELLOW, self.GREEN, self.YELLOW, self.RED]
                 self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
                 self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
@@ -131,10 +129,12 @@ class MyTile (mycommon.MyCommon):
                 self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
                 self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
                 self.TyleType = "gauge"
+
             elif self.Type.lower() == "rpm":
                 self.Nominal = self.SetDefault(self.Nominal, 3600)
                 self.Minimum = self.SetDefault(self.Minimum, 0)
-                self.Maximum = self.SetDefault(self.Maximum, self.Nominal + 100)
+                #self.Maximum = self.SetDefault(self.Maximum, self.Nominal + 100)
+                self.Maximum = self.SetDefault(self.Maximum, self.Nominal + self.myround(self.Nominal * 0.05, 10))
                 self.Divisions = self.SetDefault(self.Divisions, 4)
                 self.SubDivisions = self.SetDefault(self.SubDivisions, 10)
                 self.Labels = self.SetDefault( self.Labels, range(self.Minimum, self.Maximum, self.Nominal / 4))
