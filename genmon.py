@@ -25,7 +25,7 @@ except ImportError as e:
 from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel, myplatform, myweather
 
 
-GENMON_VERSION = "V1.9.21"
+GENMON_VERSION = "V1.9.22"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -163,7 +163,7 @@ class Monitor(mysupport.MySupport):
             self.LogErrorLine("Error in StartThreads: " + str(e1))
 
     # -------------------- Monitor::GetConfig-----------------------------------
-    def GetConfig(self, reload = False):
+    def GetConfig(self):
 
         ConfigSection = "GenMon"
         try:
@@ -250,10 +250,7 @@ class Monitor(mysupport.MySupport):
                 except Exception as e1:
                     os.remove(self.FeedbackLogFile)
         except Exception as e1:
-            if not reload:
-                raise Exception("Missing config file or config file entries: " + str(e1))
-            else:
-                self.LogErrorLine("Error reloading config file" + str(e1))
+            raise Exception("Missing config file or config file entries (genmon): " + str(e1))
             return False
 
         return True

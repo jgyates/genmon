@@ -45,6 +45,7 @@ MAIL_CONFIG = "/etc/mymail.conf"
 GENMON_CONFIG = "/etc/genmon.conf"
 Closing = False
 Restarting = False
+ControllerType = "generac_evo_nexus"
 CriticalLock = threading.Lock()
 CachedToolTips = {}
 CachedRegisterDescriptions = {}
@@ -393,7 +394,6 @@ def ReadSettingsFromFile():
                 #"address" : ['string', 'Modbus slave address', 6, "9d", "", 0 , GENMON_CONFIG],
                 #"loglocation" : ['string', 'Log Directory', 7, "/var/log/", "", "required UnixDir", GENMON_CONFIG],
                 #"enabledebug" : ['boolean', 'Enable Debug', 14, False, "", 0, GENMON_CONFIG],
-                "disableoutagecheck" : ['boolean', 'Do Not Check for Outages', 17, False, "", "", GENMON_CONFIG],
                 # These settings are not displayed as the auto-detect controller will set these
                 # these are only to be used to override the auto-detect
                 #"uselegacysetexercise" : ['boolean', 'Use Legacy Exercise Time', 43, False, "", 0, GENMON_CONFIG],
@@ -413,8 +413,7 @@ def ReadSettingsFromFile():
                 "fueltype" : ['list', 'Fuel Type', 104, "Natural Gas", "", "Natural Gas,Propane,Diesel,Gasoline", GENMON_CONFIG],
 
                 #
-                "enhancedexercise" : ['boolean', 'Enhanced Exercise Time', 105, False, "", "", GENMON_CONFIG],
-                "displayunknown" : ['boolean', 'Display Unknown Sensors', 106, False, "", "", GENMON_CONFIG],
+                "displayunknown" : ['boolean', 'Display Unknown Sensors', 111, False, "", "", GENMON_CONFIG],
 
                 # These do not appear to work on reload, some issue with Flask
                 "usehttps" : ['boolean', 'Use Secure Web Settings', 200, False, "", "", GENMON_CONFIG],
@@ -452,16 +451,23 @@ def ReadSettingsFromFile():
                 "minimumweatherinfo"  : ['boolean', 'Display Minimum Weather Info', 504, True, "", "", GENMON_CONFIG]
                 }
 
+    if ControllerType == 'h_100':
+        Choices = "120/208,120/240,230/400,240/415,277/480,347/600"
+        ConfigSettings["voltageconfiguration"] = ['list', 'Line to Neutral / Line to Line', 105, "277/480", "", Choices, GENMON_CONFIG]
+        ConfigSettings["nominalbattery"] = ['list', 'Nomonal Battery Voltage', 106, "24", "", "12,24", GENMON_CONFIG]
+    else: #ControllerType == "generac_evo_nexus":
+        ConfigSettings["disableoutagecheck"] = ['boolean', 'Do Not Check for Outages', 17, False, "", "", GENMON_CONFIG]
+        ConfigSettings["enhancedexercise"] = ['boolean', 'Enhanced Exercise Time', 105, False, "", "", GENMON_CONFIG]
     try:
         # TODO optimize this
         #MailConfig = GetAllConfigValues(MAIL_CONFIG, "MyMail")
         #GenmonConfig = GetAllConfigValues(GENMON_CONFIG, "GenMon")
 
         for entry, List in ConfigSettings.items():
-            (ConfigSettings[entry])[3] = ReadSingleConfigValue(GENMON_CONFIG, "GenMon", List[0], entry, List[3], List[5])
-
-        for entry, List in ConfigSettings.items():
-            (ConfigSettings[entry])[3] = ReadSingleConfigValue(MAIL_CONFIG, "MyMail", List[0], entry, List[3])
+            if List[6] == GENMON_CONFIG:
+                (ConfigSettings[entry])[3] = ReadSingleConfigValue(GENMON_CONFIG, "GenMon", List[0], entry, List[3], List[5])
+            else:
+                (ConfigSettings[entry])[3] = ReadSingleConfigValue(MAIL_CONFIG, "MyMail", List[0], entry, List[3])
 
         GetToolTips(ConfigSettings)
     except Exception as e1:
@@ -499,6 +505,7 @@ def GetAllConfigValues(FileName, section):
 def CacheToolTips():
 
     global CachedToolTips
+    global ControllerType
 
     try:
         config_section = "generac_evo_nexus"
@@ -511,6 +518,8 @@ def CacheToolTips():
             config_section = config.get("GenMon", 'controllertype')
         else:
             config_section = "generac_evo_nexus"
+
+        ControllerType = config_section
 
         CachedRegisterDescriptions = GetAllConfigValues(pathtofile + "/tooltips.txt", config_section)
 

@@ -59,7 +59,6 @@ class GeneratorController(mysupport.MySupport):
             self.LogLocation = "./"
         else:
             self.LogLocation = "/var/log/"
-        self.DisableOutageCheck = False
         self.bDisplayUnknownSensors = False
         self.UtilityVoltsMin = 0    # Minimum reported utility voltage above threshold
         self.UtilityVoltsMax = 0    # Maximum reported utility voltage above pickup
@@ -99,8 +98,6 @@ class GeneratorController(mysupport.MySupport):
 
             # optional config parameters, by default the software will attempt to auto-detect the controller
             # this setting will override the auto detect
-            if config.has_option(ConfigSection, 'disableoutagecheck'):
-                self.DisableOutageCheck = config.getboolean(ConfigSection, 'disableoutagecheck')
 
             if config.has_option(ConfigSection, 'enabledebug'):
                 self.EnableDebug = config.getboolean(ConfigSection, 'enabledebug')

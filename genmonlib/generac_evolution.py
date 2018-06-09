@@ -62,6 +62,7 @@ class Evolution(controller.GeneratorController):
         self.bEnhancedExerciseFrequency = False     # True if controller supports biweekly and monthly exercise times
         self.CurrentDivider = None
         self.CurrentOffset = None
+        self.DisableOutageCheck = False
 
         self.DaysOfWeek = { 0: "Sunday",    # decode for register values with day of week
                             1: "Monday",
@@ -240,22 +241,25 @@ class Evolution(controller.GeneratorController):
     #---------------------------------------------------------------------------
     def SetupTiles(self):
 
-        Tile = mytile.MyTile(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = 12, callback = self.GetBatteryVoltage, callbackparameters = (True,))
-        self.TileList.append(Tile)
-        Tile = mytile.MyTile(self.log, title = "Utility Voltage", units = "V", type = "linevolts", nominal = 240, callback = self.GetUtilityVoltage, callbackparameters = (True,))
-        self.TileList.append(Tile)
-        Tile = mytile.MyTile(self.log, title = "Output Voltage", units = "V", type = "linevolts", nominal = 240, callback = self.GetVoltageOutput, callbackparameters = (True,))
-        self.TileList.append(Tile)
-        Tile = mytile.MyTile(self.log, title = "Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq), callback = self.GetFrequency, callbackparameters = (False, True))
-        self.TileList.append(Tile)
-        Tile = mytile.MyTile(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM), callback = self.GetRPM, callbackparameters = (True,))
-        self.TileList.append(Tile)
-        if self.PowerMeterIsSupported():
-            Tile = mytile.MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = int(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
+        try:
+            Tile = mytile.MyTile(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = 12, callback = self.GetBatteryVoltage, callbackparameters = (True,))
             self.TileList.append(Tile)
-            Tile = mytile.MyTile(self.log, title = "kW Output", type = "powergraph", nominal = int(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
+            Tile = mytile.MyTile(self.log, title = "Utility Voltage", units = "V", type = "linevolts", nominal = 240, callback = self.GetUtilityVoltage, callbackparameters = (True,))
             self.TileList.append(Tile)
+            Tile = mytile.MyTile(self.log, title = "Output Voltage", units = "V", type = "linevolts", nominal = 240, callback = self.GetVoltageOutput, callbackparameters = (True,))
+            self.TileList.append(Tile)
+            Tile = mytile.MyTile(self.log, title = "Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq), callback = self.GetFrequency, callbackparameters = (False, True))
+            self.TileList.append(Tile)
+            Tile = mytile.MyTile(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM), callback = self.GetRPM, callbackparameters = (True,))
+            self.TileList.append(Tile)
+            if self.PowerMeterIsSupported():
+                Tile = mytile.MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = int(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
+                self.TileList.append(Tile)
+                Tile = mytile.MyTile(self.log, title = "kW Output", type = "powergraph", nominal = int(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
+                self.TileList.append(Tile)
 
+        except Exception as e1:
+            self.LogErrorLine("Error in SetupTiles: " + str(e1))
     #---------------------------------------------------------------------------
     def CheckModelSpecificInfo(self, NoLookUp = False):
 
@@ -3103,7 +3107,7 @@ class Evolution(controller.GeneratorController):
         return StartInfo
 
     # ---------- Evolution:GetConfig------------------
-    def GetConfig(self, reload = False):
+    def GetConfig(self):
 
         ConfigSection = "GenMon"
         try:
@@ -3136,10 +3140,7 @@ class Evolution(controller.GeneratorController):
                 self.CurrentOffset = config.getfloat(ConfigSection, 'currentoffset')
 
         except Exception as e1:
-            if not reload:
-                self.FatalError("Missing config file or config file entries: " + str(e1))
-            else:
-                self.LogErrorLine("Error reloading config file" + str(e1))
+            self.FatalError("Missing config file or config file entries (evo/nexus): " + str(e1))
             return False
 
         return True

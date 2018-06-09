@@ -102,7 +102,7 @@ class RegisterEnum(object):
     USER_CFG_06             = "0095"            # USER CFG 06 = 149
     THROTTLE_POSITION       = "0097"            # Throttle Position
     O2_SENSOR               = "0099"            # O2 Sensor
-    BATTERY_CHARGE_CURRNT   = "009b"            # Battery Charge Current
+    BATTERY_CHARGE_CURRNT   = "009b"            # Battery Charge Current NOTE: When the generator is running the battery charger current value may be wrong. 
     BATTERY_VOLTS           = "009d"            # Battery Charge Volts
     CURRENT_PHASE_A         = "009f"            # Current Phase A
     CURRENT_PHASE_B         = "00a1"            # Current Phase B
@@ -411,6 +411,7 @@ class HPanel(controller.GeneratorController):
 
         self.LastEngineState = ""
         self.CurrentAlarmState = False
+        self.VoltageConfig = None
 
         self.DaysOfWeek = { 1: "Sunday",    # decode for register values with day of week
                             2: "Monday",
@@ -470,15 +471,22 @@ class HPanel(controller.GeneratorController):
             config.read(self.ConfigFilePath + 'genmon.conf')
 
             if config.has_option(ConfigSection, 'address'):
-                self.Address = int(config.get(ConfigSection, 'address'),16)                      # modbus address
+                self.Address = int(config.get(ConfigSection, 'address'),16)     # modbus address
             else:
                 self.Address = 0x64
 
-        except Exception as e1:
-            if not reload:
-                self.FatalError("Missing config file or config file entries: " + str(e1))
+            if config.has_option(ConfigSection, 'voltageconfiguration'):
+                self.VoltageConfig = config.get(ConfigSection, 'voltageconfiguration')
             else:
-                self.LogErrorLine("Error reloading config file" + str(e1))
+                self.VoltageConfig = "277/480"
+
+            if config.has_option(ConfigSection, 'nominalbattery'):
+                self.NominalBatteryVolts = int(config.get(ConfigSection, 'nominalbattery'))
+            else:
+                self.NominalBatteryVolts = 24
+
+        except Exception as e1:
+            self.FatalError("Missing config file or config file entries (HPanel): " + str(e1))
             return False
 
         return True
@@ -494,49 +502,60 @@ class HPanel(controller.GeneratorController):
 
     #-------------HPanel:SetupTiles---------------------------------------------
     def SetupTiles(self):
-
-        Tile = mytile.MyTile(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = 24,
-            callback = self.GetParameter,
-            callbackparameters = (RegisterEnum.BATTERY_VOLTS,  None, 100.0, False, False, True))
-        self.TileList.append(Tile)
-
-        # TODO Nominal Voltage ?
-        Tile = mytile.MyTile(self.log, title = "Output Voltage", units = "V", type = "linevolts", nominal = 600,
-        callback = self.GetParameter,
-        callbackparameters = (RegisterEnum.AVG_VOLTAGE, None, None, False, True, False))
-        self.TileList.append(Tile)
-
-        Tile = mytile.MyTile(self.log, title = "Average Current", units = "A", type = "current", nominal = 2051,
-        callback = self.GetParameter,
-        callbackparameters = (RegisterEnum.AVG_CURRENT, None, None, False, True, False))
-        self.TileList.append(Tile)
-
-        Tile = mytile.MyTile(self.log, title = "Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq),
-        callback = self.GetParameter,
-        callbackparameters = (RegisterEnum.OUTPUT_FREQUENCY, None, 10.0, False, False, True))
-        self.TileList.append(Tile)
-
-        Tile = mytile.MyTile(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM),
-        callback = self.GetParameter,
-        callbackparameters = (RegisterEnum.OUTPUT_RPM, None, None, False, True, False))
-        self.TileList.append(Tile)
-
-        Tile = mytile.MyTile(self.log, title = "Coolant Temp", units = "F", type = "temperature", nominal = 118, maximum = 300,
-        callback = self.GetParameter,
-        callbackparameters = (RegisterEnum.COOLANT_TEMP, None, None, False, True, False))
-        self.TileList.append(Tile)
-
-        if self.PowerMeterIsSupported():
-            Tile = mytile.MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = int(self.NominalKW),
-            callback = self.GetParameter,
-            callbackparameters = (RegisterEnum.TOTAL_POWER_KW, None, None, False, True, False))
+        try:
+            Tile = mytile.MyTile(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = self.NominalBatteryVolts,
+                callback = self.GetParameter,
+                callbackparameters = (RegisterEnum.BATTERY_VOLTS,  None, 100.0, False, False, True))
             self.TileList.append(Tile)
 
-            Tile = mytile.MyTile(self.log, title = "kW Output", type = "powergraph", nominal = int(self.NominalKW),
-            callback = self.GetParameter,
-            callbackparameters = (RegisterEnum.TOTAL_POWER_KW, None, None, False, True, False))
+            # Nominal Voltage for gauge
+            if self.VoltageConfig != None:
+                #Valid settings are: 120/208, 120/240, 230/400, 240/415, 277/480, 347/600
+                VoltageConfigList = self.VoltageConfig.split("/")
+                NominalVoltage = int(VoltageConfigList[1])
+            else:
+                NominalVoltage = 600
 
+            Tile = mytile.MyTile(self.log, title = "Average Voltage", units = "V", type = "linevolts", nominal = NominalVoltage,
+            callback = self.GetParameter,
+            callbackparameters = (RegisterEnum.AVG_VOLTAGE, None, None, False, True, False))
             self.TileList.append(Tile)
+
+            NominalCurrent = int(self.NominalKW) * 1000 / NominalVoltage
+            Tile = mytile.MyTile(self.log, title = "Average Current", units = "A", type = "current", nominal = NominalCurrent,
+            callback = self.GetParameter,
+            callbackparameters = (RegisterEnum.AVG_CURRENT, None, None, False, True, False))
+            self.TileList.append(Tile)
+
+            Tile = mytile.MyTile(self.log, title = "Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq),
+            callback = self.GetParameter,
+            callbackparameters = (RegisterEnum.OUTPUT_FREQUENCY, None, 10.0, False, False, True))
+            self.TileList.append(Tile)
+
+            Tile = mytile.MyTile(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM),
+            callback = self.GetParameter,
+            callbackparameters = (RegisterEnum.OUTPUT_RPM, None, None, False, True, False))
+            self.TileList.append(Tile)
+
+            # water temp between 170 and 200 is a normal range for a gen. most have a 180f thermostat
+            Tile = mytile.MyTile(self.log, title = "Coolant Temp", units = "F", type = "temperature", subtype = "coolant", nominal = 180, maximum = 300,
+            callback = self.GetParameter,
+            callbackparameters = (RegisterEnum.COOLANT_TEMP, None, None, False, True, False))
+            self.TileList.append(Tile)
+
+            if self.PowerMeterIsSupported():
+                Tile = mytile.MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = int(self.NominalKW),
+                callback = self.GetParameter,
+                callbackparameters = (RegisterEnum.TOTAL_POWER_KW, None, None, False, True, False))
+                self.TileList.append(Tile)
+
+                Tile = mytile.MyTile(self.log, title = "kW Output", type = "powergraph", nominal = int(self.NominalKW),
+                callback = self.GetParameter,
+                callbackparameters = (RegisterEnum.TOTAL_POWER_KW, None, None, False, True, False))
+                self.TileList.append(Tile)
+
+        except Exception as e1:
+            self.LogErrorLine("Error in SetupTiles: " + str(e1))
 
     #-------------HPanel:CheckModelSpecificInfo---------------------------------
     # check for model specific info in read from conf file, if not there then add some defaults
@@ -959,7 +978,7 @@ class HPanel(controller.GeneratorController):
             StartInfo["nominalKW"] = self.NominalKW
             StartInfo["nominalRPM"] = self.NominalRPM
             StartInfo["nominalfrequency"] = self.NominalFreq
-            StartInfo["NominalBatteryVolts"] = "24"
+            StartInfo["NominalBatteryVolts"] = self.NominalBatteryVolts
             StartInfo["Controller"] = self.GetController()
             StartInfo["UtilityVoltage"] = False
             StartInfo["RemoteCommands"] = False

@@ -36,7 +36,8 @@ class MyTile (mycommon.MyCommon):
         self.CallbackParameters = callbackparameters
         self.Labels = labels
         self.ColorZones = colors
-        self.TileType = subtype
+        self.TileType = "gauge"
+        self.SubType = subtype
         self.DefaultSize = defaultsize
         '''
         1.) Text (eg "5 kW")
@@ -59,142 +60,149 @@ class MyTile (mycommon.MyCommon):
             self.LogError("Error in MyGauge:init: invalid type: " + str(self.Type))
             return
 
-        if self.Type.lower() == "batteryvolts":
-            self.Nominal = self.SetDefault(self.Nominal, 12)
-            self.Minimum = self.SetDefault(self.Minimum, self.Nominal/12*10)
-            self.Maximum = self.SetDefault(self.Maximum, self.Nominal/12*16)
-            self.Divisions = self.SetDefault(self.Divisions, 6)
-            self.SubDivisions = self.SetDefault(self.SubDivisions, 10)
-            self.Labels = self.SetDefault( self.Labels, range(self.Minimum, self.Maximum + 1, 1))
-            values = [self.Minimum, self.Nominal/12*11.5, self.Nominal/12*12.5, self.Nominal/12*15, self.Nominal/12*15.5, self.Maximum]
-            colors = [self.RED, self.YELLOW, self.GREEN, self.YELLOW, self.RED]
-            self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
-            self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
-            self.TileType = self.SetDefault(self.TileType,"gauge")
+        try:
+            if self.Type.lower() == "batteryvolts":
+                self.Nominal = self.SetDefault(self.Nominal, 12)
+                self.Minimum = self.SetDefault(self.Minimum, self.Nominal/12*10)
+                self.Maximum = self.SetDefault(self.Maximum, self.Nominal/12*16)
+                self.Divisions = self.SetDefault(self.Divisions, 6)
+                self.SubDivisions = self.SetDefault(self.SubDivisions, 10)
+                self.Labels = self.SetDefault( self.Labels, range(self.Minimum, self.Maximum + 1, 1))
+                values = [self.Minimum, self.Nominal/12*11.5, self.Nominal/12*12.5, self.Nominal/12*15, self.Nominal/12*15.5, self.Maximum]
+                colors = [self.RED, self.YELLOW, self.GREEN, self.YELLOW, self.RED]
+                self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
+                self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
+                self.TyleType = "gauge"
 
-        elif self.Type.lower() == "linevolts":
-            self.Nominal = self.SetDefault(self.Nominal, 240)
-            self.Minimum = self.SetDefault(self.Minimum, 0)
-            self.Maximum = self.SetDefault(self.Maximum, self.Nominal + 20)
-            self.Divisions = self.SetDefault(self.Divisions, int(self.Maximum / 10))
-            self.SubDivisions = self.SetDefault(self.SubDivisions, 0)
-            # This does not scale
-            if self.Nominal == 240:
-                self.Labels = self.SetDefault( self.Labels, [self.Minimum, 100, 156, 220, self.Nominal, self.Maximum])
-            else:
+            elif self.Type.lower() == "linevolts":
+                self.Nominal = self.SetDefault(self.Nominal, 240)
+                self.Minimum = self.SetDefault(self.Minimum, 0)
+                self.Maximum = self.SetDefault(self.Maximum, self.Nominal + 20)
+                self.Divisions = self.SetDefault(self.Divisions, 10 )#int(self.Maximum / 10))
+                self.SubDivisions = self.SetDefault(self.SubDivisions, 0)
+                # This does not scale
+                if self.Nominal == 240:
+                    self.Labels = self.SetDefault( self.Labels, [self.Minimum, 100, 156, 220, self.Nominal, self.Maximum])
+                else:
+                    self.Labels = self.SetDefault( self.Labels, self.CreateLabels(self.Minimum, self.Nominal , self.Maximum))
+                # This may not scale
+                values = [self.Minimum, self.Nominal - 10, self.Nominal - 5, self.Nominal + 5, self.Nominal + 15, self.Maximum]
+                colors = [self.RED, self.YELLOW, self.GREEN, self.YELLOW, self.RED]
+                self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
+                self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
+                self.TyleType = "gauge"
+
+            elif self.Type.lower() == "current":
+                self.Nominal = self.SetDefault(self.Nominal, 100)
+                self.Minimum = self.SetDefault(self.Minimum, 0)
+                self.Maximum = self.SetDefault(self.Maximum, int(self.Nominal * 1.2))
+
+                self.Divisions = self.SetDefault(self.Divisions, 12)
+                self.SubDivisions = self.SetDefault(self.SubDivisions, 5)
                 self.Labels = self.SetDefault( self.Labels, self.CreateLabels(self.Minimum, self.Nominal , self.Maximum))
-            # This may not scale
-            values = [self.Minimum, self.Nominal - 10, self.Nominal - 5, self.Nominal + 5, self.Nominal + 15, self.Maximum]
-            colors = [self.RED, self.YELLOW, self.GREEN, self.YELLOW, self.RED]
-            self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
-            self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
-            self.TileType = self.SetDefault(self.TileType,"gauge")
 
-        elif self.Type.lower() == "current":
-            self.Nominal = self.SetDefault(self.Nominal, 100)
-            self.Minimum = self.SetDefault(self.Minimum, 0)
-            self.Maximum = self.SetDefault(self.Maximum, int(self.Nominal * 1.2))
+                values = [self.Minimum, int(self.Nominal * 0.8), int(self.Nominal * 0.95), int(self.Nominal * 1.2)]
+                colors = [self.GREEN, self.YELLOW, self.RED]
+                self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
+                self.TyleType = "gauge"
 
-            self.Divisions = self.SetDefault(self.Divisions, 12)
-            self.SubDivisions = self.SetDefault(self.SubDivisions, 5)
-            self.Labels = self.SetDefault( self.Labels, self.CreateLabels(self.Minimum, self.Nominal , self.Maximum))
+            elif self.Type.lower() == "power":
+                self.Nominal = self.SetDefault(self.Nominal, 60)
+                self.Minimum = self.SetDefault(self.Minimum, 0)
+                self.Maximum = self.SetDefault(self.Maximum, int(self.Nominal * 1.2))
+                self.Divisions = self.SetDefault(self.Divisions, 12)
+                self.SubDivisions = self.SetDefault(self.SubDivisions, 5)
+                self.Labels = self.SetDefault( self.Labels, self.CreateLabels(self.Minimum, self.Nominal , self.Maximum))
+                values = [self.Minimum, int(self.Nominal * 0.8), int(self.Nominal * 0.95), int(self.Nominal * 1.2)]
+                colors = [self.GREEN, self.YELLOW, self.RED]
+                self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
+                self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
+                self.TyleType = "gauge"
 
-            values = [self.Minimum, int(self.Nominal * 0.8), int(self.Nominal * 0.95), int(self.Nominal * 1.2)]
-            colors = [self.GREEN, self.YELLOW, self.RED]
-            self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
-            self.TileType = self.SetDefault(self.TileType,"gauge")
+            elif self.Type.lower() == "frequency":
+                self.Nominal = self.SetDefault(self.Nominal, 60)
+                self.Minimum = self.SetDefault(self.Minimum, 0)
+                self.Maximum = self.SetDefault(self.Maximum, self.Nominal + 10)
+                self.Divisions = self.SetDefault(self.Divisions, int(self.Maximum / 10))
+                self.SubDivisions = self.SetDefault(self.SubDivisions, 10)
+                self.Labels = self.SetDefault( self.Labels, range(self.Minimum + 10, self.Maximum + 10, 10))
+                values = [self.Minimum, self.Nominal - 6, self.Nominal - 3, self.Nominal + 3, self.Nominal + 6, self.Maximum]
+                colors = [self.RED, self.YELLOW, self.GREEN, self.YELLOW, self.RED]
+                self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
+                self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
+                self.TyleType = "gauge"
+            elif self.Type.lower() == "rpm":
+                self.Nominal = self.SetDefault(self.Nominal, 3600)
+                self.Minimum = self.SetDefault(self.Minimum, 0)
+                self.Maximum = self.SetDefault(self.Maximum, self.Nominal + 100)
+                self.Divisions = self.SetDefault(self.Divisions, 4)
+                self.SubDivisions = self.SetDefault(self.SubDivisions, 10)
+                self.Labels = self.SetDefault( self.Labels, range(self.Minimum, self.Maximum, self.Nominal / 4))
+                values = [self.Minimum, self.Nominal - 75, self.Nominal - 50, self.Nominal + 50, self.Nominal + 75, self.Maximum]
+                colors = [self.RED, self.YELLOW, self.GREEN, self.YELLOW, self.RED]
+                self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
+                self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
+                self.TyleType = "gauge"
 
-        elif self.Type.lower() == "power":
-            self.Nominal = self.SetDefault(self.Nominal, 60)
-            self.Minimum = self.SetDefault(self.Minimum, 0)
-            self.Maximum = self.SetDefault(self.Maximum, int(self.Nominal * 1.2))
-            self.Divisions = self.SetDefault(self.Divisions, 12)
-            self.SubDivisions = self.SetDefault(self.SubDivisions, 5)
-            self.Labels = self.SetDefault( self.Labels, self.CreateLabels(self.Minimum, self.Nominal , self.Maximum))
-            values = [self.Minimum, int(self.Nominal * 0.8), int(self.Nominal * 0.95), int(self.Nominal * 1.2)]
-            colors = [self.GREEN, self.YELLOW, self.RED]
-            self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
-            self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
-            self.TileType = self.SetDefault(self.TileType,"gauge")
+            elif self.Type.lower() == "fuel" or self.Type.lower() == "level" or self.Type.lower() == "position":
+                self.Nominal = self.SetDefault(self.Nominal, 100)
+                self.Minimum = self.SetDefault(self.Minimum, 0)
+                self.Maximum = self.SetDefault(self.Maximum, self.Nominal)
+                self.Divisions = self.SetDefault(self.Divisions, int(self.Maximum / 10))
+                self.SubDivisions = self.SetDefault(self.SubDivisions, 10)
+                self.Labels = self.SetDefault( self.Labels, range(self.Minimum, self.Maximum, self.Divisions))
+                values = [self.Minimum, int(self.Nominal * 0.10), int(self.Nominal * 0.25), int(self.Nominal)]
+                colors = [self.RED, self.YELLOW, self.GREEN]
+                self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
+                self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
+                self.TyleType = "gauge"
 
-        elif self.Type.lower() == "frequency":
-            self.Nominal = self.SetDefault(self.Nominal, 60)
-            self.Minimum = self.SetDefault(self.Minimum, 0)
-            self.Maximum = self.SetDefault(self.Maximum, self.Nominal + 10)
-            self.Divisions = self.SetDefault(self.Divisions, int(self.Maximum / 10))
-            self.SubDivisions = self.SetDefault(self.SubDivisions, 10)
-            self.Labels = self.SetDefault( self.Labels, range(self.Minimum + 10, self.Maximum + 10, 10))
-            values = [self.Minimum, self.Nominal - 6, self.Nominal - 3, self.Nominal + 3, self.Nominal + 6, self.Maximum]
-            colors = [self.RED, self.YELLOW, self.GREEN, self.YELLOW, self.RED]
-            self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
-            self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
-            self.TileType = self.SetDefault(self.TileType,"gauge")
-        elif self.Type.lower() == "rpm":
-            self.Nominal = self.SetDefault(self.Nominal, 3600)
-            self.Minimum = self.SetDefault(self.Minimum, 0)
-            self.Maximum = self.SetDefault(self.Maximum, self.Nominal + 100)
-            self.Divisions = self.SetDefault(self.Divisions, 4)
-            self.SubDivisions = self.SetDefault(self.SubDivisions, 10)
-            self.Labels = self.SetDefault( self.Labels, range(self.Minimum, self.Maximum, self.Nominal / 4))
-            values = [self.Minimum, self.Nominal - 75, self.Nominal - 50, self.Nominal + 50, self.Nominal + 75, self.Maximum]
-            colors = [self.RED, self.YELLOW, self.GREEN, self.YELLOW, self.RED]
-            self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
-            self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
-            self.TileType = self.SetDefault(self.TileType,"gauge")
+            elif self.Type.lower() == "temperature":
+                self.Nominal = self.SetDefault(self.Nominal, 100)
+                self.Minimum = self.SetDefault(self.Minimum, 0)
+                self.Maximum = self.SetDefault(self.Maximum, self.Nominal)
+                self.Divisions = self.SetDefault(self.Divisions, int(self.Maximum / 10))
+                self.SubDivisions = self.SetDefault(self.SubDivisions, 10)
+                if self.SubType.lower() == "coolant":
+                    self.Labels = self.SetDefault( self.Labels, range(self.Minimum, self.Maximum, self.Divisions))
+                    values = [self.Minimum, self.Nominal + 20, self.Nominal + 40, self.Maximum]
+                else:
+                    self.Labels = self.SetDefault( self.Labels, range(self.Minimum, self.Maximum, self.Divisions))
+                    values = [self.Minimum, self.Nominal, self.Nominal + int((self.Maximum - self.Nominal) / 2), self.Maximum]
+                colors = [self.GREEN, self.YELLOW, self.RED]
+                self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
+                self.TyleType = "gauge"
 
-        elif self.Type.lower() == "fuel" or self.Type.lower() == "level" or self.Type.lower() == "position":
-            self.Nominal = self.SetDefault(self.Nominal, 100)
-            self.Minimum = self.SetDefault(self.Minimum, 0)
-            self.Maximum = self.SetDefault(self.Maximum, self.Nominal)
-            self.Divisions = self.SetDefault(self.Divisions, int(self.Maximum / 10))
-            self.SubDivisions = self.SetDefault(self.SubDivisions, 10)
-            self.Labels = self.SetDefault( self.Labels, range(self.Minimum, self.Maximum, self.Divisions))
-            values = [self.Minimum, int(self.Nominal * 0.10), int(self.Nominal * 0.25), int(self.Nominal)]
-            colors = [self.RED, self.YELLOW, self.GREEN]
-            self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
-            self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
-            self.TileType = self.SetDefault(self.TileType,"gauge")
+            elif self.Type.lower() == "pressure":
+                self.Nominal = self.SetDefault(self.Nominal, 100)
+                self.Minimum = self.SetDefault(self.Minimum, 0)
+                self.Maximum = self.SetDefault(self.Maximum, self.Nominal + 10)
+                self.Divisions = self.SetDefault(self.Divisions, int(self.Maximum / 10))
+                self.SubDivisions = self.SetDefault(self.SubDivisions, 10)
+                self.Labels = self.SetDefault( self.Labels, range(self.Minimum, self.Maximum, self.Divisions))
+                # TODO
+                values = [self.Minimum, self.Nominal - 15, self.Nominal - 5, self.Nominal + 5, self.Nominal + 15, self.Maximum]
+                colors = [self.RED, self.YELLOW, self.GREEN, self.YELLOW, self.RED]
+                self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
+                self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
+                self.TyleType = "gauge"
 
-        elif self.Type.lower() == "temperature":
-            self.Nominal = self.SetDefault(self.Nominal, 100)
-            self.Minimum = self.SetDefault(self.Minimum, 0)
-            self.Maximum = self.SetDefault(self.Maximum, self.Nominal)
-            self.Divisions = self.SetDefault(self.Divisions, int(self.Maximum / 10))
-            self.SubDivisions = self.SetDefault(self.SubDivisions, 10)
-            self.Labels = self.SetDefault( self.Labels, range(self.Minimum, self.Maximum, self.Divisions))
-            values = [self.Minimum, self.Nominal, self.Nominal + int((self.Maximum - self.Nominal) / 2), self.Maximum]
-            colors = [self.GREEN, self.YELLOW, self.RED]
-            self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
-            self.TileType = self.SetDefault(self.TileType,"gauge")
+            elif self.Type.lower() == "powergraph":
+                self.Nominal = self.SetDefault(self.Nominal, 100)
+                self.Minimum = self.SetDefault(self.Minimum, 0)
+                self.Maximum = self.SetDefault(self.Maximum, self.Nominal + int(self.Nominal * .20))
+                self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
+                self.TileType = "graph"
 
-        elif self.Type.lower() == "pressure":
-            self.Nominal = self.SetDefault(self.Nominal, 100)
-            self.Minimum = self.SetDefault(self.Minimum, 0)
-            self.Maximum = self.SetDefault(self.Maximum, self.Nominal + 10)
-            self.Divisions = self.SetDefault(self.Divisions, int(self.Maximum / 10))
-            self.SubDivisions = self.SetDefault(self.SubDivisions, 10)
-            self.Labels = self.SetDefault( self.Labels, range(self.Minimum, self.Maximum, self.Divisions))
-            # TODO
-            values = [self.Minimum, self.Nominal - 15, self.Nominal - 5, self.Nominal + 5, self.Nominal + 15, self.Maximum]
-            colors = [self.RED, self.YELLOW, self.GREEN, self.YELLOW, self.RED]
-            self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
-            self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
-            self.TileType = self.SetDefault(self.TileType,"gauge")
+            else:
+                self.LogError("Error in MyGauge:init: invalid type: " + str(type))
+                return
 
-        elif self.Type.lower() == "powergraph":
-            self.Nominal = self.SetDefault(self.Nominal, 100)
-            self.Minimum = self.SetDefault(self.Minimum, 0)
-            self.Maximum = self.SetDefault(self.Maximum, self.Nominal + int(self.Nominal * .20))
-            self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
-            self.TileType = self.SetDefault(self.TileType, "graph")
-
-        else:
-            self.LogError("Error in MyGauge:init: invalid type: " + str(type))
-            return
-
-        if self.Minimum >= self.Maximum:
-            self.LogError("Error in MyGauge:init: invalid value, min: %d max:%d" % (self.Minimum,str.Maximum))
-            return
+            if self.Minimum >= self.Maximum:
+                self.LogError("Error in MyGauge:init: invalid value, min: %d max:%d" % (self.Minimum,str.Maximum))
+                return
+        except Exception as e1:
+            self.LogErrorLine("Error in MyTile init: " + str(e1))
     #-------------MyTile:myround--------------------------------------
     def myround(self, x, base=5):
         return int(base * round(float(x)/base))
