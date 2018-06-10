@@ -409,13 +409,7 @@ module.exports = {
 
     templates: {
 
-      base:'\
-        <div class="field">\
-          <label class="main">{label}</label>\
-          {field}\
-          <span class="error"></span>\
-        </div>\
-      ',
+      base:'<div class="field"><label class="main">{label}</label>{field}<span class="error"></span></div>',
 
       text: '<input name="{name}" type="{subtype}" value="{value}" {attrs}>',
 
@@ -423,21 +417,9 @@ module.exports = {
 
       textarea: '<textarea name="{name}" {attrs}>{text}</textarea>',
 
-      group: '\
-        <p class="group">\
-          {@list}\
-          <label><input name="{name}" type="{subtype}" value="{#value}" {#attrs}>{#text}</label>\
-          {/list}\
-        </p>\
-      ',
+      group: '<p class="group">{@list}<label><input name="{name}" type="{subtype}" value="{#value}" {#attrs}>{#text}</label>{/list}</p>',
 
-      select: '\
-        <select name={name}>\
-          {@list}\
-          <option value="{#value}">{#text}</option>\
-          {/list}\
-        </select>\
-      '
+      select: '<select name={name}>{@list}<option value="{#value}">{#text}</option>{/list}</select>'
     }
   },
 

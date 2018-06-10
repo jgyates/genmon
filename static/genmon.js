@@ -1009,7 +1009,7 @@ function DisplayMonitor(){
               var url = "https://raw.githubusercontent.com/jgyates/genmon/master/genmon.py";
               $.ajax({dataType: "html", url: url, timeout: 4000, error: function(result) {
                  console.log("got an error when looking up latest version");
-                 latestVersion == "unknown";
+                 latestVersion = "unknown";
               }, success: function(result) {
                  latestVersion = replaceAll((jQuery.grep(result.split("\n"), function( a ) { return (a.indexOf("GENMON_VERSION") >= 0); }))[0].split(" ")[2], '"', '');
                  if (latestVersion != myGenerator["version"]) {
@@ -1763,7 +1763,7 @@ function UpdateRegisters(init, printToScreen)
             }
             regHistory["_10m"][reg_key].unshift(reg_val);
             if  (regHistory["_10m"][reg_key].length > 120) {
-               regHistory["_10m"][reg_key].pop  // remove the last element
+               var removed = regHistory["_10m"][reg_key].pop  // remove the last element
             }
 
             if (regHistory["count_60m"] >= 12) {
@@ -2161,7 +2161,7 @@ function GetBaseStatus()
                          kwHistory["data"].unshift([(new moment()).format("YYYY-MM-DD HH:mm:ss"), result.tiles[i].value]);
                       }
                       if  (kwHistory["data"].length > 10000) {
-                         kwHistory["data"].pop  // remove the last element
+                         var removed = kwHistory["data"].pop  // remove the last element
                       }
 
                       if ((menuElement == "status") && (myGenerator["PowerGraph"] == true)) {

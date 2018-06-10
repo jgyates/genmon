@@ -16,7 +16,7 @@
 .selectize-control.plugin-drag_drop.multi > .selectize-input > div.ui-sortable-placeholder {
   visibility: visible !important;
   background: #f2f2f2 !important;
-  background: rgba(0, 0, 0, 0.06) !important;
+  /* @alternate */ background: rgba(0, 0, 0, 0.06) !important;
   border:1px solid #999;
   outline:0;
   border-radius:3.01px;
@@ -348,10 +348,10 @@
   border-radius: 3px;
   background-color: #439646;
   background-image: -moz-linear-gradient(top, #4caf50, #439646);
-  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#4caf50), to(#439646));
-  background-image: -webkit-linear-gradient(top, #4caf50, #439646);
-  background-image: -o-linear-gradient(top, #4caf50, #439646);
-  background-image: linear-gradient(to bottom, #4caf50, #439646);
+  /* @alternate */ background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#4caf50), to(#439646));
+  /* @alternate */ background-image: -webkit-linear-gradient(top, #4caf50, #439646);
+  /* @alternate */ background-image: -o-linear-gradient(top, #4caf50, #439646);
+  /* @alternate */ background-image: linear-gradient(to bottom, #4caf50, #439646);
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff4caf50', endColorstr='#ff439646', GradientType=0);
   -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.2),inset 0 1px rgba(255,255,255,0.03);
@@ -360,10 +360,10 @@
 .selectize-control.multi .selectize-input [data-value].active {
   background-color: #3a823c;
   background-image: -moz-linear-gradient(top, #439646, #3a823c);
-  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#439646), to(#3a823c));
-  background-image: -webkit-linear-gradient(top, #439646, #3a823c);
-  background-image: -o-linear-gradient(top, #439646, #3a823c);
-  background-image: linear-gradient(to bottom, #439646, #3a823c);
+  /* @alternate */ background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#439646), to(#3a823c));
+  /* @alternate */ background-image: -webkit-linear-gradient(top, #439646, #3a823c);
+  /* @alternate */ background-image: -o-linear-gradient(top, #439646, #3a823c);
+  /* @alternate */ background-image: linear-gradient(to bottom, #439646, #3a823c);
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff439646', endColorstr='#ff3a823c', GradientType=0);
 }
@@ -372,10 +372,10 @@
   box-shadow: 0 1px 0 rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.8);
   background-color: #f9f9f9;
   background-image: -moz-linear-gradient(top, #fefefe, #f2f2f2);
-  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#fefefe), to(#f2f2f2));
-  background-image: -webkit-linear-gradient(top, #fefefe, #f2f2f2);
-  background-image: -o-linear-gradient(top, #fefefe, #f2f2f2);
-  background-image: linear-gradient(to bottom, #fefefe, #f2f2f2);
+  /* @alternate */ background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#fefefe), to(#f2f2f2));
+  /* @alternate */ background-image: -webkit-linear-gradient(top, #fefefe, #f2f2f2);
+  /* @alternate */ background-image: -o-linear-gradient(top, #fefefe, #f2f2f2);
+  /* @alternate */ background-image: linear-gradient(to bottom, #fefefe, #f2f2f2);
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fffefefe', endColorstr='#fff2f2f2', GradientType=0);
 }

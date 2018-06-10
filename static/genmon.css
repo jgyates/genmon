@@ -30,7 +30,6 @@ blockquote, q {
 }
 blockquote:before, blockquote:after,
 q:before, q:after {
-    content: '';
     content: none;
 }
 table {
@@ -43,9 +42,6 @@ input, select {
     font: inherit;
     vertical-align: middle;
     margin:0;
-    padding:0;
-    border:0;
-    outline:0;
     padding:.15em;
     border:1px solid #999;
     outline:0;
@@ -312,7 +308,7 @@ li a:hover:not(.active) {
 .greyscale {
    -webkit-filter: grayscale(1); /* Webkit */
    filter: gray; /* IE6-9 */
-   filter: grayscale(1); /* W3C */
+   /* @alternate */ filter: grayscale(1); /* W3C */
 }
 
 .regHistoryCanvas {
