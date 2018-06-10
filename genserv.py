@@ -482,17 +482,6 @@ def ReadSettingsFromFile():
 
 
 #------------------------------------------------------------
-def GetRegisterDescriptions():
-
-    ReturnDict = {}
-    try:
-        for (key, value) in CachedRegisterDescriptions.items():
-            ReturnDict[key] = value
-    except Exception as e1:
-        log.error("Error in GetRegisterDescriptions: " + str(e1))
-    return ReturnDict
-
-#------------------------------------------------------------
 def GetAllConfigValues(FileName, section):
 
     ReturnDict = {}
@@ -511,6 +500,7 @@ def CacheToolTips():
 
     global CachedToolTips
     global ControllerType
+    global CachedRegisterDescriptions
 
     try:
         config_section = "generac_evo_nexus"
