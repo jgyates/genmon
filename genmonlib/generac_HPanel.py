@@ -102,7 +102,7 @@ class RegisterEnum(object):
     USER_CFG_06             = "0095"            # USER CFG 06 = 149
     THROTTLE_POSITION       = "0097"            # Throttle Position
     O2_SENSOR               = "0099"            # O2 Sensor
-    BATTERY_CHARGE_CURRNT   = "009b"            # Battery Charge Current NOTE: When the generator is running the battery charger current value may be wrong. 
+    BATTERY_CHARGE_CURRNT   = "009b"            # Battery Charge Current NOTE: When the generator is running the battery charger current value may be wrong.
     BATTERY_VOLTS           = "009d"            # Battery Charge Volts
     CURRENT_PHASE_A         = "009f"            # Current Phase A
     CURRENT_PHASE_B         = "00a1"            # Current Phase B
@@ -910,9 +910,8 @@ class HPanel(controller.GeneratorController):
         if self.GetParameterBit(RegisterEnum.OUTPUT_7, Output7.INT_EXERCISE_ACT):
             EngineState += "Exercising. "
 
-        if not len(EngineState):
-            if len(self.Registers):
-                self.FeedbackPipe.SendFeedback("Engine State", FullLogs = True, Always = True, Message="Unknown Engine State")
+        if not len(EngineState) and self.InitComplete and len(self.Registers):
+            self.FeedbackPipe.SendFeedback("Engine State", FullLogs = True, Always = True, Message="Unknown Engine State")
             return "Unknown"
         return EngineState
 
