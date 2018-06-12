@@ -123,7 +123,7 @@ def ProcessCommand(command):
         if command in ["status", "status_json", "outage", "outage_json", "maint", "maint_json",
             "logs", "logs_json", "monitor", "monitor_json", "registers_json", "allregs_json",
             "start_info_json", "gui_status_json", "power_log_json", "power_log_clear",
-            "getbase", "getsitename","setexercise", "setquiet", "getexercise", "setremote",
+            "getbase", "getsitename","setexercise", "setquiet", "setremote",
             "settime", "sendregisters", "sendlogfiles", "getdebug" ]:
             finalcommand = "generator: " + command
 
