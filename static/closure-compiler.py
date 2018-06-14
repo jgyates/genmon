@@ -4,19 +4,16 @@ import os, os.path, shutil
 import urllib, zipfile, re, requests
 from time import sleep
 
-def compress(in_files, out_file, in_type='js'):
+def compress(compiler, in_files, out_file, in_type='js'):
 
     if in_type == 'js':
-        print 'java -jar closure-compiler-v20180506.jar --js "%s" --js_output_file "%s"' % ('" --js "'.join(in_files), out_file)
-        os.system('java -jar closure-compiler-v20180506.jar --js "%s" --js_output_file "%s"' % ('" --js "'.join(in_files), out_file))
+        print 'java -jar %s --js "%s" --js_output_file "%s"' % (compiler, '" --js "'.join(in_files), out_file)
+        os.system('java -jar %s --js "%s" --js_output_file "%s"' % (compiler, '" --js "'.join(in_files), out_file))
 
     if in_type == 'css':
-        print 'java -jar %s --allow-unrecognized-functions --allow-unrecognized-properties  --output-file "%s" "%s"' % (CLOSURE_COMPILER, out_file, '" "'.join(in_files))
-        os.system('java -jar %s --allow-unrecognized-functions --allow-unrecognized-properties --output-file "%s" "%s"' % (CLOSURE_STYLESHEET, out_file, '" "'.join(in_files)))
+        print 'java -jar %s --allow-unrecognized-functions --allow-unrecognized-properties  --output-file "%s" "%s"' % (compiler, out_file, '" "'.join(in_files))
+        os.system('java -jar %s --allow-unrecognized-functions --allow-unrecognized-properties --output-file "%s" "%s"' % (compiler, out_file, '" "'.join(in_files)))
 
-CLOSURE_COMPILER = "closure-compiler-v20180506.jar";
-CLOSURE_STYLESHEET = "closure-stylesheets.jar";
-    
 MINIFY_SCRIPTS = [
     'js/jquery-3.3.1.min.js',
     'js/jquery-ui.min.js',
@@ -55,6 +52,9 @@ STYLESHEETS_OUT = 'libraries.min.css'
 
 def main():
     
+    CLOSURE_COMPILER = "closure-compiler-v20180506.jar";
+    CLOSURE_STYLESHEET = "closure-stylesheets.jar";
+    
     print 'Downlaod Compilers...'
 
     c1file = urllib.URLopener()
@@ -74,7 +74,7 @@ def main():
     print "Downloaded: "+CLOSURE_STYLESHEET
 
     print 'Compressing JavaScript...'
-    compress(MINIFY_SCRIPTS, SCRIPTS_OUT, 'js')
+    compress(CLOSURE_COMPILER, MINIFY_SCRIPTS, SCRIPTS_OUT, 'js')
 
     # temp = open(SCRIPTS_OUT, 'a')
     # for f in NON_MINIFY_SCRIPTS:
@@ -91,7 +91,7 @@ def main():
     sleep (5)
 
     print 'Compressing CSS...'
-    compress(STYLESHEETS, STYLESHEETS_OUT, 'css')
+    compress(CLOSURE_STYLESHEET, STYLESHEETS, STYLESHEETS_OUT, 'css')
     print 'Compressing CSS Completed...'
 
     os.remove(CLOSURE_COMPILER)
