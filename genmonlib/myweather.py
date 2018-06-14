@@ -120,6 +120,8 @@ class MyWeather(mysupport.MySupport):
                 self.GetObservation()
                 if self.Observation == None:
                     self.OWM = None
+                    if self.WaitForExit("WeatherThread", 60 ):  # 60 sec
+                        return
                     continue
                 weatherdata = self.Observation.get_weather()
                 with self.DataAccessLock:
