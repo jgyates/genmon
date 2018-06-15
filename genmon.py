@@ -29,7 +29,7 @@ except:
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
     sys.exit(2)
 
-GENMON_VERSION = "V1.9.25"
+GENMON_VERSION = "V1.9.26"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -86,6 +86,10 @@ class Monitor(mysupport.MySupport):
 
         self.console = mylog.SetupLogger("genmon_console", log_file = "", stream = True)
 
+        if os.geteuid() != 0:
+            self.console.error("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'.")
+            sys.exit(1)
+
         if not os.path.isfile(self.ConfigFilePath + 'genmon.conf'):
             self.console.error("Missing config file : " + self.ConfigFilePath + 'genmon.conf')
             sys.exit(1)
@@ -98,8 +102,15 @@ class Monitor(mysupport.MySupport):
             raise Exception("Failure in Monitor GetConfig: " + str(e1))
             return None
 
+
         # log errors in this module to a file
         self.log = mylog.SetupLogger("genmon", self.LogLocation + "genmon.log")
+
+        if self.IsLoaded():
+            self.console.error("ERROR: genmon.py is already loaded.")
+            self.LogError("ERROR: genmon.py is already loaded.")
+            sys.exit(1)
+
 
         if self.NewInstall:
             self.LogError("New version detected: Old = %s, New = %s" % (self.Version, GENMON_VERSION))
@@ -152,6 +163,24 @@ class Monitor(mysupport.MySupport):
         self.MessagePipe.SendMessage("Generator Monitor Starting at " + self.SiteName, "Generator Monitor Starting at " + self.SiteName , msgtype = "info")
 
         self.LogError("GenMon Loadded for site: " + self.SiteName)
+
+    # ------------------------ Monitor::IsLoaded--------------------------------
+    # return true if program is already loaded
+    def IsLoaded(self):
+
+        Socket = None
+
+        try:
+            #create an INET, STREAMing socket
+            Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            #now connect to the server on our port
+            Socket.connect(("127.0.0.1", self.ServerSocketPort))
+            Socket.close()
+            return True
+        except Exception as e1:
+            if Socket != None:
+                Socket.close()
+            return False
 
     # ------------------------ Monitor::StartThreads----------------------------
     def StartThreads(self, reload = False):

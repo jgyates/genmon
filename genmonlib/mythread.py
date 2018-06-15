@@ -18,16 +18,19 @@ class MyThread():
         self.StopEvent = threading.Event()
         self.ThreadObj = threading.Thread(target = ThreadFunction, name = Name)
         self.ThreadObj.daemon = True
-        self.ThreadObj.start()       # start thread
+        self.Start()
 
     # ---------- MyThread::Stop------------------
     def GetThreadObject(self):
         return self.ThreadObj
 
+    # ---------- MyThread::Start------------------
+    def Start(self, timeout = None):
+        self.ThreadObj.start()       # start thread
     # ---------- MyThread::Wait------------------
     def Wait(self, timeout = None):
         return self.StopEvent.wait(timeout)
-        
+
     # ---------- MyThread::Stop------------------
     def Stop(self):
         self.StopEvent.set()
