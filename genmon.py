@@ -22,10 +22,14 @@ try:
 except ImportError as e:
     from configparser import RawConfigParser
 
-from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel, myplatform, myweather
+try:
+    from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel, myplatform, myweather
+except:
+    print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
+    print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
+    sys.exit(2)
 
-
-GENMON_VERSION = "V1.9.24"
+GENMON_VERSION = "V1.9.25"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -36,6 +40,7 @@ class Monitor(mysupport.MySupport):
         self.Version = "Unknown"
         self.log = None
         self.IsStopping = False
+        self.ProgramComplete = False
         if ConfigFilePath == None:
             self.ConfigFilePath = "/etc/"
         else:
@@ -79,11 +84,13 @@ class Monitor(mysupport.MySupport):
         self.Simulation = False
         self.SimulationFile = None
 
+        self.console = mylog.SetupLogger("genmon_console", log_file = "", stream = True)
+
         if not os.path.isfile(self.ConfigFilePath + 'genmon.conf'):
-            print("Missing config file : " + self.ConfigFilePath + 'genmon.conf')
+            self.console.error("Missing config file : " + self.ConfigFilePath + 'genmon.conf')
             sys.exit(1)
         if not os.path.isfile(self.ConfigFilePath + 'mymail.conf'):
-            print("Missing config file : " + self.ConfigFilePath + 'mymail.conf')
+            self.console.error("Missing config file : " + self.ConfigFilePath + 'mymail.conf')
             sys.exit(1)
 
         # read config file
@@ -102,6 +109,7 @@ class Monitor(mysupport.MySupport):
 
         atexit.register(self.Close)
         signal.signal(signal.SIGTERM, self.Close)
+        signal.signal(signal.SIGINT, self.Close)
 
         # start thread to accept incoming sockets for nagios heartbeat and command / status clients
         self.Threads["InterfaceServerThread"] = mythread.MyThread(self.InterfaceServerThread, Name = "InterfaceServerThread")
@@ -853,7 +861,8 @@ class Monitor(mysupport.MySupport):
                 if self.IsStopping:
                     return
                 self.LogErrorLine("Excpetion in InterfaceServerThread" + str(e1))
-                time.sleep(0.5)
+                if self.WaitForExit("InterfaceServerThread", 0.5 ):
+                    return
                 continue
 
         self.ServerSocket.shutdown(socket.SHUT_RDWR)
@@ -893,7 +902,11 @@ class Monitor(mysupport.MySupport):
             except:
                 pass
 
-            # Mail should self close
+            #
+            try:
+                self.mail.Close()
+            except:
+                pass
             try:
                 for item in self.ConnectionList:
                     try:
@@ -908,6 +921,7 @@ class Monitor(mysupport.MySupport):
                 if(self.ServerSocket != None):
                     self.ServerSocket.shutdown(socket.SHUT_RDWR)
                     self.ServerSocket.close()
+                self.KillThread("InterfaceServerThread")
             except:
                 pass
 
@@ -934,8 +948,9 @@ class Monitor(mysupport.MySupport):
 
         with self.CriticalLock:
             self.LogError("Generator Monitor Shutdown")
-        MainThreadRunning = False
 
+        self.ProgramComplete = True
+        sys.exit(0)
 
 #------------------- Command-line interface for monitor -----------------#
 if __name__=='__main__': #
@@ -943,10 +958,10 @@ if __name__=='__main__': #
 
     #Start things up
     MyMonitor = Monitor(ConfigFilePath = ConfigFilePath)
-    MainThreadRunning = True
+
     try:
-        while MainThreadRunning:
-            time.sleep(0.10)
+        while not MyMonitor.ProgramComplete:
+            time.sleep(0.01)
         sys.exit(0)
     except:
         pass

@@ -10,9 +10,22 @@
 
 from __future__ import print_function
 
-from flask import Flask, render_template, request, jsonify, session
+try:
+    from flask import Flask, render_template, request, jsonify, session
+except:
+    print("\n\nThis program requires the Flask library. Please see the project documentation at https://github.com/jgyates/genmon.\n")
+    sys.exit(2)
+
 import sys, signal, os, socket, atexit, time, subprocess, json, threading, signal
-from genmonlib import mylog, myclient, mythread
+
+try:
+    from genmonlib import mylog, myclient, mythread
+except:
+    print("\n\nThis program requires the modules located in the genmonlib directory in the original github repository.\n")
+    print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
+    sys.exit(2)
+
+
 import urlparse
 import re, httplib, datetime
 
@@ -846,6 +859,7 @@ if __name__ == "__main__":
 
     #atexit.register(Close)
     #signal.signal(signal.SIGTERM, Close)
+    #signal.signal(signal.SIGINT, Close)
 
     AppPath = sys.argv[0]
     LoadConfig()
@@ -896,4 +910,6 @@ if __name__ == "__main__":
         except Exception as e1:
             log.error("Error in app.run:" + str(e1))
             time.sleep(2)
+            if Closing:
+                sys.exit(0)
             Restart()

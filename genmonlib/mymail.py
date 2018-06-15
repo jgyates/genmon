@@ -19,13 +19,13 @@ from email.mime.text import MIMEText
 from email.utils import COMMASPACE, formatdate
 
 import atexit, configparser
-import mylog, mythread, mycommon
+import mylog, mythread, mysupport
 
 #imaplib.Debug = 4
 
 
 #------------ MyMail class --------------------------------------------
-class MyMail(mycommon.MyCommon):
+class MyMail(mysupport.MySupport):
     def __init__(self, monitor = False, incoming_folder = None, processed_folder = None, incoming_callback = None, localinit = False, loglocation = "/var/log/", ConfigFilePath = None):
 
         self.Monitor = monitor                          # true if we receive IMAP email
@@ -132,10 +132,6 @@ class MyMail(mycommon.MyCommon):
             if config.has_option('MyMail', 'ssl_enabled'):
                 self.SSLEnabled = config.getboolean('MyMail', 'ssl_enabled')
         except Exception as e1:
-            if reload:
-                self.FatalError("ERROR: Unable to read config file " + str(e1))
-                return False
-            else:
                 self.FatalError("ERROR: Unable to read config file " + str(e1))
 
         return True
@@ -177,13 +173,15 @@ class MyMail(mycommon.MyCommon):
                 self.Mailbox = imaplib.IMAP4_SSL(self.IMAPServer)
             except Exception:
                 self.LogError( "No Internet Connection! ")
-                time.sleep(120)
+                if self.WaitForExit("EmailCommandThread", 120 ):
+                    return
                 continue   # exit thread
             try:
                 data = self.Mailbox.login(self.EmailAccount, self.EmailPassword)
             except Exception:
                 self.LogError( "LOGIN FAILED!!! ")
-                time.sleep(60)
+                if self.WaitForExit("EmailCommandThread", 60 ):
+                    return
                 continue   # exit thread
             while True:
                 try:
@@ -195,14 +193,16 @@ class MyMail(mycommon.MyCommon):
                     rv, data = self.Mailbox.search(None, "ALL")
                     if rv != 'OK':
                         self.LogError( "No messages found! (search)")
-                        time.sleep(15)
+                        if self.WaitForExit("EmailCommandThread", 15 ):
+                            return
                         continue
                     for num in data[0].split():
                         rv, data = self.Mailbox.fetch(num, '(RFC822)')
                         if rv != 'OK':
                             self.LogError( "ERROR getting message (fetch)")
                             printToScreen( num)
-                            time.sleep(15)
+                            if self.WaitForExit("EmailCommandThread", 15 ):
+                                return
                             continue
                         msg = email.message_from_string(data[0][1])
                         decode = email.header.decode_header(msg['Subject'])[0]
@@ -217,13 +217,14 @@ class MyMail(mycommon.MyCommon):
                         self.Mailbox.store(num, '+FLAGS', '\\Deleted')     # this is needed to remove the original label
                     time.sleep(15)
                 except Exception as e1:
-                    self.LogError("Resetting email thread" + str(e1))
-                    time.sleep(60)
+                    self.LogErrorLine("Resetting email thread" + str(e1))
+                    if self.WaitForExit("EmailCommandThread", 60 ):  # 60 sec
+                        return
                     break
 
-            if self.Threads["EmailCommandThread"].StopSignaled():
+            if self.WaitForExit("EmailCommandThread", 15 ):  # 60 sec
                 return
-            time.sleep(15)
+
             ## end of outer loop
 
     #------------ MyMail.sendEmailDirectMIME --------------------------------------------
@@ -231,9 +232,7 @@ class MyMail(mycommon.MyCommon):
     def sendEmailDirectMIME(self, msgtype, subjectstr, msgstr, recipient = None, files=None, deletefile = False):
 
         if recipient == None:
-            # recipient = self.EmailRecipient
             recipient = self.EmailRecipientByType[msgtype]
-
 
         # update date
         dtstamp=datetime.datetime.now().strftime('%a %d-%b-%Y')
@@ -265,7 +264,7 @@ class MyMail(mycommon.MyCommon):
                     os.remove(f)
 
         except Exception as e1:
-            self.LogError("Error attaching file in sendEmailDirectMIME: " + str(e1))
+            self.LogErrorLine("Error attaching file in sendEmailDirectMIME: " + str(e1))
 
         #self.LogError("Logging in: SMTP Server <"+self.SMTPServer+">:Port <"+str(self.SMTPPort) + ">")
 
@@ -279,7 +278,7 @@ class MyMail(mycommon.MyCommon):
                  session.ehlo
                  # this allows support for simple TLS
         except Exception as e1:
-            self.LogError("Error SMTP Init : SSL:<" + str(self.SSLEnabled)  + ">: " + str(e1))
+            self.LogErrorLine("Error SMTP Init : SSL:<" + str(self.SSLEnabled)  + ">: " + str(e1))
             return False
 
         try:
@@ -292,7 +291,7 @@ class MyMail(mycommon.MyCommon):
             else:
                 session.sendmail(self.SenderAccount, recipient, msg.as_string())
         except Exception as e1:
-            self.LogError("Error SMTP sendmail: " + str(e1))
+            self.LogErrorLine("Error SMTP sendmail: " + str(e1))
             session.quit()
             return False
 
@@ -305,12 +304,8 @@ class MyMail(mycommon.MyCommon):
     def SendMailThread(self):
 
         # once sendMail is called email messages are queued and then sent from this thread
-
+        time.sleep(0.1)
         while True:
-
-            time.sleep(2)
-            if self.Threads["SendMailThread"].StopSignaled():
-                return
 
             while self.EmailSendQueue != []:
                 MailError = False
@@ -321,14 +316,17 @@ class MyMail(mycommon.MyCommon):
                         MailError = True
                 except Exception as e1:
                     # put the time back at the end of the queue
-                    self.LogError("Error in SendMailThread, retrying (2): " + str(e1))
+                    self.LogErrorLine("Error in SendMailThread, retrying (2): " + str(e1))
                     MailError = True
 
                 if MailError:
                     self.EmailSendQueue.insert(len(self.EmailSendQueue),EmailItems)
                     # sleep for 2 min and try again
-                    time.sleep(120)
+                    if self.WaitForExit("SendMailThread", 120 ):
+                        return
 
+            if self.WaitForExit("SendMailThread", 2 ):
+                return
 
     #------------MyMail::sendEmail-----------------------
     # msg type must be one of "outage", "error", "warn", "info"

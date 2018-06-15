@@ -12,7 +12,13 @@
 
 import datetime, time, sys, signal, os, threading, socket
 import atexit
-from genmonlib import mynotify, mylog
+try:
+    from genmonlib import mynotify, mylog
+except:
+    print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
+    print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
+    sys.exit(2)
+
 try:
     from ConfigParser import RawConfigParser
 except ImportError as e:

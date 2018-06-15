@@ -8,7 +8,14 @@
 # MODIFICATIONS:
 #------------------------------------------------------------
 import datetime, time, sys, smtplib, signal, os, threading, socket
-from genmonlib import mylog, myclient
+
+try:
+    from genmonlib import mylog, myclient
+except:
+    print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
+    print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
+    sys.exit(2)
+
 
 
 #----------  Signal Handler ------------------------------------------

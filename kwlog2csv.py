@@ -12,7 +12,13 @@
 
 
 import getopt, os, sys, json
-from genmonlib import myclient, mylog
+
+try:
+    from genmonlib import myclient, mylog
+except:
+    print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
+    print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
+    sys.exit(2)
 
 
 #------------ GeneratorDevice::LogToFile-------------------------
