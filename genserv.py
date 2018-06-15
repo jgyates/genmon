@@ -224,6 +224,7 @@ def ProcessCommand(command):
                 Restart()
         elif command in ["stop"]:
             if session.get('write_access', True):
+                Close()
                 sys.exit(0)
         else:
             return render_template('command_template.html', command = command)
@@ -816,8 +817,10 @@ def LoadConfig():
                 # so revert to HTTP
                 HTTPPort = OldHTTPPort
 
+        return True
     except Exception as e1:
-        log.error("Missing config file or config file entries: " + str(e1))
+        console.error("Missing config file or config file entries: " + str(e1))
+        return False
 
 #------------------------------------------------------------
 def ValidateFilePresent(FileName):
@@ -861,11 +864,20 @@ if __name__ == "__main__":
     #signal.signal(signal.SIGTERM, Close)
     #signal.signal(signal.SIGINT, Close)
 
-    AppPath = sys.argv[0]
-    LoadConfig()
-
     # log errors in this module to a file
     console = mylog.SetupLogger("genserv_console", log_file = "", stream = True)
+
+    if os.geteuid() != 0:
+        console.error("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'.")
+        sys.exit(1)
+
+    if not os.path.isfile(ConfigFilePath + 'genmon.conf'):
+        console.error("Missing config file : " + ConfigFilePath + 'genmon.conf')
+        sys.exit(1)
+
+    AppPath = sys.argv[0]
+    if not LoadConfig():
+        console.log("Error reading configuraiton file.")
 
     log.info("Starting " + AppPath + ", Port:" + str(HTTPPort) + ", Secure HTTP: " + str(bUseSecureHTTP) + ", SelfSignedCert: " + str(bUseSelfSignedCert))
 
