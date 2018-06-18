@@ -2,7 +2,7 @@ Use the template below if you have an issue or want to report a bug. If you have
 
 ***NOTE:*** If you are having issues with your serial connection, please read this page before posting:
 
-(https://github.com/jgyates/genmon/wiki/Appendix-6---Serial-Troubleshooting)
+https://github.com/jgyates/genmon/wiki/Appendix-6---Serial-Troubleshooting
 
 
 ### Expected Behavior
