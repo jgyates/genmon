@@ -1,5 +1,7 @@
 Use the template below if you have an issue or want to report a bug. If you have a question or a feature request you can ignore the questions below.
 
+***NOTE:*** If you are having issues with your serial connection, please read [this page](https://github.com/jgyates/genmon/wiki/Appendix-6---Serial-Troubleshooting) before posting.
+
 ### Expected Behavior
 
 {Please write here}
