@@ -26,7 +26,7 @@ import mylog, mythread, mysupport
 
 #------------ MyMail class --------------------------------------------
 class MyMail(mysupport.MySupport):
-    def __init__(self, monitor = False, incoming_folder = None, processed_folder = None, incoming_callback = None, localinit = False, loglocation = "/var/log/", ConfigFilePath = None):
+    def __init__(self, monitor = False, incoming_folder = None, processed_folder = None, incoming_callback = None, localinit = False, loglocation = "/var/log/", ConfigFilePath = None, start = True):
 
         self.Monitor = monitor                          # true if we receive IMAP email
         self.IncomingFolder = incoming_folder           # folder to look for incoming email
@@ -60,13 +60,13 @@ class MyMail(mysupport.MySupport):
 
         if not self.DisableEmail:
             if not self.DisableSMTP and self.SMTPServer != "":
-                self.Threads["SendMailThread"] = mythread.MyThread(self.SendMailThread, Name = "SendMailThread")
+                self.Threads["SendMailThread"] = mythread.MyThread(self.SendMailThread, Name = "SendMailThread", start = start)
             else:
                 self.LogError("SMTP disabled")
 
             if not self.DisableIMAP and self.Monitor and self.IMAPServer != "":     # if True then we will have an IMAP monitor thread
                 if incoming_callback and incoming_folder and processed_folder:
-                    self.Threads["EmailCommandThread"] = mythread.MyThread(self.EmailCommandThread, Name = "EmailCommandThread")
+                    self.Threads["EmailCommandThread"] = mythread.MyThread(self.EmailCommandThread, Name = "EmailCommandThread", start = start)
                 else:
                     self.FatalError("ERROR: incoming_callback, incoming_folder and processed_folder are required if receive IMAP is used")
             else:
@@ -188,7 +188,8 @@ class MyMail(mysupport.MySupport):
                     rv, data = self.Mailbox.select(self.IncomingFolder)
                     if rv != 'OK':
                         self.LogError( "Error selecting mail folder! (select)")
-                        time.sleep(15)
+                        if self.WaitForExit("EmailCommandThread", 15 ):
+                            return
                         continue
                     rv, data = self.Mailbox.search(None, "ALL")
                     if rv != 'OK':
@@ -215,14 +216,15 @@ class MyMail(mysupport.MySupport):
                         result = self.Mailbox.store(num, '+X-GM-LABELS', self.ProcessedFolder)  #add the label
                         #result = M.store(num, '-X-GM-LABELS', "Gate")  # oddly this will not remove the label
                         self.Mailbox.store(num, '+FLAGS', '\\Deleted')     # this is needed to remove the original label
-                    time.sleep(15)
+                    if self.WaitForExit("EmailCommandThread", 15 ):
+                        return
                 except Exception as e1:
                     self.LogErrorLine("Resetting email thread" + str(e1))
                     if self.WaitForExit("EmailCommandThread", 60 ):  # 60 sec
                         return
                     break
 
-            if self.WaitForExit("EmailCommandThread", 15 ):  # 60 sec
+            if self.WaitForExit("EmailCommandThread", 15 ):  # 15 sec
                 return
 
             ## end of outer loop

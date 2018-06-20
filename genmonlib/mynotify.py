@@ -26,6 +26,8 @@ class GenNotify(mycommon.MyCommon):
                 onmanual = None,
                 onutilitychange = None):
 
+        super(GenNotify, self).__init__()
+
         self.AccessLock = threading.Lock()
         self.Threads = {}
         self.LastEvent = None
@@ -59,8 +61,6 @@ class GenNotify(mycommon.MyCommon):
                 self.Events["MANUAL"] = onmanual
             if onutilitychange != None:
                 self.Events["OUTAGE"] = onutilitychange
-
-            self.Generator = myclient.ClientInterface(host = host, log = log)
 
             startcount = 0
             while startcount <= 10:

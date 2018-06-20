@@ -13,7 +13,7 @@ import mylog, mycommon
 #----------  ClientInterface::init--- ------------------------------------------
 class ClientInterface(mycommon.MyCommon):
     def __init__(self, host="127.0.0.1", port=9082, log = None):
-
+        super(ClientInterface, self).__init__()
         if log != None:
             self.log = log
         else:
@@ -47,7 +47,9 @@ class ClientInterface(mycommon.MyCommon):
             except Exception as e1:
                 retries += 1
                 if retries >= 5:
-                    self.FatalError("Error: Connect : " + str(e1))
+                    self.LogError("Error: Connect : " + str(e1))
+                    self.console.error("Genmon not loaded.")
+                    sys.exit(1)
                 else:
                     time.sleep(1)
                     continue

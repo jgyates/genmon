@@ -14,11 +14,12 @@ class MyThread():
     # regularly for the stopped() condition.
 
     # ---------- MyThread::MyThread------------------
-    def __init__(self, ThreadFunction, Name = None):
+    def __init__(self, ThreadFunction, Name = None, start = True):
         self.StopEvent = threading.Event()
         self.ThreadObj = threading.Thread(target = ThreadFunction, name = Name)
         self.ThreadObj.daemon = True
-        self.Start()
+        if start:
+            self.Start()
 
     # ---------- MyThread::Stop------------------
     def GetThreadObject(self):
