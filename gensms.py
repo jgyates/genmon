@@ -26,8 +26,12 @@ try:
 except ImportError as e:
     from configparser import RawConfigParser
 
-from twilio.rest import Client
-
+try:
+    from twilio.rest import Client
+except:
+    print("\n\nThis program requires the twilio module to be installed.\n")
+    print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
+    sys.exit(2)
 
 #----------  Signal Handler ------------------------------------------
 def signal_handler(signal, frame):
@@ -39,83 +43,83 @@ def signal_handler(signal, frame):
 def OnRun(Active):
 
     if Active:
-        print "Generator Running"
+        console.info("Generator Running")
         SendNotice("Generator Running")
     else:
-        print "Generator Running End"
+        console.info("Generator Running End")
 
 #----------  OnRunManual ------------------------------------------
 def OnRunManual(Active):
 
     if Active:
-        print "Generator Running in Manual Mode"
+        console.info("Generator Running in Manual Mode")
         SendNotice("Generator Running in Manual Mode")
     else:
-        print "Generator Running in Manual Mode End"
+        console.info("Generator Running in Manual Mode End")
 
 #----------  OnExercise ------------------------------------------
 def OnExercise(Active):
 
     if Active:
-        print "Generator Exercising"
+        console.info("Generator Exercising")
         SendNotice("Generator Exercising")
     else:
-        print "Generator Exercising End"
+        console.info("Generator Exercising End")
 
 #----------  OnReady ------------------------------------------
 def OnReady(Active):
 
     if Active:
-        print "Generator Ready"
+        console.info("Generator Ready")
         SendNotice("Generator Ready")
     else:
-        print "Generator Ready End"
+        console.info("Generator Ready End")
 
 #----------  OnOff ------------------------------------------
 def OnOff(Active):
 
     if Active:
-        print "Generator Off"
+        console.info("Generator Off")
         SendNotice("Generator Off")
     else:
-        print "Generator Off End"
+        console.info("Generator Off End")
 
 #----------  OnManual ------------------------------------------
 def OnManual(Active):
 
     if Active:
-        print "Generator Manual"
+        console.info("Generator Manual")
         SendNotice("Generator Manual")
     else:
-        print "Generator Manual End"
+        console.info("Generator Manual End")
 
 #----------  OnAlarm ------------------------------------------
 def OnAlarm(Active):
 
     if Active:
-        print "Generator Alarm"
+        console.info("Generator Alarm")
         SendNotice("Generator Alarm")
     else:
-        print "Generator Alarm End"
+        console.info("Generator Alarm End")
 
 #----------  OnService ------------------------------------------
 def OnService(Active):
 
     if Active:
-        print "Generator Service Due"
+        console.info("Generator Service Due")
         SendNotice("Generator Service Due")
     else:
-        print "Generator Servcie Due End"
+        console.info("Generator Servcie Due End")
 
 #----------  OnUtilityChange -------------------------------------
 def OnUtilityChange(Active):
 
     if Active:
-        print "Utility Service is Down"
+        console.info("Utility Service is Down")
         SendNotice("Utility Service is Down")
     else:
         SendNotice("Utility Service is Up")
-        print "Utility Service is Up"
+        console.info("Utility Service is Up")
 
 #----------  SendNotice ------------------------------------------
 def SendNotice(Message):
@@ -129,11 +133,11 @@ def SendNotice(Message):
             from_ = from_number,
             body = Message)
 
-        print(message.sid)
+        console.info(message.sid)
 
     except Exception as e1:
         log.error("Error: " + str(e1))
-        print ("Error: " + str(e1))
+        console.error("Error: " + str(e1))
 
 #------------------- Command-line interface for gengpio -----------------#
 if __name__=='__main__': # usage program.py [server_address]
@@ -142,6 +146,11 @@ if __name__=='__main__': # usage program.py [server_address]
     # Set the signal handler
     signal.signal(signal.SIGINT, signal_handler)
 
+    if os.geteuid() != 0:
+        print("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
+        sys.exit(2)
+
+    console = mylog.SetupLogger("sms_console", log_file = "", stream = True)
     log = mylog.SetupLogger("client", "/var/log/gensms.log")
 
     try:
@@ -156,7 +165,11 @@ if __name__=='__main__': # usage program.py [server_address]
         auth_token = config.get('gensms', 'authtoken')
         to_number = config.get('gensms', 'to_number')
         from_number = config.get('gensms', 'from_number')
-
+    except Exception as e1:
+        log.error("Error reading /etc/gensms.conf: " + str(e1))
+        console.error("Error reading /etc/gensms.conf: " + str(e1))
+        sys.exit(1)
+    try:
         GenNotify = mynotify.GenNotify(
                                         host = address,
                                         onready = OnReady,
@@ -175,4 +188,4 @@ if __name__=='__main__': # usage program.py [server_address]
 
     except Exception as e1:
         log.error("Error: " + str(e1))
-        print ("Error: " + str(e1))
+        console.error("Error: " + str(e1))

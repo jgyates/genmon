@@ -55,24 +55,25 @@ if __name__=='__main__':
     HelpStr = '\npython genlog.py -a <IP Address or localhost> -f <outputfile>\n'
 
     try:
+        console = mylog.SetupLogger("genlog_console", log_file = "", stream = True)
         opts, args = getopt.getopt(sys.argv[1:],"ha:f:",["address=","filename="])
     except getopt.GetoptError:
-        print (HelpStr)
+        console.error(HelpStr)
         sys.exit(2)
 
     for opt, arg in opts:
         if opt == '-h':
-            print (HelpStr)
+            console.error(HelpStr)
             sys.exit()
         elif opt in ("-a", "--address"):
             address = arg
         elif opt in ("-f", "--filename"):
             fileName = arg
 
-    print 'Address is "', address
-    print 'Output file is "', fileName
+    console.error('Address is ' + address)
+    console.error('Output file is ' + fileName)
     if not len(fileName):
-        print (HelpStr)
+        console.error(HelpStr)
         sys.exit(2)
 
     try:
@@ -96,4 +97,4 @@ if __name__=='__main__':
 
     except Exception as e1:
         log.error("Error: " + str(e1))
-        print ("Error: " + str(e1))
+        console.error("Error: " + str(e1))

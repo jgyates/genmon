@@ -69,6 +69,7 @@ if __name__=='__main__': # usage program.py [server_address]
     address='127.0.0.1' if len(sys.argv)<2 else sys.argv[1]
 
     try:
+        console = mylog.SetupLogger("gengpioin_console", log_file = "", stream = True)
         log = mylog.SetupLogger("client", "gengpioin.log")
         # Set the signal handler
         signal.signal(signal.SIGINT, signal_handler)
@@ -78,7 +79,7 @@ if __name__=='__main__': # usage program.py [server_address]
         #setup GPIO using Board numbering
         GPIO.setmode(GPIO.BOARD)
 
-        print GPIO.RPI_INFO
+        console.info( GPIO.RPI_INFO)
 
         GPIO.setwarnings(True)
 
@@ -100,4 +101,4 @@ if __name__=='__main__': # usage program.py [server_address]
 
     except Exception as e1:
         log.error("Error: " + str(e1))
-        print ("Error: " + str(e1))
+        console.error("Error: " + str(e1))

@@ -37,6 +37,7 @@ if __name__=='__main__': # usage program.py [server_address]
 
     try:
         log = mylog.SetupLogger("client", "gengpio.log")
+        console = mylog.SetupLogger("gengpio_console", log_file = "", stream = True)
         # Set the signal handler
         signal.signal(signal.SIGINT, signal_handler)
 
@@ -45,7 +46,7 @@ if __name__=='__main__': # usage program.py [server_address]
         #setup GPIO using Board numbering
         GPIO.setmode(GPIO.BOARD)
 
-        print GPIO.RPI_INFO
+        console.info( GPIO.RPI_INFO)
 
         GPIO.setwarnings(False)
 
@@ -103,10 +104,10 @@ if __name__=='__main__': # usage program.py [server_address]
 
         if "evolution" in data.lower():
             Evolution = True
-            print ("Evolution Controller Detected\n")
+            console.info ("Evolution Controller Detected\n")
         else:
             Evolution = False
-            print ("Nexus Controller Detected\n")
+            console.info ("Nexus Controller Detected\n")
 
         while True:
 
@@ -115,7 +116,7 @@ if __name__=='__main__': # usage program.py [server_address]
 
             if LastEvent != data:
                 LastEvent = data
-                print ("State: " + data)
+                console.info ("State: " + data)
 
                 if data == "READY":
                     GPIO.output(STATUS_READY,GPIO.HIGH)
@@ -205,4 +206,4 @@ if __name__=='__main__': # usage program.py [server_address]
 
     except Exception as e1:
         log.error("Error: " + str(e1))
-        print ("Error: " + str(e1))
+        console.error ("Error: " + str(e1))
