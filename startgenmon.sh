@@ -27,6 +27,17 @@ case "$1" in
     #sudo pkill -u root -f genpushover.py
     #sudo pkill -u root -f gensyslog.py
     ;;
+  hardstop)
+    echo "Hard Stopping genmon python scripts"
+    sudo pkill -9 -u root -f genmon.py
+    sudo pkill -9 -u root -f genserv.py
+    #sudo pkill -9 -u root -f gengpio.py
+    #sudo pkill -9 -u root -f gengpioin.py
+    #sudo pkill -9 -u root -f genlog.py
+    #sudo pkill -9 -u root -f gensms.py
+    #sudo pkill -9 -u root -f genpushover.py
+    #sudo pkill -9 -u root -f gensyslog.py
+    ;;
   restart)
     echo "Stopping genmon python scripts"
     sudo pkill -u root -f genmon.py
