@@ -51,6 +51,9 @@
 2501!ALARM!Bosch Governor (Stuck Open)!Command and position feedback not matching or taking too much time to achieve. Governor in open position for greater than 1 second!Possible cause: Governor wire loose, Governor module
 2502!ALARM!Bosch Governor (Stuck Closed)!Command and position feedback not matching or taking too much time to achieve. Governor in closed position (commanded otherwise) for greater than 1 second!Possible cause: Governor wire loose, Governor module
 
+# VSCF models
+1062!ALARM!VSCF Comms Loss!No communication between the controller and the AVR!Check communication wires between the controller and the AVR.
+
 ######## Gas Only##############################
 2600!ALARM!Ignition!Default Ignition Error! No further description
 2601!ALARM!Ignition (Missing Cam)!Missing Cam - Cam pulses missing for 5 seconds! No further description
@@ -120,5 +123,3 @@
 #1600!ALARM!Underspeed!The engine never comes up to 3700 RPM.!Check fuel selection and fuel supply.
 #2102!ALARM!Overload Remove Load!Overloaded!Unit re-cranks 5 times when load is applied, engine dies (0 RPM) and has low voltage (< 180V) Check for Overloaded condition on unit. Inspect stepper motor operation.
 #2103!ALARM!Overload Remove Load!Unit has run and attempted to accept load 10 times, could not accept due to overload condition.!Check for Overloaded condition on unit
-
-
