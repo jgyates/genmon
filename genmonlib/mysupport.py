@@ -9,18 +9,18 @@
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
 
-import os, sys, time, collections, threading
+import os, sys, time, collections, threading, socket
 
-from genmonlib import mycommon
+from genmonlib import mycommon, myplatform
 
-#------------ MySupport class -----------------------------------------------------
+#------------ MySupport class --------------------------------------------------
 class MySupport(mycommon.MyCommon):
     def __init__(self, simulation = False):
         super(MySupport, self).__init__()
         self.Simulation = simulation
         self.CriticalLock = threading.Lock()        # Critical Lock (writing conf file)
 
-    #------------ MySupport::LogToFile-------------------------
+    #------------ MySupport::LogToFile------------------------------------------
     def LogToFile(self, File, TimeDate, Value):
         if self.Simulation:
             return
@@ -34,7 +34,57 @@ class MySupport(mycommon.MyCommon):
         except Exception as e1:
             self.LogError("Error in  LogToFile : File: %s: %s " % (File,str(e1)))
 
-    # ---------- MySupport::KillThread------------------
+    #------------ MySupport::GetSiteName----------------------------------------
+    def GetSiteName(self):
+        return self.SiteName
+
+    # ------------------------ MySupport::IsLoaded -----------------------------
+    # return true if program is already loaded
+    def IsLoaded(self):
+
+        Socket = None
+
+        try:
+            #create an INET, STREAMing socket
+            Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            #now connect to the server on our port
+            Socket.connect(("127.0.0.1", self.ServerSocketPort))
+            Socket.close()
+            return True
+        except Exception as e1:
+            if Socket != None:
+                Socket.close()
+            return False
+
+    #------------ MySupport::GetPlatformStats ----------------------------------
+    def GetPlatformStats(self, usemetric = None):
+
+        PlatformInfo = collections.OrderedDict()
+
+        if not usemetric == None:
+            bMetric = usemetric
+        else:
+            bMetric = self.UseMetric
+        Platform = myplatform.MyPlatform(self.log, bMetric)
+
+        return Platform.GetInfo()
+
+    #---------- MySupport::GetDeadThreadName------------------------------------
+    def GetDeadThreadName(self):
+
+        RetStr = ""
+        ThreadNames = ""
+        for Name, MyThreadObj in self.Threads.items():
+            ThreadNames += Name + " "
+            if not MyThreadObj.IsAlive():
+                RetStr += MyThreadObj.Name() + " "
+
+        if RetStr == "":
+            RetStr = "All threads alive: " + ThreadNames
+
+        return RetStr
+
+    # ---------- MySupport::KillThread------------------------------------------
     def KillThread(self, Name, CleanupSelf = False):
 
         try:
@@ -49,6 +99,22 @@ class MySupport(mycommon.MyCommon):
         except Exception as e1:
             self.LogError("Error in KillThread ( " + Name  + "): " + str(e1))
             return
+
+    #---------------------MySupport::StartAllThreads----------------------------
+    def StartAllThreads(self):
+
+        for key, ThreadInfo in self.Threads.items():
+            ThreadInfo.Start()
+
+    #---------- MySupport:: AreThreadsAlive-------------------------------------
+    # ret true if all threads are alive
+    def AreThreadsAlive(self):
+
+        for Name, MyThreadObj in self.Threads.items():
+            if not MyThreadObj.IsAlive():
+                return False
+
+        return True
 
     # ---------- MySupport::IsStopSignaled------------------
     def IsStopSignaled(self, Name):
@@ -117,6 +183,8 @@ class MySupport(mycommon.MyCommon):
         elif callable(item):
             return item()
         elif isinstance(item, (int, long)):
+            return str(item)
+        elif isinstance(item, float):
             return str(item)
         else:
             self.LogError("Unable to convert type %s in GetDispatchItem" % type(item))

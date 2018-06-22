@@ -15,6 +15,7 @@ import os, sys, time, json
 class MyCommon(object):
     def __init__(self):
         self.log = None
+        self.console = None
         self.Threads = {}       # Dict of mythread objects
         self.MaintainerAddress = "generatormonitor.software@gmail.com"
         pass
@@ -75,6 +76,11 @@ class MyCommon(object):
         z = x.copy()
         z.update(y)
         return z
+
+    #---------------------MyCommon::LogConsole------------------------------------
+    def LogConsole(self, Message):
+        if not self.console == None:
+            self.console.error(Message)
 
     #---------------------MyCommon::LogError------------------------------------
     def LogError(self, Message):

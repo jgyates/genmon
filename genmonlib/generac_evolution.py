@@ -552,7 +552,7 @@ class Evolution(controller.GeneratorController):
             # if reg 000 is 3 or less then assume we have a Nexus Controller
             if ProductModel == 0x03 or ProductModel == 0x06:
                 self.EvolutionController = False    #"Nexus"
-            elif ProductModel == 0x09 or ProductModel == 0x0c:
+            elif ProductModel == 0x09 or ProductModel == 0x0c or ProductModel == 0x0a:
                 self.EvolutionController = True     #"Evolution"
             else:
                 # set a reasonable default
@@ -567,7 +567,7 @@ class Evolution(controller.GeneratorController):
             self.LogError("DetectController auto-detect override (controller). EvolutionController now is %s" % str(self.EvolutionController))
 
         if self.LiquidCooled == None:
-            if ProductModel == 0x03 or ProductModel == 0x09:
+            if ProductModel == 0x03 or ProductModel == 0x09 or ProductModel == 0x0a:
                 self.LiquidCooled = False    # Air Cooled
             elif ProductModel == 0x06 or ProductModel == 0x0c:
                 self.LiquidCooled = True     # Liquid Cooled
@@ -598,6 +598,7 @@ class Evolution(controller.GeneratorController):
                 0x03 :  "Nexus, Air Cooled",
                 0x06 :  "Nexus, Liquid Cooled",
                 0x09 :  "Evolution, Air Cooled",
+                0x0a :  "Synergy Evolution, Air Cooled",
                 0x0c :  "Evolution, Liquid Cooled"
             }
 
@@ -1375,7 +1376,7 @@ class Evolution(controller.GeneratorController):
                 MessageType = "info"
                 msgsubject = "Generator Notice: " + self.SiteName
 
-            msgbody += self.DisplayStatus()
+            msgbody += self.DisplayStatus(Reg0001Value = RegVal)
 
             if self.SystemInAlarm():
                 msgbody += self.printToString("\nTo clear the Alarm/Warning message, press OFF on the control panel keypad followed by the ENTER key.")
@@ -2198,12 +2199,15 @@ class Evolution(controller.GeneratorController):
             return "UNKNOWN: %08x" % RegVal
 
     #------------ Evolution:GetSwitchState --------------------------------------
-    def GetSwitchState(self):
+    def GetSwitchState(self, Reg0001Value = None):
 
-        Value = self.GetRegisterValueFromList("0001")
-        if len(Value) != 8:
-            return ""
-        RegVal = int(Value, 16)
+        if Reg0001Value is None:
+            Value = self.GetRegisterValueFromList("0001")
+            if len(Value) != 8:
+                return ""
+            RegVal = int(Value, 16)
+        else:
+            RegVal = Reg0001Value
 
         if self.BitIsEqual(RegVal, 0x0FFFF, 0x00):
             return "Auto"
@@ -2984,7 +2988,7 @@ class Evolution(controller.GeneratorController):
         return Outage
 
     #------------ Evolution:DisplayStatus ----------------------------------------
-    def DisplayStatus(self, DictOut = False):
+    def DisplayStatus(self, DictOut = False, Reg0001Value = None):
 
         try:
             Status = collections.OrderedDict()
@@ -3000,8 +3004,8 @@ class Evolution(controller.GeneratorController):
             Stat["Time"] = Time
 
 
-            Engine["Switch State"] = self.GetSwitchState()
-            Engine["Engine State"] = self.GetEngineState()
+            Engine["Switch State"] = self.GetSwitchState(Reg0001Value = Reg0001Value)
+            Engine["Engine State"] = self.GetEngineState(Reg0001Value = Reg0001Value)
             if self.EvolutionController and self.LiquidCooled:
                 Engine["Active Relays"] = self.GetDigitalOutputs()
                 Engine["Active Sensors"] = self.GetSensorInputs()

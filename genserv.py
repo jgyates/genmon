@@ -105,12 +105,12 @@ def do_admin_login():
     if request.form['password'] == HTTPAuthPass and request.form['username'] == HTTPAuthUser:
         session['logged_in'] = True
         session['write_access'] = True
-        log.info("Admin Login")
+        LogError("Admin Login")
         return root()
     elif request.form['password'] == HTTPAuthPass_RO and request.form['username'] == HTTPAuthUser_RO:
         session['logged_in'] = True
         session['write_access'] = False
-        log.info("Limited Rights Login")
+        LogError("Limited Rights Login")
         return root()
     else:
         return render_template('login.html')
@@ -167,7 +167,7 @@ def ProcessCommand(command):
 
             except Exception as e1:
                 data = "Retry"
-                log.error("Error on command function: " + str(e1))
+                LogError("Error on command function: " + str(e1))
 
             if command in ["status_json", "outage_json", "maint_json", "monitor_json", "logs_json",
                 "registers_json", "allregs_json", "start_info_json", "gui_status_json", "power_log_json"]:
@@ -181,7 +181,7 @@ def ProcessCommand(command):
                             StartInfo["pages"]["notifications"] = False
                         data = json.dumps(StartInfo, sort_keys=False)
                     except Exception as e1:
-                        log.error("Error in JSON parse / decode: " + str(e1))
+                        LogError("Error in JSON parse / decode: " + str(e1))
                 return data
             return jsonify(data)
 
@@ -229,7 +229,7 @@ def ProcessCommand(command):
         else:
             return render_template('command_template.html', command = command)
     except Exception as e1:
-        log.error("Error in Process Command: " + str(e1))
+        LogError("Error in Process Command: " + str(e1))
         return render_template('command_template.html', command = command)
 
 #------------------------------------------------------------
@@ -291,7 +291,7 @@ def SaveNotifications(query_string):
         Restart()
 
     except Exception as e1:
-        log.error("Error Update Config File: " + str(e1))
+        LogError("Error Update Config File: " + str(e1))
 
 #------------------------------------------------------------
 def ReadSingleConfigValue(file, section, type, entry, default, bounds = None):
@@ -318,17 +318,17 @@ def ReadSingleConfigValue(file, section, type, entry, default, bounds = None):
                 if Value.lower() in (name.lower() for name in DefaultList):
                     return Value
                 else:
-                    log.error("Error Reading Config File (value not in list): %s : %s" % (entry,Value))
+                    LogError("Error Reading Config File (value not in list): %s : %s" % (entry,Value))
                 return default
             else:
-                log.error("Error Reading Config File (bounds not provided): %s : %s" % (entry,Value))
+                LogError("Error Reading Config File (bounds not provided): %s : %s" % (entry,Value))
                 return default
         else:
-            log.error("Error Reading Config File (unknown type): %s : %s" % (entry,type))
+            LogError("Error Reading Config File (unknown type): %s : %s" % (entry,type))
             return default
 
     except Exception as e1:
-        log.error("Error Reading Config File (ReadSingleConfigValue): " + str(e1))
+        LogError("Error Reading Config File (ReadSingleConfigValue): " + str(e1))
         return default
 
 #------------------------------------------------------------
@@ -360,7 +360,7 @@ def ReadNotificationsFromFile():
             else:
                 NotificationSettings[email] = [SortOrder, Notify]
     except Exception as e1:
-        log.error("Error in ReadNotificationsFromFile: " + str(e1))
+        LogError("Error in ReadNotificationsFromFile: " + str(e1))
 
     return NotificationSettings
 
@@ -490,7 +490,7 @@ def ReadSettingsFromFile():
 
         GetToolTips(ConfigSettings)
     except Exception as e1:
-        log.error("Error in ReadSettingsFromFile: " + str(e1))
+        LogError("Error in ReadSettingsFromFile: " + str(e1))
 
     return ConfigSettings
 
@@ -505,7 +505,7 @@ def GetAllConfigValues(FileName, section):
         for (key, value) in config.items(section):
             ReturnDict[key.lower()] = value
     except Exception as e1:
-        log.error("Error GetAllConfigValues: " + FileName + ": "+ str(e1) )
+        LogError("Error GetAllConfigValues: " + FileName + ": "+ str(e1) )
 
     return ReturnDict
 
@@ -535,7 +535,7 @@ def CacheToolTips():
         CachedToolTips = GetAllConfigValues(pathtofile + "/tooltips.txt", "ToolTips")
 
     except Exception as e1:
-        log.error("Error reading tooltips.txt " + str(e1) )
+        LogError("Error reading tooltips.txt " + str(e1) )
 
 #------------------------------------------------------------
 def GetToolTips(ConfigSettings):
@@ -546,7 +546,7 @@ def GetToolTips(ConfigSettings):
             (ConfigSettings[entry])[4] = CachedToolTips[entry.lower()]
 
     except Exception as e1:
-        log.error("Error in GetToolTips: " + str(e1))
+        LogError("Error in GetToolTips: " + str(e1))
 
 #------------------------------------------------------------
 def SaveSettings(query_string):
@@ -566,12 +566,12 @@ def SaveSettings(query_string):
                     ConfigFile = CurrentConfigSettings[Entry][6]
                     Value = settings[Entry][0]
                 else:
-                    log.error("Invalid setting: " + str(Entry))
+                    LogError("Invalid setting: " + str(Entry))
                     continue
                 UpdateConfigFile(ConfigFile,Entry, Value)
         Restart()
     except Exception as e1:
-        log.error("Error Update Config File (SaveSettings): " + str(e1))
+        LogError("Error Update Config File (SaveSettings): " + str(e1))
 #------------------------------------------------------------
 # THIS CAN BE REMOVED
 def SaveSettings2(query_string):
@@ -606,7 +606,7 @@ def SaveSettings2(query_string):
             file_handle.close()
         Restart()
     except Exception as e1:
-        log.error("Error Update Config File (SaveSettings): " + str(e1))
+        LogError("Error Update Config File (SaveSettings): " + str(e1))
 
 #---------------------MySupport::UpdateConfigFile------------------------
 # Add or update config item
@@ -640,7 +640,7 @@ def UpdateConfigFile(FileName, Entry, Value):
         return True
 
     except Exception as e1:
-        log.error("Error in UpdateConfigFile: " + str(e1))
+        LogError("Error in UpdateConfigFile: " + str(e1))
         return False
 
 #------------------------------------------------------------
@@ -676,14 +676,14 @@ def Restart():
 
     Restarting = True
     if not RunBashScript("startgenmon.sh restart"):
-        log.error("Error in Restart")
+        LogError("Error in Restart")
 
 #------------------------------------------------------------
 def RestartThread():
 
     time.sleep(0.25)
     if not RunBashScript("startgenmon.sh restart"):
-        log.error("Error in Restart")
+        LogError("Error in Restart")
 
 #------------------------------------------------------------
 # This will restart the Flask App
@@ -698,7 +698,7 @@ def StartRestart():
 def Update():
     # update
     if not RunBashScript("genmonmaint.sh updatenp"):   # update no prompt
-        log.error("Error in Update")
+        LogError("Error in Update")
     # now restart
     Restart()
 
@@ -707,12 +707,12 @@ def RunBashScript(ScriptName):
     try:
         pathtoscript = os.path.dirname(os.path.realpath(__file__))
         command = "/bin/bash "
-        log.error("Script: " + command + pathtoscript + "/" + ScriptName)
+        LogError("Script: " + command + pathtoscript + "/" + ScriptName)
         subprocess.call(command + pathtoscript + "/" + ScriptName, shell=True)
         return True
 
     except Exception as e1:
-        log.error("Error in RunBashScript: (" + ScriptName + ") : " + str(e1))
+        LogError("Error in RunBashScript: (" + ScriptName + ") : " + str(e1))
         return False
 
 #------------------------------------------------------------
@@ -724,7 +724,7 @@ def CheckCertFiles(CertFile, KeyFile):
             with open(KeyFile,"r") as MyKeyFile:
                 return True
     except Exception as e1:
-        log.error("Error in CheckCertFiles: Unable to open Cert or Key file: " + CertFile + ", " + KeyFile + " : "+ str(e1))
+        LogError("Error in CheckCertFiles: Unable to open Cert or Key file: " + CertFile + ", " + KeyFile + " : "+ str(e1))
         return False
 
     return True
@@ -819,7 +819,7 @@ def LoadConfig():
 
         return True
     except Exception as e1:
-        console.error("Missing config file or config file entries: " + str(e1))
+        LogConsole("Missing config file or config file entries: " + str(e1))
         return False
 
 #------------------------------------------------------------
@@ -828,26 +828,53 @@ def ValidateFilePresent(FileName):
         with open(FileName,"r") as TestFile:     #
             return True
     except Exception as e1:
-            log.error("File (%s) not present." % FileName)
+            LogError("File (%s) not present." % FileName)
             return False
-#------------------------------------------------------------
+
+#---------------------LogConsole------------------------------------------------
+def LogConsole( Message):
+    if not console == None:
+        console.error(Message)
+
+#---------------------LogError--------------------------------------------------
+def LogError(Message):
+    if not log == None:
+        log.error(Message)
+#---------------------FatalError------------------------------------------------
+def FatalError(Message):
+    if not log == None:
+        log.error(Message)
+    raise Exception(Message)
+#---------------------LogErrorLine----------------------------------------------
+def LogErrorLine(Message):
+    if not log == None:
+        LogError(Message + " : " + self.GetErrorLine())
+
+#---------------------GetErrorLine----------------------------------------------
+def GetErrorLine(self):
+    exc_type, exc_obj, exc_tb = sys.exc_info()
+    fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+    lineno = exc_tb.tb_lineno
+    return fname + ":" + str(lineno)
+
+#-------------------------------------------------------------------------------
 def Close(NoExit = False):
 
     global Closing
     if Closing:
         return
     Closing = True
-    log.error("Close server..")
+    LogError("Close server..")
     try:
         with app.app_context():
             func = request.environ.get('werkzeug.server.shutdown')
             if func is None:
-                log.error("Not running with the Werkzeug Server")
+                LogError("Not running with the Werkzeug Server")
             func()
     except Exception as e1:
-        log.error("Error in close: " + str(e1))
+        LogError("Error in close: " + str(e1))
 
-    log.error("Server closed.")
+    LogError("Server closed.")
     if not NoExit:
         sys.exit(0)
 
@@ -868,28 +895,29 @@ if __name__ == "__main__":
     console = mylog.SetupLogger("genserv_console", log_file = "", stream = True)
 
     if os.geteuid() != 0:
-        console.error("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'.")
+        LogConsole("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'.")
         sys.exit(1)
 
     if not os.path.isfile(ConfigFilePath + 'genmon.conf'):
-        console.error("Missing config file : " + ConfigFilePath + 'genmon.conf')
+        LogConsole("Missing config file : " + ConfigFilePath + 'genmon.conf')
         sys.exit(1)
 
     AppPath = sys.argv[0]
     if not LoadConfig():
-        console.log("Error reading configuraiton file.")
+        LogConsole("Error reading configuraiton file.")
+        sys.exit(1)
 
-    log.info("Starting " + AppPath + ", Port:" + str(HTTPPort) + ", Secure HTTP: " + str(bUseSecureHTTP) + ", SelfSignedCert: " + str(bUseSelfSignedCert))
+    LogError("Starting " + AppPath + ", Port:" + str(HTTPPort) + ", Secure HTTP: " + str(bUseSecureHTTP) + ", SelfSignedCert: " + str(bUseSelfSignedCert))
 
     # validate needed files are present
     file = os.path.dirname(os.path.realpath(__file__)) + "/startgenmon.sh"
     if not ValidateFilePresent(file):
-        log.error("Required file missing : startgenmon.sh")
+        LogError("Required file missing : startgenmon.sh")
         sys.exit(1)
 
     file = os.path.dirname(os.path.realpath(__file__)) + "/genmonmaint.sh"
     if not ValidateFilePresent(file):
-        log.error("Required file missing : genmonmaint.sh")
+        LogError("Required file missing : genmonmaint.sh")
         sys.exit(1)
 
     CacheToolTips()
@@ -902,7 +930,7 @@ if __name__ == "__main__":
         except Exception as e1:
             startcount += 1
             if startcount >= 4:
-                console.error("Error: genmon not loaded.")
+                LogConsole("Error: genmon not loaded.")
                 sys.exit(1)
             time.sleep(1)
             continue
@@ -912,7 +940,7 @@ if __name__ == "__main__":
     while ((datetime.datetime.now() - Start).total_seconds() < 10):
         data = MyClientInterface.ProcessMonitorCommand("generator: gethealth")
         if "OK" in data:
-            console.info(" OK - Init complete.")
+            LogConsole(" OK - Init complete.")
             break
 
     while True:
@@ -920,7 +948,7 @@ if __name__ == "__main__":
             app.run(host="0.0.0.0", port=HTTPPort, threaded = True, ssl_context=SSLContext, use_reloader = False, debug = False)
 
         except Exception as e1:
-            log.error("Error in app.run:" + str(e1))
+            LogError("Error in app.run:" + str(e1))
             time.sleep(2)
             if Closing:
                 sys.exit(0)

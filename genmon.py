@@ -29,7 +29,7 @@ except:
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
     sys.exit(2)
 
-GENMON_VERSION = "V1.9.26"
+GENMON_VERSION = "V1.9.27"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -87,14 +87,14 @@ class Monitor(mysupport.MySupport):
         self.console = mylog.SetupLogger("genmon_console", log_file = "", stream = True)
 
         if os.geteuid() != 0:
-            self.console.error("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'.")
+            self.LogConsole("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'.")
             sys.exit(1)
 
         if not os.path.isfile(self.ConfigFilePath + 'genmon.conf'):
-            self.console.error("Missing config file : " + self.ConfigFilePath + 'genmon.conf')
+            self.LogConsole("Missing config file : " + self.ConfigFilePath + 'genmon.conf')
             sys.exit(1)
         if not os.path.isfile(self.ConfigFilePath + 'mymail.conf'):
-            self.console.error("Missing config file : " + self.ConfigFilePath + 'mymail.conf')
+            self.LogConsole("Missing config file : " + self.ConfigFilePath + 'mymail.conf')
             sys.exit(1)
 
         # read config file
@@ -102,12 +102,11 @@ class Monitor(mysupport.MySupport):
             raise Exception("Failure in Monitor GetConfig: " + str(e1))
             return None
 
-
         # log errors in this module to a file
         self.log = mylog.SetupLogger("genmon", self.LogLocation + "genmon.log")
 
         if self.IsLoaded():
-            self.console.error("ERROR: genmon.py is already loaded.")
+            self.LogConsole("ERROR: genmon.py is already loaded.")
             self.LogError("ERROR: genmon.py is already loaded.")
             sys.exit(1)
 
@@ -163,24 +162,6 @@ class Monitor(mysupport.MySupport):
         self.MessagePipe.SendMessage("Generator Monitor Starting at " + self.SiteName, "Generator Monitor Starting at " + self.SiteName , msgtype = "info")
 
         self.LogError("GenMon Loadded for site: " + self.SiteName)
-
-    # ------------------------ Monitor::IsLoaded--------------------------------
-    # return true if program is already loaded
-    def IsLoaded(self):
-
-        Socket = None
-
-        try:
-            #create an INET, STREAMing socket
-            Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            #now connect to the server on our port
-            Socket.connect(("127.0.0.1", self.ServerSocketPort))
-            Socket.close()
-            return True
-        except Exception as e1:
-            if Socket != None:
-                Socket.close()
-            return False
 
     # ------------------------ Monitor::StartThreads----------------------------
     def StartThreads(self, reload = False):
@@ -409,12 +390,12 @@ class Monitor(mysupport.MySupport):
             msgbody = "\n"
         else:
             msgbody = ""
-
+        '''
         if not self.Controller.InitComplete:
             msgsubject = "Error in Generator Command"
             msgbody += "Generator Monitor not finished starting up."
             LocalError = True
-
+        '''
         if(len(command)) == 0:
             msgsubject = "Error in Generator Command (Lenght is zero)"
             msgbody += "Invalid GENERATOR command: zero length command."
@@ -460,6 +441,7 @@ class Monitor(mysupport.MySupport):
             "status_json"       : [self.Controller.DisplayStatus, (True,), True],
             "maint_json"        : [self.Controller.DisplayMaintenance, (True,), True],
             "monitor_json"      : [self.DisplayMonitor, (True,), True],
+            "weather_json"      : [self.DisplayWeather, (True,), True],
             "outage_json"       : [self.Controller.DisplayOutage, (True,), True],
             "gui_status_json"   : [self.GetStatusForGUI, (), True],
             "getsitename"       : [self.GetSiteName, (), True],
@@ -556,19 +538,6 @@ class Monitor(mysupport.MySupport):
         outstring += self.printToString("\n")
 
         return outstring
-    #------------ Monitor::GetPlatformStats ----------------------------------
-    def GetPlatformStats(self, usemetric = None):
-
-        PlatformInfo = collections.OrderedDict()
-
-        if not usemetric == None:
-            bMetric = usemetric
-        else:
-            pass
-            bMetric = self.UseMetric
-        Platform = myplatform.MyPlatform(self.log, bMetric)
-
-        return Platform.GetInfo()
 
     #------------ Monitor::GetWeatherData --------------------------------------
     def GetWeatherData(self, ForUI = False):
@@ -602,6 +571,23 @@ class Monitor(mysupport.MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in GetUserDefinedData: " + str(e1))
         return None
+
+    #------------ Monitor::DisplayWeather --------------------------------------
+    def DisplayWeather(self, DictOut = False):
+
+        WeatherData = collections.OrderedDict()
+
+        try:
+            ReturnData = self.GetWeatherData()
+            if not ReturnData == None and len(ReturnData):
+                WeatherData["Weather"] = ReturnData
+
+            if not DictOut:
+                return self.printToString(self.ProcessDispatch(WeatherData,""))
+        except Exception as e1:
+            self.LogErrorLine("Error in DisplayWeather: " + str(e1))
+
+        return WeatherData
 
     #------------ Monitor::DisplayMonitor --------------------------------------
     def DisplayMonitor(self, DictOut = False):
@@ -641,10 +627,6 @@ class Monitor(mysupport.MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in DisplayMonitor: " + str(e1))
         return Monitor
-
-    #------------ Monitor::GetSiteName------------------------------------------
-    def GetSiteName(self):
-        return self.SiteName
 
     #------------ Monitor::GetStartInfo-----------------------------------------
     def GetStartInfo(self, NoTile = False):
@@ -763,17 +745,6 @@ class Monitor(mysupport.MySupport):
             if self.WaitForExit("ComWatchDog", 2):
                 return
 
-
-    #---------- Monitor:: AreThreadsAlive---------------------------------------
-    # ret true if all threads are alive
-    def AreThreadsAlive(self):
-
-        for Name, MyThreadObj in self.Threads.items():
-            if not MyThreadObj.IsAlive():
-                return False
-
-        return True
-
     #---------- Monitor::LogFileIsOK--------------------------------------------
     def LogFileIsOK(self):
 
@@ -801,20 +772,6 @@ class Monitor(mysupport.MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in LogFileIsOK: " + str(e1))
         return True
-    #---------- Monitor::GetDeadThreadName--------------------------------------
-    def GetDeadThreadName(self):
-
-        RetStr = ""
-        ThreadNames = ""
-        for Name, MyThreadObj in self.Threads.items():
-            ThreadNames += Name + " "
-            if not MyThreadObj.IsAlive():
-                RetStr += MyThreadObj.Name() + " "
-
-        if RetStr == "":
-            RetStr = "All threads alive: " + ThreadNames
-
-        return RetStr
 
     #----------  Monitor::SocketWorkThread-------------------------------------
     #  This thread spawns for each connection established by a client
@@ -888,15 +845,20 @@ class Monitor(mysupport.MySupport):
                 continue
             except Exception as e1:
                 if self.IsStopping:
-                    return
+                    break
                 self.LogErrorLine("Excpetion in InterfaceServerThread" + str(e1))
                 if self.WaitForExit("InterfaceServerThread", 0.5 ):
-                    return
+                    break
                 continue
 
-        self.ServerSocket.shutdown(socket.SHUT_RDWR)
-        self.ServerSocket.close()
-        self.ServerSocket = None
+        if self.ServerSocket != None:
+            if len(self.ConnectionList):
+                try:
+                    self.ServerSocket.shutdown(socket.SHUT_RDWR)
+                except:
+                    pass
+            self.ServerSocket.close()
+            self.ServerSocket = None
         #
 
     #---------------------Monitor::Close------------------------
@@ -978,8 +940,12 @@ class Monitor(mysupport.MySupport):
         with self.CriticalLock:
             self.LogError("Generator Monitor Shutdown")
 
-        self.ProgramComplete = True
-        sys.exit(0)
+        try:
+
+            self.ProgramComplete = True
+            sys.exit(0)
+        except:
+            pass
 
 #------------------- Command-line interface for monitor -----------------#
 if __name__=='__main__': #
