@@ -528,6 +528,9 @@ def CacheToolTips():
         else:
             config_section = "generac_evo_nexus"
 
+        if not len(config_section):
+            config_section = "generac_evo_nexus"
+            
         ControllerType = config_section
 
         CachedRegisterDescriptions = GetAllConfigValues(pathtofile + "/tooltips.txt", config_section)

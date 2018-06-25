@@ -54,6 +54,7 @@ class Evolution(controller.GeneratorController):
 
         # Controller Type
         self.EvolutionController = None
+        self.SynergyController = False
         self.LiquidCooled = None
         # State Info
         self.GeneratorInAlarm = False       # Flag to let the heartbeat thread know there is a problem
@@ -549,6 +550,8 @@ class Evolution(controller.GeneratorController):
 
         if self.EvolutionController == None:
 
+            if ProductModel == 0x0a:
+                self.SynergyController = True
             # if reg 000 is 3 or less then assume we have a Nexus Controller
             if ProductModel == 0x03 or ProductModel == 0x06:
                 self.EvolutionController = False    #"Nexus"
@@ -610,6 +613,8 @@ class Evolution(controller.GeneratorController):
             return ControllerDecoder.get(ProductModel, "Unknown 0x%02X" % ProductModel)
         else:
 
+            if self.SynergyController:
+                outstr = "Synergy Evolution, "
             if self.EvolutionController:
                 outstr = "Evolution, "
             else:

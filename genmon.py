@@ -29,7 +29,7 @@ except:
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
     sys.exit(2)
 
-GENMON_VERSION = "V1.9.27"
+GENMON_VERSION = "V1.9.28"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -390,12 +390,7 @@ class Monitor(mysupport.MySupport):
             msgbody = "\n"
         else:
             msgbody = ""
-        '''
-        if not self.Controller.InitComplete:
-            msgsubject = "Error in Generator Command"
-            msgbody += "Generator Monitor not finished starting up."
-            LocalError = True
-        '''
+
         if(len(command)) == 0:
             msgsubject = "Error in Generator Command (Lenght is zero)"
             msgbody += "Invalid GENERATOR command: zero length command."
