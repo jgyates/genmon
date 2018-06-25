@@ -249,7 +249,6 @@ class MyPlatform(mycommon.MyCommon):
 
         WiFiInfo = collections.OrderedDict()
 
-        # Try to get this from iwconfig
         try:
             with open("/proc/net/wireless", "r") as f:
                 for line in f:
@@ -264,7 +263,7 @@ class MyPlatform(mycommon.MyCommon):
                             WiFiInfo["WLAN Signal Quality"] = self.GetWiFiSignalQuality(adapter)
                         except:
                             WiFiInfo["WLAN Signal Quality"] = ListItems[2].replace(".", "")  + "/70"
-                            
+
                         WiFiInfo["WLAN Signal Noise"] = ListItems[4].replace(".", "") + " dBm"
         except Exception as e1:
             pass
