@@ -221,7 +221,7 @@ class MyPlatform(mycommon.MyCommon):
                 #output, _error = process.communicate()
                 LinuxInfo["Network Interface Used"] = adapter
                 try:
-                    if "wlan" in adapter:
+                    if adapter.startswith('wl'):
                         LinuxInfo = self.MergeDicts(LinuxInfo, self.GetWiFiInfo(adapter))
                 except Exception as e1:
                     pass
@@ -244,11 +244,12 @@ class MyPlatform(mycommon.MyCommon):
         match = re.search('Link Quality=([\s\S]*?) ', result)
         return match.group(1)
 
-    #------------ MyPlatform::GetWiFiSignalQuality -----------------------------
+    #------------ MyPlatform::GetWiFiInfo --------------------------------------
     def GetWiFiInfo(self, adapter):
 
         WiFiInfo = collections.OrderedDict()
 
+        # Try to get this from iwconfig
         try:
             with open("/proc/net/wireless", "r") as f:
                 for line in f:
@@ -257,7 +258,13 @@ class MyPlatform(mycommon.MyCommon):
                     ListItems = line.split()
                     if len(ListItems) > 4:
                         WiFiInfo["WLAN Signal Level"] = ListItems[3].replace(".", "") + " dBm"
-                        WiFiInfo["WLAN Signal Quality"] = ListItems[2].replace(".", "") + "/70"
+                        # Note that some WLAN drivers make this value based from 0 - 70, others are 0-100
+                        # There is no standard on the range
+                        try:
+                            WiFiInfo["WLAN Signal Quality"] = self.GetWiFiSignalQuality(adapter)
+                        except:
+                            WiFiInfo["WLAN Signal Quality"] = ListItems[2].replace(".", "")  + "/70"
+                            
                         WiFiInfo["WLAN Signal Noise"] = ListItems[4].replace(".", "") + " dBm"
         except Exception as e1:
             pass
