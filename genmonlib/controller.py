@@ -60,6 +60,7 @@ class GeneratorController(mysupport.MySupport):
         else:
             self.LogLocation = "/var/log/"
         self.bDisplayUnknownSensors = False
+        self.SlowCPUOptimization = False
         self.UtilityVoltsMin = 0    # Minimum reported utility voltage above threshold
         self.UtilityVoltsMax = 0    # Maximum reported utility voltage above pickup
         self.SystemInOutage = False         # Flag to signal utility power is out
@@ -96,6 +97,8 @@ class GeneratorController(mysupport.MySupport):
             if config.has_option(ConfigSection, 'loglocation'):
                 self.LogLocation = config.get(ConfigSection, 'loglocation')
 
+            if config.has_option(ConfigSection, 'optimizeforslowercpu'):
+                self.SlowCPUOptimization = config.getboolean(ConfigSection, 'optimizeforslowercpu')
             # optional config parameters, by default the software will attempt to auto-detect the controller
             # this setting will override the auto detect
 
@@ -152,7 +155,8 @@ class GeneratorController(mysupport.MySupport):
         try:
             self.ModBus.Flush()
             self.InitDevice()
-
+            if self.IsStopping:
+                return
             while True:
                 try:
                     self.MasterEmulation()
@@ -191,6 +195,8 @@ class GeneratorController(mysupport.MySupport):
 
         self.InitCompleteEvent.wait()
 
+        if self.IsStopping:
+            return
         self.LogError("Debug Enabled")
         self.FeedbackPipe.SendFeedback("Debug Thread Starting", FullLogs = True, Always = True, Message="Starting Debug Thread")
         TotalSent = 0
@@ -1017,6 +1023,16 @@ class GeneratorController(mysupport.MySupport):
             # Controller
             self.IsStopping = True
             try:
+                self.InitCompleteEvent.set()
+            except:
+                pass
+
+            if self.ModBus != None:
+                try:
+                    self.ModBus.Close()
+                except:
+                    pass
+            try:
                 if self.EnableDebug:
                     self.KillThread("DebugThread")
             except:
@@ -1036,13 +1052,6 @@ class GeneratorController(mysupport.MySupport):
                 self.KillThread("PowerMeter")
             except:
                 pass
-
-            if self.ModBus != None:
-                try:
-                    self.ModBus.Close()
-                except:
-                    pass
-
 
         except Exception as e1:
             self.LogErrorLine("Error Closing Controller: " + str(e1))

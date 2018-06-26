@@ -33,10 +33,12 @@ MBUS_CMD_WRITE_REGS     = 0x10
 
 #------------ ModbusProtocol class --------------------------------------------
 class ModbusProtocol(modbusbase.ModbusBase):
-    def __init__(self, updatecallback, address = 0x9d, name = "/dev/serial", rate=9600, loglocation = "/var/log/", Parity = None, OnePointFiveStopBits = None):
+    def __init__(self, updatecallback, address = 0x9d, name = "/dev/serial", rate=9600, loglocation = "/var/log/", Parity = None, OnePointFiveStopBits = None, slowcpuoptimization = False):
         super(ModbusProtocol, self).__init__(updatecallback = updatecallback, address = address, name = name, rate = rate, loglocation = loglocation)
 
         try:
+
+            self.SlowCPUOptimization = slowcpuoptimization
             # ~3000 for 9600               bit time * 10 bits * 10 char * 2 packets + wait time(3000) (convert to ms * 1000)
             self.ModBusPacketTimoutMS = (((((1/rate) * 10) * 10 * 2) *1000)  + 3000)     # .00208
             #Starting serial connection
@@ -150,8 +152,13 @@ class ModbusProtocol(modbusbase.ModbusBase):
             while True:
                 # be kind to other processes, we know we are going to have to wait for the packet to arrive
                 # so let's sleep for a bit before we start polling
-                time.sleep(0.01)
+                if self.SlowCPUOptimization:
+                    time.sleep(0.03)
+                else:
+                    time.sleep(0.01)
 
+                if self.IsStopping:
+                    return False
                 RetVal, SlavePacket = self.GetPacketFromSlave()
 
                 if RetVal == True and len(SlavePacket) != 0:    # we receive a packet
@@ -359,5 +366,5 @@ class ModbusProtocol(modbusbase.ModbusBase):
 
     #------------ModbusProtocol::Close-----------------------
     def Close(self):
-
+        self.IsStopping = True
         self.Slave.Close()

@@ -56,6 +56,18 @@ class MyMail(mysupport.MySupport):
 
         self.GetConfig()
 
+        if self.DisableEmail:
+            self.DisableIMAP = True
+            self.DisableSNMP = True
+            self.Monitor = False
+
+        if not len(self.SMTPServer):
+            self.DisableSNMP = True
+
+        if not len(self.IMAPServer):
+            self.DisableIMAP = True
+            self.Monitor = False
+
         atexit.register(self.Close)
 
         if not self.DisableEmail:

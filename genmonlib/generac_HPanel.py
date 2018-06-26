@@ -448,7 +448,7 @@ class HPanel(controller.GeneratorController):
             if self.Simulation:
                 self.ModBus = modbus_file.ModbusFile(self.UpdateRegisterList, self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation, inputfile = self.SimulationFile)
             else:
-                self.ModBus = mymodbus.ModbusProtocol(self.UpdateRegisterList, self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation)
+                self.ModBus = mymodbus.ModbusProtocol(self.UpdateRegisterList, self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation, slowcpuoptimization = self.SlowCPUOptimization)
             self.Threads = self.MergeDicts(self.Threads, self.ModBus.Threads)
             self.LastRxPacketCount = self.ModBus.RxPacketCount
 
@@ -612,9 +612,9 @@ class HPanel(controller.GeneratorController):
 
         for Register in RegisterEnum.GetRegList(): #RegisterEnum:
             try:
-                self.ModBus.ProcessMasterSlaveTransaction(Register, 1)
                 if self.IsStopping:
                     return
+                self.ModBus.ProcessMasterSlaveTransaction(Register, 1)
             except Exception as e1:
                 self.LogErrorLine("Error in MasterEmulation: " + str(e1))
         self.CheckForAlarmEvent.set()

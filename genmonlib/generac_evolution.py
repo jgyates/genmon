@@ -190,7 +190,7 @@ class Evolution(controller.GeneratorController):
             if self.Simulation:
                 self.ModBus = modbus_file.ModbusFile(self.UpdateRegisterList, self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation, inputfile = self.SimulationFile)
             else:
-                self.ModBus = mymodbus.ModbusProtocol(self.UpdateRegisterList, self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation)
+                self.ModBus = mymodbus.ModbusProtocol(self.UpdateRegisterList, self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation, slowcpuoptimization = self.SlowCPUOptimization)
             self.Threads = self.MergeDicts(self.Threads, self.ModBus.Threads)
             self.LastRxPacketCount = self.ModBus.RxPacketCount
 
@@ -219,10 +219,13 @@ class Evolution(controller.GeneratorController):
                 self.ModBus.ProcessMasterSlaveTransaction("%04x" % SERVICE_LOG_STARTING_REG, SERVICE_LOG_STRIDE)
 
             for PrimeReg, PrimeInfo in self.PrimeRegisters.items():
+                if self.IsStopping:
+                    break
                 self.ModBus.ProcessMasterSlaveTransaction(PrimeReg, int(PrimeInfo[self.REGLEN] / 2))
 
             for Reg, Info in self.BaseRegisters.items():
-
+                if self.IsStopping:
+                    break
                 #The divide by 2 is due to the diference in the values in our dict are bytes
                 # but modbus makes register request in word increments so the request needs to
                 # in word multiples, not bytes
@@ -418,7 +421,7 @@ class Evolution(controller.GeneratorController):
         Controller = self.GetController()
 
         if not len(SerialNumber) or not len(Controller):
-            self.LogError("Error in LookUpSNInfo: bad input")
+            self.LogError("Error in LookUpSNInfo: bad input, no serial number or controller info present.")
             return False
 
         if "None" in SerialNumber.lower():      # serial number is not present due to controller being replaced

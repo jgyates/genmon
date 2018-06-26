@@ -423,6 +423,7 @@ def ReadSettingsFromFile():
                 "syncdst" : ['boolean', 'Sync Daylight Savings Time', 22, False, "", "", GENMON_CONFIG],
                 "synctime" : ['boolean', 'Sync Time', 23, False, "", "", GENMON_CONFIG],
                 "metricweather"  : ['boolean', 'Use Metric Units', 24, False, "", "", GENMON_CONFIG],
+                "optimizeforslowercpu"  : ['boolean', 'Optimize for slower CPUs', 25, False, "", "", GENMON_CONFIG],
                 "autofeedback" : ['boolean', 'Automated Feedback', 29, False, "", "", GENMON_CONFIG],
 
                 #"model" : ['string', 'Generator Model', 100, "Generic Evolution Air Cooled", "", 0],
@@ -530,7 +531,7 @@ def CacheToolTips():
 
         if not len(config_section):
             config_section = "generac_evo_nexus"
-            
+
         ControllerType = config_section
 
         CachedRegisterDescriptions = GetAllConfigValues(pathtofile + "/tooltips.txt", config_section)

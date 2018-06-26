@@ -15,10 +15,11 @@ import mythread, mysupport
 #------------ MyPipe class -----------------------------------------------------
 class MyPipe(mysupport.MySupport):
     #------------ MyPipe::init--------------------------------------------------
-    def __init__(self, name, callback = None, Reuse = False, log = None, simulation = False):
+    def __init__(self, name, callback = None, Reuse = False, log = None, simulation = False, nullpipe = False):
         super(MyPipe, self).__init__(simulation = simulation)
         self.log = log
         self.BasePipeName = name
+        self.NullPipe = nullpipe
 
         if self.Simulation:
             return
@@ -42,7 +43,7 @@ class MyPipe(mysupport.MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in MyPipe:__init__: " + str(e1))
 
-        if not self.Callback == None or not self.Simulation:
+        if self.NullPipe or not self.Callback == None or not self.Simulation:
             self.Threads[self.ThreadName] = mythread.MyThread(self.ReadPipeThread, Name = self.ThreadName)
 
 
@@ -76,7 +77,7 @@ class MyPipe(mysupport.MySupport):
         time.sleep(1)
         while True:
             try:
-                if self.WaitForExit(self.ThreadName, 0.5):  # ten min
+                if self.WaitForExit(self.ThreadName, 2):  #
                     return
                 # since realines is blocking, check if the file is non zero before we attempt to read
                 if not os.path.getsize(self.FileName):

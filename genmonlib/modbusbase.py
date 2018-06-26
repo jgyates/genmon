@@ -22,6 +22,7 @@ class ModbusBase(mysupport.MySupport ):
         self.Rate = rate
         self.PortName = name
         self.InitComplete = False
+        self.IsStopping = False
         self.UpdateRegisterList = updatecallback
         self.RxPacketCount = 0
         self.TxPacketCount = 0

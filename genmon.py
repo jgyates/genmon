@@ -29,7 +29,7 @@ except:
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
     sys.exit(2)
 
-GENMON_VERSION = "V1.9.28"
+GENMON_VERSION = "V1.9.29"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -68,6 +68,7 @@ class Monitor(mysupport.MySupport):
         self.ControllerSelected = None
         self.bDisablePlatformStats = False
         self.ReadOnlyEmailCommands = False
+        self.SlowCPUOptimization = False
         # weather parameters
         self.WeatherAPIKey = None
         self.WeatherLocation = None
@@ -131,7 +132,7 @@ class Monitor(mysupport.MySupport):
 
         self.FeedbackPipe = mypipe.MyPipe("Feedback", self.FeedbackReceiver, log = self.log)
         self.Threads = self.MergeDicts(self.Threads, self.FeedbackPipe.Threads)
-        self.MessagePipe = mypipe.MyPipe("Message", self.MessageReceiver, log = self.log)
+        self.MessagePipe = mypipe.MyPipe("Message", self.MessageReceiver, log = self.log, nullpipe = self.mail.DisableSNMP)
         self.Threads = self.MergeDicts(self.Threads, self.MessagePipe.Threads)
 
         try:
@@ -149,7 +150,6 @@ class Monitor(mysupport.MySupport):
                 self.Controller = generac_evolution.Evolution(self.log, self.NewInstall, simulation = self.Simulation, simulationfile = self.SimulationFile, message = self.MessagePipe, feedback = self.FeedbackPipe)
             self.Threads = self.MergeDicts(self.Threads, self.Controller.Threads)
 
-            self.Controller.InitCompleteEvent.wait()
         except Exception as e1:
             self.FatalError("Error opening controller device: " + str(e1))
             return None
@@ -161,7 +161,7 @@ class Monitor(mysupport.MySupport):
         # send mail to tell we are starting
         self.MessagePipe.SendMessage("Generator Monitor Starting at " + self.SiteName, "Generator Monitor Starting at " + self.SiteName , msgtype = "info")
 
-        self.LogError("GenMon Loadded for site: " + self.SiteName)
+        self.LogError("GenMon Loaded for site: " + self.SiteName)
 
     # ------------------------ Monitor::StartThreads----------------------------
     def StartThreads(self, reload = False):
@@ -245,6 +245,9 @@ class Monitor(mysupport.MySupport):
 
             if config.has_option(ConfigSection, 'readonlyemailcommands'):
                 self.ReadOnlyEmailCommands = config.getboolean(ConfigSection, 'readonlyemailcommands')
+
+            if config.has_option(ConfigSection, 'optimizeforslowercpu'):
+                self.SlowCPUOptimization = config.getboolean(ConfigSection, 'optimizeforslowercpu')
 
             if config.has_option(ConfigSection, 'version'):
                 self.Version = config.get(ConfigSection, 'version')
@@ -882,8 +885,6 @@ class Monitor(mysupport.MySupport):
 
             try:
                 if not self.Controller == None:
-                    if not self.Controller.InitComplete:
-                        self.Controller.InitCompleteEvent.wait()
                     self.Controller.Close()
             except:
                 pass
@@ -920,14 +921,13 @@ class Monitor(mysupport.MySupport):
             except:
                 pass
 
-
             # Tell any remaining threads to stop
             for name, object in self.Threads.items():
                 try:
                     if self.Threads[name].IsAlive():
                         self.Threads[name].Stop()
                 except Exception as e1:
-                    self.LogErrorLine("Error killing thread in Monitor Close: " + str(e1))
+                    self.LogErrorLine("Error killing thread in Monitor Close: " + name + ":" + str(e1))
 
         except Exception as e1:
             self.LogErrorLine("Error Closing Monitor: " + str(e1))

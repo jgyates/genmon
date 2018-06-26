@@ -43,6 +43,7 @@ kwlog = Override the maximum size of the kW log. The default is 15MB.
 currentdivider = This is a value to override the divisor used to calculate the current for Evolution Air Cooled units. This value is expressed in floating point.
 currentoffset = This value provides an offset to compensate for mis-calibrated current transformers in Evolution Air Cooled generators. This may need to be used if you you see a negative current value displayed for Evolution Air Cooled Generators. The default value is zero.
 disableplatformstats = If enabled, platform statistics will not be displayed in the user interface
+optimizeforslowercpu = If enabled, minor optimizations for slower CPUs will be used. Note that this is a design trade off for responsiveness vs CPU utilization.
 disableweather= Disable weather feature
 weatherkey = Openweathermap.org API Key. This is required to enable weather reporting. See https://openweathermap.org/appid. Requires openweathermap library. If you installed the Generator Monitor Software before V1.9.6 and are upgrading you must run this command: "sudo pip install pyowm" from the console before the weather features will be functional
 weatherlocation = The location to report weather. Either enter City,State,Country or a openweathermap.org city ID.
