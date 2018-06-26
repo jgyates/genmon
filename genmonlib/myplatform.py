@@ -89,8 +89,8 @@ class MyPlatform(mycommon.MyCommon):
 
         return True
 
-    #------------ MyPlatform::ConvertFahrenheitToCelsius -----------------------
-    def ConvertFahrenheitToCelsius(self, Celsius):
+    #------------ MyPlatform::ConvertCelsiusToFahrenheit -----------------------
+    def ConvertCelsiusToFahrenheit(self, Celsius):
 
         return (9.0/5.0 * Celsius + 32)
 
@@ -108,7 +108,7 @@ class MyPlatform(mycommon.MyCommon):
                 if self.UseMetric:
                     PiInfo["CPU Temperature"] = "%.2f C" % float(output[output.index('=') + 1:output.rindex("'")])
                 else:
-                    PiInfo["CPU Temperature"] = "%.2f F" % self.ConvertFahrenheitToCelsius(float(output[output.index('=') + 1:output.rindex("'")]))
+                    PiInfo["CPU Temperature"] = "%.2f F" % self.ConvertCelsiusToFahrenheit(float(output[output.index('=') + 1:output.rindex("'")]))
             except Exception as e1:
                 self.LogError(str(e1))
                 # for non rasbpian based systems
@@ -117,7 +117,7 @@ class MyPlatform(mycommon.MyCommon):
                 if self.UseMetric:
                     TempStr = str(float(output) / 1000) + " C"
                 else:
-                    TempStr = str(self.ConvertFahrenheitToCelsius(float(output) / 1000)) + " F"
+                    TempStr = str(self.ConvertCelsiusToFahrenheit(float(output) / 1000)) + " F"
                 PiInfo["CPU Temperature"] = TempStr
 
             try:
