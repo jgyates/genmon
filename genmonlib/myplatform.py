@@ -12,7 +12,7 @@
 #
 #-------------------------------------------------------------------------------
 from subprocess import PIPE, Popen
-import os, sys, subprocess, re
+import os, sys, subprocess, re, datetime
 import collections
 import mycommon
 
@@ -215,6 +215,14 @@ class MyPlatform(mycommon.MyCommon):
                     OSReleaseInfo[k] = v.strip('"')
                 LinuxInfo["OS Name"] = OSReleaseInfo["NAME"]
                 LinuxInfo["OS Version"] = OSReleaseInfo["VERSION"]
+
+            try:
+                with open('/proc/uptime', 'r') as f:
+                    uptime_seconds = float(f.readline().split()[0])
+                    uptime_string = str(datetime.timedelta(seconds = uptime_seconds))
+                    LinuxInfo["System Uptime"] = uptime_string.split(".")[0]    # remove microseconds
+            except Exception as e1:
+                pass
 
             try:
                 adapter = os.popen("ip link | grep BROADCAST | grep -v NO-CARRIER | grep -m 1 LOWER_UP  | awk -F'[:. ]' '{print $3}'").readline().rstrip("\n")
