@@ -265,6 +265,33 @@ class Evolution(controller.GeneratorController):
         except Exception as e1:
             self.LogErrorLine("Error in SetupTiles: " + str(e1))
     #---------------------------------------------------------------------------
+    def ModelIsValid(self):
+
+        if self.Model == "Unknown" or not len(self.Model) or not self.Model.isalnum() or "generic" in self.Model.lower():
+            return False
+        return True
+    #---------------------------------------------------------------------------
+    def GetGenericModel(self):
+
+        if self.LiquidCooled:
+            return "Generic Liquid Cooled"
+        else:
+            return "Generic Air Cooled"
+
+    #---------------------------------------------------------------------------
+    def GetGenericKW(self):
+
+        if self.LiquidCooled:
+            if self.EvolutionController:
+                return "60"
+            else:
+                return "36"
+        else:
+            if self.EvolutionController:
+                return "22"
+            else:
+                return "20"
+    #---------------------------------------------------------------------------
     def CheckModelSpecificInfo(self, NoLookUp = False):
 
         if self.NominalFreq == "Unknown" or not len(self.NominalFreq):
@@ -287,27 +314,34 @@ class Evolution(controller.GeneratorController):
                     self.NominalRPM = "3600"
             self.AddItemToConfFile("nominalRPM", self.NominalRPM)
 
-        if self.NominalKW == "Unknown" or self.Model == "Unknown" or not len(self.NominalKW) or not len(self.Model) or self.NewInstall:
-
+        if self.NominalKW == "Unknown" or not len(self.NominalKW):
             self.NominalKW = self.GetModelInfo("KW")
+            if self.NominalKW != "Unknown":
+                self.AddItemToConfFile("nominalKW", self.NominalKW)
 
-            if not self.LookUpSNInfo(SkipKW = (not self.NominalKW == "Unknown"), NoLookUp = NoLookUp):
-                if self.LiquidCooled:
-                    self.Model = "Generic Liquid Cooled"
+        if self.NewInstall:
+            if not self.ModelIsValid() or  self.NominalKW == "Unknown":
+                ReturnStatus, ReturnModel, ReturnKW = self.LookUpSNInfo(SkipKW = (not self.NominalKW == "Unknown"), NoLookUp = NoLookUp)
+                if not ReturnStatus:
+                    if not self.ModelIsValid():
+                        self.Model = self.GetGenericModel()
+                        self.AddItemToConfFile("model", self.Model)
                     if self.NominalKW == "Unknown":
-                        if self.EvolutionController:
-                            self.NominalKW = "60"
-                        else:
-                            self.NominalKW = "36"
+                        self.NominalKW = self.GetGenericKW()
+                        self.AddItemToConfFile("nominalKW", self.NominalKW)
                 else:
-                    self.Model = "Generic Air Cooled"
-                    if self.NominalKW == "Unknown":
-                        if self.EvolutionController:
-                            self.NominalKW = "22"
-                        else:
-                            self.NominalKW = "20"
-            self.AddItemToConfFile("model", self.Model)
-            self.AddItemToConfFile("nominalKW", self.NominalKW)
+                    if ReturnModel == "Unknown":
+                        self.Model = self.GetGenericModel()
+                    else:
+                        self.Model = ReturnModel
+                    self.AddItemToConfFile("model", self.Model)
+
+                    if ReturnKW != "Unknown" and self.NominalKW == "Unknown":   # we found a valid Kw on the lookup
+                        self.NominalKW = ReturnKW
+                        self.AddItemToConfFile("nominalKW", self.NominalKW)
+                    elif ReturnKW == "Unknown" and self.NominalKW == "Unknown":
+                        self.NominalKW = self.GetGenericKW()
+                        self.AddItemToConfFile("nominalKW", self.NominalKW)
 
         if self.FuelType == "Unknown" or not len(self.FuelType):
             if self.Model.startswith("RD"):
@@ -363,9 +397,8 @@ class Evolution(controller.GeneratorController):
         # 50Hz Models: RG01724MNAX, RG02224MNAX, RG02724RNAX
         # RG022, RG025,RG030,RG027,RG036,RG032,RG045,RG038,RG048,RG060
         # RD01523,RD02023,RD03024,RD04834,RD05034
-        ModelLookUp_EvoLC = {
-                                13: ["48KW", "60", "120/240", "1"]
-                            }
+        ModelLookUp_EvoLC = {}  # 13: ["48KW", "60", "120/240", "1"]
+
         Register = "None"
         LookUp = None
         if not self.LiquidCooled:
@@ -375,8 +408,8 @@ class Evolution(controller.GeneratorController):
             else:
                 LookUp = ModelLookUp_NexusAC
         elif self.EvolutionController and self.LiquidCooled:
-            Register = "005c"
             LookUp = ModelLookUp_EvoLC
+            return "Unknown"    # Nexus LC is not known
         else:
             LookUp = ModelLookUp_NexusLC
             return "Unknown"    # Nexus LC is not known
@@ -416,16 +449,19 @@ class Evolution(controller.GeneratorController):
 
         productId = None
         ModelNumber = None
+        ReturnKW = "Unknown"
+        ReturnModel = "Unknown"
 
         SerialNumber = self.GetSerialNumber()
         Controller = self.GetController()
 
         if not len(SerialNumber) or not len(Controller):
             self.LogError("Error in LookUpSNInfo: bad input, no serial number or controller info present.")
-            return False
+            return False, ReturnModel, ReturnKW
 
-        if "None" in SerialNumber.lower():      # serial number is not present due to controller being replaced
-            return False
+        if "none" in SerialNumber.lower():      # serial number is not present due to controller being replaced
+            self.LogError("Error in LookUpSNInfo: No valid serial number, controller likely replaced.")
+            return False, ReturnModel, ReturnKW
 
         try:
             # for diagnostic reasons we will log the internet search
@@ -440,7 +476,7 @@ class Evolution(controller.GeneratorController):
             except Exception as e1:
                 conn.close()
                 self.LogErrorLine("Error in LookUpSNInfo (request 1): " + str(e1))
-                return False
+                return False, ReturnModel, ReturnKW
 
             try:
                 data1 = r1.read()
@@ -451,15 +487,15 @@ class Evolution(controller.GeneratorController):
                 if not len(ModelNumber):
                     self.LogError("Error in LookUpSNInfo: Model (response1)")
                     conn.close()
-                    return False
+                    return False, ReturnModel, ReturnKW
 
                 self.LogError("Found: Model: %s" % str(ModelNumber))
-                self.Model = ModelNumber
+                ReturnModel = ModelNumber
 
             except Exception as e1:
                 self.LogErrorLine("Error in LookUpSNInfo (parse request 1): " + str(e1))
                 conn.close()
-                return False
+                return False, ReturnModel, ReturnKW
 
             try:
                 productId = myresponse1["Results"][0]["Id"]
@@ -468,7 +504,7 @@ class Evolution(controller.GeneratorController):
                 productId = SerialNumber
 
             if SkipKW:
-                return True
+                return True, ReturnModel, ReturnKW
 
             try:
                 if productId == SerialNumber:
@@ -492,7 +528,7 @@ class Evolution(controller.GeneratorController):
                         if "Manuals:" in ListData[Count]:
                             KWStr = re.findall(r"(\d+)KW", ListData[Count])[0]
                             if len(KWStr) and KWStr.isdigit():
-                                self.NominalKW = KWStr
+                                ReturnKW = KWStr
 
                 else:
                     myresponse2 = json.loads(data2)
@@ -507,22 +543,22 @@ class Evolution(controller.GeneratorController):
                     else:
                         kWRating = str(int(kWRating) / 1000)
 
-                    self.NominalKW = kWRating
+                    ReturnKW = kWRating
 
                     if not len(kWRating):
                         self.LogError("Error in LookUpSNInfo: KW")
-                        return False
+                        return False, ReturnModel, ReturnKW
 
                     self.LogError("Found: KW: %skW" % str(kWRating))
 
             except Exception as e1:
                 self.LogErrorLine("Error in LookUpSNInfo: (parse KW)" + str(e1))
-                return False
+                return False, ReturnModel, ReturnKW
 
-            return True
+            return True, ReturnModel, ReturnKW
         except Exception as e1:
             self.LogErrorLine("Error in LookUpSNInfo: " + str(e1))
-            return False
+            return False, ReturnModel, ReturnKW
 
 
     #-------------Evolution:DetectController------------------------------------

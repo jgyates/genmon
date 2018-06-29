@@ -21,7 +21,6 @@ try:
     from ConfigParser import RawConfigParser
 except ImportError as e:
     from configparser import RawConfigParser
-
 try:
     from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel, myplatform, myweather
 except:
@@ -29,7 +28,7 @@ except:
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
     sys.exit(2)
 
-GENMON_VERSION = "V1.9.29"
+GENMON_VERSION = "V1.9.30"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
