@@ -28,7 +28,7 @@ except:
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
     sys.exit(2)
 
-GENMON_VERSION = "V1.9.30"
+GENMON_VERSION = "V1.9.31"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
