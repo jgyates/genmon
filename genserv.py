@@ -226,6 +226,10 @@ def ProcessCommand(command):
             if session.get('write_access', True):
                 Close()
                 sys.exit(0)
+        elif command in ["shutdown"]:
+            if session.get('write_access', True):
+                Shutdown()
+                sys.exit(0)
         else:
             return render_template('command_template.html', command = command)
     except Exception as e1:
@@ -672,6 +676,10 @@ def findConfigLine(line):
     else:
       return []
 
+#------------------------------------------------------------
+# This will shutdown the pi
+def Shutdown():
+    os.system("sudo shutdown -h now")
 #------------------------------------------------------------
 # This will restart the Flask App
 def Restart():
