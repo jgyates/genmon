@@ -17,8 +17,8 @@ CMD_LINE = "/boot/cmdline.txt"
 CMD_LINE_SERIAL_CONSOLE="console=serial0,115200"
 
 SERIAL0 = "/dev/serial0"
-SERVICE_NAME = "serial-getty@ttys0.service"
-
+GETTY_SERVICE_NAME = "serial-getty@ttys0.service"
+HCIUART_SERVIE_NAME = "hciuart"
 FileList = [BOOT_CONFIG, CMD_LINE]
 
 #-------------------------------------------------------------------------------
@@ -132,9 +132,9 @@ def CheckServiceOutput(Output):
         sys.exit(2)
 
 #-------------------------------------------------------------------------------
-def ServiceIsDisabled():
+def ServiceIsDisabled(servicename):
     try:
-        process = Popen(['systemctl', "status" , SERVICE_NAME], stdout=PIPE)
+        process = Popen(['systemctl', "status" , servicename], stdout=PIPE)
         output, _error = process.communicate()
         rc = process.returncode
         return CheckServiceOutput(output)
@@ -144,12 +144,12 @@ def ServiceIsDisabled():
         sys.exit(2)
 
 #-------------------------------------------------------------------------------
-def DisableService():
+def DisableService(servicename):
     try:
-        process = Popen(['systemctl', "stop" , SERVICE_NAME], stdout=PIPE)
+        process = Popen(['systemctl', "stop" , servicename], stdout=PIPE)
         output, _error = process.communicate()
         rc = process.returncode
-        process = Popen(['systemctl', "disable" , SERVICE_NAME], stdout=PIPE)
+        process = Popen(['systemctl', "disable" , servicename], stdout=PIPE)
         output, _error = process.communicate()
         rc = process.returncode
         return True
@@ -245,14 +245,16 @@ if __name__ == '__main__':
             "Enable UART" : [AddItemToConfFile, (BOOT_CONFIG, "enable_uart", "1", False)],
             "Disable BT" :  [AddItemToConfFile, (BOOT_CONFIG, "dtoverlay", "pi3-disable-bt", False)],
             "Disable serial console" : [ProcessCmdLineFile, (CMD_LINE, CMD_LINE_SERIAL_CONSOLE, False)],
-            "Disable serial console service" : [DisableService, ()]
+            "Disable serial console service" : [DisableService, (GETTY_SERVICE_NAME,)],
+            "Disable BT service service" : [DisableService, (HCIUART_SERVIE_NAME,)]
         }
 
         CheckDict = {
             "Checking : Is enable UART in boot config" : [AddItemToConfFile, (BOOT_CONFIG, "enable_uart", "1", True)],
             "Checking : Is BT overlay disabled" :  [AddItemToConfFile, (BOOT_CONFIG, "dtoverlay", "pi3-disable-bt", True)],
             "Checking : Serial console command line removed" : [ProcessCmdLineFile, (CMD_LINE, CMD_LINE_SERIAL_CONSOLE, True)],
-            "Checking : Serial console service disabled" : [ServiceIsDisabled, ()]
+            "Checking : Serial console service disabled" : [ServiceIsDisabled, (GETTY_SERVICE_NAME,)],
+            "Checking : BT service disabled" : [ServiceIsDisabled, (HCIUART_SERVIE_NAME,)]
         }
 
         if Check:
