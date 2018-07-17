@@ -119,22 +119,18 @@ class Evolution(controller.GeneratorController):
                     "002d" : [2, 0],     # Evo AC   (Weekly, Biweekly, Monthly)
                     "002e" : [2, 0],     # Evo      (Exercise Time) Exercise Day Sunday =0, Monday=1
                     "002f" : [2, 0],     # Evo      (Quiet Mode)
-                    "0059" : [2, 0],     # Set Voltage from Dealer Menu (not currently used)
-                    "023b" : [2, 0],     # Pick Up Voltage (Evo LQ only)
-                    "023e" : [2, 0],     # Exercise time duration (Evo LQ only)
                     "0054" : [2, 0],     # Hours since generator activation (hours of protection) (Evo LQ only)
-                    "005e" : [2, 0],     # Total engine time in minutes High (EvoLC)
-                    "005f" : [2, 0],     # Total engine time in minutes Low  (EvoLC)
-                    "0057" : [2, 0],     # Unknown Looks like some status bits (0002 to 0005 when engine starts, back to 0002 on stop)
                     "0055" : [2, 0],     # Unknown
                     "0056" : [2, 0],     # Unknown Looks like some status bits (0000 to 0003, back to 0000 on stop)
-                    "005a" : [2, 0],     # Unknown (zero except Nexus)
+                    "0057" : [2, 0],     # Unknown Looks like some status bits (0002 to 0005 when engine starts, back to 0002 on stop)
+                    "0058" : [2, 0],     # CT Sensor (EvoLC)
+                    "0059" : [2, 0],     # Rated Volts (EvoLC)
+                    "005a" : [2, 0],     # Rated Hz (EvoLC)
+                    "005d" : [2, 0],     # Unknown sensor 3, Moves between 0x55 - 0x58 continuously even when engine off
+                    "005e" : [2, 0],     # Total engine time in minutes High (EvoLC)
+                    "005f" : [2, 0],     # Total engine time in minutes Low  (EvoLC)
                     "000d" : [2, 0],     # Bit changes when the controller is updating registers.
                     "003c" : [2, 0],     # Raw RPM Sensor Data (Hall Sensor)
-                    "0058" : [2, 0],     # CT Sensor (EvoLC)
-                    "005d" : [2, 0],     # Unknown sensor 3, Moves between 0x55 - 0x58 continuously even when engine off
-                    "05ed" : [2, 0],     # Unknown sensor 4, changes between 35, 37, 39 (Ambient Temp Sensor) EvoLC
-                    "05ee" : [2, 0],     # Unknown sensor 5 (Battery Charging Sensor)
                     "05fa" : [2, 0],     # Evo AC   (Status?)
                     "0033" : [2, 0],     # Evo AC   (Status?)
                     "0034" : [2, 0],     # Evo AC   (Status?) Goes from FFFF 0000 00001 (Nexus and Evo AC)
@@ -145,10 +141,27 @@ class Evolution(controller.GeneratorController):
                     "0039" : [2, 0],     # Evo AC   (Sensor?)
                     "003a" : [2, 0],     # Evo AC   (Sensor?)  Nexus and Evo AC
                     "003b" : [2, 0],     # Evo AC   (Sensor?)  Nexus and Evo AC
-                    "0239" : [2, 0],     # Startup Delay (Evo LC)
-                    "0237" : [2, 0],     # Set Voltage (Evo LC)
                     "0208" : [2, 0],     # Calibrate Volts (Evo)
+                    "020a" : [2, 0],     # Param Group (EvoLC)
+                    "020b" : [2, 0],     # Voltage Code (EvoLC)
+                    "020e" : [2, 0],     # Volts Per Hertz (EvoLC)
+                    "0235" : [2, 0],     # Gain (EvoLC)
+                    "0237" : [2, 0],     # Set Voltage (Evo LC)
+                    "0239" : [2, 0],     # Startup Delay (Evo LC)
+                    "023b" : [2, 0],     # Pick Up Voltage (Evo LQ only)
+                    "023e" : [2, 0],     # Exercise time duration (Evo LQ only)
+                    "0207" : [2, 0],     #  Unknown (EvoLC)
+                    "0209" : [2, 0],     #  Unknown (EvoLC)
+                    "020c" : [2, 0],     #  Unknown (EvoLC)
+                    "020d" : [2, 0],     #  Unknown (EvoLC)
+                    "020f" : [2, 0],     #  Unknown (EvoLC)
+                    "0238" : [2, 0],     #  Unknown (EvoLC)
+                    "023a" : [2, 0],     #  Unknown (EvoLC)
+                    "023d" : [2, 0],     #  Unknown (EvoLC)
                     "005c" : [2, 0],     # Unknown , possible model reg on EvoLC
+                    "05ed" : [2, 0],     # Unknown sensor 4, changes between 35, 37, 39 (Ambient Temp Sensor) EvoLC
+                    "05ee" : [2, 0],     # (CT on Battery Charger)
+                    "05f2" : [2, 0],     # Unknown (EvoLC)
                     "05f3" : [2, 0],     # EvoAC, EvoLC, counter of some type
                     "05f4" : [2, 0],     # Evo AC   Current 1
                     "05f5" : [2, 0],     # Evo AC   Current 2
@@ -354,6 +367,27 @@ class Evolution(controller.GeneratorController):
                 self.FuelType = "Natural Gas"                           # NexusLC, NexusAC, EvoAC
             self.AddItemToConfFile("fueltype", self.FuelType)
 
+    #----------  GeneratorController::GetFuelConsumptionPolynomial--------------
+    def GetFuelConsumptionPolynomial(self):
+
+        try:
+            if self.EvolutionController and self.LiquidCooled:
+                if self.NominalKW == "48":
+                    #return [1.84,11.028,2.22,"L"]   # for 48Kw Diesel
+                    return [ 0.03, 0.73, 0.585,"gal"]   # for 48Kw Diesel
+
+            if self.EvolutionController and not self.LiquidCooled:
+                EvoAC_PolyLookup = {
+                                        22: [0, 2.74, 1.16, "gal"],
+                                        20: [0, 2.38, 1.18, "gal"],
+                                        16: [0, 0.84, 2.1, "gal"]
+                                        }
+                return EvoAC_PolyLookup.get(int(self.NominalKW), None)
+
+        except Exception as e1:
+            self.LogErrorLine("Error in GetFuelConsumptionPolynomial: " + str(e1))
+        return None
+
     #------------ Evolution:GetModelInfo-------------------------------
     def GetModelInfo(self, Request):
 
@@ -397,7 +431,8 @@ class Evolution(controller.GeneratorController):
         # 50Hz Models: RG01724MNAX, RG02224MNAX, RG02724RNAX
         # RG022, RG025,RG030,RG027,RG036,RG032,RG045,RG038,RG048,RG060
         # RD01523,RD02023,RD03024,RD04834,RD05034
-        ModelLookUp_EvoLC = {}  # 13: ["48KW", "60", "120/240", "1"]
+        #
+        ModelLookUp_EvoLC = {}   #10: ["48KW", "60", "120/240", "1"]
 
         Register = "None"
         LookUp = None
@@ -409,7 +444,6 @@ class Evolution(controller.GeneratorController):
                 LookUp = ModelLookUp_NexusAC
         elif self.EvolutionController and self.LiquidCooled:
             LookUp = ModelLookUp_EvoLC
-            return "Unknown"    # Nexus LC is not known
         else:
             LookUp = ModelLookUp_NexusLC
             return "Unknown"    # Nexus LC is not known
@@ -426,6 +460,8 @@ class Evolution(controller.GeneratorController):
         if Request.lower() == "frequency":
             if ModelInfo[1] == "60" or ModelInfo[1] == "50":
                 return ModelInfo[1]
+            else:
+                return "Unknown"
 
         elif Request.lower() == "kw":
             if "kw" in ModelInfo[0].lower():
@@ -1496,30 +1532,28 @@ class Evolution(controller.GeneratorController):
         # Evo Liquid Cooled: ramps up to 300 decimal (1800 RPM)
         # Nexus and Evo Air Cooled: ramps up to 600 decimal on LP/NG   (3600 RPM)
         # this is possibly raw data from RPM sensor
-        Value = self.GetUnknownSensor("003c")
-        if len(Value):
-            Sensors["Raw RPM Sensor"] = Value
+        Sensors["Raw RPM Sensor"] = self.GetParameter("003c")
 
-            Sensors["Frequency (Calculated)"] = self.GetFrequency(Calculate = True)
+        Sensors["Frequency (Calculated)"] = self.GetFrequency(Calculate = True)
 
+        Sensors["Calibrate Volts Value"] = self.GetParameter("0208")
 
-        Value = self.GetUnknownSensor("0208")
-        if len(Value):
-            Sensors["Calibrate Volts Value"] = Value
         if self.EvolutionController:
             Sensors["kW Hours in last 30 days"] = self.GetPowerHistory("power_log_json=43200,kw", NoReduce = True)
+            Sensors["Fuel Consumption in last 30 days"] = self.GetPowerHistory("power_log_json=43200,fuel", NoReduce = True)
 
         if self.EvolutionController and self.LiquidCooled:
 
+            # get total hours since activation
+            Sensors["Hours of Protection"] = self.GetParameter("0054", Label = "H")
+            Sensors["Param Group"] = self.GetParameter("020a")
+            Sensors["Voltage Code"] = self.GetParameter("020b")
+            Sensors["Volts Per Hertz"] = self.GetParameter("020e")
+            Sensors["Gain"] = self.GetParameter("0235")
+            Sensors["Rated Frequency"] = self.GetParameter("005a")
+            Sensors["Rated Voltage"] = self.GetParameter("0059")
+            Sensors["Battery Charger Sensor"] = self.GetParameter("05ee", Divider = 100.0)
             Sensors["Battery Status (Sensor)"] = self.GetBatteryStatusAlternate()
-
-            # get UKS
-            Value = self.GetUnknownSensor("05ee")
-            if len(Value):
-                # Fahrenheit = 9.0/5.0 * Celsius + 32
-                FloatTemp = int(Value) / 10.0
-                FloatStr = "%2.1f" % FloatTemp
-                Sensors["Battery Charger Sensor"] = FloatStr
 
              # get UKS
             Value = self.GetUnknownSensor("05ed")
@@ -1534,11 +1568,6 @@ class Evolution(controller.GeneratorController):
                 Sensors["Ambient Temp Thermistor"] = "Sensor: " + Value + ", " + CStr + "C, " + FStr + "F"
 
 
-            # get total hours since activation
-            Value = self.GetRegisterValueFromList("0054")
-            if len(Value):
-                StrVal = "%d H" % int(Value,16)
-                Sensors["Hours of Protection"] = StrVal
 
         if self.EvolutionController and not self.LiquidCooled:
             if self.EvolutionController:
@@ -2473,7 +2502,8 @@ class Evolution(controller.GeneratorController):
                 Value = self.GetRegisterValueFromList("0058")
                 if len(Value):
                     CurrentFloat = int(Value,16)
-                    CurrentOutput = round(max((CurrentFloat * .2248) - 303.268, 0), 2)
+                    #CurrentOutput = round(max((CurrentFloat * .2248) - 303.268, 0), 2)
+                    CurrentOutput = round(max((CurrentFloat / 3.74), 0), 2)
 
             elif self.EvolutionController and not self.LiquidCooled:
                 CurrentHi = 0
@@ -2501,8 +2531,8 @@ class Evolution(controller.GeneratorController):
                                         12 : None,      #["8KVA", "50", "220,230,240", "1"],    # 3 distinct models 220, 230, 240
                                         13 : None,      #["10KVA", "50", "220,230,240", "1"],   # 3 distinct models 220, 230, 240
                                         14 : None,      #["13KVA", "50", "220,230,240", "1"],   # 3 distinct models 220, 230, 240
-                                        15 : 56.24,        #["11KW", "60" ,"240", "1"],
-                                        17 : 21.48,       #["22KW", "60", "120/240", "1"],
+                                        15 : 56.24,     #["11KW", "60" ,"240", "1"],
+                                        17 : 21.48,     #["22KW", "60", "120/240", "1"],
                                         21 : None,      #["11KW", "60", "240 LS", "1"],
                                         32 : None,      #["Trinity", "60", "208 3Phase", "3"],  # G007077
                                         33 : None       #["Trinity", "50", "380,400,416", "3"]  # 3 distinct models 380, 400 or 416
@@ -2713,18 +2743,16 @@ class Evolution(controller.GeneratorController):
         if not "Stopped" in EngineState and not "Off" in EngineState:
             return "Not Charging"
 
-        Value = self.GetRegisterValueFromList("05ee")
-        if len(Value):
-            FloatTemp = int(Value,16) / 10.0
-            if self.LiquidCooled:
-                CompValue = 5.0
-            else:
-                CompValue = 0
-            if FloatTemp > CompValue:
-                return "Charging"
-            else:
-                return "Not Charging"
-        return ""
+        Value = self.GetParameter("05ee", Divider = 100.0, ReturnFloat = True)
+        if self.LiquidCooled:
+            CompValue = 0.57
+        else:
+            CompValue = 0
+        if Value > CompValue:
+            return "Charging"
+        else:
+            return "Not Charging"
+
 
     #------------ Evolution:GetBatteryStatus -------------------------
     # The charger operates at one of three battery charging voltage
@@ -3209,4 +3237,6 @@ class Evolution(controller.GeneratorController):
         if not self.EvolutionController:    # Not supported by Nexus at this time
             return False
 
+        if self.NominalKW.lower() == "unknown":
+            return False
         return True

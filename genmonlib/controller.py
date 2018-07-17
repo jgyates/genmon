@@ -50,6 +50,7 @@ class GeneratorController(mysupport.MySupport):
         self.Changed = 0            # stats for registers
         self.TotalChanged = 0.0     # ratio of changed ragisters
         self.EnableDebug = False    # Used for enabeling debugging
+        self.UseMetric = False
         self.OutageLog = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/outage.txt"
         self.PowerLogMaxSize = 15       # 15 MB max size
         self.PowerLog =  os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/kwlog.txt"
@@ -101,6 +102,9 @@ class GeneratorController(mysupport.MySupport):
                 self.SlowCPUOptimization = config.getboolean(ConfigSection, 'optimizeforslowercpu')
             # optional config parameters, by default the software will attempt to auto-detect the controller
             # this setting will override the auto detect
+
+            if config.has_option(ConfigSection, 'metricweather'):
+                self.UseMetric = config.getboolean(ConfigSection, 'metricweather')
 
             if config.has_option(ConfigSection, 'enabledebug'):
                 self.EnableDebug = config.getboolean(ConfigSection, 'enabledebug')
@@ -854,6 +858,7 @@ class GeneratorController(mysupport.MySupport):
     def GetPowerHistory(self, CmdString, NoReduce = False):
 
         KWHours = False
+        FuelConsumption = False
         msgbody = "Invalid command syntax for command power_log_json"
 
         try:
@@ -886,6 +891,8 @@ class GeneratorController(mysupport.MySupport):
                     Minutes = int(ParseList[0].strip())
                     if ParseList[1].strip().lower() == "kw":
                         KWHours = True
+                    elif ParseList[1].strip().lower() == "fuel":
+                        FuelConsumption = True
                 else:
                     self.LogError("Validation Error: Error parsing command string in GetPowerHistory (parse3): " + CmdString)
                     return msgbody
@@ -933,22 +940,14 @@ class GeneratorController(mysupport.MySupport):
                     # continue to the next line
 
             if KWHours:
-                TotalTime = datetime.timedelta(seconds=0)
-                TotalPower = 0
-                LastTime = None
-                for Items in PowerList:
-                    Power = float(Items[1])
-                    struct_time = time.strptime(Items[0], "%x %X")
-                    LogEntryTime = datetime.datetime.fromtimestamp(time.mktime(struct_time))
-                    if LastTime == None or Power == 0:
-                        TotalTime += LogEntryTime - LogEntryTime
-                    else:
-                        TotalTime += LastTime - LogEntryTime
-                    LastTime = LogEntryTime
-
-                    TotalPower += Power
-                # return KW Hours
-                return "%.2f" % ((TotalTime.total_seconds() / 3600) * TotalPower)
+                AvgPower, TotalSeconds = self.GetAveragePower(PowerList)
+                return "%.2f" % ((TotalSeconds / 3600) * AvgPower)
+            if FuelConsumption:
+                AvgPower, TotalSeconds = self.GetAveragePower(PowerList)
+                Consumption, Label = self.GetFuelConsumption(AvgPower, TotalSeconds)
+                if Consumption == None:
+                    return "Unknown"
+                return "%.2f %s" % (Consumption, Label)
 
             return PowerList
 
@@ -956,6 +955,39 @@ class GeneratorController(mysupport.MySupport):
             self.LogErrorLine("Error in  GetPowerHistory: " + str(e1))
             msgbody = "Error in  GetPowerHistory: " + str(e1)
             return msgbody
+
+    #----------  GeneratorController::GetAveragePower---------------------------
+    # a list of the power log is passed in (already parsed for a time period)
+    # returns a time period and average power used for that time period
+    def GetAveragePower(self, PowerList):
+
+        try:
+            TotalTime = datetime.timedelta(seconds=0)
+            Entries = 0
+            TotalPower = 0.0
+            LastPower = 0.0
+            LastTime = None
+            for Items in PowerList:
+                Power = float(Items[1])
+                struct_time = time.strptime(Items[0], "%x %X")
+                LogEntryTime = datetime.datetime.fromtimestamp(time.mktime(struct_time))
+
+                if LastTime == None or Power == 0:
+                    TotalTime += LogEntryTime - LogEntryTime
+                else:
+                    TotalTime += LastTime - LogEntryTime
+                    TotalPower += (Power + LastPower) / 2
+                    Entries += 1
+                LastTime = LogEntryTime
+                LastPower = Power
+
+            if Entries == 0:
+                return 0,0
+            TotalPower = TotalPower / Entries
+            return TotalPower, TotalTime.total_seconds()
+        except Exception as e1:
+            self.LogErrorLine("Error in  GetAveragePower: " + str(e1))
+            return 0, 0
 
     #----------  GeneratorController::PowerMeter--------------------------------
     #----------  Monitors Power Output
@@ -990,7 +1022,7 @@ class GeneratorController(mysupport.MySupport):
 
                 # Housekeeping on kw Log
                 if self.GetDeltaTimeMinutes(datetime.datetime.now() - LastPruneTime) > 1440 :     # check every day
-                    self.PrunePowerLog(43800)   # delete log entries greater than one month
+                    self.PrunePowerLog(43800 * 12)   # delete log entries greater than one year
                     LastPruneTime = datetime.datetime.now()
 
                 # Time to exit?
@@ -1015,7 +1047,27 @@ class GeneratorController(mysupport.MySupport):
             except Exception as e1:
                 self.LogErrorLine("Error in PowerMeter: " + str(e1))
 
+    #----------  GeneratorController::GetFuelConsumption------------------------
+    def GetFuelConsumption(self, kw, seconds):
+        try:
+            Polynomial = self.GetFuelConsumptionPolynomial()
+            if Polynomial == None or len(Polynomial) != 4:
+                return None, ""
 
+            Load = kw / int(self.NominalKW)
+            # Consumption of load for 1 hour
+            Consumption = (Polynomial[0] * (Load ** 2)) + (Polynomial[1] * Load) + Polynomial[2]
+
+            # now compensate for time
+            Consumption = (seconds / 3600) * Consumption
+
+            return round(Consumption, 4), Polynomial[3]
+        except Exception as e1:
+            self.LogErrorLine("Error in GetFuelConsumption: " + str(e1))
+            return None, ""
+    #----------  GeneratorController::GetFuelConsumptionPolynomial--------------
+    def GetFuelConsumptionPolynomial(self):
+        return None
     #----------  GeneratorController::Close-------------------------------------
     def Close(self):
 

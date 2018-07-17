@@ -21,7 +21,7 @@ class MySupport(mycommon.MyCommon):
         self.CriticalLock = threading.Lock()        # Critical Lock (writing conf file)
 
     #------------ MySupport::LogToFile------------------------------------------
-    def LogToFile(self, File, TimeDate, Value):
+    def LogToFile(self, File, TimeDate, Value, Value2 = None):
         if self.Simulation:
             return
         if not len(File):
@@ -29,11 +29,14 @@ class MySupport(mycommon.MyCommon):
 
         try:
             with open(File,"a") as LogFile:     #opens file
-                LogFile.write(TimeDate + "," + Value + "\n")
+                if Value2 != None:
+                    LogFile.write(TimeDate + "," + Value + "," + Value2 + "\n")
+                else:
+                    LogFile.write(TimeDate + "," + Value + "\n")
                 LogFile.flush()
         except Exception as e1:
             self.LogError("Error in  LogToFile : File: %s: %s " % (File,str(e1)))
-
+        
     #------------ MySupport::GetSiteName----------------------------------------
     def GetSiteName(self):
         return self.SiteName
