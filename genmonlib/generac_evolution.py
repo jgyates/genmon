@@ -360,29 +360,27 @@ class Evolution(controller.GeneratorController):
             if self.Model.startswith("RD"):
                 self.FuelType = "Diesel"
             elif self.Model.startswith("RG") or self.Model.startswith("QT"):
-                self.FuelType = "Natural Gas"
+                self.FuelType = "Propane"
             elif self.LiquidCooled and self.EvolutionController:          # EvoLC
                 self.FuelType = "Diesel"
             else:
-                self.FuelType = "Natural Gas"                           # NexusLC, NexusAC, EvoAC
+                self.FuelType = "Propane"                           # NexusLC, NexusAC, EvoAC
             self.AddItemToConfFile("fueltype", self.FuelType)
 
     #----------  GeneratorController::GetFuelConsumptionPolynomial--------------
     def GetFuelConsumptionPolynomial(self):
 
         try:
+
+            if self.FuelType == "Natural Gas" or self.FuelType == "Gasoline":
+                return None
             if self.EvolutionController and self.LiquidCooled:
                 if self.NominalKW == "48":
                     #return [1.84,11.028,2.22,"L"]   # for 48Kw Diesel
                     return [ 0.03, 0.73, 0.585,"gal"]   # for 48Kw Diesel
 
             if self.EvolutionController and not self.LiquidCooled:
-                EvoAC_PolyLookup = {
-                                        22: [0, 2.74, 1.16, "gal"],
-                                        20: [0, 2.38, 1.18, "gal"],
-                                        16: [0, 0.84, 2.1, "gal"]
-                                        }
-                return EvoAC_PolyLookup.get(int(self.NominalKW), None)
+                return self.GetModelInfo("polynomial")
 
         except Exception as e1:
             self.LogErrorLine("Error in GetFuelConsumptionPolynomial: " + str(e1))
@@ -391,7 +389,8 @@ class Evolution(controller.GeneratorController):
     #------------ Evolution:GetModelInfo-------------------------------
     def GetModelInfo(self, Request):
 
-        UnknownList = ["Unknown", "Unknown", "Unknown", "Unknown"]
+        # List format: [Rated kW, Freq, Voltage, Phase, Fuel Consumption Polynomial]
+        UnknownList = ["Unknown", "Unknown", "Unknown", "Unknown", None]
 
         # Nexus LQ is the QT line
         # 50Hz : QT02724MNAX
@@ -400,32 +399,36 @@ class Evolution(controller.GeneratorController):
 
         # Nexus AC
         ModelLookUp_NexusAC = {
-                                0 : ["8KW", "60", "120/240", "1"],
-                                2 : ["14KW", "60", "120/240", "1"],
-                                3 : ["15KW", "60", "120/240", "1"],
-                                4 : ["20KW", "60", "120/240", "1"]
+                                0 : ["8KW", "60", "120/240", "1", None],
+                                2 : ["14KW", "60", "120/240", "1", None],
+                                3 : ["15KW", "60", "120/240", "1", None],
+                                4 : ["20KW", "60", "120/240", "1", None]
                                 }
         # This should cover the guardian line
         ModelLookUp_EvoAC = { #ID : [KW or KVA Rating, Hz Rating, Voltage Rating, Phase]
-                                1 : ["9KW", "60", "120/240", "1"],
-                                2 : ["14KW", "60", "120/240", "1"],
-                                3 : ["17KW", "60", "120/240", "1"],
-                                4 : ["20KW", "60", "120/240", "1"],
-                                5 : ["8KW", "60", "120/240", "1"],
-                                7 : ["13KW", "60", "120/240", "1"],
-                                8 : ["15KW", "60", "120/240", "1"],
-                                9 : ["16KW", "60", "120/240", "1"],
-                                10 : ["20KW", "VSCF", "120/240", "1"],    #Variable Speed Constant Frequency
-                                11 : ["15KW", "ECOVSCF", "120/240", "1"], # Eco Variable Speed Constant Frequency
-                                12 : ["8KVA", "50", "220,230,240", "1"],         # 3 distinct models 220, 230, 240
-                                13 : ["10KVA", "50", "220,230,240", "1"],         # 3 distinct models 220, 230, 240
-                                14 : ["13KVA", "50", "220,230,240", "1"],        # 3 distinct models 220, 230, 240
-                                15 : ["11KW", "60" ,"240", "1"],
-                                17 : ["22KW", "60", "120/240", "1"],
-                                21 : ["11KW", "60", "240 LS", "1"],
-                                32 : ["Trinity", "60", "208 3Phase", "3"],      # G007077
-                                33 : ["Trinity", "50", "380,400,416", "3"]       # 3 distinct models 380, 400 or 416
+                                1 : ["9KW", "60", "120/240", "1", [0, 1, 0.37, "gal"]],
+                                2 : ["14KW", "60", "120/240", "1", [0, 1.48, 0.82, "gal"]],
+                                3 : ["17KW", "60", "120/240", "1", [0, 3.16, 0.41, "gal"]],
+                                4 : ["20KW", "60", "120/240", "1", [0, 2.38, 1.18, "gal"]],
+                                5 : ["8KW", "60", "120/240", "1", [0, 1.48, 0.2, "gal"]],
+                                7 : ["13KW", "60", "120/240", "1", None],
+                                8 : ["15KW", "60", "120/240", "1", None],
+                                9 : ["16KW", "60", "120/240", "1", [0, 0.84, 2.1, "gal"]],
+                                10 : ["20KW", "VSCF", "120/240", "1", None],          #Variable Speed Constant Frequency
+                                11 : ["15KW", "ECOVSCF", "120/240", "1", [0, 2.58, 0.61, "gal"]],       # Eco Variable Speed Constant Frequency
+                                12 : ["8KVA", "50", "220,230,240", "1", None],        # 3 distinct models 220, 230, 240
+                                13 : ["10KVA", "50", "220,230,240", "1", None],       # 3 distinct models 220, 230, 240
+                                14 : ["13KVA", "50", "220,230,240", "1", None],       # 3 distinct models 220, 230, 240
+                                15 : ["11KW", "60" ,"240", "1", [0, 1.5, 0.47, "gal"]],
+                                17 : ["22KW", "60", "120/240", "1", [0, 2.74, 1.16, "gal"]],
+                                21 : ["11KW", "60", "240 LS", "1", None],
+                                32 : ["Trinity", "60", "208 3Phase", "3", None],      # G007077
+                                33 : ["Trinity", "50", "380,400,416", "3", None]      # 3 distinct models 380, 400 or 416
                                 }
+
+        if self.SynergyController:
+            # If Synergy Controller, replace consumption polynomial
+            ModelLookUp_EvoAC[10][4] = [0, 3.34, 0.12, "gal"]
 
         # Evolution LC is the Protector series
         # 50Hz Models: RG01724MNAX, RG02224MNAX, RG02724RNAX
@@ -444,6 +447,7 @@ class Evolution(controller.GeneratorController):
                 LookUp = ModelLookUp_NexusAC
         elif self.EvolutionController and self.LiquidCooled:
             LookUp = ModelLookUp_EvoLC
+            return "Unknown"    # Nexus LC is not known
         else:
             LookUp = ModelLookUp_NexusLC
             return "Unknown"    # Nexus LC is not known
@@ -475,6 +479,8 @@ class Evolution(controller.GeneratorController):
         elif Request.lower() == "phase":
             return ModelInfo[3]
 
+        elif Request.lower() == "polynomial":
+            return ModelInfo[4]
         return "Unknown"
 
     #------------------------------------------------------------
@@ -2745,7 +2751,7 @@ class Evolution(controller.GeneratorController):
 
         Value = self.GetParameter("05ee", Divider = 100.0, ReturnFloat = True)
         if self.LiquidCooled:
-            CompValue = 0.57
+            CompValue = 0.9
         else:
             CompValue = 0
         if Value > CompValue:
