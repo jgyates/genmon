@@ -1061,7 +1061,10 @@ class GeneratorController(mysupport.MySupport):
             # now compensate for time
             Consumption = (seconds / 3600) * Consumption
 
-            return round(Consumption, 4), Polynomial[3]
+            if self.UseMetric:
+                return round(Consumption * 3.9, 4), "L"     # convert to Liters
+            else:
+                return round(Consumption, 4), Polynomial[3]
         except Exception as e1:
             self.LogErrorLine("Error in GetFuelConsumption: " + str(e1))
             return None, ""

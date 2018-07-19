@@ -150,7 +150,6 @@ class Evolution(controller.GeneratorController):
                     "0239" : [2, 0],     # Startup Delay (Evo LC)
                     "023b" : [2, 0],     # Pick Up Voltage (Evo LQ only)
                     "023e" : [2, 0],     # Exercise time duration (Evo LQ only)
-                    "0207" : [2, 0],     #  Unknown (EvoLC)
                     "0209" : [2, 0],     #  Unknown (EvoLC)
                     "020c" : [2, 0],     #  Unknown (EvoLC)
                     "020d" : [2, 0],     #  Unknown (EvoLC)
@@ -158,6 +157,18 @@ class Evolution(controller.GeneratorController):
                     "0238" : [2, 0],     #  Unknown (EvoLC)
                     "023a" : [2, 0],     #  Unknown (EvoLC)
                     "023d" : [2, 0],     #  Unknown (EvoLC)
+                    "0241" : [2, 0],     #  Unknown (EvoLC)
+                    "0242" : [2, 0],     #  Unknown (EvoLC)
+                    "0243" : [2, 0],     #  Unknown (EvoLC)
+                    "0244" : [2, 0],     #  Unknown (EvoLC)
+                    "0245" : [2, 0],     #  Unknown (EvoLC)
+                    "0246" : [2, 0],     #  Unknown (EvoLC)
+                    "0247" : [2, 0],     #  Unknown (EvoLC)
+                    "0248" : [2, 0],     #  Unknown (EvoLC)
+                    "0249" : [2, 0],     #  Unknown (EvoLC)
+                    "024a" : [2, 0],     #  Unknown (EvoLC)
+                    "0258" : [2, 0],     #  Unknown (EvoLC)
+                    "025a" : [2, 0],     #  Unknown (EvoLC)
                     "005c" : [2, 0],     # Unknown , possible model reg on EvoLC
                     "05ed" : [2, 0],     # Unknown sensor 4, changes between 35, 37, 39 (Ambient Temp Sensor) EvoLC
                     "05ee" : [2, 0],     # (CT on Battery Charger)
@@ -375,8 +386,7 @@ class Evolution(controller.GeneratorController):
             if self.FuelType == "Natural Gas" or self.FuelType == "Gasoline":
                 return None
             if self.EvolutionController and self.LiquidCooled:
-                if self.NominalKW == "48":
-                    #return [1.84,11.028,2.22,"L"]   # for 48Kw Diesel
+                if self.NominalKW == "48" and self.FuelType == "Diesel":
                     return [ 0.03, 0.73, 0.585,"gal"]   # for 48Kw Diesel
 
             if self.EvolutionController and not self.LiquidCooled:
@@ -411,19 +421,19 @@ class Evolution(controller.GeneratorController):
                                 3 : ["17KW", "60", "120/240", "1", [0, 3.16, 0.41, "gal"]],
                                 4 : ["20KW", "60", "120/240", "1", [0, 2.38, 1.18, "gal"]],
                                 5 : ["8KW", "60", "120/240", "1", [0, 1.48, 0.2, "gal"]],
-                                7 : ["13KW", "60", "120/240", "1", None],
-                                8 : ["15KW", "60", "120/240", "1", None],
+                                7 : ["13KW", "60", "120/240", "1", [0, 1.26, 0.92, "gal"]],
+                                8 : ["15KW", "60", "120/240", "1", [0, 1.84, 0.67, "gal"]],
                                 9 : ["16KW", "60", "120/240", "1", [0, 0.84, 2.1, "gal"]],
-                                10 : ["20KW", "VSCF", "120/240", "1", None],          #Variable Speed Constant Frequency
+                                10 : ["20KW", "VSCF", "120/240", "1", [0, 3.34, 0.12, "gal"]],          #Variable Speed Constant Frequency
                                 11 : ["15KW", "ECOVSCF", "120/240", "1", [0, 2.58, 0.61, "gal"]],       # Eco Variable Speed Constant Frequency
-                                12 : ["8KVA", "50", "220,230,240", "1", None],        # 3 distinct models 220, 230, 240
-                                13 : ["10KVA", "50", "220,230,240", "1", None],       # 3 distinct models 220, 230, 240
-                                14 : ["13KVA", "50", "220,230,240", "1", None],       # 3 distinct models 220, 230, 240
+                                12 : ["8KVA", "50", "220,230,240", "1", [0,  1.3, 0.21, "gal"]],        # 3 distinct models 220, 230, 240
+                                13 : ["10KVA", "50", "220,230,240", "1", [0, 1.48, 0.37, "gal"]],       # 3 distinct models 220, 230, 240
+                                14 : ["13KVA", "50", "220,230,240", "1", [0, 2.0, 0.39, "gal"]],       # 3 distinct models 220, 230, 240
                                 15 : ["11KW", "60" ,"240", "1", [0, 1.5, 0.47, "gal"]],
                                 17 : ["22KW", "60", "120/240", "1", [0, 2.74, 1.16, "gal"]],
-                                21 : ["11KW", "60", "240 LS", "1", None],
-                                32 : ["Trinity", "60", "208 3Phase", "3", None],      # G007077
-                                33 : ["Trinity", "50", "380,400,416", "3", None]      # 3 distinct models 380, 400 or 416
+                                21 : ["11KW", "60", "240 LS", "1", [0, 1.5, 0.47, "gal"]],
+                                32 : ["20KW", "60", "208 3 Phase", "3", [0, 2.34, 1.22, "gal"]],     # Trinity G007077
+                                33 : ["Trinity", "50", "380,400,416", "3", None]                    # Discontinued
                                 }
 
         if self.SynergyController:
