@@ -2095,6 +2095,7 @@ class Evolution(controller.GeneratorController):
          0x0a : "Low Oil Pressure",     #  Validate on Nexus Air Cooled.
          0x0c : "Overspeed",            #  Validated on Nexus AC
          0x0d : "RPM Sense Loss",       #  Validate on Evolution, occurred when forcing RPM sense loss from manual start
+         0x0f : "Change Oil & Filter",  #  Validate on Nexus AC
          0x14 : "Check Battery",        #  Validate on Nexus, occurred when Check Battery Alarm
          0x1f : "Service Due",          #  Validate on Evolution, occurred when forced service due
          0x20 : "Service Complete",     #  Validate on Evolution, occurred when service reset
