@@ -73,6 +73,7 @@ class GeneratorController(mysupport.MySupport):
         self.NominalRPM = "Unknown"
         self.NominalKW = "Unknown"
         self.Model = "Unknown"
+        self.TankSize = None
 
         self.ProgramStartTime = datetime.datetime.now()     # used for com metrics
         self.OutageStartTime = self.ProgramStartTime        # if these two are the same, no outage has occured
@@ -130,6 +131,9 @@ class GeneratorController(mysupport.MySupport):
 
             if config.has_option(ConfigSection, 'fueltype'):
                 self.FuelType = config.get(ConfigSection, 'fueltype')
+
+            if config.has_option(ConfigSection, 'tanksize'):
+                self.TankSize = config.get(ConfigSection, 'tanksize')
 
         except Exception as e1:
             if not reload:
@@ -1022,7 +1026,7 @@ class GeneratorController(mysupport.MySupport):
 
                 # Housekeeping on kw Log
                 if self.GetDeltaTimeMinutes(datetime.datetime.now() - LastPruneTime) > 1440 :     # check every day
-                    self.PrunePowerLog(43800 * 12)   # delete log entries greater than one year
+                    self.PrunePowerLog(43800 * 36)   # delete log entries greater than three years
                     LastPruneTime = datetime.datetime.now()
 
                 # Time to exit?
@@ -1047,6 +1051,41 @@ class GeneratorController(mysupport.MySupport):
             except Exception as e1:
                 self.LogErrorLine("Error in PowerMeter: " + str(e1))
 
+    #----------  GeneratorController::GetEstimatedFuelInTank--------------------
+    def GetEstimatedFuelInTank(self, ReturnFloat = False):
+
+        if ReturnFloat:
+            DefaultReturn = 0.0
+        else:
+            DefaultReturn = "0"
+
+        if self.TankSize == None or self.TankSize == "0":
+            return DefaultReturn
+        try:
+            FuelUsed = self.GetPowerHistory("power_log_json=0,fuel", NoReduce = True)
+            FuelUsed = self.removeAlpha(FuelUsed)
+            FuelLeft = float(self.TankSize) - float(FuelUsed)
+            if FuelLeft < 0:
+                FuelLeft = 0.0
+
+            if self.UseMetric:
+                Units = "L"
+            else:
+                Units = "gal"
+            if ReturnFloat:
+                return FuelLeft
+            return "%.2f %s" % (FuelLeft, Units)
+        except Exception as e1:
+            self.LogErrorLine("Error in GetEstimatedFuelInTank: " + str(e1))
+            return DefaultReturn
+
+    #----------  GeneratorController::FuelGuageSupported------------------------
+    def FuelGuageSupported(self):
+        return False
+    #----------  GeneratorController::FuelConsumptionSupported------------------
+    def FuelConsumptionSupported(self):
+        return False
+
     #----------  GeneratorController::GetFuelConsumption------------------------
     def GetFuelConsumption(self, kw, seconds):
         try:
@@ -1062,7 +1101,8 @@ class GeneratorController(mysupport.MySupport):
             Consumption = (seconds / 3600) * Consumption
 
             if self.UseMetric:
-                return round(Consumption * 3.9, 4), "L"     # convert to Liters
+                Consumption = Consumption * 3.78541
+                return round(Consumption, 4), "L"     # convert to Liters
             else:
                 return round(Consumption, 4), Polynomial[3]
         except Exception as e1:

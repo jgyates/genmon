@@ -280,6 +280,13 @@ class Evolution(controller.GeneratorController):
             self.TileList.append(Tile)
             Tile = mytile.MyTile(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM), callback = self.GetRPM, callbackparameters = (True,))
             self.TileList.append(Tile)
+            if self.FuelGuageSupported():
+                if self.UseMetric:
+                    Units = "L"
+                else:
+                    Units = "gal"
+                Tile = mytile.MyTile(self.log, title = "Estimated Fuel", units = Units, type = "fuel", nominal = int(self.TankSize), callback = self.GetEstimatedFuelInTank, callbackparameters = (True,))
+                self.TileList.append(Tile)
             if self.PowerMeterIsSupported():
                 Tile = mytile.MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = int(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
                 self.TileList.append(Tile)
@@ -378,6 +385,23 @@ class Evolution(controller.GeneratorController):
                 self.FuelType = "Propane"                           # NexusLC, NexusAC, EvoAC
             self.AddItemToConfFile("fueltype", self.FuelType)
 
+    #----------  GeneratorController::FuelGuageSupported------------------------
+    def FuelGuageSupported(self):
+
+        if not self.FuelConsumptionSupported():
+            return False
+
+        if self.TankSize == None or self.TankSize == "0":
+            return False
+        return True
+
+    #----------  GeneratorController::FuelConsumptionSupported------------------
+    def FuelConsumptionSupported(self):
+
+        if self.GetFuelConsumptionPolynomial() == None:
+            return False
+        else:
+            return True
     #----------  GeneratorController::GetFuelConsumptionPolynomial--------------
     def GetFuelConsumptionPolynomial(self):
 
@@ -1554,9 +1578,11 @@ class Evolution(controller.GeneratorController):
 
         Sensors["Calibrate Volts Value"] = self.GetParameter("0208")
 
-        if self.EvolutionController:
+        if self.EvolutionController and self.FuelConsumptionSupported():
             Sensors["kW Hours in last 30 days"] = self.GetPowerHistory("power_log_json=43200,kw", NoReduce = True)
             Sensors["Fuel Consumption in last 30 days"] = self.GetPowerHistory("power_log_json=43200,fuel", NoReduce = True)
+            if self.FuelGuageSupported():
+                Sensors["Extimated Fuel In Tank"] = self.GetEstimatedFuelInTank()
 
         if self.EvolutionController and self.LiquidCooled:
 
