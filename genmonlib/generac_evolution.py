@@ -1495,6 +1495,7 @@ class Evolution(controller.GeneratorController):
             else:
                 MessageType = "info"
                 msgsubject = "Generator Notice: " + self.SiteName
+                msgbody += "NOTE: This message is a notice that the state of the generator has changed. The system is not in alarm.\n"
 
             msgbody += self.DisplayStatus(Reg0001Value = RegVal)
 
