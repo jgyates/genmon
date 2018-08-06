@@ -125,7 +125,7 @@ class MyMail(mysupport.MySupport):
                           tempList.append(email)
                     else:
                        tempList.append(email)
-                # print "Inverted List: " + type + " -> " + ",".join(tempList)
+                
                 self.EmailRecipientByType[type] = ",".join(tempList)
             # SMTP Server
             if config.has_option('MyMail', 'smtp_server'):
@@ -220,13 +220,11 @@ class MyMail(mysupport.MySupport):
                         msg = email.message_from_string(data[0][1])
                         decode = email.header.decode_header(msg['Subject'])[0]
                         subject = unicode(decode[0])
-                        #print( 'Message %s: %s' % (num, subject))
 
                         self.IncomingCallback(subject)
 
                         # move the message to processed folder
                         result = self.Mailbox.store(num, '+X-GM-LABELS', self.ProcessedFolder)  #add the label
-                        #result = M.store(num, '-X-GM-LABELS', "Gate")  # oddly this will not remove the label
                         self.Mailbox.store(num, '+FLAGS', '\\Deleted')     # this is needed to remove the original label
                     if self.WaitForExit("EmailCommandThread", 15 ):
                         return
