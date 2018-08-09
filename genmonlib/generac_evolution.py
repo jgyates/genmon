@@ -56,6 +56,7 @@ class Evolution(controller.GeneratorController):
         self.EvolutionController = None
         self.SynergyController = False
         self.LiquidCooled = None
+        self.LiquidCooledParams = None
         # State Info
         self.GeneratorInAlarm = False       # Flag to let the heartbeat thread know there is a problem
         self.LastAlarmValue = 0xFF  # Last Value of the Alarm / Status Register
@@ -139,11 +140,12 @@ class Evolution(controller.GeneratorController):
                     "0037" : [2, 0],     # CT Sensor (EvoAC)
                     "0038" : [2, 0],     # Evo AC   (Sensor?)       FFFE, FFFF, 0001, 0002 random - not linear
                     "0039" : [2, 0],     # Evo AC   (Sensor?)
-                    "003a" : [2, 0],     # Evo AC   (Sensor?)  Nexus and Evo AC
-                    "003b" : [2, 0],     # Evo AC   (Sensor?)  Nexus and Evo AC
-                    "0208" : [2, 0],     # Calibrate Volts (Evo)
-                    "020a" : [2, 0],     # Param Group (EvoLC)
-                    "020b" : [2, 0],     # Voltage Code (EvoLC)
+                    "003a" : [2, 0],     # CT Sensor High (EvoAC)
+                    "003b" : [2, 0],     # CT Sensor Low (EvoAC)
+                    "0208" : [2, 0],     # Calibrate Volts (Evo all)
+                    "020a" : [2, 0],     # Param Group (EvoLC, NexuLC)
+                    "020b" : [2, 0],     # Voltage Code (EvoLC, NexusLC)
+                    "020c" : [2, 0],     #  Fuel Type (EvoLC, NexusLC)
                     "020e" : [2, 0],     # Volts Per Hertz (EvoLC)
                     "0235" : [2, 0],     # Gain (EvoLC)
                     "0237" : [2, 0],     # Set Voltage (Evo LC)
@@ -151,9 +153,8 @@ class Evolution(controller.GeneratorController):
                     "023b" : [2, 0],     # Pick Up Voltage (Evo LQ only)
                     "023e" : [2, 0],     # Exercise time duration (Evo LQ only)
                     "0209" : [2, 0],     #  Unknown (EvoLC)
-                    "020c" : [2, 0],     #  Unknown (EvoLC)
                     "020d" : [2, 0],     #  Unknown (EvoLC)
-                    "020f" : [2, 0],     #  Unknown (EvoLC)
+                    "020f" : [2, 0],     #  Unknown (EvoLC)  Something in EvoLC
                     "0238" : [2, 0],     #  Unknown (EvoLC)
                     "023a" : [2, 0],     #  Unknown (EvoLC)
                     "023d" : [2, 0],     #  Unknown (EvoLC)
@@ -167,7 +168,7 @@ class Evolution(controller.GeneratorController):
                     "0248" : [2, 0],     #  Unknown (EvoLC)
                     "0249" : [2, 0],     #  Unknown (EvoLC)
                     "024a" : [2, 0],     #  Unknown (EvoLC)
-                    "0258" : [2, 0],     #  Unknown (EvoLC)
+                    "0258" : [2, 0],     #  Unknown (EvoLC, NexusLC) Some type of setting
                     "025a" : [2, 0],     #  Unknown (EvoLC)
                     "005c" : [2, 0],     # Unknown , possible model reg on EvoLC
                     "05ed" : [2, 0],     # Unknown sensor 4, changes between 35, 37, 39 (Ambient Temp Sensor) EvoLC
@@ -351,7 +352,7 @@ class Evolution(controller.GeneratorController):
                 self.AddItemToConfFile("nominalKW", self.NominalKW)
 
         if self.NewInstall:
-            if not self.ModelIsValid() or  self.NominalKW == "Unknown":
+            if not self.ModelIsValid() or self.NominalKW == "Unknown":
                 ReturnStatus, ReturnModel, ReturnKW = self.LookUpSNInfo(SkipKW = (not self.NominalKW == "Unknown"), NoLookUp = NoLookUp)
                 if not ReturnStatus:
                     if not self.ModelIsValid():
@@ -375,15 +376,38 @@ class Evolution(controller.GeneratorController):
                         self.AddItemToConfFile("nominalKW", self.NominalKW)
 
         if self.FuelType == "Unknown" or not len(self.FuelType):
-            if self.Model.startswith("RD"):
-                self.FuelType = "Diesel"
-            elif self.Model.startswith("RG") or self.Model.startswith("QT"):
-                self.FuelType = "Propane"
-            elif self.LiquidCooled and self.EvolutionController:          # EvoLC
-                self.FuelType = "Diesel"
+            if self.LiquidCooled:
+                self.FuelType = self.GetModelInfo("Fuel")
+                if self.FuelType == "Unknown":
+                    if self.Model.startswith("RD"):
+                        self.FuelType = "Diesel"
+                    elif self.Model.startswith("RG"):
+                        if len(self.Model) >= 11:   # e.g. RD04834ADSE
+                            if self.Model[8] == "N":
+                                self.FuelType = "Natural Gas"
+                            elif self.Model[8] == "V":
+                                self.FuelType = "Propane"
+                            else:
+                                self.FuelType = "Propane"
+                    elif self.Model.startswith("QT"):
+                        self.FuelType = "Propane"
+                    elif self.LiquidCooled and self.EvolutionController:          # EvoLC
+                        if self.GetModelInfo("Fuel") == "Diesel":
+                            self.FuelType = "Diesel"
+                        else:
+                            self.FuelType = "Natural Gas"
             else:
                 self.FuelType = "Propane"                           # NexusLC, NexusAC, EvoAC
             self.AddItemToConfFile("fueltype", self.FuelType)
+
+        # This should fix issues with prefious installs of liquid cooled models that had the wrong fule type
+        if self.LiquidCooled:
+            FuelType = self.GetModelInfo("Fuel")
+            if FuelType != "Unknown" and self.FuelType != FuelType:
+                self.FuelType = FuelType
+                self.AddItemToConfFile("fueltype", self.FuelType)
+
+        self.EngineDisplacement = self.GetModelInfo("EngineDisplacement")
 
     #----------  GeneratorController::FuelGuageSupported------------------------
     def FuelGuageSupported(self):
@@ -409,84 +433,158 @@ class Evolution(controller.GeneratorController):
 
             if self.FuelType == "Natural Gas" or self.FuelType == "Gasoline":
                 return None
-            if self.EvolutionController and self.LiquidCooled:
-                if self.NominalKW == "48" and self.FuelType == "Diesel":
-                    return [ 0.03, 0.73, 0.585,"gal"]   # for 48Kw Diesel
-
-            if self.EvolutionController and not self.LiquidCooled:
+            if self.EvolutionController:
                 return self.GetModelInfo("polynomial")
 
         except Exception as e1:
             self.LogErrorLine("Error in GetFuelConsumptionPolynomial: " + str(e1))
         return None
 
-    #------------ Evolution:GetModelInfo-------------------------------
-    def GetModelInfo(self, Request):
-
-        # List format: [Rated kW, Freq, Voltage, Phase, Fuel Consumption Polynomial]
-        UnknownList = ["Unknown", "Unknown", "Unknown", "Unknown", None]
+    #------------ Evolution:GetLiquidCooledParams-------------------------------
+    def GetLiquidCooledParams(self, ParamGroup, VoltageCode):
 
         # Nexus LQ is the QT line
         # 50Hz : QT02724MNAX
         # QT022, QT027, QT036, QT048, QT080, QT070,QT100,QT130,QT150
-        ModelLookUp_NexusLC = {}
+
+        # Evolution LC is the Protector series
+        # 50Hz Models: RG01724MNAX, RG02224MNAX, RG02724RNAX
+        # RG022, RG025,RG030,RG027,RG036,RG032,RG045,RG038,RG048,RG060
+        # RD01523,RD02023,RD03024,RD04834,RD05034
+
+        # Liquid Cooled Units must be matched by the Param Group and Voltage Code settings
+        # in the dealer menu
+
+        try:
+            if not self.LiquidCooled:
+                return None
+
+            if self.EvolutionController:
+                FileName = "EvoLCParam.txt"
+            else:
+                FileName = "NexusLCParam.txt"
+
+            FullFileName = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/" + FileName
+            with open(FullFileName,"r") as ParamFile:
+                for line in ParamFile:
+                    line = line.strip()             # remove newline at beginning / end and trailing whitespace
+                    if not len(line):
+                        continue
+                    if line[0] == "#":              # comment?
+                        continue
+                    Items = line.split(",")
+                    if len(Items) < 9:
+                        continue
+                    # Lookup Param Group and # Voltage Code to find kw, phase, etc
+                    if ParamGroup == int(Items[4]) and VoltageCode == int(Items[5] ):
+                        return Items
+
+            self.LogError("Unable to find match for Param Group and Voltage Code: " + str(ParamGroup) + ", " + str(VoltageCode))
+        except Exception as e1:
+            self.LogErrorLine("Error in GetLiquidCooledParams: " + str(e1))
+
+        return None
+    #------------ Evolution:GetLiquidCooledModelInfo----------------------------
+    def GetLiquidCooledModelInfo(self, Request):
+
+        if self.LiquidCooledParams == None:
+            self.LiquidCooledParams = self.GetLiquidCooledParams(self.GetParameter("020a", ReturnInt = True), self.GetParameter("020b", ReturnInt = True))
+
+        if self.LiquidCooledParams == None:
+            return "Unknown"
+
+        if len(self.LiquidCooledParams) < 9:
+            return "Unknown"
+
+        if Request.lower() == "frequency":
+            if self.LiquidCooledParams[2] == "60" or self.LiquidCooledParams[2] == "50":
+                return self.LiquidCooledParams[2]
+            else:
+                return "Unknown"
+
+        elif Request.lower() == "kw":
+            return self.LiquidCooledParams[0]
+        elif Request.lower() == "phase":
+            return self.LiquidCooledParams[3]
+        elif Request.lower() == "enginedisplacement":
+            return self.LiquidCooledParams[8]
+        elif Request.lower() == "polynomial":
+            if len(self.LiquidCooledParams) >= 14:
+                Polynomial = []
+                Polynomial.append(float(self.LiquidCooledParams[10]))
+                Polynomial.append(float(self.LiquidCooledParams[11]))
+                Polynomial.append(float(self.LiquidCooledParams[12]))
+                Polynomial.append(self.LiquidCooledParams[13])
+                return Polynomial
+        elif Request.lower() == "fuel":
+
+            Value = self.GetParameter("020c", ReturnInt = True)
+
+            if Value == 0:
+                return "Propane"
+            if Value == 1:
+                return "Natural Gas"
+            if Value == 2:
+                return "Diesel"
+            if len(self.LiquidCooledParams) >= 9:
+                if self.LiquidCooledParams[9] == "NG/LPV":
+                    return "Propane"
+                if self.LiquidCooledParams[9] == "Diesel":
+                    return "Diesel"
+        return "Unknown"
+
+    #------------ Evolution:GetModelInfo----------------------------------------
+    def GetModelInfo(self, Request):
+
+        if self.LiquidCooled:
+            return self.GetLiquidCooledModelInfo(Request)
+
+        if self.LiquidCooled:
+            return "Unknown"
+
+        # List format: [Rated kW, Freq, Voltage, Phase, Fuel Consumption Polynomial, Engine Displacement]
+        UnknownList = ["Unknown", "Unknown", "Unknown", "Unknown", None, "Unknown"]
 
         # Nexus AC
         ModelLookUp_NexusAC = {
-                                0 : ["8KW", "60", "120/240", "1", None],
-                                2 : ["14KW", "60", "120/240", "1", None],
-                                3 : ["15KW", "60", "120/240", "1", None],
-                                4 : ["20KW", "60", "120/240", "1", None]
+                                0 : ["8KW", "60", "120/240", "1", None, "410cc"],
+                                2 : ["14KW", "60", "120/240", "1", None, "992cc"],
+                                3 : ["15KW", "60", "120/240", "1", None, "992cc"],
+                                4 : ["20KW", "60", "120/240", "1", None, "999cc"]
                                 }
         # This should cover the guardian line
-        ModelLookUp_EvoAC = { #ID : [KW or KVA Rating, Hz Rating, Voltage Rating, Phase]
-                                1 : ["9KW", "60", "120/240", "1", [0, 1, 0.37, "gal"]],
-                                2 : ["14KW", "60", "120/240", "1", [0, 1.48, 0.82, "gal"]],
-                                3 : ["17KW", "60", "120/240", "1", [0, 3.16, 0.41, "gal"]],
-                                4 : ["20KW", "60", "120/240", "1", [0, 2.38, 1.18, "gal"]],
-                                5 : ["8KW", "60", "120/240", "1", [0, 1.48, 0.2, "gal"]],
-                                7 : ["13KW", "60", "120/240", "1", [0, 1.26, 0.92, "gal"]],
-                                8 : ["15KW", "60", "120/240", "1", [0, 1.84, 0.67, "gal"]],
-                                9 : ["16KW", "60", "120/240", "1", [0, 0.84, 2.1, "gal"]],
-                                10 : ["20KW", "VSCF", "120/240", "1", [0, 3.34, 0.12, "gal"]],          #Variable Speed Constant Frequency
-                                11 : ["15KW", "ECOVSCF", "120/240", "1", [0, 2.58, 0.61, "gal"]],       # Eco Variable Speed Constant Frequency
-                                12 : ["8KVA", "50", "220,230,240", "1", [0,  1.3, 0.21, "gal"]],        # 3 distinct models 220, 230, 240
-                                13 : ["10KVA", "50", "220,230,240", "1", [0, 1.48, 0.37, "gal"]],       # 3 distinct models 220, 230, 240
-                                14 : ["13KVA", "50", "220,230,240", "1", [0, 2.0, 0.39, "gal"]],       # 3 distinct models 220, 230, 240
-                                15 : ["11KW", "60" ,"240", "1", [0, 1.5, 0.47, "gal"]],
-                                17 : ["22KW", "60", "120/240", "1", [0, 2.74, 1.16, "gal"]],
-                                21 : ["11KW", "60", "240 LS", "1", [0, 1.5, 0.47, "gal"]],
-                                32 : ["20KW", "60", "208 3 Phase", "3", [0, 2.34, 1.22, "gal"]],     # Trinity G007077
-                                33 : ["Trinity", "50", "380,400,416", "3", None]                    # Discontinued
+        ModelLookUp_EvoAC = { #ID : [KW or KVA Rating, Hz Rating, Voltage Rating, Phase, Fuel Polynomial, Engine Displacement]
+                                1 : ["9KW", "60", "120/240", "1", [0, 1, 0.37, "gal"], "426cc"],
+                                2 : ["14KW", "60", "120/240", "1", [0, 1.48, 0.82, "gal"], "992cc"],
+                                3 : ["17KW", "60", "120/240", "1", [0, 3.16, 0.41, "gal"], "992cc"],
+                                4 : ["20KW", "60", "120/240", "1", [0, 2.38, 1.18, "gal"], "999cc"],
+                                5 : ["8KW", "60", "120/240", "1", [0, 1.48, 0.2, "gal"], "410cc"],
+                                7 : ["13KW", "60", "120/240", "1", [0, 1.26, 0.92, "gal"], "992cc"],
+                                8 : ["15KW", "60", "120/240", "1", [0, 1.84, 0.67, "gal"], "999cc"],
+                                9 : ["16KW", "60", "120/240", "1", [0, 0.84, 2.1, "gal"], "999cc"],
+                                10 : ["20KW", "VSCF", "120/240", "1", [0, 3.34, 0.12, "gal"], "999cc"],          #Variable Speed Constant Frequency
+                                11 : ["15KW", "ECOVSCF", "120/240", "1", [0, 2.58, 0.61, "gal"], "999cc"],       # Eco Variable Speed Constant Frequency
+                                12 : ["8KVA", "50", "220,230,240", "1", [0,  1.3, 0.21, "gal"], "530cc"],        # 3 distinct models 220, 230, 240
+                                13 : ["10KVA", "50", "220,230,240", "1", [0, 1.48, 0.37, "gal"], "999cc"],       # 3 distinct models 220, 230, 240
+                                14 : ["13KVA", "50", "220,230,240", "1", [0, 2.0, 0.39, "gal"], "999cc"],       # 3 distinct models 220, 230, 240
+                                15 : ["11KW", "60" ,"240", "1", [0, 1.5, 0.47, "gal"], "530cc"],
+                                17 : ["22KW", "60", "120/240", "1", [0, 2.74, 1.16, "gal"], "999cc"],
+                                21 : ["11KW", "60", "240 LS", "1", [0, 1.5, 0.47, "gal"], "530cc"],
+                                32 : ["20KW", "60", "208 3 Phase", "3", [0, 2.34, 1.22, "gal"], "999cc"],     # Trinity G007077
+                                33 : ["Trinity", "50", "380,400,416", "3", None, None]                    # Discontinued
                                 }
 
         if self.SynergyController:
             # If Synergy Controller, replace consumption polynomial
             ModelLookUp_EvoAC[10][4] = [0, 3.34, 0.12, "gal"]
 
-        # Evolution LC is the Protector series
-        # 50Hz Models: RG01724MNAX, RG02224MNAX, RG02724RNAX
-        # RG022, RG025,RG030,RG027,RG036,RG032,RG045,RG038,RG048,RG060
-        # RD01523,RD02023,RD03024,RD04834,RD05034
-        #
-        ModelLookUp_EvoLC = {}   #10: ["48KW", "60", "120/240", "1"]
-
-        Register = "None"
         LookUp = None
-        if not self.LiquidCooled:
-            Register = "0019"
-            if self.EvolutionController:
-                LookUp = ModelLookUp_EvoAC
-            else:
-                LookUp = ModelLookUp_NexusAC
-        elif self.EvolutionController and self.LiquidCooled:
-            LookUp = ModelLookUp_EvoLC
-            return "Unknown"    # Nexus LC is not known
+        if self.EvolutionController:
+            LookUp = ModelLookUp_EvoAC
         else:
-            LookUp = ModelLookUp_NexusLC
-            return "Unknown"    # Nexus LC is not known
+            LookUp = ModelLookUp_NexusAC
 
-        Value = self.GetRegisterValueFromList(Register)
+        Value = self.GetRegisterValueFromList("0019")
         if not len(Value):
             return "Unknown"
 
@@ -515,6 +613,11 @@ class Evolution(controller.GeneratorController):
 
         elif Request.lower() == "polynomial":
             return ModelInfo[4]
+        elif Request.lower() == "enginedisplacement":
+            if ModelInfo[5] == None:
+                return "Unknown"
+            else:
+                return ModelInfo[5]
         return "Unknown"
 
     #------------------------------------------------------------
@@ -617,7 +720,10 @@ class Evolution(controller.GeneratorController):
                         kWRating = self.removeAlpha(kWRating)
                         kWRating = str(int(kWRating) / 1000)
                     else:
-                        kWRating = str(int(kWRating) / 1000)
+                        if int(kWRating) < 1000:
+                            kWRating = str(int(kWRating))
+                        else:
+                            kWRating = str(int(kWRating) / 1000)
 
                     ReturnKW = kWRating
 
@@ -1524,6 +1630,37 @@ class Evolution(controller.GeneratorController):
             Maint["Rated kW"] = self.NominalKW
             Maint["Nominal Frequency"] = self.NominalFreq
             Maint["Fuel Type"] = self.FuelType
+
+            if self.EngineDisplacement != "Unknown":
+                Maint["Engine Displacement"] = self.EngineDisplacement
+
+            if self.EvolutionController and self.FuelConsumptionSupported():
+                Maint["kW Hours in last 30 days"] = self.GetPowerHistory("power_log_json=43200,kw", NoReduce = True)
+                Maint["Fuel Consumption in last 30 days"] = self.GetPowerHistory("power_log_json=43200,fuel", NoReduce = True)
+                if self.FuelGuageSupported():
+                    Maint["Estimated Fuel In Tank"] = self.GetEstimatedFuelInTank()
+
+            ControllerSettings = collections.OrderedDict()
+            Maint["Controller Settings"] = ControllerSettings
+
+            if self.EvolutionController and not self.LiquidCooled:
+                ControllerSettings["Calibrate Current 1"] = self.GetParameter("05f6")
+                ControllerSettings["Calibrate Current 2"] = self.GetParameter("05f7")
+
+            ControllerSettings["Calibrate Volts"] = self.GetParameter("0208")
+            if self.LiquidCooled:
+
+                ControllerSettings["Param Group"] = self.GetParameter("020a")
+                ControllerSettings["Voltage Code"] = self.GetParameter("020b")
+
+                if self.EvolutionController and self.LiquidCooled:
+                    # get total hours since activation
+                    ControllerSettings["Hours of Protection"] = self.GetParameter("0054", Label = "H")
+                    ControllerSettings["Volts Per Hertz"] = self.GetParameter("020e")
+                    ControllerSettings["Gain"] = self.GetParameter("0235")
+                    ControllerSettings["Rated Frequency"] = self.GetParameter("005a")
+                    ControllerSettings["Rated Voltage"] = self.GetParameter("0059")
+
             Exercise = collections.OrderedDict()
             Exercise["Exercise Time"] = self.GetExerciseTime()
             if self.EvolutionController and self.LiquidCooled:
@@ -1574,27 +1711,10 @@ class Evolution(controller.GeneratorController):
         # Nexus and Evo Air Cooled: ramps up to 600 decimal on LP/NG   (3600 RPM)
         # this is possibly raw data from RPM sensor
         Sensors["Raw RPM Sensor"] = self.GetParameter("003c")
-
         Sensors["Frequency (Calculated)"] = self.GetFrequency(Calculate = True)
 
-        Sensors["Calibrate Volts Value"] = self.GetParameter("0208")
-
-        if self.EvolutionController and self.FuelConsumptionSupported():
-            Sensors["kW Hours in last 30 days"] = self.GetPowerHistory("power_log_json=43200,kw", NoReduce = True)
-            Sensors["Fuel Consumption in last 30 days"] = self.GetPowerHistory("power_log_json=43200,fuel", NoReduce = True)
-            if self.FuelGuageSupported():
-                Sensors["Extimated Fuel In Tank"] = self.GetEstimatedFuelInTank()
-
         if self.EvolutionController and self.LiquidCooled:
-
             # get total hours since activation
-            Sensors["Hours of Protection"] = self.GetParameter("0054", Label = "H")
-            Sensors["Param Group"] = self.GetParameter("020a")
-            Sensors["Voltage Code"] = self.GetParameter("020b")
-            Sensors["Volts Per Hertz"] = self.GetParameter("020e")
-            Sensors["Gain"] = self.GetParameter("0235")
-            Sensors["Rated Frequency"] = self.GetParameter("005a")
-            Sensors["Rated Voltage"] = self.GetParameter("0059")
             Sensors["Battery Charger Sensor"] = self.GetParameter("05ee", Divider = 100.0)
             Sensors["Battery Status (Sensor)"] = self.GetBatteryStatusAlternate()
 
@@ -1603,23 +1723,12 @@ class Evolution(controller.GeneratorController):
             if len(Value):
                 SensorValue = float(Value)
                 # This forumla is loosely based on an Omgeo Thermistor with the model number 44005.
-                #Celsius = 1/(0.001403+0.0002373*(math.log(SensorValue*100))+0.00000009827*((math.log(SensorValue*100))**3))-273.15
                 Celsius =1/(0.0013923+0.0002373*(math.log(SensorValue*70))+0.00000009827*((math.log(SensorValue*70))**3))-273.15
                 Fahrenheit = 9.0/5.0 * Celsius + 32
                 CStr = "%.1f" % Celsius
                 FStr = "%.1f" % Fahrenheit
                 Sensors["Ambient Temp Thermistor"] = "Sensor: " + Value + ", " + CStr + "C, " + FStr + "F"
 
-
-
-        if self.EvolutionController and not self.LiquidCooled:
-            if self.EvolutionController:
-                Value = self.GetUnknownSensor("05f6")
-                if len(Value):
-                    Sensors["Calibrate Current 1 Value"] = Value
-                Value = self.GetUnknownSensor("05f7")
-                if len(Value):
-                    Sensors["Calibrate Current 2 Value"] = Value
 
         if not self.LiquidCooled:       # Nexus AC and Evo AC
 
@@ -2118,6 +2227,7 @@ class Evolution(controller.GeneratorController):
         # These codes indicate an alarm needs to be reset before the generator will run again
         AlarmValues = {
          0x01 : "Low Battery",          #  Validate on Nexus, occurred when Low Battery Alarm
+         0x05:  "Low Fuel Pressure",    #  Validate on Nexus LC
          0x08 : "Low Coolant",          #  Validate on Evolution, occurred when forced low coolant
          0x0a : "Low Oil Pressure",     #  Validate on Nexus Air Cooled.
          0x0c : "Overspeed",            #  Validated on Nexus AC
@@ -2129,6 +2239,7 @@ class Evolution(controller.GeneratorController):
          0x2b : "Charger Missing AC",   #  Validate on EvoAC, occurred when Charger Missing AC Warning
          0x30 : "Ruptured Tank",        #  Validate on Evolution, occurred when forced ruptured tank
          0x31 : "Low Fuel Level",       #  Validate on Evolution, occurred when Low Fuel Level
+         0x32 : "Low Fuel Pressure",    #  Validate on EvoLC
          0x34 : "Emergency Stop"        #  Validate on Evolution, occurred when E-Stop
         }
 
@@ -2663,7 +2774,7 @@ class Evolution(controller.GeneratorController):
             DefaultReturn = "0 kW"
 
         if not self.PowerMeterIsSupported():
-            return ""
+            return DefaultReturn
 
         EngineState = self.GetEngineState()
         # report null if engine is not running
@@ -3281,6 +3392,6 @@ class Evolution(controller.GeneratorController):
         if not self.EvolutionController:    # Not supported by Nexus at this time
             return False
 
-        if self.NominalKW.lower() == "unknown":
+        if not len(self.NominalKW) or self.NominalKW.lower() == "unknown" or self.NominalKW == "0":
             return False
         return True

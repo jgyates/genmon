@@ -434,7 +434,7 @@ def ReadSettingsFromFile():
                 #"model" : ['string', 'Generator Model', 100, "Generic Evolution Air Cooled", "", 0],
                 "nominalfrequency": ['list', 'Rated Frequency', 101, "60", "", "50,60", GENMON_CONFIG],
                 "nominalRPM" : ['int', 'Nominal RPM', 102, "3600", "", "required digits range:1500:4000", GENMON_CONFIG],
-                "nominalKW": ['int', 'Maximum kW Output', 103, "22", "", "required digits range:1:700", GENMON_CONFIG],
+                "nominalKW": ['int', 'Maximum kW Output', 103, "22", "", "required digits range:0:1000", GENMON_CONFIG],
                 "fueltype" : ['list', 'Fuel Type', 104, "Natural Gas", "", "Natural Gas,Propane,Diesel,Gasoline", GENMON_CONFIG],
                 "tanksize" : ['int', 'Fuel Tank Size', 105, "0", "", "required digits range:0:2000", GENMON_CONFIG],
                 #

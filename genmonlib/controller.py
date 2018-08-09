@@ -73,6 +73,7 @@ class GeneratorController(mysupport.MySupport):
         self.NominalRPM = "Unknown"
         self.NominalKW = "Unknown"
         self.Model = "Unknown"
+        self.EngineDisplacement = "Unknown"
         self.TankSize = None
 
         self.ProgramStartTime = datetime.datetime.now()     # used for com metrics
@@ -1032,8 +1033,7 @@ class GeneratorController(mysupport.MySupport):
                 # Time to exit?
                 if self.IsStopSignaled("PowerMeter"):
                     return
-                KWOut = self.removeAlpha(self.GetPowerOutput())
-                KWFloat = float(KWOut)
+                KWFloat = self.GetPowerOutput(ReturnFloat = True)
 
                 if LastValue == KWFloat:
                     continue

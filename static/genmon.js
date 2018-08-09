@@ -230,7 +230,7 @@ function DisplayStatusFull() {
     for (var i = 0; i < myGenerator["tiles"].length; ++i) {
        switch (myGenerator["tiles"][i].type) {
           case "gauge":
-             if (myGenerator["tiles"][i].title == "Fuel") { 
+             if (myGenerator["tiles"][i].title == "Estimated Fuel") { 
                outstr += '<div id="fuelField_'+i+'" class="grid-item gaugeField"><br>'+myGenerator["tiles"][i].title+'<br><div style="display: inline-block; width:100%; height:65%; position: relative;"><canvas class="gaugeCanvas" id="gauge'+i+'_bg" style="height: 100%; position: absolute; left: 0; top: 0; z-index: 1;"></canvas><canvas class="gaugeCanvas" id="gauge'+i+'" style="height: 100%; position: absolute; left: 0; top: 0; z-index: 0;"></canvas></div><br><div id="text'+i+'" class="gaugeDiv"></div></div>';          
              } else {
                outstr += '<div id="gaugeField_'+i+'" class="grid-item gaugeField"><br>'+myGenerator["tiles"][i].title+'<br><canvas class="gaugeCanvas" id="gauge'+i+'"></canvas><br><div id="text'+i+'" class="gaugeDiv"></div></div>';
@@ -294,7 +294,7 @@ function DisplayStatusFull() {
                   $("#gauge"+curr_i).css("height", newHeight - ((newHeight == 95) ? 35 : 70) + "px");
                   $("#gauge"+curr_i+"_bg").css("width", newWidth + "px");
                   $("#gauge"+curr_i+"_bg").css("height", newHeight - ((newHeight == 95) ? 35 : 70) + "px");
-                  gauge[curr_i] = createFuel($("#gauge"+curr_i), $("#text"+curr_i), $("#gauge"+curr_i+"_bg"));
+                  gauge[curr_i] = createFuel($("#gauge"+curr_i), $("#text"+curr_i), $("#gauge"+curr_i+"_bg"), myGenerator["tiles"][curr_i].maximum);
                }
                if (ui.element[0].id == "plotField") {
                   $("#plotkW").css("width", newWidth + "px");
@@ -309,8 +309,8 @@ function DisplayStatusFull() {
     for (var i = 0; i < myGenerator["tiles"].length; ++i) {
        switch (myGenerator["tiles"][i].type) {
           case "gauge":
-             if (myGenerator["tiles"][i].title == "Fuel") {
-                gauge[i] = createFuel($("#gauge"+i), $("#text"+i), $("#gauge"+i+"_bg"));
+             if (myGenerator["tiles"][i].title == "Estimated Fuel") {
+                gauge[i] = createFuel($("#gauge"+i), $("#text"+i), $("#gauge"+i+"_bg"), myGenerator["tiles"][i].maximum);
              } else {
                 gauge[i] = createGauge($("#gauge"+i), $("#text"+i), 0, myGenerator["tiles"][i].minimum, myGenerator["tiles"][i].maximum,
                                                    myGenerator["tiles"][i].labels, myGenerator["tiles"][i].colorzones, myGenerator["tiles"][i].divisions, myGenerator["tiles"][i].subdivisions);
@@ -411,13 +411,13 @@ function createGauge(pCanvas, pText, pTextPrecision, pMin, pMax, pLabels, pZones
     // gauge.setTextField(pText, pTextPrecision);
     gauge.animationSpeed = 1; // set animation speed (32 is default value)
     gauge.set(pMin); // setting starting point
-    gauge.animationSpeed = 1000; // set animation speed (32 is default value)
+    gauge.animationSpeed = 255; // set animation speed (32 is default value)
 
     return gauge;
 }
 
 
-function createFuel(pCanvas, pText, pFG) {
+function createFuel(pCanvas, pText, pFG, tanksize) {
     var opts = {
       angle: 0.23, // The span of the gauge arc
       lineWidth: 0, // The line thickness
@@ -438,9 +438,9 @@ function createFuel(pCanvas, pText, pFG) {
     
     var gauge = new Gauge(pCanvas[0]).setOptions(opts);
     gauge.minValue = 0; // set max gauge value
-    gauge.maxValue = 100; // set max gauge value
+    gauge.maxValue = tanksize; // set max gauge value
     // gauge.setTextField(pText, pTextPrecision);
-    gauge.animationSpeed = 1; // set animation speed (32 is default value)
+    gauge.animationSpeed = 32; // set animation speed (32 is default value)
     
     var w = gauge.canvas.width / 2;
     var r = gauge.radius * 0.7 ;
@@ -449,6 +449,7 @@ function createFuel(pCanvas, pText, pFG) {
     pFG[0].width = gauge.canvas.width;
     pFG[0].height = gauge.canvas.height;
     var ctx = pFG[0].getContext('2d');
+    // var ctx = gauge.canvas.getContext('2d');
 
     ctx.fillStyle = "#363636";
     ctx.strokeStyle = "#363636";
@@ -651,7 +652,12 @@ function DisplayMaintenance(){
     
             outstr += '&nbsp;&nbsp;&nbsp;&nbsp;<button class="tripleButtonLeft" id="remotestop" onClick="SetStopClick();">Stop Generator</button>';
             outstr += '<button class="tripleButtonCenter" id="remotestart" onClick="SetStartClick();">Start Generator</button>';
-            outstr += '<button class="tripleButtonRight"  id="remotetransfer" onClick="SetTransferClick();">Start Generator and Transfer</button><br><br>';
+            outstr += '<button class="tripleButtonRight"  id="remotetransfer" onClick="SetTransferClick();">Start Generator and Transfer</button><br>';
+
+            if (myGenerator['PowerGraph'] == true) {
+               outstr += '<br>Reset:<br><br>';
+               outstr += '&nbsp;&nbsp;<button id="settimebutton" onClick="SetPowerLogReset();">Reset Power Log & Fuel Estimate</button>';
+            }
         }
     
             $("#mydisplay").html(outstr);
@@ -783,6 +789,29 @@ function SetTimeClick(){
         }
     });
 }
+
+//*****************************************************************************
+// called when reset Power Log / Fuel Estimate clicked
+//*****************************************************************************
+function SetPowerLogReset(){
+
+    vex.dialog.confirm({
+        unsafeMessage: 'Reset Power Log & Reset Full Estimate?<br><span class="confirmSmall">Note: This will delete the contents of the power log. This needs to be used when your tank is filled to make sure that the fuel estimate is reset.</span>',
+        overlayClosesOnClick: false,
+        callback: function (value) {
+             if (value == false) {
+                return;
+             } else {
+                // set exercise time
+                var url = baseurl.concat("power_log_clear");
+                $.getJSON(  url,
+                   {settime: " "},
+                   function(result){});
+             }
+        }
+    });
+}
+
 
 //*****************************************************************************
 // Display the Maintenance Tab
@@ -1097,7 +1126,8 @@ function updateSoftware(){
              $('.progress-bar-fill').queue(function () {
                   $(this).css('width', '100%')
              });
-             setTimeout(function(){ vex.closeAll(); location.reload();  }, 10000);
+             // location.reload();
+             setTimeout(function(){ vex.closeAll(); window.location.href = window.location.pathname+"?page=monitor"; }, 10000);
        }
 
 
@@ -1335,6 +1365,12 @@ function DisplaySettings(){
               outstr += printSettingsField(result[key][0], key, !result[key][3], "", "", "toggleSectionInverse(true, '"+key+"');");
               outstr += '</td><td nowrap>&nbsp;&nbsp;Optional - Display Current Weather&nbsp;&nbsp;</td><td width="80%"><hr></td></tr></table>';
               outstr += '<fieldset id="'+key+'Section"><table id="allsettings" border="0">';
+            } else if (key == "fueltype") {
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5],  "useFullTank(true)") + '</td></tr>';
+            } else if (key == "tanksize") {
+              outstr += '</table></fieldset><fieldset id="'+key+'Section"><table id="allsettings" border="0">';
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
+              outstr += '</table></fieldset><fieldset><table id="allsettings" border="0">';
             } else if (key == "useselfsignedcert") {
               outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "toggleSection(true, 'useselfsignedcert');") + '</td></tr>';
               outstr += '</table><fieldset id="'+key+'Section"><table id="allsettings" border="0">';
@@ -1396,12 +1432,21 @@ function DisplaySettings(){
         });
 
         usehttpsChange(false);
+        useFullTank(false);
         toggleSection(false, "useselfsignedcert");
         toggleSectionInverse(false, "disablesmtp");
         toggleSectionInverse(false, "disableimap");
         toggleSectionInverse(false, "disableweather");
    }});
 
+}
+
+function useFullTank(animation) {
+   if ($("#fueltype").val() == "Natural Gas") {
+      $("#tanksizeSection").hide((animation ? 300 : 0));
+   } else {
+      $("#tanksizeSection").show((animation ? 300 : 0));
+   }
 }
 
 function usehttpsChange(animation) {
@@ -1511,6 +1556,7 @@ function printSettingsField(type, key, value, tooltip, validation, callback) {
      case "list":
        outstr += '<div class="field idealforms-field" onmouseover="showIdealformTooltip($(this))" onmouseout="hideIdealformTooltip($(this))">' +
                  '<select id="' + key + '" style="width: 300px;" name="' + key + '" ' +
+                 ((callback != "") ? ' onChange="' + callback + ';" ' : "") +
                   (typeof value === 'undefined' ? '' : 'value="' + replaceAll(value, '"', '&quot;') + '" ') +
                   (typeof value === 'undefined' ? '' : 'oldValue="' + replaceAll(value, '"', '&quot;') + '" ') + '>' +
                  $.map(validation.split(","), function( val, i ) { return '<option class="optionClass" name="'+val+'" '+((val==value) ? 'selected' : '')+'>'+val+'</option>'}).join() +
