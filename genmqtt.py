@@ -253,7 +253,7 @@ class MyMQTT(mycommon.MyCommon):
             sys.exit(1)
 
         try:
-            self.MQTTclient = mqtt.Client()
+            self.MQTTclient = mqtt.Client(client_id = "genmon")
             if self.Username != None and len(self.Username) and self.Password != None:
                 self.MQTTclient.username_pw_set(self.Username, password=self.Password)
 
