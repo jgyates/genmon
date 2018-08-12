@@ -45,6 +45,9 @@ The software supports the following features:
 - Ability to set exercise time
 - Ability to set generator time
 - Ability to start, stop, exercise and start / active the transfer switch (i.e. power your house off the generator) remotely.
+- Power, Current output on selected models
+- Fuel consumption on selected models
+- MQTT integration for third party home automation support
 
 ![Generator Monitor Web Interface](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/Web_UI_Status.png)
 
