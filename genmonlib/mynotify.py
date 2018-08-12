@@ -112,6 +112,7 @@ class GenNotify(mycommon.MyCommon):
                 time.sleep(3)
             except Exception as e1:
                 self.LogErrorLine("Error in mynotify:MainPollingThread: " + str(e1))
+                time.sleep(3)
 
     #----------  GenNotify::CallEventHandler ---------------------------------
     def CallEventHandler(self, Status):

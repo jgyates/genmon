@@ -2230,10 +2230,12 @@ class Evolution(controller.GeneratorController):
          0x05:  "Low Fuel Pressure",    #  Validate on Nexus LC
          0x08 : "Low Coolant",          #  Validate on Evolution, occurred when forced low coolant
          0x0a : "Low Oil Pressure",     #  Validate on Nexus Air Cooled.
+         0x0b : "Overcrank",            #  Validate on NexusAC
          0x0c : "Overspeed",            #  Validated on Nexus AC
          0x0d : "RPM Sense Loss",       #  Validate on Evolution, occurred when forcing RPM sense loss from manual start
          0x0f : "Change Oil & Filter",  #  Validate on Nexus AC
          0x14 : "Check Battery",        #  Validate on Nexus, occurred when Check Battery Alarm
+         0x1e : "Under Voltage",        #  Validate on EvoAC
          0x1f : "Service Due",          #  Validate on Evolution, occurred when forced service due
          0x20 : "Service Complete",     #  Validate on Evolution, occurred when service reset
          0x2b : "Charger Missing AC",   #  Validate on EvoAC, occurred when Charger Missing AC Warning

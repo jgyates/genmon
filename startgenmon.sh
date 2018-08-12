@@ -15,6 +15,7 @@ case "$1" in
     #sudo python "$genmondir/gensms.py" &
     #sudo python "$genmondir/genpushover.py" &
     #sudo python "$genmondir/gensyslog.py" &
+    #sudo python "$genmondir/genmqtt.py" &
     ;;
   stop)
     echo "Stopping genmon python scripts"
@@ -26,6 +27,7 @@ case "$1" in
     #sudo pkill -u root -f gensms.py
     #sudo pkill -u root -f genpushover.py
     #sudo pkill -u root -f gensyslog.py
+    #sudo pkill -u root -f genmqtt.py
     ;;
   hardstop)
     echo "Hard Stopping genmon python scripts"
@@ -37,6 +39,7 @@ case "$1" in
     #sudo pkill -9 -u root -f gensms.py
     #sudo pkill -9 -u root -f genpushover.py
     #sudo pkill -9 -u root -f gensyslog.py
+    #sudo pkill -9 -u root -f genmqtt.py
     ;;
   restart)
     echo "Stopping genmon python scripts"
@@ -48,6 +51,7 @@ case "$1" in
     #sudo pkill -u root -f gensms.py
     #sudo pkill -u root -f genpushover.py
     #sudo pkill -u root -f gensyslog.py
+    #sudo pkill -u root -f genmqtt.py
     sleep 1
     echo "Starting genmon python scripts"
     sudo python "$genmondir/genmon.py"  &
@@ -60,6 +64,7 @@ case "$1" in
     #sudo python "$genmondir/gensms.py" &
     #sudo python "$genmondir/genpushover.py" &
     #sudo python "$genmondir/gensyslog.py" &
+    #sudo python "$genmondir/genmqtt.py" &
     ;;
   *)
     #

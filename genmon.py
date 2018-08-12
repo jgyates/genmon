@@ -30,7 +30,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.9.37"
+GENMON_VERSION = "V1.9.38"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -955,4 +955,4 @@ if __name__=='__main__': #
             time.sleep(0.01)
         sys.exit(0)
     except:
-        pass
+        sys.exit(1)
