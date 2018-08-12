@@ -245,6 +245,8 @@ class MyMQTT(mycommon.MyCommon):
             if config.has_option(CONFIG_SECTION, 'blacklist'):
                 BlackList = config.get(CONFIG_SECTION, 'blacklist')
                 self.BlackList = BlackList.strip().split(",")
+            if config.has_option(CONFIG_SECTION, 'debug'):
+                self.Debug = config.getboolean(CONFIG_SECTION, 'debug')
         except Exception as e1:
             log.error("Error reading /etc/genmqtt.conf: " + str(e1))
             console.error("Error reading /etc/genmqtt.conf: " + str(e1))
