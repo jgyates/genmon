@@ -42,6 +42,7 @@ class MyMail(mysupport.MySupport):
         self.DisableIMAP = False
         self.DisableSNMP = False
         self.SSLEnabled = False
+        self.UseBCC = False
         self.Threads = {}                               # Dict of mythread objects
 
         # log errors in this module to a file
@@ -108,6 +109,9 @@ class MyMail(mysupport.MySupport):
             else:
                 self.DisableIMAP = False
 
+            if config.has_option('MyMail', 'usebcc'):
+                self.UseBCC = config.getboolean('MyMail', 'usebcc')
+
             self.EmailPassword = config.get('MyMail', 'email_pw')
             self.EmailAccount = config.get('MyMail', 'email_account')
             if config.has_option('MyMail', 'sender_account'):
@@ -125,7 +129,7 @@ class MyMail(mysupport.MySupport):
                           tempList.append(email)
                     else:
                        tempList.append(email)
-                
+
                 self.EmailRecipientByType[type] = ",".join(tempList)
             # SMTP Server
             if config.has_option('MyMail', 'smtp_server'):
@@ -253,7 +257,10 @@ class MyMail(mysupport.MySupport):
 
         msg = MIMEMultipart()
         msg['From'] = self.SenderAccount
-        msg['To'] = recipient
+        if self.UseBCC:
+            msg['Bcc'] = recipient
+        else:
+            msg['To'] = recipient
         msg['Date'] = formatdate(localtime=True)
         msg['Subject'] = subjectstr
 
