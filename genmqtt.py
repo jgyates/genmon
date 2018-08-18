@@ -41,7 +41,8 @@ class MyGenPush(mysupport.MySupport):
         log = None,
         callback = None,
         polltime = None,
-        blacklist = None):
+        blacklist = None,
+        flush_interval = float('inf')):
 
         super(MyGenPush, self).__init__()
         self.Callback = callback
@@ -62,6 +63,9 @@ class MyGenPush(mysupport.MySupport):
         self.AccessLock = threading.Lock()
         self.BlackList = blacklist
         self.LastValues = {}
+        self.FlushInterval = flush_interval
+        self.LastChange = {}
+
         try:
             startcount = 0
             while startcount <= 10:
@@ -172,9 +176,11 @@ class MyGenPush(mysupport.MySupport):
                     if BlackItem.lower() in Path.lower():
                         return
             LastValue = self.LastValues.get(str(Path), None)
+            LastChange = self.LastChange.get(str(Path), 0)
 
-            if LastValue == None or LastValue != str(Value):
+            if LastValue == None or LastValue != str(Value) or (time.time() - LastChange) > self.FlushInterval:
                 self.LastValues[str(Path)] = str(Value)
+                self.LastChange[str(Path)] = time.time()
                 if self.Callback != None:
                     self.Callback(str(Path), str(Value))
 
@@ -216,6 +222,7 @@ class MyMQTT(mycommon.MyCommon):
         self.TopicRoot = None
         self.BlackList = None
         self.PollTime = 2
+        self.FlushInterval = float('inf')   # default to inifite flush interval (e.g., never)
         self.Debug = False
 
         try:
@@ -247,6 +254,8 @@ class MyMQTT(mycommon.MyCommon):
                 self.BlackList = BlackList.strip().split(",")
             if config.has_option(CONFIG_SECTION, 'debug'):
                 self.Debug = config.getboolean(CONFIG_SECTION, 'debug')
+            if config.has_option(CONFIG_SECTION, 'flush_interval'):
+                self.FlushInterval = config.getfloat(CONFIG_SECTION, 'flush_interval')
         except Exception as e1:
             log.error("Error reading /etc/genmqtt.conf: " + str(e1))
             console.error("Error reading /etc/genmqtt.conf: " + str(e1))
@@ -262,7 +271,7 @@ class MyMQTT(mycommon.MyCommon):
 
             self.MQTTclient.connect(self.MQTTAddress, self.Port, 60)
 
-            self.Push = MyGenPush(host = self.MonitorAddress, log = self.log, callback = self.PublishCallback, polltime = self.PollTime , blacklist = self.BlackList)
+            self.Push = MyGenPush(host = self.MonitorAddress, log = self.log, callback = self.PublishCallback, polltime = self.PollTime , blacklist = self.BlackList, flush_interval = self.FlushInterval)
 
             atexit.register(self.Close)
             signal.signal(signal.SIGTERM, self.Close)
