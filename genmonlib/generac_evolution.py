@@ -3387,7 +3387,7 @@ class Evolution(controller.GeneratorController):
 
             if config.has_option(ConfigSection, 'serailnumberifmissing'):
                 self.SerialNumberReplacement = config.get(ConfigSection, 'serailnumberifmissing')
-                if self.SerialNumberReplacement.isnumeric() and len(self.SerialNumberReplacement) == 10:
+                if self.SerialNumberReplacement.isdigit() and len(self.SerialNumberReplacement) == 10:
                     self.LogError("Override Serail Number: " + self.SerialNumberReplacement)
                 else:
                     self.LogError("Override Serail Number: bad format: " + self.SerialNumberReplacement)
