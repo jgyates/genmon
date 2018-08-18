@@ -65,6 +65,8 @@ class Evolution(controller.GeneratorController):
         self.CurrentDivider = None
         self.CurrentOffset = None
         self.DisableOutageCheck = False
+        self.SerialNumberReplacement = None
+        self.AdditionalRunHours = None
 
         self.DaysOfWeek = { 0: "Sunday",    # decode for register values with day of week
                             1: "Monday",
@@ -2163,6 +2165,8 @@ class Evolution(controller.GeneratorController):
             return ""
 
         if Value[0] == 'f' and Value[1] == 'f':
+            if self.SerialNumberReplacement != None:
+                return self.SerialNumberReplacement
             # this occurs if the controller has been replaced
             return "None - Controller has been replaced"
 
@@ -3165,14 +3169,22 @@ class Evolution(controller.GeneratorController):
     #------------ Evolution:GetRunTimes ----------------------------------------
     def GetRunTimes(self):
 
-        if not self.EvolutionController or not self.LiquidCooled:
-            # get total hours running
-            return self.GetParameterLong("000c", "000b")
-        else:
-            # Run minutes / 60
-            return self.GetParameterLong("005f", "005e", Divider = 60.0)
+        try:
+            RunHours = None
+            if not self.EvolutionController or not self.LiquidCooled:
+                # get total hours running
+                RunHours =  self.GetParameterLong("000c", "000b")
+            else:
+                # Run minutes / 60
+                RunHours = self.GetParameterLong("005f", "005e", Divider = 60.0)
 
+            if self.AdditionalRunHours != None:
+                RunHours = float(RunHours) + float(self.AdditionalRunHours)
 
+            return str(RunHours)
+        except Exception as e1:
+            self.LogErrorLine("Error getting run hours: " + str(e1))
+            return "Unknown"
     #------------------- Evolution:DisplayOutage -------------------------------
     def DisplayOutage(self, DictOut = False):
 
@@ -3372,6 +3384,17 @@ class Evolution(controller.GeneratorController):
                 self.CurrentDivider = config.getfloat(ConfigSection, 'currentdivider')
             if config.has_option(ConfigSection, 'currentoffset'):
                 self.CurrentOffset = config.getfloat(ConfigSection, 'currentoffset')
+
+            if config.has_option(ConfigSection, 'serailnumberifmissing'):
+                self.SerialNumberReplacement = config.get(ConfigSection, 'serailnumberifmissing')
+                if self.SerialNumberReplacement.isnumeric() and len(self.SerialNumberReplacement) == 10:
+                    self.LogError("Override Serail Number: " + self.SerialNumberReplacement)
+                else:
+                    self.LogError("Override Serail Number: bad format: " + self.SerialNumberReplacement)
+                    self.SerialNumberReplacement = None
+
+            if config.has_option(ConfigSection, 'additionalrunhours'):
+                self.AdditionalRunHours = config.get(ConfigSection, 'additionalrunhours')
 
         except Exception as e1:
             self.FatalError("Missing config file or config file entries (evo/nexus): " + str(e1))
