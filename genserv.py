@@ -182,7 +182,7 @@ def ProcessCommand(command):
                             StartInfo["pages"]["notifications"] = False
                         data = json.dumps(StartInfo, sort_keys=False)
                     except Exception as e1:
-                        LogError("Error in JSON parse / decode: " + str(e1))
+                        LogErrorLine("Error in JSON parse / decode: " + str(e1))
                 return data
             return jsonify(data)
 
@@ -234,7 +234,7 @@ def ProcessCommand(command):
         else:
             return render_template('command_template.html', command = command)
     except Exception as e1:
-        LogError("Error in Process Command: " + str(e1))
+        LogErrorLine("Error in Process Command: " + str(e1))
         return render_template('command_template.html', command = command)
 
 #------------------------------------------------------------
@@ -296,7 +296,7 @@ def SaveNotifications(query_string):
         Restart()
 
     except Exception as e1:
-        LogError("Error Update Config File: " + str(e1))
+        LogErrorLine("Error Update Config File: " + str(e1))
 
 #------------------------------------------------------------
 def ReadSingleConfigValue(file, section, type, entry, default, bounds = None):
@@ -333,7 +333,7 @@ def ReadSingleConfigValue(file, section, type, entry, default, bounds = None):
             return default
 
     except Exception as e1:
-        LogError("Error Reading Config File (ReadSingleConfigValue): " + str(e1))
+        LogErrorLine("Error Reading Config File (ReadSingleConfigValue): " + str(e1))
         return default
 
 #------------------------------------------------------------
@@ -365,7 +365,7 @@ def ReadNotificationsFromFile():
             else:
                 NotificationSettings[email] = [SortOrder, Notify]
     except Exception as e1:
-        LogError("Error in ReadNotificationsFromFile: " + str(e1))
+        LogErrorLine("Error in ReadNotificationsFromFile: " + str(e1))
 
     return NotificationSettings
 
@@ -496,7 +496,7 @@ def ReadSettingsFromFile():
 
         GetToolTips(ConfigSettings)
     except Exception as e1:
-        LogError("Error in ReadSettingsFromFile: " + str(e1))
+        LogErrorLine("Error in ReadSettingsFromFile: " + str(e1))
 
     return ConfigSettings
 
@@ -511,7 +511,7 @@ def GetAllConfigValues(FileName, section):
         for (key, value) in config.items(section):
             ReturnDict[key.lower()] = value
     except Exception as e1:
-        LogError("Error GetAllConfigValues: " + FileName + ": "+ str(e1) )
+        LogErrorLine("Error GetAllConfigValues: " + FileName + ": "+ str(e1) )
 
     return ReturnDict
 
@@ -544,7 +544,7 @@ def CacheToolTips():
         CachedToolTips = GetAllConfigValues(pathtofile + "/tooltips.txt", "ToolTips")
 
     except Exception as e1:
-        LogError("Error reading tooltips.txt " + str(e1) )
+        LogErrorLine("Error reading tooltips.txt " + str(e1) )
 
 #------------------------------------------------------------
 def GetToolTips(ConfigSettings):
@@ -555,7 +555,7 @@ def GetToolTips(ConfigSettings):
             (ConfigSettings[entry])[4] = CachedToolTips[entry.lower()]
 
     except Exception as e1:
-        LogError("Error in GetToolTips: " + str(e1))
+        LogErrorLine("Error in GetToolTips: " + str(e1))
 
 #------------------------------------------------------------
 def SaveSettings(query_string):
@@ -580,7 +580,7 @@ def SaveSettings(query_string):
                 UpdateConfigFile(ConfigFile,Entry, Value)
         Restart()
     except Exception as e1:
-        LogError("Error Update Config File (SaveSettings): " + str(e1))
+        LogErrorLine("Error Update Config File (SaveSettings): " + str(e1))
 #------------------------------------------------------------
 # THIS CAN BE REMOVED
 def SaveSettings2(query_string):
@@ -615,7 +615,7 @@ def SaveSettings2(query_string):
             file_handle.close()
         Restart()
     except Exception as e1:
-        LogError("Error Update Config File (SaveSettings): " + str(e1))
+        LogErrorLine("Error Update Config File (SaveSettings): " + str(e1))
 
 #---------------------MySupport::UpdateConfigFile------------------------
 # Add or update config item
@@ -649,7 +649,7 @@ def UpdateConfigFile(FileName, Entry, Value):
         return True
 
     except Exception as e1:
-        LogError("Error in UpdateConfigFile: " + str(e1))
+        LogErrorLine("Error in UpdateConfigFile: " + str(e1))
         return False
 
 #------------------------------------------------------------
@@ -725,7 +725,7 @@ def RunBashScript(ScriptName):
         return True
 
     except Exception as e1:
-        LogError("Error in RunBashScript: (" + ScriptName + ") : " + str(e1))
+        LogErrorLine("Error in RunBashScript: (" + ScriptName + ") : " + str(e1))
         return False
 
 #------------------------------------------------------------
@@ -737,7 +737,7 @@ def CheckCertFiles(CertFile, KeyFile):
             with open(KeyFile,"r") as MyKeyFile:
                 return True
     except Exception as e1:
-        LogError("Error in CheckCertFiles: Unable to open Cert or Key file: " + CertFile + ", " + KeyFile + " : "+ str(e1))
+        LogErrorLine("Error in CheckCertFiles: Unable to open Cert or Key file: " + CertFile + ", " + KeyFile + " : "+ str(e1))
         return False
 
     return True
@@ -841,7 +841,7 @@ def ValidateFilePresent(FileName):
         with open(FileName,"r") as TestFile:     #
             return True
     except Exception as e1:
-            LogError("File (%s) not present." % FileName)
+            LogErrorLine("File (%s) not present." % FileName)
             return False
 
 #---------------------LogConsole------------------------------------------------
@@ -861,10 +861,10 @@ def FatalError(Message):
 #---------------------LogErrorLine----------------------------------------------
 def LogErrorLine(Message):
     if not log == None:
-        LogError(Message + " : " + self.GetErrorLine())
+        LogError(Message + " : " + GetErrorLine())
 
 #---------------------GetErrorLine----------------------------------------------
-def GetErrorLine(self):
+def GetErrorLine():
     exc_type, exc_obj, exc_tb = sys.exc_info()
     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
     lineno = exc_tb.tb_lineno
@@ -885,7 +885,7 @@ def Close(NoExit = False):
                 LogError("Not running with the Werkzeug Server")
             func()
     except Exception as e1:
-        LogError("Error in close: " + str(e1))
+        LogErrorLine("Error in close: " + str(e1))
 
     LogError("Server closed.")
     if not NoExit:
@@ -961,7 +961,7 @@ if __name__ == "__main__":
             app.run(host="0.0.0.0", port=HTTPPort, threaded = True, ssl_context=SSLContext, use_reloader = False, debug = False)
 
         except Exception as e1:
-            LogError("Error in app.run:" + str(e1))
+            LogErrorLine("Error in app.run:" + str(e1))
             time.sleep(2)
             if Closing:
                 sys.exit(0)
