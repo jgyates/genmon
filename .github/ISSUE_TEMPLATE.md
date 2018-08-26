@@ -4,6 +4,13 @@ Use the template below if you have an issue or want to report a bug. If you have
 
 https://github.com/jgyates/genmon/wiki/Appendix-6---Serial-Troubleshooting
 
+If you need to send you logs to the developer, if you email is setup and working properly you can issue this command in your browser:
+
+     http://MYIPADDRESS:8000/cmd/sendlogfiles
+
+Replace MYIPADDRESS to the IP address of you pi and port 8000 if you are using a port other than the default.
+
+You can submit your registers from the Monitor page on the web interface.
 
 ### Expected Behavior
 
@@ -17,7 +24,7 @@ https://github.com/jgyates/genmon/wiki/Appendix-6---Serial-Troubleshooting
 
 {Please write here}
 
-### Screenshot or Picutres relating to the problem (if possible)
+### Screenshot or Pictures relating to the problem (if possible)
 
 {Please write here}
 
@@ -26,4 +33,3 @@ https://github.com/jgyates/genmon/wiki/Appendix-6---Serial-Troubleshooting
 - Genereator Model: {Please write here}
 - Generator Registers: {Please write here}
 - Genmon Version: {Please write here}
-
