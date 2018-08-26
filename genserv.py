@@ -806,11 +806,14 @@ def LoadConfig():
                         elif config.has_option('GenMon', 'http_pass_ro'):
                             HTTPAuthPass_RO = config.get('GenMon', 'http_pass_ro')
                             HTTPAuthPass_RO = HTTPAuthPass_RO.strip()
-
+            if config.has_option('GenMon', 'https_port'):
+                HTTPSPort = config.getint('GenMon', 'https_port')
+            else:
+                HTTPSPort = 443
         if bUseSecureHTTP:
             app.secret_key = os.urandom(12)
             OldHTTPPort = HTTPPort
-            HTTPPort = 443
+            HTTPPort = HTTPSPort
             if config.has_option('GenMon', 'useselfsignedcert'):
                 bUseSelfSignedCert = config.getboolean('GenMon', 'useselfsignedcert')
 
