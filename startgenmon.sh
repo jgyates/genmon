@@ -13,6 +13,7 @@ case "$1" in
     #sudo python "$genmondir/gengpioin.py"  &
     #sudo python "$genmondir/genlog.py" -f "$genmondir/LogFile.csv" &
     #sudo python "$genmondir/gensms.py" &
+    #sudo python "$genmondir/gensms_modem.py" &
     #sudo python "$genmondir/genpushover.py" &
     #sudo python "$genmondir/gensyslog.py" &
     #sudo python "$genmondir/genmqtt.py" &
@@ -25,6 +26,7 @@ case "$1" in
     #sudo pkill -u root -f gengpioin.py
     #sudo pkill -u root -f genlog.py
     #sudo pkill -u root -f gensms.py
+    #sudo pkill -u root -f gensms_modem.py
     #sudo pkill -u root -f genpushover.py
     #sudo pkill -u root -f gensyslog.py
     #sudo pkill -u root -f genmqtt.py
@@ -37,6 +39,7 @@ case "$1" in
     #sudo pkill -9 -u root -f gengpioin.py
     #sudo pkill -9 -u root -f genlog.py
     #sudo pkill -9 -u root -f gensms.py
+    #sudo pkill -9 -u root -f gensms_modem.py
     #sudo pkill -9 -u root -f genpushover.py
     #sudo pkill -9 -u root -f gensyslog.py
     #sudo pkill -9 -u root -f genmqtt.py
@@ -49,6 +52,7 @@ case "$1" in
     #sudo pkill -u root -f gengpioin.py
     #sudo pkill -u root -f genlog.py
     #sudo pkill -u root -f gensms.py
+    #sudo pkill -u root -f gensms_modem.py
     #sudo pkill -u root -f genpushover.py
     #sudo pkill -u root -f gensyslog.py
     #sudo pkill -u root -f genmqtt.py
@@ -62,6 +66,7 @@ case "$1" in
     #sudo python "$genmondir/gengpioin.py"  &
     #sudo python "$genmondir/genlog.py" -f "$genmondir/LogFile.csv" &
     #sudo python "$genmondir/gensms.py" &
+    #sudo python "$genmondir/gensms_modem.py" &
     #sudo python "$genmondir/genpushover.py" &
     #sudo python "$genmondir/gensyslog.py" &
     #sudo python "$genmondir/genmqtt.py" &
