@@ -18,8 +18,12 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import COMMASPACE, formatdate
 
-import atexit, configparser
+import atexit
 import mylog, mythread, mysupport
+try:
+    from ConfigParser import RawConfigParser
+except ImportError as e:
+    from configparser import RawConfigParser
 
 #imaplib.Debug = 4
 
@@ -89,7 +93,7 @@ class MyMail(mysupport.MySupport):
     def GetConfig(self, reload = False):
 
         try:
-            config = configparser.RawConfigParser()
+            config = RawConfigParser()
             # config parser reads from current directory, when running form a cron tab this is
             # not defined so we specify the full path
             config.read(self.configfile)

@@ -1059,7 +1059,7 @@ class GeneratorController(mysupport.MySupport):
         else:
             DefaultReturn = "0"
 
-        if self.TankSize == None or self.TankSize == "0":
+        if self.TankSize == None or self.TankSize == "0" or self.TankSize == "":
             return DefaultReturn
         try:
             FuelUsed = self.GetPowerHistory("power_log_json=0,fuel", NoReduce = True)

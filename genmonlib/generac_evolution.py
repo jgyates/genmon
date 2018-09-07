@@ -417,7 +417,7 @@ class Evolution(controller.GeneratorController):
         if not self.FuelConsumptionSupported():
             return False
 
-        if self.TankSize == None or self.TankSize == "0":
+        if self.TankSize == None or self.TankSize == "0" or self.TankSize == "":
             return False
         return True
 
@@ -3375,6 +3375,8 @@ class Evolution(controller.GeneratorController):
                 self.LiquidCooled = config.getboolean(ConfigSection, 'liquidcooled')
             if config.has_option(ConfigSection, 'disableoutagecheck'):
                 self.DisableOutageCheck = config.getboolean(ConfigSection, 'disableoutagecheck')
+            if config.has_option(ConfigSection, 'uselegacysetexercise'):
+                self.bUseLegacyWrite = config.getboolean(ConfigSection, 'uselegacysetexercise')
 
 
             if config.has_option(ConfigSection, 'enhancedexercise'):
