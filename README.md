@@ -38,7 +38,7 @@ The software supports the following features:
     - Critical or Warning messages from the generator
 - Web based application for viewing status of the generator
 - Limited and Full Rights login for web interface
-- SMS notifications of Generator state (via Twilio SMS API)
+- SMS notifications of Generator state and power outages (via Twilio SMS API or Expansion Cellular Modem)
 - Push notifications (via pushover.net)
 - syslog logging of generator events
 - Command Line application (all the functionality of email).
