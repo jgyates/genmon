@@ -941,7 +941,17 @@ class Evolution(controller.GeneratorController):
         elif Command == "startexercise":
             Register = 0x0003       # remote run in quiet mode (exercise)
         else:
-            return "Invalid command syntax for command setremote (2)"
+            if self.RemoteButtonsSupported():
+                if Command == "auto":
+                    Register = 0x000f   # set button to auto
+                elif Command == "manual":
+                    Register = 0x000e
+                elif Command == "off":
+                    Register = 0x0010
+                else:
+                    "Invalid command syntax for command setremote (3)"
+            else:
+                return "Invalid command syntax for command setremote (2)"
 
         with self.ModBus.CommAccessLock:
             #
@@ -3303,6 +3313,7 @@ class Evolution(controller.GeneratorController):
 
         try:
             Status["basestatus"] = self.GetBaseStatus()
+            Status["onelinestatus"] = self.GetOneLineStatus()
             Status["kwOutput"] = self.GetPowerOutput()
             Status["OutputVoltage"] = self.GetVoltageOutput()
             Status["BatteryVoltage"] = self.GetBatteryVoltage()
@@ -3332,6 +3343,7 @@ class Evolution(controller.GeneratorController):
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
             StartInfo["UtilityVoltage"] = True
             StartInfo["RemoteCommands"] = True
+            StartInfo["RemoteButtons"] = self.RemoteButtonsSupported()
 
             if not NoTile:
                 StartInfo["pages"] = {
@@ -3403,7 +3415,7 @@ class Evolution(controller.GeneratorController):
             return False
 
         return True
-    #----------  Evolution::ComminicationsIsActive  --------------------------------------
+    #----------  Evolution::ComminicationsIsActive  ----------------------------
     # Called every 2 seconds
     def ComminicationsIsActive(self):
 
@@ -3413,6 +3425,13 @@ class Evolution(controller.GeneratorController):
             self.LastRxPacketCount = self.ModBus.RxPacketCount
             return True
 
+    #----------  Generator:RemoteButtonsSupported  -----------------------------
+    # return true if Panel buttons are settable via the software
+    def RemoteButtonsSupported(self):
+
+        if self.EvolutionController and self.LiquidCooled:
+            return True
+        False
     #----------  Generator:PowerMeterIsSupported  ------------------------------
     def PowerMeterIsSupported(self):
 

@@ -379,6 +379,7 @@ class GeneratorController(mysupport.MySupport):
             StartInfo["NominalBatteryVolts"] = "12"
             StartInfo["UtilityVoltageDisplayed"] = True
             StartInfo["RemoteCommands"] = True
+            StartInfo["RemoteButtons"] = False
 
             if not NoTile:
                 StartInfo["tiles"] = []
@@ -396,6 +397,7 @@ class GeneratorController(mysupport.MySupport):
         Status = {}
         try:
             Status["basestatus"] = self.GetBaseStatus()
+            Status["onelinestatus"] = self.GetOneLineStatus()
             Status["kwOutput"] = self.GetPowerOutput()
             Status["OutputVoltage"] = "0V"
             Status["BatteryVoltage"] = "0V"
@@ -520,6 +522,10 @@ class GeneratorController(mysupport.MySupport):
     def ResetCommStats(self):
         self.ModBus.ResetCommStats()
 
+    #----------  GeneratorController:RemoteButtonsSupported  --------------------
+    # return true if Panel buttons are settable via the software
+    def RemoteButtonsSupported(self):
+        False
     #----------  GeneratorController:PowerMeterIsSupported  --------------------
     # return true if GetPowerOutput is supported
     def PowerMeterIsSupported(self):

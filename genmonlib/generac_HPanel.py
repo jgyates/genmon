@@ -981,6 +981,7 @@ class HPanel(controller.GeneratorController):
             StartInfo["Controller"] = self.GetController()
             StartInfo["UtilityVoltage"] = False
             StartInfo["RemoteCommands"] = False
+            StartInfo["RemoteButtons"] = False
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
             if not NoTile:
                 StartInfo["pages"] = {
@@ -1009,6 +1010,7 @@ class HPanel(controller.GeneratorController):
             Status = {}
 
             Status["basestatus"] = self.GetBaseStatus()
+            Status["onelinestatus"] = self.GetOneLineStatus()
             Status["kwOutput"] = self.GetPowerOutput()
             Status["OutputVoltage"] = self.GetParameter(RegisterEnum.AVG_VOLTAGE,"V")
             Status["BatteryVoltage"] = self.GetParameter(RegisterEnum.BATTERY_VOLTS, "V", 100.0)
@@ -1301,7 +1303,11 @@ class HPanel(controller.GeneratorController):
             self.LastRxPacketCount = self.ModBus.RxPacketCount
             return True
 
-    #----------  HPanel:PowerMeterIsSupported  --------------------
+    #----------  HPanel:RemoteButtonsSupported  --------------------------------
+    # return true if Panel buttons are settable via the software
+    def RemoteButtonsSupported(self):
+        False
+    #----------  HPanel:PowerMeterIsSupported  ---------------------------------
     # return true if GetPowerOutput is supported
     def PowerMeterIsSupported(self):
 
