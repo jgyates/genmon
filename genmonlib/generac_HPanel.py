@@ -1010,7 +1010,8 @@ class HPanel(controller.GeneratorController):
             Status = {}
 
             Status["basestatus"] = self.GetBaseStatus()
-            Status["onelinestatus"] = self.GetOneLineStatus()
+            Status["switchstate"] = self.GetSwitchState()
+            Status["enginestate"] = self.GetEngineState()
             Status["kwOutput"] = self.GetPowerOutput()
             Status["OutputVoltage"] = self.GetParameter(RegisterEnum.AVG_VOLTAGE,"V")
             Status["BatteryVoltage"] = self.GetParameter(RegisterEnum.BATTERY_VOLTS, "V", 100.0)

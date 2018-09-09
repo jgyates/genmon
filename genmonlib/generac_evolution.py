@@ -3313,7 +3313,8 @@ class Evolution(controller.GeneratorController):
 
         try:
             Status["basestatus"] = self.GetBaseStatus()
-            Status["onelinestatus"] = self.GetOneLineStatus()
+            Status["switchstate"] = self.GetSwitchState()
+            Status["enginestate"] = self.GetEngineState()
             Status["kwOutput"] = self.GetPowerOutput()
             Status["OutputVoltage"] = self.GetVoltageOutput()
             Status["BatteryVoltage"] = self.GetBatteryVoltage()

@@ -397,7 +397,8 @@ class GeneratorController(mysupport.MySupport):
         Status = {}
         try:
             Status["basestatus"] = self.GetBaseStatus()
-            Status["onelinestatus"] = self.GetOneLineStatus()
+            Status["switchstate"] = self.GetSwitchState()
+            Status["enginestate"] = self.GetEngineState()
             Status["kwOutput"] = self.GetPowerOutput()
             Status["OutputVoltage"] = "0V"
             Status["BatteryVoltage"] = "0V"
