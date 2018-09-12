@@ -16,8 +16,7 @@ Continue? (y/n)  "
 #-------------------------------------------------------------------
 # This function copy all config files to the ./etc directory
 function copyconffiles() {
-    sudo cp "$genmondir/genmon.conf" /etc
-    sudo cp "$genmondir/mymail.conf" /etc
+    sudo cp "$genmondir/*.conf" /etc
 }
 #-------------------------------------------------------------------
 # This function will install the required libraries for genmon
@@ -36,7 +35,7 @@ function installgenmon() {
 
     if [ -z "$1" ]    # Is parameter #1 zero length?
         then
-            read -p "Copy genmon.conf and mymail.conf to ./etc? (y/n)?" choice
+            read -p "Copy configuration files to ./etc? (y/n)?" choice
             case "$choice" in
               y|Y ) echo "Copying *.conf files to /etc"
                 copyconffiles
