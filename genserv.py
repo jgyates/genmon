@@ -581,41 +581,6 @@ def SaveSettings(query_string):
         Restart()
     except Exception as e1:
         LogErrorLine("Error Update Config File (SaveSettings): " + str(e1))
-#------------------------------------------------------------
-# THIS CAN BE REMOVED
-def SaveSettings2(query_string):
-
-    # e.g. {'displayunknown': ['true']}
-    settings = dict(urlparse.parse_qs(query_string, 1))
-
-    try:
-        for configFile in [MAIL_CONFIG, GENMON_CONFIG]:
-            # Read contents from file as a single string
-            file_handle = open(configFile, 'r')
-            file_string = file_handle.read()
-            file_handle.close()
-
-            # Write contents to file.
-            # Using mode 'w' truncates the file.
-            file_handle = open(configFile, 'w')
-            for line in file_string.splitlines():
-                if not line.isspace():
-                    parts = findConfigLine(line)
-                    for setting in settings.keys():
-                        if (parts and (len(parts) >= 5) and parts[3] and (not parts[3].isspace()) and parts[2] and (parts[2] == setting)):
-                            myList = list(parts)
-                            if ((parts[1] is not None) and (not parts[1].isspace())):
-                                # remove comment
-                                myList[1] = ""
-                            elif (parts[1] is None):
-                                myList[1] = ""
-                            myList[4] = settings[setting][0]
-                            line = "".join(myList)
-                file_handle.write(line+"\n")
-            file_handle.close()
-        Restart()
-    except Exception as e1:
-        LogErrorLine("Error Update Config File (SaveSettings): " + str(e1))
 
 #---------------------MySupport::UpdateConfigFile------------------------
 # Add or update config item
