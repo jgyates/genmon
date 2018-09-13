@@ -109,7 +109,6 @@ autofeedback = If enabled, an email will be sent to the software maintainer if c
 005d=Unknown Sensor (EvoLC)
 05ed=Ambient Temp Sensor (EvoLC)
 05ee=Battery Charger CT (EvoLC)
-05f5=Unknown Status (EvoAC, Nexus)
 05fa=Unknown Status (EvoAC, Nexus)
 0034=Unknown Sensor (Nexus, EvoAC)
 0032=Unknown Sensor (Nexus, EvoAC)
