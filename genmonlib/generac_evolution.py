@@ -346,12 +346,12 @@ class Evolution(controller.GeneratorController):
                     self.NominalRPM = "3000"
                 else:
                     self.NominalRPM = "3600"
-            self.AddItemToConfFile("nominalRPM", self.NominalRPM)
+            self.AddItemToConfFile("nominalrpm", self.NominalRPM)
 
         if self.NominalKW == "Unknown" or not len(self.NominalKW):
             self.NominalKW = self.GetModelInfo("KW")
             if self.NominalKW != "Unknown":
-                self.AddItemToConfFile("nominalKW", self.NominalKW)
+                self.AddItemToConfFile("nominalkw", self.NominalKW)
 
         if self.NewInstall:
             if not self.ModelIsValid() or self.NominalKW == "Unknown":
@@ -362,7 +362,7 @@ class Evolution(controller.GeneratorController):
                         self.AddItemToConfFile("model", self.Model)
                     if self.NominalKW == "Unknown":
                         self.NominalKW = self.GetGenericKW()
-                        self.AddItemToConfFile("nominalKW", self.NominalKW)
+                        self.AddItemToConfFile("nominalkw", self.NominalKW)
                 else:
                     if ReturnModel == "Unknown":
                         self.Model = self.GetGenericModel()
@@ -372,10 +372,10 @@ class Evolution(controller.GeneratorController):
 
                     if ReturnKW != "Unknown" and self.NominalKW == "Unknown":   # we found a valid Kw on the lookup
                         self.NominalKW = ReturnKW
-                        self.AddItemToConfFile("nominalKW", self.NominalKW)
+                        self.AddItemToConfFile("nominalkw", self.NominalKW)
                     elif ReturnKW == "Unknown" and self.NominalKW == "Unknown":
                         self.NominalKW = self.GetGenericKW()
-                        self.AddItemToConfFile("nominalKW", self.NominalKW)
+                        self.AddItemToConfFile("nominalkw", self.NominalKW)
 
         if self.FuelType == "Unknown" or not len(self.FuelType):
             if self.LiquidCooled:
