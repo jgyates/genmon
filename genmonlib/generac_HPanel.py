@@ -572,11 +572,11 @@ class HPanel(controller.GeneratorController):
                 self.NominalRPM = "1500"
             else:
                 self.NominalRPM = "1800"
-            self.AddItemToConfFile("nominalRPM", self.NominalRPM)
+            self.AddItemToConfFile("nominalrpm", self.NominalRPM)
 
         if self.NominalKW == "Unknown" or not len(self.NominalKW):
             self.NominalKW = "550"
-            self.AddItemToConfFile("nominalKW", self.NominalKW)
+            self.AddItemToConfFile("nominalkw", self.NominalKW)
 
         if self.Model == "Unknown" or not len(self.Model):
             self.Model = "Generac Generic H-100 Industrial Generator"
