@@ -1307,7 +1307,7 @@ class HPanel(controller.GeneratorController):
     #----------  HPanel:RemoteButtonsSupported  --------------------------------
     # return true if Panel buttons are settable via the software
     def RemoteButtonsSupported(self):
-        False
+        return False
     #----------  HPanel:PowerMeterIsSupported  ---------------------------------
     # return true if GetPowerOutput is supported
     def PowerMeterIsSupported(self):

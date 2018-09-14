@@ -526,11 +526,11 @@ class GeneratorController(mysupport.MySupport):
     #----------  GeneratorController:RemoteButtonsSupported  --------------------
     # return true if Panel buttons are settable via the software
     def RemoteButtonsSupported(self):
-        False
+        return False
     #----------  GeneratorController:PowerMeterIsSupported  --------------------
     # return true if GetPowerOutput is supported
     def PowerMeterIsSupported(self):
-        False
+        return False
 
     #---------------------GeneratorController::GetPowerOutput-------------------
     # returns current kW

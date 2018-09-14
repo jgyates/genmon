@@ -3403,9 +3403,9 @@ class Evolution(controller.GeneratorController):
             if config.has_option(ConfigSection, 'serailnumberifmissing'):
                 self.SerialNumberReplacement = config.get(ConfigSection, 'serailnumberifmissing')
                 if self.SerialNumberReplacement.isdigit() and len(self.SerialNumberReplacement) == 10:
-                    self.LogError("Override Serail Number: " + self.SerialNumberReplacement)
+                    self.LogError("Override Serial Number: " + self.SerialNumberReplacement)
                 else:
-                    self.LogError("Override Serail Number: bad format: " + self.SerialNumberReplacement)
+                    self.LogError("Override Serial Number: bad format: " + self.SerialNumberReplacement)
                     self.SerialNumberReplacement = None
 
             if config.has_option(ConfigSection, 'additionalrunhours'):
@@ -3432,7 +3432,7 @@ class Evolution(controller.GeneratorController):
 
         if self.EvolutionController and self.LiquidCooled:
             return True
-        False
+        return False
     #----------  Generator:PowerMeterIsSupported  ------------------------------
     def PowerMeterIsSupported(self):
 
