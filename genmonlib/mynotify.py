@@ -117,34 +117,40 @@ class GenNotify(mycommon.MyCommon):
     #----------  GenNotify::CallEventHandler ---------------------------------
     def CallEventHandler(self, Status):
 
-        if self.LastEvent == None:
-            return
-        EventCallback = self.Events.get(self.LastEvent, None)
-        # Event has ended
-        if EventCallback != None:
-            if callable(EventCallback):
-                EventCallback(Status)
+        try:
+            if self.LastEvent == None:
+                return
+            EventCallback = self.Events.get(self.LastEvent, None)
+            # Event has ended
+            if EventCallback != None:
+                if callable(EventCallback):
+                    EventCallback(Status)
+                else:
+                    self.LogError("Invalid Callback in CallEventHandler : " + str(EventCallback))
             else:
-                self.LogError("Invalid Callback in CallEventHandler : " + str(EventCallback))
-        else:
-            self.LogError("Invalid Callback in CallEventHandler : None")
-
+                self.LogError("Invalid Callback in CallEventHandler : None")
+        except Exception as e1:
+            self.LogErrorLine("Error in CallEventHandler: " + str(e1))
+        
     #----------  GenNotify::ProcessOutageState ---------------------------------
     def ProcessOutageState(self, outagestate):
 
-        if self.LastOutageStatus == outagestate:
-            return
+        try:
+            if self.LastOutageStatus == outagestate:
+                return
 
-        self.LastOutageStatus = outagestate
-        EventCallback = self.Events.get("OUTAGE", None)
+            self.LastOutageStatus = outagestate
+            EventCallback = self.Events.get("OUTAGE", None)
 
-        if EventCallback != None:
-            if callable(EventCallback):
-                EventCallback(self.LastOutageStatus)
+            if EventCallback != None:
+                if callable(EventCallback):
+                    EventCallback(self.LastOutageStatus)
+                else:
+                    self.LogError("Invalid Callback in ProcessOutageState : " + str(EventCallback))
             else:
-                self.LogError("Invalid Callback in ProcessOutageState : " + str(EventCallback))
-        else:
-            self.LogError("Invalid Callback in ProcessOutageState : None")
+                self.LogError("Invalid Callback in ProcessOutageState : None")
+        except Exception as e1:
+            self.LogErrorLine("Error in ProcessOutageState: " + str(e1))
 
     #----------  GenNotify::SendCommand ---------------------------------
     def SendCommand(self, Command):
