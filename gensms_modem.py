@@ -22,12 +22,6 @@ except Excpetion as e1:
     sys.exit(2)
 
 
-try:
-    from ConfigParser import RawConfigParser
-except ImportError as e:
-    from configparser import RawConfigParser
-
-
 
 #----------  Signal Handler ----------------------------------------------------
 def signal_handler(signal, frame):
