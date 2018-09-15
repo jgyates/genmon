@@ -35,7 +35,7 @@ function installgenmon() {
 
     if [ -z "$1" ]    # Is parameter #1 zero length?
         then
-            read -p "Copy configuration files to ./etc? (y/n)?" choice
+            read -p "Copy configuration files to /etc? (y/n)?" choice
             case "$choice" in
               y|Y ) echo "Copying *.conf files to /etc"
                 copyconffiles
