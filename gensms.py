@@ -14,17 +14,11 @@ import datetime, time, sys, signal, os, threading, socket
 import atexit
 
 try:
-    from genmonlib import mynotify, mylog
+    from genmonlib import mynotify, mylog, myconfig
 except:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
     sys.exit(2)
-
-
-try:
-    from ConfigParser import RawConfigParser
-except ImportError as e:
-    from configparser import RawConfigParser
 
 try:
     from twilio.rest import Client
@@ -155,16 +149,12 @@ if __name__=='__main__': # usage program.py [server_address]
 
     try:
 
-        # read config file
-        config = RawConfigParser()
-        # config parser reads from current directory, when running form a cron tab this is
-        # not defined so we specify the full path
-        config.read('/etc/gensms.conf')
+        config = myconfig.MyConfig(filename = '/etc/gensms.conf', section = 'gensms', log = log)
 
-        account_sid = config.get('gensms', 'accountsid')
-        auth_token = config.get('gensms', 'authtoken')
-        to_number = config.get('gensms', 'to_number')
-        from_number = config.get('gensms', 'from_number')
+        account_sid = config.ReadValue('accountsid')
+        auth_token = config.ReadValue('authtoken')
+        to_number = config.ReadValue('to_number')
+        from_number = config.ReadValue('from_number')
     except Exception as e1:
         log.error("Error reading /etc/gensms.conf: " + str(e1))
         console.error("Error reading /etc/gensms.conf: " + str(e1))

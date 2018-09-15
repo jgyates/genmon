@@ -21,16 +21,12 @@ except:
    print("\n\nThe program requies the paho-mqtt module to be installed. Please use 'sudo pip install paho-mqtt' to install.\n")
    sys.exit(2)
 try:
-    from genmonlib import mycommon, mysupport, myclient, mylog, mythread
+    from genmonlib import mycommon, mysupport, myclient, mylog, mythread, myconfig
 except:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
     sys.exit(2)
 
-try:
-    from ConfigParser import RawConfigParser
-except ImportError as e:
-    from configparser import RawConfigParser
 #------------ MyGenPush class -----------------------------------------------------
 class MyGenPush(mysupport.MySupport):
 
@@ -226,36 +222,29 @@ class MyMQTT(mycommon.MyCommon):
         self.Debug = False
 
         try:
+            config = myconfig.MyConfig(filename = '/etc/genmqtt.conf', section = 'genmqtt', log = log)
+            if config.HasOption('username'):
+                self.Username = config.ReadValue('username')
+            if config.HasOption('password'):
+                self.Password = config.ReadValue('password')
 
-            # read config file
-            config = RawConfigParser()
-            # config parser reads from current directory, when running form a cron tab this is
-            # not defined so we specify the full path
-            config.read('/etc/genmqtt.conf')
+            self.MQTTAddress = config.ReadValue('mqtt_address')
+            if config.HasOption('monitor_address'):
+                self.MonitorAddress = config.ReadValue('monitor_address')
+            if config.HasOption('mqtt_port'):
+                self.MQTTPort = config.ReadValue('mqtt_port', return_type = int)
 
-            CONFIG_SECTION = "genmqtt"
-            if config.has_option(CONFIG_SECTION, 'username'):
-                self.Username = config.get(CONFIG_SECTION, 'username')
-            if config.has_option(CONFIG_SECTION, 'password'):
-                self.Password = config.get(CONFIG_SECTION, 'password')
-
-            self.MQTTAddress = config.get(CONFIG_SECTION, 'mqtt_address')
-            if config.has_option(CONFIG_SECTION, 'monitor_address'):
-                self.MonitorAddress = config.get(CONFIG_SECTION, 'monitor_address')
-            if config.has_option(CONFIG_SECTION, 'mqtt_port'):
-                self.MQTTPort = config.getint(CONFIG_SECTION, 'mqtt_port')
-
-            if config.has_option(CONFIG_SECTION, 'poll_interval'):
-                self.PollTime = config.getfloat(CONFIG_SECTION, 'poll_interval')
-            if config.has_option(CONFIG_SECTION, 'root_topic'):
-                self.TopicRoot = config.get(CONFIG_SECTION, 'root_topic')
-            if config.has_option(CONFIG_SECTION, 'blacklist'):
-                BlackList = config.get(CONFIG_SECTION, 'blacklist')
+            if config.HasOption('poll_interval'):
+                self.PollTime = config.ReadValue('poll_interval', return_type = float)
+            if config.HasOption('root_topic'):
+                self.TopicRoot = config.ReadValue('root_topic')
+            if config.HasOption('blacklist'):
+                BlackList = config.ReadValue('blacklist')
                 self.BlackList = BlackList.strip().split(",")
-            if config.has_option(CONFIG_SECTION, 'debug'):
-                self.Debug = config.getboolean(CONFIG_SECTION, 'debug')
-            if config.has_option(CONFIG_SECTION, 'flush_interval'):
-                self.FlushInterval = config.getfloat(CONFIG_SECTION, 'flush_interval')
+            if config.HasOption('debug'):
+                self.Debug = config.ReadValue('debug', return_type = bool)
+            if config.HasOption('flush_interval'):
+                self.FlushInterval = config.ReadValue('flush_interval', return_type = float)
         except Exception as e1:
             log.error("Error reading /etc/genmqtt.conf: " + str(e1))
             console.error("Error reading /etc/genmqtt.conf: " + str(e1))

@@ -13,12 +13,8 @@ from __future__ import print_function       # For python 3.x compatibility with 
 
 import datetime, sys, collections, time, threading, re, os
 
-try:
-    from ConfigParser import RawConfigParser
-except ImportError as e:
-    from configparser import RawConfigParser
 
-import mylog, mythread, mysupport, myserial
+import mylog, mythread, mysupport, myserial, myconfig
 
 
 #------------ MyModem class ----------------------------------------------------
@@ -60,38 +56,35 @@ class MyModem(mysupport.MySupport):
         self.console = mylog.SetupLogger("mymodem_console", log_file = "", stream = True)
 
         try:
-            config = RawConfigParser()
-            # config parser reads from current directory, when running form a cron tab this is
-            # not defined so we specify the full path
-            config.read(self.configfile)
+            self.config = myconfig.MyConfig(filename = self.configfile, section = "MyModem", log = self.log)
 
-            if config.has_option('MyModem', 'log_at_commands'):
-                self.LogAtCommands = config.getboolean('MyModem', 'log_at_commands')
+            if self.config.HasOption('log_at_commands'):
+                self.LogAtCommands = self.config.ReadValue('log_at_commands', return_type = bool)
             else:
                 self.LogAtCommands = False
 
-            if config.has_option('MyModem', 'message_level'):
-                self.MessageLevel = config.get('MyModem', 'message_level')
+            if self.config.HasOption('message_level'):
+                self.MessageLevel = self.config.ReadValue('message_level')
             else:
                 self.MessageLevel = "error"
 
-            if config.has_option('MyModem', 'rate'):
-                self.Rate = config.getint('MyModem', 'rate')
+            if self.config.HasOption('rate'):
+                self.Rate = self.config.ReadValue('rate', return_type = int)
             else:
                 self.Rate = rate
 
-            if config.has_option('MyModem', 'port'):
-                self.Port = config.get('MyModem', 'port')
+            if self.config.HasOption('port'):
+                self.Port = self.config.ReadValue('port')
             else:
                 self.Port = port
 
-            if config.has_option('MyModem', 'recipient'):
-                self.Recipient = config.get('MyModem', 'recipient')
+            if self.config.HasOption('recipient'):
+                self.Recipient = self.config.ReadValue('recipient')
             else:
                 self.Recipient = recipient
 
-            if config.has_option('MyModem', 'modem_type'):
-                self.ModemType = config.get('MyModem', 'modem_type')
+            if self.config.HasOption('modem_type'):
+                self.ModemType = self.config.ReadValue('modem_type')
             else:
                 self.ModemType = modem_type
 

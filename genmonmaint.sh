@@ -30,6 +30,11 @@ function installgenmon() {
     sudo pip install Flask
     sudo pip install pyowm
     sudo pip install pytz
+    sudo apt-get install build-essential libssl-dev libffi-dev python-dev
+    sudo pip install pyopenssl
+    sudo pip install twilio
+    sudo pip install chump
+    sudo pip install paho-mqtt
     sudo chmod 775 "$genmondir/startgenmon.sh"
     sudo chmod 775 "$genmondir/genmonmaint.sh"
 
