@@ -13,11 +13,6 @@ import datetime, time, sys, os, threading, socket
 import json, collections, math
 import httplib, re
 
-try:
-    from ConfigParser import RawConfigParser
-except ImportError as e:
-    from configparser import RawConfigParser
-
 import controller, mymodbus, mythread, modbus_file, mytile
 
 
@@ -46,11 +41,18 @@ DEFAULT_PICKUP_VOLTAGE = 190
 class Evolution(controller.GeneratorController):
 
     #---------------------Evolution::__init__------------------------
-    def __init__(self, log, newinstall = False, simulation = False, simulationfile = None, message = None, feedback = None, ConfigFilePath = None):
+    def __init__(self,
+        log,
+        newinstall = False,
+        simulation = False,
+        simulationfile = None,
+        message = None,
+        feedback = None,
+        ConfigFilePath = None,
+        config = None):
 
-        #self.log = log
         # call parent constructor
-        super(Evolution, self).__init__(log, newinstall = newinstall, simulation = simulation, simulationfile = simulationfile, message = message, feedback = feedback, ConfigFilePath = ConfigFilePath)
+        super(Evolution, self).__init__(log, newinstall = newinstall, simulation = simulation, simulationfile = simulationfile, message = message, feedback = feedback, ConfigFilePath = ConfigFilePath, config = config)
 
         # Controller Type
         self.EvolutionController = None
@@ -332,7 +334,7 @@ class Evolution(controller.GeneratorController):
             self.NominalFreq = self.GetModelInfo("Frequency")
             if self.NominalFreq == "Unknown":
                 self.NominalFreq = "60"
-            self.AddItemToConfFile("nominalfrequency", self.NominalFreq)
+            self.config.WriteValue("nominalfrequency", self.NominalFreq)
 
         # This is not correct for 50Hz models
         if self.NominalRPM == "Unknown" or not len(self.NominalRPM):
@@ -346,12 +348,12 @@ class Evolution(controller.GeneratorController):
                     self.NominalRPM = "3000"
                 else:
                     self.NominalRPM = "3600"
-            self.AddItemToConfFile("nominalrpm", self.NominalRPM)
+            self.config.WriteValue("nominalrpm", self.NominalRPM)
 
         if self.NominalKW == "Unknown" or not len(self.NominalKW):
             self.NominalKW = self.GetModelInfo("KW")
             if self.NominalKW != "Unknown":
-                self.AddItemToConfFile("nominalkw", self.NominalKW)
+                self.config.WriteValue("nominalkw", self.NominalKW)
 
         if self.NewInstall:
             if not self.ModelIsValid() or self.NominalKW == "Unknown":
@@ -359,23 +361,23 @@ class Evolution(controller.GeneratorController):
                 if not ReturnStatus:
                     if not self.ModelIsValid():
                         self.Model = self.GetGenericModel()
-                        self.AddItemToConfFile("model", self.Model)
+                        self.config.WriteValue("model", self.Model)
                     if self.NominalKW == "Unknown":
                         self.NominalKW = self.GetGenericKW()
-                        self.AddItemToConfFile("nominalkw", self.NominalKW)
+                        self.config.WriteValue("nominalkw", self.NominalKW)
                 else:
                     if ReturnModel == "Unknown":
                         self.Model = self.GetGenericModel()
                     else:
                         self.Model = ReturnModel
-                    self.AddItemToConfFile("model", self.Model)
+                    self.config.WriteValue("model", self.Model)
 
                     if ReturnKW != "Unknown" and self.NominalKW == "Unknown":   # we found a valid Kw on the lookup
                         self.NominalKW = ReturnKW
-                        self.AddItemToConfFile("nominalkw", self.NominalKW)
+                        self.config.WriteValue("nominalkw", self.NominalKW)
                     elif ReturnKW == "Unknown" and self.NominalKW == "Unknown":
                         self.NominalKW = self.GetGenericKW()
-                        self.AddItemToConfFile("nominalkw", self.NominalKW)
+                        self.config.WriteValue("nominalkw", self.NominalKW)
 
         if self.FuelType == "Unknown" or not len(self.FuelType):
             if self.LiquidCooled:
@@ -400,14 +402,14 @@ class Evolution(controller.GeneratorController):
                             self.FuelType = "Natural Gas"
             else:
                 self.FuelType = "Propane"                           # NexusLC, NexusAC, EvoAC
-            self.AddItemToConfFile("fueltype", self.FuelType)
+            self.config.WriteValue("fueltype", self.FuelType)
 
-        # This should fix issues with prefious installs of liquid cooled models that had the wrong fule type
+        # This should fix issues with prefious installs of liquid cooled models that had the wrong fuel type
         if self.LiquidCooled:
             FuelType = self.GetModelInfo("Fuel")
             if FuelType != "Unknown" and self.FuelType != FuelType:
                 self.FuelType = FuelType
-                self.AddItemToConfFile("fueltype", self.FuelType)
+                self.config.WriteValue("fueltype", self.FuelType)
 
         self.EngineDisplacement = self.GetModelInfo("EngineDisplacement")
 
@@ -2014,7 +2016,8 @@ class Evolution(controller.GeneratorController):
         0x03 : "Overspeed",                  # Validated on Nexus Air Cooled
         0x04 : "RPM Sense Loss",             # Validated on Nexus Liquid Cooled and Air Cooled
         0x05 : "Underspeed",
-        0x0a : "Under Voltage",             #  Validated on Nexus AC
+        #0x09 : "UNKNOWN",
+        0x0a : "Under Voltage",              #  Validated on Nexus AC
         0x0B : "Low Cooling Fluid",          # Validated on Nexus Liquid Cooled
         0x0C : "Canbus Error",               # Validated on Nexus Liquid Cooled
         0x0F : "Govenor Fault",              # Validated on Nexus Liquid Cooled
@@ -2319,6 +2322,7 @@ class Evolution(controller.GeneratorController):
 
         if not "diesel" in self.FuelType.lower():
             DealerInputs_Evo_LC[0x0200] = [False, "Fuel below 5 inch"]
+            DealerInputs_Evo_LC[0x0020] = [False, ""]    # Ruptured Basin is not valid for non diesel systems
 
         # Nexus Liquid Cooled
         #   Position    Digital inputs      Digital Outputs
@@ -3368,48 +3372,43 @@ class Evolution(controller.GeneratorController):
     # ---------- Evolution:GetConfig------------------
     def GetConfig(self):
 
-        ConfigSection = "GenMon"
         try:
-            # read config file
-            config = RawConfigParser()
-            # config parser reads from current directory, when running form a cron tab this is
-            # not defined so we specify the full path
-            config.read(self.ConfigFilePath + 'genmon.conf')
 
-            if config.has_option(ConfigSection, 'address'):
-                self.Address = int(config.get(ConfigSection, 'address'),16)                      # modbus address
-            else:
-                self.Address = 0x9d
-            # optional config parameters, by default the software will attempt to auto-detect the controller
-            # this setting will override the auto detect
-            if config.has_option(ConfigSection, 'evolutioncontroller'):
-                self.EvolutionController = config.getboolean(ConfigSection, 'evolutioncontroller')
-            if config.has_option(ConfigSection, 'liquidcooled'):
-                self.LiquidCooled = config.getboolean(ConfigSection, 'liquidcooled')
-            if config.has_option(ConfigSection, 'disableoutagecheck'):
-                self.DisableOutageCheck = config.getboolean(ConfigSection, 'disableoutagecheck')
-            if config.has_option(ConfigSection, 'uselegacysetexercise'):
-                self.bUseLegacyWrite = config.getboolean(ConfigSection, 'uselegacysetexercise')
-
-
-            if config.has_option(ConfigSection, 'enhancedexercise'):
-                self.bEnhancedExerciseFrequency = config.getboolean(ConfigSection, 'enhancedexercise')
-
-            if config.has_option(ConfigSection, 'currentdivider'):
-                self.CurrentDivider = config.getfloat(ConfigSection, 'currentdivider')
-            if config.has_option(ConfigSection, 'currentoffset'):
-                self.CurrentOffset = config.getfloat(ConfigSection, 'currentoffset')
-
-            if config.has_option(ConfigSection, 'serailnumberifmissing'):
-                self.SerialNumberReplacement = config.get(ConfigSection, 'serailnumberifmissing')
-                if self.SerialNumberReplacement.isdigit() and len(self.SerialNumberReplacement) == 10:
-                    self.LogError("Override Serial Number: " + self.SerialNumberReplacement)
+            if self.config != None:
+                if self.config.HasOption('address'):
+                    self.Address = int(self.config.ReadValue('address'),16)                      # modbus address
                 else:
-                    self.LogError("Override Serial Number: bad format: " + self.SerialNumberReplacement)
-                    self.SerialNumberReplacement = None
+                    self.Address = 0x9d
+                # optional config parameters, by default the software will attempt to auto-detect the controller
+                # this setting will override the auto detect
+                if self.config.HasOption('evolutioncontroller'):
+                    self.EvolutionController = self.config.ReadValue('evolutioncontroller', return_type = bool)
+                if self.config.HasOption('liquidcooled'):
+                    self.LiquidCooled = self.config.ReadValue('liquidcooled', return_type = bool)
+                if self.config.HasOption('disableoutagecheck'):
+                    self.DisableOutageCheck = self.config.ReadValue('disableoutagecheck', return_type = bool)
+                if self.config.HasOption('uselegacysetexercise'):
+                    self.bUseLegacyWrite = self.config.ReadValue('uselegacysetexercise', return_type = bool)
 
-            if config.has_option(ConfigSection, 'additionalrunhours'):
-                self.AdditionalRunHours = config.get(ConfigSection, 'additionalrunhours')
+
+                if self.config.HasOption('enhancedexercise'):
+                    self.bEnhancedExerciseFrequency = self.config.ReadValue('enhancedexercise', return_type = bool)
+
+                if self.config.HasOption('currentdivider'):
+                    self.CurrentDivider = self.config.ReadValue('currentdivider', return_type = float)
+                if self.config.HasOption('currentoffset'):
+                    self.CurrentOffset = self.config.ReadValue('currentoffset', return_type = float)
+
+                if self.config.HasOption('serailnumberifmissing'):
+                    self.SerialNumberReplacement = self.config.ReadValue('serailnumberifmissing')
+                    if self.SerialNumberReplacement.isdigit() and len(self.SerialNumberReplacement) == 10:
+                        self.LogError("Override Serial Number: " + self.SerialNumberReplacement)
+                    else:
+                        self.LogError("Override Serial Number: bad format: " + self.SerialNumberReplacement)
+                        self.SerialNumberReplacement = None
+
+                if self.config.HasOption('additionalrunhours'):
+                    self.AdditionalRunHours = self.config.ReadValue('additionalrunhours')
 
         except Exception as e1:
             self.FatalError("Missing config file or config file entries (evo/nexus): " + str(e1))

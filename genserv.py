@@ -1,4 +1,4 @@
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 #    FILE: genserv.py
 # PURPOSE: Flask app for generator monitor web app
 #
@@ -6,7 +6,7 @@
 #    DATE: 20-Dec-2016
 #
 # MODIFICATIONS:
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 from __future__ import print_function
 
@@ -16,10 +16,10 @@ except:
     print("\n\nThis program requires the Flask library. Please see the project documentation at https://github.com/jgyates/genmon.\n")
     sys.exit(2)
 
-import sys, signal, os, socket, atexit, time, subprocess, json, threading, signal
+import sys, signal, os, socket, atexit, time, subprocess, json, threading, signal, errno
 
 try:
-    from genmonlib import mylog, myclient, mythread
+    from genmonlib import mylog, myclient, myconfig
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the original github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
@@ -30,12 +30,8 @@ except Exception as e1:
 import urlparse
 import re, httplib, datetime
 
-try:
-    from ConfigParser import RawConfigParser
-except ImportError as e:
-    from configparser import RawConfigParser
 
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 app = Flask(__name__,static_url_path='')
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 300
 
@@ -56,7 +52,10 @@ AppPath = ""
 favicon = "favicon.ico"
 ConfigFilePath = "/etc/"
 MAIL_CONFIG = "/etc/mymail.conf"
+MAIL_SECTION = "MyMail"
 GENMON_CONFIG = "/etc/genmon.conf"
+GENMON_SECTION = "GenMon"
+
 Closing = False
 Restarting = False
 ControllerType = "generac_evo_nexus"
@@ -64,7 +63,7 @@ CriticalLock = threading.Lock()
 CachedToolTips = {}
 CachedRegisterDescriptions = {}
 
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 @app.after_request
 def add_header(r):
     """
@@ -75,7 +74,7 @@ def add_header(r):
     r.headers["Expires"] = "0"
 
     return r
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 @app.route('/', methods=['GET'])
 def root():
 
@@ -87,7 +86,7 @@ def root():
     else:
         return app.send_static_file('index.html')
 
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 @app.route('/internal', methods=['GET'])
 def display_internal():
 
@@ -99,7 +98,7 @@ def display_internal():
     else:
         return app.send_static_file('internal.html')
 
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 @app.route('/', methods=['POST'])
 def do_admin_login():
 
@@ -116,7 +115,7 @@ def do_admin_login():
     else:
         return render_template('login.html')
 
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 @app.route("/cmd/<command>")
 def command(command):
 
@@ -130,7 +129,7 @@ def command(command):
     else:
         return ProcessCommand(command)
 
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def ProcessCommand(command):
 
     try:
@@ -237,87 +236,92 @@ def ProcessCommand(command):
         LogErrorLine("Error in Process Command: " + str(e1))
         return render_template('command_template.html', command = command)
 
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def SaveNotifications(query_string):
-    notifications = dict(urlparse.parse_qs(query_string, 1))
-    oldEmails = []
 
+    '''
+    email_recipient = email1@gmail.com,email2@gmail.com
+    email1@gmail.com = outage,info
+    email2@gmail.com = outage,info,error
+
+    notifications = {'email1@gmail.com': ['outage,info'], 'email2@gmail.com': ['outage,info,error']}
+    notifications_order_string = email1@gmail.com,email2@gmail.com
+
+    or
+
+    email_recipient = email1@gmail.com
+
+    notifications = {'email1@gmail.com': ['']}
+    notifications_order_string = email1@gmail.com
+
+    '''
+    notifications = dict(urlparse.parse_qs(query_string, 1))
     notifications_order_string = ",".join([v[0] for v in urlparse.parse_qsl(query_string, 1)])
 
+    oldEmailsList = []
+    oldNotifications = {}
+    oldEmailRecipientString = ""
     try:
         with CriticalLock:
-            # Read contents from file as a single string
-            file_handle = open(MAIL_CONFIG, 'r')
-            file_string = file_handle.read()
-            file_handle.close()
+            # get existing settings
+            if mymail_config.HasOption("email_recipient"):
+                oldEmailRecipientString = mymail_config.ReadValue("email_recipient")
+                oldEmailRecipientString.strip()
+                oldEmailsList = oldEmailRecipientString.split(",")
+                for oldEmailItem in oldEmailsList:
+                    if mymail_config.HasOption(oldEmailItem):
+                        oldNotifications[oldEmailItem] = mymail_config.ReadValue(oldEmailItem)
 
-            for line in file_string.splitlines():
-               if not line.isspace():
-                  parts = findConfigLine(line)
-                  if (parts and (len(parts) >= 5) and parts[3] and (not parts[3].isspace()) and parts[2] and (parts[2] == "email_recipient")):
-                     oldEmails = parts[4].split(",")
+            # compare, remove notifications if needed
+            for oldEmailItem in oldEmailsList:
+                if not oldEmailItem in notifications.keys() and mymail_config.HasOption(oldEmailItem):
+                    mymail_config.WriteValue(oldEmailItem, "", remove = True)
 
-            activeSection = 0
-            skip = 0
-            # Write contents to file.
-            # Using mode 'w' truncates the file.
-            file_handle = open(MAIL_CONFIG, 'w')
-            for line in file_string.splitlines():
-               if not line.isspace():
-                  parts = findConfigLine(line)
-                  if (activeSection == 1):
-                      if (parts and (len(parts) >= 5) and parts[3] and (not parts[3].isspace()) and parts[2] and (parts[2] in oldEmails)):
-                          #skip line to delete previous configuration
-                          skip = 1
-                      else:
-                          #lets write the new configuration
-                          for email in notifications.keys():
-                              if (notifications[email][0].strip() != ""):
-                                 line = email + " = " + notifications[email][0] + "\n" + line
-                          activeSection = 0
-                  elif (parts and (len(parts) >= 5) and parts[3] and (not parts[3].isspace()) and parts[2] and (parts[2] == "email_recipient")):
-                      myList = list(parts)
-                      myList[1] = ""
-                      myList[4] = notifications_order_string
-                      line = "".join(myList)
-                      activeSection = 1
-               else:
-                  if (activeSection == 1):
-                     for email in notifications.keys():
-                        if (notifications[email][0].strip() != ""):
-                           line = email + " = " + notifications[email][0] + "\n" + line
-                     activeSection = 0
+            # add / update the entries
+            # update email recipient if needed
+            if oldEmailRecipientString != notifications_order_string:
+                mymail_config.WriteValue("email_recipient", notifications_order_string)
 
-               if (skip == 0):
-                 file_handle.write(line+"\n")
-               skip = 0
+            # update catigories
+            for newEmail, newCats in notifications.items():
+                # remove catigories if needed from existing emails
+                if not len(newCats[0]) and mymail_config.HasOption(newEmail):
+                    mymail_config.WriteValue(newEmail, "", remove = True)
+                # update or add catigories
+                if len(newCats[0]):
+                    mymail_config.WriteValue(newEmail, newCats[0])
 
-            file_handle.close()
         Restart()
-
     except Exception as e1:
-        LogErrorLine("Error Update Config File: " + str(e1))
+        LogErrorLine("Error in SaveNotifications: " + str(e1))
+    return
 
-#------------------------------------------------------------
-def ReadSingleConfigValue(file, section, type, entry, default, bounds = None):
+#-------------------------------------------------------------------------------
+def ReadSingleConfigValue(filename, section, type, entry, default, bounds = None):
 
     try:
-        config = RawConfigParser()
-        # config parser reads from current directory, when running form a cron tab this is
-        # not defined so we specify the full path
-        config.read(file)
 
-        if not config.has_option(section, entry):
+        if filename == GENMON_CONFIG:
+            config = genmon_config
+        elif filename == MAIL_CONFIG:
+            config = mymail_config
+        else:
+            LogError("Unknow file in UpdateConfigFile: " + filename)
+            return default
+
+        config.SetSection(section)
+
+        if not config.HasOption(entry):
             return default
 
         if type.lower() == "string" or type == "password":
-            return config.get(section, entry)
+            return config.ReadValue(entry)
         elif type.lower() == "boolean":
-            return config.getboolean(section, entry)
+            return config.ReadValue(entry, return_type = bool)
         elif type.lower() == "int":
-            return config.getint(section, entry)
+            return config.ReadValue(entry, return_type = int)
         elif type.lower() == 'list':
-            Value = config.get(section, entry)
+            Value = config.ReadValue(entry)
             if bounds != None:
                 DefaultList = bounds.split(",")
                 if Value.lower() in (name.lower() for name in DefaultList):
@@ -336,7 +340,7 @@ def ReadSingleConfigValue(file, section, type, entry, default, bounds = None):
         LogErrorLine("Error Reading Config File (ReadSingleConfigValue): " + str(e1))
         return default
 
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def ReadNotificationsFromFile():
 
 
@@ -351,7 +355,7 @@ def ReadNotificationsFromFile():
     EmailsToNotify = []
     try:
         # There should be only one "email_recipient" entry
-        EmailsStr = ReadSingleConfigValue(MAIL_CONFIG, "MyMail", "string", "email_recipient", "")
+        EmailsStr = mymail_config.ReadValue("email_recipient")
 
         for email in EmailsStr.split(","):
             email = email.strip()
@@ -359,7 +363,7 @@ def ReadNotificationsFromFile():
 
         SortOrder = 1
         for email in EmailsToNotify:
-            Notify = ReadSingleConfigValue(MAIL_CONFIG, "MyMail", "string", email, "")
+            Notify = mymail_config.ReadValue(email, default = "")
             if Notify == "":
                 NotificationSettings[email] = [SortOrder]
             else:
@@ -369,7 +373,7 @@ def ReadNotificationsFromFile():
 
     return NotificationSettings
 
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def ReadSettingsFromFile():
 
     ### array containing information on the parameters
@@ -380,6 +384,7 @@ def ReadSettingsFromFile():
     ## 5th: tooltip (will be populated further below)
     ## 6th: validation rule if type is string or int (see below). If type is list, this is a comma delimited list of options
     ## 7th: Config file
+    ## 8th: config file section
     ## Validation Rules:
     ##         A rule must be in this format rule:param where rule is the name of the rule and param is a rule parameter,
     ##         for example minmax:10:50 will use the minmax rule with two arguments, 10 and 50.
@@ -410,84 +415,81 @@ def ReadSettingsFromFile():
 
 
     ConfigSettings =  {
-                "sitename" : ['string', 'Site Name', 1, "SiteName", "", "required minmax:4:50", GENMON_CONFIG],
-                "port" : ['string', 'Port for Serial Communication', 2, "/dev/serial0", "", "required UnixDevice", GENMON_CONFIG],
+                "sitename" : ['string', 'Site Name', 1, "SiteName", "", "required minmax:4:50", GENMON_CONFIG, GENMON_SECTION],
+                "port" : ['string', 'Port for Serial Communication', 2, "/dev/serial0", "", "required UnixDevice", GENMON_CONFIG, GENMON_SECTION],
                 # This option is not displayed as it will break the link between genmon and genserv
-                #"server_port" : ['int', 'Server Port', 5, 9082, "", 0, GENMON_CONFIG],
+                #"server_port" : ['int', 'Server Port', 5, 9082, "", 0, GENMON_CONFIG, GENMON_SECTION],
                 # this option is not displayed as this will break the modbus comms, only for debugging
-                #"address" : ['string', 'Modbus slave address', 6, "9d", "", 0 , GENMON_CONFIG],
-                #"loglocation" : ['string', 'Log Directory', 7, "/var/log/", "", "required UnixDir", GENMON_CONFIG],
-                #"enabledebug" : ['boolean', 'Enable Debug', 14, False, "", 0, GENMON_CONFIG],
+                #"address" : ['string', 'Modbus slave address', 6, "9d", "", 0 , GENMON_CONFIG, GENMON_SECTION],
+                #"loglocation" : ['string', 'Log Directory', 7, "/var/log/", "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION],
+                #"enabledebug" : ['boolean', 'Enable Debug', 14, False, "", 0, GENMON_CONFIG, GENMON_SECTION],
                 # These settings are not displayed as the auto-detect controller will set these
                 # these are only to be used to override the auto-detect
-                #"uselegacysetexercise" : ['boolean', 'Use Legacy Exercise Time', 43, False, "", 0, GENMON_CONFIG],
-                #"liquidcooled" : ['boolean', 'Liquid Cooled', 41, False, "", 0, GENMON_CONFIG],
-                #"evolutioncontroller" : ['boolean', 'Evolution Controler', 42, True, "", 0, GENMON_CONFIG],
+                #"uselegacysetexercise" : ['boolean', 'Use Legacy Exercise Time', 43, False, "", 0, GENMON_CONFIG, GENMON_SECTION],
+                #"liquidcooled" : ['boolean', 'Liquid Cooled', 41, False, "", 0, GENMON_CONFIG, GENMON_SECTION],
+                #"evolutioncontroller" : ['boolean', 'Evolution Controler', 42, True, "", 0, GENMON_CONFIG, GENMON_SECTION],
                 # remove outage log, this will always be in the same location
-                #"outagelog" : ['string', 'Outage Log', 8, "/home/pi/genmon/outage.txt", "", 0, GENMON_CONFIG],
-                "syncdst" : ['boolean', 'Sync Daylight Savings Time', 22, False, "", "", GENMON_CONFIG],
-                "synctime" : ['boolean', 'Sync Time', 23, False, "", "", GENMON_CONFIG],
-                "metricweather"  : ['boolean', 'Use Metric Units', 24, False, "", "", GENMON_CONFIG],
-                "optimizeforslowercpu"  : ['boolean', 'Optimize for slower CPUs', 25, False, "", "", GENMON_CONFIG],
-                "autofeedback" : ['boolean', 'Automated Feedback', 29, False, "", "", GENMON_CONFIG],
+                #"outagelog" : ['string', 'Outage Log', 8, "/home/pi/genmon/outage.txt", "", 0, GENMON_CONFIG, GENMON_SECTION],
+                "syncdst" : ['boolean', 'Sync Daylight Savings Time', 22, False, "", "", GENMON_CONFIG, GENMON_SECTION],
+                "synctime" : ['boolean', 'Sync Time', 23, False, "", "", GENMON_CONFIG, GENMON_SECTION],
+                "metricweather"  : ['boolean', 'Use Metric Units', 24, False, "", "", GENMON_CONFIG, GENMON_SECTION],
+                "optimizeforslowercpu"  : ['boolean', 'Optimize for slower CPUs', 25, False, "", "", GENMON_CONFIG, GENMON_SECTION],
+                "autofeedback" : ['boolean', 'Automated Feedback', 29, False, "", "", GENMON_CONFIG, GENMON_SECTION],
 
                 #"model" : ['string', 'Generator Model', 100, "Generic Evolution Air Cooled", "", 0],
-                "nominalfrequency": ['list', 'Rated Frequency', 101, "60", "", "50,60", GENMON_CONFIG],
-                "nominalRPM" : ['int', 'Nominal RPM', 102, "3600", "", "required digits range:1500:4000", GENMON_CONFIG],
-                "nominalKW": ['int', 'Maximum kW Output', 103, "22", "", "required digits range:0:1000", GENMON_CONFIG],
-                "fueltype" : ['list', 'Fuel Type', 104, "Natural Gas", "", "Natural Gas,Propane,Diesel,Gasoline", GENMON_CONFIG],
-                "tanksize" : ['int', 'Fuel Tank Size', 105, "0", "", "required digits range:0:2000", GENMON_CONFIG],
+                "nominalfrequency": ['list', 'Rated Frequency', 101, "60", "", "50,60", GENMON_CONFIG, GENMON_SECTION],
+                "nominalrpm" : ['int', 'Nominal RPM', 102, "3600", "", "required digits range:1500:4000", GENMON_CONFIG, GENMON_SECTION],
+                "nominalkw": ['int', 'Maximum kW Output', 103, "22", "", "required digits range:0:1000", GENMON_CONFIG, GENMON_SECTION],
+                "fueltype" : ['list', 'Fuel Type', 104, "Natural Gas", "", "Natural Gas,Propane,Diesel,Gasoline", GENMON_CONFIG, GENMON_SECTION],
+                "tanksize" : ['int', 'Fuel Tank Size', 105, "0", "", "required digits range:0:2000", GENMON_CONFIG, GENMON_SECTION],
                 #
-                "displayunknown" : ['boolean', 'Display Unknown Sensors', 111, False, "", "", GENMON_CONFIG],
+                "displayunknown" : ['boolean', 'Display Unknown Sensors', 111, False, "", "", GENMON_CONFIG, GENMON_SECTION],
 
                 # These do not appear to work on reload, some issue with Flask
-                "usehttps" : ['boolean', 'Use Secure Web Settings', 200, False, "", "", GENMON_CONFIG],
-                "useselfsignedcert" : ['boolean', 'Use Self-signed Certificate', 203, True, "", "", GENMON_CONFIG],
-                "keyfile" : ['string', 'https Key File', 204, "", "", "UnixFile", GENMON_CONFIG],
-                "certfile" : ['string', 'https Certificate File', 205, "", "", "UnixFile", GENMON_CONFIG],
-                "http_user" : ['string', 'Web Username', 206, "", "", "minmax:4:50", GENMON_CONFIG],
-                "http_pass" : ['string', 'Web Password', 207, "", "", "minmax:4:50", GENMON_CONFIG],
-                "http_user_ro" : ['string', 'Limited Rights User Username', 208, "", "", "minmax:4:50", GENMON_CONFIG],
-                "http_pass_ro" : ['string', 'Limited Rights User Password', 209, "", "", "minmax:4:50", GENMON_CONFIG],
-                "http_port" : ['int', 'Port of WebServer', 210, 8000, "", "required digits", GENMON_CONFIG],
-                "favicon" : ['string', 'FavIcon', 220, "", "", "minmax:8:255", GENMON_CONFIG],
+                "usehttps" : ['boolean', 'Use Secure Web Settings', 200, False, "", "", GENMON_CONFIG, GENMON_SECTION],
+                "useselfsignedcert" : ['boolean', 'Use Self-signed Certificate', 203, True, "", "", GENMON_CONFIG, GENMON_SECTION],
+                "keyfile" : ['string', 'https Key File', 204, "", "", "UnixFile", GENMON_CONFIG, GENMON_SECTION],
+                "certfile" : ['string', 'https Certificate File', 205, "", "", "UnixFile", GENMON_CONFIG, GENMON_SECTION],
+                "http_user" : ['string', 'Web Username', 206, "", "", "minmax:4:50", GENMON_CONFIG, GENMON_SECTION],
+                "http_pass" : ['string', 'Web Password', 207, "", "", "minmax:4:50", GENMON_CONFIG, GENMON_SECTION],
+                "http_user_ro" : ['string', 'Limited Rights User Username', 208, "", "", "minmax:4:50", GENMON_CONFIG, GENMON_SECTION],
+                "http_pass_ro" : ['string', 'Limited Rights User Password', 209, "", "", "minmax:4:50", GENMON_CONFIG, GENMON_SECTION],
+                "http_port" : ['int', 'Port of WebServer', 210, 8000, "", "required digits", GENMON_CONFIG, GENMON_SECTION],
+                "favicon" : ['string', 'FavIcon', 220, "", "", "minmax:8:255", GENMON_CONFIG, GENMON_SECTION],
                 # This does not appear to work on reload, some issue with Flask
 
                 #
-                #"disableemail" : ['boolean', 'Disable Email Usage', 300, True, "", "", MAIL_CONFIG],
+                #"disableemail" : ['boolean', 'Disable Email Usage', 300, True, "", "", MAIL_CONFIG, MAIL_SECTION],
                 "disablesmtp"  : ['boolean', 'Disable Sending Email', 300, False, "", "", MAIL_CONFIG],
-                "email_account" : ['string', 'Email Account', 301, "myemail@gmail.com", "", "minmax:3:50", MAIL_CONFIG],
-                "email_pw" : ['password', 'Email Password', 302, "password", "", "max:50", MAIL_CONFIG],
-                "sender_account" : ['string', 'Sender Account', 303, "no-reply@gmail.com", "", "email", MAIL_CONFIG],
+                "email_account" : ['string', 'Email Account', 301, "myemail@gmail.com", "", "minmax:3:50", MAIL_CONFIG, MAIL_SECTION],
+                "email_pw" : ['password', 'Email Password', 302, "password", "", "max:50", MAIL_CONFIG, MAIL_SECTION],
+                "sender_account" : ['string', 'Sender Account', 303, "no-reply@gmail.com", "", "email", MAIL_CONFIG, MAIL_SECTION],
                 # "email_recipient" : ['string', 'Email Recepient<br><small>(comma delimited)</small>', 105], # will be handled on the notification screen
-                "smtp_server" : ['string', 'SMTP Server <br><small>(leave emtpy to disable)</small>', 305, "smtp.gmail.com", "", "InternetAddress", MAIL_CONFIG],
-                "smtp_port" : ['int', 'SMTP Server Port', 307, 587, "", "digits", MAIL_CONFIG],
-                "ssl_enabled" : ['boolean', 'SMTP Server SSL Enabled', 308, False, "", "", MAIL_CONFIG],
+                "smtp_server" : ['string', 'SMTP Server <br><small>(leave emtpy to disable)</small>', 305, "smtp.gmail.com", "", "InternetAddress", MAIL_CONFIG, MAIL_SECTION],
+                "smtp_port" : ['int', 'SMTP Server Port', 307, 587, "", "digits", MAIL_CONFIG, MAIL_SECTION],
+                "ssl_enabled" : ['boolean', 'SMTP Server SSL Enabled', 308, False, "", "", MAIL_CONFIG, MAIL_SECTION],
 
-                "disableimap"  : ['boolean', 'Disable Receiving Email', 400, False, "", "", MAIL_CONFIG],
-                "imap_server" : ['string', 'IMAP Server <br><small>(leave emtpy to disable)</small>', 401, "imap.gmail.com", "", "InternetAddress", MAIL_CONFIG],
-                "readonlyemailcommands" : ['boolean', 'Disable Email Write Commands',402, False, "", "", GENMON_CONFIG],
-                "incoming_mail_folder" : ['string', 'Incoming Mail Folder<br><small>(if IMAP enabled)</small>', 403, "Generator", "", "minmax:1:1500", GENMON_CONFIG],
-                "processed_mail_folder" : ['string', 'Mail Processed Folder<br><small>(if IMAP enabled)</small>', 404, "Generator/Processed","", "minmax:1:255", GENMON_CONFIG],
+                "disableimap"  : ['boolean', 'Disable Receiving Email', 400, False, "", "", MAIL_CONFIG, MAIL_SECTION],
+                "imap_server" : ['string', 'IMAP Server <br><small>(leave emtpy to disable)</small>', 401, "imap.gmail.com", "", "InternetAddress", MAIL_CONFIG, MAIL_SECTION],
+                "readonlyemailcommands" : ['boolean', 'Disable Email Write Commands',402, False, "", "", GENMON_CONFIG, GENMON_SECTION],
+                "incoming_mail_folder" : ['string', 'Incoming Mail Folder<br><small>(if IMAP enabled)</small>', 403, "Generator", "", "minmax:1:1500", GENMON_CONFIG, GENMON_SECTION],
+                "processed_mail_folder" : ['string', 'Mail Processed Folder<br><small>(if IMAP enabled)</small>', 404, "Generator/Processed","", "minmax:1:255", GENMON_CONFIG, GENMON_SECTION],
 
-                "disableweather"  : ['boolean', 'Disable Weather Functionality', 500, False, "", "", GENMON_CONFIG],
-                "weatherkey" : ['string', 'Openweathermap.org API key', 501, "", "", "required minmax:4:50", GENMON_CONFIG],
-                "weatherlocation" : ['string', 'Location to report weather', 502, "", "", "required minmax:4:50", GENMON_CONFIG],
-                "minimumweatherinfo"  : ['boolean', 'Display Minimum Weather Info', 504, True, "", "", GENMON_CONFIG]
+                "disableweather"  : ['boolean', 'Disable Weather Functionality', 500, False, "", "", GENMON_CONFIG, GENMON_SECTION],
+                "weatherkey" : ['string', 'Openweathermap.org API key', 501, "", "", "required minmax:4:50", GENMON_CONFIG, GENMON_SECTION],
+                "weatherlocation" : ['string', 'Location to report weather', 502, "", "", "required minmax:4:50", GENMON_CONFIG, GENMON_SECTION],
+                "minimumweatherinfo"  : ['boolean', 'Display Minimum Weather Info', 504, True, "", "", GENMON_CONFIG, GENMON_SECTION]
                 }
 
     if ControllerType == 'h_100':
         Choices = "120/208,120/240,230/400,240/415,277/480,347/600"
-        ConfigSettings["voltageconfiguration"] = ['list', 'Line to Neutral / Line to Line', 105, "277/480", "", Choices, GENMON_CONFIG]
-        ConfigSettings["nominalbattery"] = ['list', 'Nomonal Battery Voltage', 106, "24", "", "12,24", GENMON_CONFIG]
+        ConfigSettings["voltageconfiguration"] = ['list', 'Line to Neutral / Line to Line', 105, "277/480", "", Choices, GENMON_CONFIG, GENMON_SECTION]
+        ConfigSettings["nominalbattery"] = ['list', 'Nomonal Battery Voltage', 106, "24", "", "12,24", GENMON_CONFIG, GENMON_SECTION]
     else: #ControllerType == "generac_evo_nexus":
-        ConfigSettings["disableoutagecheck"] = ['boolean', 'Do Not Check for Outages', 17, False, "", "", GENMON_CONFIG]
-        ConfigSettings["enhancedexercise"] = ['boolean', 'Enhanced Exercise Time', 105, False, "", "", GENMON_CONFIG]
+        ConfigSettings["disableoutagecheck"] = ['boolean', 'Do Not Check for Outages', 17, False, "", "", GENMON_CONFIG, GENMON_SECTION]
+        ConfigSettings["enhancedexercise"] = ['boolean', 'Enhanced Exercise Time', 105, False, "", "", GENMON_CONFIG, GENMON_SECTION]
     try:
-        # TODO optimize this
-        #MailConfig = GetAllConfigValues(MAIL_CONFIG, "MyMail")
-        #GenmonConfig = GetAllConfigValues(GENMON_CONFIG, "GenMon")
-
+        # Get all the config values
         for entry, List in ConfigSettings.items():
             if List[6] == GENMON_CONFIG:
                 (ConfigSettings[entry])[3] = ReadSingleConfigValue(GENMON_CONFIG, "GenMon", List[0], entry, List[3], List[5])
@@ -501,21 +503,21 @@ def ReadSettingsFromFile():
     return ConfigSettings
 
 
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def GetAllConfigValues(FileName, section):
 
     ReturnDict = {}
     try:
-        config = RawConfigParser()
-        config.read(FileName)
-        for (key, value) in config.items(section):
+        config = myconfig.MyConfig(filename = FileName, section = section)
+
+        for (key, value) in config.GetList():
             ReturnDict[key.lower()] = value
     except Exception as e1:
         LogErrorLine("Error GetAllConfigValues: " + FileName + ": "+ str(e1) )
 
     return ReturnDict
 
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def CacheToolTips():
 
     global CachedToolTips
@@ -527,10 +529,8 @@ def CacheToolTips():
         pathtofile = os.path.dirname(os.path.realpath(__file__))
 
         # get controller used
-        config = RawConfigParser()
-        config.read(GENMON_CONFIG)
-        if config.has_option("GenMon", 'controllertype'):
-            config_section = config.get("GenMon", 'controllertype')
+        if genmon_config.HasOption('controllertype'):
+            config_section = genmon_config.ReadValue('controllertype')
         else:
             config_section = "generac_evo_nexus"
 
@@ -546,7 +546,7 @@ def CacheToolTips():
     except Exception as e1:
         LogErrorLine("Error reading tooltips.txt " + str(e1) )
 
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def GetToolTips(ConfigSettings):
 
     try:
@@ -557,7 +557,7 @@ def GetToolTips(ConfigSettings):
     except Exception as e1:
         LogErrorLine("Error in GetToolTips: " + str(e1))
 
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def SaveSettings(query_string):
 
     try:
@@ -574,79 +574,40 @@ def SaveSettings(query_string):
                 if ConfigEntry != None:
                     ConfigFile = CurrentConfigSettings[Entry][6]
                     Value = settings[Entry][0]
+                    Section = CurrentConfigSettings[Entry][7]
                 else:
                     LogError("Invalid setting: " + str(Entry))
                     continue
-                UpdateConfigFile(ConfigFile,Entry, Value)
+                UpdateConfigFile(ConfigFile,Section, Entry, Value)
         Restart()
     except Exception as e1:
         LogErrorLine("Error Update Config File (SaveSettings): " + str(e1))
 
-#---------------------MySupport::UpdateConfigFile------------------------
+#---------------------MySupport::UpdateConfigFile-------------------------------
 # Add or update config item
-def UpdateConfigFile(FileName, Entry, Value):
+def UpdateConfigFile(FileName, section, Entry, Value):
 
     try:
 
-        Found = False
-        ConfigFile = open(FileName,'r')
-        FileString = ConfigFile.read()
-        ConfigFile.close()
+        if FileName == GENMON_CONFIG:
+            config = genmon_config
+        elif FileName == MAIL_CONFIG:
+            config = mymail_config
+        else:
+            LogError("Unknow file in UpdateConfigFile: " + FileName)
+            return False
 
-        ConfigFile = open(FileName,'w')
-        for line in FileString.splitlines():
-            if not line.isspace():                  # blank lines
-                newLine = line.strip()              # strip leading spaces
-                if len(newLine):
-                    if not newLine[0] == "#":           # not a comment
-                        items = newLine.split(' ')      # split items in line by spaces
-                        for strings in items:           # loop thru items
-                            strings = strings.strip()   # strip any whitespace
-                            if Entry == strings or strings.lower().startswith(Entry+"="):        # is this our value?
-                                line = Entry + " = " + Value    # replace it
-                                Found = True
-                                break
-
-            ConfigFile.write(line+"\n")
-        if not Found:
-            ConfigFile.write(Entry + " = " + Value + "\n")
-        ConfigFile.close()
-        return True
+        return config.WriteValue(Entry, Value)
 
     except Exception as e1:
-        LogErrorLine("Error in UpdateConfigFile: " + str(e1))
+        LogErrorLine("Error Update Config File (UpdateConfigFile): " + str(e1))
         return False
 
-#------------------------------------------------------------
-def findConfigLine(line):
-    match = re.search(
-        r"""^          # Anchor to start of line
-        (\s*)          # $1: Zero or more leading ws chars
-        (?:(\#\s*)?)   # $2: is it commented out
-        (?:            # Begin group for optional var=value.
-          (\S+)        # $3: Variable name. One or more non-spaces.
-          (\s*=\s*)    # $4: Assignment operator, optional ws
-          (            # $5: Everything up to comment or EOL.
-            [^#\\]*    # Unrolling the loop 1st normal*.
-            (?:        # Begin (special normal*)* construct.
-              \\.      # special is backslash-anything.
-              [^#\\]*  # More normal*.
-            )*         # End (special normal*)* construct.
-          )            # End $5: Value.
-        )?             # End group for optional var=value.
-        ((?:\#.*)?)    # $6: Optional comment.
-        $              # Anchor to end of line""",
-        line, re.MULTILINE | re.VERBOSE)
-    if match :
-      return match.groups()
-    else:
-      return []
-
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # This will shutdown the pi
 def Shutdown():
     os.system("sudo shutdown -h now")
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # This will restart the Flask App
 def Restart():
 
@@ -656,23 +617,7 @@ def Restart():
     if not RunBashScript("startgenmon.sh restart"):
         LogError("Error in Restart")
 
-#------------------------------------------------------------
-def RestartThread():
-
-    time.sleep(0.25)
-    if not RunBashScript("startgenmon.sh restart"):
-        LogError("Error in Restart")
-
-#------------------------------------------------------------
-# This will restart the Flask App
-def StartRestart():
-
-    ThreadObj = threading.Thread(target = RestartThread, name = "RestartThread")
-    ThreadObj.daemon = True
-    ThreadObj.start()       # start thread
-
-
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def Update():
     # update
     if not RunBashScript("genmonmaint.sh updatenp"):   # update no prompt
@@ -680,7 +625,7 @@ def Update():
     # now restart
     Restart()
 
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def RunBashScript(ScriptName):
     try:
         pathtoscript = os.path.dirname(os.path.realpath(__file__))
@@ -693,7 +638,7 @@ def RunBashScript(ScriptName):
         LogErrorLine("Error in RunBashScript: (" + ScriptName + ") : " + str(e1))
         return False
 
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # return False if File not present
 def CheckCertFiles(CertFile, KeyFile):
 
@@ -706,7 +651,7 @@ def CheckCertFiles(CertFile, KeyFile):
         return False
 
     return True
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def LoadConfig():
 
     global log
@@ -725,69 +670,64 @@ def LoadConfig():
     HTTPAuthUser = None
     SSLContext = None
     try:
-        config = RawConfigParser()
-        # config parser reads from current directory, when running form a cron tab this is
-        # not defined so we specify the full path
-        config.read(GENMON_CONFIG)
 
         # heartbeat server port, must match value in check_generator_system.py and any calling client apps
-        if config.has_option('GenMon', 'server_port'):
-            clientport = config.getint('GenMon', 'server_port')
+        if genmon_config.HasOption('server_port'):
+            clientport = genmon_config.ReadValue('server_port', return_type = int, default = 0)
 
-        if config.has_option('GenMon', 'loglocation'):
-            loglocation = config.get("GenMon", 'loglocation')
+        if genmon_config.HasOption('loglocation'):
+            loglocation = genmon_config.ReadValue('loglocation')
 
         # log errors in this module to a file
         log = mylog.SetupLogger("genserv", loglocation + "genserv.log")
 
-        if config.has_option('GenMon', 'usehttps'):
-            bUseSecureHTTP = config.getboolean('GenMon', 'usehttps')
+        if genmon_config.HasOption('usehttps'):
+            bUseSecureHTTP = genmon_config.ReadValue('usehttps', return_type = bool)
 
-        if config.has_option('GenMon', 'http_port'):
-            HTTPPort = config.getint('GenMon', 'http_port')
+        if genmon_config.HasOption('http_port'):
+            HTTPPort = genmon_config.ReadValue('http_port', return_type = int, default = 8000)
 
-        if config.has_option('GenMon', 'favicon'):
-            favicon = config.get('GenMon', 'favicon')
+        if genmon_config.HasOption('favicon'):
+            favicon = genmon_config.ReadValue('favicon')
 
         # user name and password require usehttps = True
         if bUseSecureHTTP:
-            if config.has_option('GenMon', 'http_user'):
-                HTTPAuthUser = config.get('GenMon', 'http_user')
+            if genmon_config.HasOption('http_user'):
+                HTTPAuthUser = genmon_config.ReadValue('http_user')
                 HTTPAuthUser = HTTPAuthUser.strip()
                  # No user name or pass specified, disable
                 if HTTPAuthUser == "":
                     HTTPAuthUser = None
                     HTTPAuthPass = None
-                elif config.has_option('GenMon', 'http_pass'):
-                    HTTPAuthPass = config.get('GenMon', 'http_pass')
+                elif genmon_config.HasOption('http_pass'):
+                    HTTPAuthPass = genmon_config.ReadValue('http_pass')
                     HTTPAuthPass = HTTPAuthPass.strip()
                 if HTTPAuthUser != None and HTTPAuthPass != None:
-                    if config.has_option('GenMon', 'http_user_ro'):
-                        HTTPAuthUser_RO = config.get('GenMon', 'http_user_ro')
+                    if genmon_config.HasOption('http_user_ro'):
+                        HTTPAuthUser_RO = genmon_config.ReadValue('http_user_ro')
                         HTTPAuthUser_RO = HTTPAuthUser_RO.strip()
                         if HTTPAuthUser_RO == "":
                             HTTPAuthUser_RO = None
                             HTTPAuthPass_RO = None
-                        elif config.has_option('GenMon', 'http_pass_ro'):
-                            HTTPAuthPass_RO = config.get('GenMon', 'http_pass_ro')
+                        elif genmon_config.HasOption('http_pass_ro'):
+                            HTTPAuthPass_RO = genmon_config.ReadValue('http_pass_ro')
                             HTTPAuthPass_RO = HTTPAuthPass_RO.strip()
-            if config.has_option('GenMon', 'https_port'):
-                HTTPSPort = config.getint('GenMon', 'https_port')
-            else:
-                HTTPSPort = 443
+
+            HTTPSPort = genmon_config.ReadValue('https_port', return_type = int, default = 443)
+
         if bUseSecureHTTP:
             app.secret_key = os.urandom(12)
             OldHTTPPort = HTTPPort
             HTTPPort = HTTPSPort
-            if config.has_option('GenMon', 'useselfsignedcert'):
-                bUseSelfSignedCert = config.getboolean('GenMon', 'useselfsignedcert')
+            if genmon_config.HasOption('useselfsignedcert'):
+                bUseSelfSignedCert = genmon_config.ReadValue('useselfsignedcert', return_type = bool)
 
                 if bUseSelfSignedCert:
                     SSLContext = 'adhoc'
                 else:
-                    if config.has_option('GenMon', 'certfile') and config.has_option('GenMon', 'keyfile'):
-                        CertFile = config.get('GenMon', 'certfile')
-                        KeyFile = config.get('GenMon', 'keyfile')
+                    if genmon_config.HasOption('certfile') and genmon_config.HasOption('keyfile'):
+                        CertFile = genmon_config.ReadValue('certfile')
+                        KeyFile = genmon_config.ReadValue('keyfile')
                         if CheckCertFiles(CertFile, KeyFile):
                             SSLContext = (CertFile, KeyFile)    # tuple
                         else:
@@ -802,15 +742,6 @@ def LoadConfig():
     except Exception as e1:
         LogConsole("Missing config file or config file entries: " + str(e1))
         return False
-
-#------------------------------------------------------------
-def ValidateFilePresent(FileName):
-    try:
-        with open(FileName,"r") as TestFile:     #
-            return True
-    except Exception as e1:
-            LogErrorLine("File (%s) not present." % FileName)
-            return False
 
 #---------------------LogConsole------------------------------------------------
 def LogConsole( Message):
@@ -842,24 +773,32 @@ def GetErrorLine():
 def Close(NoExit = False):
 
     global Closing
+
     if Closing:
         return
     Closing = True
-    LogError("Close server..")
     try:
+        '''
+        LogError("Close server..")
+
         with app.app_context():
             func = request.environ.get('werkzeug.server.shutdown')
             if func is None:
                 LogError("Not running with the Werkzeug Server")
             func()
+
+            LogError("Server closed.")
+        '''
+
+        MyClientInterface.Close()
     except Exception as e1:
         LogErrorLine("Error in close: " + str(e1))
 
-    LogError("Server closed.")
+    LogError("genserv closed.")
     if not NoExit:
         sys.exit(0)
 
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 if __name__ == "__main__":
     address='localhost' if len(sys.argv) <=2 else sys.argv[1]
 
@@ -868,6 +807,7 @@ if __name__ == "__main__":
     MAIL_CONFIG = ConfigFilePath + "mymail.conf"
     GENMON_CONFIG = ConfigFilePath + "genmon.conf"
 
+    # NOTE: signal handler is not compatible with the exception handler around app.run()
     #atexit.register(Close)
     #signal.signal(signal.SIGTERM, Close)
     #signal.signal(signal.SIGINT, Close)
@@ -879,25 +819,35 @@ if __name__ == "__main__":
         LogConsole("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'.")
         sys.exit(1)
 
-    if not os.path.isfile(ConfigFilePath + 'genmon.conf'):
-        LogConsole("Missing config file : " + ConfigFilePath + 'genmon.conf')
+    if not os.path.isfile(GENMON_CONFIG):
+        LogConsole("Missing config file : " + GENMON_CONFIG)
         sys.exit(1)
+
+    if not os.path.isfile(MAIL_CONFIG):
+        LogConsole("Missing config file : " + MAIL_CONFIG)
+        sys.exit(1)
+
+    genmon_config = myconfig.MyConfig(filename = GENMON_CONFIG, section = GENMON_SECTION, log = console)
+    mymail_config = myconfig.MyConfig(filename = MAIL_CONFIG, section = MAIL_SECTION, log = console)
 
     AppPath = sys.argv[0]
     if not LoadConfig():
         LogConsole("Error reading configuraiton file.")
         sys.exit(1)
 
+    genmon_config.log = log
+    mymail_config.log = log
+
     LogError("Starting " + AppPath + ", Port:" + str(HTTPPort) + ", Secure HTTP: " + str(bUseSecureHTTP) + ", SelfSignedCert: " + str(bUseSelfSignedCert))
 
     # validate needed files are present
-    file = os.path.dirname(os.path.realpath(__file__)) + "/startgenmon.sh"
-    if not ValidateFilePresent(file):
+    filename = os.path.dirname(os.path.realpath(__file__)) + "/startgenmon.sh"
+    if not os.path.isfile(filename):
         LogError("Required file missing : startgenmon.sh")
         sys.exit(1)
 
-    file = os.path.dirname(os.path.realpath(__file__)) + "/genmonmaint.sh"
-    if not ValidateFilePresent(file):
+    filename = os.path.dirname(os.path.realpath(__file__)) + "/genmonmaint.sh"
+    if not os.path.isfile(filename):
         LogError("Required file missing : genmonmaint.sh")
         sys.exit(1)
 
@@ -929,7 +879,9 @@ if __name__ == "__main__":
             app.run(host="0.0.0.0", port=HTTPPort, threaded = True, ssl_context=SSLContext, use_reloader = False, debug = False)
 
         except Exception as e1:
-            LogErrorLine("Error in app.run:" + str(e1))
+            LogErrorLine("Error in app.run: " + str(e1))
+            if e1.errno != errno.EADDRINUSE:   #Errno 98
+                sys.exit(0)
             time.sleep(2)
             if Closing:
                 sys.exit(0)

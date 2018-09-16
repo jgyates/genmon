@@ -12,12 +12,6 @@
 import datetime, time, sys, os, threading, socket
 import atexit, json, collections, random
 
-
-try:
-    from ConfigParser import RawConfigParser
-except ImportError as e:
-    from configparser import RawConfigParser
-
 import controller, mymodbus, mythread, modbus_file, mytile
 
 
@@ -168,8 +162,8 @@ class RegisterEnum(object):
     STATUS_2_INFO_END       = "0148"            #
 
 
-# reg 014b - 015c "Running from serWarmed Up, Alarms On"
-# reg 01e1 - 01e7 "OIL TEMP" or "No ECU Comms"
+    # reg 014b - 015c "Running from serWarmed Up, Alarms On"
+    # reg 01e1 - 01e7 "OIL TEMP" or "No ECU Comms"
 
     # Register #665: DTC P0134 Fault Active Counter
     # This is a value between 0 and 5. If it is 5, then the DTC was active during
@@ -404,10 +398,18 @@ DEFAULT_PICKUP_VOLTAGE = 190
 class HPanel(controller.GeneratorController):
 
     #---------------------HPanel::__init__--------------------------------------
-    def __init__(self, log, newinstall = False, simulation = False, simulationfile = None, message = None, feedback = None, ConfigFilePath = None):
+    def __init__(self,
+        log,
+        newinstall = False,
+        simulation = False,
+        simulationfile = None,
+        message = None,
+        feedback = None,
+        ConfigFilePath = None,
+        config = None):
 
         # call parent constructor
-        super(HPanel, self).__init__(log, newinstall = newinstall, simulation = simulation, simulationfile = simulationfile, message = message, feedback = feedback, ConfigFilePath = ConfigFilePath)
+        super(HPanel, self).__init__(log, newinstall = newinstall, simulation = simulation, simulationfile = simulationfile, message = message, feedback = feedback, ConfigFilePath = ConfigFilePath, config = config)
 
         self.LastEngineState = ""
         self.CurrentAlarmState = False
@@ -462,26 +464,20 @@ class HPanel(controller.GeneratorController):
     # read conf file, used internally, not called by genmon
     # return True on success, else False
     def GetConfig(self):
-        ConfigSection = "GenMon"
-        try:
-            # read config file
-            config = RawConfigParser()
-            # config parser reads from current directory, when running form a cron tab this is
-            # not defined so we specify the full path
-            config.read(self.ConfigFilePath + 'genmon.conf')
 
-            if config.has_option(ConfigSection, 'address'):
-                self.Address = int(config.get(ConfigSection, 'address'),16)     # modbus address
+        try:
+            if self.config.HasOption('address'):
+                self.Address = int(self.config.ReadValue('address'),16)     # modbus address
             else:
                 self.Address = 0x64
 
-            if config.has_option(ConfigSection, 'voltageconfiguration'):
-                self.VoltageConfig = config.get(ConfigSection, 'voltageconfiguration')
+            if self.config.HasOption('voltageconfiguration'):
+                self.VoltageConfig = self.config.ReadValue('voltageconfiguration')
             else:
                 self.VoltageConfig = "277/480"
 
-            if config.has_option(ConfigSection, 'nominalbattery'):
-                self.NominalBatteryVolts = int(config.get(ConfigSection, 'nominalbattery'))
+            if self.config.HasOption('nominalbattery'):
+                self.NominalBatteryVolts = int(self.config.ReadValue('nominalbattery'))
             else:
                 self.NominalBatteryVolts = 24
 
@@ -564,7 +560,7 @@ class HPanel(controller.GeneratorController):
         # TODO this should be determined by reading the hardware if possible.
         if self.NominalFreq == "Unknown" or not len(self.NominalFreq):
             self.NominalFreq = "60"
-            self.AddItemToConfFile("nominalfrequency", self.NominalFreq)
+            self.config.WriteValue("nominalfrequency", self.NominalFreq)
 
         # This is not correct for 50Hz models
         if self.NominalRPM == "Unknown" or not len(self.NominalRPM):
@@ -572,19 +568,19 @@ class HPanel(controller.GeneratorController):
                 self.NominalRPM = "1500"
             else:
                 self.NominalRPM = "1800"
-            self.AddItemToConfFile("nominalrpm", self.NominalRPM)
+            self.config.WriteValue("nominalrpm", self.NominalRPM)
 
         if self.NominalKW == "Unknown" or not len(self.NominalKW):
             self.NominalKW = "550"
-            self.AddItemToConfFile("nominalkw", self.NominalKW)
+            self.config.WriteValue("nominalkw", self.NominalKW)
 
         if self.Model == "Unknown" or not len(self.Model):
             self.Model = "Generac Generic H-100 Industrial Generator"
-            self.AddItemToConfFile("model", self.Model)
+            self.config.WriteValue("model", self.Model)
 
         if self.FuelType == "Unknown" or not len(self.FuelType):
             self.FuelType = "Diesel"
-            self.AddItemToConfFile("fueltype", self.FuelType)
+            self.config.WriteValue("fueltype", self.FuelType)
 
         return
     #-------------HPanel:GetParameterString-------------------------------------
