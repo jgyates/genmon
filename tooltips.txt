@@ -60,6 +60,7 @@ voltageconfiguration = The voltage configuration of the industrial generator.
 nominalbattery = 12 for one battery, 24 for two batteries
 controllertype = Set to h_100 for H-100 mode, otherwise the software will default to Nexus/Evolution Mode
 autofeedback = If enabled, an email will be sent to the software maintainer if critical data is missing in the software for your generator. The email will contain the contents of the generator registers. Enabling this option helps support the widest possible set of features and supported generators.
+gensyslog = If enabled, changes in the generator status or utility line status will be written the the system log (/var/log/syslog)
 
 [generac_evo_nexus]
 0000=Product line

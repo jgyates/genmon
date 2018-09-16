@@ -115,6 +115,7 @@ class Loader(mysupport.MySupport):
             for Module in ModuleList:
                 if not self.LibraryIsInstalled(Module[0]):
                     self.LogInfo("Warning: required library " + Module[1] + " not installed. Attempting to install....")
+                    self.LogConsole("Warning: required library " + Module[1] + " not installed. Attempting to install....")
                     if not self.InstallLibrary(Module[1]):
                         self.LogInfo("Error: unale to install library " + Module[1])
                         ErrorOccured = True
@@ -130,7 +131,6 @@ class Loader(mysupport.MySupport):
             my_module = importlib.import_module(libraryname)
             return True
         except Exception as e1:
-            self.LogConsole(str(e1))
             return False
 
     #---------------------------------------------------------------------------
@@ -141,12 +141,12 @@ class Loader(mysupport.MySupport):
             output, _error = process.communicate()
 
             if _error:
-                self.LogConsole("Error: " + str(_error))
+                self.LogConsole("Error in InstallLibrary: " + libraryname + ": " + str(_error))
             rc = process.returncode
             return True
 
         except Exception as e1:
-            self.LogInfo("Error loading module: " + str(e1), LogLine = True)
+            self.LogInfo("Error installing module: " + libraryname + ": "+ str(e1), LogLine = True)
             return False
     #---------------------------------------------------------------------------
     def LogInfo(self, message, LogLine = False):
