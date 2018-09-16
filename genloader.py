@@ -114,9 +114,9 @@ class Loader(mysupport.MySupport):
             ErrorOccured = False
             for Module in ModuleList:
                 if not self.LibraryIsInstalled(Module[0]):
-                    self.LogInfo("Warning: required library " + line + " not installed. Attempting to install....")
+                    self.LogInfo("Warning: required library " + Module[1] + " not installed. Attempting to install....")
                     if not self.InstallLibrary(Module[1]):
-                        self.LogInfo("Error: unale to install library " + line)
+                        self.LogInfo("Error: unale to install library " + Module[1])
                         ErrorOccured = True
             return not ErrorOccured
         except Exception as e1:
