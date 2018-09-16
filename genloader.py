@@ -170,15 +170,15 @@ class Loader(mysupport.MySupport):
                         self.LogInfo("Enable to find file " + self.ModulePath + self.CachedConfig[Module]["module"])
                         ErrorOccured = True
 
-                    # validate config file and if it is not there then copy it.
-                    if not self.CachedConfig[Module]["conffile"] == None and len(self.CachedConfig[Module]["conffile"]):
-                        if not os.path.isfile(self.ConfigFilePath + self.CachedConfig[Module]["conffile"]):
-                            if os.path.isfile(self.ModulePath + self.CachedConfig[Module]["conffile"]):
-                                self.LogInfo("Copying " + self.CachedConfig[Module]["conffile"] + " to " + self.ConfigFilePath )
-                                copyfile(self.ModulePath + self.CachedConfig[Module]["conffile"] , self.ConfigFilePath + self.CachedConfig[Module]["conffile"])
-                            else:
-                                self.LogInfo("Enable to find config file " + self.ModulePath + self.CachedConfig[Module]["conffile"])
-                                ErrorOccured = True
+                # validate config file and if it is not there then copy it.
+                if not self.CachedConfig[Module]["conffile"] == None and len(self.CachedConfig[Module]["conffile"]):
+                    if not os.path.isfile(self.ConfigFilePath + self.CachedConfig[Module]["conffile"]):
+                        if os.path.isfile(self.ModulePath + self.CachedConfig[Module]["conffile"]):
+                            self.LogInfo("Copying " + self.CachedConfig[Module]["conffile"] + " to " + self.ConfigFilePath )
+                            copyfile(self.ModulePath + self.CachedConfig[Module]["conffile"] , self.ConfigFilePath + self.CachedConfig[Module]["conffile"])
+                        else:
+                            self.LogInfo("Enable to find config file " + self.ModulePath + self.CachedConfig[Module]["conffile"])
+                            ErrorOccured = True
             except Exception as e1:
                 self.LogInfo("Error validating config for " + Module + " : " + str(e1), LogLine = True)
                 return False
