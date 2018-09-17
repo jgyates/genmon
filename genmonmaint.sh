@@ -19,6 +19,20 @@ function copyconffiles() {
     sudo cp "$genmondir/*.conf" /etc
 }
 #-------------------------------------------------------------------
+# This function will update the pip libraries used
+function updatelibraries() {
+  sudo pip install crcmod -U
+  sudo pip install configparser -U
+  sudo pip install pyserial -U
+  sudo pip install Flask -U
+  sudo pip install pyowm -U
+  sudo pip install pytz -U
+  sudo pip install pyopenssl  -U
+  sudo pip install twilio -U
+  sudo pip install chump -U
+  sudo pip install paho-mqtt -U
+}
+#-------------------------------------------------------------------
 # This function will install the required libraries for genmon
 function installgenmon() {
 
@@ -121,12 +135,15 @@ case "$1" in
   updatenp)
     updategenmon
     ;;
+  updatelibs)
+    updatelibraries
+    ;;
   installnp)        # install with no prompt
     installgenmon 1
     updatecrontab
     ;;
   *)
-    echo "No valid command given. Specify 'update' or 'install' on command line"
+    echo "No valid command given. Specify 'update', 'install' or 'updatelibs' on command line"
     #
     ;;
 esac
