@@ -55,6 +55,7 @@ MAIL_CONFIG = "/etc/mymail.conf"
 MAIL_SECTION = "MyMail"
 GENMON_CONFIG = "/etc/genmon.conf"
 GENMON_SECTION = "GenMon"
+GENLOADER_CONFIG = "/etc/genloader.conf"
 
 Closing = False
 Restarting = False
@@ -305,6 +306,8 @@ def ReadSingleConfigValue(filename, section, type, entry, default, bounds = None
             config = genmon_config
         elif filename == MAIL_CONFIG:
             config = mymail_config
+        elif filename == GENLOADER_CONFIG:
+            config = genloader_config
         else:
             LogError("Unknow file in UpdateConfigFile: " + filename)
             return default
@@ -385,6 +388,7 @@ def ReadSettingsFromFile():
     ## 6th: validation rule if type is string or int (see below). If type is list, this is a comma delimited list of options
     ## 7th: Config file
     ## 8th: config file section
+    ## 9th: only for genloader (config file entry name)
     ## Validation Rules:
     ##         A rule must be in this format rule:param where rule is the name of the rule and param is a rule parameter,
     ##         for example minmax:10:50 will use the minmax rule with two arguments, 10 and 50.
@@ -435,6 +439,7 @@ def ReadSettingsFromFile():
                 "metricweather"  : ['boolean', 'Use Metric Units', 24, False, "", "", GENMON_CONFIG, GENMON_SECTION],
                 "optimizeforslowercpu"  : ['boolean', 'Optimize for slower CPUs', 25, False, "", "", GENMON_CONFIG, GENMON_SECTION],
                 "autofeedback" : ['boolean', 'Automated Feedback', 29, False, "", "", GENMON_CONFIG, GENMON_SECTION],
+                "gensyslog"  : ['boolean', 'Status Changes to System Log', 30, False, "", "", GENLOADER_CONFIG, "gensyslog", "enable"],
 
                 #"model" : ['string', 'Generator Model', 100, "Generic Evolution Air Cooled", "", 0],
                 "nominalfrequency": ['list', 'Rated Frequency', 101, "60", "", "50,60", GENMON_CONFIG, GENMON_SECTION],
@@ -479,6 +484,7 @@ def ReadSettingsFromFile():
                 "weatherkey" : ['string', 'Openweathermap.org API key', 501, "", "", "required minmax:4:50", GENMON_CONFIG, GENMON_SECTION],
                 "weatherlocation" : ['string', 'Location to report weather', 502, "", "", "required minmax:4:50", GENMON_CONFIG, GENMON_SECTION],
                 "minimumweatherinfo"  : ['boolean', 'Display Minimum Weather Info', 504, True, "", "", GENMON_CONFIG, GENMON_SECTION]
+
                 }
 
     if ControllerType == 'h_100':
@@ -493,8 +499,13 @@ def ReadSettingsFromFile():
         for entry, List in ConfigSettings.items():
             if List[6] == GENMON_CONFIG:
                 (ConfigSettings[entry])[3] = ReadSingleConfigValue(GENMON_CONFIG, "GenMon", List[0], entry, List[3], List[5])
-            else:
+            elif List[6] == MAIL_CONFIG:
                 (ConfigSettings[entry])[3] = ReadSingleConfigValue(MAIL_CONFIG, "MyMail", List[0], entry, List[3])
+            elif List[6] == GENLOADER_CONFIG:
+                # NOTE: since each key in the ConfigSettings dict must be unique and genloader uses multiple sections
+                # with the same conf file entry name we use position 9 [offset 8] to get the entry name and use the key
+                # for the tooltip name
+                (ConfigSettings[entry])[3] = ReadSingleConfigValue(GENLOADER_CONFIG, List[7], List[0], List[8], List[3])
 
         GetToolTips(ConfigSettings)
     except Exception as e1:
@@ -552,7 +563,10 @@ def GetToolTips(ConfigSettings):
     try:
         pathtofile = os.path.dirname(os.path.realpath(__file__))
         for entry, List in ConfigSettings.items():
-            (ConfigSettings[entry])[4] = CachedToolTips[entry.lower()]
+            try:
+                (ConfigSettings[entry])[4] = CachedToolTips[entry.lower()]
+            except:
+                pass    # TODO
 
     except Exception as e1:
         LogErrorLine("Error in GetToolTips: " + str(e1))
@@ -593,10 +607,13 @@ def UpdateConfigFile(FileName, section, Entry, Value):
             config = genmon_config
         elif FileName == MAIL_CONFIG:
             config = mymail_config
+        elif FileName == GENLOADER_CONFIG:
+            config = genloader_config
         else:
             LogError("Unknow file in UpdateConfigFile: " + FileName)
             return False
 
+        config.SetSection(section)
         return config.WriteValue(Entry, Value)
 
     except Exception as e1:
@@ -693,24 +710,24 @@ def LoadConfig():
         # user name and password require usehttps = True
         if bUseSecureHTTP:
             if genmon_config.HasOption('http_user'):
-                HTTPAuthUser = genmon_config.ReadValue('http_user')
+                HTTPAuthUser = genmon_config.ReadValue('http_user', default = "")
                 HTTPAuthUser = HTTPAuthUser.strip()
                  # No user name or pass specified, disable
                 if HTTPAuthUser == "":
                     HTTPAuthUser = None
                     HTTPAuthPass = None
                 elif genmon_config.HasOption('http_pass'):
-                    HTTPAuthPass = genmon_config.ReadValue('http_pass')
+                    HTTPAuthPass = genmon_config.ReadValue('http_pass', default = "")
                     HTTPAuthPass = HTTPAuthPass.strip()
                 if HTTPAuthUser != None and HTTPAuthPass != None:
                     if genmon_config.HasOption('http_user_ro'):
-                        HTTPAuthUser_RO = genmon_config.ReadValue('http_user_ro')
+                        HTTPAuthUser_RO = genmon_config.ReadValue('http_user_ro', default = "")
                         HTTPAuthUser_RO = HTTPAuthUser_RO.strip()
                         if HTTPAuthUser_RO == "":
                             HTTPAuthUser_RO = None
                             HTTPAuthPass_RO = None
                         elif genmon_config.HasOption('http_pass_ro'):
-                            HTTPAuthPass_RO = genmon_config.ReadValue('http_pass_ro')
+                            HTTPAuthPass_RO = genmon_config.ReadValue('http_pass_ro', default = "")
                             HTTPAuthPass_RO = HTTPAuthPass_RO.strip()
 
             HTTPSPort = genmon_config.ReadValue('https_port', return_type = int, default = 443)
@@ -829,6 +846,7 @@ if __name__ == "__main__":
 
     genmon_config = myconfig.MyConfig(filename = GENMON_CONFIG, section = GENMON_SECTION, log = console)
     mymail_config = myconfig.MyConfig(filename = MAIL_CONFIG, section = MAIL_SECTION, log = console)
+    genloader_config = myconfig.MyConfig(filename = GENLOADER_CONFIG, section = "genmon", log = console)
 
     AppPath = sys.argv[0]
     if not LoadConfig():
@@ -837,6 +855,7 @@ if __name__ == "__main__":
 
     genmon_config.log = log
     mymail_config.log = log
+    genloader_config.log = log
 
     LogError("Starting " + AppPath + ", Port:" + str(HTTPPort) + ", Secure HTTP: " + str(bUseSecureHTTP) + ", SelfSignedCert: " + str(bUseSelfSignedCert))
 

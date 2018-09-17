@@ -175,7 +175,7 @@ class Evolution(controller.GeneratorController):
                     "0258" : [2, 0],     #  Unknown (EvoLC, NexusLC) Some type of setting
                     "025a" : [2, 0],     #  Unknown (EvoLC)
                     "005c" : [2, 0],     # Unknown , possible model reg on EvoLC
-                    "05ed" : [2, 0],     # Unknown sensor 4, changes between 35, 37, 39 (Ambient Temp Sensor) EvoLC
+                    "05ed" : [2, 0],     # Ambient Temp Sensor (EvoLC)
                     "05ee" : [2, 0],     # (CT on Battery Charger)
                     "05f2" : [2, 0],     # Unknown (EvoLC)
                     "05f3" : [2, 0],     # EvoAC, EvoLC, counter of some type
