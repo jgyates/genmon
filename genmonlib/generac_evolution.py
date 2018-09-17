@@ -131,7 +131,7 @@ class Evolution(controller.GeneratorController):
                     "0058" : [2, 0],     # CT Sensor (EvoLC)
                     "0059" : [2, 0],     # Rated Volts (EvoLC)
                     "005a" : [2, 0],     # Rated Hz (EvoLC)
-                    "005d" : [2, 0],     # Unknown sensor 3, Moves between 0x55 - 0x58 continuously even when engine off
+                    "005d" : [2, 0],     # Fuel Pressure Sensor, Moves between 0x55 - 0x58 continuously even when engine off
                     "005e" : [2, 0],     # Total engine time in minutes High (EvoLC)
                     "005f" : [2, 0],     # Total engine time in minutes Low  (EvoLC)
                     "000d" : [2, 0],     # Bit changes when the controller is updating registers.
@@ -1732,6 +1732,7 @@ class Evolution(controller.GeneratorController):
             Sensors["Battery Charger Sensor"] = self.GetParameter("05ee", Divider = 100.0)
             Sensors["Battery Status (Sensor)"] = self.GetBatteryStatusAlternate()
 
+            Sensors["Fuel Pressure Sensor"] = self.GetParameter("005d")
              # get UKS
             Value = self.GetUnknownSensor("05ed")
             if len(Value):
