@@ -16,7 +16,7 @@ except:
     print("\n\nThis program requires the Flask library. Please see the project documentation at https://github.com/jgyates/genmon.\n")
     sys.exit(2)
 
-import sys, signal, os, socket, atexit, time, subprocess, json, threading, signal, errno
+import sys, signal, os, socket, atexit, time, subprocess, json, threading, signal, errno, collections
 
 try:
     from genmonlib import mylog, myclient, myconfig
@@ -203,7 +203,7 @@ def ProcessCommand(command):
         elif command in ["settings"]:
             if session.get('write_access', True):
                 data =  ReadSettingsFromFile()
-                return jsonify(data)
+                return json.dumps(data, sort_keys = False)
             else:
                 return "Access denied"
 
@@ -388,7 +388,7 @@ def ReadSettingsFromFile():
     ## 6th: validation rule if type is string or int (see below). If type is list, this is a comma delimited list of options
     ## 7th: Config file
     ## 8th: config file section
-    ## 9th: only for genloader (config file entry name)
+    ## 9th: config file entry name
     ## Validation Rules:
     ##         A rule must be in this format rule:param where rule is the name of the rule and param is a rule parameter,
     ##         for example minmax:10:50 will use the minmax rule with two arguments, 10 and 50.
@@ -418,98 +418,95 @@ def ReadSettingsFromFile():
     ##             UnixDevice: Unix file path starting with /dev/.
 
 
-    ConfigSettings =  {
-                "sitename" : ['string', 'Site Name', 1, "SiteName", "", "required minmax:4:50", GENMON_CONFIG, GENMON_SECTION],
-                "port" : ['string', 'Port for Serial Communication', 2, "/dev/serial0", "", "required UnixDevice", GENMON_CONFIG, GENMON_SECTION],
-                # This option is not displayed as it will break the link between genmon and genserv
-                #"server_port" : ['int', 'Server Port', 5, 9082, "", 0, GENMON_CONFIG, GENMON_SECTION],
-                # this option is not displayed as this will break the modbus comms, only for debugging
-                #"address" : ['string', 'Modbus slave address', 6, "9d", "", 0 , GENMON_CONFIG, GENMON_SECTION],
-                #"loglocation" : ['string', 'Log Directory', 7, "/var/log/", "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION],
-                #"enabledebug" : ['boolean', 'Enable Debug', 14, False, "", 0, GENMON_CONFIG, GENMON_SECTION],
-                # These settings are not displayed as the auto-detect controller will set these
-                # these are only to be used to override the auto-detect
-                #"uselegacysetexercise" : ['boolean', 'Use Legacy Exercise Time', 43, False, "", 0, GENMON_CONFIG, GENMON_SECTION],
-                #"liquidcooled" : ['boolean', 'Liquid Cooled', 41, False, "", 0, GENMON_CONFIG, GENMON_SECTION],
-                #"evolutioncontroller" : ['boolean', 'Evolution Controler', 42, True, "", 0, GENMON_CONFIG, GENMON_SECTION],
-                # remove outage log, this will always be in the same location
-                #"outagelog" : ['string', 'Outage Log', 8, "/home/pi/genmon/outage.txt", "", 0, GENMON_CONFIG, GENMON_SECTION],
-                "syncdst" : ['boolean', 'Sync Daylight Savings Time', 22, False, "", "", GENMON_CONFIG, GENMON_SECTION],
-                "synctime" : ['boolean', 'Sync Time', 23, False, "", "", GENMON_CONFIG, GENMON_SECTION],
-                "metricweather"  : ['boolean', 'Use Metric Units', 24, False, "", "", GENMON_CONFIG, GENMON_SECTION],
-                "optimizeforslowercpu"  : ['boolean', 'Optimize for slower CPUs', 25, False, "", "", GENMON_CONFIG, GENMON_SECTION],
-                "autofeedback" : ['boolean', 'Automated Feedback', 29, False, "", "", GENMON_CONFIG, GENMON_SECTION],
-                "gensyslog"  : ['boolean', 'Status Changes to System Log', 30, False, "", "", GENLOADER_CONFIG, "gensyslog", "enable"],
+    ConfigSettings =  collections.OrderedDict()
+    ConfigSettings["sitename"] = ['string', 'Site Name', 1, "SiteName", "", "required minmax:4:50", GENMON_CONFIG, GENMON_SECTION, "sitename"]
+    ConfigSettings["port"] = ['string', 'Port for Serial Communication', 2, "/dev/serial0", "", "required UnixDevice", GENMON_CONFIG, GENMON_SECTION, "port"]
+    # This option is not displayed as it will break the link between genmon and genserv
+    #ConfigSettings["server_port"] = ['int', 'Server Port', 5, 9082, "", 0, GENMON_CONFIG, GENMON_SECTION,"server_port"]
+    # this option is not displayed as this will break the modbus comms, only for debugging
+    #ConfigSettings["address"] = ['string', 'Modbus slave address', 6, "9d", "", 0 , GENMON_CONFIG, GENMON_SECTION, "address"]
+    #ConfigSettings["loglocation"] = ['string', 'Log Directory', 7, "/var/log/", "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "loglocation"]
+    #ConfigSettings["enabledebug"] = ['boolean', 'Enable Debug', 14, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "enabledebug"]
+    # These settings are not displayed as the auto-detect controller will set these
+    # these are only to be used to override the auto-detect
+    #ConfigSettings["uselegacysetexercise"] = ['boolean', 'Use Legacy Exercise Time', 43, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "uselegacysetexercise"]
+    #ConfigSettings["liquidcooled"] = ['boolean', 'Liquid Cooled', 41, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "liquidcooled"]
+    #ConfigSettings["evolutioncontroller"] = ['boolean', 'Evolution Controler', 42, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "evolutioncontroller"]
+    # remove outage log, this will always be in the same location
+    #ConfigSettings["outagelog"] = ['string', 'Outage Log', 8, "/home/pi/genmon/outage.txt", "", 0, GENMON_CONFIG, GENMON_SECTION, "outagelog"]
 
-                #"model" : ['string', 'Generator Model', 100, "Generic Evolution Air Cooled", "", 0],
-                "nominalfrequency": ['list', 'Rated Frequency', 101, "60", "", "50,60", GENMON_CONFIG, GENMON_SECTION],
-                "nominalrpm" : ['int', 'Nominal RPM', 102, "3600", "", "required digits range:1500:4000", GENMON_CONFIG, GENMON_SECTION],
-                "nominalkw": ['int', 'Maximum kW Output', 103, "22", "", "required digits range:0:1000", GENMON_CONFIG, GENMON_SECTION],
-                "fueltype" : ['list', 'Fuel Type', 104, "Natural Gas", "", "Natural Gas,Propane,Diesel,Gasoline", GENMON_CONFIG, GENMON_SECTION],
-                "tanksize" : ['int', 'Fuel Tank Size', 105, "0", "", "required digits range:0:2000", GENMON_CONFIG, GENMON_SECTION],
-                #
-                "displayunknown" : ['boolean', 'Display Unknown Sensors', 111, False, "", "", GENMON_CONFIG, GENMON_SECTION],
+    if ControllerType != 'h_100':
+        ConfigSettings["disableoutagecheck"] = ['boolean', 'Do Not Check for Outages', 17, False, "", "", GENMON_CONFIG, GENMON_SECTION, "disableoutagecheck"]
+        
+    ConfigSettings["syncdst"] = ['boolean', 'Sync Daylight Savings Time', 22, False, "", "", GENMON_CONFIG, GENMON_SECTION, "syncdst"]
+    ConfigSettings["synctime"] = ['boolean', 'Sync Time', 23, False, "", "", GENMON_CONFIG, GENMON_SECTION, "synctime"]
+    ConfigSettings["metricweather"] = ['boolean', 'Use Metric Units', 24, False, "", "", GENMON_CONFIG, GENMON_SECTION, "metricweather"]
+    ConfigSettings["optimizeforslowercpu"] = ['boolean', 'Optimize for slower CPUs', 25, False, "", "", GENMON_CONFIG, GENMON_SECTION, "optimizeforslowercpu"]
+    ConfigSettings["autofeedback"] = ['boolean', 'Automated Feedback', 29, False, "", "", GENMON_CONFIG, GENMON_SECTION, "autofeedback"]
+    ConfigSettings["gensyslog"] = ['boolean', 'Status Changes to System Log', 30, False, "", "", GENLOADER_CONFIG, "gensyslog", "enable"]
 
-                # These do not appear to work on reload, some issue with Flask
-                "usehttps" : ['boolean', 'Use Secure Web Settings', 200, False, "", "", GENMON_CONFIG, GENMON_SECTION],
-                "useselfsignedcert" : ['boolean', 'Use Self-signed Certificate', 203, True, "", "", GENMON_CONFIG, GENMON_SECTION],
-                "keyfile" : ['string', 'https Key File', 204, "", "", "UnixFile", GENMON_CONFIG, GENMON_SECTION],
-                "certfile" : ['string', 'https Certificate File', 205, "", "", "UnixFile", GENMON_CONFIG, GENMON_SECTION],
-                "http_user" : ['string', 'Web Username', 206, "", "", "minmax:4:50", GENMON_CONFIG, GENMON_SECTION],
-                "http_pass" : ['string', 'Web Password', 207, "", "", "minmax:4:50", GENMON_CONFIG, GENMON_SECTION],
-                "http_user_ro" : ['string', 'Limited Rights User Username', 208, "", "", "minmax:4:50", GENMON_CONFIG, GENMON_SECTION],
-                "http_pass_ro" : ['string', 'Limited Rights User Password', 209, "", "", "minmax:4:50", GENMON_CONFIG, GENMON_SECTION],
-                "http_port" : ['int', 'Port of WebServer', 210, 8000, "", "required digits", GENMON_CONFIG, GENMON_SECTION],
-                "favicon" : ['string', 'FavIcon', 220, "", "", "minmax:8:255", GENMON_CONFIG, GENMON_SECTION],
-                # This does not appear to work on reload, some issue with Flask
-
-                #
-                #"disableemail" : ['boolean', 'Disable Email Usage', 300, True, "", "", MAIL_CONFIG, MAIL_SECTION],
-                "disablesmtp"  : ['boolean', 'Disable Sending Email', 300, False, "", "", MAIL_CONFIG],
-                "email_account" : ['string', 'Email Account', 301, "myemail@gmail.com", "", "minmax:3:50", MAIL_CONFIG, MAIL_SECTION],
-                "email_pw" : ['password', 'Email Password', 302, "password", "", "max:50", MAIL_CONFIG, MAIL_SECTION],
-                "sender_account" : ['string', 'Sender Account', 303, "no-reply@gmail.com", "", "email", MAIL_CONFIG, MAIL_SECTION],
-                # "email_recipient" : ['string', 'Email Recepient<br><small>(comma delimited)</small>', 105], # will be handled on the notification screen
-                "smtp_server" : ['string', 'SMTP Server <br><small>(leave emtpy to disable)</small>', 305, "smtp.gmail.com", "", "InternetAddress", MAIL_CONFIG, MAIL_SECTION],
-                "smtp_port" : ['int', 'SMTP Server Port', 307, 587, "", "digits", MAIL_CONFIG, MAIL_SECTION],
-                "ssl_enabled" : ['boolean', 'SMTP Server SSL Enabled', 308, False, "", "", MAIL_CONFIG, MAIL_SECTION],
-
-                "disableimap"  : ['boolean', 'Disable Receiving Email', 400, False, "", "", MAIL_CONFIG, MAIL_SECTION],
-                "imap_server" : ['string', 'IMAP Server <br><small>(leave emtpy to disable)</small>', 401, "imap.gmail.com", "", "InternetAddress", MAIL_CONFIG, MAIL_SECTION],
-                "readonlyemailcommands" : ['boolean', 'Disable Email Write Commands',402, False, "", "", GENMON_CONFIG, GENMON_SECTION],
-                "incoming_mail_folder" : ['string', 'Incoming Mail Folder<br><small>(if IMAP enabled)</small>', 403, "Generator", "", "minmax:1:1500", GENMON_CONFIG, GENMON_SECTION],
-                "processed_mail_folder" : ['string', 'Mail Processed Folder<br><small>(if IMAP enabled)</small>', 404, "Generator/Processed","", "minmax:1:255", GENMON_CONFIG, GENMON_SECTION],
-
-                "disableweather"  : ['boolean', 'Disable Weather Functionality', 500, False, "", "", GENMON_CONFIG, GENMON_SECTION],
-                "weatherkey" : ['string', 'Openweathermap.org API key', 501, "", "", "required minmax:4:50", GENMON_CONFIG, GENMON_SECTION],
-                "weatherlocation" : ['string', 'Location to report weather', 502, "", "", "required minmax:4:50", GENMON_CONFIG, GENMON_SECTION],
-                "minimumweatherinfo"  : ['boolean', 'Display Minimum Weather Info', 504, True, "", "", GENMON_CONFIG, GENMON_SECTION]
-
-                }
-
+    ConfigSettings["nominalfrequency"] = ['list', 'Rated Frequency', 101, "60", "", "50,60", GENMON_CONFIG, GENMON_SECTION, "nominalfrequency"]
+    ConfigSettings["nominalrpm"] = ['int', 'Nominal RPM', 102, "3600", "", "required digits range:1500:4000", GENMON_CONFIG, GENMON_SECTION, "nominalrpm"]
+    ConfigSettings["nominalkw"] = ['int', 'Maximum kW Output', 103, "22", "", "required digits range:0:1000", GENMON_CONFIG, GENMON_SECTION, "nominalkw"]
+    ConfigSettings["fueltype"] = ['list', 'Fuel Type', 104, "Natural Gas", "", "Natural Gas,Propane,Diesel,Gasoline", GENMON_CONFIG, GENMON_SECTION, "fueltype"]
+    ConfigSettings["tanksize"] = ['int', 'Fuel Tank Size', 105, "0", "", "required digits range:0:2000", GENMON_CONFIG, GENMON_SECTION, "tanksize"]
     if ControllerType == 'h_100':
         Choices = "120/208,120/240,230/400,240/415,277/480,347/600"
-        ConfigSettings["voltageconfiguration"] = ['list', 'Line to Neutral / Line to Line', 105, "277/480", "", Choices, GENMON_CONFIG, GENMON_SECTION]
-        ConfigSettings["nominalbattery"] = ['list', 'Nomonal Battery Voltage', 106, "24", "", "12,24", GENMON_CONFIG, GENMON_SECTION]
+        ConfigSettings["voltageconfiguration"] = ['list', 'Line to Neutral / Line to Line', 105, "277/480", "", Choices, GENMON_CONFIG, GENMON_SECTION, "voltageconfiguration"]
+        ConfigSettings["nominalbattery"] = ['list', 'Nomonal Battery Voltage', 106, "24", "", "12,24", GENMON_CONFIG, GENMON_SECTION, "nominalbattery"]
     else: #ControllerType == "generac_evo_nexus":
-        ConfigSettings["disableoutagecheck"] = ['boolean', 'Do Not Check for Outages', 17, False, "", "", GENMON_CONFIG, GENMON_SECTION]
-        ConfigSettings["enhancedexercise"] = ['boolean', 'Enhanced Exercise Time', 105, False, "", "", GENMON_CONFIG, GENMON_SECTION]
+        ConfigSettings["enhancedexercise"] = ['boolean', 'Enhanced Exercise Time', 105, False, "", "", GENMON_CONFIG, GENMON_SECTION, "enhancedexercise"]
+
+    ConfigSettings["displayunknown"] = ['boolean', 'Display Unknown Sensors', 111, False, "", "", GENMON_CONFIG, GENMON_SECTION, "displayunknown"]
+
+    # These do not appear to work on reload, some issue with Flask
+    ConfigSettings["usehttps"] = ['boolean', 'Use Secure Web Settings', 200, False, "", "", GENMON_CONFIG, GENMON_SECTION, "usehttps"]
+    ConfigSettings["useselfsignedcert"] = ['boolean', 'Use Self-signed Certificate', 203, True, "", "", GENMON_CONFIG, GENMON_SECTION, "useselfsignedcert"]
+    ConfigSettings["keyfile"] = ['string', 'https Key File', 204, "", "", "UnixFile", GENMON_CONFIG, GENMON_SECTION, "keyfile"]
+    ConfigSettings["certfile"] = ['string', 'https Certificate File', 205, "", "", "UnixFile", GENMON_CONFIG, GENMON_SECTION, "certfile"]
+    ConfigSettings["http_user"] = ['string', 'Web Username', 206, "", "", "minmax:4:50", GENMON_CONFIG, GENMON_SECTION, "http_user"]
+    ConfigSettings["http_pass"] = ['string', 'Web Password', 207, "", "", "minmax:4:50", GENMON_CONFIG, GENMON_SECTION, "http_pass"]
+    ConfigSettings["http_user_ro"] = ['string', 'Limited Rights User Username', 208, "", "", "minmax:4:50", GENMON_CONFIG, GENMON_SECTION, "http_user_ro"]
+    ConfigSettings["http_pass_ro"] = ['string', 'Limited Rights User Password', 209, "", "", "minmax:4:50", GENMON_CONFIG, GENMON_SECTION, "http_pass_ro"]
+    ConfigSettings["http_port"] = ['int', 'Port of WebServer', 210, 8000, "", "required digits", GENMON_CONFIG, GENMON_SECTION, "http_port"]
+    ConfigSettings["favicon"] = ['string', 'FavIcon', 220, "", "", "minmax:8:255", GENMON_CONFIG, GENMON_SECTION, "favicon"]
+    # This does not appear to work on reload, some issue with Flask
+
+    #
+    #ConfigSettings["disableemail"] = ['boolean', 'Disable Email Usage', 300, True, "", "", MAIL_CONFIG, MAIL_SECTION, "disableemail"]
+    ConfigSettings["disablesmtp"] = ['boolean', 'Disable Sending Email', 300, False, "", "", MAIL_CONFIG, MAIL_SECTION, "disablesmtp"]
+    ConfigSettings["email_account"] = ['string', 'Email Account', 301, "myemail@gmail.com", "", "minmax:3:50", MAIL_CONFIG, MAIL_SECTION, "email_account"]
+    ConfigSettings["email_pw"] = ['password', 'Email Password', 302, "password", "", "max:50", MAIL_CONFIG, MAIL_SECTION, "email_pw"]
+    ConfigSettings["sender_account"] = ['string', 'Sender Account', 303, "no-reply@gmail.com", "", "email", MAIL_CONFIG, MAIL_SECTION, "sender_account"]
+    # email_recipient setting will be handled on the notification screen
+    ConfigSettings["smtp_server"] = ['string', 'SMTP Server <br><small>(leave emtpy to disable)</small>', 305, "smtp.gmail.com", "", "InternetAddress", MAIL_CONFIG, MAIL_SECTION, "smtp_server"]
+    ConfigSettings["smtp_port"] = ['int', 'SMTP Server Port', 307, 587, "", "digits", MAIL_CONFIG, MAIL_SECTION, "smtp_port"]
+    ConfigSettings["ssl_enabled"] = ['boolean', 'SMTP Server SSL Enabled', 308, False, "", "", MAIL_CONFIG, MAIL_SECTION, "ssl_enabled"]
+
+    ConfigSettings["disableimap"] = ['boolean', 'Disable Receiving Email', 400, False, "", "", MAIL_CONFIG, MAIL_SECTION, "disableimap"]
+    ConfigSettings["imap_server"] = ['string', 'IMAP Server <br><small>(leave emtpy to disable)</small>', 401, "imap.gmail.com", "", "InternetAddress", MAIL_CONFIG, MAIL_SECTION, "imap_server"]
+    ConfigSettings["readonlyemailcommands"] = ['boolean', 'Disable Email Write Commands',402, False, "", "", GENMON_CONFIG, GENMON_SECTION, "readonlyemailcommands"]
+    ConfigSettings["incoming_mail_folder"] = ['string', 'Incoming Mail Folder<br><small>(if IMAP enabled)</small>', 403, "Generator", "", "minmax:1:1500", GENMON_CONFIG, GENMON_SECTION, "incoming_mail_folder"]
+    ConfigSettings["processed_mail_folder"] = ['string', 'Mail Processed Folder<br><small>(if IMAP enabled)</small>', 404, "Generator/Processed","", "minmax:1:255", GENMON_CONFIG, GENMON_SECTION, "processed_mail_folder"]
+
+    ConfigSettings["disableweather"] = ['boolean', 'Disable Weather Functionality', 500, False, "", "", GENMON_CONFIG, GENMON_SECTION, "disableweather"]
+    ConfigSettings["weatherkey"] = ['string', 'Openweathermap.org API key', 501, "", "", "required minmax:4:50", GENMON_CONFIG, GENMON_SECTION, "weatherkey"]
+    ConfigSettings["weatherlocation"] = ['string', 'Location to report weather', 502, "", "", "required minmax:4:50", GENMON_CONFIG, GENMON_SECTION, "weatherlocation"]
+    ConfigSettings["minimumweatherinfo"] = ['boolean', 'Display Minimum Weather Info', 504, True, "", "", GENMON_CONFIG, GENMON_SECTION, "minimumweatherinfo"]
+
     try:
         # Get all the config values
         for entry, List in ConfigSettings.items():
             if List[6] == GENMON_CONFIG:
-                (ConfigSettings[entry])[3] = ReadSingleConfigValue(GENMON_CONFIG, "GenMon", List[0], entry, List[3], List[5])
+                (ConfigSettings[entry])[3] = ReadSingleConfigValue(GENMON_CONFIG, "GenMon", List[0], List[8], List[3], List[5])
             elif List[6] == MAIL_CONFIG:
-                (ConfigSettings[entry])[3] = ReadSingleConfigValue(MAIL_CONFIG, "MyMail", List[0], entry, List[3])
+                (ConfigSettings[entry])[3] = ReadSingleConfigValue(MAIL_CONFIG, "MyMail", List[0], List[8], List[3])
             elif List[6] == GENLOADER_CONFIG:
-                # NOTE: since each key in the ConfigSettings dict must be unique and genloader uses multiple sections
-                # with the same conf file entry name we use position 9 [offset 8] to get the entry name and use the key
-                # for the tooltip name
                 (ConfigSettings[entry])[3] = ReadSingleConfigValue(GENLOADER_CONFIG, List[7], List[0], List[8], List[3])
 
         GetToolTips(ConfigSettings)
     except Exception as e1:
-        LogErrorLine("Error in ReadSettingsFromFile: " + str(e1))
+        LogErrorLine("Error in ReadSettingsFromFile: " + entry + ": "+ str(e1))
 
     return ConfigSettings
 
