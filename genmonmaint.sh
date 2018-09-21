@@ -32,6 +32,20 @@ function updatelibraries() {
   sudo pip install chump -U
   sudo pip install paho-mqtt -U
 }
+
+#-------------------------------------------------------------------
+# This function will install rpirtscts program needed for the LTE modem
+function installrpirtscts() {
+    echo "Installing rpirtscts..."
+    pushd
+    cd ~
+    git clone git://github.com/mholling/rpirtscts.git
+    cd rpirtscts
+    make
+    sudo cp ./rpirtscts /usr/local/bin/rpirtscts
+    echo "Finished installing rpirtscts."
+    popd
+}
 #-------------------------------------------------------------------
 # This function will install the required libraries for genmon
 function installgenmon() {
@@ -51,6 +65,7 @@ function installgenmon() {
     sudo pip install paho-mqtt
     sudo chmod 775 "$genmondir/startgenmon.sh"
     sudo chmod 775 "$genmondir/genmonmaint.sh"
+    installrpirtscts
 
     if [ -z "$1" ]    # Is parameter #1 zero length?
         then

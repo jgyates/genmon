@@ -565,6 +565,7 @@ except Exception as e1:
     sys.exit(1)
 
 class LTEPiHat(MyModem):
+    # https://github.com/mholling/rpirtscts is required
     #---------------------LTEPiHat::__init__------------------------------------
     def __init__(self,
         port = "/dev/ttyAMA0" ,
