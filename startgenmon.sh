@@ -21,7 +21,7 @@ case "$1" in
     ;;
   *)
     #
-    echo "Invalid command."
+    echo "Invalid command. Valid commands are start, stop, restart or hardstop."
     ;;
 esac
 
