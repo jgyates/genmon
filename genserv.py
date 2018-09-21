@@ -234,7 +234,7 @@ def ProcessCommand(command):
         else:
             return render_template('command_template.html', command = command)
     except Exception as e1:
-        LogErrorLine("Error in Process Command: " + str(e1))
+        LogErrorLine("Error in Process Command: " + command + ": " + str(e1))
         return render_template('command_template.html', command = command)
 
 #-------------------------------------------------------------------------------
@@ -389,6 +389,7 @@ def ReadSettingsFromFile():
     ## 7th: Config file
     ## 8th: config file section
     ## 9th: config file entry name
+    ## 10th: New Section Name
     ## Validation Rules:
     ##         A rule must be in this format rule:param where rule is the name of the rule and param is a rule parameter,
     ##         for example minmax:10:50 will use the minmax rule with two arguments, 10 and 50.
@@ -437,7 +438,7 @@ def ReadSettingsFromFile():
 
     if ControllerType != 'h_100':
         ConfigSettings["disableoutagecheck"] = ['boolean', 'Do Not Check for Outages', 17, False, "", "", GENMON_CONFIG, GENMON_SECTION, "disableoutagecheck"]
-        
+
     ConfigSettings["syncdst"] = ['boolean', 'Sync Daylight Savings Time', 22, False, "", "", GENMON_CONFIG, GENMON_SECTION, "syncdst"]
     ConfigSettings["synctime"] = ['boolean', 'Sync Time', 23, False, "", "", GENMON_CONFIG, GENMON_SECTION, "synctime"]
     ConfigSettings["metricweather"] = ['boolean', 'Use Metric Units', 24, False, "", "", GENMON_CONFIG, GENMON_SECTION, "metricweather"]

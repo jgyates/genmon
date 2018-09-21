@@ -1022,6 +1022,7 @@ class GeneratorController(mysupport.MySupport):
         # if log file is empty or does not exist, make a zero entry in log to denote start of collection
         if not os.path.isfile(self.PowerLog) or os.path.getsize(self.PowerLog) == 0:
             TimeStamp = datetime.datetime.now().strftime('%x %X')
+            self.LogError("Creating Power Log: " + self.PowerLog)
             self.LogToFile(self.PowerLog, TimeStamp, "0.0")
 
         LastValue = 0.0
@@ -1069,6 +1070,8 @@ class GeneratorController(mysupport.MySupport):
             return DefaultReturn
         try:
             FuelUsed = self.GetPowerHistory("power_log_json=0,fuel", NoReduce = True)
+            if FuelUsed == "Unknown" or not len(FuelUsed):
+                return DefaultReturn
             FuelUsed = self.removeAlpha(FuelUsed)
             FuelLeft = float(self.TankSize) - float(FuelUsed)
             if FuelLeft < 0:
