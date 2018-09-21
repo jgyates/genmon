@@ -115,7 +115,6 @@ class Loader(mysupport.MySupport):
             for Module in ModuleList:
                 if not self.LibraryIsInstalled(Module[0]):
                     self.LogInfo("Warning: required library " + Module[1] + " not installed. Attempting to install....")
-                    self.LogConsole("Warning: required library " + Module[1] + " not installed. Attempting to install....")
                     if not self.InstallLibrary(Module[1]):
                         self.LogInfo("Error: unable to install library " + Module[1])
                         ErrorOccured = True
@@ -141,7 +140,7 @@ class Loader(mysupport.MySupport):
             output, _error = process.communicate()
 
             if _error:
-                self.LogConsole("Error in InstallLibrary: " + libraryname + ": " + str(_error))
+                self.LogInfo("Error in InstallLibrary using pip : " + libraryname + " : " + str(_error))
             rc = process.returncode
             return True
 
@@ -150,11 +149,12 @@ class Loader(mysupport.MySupport):
             return False
     #---------------------------------------------------------------------------
     def LogInfo(self, message, LogLine = False):
-        self.LogConsole(message)
+
         if not LogLine:
             self.LogError(message)
         else:
             self.LogErrorLine(message)
+        self.LogConsole(message)
     #---------------------------------------------------------------------------
     def ValidateConfig(self):
 
