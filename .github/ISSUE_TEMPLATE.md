@@ -4,6 +4,10 @@ Use the template below if you have an issue or want to report a bug. If you have
 
 https://github.com/jgyates/genmon/wiki/Appendix-6---Serial-Troubleshooting
 
+If you are having other issues, please see the following page:
+
+https://github.com/jgyates/genmon/wiki/Appendix-9---General-Troubleshooting
+
 If you need to send you logs to the developer, if you email is setup and working properly you can issue this command in your browser:
 
      http://MYIPADDRESS:8000/cmd/sendlogfiles
