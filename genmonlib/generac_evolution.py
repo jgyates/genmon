@@ -1753,6 +1753,11 @@ class Evolution(controller.GeneratorController):
                 FStr = "%.1f" % Fahrenheit
                 Sensors["Ambient Temp Thermistor"] = "Sensor: " + Value + ", " + CStr + "C, " + FStr + "F"
 
+        if self.EvolutionController and self.Evolution2:
+            Sensors["Battery Charger Sensor"] = self.GetParameter("05ee", Divider = 100.0)
+            Sensors["Battery Status (Sensor)"] = self.GetBatteryStatusAlternate()
+            Sensors["Amient Temp Sensor (Candidate 1)"] = self.GetParameter("05ed")
+            Sensors["Amient Temp Sensor (Candidate 2)"] = self.GetParameter("0033")
 
         if not self.LiquidCooled:       # Nexus AC and Evo AC
 
