@@ -1844,7 +1844,7 @@ class Evolution(controller.GeneratorController):
 
             ALARMLOG     = "Alarm Log:     "
             SERVICELOG   = "Service Log:   "
-            STARTSTOPLOG = "Start Stop Log:"
+            STARTSTOPLOG = "Run Log:"
 
             EvolutionLog = [[ALARMLOG, ALARM_LOG_STARTING_REG, ALARM_LOG_STRIDE],
                             [SERVICELOG, SERVICE_LOG_STARTING_REG, SERVICE_LOG_STRIDE],
@@ -2870,7 +2870,7 @@ class Evolution(controller.GeneratorController):
     def GetPickUpVoltage(self, ReturnInt = False):
 
          # get Utility Voltage Pickup Voltage
-        if self.EvolutionController and self.LiquidCooled:
+        if (self.EvolutionController and self.LiquidCooled) or (self.EvolutionController and self.Evolution2):
             return self.GetParameter("023b", ReturnInt = ReturnInt, Label = "V")
 
         PickupVoltage = DEFAULT_PICKUP_VOLTAGE
@@ -3160,7 +3160,8 @@ class Evolution(controller.GeneratorController):
 
         try:
             time = int(Value,16) * 86400
-            time += 86400
+            if not self.Evolution2:     # add one day
+                time += 86400
             Date = datetime.datetime.fromtimestamp(time)
             return Date.strftime('%m/%d/%Y ')
         except Exception as e1:
@@ -3239,7 +3240,7 @@ class Evolution(controller.GeneratorController):
 
         OutageData["Utility Threshold Voltage"] = self.GetThresholdVoltage()
 
-        if self.EvolutionController and self.LiquidCooled:
+        if (self.EvolutionController and self.LiquidCooled) or (self.EvolutionController and self.Evolution2):
             OutageData["Utility Pickup Voltage"] = self.GetPickUpVoltage()
 
         if self.EvolutionController:
@@ -3297,7 +3298,7 @@ class Evolution(controller.GeneratorController):
                 Engine["Unsupported Sensors"] = self.DisplayUnknownSensors()
 
 
-            if self.EvolutionController:
+            if self.EvolutionController and self.LiquidCooled:
                 Line["Transfer Switch State"] = self.GetTransferStatus()
             Line["Utility Voltage"] = self.GetUtilityVoltage()
             #
