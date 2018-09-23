@@ -31,15 +31,22 @@ class MyConfig (mycommon.MyCommon):
         self.Section = section
         self.Simulation = simulation
         self.CriticalLock = threading.Lock()        # Critical Lock (writing conf file)
-
+        self.InitComplete = False
         if self.Simulation:
             return
         try:
             self.config = RawConfigParser()
             self.config.read(self.FileName)
+
+            if self.Section == None:
+                SectionList = self.GetSections()
+                if len(SectionList):
+                    self.Section = SectionList[0]
+
         except Exception as e1:
             self.LogErrorLine("Error in MyConfig:init: " + str(e1))
-
+            return
+        self.InitComplete = True
     #---------------------MyConfig::HasOption-----------------------------------
     def HasOption(self, Entry):
 
