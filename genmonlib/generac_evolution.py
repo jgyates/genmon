@@ -1657,6 +1657,9 @@ class Evolution(controller.GeneratorController):
             if self.EngineDisplacement != "Unknown":
                 Maint["Engine Displacement"] = self.EngineDisplacement
 
+            if self.EvolutionController and self.Evolution2:
+                Maint["Ambient Temperature Sensor"] = self.GetParameter("05ed", Label = "F")
+
             if self.EvolutionController and self.FuelConsumptionSupported():
                 Maint["kW Hours in last 30 days"] = self.GetPowerHistory("power_log_json=43200,kw", NoReduce = True)
                 Maint["Fuel Consumption in last 30 days"] = self.GetPowerHistory("power_log_json=43200,fuel", NoReduce = True)
@@ -1756,8 +1759,7 @@ class Evolution(controller.GeneratorController):
         if self.EvolutionController and self.Evolution2:
             Sensors["Battery Charger Sensor"] = self.GetParameter("05ee", Divider = 100.0)
             Sensors["Battery Status (Sensor)"] = self.GetBatteryStatusAlternate()
-            Sensors["Amient Temp Sensor (Candidate 1)"] = self.GetParameter("05ed")
-            Sensors["Amient Temp Sensor (Candidate 2)"] = self.GetParameter("0033")
+            Sensors["Unknown Sesnor 33"] = self.GetParameter("0033")
 
         if not self.LiquidCooled:       # Nexus AC and Evo AC
 
