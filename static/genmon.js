@@ -968,7 +968,7 @@ function DisplayLogs(){
                severity = 3;
             } else if (loglines[i].indexOf("Service Log :") >= 0) {
                severity = 2;
-            } else if (loglines[i].indexOf("Start Stop Log :") >= 0) {
+            } else if (loglines[i].indexOf("Run Log :") >= 0) {
                severity = 1;
             } else {
                var matches = loglines[i].match(/^\s*(\d+)\/(\d+)\/(\d+) (\d+:\d+:\d+) (.*)$/i)
