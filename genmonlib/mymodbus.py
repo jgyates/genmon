@@ -158,6 +158,8 @@ class ModbusProtocol(modbusbase.ModbusBase):
                     time.sleep(0.01)
 
                 if self.IsStopping:
+                    if ReturnValue:
+                        return ""
                     return False
                 RetVal, SlavePacket = self.GetPacketFromSlave()
 
@@ -168,6 +170,8 @@ class ModbusProtocol(modbusbase.ModbusBase):
                     self.LogError("Error Receiving slave packet for register %x%x" % (MasterPacket[2],MasterPacket[3]) )
                     # Errors returned here are logged in GetPacketFromSlave
                     self.Flush()
+                    if ReturnValue:
+                        return ""
                     return False
                 msElapsed = self.MillisecondsElapsed(SentTime)
                 # This normally takes about 30 ms however in some instances it can take up to 950ms
@@ -179,10 +183,13 @@ class ModbusProtocol(modbusbase.ModbusBase):
                 if msElapsed > self.ModBusPacketTimoutMS:
                     self.ComTimoutError += 1
                     self.LogError("Error: timeout receiving slave packet for register %x%x Buffer:%d" % (MasterPacket[2],MasterPacket[3], len(self.Slave.Buffer)) )
+                    self.Flush()
+                    if ReturnValue:
+                        return ""
                     return False
 
-        # update our cached register dict
-        ReturnRegValue = self.UpdateRegistersFromPacket(MasterPacket, SlavePacket, SkipUpdate = skiplog)
+            # update our cached register dict
+            ReturnRegValue = self.UpdateRegistersFromPacket(MasterPacket, SlavePacket, SkipUpdate = skiplog)
         if ReturnValue:
             return ReturnRegValue
 

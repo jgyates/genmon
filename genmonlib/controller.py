@@ -74,6 +74,7 @@ class GeneratorController(mysupport.MySupport):
         self.UtilityVoltsMax = 0    # Maximum reported utility voltage above pickup
         self.SystemInOutage = False         # Flag to signal utility power is out
         self.TransferActive = False         # Flag to signal transfer switch is allowing gen supply power
+        self.ControllerSelected = None
         self.SiteName = "Home"
         # The values "Unknown" are checked to validate conf file items are found
         self.FuelType = "Unknown"
@@ -128,6 +129,9 @@ class GeneratorController(mysupport.MySupport):
                     self.NominalKW = self.config.ReadValue('nominalKW')
                 if self.config.HasOption('model'):
                     self.Model = self.config.ReadValue('model')
+
+                if self.config.HasOption('controllertype'):
+                    self.ControllerSelected = self.config.ReadValue('controllertype')
 
                 if self.config.HasOption('fueltype'):
                     self.FuelType = self.config.ReadValue('fueltype')
@@ -201,6 +205,10 @@ class GeneratorController(mysupport.MySupport):
             return
         time.sleep(.25)
 
+        if not self.ControllerSelected == None or len(self.ControllerSelected) or self.ControllerSelected == "generac_evo_nexus":
+            MaxReg = 0x400
+        else:
+            MaxReg == 0x2000
         self.InitCompleteEvent.wait()
 
         if self.IsStopping:
@@ -217,13 +225,19 @@ class GeneratorController(mysupport.MySupport):
             if self.IsStopSignaled("DebugThread"):
                 return
             if TotalSent >= 5:
+                self.FeedbackPipe.SendFeedback("Debug Thread Finished", Always = True, FullLogs = True, Message="Finished Debug Thread")
+                if self.WaitForExit("DebugThread", 1):  #
+                    return
                 continue
             try:
-                for Reg in range(0x0 , 0x2000):
-                    if self.WaitForExit("DebugThread", 0.25):  # ten min
+                for Reg in range(0x0 , MaxReg):
+                    if self.WaitForExit("DebugThread", 0.25):  #
                         return
                     Register = "%04x" % Reg
                     NewValue = self.ModBus.ProcessMasterSlaveTransaction(Register, 1, ReturnValue = True)
+                    if not len(NewValue):
+                        if self.WaitForExit("DebugThread", 1):  #
+                            continue
                     OldValue = RegistersUnderTest.get(Register, "")
                     if OldValue == "":
                         RegistersUnderTest[Register] = NewValue        # first time seeing this register so add it to the list
@@ -233,14 +247,14 @@ class GeneratorController(mysupport.MySupport):
                                 (Register, OldValue, NewValue, BitsChanged, Mask, self.GetEngineState())
                         RegistersUnderTest[Register] = Value        # update the value
 
-                msgbody = ""
+                msgbody = "\n"
                 for Register, Value in RegistersUnderTest.items():
                     msgbody += self.printToString("%s:%s" % (Register, Value))
 
                 self.FeedbackPipe.SendFeedback("Debug Thread (Registers)", FullLogs = True, Always = True, Message=msgbody, NoCheck = True)
                 if len(RegistersUnderTestData):
                     self.FeedbackPipe.SendFeedback("Debug Thread (Changes)", FullLogs = True, Always = True, Message=RegistersUnderTestData, NoCheck = True)
-                RegistersUnderTestData = ""
+                RegistersUnderTestData = "\n"
                 TotalSent += 1
 
             except Exception as e1:

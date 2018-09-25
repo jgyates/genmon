@@ -30,7 +30,7 @@ class ModbusBase(mysupport.MySupport ):
         self.TotalElapsedPacketeTime = 0
         self.ComTimoutError = 0
         self.CrcError = 0
-        self.CommAccessLock = threading.RLock()     # lock to synchronize access to the serial port comms
+        self.CommAccessLock = threading.Lock()     # lock to synchronize access to the serial port comms
         self.ModbusStartTime = datetime.datetime.now()     # used for com metrics
 
         # log errors in this module to a file

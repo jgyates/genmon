@@ -218,6 +218,8 @@ class MySupport(mycommon.MyCommon):
     #----------  Controller::GetNumBitsChanged-------------------------------
     def GetNumBitsChanged(self, FromValue, ToValue):
 
+        if not len(FromValue) or not len(ToValue):
+            return 0, 0
         MaskBitsChanged = int(FromValue, 16) ^ int(ToValue, 16)
         NumBitsChanged = MaskBitsChanged
         count = 0
