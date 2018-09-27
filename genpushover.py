@@ -156,7 +156,17 @@ if __name__=='__main__': # usage program.py [server_address]
 
         appid = config.ReadValue('appid')
         userid = config.ReadValue('userid')
-        pushsound = config.ReadValue('pushsound')
+        pushsound = config.ReadValue('pushsound', default = 'updown')
+
+        if appid == None or not len(appid):
+            log.error("Error:  invalid app ID")
+            console.error("Error:  invalid app ID")
+            sys.exit(2)
+
+        if userid == None or not len(userid):
+            log.error("Error:  invalid user ID")
+            console.error("Error:  invalid user ID")
+            sys.exit(2)
 
     except Exception as e1:
         log.error("Error reading /etc/genpushover.conf: " + str(e1))
