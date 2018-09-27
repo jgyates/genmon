@@ -211,7 +211,7 @@ class MyMQTT(mycommon.MyCommon):
         self.Address = None
         self.Topic = None
 
-        self.MQTTAddress = "127.0.0.1"
+        self.MQTTAddress = None
         self.MonitorAddress = "127.0.0.1"
         self.Port = 1883
         self.Topic = "generator"
@@ -223,31 +223,39 @@ class MyMQTT(mycommon.MyCommon):
 
         try:
             config = myconfig.MyConfig(filename = '/etc/genmqtt.conf', section = 'genmqtt', log = log)
-            if config.HasOption('username'):
-                self.Username = config.ReadValue('username')
-            if config.HasOption('password'):
-                self.Password = config.ReadValue('password')
+
+            self.Username = config.ReadValue('username')
+
+            self.Password = config.ReadValue('password')
 
             self.MQTTAddress = config.ReadValue('mqtt_address')
-            if config.HasOption('monitor_address'):
-                self.MonitorAddress = config.ReadValue('monitor_address')
-            if config.HasOption('mqtt_port'):
-                self.MQTTPort = config.ReadValue('mqtt_port', return_type = int)
 
-            if config.HasOption('poll_interval'):
-                self.PollTime = config.ReadValue('poll_interval', return_type = float)
-            if config.HasOption('root_topic'):
-                self.TopicRoot = config.ReadValue('root_topic')
-            if config.HasOption('blacklist'):
-                BlackList = config.ReadValue('blacklist')
+            if self.MQTTAddress == None or not len(self.MQTTAddress):
+                log.error("Error: invalid MQTT server address")
+                console.error("Error: invalid MQTT server address")
+                sys.exit(1)
+
+            self.MonitorAddress = config.ReadValue('monitor_address', default = "127.0.0.1")
+            if self.MonitorAddress == None or not len(self.MonitorAddress):
+                self.MonitorAddress = "127.0.0.1"
+
+            self.MQTTPort = config.ReadValue('mqtt_port', return_type = int, default = 1883)
+
+            self.PollTime = config.ReadValue('poll_interval', return_type = float, default = 2.0)
+
+            self.TopicRoot = config.ReadValue('root_topic')
+
+            BlackList = config.ReadValue('blacklist')
+            if BlackList != None:
                 self.BlackList = BlackList.strip().split(",")
-            if config.HasOption('debug'):
-                self.Debug = config.ReadValue('debug', return_type = bool)
-            if config.HasOption('flush_interval'):
-                self.FlushInterval = config.ReadValue('flush_interval', return_type = float)
+
+            self.Debug = config.ReadValue('debug', return_type = bool, default = False)
+
+            self.FlushInterval = config.ReadValue('flush_interval', return_type = float, default = float('inf'))
+
         except Exception as e1:
-            log.error("Error reading /etc/genmqtt.conf: " + str(e1))
-            console.error("Error reading /etc/genmqtt.conf: " + str(e1))
+            self.LogErrorLine("Error reading /etc/genmqtt.conf: " + str(e1))
+            self.console.error("Error reading /etc/genmqtt.conf: " + str(e1))
             sys.exit(1)
 
         try:
