@@ -79,11 +79,15 @@ class MyConfig (mycommon.MyCommon):
         self.Section = section
         return True
     #---------------------MyConfig::ReadValue-----------------------------------
-    def ReadValue(self, Entry, return_type = str, default = None):
+    def ReadValue(self, Entry, return_type = str, default = None, section = None):
 
         if self.Simulation:
             return default
         try:
+
+            if section != None:
+                self.SetSection(section)
+
             if self.config.has_option(self.Section, Entry):
                 if return_type == str:
                     return self.config.get(self.Section, Entry)
@@ -101,12 +105,41 @@ class MyConfig (mycommon.MyCommon):
         except Exception as e1:
             self.LogErrorLine("Error in MyConfig:ReadValue: " + Entry + ": " + str(e1))
             return default
+
+
+    #---------------------MyConfig::WriteSection--------------------------------
+    def WriteSection(self, SectionName):
+
+        if self.Simulation:
+            return True
+
+        SectionList = self.GetSections()
+
+        if SectionName in SectionList:
+            self.LogError("Error in WriteSection: Section already exist.")
+            return True
+        try:
+            with self.CriticalLock:
+                with open(self.FileName, "a") as ConfigFile:
+                    ConfigFile.write("[" + SectionName + "]")
+                    ConfigFile.flush()
+                    ConfigFile.close()
+                    # update the read data that is cached
+                    self.config.read(self.FileName)
+            return True
+        except Exception as e1:
+            self.LogErrorLine("Error in WriteSection: " + str(e1))
+            return False
+
     #---------------------MyConfig::WriteValue----------------------------------
-    def WriteValue(self, Entry, Value, remove = False):
+    def WriteValue(self, Entry, Value, remove = False, section = None):
 
         if self.Simulation:
             return
 
+        if section != None:
+            self.SetSection(section)
+            
         SectionFound = False
         try:
             with self.CriticalLock:

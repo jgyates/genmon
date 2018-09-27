@@ -21,7 +21,7 @@ import mylog, mythread, mysupport, myserial, myconfig
 class MyModem(mysupport.MySupport):
     def __init__(self,
             port = "/dev/ttyAMA0" ,
-            rate=115200,
+            rate = 115200,
             loglocation = "/var/log/",
             log = None,
             localinit = False,
@@ -58,39 +58,35 @@ class MyModem(mysupport.MySupport):
         try:
             self.config = myconfig.MyConfig(filename = self.configfile, section = "MyModem", log = self.log)
 
-            if self.config.HasOption('log_at_commands'):
-                self.LogAtCommands = self.config.ReadValue('log_at_commands', return_type = bool)
-            else:
-                self.LogAtCommands = False
+            self.LogAtCommands = self.config.ReadValue('log_at_commands', return_type = bool, default = False)
 
-            if self.config.HasOption('message_level'):
-                self.MessageLevel = self.config.ReadValue('message_level')
-            else:
-                self.MessageLevel = "error"
+            self.MessageLevel = self.config.ReadValue('message_level', default = 'error')
 
-            if self.config.HasOption('rate'):
-                self.Rate = self.config.ReadValue('rate', return_type = int)
-            else:
-                self.Rate = rate
+            self.Rate = self.config.ReadValue('rate', return_type = int, default = 115200)
 
-            if self.config.HasOption('port'):
-                self.Port = self.config.ReadValue('port')
-            else:
-                self.Port = port
+            self.Port = self.config.ReadValue('port', default = "/dev/ttyAMA0")
 
-            if self.config.HasOption('recipient'):
-                self.Recipient = self.config.ReadValue('recipient')
-            else:
-                self.Recipient = recipient
+            self.Recipient = self.config.ReadValue('recipient', default = recipient)
 
-            if self.config.HasOption('modem_type'):
-                self.ModemType = self.config.ReadValue('modem_type')
-            else:
-                self.ModemType = modem_type
+            self.ModemType = self.config.ReadValue('modem_type', default = "LTEPiHat")
 
         except Exception as e1:
             self.LogErrorLine("Error reading config file: " + str(e1))
             self.LogConsole("Error reading config file: " + str(e1))
+            return
+
+        if self.Recipient == None or not len(self.Recipient):
+            self.LogErrorLine("Error invalid recipient")
+            self.LogConsole("Error invalid recipient")
+
+        if self.Port == None or not len(self.Port):
+            self.LogErrorLine("Error invalid port")
+            self.LogConsole("Error invalid port")
+            return
+
+        if self.Rate == None or self.Rate <= 0):
+            self.LogErrorLine("Error invalid rate")
+            self.LogConsole("Error invalid rate")
             return
 
         # rate * 10 bits then convert to MS
@@ -167,6 +163,11 @@ class MyModem(mysupport.MySupport):
     def SendATCommand(self, command, response = None, retries = 1, NoAddCRLF = False):
 
         try:
+
+            if self.SerialDevice == None:
+                self.LogError("Serial device is not open!")
+                return False
+                
             if not NoAddCRLF:
                 command = str(command) + b"\r\n"
                 if response != None:
@@ -222,6 +223,10 @@ class MyModem(mysupport.MySupport):
 
             if recipient == None:
                 recipient = self.Recipient
+
+            if recipient == None or not len(recipient):
+                self.LogError("Invalid recipient in SendSMS.")
+                return False
 
             with self.ModemLock:
                 # set default config
