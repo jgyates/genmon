@@ -124,8 +124,8 @@ def SendNotice(Message):
 		)
 
     except Exception as e1:
-        log.error("Error: " + str(e1))
-        console.error("Error: " + str(e1))
+        log.error("Error in SendNotice: " + str(e1))
+        console.error("Error in SendNotice: " + str(e1))
 
 #------------------- Command-line interface for gengpio -----------------#
 if __name__=='__main__': # usage program.py [server_address]
@@ -144,11 +144,36 @@ if __name__=='__main__': # usage program.py [server_address]
     try:
         config = myconfig.MyConfig(filename = '/etc/genslack.conf', section = 'genslack', log = log)
 
-        webhook_url = config.ReadValue('webhook_url')
-        channel = config.ReadValue('channel')
-        username = config.ReadValue('username')
-        icon_emoji = config.ReadValue('icon_emoji')
-        title_link = config.ReadValue('title_link')
+        webhook_url = config.ReadValue('webhook_url', default = None)
+        channel = config.ReadValue('channel', default = None)
+        username = config.ReadValue('username', default = None)
+        icon_emoji = config.ReadValue('icon_emoji', default = ":red_circle:")
+        title_link = config.ReadValue('title_link', default = None)
+
+        if webhook_url == None or not len(webhook_url):
+            log.error("Error: invalid webhoot_url setting")
+            console.error("Error: invalid webhoot_url setting")
+            sys.exit(2)
+
+        if channel == None or not len(channel):
+            log.error("Error: invalid channel setting")
+            console.error("Error: invalid channel setting")
+            sys.exit(2)
+
+        if username == None or not len(username):
+            log.error("Error: invalid username setting")
+            console.error("Error: invalid username setting")
+            sys.exit(2)
+
+        if icon_emoji == None or not len(icon_emoji):
+            log.error("Error: invalid username setting")
+            console.error("Error: invalid username setting")
+            sys.exit(2)
+
+        if title_link == None or not len(title_link):
+            log.error("Error: invalid title_link setting")
+            console.error("Error: invalid title_link setting")
+            sys.exit(2)
 
     except Exception as e1:
         log.error("Error reading /etc/genslack.conf: " + str(e1))
