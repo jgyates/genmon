@@ -60,7 +60,6 @@ class ModbusBase(mysupport.MySupport ):
         SerialStats["CRC Percent Errors"] = "%.2f" % PercentErrors
         SerialStats["Packet Timeouts"] = "%d" %  self.ComTimoutError
         # Add serial stats here
-
         CurrentTime = datetime.datetime.now()
 
         #
@@ -87,5 +86,4 @@ class ModbusBase(mysupport.MySupport ):
 
     #------------ModbusBase::Close-----------------------
     def Close(self):
-
         pass
