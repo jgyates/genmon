@@ -184,13 +184,39 @@ class Loader(mysupport.MySupport):
                 return False
 
         return not ErrorOccured
+
+    #---------------------------------------------------------------------------
+    def AddEntry(self, section = None, module = None, conffile = "", args = "", priority = '2'):
+
+        try:
+            if section == None or module == None:
+                return
+            self.config.WriteSection(section)
+            self.config.WriteValue('module', module, section = section)
+            self.config.WriteValue('enable', 'False', section = section)
+            self.config.WriteValue('hardstop', 'False', section = section)
+            self.config.WriteValue('conffile', conffile, section = section)
+            self.config.WriteValue('args', args, section = section)
+            self.config.WriteValue('priority', priority, section = section)
+        except Exception as e1:
+            self.LogInfo("Error in AddEntry: " + str(e1), LogLine = True)
+        return
     #---------------------------------------------------------------------------
     def GetConfig(self):
 
         try:
 
             Sections = self.config.GetSections()
+            ValidSections = ['genmon', 'genserv', 'gengpio', 'gengpioin', 'genlog', 'gensms', 'gensms_modem', 'genpushover', 'gensyslog', 'genmqtt', 'genslack']
+            for entry in ValidSections:
+                if not entry in Sections:
+                    if entry == 'genslack':
+                        self.LogError("Warning: Missing entry: " + entry + " , adding entry")
+                        self.AddEntry(section = entry, module = 'genslack.py', conffile = 'genslack.conf')
+                    else:
+                        self.LogError("Warning: Missing entry: " + entry)
 
+            Sections = self.config.GetSections()
             for SectionName in Sections:
                 TempDict = {}
                 self.config.SetSection(SectionName)
