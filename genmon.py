@@ -25,7 +25,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.10.7"
+GENMON_VERSION = "V1.10.8"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -357,23 +357,27 @@ class Monitor(mysupport.MySupport):
     #---------- Monitor::SendLogFiles------------------------------------------
     def SendLogFiles(self):
 
-        if not self.EmailSendIsEnabled():
-            return "Send Email is not enabled."
+        try:
+            if not self.EmailSendIsEnabled():
+                self.LogError("Error in SendLogFiles: send email is not enabled")
+                return "Send Email is not enabled."
 
-        msgbody = ""
-        msgbody += self.DictToString(self.GetStartInfo(NoTile = True))
-        if not self.bDisablePlatformStats:
-            msgbody +=  self.DictToString(self.GetPlatformStats())
-        msgbody += self.Controller.DisplayRegisters(AllRegs = True)
+            msgbody = ""
+            msgbody += self.DictToString(self.GetStartInfo(NoTile = True))
+            if not self.bDisablePlatformStats:
+                msgbody +=  self.DictToString(self.GetPlatformStats())
+            msgbody += self.Controller.DisplayRegisters(AllRegs = True)
 
-        LogList = []
-        FilesToSend = ["genmon.log", "genserv.log", "mymail.log", "myserial.log", "mymodbus.log", "gengpio.log", "gengpioin.log", "gensms.log", "gensms_modem.log", "genmqtt.log", "genpushover.log", "gensyslog.log", "genloader.log"]
-        for File in FilesToSend:
-            LogFile = self.LogLocation + File
-            if os.path.isfile(LogFile):
-                LogList.append(LogFile)
-        self.MessagePipe.SendMessage("Generator Monitor Log File Submission", msgbody , recipient = self.MaintainerAddress, files = LogList, msgtype = "info")
-        return "Log files submitted"
+            LogList = []
+            FilesToSend = ["genmon.log", "genserv.log", "mymail.log", "myserial.log", "mymodbus.log", "gengpio.log", "gengpioin.log", "gensms.log", "gensms_modem.log", "genmqtt.log", "genpushover.log", "gensyslog.log", "genloader.log", "myserialtcp.log"]
+            for File in FilesToSend:
+                LogFile = self.LogLocation + File
+                if os.path.isfile(LogFile):
+                    LogList.append(LogFile)
+            self.MessagePipe.SendMessage("Generator Monitor Log File Submission", msgbody , recipient = self.MaintainerAddress, files = LogList, msgtype = "info")
+            return "Log files submitted"
+        except Exception as e1:
+            self.LogErrorLine("Error in SendLogFiles: " + str(e1))
 
     #---------- process command from email and socket --------------------------
     def ProcessCommand(self, command, fromsocket = False):
