@@ -57,7 +57,7 @@ class SerialDevice(mysupport.MySupport):
         self.SerialDevice.rtscts = RtsCts                 #disable hardware (RTS/CTS) flow control
         self.SerialDevice.dsrdtr = False                  #disable hardware (DSR/DTR) flow control
         self.SerialDevice.writeTimeout = None             #timeout for write, return when packet sent
-
+        self.IsOpen = False
         #Check if port failed to open
         if (self.SerialDevice.isOpen() == False):
             try:
@@ -68,7 +68,7 @@ class SerialDevice(mysupport.MySupport):
         else:
             self.FatalError( "Serial port already open: %s" % self.DeviceName)
             return None
-
+        self.IsOpen = True
         self.Flush()
         self.StartReadThread()
 
@@ -126,6 +126,7 @@ class SerialDevice(mysupport.MySupport):
         if self.SerialDevice.isOpen():
             self.KillThread("SerialReadThread")
             self.SerialDevice.close()
+            self.IsOpen = False
 
     # ---------- SerialDevice::Flush--------------------------------------------
     def Flush(self):
