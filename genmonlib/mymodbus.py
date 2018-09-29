@@ -12,7 +12,7 @@
 from __future__ import print_function       # For python 3.x compatibility with print function
 
 import datetime, threading, crcmod, sys, time, collections
-import mylog, mythread, myserial, mycommon, modbusbase
+import mylog, mythread, myserial, mycommon, modbusbase, myserialtcp
 
 #--------------------- MODBUS specific Const defines for Generator class
 MBUS_ADDRESS            = 0x00
@@ -33,18 +33,39 @@ MBUS_CMD_WRITE_REGS     = 0x10
 
 #------------ ModbusProtocol class --------------------------------------------
 class ModbusProtocol(modbusbase.ModbusBase):
-    def __init__(self, updatecallback, address = 0x9d, name = "/dev/serial", rate=9600, loglocation = "/var/log/", Parity = None, OnePointFiveStopBits = None, slowcpuoptimization = False):
+    def __init__(self,
+        updatecallback,
+        address = 0x9d,
+        name = "/dev/serial",
+        rate=9600,
+        loglocation = "/var/log/",
+        Parity = None,
+        OnePointFiveStopBits = None,
+        slowcpuoptimization = False,
+        use_serial_tcp = False,
+        tcp_address = None,
+        tcp_port = None):
         super(ModbusProtocol, self).__init__(updatecallback = updatecallback, address = address, name = name, rate = rate, loglocation = loglocation)
 
         try:
 
+            self.UseTCP = use_serial_tcp
+            self.TCPAddress = tcp_address
+            self.TCPPort = tcp_port
+
             self.SlowCPUOptimization = slowcpuoptimization
             # ~3000 for 9600               bit time * 10 bits * 10 char * 2 packets + wait time(3000) (convert to ms * 1000)
             self.ModBusPacketTimoutMS = (((((1/rate) * 10) * 10 * 2) *1000)  + 3000)     # .00208
+
+            if self.UseTCP:
+                self.ModBusPacketTimoutMS = self.ModBusPacketTimoutMS
             #Starting serial connection
-            self.Slave = myserial.SerialDevice(name, rate, loglocation, Parity = Parity, OnePointFiveStopBits = OnePointFiveStopBits)
+            if self.UseTCP and self.TCPAddress != None and self.TCPPort != None:
+                self.Slave = myserialtcp.SerialTCPDevice(loglocation = loglocation, host = self.TCPAddress, port = self.TCPPort)
+            else:
+                self.Slave = myserial.SerialDevice(name, rate, loglocation, Parity = Parity, OnePointFiveStopBits = OnePointFiveStopBits)
             self.Threads = self.MergeDicts(self.Threads, self.Slave.Threads)
-            self.InitComplete = True
+
 
         except Exception as e1:
             self.FatalError("Error opening serial device: " + str(e1))
@@ -53,6 +74,7 @@ class ModbusProtocol(modbusbase.ModbusBase):
         try:
             # CRCMOD library, used for CRC calculations
             self.ModbusCrc = crcmod.predefined.mkCrcFun('modbus')
+            self.InitComplete = True
         except Exception as e1:
             self.FatalError("Unable to find crcmod package: " + str(e1))
 
@@ -339,9 +361,15 @@ class ModbusProtocol(modbusbase.ModbusBase):
         else:
             PercentErrors = float(self.CrcError) / float(self.RxPacketCount)
 
+        if self.ComTimoutError == 0 or self.RxPacketCount == 0:
+            PercentTimeoutErrors = 0.0
+        else:
+            PercentTimeoutErrors = float(self.ComTimoutError) / float(self.RxPacketCount)
+
         SerialStats["CRC Errors"] = "%d " % self.CrcError
-        SerialStats["CRC Percent Errors"] = "%.2f" % PercentErrors
+        SerialStats["CRC Percent Errors"] = ("%.2f" % (PercentErrors * 100)) + "%" 
         SerialStats["Packet Timeouts"] = "%d" %  self.ComTimoutError
+        SerialStats["Packet Timeouts Percent Errors"] = ("%.2f" % (PercentTimeoutErrors * 100)) + "%"
         # add serial stats
         SerialStats["Discarded Bytes"] = "%d" % self.Slave.DiscardedBytes
         SerialStats["Comm Restarts"] = "%d" % self.Slave.Restarts

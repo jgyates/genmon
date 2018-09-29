@@ -139,6 +139,10 @@ class GeneratorController(mysupport.MySupport):
                 if self.config.HasOption('tanksize'):
                     self.TankSize = self.config.ReadValue('tanksize')
 
+                self.UseSerialTCP = self.config.ReadValue('use_serial_tcp', return_type = bool, default = False)
+                self.SerialTCPAddress = self.config.ReadValue('serial_tcp_address', return_type = str, default = None)
+                self.SerialTCPPort = self.config.ReadValue('serial_tcp_port', return_type = int, default = None)
+
         except Exception as e1:
             if not reload:
                 self.FatalError("Missing config file or config file entries: " + str(e1))

@@ -25,7 +25,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.10.8"
+GENMON_VERSION = "V1.10.9"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -155,6 +155,7 @@ class Monitor(mysupport.MySupport):
         except Exception as e1:
             self.FatalError("Error opening controller device: " + str(e1))
             return None
+
 
         self.StartThreads()
 
@@ -726,6 +727,11 @@ class Monitor(mysupport.MySupport):
 
         self.CommunicationsActive = False
         time.sleep(0.25)
+
+        if self.Controller.UseSerialTCP:
+            WatchDogPollTime = 8
+        else:
+            WatchDogPollTime = 2
         while True:
             if self.WaitForExit("ComWatchDog", 1):
                 return
@@ -736,7 +742,7 @@ class Monitor(mysupport.MySupport):
 
             self.CommunicationsActive = self.Controller.ComminicationsIsActive()
 
-            if self.WaitForExit("ComWatchDog", 2):
+            if self.WaitForExit("ComWatchDog", WatchDogPollTime):
                 return
 
     #---------- Monitor::LogFileIsOK--------------------------------------------
@@ -777,22 +783,28 @@ class Monitor(mysupport.MySupport):
             conn.settimeout(2)   # only blok on recv for a small amount of time
 
             statusstr = ""
-            if self.Controller.SystemInAlarm():
-                statusstr += "CRITICAL: System in alarm! "
-            HealthStr = self.GetSystemHealth()
-            if HealthStr != "OK":
-                statusstr += "WARNING: " + HealthStr
-            if statusstr == "":
-                statusstr = "OK "
+            if self.Controller == None:
+                outstr = "WARNING: System Initializing"
+                conn.sendall(outstr.encode())
+            else:
+                if self.Controller.SystemInAlarm():
+                    statusstr += "CRITICAL: System in alarm! "
+                HealthStr = self.GetSystemHealth()
+                if HealthStr != "OK":
+                    statusstr += "WARNING: " + HealthStr
+                if statusstr == "":
+                    statusstr = "OK "
 
-            outstr = statusstr + ": "+ self.Controller.GetOneLineStatus()
-            conn.sendall(outstr.encode())
+                outstr = statusstr + ": "+ self.Controller.GetOneLineStatus()
+                conn.sendall(outstr.encode())
 
             while True:
                 try:
                     data = conn.recv(1024)
-
-                    outstr = self.ProcessCommand(data, True)
+                    if self.Controller == None:
+                        outstr = "Retry, System Initializing"
+                    else:
+                        outstr = self.ProcessCommand(data, True)
                     conn.sendall(outstr.encode())
                 except socket.timeout:
                     continue

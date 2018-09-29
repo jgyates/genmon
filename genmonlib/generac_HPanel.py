@@ -448,9 +448,17 @@ class HPanel(controller.GeneratorController):
         try:
             #Starting device connection
             if self.Simulation:
-                self.ModBus = modbus_file.ModbusFile(self.UpdateRegisterList, self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation, inputfile = self.SimulationFile)
+                self.ModBus = modbus_file.ModbusFile(self.UpdateRegisterList,
+                    self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation,
+                    inputfile = self.SimulationFile)
             else:
-                self.ModBus = mymodbus.ModbusProtocol(self.UpdateRegisterList, self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation, slowcpuoptimization = self.SlowCPUOptimization)
+                self.ModBus = mymodbus.ModbusProtocol(self.UpdateRegisterList,
+                    self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation,
+                    slowcpuoptimization = self.SlowCPUOptimization,
+                    use_serial_tcp = self.UseSerialTCP,
+                    tcp_address = self.SerialTCPAddress,
+                    tcp_port = self.SerialTCPPort)
+
             self.Threads = self.MergeDicts(self.Threads, self.ModBus.Threads)
             self.LastRxPacketCount = self.ModBus.RxPacketCount
 

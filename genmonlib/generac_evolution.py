@@ -218,9 +218,17 @@ class Evolution(controller.GeneratorController):
         try:
             #Starting device connection
             if self.Simulation:
-                self.ModBus = modbus_file.ModbusFile(self.UpdateRegisterList, self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation, inputfile = self.SimulationFile)
+                self.ModBus = modbus_file.ModbusFile(self.UpdateRegisterList,
+                    self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation,
+                    inputfile = self.SimulationFile)
             else:
-                self.ModBus = mymodbus.ModbusProtocol(self.UpdateRegisterList, self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation, slowcpuoptimization = self.SlowCPUOptimization)
+                self.ModBus = mymodbus.ModbusProtocol(self.UpdateRegisterList,
+                    self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation,
+                    slowcpuoptimization = self.SlowCPUOptimization,
+                    use_serial_tcp = self.UseSerialTCP,
+                    tcp_address = self.SerialTCPAddress,
+                    tcp_port = self.SerialTCPPort)
+
             self.Threads = self.MergeDicts(self.Threads, self.ModBus.Threads)
             self.LastRxPacketCount = self.ModBus.RxPacketCount
 
@@ -1744,7 +1752,7 @@ class Evolution(controller.GeneratorController):
             Sensors["Battery Charger Sensor"] = self.GetParameter("05ee", Divider = 100.0)
             Sensors["Battery Status (Sensor)"] = self.GetBatteryStatusAlternate()
 
-            Sensors["Fuel Pressure Sensor"] = self.GetParameter("005d")
+            Sensors["Fuel Pressure Sensor"] = self.GetParameter("005d", Divider = 10.0)
              # get UKS
             Value = self.GetUnknownSensor("05ed")
             if len(Value):
@@ -3417,8 +3425,12 @@ class Evolution(controller.GeneratorController):
                 if self.config.HasOption('currentoffset'):
                     self.CurrentOffset = self.config.ReadValue('currentoffset', return_type = float)
 
-                if self.config.HasOption('serailnumberifmissing'):
-                    self.SerialNumberReplacement = self.config.ReadValue('serailnumberifmissing')
+                # due to a mispelling we have two varients of this parameter
+                if self.config.HasOption('serailnumberifmissing') or self.config.HasOption('serialnumberifmissing'):
+                    if self.config.HasOption('serialnumberifmissing'):
+                        self.SerialNumberReplacement = self.config.ReadValue('serialnumberifmissing')
+                    else:
+                        self.SerialNumberReplacement = self.config.ReadValue('serailnumberifmissing')
                     if self.SerialNumberReplacement.isdigit() and len(self.SerialNumberReplacement) == 10:
                         self.LogError("Override Serial Number: " + self.SerialNumberReplacement)
                     else:
