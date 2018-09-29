@@ -390,7 +390,7 @@ if __name__ == '__main__':
         sys.exit(2)
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:],"hsrx",["help","start","restart","exit","hardstop"])
+        opts, args = getopt.getopt(sys.argv[1:],"hsrxz",["help","start","restart","exit","hardstop"])
     except getopt.GetoptError:
         print(HelpStr)
         sys.exit(2)
