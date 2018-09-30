@@ -45,9 +45,6 @@ class SerialTCPDevice(mysupport.MySupport):
     #----------  SerialTCPDevice::Connect --------------------------------------
     def Connect(self):
 
-        #retries = 0
-        #while True:
-
         try:
             #create an INET, STREAMing socket
             self.Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -57,15 +54,11 @@ class SerialTCPDevice(mysupport.MySupport):
             self.Flush()
             return True
         except Exception as e1:
-            #retries += 1
-            #if retries >= 3:
             self.LogError("Error: Connect : " + str(e1))
             self.console.error("Unable to make TCP connection.")
             self.Socket = None
             return False
-                #else:
-            #        time.sleep(1)
-            #        continue
+
     # ---------- SerialTCPDevice::ResetSerialStats------------------------------
     def ResetSerialStats(self):
         # resets status that are time based (affected by a time change)
@@ -86,6 +79,7 @@ class SerialTCPDevice(mysupport.MySupport):
                 while True:
 
                     if self.Socket == None:
+                        self.Restarts += 1
                         if not self.Connect():
                             if self.WaitForExit("SerialTCPReadThread", 10):  # 10 seconds
                                 return
@@ -109,8 +103,9 @@ class SerialTCPDevice(mysupport.MySupport):
                 #  "device reports readiness to read but returned no data (device disconnected?)"
                 #  This is believed to be a kernel issue so let's just reset the device and hope
                 #  for the best (actually this works)
-                self.Restarts += 1
-                self.Close()
+                if self.Socket != None:
+                    self.Socket.close()
+                    self.Socket = None
                 self.Connect()
 
     #------------SerialTCPDevice::DiscardByte-----------------------------------
@@ -129,6 +124,7 @@ class SerialTCPDevice(mysupport.MySupport):
                 # close socket
                 if self.Socket != None:
                     self.Socket.close()
+                    self.Socket = None
                 self.IsOpen = False
         except Exception as e1:
             self.LogErrorLine( "Error in SerialTCPDevice:Close : " + str(e1))
@@ -152,8 +148,16 @@ class SerialTCPDevice(mysupport.MySupport):
             return  data
         except socket.timeout as err:
             return ""
+        except socket.error as err:
+            self.LogErrorLine( "Error in SerialTCPDevice:Read socket error: " + str(err))
+            if self.Socket != None:
+                self.Socket.close()
+                self.Socket = None
         except Exception as e1:
             self.LogErrorLine( "Error in SerialTCPDevice:Read : " + str(e1))
+            if self.Socket != None:
+                self.Socket.close()
+                self.Socket = None
             return ""
 
     # ---------- SerialTCPDevice::Write-----------------------------------------
@@ -164,6 +168,9 @@ class SerialTCPDevice(mysupport.MySupport):
                 return None
             return self.Socket.sendall(data)
         except Exception as e1:
+            if self.Socket != None:
+                self.Socket.close()
+                self.Socket = None
             self.LogErrorLine( "Error in SerialTCPDevice:Write : " + str(e1))
             return 0
 

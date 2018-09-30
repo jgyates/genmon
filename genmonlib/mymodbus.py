@@ -356,18 +356,18 @@ class ModbusProtocol(modbusbase.ModbusBase):
 
         SerialStats["Packet Count"] = "M: %d, S: %d" % (self.TxPacketCount, self.RxPacketCount)
 
-        if self.CrcError == 0 or self.RxPacketCount == 0:
+        if self.CrcError == 0 or self.TxPacketCount == 0:
             PercentErrors = 0.0
         else:
-            PercentErrors = float(self.CrcError) / float(self.RxPacketCount)
+            PercentErrors = float(self.CrcError) / float(self.TxPacketCount)
 
-        if self.ComTimoutError == 0 or self.RxPacketCount == 0:
+        if self.ComTimoutError == 0 or self.TxPacketCount == 0:
             PercentTimeoutErrors = 0.0
         else:
-            PercentTimeoutErrors = float(self.ComTimoutError) / float(self.RxPacketCount)
+            PercentTimeoutErrors = float(self.ComTimoutError) / float(self.TxPacketCount)
 
         SerialStats["CRC Errors"] = "%d " % self.CrcError
-        SerialStats["CRC Percent Errors"] = ("%.2f" % (PercentErrors * 100)) + "%" 
+        SerialStats["CRC Percent Errors"] = ("%.2f" % (PercentErrors * 100)) + "%"
         SerialStats["Packet Timeouts"] = "%d" %  self.ComTimoutError
         SerialStats["Packet Timeouts Percent Errors"] = ("%.2f" % (PercentTimeoutErrors * 100)) + "%"
         # add serial stats
