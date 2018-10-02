@@ -172,13 +172,17 @@ class Loader(mysupport.MySupport):
 
                 # validate config file and if it is not there then copy it.
                 if not self.CachedConfig[Module]["conffile"] == None and len(self.CachedConfig[Module]["conffile"]):
-                    if not os.path.isfile(self.ConfigFilePath + self.CachedConfig[Module]["conffile"]):
-                        if os.path.isfile(self.ModulePath + self.CachedConfig[Module]["conffile"]):
-                            self.LogInfo("Copying " + self.CachedConfig[Module]["conffile"] + " to " + self.ConfigFilePath )
-                            copyfile(self.ModulePath + self.CachedConfig[Module]["conffile"] , self.ConfigFilePath + self.CachedConfig[Module]["conffile"])
-                        else:
-                            self.LogInfo("Enable to find config file " + self.ModulePath + self.CachedConfig[Module]["conffile"])
-                            ErrorOccured = True
+                    ConfFileList = self.CachedConfig[Module]["conffile"].split(",")
+                    for ConfigFile in ConfFileList:
+                        ConfigFile = ConfigFile.strip()
+                        self.LogInfo("checking " + ConfigFile)
+                        if not os.path.isfile(self.ConfigFilePath + ConfigFile):
+                            if os.path.isfile(self.ModulePath + ConfigFile):
+                                self.LogInfo("Copying " + ConfigFile + " to " + self.ConfigFilePath )
+                                copyfile(self.ModulePath + ConfigFile , self.ConfigFilePath + ConfigFile)
+                            else:
+                                self.LogInfo("Enable to find config file " + self.ModulePath + ConfigFile)
+                                ErrorOccured = True
             except Exception as e1:
                 self.LogInfo("Error validating config for " + Module + " : " + str(e1), LogLine = True)
                 return False
