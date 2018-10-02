@@ -251,8 +251,12 @@ class MyMQTT(mycommon.MyCommon):
 
             self.Debug = config.ReadValue('debug', return_type = bool, default = False)
 
-            self.FlushInterval = config.ReadValue('flush_interval', return_type = float, default = float('inf'))
-
+            if config.HasOption('flush_interval'):
+                self.FlushInterval = config.ReadValue('flush_interval', return_type = float, default = float('inf'))
+                if self.FlushInterval = 0:
+                    self.FlushInterval = float('inf')
+            else:
+                self.FlushInterval = float('inf')
         except Exception as e1:
             self.LogErrorLine("Error reading /etc/genmqtt.conf: " + str(e1))
             self.console.error("Error reading /etc/genmqtt.conf: " + str(e1))
