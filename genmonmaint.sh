@@ -34,10 +34,20 @@ function updatelibraries() {
 }
 
 #-------------------------------------------------------------------
+# This function will setup the serial port
+function setupserial() {
+  pushd $genmondir
+  cd OtherApps
+  sudo python serialconfig.py -e
+  echo "Finished setting up the serial port."
+  popd
+}
+
+#-------------------------------------------------------------------
 # This function will install rpirtscts program needed for the LTE modem
 function installrpirtscts() {
     echo "Installing rpirtscts..."
-    pushd
+    pushd $genmondir
     cd ~
     git clone git://github.com/mholling/rpirtscts.git
     cd rpirtscts
@@ -83,6 +93,18 @@ function installgenmon() {
         else
             copyconffiles
         fi
+
+      read -p "Setup the raspberry pi onboard serial port? (y/n)?" choice
+      case "$choice" in
+        y|Y ) echo "Setting up serial port..."
+          setupserial
+          ;; # yes choice
+        n|N ) echo "Not setting up serial port"
+          ;; # no choice
+        *)
+          echo "Invalid choice, not setting up serial port"
+          ;;  # default choice
+      esac
 }
 
 #-------------------------------------------------------------------
@@ -131,6 +153,7 @@ case "$1" in
     ;;
   install)
     read -n 1 -s -r -p "$installnotice"
+    echo ""
     # install libraries
     installgenmon
     # update crontab
