@@ -194,6 +194,12 @@ class RegisterEnum(object):
     # This is the coolant temperature in Celsius + 40. A generator with an
     # engine coolant temperature of 200 F will show 133.
     COOLANT_TEMP_EX         = "02a2"
+
+    # These registers change when idle but are unknown in function
+    UNKNOWN_01B1            = "01b1"
+    UNKNONW_02A8            = "02A8"
+    UNKNOWN_02A5            = "02A5"
+    UNKNOWN_02A6            = "02A6"
     #---------------------RegisterEnum::GetRegList------------------------------
     @staticmethod
     def GetRegList():
@@ -204,7 +210,25 @@ class RegisterEnum(object):
 
         return RetList
 
+'''
 
+Reg 00e4 changed from 0114 to 0727, Bits Changed: 6, Mask: 633, Engine State: Ready. Stopped.
+Reg 00e4 changed from 5440 to 9252, Bits Changed: 6, Mask: c612, Engine State: Ready. Stopped.
+
+Reg 00e5 changed from 02c8 to 40c8, Bits Changed: 2, Mask: 4200, Engine State: Ready. Stopped.
+Reg 00e5 changed from 18c9 to 56c9, Bits Changed: 4, Mask: 4e00, Engine State: Ready. Stopped.
+
+Reg 01b1 changed from 1004 to 1000, Bits Changed: 1, Mask: 4, Engine State: Ready. Stopped.
+Reg 01b1 changed from 1010 to 1004, Bits Changed: 2, Mask: 14, Engine State: Ready. Stopped.
+
+Reg 02a8 changed from 47d8 to 0000, Bits Changed: 8, Mask: 47d8, Engine State: Ready. Stopped.
+Reg 02a8 changed from 4964 to 47d8, Bits Changed: 8, Mask: ebc, Engine State: Ready. Stopped.
+
+Reg 02a5 changed from 0000 to 0002, Bits Changed: 1, Mask: 2, Engine State: Ready. Stopped.
+Reg 02a6 changed from 0000 to 001a, Bits Changed: 3, Mask: 1a, Engine State: Ready. Stopped.
+
+
+'''
 #---------------------Input1::Input1--------------------------------------------
 # Enum for register Input1
 class Input1(object):
@@ -995,7 +1019,9 @@ class HPanel(controller.GeneratorController):
                                 "logs":False,
                                 "monitor": True,
                                 "notifications": True,
-                                "settings": True
+                                "settings": True,
+                                "addons": True,
+                                "about": True
                                 }
 
                 StartInfo["tiles"] = []

@@ -3384,7 +3384,9 @@ class Evolution(controller.GeneratorController):
                                 "logs":True,
                                 "monitor": True,
                                 "notifications": True,
-                                "settings": True
+                                "settings": True,
+                                "addons": True,
+                                "about": True
                                 }
 
                 StartInfo["tiles"] = []
