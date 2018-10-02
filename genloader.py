@@ -175,7 +175,6 @@ class Loader(mysupport.MySupport):
                     ConfFileList = self.CachedConfig[Module]["conffile"].split(",")
                     for ConfigFile in ConfFileList:
                         ConfigFile = ConfigFile.strip()
-                        self.LogInfo("checking " + ConfigFile)
                         if not os.path.isfile(self.ConfigFilePath + ConfigFile):
                             if os.path.isfile(self.ModulePath + ConfigFile):
                                 self.LogInfo("Copying " + ConfigFile + " to " + self.ConfigFilePath )
