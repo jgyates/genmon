@@ -73,8 +73,8 @@ class MyConfig (mycommon.MyCommon):
 
         if self.Simulation:
             return True
-        if not isinstance(section, str) or not len(section):
-            self.LogError("Error in MyConfig:ReadValue: invalid section")
+        if not (isinstance(section, str) or isinstance(section, unicode)) or not len(section):
+            self.LogError("Error in MyConfig:ReadValue: invalid section: " + str(section))
             return False
         self.Section = section
         return True
@@ -139,7 +139,7 @@ class MyConfig (mycommon.MyCommon):
 
         if section != None:
             self.SetSection(section)
-            
+
         SectionFound = False
         try:
             with self.CriticalLock:
