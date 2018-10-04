@@ -151,10 +151,16 @@ if __name__=='__main__': # usage program.py [server_address]
 
         config = myconfig.MyConfig(filename = '/etc/gensms.conf', section = 'gensms', log = log)
 
-        account_sid = config.ReadValue('accountsid')
-        auth_token = config.ReadValue('authtoken')
-        to_number = config.ReadValue('to_number')
-        from_number = config.ReadValue('from_number')
+        account_sid = config.ReadValue('accountsid', default = "")
+        auth_token = config.ReadValue('authtoken', default = "")
+        to_number = config.ReadValue('to_number', default = "")
+        from_number = config.ReadValue('from_number', default = "")
+
+        if account_sid == "" or auth_token == "" or to_number == "" or from_number == "":
+            log.error("Missing parameter in /etc/gensms.conf")
+            console.error("Missing parameter in /etc/gensms.conf")
+            sys.exit(1)
+
     except Exception as e1:
         log.error("Error reading /etc/gensms.conf: " + str(e1))
         console.error("Error reading /etc/gensms.conf: " + str(e1))
