@@ -84,7 +84,7 @@ class MyModem(mysupport.MySupport):
             self.LogConsole("Error invalid port")
             return
 
-        if self.Rate == None or self.Rate <= 0):
+        if self.Rate == None or self.Rate <= 0:
             self.LogErrorLine("Error invalid rate")
             self.LogConsole("Error invalid rate")
             return
@@ -167,7 +167,7 @@ class MyModem(mysupport.MySupport):
             if self.SerialDevice == None:
                 self.LogError("Serial device is not open!")
                 return False
-                
+
             if not NoAddCRLF:
                 command = str(command) + b"\r\n"
                 if response != None:
