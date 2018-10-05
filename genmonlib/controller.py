@@ -240,8 +240,7 @@ class GeneratorController(mysupport.MySupport):
                     Register = "%04x" % Reg
                     NewValue = self.ModBus.ProcessMasterSlaveTransaction(Register, 1, ReturnValue = True)
                     if not len(NewValue):
-                        if self.WaitForExit("DebugThread", 1):  #
-                            continue
+                        continue
                     OldValue = RegistersUnderTest.get(Register, "")
                     if OldValue == "":
                         RegistersUnderTest[Register] = NewValue        # first time seeing this register so add it to the list
