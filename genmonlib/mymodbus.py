@@ -19,6 +19,7 @@ MBUS_ADDRESS            = 0x00
 MBUS_ADDRESS_SIZE       = 0x01
 MBUS_COMMAND            = 0x01
 MBUS_COMMAND_SIZE       = 0x01
+MBUS_EXCEPTION          = 0x02
 MBUS_WR_REQ_BYTE_COUNT  = 0x06
 MBUS_CRC_SIZE           = 0x02
 MBUS_RES_LENGTH_SIZE    = 0x01
@@ -28,6 +29,7 @@ MIN_PACKET_LENGTH_REQ   = 0x08
 MIN_PACKET_LENGTH_WR_REQ= 0x09
 MIN_PACKET_LENGTH_RES   = 0x07
 MIN_PACKET_LENGTH_WR_RES= 0x08
+MIN_PACKET_LENGTH_ERR   = 0x05
 MBUS_CMD_READ_REGS      = 0x03
 MBUS_CMD_WRITE_REGS     = 0x10
 
@@ -89,8 +91,17 @@ class ModbusProtocol(modbusbase.ModbusBase):
         Packet = []
         EmptyPacket = []    # empty packet
 
-        if len(self.Slave.Buffer) < MIN_PACKET_LENGTH_RES:
-            return True, EmptyPacket
+        if len(self.Slave.Buffer) >= MIN_PACKET_LENGTH_ERR:
+            if self.Slave.Buffer[MBUS_ADDRESS] == self.Address and (self.Slave.Buffer[MBUS_COMMAND] & 0x80):
+                for i in range(0, MIN_PACKET_LENGTH_ERR):
+                    Packet.append(self.Slave.Buffer.pop(0))  # pop Address, Function, Length, message and CRC
+                if self.CheckCRC(Packet):
+                    self.RxPacketCount += 1
+                    self.SlaveException += 1
+                    self.LogError("Modbus Exception: " + str(self.Slave.Buffer[MBUS_EXCEPTION]) + " : Modbus Command: " + str(self.Slave.Buffer[MBUS_COMMAND]))
+                else:
+                    self.CrcError += 1
+                return False, Packet
 
         if len(self.Slave.Buffer) >= MIN_PACKET_LENGTH_RES:
             if self.Slave.Buffer[MBUS_ADDRESS] == self.Address and self.Slave.Buffer[MBUS_COMMAND] in [MBUS_CMD_READ_REGS]:
@@ -108,7 +119,7 @@ class ModbusProtocol(modbusbase.ModbusBase):
                     return True, Packet
                 else:
                     self.CrcError += 1
-                    return False, EmptyPacket
+                    return False, Packet
             elif self.Slave.Buffer[MBUS_ADDRESS] == self.Address and self.Slave.Buffer[MBUS_COMMAND] in [MBUS_CMD_WRITE_REGS]:
                 # it must be a write command response
                 if len(self.Slave.Buffer) < MIN_PACKET_LENGTH_WR_RES:
@@ -118,16 +129,16 @@ class ModbusProtocol(modbusbase.ModbusBase):
 
                 if self.CheckCRC(Packet):
                     self.RxPacketCount += 1
-                    return True,Packet
+                    return True, Packet
                 else:
                     self.CrcError += 1
-                    return False, EmptyPacket
+                    return False, Packet
             else:
                 self.DiscardByte()
                 self.Flush()
                 return False, EmptyPacket
 
-        return True, EmptyPacket   # technically not a CRC error, we really should never get here
+        return True, EmptyPacket   # No full packet ready
 
 
     # ---------- GeneratorDevice::DiscardByte------------------
@@ -372,6 +383,7 @@ class ModbusProtocol(modbusbase.ModbusBase):
         SerialStats["CRC Percent Errors"] = ("%.2f" % (PercentErrors * 100)) + "%"
         SerialStats["Packet Timeouts"] = "%d" %  self.ComTimoutError
         SerialStats["Packet Timeouts Percent Errors"] = ("%.2f" % (PercentTimeoutErrors * 100)) + "%"
+        SerialStats["Modbus Exceptions"] = self.SlaveException
         # add serial stats
         SerialStats["Discarded Bytes"] = "%d" % self.Slave.DiscardedBytes
         SerialStats["Comm Restarts"] = "%d" % self.Slave.Restarts
