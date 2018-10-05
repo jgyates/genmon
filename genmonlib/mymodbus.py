@@ -205,6 +205,8 @@ class ModbusProtocol(modbusbase.ModbusBase):
                 if msElapsed > self.ModBusPacketTimoutMS:
                     self.ComTimoutError += 1
                     self.LogError("Error: timeout receiving slave packet for register %x%x Buffer:%d" % (MasterPacket[2],MasterPacket[3], len(self.Slave.Buffer)) )
+                    if len(self.Slave.Buffer):
+                        self.LogError("Buffer: " + str(self.Slave.Buffer))
                     self.Flush()
                     if ReturnValue:
                         return ""

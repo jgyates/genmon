@@ -879,12 +879,12 @@ class HPanel(controller.GeneratorController):
             # TODO validate registers
             # Validate Register by length
             if len(Register) != 4 or len(Value) < 4:
-                self.LogErrorLine("Validation Error: Invalid data in UpdateRegisterList: %s %s" % (Register, Value))
+                self.LogError("Validation Error: Invalid data in UpdateRegisterList: %s %s" % (Register, Value))
 
             if self.RegisterIsKnown(Register):
                 self.Registers[Register] = Value
             else:
-                self.LogErrorLine("Error in UpdateRegisterList: Unknown Register " + Register + ":" + Value)
+                self.LogError("Error in UpdateRegisterList: Unknown Register " + Register + ":" + Value)
         except Exception as e1:
             self.LogErrorLine("Error in UpdateRegisterList: " + str(e1))
 
