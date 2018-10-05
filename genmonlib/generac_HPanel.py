@@ -197,9 +197,9 @@ class RegisterEnum(object):
 
     # These registers change when idle but are unknown in function
     UNKNOWN_01B1            = "01b1"
-    UNKNONW_02A8            = "02A8"
-    UNKNOWN_02A5            = "02A5"
-    UNKNOWN_02A6            = "02A6"
+    UNKNOWN_02A5            = "02a5"
+    UNKNOWN_02A6            = "02a6"
+    UNKNONW_02A8            = "02a8"
     #---------------------RegisterEnum::GetRegList------------------------------
     @staticmethod
     def GetRegList():
@@ -870,7 +870,7 @@ class HPanel(controller.GeneratorController):
     #------------ HPanel:RegisterIsKnown ---------------------------------------
     def RegisterIsKnown(self, Register):
 
-        return Register in RegisterEnum.GetRegList()
+        return Register in map(str.lower,RegisterEnum.GetRegList())
 
     #------------ HPanel:UpdateRegisterList ------------------------------------
     def UpdateRegisterList(self, Register, Value):
