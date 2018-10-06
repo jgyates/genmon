@@ -79,7 +79,7 @@ class MyConfig (mycommon.MyCommon):
         self.Section = section
         return True
     #---------------------MyConfig::ReadValue-----------------------------------
-    def ReadValue(self, Entry, return_type = str, default = None, section = None):
+    def ReadValue(self, Entry, return_type = str, default = None, section = None, NoLog = False):
 
         if self.Simulation:
             return default
@@ -103,7 +103,8 @@ class MyConfig (mycommon.MyCommon):
             else:
                 return default
         except Exception as e1:
-            self.LogErrorLine("Error in MyConfig:ReadValue: " + Entry + ": " + str(e1))
+            if not NoLog:
+                self.LogErrorLine("Error in MyConfig:ReadValue: " + Entry + ": " + str(e1))
             return default
 
 

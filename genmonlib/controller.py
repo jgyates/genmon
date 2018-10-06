@@ -141,7 +141,7 @@ class GeneratorController(mysupport.MySupport):
 
                 self.UseSerialTCP = self.config.ReadValue('use_serial_tcp', return_type = bool, default = False)
                 self.SerialTCPAddress = self.config.ReadValue('serial_tcp_address', return_type = str, default = None)
-                self.SerialTCPPort = self.config.ReadValue('serial_tcp_port', return_type = int, default = None)
+                self.SerialTCPPort = self.config.ReadValue('serial_tcp_port', return_type = int, default = None, NoLog = True)
 
         except Exception as e1:
             if not reload:
