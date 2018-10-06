@@ -123,10 +123,14 @@ class SerialDevice(mysupport.MySupport):
 
     # ---------- SerialDevice::Close--------------------------------------------
     def Close(self):
-        if self.SerialDevice.isOpen():
-            self.KillThread("SerialReadThread")
-            self.SerialDevice.close()
-            self.IsOpen = False
+
+        try:
+            if self.SerialDevice.isOpen():
+                self.KillThread("SerialReadThread")
+                self.SerialDevice.close()
+                self.IsOpen = False
+        except Exception as e1:
+            self.LogErrorLine("Error in Close: " + str(e1))
 
     # ---------- SerialDevice::Flush--------------------------------------------
     def Flush(self):

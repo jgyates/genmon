@@ -868,7 +868,7 @@ class Evolution(controller.GeneratorController):
 
         return outstr
 
-    #-------------Evolution:MasterEmulation------------------------------------
+    #-------------Evolution:MasterEmulation-------------------------------------
     def MasterEmulation(self):
 
         counter = 0
