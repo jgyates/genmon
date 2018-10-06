@@ -151,7 +151,7 @@ class SerialDevice(mysupport.MySupport):
     def Write(self, data):
         return  self.SerialDevice.write(data)
 
-    # ---------- SerialDevice::GetRxBufferAsString-------------------------
+    # ---------- SerialDevice::GetRxBufferAsString------------------------------
     def GetRxBufferAsString(self):
 
         try:

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 #    FILE: generac_H-100.py
 # PURPOSE: Controller Specific Detils for Generac H-100
 #
@@ -7,7 +7,7 @@
 #    DATE: 30-Apr-2018
 #
 # MODIFICATIONS:
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 import datetime, time, sys, os, threading, socket
 import atexit, json, collections, random
@@ -943,7 +943,7 @@ class HPanel(controller.GeneratorController):
             return "Unknown"
         return EngineState
 
-    #------------ Evolution:HPanel -----------------------------------------
+    #------------ HPanel:GetDateTime -------------------------------------------
     def GetDateTime(self):
 
         ErrorReturn = "Unknown"
@@ -993,7 +993,7 @@ class HPanel(controller.GeneratorController):
         except Exception as e1:
             self.LogErrorLine("Error in GetDateTime: " + str(e1))
             return ErrorReturn
-    #------------ HPanel::GetStartInfo ----------------------------
+    #------------ HPanel::GetStartInfo -----------------------------------------
     # return a dictionary with startup info for the gui
     def GetStartInfo(self, NoTile = False):
 
@@ -1032,7 +1032,7 @@ class HPanel(controller.GeneratorController):
         except Exception as e1:
             self.LogErrorLine("Error in GetStartInfo: " + str(e1))
             return ""
-    #------------ HPanel::GetStatusForGUI -------------------------
+    #------------ HPanel::GetStatusForGUI --------------------------------------
     # return dict for GUI
     def GetStatusForGUI(self):
 
@@ -1069,7 +1069,7 @@ class HPanel(controller.GeneratorController):
             self.LogErrorLine("Error in GetStatusForGUI: " + str(e1))
             return ""
 
-    #---------------------HPanel::DisplayLogs----------------------
+    #---------------------HPanel::DisplayLogs-----------------------------------
     def DisplayLogs(self, AllLogs = False, DictOut = False, RawOutput = False):
 
         RetValue = collections.OrderedDict()
@@ -1107,7 +1107,7 @@ class HPanel(controller.GeneratorController):
             self.LogErrorLine("Error in DisplayLogs: " + str(e1))
             return ""
 
-    #------------ HPanel::DisplayMaintenance ----------------------
+    #------------ HPanel::DisplayMaintenance -----------------------------------
     def DisplayMaintenance (self, DictOut = False):
 
         try:
@@ -1149,7 +1149,7 @@ class HPanel(controller.GeneratorController):
             self.LogErrorLine("Error in DisplayMaintenance: " + str(e1))
             return ""
 
-    #------------ HPanel::DisplayStatus ---------------------------
+    #------------ HPanel::DisplayStatus ----------------------------------------
     def DisplayStatus(self, DictOut = False):
 
         try:
@@ -1216,7 +1216,7 @@ class HPanel(controller.GeneratorController):
             return ""
 
 
-    #------------------- HPanel::DisplayOutage --------------------
+    #------------------- HPanel::DisplayOutage ---------------------------------
     def DisplayOutage(self, DictOut = False):
 
         try:
@@ -1270,7 +1270,7 @@ class HPanel(controller.GeneratorController):
             self.LogErrorLine("Error in DisplayRegisters: " + str(e1))
             return ""
 
-    #----------  HPanel::SetGeneratorTimeDate----------------------
+    #----------  HPanel::SetGeneratorTimeDate-----------------------------------
     # set generator time to system time
     def SetGeneratorTimeDate(self):
 
@@ -1293,13 +1293,13 @@ class HPanel(controller.GeneratorController):
         except Exception as e1:
             self.LogErrorLine("Error in SetGeneratorTimeDate: " + str(e1))
 
-    #----------  HPanel::SetGeneratorQuietMode---------------------
+    #----------  HPanel::SetGeneratorQuietMode----------------------------------
     # Format of CmdString is "setquiet=yes" or "setquiet=no"
     # return  "Set Quiet Mode Command sent" or some meaningful error string
     def SetGeneratorQuietMode(self, CmdString):
         return "Not Supported"
 
-    #----------  HPanel::SetGeneratorExerciseTime------------------
+    #----------  HPanel::SetGeneratorExerciseTime-------------------------------
     # CmdString is in the format:
     #   setexercise=Monday,13:30,Weekly
     #   setexercise=Monday,13:30,BiWeekly
@@ -1308,7 +1308,7 @@ class HPanel(controller.GeneratorController):
     def SetGeneratorExerciseTime(self, CmdString):
         return "Not Supported"
 
-    #----------  HPanel::SetGeneratorRemoteStartStop---------------
+    #----------  HPanel::SetGeneratorRemoteStartStop----------------------------
     # CmdString will be in the format: "setremote=start"
     # valid commands are start, stop, starttransfer, startexercise
     # return string "Remote command sent successfully" or some descriptive error
@@ -1316,7 +1316,7 @@ class HPanel(controller.GeneratorController):
     def SetGeneratorRemoteStartStop(self, CmdString):
         return "Not Supported"
 
-    #----------  HPanel:GetController  ----------------------------
+    #----------  HPanel:GetController  -----------------------------------------
     # return the name of the controller, if Actual == False then return the
     # controller name that the software has been instructed to use if overridden
     # in the conf file
@@ -1324,7 +1324,7 @@ class HPanel(controller.GeneratorController):
 
         return self.GetParameterString(RegisterEnum.CONTROLLER_NAME_START, RegisterEnum.CONTROLLER_NAME_END)
 
-    #----------  HPanel:ComminicationsIsActive  -------------------
+    #----------  HPanel:ComminicationsIsActive  --------------------------------
     # Called every 2 seconds, if communictions are failing, return False, otherwise
     # True
     def ComminicationsIsActive(self):
@@ -1346,7 +1346,7 @@ class HPanel(controller.GeneratorController):
         #    return False
         return True
 
-    #---------------------HPanel::GetPowerOutput-------------------
+    #---------------------HPanel::GetPowerOutput--------------------------------
     # returns current kW
     # rerturn empty string ("") if not supported,
     # return kW with units i.e. "2.45kW"
@@ -1354,12 +1354,12 @@ class HPanel(controller.GeneratorController):
 
         return self.GetParameter(RegisterEnum.TOTAL_POWER_KW, "kW", ReturnFloat = ReturnFloat)
 
-    #----------  HPanel:GetCommStatus  ----------------------------
+    #----------  HPanel:GetCommStatus  -----------------------------------------
     # return Dict with communication stats
     def GetCommStatus(self):
         return self.ModBus.GetCommStats()
 
-    #------------ HPanel:GetBaseStatus ----------------------------
+    #------------ HPanel:GetBaseStatus -----------------------------------------
     # return one of the following: "ALARM", "SERVICEDUE", "EXERCISING", "RUNNING",
     # "RUNNING-MANUAL", "OFF", "MANUAL", "READY"
     def GetBaseStatus(self):
@@ -1387,7 +1387,7 @@ class HPanel(controller.GeneratorController):
             self.LogErrorLine("Error in GetBaseStatus: " + str(e1))
             return "UNKNOWN"
 
-    #------------ HPanel:GetOneLineStatus -------------------------
+    #------------ HPanel:GetOneLineStatus --------------------------------------
     # returns a one line status for example : switch state and engine state
     def GetOneLineStatus(self):
         return self.GetSwitchState() + " : " + self.GetEngineState()
