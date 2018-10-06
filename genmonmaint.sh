@@ -16,7 +16,7 @@ Continue? (y/n)  "
 #-------------------------------------------------------------------
 # This function copy all config files to the ./etc directory
 function copyconffiles() {
-    sudo cp "$genmondir/*.conf" /etc
+    sudo cp $genmondir/*.conf /etc
 }
 #-------------------------------------------------------------------
 # This function will update the pip libraries used
