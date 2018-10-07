@@ -60,6 +60,9 @@ voltageconfiguration = The voltage configuration of the industrial generator.
 nominalbattery = 12 for one battery, 24 for two batteries
 controllertype = Set to h_100 for H-100 mode, otherwise the software will default to Nexus/Evolution Mode
 autofeedback = If enabled, an email will be sent to the software maintainer if critical data is missing in the software for your generator. The email will contain the contents of the generator registers. Enabling this option helps support the widest possible set of features and supported generators.
+use_serial_tcp = If enabled, the software will use TCP over serial instead of direct serial communications
+serial_tcp_address = If Serial over TCP/IP is enabled, this parameter sets the IP address used for the serial server.
+serial_tcp_port = If Serial over TCP/IP is enabled, this parameter sets the IP port used for the serial server.
 
 [generac_evo_nexus]
 0000=Product line
@@ -106,10 +109,9 @@ autofeedback = If enabled, an email will be sent to the software maintainer if c
 005f=Engine Run Minutes Low (EvoLC)
 000d=Bit changes when the controller is updating registers.
 003c=Raw RPM Sensor
-005d=Unknown Sensor (EvoLC)
+005d=Fuel Pressure Sensor (EvoLC)
 05ed=Ambient Temp Sensor (EvoLC)
 05ee=Battery Charger CT (EvoLC)
-05f5=Unknown Status (EvoAC, Nexus)
 05fa=Unknown Status (EvoAC, Nexus)
 0034=Unknown Sensor (Nexus, EvoAC)
 0032=Unknown Sensor (Nexus, EvoAC)

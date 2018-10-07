@@ -1,7 +1,14 @@
 # genmon
 # Generator Monitoring Application using a Raspberry Pi and WiFi
 
-This project will monitor a backup generator that utilizes the Generac [Evolution](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/Evolution_Controller.jpg) or [Nexus](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/Nexus_Controller.jpg) Controllers over a WiFi or wired connection.  Generac, Eaton, Honeywell and Siemens Home Backup Generators use these Generac controllers. Honeywell and Eaton call the controllers Sync 1.0 (Nexus) and Sync 2.0 (Evolution) in their documentation however all of these companies sell generators that use the controllers supported by this project. The Generac [H-100](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/H-100_Controller.png) Controller is also supported. The H-100 controller is used in industrial generators from Generac and Eaton. The project is written mostly in python and has been tested with a Raspberry Pi 3 (Pi Zero and Pi 2 has also been validated). Ideally you would need to create a physical enclosure for your raspberry pi and possibly [make a cable](https://github.com/jgyates/genmon/wiki/3.1:-Making-a-Cable) to connect the raspberry pi to the Evolution or Nexus controller. If you are comfortable doing these things and you have a backup generator that has a supported controller then this project may be of interest to you.
+This project will monitor a backup generator that utilizes the Generac Controllers over a WiFi or wired connection.  The following generator controllers are supported:
+
+* Generac [Nexus](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/Nexus_Controller.jpg) and [Evolution](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/Evolution_Controller.jpg) (1.0 and 2.0) Controller (Used in Generacs residential product line)
+* Honeywell and Eaton use the Generac Controllers, they call them Sync 1.0 (Nexus), Sync 2.0 (Evolution 1.0) and Sync 3.0 (Evolution 2.0)
+* Generac [H-100](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/H-100_Controller.png) Industrial Controllers
+* The H-100 controller is used in industrial generators from Generac and Eaton.
+
+The project is written mostly in python and has been tested with a Raspberry Pi 3 (Pi Zero, Pi Zero W, Pi 2 and Pi 3b+ have also been validated). Ideally you would need to create a physical enclosure for your raspberry pi and possibly [make a cable](https://github.com/jgyates/genmon/wiki/3.1:-Making-a-Cable) to connect the raspberry pi to the Evolution or Nexus controller. If you are comfortable doing these things and you have a backup generator that has a supported controller then this project may be of interest to you.
 
 ## Functionality
 The software supports the following features:
@@ -38,7 +45,7 @@ The software supports the following features:
     - Critical or Warning messages from the generator
 - Web based application for viewing status of the generator
 - Limited and Full Rights login for web interface
-- SMS notifications of Generator state (via Twilio SMS API)
+- SMS notifications of Generator state and power outages (via Twilio SMS API or Expansion Cellular Modem)
 - Push notifications (via pushover.net)
 - syslog logging of generator events
 - Command Line application (all the functionality of email).

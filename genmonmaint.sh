@@ -16,8 +16,45 @@ Continue? (y/n)  "
 #-------------------------------------------------------------------
 # This function copy all config files to the ./etc directory
 function copyconffiles() {
-    sudo cp "$genmondir/genmon.conf" /etc
-    sudo cp "$genmondir/mymail.conf" /etc
+    sudo cp $genmondir/*.conf /etc
+}
+#-------------------------------------------------------------------
+# This function will update the pip libraries used
+function updatelibraries() {
+  sudo pip install crcmod -U
+  sudo pip install configparser -U
+  sudo pip install pyserial -U
+  sudo pip install Flask -U
+  sudo pip install pyowm -U
+  sudo pip install pytz -U
+  sudo pip install pyopenssl  -U
+  sudo pip install twilio -U
+  sudo pip install chump -U
+  sudo pip install paho-mqtt -U
+}
+
+#-------------------------------------------------------------------
+# This function will setup the serial port
+function setupserial() {
+  pushd $genmondir
+  cd OtherApps
+  sudo python serialconfig.py -e
+  echo "Finished setting up the serial port."
+  popd
+}
+
+#-------------------------------------------------------------------
+# This function will install rpirtscts program needed for the LTE modem
+function installrpirtscts() {
+    echo "Installing rpirtscts..."
+    pushd $genmondir
+    cd ~
+    git clone git://github.com/mholling/rpirtscts.git
+    cd rpirtscts
+    make
+    sudo cp ./rpirtscts /usr/local/bin/rpirtscts
+    echo "Finished installing rpirtscts."
+    popd
 }
 #-------------------------------------------------------------------
 # This function will install the required libraries for genmon
@@ -27,16 +64,22 @@ function installgenmon() {
     sudo apt-get install python-pip
     sudo pip install crcmod
     sudo pip install configparser
-    sudo apt-get install python-serial
+    sudo pip install pyserial
     sudo pip install Flask
     sudo pip install pyowm
     sudo pip install pytz
+    sudo apt-get install build-essential libssl-dev libffi-dev python-dev
+    sudo pip install pyopenssl
+    sudo pip install twilio
+    sudo pip install chump
+    sudo pip install paho-mqtt
     sudo chmod 775 "$genmondir/startgenmon.sh"
     sudo chmod 775 "$genmondir/genmonmaint.sh"
+    installrpirtscts
 
     if [ -z "$1" ]    # Is parameter #1 zero length?
         then
-            read -p "Copy genmon.conf and mymail.conf to ./etc? (y/n)?" choice
+            read -p "Copy configuration files to /etc? (y/n)?" choice
             case "$choice" in
               y|Y ) echo "Copying *.conf files to /etc"
                 copyconffiles
@@ -50,6 +93,18 @@ function installgenmon() {
         else
             copyconffiles
         fi
+
+      read -p "Setup the raspberry pi onboard serial port? (y/n)?" choice
+      case "$choice" in
+        y|Y ) echo "Setting up serial port..."
+          setupserial
+          ;; # yes choice
+        n|N ) echo "Not setting up serial port"
+          ;; # no choice
+        *)
+          echo "Invalid choice, not setting up serial port"
+          ;;  # default choice
+      esac
 }
 
 #-------------------------------------------------------------------
@@ -98,6 +153,7 @@ case "$1" in
     ;;
   install)
     read -n 1 -s -r -p "$installnotice"
+    echo ""
     # install libraries
     installgenmon
     # update crontab
@@ -117,12 +173,15 @@ case "$1" in
   updatenp)
     updategenmon
     ;;
+  updatelibs)
+    updatelibraries
+    ;;
   installnp)        # install with no prompt
     installgenmon 1
     updatecrontab
     ;;
   *)
-    echo "No valid command given. Specify 'update' or 'install' on command line"
+    echo "No valid command given. Specify 'update', 'install' or 'updatelibs' on command line"
     #
     ;;
 esac

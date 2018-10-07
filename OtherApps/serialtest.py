@@ -55,7 +55,7 @@ def OpenSerialPort(name, rate):
     return NewSerialPort
 
 #------------------- Command-line interface for monitor -----------------#
-if __name__=='__main__': # usage SerialTest.py [baud_rate]
+if __name__=='__main__': # usage SerialTest.py [port]
 
     device='/dev/serial0' if len(sys.argv)<2 else sys.argv[1]
 
@@ -91,5 +91,3 @@ if __name__=='__main__': # usage SerialTest.py [baud_rate]
 
 
     sys.exit(1)
-
-

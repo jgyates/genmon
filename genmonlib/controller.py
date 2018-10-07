@@ -16,16 +16,21 @@
 import threading, datetime, collections, os, time
 # NOTE: collections OrderedDict is used for dicts that are displayed to the UI
 
-try:
-    from ConfigParser import RawConfigParser
-except ImportError as e:
-    from configparser import RawConfigParser
 
 import mysupport, mypipe, mythread
 
 class GeneratorController(mysupport.MySupport):
     #---------------------GeneratorController::__init__-------------------------
-    def __init__(self, log, newinstall = False, simulation = False, simulationfile = None, message = None, feedback = None, ConfigFilePath = None):
+    def __init__(self,
+        log,
+        newinstall = False,
+        simulation = False,
+        simulationfile = None,
+        message = None,
+        feedback = None,
+        ConfigFilePath = None,
+        config = None):
+
         super(GeneratorController, self).__init__(simulation = simulation)
         self.log = log
         self.NewInstall = newinstall
@@ -33,10 +38,13 @@ class GeneratorController(mysupport.MySupport):
         self.SimulationFile = simulationfile
         self.FeedbackPipe = feedback
         self.MessagePipe = message
+        self.config = config
         if ConfigFilePath == None:
             self.ConfigFilePath = "/etc/"
         else:
             self.ConfigFilePath = ConfigFilePath
+
+
         self.Address = None
         self.SerialPort = "/dev/serial0"
         self.BaudRate = 9600
@@ -66,6 +74,7 @@ class GeneratorController(mysupport.MySupport):
         self.UtilityVoltsMax = 0    # Maximum reported utility voltage above pickup
         self.SystemInOutage = False         # Flag to signal utility power is out
         self.TransferActive = False         # Flag to signal transfer switch is allowing gen supply power
+        self.ControllerSelected = None
         self.SiteName = "Home"
         # The values "Unknown" are checked to validate conf file items are found
         self.FuelType = "Unknown"
@@ -80,61 +89,59 @@ class GeneratorController(mysupport.MySupport):
         self.OutageStartTime = self.ProgramStartTime        # if these two are the same, no outage has occured
         self.LastOutageDuration = self.OutageStartTime - self.OutageStartTime
 
-        # Read conf entries common to all controllers
-        ConfigSection = "GenMon"
         try:
-            # read config file
-            config = RawConfigParser()
-            # config parser reads from current directory, when running form a cron tab this is
-            # not defined so we specify the full path
-            config.read(self.ConfigFilePath + 'genmon.conf')
+            if self.config != None:
+                if self.config.HasOption('sitename'):
+                    self.SiteName = self.config.ReadValue('sitename')
 
-            # getfloat() raises an exception if the value is not a float
-            # getint() and getboolean() also do this for their respective types
-            if config.has_option(ConfigSection, 'sitename'):
-                self.SiteName = config.get(ConfigSection, 'sitename')
+                if self.config.HasOption('port'):
+                    self.SerialPort = self.config.ReadValue('port')
 
-            if config.has_option(ConfigSection, 'port'):
-                self.SerialPort = config.get(ConfigSection, 'port')
+                if self.config.HasOption('loglocation'):
+                    self.LogLocation = self.config.ReadValue('loglocation')
 
-            if config.has_option(ConfigSection, 'loglocation'):
-                self.LogLocation = config.get(ConfigSection, 'loglocation')
+                if self.config.HasOption('optimizeforslowercpu'):
+                    self.SlowCPUOptimization = self.config.ReadValue('optimizeforslowercpu', return_type = bool)
+                # optional config parameters, by default the software will attempt to auto-detect the controller
+                # this setting will override the auto detect
 
-            if config.has_option(ConfigSection, 'optimizeforslowercpu'):
-                self.SlowCPUOptimization = config.getboolean(ConfigSection, 'optimizeforslowercpu')
-            # optional config parameters, by default the software will attempt to auto-detect the controller
-            # this setting will override the auto detect
+                if self.config.HasOption('metricweather'):
+                    self.UseMetric = self.config.ReadValue('metricweather', return_type = bool)
 
-            if config.has_option(ConfigSection, 'metricweather'):
-                self.UseMetric = config.getboolean(ConfigSection, 'metricweather')
+                if self.config.HasOption('enabledebug'):
+                    self.EnableDebug = self.config.ReadValue('enabledebug', return_type = bool)
 
-            if config.has_option(ConfigSection, 'enabledebug'):
-                self.EnableDebug = config.getboolean(ConfigSection, 'enabledebug')
+                if self.config.HasOption('displayunknown'):
+                    self.bDisplayUnknownSensors = self.config.ReadValue('displayunknown', return_type = bool)
+                if self.config.HasOption('outagelog'):
+                    self.OutageLog = self.config.ReadValue('outagelog')
 
-            if config.has_option(ConfigSection, 'displayunknown'):
-                self.bDisplayUnknownSensors = config.getboolean(ConfigSection, 'displayunknown')
-            if config.has_option(ConfigSection, 'outagelog'):
-                self.OutageLog = config.get(ConfigSection, 'outagelog')
+                if self.config.HasOption('kwlog'):
+                    self.PowerLog = self.config.ReadValue('kwlog')
+                if self.config.HasOption('kwlogmax'):
+                    self.PowerLogMaxSize = self.config.ReadValue('kwlogmax', return_type = int)
 
-            if config.has_option(ConfigSection, 'kwlog'):
-                self.PowerLog = config.get(ConfigSection, 'kwlog')
-            if config.has_option(ConfigSection, 'kwlogmax'):
-                self.PowerLogMaxSize = config.getint(ConfigSection, 'kwlogmax')
+                if self.config.HasOption('nominalfrequency'):
+                    self.NominalFreq = self.config.ReadValue('nominalfrequency')
+                if self.config.HasOption('nominalRPM'):
+                    self.NominalRPM = self.config.ReadValue('nominalRPM')
+                if self.config.HasOption('nominalKW'):
+                    self.NominalKW = self.config.ReadValue('nominalKW')
+                if self.config.HasOption('model'):
+                    self.Model = self.config.ReadValue('model')
 
-            if config.has_option(ConfigSection, 'nominalfrequency'):
-                self.NominalFreq = config.get(ConfigSection, 'nominalfrequency')
-            if config.has_option(ConfigSection, 'nominalRPM'):
-                self.NominalRPM = config.get(ConfigSection, 'nominalRPM')
-            if config.has_option(ConfigSection, 'nominalKW'):
-                self.NominalKW = config.get(ConfigSection, 'nominalKW')
-            if config.has_option(ConfigSection, 'model'):
-                self.Model = config.get(ConfigSection, 'model')
+                if self.config.HasOption('controllertype'):
+                    self.ControllerSelected = self.config.ReadValue('controllertype')
 
-            if config.has_option(ConfigSection, 'fueltype'):
-                self.FuelType = config.get(ConfigSection, 'fueltype')
+                if self.config.HasOption('fueltype'):
+                    self.FuelType = self.config.ReadValue('fueltype')
 
-            if config.has_option(ConfigSection, 'tanksize'):
-                self.TankSize = config.get(ConfigSection, 'tanksize')
+                if self.config.HasOption('tanksize'):
+                    self.TankSize = self.config.ReadValue('tanksize')
+
+                self.UseSerialTCP = self.config.ReadValue('use_serial_tcp', return_type = bool, default = False)
+                self.SerialTCPAddress = self.config.ReadValue('serial_tcp_address', return_type = str, default = None)
+                self.SerialTCPPort = self.config.ReadValue('serial_tcp_port', return_type = int, default = None, NoLog = True)
 
         except Exception as e1:
             if not reload:
@@ -202,6 +209,10 @@ class GeneratorController(mysupport.MySupport):
             return
         time.sleep(.25)
 
+        if not self.ControllerSelected == None or not len(self.ControllerSelected) or self.ControllerSelected == "generac_evo_nexus":
+            MaxReg = 0x400
+        else:
+            MaxReg == 0x400
         self.InitCompleteEvent.wait()
 
         if self.IsStopping:
@@ -218,13 +229,18 @@ class GeneratorController(mysupport.MySupport):
             if self.IsStopSignaled("DebugThread"):
                 return
             if TotalSent >= 5:
+                self.FeedbackPipe.SendFeedback("Debug Thread Finished", Always = True, FullLogs = True, Message="Finished Debug Thread")
+                if self.WaitForExit("DebugThread", 1):  #
+                    return
                 continue
             try:
-                for Reg in range(0x0 , 0x2000):
-                    if self.WaitForExit("DebugThread", 0.25):  # ten min
+                for Reg in range(0x0 , MaxReg):
+                    if self.WaitForExit("DebugThread", 0.25):  #
                         return
                     Register = "%04x" % Reg
                     NewValue = self.ModBus.ProcessMasterSlaveTransaction(Register, 1, ReturnValue = True)
+                    if not len(NewValue):
+                        continue
                     OldValue = RegistersUnderTest.get(Register, "")
                     if OldValue == "":
                         RegistersUnderTest[Register] = NewValue        # first time seeing this register so add it to the list
@@ -234,14 +250,14 @@ class GeneratorController(mysupport.MySupport):
                                 (Register, OldValue, NewValue, BitsChanged, Mask, self.GetEngineState())
                         RegistersUnderTest[Register] = Value        # update the value
 
-                msgbody = ""
+                msgbody = "\n"
                 for Register, Value in RegistersUnderTest.items():
                     msgbody += self.printToString("%s:%s" % (Register, Value))
 
                 self.FeedbackPipe.SendFeedback("Debug Thread (Registers)", FullLogs = True, Always = True, Message=msgbody, NoCheck = True)
                 if len(RegistersUnderTestData):
                     self.FeedbackPipe.SendFeedback("Debug Thread (Changes)", FullLogs = True, Always = True, Message=RegistersUnderTestData, NoCheck = True)
-                RegistersUnderTestData = ""
+                RegistersUnderTestData = "\n"
                 TotalSent += 1
 
             except Exception as e1:
@@ -379,6 +395,7 @@ class GeneratorController(mysupport.MySupport):
             StartInfo["NominalBatteryVolts"] = "12"
             StartInfo["UtilityVoltageDisplayed"] = True
             StartInfo["RemoteCommands"] = True
+            StartInfo["RemoteButtons"] = False
 
             if not NoTile:
                 StartInfo["tiles"] = []
@@ -396,6 +413,8 @@ class GeneratorController(mysupport.MySupport):
         Status = {}
         try:
             Status["basestatus"] = self.GetBaseStatus()
+            Status["switchstate"] = self.GetSwitchState()
+            Status["enginestate"] = self.GetEngineState()
             Status["kwOutput"] = self.GetPowerOutput()
             Status["OutputVoltage"] = "0V"
             Status["BatteryVoltage"] = "0V"
@@ -520,10 +539,14 @@ class GeneratorController(mysupport.MySupport):
     def ResetCommStats(self):
         self.ModBus.ResetCommStats()
 
+    #----------  GeneratorController:RemoteButtonsSupported  --------------------
+    # return true if Panel buttons are settable via the software
+    def RemoteButtonsSupported(self):
+        return False
     #----------  GeneratorController:PowerMeterIsSupported  --------------------
     # return true if GetPowerOutput is supported
     def PowerMeterIsSupported(self):
-        False
+        return False
 
     #---------------------GeneratorController::GetPowerOutput-------------------
     # returns current kW
@@ -1016,6 +1039,7 @@ class GeneratorController(mysupport.MySupport):
         # if log file is empty or does not exist, make a zero entry in log to denote start of collection
         if not os.path.isfile(self.PowerLog) or os.path.getsize(self.PowerLog) == 0:
             TimeStamp = datetime.datetime.now().strftime('%x %X')
+            self.LogError("Creating Power Log: " + self.PowerLog)
             self.LogToFile(self.PowerLog, TimeStamp, "0.0")
 
         LastValue = 0.0
@@ -1059,10 +1083,12 @@ class GeneratorController(mysupport.MySupport):
         else:
             DefaultReturn = "0"
 
-        if self.TankSize == None or self.TankSize == "0":
+        if self.TankSize == None or self.TankSize == "0" or self.TankSize == "":
             return DefaultReturn
         try:
             FuelUsed = self.GetPowerHistory("power_log_json=0,fuel", NoReduce = True)
+            if FuelUsed == "Unknown" or not len(FuelUsed):
+                return DefaultReturn
             FuelUsed = self.removeAlpha(FuelUsed)
             FuelLeft = float(self.TankSize) - float(FuelUsed)
             if FuelLeft < 0:

@@ -13,17 +13,11 @@ import datetime, time, sys, signal, os, threading, socket
 import atexit
 
 try:
-    from genmonlib import mynotify, mylog
+    from genmonlib import mynotify, mylog, myconfig
 except:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
     sys.exit(2)
-
-
-try:
-    from ConfigParser import RawConfigParser
-except ImportError as e:
-    from configparser import RawConfigParser
 
 try:
     from chump import Application
@@ -158,15 +152,22 @@ if __name__=='__main__': # usage program.py [server_address]
 
     try:
 
-        # read config file
-        config = RawConfigParser()
-        # config parser reads from current directory, when running form a cron tab this is
-        # not defined so we specify the full path
-        config.read('/etc/genpushover.conf')
+        config = myconfig.MyConfig(filename = '/etc/genpushover.conf', section = 'genpushover', log = log)
 
-        appid = config.get('genpushover', 'appid')
-        userid = config.get('genpushover', 'userid')
-        pushsound = config.get('genpushover', 'pushsound')
+        appid = config.ReadValue('appid')
+        userid = config.ReadValue('userid')
+        pushsound = config.ReadValue('pushsound', default = 'updown')
+
+        if appid == None or not len(appid):
+            log.error("Error:  invalid app ID")
+            console.error("Error:  invalid app ID")
+            sys.exit(2)
+
+        if userid == None or not len(userid):
+            log.error("Error:  invalid user ID")
+            console.error("Error:  invalid user ID")
+            sys.exit(2)
+
     except Exception as e1:
         log.error("Error reading /etc/genpushover.conf: " + str(e1))
         console.error("Error reading /etc/genpushover.conf: " + str(e1))

@@ -2,6 +2,7 @@
 // global base state
 var baseState = "READY";        // updated on a time
 var currentbaseState = "READY"; // menus change on this var
+var switchState = "Auto";        // updated on a time
 var currentClass = "active";    // CSS class for menu color
 var menuElement = "status";
 var ajaxErrors = {errorCount: 0, lastSuccessTime: 0, log: ""};
@@ -650,14 +651,22 @@ function DisplayMaintenance(){
     
             outstr += '<br><br>Remote Commands:<br><br>';
     
-            outstr += '&nbsp;&nbsp;&nbsp;&nbsp;<button class="tripleButtonLeft" id="remotestop" onClick="SetStopClick();">Stop Generator</button>';
-            outstr += '<button class="tripleButtonCenter" id="remotestart" onClick="SetStartClick();">Start Generator</button>';
-            outstr += '<button class="tripleButtonRight"  id="remotetransfer" onClick="SetTransferClick();">Start Generator and Transfer</button><br>';
+            outstr += '&nbsp;&nbsp;&nbsp;&nbsp;<button class="tripleButtonLeft" id="remotestop" onClick="SetClick(\'stop\');">Stop Generator</button>';
+            outstr += '<button class="tripleButtonCenter" id="remotestart" onClick="SetClick(\'start\');">Start Generator</button>';
+            outstr += '<button class="tripleButtonRight"  id="remotetransfer" onClick="SetClick(\'starttransfer\');">Start Generator and Transfer</button><br>';
+
+            if (myGenerator['RemoteButtons'] == true) {
+               outstr += '<br>Switch Position:<br><br>';
+               outstr += '&nbsp;&nbsp;&nbsp;&nbsp;<button class="tripleButtonLeft" id="switchoff" onClick="SetClick(\'off\');">Off</button>';
+               outstr += '<button class="tripleButtonCenter" id="switchauto" onClick="SetClick(\'auto\');">Auto</button>';
+               outstr += '<button class="tripleButtonRight"  id="switchmanual" onClick="SetClick(\'manual\');">Manual</button><br>';
+            }
 
             if (myGenerator['PowerGraph'] == true) {
                outstr += '<br>Reset:<br><br>';
                outstr += '&nbsp;&nbsp;<button id="settimebutton" onClick="SetPowerLogReset();">Reset Power Log & Fuel Estimate</button>';
             }
+
         }
     
             $("#mydisplay").html(outstr);
@@ -670,7 +679,7 @@ function DisplayMaintenance(){
             $("#hours").val(myGenerator['ExerciseHour']);
             $("#minutes").val(myGenerator['ExerciseMinute']);
     
-            startStartStopButtonsState();
+            setStartStopButtonsState();
     
             myGenerator["OldExerciseParameters"] = [myGenerator['ExerciseDay'], myGenerator['ExerciseHour'], myGenerator['ExerciseMinute'], myGenerator['QuietMode'], myGenerator['ExerciseFrequency'], myGenerator['EnhancedExerciseEnabled']];
         }
@@ -717,52 +726,38 @@ function WeekdayExerciseSelection(){
 //*****************************************************************************
 // called when Set Remote Stop is clicked
 //*****************************************************************************
-function SetStopClick(){
+function SetClick(cmd){
+    var msg = "";
+
+    switch (cmd) {
+       case "stop": 
+          msg = 'Stop generator?<br><span class="confirmSmall">Note: If the generator is powering a load the transfer switch will be deactivated and there will be a cool down period of a few minutes.</span>';
+          break;
+       case "start": 
+          msg = 'Start generator?<br><span class="confirmSmall">Generator will start, warm up and run idle (without activating the transfer switch).</span>';
+          break;
+       case "starttransfer":
+          msg = 'Start generator and activate transfer switch?<br><span class="confirmSmall">Generator will start, warm up, then activate the transfer switch.</span>';
+          break;
+       case "off":
+          msg = 'Turn off the Generator?<br><span class="confirmSmall">Generator will NOT start automatically in case of a power outage.</span>';
+          break;
+       case "auto":
+          msg = 'Set generator to Auto?<br><span class="confirmSmall">Generator will automatically start and transfer in case of a power outage.</span>';
+          break;
+       case "manual":
+          msg = 'Set generator to Manual?<br><span class="confirmSmall">Generator will start, warm up and run idle (without activating the transfer switch).</span>';
+          break;
+    }
 
     vex.dialog.confirm({
-        unsafeMessage: 'Stop generator?<br><span class="confirmSmall">Note: If the generator is powering a load the transfer switch will be deactivated and there will be a cool down period of a few minutes.</span>',
+        unsafeMessage: msg,
         overlayClosesOnClick: false,
         callback: function (value) {
              if (value == false) {
                 return;
              } else {
-                SetRemoteCommand("stop")
-             }
-        }
-    });
-}
-
-//*****************************************************************************
-// called when Set Remote Start is clicked
-//*****************************************************************************
-function SetStartClick(){
-
-    vex.dialog.confirm({
-        unsafeMessage: 'Start generator?<br><span class="confirmSmall">Generator will start, warm up and run idle (without activating the transfer switch).</span>',
-        overlayClosesOnClick: false,
-        callback: function (value) {
-             if (value == false) {
-                return;
-             } else {
-                SetRemoteCommand("start")
-             }
-        }
-    });
-}
-
-//*****************************************************************************
-// called when Set Remote Tansfer is clicked
-//*****************************************************************************
-function SetTransferClick(){
-
-    vex.dialog.confirm({
-        unsafeMessage: 'Start generator and activate transfer switch?<br><span class="confirmSmall">Generator will start, warm up, then activate the transfer switch.</span>',
-        overlayClosesOnClick: false,
-        callback: function (value) {
-             if (value == false) {
-                return;
-             } else {
-                SetRemoteCommand("starttransfer")
+                SetRemoteCommand(cmd)
              }
         }
     });
@@ -837,7 +832,7 @@ function DisplayMaintenanceUpdate(){
         if (myGenerator['QuietMode'] !=  myGenerator['OldExerciseParameters'][3])
            $("#quietmode").val(myGenerator['QuietMode']);
     
-        startStartStopButtonsState();
+        setStartStopButtonsState();
     
         myGenerator["OldExerciseParameters"] = [myGenerator['ExerciseDay'], myGenerator['ExerciseHour'], myGenerator['ExerciseMinute'], myGenerator['QuietMode'], myGenerator['ExerciseFrequency'], myGenerator['EnhancedExerciseEnabled']];
     }
@@ -852,7 +847,7 @@ function DisplayMaintenanceUpdate(){
 
 }
 
-function startStartStopButtonsState(){
+function setStartStopButtonsState(){
    if((baseState === "EXERCISING") || (baseState === "RUNNING")) {
      $("#remotestop").prop("disabled",false);
      $("#remotestart").prop("disabled",true);
@@ -867,22 +862,46 @@ function startStartStopButtonsState(){
    $("#remotestart").css("background", "#bbbbbb");
    $("#remotetransfer").css("background", "#bbbbbb");
    switch (baseState) {
-    case "EXERCISING" :
+     case "EXERCISING" :
         $("#remotestart").css("background", "#4CAF50");
-        $("#remotestop").css("background", "#bbbbbb");
-        $("#remotetransfer").css("background", "#bbbbbb");
         break;
-    case "RUNNING":
+     case "RUNNING":
         $("#remotetransfer").css("background", "#4CAF50");
-        $("#remotestop").css("background", "#bbbbbb");
-        $("#remotestart").css("background", "#bbbbbb");
         break;
      default:
         $("#remotestop").css("background", "#4CAF50");
-        $("#remotestart").css("background", "#bbbbbb");
-        $("#remotetransfer").css("background", "#bbbbbb");
         break;
    }
+   
+   $("#switchoff").css("background", "#bbbbbb");
+   $("#switchauto").css("background", "#bbbbbb");
+   $("#switchmanual").css("background", "#bbbbbb");
+   switch (switchState) {
+     case "Auto" :
+        $("#switchoff").prop("disabled",false);
+        $("#switchauto").prop("disabled",true);
+        $("#switchmanual").prop("disabled",false);
+        $("#switchauto").css("background", "#4CAF50");
+        break;
+     case "Off" :
+        $("#switchoff").prop("disabled",true);
+        $("#switchauto").prop("disabled",false);
+        $("#switchmanual").prop("disabled",false);
+        $("#switchoff").css("background", "#4CAF50");
+        break;
+     case "Manual" :
+        $("#switchoff").prop("disabled",false);
+        $("#switchauto").prop("disabled",false);
+        $("#switchmanual").prop("disabled",true);
+        $("#switchmanual").css("background", "#4CAF50");
+        break;
+     default:   
+        $("#switchoff").prop("disabled",false);
+        $("#switchauto").prop("disabled",false);
+        $("#switchmanual").prop("disabled",false);
+        break;
+   }
+   
 }
 
 //*****************************************************************************
@@ -949,7 +968,7 @@ function DisplayLogs(){
                severity = 3;
             } else if (loglines[i].indexOf("Service Log :") >= 0) {
                severity = 2;
-            } else if (loglines[i].indexOf("Start Stop Log :") >= 0) {
+            } else if (loglines[i].indexOf("Run Log :") >= 0) {
                severity = 1;
             } else {
                var matches = loglines[i].match(/^\s*(\d+)\/(\d+)\/(\d+) (\d+:\d+:\d+) (.*)$/i)
@@ -2238,6 +2257,7 @@ function GetBaseStatus()
           $("#ajaxWarning").hide(400);
         }
 
+        switchState = result['switchstate'];
         baseState = result['basestatus'];
         // active, activealarm, activeexercise
         if (baseState != currentbaseState) {

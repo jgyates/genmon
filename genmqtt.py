@@ -21,16 +21,12 @@ except:
    print("\n\nThe program requies the paho-mqtt module to be installed. Please use 'sudo pip install paho-mqtt' to install.\n")
    sys.exit(2)
 try:
-    from genmonlib import mycommon, mysupport, myclient, mylog, mythread
+    from genmonlib import mycommon, mysupport, myclient, mylog, mythread, myconfig
 except:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
     sys.exit(2)
 
-try:
-    from ConfigParser import RawConfigParser
-except ImportError as e:
-    from configparser import RawConfigParser
 #------------ MyGenPush class -----------------------------------------------------
 class MyGenPush(mysupport.MySupport):
 
@@ -41,7 +37,8 @@ class MyGenPush(mysupport.MySupport):
         log = None,
         callback = None,
         polltime = None,
-        blacklist = None):
+        blacklist = None,
+        flush_interval = float('inf')):
 
         super(MyGenPush, self).__init__()
         self.Callback = callback
@@ -62,6 +59,9 @@ class MyGenPush(mysupport.MySupport):
         self.AccessLock = threading.Lock()
         self.BlackList = blacklist
         self.LastValues = {}
+        self.FlushInterval = flush_interval
+        self.LastChange = {}
+
         try:
             startcount = 0
             while startcount <= 10:
@@ -172,9 +172,11 @@ class MyGenPush(mysupport.MySupport):
                     if BlackItem.lower() in Path.lower():
                         return
             LastValue = self.LastValues.get(str(Path), None)
+            LastChange = self.LastChange.get(str(Path), 0)
 
-            if LastValue == None or LastValue != str(Value):
+            if LastValue == None or LastValue != str(Value) or (time.time() - LastChange) > self.FlushInterval:
                 self.LastValues[str(Path)] = str(Value)
+                self.LastChange[str(Path)] = time.time()
                 if self.Callback != None:
                     self.Callback(str(Path), str(Value))
 
@@ -209,47 +211,55 @@ class MyMQTT(mycommon.MyCommon):
         self.Address = None
         self.Topic = None
 
-        self.MQTTAddress = "127.0.0.1"
+        self.MQTTAddress = None
         self.MonitorAddress = "127.0.0.1"
         self.Port = 1883
         self.Topic = "generator"
         self.TopicRoot = None
         self.BlackList = None
         self.PollTime = 2
+        self.FlushInterval = float('inf')   # default to inifite flush interval (e.g., never)
         self.Debug = False
 
         try:
+            config = myconfig.MyConfig(filename = '/etc/genmqtt.conf', section = 'genmqtt', log = log)
 
-            # read config file
-            config = RawConfigParser()
-            # config parser reads from current directory, when running form a cron tab this is
-            # not defined so we specify the full path
-            config.read('/etc/genmqtt.conf')
+            self.Username = config.ReadValue('username')
 
-            CONFIG_SECTION = "genmqtt"
-            if config.has_option(CONFIG_SECTION, 'username'):
-                self.Username = config.get(CONFIG_SECTION, 'username')
-            if config.has_option(CONFIG_SECTION, 'password'):
-                self.Password = config.get(CONFIG_SECTION, 'password')
+            self.Password = config.ReadValue('password')
 
-            self.MQTTAddress = config.get(CONFIG_SECTION, 'mqtt_address')
-            if config.has_option(CONFIG_SECTION, 'monitor_address'):
-                self.MonitorAddress = config.get(CONFIG_SECTION, 'monitor_address')
-            if config.has_option(CONFIG_SECTION, 'mqtt_port'):
-                self.MQTTPort = config.getint(CONFIG_SECTION, 'mqtt_port')
+            self.MQTTAddress = config.ReadValue('mqtt_address')
 
-            if config.has_option(CONFIG_SECTION, 'poll_interval'):
-                self.PollTime = config.getfloat(CONFIG_SECTION, 'poll_interval')
-            if config.has_option(CONFIG_SECTION, 'root_topic'):
-                self.TopicRoot = config.get(CONFIG_SECTION, 'root_topic')
-            if config.has_option(CONFIG_SECTION, 'blacklist'):
-                BlackList = config.get(CONFIG_SECTION, 'blacklist')
+            if self.MQTTAddress == None or not len(self.MQTTAddress):
+                log.error("Error: invalid MQTT server address")
+                console.error("Error: invalid MQTT server address")
+                sys.exit(1)
+
+            self.MonitorAddress = config.ReadValue('monitor_address', default = "127.0.0.1")
+            if self.MonitorAddress == None or not len(self.MonitorAddress):
+                self.MonitorAddress = "127.0.0.1"
+
+            self.MQTTPort = config.ReadValue('mqtt_port', return_type = int, default = 1883)
+
+            self.PollTime = config.ReadValue('poll_interval', return_type = float, default = 2.0)
+
+            self.TopicRoot = config.ReadValue('root_topic')
+
+            BlackList = config.ReadValue('blacklist')
+            if BlackList != None:
                 self.BlackList = BlackList.strip().split(",")
-            if config.has_option(CONFIG_SECTION, 'debug'):
-                self.Debug = config.getboolean(CONFIG_SECTION, 'debug')
+
+            self.Debug = config.ReadValue('debug', return_type = bool, default = False)
+
+            if config.HasOption('flush_interval'):
+                self.FlushInterval = config.ReadValue('flush_interval', return_type = float, default = float('inf'))
+                if self.FlushInterval = 0:
+                    self.FlushInterval = float('inf')
+            else:
+                self.FlushInterval = float('inf')
         except Exception as e1:
-            log.error("Error reading /etc/genmqtt.conf: " + str(e1))
-            console.error("Error reading /etc/genmqtt.conf: " + str(e1))
+            self.LogErrorLine("Error reading /etc/genmqtt.conf: " + str(e1))
+            self.console.error("Error reading /etc/genmqtt.conf: " + str(e1))
             sys.exit(1)
 
         try:
@@ -262,7 +272,7 @@ class MyMQTT(mycommon.MyCommon):
 
             self.MQTTclient.connect(self.MQTTAddress, self.Port, 60)
 
-            self.Push = MyGenPush(host = self.MonitorAddress, log = self.log, callback = self.PublishCallback, polltime = self.PollTime , blacklist = self.BlackList)
+            self.Push = MyGenPush(host = self.MonitorAddress, log = self.log, callback = self.PublishCallback, polltime = self.PollTime , blacklist = self.BlackList, flush_interval = self.FlushInterval)
 
             atexit.register(self.Close)
             signal.signal(signal.SIGTERM, self.Close)

@@ -18,19 +18,14 @@ import httplib, re
 from subprocess import PIPE, Popen
 
 try:
-    from ConfigParser import RawConfigParser
-except ImportError as e:
-    from configparser import RawConfigParser
-
-try:
-    from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel, myplatform, myweather
+    from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel, myplatform, myweather, myconfig
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.9.38"
+GENMON_VERSION = "V1.10.13"
 
 #------------ Monitor class --------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -99,13 +94,19 @@ class Monitor(mysupport.MySupport):
             self.LogConsole("Missing config file : " + self.ConfigFilePath + 'mymail.conf')
             sys.exit(1)
 
+        # log errors in this module to a file
+        self.log = mylog.SetupLogger("genmon", self.LogLocation + "genmon.log")
+
+        self.config = myconfig.MyConfig(filename = self.ConfigFilePath + 'genmon.conf', section = "GenMon", log = self.console)
         # read config file
         if not self.GetConfig():
-            raise Exception("Failure in Monitor GetConfig: " + str(e1))
-            return None
+            self.LogConsole("Failure in Monitor GetConfig")
+            sys.exit(1)
 
         # log errors in this module to a file
         self.log = mylog.SetupLogger("genmon", self.LogLocation + "genmon.log")
+
+        self.config.log = self.log
 
         if self.IsLoaded():
             self.LogConsole("ERROR: genmon.py is already loaded.")
@@ -146,14 +147,15 @@ class Monitor(mysupport.MySupport):
                 self.ControllerSelected = "generac_evo_nexus"
 
             if self.ControllerSelected.lower() == "h_100" :
-                self.Controller = generac_HPanel.HPanel(self.log, newinstall = self.NewInstall, simulation = self.Simulation, simulationfile = self.SimulationFile, message = self.MessagePipe, feedback = self.FeedbackPipe)
+                self.Controller = generac_HPanel.HPanel(self.log, newinstall = self.NewInstall, simulation = self.Simulation, simulationfile = self.SimulationFile, message = self.MessagePipe, feedback = self.FeedbackPipe, config = self.config)
             else:
-                self.Controller = generac_evolution.Evolution(self.log, self.NewInstall, simulation = self.Simulation, simulationfile = self.SimulationFile, message = self.MessagePipe, feedback = self.FeedbackPipe)
+                self.Controller = generac_evolution.Evolution(self.log, self.NewInstall, simulation = self.Simulation, simulationfile = self.SimulationFile, message = self.MessagePipe, feedback = self.FeedbackPipe, config = self.config)
             self.Threads = self.MergeDicts(self.Threads, self.Controller.Threads)
 
         except Exception as e1:
             self.FatalError("Error opening controller device: " + str(e1))
             return None
+
 
         self.StartThreads()
 
@@ -184,85 +186,75 @@ class Monitor(mysupport.MySupport):
     # -------------------- Monitor::GetConfig-----------------------------------
     def GetConfig(self):
 
-        ConfigSection = "GenMon"
         try:
-            # read config file
-            config = RawConfigParser()
-            # config parser reads from current directory, when running form a cron tab this is
-            # not defined so we specify the full path
-            config.read(self.ConfigFilePath + 'genmon.conf')
+            if self.config.HasOption('sitename'):
+                self.SiteName = self.config.ReadValue('sitename')
 
-            # getfloat() raises an exception if the value is not a float
-            # getint() and getboolean() also do this for their respective types
+            if self.config.HasOption('incoming_mail_folder'):
+                self.IncomingEmailFolder = self.config.ReadValue('incoming_mail_folder')     # imap folder for incoming mail
 
-            if config.has_option(ConfigSection, 'sitename'):
-                self.SiteName = config.get(ConfigSection, 'sitename')
-
-            if config.has_option(ConfigSection, 'incoming_mail_folder'):
-                self.IncomingEmailFolder = config.get(ConfigSection, 'incoming_mail_folder')     # imap folder for incoming mail
-
-            if config.has_option(ConfigSection, 'processed_mail_folder'):
-                self.ProcessedEmailFolder = config.get(ConfigSection, 'processed_mail_folder')   # imap folder for processed mail
+            if self.config.HasOption('processed_mail_folder'):
+                self.ProcessedEmailFolder = self.config.ReadValue('processed_mail_folder')   # imap folder for processed mail
             #  server_port, must match value in myclient.py and check_monitor_system.py and any calling client apps
-            if config.has_option(ConfigSection, 'server_port'):
-                self.ServerSocketPort = config.getint(ConfigSection, 'server_port')
+            if self.config.HasOption('server_port'):
+                self.ServerSocketPort = self.config.ReadValue('server_port', return_type = int)
 
-            if config.has_option(ConfigSection, 'loglocation'):
-                self.LogLocation = config.get(ConfigSection, 'loglocation')
+            if self.config.HasOption('loglocation'):
+                self.LogLocation = self.config.ReadValue('loglocation')
 
-            if config.has_option(ConfigSection, 'syncdst'):
-                self.bSyncDST = config.getboolean(ConfigSection, 'syncdst')
-            if config.has_option(ConfigSection, 'synctime'):
-                self.bSyncTime = config.getboolean(ConfigSection, 'synctime')
+            if self.config.HasOption('syncdst'):
+                self.bSyncDST = self.config.ReadValue('syncdst', return_type = bool)
+            if self.config.HasOption('synctime'):
+                self.bSyncTime = self.config.ReadValue('synctime', return_type = bool)
 
-            if config.has_option(ConfigSection, 'disableplatformstats'):
-                self.bDisablePlatformStats = config.getboolean(ConfigSection, 'disableplatformstats')
+            if self.config.HasOption('disableplatformstats'):
+                self.bDisablePlatformStats = self.config.ReadValue('disableplatformstats', return_type = bool)
 
-            if config.has_option(ConfigSection, 'simulation'):
-                self.Simulation = config.getboolean(ConfigSection, 'simulation')
+            if self.config.HasOption('simulation'):
+                self.Simulation = self.config.ReadValue('simulation', return_type = bool)
 
-            if config.has_option(ConfigSection, 'simulationfile'):
-                self.SimulationFile = config.get(ConfigSection, 'simulationfile')
+            if self.config.HasOption('simulationfile'):
+                self.SimulationFile = self.config.ReadValue('simulationfile')
 
-            if config.has_option(ConfigSection, 'controllertype'):
-                self.ControllerSelected = config.get(ConfigSection, 'controllertype')
+            if self.config.HasOption('controllertype'):
+                self.ControllerSelected = self.config.ReadValue('controllertype')
 
-            if config.has_option(ConfigSection, 'disableweather'):
-                self.DisableWeather = config.getboolean(ConfigSection, 'disableweather')
+            if self.config.HasOption('disableweather'):
+                self.DisableWeather = self.config.ReadValue('disableweather', return_type = bool)
             else:
                 self.DisableWeather = False
 
-            if config.has_option(ConfigSection, 'weatherkey'):
-                self.WeatherAPIKey = config.get(ConfigSection, 'weatherkey')
+            if self.config.HasOption('weatherkey'):
+                self.WeatherAPIKey = self.config.ReadValue('weatherkey')
 
-            if config.has_option(ConfigSection, 'weatherlocation'):
-                self.WeatherLocation = config.get(ConfigSection, 'weatherlocation')
+            if self.config.HasOption('weatherlocation'):
+                self.WeatherLocation = self.config.ReadValue('weatherlocation')
 
-            if config.has_option(ConfigSection, 'metricweather'):
-                self.UseMetric = config.getboolean(ConfigSection, 'metricweather')
+            if self.config.HasOption('metricweather'):
+                self.UseMetric = self.config.ReadValue('metricweather', return_type = bool)
 
-            if config.has_option(ConfigSection, 'minimumweatherinfo'):
-                self.WeatherMinimum = config.getboolean(ConfigSection, 'minimumweatherinfo')
+            if self.config.HasOption('minimumweatherinfo'):
+                self.WeatherMinimum = self.config.ReadValue('minimumweatherinfo', return_type = bool)
 
-            if config.has_option(ConfigSection, 'readonlyemailcommands'):
-                self.ReadOnlyEmailCommands = config.getboolean(ConfigSection, 'readonlyemailcommands')
+            if self.config.HasOption('readonlyemailcommands'):
+                self.ReadOnlyEmailCommands = self.config.ReadValue('readonlyemailcommands', return_type = bool)
 
-            if config.has_option(ConfigSection, 'optimizeforslowercpu'):
-                self.SlowCPUOptimization = config.getboolean(ConfigSection, 'optimizeforslowercpu')
+            if self.config.HasOption('optimizeforslowercpu'):
+                self.SlowCPUOptimization = self.config.ReadValue('optimizeforslowercpu', return_type = bool)
 
-            if config.has_option(ConfigSection, 'version'):
-                self.Version = config.get(ConfigSection, 'version')
+            if self.config.HasOption('version'):
+                self.Version = self.config.ReadValue('version')
                 if not self.Version == GENMON_VERSION:
-                    self.AddItemToConfFile('version', GENMON_VERSION)
+                    self.config.WriteValue('version', GENMON_VERSION)
                     self.NewInstall = True
             else:
-                self.AddItemToConfFile('version', GENMON_VERSION)
+                self.config.WriteValue('version', GENMON_VERSION)
                 self.NewInstall = True
                 self.Version = GENMON_VERSION
-            if config.has_option(ConfigSection, "autofeedback"):
-                self.FeedbackEnabled = config.getboolean(ConfigSection, 'autofeedback')
+            if self.config.HasOption("autofeedback"):
+                self.FeedbackEnabled = self.config.ReadValue('autofeedback', return_type = bool)
             else:
-                self.AddItemToConfFile('autofeedback', "False")
+                self.config.WriteValue('autofeedback', "False")
                 self.FeedbackEnabled = False
             # Load saved feedback log if log is present
             if os.path.isfile(self.FeedbackLogFile):
@@ -272,7 +264,7 @@ class Monitor(mysupport.MySupport):
                 except Exception as e1:
                     os.remove(self.FeedbackLogFile)
         except Exception as e1:
-            raise Exception("Missing config file or config file entries (genmon): " + str(e1))
+            self.LogErrorLine("Missing config file or config file entries (genmon): " + str(e1))
             return False
 
         return True
@@ -366,23 +358,27 @@ class Monitor(mysupport.MySupport):
     #---------- Monitor::SendLogFiles------------------------------------------
     def SendLogFiles(self):
 
-        if not self.EmailSendIsEnabled():
-            return "Send Email is not enabled."
+        try:
+            if not self.EmailSendIsEnabled():
+                self.LogError("Error in SendLogFiles: send email is not enabled")
+                return "Send Email is not enabled."
 
-        msgbody = ""
-        msgbody += self.DictToString(self.GetStartInfo(NoTile = True))
-        if not self.bDisablePlatformStats:
-            msgbody +=  self.DictToString(self.GetPlatformStats())
-        msgbody += self.Controller.DisplayRegisters(AllRegs = True)
+            msgbody = ""
+            msgbody += self.DictToString(self.GetStartInfo(NoTile = True))
+            if not self.bDisablePlatformStats:
+                msgbody +=  self.DictToString(self.GetPlatformStats())
+            msgbody += self.Controller.DisplayRegisters(AllRegs = True)
 
-        LogList = []
-        FilesToSend = ["genmon.log", "genserv.log", "mymail.log", "myserial.log", "mymodbus.log"]
-        for File in FilesToSend:
-            LogFile = self.LogLocation + File
-            if os.path.isfile(LogFile):
-                LogList.append(LogFile)
-        self.MessagePipe.SendMessage("Generator Monitor Log File Submission", msgbody , recipient = self.MaintainerAddress, files = LogList, msgtype = "info")
-        return "Log files submitted"
+            LogList = []
+            FilesToSend = ["genmon.log", "genserv.log", "mymail.log", "myserial.log", "mymodbus.log", "gengpio.log", "gengpioin.log", "gensms.log", "gensms_modem.log", "genmqtt.log", "genpushover.log", "gensyslog.log", "genloader.log", "myserialtcp.log"]
+            for File in FilesToSend:
+                LogFile = self.LogLocation + File
+                if os.path.isfile(LogFile):
+                    LogList.append(LogFile)
+            self.MessagePipe.SendMessage("Generator Monitor Log File Submission", msgbody , recipient = self.MaintainerAddress, files = LogList, msgtype = "info")
+            return "Log files submitted"
+        except Exception as e1:
+            self.LogErrorLine("Error in SendLogFiles: " + str(e1))
 
     #---------- process command from email and socket --------------------------
     def ProcessCommand(self, command, fromsocket = False):
@@ -731,6 +727,11 @@ class Monitor(mysupport.MySupport):
 
         self.CommunicationsActive = False
         time.sleep(0.25)
+
+        if self.Controller.UseSerialTCP:
+            WatchDogPollTime = 8
+        else:
+            WatchDogPollTime = 2
         while True:
             if self.WaitForExit("ComWatchDog", 1):
                 return
@@ -741,7 +742,7 @@ class Monitor(mysupport.MySupport):
 
             self.CommunicationsActive = self.Controller.ComminicationsIsActive()
 
-            if self.WaitForExit("ComWatchDog", 2):
+            if self.WaitForExit("ComWatchDog", WatchDogPollTime):
                 return
 
     #---------- Monitor::LogFileIsOK--------------------------------------------
@@ -782,22 +783,28 @@ class Monitor(mysupport.MySupport):
             conn.settimeout(2)   # only blok on recv for a small amount of time
 
             statusstr = ""
-            if self.Controller.SystemInAlarm():
-                statusstr += "CRITICAL: System in alarm! "
-            HealthStr = self.GetSystemHealth()
-            if HealthStr != "OK":
-                statusstr += "WARNING: " + HealthStr
-            if statusstr == "":
-                statusstr = "OK "
+            if self.Controller == None:
+                outstr = "WARNING: System Initializing"
+                conn.sendall(outstr.encode())
+            else:
+                if self.Controller.SystemInAlarm():
+                    statusstr += "CRITICAL: System in alarm! "
+                HealthStr = self.GetSystemHealth()
+                if HealthStr != "OK":
+                    statusstr += "WARNING: " + HealthStr
+                if statusstr == "":
+                    statusstr = "OK "
 
-            outstr = statusstr + ": "+ self.Controller.GetOneLineStatus()
-            conn.sendall(outstr.encode())
+                outstr = statusstr + ": "+ self.Controller.GetOneLineStatus()
+                conn.sendall(outstr.encode())
 
             while True:
                 try:
                     data = conn.recv(1024)
-
-                    outstr = self.ProcessCommand(data, True)
+                    if self.Controller == None:
+                        outstr = "Retry, System Initializing"
+                    else:
+                        outstr = self.ProcessCommand(data, True)
                     conn.sendall(outstr.encode())
                 except socket.timeout:
                     continue

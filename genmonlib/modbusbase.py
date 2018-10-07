@@ -28,7 +28,7 @@ class ModbusBase(mysupport.MySupport ):
         self.TxPacketCount = 0
         self.ComTimoutError = 0
         self.TotalElapsedPacketeTime = 0
-        self.ComTimoutError = 0
+        self.SlaveException = 0
         self.CrcError = 0
         self.CommAccessLock = threading.RLock()     # lock to synchronize access to the serial port comms
         self.ModbusStartTime = datetime.datetime.now()     # used for com metrics
@@ -51,16 +51,22 @@ class ModbusBase(mysupport.MySupport ):
 
         SerialStats["Packet Count"] = "M: %d, S: %d" % (self.TxPacketCount, self.RxPacketCount)
 
-        if self.CrcError == 0 or self.RxPacketCount == 0:
+        if self.CrcError == 0 or self.TxPacketCount == 0:
             PercentErrors = 0.0
         else:
-            PercentErrors = float(self.CrcError) / float(self.RxPacketCount)
+            PercentErrors = float(self.CrcError) / float(self.TxPacketCount)
+
+        if self.ComTimoutError == 0 or self.TxPacketCount == 0:
+            PercentTimeoutErrors = 0.0
+        else:
+            PercentTimeoutErrors = float(self.ComTimoutError) / float(self.TxPacketCount)
 
         SerialStats["CRC Errors"] = "%d " % self.CrcError
-        SerialStats["CRC Percent Errors"] = "%.2f" % PercentErrors
+        SerialStats["CRC Percent Errors"] = ("%.2f" % (PercentErrors * 100)) + "%"
         SerialStats["Packet Timeouts"] = "%d" %  self.ComTimoutError
+        SerialStats["Packet Timeouts Percent Errors"] = ("%.2f" % (PercentTimeoutErrors * 100)) + "%"
+        SerialStats["Modbus Exceptions"] = self.SlaveException
         # Add serial stats here
-
         CurrentTime = datetime.datetime.now()
 
         #
@@ -77,6 +83,9 @@ class ModbusBase(mysupport.MySupport ):
     def ResetCommStats(self):
         self.RxPacketCount = 0
         self.TxPacketCount = 0
+        self.CrcError = 0
+        self.ComTimoutError = 0
+        self.SlaveException = 0
         self.TotalElapsedPacketeTime = 0
         self.ModbusStartTime = datetime.datetime.now()     # used for com metrics
         pass
@@ -87,5 +96,4 @@ class ModbusBase(mysupport.MySupport ):
 
     #------------ModbusBase::Close-----------------------
     def Close(self):
-
         pass

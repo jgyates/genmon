@@ -11,7 +11,7 @@
 
 import os, sys, time, collections, threading, socket
 
-from genmonlib import mycommon, myplatform
+from genmonlib import mycommon, myplatform, myconfig
 
 #------------ MySupport class --------------------------------------------------
 class MySupport(mycommon.MyCommon):
@@ -36,7 +36,7 @@ class MySupport(mycommon.MyCommon):
                 LogFile.flush()
         except Exception as e1:
             self.LogError("Error in  LogToFile : File: %s: %s " % (File,str(e1)))
-        
+
     #------------ MySupport::GetSiteName----------------------------------------
     def GetSiteName(self):
         return self.SiteName
@@ -138,43 +138,6 @@ class MySupport(mycommon.MyCommon):
             return False
 
         return Thread.Wait(timeout)
-    #---------------------MySupport::AddItemToConfFile------------------------
-    # Add or update config item
-    def AddItemToConfFile(self, Entry, Value):
-
-        if self.Simulation:
-            return
-        FileName = "/etc/genmon.conf"
-        try:
-            with self.CriticalLock:
-                Found = False
-                ConfigFile = open(FileName,'r')
-                FileString = ConfigFile.read()
-                ConfigFile.close()
-
-                ConfigFile = open(FileName,'w')
-                for line in FileString.splitlines():
-                    if not line.isspace():                  # blank lines
-                        newLine = line.strip()              # strip leading spaces
-                        if len(newLine):
-                            if not newLine[0] == "#":           # not a comment
-                                items = newLine.split(' ')      # split items in line by spaces
-                                for strings in items:           # loop thru items
-                                    strings = strings.strip()   # strip any whitespace
-                                    if Entry == strings or strings.lower().startswith(Entry+"="):        # is this our value?
-                                        line = Entry + " = " + Value    # replace it
-                                        Found = True
-                                        break
-
-                    ConfigFile.write(line+"\n")
-                if not Found:
-                    ConfigFile.write(Entry + " = " + Value + "\n")
-                ConfigFile.close()
-            return True
-
-        except Exception as e1:
-            self.LogError("Error in AddItemToConfFile: " + str(e1))
-            return False
 
     #------------ MySupport::GetDispatchItem ------------------------------------
     def GetDispatchItem(self, item):
@@ -255,6 +218,8 @@ class MySupport(mycommon.MyCommon):
     #----------  Controller::GetNumBitsChanged-------------------------------
     def GetNumBitsChanged(self, FromValue, ToValue):
 
+        if not len(FromValue) or not len(ToValue):
+            return 0, 0
         MaskBitsChanged = int(FromValue, 16) ^ int(ToValue, 16)
         NumBitsChanged = MaskBitsChanged
         count = 0

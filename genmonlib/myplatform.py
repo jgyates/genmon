@@ -146,7 +146,7 @@ class MyPlatform(mycommon.MyCommon):
         StatusStr = ""
 
         if (status & 0x40000):
-            StatusStr += "Has occured. "
+            StatusStr += "Has occurred. "
         if (status & 0x4):
             StatusStr += "Throttling Active. "
 
@@ -157,7 +157,7 @@ class MyPlatform(mycommon.MyCommon):
 
         StatusStr = ""
         if (status & 0x20000):
-            StatusStr += "Has occured. "
+            StatusStr += "Has occurred. "
         if (status & 0x2):
             StatusStr += "ARM frequency capped. "
 
@@ -168,7 +168,7 @@ class MyPlatform(mycommon.MyCommon):
 
         StatusStr = ""
         if (status & 0x10000):
-            StatusStr += "Has occured. "
+            StatusStr += "Has occurred. "
         if (status & 0x1):
             StatusStr += "Undervoltage Detected. "
 

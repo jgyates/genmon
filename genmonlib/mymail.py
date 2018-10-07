@@ -18,8 +18,10 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import COMMASPACE, formatdate
 
-import atexit, configparser
-import mylog, mythread, mysupport
+import atexit
+from shutil import copyfile
+
+import mylog, mythread, mysupport, myconfig
 
 #imaplib.Debug = 4
 
@@ -44,7 +46,7 @@ class MyMail(mysupport.MySupport):
         self.SSLEnabled = False
         self.UseBCC = False
         self.Threads = {}                               # Dict of mythread objects
-
+        self.ModulePath = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/"
         # log errors in this module to a file
         if localinit == True:
             self.logfile = "mymail.log"
@@ -54,6 +56,19 @@ class MyMail(mysupport.MySupport):
             self.configfile = self.ConfigFilePath + "mymail.conf"
 
         self.log = mylog.SetupLogger("mymail", self.logfile)
+
+        # if mymail.conf is not in the /etc directory attempt to copy it from the
+        # main source directory
+        if not os.path.isfile(self.configfile):
+            if os.path.isfile(self.ModulePath + "mymail.conf"):
+                copyfile(self.ModulePath + "mymail.conf" , self.configfile)
+            else:
+                self.LogConsole("Missing config file : " + self.configfile)
+                self.LogError("Missing config file : " + self.configfile)
+                sys.exit(1)
+
+
+        self.config = myconfig.MyConfig(filename = self.configfile, section = "MyMail", log = self.log)
 
         self.GetConfig()
 
@@ -89,66 +104,63 @@ class MyMail(mysupport.MySupport):
     def GetConfig(self, reload = False):
 
         try:
-            config = configparser.RawConfigParser()
-            # config parser reads from current directory, when running form a cron tab this is
-            # not defined so we specify the full path
-            config.read(self.configfile)
 
-            if config.has_option('MyMail', 'disableemail'):
-                self.DisableEmail = config.getboolean('MyMail', 'disableemail')
+            if self.config.HasOption('disableemail'):
+                self.DisableEmail = self.config.ReadValue('disableemail', return_type = bool)
             else:
                 self.DisableEmail = False
 
-            if config.has_option('MyMail', 'disablesmtp'):
-                self.DisableSMTP = config.getboolean('MyMail', 'disablesmtp')
+            if self.config.HasOption('disablesmtp'):
+                self.DisableSMTP = self.config.ReadValue('disablesmtp', return_type = bool)
             else:
                 self.DisableSMTP = False
 
-            if config.has_option('MyMail', 'disableimap'):
-                self.DisableIMAP = config.getboolean('MyMail', 'disableimap')
+            if self.config.HasOption('disableimap'):
+                self.DisableIMAP = self.config.ReadValue('disableimap', return_type = bool)
             else:
                 self.DisableIMAP = False
 
-            if config.has_option('MyMail', 'usebcc'):
-                self.UseBCC = config.getboolean('MyMail', 'usebcc')
+            if self.config.HasOption('usebcc'):
+                self.UseBCC = self.config.ReadValue('usebcc', return_type = bool)
 
-            self.EmailPassword = config.get('MyMail', 'email_pw')
-            self.EmailAccount = config.get('MyMail', 'email_account')
-            if config.has_option('MyMail', 'sender_account'):
-                self.SenderAccount = config.get('MyMail', 'sender_account')
+            self.EmailPassword = self.config.ReadValue('email_pw')
+            self.EmailAccount = self.config.ReadValue('email_account')
+            if self.config.HasOption('sender_account'):
+                self.SenderAccount = self.config.ReadValue('sender_account')
             else:
                 self.SenderAccount = self.EmailAccount
             # SMTP Recepients
-            self.EmailRecipient = config.get('MyMail', 'email_recipient')
+            self.EmailRecipient = self.config.ReadValue('email_recipient')
             self.EmailRecipientByType = {}
             for type in ["outage", "error", "warn", "info"]:
                 tempList = []
                 for email in self.EmailRecipient.split(','):
-                    if config.has_option('MyMail', email):
-                       if type in config.get('MyMail', email).split(','):
+                    if self.config.HasOption(email):
+                       if type in self.config.ReadValue(email).split(','):
                           tempList.append(email)
                     else:
                        tempList.append(email)
 
                 self.EmailRecipientByType[type] = ",".join(tempList)
             # SMTP Server
-            if config.has_option('MyMail', 'smtp_server'):
-                self.SMTPServer = config.get('MyMail', 'smtp_server')
+            if self.config.HasOption('smtp_server'):
+                self.SMTPServer = self.config.ReadValue('smtp_server')
                 self.SMTPServer = self.SMTPServer.strip()
             else:
                 self.SMTPServer = ""
             # IMAP Server
-            if config.has_option('MyMail', 'imap_server'):
-                self.IMAPServer = config.get('MyMail', 'imap_server')
+            if self.config.HasOption('imap_server'):
+                self.IMAPServer = self.config.ReadValue('imap_server')
                 self.IMAPServer = self.IMAPServer.strip()
             else:
                 self.IMAPServer = ""
-            self.SMTPPort = config.getint('MyMail', 'smtp_port')
+            self.SMTPPort = self.config.ReadValue('smtp_port', return_type = int)
 
-            if config.has_option('MyMail', 'ssl_enabled'):
-                self.SSLEnabled = config.getboolean('MyMail', 'ssl_enabled')
+            if self.config.HasOption('ssl_enabled'):
+                self.SSLEnabled = self.config.ReadValue('ssl_enabled', return_type = bool)
         except Exception as e1:
-                self.FatalError("ERROR: Unable to read config file " + str(e1))
+                self.LogErrorLine("ERROR: Unable to read config file : " + str(e1))
+                sys.exit(1)
 
         return True
 

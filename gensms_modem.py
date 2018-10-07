@@ -1,39 +1,39 @@
 #!/usr/bin/env python
-#------------------------------------------------------------
-#    FILE: gensms.py
+#-------------------------------------------------------------------------------
+#    FILE: gensms_modem.py
 # PURPOSE: genmon.py support program to allow SMS (txt messages)
-# to be sent when the generator status changes
-#
+# to be sent when the generator status changes. This program uses
+# an expansion card to send SMS messages via cellular.
 #  AUTHOR: Jason G Yates
 #    DATE: 05-Apr-2016
 #
 # MODIFICATIONS:
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 import datetime, time, sys, signal, os, threading, socket
 import atexit
 
 try:
-    from genmonlib import mynotify, mylog, myconfig
-except:
+    from genmonlib import mynotify, mylog, mymodem
+except Excpetion as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
+    print("Error: " + str(e1))
     sys.exit(2)
 
-try:
-    from twilio.rest import Client
-except:
-    print("\n\nThis program requires the twilio module to be installed.\n")
-    print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
-    sys.exit(2)
 
-#----------  Signal Handler ------------------------------------------
+
+#----------  Signal Handler ----------------------------------------------------
 def signal_handler(signal, frame):
 
-    GenNotify.Close()
+    try:
+        GenNotify.Close()
+        SMS.Close()
+    except:
+        pass
     sys.exit(0)
 
-#----------  OnRun ------------------------------------------
+#----------  OnRun -------------------------------------------------------------
 def OnRun(Active):
 
     if Active:
@@ -42,7 +42,7 @@ def OnRun(Active):
     else:
         console.info("Generator Running End")
 
-#----------  OnRunManual ------------------------------------------
+#----------  OnRunManual -------------------------------------------------------
 def OnRunManual(Active):
 
     if Active:
@@ -51,7 +51,7 @@ def OnRunManual(Active):
     else:
         console.info("Generator Running in Manual Mode End")
 
-#----------  OnExercise ------------------------------------------
+#----------  OnExercise --------------------------------------------------------
 def OnExercise(Active):
 
     if Active:
@@ -60,7 +60,7 @@ def OnExercise(Active):
     else:
         console.info("Generator Exercising End")
 
-#----------  OnReady ------------------------------------------
+#----------  OnReady -----------------------------------------------------------
 def OnReady(Active):
 
     if Active:
@@ -69,7 +69,7 @@ def OnReady(Active):
     else:
         console.info("Generator Ready End")
 
-#----------  OnOff ------------------------------------------
+#----------  OnOff -------------------------------------------------------------
 def OnOff(Active):
 
     if Active:
@@ -78,7 +78,7 @@ def OnOff(Active):
     else:
         console.info("Generator Off End")
 
-#----------  OnManual ------------------------------------------
+#----------  OnManual ----------------------------------------------------------
 def OnManual(Active):
 
     if Active:
@@ -87,7 +87,7 @@ def OnManual(Active):
     else:
         console.info("Generator Manual End")
 
-#----------  OnAlarm ------------------------------------------
+#----------  OnAlarm -----------------------------------------------------------
 def OnAlarm(Active):
 
     if Active:
@@ -96,7 +96,7 @@ def OnAlarm(Active):
     else:
         console.info("Generator Alarm End")
 
-#----------  OnService ------------------------------------------
+#----------  OnService ---------------------------------------------------------
 def OnService(Active):
 
     if Active:
@@ -105,7 +105,7 @@ def OnService(Active):
     else:
         console.info("Generator Servcie Due End")
 
-#----------  OnUtilityChange -------------------------------------
+#----------  OnUtilityChange ---------------------------------------------------
 def OnUtilityChange(Active):
 
     if Active:
@@ -115,25 +115,17 @@ def OnUtilityChange(Active):
         SendNotice("Utility Service is Up")
         console.info("Utility Service is Up")
 
-#----------  SendNotice ------------------------------------------
+#----------  SendNotice --------------------------------------------------------
 def SendNotice(Message):
 
     try:
 
-        client = Client(account_sid, auth_token)
-
-        message = client.messages.create(
-            to= to_number,
-            from_ = from_number,
-            body = Message)
-
-        console.info(message.sid)
-
+        SMS.SendMessage(Message)
     except Exception as e1:
         log.error("Error: " + str(e1))
         console.error("Error: " + str(e1))
 
-#------------------- Command-line interface for gengpio -----------------#
+#------------------- Command-line interface for gengpio -----------------------#
 if __name__=='__main__': # usage program.py [server_address]
     address='127.0.0.1' if len(sys.argv)<2 else sys.argv[1]
 
@@ -144,26 +136,21 @@ if __name__=='__main__': # usage program.py [server_address]
         print("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
         sys.exit(2)
 
-    console = mylog.SetupLogger("sms_console", log_file = "", stream = True)
-    log = mylog.SetupLogger("client", "/var/log/gensms.log")
+    console = mylog.SetupLogger("sms_console_modem", log_file = "", stream = True)
+    log = mylog.SetupLogger("client", "/var/log/gensms_modem.log")
 
     try:
 
-        config = myconfig.MyConfig(filename = '/etc/gensms.conf', section = 'gensms', log = log)
-
-        account_sid = config.ReadValue('accountsid', default = "")
-        auth_token = config.ReadValue('authtoken', default = "")
-        to_number = config.ReadValue('to_number', default = "")
-        from_number = config.ReadValue('from_number', default = "")
-
-        if account_sid == "" or auth_token == "" or to_number == "" or from_number == "":
-            log.error("Missing parameter in /etc/gensms.conf")
-            console.error("Missing parameter in /etc/gensms.conf")
-            sys.exit(1)
+        SMS = mymodem.LTEPiHat(log = log)
+        if not SMS.InitComplete:
+            SMS.Close()
+            log.error("Modem Init FAILED!")
+            console.error("Modem Init FAILED!")
+            sys.exit(2)
 
     except Exception as e1:
-        log.error("Error reading /etc/gensms.conf: " + str(e1))
-        console.error("Error reading /etc/gensms.conf: " + str(e1))
+        log.error("Error on modem init:" + str(e1))
+        console.error("Error modem init: " + str(e1))
         sys.exit(1)
     try:
         GenNotify = mynotify.GenNotify(
@@ -178,6 +165,9 @@ if __name__=='__main__': # usage program.py [server_address]
                                         onmanual = OnManual,
                                         onutilitychange = OnUtilityChange,
                                         log = log)
+
+        SMSInfo = SMS.GetInfo(ReturnString = True)
+        log.error(SMSInfo)
 
         while True:
             time.sleep(1)

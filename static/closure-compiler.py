@@ -58,7 +58,8 @@ def main():
     print 'Downlaod Compilers...'
 
     c1file = urllib.URLopener()
-    c1file.retrieve("https://dl.google.com/closure-compiler/compiler-latest.zip", "compiler-latest.zip")
+    # c1file.retrieve("https://dl.google.com/closure-compiler/compiler-latest.zip", "compiler-latest.zip")
+    c1file.retrieve("https://dl.google.com/closure-compiler/compiler-20180805.zip", "compiler-latest.zip")
     zip_ref = zipfile.ZipFile("compiler-latest.zip", 'r')
     filenames = zip_ref.namelist()
     CLOSURE_COMPILER = filter(lambda x: re.search(r'.jar', x), filenames)[0]

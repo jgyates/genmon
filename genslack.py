@@ -1,29 +1,21 @@
 #!/usr/bin/env python
 #------------------------------------------------------------
-#    FILE: gensms.py
-# PURPOSE: genmon.py support program to allow SMS (txt messages)
+#    FILE: genslack.py
+# PURPOSE: genmon.py support program to allow Slack messages
 # to be sent when the generator status changes
 #
-#  AUTHOR: Jason G Yates
-#    DATE: 05-Apr-2016
+#  AUTHOR: Nate Renbarger - Mostly copied from gensms
+#    DATE: 20-Sep-2018
 #
 # MODIFICATIONS:
 #------------------------------------------------------------
 
-import datetime, time, sys, signal, os, threading, socket
-import atexit
+import datetime, time, sys, signal, os, threading, socket, json, requests
 
 try:
     from genmonlib import mynotify, mylog, myconfig
 except:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
-    print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
-    sys.exit(2)
-
-try:
-    from twilio.rest import Client
-except:
-    print("\n\nThis program requires the twilio module to be installed.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
     sys.exit(2)
 
@@ -119,19 +111,21 @@ def OnUtilityChange(Active):
 def SendNotice(Message):
 
     try:
+		slack_data = {'channel':channel, 'username':username, 'icon_emoji':icon_emoji, 'attachments': [{'title':'GenMon Alert', 'title_link':title_link, 'fields': [{ 'title':'Status', 'value':Message, 'short':'false' }]}]}
 
-        client = Client(account_sid, auth_token)
-
-        message = client.messages.create(
-            to= to_number,
-            from_ = from_number,
-            body = Message)
-
-        console.info(message.sid)
+		response = requests.post(
+		    webhook_url, data=json.dumps(slack_data),
+		    headers={'Content-Type': 'application/json'}
+		)
+		if response.status_code != 200:
+		    raise ValueError(
+		        'Request to slack returned an error %s, the response is:\n%s'
+		        % (response.status_code, response.text)
+		)
 
     except Exception as e1:
-        log.error("Error: " + str(e1))
-        console.error("Error: " + str(e1))
+        log.error("Error in SendNotice: " + str(e1))
+        console.error("Error in SendNotice: " + str(e1))
 
 #------------------- Command-line interface for gengpio -----------------#
 if __name__=='__main__': # usage program.py [server_address]
@@ -144,27 +138,48 @@ if __name__=='__main__': # usage program.py [server_address]
         print("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
         sys.exit(2)
 
-    console = mylog.SetupLogger("sms_console", log_file = "", stream = True)
-    log = mylog.SetupLogger("client", "/var/log/gensms.log")
+    console = mylog.SetupLogger("slack_console", log_file = "", stream = True)
+    log = mylog.SetupLogger("client", "/var/log/genslack.log")
 
     try:
+        config = myconfig.MyConfig(filename = '/etc/genslack.conf', section = 'genslack', log = log)
 
-        config = myconfig.MyConfig(filename = '/etc/gensms.conf', section = 'gensms', log = log)
+        webhook_url = config.ReadValue('webhook_url', default = None)
+        channel = config.ReadValue('channel', default = None)
+        username = config.ReadValue('username', default = None)
+        icon_emoji = config.ReadValue('icon_emoji', default = ":red_circle:")
+        title_link = config.ReadValue('title_link', default = None)
 
-        account_sid = config.ReadValue('accountsid', default = "")
-        auth_token = config.ReadValue('authtoken', default = "")
-        to_number = config.ReadValue('to_number', default = "")
-        from_number = config.ReadValue('from_number', default = "")
+        if webhook_url == None or not len(webhook_url):
+            log.error("Error: invalid webhoot_url setting")
+            console.error("Error: invalid webhoot_url setting")
+            sys.exit(2)
 
-        if account_sid == "" or auth_token == "" or to_number == "" or from_number == "":
-            log.error("Missing parameter in /etc/gensms.conf")
-            console.error("Missing parameter in /etc/gensms.conf")
-            sys.exit(1)
+        if channel == None or not len(channel):
+            log.error("Error: invalid channel setting")
+            console.error("Error: invalid channel setting")
+            sys.exit(2)
+
+        if username == None or not len(username):
+            log.error("Error: invalid username setting")
+            console.error("Error: invalid username setting")
+            sys.exit(2)
+
+        if icon_emoji == None or not len(icon_emoji):
+            log.error("Error: invalid username setting")
+            console.error("Error: invalid username setting")
+            sys.exit(2)
+
+        if title_link == None or not len(title_link):
+            log.error("Error: invalid title_link setting")
+            console.error("Error: invalid title_link setting")
+            sys.exit(2)
 
     except Exception as e1:
-        log.error("Error reading /etc/gensms.conf: " + str(e1))
-        console.error("Error reading /etc/gensms.conf: " + str(e1))
+        log.error("Error reading /etc/genslack.conf: " + str(e1))
+        console.error("Error reading /etc/genslack.conf: " + str(e1))
         sys.exit(1)
+
     try:
         GenNotify = mynotify.GenNotify(
                                         host = address,
