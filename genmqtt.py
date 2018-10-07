@@ -253,7 +253,7 @@ class MyMQTT(mycommon.MyCommon):
 
             if config.HasOption('flush_interval'):
                 self.FlushInterval = config.ReadValue('flush_interval', return_type = float, default = float('inf'))
-                if self.FlushInterval = 0:
+                if self.FlushInterval == 0:
                     self.FlushInterval = float('inf')
             else:
                 self.FlushInterval = float('inf')
