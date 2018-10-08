@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 #    FILE: gengpioin.py
 # PURPOSE: genmon.py support program to allow GPIO inputs to control
 # remote start, stop snd start/transfer functionality
@@ -9,7 +9,7 @@
 #    DATE: 10-Apr-2016
 #
 # MODIFICATIONS:
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 import datetime, time, sys, signal, os, threading, socket
 import atexit
@@ -28,7 +28,7 @@ INPUT_STOP = 11             # STOP GPIO 17
 INPUT_START = 13            # START GPIO 27
 INPUT_START_TRANSFER = 15   # START/TRANSFER GPIO 22
 
-#----------  Signal Handler ------------------------------------------
+#----------  Signal Handler ----------------------------------------------------
 def signal_handler(signal, frame):
 
     GPIO.remove_event_detect(INPUT_STOP)
@@ -38,7 +38,7 @@ def signal_handler(signal, frame):
     MyClientInterface.Close()
     sys.exit(0)
 
-#------------------- StopCallback -----------------#
+#------------------- StopCallback ----------------------------------------------
 def StopCallBack():
 
     try:
@@ -47,7 +47,7 @@ def StopCallBack():
         log.error("Error: " + str(e1))
 
 
-#------------------- StartCallBack -----------------#
+#------------------- StartCallBack ---------------------------------------------
 def StartCallBack():
 
     try:
@@ -56,7 +56,7 @@ def StartCallBack():
         log.error("Error: " + str(e1))
 
 
-#------------------- StartTransferCallBack -----------------#
+#------------------- StartTransferCallBack -------------------------------------
 def StartTransferCallBack():
 
     try:
@@ -64,7 +64,7 @@ def StartTransferCallBack():
     except Exception as e1:
         log.error("Error: " + str(e1))
 
-#------------------- Command-line interface for gengpioin -----------------#
+#------------------- Command-line interface for gengpioin ----------------------
 if __name__=='__main__': # usage program.py [server_address]
     address='127.0.0.1' if len(sys.argv)<2 else sys.argv[1]
 

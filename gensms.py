@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 #    FILE: gensms.py
 # PURPOSE: genmon.py support program to allow SMS (txt messages)
 # to be sent when the generator status changes
@@ -8,7 +8,7 @@
 #    DATE: 05-Apr-2016
 #
 # MODIFICATIONS:
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 import datetime, time, sys, signal, os, threading, socket
 import atexit
@@ -27,13 +27,13 @@ except:
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
     sys.exit(2)
 
-#----------  Signal Handler ------------------------------------------
+#----------  Signal Handler ----------------------------------------------------
 def signal_handler(signal, frame):
 
     GenNotify.Close()
     sys.exit(0)
 
-#----------  OnRun ------------------------------------------
+#----------  OnRun -------------------------------------------------------------
 def OnRun(Active):
 
     if Active:
@@ -42,7 +42,7 @@ def OnRun(Active):
     else:
         console.info("Generator Running End")
 
-#----------  OnRunManual ------------------------------------------
+#----------  OnRunManual -------------------------------------------------------
 def OnRunManual(Active):
 
     if Active:
@@ -51,7 +51,7 @@ def OnRunManual(Active):
     else:
         console.info("Generator Running in Manual Mode End")
 
-#----------  OnExercise ------------------------------------------
+#----------  OnExercise --------------------------------------------------------
 def OnExercise(Active):
 
     if Active:
@@ -60,7 +60,7 @@ def OnExercise(Active):
     else:
         console.info("Generator Exercising End")
 
-#----------  OnReady ------------------------------------------
+#----------  OnReady -----------------------------------------------------------
 def OnReady(Active):
 
     if Active:
@@ -69,7 +69,7 @@ def OnReady(Active):
     else:
         console.info("Generator Ready End")
 
-#----------  OnOff ------------------------------------------
+#----------  OnOff -------------------------------------------------------------
 def OnOff(Active):
 
     if Active:
@@ -78,7 +78,7 @@ def OnOff(Active):
     else:
         console.info("Generator Off End")
 
-#----------  OnManual ------------------------------------------
+#----------  OnManual ----------------------------------------------------------
 def OnManual(Active):
 
     if Active:
@@ -87,7 +87,7 @@ def OnManual(Active):
     else:
         console.info("Generator Manual End")
 
-#----------  OnAlarm ------------------------------------------
+#----------  OnAlarm -----------------------------------------------------------
 def OnAlarm(Active):
 
     if Active:
@@ -96,7 +96,7 @@ def OnAlarm(Active):
     else:
         console.info("Generator Alarm End")
 
-#----------  OnService ------------------------------------------
+#----------  OnService ---------------------------------------------------------
 def OnService(Active):
 
     if Active:
@@ -105,7 +105,7 @@ def OnService(Active):
     else:
         console.info("Generator Servcie Due End")
 
-#----------  OnUtilityChange -------------------------------------
+#----------  OnUtilityChange ---------------------------------------------------
 def OnUtilityChange(Active):
 
     if Active:
@@ -115,7 +115,7 @@ def OnUtilityChange(Active):
         SendNotice("Utility Service is Up")
         console.info("Utility Service is Up")
 
-#----------  SendNotice ------------------------------------------
+#----------  SendNotice --------------------------------------------------------
 def SendNotice(Message):
 
     try:
@@ -133,7 +133,7 @@ def SendNotice(Message):
         log.error("Error: " + str(e1))
         console.error("Error: " + str(e1))
 
-#------------------- Command-line interface for gengpio -----------------#
+#------------------- Command-line interface for gengpio ------------------------
 if __name__=='__main__': # usage program.py [server_address]
     address='127.0.0.1' if len(sys.argv)<2 else sys.argv[1]
 

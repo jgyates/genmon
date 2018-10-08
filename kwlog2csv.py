@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 #    FILE: kwlog2csv.py
 # PURPOSE: kwlog2csv.py support program to allow testing of generator
 # run time
@@ -8,7 +8,7 @@
 #    DATE: 17-Mar-2018
 #
 # MODIFICATIONS:
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 
 import getopt, os, sys, json
@@ -21,7 +21,7 @@ except:
     sys.exit(2)
 
 
-#------------ GeneratorDevice::LogToFile-------------------------
+#------------ GeneratorDevice::LogToFile----------------------------------------
 def LogToFile( File, TimeDate, Value):
 
     if not len(File):
@@ -34,7 +34,7 @@ def LogToFile( File, TimeDate, Value):
     except Exception as e1:
         print("Error in  LogToFile : File: %s: %s " % (File,str(e1)))
 
-#------------------- Command-line interface for program -----------------#
+#------------------- Command-line interface for program ------------------------
 if __name__=='__main__':
 
 
