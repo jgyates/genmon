@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 #    FILE: modbus_file.py
 # PURPOSE: simulate modbus, registers backed by text file
 #
@@ -7,14 +7,14 @@
 #    DATE: 19-Apr-2018
 #
 # MODIFICATIONS:
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 from __future__ import print_function       # For python 3.x compatibility with print function
 
 import datetime, threading, crcmod, sys, time, os, collections
 import mylog, mythread, mycommon, modbusbase
 
-#------------ ModbusBase class --------------------------------------------
+#------------ ModbusBase class -------------------------------------------------
 class ModbusFile(modbusbase.ModbusBase):
     def __init__(self, updatecallback, address = 0x9d, name = "/dev/serial", rate=9600, loglocation = "/var/log/", inputfile = None):
         super(ModbusFile, self).__init__(updatecallback = updatecallback, address = address, name = name, rate = rate, loglocation = loglocation)
@@ -81,7 +81,7 @@ class ModbusFile(modbusbase.ModbusBase):
                     time.sleep(.02)
         return
 
-    #----------  GeneratorDevice:ReadInputFile  ---------------------------------
+    #----------  GeneratorDevice:ReadInputFile  --------------------------------
     def ReadInputFile(self, FileName):
 
         if not len(FileName):
@@ -156,11 +156,11 @@ class ModbusFile(modbusbase.ModbusBase):
         self.ModbusStartTime = datetime.datetime.now()     # used for com metrics
         pass
 
-    #------------ModbusBase::Flush-----------------------
+    #------------ModbusBase::Flush----------------------------------------------
     def Flush(self):
         pass
 
-    #------------ModbusBase::Close-----------------------
+    #------------ModbusBase::Close----------------------------------------------
     def Close(self):
 
         pass
