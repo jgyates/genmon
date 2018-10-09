@@ -90,7 +90,7 @@ function resizeDiv() {
      $('#navMenu').css({'width': '200px'});
      $('#footer').css({'height': '30px'});
      $('#footer').css({'width': vpw + 'px'});
-     
+
      if ((menuElement == "status") && ($('.packery').length > 0)) {
         var gridWidth = Math.round((vpw-240)/190);
             gridWidth = (gridWidth < 1) ? 1 : gridWidth;
@@ -98,7 +98,7 @@ function resizeDiv() {
         if (kwHistory["defaultPlotWidth"] != kwHistory["oldDefaultPlotWidth"]) {
            kwHistory["oldDefaultPlotWidth"] = kwHistory["defaultPlotWidth"];
            $('.plotField').css({'width': (kwHistory["defaultPlotWidth"] * 180)+((kwHistory["defaultPlotWidth"]-1)*10) + 'px'});
-        
+
            if ((windowActive == true) && (typeof kwHistory["plot"].replot !== "undefined")) {
               var now = new moment();
               var max = now.format("YYYY-MM-DD H:mm:ss");
@@ -112,7 +112,7 @@ function resizeDiv() {
 
         $('.packery').css({'width': (vpw - 240) + 'px'});
      }
-     
+
 }
 
 //*****************************************************************************
@@ -139,10 +139,10 @@ Number.prototype.pad = function(size) {
       while (s.length < (size || 2)) {s = "0" + s;}
       return s;
     }
-    
+
 //*****************************************************************************
 //  Read QueryString Parameter
-//*****************************************************************************    
+//*****************************************************************************
 function GetQueryStringParams(sParam) {
     var sPageURL = window.location.search.substring(1);
     var sURLVariables = sPageURL.split('&');
@@ -151,7 +151,7 @@ function GetQueryStringParams(sParam) {
 	if (sParameterName[0] == sParam)
 	   return sParameterName[1];
     }
-}	
+}
 
 //*****************************************************************************
 // called when setting a remote command
@@ -183,7 +183,7 @@ function CreateMenuWhenReady() {
 
 function CreateMenu() {
     var outstr = '';
-    
+
     SetHeaderValues();
     $("#footer").html('<table border="0" width="100%" height="30px"><tr><td width="5%"><img class="tooltip alert_small" id="ajaxWarning" src="images/transparent.png" height="28px" width="28px" style="display: none;"></td><td width="90%"><a href="https://github.com/jgyates/genmon" target="_blank">GenMon Project on GitHub</a></td><td width="5%"></td></tr></table>');
     $('#ajaxWarning').tooltipster({minWidth: '280px', maxWidth: '480px', animation: 'fade', updateAnimation: 'null', contentAsHTML: 'true', delay: 100, animationDuration: 200, side: ['top', 'left'], content: "No Communicatikon Errors occured"});
@@ -202,14 +202,18 @@ function CreateMenu() {
        outstr += '<li id="notifications"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="notifications" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Notifications</td></tr></table></a></li>';
     if (myGenerator["pages"]["settings"] == true)
        outstr += '<li id="settings"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="settings" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Settings</td></tr></table></a></li>';
+    if (myGenerator["pages"]["addons"] == true)
+       outstr += '<li id="addons"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="addon" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Add-Ons</td></tr></table></a></li>';
+    if (myGenerator["pages"]["about"] == true)
+       outstr += '<li id="about"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="about" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;About</td></tr></table></a></li>';
 
     $("#navMenu").html('<ul>' + outstr + '</ul>');
     $("li").on('click',  function() {  MenuClick($(this).attr("id"));});
-    
+
     var page = GetQueryStringParams('page');
-    
-    MenuClick(((page != undefined) && (jQuery.inArray( page, ["status", "maint", "outage", "logs", "monitor", "notifications", "settings"] ))) ? page : "status");
-    
+
+    MenuClick(((page != undefined) && (jQuery.inArray( page, ["status", "maint", "outage", "logs", "monitor", "notifications", "settings", "addons", "about"] ))) ? page : "status");
+
     $(".loader").removeClass("is-active");
 }
 
@@ -225,14 +229,14 @@ function DisplayStatusFull() {
         gridWidth = (gridWidth < 1) ? 1 : gridWidth;
     kwHistory["defaultPlotWidth"] = ((gridWidth > 4) ? 4 : (gridWidth < 1) ? 1 : gridWidth);
     kwHistory["oldDefaultPlotWidth"] = kwHistory["defaultPlotWidth"];
-        
+
     var outstr = 'Dashboard:<br><br>';
     outstr += '<center><div class="packery">';
     for (var i = 0; i < myGenerator["tiles"].length; ++i) {
        switch (myGenerator["tiles"][i].type) {
           case "gauge":
-             if (myGenerator["tiles"][i].title == "Estimated Fuel") { 
-               outstr += '<div id="fuelField_'+i+'" class="grid-item gaugeField"><br>'+myGenerator["tiles"][i].title+'<br><div style="display: inline-block; width:100%; height:65%; position: relative;"><canvas class="gaugeCanvas" id="gauge'+i+'_bg" style="height: 100%; position: absolute; left: 0; top: 0; z-index: 1;"></canvas><canvas class="gaugeCanvas" id="gauge'+i+'" style="height: 100%; position: absolute; left: 0; top: 0; z-index: 0;"></canvas></div><br><div id="text'+i+'" class="gaugeDiv"></div></div>';          
+             if (myGenerator["tiles"][i].title == "Estimated Fuel") {
+               outstr += '<div id="fuelField_'+i+'" class="grid-item gaugeField"><br>'+myGenerator["tiles"][i].title+'<br><div style="display: inline-block; width:100%; height:65%; position: relative;"><canvas class="gaugeCanvas" id="gauge'+i+'_bg" style="height: 100%; position: absolute; left: 0; top: 0; z-index: 1;"></canvas><canvas class="gaugeCanvas" id="gauge'+i+'" style="height: 100%; position: absolute; left: 0; top: 0; z-index: 0;"></canvas></div><br><div id="text'+i+'" class="gaugeDiv"></div></div>';
              } else {
                outstr += '<div id="gaugeField_'+i+'" class="grid-item gaugeField"><br>'+myGenerator["tiles"][i].title+'<br><canvas class="gaugeCanvas" id="gauge'+i+'"></canvas><br><div id="text'+i+'" class="gaugeDiv"></div></div>';
              }
@@ -244,7 +248,7 @@ function DisplayStatusFull() {
     }
     outstr += '</div></center><br>';
     $("#mydisplay").html(outstr + '<div style="clear:both" id="statusText"></div>');
-    
+
     $('.packery').css({'width': (vpw-240) + 'px'});
     $('.plotField').css({'width': (kwHistory["defaultPlotWidth"] * 180)+((kwHistory["defaultPlotWidth"]-1)*10) + 'px'});
 
@@ -324,9 +328,9 @@ function DisplayStatusFull() {
           case "graph":
              createGraph(myGenerator["tiles"][i].title, myGenerator["tiles"][i].minimum, myGenerator["tiles"][i].maximum);
              break;
-       }     
+       }
     }
-    
+
     var url = baseurl.concat("status_json");
     $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
         processAjaxSuccess();
@@ -436,17 +440,17 @@ function createFuel(pCanvas, pText, pFG, tanksize) {
       generateGradient: false,
       highDpiSupport: true,     // High resolution support
     };
-    
+
     var gauge = new Gauge(pCanvas[0]).setOptions(opts);
     gauge.minValue = 0; // set max gauge value
     gauge.maxValue = tanksize; // set max gauge value
     // gauge.setTextField(pText, pTextPrecision);
     gauge.animationSpeed = 32; // set animation speed (32 is default value)
-    
+
     var w = gauge.canvas.width / 2;
     var r = gauge.radius * 0.7 ;
     var h = (gauge.canvas.height * gauge.paddingTop + gauge.availableHeight) - ((gauge.radius + gauge.lineWidth / 2) * gauge.extraPadding);
-    
+
     pFG[0].width = gauge.canvas.width;
     pFG[0].height = gauge.canvas.height;
     var ctx = pFG[0].getContext('2d');
@@ -457,7 +461,7 @@ function createFuel(pCanvas, pText, pFG, tanksize) {
     ctx.beginPath();
     ctx.arc( w, h, Math.round(r/6), 0, 2 * Math.PI);
     ctx.fill();
-    
+
     var bgImage = new Image;
     bgImage.src = "images/sprites.png";
     bgImage.onload = function() {
@@ -544,7 +548,7 @@ function printKwPlot(currentKw) {
    if (kwHistory["kwDuration"] == "d")
      max = now.add(1, "h").format("YYYY-MM-DD H:mm:ss")
 
-   if ((windowActive == true) && (typeof kwHistory["plot"].replot !== "undefined")) 
+   if ((windowActive == true) && (typeof kwHistory["plot"].replot !== "undefined"))
      kwHistory["plot"].replot({data: [kwHistory["data"]], axes:{xaxis:{tickInterval: kwHistory["tickInterval"], tickOptions:{formatString:kwHistory["formatString"]}, max:now.format("YYYY-MM-DD H:mm:ss"), min:now.add(-1, kwHistory["kwDuration"]).format("YYYY-MM-DD H:mm:ss")}}});
 
    if (currentKw == 0)
@@ -610,7 +614,7 @@ function DisplayMaintenance(){
 
         outstr = '<div style="clear:both" id="maintText">' + json2html(result, "", "root") + '</div>';
 
-        if (myGenerator["write_access"] == true) { 
+        if (myGenerator["write_access"] == true) {
             outstr += "<br>Generator Exercise Time:<br><br>";
 
             //Create array of options to be added
@@ -630,27 +634,27 @@ function DisplayMaintenance(){
                 outstr += '<option value="' + i.pad() + '">' + i.pad() + '</option>';
             }
             outstr += '</select> : ';
-    
+
             //Create and append the options, minute
             outstr += '<select id="minutes">';
             for (var i = 0; i < 60; i++) {
                 outstr += '<option value="' + i.pad() + '">' + i.pad() + '</option>';
             }
             outstr += '</select>';
-    
+
             //Create and append select list
             outstr += '&nbsp;&nbsp;<select id="quietmode">';
             outstr += '<option value="On" ' + (myGenerator['QuietMode'] == "On"  ? ' selected="selected" ' : '') + '>Quiet Mode On </option>';
             outstr += '<option value="Off"' + (myGenerator['QuietMode'] == "Off" ? ' selected="selected" ' : '') + '>Quiet Mode Off</option>';
             outstr += '</select><br><br>';
-    
+
             outstr += '&nbsp;&nbsp;<button id="setexercisebutton" onClick="saveMaintenance();">Set Exercise Time</button>';
-    
+
             outstr += '<br><br>Generator Time:<br><br>';
             outstr += '&nbsp;&nbsp;<button id="settimebutton" onClick="SetTimeClick();">Set Generator Time</button>';
-    
+
             outstr += '<br><br>Remote Commands:<br><br>';
-    
+
             outstr += '&nbsp;&nbsp;&nbsp;&nbsp;<button class="tripleButtonLeft" id="remotestop" onClick="SetClick(\'stop\');">Stop Generator</button>';
             outstr += '<button class="tripleButtonCenter" id="remotestart" onClick="SetClick(\'start\');">Start Generator</button>';
             outstr += '<button class="tripleButtonRight"  id="remotetransfer" onClick="SetClick(\'starttransfer\');">Start Generator and Transfer</button><br>';
@@ -668,19 +672,19 @@ function DisplayMaintenance(){
             }
 
         }
-    
+
             $("#mydisplay").html(outstr);
-    
-        if (myGenerator["write_access"] == true) { 
-    
+
+        if (myGenerator["write_access"] == true) {
+
             setExerciseSelection();
-    
+
             $("#days").val(myGenerator['ExerciseDay']);
             $("#hours").val(myGenerator['ExerciseHour']);
             $("#minutes").val(myGenerator['ExerciseMinute']);
-    
+
             setStartStopButtonsState();
-    
+
             myGenerator["OldExerciseParameters"] = [myGenerator['ExerciseDay'], myGenerator['ExerciseHour'], myGenerator['ExerciseMinute'], myGenerator['QuietMode'], myGenerator['ExerciseFrequency'], myGenerator['EnhancedExerciseEnabled']];
         }
 
@@ -730,10 +734,10 @@ function SetClick(cmd){
     var msg = "";
 
     switch (cmd) {
-       case "stop": 
+       case "stop":
           msg = 'Stop generator?<br><span class="confirmSmall">Note: If the generator is powering a load the transfer switch will be deactivated and there will be a cool down period of a few minutes.</span>';
           break;
-       case "start": 
+       case "start":
           msg = 'Start generator?<br><span class="confirmSmall">Generator will start, warm up and run idle (without activating the transfer switch).</span>';
           break;
        case "starttransfer":
@@ -800,7 +804,7 @@ function SetPowerLogReset(){
                 // set exercise time
                 var url = baseurl.concat("power_log_clear");
                 $.getJSON(  url,
-                   {settime: " "},
+                   {power_log_clear: " "},
                    function(result){});
              }
         }
@@ -817,12 +821,12 @@ function DisplayMaintenanceUpdate(){
         $("#Exercise_Time").html(myGenerator['ExerciseFrequency'] + ' ' +
                                  myGenerator['ExerciseDay'] + ' ' + myGenerator['ExerciseHour'] + ':' + myGenerator['ExerciseMinute'] +
                                  ' Quiet Mode ' + myGenerator['QuietMode']);
-    
+
         if ((myGenerator['EnhancedExerciseEnabled'] == true) && (myGenerator['ExerciseFrequency'] != myGenerator['OldExerciseParameters'][4])) {
             $("#ExerciseFrequency").val(myGenerator['ExerciseFrequency']);
             setExerciseSelection();
         }
-    
+
         if (myGenerator['ExerciseDay'] !=  myGenerator['OldExerciseParameters'][0])
            $("#days").val(myGenerator['ExerciseDay']);
         if (myGenerator['ExerciseHour'] !=  myGenerator['OldExerciseParameters'][1])
@@ -831,12 +835,12 @@ function DisplayMaintenanceUpdate(){
            $("#minutes").val(myGenerator['ExerciseMinute']);
         if (myGenerator['QuietMode'] !=  myGenerator['OldExerciseParameters'][3])
            $("#quietmode").val(myGenerator['QuietMode']);
-    
+
         setStartStopButtonsState();
-    
+
         myGenerator["OldExerciseParameters"] = [myGenerator['ExerciseDay'], myGenerator['ExerciseHour'], myGenerator['ExerciseMinute'], myGenerator['QuietMode'], myGenerator['ExerciseFrequency'], myGenerator['EnhancedExerciseEnabled']];
     }
-    
+
     var url = baseurl.concat("maint_json");
     $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
         processAjaxSuccess();
@@ -848,31 +852,31 @@ function DisplayMaintenanceUpdate(){
 }
 
 function setStartStopButtonsState(){
-   if((baseState === "EXERCISING") || (baseState === "RUNNING")) {
-     $("#remotestop").prop("disabled",false);
-     $("#remotestart").prop("disabled",true);
-     $("#remotetransfer").prop("disabled",true);
-   } else {
-     $("#remotestop").prop("disabled",true);
-     $("#remotestart").prop("disabled",false);
-     $("#remotetransfer").prop("disabled",false);
-   }
-
    $("#remotestop").css("background", "#bbbbbb");
    $("#remotestart").css("background", "#bbbbbb");
    $("#remotetransfer").css("background", "#bbbbbb");
    switch (baseState) {
      case "EXERCISING" :
+        $("#remotestop").prop("disabled",false);
+        $("#remotestart").prop("disabled",true);
+        $("#remotetransfer").prop("disabled",true);
         $("#remotestart").css("background", "#4CAF50");
         break;
      case "RUNNING":
+        $("#remotestop").prop("disabled",false);
+        $("#remotestart").prop("disabled",true);
+        $("#remotetransfer").prop("disabled",true);
+        $("#remotestart").css("background", "#4CAF50");
         $("#remotetransfer").css("background", "#4CAF50");
         break;
      default:
+        $("#remotestop").prop("disabled",true);
+        $("#remotestart").prop("disabled",false);
+        $("#remotetransfer").prop("disabled",false);
         $("#remotestop").css("background", "#4CAF50");
         break;
    }
-   
+
    $("#switchoff").css("background", "#bbbbbb");
    $("#switchauto").css("background", "#bbbbbb");
    $("#switchmanual").css("background", "#bbbbbb");
@@ -895,13 +899,13 @@ function setStartStopButtonsState(){
         $("#switchmanual").prop("disabled",true);
         $("#switchmanual").css("background", "#4CAF50");
         break;
-     default:   
+     default:
         $("#switchoff").prop("disabled",false);
         $("#switchauto").prop("disabled",false);
         $("#switchmanual").prop("disabled",false);
         break;
    }
-   
+
 }
 
 //*****************************************************************************
@@ -1006,7 +1010,7 @@ function DisplayMonitor(){
         processAjaxSuccess();
 
         var outstr = json2html(result, "", "root");
-        
+
         if (myGenerator["write_access"] == true) {
             outstr += '<br><br>Update Generator Monitor Software:<br><div id="updateNeeded"><br></div>';
             outstr += '&nbsp;&nbsp;<button id="checkNewVersion" onClick="checkNewVersion();">Upgrade to latest version</button>';
@@ -1369,6 +1373,11 @@ function DisplaySettings(){
               outstr += printSettingsField(result[key][0], key, result[key][3], "", "", "usehttpsChange(true);");
               outstr += '</td><td nowrap>&nbsp;&nbsp;Optional - Webserver Security Settings&nbsp;&nbsp;</td><td width="80%"><hr></td></tr></table>';
               outstr += '<fieldset id="'+key+'Section"><table id="allsettings" border="0">';
+            } else if (key == "use_serial_tcp") {
+              outstr += '</table></fieldset><table width="100%" border="0"><tr><td width="25px">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td nowrap width="90px">';
+              outstr += printSettingsField(result[key][0], key, result[key][3], "", "", "useSerialTCPChange(true);");
+              outstr += '</td><td nowrap>&nbsp;&nbsp;Enable Serial over TCP/IP&nbsp;&nbsp;</td><td width="80%">&nbsp;</td></tr></table>';
+              outstr += '<fieldset id="'+key+'Section"><table id="allsettings" border="0">';
             } else if (key == "disablesmtp") {
               outstr += '</table></fieldset><br><br><table width="100%" border="0"><tr><td nowrap width="90px">';
               outstr += printSettingsField(result[key][0], key, !result[key][3], "", "", "toggleSectionInverse(true, '"+key+"');");
@@ -1399,6 +1408,15 @@ function DisplaySettings(){
             } else if (key == "http_port") {
               outstr += '</table></fieldset><fieldset id="noneSecuritySettings"><table id="allsettings" border="0">';
               outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "toggleSection(true, 'useselfsignedcert');") + '</td></tr>';
+            } else if (key == "port") {
+              outstr += '</table></fieldset><fieldset id="serialDirect"><table id="allsettings" border="0">';
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "toggleSection(true, 'useselfsignedcert');") + '</td></tr>';
+            } else if (key == "serial_tcp_address") {
+              outstr += '</table></fieldset><fieldset id="serialTCP"><table id="allsettings" border="0">';
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "toggleSection(true, 'useselfsignedcert');") + '</td></tr>';
+            } else if (key == "serial_tcp_port") {
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "toggleSection(true, 'useselfsignedcert');") + '</td></tr>';
+              outstr += '</table></fieldset><table id="allsettings" border="0">';
             } else if (key == "favicon") {
               outstr += '</table></fieldset><table id="allsettings" border="0">';
               outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "toggleSection(true, 'useselfsignedcert');") + '</td></tr>';
@@ -1406,7 +1424,7 @@ function DisplaySettings(){
               outstr += '<tr><td width="25px">&nbsp;</td><td bgcolor="#ffcccc" width="300px">' + result[key][1] + '</td><td bgcolor="#ffcccc">' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
             } else if (key == "weatherlocation") {
               outstr += '<tr><td width="25px">&nbsp;</td><td valign="top" width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]);
-              if (usehttps == true) { 
+              if (usehttps == true) {
                 outstr += '<br><button type="button" id="weathercityname" onclick="lookupLocation()">Look Up</button>';
               }
               outstr += '</td></tr>';
@@ -1420,10 +1438,21 @@ function DisplaySettings(){
         $("#mydisplay").html(outstr);
         $('input').lc_switch();
         $.extend($.idealforms.rules, {
-           // InternetAddress: /^[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(\/.*)?$/g, /// Warning - this does nto seem to work well.
            // The rule is added as "ruleFunction:arg1:arg2"
+           HTTPAddress: function(input, value, arg1, arg2) {
+             var regex = RegExp("^http[s]?:\\/\\/(([a-z0-9]+([\-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))$", 'g');
+             return regex.test(value);
+           },
            InternetAddress: function(input, value, arg1, arg2) {
-             var regex = RegExp("^[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(\/.*)?$", 'g');
+             var regex = RegExp("^(([a-z0-9]+([\-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))$", 'g');
+             return regex.test(value);
+           },
+           IPAddress: function(input, value, arg1, arg2) {
+             var regex = RegExp("^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\/.*)?)|(localhost(\/.*)?))$", 'g');
+             return regex.test(value);
+           },
+           InternationalPhone: function(input, value, arg1, arg2) {
+             var regex = RegExp('^(\\+(\\d{1,3}))?((\\(\\d{1,4}\\))|(\\d{1,3}))?(\\s|\-)?(\\d+(\\s?|\-?))+$', 'g');
              return regex.test(value);
            },
            UnixFile: function(input, value, arg1, arg2) {
@@ -1440,7 +1469,10 @@ function DisplaySettings(){
            }
         });
         $.extend($.idealforms.errors, {
+            HTTPAddress: 'Must be a valid address from an internet server, eg. http://mail.google.com',
             InternetAddress: 'Must be a valid address from an internet server, eg. mail.google.com',
+            IPAddress: 'Must be a valid IP address, eg. 192.168.1.100',
+            InternationalPhone: 'Must be a valid Phone Number, eg. +1 123 456 7890',
             UnixFile: 'Must be a valid UNIX file',
             UnixDir: 'Must be a valid UNIX path',
             UnixDevice: 'Must be a valid UNIX file path starting with /dev/'
@@ -1451,6 +1483,7 @@ function DisplaySettings(){
         });
 
         usehttpsChange(false);
+        useSerialTCPChange(false);
         useFullTank(false);
         toggleSection(false, "useselfsignedcert");
         toggleSectionInverse(false, "disablesmtp");
@@ -1482,6 +1515,16 @@ function usehttpsChange(animation) {
    }
 }
 
+function useSerialTCPChange(animation) {
+   if ($("#use_serial_tcp").is(":checked")) {
+      $("#serialDirect").hide((animation ? 300 : 0));
+      $("#serialTCP").show((animation ? 300 : 0));
+   } else {
+      $("#serialTCP").hide((animation ? 300 : 0));
+      $("#serialDirect").show((animation ? 300 : 0));
+   }
+}
+
 function toggleSection(animation, section) {
    if ($("#"+section).is(":checked")) {
       $("#"+section+"Section").hide((animation ? 300 : 0));
@@ -1504,7 +1547,7 @@ function lookupLocation() {
     } else {
         GenmonAlert("Your browser does not support Geolocation!");
     }
-}    
+}
 
 function locationError(error) {
     switch (error.code) {
@@ -1546,6 +1589,7 @@ function printSettingsField(type, key, value, tooltip, validation, callback) {
      case "password":
        outstr += '<div class="field idealforms-field">' +
                  '<input id="' + key + '" style="width: 300px;" name="' + key + '" type="' + ((type == "password") ? "password" : "text") + '" ' +
+                  ((callback != "") ? ' onChange="' + callback + ';" ' : "") +
                   (typeof value === 'undefined' ? '' : 'value="' + replaceAll(value, '"', '&quot;') + '" ') +
                   (typeof value === 'undefined' ? '' : 'oldValue="' + replaceAll(value, '"', '&quot;') + '" ') +
                   (typeof validation === 'undefined' ? '' : 'data-idealforms-rules="' + validation + '" ') + '>' +
@@ -1553,9 +1597,11 @@ function printSettingsField(type, key, value, tooltip, validation, callback) {
                   (((typeof tooltip === 'undefined' ) || (tooltip.trim() == "")) ? '' : '<span class="tooltip" style="display: none;">' + replaceAll(tooltip, '"', '&quot;') + '</span>') +
                  '</div>';
        break;
+     case "float":
      case "int":
        outstr += '<div class="field idealforms-field">' +
                  '<input id="' + key + '" style="width: 150px;" name="' + key + '" type="text" ' +
+                  ((callback != "") ? ' onChange="' + callback + ';" ' : "") +
                   (typeof value === 'undefined' ? '' : 'value="' + value.toString() + '" ') +
                   (typeof value === 'undefined' ? '' : 'oldValue="' + value.toString() + '" ') +
                   (typeof validation === 'undefined' ? '' : 'data-idealforms-rules="' + validation + '" ') + '>' +
@@ -1683,9 +1729,9 @@ function saveSettingsJSON() {
                $(this).attr('oldValue', currentValue);
             }
         });
-        
+
         jQuery.each( ["disablesmtp", "disableimap", "disableweather"], function( i, val ) {
-          if (fields[val] != undefined) 
+          if (fields[val] != undefined)
              fields[val] = (fields[val] == "true" ? "false" : "true");
         });
 
@@ -1700,6 +1746,262 @@ function saveSettingsJSON() {
         GenmonAlert("Error: invalid selection");
     }
 }
+
+//*****************************************************************************
+// Display the Addons Tab
+//*****************************************************************************
+
+function DisplayAddons(){
+    var url = baseurl.concat("get_add_on_settings");
+    $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
+        processAjaxSuccess();
+
+        var vpw = $(window).width();
+        var gridWidth = Math.floor((vpw-240)/380);
+            gridWidth = (gridWidth < 1) ? 1 : gridWidth;
+        var currentGrid = 1;
+
+        var  outstr = 'Available Add-ons:<br><br>';
+        outstr += '<table border="0" style="border-collapse: separate; border-spacing: 20px;" width="100%"><tbody><tr><td valign="top">';
+
+        $.each(Object.keys(result), function(i, addon) {
+            var thisEnabled = ((typeof result[addon]["enable"] !== 'undefined' ) && (result[addon]["enable"].toString() == "true")) ? true : false;
+            var thisIcon = result[addon]["icon"];
+            outstr += '  <div class="card">';
+            outstr += '    <form class="idealforms" style="border-spacing: 0px;" novalidate  id="' + addon + '_form">';
+            outstr += '        <div id="' + addon + '_bg" align="center" style="width:360px; background-color:#e1e1e1; border-radius: 6px 6px 0px 0px; float:left;"><img id="' + addon + '_image" width="252px" class="'+thisIcon+'" src="images/transparent.png"></div>';
+            outstr += '        <div id="' + addon + '_title" style="display: inline-block; float:center; margin-left:10px; margin-top: 5px; margin-bottom: 5px; width:265px" >'+result[addon]["title"]+'</div>';
+            outstr += '        <div style="display: inline-block; clear:right; float:right; margin-top:5px; margin-right:10px; width:75px" class="field idealforms-field">' +
+                      '          <input id="' + addon + '" name="' + addon + '" type="checkbox" style="margin:0px;padding:0px" data-callback="toggleCard(true,\'' + addon + '\',\'' + thisIcon + '\')"' +
+                                 (thisEnabled ? ' checked ' : '') +
+                                 (thisEnabled ? ' oldValue="true" ' : ' oldValue="false" ') + '>' +
+                      '        </div>';
+            outstr += '      <div style="clear: both;"></div>';
+            outstr += '      <div id="' + addon + '_overview" style="margin:10px;font-size: 15px;">'+result[addon]["description"]+'<br><br><center><a target="_blank" href="'+result[addon]["url"]+'">Click for more information</a></center></div>';
+            outstr += '      <div id="' + addon + '_settings" style="margin:10px;font-size: 15px;">';
+            if ((result[addon]["parameters"] == null) || (Object.keys(result[addon]["parameters"]).length == 0)) {
+               outstr += "No settings required for this addon";
+            } else {
+               $.each(Object.keys(result[addon]["parameters"]), function(j, param) {
+                   var par = result[addon]["parameters"][param];
+                   outstr += par["display_name"] + '<br>';
+                   outstr += printSettingsField(par["type"], param, par["value"], par["description"], par["bounds"], "changedCard(true, '"+addon+"')") + '<div style="clear: both;"></div>';
+               });
+            }
+            outstr += '      </div>';
+            outstr += '    </form>';
+            outstr += '    <center><button id="' + addon + '_save" onClick="saveAddon(\'' + addon + '\', \'' + result[addon]["title"] + '\')" style="align:center;">Save</button></center><br>';
+            outstr += '  </div>';
+            if (((i+1)/Object.keys(result).length) > (currentGrid/gridWidth)) {
+               outstr += '</td><td valign="top">';
+               currentGrid++;
+            }
+        });
+        outstr += '</td></tr></tbody></table></form><br>';
+
+        $("#mydisplay").html(outstr);
+        $('input').lc_switch();
+        $.extend($.idealforms.rules, {
+           // The rule is added as "ruleFunction:arg1:arg2"
+           HTTPAddress: function(input, value, arg1, arg2) {
+             var regex = RegExp("^http[s]?:\\/\\/(([a-z0-9]+([\-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))$", 'g');
+             return regex.test(value);
+           },
+           InternetAddress: function(input, value, arg1, arg2) {
+             var regex = RegExp("^(([a-z0-9]+([\-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))$", 'g');
+             return regex.test(value);
+           },
+           IPAddress: function(input, value, arg1, arg2) {
+             var regex = RegExp("^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\/.*)?)|(localhost(\/.*)?))$", 'g');
+             return regex.test(value);
+           },
+           InternationalPhone: function(input, value, arg1, arg2) {
+             var regex = RegExp('^(\\+(\\d{1,3}))?((\\(\\d{1,4}\\))|(\\d{1,3}))?(\\s|\-)?(\\d+(\\s?|\-?))+$', 'g');
+             return regex.test(value);
+           },
+           UnixFile: function(input, value, arg1, arg2) {
+             var regex = RegExp("^(\/[^\/]+)+$", 'g');
+             return regex.test(value);
+           },
+           UnixDir: function(input, value, arg1, arg2) {
+             var regex = RegExp("^(\/[^\/]+)+\/$", 'g');
+             return regex.test(value);
+           },
+           UnixDevice: function(input, value, arg1, arg2) {
+             var regex = RegExp("^\/dev(\/[^\/]+)+$", 'g');
+             return regex.test(value);
+           }
+        });
+        $.extend($.idealforms.errors, {
+            HTTPAddress: 'Must be a valid address from an internet server, eg. http://mail.google.com',
+            InternetAddress: 'Must be a valid address from an internet server, eg. mail.google.com',
+            IPAddress: 'Must be a valid IP address, eg. 192.168.1.100',
+            InternationalPhone: 'Must be a valid Phone Number, eg. +1 123 456 7890',
+            UnixFile: 'Must be a valid UNIX file',
+            UnixDir: 'Must be a valid UNIX path',
+            UnixDevice: 'Must be a valid UNIX file path starting with /dev/'
+        });
+        $('form.idealforms').idealforms({
+           tooltip: '.tooltip',
+           silentLoad: true,
+        });
+
+        $.each(Object.keys(result), function(i, addon) {
+            var thisIcon = result[addon]["icon"];
+            toggleCard(0, addon, thisIcon);
+            $("#"+addon+"_save").hide(0);
+        });
+
+    }});
+}
+
+function toggleCard(animation, addon, icon) {
+   if ($("#"+addon).is(":checked")) {
+      $("#"+addon+"_bg").animate({backgroundColor: '#ffffff', width: '50px',  margin:'7px', padding: '0px', borderTopLeftRadius: 0, borderTopRightRadius: 0}, (animation ? 300 : 0));
+      $("#"+addon+"_image").animate({backgroundColor: '#ffffff', width: '50px'}, 0);
+      $("#"+addon+"_title").animate({width: '195px'}, 0);
+      $("#"+addon+"_image").removeClass(icon);
+      $("#"+addon+"_image").addClass(icon+"_small");
+      $("#"+addon+"_overview").hide((animation ? 300 : 0));
+      $("#"+addon+"_settings").show((animation ? 300 : 0));
+   } else {
+      $("#"+addon+"_bg").animate({backgroundColor: '#e1e1e1', width: '360px', margin:'0px', padding: '10px', borderTopLeftRadius: 6, borderTopRightRadius: 6}, (animation ? 300 : 0));
+      $("#"+addon+"_image").animate({backgroundColor: '#e1e1e1', width: '252px'}, 0);
+      $("#"+addon+"_title").animate({width: '265px'}, 0);
+      $("#"+addon+"_image").removeClass(icon+"_small");
+      $("#"+addon+"_image").addClass(icon);
+      $("#"+addon+"_overview").show((animation ? 300 : 0));
+      $("#"+addon+"_settings").hide((animation ? 300 : 0));
+   }
+   changedCard(animation, addon);
+}
+
+function changedCard(animation, addon) {
+   var fields = {};
+
+   $('#' + addon + '_form input').each(function() {
+            var oldValue = $(this).attr('oldValue');
+            var currentValue = (($(this).attr('type') == "checkbox") ? ($(this).prop('checked') === true ? "true" : "false") : $(this).val());
+            if (oldValue != currentValue) {
+               fields[$(this).attr('name')] = currentValue;
+            }
+   });
+   $('#' + addon + '_form select').each(function() {
+            var oldValue = $(this).attr('oldValue');
+            var currentValue = $(this).val();
+            if (oldValue != currentValue) {
+               fields[$(this).attr('name')] = currentValue;
+            }
+   });
+
+   if (Object.keys(fields).length > 0) {
+      $("#"+addon+"_save").show((animation ? 300 : 0));
+   } else {
+      $("#"+addon+"_save").hide((animation ? 300 : 0))
+   }
+}
+
+function saveAddon(addon, addonTitle){
+
+    var DisplayStr = "Save settings for "+addonTitle+"? Are you sure?";
+    var DisplayStrAnswer = false;
+    var DisplayStrButtons = {
+        NO: {
+          text: 'Cancel',
+          type: 'button',
+          className: 'vex-dialog-button-secondary',
+          click: function noClick () {
+            DisplayStrAnswer = false
+            this.close()
+          }
+        },
+        YES: {
+          text: 'OK',
+          type: 'submit',
+          className: 'vex-dialog-button-primary',
+          click: function yesClick () {
+            DisplayStrAnswer = true
+          }
+        }
+    }
+
+    vex.dialog.open({
+        unsafeMessage: DisplayStr,
+        overlayClosesOnClick: false,
+        buttons: [
+           DisplayStrButtons.NO,
+           DisplayStrButtons.YES
+        ],
+        onSubmit: function(e) {
+           if (DisplayStrAnswer) {
+             DisplayStrAnswer = false; // Prevent recursive calls.
+             e.preventDefault();
+             saveAddonJSON(addon);
+             var DisplayStr1 = 'Saving '+addonTitle+'...';
+             var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
+             $('.vex-dialog-message').html(DisplayStr1);
+             $('.vex-dialog-buttons').html(DisplayStr2);
+             $('.progress-bar-fill').queue(function () {
+                  $(this).css('width', '100%')
+             });
+             setTimeout(function(){
+                vex.closeAll();
+             }, 10000);
+           }
+        }
+    })
+}
+
+function saveAddonJSON(addon) {
+    try {
+        var result = {};
+             result[addon] = {};
+             result[addon]["parameters"] = {};
+
+        $('#' + addon + '_form input').each(function() {
+            var oldValue = $(this).attr('oldValue');
+            var currentValue = (($(this).attr('type') == "checkbox") ? ($(this).prop('checked') === true ? "true" : "false") : $(this).val());
+            if (oldValue != currentValue) {
+               if ($(this).attr('name') == addon) {
+                  result[addon]["enable"] = currentValue;
+               } else {
+                  result[addon]["parameters"][$(this).attr('name')] = currentValue;
+               }
+               $(this).attr('oldValue', currentValue);
+            }
+        });
+        $('#' + addon + '_form select').each(function() {
+            var oldValue = $(this).attr('oldValue');
+            var currentValue = $(this).val();
+            if (oldValue != currentValue) {
+               result[addon]["parameters"][$(this).attr('name')] = currentValue;
+               $(this).attr('oldValue', currentValue);
+            }
+        });
+
+        // save settings
+        var url = baseurl.concat("set_add_on_settings");
+        $.getJSON(  url,
+                    {set_add_on_settings: JSON.stringify(result)},
+                    function(result){
+        });
+
+    } catch(err) {
+        GenmonAlert("Error: invalid selection");
+    }
+}
+
+//*****************************************************************************
+// Display the About Tab
+//*****************************************************************************
+
+function DisplayAbout(){
+    var outstr = '<br><br><br><center><img src="images/GenmonLogo.png" width="60%"><br>';
+    outstr += '<br>Genmon<br>Version '+myGenerator["version"]+'<br><br><br>Developed by <a target="_blank" href="https://github.com/jgyates/">@jgyates</a>.<br><br>Published under the <a target="_blank" href="https://raw.githubusercontent.com/jgyates/genmon/master/LICENSE">GNU General Public License v2.0</a>.<br><br>Source: <a target="_blank" href="https://github.com/jgyates/genmon">Github</a><br><br>Built using Python & Javascript.</center>';
+
+    $("#mydisplay").html(outstr);
+}
+
 
 //*****************************************************************************
 // DisplayRegisters - Shows the raw register data.
@@ -2023,6 +2325,12 @@ function MenuClick(page)
             case "settings":
                 DisplaySettings();
                 break;
+            case "addons":
+                DisplayAddons();
+                break;
+            case "about":
+                DisplayAbout();
+                break;
             case "registers":
                 DisplayRegistersFull();
                 break;
@@ -2182,7 +2490,7 @@ function UpdateDisplay()
         DisplayLogs();
     } else if (menuElement == "monitor") {
         DisplayMonitor();
-    } else if ((menuElement != "settings") && (menuElement != "notifications")) {
+    } else if ((menuElement != "settings") && (menuElement != "notifications") && (menuElement != "addons") && (menuElement != "about")) {
         GetDisplayValues(menuElement);
     }
 
@@ -2211,7 +2519,7 @@ function GetBaseStatus()
            for (var i = 0; i < result.tiles.length; ++i) {
              switch (myGenerator["tiles"][i].type) {
                 case "gauge":
-                   gauge[i].set(result.tiles[i].value); 
+                   gauge[i].set(result.tiles[i].value);
                    $("#text"+i).html(result.tiles[i].text);
                    break;
                 case "graph":
@@ -2221,7 +2529,7 @@ function GetBaseStatus()
                          // make sure we add a 0 before the graph goes up, to ensure the interpolation works
                          kwHistory["data"].unshift([(new moment()).add(-2, "s").format("YYYY-MM-DD HH:mm:ss"), 0]);
                       }
-  
+
                       if ((result.tiles[i].value != 0) || (kwHistory["data"][0][1] != 0)) {
                          kwHistory["data"].unshift([(new moment()).format("YYYY-MM-DD HH:mm:ss"), result.tiles[i].value]);
                       }
@@ -2290,6 +2598,6 @@ function GetBaseStatus()
         prevStatusValues = result;
         return
    }});
-   
+
    return
 }

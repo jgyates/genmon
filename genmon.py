@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 #    FILE: genmon.py
 # PURPOSE: Monitor for Generator
 #
@@ -8,7 +8,7 @@
 #          23-Apr-2018
 #
 # MODIFICATIONS:
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 from __future__ import print_function       # For python 3.x compatibility with print function
 
@@ -25,9 +25,9 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.10.13"
+GENMON_VERSION = "V1.11.0"
 
-#------------ Monitor class --------------------------------------------
+#------------ Monitor class ----------------------------------------------------
 class Monitor(mysupport.MySupport):
 
     def __init__(self, ConfigFilePath = None):
@@ -269,7 +269,7 @@ class Monitor(mysupport.MySupport):
 
         return True
 
-    #------------------------------------------------------------
+    #---------------------------------------------------------------------------
     def ProcessFeedbackInfo(self):
 
         try:
@@ -282,7 +282,7 @@ class Monitor(mysupport.MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in ProcessFeedbackInfo: " + str(e1))
 
-    #------------------------------------------------------------
+    #---------------------------------------------------------------------------
     def FeedbackReceiver(self, Message):
 
         try:
@@ -293,7 +293,7 @@ class Monitor(mysupport.MySupport):
             self.LogErrorLine("Error in  FeedbackReceiver: " + str(e1))
             self.LogError("Size : " + str(len(Message)))
             self.LogError("Message : " + str(Message))
-    #------------------------------------------------------------
+    #---------------------------------------------------------------------------
     def MessageReceiver(self, Message):
 
         try:
@@ -302,7 +302,7 @@ class Monitor(mysupport.MySupport):
             self.mail.sendEmail(MessageDict["subjectstr"], MessageDict["msgstr"], MessageDict["recipient"], MessageDict["files"],MessageDict["deletefile"] ,MessageDict["msgtype"])
         except Exception as e1:
             self.LogErrorLine("Error in  MessageReceiver: " + str(e1))
-    #------------------------------------------------------------
+    #---------------------------------------------------------------------------
     def SendFeedbackInfo(self, Reason, Always = False, Message = None, FullLogs = True, NoCheck = False):
         try:
             if self.NewInstall or Always:
@@ -355,7 +355,7 @@ class Monitor(mysupport.MySupport):
         self.MessagePipe.SendMessage("Generator Monitor Register Submission", msgbody , recipient = self.MaintainerAddress, msgtype = "info")
         return "Registers submitted"
 
-    #---------- Monitor::SendLogFiles------------------------------------------
+    #---------- Monitor::SendLogFiles-------------------------------------------
     def SendLogFiles(self):
 
         try:
@@ -496,7 +496,7 @@ class Monitor(mysupport.MySupport):
             msgbody += "EndOfMessage"
             return msgbody
 
-    #------------ Monitor::DisplayHelp ----------------------------------------
+    #------------ Monitor::DisplayHelp -----------------------------------------
     def DisplayHelp(self):
 
         outstring = ""
@@ -634,7 +634,7 @@ class Monitor(mysupport.MySupport):
 
         return StartInfo
 
-    #------------ Monitor::GetStatusForGUI ------------------------------------
+    #------------ Monitor::GetStatusForGUI -------------------------------------
     def GetStatusForGUI(self):
 
         Status = {}
@@ -653,7 +653,7 @@ class Monitor(mysupport.MySupport):
 
         return ReturnDict
 
-    #-------------Monitor::GetSystemHealth--------------------------------
+    #-------------Monitor::GetSystemHealth--------------------------------------
     #   returns the health of the monitor program
     def GetSystemHealth(self):
 
@@ -671,7 +671,7 @@ class Monitor(mysupport.MySupport):
             outstr = "OK"
         return outstr
 
-    #----------  Monitor::StartTimeThread-------------------------------------
+    #----------  Monitor::StartTimeThread---------------------------------------
     def StartTimeThread(self):
 
         # This is done is a separate thread as not to block any return email processing
@@ -679,7 +679,7 @@ class Monitor(mysupport.MySupport):
         mythread.MyThread(self.Controller.SetGeneratorTimeDate, Name = "SetTimeThread")
         return "Time Set: Command Sent\n"
 
-    #----------  Monitor::TimeSyncThread-------------------------------------
+    #----------  Monitor::TimeSyncThread----------------------------------------
     def TimeSyncThread(self):
 
         self.bDST = self.is_dst()   # set initial DST state
@@ -822,7 +822,7 @@ class Monitor(mysupport.MySupport):
 
         # end SocketWorkThread
 
-    #----------  interface for heartbeat server thread -------------
+    #----------  interface for heartbeat server thread -------------------------
     def InterfaceServerThread(self):
 
         #create an INET, STREAMing socket
@@ -867,7 +867,7 @@ class Monitor(mysupport.MySupport):
             self.ServerSocket = None
         #
 
-    #---------------------Monitor::Close------------------------
+    #---------------------Monitor::Close----------------------------------------
     def Close(self):
 
         # we dont really care about the errors that may be generated on shutdown
@@ -950,7 +950,7 @@ class Monitor(mysupport.MySupport):
         except:
             pass
 
-#------------------- Command-line interface for monitor -----------------#
+#------------------- Command-line interface for monitor ------------------------
 if __name__=='__main__': #
     ConfigFilePath = None if len(sys.argv)<2 else sys.argv[1]
 
