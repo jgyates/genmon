@@ -1284,11 +1284,18 @@ class HPanel(controller.GeneratorController):
             Data.append(d.minute)
             self.ModBus.ProcessMasterSlaveWriteTransaction(RegisterEnum.GEN_TIME_HR_MIN, len(Data) / 2, Data)
             self.LogError("Writing HR:MIN : " + str(d.hour) + ":" + str(d.minute))
+
+            DayOfWeek = d.weekday()     # returns Monday is 0 and Sunday is 6
+            # expects Sunday = 1, Saturday = 7
+            if DayOfWeek == 6:
+                DayOfWeek = 1
+            else:
+                DayOfWeek += 2
             Data= []
             Data.append(d.second)           #GEN_TIME_SEC_DYWK
-            Data.append(0)                  #Day of Week is always zero
+            Data.append(DayOfWeek)                  #Day of Week is always zero
             self.ModBus.ProcessMasterSlaveWriteTransaction(RegisterEnum.GEN_TIME_SEC_DYWK, len(Data) / 2, Data)
-            self.LogError("Writing SEC:DYWK : " + str(d.second) + ":" + str(0))
+            self.LogError("Writing SEC:DYWK : " + str(d.second) + ":" + str(DayOfWeek))
             Data= []
             Data.append(d.month)            #GEN_TIME_MONTH_DAY
             Data.append(d.day)              # low byte is day of month
