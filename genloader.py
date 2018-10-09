@@ -89,7 +89,7 @@ class Loader(mysupport.MySupport):
 
             if self.Stop:
                 self.StopModules()
-                time.sleep(1)
+                time.sleep(2)
 
             if self.Start:
                 self.StartModules()
