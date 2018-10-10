@@ -1011,6 +1011,8 @@ class HPanel(controller.GeneratorController):
             StartInfo["RemoteCommands"] = False
             StartInfo["RemoteButtons"] = False
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
+            StartInfo["ExerciseControls"] = not self.SmartSwitch
+
             if not NoTile:
                 StartInfo["pages"] = {
                                 "status":True,
@@ -1127,9 +1129,10 @@ class HPanel(controller.GeneratorController):
             Maint["Nominal Frequency"] = self.NominalFreq
             Maint["Fuel Type"] = self.FuelType
             Exercise = collections.OrderedDict()
-            Maint["Exercise"] = Exercise
-            #Exercise["Exercise Time"] = self.GetExerciseTime()
-            #Exercise["Exercise Duration"] = self.GetExerciseDuration()
+            if not self.SmartSwitch:
+                Maint["Exercise"] = Exercise
+                #Exercise["Exercise Time"] = self.GetExerciseTime()
+                #Exercise["Exercise Duration"] = self.GetExerciseDuration()
 
             Service = collections.OrderedDict()
             Maint["Service"] = Service

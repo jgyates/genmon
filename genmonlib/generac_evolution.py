@@ -1695,11 +1695,13 @@ class Evolution(controller.GeneratorController):
                     ControllerSettings["Rated Frequency"] = self.GetParameter("005a")
                     ControllerSettings["Rated Voltage"] = self.GetParameter("0059")
 
-            Exercise = collections.OrderedDict()
-            Exercise["Exercise Time"] = self.GetExerciseTime()
-            if self.EvolutionController and self.LiquidCooled:
-                Exercise["Exercise Duration"] = self.GetExerciseDuration()
-            Maint["Exercise"] = Exercise
+            if not self.SmartSwitch:
+                Exercise = collections.OrderedDict()
+                Exercise["Exercise Time"] = self.GetExerciseTime()
+                if self.EvolutionController and self.LiquidCooled:
+                    Exercise["Exercise Duration"] = self.GetExerciseDuration()
+                Maint["Exercise"] = Exercise
+
             Service = collections.OrderedDict()
             if not self.EvolutionController and self.LiquidCooled:
                 Service["Air Filter Service Due"] = self.GetServiceDue("AIR") + " or " + self.GetServiceDueDate("AIR")
@@ -3373,8 +3375,9 @@ class Evolution(controller.GeneratorController):
             StartInfo["NominalBatteryVolts"] = "12"
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
             StartInfo["UtilityVoltage"] = True
-            StartInfo["RemoteCommands"] = True
+            StartInfo["RemoteCommands"] = not self.SmartSwitch
             StartInfo["RemoteButtons"] = self.RemoteButtonsSupported()
+            StartInfo["ExerciseControls"] = not self.SmartSwitch
 
             if not NoTile:
                 StartInfo["pages"] = {
