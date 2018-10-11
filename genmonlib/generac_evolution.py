@@ -208,7 +208,7 @@ class Evolution(controller.GeneratorController):
             self.FatalError("Failure in Controller GetConfig: " + str(e1))
             return None
         try:
-            self.AlarmFile = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/ALARMS.txt"
+            self.AlarmFile = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/data/ALARMS.txt"
             with open(self.AlarmFile,"r") as AlarmFile:     #
                 pass
         except Exception as e1:
@@ -477,7 +477,7 @@ class Evolution(controller.GeneratorController):
             else:
                 FileName = "NexusLCParam.txt"
 
-            FullFileName = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/" + FileName
+            FullFileName = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/data/" + FileName
             with open(FullFileName,"r") as ParamFile:
                 for line in ParamFile:
                     line = line.strip()             # remove newline at beginning / end and trailing whitespace

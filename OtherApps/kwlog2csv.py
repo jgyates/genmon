@@ -13,6 +13,8 @@
 
 import getopt, os, sys, json
 
+sys.path.append("..") # Adds higher directory to python modules path.
+
 try:
     from genmonlib import myclient, mylog
 except:

@@ -50,6 +50,8 @@ class Loader(mysupport.MySupport):
             self.configfile = self.ConfigFilePath + self.ConfigFileName
 
         self.ModulePath = os.path.dirname(os.path.realpath(__file__)) + "/"
+        self.ConfPath = os.path.dirname(os.path.realpath(__file__)) + "/conf/"
+
 
         # log errors in this module to a file
         if log == None:
@@ -70,8 +72,8 @@ class Loader(mysupport.MySupport):
             # check to see if genloader.conf is present, if not copy it from genmon directory
             if not os.path.isfile(self.configfile):
                 self.LogInfo("Warning: unable to find config file: " + self.configfile + " Copying file to /etc/ directory.")
-                if os.path.isfile(self.ModulePath + self.ConfigFileName):
-                    copyfile(self.ModulePath + self.ConfigFileName , self.configfile)
+                if os.path.isfile(self.ConfPath + self.ConfigFileName):
+                    copyfile(self.ConfPath + self.ConfigFileName , self.configfile)
                 else:
                     self.LogInfo("Unable to find config file.")
                     sys.exit(2)
@@ -176,11 +178,11 @@ class Loader(mysupport.MySupport):
                     for ConfigFile in ConfFileList:
                         ConfigFile = ConfigFile.strip()
                         if not os.path.isfile(self.ConfigFilePath + ConfigFile):
-                            if os.path.isfile(self.ModulePath + ConfigFile):
+                            if os.path.isfile(self.ConfPath + ConfigFile):
                                 self.LogInfo("Copying " + ConfigFile + " to " + self.ConfigFilePath )
-                                copyfile(self.ModulePath + ConfigFile , self.ConfigFilePath + ConfigFile)
+                                copyfile(self.ConfPath + ConfigFile , self.ConfigFilePath + ConfigFile)
                             else:
-                                self.LogInfo("Enable to find config file " + self.ModulePath + ConfigFile)
+                                self.LogInfo("Enable to find config file " + self.ConfPath + ConfigFile)
                                 ErrorOccured = True
             except Exception as e1:
                 self.LogInfo("Error validating config for " + Module + " : " + str(e1), LogLine = True)

@@ -1,8 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+
+## V1.11.2 - 2018-10-11
+- Moved data files to /data directory
+- Moved conf files to /conf directory (runtime still expected files in /etc)
+- Moved kwlog2csv.py to OtherApps
+
 ## V1.11.1 - 2018-10-10
-- Added option for smart_transfer_switch in genmon.conf 
+- Added option for smart_transfer_switch in genmon.conf
 
 ## V1.11.0 - 2018-10-9
 - Added 'Add-On' and 'About' to web interface. 'Add-On' section allows enabling, disabling and setting options for add on programs

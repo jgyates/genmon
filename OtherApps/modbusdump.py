@@ -11,11 +11,13 @@
 
 
 import sys, time, getopt
+
+sys.path.append("..") # Adds higher directory to python modules path.
 try:
     from genmonlib import mymodbus, myserial
 except:
     print "\n\nThis program is used for the testing of modbus registers."
-    print "\n\nThis program requires the modules mymodbus.py and myserial.py to reside in the genmonlib directory. If you are seeing this message you should copy the file modbusdump.py up one directory.\n"
+    print "\n\nThis program requires the modules mymodbus.py and myserial.py to reside in the genmonlib directory.\n"
     sys.exit(2)
 
 #------------ printToScreen --------------------------------------------

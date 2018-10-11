@@ -906,9 +906,9 @@ def CacheToolTips():
 
         ControllerType = config_section
 
-        CachedRegisterDescriptions = GetAllConfigValues(pathtofile + "/tooltips.txt", config_section)
+        CachedRegisterDescriptions = GetAllConfigValues(pathtofile + "/data/tooltips.txt", config_section)
 
-        CachedToolTips = GetAllConfigValues(pathtofile + "/tooltips.txt", "ToolTips")
+        CachedToolTips = GetAllConfigValues(pathtofile + "/data/tooltips.txt", "ToolTips")
 
     except Exception as e1:
         LogErrorLine("Error reading tooltips.txt " + str(e1) )
