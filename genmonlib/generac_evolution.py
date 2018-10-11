@@ -940,6 +940,7 @@ class Evolution(controller.GeneratorController):
                 return msgbody
 
             Command = CmdList[1].strip()
+            Command = Command.lower()
 
         except Exception as e1:
             self.LogErrorLine("Validation Error: Error parsing command string in SetGeneratorRemoteStartStop: " + CmdString)
@@ -959,6 +960,8 @@ class Evolution(controller.GeneratorController):
             Register = 0x0002       # start the generator, then engage the transfer transfer switch
         elif Command == "startexercise":
             Register = 0x0003       # remote run in quiet mode (exercise)
+        elif Command == "resetalarm":
+            Register = 0x000d
         else:
             if self.RemoteButtonsSupported():
                 if Command == "auto":
