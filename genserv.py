@@ -675,9 +675,11 @@ def ReadSingleConfigValue(entry, filename = None, section = None, type = "string
         if type.lower() == "string" or type == "password":
             return config.ReadValue(entry)
         elif type.lower() == "boolean":
-            return config.ReadValue(entry, return_type = bool)
+            return config.ReadValue(entry, return_type = bool, default = default)
         elif type.lower() == "int":
-            return config.ReadValue(entry, return_type = int)
+            return config.ReadValue(entry, return_type = int, default = default)
+        elif type.lower() == "float":
+            return config.ReadValue(entry, return_type = float, default = default)
         elif type.lower() == 'list':
             Value = config.ReadValue(entry)
             if bounds != None:
