@@ -443,7 +443,7 @@ def GetAddOns():
             bounds = 'minmax:4:50',
             display_name = "MQTT Authentication Password")
         AddOnCfg['genmqtt']['parameters']['poll_interval'] = CreateAddOnParam(
-            ConfigFiles[GENMQTT_CONFIG].ReadValue("poll_interval", return_type = int, default = 2.0),
+            ConfigFiles[GENMQTT_CONFIG].ReadValue("poll_interval", return_type = float, default = 2.0),
             'float',
             "The time in seconds between requesting status from genmon. The default value is 2 seconds.",
             bounds = 'number',
@@ -778,7 +778,7 @@ def ReadSettingsFromFile():
     ConfigSettings["use_serial_tcp"] = ['boolean', 'Enable Serial over TCP/IP', 2, False, "", "", GENMON_CONFIG, GENMON_SECTION, "use_serial_tcp"]
     ConfigSettings["port"] = ['string', 'Port for Serial Communication', 3, "/dev/serial0", "", "required UnixDevice", GENMON_CONFIG, GENMON_SECTION, "port"]
     ConfigSettings["serial_tcp_address"] = ['string', 'Serial Server TCP/IP Address', 4, "", "", "", GENMON_CONFIG, GENMON_SECTION, "serial_tcp_address"]
-    ConfigSettings["serial_tcp_port"] = ['int', 'Serial Server TCP/IP Port', 5, "", "", "digits", GENMON_CONFIG, GENMON_SECTION, "serial_tcp_port"]
+    ConfigSettings["serial_tcp_port"] = ['int', 'Serial Server TCP/IP Port', 5, "8899", "", "digits", GENMON_CONFIG, GENMON_SECTION, "serial_tcp_port"]
 
     # This option is not displayed as it will break the link between genmon and genserv
     #ConfigSettings["server_port"] = ['int', 'Server Port', 5, 9082, "", 0, GENMON_CONFIG, GENMON_SECTION,"server_port"]

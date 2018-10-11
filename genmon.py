@@ -25,7 +25,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.11.2"
+GENMON_VERSION = "V1.11.3"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -370,7 +370,10 @@ class Monitor(mysupport.MySupport):
             msgbody += self.Controller.DisplayRegisters(AllRegs = True)
 
             LogList = []
-            FilesToSend = ["genmon.log", "genserv.log", "mymail.log", "myserial.log", "mymodbus.log", "gengpio.log", "gengpioin.log", "gensms.log", "gensms_modem.log", "genmqtt.log", "genpushover.log", "gensyslog.log", "genloader.log", "myserialtcp.log"]
+            FilesToSend = ["genmon.log", "genserv.log", "mymail.log", "myserial.log",
+                "mymodbus.log", "gengpio.log", "gengpioin.log", "gensms.log",
+                "gensms_modem.log", "genmqtt.log", "genpushover.log", "gensyslog.log",
+                "genloader.log", "myserialtcp.log", "genlog.log", "genslack.log"]
             for File in FilesToSend:
                 LogFile = self.LogLocation + File
                 if os.path.isfile(LogFile):
