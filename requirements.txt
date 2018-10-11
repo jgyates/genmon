@@ -4,3 +4,7 @@ pyserial
 crcmod
 pyowm
 pytz
+pyopenssl
+twilio
+chump
+paho-mqtt
