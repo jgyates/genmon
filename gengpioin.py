@@ -70,7 +70,7 @@ if __name__=='__main__': # usage program.py [server_address]
 
     try:
         console = mylog.SetupLogger("gengpioin_console", log_file = "", stream = True)
-        log = mylog.SetupLogger("client", "gengpioin.log")
+        log = mylog.SetupLogger("client", "/var/log/gengpioin.log")
         # Set the signal handler
         signal.signal(signal.SIGINT, signal_handler)
 

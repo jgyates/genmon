@@ -36,7 +36,7 @@ if __name__=='__main__': # usage program.py [server_address]
 
 
     try:
-        log = mylog.SetupLogger("client", "gengpio.log")
+        log = mylog.SetupLogger("client", "/var/log/gengpio.log")
         console = mylog.SetupLogger("gengpio_console", log_file = "", stream = True)
         # Set the signal handler
         signal.signal(signal.SIGINT, signal_handler)

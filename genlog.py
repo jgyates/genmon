@@ -77,7 +77,7 @@ if __name__=='__main__':
         sys.exit(2)
 
     try:
-        log = mylog.SetupLogger("client", "genlog.log")
+        log = mylog.SetupLogger("client", "/var/log/genlog.log")
         # Set the signal handler
         signal.signal(signal.SIGINT, signal_handler)
 
