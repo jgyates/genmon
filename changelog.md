@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
-## V1.11.3 - 2018-10-11
+## V1.11.4 - 2018-10-11
 - Corrected bug in type in genserv.py. Corrects problem with settings page not displaying.
 
 ## V1.11.2 - 2018-10-11
