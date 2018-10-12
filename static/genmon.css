@@ -140,9 +140,9 @@ li a:hover:not(.active) {
     color: white;
 }
 
-/* Pictures */
+/* Icons */
 
-.alert_large, .alert_small, .log, .maintenance, .monitor, .notifications, .outage, .print10, .print24, .print60, .registers, .remove_bin, .settings, .status, .temp1, .temp2, .temp3, .temp4, .title-bg, .validation_ok, .validation_text, .wifi1, .wifi2, .wifi3, .wifi4, .fuel{
+.alert_large, .alert_small, .log, .maintenance, .monitor, .notifications, .outage, .print10, .print24, .print60, .registers, .remove_bin, .settings, .status, .temp1, .temp2, .temp3, .temp4, .title-bg, .validation_ok, .validation_text, .wifi1, .wifi2, .wifi3, .wifi4, .fuel, .about, .addon{
 	background: url(images/sprites.png) no-repeat;
 }
 
@@ -301,6 +301,121 @@ li a:hover:not(.active) {
 	width: 400px;
 	height: 189px;
 }
+
+.about{
+	background-position: -314px -166px ;
+	width: 20px;
+	height: 20px;
+}
+
+.addon{
+	background-position: -264px -166px ;
+	width: 20px;
+	height: 20px;
+}
+
+/* Addons */
+
+.linux_small, .mqtt_small, .rpi_small, .slack_small, .twilio_small, .pushover_small, .linux, .mqtt, .pushover, .rpi, .slack, .twilio, .sms, .sms_small, .csv_small, .csv{
+	background: url(images/addons.png) no-repeat;
+}
+
+.linux_small{
+	background-position: -263px -355px ;
+	width: 50px;
+	height: 25px;
+}
+
+.mqtt_small{
+	background-position: -269px -333px ;
+	width: 50px;
+	height: 12px;
+}
+
+.rpi_small{
+	background-position: -398px -362px ;
+	width: 50px;
+	height: 15px;
+}
+
+.slack_small{
+	background-position: -461px -361px ;
+	width: 50px;
+	height: 15px;
+}
+
+.twilio_small{
+	background-position: -463px -330px ;
+	width: 50px;
+	height: 17px;
+}
+
+.pushover_small{
+	background-position: -334px -362px ;
+	width: 50px;
+	height: 13px;
+}
+
+.linux{
+	background-position: -1px -173px ;
+	width: 252px;
+	height: 125px;
+}
+
+.mqtt{
+	background-position: -258px -72px ;
+	width: 252px;
+	height: 62px;
+}
+
+.pushover{
+	background-position: -255px 0;
+	width: 252px;
+	height: 63px;
+}
+
+.rpi{
+	background-position: 0 -93px ;
+	width: 252px;
+	height: 76px;
+}
+
+.slack{
+	background-position: -257px -146px ;
+	width: 252px;
+	height: 77px;
+}
+
+.twilio{
+	background-position: -256px -231px ;
+	width: 252px;
+	height: 83px;
+}
+
+.sms{
+	background-position: 0 0;
+	width: 252px;
+	height: 84px;
+}
+
+.sms_small{
+	background-position: -332px -331px ;
+	width: 50px;
+	height: 17px;
+}
+
+.csv_small{
+	background-position: -395px -330px ;
+	width: 50px;
+	height: 18px;
+}
+
+.csv{
+	background-position: 0 -305px ;
+	width: 252px;
+	height: 93px;
+}
+
 
 
 /* Classes */
@@ -487,6 +602,17 @@ li a:hover:not(.active) {
 }
 .printButton {
     cursor: pointer;
+}
+
+.card {
+  -webkit-box-shadow: 0 2px 2px 0 rgba(0,0,0,0.14),0 3px 1px -2px rgba(0,0,0,0.12),0 1px 5px 0 rgba(0,0,0,0.2);
+  box-shadow: 0 2px 2px 0 rgba(0,0,0,0.14),0 3px 1px -2px rgba(0,0,0,0.12),0 1px 5px 0 rgba(0,0,0,0.2);
+  position: relative;
+  margin: 0.5rem 0 1rem 0;
+  background-color: #fff;
+  -webkit-transition: -webkit-box-shadow .25s;
+  transition: box-shadow .25s, -webkit-box-shadow .25s;
+  border-radius: 6px;  width: 360px;
 }
 
 #mydisplay {

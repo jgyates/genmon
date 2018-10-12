@@ -208,7 +208,7 @@ class Evolution(controller.GeneratorController):
             self.FatalError("Failure in Controller GetConfig: " + str(e1))
             return None
         try:
-            self.AlarmFile = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/ALARMS.txt"
+            self.AlarmFile = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/data/ALARMS.txt"
             with open(self.AlarmFile,"r") as AlarmFile:     #
                 pass
         except Exception as e1:
@@ -477,7 +477,7 @@ class Evolution(controller.GeneratorController):
             else:
                 FileName = "NexusLCParam.txt"
 
-            FullFileName = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/" + FileName
+            FullFileName = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/data/" + FileName
             with open(FullFileName,"r") as ParamFile:
                 for line in ParamFile:
                     line = line.strip()             # remove newline at beginning / end and trailing whitespace
@@ -940,6 +940,7 @@ class Evolution(controller.GeneratorController):
                 return msgbody
 
             Command = CmdList[1].strip()
+            Command = Command.lower()
 
         except Exception as e1:
             self.LogErrorLine("Validation Error: Error parsing command string in SetGeneratorRemoteStartStop: " + CmdString)
@@ -959,6 +960,8 @@ class Evolution(controller.GeneratorController):
             Register = 0x0002       # start the generator, then engage the transfer transfer switch
         elif Command == "startexercise":
             Register = 0x0003       # remote run in quiet mode (exercise)
+        elif Command == "resetalarm":
+            Register = 0x000d
         else:
             if self.RemoteButtonsSupported():
                 if Command == "auto":
@@ -1695,11 +1698,13 @@ class Evolution(controller.GeneratorController):
                     ControllerSettings["Rated Frequency"] = self.GetParameter("005a")
                     ControllerSettings["Rated Voltage"] = self.GetParameter("0059")
 
-            Exercise = collections.OrderedDict()
-            Exercise["Exercise Time"] = self.GetExerciseTime()
-            if self.EvolutionController and self.LiquidCooled:
-                Exercise["Exercise Duration"] = self.GetExerciseDuration()
-            Maint["Exercise"] = Exercise
+            if not self.SmartSwitch:
+                Exercise = collections.OrderedDict()
+                Exercise["Exercise Time"] = self.GetExerciseTime()
+                if self.EvolutionController and self.LiquidCooled:
+                    Exercise["Exercise Duration"] = self.GetExerciseDuration()
+                Maint["Exercise"] = Exercise
+
             Service = collections.OrderedDict()
             if not self.EvolutionController and self.LiquidCooled:
                 Service["Air Filter Service Due"] = self.GetServiceDue("AIR") + " or " + self.GetServiceDueDate("AIR")
@@ -3373,8 +3378,9 @@ class Evolution(controller.GeneratorController):
             StartInfo["NominalBatteryVolts"] = "12"
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
             StartInfo["UtilityVoltage"] = True
-            StartInfo["RemoteCommands"] = True
+            StartInfo["RemoteCommands"] = not self.SmartSwitch
             StartInfo["RemoteButtons"] = self.RemoteButtonsSupported()
+            StartInfo["ExerciseControls"] = not self.SmartSwitch
 
             if not NoTile:
                 StartInfo["pages"] = {

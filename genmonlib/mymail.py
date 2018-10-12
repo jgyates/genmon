@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 #    FILE: mymail.py
 # PURPOSE: send mail messages and receive commands via email
 #
@@ -7,7 +7,7 @@
 #    DATE: 18-Nov-2016
 #
 # MODIFICATIONS:
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 import datetime, time, smtplib, threading
 import imaplib, email, email.header
@@ -26,7 +26,7 @@ import mylog, mythread, mysupport, myconfig
 #imaplib.Debug = 4
 
 
-#------------ MyMail class --------------------------------------------
+#------------ MyMail class -----------------------------------------------------
 class MyMail(mysupport.MySupport):
     def __init__(self, monitor = False, incoming_folder = None, processed_folder = None, incoming_callback = None, localinit = False, loglocation = "/var/log/", ConfigFilePath = None, start = True):
 
@@ -100,7 +100,7 @@ class MyMail(mysupport.MySupport):
             else:
                 self.LogError("IMAP disabled")
 
-    #---------- MyMail.GetConfig ----------------------
+    #---------- MyMail.GetConfig -----------------------------------------------
     def GetConfig(self, reload = False):
 
         try:
@@ -164,7 +164,7 @@ class MyMail(mysupport.MySupport):
 
         return True
 
-    #---------- MyMail.Close -----------------------------------
+    #---------- MyMail.Close ---------------------------------------------------
     def Close(self):
         try:
             if not self.DisableEmail:
@@ -192,7 +192,7 @@ class MyMail(mysupport.MySupport):
         except Exception as e1:
             self.LogErrorLine("Error Closing Mail: " + str(e1))
 
-    #---------- MyMail.EmailCommandThread -----------------------------------
+    #---------- MyMail.EmailCommandThread --------------------------------------
     def EmailCommandThread(self):
 
         while True:
@@ -255,7 +255,7 @@ class MyMail(mysupport.MySupport):
 
             ## end of outer loop
 
-    #------------ MyMail.sendEmailDirectMIME --------------------------------------------
+    #------------ MyMail.sendEmailDirectMIME -----------------------------------
     # send email, bypass queue
     def sendEmailDirectMIME(self, msgtype, subjectstr, msgstr, recipient = None, files=None, deletefile = False):
 
@@ -331,7 +331,7 @@ class MyMail(mysupport.MySupport):
         return True
        # end sendEmailDirectMIME()
 
-    #------------MyMail::SendMailThread-----------------------
+    #------------MyMail::SendMailThread-----------------------------------------
     def SendMailThread(self):
 
         # once sendMail is called email messages are queued and then sent from this thread
@@ -359,7 +359,7 @@ class MyMail(mysupport.MySupport):
             if self.WaitForExit("SendMailThread", 2 ):
                 return
 
-    #------------MyMail::sendEmail-----------------------
+    #------------MyMail::sendEmail----------------------------------------------
     # msg type must be one of "outage", "error", "warn", "info"
     def sendEmail(self, subjectstr, msgstr, recipient = None, files = None, deletefile = False, msgtype = "error"):
 

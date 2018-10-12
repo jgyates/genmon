@@ -119,7 +119,7 @@ class MySupport(mycommon.MyCommon):
 
         return True
 
-    # ---------- MySupport::IsStopSignaled------------------
+    # ---------- MySupport::IsStopSignaled--------------------------------------
     def IsStopSignaled(self, Name):
 
         Thread = self.Threads.get(Name, None)
@@ -139,7 +139,7 @@ class MySupport(mycommon.MyCommon):
 
         return Thread.Wait(timeout)
 
-    #------------ MySupport::GetDispatchItem ------------------------------------
+    #------------ MySupport::GetDispatchItem -----------------------------------
     def GetDispatchItem(self, item):
 
         if isinstance(item, str):
@@ -157,7 +157,7 @@ class MySupport(mycommon.MyCommon):
             self.LogError("Item: " + str(item))
             return ""
 
-    #------------ MySupport::ProcessDispatch ------------------------------------
+    #------------ MySupport::ProcessDispatch -----------------------------------
     # This function is recursive, it will turn a dict with callable functions into
     # all of the callable functions resolved to stings (by calling the functions).
     # If string output is needed instead of a dict output, ProcessDispatchToString
@@ -187,7 +187,7 @@ class MySupport(mycommon.MyCommon):
 
         return InputBuffer
 
-     #------------ MySupport::ProcessDispatchToString ---------------------------
+     #------------ MySupport::ProcessDispatchToString --------------------------
      # This function is recursive, it will turn a dict with callable functions into
      # a printable string with indentation and formatting
     def ProcessDispatchToString(self, node, InputBuffer, indent = 0):
@@ -215,7 +215,7 @@ class MySupport(mycommon.MyCommon):
             self.LogError("Invalid type in ProcessDispatchToString %s " % type(node))
         return InputBuffer
 
-    #----------  Controller::GetNumBitsChanged-------------------------------
+    #----------  Controller::GetNumBitsChanged----------------------------------
     def GetNumBitsChanged(self, FromValue, ToValue):
 
         if not len(FromValue) or not len(ToValue):

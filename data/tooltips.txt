@@ -63,6 +63,7 @@ autofeedback = If enabled, an email will be sent to the software maintainer if c
 use_serial_tcp = If enabled, the software will use TCP over serial instead of direct serial communications
 serial_tcp_address = If Serial over TCP/IP is enabled, this parameter sets the IP address used for the serial server.
 serial_tcp_port = If Serial over TCP/IP is enabled, this parameter sets the IP port used for the serial server.
+smart_transfer_switch = If enabled a smart transfer switch is utilized and the generator controller will not be responsible for starting and stopping or or weekly exercise functions and these items will be disabled in the web interface.
 
 [generac_evo_nexus]
 0000=Product line

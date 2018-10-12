@@ -1,16 +1,16 @@
 #!/usr/bin/env python
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 #    FILE: mynotify.py
 # PURPOSE:
 #
 #  AUTHOR: Jason G Yates
 #    DATE: 25-Apr-2017
 # MODIFICATIONS:
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 import datetime, time, sys, signal, os, threading, json
 import myclient, mylog, mythread, mycommon, collections
 
-#----------  GenNotify::init--- ------------------------------------------
+#----------  GenNotify::init--- ------------------------------------------------
 class GenNotify(mycommon.MyCommon):
     def __init__(self,
                 host="127.0.0.1",
@@ -80,7 +80,7 @@ class GenNotify(mycommon.MyCommon):
         except Exception as e1:
             self.LogErrorLine("Error in mynotify init: "  + str(e1))
 
-    # ---------- GenNotify::MainPollingThread------------------
+    # ---------- GenNotify::MainPollingThread-----------------------------------
     def MainPollingThread(self):
 
         while True:
@@ -114,7 +114,7 @@ class GenNotify(mycommon.MyCommon):
                 self.LogErrorLine("Error in mynotify:MainPollingThread: " + str(e1))
                 time.sleep(3)
 
-    #----------  GenNotify::CallEventHandler ---------------------------------
+    #----------  GenNotify::CallEventHandler -----------------------------------
     def CallEventHandler(self, Status):
 
         try:
@@ -131,7 +131,7 @@ class GenNotify(mycommon.MyCommon):
                 self.LogError("Invalid Callback in CallEventHandler : None")
         except Exception as e1:
             self.LogErrorLine("Error in CallEventHandler: " + str(e1))
-        
+
     #----------  GenNotify::ProcessOutageState ---------------------------------
     def ProcessOutageState(self, outagestate):
 
@@ -152,7 +152,7 @@ class GenNotify(mycommon.MyCommon):
         except Exception as e1:
             self.LogErrorLine("Error in ProcessOutageState: " + str(e1))
 
-    #----------  GenNotify::SendCommand ---------------------------------
+    #----------  GenNotify::SendCommand ----------------------------------------
     def SendCommand(self, Command):
 
         if len(Command) == 0:
@@ -167,7 +167,7 @@ class GenNotify(mycommon.MyCommon):
 
         return data
 
-    #----------  GenNotify::Close ---------------------------------
+    #----------  GenNotify::Close ----------------------------------------------
     def Close(self):
 
         self.Generator.Close()

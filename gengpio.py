@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 #    FILE: gengpio.py
 # PURPOSE: genmon.py support program to allow GPIO pints to drive
 # status LEDs
@@ -8,7 +8,7 @@
 #    DATE: 05-Apr-2016
 #
 # MODIFICATIONS:
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 import datetime, time, sys, signal, os, threading, socket
 import atexit
@@ -23,20 +23,20 @@ import RPi.GPIO as GPIO
 
 
 
-#----------  Signal Handler ------------------------------------------
+#----------  Signal Handler ----------------------------------------------------
 def signal_handler(signal, frame):
 
     GPIO.cleanup()
     MyClientInterface.Close()
     sys.exit(0)
 
-#------------------- Command-line interface for gengpio -----------------#
+#------------------- Command-line interface for gengpio ------------------------
 if __name__=='__main__': # usage program.py [server_address]
     address='127.0.0.1' if len(sys.argv)<2 else sys.argv[1]
 
 
     try:
-        log = mylog.SetupLogger("client", "gengpio.log")
+        log = mylog.SetupLogger("client", "/var/log/gengpio.log")
         console = mylog.SetupLogger("gengpio_console", log_file = "", stream = True)
         # Set the signal handler
         signal.signal(signal.SIGINT, signal_handler)

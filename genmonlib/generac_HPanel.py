@@ -1011,6 +1011,8 @@ class HPanel(controller.GeneratorController):
             StartInfo["RemoteCommands"] = False
             StartInfo["RemoteButtons"] = False
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
+            StartInfo["ExerciseControls"] = not self.SmartSwitch
+
             if not NoTile:
                 StartInfo["pages"] = {
                                 "status":True,
@@ -1127,9 +1129,10 @@ class HPanel(controller.GeneratorController):
             Maint["Nominal Frequency"] = self.NominalFreq
             Maint["Fuel Type"] = self.FuelType
             Exercise = collections.OrderedDict()
-            Maint["Exercise"] = Exercise
-            #Exercise["Exercise Time"] = self.GetExerciseTime()
-            #Exercise["Exercise Duration"] = self.GetExerciseDuration()
+            if not self.SmartSwitch:
+                Maint["Exercise"] = Exercise
+                #Exercise["Exercise Time"] = self.GetExerciseTime()
+                #Exercise["Exercise Duration"] = self.GetExerciseDuration()
 
             Service = collections.OrderedDict()
             Maint["Service"] = Service
@@ -1283,23 +1286,29 @@ class HPanel(controller.GeneratorController):
             Data.append(d.hour)             #GEN_TIME_HR_MIN
             Data.append(d.minute)
             self.ModBus.ProcessMasterSlaveWriteTransaction(RegisterEnum.GEN_TIME_HR_MIN, len(Data) / 2, Data)
-            self.LogError("Writing HR:MIN : " + str(d.hour) + ":" + str(d.minute))
+
+            DayOfWeek = d.weekday()     # returns Monday is 0 and Sunday is 6
+            # expects Sunday = 1, Saturday = 7
+            if DayOfWeek == 6:
+                DayOfWeek = 1
+            else:
+                DayOfWeek += 2
             Data= []
             Data.append(d.second)           #GEN_TIME_SEC_DYWK
-            Data.append(0)                  #Day of Week is always zero
+            Data.append(DayOfWeek)                  #Day of Week is always zero
             self.ModBus.ProcessMasterSlaveWriteTransaction(RegisterEnum.GEN_TIME_SEC_DYWK, len(Data) / 2, Data)
-            self.LogError("Writing SEC:DYWK : " + str(d.second) + ":" + str(0))
+
             Data= []
             Data.append(d.month)            #GEN_TIME_MONTH_DAY
             Data.append(d.day)              # low byte is day of month
             self.ModBus.ProcessMasterSlaveWriteTransaction(RegisterEnum.GEN_TIME_MONTH_DAY, len(Data) / 2, Data)
-            self.LogError("Writing MTH:DY : " + str(d.month) + ":" + str(d.day))
+
             Data= []
             # Note: Day of week should always be zero when setting time
             Data.append(d.year - 2000)      # GEN_TIME_YR
             Data.append(0)                  #
             self.ModBus.ProcessMasterSlaveWriteTransaction(RegisterEnum.GEN_TIME_YR, len(Data) / 2, Data)
-            self.LogError("Writing YR: : " + str(d.year) + ":" + str(0))
+
         except Exception as e1:
             self.LogErrorLine("Error in SetGeneratorTimeDate: " + str(e1))
 

@@ -1,13 +1,14 @@
+#-------------------------------------------------------------------------------
 # PURPOSE: setup logging
 #
 #  AUTHOR: Jason G Yates
 #    DATE: 03-Dec-2016
 #
 # MODIFICATIONS:
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 import logging, logging.handlers
 
-#---------- SetupLogger -------------------------
+#---------- SetupLogger --------------------------------------------------------
 def SetupLogger(logger_name, log_file, level=logging.INFO, stream = False):
 
 
@@ -29,7 +30,7 @@ def SetupLogger(logger_name, log_file, level=logging.INFO, stream = False):
 
     if stream:      # print to screen also?
         streamHandler = logging.StreamHandler()
-        # Dont format stream log messages 
+        # Dont format stream log messages
         logger.addHandler(streamHandler)
 
 

@@ -139,6 +139,8 @@ class GeneratorController(mysupport.MySupport):
                 if self.config.HasOption('tanksize'):
                     self.TankSize = self.config.ReadValue('tanksize')
 
+                self.SmartSwitch = self.config.ReadValue('smart_transfer_switch', return_type = bool, default = False)
+
                 self.UseSerialTCP = self.config.ReadValue('use_serial_tcp', return_type = bool, default = False)
                 self.SerialTCPAddress = self.config.ReadValue('serial_tcp_address', return_type = str, default = None)
                 self.SerialTCPPort = self.config.ReadValue('serial_tcp_port', return_type = int, default = None, NoLog = True)

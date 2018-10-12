@@ -56,6 +56,11 @@ MAIL_SECTION = "MyMail"
 GENMON_CONFIG = "/etc/genmon.conf"
 GENMON_SECTION = "GenMon"
 GENLOADER_CONFIG = "/etc/genloader.conf"
+GENSMS_CONFIG = "/etc/gensms.conf"
+MYMODEM_CONFIG = "/etc/mymodem.conf"
+GENPUSHOVER_CONFIG = "/etc/genpushover.conf"
+GENMQTT_CONFIG = "/etc/genmqtt.conf"
+GENSLACK_CONFIG = "/etc/genslack.conf"
 
 Closing = False
 Restarting = False
@@ -134,6 +139,7 @@ def command(command):
 def ProcessCommand(command):
 
     try:
+        #LogError(request.url)
         if command in ["status", "status_json", "outage", "outage_json", "maint", "maint_json",
             "logs", "logs_json", "monitor", "monitor_json", "registers_json", "allregs_json",
             "start_info_json", "gui_status_json", "power_log_json", "power_log_clear",
@@ -164,6 +170,7 @@ def ProcessCommand(command):
                     setlogstr = request.args.get('power_log_json', 0, type=str)
                     if setlogstr:
                         finalcommand += "=" + setlogstr
+
                 data = MyClientInterface.ProcessMonitorCommand(finalcommand)
 
             except Exception as e1:
@@ -212,6 +219,18 @@ def ProcessCommand(command):
                 SaveNotifications(request.args.get('setnotifications', 0, type=str))
             return "OK"
 
+        # Add on items
+        elif command in ["get_add_on_settings", "set_add_on_settings"]:
+            if session.get('write_access', True):
+                if command == "get_add_on_settings":
+                    data = GetAddOnSettings()
+                    return json.dumps(data, sort_keys = False)
+                elif command == "set_add_on_settings":
+                    SaveAddOnSettings(request.args.get('set_add_on_settings', default = None, type=str))
+                else:
+                    return "OK"
+            return "OK"
+
         elif command in ["setsettings"]:
             if session.get('write_access', True):
                 SaveSettings(request.args.get('setsettings', 0, type=str))
@@ -237,6 +256,342 @@ def ProcessCommand(command):
         LogErrorLine("Error in Process Command: " + command + ": " + str(e1))
         return render_template('command_template.html', command = command)
 
+#-------------------------------------------------------------------------------
+def GetAddOns():
+    AddOnCfg = collections.OrderedDict()
+
+    try:
+        # GENGPIO
+        Temp = collections.OrderedDict()
+        AddOnCfg['gengpio'] = collections.OrderedDict()
+        AddOnCfg['gengpio']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "gengpio", default = False)
+        AddOnCfg['gengpio']['title'] = "Genmon GPIO Outputs"
+        AddOnCfg['gengpio']['description'] = "Genmon will set Raspberry Pi GPIO outputs (see documentation for details)"
+        AddOnCfg['gengpio']['icon'] = "rpi"
+        AddOnCfg['gengpio']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gengpiopy-optional"
+        AddOnCfg['gengpio']['parameters'] = None
+
+        # GENGPIOIN
+        AddOnCfg['gengpioin'] = collections.OrderedDict()
+        AddOnCfg['gengpioin']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "gengpioin", default = False)
+        AddOnCfg['gengpioin']['title'] = "Genmon GPIO Inputs"
+        AddOnCfg['gengpioin']['description'] = "Genmon will set Raspberry Pi GPIO inputs (see documentation for details)"
+        AddOnCfg['gengpioin']['icon'] = "rpi"
+        AddOnCfg['gengpioin']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gengpioinpy-optional"
+        AddOnCfg['gengpioin']['parameters'] = None
+
+        #GENLOG
+        AddOnCfg['genlog'] = collections.OrderedDict()
+        AddOnCfg['genlog']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "genlog", default = False)
+        AddOnCfg['genlog']['title'] = "Notifications to CSV Log"
+        AddOnCfg['genlog']['description'] = "Log Genmon and utility state changes to a file. Log file is in text CSV format."
+        AddOnCfg['genlog']['icon'] = "csv"
+        AddOnCfg['genlog']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genlogpy-optional"
+        AddOnCfg['genlog']['parameters'] = collections.OrderedDict()
+        Args = ConfigFiles[GENLOADER_CONFIG].ReadValue("args", return_type = str, section = "genlog", default = False)
+        ArgList = Args.split()
+        if len(ArgList) == 2:
+            Value = ArgList[1]
+        else:
+            Value = ""
+        AddOnCfg['genlog']['parameters']['Log File Name'] = CreateAddOnParam(
+            Value,
+            'string',
+            'Filename for log. Full path of the file must be included (i.e. /home/pi/genmon/LogFile.csv)',
+            bounds = "required UnixFile",
+            display_name = "Log File Name" )
+
+
+        #GENSMS
+        AddOnCfg['gensms'] = collections.OrderedDict()
+        AddOnCfg['gensms']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "gensms", default = False)
+        AddOnCfg['gensms']['title'] = "Notifications via SMS - Twilio"
+        AddOnCfg['gensms']['description'] = "Send Genmon and utility state changes via Twilio SMS"
+        AddOnCfg['gensms']['icon'] = "twilio"
+        AddOnCfg['gensms']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gensmspy-optional"
+        AddOnCfg['gensms']['parameters'] = collections.OrderedDict()
+
+        AddOnCfg['gensms']['parameters']['accountsid'] = CreateAddOnParam(
+            ConfigFiles[GENSMS_CONFIG].ReadValue("accountsid", return_type = str, default = ""),
+            'string',
+            "Twilio account SID. This can be obtained from a valid Twilio account",
+            bounds = 'required minmax:10:50',
+            display_name = "Twilio Account SID")
+        AddOnCfg['gensms']['parameters']['authtoken'] = CreateAddOnParam(
+            ConfigFiles[GENSMS_CONFIG].ReadValue("authtoken", return_type = str, default = ""),
+            'string',
+            "Twilio authentication token. This can be obtained from a valid Twilio account",
+            bounds = 'required minmax:10:50',
+            display_name = "Twilio Authentication Token")
+        AddOnCfg['gensms']['parameters']['to_number'] = CreateAddOnParam(
+            ConfigFiles[GENSMS_CONFIG].ReadValue("to_number", return_type = str, default = ""),
+            'string',
+            "Mobile number to send SMS message to. This can be any mobile number.",
+            bounds = 'required InternationalPhone',
+            display_name = "Recipient Phone Number")
+        AddOnCfg['gensms']['parameters']['from_number'] = CreateAddOnParam(
+            ConfigFiles[GENSMS_CONFIG].ReadValue("from_number", return_type = str, default = ""),
+            'string',
+            "Number to send SMS message from. This should be a twilio phone number.",
+            bounds = 'required InternationalPhone',
+            display_name = "Twilio Phone Number")
+
+        #GENSMS_MODEM
+        AddOnCfg['gensms_modem'] = collections.OrderedDict()
+        AddOnCfg['gensms_modem']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "gensms_modem", default = False)
+        AddOnCfg['gensms_modem']['title'] = "Notifications via SMS - LTE Hat"
+        AddOnCfg['gensms_modem']['description'] = "Send Genmon and utility state changes via cellular SMS (additional hardware required)"
+        AddOnCfg['gensms_modem']['icon'] = "sms"
+        AddOnCfg['gensms_modem']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gensms_modempy-optional"
+        AddOnCfg['gensms_modem']['parameters'] = collections.OrderedDict()
+
+        AddOnCfg['gensms_modem']['parameters']['recipient'] = CreateAddOnParam(
+            ConfigFiles[MYMODEM_CONFIG].ReadValue("recipient", return_type = str, default = ""),
+            'string',
+            "Mobile number to send SMS message. This can be any mobile number. No dashes or spaces.",
+            bounds = 'required InternationalPhone',
+            display_name = "Recipient Phone Number")
+        AddOnCfg['gensms_modem']['parameters']['port'] = CreateAddOnParam(
+            ConfigFiles[MYMODEM_CONFIG].ReadValue("port", return_type = str, default = ""),
+            'string',
+            "This is the serial device to send AT modem commands. This *must* be different from the serial port used by the generator monitor software.",
+            bounds = 'required UnixDevice',
+            display_name = "Modem Serial Port")
+
+        AddOnCfg['gensms_modem']['parameters']['rate'] = CreateAddOnParam(
+            ConfigFiles[MYMODEM_CONFIG].ReadValue("rate", return_type = int, default = 115200),
+            'int',
+            "The baud rate for the port. Use 115200 for the LTEPiHat.",
+            bounds = 'required digits',
+            display_name = "Modem Serial Rate")
+        AddOnCfg['gensms_modem']['parameters']['log_at_commands'] = CreateAddOnParam(
+            ConfigFiles[MYMODEM_CONFIG].ReadValue("log_at_commands", return_type = bool, default = False),
+            'boolean',
+            "Enable to log at commands to the log file.",
+            display_name = "Log AT Commands")
+        # modem type - select the type of modem used. For future use. Presently "LTEPiHat" is the only option
+        #modem_type = LTEPiHat
+
+        #GENPUSHOVER
+        AddOnCfg['genpushover'] = collections.OrderedDict()
+        AddOnCfg['genpushover']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "genpushover", default = False)
+        AddOnCfg['genpushover']['title'] = "Notifications via Pushover"
+        AddOnCfg['genpushover']['description'] = "Send Genmon and utility state changes via Pushover service"
+        AddOnCfg['genpushover']['icon'] = "pushover"
+        AddOnCfg['genpushover']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genpushoverpy-optional"
+        AddOnCfg['genpushover']['parameters'] = collections.OrderedDict()
+
+        AddOnCfg['genpushover']['parameters']['appid'] = CreateAddOnParam(
+            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue("appid", return_type = str, default = ""),
+            'string',
+            "Pushover app ID.",
+            bounds = 'required minmax:5:50',
+            display_name = "Application ID")
+        AddOnCfg['genpushover']['parameters']['userid'] = CreateAddOnParam(
+            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue("userid", return_type = str, default = ""),
+            'string',
+            "Pushover user ID.",
+            bounds = 'required minmax:5:50',
+            display_name = "User ID")
+        AddOnCfg['genpushover']['parameters']['pushsound'] = CreateAddOnParam(
+            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue("pushsound", return_type = str, default = "updown"),
+            'string',
+            "Notification sound identifier. See https://pushover.net/api#sounds for a full list of sound IDs",
+            bounds = 'minmax:3:20',
+            display_name = "Push Sound")
+
+        # GENSYSLOG
+        AddOnCfg['gensyslog'] = collections.OrderedDict()
+        AddOnCfg['gensyslog']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "gensyslog", default = False)
+        AddOnCfg['gensyslog']['title'] = "Linux System Logging"
+        AddOnCfg['gensyslog']['description'] = "Write generator and utility state changes to system log (/var/log/system)"
+        AddOnCfg['gensyslog']['icon'] = "linux"
+        AddOnCfg['gensyslog']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gensyslogpy-optional"
+        AddOnCfg['gensyslog']['parameters'] = None
+
+        #GENMQTT
+        AddOnCfg['genmqtt'] = collections.OrderedDict()
+        AddOnCfg['genmqtt']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "genmqtt", default = False)
+        AddOnCfg['genmqtt']['title'] = "MQTT integration"
+        AddOnCfg['genmqtt']['description'] = "Export Genmon data and status to MQTT server for automation integration"
+        AddOnCfg['genmqtt']['icon'] = "mqtt"
+        AddOnCfg['genmqtt']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genmqttpy-optional"
+        AddOnCfg['genmqtt']['parameters'] = collections.OrderedDict()
+
+        AddOnCfg['genmqtt']['parameters']['mqtt_address'] = CreateAddOnParam(
+            ConfigFiles[GENMQTT_CONFIG].ReadValue("mqtt_address", return_type = str, default = ""),
+            'string',
+            "Address of your MQTT server.",
+            bounds = 'required IPAddress',
+            display_name = "MQTT Server Address")
+        AddOnCfg['genmqtt']['parameters']['mqtt_port'] = CreateAddOnParam(
+            ConfigFiles[GENMQTT_CONFIG].ReadValue("mqtt_port", return_type = int, default = 1833),
+            'int',
+            "The port of the MQTT server in a decimal number.",
+            bounds = 'required digits',
+            display_name = "MQTT Server Port Number")
+        AddOnCfg['genmqtt']['parameters']['username'] = CreateAddOnParam(
+            ConfigFiles[GENMQTT_CONFIG].ReadValue("username", return_type = str, default = ""),
+            'string',
+            "This value is used for the username if your MQTT server requires authentication. Leave blank for no authentication.",
+            bounds = 'minmax:4:50',
+            display_name = "MQTT Authentication Username")
+        AddOnCfg['genmqtt']['parameters']['password'] = CreateAddOnParam(
+            ConfigFiles[GENMQTT_CONFIG].ReadValue("password", return_type = str, default = ""),
+            'string',
+            "This value is used for the password if your MQTT server requires authentication. Leave blank for no authentication or no password.",
+            bounds = 'minmax:4:50',
+            display_name = "MQTT Authentication Password")
+        AddOnCfg['genmqtt']['parameters']['poll_interval'] = CreateAddOnParam(
+            ConfigFiles[GENMQTT_CONFIG].ReadValue("poll_interval", return_type = float, default = 2.0),
+            'float',
+            "The time in seconds between requesting status from genmon. The default value is 2 seconds.",
+            bounds = 'number',
+            display_name = "Poll Interval")
+        AddOnCfg['genmqtt']['parameters']['root_topic'] = CreateAddOnParam(
+            ConfigFiles[GENMQTT_CONFIG].ReadValue("root_topic", return_type = str, default = ""),
+            'string',
+            "(Optional) Prepend this value to the MQTT data path i.e. 'Home' would result in 'Home/generator/...''",
+            bounds = 'minmax 1:50',
+            display_name = "Root Topic")
+        AddOnCfg['genmqtt']['parameters']['blacklist'] = CreateAddOnParam(
+            ConfigFiles[GENMQTT_CONFIG].ReadValue("blacklist", return_type = str, default = ""),
+            'string',
+            "(Optional) Names of data not exported to the MQTT server, separated by commas.",
+            bounds = '',
+            display_name = "Blacklist Filter")
+        AddOnCfg['genmqtt']['parameters']['flush_interval'] = CreateAddOnParam(
+            ConfigFiles[GENMQTT_CONFIG].ReadValue("flush_interval", return_type = float, default = "0"),
+            'float',
+            "(Optional) Time in seconds where even unchanged values will be published to their MQTT topic. Set to zero to disable flushing.",
+            bounds = 'number',
+            display_name = "Flush Interval")
+
+        #GENSLACK
+        AddOnCfg['genslack'] = collections.OrderedDict()
+        AddOnCfg['genslack']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "genslack", default = False)
+        AddOnCfg['genslack']['title'] = "Notifications via Slack"
+        AddOnCfg['genslack']['description'] = "Send Genmon and utility state changes via Slack service"
+        AddOnCfg['genslack']['icon'] = "slack"
+        AddOnCfg['genslack']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genslackpy-optional"
+        AddOnCfg['genslack']['parameters'] = collections.OrderedDict()
+
+        AddOnCfg['genslack']['parameters']['webhook_url'] = CreateAddOnParam(
+            ConfigFiles[GENSLACK_CONFIG].ReadValue("webhook_url", return_type = str, default = ""),
+            'string',
+            "Full Slack Webhook URL. Retrieve from Slack custom integration configuration.",
+            bounds = 'required HTTPAddress',
+            display_name = "Web Hook URL")
+        AddOnCfg['genslack']['parameters']['channel'] = CreateAddOnParam(
+            ConfigFiles[GENSLACK_CONFIG].ReadValue("channel", return_type = str, default = ""),
+            'string',
+            "Slack channel to which the message will be sent.",
+            display_name = "Channel")
+        AddOnCfg['genslack']['parameters']['username'] = CreateAddOnParam(
+            ConfigFiles[GENSLACK_CONFIG].ReadValue("username", return_type = str, default = ""),
+            'string',
+            "Slack username.",
+            bounds = 'required username',
+            display_name = "Username")
+        AddOnCfg['genslack']['parameters']['icon_emoji'] = CreateAddOnParam(
+            ConfigFiles[GENSLACK_CONFIG].ReadValue("icon_emoji", return_type = str, default = ":red_circle:"),
+            'string',
+            "Emoji that appears as the icon of the user who sent the message i.e. :red_circle:n",
+             bounds = '',
+             display_name = "Icon Emoji")
+        AddOnCfg['genslack']['parameters']['title_link'] = CreateAddOnParam(
+            ConfigFiles[GENSLACK_CONFIG].ReadValue("title_link", return_type = str, default = request.url_root),
+            'string',
+            "Use this to make the title of the message a link i.e. link to the genmon web interface.",
+            bounds = 'HTTPAddress',
+            display_name = "Title Link")
+
+    except Exception as e1:
+        LogErrorLine("Error in GetAddOns: " + str(e1))
+
+    return AddOnCfg
+#------------ MyCommon::StripJson ------------------------------------------
+def StripJson(InputString):
+    for char in '{}[]"':
+        InputString = InputString.replace(char,'')
+    return InputString
+
+#------------ MyCommon::DictToString ---------------------------------------
+def DictToString(InputDict, ExtraStrip = False):
+
+    if InputDict == None:
+        return ""
+    ReturnString = json.dumps(InputDict,sort_keys=False, indent = 4, separators=(' ', ': '))
+    return ReturnString
+    if ExtraStrip:
+        ReturnString = ReturnString.replace("} \n","")
+    return StripJson(ReturnString)
+#-------------------------------------------------------------------------------
+def CreateAddOnParam(value = "", type = "string", description = "", bounds = "", display_name = ""):
+
+    # Bounds are defined in ReadSettingsFromFile comments
+    Parameter = collections.OrderedDict()
+    Parameter['value'] = value
+    Parameter['type'] = type
+    Parameter['description'] = description
+    Parameter['bounds'] = bounds
+    Parameter['display_name'] = display_name
+    return Parameter
+#-------------------------------------------------------------------------------
+def GetAddOnSettings():
+    try:
+        return GetAddOns()
+    except Exception as e1:
+        LogErrorLine("Error in GetAddOnSettings: " + str(e1))
+        return {}
+
+#-------------------------------------------------------------------------------
+def SaveAddOnSettings(query_string):
+    try:
+        if query_string == None:
+            LogError("Empty query string in SaveAddOnSettings")
+            return
+
+        settings = json.loads(query_string)
+        if not len(settings):
+            return      # nothing to change
+
+        ConfigDict ={
+            "genmon" : ConfigFiles[GENMON_CONFIG],
+            "mymail" : ConfigFiles[MAIL_CONFIG],
+            "genloader" : ConfigFiles[GENLOADER_CONFIG],
+            "gensms" : ConfigFiles[GENSMS_CONFIG],
+            "gensms_modem" : ConfigFiles[MYMODEM_CONFIG],
+            "genpushover" : ConfigFiles[GENPUSHOVER_CONFIG],
+            "genmqtt" : ConfigFiles[GENMQTT_CONFIG],
+            "genslack" : ConfigFiles[GENSLACK_CONFIG],
+            "genlog" : ConfigFiles[GENLOADER_CONFIG],
+            "gensyslog" : ConfigFiles[GENLOADER_CONFIG],
+            "gengpio" : ConfigFiles[GENLOADER_CONFIG],
+            "gengpioin" : ConfigFiles[GENLOADER_CONFIG]
+        }
+
+        for module, entries in settings.items():   # module
+            ParameterConfig = ConfigDict.get(module, None)
+            if ParameterConfig == None:
+                LogError("Invalid module in SaveAddOnSettings: " + module)
+                continue
+            # Find if it needs to be enabled / disabled or if there are parameters
+            for basesettings, basevalues in entries.items():    # base settings
+                if basesettings == 'enable':
+                    ConfigFiles[GENLOADER_CONFIG].WriteValue("enable", basevalues, section = module)
+                if basesettings == 'parameters':
+                    for params, paramvalue in basevalues.items():
+                        if module == "genlog" and params == "Log File Name":
+                            ConfigFiles[GENLOADER_CONFIG].WriteValue("args", "-f " + paramvalue, section = module)
+                        else:
+                            ParameterConfig.WriteValue(params, paramvalue)
+
+        Restart()
+        return
+    except Exception as e1:
+        LogErrorLine("Error in SaveAddOnSettings: " + str(e1))
+        return
 #-------------------------------------------------------------------------------
 def SaveNotifications(query_string):
 
@@ -265,32 +620,32 @@ def SaveNotifications(query_string):
     try:
         with CriticalLock:
             # get existing settings
-            if mymail_config.HasOption("email_recipient"):
-                oldEmailRecipientString = mymail_config.ReadValue("email_recipient")
+            if ConfigFiles[MAIL_CONFIG].HasOption("email_recipient"):
+                oldEmailRecipientString = ConfigFiles[MAIL_CONFIG].ReadValue("email_recipient")
                 oldEmailRecipientString.strip()
                 oldEmailsList = oldEmailRecipientString.split(",")
                 for oldEmailItem in oldEmailsList:
-                    if mymail_config.HasOption(oldEmailItem):
-                        oldNotifications[oldEmailItem] = mymail_config.ReadValue(oldEmailItem)
+                    if ConfigFiles[MAIL_CONFIG].HasOption(oldEmailItem):
+                        oldNotifications[oldEmailItem] = ConfigFiles[MAIL_CONFIG].ReadValue(oldEmailItem)
 
             # compare, remove notifications if needed
             for oldEmailItem in oldEmailsList:
-                if not oldEmailItem in notifications.keys() and mymail_config.HasOption(oldEmailItem):
-                    mymail_config.WriteValue(oldEmailItem, "", remove = True)
+                if not oldEmailItem in notifications.keys() and ConfigFiles[MAIL_CONFIG].HasOption(oldEmailItem):
+                    ConfigFiles[MAIL_CONFIG].WriteValue(oldEmailItem, "", remove = True)
 
             # add / update the entries
             # update email recipient if needed
             if oldEmailRecipientString != notifications_order_string:
-                mymail_config.WriteValue("email_recipient", notifications_order_string)
+                ConfigFiles[MAIL_CONFIG].WriteValue("email_recipient", notifications_order_string)
 
             # update catigories
             for newEmail, newCats in notifications.items():
                 # remove catigories if needed from existing emails
-                if not len(newCats[0]) and mymail_config.HasOption(newEmail):
-                    mymail_config.WriteValue(newEmail, "", remove = True)
+                if not len(newCats[0]) and ConfigFiles[MAIL_CONFIG].HasOption(newEmail):
+                    ConfigFiles[MAIL_CONFIG].WriteValue(newEmail, "", remove = True)
                 # update or add catigories
                 if len(newCats[0]):
-                    mymail_config.WriteValue(newEmail, newCats[0])
+                    ConfigFiles[MAIL_CONFIG].WriteValue(newEmail, newCats[0])
 
         Restart()
     except Exception as e1:
@@ -298,21 +653,21 @@ def SaveNotifications(query_string):
     return
 
 #-------------------------------------------------------------------------------
-def ReadSingleConfigValue(filename, section, type, entry, default, bounds = None):
+def ReadSingleConfigValue(entry, filename = None, section = None, type = "string", default = "", bounds = None):
 
     try:
 
-        if filename == GENMON_CONFIG:
-            config = genmon_config
-        elif filename == MAIL_CONFIG:
-            config = mymail_config
-        elif filename == GENLOADER_CONFIG:
-            config = genloader_config
-        else:
-            LogError("Unknow file in UpdateConfigFile: " + filename)
+        try:
+            if filename == None:
+                config = ConfigFiles[GENMON_CONFIG]
+            else:
+                config = ConfigFiles[filename]
+        except Exception as e1:
+            LogErrorLine("Unknow file in UpdateConfigFile: " + filename + ": " + str(e1))
             return default
 
-        config.SetSection(section)
+        if section != None:
+            config.SetSection(section)
 
         if not config.HasOption(entry):
             return default
@@ -320,9 +675,11 @@ def ReadSingleConfigValue(filename, section, type, entry, default, bounds = None
         if type.lower() == "string" or type == "password":
             return config.ReadValue(entry)
         elif type.lower() == "boolean":
-            return config.ReadValue(entry, return_type = bool)
+            return config.ReadValue(entry, return_type = bool, default = default)
         elif type.lower() == "int":
-            return config.ReadValue(entry, return_type = int)
+            return config.ReadValue(entry, return_type = int, default = default)
+        elif type.lower() == "float":
+            return config.ReadValue(entry, return_type = float, default = default)
         elif type.lower() == 'list':
             Value = config.ReadValue(entry)
             if bounds != None:
@@ -358,7 +715,7 @@ def ReadNotificationsFromFile():
     EmailsToNotify = []
     try:
         # There should be only one "email_recipient" entry
-        EmailsStr = mymail_config.ReadValue("email_recipient")
+        EmailsStr = ConfigFiles[MAIL_CONFIG].ReadValue("email_recipient")
 
         for email in EmailsStr.split(","):
             email = email.strip()
@@ -366,7 +723,7 @@ def ReadNotificationsFromFile():
 
         SortOrder = 1
         for email in EmailsToNotify:
-            Notify = mymail_config.ReadValue(email, default = "")
+            Notify = ConfigFiles[MAIL_CONFIG].ReadValue(email, default = "")
             if Notify == "":
                 NotificationSettings[email] = [SortOrder]
             else:
@@ -389,7 +746,6 @@ def ReadSettingsFromFile():
     ## 7th: Config file
     ## 8th: config file section
     ## 9th: config file entry name
-    ## 10th: New Section Name
     ## Validation Rules:
     ##         A rule must be in this format rule:param where rule is the name of the rule and param is a rule parameter,
     ##         for example minmax:10:50 will use the minmax rule with two arguments, 10 and 50.
@@ -421,7 +777,11 @@ def ReadSettingsFromFile():
 
     ConfigSettings =  collections.OrderedDict()
     ConfigSettings["sitename"] = ['string', 'Site Name', 1, "SiteName", "", "required minmax:4:50", GENMON_CONFIG, GENMON_SECTION, "sitename"]
-    ConfigSettings["port"] = ['string', 'Port for Serial Communication', 2, "/dev/serial0", "", "required UnixDevice", GENMON_CONFIG, GENMON_SECTION, "port"]
+    ConfigSettings["use_serial_tcp"] = ['boolean', 'Enable Serial over TCP/IP', 2, False, "", "", GENMON_CONFIG, GENMON_SECTION, "use_serial_tcp"]
+    ConfigSettings["port"] = ['string', 'Port for Serial Communication', 3, "/dev/serial0", "", "required UnixDevice", GENMON_CONFIG, GENMON_SECTION, "port"]
+    ConfigSettings["serial_tcp_address"] = ['string', 'Serial Server TCP/IP Address', 4, "", "", "", GENMON_CONFIG, GENMON_SECTION, "serial_tcp_address"]
+    ConfigSettings["serial_tcp_port"] = ['int', 'Serial Server TCP/IP Port', 5, "8899", "", "digits", GENMON_CONFIG, GENMON_SECTION, "serial_tcp_port"]
+
     # This option is not displayed as it will break the link between genmon and genserv
     #ConfigSettings["server_port"] = ['int', 'Server Port', 5, 9082, "", 0, GENMON_CONFIG, GENMON_SECTION,"server_port"]
     # this option is not displayed as this will break the modbus comms, only for debugging
@@ -444,7 +804,6 @@ def ReadSettingsFromFile():
     ConfigSettings["metricweather"] = ['boolean', 'Use Metric Units', 24, False, "", "", GENMON_CONFIG, GENMON_SECTION, "metricweather"]
     ConfigSettings["optimizeforslowercpu"] = ['boolean', 'Optimize for slower CPUs', 25, False, "", "", GENMON_CONFIG, GENMON_SECTION, "optimizeforslowercpu"]
     ConfigSettings["autofeedback"] = ['boolean', 'Automated Feedback', 29, False, "", "", GENMON_CONFIG, GENMON_SECTION, "autofeedback"]
-    ConfigSettings["gensyslog"] = ['boolean', 'Status Changes to System Log', 30, False, "", "", GENLOADER_CONFIG, "gensyslog", "enable"]
 
     ConfigSettings["nominalfrequency"] = ['list', 'Rated Frequency', 101, "60", "", "50,60", GENMON_CONFIG, GENMON_SECTION, "nominalfrequency"]
     ConfigSettings["nominalrpm"] = ['int', 'Nominal RPM', 102, "3600", "", "required digits range:1500:4000", GENMON_CONFIG, GENMON_SECTION, "nominalrpm"]
@@ -499,11 +858,12 @@ def ReadSettingsFromFile():
         # Get all the config values
         for entry, List in ConfigSettings.items():
             if List[6] == GENMON_CONFIG:
-                (ConfigSettings[entry])[3] = ReadSingleConfigValue(GENMON_CONFIG, "GenMon", List[0], List[8], List[3], List[5])
+                # filename, section = None, type = "string", entry, default = "", bounds = None):
+                (ConfigSettings[entry])[3] = ReadSingleConfigValue(entry = List[8], filename = GENMON_CONFIG, section =  List[7], type = List[0], default = List[3], bounds = List[5])
             elif List[6] == MAIL_CONFIG:
-                (ConfigSettings[entry])[3] = ReadSingleConfigValue(MAIL_CONFIG, "MyMail", List[0], List[8], List[3])
-            elif List[6] == GENLOADER_CONFIG:
-                (ConfigSettings[entry])[3] = ReadSingleConfigValue(GENLOADER_CONFIG, List[7], List[0], List[8], List[3])
+                (ConfigSettings[entry])[3] = ReadSingleConfigValue(entry = List[8], filename = MAIL_CONFIG, section = List[7], type = List[0], default = List[3])
+            else:
+                LogError("Invaild Config File in ReadSettingsFromFile: " + str(List[6]))
 
         GetToolTips(ConfigSettings)
     except Exception as e1:
@@ -538,8 +898,8 @@ def CacheToolTips():
         pathtofile = os.path.dirname(os.path.realpath(__file__))
 
         # get controller used
-        if genmon_config.HasOption('controllertype'):
-            config_section = genmon_config.ReadValue('controllertype')
+        if ConfigFiles[GENMON_CONFIG].HasOption('controllertype'):
+            config_section = ConfigFiles[GENMON_CONFIG].ReadValue('controllertype')
         else:
             config_section = "generac_evo_nexus"
 
@@ -548,9 +908,9 @@ def CacheToolTips():
 
         ControllerType = config_section
 
-        CachedRegisterDescriptions = GetAllConfigValues(pathtofile + "/tooltips.txt", config_section)
+        CachedRegisterDescriptions = GetAllConfigValues(pathtofile + "/data/tooltips.txt", config_section)
 
-        CachedToolTips = GetAllConfigValues(pathtofile + "/tooltips.txt", "ToolTips")
+        CachedToolTips = GetAllConfigValues(pathtofile + "/data/tooltips.txt", "ToolTips")
 
     except Exception as e1:
         LogErrorLine("Error reading tooltips.txt " + str(e1) )
@@ -559,11 +919,12 @@ def CacheToolTips():
 def GetToolTips(ConfigSettings):
 
     try:
-        pathtofile = os.path.dirname(os.path.realpath(__file__))
+
         for entry, List in ConfigSettings.items():
             try:
                 (ConfigSettings[entry])[4] = CachedToolTips[entry.lower()]
             except:
+                #self.LogError("Error in GetToolTips: " + entry)
                 pass    # TODO
 
     except Exception as e1:
@@ -601,14 +962,10 @@ def UpdateConfigFile(FileName, section, Entry, Value):
 
     try:
 
-        if FileName == GENMON_CONFIG:
-            config = genmon_config
-        elif FileName == MAIL_CONFIG:
-            config = mymail_config
-        elif FileName == GENLOADER_CONFIG:
-            config = genloader_config
-        else:
-            LogError("Unknow file in UpdateConfigFile: " + FileName)
+        try:
+            config = ConfigFiles[FileName]
+        except Excpetion as e1:
+            LogErrorLine("Unknow file in UpdateConfigFile: " + FileName + ": " + str(e1))
             return False
 
         config.SetSection(section)
@@ -658,9 +1015,12 @@ def RunBashScript(ScriptName):
 def CheckCertFiles(CertFile, KeyFile):
 
     try:
-        with open(CertFile,"r") as MyCertFile:
-            with open(KeyFile,"r") as MyKeyFile:
-                return True
+        if not os.path.isfile(CertFile):
+            LogConsole("Missing cert file : " + CertFile)
+            return False
+        if not os.path.isfile(KeyFile):
+            LogConsole("Missing key file : " + KeyFile)
+            return False
     except Exception as e1:
         LogErrorLine("Error in CheckCertFiles: Unable to open Cert or Key file: " + CertFile + ", " + KeyFile + " : "+ str(e1))
         return False
@@ -687,62 +1047,62 @@ def LoadConfig():
     try:
 
         # heartbeat server port, must match value in check_generator_system.py and any calling client apps
-        if genmon_config.HasOption('server_port'):
-            clientport = genmon_config.ReadValue('server_port', return_type = int, default = 0)
+        if ConfigFiles[GENMON_CONFIG].HasOption('server_port'):
+            clientport = ConfigFiles[GENMON_CONFIG].ReadValue('server_port', return_type = int, default = 0)
 
-        if genmon_config.HasOption('loglocation'):
-            loglocation = genmon_config.ReadValue('loglocation')
+        if ConfigFiles[GENMON_CONFIG].HasOption('loglocation'):
+            loglocation = ConfigFiles[GENMON_CONFIG].ReadValue('loglocation')
 
         # log errors in this module to a file
         log = mylog.SetupLogger("genserv", loglocation + "genserv.log")
 
-        if genmon_config.HasOption('usehttps'):
-            bUseSecureHTTP = genmon_config.ReadValue('usehttps', return_type = bool)
+        if ConfigFiles[GENMON_CONFIG].HasOption('usehttps'):
+            bUseSecureHTTP = ConfigFiles[GENMON_CONFIG].ReadValue('usehttps', return_type = bool)
 
-        if genmon_config.HasOption('http_port'):
-            HTTPPort = genmon_config.ReadValue('http_port', return_type = int, default = 8000)
+        if ConfigFiles[GENMON_CONFIG].HasOption('http_port'):
+            HTTPPort = ConfigFiles[GENMON_CONFIG].ReadValue('http_port', return_type = int, default = 8000)
 
-        if genmon_config.HasOption('favicon'):
-            favicon = genmon_config.ReadValue('favicon')
+        if ConfigFiles[GENMON_CONFIG].HasOption('favicon'):
+            favicon = ConfigFiles[GENMON_CONFIG].ReadValue('favicon')
 
         # user name and password require usehttps = True
         if bUseSecureHTTP:
-            if genmon_config.HasOption('http_user'):
-                HTTPAuthUser = genmon_config.ReadValue('http_user', default = "")
+            if ConfigFiles[GENMON_CONFIG].HasOption('http_user'):
+                HTTPAuthUser = ConfigFiles[GENMON_CONFIG].ReadValue('http_user', default = "")
                 HTTPAuthUser = HTTPAuthUser.strip()
                  # No user name or pass specified, disable
                 if HTTPAuthUser == "":
                     HTTPAuthUser = None
                     HTTPAuthPass = None
-                elif genmon_config.HasOption('http_pass'):
-                    HTTPAuthPass = genmon_config.ReadValue('http_pass', default = "")
+                elif ConfigFiles[GENMON_CONFIG].HasOption('http_pass'):
+                    HTTPAuthPass = ConfigFiles[GENMON_CONFIG].ReadValue('http_pass', default = "")
                     HTTPAuthPass = HTTPAuthPass.strip()
                 if HTTPAuthUser != None and HTTPAuthPass != None:
-                    if genmon_config.HasOption('http_user_ro'):
-                        HTTPAuthUser_RO = genmon_config.ReadValue('http_user_ro', default = "")
+                    if ConfigFiles[GENMON_CONFIG].HasOption('http_user_ro'):
+                        HTTPAuthUser_RO = ConfigFiles[GENMON_CONFIG].ReadValue('http_user_ro', default = "")
                         HTTPAuthUser_RO = HTTPAuthUser_RO.strip()
                         if HTTPAuthUser_RO == "":
                             HTTPAuthUser_RO = None
                             HTTPAuthPass_RO = None
-                        elif genmon_config.HasOption('http_pass_ro'):
-                            HTTPAuthPass_RO = genmon_config.ReadValue('http_pass_ro', default = "")
+                        elif ConfigFiles[GENMON_CONFIG].HasOption('http_pass_ro'):
+                            HTTPAuthPass_RO = ConfigFiles[GENMON_CONFIG].ReadValue('http_pass_ro', default = "")
                             HTTPAuthPass_RO = HTTPAuthPass_RO.strip()
 
-            HTTPSPort = genmon_config.ReadValue('https_port', return_type = int, default = 443)
+            HTTPSPort = ConfigFiles[GENMON_CONFIG].ReadValue('https_port', return_type = int, default = 443)
 
         if bUseSecureHTTP:
             app.secret_key = os.urandom(12)
             OldHTTPPort = HTTPPort
             HTTPPort = HTTPSPort
-            if genmon_config.HasOption('useselfsignedcert'):
-                bUseSelfSignedCert = genmon_config.ReadValue('useselfsignedcert', return_type = bool)
+            if ConfigFiles[GENMON_CONFIG].HasOption('useselfsignedcert'):
+                bUseSelfSignedCert = ConfigFiles[GENMON_CONFIG].ReadValue('useselfsignedcert', return_type = bool)
 
                 if bUseSelfSignedCert:
                     SSLContext = 'adhoc'
                 else:
-                    if genmon_config.HasOption('certfile') and genmon_config.HasOption('keyfile'):
-                        CertFile = genmon_config.ReadValue('certfile')
-                        KeyFile = genmon_config.ReadValue('keyfile')
+                    if ConfigFiles[GENMON_CONFIG].HasOption('certfile') and ConfigFiles[GENMON_CONFIG].HasOption('keyfile'):
+                        CertFile = ConfigFiles[GENMON_CONFIG].ReadValue('certfile')
+                        KeyFile = ConfigFiles[GENMON_CONFIG].ReadValue('keyfile')
                         if CheckCertFiles(CertFile, KeyFile):
                             SSLContext = (CertFile, KeyFile)    # tuple
                         else:
@@ -819,8 +1179,6 @@ if __name__ == "__main__":
 
     ConfigFilePath='/etc/' if len(sys.argv) <=3 else sys.argv[2]
 
-    MAIL_CONFIG = ConfigFilePath + "mymail.conf"
-    GENMON_CONFIG = ConfigFilePath + "genmon.conf"
 
     # NOTE: signal handler is not compatible with the exception handler around app.run()
     #atexit.register(Close)
@@ -834,26 +1192,24 @@ if __name__ == "__main__":
         LogConsole("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'.")
         sys.exit(1)
 
-    if not os.path.isfile(GENMON_CONFIG):
-        LogConsole("Missing config file : " + GENMON_CONFIG)
-        sys.exit(1)
+    ConfigFileList = [GENMON_CONFIG, MAIL_CONFIG, GENLOADER_CONFIG, GENSMS_CONFIG, MYMODEM_CONFIG, GENPUSHOVER_CONFIG, GENMQTT_CONFIG, GENSLACK_CONFIG]
 
-    if not os.path.isfile(MAIL_CONFIG):
-        LogConsole("Missing config file : " + MAIL_CONFIG)
-        sys.exit(1)
+    for ConfigFile in ConfigFileList:
+        if not os.path.isfile(ConfigFile):
+            LogConsole("Missing config file : " + ConfigFile)
+            sys.exit(1)
 
-    genmon_config = myconfig.MyConfig(filename = GENMON_CONFIG, section = GENMON_SECTION, log = console)
-    mymail_config = myconfig.MyConfig(filename = MAIL_CONFIG, section = MAIL_SECTION, log = console)
-    genloader_config = myconfig.MyConfig(filename = GENLOADER_CONFIG, section = "genmon", log = console)
+    ConfigFiles = {}
+    for ConfigFile in ConfigFileList:
+        ConfigFiles[ConfigFile] = myconfig.MyConfig(filename = ConfigFile, log = console)
 
     AppPath = sys.argv[0]
     if not LoadConfig():
         LogConsole("Error reading configuraiton file.")
         sys.exit(1)
 
-    genmon_config.log = log
-    mymail_config.log = log
-    genloader_config.log = log
+    for ConfigFile in ConfigFileList:
+        ConfigFiles[ConfigFile].log = log
 
     LogError("Starting " + AppPath + ", Port:" + str(HTTPPort) + ", Secure HTTP: " + str(bUseSecureHTTP) + ", SelfSignedCert: " + str(bUseSelfSignedCert))
 
@@ -897,8 +1253,9 @@ if __name__ == "__main__":
 
         except Exception as e1:
             LogErrorLine("Error in app.run: " + str(e1))
-            if e1.errno != errno.EADDRINUSE:   #Errno 98
-                sys.exit(0)
+            #Errno 98
+            if e1.errno != errno.EADDRINUSE and e1.errno != errno.EIO:
+                sys.exit(1)
             time.sleep(2)
             if Closing:
                 sys.exit(0)

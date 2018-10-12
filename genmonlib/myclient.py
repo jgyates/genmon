@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 #    FILE: myclient.py
 # PURPOSE:
 #
 #  AUTHOR: Jason G Yates
 #    DATE: 5-Apr-2017
 # MODIFICATIONS:
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 import datetime, time, sys, smtplib, signal, os, threading, socket
 import mylog, mycommon
 
@@ -30,7 +30,7 @@ class ClientInterface(mycommon.MyCommon):
 
         self.Connect()
 
-    #----------  ClientInterface::Connect ---------------------------------
+    #----------  ClientInterface::Connect --------------------------------------
     def Connect(self):
 
         retries = 0
@@ -56,7 +56,7 @@ class ClientInterface(mycommon.MyCommon):
                     continue
 
 
-    #----------  ClientInterface::SendCommand ---------------------------------
+    #----------  ClientInterface::SendCommand ----------------------------------
     def SendCommand(self, cmd):
 
         try:
@@ -66,7 +66,7 @@ class ClientInterface(mycommon.MyCommon):
             self.Close()
             self.Connect()
 
-    #----------  ClientInterface::Receive ---------------------------------
+    #----------  ClientInterface::Receive --------------------------------------
     def Receive(self, noeom = False):
 
         with self.AccessLock:
@@ -101,7 +101,7 @@ class ClientInterface(mycommon.MyCommon):
 
             return RetStatus, data
 
-    #----------  ClientInterface::CheckForStarupMessage ---------------------------------
+    #----------  ClientInterface::CheckForStarupMessage ------------------------
     def CheckForStarupMessage(self, data):
 
         # check for initial status response from monitor
@@ -110,11 +110,11 @@ class ClientInterface(mycommon.MyCommon):
         else:
             return False
 
-    #----------  ClientInterface::Close ---------------------------------
+    #----------  ClientInterface::Close ----------------------------------------
     def Close(self):
         self.Socket.close()
 
-    #----------  ClientInterface::ProcessMonitorCommand ---------------------------------
+    #----------  ClientInterface::ProcessMonitorCommand ------------------------
     def ProcessMonitorCommand(self, cmd):
 
         data = ""

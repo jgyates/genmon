@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 #    FILE: modbusbase.py
 # PURPOSE: Base modbus class support
 #
@@ -7,14 +7,14 @@
 #    DATE: 19-Apr-2018
 #
 # MODIFICATIONS:
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 from __future__ import print_function       # For python 3.x compatibility with print function
 
 import datetime, threading, crcmod, sys, time
 import mylog, mythread, mysupport
 
-#------------ ModbusBase class --------------------------------------------
+#------------ ModbusBase class -------------------------------------------------
 class ModbusBase(mysupport.MySupport ):
     def __init__(self, updatecallback, address = 0x9d, name = "/dev/serial", rate=9600, loglocation = "/var/log/"):
         super(ModbusBase, self).__init__()
@@ -37,7 +37,7 @@ class ModbusBase(mysupport.MySupport ):
         self.log = mylog.SetupLogger("mymodbus", loglocation + "mymodbus.log")
 
 
-    #-------------ModbusBase::ProcessMasterSlaveWriteTransaction--------------------
+    #-------------ModbusBase::ProcessMasterSlaveWriteTransaction----------------
     def ProcessMasterSlaveWriteTransaction(self, Register, Length, Data):
         return
 
@@ -90,10 +90,10 @@ class ModbusBase(mysupport.MySupport ):
         self.ModbusStartTime = datetime.datetime.now()     # used for com metrics
         pass
 
-    #------------ModbusBase::Flush-----------------------
+    #------------ModbusBase::Flush----------------------------------------------
     def Flush(self):
         pass
 
-    #------------ModbusBase::Close-----------------------
+    #------------ModbusBase::Close----------------------------------------------
     def Close(self):
         pass

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 #    FILE: genlog.py
 # PURPOSE: genmon.py support program to allow logging of generator
 # run time
@@ -8,7 +8,7 @@
 #    DATE: 19-Apr-2016
 #
 # MODIFICATIONS:
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 import datetime, time, sys, signal, os, threading, socket
 from datetime import datetime
@@ -22,19 +22,19 @@ except:
     sys.exit(2)
 
 
-#----------  Signal Handler ------------------------------------------
+#----------  Signal Handler ----------------------------------------------------
 def signal_handler(signal, frame):
 
     MyClientInterface.Close()
     sys.exit(0)
 
-#------------------- excel_date -----------------#
+#------------------- excel_date ------------------------------------------------
 def excel_date(date1):
     temp = datetime(1899, 12, 30)    # Note, not 31st Dec but 30th!
     delta = date1 - temp
     return str(float(delta.days) + (float(delta.seconds) / 86400))
 
-#------------------- Command-line interface for genlog -----------------#
+#------------------- Command-line interface for genlog -------------------------
 def LogDataToFile(fileName, time, Event):
 
 
@@ -45,7 +45,7 @@ def LogDataToFile(fileName, time, Event):
         LogFile.write(excel_date(time) + ","+ Event +"\n")
         LogFile.flush()
 
-#------------------- Command-line interface for genlog -----------------#
+#------------------- Command-line interface for genlog -------------------------
 if __name__=='__main__':
 
 
@@ -77,7 +77,7 @@ if __name__=='__main__':
         sys.exit(2)
 
     try:
-        log = mylog.SetupLogger("client", "genlog.log")
+        log = mylog.SetupLogger("client", "/var/log/genlog.log")
         # Set the signal handler
         signal.signal(signal.SIGINT, signal_handler)
 

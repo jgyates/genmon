@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 #    FILE: genmqtt.py
 # PURPOSE: genmqtt.py is a client interface for a MQTT server / broker
 #
@@ -7,7 +7,7 @@
 #    DATE: 08-10-2018
 #
 # MODIFICATIONS:
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 
 import datetime, time, sys, signal, os, threading, collections, json
@@ -27,10 +27,10 @@ except:
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
     sys.exit(2)
 
-#------------ MyGenPush class -----------------------------------------------------
+#------------ MyGenPush class --------------------------------------------------
 class MyGenPush(mysupport.MySupport):
 
-    #------------ MyGenPush::init--------------------------------------------------
+    #------------ MyGenPush::init-----------------------------------------------
     def __init__(self,
         host="127.0.0.1",
         port=9082,
@@ -82,7 +82,7 @@ class MyGenPush(mysupport.MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in mygenpush init: "  + str(e1))
 
-    #----------  MyGenPush::SendCommand ---------------------------------
+    #----------  MyGenPush::SendCommand ----------------------------------------
     def SendCommand(self, Command):
 
         if len(Command) == 0:
@@ -97,7 +97,7 @@ class MyGenPush(mysupport.MySupport):
 
         return data
 
-    # ---------- MyGenPush::MainPollingThread-------------------------------
+    # ---------- MyGenPush::MainPollingThread-----------------------------------
     def MainPollingThread(self):
 
         while True:
@@ -130,7 +130,7 @@ class MyGenPush(mysupport.MySupport):
                 if self.WaitForExit("PollingThread", float(self.PollTime)):
                     return
 
-    #------------ MySupport::CheckDictForChanges ---------------------------
+    #------------ MySupport::CheckDictForChanges -------------------------------
     # This function is recursive, it will turn a nested dict into a flat dict keys
     # that have a directory structure with corrposonding values and deteermine if
     # anyting changed. If it has then call our callback function
@@ -253,7 +253,7 @@ class MyMQTT(mycommon.MyCommon):
 
             if config.HasOption('flush_interval'):
                 self.FlushInterval = config.ReadValue('flush_interval', return_type = float, default = float('inf'))
-                if self.FlushInterval = 0:
+                if self.FlushInterval == 0:
                     self.FlushInterval = float('inf')
             else:
                 self.FlushInterval = float('inf')
