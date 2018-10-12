@@ -34,6 +34,6 @@ You can submit your registers from the Monitor page on the web interface.
 
 ### Your Environment
 
-- Genereator Model: {Please write here}
+- Generator Model: {Please write here}
 - Generator Registers: {Please write here}
 - Genmon Version: {Please write here}
