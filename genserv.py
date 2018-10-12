@@ -1254,7 +1254,7 @@ if __name__ == "__main__":
         except Exception as e1:
             LogErrorLine("Error in app.run: " + str(e1))
             #Errno 98
-            if e1.errno != errno.EADDRINUSE and e1.errno != errno.EIO:
+            if e1.errno != errno.EADDRINUSE: # and e1.errno != errno.EIO:
                 sys.exit(1)
             time.sleep(2)
             if Closing:
