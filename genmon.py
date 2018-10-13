@@ -25,7 +25,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.11.4"
+GENMON_VERSION = "V1.11.5"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -783,8 +783,6 @@ class Monitor(mysupport.MySupport):
 
         try:
 
-            conn.settimeout(2)   # only blok on recv for a small amount of time
-
             statusstr = ""
             if self.Controller == None:
                 outstr = "WARNING: System Initializing"
@@ -804,12 +802,18 @@ class Monitor(mysupport.MySupport):
             while True:
                 try:
                     data = conn.recv(1024)
-                    if self.Controller == None:
-                        outstr = "Retry, System Initializing"
+                    if len(data):
+                        if self.Controller == None:
+                            outstr = "Retry, System Initializing"
+                        else:
+                            outstr = self.ProcessCommand(data, True)
+                        conn.sendall(outstr.encode())
                     else:
-                        outstr = self.ProcessCommand(data, True)
-                    conn.sendall(outstr.encode())
+                        # socket closed remotely
+                        break
                 except socket.timeout:
+                    if self.IsStopping:
+                        break
                     continue
                 except socket.error as msg:
                     try:
@@ -820,9 +824,14 @@ class Monitor(mysupport.MySupport):
                     break
 
         except socket.error as msg:
+            self.LogError("Error in SocketWorkThread: " + str(msg))
+            pass
+
+        try:
             self.ConnectionList.remove(conn)
             conn.close()
-
+        except:
+            pass
         # end SocketWorkThread
 
     #----------  interface for heartbeat server thread -------------------------

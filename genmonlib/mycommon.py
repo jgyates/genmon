@@ -77,6 +77,14 @@ class MyCommon(object):
         z.update(y)
         return z
 
+    #---------------------------------------------------------------------------
+    def LogInfo(self, message, LogLine = False):
+
+        if not LogLine:
+            self.LogError(message)
+        else:
+            self.LogErrorLine(message)
+        self.LogConsole(message)
     #---------------------MyCommon::LogConsole------------------------------------
     def LogConsole(self, Message):
         if not self.console == None:

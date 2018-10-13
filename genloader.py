@@ -150,14 +150,6 @@ class Loader(mysupport.MySupport):
             self.LogInfo("Error installing module: " + libraryname + ": "+ str(e1), LogLine = True)
             return False
     #---------------------------------------------------------------------------
-    def LogInfo(self, message, LogLine = False):
-
-        if not LogLine:
-            self.LogError(message)
-        else:
-            self.LogErrorLine(message)
-        self.LogConsole(message)
-    #---------------------------------------------------------------------------
     def ValidateConfig(self):
 
         ErrorOccured = False
