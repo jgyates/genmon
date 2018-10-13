@@ -331,7 +331,7 @@ class Loader(mysupport.MySupport):
                 return False
         return not ErrorOccured
     #---------------------------------------------------------------------------
-    def LoadModule(self, modulename, args = None):
+    def LoadModuleAlt(self, modulename, args = None):
         try:
             self.LogConsole("Starting " + modulename)
             # to load as a background process we just use os.system since Popen
@@ -347,6 +347,34 @@ class Loader(mysupport.MySupport):
             self.LogInfo("Error loading module: " + str(e1), LogLine = True)
             return False
 
+    #---------------------------------------------------------------------------
+    def LoadModule(self, modulename, args = None):
+        try:
+            self.LogConsole("Starting " + modulename)
+
+            try:
+                from subprocess import DEVNULL # py3k
+            except ImportError:
+                import os
+                DEVNULL = open(os.devnull, 'wb')
+
+            if not len(args):
+                args = None
+
+            if "genserv.py" in modulename:
+                OutputStream = DEVNULL
+            else:
+                OutputStream = subprocess.PIPE
+            if args == None:
+                # close_fds=True
+                pid = subprocess.Popen([sys.executable, modulename], stdout=OutputStream, stderr=OutputStream, stdin=OutputStream)
+            else:
+                pid = subprocess.Popen([sys.executable, modulename, args], stdout=OutputStream, stderr=OutputStream, stdin=OutputStream)
+            return True
+
+        except Exception as e1:
+            self.LogInfo("Error loading module: " + str(e1), LogLine = True)
+            return False
     #---------------------------------------------------------------------------
     def UnloadModule(self, modulename, HardStop = False):
         try:

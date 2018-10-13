@@ -48,7 +48,7 @@ class ClientInterface(mycommon.MyCommon):
             except Exception as e1:
                 retries += 1
                 if retries >= 5:
-                    self.LogError("Error: Connect : " + str(e1))
+                    self.LogErrorLine("Error: Connect : " + str(e1))
                     self.console.error("Genmon not loaded.")
                     sys.exit(1)
                 else:
@@ -62,7 +62,7 @@ class ClientInterface(mycommon.MyCommon):
         try:
             self.Socket.sendall(cmd.encode())
         except Exception as e1:
-            self.LogError( "Error: TX: " + str(e1))
+            self.LogErrorLine( "Error: TX: " + str(e1))
             self.Close()
             self.Connect()
 
@@ -93,7 +93,7 @@ class ClientInterface(mycommon.MyCommon):
                     self.Connect()
                     return False, data
             except Exception as e1:
-                self.LogError( "Error: RX:" + str(e1))
+                self.LogErrorLine( "Error: RX:" + str(e1))
                 self.Close()
                 self.Connect()
                 RetStatus = False
@@ -125,5 +125,5 @@ class ClientInterface(mycommon.MyCommon):
                     self.SendCommand(cmd)
                     RetStatus, data = self.Receive()
         except Exception as e1:
-            self.LogError("Error in ProcessMonitorCommand:" + str(e1))
+            self.LogErrorLine("Error in ProcessMonitorCommand:" + str(e1))
         return data

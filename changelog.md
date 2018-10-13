@@ -1,8 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.11.6 - 2018-10-12
+- Changed loading method in genloader.py to work around I/O error with Flask library. As a result the output of the flask library is redirected to /dev/null so it will not be displayed on the console. If you started the software manually from the console and then exited the console and attempted to restart from the web UI (with a settings change) the Flask library used by genserv.py would cause an exception (I/O error). This works around this issue.
+- Added more error checking / logging in modbus protocol code. This makes serial over TCP more robust.
+- Fixed minor issue in genlog.py
+- Improved error logging in myclient.py
+
 ## V1.11.5 - 2018-10-12
-- Removed restart on I/O error in genserv. 
+- Removed restart on I/O error in genserv.
 
 ## V1.11.4 - 2018-10-11
 - Corrected bug in type in genserv.py. Corrects problem with settings page not displaying.
