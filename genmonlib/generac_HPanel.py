@@ -1011,7 +1011,7 @@ class HPanel(controller.GeneratorController):
             StartInfo["RemoteCommands"] = False
             StartInfo["RemoteButtons"] = False
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
-            StartInfo["ExerciseControls"] = not self.SmartSwitch
+            StartInfo["ExerciseControls"] = False  # self.SmartSwitch
 
             if not NoTile:
                 StartInfo["pages"] = {
@@ -1371,7 +1371,10 @@ class HPanel(controller.GeneratorController):
     # return kW with units i.e. "2.45kW"
     def GetPowerOutput(self, ReturnFloat = False):
 
-        return self.GetParameter(RegisterEnum.TOTAL_POWER_KW, "kW", ReturnFloat = ReturnFloat)
+        if ReturnFloat:
+            return self.GetParameter(RegisterEnum.TOTAL_POWER_KW, ReturnFloat = True)
+        else:
+            return self.GetParameter(RegisterEnum.TOTAL_POWER_KW, "kW", ReturnFloat = False)
 
     #----------  HPanel:GetCommStatus  -----------------------------------------
     # return Dict with communication stats

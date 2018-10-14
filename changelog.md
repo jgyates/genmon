@@ -1,7 +1,15 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
-## V1.11.6 - 2018-10-12
+## V1.11.7 - 2018-10-13
+- Add new remote command to reset the current alarm (see  Maintenance page)
+- Fixed bug in power log for H-100, if you experience problems, reset the power log or delete the file kwlog.txt and restart.
+- Moved Update Software in the web interface to the About page
+- Moved Submit Registers in the web interface to the About page
+- Added Submit Log Files button on the About page
+- Added change log to the web interface About page
+
+## V1.11.6 - 2018-10-13
 - Changed loading method in genloader.py to work around I/O error with Flask library. As a result the output of the flask library is redirected to /dev/null so it will not be displayed on the console. If you started the software manually from the console and then exited the console and attempted to restart from the web UI (with a settings change) the Flask library used by genserv.py would cause an exception (I/O error). This works around this issue.
 - Added more error checking / logging in modbus protocol code. This makes serial over TCP more robust.
 - Fixed minor issue in genlog.py

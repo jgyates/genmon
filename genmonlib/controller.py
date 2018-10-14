@@ -953,6 +953,8 @@ class GeneratorController(mysupport.MySupport):
                         Items = line.split(",")
                         if len(Items) != 2:
                             continue
+                        # remove any kW labels that may be there
+                        Items[1] = self.removeAlpha(Items[1])
 
                         if Minutes:
                             struct_time = time.strptime(Items[0], "%x %X")
