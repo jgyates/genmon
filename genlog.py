@@ -69,6 +69,7 @@ if __name__=='__main__':
             address = arg
         elif opt in ("-f", "--filename"):
             fileName = arg
+            fileName = fileName.strip()
 
     console.error('Address is ' + address)
     console.error('Output file is ' + fileName)

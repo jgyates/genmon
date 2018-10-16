@@ -1011,7 +1011,7 @@ class HPanel(controller.GeneratorController):
             StartInfo["RemoteCommands"] = False
             StartInfo["RemoteButtons"] = False
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
-            StartInfo["ExerciseControls"] = not self.SmartSwitch
+            StartInfo["ExerciseControls"] = False  # self.SmartSwitch
 
             if not NoTile:
                 StartInfo["pages"] = {
@@ -1153,7 +1153,7 @@ class HPanel(controller.GeneratorController):
             return ""
 
     #------------ HPanel::DisplayStatus ----------------------------------------
-    def DisplayStatus(self, DictOut = False):
+    def DisplayStatus(self, DictOut = False, JSONNum = False):
 
         try:
             Status = collections.OrderedDict()
@@ -1170,33 +1170,33 @@ class HPanel(controller.GeneratorController):
             Stat["Time"] = Time
 
 
-            Battery["Battery Voltage"] = self.GetParameter(RegisterEnum.BATTERY_VOLTS, "V", 100.0)
-            Battery["Battery Charger Current"] = self.GetParameter(RegisterEnum.BATTERY_CHARGE_CURRNT, "A", 10.0)
+            Battery["Battery Voltage"] = self.ValueOut(self.GetParameter(RegisterEnum.BATTERY_VOLTS, ReturnFloat = True, Divider = 100.0), "V", JSONNum)
+            Battery["Battery Charger Current"] = self.ValueOut(self.GetParameter(RegisterEnum.BATTERY_CHARGE_CURRNT, ReturnFloat = True, Divider = 10.0), "A", JSONNum)
 
             Engine["Current Status"] = self.GetParameterString(RegisterEnum.STATUS_INFO_START, RegisterEnum.STATUS_INFO_END)
             Engine["Previous Status"] = self.GetParameterString(RegisterEnum.STATUS_2_INFO_START, RegisterEnum.STATUS_2_INFO_END)
             Engine["Switch State"] = self.GetSwitchState()
             Engine["Engine State"] = self.GetEngineState()
-            Engine["Output Power"] = self.GetPowerOutput()
-            Engine["Output Power Factor"] = self.GetParameter(RegisterEnum.TOTAL_PF, Divider = 100.0)
-            Engine["RPM"] = self.GetParameter(RegisterEnum.OUTPUT_RPM)
-            Engine["Frequency"] = self.GetParameter(RegisterEnum.OUTPUT_FREQUENCY, "Hz", 10.0)
-            Engine["Throttle Position"] = self.GetParameter(RegisterEnum.THROTTLE_POSITION, "Stp")
-            Engine["Coolant Temp"] = self.GetParameter(RegisterEnum.COOLANT_TEMP, "F")
-            Engine["Coolant Level"] = self.GetParameter(RegisterEnum.COOLANT_LEVEL, "Stp")
-            Engine["Oil Pressure"] = self.GetParameter(RegisterEnum.OIL_PRESSURE, "psi")
-            Engine["Oil Temp"] = self.GetParameter(RegisterEnum.OIL_TEMP, "F")
-            Engine["Fuel Level"] = self.GetParameter(RegisterEnum.FUEL_LEVEL)
-            Engine["Oxygen Sensor"] = self.GetParameter(RegisterEnum.O2_SENSOR)
-            Engine["Current Phase A"] = self.GetParameter(RegisterEnum.CURRENT_PHASE_A,"A")
-            Engine["Current Phase B"] = self.GetParameter(RegisterEnum.CURRENT_PHASE_B,"A")
-            Engine["Current Phase C"] = self.GetParameter(RegisterEnum.CURRENT_PHASE_C,"A")
-            Engine["Average Current"] = self.GetParameter(RegisterEnum.AVG_CURRENT,"A")
-            Engine["Voltage A-B"] = self.GetParameter(RegisterEnum.VOLTS_PHASE_A_B,"V")
-            Engine["Voltage B-C"] = self.GetParameter(RegisterEnum.VOLTS_PHASE_B_C,"V")
-            Engine["Voltage C-A"] = self.GetParameter(RegisterEnum.VOLTS_PHASE_C_A,"V")
-            Engine["Average Voltage"] = self.GetParameter(RegisterEnum.AVG_VOLTAGE,"V")
-            Engine["Air Fuel Duty Cycle"] = self.GetParameter(RegisterEnum.A_F_DUTY_CYCLE, Divider = 10.0)
+            Engine["Output Power"] = self.ValueOut(self.GetPowerOutput(ReturnFloat = True), "kW", JSONNum)
+            Engine["Output Power Factor"] = self.ValueOut(self.GetParameter(RegisterEnum.TOTAL_PF, ReturnFloat = True, Divider = 100.0), "", JSONNum)
+            Engine["RPM"] = self.ValueOut(self.GetParameter(RegisterEnum.OUTPUT_RPM, ReturnInt = True), "", JSONNum)
+            Engine["Frequency"] = self.ValueOut(self.GetParameter(RegisterEnum.OUTPUT_FREQUENCY, ReturnFloat = True, Divider = 10.0), "Hz", JSONNum)
+            Engine["Throttle Position"] = self.ValueOut(self.GetParameter(RegisterEnum.THROTTLE_POSITION, ReturnInt = True), "Stp", JSONNum)
+            Engine["Coolant Temp"] = self.ValueOut(self.GetParameter(RegisterEnum.COOLANT_TEMP, ReturnInt = True), "F", JSONNum)
+            Engine["Coolant Level"] = self.ValueOut(self.GetParameter(RegisterEnum.COOLANT_LEVEL, ReturnInt = True), "Stp", JSONNum)
+            Engine["Oil Pressure"] = self.ValueOut(self.GetParameter(RegisterEnum.OIL_PRESSURE, ReturnInt = True), "psi", JSONNum)
+            Engine["Oil Temp"] = self.ValueOut(self.GetParameter(RegisterEnum.OIL_TEMP, ReturnInt = True), "F", JSONNum)
+            Engine["Fuel Level"] = self.ValueOut(self.GetParameter(RegisterEnum.FUEL_LEVEL, ReturnInt = True), "", JSONNum)
+            Engine["Oxygen Sensor"] = self.ValueOut(self.GetParameter(RegisterEnum.O2_SENSOR, ReturnInt = True), "", JSONNum)
+            Engine["Current Phase A"] = self.ValueOut(self.GetParameter(RegisterEnum.CURRENT_PHASE_A, ReturnInt = True), "A", JSONNum)
+            Engine["Current Phase B"] = self.ValueOut(self.GetParameter(RegisterEnum.CURRENT_PHASE_B,ReturnInt = True), "A", JSONNum)
+            Engine["Current Phase C"] = self.ValueOut(self.GetParameter(RegisterEnum.CURRENT_PHASE_C,ReturnInt = True), "A", JSONNum)
+            Engine["Average Current"] = self.ValueOut(self.GetParameter(RegisterEnum.AVG_CURRENT,ReturnInt = True), "A", JSONNum)
+            Engine["Voltage A-B"] = self.ValueOut(self.GetParameter(RegisterEnum.VOLTS_PHASE_A_B,ReturnInt = True), "V", JSONNum)
+            Engine["Voltage B-C"] = self.ValueOut(self.GetParameter(RegisterEnum.VOLTS_PHASE_B_C,ReturnInt = True), "V", JSONNum)
+            Engine["Voltage C-A"] = self.ValueOut(self.GetParameter(RegisterEnum.VOLTS_PHASE_C_A,ReturnInt = True), "V", JSONNum)
+            Engine["Average Voltage"] = self.ValueOut(self.GetParameter(RegisterEnum.AVG_VOLTAGE,ReturnInt = True), "V", JSONNum)
+            Engine["Air Fuel Duty Cycle"] = self.ValueOut(self.GetParameter(RegisterEnum.A_F_DUTY_CYCLE, ReturnFloat = True, Divider = 10.0), "", JSONNum)
 
             if self.SystemInAlarm():
                 Engine["System In Alarm"] = self.GetAlarmList()
@@ -1371,7 +1371,10 @@ class HPanel(controller.GeneratorController):
     # return kW with units i.e. "2.45kW"
     def GetPowerOutput(self, ReturnFloat = False):
 
-        return self.GetParameter(RegisterEnum.TOTAL_POWER_KW, "kW", ReturnFloat = ReturnFloat)
+        if ReturnFloat:
+            return self.GetParameter(RegisterEnum.TOTAL_POWER_KW, ReturnFloat = True)
+        else:
+            return self.GetParameter(RegisterEnum.TOTAL_POWER_KW, "kW", ReturnFloat = False)
 
     #----------  HPanel:GetCommStatus  -----------------------------------------
     # return Dict with communication stats

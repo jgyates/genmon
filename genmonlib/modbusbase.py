@@ -30,6 +30,7 @@ class ModbusBase(mysupport.MySupport ):
         self.TotalElapsedPacketeTime = 0
         self.SlaveException = 0
         self.CrcError = 0
+        self.ComValidationError = 0
         self.CommAccessLock = threading.RLock()     # lock to synchronize access to the serial port comms
         self.ModbusStartTime = datetime.datetime.now()     # used for com metrics
 
@@ -66,6 +67,7 @@ class ModbusBase(mysupport.MySupport ):
         SerialStats["Packet Timeouts"] = "%d" %  self.ComTimoutError
         SerialStats["Packet Timeouts Percent Errors"] = ("%.2f" % (PercentTimeoutErrors * 100)) + "%"
         SerialStats["Modbus Exceptions"] = self.SlaveException
+        SerialStats["Validation Errors"] = self.ComValidationError
         # Add serial stats here
         CurrentTime = datetime.datetime.now()
 
@@ -85,6 +87,7 @@ class ModbusBase(mysupport.MySupport ):
         self.TxPacketCount = 0
         self.CrcError = 0
         self.ComTimoutError = 0
+        self.ComValidationError = 0
         self.SlaveException = 0
         self.TotalElapsedPacketeTime = 0
         self.ModbusStartTime = datetime.datetime.now()     # used for com metrics

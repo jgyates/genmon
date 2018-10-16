@@ -1,4 +1,4 @@
-// Define header
+
 // global base state
 var baseState = "READY";        // updated on a time
 var currentbaseState = "READY"; // menus change on this var
@@ -615,49 +615,56 @@ function DisplayMaintenance(){
         outstr = '<div style="clear:both" id="maintText">' + json2html(result, "", "root") + '</div>';
 
         if (myGenerator["write_access"] == true) {
-            outstr += "<br>Generator Exercise Time:<br><br>";
+            if (myGenerator['ExerciseControls'] == true) {
 
-            //Create array of options to be added
-            if (myGenerator['EnhancedExerciseEnabled'] == true) {
-                outstr += '&nbsp;&nbsp;&nbsp;&nbsp;<select id="ExerciseFrequency" onChange="setExerciseSelection()">';
-                outstr += '<option value="Weekly" ' + (myGenerator['ExerciseFrequency'] == "Weekly"  ? ' selected="selected" ' : '') + '>Weekly</option>';
-                outstr += '<option value="Biweekly" ' + (myGenerator['ExerciseFrequency'] == "Biweekly"  ? ' selected="selected" ' : '') + '>Biweekly</option>';
-                outstr += '<option value="Monthly" ' + (myGenerator['ExerciseFrequency'] == "Monthly"  ? ' selected="selected" ' : '') + '>Monthly</option>';
-                outstr += '</select>';
+               outstr += "<br>Generator Exercise Time:<br><br>";
+   
+               //Create array of options to be added
+               if (myGenerator['EnhancedExerciseEnabled'] == true) {
+                   outstr += '&nbsp;&nbsp;&nbsp;&nbsp;<select id="ExerciseFrequency" onChange="setExerciseSelection()">';
+                   outstr += '<option value="Weekly" ' + (myGenerator['ExerciseFrequency'] == "Weekly"  ? ' selected="selected" ' : '') + '>Weekly</option>';
+                   outstr += '<option value="Biweekly" ' + (myGenerator['ExerciseFrequency'] == "Biweekly"  ? ' selected="selected" ' : '') + '>Biweekly</option>';
+                   outstr += '<option value="Monthly" ' + (myGenerator['ExerciseFrequency'] == "Monthly"  ? ' selected="selected" ' : '') + '>Monthly</option>';
+                   outstr += '</select>';
+               }
+   
+               //Create and append the options, days
+               outstr += '&nbsp;<select id="days"></select> , ';
+               //Create and append the options, hours
+               outstr += '<select id="hours">';
+               for (var i = 0; i < 24; i++) {
+                   outstr += '<option value="' + i.pad() + '">' + i.pad() + '</option>';
+               }
+               outstr += '</select> : ';
+   
+               //Create and append the options, minute
+               outstr += '<select id="minutes">';
+               for (var i = 0; i < 60; i++) {
+                   outstr += '<option value="' + i.pad() + '">' + i.pad() + '</option>';
+               }
+               outstr += '</select>';
+   
+               //Create and append select list
+               outstr += '&nbsp;&nbsp;<select id="quietmode">';
+               outstr += '<option value="On" ' + (myGenerator['QuietMode'] == "On"  ? ' selected="selected" ' : '') + '>Quiet Mode On </option>';
+               outstr += '<option value="Off"' + (myGenerator['QuietMode'] == "Off" ? ' selected="selected" ' : '') + '>Quiet Mode Off</option>';
+               outstr += '</select><br><br>';
+   
+               outstr += '&nbsp;&nbsp;<button id="setexercisebutton" onClick="saveMaintenance();">Set Exercise Time</button>';
             }
-
-            //Create and append the options, days
-            outstr += '&nbsp;<select id="days"></select> , ';
-            //Create and append the options, hours
-            outstr += '<select id="hours">';
-            for (var i = 0; i < 24; i++) {
-                outstr += '<option value="' + i.pad() + '">' + i.pad() + '</option>';
-            }
-            outstr += '</select> : ';
-
-            //Create and append the options, minute
-            outstr += '<select id="minutes">';
-            for (var i = 0; i < 60; i++) {
-                outstr += '<option value="' + i.pad() + '">' + i.pad() + '</option>';
-            }
-            outstr += '</select>';
-
-            //Create and append select list
-            outstr += '&nbsp;&nbsp;<select id="quietmode">';
-            outstr += '<option value="On" ' + (myGenerator['QuietMode'] == "On"  ? ' selected="selected" ' : '') + '>Quiet Mode On </option>';
-            outstr += '<option value="Off"' + (myGenerator['QuietMode'] == "Off" ? ' selected="selected" ' : '') + '>Quiet Mode Off</option>';
-            outstr += '</select><br><br>';
-
-            outstr += '&nbsp;&nbsp;<button id="setexercisebutton" onClick="saveMaintenance();">Set Exercise Time</button>';
 
             outstr += '<br><br>Generator Time:<br><br>';
             outstr += '&nbsp;&nbsp;<button id="settimebutton" onClick="SetTimeClick();">Set Generator Time</button>';
 
-            outstr += '<br><br>Remote Commands:<br><br>';
+            if (myGenerator['RemoteCommands'] == true) {
+               outstr += '<br><br>Remote Commands:<br><br>';
+               outstr += '&nbsp;&nbsp;&nbsp;&nbsp;<button class="tripleButtonLeft" id="remotestop" onClick="SetClick(\'stop\');">Stop Generator</button>';
+               outstr += '<button class="tripleButtonCenter" id="remotestart" onClick="SetClick(\'start\');">Start Generator</button>';
+               outstr += '<button class="tripleButtonRight"  id="remotetransfer" onClick="SetClick(\'starttransfer\');">Start Generator and Transfer</button>';
 
-            outstr += '&nbsp;&nbsp;&nbsp;&nbsp;<button class="tripleButtonLeft" id="remotestop" onClick="SetClick(\'stop\');">Stop Generator</button>';
-            outstr += '<button class="tripleButtonCenter" id="remotestart" onClick="SetClick(\'start\');">Start Generator</button>';
-            outstr += '<button class="tripleButtonRight"  id="remotetransfer" onClick="SetClick(\'starttransfer\');">Start Generator and Transfer</button><br>';
+               outstr += '<br><br>Reset Alarm Condition:<br><br>';
+               outstr += '&nbsp;&nbsp;<button id="resetalarm" onClick="ResetAlarmClick();">Reset Alarm Condition</button><br>';
+            }
 
             if (myGenerator['RemoteButtons'] == true) {
                outstr += '<br>Switch Position:<br><br>';
@@ -781,6 +788,28 @@ function SetTimeClick(){
              } else {
                 // set exercise time
                 var url = baseurl.concat("settime");
+                $.getJSON(  url,
+                   {settime: " "},
+                   function(result){});
+             }
+        }
+    });
+}
+
+//*****************************************************************************
+// called when Reset Alarm Condition is clicked
+//*****************************************************************************
+function ResetAlarmClick(){
+
+    vex.dialog.confirm({
+        unsafeMessage: 'Are you sure you want to reset the alarm condition on your generator?',
+        overlayClosesOnClick: false,
+        callback: function (value) {
+             if (value == false) {
+                return;
+             } else {
+                // set exercise time
+                var url = baseurl.concat("resetalarm");
                 $.getJSON(  url,
                    {settime: " "},
                    function(result){});
@@ -1011,12 +1040,6 @@ function DisplayMonitor(){
 
         var outstr = json2html(result, "", "root");
 
-        if (myGenerator["write_access"] == true) {
-            outstr += '<br><br>Update Generator Monitor Software:<br><div id="updateNeeded"><br></div>';
-            outstr += '&nbsp;&nbsp;<button id="checkNewVersion" onClick="checkNewVersion();">Upgrade to latest version</button>';
-            outstr += '<br><br>Submit Registers to Developers:<br><br>';
-            outstr += '&nbsp;&nbsp;<button id="submitRegisters" onClick="submitRegisters();">Submit Registers</button>';
-        }
 
         $("#mydisplay").html(outstr);
 
@@ -1055,124 +1078,9 @@ function DisplayMonitor(){
            $("#Conditions").html('<div style="display: inline-block; position: relative;">'+result["Monitor"]["Weather"]["Conditions"] + '<img class="greyscale" style="position: absolute;top:-30px;left:160px" src="http://openweathermap.org/img/w/' + prevStatusValues["Weather"]["icon"] + '.png"></div>');
         }
 
-        if (myGenerator["write_access"] == true) {
-            if (latestVersion == "") {
-              // var url = "https://api.github.com/repos/jgyates/genmon/releases";
-              var url = "https://raw.githubusercontent.com/jgyates/genmon/master/genmon.py";
-              $.ajax({dataType: "html", url: url, timeout: 4000, error: function(result) {
-                 console.log("got an error when looking up latest version");
-                 latestVersion = "unknown";
-              }, success: function(result) {
-                 latestVersion = replaceAll((jQuery.grep(result.split("\n"), function( a ) { return (a.indexOf("GENMON_VERSION") >= 0); }))[0].split(" ")[2], '"', '');
-                 if (latestVersion != myGenerator["version"]) {
-                    $('#updateNeeded').hide().html("<br>&nbsp;&nbsp;&nbsp;&nbsp;You are not running the latest version.<br>&nbsp;&nbsp;&nbsp;&nbsp;Current Version: " + myGenerator["version"] +"<br>&nbsp;&nbsp;&nbsp;&nbsp;New Version: " + latestVersion+"<br><br>").fadeIn(1000);
-                 }
-              }});
-            } else if ((latestVersion != "unknown") && (latestVersion != myGenerator["version"])) {
-              $('#updateNeeded').html("<br>&nbsp;&nbsp;&nbsp;&nbsp;You are not running the latest version.<br>&nbsp;&nbsp;&nbsp;&nbsp;Current Version: " + myGenerator["version"] +"<br>&nbsp;&nbsp;&nbsp;&nbsp;New Version: " + latestVersion+"<br><br>");
-            }
-        }
    }});
 }
 
-function checkNewVersion(){
-    var DisplayStr = 'Checking for latest version...<br><br><div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
-    $('.vex-dialog-buttons').html(DisplayStr);
-    $('.progress-bar-fill').queue(function () {
-        $(this).css('width', '100%')
-    });
-    var DisplayStrButtons = {
-        NO: {
-          text: 'Cancel',
-          type: 'button',
-          className: 'vex-dialog-button-secondary',
-          click: function yesClick () { this.close() }
-        },
-        YES: {
-          text: 'Upgrade',
-          type: 'submit',
-          className: 'vex-dialog-button-primary',
-          click: function yesClick () { }
-        }
-    }
-
-    var myDialog = vex.dialog.open({
-        unsafeMessage: DisplayStr,
-        overlayClosesOnClick: false,
-        buttons: [
-           DisplayStrButtons.NO,
-           DisplayStrButtons.YES
-        ],
-        onSubmit: function(e) {
-             e.preventDefault();
-             updateSoftware();
-             var DisplayStr1 = 'Downloading latest version...';
-             var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
-             $('.vex-dialog-message').html(DisplayStr1);
-             $('.vex-dialog-buttons').html(DisplayStr2);
-             $('.progress-bar-fill').queue(function () {
-                  $(this).css('width', '100%')
-             });
-        }
-    });
-
-    if (latestVersion != myGenerator["version"]) {
-          // $('.vex-dialog-message').html("A new version is available.<br>Current Version: " + myGenerator["version"] + "<br>New Version: " + latestVersion);
-          $('.vex-dialog-message').html("Are you sure you want to update to the latest version?");
-    } else {
-          $('.vex-dialog-message').html("Are you sure you want to upgrade?");
-    }
-}
-
-//*****************************************************************************
-// called when requesting upgrade
-//*****************************************************************************
-function updateSoftware(){
-
-    // set remote command
-    var url = baseurl.concat("updatesoftware");
-    $.ajax({
-       type: "GET",
-       url: url,
-       dataType: "json",
-       timeout: 0,
-       success: function(results){
-             /// THIS IS NOT AN EXPECTED RESPONSE!!! genserv.py is expected to restart on it's own before returning a valid value;
-             vex.closeAll();
-             GenmonAlert("An unexepected outcome occured. Genmon might not have been updated. Please verify manually or try again!");
-       },
-       error: function(XMLHttpRequest, textStatus, errorThrown){
-             var DisplayStr1 = 'Restarting...';
-             var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
-             $('.vex-dialog-message').html(DisplayStr1);
-             $('.vex-dialog-buttons').html(DisplayStr2);
-             $('.progress-bar-fill').queue(function () {
-                  $(this).css('width', '100%')
-             });
-             // location.reload();
-             setTimeout(function(){ vex.closeAll(); window.location.href = window.location.pathname+"?page=monitor"; }, 10000);
-       }
-
-
-    });
-}
-
-function submitRegisters(){
-    vex.dialog.confirm({
-        unsafeMessage: 'Send the contents of your generator registers to the developer for compatibility testing?<br>',
-        overlayClosesOnClick: false,
-        callback: function (value) {
-             if (value == false) {
-                return;
-             } else {
-                var url = baseurl.concat("sendregisters");
-                $.getJSON(  url,
-                   {},
-                   function(result){});
-             }
-        }
-    });
-}
 
 //*****************************************************************************
 // Display the Notification Tab
@@ -1997,9 +1905,191 @@ function saveAddonJSON(addon) {
 
 function DisplayAbout(){
     var outstr = '<br><br><br><center><img src="images/GenmonLogo.png" width="60%"><br>';
-    outstr += '<br>Genmon<br>Version '+myGenerator["version"]+'<br><br><br>Developed by <a target="_blank" href="https://github.com/jgyates/">@jgyates</a>.<br><br>Published under the <a target="_blank" href="https://raw.githubusercontent.com/jgyates/genmon/master/LICENSE">GNU General Public License v2.0</a>.<br><br>Source: <a target="_blank" href="https://github.com/jgyates/genmon">Github</a><br><br>Built using Python & Javascript.</center>';
+    outstr += '<div class="aboutInfo"><br>Genmon<br>Version '+myGenerator["version"]+'<br><br><br>Developed by <a target="_blank" href="https://github.com/jgyates/">@jgyates</a>.<br><br>Published under the <a target="_blank" href="https://raw.githubusercontent.com/jgyates/genmon/master/LICENSE">GNU General Public License v2.0</a>.<br><br>Source: <a target="_blank" href="https://github.com/jgyates/genmon">Github</a><br><br>Built using Python & Javascript.<br>&nbsp;<br></center></div>';
+
+    if (myGenerator["write_access"] == true) {
+      outstr += '<center>Update Generator Monitor Software:<br><div id="updateNeeded" style="font-size:16px; margin:2px;"><br></div>';
+      outstr += '&nbsp;&nbsp;<button id="checkNewVersion" onClick="checkNewVersion();">Upgrade to latest version</button><br>';
+      outstr += '&nbsp;&nbsp;<a href="javascript:showChangeLog();" style="font-style:normal; font-size:14px; text-decoration:underline;">Change Log</a>';
+      outstr += '<br><br>Submit Information to Developers:<br><br>';
+      outstr += '&nbsp;&nbsp;<button id="submitRegisters" onClick="submitRegisters();">Submit Registers</button>';
+      outstr += '&nbsp;&nbsp;<button id="submitLogs" onClick="submitLogs();">Submit Logs</button></center>';
+    }
 
     $("#mydisplay").html(outstr);
+    
+    if (myGenerator["write_access"] == true) {
+       if (latestVersion == "") {
+         // var url = "https://api.github.com/repos/jgyates/genmon/releases";
+         var url = "https://raw.githubusercontent.com/jgyates/genmon/master/genmon.py";
+         $.ajax({dataType: "html", url: url, timeout: 4000, error: function(result) {
+               console.log("got an error when looking up latest version");
+               latestVersion = "unknown";
+         }, success: function(result) {
+               latestVersion = replaceAll((jQuery.grep(result.split("\n"), function( a ) { return (a.indexOf("GENMON_VERSION") >= 0); }))[0].split(" ")[2], '"', '');
+               if (latestVersion != myGenerator["version"]) {
+                     $('#updateNeeded').hide().html("<br>&nbsp;&nbsp;&nbsp;&nbsp;You are not running the latest version.<br>&nbsp;&nbsp;&nbsp;&nbsp;Current Version: " + myGenerator["version"] +"<br>&nbsp;&nbsp;&nbsp;&nbsp;New Version: " + latestVersion+"<br><br>").fadeIn(1000);
+               }
+         }});
+       } else if ((latestVersion != "unknown") && (latestVersion != myGenerator["version"])) {
+         $('#updateNeeded').html("<br>&nbsp;&nbsp;&nbsp;&nbsp;You are not running the latest version.<br>&nbsp;&nbsp;&nbsp;&nbsp;Current Version: " + myGenerator["version"] +"<br>&nbsp;&nbsp;&nbsp;&nbsp;New Version: " + latestVersion+"<br><br>");
+       }
+    }
+}
+
+function showChangeLog() {
+    var DisplayStr = '<div id="changeLogText">Change Log<br><br>Loading...</div>';
+    $('.vex-dialog-buttons').html(DisplayStr);
+    var DisplayStrButtons = {
+        CLOSE: {
+          text: 'Close',
+          type: 'button',
+          className: 'vex-dialog-button-primary',
+          click: function yesClick () { this.close() }
+        },
+    }
+
+    var myDialog = vex.dialog.open({
+        unsafeMessage: DisplayStr,
+        overlayClosesOnClick: true,
+        buttons: [
+           DisplayStrButtons.CLOSE
+        ],
+    });
+
+    var url = "https://raw.githubusercontent.com/jgyates/genmon/master/changelog.md";
+    $.ajax({dataType: "html", url: url, timeout: 4000, error: function(result) {
+       console.log("got an error when looking up latest version");
+       latestVersion = "unknown";
+    }, success: function(result) {
+       vpw = $(window).width();
+       vph = $(window).height();
+       changeLog = replaceAll(result, '\n', '<br>\n');
+       changeLog = changeLog.replace(/##(.*?)<br>/g, "<h2 style='font-size:14px'>$1</h2>")
+       changeLog = changeLog.replace(/#(.*?)<br>/g, "<h1 style='font-size:18px; font-style:normal;'>$1</h1>")
+       changeLog = changeLog.replace(/\n- (.*?)<br>/g, "\n<ul style='list-style-type: disc; list-style-position: outside; margin-left: 10px;'><li>$1</li></ul>")
+       $('.vex-content').width(vpw-350).fadeIn(1000);
+       $('.vex-content').height(vph-350).fadeIn(1000);
+       $('#changeLogText').html("<div style='font-size:10px; line-height: normal; overflow-y: scroll; height:"+($('.vex-content').height() - 50)+"px'>"+changeLog+"</div>").fadeIn(1000);
+    }});
+
+
+}
+
+function checkNewVersion(){
+    var DisplayStr = 'Checking for latest version...<br><br><div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
+    $('.vex-dialog-buttons').html(DisplayStr);
+    $('.progress-bar-fill').queue(function () {
+        $(this).css('width', '100%')
+    });
+    var DisplayStrButtons = {
+        NO: {
+          text: 'Cancel',
+          type: 'button',
+          className: 'vex-dialog-button-secondary',
+          click: function yesClick () { this.close() }
+        },
+        YES: {
+          text: 'Upgrade',
+          type: 'submit',
+          className: 'vex-dialog-button-primary',
+          click: function yesClick () { }
+        }
+    }
+
+    var myDialog = vex.dialog.open({
+        unsafeMessage: DisplayStr,
+        overlayClosesOnClick: false,
+        buttons: [
+           DisplayStrButtons.NO,
+           DisplayStrButtons.YES
+        ],
+        onSubmit: function(e) {
+             e.preventDefault();
+             updateSoftware();
+             var DisplayStr1 = 'Downloading latest version...';
+             var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
+             $('.vex-dialog-message').html(DisplayStr1);
+             $('.vex-dialog-buttons').html(DisplayStr2);
+             $('.progress-bar-fill').queue(function () {
+                  $(this).css('width', '100%')
+             });
+        }
+    });
+
+    if (latestVersion != myGenerator["version"]) {
+          // $('.vex-dialog-message').html("A new version is available.<br>Current Version: " + myGenerator["version"] + "<br>New Version: " + latestVersion);
+          $('.vex-dialog-message').html("Are you sure you want to update to the latest version?");
+    } else {
+          $('.vex-dialog-message').html("Are you sure you want to upgrade?");
+    }
+}
+
+//*****************************************************************************
+// called when requesting upgrade
+//*****************************************************************************
+function updateSoftware(){
+
+    // set remote command
+    var url = baseurl.concat("updatesoftware");
+    $.ajax({
+       type: "GET",
+       url: url,
+       dataType: "json",
+       timeout: 0,
+       success: function(results){
+             /// THIS IS NOT AN EXPECTED RESPONSE!!! genserv.py is expected to restart on it's own before returning a valid value;
+             vex.closeAll();
+             GenmonAlert("An unexepected outcome occured. Genmon might not have been updated. Please verify manually or try again!");
+       },
+       error: function(XMLHttpRequest, textStatus, errorThrown){
+             var DisplayStr1 = 'Restarting...';
+             var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
+             $('.vex-dialog-message').html(DisplayStr1);
+             $('.vex-dialog-buttons').html(DisplayStr2);
+             $('.progress-bar-fill').queue(function () {
+                  $(this).css('width', '100%')
+             });
+             // location.reload();
+             setTimeout(function(){ vex.closeAll(); window.location.href = window.location.pathname+"?page=about"; }, 10000);
+       }
+
+
+    });
+}
+
+function submitRegisters(){
+    vex.dialog.confirm({
+        unsafeMessage: 'Send the contents of your generator registers to the developer for compatibility testing?<br>',
+        overlayClosesOnClick: false,
+        callback: function (value) {
+             if (value == false) {
+                return;
+             } else {
+                var url = baseurl.concat("sendregisters");
+                $.getJSON(  url,
+                   {},
+                   function(result){});
+             }
+        }
+    });
+}
+
+function submitLogs(){
+    vex.dialog.confirm({
+        unsafeMessage: 'Send the contents of your log files to the developer?<br>',
+        overlayClosesOnClick: false,
+        callback: function (value) {
+             if (value == false) {
+                return;
+             } else {
+                var url = baseurl.concat("sendlogfiles");
+                $.getJSON(  url,
+                   {},
+                   function(result){});
+             }
+        }
+    });
 }
 
 

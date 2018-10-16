@@ -19,6 +19,10 @@ MBUS_ADDRESS            = 0x00
 MBUS_ADDRESS_SIZE       = 0x01
 MBUS_COMMAND            = 0x01
 MBUS_COMMAND_SIZE       = 0x01
+MBUS_REG_HI             = 0x02
+MBUS_REG_LOW            = 0x03
+MBUS_LENGTH_HI          = 0x04
+MBUS_LENGTH_LOW         = 0x05
 MBUS_EXCEPTION          = 0x02
 MBUS_WR_REQ_BYTE_COUNT  = 0x06
 MBUS_CRC_SIZE           = 0x02
@@ -263,6 +267,11 @@ class ModbusProtocol(modbusbase.ModbusBase):
 
             # update our cached register dict
             ReturnRegValue = self.UpdateRegistersFromPacket(MasterPacket, SlavePacket, SkipUpdate = skiplog)
+            if ReturnRegValue == "Error":
+                self.LogError("Master: " + str(MasterPacket))
+                self.LogError("Slave: " + str(SlavePacket))
+                self.ComValidationError += 1
+                self.Flush()
         if ReturnValue:
             return ReturnRegValue
 
@@ -334,39 +343,54 @@ class ModbusProtocol(modbusbase.ModbusBase):
 
         try:
             if len(MasterPacket) < MIN_PACKET_LENGTH_RES or len(SlavePacket) < MIN_PACKET_LENGTH_RES:
-                return ""
+                self.LogError("Validation Error, length: Master" + str(len(MasterPacket)) + " Slave: " + str(len(SlavePacket)))
+                return "Error"
 
             if MasterPacket[MBUS_ADDRESS] != self.Address:
-                self.LogError("Validation Error:: Invalid address in UpdateRegistersFromPacket (Master)")
-
+                self.LogError("Validation Error: Invalid address in UpdateRegistersFromPacket (Master)")
+                return "Error"
             if SlavePacket[MBUS_ADDRESS] != self.Address:
-                self.LogError("Validation Error:: Invalid address in UpdateRegistersFromPacket (Slave)")
-
+                self.LogError("Validation Error: Invalid address in UpdateRegistersFromPacket (Slave)")
+                return "Error"
             if not SlavePacket[MBUS_COMMAND] in [MBUS_CMD_READ_REGS, MBUS_CMD_WRITE_REGS]:
-                self.LogError("UpdateRegistersFromPacket: Unknown Function slave %02x %02x" %  (SlavePacket[0],SlavePacket[1]))
-
+                self.LogError("Validation Error: Unknown Function slave %02x %02x" %  (SlavePacket[0],SlavePacket[1]))
+                return "Error"
             if not MasterPacket[MBUS_COMMAND] in [MBUS_CMD_READ_REGS, MBUS_CMD_WRITE_REGS]:
-                self.LogError("UpdateRegistersFromPacket: Unknown Function master %02x %02x" %  (MasterPacket[0],MasterPacket[1]))
+                self.LogError("Validation Error: Unknown Function master %02x %02x" %  (MasterPacket[0],MasterPacket[1]))
+                return "Error"
+
+            if MasterPacket[MBUS_COMMAND] != SlavePacket[MBUS_COMMAND]:
+                self.LogError("Validation Error: Command Mismatch :" + str(MasterPacket[MBUS_COMMAND]) + ":" + str(SlavePacket[MBUS_COMMAND]))
+                return "Error"
 
              # get register from master packet
             Register = "%02x%02x" % (MasterPacket[2],MasterPacket[3])
-            # get value from slave packet
-            length = SlavePacket[MBUS_RESPONSE_LEN]
-            if (length + MBUS_RES_PAYLOAD_SIZE_MINUS_LENGTH) > len(SlavePacket):
-                 return ""
+            if MasterPacket[MBUS_COMMAND] == MBUS_CMD_WRITE_REGS:
+                # get register from slave packet
+                SlaveRegister = "%02x%02x" % (SlavePacket[2],SlavePacket[3])
+                if SlaveRegister != Register:
+                    self.LogError("Validation Error: Master Slave Register Mismatch : " + Register +  ":" + SlaveRegister)
+                    return "Error"
 
             RegisterValue = ""
-            for i in range(3, length+3):
-                RegisterValue += "%02x" % SlavePacket[i]
-            # update register list
-            if not SkipUpdate:
-                if not self.UpdateRegisterList == None:
-                    self.UpdateRegisterList(Register, RegisterValue)
+            if MasterPacket[MBUS_COMMAND] == MBUS_CMD_READ_REGS:
+                # get value from slave packet
+                length = SlavePacket[MBUS_RESPONSE_LEN]
+                if (length + MBUS_RES_PAYLOAD_SIZE_MINUS_LENGTH) > len(SlavePacket):
+                    self.LogError("Validation Error: Slave Lenght : " + length +  ":" + len(SlavePacket))
+                    return "Error"
+
+                for i in range(3, length+3):
+                    RegisterValue += "%02x" % SlavePacket[i]
+                # update register list
+                if not SkipUpdate:
+                    if not self.UpdateRegisterList == None:
+                        self.UpdateRegisterList(Register, RegisterValue)
 
             return RegisterValue
         except Exception as e1:
             self.LogErrorLine("Error in UpdateRegistersFromPacket: " + str(e1))
-            return ""
+            return "Error"
 
      #------------ModbusProtocol::CheckCrc--------------------------------------
     def CheckCRC(self, Packet):
@@ -430,6 +454,7 @@ class ModbusProtocol(modbusbase.ModbusBase):
             SerialStats["Packet Timeouts"] = "%d" %  self.ComTimoutError
             SerialStats["Packet Timeouts Percent Errors"] = ("%.2f" % (PercentTimeoutErrors * 100)) + "%"
             SerialStats["Modbus Exceptions"] = self.SlaveException
+            SerialStats["Validation Errors"] = self.ComValidationError
             # add serial stats
             SerialStats["Discarded Bytes"] = "%d" % self.Slave.DiscardedBytes
             SerialStats["Comm Restarts"] = "%d" % self.Slave.Restarts

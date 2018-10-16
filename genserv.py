@@ -466,6 +466,13 @@ def GetAddOns():
             "(Optional) Time in seconds where even unchanged values will be published to their MQTT topic. Set to zero to disable flushing.",
             bounds = 'number',
             display_name = "Flush Interval")
+        AddOnCfg['genmqtt']['parameters']['numeric_json'] = CreateAddOnParam(
+            ConfigFiles[GENMQTT_CONFIG].ReadValue("numeric_json", return_type = bool, default = False),
+            'boolean',
+            "If enabled will return numeric values in the Status topic as a JSON string which can be converted to an object with integer or float values.",
+            bounds = '',
+            display_name = "JSON for Numerics")
+
 
         #GENSLACK
         AddOnCfg['genslack'] = collections.OrderedDict()
@@ -817,6 +824,7 @@ def ReadSettingsFromFile():
     else: #ControllerType == "generac_evo_nexus":
         ConfigSettings["enhancedexercise"] = ['boolean', 'Enhanced Exercise Time', 105, False, "", "", GENMON_CONFIG, GENMON_SECTION, "enhancedexercise"]
 
+    ConfigSettings["smart_transfer_switch"] = ['boolean', 'Smart Transfer Switch', 110, False, "", "", GENMON_CONFIG, GENMON_SECTION, "smart_transfer_switch"]
     ConfigSettings["displayunknown"] = ['boolean', 'Display Unknown Sensors', 111, False, "", "", GENMON_CONFIG, GENMON_SECTION, "displayunknown"]
 
     # These do not appear to work on reload, some issue with Flask
@@ -1254,7 +1262,7 @@ if __name__ == "__main__":
         except Exception as e1:
             LogErrorLine("Error in app.run: " + str(e1))
             #Errno 98
-            if e1.errno != errno.EADDRINUSE and e1.errno != errno.EIO:
+            if e1.errno != errno.EADDRINUSE: # and e1.errno != errno.EIO:
                 sys.exit(1)
             time.sleep(2)
             if Closing:
