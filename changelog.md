@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+
+## V1.11.8 - 2018-10-16
+- Improvements for genmqtt.py to allow for integer and float values to be passed as JSON strings
+- Added option for Smart Transfer Switch. This will disable the weekly exercise and remote start in the UI since the transfer switch will handled this.
+
 ## V1.11.7 - 2018-10-13
 - Add new remote command to reset the current alarm (see  Maintenance page)
 - Fixed bug in power log for H-100, if you experience problems, reset the power log or delete the file kwlog.txt and restart.

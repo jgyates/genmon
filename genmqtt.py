@@ -38,10 +38,15 @@ class MyGenPush(mysupport.MySupport):
         callback = None,
         polltime = None,
         blacklist = None,
-        flush_interval = float('inf')):
+        flush_interval = float('inf'),
+        use_numeric = False,
+        debug = False):
 
         super(MyGenPush, self).__init__()
         self.Callback = callback
+
+        self.UseNumeric = use_numeric
+        self.Debug = debug
 
         if polltime == None:
             self.PollTime = 3
@@ -103,7 +108,10 @@ class MyGenPush(mysupport.MySupport):
         while True:
             try:
 
-                statusdata = self.SendCommand("generator: status_json")
+                if not self.UseNumeric:
+                    statusdata = self.SendCommand("generator: status_json")
+                else:
+                    statusdata = self.SendCommand("generator: status_num_json")
                 outagedata = self.SendCommand("generator: outage_json")
                 monitordata = self.SendCommand("generator: monitor_json")
                 maintdata = self.SendCommand("generator: maint_json")
@@ -132,7 +140,7 @@ class MyGenPush(mysupport.MySupport):
 
     #------------ MySupport::CheckDictForChanges -------------------------------
     # This function is recursive, it will turn a nested dict into a flat dict keys
-    # that have a directory structure with corrposonding values and deteermine if
+    # that have a directory structure with corrposonding values and determine if
     # anyting changed. If it has then call our callback function
     def CheckDictForChanges(self, node, PathPrefix):
 
@@ -155,12 +163,12 @@ class MyGenPush(mysupport.MySupport):
                            #todo list support
                            pass
                        else:
-                           self.LogError("Invalid type in CheckDictForChanges: %s %s (2)" % (key, type(listitem)))
+                           self.LogError("Invalid type in CheckDictForChanges: %s %s (2)" % (key, str(type(listitem))))
                else:
                    CurrentPath = PathPrefix + "/" + str(key)
-                   self.CheckForChanges(CurrentPath, str(item))
+                   self.CheckForChanges(CurrentPath, item)
         else:
-           self.LogError("Invalid type in CheckDictForChanges %s " % type(node))
+           self.LogError("Invalid type in CheckDictForChanges %s " % str(type(node)))
 
     # ---------- MyGenPush::CheckForChanges-------------------------------------
     def CheckForChanges(self, Path, Value):
@@ -174,11 +182,11 @@ class MyGenPush(mysupport.MySupport):
             LastValue = self.LastValues.get(str(Path), None)
             LastChange = self.LastChange.get(str(Path), 0)
 
-            if LastValue == None or LastValue != str(Value) or (time.time() - LastChange) > self.FlushInterval:
-                self.LastValues[str(Path)] = str(Value)
+            if LastValue == None or LastValue != Value or (time.time() - LastChange) > self.FlushInterval:
+                self.LastValues[str(Path)] = Value
                 self.LastChange[str(Path)] = time.time()
                 if self.Callback != None:
-                    self.Callback(str(Path), str(Value))
+                    self.Callback(str(Path), Value)
 
         except Exception as e1:
              self.LogErrorLine("Error in mygenpush:CheckForChanges: " + str(e1))
@@ -217,6 +225,7 @@ class MyMQTT(mycommon.MyCommon):
         self.Topic = "generator"
         self.TopicRoot = None
         self.BlackList = None
+        self.UseNumeric = False
         self.PollTime = 2
         self.FlushInterval = float('inf')   # default to inifite flush interval (e.g., never)
         self.Debug = False
@@ -243,14 +252,22 @@ class MyMQTT(mycommon.MyCommon):
 
             self.PollTime = config.ReadValue('poll_interval', return_type = float, default = 2.0)
 
+            self.UseNumeric = config.ReadValue('numeric_json', return_type = bool, default = False)
+
             self.TopicRoot = config.ReadValue('root_topic')
 
             BlackList = config.ReadValue('blacklist')
+
             if BlackList != None:
-                self.BlackList = BlackList.strip().split(",")
+                if len(BlackList):
+                    BList = BlackList.strip().split(",")
+                    if len(BList):
+                        self.BlackList = []
+                        for Items in BList:
+                            self.BlackList.append(Items.strip())
 
             self.Debug = config.ReadValue('debug', return_type = bool, default = False)
-
+                
             if config.HasOption('flush_interval'):
                 self.FlushInterval = config.ReadValue('flush_interval', return_type = float, default = float('inf'))
                 if self.FlushInterval == 0:
@@ -272,7 +289,11 @@ class MyMQTT(mycommon.MyCommon):
 
             self.MQTTclient.connect(self.MQTTAddress, self.Port, 60)
 
-            self.Push = MyGenPush(host = self.MonitorAddress, log = self.log, callback = self.PublishCallback, polltime = self.PollTime , blacklist = self.BlackList, flush_interval = self.FlushInterval)
+            self.Push = MyGenPush(host = self.MonitorAddress,
+                log = self.log, callback = self.PublishCallback,
+                polltime = self.PollTime , blacklist = self.BlackList,
+                flush_interval = self.FlushInterval, use_numeric = self.UseNumeric,
+                debug = self.Debug)
 
             atexit.register(self.Close)
             signal.signal(signal.SIGTERM, self.Close)
@@ -294,11 +315,12 @@ class MyMQTT(mycommon.MyCommon):
                 FullPath = str(name)
 
             if self.Debug:
-                self.console.info("Publish:  " + FullPath  + ": " + str(value))
+                self.console.info("Publish:  " + FullPath  + ": " + str(value) + ": " + str(type(value)))
 
-            self.MQTTclient.publish(FullPath, str(value))
+            self.MQTTclient.publish(FullPath, value)
         except Exception as e1:
             self.LogErrorLine("Error in MyMQTT:PublishCallback: " + str(e1))
+
     #------------ MyMQTT::on_connect--------------------------------------------
     # The callback for when the client receives a CONNACK response from the server.
     def on_connect(self, client, userdata, flags, rc):

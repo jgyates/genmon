@@ -2906,13 +2906,16 @@ class Evolution(controller.GeneratorController):
         return self.GetParameter("0011", ReturnInt = ReturnInt, Label = "V")
 
     #------------ Evolution:GetSetOutputVoltage --------------------------------
-    def GetSetOutputVoltage(self):
+    def GetSetOutputVoltage(self, ReturnInt = False):
 
         # get set output voltage
         if not self.EvolutionController or not self.LiquidCooled:
-            return ""
+            if ReturnInt:
+                return 0
+            else:
+                return ""
 
-        return self.GetParameter("0237", Label = "V")
+        return self.GetParameter("0237", Label = "V", ReturnInt = ReturnInt)
 
     #------------ Evolution:GetStartupDelay ------------------------------------
     def GetStartupDelay(self):
@@ -3255,8 +3258,8 @@ class Evolution(controller.GeneratorController):
         if len(Value):
             OutageData["Utility Voltage"] = Value
 
-        OutageData["Utility Voltage Minimum"] = "%dV " % (self.UtilityVoltsMin)
-        OutageData["Utility Voltage Maximum"] = "%dV " % (self.UtilityVoltsMax)
+        OutageData["Utility Voltage Minimum"] = "%d V " % (self.UtilityVoltsMin)
+        OutageData["Utility Voltage Maximum"] = "%d V " % (self.UtilityVoltsMax)
 
         OutageData["Utility Threshold Voltage"] = self.GetThresholdVoltage()
 
@@ -3274,7 +3277,7 @@ class Evolution(controller.GeneratorController):
         return Outage
 
     #------------ Evolution:DisplayStatus --------------------------------------
-    def DisplayStatus(self, DictOut = False, Reg0001Value = None):
+    def DisplayStatus(self, DictOut = False, JSONNum = False, Reg0001Value = None):
 
         try:
             Status = collections.OrderedDict()
@@ -3299,20 +3302,20 @@ class Evolution(controller.GeneratorController):
             if self.SystemInAlarm():
                 Engine["System In Alarm"] = self.GetAlarmState()
 
-            Engine["Battery Voltage"] = self.GetBatteryVoltage()
+            Engine["Battery Voltage"] = self.ValueOut(self.GetBatteryVoltage(ReturnFloat = True), "V", JSONNum)
             if self.EvolutionController and self.LiquidCooled:
                 Engine["Battery Status"] = self.GetBatteryStatus()
 
-            Engine["RPM"] = self.GetRPM()
+            Engine["RPM"] = self.ValueOut(self.GetRPM(ReturnInt = True), "", JSONNum)
 
-            Engine["Frequency"] = self.GetFrequency()
-            Engine["Output Voltage"] = self.GetVoltageOutput()
+            Engine["Frequency"] = self.ValueOut(self.GetFrequency(ReturnFloat = True), "Hz", JSONNum)
+            Engine["Output Voltage"] = self.ValueOut(self.GetVoltageOutput(ReturnInt = True), "V", JSONNum)
 
             if self.PowerMeterIsSupported():
-                Engine["Output Current"] = self.GetCurrentOutput()
-                Engine["Output Power (Single Phase)"] = self.GetPowerOutput()
+                Engine["Output Current"] = self.ValueOut(self.GetCurrentOutput(ReturnFloat = True), "A", JSONNum)
+                Engine["Output Power (Single Phase)"] = self.ValueOut(self.GetPowerOutput(ReturnFloat = True), "kW", JSONNum)
 
-            Engine["Active Rotor Poles (Calculated)"] = self.GetActiveRotorPoles()
+            Engine["Active Rotor Poles (Calculated)"] = self.ValueOut(self.GetActiveRotorPoles(ReturnInt = True), "", JSONNum)
 
             if self.bDisplayUnknownSensors:
                 Engine["Unsupported Sensors"] = self.DisplayUnknownSensors()
@@ -3320,15 +3323,15 @@ class Evolution(controller.GeneratorController):
 
             if self.EvolutionController and self.LiquidCooled:
                 Line["Transfer Switch State"] = self.GetTransferStatus()
-            Line["Utility Voltage"] = self.GetUtilityVoltage()
+            Line["Utility Voltage"] = self.ValueOut(self.GetUtilityVoltage(ReturnInt = True), "V", JSONNum)
             #
-            Line["Utility Voltage Max"] = "%dV " % (self.UtilityVoltsMax)
-            Line["Utility Voltage Min"] = "%dV " % (self.UtilityVoltsMin)
-            Line["Utility Threshold Voltage"] = self.GetThresholdVoltage()
+            Line["Utility Voltage Max"] = self.ValueOut(self.UtilityVoltsMax, "V", JSONNum)
+            Line["Utility Voltage Min"] = self.ValueOut(self.UtilityVoltsMin, "V", JSONNum)
+            Line["Utility Threshold Voltage"] = self.ValueOut(self.GetThresholdVoltage(ReturnInt = True), "V", JSONNum)
 
             if self.EvolutionController and self.LiquidCooled:
-                Line["Utility Pickup Voltage"] = self.GetPickUpVoltage()
-                Line["Set Output Voltage"] = self.GetSetOutputVoltage()
+                Line["Utility Pickup Voltage"] = self.ValueOut(self.GetPickUpVoltage(ReturnInt = True), "V", JSONNum)
+                Line["Set Output Voltage"] = self.ValueOut(self.GetSetOutputVoltage(ReturnInt = True), "V", JSONNum)
 
             # Generator time
             Time["Monitor Time"] = datetime.datetime.now().strftime("%A %B %-d, %Y %H:%M:%S")

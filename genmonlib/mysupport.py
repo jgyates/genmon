@@ -9,7 +9,7 @@
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
 
-import os, sys, time, collections, threading, socket
+import os, sys, time, collections, threading, socket, json
 
 from genmonlib import mycommon, myplatform, myconfig
 
@@ -139,6 +139,38 @@ class MySupport(mycommon.MyCommon):
 
         return Thread.Wait(timeout)
 
+    #------------ MySupport::ValueOut ------------------------------------------
+    def ValueOut(self, value, unit, NoString = False):
+        try:
+
+            if NoString:
+                ReturnDict = collections.OrderedDict()
+                ReturnDict["unit"] = unit
+                DefaultReturn = json.dumps({'value': 0}, sort_keys=False)
+            else:
+                DefaultReturn = ""
+            if isinstance(value, int):
+                if not NoString:
+                    return "%d %s" % (int(value), str(unit))
+                else:
+                    ReturnDict["type"] = 'int'
+                    ReturnDict["value"] = value
+                    return json.dumps(ReturnDict, sort_keys=False)
+            elif isinstance(value, float):
+                if not NoString:
+                    return "%.2f %s" % (float(value), str(unit))
+                else:
+                    ReturnDict = collections.OrderedDict()
+                    ReturnDict["type"] = 'float'
+                    ReturnDict["value"] = round(value, 2)
+                    return json.dumps(ReturnDict, sort_keys=False)
+            else:
+                self.LogError("Unsupported type in ValueOut: " + str(type(value)))
+                return DefaultReturn
+        except Exception as e1:
+            self.LogErrorLine("Error in ValueOut: " + str(e1))
+            return DefaultReturn
+
     #------------ MySupport::GetDispatchItem -----------------------------------
     def GetDispatchItem(self, item):
 
@@ -153,7 +185,7 @@ class MySupport(mycommon.MyCommon):
         elif isinstance(item, float):
             return str(item)
         else:
-            self.LogError("Unable to convert type %s in GetDispatchItem" % type(item))
+            self.LogError("Unable to convert type %s in GetDispatchItem" % str(type(item)))
             self.LogError("Item: " + str(item))
             return ""
 
@@ -179,11 +211,11 @@ class MySupport(mycommon.MyCommon):
                             NewDict2 = collections.OrderedDict()
                             InputBuffer[key].append(self.ProcessDispatch(listitem, NewDict2))
                         else:
-                            self.LogError("Invalid type in ProcessDispatch %s " % type(node))
+                            self.LogError("Invalid type in ProcessDispatch %s " % str(type(node)))
                 else:
                     InputBuffer[key] = self.GetDispatchItem(item)
         else:
-            self.LogError("Invalid type in ProcessDispatch %s " % type(node))
+            self.LogError("Invalid type in ProcessDispatch %s " % str(type(node)))
 
         return InputBuffer
 
@@ -208,11 +240,11 @@ class MySupport(mycommon.MyCommon):
                         elif isinstance(listitem, str):
                             InputBuffer += (("    " * (indent +1)) +  self.GetDispatchItem(listitem) + "\n")
                         else:
-                            self.LogError("Invalid type in ProcessDispatchToString %s %s (2)" % (key, type(listitem)))
+                            self.LogError("Invalid type in ProcessDispatchToString %s %s (2)" % (key, str(type(listitem))))
                 else:
                     InputBuffer += (("    " * indent) + str(key) + " : " +  self.GetDispatchItem(item) + "\n")
         else:
-            self.LogError("Invalid type in ProcessDispatchToString %s " % type(node))
+            self.LogError("Invalid type in ProcessDispatchToString %s " % str(type(node)))
         return InputBuffer
 
     #----------  Controller::GetNumBitsChanged----------------------------------

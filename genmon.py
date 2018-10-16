@@ -25,7 +25,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.11.7"
+GENMON_VERSION = "V1.11.8"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -437,6 +437,7 @@ class Monitor(mysupport.MySupport):
             "allregs_json"      : [self.Controller.DisplayRegisters, (True, True), True],   # display registers
             "logs_json"         : [self.Controller.DisplayLogs, (True, True), True],
             "status_json"       : [self.Controller.DisplayStatus, (True,), True],
+            "status_num_json"   : [self.Controller.DisplayStatus, (True,True), True],
             "maint_json"        : [self.Controller.DisplayMaintenance, (True,), True],
             "monitor_json"      : [self.DisplayMonitor, (True,), True],
             "weather_json"      : [self.DisplayWeather, (True,), True],
@@ -851,7 +852,7 @@ class Monitor(mysupport.MySupport):
         while True:
             try:
                 conn, addr = self.ServerSocket.accept()
-                #self.printToString( 'Connected with ' + addr[0] + ':' + str(addr[1]))
+                #self.LogError('Connected with ' + addr[0] + ':' + str(addr[1]))
                 conn.settimeout(0.5)
                 self.ConnectionList.append(conn)
                 SocketThread = threading.Thread(target=self.SocketWorkThread, args = (conn,), name = "SocketWorkThread")
