@@ -44,7 +44,7 @@ bUseSecureHTTP = False
 bUseSelfSignedCert = True
 SSLContext = None
 HTTPPort = 8000
-loglocation = "/var/log/"
+loglocation = "./"
 clientport = 0
 log = None
 console = None
@@ -227,6 +227,17 @@ def ProcessCommand(command):
                     return json.dumps(data, sort_keys = False)
                 elif command == "set_add_on_settings":
                     SaveAddOnSettings(request.args.get('set_add_on_settings', default = None, type=str))
+                else:
+                    return "OK"
+            return "OK"
+
+        elif command in ["get_advanced_settings", "set_advanced_settings"]:
+            if session.get('write_access', True):
+                if command == "get_advanced_settings":
+                    data = ReadAdvancedSettingsFromFile()
+                    return json.dumps(data, sort_keys = False)
+                elif command == "set_advanced_settings":
+                    SaveAdvancedSettings(request.args.get('set_add_on_settings', default = None, type=str))
                 else:
                     return "OK"
             return "OK"
@@ -739,7 +750,72 @@ def ReadNotificationsFromFile():
         LogErrorLine("Error in ReadNotificationsFromFile: " + str(e1))
 
     return NotificationSettings
+#-------------------------------------------------------------------------------
+def ReadAdvancedSettingsFromFile():
 
+    ConfigSettings =  collections.OrderedDict()
+    try:
+        # This option is not displayed as it will break the link between genmon and genserv
+        ConfigSettings["server_port"] = ['int', 'Server Port', 5, 9082, "", 0, GENMON_CONFIG, GENMON_SECTION,"server_port"]
+        # this option is not displayed as this will break the modbus comms, only for debugging
+        ConfigSettings["address"] = ['string', 'Modbus slave address', 6, "9d", "", 0 , GENMON_CONFIG, GENMON_SECTION, "address"]
+        ConfigSettings["loglocation"] = ['string', 'Log Directory', 7, "/var/log/", "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "loglocation"]
+        ConfigSettings["enabledebug"] = ['boolean', 'Enable Debug', 8, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "enabledebug"]
+        # These settings are not displayed as the auto-detect controller will set these
+        # these are only to be used to override the auto-detect
+        #ConfigSettings["uselegacysetexercise"] = ['boolean', 'Use Legacy Exercise Time', 9, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "uselegacysetexercise"]
+        #ConfigSettings["liquidcooled"] = ['boolean', 'Force Controller Type (cooling)', 10, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "liquidcooled"]
+        #ConfigSettings["evolutioncontroller"] = ['boolean', 'Force Controller Type (Evo/Nexus)', 11, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "evolutioncontroller"]
+        # remove outage log, this will always be in the same location
+        ConfigSettings["outagelog"] = ['string', 'Outage Log', 12, "/home/pi/genmon/outage.txt", "", "required UnixFile", GENMON_CONFIG, GENMON_SECTION, "outagelog"]
+        ConfigSettings["serialnumberifmissing"] = ['string', 'Serial Number if Missing', 13, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "serialnumberifmissing"]
+        ConfigSettings["additionalrunhours"] = ['string', 'Additional Run Hours', 14, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "serialnumberifmissing"]
+        #ConfigSettings["kwlog"] = ['string', 'Power Log Name / Disable', 15, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlog"]
+        ConfigSettings["kwlogmax"] = ['string', 'Maximum size Power Log (MB)', 16, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlogmax"]
+        ConfigSettings["currentdivider"] = ['float', 'Current Divider', 17, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentdivider"]
+        ConfigSettings["currentoffset"] = ['string', 'Current Offset', 18, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentoffset"]
+        ConfigSettings["disableplatformstats"] = ['boolean', 'Enable Debug', 19, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "disableplatformstats"]
+        ConfigSettings["additional_modbus_timeout"] = ['float', 'Additional Modbus Timeout (sec)', 20, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "additional_modbus_timeout"]
+        ConfigSettings["controllertype"] = ['list', 'Controller Type', 21, "generac_evo_nexus", "", "generac_evo_nexus,h_100", GENMON_CONFIG, GENMON_SECTION, "nominalfrequency"]
+        #controllertype
+
+
+        for entry, List in ConfigSettings.items():
+            if List[6] == GENMON_CONFIG:
+                # filename, section = None, type = "string", entry, default = "", bounds = None):
+                (ConfigSettings[entry])[3] = ReadSingleConfigValue(entry = List[8], filename = GENMON_CONFIG, section =  List[7], type = List[0], default = List[3], bounds = List[5])
+            else:
+                LogError("Invaild Config File in ReadAdvancedSettingsFromFile: " + str(List[6]))
+
+        GetToolTips(ConfigSettings)
+    except Exception as e1:
+        self.LogErrorLine("Error in ReadAdvancedSettingsFromFile: " + str(e1))
+    return ConfigSettings
+
+#-------------------------------------------------------------------------------
+def SaveAdvancedSettings(query_string):
+    try:
+
+        # e.g. {'displayunknown': ['true']}
+        settings = dict(urlparse.parse_qs(query_string, 1))
+        if not len(settings):
+            # nothing to change
+            return
+        CurrentConfigSettings = ReadAdvancedSettingsFromFile()
+        with CriticalLock:
+            for Entry in settings.keys():
+                ConfigEntry = CurrentConfigSettings.get(Entry, None)
+                if ConfigEntry != None:
+                    ConfigFile = CurrentConfigSettings[Entry][6]
+                    Value = settings[Entry][0]
+                    Section = CurrentConfigSettings[Entry][7]
+                else:
+                    LogError("Invalid setting in SaveAdvancedSettings: " + str(Entry))
+                    continue
+                UpdateConfigFile(ConfigFile,Section, Entry, Value)
+        Restart()
+    except Exception as e1:
+        LogErrorLine("Error Update Config File (SaveAdvancedSettings): " + str(e1))
 #-------------------------------------------------------------------------------
 def ReadSettingsFromFile():
 
@@ -788,20 +864,6 @@ def ReadSettingsFromFile():
     ConfigSettings["port"] = ['string', 'Port for Serial Communication', 3, "/dev/serial0", "", "required UnixDevice", GENMON_CONFIG, GENMON_SECTION, "port"]
     ConfigSettings["serial_tcp_address"] = ['string', 'Serial Server TCP/IP Address', 4, "", "", "", GENMON_CONFIG, GENMON_SECTION, "serial_tcp_address"]
     ConfigSettings["serial_tcp_port"] = ['int', 'Serial Server TCP/IP Port', 5, "8899", "", "digits", GENMON_CONFIG, GENMON_SECTION, "serial_tcp_port"]
-
-    # This option is not displayed as it will break the link between genmon and genserv
-    #ConfigSettings["server_port"] = ['int', 'Server Port', 5, 9082, "", 0, GENMON_CONFIG, GENMON_SECTION,"server_port"]
-    # this option is not displayed as this will break the modbus comms, only for debugging
-    #ConfigSettings["address"] = ['string', 'Modbus slave address', 6, "9d", "", 0 , GENMON_CONFIG, GENMON_SECTION, "address"]
-    #ConfigSettings["loglocation"] = ['string', 'Log Directory', 7, "/var/log/", "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "loglocation"]
-    #ConfigSettings["enabledebug"] = ['boolean', 'Enable Debug', 14, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "enabledebug"]
-    # These settings are not displayed as the auto-detect controller will set these
-    # these are only to be used to override the auto-detect
-    #ConfigSettings["uselegacysetexercise"] = ['boolean', 'Use Legacy Exercise Time', 43, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "uselegacysetexercise"]
-    #ConfigSettings["liquidcooled"] = ['boolean', 'Liquid Cooled', 41, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "liquidcooled"]
-    #ConfigSettings["evolutioncontroller"] = ['boolean', 'Evolution Controler', 42, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "evolutioncontroller"]
-    # remove outage log, this will always be in the same location
-    #ConfigSettings["outagelog"] = ['string', 'Outage Log', 8, "/home/pi/genmon/outage.txt", "", 0, GENMON_CONFIG, GENMON_SECTION, "outagelog"]
 
     if ControllerType != 'h_100':
         ConfigSettings["disableoutagecheck"] = ['boolean', 'Do Not Check for Outages', 17, False, "", "", GENMON_CONFIG, GENMON_SECTION, "disableoutagecheck"]
