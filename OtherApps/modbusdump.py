@@ -108,7 +108,7 @@ if __name__=='__main__': #
 
     modbus = None
     try:
-        modbus = mymodbus.ModbusProtocol(RegisterResults, modbusaddress, device, baudrate, loglocation = "./", Parity = parity, OnePointFiveStopBits = OnePointFiveStopBits)
+        modbus = mymodbus.ModbusProtocol(RegisterResults, modbusaddress, device, baudrate, Parity = parity, OnePointFiveStopBits = OnePointFiveStopBits)
         pass
     except Exception as e1:
         printToScreen( "Error opening serial device...: " + str(e1))

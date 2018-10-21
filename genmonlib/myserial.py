@@ -17,8 +17,11 @@ import mylog, mythread, mysupport
 
 #------------ SerialDevice class -----------------------------------------------
 class SerialDevice(mysupport.MySupport):
-    def __init__(self, name, rate=9600, loglocation = "/var/log/", log = None, Parity = None, OnePointFiveStopBits = None, RtsCts = False):
+    def __init__(self, name = '/dev/serial0', rate=9600, log = None, Parity = None, OnePointFiveStopBits = None, RtsCts = False, config = None):
+
         super(SerialDevice, self).__init__()
+
+        self.config = config
         self.DeviceName = name
         self.BaudRate = rate
         self.Buffer = []
@@ -26,16 +29,21 @@ class SerialDevice(mysupport.MySupport):
         self.DiscardedBytes = 0
         self.Restarts = 0
         self.SerialStartTime = datetime.datetime.now()     # used for com metrics
+        self.loglocation = './'
+
+        if self.config != None:
+            self.loglocation = self.config.ReadValue('loglocation', default = '/var/log/')
+            self.DeviceName = self.config.ReadValue('port', default = '/dev/serial0')
 
         # log errors in this module to a file
         if log == None:
-            self.log = mylog.SetupLogger("myserial", loglocation + "myserial.log")
+            self.log = mylog.SetupLogger("myserial", self.loglocation + "myserial.log")
         else:
             self.log = log
 
         #Starting serial connection
         self.SerialDevice = serial.Serial()
-        self.SerialDevice.port = name
+        self.SerialDevice.port = self.DeviceName
         self.SerialDevice.baudrate = rate
         self.SerialDevice.bytesize = serial.EIGHTBITS     #number of bits per bytes
         if Parity == None:

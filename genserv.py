@@ -767,7 +767,7 @@ def ReadAdvancedSettingsFromFile():
         #ConfigSettings["liquidcooled"] = ['boolean', 'Force Controller Type (cooling)', 10, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "liquidcooled"]
         #ConfigSettings["evolutioncontroller"] = ['boolean', 'Force Controller Type (Evo/Nexus)', 11, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "evolutioncontroller"]
         # remove outage log, this will always be in the same location
-        ConfigSettings["outagelog"] = ['string', 'Outage Log', 12, "/home/pi/genmon/outage.txt", "", "required UnixFile", GENMON_CONFIG, GENMON_SECTION, "outagelog"]
+        #ConfigSettings["outagelog"] = ['string', 'Outage Log', 12, "/home/pi/genmon/outage.txt", "", "required UnixFile", GENMON_CONFIG, GENMON_SECTION, "outagelog"]
         ConfigSettings["serialnumberifmissing"] = ['string', 'Serial Number if Missing', 13, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "serialnumberifmissing"]
         ConfigSettings["additionalrunhours"] = ['string', 'Additional Run Hours', 14, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "serialnumberifmissing"]
         #ConfigSettings["kwlog"] = ['string', 'Power Log Name / Disable', 15, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlog"]
@@ -776,7 +776,8 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["currentoffset"] = ['string', 'Current Offset', 18, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentoffset"]
         ConfigSettings["disableplatformstats"] = ['boolean', 'Enable Debug', 19, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "disableplatformstats"]
         ConfigSettings["additional_modbus_timeout"] = ['float', 'Additional Modbus Timeout (sec)', 20, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "additional_modbus_timeout"]
-        ConfigSettings["controllertype"] = ['list', 'Controller Type', 21, "generac_evo_nexus", "", "generac_evo_nexus,h_100", GENMON_CONFIG, GENMON_SECTION, "nominalfrequency"]
+        ConfigSettings["https_port"] = ['int', 'Override HTTPS port', 21, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "https_port"]
+        ConfigSettings["controllertype"] = ['list', 'Controller Type', 22, "generac_evo_nexus", "", "generac_evo_nexus,h_100", GENMON_CONFIG, GENMON_SECTION, "nominalfrequency"]
         #controllertype
 
 
@@ -872,6 +873,7 @@ def ReadSettingsFromFile():
     ConfigSettings["synctime"] = ['boolean', 'Sync Time', 23, False, "", "", GENMON_CONFIG, GENMON_SECTION, "synctime"]
     ConfigSettings["metricweather"] = ['boolean', 'Use Metric Units', 24, False, "", "", GENMON_CONFIG, GENMON_SECTION, "metricweather"]
     ConfigSettings["optimizeforslowercpu"] = ['boolean', 'Optimize for slower CPUs', 25, False, "", "", GENMON_CONFIG, GENMON_SECTION, "optimizeforslowercpu"]
+    ConfigSettings["disablepowerlog"] = ['boolean', 'Disable Power / Current Display', 26, False, "", "", GENMON_CONFIG, GENMON_SECTION, "disablepowerlog"]
     ConfigSettings["autofeedback"] = ['boolean', 'Automated Feedback', 29, False, "", "", GENMON_CONFIG, GENMON_SECTION, "autofeedback"]
 
     ConfigSettings["nominalfrequency"] = ['list', 'Rated Frequency', 101, "60", "", "50,60", GENMON_CONFIG, GENMON_SECTION, "nominalfrequency"]

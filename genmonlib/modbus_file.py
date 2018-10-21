@@ -16,8 +16,16 @@ import mylog, mythread, mycommon, modbusbase
 
 #------------ ModbusBase class -------------------------------------------------
 class ModbusFile(modbusbase.ModbusBase):
-    def __init__(self, updatecallback, address = 0x9d, name = "/dev/serial", rate=9600, loglocation = "/var/log/", inputfile = None):
-        super(ModbusFile, self).__init__(updatecallback = updatecallback, address = address, name = name, rate = rate, loglocation = loglocation)
+    def __init__(self,
+        updatecallback,
+        address = 0x9d,
+        name = "/dev/serial",
+        rate=9600,
+        config = None,
+        inputfile = None):
+
+        super(ModbusFile, self).__init__(updatecallback = updatecallback, address = address, name = name, rate = rate, config = config)
+
         self.Address = address
         self.Rate = rate
         self.PortName = name
@@ -34,12 +42,11 @@ class ModbusFile(modbusbase.ModbusBase):
 
         self.ModbusStartTime = datetime.datetime.now()     # used for com metrics
         self.Registers = {}
+        self.Strings = {}
+        self.FileData = {}
 
         if self.InputFile == None:
             self.InputFile = os.path.dirname(os.path.realpath(__file__)) + "/modbusregs.txt"
-
-        # log errors in this module to a file
-        self.log = mylog.SetupLogger("mymodbus", loglocation + "mymodbus.log")
 
         if not os.path.isfile(self.InputFile):
             self.LogError("Error: File not present: " + self.InputFile)
@@ -48,7 +55,7 @@ class ModbusFile(modbusbase.ModbusBase):
 
         self.ReadInputFile(self.InputFile)
         self.Threads["ReadInputFileThread"] = mythread.MyThread(self.ReadInputFileThread, Name = "ReadInputFileThread")
-
+        self.InitComplete = False
 
     #-------------ModbusBase::ReadInputFileThread-------------------------------
     def ReadInputFileThread(self):
@@ -65,25 +72,46 @@ class ModbusFile(modbusbase.ModbusBase):
         return
 
     #-------------ModbusBase::ProcessMasterSlaveTransaction--------------------
-    def ProcessMasterSlaveTransaction(self, Register, Length, ReturnValue = False):
+    def ProcessMasterSlaveTransaction(self, Register, Length, skipupdate = False, ReturnString = False):
 
         # TODO need more validation
-        RegValue = self.Registers.get(Register, "")
-        if len(RegValue):
-            if ReturnValue:
-                return RegValue
-            else:
-                if not self.UpdateRegisterList == None:
-                    self.UpdateRegisterList(Register, RegValue)
-                self.TxPacketCount += 1
-                self.RxPacketCount += 1
-                if self.SimulateTime:
-                    time.sleep(.02)
-        return
+
+        if ReturnString:
+            RegValue = self.Strings.get(Register, "")
+        else:
+            RegValue = self.Registers.get(Register, "")
+
+        self.TxPacketCount += 1
+        self.RxPacketCount += 1
+        if self.SimulateTime:
+            time.sleep(.02)
+
+        if not skipupdate:
+            if not self.UpdateRegisterList == None:
+                self.UpdateRegisterList(Register, RegValue)
+
+        return RegValue
+
+    #-------------ModbusProtocol::ProcessMasterSlaveFileReadTransaction---------
+    def ProcessMasterSlaveFileReadTransaction(self, Register, Length, skipupdate = False, file_num = 1, ReturnString = False):
+
+        RegValue = self.FileData.get(Register, "")
+
+        self.TxPacketCount += 1
+        self.RxPacketCount += 1
+        if self.SimulateTime:
+            time.sleep(.02)
+
+        return RegValue
 
     #----------  GeneratorDevice:ReadInputFile  --------------------------------
     def ReadInputFile(self, FileName):
 
+        REGISTERS = 0
+        STRINGS = 1
+        FILE_DATA = 2
+
+        Section  = REGISTERS
         if not len(FileName):
             self.LogError("Error in  ReadInputFile: No Input File")
             return False
@@ -99,20 +127,43 @@ class ModbusFile(modbusbase.ModbusBase):
                         continue
                     if line[0] == "#":              # comment?
                         continue
-                    line = line.replace('\t', ' ')
-                    line = line.replace(' : ', ':')
-                    Items = line.split(" ")
+                    if "Strings :"in line:
+                        Section = STRINGS
+                    elif "FileData :" in line:
+                        Section = FILE_DATA
+                    if Section == REGISTERS:
+                        line = line.replace('\t', ' ')
+                        line = line.replace(' : ', ':')
+                        Items = line.split(" ")
+                        for entry in Items:
+                            RegEntry = entry.split(":")
+                            if len(RegEntry) == 2:
+                                if len(RegEntry[0])  and len(RegEntry[1]):
+                                    try:
+                                        if Section == REGISTERS:
+                                            HexVal = int(RegEntry[0], 16)
+                                            HexVal = int(RegEntry[1], 16)
+                                            #self.LogError("REGISTER: <" + RegEntry[0] + ": " + RegEntry[1] + ">")
+                                            self.Registers[RegEntry[0]] = RegEntry[1]
 
-                    for entry in Items:
-                        RegEntry = entry.split(":")
-                        if len(RegEntry) == 2:
-                            if len(RegEntry[0])  and len(RegEntry[1]):
-                                try:
-                                    HexVal = int(RegEntry[0], 16)
-                                    HexVal = int(RegEntry[1], 16)
-                                    self.Registers[RegEntry[0]] = RegEntry[1]
-                                except:
-                                    continue
+                                    except:
+                                        continue
+                    elif Section == STRINGS:
+                        Items = line.split(" : ")
+                        if len(Items) == 2:
+                            #self.LogError("STRINGS: <" + Items[0] + ": " + Items[1] + ">")
+                            self.Strings[Items[0]] = Items[1]
+                        else:
+                            pass
+                            #self.LogError("Error in STRINGS: " + str(Items))
+                    elif Section == FILE_DATA:
+                        Items = line.split(" : ")
+                        if len(Items) == 2:
+                            #self.LogError("FILEDATA: <" + Items[0] + ": " + Items[1] + ">")
+                            self.FileData[Items[0]] = Items[1]
+                        else:
+                            pass
+                            #self.LogError("Error in FILEDATA: " + str(Items))
 
             return True
 

@@ -25,7 +25,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.11.8"
+GENMON_VERSION = "V1.11.9"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -153,8 +153,8 @@ class Monitor(mysupport.MySupport):
             self.Threads = self.MergeDicts(self.Threads, self.Controller.Threads)
 
         except Exception as e1:
-            self.FatalError("Error opening controller device: " + str(e1))
-            return None
+            self.LogErrorLine("Error opening controller device: " + str(e1))
+            sys.exit(1)
 
 
         self.StartThreads()
@@ -199,8 +199,7 @@ class Monitor(mysupport.MySupport):
             if self.config.HasOption('server_port'):
                 self.ServerSocketPort = self.config.ReadValue('server_port', return_type = int)
 
-            if self.config.HasOption('loglocation'):
-                self.LogLocation = self.config.ReadValue('loglocation')
+            self.LogLocation = self.config.ReadValue('loglocation', default = "/var/log/")
 
             if self.config.HasOption('syncdst'):
                 self.bSyncDST = self.config.ReadValue('syncdst', return_type = bool)
@@ -322,6 +321,8 @@ class Monitor(mysupport.MySupport):
                 if not self.bDisablePlatformStats:
                     msgbody +=  self.DictToString(self.GetPlatformStats())
                 msgbody += self.Controller.DisplayRegisters(AllRegs = FullLogs)
+
+                msgbody += "\n" + self.GetSupportData() + "\n"
                 if self.FeedbackEnabled:
                     self.MessagePipe.SendMessage("Generator Monitor Submission", msgbody , recipient = self.MaintainerAddress, msgtype = "error")
 
@@ -352,11 +353,29 @@ class Monitor(mysupport.MySupport):
         if not self.bDisablePlatformStats:
             msgbody +=  self.DictToString(self.GetPlatformStats())
         msgbody += self.Controller.DisplayRegisters(AllRegs = True)
+
+        msgbody += "\n" + self.GetSupportData()  + "\n"
+
         self.MessagePipe.SendMessage("Generator Monitor Register Submission", msgbody , recipient = self.MaintainerAddress, msgtype = "info")
         return "Registers submitted"
 
+    #---------- Monitor::GetSupportData-----------------------------------------
+    def GetSupportData(self):
+
+        SupportData = collections.OrderedDict()
+        SupportData["StartInfo"] = self.GetStartInfo(NoTile = True)
+        if not self.bDisablePlatformStats:
+            SupportData["PlatformStats"] = self.GetPlatformStats()
+        SupportData["Data"] = self.Controller.DisplayRegisters(AllRegs = True, DictOut = True)
+        # Raw Modbus data
+        SupportData["Registers"] = self.Controller.Registers
+        SupportData["Strings"] = self.Controller.Strings
+        SupportData["FileData"] = self.Controller.FileData
+
+        return json.dumps(SupportData, sort_keys=False)
+
     #---------- Monitor::SendLogFiles-------------------------------------------
-    def SendLogFiles(self):
+    def SendLogFiles(self, AsJSON = True):
 
         try:
             if not self.EmailSendIsEnabled():
@@ -368,6 +387,8 @@ class Monitor(mysupport.MySupport):
             if not self.bDisablePlatformStats:
                 msgbody +=  self.DictToString(self.GetPlatformStats())
             msgbody += self.Controller.DisplayRegisters(AllRegs = True)
+
+            msgbody += "\n" + self.GetSupportData()  + "\n"
 
             LogList = []
             FilesToSend = ["genmon.log", "genserv.log", "mymail.log", "myserial.log",
@@ -427,7 +448,7 @@ class Monitor(mysupport.MySupport):
             "settime"       : [self.StartTimeThread, (), False],                  # set time and date
             "setexercise"   : [self.Controller.SetGeneratorExerciseTime, (command.lower(),), False],
             "setquiet"      : [self.Controller.SetGeneratorQuietMode, ( command.lower(),), False],
-            "setremote"     : [self.Controller.SetGeneratorRemoteStartStop, (command.lower(),), False],
+            "setremote"     : [self.Controller.SetGeneratorRemoteCommand, (command.lower(),), False],
             "help"          : [self.DisplayHelp, (), False],                   # display help screen
             ## These commands are used by the web / socket interface only
             "power_log_json"    : [self.Controller.GetPowerHistory, (command.lower(),), True],
@@ -489,7 +510,7 @@ class Monitor(mysupport.MySupport):
                 if not fromsocket:
                     msgbody += "\n"
         except Exception as e1:
-            self.LogErrorLine("Error Processing Commands: " + str(e1))
+            self.LogErrorLine("Error Processing Commands: " + command + ": "+ str(e1))
 
         if not ValidCommand:
             msgbody += "No valid command recognized."
@@ -732,15 +753,16 @@ class Monitor(mysupport.MySupport):
         self.CommunicationsActive = False
         time.sleep(0.25)
 
-        if self.Controller.UseSerialTCP:
-            WatchDogPollTime = 8
-        else:
-            WatchDogPollTime = 2
         while True:
             if self.WaitForExit("ComWatchDog", 1):
                 return
             if self.Controller.InitComplete:
                 break
+
+        if self.Controller.ModBus.UseTCP:
+            WatchDogPollTime = 8
+        else:
+            WatchDogPollTime = 2
 
         while True:
 

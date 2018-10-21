@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.11.9 - 2018-10-21
+- Updates for H-100
+- H-100 Log Entries
+- Alarm Acknowledge added
+- Updated modbus modules to better support modbus file reads
+- Corrected problem with reset alarm command on Evo/Nexus
+- Added option to disable power log and current output display
 
 ## V1.11.8 - 2018-10-16
 - Improvements for genmqtt.py to allow for integer and float values to be passed as JSON strings

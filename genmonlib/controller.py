@@ -28,7 +28,6 @@ class GeneratorController(mysupport.MySupport):
         simulationfile = None,
         message = None,
         feedback = None,
-        ConfigFilePath = None,
         config = None):
 
         super(GeneratorController, self).__init__(simulation = simulation)
@@ -39,43 +38,28 @@ class GeneratorController(mysupport.MySupport):
         self.FeedbackPipe = feedback
         self.MessagePipe = message
         self.config = config
-        if ConfigFilePath == None:
-            self.ConfigFilePath = "/etc/"
-        else:
-            self.ConfigFilePath = ConfigFilePath
 
-
-        self.Address = None
-        self.SerialPort = "/dev/serial0"
-        self.BaudRate = 9600
         self.ModBus = None
         self.InitComplete = False
         self.IsStopping = False
         self.InitCompleteEvent = threading.Event() # Event to signal init complete
         self.CheckForAlarmEvent = threading.Event() # Event to signal checking for alarm
-        self.Registers = {}         # dict for registers and values
+        self.Registers = collections.OrderedDict()         # dict for registers and values
+        self.Strings = collections.OrderedDict()           # dict for registers read a string data
+        self.FileData = collections.OrderedDict()          # dict for modbus file reads
         self.NotChanged = 0         # stats for registers
         self.Changed = 0            # stats for registers
         self.TotalChanged = 0.0     # ratio of changed ragisters
-        self.EnableDebug = False    # Used for enabeling debugging
-        self.UseMetric = False
         self.OutageLog = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/outage.txt"
         self.PowerLogMaxSize = 15       # 15 MB max size
         self.PowerLog =  os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/kwlog.txt"
         self.TileList = []        # Tile list for GUI
 
-        if self.Simulation:
-            self.LogLocation = "./"
-        else:
-            self.LogLocation = "/var/log/"
-        self.bDisplayUnknownSensors = False
-        self.SlowCPUOptimization = False
         self.UtilityVoltsMin = 0    # Minimum reported utility voltage above threshold
         self.UtilityVoltsMax = 0    # Maximum reported utility voltage above pickup
         self.SystemInOutage = False         # Flag to signal utility power is out
         self.TransferActive = False         # Flag to signal transfer switch is allowing gen supply power
         self.ControllerSelected = None
-        self.SiteName = "Home"
         # The values "Unknown" are checked to validate conf file items are found
         self.FuelType = "Unknown"
         self.NominalFreq = "Unknown"
@@ -91,35 +75,21 @@ class GeneratorController(mysupport.MySupport):
 
         try:
             if self.config != None:
-                if self.config.HasOption('sitename'):
-                    self.SiteName = self.config.ReadValue('sitename')
+                self.SiteName = self.config.ReadValue('sitename', default = 'Home')
+                self.LogLocation = self.config.ReadValue('loglocation', default = '/var/log/')
+                self.UseMetric = self.config.ReadValue('metricweather', return_type = bool, default = False)
+                self.EnableDebug = self.config.ReadValue('enabledebug', return_type = bool, default = False)
+                self.bDisplayUnknownSensors = self.config.ReadValue('displayunknown', return_type = bool, default = False)
+                self.bDisablePowerLog = self.config.ReadValue('disablepowerlog', return_type = bool, default = False)
 
-                if self.config.HasOption('port'):
-                    self.SerialPort = self.config.ReadValue('port')
 
-                if self.config.HasOption('loglocation'):
-                    self.LogLocation = self.config.ReadValue('loglocation')
-
-                if self.config.HasOption('optimizeforslowercpu'):
-                    self.SlowCPUOptimization = self.config.ReadValue('optimizeforslowercpu', return_type = bool)
-                # optional config parameters, by default the software will attempt to auto-detect the controller
-                # this setting will override the auto detect
-
-                if self.config.HasOption('metricweather'):
-                    self.UseMetric = self.config.ReadValue('metricweather', return_type = bool)
-
-                if self.config.HasOption('enabledebug'):
-                    self.EnableDebug = self.config.ReadValue('enabledebug', return_type = bool)
-
-                if self.config.HasOption('displayunknown'):
-                    self.bDisplayUnknownSensors = self.config.ReadValue('displayunknown', return_type = bool)
                 if self.config.HasOption('outagelog'):
                     self.OutageLog = self.config.ReadValue('outagelog')
 
                 if self.config.HasOption('kwlog'):
                     self.PowerLog = self.config.ReadValue('kwlog')
-                if self.config.HasOption('kwlogmax'):
-                    self.PowerLogMaxSize = self.config.ReadValue('kwlogmax', return_type = int)
+
+                self.PowerLogMaxSize = self.config.ReadValue('kwlogmax', return_type = int, default = 15)
 
                 if self.config.HasOption('nominalfrequency'):
                     self.NominalFreq = self.config.ReadValue('nominalfrequency')
@@ -140,10 +110,6 @@ class GeneratorController(mysupport.MySupport):
                     self.TankSize = self.config.ReadValue('tanksize')
 
                 self.SmartSwitch = self.config.ReadValue('smart_transfer_switch', return_type = bool, default = False)
-
-                self.UseSerialTCP = self.config.ReadValue('use_serial_tcp', return_type = bool, default = False)
-                self.SerialTCPAddress = self.config.ReadValue('serial_tcp_address', return_type = str, default = None)
-                self.SerialTCPPort = self.config.ReadValue('serial_tcp_port', return_type = int, default = None, NoLog = True)
 
         except Exception as e1:
             if not reload:
@@ -214,7 +180,7 @@ class GeneratorController(mysupport.MySupport):
         if not self.ControllerSelected == None or not len(self.ControllerSelected) or self.ControllerSelected == "generac_evo_nexus":
             MaxReg = 0x400
         else:
-            MaxReg == 0x400
+            MaxReg == 0x2000
         self.InitCompleteEvent.wait()
 
         if self.IsStopping:
@@ -240,7 +206,7 @@ class GeneratorController(mysupport.MySupport):
                     if self.WaitForExit("DebugThread", 0.25):  #
                         return
                     Register = "%04x" % Reg
-                    NewValue = self.ModBus.ProcessMasterSlaveTransaction(Register, 1, ReturnValue = True)
+                    NewValue = self.ModBus.ProcessMasterSlaveTransaction(Register, 1, skipupdate = True)
                     if not len(NewValue):
                         continue
                     OldValue = RegistersUnderTest.get(Register, "")
@@ -291,9 +257,16 @@ class GeneratorController(mysupport.MySupport):
             return ""
 
     #-------------GeneratorController:GetParameterLong--------------------------
-    def GetParameterLong(self, RegisterLo, RegisterHi, Label = None, Divider = None, ReturnInt = False):
+    def GetParameterLong(self, RegisterLo, RegisterHi, Label = None, Divider = None, ReturnInt = False, ReturnFloat = False):
 
         try:
+            if ReturnInt:
+                DefaultReturn = 0
+            elif ReturnFloat:
+                DefaultReturn = 0.0
+            else:
+                DefaultReturn = ""
+
             if not Label == None:
                 LabelStr = Label
             else:
@@ -303,10 +276,7 @@ class GeneratorController(mysupport.MySupport):
             ValueHi = self.GetParameter(RegisterHi)
 
             if not len(ValueLo) or not len(ValueHi):
-                if ReturnInt:
-                    return 0
-                else:
-                    return ""
+                return DefaultReturn
 
             IntValueLo = int(ValueLo)
             IntValueHi = int(ValueHi)
@@ -318,11 +288,13 @@ class GeneratorController(mysupport.MySupport):
 
             if not Divider == None:
                 FloatValue = IntValue / Divider
+                if ReturnFloat:
+                    return FloatValue
                 return "%2.1f %s" % (FloatValue, LabelStr)
             return "%d %s" % (IntValue, LabelStr)
         except Exception as e1:
             self.LogErrorLine("Error in GetParameterBit: " + str(e1))
-            return ""
+            return DefaultReturn
 
     #-------------GeneratorController:GetParameter------------------------------
     # Hex assumes no Divider and Label - return Hex string
@@ -367,7 +339,7 @@ class GeneratorController(mysupport.MySupport):
                 return str(int(Value,16))
 
         except Exception as e1:
-            self.LogErrorLine("Error in GetParameter:" + str(e1))
+            self.LogErrorLine("Error in GetParameter: Reg: " + Register + ": " + str(e1))
             return ""
 
     #---------------------GeneratorController::GetConfig------------------------
@@ -631,7 +603,7 @@ class GeneratorController(mysupport.MySupport):
 
             Register = CmdList[1].strip()
 
-            RegValue = self.ModBus.ProcessMasterSlaveTransaction( Register, 1, ReturnValue = True)
+            RegValue = self.ModBus.ProcessMasterSlaveTransaction( Register, 1, skipupdate = True)
 
             if RegValue == "":
                 self.LogError("Validation Error: Register  not known (ReadRegValue):" + Register)

@@ -156,6 +156,13 @@ class MySupport(mycommon.MyCommon):
                     ReturnDict["type"] = 'int'
                     ReturnDict["value"] = value
                     return json.dumps(ReturnDict, sort_keys=False)
+            if isinstance(value, long):
+                if not NoString:
+                    return "%d %s" % (int(value), str(unit))
+                else:
+                    ReturnDict["type"] = 'long'
+                    ReturnDict["value"] = value
+                    return json.dumps(ReturnDict, sort_keys=False)
             elif isinstance(value, float):
                 if not NoString:
                     return "%.2f %s" % (float(value), str(unit))
