@@ -358,7 +358,7 @@ class ModbusProtocol(modbusbase.ModbusBase):
                 Register = Packet[MBUS_OFF_REGISTER_HI] << 8 |  Packet[MBUS_OFF_REGISTER_LOW] & 0x00FF
             return Register
         except Exception as e1:
-            self.LogErrorLine("Error in GetRegisterFromPacket: " + str(Buffer))
+            self.LogErrorLine("Error in GetRegisterFromPacket: " + str(e1))
             return Register
 
     # ---------- ModbusProtocol::CreateMasterPacket-----------------------------
