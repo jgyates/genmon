@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file. Major relea
 - Update for unit test functions
 - Improved format of register submission to facilitate testing
 - Fixed one bug introduced in 1.11.9 for Nexus / Evo
+- Minor mod to battery gauge, now goes to zero volts instead of 10 on the low end
 
 ## V1.11.9 - 2018-10-21
 - Updates for H-100
