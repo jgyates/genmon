@@ -3224,7 +3224,7 @@ class Evolution(controller.GeneratorController):
             RunHours = None
             if not self.EvolutionController or not self.LiquidCooled:
                 # get total hours running
-                RunHours =  self.GetParameterLong("000c", "000b", RetrurnInt = True)
+                RunHours =  self.GetParameterLong("000c", "000b", ReturnInt = True)
                 if self.AdditionalRunHours != None:
                     RunHours = int(RunHours) + int(self.AdditionalRunHours)
             else:

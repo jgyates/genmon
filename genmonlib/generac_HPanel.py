@@ -43,8 +43,8 @@ class RegisterEnum(object):
     OIL_TEMP                = ["008b", 2]            # Oil Temp
     COOLANT_TEMP            = ["008d", 2]            # Coolant Temp
     OIL_PRESSURE            = ["008f", 2]            # Oil Pressure
-    COOLANT_LEVEL           = ["0091", 2]            # Coolant Level
-    FUEL_LEVEL              = ["0093", 2]            # USER CFG 05/Fuel Level =147
+    COOLANT_LEVEL           = ["0091", 2]            # Coolant Level                * Different on G-Panel
+    FUEL_LEVEL              = ["0093", 2]            # USER CFG 05/Fuel Level =147  * Different on G-Panel
     USER_CFG_06             = ["0095", 2]            # USER CFG 06 = 149
     THROTTLE_POSITION       = ["0097", 2]            # Throttle Position
     O2_SENSOR               = ["0099", 2]            # O2 Sensor
