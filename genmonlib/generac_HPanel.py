@@ -935,7 +935,7 @@ class HPanel(controller.GeneratorController):
             elif self.RegisterIsFileRecord(Register) and IsFile:
                 self.FileData[Register] = Value
             else:
-                self.LogError("Error in UpdateRegisterList: Unknown Register " + Register + ":" + Value)
+                self.LogError("Error in UpdateRegisterList: Unknown Register " + Register + ":" + Value + ": IsFile: " + str(IsFile) + ": " + "IsString: " + str(IsString))
         except Exception as e1:
             self.LogErrorLine("Error in UpdateRegisterList: " + str(e1))
 
@@ -962,6 +962,11 @@ class HPanel(controller.GeneratorController):
 
     #------------ HPanel:GetEngineState ----------------------------------------
     def GetEngineState(self):
+
+        State = self.GetParameterStringValue(RegisterStringEnum.ENGINE_STATUS[REGISTER])
+
+        if len(State):
+            return State
 
         try:
             EngineState = ""
@@ -991,6 +996,10 @@ class HPanel(controller.GeneratorController):
                 EngineState += "Shutdown alarm is active. "
             if self.GetParameterBit(RegisterEnum.OUTPUT_7[REGISTER], Output7.INT_EXERCISE_ACT):
                 EngineState += "Exercising. "
+            if self.GetParameterBit(RegisterEnum.OUTPUT_1[REGISTER], Output1.GEN_IN_MANUAL):
+                EngineState += "Generator In Manual. "
+            if self.GetParameterBit(RegisterEnum.INPUT_1[REGISTER], Input1.REMOTE_START):
+                EngineState += "Two Wire Start. "
 
             if not len(EngineState) and self.InitComplete and len(self.Registers):
                 self.FeedbackPipe.SendFeedback("Engine State", FullLogs = True, Always = True, Message="Unknown Engine State")
@@ -1224,10 +1233,9 @@ class HPanel(controller.GeneratorController):
             Battery["Battery Voltage"] = self.ValueOut(self.GetParameter(RegisterEnum.BATTERY_VOLTS[REGISTER], ReturnFloat = True, Divider = 100.0), "V", JSONNum)
             Battery["Battery Charger Current"] = self.ValueOut(self.GetParameter(RegisterEnum.BATTERY_CHARGE_CURRNT[REGISTER], ReturnFloat = True, Divider = 10.0), "A", JSONNum)
 
-            Engine["Engine Status"] = self.GetParameterStringValue(RegisterStringEnum.ENGINE_STATUS[REGISTER])
+            Engine["Engine Status"] = self.GetEngineState()
             Engine["Generator Status"] = self.GetParameterStringValue(RegisterStringEnum.GENERATOR_STATUS[REGISTER])
             Engine["Switch State"] = self.GetSwitchState()
-            Engine["Engine State"] = self.GetEngineState()
             Engine["Output Power"] = self.ValueOut(self.GetPowerOutput(ReturnFloat = True), "kW", JSONNum)
             Engine["Output Power Factor"] = self.ValueOut(self.GetParameter(RegisterEnum.TOTAL_PF[REGISTER], ReturnFloat = True, Divider = 100.0), "", JSONNum)
             Engine["RPM"] = self.ValueOut(self.GetParameter(RegisterEnum.OUTPUT_RPM[REGISTER], ReturnInt = True), "", JSONNum)
@@ -1536,15 +1544,21 @@ class HPanel(controller.GeneratorController):
     # "RUNNING-MANUAL", "OFF", "MANUAL", "READY"
     def GetBaseStatus(self):
         try:
+            Status = self.GetEngineState()
+            if "running" in Status.lower():
+                IsRunning = True
+            else:
+                IsRunning = False
+
             if self.SystemInAlarm():
                 return "ALARM"
             elif self.GetParameterBit(RegisterEnum.OUTPUT_7[REGISTER], Output7.NEED_SERVICE):
                 return "SERVICEDUE"
             elif self.GetParameterBit(RegisterEnum.OUTPUT_7[REGISTER], Output7.INT_EXERCISE_ACT):
                 return "EXERCISING"
-            elif self.GetParameterBit(RegisterEnum.OUTPUT_1[REGISTER], Output1.GEN_RUNNING) and self.GetSwitchState().lower() == "auto":
+            elif (IsRunning or self.GetParameterBit(RegisterEnum.OUTPUT_1[REGISTER], Output1.GEN_RUNNING)) and self.GetSwitchState().lower() == "auto":
                 return "RUNNING"
-            elif self.GetParameterBit(RegisterEnum.OUTPUT_1[REGISTER], Output1.GEN_RUNNING) and self.GetSwitchState().lower() == "manual":
+            elif (IsRunning or self.GetParameterBit(RegisterEnum.OUTPUT_1[REGISTER], Output1.GEN_RUNNING)) and self.GetSwitchState().lower() == "manual":
                 return "RUNNING-MANUAL"
             elif self.GetSwitchState().lower() == "manual":
                 return "MANUAL"

@@ -11,7 +11,7 @@
 
 from __future__ import print_function       # For python 3.x compatibility with print function
 
-import datetime, threading, crcmod, sys, time, os, collections
+import datetime, threading, crcmod, sys, time, os, collections, json
 import mylog, mythread, mycommon, modbusbase
 
 #------------ ModbusBase class -------------------------------------------------
@@ -53,8 +53,10 @@ class ModbusFile(modbusbase.ModbusBase):
         self.CommAccessLock = threading.RLock()     # lock to synchronize access to the serial port comms
         self.UpdateRegisterList = updatecallback
 
-        self.ReadInputFile(self.InputFile)
-        self.Threads["ReadInputFileThread"] = mythread.MyThread(self.ReadInputFileThread, Name = "ReadInputFileThread")
+        if not self.ReadInputFile(self.InputFile):
+            self.LogError("ModusFile Init(): Error loading input file: " + self.InputFile)
+        else:
+            self.Threads["ReadInputFileThread"] = mythread.MyThread(self.ReadInputFileThread, Name = "ReadInputFileThread")
         self.InitComplete = False
 
     #-------------ModbusBase::ReadInputFileThread-------------------------------
@@ -88,7 +90,7 @@ class ModbusFile(modbusbase.ModbusBase):
 
         if not skipupdate:
             if not self.UpdateRegisterList == None:
-                self.UpdateRegisterList(Register, RegValue)
+                self.UpdateRegisterList(Register, RegValue, IsFile = False, IsString = ReturnString)
 
         return RegValue
 
@@ -102,7 +104,30 @@ class ModbusFile(modbusbase.ModbusBase):
         if self.SimulateTime:
             time.sleep(.02)
 
+        RegValue = self.FileData.get(Register, "")
+        if not skipupdate:
+            if not self.UpdateRegisterList == None:
+                self.UpdateRegisterList(Register, RegValue, IsFile = True, IsString = ReturnString)
+
         return RegValue
+
+    #----------  ReadInputFile  ------------------------------------------------
+    def ReadJSONFile(self, FileName):
+
+        if not len(FileName):
+            self.LogError("Error in  ReadInputFile: No Input File")
+            return False
+
+        try:
+            with open(FileName) as f:
+                data = json.load(f,object_pairs_hook=collections.OrderedDict)
+                self.Registers = data["Registers"]
+                self.Strings = data["Strings"]
+                self.FileData = data["FileData"]
+            return True
+        except Exception as e1:
+            #self.LogErrorLine("Error in ReadJSONFile: " + str(e1))
+            return False
 
     #----------  GeneratorDevice:ReadInputFile  --------------------------------
     def ReadInputFile(self, FileName):
@@ -115,6 +140,9 @@ class ModbusFile(modbusbase.ModbusBase):
         if not len(FileName):
             self.LogError("Error in  ReadInputFile: No Input File")
             return False
+
+        if self.ReadJSONFile(FileName):
+            return True
 
         try:
 

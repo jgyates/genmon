@@ -244,7 +244,7 @@ class MySupport(mycommon.MyCommon):
                     for listitem in item:
                         if isinstance(listitem, dict):
                             InputBuffer = self.ProcessDispatchToString(listitem, InputBuffer, indent + 1)
-                        elif isinstance(listitem, str):
+                        elif isinstance(listitem, str) or isinstance(listitem, unicode):
                             InputBuffer += (("    " * (indent +1)) +  self.GetDispatchItem(listitem) + "\n")
                         else:
                             self.LogError("Invalid type in ProcessDispatchToString %s %s (2)" % (key, str(type(listitem))))
