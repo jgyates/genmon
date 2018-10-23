@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. Major relea
 - Minor update to reporting of engine state for H-100
 - Update for unit test functions
 - Improved format of register submission to facilitate testing
+- Fixed one bug introduced in 1.11.9 for Nexus / Evo
 
 ## V1.11.9 - 2018-10-21
 - Updates for H-100
