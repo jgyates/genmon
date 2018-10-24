@@ -3393,7 +3393,7 @@ class Evolution(controller.GeneratorController):
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
             StartInfo["UtilityVoltage"] = True
             StartInfo["RemoteCommands"] = not self.SmartSwitch
-            StartInfo["ResetAlarms"] = True
+            StartInfo["ResetAlarms"] = self.EvolutionController
             StartInfo["AckAlarms"] = False
             StartInfo["RemoteButtons"] = self.RemoteButtonsSupported()
             StartInfo["ExerciseControls"] = not self.SmartSwitch
