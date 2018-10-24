@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.11.12 - 2018-10-23
+- Inital support for Evolution Power Pact
+
 ## V1.11.11 - 2018-10-23
 - Removed Reset Alarm remote command for Nexus Controllers in the web interface. Does not appear to work on Nexus. The command is still there if using ClientInterface.py on the command line if anyone is interested in testing this on a Nexus.
 - Non functional modifications to H-100 code to prep for new features.

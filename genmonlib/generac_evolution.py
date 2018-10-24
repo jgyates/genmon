@@ -57,6 +57,7 @@ class Evolution(controller.GeneratorController):
         self.EvolutionController = None
         self.SynergyController = False
         self.Evolution2 = False
+        self.PowerPact = False
         self.LiquidCooled = None
         self.LiquidCooledParams = None
         # State Info
@@ -791,10 +792,13 @@ class Evolution(controller.GeneratorController):
             if ProductModel == 0x15:
                 self.Evolution2 = True
 
+            if ProductModel == 0x12:
+                self.PowerPact = True
+
             # if reg 000 is 3 or less then assume we have a Nexus Controller
             if ProductModel == 0x03 or ProductModel == 0x06:
                 self.EvolutionController = False    #"Nexus"
-            elif ProductModel == 0x09 or ProductModel == 0x0c or ProductModel == 0x0a  or ProductModel == 0x15:
+            elif ProductModel == 0x09 or ProductModel == 0x0c or ProductModel == 0x0a  or ProductModel == 0x15 or ProductModel == 0x12:
                 self.EvolutionController = True     #"Evolution"
             else:
                 # set a reasonable default
@@ -809,7 +813,7 @@ class Evolution(controller.GeneratorController):
             self.LogError("DetectController auto-detect override (controller). EvolutionController now is %s" % str(self.EvolutionController))
 
         if self.LiquidCooled == None:
-            if ProductModel == 0x03 or ProductModel == 0x09 or ProductModel == 0x0a  or ProductModel == 0x15:
+            if ProductModel == 0x03 or ProductModel == 0x09 or ProductModel == 0x0a  or ProductModel == 0x15  or ProductModel == 0x12:
                 self.LiquidCooled = False    # Air Cooled
             elif ProductModel == 0x06 or ProductModel == 0x0c:
                 self.LiquidCooled = True     # Liquid Cooled
@@ -842,6 +846,7 @@ class Evolution(controller.GeneratorController):
                 0x09 :  "Evolution, Air Cooled",
                 0x0a :  "Synergy Evolution, Air Cooled",
                 0x0c :  "Evolution, Liquid Cooled",
+                0x12 :  "Power Pact Evolution, Air Cooled",
                 0x15 :  "Evolution 2.0, Air Cooled"
             }
 
@@ -853,10 +858,12 @@ class Evolution(controller.GeneratorController):
             return ControllerDecoder.get(ProductModel, "Unknown 0x%02X" % ProductModel)
         else:
 
-            if self.SynergyController:
-                outstr = "Synergy Evolution, "
             if self.EvolutionController:
-                if self.Evolution2:
+                if self.SynergyController:
+                    outstr = "Synergy Evolution, "
+                elif self.PowerPact:
+                    outstr = "Power Pact Evolution, "
+                elif self.Evolution2:
                     outstr = "Evolution 2.0, "
                 else:
                     outstr = "Evolution, "
