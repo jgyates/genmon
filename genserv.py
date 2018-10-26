@@ -237,7 +237,7 @@ def ProcessCommand(command):
                     data = ReadAdvancedSettingsFromFile()
                     return json.dumps(data, sort_keys = False)
                 elif command == "set_advanced_settings":
-                    SaveAdvancedSettings(request.args.get('set_add_on_settings', default = None, type=str))
+                    SaveAdvancedSettings(request.args.get('set_advanced_settings', default = None, type=str))
                 else:
                     return "OK"
             return "OK"
@@ -693,11 +693,11 @@ def ReadSingleConfigValue(entry, filename = None, section = None, type = "string
         if type.lower() == "string" or type == "password":
             return config.ReadValue(entry)
         elif type.lower() == "boolean":
-            return config.ReadValue(entry, return_type = bool, default = default)
+            return config.ReadValue(entry, return_type = bool, default = default, NoLog = True)
         elif type.lower() == "int":
-            return config.ReadValue(entry, return_type = int, default = default)
+            return config.ReadValue(entry, return_type = int, default = default, NoLog = True)
         elif type.lower() == "float":
-            return config.ReadValue(entry, return_type = float, default = default)
+            return config.ReadValue(entry, return_type = float, default = default, NoLog = True)
         elif type.lower() == 'list':
             Value = config.ReadValue(entry)
             if bounds != None:
@@ -759,8 +759,10 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["server_port"] = ['int', 'Server Port', 5, 9082, "", 0, GENMON_CONFIG, GENMON_SECTION,"server_port"]
         # this option is not displayed as this will break the modbus comms, only for debugging
         ConfigSettings["address"] = ['string', 'Modbus slave address', 6, "9d", "", 0 , GENMON_CONFIG, GENMON_SECTION, "address"]
-        ConfigSettings["loglocation"] = ['string', 'Log Directory', 7, "/var/log/", "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "loglocation"]
-        ConfigSettings["enabledebug"] = ['boolean', 'Enable Debug', 8, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "enabledebug"]
+        ConfigSettings["additional_modbus_timeout"] = ['float', 'Additional Modbus Timeout (sec)', 7, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "additional_modbus_timeout"]
+        ConfigSettings["controllertype"] = ['list', 'Controller Type', 8, "generac_evo_nexus", "", "generac_evo_nexus,h_100", GENMON_CONFIG, GENMON_SECTION, "controllertype"]
+        ConfigSettings["loglocation"] = ['string', 'Log Directory',9, "/var/log/", "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "loglocation"]
+        ConfigSettings["enabledebug"] = ['boolean', 'Enable Debug', 10, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "enabledebug"]
         # These settings are not displayed as the auto-detect controller will set these
         # these are only to be used to override the auto-detect
         #ConfigSettings["uselegacysetexercise"] = ['boolean', 'Use Legacy Exercise Time', 9, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "uselegacysetexercise"]
@@ -769,16 +771,14 @@ def ReadAdvancedSettingsFromFile():
         # remove outage log, this will always be in the same location
         #ConfigSettings["outagelog"] = ['string', 'Outage Log', 12, "/home/pi/genmon/outage.txt", "", "required UnixFile", GENMON_CONFIG, GENMON_SECTION, "outagelog"]
         ConfigSettings["serialnumberifmissing"] = ['string', 'Serial Number if Missing', 13, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "serialnumberifmissing"]
-        ConfigSettings["additionalrunhours"] = ['string', 'Additional Run Hours', 14, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "serialnumberifmissing"]
+        ConfigSettings["additionalrunhours"] = ['string', 'Additional Run Hours', 14, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "additionalrunhours"]
         #ConfigSettings["kwlog"] = ['string', 'Power Log Name / Disable', 15, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlog"]
         ConfigSettings["kwlogmax"] = ['string', 'Maximum size Power Log (MB)', 16, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlogmax"]
         ConfigSettings["currentdivider"] = ['float', 'Current Divider', 17, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentdivider"]
         ConfigSettings["currentoffset"] = ['string', 'Current Offset', 18, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentoffset"]
-        ConfigSettings["disableplatformstats"] = ['boolean', 'Enable Debug', 19, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "disableplatformstats"]
-        ConfigSettings["additional_modbus_timeout"] = ['float', 'Additional Modbus Timeout (sec)', 20, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "additional_modbus_timeout"]
+        ConfigSettings["disableplatformstats"] = ['boolean', 'Disable Platform Stats', 19, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "disableplatformstats"]
         ConfigSettings["https_port"] = ['int', 'Override HTTPS port', 21, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "https_port"]
-        ConfigSettings["controllertype"] = ['list', 'Controller Type', 22, "generac_evo_nexus", "", "generac_evo_nexus,h_100", GENMON_CONFIG, GENMON_SECTION, "nominalfrequency"]
-        #controllertype
+
 
 
         for entry, List in ConfigSettings.items():
@@ -797,6 +797,9 @@ def ReadAdvancedSettingsFromFile():
 def SaveAdvancedSettings(query_string):
     try:
 
+        if query_string == None:
+            LogError("Empty query string in SaveAdvancedSettings")
+            return
         # e.g. {'displayunknown': ['true']}
         settings = dict(urlparse.parse_qs(query_string, 1))
         if not len(settings):
