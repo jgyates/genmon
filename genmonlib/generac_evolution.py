@@ -1731,7 +1731,10 @@ class Evolution(controller.GeneratorController):
                 Service["Battery Service Due"] = self.GetServiceDue("BATTERY") + " or " + self.GetServiceDueDate("BATTERY")
             else:
                 # Evolution
-                if not self.PowerPact:
+                if self.PowerPact:
+                    Service["Service A Due"] = self.GetServiceDue("A")
+                    Service["Service B Due"] = self.GetServiceDue("B")
+                else:
                     Service["Service A Due"] = self.GetServiceDue("A") + " or " + self.GetServiceDueDate("A")
                     Service["Service B Due"] = self.GetServiceDue("B") + " or " + self.GetServiceDueDate("B")
 
@@ -3068,7 +3071,6 @@ class Evolution(controller.GeneratorController):
         # get Hours until next service
         if self.EvolutionController:
             ServiceList = ["A","B"]
-
             for Service in ServiceList:
                 Value = self.GetServiceDue(Service, NoUnits = True)
                 if not len(Value):
@@ -3137,6 +3139,8 @@ class Evolution(controller.GeneratorController):
     #------------ Evolution:GetServiceDueDate ----------------------------------
     def GetServiceDueDate(self, serviceType = "A"):
 
+        if self.PowerPact:
+            return ""
         # Evolution Air Cooled Maintenance Message Intervals
         #Inspect Battery"  1 Year
         #Schedule A       200 Hours or 2 years
