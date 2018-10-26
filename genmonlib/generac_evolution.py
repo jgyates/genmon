@@ -1716,7 +1716,9 @@ class Evolution(controller.GeneratorController):
                 Maint["Exercise"] = Exercise
 
             Service = collections.OrderedDict()
+
             if not self.EvolutionController and self.LiquidCooled:
+                # NexusLC
                 Service["Air Filter Service Due"] = self.GetServiceDue("AIR") + " or " + self.GetServiceDueDate("AIR")
                 Service["Oil Change and Filter Due"] = self.GetServiceDue("OIL") + " or " + self.GetServiceDueDate("OIL")
                 Service["Spark Plug Change Due"] = self.GetServiceDue("SPARK") + " or " + self.GetServiceDueDate("SPARK")
@@ -1728,8 +1730,10 @@ class Evolution(controller.GeneratorController):
                 Service["Spark Plug Service Due"] = self.GetServiceDue("SPARK") + " or " + self.GetServiceDueDate("SPARK")
                 Service["Battery Service Due"] = self.GetServiceDue("BATTERY") + " or " + self.GetServiceDueDate("BATTERY")
             else:
-                Service["Service A Due"] = self.GetServiceDue("A") + " or " + self.GetServiceDueDate("A")
-                Service["Service B Due"] = self.GetServiceDue("B") + " or " + self.GetServiceDueDate("B")
+                # Evolution
+                if not self.PowerPact:
+                    Service["Service A Due"] = self.GetServiceDue("A") + " or " + self.GetServiceDueDate("A")
+                    Service["Service B Due"] = self.GetServiceDue("B") + " or " + self.GetServiceDueDate("B")
 
             Service["Total Run Hours"] = self.GetRunTimes()
             Service["Hardware Version"] = self.GetHardwareVersion()

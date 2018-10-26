@@ -160,6 +160,8 @@ class SerialTCPDevice(mysupport.MySupport):
             if self.Socket == None:
                 return ""
             data = self.Socket.recv(self.rxdatasize)
+            if data == None:
+                return ""
             return  data
         except socket.timeout as err:
             return ""
