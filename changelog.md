@@ -1,10 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
-## V1.11.13 - 2018-10-23
+## V1.11.14 - 2018-10-27
+- Added advanced page for web UI
+
+## V1.11.13 - 2018-10-26
 - Minor update for Power Pact, removed Service Due data
 
-## V1.11.12 - 2018-10-23
+## V1.11.12 - 2018-10-25
 - Initial support for Evolution Power Pact
 
 ## V1.11.11 - 2018-10-23

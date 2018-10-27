@@ -1268,7 +1268,7 @@ function DisplaySettings(){
         for (var index = 0; index < settings.length; ++index) {
             var key = settings[index];
             if (key == "sitename") {
-              outstr += '</table></fieldset><br>General Settings:<fieldset id="generalSettings"><table id="allsettings" border="0">';
+              outstr += '<br>General Settings:<fieldset id="generalSettings"><table id="allsettings" border="0">';
               outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
             } else if (key == "nominalfrequency") {
               outstr += '</table></fieldset><br><br><table width="100%" border="0"><tr><td nowrap>Generator Model Specific Settings&nbsp;&nbsp;</td><td width="80%"><hr></td></tr></table>';
@@ -1278,7 +1278,7 @@ function DisplaySettings(){
               usehttps = result[key][3];
               outstr += '</table></fieldset><br><br><table width="100%" border="0"><tr><td nowrap width="90px">';
               outstr += printSettingsField(result[key][0], key, result[key][3], "", "", "usehttpsChange(true);");
-              outstr += '</td><td nowrap>&nbsp;&nbsp;Optional - Webserver Security Settings&nbsp;&nbsp;</td><td width="80%"><hr></td></tr></table>';
+              outstr += '</td><td nowrap>&nbsp;&nbsp;Optional - Webserver Security Settings&nbsp;&nbsp;</td><td width="80%"><hr></td></tr><tr><td colspan="3"><div id="newURLnotify"><font color="red">NOTE: After saving, your new URL will be: <div style="display: inline-block;" id="newURL"></div></font></div></td></tr></table>';
               outstr += '<fieldset id="'+key+'Section"><table id="allsettings" border="0">';
             } else if (key == "use_serial_tcp") {
               outstr += '</table></fieldset><table width="100%" border="0"><tr><td width="25px">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td nowrap width="90px">';
@@ -1314,7 +1314,7 @@ function DisplaySettings(){
               outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "toggleSection(true, 'useselfsignedcert');") + '</td></tr>';
             } else if (key == "http_port") {
               outstr += '</table></fieldset><fieldset id="noneSecuritySettings"><table id="allsettings" border="0">';
-              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "toggleSection(true, 'useselfsignedcert');") + '</td></tr>';
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "toggleSection(true, 'useselfsignedcert'); usehttpsChange(true);") + '</td></tr>';
             } else if (key == "port") {
               outstr += '</table></fieldset><fieldset id="serialDirect"><table id="allsettings" border="0">';
               outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "toggleSection(true, 'useselfsignedcert');") + '</td></tr>';
@@ -1421,6 +1421,13 @@ function usehttpsChange(animation) {
       $("#usehttpsSection").hide((animation ? 300 : 0));
       $("#noneSecuritySettings").show((animation ? 300 : 0));
    }
+   if (($('#http_port').val() == $('#http_port').attr('oldValue')) && ($("#usehttps").attr('oldValue') == ($("#usehttps").prop('checked') === true ? "true" : "false"))){ 
+      $("#newURLnotify").hide((animation ? 300 : 0));
+   } else {
+      $("#newURL").html((($("#usehttps").is(":checked"))?"https":"http")+"://"+$(location).attr('hostname')+(((!$("#usehttps").is(":checked")) && ($('#http_port').val() != "80"))?":"+$('#http_port').val():"")+$(location).attr('pathname'));
+      $("#newURLnotify").show((animation ? 300 : 0));
+   }
+
 }
 //*****************************************************************************
 function useSerialTCPChange(animation) {
@@ -1497,30 +1504,30 @@ function printSettingsField(type, key, value, tooltip, validation, callback) {
      case "password":
        outstr += '<div class="field idealforms-field">' +
                  '<input id="' + key + '" style="width: 300px;" name="' + key + '" type="' + ((type == "password") ? "password" : "text") + '" ' +
-                  ((callback != "") ? ' onChange="' + callback + ';" ' : "") +
+                  (((typeof callback !== 'undefined' ) && (callback != "")) ? ' onChange="' + callback + ';" ' : "") +
                   (typeof value === 'undefined' ? '' : 'value="' + replaceAll(value, '"', '&quot;') + '" ') +
                   (typeof value === 'undefined' ? '' : 'oldValue="' + replaceAll(value, '"', '&quot;') + '" ') +
-                  (typeof validation === 'undefined' ? '' : 'data-idealforms-rules="' + validation + '" ') + '>' +
+                  (((typeof validation === 'undefined') || (validation==0)) ? 'onFocus="$(\'#'+key+'_tooltip\').show();" onBlur="$(\'#'+key+'_tooltip\').hide();" ' : 'data-idealforms-rules="' + validation + '" ') + '>' +
                  '<span class="error" style="display: none;"></span>' +
-                  (((typeof tooltip === 'undefined' ) || (tooltip.trim() == "")) ? '' : '<span class="tooltip" style="display: none;">' + replaceAll(tooltip, '"', '&quot;') + '</span>') +
+                  (((typeof tooltip !== 'undefined' ) && (tooltip.trim() != "")) ? '<span id="' + key + '_tooltip" class="tooltip" style="display: none;">' + replaceAll(tooltip, '"', '&quot;') + '</span>' : "") +
                  '</div>';
        break;
      case "float":
      case "int":
        outstr += '<div class="field idealforms-field">' +
                  '<input id="' + key + '" style="width: 150px;" name="' + key + '" type="text" ' +
-                  ((callback != "") ? ' onChange="' + callback + ';" ' : "") +
+                  (((typeof callback !== 'undefined' ) && (callback != "")) ? ' onChange="' + callback + ';" ' : "") +
                   (typeof value === 'undefined' ? '' : 'value="' + value.toString() + '" ') +
                   (typeof value === 'undefined' ? '' : 'oldValue="' + value.toString() + '" ') +
-                  (typeof validation === 'undefined' ? '' : 'data-idealforms-rules="' + validation + '" ') + '>' +
+                  (((typeof validation === 'undefined') || (validation==0)) ? 'onFocus="$(\'#'+key+'_tooltip\').show();" onBlur="$(\'#'+key+'_tooltip\').hide();" ' : 'data-idealforms-rules="' + validation + '" ') + '>' +
                  '<span class="error" style="display: none;"></span>' +
-                  (((typeof tooltip === 'undefined' ) || (tooltip.trim() == "")) ? '' : '<span class="tooltip" style="display: none;">' + replaceAll(tooltip, '"', '&quot;') + '</span>') +
+                  (((typeof tooltip !== 'undefined' ) && (tooltip.trim() != "")) ? '<span id="' + key + '_tooltip" class="tooltip" style="display: none;">' + replaceAll(tooltip, '"', '&quot;') + '</span>' : "") +
                  '</div>';
        break;
      case "boolean":
        outstr += '<div class="field idealforms-field" onmouseover="showIdealformTooltip($(this))" onmouseout="hideIdealformTooltip($(this))">' +
                  '<input id="' + key + '" name="' + key + '" type="checkbox" ' +
-                  ((callback != "") ? ' data-callback="' + callback + ';" ' : "") +
+                  (((typeof callback !== 'undefined' ) && (callback != "")) ? ' data-callback="' + callback + ';" ' : "") +
                   (((typeof value !== 'undefined' ) && (value.toString() == "true")) ? ' checked ' : '') +
                   (((typeof value !== 'undefined' ) && (value.toString() == "true")) ? ' oldValue="true" ' : ' oldValue="false" ') + '>' +
                   (((typeof tooltip === 'undefined' ) || (tooltip.trim() == "")) ? '' : '<span class="tooltip" style="display: none;">' + replaceAll(tooltip, '"', '&quot;') + '</span><i class="icon"></i>') +
@@ -1529,7 +1536,7 @@ function printSettingsField(type, key, value, tooltip, validation, callback) {
      case "list":
        outstr += '<div class="field idealforms-field" onmouseover="showIdealformTooltip($(this))" onmouseout="hideIdealformTooltip($(this))">' +
                  '<select id="' + key + '" style="width: 300px;" name="' + key + '" ' +
-                 ((callback != "") ? ' onChange="' + callback + ';" ' : "") +
+                  (((typeof callback !== 'undefined' ) && (callback != "")) ? ' onChange="' + callback + ';" ' : "") +
                   (typeof value === 'undefined' ? '' : 'value="' + replaceAll(value, '"', '&quot;') + '" ') +
                   (typeof value === 'undefined' ? '' : 'oldValue="' + replaceAll(value, '"', '&quot;') + '" ') + '>' +
                  $.map(validation.split(","), function( val, i ) { return '<option class="optionClass" name="'+val+'" '+((val==value) ? 'selected' : '')+'>'+val+'</option>'}).join() +
@@ -2384,15 +2391,179 @@ function toHex(d) {
 }
 
 //*****************************************************************************
+// Display the ADVANCED Settings Tab
+//*****************************************************************************
+function DisplayAdvancedSettings(){
+
+    var url = baseurl.concat("get_advanced_settings");
+    $.ajax({dataType: "json", url: url, timeout: 12000, error: processAjaxError, success: function(result){
+        processAjaxSuccess();
+
+        var outstr = '<form class="idealforms" novalidate  id="formSettings">ADVANCED Settings:<br><br><font color="red">Warning: These settings are intended for debugging and advanced users. Please proceed with caution.</font><br><br><fieldset id="generalSettings"><table id="allsettings" border="0">';
+        var settings =  getSortedKeys(result, 2);
+        for (var index = 0; index < settings.length; ++index) {
+            var key = settings[index];
+            outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
+        }
+        outstr += '</table></fieldset></form><br>';
+        outstr += '<button id="setadvancedsettingsbutton" onClick="saveAdvancedSettings()">Save</button>';
+
+        $("#mydisplay").html(outstr);
+        $('input').lc_switch();
+        $.extend($.idealforms.rules, {
+           // The rule is added as "ruleFunction:arg1:arg2"
+           HTTPAddress: function(input, value, arg1, arg2) {
+             var regex = RegExp("^http[s]?:\\/\\/(([a-z0-9]+([\-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))$", 'g');
+             return regex.test(value);
+           },
+           InternetAddress: function(input, value, arg1, arg2) {
+             var regex = RegExp("^(([a-z0-9]+([\-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))$", 'g');
+             return regex.test(value);
+           },
+           IPAddress: function(input, value, arg1, arg2) {
+             var regex = RegExp("^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\/.*)?)|(localhost(\/.*)?))$", 'g');
+             return regex.test(value);
+           },
+           InternationalPhone: function(input, value, arg1, arg2) {
+             var regex = RegExp('^(\\+(\\d{1,3}))?((\\(\\d{1,4}\\))|(\\d{1,3}))?(\\s|\-)?(\\d+(\\s?|\-?))+$', 'g');
+             return regex.test(value);
+           },
+           UnixFile: function(input, value, arg1, arg2) {
+             var regex = RegExp("^(\/[^\/]+)+$", 'g');
+             return regex.test(value);
+           },
+           UnixDir: function(input, value, arg1, arg2) {
+             var regex = RegExp("^(\/[^\/]+)+\/$", 'g');
+             return regex.test(value);
+           },
+           UnixDevice: function(input, value, arg1, arg2) {
+             var regex = RegExp("^\/dev(\/[^\/]+)+$", 'g');
+             return regex.test(value);
+           }
+        });
+        $.extend($.idealforms.errors, {
+            HTTPAddress: 'Must be a valid address from an internet server, eg. http://mail.google.com',
+            InternetAddress: 'Must be a valid address from an internet server, eg. mail.google.com',
+            IPAddress: 'Must be a valid IP address, eg. 192.168.1.100',
+            InternationalPhone: 'Must be a valid Phone Number, eg. +1 123 456 7890',
+            UnixFile: 'Must be a valid UNIX file',
+            UnixDir: 'Must be a valid UNIX path',
+            UnixDevice: 'Must be a valid UNIX file path starting with /dev/'
+        });
+        $('form.idealforms').idealforms({
+           tooltip: '.tooltip',
+           silentLoad: true,
+        });
+   }});
+
+}
+
+//*****************************************************************************
+// called when Save Settings is clicked
+//*****************************************************************************
+function saveAdvancedSettings(){
+
+    var DisplayStr = "Save settings? Are you sure?";
+    var DisplayStrAnswer = false;
+    var DisplayStrButtons = {
+        NO: {
+          text: 'Cancel',
+          type: 'button',
+          className: 'vex-dialog-button-secondary',
+          click: function noClick () {
+            DisplayStrAnswer = false
+            this.close()
+          }
+        },
+        YES: {
+          text: 'OK',
+          type: 'submit',
+          className: 'vex-dialog-button-primary',
+          click: function yesClick () {
+            DisplayStrAnswer = true
+          }
+        }
+    }
+
+    vex.dialog.open({
+        unsafeMessage: DisplayStr,
+        overlayClosesOnClick: false,
+        buttons: [
+           DisplayStrButtons.NO,
+           DisplayStrButtons.YES
+        ],
+        onSubmit: function(e) {
+           if (DisplayStrAnswer) {
+             DisplayStrAnswer = false; // Prevent recursive calls.
+             e.preventDefault();
+             saveAdvancedSettingsJSON();
+             var DisplayStr1 = 'Saving...';
+             var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
+             $('.vex-dialog-message').html(DisplayStr1);
+             $('.vex-dialog-buttons').html(DisplayStr2);
+             $('.progress-bar-fill').queue(function () {
+                  $(this).css('width', '100%')
+             });
+             setTimeout(function(){
+                vex.closeAll();
+             }, 10000);
+           }
+        }
+    })
+}
+//*****************************************************************************
+function saveAdvancedSettingsJSON() {
+    try {
+        var fields = {};
+
+        $('#formSettings input').each(function() {
+            var oldValue = $(this).attr('oldValue');
+            var currentValue = (($(this).attr('type') == "checkbox") ? ($(this).prop('checked') === true ? "true" : "false") : $(this).val());
+            if (oldValue != currentValue) {
+               fields[$(this).attr('name')] = currentValue;
+               $(this).attr('oldValue', currentValue);
+            }
+        });
+        $('#formSettings select').each(function() {
+            var oldValue = $(this).attr('oldValue');
+            var currentValue = $(this).val();
+            if (oldValue != currentValue) {
+               fields[$(this).attr('name')] = currentValue;
+               $(this).attr('oldValue', currentValue);
+            }
+        });
+
+        jQuery.each( ["disablesmtp", "disableimap", "disableweather"], function( i, val ) {
+          if (fields[val] != undefined)
+             fields[val] = (fields[val] == "true" ? "false" : "true");
+        });
+
+        // save settings
+        var url = baseurl.concat("set_advanced_settings");
+        $.getJSON(  url,
+                    {set_advanced_settings: $.param(fields)},
+                    function(result){
+        });
+
+    } catch(err) {
+        GenmonAlert("Error: invalid selection");
+    }
+}
+
+
+//*****************************************************************************
 //  called when menu is clicked
 //*****************************************************************************
 function MenuClick(page)
 {
+        oldMenuElement = menuElement;
         menuElement = page;
         RemoveClass();  // remove class from menu items
         // add class active to the clicked item
         $("#"+menuElement).find("a").addClass(GetCurrentClass());
         window.scrollTo(0,0);
+        $("#registers").removeClass("settings");
+        $("#registers").addClass("registers");
         switch (menuElement) {
             case "outage":
                 GetDisplayValues(menuElement);
@@ -2422,7 +2593,14 @@ function MenuClick(page)
                 DisplayAbout();
                 break;
             case "registers":
-                DisplayRegistersFull();
+                if (oldMenuElement == "registers") {
+                   menuElement = "adv_settings";
+                   DisplayAdvancedSettings();
+                } else {                
+                   $("#registers").addClass("settings");
+                   $("#registers").removeClass("registers");
+                   DisplayRegistersFull();
+                }
                 break;
             default:
                 break;
@@ -2580,7 +2758,7 @@ function UpdateDisplay()
         DisplayLogs();
     } else if (menuElement == "monitor") {
         DisplayMonitor();
-    } else if ((menuElement != "settings") && (menuElement != "notifications") && (menuElement != "addons") && (menuElement != "about")) {
+    } else if ((menuElement != "settings") && (menuElement != "notifications") && (menuElement != "addons") && (menuElement != "about") && (menuElement != "adv_settings")) {
         GetDisplayValues(menuElement);
     }
 
