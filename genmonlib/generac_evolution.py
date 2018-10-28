@@ -427,6 +427,8 @@ class Evolution(controller.GeneratorController):
     #----------  GeneratorController::FuelGuageSupported------------------------
     def FuelGuageSupported(self):
 
+        if not self.PowerMeterIsSupported():
+            return False
         if not self.FuelConsumptionSupported():
             return False
 
@@ -1681,11 +1683,19 @@ class Evolution(controller.GeneratorController):
             if self.EvolutionController and self.Evolution2:
                 Maint["Ambient Temperature Sensor"] = self.GetParameter("05ed", Label = "F")
 
-            if self.EvolutionController and self.FuelConsumptionSupported():
-                Maint["kW Hours in last 30 days"] = self.GetPowerHistory("power_log_json=43200,kw", NoReduce = True)
-                Maint["Fuel Consumption in last 30 days"] = self.GetPowerHistory("power_log_json=43200,fuel", NoReduce = True)
-                if self.FuelGuageSupported():
-                    Maint["Estimated Fuel In Tank"] = self.GetEstimatedFuelInTank()
+            if self.PowerMeterIsSupported() and self.FuelConsumptionSupported():
+                # Only update this once a min
+                if self.LastHouseKeepingTime == None or self.GetDeltaTimeMinutes(datetime.datetime.now() - self.LastHouseKeepingTime) >= 1 :
+                    self.KWHoursMonth = self.GetPowerHistory("power_log_json=43200,kw")
+                    self.FuelMonth = self.GetPowerHistory("power_log_json=43200,fuel")
+                    self.LastHouseKeepingTime = datetime.datetime.now()
+
+                if self.KWHoursMonth != None:
+                    Maint["kW Hours in last 30 days"] = self.KWHoursMonth
+                if self.FuelMonth != None:
+                    Maint["Fuel Consumption in last 30 days"] = self.FuelMonth
+
+
 
             ControllerSettings = collections.OrderedDict()
             Maint["Controller Settings"] = ControllerSettings
@@ -2706,6 +2716,7 @@ class Evolution(controller.GeneratorController):
         Divisor = 1.0
         CurrentOffset = 0.0
         CurrentFloat = 0.0
+        DebugInfo = ""
 
         if ReturnFloat:
             DefaultReturn = 0.0
@@ -2723,6 +2734,7 @@ class Evolution(controller.GeneratorController):
             if self.EvolutionController and self.LiquidCooled:
                 Value = self.GetRegisterValueFromList("0058")
                 if len(Value):
+                    DebugInfo += Value
                     CurrentFloat = int(Value,16)
                     #CurrentOutput = round(max((CurrentFloat * .2248) - 303.268, 0), 2)
                     CurrentOutput = round(max((CurrentFloat / 3.74), 0), 2)
@@ -2733,9 +2745,11 @@ class Evolution(controller.GeneratorController):
 
                 Value = self.GetRegisterValueFromList("003a")
                 if len(Value):
+                    DebugInfo += "Hi: " + Value
                     CurrentHi = int(Value,16)
                 Value = self.GetRegisterValueFromList("003b")
                 if len(Value):
+                    DebugInfo += " Lo: " + Value
                     CurrentLow = int(Value,16)
 
                 # Dict is formated this way:  ModelID: [ divisor, offset to register]
@@ -2790,7 +2804,7 @@ class Evolution(controller.GeneratorController):
                 if CurrentOutput > ((int(self.NominalKW) * 1000) / 240) + 2 or CurrentOutput < 0:
                     # if we are here, then the current is out of range.
                     if not BaseStatus == "EXERCISING":
-                        msg = "Current Calculation: %f, CurrentFloat: %f, Divisor: %f, Offset %f" % (CurrentOutput, CurrentFloat, Divisor, CurrentOffset)
+                        msg = "Current Calculation: %f, CurrentFloat: %f, Divisor: %f, Offset %f, Debug: %s" % (CurrentOutput, CurrentFloat, Divisor, CurrentOffset, DebugInfo)
                         self.FeedbackPipe.SendFeedback("Current Calculation out of range", Message=msg, FullLogs = True )
                     if CurrentOutput < 0:
                         CurrentOutput = 0

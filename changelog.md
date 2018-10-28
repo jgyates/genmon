@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.11.15 - 2018-10-28
+- Optimized fuel and power log file system reads
+- Added additional debug prints for troubleshooting Current Output on some systems
+
 ## V1.11.14 - 2018-10-27
 - Added advanced page for web UI
 
