@@ -242,15 +242,21 @@ class MyPlatform(mycommon.MyCommon):
 
     #------------ MyPlatform::GetWiFiSignalStrength ----------------------------
     def GetWiFiSignalStrength(self, adapter):
-        result = subprocess.check_output(['sudo', 'iw', adapter, 'link'])
-        match = re.search('signal: -(\d+) dBm', result)
-        return match.group(1)
+        try:
+            result = subprocess.check_output(['iw', adapter, 'link'])
+            match = re.search('signal: -(\d+) dBm', result)
+            return match.group(1)
+        except Exception as e1:
+            return ""
 
     #------------ MyPlatform::GetWiFiSignalQuality -----------------------------
     def GetWiFiSignalQuality(self, adapter):
-        result = subprocess.check_output(['sudo', 'iwconfig', adapter])
-        match = re.search('Link Quality=([\s\S]*?) ', result)
-        return match.group(1)
+        try:
+            result = subprocess.check_output(['iwconfig', adapter])
+            match = re.search('Link Quality=([\s\S]*?) ', result)
+            return match.group(1)
+        except Exception as e1:
+            return ""
 
     #------------ MyPlatform::GetWiFiInfo --------------------------------------
     def GetWiFiInfo(self, adapter):

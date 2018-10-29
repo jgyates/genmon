@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
 ## V1.11.16 - 2018-10-29
+- Removed 'sudo' from wireless stats check
+
+## V1.11.16 - 2018-10-29
 - Added advanced (genmon.conf) to use the absolute value of the CT reading when making current calculations.
 
 ## V1.11.15 - 2018-10-28

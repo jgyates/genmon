@@ -25,7 +25,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.11.16"
+GENMON_VERSION = "V1.11.17"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(mysupport.MySupport):
