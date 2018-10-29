@@ -776,7 +776,8 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["kwlogmax"] = ['string', 'Maximum size Power Log (MB)', 16, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlogmax"]
         ConfigSettings["currentdivider"] = ['float', 'Current Divider', 17, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentdivider"]
         ConfigSettings["currentoffset"] = ['string', 'Current Offset', 18, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentoffset"]
-        ConfigSettings["disableplatformstats"] = ['boolean', 'Disable Platform Stats', 19, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "disableplatformstats"]
+        ConfigSettings["currentabs"] = ['boolean', 'Current Absolute Value', 19, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "currentabs"]
+        ConfigSettings["disableplatformstats"] = ['boolean', 'Disable Platform Stats', 20, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "disableplatformstats"]
         ConfigSettings["https_port"] = ['int', 'Override HTTPS port', 21, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "https_port"]
 
 

@@ -67,6 +67,7 @@ class Evolution(controller.GeneratorController):
         self.bEnhancedExerciseFrequency = False     # True if controller supports biweekly and monthly exercise times
         self.CurrentDivider = None
         self.CurrentOffset = None
+        self.CurrentAbsoluteValue = False
         self.DisableOutageCheck = False
         self.SerialNumberReplacement = None
         self.AdditionalRunHours = None
@@ -2739,6 +2740,9 @@ class Evolution(controller.GeneratorController):
                     #CurrentOutput = round(max((CurrentFloat * .2248) - 303.268, 0), 2)
                     CurrentOutput = round(max((CurrentFloat / 3.74), 0), 2)
 
+                    if self.CurrentAbsoluteValue:
+                        CurrentFloat = abs(CurrentOutput)
+
             elif self.EvolutionController and not self.LiquidCooled:
                 CurrentHi = 0
                 CurrentLow = 0
@@ -2775,6 +2779,9 @@ class Evolution(controller.GeneratorController):
                                         }
 
                 CurrentFloat = float(self.signed32((CurrentHi << 16) | (CurrentLow)))
+
+                if self.CurrentAbsoluteValue:
+                    CurrentFloat = abs(CurrentFloat)
                 # Get Model ID
                 Value = self.GetRegisterValueFromList("0019")
                 if not len(Value):
@@ -3466,6 +3473,7 @@ class Evolution(controller.GeneratorController):
                 self.bEnhancedExerciseFrequency = self.config.ReadValue('enhancedexercise', return_type = bool, default = False)
                 self.CurrentDivider = self.config.ReadValue('currentdivider', return_type = float, default = None, NoLog = True)
                 self.CurrentOffset = self.config.ReadValue('currentoffset', return_type = float, default = None, NoLog = True)
+                self.CurrentAbsoluteValue = self.config.ReadValue('currentabs', return_type = bool, default = False, NoLog = True)
 
                 self.SerialNumberReplacement = self.config.ReadValue('serialnumberifmissing', default = None)
                 if self.SerialNumberReplacement != None and len(self.SerialNumberReplacement):
