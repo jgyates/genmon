@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
-## V1.11.16 - 2018-10-29
+## V1.11.17 - 2018-10-29
 - Removed 'sudo' from wireless stats check
 
 ## V1.11.16 - 2018-10-29
