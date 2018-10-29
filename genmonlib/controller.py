@@ -54,6 +54,7 @@ class GeneratorController(mysupport.MySupport):
         self.PowerLogMaxSize = 15       # 15 MB max size
         self.PowerLog =  os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/kwlog.txt"
         self.PowerLogList = []
+        self.PowerLock = threading.RLock()
         self.KWHoursMonth = None
         self.FuelMonth = None
         self.LastHouseKeepingTime = None
@@ -744,6 +745,14 @@ class GeneratorController(mysupport.MySupport):
             return "Error in  ClearPowerLog: " + str(e1)
 
     #------------ GeneratorController::ReducePowerSamples-----------------------
+    def ReducePowerSamples2(self, PowerList, MaxSize):
+        NewList = []
+        try:
+            pass
+        except Exception as e1:
+            self.LogErrorLine("Error in ReducePowerSamples: " + str(e1))
+        return []
+    #------------ GeneratorController::ReducePowerSamples-----------------------
     def ReducePowerSamples(self, PowerList, MaxSize):
 
         if MaxSize == 0:
@@ -781,97 +790,26 @@ class GeneratorController(mysupport.MySupport):
 
         import random
         try:
-            if len(List) <= MaxSize:
+            NewList = List[:]
+            if len(NewList) <= MaxSize:
                 self.LogError("RemovePowerSamples: Error: Can't remove ")
-                return List
+                return NewList
 
-            Extra = len(List) - MaxSize
+            Extra = len(NewList) - MaxSize
             for Count in range(Extra):
-                    # assume first and last sampels are zero samples so don't select thoes
-                    self.MarkNonZeroKwEntry(List, random.randint(1, len(List) - 2))
+                # assume first and last sampels are zero samples so don't select thoes
+                repeat = True
+                while (repeat):
+                    position = random.randint(1, len(NewList) - 2)
+                    if float(NewList[position][1]) != 0:
+                        Entry = NewList.pop(position)
+                        repeat = False
 
-            TempList = []
-            for TimeStamp, KWValue in List:
-                if not TimeStamp == "X":
-                    TempList.append([TimeStamp, KWValue])
-            return TempList
+            return NewList
         except Exception as e1:
             self.LogErrorLine("Error in RemovePowerSamples: %s" % str(e1))
-            return List
+            return NewList
 
-    #------------ GeneratorController::MarkNonZeroKwEntry-----------------------
-    #       RECURSIVE
-    def MarkNonZeroKwEntry(self, List, Index):
-
-        try:
-            TimeStamp, KwValue = List[Index]
-            if not KwValue == "X" and not float(KwValue) == 0.0:
-                List[Index] = ["X", "X"]
-                return
-            else:
-                self.MarkNonZeroKwEntry(List, Index - 1)
-                return
-        except Exception as e1:
-            self.LogErrorLine("Error in MarkNonZeroKwEntry: %s" % str(e1))
-        return
-
-    #------------ GeneratorController::ReducePowerSamples-----------------------
-    def ReducePowerSamplesAlt(self, PowerList, MaxSize):
-
-        if MaxSize == 0:
-            self.LogError("RecducePowerSamples: Error: Max size is zero")
-            return []
-
-        periodMaxSamples = MaxSize
-        NewList = []
-        try:
-            CurrentTime = datetime.datetime.now()
-            secondPerSample = 0
-            prevMax = 0
-            currMax = 0
-            currTime = CurrentTime
-            prevTime = CurrentTime + datetime.timedelta(minutes=1)
-            currSampleTime = CurrentTime
-            prevBucketTime = CurrentTime # prevent a 0 to be written the first time
-            nextBucketTime = CurrentTime - datetime.timedelta(seconds=1)
-
-            for Count in range(len(PowerList)):
-               TimeStamp, KWValue = PowerList[Count]
-               struct_time = time.strptime(TimeStamp, "%x %X")
-               delta_sec = (CurrentTime - datetime.datetime.fromtimestamp(time.mktime(struct_time))).total_seconds()
-               if 0 <= delta_sec <= datetime.timedelta(minutes=60).total_seconds():
-                   secondPerSample = int(datetime.timedelta(minutes=60).total_seconds() / periodMaxSamples)
-               if datetime.timedelta(minutes=60).total_seconds() <= delta_sec <=  datetime.timedelta(hours=24).total_seconds():
-                   secondPerSample = int(datetime.timedelta(hours=23).total_seconds() / periodMaxSamples)
-               if datetime.timedelta(hours=24).total_seconds() <= delta_sec <= datetime.timedelta(days=7).total_seconds():
-                   secondPerSample = int(datetime.timedelta(days=6).total_seconds() / periodMaxSamples)
-               if datetime.timedelta(days=7).total_seconds() <= delta_sec <= datetime.timedelta(days=31).total_seconds():
-                   secondPerSample = int(datetime.timedelta(days=25).total_seconds() / periodMaxSamples)
-
-               currSampleTime = CurrentTime - datetime.timedelta(seconds=(int(delta_sec / secondPerSample)*secondPerSample))
-               if (currSampleTime != currTime):
-                   if ((currMax > 0) and (prevBucketTime != prevTime)):
-                       NewList.append([prevBucketTime.strftime('%x %X'), 0.0])
-                   if ((currMax > 0) or ((currMax == 0) and (prevMax > 0))):
-                       NewList.append([currTime.strftime('%x %X'), currMax])
-                   if ((currMax > 0) and (nextBucketTime != currSampleTime)):
-                       NewList.append([nextBucketTime.strftime('%x %X'), 0.0])
-                   prevMax = currMax
-                   prevTime = currTime
-                   currMax = KWValue
-                   currTime = currSampleTime
-                   prevBucketTime  = CurrentTime - datetime.timedelta(seconds=((int(delta_sec / secondPerSample)+1)*secondPerSample))
-                   nextBucketTime  = CurrentTime - datetime.timedelta(seconds=((int(delta_sec / secondPerSample)-1)*secondPerSample))
-               else:
-                   currMax = max(currMax, KWValue)
-
-
-            NewList.append([currTime.strftime('%x %X'), currMax])
-        except Exception as e1:
-            self.LogErrorLine("Error in RecducePowerSamples: %s" % str(e1))
-            return PowerList
-
-        return NewList
     #------------ GeneratorController::GetPowerLogForMinutes--------------------
     def GetPowerLogForMinutes(self, Minutes = 0):
         try:
@@ -904,33 +842,33 @@ class GeneratorController(mysupport.MySupport):
         # return cached list if we have read the file before
         if len(self.PowerLogList) and not Minutes:
             return self.PowerLogList
+        with self.PowerLock:
+            if Minutes:
+                return self.GetPowerLogForMinutes(Minutes)
 
-        if Minutes:
-            return self.GetPowerLogForMinutes(Minutes)
+            try:
+                with open(self.PowerLog,"r") as LogFile:     #opens file
+                    for line in LogFile:
+                        line = line.strip()                  # remove whitespace at beginning and end
 
-        try:
-            with open(self.PowerLog,"r") as LogFile:     #opens file
-                for line in LogFile:
-                    line = line.strip()                  # remove whitespace at beginning and end
+                        if not len(line):
+                            continue
+                        if line[0] == "#":                  # comment
+                            continue
+                        Items = line.split(",")
+                        if len(Items) != 2:
+                            continue
+                        # remove any kW labels that may be there
+                        Items[1] = self.removeAlpha(Items[1])
+                        PowerList.insert(0, [Items[0], Items[1]])
 
-                    if not len(line):
-                        continue
-                    if line[0] == "#":                  # comment
-                        continue
-                    Items = line.split(",")
-                    if len(Items) != 2:
-                        continue
-                    # remove any kW labels that may be there
-                    Items[1] = self.removeAlpha(Items[1])
-                    PowerList.insert(0, [Items[0], Items[1]])
+            except Exception as e1:
+                self.LogErrorLine("Error in  GetPowerHistory (parse file): " + str(e1))
 
-        except Exception as e1:
-            self.LogErrorLine("Error in  GetPowerHistory (parse file): " + str(e1))
-
-        if len(PowerList) > 500 and not NoReduce:
-            PowerList = self.ReducePowerSamples(PowerList, 500)
-        if not len(self.PowerLogList):
-            self.PowerLogList = PowerList
+            if len(PowerList) > 500 and not NoReduce:
+                PowerList = self.ReducePowerSamples(PowerList, 500)
+            if not len(self.PowerLogList):
+                self.PowerLogList = PowerList
         return PowerList
     #------------ GeneratorController::GetPowerHistory--------------------------
     def GetPowerHistory(self, CmdString, NoReduce = False):
