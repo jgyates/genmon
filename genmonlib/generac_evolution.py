@@ -67,7 +67,6 @@ class Evolution(controller.GeneratorController):
         self.bEnhancedExerciseFrequency = False     # True if controller supports biweekly and monthly exercise times
         self.CurrentDivider = None
         self.CurrentOffset = None
-        self.CurrentAbsoluteValue = False
         self.DisableOutageCheck = False
         self.SerialNumberReplacement = None
         self.AdditionalRunHours = None
@@ -2739,9 +2738,7 @@ class Evolution(controller.GeneratorController):
                     CurrentFloat = int(Value,16)
                     #CurrentOutput = round(max((CurrentFloat * .2248) - 303.268, 0), 2)
                     CurrentOutput = round(max((CurrentFloat / 3.74), 0), 2)
-
-                    if self.CurrentAbsoluteValue:
-                        CurrentFloat = abs(CurrentOutput)
+                    CurrentFloat = abs(CurrentOutput)
 
             elif self.EvolutionController and not self.LiquidCooled:
                 CurrentHi = 0
@@ -2756,6 +2753,8 @@ class Evolution(controller.GeneratorController):
                     DebugInfo += " Lo: " + Value
                     CurrentLow = int(Value,16)
 
+                if CurrentHi == 0xffff and CurrentLow == 0x0000:
+                    CurrentHi = 0
                 # Dict is formated this way:  ModelID: [ divisor, offset to register]
                 ModelLookUp_EvoAC = { #ID : [KW or KVA Rating, Hz Rating, Voltage Rating, Phase]
                                         1 : None,      #["9KW", "60", "120/240", "1"],
@@ -2780,8 +2779,7 @@ class Evolution(controller.GeneratorController):
 
                 CurrentFloat = float(self.signed32((CurrentHi << 16) | (CurrentLow)))
 
-                if self.CurrentAbsoluteValue:
-                    CurrentFloat = abs(CurrentFloat)
+                CurrentFloat = abs(CurrentFloat)
                 # Get Model ID
                 Value = self.GetRegisterValueFromList("0019")
                 if not len(Value):
@@ -3473,7 +3471,6 @@ class Evolution(controller.GeneratorController):
                 self.bEnhancedExerciseFrequency = self.config.ReadValue('enhancedexercise', return_type = bool, default = False)
                 self.CurrentDivider = self.config.ReadValue('currentdivider', return_type = float, default = None, NoLog = True)
                 self.CurrentOffset = self.config.ReadValue('currentoffset', return_type = float, default = None, NoLog = True)
-                self.CurrentAbsoluteValue = self.config.ReadValue('currentabs', return_type = bool, default = False, NoLog = True)
 
                 self.SerialNumberReplacement = self.config.ReadValue('serialnumberifmissing', default = None)
                 if self.SerialNumberReplacement != None and len(self.SerialNumberReplacement):

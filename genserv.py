@@ -776,7 +776,6 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["kwlogmax"] = ['string', 'Maximum size Power Log (MB)', 16, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlogmax"]
         ConfigSettings["currentdivider"] = ['float', 'Current Divider', 17, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentdivider"]
         ConfigSettings["currentoffset"] = ['string', 'Current Offset', 18, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentoffset"]
-        ConfigSettings["currentabs"] = ['boolean', 'Current Absolute Value', 19, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "currentabs"]
         ConfigSettings["disableplatformstats"] = ['boolean', 'Disable Platform Stats', 20, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "disableplatformstats"]
         ConfigSettings["https_port"] = ['int', 'Override HTTPS port', 21, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "https_port"]
 
@@ -982,8 +981,17 @@ def CacheToolTips():
         if not len(config_section):
             config_section = "generac_evo_nexus"
 
+        # H_100
         ControllerType = config_section
 
+        if ControllerType == "h_100":
+            try:
+                if len(GStartInfo["Controller"]) and not "H-100" in GStartInfo["Controller"]:
+                    # Controller is G-Panel
+                    config_section = "g_panel"
+
+            except Exception as e1:
+                LogError("Error reading Controller Type for H-100: " + str(e1))
         CachedRegisterDescriptions = GetAllConfigValues(pathtofile + "/data/tooltips.txt", config_section)
 
         CachedToolTips = GetAllConfigValues(pathtofile + "/data/tooltips.txt", "ToolTips")
@@ -1229,18 +1237,6 @@ def Close(NoExit = False):
         return
     Closing = True
     try:
-        '''
-        LogError("Close server..")
-
-        with app.app_context():
-            func = request.environ.get('werkzeug.server.shutdown')
-            if func is None:
-                LogError("Not running with the Werkzeug Server")
-            func()
-
-            LogError("Server closed.")
-        '''
-
         MyClientInterface.Close()
     except Exception as e1:
         LogErrorLine("Error in close: " + str(e1))
@@ -1300,8 +1296,6 @@ if __name__ == "__main__":
         LogError("Required file missing : genmonmaint.sh")
         sys.exit(1)
 
-    CacheToolTips()
-
     startcount = 0
     while startcount <= 4:
         try:
@@ -1323,6 +1317,13 @@ if __name__ == "__main__":
             LogConsole(" OK - Init complete.")
             break
 
+    try:
+        data = MyClientInterface.ProcessMonitorCommand("generator: start_info_json")
+        GStartInfo = json.loads(data)
+    except Exception as e1:
+        LogError("Error getting start info : " + str(e1))
+
+    CacheToolTips()
     while True:
         try:
             app.run(host="0.0.0.0", port=HTTPPort, threaded = True, ssl_context=SSLContext, use_reloader = False, debug = False)

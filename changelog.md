@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.11.18 - 2018-10-29
+- Initial support for Generac G-Panel Industrial Generators
+- Update for H-100 Industrial Generators
+- Minor update to Current  / Power calculation on Evolution. This will potentially fix some system that were not reporting Current and Power properly
+
 ## V1.11.17 - 2018-10-29
 - Removed 'sudo' from wireless stats check
 
