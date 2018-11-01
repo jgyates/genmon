@@ -26,12 +26,10 @@ ALARM_LOG_LENGTH                = 64
 EVENT_LOG_START                 = 0x0c15
 EVENT_LOG_ENTRIES               = 20
 EVENT_LOG_LENGTH                = 64
-SERIAL_NUMBER_FILE_RECORD       = "0040"      # 0x40
-SERIAL_NUM_LENGTH               = 64
+NAMEPLATE_DATA_FILE_RECORD      = "0040"      # 0x40
+NAMEPLATE_DATA_LENGTH           = 64        # Note: This is 1024 but I only read 64 due to performance
 ENGINE_DATA_FILE_RECORD         = "002a"
 ENGINE_DATA_LENGTH  = 18
-NAMEPLATE_DATA_FILE_RECORD      = "0040"
-NAMEPLATE_DATA_LENGTH           = 1024
 
 #---------------------HPanelReg::HPanelReg--------------------------------------
 class HPanelReg(object):
@@ -782,7 +780,6 @@ class HPanel(controller.GeneratorController):
         self.LastEngineState = ""
         self.CurrentAlarmState = False
         self.VoltageConfig = None
-        self.SerialNumber = "Unknown"
         self.NamePlateData = "Unknown"
         self.FlyWheelTeeth = []
         self.CTRatio = []
@@ -868,8 +865,8 @@ class HPanel(controller.GeneratorController):
             if self.ControllerDetected:
                 return True
 
-            ControllerString = self.ModBus.ProcessMasterSlaveTransaction(RegisterStringEnum.CONTROLLER_NAME[REGISTER],
-                RegisterStringEnum.CONTROLLER_NAME[LENGTH] / 2, ReturnString = True)
+            ControllerString = self.HexStringToString(self.ModBus.ProcessMasterSlaveTransaction(RegisterStringEnum.CONTROLLER_NAME[REGISTER],
+                RegisterStringEnum.CONTROLLER_NAME[LENGTH] / 2))
 
             if not len(ControllerString):
                 self.LogError("Unable to ID controller, possiby not receiving data.")
@@ -973,15 +970,10 @@ class HPanel(controller.GeneratorController):
     def CheckModelSpecificInfo(self):
 
         try:
-            # Get Serial Number
-            self.SerialNumber = self.ModBus.ProcessMasterSlaveFileReadTransaction(SERIAL_NUMBER_FILE_RECORD, SERIAL_NUM_LENGTH / 2 , ReturnString = True)
+            # Read the nameplate dataGet Serial Number
+            self.NamePlateData = self.HexStringToString(self.ModBus.ProcessMasterSlaveFileReadTransaction(NAMEPLATE_DATA_FILE_RECORD, NAMEPLATE_DATA_LENGTH / 2 ))
 
-            if not "simulator" in self.SerialNumber:
-                self.NamePlateData = self.ModBus.ProcessMasterSlaveFileReadTransaction(NAMEPLATE_DATA_FILE_RECORD, NAMEPLATE_DATA_LENGTH / 2 , ReturnString = False)
-                if not len(self.NamePlateData):
-                    self.SerialNumber = self.ModBus.ProcessMasterSlaveFileReadTransaction(SERIAL_NUMBER_FILE_RECORD, SERIAL_NUM_LENGTH / 2 , ReturnString = True)
-
-            EngineData = self.ModBus.ProcessMasterSlaveFileReadTransaction(ENGINE_DATA_FILE_RECORD, ENGINE_DATA_LENGTH / 2 , ReturnString = False)
+            EngineData = self.ModBus.ProcessMasterSlaveFileReadTransaction(ENGINE_DATA_FILE_RECORD, ENGINE_DATA_LENGTH / 2 )
             if len(EngineData) >= 34:
                 try:
                     self.FlyWheelTeeth.append(self.GetIntFromString(EngineData, 0, 2))  # Byte 1 and 2
@@ -1042,8 +1034,11 @@ class HPanel(controller.GeneratorController):
             self.LogErrorLine("Error in GetIntFromString: " + str(e1))
             return 0
     #-------------HPanel:GetParameterStringValue--------------------------------
-    def GetParameterStringValue(self, Register):
+    def GetParameterStringValue(self, Register, ReturnString = False):
 
+        StringValue = self.Strings.get(Register, "")
+        if ReturnString:
+            return self.HexStringToString(StringValue)
         return self.Strings.get(Register, "")
 
     #-------------HPanel:GetGeneratorStrings------------------------------------
@@ -1054,7 +1049,7 @@ class HPanel(controller.GeneratorController):
                 try:
                     if self.IsStopping:
                         return
-                    self.ModBus.ProcessMasterSlaveTransaction(RegisterList[REGISTER], RegisterList[LENGTH] / 2, ReturnString = RegisterList[RET_STRING])
+                    self.ModBus.ProcessMasterSlaveTransaction(RegisterList[REGISTER], RegisterList[LENGTH] / 2)
                 except Exception as e1:
                     self.LogErrorLine("Error in GetGeneratorStrings: " + str(e1))
 
@@ -1180,7 +1175,7 @@ class HPanel(controller.GeneratorController):
             LocalEvent = []
             for RegValue in range(EVENT_LOG_START + EVENT_LOG_ENTRIES -1 , EVENT_LOG_START -1, -1):
                 Register = "%04x" % RegValue
-                LogEntry = self.ModBus.ProcessMasterSlaveFileReadTransaction(Register, EVENT_LOG_LENGTH /2 , ReturnString = True)
+                LogEntry = self.HexStringToString(self.ModBus.ProcessMasterSlaveFileReadTransaction(Register, EVENT_LOG_LENGTH /2))
                 LogEntry = self.ParseLogEntry(LogEntry, Type = "event")
                 if not len(LogEntry):
                     continue
@@ -1195,8 +1190,7 @@ class HPanel(controller.GeneratorController):
             LocalAlarm = []
             for RegValue in range(ALARM_LOG_START + ALARM_LOG_ENTRIES -1, ALARM_LOG_START -1, -1):
                 Register = "%04x" % RegValue
-                LogEntry = self.ModBus.ProcessMasterSlaveFileReadTransaction(Register, ALARM_LOG_LENGTH /2, ReturnString = True)
-
+                LogEntry = self.HexStringToString(self.ModBus.ProcessMasterSlaveFileReadTransaction(Register, ALARM_LOG_LENGTH /2))
                 LogEntry = self.ParseLogEntry(LogEntry, Type = "alarm")
                 if not len(LogEntry):
                     continue
@@ -1249,7 +1243,7 @@ class HPanel(controller.GeneratorController):
         try:
             RegInt = int(Register,16)
 
-            if Register == SERIAL_NUMBER_FILE_RECORD:
+            if Register == NAMEPLATE_DATA_FILE_RECORD:
                 return True
             if Register == ENGINE_DATA_FILE_RECORD:
                 return True
@@ -1358,10 +1352,10 @@ class HPanel(controller.GeneratorController):
             #   "Stopping due to Alrm"      Generator is running down after being turned off due to a shutdown alarm.
             #   "Stopped due to Alarm"      Generator is stopped due to a shutdown alarm.
 
-            State = self.GetParameterStringValue(RegisterStringEnum.ENGINE_STATUS[REGISTER])
+            State = self.GetParameterStringValue(RegisterStringEnum.ENGINE_STATUS[REGISTER], RegisterStringEnum.ENGINE_STATUS[RET_STRING])
 
             if len(State):
-                return State
+                return str(State)
             else:
                 return "Unknown"
         except Exception as e1:
@@ -1570,11 +1564,12 @@ class HPanel(controller.GeneratorController):
             Maint = collections.OrderedDict()
             Maintenance["Maintenance"] = Maint
             Maint["Model"] = self.Model
-            Maint["Generator Serial Number"] = self.SerialNumber
+            if len(self.NamePlateData):
+                Maint["Name Plate Info"] = self.NamePlateData
             Maint["Controller"] = self.GetController()
-            Maint["Controller Software Version"] = self.GetParameterStringValue(RegisterStringEnum.VERSION_DATE[REGISTER])
+            Maint["Controller Software Version"] = self.GetParameterStringValue(RegisterStringEnum.VERSION_DATE[REGISTER], RegisterStringEnum.VERSION_DATE[RET_STRING])
 
-            Maint["Minimum GenLink Version"] = self.GetParameterStringValue(RegisterStringEnum.MIN_GENLINK_VERSION[REGISTER])
+            Maint["Minimum GenLink Version"] = self.GetParameterStringValue(RegisterStringEnum.MIN_GENLINK_VERSION[REGISTER], RegisterStringEnum.MIN_GENLINK_VERSION[RET_STRING])
             Maint["Nominal RPM"] = self.NominalRPM
             Maint["Rated kW"] = self.NominalKW
             Maint["Nominal Frequency"] = self.NominalFreq
@@ -1590,8 +1585,8 @@ class HPanel(controller.GeneratorController):
             ControllerSettings = collections.OrderedDict()
             Maint["Controller Configuration"] = ControllerSettings
 
-            ControllerSettings["Controller Power Up Time"] = self.GetTimeFromString(self.GetParameterStringValue(RegisterStringEnum.POWER_UP_TIME[REGISTER]))
-            ControllerSettings["Controller Last Power Fail"] = self.GetTimeFromString(self.GetParameterStringValue(RegisterStringEnum.LAST_POWER_FAIL[REGISTER]))
+            ControllerSettings["Controller Power Up Time"] = self.GetTimeFromString(self.GetParameterStringValue(RegisterStringEnum.POWER_UP_TIME[REGISTER], RegisterStringEnum.POWER_UP_TIME[RET_STRING]))
+            ControllerSettings["Controller Last Power Fail"] = self.GetTimeFromString(self.GetParameterStringValue(RegisterStringEnum.LAST_POWER_FAIL[REGISTER], RegisterStringEnum.LAST_POWER_FAIL[RET_STRING]))
             ControllerSettings["Target RPM"] = str(self.TargetRPM[0]) if len(self.TargetRPM) else "Unknown"
             ControllerSettings["Number of Flywheel Teeth"] = str(self.FlyWheelTeeth[0]) if len(self.FlyWheelTeeth) else "Unknown"
             ControllerSettings["Phase"] = str(self.Phase) if self.Phase != None else "Unknown"
@@ -1643,7 +1638,7 @@ class HPanel(controller.GeneratorController):
             Battery["Battery Charger Current"] = self.ValueOut(self.GetParameter(self.Reg.BATTERY_CHARGE_CURRNT[REGISTER], ReturnFloat = True, Divider = 10.0), "A", JSONNum)
 
             Engine["Engine Status"] = self.GetEngineState()
-            Engine["Generator Status"] = self.GetParameterStringValue(RegisterStringEnum.GENERATOR_STATUS[REGISTER])
+            Engine["Generator Status"] = self.GetParameterStringValue(RegisterStringEnum.GENERATOR_STATUS[REGISTER], RegisterStringEnum.GENERATOR_STATUS[RET_STRING])
             Engine["Switch State"] = self.GetSwitchState()
             Engine["Output Power"] = self.ValueOut(self.GetPowerOutput(ReturnFloat = True), "kW", JSONNum)
             Engine["Output Power Factor"] = self.ValueOut(self.GetParameter(self.Reg.TOTAL_PF[REGISTER], ReturnFloat = True, Divider = 100.0), "", JSONNum)
@@ -1703,6 +1698,7 @@ class HPanel(controller.GeneratorController):
             Outage["Outage"] = OutageData
 
             OutageData["Status"] = "Not Supported"
+            OutageData["System In Outage"] = "No"       # mynotify.py checks this
 
         except Exception as e1:
             self.LogErrorLine("Error in DisplayOutage: " + str(e1))
@@ -1918,7 +1914,7 @@ class HPanel(controller.GeneratorController):
     # in the conf file
     def GetController(self, Actual = True):
 
-        return self.GetParameterStringValue(RegisterStringEnum.CONTROLLER_NAME[REGISTER])
+        return self.GetParameterStringValue(RegisterStringEnum.CONTROLLER_NAME[REGISTER], RegisterStringEnum.CONTROLLER_NAME[RET_STRING])
 
     #----------  HPanel:ComminicationsIsActive  --------------------------------
     # Called every 2 seconds, if communictions are failing, return False, otherwise
@@ -1964,7 +1960,7 @@ class HPanel(controller.GeneratorController):
     def GetBaseStatus(self):
         try:
             EngineStatus = self.GetEngineState().lower()
-            GeneratorStatus = self.GetParameterStringValue(RegisterStringEnum.GENERATOR_STATUS[REGISTER]).lower()
+            GeneratorStatus = self.GetParameterStringValue(RegisterStringEnum.GENERATOR_STATUS[REGISTER],RegisterStringEnum.GENERATOR_STATUS[RET_STRING]).lower()
             SwitchState = self.GetSwitchState().lower()
 
             if "running" in EngineStatus:

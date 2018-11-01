@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.11.19 - 2018-10-31
+- Added email notice when communications with controller has been lost (and restored)
+- Corrected one minor issue with mynotify.py
+- Improvement to H-100 / G-Panel handling of string data
+- Update for PowerPack, enabled fuel monitoring (if supported by controller)
+- Improved bounds checking on modbus protocol 
+
 ## V1.11.18 - 2018-10-29
 - Initial support for Generac G-Panel Industrial Generators
 - Update for H-100 Industrial Generators

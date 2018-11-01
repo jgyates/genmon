@@ -126,7 +126,7 @@ class MyPipe(mysupport.MySupport):
             data = json.dumps(MessageDict, sort_keys=False)
             self.WriteFile(data)
         except Exception as e1:
-            self.LogErrorLine("Error in SendMessage: " + str(e1))
+            self.LogErrorLine("Error in SendMessage: <" + (str(subjectstr)) + "> : "+ str(e1))
 
     #------------ MyPipe::Close-------------------------------------------------
     def Close(self):

@@ -304,9 +304,9 @@ class Evolution(controller.GeneratorController):
                 Tile = mytile.MyTile(self.log, title = "Estimated Fuel", units = Units, type = "fuel", nominal = int(self.TankSize), callback = self.GetEstimatedFuelInTank, callbackparameters = (True,))
                 self.TileList.append(Tile)
             if self.PowerMeterIsSupported():
-                Tile = mytile.MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = int(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
+                Tile = mytile.MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = float(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
                 self.TileList.append(Tile)
-                Tile = mytile.MyTile(self.log, title = "kW Output", type = "powergraph", nominal = int(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
+                Tile = mytile.MyTile(self.log, title = "kW Output", type = "powergraph", nominal = float(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
                 self.TileList.append(Tile)
 
         except Exception as e1:
@@ -583,12 +583,13 @@ class Evolution(controller.GeneratorController):
                                 11 : ["15KW", "ECOVSCF", "120/240", "1", [0, 2.58, 0.61, "gal"], "999 cc"],       # Eco Variable Speed Constant Frequency
                                 12 : ["8KVA", "50", "220,230,240", "1", [0,  1.3, 0.21, "gal"], "530 cc"],        # 3 distinct models 220, 230, 240
                                 13 : ["10KVA", "50", "220,230,240", "1", [0, 1.48, 0.37, "gal"], "999 cc"],       # 3 distinct models 220, 230, 240
-                                14 : ["13KVA", "50", "220,230,240", "1", [0, 2.0, 0.39, "gal"], "999 cc"],       # 3 distinct models 220, 230, 240
+                                14 : ["13KVA", "50", "220,230,240", "1", [0, 2.0, 0.39, "gal"], "999 cc"],        # 3 distinct models 220, 230, 240
                                 15 : ["11KW", "60" ,"240", "1", [0, 1.5, 0.47, "gal"], "530 cc"],
                                 17 : ["22KW", "60", "120/240", "1", [0, 2.74, 1.16, "gal"], "999 cc"],
                                 21 : ["11KW", "60", "240 LS", "1", [0, 1.5, 0.47, "gal"], "530 cc"],
-                                32 : ["20KW", "60", "208 3 Phase", "3", [0, 2.34, 1.22, "gal"], "999 cc"],     # Trinity G007077
-                                33 : ["Trinity", "50", "380,400,416", "3", None, None]                    # Discontinued
+                                22 : ["7.5KW", "60", "240", "1", [0, 1.1, 0.32, "gal"], "420 cc"],                # Power Pact
+                                32 : ["20KW", "60", "208 3 Phase", "3", [0, 2.34, 1.22, "gal"], "999 cc"],      # Trinity G007077
+                                33 : ["Trinity", "50", "380,400,416", "3", None, None]                          # Discontinued
                                 }
 
         if self.SynergyController:
@@ -2773,6 +2774,7 @@ class Evolution(controller.GeneratorController):
                                         15 : 56.24,     #["11KW", "60" ,"240", "1"],
                                         17 : 21.48,     #["22KW", "60", "120/240", "1"],
                                         21 : None,      #["11KW", "60", "240 LS", "1"],
+                                        22 : None,      # Power Pact
                                         32 : None,      #["Trinity", "60", "208 3Phase", "3"],  # G007077
                                         33 : None       #["Trinity", "50", "380,400,416", "3"]  # 3 distinct models 380, 400 or 416
                                         }
@@ -2790,7 +2792,7 @@ class Evolution(controller.GeneratorController):
 
                 if self.CurrentDivider == None or self.CurrentDivider < 1:
                     if LookUpReturn == None:
-                        Divisor = (22.0 / int(self.NominalKW)) * 22       # Default Divisor
+                        Divisor = (22.0 / float(self.NominalKW)) * 22       # Default Divisor
                     else:
                         Divisor = LookUpReturn
                 else:
@@ -2806,7 +2808,7 @@ class Evolution(controller.GeneratorController):
             BaseStatus = self.GetBaseStatus()
             Voltage = self.GetVoltageOutput(ReturnInt = True)
             if Voltage > 100:     # only bounds check if the voltage is over 100V to give things a chance to stabalize
-                if CurrentOutput > ((int(self.NominalKW) * 1000) / 240) + 2 or CurrentOutput < 0:
+                if CurrentOutput > ((float(self.NominalKW) * 1000) / 240) + 2 or CurrentOutput < 0:
                     # if we are here, then the current is out of range.
                     if not BaseStatus == "EXERCISING":
                         msg = "Current Calculation: %f, CurrentFloat: %f, Divisor: %f, Offset %f, Debug: %s" % (CurrentOutput, CurrentFloat, Divisor, CurrentOffset, DebugInfo)
@@ -2814,7 +2816,7 @@ class Evolution(controller.GeneratorController):
                     if CurrentOutput < 0:
                         CurrentOutput = 0
                     else:
-                        CurrentOutput = round((int(self.NominalKW) * 1000) / 240, 2)
+                        CurrentOutput = round((float(self.NominalKW) * 1000) / 240, 2)
             if ReturnFloat:
                 return CurrentOutput
 

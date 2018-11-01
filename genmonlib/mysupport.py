@@ -178,6 +178,34 @@ class MySupport(mycommon.MyCommon):
             self.LogErrorLine("Error in ValueOut: " + str(e1))
             return DefaultReturn
 
+    #----------  MySupport::HexStringToString  ---------------------------------
+    def HexStringToString(self, input):
+
+        try:
+            if not len(input):
+                return ""
+            if not self.StringIsHex(input):
+                return ""
+            ByteArray = bytearray.fromhex(input)
+            if ByteArray[0] == 0:
+                return ""
+            End = ByteArray.find('\0')
+            if End != -1:
+                ByteArray = ByteArray[:End]
+            return str(ByteArray).encode('ascii')
+        except Exception as e1:
+            self.LogErrorLine("Error in HexStringToString: " + str(e1))
+            return ""
+
+    #----------  MySupport::StringIsHex  ---------------------------------------
+    def StringIsHex(self, input):
+        try:
+            if " " in input:
+                return False
+            int(input, 16)
+            return True
+        except:
+            return False
     #------------ MySupport::GetDispatchItem -----------------------------------
     def GetDispatchItem(self, item):
 

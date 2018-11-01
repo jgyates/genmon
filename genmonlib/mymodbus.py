@@ -25,6 +25,8 @@ MBUS_OFF_FILE_PAYLOAD_LEN   = 0x03
 MBUS_OFF_FILE_PAYLOAD       = 0x05
 MBUS_OFF_REGISTER_HI        = 0x02
 MBUS_OFF_REGISTER_LOW       = 0x03
+MBUS_OFF_FILE_NUM_HI        = 0x04
+MBUS_OFF_FILE_NUM_LOW       = 0x05
 MBUS_OFF_FILE_RECORD_HI     = 0x06
 MBUS_OFF_FILE_RECORD_LOW    = 0x07
 MBUS_OFF_RECORD_LENGTH_HI   = 0x08
@@ -50,6 +52,14 @@ MBUS_READ_FILE_REQUEST_PAYLOAD_LENGTH   = 0x07
 MIN_REQ_PACKET_LENGTH                   = 0x08
 MIN_WR_REQ_PACKET_LENGTH                = 0x09
 MIN_FILE_READ_REQ_PACKET_LENGTH         = 0x0C
+MAX_MODBUS_PACKET_SIZE                  = 0x100
+# Varible limits
+MAX_REGISTER                            = 0xffff
+MIN_REGISTER                            = 0x0
+MAX_FILE_RECORD_NUM                     = 0x270F
+MIN_FILE_RECORD_NUM                     = 0x0
+MAX_FILE_NUMBER                         = 0xFFFF
+MIN_FILE_NUMBER                         = 0x01
 # commands
 MBUS_CMD_READ_REGS      = 0x03
 MBUS_CMD_WRITE_REGS     = 0x10
@@ -59,6 +69,17 @@ MBUS_CMD_READ_FILE      = 0x14
 MBUS_FILE_TYPE_VALUE    = 0x06
 MBUS_ERROR_BIT          = 0x80
 
+# Exceprtion codes
+MBUS_EXCEP_FUNCTION     = 0x01      # Illegal Function
+MBUS_EXCEP_ADDRESS      = 0x02      # Illegal Address
+MBUS_EXCEP_DATA         = 0x03      # Illegal Data Value
+MBUS_EXCEP_SLAVE_FAIL   = 0x04      # Slave Device Failure
+MBUS_EXCEP_ACK          = 0x05      # Acknowledge
+MBUS_EXCEP_BUSY         = 0x06      # Slave Device Busy
+MBUS_EXCEP_NACK         = 0x07      # Negative Acknowledge
+MBUS_EXCEP_MEM_PE       = 0x08      # Memory Parity Error
+MBUS_EXCEP_GATEWAY      = 0x10      # Gateway Path Unavailable
+MBUS_EXCEP_GATEWAY_TG   = 0x11      #Gateway Target Device Failed to Respond
 
 #------------ ModbusProtocol class ---------------------------------------------
 class ModbusProtocol(modbusbase.ModbusBase):
@@ -108,16 +129,16 @@ class ModbusProtocol(modbusbase.ModbusBase):
         try:
 
             LookUp = {
-                0x01 : "Illegal Function",
-                0x02 : "Illegal Address",
-                0x03 : "Illegal Data Value",
-                0x04 : "Slave Device Failure",
-                0x05 : "Acknowledge",
-                0x06 : "Slave Device Busy",
-                0x07 : "Negative Acknowledge",
-                0x08 : "Memory Parity Error",
-                0x10 : "Gateway Path Unavailable",
-                0x11 : "Gateway Target Device Failed to Respond"
+                MBUS_EXCEP_FUNCTION : "Illegal Function",
+                MBUS_EXCEP_ADDRESS : "Illegal Address",
+                MBUS_EXCEP_DATA : "Illegal Data Value",
+                MBUS_EXCEP_SLAVE_FAIL : "Slave Device Failure",
+                MBUS_EXCEP_ACK : "Acknowledge",
+                MBUS_EXCEP_BUSY : "Slave Device Busy",
+                MBUS_EXCEP_NACK : "Negative Acknowledge",
+                MBUS_EXCEP_MEM_PE : "Memory Parity Error",
+                MBUS_EXCEP_GATEWAY : "Gateway Path Unavailable",
+                MBUS_EXCEP_GATEWAY_TG : "Gateway Target Device Failed to Respond"
              }
 
             ReturnString = LookUp.get(Code, "Unknown")
@@ -210,7 +231,6 @@ class ModbusProtocol(modbusbase.ModbusBase):
                 else:
                     self.CrcError += 1
                     return False, Packet
-
             else:
                 # received a  response to a command we do not support
                 self.DiscardByte()
@@ -368,12 +388,23 @@ class ModbusProtocol(modbusbase.ModbusBase):
 
         Packet = []
         try:
+            RegisterInt = int(register,16)
+
+            if RegisterInt < MIN_REGISTER or RegisterInt > MAX_REGISTER:
+                self.ComValidationError += 1
+                self.LogError("Validation Error: CreateMasterPacket maximum regiseter value exceeded: " + str(register))
+                return []
+            if file_num < MIN_FILE_NUMBER or file_num > MAX_FILE_NUMBER:
+                self.ComValidationError += 1
+                self.LogError("Validation Error: CreateMasterPacket maximum file number value exceeded: " + str(file_num))
+                return []
+
             if command == MBUS_CMD_READ_REGS:
                 Packet.append(self.Address)                 # address
                 Packet.append(command)                      # command
-                Packet.append(int(register,16) >> 8)        # reg hi
-                Packet.append(int(register,16) & 0x00FF)    # reg low
-                Packet.append(length >> 8)                  # length hi
+                Packet.append(RegisterInt >> 8)             # reg higy
+                Packet.append(RegisterInt & 0x00FF)         # reg low
+                Packet.append(length >> 8)                  # length high
                 Packet.append(length & 0x00FF)              # length low
                 CRCValue = self.GetCRC(Packet)
                 Packet.append(CRCValue & 0x00FF)            # CRC low
@@ -382,15 +413,17 @@ class ModbusProtocol(modbusbase.ModbusBase):
             elif command == MBUS_CMD_WRITE_REGS:
                 if len(data) == 0:
                     self.LogError("Validation Error: CreateMasterPacket invalid length (1) %x %x" % (len(data), length))
-                    return Packet
+                    self.ComValidationError += 1
+                    return []
                 if len(data)/2 != length:
                     self.LogError("Validation Error: CreateMasterPacket invalid length (2) %x %x" % (len(data), length))
-                    return Packet
+                    self.ComValidationError += 1
+                    return []
                 Packet.append(self.Address)                 # address
                 Packet.append(command)                      # command
-                Packet.append(int(register,16) >> 8)        # reg hi
-                Packet.append(int(register,16) & 0x00FF)    # reg low
-                Packet.append(length >> 8)                  # Num of Reg hi
+                Packet.append(RegisterInt >> 8)             # reg higy
+                Packet.append(RegisterInt & 0x00FF)         # reg low
+                Packet.append(length >> 8)                  # Num of Reg higy
                 Packet.append(length & 0x00FF)              # Num of Reg low
                 Packet.append(len(data))                    # byte count
                 for b in range(0, len(data)):
@@ -400,14 +433,20 @@ class ModbusProtocol(modbusbase.ModbusBase):
                 Packet.append(CRCValue >> 8)                # CRC high
 
             elif command == MBUS_CMD_READ_FILE:
+
+                # Note, we only support one sub request at at time
+                if RegisterInt < MIN_FILE_RECORD_NUM or RegisterInt > MAX_FILE_RECORD_NUM:
+                    self.ComValidationError += 1
+                    self.LogError("Validation Error: CreateMasterPacket maximum regiseter (record number) value exceeded: " + str(register))
+                    return []
                 Packet.append(self.Address)                 # address
                 Packet.append(command)                      # command
                 Packet.append(MBUS_READ_FILE_REQUEST_PAYLOAD_LENGTH)     # Byte count
                 Packet.append(MBUS_FILE_TYPE_VALUE)         # always same value
                 Packet.append(file_num >> 8)                # File Number hi
                 Packet.append(file_num & 0x00FF)            # File Number low
-                Packet.append(int(register,16) >> 8)        # register (file record) hi
-                Packet.append(int(register,16) & 0x00FF)    # register (file record) hi
+                Packet.append(RegisterInt >> 8)             # register (file record number) high
+                Packet.append(RegisterInt & 0x00FF)         # register (file record number) low
                 Packet.append(length >> 8)                  # Length to return hi
                 Packet.append(length & 0x00FF)              # Length to return lo
                 CRCValue = self.GetCRC(Packet)
@@ -415,9 +454,16 @@ class ModbusProtocol(modbusbase.ModbusBase):
                 Packet.append(CRCValue >> 8)                # CRC high
             else:
                 self.LogError("Validation Error: Invalid command in CreateMasterPacket!")
-                return Packet
+                self.ComValidationError += 1
+                return []
         except Exception as e1:
             self.LogErrorLine("Error in CreateMasterPacket: " + str(e1))
+
+        if len(Packet) > MAX_MODBUS_PACKET_SIZE:
+            self.LogError("Validation Error: CreateMasterPacket: Packet size exceeds max size")
+            self.ComValidationError += 1
+            return []
+
         return Packet
 
     #-------------ModbusProtocol::SendPacketAsMaster----------------------------
@@ -504,8 +550,8 @@ class ModbusProtocol(modbusbase.ModbusBase):
                         self.UpdateRegisterList(Register, RegisterStringValue, IsString = True, IsFile = True)
                 pass
             if ReturnString:
-                return RegisterStringValue
-            return RegisterValue
+                return str(RegisterStringValue)
+            return str(RegisterValue)
         except Exception as e1:
             self.LogErrorLine("Error in UpdateRegistersFromPacket: " + str(e1))
             return "Error"

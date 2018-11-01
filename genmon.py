@@ -25,7 +25,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.11.18"
+GENMON_VERSION = "V1.11.19"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -753,6 +753,8 @@ class Monitor(mysupport.MySupport):
         self.CommunicationsActive = False
         time.sleep(0.25)
 
+        NoticeSent = False
+        LastActiveTime = datetime.datetime.now()
         while True:
             if self.WaitForExit("ComWatchDog", 1):
                 return
@@ -767,6 +769,17 @@ class Monitor(mysupport.MySupport):
         while True:
 
             self.CommunicationsActive = self.Controller.ComminicationsIsActive()
+
+            if self.CommunicationsActive:
+                LastActiveTime = datetime.datetime.now()
+                if NoticeSent:
+                    NoticeSent = False
+                    self.MessagePipe.SendMessage("Generator Monitor Communication Restored at " + self.SiteName, "Generator Monitor communications with the controller has been restored at " + self.SiteName , msgtype = "info")
+            else:
+                if self.GetDeltaTimeMinutes(datetime.datetime.now() - LastActiveTime) > 1 :
+                    if not NoticeSent:
+                        NoticeSent = True
+                        self.MessagePipe.SendMessage("Generator Monitor Communication WARNING at " + self.SiteName, "Generator Monitor is not communicating with the controller at " + self.SiteName , msgtype = "error")
 
             if self.WaitForExit("ComWatchDog", WatchDogPollTime):
                 return
