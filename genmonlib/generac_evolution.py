@@ -2734,12 +2734,24 @@ class Evolution(controller.GeneratorController):
 
             if self.EvolutionController and self.LiquidCooled:
                 Value = self.GetRegisterValueFromList("0058")
+                DebugInfo += Value
                 if len(Value):
-                    DebugInfo += Value
                     CurrentFloat = int(Value,16)
-                    #CurrentOutput = round(max((CurrentFloat * .2248) - 303.268, 0), 2)
-                    CurrentOutput = round(max((CurrentFloat / 3.74), 0), 2)
-                    CurrentFloat = abs(CurrentOutput)
+                else:
+                    CurrentFloat = 0.0
+
+                if self.CurrentDivider == None or self.CurrentDivider < 1:
+                    Divisor = 30.0/67.0
+                else:
+                    Divisor = self.CurrentDivider
+
+                if self.CurrentOffset == None:
+                    CurrentOffset = -1939.0/6.0
+                else:
+                    CurrentOffset = self.CurrentOffset
+
+                CurrentOutput = round(max(((CurrentFloat  / Divisor) +  CurrentOffset), 0), 2)
+                CurrentFloat = abs(CurrentOutput)
 
             elif self.EvolutionController and not self.LiquidCooled:
                 CurrentHi = 0
