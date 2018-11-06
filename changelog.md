@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.11.21 - 2018-11-06
+- Added advanced option to subtract fuel form reported fuel estimate. See https://github.com/jgyates/genmon/wiki/Appendix-8-Monitoring-Fuel-and-Power-Usage
+- Added email warning when estimated fuel in tank reaches 20% and 10%
+- Corrected potential problem with a warning email about the power log being sent multiple times
+
 ## V1.11.20 - 2018-11-06
 - Updated current calculation algorithm for Evolution Liquid Cooled. See https://github.com/jgyates/genmon/wiki/Appendix-4-Known-Issues for additional details.
 

@@ -25,7 +25,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.11.20"
+GENMON_VERSION = "V1.11.21"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -58,6 +58,7 @@ class Monitor(mysupport.MySupport):
         self.NewInstall = False         # True if newly installed or newly upgraded version
         self.FeedbackEnabled = False    # True if sending autoated feedback on missing information
         self.FeedbackMessages = {}
+        self.OneTimeMessages = {}
         self.MailInit = False       # set to true once mail is init
         self.CommunicationsActive = False   # Flag to let the heartbeat thread know we are communicating
         self.Controller = None
@@ -287,7 +288,10 @@ class Monitor(mysupport.MySupport):
         try:
             FeedbackDict = {}
             FeedbackDict = json.loads(Message)
-            self.SendFeedbackInfo(FeedbackDict["Reason"], FeedbackDict["Always"], FeedbackDict["Message"], FeedbackDict["FullLogs"], FeedbackDict["NoCheck"])
+            self.SendFeedbackInfo(FeedbackDict["Reason"],
+                Always = FeedbackDict["Always"], Message = FeedbackDict["Message"],
+                FullLogs = FeedbackDict["FullLogs"], NoCheck = FeedbackDict["NoCheck"])
+
         except Exception as e1:
             self.LogErrorLine("Error in  FeedbackReceiver: " + str(e1))
             self.LogError("Size : " + str(len(Message)))
@@ -298,7 +302,19 @@ class Monitor(mysupport.MySupport):
         try:
             MessageDict = {}
             MessageDict = json.loads(Message)
-            self.mail.sendEmail(MessageDict["subjectstr"], MessageDict["msgstr"], MessageDict["recipient"], MessageDict["files"],MessageDict["deletefile"] ,MessageDict["msgtype"])
+
+            if MessageDict["onlyonce"]:
+                Subject = self.OneTimeMessages.get(MessageDict["subjectstr"], None)
+                if Subject == None:
+                    self.OneTimeMessages[MessageDict["subjectstr"]] = MessageDict["msgstr"]
+                else:
+                    return
+
+            self.mail.sendEmail(MessageDict["subjectstr"],
+                MessageDict["msgstr"], recipient = MessageDict["recipient"],
+                files = MessageDict["files"], deletefile= MessageDict["deletefile"],
+                msgtype= MessageDict["msgtype"])
+
         except Exception as e1:
             self.LogErrorLine("Error in  MessageReceiver: " + str(e1))
     #---------------------------------------------------------------------------

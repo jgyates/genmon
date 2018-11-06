@@ -86,6 +86,7 @@ class GeneratorController(mysupport.MySupport):
                 self.EnableDebug = self.config.ReadValue('enabledebug', return_type = bool, default = False)
                 self.bDisplayUnknownSensors = self.config.ReadValue('displayunknown', return_type = bool, default = False)
                 self.bDisablePowerLog = self.config.ReadValue('disablepowerlog', return_type = bool, default = False)
+                self.SubtractFuel = self.config.ReadValue('subtractfuel', return_type = float, default = 0.0)
 
 
                 if self.config.HasOption('outagelog'):
@@ -689,8 +690,8 @@ class GeneratorController(mysupport.MySupport):
             LogSize = os.path.getsize(self.PowerLog)
 
             if float(LogSize) / (1024*1024) >= self.PowerLogMaxSize * 0.98:
-                msgbody = "The kwlog file size is 98% of the maximum. Once the log reaches 100% of the maximum size the log will be reset."
-                self.MessagePipe.SendMessage("Notice: Log file size warning" , msgbody, msgtype = "warn")
+                msgbody = "The kwlog file size is 98% of the maximum. Once the log reaches 100% of the log will be reset."
+                self.MessagePipe.SendMessage("Notice: Log file size warning" , msgbody, msgtype = "warn", onlyonce = True)
 
             # is the file size too big?
             if float(LogSize) / (1024*1024) >= self.PowerLogMaxSize:
@@ -1009,6 +1010,7 @@ class GeneratorController(mysupport.MySupport):
 
         LastValue = 0.0
         LastPruneTime = datetime.datetime.now()
+        LastFuelCheckTime = datetime.datetime.now()
         while True:
             try:
                 if self.WaitForExit("PowerMeter", 10):
@@ -1019,6 +1021,10 @@ class GeneratorController(mysupport.MySupport):
                     if self.GetDeltaTimeMinutes(datetime.datetime.now() - LastPruneTime) > 1440 :     # check every day
                         self.PrunePowerLog(43800 * 36)   # delete log entries greater than three years
                         LastPruneTime = datetime.datetime.now()
+
+                if self.GetDeltaTimeMinutes(datetime.datetime.now() - LastFuelCheckTime) > 10 :         # check 10 min
+                    LastFuelCheckTime = datetime.datetime.now()
+                    self.CheckFuelLevel()
 
                 # Time to exit?
                 if self.IsStopSignaled("PowerMeter"):
@@ -1041,6 +1047,36 @@ class GeneratorController(mysupport.MySupport):
             except Exception as e1:
                 self.LogErrorLine("Error in PowerMeter: " + str(e1))
 
+    #----------  GeneratorController::CheckFuelLevel----------------------------
+    def CheckFuelLevel(self):
+        try:
+
+            if not self.FuelGuageSupported():
+                return True
+
+            if self.TankSize == None or self.TankSize == "0" or self.TankSize == "":
+                return True
+            FuelInTank = self.GetEstimatedFuelInTank(ReturnFloat = True)
+
+            if FuelInTank >= self.TankSize:
+                return True
+
+            RemainingFuel = float(FuelInTank) / float(self.TankSize)
+
+            if RemainingFuel <= 0.1:    # Ten percent left
+                msgbody = "Warning: The estimated fuel in the tank is at or below 10%"
+                self.MessagePipe.SendMessage("Warning: Fuel Level at or below 10%" , msgbody, msgtype = "warn", onlyonce = True)
+                return False
+            elif RemainingFuel <= 0.20:    # 20 percent left
+                msgbody = "Warning: The estimated fuel in the tank is at or below 20%"
+                self.MessagePipe.SendMessage("Warning: Fuel Level at or below 20%" , msgbody, msgtype = "warn", onlyonce = True)
+                return False
+            else:
+                return True
+
+        except Exception as e1:
+            self.LogErrorLine("Error in CheckFuelLevel: " + str(e1))
+            return True
     #----------  GeneratorController::GetEstimatedFuelInTank--------------------
     def GetEstimatedFuelInTank(self, ReturnFloat = False):
 
@@ -1048,6 +1084,9 @@ class GeneratorController(mysupport.MySupport):
             DefaultReturn = 0.0
         else:
             DefaultReturn = "0"
+
+        if not self.FuelGuageSupported():
+            return DefaultReturn
 
         if self.TankSize == None or self.TankSize == "0" or self.TankSize == "":
             return DefaultReturn
@@ -1057,9 +1096,11 @@ class GeneratorController(mysupport.MySupport):
                 return DefaultReturn
             FuelUsed = self.removeAlpha(FuelUsed)
             FuelLeft = float(self.TankSize) - float(FuelUsed)
+
+            FuelLeft = float(FuelLeft) - float(self.SubtractFuel)
+
             if FuelLeft < 0:
                 FuelLeft = 0.0
-
             if self.UseMetric:
                 Units = "L"
             else:
