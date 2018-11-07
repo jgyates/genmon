@@ -121,20 +121,20 @@ def OnUtilityChange(Active):
 def SendNotice(Message):
 
     try:
-	app = Application(appid)
-	user = app.get_user(userid)
+       app = Application(appid)
+       user = app.get_user(userid)
 
-        message = user.create_message(
-		message = Message,
-		sound = pushsound)
+       message = user.create_message(
+            message = Message,
+            sound = pushsound)
 
-	message.send()
+       message.send()
 
-        console.info(message.id)
+       console.info(message.id)
 
     except Exception as e1:
-        log.error("Error: " + str(e1))
-        console.error("Error: " + str(e1))
+       log.error("Error: " + str(e1))
+       console.error("Error: " + str(e1))
 
 #------------------- Command-line interface for gengpio ------------------------
 if __name__=='__main__': # usage program.py [server_address]
