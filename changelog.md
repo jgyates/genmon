@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.11.22 - 2018-11-07
+- Minor update to include program run duration time in data submitted in automated feedback error reporting
+- Added missing tooltip on advanced page
+
 ## V1.11.21 - 2018-11-06
 - Added advanced option to subtract fuel form reported fuel estimate. See https://github.com/jgyates/genmon/wiki/Appendix-8-Monitoring-Fuel-and-Power-Usage
 - Added email warning when estimated fuel in tank reaches 20% and 10%

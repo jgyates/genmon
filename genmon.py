@@ -25,7 +25,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.11.21"
+GENMON_VERSION = "V1.11.22"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -379,6 +379,8 @@ class Monitor(mysupport.MySupport):
     def GetSupportData(self):
 
         SupportData = collections.OrderedDict()
+        SupportData["Program Run Time"] = self.GetProgramRunTime()
+        SupportData["Monitor Health"] = self.GetSystemHealth()
         SupportData["StartInfo"] = self.GetStartInfo(NoTile = True)
         if not self.bDisablePlatformStats:
             SupportData["PlatformStats"] = self.GetPlatformStats()
@@ -575,6 +577,15 @@ class Monitor(mysupport.MySupport):
 
         return outstring
 
+    #------------ Monitor::GetProgramRunTime -----------------------------------
+    def GetProgramRunTime(self):
+        try:
+            ProgramRunTime = datetime.datetime.now() - self.ProgramStartTime
+            outstr = str(ProgramRunTime).split(".")[0]  # remove microseconds from string
+            return self.ProgramName + " running for " + outstr + "."
+        except Exception as e1:
+            self.LogErrorLine("Error in GetProgramRunTime:" + str(e1))
+            return "Unknown"
     #------------ Monitor::GetWeatherData --------------------------------------
     def GetWeatherData(self, ForUI = False):
 
@@ -640,9 +651,7 @@ class Monitor(mysupport.MySupport):
             GenMonStats["Monitor Health"] =  self.GetSystemHealth()
             GenMonStats["Controller"] = self.Controller.GetController(Actual = False)
 
-            ProgramRunTime = datetime.datetime.now() - self.ProgramStartTime
-            outstr = str(ProgramRunTime).split(".")[0]  # remove microseconds from string
-            GenMonStats["Run time"] = self.ProgramName + " running for " + outstr + "."
+            GenMonStats["Run time"] = self.GetProgramRunTime()
             GenMonStats["Generator Monitor Version"] = GENMON_VERSION
 
             if not self.bDisablePlatformStats:
