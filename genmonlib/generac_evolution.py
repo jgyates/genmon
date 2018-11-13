@@ -145,8 +145,7 @@ class Evolution(controller.GeneratorController):
                     "0037" : [2, 0],     # CT Sensor (EvoAC)
                     "0038" : [2, 0],     # Evo AC   (Sensor?)       FFFE, FFFF, 0001, 0002 random - not linear
                     "0039" : [2, 0],     # Evo AC   (Sensor?)
-                    "003a" : [2, 0],     # CT Sensor High (EvoAC)
-                    "003b" : [2, 0],     # CT Sensor Low (EvoAC)
+                    "003a" : [4, 0],     # CT Sensor (EvoAC)
                     "0208" : [2, 0],     # Calibrate Volts (Evo all)
                     "020a" : [2, 0],     # Param Group (EvoLC, NexuLC)
                     "020b" : [2, 0],     # Voltage Code (EvoLC, NexusLC)
@@ -1821,11 +1820,6 @@ class Evolution(controller.GeneratorController):
                 SignedStr = str(self.signed16( int(Value)))
                 Sensors["Unsupported Sensor 3"] = SignedStr
 
-            #
-            Value = self.GetUnknownSensor("003b")
-            if len(Value):
-                Sensors["Unsupported Sensor 4"] = Value
-
         return Sensors
 
     #------------ Evolution:LogRange -------------------------------------------
@@ -2751,23 +2745,19 @@ class Evolution(controller.GeneratorController):
                     CurrentOffset = self.CurrentOffset
 
                 CurrentOutput = round(max(((CurrentFloat  / Divisor) +  CurrentOffset), 0), 2)
-                CurrentFloat = abs(CurrentOutput)
+                CurrentOutput = abs(CurrentOutput)
 
             elif self.EvolutionController and not self.LiquidCooled:
-                CurrentHi = 0
-                CurrentLow = 0
-
                 Value = self.GetRegisterValueFromList("003a")
+                DebugInfo += Value
                 if len(Value):
-                    DebugInfo += "Hi: " + Value
-                    CurrentHi = int(Value,16)
-                Value = self.GetRegisterValueFromList("003b")
-                if len(Value):
-                    DebugInfo += " Lo: " + Value
-                    CurrentLow = int(Value,16)
+                    CurrentFloat = int(Value,16)
+                else:
+                    CurrentFloat = 0.0
 
-                if CurrentHi == 0xffff and CurrentLow == 0x0000:
-                    CurrentHi = 0
+                CurrentFloat = self.signed32(CurrentFloat)
+                CurrentFloat = abs(CurrentFloat)
+
                 # Dict is formated this way:  ModelID: [ divisor, offset to register]
                 ModelLookUp_EvoAC = { #ID : [KW or KVA Rating, Hz Rating, Voltage Rating, Phase]
                                         1 : None,      #["9KW", "60", "120/240", "1"],
@@ -2791,9 +2781,7 @@ class Evolution(controller.GeneratorController):
                                         33 : None       #["Trinity", "50", "380,400,416", "3"]  # 3 distinct models 380, 400 or 416
                                         }
 
-                CurrentFloat = float(self.signed32((CurrentHi << 16) | (CurrentLow)))
 
-                CurrentFloat = abs(CurrentFloat)
                 # Get Model ID
                 Value = self.GetRegisterValueFromList("0019")
                 if not len(Value):
