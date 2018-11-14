@@ -1,8 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.11.24 - 2018-11-14
+- Minor update for EvoLC current / power calculation
+
 ## V1.11.23 - 2018-11-13
-- Minor update to improve EvoAC current reading by reducing erroneous momentary current values. 
+- Minor update to improve EvoAC current reading by reducing erroneous momentary current values.
 
 ## V1.11.22 - 2018-11-07
 - Minor update to include program run duration time in data submitted in automated feedback error reporting

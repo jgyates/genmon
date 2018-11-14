@@ -2744,7 +2744,7 @@ class Evolution(controller.GeneratorController):
                 else:
                     CurrentOffset = self.CurrentOffset
 
-                CurrentOutput = round(max(((CurrentFloat  / Divisor) +  CurrentOffset), 0), 2)
+                CurrentOutput = round(((CurrentFloat  / Divisor) +  CurrentOffset), 2)
                 CurrentOutput = abs(CurrentOutput)
 
             elif self.EvolutionController and not self.LiquidCooled:
@@ -2810,7 +2810,7 @@ class Evolution(controller.GeneratorController):
             if Voltage > 100:     # only bounds check if the voltage is over 100V to give things a chance to stabalize
                 if CurrentOutput > ((float(self.NominalKW) * 1000) / 240) + 2 or CurrentOutput < 0:
                     # if we are here, then the current is out of range.
-                    if not BaseStatus == "EXERCISING":
+                    if not self.EvolutionController  and not self.LiquidCooled and not BaseStatus == "EXERCISING":
                         msg = "Current Calculation: %f, CurrentFloat: %f, Divisor: %f, Offset %f, Debug: %s" % (CurrentOutput, CurrentFloat, Divisor, CurrentOffset, DebugInfo)
                         self.FeedbackPipe.SendFeedback("Current Calculation out of range", Message=msg, FullLogs = True )
                     if CurrentOutput < 0:
