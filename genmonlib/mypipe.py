@@ -110,7 +110,7 @@ class MyPipe(mysupport.MySupport):
             self.LogErrorLine("Error in SendFeedback: " + str(e1))
 
     #----------------MyPipe::SendMessage----------------------------------------
-    def SendMessage(self,subjectstr, msgstr, recipient = None, files = None, deletefile = False, msgtype = "error"):
+    def SendMessage(self,subjectstr, msgstr, recipient = None, files = None, deletefile = False, msgtype = "error", onlyonce = False):
 
         if self.Simulation:
             return
@@ -122,11 +122,12 @@ class MyPipe(mysupport.MySupport):
             MessageDict["files"] = files
             MessageDict["deletefile"] = deletefile
             MessageDict["msgtype"] = msgtype
+            MessageDict["onlyonce"] = onlyonce
 
             data = json.dumps(MessageDict, sort_keys=False)
             self.WriteFile(data)
         except Exception as e1:
-            self.LogErrorLine("Error in SendMessage: " + str(e1))
+            self.LogErrorLine("Error in SendMessage: <" + (str(subjectstr)) + "> : "+ str(e1))
 
     #------------ MyPipe::Close-------------------------------------------------
     def Close(self):

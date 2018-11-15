@@ -28,7 +28,6 @@ class GeneratorController(mysupport.MySupport):
         simulationfile = None,
         message = None,
         feedback = None,
-        ConfigFilePath = None,
         config = None):
 
         super(GeneratorController, self).__init__(simulation = simulation)
@@ -39,43 +38,33 @@ class GeneratorController(mysupport.MySupport):
         self.FeedbackPipe = feedback
         self.MessagePipe = message
         self.config = config
-        if ConfigFilePath == None:
-            self.ConfigFilePath = "/etc/"
-        else:
-            self.ConfigFilePath = ConfigFilePath
 
-
-        self.Address = None
-        self.SerialPort = "/dev/serial0"
-        self.BaudRate = 9600
         self.ModBus = None
         self.InitComplete = False
         self.IsStopping = False
         self.InitCompleteEvent = threading.Event() # Event to signal init complete
         self.CheckForAlarmEvent = threading.Event() # Event to signal checking for alarm
-        self.Registers = {}         # dict for registers and values
+        self.Registers = collections.OrderedDict()         # dict for registers and values
+        self.Strings = collections.OrderedDict()           # dict for registers read a string data
+        self.FileData = collections.OrderedDict()          # dict for modbus file reads
         self.NotChanged = 0         # stats for registers
         self.Changed = 0            # stats for registers
         self.TotalChanged = 0.0     # ratio of changed ragisters
-        self.EnableDebug = False    # Used for enabeling debugging
-        self.UseMetric = False
         self.OutageLog = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/outage.txt"
         self.PowerLogMaxSize = 15       # 15 MB max size
         self.PowerLog =  os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/kwlog.txt"
+        self.PowerLogList = []
+        self.PowerLock = threading.RLock()
+        self.KWHoursMonth = None
+        self.FuelMonth = None
+        self.LastHouseKeepingTime = None
         self.TileList = []        # Tile list for GUI
 
-        if self.Simulation:
-            self.LogLocation = "./"
-        else:
-            self.LogLocation = "/var/log/"
-        self.bDisplayUnknownSensors = False
-        self.SlowCPUOptimization = False
         self.UtilityVoltsMin = 0    # Minimum reported utility voltage above threshold
         self.UtilityVoltsMax = 0    # Maximum reported utility voltage above pickup
         self.SystemInOutage = False         # Flag to signal utility power is out
         self.TransferActive = False         # Flag to signal transfer switch is allowing gen supply power
         self.ControllerSelected = None
-        self.SiteName = "Home"
         # The values "Unknown" are checked to validate conf file items are found
         self.FuelType = "Unknown"
         self.NominalFreq = "Unknown"
@@ -91,35 +80,22 @@ class GeneratorController(mysupport.MySupport):
 
         try:
             if self.config != None:
-                if self.config.HasOption('sitename'):
-                    self.SiteName = self.config.ReadValue('sitename')
+                self.SiteName = self.config.ReadValue('sitename', default = 'Home')
+                self.LogLocation = self.config.ReadValue('loglocation', default = '/var/log/')
+                self.UseMetric = self.config.ReadValue('metricweather', return_type = bool, default = False)
+                self.EnableDebug = self.config.ReadValue('enabledebug', return_type = bool, default = False)
+                self.bDisplayUnknownSensors = self.config.ReadValue('displayunknown', return_type = bool, default = False)
+                self.bDisablePowerLog = self.config.ReadValue('disablepowerlog', return_type = bool, default = False)
+                self.SubtractFuel = self.config.ReadValue('subtractfuel', return_type = float, default = 0.0)
 
-                if self.config.HasOption('port'):
-                    self.SerialPort = self.config.ReadValue('port')
 
-                if self.config.HasOption('loglocation'):
-                    self.LogLocation = self.config.ReadValue('loglocation')
-
-                if self.config.HasOption('optimizeforslowercpu'):
-                    self.SlowCPUOptimization = self.config.ReadValue('optimizeforslowercpu', return_type = bool)
-                # optional config parameters, by default the software will attempt to auto-detect the controller
-                # this setting will override the auto detect
-
-                if self.config.HasOption('metricweather'):
-                    self.UseMetric = self.config.ReadValue('metricweather', return_type = bool)
-
-                if self.config.HasOption('enabledebug'):
-                    self.EnableDebug = self.config.ReadValue('enabledebug', return_type = bool)
-
-                if self.config.HasOption('displayunknown'):
-                    self.bDisplayUnknownSensors = self.config.ReadValue('displayunknown', return_type = bool)
                 if self.config.HasOption('outagelog'):
                     self.OutageLog = self.config.ReadValue('outagelog')
 
                 if self.config.HasOption('kwlog'):
                     self.PowerLog = self.config.ReadValue('kwlog')
-                if self.config.HasOption('kwlogmax'):
-                    self.PowerLogMaxSize = self.config.ReadValue('kwlogmax', return_type = int)
+
+                self.PowerLogMaxSize = self.config.ReadValue('kwlogmax', return_type = int, default = 15)
 
                 if self.config.HasOption('nominalfrequency'):
                     self.NominalFreq = self.config.ReadValue('nominalfrequency')
@@ -140,10 +116,6 @@ class GeneratorController(mysupport.MySupport):
                     self.TankSize = self.config.ReadValue('tanksize')
 
                 self.SmartSwitch = self.config.ReadValue('smart_transfer_switch', return_type = bool, default = False)
-
-                self.UseSerialTCP = self.config.ReadValue('use_serial_tcp', return_type = bool, default = False)
-                self.SerialTCPAddress = self.config.ReadValue('serial_tcp_address', return_type = str, default = None)
-                self.SerialTCPPort = self.config.ReadValue('serial_tcp_port', return_type = int, default = None, NoLog = True)
 
         except Exception as e1:
             if not reload:
@@ -214,7 +186,7 @@ class GeneratorController(mysupport.MySupport):
         if not self.ControllerSelected == None or not len(self.ControllerSelected) or self.ControllerSelected == "generac_evo_nexus":
             MaxReg = 0x400
         else:
-            MaxReg == 0x400
+            MaxReg == 0x2000
         self.InitCompleteEvent.wait()
 
         if self.IsStopping:
@@ -240,7 +212,7 @@ class GeneratorController(mysupport.MySupport):
                     if self.WaitForExit("DebugThread", 0.25):  #
                         return
                     Register = "%04x" % Reg
-                    NewValue = self.ModBus.ProcessMasterSlaveTransaction(Register, 1, ReturnValue = True)
+                    NewValue = self.ModBus.ProcessMasterSlaveTransaction(Register, 1, skipupdate = True)
                     if not len(NewValue):
                         continue
                     OldValue = RegistersUnderTest.get(Register, "")
@@ -291,9 +263,16 @@ class GeneratorController(mysupport.MySupport):
             return ""
 
     #-------------GeneratorController:GetParameterLong--------------------------
-    def GetParameterLong(self, RegisterLo, RegisterHi, Label = None, Divider = None, ReturnInt = False):
+    def GetParameterLong(self, RegisterLo, RegisterHi, Label = None, Divider = None, ReturnInt = False, ReturnFloat = False):
 
         try:
+            if ReturnInt:
+                DefaultReturn = 0
+            elif ReturnFloat:
+                DefaultReturn = 0.0
+            else:
+                DefaultReturn = ""
+
             if not Label == None:
                 LabelStr = Label
             else:
@@ -303,10 +282,7 @@ class GeneratorController(mysupport.MySupport):
             ValueHi = self.GetParameter(RegisterHi)
 
             if not len(ValueLo) or not len(ValueHi):
-                if ReturnInt:
-                    return 0
-                else:
-                    return ""
+                return DefaultReturn
 
             IntValueLo = int(ValueLo)
             IntValueHi = int(ValueHi)
@@ -318,11 +294,13 @@ class GeneratorController(mysupport.MySupport):
 
             if not Divider == None:
                 FloatValue = IntValue / Divider
+                if ReturnFloat:
+                    return FloatValue
                 return "%2.1f %s" % (FloatValue, LabelStr)
             return "%d %s" % (IntValue, LabelStr)
         except Exception as e1:
             self.LogErrorLine("Error in GetParameterBit: " + str(e1))
-            return ""
+            return DefaultReturn
 
     #-------------GeneratorController:GetParameter------------------------------
     # Hex assumes no Divider and Label - return Hex string
@@ -367,7 +345,7 @@ class GeneratorController(mysupport.MySupport):
                 return str(int(Value,16))
 
         except Exception as e1:
-            self.LogErrorLine("Error in GetParameter:" + str(e1))
+            self.LogErrorLine("Error in GetParameter: Reg: " + Register + ": " + str(e1))
             return ""
 
     #---------------------GeneratorController::GetConfig------------------------
@@ -631,7 +609,7 @@ class GeneratorController(mysupport.MySupport):
 
             Register = CmdList[1].strip()
 
-            RegValue = self.ModBus.ProcessMasterSlaveTransaction( Register, 1, ReturnValue = True)
+            RegValue = self.ModBus.ProcessMasterSlaveTransaction( Register, 1, skipupdate = True)
 
             if RegValue == "":
                 self.LogError("Validation Error: Register  not known (ReadRegValue):" + Register)
@@ -689,6 +667,16 @@ class GeneratorController(mysupport.MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in  DisplayOutageHistory: " + str(e1))
             return []
+    #------------ GeneratorController::LogToPowerLog----------------------------
+    def LogToPowerLog(self, TimeStamp, Value):
+
+        try:
+            if len(self.PowerLogList):
+                self.PowerLogList.insert(0, [TimeStamp, Value])
+            self.LogToFile(self.PowerLog, TimeStamp, Value)
+        except Exception as e1:
+            self.LogErrorLine("Error in LogToPowerLog: " + str(e1))
+
     #------------ GeneratorController::PrunePowerLog----------------------------
     def PrunePowerLog(self, Minutes):
 
@@ -702,8 +690,8 @@ class GeneratorController(mysupport.MySupport):
             LogSize = os.path.getsize(self.PowerLog)
 
             if float(LogSize) / (1024*1024) >= self.PowerLogMaxSize * 0.98:
-                msgbody = "The kwlog file size is 98% of the maximum. Once the log reaches 100% of the maximum size the log will be reset."
-                self.MessagePipe.SendMessage("Notice: Log file size warning" , msgbody, msgtype = "warn")
+                msgbody = "The kwlog file size is 98% of the maximum. Once the log reaches 100% of the log will be reset."
+                self.MessagePipe.SendMessage("Notice: Log file size warning" , msgbody, msgtype = "warn", onlyonce = True)
 
             # is the file size too big?
             if float(LogSize) / (1024*1024) >= self.PowerLogMaxSize:
@@ -723,7 +711,7 @@ class GeneratorController(mysupport.MySupport):
             LogSize = os.path.getsize(self.PowerLog)
             if LogSize == 0:
                 TimeStamp = datetime.datetime.now().strftime('%x %X')
-                self.LogToFile(self.PowerLog, TimeStamp, "0.0")
+                self.LogToPowerLog( TimeStamp, "0.0")
 
             return "OK"
 
@@ -745,10 +733,12 @@ class GeneratorController(mysupport.MySupport):
             except:
                 pass
 
+            self.PowerLogList = []
+
             if not NoCreate:
                 # add zero entry to note the start of the log
                 TimeStamp = datetime.datetime.now().strftime('%x %X')
-                self.LogToFile(self.PowerLog, TimeStamp, "0.0")
+                self.LogToPowerLog( TimeStamp, "0.0")
 
             return "Power Log cleared"
         except Exception as e1:
@@ -756,7 +746,15 @@ class GeneratorController(mysupport.MySupport):
             return "Error in  ClearPowerLog: " + str(e1)
 
     #------------ GeneratorController::ReducePowerSamples-----------------------
-    def ReducePowerSamplesOld(self, PowerList, MaxSize):
+    def ReducePowerSamples2(self, PowerList, MaxSize):
+        NewList = []
+        try:
+            pass
+        except Exception as e1:
+            self.LogErrorLine("Error in ReducePowerSamples: " + str(e1))
+        return []
+    #------------ GeneratorController::ReducePowerSamples-----------------------
+    def ReducePowerSamples(self, PowerList, MaxSize):
 
         if MaxSize == 0:
             self.LogError("RecducePowerSamples: Error: Max size is zero")
@@ -781,7 +779,7 @@ class GeneratorController(mysupport.MySupport):
 
             # if we have too many entries due to a remainder or not removing zero samples, then delete some
             if len(NewList) > MaxSize:
-                return RemovePowerSamples(NewList, MaxSize)
+                return self.RemovePowerSamples(NewList, MaxSize)
         except Exception as e1:
             self.LogErrorLine("Error in RecducePowerSamples: %s" % str(e1))
             return PowerList
@@ -789,101 +787,90 @@ class GeneratorController(mysupport.MySupport):
         return NewList
 
     #------------ GeneratorController::RemovePowerSamples-----------------------
-    def RemovePowerSamples(List, MaxSize):
+    def RemovePowerSamples(self, List, MaxSize):
 
+        import random
         try:
-            if len(List) <= MaxSize:
+            NewList = List[:]
+            if len(NewList) <= MaxSize:
                 self.LogError("RemovePowerSamples: Error: Can't remove ")
-                return List
+                return NewList
 
-            Extra = len(List) - MaxSize
+            Extra = len(NewList) - MaxSize
             for Count in range(Extra):
-                    # assume first and last sampels are zero samples so don't select thoes
-                    self.MarkNonZeroKwEntry(List, random.randint(1, len(List) - 2))
+                # assume first and last sampels are zero samples so don't select thoes
+                repeat = True
+                while (repeat):
+                    position = random.randint(1, len(NewList) - 2)
+                    if float(NewList[position][1]) != 0:
+                        Entry = NewList.pop(position)
+                        repeat = False
 
-            TempList = []
-            for TimeStamp, KWValue in List:
-                if not TimeStamp == "X":
-                    TempList.append([TimeStamp, KWValue])
-            return TempList
+            return NewList
         except Exception as e1:
             self.LogErrorLine("Error in RemovePowerSamples: %s" % str(e1))
-            return List
+            return NewList
 
-    #------------ GeneratorController::MarkNonZeroKwEntry-----------------------
-    #       RECURSIVE
-    def MarkNonZeroKwEntry(self, List, Index):
-
+    #------------ GeneratorController::GetPowerLogForMinutes--------------------
+    def GetPowerLogForMinutes(self, Minutes = 0):
         try:
-            TimeStamp, KwValue = List[Index]
-            if not KwValue == "X" and not float(KwValue) == 0.0:
-                List[Index] = ["X", "X"]
-                return
-            else:
-                MarkNonZeroKwEntry(List, Index - 1)
-                return
-        except Exception as e1:
-            self.LogErrorLine("Error in MarkNonZeroKwEntry: %s" % str(e1))
-        return
-
-    #------------ GeneratorController::ReducePowerSamples-----------------------
-    def ReducePowerSamples(self, PowerList, MaxSize):
-
-        if MaxSize == 0:
-            self.LogError("RecducePowerSamples: Error: Max size is zero")
-            return []
-
-        periodMaxSamples = MaxSize
-        NewList = []
-        try:
+            ReturnList = []
+            PowerList = self.ReadPowerLogFromFile()
+            if not Minutes:
+                return PowerList
             CurrentTime = datetime.datetime.now()
-            secondPerSample = 0
-            prevMax = 0
-            currMax = 0
-            currTime = CurrentTime
-            prevTime = CurrentTime + datetime.timedelta(minutes=1)
-            currSampleTime = CurrentTime
-            prevBucketTime = CurrentTime # prevent a 0 to be written the first time
-            nextBucketTime = CurrentTime - datetime.timedelta(seconds=1)
 
-            for Count in range(len(PowerList)):
-               TimeStamp, KWValue = PowerList[Count]
-               struct_time = time.strptime(TimeStamp, "%x %X")
-               delta_sec = (CurrentTime - datetime.datetime.fromtimestamp(time.mktime(struct_time))).total_seconds()
-               if 0 <= delta_sec <= datetime.timedelta(minutes=60).total_seconds():
-                   secondPerSample = int(datetime.timedelta(minutes=60).total_seconds() / periodMaxSamples)
-               if datetime.timedelta(minutes=60).total_seconds() <= delta_sec <=  datetime.timedelta(hours=24).total_seconds():
-                   secondPerSample = int(datetime.timedelta(hours=23).total_seconds() / periodMaxSamples)
-               if datetime.timedelta(hours=24).total_seconds() <= delta_sec <= datetime.timedelta(days=7).total_seconds():
-                   secondPerSample = int(datetime.timedelta(days=6).total_seconds() / periodMaxSamples)
-               if datetime.timedelta(days=7).total_seconds() <= delta_sec <= datetime.timedelta(days=31).total_seconds():
-                   secondPerSample = int(datetime.timedelta(days=25).total_seconds() / periodMaxSamples)
-
-               currSampleTime = CurrentTime - datetime.timedelta(seconds=(int(delta_sec / secondPerSample)*secondPerSample))
-               if (currSampleTime != currTime):
-                   if ((currMax > 0) and (prevBucketTime != prevTime)):
-                       NewList.append([prevBucketTime.strftime('%x %X'), 0.0])
-                   if ((currMax > 0) or ((currMax == 0) and (prevMax > 0))):
-                       NewList.append([currTime.strftime('%x %X'), currMax])
-                   if ((currMax > 0) and (nextBucketTime != currSampleTime)):
-                       NewList.append([nextBucketTime.strftime('%x %X'), 0.0])
-                   prevMax = currMax
-                   prevTime = currTime
-                   currMax = KWValue
-                   currTime = currSampleTime
-                   prevBucketTime  = CurrentTime - datetime.timedelta(seconds=((int(delta_sec / secondPerSample)+1)*secondPerSample))
-                   nextBucketTime  = CurrentTime - datetime.timedelta(seconds=((int(delta_sec / secondPerSample)-1)*secondPerSample))
-               else:
-                   currMax = max(currMax, KWValue)
-
-
-            NewList.append([currTime.strftime('%x %X'), currMax])
+            for Time, Power in reversed(PowerList):
+                struct_time = time.strptime(Time, "%x %X")
+                LogEntryTime = datetime.datetime.fromtimestamp(time.mktime(struct_time))
+                Delta = CurrentTime - LogEntryTime
+                if self.GetDeltaTimeMinutes(Delta) < Minutes :
+                    ReturnList.insert(0, [Time, Power])
+            return ReturnList
         except Exception as e1:
-            self.LogErrorLine("Error in RecducePowerSamples: %s" % str(e1))
-            return PowerList
+            self.LogErrorLine("Error in GetPowerLogForMinutes: " + str(e1))
+            return ReturnList
 
-        return NewList
+    #------------ GeneratorController::ReadPowerLogFromFile---------------------
+    def ReadPowerLogFromFile(self, Minutes = 0, NoReduce = False):
 
+        # check to see if a log file exist yet
+        if not os.path.isfile(self.PowerLog):
+            return []
+        PowerList = []
+        CurrentTime = datetime.datetime.now()
+
+        # return cached list if we have read the file before
+        if len(self.PowerLogList) and not Minutes:
+            return self.PowerLogList
+        with self.PowerLock:
+            if Minutes:
+                return self.GetPowerLogForMinutes(Minutes)
+
+            try:
+                with open(self.PowerLog,"r") as LogFile:     #opens file
+                    for line in LogFile:
+                        line = line.strip()                  # remove whitespace at beginning and end
+
+                        if not len(line):
+                            continue
+                        if line[0] == "#":                  # comment
+                            continue
+                        Items = line.split(",")
+                        if len(Items) != 2:
+                            continue
+                        # remove any kW labels that may be there
+                        Items[1] = self.removeAlpha(Items[1])
+                        PowerList.insert(0, [Items[0], Items[1]])
+
+            except Exception as e1:
+                self.LogErrorLine("Error in  GetPowerHistory (parse file): " + str(e1))
+
+            if len(PowerList) > 500 and not NoReduce:
+                PowerList = self.ReducePowerSamples(PowerList, 500)
+            if not len(self.PowerLogList):
+                self.PowerLogList = PowerList
+        return PowerList
     #------------ GeneratorController::GetPowerHistory--------------------------
     def GetPowerHistory(self, CmdString, NoReduce = False):
 
@@ -934,42 +921,13 @@ class GeneratorController(mysupport.MySupport):
             return msgbody
 
         try:
-            # check to see if a log file exist yet
-            if not os.path.isfile(self.PowerLog):
-                return []
 
-            PowerList = []
+            PowerList = self.ReadPowerLogFromFile( Minutes = Minutes)
 
-            with open(self.PowerLog,"r") as LogFile:     #opens file
-                CurrentTime = datetime.datetime.now()
-                try:
-                    for line in LogFile:
-                        line = line.strip()                  # remove whitespace at beginning and end
-
-                        if not len(line):
-                            continue
-                        if line[0] == "#":                  # comment
-                            continue
-                        Items = line.split(",")
-                        if len(Items) != 2:
-                            continue
-                        # remove any kW labels that may be there
-                        Items[1] = self.removeAlpha(Items[1])
-
-                        if Minutes:
-                            struct_time = time.strptime(Items[0], "%x %X")
-                            LogEntryTime = datetime.datetime.fromtimestamp(time.mktime(struct_time))
-                            Delta = CurrentTime - LogEntryTime
-                            if self.GetDeltaTimeMinutes(Delta) < Minutes :
-                                PowerList.insert(0, [Items[0], Items[1]])
-                        else:
-                            PowerList.insert(0, [Items[0], Items[1]])
-                    #Shorten list to 1000 if specific duration requested
-                    if not KWHours and len(PowerList) > 500 and Minutes and not NoReduce:
-                        PowerList = self.ReducePowerSamples(PowerList, 500)
-                except Exception as e1:
-                    self.LogErrorLine("Error in  GetPowerHistory (parse file): " + str(e1))
-                    # continue to the next line
+            #Shorten list to 500 if specific duration requested
+            #if not KWHours and len(PowerList) > 500 and Minutes and not NoReduce:
+            if len(PowerList) > 500 and Minutes and not NoReduce:
+                PowerList = self.ReducePowerSamples(PowerList, 500)
 
             if KWHours:
                 AvgPower, TotalSeconds = self.GetAveragePower(PowerList)
@@ -1003,6 +961,10 @@ class GeneratorController(mysupport.MySupport):
                 Power = float(Items[1])
                 struct_time = time.strptime(Items[0], "%x %X")
                 LogEntryTime = datetime.datetime.fromtimestamp(time.mktime(struct_time))
+
+                if LastTime != None:
+                    if LogEntryTime > LastTime:
+                        self.LogError("Error in GetAveragePower: time sequence error")
 
                 if LastTime == None or Power == 0:
                     TotalTime += LogEntryTime - LogEntryTime
@@ -1044,19 +1006,25 @@ class GeneratorController(mysupport.MySupport):
         if not os.path.isfile(self.PowerLog) or os.path.getsize(self.PowerLog) == 0:
             TimeStamp = datetime.datetime.now().strftime('%x %X')
             self.LogError("Creating Power Log: " + self.PowerLog)
-            self.LogToFile(self.PowerLog, TimeStamp, "0.0")
+            self.LogToPowerLog( TimeStamp, "0.0")
 
         LastValue = 0.0
         LastPruneTime = datetime.datetime.now()
+        LastFuelCheckTime = datetime.datetime.now()
         while True:
             try:
                 if self.WaitForExit("PowerMeter", 10):
                     return
 
                 # Housekeeping on kw Log
-                if self.GetDeltaTimeMinutes(datetime.datetime.now() - LastPruneTime) > 1440 :     # check every day
-                    self.PrunePowerLog(43800 * 36)   # delete log entries greater than three years
-                    LastPruneTime = datetime.datetime.now()
+                if LastValue == 0:
+                    if self.GetDeltaTimeMinutes(datetime.datetime.now() - LastPruneTime) > 1440 :     # check every day
+                        self.PrunePowerLog(43800 * 36)   # delete log entries greater than three years
+                        LastPruneTime = datetime.datetime.now()
+
+                if self.GetDeltaTimeMinutes(datetime.datetime.now() - LastFuelCheckTime) > 10 :         # check 10 min
+                    LastFuelCheckTime = datetime.datetime.now()
+                    self.CheckFuelLevel()
 
                 # Time to exit?
                 if self.IsStopSignaled("PowerMeter"):
@@ -1069,16 +1037,46 @@ class GeneratorController(mysupport.MySupport):
                 if LastValue == 0:
                     StartTime = datetime.datetime.now() - datetime.timedelta(seconds=1)
                     TimeStamp = StartTime.strftime('%x %X')
-                    self.LogToFile(self.PowerLog, TimeStamp, str(LastValue))
+                    self.LogToPowerLog( TimeStamp, str(LastValue))
 
                 LastValue = KWFloat
                 # Log to file
                 TimeStamp = datetime.datetime.now().strftime('%x %X')
-                self.LogToFile(self.PowerLog, TimeStamp, str(KWFloat))
+                self.LogToPowerLog( TimeStamp, str(KWFloat))
 
             except Exception as e1:
                 self.LogErrorLine("Error in PowerMeter: " + str(e1))
 
+    #----------  GeneratorController::CheckFuelLevel----------------------------
+    def CheckFuelLevel(self):
+        try:
+
+            if not self.FuelGuageSupported():
+                return True
+
+            if self.TankSize == None or self.TankSize == "0" or self.TankSize == "":
+                return True
+            FuelInTank = self.GetEstimatedFuelInTank(ReturnFloat = True)
+
+            if FuelInTank >= self.TankSize:
+                return True
+
+            RemainingFuel = float(FuelInTank) / float(self.TankSize)
+
+            if RemainingFuel <= 0.1:    # Ten percent left
+                msgbody = "Warning: The estimated fuel in the tank is at or below 10%"
+                self.MessagePipe.SendMessage("Warning: Fuel Level at or below 10%" , msgbody, msgtype = "warn", onlyonce = True)
+                return False
+            elif RemainingFuel <= 0.20:    # 20 percent left
+                msgbody = "Warning: The estimated fuel in the tank is at or below 20%"
+                self.MessagePipe.SendMessage("Warning: Fuel Level at or below 20%" , msgbody, msgtype = "warn", onlyonce = True)
+                return False
+            else:
+                return True
+
+        except Exception as e1:
+            self.LogErrorLine("Error in CheckFuelLevel: " + str(e1))
+            return True
     #----------  GeneratorController::GetEstimatedFuelInTank--------------------
     def GetEstimatedFuelInTank(self, ReturnFloat = False):
 
@@ -1087,17 +1085,22 @@ class GeneratorController(mysupport.MySupport):
         else:
             DefaultReturn = "0"
 
+        if not self.FuelGuageSupported():
+            return DefaultReturn
+
         if self.TankSize == None or self.TankSize == "0" or self.TankSize == "":
             return DefaultReturn
         try:
-            FuelUsed = self.GetPowerHistory("power_log_json=0,fuel", NoReduce = True)
+            FuelUsed = self.GetPowerHistory("power_log_json=0,fuel")
             if FuelUsed == "Unknown" or not len(FuelUsed):
                 return DefaultReturn
             FuelUsed = self.removeAlpha(FuelUsed)
             FuelLeft = float(self.TankSize) - float(FuelUsed)
+
+            FuelLeft = float(FuelLeft) - float(self.SubtractFuel)
+
             if FuelLeft < 0:
                 FuelLeft = 0.0
-
             if self.UseMetric:
                 Units = "L"
             else:

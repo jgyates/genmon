@@ -156,6 +156,13 @@ class MySupport(mycommon.MyCommon):
                     ReturnDict["type"] = 'int'
                     ReturnDict["value"] = value
                     return json.dumps(ReturnDict, sort_keys=False)
+            if isinstance(value, long):
+                if not NoString:
+                    return "%d %s" % (int(value), str(unit))
+                else:
+                    ReturnDict["type"] = 'long'
+                    ReturnDict["value"] = value
+                    return json.dumps(ReturnDict, sort_keys=False)
             elif isinstance(value, float):
                 if not NoString:
                     return "%.2f %s" % (float(value), str(unit))
@@ -171,6 +178,34 @@ class MySupport(mycommon.MyCommon):
             self.LogErrorLine("Error in ValueOut: " + str(e1))
             return DefaultReturn
 
+    #----------  MySupport::HexStringToString  ---------------------------------
+    def HexStringToString(self, input):
+
+        try:
+            if not len(input):
+                return ""
+            if not self.StringIsHex(input):
+                return ""
+            ByteArray = bytearray.fromhex(input)
+            if ByteArray[0] == 0:
+                return ""
+            End = ByteArray.find('\0')
+            if End != -1:
+                ByteArray = ByteArray[:End]
+            return str(ByteArray).encode('ascii')
+        except Exception as e1:
+            self.LogErrorLine("Error in HexStringToString: " + str(e1))
+            return ""
+
+    #----------  MySupport::StringIsHex  ---------------------------------------
+    def StringIsHex(self, input):
+        try:
+            if " " in input:
+                return False
+            int(input, 16)
+            return True
+        except:
+            return False
     #------------ MySupport::GetDispatchItem -----------------------------------
     def GetDispatchItem(self, item):
 
@@ -237,7 +272,7 @@ class MySupport(mycommon.MyCommon):
                     for listitem in item:
                         if isinstance(listitem, dict):
                             InputBuffer = self.ProcessDispatchToString(listitem, InputBuffer, indent + 1)
-                        elif isinstance(listitem, str):
+                        elif isinstance(listitem, str) or isinstance(listitem, unicode):
                             InputBuffer += (("    " * (indent +1)) +  self.GetDispatchItem(listitem) + "\n")
                         else:
                             self.LogError("Invalid type in ProcessDispatchToString %s %s (2)" % (key, str(type(listitem))))

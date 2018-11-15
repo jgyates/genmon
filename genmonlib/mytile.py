@@ -63,11 +63,11 @@ class MyTile (mycommon.MyCommon):
         try:
             if self.Type.lower() == "batteryvolts":
                 self.Nominal = self.SetDefault(self.Nominal, 12)
-                self.Minimum = self.SetDefault(self.Minimum, self.Nominal/12*10)
+                self.Minimum = self.SetDefault(self.Minimum, 0, ) #self.Nominal/12*10)
                 self.Maximum = self.SetDefault(self.Maximum, self.Nominal/12*16)
                 self.Divisions = self.SetDefault(self.Divisions, 6)
                 self.SubDivisions = self.SetDefault(self.SubDivisions, 10)
-                self.Labels = self.SetDefault( self.Labels, range(self.Minimum, self.Maximum + 1, 1))
+                self.Labels = self.SetDefault( self.Labels, range(self.Minimum, self.Maximum + 1, self.Maximum / 4))
                 values = [self.Minimum, self.Nominal/12*11.5, self.Nominal/12*12.5, self.Nominal/12*15, self.Nominal/12*15.5, self.Maximum]
                 colors = [self.RED, self.YELLOW, self.GREEN, self.YELLOW, self.RED]
                 self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))

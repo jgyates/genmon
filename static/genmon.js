@@ -39,7 +39,7 @@ $(document).ready(function() {
     resizeDiv();
 });
 
-
+//*****************************************************************************
 window.onresize = function(event) {
     resizeDiv();
 }
@@ -61,6 +61,7 @@ function processAjaxSuccess() {
     ajaxErrors["lastSuccessTime"] = new moment();
 }
 
+//*****************************************************************************
 function processAjaxError(xhr, ajaxOptions, thrownError) {
     // alert(xhr.status);
     // alert(thrownError);
@@ -125,7 +126,7 @@ $(window).focus(function() {
     windowActive = true;
     // console.log(moment().format("YYYY-MM-DD HH:mm:ss") + " window became active. Starting background replots for jqplot");
 });
-
+//*****************************************************************************
 $(window).blur(function() {
     windowActive = false;
     // console.log(moment().format("YYYY-MM-DD HH:mm:ss") + " window became inactive. Stopping background replots for jqplot");
@@ -181,6 +182,7 @@ function CreateMenuWhenReady() {
     return true;
 }
 
+//*****************************************************************************
 function CreateMenu() {
     var outstr = '';
 
@@ -339,6 +341,7 @@ function DisplayStatusFull() {
     return;
 }
 
+//*****************************************************************************
 function json2html(json, intent, parentkey) {
     var outstr = '';
     if (typeof json === 'string') {
@@ -354,7 +357,7 @@ function json2html(json, intent, parentkey) {
       if (json.length > 0) {
         intent += "&nbsp;&nbsp;&nbsp;&nbsp;";
         for (var i = 0; i < json.length; ++i) {
-          outstr += json2html(json[i], intent, parentkey+"_"+i);
+          outstr += intent + json2html(json[i], intent, parentkey+"_"+i);
         }
       }
     }
@@ -376,6 +379,7 @@ function json2html(json, intent, parentkey) {
     return outstr;
 }
 
+//*****************************************************************************
 function createGauge(pCanvas, pText, pTextPrecision, pMin, pMax, pLabels, pZones, pDiv, pSubDiv) {
     var opts = {
       angle: -0.2, // The span of the gauge arc
@@ -421,7 +425,7 @@ function createGauge(pCanvas, pText, pTextPrecision, pMin, pMax, pLabels, pZones
     return gauge;
 }
 
-
+//*****************************************************************************
 function createFuel(pCanvas, pText, pFG, tanksize) {
     var opts = {
       angle: 0.23, // The span of the gauge arc
@@ -470,7 +474,7 @@ function createFuel(pCanvas, pText, pFG, tanksize) {
 
     return gauge;
 }
-
+//*****************************************************************************
 function createGraph(title, minimum, maximum) {
     kwHistory["kwDuration"] = "h";
     kwHistory["tickInterval"] = "10 minutes";
@@ -536,7 +540,7 @@ function createGraph(title, minimum, maximum) {
     });
 
 }
-
+//*****************************************************************************
 function printKwPlot(currentKw) {
    var now = new moment();
    if (currentKw == 0)
@@ -571,7 +575,7 @@ function DisplayStatusUpdate()
     }});
 
 }
-
+//*****************************************************************************
 function json2updates(json, parentkey) {
     if ((typeof json === 'string') && ($("#"+parentkey.replace(/ /g, '_')).html() != json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'))) {
       $("#"+parentkey.replace(/ /g, '_')).html(json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
@@ -618,7 +622,7 @@ function DisplayMaintenance(){
             if (myGenerator['ExerciseControls'] == true) {
 
                outstr += "<br>Generator Exercise Time:<br><br>";
-   
+
                //Create array of options to be added
                if (myGenerator['EnhancedExerciseEnabled'] == true) {
                    outstr += '&nbsp;&nbsp;&nbsp;&nbsp;<select id="ExerciseFrequency" onChange="setExerciseSelection()">';
@@ -627,7 +631,7 @@ function DisplayMaintenance(){
                    outstr += '<option value="Monthly" ' + (myGenerator['ExerciseFrequency'] == "Monthly"  ? ' selected="selected" ' : '') + '>Monthly</option>';
                    outstr += '</select>';
                }
-   
+
                //Create and append the options, days
                outstr += '&nbsp;<select id="days"></select> , ';
                //Create and append the options, hours
@@ -636,20 +640,20 @@ function DisplayMaintenance(){
                    outstr += '<option value="' + i.pad() + '">' + i.pad() + '</option>';
                }
                outstr += '</select> : ';
-   
+
                //Create and append the options, minute
                outstr += '<select id="minutes">';
                for (var i = 0; i < 60; i++) {
                    outstr += '<option value="' + i.pad() + '">' + i.pad() + '</option>';
                }
                outstr += '</select>';
-   
+
                //Create and append select list
                outstr += '&nbsp;&nbsp;<select id="quietmode">';
                outstr += '<option value="On" ' + (myGenerator['QuietMode'] == "On"  ? ' selected="selected" ' : '') + '>Quiet Mode On </option>';
                outstr += '<option value="Off"' + (myGenerator['QuietMode'] == "Off" ? ' selected="selected" ' : '') + '>Quiet Mode Off</option>';
                outstr += '</select><br><br>';
-   
+
                outstr += '&nbsp;&nbsp;<button id="setexercisebutton" onClick="saveMaintenance();">Set Exercise Time</button>';
             }
 
@@ -662,8 +666,17 @@ function DisplayMaintenance(){
                outstr += '<button class="tripleButtonCenter" id="remotestart" onClick="SetClick(\'start\');">Start Generator</button>';
                outstr += '<button class="tripleButtonRight"  id="remotetransfer" onClick="SetClick(\'starttransfer\');">Start Generator and Transfer</button>';
 
-               outstr += '<br><br>Reset Alarm Condition:<br><br>';
-               outstr += '&nbsp;&nbsp;<button id="resetalarm" onClick="ResetAlarmClick();">Reset Alarm Condition</button><br>';
+            }
+
+            if (myGenerator['ResetAlarms'] == true || myGenerator['AckAlarms'] == true){
+               outstr += '<br><br>Alarm Condition:<br><br>';
+               outstr += '&nbsp;&nbsp;';
+               if (myGenerator['ResetAlarms'] == true) {
+                 outstr += '&nbsp;&nbsp;<button id="resetalarm" onClick="SetClick(\'resetalarm\');">Reset Alarm</button><br>';
+               }
+               if (myGenerator['AckAlarms'] == true) {
+                  outstr += '&nbsp;&nbsp;<button id="ackalarm" onClick="SetClick(\'ackalarm\');">Acknowledge Alarm</button><br>';
+               }
             }
 
             if (myGenerator['RemoteButtons'] == true) {
@@ -759,6 +772,12 @@ function SetClick(cmd){
        case "manual":
           msg = 'Set generator to Manual?<br><span class="confirmSmall">Generator will start, warm up and run idle (without activating the transfer switch).</span>';
           break;
+       case "resetalarm":
+          msg = 'Reset generator alarm?<br><span class="confirmSmall">Are you sure you want to reset the alarm condition on your generator?</span>';
+          break;
+       case "ackalarm":
+          msg = 'Acknowledge generator alarm?<br><span class="confirmSmall">Are you sure you want to acknowledge the alarm condition on your generator?</span>';
+          break;
     }
 
     vex.dialog.confirm({
@@ -788,28 +807,6 @@ function SetTimeClick(){
              } else {
                 // set exercise time
                 var url = baseurl.concat("settime");
-                $.getJSON(  url,
-                   {settime: " "},
-                   function(result){});
-             }
-        }
-    });
-}
-
-//*****************************************************************************
-// called when Reset Alarm Condition is clicked
-//*****************************************************************************
-function ResetAlarmClick(){
-
-    vex.dialog.confirm({
-        unsafeMessage: 'Are you sure you want to reset the alarm condition on your generator?',
-        overlayClosesOnClick: false,
-        callback: function (value) {
-             if (value == false) {
-                return;
-             } else {
-                // set exercise time
-                var url = baseurl.concat("resetalarm");
                 $.getJSON(  url,
                    {settime: " "},
                    function(result){});
@@ -880,6 +877,7 @@ function DisplayMaintenanceUpdate(){
 
 }
 
+//*****************************************************************************
 function setStartStopButtonsState(){
    $("#remotestop").css("background", "#bbbbbb");
    $("#remotestart").css("background", "#bbbbbb");
@@ -1144,7 +1142,7 @@ function DisplayNotifications(){
         });
    }});
 }
-
+//*****************************************************************************
 function renderNotificationLine(rowcount, line_type, line_text, line_perms) {
 
    var outstr = '<tr id="row_' + rowcount + '"><td nowrap><div rowcount="' + rowcount + '" class="removeRow"><img class="remove_bin" src="images/transparent.png" height="24px" width="24px"></div></td>';
@@ -1158,7 +1156,7 @@ function renderNotificationLine(rowcount, line_type, line_text, line_perms) {
    return outstr;
 }
 
-
+//*****************************************************************************
 function setNotificationFieldValidation(rowcount) {
     if ($("#type_"+rowcount).val() == "s01_email") {
        $("#email_"+rowcount).unmask();
@@ -1229,6 +1227,7 @@ function saveNotifications(){
     })
 }
 
+//*****************************************************************************
 function saveNotificationsJSON(){
     try {
         var fields = {};
@@ -1269,7 +1268,7 @@ function DisplaySettings(){
         for (var index = 0; index < settings.length; ++index) {
             var key = settings[index];
             if (key == "sitename") {
-              outstr += '</table></fieldset><br>General Settings:<fieldset id="generalSettings"><table id="allsettings" border="0">';
+              outstr += '<br>General Settings:<fieldset id="generalSettings"><table id="allsettings" border="0">';
               outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
             } else if (key == "nominalfrequency") {
               outstr += '</table></fieldset><br><br><table width="100%" border="0"><tr><td nowrap>Generator Model Specific Settings&nbsp;&nbsp;</td><td width="80%"><hr></td></tr></table>';
@@ -1279,7 +1278,7 @@ function DisplaySettings(){
               usehttps = result[key][3];
               outstr += '</table></fieldset><br><br><table width="100%" border="0"><tr><td nowrap width="90px">';
               outstr += printSettingsField(result[key][0], key, result[key][3], "", "", "usehttpsChange(true);");
-              outstr += '</td><td nowrap>&nbsp;&nbsp;Optional - Webserver Security Settings&nbsp;&nbsp;</td><td width="80%"><hr></td></tr></table>';
+              outstr += '</td><td nowrap>&nbsp;&nbsp;Optional - Webserver Security Settings&nbsp;&nbsp;</td><td width="80%"><hr></td></tr><tr><td colspan="3"><div id="newURLnotify"><font color="red">NOTE: After saving, your new URL will be: <div style="display: inline-block;" id="newURL"></div></font></div></td></tr></table>';
               outstr += '<fieldset id="'+key+'Section"><table id="allsettings" border="0">';
             } else if (key == "use_serial_tcp") {
               outstr += '</table></fieldset><table width="100%" border="0"><tr><td width="25px">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td nowrap width="90px">';
@@ -1315,7 +1314,7 @@ function DisplaySettings(){
               outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "toggleSection(true, 'useselfsignedcert');") + '</td></tr>';
             } else if (key == "http_port") {
               outstr += '</table></fieldset><fieldset id="noneSecuritySettings"><table id="allsettings" border="0">';
-              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "toggleSection(true, 'useselfsignedcert');") + '</td></tr>';
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "toggleSection(true, 'useselfsignedcert'); usehttpsChange(true);") + '</td></tr>';
             } else if (key == "port") {
               outstr += '</table></fieldset><fieldset id="serialDirect"><table id="allsettings" border="0">';
               outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "toggleSection(true, 'useselfsignedcert');") + '</td></tr>';
@@ -1401,6 +1400,7 @@ function DisplaySettings(){
 
 }
 
+//*****************************************************************************
 function useFullTank(animation) {
    if ($("#fueltype").val() == "Natural Gas") {
       $("#tanksizeSection").hide((animation ? 300 : 0));
@@ -1408,7 +1408,7 @@ function useFullTank(animation) {
       $("#tanksizeSection").show((animation ? 300 : 0));
    }
 }
-
+//*****************************************************************************
 function usehttpsChange(animation) {
    if ($("#usehttps").is(":checked")) {
       $("#noneSecuritySettings").hide((animation ? 300 : 0));
@@ -1421,8 +1421,15 @@ function usehttpsChange(animation) {
       $("#usehttpsSection").hide((animation ? 300 : 0));
       $("#noneSecuritySettings").show((animation ? 300 : 0));
    }
-}
+   if (($('#http_port').val() == $('#http_port').attr('oldValue')) && ($("#usehttps").attr('oldValue') == ($("#usehttps").prop('checked') === true ? "true" : "false"))){ 
+      $("#newURLnotify").hide((animation ? 300 : 0));
+   } else {
+      $("#newURL").html((($("#usehttps").is(":checked"))?"https":"http")+"://"+$(location).attr('hostname')+(((!$("#usehttps").is(":checked")) && ($('#http_port').val() != "80"))?":"+$('#http_port').val():"")+$(location).attr('pathname'));
+      $("#newURLnotify").show((animation ? 300 : 0));
+   }
 
+}
+//*****************************************************************************
 function useSerialTCPChange(animation) {
    if ($("#use_serial_tcp").is(":checked")) {
       $("#serialDirect").hide((animation ? 300 : 0));
@@ -1432,7 +1439,7 @@ function useSerialTCPChange(animation) {
       $("#serialDirect").show((animation ? 300 : 0));
    }
 }
-
+//*****************************************************************************
 function toggleSection(animation, section) {
    if ($("#"+section).is(":checked")) {
       $("#"+section+"Section").hide((animation ? 300 : 0));
@@ -1440,7 +1447,7 @@ function toggleSection(animation, section) {
       $("#"+section+"Section").show((animation ? 300 : 0));
    };
 }
-
+//*****************************************************************************
 function toggleSectionInverse(animation, section) {
    if ($("#"+section).is(":checked")) {
       $("#"+section+"Section").show((animation ? 300 : 0));
@@ -1448,7 +1455,7 @@ function toggleSectionInverse(animation, section) {
       $("#"+section+"Section").hide((animation ? 300 : 0));
    };
 }
-
+//*****************************************************************************
 function lookupLocation() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(locationSuccess, locationError);
@@ -1456,7 +1463,7 @@ function lookupLocation() {
         GenmonAlert("Your browser does not support Geolocation!");
     }
 }
-
+//*****************************************************************************
 function locationError(error) {
     switch (error.code) {
     case error.TIMEOUT:
@@ -1474,7 +1481,7 @@ function locationError(error) {
     }
 }
 
-
+//*****************************************************************************
 function locationSuccess(position) {
     try {
             var weatherAPI = '//api.openweathermap.org/data/2.5/forecast?lat=' + position.coords.latitude + '&lon=' + position.coords.longitude + '&lang=en&APPID='+$('#weatherkey').val();
@@ -1489,7 +1496,7 @@ function locationSuccess(position) {
     }
 }
 
-
+//*****************************************************************************
 function printSettingsField(type, key, value, tooltip, validation, callback) {
    var outstr = "";
    switch (type) {
@@ -1497,30 +1504,30 @@ function printSettingsField(type, key, value, tooltip, validation, callback) {
      case "password":
        outstr += '<div class="field idealforms-field">' +
                  '<input id="' + key + '" style="width: 300px;" name="' + key + '" type="' + ((type == "password") ? "password" : "text") + '" ' +
-                  ((callback != "") ? ' onChange="' + callback + ';" ' : "") +
+                  (((typeof callback !== 'undefined' ) && (callback != "")) ? ' onChange="' + callback + ';" ' : "") +
                   (typeof value === 'undefined' ? '' : 'value="' + replaceAll(value, '"', '&quot;') + '" ') +
                   (typeof value === 'undefined' ? '' : 'oldValue="' + replaceAll(value, '"', '&quot;') + '" ') +
-                  (typeof validation === 'undefined' ? '' : 'data-idealforms-rules="' + validation + '" ') + '>' +
+                  (((typeof validation === 'undefined') || (validation==0)) ? 'onFocus="$(\'#'+key+'_tooltip\').show();" onBlur="$(\'#'+key+'_tooltip\').hide();" ' : 'data-idealforms-rules="' + validation + '" ') + '>' +
                  '<span class="error" style="display: none;"></span>' +
-                  (((typeof tooltip === 'undefined' ) || (tooltip.trim() == "")) ? '' : '<span class="tooltip" style="display: none;">' + replaceAll(tooltip, '"', '&quot;') + '</span>') +
+                  (((typeof tooltip !== 'undefined' ) && (tooltip.trim() != "")) ? '<span id="' + key + '_tooltip" class="tooltip" style="display: none;">' + replaceAll(tooltip, '"', '&quot;') + '</span>' : "") +
                  '</div>';
        break;
      case "float":
      case "int":
        outstr += '<div class="field idealforms-field">' +
                  '<input id="' + key + '" style="width: 150px;" name="' + key + '" type="text" ' +
-                  ((callback != "") ? ' onChange="' + callback + ';" ' : "") +
+                  (((typeof callback !== 'undefined' ) && (callback != "")) ? ' onChange="' + callback + ';" ' : "") +
                   (typeof value === 'undefined' ? '' : 'value="' + value.toString() + '" ') +
                   (typeof value === 'undefined' ? '' : 'oldValue="' + value.toString() + '" ') +
-                  (typeof validation === 'undefined' ? '' : 'data-idealforms-rules="' + validation + '" ') + '>' +
+                  (((typeof validation === 'undefined') || (validation==0)) ? 'onFocus="$(\'#'+key+'_tooltip\').show();" onBlur="$(\'#'+key+'_tooltip\').hide();" ' : 'data-idealforms-rules="' + validation + '" ') + '>' +
                  '<span class="error" style="display: none;"></span>' +
-                  (((typeof tooltip === 'undefined' ) || (tooltip.trim() == "")) ? '' : '<span class="tooltip" style="display: none;">' + replaceAll(tooltip, '"', '&quot;') + '</span>') +
+                  (((typeof tooltip !== 'undefined' ) && (tooltip.trim() != "")) ? '<span id="' + key + '_tooltip" class="tooltip" style="display: none;">' + replaceAll(tooltip, '"', '&quot;') + '</span>' : "") +
                  '</div>';
        break;
      case "boolean":
        outstr += '<div class="field idealforms-field" onmouseover="showIdealformTooltip($(this))" onmouseout="hideIdealformTooltip($(this))">' +
                  '<input id="' + key + '" name="' + key + '" type="checkbox" ' +
-                  ((callback != "") ? ' data-callback="' + callback + ';" ' : "") +
+                  (((typeof callback !== 'undefined' ) && (callback != "")) ? ' data-callback="' + callback + ';" ' : "") +
                   (((typeof value !== 'undefined' ) && (value.toString() == "true")) ? ' checked ' : '') +
                   (((typeof value !== 'undefined' ) && (value.toString() == "true")) ? ' oldValue="true" ' : ' oldValue="false" ') + '>' +
                   (((typeof tooltip === 'undefined' ) || (tooltip.trim() == "")) ? '' : '<span class="tooltip" style="display: none;">' + replaceAll(tooltip, '"', '&quot;') + '</span><i class="icon"></i>') +
@@ -1529,7 +1536,7 @@ function printSettingsField(type, key, value, tooltip, validation, callback) {
      case "list":
        outstr += '<div class="field idealforms-field" onmouseover="showIdealformTooltip($(this))" onmouseout="hideIdealformTooltip($(this))">' +
                  '<select id="' + key + '" style="width: 300px;" name="' + key + '" ' +
-                 ((callback != "") ? ' onChange="' + callback + ';" ' : "") +
+                  (((typeof callback !== 'undefined' ) && (callback != "")) ? ' onChange="' + callback + ';" ' : "") +
                   (typeof value === 'undefined' ? '' : 'value="' + replaceAll(value, '"', '&quot;') + '" ') +
                   (typeof value === 'undefined' ? '' : 'oldValue="' + replaceAll(value, '"', '&quot;') + '" ') + '>' +
                  $.map(validation.split(","), function( val, i ) { return '<option class="optionClass" name="'+val+'" '+((val==value) ? 'selected' : '')+'>'+val+'</option>'}).join() +
@@ -1542,15 +1549,15 @@ function printSettingsField(type, key, value, tooltip, validation, callback) {
    }
    return outstr;
 }
-
+//*****************************************************************************
 function showIdealformTooltip(obj) {
     obj.find(".tooltip").show()
 }
-
+//*****************************************************************************
 function hideIdealformTooltip(obj) {
     obj.find(".tooltip").hide()
 }
-
+//*****************************************************************************
 function getSortedKeys(obj, index) {
     var keys = []; for (var key in obj) keys.push(key);
     return keys.sort(function(a,b){return obj[a][index]-obj[b][index]});
@@ -1616,7 +1623,7 @@ function saveSettings(){
         }
     })
 }
-
+//*****************************************************************************
 function saveSettingsJSON() {
     try {
         var fields = {};
@@ -1762,7 +1769,7 @@ function DisplayAddons(){
 
     }});
 }
-
+//*****************************************************************************
 function toggleCard(animation, addon, icon) {
    if ($("#"+addon).is(":checked")) {
       $("#"+addon+"_bg").animate({backgroundColor: '#ffffff', width: '50px',  margin:'7px', padding: '0px', borderTopLeftRadius: 0, borderTopRightRadius: 0}, (animation ? 300 : 0));
@@ -1783,7 +1790,7 @@ function toggleCard(animation, addon, icon) {
    }
    changedCard(animation, addon);
 }
-
+//*****************************************************************************
 function changedCard(animation, addon) {
    var fields = {};
 
@@ -1808,7 +1815,7 @@ function changedCard(animation, addon) {
       $("#"+addon+"_save").hide((animation ? 300 : 0))
    }
 }
-
+//*****************************************************************************
 function saveAddon(addon, addonTitle){
 
     var DisplayStr = "Save settings for "+addonTitle+"? Are you sure?";
@@ -1859,7 +1866,7 @@ function saveAddon(addon, addonTitle){
         }
     })
 }
-
+//*****************************************************************************
 function saveAddonJSON(addon) {
     try {
         var result = {};
@@ -1917,7 +1924,7 @@ function DisplayAbout(){
     }
 
     $("#mydisplay").html(outstr);
-    
+
     if (myGenerator["write_access"] == true) {
        if (latestVersion == "") {
          // var url = "https://api.github.com/repos/jgyates/genmon/releases";
@@ -1936,7 +1943,7 @@ function DisplayAbout(){
        }
     }
 }
-
+//*****************************************************************************
 function showChangeLog() {
     var DisplayStr = '<div id="changeLogText">Change Log<br><br>Loading...</div>';
     $('.vex-dialog-buttons').html(DisplayStr);
@@ -1975,7 +1982,7 @@ function showChangeLog() {
 
 
 }
-
+//*****************************************************************************
 function checkNewVersion(){
     var DisplayStr = 'Checking for latest version...<br><br><div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
     $('.vex-dialog-buttons').html(DisplayStr);
@@ -2057,7 +2064,7 @@ function updateSoftware(){
 
     });
 }
-
+//*****************************************************************************
 function submitRegisters(){
     vex.dialog.confirm({
         unsafeMessage: 'Send the contents of your generator registers to the developer for compatibility testing?<br>',
@@ -2074,7 +2081,7 @@ function submitRegisters(){
         }
     });
 }
-
+//*****************************************************************************
 function submitLogs(){
     vex.dialog.confirm({
         unsafeMessage: 'Send the contents of your log files to the developer?<br>',
@@ -2184,7 +2191,7 @@ function DisplayRegistersFull()
     });
 
 }
-
+//*****************************************************************************
 function UpdateRegisters(init, printToScreen)
 {
     if (init) {
@@ -2260,7 +2267,7 @@ function UpdateRegisters(init, printToScreen)
            UpdateRegistersColor();
     }});
 }
-
+//*****************************************************************************
 function UpdateRegistersColor() {
     var CurrentTime = new Date().getTime();
     $.each(regHistory["updateTime"], function( reg_key, update_time ){
@@ -2278,7 +2285,7 @@ function UpdateRegistersColor() {
         }
     });
 }
-
+//*****************************************************************************
 function printRegisters (type) {
     var plots = [];
     var data, labelMin, labelText, labelTitle;
@@ -2378,21 +2385,185 @@ function printRegisters (type) {
     $("#printRegisterFrame").printThis({canvas: true, importCSS: false, loadCSS: "css/print.css", pageTitle:"Genmon Registers", removeScripts: true});
     setTimeout(function(){ $("#printRegisterFrame").remove(); }, 1000);
 }
-
+//*****************************************************************************
 function toHex(d) {
     return  ("0"+(Number(d).toString(16))).slice(-2).toUpperCase()
 }
+
+//*****************************************************************************
+// Display the ADVANCED Settings Tab
+//*****************************************************************************
+function DisplayAdvancedSettings(){
+
+    var url = baseurl.concat("get_advanced_settings");
+    $.ajax({dataType: "json", url: url, timeout: 12000, error: processAjaxError, success: function(result){
+        processAjaxSuccess();
+
+        var outstr = '<form class="idealforms" novalidate  id="formSettings">ADVANCED Settings:<br><br><font color="red">Warning: These settings are intended for debugging and advanced users. Please proceed with caution.</font><br><br><fieldset id="generalSettings"><table id="allsettings" border="0">';
+        var settings =  getSortedKeys(result, 2);
+        for (var index = 0; index < settings.length; ++index) {
+            var key = settings[index];
+            outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
+        }
+        outstr += '</table></fieldset></form><br>';
+        outstr += '<button id="setadvancedsettingsbutton" onClick="saveAdvancedSettings()">Save</button>';
+
+        $("#mydisplay").html(outstr);
+        $('input').lc_switch();
+        $.extend($.idealforms.rules, {
+           // The rule is added as "ruleFunction:arg1:arg2"
+           HTTPAddress: function(input, value, arg1, arg2) {
+             var regex = RegExp("^http[s]?:\\/\\/(([a-z0-9]+([\-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))$", 'g');
+             return regex.test(value);
+           },
+           InternetAddress: function(input, value, arg1, arg2) {
+             var regex = RegExp("^(([a-z0-9]+([\-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))$", 'g');
+             return regex.test(value);
+           },
+           IPAddress: function(input, value, arg1, arg2) {
+             var regex = RegExp("^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\/.*)?)|(localhost(\/.*)?))$", 'g');
+             return regex.test(value);
+           },
+           InternationalPhone: function(input, value, arg1, arg2) {
+             var regex = RegExp('^(\\+(\\d{1,3}))?((\\(\\d{1,4}\\))|(\\d{1,3}))?(\\s|\-)?(\\d+(\\s?|\-?))+$', 'g');
+             return regex.test(value);
+           },
+           UnixFile: function(input, value, arg1, arg2) {
+             var regex = RegExp("^(\/[^\/]+)+$", 'g');
+             return regex.test(value);
+           },
+           UnixDir: function(input, value, arg1, arg2) {
+             var regex = RegExp("^(\/[^\/]+)+\/$", 'g');
+             return regex.test(value);
+           },
+           UnixDevice: function(input, value, arg1, arg2) {
+             var regex = RegExp("^\/dev(\/[^\/]+)+$", 'g');
+             return regex.test(value);
+           }
+        });
+        $.extend($.idealforms.errors, {
+            HTTPAddress: 'Must be a valid address from an internet server, eg. http://mail.google.com',
+            InternetAddress: 'Must be a valid address from an internet server, eg. mail.google.com',
+            IPAddress: 'Must be a valid IP address, eg. 192.168.1.100',
+            InternationalPhone: 'Must be a valid Phone Number, eg. +1 123 456 7890',
+            UnixFile: 'Must be a valid UNIX file',
+            UnixDir: 'Must be a valid UNIX path',
+            UnixDevice: 'Must be a valid UNIX file path starting with /dev/'
+        });
+        $('form.idealforms').idealforms({
+           tooltip: '.tooltip',
+           silentLoad: true,
+        });
+   }});
+
+}
+
+//*****************************************************************************
+// called when Save Settings is clicked
+//*****************************************************************************
+function saveAdvancedSettings(){
+
+    var DisplayStr = "Save settings? Are you sure?";
+    var DisplayStrAnswer = false;
+    var DisplayStrButtons = {
+        NO: {
+          text: 'Cancel',
+          type: 'button',
+          className: 'vex-dialog-button-secondary',
+          click: function noClick () {
+            DisplayStrAnswer = false
+            this.close()
+          }
+        },
+        YES: {
+          text: 'OK',
+          type: 'submit',
+          className: 'vex-dialog-button-primary',
+          click: function yesClick () {
+            DisplayStrAnswer = true
+          }
+        }
+    }
+
+    vex.dialog.open({
+        unsafeMessage: DisplayStr,
+        overlayClosesOnClick: false,
+        buttons: [
+           DisplayStrButtons.NO,
+           DisplayStrButtons.YES
+        ],
+        onSubmit: function(e) {
+           if (DisplayStrAnswer) {
+             DisplayStrAnswer = false; // Prevent recursive calls.
+             e.preventDefault();
+             saveAdvancedSettingsJSON();
+             var DisplayStr1 = 'Saving...';
+             var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
+             $('.vex-dialog-message').html(DisplayStr1);
+             $('.vex-dialog-buttons').html(DisplayStr2);
+             $('.progress-bar-fill').queue(function () {
+                  $(this).css('width', '100%')
+             });
+             setTimeout(function(){
+                vex.closeAll();
+             }, 10000);
+           }
+        }
+    })
+}
+//*****************************************************************************
+function saveAdvancedSettingsJSON() {
+    try {
+        var fields = {};
+
+        $('#formSettings input').each(function() {
+            var oldValue = $(this).attr('oldValue');
+            var currentValue = (($(this).attr('type') == "checkbox") ? ($(this).prop('checked') === true ? "true" : "false") : $(this).val());
+            if (oldValue != currentValue) {
+               fields[$(this).attr('name')] = currentValue;
+               $(this).attr('oldValue', currentValue);
+            }
+        });
+        $('#formSettings select').each(function() {
+            var oldValue = $(this).attr('oldValue');
+            var currentValue = $(this).val();
+            if (oldValue != currentValue) {
+               fields[$(this).attr('name')] = currentValue;
+               $(this).attr('oldValue', currentValue);
+            }
+        });
+
+        jQuery.each( ["disablesmtp", "disableimap", "disableweather"], function( i, val ) {
+          if (fields[val] != undefined)
+             fields[val] = (fields[val] == "true" ? "false" : "true");
+        });
+
+        // save settings
+        var url = baseurl.concat("set_advanced_settings");
+        $.getJSON(  url,
+                    {set_advanced_settings: $.param(fields)},
+                    function(result){
+        });
+
+    } catch(err) {
+        GenmonAlert("Error: invalid selection");
+    }
+}
+
 
 //*****************************************************************************
 //  called when menu is clicked
 //*****************************************************************************
 function MenuClick(page)
 {
+        oldMenuElement = menuElement;
         menuElement = page;
         RemoveClass();  // remove class from menu items
         // add class active to the clicked item
         $("#"+menuElement).find("a").addClass(GetCurrentClass());
         window.scrollTo(0,0);
+        $("#registers").removeClass("settings");
+        $("#registers").addClass("registers");
         switch (menuElement) {
             case "outage":
                 GetDisplayValues(menuElement);
@@ -2422,7 +2593,14 @@ function MenuClick(page)
                 DisplayAbout();
                 break;
             case "registers":
-                DisplayRegistersFull();
+                if (oldMenuElement == "registers") {
+                   menuElement = "adv_settings";
+                   DisplayAdvancedSettings();
+                } else {                
+                   $("#registers").addClass("settings");
+                   $("#registers").removeClass("registers");
+                   DisplayRegistersFull();
+                }
                 break;
             default:
                 break;
@@ -2520,7 +2698,7 @@ function changeFavicon(src) {
    }
    document.head.appendChild(link);
 }
-
+//*****************************************************************************
 function SetFavIcon()
 {
     url = baseurl.concat("getfavicon");
@@ -2580,7 +2758,7 @@ function UpdateDisplay()
         DisplayLogs();
     } else if (menuElement == "monitor") {
         DisplayMonitor();
-    } else if ((menuElement != "settings") && (menuElement != "notifications") && (menuElement != "addons") && (menuElement != "about")) {
+    } else if ((menuElement != "settings") && (menuElement != "notifications") && (menuElement != "addons") && (menuElement != "about") && (menuElement != "adv_settings")) {
         GetDisplayValues(menuElement);
     }
 

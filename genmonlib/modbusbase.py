@@ -16,11 +16,18 @@ import mylog, mythread, mysupport
 
 #------------ ModbusBase class -------------------------------------------------
 class ModbusBase(mysupport.MySupport ):
-    def __init__(self, updatecallback, address = 0x9d, name = "/dev/serial", rate=9600, loglocation = "/var/log/"):
+    def __init__(self,
+        updatecallback,
+        address = 0x9d,
+        name = "/dev/serial",
+        rate=9600,
+        config = None):
+
         super(ModbusBase, self).__init__()
         self.Address = address
         self.Rate = rate
         self.PortName = name
+        self.config = config
         self.InitComplete = False
         self.IsStopping = False
         self.UpdateRegisterList = updatecallback
@@ -31,21 +38,37 @@ class ModbusBase(mysupport.MySupport ):
         self.SlaveException = 0
         self.CrcError = 0
         self.ComValidationError = 0
+        self.UnexpectedData = 0
+        self.SlowCPUOptimization = False
+        self.UseTCP = False
+
+        if self.config != None:
+            self.loglocation = self.config.ReadValue('loglocation', default = '/var/log/')
+            self.SlowCPUOptimization = self.config.ReadValue('optimizeforslowercpu', return_type = bool, default = False)
+            self.UseTCP = self.config.ReadValue('use_serial_tcp', return_type = bool, default = False)
+            self.Address = int(self.config.ReadValue('address', default = '9d'),16)         # modbus address
+            self.AdditionalModbusTimeout = self.config.ReadValue('additional_modbus_timeout', return_type = float, default = 0.0)
+        else:
+            self.loglocation = default = './'
+
+
         self.CommAccessLock = threading.RLock()     # lock to synchronize access to the serial port comms
         self.ModbusStartTime = datetime.datetime.now()     # used for com metrics
 
         # log errors in this module to a file
-        self.log = mylog.SetupLogger("mymodbus", loglocation + "mymodbus.log")
-
+        self.log = mylog.SetupLogger("mymodbus", self.loglocation + "mymodbus.log")
 
     #-------------ModbusBase::ProcessMasterSlaveWriteTransaction----------------
     def ProcessMasterSlaveWriteTransaction(self, Register, Length, Data):
         return
 
     #-------------ModbusBase::ProcessMasterSlaveTransaction--------------------
-    def ProcessMasterSlaveTransaction(self, Register, Length, ReturnValue = False):
+    def ProcessMasterSlaveTransaction(self, Register, Length, skipupdate = False, ReturnString = False):
         return
 
+    #-------------ModbusProtocol::ProcessMasterSlaveFileReadTransaction---------
+    def ProcessMasterSlaveFileReadTransaction(self, Register, Length, skipupdate = False, file_num = 1, ReturnString = False):
+        return
     # ---------- ModbusBase::GetCommStats---------------------------------------
     def GetCommStats(self):
         SerialStats = collections.OrderedDict()
@@ -68,6 +91,7 @@ class ModbusBase(mysupport.MySupport ):
         SerialStats["Packet Timeouts Percent Errors"] = ("%.2f" % (PercentTimeoutErrors * 100)) + "%"
         SerialStats["Modbus Exceptions"] = self.SlaveException
         SerialStats["Validation Errors"] = self.ComValidationError
+        SerialStats["Invalid Data"] = self.UnexpectedData
         # Add serial stats here
         CurrentTime = datetime.datetime.now()
 

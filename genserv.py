@@ -44,7 +44,7 @@ bUseSecureHTTP = False
 bUseSelfSignedCert = True
 SSLContext = None
 HTTPPort = 8000
-loglocation = "/var/log/"
+loglocation = "./"
 clientport = 0
 log = None
 console = None
@@ -227,6 +227,17 @@ def ProcessCommand(command):
                     return json.dumps(data, sort_keys = False)
                 elif command == "set_add_on_settings":
                     SaveAddOnSettings(request.args.get('set_add_on_settings', default = None, type=str))
+                else:
+                    return "OK"
+            return "OK"
+
+        elif command in ["get_advanced_settings", "set_advanced_settings"]:
+            if session.get('write_access', True):
+                if command == "get_advanced_settings":
+                    data = ReadAdvancedSettingsFromFile()
+                    return json.dumps(data, sort_keys = False)
+                elif command == "set_advanced_settings":
+                    SaveAdvancedSettings(request.args.get('set_advanced_settings', default = None, type=str))
                 else:
                     return "OK"
             return "OK"
@@ -682,11 +693,11 @@ def ReadSingleConfigValue(entry, filename = None, section = None, type = "string
         if type.lower() == "string" or type == "password":
             return config.ReadValue(entry)
         elif type.lower() == "boolean":
-            return config.ReadValue(entry, return_type = bool, default = default)
+            return config.ReadValue(entry, return_type = bool, default = default, NoLog = True)
         elif type.lower() == "int":
-            return config.ReadValue(entry, return_type = int, default = default)
+            return config.ReadValue(entry, return_type = int, default = default, NoLog = True)
         elif type.lower() == "float":
-            return config.ReadValue(entry, return_type = float, default = default)
+            return config.ReadValue(entry, return_type = float, default = default, NoLog = True)
         elif type.lower() == 'list':
             Value = config.ReadValue(entry)
             if bounds != None:
@@ -739,7 +750,77 @@ def ReadNotificationsFromFile():
         LogErrorLine("Error in ReadNotificationsFromFile: " + str(e1))
 
     return NotificationSettings
+#-------------------------------------------------------------------------------
+def ReadAdvancedSettingsFromFile():
 
+    ConfigSettings =  collections.OrderedDict()
+    try:
+        # This option is not displayed as it will break the link between genmon and genserv
+        ConfigSettings["server_port"] = ['int', 'Server Port', 5, 9082, "", 0, GENMON_CONFIG, GENMON_SECTION,"server_port"]
+        # this option is not displayed as this will break the modbus comms, only for debugging
+        ConfigSettings["address"] = ['string', 'Modbus slave address', 6, "9d", "", 0 , GENMON_CONFIG, GENMON_SECTION, "address"]
+        ConfigSettings["additional_modbus_timeout"] = ['float', 'Additional Modbus Timeout (sec)', 7, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "additional_modbus_timeout"]
+        ConfigSettings["controllertype"] = ['list', 'Controller Type', 8, "generac_evo_nexus", "", "generac_evo_nexus,h_100", GENMON_CONFIG, GENMON_SECTION, "controllertype"]
+        ConfigSettings["loglocation"] = ['string', 'Log Directory',9, "/var/log/", "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "loglocation"]
+        ConfigSettings["enabledebug"] = ['boolean', 'Enable Debug', 10, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "enabledebug"]
+        # These settings are not displayed as the auto-detect controller will set these
+        # these are only to be used to override the auto-detect
+        #ConfigSettings["uselegacysetexercise"] = ['boolean', 'Use Legacy Exercise Time', 9, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "uselegacysetexercise"]
+        #ConfigSettings["liquidcooled"] = ['boolean', 'Force Controller Type (cooling)', 10, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "liquidcooled"]
+        #ConfigSettings["evolutioncontroller"] = ['boolean', 'Force Controller Type (Evo/Nexus)', 11, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "evolutioncontroller"]
+        # remove outage log, this will always be in the same location
+        #ConfigSettings["outagelog"] = ['string', 'Outage Log', 12, "/home/pi/genmon/outage.txt", "", "required UnixFile", GENMON_CONFIG, GENMON_SECTION, "outagelog"]
+        ConfigSettings["serialnumberifmissing"] = ['string', 'Serial Number if Missing', 13, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "serialnumberifmissing"]
+        ConfigSettings["additionalrunhours"] = ['string', 'Additional Run Hours', 14, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "additionalrunhours"]
+        ConfigSettings["subtractfuel"] = ['float', 'Subtract Fuel', 15, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "subtractfuel"]
+        #ConfigSettings["kwlog"] = ['string', 'Power Log Name / Disable', 16, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlog"]
+        ConfigSettings["kwlogmax"] = ['string', 'Maximum size Power Log (MB)', 17, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlogmax"]
+        ConfigSettings["currentdivider"] = ['float', 'Current Divider', 18, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentdivider"]
+        ConfigSettings["currentoffset"] = ['string', 'Current Offset', 19, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentoffset"]
+        ConfigSettings["disableplatformstats"] = ['boolean', 'Disable Platform Stats', 20, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "disableplatformstats"]
+        ConfigSettings["https_port"] = ['int', 'Override HTTPS port', 21, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "https_port"]
+
+
+
+        for entry, List in ConfigSettings.items():
+            if List[6] == GENMON_CONFIG:
+                # filename, section = None, type = "string", entry, default = "", bounds = None):
+                (ConfigSettings[entry])[3] = ReadSingleConfigValue(entry = List[8], filename = GENMON_CONFIG, section =  List[7], type = List[0], default = List[3], bounds = List[5])
+            else:
+                LogError("Invaild Config File in ReadAdvancedSettingsFromFile: " + str(List[6]))
+
+        GetToolTips(ConfigSettings)
+    except Exception as e1:
+        self.LogErrorLine("Error in ReadAdvancedSettingsFromFile: " + str(e1))
+    return ConfigSettings
+
+#-------------------------------------------------------------------------------
+def SaveAdvancedSettings(query_string):
+    try:
+
+        if query_string == None:
+            LogError("Empty query string in SaveAdvancedSettings")
+            return
+        # e.g. {'displayunknown': ['true']}
+        settings = dict(urlparse.parse_qs(query_string, 1))
+        if not len(settings):
+            # nothing to change
+            return
+        CurrentConfigSettings = ReadAdvancedSettingsFromFile()
+        with CriticalLock:
+            for Entry in settings.keys():
+                ConfigEntry = CurrentConfigSettings.get(Entry, None)
+                if ConfigEntry != None:
+                    ConfigFile = CurrentConfigSettings[Entry][6]
+                    Value = settings[Entry][0]
+                    Section = CurrentConfigSettings[Entry][7]
+                else:
+                    LogError("Invalid setting in SaveAdvancedSettings: " + str(Entry))
+                    continue
+                UpdateConfigFile(ConfigFile,Section, Entry, Value)
+        Restart()
+    except Exception as e1:
+        LogErrorLine("Error Update Config File (SaveAdvancedSettings): " + str(e1))
 #-------------------------------------------------------------------------------
 def ReadSettingsFromFile():
 
@@ -789,20 +870,6 @@ def ReadSettingsFromFile():
     ConfigSettings["serial_tcp_address"] = ['string', 'Serial Server TCP/IP Address', 4, "", "", "", GENMON_CONFIG, GENMON_SECTION, "serial_tcp_address"]
     ConfigSettings["serial_tcp_port"] = ['int', 'Serial Server TCP/IP Port', 5, "8899", "", "digits", GENMON_CONFIG, GENMON_SECTION, "serial_tcp_port"]
 
-    # This option is not displayed as it will break the link between genmon and genserv
-    #ConfigSettings["server_port"] = ['int', 'Server Port', 5, 9082, "", 0, GENMON_CONFIG, GENMON_SECTION,"server_port"]
-    # this option is not displayed as this will break the modbus comms, only for debugging
-    #ConfigSettings["address"] = ['string', 'Modbus slave address', 6, "9d", "", 0 , GENMON_CONFIG, GENMON_SECTION, "address"]
-    #ConfigSettings["loglocation"] = ['string', 'Log Directory', 7, "/var/log/", "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "loglocation"]
-    #ConfigSettings["enabledebug"] = ['boolean', 'Enable Debug', 14, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "enabledebug"]
-    # These settings are not displayed as the auto-detect controller will set these
-    # these are only to be used to override the auto-detect
-    #ConfigSettings["uselegacysetexercise"] = ['boolean', 'Use Legacy Exercise Time', 43, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "uselegacysetexercise"]
-    #ConfigSettings["liquidcooled"] = ['boolean', 'Liquid Cooled', 41, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "liquidcooled"]
-    #ConfigSettings["evolutioncontroller"] = ['boolean', 'Evolution Controler', 42, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "evolutioncontroller"]
-    # remove outage log, this will always be in the same location
-    #ConfigSettings["outagelog"] = ['string', 'Outage Log', 8, "/home/pi/genmon/outage.txt", "", 0, GENMON_CONFIG, GENMON_SECTION, "outagelog"]
-
     if ControllerType != 'h_100':
         ConfigSettings["disableoutagecheck"] = ['boolean', 'Do Not Check for Outages', 17, False, "", "", GENMON_CONFIG, GENMON_SECTION, "disableoutagecheck"]
 
@@ -810,6 +877,7 @@ def ReadSettingsFromFile():
     ConfigSettings["synctime"] = ['boolean', 'Sync Time', 23, False, "", "", GENMON_CONFIG, GENMON_SECTION, "synctime"]
     ConfigSettings["metricweather"] = ['boolean', 'Use Metric Units', 24, False, "", "", GENMON_CONFIG, GENMON_SECTION, "metricweather"]
     ConfigSettings["optimizeforslowercpu"] = ['boolean', 'Optimize for slower CPUs', 25, False, "", "", GENMON_CONFIG, GENMON_SECTION, "optimizeforslowercpu"]
+    ConfigSettings["disablepowerlog"] = ['boolean', 'Disable Power / Current Display', 26, False, "", "", GENMON_CONFIG, GENMON_SECTION, "disablepowerlog"]
     ConfigSettings["autofeedback"] = ['boolean', 'Automated Feedback', 29, False, "", "", GENMON_CONFIG, GENMON_SECTION, "autofeedback"]
 
     ConfigSettings["nominalfrequency"] = ['list', 'Rated Frequency', 101, "60", "", "50,60", GENMON_CONFIG, GENMON_SECTION, "nominalfrequency"]
@@ -914,8 +982,17 @@ def CacheToolTips():
         if not len(config_section):
             config_section = "generac_evo_nexus"
 
+        # H_100
         ControllerType = config_section
 
+        if ControllerType == "h_100":
+            try:
+                if len(GStartInfo["Controller"]) and not "H-100" in GStartInfo["Controller"]:
+                    # Controller is G-Panel
+                    config_section = "g_panel"
+
+            except Exception as e1:
+                LogError("Error reading Controller Type for H-100: " + str(e1))
         CachedRegisterDescriptions = GetAllConfigValues(pathtofile + "/data/tooltips.txt", config_section)
 
         CachedToolTips = GetAllConfigValues(pathtofile + "/data/tooltips.txt", "ToolTips")
@@ -1161,18 +1238,6 @@ def Close(NoExit = False):
         return
     Closing = True
     try:
-        '''
-        LogError("Close server..")
-
-        with app.app_context():
-            func = request.environ.get('werkzeug.server.shutdown')
-            if func is None:
-                LogError("Not running with the Werkzeug Server")
-            func()
-
-            LogError("Server closed.")
-        '''
-
         MyClientInterface.Close()
     except Exception as e1:
         LogErrorLine("Error in close: " + str(e1))
@@ -1232,8 +1297,6 @@ if __name__ == "__main__":
         LogError("Required file missing : genmonmaint.sh")
         sys.exit(1)
 
-    CacheToolTips()
-
     startcount = 0
     while startcount <= 4:
         try:
@@ -1255,6 +1318,13 @@ if __name__ == "__main__":
             LogConsole(" OK - Init complete.")
             break
 
+    try:
+        data = MyClientInterface.ProcessMonitorCommand("generator: start_info_json")
+        GStartInfo = json.loads(data)
+    except Exception as e1:
+        LogError("Error getting start info : " + str(e1))
+
+    CacheToolTips()
     while True:
         try:
             app.run(host="0.0.0.0", port=HTTPPort, threaded = True, ssl_context=SSLContext, use_reloader = False, debug = False)

@@ -25,7 +25,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.11.8"
+GENMON_VERSION = "V1.11.24"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -58,6 +58,7 @@ class Monitor(mysupport.MySupport):
         self.NewInstall = False         # True if newly installed or newly upgraded version
         self.FeedbackEnabled = False    # True if sending autoated feedback on missing information
         self.FeedbackMessages = {}
+        self.OneTimeMessages = {}
         self.MailInit = False       # set to true once mail is init
         self.CommunicationsActive = False   # Flag to let the heartbeat thread know we are communicating
         self.Controller = None
@@ -153,8 +154,8 @@ class Monitor(mysupport.MySupport):
             self.Threads = self.MergeDicts(self.Threads, self.Controller.Threads)
 
         except Exception as e1:
-            self.FatalError("Error opening controller device: " + str(e1))
-            return None
+            self.LogErrorLine("Error opening controller device: " + str(e1))
+            sys.exit(1)
 
 
         self.StartThreads()
@@ -199,8 +200,7 @@ class Monitor(mysupport.MySupport):
             if self.config.HasOption('server_port'):
                 self.ServerSocketPort = self.config.ReadValue('server_port', return_type = int)
 
-            if self.config.HasOption('loglocation'):
-                self.LogLocation = self.config.ReadValue('loglocation')
+            self.LogLocation = self.config.ReadValue('loglocation', default = "/var/log/")
 
             if self.config.HasOption('syncdst'):
                 self.bSyncDST = self.config.ReadValue('syncdst', return_type = bool)
@@ -288,7 +288,10 @@ class Monitor(mysupport.MySupport):
         try:
             FeedbackDict = {}
             FeedbackDict = json.loads(Message)
-            self.SendFeedbackInfo(FeedbackDict["Reason"], FeedbackDict["Always"], FeedbackDict["Message"], FeedbackDict["FullLogs"], FeedbackDict["NoCheck"])
+            self.SendFeedbackInfo(FeedbackDict["Reason"],
+                Always = FeedbackDict["Always"], Message = FeedbackDict["Message"],
+                FullLogs = FeedbackDict["FullLogs"], NoCheck = FeedbackDict["NoCheck"])
+
         except Exception as e1:
             self.LogErrorLine("Error in  FeedbackReceiver: " + str(e1))
             self.LogError("Size : " + str(len(Message)))
@@ -299,7 +302,19 @@ class Monitor(mysupport.MySupport):
         try:
             MessageDict = {}
             MessageDict = json.loads(Message)
-            self.mail.sendEmail(MessageDict["subjectstr"], MessageDict["msgstr"], MessageDict["recipient"], MessageDict["files"],MessageDict["deletefile"] ,MessageDict["msgtype"])
+
+            if MessageDict["onlyonce"]:
+                Subject = self.OneTimeMessages.get(MessageDict["subjectstr"], None)
+                if Subject == None:
+                    self.OneTimeMessages[MessageDict["subjectstr"]] = MessageDict["msgstr"]
+                else:
+                    return
+
+            self.mail.sendEmail(MessageDict["subjectstr"],
+                MessageDict["msgstr"], recipient = MessageDict["recipient"],
+                files = MessageDict["files"], deletefile= MessageDict["deletefile"],
+                msgtype= MessageDict["msgtype"])
+
         except Exception as e1:
             self.LogErrorLine("Error in  MessageReceiver: " + str(e1))
     #---------------------------------------------------------------------------
@@ -322,6 +337,8 @@ class Monitor(mysupport.MySupport):
                 if not self.bDisablePlatformStats:
                     msgbody +=  self.DictToString(self.GetPlatformStats())
                 msgbody += self.Controller.DisplayRegisters(AllRegs = FullLogs)
+
+                msgbody += "\n" + self.GetSupportData() + "\n"
                 if self.FeedbackEnabled:
                     self.MessagePipe.SendMessage("Generator Monitor Submission", msgbody , recipient = self.MaintainerAddress, msgtype = "error")
 
@@ -352,11 +369,31 @@ class Monitor(mysupport.MySupport):
         if not self.bDisablePlatformStats:
             msgbody +=  self.DictToString(self.GetPlatformStats())
         msgbody += self.Controller.DisplayRegisters(AllRegs = True)
+
+        msgbody += "\n" + self.GetSupportData()  + "\n"
+
         self.MessagePipe.SendMessage("Generator Monitor Register Submission", msgbody , recipient = self.MaintainerAddress, msgtype = "info")
         return "Registers submitted"
 
+    #---------- Monitor::GetSupportData-----------------------------------------
+    def GetSupportData(self):
+
+        SupportData = collections.OrderedDict()
+        SupportData["Program Run Time"] = self.GetProgramRunTime()
+        SupportData["Monitor Health"] = self.GetSystemHealth()
+        SupportData["StartInfo"] = self.GetStartInfo(NoTile = True)
+        if not self.bDisablePlatformStats:
+            SupportData["PlatformStats"] = self.GetPlatformStats()
+        SupportData["Data"] = self.Controller.DisplayRegisters(AllRegs = True, DictOut = True)
+        # Raw Modbus data
+        SupportData["Registers"] = self.Controller.Registers
+        SupportData["Strings"] = self.Controller.Strings
+        SupportData["FileData"] = self.Controller.FileData
+
+        return json.dumps(SupportData, sort_keys=False)
+
     #---------- Monitor::SendLogFiles-------------------------------------------
-    def SendLogFiles(self):
+    def SendLogFiles(self, AsJSON = True):
 
         try:
             if not self.EmailSendIsEnabled():
@@ -368,6 +405,8 @@ class Monitor(mysupport.MySupport):
             if not self.bDisablePlatformStats:
                 msgbody +=  self.DictToString(self.GetPlatformStats())
             msgbody += self.Controller.DisplayRegisters(AllRegs = True)
+
+            msgbody += "\n" + self.GetSupportData()  + "\n"
 
             LogList = []
             FilesToSend = ["genmon.log", "genserv.log", "mymail.log", "myserial.log",
@@ -427,7 +466,7 @@ class Monitor(mysupport.MySupport):
             "settime"       : [self.StartTimeThread, (), False],                  # set time and date
             "setexercise"   : [self.Controller.SetGeneratorExerciseTime, (command.lower(),), False],
             "setquiet"      : [self.Controller.SetGeneratorQuietMode, ( command.lower(),), False],
-            "setremote"     : [self.Controller.SetGeneratorRemoteStartStop, (command.lower(),), False],
+            "setremote"     : [self.Controller.SetGeneratorRemoteCommand, (command.lower(),), False],
             "help"          : [self.DisplayHelp, (), False],                   # display help screen
             ## These commands are used by the web / socket interface only
             "power_log_json"    : [self.Controller.GetPowerHistory, (command.lower(),), True],
@@ -489,7 +528,7 @@ class Monitor(mysupport.MySupport):
                 if not fromsocket:
                     msgbody += "\n"
         except Exception as e1:
-            self.LogErrorLine("Error Processing Commands: " + str(e1))
+            self.LogErrorLine("Error Processing Commands: " + command + ": "+ str(e1))
 
         if not ValidCommand:
             msgbody += "No valid command recognized."
@@ -538,6 +577,15 @@ class Monitor(mysupport.MySupport):
 
         return outstring
 
+    #------------ Monitor::GetProgramRunTime -----------------------------------
+    def GetProgramRunTime(self):
+        try:
+            ProgramRunTime = datetime.datetime.now() - self.ProgramStartTime
+            outstr = str(ProgramRunTime).split(".")[0]  # remove microseconds from string
+            return self.ProgramName + " running for " + outstr + "."
+        except Exception as e1:
+            self.LogErrorLine("Error in GetProgramRunTime:" + str(e1))
+            return "Unknown"
     #------------ Monitor::GetWeatherData --------------------------------------
     def GetWeatherData(self, ForUI = False):
 
@@ -603,9 +651,7 @@ class Monitor(mysupport.MySupport):
             GenMonStats["Monitor Health"] =  self.GetSystemHealth()
             GenMonStats["Controller"] = self.Controller.GetController(Actual = False)
 
-            ProgramRunTime = datetime.datetime.now() - self.ProgramStartTime
-            outstr = str(ProgramRunTime).split(".")[0]  # remove microseconds from string
-            GenMonStats["Run time"] = self.ProgramName + " running for " + outstr + "."
+            GenMonStats["Run time"] = self.GetProgramRunTime()
             GenMonStats["Generator Monitor Version"] = GENMON_VERSION
 
             if not self.bDisablePlatformStats:
@@ -732,19 +778,33 @@ class Monitor(mysupport.MySupport):
         self.CommunicationsActive = False
         time.sleep(0.25)
 
-        if self.Controller.UseSerialTCP:
-            WatchDogPollTime = 8
-        else:
-            WatchDogPollTime = 2
+        NoticeSent = False
+        LastActiveTime = datetime.datetime.now()
         while True:
             if self.WaitForExit("ComWatchDog", 1):
                 return
             if self.Controller.InitComplete:
                 break
 
+        if self.Controller.ModBus.UseTCP:
+            WatchDogPollTime = 8
+        else:
+            WatchDogPollTime = 2
+
         while True:
 
             self.CommunicationsActive = self.Controller.ComminicationsIsActive()
+
+            if self.CommunicationsActive:
+                LastActiveTime = datetime.datetime.now()
+                if NoticeSent:
+                    NoticeSent = False
+                    self.MessagePipe.SendMessage("Generator Monitor Communication Restored at " + self.SiteName, "Generator Monitor communications with the controller has been restored at " + self.SiteName , msgtype = "info")
+            else:
+                if self.GetDeltaTimeMinutes(datetime.datetime.now() - LastActiveTime) > 1 :
+                    if not NoticeSent:
+                        NoticeSent = True
+                        self.MessagePipe.SendMessage("Generator Monitor Communication WARNING at " + self.SiteName, "Generator Monitor is not communicating with the controller at " + self.SiteName , msgtype = "error")
 
             if self.WaitForExit("ComWatchDog", WatchDogPollTime):
                 return

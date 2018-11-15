@@ -1,6 +1,73 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.11.24 - 2018-11-14
+- Minor update for EvoLC current / power calculation
+
+## V1.11.23 - 2018-11-13
+- Minor update to improve EvoAC current reading by reducing erroneous momentary current values.
+
+## V1.11.22 - 2018-11-07
+- Minor update to include program run duration time in data submitted in automated feedback error reporting
+- Added missing tooltip on advanced page
+
+## V1.11.21 - 2018-11-06
+- Added advanced option to subtract fuel form reported fuel estimate. See https://github.com/jgyates/genmon/wiki/Appendix-8-Monitoring-Fuel-and-Power-Usage
+- Added email warning when estimated fuel in tank reaches 20% and 10%
+- Corrected potential problem with a warning email about the power log being sent multiple times
+
+## V1.11.20 - 2018-11-06
+- Updated current calculation algorithm for Evolution Liquid Cooled. See https://github.com/jgyates/genmon/wiki/Appendix-4-Known-Issues for additional details.
+
+## V1.11.19 - 2018-10-31
+- Added email notice when communications with controller has been lost (and restored)
+- Corrected one minor issue with mynotify.py
+- Improvement to H-100 / G-Panel handling of string data
+- Update for PowerPack, enabled fuel monitoring (if supported by controller)
+- Improved bounds checking on modbus protocol
+
+## V1.11.18 - 2018-10-29
+- Initial support for Generac G-Panel Industrial Generators
+- Update for H-100 Industrial Generators
+- Minor update to Current  / Power calculation on Evolution. This will potentially fix some system that were not reporting Current and Power properly
+
+## V1.11.17 - 2018-10-29
+- Removed 'sudo' from wireless stats check
+
+## V1.11.16 - 2018-10-29
+- Added advanced (genmon.conf) to use the absolute value of the CT reading when making current calculations.
+
+## V1.11.15 - 2018-10-28
+- Optimized fuel and power log file system reads
+- Added additional debug prints for troubleshooting Current Output on some systems
+
+## V1.11.14 - 2018-10-27
+- Added advanced page for web UI
+
+## V1.11.13 - 2018-10-26
+- Minor update for Power Pact, removed Service Due data
+
+## V1.11.12 - 2018-10-25
+- Initial support for Evolution Power Pact
+
+## V1.11.11 - 2018-10-23
+- Removed Reset Alarm remote command for Nexus Controllers in the web interface. Does not appear to work on Nexus. The command is still there if using ClientInterface.py on the command line if anyone is interested in testing this on a Nexus.
+- Non functional modifications to H-100 code to prep for new features.
+
+## V1.11.10 - 2018-10-22
+- Minor update to reporting of engine state for H-100
+- Update for unit test functions
+- Improved format of register submission to facilitate testing
+- Fixed one bug introduced in 1.11.9 for Nexus / Evo
+- Minor mod to battery gauge, now goes to zero volts instead of 10 on the low end
+
+## V1.11.9 - 2018-10-21
+- Updates for H-100
+- H-100 Log Entries
+- Alarm Acknowledge added
+- Updated modbus modules to better support modbus file reads
+- Corrected problem with reset alarm command on Evo/Nexus
+- Added option to disable power log and current output display
 
 ## V1.11.8 - 2018-10-16
 - Improvements for genmqtt.py to allow for integer and float values to be passed as JSON strings

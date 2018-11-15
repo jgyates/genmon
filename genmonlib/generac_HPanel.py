@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #-------------------------------------------------------------------------------
-#    FILE: generac_H-100.py
-# PURPOSE: Controller Specific Detils for Generac H-100
+#    FILE: generac_HPanel.py
+# PURPOSE: Controller Specific Detils for Generac H-100 and G-Panel
 #
 #  AUTHOR: Jason G Yates
 #    DATE: 30-Apr-2018
@@ -9,235 +9,580 @@
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
 
-import datetime, time, sys, os, threading, socket
+import datetime, time, sys, os, threading, socket, re
 import atexit, json, collections, random
 
 import controller, mymodbus, mythread, modbus_file, mytile
 
+# Module defines ---------------------------------------------------------------
+REGISTER    = 0
+LENGTH      = 1
+RET_STRING  = 2
 
-#---------------------RegisterEnum::RegisterEnum--------------------------------
-class RegisterEnum(object):
-    UNK_2                   = "0002"            # UNKNOWN Bit 0100 change on power loss
-    UNK_8                   = "0008"            # UNKNOWN
-    CONTROLLER_NAME_START   = "0020"            # reg 0020 - 0035 "H-100 Controller, PM-DCP Release 4.1C , HW00"
-    CONTROLLER_1            = "0021"            # Controller Name
-    CONTROLLER_2            = "0022"            # Controller Name
-    CONTROLLER_3            = "0023"            # Controller Name
-    CONTROLLER_4            = "0024"            # Controller Name
-    CONTROLLER_5            = "0025"            # Controller Name
-    CONTROLLER_6            = "0026"            # Controller Name
-    CONTROLLER_7            = "0027"            # Controller Name
-    CONTROLLER_8            = "0028"            # Controller Name
-    CONTROLLER_9            = "0029"            # Controller Name
-    CONTROLLER_10           = "002a"            # Controller Name
-    CONTROLLER_11           = "002b"            # Controller Name
-    CONTROLLER_12           = "002c"            # Controller Name
-    CONTROLLER_13           = "002d"            # Controller Name
-    CONTROLLER_14           = "002e"            # Controller Name
-    CONTROLLER_15           = "002f"            # Controller Name
-    CONTROLLER_16           = "0030"            # Controller Name
-    CONTROLLER_17           = "0031"            # Controller Name
-    CONTROLLER_18           = "0031"            # Controller Name
-    CONTROLLER_19           = "0033"            # Controller Name
-    CONTROLLER_20           = "0034"            # Controller Name
-    CONTROLLER_NAME_END     = "0035"            # Controller Name
-    PMDCP_INFO_START        = "0040"            # reg 0040 - 005b "PM-DCP Release 4.1C , HW00, $Date: 2015/10/01 15:37:56 $"
-    PMDCP_INFO_1            = "0041"            # PM-DCP Info
-    PMDCP_INFO_2            = "0042"            # PM-DCP Info
-    PMDCP_INFO_3            = "0043"            # PM-DCP Info
-    PMDCP_INFO_4            = "0044"            # PM-DCP Info
-    PMDCP_INFO_5            = "0045"            # PM-DCP Info
-    PMDCP_INFO_6            = "0046"            # PM-DCP Info
-    PMDCP_INFO_7            = "0047"            # PM-DCP Info
-    PMDCP_INFO_8            = "0048"            # PM-DCP Info
-    PMDCP_INFO_9            = "0049"            # PM-DCP Info
-    PMDCP_INFO_10           = "004a"            # PM-DCP Info
-    PMDCP_INFO_11           = "004b"            # PM-DCP Info
-    PMDCP_INFO_12           = "004c"            # PM-DCP Info
-    PMDCP_INFO_13           = "004d"            # PM-DCP Info
-    PMDCP_INFO_14           = "004e"            # PM-DCP Info
-    PMDCP_INFO_15           = "004f"            # PM-DCP Info
-    PMDCP_INFO_16           = "0050"            # PM-DCP Info
-    PMDCP_INFO_17           = "0051"            # PM-DCP Info
-    PMDCP_INFO_18           = "0052"            # PM-DCP Info
-    PMDCP_INFO_19           = "0053"            # PM-DCP Info
-    PMDCP_INFO_20           = "0054"            # PM-DCP Info
-    PMDCP_INFO_21           = "0055"            # PM-DCP Info
-    PMDCP_INFO_22           = "0056"            # PM-DCP Info
-    PMDCP_INFO_23           = "0057"            # PM-DCP Info
-    PMDCP_INFO_24           = "0058"            # PM-DCP Info
-    PMDCP_INFO_25           = "0059"            # PM-DCP Info
-    PMDCP_INFO_26           = "005a"            # PM-DCP Info
-    PMDCP_INFO_END          = "005b"            # PM-DCP Info
+#These are the same or H-Panel and G-Panel
+ALARM_LOG_START                 = 0x0c01
+ALARM_LOG_ENTRIES               = 20
+ALARM_LOG_LENGTH                = 64
+EVENT_LOG_START                 = 0x0c15
+EVENT_LOG_ENTRIES               = 20
+EVENT_LOG_LENGTH                = 64
+NAMEPLATE_DATA_FILE_RECORD      = "0040"      # 0x40
+NAMEPLATE_DATA_LENGTH           = 64        # Note: This is 1024 but I only read 64 due to performance
+ENGINE_DATA_FILE_RECORD         = "002a"
+ENGINE_DATA_LENGTH  = 18
 
-    VERSION_INFO_START      = "0060"            # reg 0060 - 0065 "4.0.1, 4.0.0"
-    VERSION_INFO_1          = "0061"            # Version Info
-    VERSION_INFO_2          = "0062"            # Version Info
-    VERSION_INFO_3          = "0063"            # Version Info
-    VERSION_INFO_4          = "0064"            # Version Info
-    VERSION_INFO_5          = "0065"            # Version Info
-    VERSION_INFO_END        = "0066"            # Version Info
+#---------------------HPanelReg::HPanelReg--------------------------------------
+class HPanelReg(object):
+    INPUT_1                 = ["0080", 2]            # Input 1
+    INPUT_2                 = ["0081", 2]            # Input 2
+    OUTPUT_1                = ["0082", 2]            # Output 1
+    OUTPUT_2                = ["0083", 2]            # Output 2
+    OUTPUT_3                = ["0084", 2]            # Output 3
+    OUTPUT_4                = ["0085", 2]            # Output 4
+    OUTPUT_5                = ["0086", 2]            # Output 5
+    OUTPUT_6                = ["0087", 2]            # Output 6
+    OUTPUT_7                = ["0088", 2]            # Output 7
+    OUTPUT_8                = ["0089", 2]            # Output 8
+    OIL_TEMP                = ["008a", 4]            # Oil Temp
+    COOLANT_TEMP            = ["008c", 4]            # Coolant Temp
+    OIL_PRESSURE            = ["008e", 4]            # Oil Pressure
+    COOLANT_LEVEL           = ["0090", 4]            # Coolant Level                * Different on G-Panel
+    FUEL_LEVEL              = ["0092", 4]            # USER CFG 05/Fuel Level =147  * Different on G-Panel
+    THROTTLE_POSITION       = ["0096", 4]            # Throttle Position            * Different on G-Panel
+    O2_SENSOR               = ["0098", 4]            # O2 Sensor                    * Different on G-Panel
+    # NOTE: When the generator is running the battery charger current value may be wrong.
+    BATTERY_CHARGE_CURRNT   = ["009a", 4]            # Battery Charge Current       * Different on G-Panel
+    BATTERY_VOLTS           = ["009c", 4]            # Battery Charge Volts         * Different on G-Panel
+    CURRENT_PHASE_A         = ["009e", 4]            # Current Phase A              * Different on G-Panel
+    CURRENT_PHASE_B         = ["00a0", 4]            # Current Phase B              * Different on G-Panel
+    # NOTE: Single Phase Current
+    CURRENT_PHASE_C         = ["00a2", 4]            # Current Phase C              * Different on G-Panel
+    AVG_CURRENT             = ["00a4", 4]            # Avg Current                  * Different on G-Panel
+    VOLTS_PHASE_A_B         = ["00a6", 4]            # Voltage Phase AB             * Different on G-Panel
+    VOLTS_PHASE_B_C         = ["00a8", 4]            # Voltage Phase BC             * Different on G-Panel
+    VOLTS_PHASE_C_A         = ["00aa", 4]            # Voltage Phase CA             * Different on G-Panel
+    AVG_VOLTAGE             = ["00ac", 4]            # Average Voltage              * Different on G-Panel
+    TOTAL_POWER_KW          = ["00ae", 4]            # Total Power (kW)             * Different on G-Panel
+    TOTAL_PF                = ["00b0", 4]            # Power Factor                 * Different on G-Panel
+    OUTPUT_FREQUENCY        = ["00b2", 4]            # Output Frequency             * Different on G-Panel
+    OUTPUT_RPM              = ["00b4", 4]            # Output RPM                   * Different on G-Panel
+    A_F_DUTY_CYCLE          = ["00b6", 4]            # Air Fuel Duty Cycle          * Different on G-Panel
 
-    INPUT_1                 = "0080"            # Input 1
-    INPUT_2                 = "0081"            # Input 2
-    OUTPUT_1                = "0082"            # Output 1
-    OUTPUT_2                = "0083"            # Output 2
-    OUTPUT_3                = "0084"            # Output 3
-    OUTPUT_4                = "0085"            # Output 4
-    OUTPUT_5                = "0086"            # Output 5
-    OUTPUT_6                = "0087"            # Output 6
-    OUTPUT_7                = "0088"            # Output 7
-    OUTPUT_8                = "0089"            # Output 8
-    OIL_TEMP                = "008b"            # Oil Temp
-    COOLANT_TEMP            = "008d"            # Coolant Temp
-    OIL_PRESSURE            = "008f"            # Oil Pressure
-    COOLANT_LEVEL           = "0091"            # Coolant Level
-    FUEL_LEVEL              = "0093"            # USER CFG 05/Fuel Level =147
-    USER_CFG_06             = "0095"            # USER CFG 06 = 149
-    THROTTLE_POSITION       = "0097"            # Throttle Position
-    O2_SENSOR               = "0099"            # O2 Sensor
-    BATTERY_CHARGE_CURRNT   = "009b"            # Battery Charge Current NOTE: When the generator is running the battery charger current value may be wrong.
-    BATTERY_VOLTS           = "009d"            # Battery Charge Volts
-    CURRENT_PHASE_A         = "009f"            # Current Phase A
-    CURRENT_PHASE_B         = "00a1"            # Current Phase B
-    CURRENT_PHASE_C         = "00a3"            # Current Phase C
-    AVG_CURRENT             = "00a5"            # Avg Current
-    VOLTS_PHASE_A_B         = "00a7"            # Voltage Phase AB
-    VOLTS_PHASE_B_C         = "00a9"            # Voltage Phase BC
-    VOLTS_PHASE_C_A         = "00ab"            # Voltage Phase CA
-    AVG_VOLTAGE             = "00ad"            # Average Voltage
-    TOTAL_POWER_KW          = "00af"            # Total Power (kW)
-    TOTAL_PF                = "00b1"            # Power Factor
-    OUTPUT_FREQUENCY        = "00b3"            # Output Frequency
-    OUTPUT_RPM              = "00b5"            # Output RPM
-    A_F_DUTY_CYCLE          = "00b7"            # Air Fuel Duty Cycle
-    UNK_B7                  = "00b9"            # Unknown (changes on power loss)
-    UNK_DC                  = "00dc"            # UNKNOWN
-    UNK_DD                  = "00dd"            # UNKNOWN
-    GEN_TIME_HR_MIN         = "00e0"            # Time HR:MIN
-    GEN_TIME_SEC_DYWK       = "00e1"            # Time SEC:DayOfWeek
-    GEN_TIME_MONTH_DAY      = "00e2"            # Time Month:DayofMonth
-    GEN_TIME_YR             = "00e3"            # Time YR:UNK
-    GEN_TIME_5              = "00e4"            # Unknown (changes while running) High byte 100th of sec?, Low Byte?
-    GEN_TIME_6              = "00e5"            # Unknown (changes while running) High byte incriments every min (0-59) Low Byte incriments every hour.
-    GEN_TIME_7              = "00e6"            # Unknown
-    GEN_TIME_8              = "00e7"            # Unknown
-    UNK_EF                  = "00ef"            # Unknown (changes while running)
-    UNK_F0                  = "00f0"            # Unknown (not used)
-    UNK_F1                  = "00f1"            # Unknown (changes while running)
-    UNK_F2                  = "00f2"            # Unknown (changes while running)
-    UNK_F3                  = "00f3"            # Unknown (changes while running)
-    UNK_104                 = "0104"            # UNKNOWN
-    UNK_105                 = "0105"            # UNKNOWN
-    UNK_106                 = "0106"            # UNKNOWN
-    UNK_107                 = "0107"            # UNKNOWN
-    UNK_108                 = "0108"            # UNKNOWN
-    UNK_109                 = "0109"            # UNKNOWN
-    UNK_10A                 = "010a"            # UNKNOWN
-    UNK_10B                 = "010b"            # UNKNOWN
-    UNK_110                 = "0110"            # UNKNOWN (change when running)
-    ENGINE_HOURS_HI         = "0130"            # Engine Hours High
-    ENGINE_HOURS_LO         = "0131"            # Engine Hours Low
-    UNK_132                 = "0132"            # UNKNOWN
-    STATUS_INFO_START       = "0133"            # reg 0133 - 013c "Running from Manual"
-    STATUS_INFO_1           = "0134"            #
-    STATUS_INFO_2           = "0135"            #
-    STATUS_INFO_3           = "0136"            #
-    STATUS_INFO_4           = "0137"            #
-    STATUS_INFO_5           = "0138"            #
-    STATUS_INFO_6           = "0139"            #
-    STATUS_INFO_7           = "013a"            #
-    STATUS_INFO_8           = "013b"            #
-    STATUS_INFO_END         = "013c"            #
+    GEN_TIME_HR_MIN         = ["00e0", 2]            # Time HR:MIN
+    GEN_TIME_SEC_DYWK       = ["00e1", 2]            # Time SEC:DayOfWeek
+    GEN_TIME_MONTH_DAY      = ["00e2", 2]            # Time Month:DayofMonth
+    GEN_TIME_YR             = ["00e3", 2]            # Time YR:UNK
 
-    STATUS_2_INFO_START     = "013f"            # reg 013f - 0148 "Running from 2-Wire"
-    STATUS_2_INFO_1         = "0140"            #
-    STATUS_2_INFO_2         = "0141"            #
-    STATUS_2_INFO_3         = "0142"            #
-    STATUS_2_INFO_4         = "0143"            #
-    STATUS_2_INFO_5         = "0144"            #
-    STATUS_2_INFO_6         = "0145"            #
-    STATUS_2_INFO_7         = "0146"            #
-    STATUS_2_INFO_8         = "0147"            #
-    STATUS_2_INFO_END       = "0148"            #
+    ALARM_ACK               = ["012e", 2]            # Number of alarm acks
+    ACTIVE_ALARM_COUNT      = ["012f", 2]            # Number of active alarms
+    ENGINE_HOURS            = ["0130", 4]            # Engine Hours High
+    ENGINE_STATUS_CODE      = ["0132", 2]            # Engine Status Code
 
+    START_BITS              = ["019c", 2]            # Start Bits
+    START_BITS_2            = ["019d", 2]            # Start Bits 2
+    START_BITS_3            = ["019e", 2]            # Start Bits 2
+    KEY_SWITCH_STATE        = ["01a0", 2]            # High Byte is True if Auto, Low Byte True if Manual (False if Off)
+    DI_STATE_1              = ["01a1", 2]            # * Different on G-Panel
+    DI_STATE_2              = ["01a2", 2]            # * Different on G-Panel
+    QUIETTEST_STATUS        = ["022b", 2]            # Quiet Test Status and reqest
 
-    # reg 014b - 015c "Running from serWarmed Up, Alarms On"
-    # reg 01e1 - 01e7 "OIL TEMP" or "No ECU Comms"
+    EXT_SW_TARGET_VOLTAGE   = ["0ea7", 2]            # External Switch Target Voltage
+    EXT_SW_AVG_UTIL_VOLTS   = ["0eb5", 2]            # External Switch Avg Utility Volts
 
-    # Register #665: DTC P0134 Fault Active Counter
-    # This is a value between 0 and 5. If it is 5, then the DTC was active during
-    # this Start/Stop cycle. If it is 1 through 4, then the DTC was not active
-    # this Start/Stop cycle, but it was active in a previous cycle and has not
-    # yet cleared. If it is 0, then the DTC is cleared.
-    DTC_FAULT_COUNTER       = "0299"
-    # Register #668: Oxygen Sensor Reading
-    # This is a value between 0 and 1023. The lower the value the leaner the
-    # combustion. The higher the value the richer the combustion. Roughly 450 is
-    # the stoichiometric balance between lean and rich. It is desired that the
-    # Oxygen Sensor tog- gle between rich and lean in order to optimize the
-    # emissions.
-    O2_SENSOR_EX            = "029c"
-    # Register #670: Throttle Position
-    # This is a value between 150 and 850 normally. The lower the number the
-    # less flow there is. At rest, the throttle position is typically around
-    # 150. Full open throttle is about 850.
-    THROTTLE_POSITION_EX    = "029e"
-    # Register #672: Generator Load / Engine Torque
-    # This is the generator load in kW. It represents the engine output torque.
-    GENERATOR_LOAD          = "02a0"
-    # Register #673: Engine Speed
-    # This is the engine speed in RPM * 8. A generator running at 1800 RPM will
-    # show 14,400.
-    ENGINE_SPEED            = "02a1"
-    # Register #674: Engine Coolant Temperature
-    # This is the coolant temperature in Celsius + 40. A generator with an
-    # engine coolant temperature of 200 F will show 133.
-    COOLANT_TEMP_EX         = "02a2"
+    #---------------------HPanelReg::hexsort------------------------------------
+    #@staticmethod
+    def hexsort(self, e):
+        try:
+            return int(e[REGISTER],16)
+        except:
+            return 0
+    #@staticmethod
+    #---------------------HPanelReg::GetRegList---------------------------------
+    def GetRegList(self):
+        RetList = []
+        for attr, value in HPanelReg.__dict__.iteritems():
+            if not callable(getattr(self,attr)) and not attr.startswith("__"):
+                RetList.append(value)
 
-    # These registers change when idle but are unknown in function
-    UNKNOWN_01B1            = "01b1"
-    UNKNOWN_02A5            = "02a5"
-    UNKNOWN_02A6            = "02a6"
-    UNKNONW_02A8            = "02a8"
-    #---------------------RegisterEnum::GetRegList------------------------------
+        RetList.sort(key=self.hexsort)
+        return RetList
+#---------------------------HPanelIO:HPanelIO-----------------------------------
+class HPanelIO(object):
+
+    Inputs = {
+        # Input 1
+        ("0080", 0x8000) : "Switch In Auto",
+        ("0080", 0x4000) : "Switch in Manual",
+        ("0080", 0x2000) : "Emergency Stop",
+        ("0080", 0x1000) : "Remote Start",
+        ("0080", 0x0800) : "DI-1 Battery Charger Fail",
+        ("0080", 0x0400) : "DI-2 Fuel Pressure",
+        ("0080", 0x0200) : "DI-3 Line Power",
+        ("0080", 0x0100) : "DI-4 Generator Power",
+        ("0080", 0x0080) : "Modem DCD",
+        ("0080", 0x0040) : "Modem Enabled",
+        ("0080", 0x0020) : "Generator Overspeed",
+        ("0080", 0x0010) : "HUIO-1 Config 12",
+        ("0080", 0x0008) : "HUIO-1 Config 13",
+        ("0080", 0x0004) : "HUIO-1 Config 14",
+        ("0080", 0x0002) : "HUIO-1 Config 15",
+        ("0080", 0x0001) : "HUIO-2 Config 16",
+        # Input 2
+        ("0081", 0x8000) : "HUIO-2 Config 17",
+        ("0081", 0x4000) : "HUIO-2 Config 18",
+        ("0081", 0x2000) : "HUIO-2 Config 19",
+        ("0081", 0x1000) : "HUIO-3 Config 20",
+        ("0081", 0x0800) : "HUIO-3 Config 21",
+        ("0081", 0x0400) : "HUIO-3 Config 22",
+        ("0081", 0x0200) : "HUIO-3 Config 23",
+        ("0081", 0x0100) : "HUIO-4 Config 24",
+        ("0081", 0x0080) : "HUIO-4 Config 25",
+        ("0081", 0x0040) : "HUIO-4 Config 26",
+        ("0081", 0x0020) : "HUIO-4 Config 27",
+    }
+    Outputs = {
+        # Output1
+        ("0082", 0x8000) : "Genertor in Alarm",
+        ("0082", 0x4000) : "Genertor in Warning",
+        ("0082", 0x2000) : "Running",
+        ("0082", 0x1000) : "Alarms Enabled",
+        ("0082", 0x0800) : "Read for Load",
+        ("0082", 0x0400) : "Ready to Run",
+        ("0082", 0x0200) : "Stopped in Alarm",
+        ("0082", 0x0100) : "Stopped",
+        ("0082", 0x0080) : "Key in Manual Position",
+        ("0082", 0x0040) : "Key in Auto Position",
+        ("0082", 0x0020) : "Key in Off Position",
+        ("0082", 0x0004) : "Annunciator Light",
+
+        # Output6
+        ("0087", 0x0400) : "Digital Input Key in Auto Active",
+        ("0087", 0x0200) : "Digital Input Key in Manual Active",
+        ("0087", 0x0100) : "Emergency Stop Digitial Input Active",
+        ("0087", 0x0080) : "Remote Start Digital Input Active",
+        ("0087", 0x0040) : "DI-1, Digitial Input #5 Active / Battery Charger Fail",
+        ("0087", 0x0020) : "DI-2, Digitial Input #6 Active / Ruptured Basin, Gas Leak, Low Fuel Pressure",
+        ("0087", 0x0010) : "DI-3, Digitial Input #7 Active / Line Power",
+        ("0087", 0x0008) : "DI-4, Digitial Input #8 Active / Generator Power",
+        ("0087", 0x0004) : "Line Power",
+        ("0087", 0x0002) : "Generator Power",
+        # Output 7
+        ("0088", 0x4000) : "In Warm Up",
+        ("0088", 0x2000) : "In Cool Down",
+        ("0088", 0x1000) : "Cranking",
+        ("0088", 0x0800) : "Needs Service",
+        ("0088", 0x0400) : "Shutdown",
+        ("0088", 0x0080) : "Fault Relay Active",
+        ("0088", 0x0040) : "User Config 106",
+        ("0088", 0x0020) : "Internal Exercise Active",
+        ("0088", 0x0010) : "Check for ILC",
+        ("0088", 0x0008) : "User Config 109",
+        ("0088", 0x0004) : "User Config 110",
+        ("0088", 0x0002) : "User Config 111",
+        ("0088", 0x0001) : "User Config 112",
+        # Output 8
+        ("0089", 0x8000) : "User Config 113",
+        ("0089", 0x4000) : "User Config 114",
+        ("0089", 0x2000) : "User Config 115",
+        ("0089", 0x1000) : "User Config 116",
+        ("0089", 0x0800) : "User Config 117",
+        ("0089", 0x0400) : "User Config 118",
+        ("0089", 0x0400) : "User Config 118",
+        ("0089", 0x0200) : "RPM Missing",
+        ("0089", 0x0200) : "Reset Alarms",
+    }
+    Alarms = {
+        # Output 1
+        ("0082", 0x0010) : "Overcrank Alarm - Generator has unsuccessfully tried to start the designated number of times.",
+        ("0082", 0x0008) : "Oil Inhibit Alarm - Oil pressure too high for a stopped engine.",
+        ("0082", 0x0002) : "Oil Temp High Alarm - Oil Temperature has gone above maximum alarm limit.",
+        ("0082", 0x0002) : "Oil Temp Low Alarm - Oil Temperature has gone below minimum alarm limit.",
+        # Output 2
+        ("0083", 0x8000) : "Oil Temp High Warning - Oil Temperature has gone above maximum warning limit.",
+        ("0083", 0x4000) : "Oil Temp Low Warning - Oil Temperature has gone below minimum warning limit.",
+        ("0083", 0x2000) : "Oil Temp Fault - Oil Temperature sensor exceeds nominal limits for valid sensor reading.",
+        ("0083", 0x1000) : "Coolant Temp High Alarm - Coolant Temperature has gone above maximum alarm limit.",
+        ("0083", 0x0800) : "Coolant Temp Low Alarm - Coolant Temperature has gone below mimimuim alarm limit.",
+        ("0083", 0x0400) : "Coolant Temp High Warning - Coolant Temperature has gone above maximum warning limit.",
+        ("0083", 0x0200) : "Coolant Temp Low Warning - Coolant Temperature has gone below mimimuim warning limit.",
+        ("0083", 0x0100) : "Coolant Temp Fault - Coolant Temperature sensor exceeds nominal limits for valid sensor reading.",
+        ("0083", 0x0080) : "Oil Pressure High Alarm - Oil Pressure has gone above maximum alarm limit.",
+        ("0083", 0x0040) : "Oil Pressure Low Alarm - Oil Pressure has gone below mimimum alarm limit.",
+        ("0083", 0x0020) : "Oil Pressure High Warning - Oil Pressure has gone above maximum warning limit.",
+        ("0083", 0x0010) : "Oil Pressure Low Warning - Oil Pressure has gone below minimum warning limit.",
+        ("0083", 0x0008) : "Oil Pressure Fault - Oil Pressure sensor exceeds nominal limits for valid sensor reading.",
+        ("0083", 0x0004) : "Coolant Level High Alarm - Coolant Level has gone above maximum alarm limit.",
+        ("0083", 0x0002) : "Coolant Level Low Alarm - Coolant Level has gone below minimum alarm limit.",
+        ("0083", 0x0001) : "Coolant Level High Warning - Coolant Level has gone above maximum warning limit.",
+        # Output 3
+        ("0084", 0x8000) : "Coolant Level Low Warning - Coolant Level has gone below mimimum warning limit.",
+        ("0084", 0x4000) : "Coolant Level Fault - Coolant Level sensor exceeds nominal limits for valid sensor reading.",
+        ("0084", 0x2000) : "Fuel Level High Alarm - Fuel Level has gone above maximum alarm limit.",
+        ("0084", 0x1000) : "Fuel Level Low Alarm - Fuel Level has gone below mimimum alarm limit.",
+        ("0084", 0x0800) : "Fuel Level High Warning - Fuel Level has gone above maximum warning limit.",
+        ("0084", 0x0400) : "Fuel Level Low Warning - Fuel Level has gone below mimimum warning limit.",
+        ("0084", 0x0200) : "Fuel Level Fault - Fuel Level sensor exceeds nominal limits for valid sensor reading.",
+        ("0084", 0x0100) : "Analog Input 6 High Alarm - Analog Input 6 has gone above maximum alarm limit (Fuel Pressure or Inlet Air Temperature).",
+        ("0084", 0x0080) : "Analog Input 6 Low Alarm - Analog Input 6 has gone below mimimum alarm limit (Fuel Pressure or Inlet Air Temperature).",
+        ("0084", 0x0040) : "Analog Input 6 High Warning - Analog Input 6 has gone above maximum warning limit (Fuel Pressure or Inlet Air Temperature).",
+        ("0084", 0x0020) : "Analog Input 6 Low Warning - Analog Input 6 has gone below mimimum warning limit (Fuel Pressure or Inlet Air Temperature).",
+        ("0084", 0x0010) : "Analog Input 6 Fault - Analog Input 6 sensor exceeds nominal limits for valid sensor reading (Fuel Pressure or Inlet Air Temperature).",
+        ("0084", 0x0008) : "Throttle Position High Alarm - Throttle Position has gone above maximum alarm limit.",
+        ("0084", 0x0004) : "Throttle Position Low Alarm - Throttle Position has gone below minimum alarm limit.",
+        ("0084", 0x0002) : "Throttle Position High Warning - Throttle Position has gone above maximum warning limit.",
+        ("0084", 0x0001) : "Throttle Position Low Warning - Throttle Position has gone below minimum warning limit.",
+
+        # Output 4
+        ("0085", 0x8000) : "Throttle Position Fault - Throttle Position sensor exceeds nominal limits for valid sensor reading.",
+        ("0085", 0x4000) : "Analog Input 8 High Alarm - Analog Input 8 has gone above maximum alarm limit (Emissions Sensor or Fluid Basin).",
+        ("0085", 0x2000) : "Analog Input 8 Low Alarm - Analog Input 8 has gone below minimum alarm limit (Emissions Sensor or Fluid Basin).",
+        ("0085", 0x1000) : "Analog Input 8 High Warning - Analog Input 8 has gone above maximum warning limit (Emissions Sensor or Fluid Basin).",
+        ("0085", 0x0800) : "Analog Input 8 Low Warning - Analog Input 8 has gone below minimum warning limit Emissions Sensor or Fluid Basin).",
+        ("0085", 0x0400) : "Analog Input 8 Fault - Analog Input 8 sensor exceeds nominal limits for valid sensor reading (Emissions Sensor or Fluid Basin).",
+        ("0085", 0x0200) : "Battery Charge Current High Alarm - Battery Charge Current has gone above maximum alarm limit.",
+        ("0085", 0x0100) : "Battery Charge Current Low Alarm - Battery Charge Current has gone below minimum alarm limit.",
+        ("0085", 0x0080) : "Battery Charge Current High Warning - Battery Charge Current has gone above maximum warning limit.",
+        ("0085", 0x0040) : "Battery Charge Current Low Warning - Battery Charge Current has gone below minimum warning limit.",
+        ("0085", 0x0020) : "Battery Charge Current Fault - Battery Charge Current sensor exceeds nominal limits for valid sensor reading.",
+        ("0085", 0x0010) : "Battery Charge Voltage High Alarm - Battery Charge Voltage has gone above maximum alarm limit.",
+        ("0085", 0x0008) : "Battery Charge Voltage Low Alarm - Battery Charge Voltage has gone below minimum alarm limit.",
+        ("0085", 0x0004) : "Battery Charge Voltage High Warning - Battery Charge Voltage has gone above maximum warning limit.",
+        ("0085", 0x0002) : "Battery Charge Voltage Low Warning - Battery Charge Voltage has gone below minimum warning limit.",
+        ("0085", 0x0001) : "Battery Charge Voltage Fault - Battery Charge Voltage sensor exceeds nominal limits for valid sensor reading.",
+
+        # Output 5
+        ("0086", 0x8000) : "Average Current Low Alarm - Average Current has gone below minimum alarm limit.",
+        ("0086", 0x4000) : "Average Current High Warning - Average Current has gone above maximum warning limit.",
+        ("0086", 0x2000) : "Average Current Low Warning - Average Current has gone below minimum warning limit.",
+        ("0086", 0x1000) : "Average Voltage High Alarm - Average Voltage has gone above maximum alarm limit.",
+        ("0086", 0x0800) : "Average Voltage Low Alarm - Average Voltage has gone below minimum alarm limit.",
+        ("0086", 0x0400) : "Average Voltage High Warning - Average Voltage has gone above maximum warning limit.",
+        ("0086", 0x0200) : "Average Voltage Low Warning - Average Voltage has gone below minimum warning limit.",
+        ("0086", 0x0100) : "Total Real Power High Alarm - Total Real Power has gone above maximum alarm limit.",
+        ("0086", 0x0080) : "Total Real Power Low Alarm - Total Real Power has gone below minimum alarm limit.",
+        ("0086", 0x0040) : "Total Real Power High Warning - Total Real Power has gone above maximum warning limit.",
+        ("0086", 0x0020) : "Total Real Power Low Warning - Total Real Power has gone below minimum warning limit.",
+        ("0086", 0x0010) : "Generator Frequency High Alarm - Generator Frequency has gone above maximum alarm limit.",
+        ("0086", 0x0008) : "Generator Frequency Low Alarm - Generator Frequency has gone below minimum alarm limit.",
+        ("0086", 0x0004) : "Generator Frequency High Warning - Generator Frequency has gone above maximum warning limit.",
+        ("0086", 0x0002) : "Generator Frequency Low Warning - Generator Frequency has gone below minimum warning limit.",
+        ("0086", 0x0001) : "Generator Frequency Fault - Generator Frequency sensor exceeds nominal limits for valid sensor reading.",
+        # Output 6
+        ("0087", 0x8000) : "Engine RPM High Alarm - Engine RPM has gone above maximum alarm limit.",
+        ("0087", 0x4000) : "Engine RPM Low Alarm - Engine RPM has gone below minimum alarm limit.",
+        ("0087", 0x2000) : "Engine RPM High Warning - Engine RPM has gone above maximum warning limit.",
+        ("0087", 0x1000) : "Engine RPM Low Warning - Engine RPM has gone below minimum warning limit.",
+        ("0087", 0x0800) : "Engine RPM Fault - Engine RPM exceeds nominal limits for valid sensor reading.",
+        ("0087", 0x0001) : "Integrated Logic Controller Warning - Warning 1.",
+        # Output 7
+        ("0088", 0x8000) : "Integrated Logic Controller Warning - Warning 2.",
+        ("0088", 0x0200) : "Detected voltage phase rotation as not being A-B-C.",
+        ("0088", 0x0100) : "Detected current phase rotation as not being A-B-C and not matching voltage.",
+
+    }
+
+#---------------------GPanelReg::GPanelReg--------------------------------------
+class GPanelReg(object):
+    INPUT_1                 = ["0080", 2]            # Input 1
+    INPUT_2                 = ["0081", 2]            # Input 2
+    OUTPUT_1                = ["0082", 2]            # Output 1
+    OUTPUT_2                = ["0083", 2]            # Output 2
+    OUTPUT_3                = ["0084", 2]            # Output 3
+    OUTPUT_4                = ["0085", 2]            # Output 4
+    OUTPUT_5                = ["0086", 2]            # Output 5
+    OUTPUT_6                = ["0087", 2]            # Output 6
+    OUTPUT_7                = ["0088", 2]            # Output 7
+    OUTPUT_8                = ["0089", 2]            # Output 8
+    OIL_TEMP                = ["008a", 4]            # Oil Temp
+    COOLANT_TEMP            = ["008c", 4]            # Coolant Temp
+    OIL_PRESSURE            = ["008e", 4]            # Oil Pressure
+    THROTTLE_POSITION       = ["0090", 4]            # Throttle Position            * Different on G-Panel
+    COOLANT_LEVEL           = ["009c", 4]            # Coolant Level                * Different on G-Panel
+    FUEL_LEVEL              = ["009e", 4]            # USER CFG 05/Fuel Level =147  * Different on G-Panel
+    O2_SENSOR               = ["00a4", 4]            # O2 Sensor                    * Different on G-Panel
+    # NOTE: When the generator is running the battery charger current value may be wrong.
+    BATTERY_CHARGE_CURRNT   = ["00a6", 4]            # Battery Charge Current       * Different on G-Panel
+    A_F_DUTY_CYCLE          = ["00aa", 4]            # Air Fuel Duty Cycle          * Different on G-Panel
+    BATTERY_VOLTS           = ["00ac", 4]            # Battery Charge Volts         * Different on G-Panel
+    CURRENT_PHASE_A         = ["00b6", 4]            # Current Phase A              * Different on G-Panel
+    CURRENT_PHASE_B         = ["00b8", 4]            # Current Phase B              * Different on G-Panel
+    # NOTE: Single Phase Current
+    CURRENT_PHASE_C         = ["00ba", 4]            # Current Phase C              * Different on G-Panel
+    AVG_CURRENT             = ["00bc", 4]            # Avg Current                  * Different on G-Panel
+    VOLTS_PHASE_A_B         = ["00c6", 4]            # Voltage Phase AB             * Different on G-Panel
+    VOLTS_PHASE_B_C         = ["00c8", 4]            # Voltage Phase BC             * Different on G-Panel
+    VOLTS_PHASE_C_A         = ["00ca", 4]            # Voltage Phase CA             * Different on G-Panel
+    AVG_VOLTAGE             = ["00cc", 4]            # Average Voltage              * Different on G-Panel
+    TOTAL_POWER_KW          = ["00ce", 4]            # Total Power (kW)             * Different on G-Panel
+    TOTAL_PF                = ["00d2", 4]            # Power Factor                 * Different on G-Panel
+    OUTPUT_FREQUENCY        = ["00d6", 4]            # Output Frequency             * Different on G-Panel
+    OUTPUT_RPM              = ["00da", 4]            # Output RPM                   * Different on G-Panel
+    GEN_TIME_HR_MIN         = ["00e0", 2]            # Time HR:MIN
+    GEN_TIME_SEC_DYWK       = ["00e1", 2]            # Time SEC:DayOfWeek
+    GEN_TIME_MONTH_DAY      = ["00e2", 2]            # Time Month:DayofMonth
+    GEN_TIME_YR             = ["00e3", 2]            # Time YR:UNK
+
+    ALARM_ACK               = ["012e", 2]            # Number of alarm acks
+    ACTIVE_ALARM_COUNT      = ["012f", 2]            # Number of active alarms
+    ENGINE_HOURS            = ["0130", 4]            # Engine Hours High
+    ENGINE_STATUS_CODE      = ["0132", 2]            # Engine Status Code
+
+    START_BITS              = ["019c", 2]            # Start Bits
+    START_BITS_2            = ["019d", 2]            # Start Bits 2
+    START_BITS_3            = ["019e", 2]            # Start Bits 2
+    KEY_SWITCH_STATE        = ["01a0", 2]            # High Byte is True if Auto, Low Byte True if Manual (False if Off)
+    DI_STATE_1              = ["01a1", 2]            # * Different on G-Panel
+    DI_STATE_2              = ["01a2", 2]            # * Different on G-Panel
+    QUIETTEST_STATUS        = ["022b", 2]            # Quiet Test Status and reqest
+
+    EXT_SW_TARGET_VOLTAGE   = ["0ea7", 2]            # External Switch Target Voltage
+    EXT_SW_AVG_UTIL_VOLTS   = ["0eb5", 2]            # External Switch Avg Utility Volts
+
+    #---------------------GPanelReg::hexsort------------------------------------
+    #@staticmethod
+    def hexsort(self, e):
+        try:
+            return int(e[REGISTER],16)
+        except:
+            return 0
+    #@staticmethod
+    #---------------------GPanelReg::GetRegList---------------------------------
+    def GetRegList(self):
+        RetList = []
+        for attr, value in GPanelReg.__dict__.iteritems():
+            if not callable(getattr(self,attr)) and not attr.startswith("__"):
+                RetList.append(value)
+
+        RetList.sort(key=self.hexsort)
+        return RetList
+
+#---------------------------GPanelIO:GPanelIO-----------------------------------
+class GPanelIO(object):
+
+    Inputs = {
+        # Input 1
+        ("0080", 0x8000) : "Switch In Auto",
+        ("0080", 0x4000) : "Switch in Manual",
+        ("0080", 0x2000) : "Alarm Acknowledg",
+        ("0080", 0x1000) : "Emergency Stop",
+        ("0080", 0x0800) : "Remote Start",
+        ("0080", 0x0400) : "Battery Charger Fail",
+        ("0080", 0x0200) : "Ruptured Basin",
+        ("0080", 0x0100) : "User Configurable 08",
+        ("0080", 0x0080) : "User Configurable 09",
+        ("0080", 0x0040) : "User Configurable 10",
+        ("0080", 0x0020) : "Stop Deadbus Connect",
+        ("0080", 0x0010) : "Exercise Active",
+        ("0080", 0x0008) : "Generator Switch Active",
+        ("0080", 0x0004) : "Utility Switch Active",
+        ("0080", 0x0002) : "Select Trip Status",
+        ("0080", 0x0001) : "MCB Status",
+        # Input 2
+        ("0081", 0x8000) : "Phase Rotation Valid",
+        ("0081", 0x4000) : "User Configurable 18",
+        ("0081", 0x2000) : "User Configurable 19",
+        ("0081", 0x1000) : "User Configurable 20",
+        ("0081", 0x0800) : "User Configurable 21",
+        ("0081", 0x0400) : "User Configurable 22",
+        ("0081", 0x0200) : "User Configurable 23",
+        ("0081", 0x0100) : "User Configurable 24",
+        ("0081", 0x0080) : "Modem Selected",
+        ("0081", 0x0040) : "Generator Overspeed",
+        ("0081", 0x0020) : "DI-1",
+        ("0081", 0x0010) : "DI-2",
+        ("0081", 0x0008) : "DI-3 / Line Power",
+        ("0081", 0x0004) : "DI-4 / Generator Power",
+        ("0081", 0x0002) : "User Configurable 31",
+        ("0081", 0x0001) : "User Configurable 32",
+    }
+    Outputs = {
+        # Output1
+        ("0082", 0x8000) : "Genertor in Alarm",
+        ("0082", 0x4000) : "Genertor in Warning",
+        # Output 2
+        # Output 3
+        ("0084", 0x0002) : "Switch in Auto",
+        ("0084", 0x0001) : "Switch in Manual",
+        # Output 4
+        ("0085", 0x8000) : "Switch in Off",
+        ("0085", 0x4000) : "Stopped",
+        ("0085", 0x2000) : "Stopped in Alarm",
+        ("0085", 0x1000) : "Stopped, Ready to Run",
+        ("0085", 0x0800) : "Running",
+        ("0085", 0x0400) : "Ready for Load",
+        ("0085", 0x0200) : "Alarms Enabled",
+        ("0085", 0x0100) : "In Warm Up",
+        ("0085", 0x0080) : "In Cool Down",
+        ("0085", 0x0040) : "Cranking",
+        ("0085", 0x0020) : "Voltage Dropout",
+        ("0085", 0x0010) : "Voltage Pickup",
+        ("0085", 0x0008) : "In Line Interrupt Delay",
+        ("0085", 0x0004) : "In Return to Utility Delay",
+        ("0085", 0x0002) : "In TDN",
+        ("0085", 0x0001) : "Load Shedding",
+        # Output 5
+        ("0086", 0x8000) : "Out of Service",
+        ("0086", 0x4000) : "Needs Service",
+        ("0086", 0x2000) : "Battery Charger Fail",
+        ("0086", 0x1000) : "Line Power",
+        ("0086", 0x0800) : "Generator Power",
+        ("0086", 0x0400) : "Gas Reduced - Knock",
+        ("0086", 0x0200) : "All Engines on Line",
+        ("0086", 0x0100) : "Shutdown",
+        # Output 6
+        ("0087", 0x0010) : "User Configurable 92",
+        ("0087", 0x0008) : "User Configurable 93",
+        ("0087", 0x0004) : "User Configurable 94",
+        ("0087", 0x0002) : "User Configurable 95",
+        ("0087", 0x0001) : "User Configurable 96",
+        # Output 7
+        ("0088", 0x8000) : "User Configurable 97",
+        ("0088", 0x4000) : "User Configurable 98",
+        ("0088", 0x2000) : "User Configurable 99",
+        ("0088", 0x1000) : "User Configurable 100",
+        ("0088", 0x0800) : "User Configurable 101",
+        ("0088", 0x0400) : "User Configurable 102",
+        ("0088", 0x0200) : "User Configurable 103",
+        ("0088", 0x0100) : "User Configurable 104",
+        ("0088", 0x0080) : "User Configurable 105",
+        ("0088", 0x0040) : "User Configurable 106",
+        ("0088", 0x0020) : "User Configurable 107",
+        ("0088", 0x0010) : "User Configurable 108",
+        ("0088", 0x0008) : "User Configurable 109",
+        ("0088", 0x0004) : "User Configurable 110",
+        ("0088", 0x0002) : "User Configurable 111",
+        ("0088", 0x0001) : "User Configurable 112",
+        # Output 8
+        ("0089", 0x8000) : "User Configurable 113",
+        ("0089", 0x4000) : "User Configurable 114",
+        ("0089", 0x2000) : "User Configurable 115",
+        ("0089", 0x1000) : "User Configurable 116",
+        ("0089", 0x0800) : "User Configurable 117",
+        ("0089", 0x0400) : "User Configurable 118",
+        ("0089", 0x0100) : "On Line in Backup Mode",
+    }
+    Alarms = {
+        # Output 1
+        ("0082", 0x2000) : "Low Oil Pressure Alarm",
+        ("0082", 0x1000) : "Low Oil Pressure Warning",
+        ("0082", 0x0800) : "High Coolant Temp Warning",
+        ("0082", 0x0400) : "High Coolant Temp Alarm",
+        ("0082", 0x0200) : "Low Coolant Temp Warning",
+        ("0082", 0x0100) : "High Oil Temp Warning",
+        ("0082", 0x0080) : "High Oil Temp Alarm",
+        ("0082", 0x0040) : "Low Battery Voltage Warning",
+        ("0082", 0x0020) : "High Batter Voltage Alarm",
+        ("0082", 0x0010) : "Overspeed Alarm",
+        ("0082", 0x0008) : "Underspeed Alarm",
+        ("0082", 0x0004) : "Overvoltage Alarm",
+        ("0082", 0x0002) : "Undervoltage Alarm",
+        ("0082", 0x0001) : "Over Frequency Alarm",
+
+        # Output 2
+        ("0083", 0x8000) : "Under Frequency Alarm",
+        ("0083", 0x4000) : "High Fuel Alarm",
+        ("0083", 0x2000) : "Low Fuel Warning",
+        ("0083", 0x1000) : "Low Fuel Alarm",
+        ("0083", 0x0800) : "Fail to Start Alarm",
+        ("0083", 0x0400) : "Coolant Level Alarm",
+        ("0083", 0x0200) : "RPM Sensor Fail Alarm",
+        ("0083", 0x0100) : "Stop Inhibit Alarm",
+        ("0083", 0x0080) : "Emergency Stop Alarm",
+        ("0083", 0x0040) : "Oil Pressure Sensor Fault",
+        ("0083", 0x0020) : "Oil Temp Sensor Fault",
+        ("0083", 0x0010) : "Coolant Temp Sensor Fault",
+        ("0083", 0x0008) : "Knock Unit Fault",
+        ("0083", 0x0004) : "Knock Not Calibrated",
+        ("0083", 0x0002) : "Transfer Switch Error Alarm",
+        ("0083", 0x0001) : "Reverse Power Alarm",
+
+        # Output 3
+        ("0084", 0x8000) : "MCB is Open",
+        ("0084", 0x4000) : "Oil Filter Blocked Alarm",
+        ("0084", 0x2000) : "Air Filter Blocked Alarm",
+        ("0084", 0x1000) : "Oxygen Sensor Fault",
+        ("0084", 0x0800) : "Alternator Problem",
+        ("0084", 0x0400) : "Gas Pressure Warning",
+        ("0084", 0x0200) : "Exhaust Temp Warning",
+        ("0084", 0x0100) : "Exhaust Temp Alarm",
+        ("0084", 0x0080) : "Flame Detection",
+        ("0084", 0x0040) : "Carbon Monixide Alarm",
+        ("0084", 0x0020) : "Vacume Sensor Fault Alarm",
+        ("0084", 0x0010) : "Cam Mapped O P",
+        ("0084", 0x0008) : "Crank Mapped O P",
+        ("0084", 0x0004) : "Gas Flow Sensor Fault Alarm",
+        # Output 4
+        # Output 5
+        ("0086", 0x0080) : "Check Voltage Phase Rotation",
+        ("0086", 0x0040) : "Check Current Phase Rotation",
+        ("0086", 0x0020) : "ILC Alarm / Warning 1",
+        ("0086", 0x0010) : "ILC Alarm / Warning 2",
+        ("0086", 0x0008) : "Gas Shutoff - Knock",
+        ("0086", 0x0004) : "High Inlet Manifold Temp Alarm",
+        ("0086", 0x0002) : "High Inlest Manifold Temp Warning",
+        ("0086", 0x0001) : "Low Turbo Pressure - Gas",
+        # Output 6
+        ("0087", 0x8000) : "Low Turbo Pressure - Diesel",
+        ("0087", 0x4000) : "Low Gass Pressure Shutoff",
+        ("0087", 0x2000) : "Low Gas Pressure Disable",
+        ("0087", 0x1000) : "High Gas Pressure Disable",
+        ("0087", 0x0800) : "CAC Bypass Valve Fault",
+        ("0087", 0x0400) : "Knock Sample Missing",
+        ("0087", 0x0200) : "Disable Checksync Board",
+        ("0087", 0x0100) : "Fault Relay Active",
+        ("0087", 0x0080) : "Annunciator Light",
+        ("0087", 0x0040) : "PC-SC Comms Failed",
+        ("0087", 0x0020) : "Check if ILC is Running",
+        # Output 7
+        # Output 8
+        ("0089", 0x0200) : "RPM Missing in Crank",
+
+    }
+
+#---------------------------RegisterStringEnum:RegisterStringEnum---------------
+class RegisterStringEnum(object):
+
+    # These Values are the same for H-Panel, and G-Panel
+    # Note, the first value is the register (in hex string), the second is the numbert of bytes
+    # third is if the result is stored as a string
+    CONTROLLER_NAME             =   ["0020", 0x40, True]            #
+    VERSION_DATE                =   ["0040", 0x40, True]
+    LAST_POWER_FAIL             =   ["0104", 0x08, False]
+    POWER_UP_TIME               =   ["0108", 0x08, False]
+    ENGINE_STATUS               =   ["0133", 0x40, True]
+    GENERATOR_STATUS            =   ["0153", 0x40, True]
+    GENERATOR_DATA_TIME         =   ["0173", 0x40, False]
+    MIN_GENLINK_VERSION         =   ["0060", 0x40, True]
+    MAINT_LIFE                  =   ["0193", 0x12, False]
+    ENGINE_KW_HOURS             =   ["0236", 0x08, False]
+
+    #---------------------RegisterStringEnum::hexsort---------------------------
+    @staticmethod
+    def hexsort( e):
+        try:
+            return int(e[REGISTER],16)
+        except:
+            return 0
+    #---------------------RegisterStringEnum::GetRegList------------------------
     @staticmethod
     def GetRegList():
         RetList = []
-        for attr, value in RegisterEnum.__dict__.iteritems():
-            if not callable(getattr(RegisterEnum(),attr)) and not attr.startswith("__"):
+        for attr, value in RegisterStringEnum.__dict__.iteritems():
+            if not callable(getattr(RegisterStringEnum(),attr)) and not attr.startswith("__"):
                 RetList.append(value)
-
+        RetList.sort(key=RegisterStringEnum.hexsort)
         return RetList
 
-'''
 
-Reg 00e4 changed from 0114 to 0727, Bits Changed: 6, Mask: 633, Engine State: Ready. Stopped.
-Reg 00e4 changed from 5440 to 9252, Bits Changed: 6, Mask: c612, Engine State: Ready. Stopped.
-
-Reg 00e5 changed from 02c8 to 40c8, Bits Changed: 2, Mask: 4200, Engine State: Ready. Stopped.
-Reg 00e5 changed from 18c9 to 56c9, Bits Changed: 4, Mask: 4e00, Engine State: Ready. Stopped.
-
-Reg 01b1 changed from 1004 to 1000, Bits Changed: 1, Mask: 4, Engine State: Ready. Stopped.
-Reg 01b1 changed from 1010 to 1004, Bits Changed: 2, Mask: 14, Engine State: Ready. Stopped.
-
-Reg 02a8 changed from 47d8 to 0000, Bits Changed: 8, Mask: 47d8, Engine State: Ready. Stopped.
-Reg 02a8 changed from 4964 to 47d8, Bits Changed: 8, Mask: ebc, Engine State: Ready. Stopped.
-
-Reg 02a5 changed from 0000 to 0002, Bits Changed: 1, Mask: 2, Engine State: Ready. Stopped.
-Reg 02a6 changed from 0000 to 001a, Bits Changed: 3, Mask: 1a, Engine State: Ready. Stopped.
-
-
-'''
 #---------------------Input1::Input1--------------------------------------------
 # Enum for register Input1
-class Input1(object):
+class Input1(object):                   # * Different on G-Panel
     AUTO_SWITCH         = 0x8000
     MANUAL_SWITCH       = 0x4000
-    EMERGENCY_STOP      = 0x2000
-    REMOTE_START        = 0x1000
-    DI1_BAT_CHRGR_FAIL  = 0x0800
-    DI2_FUEL_PRESSURE   = 0x0400
+    EMERGENCY_STOP      = 0x2000        # * Different on G-Panel
+    REMOTE_START        = 0x1000        # * Different on G-Panel
+    DI1_BAT_CHRGR_FAIL  = 0x0800        # * Different on G-Panel
+    DI2_FUEL_PRESSURE   = 0x0400        # * Different on G-Panel
     DI3_LINE_POWER      = 0x0200
     DI4_GEN_POWER       = 0x0100
     MODEM_DCD           = 0x0080
@@ -267,8 +612,8 @@ class Input2(object):
 #---------------------Output1::Output1------------------------------------------
 # Enum for register Output1
 class Output1(object):
-    COMMON_ALARM        = 0x8000
-    COMMON_WARNING      = 0x4000
+    COMMON_ALARM        = 0x8000        # Same on H and G Panel
+    COMMON_WARNING      = 0x4000        # Same on H and G Panel
     GEN_RUNNING         = 0x2000
     ALARMS_ENABLED      = 0x1000
     READY_FOR_LOAD      = 0x0800
@@ -416,8 +761,6 @@ class Output8(object):
     RPM_MISSING         = 0x0200
     RESET_ALARMS        = 0x0100
 
-DEFAULT_THRESHOLD_VOLTAGE = 143
-DEFAULT_PICKUP_VOLTAGE = 190
 
 class HPanel(controller.GeneratorController):
 
@@ -429,15 +772,27 @@ class HPanel(controller.GeneratorController):
         simulationfile = None,
         message = None,
         feedback = None,
-        ConfigFilePath = None,
         config = None):
 
         # call parent constructor
-        super(HPanel, self).__init__(log, newinstall = newinstall, simulation = simulation, simulationfile = simulationfile, message = message, feedback = feedback, ConfigFilePath = ConfigFilePath, config = config)
+        super(HPanel, self).__init__(log, newinstall = newinstall, simulation = simulation, simulationfile = simulationfile, message = message, feedback = feedback, config = config)
 
         self.LastEngineState = ""
         self.CurrentAlarmState = False
         self.VoltageConfig = None
+        self.NamePlateData = "Unknown"
+        self.FlyWheelTeeth = []
+        self.CTRatio = []
+        self.Phase = None
+        self.TargetRPM = []
+        self.AlarmAccessLock = threading.RLock()     # lock to synchronize access to the logs
+        self.EventAccessLock = threading.RLock()     # lock to synchronize access to the logs
+        self.AlarmLog = []
+        self.EventLog = []
+        self.ControllerDetected = False
+        self.HPanelDetected = True          # False if G-Panel
+        self.Reg = HPanelReg()
+        self.IO = HPanelIO()
 
         self.DaysOfWeek = { 1: "Sunday",    # decode for register values with day of week
                             2: "Monday",
@@ -473,15 +828,11 @@ class HPanel(controller.GeneratorController):
             #Starting device connection
             if self.Simulation:
                 self.ModBus = modbus_file.ModbusFile(self.UpdateRegisterList,
-                    self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation,
-                    inputfile = self.SimulationFile)
+                    inputfile = self.SimulationFile,
+                    config = self.config)
             else:
                 self.ModBus = mymodbus.ModbusProtocol(self.UpdateRegisterList,
-                    self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation,
-                    slowcpuoptimization = self.SlowCPUOptimization,
-                    use_serial_tcp = self.UseSerialTCP,
-                    tcp_address = self.SerialTCPAddress,
-                    tcp_port = self.SerialTCPPort)
+                    config = self.config)
 
             self.Threads = self.MergeDicts(self.Threads, self.ModBus.Threads)
             self.LastRxPacketCount = self.ModBus.RxPacketCount
@@ -498,20 +849,8 @@ class HPanel(controller.GeneratorController):
     def GetConfig(self):
 
         try:
-            if self.config.HasOption('address'):
-                self.Address = int(self.config.ReadValue('address'),16)     # modbus address
-            else:
-                self.Address = 0x64
-
-            if self.config.HasOption('voltageconfiguration'):
-                self.VoltageConfig = self.config.ReadValue('voltageconfiguration')
-            else:
-                self.VoltageConfig = "277/480"
-
-            if self.config.HasOption('nominalbattery'):
-                self.NominalBatteryVolts = int(self.config.ReadValue('nominalbattery'))
-            else:
-                self.NominalBatteryVolts = 24
+            self.VoltageConfig = self.config.ReadValue('voltageconfiguration', default = "277/480")
+            self.NominalBatteryVolts = int(self.config.ReadValue('nominalbattery', return_type = int, default = 24))
 
         except Exception as e1:
             self.FatalError("Missing config file or config file entries (HPanel): " + str(e1))
@@ -519,21 +858,55 @@ class HPanel(controller.GeneratorController):
 
         return True
 
+    #-------------HPanel:IdentifyController-------------------------------------
+    def IdentifyController(self):
+
+        try:
+            if self.ControllerDetected:
+                return True
+
+            ControllerString = self.HexStringToString(self.ModBus.ProcessMasterSlaveTransaction(RegisterStringEnum.CONTROLLER_NAME[REGISTER],
+                RegisterStringEnum.CONTROLLER_NAME[LENGTH] / 2))
+
+            if not len(ControllerString):
+                self.LogError("Unable to ID controller, possiby not receiving data.")
+                self.ControllerDetected = False
+                return False
+            self.ControllerDetected = True
+            if "h-100" in ControllerString.lower():
+                self.LogError("Detected H-100 Controller")
+                self.HPanelDetected = True
+                self.Reg = HPanelReg()
+                self.IO = HPanelIO()
+            else:
+                self.LogError("Detected G-Panel Controller")
+                self.HPanelDetected = False
+                self.Reg = GPanelReg()
+                self.IO = GPanelIO()
+            return True
+        except Exception as e1:
+            self.LogErrorLine("Error in IdentifyController: " + str(e1))
+            return False
     #-------------HPanel:InitDevice---------------------------------------------
     # One time reads, and read all registers once
     def InitDevice(self):
-        self.MasterEmulation()
-        self.CheckModelSpecificInfo()
-        self.SetupTiles()
-        self.InitComplete = True
-        self.InitCompleteEvent.set()
+
+        try:
+            self.IdentifyController()
+            self.MasterEmulation()
+            self.CheckModelSpecificInfo()
+            self.SetupTiles()
+            self.InitComplete = True
+            self.InitCompleteEvent.set()
+        except Exception as e1:
+            self.LogErrorLine("Error in InitDevice: " + str(e1))
 
     #-------------HPanel:SetupTiles---------------------------------------------
     def SetupTiles(self):
         try:
             Tile = mytile.MyTile(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = self.NominalBatteryVolts,
                 callback = self.GetParameter,
-                callbackparameters = (RegisterEnum.BATTERY_VOLTS,  None, 100.0, False, False, True))
+                callbackparameters = (self.Reg.BATTERY_VOLTS[REGISTER],  None, 100.0, False, False, True))
             self.TileList.append(Tile)
 
             # Nominal Voltage for gauge
@@ -544,42 +917,49 @@ class HPanel(controller.GeneratorController):
             else:
                 NominalVoltage = 600
 
+            if self.NominalKW == None or self.NominalKW == "" or self.NominalKW == "Unknown":
+                self.NominalKW = "550"
+
             Tile = mytile.MyTile(self.log, title = "Average Voltage", units = "V", type = "linevolts", nominal = NominalVoltage,
             callback = self.GetParameter,
-            callbackparameters = (RegisterEnum.AVG_VOLTAGE, None, None, False, True, False))
+            callbackparameters = (self.Reg.AVG_VOLTAGE[REGISTER], None, None, False, True, False))
             self.TileList.append(Tile)
 
             NominalCurrent = int(self.NominalKW) * 1000 / NominalVoltage
             Tile = mytile.MyTile(self.log, title = "Average Current", units = "A", type = "current", nominal = NominalCurrent,
             callback = self.GetParameter,
-            callbackparameters = (RegisterEnum.AVG_CURRENT, None, None, False, True, False))
+            callbackparameters = (self.Reg.AVG_CURRENT[REGISTER], None, None, False, True, False))
             self.TileList.append(Tile)
 
+            if self.NominalFreq == None or self.NominalFreq == "" or self.NominalFreq == "Unknown":
+                self.NominalFreq = "60"
             Tile = mytile.MyTile(self.log, title = "Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq),
             callback = self.GetParameter,
-            callbackparameters = (RegisterEnum.OUTPUT_FREQUENCY, None, 10.0, False, False, True))
+            callbackparameters = (self.Reg.OUTPUT_FREQUENCY[REGISTER], None, 10.0, False, False, True))
             self.TileList.append(Tile)
 
+            if self.NominalRPM == None or self.NominalRPM == "" or self.NominalRPM == "Unknown":
+                self.NominalRPM = "3600"
             Tile = mytile.MyTile(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM),
             callback = self.GetParameter,
-            callbackparameters = (RegisterEnum.OUTPUT_RPM, None, None, False, True, False))
+            callbackparameters = (self.Reg.OUTPUT_RPM[REGISTER], None, None, False, True, False))
             self.TileList.append(Tile)
 
             # water temp between 170 and 200 is a normal range for a gen. most have a 180f thermostat
             Tile = mytile.MyTile(self.log, title = "Coolant Temp", units = "F", type = "temperature", subtype = "coolant", nominal = 180, maximum = 300,
             callback = self.GetParameter,
-            callbackparameters = (RegisterEnum.COOLANT_TEMP, None, None, False, True, False))
+            callbackparameters = (self.Reg.COOLANT_TEMP[REGISTER], None, None, False, True, False))
             self.TileList.append(Tile)
 
             if self.PowerMeterIsSupported():
                 Tile = mytile.MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = int(self.NominalKW),
                 callback = self.GetParameter,
-                callbackparameters = (RegisterEnum.TOTAL_POWER_KW, None, None, False, True, False))
+                callbackparameters = (self.Reg.TOTAL_POWER_KW[REGISTER], None, None, False, True, False))
                 self.TileList.append(Tile)
 
                 Tile = mytile.MyTile(self.log, title = "kW Output", type = "powergraph", nominal = int(self.NominalKW),
                 callback = self.GetParameter,
-                callbackparameters = (RegisterEnum.TOTAL_POWER_KW, None, None, False, True, False))
+                callbackparameters = (self.Reg.TOTAL_POWER_KW[REGISTER], None, None, False, True, False))
                 self.TileList.append(Tile)
 
         except Exception as e1:
@@ -589,250 +969,239 @@ class HPanel(controller.GeneratorController):
     # check for model specific info in read from conf file, if not there then add some defaults
     def CheckModelSpecificInfo(self):
 
-        # TODO this should be determined by reading the hardware if possible.
-        if self.NominalFreq == "Unknown" or not len(self.NominalFreq):
-            self.NominalFreq = "60"
-            self.config.WriteValue("nominalfrequency", self.NominalFreq)
+        try:
+            # Read the nameplate dataGet Serial Number
+            self.NamePlateData = self.HexStringToString(self.ModBus.ProcessMasterSlaveFileReadTransaction(NAMEPLATE_DATA_FILE_RECORD, NAMEPLATE_DATA_LENGTH / 2 ))
 
-        # This is not correct for 50Hz models
-        if self.NominalRPM == "Unknown" or not len(self.NominalRPM):
-            if self.NominalFreq == "50":
-                self.NominalRPM = "1500"
-            else:
-                self.NominalRPM = "1800"
-            self.config.WriteValue("nominalrpm", self.NominalRPM)
+            EngineData = self.ModBus.ProcessMasterSlaveFileReadTransaction(ENGINE_DATA_FILE_RECORD, ENGINE_DATA_LENGTH / 2 )
+            if len(EngineData) >= 34:
+                try:
+                    self.FlyWheelTeeth.append(self.GetIntFromString(EngineData, 0, 2))  # Byte 1 and 2
+                    self.FlyWheelTeeth.append(self.GetIntFromString(EngineData, 2, 2))  # Byte 2 and 3
+                    self.FlyWheelTeeth.append(self.GetIntFromString(EngineData, 4, 2))  # Byte 4 and 5
+                    self.CTRatio.append(self.GetIntFromString(EngineData, 6, 2))        # Byte 6 and 7
+                    self.CTRatio.append(self.GetIntFromString(EngineData, 8, 2))        # Byte 8 and 9
+                    # Skip byte 10 and 11
+                    self.Phase = self.GetIntFromString(EngineData, 12, 1)               # Byte 12
+                    self.TargetRPM.append(self.GetIntFromString(EngineData, 13, 2))     # Byte 13 and 14
+                    self.TargetRPM.append(self.GetIntFromString(EngineData, 15, 2))     # Byte 15 and 16
+                except Exception as e1:
+                    self.LogError("Error parsing engine parameters: " + str(e1))
 
-        if self.NominalKW == "Unknown" or not len(self.NominalKW):
-            self.NominalKW = "550"
-            self.config.WriteValue("nominalkw", self.NominalKW)
+            # TODO this should be determined by reading the hardware if possible.
+            if self.NominalFreq == "Unknown" or not len(self.NominalFreq):
+                self.NominalFreq = "60"
+                self.config.WriteValue("nominalfrequency", self.NominalFreq)
 
-        if self.Model == "Unknown" or not len(self.Model):
-            self.Model = "Generac Generic H-100 Industrial Generator"
-            self.config.WriteValue("model", self.Model)
+            # This is not correct for 50Hz models
+            if self.NominalRPM == "Unknown" or not len(self.NominalRPM):
+                if self.NominalFreq == "50":
+                    self.NominalRPM = "1500"
+                else:
+                    self.NominalRPM = "1800"
+                self.config.WriteValue("nominalrpm", self.NominalRPM)
 
-        if self.FuelType == "Unknown" or not len(self.FuelType):
-            self.FuelType = "Diesel"
-            self.config.WriteValue("fueltype", self.FuelType)
+            if self.NominalKW == "Unknown" or not len(self.NominalKW):
+                self.NominalKW = "550"
+                self.config.WriteValue("nominalkw", self.NominalKW)
 
+            if self.Model == "Unknown" or not len(self.Model) or "generic" in self.Model.lower():
+                if self.HPanelDetected:
+                    self.Model = "Generac H-100 Industrial Generator"
+                else:
+                    self.Model = "Generac G-Panel Industrial Generator"
+                self.config.WriteValue("model", self.Model)
+
+            if self.FuelType == "Unknown" or not len(self.FuelType):
+                self.FuelType = "Diesel"
+                self.config.WriteValue("fueltype", self.FuelType)
+        except Exception as e1:
+            self.LogErrorLine("Error in CheckModelSpecificInfo: " + str(e1))
         return
-    #-------------HPanel:GetParameterString-------------------------------------
-    def GetParameterString(self, Start, End):
+    #-------------HPanel:GetIntFromString---------------------------------------
+    def GetIntFromString(self, input_string, byte_offset, length = 1, decimal = False):
 
         try:
-            StartInt = int(Start, 16)
-            EndInt = int(End, 16)
-
-            ByteList = []
-            ReturnString = ""
-            for Register in range(StartInt, EndInt + 1):
-                RegValue = self.GetParameter( "%04x" % Register, ReturnInt = True)
-                if RegValue == 0:
-                    break
-                ByteList.append(RegValue >> 8)
-                ByteList.append(RegValue & 0xFF)
-            return ReturnString.join(map(chr, ByteList))
+            if len(input_string) < byte_offset + length:
+                self.LogError("Invalid length in GetIntFromString: " + str(input_string))
+                return 0
+            StringOffset = byte_offset * 2
+            StringOffsetEnd = StringOffset + (length *2)
+            if decimal:
+                return int(input_string[StringOffset:StringOffsetEnd])
+            return int(input_string[StringOffset:StringOffsetEnd], 16)
         except Exception as e1:
-            self.LogErrorLine("Error in GetStringParameter: " + str(e1))
-            return ""
+            self.LogErrorLine("Error in GetIntFromString: " + str(e1))
+            return 0
+    #-------------HPanel:GetParameterStringValue--------------------------------
+    def GetParameterStringValue(self, Register, ReturnString = False):
+
+        StringValue = self.Strings.get(Register, "")
+        if ReturnString:
+            return self.HexStringToString(StringValue)
+        return self.Strings.get(Register, "")
+
+    #-------------HPanel:GetGeneratorStrings------------------------------------
+    def GetGeneratorStrings(self):
+
+        try:
+            for RegisterList in RegisterStringEnum.GetRegList():
+                try:
+                    if self.IsStopping:
+                        return
+                    self.ModBus.ProcessMasterSlaveTransaction(RegisterList[REGISTER], RegisterList[LENGTH] / 2)
+                except Exception as e1:
+                    self.LogErrorLine("Error in GetGeneratorStrings: " + str(e1))
+
+        except Exception as e1:
+            self.LogErrorLine("Error in GetGeneratorStrings: " + str(e1))
 
     #-------------HPanel:MasterEmulation----------------------------------------
     def MasterEmulation(self):
 
-        for Register in RegisterEnum.GetRegList(): #RegisterEnum:
-            try:
-                if self.IsStopping:
+        try:
+            if not self.ControllerDetected:
+                self.IdentifyController()
+                if not self.ControllerDetected:
                     return
-                self.ModBus.ProcessMasterSlaveTransaction(Register, 1)
-            except Exception as e1:
-                self.LogErrorLine("Error in MasterEmulation: " + str(e1))
-        self.CheckForAlarmEvent.set()
+            for RegisterList in self.Reg.GetRegList():
+                try:
+                    if self.IsStopping:
+                        return
+                    self.ModBus.ProcessMasterSlaveTransaction(RegisterList[REGISTER], RegisterList[LENGTH] / 2)
+                except Exception as e1:
+                    self.LogErrorLine("Error in MasterEmulation: " + str(e1))
+
+            self.GetGeneratorStrings()
+            self.CheckForAlarmEvent.set()
+        except Exception as e1:
+            self.LogErrorLine("Error in MasterEmulation: " + str(e1))
 
     #------------ HPanel:GetTransferStatus -------------------------------------
     def GetTransferStatus(self):
 
         LineState = "Unknown"
-        #if self.GetParameterBit(RegisterEnum.INPUT_1, Input1.DI3_LINE_POWER):
-        #if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.DI3_LINE_PWR_ACT):
-        if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.LINE_POWER):
-            LineState = "Utility"
-        #if self.GetParameterBit(RegisterEnum.INPUT_1, Input1.DI4_GEN_POWER):
-        #if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.DI4_GEN_PWR_ACT):
-        if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.GEN_POWER):
-            LineState = "Generator"
+        if self.HPanelDetected:
+            if self.GetParameterBit(self.Reg.OUTPUT_6[REGISTER], Output6.LINE_POWER):
+                LineState = "Utility"
+            if self.GetParameterBit(self.Reg.OUTPUT_6[REGISTER], Output6.GEN_POWER):
+                LineState = "Generator"
+        else:
+            if self.GetParameterBit(self.Reg.OUTPUT_5[REGISTER], 0x1000):
+                LineState = "Utility"
+            if self.GetParameterBit(self.Reg.OUTPUT_5[REGISTER], 0x0800):
+                LineState = "Generator"
         return LineState
 
-    #------------ HPanel:GetAlarmlist ------------------------------------------
-    def GetAlarmList(self):
+    #------------ HPanel:GetCondition ------------------------------------------
+    def GetCondition(self, RegList = None, type = None):
 
-        AlarmList = []
-        # Now check specific alarm conditions
-        if self.GetParameterBit(RegisterEnum.OUTPUT_1, Output1.OVERCRANK_ALARM):
-            AlarmList.append("Overcrank Alarm - Generator has unsuccessfully tried to start the designated number of times.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_1, Output1.OIL_INHIBIT_ALRM):
-            AlarmList.append("Oil Inhibit Alarm - Oil pressure too high for a stopped engine.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_1, Output1.OIL_TEMP_HI_ALRM):
-            AlarmList.append("Oil Temp High Alarm - Oil Temperature has gone above maximum alarm limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_1, Output1.OIL_TEMP_LO_ALRM):
-            AlarmList.append("Oil Temp Low Alarm - Oil Temperature has gone below minimum alarm limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.OIL_TEMP_HI_WARN):
-            AlarmList.append("Oil Temp High Warning - Oil Temperature has gone above maximum warning limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.OIL_TEMP_LO_WARN):
-            AlarmList.append("Oil Temp Low Warning - Oil Temperature has gone below minimum warning limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.OIL_TEMP_FAULT):
-            AlarmList.append("Oil Temp Fault - Oil Temperature sensor exceeds nominal limits for valid sensor reading.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.COOL_TMP_HI_ALRM):
-            AlarmList.append("Coolant Temp High Alarm - Coolant Temperature has gone above maximum alarm limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.COOL_TMP_LO_ALRM):
-            AlarmList.append("Coolant Temp Low Alarm - Coolant Temperature has gone below mimimuim alarm limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.COOL_TMP_HI_WARN):
-            AlarmList.append("Coolant Temp High Warning - Coolant Temperature has gone above maximum warning limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.COOL_TMP_LO_WARN):
-            AlarmList.append("Coolant Temp Low Warning - Coolant Temperature has gone below mimimuim warning limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.COOL_TMP_FAULT):
-            AlarmList.append("Coolant Temp Fault - Coolant Temperature sensor exceeds nominal limits for valid sensor reading.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.OIL_PRES_HI_ALRM):
-            AlarmList.append("Oil Pressure High Alarm - Oil Pressure has gone above maximum alarm limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.OIL_PRES_LO_ALRM):
-            AlarmList.append("Oil Pressure Low Alarm - Oil Pressure has gone below mimimum alarm limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.OIL_PRES_HI_WARN):
-            AlarmList.append("Oil Pressure High Warning - Oil Pressure has gone above maximum warning limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.OIL_PRES_LO_WARN):
-            AlarmList.append("Oil Pressure Low Warning - Oil Pressure has gone below minimum warning limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.OIL_PRES_FAULT):
-            AlarmList.append("Oil Pressure Fault - Oil Pressure sensor exceeds nominal limits for valid sensor reading.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.COOL_LVL_HI_ALRM):
-            AlarmList.append("Coolant Level High Alarm - Coolant Level has gone above maximum alarm limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.COOL_LVL_LO_ALRM):
-            AlarmList.append("Coolant Level Low Alarm - Coolant Level has gone below minimum alarm limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_2, Output2.COOL_LVL_HI_WARN):
-            AlarmList.append("Coolant Level High Warning - Coolant Level has gone above maximum warning limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.COOL_LVL_LO_WARN):
-            AlarmList.append("Coolant Level Low Warning - Coolant Level has gone below mimimum warning limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.COOL_LVL_FAULT):
-            AlarmList.append("Coolant Level Fault - Coolant Level sensor exceeds nominal limits for valid sensor reading.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.FUEL_LVL_HI_ALRM):
-            AlarmList.append("Fuel Level High Alarm - Fuel Level has gone above maximum alarm limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.FUEL_LVL_LO_ALRM):
-            AlarmList.append("Fuel Level Low Alarm - Fuel Level has gone below mimimum alarm limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.FUEL_LVL_HI_WARN):
-            AlarmList.append("Fuel Level High Warning - Fuel Level has gone above maximum warning limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.FUEL_LVL_LO_WARN):
-            AlarmList.append("Fuel Level Low Warning - Fuel Level has gone below mimimum warning limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.FUEL_LVL_FAULT):
-            AlarmList.append("Fuel Level Fault - Fuel Level sensor exceeds nominal limits for valid sensor reading.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.ANALOG_6_HI_ALRM):
-            AlarmList.append("Analog Input 6 High Alarm - Analog Input 6 has gone above maximum alarm limit (Fuel Pressure or Inlet Air Temperature).")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.ANALOG_6_LO_ALRM):
-            AlarmList.append("Analog Input 6 Low Alarm - Analog Input 6 has gone below mimimum alarm limit (Fuel Pressure or Inlet Air Temperature).")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.ANALOG_6_HI_WARN):
-            AlarmList.append("Analog Input 6 High Warning - Analog Input 6 has gone above maximum warning limit (Fuel Pressure or Inlet Air Temperature).")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.ANALOG_6_LO_WARN):
-            AlarmList.append("Analog Input 6 Low Warning - Analog Input 6 has gone below mimimum warning limit (Fuel Pressure or Inlet Air Temperature).")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.ANALOG_6_FAULT):
-            AlarmList.append("Analog Input 6 Fault - Analog Input 6 sensor exceeds nominal limits for valid sensor reading (Fuel Pressure or Inlet Air Temperature).")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.GOV_POS_HI_ALARM):
-            AlarmList.append("Throttle Position High Alarm - Throttle Position has gone above maximum alarm limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.GOV_POS_LO_ALARM):
-            AlarmList.append("Throttle Position Low Alarm - Throttle Position has gone below minimum alarm limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.GOV_POS_HI_WARN):
-            AlarmList.append("Throttle Position High Warning - Throttle Position has gone above maximum warning limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_3, Output3.GOV_POS_LO_WARN):
-            AlarmList.append("Throttle Position Low Warning - Throttle Position has gone below minimum warning limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.GOV_POS_FAULT):
-            AlarmList.append("Throttle Position Fault - Throttle Position sensor exceeds nominal limits for valid sensor reading.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.OXYGEN_HI_ALARM):
-            AlarmList.append("Analog Input 8 High Alarm - Analog Input 8 has gone above maximum alarm limit (Emissions Sensor or Fluid Basin).")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.OXYGEN_LO_ALARM):
-            AlarmList.append("Analog Input 8 Low Alarm - Analog Input 8 has gone below minimum alarm limit (Emissions Sensor or Fluid Basin).")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.OXYGEN_HI_WARN):
-            AlarmList.append("Analog Input 8 High Warning - Analog Input 8 has gone above maximum warning limit (Emissions Sensor or Fluid Basin).")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.OXYGEN_LO_WARN):
-            AlarmList.append("Analog Input 8 Low Warning - Analog Input 8 has gone below minimum warning limit Emissions Sensor or Fluid Basin).")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.OXYGEN_SENSOR_FAULT):
-            AlarmList.append("Analog Input 8 Fault - Analog Input 8 sensor exceeds nominal limits for valid sensor reading (Emissions Sensor or Fluid Basin).")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.CHG_CURR_HI_ALRM):
-            AlarmList.append("Battery Charge Current High Alarm - Battery Charge Current has gone above maximum alarm limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.CHG_CURR_LO_ALRM):
-            AlarmList.append("Battery Charge Current Low Alarm - Battery Charge Current has gone below minimum alarm limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.CHG_CURR_HI_WARN):
-            AlarmList.append("Battery Charge Current High Warning - Battery Charge Current has gone above maximum warning limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.CHG_CURR_LO_WARN):
-            AlarmList.append("Battery Charge Current Low Warning - Battery Charge Current has gone below minimum warning limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.CHG_CURR_FAULT):
-            AlarmList.append("Battery Charge Current Fault - Battery Charge Current sensor exceeds nominal limits for valid sensor reading.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.CHG_CURR_HI_ALRM):
-            AlarmList.append("Battery Charge Current High Alarm - Battery Charge Current has gone above maximum alarm limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.CHG_CURR_LO_ALRM):
-            AlarmList.append("Battery Charge Current Low Alarm - Battery Charge Current has gone below minimum alarm limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.CHG_CURR_HI_WARN):
-            AlarmList.append("Battery Charge Current High Warning - Battery Charge Current has gone above maximum warning limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.CHG_CURR_LO_WARN):
-            AlarmList.append("Battery Charge Current Low Warning - Battery Charge Current has gone below minimum warning limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_4, Output4.AVG_CURR_HI_ALRM):
-            AlarmList.append("Average Current High Alarm - Average Current has gone above maximum alarm limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.AVG_CURR_LO_ALRM):
-            AlarmList.append("Average Current Low Alarm - Average Current has gone below minimum alarm limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.AVG_CURR_HI_WARN):
-            AlarmList.append("Average Current High Warning - Average Current has gone above maximum warning limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.AVG_CURR_LO_WARN):
-            AlarmList.append("Average Current Low Warning - Average Current has gone below minimum warning limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.AVG_VOLT_HI_ALRM):
-            AlarmList.append("Average Voltage High Alarm - Average Voltage has gone above maximum alarm limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.AVG_VOLT_LO_ALRM):
-            AlarmList.append("Average Voltage Low Alarm - Average Voltage has gone below minimum alarm limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.AVG_VOLT_HI_WARN):
-            AlarmList.append("Average Voltage High Warning - Average Voltage has gone above maximum warning limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.AVG_VOLT_LO_WARN):
-            AlarmList.append("Average Voltage Low Warning - Average Voltage has gone below minimum warning limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.TOT_PWR_HI_ALARM):
-            AlarmList.append("Total Real Power High Alarm - Total Real Power has gone above maximum alarm limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.TOT_PWR_LO_ALARM):
-            AlarmList.append("Total Real Power Low Alarm - Total Real Power has gone below minimum alarm limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.AVG_VOLT_HI_WARN):
-            AlarmList.append("Total Real Power High Warning - Total Real Power has gone above maximum warning limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.TOT_PWR_HI_WARN):
-            AlarmList.append("Total Real Power Low Warning - Total Real Power has gone below minimum warning limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.GEN_FREQ_HI_ALRM):
-            AlarmList.append("Generator Frequency High Alarm - Generator Frequency has gone above maximum alarm limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.GEN_FREQ_LO_ALRM):
-            AlarmList.append("Generator Frequency Low Alarm - Generator Frequency has gone below minimum alarm limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.GEN_FREQ_HI_WARN):
-            AlarmList.append("Generator Frequency High Warning - Generator Frequency has gone above maximum warning limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.GEN_FREQ_LO_WARN):
-            AlarmList.append("Generator Frequency Low Warning - Generator Frequency has gone below minimum warning limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_5, Output5.GEN_FREQ_FAULT):
-            AlarmList.append("Generator Frequency Fault - Generator Frequency sensor exceeds nominal limits for valid sensor reading.")
+        try:
+            if type == None or RegList == None:
+                return []
+            if type.lower() == "alarms":
+                Lookup = self.IO.Alarms
+            elif type.lower() == "inputs":
+                Lookup = self.IO.Inputs
+            elif type.lower() == "outputs":
+                Lookup = self.IO.Outputs
+            else:
+                self.LogError("Error in GetCondition: Invalid input for type: " + str(type))
+                return []
 
-        if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.ENG_RPM_HI_ALARM):
-            AlarmList.append("Engine RPM High Alarm - Engine RPM has gone above maximum alarm limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.ENG_RPM_LO_ALARM):
-            AlarmList.append("Engine RPM Low Alarm - Engine RPM has gone below minimum alarm limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.ENG_RPM_HI_WARN):
-            AlarmList.append("Engine RPM High Warning - Engine RPM has gone above maximum warning limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.ENG_RPM_LO_WARN):
-            AlarmList.append("Engine RPM Low Warning - Engine RPM has gone below minimum warning limit.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.ENG_RPM_FAULT):
-            AlarmList.append("Engine RPM Fault - Engine RPM exceeds nominal limits for valid sensor reading.")
+            StringList = []
+            for Register in RegList:
+                Output = self.GetParameter(Register , ReturnInt = True)
+                Mask = 1
+                while (Output):
+                    if Output & 0x01:
+                        Value = Lookup.get((Register, Mask), None)
+                        if not Value == None:
+                            StringList.append(Value)
+                    Mask <<= 1
+                    Output >>= 1
 
-        if self.GetParameterBit(RegisterEnum.INPUT_1, Input1.DI1_BAT_CHRGR_FAIL):
-            if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.BATTERY_CHARGE_FAIL):
-                AlarmList.append("Battery Charger Failure - Digital Input #5 active, Battery Charger Fail digital input active.")
-        if self.GetParameterBit(RegisterEnum.INPUT_1, Input1.DI2_FUEL_PRESSURE):
-            if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.LOW_FUEL_PRS_ACT):
-                AlarmList.append("Fuel Leak or Low Fuel Pressure - Ruptured Basin input active / Propane Gas Leak input active / Low Fuel Pressure digital input active.")
+            return StringList
+        except Exception as e1:
+            self.LogErrorLine("Error in GetCondition: " + str(e1))
+            return []
 
-        if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.ILC_ALR_WRN_1):
-            AlarmList.append("Integrated Locic Controller Warning - Warning 1.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_7, Output7.ILC_ALR_WRN_2):
-            AlarmList.append("Integrated Locic Controller Warning - Warning 2.")
+    #------------ HPanel:ParseLogEntry ---------------------------------------------
+    def ParseLogEntry(self, Entry, Type = None):
 
-        if self.GetParameterBit(RegisterEnum.OUTPUT_7, Output7.CHCK_V_PHS_ROT):
-            AlarmList.append("Detected voltage phase rotation as not being A-B-C.")
-        if self.GetParameterBit(RegisterEnum.OUTPUT_7, Output7.CHCK_C_PHS_ROT):
-            AlarmList.append("Detected current phase rotation as not being A-B-C and not matching voltage.")
+        try:
+            if Type == None:
+                return ""
 
-        return AlarmList
+            if not len(Entry):
+                return ""
 
+            # get time
+            RetList = re.findall(r'\d{1,2}:\d{1,2}:\d{1,2}', Entry)
+            if RetList == None or not len(RetList):
+                self.LogError("ParseLogEntry: No Time found in log entry")
+                return Entry
+            EntryTime = RetList[0]
+            # get date
+            RetList = re.findall(r'\d{1,2}/\d{1,2}/\d{1,2}', Entry)
+            if RetList == None or not len(RetList):
+                self.LogError("ParseLogEntry: No date found in log entry")
+                return Entry
+            EntryDate = RetList[0]
+
+            Entry = Entry.replace(EntryDate, "")
+            Entry = Entry.replace(EntryTime, "")
+
+            Entry = Entry.strip()
+
+            Entry = Entry.replace("  ", "")
+            if Type.lower() == "alarm":
+                Entry = Entry.replace("(?)","Shutdown")
+
+            elif Type.lower() == "event":
+                Entry = Entry.replace("()", "")
+
+            Entry = EntryDate + " " + EntryTime + " " + Entry
+
+            return Entry
+        except Exception as e1:
+            self.LogErrorLine("Error in ParseLogEntry: " + str(e1))
+            return ""
+
+    #------------ HPanel:UpdateLog ---------------------------------------------
+    def UpdateLog(self):
+
+        try:
+            LocalEvent = []
+            for RegValue in range(EVENT_LOG_START + EVENT_LOG_ENTRIES -1 , EVENT_LOG_START -1, -1):
+                Register = "%04x" % RegValue
+                LogEntry = self.HexStringToString(self.ModBus.ProcessMasterSlaveFileReadTransaction(Register, EVENT_LOG_LENGTH /2))
+                LogEntry = self.ParseLogEntry(LogEntry, Type = "event")
+                if not len(LogEntry):
+                    continue
+                if "undefined" in LogEntry:
+                    continue
+
+                LocalEvent.append(LogEntry)
+
+            with self.EventAccessLock:
+                self.EventLog = LocalEvent
+
+            LocalAlarm = []
+            for RegValue in range(ALARM_LOG_START + ALARM_LOG_ENTRIES -1, ALARM_LOG_START -1, -1):
+                Register = "%04x" % RegValue
+                LogEntry = self.HexStringToString(self.ModBus.ProcessMasterSlaveFileReadTransaction(Register, ALARM_LOG_LENGTH /2))
+                LogEntry = self.ParseLogEntry(LogEntry, Type = "alarm")
+                if not len(LogEntry):
+                    continue
+
+                LocalAlarm.append(LogEntry)
+
+            with self.AlarmAccessLock:
+                self.AlarmLog = list(LocalAlarm)
+
+        except Exception as e1:
+            self.LogErrorLine("Error in UpdateLog: " + str(e1))
     #------------ HPanel:CheckForAlarms ----------------------------------------
     def CheckForAlarms(self):
 
@@ -843,13 +1212,13 @@ class HPanel(controller.GeneratorController):
             EngineState = self.GetEngineState()
             if not EngineState == self.LastEngineState:
                 self.LastEngineState = EngineState
-                # This will trigger a call to CheckForalarms with LisOutput = True
+                self.UpdateLog()
+                # This will trigger a call to CheckForalarms with ListOutput = True
                 msgsubject = "Generator Notice: " + self.SiteName
                 msgbody = self.DisplayStatus()
                 self.MessagePipe.SendMessage(msgsubject , msgbody, msgtype = "warn")
 
             # Check for Alarms
-
             if self.SystemInAlarm():
                 if not self.CurrentAlarmState:
                     msgsubject = "Generator Notice: ALARM Active at " + self.SiteName
@@ -867,24 +1236,62 @@ class HPanel(controller.GeneratorController):
             self.LogErrorLine("Error in CheckForAlarms: " + str(e1))
 
         return
-    #------------ HPanel:RegisterIsKnown ---------------------------------------
-    def RegisterIsKnown(self, Register):
 
-        return Register in map(str.lower,RegisterEnum.GetRegList())
-
-    #------------ HPanel:UpdateRegisterList ------------------------------------
-    def UpdateRegisterList(self, Register, Value):
+    #------------ HPanel:RegisterIsFileRecord ------------------------------
+    def RegisterIsFileRecord(self, Register):
 
         try:
-            # TODO validate registers
-            # Validate Register by length
-            if len(Register) != 4 or len(Value) < 4:
-                self.LogError("Validation Error: Invalid data in UpdateRegisterList: %s %s" % (Register, Value))
+            RegInt = int(Register,16)
 
-            if self.RegisterIsKnown(Register):
+            if Register == NAMEPLATE_DATA_FILE_RECORD:
+                return True
+            if Register == ENGINE_DATA_FILE_RECORD:
+                return True
+            if RegInt >= ALARM_LOG_START or RegInt <= ALARM_LOG_START + ALARM_LOG_ENTRIES:
+                return True
+            if RegInt >= EVENT_LOG_START or RegInt <= EVENT_LOG_START + EVENT_LOG_ENTRIES:
+                return True
+
+        except Exception as e1:
+            self.LogErrorLine("Error in RegisterIsFileRecord: " + str(e1))
+
+        return False
+
+    #------------ HPanel:RegisterIsStringRegister ------------------------------
+    def RegisterIsStringRegister(self, Register):
+
+        StringList = RegisterStringEnum.GetRegList()
+        for StringReg in StringList:
+            if Register.lower() == StringReg[REGISTER].lower():
+                return True
+        return False
+
+    #------------ HPanel:RegisterIsBaseRegister --------------------------------
+    def RegisterIsBaseRegister(self, Register):
+
+        RegisterList = self.Reg.GetRegList()
+        for ListReg in RegisterList:
+            if Register.lower() == ListReg[REGISTER].lower():
+                # TODO check value length
+                return True
+
+        return False
+
+    #------------ HPanel:UpdateRegisterList ------------------------------------
+    def UpdateRegisterList(self, Register, Value, IsString = False, IsFile = False):
+
+        try:
+            if len(Register) != 4:
+                self.LogError("Validation Error: Invalid register value in UpdateRegisterList: %s %s" % (Register, Value))
+
+            if self.RegisterIsBaseRegister(Register) and not IsFile:
                 self.Registers[Register] = Value
+            elif self.RegisterIsStringRegister(Register) and not IsFile:
+                self.Strings[Register] = Value
+            elif self.RegisterIsFileRecord(Register) and IsFile:
+                self.FileData[Register] = Value
             else:
-                self.LogError("Error in UpdateRegisterList: Unknown Register " + Register + ":" + Value)
+                self.LogError("Error in UpdateRegisterList: Unknown Register " + Register + ":" + Value + ": IsFile: " + str(IsFile) + ": " + "IsString: " + str(IsString))
         except Exception as e1:
             self.LogErrorLine("Error in UpdateRegisterList: " + str(e1))
 
@@ -892,63 +1299,75 @@ class HPanel(controller.GeneratorController):
     # return True if generator is in alarm, else False
     def SystemInAlarm(self):
 
-        if self.GetParameterBit(RegisterEnum.OUTPUT_1, Output1.COMMON_ALARM):
-            return True
-        if self.GetParameterBit(RegisterEnum.OUTPUT_1, Output1.COMMON_WARNING):
-            return True
-        return False
+        try:
+            if self.GetParameter(self.Reg.ACTIVE_ALARM_COUNT[REGISTER], ReturnInt = True) != 0:
+                return True
+            if self.GetParameter(self.Reg.ALARM_ACK[REGISTER], ReturnInt = True) != 0:
+                return True
+            return False
+        except Exception as e1:
+            self.LogErrorLine("Error in SystemInAlarm: " + str(e1))
+            return False
     #------------ HPanel:GetSwitchState ----------------------------------------
     def GetSwitchState(self):
 
-        if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.SWITCH_IN_MANUAL):
-            return "Manual"
-        elif self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.SWITCH_IN_AUTO):
-            return "Auto"
-        else:
-            return "Off"
+        try:
+            SwitchState = self.GetParameter(self.Reg.KEY_SWITCH_STATE[REGISTER], ReturnInt = True)
+            if SwitchState & 0x00FF:
+                return "Manual"
+            elif SwitchState & 0xFF00:
+                return "Auto"
+            else:
+                return "Off"
+        except Exception as e1:
+            self.LogErrorLine("Error in GetSwitchState: " + str(e1))
+            return "Unknown"
 
     #------------ HPanel:GetEngineState ----------------------------------------
     def GetEngineState(self):
 
-        EngineState = ""
-        if self.GetParameterBit(RegisterEnum.OUTPUT_1, Output1.GEN_READY_TO_RUN):
-            EngineState += "Ready. "
-        if self.GetParameterBit(RegisterEnum.OUTPUT_1, Output1.GEN_RUNNING):
-            EngineState += "Running. "
-        if self.GetParameterBit(RegisterEnum.OUTPUT_1, Output1.READY_FOR_LOAD):
-            EngineState += "Ready for Load. "
-        if self.GetParameterBit(RegisterEnum.OUTPUT_1, Output1.GEN_STOPPED_ALARM):
-            EngineState += "Stopped in Alarm. "
-        if self.GetParameterBit(RegisterEnum.OUTPUT_1, Output1.GEN_STOPPED):
-            EngineState += "Stopped. "
-        if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.E_STOP_ACTIVE):
-            EngineState += "E-Stop Active. "
-        if self.GetParameterBit(RegisterEnum.OUTPUT_6, Output6.REMOTE_START_ACT):
-            EngineState += "Remote Start Active. "
-        if self.GetParameterBit(RegisterEnum.OUTPUT_7, Output7.IN_WARM_UP):
-            EngineState += "Warming Up. "
-        if self.GetParameterBit(RegisterEnum.OUTPUT_7, Output7.IN_COOL_DOWN):
-            EngineState += "Cooling Down. "
-        if self.GetParameterBit(RegisterEnum.OUTPUT_7, Output7.CRANKING):
-            EngineState += "Cranking. "
-        if self.GetParameterBit(RegisterEnum.OUTPUT_7, Output7.NEED_SERVICE):
-            EngineState += "Needs Service. "
-        if self.GetParameterBit(RegisterEnum.OUTPUT_7, Output7.SHUTDOWN_GENSET):
-            EngineState += "Shutdown alarm is active. "
-        if self.GetParameterBit(RegisterEnum.OUTPUT_7, Output7.INT_EXERCISE_ACT):
-            EngineState += "Exercising. "
+        try:
+            # The Engine Status should return these values:
+            #   "Stopped, Key SW Off"       The engine is stopped and the key switch is in the OFF position.
+            #   "Running from Manual"       The engine is starting or running and the key switch is in the MANUAL position.
+            #   "Running from 2-wire"       The engine is starting or running because the 2-wire start signal was activated and the key switch is in the AUTO position.
+            #   "Running from serial"       The engine is starting or running because the GenLink commanded it to start and the key switch is in the AUTO position.
+            #   "Running exercise"          The engine is starting or running because internal exercise was activated and the key switch is in the AUTO position.
+            #   "Stopped, Key SW Auto"      The engine is stopped and the key switch is in the AUTO position.
+            #   "Running, QuietTest"        The engine is starting or running because QuietTest was activated and the key switch is in the AUTO position.
+            #   "Running, HTS Xfer SW"      The engine is starting or running because the HTS(s) indicated a need for the gen- erator power and the key switch is in the AUTO position.
+            #   "Resetting"                 The generator control system is resetting.
+            #   "Stopped"                   Generator is stopped and not preheating.
+            #   "Stopped, Preheating"       Generator is stopped and preheating.
+            #   "Cranking"                  Generator is starting and not preheating.
+            #   "Cranking, Preheating"      Generator is starting and preheating.
+            #   "Pause between starts"      Generator is pausing between consecutive start attempts.
+            #   "Started, not to speed"     Generator is started, but has not attained normal running speed yet.
+            #   "Warming, Alarms Off"       Generator is started and is up to speed, but is waiting for warmup timer to expire.
+            #   "Warmed Up, Alarms Off"     Generator is started and warmed up, but the hold-off alarms are not yet enabled.
+            #   "Warming, Alarms On"        Generator is started and the hold-off alarms are enabled, but is waiting for warm up timer to expire.
+            #   "Warmed Up, Alarms On"      Generator is started, warmed up, and the hold-off alarms are enabled.
+            #   "Running, cooling down"     Generator is still running, but waiting for cool down timer to expire.
+            #   "Stopping"                  Generator is running down after being turned off normally.
+            #   "Stopping due to Alrm"      Generator is running down after being turned off due to a shutdown alarm.
+            #   "Stopped due to Alarm"      Generator is stopped due to a shutdown alarm.
 
-        if not len(EngineState) and self.InitComplete and len(self.Registers):
-            self.FeedbackPipe.SendFeedback("Engine State", FullLogs = True, Always = True, Message="Unknown Engine State")
+            State = self.GetParameterStringValue(RegisterStringEnum.ENGINE_STATUS[REGISTER], RegisterStringEnum.ENGINE_STATUS[RET_STRING])
+
+            if len(State):
+                return str(State)
+            else:
+                return "Unknown"
+        except Exception as e1:
+            self.LogErrorLine("Error in GetEngineState (1): " + str(e1))
             return "Unknown"
-        return EngineState
 
     #------------ HPanel:GetDateTime -------------------------------------------
     def GetDateTime(self):
 
         ErrorReturn = "Unknown"
         try:
-            Value = self.GetParameter(RegisterEnum.GEN_TIME_HR_MIN)
+            Value = self.GetParameter(self.Reg.GEN_TIME_HR_MIN[REGISTER])
             if not len(Value):
                 return ErrorReturn
 
@@ -959,7 +1378,7 @@ class HPanel(controller.GeneratorController):
                 self.LogError("Error in GetDateTime: Invalid Hour or Minute: " + str(Hour) + ", " + str(Minute))
                 return ErrorReturn
 
-            Value = self.GetParameter(RegisterEnum.GEN_TIME_SEC_DYWK)
+            Value = self.GetParameter(self.Reg.GEN_TIME_SEC_DYWK[REGISTER])
             if not len(Value):
                 return ErrorReturn
             TempInt = int(Value)
@@ -969,7 +1388,7 @@ class HPanel(controller.GeneratorController):
                 self.LogError("Error in GetDateTime: Invalid Seconds or Day of Week: " + str(Second) + ", " + str(DayOfWeek))
                 return ErrorReturn
 
-            Value = self.GetParameter(RegisterEnum.GEN_TIME_MONTH_DAY)
+            Value = self.GetParameter(self.Reg.GEN_TIME_MONTH_DAY[REGISTER])
             if not len(Value):
                 return ErrorReturn
             TempInt = int(Value)
@@ -977,9 +1396,9 @@ class HPanel(controller.GeneratorController):
             DayOfMonth = TempInt & 0x00ff
             if Month > 12 or Month == 0 or DayOfMonth == 0 or DayOfMonth > 31:
                 self.LogError("Error in GetDateTime: Invalid Month or Day of Month: " + str(Month) + ", " + str(DayOfMonth))
-                return ErrorValue
+                return ErrorReturn
 
-            Value = self.GetParameter(RegisterEnum.GEN_TIME_YR)
+            Value = self.GetParameter(self.Reg.GEN_TIME_YR[REGISTER])
             if not len(Value):
                 return ErrorReturn
             TempInt = int(Value)
@@ -993,6 +1412,35 @@ class HPanel(controller.GeneratorController):
         except Exception as e1:
             self.LogErrorLine("Error in GetDateTime: " + str(e1))
             return ErrorReturn
+
+    #------------ HPanel::GetTimeFromString ------------------------------------
+    def GetTimeFromString(self, input_string):
+
+        try:
+            # Format is: 00 31 52 d8 02 15 10 18
+            if len(input_string) < 16:
+                return "Unknown"
+
+            OutString = ""
+            Date = "%02d/%02d/%02d" % (self.GetIntFromString(input_string, 6, 1, decimal = True),
+                self.GetIntFromString(input_string, 5, 1, decimal = True),
+                self.GetIntFromString(input_string, 7, 1, decimal = True))
+
+            AMorPM = self.GetIntFromString(input_string, 3, 1)
+
+            if AMorPM == 0xd1:
+                # PM
+                Hour = self.GetIntFromString(input_string, 4, 1, decimal = True) + 12
+            else:
+                Hour = self.GetIntFromString(input_string, 4, 1, decimal = True)
+
+            Time = "%02d:%02d:%02d" % (Hour, self.GetIntFromString(input_string, 2, 1, decimal = True),
+                self.GetIntFromString(input_string, 1, 1, decimal = True))
+
+            return Date + " " + Time
+        except Exception as e1:
+            self.LogErrorLine("Error in GetTimeFromString: " + str(e1))
+            return "Unknown"
     #------------ HPanel::GetStartInfo -----------------------------------------
     # return a dictionary with startup info for the gui
     def GetStartInfo(self, NoTile = False):
@@ -1009,6 +1457,8 @@ class HPanel(controller.GeneratorController):
             StartInfo["Controller"] = self.GetController()
             StartInfo["UtilityVoltage"] = False
             StartInfo["RemoteCommands"] = False
+            StartInfo["ResetAlarms"] = False
+            StartInfo["AckAlarms"] = True
             StartInfo["RemoteButtons"] = False
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
             StartInfo["ExerciseControls"] = False  # self.SmartSwitch
@@ -1018,7 +1468,7 @@ class HPanel(controller.GeneratorController):
                                 "status":True,
                                 "maint":True,
                                 "outage":False,
-                                "logs":False,
+                                "logs":True,
                                 "monitor": True,
                                 "notifications": True,
                                 "settings": True,
@@ -1030,10 +1480,10 @@ class HPanel(controller.GeneratorController):
                 for Tile in self.TileList:
                     StartInfo["tiles"].append(Tile.GetStartInfo())
 
-            return StartInfo
         except Exception as e1:
             self.LogErrorLine("Error in GetStartInfo: " + str(e1))
-            return ""
+
+        return StartInfo
     #------------ HPanel::GetStatusForGUI --------------------------------------
     # return dict for GUI
     def GetStatusForGUI(self):
@@ -1045,11 +1495,11 @@ class HPanel(controller.GeneratorController):
             Status["switchstate"] = self.GetSwitchState()
             Status["enginestate"] = self.GetEngineState()
             Status["kwOutput"] = self.GetPowerOutput()
-            Status["OutputVoltage"] = self.GetParameter(RegisterEnum.AVG_VOLTAGE,"V")
-            Status["BatteryVoltage"] = self.GetParameter(RegisterEnum.BATTERY_VOLTS, "V", 100.0)
+            Status["OutputVoltage"] = self.GetParameter(self.Reg.AVG_VOLTAGE[REGISTER],"V")
+            Status["BatteryVoltage"] = self.GetParameter(self.Reg.BATTERY_VOLTS[REGISTER], "V", 100.0)
             Status["UtilityVoltage"] = "0"
-            Status["RPM"] = self.GetParameter(RegisterEnum.OUTPUT_RPM)
-            Status["Frequency"] = self.GetParameter(RegisterEnum.OUTPUT_FREQUENCY, "Hz", 10.0)
+            Status["RPM"] = self.GetParameter(self.Reg.OUTPUT_RPM[REGISTER])
+            Status["Frequency"] = self.GetParameter(self.Reg.OUTPUT_FREQUENCY[REGISTER], "Hz", 10.0)
             # Exercise Info is a dict containing the following:
             # TODO
             ExerciseInfo = collections.OrderedDict()
@@ -1066,10 +1516,10 @@ class HPanel(controller.GeneratorController):
             for Tile in self.TileList:
                 Status["tiles"].append(Tile.GetGUIInfo())
 
-            return Status
         except Exception as e1:
             self.LogErrorLine("Error in GetStatusForGUI: " + str(e1))
-            return ""
+
+        return Status
 
     #---------------------HPanel::DisplayLogs-----------------------------------
     def DisplayLogs(self, AllLogs = False, DictOut = False, RawOutput = False):
@@ -1083,31 +1533,26 @@ class HPanel(controller.GeneratorController):
             # Each dict in the list is a log (alarm, start/stop). For Example:
             #
             #       Dict[Logs] = [ {"Alarm Log" : [Log Entry1, LogEntry2, ...]},
-            #                      {"Start Stop Log" : [Log Entry3, Log Entry 4, ...]}...]
+            #                      {"Run Log" : [Log Entry3, Log Entry 4, ...]}...]
 
-            ALARMLOG     = "Alarm Log:     "
-            SERVICELOG   = "Service Log:   "
-            STARTSTOPLOG = "Start Stop Log:"
+            with self.EventAccessLock:
+                LocalEventLog = list(self.EventLog)
 
-            LogList = [ {"Alarm Log": ["Not Implemented"]},
-                        {"Start Stop Log": ["Not Implemented"]}]
+            with self.AlarmAccessLock:
+                LocalAlarmLog = (self.AlarmLog)
+            LogList = [ {"Alarm Log": LocalAlarmLog},
+                        {"Run Log": LocalEventLog}]
 
             RetValue["Logs"] = LogList
-            if UnknownFound:
-                msgbody = "\nThe output appears to have unknown values. Please see the following threads to resolve these issues:"
-                msgbody += "\n        https://github.com/jgyates/genmon/issues/12"
-                msgbody += "\n        https://github.com/jgyates/genmon/issues/13"
-                RetValue["Note"] = msgbody
-                self.FeedbackPipe.SendFeedback("Logs", FullLogs = True, Always = True, Message="Unknown Entries in Log")
 
-            if not DictOut:
-                return self.printToString(self.ProcessDispatch(RetValue,""))
-
-            return RetValue
 
         except Exception as e1:
             self.LogErrorLine("Error in DisplayLogs: " + str(e1))
-            return ""
+
+        if not DictOut:
+            return self.printToString(self.ProcessDispatch(RetValue,""))
+
+        return RetValue
 
     #------------ HPanel::DisplayMaintenance -----------------------------------
     def DisplayMaintenance (self, DictOut = False):
@@ -1119,38 +1564,57 @@ class HPanel(controller.GeneratorController):
             Maint = collections.OrderedDict()
             Maintenance["Maintenance"] = Maint
             Maint["Model"] = self.Model
-            # TODO
-            #Maint["Generator Serial Number"] = self.GetSerialNumber()
+            if len(self.NamePlateData):
+                Maint["Name Plate Info"] = self.NamePlateData
             Maint["Controller"] = self.GetController()
-            Maint["PM-DCP"] = self.GetParameterString(RegisterEnum.PMDCP_INFO_START, RegisterEnum.PMDCP_INFO_END)
-            Maint["Version"] = self.GetParameterString(RegisterEnum.VERSION_INFO_START, RegisterEnum.VERSION_INFO_END)
+            Maint["Controller Software Version"] = self.GetParameterStringValue(RegisterStringEnum.VERSION_DATE[REGISTER], RegisterStringEnum.VERSION_DATE[RET_STRING])
+
+            Maint["Minimum GenLink Version"] = self.GetParameterStringValue(RegisterStringEnum.MIN_GENLINK_VERSION[REGISTER], RegisterStringEnum.MIN_GENLINK_VERSION[RET_STRING])
             Maint["Nominal RPM"] = self.NominalRPM
             Maint["Rated kW"] = self.NominalKW
             Maint["Nominal Frequency"] = self.NominalFreq
             Maint["Fuel Type"] = self.FuelType
-            Exercise = collections.OrderedDict()
+
             if not self.SmartSwitch:
-                Maint["Exercise"] = Exercise
+                pass
+                Exercise = collections.OrderedDict()
+                #Maint["Exercise"] = Exercise
                 #Exercise["Exercise Time"] = self.GetExerciseTime()
                 #Exercise["Exercise Duration"] = self.GetExerciseDuration()
 
+            ControllerSettings = collections.OrderedDict()
+            Maint["Controller Configuration"] = ControllerSettings
+
+            ControllerSettings["Controller Power Up Time"] = self.GetTimeFromString(self.GetParameterStringValue(RegisterStringEnum.POWER_UP_TIME[REGISTER], RegisterStringEnum.POWER_UP_TIME[RET_STRING]))
+            ControllerSettings["Controller Last Power Fail"] = self.GetTimeFromString(self.GetParameterStringValue(RegisterStringEnum.LAST_POWER_FAIL[REGISTER], RegisterStringEnum.LAST_POWER_FAIL[RET_STRING]))
+            ControllerSettings["Target RPM"] = str(self.TargetRPM[0]) if len(self.TargetRPM) else "Unknown"
+            ControllerSettings["Number of Flywheel Teeth"] = str(self.FlyWheelTeeth[0]) if len(self.FlyWheelTeeth) else "Unknown"
+            ControllerSettings["Phase"] = str(self.Phase) if self.Phase != None else "Unknown"
+            ControllerSettings["CT Ratio"] = str(self.CTRatio[0]) if len(self.CTRatio) else "Unknown"
+
+
             Service = collections.OrderedDict()
             Maint["Service"] = Service
-            #Service["Service A Due"] = self.GetServiceDue("A") + " or " + self.GetServiceDueDate("A")
-            #Service["Service B Due"] = self.GetServiceDue("B") + " or " + self.GetServiceDueDate("B")
 
-            Service["Total Run Hours"] = self.GetParameterLong(RegisterEnum.ENGINE_HOURS_LO, RegisterEnum.ENGINE_HOURS_HI,"H", 10.0)
-            #Service["Hardware Version"] = self.GetHardwareVersion()
-            #Service["Firmware Version"] = self.GetFirmwareVersion()
+            Service["Total Run Hours"] = self.GetParameter(self.Reg.ENGINE_HOURS[REGISTER],"H", 10.0)
 
+            IOStatus = collections.OrderedDict()
+            Maint["I/O Status"] = IOStatus
+            OutputList = [self.Reg.OUTPUT_1[REGISTER],self.Reg.OUTPUT_2[REGISTER],
+                            self.Reg.OUTPUT_3[REGISTER],self.Reg.OUTPUT_4[REGISTER],
+                            self.Reg.OUTPUT_5[REGISTER],self.Reg.OUTPUT_6[REGISTER],
+                            self.Reg.OUTPUT_7[REGISTER],self.Reg.OUTPUT_8[REGISTER]
+                        ]
+            IOStatus["Inputs"] = self.GetCondition(RegList = [self.Reg.INPUT_1[REGISTER],self.Reg.INPUT_2[REGISTER]], type = "inputs")
+            IOStatus["Outputs"] = self.GetCondition(RegList = OutputList, type = "outputs")
 
-            if not DictOut:
-                return self.printToString(self.ProcessDispatch(Maintenance,""))
-
-            return Maintenance
         except Exception as e1:
             self.LogErrorLine("Error in DisplayMaintenance: " + str(e1))
-            return ""
+
+        if not DictOut:
+            return self.printToString(self.ProcessDispatch(Maintenance,""))
+
+        return Maintenance
 
     #------------ HPanel::DisplayStatus ----------------------------------------
     def DisplayStatus(self, DictOut = False, JSONNum = False):
@@ -1161,45 +1625,55 @@ class HPanel(controller.GeneratorController):
             Status["Status"] = Stat
             Engine = collections.OrderedDict()
             Stat["Engine"] = Engine
+            Alarms = collections.OrderedDict()
+            Stat["Alarms"] = Alarms
             Battery = collections.OrderedDict()
             Stat["Battery"] = Battery
             Line = collections.OrderedDict()
             Stat["Line State"] = Line
-            LastLog = collections.OrderedDict()
             Time = collections.OrderedDict()
             Stat["Time"] = Time
 
+            Battery["Battery Voltage"] = self.ValueOut(self.GetParameter(self.Reg.BATTERY_VOLTS[REGISTER], ReturnFloat = True, Divider = 100.0), "V", JSONNum)
+            Battery["Battery Charger Current"] = self.ValueOut(self.GetParameter(self.Reg.BATTERY_CHARGE_CURRNT[REGISTER], ReturnFloat = True, Divider = 10.0), "A", JSONNum)
 
-            Battery["Battery Voltage"] = self.ValueOut(self.GetParameter(RegisterEnum.BATTERY_VOLTS, ReturnFloat = True, Divider = 100.0), "V", JSONNum)
-            Battery["Battery Charger Current"] = self.ValueOut(self.GetParameter(RegisterEnum.BATTERY_CHARGE_CURRNT, ReturnFloat = True, Divider = 10.0), "A", JSONNum)
-
-            Engine["Current Status"] = self.GetParameterString(RegisterEnum.STATUS_INFO_START, RegisterEnum.STATUS_INFO_END)
-            Engine["Previous Status"] = self.GetParameterString(RegisterEnum.STATUS_2_INFO_START, RegisterEnum.STATUS_2_INFO_END)
+            Engine["Engine Status"] = self.GetEngineState()
+            Engine["Generator Status"] = self.GetParameterStringValue(RegisterStringEnum.GENERATOR_STATUS[REGISTER], RegisterStringEnum.GENERATOR_STATUS[RET_STRING])
             Engine["Switch State"] = self.GetSwitchState()
-            Engine["Engine State"] = self.GetEngineState()
             Engine["Output Power"] = self.ValueOut(self.GetPowerOutput(ReturnFloat = True), "kW", JSONNum)
-            Engine["Output Power Factor"] = self.ValueOut(self.GetParameter(RegisterEnum.TOTAL_PF, ReturnFloat = True, Divider = 100.0), "", JSONNum)
-            Engine["RPM"] = self.ValueOut(self.GetParameter(RegisterEnum.OUTPUT_RPM, ReturnInt = True), "", JSONNum)
-            Engine["Frequency"] = self.ValueOut(self.GetParameter(RegisterEnum.OUTPUT_FREQUENCY, ReturnFloat = True, Divider = 10.0), "Hz", JSONNum)
-            Engine["Throttle Position"] = self.ValueOut(self.GetParameter(RegisterEnum.THROTTLE_POSITION, ReturnInt = True), "Stp", JSONNum)
-            Engine["Coolant Temp"] = self.ValueOut(self.GetParameter(RegisterEnum.COOLANT_TEMP, ReturnInt = True), "F", JSONNum)
-            Engine["Coolant Level"] = self.ValueOut(self.GetParameter(RegisterEnum.COOLANT_LEVEL, ReturnInt = True), "Stp", JSONNum)
-            Engine["Oil Pressure"] = self.ValueOut(self.GetParameter(RegisterEnum.OIL_PRESSURE, ReturnInt = True), "psi", JSONNum)
-            Engine["Oil Temp"] = self.ValueOut(self.GetParameter(RegisterEnum.OIL_TEMP, ReturnInt = True), "F", JSONNum)
-            Engine["Fuel Level"] = self.ValueOut(self.GetParameter(RegisterEnum.FUEL_LEVEL, ReturnInt = True), "", JSONNum)
-            Engine["Oxygen Sensor"] = self.ValueOut(self.GetParameter(RegisterEnum.O2_SENSOR, ReturnInt = True), "", JSONNum)
-            Engine["Current Phase A"] = self.ValueOut(self.GetParameter(RegisterEnum.CURRENT_PHASE_A, ReturnInt = True), "A", JSONNum)
-            Engine["Current Phase B"] = self.ValueOut(self.GetParameter(RegisterEnum.CURRENT_PHASE_B,ReturnInt = True), "A", JSONNum)
-            Engine["Current Phase C"] = self.ValueOut(self.GetParameter(RegisterEnum.CURRENT_PHASE_C,ReturnInt = True), "A", JSONNum)
-            Engine["Average Current"] = self.ValueOut(self.GetParameter(RegisterEnum.AVG_CURRENT,ReturnInt = True), "A", JSONNum)
-            Engine["Voltage A-B"] = self.ValueOut(self.GetParameter(RegisterEnum.VOLTS_PHASE_A_B,ReturnInt = True), "V", JSONNum)
-            Engine["Voltage B-C"] = self.ValueOut(self.GetParameter(RegisterEnum.VOLTS_PHASE_B_C,ReturnInt = True), "V", JSONNum)
-            Engine["Voltage C-A"] = self.ValueOut(self.GetParameter(RegisterEnum.VOLTS_PHASE_C_A,ReturnInt = True), "V", JSONNum)
-            Engine["Average Voltage"] = self.ValueOut(self.GetParameter(RegisterEnum.AVG_VOLTAGE,ReturnInt = True), "V", JSONNum)
-            Engine["Air Fuel Duty Cycle"] = self.ValueOut(self.GetParameter(RegisterEnum.A_F_DUTY_CYCLE, ReturnFloat = True, Divider = 10.0), "", JSONNum)
+            Engine["Output Power Factor"] = self.ValueOut(self.GetParameter(self.Reg.TOTAL_PF[REGISTER], ReturnFloat = True, Divider = 100.0), "", JSONNum)
+            Engine["RPM"] = self.ValueOut(self.GetParameter(self.Reg.OUTPUT_RPM[REGISTER], ReturnInt = True), "", JSONNum)
+            Engine["Frequency"] = self.ValueOut(self.GetParameter(self.Reg.OUTPUT_FREQUENCY[REGISTER], ReturnFloat = True, Divider = 10.0), "Hz", JSONNum)
+            Engine["Throttle Position"] = self.ValueOut(self.GetParameter(self.Reg.THROTTLE_POSITION[REGISTER], ReturnInt = True), "Stp", JSONNum)
+            Engine["Coolant Temp"] = self.ValueOut(self.GetParameter(self.Reg.COOLANT_TEMP[REGISTER], ReturnInt = True), "F", JSONNum)
+            Engine["Coolant Level"] = self.ValueOut(self.GetParameter(self.Reg.COOLANT_LEVEL[REGISTER], ReturnInt = True), "Stp", JSONNum)
+            Engine["Oil Pressure"] = self.ValueOut(self.GetParameter(self.Reg.OIL_PRESSURE[REGISTER], ReturnInt = True), "psi", JSONNum)
+            Engine["Oil Temp"] = self.ValueOut(self.GetParameter(self.Reg.OIL_TEMP[REGISTER], ReturnInt = True), "F", JSONNum)
+            Engine["Fuel Level"] = self.ValueOut(self.GetParameter(self.Reg.FUEL_LEVEL[REGISTER], ReturnInt = True), "", JSONNum)
+            Engine["Oxygen Sensor"] = self.ValueOut(self.GetParameter(self.Reg.O2_SENSOR[REGISTER], ReturnInt = True), "", JSONNum)
+            Engine["Current Phase A"] = self.ValueOut(self.GetParameter(self.Reg.CURRENT_PHASE_A[REGISTER], ReturnInt = True), "A", JSONNum)
+            Engine["Current Phase B"] = self.ValueOut(self.GetParameter(self.Reg.CURRENT_PHASE_B[REGISTER],ReturnInt = True), "A", JSONNum)
+            Engine["Current Phase C"] = self.ValueOut(self.GetParameter(self.Reg.CURRENT_PHASE_C[REGISTER],ReturnInt = True), "A", JSONNum)
+            Engine["Average Current"] = self.ValueOut(self.GetParameter(self.Reg.AVG_CURRENT[REGISTER],ReturnInt = True), "A", JSONNum)
+            Engine["Voltage A-B"] = self.ValueOut(self.GetParameter(self.Reg.VOLTS_PHASE_A_B[REGISTER],ReturnInt = True), "V", JSONNum)
+            Engine["Voltage B-C"] = self.ValueOut(self.GetParameter(self.Reg.VOLTS_PHASE_B_C[REGISTER],ReturnInt = True), "V", JSONNum)
+            Engine["Voltage C-A"] = self.ValueOut(self.GetParameter(self.Reg.VOLTS_PHASE_C_A[REGISTER],ReturnInt = True), "V", JSONNum)
+            Engine["Average Voltage"] = self.ValueOut(self.GetParameter(self.Reg.AVG_VOLTAGE[REGISTER],ReturnInt = True), "V", JSONNum)
+            Engine["Air Fuel Duty Cycle"] = self.ValueOut(self.GetParameter(self.Reg.A_F_DUTY_CYCLE[REGISTER], ReturnFloat = True, Divider = 10.0), "", JSONNum)
 
+            Alarms["Number of Active Alarms"] = self.ValueOut(self.GetParameter(self.Reg.ACTIVE_ALARM_COUNT[REGISTER], ReturnInt = True), "", JSONNum)
+            Alarms["Number of Acknowledged Alarms"] = self.ValueOut(self.GetParameter(self.Reg.ALARM_ACK[REGISTER], ReturnInt = True), "", JSONNum)
+
+            OutputList = [self.Reg.OUTPUT_1[REGISTER],self.Reg.OUTPUT_2[REGISTER],
+                            self.Reg.OUTPUT_3[REGISTER],self.Reg.OUTPUT_4[REGISTER],
+                            self.Reg.OUTPUT_5[REGISTER],self.Reg.OUTPUT_6[REGISTER],
+                            self.Reg.OUTPUT_7[REGISTER],self.Reg.OUTPUT_8[REGISTER]
+                        ]
             if self.SystemInAlarm():
-                Engine["System In Alarm"] = self.GetAlarmList()
+                AlarmList = self.GetCondition(RegList = OutputList, type = "alarms")
+                if len(AlarmList):
+                    Alarms["Alarm List"] = AlarmList
+
 
             Line["Transfer Switch State"] = self.GetTransferStatus()
 
@@ -1207,17 +1681,13 @@ class HPanel(controller.GeneratorController):
             Time["Monitor Time"] = datetime.datetime.now().strftime("%A %B %-d, %Y %H:%M:%S")
             Time["Generator Time"] = self.GetDateTime()
 
-            #Stat["Last Log Entries"] = self.DisplayLogs(AllLogs = False, DictOut = True)
-
-
-            if not DictOut:
-                return self.printToString(self.ProcessDispatch(Status,""))
-
-            return Status
         except Exception as e1:
             self.LogErrorLine("Error in DisplayStatus: " + str(e1))
-            return ""
 
+        if not DictOut:
+            return self.printToString(self.ProcessDispatch(Status,""))
+
+        return Status
 
     #------------------- HPanel::DisplayOutage ---------------------------------
     def DisplayOutage(self, DictOut = False):
@@ -1228,15 +1698,15 @@ class HPanel(controller.GeneratorController):
             Outage["Outage"] = OutageData
 
             OutageData["Status"] = "Not Supported"
+            OutageData["System In Outage"] = "No"       # mynotify.py checks this
 
-            if not DictOut:
-                return self.printToString(self.ProcessDispatch(Outage,""))
-
-            return Outage
         except Exception as e1:
             self.LogErrorLine("Error in DisplayOutage: " + str(e1))
-            return ""
 
+        if not DictOut:
+            return self.printToString(self.ProcessDispatch(Outage,""))
+
+        return Outage
 
     #------------ HPanel::DisplayRegisters -------------------------------------
     def DisplayRegisters(self, AllRegs = False, DictOut = False):
@@ -1253,25 +1723,27 @@ class HPanel(controller.GeneratorController):
             Regs["Base Registers"] = RegList
             # display all the registers
             for Register, Value in self.Registers.items():
-
-                # do not display log registers or model register
-                # TODO
-                #if self.RegisterIsLog(Register):
-                #    continue
-                ##
                 RegList.append({Register:Value})
 
 
             if AllRegs:
                 Regs["Log Registers"]= self.DisplayLogs(AllLogs = True, RawOutput = True, DictOut = True)
+                StringList = []
+                Regs["Strings"] = StringList
+                for Register, Value in self.Strings.items():
+                     StringList.append({Register:Value})
+                FileDataList = []
+                Regs["FileData"] = FileDataList
+                for Register, Value in self.FileData.items():
+                     FileDataList.append({Register:Value})
 
-            if not DictOut:
-                return self.printToString(self.ProcessDispatch(Registers,""))
-
-            return Registers
         except Exception as e1:
             self.LogErrorLine("Error in DisplayRegisters: " + str(e1))
-            return ""
+
+        if not DictOut:
+            return self.printToString(self.ProcessDispatch(Registers,""))
+
+        return Registers
 
     #----------  HPanel::SetGeneratorTimeDate-----------------------------------
     # set generator time to system time
@@ -1285,7 +1757,7 @@ class HPanel(controller.GeneratorController):
             Data= []
             Data.append(d.hour)             #GEN_TIME_HR_MIN
             Data.append(d.minute)
-            self.ModBus.ProcessMasterSlaveWriteTransaction(RegisterEnum.GEN_TIME_HR_MIN, len(Data) / 2, Data)
+            self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.GEN_TIME_HR_MIN[REGISTER], len(Data) / 2, Data)
 
             DayOfWeek = d.weekday()     # returns Monday is 0 and Sunday is 6
             # expects Sunday = 1, Saturday = 7
@@ -1296,18 +1768,18 @@ class HPanel(controller.GeneratorController):
             Data= []
             Data.append(d.second)           #GEN_TIME_SEC_DYWK
             Data.append(DayOfWeek)                  #Day of Week is always zero
-            self.ModBus.ProcessMasterSlaveWriteTransaction(RegisterEnum.GEN_TIME_SEC_DYWK, len(Data) / 2, Data)
+            self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.GEN_TIME_SEC_DYWK[REGISTER], len(Data) / 2, Data)
 
             Data= []
             Data.append(d.month)            #GEN_TIME_MONTH_DAY
             Data.append(d.day)              # low byte is day of month
-            self.ModBus.ProcessMasterSlaveWriteTransaction(RegisterEnum.GEN_TIME_MONTH_DAY, len(Data) / 2, Data)
+            self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.GEN_TIME_MONTH_DAY[REGISTER], len(Data) / 2, Data)
 
             Data= []
             # Note: Day of week should always be zero when setting time
             Data.append(d.year - 2000)      # GEN_TIME_YR
             Data.append(0)                  #
-            self.ModBus.ProcessMasterSlaveWriteTransaction(RegisterEnum.GEN_TIME_YR, len(Data) / 2, Data)
+            self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.GEN_TIME_YR[REGISTER], len(Data) / 2, Data)
 
         except Exception as e1:
             self.LogErrorLine("Error in SetGeneratorTimeDate: " + str(e1))
@@ -1327,13 +1799,114 @@ class HPanel(controller.GeneratorController):
     def SetGeneratorExerciseTime(self, CmdString):
         return "Not Supported"
 
-    #----------  HPanel::SetGeneratorRemoteStartStop----------------------------
+    #----------  HPanel::SetGeneratorRemoteCommand----------------------------
     # CmdString will be in the format: "setremote=start"
     # valid commands are start, stop, starttransfer, startexercise
     # return string "Remote command sent successfully" or some descriptive error
     # string if failure
-    def SetGeneratorRemoteStartStop(self, CmdString):
-        return "Not Supported"
+    def SetGeneratorRemoteCommand(self, CmdString):
+
+        #return "Not Supported"
+        msgbody = "Invalid command syntax for command setremote (1)"
+
+        try:
+            #Format we are looking for is "setremote=start"
+            CmdList = CmdString.split("=")
+            if len(CmdList) != 2:
+                self.LogError("Validation Error: Error parsing command string in SetGeneratorRemoteCommand (parse): " + CmdString)
+                return msgbody
+
+            CmdList[0] = CmdList[0].strip()
+
+            if not CmdList[0].lower() == "setremote":
+                self.LogError("Validation Error: Error parsing command string in SetGeneratorRemoteCommand (parse2): " + CmdString)
+                return msgbody
+
+            Command = CmdList[1].strip()
+            Command = Command.lower()
+
+        except Exception as e1:
+            self.LogErrorLine("Validation Error: Error parsing command string in SetGeneratorRemoteCommand: " + CmdString)
+            self.LogError( str(e1))
+            return msgbody
+
+        try:
+            Value = 0x0000               # writing any value to index register is valid for remote start / stop commands
+            Data = []
+            if Command == "start":
+                Value = 0x0001       # remote start
+                Value2 = 0x0000
+                Value3 = 0x0000
+            elif Command == "stop":
+                Value = 0x0000       # remote stop
+                Value2 = 0x0000
+                Value3 = 0x0000
+            elif Command == "startstandby":
+                Value = 0x0001       # remote start (standby)
+                Value2 = 0x0000
+                Value3 = 0x0001
+            elif Command == "startparallel":
+                Value = 0x0001       # remote start (parallel)
+                Value2 = 0x0001
+                Value3 = 0x0000
+            elif Command == "quiettest":
+                Data = []
+                Data.append(0)
+                Data.append(1)
+                self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.QUIETTEST_STATUS[REGISTER], len(Data) / 2, Data)
+                return "Remote command sent successfully (quiettest)"
+            elif Command == "quietteststop":
+                Data = []
+                Data.append(0)
+                Data.append(0)
+                self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.QUIETTEST_STATUS[REGISTER], len(Data) / 2, Data)
+                return "Remote command sent successfully (quietteststop)"
+            elif Command == "ackalarm":
+                Data = []
+                Data.append(0)
+                Data.append(1)
+                self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.ALARM_ACK[REGISTER], len(Data) / 2, Data)
+                return "Remote command sent successfully (ackalarm)"
+
+                '''
+                # This does not work
+                elif Command == "off":
+                    Data = []
+                    Data.append(0)
+                    Data.append(0)
+                    self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.SWITCH_STATE[REGISTER], len(Data) / 2, Data)
+                    return "Remote command sent successfully (off)"
+                elif Command == "auto":
+                    Data = []
+                    Data.append(1)
+                    Data.append(0)
+                    self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.SWITCH_STATE[REGISTER], len(Data) / 2, Data)
+                    return "Remote command sent successfully (auto)"
+                elif Command == "manual":
+                    Data = []
+                    Data.append(0)
+                    Data.append(1)
+                    self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.SWITCH_STATE[REGISTER], len(Data) / 2, Data)
+                    return "Remote command sent successfully (manual)"
+                '''
+            else:
+                return "Invalid command syntax for command setremote (2)"
+
+            Data.append(Value >> 8)             # value to be written (High byte)
+            Data.append(Value & 0x00FF)         # value written (Low byte)
+            Data.append(Value2 >> 8)            # value to be written (High byte)
+            Data.append(Value2 & 0x00FF)        # value written (Low byte)
+            Data.append(Value3 >> 8)            # value to be written (High byte)
+            Data.append(Value3 & 0x00FF)        # value written (Low byte)
+
+            ## Write 3 regs at once
+            self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.START_BITS[REGISTER], len(Data) / 2, Data)
+
+            return "Remote command sent successfully"
+        except Exception as e1:
+            self.LogErrorLine("Error in SetGeneratorRemoteCommand: " + str(e1))
+            return "Error"
+
 
     #----------  HPanel:GetController  -----------------------------------------
     # return the name of the controller, if Actual == False then return the
@@ -1341,7 +1914,7 @@ class HPanel(controller.GeneratorController):
     # in the conf file
     def GetController(self, Actual = True):
 
-        return self.GetParameterString(RegisterEnum.CONTROLLER_NAME_START, RegisterEnum.CONTROLLER_NAME_END)
+        return self.GetParameterStringValue(RegisterStringEnum.CONTROLLER_NAME[REGISTER], RegisterStringEnum.CONTROLLER_NAME[RET_STRING])
 
     #----------  HPanel:ComminicationsIsActive  --------------------------------
     # Called every 2 seconds, if communictions are failing, return False, otherwise
@@ -1361,8 +1934,8 @@ class HPanel(controller.GeneratorController):
     # return true if GetPowerOutput is supported
     def PowerMeterIsSupported(self):
 
-        #if self.Simulation:
-        #    return False
+        if self.bDisablePowerLog:
+            return False
         return True
 
     #---------------------HPanel::GetPowerOutput--------------------------------
@@ -1372,9 +1945,9 @@ class HPanel(controller.GeneratorController):
     def GetPowerOutput(self, ReturnFloat = False):
 
         if ReturnFloat:
-            return self.GetParameter(RegisterEnum.TOTAL_POWER_KW, ReturnFloat = True)
+            return self.GetParameter(self.Reg.TOTAL_POWER_KW[REGISTER], ReturnFloat = True)
         else:
-            return self.GetParameter(RegisterEnum.TOTAL_POWER_KW, "kW", ReturnFloat = False)
+            return self.GetParameter(self.Reg.TOTAL_POWER_KW[REGISTER], "kW", ReturnFloat = False)
 
     #----------  HPanel:GetCommStatus  -----------------------------------------
     # return Dict with communication stats
@@ -1386,21 +1959,42 @@ class HPanel(controller.GeneratorController):
     # "RUNNING-MANUAL", "OFF", "MANUAL", "READY"
     def GetBaseStatus(self):
         try:
+            EngineStatus = self.GetEngineState().lower()
+            GeneratorStatus = self.GetParameterStringValue(RegisterStringEnum.GENERATOR_STATUS[REGISTER],RegisterStringEnum.GENERATOR_STATUS[RET_STRING]).lower()
+            SwitchState = self.GetSwitchState().lower()
+
+            if "running" in EngineStatus:
+                IsRunning = True
+            else:
+                IsRunning = False
+            if "stopped" in GeneratorStatus:
+                IsStopped = True
+            else:
+                IsStopped = False
+            if "exercising" in EngineStatus or "exercise" in EngineStatus or "quiettest" in EngineStatus:
+                IsExercising = True
+            else:
+                IsExercising = False
+            if self.HPanelDetected:
+                ServiceDue = self.GetParameterBit(self.Reg.OUTPUT_7[REGISTER], Output7.NEED_SERVICE)
+            else:
+                ServiceDue = self.GetParameterBit(self.Reg.OUTPUT_5[REGISTER], 0x4000)
+
             if self.SystemInAlarm():
                 return "ALARM"
-            elif self.GetParameterBit(RegisterEnum.OUTPUT_7, Output7.NEED_SERVICE):
+            elif ServiceDue:
                 return "SERVICEDUE"
-            elif self.GetParameterBit(RegisterEnum.OUTPUT_7, Output7.INT_EXERCISE_ACT):
+            elif IsExercising:
                 return "EXERCISING"
-            elif self.GetParameterBit(RegisterEnum.OUTPUT_1, Output1.GEN_RUNNING) and self.GetSwitchState().lower() == "auto":
+            elif IsRunning and SwitchState == "auto":
                 return "RUNNING"
-            elif self.GetParameterBit(RegisterEnum.OUTPUT_1, Output1.GEN_RUNNING) and self.GetSwitchState().lower() == "manual":
+            elif IsRunning and SwitchState == "manual":
                 return "RUNNING-MANUAL"
-            elif self.GetSwitchState().lower() == "manual":
+            elif SwitchState == "manual":
                 return "MANUAL"
-            elif self.GetSwitchState().lower() == "auto":
+            elif SwitchState == "auto":
                 return "READY"
-            elif self.GetSwitchState().lower() == "off":
+            elif SwitchState == "off":
                 return "OFF"
             else:
                 self.FeedbackPipe.SendFeedback("Base State", FullLogs = True, Always = True, Message="Unknown Base State")

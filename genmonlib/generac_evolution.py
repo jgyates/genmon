@@ -48,16 +48,16 @@ class Evolution(controller.GeneratorController):
         simulationfile = None,
         message = None,
         feedback = None,
-        ConfigFilePath = None,
         config = None):
 
         # call parent constructor
-        super(Evolution, self).__init__(log, newinstall = newinstall, simulation = simulation, simulationfile = simulationfile, message = message, feedback = feedback, ConfigFilePath = ConfigFilePath, config = config)
+        super(Evolution, self).__init__(log, newinstall = newinstall, simulation = simulation, simulationfile = simulationfile, message = message, feedback = feedback, config = config)
 
         # Controller Type
         self.EvolutionController = None
         self.SynergyController = False
         self.Evolution2 = False
+        self.PowerPact = False
         self.LiquidCooled = None
         self.LiquidCooledParams = None
         # State Info
@@ -145,8 +145,7 @@ class Evolution(controller.GeneratorController):
                     "0037" : [2, 0],     # CT Sensor (EvoAC)
                     "0038" : [2, 0],     # Evo AC   (Sensor?)       FFFE, FFFF, 0001, 0002 random - not linear
                     "0039" : [2, 0],     # Evo AC   (Sensor?)
-                    "003a" : [2, 0],     # CT Sensor High (EvoAC)
-                    "003b" : [2, 0],     # CT Sensor Low (EvoAC)
+                    "003a" : [4, 0],     # CT Sensor (EvoAC)
                     "0208" : [2, 0],     # Calibrate Volts (Evo all)
                     "020a" : [2, 0],     # Param Group (EvoLC, NexuLC)
                     "020b" : [2, 0],     # Voltage Code (EvoLC, NexusLC)
@@ -205,29 +204,25 @@ class Evolution(controller.GeneratorController):
 
         # read config file
         if not self.GetConfig():
-            self.FatalError("Failure in Controller GetConfig: " + str(e1))
-            return None
+            self.LogError("Failure in Controller GetConfig: " + str(e1))
+            sys.exit(1)
         try:
             self.AlarmFile = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/data/ALARMS.txt"
             with open(self.AlarmFile,"r") as AlarmFile:     #
                 pass
         except Exception as e1:
-            self.FatalError("Unable to open alarm file: " + str(e1))
-            return None
+            self.LogErrorLine("Unable to open alarm file: " + str(e1))
+            sys.exit(1)
 
         try:
             #Starting device connection
             if self.Simulation:
                 self.ModBus = modbus_file.ModbusFile(self.UpdateRegisterList,
-                    self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation,
-                    inputfile = self.SimulationFile)
+                    inputfile = self.SimulationFile,
+                    config = self.config)
             else:
                 self.ModBus = mymodbus.ModbusProtocol(self.UpdateRegisterList,
-                    self.Address, self.SerialPort, self.BaudRate, loglocation = self.LogLocation,
-                    slowcpuoptimization = self.SlowCPUOptimization,
-                    use_serial_tcp = self.UseSerialTCP,
-                    tcp_address = self.SerialTCPAddress,
-                    tcp_port = self.SerialTCPPort)
+                    config = self.config)
 
             self.Threads = self.MergeDicts(self.Threads, self.ModBus.Threads)
             self.LastRxPacketCount = self.ModBus.RxPacketCount
@@ -235,8 +230,8 @@ class Evolution(controller.GeneratorController):
             self.StartCommonThreads()
 
         except Exception as e1:
-            self.FatalError("Error opening modbus device: " + str(e1))
-            return None
+            self.LogErrorLine("Error opening modbus device: " + str(e1))
+            sys.exit(1)
     #-------------Evolution:InitDevice------------------------------------------
     # One time reads, and read all registers once
     def InitDevice(self):
@@ -290,8 +285,14 @@ class Evolution(controller.GeneratorController):
             self.TileList.append(Tile)
             Tile = mytile.MyTile(self.log, title = "Output Voltage", units = "V", type = "linevolts", nominal = 240, callback = self.GetVoltageOutput, callbackparameters = (True,))
             self.TileList.append(Tile)
+
+            if self.NominalFreq == None or self.NominalFreq == "" or self.NominalFreq == "Unknown":
+                self.NominalFreq = "60"
             Tile = mytile.MyTile(self.log, title = "Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq), callback = self.GetFrequency, callbackparameters = (False, True))
             self.TileList.append(Tile)
+
+            if self.NominalRPM == None or self.NominalRPM == "" or self.NominalRPM == "Unknown":
+                self.NominalRPM = "3600"
             Tile = mytile.MyTile(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM), callback = self.GetRPM, callbackparameters = (True,))
             self.TileList.append(Tile)
             if self.FuelGuageSupported():
@@ -302,9 +303,9 @@ class Evolution(controller.GeneratorController):
                 Tile = mytile.MyTile(self.log, title = "Estimated Fuel", units = Units, type = "fuel", nominal = int(self.TankSize), callback = self.GetEstimatedFuelInTank, callbackparameters = (True,))
                 self.TileList.append(Tile)
             if self.PowerMeterIsSupported():
-                Tile = mytile.MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = int(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
+                Tile = mytile.MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = float(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
                 self.TileList.append(Tile)
-                Tile = mytile.MyTile(self.log, title = "kW Output", type = "powergraph", nominal = int(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
+                Tile = mytile.MyTile(self.log, title = "kW Output", type = "powergraph", nominal = float(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
                 self.TileList.append(Tile)
 
         except Exception as e1:
@@ -425,6 +426,8 @@ class Evolution(controller.GeneratorController):
     #----------  GeneratorController::FuelGuageSupported------------------------
     def FuelGuageSupported(self):
 
+        if not self.PowerMeterIsSupported():
+            return False
         if not self.FuelConsumptionSupported():
             return False
 
@@ -579,12 +582,13 @@ class Evolution(controller.GeneratorController):
                                 11 : ["15KW", "ECOVSCF", "120/240", "1", [0, 2.58, 0.61, "gal"], "999 cc"],       # Eco Variable Speed Constant Frequency
                                 12 : ["8KVA", "50", "220,230,240", "1", [0,  1.3, 0.21, "gal"], "530 cc"],        # 3 distinct models 220, 230, 240
                                 13 : ["10KVA", "50", "220,230,240", "1", [0, 1.48, 0.37, "gal"], "999 cc"],       # 3 distinct models 220, 230, 240
-                                14 : ["13KVA", "50", "220,230,240", "1", [0, 2.0, 0.39, "gal"], "999 cc"],       # 3 distinct models 220, 230, 240
+                                14 : ["13KVA", "50", "220,230,240", "1", [0, 2.0, 0.39, "gal"], "999 cc"],        # 3 distinct models 220, 230, 240
                                 15 : ["11KW", "60" ,"240", "1", [0, 1.5, 0.47, "gal"], "530 cc"],
                                 17 : ["22KW", "60", "120/240", "1", [0, 2.74, 1.16, "gal"], "999 cc"],
                                 21 : ["11KW", "60", "240 LS", "1", [0, 1.5, 0.47, "gal"], "530 cc"],
-                                32 : ["20KW", "60", "208 3 Phase", "3", [0, 2.34, 1.22, "gal"], "999 cc"],     # Trinity G007077
-                                33 : ["Trinity", "50", "380,400,416", "3", None, None]                    # Discontinued
+                                22 : ["7.5KW", "60", "240", "1", [0, 1.1, 0.32, "gal"], "420 cc"],                # Power Pact
+                                32 : ["20KW", "60", "208 3 Phase", "3", [0, 2.34, 1.22, "gal"], "999 cc"],      # Trinity G007077
+                                33 : ["Trinity", "50", "380,400,416", "3", None, None]                          # Discontinued
                                 }
 
         if self.SynergyController:
@@ -790,10 +794,13 @@ class Evolution(controller.GeneratorController):
             if ProductModel == 0x15:
                 self.Evolution2 = True
 
+            if ProductModel == 0x12:
+                self.PowerPact = True
+
             # if reg 000 is 3 or less then assume we have a Nexus Controller
             if ProductModel == 0x03 or ProductModel == 0x06:
                 self.EvolutionController = False    #"Nexus"
-            elif ProductModel == 0x09 or ProductModel == 0x0c or ProductModel == 0x0a  or ProductModel == 0x15:
+            elif ProductModel == 0x09 or ProductModel == 0x0c or ProductModel == 0x0a  or ProductModel == 0x15 or ProductModel == 0x12:
                 self.EvolutionController = True     #"Evolution"
             else:
                 # set a reasonable default
@@ -808,7 +815,7 @@ class Evolution(controller.GeneratorController):
             self.LogError("DetectController auto-detect override (controller). EvolutionController now is %s" % str(self.EvolutionController))
 
         if self.LiquidCooled == None:
-            if ProductModel == 0x03 or ProductModel == 0x09 or ProductModel == 0x0a  or ProductModel == 0x15:
+            if ProductModel == 0x03 or ProductModel == 0x09 or ProductModel == 0x0a  or ProductModel == 0x15  or ProductModel == 0x12:
                 self.LiquidCooled = False    # Air Cooled
             elif ProductModel == 0x06 or ProductModel == 0x0c:
                 self.LiquidCooled = True     # Liquid Cooled
@@ -841,6 +848,7 @@ class Evolution(controller.GeneratorController):
                 0x09 :  "Evolution, Air Cooled",
                 0x0a :  "Synergy Evolution, Air Cooled",
                 0x0c :  "Evolution, Liquid Cooled",
+                0x12 :  "Power Pact Evolution, Air Cooled",
                 0x15 :  "Evolution 2.0, Air Cooled"
             }
 
@@ -852,10 +860,12 @@ class Evolution(controller.GeneratorController):
             return ControllerDecoder.get(ProductModel, "Unknown 0x%02X" % ProductModel)
         else:
 
-            if self.SynergyController:
-                outstr = "Synergy Evolution, "
             if self.EvolutionController:
-                if self.Evolution2:
+                if self.SynergyController:
+                    outstr = "Synergy Evolution, "
+                elif self.PowerPact:
+                    outstr = "Power Pact Evolution, "
+                elif self.Evolution2:
                     outstr = "Evolution 2.0, "
                 else:
                     outstr = "Evolution, "
@@ -921,8 +931,8 @@ class Evolution(controller.GeneratorController):
                 if self.IsStopping:
                     return
 
-    #----------  Evolution:SetGeneratorRemoteStartStop--------------------------
-    def SetGeneratorRemoteStartStop(self, CmdString):
+    #----------  Evolution:SetGeneratorRemoteCommand--------------------------
+    def SetGeneratorRemoteCommand(self, CmdString):
 
         msgbody = "Invalid command syntax for command setremote (1)"
 
@@ -930,20 +940,20 @@ class Evolution(controller.GeneratorController):
             #Format we are looking for is "setremote=start"
             CmdList = CmdString.split("=")
             if len(CmdList) != 2:
-                self.LogError("Validation Error: Error parsing command string in SetGeneratorRemoteStartStop (parse): " + CmdString)
+                self.LogError("Validation Error: Error parsing command string in SetGeneratorRemoteCommand (parse): " + CmdString)
                 return msgbody
 
             CmdList[0] = CmdList[0].strip()
 
             if not CmdList[0].lower() == "setremote":
-                self.LogError("Validation Error: Error parsing command string in SetGeneratorRemoteStartStop (parse2): " + CmdString)
+                self.LogError("Validation Error: Error parsing command string in SetGeneratorRemoteCommand (parse2): " + CmdString)
                 return msgbody
 
             Command = CmdList[1].strip()
             Command = Command.lower()
 
         except Exception as e1:
-            self.LogErrorLine("Validation Error: Error parsing command string in SetGeneratorRemoteStartStop: " + CmdString)
+            self.LogErrorLine("Validation Error: Error parsing command string in SetGeneratorRemoteCommand: " + CmdString)
             self.LogError( str(e1))
             return msgbody
 
@@ -1434,8 +1444,10 @@ class Evolution(controller.GeneratorController):
         return False
 
     #------------ Evolution:UpdateRegisterList ---------------------------------
-    def UpdateRegisterList(self, Register, Value):
+    def UpdateRegisterList(self, Register, Value, IsString = False, IsFile = False):
 
+        if IsString:
+            self.LogError("Validation Error: IsString is True")
         # Validate Register by length
         if len(Register) != 4 or len(Value) < 4:
             self.LogError("Validation Error: Invalid data in UpdateRegisterList: %s %s" % (Register, Value))
@@ -1671,11 +1683,19 @@ class Evolution(controller.GeneratorController):
             if self.EvolutionController and self.Evolution2:
                 Maint["Ambient Temperature Sensor"] = self.GetParameter("05ed", Label = "F")
 
-            if self.EvolutionController and self.FuelConsumptionSupported():
-                Maint["kW Hours in last 30 days"] = self.GetPowerHistory("power_log_json=43200,kw", NoReduce = True)
-                Maint["Fuel Consumption in last 30 days"] = self.GetPowerHistory("power_log_json=43200,fuel", NoReduce = True)
-                if self.FuelGuageSupported():
-                    Maint["Estimated Fuel In Tank"] = self.GetEstimatedFuelInTank()
+            if self.PowerMeterIsSupported() and self.FuelConsumptionSupported():
+                # Only update this once a min
+                if self.LastHouseKeepingTime == None or self.GetDeltaTimeMinutes(datetime.datetime.now() - self.LastHouseKeepingTime) >= 1 :
+                    self.KWHoursMonth = self.GetPowerHistory("power_log_json=43200,kw")
+                    self.FuelMonth = self.GetPowerHistory("power_log_json=43200,fuel")
+                    self.LastHouseKeepingTime = datetime.datetime.now()
+
+                if self.KWHoursMonth != None:
+                    Maint["kW Hours in last 30 days"] = self.KWHoursMonth
+                if self.FuelMonth != None:
+                    Maint["Fuel Consumption in last 30 days"] = self.FuelMonth
+
+
 
             ControllerSettings = collections.OrderedDict()
             Maint["Controller Settings"] = ControllerSettings
@@ -1706,7 +1726,9 @@ class Evolution(controller.GeneratorController):
                 Maint["Exercise"] = Exercise
 
             Service = collections.OrderedDict()
+
             if not self.EvolutionController and self.LiquidCooled:
+                # NexusLC
                 Service["Air Filter Service Due"] = self.GetServiceDue("AIR") + " or " + self.GetServiceDueDate("AIR")
                 Service["Oil Change and Filter Due"] = self.GetServiceDue("OIL") + " or " + self.GetServiceDueDate("OIL")
                 Service["Spark Plug Change Due"] = self.GetServiceDue("SPARK") + " or " + self.GetServiceDueDate("SPARK")
@@ -1718,8 +1740,13 @@ class Evolution(controller.GeneratorController):
                 Service["Spark Plug Service Due"] = self.GetServiceDue("SPARK") + " or " + self.GetServiceDueDate("SPARK")
                 Service["Battery Service Due"] = self.GetServiceDue("BATTERY") + " or " + self.GetServiceDueDate("BATTERY")
             else:
-                Service["Service A Due"] = self.GetServiceDue("A") + " or " + self.GetServiceDueDate("A")
-                Service["Service B Due"] = self.GetServiceDue("B") + " or " + self.GetServiceDueDate("B")
+                # Evolution
+                if self.PowerPact:
+                    Service["Service A Due"] = self.GetServiceDue("A")
+                    Service["Service B Due"] = self.GetServiceDue("B")
+                else:
+                    Service["Service A Due"] = self.GetServiceDue("A") + " or " + self.GetServiceDueDate("A")
+                    Service["Service B Due"] = self.GetServiceDue("B") + " or " + self.GetServiceDueDate("B")
 
             Service["Total Run Hours"] = self.GetRunTimes()
             Service["Hardware Version"] = self.GetHardwareVersion()
@@ -1792,11 +1819,6 @@ class Evolution(controller.GeneratorController):
             if len(Value):
                 SignedStr = str(self.signed16( int(Value)))
                 Sensors["Unsupported Sensor 3"] = SignedStr
-
-            #
-            Value = self.GetUnknownSensor("003b")
-            if len(Value):
-                Sensors["Unsupported Sensor 4"] = Value
 
         return Sensors
 
@@ -2689,6 +2711,7 @@ class Evolution(controller.GeneratorController):
         Divisor = 1.0
         CurrentOffset = 0.0
         CurrentFloat = 0.0
+        DebugInfo = ""
 
         if ReturnFloat:
             DefaultReturn = 0.0
@@ -2705,21 +2728,35 @@ class Evolution(controller.GeneratorController):
 
             if self.EvolutionController and self.LiquidCooled:
                 Value = self.GetRegisterValueFromList("0058")
+                DebugInfo += Value
                 if len(Value):
                     CurrentFloat = int(Value,16)
-                    #CurrentOutput = round(max((CurrentFloat * .2248) - 303.268, 0), 2)
-                    CurrentOutput = round(max((CurrentFloat / 3.74), 0), 2)
+                else:
+                    CurrentFloat = 0.0
+
+                if self.CurrentDivider == None or self.CurrentDivider < 1:
+                    Divisor = 30.0/67.0
+                else:
+                    Divisor = self.CurrentDivider
+
+                if self.CurrentOffset == None:
+                    CurrentOffset = -1939.0/6.0
+                else:
+                    CurrentOffset = self.CurrentOffset
+
+                CurrentOutput = round(((CurrentFloat  / Divisor) +  CurrentOffset), 2)
+                CurrentOutput = abs(CurrentOutput)
 
             elif self.EvolutionController and not self.LiquidCooled:
-                CurrentHi = 0
-                CurrentLow = 0
-
                 Value = self.GetRegisterValueFromList("003a")
+                DebugInfo += Value
                 if len(Value):
-                    CurrentHi = int(Value,16)
-                Value = self.GetRegisterValueFromList("003b")
-                if len(Value):
-                    CurrentLow = int(Value,16)
+                    CurrentFloat = int(Value,16)
+                else:
+                    CurrentFloat = 0.0
+
+                CurrentFloat = self.signed32(CurrentFloat)
+                CurrentFloat = abs(CurrentFloat)
 
                 # Dict is formated this way:  ModelID: [ divisor, offset to register]
                 ModelLookUp_EvoAC = { #ID : [KW or KVA Rating, Hz Rating, Voltage Rating, Phase]
@@ -2739,11 +2776,12 @@ class Evolution(controller.GeneratorController):
                                         15 : 56.24,     #["11KW", "60" ,"240", "1"],
                                         17 : 21.48,     #["22KW", "60", "120/240", "1"],
                                         21 : None,      #["11KW", "60", "240 LS", "1"],
+                                        22 : None,      # Power Pact
                                         32 : None,      #["Trinity", "60", "208 3Phase", "3"],  # G007077
                                         33 : None       #["Trinity", "50", "380,400,416", "3"]  # 3 distinct models 380, 400 or 416
                                         }
 
-                CurrentFloat = float(self.signed32((CurrentHi << 16) | (CurrentLow)))
+
                 # Get Model ID
                 Value = self.GetRegisterValueFromList("0019")
                 if not len(Value):
@@ -2754,7 +2792,7 @@ class Evolution(controller.GeneratorController):
 
                 if self.CurrentDivider == None or self.CurrentDivider < 1:
                     if LookUpReturn == None:
-                        Divisor = (22.0 / int(self.NominalKW)) * 22       # Default Divisor
+                        Divisor = (22.0 / float(self.NominalKW)) * 22       # Default Divisor
                     else:
                         Divisor = LookUpReturn
                 else:
@@ -2770,15 +2808,15 @@ class Evolution(controller.GeneratorController):
             BaseStatus = self.GetBaseStatus()
             Voltage = self.GetVoltageOutput(ReturnInt = True)
             if Voltage > 100:     # only bounds check if the voltage is over 100V to give things a chance to stabalize
-                if CurrentOutput > ((int(self.NominalKW) * 1000) / 240) + 2 or CurrentOutput < 0:
+                if CurrentOutput > ((float(self.NominalKW) * 1000) / 240) + 2 or CurrentOutput < 0:
                     # if we are here, then the current is out of range.
-                    if not BaseStatus == "EXERCISING":
-                        msg = "Current Calculation: %f, CurrentFloat: %f, Divisor: %f, Offset %f" % (CurrentOutput, CurrentFloat, Divisor, CurrentOffset)
+                    if not self.EvolutionController  and not self.LiquidCooled and not BaseStatus == "EXERCISING":
+                        msg = "Current Calculation: %f, CurrentFloat: %f, Divisor: %f, Offset %f, Debug: %s" % (CurrentOutput, CurrentFloat, Divisor, CurrentOffset, DebugInfo)
                         self.FeedbackPipe.SendFeedback("Current Calculation out of range", Message=msg, FullLogs = True )
                     if CurrentOutput < 0:
                         CurrentOutput = 0
                     else:
-                        CurrentOutput = round((int(self.NominalKW) * 1000) / 240, 2)
+                        CurrentOutput = round((float(self.NominalKW) * 1000) / 240, 2)
             if ReturnFloat:
                 return CurrentOutput
 
@@ -3054,7 +3092,6 @@ class Evolution(controller.GeneratorController):
         # get Hours until next service
         if self.EvolutionController:
             ServiceList = ["A","B"]
-
             for Service in ServiceList:
                 Value = self.GetServiceDue(Service, NoUnits = True)
                 if not len(Value):
@@ -3123,6 +3160,8 @@ class Evolution(controller.GeneratorController):
     #------------ Evolution:GetServiceDueDate ----------------------------------
     def GetServiceDueDate(self, serviceType = "A"):
 
+        if self.PowerPact:
+            return ""
         # Evolution Air Cooled Maintenance Message Intervals
         #Inspect Battery"  1 Year
         #Schedule A       200 Hours or 2 years
@@ -3221,55 +3260,63 @@ class Evolution(controller.GeneratorController):
             RunHours = None
             if not self.EvolutionController or not self.LiquidCooled:
                 # get total hours running
-                RunHours =  self.GetParameterLong("000c", "000b")
+                RunHours =  self.GetParameterLong("000c", "000b", ReturnInt = True)
+                if self.AdditionalRunHours != None:
+                    RunHours = int(RunHours) + int(self.AdditionalRunHours)
             else:
                 # Run minutes / 60
                 RunHours = self.GetParameterLong("005f", "005e", Divider = 60.0)
-
-            if self.AdditionalRunHours != None:
-                RunHours = float(RunHours) + float(self.AdditionalRunHours)
+                if not len(RunHours):
+                    RunHours = "0.0"
+                if self.AdditionalRunHours != None:
+                    RunHours = float(RunHours) + float(self.AdditionalRunHours)
 
             return str(RunHours)
         except Exception as e1:
-            self.LogErrorLine("Error getting run hours: " + str(e1))
+            self.LogErrorLine("Error getting run hours: " + str(RunHours) + ":" + str(self.AdditionalRunHours) + ": "+ str(e1))
             return "Unknown"
     #------------------- Evolution:DisplayOutage -------------------------------
     def DisplayOutage(self, DictOut = False):
 
-        Outage = collections.OrderedDict()
-        OutageData = collections.OrderedDict()
-        Outage["Outage"] = OutageData
+        try:
+
+            Outage = collections.OrderedDict()
+            OutageData = collections.OrderedDict()
+            Outage["Outage"] = OutageData
 
 
-        if self.SystemInOutage:
-            outstr = "System in outage since %s" % self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S")
-        else:
-            if self.ProgramStartTime != self.OutageStartTime:
-                OutageStr = str(self.LastOutageDuration).split(".")[0]  # remove microseconds from string
-                outstr = "Last outage occurred at %s and lasted %s." % (self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"), OutageStr)
+            if self.SystemInOutage:
+                outstr = "System in outage since %s" % self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S")
             else:
-                outstr = "No outage has occurred since program launched."
+                if self.ProgramStartTime != self.OutageStartTime:
+                    OutageStr = str(self.LastOutageDuration).split(".")[0]  # remove microseconds from string
+                    outstr = "Last outage occurred at %s and lasted %s." % (self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"), OutageStr)
+                else:
+                    outstr = "No outage has occurred since program launched."
 
-        OutageData["Status"] = outstr
-        OutageData["System In Outage"] = "Yes" if self.SystemInOutage else "No"
+            OutageData["Status"] = outstr
+            OutageData["System In Outage"] = "Yes" if self.SystemInOutage else "No"
 
-         # get utility voltage
-        Value = self.GetUtilityVoltage()
-        if len(Value):
-            OutageData["Utility Voltage"] = Value
+             # get utility voltage
+            Value = self.GetUtilityVoltage()
+            if len(Value):
+                OutageData["Utility Voltage"] = Value
 
-        OutageData["Utility Voltage Minimum"] = "%d V " % (self.UtilityVoltsMin)
-        OutageData["Utility Voltage Maximum"] = "%d V " % (self.UtilityVoltsMax)
+            OutageData["Utility Voltage Minimum"] = "%d V " % (self.UtilityVoltsMin)
+            OutageData["Utility Voltage Maximum"] = "%d V " % (self.UtilityVoltsMax)
 
-        OutageData["Utility Threshold Voltage"] = self.GetThresholdVoltage()
+            OutageData["Utility Threshold Voltage"] = self.GetThresholdVoltage()
 
-        if (self.EvolutionController and self.LiquidCooled) or (self.EvolutionController and self.Evolution2):
-            OutageData["Utility Pickup Voltage"] = self.GetPickUpVoltage()
+            if (self.EvolutionController and self.LiquidCooled) or (self.EvolutionController and self.Evolution2):
+                OutageData["Utility Pickup Voltage"] = self.GetPickUpVoltage()
 
-        if self.EvolutionController:
-            OutageData["Startup Delay"] = self.GetStartupDelay()
+            if self.EvolutionController:
+                OutageData["Startup Delay"] = self.GetStartupDelay()
 
-        OutageData["Outage Log"] = self.DisplayOutageHistory()
+            OutageData["Outage Log"] = self.DisplayOutageHistory()
+
+        except Exception as e1:
+            self.LogErrorLine("Error in DisplayOutage: " + str(e1))
 
         if not DictOut:
             return self.printToString(self.ProcessDispatch(Outage,""))
@@ -3382,6 +3429,8 @@ class Evolution(controller.GeneratorController):
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
             StartInfo["UtilityVoltage"] = True
             StartInfo["RemoteCommands"] = not self.SmartSwitch
+            StartInfo["ResetAlarms"] = self.EvolutionController
+            StartInfo["AckAlarms"] = False
             StartInfo["RemoteButtons"] = self.RemoteButtonsSupported()
             StartInfo["ExerciseControls"] = not self.SmartSwitch
 
@@ -3412,47 +3461,33 @@ class Evolution(controller.GeneratorController):
         try:
 
             if self.config != None:
-                if self.config.HasOption('address'):
-                    self.Address = int(self.config.ReadValue('address'),16)                      # modbus address
-                else:
-                    self.Address = 0x9d
                 # optional config parameters, by default the software will attempt to auto-detect the controller
                 # this setting will override the auto detect
                 if self.config.HasOption('evolutioncontroller'):
-                    self.EvolutionController = self.config.ReadValue('evolutioncontroller', return_type = bool)
+                    self.EvolutionController = self.config.ReadValue('evolutioncontroller', return_type = bool, default = False)
                 if self.config.HasOption('liquidcooled'):
-                    self.LiquidCooled = self.config.ReadValue('liquidcooled', return_type = bool)
-                if self.config.HasOption('disableoutagecheck'):
-                    self.DisableOutageCheck = self.config.ReadValue('disableoutagecheck', return_type = bool)
-                if self.config.HasOption('uselegacysetexercise'):
-                    self.bUseLegacyWrite = self.config.ReadValue('uselegacysetexercise', return_type = bool)
+                    self.LiquidCooled = self.config.ReadValue('liquidcooled', return_type = bool, default = False)
 
+                self.DisableOutageCheck = self.config.ReadValue('disableoutagecheck', return_type = bool, default = False)
+                self.bUseLegacyWrite = self.config.ReadValue('uselegacysetexercise', return_type = bool, default = False)
+                self.bEnhancedExerciseFrequency = self.config.ReadValue('enhancedexercise', return_type = bool, default = False)
+                self.CurrentDivider = self.config.ReadValue('currentdivider', return_type = float, default = None, NoLog = True)
+                self.CurrentOffset = self.config.ReadValue('currentoffset', return_type = float, default = None, NoLog = True)
 
-                if self.config.HasOption('enhancedexercise'):
-                    self.bEnhancedExerciseFrequency = self.config.ReadValue('enhancedexercise', return_type = bool)
-
-                if self.config.HasOption('currentdivider'):
-                    self.CurrentDivider = self.config.ReadValue('currentdivider', return_type = float)
-                if self.config.HasOption('currentoffset'):
-                    self.CurrentOffset = self.config.ReadValue('currentoffset', return_type = float)
-
-                # due to a mispelling we have two varients of this parameter
-                if self.config.HasOption('serailnumberifmissing') or self.config.HasOption('serialnumberifmissing'):
-                    if self.config.HasOption('serialnumberifmissing'):
-                        self.SerialNumberReplacement = self.config.ReadValue('serialnumberifmissing')
-                    else:
-                        self.SerialNumberReplacement = self.config.ReadValue('serailnumberifmissing')
+                self.SerialNumberReplacement = self.config.ReadValue('serialnumberifmissing', default = None)
+                if self.SerialNumberReplacement != None and len(self.SerialNumberReplacement):
                     if self.SerialNumberReplacement.isdigit() and len(self.SerialNumberReplacement) == 10:
-                        self.LogError("Override Serial Number: " + self.SerialNumberReplacement)
+                        self.LogError("Override Serial Number: " + "<" + self.SerialNumberReplacement + ">")
                     else:
-                        self.LogError("Override Serial Number: bad format: " + self.SerialNumberReplacement)
+                        self.LogError("Override Serial Number: bad format: " + "<" + self.SerialNumberReplacement + ">")
                         self.SerialNumberReplacement = None
+                else:
+                    self.SerialNumberReplacement = None
 
-                if self.config.HasOption('additionalrunhours'):
-                    self.AdditionalRunHours = self.config.ReadValue('additionalrunhours')
+                self.AdditionalRunHours = self.config.ReadValue('additionalrunhours', return_type = float, default = 0.0, NoLog = True)
 
         except Exception as e1:
-            self.FatalError("Missing config file or config file entries (evo/nexus): " + str(e1))
+            self.LogErrorLine("Missing config file or config file entries (evo/nexus): " + str(e1))
             return False
 
         return True
@@ -3476,6 +3511,8 @@ class Evolution(controller.GeneratorController):
     #----------  Generator:PowerMeterIsSupported  ------------------------------
     def PowerMeterIsSupported(self):
 
+        if self.bDisablePowerLog:
+            return False
         if not self.EvolutionController:    # Not supported by Nexus at this time
             return False
 

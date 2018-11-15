@@ -17,22 +17,37 @@ import mylog, mythread, mysupport
 
 #------------ SerialTCPDevice class --------------------------------------------
 class SerialTCPDevice(mysupport.MySupport):
-    def __init__(self, loglocation = "/var/log/", log = None, host="127.0.0.1", port=8899):
+    def __init__(self,
+        log = None,
+        host = "127.0.0.1",
+        port = 8899,
+        config = None):
+
         super(SerialTCPDevice, self).__init__()
         self.DeviceName = "serialTCP"
+        self.config = config
         self.Buffer = []
         self.BufferLock = threading.Lock()
         self.DiscardedBytes = 0
         self.Restarts = 0
         self.SerialStartTime = datetime.datetime.now()     # used for com metrics
         self.rxdatasize = 2000
+        self.SocketTimeout = 1
+
         self.host = host
         self.port = port
+
+        if self.config != None:
+            self.loglocation = self.config.ReadValue('loglocation', default = '/var/log/')
+            self.host = self.config.ReadValue('serial_tcp_address', return_type = str, default = None)
+            self.port = self.config.ReadValue('serial_tcp_port', return_type = int, default = None, NoLog = True)
+        else:
+            self.loglocation = default = './'
 
         # log errors in this module to a file
         self.console = mylog.SetupLogger("myserialtcp_console", log_file = "", stream = True)
         if log == None:
-            self.log = mylog.SetupLogger("myserialtcp", loglocation + "myserialtcp.log")
+            self.log = mylog.SetupLogger("myserialtcp", self.loglocation + "myserialtcp.log")
         else:
             self.log = log
 
@@ -48,7 +63,7 @@ class SerialTCPDevice(mysupport.MySupport):
         try:
             #create an INET, STREAMing socket
             self.Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.Socket.settimeout(1)
+            self.Socket.settimeout(self.SocketTimeout)
             #now connect to the server on our port
             self.Socket.connect((self.host, self.port))
             self.Flush()
@@ -145,6 +160,8 @@ class SerialTCPDevice(mysupport.MySupport):
             if self.Socket == None:
                 return ""
             data = self.Socket.recv(self.rxdatasize)
+            if data == None:
+                return ""
             return  data
         except socket.timeout as err:
             return ""

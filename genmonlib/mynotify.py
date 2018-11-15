@@ -93,7 +93,8 @@ class GenNotify(mycommon.MyCommon):
                     OutageDict = json.loads(outagedata)
                     OutageState = True if OutageDict["Outage"]["System In Outage"].lower() == "yes" else False
                 except Exception as e1:
-                    self.LogErrorLine("Unable to get outage state: " + str(e1))
+                    # The system does no support outage tracking (i.e. H-100)
+                    #self.LogErrorLine("Unable to get outage state: " + str(e1))
                     OutageState = None
                 if OutageState != None:
                     self.ProcessOutageState(OutageState)

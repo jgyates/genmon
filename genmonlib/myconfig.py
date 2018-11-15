@@ -32,8 +32,6 @@ class MyConfig (mycommon.MyCommon):
         self.Simulation = simulation
         self.CriticalLock = threading.Lock()        # Critical Lock (writing conf file)
         self.InitComplete = False
-        if self.Simulation:
-            return
         try:
             self.config = RawConfigParser()
             self.config.read(self.FileName)
@@ -50,22 +48,16 @@ class MyConfig (mycommon.MyCommon):
     #---------------------MyConfig::HasOption-----------------------------------
     def HasOption(self, Entry):
 
-        if self.Simulation:
-            return False
         return self.config.has_option(self.Section, Entry)
 
     #---------------------MyConfig::GetList-------------------------------------
     def GetList(self):
 
-        if self.Simulation:
-            return []
         return self.config.items(self.Section)
 
     #---------------------MyConfig::GetSections---------------------------------
     def GetSections(self):
 
-        if self.Simulation:
-            return []
         return self.config.sections()
 
     #---------------------MyConfig::SetSection----------------------------------
@@ -81,8 +73,6 @@ class MyConfig (mycommon.MyCommon):
     #---------------------MyConfig::ReadValue-----------------------------------
     def ReadValue(self, Entry, return_type = str, default = None, section = None, NoLog = False):
 
-        if self.Simulation:
-            return default
         try:
 
             if section != None:
