@@ -203,10 +203,6 @@ def ProcessCommand(command):
         elif command in ["getfavicon"]:
             return jsonify(favicon)
 
-        elif command in ["notifications"]:
-            data = ReadNotificationsFromFile()
-            return jsonify(data)
-
         elif command in ["settings"]:
             if session.get('write_access', True):
                 data =  ReadSettingsFromFile()
@@ -214,6 +210,9 @@ def ProcessCommand(command):
             else:
                 return "Access denied"
 
+        elif command in ["notifications"]:
+            data = ReadNotificationsFromFile()
+            return jsonify(data)
         elif command in ["setnotifications"]:
             if session.get('write_access', True):
                 SaveNotifications(request.args.get('setnotifications', 0, type=str))
@@ -610,6 +609,40 @@ def SaveAddOnSettings(query_string):
     except Exception as e1:
         LogErrorLine("Error in SaveAddOnSettings: " + str(e1))
         return
+
+#-------------------------------------------------------------------------------
+def ReadNotificationsFromFile():
+
+
+    ### array containing information on the parameters
+    ## 1st: email address
+    ## 2nd: sort order, aka row number
+    ## 3rd: comma delimited list of notidications that are enabled
+    NotificationSettings = {}
+    # e.g. {'myemail@gmail.com': [1]}
+    # e.g. {'myemail@gmail.com': [1, 'error,warn,info']}
+
+    EmailsToNotify = []
+    try:
+        # There should be only one "email_recipient" entry
+        EmailsStr = ConfigFiles[MAIL_CONFIG].ReadValue("email_recipient")
+
+        for email in EmailsStr.split(","):
+            email = email.strip()
+            EmailsToNotify.append(email)
+
+        SortOrder = 1
+        for email in EmailsToNotify:
+            Notify = ConfigFiles[MAIL_CONFIG].ReadValue(email, default = "")
+            if Notify == "":
+                NotificationSettings[email] = [SortOrder]
+            else:
+                NotificationSettings[email] = [SortOrder, Notify]
+    except Exception as e1:
+        LogErrorLine("Error in ReadNotificationsFromFile: " + str(e1))
+
+    return NotificationSettings
+
 #-------------------------------------------------------------------------------
 def SaveNotifications(query_string):
 
@@ -718,38 +751,6 @@ def ReadSingleConfigValue(entry, filename = None, section = None, type = "string
         LogErrorLine("Error Reading Config File (ReadSingleConfigValue): " + str(e1))
         return default
 
-#-------------------------------------------------------------------------------
-def ReadNotificationsFromFile():
-
-
-    ### array containing information on the parameters
-    ## 1st: email address
-    ## 2nd: sort order, aka row number
-    ## 3rd: comma delimited list of notidications that are enabled
-    NotificationSettings = {}
-    # e.g. {'myemail@gmail.com': [1]}
-    # e.g. {'myemail@gmail.com': [1, 'error,warn,info']}
-
-    EmailsToNotify = []
-    try:
-        # There should be only one "email_recipient" entry
-        EmailsStr = ConfigFiles[MAIL_CONFIG].ReadValue("email_recipient")
-
-        for email in EmailsStr.split(","):
-            email = email.strip()
-            EmailsToNotify.append(email)
-
-        SortOrder = 1
-        for email in EmailsToNotify:
-            Notify = ConfigFiles[MAIL_CONFIG].ReadValue(email, default = "")
-            if Notify == "":
-                NotificationSettings[email] = [SortOrder]
-            else:
-                NotificationSettings[email] = [SortOrder, Notify]
-    except Exception as e1:
-        LogErrorLine("Error in ReadNotificationsFromFile: " + str(e1))
-
-    return NotificationSettings
 #-------------------------------------------------------------------------------
 def ReadAdvancedSettingsFromFile():
 

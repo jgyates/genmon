@@ -96,19 +96,19 @@ class Evolution(controller.GeneratorController):
         # and due to the magic of python, we often deal with the response in string values
         #   dict format  Register: [ Length in bytes: monitor change 0 - no, 1 = yes]
         self.BaseRegisters = {                  # base registers read by master
-                    "0000" : [2, 0],     # possibly product line code (Nexus, EvoAQ, EvoLQ)
-                    "0005" : [2, 0],     # Exercise Time Hi Byte = Hour, Lo Byte = Min (Read Only) (Nexus, EvoAQ, EvoLQ)
-                    "0006" : [2, 0],     # Exercise Time Hi Byte = Day of Week 00=Sunday 01=Monday, Low Byte = 00=quiet=no, 01=yes (Nexus, EvoAQ, EvoLQ)
-                    "0007" : [2, 0],     # Engine RPM  (Nexus, EvoAQ, EvoLQ)
-                    "0008" : [2, 0],     # Freq - value includes Hz to the tenths place i.e. 59.9 Hz (Nexus, EvoAQ, EvoLQ)
-                    "000a" : [2, 0],     # battery voltage Volts to  tenths place i.e. 13.9V (Nexus, EvoAQ, EvoLQ)
+                    "0000" : [2, 0],     # possibly product line code (Nexus, EvoAC, EvoLC)
+                    "0005" : [2, 0],     # Exercise Time Hi Byte = Hour, Lo Byte = Min (Read Only) (Nexus, EvoAC, EvoLC)
+                    "0006" : [2, 0],     # Exercise Time Hi Byte = Day of Week 00=Sunday 01=Monday, Low Byte = 00=quiet=no, 01=yes (Nexus, EvoAC, EvoLC)
+                    "0007" : [2, 0],     # Engine RPM  (Nexus, EvoAC, EvoLC)
+                    "0008" : [2, 0],     # Freq - value includes Hz to the tenths place i.e. 59.9 Hz (Nexus, EvoAC, EvoLC)
+                    "000a" : [2, 0],     # battery voltage Volts to  tenths place i.e. 13.9V (Nexus, EvoAC, EvoLC)
                     "000b" : [2, 0],     # engine run time hours High
                     "000c" : [2, 0],     # engine run time hours Low
-                    "000e" : [2, 0],     # Read / Write: Generator Time Hi byte = hours, Lo byte = min (Nexus, EvoAQ, EvoLQ)
-                    "000f" : [2, 0],     # Read / Write: Generator Time Hi byte = month, Lo byte = day of the month (Nexus, EvoAQ, EvoLQ)
-                    "0010" : [2, 0],     # Read / Write: Generator Time = Hi byte Day of Week 00=Sunday 01=Monday, Lo byte = last 2 digits of year (Nexus, EvoAQ, EvoLQ)
-                    "0011" : [2, 0],     # Utility Threshold, ML Does not read this  (Nexus, EvoAQ, EvoLQ) (possibly read / write)
-                    "0012" : [2, 0],     # Gen output voltage (Nexus, EvoAQ, EvoLQ)
+                    "000e" : [2, 0],     # Read / Write: Generator Time Hi byte = hours, Lo byte = min (Nexus, EvoAC, EvoLC)
+                    "000f" : [2, 0],     # Read / Write: Generator Time Hi byte = month, Lo byte = day of the month (Nexus, EvoAC, EvoLC)
+                    "0010" : [2, 0],     # Read / Write: Generator Time = Hi byte Day of Week 00=Sunday 01=Monday, Lo byte = last 2 digits of year (Nexus, EvoAC, EvoLC)
+                    "0011" : [2, 0],     # Utility Threshold, ML Does not read this  (Nexus, EvoAC, EvoLC) (possibly read / write)
+                    "0012" : [2, 0],     # Gen output voltage (Nexus, EvoAC, EvoLC)
                     "0019" : [2, 0],     # Model ID register, (EvoAC, NexusAC)
                     "001a" : [2, 0],     # Hours Until Service A
                     "001b" : [2, 0],     # Date Service A Due
@@ -119,13 +119,13 @@ class Evolution(controller.GeneratorController):
                     "0020" : [2, 0],     # Service Info Date (NexusAC)
                     "0021" : [2, 0],     # Service Info Hours (NexusAC)
                     "0022" : [2, 0],     # Service Info Date (NexusAC, EvoAC)
-                    "002a" : [2, 0],     # hardware (high byte) (Hardware V1.04 = 0x68) and firmware version (low byte) (Firmware V1.33 = 0x85) (Nexus, EvoAQ, EvoLQ)
+                    "002a" : [2, 0],     # hardware (high byte) (Hardware V1.04 = 0x68) and firmware version (low byte) (Firmware V1.33 = 0x85) (Nexus, EvoAC, EvoLC)
                     "002b" : [2, 0],     # Startup Delay (Evo AC)
                     "002c" : [2, 0],     # Evo      (Exercise Time) Exercise Time HH:MM
                     "002d" : [2, 0],     # Evo AC   (Weekly, Biweekly, Monthly)
                     "002e" : [2, 0],     # Evo      (Exercise Time) Exercise Day Sunday =0, Monday=1
                     "002f" : [2, 0],     # Evo      (Quiet Mode)
-                    "0054" : [2, 0],     # Hours since generator activation (hours of protection) (Evo LQ only)
+                    "0054" : [2, 0],     # Hours since generator activation (hours of protection) (Evo LC only)
                     "0055" : [2, 0],     # Unknown
                     "0056" : [2, 0],     # Unknown Looks like some status bits (0000 to 0003, back to 0000 on stop)
                     "0057" : [2, 0],     # Unknown Looks like some status bits (0002 to 0005 when engine starts, back to 0002 on stop)
@@ -154,8 +154,8 @@ class Evolution(controller.GeneratorController):
                     "0235" : [2, 0],     # Gain (EvoLC)
                     "0237" : [2, 0],     # Set Voltage (Evo LC)
                     "0239" : [2, 0],     # Startup Delay (Evo LC)
-                    "023b" : [2, 0],     # Pick Up Voltage (Evo LQ only)
-                    "023e" : [2, 0],     # Exercise time duration (Evo LQ only)
+                    "023b" : [2, 0],     # Pick Up Voltage (Evo LC only)
+                    "023e" : [2, 0],     # Exercise time duration (Evo LC only)
                     "0209" : [2, 0],     #  Unknown (EvoLC)
                     "020d" : [2, 0],     #  Unknown (EvoLC)
                     "020f" : [2, 0],     #  Unknown (EvoLC)  Something in EvoLC
@@ -459,7 +459,7 @@ class Evolution(controller.GeneratorController):
     #------------ Evolution:GetLiquidCooledParams-------------------------------
     def GetLiquidCooledParams(self, ParamGroup, VoltageCode):
 
-        # Nexus LQ is the QT line
+        # Nexus LC is the QT line
         # 50Hz : QT02724MNAX
         # QT022, QT027, QT036, QT048, QT080, QT070,QT100,QT130,QT150
 
@@ -1676,6 +1676,8 @@ class Evolution(controller.GeneratorController):
             Maint["Rated kW"] = self.NominalKW
             Maint["Nominal Frequency"] = self.NominalFreq
             Maint["Fuel Type"] = self.FuelType
+            if self.EvolutionController and self.FuelType.lower() == "diesel":
+                Maint["Fuel Level Sensor"] = self.GetParameter("005d", Label = "%")
 
             if self.EngineDisplacement != "Unknown":
                 Maint["Engine Displacement"] = self.EngineDisplacement
@@ -1784,7 +1786,6 @@ class Evolution(controller.GeneratorController):
             Sensors["Battery Charger Sensor"] = self.GetParameter("05ee", Divider = 100.0)
             Sensors["Battery Status (Sensor)"] = self.GetBatteryStatusAlternate()
 
-            Sensors["Fuel Pressure Sensor"] = self.GetParameter("005d", Divider = 10.0)
              # get UKS
             Value = self.GetUnknownSensor("05ed")
             if len(Value):

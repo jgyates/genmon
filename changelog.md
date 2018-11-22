@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.11.25 - 2018-11-21
+- Added Fuel Level Sensor reading for EvoLC Diesel Units on Maintenance page
+
 ## V1.11.24 - 2018-11-14
 - Minor update for EvoLC current / power calculation
 
