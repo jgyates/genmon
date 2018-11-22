@@ -1051,7 +1051,7 @@ class GeneratorController(mysupport.MySupport):
     def CheckFuelLevel(self):
         try:
 
-            if not self.FuelGuageSupported():
+            if not self.FuelGaugeSupported():
                 return True
 
             if self.TankSize == None or self.TankSize == "0" or self.TankSize == "":
@@ -1085,7 +1085,7 @@ class GeneratorController(mysupport.MySupport):
         else:
             DefaultReturn = "0"
 
-        if not self.FuelGuageSupported():
+        if not self.FuelGaugeSupported():
             return DefaultReturn
 
         if self.TankSize == None or self.TankSize == "0" or self.TankSize == "":
@@ -1112,8 +1112,8 @@ class GeneratorController(mysupport.MySupport):
             self.LogErrorLine("Error in GetEstimatedFuelInTank: " + str(e1))
             return DefaultReturn
 
-    #----------  GeneratorController::FuelGuageSupported------------------------
-    def FuelGuageSupported(self):
+    #----------  GeneratorController::FuelGaugeSupported------------------------
+    def FuelGaugeSupported(self):
         return False
     #----------  GeneratorController::FuelConsumptionSupported------------------
     def FuelConsumptionSupported(self):

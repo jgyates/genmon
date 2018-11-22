@@ -295,7 +295,11 @@ class Evolution(controller.GeneratorController):
                 self.NominalRPM = "3600"
             Tile = mytile.MyTile(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM), callback = self.GetRPM, callbackparameters = (True,))
             self.TileList.append(Tile)
-            if self.FuelGuageSupported():
+
+            if self.EvolutionController and self.LiquidCooled and self.UseFuelSensor:
+                Tile = mytile.MyTile(self.log, title = "Fuel", units = "%", type = "fuel", nominal = 100, callback = self.GetFuelSensor, callbackparameters = (True,))
+                self.TileList.append(Tile)
+            elif self.FuelGaugeSupported():
                 if self.UseMetric:
                     Units = "L"
                 else:
@@ -423,8 +427,8 @@ class Evolution(controller.GeneratorController):
 
         self.EngineDisplacement = self.GetModelInfo("EngineDisplacement")
 
-    #----------  GeneratorController::FuelGuageSupported------------------------
-    def FuelGuageSupported(self):
+    #----------  GeneratorController::FuelGaugeSupported------------------------
+    def FuelGaugeSupported(self):
 
         if not self.PowerMeterIsSupported():
             return False
@@ -1676,8 +1680,8 @@ class Evolution(controller.GeneratorController):
             Maint["Rated kW"] = self.NominalKW
             Maint["Nominal Frequency"] = self.NominalFreq
             Maint["Fuel Type"] = self.FuelType
-            if self.EvolutionController and self.FuelType.lower() == "diesel":
-                Maint["Fuel Level Sensor"] = self.GetParameter("005d", Label = "%")
+            if self.EvolutionController and self.LiquidCooled and self.FuelType.lower() == "diesel":
+                Maint["Fuel Level Sensor"] = self.GetFuelSensor()
 
             if self.EngineDisplacement != "Unknown":
                 Maint["Engine Displacement"] = self.EngineDisplacement
@@ -2854,6 +2858,11 @@ class Evolution(controller.GeneratorController):
             self.LogErrorLine("Error in GetActiveRotorPoles: " + str(e1))
             return DefaultReturn
 
+    #------------ Evolution:GetFuelSensor --------------------------------------
+    def GetFuelSensor(self, ReturnInt = False):
+
+        return self.GetParameter("005d", Label = "%", ReturnInt = ReturnInt)
+
     #------------ Evolution:GetPowerOutput -------------------------------------
     def GetPowerOutput(self, ReturnFloat = False):
 
@@ -3474,6 +3483,7 @@ class Evolution(controller.GeneratorController):
                 self.bEnhancedExerciseFrequency = self.config.ReadValue('enhancedexercise', return_type = bool, default = False)
                 self.CurrentDivider = self.config.ReadValue('currentdivider', return_type = float, default = None, NoLog = True)
                 self.CurrentOffset = self.config.ReadValue('currentoffset', return_type = float, default = None, NoLog = True)
+                self.UseFuelSensor = self.config.ReadValue('usesensorforfuelgauge', return_type = bool, default = True)
 
                 self.SerialNumberReplacement = self.config.ReadValue('serialnumberifmissing', default = None)
                 if self.SerialNumberReplacement != None and len(self.SerialNumberReplacement):

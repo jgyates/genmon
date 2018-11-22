@@ -886,12 +886,17 @@ def ReadSettingsFromFile():
     ConfigSettings["nominalkw"] = ['int', 'Maximum kW Output', 103, "22", "", "required digits range:0:1000", GENMON_CONFIG, GENMON_SECTION, "nominalkw"]
     ConfigSettings["fueltype"] = ['list', 'Fuel Type', 104, "Natural Gas", "", "Natural Gas,Propane,Diesel,Gasoline", GENMON_CONFIG, GENMON_SECTION, "fueltype"]
     ConfigSettings["tanksize"] = ['int', 'Fuel Tank Size', 105, "0", "", "required digits range:0:2000", GENMON_CONFIG, GENMON_SECTION, "tanksize"]
+
+    ControllerInfo = GetControllerInfo("controller").lower()
+    if "liquid cooled" in ControllerInfo and "evolution" in ControllerInfo and GetControllerInfo("fueltype").lower() == "diesel":
+        ConfigSettings["usesensorforfuelgauge"] = ['boolean', 'Use Sensor for Fuel Gauge', 106, True, "", "", GENMON_CONFIG, GENMON_SECTION, "usesensorforfuelgauge"]
+
     if ControllerType == 'h_100':
         Choices = "120/208,120/240,230/400,240/415,277/480,347/600"
-        ConfigSettings["voltageconfiguration"] = ['list', 'Line to Neutral / Line to Line', 105, "277/480", "", Choices, GENMON_CONFIG, GENMON_SECTION, "voltageconfiguration"]
-        ConfigSettings["nominalbattery"] = ['list', 'Nomonal Battery Voltage', 106, "24", "", "12,24", GENMON_CONFIG, GENMON_SECTION, "nominalbattery"]
+        ConfigSettings["voltageconfiguration"] = ['list', 'Line to Neutral / Line to Line', 107, "277/480", "", Choices, GENMON_CONFIG, GENMON_SECTION, "voltageconfiguration"]
+        ConfigSettings["nominalbattery"] = ['list', 'Nomonal Battery Voltage', 108, "24", "", "12,24", GENMON_CONFIG, GENMON_SECTION, "nominalbattery"]
     else: #ControllerType == "generac_evo_nexus":
-        ConfigSettings["enhancedexercise"] = ['boolean', 'Enhanced Exercise Time', 105, False, "", "", GENMON_CONFIG, GENMON_SECTION, "enhancedexercise"]
+        ConfigSettings["enhancedexercise"] = ['boolean', 'Enhanced Exercise Time', 109, False, "", "", GENMON_CONFIG, GENMON_SECTION, "enhancedexercise"]
 
     ConfigSettings["smart_transfer_switch"] = ['boolean', 'Smart Transfer Switch', 110, False, "", "", GENMON_CONFIG, GENMON_SECTION, "smart_transfer_switch"]
     ConfigSettings["displayunknown"] = ['boolean', 'Display Unknown Sensors', 111, False, "", "", GENMON_CONFIG, GENMON_SECTION, "displayunknown"]
@@ -962,6 +967,29 @@ def GetAllConfigValues(FileName, section):
         LogErrorLine("Error GetAllConfigValues: " + FileName + ": "+ str(e1) )
 
     return ReturnDict
+
+#-------------------------------------------------------------------------------
+def GetControllerInfo(request = None):
+
+    ReturnValue = "Evolution, Air Cooled"
+    try:
+        if request.lower() == "controller":
+            ReturnValue = "Evolution, Air Cooled"
+        if request.lower() == "fueltype":
+            ReturnValue = "Propane"
+
+        if not len(GStartInfo):
+            return ReturnValue
+
+        if request.lower() == "controller":
+            return GStartInfo["Controller"]
+        if request.lower() == "fueltype":
+            return GStartInfo["fueltype"]
+    except Exception as e1:
+        LogErrorLine("Error in GetControllerInfo: " + str(e1))
+        pass
+
+    return ReturnValue
 
 #-------------------------------------------------------------------------------
 def CacheToolTips():
