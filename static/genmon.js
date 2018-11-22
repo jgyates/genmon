@@ -237,7 +237,7 @@ function DisplayStatusFull() {
     for (var i = 0; i < myGenerator["tiles"].length; ++i) {
        switch (myGenerator["tiles"][i].type) {
           case "gauge":
-             if ((myGenerator["tiles"][i].title == "Estimated Fuel") || (myGenerator["tiles"][i].title == "Fuel")) {
+             if (myGenerator["tiles"][i].subtype == "fuel") {
                outstr += '<div id="fuelField_'+i+'" class="grid-item gaugeField"><br>'+myGenerator["tiles"][i].title+'<br><div style="display: inline-block; width:100%; height:65%; position: relative;"><canvas class="gaugeCanvas" id="gauge'+i+'_bg" style="height: 100%; position: absolute; left: 0; top: 0; z-index: 1;"></canvas><canvas class="gaugeCanvas" id="gauge'+i+'" style="height: 100%; position: absolute; left: 0; top: 0; z-index: 0;"></canvas></div><br><div id="text'+i+'" class="gaugeDiv"></div></div>';
              } else {
                outstr += '<div id="gaugeField_'+i+'" class="grid-item gaugeField"><br>'+myGenerator["tiles"][i].title+'<br><canvas class="gaugeCanvas" id="gauge'+i+'"></canvas><br><div id="text'+i+'" class="gaugeDiv"></div></div>';
@@ -316,7 +316,7 @@ function DisplayStatusFull() {
     for (var i = 0; i < myGenerator["tiles"].length; ++i) {
        switch (myGenerator["tiles"][i].type) {
           case "gauge":
-             if ((myGenerator["tiles"][i].title == "Estimated Fuel") || (myGenerator["tiles"][i].title == "Fuel")) {
+             if (myGenerator["tiles"][i].subtype == "fuel") {
                 gauge[i] = createFuel($("#gauge"+i), $("#text"+i), $("#gauge"+i+"_bg"), myGenerator["tiles"][i].maximum);
              } else {
                 gauge[i] = createGauge($("#gauge"+i), $("#text"+i), 0, myGenerator["tiles"][i].minimum, myGenerator["tiles"][i].maximum,

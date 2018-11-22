@@ -299,5 +299,6 @@ class MyTile (mycommon.MyCommon):
         StartInfo["labels"] = self.Labels
         StartInfo["colorzones"] = self.ColorZones
         StartInfo["type"] = self.TileType
+        StartInfo["subtype"] = self.Type
         StartInfo["default-size"] = self.DefaultSize
         return StartInfo
