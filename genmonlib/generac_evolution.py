@@ -296,10 +296,10 @@ class Evolution(controller.GeneratorController):
             Tile = mytile.MyTile(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM), callback = self.GetRPM, callbackparameters = (True,))
             self.TileList.append(Tile)
 
-            if self.EvolutionController and self.LiquidCooled and self.UseFuelSensor:
+            if self.FuelSensorSupported():
                 Tile = mytile.MyTile(self.log, title = "Fuel", units = "%", type = "fuel", nominal = 100, callback = self.GetFuelSensor, callbackparameters = (True,))
                 self.TileList.append(Tile)
-            elif self.FuelGaugeSupported():
+            elif self.FuelCalculationSupported():
                 if self.UseMetric:
                     Units = "L"
                 else:
@@ -427,8 +427,15 @@ class Evolution(controller.GeneratorController):
 
         self.EngineDisplacement = self.GetModelInfo("EngineDisplacement")
 
-    #----------  GeneratorController::FuelGaugeSupported------------------------
-    def FuelGaugeSupported(self):
+    #----------  GeneratorController::FuelSensorSupported------------------------
+    def FuelSensorSupported(self):
+
+        if self.EvolutionController and self.LiquidCooled and self.UseFuelSensor and self.FuelType.lower() == "diesel":
+            return True
+        return False
+
+    #----------  GeneratorController::FuelCalculationSupported------------------
+    def FuelCalculationSupported(self):
 
         if not self.PowerMeterIsSupported():
             return False
@@ -1680,7 +1687,7 @@ class Evolution(controller.GeneratorController):
             Maint["Rated kW"] = self.NominalKW
             Maint["Nominal Frequency"] = self.NominalFreq
             Maint["Fuel Type"] = self.FuelType
-            if self.EvolutionController and self.LiquidCooled and self.FuelType.lower() == "diesel":
+            if self.FuelSensorSupported():
                 Maint["Fuel Level Sensor"] = self.GetFuelSensor()
 
             if self.EngineDisplacement != "Unknown":
@@ -1689,19 +1696,21 @@ class Evolution(controller.GeneratorController):
             if self.EvolutionController and self.Evolution2:
                 Maint["Ambient Temperature Sensor"] = self.GetParameter("05ed", Label = "F")
 
+            # Only update power log related info once a min for performance reasons
+            if self.LastHouseKeepingTime == None or self.GetDeltaTimeMinutes(datetime.datetime.now() - self.LastHouseKeepingTime) >= 1 :
+                UpdateNow = True
+                self.LastHouseKeepingTime = datetime.datetime.now()
+            else:
+                UpdateNow = False
             if self.PowerMeterIsSupported() and self.FuelConsumptionSupported():
-                # Only update this once a min
-                if self.LastHouseKeepingTime == None or self.GetDeltaTimeMinutes(datetime.datetime.now() - self.LastHouseKeepingTime) >= 1 :
+                if UpdateNow:
                     self.KWHoursMonth = self.GetPowerHistory("power_log_json=43200,kw")
                     self.FuelMonth = self.GetPowerHistory("power_log_json=43200,fuel")
-                    self.LastHouseKeepingTime = datetime.datetime.now()
 
                 if self.KWHoursMonth != None:
                     Maint["kW Hours in last 30 days"] = self.KWHoursMonth
                 if self.FuelMonth != None:
                     Maint["Fuel Consumption in last 30 days"] = self.FuelMonth
-
-
 
             ControllerSettings = collections.OrderedDict()
             Maint["Controller Settings"] = ControllerSettings
@@ -2861,6 +2870,8 @@ class Evolution(controller.GeneratorController):
     #------------ Evolution:GetFuelSensor --------------------------------------
     def GetFuelSensor(self, ReturnInt = False):
 
+        if not self.FuelSensorSupported():
+            return None
         return self.GetParameter("005d", Label = "%", ReturnInt = ReturnInt)
 
     #------------ Evolution:GetPowerOutput -------------------------------------
