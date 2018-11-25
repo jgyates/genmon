@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
 ## V1.11.26 - 2018-11-22
-- Added option for EvoLC Diesel to use fuel sensor data for Fuel Guage 
+- Added option for EvoLC Diesel to use fuel sensor data for Fuel Gauge 
 
 ## V1.11.25 - 2018-11-21
 - Added Fuel Level Sensor reading for EvoLC Diesel Units on Maintenance page
