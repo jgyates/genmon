@@ -10,15 +10,7 @@
 #------------------------------------------------------------
 
 
-import sys, time, serial
-
-
-#------------ printToScreen --------------------------------------------
-def printToScreen( msgstr):
-
-    print "{0}\n".format(msgstr),
-    no_op = 0
-    # end printToScreen(msgstr):
+import sys, time, serial, os
 
 
 #------------------- Open Serial Port -----------------#
@@ -41,12 +33,12 @@ def OpenSerialPort(name, rate):
     if (NewSerialPort.isOpen() == False):
         try:
             NewSerialPort.open()
-            printToScreen( "Serial port opened")
+            print( "Serial port opened")
         except Exception as e:
-            printToScreen( "error open serial port: " + str(e))
+            print( "error open serial port: " + str(e))
             return 0
     else:
-        printToScreen( "Serial port already open???")
+        print( "Serial port already open???")
         return 0
 
     NewSerialPort.flushInput() #flush input buffer, discarding all its contents
@@ -54,6 +46,12 @@ def OpenSerialPort(name, rate):
 
     return NewSerialPort
 
+#------------------GetErrorInfo-------------------------------------------------
+def GetErrorInfo():
+    exc_type, exc_obj, exc_tb = sys.exc_info()
+    fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+    lineno = exc_tb.tb_lineno
+    return fname + ":" + str(lineno)
 #------------------- Command-line interface for monitor -----------------#
 if __name__=='__main__': # usage SerialTest.py [port]
 
@@ -61,7 +59,7 @@ if __name__=='__main__': # usage SerialTest.py [port]
 
     baudrate=9600
 
-    print "\nLoopback testing for serial port " + device + "...\n"
+    print ("\nLoopback testing for serial port " + device + "...\n")
 
     try:
 
@@ -69,25 +67,25 @@ if __name__=='__main__': # usage SerialTest.py [port]
         serialPort = OpenSerialPort(device, baudrate)
 
         if (serialPort == 0):
-            print "Error opening Serial Port " + device
+            print ("Error opening Serial Port " + device)
             sys.exit(1)
 
         TestString = "Testing 1 2 3\n"
 
-        printToScreen("write data: sent test string")
-        serialPort.write(TestString)
+        print("write data: sent test string")
+        serialPort.write(TestString.encode())
         time.sleep(.05)
-        printToScreen("waiting to received data....")
+        print("waiting to received data....")
         ReceivedString = serialPort.readline()
 
         if TestString != ReceivedString:
-            printToScreen("FAILED: Sent data does not match receive. Received %d bytes" % len(ReceivedString))
+            print("FAILED: Sent data does not match receive. Received %d bytes" % len(ReceivedString))
         else:
-            printToScreen("PASSED! Loopback successful")
+            print("PASSED! Loopback successful")
         serialPort.close()
 
     except Exception as e1:
-        printToScreen( "error communicating...: " + str(e1))
+        print( "error communicating...: " + str(e1) + " " + GetErrorInfo())
 
 
     sys.exit(1)

@@ -119,6 +119,8 @@ def CheckServiceOutput(Output):
 
     try:
         for line in iter(Output.splitlines()):
+            if sys.version_info[0] >= 3:
+                line = line.decode() 
             if "Loaded:" in line:
                 line = line.strip()
                 lineitems = line.split(";")
@@ -128,7 +130,7 @@ def CheckServiceOutput(Output):
                     return False
         return False
     except Exception as e1:
-        print("Program Error: " + str(e1)) + " " + GetErrorInfo()
+        print("Program Error: (CheckServiceOutput): " + str(e1) + " " + GetErrorInfo())
         sys.exit(2)
 
 #-------------------------------------------------------------------------------
@@ -140,7 +142,7 @@ def ServiceIsDisabled(servicename):
         return CheckServiceOutput(output)
 
     except Exception as e1:
-        print("Program Error: " + str(e1)) + " " + GetErrorInfo()
+        print("Program Error (ServiceIsDisabled): " + str(e1) + " " + GetErrorInfo())
         sys.exit(2)
 
 #-------------------------------------------------------------------------------
@@ -155,7 +157,7 @@ def DisableService(servicename):
         return True
 
     except Exception as e1:
-        print("Program Error: " + str(e1)) + " " + GetErrorInfo()
+        print("Program Error (ServiceIsDisabled): " + str(e1) + " " + GetErrorInfo())
         sys.exit(2)
 
 #------------------RestoreFiles------------------------------------------------------
@@ -200,7 +202,7 @@ if __name__ == '__main__':
 
     for opt, arg in opts:
         if opt == '-h':
-            print HelpStr
+            print (HelpStr)
             sys.exit()
         elif opt in ("-e", "--enable"):
             Enable = True
@@ -282,5 +284,5 @@ if __name__ == '__main__':
             print("\nSerial port may not work as expected. Not all required settings changes were detected.\n")
             sys.exit(2)
     except Exception as e1:
-        print("Program Error: " + str(e1)) + " " + GetErrorInfo()
+        print("Program Error (main): " + str(e1) + " " + GetErrorInfo())
         sys.exit(2)

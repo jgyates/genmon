@@ -13,14 +13,6 @@
 import sys, time, getopt, socket
 
 
-#------------ printToScreen --------------------------------------------
-def printToScreen( msgstr):
-
-    print "{0}\n".format(msgstr),
-    no_op = 0
-    # end printToScreen(msgstr):
-
-
 #-------------------------------------------------------------------------------
 def OpenPort(host, port):
 
@@ -32,7 +24,7 @@ def OpenPort(host, port):
         newSocket.connect((host, port))
         return newSocket
     except Exception as e1:
-        printToScreen("Error opening socket: " + str(e1))
+        print("Error opening socket: " + str(e1))
         return None
 
 #-------------------------------------------------------------------------------
@@ -64,7 +56,7 @@ if __name__=='__main__':
         print (HelpStr)
         sys.exit(2)
 
-    print "\nLoopback testing for TCP serial port at " + host + ":" + str(port) + "...\n"
+    print ("\nLoopback testing for TCP serial port at " + host + ":" + str(port) + "...\n")
 
     try:
 
@@ -77,22 +69,22 @@ if __name__=='__main__':
 
         TestString = "Testing 1 2 3\n"
 
-        printToScreen("write data: sent test string")
+        print("write data: sent test string")
         Socket.sendall(TestString.encode())
-        printToScreen("waiting to received data....")
+        print("waiting to received data....")
         time.sleep(.05)
         ReceivedString = Socket.recv(200)
 
         Socket.close()
 
         if TestString != ReceivedString:
-            printToScreen("FAILED: Sent data does not match receive. Received %d bytes" % len(ReceivedString))
+            print("FAILED: Sent data does not match receive. Received %d bytes" % len(ReceivedString))
         else:
-            printToScreen("PASSED! Loopback successful")
+            print("PASSED! Loopback successful")
         Socket.close()
 
     except Exception as e1:
-        printToScreen( "error communicating...: " + str(e1))
+        print( "error communicating...: " + str(e1))
 
 
     sys.exit(1)

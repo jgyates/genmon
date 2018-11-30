@@ -17,14 +17,16 @@ import atexit
 
 try:
    import paho.mqtt.client as mqtt
-except:
+except Exception as e1:
    print("\n\nThe program requies the paho-mqtt module to be installed. Please use 'sudo pip install paho-mqtt' to install.\n")
+   print("Error: " + str(e1))
    sys.exit(2)
 try:
     from genmonlib import mycommon, mysupport, myclient, mylog, mythread, myconfig
-except:
+except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
+    print("Error: " + str(e1))
     sys.exit(2)
 
 #------------ MyGenPush class --------------------------------------------------
@@ -267,7 +269,7 @@ class MyMQTT(mycommon.MyCommon):
                             self.BlackList.append(Items.strip())
 
             self.Debug = config.ReadValue('debug', return_type = bool, default = False)
-                
+
             if config.HasOption('flush_interval'):
                 self.FlushInterval = config.ReadValue('flush_interval', return_type = float, default = float('inf'))
                 if self.FlushInterval == 0:

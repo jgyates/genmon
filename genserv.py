@@ -12,8 +12,9 @@ from __future__ import print_function
 
 try:
     from flask import Flask, render_template, request, jsonify, session
-except:
+except Exception as e1:
     print("\n\nThis program requires the Flask library. Please see the project documentation at https://github.com/jgyates/genmon.\n")
+    print("Error: " + str(e1))
     sys.exit(2)
 
 import sys, signal, os, socket, atexit, time, subprocess, json, threading, signal, errno, collections

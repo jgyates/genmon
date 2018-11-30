@@ -10,28 +10,25 @@
 #------------------------------------------------------------
 
 
-import sys, time, getopt
+import sys, time, getopt, os
 
-sys.path.append("..") # Adds higher directory to python modules path.
+sys.path.append(os.path.dirname(sys.path[0]))   # Adds higher directory to python modules path.
+print(sys.path)
+
 try:
     from genmonlib import mymodbus, myserial
-except:
-    print "\n\nThis program is used for the testing of modbus registers."
-    print "\n\nThis program requires the modules mymodbus.py and myserial.py to reside in the genmonlib directory.\n"
+except Exception as e1:
+    print ("\n\nThis program is used for the testing of modbus registers.")
+    print ("\n\nThis program requires the modules mymodbus.py and myserial.py to reside in the genmonlib directory.\n")
+    print("\n\nError: " + str(e1))
     sys.exit(2)
 
-#------------ printToScreen --------------------------------------------
-def printToScreen( msgstr):
-
-    print "{0}\n".format(msgstr),
-    no_op = 0
-    # end printToScreen(msgstr):
-
+#------------ RegisterResults --------------------------------------------------
 def RegisterResults(Register, Value):
 
     print(Register + ":" + Value)
 
-#------------------- Command-line interface for monitor -----------------#
+#------------------- Command-line interface for monitor -----------------------#
 if __name__=='__main__': #
 
     device = None
@@ -63,36 +60,36 @@ if __name__=='__main__': #
     try:
         for opt, arg in opts:
             if opt == '-h':
-                print HelpStr
+                print (HelpStr)
                 sys.exit()
             elif opt in ("-a", "--address"):
                 modbusaddress = int(arg,16)
-                print 'Address is : %x' % modbusaddress
+                print ('Address is : %x' % modbusaddress)
             elif opt in ("-p", "--port"):
                 device = arg
-                print 'Port is :', device
+                print ('Port is :', device)
             elif opt in ("-r", "--rate"):
                 baudrate = int(arg)
-                print 'Baud Rate : ' + str(baudrate)
+                print ('Baud Rate : ' + str(baudrate))
             elif opt in ("-s", "--start"):
                 startregister =  int(arg)
-                print 'Start Register : ' + str(startregister)
+                print ('Start Register : ' + str(startregister))
             elif opt in ("-e", "--end"):
                 endregister =  int(arg)
-                print 'Start Register : ' + str(endregister)
+                print ('Start Register : ' + str(endregister))
             elif opt in ("-x", "--parity"):
                 parity =  int(arg)
-                print 'Parity : ' + str(parity)
+                print ('Parity : ' + str(parity))
             elif opt in ("-b", "--stopbits"):
                 stopbits =  True
-                print '1.5 Stop Bits : ' + str(stopbits)
+                print ('1.5 Stop Bits : ' + str(stopbits))
 
     except Exception as e1:
-        print HelpStr
+        print (HelpStr)
         sys.exit(2)
 
     if device == None or baudrate == None or startregister == None or endregister == None or modbusaddress == None or startregister > endregister or modbusaddress > 255:
-        print HelpStr
+        print (HelpStr)
         sys.exit(2)
 
     if not stopbits == None:
@@ -102,7 +99,7 @@ if __name__=='__main__': #
 
     if not parity == None:
         if not parity == 1 and not parity == 2:
-            print HelpStr
+            print (HelpStr)
             sys.exit(2)
 
 
@@ -111,7 +108,7 @@ if __name__=='__main__': #
         modbus = mymodbus.ModbusProtocol(RegisterResults, modbusaddress, device, baudrate, Parity = parity, OnePointFiveStopBits = OnePointFiveStopBits)
         pass
     except Exception as e1:
-        printToScreen( "Error opening serial device...: " + str(e1))
+        print( "Error opening serial device...: " + str(e1))
         sys.exit(2)
     try:
         for Reg in range(startregister , endregister):

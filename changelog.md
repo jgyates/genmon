@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.11.28 - 2018-11-29
+- WIP updates for Python3
+
 ## V1.11.27 - 2018-11-25
 - Added Liquid Cooled Fuel consumption curves for RD015, RD030 and RD050
 - Update for low fuel notifications for EvoLC
