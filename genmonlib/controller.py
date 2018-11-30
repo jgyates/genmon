@@ -1047,27 +1047,45 @@ class GeneratorController(mysupport.MySupport):
             except Exception as e1:
                 self.LogErrorLine("Error in PowerMeter: " + str(e1))
 
+    #----------  GeneratorController::GetFuelLevel------------------------------
+    def GetFuelLevel(self, ReturnFloat = False):
+        # return 0 - 100 or None
+        if not self.FuelCalculationSupported() and not self.FuelSensorSupported():
+            return None
+
+        if self.FuelSensorSupported():
+            FuelLevel = float(self.GetFuelSensor(ReturnInt = True))
+        else:
+            if self.TankSize == None or self.TankSize == "0" or self.TankSize == "":
+                return None
+            FuelInTank = self.GetEstimatedFuelInTank(ReturnFloat = True)
+
+            if FuelInTank >= self.TankSize:
+                FuelLevel = 100
+            else:
+                FuelLevel = float(FuelInTank) / float(self.TankSize) * 100
+
+        if ReturnFloat:
+            return float(FuelLevel)
+        else:
+            return "%.2f %%" % FuelLevel
     #----------  GeneratorController::CheckFuelLevel----------------------------
     def CheckFuelLevel(self):
         try:
 
-            if not self.FuelGuageSupported():
+            if not self.FuelCalculationSupported() and not self.FuelSensorSupported():
                 return True
 
-            if self.TankSize == None or self.TankSize == "0" or self.TankSize == "":
-                return True
-            FuelInTank = self.GetEstimatedFuelInTank(ReturnFloat = True)
+            FuelLevel = self.GetFuelLevel(ReturnFloat = True)
 
-            if FuelInTank >= self.TankSize:
+            if FuelLevel == None:
                 return True
 
-            RemainingFuel = float(FuelInTank) / float(self.TankSize)
-
-            if RemainingFuel <= 0.1:    # Ten percent left
+            if RemainingFuel <= 10:    # Ten percent left
                 msgbody = "Warning: The estimated fuel in the tank is at or below 10%"
                 self.MessagePipe.SendMessage("Warning: Fuel Level at or below 10%" , msgbody, msgtype = "warn", onlyonce = True)
                 return False
-            elif RemainingFuel <= 0.20:    # 20 percent left
+            elif RemainingFuel <= 20:    # 20 percent left
                 msgbody = "Warning: The estimated fuel in the tank is at or below 20%"
                 self.MessagePipe.SendMessage("Warning: Fuel Level at or below 20%" , msgbody, msgtype = "warn", onlyonce = True)
                 return False
@@ -1085,7 +1103,7 @@ class GeneratorController(mysupport.MySupport):
         else:
             DefaultReturn = "0"
 
-        if not self.FuelGuageSupported():
+        if not self.FuelCalculationSupported():
             return DefaultReturn
 
         if self.TankSize == None or self.TankSize == "0" or self.TankSize == "":
@@ -1112,8 +1130,14 @@ class GeneratorController(mysupport.MySupport):
             self.LogErrorLine("Error in GetEstimatedFuelInTank: " + str(e1))
             return DefaultReturn
 
-    #----------  GeneratorController::FuelGuageSupported------------------------
-    def FuelGuageSupported(self):
+    #------------ Evolution:GetFuelSensor --------------------------------------
+    def GetFuelSensor(self, ReturnInt = False):
+        return None
+    #----------  GeneratorController::FuelSensorSupported------------------------
+    def FuelSensorSupported(self):
+        return False
+    #----------  GeneratorController::FuelCalculationSupported------------------------
+    def FuelCalculationSupported(self):
         return False
     #----------  GeneratorController::FuelConsumptionSupported------------------
     def FuelConsumptionSupported(self):

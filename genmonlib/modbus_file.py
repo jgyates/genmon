@@ -83,6 +83,14 @@ class ModbusFile(modbusbase.ModbusBase):
         else:
             RegValue = self.Registers.get(Register, "")
 
+            if len(RegValue):
+                while (len(RegValue) != Length * 4):
+
+                    if len(RegValue) < Length * 4:
+                        RegValue = "0" + RegValue
+                    elif len(RegValue) > Length * 4:
+                        RegValue = RegValue[1:]
+
         self.TxPacketCount += 1
         self.RxPacketCount += 1
         if self.SimulateTime:

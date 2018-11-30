@@ -14,16 +14,18 @@ import atexit
 
 try:
     from genmonlib import mynotify, mylog, myconfig
-except:
+except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
+    print("Error: " + str(e1))
     sys.exit(2)
 
 try:
     from chump import Application
-except:
+except Exception as e1:
     print("\n\nThis program requires the chump module to be installed.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
+    print("Error: " + str(e1))
     sys.exit(2)
 
 

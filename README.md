@@ -8,9 +8,9 @@ This project will monitor a backup generator that utilizes the Generac Controlle
 * Generac [H-100](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/H-100_Controller.png) Industrial Controllers
 * The H-100 controller is used in industrial generators from Generac and Eaton.
 * Generac G-Panel based Industrial Controllers
-* Generac PowerPact 
+* Generac PowerPact
 
-The project is written mostly in python and has been tested with a Raspberry Pi 3 (Pi Zero, Pi Zero W, Pi 2 and Pi 3b+ have also been validated). Ideally you would need to create a physical enclosure for your raspberry pi and possibly [make a cable](https://github.com/jgyates/genmon/wiki/3.1:-Making-a-Cable) to connect the raspberry pi to the Evolution or Nexus controller. If you are comfortable doing these things and you have a backup generator that has a supported controller then this project may be of interest to you.
+The project is written mostly in python and has been tested with a Raspberry Pi 3 (Pi Zero, Pi Zero W, Pi 2 and Pi 3b+ have also been validated). To use this project you would need to create a physical enclosure for your raspberry pi and possibly [make a cable](https://github.com/jgyates/genmon/wiki/3.1--Making-a-Cable) to connect the raspberry pi to the generator controller or purchase [pre-assembled hardware](https://github.com/jgyates/genmon/wiki#pre-assembled-hardware). If you are comfortable doing these things and you have a backup generator that has a supported controller then this project may be of interest to you.
 
 ## Functionality
 The software supports the following features:
@@ -64,6 +64,11 @@ The software supports the following features:
 This project is free to use under the posted license agreement. It was written and is supported by one person with testing and some documentation supported by users of the software. I originally created this project for my personal use however I decided to make the project available to anyone interested, however I do accept tips via paypal:
 
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=8Z4TSR22RLMWQ&lc=US&item_name=jgyates&item_number=jgyates&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_LG%2egif%3aNonHosted)
+
+## Pre-Assembled Hardware
+This project is open source and ideal for those who like to tinker, however pre-assembled hardware and cables are available for anyone interested on via ebay.com from this source:
+
+* [Pre-Assembled Pi and Cable](https://www.ebay.com/itm/Generac-Generator-Monitor-Device-Powered-by-GenMon-github-by-jgyates/263944254074?hash=item3d744db27a:g:xvAAAOSw8H1boD0R:rk:1:pf:0)
 
 
 ## Testing

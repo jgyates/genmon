@@ -25,7 +25,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.11.24"
+GENMON_VERSION = "V1.11.28"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(mysupport.MySupport):
@@ -372,7 +372,7 @@ class Monitor(mysupport.MySupport):
 
         msgbody += "\n" + self.GetSupportData()  + "\n"
 
-        self.MessagePipe.SendMessage("Generator Monitor Register Submission", msgbody , recipient = self.MaintainerAddress, msgtype = "info")
+        self.MessagePipe.SendMessage("Generator Monitor Register Submission", msgbody , recipient = self.MaintainerAddress, msgtype = "error")
         return "Registers submitted"
 
     #---------- Monitor::GetSupportData-----------------------------------------
@@ -417,7 +417,7 @@ class Monitor(mysupport.MySupport):
                 LogFile = self.LogLocation + File
                 if os.path.isfile(LogFile):
                     LogList.append(LogFile)
-            self.MessagePipe.SendMessage("Generator Monitor Log File Submission", msgbody , recipient = self.MaintainerAddress, files = LogList, msgtype = "info")
+            self.MessagePipe.SendMessage("Generator Monitor Log File Submission", msgbody , recipient = self.MaintainerAddress, files = LogList, msgtype = "error")
             return "Log files submitted"
         except Exception as e1:
             self.LogErrorLine("Error in SendLogFiles: " + str(e1))
