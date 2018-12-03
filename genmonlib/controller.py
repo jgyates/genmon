@@ -1081,11 +1081,11 @@ class GeneratorController(mysupport.MySupport):
             if FuelLevel == None:
                 return True
 
-            if RemainingFuel <= 10:    # Ten percent left
+            if FuelLevel <= 10:    # Ten percent left
                 msgbody = "Warning: The estimated fuel in the tank is at or below 10%"
                 self.MessagePipe.SendMessage("Warning: Fuel Level at or below 10%" , msgbody, msgtype = "warn", onlyonce = True)
                 return False
-            elif RemainingFuel <= 20:    # 20 percent left
+            elif FuelLevel <= 20:    # 20 percent left
                 msgbody = "Warning: The estimated fuel in the tank is at or below 20%"
                 self.MessagePipe.SendMessage("Warning: Fuel Level at or below 20%" , msgbody, msgtype = "warn", onlyonce = True)
                 return False

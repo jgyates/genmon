@@ -739,7 +739,7 @@ def ReadSingleConfigValue(entry, filename = None, section = None, type = "string
                 if Value.lower() in (name.lower() for name in DefaultList):
                     return Value
                 else:
-                    LogError("Error Reading Config File (value not in list): %s : %s" % (entry,Value))
+                    LogError("Warning: Reading Config File (value not in list): %s : %s" % (entry,Value))
                 return default
             else:
                 LogError("Error Reading Config File (bounds not provided): %s : %s" % (entry,Value))

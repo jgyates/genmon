@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.11.29 - 2018-12-02
+- Fixed on bug for fuel level reporting
+
 ## V1.11.28 - 2018-11-29
 - WIP updates for Python3
 
