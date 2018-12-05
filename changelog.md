@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.11.30 - 2018-12-05
+- Created button on About page to download configuration files for backup purposes
+
 ## V1.11.29 - 2018-12-02
 - Fixed on bug for fuel level reporting
 

@@ -123,6 +123,30 @@ function updatecrontab() {
             echo "$result"
         fi
 }
+
+#-------------------------------------------------------------------
+# backup genmon
+function backupgenmon() {
+
+    echo "Backup genmon..."
+    cd $genmondir
+    sudo rm -r genmon_backup
+    sudo rm genmon_backup.tar.gz
+    mkdir genmon_backup
+    mkdir ./genmon_backup/conf
+    sudo cp /etc/genmon.conf ./genmon_backup/conf
+    sudo cp /etc/mymail.conf ./genmon_backup/conf
+    sudo cp /etc/genloader.conf ./genmon_backup/conf
+    sudo cp /etc/genmqtt.conf ./genmon_backup/conf
+    sudo cp /etc/genpushover.conf ./genmon_backup/conf
+    sudo cp /etc/genslack.conf ./genmon_backup/conf
+    sudo cp /etc/gensms.conf ./genmon_backup/conf
+    sudo cp /etc/mymodem.conf ./genmon_backup/conf
+    sudo cp outage.txt ./genmon_backup
+    sudo cp kwlog.txt ./genmon_backup
+    tar -zcvf genmon_backup.tar.gz genmon_backup/
+    sudo rm -r genmon_backup
+}
 #-------------------------------------------------------------------
 # update genmon from the github repository
 # this function assumes you have downloaded the project from github
@@ -170,6 +194,9 @@ case "$1" in
     esac
 
     ;;  # install
+  backup)
+    backupgenmon
+    ;;
   updatenp)
     updategenmon
     ;;
@@ -181,7 +208,7 @@ case "$1" in
     updatecrontab
     ;;
   *)
-    echo "No valid command given. Specify 'update', 'install' or 'updatelibs' on command line"
+    echo "No valid command given. Specify 'backup','update', 'install' or 'updatelibs' on command line"
     #
     ;;
 esac

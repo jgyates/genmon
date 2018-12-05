@@ -11,7 +11,7 @@
 from __future__ import print_function
 
 try:
-    from flask import Flask, render_template, request, jsonify, session
+    from flask import Flask, render_template, request, jsonify, session, send_file
 except Exception as e1:
     print("\n\nThis program requires the Flask library. Please see the project documentation at https://github.com/jgyates/genmon.\n")
     print("Error: " + str(e1))
@@ -261,6 +261,12 @@ def ProcessCommand(command):
             if session.get('write_access', True):
                 Shutdown()
                 sys.exit(0)
+        elif command in ["backup"]:
+            if session.get('write_access', True):
+                Backup()    # Create backup file
+                # Now send the file
+                pathtofile = os.path.dirname(os.path.realpath(__file__))
+                return send_file(pathtofile + "/genmon_backup.tar.gz", as_attachment=True)
         else:
             return render_template('command_template.html', command = command)
     except Exception as e1:
@@ -1111,6 +1117,12 @@ def Update():
         LogError("Error in Update")
     # now restart
     Restart()
+
+#-------------------------------------------------------------------------------
+def Backup():
+    # update
+    if not RunBashScript("genmonmaint.sh backup"):   # update no prompt
+        LogError("Error in Backup")
 
 #-------------------------------------------------------------------------------
 def RunBashScript(ScriptName):
