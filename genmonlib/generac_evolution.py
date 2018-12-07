@@ -129,7 +129,7 @@ class Evolution(controller.GeneratorController):
                     "0055" : [2, 0],     # Unknown
                     "0056" : [2, 0],     # Unknown Looks like some status bits (0000 to 0003, back to 0000 on stop)
                     "0057" : [2, 0],     # Unknown Looks like some status bits (0002 to 0005 when engine starts, back to 0002 on stop)
-                    "0058" : [2, 0],     # CT Sensor (EvoLC)
+                    "0058" : [2, 0],     # Hall Effect Sensor (EvoLC)
                     "0059" : [2, 0],     # Rated Volts (EvoLC)
                     "005a" : [2, 0],     # Rated Hz (EvoLC)
                     "005d" : [2, 0],     # Fuel Pressure Sensor, Moves between 0x55 - 0x58 continuously even when engine off
@@ -2741,7 +2741,7 @@ class Evolution(controller.GeneratorController):
                 return DefaultReturn
 
             if self.EvolutionController and self.LiquidCooled:
-                Value = self.GetRegisterValueFromList("0058")
+                Value = self.GetRegisterValueFromList("0058")   # Hall Effect Sensor
                 DebugInfo += Value
                 if len(Value):
                     CurrentFloat = int(Value,16)
