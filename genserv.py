@@ -492,7 +492,7 @@ def GetAddOns():
         AddOnCfg['genmqtt']['parameters']['cert_authority_path'] = CreateAddOnParam(
             ConfigFiles[GENMQTT_CONFIG].ReadValue("cert_authority_path", return_type = str, default = ""),
             'string',
-            "(Optional) Full path to Certificate Authority file. Leave empty to not use SSL/TLS",
+            "(Optional) Full path to Certificate Authority file. Leave empty to not use SSL/TLS. If used port will be forced to 8883.",
             bounds = '',
             display_name = "SSL/TLS CA certificate file")
         AddOnCfg['genmqtt']['parameters']['tls_version'] = CreateAddOnParam(
