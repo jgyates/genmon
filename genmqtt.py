@@ -260,7 +260,7 @@ class MyMQTT(mycommon.MyCommon):
 
             #http://www.steves-internet-guide.com/mosquitto-tls/
             self.CertificateAuthorityPath =  config.ReadValue('cert_authority_path', default = "")
-            self.TLSVersion = config.ReadValue('tls_version', return_type = float, default = 1.0)
+            self.TLSVersion = config.ReadValue('tls_version', return_type = int, default = 1)
 
             BlackList = config.ReadValue('blacklist')
 
