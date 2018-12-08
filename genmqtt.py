@@ -258,6 +258,10 @@ class MyMQTT(mycommon.MyCommon):
 
             self.TopicRoot = config.ReadValue('root_topic')
 
+            #http://www.steves-internet-guide.com/mosquitto-tls/
+            self.CertificateAuthorityPath =  config.ReadValue('cert_authority_path', default = "")
+            self.TLSVersion = config.ReadValue('tls_version', return_type = float, default = 1.0)
+
             BlackList = config.ReadValue('blacklist')
 
             if BlackList != None:
@@ -288,6 +292,16 @@ class MyMQTT(mycommon.MyCommon):
 
             self.MQTTclient.on_connect = self.on_connect
             self.MQTTclient.on_message = self.on_message
+
+
+            if len(self.CertificateAuthorityPath):
+                if os.path.isfile(self.CertificateAuthorityPath):
+                    if self.TLSVersion < 1:
+                        self.TLSVersion = 1
+                    self.MQTTclient.tls_set(ca_certs = self.CertificateAuthorityPath,tls_version = self.TLSVersion )
+                    self.Port = 8883    # port for SSL
+                else:
+                    self.LogError("Error: Unable to  find CA cert file: " + self.CertificateAuthorityPath)
 
             self.MQTTclient.connect(self.MQTTAddress, self.Port, 60)
 

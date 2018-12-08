@@ -478,7 +478,7 @@ def GetAddOns():
             bounds = '',
             display_name = "Blacklist Filter")
         AddOnCfg['genmqtt']['parameters']['flush_interval'] = CreateAddOnParam(
-            ConfigFiles[GENMQTT_CONFIG].ReadValue("flush_interval", return_type = float, default = "0"),
+            ConfigFiles[GENMQTT_CONFIG].ReadValue("flush_interval", return_type = float, default = 0),
             'float',
             "(Optional) Time in seconds where even unchanged values will be published to their MQTT topic. Set to zero to disable flushing.",
             bounds = 'number',
@@ -489,6 +489,18 @@ def GetAddOns():
             "If enabled will return numeric values in the Status topic as a JSON string which can be converted to an object with integer or float values.",
             bounds = '',
             display_name = "JSON for Numerics")
+        AddOnCfg['genmqtt']['parameters']['cert_authority_path'] = CreateAddOnParam(
+            ConfigFiles[GENMQTT_CONFIG].ReadValue("cert_authority_path", return_type = str, default = ""),
+            'string',
+            "(Optional) Full path to Certificate Authority file. Leave empty to not use SSL/TLS",
+            bounds = '',
+            display_name = "SSL/TLS CA certificate file")
+        AddOnCfg['genmqtt']['parameters']['tls_version'] = CreateAddOnParam(
+            ConfigFiles[GENMQTT_CONFIG].ReadValue("tls_version", return_type = float, default = 1),
+            'float',
+            "(Optional) TLS version used. Default is 1. This is ignored if a CA cert file is used. ",
+            bounds = 'number',
+            display_name = "TLS Version")
 
 
         #GENSLACK

@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.11.31 - 2018-12-08
+- Added SSL/TLS option for MQTT add on program (genmqtt.py)
+
 ## V1.11.30 - 2018-12-05
 - Created button on About page to download configuration files for backup purposes
 
