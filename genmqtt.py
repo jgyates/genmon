@@ -10,7 +10,7 @@
 #-------------------------------------------------------------------------------
 
 
-import datetime, time, sys, signal, os, threading, collections, json
+import datetime, time, sys, signal, os, threading, collections, json, ssl
 import atexit
 
 #The following is need to install the mqtt module: pip install paho-mqtt
@@ -260,7 +260,7 @@ class MyMQTT(mycommon.MyCommon):
 
             #http://www.steves-internet-guide.com/mosquitto-tls/
             self.CertificateAuthorityPath =  config.ReadValue('cert_authority_path', default = "")
-            self.TLSVersion = config.ReadValue('tls_version', return_type = int, default = 1)
+            self.TLSVersion = config.ReadValue('tls_version', return_type = string, default = "1.0")
 
             BlackList = config.ReadValue('blacklist')
 
@@ -296,9 +296,16 @@ class MyMQTT(mycommon.MyCommon):
 
             if len(self.CertificateAuthorityPath):
                 if os.path.isfile(self.CertificateAuthorityPath):
-                    if self.TLSVersion < 1:
-                        self.TLSVersion = 1
-                    self.MQTTclient.tls_set(ca_certs = self.CertificateAuthorityPath,tls_version = self.TLSVersion )
+                    use_tls = ssl.PROTOCOL_TLSv1
+                    if self.TLSVersion == "1.0" or self.TLSVersion == "1":
+                        use_tls = ssl.PROTOCOL_TLSv1
+                    elif self.TLSVersion == "1.1":
+                        use_tls = ssl.PROTOCOL_TLSv1_1
+                    elif self.TLSVersion == "1.2":
+                        use_tls = ssl.PROTOCOL_TLSv1_2
+                    else:
+                        self.LogError("Error: invalid TLS version specified, defaulting to 1.0: " + self.TLSVersion)
+                    self.MQTTclient.tls_set(ca_certs = self.CertificateAuthorityPath,tls_version = use_tls )
                     self.Port = 8883    # port for SSL
                 else:
                     self.LogError("Error: Unable to  find CA cert file: " + self.CertificateAuthorityPath)

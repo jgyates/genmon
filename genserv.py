@@ -497,9 +497,9 @@ def GetAddOns():
             display_name = "SSL/TLS CA certificate file")
         AddOnCfg['genmqtt']['parameters']['tls_version'] = CreateAddOnParam(
             ConfigFiles[GENMQTT_CONFIG].ReadValue("tls_version", return_type = float, default = 1),
-            'int',
-            "(Optional) TLS version used (integer). Default is 1. This is ignored if a CA cert file is used. ",
-            bounds = 'number',
+            'string',
+            "(Optional) TLS version used (integer). Default is 1.0. Must be 1.0, 1.1, or 1.2. This is ignored if a CA cert file is used. ",
+            bounds = '',
             display_name = "TLS Version")
 
 
