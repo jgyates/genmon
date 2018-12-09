@@ -497,10 +497,16 @@ def GetAddOns():
             display_name = "SSL/TLS CA certificate file")
         AddOnCfg['genmqtt']['parameters']['tls_version'] = CreateAddOnParam(
             ConfigFiles[GENMQTT_CONFIG].ReadValue("tls_version", return_type = str, default = "1.0"),
-            'string',
+            'list',
             "(Optional) TLS version used (integer). Default is 1.0. Must be 1.0, 1.1, or 1.2. This is ignored if a CA cert file is used. ",
-            bounds = '',
+            bounds = '1.0,1.1,1.2',
             display_name = "TLS Version")
+        AddOnCfg['genmqtt']['parameters']['cert_reqs'] = CreateAddOnParam(
+            ConfigFiles[GENMQTT_CONFIG].ReadValue("cert_reqs", return_type = str, default = "Required"),
+            'list',
+            "(Optional) Defines the certificate requirements that the client imposes on the broker. Used if Certificate Authority file is used.",
+            bounds = 'None,Optional,Required',
+            display_name = "Certificate Requirements")
 
 
         #GENSLACK

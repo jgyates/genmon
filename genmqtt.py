@@ -261,6 +261,7 @@ class MyMQTT(mycommon.MyCommon):
             #http://www.steves-internet-guide.com/mosquitto-tls/
             self.CertificateAuthorityPath =  config.ReadValue('cert_authority_path', default = "")
             self.TLSVersion = config.ReadValue('tls_version', return_type = str, default = "1.0")
+            self.CertReqs = config.ReadValue('cert_reqs', return_type = str, default = "Required")
 
             BlackList = config.ReadValue('blacklist')
 
@@ -296,6 +297,16 @@ class MyMQTT(mycommon.MyCommon):
 
             if len(self.CertificateAuthorityPath):
                 if os.path.isfile(self.CertificateAuthorityPath):
+                    cert_reqs = ssl.CERT_REQUIRED
+                    if self.CertReqs.lower() == "required":
+                        cert_reqs = ssl.CERT_REQUIRED
+                    elif self.CertReqs.lower() == "optional":
+                        cert_reqs = ssl.CERT_REQUIRED
+                    elif self.CertReqs.lower() == "none":
+                        cert_reqs = ssl.CERT_NONE
+                    else:
+                        self.LogError("Error: invalid cert required specified, defaulting to required: " + self.self.CertReq)
+                        
                     use_tls = ssl.PROTOCOL_TLSv1
                     if self.TLSVersion == "1.0" or self.TLSVersion == "1":
                         use_tls = ssl.PROTOCOL_TLSv1
