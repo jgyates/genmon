@@ -306,7 +306,7 @@ class MyMQTT(mycommon.MyCommon):
                         cert_reqs = ssl.CERT_NONE
                     else:
                         self.LogError("Error: invalid cert required specified, defaulting to required: " + self.self.CertReq)
-                        
+
                     use_tls = ssl.PROTOCOL_TLSv1
                     if self.TLSVersion == "1.0" or self.TLSVersion == "1":
                         use_tls = ssl.PROTOCOL_TLSv1
@@ -316,7 +316,7 @@ class MyMQTT(mycommon.MyCommon):
                         use_tls = ssl.PROTOCOL_TLSv1_2
                     else:
                         self.LogError("Error: invalid TLS version specified, defaulting to 1.0: " + self.TLSVersion)
-                    self.MQTTclient.tls_set(ca_certs = self.CertificateAuthorityPath,tls_version = use_tls )
+                    self.MQTTclient.tls_set(ca_certs = self.CertificateAuthorityPath,cert_reqs = cert_reqs, tls_version = use_tls )
                     self.Port = 8883    # port for SSL
                 else:
                     self.LogError("Error: Unable to  find CA cert file: " + self.CertificateAuthorityPath)
