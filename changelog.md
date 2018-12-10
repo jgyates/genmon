@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.11.32 - 2018-12-09
+- Fixed bug in CurrentDivider not accepting a decimal value between 0 and 1
+
 ## V1.11.31 - 2018-12-08
 - Added SSL/TLS option for MQTT add on program (genmqtt.py)
 

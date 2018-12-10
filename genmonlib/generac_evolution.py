@@ -2748,7 +2748,7 @@ class Evolution(controller.GeneratorController):
                 else:
                     CurrentFloat = 0.0
 
-                if self.CurrentDivider == None or self.CurrentDivider < 1:
+                if self.CurrentDivider == None or self.CurrentDivider <= 0:
                     Divisor = 30.0/67.0
                 else:
                     Divisor = self.CurrentDivider
@@ -2804,7 +2804,7 @@ class Evolution(controller.GeneratorController):
                 LookUpReturn = ModelLookUp_EvoAC.get(int(Value,16), None)
 
 
-                if self.CurrentDivider == None or self.CurrentDivider < 1:
+                if self.CurrentDivider == None or self.CurrentDivider <= 0:
                     if LookUpReturn == None:
                         Divisor = (22.0 / float(self.NominalKW)) * 22       # Default Divisor
                     else:
