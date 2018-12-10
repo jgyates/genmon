@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. Major relea
 - Added more parameter validation for TankSize
 - Updated favicon.ico for web interface
 - Added code for future features
+- Added fuel consumption polynomials for RG022,RG027,RG032,RG038,RG048 
 
 ## V1.11.33 - 2018-12-10
 - Corrected bug in error handling in mymail.py
