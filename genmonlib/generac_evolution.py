@@ -2749,12 +2749,12 @@ class Evolution(controller.GeneratorController):
                     CurrentFloat = 0.0
 
                 if self.CurrentDivider == None or self.CurrentDivider <= 0:
-                    Divisor = 30.0/67.0
+                    Divisor = 0.425    #30.0/67.0
                 else:
                     Divisor = self.CurrentDivider
 
                 if self.CurrentOffset == None:
-                    CurrentOffset = -1939.0/6.0
+                    CurrentOffset = -323.31     #-1939.0/6.0
                 else:
                     CurrentOffset = self.CurrentOffset
 
