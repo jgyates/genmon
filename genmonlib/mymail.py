@@ -228,8 +228,7 @@ class MyMail(mysupport.MySupport):
                     for num in data[0].split():
                         rv, data = self.Mailbox.fetch(num, '(RFC822)')
                         if rv != 'OK':
-                            self.LogError( "ERROR getting message (fetch)")
-                            printToScreen( num)
+                            self.LogError( "ERROR getting message (fetch): " + str(num))
                             if self.WaitForExit("EmailCommandThread", 15 ):
                                 return
                             continue
