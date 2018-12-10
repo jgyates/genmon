@@ -442,7 +442,7 @@ class Evolution(controller.GeneratorController):
         if not self.FuelConsumptionSupported():
             return False
 
-        if self.TankSize == None or self.TankSize == "0" or self.TankSize == "":
+        if self.TankSize == 0:
             return False
         return True
 

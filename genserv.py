@@ -20,7 +20,7 @@ except Exception as e1:
 import sys, signal, os, socket, atexit, time, subprocess, json, threading, signal, errno, collections
 
 try:
-    from genmonlib import mylog, myclient, myconfig
+    from genmonlib import mylog, myclient, myconfig, mymail
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the original github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
@@ -267,12 +267,50 @@ def ProcessCommand(command):
                 # Now send the file
                 pathtofile = os.path.dirname(os.path.realpath(__file__))
                 return send_file(pathtofile + "/genmon_backup.tar.gz", as_attachment=True)
+        elif command in ["test_email"]:
+            return SendTestEmail(request.args.get('test_email', default = None, type=str))
         else:
             return render_template('command_template.html', command = command)
     except Exception as e1:
         LogErrorLine("Error in Process Command: " + command + ": " + str(e1))
         return render_template('command_template.html', command = command)
 
+#-------------------------------------------------------------------------------
+def SendTestEmail(query_string):
+    try:
+        if query_string == None or not  len(query_string):
+            return "No parameters given for email test."
+        parameters = dict(urlparse.parse_qs(query_string, 1))
+    except:
+        LogErrorLine("Error getting parameters in SendTestEmail: " + str(e1))
+        return "Error getting parameters in email test: " + str(e1)
+
+    try:
+        smtp_server =  parameters['smtp_server']
+        smtp_port =  parameters['smtp_port']
+        email_account = parameters['email_account']
+        sender_account = parameters['sender_account']
+        recipient = parameters['recipient']
+        password = parameters['password']
+        use_ssl = parameters['use_ssl']
+    except Exception as e1:
+        LogErrorLine("Error parsing parameters in SendTestEmail: " + str(e1))
+        return "Error parsing parameters in email test: " + str(e1)
+
+    try:
+        ReturnMessage = mymail.MyMail.TestSendSettings(
+            smtp_server =  smtp_server,
+            smtp_port =  smtp_port,
+            email_account = email_account,
+            sender_account = sender_account,
+            recipient = recipient,
+            password = password,
+            use_ssl = use_ssl
+        )
+        return ReturnMessage
+    except Exception as e1:
+        LogErrorLine("Error sending test email : " + str(e1))
+        return "Error sending test email : " + str(e1)
 #-------------------------------------------------------------------------------
 def GetAddOns():
     AddOnCfg = collections.OrderedDict()

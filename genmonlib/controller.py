@@ -72,7 +72,7 @@ class GeneratorController(mysupport.MySupport):
         self.NominalKW = "Unknown"
         self.Model = "Unknown"
         self.EngineDisplacement = "Unknown"
-        self.TankSize = None
+        self.TankSize = 0
 
         self.ProgramStartTime = datetime.datetime.now()     # used for com metrics
         self.OutageStartTime = self.ProgramStartTime        # if these two are the same, no outage has occured
@@ -112,8 +112,7 @@ class GeneratorController(mysupport.MySupport):
                 if self.config.HasOption('fueltype'):
                     self.FuelType = self.config.ReadValue('fueltype')
 
-                if self.config.HasOption('tanksize'):
-                    self.TankSize = self.config.ReadValue('tanksize')
+                self.TankSize = self.config.ReadValue('tanksize', return_type = int, default  = 0)
 
                 self.SmartSwitch = self.config.ReadValue('smart_transfer_switch', return_type = bool, default = False)
 
@@ -1056,7 +1055,7 @@ class GeneratorController(mysupport.MySupport):
         if self.FuelSensorSupported():
             FuelLevel = float(self.GetFuelSensor(ReturnInt = True))
         else:
-            if self.TankSize == None or self.TankSize == "0" or self.TankSize == "":
+            if self.TankSize == 0:
                 return None
             FuelInTank = self.GetEstimatedFuelInTank(ReturnFloat = True)
 
@@ -1106,7 +1105,7 @@ class GeneratorController(mysupport.MySupport):
         if not self.FuelCalculationSupported():
             return DefaultReturn
 
-        if self.TankSize == None or self.TankSize == "0" or self.TankSize == "":
+        if self.TankSize == 0:
             return DefaultReturn
         try:
             FuelUsed = self.GetPowerHistory("power_log_json=0,fuel")

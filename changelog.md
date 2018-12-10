@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.11.34 - 2018-12-10
+- Added more parameter validation for TankSize
+- Updated favicon.ico for web interface
+- Added code for future features
+
 ## V1.11.33 - 2018-12-10
 - Corrected bug in error handling in mymail.py
 
