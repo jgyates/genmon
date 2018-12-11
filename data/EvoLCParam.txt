@@ -1,9 +1,9 @@
 #kW,Volts,Frequency,Phase,Parameter Group,Voltage Code,Emission,Unit Voltage Code,Engine,Fuel
-12,220,50,1,10,12312,N,M,2.3 L,Diesel
+12,220,50,1,10,12312,N,M,2.3 L,Diesel,0.105,0.547,1.64,gal
 15,240,60,1,5,24,N,A,2.3 L,Diesel,0.015,0.251,0.24,gal
 15,208,60,3,5,2072,N,G,2.3 L,Diesel,0.015,0.251,0.24,gal
 15,240,60,3,5,4120,N,J,2.3 L,Diesel,0.015,0.251,0.24,gal
-16,220,50,1,7,12312,N,M,2.3 L,Diesel,0.015,0.251,0.24,gal
+16,220,50,1,7,12312,N,M,2.3 L,Diesel,0.2325,0.3685,2.2825,gal
 20,240,60,1,2,24,N,A,2.3 L,Diesel,0.02,0.34,0.305,gal
 20,208,60,3,2,2072,N,G,2.3 L,Diesel,0.02,0.34,0.305,gal
 20,240,60,3,2,4120,N,J,2.3 L,Diesel,0.02,0.34,0.305,gal
