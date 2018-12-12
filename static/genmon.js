@@ -1252,7 +1252,28 @@ function saveNotificationsJSON(){
         GenmonAlert("Error: invalid selection");
     }
 }
+//*****************************************************************************
+// test email
+//*****************************************************************************
+function TestEmailSettings(smtp_server, smtp_port,email_account,sender_account,recipient, password, use_ssl){
 
+    var parameters = {};
+    parameters['smtp_server'] = smtp_server;
+    parameters['smtp_port'] = smtp_port;
+    parameters['email_account'] = email_account;
+    parameters['sender_account'] = sender_account;
+    parameters['recipient'] = recipient;
+    parameters['password'] = password;
+    parameters['use_ssl'] = use_ssl;
+
+      // test email settings
+      var url = baseurl.concat("test_email");
+      $.getJSON(  url,
+                  {test_email: JSON.stringify(parameters)},
+                  function(result){
+                    GenmonAlert(result)
+      });
+}
 //*****************************************************************************
 // Display the Settings Tab
 //*****************************************************************************

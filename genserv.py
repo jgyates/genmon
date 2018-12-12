@@ -280,32 +280,44 @@ def SendTestEmail(query_string):
     try:
         if query_string == None or not  len(query_string):
             return "No parameters given for email test."
-        parameters = dict(urlparse.parse_qs(query_string, 1))
+        parameters = json.loads(query_string)
+        if not len(parameters):
+            return "No parameters"    # nothing to change
+
     except:
         LogErrorLine("Error getting parameters in SendTestEmail: " + str(e1))
         return "Error getting parameters in email test: " + str(e1)
-
     try:
-        smtp_server =  parameters['smtp_server']
-        smtp_port =  parameters['smtp_port']
-        email_account = parameters['email_account']
-        sender_account = parameters['sender_account']
-        recipient = parameters['recipient']
-        password = parameters['password']
-        use_ssl = parameters['use_ssl']
+        smtp_server =  str(parameters['smtp_server'])
+        smtp_server = smtp_server.strip()
+        smtp_port =  int(parameters['smtp_port'])
+        email_account = str(parameters['email_account'])
+        email_account = email_account.strip()
+        sender_account = str(parameters['sender_account'])
+        sender_account = sender_account.strip()
+        if not len(sender_account):
+            sender_account == None
+        recipient = str(parameters['recipient'])
+        recipient = recipient.strip()
+        password = str(parameters['password'])
+        if parameters['use_ssl'].lower() == 'true':
+            use_ssl = True
+        else:
+            use_ssl = False
     except Exception as e1:
         LogErrorLine("Error parsing parameters in SendTestEmail: " + str(e1))
+        LogError(str(parameters))
         return "Error parsing parameters in email test: " + str(e1)
 
     try:
         ReturnMessage = mymail.MyMail.TestSendSettings(
-            smtp_server =  smtp_server,
-            smtp_port =  smtp_port,
-            email_account = email_account,
-            sender_account = sender_account,
-            recipient = recipient,
-            password = password,
-            use_ssl = use_ssl
+              smtp_server = smtp_server,
+              smtp_port = smtp_port,
+              email_account = email_account,
+              sender_account = sender_account,
+              recipient = recipient,
+              password = password,
+              use_ssl = use_ssl
         )
         return ReturnMessage
     except Exception as e1:

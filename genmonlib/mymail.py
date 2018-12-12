@@ -130,6 +130,8 @@ class MyMail(mysupport.MySupport):
         if smtp_port == None or not isinstance(smtp_port , int):
             return "Error: Invalid SMTP port"
 
+        if use_ssl == None or not isinstance(use_ssl , bool):
+            return "Error: Invalid Use SSL value"
         # update date
         dtstamp=datetime.datetime.now().strftime('%a %d-%b-%Y')
         # update time
