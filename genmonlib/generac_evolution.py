@@ -1802,9 +1802,11 @@ class Evolution(controller.GeneratorController):
              # get UKS
             Value = self.GetUnknownSensor("05ed")
             if len(Value):
-                SensorValue = float(Value)
-                # This forumla is loosely based on an Omgeo Thermistor with the model number 44005.
-                Celsius =1/(0.0013923+0.0002373*(math.log(SensorValue*70))+0.00000009827*((math.log(SensorValue*70))**3))-273.15
+                # Shift by one then  apply this polynomial
+                # The shift by one appears
+                # Sensor values odd below 60 decimal, even above 60 decimal (60 shift right 1 is 30 which is 11.5C or 52.7F)
+                SensorValue = int(Value) >> 1
+                Celsius = float((-0.2081* SensorValue**2)+(10.928*SensorValue)-129.02)
                 Fahrenheit = 9.0/5.0 * Celsius + 32
                 CStr = "%.1f" % Celsius
                 FStr = "%.1f" % Fahrenheit

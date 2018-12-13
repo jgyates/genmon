@@ -1,11 +1,15 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.11.35 - 2018-12-13
+- Minor update to EvoLC ambient temp sensor (see Unsupported Sensors)
+- WIP updates for email test
+
 ## V1.11.34 - 2018-12-10
 - Added more parameter validation for TankSize
 - Updated favicon.ico for web interface
 - Added code for future features
-- Added fuel consumption polynomials for RG022,RG027,RG032,RG038,RG048 
+- Added fuel consumption polynomials for RG022,RG027,RG032,RG038,RG048
 
 ## V1.11.33 - 2018-12-10
 - Corrected bug in error handling in mymail.py
