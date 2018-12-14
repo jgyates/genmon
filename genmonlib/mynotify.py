@@ -7,11 +7,14 @@
 #    DATE: 25-Apr-2017
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
-import datetime, time, sys, signal, os, threading, json
-import myclient, mylog, mythread, mycommon, collections
+import datetime, time, sys, signal, os, threading, json, collections
 
+from genmonlib.mycommon import MyCommon
+from genmonlib.mylog import SetupLogger
+from genmonlib.mythread import MyThread
+from genmonlib.myclient import ClientInterface
 #----------  GenNotify::init--- ------------------------------------------------
-class GenNotify(mycommon.MyCommon):
+class GenNotify(MyCommon):
     def __init__(self,
                 host="127.0.0.1",
                 port=9082,
@@ -38,9 +41,9 @@ class GenNotify(mycommon.MyCommon):
             self.log = log
         else:
             # log errors in this module to a file
-            self.log = mylog.SetupLogger("client", "/var/log/myclient.log")
+            self.log = SetupLogger("client", "/var/log/myclient.log")
 
-        self.console = mylog.SetupLogger("notify_console", log_file = "", stream = True)
+        self.console = SetupLogger("notify_console", log_file = "", stream = True)
         try:
             # init event callbacks
             if onready != None:
@@ -65,7 +68,7 @@ class GenNotify(mycommon.MyCommon):
             startcount = 0
             while startcount <= 10:
                 try:
-                    self.Generator = myclient.ClientInterface(host = host, log = log)
+                    self.Generator = ClientInterface(host = host, log = log)
                     break
                 except Exception as e1:
                     startcount += 1
@@ -76,7 +79,7 @@ class GenNotify(mycommon.MyCommon):
                     continue
 
             # start thread to accept incoming sockets for nagios heartbeat
-            self.Threads["PollingThread"] = mythread.MyThread(self.MainPollingThread, Name = "PollingThread")
+            self.Threads["PollingThread"] = MyThread(self.MainPollingThread, Name = "PollingThread")
         except Exception as e1:
             self.LogErrorLine("Error in mynotify init: "  + str(e1))
 

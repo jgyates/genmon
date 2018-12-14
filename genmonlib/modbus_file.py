@@ -12,10 +12,12 @@
 from __future__ import print_function       # For python 3.x compatibility with print function
 
 import datetime, threading, crcmod, sys, time, os, collections, json
-import mylog, mythread, mycommon, modbusbase
+
+from genmonlib.modbusbase import ModbusBase
+from genmonlib.mythread import MyThread
 
 #------------ ModbusBase class -------------------------------------------------
-class ModbusFile(modbusbase.ModbusBase):
+class ModbusFile(ModbusBase):
     def __init__(self,
         updatecallback,
         address = 0x9d,
@@ -56,7 +58,7 @@ class ModbusFile(modbusbase.ModbusBase):
         if not self.ReadInputFile(self.InputFile):
             self.LogError("ModusFile Init(): Error loading input file: " + self.InputFile)
         else:
-            self.Threads["ReadInputFileThread"] = mythread.MyThread(self.ReadInputFileThread, Name = "ReadInputFileThread")
+            self.Threads["ReadInputFileThread"] = MyThread(self.ReadInputFileThread, Name = "ReadInputFileThread")
         self.InitComplete = False
 
     #-------------ModbusBase::ReadInputFileThread-------------------------------

@@ -13,10 +13,9 @@
 import sys, time, getopt, os
 
 sys.path.append(os.path.dirname(sys.path[0]))   # Adds higher directory to python modules path.
-print(sys.path)
 
 try:
-    from genmonlib import mymodbus, myserial
+    from genmonlib.mymodbus import ModbusProtocol
 except Exception as e1:
     print ("\n\nThis program is used for the testing of modbus registers.")
     print ("\n\nThis program requires the modules mymodbus.py and myserial.py to reside in the genmonlib directory.\n")
@@ -105,7 +104,7 @@ if __name__=='__main__': #
 
     modbus = None
     try:
-        modbus = mymodbus.ModbusProtocol(RegisterResults, modbusaddress, device, baudrate, Parity = parity, OnePointFiveStopBits = OnePointFiveStopBits)
+        modbus = ModbusProtocol(RegisterResults, modbusaddress, device, baudrate, Parity = parity, OnePointFiveStopBits = OnePointFiveStopBits)
         pass
     except Exception as e1:
         print( "Error opening serial device...: " + str(e1))

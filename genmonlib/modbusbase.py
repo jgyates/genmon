@@ -12,10 +12,13 @@
 from __future__ import print_function       # For python 3.x compatibility with print function
 
 import datetime, threading, crcmod, sys, time
-import mylog, mythread, mysupport
+
+from genmonlib.mysupport import MySupport
+from genmonlib.mylog import SetupLogger
+
 
 #------------ ModbusBase class -------------------------------------------------
-class ModbusBase(mysupport.MySupport ):
+class ModbusBase(MySupport ):
     def __init__(self,
         updatecallback,
         address = 0x9d,
@@ -56,7 +59,7 @@ class ModbusBase(mysupport.MySupport ):
         self.ModbusStartTime = datetime.datetime.now()     # used for com metrics
 
         # log errors in this module to a file
-        self.log = mylog.SetupLogger("mymodbus", self.loglocation + "mymodbus.log")
+        self.log = SetupLogger("mymodbus", self.loglocation + "mymodbus.log")
 
     #-------------ModbusBase::ProcessMasterSlaveWriteTransaction----------------
     def ProcessMasterSlaveWriteTransaction(self, Register, Length, Data):

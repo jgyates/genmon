@@ -15,7 +15,8 @@ from datetime import datetime
 import atexit, getopt
 
 try:
-    from genmonlib import myclient, mylog
+    from genmonlib.mylog import SetupLogger
+    from genmonlib.myclient import ClientInterface
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
@@ -56,7 +57,7 @@ if __name__=='__main__':
     HelpStr = '\npython genlog.py -a <IP Address or localhost> -f <outputfile>\n'
 
     try:
-        console = mylog.SetupLogger("genlog_console", log_file = "", stream = True)
+        console = SetupLogger("genlog_console", log_file = "", stream = True)
         opts, args = getopt.getopt(sys.argv[1:],"ha:f:",["address=","filename="])
     except getopt.GetoptError:
         console.error(HelpStr)
@@ -79,11 +80,11 @@ if __name__=='__main__':
         sys.exit(2)
 
     try:
-        log = mylog.SetupLogger("client", "/var/log/genlog.log")
+        log = SetupLogger("client", "/var/log/genlog.log")
         # Set the signal handler
         signal.signal(signal.SIGINT, signal_handler)
 
-        MyClientInterface = myclient.ClientInterface(host = address, log = log)
+        MyClientInterface = ClientInterface(host = address, log = log)
 
         LastEvent = ""
 

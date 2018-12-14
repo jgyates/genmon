@@ -13,7 +13,9 @@ import datetime, time, sys, signal, os, threading, socket
 import atexit
 
 try:
-    from genmonlib import mynotify, mylog, myconfig
+    from genmonlib.mylog import SetupLogger
+    from genmonlib.mynotify import GenNotify
+    from genmonlib.myconfig import MyConfig
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
@@ -149,12 +151,12 @@ if __name__=='__main__': # usage program.py [server_address]
         print("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
         sys.exit(2)
 
-    console = mylog.SetupLogger("pushover_console", log_file = "", stream = True)
-    log = mylog.SetupLogger("client", "/var/log/genpushover.log")
+    console = SetupLogger("pushover_console", log_file = "", stream = True)
+    log = SetupLogger("client", "/var/log/genpushover.log")
 
     try:
 
-        config = myconfig.MyConfig(filename = '/etc/genpushover.conf', section = 'genpushover', log = log)
+        config = MyConfig(filename = '/etc/genpushover.conf', section = 'genpushover', log = log)
 
         appid = config.ReadValue('appid')
         userid = config.ReadValue('userid')
@@ -175,7 +177,7 @@ if __name__=='__main__': # usage program.py [server_address]
         console.error("Error reading /etc/genpushover.conf: " + str(e1))
         sys.exit(1)
     try:
-        GenNotify = mynotify.GenNotify(
+        GenNotify = GenNotify(
                                         host = address,
                                         onready = OnReady,
                                         onexercise = OnExercise,

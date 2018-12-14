@@ -12,7 +12,10 @@
 import datetime, time, sys, os, threading, socket, re
 import atexit, json, collections, random
 
-import controller, mymodbus, mythread, modbus_file, mytile
+from genmonlib.controller import GeneratorController
+from genmonlib.mytile import MyTile
+from genmonlib.modbus_file import ModbusFile
+from genmonlib.mymodbus import ModbusProtocol
 
 # Module defines ---------------------------------------------------------------
 REGISTER    = 0
@@ -762,7 +765,7 @@ class Output8(object):
     RESET_ALARMS        = 0x0100
 
 
-class HPanel(controller.GeneratorController):
+class HPanel(GeneratorController):
 
     #---------------------HPanel::__init__--------------------------------------
     def __init__(self,
@@ -827,11 +830,11 @@ class HPanel(controller.GeneratorController):
         try:
             #Starting device connection
             if self.Simulation:
-                self.ModBus = modbus_file.ModbusFile(self.UpdateRegisterList,
+                self.ModBus = ModbusFile(self.UpdateRegisterList,
                     inputfile = self.SimulationFile,
                     config = self.config)
             else:
-                self.ModBus = mymodbus.ModbusProtocol(self.UpdateRegisterList,
+                self.ModBus = ModbusProtocol(self.UpdateRegisterList,
                     config = self.config)
 
             self.Threads = self.MergeDicts(self.Threads, self.ModBus.Threads)
@@ -904,7 +907,7 @@ class HPanel(controller.GeneratorController):
     #-------------HPanel:SetupTiles---------------------------------------------
     def SetupTiles(self):
         try:
-            Tile = mytile.MyTile(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = self.NominalBatteryVolts,
+            Tile = MyTile(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = self.NominalBatteryVolts,
                 callback = self.GetParameter,
                 callbackparameters = (self.Reg.BATTERY_VOLTS[REGISTER],  None, 100.0, False, False, True))
             self.TileList.append(Tile)
@@ -920,44 +923,44 @@ class HPanel(controller.GeneratorController):
             if self.NominalKW == None or self.NominalKW == "" or self.NominalKW == "Unknown":
                 self.NominalKW = "550"
 
-            Tile = mytile.MyTile(self.log, title = "Average Voltage", units = "V", type = "linevolts", nominal = NominalVoltage,
+            Tile = MyTile(self.log, title = "Average Voltage", units = "V", type = "linevolts", nominal = NominalVoltage,
             callback = self.GetParameter,
             callbackparameters = (self.Reg.AVG_VOLTAGE[REGISTER], None, None, False, True, False))
             self.TileList.append(Tile)
 
             NominalCurrent = int(self.NominalKW) * 1000 / NominalVoltage
-            Tile = mytile.MyTile(self.log, title = "Average Current", units = "A", type = "current", nominal = NominalCurrent,
+            Tile = MyTile(self.log, title = "Average Current", units = "A", type = "current", nominal = NominalCurrent,
             callback = self.GetParameter,
             callbackparameters = (self.Reg.AVG_CURRENT[REGISTER], None, None, False, True, False))
             self.TileList.append(Tile)
 
             if self.NominalFreq == None or self.NominalFreq == "" or self.NominalFreq == "Unknown":
                 self.NominalFreq = "60"
-            Tile = mytile.MyTile(self.log, title = "Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq),
+            Tile = MyTile(self.log, title = "Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq),
             callback = self.GetParameter,
             callbackparameters = (self.Reg.OUTPUT_FREQUENCY[REGISTER], None, 10.0, False, False, True))
             self.TileList.append(Tile)
 
             if self.NominalRPM == None or self.NominalRPM == "" or self.NominalRPM == "Unknown":
                 self.NominalRPM = "3600"
-            Tile = mytile.MyTile(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM),
+            Tile = MyTile(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM),
             callback = self.GetParameter,
             callbackparameters = (self.Reg.OUTPUT_RPM[REGISTER], None, None, False, True, False))
             self.TileList.append(Tile)
 
             # water temp between 170 and 200 is a normal range for a gen. most have a 180f thermostat
-            Tile = mytile.MyTile(self.log, title = "Coolant Temp", units = "F", type = "temperature", subtype = "coolant", nominal = 180, maximum = 300,
+            Tile = MyTile(self.log, title = "Coolant Temp", units = "F", type = "temperature", subtype = "coolant", nominal = 180, maximum = 300,
             callback = self.GetParameter,
             callbackparameters = (self.Reg.COOLANT_TEMP[REGISTER], None, None, False, True, False))
             self.TileList.append(Tile)
 
             if self.PowerMeterIsSupported():
-                Tile = mytile.MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = int(self.NominalKW),
+                Tile = MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = int(self.NominalKW),
                 callback = self.GetParameter,
                 callbackparameters = (self.Reg.TOTAL_POWER_KW[REGISTER], None, None, False, True, False))
                 self.TileList.append(Tile)
 
-                Tile = mytile.MyTile(self.log, title = "kW Output", type = "powergraph", nominal = int(self.NominalKW),
+                Tile = MyTile(self.log, title = "kW Output", type = "powergraph", nominal = int(self.NominalKW),
                 callback = self.GetParameter,
                 callbackparameters = (self.Reg.TOTAL_POWER_KW[REGISTER], None, None, False, True, False))
                 self.TileList.append(Tile)

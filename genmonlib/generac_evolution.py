@@ -11,10 +11,17 @@
 
 import datetime, time, sys, os, threading, socket
 import json, collections, math
-import httplib, re
+import re
 
-import controller, mymodbus, mythread, modbus_file, mytile
+try:
+    from httplib import HTTPSConnection
+except ImportError:
+     from http.client import HTTPSConnection
 
+from genmonlib.controller import GeneratorController
+from genmonlib.mytile import MyTile
+from genmonlib.modbus_file import ModbusFile
+from genmonlib.mymodbus import ModbusProtocol
 
 #-------------------Generator specific const defines for Generator class--------
 LOG_DEPTH               = 50
@@ -38,7 +45,7 @@ NEXUS_ALARM_LOG_END_REG         = ((NEXUS_ALARM_LOG_STARTING_REG + (NEXUS_ALARM_
 DEFAULT_THRESHOLD_VOLTAGE = 143
 DEFAULT_PICKUP_VOLTAGE = 190
 
-class Evolution(controller.GeneratorController):
+class Evolution(GeneratorController):
 
     #---------------------Evolution::__init__-----------------------------------
     def __init__(self,
@@ -217,11 +224,11 @@ class Evolution(controller.GeneratorController):
         try:
             #Starting device connection
             if self.Simulation:
-                self.ModBus = modbus_file.ModbusFile(self.UpdateRegisterList,
+                self.ModBus = ModbusFile(self.UpdateRegisterList,
                     inputfile = self.SimulationFile,
                     config = self.config)
             else:
-                self.ModBus = mymodbus.ModbusProtocol(self.UpdateRegisterList,
+                self.ModBus = ModbusProtocol(self.UpdateRegisterList,
                     config = self.config)
 
             self.Threads = self.MergeDicts(self.Threads, self.ModBus.Threads)
@@ -279,37 +286,37 @@ class Evolution(controller.GeneratorController):
     def SetupTiles(self):
 
         try:
-            Tile = mytile.MyTile(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = 12, callback = self.GetBatteryVoltage, callbackparameters = (True,))
+            Tile = MyTile(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = 12, callback = self.GetBatteryVoltage, callbackparameters = (True,))
             self.TileList.append(Tile)
-            Tile = mytile.MyTile(self.log, title = "Utility Voltage", units = "V", type = "linevolts", nominal = 240, callback = self.GetUtilityVoltage, callbackparameters = (True,))
+            Tile = MyTile(self.log, title = "Utility Voltage", units = "V", type = "linevolts", nominal = 240, callback = self.GetUtilityVoltage, callbackparameters = (True,))
             self.TileList.append(Tile)
-            Tile = mytile.MyTile(self.log, title = "Output Voltage", units = "V", type = "linevolts", nominal = 240, callback = self.GetVoltageOutput, callbackparameters = (True,))
+            Tile = MyTile(self.log, title = "Output Voltage", units = "V", type = "linevolts", nominal = 240, callback = self.GetVoltageOutput, callbackparameters = (True,))
             self.TileList.append(Tile)
 
             if self.NominalFreq == None or self.NominalFreq == "" or self.NominalFreq == "Unknown":
                 self.NominalFreq = "60"
-            Tile = mytile.MyTile(self.log, title = "Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq), callback = self.GetFrequency, callbackparameters = (False, True))
+            Tile = MyTile(self.log, title = "Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq), callback = self.GetFrequency, callbackparameters = (False, True))
             self.TileList.append(Tile)
 
             if self.NominalRPM == None or self.NominalRPM == "" or self.NominalRPM == "Unknown":
                 self.NominalRPM = "3600"
-            Tile = mytile.MyTile(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM), callback = self.GetRPM, callbackparameters = (True,))
+            Tile = MyTile(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM), callback = self.GetRPM, callbackparameters = (True,))
             self.TileList.append(Tile)
 
             if self.FuelSensorSupported():
-                Tile = mytile.MyTile(self.log, title = "Fuel", units = "%", type = "fuel", nominal = 100, callback = self.GetFuelSensor, callbackparameters = (True,))
+                Tile = MyTile(self.log, title = "Fuel", units = "%", type = "fuel", nominal = 100, callback = self.GetFuelSensor, callbackparameters = (True,))
                 self.TileList.append(Tile)
             elif self.FuelCalculationSupported():
                 if self.UseMetric:
                     Units = "L"
                 else:
                     Units = "gal"
-                Tile = mytile.MyTile(self.log, title = "Estimated Fuel", units = Units, type = "fuel", nominal = int(self.TankSize), callback = self.GetEstimatedFuelInTank, callbackparameters = (True,))
+                Tile = MyTile(self.log, title = "Estimated Fuel", units = Units, type = "fuel", nominal = int(self.TankSize), callback = self.GetEstimatedFuelInTank, callbackparameters = (True,))
                 self.TileList.append(Tile)
             if self.PowerMeterIsSupported():
-                Tile = mytile.MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = float(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
+                Tile = MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = float(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
                 self.TileList.append(Tile)
-                Tile = mytile.MyTile(self.log, title = "kW Output", type = "powergraph", nominal = float(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
+                Tile = MyTile(self.log, title = "kW Output", type = "powergraph", nominal = float(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
                 self.TileList.append(Tile)
 
         except Exception as e1:
@@ -676,7 +683,7 @@ class Evolution(controller.GeneratorController):
             myregex = re.compile('<.*?>')
 
             try:
-                conn = httplib.HTTPSConnection("www.generac.com", 443, timeout=10)
+                conn = HTTPSConnection("www.generac.com", 443, timeout=10)
                 conn.request("GET", "/GeneracCorporate/WebServices/GeneracSelfHelpWebService.asmx/GetSearchResults?query=" + SerialNumber, "",
                         headers={"User-Agent": "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)"})
                 r1 = conn.getresponse()

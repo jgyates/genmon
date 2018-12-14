@@ -17,9 +17,10 @@ import threading, datetime, collections, os, time
 # NOTE: collections OrderedDict is used for dicts that are displayed to the UI
 
 
-import mysupport, mypipe, mythread
+from genmonlib.mysupport import MySupport
+from genmonlib.mythread import MyThread 
 
-class GeneratorController(mysupport.MySupport):
+class GeneratorController(MySupport):
     #---------------------GeneratorController::__init__-------------------------
     def __init__(self,
         log,
@@ -127,15 +128,15 @@ class GeneratorController(mysupport.MySupport):
     # called after get config file, starts threads common to all controllers
     def StartCommonThreads(self):
 
-        self.Threads["CheckAlarmThread"] = mythread.MyThread(self.CheckAlarmThread, Name = "CheckAlarmThread")
+        self.Threads["CheckAlarmThread"] = MyThread(self.CheckAlarmThread, Name = "CheckAlarmThread")
         # start read thread to process incoming data commands
-        self.Threads["ProcessThread"] = mythread.MyThread(self.ProcessThread, Name = "ProcessThread")
+        self.Threads["ProcessThread"] = MyThread(self.ProcessThread, Name = "ProcessThread")
 
         if self.EnableDebug:        # for debugging registers
-            self.Threads["DebugThread"] = mythread.MyThread(self.DebugThread, Name = "DebugThread")
+            self.Threads["DebugThread"] = MyThread(self.DebugThread, Name = "DebugThread")
 
         # start thread for kw log
-        self.Threads["PowerMeter"] = mythread.MyThread(self.PowerMeter, Name = "PowerMeter")
+        self.Threads["PowerMeter"] = MyThread(self.PowerMeter, Name = "PowerMeter")
 
     # ---------- GeneratorController:ProcessThread------------------------------
     #  read registers, remove items from Buffer, form packets, store register data

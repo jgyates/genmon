@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.12.0 - 2018-12-14
+- Python 3 updates, still recommend using Python 2.7 as it has been tested more, but this update allows for greater compatibility with Python 3.5 
+
 ## V1.11.35 - 2018-12-13
 - Minor update to EvoLC ambient temp sensor (see Unsupported Sensors)
 - WIP updates for email test

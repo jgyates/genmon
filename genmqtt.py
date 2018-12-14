@@ -22,7 +22,13 @@ except Exception as e1:
    print("Error: " + str(e1))
    sys.exit(2)
 try:
-    from genmonlib import mycommon, mysupport, myclient, mylog, mythread, myconfig
+    from genmonlib.myclient import ClientInterface
+    from genmonlib.mylog import SetupLogger
+    from genmonlib.myconfig import MyConfig
+    from genmonlib.mysupport import MySupport
+    from genmonlib.mycommon import MyCommon
+    from genmonlib.mythread import MyThread
+
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
@@ -30,7 +36,7 @@ except Exception as e1:
     sys.exit(2)
 
 #------------ MyGenPush class --------------------------------------------------
-class MyGenPush(mysupport.MySupport):
+class MyGenPush(MySupport):
 
     #------------ MyGenPush::init-----------------------------------------------
     def __init__(self,
@@ -59,9 +65,9 @@ class MyGenPush(mysupport.MySupport):
             self.log = log
         else:
             # log errors in this module to a file
-            self.log = mylog.SetupLogger("client", "/var/log/mygenpush.log")
+            self.log = SetupLogger("client", "/var/log/mygenpush.log")
 
-        self.console = mylog.SetupLogger("mygenpush_console", log_file = "", stream = True)
+        self.console = SetupLogger("mygenpush_console", log_file = "", stream = True)
 
         self.AccessLock = threading.Lock()
         self.BlackList = blacklist
@@ -73,7 +79,7 @@ class MyGenPush(mysupport.MySupport):
             startcount = 0
             while startcount <= 10:
                 try:
-                    self.Generator = myclient.ClientInterface(host = host, log = log)
+                    self.Generator = ClientInterface(host = host, log = log)
                     break
                 except Exception as e1:
                     startcount += 1
@@ -84,7 +90,7 @@ class MyGenPush(mysupport.MySupport):
                     time.sleep(1)
                     continue
             # start thread to accept incoming sockets for nagios heartbeat
-            self.Threads["PollingThread"] = mythread.MyThread(self.MainPollingThread, Name = "PollingThread")
+            self.Threads["PollingThread"] = MyThread(self.MainPollingThread, Name = "PollingThread")
 
         except Exception as e1:
             self.LogErrorLine("Error in mygenpush init: "  + str(e1))
@@ -198,7 +204,7 @@ class MyGenPush(mysupport.MySupport):
         self.Generator.Close()
 
 #------------ MyMQTT class -----------------------------------------------------
-class MyMQTT(mycommon.MyCommon):
+class MyMQTT(MyCommon):
 
     #------------ MyMQTT::init--------------------------------------------------
     def __init__(self, log = None):
@@ -210,11 +216,11 @@ class MyMQTT(mycommon.MyCommon):
             self.log = log
         else:
             # log errors in this module to a file
-            self.log = mylog.SetupLogger("client", self.LogFileName)
+            self.log = SetupLogger("client", self.LogFileName)
 
         # cleanup
         # test
-        self.console = mylog.SetupLogger("mymqtt_console", log_file = "", stream = True)
+        self.console = SetupLogger("mymqtt_console", log_file = "", stream = True)
 
         self.Username = None
         self.Password = None
@@ -233,7 +239,7 @@ class MyMQTT(mycommon.MyCommon):
         self.Debug = False
 
         try:
-            config = myconfig.MyConfig(filename = '/etc/genmqtt.conf', section = 'genmqtt', log = log)
+            config = MyConfig(filename = '/etc/genmqtt.conf', section = 'genmqtt', log = log)
 
             self.Username = config.ReadValue('username')
 

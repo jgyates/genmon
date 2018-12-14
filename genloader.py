@@ -13,7 +13,9 @@ from subprocess import PIPE, Popen, call
 from shutil import copyfile
 
 try:
-    from genmonlib import mylog, mysupport, myconfig
+    from genmonlib.mysupport import MySupport
+    from genmonlib.mylog import SetupLogger
+    from genmonlib.myconfig import MyConfig
 
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
@@ -22,7 +24,7 @@ except Exception as e1:
     sys.exit(2)
 
 #------------ Loader class -----------------------------------------------------
-class Loader(mysupport.MySupport):
+class Loader(MySupport):
 
     def __init__(self,
         start = False,
@@ -55,11 +57,11 @@ class Loader(mysupport.MySupport):
 
         # log errors in this module to a file
         if log == None:
-            self.log = mylog.SetupLogger("genloader", loglocation + "genloader.log")
+            self.log = SetupLogger("genloader", loglocation + "genloader.log")
         else:
             self.log = log
 
-        self.console = mylog.SetupLogger("genloader_console", log_file = "", stream = True)
+        self.console = SetupLogger("genloader_console", log_file = "", stream = True)
 
         try:
             if self.Start:
@@ -78,7 +80,7 @@ class Loader(mysupport.MySupport):
                     self.LogInfo("Unable to find config file.")
                     sys.exit(2)
 
-            self.config = myconfig.MyConfig(filename = self.configfile, section = "genmon", log = self.log)
+            self.config = MyConfig(filename = self.configfile, section = "genmon", log = self.log)
             if not self.GetConfig():
                 self.LogInfo("Error reading config file. Exiting")
                 sys.exit(2)
@@ -286,8 +288,9 @@ class Loader(mysupport.MySupport):
                         LoadDict[Module] = 99
                 except Exception as e1:
                     self.LogInfo("Error reading load order (retrying): " + str(e1), LogLine = True)
-
-            for key, value in sorted(LoadDict.iteritems(), key=lambda (k,v): (v,k)):
+            #lambda kv: (-kv[1], kv[0])
+            for key, value in sorted(LoadDict.iteritems(), key=lambda kv: (-kv[1], kv[0])):
+            #for key, value in sorted(LoadDict.iteritems(), key=lambda (k,v): (v,k)):
                 LoadOrder.append(key)
         except Exception as e1:
             self.LogInfo("Error reading load order: " + str(e1), LogLine = True)
@@ -426,7 +429,7 @@ if __name__ == '__main__':
 
     for opt, arg in opts:
         if opt == '-h':
-            print HelpStr
+            print(HelpStr)
             sys.exit()
         elif opt in ("-s", "--start"):
             StartModules = True

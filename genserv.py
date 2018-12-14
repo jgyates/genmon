@@ -20,16 +20,27 @@ except Exception as e1:
 import sys, signal, os, socket, atexit, time, subprocess, json, threading, signal, errno, collections
 
 try:
-    from genmonlib import mylog, myclient, myconfig, mymail
+    from genmonlib.myclient import ClientInterface
+    from genmonlib.mylog import SetupLogger
+    from genmonlib.myconfig import MyConfig
+    from genmonlib.mymail import MyMail
+
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the original github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
     print("Error: " + str(e1))
     sys.exit(2)
 
+try:
+    from urllib.parse import urlparse
+    from urllib.parse import parse_qs
+    from urllib.parse import parse_qsl
+except ImportError:
+    from urlparse import urlparse
+    from urlparse import parse_qs
+    from urlparse import parse_qsl
 
-import urlparse
-import re, httplib, datetime
+import re, datetime
 
 
 #-------------------------------------------------------------------------------
@@ -310,7 +321,7 @@ def SendTestEmail(query_string):
         return "Error parsing parameters in email test: " + str(e1)
 
     try:
-        ReturnMessage = mymail.MyMail.TestSendSettings(
+        ReturnMessage = MyMail.TestSendSettings(
               smtp_server = smtp_server,
               smtp_port = smtp_port,
               email_account = email_account,
@@ -737,8 +748,8 @@ def SaveNotifications(query_string):
     notifications_order_string = email1@gmail.com
 
     '''
-    notifications = dict(urlparse.parse_qs(query_string, 1))
-    notifications_order_string = ",".join([v[0] for v in urlparse.parse_qsl(query_string, 1)])
+    notifications = dict(parse_qs(query_string, 1))
+    notifications_order_string = ",".join([v[0] for v in parse_qsl(query_string, 1)])
 
     oldEmailsList = []
     oldNotifications = {}
@@ -878,7 +889,7 @@ def SaveAdvancedSettings(query_string):
             LogError("Empty query string in SaveAdvancedSettings")
             return
         # e.g. {'displayunknown': ['true']}
-        settings = dict(urlparse.parse_qs(query_string, 1))
+        settings = dict(parse_qs(query_string, 1))
         if not len(settings):
             # nothing to change
             return
@@ -1034,7 +1045,7 @@ def GetAllConfigValues(FileName, section):
 
     ReturnDict = {}
     try:
-        config = myconfig.MyConfig(filename = FileName, section = section)
+        config = MyConfig(filename = FileName, section = section)
 
         for (key, value) in config.GetList():
             ReturnDict[key.lower()] = value
@@ -1125,7 +1136,7 @@ def SaveSettings(query_string):
     try:
 
         # e.g. {'displayunknown': ['true']}
-        settings = dict(urlparse.parse_qs(query_string, 1))
+        settings = dict(parse_qs(query_string, 1))
         if not len(settings):
             # nothing to change
             return
@@ -1249,7 +1260,7 @@ def LoadConfig():
             loglocation = ConfigFiles[GENMON_CONFIG].ReadValue('loglocation')
 
         # log errors in this module to a file
-        log = mylog.SetupLogger("genserv", loglocation + "genserv.log")
+        log = SetupLogger("genserv", loglocation + "genserv.log")
 
         if ConfigFiles[GENMON_CONFIG].HasOption('usehttps'):
             bUseSecureHTTP = ConfigFiles[GENMON_CONFIG].ReadValue('usehttps', return_type = bool)
@@ -1369,7 +1380,7 @@ if __name__ == "__main__":
     #signal.signal(signal.SIGINT, Close)
 
     # log errors in this module to a file
-    console = mylog.SetupLogger("genserv_console", log_file = "", stream = True)
+    console = SetupLogger("genserv_console", log_file = "", stream = True)
 
     if os.geteuid() != 0:
         LogConsole("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'.")
@@ -1384,7 +1395,7 @@ if __name__ == "__main__":
 
     ConfigFiles = {}
     for ConfigFile in ConfigFileList:
-        ConfigFiles[ConfigFile] = myconfig.MyConfig(filename = ConfigFile, log = console)
+        ConfigFiles[ConfigFile] = MyConfig(filename = ConfigFile, log = console)
 
     AppPath = sys.argv[0]
     if not LoadConfig():
@@ -1410,7 +1421,7 @@ if __name__ == "__main__":
     startcount = 0
     while startcount <= 4:
         try:
-            MyClientInterface = myclient.ClientInterface(host = address,port=clientport, log = log)
+            MyClientInterface = ClientInterface(host = address,port=clientport, log = log)
             break
         except Exception as e1:
             startcount += 1

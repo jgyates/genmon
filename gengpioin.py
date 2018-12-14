@@ -14,7 +14,8 @@
 import datetime, time, sys, signal, os, threading, socket
 import atexit
 try:
-    from genmonlib import myclient, mylog
+    from genmonlib.mylog import SetupLogger
+    from genmonlib.myclient import ClientInterface
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
@@ -70,12 +71,12 @@ if __name__=='__main__': # usage program.py [server_address]
     address='127.0.0.1' if len(sys.argv)<2 else sys.argv[1]
 
     try:
-        console = mylog.SetupLogger("gengpioin_console", log_file = "", stream = True)
-        log = mylog.SetupLogger("client", "/var/log/gengpioin.log")
+        console = SetupLogger("gengpioin_console", log_file = "", stream = True)
+        log = SetupLogger("client", "/var/log/gengpioin.log")
         # Set the signal handler
         signal.signal(signal.SIGINT, signal_handler)
 
-        MyClientInterface = myclient.ClientInterface(host = address, log = log)
+        MyClientInterface = ClientInterface(host = address, log = log)
 
         #setup GPIO using Board numbering
         GPIO.setmode(GPIO.BOARD)

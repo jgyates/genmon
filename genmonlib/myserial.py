@@ -12,11 +12,13 @@
 from __future__ import print_function       # For python 3.x compatibility with print function
 
 import datetime, threading, serial, sys
-import mylog, mythread, mysupport
 
+from genmonlib.mysupport import MySupport
+from genmonlib.mylog import SetupLogger
+from genmonlib.mythread import MyThread
 
 #------------ SerialDevice class -----------------------------------------------
-class SerialDevice(mysupport.MySupport):
+class SerialDevice(MySupport):
     def __init__(self, name = '/dev/serial0', rate=9600, log = None, Parity = None, OnePointFiveStopBits = None, RtsCts = False, config = None):
 
         super(SerialDevice, self).__init__()
@@ -37,7 +39,7 @@ class SerialDevice(mysupport.MySupport):
 
         # log errors in this module to a file
         if log == None:
-            self.log = mylog.SetupLogger("myserial", self.loglocation + "myserial.log")
+            self.log = SetupLogger("myserial", self.loglocation + "myserial.log")
         else:
             self.log = log
 
@@ -88,7 +90,7 @@ class SerialDevice(mysupport.MySupport):
     def StartReadThread(self):
 
         # start read thread to monitor incoming data commands
-        self.Threads["SerialReadThread"] = mythread.MyThread(self.ReadThread, Name = "SerialReadThread")
+        self.Threads["SerialReadThread"] = MyThread(self.ReadThread, Name = "SerialReadThread")
 
         return self.Threads["SerialReadThread"]
 

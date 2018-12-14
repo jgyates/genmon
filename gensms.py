@@ -14,7 +14,9 @@ import datetime, time, sys, signal, os, threading, socket
 import atexit
 
 try:
-    from genmonlib import mynotify, mylog, myconfig
+    from genmonlib.myconfig import MyConfig
+    from genmonlib.mylog import SetupLogger
+    from genmonlib.mynotify import GenNotify
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
@@ -146,12 +148,12 @@ if __name__=='__main__': # usage program.py [server_address]
         print("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
         sys.exit(2)
 
-    console = mylog.SetupLogger("sms_console", log_file = "", stream = True)
-    log = mylog.SetupLogger("client", "/var/log/gensms.log")
+    console = SetupLogger("sms_console", log_file = "", stream = True)
+    log = SetupLogger("client", "/var/log/gensms.log")
 
     try:
 
-        config = myconfig.MyConfig(filename = '/etc/gensms.conf', section = 'gensms', log = log)
+        config = MyConfig(filename = '/etc/gensms.conf', section = 'gensms', log = log)
 
         account_sid = config.ReadValue('accountsid', default = "")
         auth_token = config.ReadValue('authtoken', default = "")
@@ -168,7 +170,7 @@ if __name__=='__main__': # usage program.py [server_address]
         console.error("Error reading /etc/gensms.conf: " + str(e1))
         sys.exit(1)
     try:
-        GenNotify = mynotify.GenNotify(
+        GenNotify = GenNotify(
                                         host = address,
                                         onready = OnReady,
                                         onexercise = OnExercise,

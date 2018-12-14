@@ -14,10 +14,11 @@
 from subprocess import PIPE, Popen
 import os, sys, subprocess, re, datetime
 import collections
-import mycommon
+
+from genmonlib.mycommon import MyCommon
 
 #------------ MyPlatform class -------------------------------------------------
-class MyPlatform(mycommon.MyCommon):
+class MyPlatform(MyCommon):
 
     #------------ MyPlatform::init----------------------------------------------
     def __init__(self, log = None, usemetric = True):

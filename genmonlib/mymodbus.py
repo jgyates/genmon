@@ -12,7 +12,10 @@
 from __future__ import print_function       # For python 3.x compatibility with print function
 
 import datetime, threading, crcmod, sys, time, collections
-import mylog, mythread, myserial, mycommon, modbusbase, myserialtcp
+
+from genmonlib.modbusbase import ModbusBase
+from genmonlib.myserial import SerialDevice
+from genmonlib.myserialtcp import SerialTCPDevice
 
 #--------------------- MODBUS specific Const defines for Generator class--------
 # Packet offsets
@@ -82,7 +85,7 @@ MBUS_EXCEP_GATEWAY      = 0x10      # Gateway Path Unavailable
 MBUS_EXCEP_GATEWAY_TG   = 0x11      #Gateway Target Device Failed to Respond
 
 #------------ ModbusProtocol class ---------------------------------------------
-class ModbusProtocol(modbusbase.ModbusBase):
+class ModbusProtocol(ModbusBase):
     def __init__(self,
         updatecallback,
         address = 0x9d,
@@ -106,9 +109,9 @@ class ModbusProtocol(modbusbase.ModbusBase):
                 self.ModBusPacketTimoutMS = self.ModBusPacketTimoutMS
             #Starting serial connection
             if self.UseTCP:
-                self.Slave = myserialtcp.SerialTCPDevice(config = self.config)
+                self.Slave = SerialTCPDevice(config = self.config)
             else:
-                self.Slave = myserial.SerialDevice(name = name, rate = rate, Parity = Parity, OnePointFiveStopBits = OnePointFiveStopBits, config = self.config)
+                self.Slave = SerialDevice(name = name, rate = rate, Parity = Parity, OnePointFiveStopBits = OnePointFiveStopBits, config = self.config)
             self.Threads = self.MergeDicts(self.Threads, self.Slave.Threads)
 
 

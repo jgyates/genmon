@@ -21,13 +21,16 @@ from email.utils import COMMASPACE, formatdate
 import atexit
 from shutil import copyfile
 
-import mylog, mythread, mysupport, myconfig
+from genmonlib.myconfig import MyConfig
+from genmonlib.mysupport import MySupport
+from genmonlib.mylog import SetupLogger
+from genmonlib.mythread import MyThread
 
 #imaplib.Debug = 4
 
 
 #------------ MyMail class -----------------------------------------------------
-class MyMail(mysupport.MySupport):
+class MyMail(MySupport):
     def __init__(self,
         monitor = False,
         incoming_folder = None,
@@ -63,7 +66,7 @@ class MyMail(mysupport.MySupport):
             self.logfile = loglocation + "mymail.log"
             self.configfile = self.ConfigFilePath + "mymail.conf"
 
-        self.log = mylog.SetupLogger("mymail", self.logfile)
+        self.log = SetupLogger("mymail", self.logfile)
 
         # if mymail.conf is not in the /etc directory attempt to copy it from the
         # main source directory
@@ -76,7 +79,7 @@ class MyMail(mysupport.MySupport):
                 sys.exit(1)
 
 
-        self.config = myconfig.MyConfig(filename = self.configfile, section = "MyMail", log = self.log)
+        self.config = MyConfig(filename = self.configfile, section = "MyMail", log = self.log)
 
         self.GetConfig()
 
@@ -96,13 +99,13 @@ class MyMail(mysupport.MySupport):
 
         if not self.DisableEmail:
             if not self.DisableSMTP and self.SMTPServer != "":
-                self.Threads["SendMailThread"] = mythread.MyThread(self.SendMailThread, Name = "SendMailThread", start = start)
+                self.Threads["SendMailThread"] = MyThread(self.SendMailThread, Name = "SendMailThread", start = start)
             else:
                 self.LogError("SMTP disabled")
 
             if not self.DisableIMAP and self.Monitor and self.IMAPServer != "":     # if True then we will have an IMAP monitor thread
                 if incoming_callback and incoming_folder and processed_folder:
-                    self.Threads["EmailCommandThread"] = mythread.MyThread(self.EmailCommandThread, Name = "EmailCommandThread", start = start)
+                    self.Threads["EmailCommandThread"] = MyThread(self.EmailCommandThread, Name = "EmailCommandThread", start = start)
                 else:
                     self.FatalError("ERROR: incoming_callback, incoming_folder and processed_folder are required if receive IMAP is used")
             else:

@@ -13,10 +13,10 @@
 #
 #-------------------------------------------------------------------------------
 
-import mycommon
+from genmonlib.mycommon import MyCommon
 
 # See http://bernii.github.io/gauge.js/ for gauage paraeters
-class MyTile (mycommon.MyCommon):
+class MyTile (MyCommon):
     #---------------------MyTile::__init__--------------------------------------
     def __init__(self, log, title = None, units = None, type = None, subtype = None,
         nominal = None, minimum = None, maximum = None, divisions = None, subdivisions = None,
