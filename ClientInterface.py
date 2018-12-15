@@ -10,7 +10,8 @@
 import datetime, time, sys, smtplib, signal, os, threading, socket
 
 try:
-    from genmonlib import mylog, myclient
+    from genmonlib.mylog import SetupLogger
+    from genmonlib.myclient import ClientInterface
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
@@ -29,8 +30,8 @@ if __name__=='__main__': # usage program.py [server_address]
     address='localhost' if len(sys.argv)<2 else sys.argv[1]
 
     # log errors in this module to a file
-    console = mylog.SetupLogger("client_console", log_file = "", stream = True)
-    log = mylog.SetupLogger("client", "client.log")
+    console = SetupLogger("client_console", log_file = "", stream = True)
+    log = SetupLogger("client", "client.log")
 
     # Set the signal handler
     signal.signal(signal.SIGINT, signal_handler)
@@ -38,7 +39,7 @@ if __name__=='__main__': # usage program.py [server_address]
     startcount = 0
     while startcount <= 2:
         try:
-            MyClientInterface = myclient.ClientInterface(host = address, log = log)
+            MyClientInterface = ClientInterface(host = address, log = log)
             break
         except Exception as e1:
             startcount += 1
