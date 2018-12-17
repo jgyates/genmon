@@ -9,7 +9,9 @@
 #-------------------------------------------------------------------------------
 
 import datetime, time, threading, collections
-import mysupport, mythread
+
+from genmonlib.mysupport import MySupport
+from genmonlib.mythread import MyThread
 
 try:
     import pyowm
@@ -17,7 +19,7 @@ try:
 except:
     pyowm_installed = False
 
-class MyWeather(mysupport.MySupport):
+class MyWeather(MySupport):
     #---------------------__init__----------------------------------------------
     def __init__(self, apikey, location, log = None, unit = 'imperial'):
         super(MyWeather, self).__init__()
@@ -45,7 +47,7 @@ class MyWeather(mysupport.MySupport):
                 return
 
             self.InitOWM()
-            self.Threads["WeatherThread"] = mythread.MyThread(self.WeatherThread, Name = "WeatherThread")
+            self.Threads["WeatherThread"] = MyThread(self.WeatherThread, Name = "WeatherThread")
         except Exception as e1:
             self.LogErrorLine("Error on MyWeather:init: " + str(e1))
 
@@ -208,7 +210,7 @@ class MyWeather(mysupport.MySupport):
                     Data["icon"] = self.WeatherData.get_weather_icon_name()     # Get OWM weather icon code
 
             return Data
-        except Exception, e1:
+        except Exception as e1:
             self.LogErrorLine("Error in GetWeather: " + str(e1))
             return Data
 

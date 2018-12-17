@@ -17,9 +17,10 @@ import threading, datetime, collections, os, time
 # NOTE: collections OrderedDict is used for dicts that are displayed to the UI
 
 
-import mysupport, mypipe, mythread
+from genmonlib.mysupport import MySupport
+from genmonlib.mythread import MyThread 
 
-class GeneratorController(mysupport.MySupport):
+class GeneratorController(MySupport):
     #---------------------GeneratorController::__init__-------------------------
     def __init__(self,
         log,
@@ -72,7 +73,7 @@ class GeneratorController(mysupport.MySupport):
         self.NominalKW = "Unknown"
         self.Model = "Unknown"
         self.EngineDisplacement = "Unknown"
-        self.TankSize = None
+        self.TankSize = 0
 
         self.ProgramStartTime = datetime.datetime.now()     # used for com metrics
         self.OutageStartTime = self.ProgramStartTime        # if these two are the same, no outage has occured
@@ -112,8 +113,7 @@ class GeneratorController(mysupport.MySupport):
                 if self.config.HasOption('fueltype'):
                     self.FuelType = self.config.ReadValue('fueltype')
 
-                if self.config.HasOption('tanksize'):
-                    self.TankSize = self.config.ReadValue('tanksize')
+                self.TankSize = self.config.ReadValue('tanksize', return_type = int, default  = 0)
 
                 self.SmartSwitch = self.config.ReadValue('smart_transfer_switch', return_type = bool, default = False)
 
@@ -128,15 +128,15 @@ class GeneratorController(mysupport.MySupport):
     # called after get config file, starts threads common to all controllers
     def StartCommonThreads(self):
 
-        self.Threads["CheckAlarmThread"] = mythread.MyThread(self.CheckAlarmThread, Name = "CheckAlarmThread")
+        self.Threads["CheckAlarmThread"] = MyThread(self.CheckAlarmThread, Name = "CheckAlarmThread")
         # start read thread to process incoming data commands
-        self.Threads["ProcessThread"] = mythread.MyThread(self.ProcessThread, Name = "ProcessThread")
+        self.Threads["ProcessThread"] = MyThread(self.ProcessThread, Name = "ProcessThread")
 
         if self.EnableDebug:        # for debugging registers
-            self.Threads["DebugThread"] = mythread.MyThread(self.DebugThread, Name = "DebugThread")
+            self.Threads["DebugThread"] = MyThread(self.DebugThread, Name = "DebugThread")
 
         # start thread for kw log
-        self.Threads["PowerMeter"] = mythread.MyThread(self.PowerMeter, Name = "PowerMeter")
+        self.Threads["PowerMeter"] = MyThread(self.PowerMeter, Name = "PowerMeter")
 
     # ---------- GeneratorController:ProcessThread------------------------------
     #  read registers, remove items from Buffer, form packets, store register data
@@ -1056,7 +1056,7 @@ class GeneratorController(mysupport.MySupport):
         if self.FuelSensorSupported():
             FuelLevel = float(self.GetFuelSensor(ReturnInt = True))
         else:
-            if self.TankSize == None or self.TankSize == "0" or self.TankSize == "":
+            if self.TankSize == 0:
                 return None
             FuelInTank = self.GetEstimatedFuelInTank(ReturnFloat = True)
 
@@ -1081,11 +1081,11 @@ class GeneratorController(mysupport.MySupport):
             if FuelLevel == None:
                 return True
 
-            if RemainingFuel <= 10:    # Ten percent left
+            if FuelLevel <= 10:    # Ten percent left
                 msgbody = "Warning: The estimated fuel in the tank is at or below 10%"
                 self.MessagePipe.SendMessage("Warning: Fuel Level at or below 10%" , msgbody, msgtype = "warn", onlyonce = True)
                 return False
-            elif RemainingFuel <= 20:    # 20 percent left
+            elif FuelLevel <= 20:    # 20 percent left
                 msgbody = "Warning: The estimated fuel in the tank is at or below 20%"
                 self.MessagePipe.SendMessage("Warning: Fuel Level at or below 20%" , msgbody, msgtype = "warn", onlyonce = True)
                 return False
@@ -1106,7 +1106,7 @@ class GeneratorController(mysupport.MySupport):
         if not self.FuelCalculationSupported():
             return DefaultReturn
 
-        if self.TankSize == None or self.TankSize == "0" or self.TankSize == "":
+        if self.TankSize == 0:
             return DefaultReturn
         try:
             FuelUsed = self.GetPowerHistory("power_log_json=0,fuel")

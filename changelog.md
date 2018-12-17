@@ -1,6 +1,34 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.12.0 - 2018-12-13
+- Python 3 updates, still recommend using Python 2.7 as it has been tested more, but this update allows for greater compatibility with Python 3.5
+
+## V1.11.35 - 2018-12-13
+- Minor update to EvoLC ambient temp sensor (see Unsupported Sensors)
+- WIP updates for email test
+
+## V1.11.34 - 2018-12-10
+- Added more parameter validation for TankSize
+- Updated favicon.ico for web interface
+- Added code for future features
+- Added fuel consumption polynomials for RG022,RG027,RG032,RG038,RG048
+
+## V1.11.33 - 2018-12-10
+- Corrected bug in error handling in mymail.py
+
+## V1.11.32 - 2018-12-09
+- Fixed bug in CurrentDivider not accepting a decimal value between 0 and 1
+
+## V1.11.31 - 2018-12-08
+- Added SSL/TLS option for MQTT add on program (genmqtt.py)
+
+## V1.11.30 - 2018-12-05
+- Created button on About page to download configuration files for backup purposes
+
+## V1.11.29 - 2018-12-02
+- Fixed on bug for fuel level reporting
+
 ## V1.11.28 - 2018-11-29
 - WIP updates for Python3
 

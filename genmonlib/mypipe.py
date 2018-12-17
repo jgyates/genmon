@@ -10,10 +10,12 @@
 #-------------------------------------------------------------------------------
 
 import os, sys, time, json, threading
-import mythread, mysupport
+
+from genmonlib.mysupport import MySupport
+from genmonlib.mythread import MyThread
 
 #------------ MyPipe class -----------------------------------------------------
-class MyPipe(mysupport.MySupport):
+class MyPipe(MySupport):
     #------------ MyPipe::init--------------------------------------------------
     def __init__(self, name, callback = None, Reuse = False, log = None, simulation = False, nullpipe = False):
         super(MyPipe, self).__init__(simulation = simulation)
@@ -44,7 +46,7 @@ class MyPipe(mysupport.MySupport):
             self.LogErrorLine("Error in MyPipe:__init__: " + str(e1))
 
         if self.NullPipe or not self.Callback == None or not self.Simulation:
-            self.Threads[self.ThreadName] = mythread.MyThread(self.ReadPipeThread, Name = self.ThreadName)
+            self.Threads[self.ThreadName] = MyThread(self.ReadPipeThread, Name = self.ThreadName)
 
 
     #------------ MyPipe::Write-------------------------------------------------

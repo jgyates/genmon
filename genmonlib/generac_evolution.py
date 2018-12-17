@@ -11,10 +11,17 @@
 
 import datetime, time, sys, os, threading, socket
 import json, collections, math
-import httplib, re
+import re
 
-import controller, mymodbus, mythread, modbus_file, mytile
+try:
+    from httplib import HTTPSConnection
+except ImportError:
+     from http.client import HTTPSConnection
 
+from genmonlib.controller import GeneratorController
+from genmonlib.mytile import MyTile
+from genmonlib.modbus_file import ModbusFile
+from genmonlib.mymodbus import ModbusProtocol
 
 #-------------------Generator specific const defines for Generator class--------
 LOG_DEPTH               = 50
@@ -38,7 +45,7 @@ NEXUS_ALARM_LOG_END_REG         = ((NEXUS_ALARM_LOG_STARTING_REG + (NEXUS_ALARM_
 DEFAULT_THRESHOLD_VOLTAGE = 143
 DEFAULT_PICKUP_VOLTAGE = 190
 
-class Evolution(controller.GeneratorController):
+class Evolution(GeneratorController):
 
     #---------------------Evolution::__init__-----------------------------------
     def __init__(self,
@@ -129,7 +136,7 @@ class Evolution(controller.GeneratorController):
                     "0055" : [2, 0],     # Unknown
                     "0056" : [2, 0],     # Unknown Looks like some status bits (0000 to 0003, back to 0000 on stop)
                     "0057" : [2, 0],     # Unknown Looks like some status bits (0002 to 0005 when engine starts, back to 0002 on stop)
-                    "0058" : [2, 0],     # CT Sensor (EvoLC)
+                    "0058" : [2, 0],     # Hall Effect Sensor (EvoLC)
                     "0059" : [2, 0],     # Rated Volts (EvoLC)
                     "005a" : [2, 0],     # Rated Hz (EvoLC)
                     "005d" : [2, 0],     # Fuel Pressure Sensor, Moves between 0x55 - 0x58 continuously even when engine off
@@ -217,11 +224,11 @@ class Evolution(controller.GeneratorController):
         try:
             #Starting device connection
             if self.Simulation:
-                self.ModBus = modbus_file.ModbusFile(self.UpdateRegisterList,
+                self.ModBus = ModbusFile(self.UpdateRegisterList,
                     inputfile = self.SimulationFile,
                     config = self.config)
             else:
-                self.ModBus = mymodbus.ModbusProtocol(self.UpdateRegisterList,
+                self.ModBus = ModbusProtocol(self.UpdateRegisterList,
                     config = self.config)
 
             self.Threads = self.MergeDicts(self.Threads, self.ModBus.Threads)
@@ -279,37 +286,37 @@ class Evolution(controller.GeneratorController):
     def SetupTiles(self):
 
         try:
-            Tile = mytile.MyTile(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = 12, callback = self.GetBatteryVoltage, callbackparameters = (True,))
+            Tile = MyTile(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = 12, callback = self.GetBatteryVoltage, callbackparameters = (True,))
             self.TileList.append(Tile)
-            Tile = mytile.MyTile(self.log, title = "Utility Voltage", units = "V", type = "linevolts", nominal = 240, callback = self.GetUtilityVoltage, callbackparameters = (True,))
+            Tile = MyTile(self.log, title = "Utility Voltage", units = "V", type = "linevolts", nominal = 240, callback = self.GetUtilityVoltage, callbackparameters = (True,))
             self.TileList.append(Tile)
-            Tile = mytile.MyTile(self.log, title = "Output Voltage", units = "V", type = "linevolts", nominal = 240, callback = self.GetVoltageOutput, callbackparameters = (True,))
+            Tile = MyTile(self.log, title = "Output Voltage", units = "V", type = "linevolts", nominal = 240, callback = self.GetVoltageOutput, callbackparameters = (True,))
             self.TileList.append(Tile)
 
             if self.NominalFreq == None or self.NominalFreq == "" or self.NominalFreq == "Unknown":
                 self.NominalFreq = "60"
-            Tile = mytile.MyTile(self.log, title = "Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq), callback = self.GetFrequency, callbackparameters = (False, True))
+            Tile = MyTile(self.log, title = "Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq), callback = self.GetFrequency, callbackparameters = (False, True))
             self.TileList.append(Tile)
 
             if self.NominalRPM == None or self.NominalRPM == "" or self.NominalRPM == "Unknown":
                 self.NominalRPM = "3600"
-            Tile = mytile.MyTile(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM), callback = self.GetRPM, callbackparameters = (True,))
+            Tile = MyTile(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM), callback = self.GetRPM, callbackparameters = (True,))
             self.TileList.append(Tile)
 
             if self.FuelSensorSupported():
-                Tile = mytile.MyTile(self.log, title = "Fuel", units = "%", type = "fuel", nominal = 100, callback = self.GetFuelSensor, callbackparameters = (True,))
+                Tile = MyTile(self.log, title = "Fuel", units = "%", type = "fuel", nominal = 100, callback = self.GetFuelSensor, callbackparameters = (True,))
                 self.TileList.append(Tile)
             elif self.FuelCalculationSupported():
                 if self.UseMetric:
                     Units = "L"
                 else:
                     Units = "gal"
-                Tile = mytile.MyTile(self.log, title = "Estimated Fuel", units = Units, type = "fuel", nominal = int(self.TankSize), callback = self.GetEstimatedFuelInTank, callbackparameters = (True,))
+                Tile = MyTile(self.log, title = "Estimated Fuel", units = Units, type = "fuel", nominal = int(self.TankSize), callback = self.GetEstimatedFuelInTank, callbackparameters = (True,))
                 self.TileList.append(Tile)
             if self.PowerMeterIsSupported():
-                Tile = mytile.MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = float(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
+                Tile = MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = float(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
                 self.TileList.append(Tile)
-                Tile = mytile.MyTile(self.log, title = "kW Output", type = "powergraph", nominal = float(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
+                Tile = MyTile(self.log, title = "kW Output", type = "powergraph", nominal = float(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
                 self.TileList.append(Tile)
 
         except Exception as e1:
@@ -442,7 +449,7 @@ class Evolution(controller.GeneratorController):
         if not self.FuelConsumptionSupported():
             return False
 
-        if self.TankSize == None or self.TankSize == "0" or self.TankSize == "":
+        if self.TankSize == 0:
             return False
         return True
 
@@ -676,7 +683,7 @@ class Evolution(controller.GeneratorController):
             myregex = re.compile('<.*?>')
 
             try:
-                conn = httplib.HTTPSConnection("www.generac.com", 443, timeout=10)
+                conn = HTTPSConnection("www.generac.com", 443, timeout=10)
                 conn.request("GET", "/GeneracCorporate/WebServices/GeneracSelfHelpWebService.asmx/GetSearchResults?query=" + SerialNumber, "",
                         headers={"User-Agent": "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)"})
                 r1 = conn.getresponse()
@@ -1802,9 +1809,11 @@ class Evolution(controller.GeneratorController):
              # get UKS
             Value = self.GetUnknownSensor("05ed")
             if len(Value):
-                SensorValue = float(Value)
-                # This forumla is loosely based on an Omgeo Thermistor with the model number 44005.
-                Celsius =1/(0.0013923+0.0002373*(math.log(SensorValue*70))+0.00000009827*((math.log(SensorValue*70))**3))-273.15
+                # Shift by one then  apply this polynomial
+                # The shift by one appears
+                # Sensor values odd below 60 decimal, even above 60 decimal (60 shift right 1 is 30 which is 11.5C or 52.7F)
+                SensorValue = int(Value) >> 1
+                Celsius = float((-0.2081* SensorValue**2)+(10.928*SensorValue)-129.02)
                 Fahrenheit = 9.0/5.0 * Celsius + 32
                 CStr = "%.1f" % Celsius
                 FStr = "%.1f" % Fahrenheit
@@ -2741,20 +2750,20 @@ class Evolution(controller.GeneratorController):
                 return DefaultReturn
 
             if self.EvolutionController and self.LiquidCooled:
-                Value = self.GetRegisterValueFromList("0058")
+                Value = self.GetRegisterValueFromList("0058")   # Hall Effect Sensor
                 DebugInfo += Value
                 if len(Value):
                     CurrentFloat = int(Value,16)
                 else:
                     CurrentFloat = 0.0
 
-                if self.CurrentDivider == None or self.CurrentDivider < 1:
-                    Divisor = 30.0/67.0
+                if self.CurrentDivider == None or self.CurrentDivider <= 0:
+                    Divisor = 0.425    #30.0/67.0
                 else:
                     Divisor = self.CurrentDivider
 
                 if self.CurrentOffset == None:
-                    CurrentOffset = -1939.0/6.0
+                    CurrentOffset = -323.31     #-1939.0/6.0
                 else:
                     CurrentOffset = self.CurrentOffset
 
@@ -2804,7 +2813,7 @@ class Evolution(controller.GeneratorController):
                 LookUpReturn = ModelLookUp_EvoAC.get(int(Value,16), None)
 
 
-                if self.CurrentDivider == None or self.CurrentDivider < 1:
+                if self.CurrentDivider == None or self.CurrentDivider <= 0:
                     if LookUpReturn == None:
                         Divisor = (22.0 / float(self.NominalKW)) * 22       # Default Divisor
                     else:

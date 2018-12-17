@@ -14,21 +14,29 @@ from __future__ import print_function       # For python 3.x compatibility with 
 
 import datetime, time, sys, signal, os, threading, socket
 import atexit, json, collections, random
-import httplib, re
+import re
 from subprocess import PIPE, Popen
 
 try:
-    from genmonlib import mymail, mylog, mythread, mypipe, mysupport, generac_evolution, generac_HPanel, myplatform, myweather, myconfig
+    from genmonlib.mylog import SetupLogger
+    from genmonlib.myconfig import MyConfig
+    from genmonlib.mymail import MyMail
+    from genmonlib.mythread import MyThread
+    from genmonlib.mysupport import MySupport
+    from genmonlib.mypipe import MyPipe
+    from genmonlib.generac_evolution import Evolution
+    from genmonlib.generac_HPanel import HPanel
+    from genmonlib.myweather import MyWeather
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.11.28"
+GENMON_VERSION = "V1.12.0"
 
 #------------ Monitor class ----------------------------------------------------
-class Monitor(mysupport.MySupport):
+class Monitor(MySupport):
 
     def __init__(self, ConfigFilePath = None):
         super(Monitor, self).__init__()
@@ -82,7 +90,7 @@ class Monitor(mysupport.MySupport):
         self.Simulation = False
         self.SimulationFile = None
 
-        self.console = mylog.SetupLogger("genmon_console", log_file = "", stream = True)
+        self.console = SetupLogger("genmon_console", log_file = "", stream = True)
 
         if os.geteuid() != 0:
             self.LogConsole("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'.")
@@ -96,16 +104,16 @@ class Monitor(mysupport.MySupport):
             sys.exit(1)
 
         # log errors in this module to a file
-        self.log = mylog.SetupLogger("genmon", self.LogLocation + "genmon.log")
+        self.log = SetupLogger("genmon", self.LogLocation + "genmon.log")
 
-        self.config = myconfig.MyConfig(filename = self.ConfigFilePath + 'genmon.conf', section = "GenMon", log = self.console)
+        self.config = MyConfig(filename = self.ConfigFilePath + 'genmon.conf', section = "GenMon", log = self.console)
         # read config file
         if not self.GetConfig():
             self.LogConsole("Failure in Monitor GetConfig")
             sys.exit(1)
 
         # log errors in this module to a file
-        self.log = mylog.SetupLogger("genmon", self.LogLocation + "genmon.log")
+        self.log = SetupLogger("genmon", self.LogLocation + "genmon.log")
 
         self.config.log = self.log
 
@@ -126,16 +134,16 @@ class Monitor(mysupport.MySupport):
         signal.signal(signal.SIGINT, self.Close)
 
         # start thread to accept incoming sockets for nagios heartbeat and command / status clients
-        self.Threads["InterfaceServerThread"] = mythread.MyThread(self.InterfaceServerThread, Name = "InterfaceServerThread")
+        self.Threads["InterfaceServerThread"] = MyThread(self.InterfaceServerThread, Name = "InterfaceServerThread")
 
         # init mail, start processing incoming email
-        self.mail = mymail.MyMail(monitor=True, incoming_folder = self.IncomingEmailFolder, processed_folder =self.ProcessedEmailFolder,incoming_callback = self.ProcessCommand)
+        self.mail = MyMail(monitor=True, incoming_folder = self.IncomingEmailFolder, processed_folder =self.ProcessedEmailFolder,incoming_callback = self.ProcessCommand)
         self.Threads = self.MergeDicts(self.Threads, self.mail.Threads)
         self.MailInit = True
 
-        self.FeedbackPipe = mypipe.MyPipe("Feedback", self.FeedbackReceiver, log = self.log)
+        self.FeedbackPipe = MyPipe("Feedback", self.FeedbackReceiver, log = self.log)
         self.Threads = self.MergeDicts(self.Threads, self.FeedbackPipe.Threads)
-        self.MessagePipe = mypipe.MyPipe("Message", self.MessageReceiver, log = self.log, nullpipe = self.mail.DisableSNMP)
+        self.MessagePipe = MyPipe("Message", self.MessageReceiver, log = self.log, nullpipe = self.mail.DisableSNMP)
         self.Threads = self.MergeDicts(self.Threads, self.MessagePipe.Threads)
 
         try:
@@ -148,9 +156,9 @@ class Monitor(mysupport.MySupport):
                 self.ControllerSelected = "generac_evo_nexus"
 
             if self.ControllerSelected.lower() == "h_100" :
-                self.Controller = generac_HPanel.HPanel(self.log, newinstall = self.NewInstall, simulation = self.Simulation, simulationfile = self.SimulationFile, message = self.MessagePipe, feedback = self.FeedbackPipe, config = self.config)
+                self.Controller = HPanel(self.log, newinstall = self.NewInstall, simulation = self.Simulation, simulationfile = self.SimulationFile, message = self.MessagePipe, feedback = self.FeedbackPipe, config = self.config)
             else:
-                self.Controller = generac_evolution.Evolution(self.log, self.NewInstall, simulation = self.Simulation, simulationfile = self.SimulationFile, message = self.MessagePipe, feedback = self.FeedbackPipe, config = self.config)
+                self.Controller = Evolution(self.log, self.NewInstall, simulation = self.Simulation, simulationfile = self.SimulationFile, message = self.MessagePipe, feedback = self.FeedbackPipe, config = self.config)
             self.Threads = self.MergeDicts(self.Threads, self.Controller.Threads)
 
         except Exception as e1:
@@ -172,14 +180,14 @@ class Monitor(mysupport.MySupport):
 
         try:
             # start thread to accept incoming sockets for nagios heartbeat
-            self.Threads["ComWatchDog"] = mythread.MyThread(self.ComWatchDog, Name = "ComWatchDog")
+            self.Threads["ComWatchDog"] = MyThread(self.ComWatchDog, Name = "ComWatchDog")
 
             if self.bSyncDST or self.bSyncTime:     # Sync time thread
-                self.Threads["TimeSyncThread"] = mythread.MyThread(self.TimeSyncThread, Name = "TimeSyncThread")
+                self.Threads["TimeSyncThread"] = MyThread(self.TimeSyncThread, Name = "TimeSyncThread")
 
             if not self.DisableWeather and not self.WeatherAPIKey == None and len(self.WeatherAPIKey) and not self.WeatherLocation == None and len(self.WeatherLocation):
                 Unit = 'metric' if self.UseMetric else 'imperial'
-                self.MyWeather = myweather.MyWeather(self.WeatherAPIKey, location = self.WeatherLocation, unit = Unit, log = self.log)
+                self.MyWeather = MyWeather(self.WeatherAPIKey, location = self.WeatherLocation, unit = Unit, log = self.log)
                 self.Threads = self.MergeDicts(self.Threads, self.MyWeather.Threads)
         except Exception as e1:
             self.LogErrorLine("Error in StartThreads: " + str(e1))
@@ -501,7 +509,7 @@ class Monitor(mysupport.MySupport):
                     continue
                 item = item.strip()
                 LookUp = item
-                if "=" in item:
+                if b"=" in item:
                     BaseCmd = item.split('=')
                     LookUp = BaseCmd[0]
                 # check if we disallow write commands via email
@@ -726,7 +734,7 @@ class Monitor(mysupport.MySupport):
 
         # This is done is a separate thread as not to block any return email processing
         # since we attempt to sync with generator time
-        mythread.MyThread(self.Controller.SetGeneratorTimeDate, Name = "SetTimeThread")
+        MyThread(self.Controller.SetGeneratorTimeDate, Name = "SetTimeThread")
         return "Time Set: Command Sent\n"
 
     #----------  Monitor::TimeSyncThread----------------------------------------

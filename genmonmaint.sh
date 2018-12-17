@@ -21,16 +21,26 @@ function copyconffiles() {
 #-------------------------------------------------------------------
 # This function will update the pip libraries used
 function updatelibraries() {
-  sudo pip install crcmod -U
-  sudo pip install configparser -U
-  sudo pip install pyserial -U
-  sudo pip install Flask -U
-  sudo pip install pyowm -U
-  sudo pip install pytz -U
-  sudo pip install pyopenssl  -U
-  sudo pip install twilio -U
-  sudo pip install chump -U
-  sudo pip install paho-mqtt -U
+  local pipcmd=
+
+  if [ $# -eq 0 ]; then
+    pipcmd="pip"
+  elif [ $1 == "3" ]; then
+    echo "Installing for Python 3.x"
+    pipcmd="pip3"
+  else
+    pipcmd="pip"
+  fi
+  sudo $pipcmd install crcmod -U
+  sudo $pipcmd install configparser -U
+  sudo $pipcmd install pyserial -U
+  sudo $pipcmd install Flask -U
+  sudo $pipcmd install pyowm -U
+  sudo $pipcmd install pytz -U
+  sudo $pipcmd install pyopenssl  -U
+  sudo $pipcmd install twilio -U
+  sudo $pipcmd install chump -U
+  sudo $pipcmd install paho-mqtt -U
 }
 
 #-------------------------------------------------------------------
@@ -60,40 +70,49 @@ function installrpirtscts() {
 # This function will install the required libraries for genmon
 function installgenmon() {
 
+    local pipcmd=
+
+    if [ -z "$2" ]; then
+      pipcmd="pip"
+    elif [ $2 == "3" ]; then
+      echo "Installing for Python 3.x"
+      pipcmd="pip3"
+    else
+      pipcmd="pip"
+    fi
     sudo apt-get update
     sudo apt-get install python-pip
-    sudo pip install crcmod
-    sudo pip install configparser
-    sudo pip install pyserial
-    sudo pip install Flask
-    sudo pip install pyowm
-    sudo pip install pytz
+    sudo $pipcmd install crcmod
+    sudo $pipcmd install configparser
+    sudo $pipcmd install pyserial
+    sudo $pipcmd install Flask
+    sudo $pipcmd install pyowm
+    sudo $pipcmd install pytz
     sudo apt-get install build-essential libssl-dev libffi-dev python-dev
-    sudo pip install pyopenssl
-    sudo pip install twilio
-    sudo pip install chump
-    sudo pip install paho-mqtt
+    sudo $pipcmd install pyopenssl
+    sudo $pipcmd install twilio
+    sudo $pipcmd install chump
+    sudo $pipcmd install paho-mqtt
     sudo chmod 775 "$genmondir/startgenmon.sh"
     sudo chmod 775 "$genmondir/genmonmaint.sh"
     installrpirtscts
 
-    if [ -z "$1" ]    # Is parameter #1 zero length?
-        then
-            read -p "Copy configuration files to /etc? (y/n)?" choice
-            case "$choice" in
-              y|Y ) echo "Copying *.conf files to /etc"
-                copyconffiles
-                ;; # yes choice
-              n|N ) echo "Not copying *.conf to /etc"
-                ;; # no choice
-              *)
-                echo "Invalid choice, not copying conf files"
-                ;;  # default choice
-            esac
-        else
+    if [ -z "$2" ] || [ $1 == "prompt" ]; then    # Is parameter #1 zero length?
+        read -p "Copy configuration files to /etc? (y/n)?" choice
+        case "$choice" in
+          y|Y ) echo "Copying *.conf files to /etc"
             copyconffiles
-        fi
-
+            ;; # yes choice
+          n|N ) echo "Not copying *.conf to /etc"
+            ;; # no choice
+          *)
+            echo "Invalid choice, not copying conf files"
+            ;;  # default choice
+        esac
+    else
+        copyconffiles
+    fi
+    if [ -z "$2" ] || [ $1 == "prompt" ]; then    # Is parameter #1 zero length?
       read -p "Setup the raspberry pi onboard serial port? (y/n)?" choice
       case "$choice" in
         y|Y ) echo "Setting up serial port..."
@@ -105,6 +124,9 @@ function installgenmon() {
           echo "Invalid choice, not setting up serial port"
           ;;  # default choice
       esac
+    else
+        setupserial
+    fi
 }
 
 #-------------------------------------------------------------------
@@ -122,6 +144,30 @@ function updatecrontab() {
             echo "Crontab already contains genmon start script:"
             echo "$result"
         fi
+}
+
+#-------------------------------------------------------------------
+# backup genmon
+function backupgenmon() {
+
+    echo "Backup genmon..."
+    cd $genmondir
+    sudo rm -r genmon_backup
+    sudo rm genmon_backup.tar.gz
+    mkdir genmon_backup
+    mkdir ./genmon_backup/conf
+    sudo cp /etc/genmon.conf ./genmon_backup/conf
+    sudo cp /etc/mymail.conf ./genmon_backup/conf
+    sudo cp /etc/genloader.conf ./genmon_backup/conf
+    sudo cp /etc/genmqtt.conf ./genmon_backup/conf
+    sudo cp /etc/genpushover.conf ./genmon_backup/conf
+    sudo cp /etc/genslack.conf ./genmon_backup/conf
+    sudo cp /etc/gensms.conf ./genmon_backup/conf
+    sudo cp /etc/mymodem.conf ./genmon_backup/conf
+    sudo cp outage.txt ./genmon_backup
+    sudo cp kwlog.txt ./genmon_backup
+    tar -zcvf genmon_backup.tar.gz genmon_backup/
+    sudo rm -r genmon_backup
 }
 #-------------------------------------------------------------------
 # update genmon from the github repository
@@ -155,7 +201,7 @@ case "$1" in
     read -n 1 -s -r -p "$installnotice"
     echo ""
     # install libraries
-    installgenmon
+    installgenmon  "prompt" $2
     # update crontab
     read -p "Start genmon on boot? (y/n)?" choice
     case "$choice" in
@@ -170,18 +216,21 @@ case "$1" in
     esac
 
     ;;  # install
+  backup)
+    backupgenmon
+    ;;
   updatenp)
     updategenmon
     ;;
   updatelibs)
-    updatelibraries
+    updatelibraries $2
     ;;
   installnp)        # install with no prompt
-    installgenmon 1
+    installgenmon "noprompt" $2
     updatecrontab
     ;;
   *)
-    echo "No valid command given. Specify 'update', 'install' or 'updatelibs' on command line"
+    echo "No valid command given. Specify 'backup','update', 'install' or 'updatelibs' on command line"
     #
     ;;
 esac

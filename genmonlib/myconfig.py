@@ -19,9 +19,9 @@ try:
 except ImportError as e:
     from configparser import RawConfigParser
 
-import mycommon, mylog
+from genmonlib.mycommon import MyCommon
 
-class MyConfig (mycommon.MyCommon):
+class MyConfig (MyCommon):
     #---------------------MyConfig::__init__------------------------------------
     def __init__(self, filename = None, section = None, simulation = False, log = None):
 

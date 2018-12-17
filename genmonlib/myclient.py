@@ -8,19 +8,21 @@
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
 import datetime, time, sys, smtplib, signal, os, threading, socket
-import mylog, mycommon
+
+from genmonlib.mycommon import MyCommon
+from genmonlib.mylog import SetupLogger
 
 #----------  ClientInterface::init--- ------------------------------------------
-class ClientInterface(mycommon.MyCommon):
+class ClientInterface(MyCommon):
     def __init__(self, host="127.0.0.1", port=9082, log = None):
         super(ClientInterface, self).__init__()
         if log != None:
             self.log = log
         else:
             # log errors in this module to a file
-            self.log = mylog.SetupLogger("client", "/var/log/myclient.log")
+            self.log = SetupLogger("client", "/var/log/myclient.log")
 
-        self.console = mylog.SetupLogger("client_console", log_file = "", stream = True)
+        self.console = SetupLogger("client_console", log_file = "", stream = True)
 
         self.AccessLock = threading.RLock()
         self.EndOfMessage = "EndOfMessage"

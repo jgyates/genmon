@@ -10,7 +10,7 @@
 #-------------------------------------------------------------------------------
 
 
-import datetime, time, sys, signal, os, threading, collections, json
+import datetime, time, sys, signal, os, threading, collections, json, ssl
 import atexit
 
 #The following is need to install the mqtt module: pip install paho-mqtt
@@ -22,7 +22,13 @@ except Exception as e1:
    print("Error: " + str(e1))
    sys.exit(2)
 try:
-    from genmonlib import mycommon, mysupport, myclient, mylog, mythread, myconfig
+    from genmonlib.myclient import ClientInterface
+    from genmonlib.mylog import SetupLogger
+    from genmonlib.myconfig import MyConfig
+    from genmonlib.mysupport import MySupport
+    from genmonlib.mycommon import MyCommon
+    from genmonlib.mythread import MyThread
+
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
@@ -30,7 +36,7 @@ except Exception as e1:
     sys.exit(2)
 
 #------------ MyGenPush class --------------------------------------------------
-class MyGenPush(mysupport.MySupport):
+class MyGenPush(MySupport):
 
     #------------ MyGenPush::init-----------------------------------------------
     def __init__(self,
@@ -59,9 +65,9 @@ class MyGenPush(mysupport.MySupport):
             self.log = log
         else:
             # log errors in this module to a file
-            self.log = mylog.SetupLogger("client", "/var/log/mygenpush.log")
+            self.log = SetupLogger("client", "/var/log/mygenpush.log")
 
-        self.console = mylog.SetupLogger("mygenpush_console", log_file = "", stream = True)
+        self.console = SetupLogger("mygenpush_console", log_file = "", stream = True)
 
         self.AccessLock = threading.Lock()
         self.BlackList = blacklist
@@ -73,7 +79,7 @@ class MyGenPush(mysupport.MySupport):
             startcount = 0
             while startcount <= 10:
                 try:
-                    self.Generator = myclient.ClientInterface(host = host, log = log)
+                    self.Generator = ClientInterface(host = host, log = log)
                     break
                 except Exception as e1:
                     startcount += 1
@@ -84,7 +90,7 @@ class MyGenPush(mysupport.MySupport):
                     time.sleep(1)
                     continue
             # start thread to accept incoming sockets for nagios heartbeat
-            self.Threads["PollingThread"] = mythread.MyThread(self.MainPollingThread, Name = "PollingThread")
+            self.Threads["PollingThread"] = MyThread(self.MainPollingThread, Name = "PollingThread")
 
         except Exception as e1:
             self.LogErrorLine("Error in mygenpush init: "  + str(e1))
@@ -198,7 +204,7 @@ class MyGenPush(mysupport.MySupport):
         self.Generator.Close()
 
 #------------ MyMQTT class -----------------------------------------------------
-class MyMQTT(mycommon.MyCommon):
+class MyMQTT(MyCommon):
 
     #------------ MyMQTT::init--------------------------------------------------
     def __init__(self, log = None):
@@ -210,11 +216,11 @@ class MyMQTT(mycommon.MyCommon):
             self.log = log
         else:
             # log errors in this module to a file
-            self.log = mylog.SetupLogger("client", self.LogFileName)
+            self.log = SetupLogger("client", self.LogFileName)
 
         # cleanup
         # test
-        self.console = mylog.SetupLogger("mymqtt_console", log_file = "", stream = True)
+        self.console = SetupLogger("mymqtt_console", log_file = "", stream = True)
 
         self.Username = None
         self.Password = None
@@ -233,7 +239,7 @@ class MyMQTT(mycommon.MyCommon):
         self.Debug = False
 
         try:
-            config = myconfig.MyConfig(filename = '/etc/genmqtt.conf', section = 'genmqtt', log = log)
+            config = MyConfig(filename = '/etc/genmqtt.conf', section = 'genmqtt', log = log)
 
             self.Username = config.ReadValue('username')
 
@@ -257,6 +263,11 @@ class MyMQTT(mycommon.MyCommon):
             self.UseNumeric = config.ReadValue('numeric_json', return_type = bool, default = False)
 
             self.TopicRoot = config.ReadValue('root_topic')
+
+            #http://www.steves-internet-guide.com/mosquitto-tls/
+            self.CertificateAuthorityPath =  config.ReadValue('cert_authority_path', default = "")
+            self.TLSVersion = config.ReadValue('tls_version', return_type = str, default = "1.0")
+            self.CertReqs = config.ReadValue('cert_reqs', return_type = str, default = "Required")
 
             BlackList = config.ReadValue('blacklist')
 
@@ -288,6 +299,33 @@ class MyMQTT(mycommon.MyCommon):
 
             self.MQTTclient.on_connect = self.on_connect
             self.MQTTclient.on_message = self.on_message
+
+
+            if len(self.CertificateAuthorityPath):
+                if os.path.isfile(self.CertificateAuthorityPath):
+                    cert_reqs = ssl.CERT_REQUIRED
+                    if self.CertReqs.lower() == "required":
+                        cert_reqs = ssl.CERT_REQUIRED
+                    elif self.CertReqs.lower() == "optional":
+                        cert_reqs = ssl.CERT_REQUIRED
+                    elif self.CertReqs.lower() == "none":
+                        cert_reqs = ssl.CERT_NONE
+                    else:
+                        self.LogError("Error: invalid cert required specified, defaulting to required: " + self.self.CertReq)
+
+                    use_tls = ssl.PROTOCOL_TLSv1
+                    if self.TLSVersion == "1.0" or self.TLSVersion == "1":
+                        use_tls = ssl.PROTOCOL_TLSv1
+                    elif self.TLSVersion == "1.1":
+                        use_tls = ssl.PROTOCOL_TLSv1_1
+                    elif self.TLSVersion == "1.2":
+                        use_tls = ssl.PROTOCOL_TLSv1_2
+                    else:
+                        self.LogError("Error: invalid TLS version specified, defaulting to 1.0: " + self.TLSVersion)
+                    self.MQTTclient.tls_set(ca_certs = self.CertificateAuthorityPath,cert_reqs = cert_reqs, tls_version = use_tls )
+                    self.Port = 8883    # port for SSL
+                else:
+                    self.LogError("Error: Unable to  find CA cert file: " + self.CertificateAuthorityPath)
 
             self.MQTTclient.connect(self.MQTTAddress, self.Port, 60)
 

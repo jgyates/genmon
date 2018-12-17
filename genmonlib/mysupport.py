@@ -11,10 +11,11 @@
 
 import os, sys, time, collections, threading, socket, json
 
-from genmonlib import mycommon, myplatform, myconfig
+from genmonlib.myplatform import MyPlatform
+from genmonlib.mycommon import MyCommon
 
 #------------ MySupport class --------------------------------------------------
-class MySupport(mycommon.MyCommon):
+class MySupport(MyCommon):
     def __init__(self, simulation = False):
         super(MySupport, self).__init__()
         self.Simulation = simulation
@@ -68,7 +69,7 @@ class MySupport(mycommon.MyCommon):
             bMetric = usemetric
         else:
             bMetric = self.UseMetric
-        Platform = myplatform.MyPlatform(self.log, bMetric)
+        Platform = MyPlatform(self.log, bMetric)
 
         return Platform.GetInfo()
 

@@ -13,7 +13,9 @@
 import datetime, time, sys, signal, os, threading, socket, json, requests
 
 try:
-    from genmonlib import mynotify, mylog, myconfig
+    from genmonlib.mylog import SetupLogger
+    from genmonlib.mynotify import GenNotify
+    from genmonlib.myconfig import MyConfig
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
@@ -112,17 +114,17 @@ def OnUtilityChange(Active):
 def SendNotice(Message):
 
     try:
-		slack_data = {'channel':channel, 'username':username, 'icon_emoji':icon_emoji, 'attachments': [{'title':'GenMon Alert', 'title_link':title_link, 'fields': [{ 'title':'Status', 'value':Message, 'short':'false' }]}]}
+        slack_data = {'channel':channel, 'username':username, 'icon_emoji':icon_emoji, 'attachments': [{'title':'GenMon Alert', 'title_link':title_link, 'fields': [{ 'title':'Status', 'value':Message, 'short':'false' }]}]}
 
-		response = requests.post(
-		    webhook_url, data=json.dumps(slack_data),
-		    headers={'Content-Type': 'application/json'}
-		)
-		if response.status_code != 200:
-		    raise ValueError(
-		        'Request to slack returned an error %s, the response is:\n%s'
-		        % (response.status_code, response.text)
-		)
+        response = requests.post(
+                webhook_url, data=json.dumps(slack_data),
+                headers={'Content-Type': 'application/json'}
+            )
+        if response.status_code != 200:
+            raise ValueError(
+                'Request to slack returned an error %s, the response is:\n%s'
+                % (response.status_code, response.text)
+            )
 
     except Exception as e1:
         log.error("Error in SendNotice: " + str(e1))
@@ -139,11 +141,11 @@ if __name__=='__main__': # usage program.py [server_address]
         print("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
         sys.exit(2)
 
-    console = mylog.SetupLogger("slack_console", log_file = "", stream = True)
-    log = mylog.SetupLogger("client", "/var/log/genslack.log")
+    console = SetupLogger("slack_console", log_file = "", stream = True)
+    log = SetupLogger("client", "/var/log/genslack.log")
 
     try:
-        config = myconfig.MyConfig(filename = '/etc/genslack.conf', section = 'genslack', log = log)
+        config = MyConfig(filename = '/etc/genslack.conf', section = 'genslack', log = log)
 
         webhook_url = config.ReadValue('webhook_url', default = None)
         channel = config.ReadValue('channel', default = None)
@@ -182,7 +184,7 @@ if __name__=='__main__': # usage program.py [server_address]
         sys.exit(1)
 
     try:
-        GenNotify = mynotify.GenNotify(
+        GenNotify = GenNotify(
                                         host = address,
                                         onready = OnReady,
                                         onexercise = OnExercise,

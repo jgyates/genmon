@@ -21,14 +21,25 @@ from email.utils import COMMASPACE, formatdate
 import atexit
 from shutil import copyfile
 
-import mylog, mythread, mysupport, myconfig
+from genmonlib.myconfig import MyConfig
+from genmonlib.mysupport import MySupport
+from genmonlib.mylog import SetupLogger
+from genmonlib.mythread import MyThread
 
 #imaplib.Debug = 4
 
 
 #------------ MyMail class -----------------------------------------------------
-class MyMail(mysupport.MySupport):
-    def __init__(self, monitor = False, incoming_folder = None, processed_folder = None, incoming_callback = None, localinit = False, loglocation = "/var/log/", ConfigFilePath = None, start = True):
+class MyMail(MySupport):
+    def __init__(self,
+        monitor = False,
+        incoming_folder = None,
+        processed_folder = None,
+        incoming_callback = None,
+        localinit = False,
+        loglocation = "/var/log/",
+        ConfigFilePath = None,
+        start = True):
 
         self.Monitor = monitor                          # true if we receive IMAP email
         self.IncomingFolder = incoming_folder           # folder to look for incoming email
@@ -55,7 +66,7 @@ class MyMail(mysupport.MySupport):
             self.logfile = loglocation + "mymail.log"
             self.configfile = self.ConfigFilePath + "mymail.conf"
 
-        self.log = mylog.SetupLogger("mymail", self.logfile)
+        self.log = SetupLogger("mymail", self.logfile)
 
         # if mymail.conf is not in the /etc directory attempt to copy it from the
         # main source directory
@@ -68,7 +79,7 @@ class MyMail(mysupport.MySupport):
                 sys.exit(1)
 
 
-        self.config = myconfig.MyConfig(filename = self.configfile, section = "MyMail", log = self.log)
+        self.config = MyConfig(filename = self.configfile, section = "MyMail", log = self.log)
 
         self.GetConfig()
 
@@ -88,17 +99,86 @@ class MyMail(mysupport.MySupport):
 
         if not self.DisableEmail:
             if not self.DisableSMTP and self.SMTPServer != "":
-                self.Threads["SendMailThread"] = mythread.MyThread(self.SendMailThread, Name = "SendMailThread", start = start)
+                self.Threads["SendMailThread"] = MyThread(self.SendMailThread, Name = "SendMailThread", start = start)
             else:
                 self.LogError("SMTP disabled")
 
             if not self.DisableIMAP and self.Monitor and self.IMAPServer != "":     # if True then we will have an IMAP monitor thread
                 if incoming_callback and incoming_folder and processed_folder:
-                    self.Threads["EmailCommandThread"] = mythread.MyThread(self.EmailCommandThread, Name = "EmailCommandThread", start = start)
+                    self.Threads["EmailCommandThread"] = MyThread(self.EmailCommandThread, Name = "EmailCommandThread", start = start)
                 else:
                     self.FatalError("ERROR: incoming_callback, incoming_folder and processed_folder are required if receive IMAP is used")
             else:
                 self.LogError("IMAP disabled")
+
+    #---------- MyMail.TestSendSettings ----------------------------------------
+    @staticmethod
+    def TestSendSettings( smtp_server =  None, smtp_port =  587, email_account = None, sender_account = None, recipient = None, password = None, use_ssl = False):
+
+        if smtp_server == None or not len(smtp_server):
+            return "Error: Invalid SMTP server"
+
+        if email_account  == None or not len(email_account):
+            return "Error: Invalid email account"
+
+        if sender_account  == None or not len(sender_account):
+            sender_account = email_account
+
+        if recipient  == None or not len(recipient):
+            return "Error: Invalid email recipient"
+
+        if password  == None or not len(password):
+            return "Error: Invalid email recipient"
+
+        if smtp_port == None or not isinstance(smtp_port , int):
+            return "Error: Invalid SMTP port"
+
+        if use_ssl == None or not isinstance(use_ssl , bool):
+            return "Error: Invalid Use SSL value"
+        # update date
+        dtstamp=datetime.datetime.now().strftime('%a %d-%b-%Y')
+        # update time
+        tmstamp=datetime.datetime.now().strftime('%I:%M:%S %p')
+
+        msg = MIMEMultipart()
+        msg['From'] = sender_account
+        msg['To'] = recipient
+        msg['Date'] = formatdate(localtime=True)
+        msg['Subject'] = "Genmon Test Email"
+
+        msgstr = '\n' + 'Test email from genmon\n'
+        body = '\n' + 'Time: ' + tmstamp + '\n' + 'Date: ' + dtstamp + '\n' + msgstr
+        msg.attach(MIMEText(body, 'plain', 'us-ascii'))
+
+        try:
+            if use_ssl:
+                 session = smtplib.SMTP_SSL(smtp_server, smtp_port)
+                 session.ehlo()
+            else:
+                 session = smtplib.SMTP(smtp_server, smtp_port)
+                 session.starttls()
+                 session.ehlo
+                 # this allows support for simple TLS
+        except Exception as e1:
+            #self.LogErrorLine("Error Test SMTP : SSL:<" + str(use_ssl)  + ">: " + str(e1))
+            return "Error Initializing SMTP library: " + str(e1)
+
+        try:
+            if password != "":
+                session.login(str(email_account), str(password))
+
+            if "," in recipient:
+                multiple_recipients = recipient.split(",")
+                session.sendmail(sender_account, multiple_recipients, msg.as_string())
+            else:
+                session.sendmail(sender_account, recipient, msg.as_string())
+        except Exception as e1:
+            #self.LogErrorLine("Error SMTP sendmail: " + str(e1))
+            session.quit()
+            return "Error sending email: " + str(e1)
+
+        session.quit()
+        return "Success"
 
     #---------- MyMail.GetConfig -----------------------------------------------
     def GetConfig(self, reload = False):
@@ -228,8 +308,7 @@ class MyMail(mysupport.MySupport):
                     for num in data[0].split():
                         rv, data = self.Mailbox.fetch(num, '(RFC822)')
                         if rv != 'OK':
-                            self.LogError( "ERROR getting message (fetch)")
-                            printToScreen( num)
+                            self.LogError( "ERROR getting message (fetch): " + str(num))
                             if self.WaitForExit("EmailCommandThread", 15 ):
                                 return
                             continue

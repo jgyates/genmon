@@ -13,12 +13,14 @@ from __future__ import print_function       # For python 3.x compatibility with 
 
 import datetime, sys, collections, time, threading, re, os
 
-
-import mylog, mythread, mysupport, myserial, myconfig
-
+from genmonlib.myserial import SerialDevice
+from genmonlib.myconfig import MyConfig
+from genmonlib.mysupport import MySupport
+from genmonlib.mylog import SetupLogger
+from genmonlib.mythread import MyThread
 
 #------------ MyModem class ----------------------------------------------------
-class MyModem(mysupport.MySupport):
+class MyModem(MySupport):
     def __init__(self,
             port = "/dev/ttyAMA0" ,
             rate = 115200,
@@ -49,14 +51,14 @@ class MyModem(mysupport.MySupport):
 
         # log errors in this module to a file
         if log == None:
-            self.log = mylog.SetupLogger("mymodem", loglocation + "mymodem.log")
+            self.log = SetupLogger("mymodem", loglocation + "mymodem.log")
         else:
             self.log = log
 
-        self.console = mylog.SetupLogger("mymodem_console", log_file = "", stream = True)
+        self.console = SetupLogger("mymodem_console", log_file = "", stream = True)
 
         try:
-            self.config = myconfig.MyConfig(filename = self.configfile, section = "MyModem", log = self.log)
+            self.config = MyConfig(filename = self.configfile, section = "MyModem", log = self.log)
 
             self.LogAtCommands = self.config.ReadValue('log_at_commands', return_type = bool, default = False)
 
@@ -95,10 +97,10 @@ class MyModem(mysupport.MySupport):
         self.InitComplete = False
 
         try:
-            self.SerialDevice = myserial.SerialDevice(port, rate = rate, loglocation = loglocation, log = self.log)
+            self.SerialDevice = SerialDevice(port, rate = rate, loglocation = loglocation, log = self.log)
             self.Threads = self.MergeDicts(self.Threads, self.SerialDevice.Threads)
 
-            self.Threads["SendMessageThread"] = mythread.MyThread(self.SendMessageThread, Name = "SendMessageThread")
+            self.Threads["SendMessageThread"] = MyThread(self.SendMessageThread, Name = "SendMessageThread")
 
         except Exception as e1:
             self.LogErrorLine("Error opening serial device in MyModem: " + str(e1))

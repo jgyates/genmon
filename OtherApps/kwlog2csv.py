@@ -88,5 +88,5 @@ if __name__=='__main__':
         for Time, Value in reversed(data):
             LogToFile(fileName, Time, Value)
 
-    except Exception, e1:
-        print "Error (1): " + str(e1)
+    except Exception as e1:
+        print ("Error (1): " + str(e1))

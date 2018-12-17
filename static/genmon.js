@@ -1252,7 +1252,28 @@ function saveNotificationsJSON(){
         GenmonAlert("Error: invalid selection");
     }
 }
+//*****************************************************************************
+// test email
+//*****************************************************************************
+function TestEmailSettings(smtp_server, smtp_port,email_account,sender_account,recipient, password, use_ssl){
 
+    var parameters = {};
+    parameters['smtp_server'] = smtp_server;
+    parameters['smtp_port'] = smtp_port;
+    parameters['email_account'] = email_account;
+    parameters['sender_account'] = sender_account;
+    parameters['recipient'] = recipient;
+    parameters['password'] = password;
+    parameters['use_ssl'] = use_ssl;
+
+      // test email settings
+      var url = baseurl.concat("test_email");
+      $.getJSON(  url,
+                  {test_email: JSON.stringify(parameters)},
+                  function(result){
+                    GenmonAlert(result)
+      });
+}
 //*****************************************************************************
 // Display the Settings Tab
 //*****************************************************************************
@@ -1915,12 +1936,17 @@ function DisplayAbout(){
     outstr += '<div class="aboutInfo"><br>Genmon<br>Version '+myGenerator["version"]+'<br><br><br>Developed by <a target="_blank" href="https://github.com/jgyates/">@jgyates</a>.<br><br>Published under the <a target="_blank" href="https://raw.githubusercontent.com/jgyates/genmon/master/LICENSE">GNU General Public License v2.0</a>.<br><br>Source: <a target="_blank" href="https://github.com/jgyates/genmon">Github</a><br><br>Built using Python & Javascript.<br>&nbsp;<br></center></div>';
 
     if (myGenerator["write_access"] == true) {
+      // Update software
       outstr += '<center>Update Generator Monitor Software:<br><div id="updateNeeded" style="font-size:16px; margin:2px;"><br></div>';
       outstr += '&nbsp;&nbsp;<button id="checkNewVersion" onClick="checkNewVersion();">Upgrade to latest version</button><br>';
       outstr += '&nbsp;&nbsp;<a href="javascript:showChangeLog();" style="font-style:normal; font-size:14px; text-decoration:underline;">Change Log</a>';
+      // Submit registers and logs
       outstr += '<br><br>Submit Information to Developers:<br><br>';
       outstr += '&nbsp;&nbsp;<button id="submitRegisters" onClick="submitRegisters();">Submit Registers</button>';
-      outstr += '&nbsp;&nbsp;<button id="submitLogs" onClick="submitLogs();">Submit Logs</button></center>';
+      outstr += '&nbsp;&nbsp;<button id="submitLogs" onClick="submitLogs();">Submit Logs</button>';
+      //Backup
+      outstr += '<br><br>Download Backup Files:<br><br>';
+      outstr += '&nbsp;&nbsp;<button id="backupFiles" onClick="backupFiles();">Backup</button></center>';
     }
 
     $("#mydisplay").html(outstr);
@@ -2063,6 +2089,23 @@ function updateSoftware(){
 
 
     });
+}
+//*****************************************************************************
+function backupFiles(){
+
+    var link=document.createElement("a");
+    link.id = 'backupLink'; //give it an ID
+    link.href=baseurl.concat("backup");
+
+    //use the following instead of link.click() so it will work on more browsers
+    var clickEvent = new MouseEvent("click", {
+      "view": window,
+      "bubbles": true,
+      "cancelable": false
+    });
+    link.dispatchEvent(clickEvent);
+
+
 }
 //*****************************************************************************
 function submitRegisters(){
