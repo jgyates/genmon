@@ -1098,37 +1098,44 @@ function DisplayMonitor(){
 
         if ($("#CPU_Temperature").length > 0) {
            temp_img = "temp1";
+           cpu_temp = $("#CPU_Temperature").text();
+           cpu_temp_num = parseInt(cpu_temp.replace(/C/g, '').trim());
+           if (cpu_temp.indexOf("F") > 0 ) {
+              cpu_temp_num = Math.round((parseInt(cpu_temp.replace(/F/g, '').trim()) - 32) * 5 / 9);
+           }
            switch (true) {
-              case (parseInt(prevStatusValues["PlatformStats"][0]["CPU Temperature"].replace(/C/g, '').trim()) > 85):
+              case (cpu_temp_num > 85):
                   temp_img = "temp4";
                   break;
-              case (parseInt(prevStatusValues["PlatformStats"][0]["CPU Temperature"].replace(/C/g, '').trim()) > 75):
+              case (cpu_temp_num > 75):
                   temp_img = "temp3";
                   break;
-              case (parseInt(prevStatusValues["PlatformStats"][0]["CPU Temperature"].replace(/C/g, '').trim()) > 50):
+              case (cpu_temp_num > 50):
                   temp_img = "temp2";
                   break;
            }
-           $("#CPU_Temperature").html('<div style="display: inline-block; position: relative;">'+result["Monitor"][2]["Platform Stats"][0]["CPU Temperature"] + '<img style="position: absolute;top:-10px;left:75px" class="'+ temp_img +'" src="images/transparent.png"></div>');
+           $("#CPU_Temperature").html('<div style="display: inline-block; position: relative;">' + cpu_temp + '<img style="position: absolute;top:-10px;left:75px" class="'+ temp_img +'" src="images/transparent.png"></div>');
         }
 
         if ($("#WLAN_Signal_Level").length > 0) {
            wifi_img = "wifi1";
+           wifi_level = $("#WLAN_Signal_Level").text();
            switch (true) {
-              case (parseInt(prevStatusValues["PlatformStats"][9]["WLAN Signal Level"].replace(/dBm/g, '').trim()) > -67):
+              case (parseInt(wifi_level.replace(/dBm/g, '').trim()) > -67):
                   wifi_img = "wifi4";
                   break;
-              case (parseInt(prevStatusValues["PlatformStats"][9]["WLAN Signal Level"].replace(/dBm/g, '').trim()) > -70):
+              case (parseInt(wifi_level.replace(/dBm/g, '').trim()) > -70):
                   wifi_img = "wifi3";
                   break;
-              case (parseInt(prevStatusValues["PlatformStats"][9]["WLAN Signal Level"].replace(/dBm/g, '').trim()) > -80):
+              case (parseInt(wifi_level.replace(/dBm/g, '').trim()) > -80):
                   wifi_img = "wifi2";
                   break;
            }
-           $("#WLAN_Signal_Level").html('<div style="display: inline-block; position: relative;">'+result["Monitor"]["Platform Stats"][9]["WLAN Signal Level"] + '<img style="position: absolute;top:-10px;left:110px" class="'+ wifi_img +'" src="images/transparent.png"></div>');
+           $("#WLAN_Signal_Level").html('<div style="display: inline-block; position: relative;">' + wifi_level + '<img style="position: absolute;top:-10px;left:110px" class="'+ wifi_img +'" src="images/transparent.png"></div>');
         }
         if ($("#Conditions").length > 0) {
-           $("#Conditions").html('<div style="display: inline-block; position: relative;">'+result["Monitor"][3]["Weather"][1]["Conditions"] + '<img class="greyscale" style="position: absolute;top:-30px;left:160px" src="http://openweathermap.org/img/w/' + prevStatusValues["Weather"][14]["icon"] + '.png"></div>');
+           weatherCondition = $("#Conditions").text()
+           $("#Conditions").html('<div style="display: inline-block; position: relative;">' + weatherCondition + '<img class="greyscale" style="position: absolute;top:-30px;left:160px" src="http://openweathermap.org/img/w/' + prevStatusValues["Weather"][13]["icon"] + '.png"></div>');
         }
 
    }});
