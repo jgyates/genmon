@@ -8,13 +8,7 @@ If you are having other issues, please see the following page:
 
 https://github.com/jgyates/genmon/wiki/3.5---General-Troubleshooting
 
-If you need to send you logs to the developer, if you email is setup and working properly you can issue this command in your browser:
-
-     http://MYIPADDRESS:8000/cmd/sendlogfiles
-
-Replace MYIPADDRESS to the IP address of you pi and port 8000 if you are using a port other than the default.
-
-You can submit your registers from the Monitor page on the web interface.
+If you need to send you logs and registers to the developer, if you email is setup and working properly you can click send your logs on the About page in the web interface.
 
 ### Expected Behavior
 
@@ -35,5 +29,5 @@ You can submit your registers from the Monitor page on the web interface.
 ### Your Environment
 
 - Generator Model: {Please write here}
-- Generator Registers: {Please write here}
+- Generator Registers: Submit via the About page
 - Genmon Version: {Please write here}

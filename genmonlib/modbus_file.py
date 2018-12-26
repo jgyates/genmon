@@ -58,17 +58,22 @@ class ModbusFile(ModbusBase):
         if not self.ReadInputFile(self.InputFile):
             self.LogError("ModusFile Init(): Error loading input file: " + self.InputFile)
         else:
-            self.Threads["ReadInputFileThread"] = MyThread(self.ReadInputFileThread, Name = "ReadInputFileThread")
+            if not self.AdjustInputData():
+                self.LogInfo("Error parsing input data")
+
+            self.Threads["ReadInputFileThread"] = MyThread(self.ReadInputFileThread, Name = "ReadInputFileThread", start = False)
+            self.Threads["ReadInputFileThread"].Start()
         self.InitComplete = False
 
     #-------------ModbusBase::ReadInputFileThread-------------------------------
     def ReadInputFileThread(self):
 
-        time.sleep(0.01)
         while True:
             if self.IsStopSignaled("ReadInputFileThread"):
                 break
             self.ReadInputFile(self.InputFile)
+            if not self.AdjustInputData():
+                self.LogInfo("Error parsing input data")
             time.sleep(5)
 
     #-------------ModbusBase::ProcessMasterSlaveWriteTransaction----------------
@@ -83,15 +88,18 @@ class ModbusFile(ModbusBase):
         if ReturnString:
             RegValue = self.Strings.get(Register, "")
         else:
-            RegValue = self.Registers.get(Register, "")
+            RegValue = self.Strings.get(Register, None)
 
-            if len(RegValue):
-                while (len(RegValue) != Length * 4):
+            if  RegValue == None :
+                RegValue = self.Registers.get(Register, "")
 
-                    if len(RegValue) < Length * 4:
-                        RegValue = "0" + RegValue
-                    elif len(RegValue) > Length * 4:
-                        RegValue = RegValue[1:]
+                if len(RegValue):
+                    while (len(RegValue) != Length * 4):
+
+                        if len(RegValue) < Length * 4:
+                            RegValue = "0" + RegValue
+                        elif len(RegValue) > Length * 4:
+                            RegValue = RegValue[1:]
 
         self.TxPacketCount += 1
         self.RxPacketCount += 1
@@ -120,14 +128,38 @@ class ModbusFile(ModbusBase):
                 self.UpdateRegisterList(Register, RegValue, IsFile = True, IsString = ReturnString)
 
         return RegValue
+    #----------  AdjustInputData  ----------------------------------------------
+    def AdjustInputData(self):
 
-    #----------  ReadInputFile  ------------------------------------------------
+        if not len(self.Registers):
+            self.LogError("Error in AdjustInputData, no data.")
+            return False
+        #  No need to adjust data for registers, move on to strings and File data
+        for Reg, Value in self.Strings.items():
+            RegInt = int(Reg,16)
+            if not len(Value):
+                self.Registers["%04x" % (RegInt)] = "0000"
+                continue
+            if self.StringIsHex(Value):
+                # Not a string, just hex data in a string format
+                for i in range( 0, len(Value), 4):
+                    self.Registers["%04x" % (RegInt + (i / 4))] = Value[i:i+4]
+            else:
+                for i in range(0, len(Value), 2):
+                    HiByte = ord(Value[i])
+                    if i + 1 >= len(Value):
+                        LowByte = 0
+                    else:
+                        LowByte = ord(Value[i+1])
+                    self.Registers["%04x" % (RegInt + (i / 2))] = "%02x%02x" % (HiByte, LowByte)
+        return True
+
+    #----------  ReadJSONFile  -------------------------------------------------
     def ReadJSONFile(self, FileName):
 
         if not len(FileName):
-            self.LogError("Error in  ReadInputFile: No Input File")
+            self.LogError("Error in  ReadJSONFile: No Input File")
             return False
-
         try:
             with open(FileName) as f:
                 data = json.load(f,object_pairs_hook=collections.OrderedDict)
@@ -211,18 +243,18 @@ class ModbusFile(ModbusBase):
 
     # ---------- ModbusBase::GetCommStats---------------------------------------
     def GetCommStats(self):
-        SerialStats = collections.OrderedDict()
+        SerialStats = []
 
-        SerialStats["Packet Count"] = "M: %d, S: %d" % (self.TxPacketCount, self.RxPacketCount)
+        SerialStats.append({"Packet Count" : "M: %d, S: %d" % (self.TxPacketCount, self.RxPacketCount)})
 
         if self.CrcError == 0 or self.RxPacketCount == 0:
             PercentErrors = 0.0
         else:
             PercentErrors = float(self.CrcError) / float(self.RxPacketCount)
 
-        SerialStats["CRC Errors"] = "%d " % self.CrcError
-        SerialStats["CRC Percent Errors"] = "%.2f" % PercentErrors
-        SerialStats["Packet Timeouts"] = "%d" %  self.ComTimoutError
+        SerialStats.append({"CRC Errors" : "%d " % self.CrcError})
+        SerialStats.append({"CRC Percent Errors" : "%.2f" % PercentErrors})
+        SerialStats.append({"Packet Timeouts" : "%d" %  self.ComTimoutError})
         # Add serial stats here
 
         CurrentTime = datetime.datetime.now()
@@ -230,11 +262,11 @@ class ModbusFile(ModbusBase):
         #
         Delta = CurrentTime - self.ModbusStartTime        # yields a timedelta object
         PacketsPerSecond = float((self.TxPacketCount + self.RxPacketCount)) / float(Delta.total_seconds())
-        SerialStats["Packets Per Second"] = "%.2f" % (PacketsPerSecond)
+        SerialStats.append({"Packets Per Second" : "%.2f" % (PacketsPerSecond)})
 
         if self.RxPacketCount:
             AvgTransactionTime = float(self.TotalElapsedPacketeTime / self.RxPacketCount)
-            SerialStats["Average Transaction Time"] = "%.4f sec" % (AvgTransactionTime)
+            SerialStats.append({"Average Transaction Time" : "%.4f sec" % (AvgTransactionTime)})
 
         return SerialStats
     # ---------- ModbusBase::ResetCommStats-------------------------------------

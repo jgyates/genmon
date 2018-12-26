@@ -63,8 +63,6 @@ class MySupport(MyCommon):
     #------------ MySupport::GetPlatformStats ----------------------------------
     def GetPlatformStats(self, usemetric = None):
 
-        PlatformInfo = collections.OrderedDict()
-
         if not usemetric == None:
             bMetric = usemetric
         else:

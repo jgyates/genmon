@@ -1539,10 +1539,10 @@ class HPanel(GeneratorController):
             #                      {"Run Log" : [Log Entry3, Log Entry 4, ...]}...]
 
             with self.EventAccessLock:
-                LocalEventLog = list(self.EventLog)
+                LocalEventLog = self.EventLog
 
             with self.AlarmAccessLock:
-                LocalAlarmLog = (self.AlarmLog)
+                LocalAlarmLog = self.AlarmLog
             LogList = [ {"Alarm Log": LocalAlarmLog},
                         {"Run Log": LocalEventLog}]
 
@@ -1564,52 +1564,53 @@ class HPanel(GeneratorController):
             # use ordered dict to maintain order of output
             # ordered dict to handle evo vs nexus functions
             Maintenance = collections.OrderedDict()
-            Maint = collections.OrderedDict()
-            Maintenance["Maintenance"] = Maint
-            Maint["Model"] = self.Model
-            if len(self.NamePlateData):
-                Maint["Name Plate Info"] = self.NamePlateData
-            Maint["Controller"] = self.GetController()
-            Maint["Controller Software Version"] = self.GetParameterStringValue(RegisterStringEnum.VERSION_DATE[REGISTER], RegisterStringEnum.VERSION_DATE[RET_STRING])
+            Maintenance["Maintenance"] = []
 
-            Maint["Minimum GenLink Version"] = self.GetParameterStringValue(RegisterStringEnum.MIN_GENLINK_VERSION[REGISTER], RegisterStringEnum.MIN_GENLINK_VERSION[RET_STRING])
-            Maint["Nominal RPM"] = self.NominalRPM
-            Maint["Rated kW"] = self.NominalKW
-            Maint["Nominal Frequency"] = self.NominalFreq
-            Maint["Fuel Type"] = self.FuelType
+            Maintenance["Maintenance"].append({"Model" : self.Model})
+            if len(self.NamePlateData):
+                Maintenance["Maintenance"].append({"Name Plate Info" : self.NamePlateData})
+            Maintenance["Maintenance"].append({"Controller" : self.GetController()})
+            Maintenance["Maintenance"].append({"Controller Software Version" : self.GetParameterStringValue(RegisterStringEnum.VERSION_DATE[REGISTER], RegisterStringEnum.VERSION_DATE[RET_STRING])})
+
+            Maintenance["Maintenance"].append({"Minimum GenLink Version" : self.GetParameterStringValue(RegisterStringEnum.MIN_GENLINK_VERSION[REGISTER], RegisterStringEnum.MIN_GENLINK_VERSION[RET_STRING])})
+            Maintenance["Maintenance"].append({"Nominal RPM" : self.NominalRPM})
+            Maintenance["Maintenance"].append({"Rated kW" : self.NominalKW})
+            Maintenance["Maintenance"].append({"Nominal Frequency" : self.NominalFreq})
+            Maintenance["Maintenance"].append({"Fuel Type" : self.FuelType})
 
             if not self.SmartSwitch:
                 pass
-                Exercise = collections.OrderedDict()
-                #Maint["Exercise"] = Exercise
-                #Exercise["Exercise Time"] = self.GetExerciseTime()
-                #Exercise["Exercise Duration"] = self.GetExerciseDuration()
+                Exercise = []
+                #Maintenance["Maintenance"].append({"Exercise" : Exercise
+                #Exercise["Exercise Time" : self.GetExerciseTime()
+                #Exercise["Exercise Duration" : self.GetExerciseDuration()
 
-            ControllerSettings = collections.OrderedDict()
-            Maint["Controller Configuration"] = ControllerSettings
+            ControllerSettings = []
+            Maintenance["Maintenance"].append({"Controller Configuration" : ControllerSettings})
 
-            ControllerSettings["Controller Power Up Time"] = self.GetTimeFromString(self.GetParameterStringValue(RegisterStringEnum.POWER_UP_TIME[REGISTER], RegisterStringEnum.POWER_UP_TIME[RET_STRING]))
-            ControllerSettings["Controller Last Power Fail"] = self.GetTimeFromString(self.GetParameterStringValue(RegisterStringEnum.LAST_POWER_FAIL[REGISTER], RegisterStringEnum.LAST_POWER_FAIL[RET_STRING]))
-            ControllerSettings["Target RPM"] = str(self.TargetRPM[0]) if len(self.TargetRPM) else "Unknown"
-            ControllerSettings["Number of Flywheel Teeth"] = str(self.FlyWheelTeeth[0]) if len(self.FlyWheelTeeth) else "Unknown"
-            ControllerSettings["Phase"] = str(self.Phase) if self.Phase != None else "Unknown"
-            ControllerSettings["CT Ratio"] = str(self.CTRatio[0]) if len(self.CTRatio) else "Unknown"
+            ControllerSettings.append({"Controller Power Up Time" : self.GetTimeFromString(self.GetParameterStringValue(RegisterStringEnum.POWER_UP_TIME[REGISTER], RegisterStringEnum.POWER_UP_TIME[RET_STRING]))})
+            ControllerSettings.append({"Controller Last Power Fail" : self.GetTimeFromString(self.GetParameterStringValue(RegisterStringEnum.LAST_POWER_FAIL[REGISTER], RegisterStringEnum.LAST_POWER_FAIL[RET_STRING]))})
+            ControllerSettings.append({"Target RPM" : str(self.TargetRPM[0]) if len(self.TargetRPM) else "Unknown"})
+            ControllerSettings.append({"Number of Flywheel Teeth" : str(self.FlyWheelTeeth[0]) if len(self.FlyWheelTeeth) else "Unknown"})
+            ControllerSettings.append({"Phase" : str(self.Phase) if self.Phase != None else "Unknown"})
+            ControllerSettings.append({"CT Ratio" : str(self.CTRatio[0]) if len(self.CTRatio) else "Unknown"})
 
 
-            Service = collections.OrderedDict()
-            Maint["Service"] = Service
+            Service = []
+            Maintenance["Maintenance"].append({"Service" : Service})
 
-            Service["Total Run Hours"] = self.GetParameter(self.Reg.ENGINE_HOURS[REGISTER],"H", 10.0)
+            Service.append({"Total Run Hours" : self.GetParameter(self.Reg.ENGINE_HOURS[REGISTER],"H", 10.0)})
 
-            IOStatus = collections.OrderedDict()
-            Maint["I/O Status"] = IOStatus
+            IOStatus = []
+            Maintenance["Maintenance"].append({"I/O Status" : IOStatus})
+
             OutputList = [self.Reg.OUTPUT_1[REGISTER],self.Reg.OUTPUT_2[REGISTER],
                             self.Reg.OUTPUT_3[REGISTER],self.Reg.OUTPUT_4[REGISTER],
                             self.Reg.OUTPUT_5[REGISTER],self.Reg.OUTPUT_6[REGISTER],
                             self.Reg.OUTPUT_7[REGISTER],self.Reg.OUTPUT_8[REGISTER]
                         ]
-            IOStatus["Inputs"] = self.GetCondition(RegList = [self.Reg.INPUT_1[REGISTER],self.Reg.INPUT_2[REGISTER]], type = "inputs")
-            IOStatus["Outputs"] = self.GetCondition(RegList = OutputList, type = "outputs")
+            IOStatus.append({"Inputs" : self.GetCondition(RegList = [self.Reg.INPUT_1[REGISTER],self.Reg.INPUT_2[REGISTER]], type = "inputs")})
+            IOStatus.append({"Outputs" : self.GetCondition(RegList = OutputList, type = "outputs")})
 
         except Exception as e1:
             self.LogErrorLine("Error in DisplayMaintenance: " + str(e1))
@@ -1624,48 +1625,49 @@ class HPanel(GeneratorController):
 
         try:
             Status = collections.OrderedDict()
-            Stat = collections.OrderedDict()
-            Status["Status"] = Stat
-            Engine = collections.OrderedDict()
-            Stat["Engine"] = Engine
-            Alarms = collections.OrderedDict()
-            Stat["Alarms"] = Alarms
-            Battery = collections.OrderedDict()
-            Stat["Battery"] = Battery
-            Line = collections.OrderedDict()
-            Stat["Line State"] = Line
-            Time = collections.OrderedDict()
-            Stat["Time"] = Time
+            Status["Status"] = []
 
-            Battery["Battery Voltage"] = self.ValueOut(self.GetParameter(self.Reg.BATTERY_VOLTS[REGISTER], ReturnFloat = True, Divider = 100.0), "V", JSONNum)
-            Battery["Battery Charger Current"] = self.ValueOut(self.GetParameter(self.Reg.BATTERY_CHARGE_CURRNT[REGISTER], ReturnFloat = True, Divider = 10.0), "A", JSONNum)
+            Engine = []
+            Alarms = []
+            Battery = []
+            Line = []
+            Time = []
 
-            Engine["Engine Status"] = self.GetEngineState()
-            Engine["Generator Status"] = self.GetParameterStringValue(RegisterStringEnum.GENERATOR_STATUS[REGISTER], RegisterStringEnum.GENERATOR_STATUS[RET_STRING])
-            Engine["Switch State"] = self.GetSwitchState()
-            Engine["Output Power"] = self.ValueOut(self.GetPowerOutput(ReturnFloat = True), "kW", JSONNum)
-            Engine["Output Power Factor"] = self.ValueOut(self.GetParameter(self.Reg.TOTAL_PF[REGISTER], ReturnFloat = True, Divider = 100.0), "", JSONNum)
-            Engine["RPM"] = self.ValueOut(self.GetParameter(self.Reg.OUTPUT_RPM[REGISTER], ReturnInt = True), "", JSONNum)
-            Engine["Frequency"] = self.ValueOut(self.GetParameter(self.Reg.OUTPUT_FREQUENCY[REGISTER], ReturnFloat = True, Divider = 10.0), "Hz", JSONNum)
-            Engine["Throttle Position"] = self.ValueOut(self.GetParameter(self.Reg.THROTTLE_POSITION[REGISTER], ReturnInt = True), "Stp", JSONNum)
-            Engine["Coolant Temp"] = self.ValueOut(self.GetParameter(self.Reg.COOLANT_TEMP[REGISTER], ReturnInt = True), "F", JSONNum)
-            Engine["Coolant Level"] = self.ValueOut(self.GetParameter(self.Reg.COOLANT_LEVEL[REGISTER], ReturnInt = True), "Stp", JSONNum)
-            Engine["Oil Pressure"] = self.ValueOut(self.GetParameter(self.Reg.OIL_PRESSURE[REGISTER], ReturnInt = True), "psi", JSONNum)
-            Engine["Oil Temp"] = self.ValueOut(self.GetParameter(self.Reg.OIL_TEMP[REGISTER], ReturnInt = True), "F", JSONNum)
-            Engine["Fuel Level"] = self.ValueOut(self.GetParameter(self.Reg.FUEL_LEVEL[REGISTER], ReturnInt = True), "", JSONNum)
-            Engine["Oxygen Sensor"] = self.ValueOut(self.GetParameter(self.Reg.O2_SENSOR[REGISTER], ReturnInt = True), "", JSONNum)
-            Engine["Current Phase A"] = self.ValueOut(self.GetParameter(self.Reg.CURRENT_PHASE_A[REGISTER], ReturnInt = True), "A", JSONNum)
-            Engine["Current Phase B"] = self.ValueOut(self.GetParameter(self.Reg.CURRENT_PHASE_B[REGISTER],ReturnInt = True), "A", JSONNum)
-            Engine["Current Phase C"] = self.ValueOut(self.GetParameter(self.Reg.CURRENT_PHASE_C[REGISTER],ReturnInt = True), "A", JSONNum)
-            Engine["Average Current"] = self.ValueOut(self.GetParameter(self.Reg.AVG_CURRENT[REGISTER],ReturnInt = True), "A", JSONNum)
-            Engine["Voltage A-B"] = self.ValueOut(self.GetParameter(self.Reg.VOLTS_PHASE_A_B[REGISTER],ReturnInt = True), "V", JSONNum)
-            Engine["Voltage B-C"] = self.ValueOut(self.GetParameter(self.Reg.VOLTS_PHASE_B_C[REGISTER],ReturnInt = True), "V", JSONNum)
-            Engine["Voltage C-A"] = self.ValueOut(self.GetParameter(self.Reg.VOLTS_PHASE_C_A[REGISTER],ReturnInt = True), "V", JSONNum)
-            Engine["Average Voltage"] = self.ValueOut(self.GetParameter(self.Reg.AVG_VOLTAGE[REGISTER],ReturnInt = True), "V", JSONNum)
-            Engine["Air Fuel Duty Cycle"] = self.ValueOut(self.GetParameter(self.Reg.A_F_DUTY_CYCLE[REGISTER], ReturnFloat = True, Divider = 10.0), "", JSONNum)
+            Status["Status"].append({"Engine":Engine})
+            Status["Status"].append({"Alarms":Alarms})
+            Status["Status"].append({"Battery":Battery})
+            Status["Status"].append({"Line State":Line})
+            Status["Status"].append({"Time":Time})
 
-            Alarms["Number of Active Alarms"] = self.ValueOut(self.GetParameter(self.Reg.ACTIVE_ALARM_COUNT[REGISTER], ReturnInt = True), "", JSONNum)
-            Alarms["Number of Acknowledged Alarms"] = self.ValueOut(self.GetParameter(self.Reg.ALARM_ACK[REGISTER], ReturnInt = True), "", JSONNum)
+            Battery.append({"Battery Voltage" : self.ValueOut(self.GetParameter(self.Reg.BATTERY_VOLTS[REGISTER], ReturnFloat = True, Divider = 100.0), "V", JSONNum)})
+            Battery.append({"Battery Charger Current" : self.ValueOut(self.GetParameter(self.Reg.BATTERY_CHARGE_CURRNT[REGISTER], ReturnFloat = True, Divider = 10.0), "A", JSONNum)})
+
+            Engine.append({"Engine Status" : self.GetEngineState()})
+            Engine.append({"Generator Status" : self.GetParameterStringValue(RegisterStringEnum.GENERATOR_STATUS[REGISTER], RegisterStringEnum.GENERATOR_STATUS[RET_STRING])})
+            Engine.append({"Switch State" : self.GetSwitchState()})
+            Engine.append({"Output Power" : self.ValueOut(self.GetPowerOutput(ReturnFloat = True), "kW", JSONNum)})
+            Engine.append({"Output Power Factor" : self.ValueOut(self.GetParameter(self.Reg.TOTAL_PF[REGISTER], ReturnFloat = True, Divider = 100.0), "", JSONNum)})
+            Engine.append({"RPM" : self.ValueOut(self.GetParameter(self.Reg.OUTPUT_RPM[REGISTER], ReturnInt = True), "", JSONNum)})
+            Engine.append({"Frequency" : self.ValueOut(self.GetParameter(self.Reg.OUTPUT_FREQUENCY[REGISTER], ReturnFloat = True, Divider = 10.0), "Hz", JSONNum)})
+            Engine.append({"Throttle Position" : self.ValueOut(self.GetParameter(self.Reg.THROTTLE_POSITION[REGISTER], ReturnInt = True), "Stp", JSONNum)})
+            Engine.append({"Coolant Temp" : self.ValueOut(self.GetParameter(self.Reg.COOLANT_TEMP[REGISTER], ReturnInt = True), "F", JSONNum)})
+            Engine.append({"Coolant Level" : self.ValueOut(self.GetParameter(self.Reg.COOLANT_LEVEL[REGISTER], ReturnInt = True), "Stp", JSONNum)})
+            Engine.append({"Oil Pressure" : self.ValueOut(self.GetParameter(self.Reg.OIL_PRESSURE[REGISTER], ReturnInt = True), "psi", JSONNum)})
+            Engine.append({"Oil Temp" : self.ValueOut(self.GetParameter(self.Reg.OIL_TEMP[REGISTER], ReturnInt = True), "F", JSONNum)})
+            Engine.append({"Fuel Level" : self.ValueOut(self.GetParameter(self.Reg.FUEL_LEVEL[REGISTER], ReturnInt = True), "", JSONNum)})
+            Engine.append({"Oxygen Sensor" : self.ValueOut(self.GetParameter(self.Reg.O2_SENSOR[REGISTER], ReturnInt = True), "", JSONNum)})
+            Engine.append({"Current Phase A" : self.ValueOut(self.GetParameter(self.Reg.CURRENT_PHASE_A[REGISTER], ReturnInt = True), "A", JSONNum)})
+            Engine.append({"Current Phase B" : self.ValueOut(self.GetParameter(self.Reg.CURRENT_PHASE_B[REGISTER],ReturnInt = True), "A", JSONNum)})
+            Engine.append({"Current Phase C" : self.ValueOut(self.GetParameter(self.Reg.CURRENT_PHASE_C[REGISTER],ReturnInt = True), "A", JSONNum)})
+            Engine.append({"Average Current" : self.ValueOut(self.GetParameter(self.Reg.AVG_CURRENT[REGISTER],ReturnInt = True), "A", JSONNum)})
+            Engine.append({"Voltage A-B" : self.ValueOut(self.GetParameter(self.Reg.VOLTS_PHASE_A_B[REGISTER],ReturnInt = True), "V", JSONNum)})
+            Engine.append({"Voltage B-C" : self.ValueOut(self.GetParameter(self.Reg.VOLTS_PHASE_B_C[REGISTER],ReturnInt = True), "V", JSONNum)})
+            Engine.append({"Voltage C-A" : self.ValueOut(self.GetParameter(self.Reg.VOLTS_PHASE_C_A[REGISTER],ReturnInt = True), "V", JSONNum)})
+            Engine.append({"Average Voltage" : self.ValueOut(self.GetParameter(self.Reg.AVG_VOLTAGE[REGISTER],ReturnInt = True), "V", JSONNum)})
+            Engine.append({"Air Fuel Duty Cycle" : self.ValueOut(self.GetParameter(self.Reg.A_F_DUTY_CYCLE[REGISTER], ReturnFloat = True, Divider = 10.0), "", JSONNum)})
+
+            Alarms.append({"Number of Active Alarms" : self.ValueOut(self.GetParameter(self.Reg.ACTIVE_ALARM_COUNT[REGISTER], ReturnInt = True), "", JSONNum)})
+            Alarms.append({"Number of Acknowledged Alarms" : self.ValueOut(self.GetParameter(self.Reg.ALARM_ACK[REGISTER], ReturnInt = True), "", JSONNum)})
 
             OutputList = [self.Reg.OUTPUT_1[REGISTER],self.Reg.OUTPUT_2[REGISTER],
                             self.Reg.OUTPUT_3[REGISTER],self.Reg.OUTPUT_4[REGISTER],
@@ -1675,14 +1677,14 @@ class HPanel(GeneratorController):
             if self.SystemInAlarm():
                 AlarmList = self.GetCondition(RegList = OutputList, type = "alarms")
                 if len(AlarmList):
-                    Alarms["Alarm List"] = AlarmList
+                    Alarms.append({"Alarm List" : AlarmList})
 
 
-            Line["Transfer Switch State"] = self.GetTransferStatus()
+            Line.append({"Transfer Switch State" : self.GetTransferStatus()})
 
             # Generator time
-            Time["Monitor Time"] = datetime.datetime.now().strftime("%A %B %-d, %Y %H:%M:%S")
-            Time["Generator Time"] = self.GetDateTime()
+            Time.append({"Monitor Time" : datetime.datetime.now().strftime("%A %B %-d, %Y %H:%M:%S")})
+            Time.append({"Generator Time" : self.GetDateTime()})
 
         except Exception as e1:
             self.LogErrorLine("Error in DisplayStatus: " + str(e1))

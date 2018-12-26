@@ -340,9 +340,66 @@ function DisplayStatusFull() {
     }});
     return;
 }
-
 //*****************************************************************************
-function json2html(json, intent, parentkey) {
+function getItem(json, parentkey)  {
+
+  var outstr = '';
+  if (typeof json === 'string') {
+    outstr += '<div class="jsonVal" id="'+parentkey.replace(/ /g, '_')+'">' + json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div><br>';
+  } else if (typeof json === 'number') {
+    outstr += '<div class="jsonVal" id="'+parentkey.replace(/ /g, '_')+'">' + json + '</div><br>';
+  } else if (typeof json === 'boolean') {
+    outstr += '<div class="jsonVal" id="'+parentkey.replace(/ /g, '_')+'">' + json + '</div><br>';
+  } else if (json === null) {
+    outstr += '<div class="jsonVal" id="'+parentkey.replace(/ /g, '_')+'">null</div><br>';
+  } else {
+    console.log("unexpected type in getItem: " + (typeof json));
+  }
+  return outstr
+}
+//*****************************************************************************
+function json2html(json, indent, parentkey) {
+
+    if ((typeof json === 'string') || (typeof json === 'number') || (typeof json === 'boolean') || (typeof json === null)) {
+        console.log("unexpected type in json2html (1): " + (typeof json));
+        return ""
+    }
+    var outstr = '';
+    if (typeof json === 'object') {
+      var key_count = Object.keys(json).length;
+      if (key_count <= 0) {
+        console.log("key count invalid in json2html: " + key_count);
+        return outstr
+      }
+      for (var key in json) {
+        if (json.hasOwnProperty(key) == false) {
+          console.log("no property of key in json2html: " + key);
+          return outstr
+        }
+        if (json[key].constructor === Array) {
+            if (json[key].length > 0) {
+              outstr += "<br>" + indent + key + ' :<br>';   // + json2html(json[key], indent, key);
+              for (var i = 0; i < json[key].length; ++i) {
+                if (typeof json[key][i] === 'object') {
+                  outstr +=  json2html(json[key][i], indent + "&nbsp;&nbsp;&nbsp;&nbsp;", parentkey+"_"+i);
+                } else {
+                  outstr += indent + "&nbsp;&nbsp;&nbsp;&nbsp;" + key + ' : ' + getItem(json[key][i], key); //parentkey);
+                }
+              }
+            }
+        } else if (typeof json[key] === 'object') {
+           outstr += "<br>" + indent + key + ' :<br>' + json2html(json[key], indent + "&nbsp;&nbsp;&nbsp;&nbsp;", key);
+        } else if ((typeof json[key] === 'string') || (typeof json[key] === 'number') || (typeof json[key] === 'boolean') || (typeof json[key] === null)) {
+           outstr += indent + key + ' : ' + getItem(json[key], key); //parentkey);
+        } else {
+          console.log("unexpected type in json2html (2): " + parentkey + " : "+  json[key] + " : "+ (typeof json[key]));
+        }
+      }
+    }
+
+    return outstr;
+}
+function json2html_old(json, indent, parentkey) {
     var outstr = '';
     if (typeof json === 'string') {
       outstr += '<div class="jsonVal" id="'+parentkey.replace(/ /g, '_')+'">' + json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div><br>';
@@ -355,22 +412,22 @@ function json2html(json, intent, parentkey) {
     }
     else if (json instanceof Array) {
       if (json.length > 0) {
-        intent += "&nbsp;&nbsp;&nbsp;&nbsp;";
+        indent += "&nbsp;&nbsp;&nbsp;&nbsp;";
         for (var i = 0; i < json.length; ++i) {
-          outstr += intent + json2html(json[i], intent, parentkey+"_"+i);
+          outstr += indent + json2html(json[i], indent, parentkey+"_"+i);
         }
       }
     }
     else if (typeof json === 'object') {
       var key_count = Object.keys(json).length;
       if (key_count > 0) {
-        intent += "&nbsp;&nbsp;&nbsp;&nbsp;";
+        indent += "&nbsp;&nbsp;&nbsp;&nbsp;";
         for (var key in json) {
           if (json.hasOwnProperty(key)) {
             if ((typeof json[key] === 'string') || (typeof json[key] === 'number') || (typeof json[key] === 'boolean') || (typeof json[key] === null)) {
-               outstr += intent + key + ' : ' + json2html(json[key], intent, key);
+               outstr += indent + key + ' : ' + json2html(json[key], indent, key);
             } else {
-               outstr += "<br>" + intent + key + ' :<br>' + json2html(json[key], intent, key);
+               outstr += "<br>" + indent + key + ' :<br>' + json2html(json[key], indent, key);
             }
           }
         }
@@ -670,9 +727,8 @@ function DisplayMaintenance(){
 
             if (myGenerator['ResetAlarms'] == true || myGenerator['AckAlarms'] == true){
                outstr += '<br><br>Alarm Condition:<br><br>';
-               outstr += '&nbsp;&nbsp;';
                if (myGenerator['ResetAlarms'] == true) {
-                 outstr += '&nbsp;&nbsp;<button id="resetalarm" onClick="SetClick(\'resetalarm\');">Reset Alarm</button><br>';
+                  outstr += '&nbsp;&nbsp;<button id="resetalarm" onClick="SetClick(\'resetalarm\');">Reset Alarm</button><br>';
                }
                if (myGenerator['AckAlarms'] == true) {
                   outstr += '&nbsp;&nbsp;<button id="ackalarm" onClick="SetClick(\'ackalarm\');">Acknowledge Alarm</button><br>';
@@ -1004,11 +1060,11 @@ function DisplayLogs(){
             } else {
                var matches = loglines[i].match(/^\s*(\d+)\/(\d+)\/(\d+) (\d+:\d+:\d+) (.*)$/i)
                if ((matches != undefined) && (matches.length == 6)) {
-                  if ((12*matches[3]+1*matches[1]+12) <  (12*(date.getYear()-100) + date.getMonth() + 1)) {
+                  if ((12*matches[3]+1*matches[1]+12) <= (12*(date.getYear()-100) + date.getMonth() + 1)) {
                   } else if (data_helper[matches.slice(1,3).join("/")] == undefined) {
                       data_helper[matches.slice(1,3).join("/")] = {count: severity, date: '20'+matches[3]+'-'+matches[1]+'-'+matches[2], dateFormatted: matches[2]+' '+MonthsOfYearArray[(matches[1] -1)]+' 20'+matches[3], title: matches[5].trim()};
-                      if (((12*(date.getYear()-100) + date.getMonth() + 1)-(12*matches[3]+1*matches[1])) > months) {
-                          months = (12*(date.getYear()-100) + date.getMonth() + 1)-(12*matches[3]+1*matches[1])
+                      if (((12*(date.getYear()-100) + date.getMonth() + 1)-(12*matches[3]+1*matches[1])+1) > months) {
+                          months = (12*(date.getYear()-100) + date.getMonth() + 1)-(12*matches[3]+1*matches[1])+1
                       }
                   } else {
                       data_helper[matches.slice(1,3).join("/")]["title"] = data_helper[matches.slice(1,3).join("/")]["title"] + "<br>" + matches[5].trim();
@@ -1018,11 +1074,11 @@ function DisplayLogs(){
                }
             }
         }
-        var data = Object.keys(data_helper).map(function(itm) { return data_helper[itm]; });
+        var data = Object.keys(data_helper).sort().map(function(itm) { return data_helper[itm]; });
         // var data = Object.keys(data_helper).map(itm => data_helper[itm]);
         // var data = Object.values(data_helper);
         // console.log(data);
-        var options = {coloring: 'genmon', months: months, labels: { days: true, months: true, custom: {monthLabels: "MMM 'YY"}}, tooltips: { show: true, options: {}}, legend: { show: false}};
+        var options = {coloring: 'genmon', start: new Date((date.getMonth()-12 < 0) ? date.getYear() - 1 + 1900 : date.getYear() + 1900, (date.getMonth()-12 < 0) ? date.getMonth()+1 : date.getMonth()-12, 1), end: new Date(date.getYear() + 1900, date.getMonth(), date.getDate()), months: months, labels: { days: true, months: true, custom: {monthLabels: "MMM 'YY"}}, tooltips: { show: true, options: {}}, legend: { show: false}};
         $("#annualCalendar").CalendarHeatmap(data, options);
    }});
 }
@@ -1038,47 +1094,45 @@ function DisplayMonitor(){
 
         var outstr = json2html(result, "", "root");
 
-
         $("#mydisplay").html(outstr);
 
         if ($("#CPU_Temperature").length > 0) {
            temp_img = "temp1";
            switch (true) {
-              case (parseInt(prevStatusValues["PlatformStats"]["CPU Temperature"].replace(/C/g, '').trim()) > 85):
+              case (parseInt(prevStatusValues["PlatformStats"][0]["CPU Temperature"].replace(/C/g, '').trim()) > 85):
                   temp_img = "temp4";
                   break;
-              case (parseInt(prevStatusValues["PlatformStats"]["CPU Temperature"].replace(/C/g, '').trim()) > 75):
+              case (parseInt(prevStatusValues["PlatformStats"][0]["CPU Temperature"].replace(/C/g, '').trim()) > 75):
                   temp_img = "temp3";
                   break;
-              case (parseInt(prevStatusValues["PlatformStats"]["CPU Temperature"].replace(/C/g, '').trim()) > 50):
+              case (parseInt(prevStatusValues["PlatformStats"][0]["CPU Temperature"].replace(/C/g, '').trim()) > 50):
                   temp_img = "temp2";
                   break;
            }
-           $("#CPU_Temperature").html('<div style="display: inline-block; position: relative;">'+result["Monitor"]["Platform Stats"]["CPU Temperature"] + '<img style="position: absolute;top:-10px;left:75px" class="'+ temp_img +'" src="images/transparent.png"></div>');
+           $("#CPU_Temperature").html('<div style="display: inline-block; position: relative;">'+result["Monitor"][2]["Platform Stats"][0]["CPU Temperature"] + '<img style="position: absolute;top:-10px;left:75px" class="'+ temp_img +'" src="images/transparent.png"></div>');
         }
 
         if ($("#WLAN_Signal_Level").length > 0) {
            wifi_img = "wifi1";
            switch (true) {
-              case (parseInt(prevStatusValues["PlatformStats"]["WLAN Signal Level"].replace(/dBm/g, '').trim()) > -67):
+              case (parseInt(prevStatusValues["PlatformStats"][9]["WLAN Signal Level"].replace(/dBm/g, '').trim()) > -67):
                   wifi_img = "wifi4";
                   break;
-              case (parseInt(prevStatusValues["PlatformStats"]["WLAN Signal Level"].replace(/dBm/g, '').trim()) > -70):
+              case (parseInt(prevStatusValues["PlatformStats"][9]["WLAN Signal Level"].replace(/dBm/g, '').trim()) > -70):
                   wifi_img = "wifi3";
                   break;
-              case (parseInt(prevStatusValues["PlatformStats"]["WLAN Signal Level"].replace(/dBm/g, '').trim()) > -80):
+              case (parseInt(prevStatusValues["PlatformStats"][9]["WLAN Signal Level"].replace(/dBm/g, '').trim()) > -80):
                   wifi_img = "wifi2";
                   break;
            }
-           $("#WLAN_Signal_Level").html('<div style="display: inline-block; position: relative;">'+result["Monitor"]["Platform Stats"]["WLAN Signal Level"] + '<img style="position: absolute;top:-10px;left:110px" class="'+ wifi_img +'" src="images/transparent.png"></div>');
+           $("#WLAN_Signal_Level").html('<div style="display: inline-block; position: relative;">'+result["Monitor"]["Platform Stats"][9]["WLAN Signal Level"] + '<img style="position: absolute;top:-10px;left:110px" class="'+ wifi_img +'" src="images/transparent.png"></div>');
         }
         if ($("#Conditions").length > 0) {
-           $("#Conditions").html('<div style="display: inline-block; position: relative;">'+result["Monitor"]["Weather"]["Conditions"] + '<img class="greyscale" style="position: absolute;top:-30px;left:160px" src="http://openweathermap.org/img/w/' + prevStatusValues["Weather"]["icon"] + '.png"></div>');
+           $("#Conditions").html('<div style="display: inline-block; position: relative;">'+result["Monitor"][3]["Weather"][1]["Conditions"] + '<img class="greyscale" style="position: absolute;top:-30px;left:160px" src="http://openweathermap.org/img/w/' + prevStatusValues["Weather"][14]["icon"] + '.png"></div>');
         }
 
    }});
 }
-
 
 //*****************************************************************************
 // Display the Notification Tab
@@ -1255,6 +1309,16 @@ function saveNotificationsJSON(){
 //*****************************************************************************
 // test email
 //*****************************************************************************
+function TestEmailSettingsWrapper(){
+    GenmonPrompt("Sending Test Email", "recepient:", $("#email_account").val());
+}
+
+function TestEmailSettingsWrapperSubmit(email){
+    $('.vex-dialog-message').html("<h4>Sending...</h4>");
+    $('.vex-dialog-buttons').hide();
+    TestEmailSettings($("#smtp_server").val(), $("#smtp_port").val(), $("#email_account").val(), $("#sender_account").val(), email, $("#email_pw").val(), ($("#ssl_enabled").prop('checked')  === true ? "true" : "false"));
+}
+
 function TestEmailSettings(smtp_server, smtp_port,email_account,sender_account,recipient, password, use_ssl){
 
     var parameters = {};
@@ -1268,10 +1332,20 @@ function TestEmailSettings(smtp_server, smtp_port,email_account,sender_account,r
 
       // test email settings
       var url = baseurl.concat("test_email");
-      $.getJSON(  url,
+      $.get(  url,
                   {test_email: JSON.stringify(parameters)},
-                  function(result){
-                    GenmonAlert(result)
+                  function (result, status) {
+                    if ((status == "success") && (result == "Success")) {
+                       vex.dialog.buttons.YES.text = 'OK';
+                       $('.vex-dialog-message').html("Test email sent successfully. Please verify that you received the email.");
+                       $('.vex-dialog-button-primary').text("OK");
+                       $('.vex-dialog-button-secondary').hide();
+                       $('.vex-dialog-buttons').show();
+                    } else {
+                       vex.dialog.buttons.YES.text = 'Close';
+                       GenmonAlert("An error occured: <br>"+result+"<br><br>Please try again.");
+                       $('.vex-dialog-button-primary').text("Close");
+                    }
       });
 }
 //*****************************************************************************
@@ -1312,6 +1386,8 @@ function DisplaySettings(){
               outstr += '</td><td nowrap>&nbsp;&nbsp;Optional - Outbound Email Settings&nbsp;&nbsp;</td><td width="80%"><hr></td></tr></table>';
               outstr += '<fieldset id="'+key+'Section"><table id="allsettings" border="0">';
             } else if (key == "disableimap") {
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px" colspan="2"><button type="button" style="margin-left: 0px; background: #bbbbbb; cursor:pointer; padding: .5em .5em; border: 0; border-radius: 3.01px; font-family: inherit;" '+
+                        ' id="testsettingsbutton" onClick="TestEmailSettingsWrapper();return false;">Test Email Settings</button></td></tr>';
               outstr += '</table></fieldset><br><br><table width="100%" border="0"><tr><td nowrap width="90px">';
               outstr += printSettingsField(result[key][0], key, !result[key][3], "", "", "toggleSectionInverse(true, '"+key+"');");
               outstr += '</td><td nowrap>&nbsp;&nbsp;Optional - Inbound Email Commands Processing&nbsp;&nbsp;</td><td width="80%"><hr></td></tr></table>';
@@ -2784,6 +2860,36 @@ function GenmonAlert(msg)
 {
        vex.closeAll();
        vex.dialog.alert({ unsafeMessage: '<table><tr><td valign="middle" width="200px" align="center"><img class="alert_large" src="images/transparent.png" width="64px" height="64px"></td><td valign="middle" width="70%">'+msg+'</td></tr></table>'});
+}
+
+function GenmonPrompt(title, msg, placeholder)
+{
+       vex.closeAll();
+       vex.dialog.buttons.YES.text = 'Send';
+       vex.dialog.open({ onSubmit: function(e) {
+           e.preventDefault();
+           if (vex.dialog.buttons.YES.text == "Send") {
+             TestEmailSettingsWrapperSubmit($("#promptField").val())
+           } else {
+             vex.closeAll();
+           }
+        },
+        unsafeMessage:  [title, "<br>",
+        '<style>',
+            '.vex-custom-field-wrapper {',
+                'margin: 1em 0;',
+            '}',
+            '.vex-custom-field-wrapper > label {',
+                'display: inline-block;',
+                'margin-bottom: .2em;',
+            '}',
+        '</style>',
+        '<div class="vex-custom-field-wrapper">',
+            '<label for="date">'+msg+'</label>',
+            '<div class="vex-custom-input-wrapper">',
+                '<input name="promptField" style="width:100%" id="promptField" type="text" value="' + placeholder + '" />',
+            '</div>',
+        '</div>'].join(''), overlayClosesOnClick: false});
 }
 
 //*****************************************************************************

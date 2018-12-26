@@ -601,10 +601,10 @@ class ModbusProtocol(ModbusBase):
             return 0
     # ---------- ModbusProtocol::GetCommStats-----------------------------------
     def GetCommStats(self):
-        SerialStats = collections.OrderedDict()
+        SerialStats = []
 
         try:
-            SerialStats["Packet Count"] = "M: %d, S: %d" % (self.TxPacketCount, self.RxPacketCount)
+            SerialStats.append({"Packet Count" : "M: %d, S: %d" % (self.TxPacketCount, self.RxPacketCount)})
 
             if self.CrcError == 0 or self.TxPacketCount == 0:
                 PercentErrors = 0.0
@@ -616,26 +616,26 @@ class ModbusProtocol(ModbusBase):
             else:
                 PercentTimeoutErrors = float(self.ComTimoutError) / float(self.TxPacketCount)
 
-            SerialStats["CRC Errors"] = "%d " % self.CrcError
-            SerialStats["CRC Percent Errors"] = ("%.2f" % (PercentErrors * 100)) + "%"
-            SerialStats["Packet Timeouts"] = "%d" %  self.ComTimoutError
-            SerialStats["Packet Timeouts Percent Errors"] = ("%.2f" % (PercentTimeoutErrors * 100)) + "%"
-            SerialStats["Modbus Exceptions"] = self.SlaveException
-            SerialStats["Validation Errors"] = self.ComValidationError
-            SerialStats["Invalid Data"] = self.UnexpectedData
+            SerialStats.append({"CRC Errors" : "%d " % self.CrcError})
+            SerialStats.append({"CRC Percent Errors" : ("%.2f" % (PercentErrors * 100)) + "%"})
+            SerialStats.append({"Packet Timeouts" : "%d" %  self.ComTimoutError})
+            SerialStats.append({"Packet Timeouts Percent Errors" : ("%.2f" % (PercentTimeoutErrors * 100)) + "%"})
+            SerialStats.append({"Modbus Exceptions" : self.SlaveException})
+            SerialStats.append({"Validation Errors" : self.ComValidationError})
+            SerialStats.append({"Invalid Data" : self.UnexpectedData})
             # add serial stats
-            SerialStats["Discarded Bytes"] = "%d" % self.Slave.DiscardedBytes
-            SerialStats["Comm Restarts"] = "%d" % self.Slave.Restarts
+            SerialStats.append({"Discarded Bytes" : "%d" % self.Slave.DiscardedBytes})
+            SerialStats.append({"Comm Restarts" : "%d" % self.Slave.Restarts})
 
             CurrentTime = datetime.datetime.now()
             #
             Delta = CurrentTime - self.ModbusStartTime        # yields a timedelta object
             PacketsPerSecond = float((self.TxPacketCount + self.RxPacketCount)) / float(Delta.total_seconds())
-            SerialStats["Packets Per Second"] = "%.2f" % (PacketsPerSecond)
+            SerialStats.append({"Packets Per Second" : "%.2f" % (PacketsPerSecond)})
 
             if self.RxPacketCount:
                 AvgTransactionTime = float(self.TotalElapsedPacketeTime / self.RxPacketCount)
-                SerialStats["Average Transaction Time"] = "%.4f sec" % (AvgTransactionTime)
+                SerialStats.append({"Average Transaction Time" : "%.4f sec" % (AvgTransactionTime)})
         except Exception as e1:
             self.LogErrorLine("Error in GetCommStats: " + str(e1))
         return SerialStats

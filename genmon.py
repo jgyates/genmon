@@ -33,7 +33,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.12.1"
+GENMON_VERSION = "V1.12.2"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(MySupport):
@@ -341,9 +341,9 @@ class Monitor(MySupport):
                 msgbody = "Reason = " + Reason + "\n"
                 if Message != None:
                     msgbody += "Message : " + Message + "\n"
-                msgbody += self.DictToString(self.GetStartInfo(NoTile = True))
+                msgbody += self.printToString(self.ProcessDispatch(self.GetStartInfo(NoTile = True),""))
                 if not self.bDisablePlatformStats:
-                    msgbody +=  self.DictToString(self.GetPlatformStats())
+                    msgbody += self.printToString(self.ProcessDispatch({"Platform Stats" : self.GetPlatformStats()},""))
                 msgbody += self.Controller.DisplayRegisters(AllRegs = FullLogs)
 
                 msgbody += "\n" + self.GetSupportData() + "\n"
@@ -366,23 +366,6 @@ class Monitor(MySupport):
             return False
         return True
 
-    #---------- Monitor::SendRegisters------------------------------------------
-    def SendRegisters(self):
-
-        if not self.EmailSendIsEnabled():
-            return "Send Email is not enabled."
-
-        msgbody = ""
-        msgbody += self.DictToString(self.GetStartInfo(NoTile = True))
-        if not self.bDisablePlatformStats:
-            msgbody +=  self.DictToString(self.GetPlatformStats())
-        msgbody += self.Controller.DisplayRegisters(AllRegs = True)
-
-        msgbody += "\n" + self.GetSupportData()  + "\n"
-
-        self.MessagePipe.SendMessage("Generator Monitor Register Submission", msgbody , recipient = self.MaintainerAddress, msgtype = "error")
-        return "Registers submitted"
-
     #---------- Monitor::GetSupportData-----------------------------------------
     def GetSupportData(self):
 
@@ -400,35 +383,40 @@ class Monitor(MySupport):
 
         return json.dumps(SupportData, sort_keys=False)
 
-    #---------- Monitor::SendLogFiles-------------------------------------------
-    def SendLogFiles(self, AsJSON = True):
+    #---------- Monitor::SendSupportInfo----------------------------------------
+    def SendSupportInfo(self, SendLogs = True):
 
         try:
             if not self.EmailSendIsEnabled():
-                self.LogError("Error in SendLogFiles: send email is not enabled")
+                self.LogError("Error in SendSupportInfo: send email is not enabled")
                 return "Send Email is not enabled."
 
             msgbody = ""
-            msgbody += self.DictToString(self.GetStartInfo(NoTile = True))
+            msgbody += self.printToString(self.ProcessDispatch(self.GetStartInfo(NoTile = True),""))
             if not self.bDisablePlatformStats:
-                msgbody +=  self.DictToString(self.GetPlatformStats())
+                msgbody += self.printToString(self.ProcessDispatch({"Platform Stats" : self.GetPlatformStats()},""))
+
             msgbody += self.Controller.DisplayRegisters(AllRegs = True)
 
             msgbody += "\n" + self.GetSupportData()  + "\n"
-
-            LogList = []
-            FilesToSend = ["genmon.log", "genserv.log", "mymail.log", "myserial.log",
-                "mymodbus.log", "gengpio.log", "gengpioin.log", "gensms.log",
-                "gensms_modem.log", "genmqtt.log", "genpushover.log", "gensyslog.log",
-                "genloader.log", "myserialtcp.log", "genlog.log", "genslack.log"]
-            for File in FilesToSend:
-                LogFile = self.LogLocation + File
-                if os.path.isfile(LogFile):
-                    LogList.append(LogFile)
-            self.MessagePipe.SendMessage("Generator Monitor Log File Submission", msgbody , recipient = self.MaintainerAddress, files = LogList, msgtype = "error")
+            msgtitle = "Generator Monitor Log File Submission"
+            if SendLogs == True:
+                LogList = []
+                FilesToSend = ["genmon.log", "genserv.log", "mymail.log", "myserial.log",
+                    "mymodbus.log", "gengpio.log", "gengpioin.log", "gensms.log",
+                    "gensms_modem.log", "genmqtt.log", "genpushover.log", "gensyslog.log",
+                    "genloader.log", "myserialtcp.log", "genlog.log", "genslack.log"]
+                for File in FilesToSend:
+                    LogFile = self.LogLocation + File
+                    if os.path.isfile(LogFile):
+                        LogList.append(LogFile)
+            else:
+                msgtitle = "Generator Monitor Register Submission"
+                LogList = None
+            self.MessagePipe.SendMessage(msgtitle, msgbody , recipient = self.MaintainerAddress, files = LogList, msgtype = "error")
             return "Log files submitted"
         except Exception as e1:
-            self.LogErrorLine("Error in SendLogFiles: " + str(e1))
+            self.LogErrorLine("Error in SendSupportInfo: " + str(e1))
 
     #---------- process command from email and socket --------------------------
     def ProcessCommand(self, command, fromsocket = False):
@@ -496,8 +484,8 @@ class Monitor(MySupport):
             "getregvalue"       : [self.Controller.GetRegValue, (command.lower(),), True],     # only used for debug purposes, read a cached register value
             "readregvalue"      : [self.Controller.ReadRegValue, (command.lower(),), True],    # only used for debug purposes, Read Register Non Cached
             "getdebug"          : [self.GetDeadThreadName, (), True],           # only used for debug purposes. If a thread crashes it tells you the thread name
-            "sendregisters"     : [self.SendRegisters, (), True],
-            "sendlogfiles"      : [self.SendLogFiles, (), True]
+            "sendregisters"     : [self.SendSupportInfo, (False,), True],
+            "sendlogfiles"      : [self.SendSupportInfo, (True,), True]
         }
 
         CommandList = command.split(b' ')    # PYTHON3
@@ -649,31 +637,31 @@ class Monitor(MySupport):
 
         try:
             Monitor = collections.OrderedDict()
-            MonitorData = collections.OrderedDict()
+            MonitorData = []
             Monitor["Monitor"] = MonitorData
-            GenMonStats = collections.OrderedDict()
-            SerialStats = collections.OrderedDict()
-            MonitorData["Generator Monitor Stats"] = GenMonStats
-            MonitorData["Serial Stats"] = self.Controller.GetCommStatus()
+            GenMonStats = []
+            SerialStats = []
+            MonitorData.append({"Generator Monitor Stats" : GenMonStats})
+            MonitorData.append({"Serial Stats" : self.Controller.GetCommStatus()})
 
-            GenMonStats["Monitor Health"] =  self.GetSystemHealth()
-            GenMonStats["Controller"] = self.Controller.GetController(Actual = False)
+            GenMonStats.append({"Monitor Health" :  self.GetSystemHealth()})
+            GenMonStats.append({"Controller" : self.Controller.GetController(Actual = False)})
 
-            GenMonStats["Run time"] = self.GetProgramRunTime()
-            GenMonStats["Generator Monitor Version"] = GENMON_VERSION
+            GenMonStats.append({"Run time" : self.GetProgramRunTime()})
+            GenMonStats.append({"Generator Monitor Version" : GENMON_VERSION})
 
             if not self.bDisablePlatformStats:
                 PlatformStats = self.GetPlatformStats()
                 if not PlatformStats == None:
-                    MonitorData["Platform Stats"] = PlatformStats
+                    MonitorData.append({"Platform Stats" : PlatformStats})
 
             WeatherData = self.GetWeatherData()
             if not WeatherData == None and len(WeatherData):
-                MonitorData["Weather"] = WeatherData
+                MonitorData.append({"Weather" : WeatherData})
 
             UserData = self.GetUserDefinedData()
             if not UserData == None and len(UserData):
-                MonitorData["External Data"] = UserData
+                MonitorData.append({"External Data" : UserData})
 
             if not DictOut:
                 return self.printToString(self.ProcessDispatch(Monitor,""))

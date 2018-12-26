@@ -18,7 +18,7 @@ import threading, datetime, collections, os, time
 
 
 from genmonlib.mysupport import MySupport
-from genmonlib.mythread import MyThread 
+from genmonlib.mythread import MyThread
 
 class GeneratorController(MySupport):
     #---------------------GeneratorController::__init__-------------------------
@@ -58,6 +58,7 @@ class GeneratorController(MySupport):
         self.PowerLock = threading.RLock()
         self.KWHoursMonth = None
         self.FuelMonth = None
+        self.RunHoursMonth = None
         self.LastHouseKeepingTime = None
         self.TileList = []        # Tile list for GUI
 
@@ -648,8 +649,10 @@ class GeneratorController(MySupport):
                     if line[0] == "#":              # comment?
                         continue
                     Items = line.split(",")
+                    # Three items is for duration greater than 24 hours, i.e 1 day, 08:12
                     if len(Items) != 2 and len(Items) != 3:
                         continue
+
                     if len(Items) == 3:
                         strDuration = Items[1] + "," + Items[2]
                     else:
@@ -660,7 +663,10 @@ class GeneratorController(MySupport):
                         OutageLog.pop()
 
             for Items in OutageLog:
-                LogHistory.append("%s, Duration: %s" % (Items[0], Items[1]))
+                if len(Items) == 2:
+                    LogHistory.append("%s, Duration: %s" % (Items[0], Items[1]))
+                #else if len(Items) == 3:
+                #    LogHistory.append("%s, Duration: %s, Fuel: %s" % (Items[0], Items[1], Items[2]))
 
             return LogHistory
 
@@ -876,6 +882,7 @@ class GeneratorController(MySupport):
 
         KWHours = False
         FuelConsumption = False
+        RunHours = False
         msgbody = "Invalid command syntax for command power_log_json"
 
         try:
@@ -910,6 +917,8 @@ class GeneratorController(MySupport):
                         KWHours = True
                     elif ParseList[1].strip().lower() == "fuel":
                         FuelConsumption = True
+                    elif ParseList[1].strip().lower() == "time":
+                        RunHours = True
                 else:
                     self.LogError("Validation Error: Error parsing command string in GetPowerHistory (parse3): " + CmdString)
                     return msgbody
@@ -938,6 +947,9 @@ class GeneratorController(MySupport):
                 if Consumption == None:
                     return "Unknown"
                 return "%.2f %s" % (Consumption, Label)
+            if RunHours:
+                AvgPower, TotalSeconds = self.GetAveragePower(PowerList)
+                return "%.2f" % (TotalSeconds / 60.0 / 60.0)
 
             return PowerList
 

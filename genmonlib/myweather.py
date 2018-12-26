@@ -141,15 +141,15 @@ class MyWeather(MySupport):
     #---------------------GetLocation-------------------------------------------
     def GetLocation(self):
 
-        Data = collections.OrderedDict()
+        Data = []
         try:
             if self.ObservationLocation == None:
                 return None
 
-            Data["City Name"] = self.ObservationLocation.get_name()
-            Data["Latitude"] = self.ObservationLocation.get_lat()
-            Data["Longitude"] = self.ObservationLocation.get_lon()
-            Data["City ID"] = self.ObservationLocation.get_ID()
+            Data.append({"City Name" : self.ObservationLocation.get_name()})
+            Data.append({"Latitude" : self.ObservationLocation.get_lat()})
+            Data.append({"Longitude" : self.ObservationLocation.get_lon()})
+            Data.append({"City ID" : self.ObservationLocation.get_ID()})
         except Exception as e1:
             self.LogErrorLine("Error in GetLocation: " + str(e1))
 
@@ -157,7 +157,7 @@ class MyWeather(MySupport):
     #---------------------GetWeather--------------------------------------------
     def GetWeather(self, minimum = True, ForUI = False):
 
-        Data = collections.OrderedDict()
+        Data = []
 
         try:
             # Search for current weather in location
@@ -169,14 +169,14 @@ class MyWeather(MySupport):
 
             with self.DataAccessLock:
                 TempDict = self.WeatherData.get_temperature(unit = self.GetUnits("temp"))
-                Data["Current Temperature"] = str(TempDict.get('temp', 0)) + " " + self.GetUnits("temp", Label = True)
-                Data["Conditions"] = self.WeatherData.get_detailed_status().title()
+                Data.append({"Current Temperature" : str(TempDict.get('temp', 0)) + " " + self.GetUnits("temp", Label = True)})
+                Data.append({"Conditions" : self.WeatherData.get_detailed_status().title()})
 
                 if not minimum:
-                    Data["Maximum Current Temperature"] = str(TempDict.get('temp_max', 0)) + " " + self.GetUnits("temp", Label = True)
-                    Data["Minimum Current Temperature"] = str(TempDict.get('temp_min', 0)) + " " + self.GetUnits("temp", Label = True)
-                    Data["Humidity"] = str(self.WeatherData.get_humidity() ) + " %"
-                    Data["Cloud Coverage"] = str(self.WeatherData.get_clouds()) + " %"
+                    Data.append({"Maximum Current Temperature" : str(TempDict.get('temp_max', 0)) + " " + self.GetUnits("temp", Label = True)})
+                    Data.append({"Minimum Current Temperature" : str(TempDict.get('temp_min', 0)) + " " + self.GetUnits("temp", Label = True)})
+                    Data.append({"Humidity" : str(self.WeatherData.get_humidity() ) + " %"})
+                    Data.append({"Cloud Coverage" : str(self.WeatherData.get_clouds()) + " %"})
                     TempDict = self.WeatherData.get_wind(unit = self.GetUnits("speed")) # unit is meters_sec or miles_hour
                     Degrees = round(TempDict.get("deg", 0), 2)
                     Cardinal = self.DegreesToCardinal(Degrees)
@@ -184,30 +184,30 @@ class MyWeather(MySupport):
                         WindString = Cardinal + " (" + str(Degrees) + " Degrees), "
                     else:
                         WindString = str(Degrees) + " Degrees, "
-                    Data["Wind"] = WindString + str(round(TempDict.get("speed", 0),2)) + " " +self.GetUnits("speed", Label = True)
+                    Data.append({"Wind" : WindString + str(round(TempDict.get("speed", 0),2)) + " " +self.GetUnits("speed", Label = True)})
                     TempDict = self.WeatherData.get_rain()
                     if len(TempDict):
-                        Data["Rain in last 3 hours"] = str(TempDict.get("3h", 0))
+                        Data.append({"Rain in last 3 hours" : str(TempDict.get("3h", 0))})
                     TempDict = self.WeatherData.get_snow()
                     if len(TempDict):
-                        Data["Snow in last 3 hours"] = str(TempDict.get("3h", 0))
+                        Data.append({"Snow in last 3 hours" : str(TempDict.get("3h", 0))})
 
                     TempDict = self.WeatherData.get_pressure()
                     if len(TempDict):
-                        Data["Pressure"] = str(TempDict.get("press", 0)) + " " + "hpa"
+                        Data.append({"Pressure" : str(TempDict.get("press", 0)) + " " + "hpa"})
 
-                    Data["Sunrise Time"] = datetime.datetime.fromtimestamp(int(self.WeatherData.get_sunrise_time())).strftime("%A %B %-d, %Y %H:%M:%S")
-                    Data["Sunset Time"] = datetime.datetime.fromtimestamp(int(self.WeatherData.get_sunset_time())).strftime("%A %B %-d, %Y %H:%M:%S")
+                    Data.append({"Sunrise Time" : datetime.datetime.fromtimestamp(int(self.WeatherData.get_sunrise_time())).strftime("%A %B %-d, %Y %H:%M:%S")})
+                    Data.append({"Sunset Time" : datetime.datetime.fromtimestamp(int(self.WeatherData.get_sunset_time())).strftime("%A %B %-d, %Y %H:%M:%S")})
 
                     ReferenceTime = datetime.datetime.fromtimestamp(int(self.WeatherData.get_reference_time()))
-                    Data["Reference Time"] = ReferenceTime.strftime("%A %B %-d, %Y %H:%M:%S")
+                    Data.append({"Reference Time" : ReferenceTime.strftime("%A %B %-d, %Y %H:%M:%S")})
                     LocationData = self.GetLocation()
                     if LocationData != None and len(LocationData):
-                        Data["Location"] = LocationData
+                        Data.append({"Location" : LocationData})
                 if ForUI:
-                    Data["code"] = self.WeatherData.get_weather_code()          # Get OWM weather condition code
+                    Data.append({"code" : self.WeatherData.get_weather_code()})          # Get OWM weather condition code
                     # "http://openweathermap.org/img/w/" + iconCode + ".png";
-                    Data["icon"] = self.WeatherData.get_weather_icon_name()     # Get OWM weather icon code
+                    Data.append({"icon" : self.WeatherData.get_weather_icon_name()})     # Get OWM weather icon code
 
             return Data
         except Exception as e1:
