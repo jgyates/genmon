@@ -27,7 +27,8 @@ class GenNotify(MyCommon):
                 onservice = None,
                 onoff = None,
                 onmanual = None,
-                onutilitychange = None):
+                onutilitychange = None,
+                start = True):
 
         super(GenNotify, self).__init__()
 
@@ -78,10 +79,17 @@ class GenNotify(MyCommon):
                     time.sleep(1)
                     continue
 
-            # start thread to accept incoming sockets for nagios heartbeat
-            self.Threads["PollingThread"] = MyThread(self.MainPollingThread, Name = "PollingThread")
+            self.Threads["PollingThread"] = MyThread(self.MainPollingThread, Name = "PollingThread", start = start)
+            self.Started = start
         except Exception as e1:
             self.LogErrorLine("Error in mynotify init: "  + str(e1))
+
+    # ---------- GenNotify::MainPollingThread-----------------------------------
+    def StartPollThread(self):
+
+        if not self.Started:
+            self.Threads["PollingThread"].Start()
+            self.Started = True
 
     # ---------- GenNotify::MainPollingThread-----------------------------------
     def MainPollingThread(self):
@@ -173,6 +181,9 @@ class GenNotify(MyCommon):
 
     #----------  GenNotify::Close ----------------------------------------------
     def Close(self):
-
-        self.Generator.Close()
+        try:
+            self.KillThread("PollingThread")
+            self.Generator.Close()
+        except Exception as e1:
+            pass 
         return False

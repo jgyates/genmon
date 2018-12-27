@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+
+## V1.12.3 - 2018-12-27
+- Changed link to download openweathermap icon
+- Added functionality to mynotify.py for future features
+
 ## V1.12.2 - 2018-12-23
 - Changed format of JSON for better compatibility with external apps and exporting data
 - Minor mods to issue template

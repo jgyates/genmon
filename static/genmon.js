@@ -1135,7 +1135,7 @@ function DisplayMonitor(){
         }
         if ($("#Conditions").length > 0) {
            weatherCondition = $("#Conditions").text()
-           $("#Conditions").html('<div style="display: inline-block; position: relative;">' + weatherCondition + '<img class="greyscale" style="position: absolute;top:-30px;left:160px" src="http://openweathermap.org/img/w/' + prevStatusValues["Weather"][13]["icon"] + '.png"></div>');
+           $("#Conditions").html('<div style="display: inline-block; position: relative;">' + weatherCondition + '<img class="greyscale" style="position: absolute;top:-30px;left:160px" src="https://openweathermap.org/img/w/' + prevStatusValues["Weather"][13]["icon"] + '.png"></div>');
         }
 
    }});
