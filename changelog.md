@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.12.4 - 2018-12-28
+- Fixed bug with openweathermap icon
 
 ## V1.12.3 - 2018-12-27
 - Changed link to download openweathermap icon
