@@ -15,6 +15,7 @@ import datetime, time, sys, signal, os, threading, socket
 import atexit
 try:
     from genmonlib.mylog import SetupLogger
+    from genmonlib.myconfig import MyConfig
     from genmonlib.myclient import ClientInterface
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
@@ -75,6 +76,24 @@ if __name__=='__main__': # usage program.py [server_address]
         log = SetupLogger("client", "/var/log/gengpioin.log")
         # Set the signal handler
         signal.signal(signal.SIGINT, signal_handler)
+        ConfigFilePath = "/etc/"
+
+        DefaultTrigger = GPIO.FALLING
+        DefaultPullup = GPIO.PUD_UP
+
+        if not os.path.isfile(ConfigFilePath + 'gengpioin.conf'):
+            config = MyConfig(filename = ConfigFilePath + 'gengpioin.conf', section = 'gengpioin', log = log)
+            Trigger = config.ReadValue('trigger', default = "falling")
+            if Trigger.lower() == "rising":
+                DefaultTrigger = GPIO.RISING
+            elif Trigger.lower() == "both":
+                DefaultTrigger = GPIO.BOTH
+
+            ResistorPull = config.ReadValue('resistorpull', default = "up")
+            if ResistorPull.lower() == "down":
+                DefaultPullup = GPIO.PUD_DOWN
+            elif ResistorPull.lower() == "off":
+                DefaultPullup = GPIO.PUD_OFF
 
         MyClientInterface = ClientInterface(host = address, log = log)
 
@@ -85,16 +104,16 @@ if __name__=='__main__': # usage program.py [server_address]
 
         GPIO.setwarnings(True)
 
-        GPIO.setup(INPUT_STOP, GPIO.IN, pull_up_down=GPIO.PUD_UP)               # input, set internal pull up resistor#
-        GPIO.add_event_detect(INPUT_STOP, GPIO.FALLING)                         # detect falling edge
+        GPIO.setup(INPUT_STOP, GPIO.IN, pull_up_down=DefaultPullup)               # input, set internal pull up resistor#
+        GPIO.add_event_detect(INPUT_STOP, DefaultTrigger)                         # detect falling edge
         GPIO.add_event_callback(INPUT_STOP, callback = StopCallBack) #, bouncetime=1000)
 
-        GPIO.setup(INPUT_START, GPIO.IN, pull_up_down=GPIO.PUD_UP)              # input, set internal pull up resistor#
-        GPIO.add_event_detect(INPUT_START, GPIO.FALLING)                        # detect falling edge
+        GPIO.setup(INPUT_START, GPIO.IN, pull_up_down=DefaultPullup)              # input, set internal pull up resistor#
+        GPIO.add_event_detect(INPUT_START, DefaultTrigger)                        # detect falling edge
         GPIO.add_event_callback(INPUT_START, callback = StartCallBack) #, bouncetime=1000)
 
-        GPIO.setup(INPUT_START_TRANSFER, GPIO.IN, pull_up_down=GPIO.PUD_UP)     # input, set internal pull up resistor#
-        GPIO.add_event_detect(INPUT_START_TRANSFER, GPIO.FALLING)               # detect falling edge
+        GPIO.setup(INPUT_START_TRANSFER, GPIO.IN, pull_up_down=DefaultPullup)     # input, set internal pull up resistor#
+        GPIO.add_event_detect(INPUT_START_TRANSFER, DefaultTrigger)               # detect falling edge
         GPIO.add_event_callback(INPUT_START_TRANSFER, callback = StartTransferCallBack) #, bouncetime=1000)
 
 

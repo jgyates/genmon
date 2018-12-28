@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.12.5 - 2018-12-28
+- Update to allow GPIO Input parameters for pull up/down resistor and GPIO input trigger
+
 ## V1.12.4 - 2018-12-28
 - Fixed bug with openweathermap icon
 

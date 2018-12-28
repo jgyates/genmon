@@ -200,6 +200,24 @@ class Loader(MySupport):
         except Exception as e1:
             self.LogInfo("Error in AddEntry: " + str(e1), LogLine = True)
         return
+
+    #---------------------------------------------------------------------------
+    def UpdateIfNeeded(self):
+
+        try:
+            self.config.SetSection("gengpioin")
+            if not self.config.HasOption('conffile'):
+                self.config.WriteValue('conffile', "gengpioin.conf", section = "gengpioin")
+                self.LogError("Updated entry gengpioin.conf")
+            else:
+                defValue = self.config.ReadValue('conffile', default = "")
+                if not len(defValue):
+                    self.config.WriteValue('conffile', "gengpioin.conf", section = "gengpioin")
+                    self.LogError("Updated entry gengpioin.conf")
+
+        except Exception as e1:
+            self.LogInfo("Error in UpdateIfNeeded: " + str(e1), LogLine = True)
+
     #---------------------------------------------------------------------------
     def GetConfig(self):
 
@@ -214,6 +232,8 @@ class Loader(MySupport):
                         self.AddEntry(section = entry, module = 'genslack.py', conffile = 'genslack.conf')
                     else:
                         self.LogError("Warning: Missing entry: " + entry)
+
+            self.UpdateIfNeeded()
 
             Sections = self.config.GetSections()
             for SectionName in Sections:
