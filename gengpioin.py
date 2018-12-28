@@ -46,6 +46,7 @@ def StopCallBack():
 
     try:
         MyClientInterface.ProcessMonitorCommand("generator: setremote=stop")
+        log.error("Sent Remote Stop Command")
     except Exception as e1:
         log.error("Error: " + str(e1))
 
@@ -55,6 +56,7 @@ def StartCallBack():
 
     try:
         MyClientInterface.ProcessMonitorCommand("generator: setremote=start")
+        log.error("Sent Remote Start Command")
     except Exception as e1:
         log.error("Error: " + str(e1))
 
@@ -64,6 +66,7 @@ def StartTransferCallBack():
 
     try:
         MyClientInterface.ProcessMonitorCommand("generator: setremote=starttransfer")
+        log.error("Sent Remote Start and Transfer Command")
     except Exception as e1:
         log.error("Error: " + str(e1))
 
@@ -81,7 +84,8 @@ if __name__=='__main__': # usage program.py [server_address]
         DefaultTrigger = GPIO.FALLING
         DefaultPullup = GPIO.PUD_UP
 
-        if not os.path.isfile(ConfigFilePath + 'gengpioin.conf'):
+        if os.path.isfile(ConfigFilePath + 'gengpioin.conf'):
+            log.error("Reading config file")
             config = MyConfig(filename = ConfigFilePath + 'gengpioin.conf', section = 'gengpioin', log = log)
             Trigger = config.ReadValue('trigger', default = "falling")
             if Trigger.lower() == "rising":
@@ -95,6 +99,26 @@ if __name__=='__main__': # usage program.py [server_address]
             elif ResistorPull.lower() == "off":
                 DefaultPullup = GPIO.PUD_OFF
 
+        Settings = ""
+        if DefaultPullup == GPIO.PUD_OFF:
+            Settings += " Resitor Pull Off "
+        elif DefaultPullup == GPIO.PUD_UP:
+            Settings += " Resitor Pull Up "
+        elif DefaultPullup == GPIO.PUD_DOWN:
+            Settings += " Resitor Pull Down "
+        else:
+            Settings += " Resitor Pull Unknown "
+
+        if DefaultTrigger == GPIO.RISING:
+            Settings += " Trigger Rising "
+        elif DefaultTrigger == GPIO.FALLING:
+            Settings += " Trigger Falling "
+        elif DefaultTrigger == GPIO.BOTH:
+            Settings += " Trigger Both "
+        else:
+            Settings += " Trigger Unknown "
+
+        log.error("Settings: " + Settings)
         MyClientInterface = ClientInterface(host = address, log = log)
 
         #setup GPIO using Board numbering
