@@ -283,6 +283,8 @@ class MyTile (MyCommon):
 
             GUIInfo["value"] = ValueStr
             GUIInfo["title"] = self.Title
+            GUIInfo["type"] = self.TileType
+            GUIInfo["subtype"] = self.Type
         except Exception as e1:
             self.LogErrorLine("Error in GetGUIInfo: " + str(e1))
         return GUIInfo
@@ -301,4 +303,8 @@ class MyTile (MyCommon):
         StartInfo["type"] = self.TileType
         StartInfo["subtype"] = self.Type
         StartInfo["default-size"] = self.DefaultSize
+        if self.Units == None:
+            StartInfo["units"] = ""
+        else:
+            StartInfo["units"] = self.Units
         return StartInfo

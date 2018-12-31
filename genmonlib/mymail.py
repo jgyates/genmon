@@ -324,7 +324,7 @@ class MyMail(MySupport):
                     if self.WaitForExit("EmailCommandThread", 15 ):
                         return
                 except Exception as e1:
-                    self.LogErrorLine("Resetting email thread" + str(e1))
+                    self.LogErrorLine("Resetting email thread : " + str(e1))
                     if self.WaitForExit("EmailCommandThread", 60 ):  # 60 sec
                         return
                     break

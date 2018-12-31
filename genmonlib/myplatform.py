@@ -111,7 +111,7 @@ class MyPlatform(MyCommon):
                 else:
                     PiInfo.append({"CPU Temperature" : "%.2f F" % self.ConvertCelsiusToFahrenheit(float(output[output.index('=') + 1:output.rindex("'")]))})
             except Exception as e1:
-                self.LogError(str(e1))
+                self.LogErrorLine(str(e1))
                 # for non rasbpian based systems
                 process = Popen(['cat', '/sys/class/thermal/thermal_zone0/temp'], stdout=PIPE)
                 output, _error = process.communicate()

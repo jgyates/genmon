@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.12.6 - 2018-12-31
+- Added additional debug print for troubleshooting
+- Added new field for future features
+- Corrected spacing in an existing log entry
+
 ## V1.12.5 - 2018-12-28
 - Update to allow GPIO Input parameters for pull up/down resistor and GPIO input trigger
 
