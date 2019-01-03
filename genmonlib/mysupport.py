@@ -145,7 +145,7 @@ class MySupport(MyCommon):
             if NoString:
                 ReturnDict = collections.OrderedDict()
                 ReturnDict["unit"] = unit
-                DefaultReturn = json.dumps({'value': 0}, sort_keys=False)
+                DefaultReturn = ReturnDict
             else:
                 DefaultReturn = ""
             if isinstance(value, int):
@@ -154,14 +154,14 @@ class MySupport(MyCommon):
                 else:
                     ReturnDict["type"] = 'int'
                     ReturnDict["value"] = value
-                    return json.dumps(ReturnDict, sort_keys=False)
+                    return ReturnDict
             if isinstance(value, long):
                 if not NoString:
                     return "%d %s" % (int(value), str(unit))
                 else:
                     ReturnDict["type"] = 'long'
                     ReturnDict["value"] = value
-                    return json.dumps(ReturnDict, sort_keys=False)
+                    return ReturnDict
             elif isinstance(value, float):
                 if not NoString:
                     return "%.2f %s" % (float(value), str(unit))
@@ -169,7 +169,7 @@ class MySupport(MyCommon):
                     ReturnDict = collections.OrderedDict()
                     ReturnDict["type"] = 'float'
                     ReturnDict["value"] = round(value, 2)
-                    return json.dumps(ReturnDict, sort_keys=False)
+                    return ReturnDict
             else:
                 self.LogError("Unsupported type in ValueOut: " + str(type(value)))
                 return DefaultReturn

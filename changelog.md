@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.12.7 - 2019-01-02
+- Update for gengpioin.py triggers, added software debounce option to UI
+- Minor mod to genserv.py for debugging purposes
+- Updated code that returns numeric values for MQTT so JSON is not parsed twice
+
 ## V1.12.6 - 2018-12-31
 - Added additional debug print for troubleshooting
 - Added new field for future features

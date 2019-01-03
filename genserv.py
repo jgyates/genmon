@@ -157,7 +157,7 @@ def ProcessCommand(command):
             "logs", "logs_json", "monitor", "monitor_json", "registers_json", "allregs_json",
             "start_info_json", "gui_status_json", "power_log_json", "power_log_clear",
             "getbase", "getsitename","setexercise", "setquiet", "setremote",
-            "settime", "sendregisters", "sendlogfiles", "getdebug" ]:
+            "settime", "sendregisters", "sendlogfiles", "getdebug", "status_num_json" ]:
             finalcommand = "generator: " + command
 
             try:
@@ -191,7 +191,8 @@ def ProcessCommand(command):
                 LogError("Error on command function: " + str(e1))
 
             if command in ["status_json", "outage_json", "maint_json", "monitor_json", "logs_json",
-                "registers_json", "allregs_json", "start_info_json", "gui_status_json", "power_log_json"]:
+                "registers_json", "allregs_json", "start_info_json", "gui_status_json", "power_log_json",
+                "status_num_json"]:
 
                 if command in ["start_info_json"]:
                     try:
@@ -370,6 +371,12 @@ def GetAddOns():
             "Set GPIO input internal pull up or pull down resistor.",
             bounds = 'up,down,off',
             display_name = "Internal resistor pull")
+        AddOnCfg['gengpioin']['parameters']['bounce'] = CreateAddOnParam(
+            ConfigFiles[GENGPIOIN_CONFIG].ReadValue("bounce", return_type = int, default = 0),
+            'int',
+            "Minimum interval in milliseconds between valid input channges. Zero to disable, or positive whole number.",
+            bounds = 'number',
+            display_name = "Software Debounce")
 
         #GENLOG
         AddOnCfg['genlog'] = collections.OrderedDict()
