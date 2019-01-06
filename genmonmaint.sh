@@ -35,7 +35,7 @@ function updatelibraries() {
   sudo $pipcmd install configparser -U
   sudo $pipcmd install pyserial -U
   sudo $pipcmd install Flask -U
-  sudo $pipcmd install pyowm -U
+  sudo $pipcmd install pyowm==2.9.0 -U
   sudo $pipcmd install pytz -U
   sudo $pipcmd install pyopenssl  -U
   sudo $pipcmd install twilio -U
@@ -86,7 +86,7 @@ function installgenmon() {
     sudo $pipcmd install configparser
     sudo $pipcmd install pyserial
     sudo $pipcmd install Flask
-    sudo $pipcmd install pyowm
+    sudo $pipcmd install pyowm==2.9.0
     sudo $pipcmd install pytz
     sudo apt-get install build-essential libssl-dev libffi-dev python-dev
     sudo $pipcmd install pyopenssl

@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.12.8 - 2019-01-06
+- Updated install script to force pyowm version 2.9.0. Version 2.10 is python 3 only
+- Minor update to genmon.js to better convert JSON to HTML
+
 ## V1.12.7 - 2019-01-02
 - Update for gengpioin.py triggers, added software debounce option to UI
 - Minor mod to genserv.py for debugging purposes

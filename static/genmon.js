@@ -383,7 +383,7 @@ function json2html(json, indent, parentkey) {
                 if (typeof json[key][i] === 'object') {
                   outstr +=  json2html(json[key][i], indent + "&nbsp;&nbsp;&nbsp;&nbsp;", parentkey+"_"+i);
                 } else {
-                  outstr += indent + "&nbsp;&nbsp;&nbsp;&nbsp;" + key + ' : ' + getItem(json[key][i], key); //parentkey);
+                  outstr += indent + "&nbsp;&nbsp;&nbsp;&nbsp;" +  getItem(json[key][i], key);
                 }
               }
             }
@@ -399,43 +399,6 @@ function json2html(json, indent, parentkey) {
 
     return outstr;
 }
-function json2html_old(json, indent, parentkey) {
-    var outstr = '';
-    if (typeof json === 'string') {
-      outstr += '<div class="jsonVal" id="'+parentkey.replace(/ /g, '_')+'">' + json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div><br>';
-    } else if (typeof json === 'number') {
-      outstr += '<div class="jsonVal" id="'+parentkey.replace(/ /g, '_')+'">' + json + '</div><br>';
-    } else if (typeof json === 'boolean') {
-      outstr += '<div class="jsonVal" id="'+parentkey.replace(/ /g, '_')+'">' + json + '</div><br>';
-    } else if (json === null) {
-      outstr += '<div class="jsonVal" id="'+parentkey.replace(/ /g, '_')+'">null</div><br>';
-    }
-    else if (json instanceof Array) {
-      if (json.length > 0) {
-        indent += "&nbsp;&nbsp;&nbsp;&nbsp;";
-        for (var i = 0; i < json.length; ++i) {
-          outstr += indent + json2html(json[i], indent, parentkey+"_"+i);
-        }
-      }
-    }
-    else if (typeof json === 'object') {
-      var key_count = Object.keys(json).length;
-      if (key_count > 0) {
-        indent += "&nbsp;&nbsp;&nbsp;&nbsp;";
-        for (var key in json) {
-          if (json.hasOwnProperty(key)) {
-            if ((typeof json[key] === 'string') || (typeof json[key] === 'number') || (typeof json[key] === 'boolean') || (typeof json[key] === null)) {
-               outstr += indent + key + ' : ' + json2html(json[key], indent, key);
-            } else {
-               outstr += "<br>" + indent + key + ' :<br>' + json2html(json[key], indent, key);
-            }
-          }
-        }
-      }
-    }
-    return outstr;
-}
-
 //*****************************************************************************
 function createGauge(pCanvas, pText, pTextPrecision, pMin, pMax, pLabels, pZones, pDiv, pSubDiv) {
     var opts = {
@@ -1140,7 +1103,7 @@ function DisplayMonitor(){
              if (Object.keys(val)[0] == "icon") {
                weatherIcon = val["icon"];
              }
-           }); 
+           });
            $("#Conditions").html('<div style="display: inline-block; position: relative;">' + weatherCondition + '<img class="greyscale" style="position: absolute;top:-30px;left:160px" src="https://openweathermap.org/img/w/' + weatherIcon + '.png"></div>');
         }
 
