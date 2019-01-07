@@ -13,6 +13,31 @@ This script requires internet access. If you have modified any files in the genm
 they will be overwritten. Configuration files in the /etc directory will not be overritten.   \
 Continue? (y/n)  "
 
+usepython3=false
+pipcommand="pip"
+pythoncommand="python"
+
+#-------------------------------------------------------------------
+function setup() {
+
+  if [ $# -eq 0 ]; then
+    usepython3=false
+  elif [ $1 == "3" ]; then
+    usepython3=true
+  else
+    usepython3=false
+  fi
+
+  if [ "$usepython3" = true ] ; then
+    echo 'Setting up for Python 3.x...'
+    pipcommand="pip3"
+    pythoncommand="python3"
+  else
+    echo 'Setting up for Python 2.7...'
+    pipcommand="pip"
+    pythoncommand="python"
+fi
+}
 #-------------------------------------------------------------------
 # This function copy all config files to the ./etc directory
 function copyconffiles() {
@@ -21,26 +46,21 @@ function copyconffiles() {
 #-------------------------------------------------------------------
 # This function will update the pip libraries used
 function updatelibraries() {
-  local pipcmd=
 
-  if [ $# -eq 0 ]; then
-    pipcmd="pip"
-  elif [ $1 == "3" ]; then
-    echo "Installing for Python 3.x"
-    pipcmd="pip3"
+  sudo $pipcommand install crcmod -U
+  sudo $pipcommand install configparser -U
+  sudo $pipcommand install pyserial -U
+  sudo $pipcommand install Flask -U
+  if [ "$usepython3" = true ] ; then
+    sudo $pipcommand install pyowm -U
   else
-    pipcmd="pip"
+    sudo $pipcommand install pyowm==2.9.0 -U
   fi
-  sudo $pipcmd install crcmod -U
-  sudo $pipcmd install configparser -U
-  sudo $pipcmd install pyserial -U
-  sudo $pipcmd install Flask -U
-  sudo $pipcmd install pyowm==2.9.0 -U
-  sudo $pipcmd install pytz -U
-  sudo $pipcmd install pyopenssl  -U
-  sudo $pipcmd install twilio -U
-  sudo $pipcmd install chump -U
-  sudo $pipcmd install paho-mqtt -U
+  sudo $pipcommand install pytz -U
+  sudo $pipcommand install pyopenssl  -U
+  sudo $pipcommand install twilio -U
+  sudo $pipcommand install chump -U
+  sudo $pipcommand install paho-mqtt -U
 }
 
 #-------------------------------------------------------------------
@@ -48,7 +68,7 @@ function updatelibraries() {
 function setupserial() {
   pushd $genmondir
   cd OtherApps
-  sudo python serialconfig.py -e
+  sudo $pythoncommand serialconfig.py -e
   echo "Finished setting up the serial port."
   popd
 }
@@ -70,29 +90,27 @@ function installrpirtscts() {
 # This function will install the required libraries for genmon
 function installgenmon() {
 
-    local pipcmd=
-
-    if [ -z "$2" ]; then
-      pipcmd="pip"
-    elif [ $2 == "3" ]; then
-      echo "Installing for Python 3.x"
-      pipcmd="pip3"
-    else
-      pipcmd="pip"
-    fi
     sudo apt-get update
-    sudo apt-get install python-pip
-    sudo $pipcmd install crcmod
-    sudo $pipcmd install configparser
-    sudo $pipcmd install pyserial
-    sudo $pipcmd install Flask
-    sudo $pipcmd install pyowm==2.9.0
-    sudo $pipcmd install pytz
+    if [ "$usepython3" = true ] ; then
+      sudo apt-get install python3-pip
+    else
+      sudo apt-get install python-pip
+    fi
+    sudo $pipcommand install crcmod
+    sudo $pipcommand install configparser
+    sudo $pipcommand install pyserial
+    sudo $pipcommand install Flask
+    if [ "$usepython3" = true ] ; then
+      sudo $pipcommand install pyowm
+    else
+      sudo $pipcommand install pyowm==2.9.0
+    fi
+    sudo $pipcommand install pytz
     sudo apt-get install build-essential libssl-dev libffi-dev python-dev
-    sudo $pipcmd install pyopenssl
-    sudo $pipcmd install twilio
-    sudo $pipcmd install chump
-    sudo $pipcmd install paho-mqtt
+    sudo $pipcommand install pyopenssl
+    sudo $pipcommand install twilio
+    sudo $pipcommand install chump
+    sudo $pipcommand install paho-mqtt
     sudo chmod 775 "$genmondir/startgenmon.sh"
     sudo chmod 775 "$genmondir/genmonmaint.sh"
     installrpirtscts
@@ -186,6 +204,9 @@ function updategenmon() {
 
 #-------------------------------------------------------------------
 # main entry
+
+# setup must be run first
+setup $2
 case "$1" in
   update)
 
@@ -201,7 +222,7 @@ case "$1" in
     read -n 1 -s -r -p "$installnotice"
     echo ""
     # install libraries
-    installgenmon  "prompt" $2
+    installgenmon  "prompt"
     # update crontab
     read -p "Start genmon on boot? (y/n)?" choice
     case "$choice" in
@@ -223,10 +244,10 @@ case "$1" in
     updategenmon
     ;;
   updatelibs)
-    updatelibraries $2
+    updatelibraries
     ;;
   installnp)        # install with no prompt
-    installgenmon "noprompt" $2
+    installgenmon "noprompt"
     updatecrontab
     ;;
   *)
