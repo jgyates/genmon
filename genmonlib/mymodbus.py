@@ -255,7 +255,7 @@ class ModbusProtocol(ModbusBase):
         try:
             MasterPacket = []
 
-            MasterPacket = self.CreateMasterPacket(Register, length = Length, command = MBUS_CMD_WRITE_REGS, data = Data)
+            MasterPacket = self.CreateMasterPacket(Register, length = int(Length), command = MBUS_CMD_WRITE_REGS, data = Data)
 
             if len(MasterPacket) == 0:
                 return False
@@ -271,7 +271,7 @@ class ModbusProtocol(ModbusBase):
         MasterPacket = []
 
         try:
-            MasterPacket = self.CreateMasterPacket(Register, length = Length)
+            MasterPacket = self.CreateMasterPacket(Register, length = int(Length))
 
             if len(MasterPacket) == 0:
                 return ""
@@ -288,7 +288,7 @@ class ModbusProtocol(ModbusBase):
         MasterPacket = []
 
         try:
-            MasterPacket = self.CreateMasterPacket(Register, length = Length, command = MBUS_CMD_READ_FILE, file_num = file_num)
+            MasterPacket = self.CreateMasterPacket(Register, length = int(Length), command = MBUS_CMD_READ_FILE, file_num = file_num)
 
             if len(MasterPacket) == 0:
                 return ""

@@ -155,13 +155,6 @@ class MySupport(MyCommon):
                     ReturnDict["type"] = 'int'
                     ReturnDict["value"] = value
                     return ReturnDict
-            if isinstance(value, long):
-                if not NoString:
-                    return "%d %s" % (int(value), str(unit))
-                else:
-                    ReturnDict["type"] = 'long'
-                    ReturnDict["value"] = value
-                    return ReturnDict
             elif isinstance(value, float):
                 if not NoString:
                     return "%.2f %s" % (float(value), str(unit))
@@ -169,6 +162,13 @@ class MySupport(MyCommon):
                     ReturnDict = collections.OrderedDict()
                     ReturnDict["type"] = 'float'
                     ReturnDict["value"] = round(value, 2)
+                    return ReturnDict
+            elif sys.version_info[0] < 3 and isinstance(value, long):
+                if not NoString:
+                    return "%d %s" % (int(value), str(unit))
+                else:
+                    ReturnDict["type"] = 'long'
+                    ReturnDict["value"] = value
                     return ReturnDict
             else:
                 self.LogError("Unsupported type in ValueOut: " + str(type(value)))
@@ -188,10 +188,10 @@ class MySupport(MyCommon):
             ByteArray = bytearray.fromhex(input)
             if ByteArray[0] == 0:
                 return ""
-            End = ByteArray.find('\0')
+            End = ByteArray.find(b'\0')
             if End != -1:
                 ByteArray = ByteArray[:End]
-            return str(ByteArray).encode('ascii')
+            return str(ByteArray.decode('ascii'))
         except Exception as e1:
             self.LogErrorLine("Error in HexStringToString: " + str(e1))
             return ""
@@ -210,13 +210,17 @@ class MySupport(MyCommon):
 
         if isinstance(item, str):
             return item
-        if isinstance(item, unicode):
+        if sys.version_info[0] < 3 and isinstance(item, unicode):
             return str(item)
         elif callable(item):
             return item()
-        elif isinstance(item, (int, long)):
+        elif isinstance(item, int):
+            return str(item)
+        elif sys.version_info[0] < 3 and isinstance(item, (int, long)):
             return str(item)
         elif isinstance(item, float):
+            return str(item)
+        elif sys.version_info[0] >= 3 and isinstance(item, (bytes)):
             return str(item)
         else:
             self.LogError("Unable to convert type %s in GetDispatchItem" % str(type(item)))

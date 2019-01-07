@@ -1464,6 +1464,8 @@ if __name__ == "__main__":
         GStartInfo = json.loads(data)
     except Exception as e1:
         LogError("Error getting start info : " + str(e1))
+        LogError("Data returned from start_info_json: "  + data)
+        sys.exit(1)
 
     CacheToolTips()
     while True:

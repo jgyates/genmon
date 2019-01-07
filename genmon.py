@@ -33,7 +33,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.12.8"
+GENMON_VERSION = "V1.12.9"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(MySupport):
@@ -422,7 +422,7 @@ class Monitor(MySupport):
     def ProcessCommand(self, command, fromsocket = False):
 
         LocalError = False
-
+        command = command.decode('ascii')
         msgsubject = "Generator Command Response at " + self.SiteName
         if not fromsocket:
             msgbody = "\n"
@@ -435,7 +435,7 @@ class Monitor(MySupport):
             LocalError = True
 
         if not LocalError:
-            if(not command.lower().startswith( b'generator:' )):         # PYTHON3
+            if(not command.lower().startswith( 'generator:' )):
                 msgsubject = "Error in Generator Command (command prefix)"
                 msgbody += "Invalid GENERATOR command: all commands must be prefixed by \"generator: \""
                 LocalError = True
@@ -448,7 +448,7 @@ class Monitor(MySupport):
                 msgbody += "EndOfMessage"
                 return msgbody
 
-        if command.lower().startswith(b'generator:'):
+        if command.lower().startswith('generator:'):
             command = command[len('generator:'):]
 
         CommandDict = {
@@ -488,7 +488,7 @@ class Monitor(MySupport):
             "sendlogfiles"      : [self.SendSupportInfo, (True,), True]
         }
 
-        CommandList = command.split(b' ')    # PYTHON3
+        CommandList = command.split(' ')
 
         ValidCommand = False
         try:
@@ -497,7 +497,7 @@ class Monitor(MySupport):
                     continue
                 item = item.strip()
                 LookUp = item
-                if b"=" in item:
+                if "=" in item:
                     BaseCmd = item.split('=')
                     LookUp = BaseCmd[0]
                 # check if we disallow write commands via email
@@ -677,7 +677,6 @@ class Monitor(MySupport):
         StartInfo["sitename"] = self.SiteName
         ControllerStartInfo = self.Controller.GetStartInfo(NoTile = NoTile)
         StartInfo = self.MergeDicts(StartInfo, ControllerStartInfo)
-
         return StartInfo
 
     #------------ Monitor::GetStatusForGUI -------------------------------------

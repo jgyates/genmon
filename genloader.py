@@ -309,7 +309,7 @@ class Loader(MySupport):
                 except Exception as e1:
                     self.LogInfo("Error reading load order (retrying): " + str(e1), LogLine = True)
             #lambda kv: (-kv[1], kv[0])
-            for key, value in sorted(LoadDict.iteritems(), key=lambda kv: (-kv[1], kv[0])):
+            for key, value in sorted(LoadDict.items(), key=lambda kv: (-kv[1], kv[0])):
             #for key, value in sorted(LoadDict.iteritems(), key=lambda (k,v): (v,k)):
                 LoadOrder.append(key)
         except Exception as e1:
@@ -324,7 +324,7 @@ class Loader(MySupport):
             self.LogInfo("Error, nothing to stop.")
             return False
         ErrorOccured = False
-        for Module in reversed(self.LoadOrder):
+        for Module in self.LoadOrder:
             try:
                 if not self.UnloadModule(self.CachedConfig[Module]["module"], HardStop = self.CachedConfig[Module]["hardstop"]):
                     self.LogInfo("Error stopping " + Module)
@@ -337,11 +337,12 @@ class Loader(MySupport):
     def StartModules(self):
 
         self.LogConsole("Starting....")
+
         if not len(self.LoadOrder):
             self.LogInfo("Error, nothing to start.")
             return False
         ErrorOccured = False
-        for Module in self.LoadOrder:
+        for Module in reversed(self.LoadOrder):
             try:
                 if self.CachedConfig[Module]["enable"]:
                     if not self.LoadModule(self.ModulePath + self.CachedConfig[Module]["module"], args = self.CachedConfig[Module]["args"]):
@@ -359,7 +360,7 @@ class Loader(MySupport):
             self.LogConsole("Starting " + modulename)
             # to load as a background process we just use os.system since Popen
             # is problematic in doing this
-            CommandString = "python " + modulename
+            CommandString = sys.executable + " " + modulename
             if args != None and len(args):
                 CommandString += " " + args
             CommandString += " &"

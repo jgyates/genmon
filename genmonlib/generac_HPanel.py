@@ -103,7 +103,7 @@ class HPanelReg(object):
     #---------------------HPanelReg::GetRegList---------------------------------
     def GetRegList(self):
         RetList = []
-        for attr, value in HPanelReg.__dict__.iteritems():
+        for attr, value in HPanelReg.__dict__.items():
             if not callable(getattr(self,attr)) and not attr.startswith("__"):
                 RetList.append(value)
 
@@ -352,7 +352,7 @@ class GPanelReg(object):
     #---------------------GPanelReg::GetRegList---------------------------------
     def GetRegList(self):
         RetList = []
-        for attr, value in GPanelReg.__dict__.iteritems():
+        for attr, value in GPanelReg.__dict__.items():
             if not callable(getattr(self,attr)) and not attr.startswith("__"):
                 RetList.append(value)
 
@@ -570,7 +570,7 @@ class RegisterStringEnum(object):
     @staticmethod
     def GetRegList():
         RetList = []
-        for attr, value in RegisterStringEnum.__dict__.iteritems():
+        for attr, value in RegisterStringEnum.__dict__.items():
             if not callable(getattr(RegisterStringEnum(),attr)) and not attr.startswith("__"):
                 RetList.append(value)
         RetList.sort(key=RegisterStringEnum.hexsort)
@@ -871,6 +871,7 @@ class HPanel(GeneratorController):
             ControllerString = self.HexStringToString(self.ModBus.ProcessMasterSlaveTransaction(RegisterStringEnum.CONTROLLER_NAME[REGISTER],
                 RegisterStringEnum.CONTROLLER_NAME[LENGTH] / 2))
 
+            ControllerString = str(ControllerString)
             if not len(ControllerString):
                 self.LogError("Unable to ID controller, possiby not receiving data.")
                 self.ControllerDetected = False
@@ -1263,21 +1264,26 @@ class HPanel(GeneratorController):
     #------------ HPanel:RegisterIsStringRegister ------------------------------
     def RegisterIsStringRegister(self, Register):
 
-        StringList = RegisterStringEnum.GetRegList()
-        for StringReg in StringList:
-            if Register.lower() == StringReg[REGISTER].lower():
-                return True
+        try:
+            StringList = RegisterStringEnum.GetRegList()
+            for StringReg in StringList:
+                if Register.lower() == StringReg[REGISTER].lower():
+                    return True
+        except Exception as e1:
+            self.LogErrorLine("Error in RegisterIsBaseRegister: " + str(e1))
         return False
 
     #------------ HPanel:RegisterIsBaseRegister --------------------------------
     def RegisterIsBaseRegister(self, Register):
 
-        RegisterList = self.Reg.GetRegList()
-        for ListReg in RegisterList:
-            if Register.lower() == ListReg[REGISTER].lower():
-                # TODO check value length
-                return True
-
+        try:
+            RegisterList = self.Reg.GetRegList()
+            for ListReg in RegisterList:
+                if Register.lower() == ListReg[REGISTER].lower():
+                    # TODO check value length
+                    return True
+        except Exception as e1:
+            self.LogErrorLine("Error in RegisterIsBaseRegister: " + str(e1))
         return False
 
     #------------ HPanel:UpdateRegisterList ------------------------------------

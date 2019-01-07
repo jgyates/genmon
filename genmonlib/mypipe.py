@@ -65,7 +65,7 @@ class MyPipe(MySupport):
 
         try:
             with self.FileAccessLock:
-                with open(self.FileName, 'rw+') as f:
+                with open(self.FileName, 'r') as f:
                     lines = f.readlines()
                 open(self.FileName, 'w').close()
             return lines
