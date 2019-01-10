@@ -90,6 +90,7 @@ function installrpirtscts() {
 # This function will install the required libraries for genmon
 function installgenmon() {
 
+    # possibly use "sudo easy_install3 -U pip"
     sudo apt-get update
     if [ "$usepython3" = true ] ; then
       sudo apt-get install python3-pip

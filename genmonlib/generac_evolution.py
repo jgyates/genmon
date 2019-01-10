@@ -1608,11 +1608,15 @@ class Evolution(GeneratorController):
                     OutageStr = str(self.LastOutageDuration).split(".")[0]  # remove microseconds from string
                     msgbody = "\nUtility Power Restored. Duration of outage " + OutageStr
                     self.MessagePipe.SendMessage("Outage Recovery Notice at " + self.SiteName, msgbody, msgtype = "outage")
-                    #try:
-                    #    FuelUsed = self.GetPowerHistory("power_log_json=%d,fuel" % self.LastOutageDuration.total_seconds()))
-                    #    OutageStr += "," + FuelUsed
-                    #except Exception as e1:
-                    #    self.LogErrorLine("Error recording fuel usage for outage: " + str(e1))
+                    try:
+                        if self.FuelCalculationSupported():
+                            self.LogError("1")
+                            FuelUsed = self.GetPowerHistory("power_log_json=%d,fuel" % self.LastOutageDuration.total_seconds())
+                            if len(FuelUsed) and not "unknown" in FuelUsed.lower():
+                                self.LogError("2")
+                                OutageStr += "," + FuelUsed
+                    except Exception as e1:
+                        self.LogErrorLine("Error recording fuel usage for outage: " + str(e1))
                     # log outage to file
                     self.LogToFile(self.OutageLog, self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"), OutageStr)
             else:

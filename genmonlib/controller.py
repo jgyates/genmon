@@ -650,23 +650,40 @@ class GeneratorController(MySupport):
                         continue
                     Items = line.split(",")
                     # Three items is for duration greater than 24 hours, i.e 1 day, 08:12
-                    if len(Items) != 2 and len(Items) != 3:
+                    if len(Items) < 2:
+                        continue
+                    strDuration = ""
+                    strFuel = ""
+                    if len(Items)  == 2:
+                        # Only date and duration less than a day
+                        strDuration = Items[1]
+                    elif (len(Items) == 3) and ("day" in Items[1]):
+                        #  date and outage greater than 24 hours
+                        strDuration  = Items[1] + "," + Items[2]
+                    elif len(Items) == 3:
+                        # date, outage less than 1 day, and fuel
+                        strDuration = Items[1]
+                        strFuel = Items[2]
+                    elif len(Items) == 4 and ("day" in Items[1]):
+                        # date, outage less greater than 1 day, and fuel
+                        strDuration = Items[1] + "," + Items[2]
+                        strFuel = Items[3]
+                    else:
                         continue
 
-                    if len(Items) == 3:
-                        strDuration = Items[1] + "," + Items[2]
-                    else:
-                        strDuration = Items[1]
+                    if len(strDuration)  and len(strFuel):
+                        OutageLog.insert(0, [Items[0], strDuration, strFuel])
+                    elif len(strDuration):
+                        OutageLog.insert(0, [Items[0], strDuration])
 
-                    OutageLog.insert(0, [Items[0], strDuration])
                     if len(OutageLog) > 50:     # limit log to 50 entries
                         OutageLog.pop()
 
             for Items in OutageLog:
                 if len(Items) == 2:
                     LogHistory.append("%s, Duration: %s" % (Items[0], Items[1]))
-                #else if len(Items) == 3:
-                #    LogHistory.append("%s, Duration: %s, Fuel: %s" % (Items[0], Items[1], Items[2]))
+                elif len(Items) == 3:
+                    LogHistory.append("%s, Duration: %s, Estimated Fuel: %s" % (Items[0], Items[1], Items[2]))
 
             return LogHistory
 
