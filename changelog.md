@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.12.11 - 2019-01-15
+- Added new alarm code for NexusLC
+
 ## V1.12.10 - 2019-01-09
 - Added entry to outage log for fuel consumption if fuel consumption supported by your generator
 

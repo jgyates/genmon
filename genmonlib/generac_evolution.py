@@ -2340,6 +2340,7 @@ class Evolution(GeneratorController):
          0x0f : "Change Oil & Filter",  #  Validate on Nexus AC
          0x10 : "Inspect Air Filter",   #  Validate on Nexus LC
          0x14 : "Check Battery",        #  Validate on Nexus, occurred when Check Battery Alarm
+         0x1c : "Throttle Failure",     #  Validate on Nexus LC,
          0x1e : "Under Voltage",        #  Validate on EvoAC
          0x1f : "Service Due",          #  Validate on Evolution, occurred when forced service due
          0x20 : "Service Complete",     #  Validate on Evolution, occurred when service reset
