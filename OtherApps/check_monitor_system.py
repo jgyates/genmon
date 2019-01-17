@@ -25,18 +25,18 @@ def main(argv):
     try:
       opts, args = getopt.getopt(argv,"H:h")
     except getopt.GetoptError:
-      print 'USAGE: check_monitor_system.py -H <hostaddress> '
+      print('USAGE: check_monitor_system.py -H <hostaddress> ')
       sys.exit(2)
 
     for opt, arg in opts:
       if opt == '-h':
-         print 'USAGE: check_monitor_system.py -H <hostaddress>'
+         print('USAGE: check_monitor_system.py -H <hostaddress>')
          sys.exit(1)
       elif opt in ("-H"):
          myhostaddress = arg
 
     if myhostaddress == '':
-       print 'USAGE: check_monitor_system.py -H <hostaddress>'
+       print('USAGE: check_monitor_system.py -H <hostaddress>')
        sys.exit(1)
 
     try:
@@ -46,7 +46,7 @@ def main(argv):
         s.connect((myhostaddress, 9082))
         s.settimeout(8.0)   #  blok on recv
     except:
-        print "CRITICAL: Monitor Program not running"
+        print("CRITICAL: Monitor Program not running")
         sys.exit(2)
 
     try:
@@ -54,23 +54,24 @@ def main(argv):
         data = s.recv(1024)
         s.shutdown(socket.SHUT_RDWR)
         s.close()
+        data = data.decode('ascii')
     except:
         # if not receiving then check exit
-        print "CRITICAL: No Data"
+        print("CRITICAL: No Data")
         sys.exit(2)
 
     #print data
     if "OK" in data:           #
-        print data
+        print(data)
         sys.exit(0)
     elif "CRITICAL" in data:
-        print data
+        print(data)
         sys.exit(2)
     elif "WARNING" in data:
-        print data
+        print(data)
         sys.exit(1)
     else:
-        print data
+        print(data)
         sys.exit(1)
 
 if __name__ == "__main__":
