@@ -1610,10 +1610,8 @@ class Evolution(GeneratorController):
                     self.MessagePipe.SendMessage("Outage Recovery Notice at " + self.SiteName, msgbody, msgtype = "outage")
                     try:
                         if self.FuelCalculationSupported():
-                            self.LogError("1")
                             FuelUsed = self.GetPowerHistory("power_log_json=%d,fuel" % self.LastOutageDuration.total_seconds())
                             if len(FuelUsed) and not "unknown" in FuelUsed.lower():
-                                self.LogError("2")
                                 OutageStr += "," + FuelUsed
                     except Exception as e1:
                         self.LogErrorLine("Error recording fuel usage for outage: " + str(e1))
@@ -1717,7 +1715,7 @@ class Evolution(GeneratorController):
                 self.LastHouseKeepingTime = datetime.datetime.now()
             else:
                 UpdateNow = False
-            if self.PowerMeterIsSupported() and self.FuelConsumptionSupported():
+            if self.PowerMeterIsSupported() and self.FuelCalculationSupported():
                 if UpdateNow:
                     self.KWHoursMonth = self.GetPowerHistory("power_log_json=43200,kw")
                     self.FuelMonth = self.GetPowerHistory("power_log_json=43200,fuel")
@@ -3470,6 +3468,9 @@ class Evolution(GeneratorController):
             StartInfo["Controller"] = self.GetController(Actual = False)
             StartInfo["NominalBatteryVolts"] = "12"
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
+            StartInfo["FuelCalculation"] = self.FuelCalculationSupported()
+            StartInfo["FuelSensor"] = self.FuelSensorSupported()
+            StartInfo["FuelConsumption"] = self.FuelConsumptionSupported()
             StartInfo["UtilityVoltage"] = True
             StartInfo["RemoteCommands"] = not self.SmartSwitch
             StartInfo["ResetAlarms"] = self.EvolutionController

@@ -98,15 +98,7 @@ class GenNotify(MyCommon):
             try:
 
                 data = self.SendCommand("generator: getbase")
-                outagedata = self.SendCommand("generator: outage_json")
-                try:
-                    OutageDict = collections.OrderedDict()
-                    OutageDict = json.loads(outagedata)
-                    OutageState = True if OutageDict["Outage"]["System In Outage"].lower() == "yes" else False
-                except Exception as e1:
-                    # The system does no support outage tracking (i.e. H-100)
-                    #self.LogErrorLine("Unable to get outage state: " + str(e1))
-                    OutageState = None
+                OutageState = self.GetOutageState()
                 if OutageState != None:
                     self.ProcessOutageState(OutageState)
 
@@ -126,6 +118,26 @@ class GenNotify(MyCommon):
                 self.LogErrorLine("Error in mynotify:MainPollingThread: " + str(e1))
                 time.sleep(3)
 
+    #----------  GenNotify::GetOutageState -------------------------------------
+    def GetOutageState(self):
+        OutageState = None
+        outagedata = self.SendCommand("generator: outage_json")
+        try:
+            OutageDict = collections.OrderedDict()
+            OutageDict = json.loads(outagedata)
+            OutageList = OutageDict["Outage"]
+            for Items in OutageList:
+                for key, value in Items.items():
+                    if key == "System In Outage":
+                        if value.lower() == "yes":
+                            return True
+                        else:
+                            return False
+        except Exception as e1:
+            # The system does no support outage tracking (i.e. H-100)
+            self.LogErrorLine("Unable to get outage state: " + str(e1))
+            OutageState = None
+        return OutageState
     #----------  GenNotify::CallEventHandler -----------------------------------
     def CallEventHandler(self, Status):
 
@@ -185,5 +197,5 @@ class GenNotify(MyCommon):
             self.KillThread("PollingThread")
             self.Generator.Close()
         except Exception as e1:
-            pass 
+            pass
         return False

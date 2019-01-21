@@ -1462,14 +1462,17 @@ class HPanel(GeneratorController):
             StartInfo["nominalKW"] = self.NominalKW
             StartInfo["nominalRPM"] = self.NominalRPM
             StartInfo["nominalfrequency"] = self.NominalFreq
+            StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
             StartInfo["NominalBatteryVolts"] = self.NominalBatteryVolts
+            StartInfo["FuelCalculation"] = self.FuelCalculationSupported()
+            StartInfo["FuelSensor"] = self.FuelSensorSupported()
+            StartInfo["FuelConsumption"] = self.FuelConsumptionSupported()
             StartInfo["Controller"] = self.GetController()
             StartInfo["UtilityVoltage"] = False
             StartInfo["RemoteCommands"] = False
             StartInfo["ResetAlarms"] = False
             StartInfo["AckAlarms"] = True
             StartInfo["RemoteButtons"] = False
-            StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
             StartInfo["ExerciseControls"] = False  # self.SmartSwitch
 
             if not NoTile:

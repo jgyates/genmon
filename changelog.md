@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.12.12 - 2019-01-21
+- Fixed problem with outage notifications in mynotify.py (effects add on programs) introduced in 1.12.2
+- Added more info relating to fuel estimation to help in troubleshooting issues.
+- Fixed formatting issue with login page for secure web settings
+- Improved message in low fuel warning email (only for controllers with fuel estimate calculations)
+
 ## V1.12.11 - 2019-01-15
 - Added new alarm code for NexusLC
 
