@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+
+## V1.12.13 - 2019-01-22
+- Added method to generate self signed key instead of using the Flask key by default. This will make Secure WebServer more reliable
+- Corrected typo in /conf/gengpioin.conf
+
 ## V1.12.12 - 2019-01-21
 - Fixed problem with outage notifications in mynotify.py (effects add on programs) introduced in 1.12.2
 - Added more info relating to fuel estimation to help in troubleshooting issues.

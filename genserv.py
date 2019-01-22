@@ -1253,6 +1253,52 @@ def CheckCertFiles(CertFile, KeyFile):
 
     return True
 #-------------------------------------------------------------------------------
+def generate_adhoc_ssl_context():
+        #Generates an adhoc SSL context web server.
+        try:
+            from OpenSSL import crypto
+            import ssl
+
+            import tempfile
+            import atexit
+            from random import random
+
+            cert = crypto.X509()
+            cert.set_serial_number(int(random() * sys.maxsize))
+            cert.gmtime_adj_notBefore(0)
+            cert.gmtime_adj_notAfter(60 * 60 * 24 * 365)
+
+            subject = cert.get_subject()
+            subject.CN = '*'
+            subject.O = 'Dummy Certificate'
+
+            issuer = cert.get_issuer()
+            issuer.CN = 'Untrusted Authority'
+            issuer.O = 'Self-Signed'
+
+            pkey = crypto.PKey()
+            pkey.generate_key(crypto.TYPE_RSA, 2048)
+            cert.set_pubkey(pkey)
+            cert.sign(pkey, 'sha256')
+
+            cert_handle, cert_file = tempfile.mkstemp()
+            pkey_handle, pkey_file = tempfile.mkstemp()
+            atexit.register(os.remove, pkey_file)
+            atexit.register(os.remove, cert_file)
+
+            os.write(cert_handle, crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
+            os.write(pkey_handle, crypto.dump_privatekey(crypto.FILETYPE_PEM, pkey))
+            os.close(cert_handle)
+            os.close(pkey_handle)
+            # ctx = ssl.SSLContext(ssl.PROTOCOL_TLS)
+            ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+            ctx.load_cert_chain(cert_file, pkey_file)
+            ctx.verify_mode = ssl.CERT_NONE
+            return ctx
+        except Exception as e1:
+            LogError("Error in generate_adhoc_ssl_context: " + str(e1))
+            return None
+#-------------------------------------------------------------------------------
 def LoadConfig():
 
     global log
@@ -1324,7 +1370,9 @@ def LoadConfig():
                 bUseSelfSignedCert = ConfigFiles[GENMON_CONFIG].ReadValue('useselfsignedcert', return_type = bool)
 
                 if bUseSelfSignedCert:
-                    SSLContext = 'adhoc'
+                    SSLContext = generate_adhoc_ssl_context()   #  create our own self signed cert
+                    if SSLContext == None:
+                        SSLContext = 'adhoc'    # Use Flask supplied self signed cert
                 else:
                     if ConfigFiles[GENMON_CONFIG].HasOption('certfile') and ConfigFiles[GENMON_CONFIG].HasOption('keyfile'):
                         CertFile = ConfigFiles[GENMON_CONFIG].ReadValue('certfile')
