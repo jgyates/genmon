@@ -1610,7 +1610,14 @@ class Evolution(GeneratorController):
                     self.MessagePipe.SendMessage("Outage Recovery Notice at " + self.SiteName, msgbody, msgtype = "outage")
                     try:
                         if self.FuelCalculationSupported():
-                            FuelUsed = self.GetPowerHistory("power_log_json=%d,fuel" % self.LastOutageDuration.total_seconds())
+                            if self.LastOutageDuration.total_seconds():
+                                FuelUsed = self.GetPowerHistory("power_log_json=%d,fuel" % self.LastOutageDuration.total_seconds())
+                            else:
+                                # Outage of zero seconds...
+                                if self.UseMetric:
+                                    FuelUsed = "0 L"
+                                else:
+                                    FuelUsed = "0 gal"
                             if len(FuelUsed) and not "unknown" in FuelUsed.lower():
                                 OutageStr += "," + FuelUsed
                     except Exception as e1:

@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.12.14 - 2019-01-23
+- Corrected issue with outage log reporting incorrect fuel usage for outages of zero duration
 
 ## V1.12.13 - 2019-01-22
 - Added method to generate self signed key instead of using the Flask key by default. This will make Secure WebServer more reliable
