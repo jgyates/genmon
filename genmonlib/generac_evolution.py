@@ -1547,10 +1547,10 @@ class Evolution(GeneratorController):
         try:
             if self.DisableOutageCheck:
                 # do not check for outage
-                return ""
+                return
 
             if not self.InitComplete:
-                return ""
+                return 
 
             UtilityVoltsStr = self.GetUtilityVoltage()
             if not len(UtilityVoltsStr):
