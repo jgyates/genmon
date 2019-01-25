@@ -55,6 +55,7 @@ class MyMail(MySupport):
         self.DisableIMAP = False
         self.DisableSNMP = False
         self.SSLEnabled = False
+        self.TLSDisable = False
         self.UseBCC = False
         self.Threads = {}                               # Dict of mythread objects
         self.ModulePath = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/"
@@ -238,6 +239,9 @@ class MyMail(MySupport):
 
             if self.config.HasOption('ssl_enabled'):
                 self.SSLEnabled = self.config.ReadValue('ssl_enabled', return_type = bool)
+
+            self.TLSDisable = self.config.ReadValue('tls_disable', return_type = bool, default = False)
+
         except Exception as e1:
                 self.LogErrorLine("ERROR: Unable to read config file : " + str(e1))
                 sys.exit(1)
@@ -384,7 +388,8 @@ class MyMail(MySupport):
                  session.ehlo()
             else:
                  session = smtplib.SMTP(self.SMTPServer, self.SMTPPort)
-                 session.starttls()
+                 if not self.TLSDisable:
+                     session.starttls()
                  session.ehlo
                  # this allows support for simple TLS
         except Exception as e1:

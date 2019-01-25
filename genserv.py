@@ -1029,7 +1029,8 @@ def ReadSettingsFromFile():
     # email_recipient setting will be handled on the notification screen
     ConfigSettings["smtp_server"] = ['string', 'SMTP Server <br><small>(leave emtpy to disable)</small>', 305, "smtp.gmail.com", "", "InternetAddress", MAIL_CONFIG, MAIL_SECTION, "smtp_server"]
     ConfigSettings["smtp_port"] = ['int', 'SMTP Server Port', 307, 587, "", "digits", MAIL_CONFIG, MAIL_SECTION, "smtp_port"]
-    ConfigSettings["ssl_enabled"] = ['boolean', 'SMTP Server SSL Enabled', 308, False, "", "", MAIL_CONFIG, MAIL_SECTION, "ssl_enabled"]
+    ConfigSettings["ssl_enabled"] = ['boolean', 'SSL Enabled', 308, False, "", "", MAIL_CONFIG, MAIL_SECTION, "ssl_enabled"]
+    ConfigSettings["tls_disable"] = ['boolean', 'Disable TLS Encryption', 309, False, "", "", MAIL_CONFIG, MAIL_SECTION, "tls_disable"]
 
     ConfigSettings["disableimap"] = ['boolean', 'Disable Receiving Email', 400, False, "", "", MAIL_CONFIG, MAIL_SECTION, "disableimap"]
     ConfigSettings["imap_server"] = ['string', 'IMAP Server <br><small>(leave emtpy to disable)</small>', 401, "imap.gmail.com", "", "InternetAddress", MAIL_CONFIG, MAIL_SECTION, "imap_server"]
