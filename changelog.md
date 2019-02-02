@@ -1,8 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.12.16 - 2019-02-02
+- Removed reset alarm from web interface for EvoAC as more testing is needed on this feature.
+
 ## V1.12.15 - 2019-01-25
-- Added option to disable TLS encryption 
+- Added option to disable TLS encryption
 
 ## V1.12.14 - 2019-01-23
 - Corrected issue with outage log reporting incorrect fuel usage for outages of zero duration

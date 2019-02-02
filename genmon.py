@@ -33,7 +33,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.12.15"
+GENMON_VERSION = "V1.12.16"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(MySupport):
@@ -463,6 +463,7 @@ class Monitor(MySupport):
             "setexercise"   : [self.Controller.SetGeneratorExerciseTime, (command.lower(),), False],
             "setquiet"      : [self.Controller.SetGeneratorQuietMode, ( command.lower(),), False],
             "setremote"     : [self.Controller.SetGeneratorRemoteCommand, (command.lower(),), False],
+            "testcommand"   : [self.Controller.TestCommand, (command.lower(),), False],
             "help"          : [self.DisplayHelp, (), False],                   # display help screen
             ## These commands are used by the web / socket interface only
             "power_log_json"    : [self.Controller.GetPowerHistory, (command.lower(),), True],

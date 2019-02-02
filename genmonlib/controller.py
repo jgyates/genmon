@@ -177,6 +177,9 @@ class GeneratorController(MySupport):
             except Exception as e1:
                 self.LogErrorLine("Error in  CheckAlarmThread" + str(e1))
 
+    #----------  GeneratorController:TestCommand--------------------------------
+    def TestCommand(self):
+        return "Not Supported"
     #----------  GeneratorController:DebugThread--------------------------------
     def DebugThread(self):
 

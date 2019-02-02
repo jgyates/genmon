@@ -949,6 +949,65 @@ class Evolution(GeneratorController):
                 if self.IsStopping:
                     return
 
+    #----------  GeneratorController:TestCommand--------------------------------
+    def TestCommand(self, CmdString):
+
+        msgbody = "Invalid command syntax for command testcommand (1)"
+
+        try:
+            #Format we are looking for is "testcommand=xx, where xx is a number"
+            CmdList = CmdString.split("=")
+            if len(CmdList) != 2:
+                self.LogError("Validation Error: Error parsing command string in TestCommand (parse): " + CmdString)
+                return msgbody
+
+            CmdList[0] = CmdList[0].strip()
+
+            if not CmdList[0].lower() == "testcommand":
+                self.LogError("Validation Error: Error parsing command string in TestCommand (parse2): " + CmdString)
+                return msgbody
+
+            Command = CmdList[1].strip()
+            Command = Command.lower()
+
+        except Exception as e1:
+            self.LogErrorLine("Validation Error: Error parsing command string in TestCommand: " + CmdString)
+            self.LogError( str(e1))
+            return msgbody
+
+        Register = 0
+        Value = 0x000               # writing any value to index register is valid for remote start / stop commands
+
+        try:
+            Register = int(Command)
+        except  Exception as e1:
+            self.LogErrorLine("Error parsing testcommand: " + str(e1))
+            return msgbody
+
+        if Register < 0 or Register > 16:
+            self.LogError("Testcommand supports commands 0 - 16")
+            return "Testcommand supports commands 0 - 16"
+
+        with self.ModBus.CommAccessLock:
+            #
+            LowByte = Value & 0x00FF
+            HighByte = Value >> 8
+            Data= []
+            Data.append(HighByte)           # Value for indexed register (High byte)
+            Data.append(LowByte)            # Value for indexed register (Low byte)
+
+            self.ModBus.ProcessMasterSlaveWriteTransaction("0004", len(Data) / 2, Data)
+
+            LowByte = Register & 0x00FF
+            HighByte = Register >> 8
+            Data= []
+            Data.append(HighByte)           # indexed register to be written (High byte)
+            Data.append(LowByte)            # indexed register to be written (Low byte)
+
+            self.ModBus.ProcessMasterSlaveWriteTransaction("0003", len(Data) / 2, Data)
+
+        return "Test command sent successfully"
+
     #----------  Evolution:SetGeneratorRemoteCommand--------------------------
     def SetGeneratorRemoteCommand(self, CmdString):
 
@@ -1550,7 +1609,7 @@ class Evolution(GeneratorController):
                 return
 
             if not self.InitComplete:
-                return 
+                return
 
             UtilityVoltsStr = self.GetUtilityVoltage()
             if not len(UtilityVoltsStr):
@@ -3480,7 +3539,7 @@ class Evolution(GeneratorController):
             StartInfo["FuelConsumption"] = self.FuelConsumptionSupported()
             StartInfo["UtilityVoltage"] = True
             StartInfo["RemoteCommands"] = not self.SmartSwitch
-            StartInfo["ResetAlarms"] = self.EvolutionController
+            StartInfo["ResetAlarms"] = self.EvolutionController and self.LiquidCooled
             StartInfo["AckAlarms"] = False
             StartInfo["RemoteButtons"] = self.RemoteButtonsSupported()
             StartInfo["ExerciseControls"] = not self.SmartSwitch
