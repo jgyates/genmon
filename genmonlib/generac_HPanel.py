@@ -1179,8 +1179,11 @@ class HPanel(GeneratorController):
             LocalEvent = []
             for RegValue in range(EVENT_LOG_START + EVENT_LOG_ENTRIES -1 , EVENT_LOG_START -1, -1):
                 Register = "%04x" % RegValue
+                #self.LogError("Reg:<" + Register + ">")
                 LogEntry = self.HexStringToString(self.ModBus.ProcessMasterSlaveFileReadTransaction(Register, EVENT_LOG_LENGTH /2))
+                #self.LogError("R:<" + LogEntry + ">")
                 LogEntry = self.ParseLogEntry(LogEntry, Type = "event")
+                #self.LogError("P:<" + LogEntry + ">")
                 if not len(LogEntry):
                     continue
                 if "undefined" in LogEntry:
@@ -1189,7 +1192,7 @@ class HPanel(GeneratorController):
                 LocalEvent.append(LogEntry)
 
             with self.EventAccessLock:
-                self.EventLog = LocalEvent
+                self.EventLog = LocalEvent[::-1]
 
             LocalAlarm = []
             for RegValue in range(ALARM_LOG_START + ALARM_LOG_ENTRIES -1, ALARM_LOG_START -1, -1):
@@ -1202,7 +1205,7 @@ class HPanel(GeneratorController):
                 LocalAlarm.append(LogEntry)
 
             with self.AlarmAccessLock:
-                self.AlarmLog = list(LocalAlarm)
+                self.AlarmLog = LocalAlarm[::-1]
 
         except Exception as e1:
             self.LogErrorLine("Error in UpdateLog: " + str(e1))

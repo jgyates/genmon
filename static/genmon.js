@@ -10,6 +10,7 @@ var windowActive = true;
 var latestVersion = "";
 var resizeTimeout;
 
+var maintenanceLog = []
 var myGenerator = {sitename: "", nominalRPM: 3600, nominalfrequency: 60, Controller: "", model: "", nominalKW: 22, fueltype: "", UnsentFeedback: false, SystemHealth: false, EnhancedExerciseEnabled: false, OldExerciseParameters:[-1,-1,-1,-1,-1,-1]};
 var regHistory = {updateTime: {}, _10m: {}, _60m: {}, _24h: {}, historySince: "", count_60m: 0, count_24h: 0};
 var kwHistory = {data: [], plot:"", kwDuration: "h", tickInterval: "10 minutes", formatString: "%H:%M", defaultPlotWidth: 4, oldDefaultPlotWidth: 4};
@@ -148,10 +149,95 @@ function GetQueryStringParams(sParam) {
     var sPageURL = window.location.search.substring(1);
     var sURLVariables = sPageURL.split('&');
     for (var i = 0; i < sURLVariables.length; i++) {
-	var sParameterName = sURLVariables[i].split('=');
-	if (sParameterName[0] == sParam)
-	   return sParameterName[1];
+      var sParameterName = sURLVariables[i].split('=');
+      if (sParameterName[0] == sParam)
+        return sParameterName[1];
+        }
+}
+
+//*****************************************************************************
+// called when adding an  entry to the maint log
+//*****************************************************************************
+function AddMaintenanceLogEntry(date, type, hours, comment){
+
+  if ((typeof date != 'string') || (typeof type != 'string') || (typeof hours != 'number') || (typeof comment != "string")){
+    // TODO display error
+    console.log("Invalid type for Maint Log Entry ");
+    return false
+  }
+  // check type
+  if ((type.toLowerCase() !== 'repair') &&
+    (type.toLowerCase() !== 'check') &&
+    (type.toLowerCase() !== 'observation') &&
+    (type.toLowerCase() !== 'maintenance')) {
+      console.log("Invalid value for Type");
+      return false
     }
+  // check date
+  var date_regex = /^(0[1-9]|1[0-2])\/(0[1-9]|1\d|2\d|3[01])\/(19|20)\d{2}$/ ;
+  if(!(date_regex.test(date)))
+  {
+      console.log("Invalid date format, expecting MM/DD/YYYY: " + date);
+      return false;
+  }
+  var entry = {
+      date: date,     // Format is text string:  MM/DD/YYYY
+      type: type,     // Values are string: "Repair", "Maintenance", "Check" or "Observation"
+      hours: hours,   // Must be a number (integer or floating point)
+      comment: comment// Text string
+      };
+
+    // send command
+    var url = baseurl.concat("add_maint_log");
+    $.getJSON(  url,
+                {add_maint_log: JSON.stringify(entry)},
+                function(result){
+                  GetMaintenanceLog()
+   });
+
+   return true
+}
+
+//*****************************************************************************
+// called when adding an  entry to the maint log
+//*****************************************************************************
+function ClearMaintenanceLog(){
+
+    vex.dialog.confirm({
+        unsafeMessage: 'Clearn the maintenance log? This action cannot be undone.<br>',
+        overlayClosesOnClick: false,
+        callback: function (value) {
+             if (value == false) {
+                return;
+             } else {
+                var url = baseurl.concat("clear_maint_log");
+                $.getJSON(  url,
+                   {},
+                   function(result){
+                     maintenanceLog = []
+                   });
+             }
+        }
+    });
+}
+
+//*****************************************************************************
+// called when adding an  entry to the maint log
+//*****************************************************************************
+function GetMaintenanceLog(){
+
+    // send command
+    var url = baseurl.concat("get_maint_log_json");
+    $.getJSON(  url,
+                {},
+                function(result){
+                  try{
+                    maintenanceLog = JSON.stringify(result)
+                  }
+                  catch(err){
+                    console.log("Failure getting maintenance log : " + err.message);
+                  }
+   });
 }
 
 //*****************************************************************************
@@ -2161,6 +2247,7 @@ function backupFiles(){
 }
 //*****************************************************************************
 function submitRegisters(){
+
     vex.dialog.confirm({
         unsafeMessage: 'Send the contents of your generator registers to the developer for compatibility testing?<br>',
         overlayClosesOnClick: false,

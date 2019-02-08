@@ -13,7 +13,7 @@
 #
 #-------------------------------------------------------------------------------
 
-import threading, datetime, collections, os, time
+import threading, datetime, collections, os, time, json
 # NOTE: collections OrderedDict is used for dicts that are displayed to the UI
 
 
@@ -51,6 +51,9 @@ class GeneratorController(MySupport):
         self.NotChanged = 0         # stats for registers
         self.Changed = 0            # stats for registers
         self.TotalChanged = 0.0     # ratio of changed ragisters
+        self.MaintLog =  os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/maintlog.json"
+        self.MaintLogList = []
+        self.MaintLock = threading.RLock()
         self.OutageLog = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/outage.txt"
         self.PowerLogMaxSize = 15       # 15 MB max size
         self.PowerLog =  os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/kwlog.txt"
@@ -755,7 +758,8 @@ class GeneratorController(MySupport):
             if not os.path.isfile(self.PowerLog):
                 return "Power Log is empty"
             try:
-                os.remove(self.PowerLog)
+                with self.PowerLock:
+                    os.remove(self.PowerLog)
             except:
                 pass
 
@@ -771,14 +775,6 @@ class GeneratorController(MySupport):
             self.LogErrorLine("Error in  ClearPowerLog: " + str(e1))
             return "Error in  ClearPowerLog: " + str(e1)
 
-    #------------ GeneratorController::ReducePowerSamples-----------------------
-    def ReducePowerSamples2(self, PowerList, MaxSize):
-        NewList = []
-        try:
-            pass
-        except Exception as e1:
-            self.LogErrorLine("Error in ReducePowerSamples: " + str(e1))
-        return []
     #------------ GeneratorController::ReducePowerSamples-----------------------
     def ReducePowerSamples(self, PowerList, MaxSize):
 
@@ -890,7 +886,7 @@ class GeneratorController(MySupport):
                         PowerList.insert(0, [Items[0], Items[1]])
 
             except Exception as e1:
-                self.LogErrorLine("Error in  GetPowerHistory (parse file): " + str(e1))
+                self.LogErrorLine("Error in  ReadPowerLogFromFile (parse file): " + str(e1))
 
             if len(PowerList) > 500 and not NoReduce:
                 PowerList = self.ReducePowerSamples(PowerList, 500)
@@ -1202,6 +1198,105 @@ class GeneratorController(MySupport):
     #----------  GeneratorController::GetFuelConsumptionPolynomial--------------
     def GetFuelConsumptionPolynomial(self):
         return None
+    #----------  GeneratorController::AddEntryToMaintLog------------------------
+    def AddEntryToMaintLog(self, EntryString):
+
+        if EntryString == None or not len(EntryString):
+            return "Invalid input for Maintenance Log entry."
+
+        EntryString = EntryString.strip()
+        if EntryString.startswith("add_maint_log"):
+            EntryString = EntryString[len('add_maint_log'):]
+            EntryString = EntryString.strip()
+            if EntryString.strip().startswith("="):
+                EntryString = EntryString[len("="):]
+                EntryString = EntryString.strip()
+        try:
+            Entry = json.loads(EntryString)
+            # validate object
+            if not self.ValidateMaintLogEntry(Entry):
+                return "Invalid maintenance log entry"
+            self.MaintLogList.append(Entry)
+            with open(self.MaintLog, 'w') as outfile:
+                json.dump(self.MaintLogList, outfile, sort_keys = True, indent = 4, ensure_ascii = False)
+        except Exception as e1:
+            self.LogErrorLine("Error in AddEntryToMaintLog: " + str(e1))
+            return "Invalid input for Maintenance Log entry (2)."
+
+        return "OK"
+
+    #----------  GeneratorController::ValidateMaintLogEntry---------------------
+    def ValidateMaintLogEntry(self, Entry):
+
+        try:
+            # add_maint_log={"date":"01/02/2019", "type":"Repair", "comment":"Hello","hours":11.2}
+            if not isinstance(Entry, dict):
+                self.LogError("Error in ValidateMaintLogEntry: Entry is not a dict")
+                return False
+
+            if not isinstance(Entry["date"], str) and not isinstance(Entry["date"], unicode):
+                self.LogError("Error in ValidateMaintLogEntry: Entry date is not a string: " + str(type(Entry["date"])))
+                return False
+
+            try:
+                EntryDate = datetime.datetime.strptime(Entry["date"], "%m/%d/%Y")
+            except Exception as e1:
+                self.LogErrorLine("Error in ValidateMaintLogEntry: expecting MM/DD/YYYY : " + str(e1))
+
+            if not isinstance(Entry["type"], str) and not isinstance(Entry["type"], unicode):
+                self.LogError("Error in ValidateMaintLogEntry: Entry type is not a string: " + str(type(Entry["hours"])))
+                return False
+            if not Entry["type"].lower() in ["maintenance", "check", "repair", "observation"]:
+                self.LogError("Error in ValidateMaintLogEntry: Invalid type: " + str(Entry["type"]))
+
+            Entry["type"] = Entry["type"].title()
+
+            if not isinstance(Entry["hours"], int) and not isinstance(Entry["hours"], float) :
+                self.LogError("Error in ValidateMaintLogEntry: Entry type is not a number: " + str(type(Entry["hours"])))
+                return False
+            if not isinstance(Entry["comment"], str) and not isinstance(Entry["comment"], unicode):
+                self.LogError("Error in ValidateMaintLogEntry: Entry comment is not a string: " + str(type(Entry["comment"])))
+
+        except Exception as e1:
+            self.LogErrorLine("Error in ValidateMaintLogEntry: " + str(e1))
+            return False
+
+        return True
+    #----------  GeneratorController::GetMaintLog-------------------------------
+    def GetMaintLog(self):
+
+        try:
+            if len(self.MaintLogList):
+                return json.dumps(self.MaintLogList)
+            if os.path.isfile(self.MaintLog):
+                try:
+                    with open(self.MaintLog) as infile:
+                        self.MaintLogList = json.load(infile)
+                        return json.dumps(self.MaintLogList)
+                except Exception as e1:
+                    self.LogErrorLine("Error in GetMaintLog: " + str(e1))
+        except Exception as e1:
+            self.LogErrorLine("Error in GetMaintLog (2): " + str(e1))
+
+        return "[]"
+
+    #----------  GeneratorController::ClearMaintLog-------------------------------
+    def ClearMaintLog(self):
+        try:
+            if len(self.MaintLog) and os.path.isfile(self.MaintLog):
+                try:
+                    with self.MaintLock:
+                        os.remove(self.MaintLog)
+                except:
+                    pass
+
+            self.MaintLogList = []
+
+            return "Maintenance Log cleared"
+        except Exception as e1:
+            self.LogErrorLine("Error in  ClearMaintLog: " + str(e1))
+            return "Error in  ClearMaintLog: " + str(e1)
+
     #----------  GeneratorController::Close-------------------------------------
     def Close(self):
 

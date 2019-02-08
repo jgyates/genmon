@@ -185,6 +185,7 @@ function backupgenmon() {
     sudo cp /etc/mymodem.conf ./genmon_backup/conf
     sudo cp outage.txt ./genmon_backup
     sudo cp kwlog.txt ./genmon_backup
+    sudo cp maintlog.json ./genmon_backup
     tar -zcvf genmon_backup.tar.gz genmon_backup/
     sudo rm -r genmon_backup
 }

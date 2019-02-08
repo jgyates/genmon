@@ -33,7 +33,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.12.16"
+GENMON_VERSION = "V1.12.17"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(MySupport):
@@ -479,6 +479,9 @@ class Monitor(MySupport):
             "weather_json"      : [self.DisplayWeather, (True,), True],
             "outage_json"       : [self.Controller.DisplayOutage, (True,), True],
             "gui_status_json"   : [self.GetStatusForGUI, (), True],
+            "get_maint_log_json": [self.Controller.GetMaintLog, (), True],
+            "add_maint_log"     : [self.Controller.AddEntryToMaintLog, (command,), True],    # Do not do command.lower() since this input is JSON
+            "clear_maint_log"   : [self.Controller.ClearMaintLog, (), True],
             "getsitename"       : [self.GetSiteName, (), True],
             "getbase"           : [self.Controller.GetBaseStatus, (), True],    #  (UI changes color based on exercise, running , ready status)
             "gethealth"         : [self.GetSystemHealth, (), True],

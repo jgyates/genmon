@@ -157,7 +157,8 @@ def ProcessCommand(command):
             "logs", "logs_json", "monitor", "monitor_json", "registers_json", "allregs_json",
             "start_info_json", "gui_status_json", "power_log_json", "power_log_clear",
             "getbase", "getsitename","setexercise", "setquiet", "setremote",
-            "settime", "sendregisters", "sendlogfiles", "getdebug", "status_num_json" ]:
+            "settime", "sendregisters", "sendlogfiles", "getdebug", "status_num_json",
+            "get_maint_log_json", "add_maint_log", "clear_maint_log" ]:
             finalcommand = "generator: " + command
 
             try:
@@ -183,6 +184,10 @@ def ProcessCommand(command):
                     setlogstr = request.args.get('power_log_json', 0, type=str)
                     if setlogstr:
                         finalcommand += "=" + setlogstr
+                if command == "add_maint_log":
+                    addlogstr = request.args.get('add_maint_log', 0, type=str)
+                    if addlogstr:
+                        finalcommand += "=" + addlogstr
 
                 data = MyClientInterface.ProcessMonitorCommand(finalcommand)
 
@@ -192,7 +197,7 @@ def ProcessCommand(command):
 
             if command in ["status_json", "outage_json", "maint_json", "monitor_json", "logs_json",
                 "registers_json", "allregs_json", "start_info_json", "gui_status_json", "power_log_json",
-                "status_num_json"]:
+                "status_num_json", "get_maint_log_json"]:
 
                 if command in ["start_info_json"]:
                     try:

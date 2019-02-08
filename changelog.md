@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.12.17 - 2019-02-07
+- Initial update for maintenance log feature. GUI still needs work.
+- Corrected the display of the Run/Event log and Alarm log for the H-Panel and G-Panel Industrial controllers. This now displays the logs with the newest entries first.
+
 ## V1.12.16 - 2019-02-02
 - Removed reset alarm from web interface for EvoAC as more testing is needed on this feature.
 
