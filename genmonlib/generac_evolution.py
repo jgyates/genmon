@@ -1845,6 +1845,8 @@ class Evolution(GeneratorController):
                 else:
                     Service.append({"Service A Due" : self.GetServiceDue("A") + " or " + self.GetServiceDueDate("A")})
                     Service.append({"Service B Due" : self.GetServiceDue("B") + " or " + self.GetServiceDueDate("B")})
+                    if not self.LiquidCooled:
+                        Service.append({"Battery Check Due" : self.GetServiceDueDate("BATTERY")})
 
             Service.append({"Total Run Hours" : self.GetRunTimes()})
             Service.append({"Hardware Version" : self.GetHardwareVersion()})
@@ -3281,9 +3283,14 @@ class Evolution(GeneratorController):
         #Schedule C       1000 Hours
         ServiceTypeLookup_Evo = {
                                 "A" : "001b",
-                                "B" : "001f"
+                                "B" : "001f",
                                 }
 
+        ServiceTypeLookup_EvoAC = {
+                                "A" : "001b",
+                                "B" : "001f",
+                                "BATTERY" : "0022"
+                                }
         # Nexus Air Cooled Maintenance Message Intervals
         # Inspect Battery     1 Year
         #Change Oil & Filter  200 Hours or 2 years
@@ -3312,7 +3319,10 @@ class Evolution(GeneratorController):
                                 "AIR" : "001d",
                                 }
         if self.EvolutionController:
-            LookUp = ServiceTypeLookup_Evo
+            if self.LiquidCooled:
+                LookUp = ServiceTypeLookup_Evo
+            else:
+                LookUp = ServiceTypeLookup_EvoAC
         elif not self.LiquidCooled:
             LookUp = ServiceTypeLookup_Nexus_AC
         else:

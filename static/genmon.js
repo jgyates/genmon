@@ -192,7 +192,7 @@ function AddMaintenanceLogEntry(date, type, hours, comment){
     $.getJSON(  url,
                 {add_maint_log: JSON.stringify(entry)},
                 function(result){
-                  GetMaintenanceLog()
+                  GetMaintenanceLog()   // Update the log
    });
 
    return true
