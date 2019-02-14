@@ -18,6 +18,11 @@ pipcommand="pip"
 pythoncommand="python"
 
 #-------------------------------------------------------------------
+function clean() {
+
+  sudo rm $genmondir/genmonlib/*.pyc
+}
+#-------------------------------------------------------------------
 function setup() {
 
   if [ $# -eq 0 ]; then
@@ -252,8 +257,11 @@ case "$1" in
     installgenmon "noprompt"
     updatecrontab
     ;;
+  clean)
+    clean
+    ;;
   *)
-    echo "No valid command given. Specify 'backup','update', 'install' or 'updatelibs' on command line"
+    echo "No valid command given. Specify 'backup', 'clean', 'update', 'install' or 'updatelibs' on command line"
     #
     ;;
 esac
