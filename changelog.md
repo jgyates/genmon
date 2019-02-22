@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.12.19 - 2019-02-21
+- Added sender name in email settings
+- Fixed test email functional to support disabling TLS
+
 ## V1.12.18 - 2019-02-08
 - Added battery check service due date for EvoAC
 

@@ -1378,19 +1378,24 @@ function TestEmailSettingsWrapper(){
 function TestEmailSettingsWrapperSubmit(email){
     $('.vex-dialog-message').html("<h4>Sending...</h4>");
     $('.vex-dialog-buttons').hide();
-    TestEmailSettings($("#smtp_server").val(), $("#smtp_port").val(), $("#email_account").val(), $("#sender_account").val(), email, $("#email_pw").val(), ($("#ssl_enabled").prop('checked')  === true ? "true" : "false"));
+    TestEmailSettings($("#smtp_server").val(), $("#smtp_port").val(), $("#email_account").val(),
+      $("#sender_account").val(),$("#sender_name").val(), email, $("#email_pw").val(),
+      ($("#ssl_enabled").prop('checked')  === true ? "true" : "false"),
+      ($("#tls_disable").prop('checked')  === true ? "true" : "false"));
 }
 
-function TestEmailSettings(smtp_server, smtp_port,email_account,sender_account,recipient, password, use_ssl){
+function TestEmailSettings(smtp_server, smtp_port,email_account,sender_account,sender_name,recipient, password, use_ssl, tls_disable){
 
     var parameters = {};
     parameters['smtp_server'] = smtp_server;
     parameters['smtp_port'] = smtp_port;
     parameters['email_account'] = email_account;
     parameters['sender_account'] = sender_account;
+    parameters['sender_name'] = sender_name;
     parameters['recipient'] = recipient;
     parameters['password'] = password;
     parameters['use_ssl'] = use_ssl;
+    parameters['tls_disable'] = tls_disable;
 
       // test email settings
       var url = baseurl.concat("test_email");

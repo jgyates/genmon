@@ -114,7 +114,7 @@ class MyMail(MySupport):
 
     #---------- MyMail.TestSendSettings ----------------------------------------
     @staticmethod
-    def TestSendSettings( smtp_server =  None, smtp_port =  587, email_account = None, sender_account = None, recipient = None, password = None, use_ssl = False):
+    def TestSendSettings( smtp_server =  None, smtp_port =  587, email_account = None, sender_account = None, sender_name = None, recipient = None, password = None, use_ssl = False, tls_disable = False):
 
         if smtp_server == None or not len(smtp_server):
             return "Error: Invalid SMTP server"
@@ -136,13 +136,20 @@ class MyMail(MySupport):
 
         if use_ssl == None or not isinstance(use_ssl , bool):
             return "Error: Invalid Use SSL value"
+
+        if tls_disable == None or not isinstance(tls_disable , bool):
+            return "Error: Invalid TLS Disable value"
         # update date
         dtstamp=datetime.datetime.now().strftime('%a %d-%b-%Y')
         # update time
         tmstamp=datetime.datetime.now().strftime('%I:%M:%S %p')
 
         msg = MIMEMultipart()
-        msg['From'] = sender_account
+        if sender_name == None or not len(sender_name):
+            msg['From'] = sender_account
+        else:
+            msg['From'] = sender_name + " <" + sender_account + ">"
+
         msg['To'] = recipient
         msg['Date'] = formatdate(localtime=True)
         msg['Subject'] = "Genmon Test Email"
@@ -157,7 +164,8 @@ class MyMail(MySupport):
                  session.ehlo()
             else:
                  session = smtplib.SMTP(smtp_server, smtp_port)
-                 session.starttls()
+                 if not tls_disable:
+                     session.starttls()
                  session.ehlo
                  # this allows support for simple TLS
         except Exception as e1:
@@ -208,8 +216,14 @@ class MyMail(MySupport):
             self.EmailAccount = self.config.ReadValue('email_account')
             if self.config.HasOption('sender_account'):
                 self.SenderAccount = self.config.ReadValue('sender_account')
+                self.SenderAccount = self.SenderAccount.strip()
+                if not len(self.SenderAccount):
+                    self.SenderAccount = self.EmailAccount
             else:
                 self.SenderAccount = self.EmailAccount
+
+            self.SenderName = self.config.ReadValue('sender_name', default = None)
+
             # SMTP Recepients
             self.EmailRecipient = self.config.ReadValue('email_recipient')
             self.EmailRecipientByType = {}
@@ -351,7 +365,12 @@ class MyMail(MySupport):
         tmstamp=datetime.datetime.now().strftime('%I:%M:%S %p')
 
         msg = MIMEMultipart()
-        msg['From'] = self.SenderAccount
+        if self.SenderName == None or not len(self.SenderName):
+            msg['From'] = self.SenderAccount
+        else:
+            msg['From'] = self.SenderName + " <" + self.SenderAccount + ">"
+            self.LogError(msg['From'])
+
         if self.UseBCC:
             msg['Bcc'] = recipient
         else:

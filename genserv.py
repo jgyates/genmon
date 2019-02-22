@@ -315,6 +315,10 @@ def SendTestEmail(query_string):
         sender_account = sender_account.strip()
         if not len(sender_account):
             sender_account == None
+        sender_name = str(parameters['sender_name'])
+        sender_name = sender_name.strip()
+        if not len(sender_name):
+            sender_name == None
         recipient = str(parameters['recipient'])
         recipient = recipient.strip()
         password = str(parameters['password'])
@@ -322,6 +326,11 @@ def SendTestEmail(query_string):
             use_ssl = True
         else:
             use_ssl = False
+
+        if parameters['tls_disable'].lower() == 'true':
+            tls_disable = True
+        else:
+            tls_disable = False
     except Exception as e1:
         LogErrorLine("Error parsing parameters in SendTestEmail: " + str(e1))
         LogError(str(parameters))
@@ -333,9 +342,11 @@ def SendTestEmail(query_string):
               smtp_port = smtp_port,
               email_account = email_account,
               sender_account = sender_account,
+              sender_name = sender_name,
               recipient = recipient,
               password = password,
-              use_ssl = use_ssl
+              use_ssl = use_ssl,
+              tls_disable = tls_disable
         )
         return ReturnMessage
     except Exception as e1:
@@ -1031,6 +1042,7 @@ def ReadSettingsFromFile():
     ConfigSettings["email_account"] = ['string', 'Email Account', 301, "myemail@gmail.com", "", "minmax:3:50", MAIL_CONFIG, MAIL_SECTION, "email_account"]
     ConfigSettings["email_pw"] = ['password', 'Email Password', 302, "password", "", "max:50", MAIL_CONFIG, MAIL_SECTION, "email_pw"]
     ConfigSettings["sender_account"] = ['string', 'Sender Account', 303, "no-reply@gmail.com", "", "email", MAIL_CONFIG, MAIL_SECTION, "sender_account"]
+    ConfigSettings["sender_name"] = ['string', 'Sender Name', 304, "", "", "max:50", MAIL_CONFIG, MAIL_SECTION, "sender_name"]
     # email_recipient setting will be handled on the notification screen
     ConfigSettings["smtp_server"] = ['string', 'SMTP Server <br><small>(leave emtpy to disable)</small>', 305, "smtp.gmail.com", "", "InternetAddress", MAIL_CONFIG, MAIL_SECTION, "smtp_server"]
     ConfigSettings["smtp_port"] = ['int', 'SMTP Server Port', 307, 587, "", "digits", MAIL_CONFIG, MAIL_SECTION, "smtp_port"]

@@ -6,6 +6,7 @@ email_pw = Password for the email account used for sending and receiving email
 email_account = Email account username
 email_recipient = Address that email are sent
 sender_account = Email address from which the emails are sent
+sender_name = Name of the sender (i.e. Genmon or John Doe)
 smtp_server = Mail server used for sending email, leave empty to disable SMTP
 imap_server = Server address used for receiving email, leave empty to disable IMAP
 smtp_port = SMTP port used on the SMTP server for sending email. Typically port 587 is used for TLS and port 465 is used for SSL
