@@ -673,13 +673,13 @@ def GetAddOns():
             AddOnCfg['genexercise']['parameters']['exercise_hour'] = CreateAddOnParam(
                 ConfigFiles[GENEXERCISE_CONFIG].ReadValue("exercise_hour", return_type = int, default = 12),
                 'int',
-                "The hour of the exercise time.",
+                "The hour of the exercise time. Valid input is 0 - 23.",
                 bounds = "required digits range:0:23",
                 display_name = "Exercise Time Hour")
             AddOnCfg['genexercise']['parameters']['exercise_minute'] = CreateAddOnParam(
                 ConfigFiles[GENEXERCISE_CONFIG].ReadValue("exercise_minute", return_type = int, default = 0),
                 'int',
-                "The minute of the exercise time.",
+                "The minute of the exercise time.  Valid input is 0 - 59",
                 bounds = "required digits range:0:59",
                 display_name = "Exercise Time Minute")
             AddOnCfg['genexercise']['parameters']['exercise_day_of_month'] = CreateAddOnParam(
