@@ -30,6 +30,7 @@ MINIFY_SCRIPTS = [
     'js/packery.pkgd.min.js',
     'js/jquery.idealforms.genmon.js',
     'js/jquery.CalendarHeatmap.genmon.js',
+    'js/jquery.timepicker.min.js',
     'genmon.js'
     ]
 NON_MINIFY_SCRIPTS = [
@@ -46,7 +47,8 @@ STYLESHEETS = [
     'css/jquery.CalendarHeatmap.css',
     'css/jquery.jqplot.min.css',
     'css/tooltipster.bundle.min.css',
-    'css/vex-theme-os.css'
+    'css/vex-theme-os.css',
+    'css/jquery.timepicker.min.css'
     ]
 STYLESHEETS_OUT = 'libraries.min.css'
 

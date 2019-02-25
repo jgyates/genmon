@@ -1,7 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
-## V1.12.20 - 2019-02-23
+## V1.12.21 - 2019-02-25
+- Added Service Journal for creating a user journal of service and repair activities
+- Modified backup to  include the Service Journal.
+- Added new Add On functionality for enhanced exercise features (Transfer Exercise). This is available for Evolution Controllers only.
+- Updated gengpio.py to add GPIO pins for Monitor Health and Internet Connectivity Status
+
+## V1.12.20 - 2019-02-24
 - Updated alarm data for H-Panel for Emergency Stop
 
 ## V1.12.19 - 2019-02-21

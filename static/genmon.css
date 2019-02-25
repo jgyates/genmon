@@ -37,7 +37,7 @@ table {
     border-spacing: 0;
 }
 /* END: HTML 5 reset for older browsers */
-input, select {
+input, select, textarea {
     font-size: 100%;
     font: inherit;
     vertical-align: middle;
@@ -142,7 +142,7 @@ li a:hover:not(.active) {
 
 /* Icons */
 
-.alert_large, .alert_small, .log, .maintenance, .monitor, .notifications, .outage, .print10, .print24, .print60, .registers, .remove_bin, .settings, .status, .temp1, .temp2, .temp3, .temp4, .title-bg, .validation_ok, .validation_text, .wifi1, .wifi2, .wifi3, .wifi4, .fuel, .about, .addon{
+.alert_large, .alert_small, .log, .maintenance, .monitor, .notifications, .outage, .print10, .print24, .print60, .registers, .remove_bin, .settings, .status, .temp1, .temp2, .temp3, .temp4, .title-bg, .validation_ok, .validation_text, .wifi1, .wifi2, .wifi3, .wifi4, .fuel, .about, .addon, .journal{
 	background: url(images/sprites.png) no-repeat;
 }
 
@@ -314,9 +314,16 @@ li a:hover:not(.active) {
 	height: 20px;
 }
 
+.journal{
+	background-position: -314px -117px ;
+	width: 20px;
+	height: 20px;
+}
+
+
 /* Addons */
 
-.linux_small, .mqtt_small, .rpi_small, .slack_small, .twilio_small, .pushover_small, .linux, .mqtt, .pushover, .rpi, .slack, .twilio, .sms, .sms_small, .csv_small, .csv{
+.linux_small, .mqtt_small, .rpi_small, .slack_small, .twilio_small, .pushover_small, .linux, .mqtt, .pushover, .rpi, .slack, .twilio, .sms, .sms_small, .csv_small, .csv, .selftest, .selftest_small, .Genmon, .Genmon_small{
 	background: url(images/addons.png) no-repeat;
 }
 
@@ -414,6 +421,30 @@ li a:hover:not(.active) {
 	background-position: 0 -305px ;
 	width: 252px;
 	height: 93px;
+}
+
+.selftest{
+	background-position: 0 -403px ;
+	width: 252px;
+	height: 77px;
+}
+
+.selftest_small{
+	background-position: -461px -384px ;
+	width: 50px;
+	height: 15px;
+}
+
+.Genmon{
+	background-position: -260px -415px ;
+	width: 252px;
+	height: 57px;
+}
+
+.Genmon_small{
+	background-position: -400px -386px ;
+	width: 50px;
+	height: 11px;
 }
 
 

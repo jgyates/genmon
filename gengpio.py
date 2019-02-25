@@ -10,7 +10,7 @@
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
 
-import datetime, time, sys, signal, os, threading, socket
+import datetime, time, sys, signal, os, threading, socket, json
 import atexit
 try:
     from genmonlib.mylog import SetupLogger
@@ -22,7 +22,6 @@ except Exception as e1:
     sys.exit(2)
 
 import RPi.GPIO as GPIO
-
 
 
 #----------  Signal Handler ----------------------------------------------------
@@ -63,7 +62,8 @@ if __name__=='__main__': # usage program.py [server_address]
         STATUS_OFF = 21         # OFF GPIO 9   (pin 21)
 
         # Set additional GPIO based on these error codes
-
+        ER_GENMON = 3           # Genmon is reporting errors due to modbus or internal problems GPIO 2(pin3)
+        ER_INTERNET = 5         # No internet connection GPIO3 (pin 5)
         # Overspeed/Underspeed (alarms 1200-1206, 1600-1603) GPIO 5 (pin 29)
         ER_SPEED = 29
         # Low Oil (alarm 1300) GPIO 6 (pin 31)
@@ -90,6 +90,9 @@ if __name__=='__main__': # usage program.py [server_address]
         GPIO.setup(STATUS_EXERCISING, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(STATUS_OFF, GPIO.OUT, initial=GPIO.LOW)
 
+        GPIO.setup(ER_GENMON, GPIO.OUT, initial=GPIO.LOW)
+        GPIO.setup(ER_INTERNET, GPIO.OUT, initial=GPIO.LOW)
+
         GPIO.setup(ER_SPEED, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(ER_LOW_OIL, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(ER_HIGH_TEMP, GPIO.OUT, initial=GPIO.LOW)
@@ -109,7 +112,7 @@ if __name__=='__main__': # usage program.py [server_address]
             console.info ("Evolution Controller Detected\n")
         else:
             Evolution = False
-            console.info ("Nexus Controller Detected\n")
+            console.info ("Non Evolution Controller Detected\n")
 
         while True:
 
@@ -204,7 +207,28 @@ if __name__=='__main__': # usage program.py [server_address]
                     GPIO.output(ER_GOVERNOR,GPIO.LOW)
                     GPIO.output(ER_WARNING,GPIO.LOW)
 
-            time.sleep(3)
+            # Get Genmon status
+            try:
+                data = MyClientInterface.ProcessMonitorCommand("generator: monitor_json")
+                TempDict = {}
+                TempDict = json.loads(data)
+                HealthStr = TempDict["Monitor"][0]["Generator Monitor Stats"][0]["Monitor Health"]
+                if HealthStr.lower() == "ok":
+                    GPIO.output(ER_INTERNET,GPIO.LOW)
+                else:
+                    GPIO.output(ER_INTERNET,GPIO.HIGH)
+            except Exception as e1:
+                log.error("Error getting monitor health: " +str(e1))
+            # get Internet Status
+            try:
+                data = MyClientInterface.ProcessMonitorCommand("generator: network_status")
+                if data.lower() == "ok":
+                    GPIO.output(ER_INTERNET,GPIO.LOW)
+                else:
+                    GPIO.output(ER_INTERNET,GPIO.HIGH)
+                time.sleep(3)
+            except Exception as e1:
+                log.error("Error getting internet status: " +str(e1))
 
     except Exception as e1:
         log.error("Error: " + str(e1))

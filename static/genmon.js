@@ -10,7 +10,6 @@ var windowActive = true;
 var latestVersion = "";
 var resizeTimeout;
 
-var maintenanceLog = []
 var myGenerator = {sitename: "", nominalRPM: 3600, nominalfrequency: 60, Controller: "", model: "", nominalKW: 22, fueltype: "", UnsentFeedback: false, SystemHealth: false, EnhancedExerciseEnabled: false, OldExerciseParameters:[-1,-1,-1,-1,-1,-1]};
 var regHistory = {updateTime: {}, _10m: {}, _60m: {}, _24h: {}, historySince: "", count_60m: 0, count_24h: 0};
 var kwHistory = {data: [], plot:"", kwDuration: "h", tickInterval: "10 minutes", formatString: "%H:%M", defaultPlotWidth: 4, oldDefaultPlotWidth: 4};
@@ -155,90 +154,6 @@ function GetQueryStringParams(sParam) {
         }
 }
 
-//*****************************************************************************
-// called when adding an  entry to the maint log
-//*****************************************************************************
-function AddMaintenanceLogEntry(date, type, hours, comment){
-
-  if ((typeof date != 'string') || (typeof type != 'string') || (typeof hours != 'number') || (typeof comment != "string")){
-    // TODO display error
-    console.log("Invalid type for Maint Log Entry ");
-    return false
-  }
-  // check type
-  if ((type.toLowerCase() !== 'repair') &&
-    (type.toLowerCase() !== 'check') &&
-    (type.toLowerCase() !== 'observation') &&
-    (type.toLowerCase() !== 'maintenance')) {
-      console.log("Invalid value for Type");
-      return false
-    }
-  // check date
-  var date_regex = /^(0[1-9]|1[0-2])\/(0[1-9]|1\d|2\d|3[01])\/(19|20)\d{2}$/ ;
-  if(!(date_regex.test(date)))
-  {
-      console.log("Invalid date format, expecting MM/DD/YYYY: " + date);
-      return false;
-  }
-  var entry = {
-      date: date,     // Format is text string:  MM/DD/YYYY
-      type: type,     // Values are string: "Repair", "Maintenance", "Check" or "Observation"
-      hours: hours,   // Must be a number (integer or floating point)
-      comment: comment// Text string
-      };
-
-    // send command
-    var url = baseurl.concat("add_maint_log");
-    $.getJSON(  url,
-                {add_maint_log: JSON.stringify(entry)},
-                function(result){
-                  GetMaintenanceLog()   // Update the log
-   });
-
-   return true
-}
-
-//*****************************************************************************
-// called when adding an  entry to the maint log
-//*****************************************************************************
-function ClearMaintenanceLog(){
-
-    vex.dialog.confirm({
-        unsafeMessage: 'Clearn the maintenance log? This action cannot be undone.<br>',
-        overlayClosesOnClick: false,
-        callback: function (value) {
-             if (value == false) {
-                return;
-             } else {
-                var url = baseurl.concat("clear_maint_log");
-                $.getJSON(  url,
-                   {},
-                   function(result){
-                     maintenanceLog = []
-                   });
-             }
-        }
-    });
-}
-
-//*****************************************************************************
-// called when adding an  entry to the maint log
-//*****************************************************************************
-function GetMaintenanceLog(){
-
-    // send command
-    var url = baseurl.concat("get_maint_log_json");
-    $.getJSON(  url,
-                {},
-                function(result){
-                  try{
-                    maintenanceLog = JSON.stringify(result)
-                  }
-                  catch(err){
-                    console.log("Failure getting maintenance log : " + err.message);
-                  }
-   });
-}
 
 //*****************************************************************************
 // called when setting a remote command
@@ -288,6 +203,8 @@ function CreateMenu() {
        outstr += '<li id="monitor"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="monitor" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Monitor</td></tr></table></a></li>';
     if (myGenerator["pages"]["notifications"] == true)
        outstr += '<li id="notifications"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="notifications" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Notifications</td></tr></table></a></li>';
+    if (myGenerator["pages"]["maintlog"] == true)
+       outstr += '<li id="journal"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="journal" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Service Journal</td></tr></table></a></li>';
     if (myGenerator["pages"]["settings"] == true)
        outstr += '<li id="settings"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="settings" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Settings</td></tr></table></a></li>';
     if (myGenerator["pages"]["addons"] == true)
@@ -300,7 +217,7 @@ function CreateMenu() {
 
     var page = GetQueryStringParams('page');
 
-    MenuClick(((page != undefined) && (jQuery.inArray( page, ["status", "maint", "outage", "logs", "monitor", "notifications", "settings", "addons", "about"] ))) ? page : "status");
+    MenuClick(((page != undefined) && (jQuery.inArray( page, ["status", "maint", "outage", "logs", "monitor", "notifications", "journal", "settings", "addons", "about"] ))) ? page : "status");
 
     $(".loader").removeClass("is-active");
 }
@@ -1368,6 +1285,244 @@ function saveNotificationsJSON(){
         GenmonAlert("Error: invalid selection");
     }
 }
+
+
+//*****************************************************************************
+// Display the Journal Tab
+//*****************************************************************************
+
+// Additional Carriers are listed here: https://teamunify.uservoice.com/knowledgebase/articles/57460-communication-email-to-sms-gateway-list
+
+function DisplayJournal(){
+    var url = baseurl.concat("get_maint_log_json");
+    $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
+        processAjaxSuccess();
+
+        var  outstr = 'Journal Entires:<br><br>';
+        outstr += '<table id="alljournal" border="0" style="border-collapse: separate; border-spacing: 10px;" width="100%"><tbody>';
+
+        $.each(Object.keys(result), function(i, key) {
+            outstr += renderJournalLine(i, result[i]["date"], result[i]["type"], result[i]["hours"], result[i]["comment"]);
+        });
+        outstr += '</tbody></table><br>';
+        outstr += '<button value="+Add" id="addJournalRow">+Add</button>';
+        outstr += '<br><br><button value="Clear" id="clearJournal">Clear Journal</button>';
+
+        $("#mydisplay").html(outstr);
+
+        var rowcount = Object.keys(result).length;
+
+        $(document).ready(function() {
+           $("#addJournalRow").click(function () {
+                  var outstr = emptyJournalLine(rowcount, myGenerator['MonitorTime'], "", isNaN(parseInt(myGenerator['RunHours'])) ? "" : parseInt(myGenerator['RunHours']))
+                  if ($("#alljournal").length > 0) {
+                      $("#alljournal").append(outstr);
+                  } else {
+                      $("#alljournal").append(outstr);
+                  }
+                  $("input[name^='time_"+rowcount+"']").timepicker({ 'timeFormat': 'H:i' });
+                  $("input[name^='date_"+rowcount+"']").datepicker({ dateFormat: 'mm/dd/yy' })
+                  rowcount++;
+           });
+
+           $("#clearJournal").click(function () {
+              ClearJournal();
+           });
+
+        });
+   }});
+}
+//*****************************************************************************
+function renderJournalLine(rowcount, date, type, hours, comment) {
+
+   var outstr = '<tr id="row_' + rowcount + '"><td align="center">';
+   outstr += '  <div class="card" style="width:80%;align:center;" name="journal_' + rowcount + '">';
+   outstr += '     <div style="width:100%; background-color:#e1e1e1; border-radius: 6px 6px 0px 0px; float:left; padding-top:10px; padding-bottom:10px;">';
+   outstr += '         <table width="90%"><tr><td width="33%">Date: '+date+'</td><td width="33%">Type: '+type+'</td><td width="33%">Service Hours: '+hours+'</td></table>';
+   outstr += '     </div>';
+   outstr += '     <div style="clear: both;"></div>';
+   outstr += '     <div style="margin:10px;font-size: 15px;">'+comment+'</center></div>';
+   outstr += '     <div style="clear: both;"></div><br>';
+   outstr += '  </div>';
+   outstr += '</td>';
+
+   return outstr;
+}
+
+function emptyJournalLine(rowcount, date, type, hours, comment) {
+   var outstr = '<tr id="row_' + rowcount + '"><td align="center">';
+   outstr += '<form id="formNotifications">';
+   outstr += '  <div class="card" style="width:80%;align:center;" name="journal_' + rowcount + '">';
+   outstr += '     <div style="width:100%; background-color:#e1e1e1; border-radius: 6px 6px 0px 0px; float:left; padding-top:10px; padding-bottom:10px;">';
+   outstr += '         <center><table width="80%">';
+   outstr += '           <tr><td align="right" style="padding:3px">Date: &nbsp;&nbsp;&nbsp;</td><td style="padding:3px"><input id="date_' + rowcount + '" name="date_' + rowcount + '" type="text" value="'+date.split(" ")[0]+'">&nbsp;<input id="time_' + rowcount + '" name="time_' + rowcount + '" type="text" value="'+date.split(" ")[1]+'"></td></tr>';
+   outstr += '           <tr><td align="right" style="padding:3px">Type: &nbsp;&nbsp;&nbsp;</td><td style="padding:3px"><select id="type_' + rowcount + '" name="type_' + rowcount + '" ><option value="repair">Repair</option><option value="check">Check</option><option value="observation">Observation</option><option value="maintenance">Maintenance</option></select></td></tr>';
+   outstr += '           <tr><td align="right" style="padding:3px">Service Hours: &nbsp;&nbsp;&nbsp;</td><td style="padding:3px"><input id="hours_' + rowcount + '" name="hours_' + rowcount + '" type="text" value="'+hours+'"></td></tr>';
+   outstr += '         </table></center>';
+   outstr += '     </div>';
+   outstr += '     <div style="clear: both;"></div>';
+   outstr += '     <div style="margin:15px;font-size: 15px;"><textarea id="comment_' + rowcount + '" name="comment_' + rowcount + '" rows="4" style="width:100%;"></textarea></center></div>';
+   outstr += '     <div style="clear: both;"></div>';
+   outstr += '     <button id="setjournalbutton" onClick="saveJournals(' + rowcount + '); return false;">Save</button>';
+   outstr += '     <div style="clear: both;"></div><br>';
+   outstr += '  </div>';
+   outstr += '</form>';
+   outstr += '</td>';
+
+   return outstr;
+
+}
+
+
+//*****************************************************************************
+// called when Save Journals is clicked
+//*****************************************************************************
+function saveJournals(rowcount){
+
+    var DisplayStr = "Save journal? Are you sure?";
+    var DisplayStrAnswer = false;
+    var DisplayStrButtons = {
+        NO: {
+          text: 'Cancel',
+          type: 'button',
+          className: 'vex-dialog-button-secondary',
+          click: function noClick () {
+            DisplayStrAnswer = false
+            this.close()
+          }
+        },
+        YES: {
+          text: 'OK',
+          type: 'submit',
+          className: 'vex-dialog-button-primary',
+          click: function yesClick () {
+            DisplayStrAnswer = true
+          }
+        }
+    }
+
+    validationResult = ValidateJournalEntry($("input[name^='date_"+rowcount+"']").val(), $("input[name^='time_"+rowcount+"']").val(), $("select[name^='type_"+rowcount+"']").val(), $("input[name^='hours_"+rowcount+"']").val(), $("textarea[name^='comment_"+rowcount+"']").val());
+    if (validationResult != "OK") {
+       GenmonAlert("Data value not correct.<br>"+validationResult);
+       return false;
+    }
+
+    vex.dialog.open({
+        unsafeMessage: DisplayStr,
+        overlayClosesOnClick: false,
+        buttons: [
+           DisplayStrButtons.NO,
+           DisplayStrButtons.YES
+        ],
+        onSubmit: function(e) {
+           if (DisplayStrAnswer) {
+             DisplayStrAnswer = false; // Prevent recursive calls.
+             e.preventDefault();
+             saveJournalsJSON(rowcount);
+             var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
+             $('.vex-dialog-buttons').html(DisplayStr2);
+             $('.progress-bar-fill').queue(function () {
+                  $(this).css('width', '100%')
+             });
+             setTimeout(function(){ vex.closeAll();}, 2000);
+           }
+        }
+    })
+}
+
+//*****************************************************************************
+function saveJournalsJSON(rowcount){
+    try {
+        var fields = {};
+
+        var entry = {
+            date: $("input[name^='date_"+rowcount+"']").val()+" "+$("input[name^='time_"+rowcount+"']").val(),   // Format is text string:  MM/DD/YYYY
+            type: $("select[name^='type_"+rowcount+"']").val(),                                                  // Values are string: "Repair", "Maintenance", "Check" or "Observation"
+            hours: parseInt($("input[name^='hours_"+rowcount+"']").val()),                                       // Must be a number (integer or floating point)
+            comment: $("textarea[name^='comment_"+rowcount+"']").val()                                           // Text string
+            };
+
+        // send command
+        var url = baseurl.concat("add_maint_log");
+        $.getJSON(  url,
+              {add_maint_log: JSON.stringify(entry)},
+              function(result){
+                 outstr = renderJournalLine(rowcount, entry["date"], entry["type"], entry["hours"], entry["comment"]);
+                 $("#row_"+rowcount).replaceWith(outstr);
+        });
+
+
+    } catch(err) {
+        GenmonAlert("Error: invalid selection");
+    }
+}
+
+//*****************************************************************************
+// called when adding an  entry to the maint log
+//*****************************************************************************
+function ValidateJournalEntry(date, time, type, hours, comment){
+
+  if ((typeof date != 'string') || (typeof time != 'string') || (typeof type != 'string') || (typeof hours != 'string') || (typeof comment != "string")){
+    return "Invalid type for Maint Log Entry "
+  }
+
+  hoursInt = parseInt(hours)
+  if ((typeof hoursInt != "number") || isNaN(hoursInt) || (hoursInt == 0)){
+    return "Service Hours is not a number or 0"
+  }
+
+  // check type
+  if ((type.toLowerCase() !== 'repair') &&
+      (type.toLowerCase() !== 'check') &&
+      (type.toLowerCase() !== 'observation') &&
+      (type.toLowerCase() !== 'maintenance')) {
+          return "Invalid value for Type"
+  }
+
+  if (comment.trim() == "") {
+     return "Comment field must not be blank";
+  }
+
+  // check date
+  var date_regex = /^(0[1-9]|1[0-2])\/(0[1-9]|1\d|2\d|3[01])\/(19|20)\d{2}$/ ;
+  if(!(date_regex.test(date)))
+  {
+      return "Invalid date format, expecting MM/DD/YYYY: " + date;
+  }
+
+  var time_regex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/ ;
+  if(!(time_regex.test(time)))
+  {
+      return "Invalid time format, expecting HH:MM " + time;
+  }
+
+  return "OK"
+}
+
+//*****************************************************************************
+// called when adding an  entry to the maint log
+//*****************************************************************************
+function ClearJournal(){
+
+    vex.dialog.confirm({
+        unsafeMessage: 'Clear the Service Journal? This action cannot be undone.<br>',
+        overlayClosesOnClick: false,
+        callback: function (value) {
+             if (value == false) {
+                return;
+             } else {
+                var url = baseurl.concat("clear_maint_log");
+                $.getJSON(  url,
+                   {},
+                   function(result){
+                     $("#alljournal").empty();
+                   });
+             }
+        }
+    });
+}
+
+
 //*****************************************************************************
 // test email
 //*****************************************************************************
@@ -1515,7 +1670,7 @@ function DisplaySettings(){
              return regex.test(value);
            },
            InternetAddress: function(input, value, arg1, arg2) {
-             var regex = RegExp("^(([a-z0-9]+([\-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))$", 'g');
+             var regex = RegExp("^((([a-z0-9]+([\-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))|((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\/.*)?))$", 'g');
              return regex.test(value);
            },
            IPAddress: function(input, value, arg1, arg2) {
@@ -2770,6 +2925,9 @@ function MenuClick(page)
             case "notifications":
                 DisplayNotifications();
                 break;
+            case "journal":
+                DisplayJournal();
+                break;
             case "settings":
                 DisplaySettings();
                 break;
@@ -2975,7 +3133,7 @@ function UpdateDisplay()
         DisplayLogs();
     } else if (menuElement == "monitor") {
         DisplayMonitor();
-    } else if ((menuElement != "settings") && (menuElement != "notifications") && (menuElement != "addons") && (menuElement != "about") && (menuElement != "adv_settings")) {
+    } else if ((menuElement != "settings") && (menuElement != "notifications") && (menuElement != "journal") && (menuElement != "addons") && (menuElement != "about") && (menuElement != "adv_settings")) {
         GetDisplayValues(menuElement);
     }
 
@@ -2999,6 +3157,10 @@ function GetBaseStatus()
         myGenerator['QuietMode'] = result['ExerciseInfo']['QuietMode'];
         myGenerator['ExerciseFrequency'] = result['ExerciseInfo']['Frequency'];
         myGenerator['EnhancedExerciseEnabled'] = ((result['ExerciseInfo']['EnhancedExerciseMode'] === "False") ? false : true);
+
+        myGenerator['MonitorTime'] = result['MonitorTime'];
+        myGenerator['RunHours'] = result['RunHours'];
+
 
         if ((menuElement == "status") && (gauge.length > 0)) {
            for (var i = 0; i < result.tiles.length; ++i) {

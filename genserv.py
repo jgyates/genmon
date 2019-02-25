@@ -74,6 +74,7 @@ GENPUSHOVER_CONFIG = "/etc/genpushover.conf"
 GENMQTT_CONFIG = "/etc/genmqtt.conf"
 GENSLACK_CONFIG = "/etc/genslack.conf"
 GENGPIOIN_CONFIG = "/etc/gengpioin.conf"
+GENEXERCISE_CONFIG = "/etc/genexercise.conf"
 
 Closing = False
 Restarting = False
@@ -162,7 +163,7 @@ def ProcessCommand(command):
             finalcommand = "generator: " + command
 
             try:
-                if command in ["setexercise", "setquiet", "setremote"] and not session.get('write_access', True):
+                if command in ["setexercise", "setquiet", "setremote", "add_maint_log"] and not session.get('write_access', True):
                     return jsonify("Read Only Mode")
 
                 if command == "setexercise":
@@ -356,6 +357,7 @@ def SendTestEmail(query_string):
 def GetAddOns():
     AddOnCfg = collections.OrderedDict()
 
+    # Default icon name should be "Genmon" to get a generic icon
     try:
         # GENGPIO
         Temp = collections.OrderedDict()
@@ -645,6 +647,66 @@ def GetAddOns():
             bounds = 'HTTPAddress',
             display_name = "Title Link")
 
+        # GENEXERCISE
+        ControllerInfo = GetControllerInfo("controller").lower()
+        if "evolution" in ControllerInfo:
+            AddOnCfg['genexercise'] = collections.OrderedDict()
+            AddOnCfg['genexercise']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "genexercise", default = False)
+            AddOnCfg['genexercise']['title'] = "Evolution Enhanced Exercise"
+            AddOnCfg['genexercise']['description'] = "Add additional exercise cycles with new functionality for Evolution Controllers"
+            AddOnCfg['genexercise']['icon'] = "selftest"
+            AddOnCfg['genexercise']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genexercisepy-optional"
+            AddOnCfg['genexercise']['parameters'] = collections.OrderedDict()
+
+            AddOnCfg['genexercise']['parameters']['exercise_type'] = CreateAddOnParam(
+                ConfigFiles[GENEXERCISE_CONFIG].ReadValue("exercise_type", return_type = str, default = "Normal"),
+                'list',
+                "Quiet Exercise (reducded RPM, Hz and Voltage), Normal Exercise or Exercise with Transfer Switch Activated.",
+                bounds = 'Quiet,Normal,Transfer',
+                display_name = "Exercise Type")
+            AddOnCfg['genexercise']['parameters']['exercise_frequency'] = CreateAddOnParam(
+                ConfigFiles[GENEXERCISE_CONFIG].ReadValue("exercise_frequency", return_type = str, default = "Monthly"),
+                'list',
+                "Exercise Frequency options are Weekly, Biweekly, or Monthly",
+                bounds = 'Weekly,Biweekly,Monthly',
+                display_name = "Exercise Frequency")
+            AddOnCfg['genexercise']['parameters']['exercise_hour'] = CreateAddOnParam(
+                ConfigFiles[GENEXERCISE_CONFIG].ReadValue("exercise_hour", return_type = int, default = 12),
+                'int',
+                "The hour of the exercise time.",
+                bounds = "required digits range:0:23",
+                display_name = "Exercise Time Hour")
+            AddOnCfg['genexercise']['parameters']['exercise_minute'] = CreateAddOnParam(
+                ConfigFiles[GENEXERCISE_CONFIG].ReadValue("exercise_minute", return_type = int, default = 0),
+                'int',
+                "The minute of the exercise time.",
+                bounds = "required digits range:0:59",
+                display_name = "Exercise Time Minute")
+            AddOnCfg['genexercise']['parameters']['exercise_day_of_month'] = CreateAddOnParam(
+                ConfigFiles[GENEXERCISE_CONFIG].ReadValue("exercise_day_of_month", return_type = int, default = 1),
+                'int',
+                "The day of month if monthly exercise is selected.",
+                bounds = "required digits range:1:28",
+                display_name = "Exercise Day of Month")
+            AddOnCfg['genexercise']['parameters']['exercise_day_of_week'] = CreateAddOnParam(
+                ConfigFiles[GENEXERCISE_CONFIG].ReadValue("exercise_day_of_week", return_type = str, default = "Monday"),
+                'list',
+                "Exercise day of the week, if Weekly or Biweekly exercise frequency is selected.",
+                bounds = "Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday",
+                display_name = "Exercise Day of the Week")
+            AddOnCfg['genexercise']['parameters']['exercise_duration'] = CreateAddOnParam(
+                ConfigFiles[GENEXERCISE_CONFIG].ReadValue("exercise_duration", return_type = float, default = 12),
+                'float',
+                "The duration of the exercise time. Note: this time does not include warmup time for Transfer type exercise cycles.",
+                bounds = 'number range:5:60',
+                display_name = "Exercise Duration")
+            AddOnCfg['genexercise']['parameters']['exercise_warmup'] = CreateAddOnParam(
+                ConfigFiles[GENEXERCISE_CONFIG].ReadValue("exercise_warmup", return_type = float, default = 0),
+                'float',
+                "The duration of the warmup time. Note: this time only appies to the transfer type of exercise cycle. Zero will disable the warmup period.",
+                bounds = 'number range:0:30',
+                display_name = "Warmup Duration")
+
     except Exception as e1:
         LogErrorLine("Error in GetAddOns: " + str(e1))
 
@@ -707,7 +769,8 @@ def SaveAddOnSettings(query_string):
             "genlog" : ConfigFiles[GENLOADER_CONFIG],
             "gensyslog" : ConfigFiles[GENLOADER_CONFIG],
             "gengpio" : ConfigFiles[GENLOADER_CONFIG],
-            "gengpioin" : ConfigFiles[GENGPIOIN_CONFIG]
+            "gengpioin" : ConfigFiles[GENGPIOIN_CONFIG],
+            "genexercise" : ConfigFiles[GENEXERCISE_CONFIG]
         }
 
         for module, entries in settings.items():   # module
@@ -990,7 +1053,7 @@ def ReadSettingsFromFile():
     ConfigSettings["sitename"] = ['string', 'Site Name', 1, "SiteName", "", "required minmax:4:50", GENMON_CONFIG, GENMON_SECTION, "sitename"]
     ConfigSettings["use_serial_tcp"] = ['boolean', 'Enable Serial over TCP/IP', 2, False, "", "", GENMON_CONFIG, GENMON_SECTION, "use_serial_tcp"]
     ConfigSettings["port"] = ['string', 'Port for Serial Communication', 3, "/dev/serial0", "", "required UnixDevice", GENMON_CONFIG, GENMON_SECTION, "port"]
-    ConfigSettings["serial_tcp_address"] = ['string', 'Serial Server TCP/IP Address', 4, "", "", "", GENMON_CONFIG, GENMON_SECTION, "serial_tcp_address"]
+    ConfigSettings["serial_tcp_address"] = ['string', 'Serial Server TCP/IP Address', 4, "", "", "InternetAddress", GENMON_CONFIG, GENMON_SECTION, "serial_tcp_address"]
     ConfigSettings["serial_tcp_port"] = ['int', 'Serial Server TCP/IP Port', 5, "8899", "", "digits", GENMON_CONFIG, GENMON_SECTION, "serial_tcp_port"]
 
     if ControllerType != 'h_100':
@@ -1472,7 +1535,7 @@ if __name__ == "__main__":
         LogConsole("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'.")
         sys.exit(1)
 
-    ConfigFileList = [GENMON_CONFIG, MAIL_CONFIG, GENLOADER_CONFIG, GENSMS_CONFIG, MYMODEM_CONFIG, GENPUSHOVER_CONFIG, GENMQTT_CONFIG, GENSLACK_CONFIG, GENGPIOIN_CONFIG]
+    ConfigFileList = [GENMON_CONFIG, MAIL_CONFIG, GENLOADER_CONFIG, GENSMS_CONFIG, MYMODEM_CONFIG, GENPUSHOVER_CONFIG, GENMQTT_CONFIG, GENSLACK_CONFIG, GENGPIOIN_CONFIG, GENEXERCISE_CONFIG]
 
     for ConfigFile in ConfigFileList:
         if not os.path.isfile(ConfigFile):
