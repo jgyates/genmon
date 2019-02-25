@@ -688,7 +688,7 @@ class Monitor(MySupport):
     def GetStatusForGUI(self):
 
         Status = {}
-        
+
         Status["SystemHealth"] = self.GetSystemHealth()
         Status["UnsentFeedback"] = str(os.path.isfile(self.FeedbackLogFile))
 
@@ -700,7 +700,7 @@ class Monitor(MySupport):
         if not WeatherData == None and len(WeatherData):
             Status["Weather"] = WeatherData
         # Monitor Time
-        Status["MonitorTime"] = datetime.datetime.now().strftime("%A %B %-d, %Y %H:%M:%S")
+        Status["MonitorTime"] = datetime.datetime.now().strftime("%m/%d/%Y %H:%M")
         # Engine run hours
         Status["RunHours"] = self.Controller.GetRunHours()
         ReturnDict = self.MergeDicts(Status, self.Controller.GetStatusForGUI())
