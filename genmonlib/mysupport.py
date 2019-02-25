@@ -71,6 +71,19 @@ class MySupport(MyCommon):
 
         return Platform.GetInfo()
 
+    #---------- MySupport::InternetConnected------------------------------------
+    # Note: this function, if the internet connection is not present could
+    # take some time to complete due to the network timeout
+    def InternetConnected(self):
+        try:
+            if MyPlatform.InterntConnected():
+                Status = "OK"
+            else:
+                Status = "Disconnected"
+
+            return Status
+        except Exception as e1:
+            return "Unknown" + ":" + str(e1)
     #---------- MySupport::GetDeadThreadName------------------------------------
     def GetDeadThreadName(self):
 

@@ -279,7 +279,7 @@ class HPanelIO(object):
         ("0087", 0x0001) : "Integrated Logic Controller Warning - Warning 1.",
         # Output 7
         ("0088", 0x8000) : "Integrated Logic Controller Warning - Warning 2.",
-        ("0088", 0x0200) : "Detected voltage phase rotation as not being A-B-C.",
+        ("0088", 0x0200) : "Emergency Stop",
         ("0088", 0x0100) : "Detected current phase rotation as not being A-B-C and not matching voltage.",
 
     }
@@ -1485,6 +1485,7 @@ class HPanel(GeneratorController):
                                 "outage":False,
                                 "logs":True,
                                 "monitor": True,
+                                "maintlog" : True,
                                 "notifications": True,
                                 "settings": True,
                                 "addons": True,
@@ -1611,7 +1612,7 @@ class HPanel(GeneratorController):
             Service = []
             Maintenance["Maintenance"].append({"Service" : Service})
 
-            Service.append({"Total Run Hours" : self.GetParameter(self.Reg.ENGINE_HOURS[REGISTER],"H", 10.0)})
+            Service.append({"Total Run Hours" : self.GetRunHours})
 
             IOStatus = []
             Maintenance["Maintenance"].append({"I/O Status" : IOStatus})
@@ -1705,6 +1706,10 @@ class HPanel(GeneratorController):
             return self.printToString(self.ProcessDispatch(Status,""))
 
         return Status
+
+    #------------ GeneratorController:GetRunHours ------------------------------
+    def GetRunHours(self):
+        return self.GetParameter(self.Reg.ENGINE_HOURS[REGISTER],"", 10.0)
 
     #------------------- HPanel::DisplayOutage ---------------------------------
     def DisplayOutage(self, DictOut = False):

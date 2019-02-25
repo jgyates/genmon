@@ -224,7 +224,6 @@ class MyMQTT(MyCommon):
 
         self.Username = None
         self.Password = None
-        self.Address = None
         self.Topic = None
 
         self.MQTTAddress = None

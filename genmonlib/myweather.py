@@ -194,7 +194,7 @@ class MyWeather(MySupport):
 
                     TempDict = self.WeatherData.get_pressure()
                     if len(TempDict):
-                        Data.append({"Pressure" : str(TempDict.get("press", 0)) + " " + "hpa"})
+                        Data.append({"Pressure" : str(TempDict.get("press", 0)) + " " + "hPa"})
 
                     Data.append({"Sunrise Time" : datetime.datetime.fromtimestamp(int(self.WeatherData.get_sunrise_time())).strftime("%A %B %-d, %Y %H:%M:%S")})
                     Data.append({"Sunset Time" : datetime.datetime.fromtimestamp(int(self.WeatherData.get_sunset_time())).strftime("%A %B %-d, %Y %H:%M:%S")})

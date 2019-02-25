@@ -547,6 +547,9 @@ class GeneratorController(MySupport):
     def GetCommStatus(self):
         return self.ModBus.GetCommStats()
 
+    #------------ GeneratorController:GetRunHours ------------------------------
+    def GetRunHours(self):
+        return "Unknown"
     #------------ GeneratorController:GetBaseStatus ----------------------------
     # return one of the following: "ALARM", "SERVICEDUE", "EXERCISING", "RUNNING",
     # "RUNNING-MANUAL", "OFF", "MANUAL", "READY"

@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.12.20 - 2019-02-23
+- Updated alarm data for H-Panel for Emergency Stop
+
 ## V1.12.19 - 2019-02-21
 - Added sender name in email settings
 - Fixed test email functional to support disabling TLS

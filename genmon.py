@@ -33,7 +33,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.12.19"
+GENMON_VERSION = "V1.12.20"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(MySupport):
@@ -405,7 +405,7 @@ class Monitor(MySupport):
                 FilesToSend = ["genmon.log", "genserv.log", "mymail.log", "myserial.log",
                     "mymodbus.log", "gengpio.log", "gengpioin.log", "gensms.log",
                     "gensms_modem.log", "genmqtt.log", "genpushover.log", "gensyslog.log",
-                    "genloader.log", "myserialtcp.log", "genlog.log", "genslack.log"]
+                    "genloader.log", "myserialtcp.log", "genlog.log", "genslack.log", "genexercise.log"]
                 for File in FilesToSend:
                     LogFile = self.LogLocation + File
                     if os.path.isfile(LogFile):
@@ -464,6 +464,7 @@ class Monitor(MySupport):
             "setquiet"      : [self.Controller.SetGeneratorQuietMode, ( command.lower(),), False],
             "setremote"     : [self.Controller.SetGeneratorRemoteCommand, (command.lower(),), False],
             "testcommand"   : [self.Controller.TestCommand, (command.lower(),), False],
+            "network_status": [self.InternetConnected, (), False],
             "help"          : [self.DisplayHelp, (), False],                   # display help screen
             ## These commands are used by the web / socket interface only
             "power_log_json"    : [self.Controller.GetPowerHistory, (command.lower(),), True],
@@ -687,7 +688,7 @@ class Monitor(MySupport):
     def GetStatusForGUI(self):
 
         Status = {}
-
+        
         Status["SystemHealth"] = self.GetSystemHealth()
         Status["UnsentFeedback"] = str(os.path.isfile(self.FeedbackLogFile))
 
@@ -698,6 +699,10 @@ class Monitor(MySupport):
         WeatherData = self.GetWeatherData(ForUI = True)
         if not WeatherData == None and len(WeatherData):
             Status["Weather"] = WeatherData
+        # Monitor Time
+        Status["MonitorTime"] = datetime.datetime.now().strftime("%A %B %-d, %Y %H:%M:%S")
+        # Engine run hours
+        Status["RunHours"] = self.Controller.GetRunHours()
         ReturnDict = self.MergeDicts(Status, self.Controller.GetStatusForGUI())
 
         return ReturnDict

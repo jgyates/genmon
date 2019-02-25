@@ -1848,7 +1848,7 @@ class Evolution(GeneratorController):
                     if not self.LiquidCooled:
                         Service.append({"Battery Check Due" : self.GetServiceDueDate("BATTERY")})
 
-            Service.append({"Total Run Hours" : self.GetRunTimes()})
+            Service.append({"Total Run Hours" : self.GetRunHours()})
             Service.append({"Hardware Version" : self.GetHardwareVersion()})
             Service.append({"Firmware Version" : self.GetFirmwareVersion()})
 
@@ -3371,8 +3371,8 @@ class Evolution(GeneratorController):
         FloatTemp = IntTemp / 100.0
         return "V%2.2f" % FloatTemp     #
 
-    #------------ Evolution:GetRunTimes ----------------------------------------
-    def GetRunTimes(self):
+    #------------ Evolution:GetRunHours ----------------------------------------
+    def GetRunHours(self):
 
         try:
             RunHours = None
@@ -3561,6 +3561,7 @@ class Evolution(GeneratorController):
                                 "outage":True,
                                 "logs":True,
                                 "monitor": True,
+                                "maintlog" : True,
                                 "notifications": True,
                                 "settings": True,
                                 "addons": True,
