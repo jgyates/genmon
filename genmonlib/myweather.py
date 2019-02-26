@@ -106,7 +106,7 @@ class MyWeather(MySupport):
         except Exception as e1:
             self.Observation = None
             self.ObservationLocation = None
-            self.LogErrorLine("Error in GetObservation: " + str(e1))
+            self.LogErrorLine("Error in GetObservation: " + "(" + str(self.Location) +  ") :" + str(e1))
 
     #---------------------WeatherThread-----------------------------------------
     def WeatherThread(self):
