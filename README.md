@@ -71,7 +71,8 @@ This project is free to use under the posted license agreement. It was written a
 ## Pre-Assembled Hardware
 This project is open source and ideal for those who like to tinker, however pre-assembled hardware and cables are available for anyone interested on via ebay.com from this source:
 
-* [Pre-Assembled Pi and Cable](https://www.ebay.com/itm/Generac-Generator-Monitor-Device-Powered-by-GenMon-github-by-jgyates/263944254074?hash=item3d744db27a:g:xvAAAOSw8H1boD0R:rk:1:pf:0)
+* [Pre-Assembled Pi and Cable](https://www.ebay.com/itm/264200240940)
+* [Pre-loaded SD Card](https://www.ebay.com/itm/GenPi-Generac-Monitor-by-GenMon-W-New-Setup-SDcard-w-Software-Only/264216642416)
 
 
 ## Testing
