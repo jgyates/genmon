@@ -1612,7 +1612,7 @@ class HPanel(GeneratorController):
             Service = []
             Maintenance["Maintenance"].append({"Service" : Service})
 
-            Service.append({"Total Run Hours" : self.GetRunHours})
+            Service.append({"Total Run Hours" : self.GetRunHours()})
 
             IOStatus = []
             Maintenance["Maintenance"].append({"I/O Status" : IOStatus})
@@ -1709,7 +1709,7 @@ class HPanel(GeneratorController):
 
     #------------ GeneratorController:GetRunHours ------------------------------
     def GetRunHours(self):
-        return self.GetParameter(self.Reg.ENGINE_HOURS[REGISTER],"", 10.0)
+        return self.GetParameter(self.Reg.ENGINE_HOURS[REGISTER],"", 10.0 )
 
     #------------------- HPanel::DisplayOutage ---------------------------------
     def DisplayOutage(self, DictOut = False):
