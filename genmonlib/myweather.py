@@ -99,7 +99,10 @@ class MyWeather(MySupport):
             return
         try:
             if self.Location.isdigit():
-                self.Observation = self.OWM.weather_at_id(int(self.Location))
+                if len(self.Location.strip()) == 5:     # Assume this is a zip code
+                    self.Observation = self.OWM.weather_at_zip_code(self.Location,"us")
+                else:
+                    self.Observation = self.OWM.weather_at_id(int(self.Location))
             else:
                 self.Observation = self.OWM.weather_at_place(self.Location)
             self.ObservationLocation = self.Observation.get_location()
