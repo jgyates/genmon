@@ -61,6 +61,18 @@ class MyCommon(object):
 
         # end printToString
 
+    #---------- MyCommon:FindDictValueInListByKey ------------------------------
+    def FindDictValueInListByKey(self, key, listname):
+
+        try:
+            for item in listname:
+                if isinstance(item, dict):
+                    for dictkey, value in item.items():
+                        if dictkey.lower() == key.lower():
+                            return value
+        except Exception as e1:
+            self.LogErrorLine("Error in FindDictInList: " + str(e1))
+        return None
     #----------  MyCommon::removeAlpha------------------------------------------
     # used to remove alpha characters from string so the string contains a
     # float value (leaves all special characters)

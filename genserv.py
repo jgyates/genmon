@@ -670,6 +670,11 @@ def GetAddOns():
                 "Exercise Frequency options are Weekly, Biweekly, or Monthly",
                 bounds = 'Weekly,Biweekly,Monthly',
                 display_name = "Exercise Frequency")
+            AddOnCfg['genexercise']['parameters']['use_gen_time'] = CreateAddOnParam(
+                ConfigFiles[GENEXERCISE_CONFIG].ReadValue("use_gen_time", return_type = bool, default = False),
+                'boolean',
+                "Enable to use the generator time for the exercise cycle, otherwise it will use the system time.",
+                display_name = "Use Generator Time")
             AddOnCfg['genexercise']['parameters']['exercise_hour'] = CreateAddOnParam(
                 ConfigFiles[GENEXERCISE_CONFIG].ReadValue("exercise_hour", return_type = int, default = 12),
                 'int',
@@ -1104,7 +1109,7 @@ def ReadSettingsFromFile():
     ConfigSettings["disablesmtp"] = ['boolean', 'Disable Sending Email', 300, False, "", "", MAIL_CONFIG, MAIL_SECTION, "disablesmtp"]
     ConfigSettings["email_account"] = ['string', 'Email Account', 301, "myemail@gmail.com", "", "minmax:3:50", MAIL_CONFIG, MAIL_SECTION, "email_account"]
     ConfigSettings["email_pw"] = ['password', 'Email Password', 302, "password", "", "max:50", MAIL_CONFIG, MAIL_SECTION, "email_pw"]
-    ConfigSettings["sender_account"] = ['string', 'Sender Account', 303, "no-reply@gmail.com", "", "email", MAIL_CONFIG, MAIL_SECTION, "sender_account"]
+    ConfigSettings["sender_account"] = ['string', 'Sender Address', 303, "no-reply@gmail.com", "", "email", MAIL_CONFIG, MAIL_SECTION, "sender_account"]
     ConfigSettings["sender_name"] = ['string', 'Sender Name', 304, "", "", "max:50", MAIL_CONFIG, MAIL_SECTION, "sender_name"]
     # email_recipient setting will be handled on the notification screen
     ConfigSettings["smtp_server"] = ['string', 'SMTP Server <br><small>(leave emtpy to disable)</small>', 305, "smtp.gmail.com", "", "InternetAddress", MAIL_CONFIG, MAIL_SECTION, "smtp_server"]

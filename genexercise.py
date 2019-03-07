@@ -59,6 +59,7 @@ class GenExercise(MySupport):
             self.ExerciseFrequency = self.config.ReadValue('exercise_frequency',  default = "Monthly")
             self.MonitorAddress = self.config.ReadValue('monitor_address', default = "127.0.0.1")
             self.LastExerciseTime = self.config.ReadValue('last_exercise',  default = None)
+            self.UseGeneratorTime = self.config.ReadValue('use_gen_time',  return_type = bool, default = False)
             self.Debug = self.config.ReadValue('debug', return_type = bool, default = False)
 
             # Validate settings
@@ -246,8 +247,9 @@ class GenExercise(MySupport):
 
         try:
             NowString = datetime.datetime.now().strftime("%A %B %d, %Y %H:%M:%S")
-            self.config.WriteValue("last_exercise", NowString)
-            self.config.LastExerciseTime = NowString
+            if self.ExerciseFrequency.lower() == "biweekly":
+                self.config.WriteValue("last_exercise", NowString)
+                self.config.LastExerciseTime = NowString
             if self.Debug:
                 self.LogError("Last Exercise Cycle: " + NowString)
         except Exception as e1:
@@ -256,7 +258,10 @@ class GenExercise(MySupport):
     # ---------- GenExercise::TimeForExercise-----------------------------------
     def TimeForExercise(self):
         try:
-            TimeNow = datetime.datetime.now()
+            if self.UseGeneratorTime:
+                TimeNow = self.GetGeneratorTime()
+            else:
+                TimeNow = datetime.datetime.now()
             if TimeNow.hour != self.ExerciseHour or TimeNow.minute != self.ExerciseMinute:
                 return False
 
@@ -280,6 +285,29 @@ class GenExercise(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in TimeForExercise: " + str(e1))
         return False
+    # ---------- GenExercise::GetGeneratorTime----------------------------------
+    def GetGeneratorTime(self):
+        try:
+            data = self.SendCommand("generator: status_json")
+            Status = {}
+            Status = json.loads(data)
+            TimeDict = self.FindDictValueInListByKey("Time", Status["Status"])
+            if TimeDict != None:
+                TimeDictStr = self.FindDictValueInListByKey("Generator Time", TimeDict)
+                if TimeDictStr != None:
+                    GenTimeStr = TimeDictStr
+                    # Format is "Wednesday March 6, 2019 13:10"
+                    GenTime = datetime.datetime.strptime(GenTimeStr, "%A %B %d, %Y %H:%M")
+                else:
+                    self.LogError("Error getting generator time!")
+                    GenTime = datetime.datetime.now()
+            else:
+                self.LogError("Error getting generator time (2)!")
+                GenTime = datetime.datetime.now()
+            return GenTime
+        except Exception as e1:
+            self.LogErrorLine("Error in GetGeneratorTime: " + str(e1))
+            return datetime.datetime.now()
     # ---------- GenExercise::ExerciseThread------------------------------------
     def ExerciseThread(self):
 

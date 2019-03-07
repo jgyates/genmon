@@ -129,7 +129,7 @@ class MyMail(MySupport):
             return "Error: Invalid email recipient"
 
         if password  == None or not len(password):
-            return "Error: Invalid email recipient"
+            password = ""
 
         if smtp_port == None or not isinstance(smtp_port , int):
             return "Error: Invalid SMTP port"
@@ -212,7 +212,8 @@ class MyMail(MySupport):
             if self.config.HasOption('usebcc'):
                 self.UseBCC = self.config.ReadValue('usebcc', return_type = bool)
 
-            self.EmailPassword = self.config.ReadValue('email_pw')
+            self.EmailPassword = self.config.ReadValue('email_pw', default = "")
+            self.EmailPassword =  self.EmailPassword.strip()
             self.EmailAccount = self.config.ReadValue('email_account')
             if self.config.HasOption('sender_account'):
                 self.SenderAccount = self.config.ReadValue('sender_account')
