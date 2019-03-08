@@ -1649,7 +1649,8 @@ class HPanel(GeneratorController):
             Status["Status"].append({"Engine":Engine})
             Status["Status"].append({"Alarms":Alarms})
             Status["Status"].append({"Battery":Battery})
-            Status["Status"].append({"Line State":Line})
+            if not self.SmartSwitch:
+                Status["Status"].append({"Line State":Line})
             Status["Status"].append({"Time":Time})
 
             Battery.append({"Battery Voltage" : self.ValueOut(self.GetParameter(self.Reg.BATTERY_VOLTS[REGISTER], ReturnFloat = True, Divider = 100.0), "V", JSONNum)})
@@ -1692,8 +1693,8 @@ class HPanel(GeneratorController):
                 if len(AlarmList):
                     Alarms.append({"Alarm List" : AlarmList})
 
-
-            Line.append({"Transfer Switch State" : self.GetTransferStatus()})
+            if not self.SmartSwitch:
+                Line.append({"Transfer Switch State" : self.GetTransferStatus()})
 
             # Generator time
             Time.append({"Monitor Time" : datetime.datetime.now().strftime("%A %B %-d, %Y %H:%M:%S")})

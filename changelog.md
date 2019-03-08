@@ -1,9 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.12.24 - 2019-03-08
+- Remove Line State for G Panel and H Panel if Smart Transfer Switch option is enabled
+
 ## V1.12.23 - 2019-03-06
 - Minor update to email password validation
-- Change to allow test email to be sent without a password 
+- Change to allow test email to be sent without a password
 - Added option in Evolution Enhanced Exercise Add On to allow use of generator time instead of system time.
 
 ## V1.12.22 - 2019-03-02
