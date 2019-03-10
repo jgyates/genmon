@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.12.25 - 2019-03-10
+- Added the ability to use floating point values for run hours in the service journal
+
 ## V1.12.24 - 2019-03-08
 - Remove Line State for G Panel and H Panel if Smart Transfer Switch option is enabled
 

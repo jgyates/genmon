@@ -1314,7 +1314,7 @@ function DisplayJournal(){
 
         $(document).ready(function() {
            $("#addJournalRow").click(function () {
-                  var outstr = emptyJournalLine(rowcount, myGenerator['MonitorTime'], "", isNaN(parseInt(myGenerator['RunHours'])) ? "" : parseInt(myGenerator['RunHours']))
+                  var outstr = emptyJournalLine(rowcount, myGenerator['MonitorTime'], "", isNaN(parseFloat(myGenerator['RunHours'])) ? "" : parseFloat(myGenerator['RunHours']))
                   if ($("#alljournal").length > 0) {
                       $("#alljournal").append(outstr);
                   } else {
@@ -1438,7 +1438,7 @@ function saveJournalsJSON(rowcount){
         var entry = {
             date: $("input[name^='date_"+rowcount+"']").val()+" "+$("input[name^='time_"+rowcount+"']").val(),   // Format is text string:  MM/DD/YYYY
             type: $("select[name^='type_"+rowcount+"']").val(),                                                  // Values are string: "Repair", "Maintenance", "Check" or "Observation"
-            hours: parseInt($("input[name^='hours_"+rowcount+"']").val()),                                       // Must be a number (integer or floating point)
+            hours: parseFloat($("input[name^='hours_"+rowcount+"']").val()),                                       // Must be a number (integer or floating point)
             comment: $("textarea[name^='comment_"+rowcount+"']").val()                                           // Text string
             };
 
@@ -1466,8 +1466,8 @@ function ValidateJournalEntry(date, time, type, hours, comment){
     return "Invalid type for Maint Log Entry "
   }
 
-  hoursInt = parseInt(hours)
-  if ((typeof hoursInt != "number") || isNaN(hoursInt) || (hoursInt == 0)){
+  hoursFloat = parseFloat(hours)
+  if ((typeof hoursFloat != "number") || isNaN(hoursFloat) || (hoursFloat == 0)){
     return "Service Hours is not a number or 0"
   }
 
