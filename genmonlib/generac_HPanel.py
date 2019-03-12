@@ -89,8 +89,28 @@ class HPanelReg(object):
     DI_STATE_2              = ["01a2", 2]            # * Different on G-Panel
     QUIETTEST_STATUS        = ["022b", 2]            # Quiet Test Status and reqest
 
+    # EXT_SW_XX regististers are for HTS/MTS/STS Switches
+    EXT_SW_GENERAL_STATUS   = ["0ea1", 2]            # External Switch General Status
+    EXT_SW_MINIC_DIAGRAM    = ["0ea2", 2]            # Ext Switch Mimic Diagram
     EXT_SW_TARGET_VOLTAGE   = ["0ea7", 2]            # External Switch Target Voltage
-    EXT_SW_AVG_UTIL_VOLTS   = ["0eb5", 2]            # External Switch Avg Utility Volts
+    EXT_SW_TARGET_FREQ      = ["0eaa", 2]            # External Switch Target Freq
+    EXT_SW_UTILITY_VOLTS_AB = ["0ead", 2]            # External Switch Utility AB Voltage
+    EXT_SW_UTILITY_VOLTS_BC = ["0eae", 2]            # External Switch Utility BC Voltage
+    EXT_SW_UTILITY_VOLTS_CA = ["0eaf", 2]            # External Switch Utility CA Voltage
+    EXT_SW_UTILITY_AMPS_A   = ["0eb0", 2]            # External Switch Utility A Amps
+    EXT_SW_UTILITY_AMPS_B   = ["0eb1", 2]            # External Switch Utility B Amps
+    EXT_SW_UTILITY_AMPS_C   = ["0eb2", 2]            # External Switch Utility C Amps
+    EXT_SW_UTILITY_AVG_VOLTS= ["0eb4", 2]            # External Switch Average Utility Volts
+    EXT_SW_UTILITY_AVG_AMPS = ["0eb5", 2]            # External Switch Average Utility Amps
+    EXT_SW_UTILITY_FREQ     = ["0eb6", 2]            # External Switch Utility Freq
+    EXT_SW_UTILITY_PF       = ["0eb7", 2]            # External Switch Utility Power Factor
+    EXT_SW_UTILITY_KW       = ["0eb8", 2]            # External Switch Utility Power
+    EXT_SW_GEN_AVG_VOLT     = ["0eb9", 2]            # External Switch Generator Average Voltage
+    EXT_SW_GEN_FREQ         = ["0eba", 2]            # External Switch Generator Freq
+    EXT_SW_BACKUP_BATT_VOLTS= ["0ebc", 2]            # External Switch Backup Battery Voltage
+    EXT_SW_VERSION          = ["0ebf", 2]            # External Switch SW Version
+    EXT_SW_SELECTED         = ["0ec0", 2]            # External Switch Selected
+
 
     #---------------------HPanelReg::hexsort------------------------------------
     #@staticmethod
@@ -338,8 +358,27 @@ class GPanelReg(object):
     DI_STATE_2              = ["01a2", 2]            # * Different on G-Panel
     QUIETTEST_STATUS        = ["022b", 2]            # Quiet Test Status and reqest
 
+    # EXT_SW_XX regististers are for HTS/MTS/STS Switches
+    EXT_SW_GENERAL_STATUS   = ["0ea1", 2]            # External Switch General Status
+    EXT_SW_MINIC_DIAGRAM    = ["0ea2", 2]            # Ext Switch Mimic Diagram
     EXT_SW_TARGET_VOLTAGE   = ["0ea7", 2]            # External Switch Target Voltage
-    EXT_SW_AVG_UTIL_VOLTS   = ["0eb5", 2]            # External Switch Avg Utility Volts
+    EXT_SW_TARGET_FREQ      = ["0eaa", 2]            # External Switch Target Freq
+    EXT_SW_UTILITY_VOLTS_AB = ["0ead", 2]            # External Switch Utility AB Voltage
+    EXT_SW_UTILITY_VOLTS_BC = ["0eae", 2]            # External Switch Utility BC Voltage
+    EXT_SW_UTILITY_VOLTS_CA = ["0eaf", 2]            # External Switch Utility CA Voltage
+    EXT_SW_UTILITY_AMPS_A   = ["0eb0", 2]            # External Switch Utility A Amps
+    EXT_SW_UTILITY_AMPS_B   = ["0eb1", 2]            # External Switch Utility B Amps
+    EXT_SW_UTILITY_AMPS_C   = ["0eb2", 2]            # External Switch Utility C Amps
+    EXT_SW_UTILITY_AVG_VOLTS= ["0eb4", 2]            # External Switch Average Utility Volts
+    EXT_SW_UTILITY_AVG_AMPS = ["0eb5", 2]            # External Switch Average Utility Amps
+    EXT_SW_UTILITY_FREQ     = ["0eb6", 2]            # External Switch Utility Freq
+    EXT_SW_UTILITY_PF       = ["0eb7", 2]            # External Switch Utility Power Factor
+    EXT_SW_UTILITY_KW       = ["0eb8", 2]            # External Switch Utility Power
+    EXT_SW_GEN_AVG_VOLT     = ["0eb9", 2]            # External Switch Generator Average Voltage
+    EXT_SW_GEN_FREQ         = ["0eba", 2]            # External Switch Generator Freq
+    EXT_SW_BACKUP_BATT_VOLTS= ["0ebc", 2]            # External Switch Backup Battery Voltage
+    EXT_SW_VERSION          = ["0ebf", 2]            # External Switch SW Version
+    EXT_SW_SELECTED         = ["0ec0", 2]            # External Switch Selected
 
     #---------------------GPanelReg::hexsort------------------------------------
     #@staticmethod
@@ -854,6 +893,7 @@ class HPanel(GeneratorController):
         try:
             self.VoltageConfig = self.config.ReadValue('voltageconfiguration', default = "277/480")
             self.NominalBatteryVolts = int(self.config.ReadValue('nominalbattery', return_type = int, default = 24))
+            self.HTSTransferSwitch = self.config.ReadValue('hts_transfer_switch', return_type = bool, default = False)
 
         except Exception as e1:
             self.FatalError("Missing config file or config file entries (HPanel): " + str(e1))
@@ -924,13 +964,13 @@ class HPanel(GeneratorController):
             if self.NominalKW == None or self.NominalKW == "" or self.NominalKW == "Unknown":
                 self.NominalKW = "550"
 
-            Tile = MyTile(self.log, title = "Average Voltage", units = "V", type = "linevolts", nominal = NominalVoltage,
+            Tile = MyTile(self.log, title = "Voltage (Avg)", units = "V", type = "linevolts", nominal = NominalVoltage,
             callback = self.GetParameter,
             callbackparameters = (self.Reg.AVG_VOLTAGE[REGISTER], None, None, False, True, False))
             self.TileList.append(Tile)
 
             NominalCurrent = int(self.NominalKW) * 1000 / NominalVoltage
-            Tile = MyTile(self.log, title = "Average Current", units = "A", type = "current", nominal = NominalCurrent,
+            Tile = MyTile(self.log, title = "Current (Avg)", units = "A", type = "current", nominal = NominalCurrent,
             callback = self.GetParameter,
             callbackparameters = (self.Reg.AVG_CURRENT[REGISTER], None, None, False, True, False))
             self.TileList.append(Tile)
@@ -954,6 +994,20 @@ class HPanel(GeneratorController):
             callback = self.GetParameter,
             callbackparameters = (self.Reg.COOLANT_TEMP[REGISTER], None, None, False, True, False))
             self.TileList.append(Tile)
+
+            if self.HTSTransferSwitch:
+                Tile = MyTile(self.log, title = "Utility Voltage (Avg)", units = "V", type = "linevolts", nominal = NominalVoltage,
+                callback = self.GetParameter,
+                callbackparameters = (self.Reg.EXT_SW_UTILITY_AVG_VOLTS[REGISTER], None, None, False, True, False))
+                self.TileList.append(Tile)
+                Tile = MyTile(self.log, title = "Utility Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq),
+                callback = self.GetParameter,
+                callbackparameters = (self.Reg.EXT_SW_UTILITY_FREQ[REGISTER], None, 100.0, False, False, True))
+                self.TileList.append(Tile)
+                Tile = MyTile(self.log, title = "Utility Power", units = "kW", type = "power", nominal = int(self.NominalKW),
+                callback = self.GetParameter,
+                callbackparameters = (self.Reg.EXT_SW_UTILITY_KW[REGISTER], None, None, False, True, False))
+                self.TileList.append(Tile)
 
             if self.PowerMeterIsSupported():
                 Tile = MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = int(self.NominalKW),
@@ -1649,7 +1703,7 @@ class HPanel(GeneratorController):
             Status["Status"].append({"Engine":Engine})
             Status["Status"].append({"Alarms":Alarms})
             Status["Status"].append({"Battery":Battery})
-            if not self.SmartSwitch:
+            if not self.SmartSwitch or self.HTSTransferSwitch:
                 Status["Status"].append({"Line State":Line})
             Status["Status"].append({"Time":Time})
 
@@ -1693,8 +1747,41 @@ class HPanel(GeneratorController):
                 if len(AlarmList):
                     Alarms.append({"Alarm List" : AlarmList})
 
-            if not self.SmartSwitch:
-                Line.append({"Transfer Switch State" : self.GetTransferStatus()})
+            if not self.SmartSwitch  or self.HTSTransferSwitch:
+                if not self.SmartSwitch:
+                    Line.append({"Transfer Switch State" : self.GetTransferStatus()})
+                if self.HTSTransferSwitch:
+                    Line.append({"Target Utility Voltage" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_TARGET_VOLTAGE[REGISTER], ReturnInt = True), "V", JSONNum)})
+                    Line.append({"Target Utility Frequency" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_TARGET_FREQ[REGISTER], ReturnFloat = True, Divider = 100.0), "Hz", JSONNum)})
+
+                    Line.append({"Utility Frequency" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_UTILITY_FREQ[REGISTER], ReturnFloat = True, Divider = 100.0), "Hz", JSONNum)})
+
+                    Line.append({"Utility Voltage A-B" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_UTILITY_VOLTS_AB[REGISTER], ReturnInt = True), "V", JSONNum)})
+                    Line.append({"Utility Voltage B-C" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_UTILITY_VOLTS_BC[REGISTER], ReturnInt = True), "V", JSONNum)})
+                    Line.append({"Utility Voltage C-A" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_UTILITY_VOLTS_CA[REGISTER], ReturnInt = True), "V", JSONNum)})
+                    Line.append({"Average Utility Voltage" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_UTILITY_AVG_VOLTS[REGISTER], ReturnInt = True), "V", JSONNum)})
+
+                    Line.append({"Utility Current Phase A" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_UTILITY_AMPS_A[REGISTER], ReturnInt = True), "A", JSONNum)})
+                    Line.append({"Utility Current Phase B" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_UTILITY_AMPS_B[REGISTER], ReturnInt = True), "A", JSONNum)})
+                    Line.append({"Utility Current Phase C" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_UTILITY_AMPS_C[REGISTER], ReturnInt = True), "A", JSONNum)})
+                    Line.append({"Average Utility Current" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_UTILITY_AVG_AMPS[REGISTER], ReturnInt = True), "A", JSONNum)})
+
+                    Line.append({"Utility Power Factor" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_UTILITY_PF[REGISTER], ReturnFloat = True, Divider = 100.0), "", JSONNum)})
+                    Line.append({"Utility Power" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_UTILITY_KW[REGISTER], ReturnInt = True), "kW", JSONNum)})
+
+                    Line.append({"Switch Reported Generator Average Voltage" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_GEN_AVG_VOLT[REGISTER], ReturnInt = True), "V", JSONNum)})
+                    Line.append({"Switch Reported Generator Average Frequency" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_GEN_FREQ[REGISTER], ReturnFloat = True, Divider = 100.0), "Hz", JSONNum)})
+
+                    Line.append({"Backup Battery Volts" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_BACKUP_BATT_VOLTS[REGISTER], ReturnFloat = True, Divider = 100.0), "V", JSONNum)})
+
+                    Line.append({"Switch Software Version" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_VERSION[REGISTER], ReturnInt = True), "", JSONNum)})
+                    Line.append({"Switch Selected" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_SELECTED[REGISTER], ReturnInt = True), "", JSONNum)})
+
+                    '''
+                    EXT_SW_GENERAL_STATUS           # External Switch General Status
+                    EXT_SW_MINIC_DIAGRAM            # Ext Switch Mimic Diagram
+
+                    '''
 
             # Generator time
             Time.append({"Monitor Time" : datetime.datetime.now().strftime("%A %B %-d, %Y %H:%M:%S")})

@@ -1085,6 +1085,7 @@ def ReadSettingsFromFile():
         Choices = "120/208,120/240,230/400,240/415,277/480,347/600"
         ConfigSettings["voltageconfiguration"] = ['list', 'Line to Neutral / Line to Line', 107, "277/480", "", Choices, GENMON_CONFIG, GENMON_SECTION, "voltageconfiguration"]
         ConfigSettings["nominalbattery"] = ['list', 'Nomonal Battery Voltage', 108, "24", "", "12,24", GENMON_CONFIG, GENMON_SECTION, "nominalbattery"]
+        ConfigSettings["hts_transfer_switch"] = ['boolean', 'HTS/MTS/STS Transfer Switch', 109, False, "", "", GENMON_CONFIG, GENMON_SECTION, "hts_transfer_switch"]
     else: #ControllerType == "generac_evo_nexus":
         ConfigSettings["enhancedexercise"] = ['boolean', 'Enhanced Exercise Time', 109, False, "", "", GENMON_CONFIG, GENMON_SECTION, "enhancedexercise"]
 
