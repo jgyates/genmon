@@ -1752,7 +1752,7 @@ class HPanel(GeneratorController):
                     Line.append({"Transfer Switch State" : self.GetTransferStatus()})
                 if self.HTSTransferSwitch:
                     Line.append({"Target Utility Voltage" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_TARGET_VOLTAGE[REGISTER], ReturnInt = True), "V", JSONNum)})
-                    Line.append({"Target Utility Frequency" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_TARGET_FREQ[REGISTER], ReturnFloat = True, Divider = 100.0), "Hz", JSONNum)})
+                    Line.append({"Target Utility Frequency" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_TARGET_FREQ[REGISTER], ReturnInt = True), "Hz", JSONNum)})
 
                     Line.append({"Utility Frequency" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_UTILITY_FREQ[REGISTER], ReturnFloat = True, Divider = 100.0), "Hz", JSONNum)})
 
