@@ -268,6 +268,10 @@ class GenExercise(MySupport):
             weekDays = ("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday")
 
             WeekDayString = weekDays[TimeNow.weekday()]
+
+            if not self.ExerciseFrequency.lower() in ["weekly", "biweekly", "monthly"]:
+                self.LogError("Invalid Exercise Frequency in TimeForExercise: " + str(self.ExerciseFrequency))
+                return False
             if self.ExerciseFrequency.lower() == "weekly" and self.ExerciseDayOfWeek.lower() == WeekDayString.lower():
                 return True
             elif self.ExerciseFrequency.lower() == "biweekly"  and self.ExerciseDayOfWeek.lower() == WeekDayString.lower():
@@ -280,7 +284,6 @@ class GenExercise(MySupport):
             elif self.ExerciseFrequency.lower() == "monthly" and TimeNow.day == self.ExerciseDayOfMonth:
                 return True
             else:
-                self.LogError("Invalid Exercise Frequency in TimeForExercise: " + str(self.ExerciseFrequency))
                 return False
         except Exception as e1:
             self.LogErrorLine("Error in TimeForExercise: " + str(e1))

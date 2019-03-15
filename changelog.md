@@ -1,8 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.12.27 - 2019-03-15
+- Corrected problem with genercise.py to reduce unneeded writing to log file.
+
 ## V1.12.26 - 2019-03-12
-- Initial support for HTS, MTS, STS transfer switches for H-Panel and G-Panel controllers 
+- Initial support for HTS, MTS, STS transfer switches for H-Panel and G-Panel controllers
 
 ## V1.12.25 - 2019-03-10
 - Added the ability to use floating point values for run hours in the service journal
