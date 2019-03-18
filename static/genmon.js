@@ -687,7 +687,9 @@ function DisplayMaintenance(){
                outstr += '<br><br>Remote Commands:<br><br>';
                outstr += '&nbsp;&nbsp;&nbsp;&nbsp;<button class="tripleButtonLeft" id="remotestop" onClick="SetClick(\'stop\');">Stop Generator</button>';
                outstr += '<button class="tripleButtonCenter" id="remotestart" onClick="SetClick(\'start\');">Start Generator</button>';
-               outstr += '<button class="tripleButtonRight"  id="remotetransfer" onClick="SetClick(\'starttransfer\');">Start Generator and Transfer</button>';
+               if (myGenerator['RemoteTransfer'] == true) {
+                 outstr += '<button class="tripleButtonRight"  id="remotetransfer" onClick="SetClick(\'starttransfer\');">Start Generator and Transfer</button>';
+               }
 
             }
 

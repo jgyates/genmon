@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.12.28 - 2019-03-18
+- Update for H and G Panel remote start / stop commands
+
 ## V1.12.27 - 2019-03-15
 - Corrected problem with genercise.py to reduce unneeded writing to log file.
 

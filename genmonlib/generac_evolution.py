@@ -3551,6 +3551,7 @@ class Evolution(GeneratorController):
             StartInfo["RemoteCommands"] = not self.SmartSwitch
             StartInfo["ResetAlarms"] = self.EvolutionController and self.LiquidCooled
             StartInfo["AckAlarms"] = False
+            StartInfo["RemoteTransfer"] = self.EvolutionController
             StartInfo["RemoteButtons"] = self.RemoteButtonsSupported()
             StartInfo["ExerciseControls"] = not self.SmartSwitch
 

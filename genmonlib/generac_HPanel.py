@@ -1526,10 +1526,11 @@ class HPanel(GeneratorController):
             StartInfo["FuelConsumption"] = self.FuelConsumptionSupported()
             StartInfo["Controller"] = self.GetController()
             StartInfo["UtilityVoltage"] = False
-            StartInfo["RemoteCommands"] = False
+            StartInfo["RemoteCommands"] = True      # Remote Start/ Stop/ StartTransfer
             StartInfo["ResetAlarms"] = False
             StartInfo["AckAlarms"] = True
-            StartInfo["RemoteButtons"] = False
+            StartInfo["RemoteTransfer"] = self.HTSTransferSwitch    # Remote start and transfer command
+            StartInfo["RemoteButtons"] = False      # Remote controll of Off/Auto/Manual
             StartInfo["ExerciseControls"] = False  # self.SmartSwitch
 
             if not NoTile:
@@ -1944,20 +1945,20 @@ class HPanel(GeneratorController):
             Value = 0x0000               # writing any value to index register is valid for remote start / stop commands
             Data = []
             if Command == "start":
-                Value = 0x0001       # remote start
+                Value = 0x0080       # remote start
                 Value2 = 0x0000
                 Value3 = 0x0000
             elif Command == "stop":
                 Value = 0x0000       # remote stop
                 Value2 = 0x0000
                 Value3 = 0x0000
-            elif Command == "startstandby":
-                Value = 0x0001       # remote start (standby)
+            elif Command == "starttransfer":
+                Value = 0x0080       # remote start (standby)
                 Value2 = 0x0000
-                Value3 = 0x0001
+                Value3 = 0x0080
             elif Command == "startparallel":
-                Value = 0x0001       # remote start (parallel)
-                Value2 = 0x0001
+                Value = 0x0080       # remote start (parallel)
+                Value2 = 0x0080
                 Value3 = 0x0000
             elif Command == "quiettest":
                 Data = []
