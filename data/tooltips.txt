@@ -68,12 +68,13 @@ use_serial_tcp = If enabled, the software will use TCP over serial instead of di
 serial_tcp_address = If Serial over TCP/IP is enabled, this parameter sets the IP address used for the serial server.
 serial_tcp_port = If Serial over TCP/IP is enabled, this parameter sets the IP port used for the serial server.
 hts_transfer_switch=Enable if you have a HTS, MTS or STS transfer switch to enable reading additional data from the transfer switch
-smart_transfer_switch = If enabled a smart transfer switch is utilized and the generator controller will not be responsible for starting and stopping or or weekly exercise functions and these items will be disabled in the web interface. 
+smart_transfer_switch = If enabled a smart transfer switch is utilized and the generator controller will not be responsible for starting and stopping or or weekly exercise functions and these items will be disabled in the web interface.
 serialnumberifmissing= If the serial number is not present due to the controller being replaced you can override the missing serial number and still have the software lookup model information. This is a numeric value that must be ten digits. Pad leading zeros if you serial number is less than 10 digits.
 additionalrunhours= Nexus controllers (not Evolution) do not have the ability to set the run hours. If your controller has been replaced you can use this entry to add hours to the Run Hours reported by the in the UI. Note: If this option is used it will only modify the run hours displayed in the web interface. It will not affect the controllers internal maintenance counters. This value must be a numeric value.
 additional_modbus_timeout=Add this value (in seconds) to the modbus timeout value. Floating point value.
 disablepowerlog=Enable to disable the power log and current reading. Not supported on Nexus.
 subtractfuel=The amount of fuel (gal or L, depending on 'Use Metric' setting) to subtract from the fuel in tank estimate
+user_url=A user defined URL link to include in status emails sent from the software when the generator status changes
 
 [generac_evo_nexus]
 0000=Product line

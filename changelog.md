@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.12.29 - 2019-03-19
+- Add user defined URL to email messages (see advanced page)
+- Modified H-100 email format to include explanation of email
+
 ## V1.12.28 - 2019-03-18
 - Update for H and G Panel remote start / stop commands
 

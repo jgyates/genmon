@@ -92,7 +92,7 @@ class GeneratorController(MySupport):
                 self.bDisplayUnknownSensors = self.config.ReadValue('displayunknown', return_type = bool, default = False)
                 self.bDisablePowerLog = self.config.ReadValue('disablepowerlog', return_type = bool, default = False)
                 self.SubtractFuel = self.config.ReadValue('subtractfuel', return_type = float, default = 0.0)
-
+                self.UserURL = self.config.ReadValue('user_url',  default = "").strip()
 
                 if self.config.HasOption('outagelog'):
                     self.OutageLog = self.config.ReadValue('outagelog')

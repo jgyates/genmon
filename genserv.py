@@ -970,7 +970,7 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["currentoffset"] = ['string', 'Current Offset', 19, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentoffset"]
         ConfigSettings["disableplatformstats"] = ['boolean', 'Disable Platform Stats', 20, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "disableplatformstats"]
         ConfigSettings["https_port"] = ['int', 'Override HTTPS port', 21, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "https_port"]
-
+        ConfigSettings["user_url"] = ['string', 'User URL', 22, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "user_url"]
 
 
         for entry, List in ConfigSettings.items():

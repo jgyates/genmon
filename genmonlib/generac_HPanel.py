@@ -1271,24 +1271,33 @@ class HPanel(GeneratorController):
                 return
             # Check for changes in engine state
             EngineState = self.GetEngineState()
+            msgbody = ""
+
+            if len(self.UserURL):
+                msgbody += "For additional information : " + self.UserURL + "\n"
             if not EngineState == self.LastEngineState:
                 self.LastEngineState = EngineState
                 self.UpdateLog()
                 # This will trigger a call to CheckForalarms with ListOutput = True
                 msgsubject = "Generator Notice: " + self.SiteName
-                msgbody = self.DisplayStatus()
-                self.MessagePipe.SendMessage(msgsubject , msgbody, msgtype = "warn")
+                if not self.SystemInAlarm():
+                    msgbody += "NOTE: This message is a notice that the state of the generator has changed. The system is not in alarm.\n"
+                    MessageType = "info"
+                else:
+                    MessageType = "warn"
+                msgbody += self.DisplayStatus()
+                self.MessagePipe.SendMessage(msgsubject , msgbody, msgtype = MessageType)
 
             # Check for Alarms
             if self.SystemInAlarm():
                 if not self.CurrentAlarmState:
                     msgsubject = "Generator Notice: ALARM Active at " + self.SiteName
-                    msgbody = self.DisplayStatus()
+                    msgbody += self.DisplayStatus()
                     self.MessagePipe.SendMessage(msgsubject , msgbody, msgtype = "warn")
             else:
                 if self.CurrentAlarmState:
                     msgsubject = "Generator Notice: ALARM Clear at " + self.SiteName
-                    msgbody = self.DisplayStatus()
+                    msgbody += self.DisplayStatus()
                     self.MessagePipe.SendMessage(msgsubject , msgbody, msgtype = "warn")
 
             self.CurrentAlarmState = self.SystemInAlarm()

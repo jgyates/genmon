@@ -1722,6 +1722,9 @@ class Evolution(GeneratorController):
             msgsubject = ""
             msgbody = "\n"
 
+            if len(self.UserURL):
+                msgbody += "For additional information : " + self.UserURL + "\n"
+                
             if self.SystemInAlarm():        # Update Alarm Status global flag, returns True if system in alarm
 
                 msgsubject += "Generator Alert at " + self.SiteName + ": "
