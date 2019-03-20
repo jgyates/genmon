@@ -615,7 +615,6 @@ class RegisterStringEnum(object):
         RetList.sort(key=RegisterStringEnum.hexsort)
         return RetList
 
-
 #---------------------Input1::Input1--------------------------------------------
 # Enum for register Input1
 class Input1(object):                   # * Different on G-Panel
@@ -822,11 +821,6 @@ class HPanel(GeneratorController):
         self.LastEngineState = ""
         self.CurrentAlarmState = False
         self.VoltageConfig = None
-        self.NamePlateData = "Unknown"
-        self.FlyWheelTeeth = []
-        self.CTRatio = []
-        self.Phase = None
-        self.TargetRPM = []
         self.AlarmAccessLock = threading.RLock()     # lock to synchronize access to the logs
         self.EventAccessLock = threading.RLock()     # lock to synchronize access to the logs
         self.AlarmLog = []
@@ -1028,24 +1022,6 @@ class HPanel(GeneratorController):
     def CheckModelSpecificInfo(self):
 
         try:
-            # Read the nameplate dataGet Serial Number
-            self.NamePlateData = self.HexStringToString(self.ModBus.ProcessMasterSlaveFileReadTransaction(NAMEPLATE_DATA_FILE_RECORD, NAMEPLATE_DATA_LENGTH / 2 ))
-
-            EngineData = self.ModBus.ProcessMasterSlaveFileReadTransaction(ENGINE_DATA_FILE_RECORD, ENGINE_DATA_LENGTH / 2 )
-            if len(EngineData) >= 34:
-                try:
-                    self.FlyWheelTeeth.append(self.GetIntFromString(EngineData, 0, 2))  # Byte 1 and 2
-                    self.FlyWheelTeeth.append(self.GetIntFromString(EngineData, 2, 2))  # Byte 2 and 3
-                    self.FlyWheelTeeth.append(self.GetIntFromString(EngineData, 4, 2))  # Byte 4 and 5
-                    self.CTRatio.append(self.GetIntFromString(EngineData, 6, 2))        # Byte 6 and 7
-                    self.CTRatio.append(self.GetIntFromString(EngineData, 8, 2))        # Byte 8 and 9
-                    # Skip byte 10 and 11
-                    self.Phase = self.GetIntFromString(EngineData, 12, 1)               # Byte 12
-                    self.TargetRPM.append(self.GetIntFromString(EngineData, 13, 2))     # Byte 13 and 14
-                    self.TargetRPM.append(self.GetIntFromString(EngineData, 15, 2))     # Byte 15 and 16
-                except Exception as e1:
-                    self.LogError("Error parsing engine parameters: " + str(e1))
-
             # TODO this should be determined by reading the hardware if possible.
             if self.NominalFreq == "Unknown" or not len(self.NominalFreq):
                 self.NominalFreq = "60"
@@ -1099,6 +1075,41 @@ class HPanel(GeneratorController):
             return self.HexStringToString(StringValue)
         return self.Strings.get(Register, "")
 
+    #-------------HPanel:GetParameterFileValue----------------------------------
+    def GetParameterFileValue(self, Register, ReturnString = False):
+
+        StringValue = self.FileData.get(Register, "")
+        if ReturnString:
+            return self.HexStringToString(StringValue)
+        return self.FileData.get(Register, "")
+    #-------------HPanel:GetGeneratorFileData-----------------------------------
+    def GetGeneratorFileData(self):
+
+        try:
+            # Read the nameplate dataGet Serial Number
+            self.ModBus.ProcessMasterSlaveFileReadTransaction(NAMEPLATE_DATA_FILE_RECORD, NAMEPLATE_DATA_LENGTH / 2 )
+            # Read Engine data
+            self.ModBus.ProcessMasterSlaveFileReadTransaction(ENGINE_DATA_FILE_RECORD, ENGINE_DATA_LENGTH / 2 )
+
+            self.GetGeneratorLogFileData()
+        except Exception as e1:
+            self.LogErrorLine("Error in GetGeneratorFileData: " + str(e1))
+
+    #------------ HPanel:GetGeneratorLogFileData -------------------------------
+    def GetGeneratorLogFileData(self):
+
+        try:
+            for RegValue in range(EVENT_LOG_START + EVENT_LOG_ENTRIES -1 , EVENT_LOG_START -1, -1):
+                Register = "%04x" % RegValue
+                self.ModBus.ProcessMasterSlaveFileReadTransaction(Register, EVENT_LOG_LENGTH /2)
+
+            for RegValue in range(ALARM_LOG_START + ALARM_LOG_ENTRIES -1, ALARM_LOG_START -1, -1):
+                Register = "%04x" % RegValue
+                self.ModBus.ProcessMasterSlaveFileReadTransaction(Register, ALARM_LOG_LENGTH /2)
+
+        except Exception as e1:
+            self.LogErrorLine("Error in GetGeneratorLogFileData: " + str(e1))
+
     #-------------HPanel:GetGeneratorStrings------------------------------------
     def GetGeneratorStrings(self):
 
@@ -1131,6 +1142,7 @@ class HPanel(GeneratorController):
                     self.LogErrorLine("Error in MasterEmulation: " + str(e1))
 
             self.GetGeneratorStrings()
+            self.GetGeneratorFileData()
             self.CheckForAlarmEvent.set()
         except Exception as e1:
             self.LogErrorLine("Error in MasterEmulation: " + str(e1))
@@ -1226,43 +1238,6 @@ class HPanel(GeneratorController):
             self.LogErrorLine("Error in ParseLogEntry: " + str(e1))
             return ""
 
-    #------------ HPanel:UpdateLog ---------------------------------------------
-    def UpdateLog(self):
-
-        try:
-            LocalEvent = []
-            for RegValue in range(EVENT_LOG_START + EVENT_LOG_ENTRIES -1 , EVENT_LOG_START -1, -1):
-                Register = "%04x" % RegValue
-                #self.LogError("Reg:<" + Register + ">")
-                LogEntry = self.HexStringToString(self.ModBus.ProcessMasterSlaveFileReadTransaction(Register, EVENT_LOG_LENGTH /2))
-                #self.LogError("R:<" + LogEntry + ">")
-                LogEntry = self.ParseLogEntry(LogEntry, Type = "event")
-                #self.LogError("P:<" + LogEntry + ">")
-                if not len(LogEntry):
-                    continue
-                if "undefined" in LogEntry:
-                    continue
-
-                LocalEvent.append(LogEntry)
-
-            with self.EventAccessLock:
-                self.EventLog = LocalEvent[::-1]
-
-            LocalAlarm = []
-            for RegValue in range(ALARM_LOG_START + ALARM_LOG_ENTRIES -1, ALARM_LOG_START -1, -1):
-                Register = "%04x" % RegValue
-                LogEntry = self.HexStringToString(self.ModBus.ProcessMasterSlaveFileReadTransaction(Register, ALARM_LOG_LENGTH /2))
-                LogEntry = self.ParseLogEntry(LogEntry, Type = "alarm")
-                if not len(LogEntry):
-                    continue
-
-                LocalAlarm.append(LogEntry)
-
-            with self.AlarmAccessLock:
-                self.AlarmLog = LocalAlarm[::-1]
-
-        except Exception as e1:
-            self.LogErrorLine("Error in UpdateLog: " + str(e1))
     #------------ HPanel:CheckForAlarms ----------------------------------------
     def CheckForAlarms(self):
 
@@ -1277,8 +1252,6 @@ class HPanel(GeneratorController):
                 msgbody += "For additional information : " + self.UserURL + "\n"
             if not EngineState == self.LastEngineState:
                 self.LastEngineState = EngineState
-                self.UpdateLog()
-                # This will trigger a call to CheckForalarms with ListOutput = True
                 msgsubject = "Generator Notice: " + self.SiteName
                 if not self.SystemInAlarm():
                     msgbody += "NOTE: This message is a notice that the state of the generator has changed. The system is not in alarm.\n"
@@ -1614,14 +1587,30 @@ class HPanel(GeneratorController):
             #
             #       Dict[Logs] = [ {"Alarm Log" : [Log Entry1, LogEntry2, ...]},
             #                      {"Run Log" : [Log Entry3, Log Entry 4, ...]}...]
+            LocalEvent = []
+            for RegValue in range(EVENT_LOG_START + EVENT_LOG_ENTRIES -1 , EVENT_LOG_START -1, -1):
+                Register = "%04x" % RegValue
+                LogEntry = self.GetParameterFileValue(Register, ReturnString = True)
+                LogEntry = self.ParseLogEntry(LogEntry, Type = "event")
+                if not len(LogEntry):
+                    continue
+                if "undefined" in LogEntry:
+                    continue
 
-            with self.EventAccessLock:
-                LocalEventLog = self.EventLog
+                LocalEvent.append(LogEntry)
 
-            with self.AlarmAccessLock:
-                LocalAlarmLog = self.AlarmLog
-            LogList = [ {"Alarm Log": LocalAlarmLog},
-                        {"Run Log": LocalEventLog}]
+            LocalAlarm = []
+            for RegValue in range(ALARM_LOG_START + ALARM_LOG_ENTRIES -1, ALARM_LOG_START -1, -1):
+                Register = "%04x" % RegValue
+                LogEntry = self.GetParameterFileValue(Register, ReturnString = True)
+                LogEntry = self.ParseLogEntry(LogEntry, Type = "alarm")
+                if not len(LogEntry):
+                    continue
+
+                LocalAlarm.append(LogEntry)
+
+            LogList = [ {"Alarm Log": LocalAlarm},
+                        {"Run Log": LocalEvent}]
 
             RetValue["Logs"] = LogList
 
@@ -1644,8 +1633,9 @@ class HPanel(GeneratorController):
             Maintenance["Maintenance"] = []
 
             Maintenance["Maintenance"].append({"Model" : self.Model})
-            if len(self.NamePlateData):
-                Maintenance["Maintenance"].append({"Name Plate Info" : self.NamePlateData})
+            NamePlateData = self.GetParameterFileValue(NAMEPLATE_DATA_FILE_RECORD, ReturnString = True)
+            if len(NamePlateData):
+                Maintenance["Maintenance"].append({"Name Plate Info" : NamePlateData})
             Maintenance["Maintenance"].append({"Controller" : self.GetController()})
             Maintenance["Maintenance"].append({"Controller Software Version" : self.GetParameterStringValue(RegisterStringEnum.VERSION_DATE[REGISTER], RegisterStringEnum.VERSION_DATE[RET_STRING])})
 
@@ -1667,11 +1657,12 @@ class HPanel(GeneratorController):
 
             ControllerSettings.append({"Controller Power Up Time" : self.GetTimeFromString(self.GetParameterStringValue(RegisterStringEnum.POWER_UP_TIME[REGISTER], RegisterStringEnum.POWER_UP_TIME[RET_STRING]))})
             ControllerSettings.append({"Controller Last Power Fail" : self.GetTimeFromString(self.GetParameterStringValue(RegisterStringEnum.LAST_POWER_FAIL[REGISTER], RegisterStringEnum.LAST_POWER_FAIL[RET_STRING]))})
-            ControllerSettings.append({"Target RPM" : str(self.TargetRPM[0]) if len(self.TargetRPM) else "Unknown"})
-            ControllerSettings.append({"Number of Flywheel Teeth" : str(self.FlyWheelTeeth[0]) if len(self.FlyWheelTeeth) else "Unknown"})
-            ControllerSettings.append({"Phase" : str(self.Phase) if self.Phase != None else "Unknown"})
-            ControllerSettings.append({"CT Ratio" : str(self.CTRatio[0]) if len(self.CTRatio) else "Unknown"})
 
+            FlyWheelTeeth, CTRatio, Phase, TargetRPM = self.GetEngineData()
+            ControllerSettings.append({"Target RPM" : str(TargetRPM[0]) if len(TargetRPM) else "Unknown"})
+            ControllerSettings.append({"Number of Flywheel Teeth" : str(FlyWheelTeeth[0]) if len(FlyWheelTeeth) else "Unknown"})
+            ControllerSettings.append({"Phase" : str(Phase) if Phase != None else "Unknown"})
+            ControllerSettings.append({"CT Ratio" : str(CTRatio[0]) if len(CTRatio) else "Unknown"})
 
             Service = []
             Maintenance["Maintenance"].append({"Service" : Service})
@@ -1805,6 +1796,28 @@ class HPanel(GeneratorController):
 
         return Status
 
+    #------------ GeneratorController:GetEngineData ----------------------------
+    def GetEngineData(self):
+
+        FlyWheelTeeth = []
+        CTRatio = []
+        Phase = None
+        TargetRPM = []
+        EngineData = self.GetParameterFileValue(ENGINE_DATA_FILE_RECORD)
+        if len(EngineData) >= 34:
+            try:
+                FlyWheelTeeth.append(self.GetIntFromString(EngineData, 0, 2))  # Byte 1 and 2
+                FlyWheelTeeth.append(self.GetIntFromString(EngineData, 2, 2))  # Byte 2 and 3
+                FlyWheelTeeth.append(self.GetIntFromString(EngineData, 4, 2))  # Byte 4 and 5
+                CTRatio.append(self.GetIntFromString(EngineData, 6, 2))        # Byte 6 and 7
+                CTRatio.append(self.GetIntFromString(EngineData, 8, 2))        # Byte 8 and 9
+                # Skip byte 10 and 11
+                Phase = self.GetIntFromString(EngineData, 12, 1)               # Byte 12
+                TargetRPM.append(self.GetIntFromString(EngineData, 13, 2))     # Byte 13 and 14
+                TargetRPM.append(self.GetIntFromString(EngineData, 15, 2))     # Byte 15 and 16
+            except Exception as e1:
+                self.LogError("Error parsing engine parameters: " + str(e1))
+        return FlyWheelTeeth, CTRatio, Phase, TargetRPM
     #------------ GeneratorController:GetRunHours ------------------------------
     def GetRunHours(self):
         return self.GetParameter(self.Reg.ENGINE_HOURS[REGISTER],"", 10.0 )
