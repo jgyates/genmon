@@ -31,8 +31,16 @@ EVENT_LOG_ENTRIES               = 20
 EVENT_LOG_LENGTH                = 64
 NAMEPLATE_DATA_FILE_RECORD      = "0040"      # 0x40
 NAMEPLATE_DATA_LENGTH           = 64        # Note: This is 1024 but I only read 64 due to performance
-ENGINE_DATA_FILE_RECORD         = "002a"
-ENGINE_DATA_LENGTH  = 18
+MISC_GEN_FILE_RECORD            = "002a"
+MISC_GEN_LENGTH                 = 18
+ENGINE_DATA_FILE_RECORD         = "0050"
+ENGINE_DATA_FILE_RECORD_LENGTH  = 48
+GOV_DATA_FILE_RECORD            = "00d3"
+GOV_DATA_SEC_FILE_RECORD_LENGTH = 60        # Extra byte, actual data is 59
+GOV_DATA_SEC_FILE_RECORD        = "00d4"
+GOV_DATA_SEC_FILE_RECORD_LENGTH = 60        # Extra byte, actual data is 59
+REGULATOR_FILE_RECORD           = "00d5"
+REGULATOR_FILE_RECORD_LENGTH    = 44
 
 #---------------------HPanelReg::HPanelReg--------------------------------------
 class HPanelReg(object):
@@ -823,8 +831,6 @@ class HPanel(GeneratorController):
         self.VoltageConfig = None
         self.AlarmAccessLock = threading.RLock()     # lock to synchronize access to the logs
         self.EventAccessLock = threading.RLock()     # lock to synchronize access to the logs
-        self.AlarmLog = []
-        self.EventLog = []
         self.ControllerDetected = False
         self.HPanelDetected = True          # False if G-Panel
         self.Reg = HPanelReg()
@@ -1082,14 +1088,23 @@ class HPanel(GeneratorController):
         if ReturnString:
             return self.HexStringToString(StringValue)
         return self.FileData.get(Register, "")
+
     #-------------HPanel:GetGeneratorFileData-----------------------------------
     def GetGeneratorFileData(self):
 
         try:
             # Read the nameplate dataGet Serial Number
             self.ModBus.ProcessMasterSlaveFileReadTransaction(NAMEPLATE_DATA_FILE_RECORD, NAMEPLATE_DATA_LENGTH / 2 )
-            # Read Engine data
-            self.ModBus.ProcessMasterSlaveFileReadTransaction(ENGINE_DATA_FILE_RECORD, ENGINE_DATA_LENGTH / 2 )
+            # Read Misc Engine data
+            self.ModBus.ProcessMasterSlaveFileReadTransaction(MISC_GEN_FILE_RECORD, MISC_GEN_LENGTH / 2 )
+            # Read Engine Data
+            self.ModBus.ProcessMasterSlaveFileReadTransaction(ENGINE_DATA_FILE_RECORD, ENGINE_DATA_FILE_RECORD_LENGTH / 2 )
+            # Read Govonor Data
+            self.ModBus.ProcessMasterSlaveFileReadTransaction(GOV_DATA_FILE_RECORD, GOV_DATA_SEC_FILE_RECORD_LENGTH / 2 )
+            # Read Secondary Govonor Data
+            self.ModBus.ProcessMasterSlaveFileReadTransaction(GOV_DATA_SEC_FILE_RECORD, GOV_DATA_SEC_FILE_RECORD_LENGTH / 2 )
+            # Read Regulator Data
+            self.ModBus.ProcessMasterSlaveFileReadTransaction(REGULATOR_FILE_RECORD, REGULATOR_FILE_RECORD_LENGTH / 2 )
 
             self.GetGeneratorLogFileData()
         except Exception as e1:
@@ -1288,7 +1303,15 @@ class HPanel(GeneratorController):
 
             if Register == NAMEPLATE_DATA_FILE_RECORD:
                 return True
+            if Register == MISC_GEN_FILE_RECORD:
+                return True
             if Register == ENGINE_DATA_FILE_RECORD:
+                return True
+            if Register == GOV_DATA_FILE_RECORD:
+                return True
+            if Register == GOV_DATA_SEC_FILE_RECORD:
+                return True
+            if Register == REGULATOR_FILE_RECORD:
                 return True
             if RegInt >= ALARM_LOG_START or RegInt <= ALARM_LOG_START + ALARM_LOG_ENTRIES:
                 return True
@@ -1803,7 +1826,7 @@ class HPanel(GeneratorController):
         CTRatio = []
         Phase = None
         TargetRPM = []
-        EngineData = self.GetParameterFileValue(ENGINE_DATA_FILE_RECORD)
+        EngineData = self.GetParameterFileValue(MISC_GEN_FILE_RECORD)
         if len(EngineData) >= 34:
             try:
                 FlyWheelTeeth.append(self.GetIntFromString(EngineData, 0, 2))  # Byte 1 and 2

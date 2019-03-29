@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.12.31 - 2019-03-29
+- Added more register reads in H and G Panel controller (need register submissions to complete adding more data to UI)
+- Corrected bug in /OtherApps/modbusdump.py
+- Update for 2008 model Pre-Nexus controllers (i.e. made in 2008 and do not have Nexus printed on them). Previously these controllers were not supported. See https://github.com/jgyates/genmon/wiki/Appendix-4-Known-Issues item 6 for more details.
+
 ## V1.12.30 - 2019-03-20
 - H and G Panel update to address log responsiveness
 

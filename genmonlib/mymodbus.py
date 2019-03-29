@@ -151,6 +151,17 @@ class ModbusProtocol(ModbusBase):
             self.LogErrorLine("Error in GetExceptionString: " + str(e1))
 
         return ""
+    # ---------- ModbusProtocol::CheckResponseAddress---------------------------
+    def CheckResponseAddress(self, Address):
+
+        if Address == self.Address:
+            return True
+        if self.ResponseAddress == None:
+            return False
+        if Address == self.ResponseAddress:
+            return True
+        return False
+
     # ---------- ModbusProtocol::GetPacketFromSlave-----------------------------
     #  This function returns two values, the first is boolean. The seconds is
     #  a packet (list). If the return value is True and an empty packet, then
@@ -165,7 +176,7 @@ class ModbusProtocol(ModbusBase):
             if not len(self.Slave.Buffer):
                 return True, EmptyPacket
 
-            if self.Slave.Buffer[MBUS_OFF_ADDRESS] != self.Address:
+            if not self.CheckResponseAddress(self.Slave.Buffer[MBUS_OFF_ADDRESS]):
                 self.DiscardByte()
                 self.Flush()
                 return False, EmptyPacket
@@ -492,7 +503,7 @@ class ModbusProtocol(ModbusBase):
             if MasterPacket[MBUS_OFF_ADDRESS] != self.Address:
                 self.LogError("Validation Error: Invalid address in UpdateRegistersFromPacket (Master)")
                 return "Error"
-            if SlavePacket[MBUS_OFF_ADDRESS] != self.Address:
+            if not self.CheckResponseAddress(SlavePacket[MBUS_OFF_ADDRESS]):
                 self.LogError("Validation Error: Invalid address in UpdateRegistersFromPacket (Slave)")
                 return "Error"
             if not SlavePacket[MBUS_OFF_COMMAND] in [MBUS_CMD_READ_REGS, MBUS_CMD_WRITE_REGS, MBUS_CMD_READ_FILE]:

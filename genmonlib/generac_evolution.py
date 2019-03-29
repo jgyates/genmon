@@ -65,6 +65,7 @@ class Evolution(GeneratorController):
         self.SynergyController = False
         self.Evolution2 = False
         self.PowerPact = False
+        self.PreNexus  = False
         self.LiquidCooled = None
         self.LiquidCooledParams = None
         # State Info
@@ -815,8 +816,10 @@ class Evolution(GeneratorController):
             if ProductModel == 0x12:
                 self.PowerPact = True
 
+            if ProductModel == 0x02:
+                self.PreNexus = True
             # if reg 000 is 3 or less then assume we have a Nexus Controller
-            if ProductModel == 0x03 or ProductModel == 0x06:
+            if ProductModel == 0x03 or ProductModel == 0x06 or ProductModel == 0x02:
                 self.EvolutionController = False    #"Nexus"
             elif ProductModel == 0x09 or ProductModel == 0x0c or ProductModel == 0x0a  or ProductModel == 0x15 or ProductModel == 0x12:
                 self.EvolutionController = True     #"Evolution"
@@ -833,7 +836,7 @@ class Evolution(GeneratorController):
             self.LogError("DetectController auto-detect override (controller). EvolutionController now is %s" % str(self.EvolutionController))
 
         if self.LiquidCooled == None:
-            if ProductModel == 0x03 or ProductModel == 0x09 or ProductModel == 0x0a  or ProductModel == 0x15  or ProductModel == 0x12:
+            if ProductModel == 0x03 or ProductModel == 0x09 or ProductModel == 0x0a  or ProductModel == 0x15  or ProductModel == 0x12 or ProductModel == 0x02:
                 self.LiquidCooled = False    # Air Cooled
             elif ProductModel == 0x06 or ProductModel == 0x0c:
                 self.LiquidCooled = True     # Liquid Cooled
@@ -861,6 +864,7 @@ class Evolution(GeneratorController):
         if Actual:
 
             ControllerDecoder = {
+                0x02 :  "Pre-Nexus, Air Cooled",
                 0x03 :  "Nexus, Air Cooled",
                 0x06 :  "Nexus, Liquid Cooled",
                 0x09 :  "Evolution, Air Cooled",
@@ -888,7 +892,10 @@ class Evolution(GeneratorController):
                 else:
                     outstr = "Evolution, "
             else:
-                outstr = "Nexus, "
+                if self.PreNexus:
+                    outstr = "Pre-Nexus, "
+                else:
+                    outstr = "Nexus, "
             if self.LiquidCooled:
                 outstr += "Liquid Cooled"
             else:
@@ -1724,7 +1731,7 @@ class Evolution(GeneratorController):
 
             if len(self.UserURL):
                 msgbody += "For additional information : " + self.UserURL + "\n"
-                
+
             if self.SystemInAlarm():        # Update Alarm Status global flag, returns True if system in alarm
 
                 msgsubject += "Generator Alert at " + self.SiteName + ": "
@@ -1805,7 +1812,9 @@ class Evolution(GeneratorController):
                 ControllerSettings.append({"Calibrate Current 1" : self.GetParameter("05f6")})
                 ControllerSettings.append({"Calibrate Current 2" : self.GetParameter("05f7")})
 
-            ControllerSettings.append({"Calibrate Volts" : self.GetParameter("0208")})
+            if not self.PreNexus:
+                ControllerSettings.append({"Calibrate Volts" : self.GetParameter("0208")})
+                
             if self.LiquidCooled:
 
                 ControllerSettings.append({"Param Group" : self.GetParameter("020a")})
@@ -2034,7 +2043,65 @@ class Evolution(GeneratorController):
 
         return RetValue
 
+    #----------  Evolution:ParsePreNexusLog-------------------------------------
+    # This function will parse log entries for Pre-Nexus models
+    # #     AABBCCDDEEFFGGHH
+    #       AA = log entry number
+    #       BB = Log Code - Unique Value for displayable string
+    #       CC = Hour
+    #       DD = minutes
+    #       EE = seconds
+    #       FF = Month
+    #       GG = Date
+    #       HH = year
+    #---------------------------------------------------------------------------
+    def ParsePreNexusLog(self, Value, LogBase = None):
 
+        # Nexus    14071b12090e1212
+        # PreNexus be040f2d0b031d13 = "03/29/19 15:45:11 RPM Sense Loss"
+
+        if len(Value) < 16:
+            self.LogError("Error in  ParsePreNexusLog length check (16)")
+            return None,None,None,None,None,None,None
+
+        TempVal = Value[10:12]
+        Month = int(TempVal, 16)
+        if Month == 0 or Month > 12:    # validate month
+            # This is the normal return path for an empty log entry
+            return None,None,None,None,None,None,None
+
+        TempVal = Value[6:8]
+        Min = int(TempVal, 16)
+        if Min >59:                     # validate minute
+            self.LogError("Error in  ParsePreNexusLog minutes check")
+            return None,None,None,None,None,None,None
+
+        TempVal = Value[4:6]
+        Hour = int(TempVal, 16)
+        if Hour > 23:                   # validate hour
+            self.LogError("Error in  ParsePreNexusLog hours check")
+            return None,None,None,None,None,None,None
+
+        # Seconds
+        TempVal = Value[8:10]
+        Seconds = int(TempVal, 16)
+        if Seconds > 59:
+            self.LogError("Error in  ParsePreNexusLog seconds check")
+            return None,None,None,None,None,None,None
+
+        TempVal = Value[12:14]
+        Day = int(TempVal, 16)
+        if Day == 0 or Day > 31:        # validate day
+            self.LogError("Error in  ParsePreNexusLog day check")
+            return None,None,None,None,None,None,None
+
+        TempVal = Value[14:16]
+        Year = int(TempVal, 16)         # year
+
+        TempVal = Value[2:4]            # this value represents a unique display string
+        LogCode = int(TempVal, 16)
+
+        return Month,Day,Year,Hour,Min, Seconds, LogCode
     #----------  Evolution:ParseLogEntry----------------------------------------
     #  Log Entries are in one of two formats, 16 (On off Log, Service Log) or
     #   20 chars (Alarm Log)
@@ -2193,46 +2260,52 @@ class Evolution(GeneratorController):
             self.LogError("Error in  ParseLogEntry length check (16)")
             return ""
 
-        if len(Value) > 20:
-            self.LogError("Error in  ParseLogEntry length check (20)")
-            return ""
+        if self.PreNexus:
+            Month,Day,Year,Hour,Min, Seconds, LogCode = self.ParsePreNexusLog( Value, LogBase = LogBase)
+            if Month == None:
+                self.LogError("Error in ParsePreNexusLog length check")
+                return ""
+        else:
+            if len(Value) > 20:
+                self.LogError("Error in  ParseLogEntry length check (20)")
+                return ""
 
-        TempVal = Value[8:10]
-        Month = int(TempVal, 16)
-        if Month == 0 or Month > 12:    # validate month
-            # This is the normal return path for an empty log entry
-            return ""
+            TempVal = Value[8:10]
+            Month = int(TempVal, 16)
+            if Month == 0 or Month > 12:    # validate month
+                # This is the normal return path for an empty log entry
+                return ""
 
-        TempVal = Value[4:6]
-        Min = int(TempVal, 16)
-        if Min >59:                     # validate minute
-            self.LogError("Error in  ParseLogEntry minutes check")
-            return ""
+            TempVal = Value[4:6]
+            Min = int(TempVal, 16)
+            if Min >59:                     # validate minute
+                self.LogError("Error in  ParseLogEntry minutes check")
+                return ""
 
-        TempVal = Value[6:8]
-        Hour = int(TempVal, 16)
-        if Hour > 23:                   # validate hour
-            self.LogError("Error in  ParseLogEntry hours check")
-            return ""
+            TempVal = Value[6:8]
+            Hour = int(TempVal, 16)
+            if Hour > 23:                   # validate hour
+                self.LogError("Error in  ParseLogEntry hours check")
+                return ""
 
-        # Seconds
-        TempVal = Value[10:12]
-        Seconds = int(TempVal, 16)
-        if Seconds > 59:
-            self.LogError("Error in  ParseLogEntry seconds check")
-            return ""
+            # Seconds
+            TempVal = Value[10:12]
+            Seconds = int(TempVal, 16)
+            if Seconds > 59:
+                self.LogError("Error in  ParseLogEntry seconds check")
+                return ""
 
-        TempVal = Value[14:16]
-        Day = int(TempVal, 16)
-        if Day == 0 or Day > 31:        # validate day
-            self.LogError("Error in  ParseLogEntry day check")
-            return ""
+            TempVal = Value[14:16]
+            Day = int(TempVal, 16)
+            if Day == 0 or Day > 31:        # validate day
+                self.LogError("Error in  ParseLogEntry day check")
+                return ""
 
-        TempVal = Value[12:14]
-        Year = int(TempVal, 16)         # year
+            TempVal = Value[12:14]
+            Year = int(TempVal, 16)         # year
 
-        TempVal = Value[0:2]            # this value represents a unique display string
-        LogCode = int(TempVal, 16)
+            TempVal = Value[0:2]            # this value represents a unique display string
+            LogCode = int(TempVal, 16)
 
         DecoderLookup = {}
 
@@ -2328,6 +2401,9 @@ class Evolution(GeneratorController):
         # Hex Register Values:  30 30 30 37 37 32 32 39 38 37 -> High part of each byte = 3, low part is SN
         #                       decode as s/n 0007722987
         # at present I am guessing that the 3 that is interleaved in this data is the line of gensets (air cooled may be 03?)
+
+        if self.PreNexus:
+            return "Unknown"
         RegStr = "%04x" % MODEL_REG
         Value = self.GetRegisterValueFromList(RegStr)       # Serial Number Register
         if len(Value) != 20:

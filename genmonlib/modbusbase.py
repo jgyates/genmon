@@ -44,6 +44,8 @@ class ModbusBase(MySupport ):
         self.UnexpectedData = 0
         self.SlowCPUOptimization = False
         self.UseTCP = False
+        self.AdditionalModbusTimeout = 0
+        self.ResponseAddress = None         # Used if recieve packes have a different address than sent packets
 
         if self.config != None:
             self.loglocation = self.config.ReadValue('loglocation', default = '/var/log/')
@@ -51,6 +53,12 @@ class ModbusBase(MySupport ):
             self.UseTCP = self.config.ReadValue('use_serial_tcp', return_type = bool, default = False)
             self.Address = int(self.config.ReadValue('address', default = '9d'),16)         # modbus address
             self.AdditionalModbusTimeout = self.config.ReadValue('additional_modbus_timeout', return_type = float, default = 0.0)
+            ResponseAddressStr = self.config.ReadValue('response_address', default = None)
+            if ResponseAddressStr != None:
+                try:
+                    self.ResponseAddress = int(ResponseAddressStr,16)         # response modbus address
+                except:
+                    self.ResponseAddress = None
         else:
             self.loglocation = default = './'
 

@@ -104,7 +104,8 @@ if __name__=='__main__': #
 
     modbus = None
     try:
-        modbus = ModbusProtocol(RegisterResults, modbusaddress, device, baudrate, Parity = parity, OnePointFiveStopBits = OnePointFiveStopBits)
+        modbus = ModbusProtocol(updatecallback = RegisterResults, address = modbusaddress, name = device,
+            rate = baudrate, Parity = parity, OnePointFiveStopBits = OnePointFiveStopBits)
         pass
     except Exception as e1:
         print( "Error opening serial device...: " + str(e1))
