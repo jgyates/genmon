@@ -36,11 +36,11 @@ MISC_GEN_LENGTH                 = 18
 ENGINE_DATA_FILE_RECORD         = "0050"
 ENGINE_DATA_FILE_RECORD_LENGTH  = 48
 GOV_DATA_FILE_RECORD            = "00d3"
-GOV_DATA_SEC_FILE_RECORD_LENGTH = 60        # Extra byte, actual data is 59
+GOV_DATA_FILE_RECORD_LENGTH     = 60        # Extra byte, actual data is 59
 GOV_DATA_SEC_FILE_RECORD        = "00d4"
 GOV_DATA_SEC_FILE_RECORD_LENGTH = 60        # Extra byte, actual data is 59
 REGULATOR_FILE_RECORD           = "00d5"
-REGULATOR_FILE_RECORD_LENGTH    = 44
+REGULATOR_FILE_RECORD_LENGTH    = 46
 
 #---------------------HPanelReg::HPanelReg--------------------------------------
 class HPanelReg(object):
@@ -1067,9 +1067,14 @@ class HPanel(GeneratorController):
                 return 0
             StringOffset = byte_offset * 2
             StringOffsetEnd = StringOffset + (length *2)
-            if decimal:
-                return int(input_string[StringOffset:StringOffsetEnd])
-            return int(input_string[StringOffset:StringOffsetEnd], 16)
+            if StringOffset == StringOffsetEnd:
+                if decimal:
+                    return int(input_string[StringOffsetd])
+                return int(input_string[StringOffset], 16)
+            else:
+                if decimal:
+                    return int(input_string[StringOffset:StringOffsetEnd])
+                return int(input_string[StringOffset:StringOffsetEnd], 16)
         except Exception as e1:
             self.LogErrorLine("Error in GetIntFromString: " + str(e1))
             return 0
@@ -1100,7 +1105,7 @@ class HPanel(GeneratorController):
             # Read Engine Data
             self.ModBus.ProcessMasterSlaveFileReadTransaction(ENGINE_DATA_FILE_RECORD, ENGINE_DATA_FILE_RECORD_LENGTH / 2 )
             # Read Govonor Data
-            self.ModBus.ProcessMasterSlaveFileReadTransaction(GOV_DATA_FILE_RECORD, GOV_DATA_SEC_FILE_RECORD_LENGTH / 2 )
+            self.ModBus.ProcessMasterSlaveFileReadTransaction(GOV_DATA_FILE_RECORD, GOV_DATA_FILE_RECORD_LENGTH / 2 )
             # Read Secondary Govonor Data
             self.ModBus.ProcessMasterSlaveFileReadTransaction(GOV_DATA_SEC_FILE_RECORD, GOV_DATA_SEC_FILE_RECORD_LENGTH / 2 )
             # Read Regulator Data
@@ -1675,17 +1680,14 @@ class HPanel(GeneratorController):
                 #Exercise["Exercise Time" : self.GetExerciseTime()
                 #Exercise["Exercise Duration" : self.GetExerciseDuration()
 
-            ControllerSettings = []
-            Maintenance["Maintenance"].append({"Controller Configuration" : ControllerSettings})
 
-            ControllerSettings.append({"Controller Power Up Time" : self.GetTimeFromString(self.GetParameterStringValue(RegisterStringEnum.POWER_UP_TIME[REGISTER], RegisterStringEnum.POWER_UP_TIME[RET_STRING]))})
-            ControllerSettings.append({"Controller Last Power Fail" : self.GetTimeFromString(self.GetParameterStringValue(RegisterStringEnum.LAST_POWER_FAIL[REGISTER], RegisterStringEnum.LAST_POWER_FAIL[RET_STRING]))})
+            Maintenance["Maintenance"].append({"Controller Power Up Time" : self.GetTimeFromString(self.GetParameterStringValue(RegisterStringEnum.POWER_UP_TIME[REGISTER], RegisterStringEnum.POWER_UP_TIME[RET_STRING]))})
+            Maintenance["Maintenance"].append({"Controller Last Power Fail" : self.GetTimeFromString(self.GetParameterStringValue(RegisterStringEnum.LAST_POWER_FAIL[REGISTER], RegisterStringEnum.LAST_POWER_FAIL[RET_STRING]))})
 
-            FlyWheelTeeth, CTRatio, Phase, TargetRPM = self.GetEngineData()
-            ControllerSettings.append({"Target RPM" : str(TargetRPM[0]) if len(TargetRPM) else "Unknown"})
-            ControllerSettings.append({"Number of Flywheel Teeth" : str(FlyWheelTeeth[0]) if len(FlyWheelTeeth) else "Unknown"})
-            ControllerSettings.append({"Phase" : str(Phase) if Phase != None else "Unknown"})
-            ControllerSettings.append({"CT Ratio" : str(CTRatio[0]) if len(CTRatio) else "Unknown"})
+            Maintenance["Maintenance"].append({"Generator Settings" : self.GetGeneratorSettings()})
+            Maintenance["Maintenance"].append({"Engine Settings" : self.GetEngineSettings()})
+            Maintenance["Maintenance"].append({"Governor Settings" : self.GetGovernorSettings()})
+            Maintenance["Maintenance"].append({"Regulator Settings" : self.GetRegulatorSettings()})
 
             Service = []
             Maintenance["Maintenance"].append({"Service" : Service})
@@ -1819,28 +1821,113 @@ class HPanel(GeneratorController):
 
         return Status
 
-    #------------ GeneratorController:GetEngineData ----------------------------
-    def GetEngineData(self):
+    #------------ GeneratorController:GetRegulatorSettings ---------------------
+    def GetRegulatorSettings(self):
 
+        RegSettings = []
+        RegData = self.GetParameterFileValue(REGULATOR_FILE_RECORD)
+        if len(RegData) >= (REGULATOR_FILE_RECORD_LENGTH * 2):
+            try:
+                RegSettings.append({"Voltage KP" : str(self.GetIntFromString(RegData, 0, 2)) + " V"})           # Byte 0 and 1
+                RegSettings.append({"Voltage KI" : str(self.GetIntFromString(RegData, 2, 2)) + " V"})           # Byte 2 and 3
+                RegSettings.append({"Voltage KD" : str(self.GetIntFromString(RegData, 4, 2)) + " V"})           # Byte 4 and 5
+                RegSettings.append({"Volts Per Hz" : str(self.GetIntFromString(RegData, 14, 2))})               # Byte 14 and 15
+                RegSettings.append({"High Voltage Limit" : str(self.GetIntFromString(RegData, 18, 2)) + " V"})  # Byte 18 and 19
+                RegSettings.append({"Low Voltage Limit" : str(self.GetIntFromString(RegData, 20, 2)) + " V"})   # Byte 20 and 21
+                RegSettings.append({"Target Volts" : str(self.GetIntFromString(RegData, 6, 2)) + " V"})         # Byte 6 and 7
+                RegSettings.append({"VF Corner 1" : str(self.GetIntFromString(RegData, 10, 2)) + " Hz"})        # Byte 10 and 11
+                RegSettings.append({"VF Corner 2" : str(self.GetIntFromString(RegData, 12, 2)) + " Hz"})        # Byte 12 and 13
+                RegSettings.append({"Rated Power" : str(self.GetIntFromString(RegData, 26, 2))})                # Byte 26 and 27
+                PowerFactor = self.GetIntFromString(RegData, 24, 2)         # Byte 24 and 25
+                RegSettings.append({"Power Factor" : "%.2f" % (PowerFactor / 100)})
+                RegSettings.append({"kW Demand" : str(self.GetIntFromString(RegData, 22, 2)) + " kW"})          # Byte 22 and 23
+                RegSettings.append({"Panel Type" : str(self.GetIntFromString(RegData, 28, 2))})                 # Byte 28 and 29
+                #RegSettings.append({"Exciter Frequency Ratio" : str(self.GetIntFromString(RegData, 44, 1))})   # Byte 44
+
+            except Exception as e1:
+                self.LogErrorLine("Error parsing regulator settings: " + str(e1))
+        return RegSettings
+
+    #------------ GeneratorController:GetGovernorSettings ----------------------
+    def GetGovernorSettings(self):
+
+        GovSettings = []
+        GovData = self.GetParameterFileValue(GOV_DATA_FILE_RECORD)
+        if len(GovData) >= (GOV_DATA_FILE_RECORD_LENGTH * 2):
+            try:
+                #GovSettings.append({"Standby KP" : str(self.GetIntFromString(GovData, 0, 2))})                        # Byte 0 and 1
+                #GovSettings.append({"Standby KI" : str(self.GetIntFromString(GovData, 2, 2))})                        # Byte 2 and 3
+                #GovSettings.append({"Standby KD" : str(self.GetIntFromString(GovData, 4, 2))})                        # Byte 4 and 5
+                #GovSettings.append({"Actuator Start Position" : str(self.GetIntFromString(GovData, 20, 2))})          # Byte 20 and 21
+                #GovSettings.append({"Offset" : str(self.GetIntFromString(GovData, 22, 2))})                           # Byte 22 and 23
+                #GovSettings.append({"Full Scale" : str(self.GetIntFromString(GovData, 24, 2))})                       # Byte 24 and 25
+                GovSettings.append({"Soft Start Frequency" : str(self.GetIntFromString(GovData, 26, 2)) + " Hz"})     # Byte 26 and 26
+                #GovSettings.append({"Engine Linearization" : str(self.GetIntFromString(GovData, 28, 2))})             # Byte 28 and 29
+
+                #GovSettings.append({"Use Diesel Algorithms" : "Yes" if self.GetIntFromString(GovData, 12, 2) else "No"})   # Byte 12 - 13
+                GovFreq = self.GetIntFromString(GovData, 14, 2)         # Byte 14 and 15
+                GovSettings.append({"Governor Target Frequency" : "%.2f Hz" % (GovFreq / 100)})
+
+            except Exception as e1:
+                self.LogErrorLine("Error parsing governor settings: " + str(e1))
+        return GovSettings
+
+    #------------ GeneratorController:GetEngineSettings ------------------------
+    def GetEngineSettings(self):
+
+        EngineSettings = []
+        EngineData = self.GetParameterFileValue(ENGINE_DATA_FILE_RECORD)
+        if len(EngineData) >= (ENGINE_DATA_FILE_RECORD_LENGTH * 2):
+            try:
+                EngineSettings.append({"Engine Transfer Enable" : "Enabled" if self.GetIntFromString(EngineData, 0, 2) else "Disabled"})   # Byte 1 and 2
+                EngineSettings.append({"Preheat Enable" : "Enabled" if self.GetIntFromString(EngineData, 2, 2) else "Disabled"})           # Byte 2 and 3
+                if self.GetIntFromString(EngineData, 2, 2):
+                    EngineSettings.append({"Preheat Time" : str(self.GetIntFromString(EngineData, 4, 2)) + " s"})           # Byte 4 and 5
+                    EngineSettings.append({"Preheat Temp Limit" : str(self.GetIntFromString(EngineData, 47, 1)) + " F"})    # Byte 47
+                EngineSettings.append({"Start detection RPM" : str(self.GetIntFromString(EngineData, 6, 2))})               # Byte 6 and 7
+                EngineSettings.append({"Crank Time" : str(self.GetIntFromString(EngineData, 8, 2)) + " s"})                 # Byte 8 and 9
+                EngineSettings.append({"Alarm Hold Off Time" : str(self.GetIntFromString(EngineData, 10, 2)) + " s"})       # Byte 10 and 11
+                EngineSettings.append({"Engine Warm Up Time" : str(self.GetIntFromString(EngineData, 12, 2)) + " s"})       # Byte 12 and 13
+                EngineSettings.append({"Engine Cool Down Time" : str(self.GetIntFromString(EngineData, 14, 2)) + " s"})     # Byte 14 and 15
+                EngineSettings.append({"Pause Between Cranks Attempts" : str(self.GetIntFromString(EngineData, 16, 2)) + " s"})         # Byte 16 and 17
+                EngineSettings.append({"Start Attempts" : str(self.GetIntFromString(EngineData, 18, 2))})                   # Byte 18 and 19
+                EngineSettings.append({"Load Accept Frequency" : str(self.GetIntFromString(EngineData, 20, 2)) + " Hz"})    # Byte 20 and 21
+                EngineSettings.append({"Load Accept Voltage" : str(self.GetIntFromString(EngineData, 22, 2)) + " V"})       # Byte 22 and 23
+
+            except Exception as e1:
+                self.LogErrorLine("Error parsing engine settings: " + str(e1))
+        return EngineSettings
+
+    #------------ GeneratorController:GetGeneratorSettings ---------------------
+    def GetGeneratorSettings(self):
+
+        GeneratorSettings = []
         FlyWheelTeeth = []
         CTRatio = []
         Phase = None
         TargetRPM = []
-        EngineData = self.GetParameterFileValue(MISC_GEN_FILE_RECORD)
-        if len(EngineData) >= 34:
+        GenData = self.GetParameterFileValue(MISC_GEN_FILE_RECORD)
+        if len(GenData) >= 34:
             try:
-                FlyWheelTeeth.append(self.GetIntFromString(EngineData, 0, 2))  # Byte 1 and 2
-                FlyWheelTeeth.append(self.GetIntFromString(EngineData, 2, 2))  # Byte 2 and 3
-                FlyWheelTeeth.append(self.GetIntFromString(EngineData, 4, 2))  # Byte 4 and 5
-                CTRatio.append(self.GetIntFromString(EngineData, 6, 2))        # Byte 6 and 7
-                CTRatio.append(self.GetIntFromString(EngineData, 8, 2))        # Byte 8 and 9
+                FlyWheelTeeth.append(self.GetIntFromString(GenData, 0, 2))  # Byte 1 and 2
+                FlyWheelTeeth.append(self.GetIntFromString(GenData, 2, 2))  # Byte 2 and 3
+                FlyWheelTeeth.append(self.GetIntFromString(GenData, 4, 2))  # Byte 4 and 5
+                CTRatio.append(self.GetIntFromString(GenData, 6, 2))        # Byte 6 and 7
+                CTRatio.append(self.GetIntFromString(GenData, 8, 2))        # Byte 8 and 9
                 # Skip byte 10 and 11
-                Phase = self.GetIntFromString(EngineData, 12, 1)               # Byte 12
-                TargetRPM.append(self.GetIntFromString(EngineData, 13, 2))     # Byte 13 and 14
-                TargetRPM.append(self.GetIntFromString(EngineData, 15, 2))     # Byte 15 and 16
+                Phase = self.GetIntFromString(GenData, 12, 1)               # Byte 12
+                TargetRPM.append(self.GetIntFromString(GenData, 13, 2))     # Byte 13 and 14
+                TargetRPM.append(self.GetIntFromString(GenData, 15, 2))     # Byte 15 and 16
+
+                GeneratorSettings.append({"Target RPM" : str(TargetRPM[0]) if len(TargetRPM) else "Unknown"})
+                GeneratorSettings.append({"Number of Flywheel Teeth" : str(FlyWheelTeeth[0]) if len(FlyWheelTeeth) else "Unknown"})
+                GeneratorSettings.append({"Phase" : str(Phase) if Phase != None else "Unknown"})
+                GeneratorSettings.append({"CT Ratio" : str(CTRatio[0]) if len(CTRatio) else "Unknown"})
+
             except Exception as e1:
-                self.LogError("Error parsing engine parameters: " + str(e1))
-        return FlyWheelTeeth, CTRatio, Phase, TargetRPM
+                self.LogErrorLine("Error parsing generator settings: " + str(e1))
+
+        return GeneratorSettings
     #------------ GeneratorController:GetRunHours ------------------------------
     def GetRunHours(self):
         return self.GetParameter(self.Reg.ENGINE_HOURS[REGISTER],"", 10.0 )
