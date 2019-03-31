@@ -3,6 +3,7 @@ All notable changes to this project will be documented in this file. Major relea
 
 ## V1.12.32 - 2019-03-30
 - Added H-100 and G-Panel Regulator, Governor and Engine data
+- Added new alarm code for Nexus
 
 ## V1.12.31 - 2019-03-29
 - Added more register reads in H and G Panel controller (need register submissions to complete adding more data to UI)
