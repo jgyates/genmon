@@ -384,7 +384,7 @@ class Monitor(MySupport):
         return json.dumps(SupportData, sort_keys=False)
 
     #---------- Monitor::GetLogFileNames----------------------------------------
-    def GetLogFileNames(self)
+    def GetLogFileNames(self):
 
         try:
             LogList = []
