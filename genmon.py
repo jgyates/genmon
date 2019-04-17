@@ -33,7 +33,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.12.32"
+GENMON_VERSION = "V1.12.33"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(MySupport):
@@ -283,7 +283,7 @@ class Monitor(MySupport):
         try:
             if self.FeedbackEnabled:
                 for Key, Entry in self.FeedbackMessages.items():
-                    self.MessagePipe.SendMessage("Generator Monitor Submission", Entry , recipient = "generatormonitor.software@gmail.com", msgtype = "error")
+                    self.MessagePipe.SendMessage("Generator Monitor Submission", Entry , recipient = self.MaintainerAddress, files = self.GetLogFileNames(), msgtype = "error")
                 # delete unsent Messages
                 if os.path.isfile(self.FeedbackLogFile):
                     os.remove(self.FeedbackLogFile)
@@ -348,7 +348,7 @@ class Monitor(MySupport):
 
                 msgbody += "\n" + self.GetSupportData() + "\n"
                 if self.FeedbackEnabled:
-                    self.MessagePipe.SendMessage("Generator Monitor Submission", msgbody , recipient = self.MaintainerAddress, msgtype = "error")
+                    self.MessagePipe.SendMessage("Generator Monitor Submission", msgbody , recipient = self.MaintainerAddress, files = self.GetLogFileNames(), msgtype = "error")
 
                 self.FeedbackMessages[Reason] = msgbody
                 # if feedback not enabled, save the log to file
@@ -383,6 +383,23 @@ class Monitor(MySupport):
 
         return json.dumps(SupportData, sort_keys=False)
 
+    #---------- Monitor::GetLogFileNames----------------------------------------
+    def GetLogFileNames(self)
+
+        try:
+            LogList = []
+            FilesToSend = ["genmon.log", "genserv.log", "mymail.log", "myserial.log",
+                "mymodbus.log", "gengpio.log", "gengpioin.log", "gensms.log",
+                "gensms_modem.log", "genmqtt.log", "genpushover.log", "gensyslog.log",
+                "genloader.log", "myserialtcp.log", "genlog.log", "genslack.log", "genexercise.log"]
+            for File in FilesToSend:
+                LogFile = self.LogLocation + File
+                if os.path.isfile(LogFile):
+                    LogList.append(LogFile)
+            return LogList
+        except Exception as e1:
+            return None
+
     #---------- Monitor::SendSupportInfo----------------------------------------
     def SendSupportInfo(self, SendLogs = True):
 
@@ -401,15 +418,7 @@ class Monitor(MySupport):
             msgbody += "\n" + self.GetSupportData()  + "\n"
             msgtitle = "Generator Monitor Log File Submission"
             if SendLogs == True:
-                LogList = []
-                FilesToSend = ["genmon.log", "genserv.log", "mymail.log", "myserial.log",
-                    "mymodbus.log", "gengpio.log", "gengpioin.log", "gensms.log",
-                    "gensms_modem.log", "genmqtt.log", "genpushover.log", "gensyslog.log",
-                    "genloader.log", "myserialtcp.log", "genlog.log", "genslack.log", "genexercise.log"]
-                for File in FilesToSend:
-                    LogFile = self.LogLocation + File
-                    if os.path.isfile(LogFile):
-                        LogList.append(LogFile)
+                LogList = self.GetLogFileNames()
             else:
                 msgtitle = "Generator Monitor Register Submission"
                 LogList = None

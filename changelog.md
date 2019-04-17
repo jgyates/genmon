@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.12.33 - 2019-04-17
+- Support for Evolution Liquid Cooled Three phase
+
 ## V1.12.32 - 2019-03-30
 - Added H-100 and G-Panel Regulator, Governor and Engine data
 - Added new alarm code for Nexus

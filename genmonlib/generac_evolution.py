@@ -78,6 +78,7 @@ class Evolution(GeneratorController):
         self.DisableOutageCheck = False
         self.SerialNumberReplacement = None
         self.AdditionalRunHours = None
+        self.NominalLineVolts = 240
 
         self.DaysOfWeek = { 0: "Sunday",    # decode for register values with day of week
                             1: "Monday",
@@ -289,9 +290,9 @@ class Evolution(GeneratorController):
         try:
             Tile = MyTile(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = 12, callback = self.GetBatteryVoltage, callbackparameters = (True,))
             self.TileList.append(Tile)
-            Tile = MyTile(self.log, title = "Utility Voltage", units = "V", type = "linevolts", nominal = 240, callback = self.GetUtilityVoltage, callbackparameters = (True,))
+            Tile = MyTile(self.log, title = "Utility Voltage", units = "V", type = "linevolts", nominal = self.NominalLineVolts, callback = self.GetUtilityVoltage, callbackparameters = (True,))
             self.TileList.append(Tile)
-            Tile = MyTile(self.log, title = "Output Voltage", units = "V", type = "linevolts", nominal = 240, callback = self.GetVoltageOutput, callbackparameters = (True,))
+            Tile = MyTile(self.log, title = "Output Voltage", units = "V", type = "linevolts", nominal = self.NominalLineVolts, callback = self.GetVoltageOutput, callbackparameters = (True,))
             self.TileList.append(Tile)
 
             if self.NominalFreq == None or self.NominalFreq == "" or self.NominalFreq == "Unknown":
@@ -432,6 +433,8 @@ class Evolution(GeneratorController):
             if FuelType != "Unknown" and self.FuelType != FuelType:
                 self.FuelType = FuelType
                 self.config.WriteValue("fueltype", self.FuelType)
+            # Set Nominal Line Volts if three phase
+            self.NominalLineVolts = int(self.GetLiquidCooledModelInfo( "nominalvolts"))
 
         self.EngineDisplacement = self.GetModelInfo("EngineDisplacement")
 
@@ -551,6 +554,8 @@ class Evolution(GeneratorController):
                 Polynomial.append(float(self.LiquidCooledParams[12]))
                 Polynomial.append(self.LiquidCooledParams[13])
                 return Polynomial
+        elif Request.lower() == "nominalvolts":
+            return self.LiquidCooledParams[1]
         elif Request.lower() == "fuel":
 
             Value = self.GetParameter("020c", ReturnInt = True)
@@ -1819,6 +1824,8 @@ class Evolution(GeneratorController):
 
                 ControllerSettings.append({"Param Group" : self.GetParameter("020a")})
                 ControllerSettings.append({"Voltage Code" : self.GetParameter("020b")})
+                ControllerSettings.append({"Phase" : self.GetLiquidCooledModelInfo( "phase")})
+                ControllerSettings.append({"Nominal Line Voltage" : self.GetLiquidCooledModelInfo( "nominalvolts")})
 
                 if self.EvolutionController and self.LiquidCooled:
                     # get total hours since activation
@@ -2991,7 +2998,7 @@ class Evolution(GeneratorController):
             BaseStatus = self.GetBaseStatus()
             Voltage = self.GetVoltageOutput(ReturnInt = True)
             if Voltage > 100:     # only bounds check if the voltage is over 100V to give things a chance to stabalize
-                if CurrentOutput > ((float(self.NominalKW) * 1000) / 240) + 2 or CurrentOutput < 0:
+                if CurrentOutput > ((float(self.NominalKW) * 1000) / self.NominalLineVolts) + 2 or CurrentOutput < 0:
                     # if we are here, then the current is out of range.
                     if not self.EvolutionController  and not self.LiquidCooled and not BaseStatus == "EXERCISING":
                         msg = "Current Calculation: %f, CurrentFloat: %f, Divisor: %f, Offset %f, Debug: %s" % (CurrentOutput, CurrentFloat, Divisor, CurrentOffset, DebugInfo)
@@ -2999,7 +3006,7 @@ class Evolution(GeneratorController):
                     if CurrentOutput < 0:
                         CurrentOutput = 0
                     else:
-                        CurrentOutput = round((float(self.NominalKW) * 1000) / 240, 2)
+                        CurrentOutput = round((float(self.NominalKW) * 1000) / self.NominalLineVolts, 2)
             if ReturnFloat:
                 return CurrentOutput
 
