@@ -118,5 +118,5 @@ if __name__=='__main__': #
         print("Error reading device: " + str(e1))
         sys.exit(2)
 
-    print("OK")
+    print("Program Complete")
     sys.exit(1)
