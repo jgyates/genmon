@@ -433,8 +433,8 @@ class Evolution(GeneratorController):
             if FuelType != "Unknown" and self.FuelType != FuelType:
                 self.FuelType = FuelType
                 self.config.WriteValue("fueltype", self.FuelType)
-            # Set Nominal Line Volts if three phase
-            self.NominalLineVolts = int(self.GetLiquidCooledModelInfo( "nominalvolts"))
+        # Set Nominal Line Volts if three phase
+        self.NominalLineVolts = int(self.GetModelInfo( "nominalvolts"))
 
         self.EngineDisplacement = self.GetModelInfo("EngineDisplacement")
 
@@ -582,37 +582,37 @@ class Evolution(GeneratorController):
         if self.LiquidCooled:
             return "Unknown"
 
-        # List format: [Rated kW, Freq, Voltage, Phase, Fuel Consumption Polynomial, Engine Displacement]
-        UnknownList = ["Unknown", "Unknown", "Unknown", "Unknown", None, "Unknown"]
+        # List format: [Rated kW, Freq, Voltage, Phase, Fuel Consumption Polynomial, Engine Displacement, Line Voltage]
+        UnknownList = ["Unknown", "Unknown", "Unknown", "Unknown", None, "Unknown", "Unknown"]
 
         # Nexus AC
         ModelLookUp_NexusAC = {
-                                0 : ["8KW", "60", "120/240", "1", None, "410 cc"],
-                                2 : ["14KW", "60", "120/240", "1", None, "992 cc"],
-                                3 : ["15KW", "60", "120/240", "1", None, "992 cc"],
-                                4 : ["20KW", "60", "120/240", "1", None, "999 cc"]
+                                0 : ["8KW", "60", "120/240", "1", None, "410 cc", "240"],
+                                2 : ["14KW", "60", "120/240", "1", None, "992 cc", "240"],
+                                3 : ["15KW", "60", "120/240", "1", None, "992 cc", "240"],
+                                4 : ["20KW", "60", "120/240", "1", None, "999 cc", "240"]
                                 }
         # This should cover the guardian line
         ModelLookUp_EvoAC = { #ID : [KW or KVA Rating, Hz Rating, Voltage Rating, Phase, Fuel Polynomial, Engine Displacement]
-                                1 : ["9KW", "60", "120/240", "1", [0, 1, 0.37, "gal"], "426 cc"],
-                                2 : ["14KW", "60", "120/240", "1", [0, 1.48, 0.82, "gal"], "992 cc"],
-                                3 : ["17KW", "60", "120/240", "1", [0, 3.16, 0.41, "gal"], "992 cc"],
-                                4 : ["20KW", "60", "120/240", "1", [0, 2.38, 1.18, "gal"], "999 cc"],
-                                5 : ["8KW", "60", "120/240", "1", [0, 1.48, 0.2, "gal"], "410 cc"],
-                                7 : ["13KW", "60", "120/240", "1", [0, 1.26, 0.92, "gal"], "992 cc"],
-                                8 : ["15KW", "60", "120/240", "1", [0, 1.84, 0.67, "gal"], "999 cc"],
-                                9 : ["16KW", "60", "120/240", "1", [0, 0.84, 2.1, "gal"], "999 cc"],
-                                10 : ["20KW", "VSCF", "120/240", "1", [0, 3.34, 0.12, "gal"], "999 cc"],          #Variable Speed Constant Frequency
-                                11 : ["15KW", "ECOVSCF", "120/240", "1", [0, 2.58, 0.61, "gal"], "999 cc"],       # Eco Variable Speed Constant Frequency
-                                12 : ["8KVA", "50", "220,230,240", "1", [0,  1.3, 0.21, "gal"], "530 cc"],        # 3 distinct models 220, 230, 240
-                                13 : ["10KVA", "50", "220,230,240", "1", [0, 1.48, 0.37, "gal"], "999 cc"],       # 3 distinct models 220, 230, 240
-                                14 : ["13KVA", "50", "220,230,240", "1", [0, 2.0, 0.39, "gal"], "999 cc"],        # 3 distinct models 220, 230, 240
-                                15 : ["11KW", "60" ,"240", "1", [0, 1.5, 0.47, "gal"], "530 cc"],
-                                17 : ["22KW", "60", "120/240", "1", [0, 2.74, 1.16, "gal"], "999 cc"],
-                                21 : ["11KW", "60", "240 LS", "1", [0, 1.5, 0.47, "gal"], "530 cc"],
-                                22 : ["7.5KW", "60", "240", "1", [0, 1.1, 0.32, "gal"], "420 cc"],                # Power Pact
-                                32 : ["20KW", "60", "208 3 Phase", "3", [0, 2.34, 1.22, "gal"], "999 cc"],      # Trinity G007077
-                                33 : ["Trinity", "50", "380,400,416", "3", None, None]                          # Discontinued
+                                1 : ["9KW", "60", "120/240", "1", [0, 1, 0.37, "gal"], "426 cc", "240"],
+                                2 : ["14KW", "60", "120/240", "1", [0, 1.48, 0.82, "gal"], "992 cc", "240"],
+                                3 : ["17KW", "60", "120/240", "1", [0, 3.16, 0.41, "gal"], "992 cc", "240"],
+                                4 : ["20KW", "60", "120/240", "1", [0, 2.38, 1.18, "gal"], "999 cc", "240"],
+                                5 : ["8KW", "60", "120/240", "1", [0, 1.48, 0.2, "gal"], "410 cc", "240"],
+                                7 : ["13KW", "60", "120/240", "1", [0, 1.26, 0.92, "gal"], "992 cc", "240"],
+                                8 : ["15KW", "60", "120/240", "1", [0, 1.84, 0.67, "gal"], "999 cc", "240"],
+                                9 : ["16KW", "60", "120/240", "1", [0, 0.84, 2.1, "gal"], "999 cc", "240"],
+                                10 : ["20KW", "VSCF", "120/240", "1", [0, 3.34, 0.12, "gal"], "999 cc", "240"],          #Variable Speed Constant Frequency
+                                11 : ["15KW", "ECOVSCF", "120/240", "1", [0, 2.58, 0.61, "gal"], "999 cc", "240"],       # Eco Variable Speed Constant Frequency
+                                12 : ["8KVA", "50", "220,230,240", "1", [0,  1.3, 0.21, "gal"], "530 cc", "240"],        # 3 distinct models 220, 230, 240
+                                13 : ["10KVA", "50", "220,230,240", "1", [0, 1.48, 0.37, "gal"], "999 cc", "240"],       # 3 distinct models 220, 230, 240
+                                14 : ["13KVA", "50", "220,230,240", "1", [0, 2.0, 0.39, "gal"], "999 cc", "240"],        # 3 distinct models 220, 230, 240
+                                15 : ["11KW", "60" ,"240", "1", [0, 1.5, 0.47, "gal"], "530 cc", "240"],
+                                17 : ["22KW", "60", "120/240", "1", [0, 2.74, 1.16, "gal"], "999 cc", "240"],
+                                21 : ["11KW", "60", "240 LS", "1", [0, 1.5, 0.47, "gal"], "530 cc", "240"],
+                                22 : ["7.5KW", "60", "240", "1", [0, 1.1, 0.32, "gal"], "420 cc", "240"],                # Power Pact
+                                32 : ["20KW", "60", "208 3 Phase", "3", [0, 2.34, 1.22, "gal"], "999 cc", "208"],      # Trinity G007077
+                                33 : ["Trinity", "50", "380,400,416", "3", None, None, "380"]                          # Discontinued
                                 }
 
         if self.SynergyController:
@@ -659,6 +659,8 @@ class Evolution(GeneratorController):
                 return "Unknown"
             else:
                 return ModelInfo[5]
+        elif Request.lower() == "nominalvolts":
+            return ModelInfo[6]
         return "Unknown"
 
     #---------------------------------------------------------------------------
@@ -1778,8 +1780,8 @@ class Evolution(GeneratorController):
             Maintenance["Maintenance"].append({"Generator Serial Number" : self.GetSerialNumber()})
             Maintenance["Maintenance"].append({"Controller" : self.GetController()})
             Maintenance["Maintenance"].append({"Nominal RPM" : self.NominalRPM})
-            Maintenance["Maintenance"].append({"Rated kW" : self.NominalKW})
-            Maintenance["Maintenance"].append({"Nominal Frequency" : self.NominalFreq})
+            Maintenance["Maintenance"].append({"Rated kW" : str(self.NominalKW) + " kW"})
+            Maintenance["Maintenance"].append({"Nominal Frequency" : str(self.NominalFreq) + " Hz"})
             Maintenance["Maintenance"].append({"Fuel Type" : self.FuelType})
             if self.FuelSensorSupported():
                 Maintenance["Maintenance"].append({"Fuel Level Sensor" : self.GetFuelSensor()})
@@ -1803,11 +1805,11 @@ class Evolution(GeneratorController):
                     self.RunHoursMonth = self.GetPowerHistory("power_log_json=43200,time")
 
                 if self.KWHoursMonth != None:
-                    Maintenance["Maintenance"].append({"kW Hours in last 30 days" : self.KWHoursMonth})
+                    Maintenance["Maintenance"].append({"kW Hours in last 30 days" : str(self.KWHoursMonth) + " kWh"})
                 if self.FuelMonth != None:
                     Maintenance["Maintenance"].append({"Fuel Consumption in last 30 days" : self.FuelMonth})
                 if self.RunHoursMonth != None:
-                    Maintenance["Maintenance"].append({"Run Hours in last 30 days" : self.RunHoursMonth})
+                    Maintenance["Maintenance"].append({"Run Hours in last 30 days" : str(self.RunHoursMonth) + " h"})
 
 
             ControllerSettings = []
@@ -1820,20 +1822,21 @@ class Evolution(GeneratorController):
             if not self.PreNexus:
                 ControllerSettings.append({"Calibrate Volts" : self.GetParameter("0208")})
 
+            ControllerSettings.append({"Nominal Line Voltage" : str(self.GetModelInfo( "nominalvolts")) +  " V"})
+            ControllerSettings.append({"Rated Max Power" : str(self.GetModelInfo( "kw")) +  " kW"})
             if self.LiquidCooled:
 
                 ControllerSettings.append({"Param Group" : self.GetParameter("020a")})
                 ControllerSettings.append({"Voltage Code" : self.GetParameter("020b")})
                 ControllerSettings.append({"Phase" : self.GetLiquidCooledModelInfo( "phase")})
-                ControllerSettings.append({"Nominal Line Voltage" : self.GetLiquidCooledModelInfo( "nominalvolts")})
 
                 if self.EvolutionController and self.LiquidCooled:
                     # get total hours since activation
                     ControllerSettings.append({"Hours of Protection" : self.GetParameter("0054", Label = "H")})
                     ControllerSettings.append({"Volts Per Hertz" : self.GetParameter("020e")})
                     ControllerSettings.append({"Gain" : self.GetParameter("0235")})
-                    ControllerSettings.append({"Rated Frequency" : self.GetParameter("005a")})
-                    ControllerSettings.append({"Rated Voltage" : self.GetParameter("0059")})
+                    ControllerSettings.append({"Rated Frequency" : self.GetParameter("005a", Label = "Hz")})
+                    ControllerSettings.append({"Rated Voltage" : self.GetParameter("0059", Label = "V")})
 
             if not self.SmartSwitch:
                 Exercise = []
