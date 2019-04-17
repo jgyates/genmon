@@ -75,7 +75,7 @@ if __name__=='__main__': #
                 print ('Start Register : ' + str(startregister))
             elif opt in ("-e", "--end"):
                 endregister =  int(arg)
-                print ('Start Register : ' + str(endregister))
+                print ('End Register : ' + str(endregister))
             elif opt in ("-x", "--parity"):
                 parity =  int(arg)
                 print ('Parity : ' + str(parity))
