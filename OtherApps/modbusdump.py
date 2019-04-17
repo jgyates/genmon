@@ -66,7 +66,7 @@ if __name__=='__main__': #
                 print ('Address is : %x' % modbusaddress)
             elif opt in ("-p", "--port"):
                 device = arg
-                print ('Port is :', device)
+                print ('Port is : %s' % device)
             elif opt in ("-r", "--rate"):
                 baudrate = int(arg)
                 print ('Baud Rate : ' + str(baudrate))
