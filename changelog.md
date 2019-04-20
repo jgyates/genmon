@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.13.00 - 2019-04-20
+- Added Add On for Email to SMS support
+
 ## V1.12.33 - 2019-04-17
 - Support for Evolution Liquid Cooled Three phase
 

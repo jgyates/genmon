@@ -75,6 +75,7 @@ GENMQTT_CONFIG = "/etc/genmqtt.conf"
 GENSLACK_CONFIG = "/etc/genslack.conf"
 GENGPIOIN_CONFIG = "/etc/gengpioin.conf"
 GENEXERCISE_CONFIG = "/etc/genexercise.conf"
+GENEMAIL2SMS_CONFIG = "/etc/genemail2sms.conf"
 
 Closing = False
 Restarting = False
@@ -712,6 +713,21 @@ def GetAddOns():
                 bounds = 'number range:0:30',
                 display_name = "Warmup Duration")
 
+        #GENEMAIL2SMS
+        AddOnCfg['genemail2sms'] = collections.OrderedDict()
+        AddOnCfg['genemail2sms']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "genemail2sms", default = False)
+        AddOnCfg['genemail2sms']['title'] = "Mobile Carrier Email to SMS"
+        AddOnCfg['genemail2sms']['description'] = "Send Genmon and utility state changes via carrier email to SMS service"
+        AddOnCfg['genemail2sms']['icon'] = "Genmon"
+        AddOnCfg['genemail2sms']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genemail2smspy-optional"
+        AddOnCfg['genemail2sms']['parameters'] = collections.OrderedDict()
+
+        AddOnCfg['genemail2sms']['parameters']['destination'] = CreateAddOnParam(
+            ConfigFiles[GENEMAIL2SMS_CONFIG].ReadValue("destination", return_type = str, default = ""),
+            'string',
+            "Email to SMS email recipient. Must be a valid email address",
+            bounds = 'required email',
+            display_name = "Email to SMS address")
     except Exception as e1:
         LogErrorLine("Error in GetAddOns: " + str(e1))
 
@@ -775,7 +791,8 @@ def SaveAddOnSettings(query_string):
             "gensyslog" : ConfigFiles[GENLOADER_CONFIG],
             "gengpio" : ConfigFiles[GENLOADER_CONFIG],
             "gengpioin" : ConfigFiles[GENGPIOIN_CONFIG],
-            "genexercise" : ConfigFiles[GENEXERCISE_CONFIG]
+            "genexercise" : ConfigFiles[GENEXERCISE_CONFIG],
+            "genemail2sms" : ConfigFiles[GENEMAIL2SMS_CONFIG]
         }
 
         for module, entries in settings.items():   # module
@@ -1542,7 +1559,7 @@ if __name__ == "__main__":
         LogConsole("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'.")
         sys.exit(1)
 
-    ConfigFileList = [GENMON_CONFIG, MAIL_CONFIG, GENLOADER_CONFIG, GENSMS_CONFIG, MYMODEM_CONFIG, GENPUSHOVER_CONFIG, GENMQTT_CONFIG, GENSLACK_CONFIG, GENGPIOIN_CONFIG, GENEXERCISE_CONFIG]
+    ConfigFileList = [GENMON_CONFIG, MAIL_CONFIG, GENLOADER_CONFIG, GENSMS_CONFIG, MYMODEM_CONFIG, GENPUSHOVER_CONFIG, GENMQTT_CONFIG, GENSLACK_CONFIG, GENGPIOIN_CONFIG, GENEXERCISE_CONFIG, GENEMAIL2SMS_CONFIG]
 
     for ConfigFile in ConfigFileList:
         if not os.path.isfile(ConfigFile):

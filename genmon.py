@@ -33,7 +33,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.12.33"
+GENMON_VERSION = "V1.13.00"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(MySupport):
@@ -391,7 +391,8 @@ class Monitor(MySupport):
             FilesToSend = ["genmon.log", "genserv.log", "mymail.log", "myserial.log",
                 "mymodbus.log", "gengpio.log", "gengpioin.log", "gensms.log",
                 "gensms_modem.log", "genmqtt.log", "genpushover.log", "gensyslog.log",
-                "genloader.log", "myserialtcp.log", "genlog.log", "genslack.log", "genexercise.log"]
+                "genloader.log", "myserialtcp.log", "genlog.log", "genslack.log",
+                "genexercise.log","genemail2sms.log"]
             for File in FilesToSend:
                 LogFile = self.LogLocation + File
                 if os.path.isfile(LogFile):
