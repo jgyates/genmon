@@ -1542,6 +1542,7 @@ class HPanel(GeneratorController):
             StartInfo["RemoteTransfer"] = self.HTSTransferSwitch    # Remote start and transfer command
             StartInfo["RemoteButtons"] = False      # Remote controll of Off/Auto/Manual
             StartInfo["ExerciseControls"] = False  # self.SmartSwitch
+            StartInfo["WriteQuietMode"] = False
 
             if not NoTile:
                 StartInfo["pages"] = {

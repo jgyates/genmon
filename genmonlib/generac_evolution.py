@@ -3644,6 +3644,7 @@ class Evolution(GeneratorController):
             StartInfo["RemoteTransfer"] = self.EvolutionController
             StartInfo["RemoteButtons"] = self.RemoteButtonsSupported()
             StartInfo["ExerciseControls"] = not self.SmartSwitch
+            StartInfo["WriteQuietMode"] = True #self.EvolutionController
 
             if not NoTile:
                 StartInfo["pages"] = {

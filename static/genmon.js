@@ -671,12 +671,15 @@ function DisplayMaintenance(){
                }
                outstr += '</select>';
 
-               //Create and append select list
-               outstr += '&nbsp;&nbsp;<select id="quietmode">';
-               outstr += '<option value="On" ' + (myGenerator['QuietMode'] == "On"  ? ' selected="selected" ' : '') + '>Quiet Mode On </option>';
-               outstr += '<option value="Off"' + (myGenerator['QuietMode'] == "Off" ? ' selected="selected" ' : '') + '>Quiet Mode Off</option>';
-               outstr += '</select><br><br>';
+               if (myGenerator['WriteQuietMode'] == true) {
+                 //Create and append select list
+                 outstr += '&nbsp;&nbsp;<select id="quietmode">';
+                 outstr += '<option value="On" ' + (myGenerator['QuietMode'] == "On"  ? ' selected="selected" ' : '') + '>Quiet Mode On </option>';
+                 outstr += '<option value="Off"' + (myGenerator['QuietMode'] == "Off" ? ' selected="selected" ' : '') + '>Quiet Mode Off</option>';
+                 outstr += '</select>';
+               }
 
+               outstr += '<br><br>'
                outstr += '&nbsp;&nbsp;<button id="setexercisebutton" onClick="saveMaintenance();">Set Exercise Time</button>';
             }
 
@@ -986,10 +989,13 @@ function saveMaintenance(){
                                 function(result){});
 
                     // set quite mode
-                    var url = baseurl.concat("setquiet");
-                    $.getJSON(  url,
-                                {setquiet: strQuiet},
-                                function(result){});
+                    if (myGenerator['WriteQuietMode'] == true) {
+                      var url = baseurl.concat("setquiet");
+                      $.getJSON(  url,
+                                  {setquiet: strQuiet},
+                                  function(result){});
+                    }
+
                  }
             }
         });
