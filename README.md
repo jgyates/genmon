@@ -72,7 +72,8 @@ This project is free to use under the posted license agreement. It was written a
 ## Pre-Assembled Hardware
 This project is open source and ideal for those who like to tinker, however pre-assembled hardware and cables are available for anyone interested on via ebay.com from this source:
 
-* [Pre-Assembled Pi and Cable](https://www.ebay.com/itm/264200240940)
+* [Pre-Assembled Pi and Cable using the built in internal antenna](https://www.ebay.com/itm/264200240940)
+* [Pre-Assembled Pi and Cable with external wi-fi Antenna](https://www.ebay.com/itm/GenPi-Generac-Gen-Monitor-powered-by-GenMon-W-New-Easy-Setup-W-Ext-Ant/264297841518)
 * [Pre-loaded SD Card](https://www.ebay.com/itm/GenPi-Generac-Monitor-by-GenMon-W-New-Setup-SDcard-w-Software-Only/264216642416)
 
 
