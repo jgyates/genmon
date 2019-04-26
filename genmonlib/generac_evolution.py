@@ -279,8 +279,9 @@ class Evolution(GeneratorController):
             # check for unknown events (i.e. events we are not decoded) and send an email if they occur
             self.CheckForAlarmEvent.set()
             self.SetupTiles()
-            self.InitComplete = True
-            self.InitCompleteEvent.set()
+            if not self.EvolutionController == None and not self.LiquidCooled == None:
+                self.InitComplete = True
+                self.InitCompleteEvent.set()
         except Exception as e1:
             self.LogErrorLine("Error in InitDevice: " + str(e1))
 
@@ -288,6 +289,7 @@ class Evolution(GeneratorController):
     def SetupTiles(self):
 
         try:
+            self.TileList = []
             Tile = MyTile(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = 12, callback = self.GetBatteryVoltage, callbackparameters = (True,))
             self.TileList.append(Tile)
             Tile = MyTile(self.log, title = "Utility Voltage", units = "V", type = "linevolts", nominal = self.NominalLineVolts, callback = self.GetUtilityVoltage, callbackparameters = (True,))
@@ -353,90 +355,96 @@ class Evolution(GeneratorController):
     #---------------------------------------------------------------------------
     def CheckModelSpecificInfo(self, NoLookUp = False):
 
-        if self.NominalFreq == "Unknown" or not len(self.NominalFreq):
-            self.NominalFreq = self.GetModelInfo("Frequency")
-            if self.NominalFreq == "Unknown":
-                self.NominalFreq = "60"
-            self.config.WriteValue("nominalfrequency", self.NominalFreq)
+        try:
+            if self.NominalFreq == "Unknown" or not len(self.NominalFreq):
+                self.NominalFreq = self.GetModelInfo("Frequency")
+                if self.NominalFreq == "Unknown":
+                    self.NominalFreq = "60"
+                self.config.WriteValue("nominalfrequency", self.NominalFreq)
 
-        # This is not correct for 50Hz models
-        if self.NominalRPM == "Unknown" or not len(self.NominalRPM):
-            if self.LiquidCooled:
-                if self.NominalFreq == "50":
-                    self.NominalRPM = "1500"
-                else:
-                    self.NominalRPM = "1800"
-            else:
-                if self.NominalFreq == "50":
-                    self.NominalRPM = "3000"
-                else:
-                    self.NominalRPM = "3600"
-            self.config.WriteValue("nominalrpm", self.NominalRPM)
-
-        if self.NominalKW == "Unknown" or not len(self.NominalKW):
-            self.NominalKW = self.GetModelInfo("KW")
-            if self.NominalKW != "Unknown":
-                self.config.WriteValue("nominalkw", self.NominalKW)
-
-        if self.NewInstall:
-            if not self.ModelIsValid() or self.NominalKW == "Unknown":
-                ReturnStatus, ReturnModel, ReturnKW = self.LookUpSNInfo(SkipKW = (not self.NominalKW == "Unknown"), NoLookUp = NoLookUp)
-                if not ReturnStatus:
-                    if not self.ModelIsValid():
-                        self.Model = self.GetGenericModel()
-                        self.config.WriteValue("model", self.Model)
-                    if self.NominalKW == "Unknown":
-                        self.NominalKW = self.GetGenericKW()
-                        self.config.WriteValue("nominalkw", self.NominalKW)
-                else:
-                    if ReturnModel == "Unknown":
-                        self.Model = self.GetGenericModel()
+            # This is not correct for 50Hz models
+            if self.NominalRPM == "Unknown" or not len(self.NominalRPM):
+                if self.LiquidCooled:
+                    if self.NominalFreq == "50":
+                        self.NominalRPM = "1500"
                     else:
-                        self.Model = ReturnModel
-                    self.config.WriteValue("model", self.Model)
+                        self.NominalRPM = "1800"
+                else:
+                    if self.NominalFreq == "50":
+                        self.NominalRPM = "3000"
+                    else:
+                        self.NominalRPM = "3600"
+                self.config.WriteValue("nominalrpm", self.NominalRPM)
 
-                    if ReturnKW != "Unknown" and self.NominalKW == "Unknown":   # we found a valid Kw on the lookup
-                        self.NominalKW = ReturnKW
-                        self.config.WriteValue("nominalkw", self.NominalKW)
-                    elif ReturnKW == "Unknown" and self.NominalKW == "Unknown":
-                        self.NominalKW = self.GetGenericKW()
-                        self.config.WriteValue("nominalkw", self.NominalKW)
+            if self.NominalKW == "Unknown" or not len(self.NominalKW):
+                self.NominalKW = self.GetModelInfo("KW")
+                if self.NominalKW != "Unknown":
+                    self.config.WriteValue("nominalkw", self.NominalKW)
 
-        if self.FuelType == "Unknown" or not len(self.FuelType):
-            if self.LiquidCooled:
-                self.FuelType = self.GetModelInfo("Fuel")
-                if self.FuelType == "Unknown":
-                    if self.Model.startswith("RD"):
-                        self.FuelType = "Diesel"
-                    elif self.Model.startswith("RG"):
-                        if len(self.Model) >= 11:   # e.g. RD04834ADSE
-                            if self.Model[8] == "N":
-                                self.FuelType = "Natural Gas"
-                            elif self.Model[8] == "V":
-                                self.FuelType = "Propane"
-                            else:
-                                self.FuelType = "Propane"
-                    elif self.Model.startswith("QT"):
-                        self.FuelType = "Propane"
-                    elif self.LiquidCooled and self.EvolutionController:          # EvoLC
-                        if self.GetModelInfo("Fuel") == "Diesel":
-                            self.FuelType = "Diesel"
+            if self.NewInstall:
+                if not self.ModelIsValid() or self.NominalKW == "Unknown":
+                    ReturnStatus, ReturnModel, ReturnKW = self.LookUpSNInfo(SkipKW = (not self.NominalKW == "Unknown"), NoLookUp = NoLookUp)
+                    if not ReturnStatus:
+                        if not self.ModelIsValid():
+                            self.Model = self.GetGenericModel()
+                            self.config.WriteValue("model", self.Model)
+                        if self.NominalKW == "Unknown":
+                            self.NominalKW = self.GetGenericKW()
+                            self.config.WriteValue("nominalkw", self.NominalKW)
+                    else:
+                        if ReturnModel == "Unknown":
+                            self.Model = self.GetGenericModel()
                         else:
-                            self.FuelType = "Natural Gas"
-            else:
-                self.FuelType = "Propane"                           # NexusLC, NexusAC, EvoAC
-            self.config.WriteValue("fueltype", self.FuelType)
+                            self.Model = ReturnModel
+                        self.config.WriteValue("model", self.Model)
 
-        # This should fix issues with prefious installs of liquid cooled models that had the wrong fuel type
-        if self.LiquidCooled:
-            FuelType = self.GetModelInfo("Fuel")
-            if FuelType != "Unknown" and self.FuelType != FuelType:
-                self.FuelType = FuelType
+                        if ReturnKW != "Unknown" and self.NominalKW == "Unknown":   # we found a valid Kw on the lookup
+                            self.NominalKW = ReturnKW
+                            self.config.WriteValue("nominalkw", self.NominalKW)
+                        elif ReturnKW == "Unknown" and self.NominalKW == "Unknown":
+                            self.NominalKW = self.GetGenericKW()
+                            self.config.WriteValue("nominalkw", self.NominalKW)
+
+            if self.FuelType == "Unknown" or not len(self.FuelType):
+                if self.LiquidCooled:
+                    self.FuelType = self.GetModelInfo("Fuel")
+                    if self.FuelType == "Unknown":
+                        if self.Model.startswith("RD"):
+                            self.FuelType = "Diesel"
+                        elif self.Model.startswith("RG"):
+                            if len(self.Model) >= 11:   # e.g. RD04834ADSE
+                                if self.Model[8] == "N":
+                                    self.FuelType = "Natural Gas"
+                                elif self.Model[8] == "V":
+                                    self.FuelType = "Propane"
+                                else:
+                                    self.FuelType = "Propane"
+                        elif self.Model.startswith("QT"):
+                            self.FuelType = "Propane"
+                        elif self.LiquidCooled and self.EvolutionController:          # EvoLC
+                            if self.GetModelInfo("Fuel") == "Diesel":
+                                self.FuelType = "Diesel"
+                            else:
+                                self.FuelType = "Natural Gas"
+                else:
+                    self.FuelType = "Propane"                           # NexusLC, NexusAC, EvoAC
                 self.config.WriteValue("fueltype", self.FuelType)
-        # Set Nominal Line Volts if three phase
-        self.NominalLineVolts = int(self.GetModelInfo( "nominalvolts"))
 
-        self.EngineDisplacement = self.GetModelInfo("EngineDisplacement")
+            # This should fix issues with prefious installs of liquid cooled models that had the wrong fuel type
+            if self.LiquidCooled:
+                FuelType = self.GetModelInfo("Fuel")
+                if FuelType != "Unknown" and self.FuelType != FuelType:
+                    self.FuelType = FuelType
+                    self.config.WriteValue("fueltype", self.FuelType)
+            # Set Nominal Line Volts if three phase
+            try:
+                self.NominalLineVolts = int(self.GetModelInfo( "nominalvolts"))
+            except:
+                pass
+
+            self.EngineDisplacement = self.GetModelInfo("EngineDisplacement")
+        except Exception as e1:
+            self.LogErrorLine("Error in CheckModelSpecificInfo: " + str(e1))
 
     #----------  GeneratorController::FuelSensorSupported------------------------
     def FuelSensorSupported(self):
@@ -575,6 +583,9 @@ class Evolution(GeneratorController):
 
     #------------ Evolution:GetModelInfo----------------------------------------
     def GetModelInfo(self, Request):
+
+        if self.LiquidCooled == None or self.EvolutionController == None:
+            return "Unknown"
 
         if self.LiquidCooled:
             return self.GetLiquidCooledModelInfo(Request)
@@ -3360,6 +3371,8 @@ class Evolution(GeneratorController):
     #------------ Evolution:GetServiceDueDate ----------------------------------
     def GetServiceDueDate(self, serviceType = "A"):
 
+        if self.EvolutionController == None or self.LiquidCooled == None:
+            return ""
         if self.PowerPact:
             return ""
         # Evolution Air Cooled Maintenance Message Intervals

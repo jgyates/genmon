@@ -153,6 +153,8 @@ class GeneratorController(MySupport):
                 return
             while True:
                 try:
+                    if not self.InitComplete:
+                        self.InitDevice()
                     self.MasterEmulation()
                     if self.IsStopSignaled("ProcessThread"):
                         break

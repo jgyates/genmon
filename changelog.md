@@ -1,9 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.13.02 - 2019-04-26
+- Improved startup error handling to better respond if there are serial issues preventing the software from identifying the controller
+
 ## V1.13.01 - 2019-04-22
 - Corrected one typo
-- Added code for debugging purposes 
+- Added code for debugging purposes
 
 ## V1.13.00 - 2019-04-20
 - Added Add On for Email to SMS support

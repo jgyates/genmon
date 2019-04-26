@@ -948,6 +948,7 @@ class HPanel(GeneratorController):
     #-------------HPanel:SetupTiles---------------------------------------------
     def SetupTiles(self):
         try:
+            self.TileList = []
             Tile = MyTile(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = self.NominalBatteryVolts,
                 callback = self.GetParameter,
                 callbackparameters = (self.Reg.BATTERY_VOLTS[REGISTER],  None, 100.0, False, False, True))
