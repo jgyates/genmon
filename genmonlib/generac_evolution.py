@@ -1013,23 +1013,7 @@ class Evolution(GeneratorController):
             self.LogError("Testcommand supports commands 0 - 16")
             return "Testcommand supports commands 0 - 16"
 
-        with self.ModBus.CommAccessLock:
-            #
-            LowByte = Value & 0x00FF
-            HighByte = Value >> 8
-            Data= []
-            Data.append(HighByte)           # Value for indexed register (High byte)
-            Data.append(LowByte)            # Value for indexed register (Low byte)
-
-            self.ModBus.ProcessMasterSlaveWriteTransaction("0004", len(Data) / 2, Data)
-
-            LowByte = Register & 0x00FF
-            HighByte = Register >> 8
-            Data= []
-            Data.append(HighByte)           # indexed register to be written (High byte)
-            Data.append(LowByte)            # indexed register to be written (Low byte)
-
-            self.ModBus.ProcessMasterSlaveWriteTransaction("0003", len(Data) / 2, Data)
+        self.WriteIndexedRegister(Register, Value)
 
         return "Test command sent successfully"
 
@@ -1087,25 +1071,33 @@ class Evolution(GeneratorController):
             else:
                 return "Invalid command syntax for command setremote (2)"
 
-        with self.ModBus.CommAccessLock:
-            #
-            LowByte = Value & 0x00FF
-            HighByte = Value >> 8
-            Data= []
-            Data.append(HighByte)           # Value for indexed register (High byte)
-            Data.append(LowByte)            # Value for indexed register (Low byte)
-
-            self.ModBus.ProcessMasterSlaveWriteTransaction("0004", len(Data) / 2, Data)
-
-            LowByte = Register & 0x00FF
-            HighByte = Register >> 8
-            Data= []
-            Data.append(HighByte)           # indexed register to be written (High byte)
-            Data.append(LowByte)            # indexed register to be written (Low byte)
-
-            self.ModBus.ProcessMasterSlaveWriteTransaction("0003", len(Data) / 2, Data)
+        self.WriteIndexedRegister(Register,Value)
 
         return "Remote command sent successfully"
+
+    #-------------WriteIndexedRegister------------------------------------------
+    def WriteIndexedRegister(self, register, value):
+
+        try:
+            with self.ModBus.CommAccessLock:
+                #
+                LowByte = value & 0x00FF
+                HighByte = value >> 8
+                Data= []
+                Data.append(HighByte)           # Value for indexed register (High byte)
+                Data.append(LowByte)            # Value for indexed register (Low byte)
+
+                self.ModBus.ProcessMasterSlaveWriteTransaction("0004", len(Data) / 2, Data)
+
+                LowByte = register & 0x00FF
+                HighByte = register >> 8
+                Data= []
+                Data.append(HighByte)           # indexed register to be written (High byte)
+                Data.append(LowByte)            # indexed register to be written (Low byte)
+
+                self.ModBus.ProcessMasterSlaveWriteTransaction("0003", len(Data) / 2, Data)
+        except Exception as e1:
+            self.LogErrorLine("Error in WriteIndexedRegister: " + str(e1))
 
     #-------------MonitorUnknownRegisters---------------------------------------
     def MonitorUnknownRegisters(self,Register, FromValue, ToValue):
@@ -1219,24 +1211,11 @@ class Evolution(GeneratorController):
         DeltaTime =  TargetExerciseTime - GeneratorTime
         total_delta_min = self.GetDeltaTimeMinutes(DeltaTime)
 
+         # Hour 0 - 23,  Min 0 - 59
         WriteValue = self.CalculateExerciseTime(total_delta_min)
 
-        with self.ModBus.CommAccessLock:
-            #  have seen the following values 0cf6,0f8c,0f5e
-            Last = WriteValue & 0x00FF
-            First = WriteValue >> 8
-            Data= []
-            Data.append(First)             # Hour 0 - 23
-            Data.append(Last)             # Min 0 - 59
+        self.WriteIndexedRegister(0x0006,WriteValue)
 
-            self.ModBus.ProcessMasterSlaveWriteTransaction("0004", len(Data) / 2, Data)
-
-            #
-            Data= []
-            Data.append(0)                  # The value for reg 0003 is always 0006. This appears
-            Data.append(6)                  # to be an indexed register
-
-            self.ModBus.ProcessMasterSlaveWriteTransaction("0003", len(Data) / 2, Data)
         return  "Set Exercise Time Command sent (using legacy write)"
 
     #----------  Evolution:SetGeneratorExerciseTime-----------------------------
@@ -1398,6 +1377,9 @@ class Evolution(GeneratorController):
 
     #----------  Evolution:SetGeneratorQuietMode--------------------------------
     def SetGeneratorQuietMode(self, CmdString):
+
+        if not self.EvolutionController or not self.LiquidCooled:
+            return "Not supported on this controller."
 
         # extract quiet mode setting from Command String
         # format is setquiet=yes or setquiet=no
@@ -3657,7 +3639,7 @@ class Evolution(GeneratorController):
             StartInfo["RemoteTransfer"] = self.EvolutionController
             StartInfo["RemoteButtons"] = self.RemoteButtonsSupported()
             StartInfo["ExerciseControls"] = not self.SmartSwitch
-            StartInfo["WriteQuietMode"] = True #self.EvolutionController
+            StartInfo["WriteQuietMode"] = self.EvolutionController and self.LiquidCooled
 
             if not NoTile:
                 StartInfo["pages"] = {

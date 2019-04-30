@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.13.03 - 2019-04-30
+- Removed the ability to set quiet mode for Nexus and Air Cooled Evolution as this does not appear to be supported in the firmware.
+s
 ## V1.13.02 - 2019-04-26
 - Improved startup error handling to better respond if there are serial issues preventing the software from identifying the controller
 
