@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.13.04 - 2019-05-01
+- Corrected display anomaly in web UI
+
 ## V1.13.03 - 2019-04-30
 - Removed the ability to set quiet mode for Nexus and Air Cooled Evolution as this does not appear to be supported in the firmware.
 s

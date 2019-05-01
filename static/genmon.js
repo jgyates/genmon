@@ -871,10 +871,12 @@ function SetPowerLogReset(){
 function DisplayMaintenanceUpdate(){
 
     if (myGenerator["write_access"] == true) {
+        /*
+        // This code has been removed as it update the UI incorrectly
         $("#Exercise_Time").html(myGenerator['ExerciseFrequency'] + ' ' +
                                  myGenerator['ExerciseDay'] + ' ' + myGenerator['ExerciseHour'] + ':' + myGenerator['ExerciseMinute'] +
                                  ' Quiet Mode ' + myGenerator['QuietMode']);
-
+        */
         if ((myGenerator['EnhancedExerciseEnabled'] == true) && (myGenerator['ExerciseFrequency'] != myGenerator['OldExerciseParameters'][4])) {
             $("#ExerciseFrequency").val(myGenerator['ExerciseFrequency']);
             setExerciseSelection();
