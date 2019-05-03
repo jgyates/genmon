@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.13.05 - 2019-05-03
+- Corrected typo in gengpio.py
+- Added additional error checking in genmon.js
+
 ## V1.13.04 - 2019-05-01
 - Corrected display anomaly in web UI
 

@@ -214,9 +214,9 @@ if __name__=='__main__': # usage program.py [server_address]
                 TempDict = json.loads(data)
                 HealthStr = TempDict["Monitor"][0]["Generator Monitor Stats"][0]["Monitor Health"]
                 if HealthStr.lower() == "ok":
-                    GPIO.output(ER_INTERNET,GPIO.LOW)
+                    GPIO.output(ER_GENMON,GPIO.LOW)
                 else:
-                    GPIO.output(ER_INTERNET,GPIO.HIGH)
+                    GPIO.output(ER_GENMON,GPIO.HIGH)
             except Exception as e1:
                 log.error("Error getting monitor health: " +str(e1))
             # get Internet Status

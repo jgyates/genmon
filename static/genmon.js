@@ -2557,66 +2557,71 @@ function UpdateRegisters(init, printToScreen)
     $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(RegData){
         processAjaxSuccess();
 
-        $.each(RegData.Registers["Base Registers"], function(i, item) {
-            var reg_key = Object.keys(item)[0]
-            var reg_val = item[Object.keys(item)[0]];
+        try{
+            $.each(RegData.Registers["Base Registers"], function(i, item) {
+                var reg_key = Object.keys(item)[0]
+                var reg_val = item[Object.keys(item)[0]];
 
-            if ((init) || (regHistory["_10m"][reg_key] == undefined)) {
-                regHistory["updateTime"][reg_key] = 0;
-                regHistory["_10m"][reg_key] = [reg_val];
-                regHistory["_60m"][reg_key] = [reg_val, reg_val];
-                regHistory["_24h"][reg_key] = [reg_val, reg_val];
-            } else {
-               if (reg_val != regHistory["_10m"][reg_key][0]) {
-                  regHistory["updateTime"][reg_key] = new Date().getTime();
+                if ((init) || (regHistory["_10m"][reg_key] == undefined)) {
+                    regHistory["updateTime"][reg_key] = 0;
+                    regHistory["_10m"][reg_key] = [reg_val];
+                    regHistory["_60m"][reg_key] = [reg_val, reg_val];
+                    regHistory["_24h"][reg_key] = [reg_val, reg_val];
+                } else {
+                   if (reg_val != regHistory["_10m"][reg_key][0]) {
+                      regHistory["updateTime"][reg_key] = new Date().getTime();
 
-                  if (printToScreen) {
-                    var outstr  = ((reg_key == "01f4") ? '<span class="registerTDvalMedium">HEX:<br>' + reg_val + '</span>' : 'HEX: '+reg_val) + '<br>';
-                        outstr += ((reg_key == "01f4") ? '' : '<span class="registerTDvalSmall">DEC: ' + parseInt(reg_val, 16) + ' | HI:LO: '+parseInt(reg_val.substring(0,2), 16)+':'+parseInt(reg_val.substring(2,4), 16)+'</span>');
-                    $("#content_"+reg_key).html(outstr);
-                  }
-               }
-            }
-            regHistory["_10m"][reg_key].unshift(reg_val);
-            if  (regHistory["_10m"][reg_key].length > 120) {
-               var removed = regHistory["_10m"][reg_key].pop  // remove the last element
-            }
+                      if (printToScreen) {
+                        var outstr  = ((reg_key == "01f4") ? '<span class="registerTDvalMedium">HEX:<br>' + reg_val + '</span>' : 'HEX: '+reg_val) + '<br>';
+                            outstr += ((reg_key == "01f4") ? '' : '<span class="registerTDvalSmall">DEC: ' + parseInt(reg_val, 16) + ' | HI:LO: '+parseInt(reg_val.substring(0,2), 16)+':'+parseInt(reg_val.substring(2,4), 16)+'</span>');
+                        $("#content_"+reg_key).html(outstr);
+                      }
+                   }
+                }
+                regHistory["_10m"][reg_key].unshift(reg_val);
+                if  (regHistory["_10m"][reg_key].length > 120) {
+                   var removed = regHistory["_10m"][reg_key].pop  // remove the last element
+                }
 
-            if (regHistory["count_60m"] >= 12) {
-               var min = 0;
-               var max = 0;
-               for (var i = 1; i <12; i++) {
-                   if (regHistory["_10m"][reg_key][i] > regHistory["_10m"][reg_key][max])
-                      max = i;
-                   if (regHistory["_10m"][reg_key][i] < regHistory["_10m"][reg_key][min])
-                      min = i;
-               }
-               regHistory["_60m"][reg_key].unshift(regHistory["_10m"][reg_key][((min > max) ? min : max)], regHistory["_10m"][reg_key][((min > max) ? max : min)]);
+                if (regHistory["count_60m"] >= 12) {
+                   var min = 0;
+                   var max = 0;
+                   for (var i = 1; i <12; i++) {
+                       if (regHistory["_10m"][reg_key][i] > regHistory["_10m"][reg_key][max])
+                          max = i;
+                       if (regHistory["_10m"][reg_key][i] < regHistory["_10m"][reg_key][min])
+                          min = i;
+                   }
+                   regHistory["_60m"][reg_key].unshift(regHistory["_10m"][reg_key][((min > max) ? min : max)], regHistory["_10m"][reg_key][((min > max) ? max : min)]);
 
-               if  (regHistory["_60m"][reg_key].length > 120)
-                 regHistory["_60m"][reg_key].splice(-2, 2);  // remove the last 2 element
-            }
+                   if  (regHistory["_60m"][reg_key].length > 120)
+                     regHistory["_60m"][reg_key].splice(-2, 2);  // remove the last 2 element
+                }
 
-            if (regHistory["count_24h"] >= 288) {
-               var min = 0;
-               var max = 0;
-               for (var i = 1; i <24; i++) {
-                   if (regHistory["_60m"][reg_key][i] > regHistory["_60m"][reg_key][max])
-                      max = i;
-                   if (regHistory["_60m"][reg_key][i] < regHistory["_60m"][reg_key][min])
-                      min = i;
-               }
-               regHistory["_24h"][reg_key].unshift(regHistory["_60m"][reg_key][((min > max) ? min : max)], regHistory["_60m"][reg_key][((min > max) ? max : min)]);
+                if (regHistory["count_24h"] >= 288) {
+                   var min = 0;
+                   var max = 0;
+                   for (var i = 1; i <24; i++) {
+                       if (regHistory["_60m"][reg_key][i] > regHistory["_60m"][reg_key][max])
+                          max = i;
+                       if (regHistory["_60m"][reg_key][i] < regHistory["_60m"][reg_key][min])
+                          min = i;
+                   }
+                   regHistory["_24h"][reg_key].unshift(regHistory["_60m"][reg_key][((min > max) ? min : max)], regHistory["_60m"][reg_key][((min > max) ? max : min)]);
 
-               if  (regHistory["_24h"][reg_key].length > 120)
-                 regHistory["_24h"][reg_key].splice(-2, 2);  // remove the last 2 element
-            }
-        });
-        regHistory["count_60m"] = ((regHistory["count_60m"] >= 12) ? 0 : regHistory["count_60m"]+1);
-        regHistory["count_24h"] = ((regHistory["count_24h"] >= 288) ? 0 : regHistory["count_24h"]+1);
+                   if  (regHistory["_24h"][reg_key].length > 120)
+                     regHistory["_24h"][reg_key].splice(-2, 2);  // remove the last 2 element
+                }
+            });
+            regHistory["count_60m"] = ((regHistory["count_60m"] >= 12) ? 0 : regHistory["count_60m"]+1);
+            regHistory["count_24h"] = ((regHistory["count_24h"] >= 288) ? 0 : regHistory["count_24h"]+1);
 
-        if (printToScreen)
-           UpdateRegistersColor();
+            if (printToScreen)
+               UpdateRegistersColor();
+          }
+          catch(err){
+              console.log("Error in UpdateRegisters" + err)
+          }
     }});
 }
 //*****************************************************************************
@@ -3161,99 +3166,104 @@ function GetBaseStatus()
     $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
         processAjaxSuccess();
 
-        myGenerator['ExerciseDay'] = result['ExerciseInfo']['Day'];
-        myGenerator['ExerciseHour'] = result['ExerciseInfo']['Hour'];
-        myGenerator['ExerciseMinute'] = result['ExerciseInfo']['Minute'];
-        myGenerator['QuietMode'] = result['ExerciseInfo']['QuietMode'];
-        myGenerator['ExerciseFrequency'] = result['ExerciseInfo']['Frequency'];
-        myGenerator['EnhancedExerciseEnabled'] = ((result['ExerciseInfo']['EnhancedExerciseMode'] === "False") ? false : true);
+        try {
+          myGenerator['ExerciseDay'] = result['ExerciseInfo']['Day'];
+          myGenerator['ExerciseHour'] = result['ExerciseInfo']['Hour'];
+          myGenerator['ExerciseMinute'] = result['ExerciseInfo']['Minute'];
+          myGenerator['QuietMode'] = result['ExerciseInfo']['QuietMode'];
+          myGenerator['ExerciseFrequency'] = result['ExerciseInfo']['Frequency'];
+          myGenerator['EnhancedExerciseEnabled'] = ((result['ExerciseInfo']['EnhancedExerciseMode'] === "False") ? false : true);
 
-        myGenerator['MonitorTime'] = result['MonitorTime'];
-        myGenerator['RunHours'] = result['RunHours'];
+          myGenerator['MonitorTime'] = result['MonitorTime'];
+          myGenerator['RunHours'] = result['RunHours'];
 
 
-        if ((menuElement == "status") && (gauge.length > 0)) {
-           for (var i = 0; i < result.tiles.length; ++i) {
-             switch (myGenerator["tiles"][i].type) {
-                case "gauge":
-                   gauge[i].set(result.tiles[i].value);
-                   $("#text"+i).html(result.tiles[i].text);
-                   break;
-                case "graph":
-                   if (kwHistory["data"].length > 0) { /// Otherwise initialization has not finished
+          if ((menuElement == "status") && (gauge.length > 0)) {
+             for (var i = 0; i < result.tiles.length; ++i) {
+               switch (myGenerator["tiles"][i].type) {
+                  case "gauge":
+                     gauge[i].set(result.tiles[i].value);
+                     $("#text"+i).html(result.tiles[i].text);
+                     break;
+                  case "graph":
+                     if (kwHistory["data"].length > 0) { /// Otherwise initialization has not finished
 
-                      if ((result.tiles[i].value != 0) && (kwHistory["data"][0][1] == 0)) {
-                         // make sure we add a 0 before the graph goes up, to ensure the interpolation works
-                         kwHistory["data"].unshift([(new moment()).add(-2, "s").format("YYYY-MM-DD HH:mm:ss"), 0]);
-                      }
+                        if ((result.tiles[i].value != 0) && (kwHistory["data"][0][1] == 0)) {
+                           // make sure we add a 0 before the graph goes up, to ensure the interpolation works
+                           kwHistory["data"].unshift([(new moment()).add(-2, "s").format("YYYY-MM-DD HH:mm:ss"), 0]);
+                        }
 
-                      if ((result.tiles[i].value != 0) || (kwHistory["data"][0][1] != 0)) {
-                         kwHistory["data"].unshift([(new moment()).format("YYYY-MM-DD HH:mm:ss"), result.tiles[i].value]);
-                      }
-                      if  (kwHistory["data"].length > 10000) {
-                         var removed = kwHistory["data"].pop  // remove the last element
-                      }
+                        if ((result.tiles[i].value != 0) || (kwHistory["data"][0][1] != 0)) {
+                           kwHistory["data"].unshift([(new moment()).format("YYYY-MM-DD HH:mm:ss"), result.tiles[i].value]);
+                        }
+                        if  (kwHistory["data"].length > 10000) {
+                           var removed = kwHistory["data"].pop  // remove the last element
+                        }
 
-                      if ((menuElement == "status") && (myGenerator["PowerGraph"] == true)) {
-                         printKwPlot(result.tiles[i].value);
-                      }
-                   }
-                   break;
+                        if ((menuElement == "status") && (myGenerator["PowerGraph"] == true)) {
+                           printKwPlot(result.tiles[i].value);
+                        }
+                     }
+                     break;
+               }
              }
-           }
-        }
+          }
 
-        if (result['SystemHealth'].toUpperCase() != "OK") {
-          myGenerator['SystemHealth'] = true;
-          var tempMsg = '<b><span style="font-size:14px">GENMON SYSTEM WARNING</span></b><br>'+result['SystemHealth'];
-          $("#footer").addClass("alert");
-          $("#ajaxWarning").show(400);
-          $('#ajaxWarning').tooltipster('content', tempMsg);
-        } else if (result['UnsentFeedback'].toLowerCase() == "true") {
-          myGenerator['UnsentFeedback'] = true;
-          var tempMsg = '<b><span style="font-size:14px">UNKNOWN ERROR OCCURED</span></b><br>The software had encountered unknown status from<br>your generator.<br>This status could be used to improve the software.<br>To send the contents of your generator registers to<br>the software developer please enable "Auto Feedback"<br>on the Settings page.';
-          $("#footer").addClass("alert");
-          $("#ajaxWarning").show(400);
-          $('#ajaxWarning').tooltipster('content', tempMsg);
-        } else { // Note - this claus only get's executed if the ajax connection worked. Hence no need to check ajaxErrors["errorCount"]
-          myGenerator['UnsentFeedback'] = false;
-          myGenerator['SystemHealth'] = false;
-          $("#footer").removeClass("alert");
-          $("#ajaxWarning").hide(400);
-        }
+          if (result['SystemHealth'].toUpperCase() != "OK") {
+            myGenerator['SystemHealth'] = true;
+            var tempMsg = '<b><span style="font-size:14px">GENMON SYSTEM WARNING</span></b><br>'+result['SystemHealth'];
+            $("#footer").addClass("alert");
+            $("#ajaxWarning").show(400);
+            $('#ajaxWarning').tooltipster('content', tempMsg);
+          } else if (result['UnsentFeedback'].toLowerCase() == "true") {
+            myGenerator['UnsentFeedback'] = true;
+            var tempMsg = '<b><span style="font-size:14px">UNKNOWN ERROR OCCURED</span></b><br>The software had encountered unknown status from<br>your generator.<br>This status could be used to improve the software.<br>To send the contents of your generator registers to<br>the software developer please enable "Auto Feedback"<br>on the Settings page.';
+            $("#footer").addClass("alert");
+            $("#ajaxWarning").show(400);
+            $('#ajaxWarning').tooltipster('content', tempMsg);
+          } else { // Note - this claus only get's executed if the ajax connection worked. Hence no need to check ajaxErrors["errorCount"]
+            myGenerator['UnsentFeedback'] = false;
+            myGenerator['SystemHealth'] = false;
+            $("#footer").removeClass("alert");
+            $("#ajaxWarning").hide(400);
+          }
 
-        switchState = result['switchstate'];
-        baseState = result['basestatus'];
-        // active, activealarm, activeexercise
-        if (baseState != currentbaseState) {
+          switchState = result['switchstate'];
+          baseState = result['basestatus'];
+          // active, activealarm, activeexercise
+          if (baseState != currentbaseState) {
 
-            // it changed so remove the old class
-            RemoveClass();
+              // it changed so remove the old class
+              RemoveClass();
 
-            if(baseState === "READY")
-                currentClass = "active";
-            if(baseState === "ALARM")
-                currentClass = "activealarm";
-            if(baseState === "EXERCISING")
-                currentClass = "activeexercise";
-            if(baseState === "RUNNING")
-                currentClass = "activerun";
-            if(baseState === "RUNNING-MANUAL")
-                currentClass = "activerunmanual";
-            if(baseState === "SERVICEDUE")
-                currentClass = "activeservice";
-            if(baseState === "OFF")
-                currentClass = "activeoff";
-            if(baseState === "MANUAL")
-                currentClass = "activemanual";
+              if(baseState === "READY")
+                  currentClass = "active";
+              if(baseState === "ALARM")
+                  currentClass = "activealarm";
+              if(baseState === "EXERCISING")
+                  currentClass = "activeexercise";
+              if(baseState === "RUNNING")
+                  currentClass = "activerun";
+              if(baseState === "RUNNING-MANUAL")
+                  currentClass = "activerunmanual";
+              if(baseState === "SERVICEDUE")
+                  currentClass = "activeservice";
+              if(baseState === "OFF")
+                  currentClass = "activeoff";
+              if(baseState === "MANUAL")
+                  currentClass = "activemanual";
 
-            currentbaseState = baseState;
-            // Added active to selected class
-            $("#"+menuElement).find("a").addClass(GetCurrentClass());
-        }
+              currentbaseState = baseState;
+              // Added active to selected class
+              $("#"+menuElement).find("a").addClass(GetCurrentClass());
+          }
 
-        prevStatusValues = result;
-        return
+          prevStatusValues = result;
+          return
+    }
+    catch(err){
+      console.log("Error in GetBaseStatus: " + err);
+    }
    }});
 
    return
