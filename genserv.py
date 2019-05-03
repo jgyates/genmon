@@ -650,11 +650,11 @@ def GetAddOns():
 
         # GENEXERCISE
         ControllerInfo = GetControllerInfo("controller").lower()
-        if "evolution" in ControllerInfo:
+        if "evolution" in ControllerInfo or "nexus" in ControllerInfo:
             AddOnCfg['genexercise'] = collections.OrderedDict()
             AddOnCfg['genexercise']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "genexercise", default = False)
-            AddOnCfg['genexercise']['title'] = "Evolution Enhanced Exercise"
-            AddOnCfg['genexercise']['description'] = "Add additional exercise cycles with new functionality for Evolution Controllers"
+            AddOnCfg['genexercise']['title'] = "Enhanced Exercise"
+            AddOnCfg['genexercise']['description'] = "Add additional exercise cycles with new functionality for Evolution/Nexus Controllers"
             AddOnCfg['genexercise']['icon'] = "selftest"
             AddOnCfg['genexercise']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genexercisepy-optional"
             AddOnCfg['genexercise']['parameters'] = collections.OrderedDict()

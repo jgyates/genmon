@@ -3633,11 +3633,11 @@ class Evolution(GeneratorController):
             StartInfo["FuelSensor"] = self.FuelSensorSupported()
             StartInfo["FuelConsumption"] = self.FuelConsumptionSupported()
             StartInfo["UtilityVoltage"] = True
-            StartInfo["RemoteCommands"] = not self.SmartSwitch
+            StartInfo["RemoteCommands"] = not self.SmartSwitch  # Start and Stop
             StartInfo["ResetAlarms"] = self.EvolutionController and self.LiquidCooled
             StartInfo["AckAlarms"] = False
-            StartInfo["RemoteTransfer"] = self.EvolutionController
-            StartInfo["RemoteButtons"] = self.RemoteButtonsSupported()
+            StartInfo["RemoteTransfer"] = not self.SmartSwitch      # Start / Transfer
+            StartInfo["RemoteButtons"] = self.RemoteButtonsSupported()  # On, Off , Auto
             StartInfo["ExerciseControls"] = not self.SmartSwitch
             StartInfo["WriteQuietMode"] = self.EvolutionController and self.LiquidCooled
 

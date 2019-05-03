@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #-------------------------------------------------------------------------------
 #    FILE: genexercise.py
-# PURPOSE: genexercise.py add enhanced exercise functionality for Evolution cotrollers
+# PURPOSE: genexercise.py add enhanced exercise functionality for Evolution and Nexus cotrollers
 #
 #  AUTHOR: jgyates
 #    DATE: 02-23-2019
@@ -163,8 +163,8 @@ class GenExercise(MySupport):
             data = self.SendCommand("generator: start_info_json")
             StartInfo = {}
             StartInfo = json.loads(data)
-            if not "evolution" in StartInfo["Controller"].lower():
-                self.LogError("Error: Only Evolution Controllers is supported for this feature: " + StartInfo["Controller"])
+            if not "evolution" in StartInfo["Controller"].lower() and not "nexus" in StartInfo["Controller"].lower():
+                self.LogError("Error: Only Evolution or Nexus controllers are supported for this feature: " + StartInfo["Controller"])
                 return False
             return True
         except Exception as e1:
