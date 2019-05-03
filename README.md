@@ -60,7 +60,7 @@ The software supports the following features:
 - MQTT integration for third party home automation support
 - Service Journal for logging maintenance, repair, etc
 - Backup configuration files
-- Enhanced Exercise options for Evolution controller (Exercise Transfer Switch)
+- Enhanced Exercise options for Evolution/Nexus controller (Exercise Transfer Switch)
 
 ![Generator Monitor Web Interface](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/Web_UI_Status.png)
 
