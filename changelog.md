@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
 ## V1.13.06 - 2019-05-03
+- Fixed bug in genexercise.py that prevented a "Start/Transfer" exercise cycle from stoping
+
+## V1.13.06 - 2019-05-03
 - Fixed problem with Nexus controllers not properly showing "Start and Transfer" button in web interface
 - Modified Enhanced Exercise add on program to support Nexus controllers
 

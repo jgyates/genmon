@@ -2378,6 +2378,9 @@ function updateSoftware(){
        url: url,
        dataType: "json",
        timeout: 0,
+       headers: {
+          "Cache-Control": "no-cache"
+        },
        success: function(results){
              /// THIS IS NOT AN EXPECTED RESPONSE!!! genserv.py is expected to restart on it's own before returning a valid value;
              vex.closeAll();
