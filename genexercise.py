@@ -116,6 +116,7 @@ class GenExercise(MySupport):
                 self.LogError("Requirements not met. Exiting.")
                 sys.exit(1)
 
+            self.LogError(str(self.GetGeneratorTime()))
             # start thread monitor time for exercise
             self.Threads["ExerciseThread"] = MyThread(self.ExerciseThread, Name = "ExerciseThread", start = False)
             self.Threads["ExerciseThread"].Start()
@@ -291,6 +292,7 @@ class GenExercise(MySupport):
     # ---------- GenExercise::GetGeneratorTime----------------------------------
     def GetGeneratorTime(self):
         try:
+            GenTimeStr = ""
             data = self.SendCommand("generator: status_json")
             Status = {}
             Status = json.loads(data)
@@ -299,7 +301,7 @@ class GenExercise(MySupport):
                 TimeDictStr = self.FindDictValueInListByKey("Generator Time", TimeDict)
                 if TimeDictStr != None:
                     GenTimeStr = TimeDictStr
-                    # Format is "Wednesday March 6, 2019 13:10"
+                    # Format is "Wednesday March 6, 2019 13:10" or " "Friday May 3, 2019 11:11"
                     GenTime = datetime.datetime.strptime(GenTimeStr, "%A %B %d, %Y %H:%M")
                 else:
                     self.LogError("Error getting generator time!")
@@ -309,7 +311,7 @@ class GenExercise(MySupport):
                 GenTime = datetime.datetime.now()
             return GenTime
         except Exception as e1:
-            self.LogErrorLine("Error in GetGeneratorTime: " + str(e1))
+            self.LogErrorLine("Error in GetGeneratorTime: " + str(e1) + ": " + GenTimeStr)
             return datetime.datetime.now()
     # ---------- GenExercise::ExerciseThread------------------------------------
     def ExerciseThread(self):
