@@ -20,6 +20,7 @@ except ImportError as e:
     from configparser import RawConfigParser
 
 from genmonlib.mycommon import MyCommon
+from genmonlib.program_defaults import ProgramDefaults
 
 class MyConfig (MyCommon):
     #---------------------MyConfig::__init__------------------------------------

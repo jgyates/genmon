@@ -13,7 +13,7 @@
 from __future__ import print_function       # For python 3.x compatibility with print function
 
 import datetime, time, sys, signal, os, threading, socket
-import atexit, json, collections, random
+import atexit, json, collections, random, getopt
 import re
 from subprocess import PIPE, Popen
 
@@ -27,26 +27,28 @@ try:
     from genmonlib.generac_evolution import Evolution
     from genmonlib.generac_HPanel import HPanel
     from genmonlib.myweather import MyWeather
+    from genmonlib.program_defaults import ProgramDefaults
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.13.07"
+GENMON_VERSION = "V1.13.08"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(MySupport):
 
-    def __init__(self, ConfigFilePath = None):
+    def __init__(self, ConfigFilePath = ProgramDefaults.ConfPath):
         super(Monitor, self).__init__()
+
         self.ProgramName = "Generator Monitor"
         self.Version = "Unknown"
         self.log = None
         self.IsStopping = False
         self.ProgramComplete = False
-        if ConfigFilePath == None:
-            self.ConfigFilePath = "/etc/"
+        if ConfigFilePath == None or ConfigFilePath == "":
+            self.ConfigFilePath = ProgramDefaults.ConfPath
         else:
             self.ConfigFilePath = ConfigFilePath
 
@@ -54,12 +56,12 @@ class Monitor(MySupport):
         # defautl values
         self.SiteName = "Home"
         self.ServerSocket = None
-        self.ServerSocketPort = 9082    # server socket for nagios heartbeat and command/status
+        self.ServerSocketPort = ProgramDefaults.ServerPort    # server socket for nagios heartbeat and command/status
         self.IncomingEmailFolder = "Generator"
         self.ProcessedEmailFolder = "Generator/Processed"
 
-        self.FeedbackLogFile = os.path.dirname(os.path.realpath(__file__)) + "/feedback.json"
-        self.LogLocation = "/var/log/"
+        self.FeedbackLogFile = self.ConfigFilePath + "feedback.json"
+        self.LogLocation = ProgramDefaults.LogPath
         self.LastLogFileSize = 0
         self.NumberOfLogSizeErrors = 0
         # set defaults for optional parameters
@@ -103,9 +105,6 @@ class Monitor(MySupport):
             self.LogConsole("Missing config file : " + self.ConfigFilePath + 'mymail.conf')
             sys.exit(1)
 
-        # log errors in this module to a file
-        self.log = SetupLogger("genmon", self.LogLocation + "genmon.log")
-
         self.config = MyConfig(filename = self.ConfigFilePath + 'genmon.conf', section = "GenMon", log = self.console)
         # read config file
         if not self.GetConfig():
@@ -137,13 +136,18 @@ class Monitor(MySupport):
         self.Threads["InterfaceServerThread"] = MyThread(self.InterfaceServerThread, Name = "InterfaceServerThread")
 
         # init mail, start processing incoming email
-        self.mail = MyMail(monitor=True, incoming_folder = self.IncomingEmailFolder, processed_folder =self.ProcessedEmailFolder,incoming_callback = self.ProcessCommand)
+        self.mail = MyMail(monitor=True, incoming_folder = self.IncomingEmailFolder,
+            processed_folder =self.ProcessedEmailFolder,incoming_callback = self.ProcessCommand,
+            loglocation = self.LogLocation, ConfigFilePath = ConfigFilePath)
+
         self.Threads = self.MergeDicts(self.Threads, self.mail.Threads)
         self.MailInit = True
 
-        self.FeedbackPipe = MyPipe("Feedback", self.FeedbackReceiver, log = self.log)
+        self.FeedbackPipe = MyPipe("Feedback", self.FeedbackReceiver,
+            log = self.log, ConfigFilePath = self.ConfigFilePath)
         self.Threads = self.MergeDicts(self.Threads, self.FeedbackPipe.Threads)
-        self.MessagePipe = MyPipe("Message", self.MessageReceiver, log = self.log, nullpipe = self.mail.DisableSNMP)
+        self.MessagePipe = MyPipe("Message", self.MessageReceiver, log = self.log,
+            nullpipe = self.mail.DisableSNMP, ConfigFilePath = self.ConfigFilePath)
         self.Threads = self.MergeDicts(self.Threads, self.MessagePipe.Threads)
 
         try:
@@ -208,7 +212,7 @@ class Monitor(MySupport):
             if self.config.HasOption('server_port'):
                 self.ServerSocketPort = self.config.ReadValue('server_port', return_type = int)
 
-            self.LogLocation = self.config.ReadValue('loglocation', default = "/var/log/")
+            self.LogLocation = self.config.ReadValue('loglocation', default = ProgramDefaults.LogPath)
 
             if self.config.HasOption('syncdst'):
                 self.bSyncDST = self.config.ReadValue('syncdst', return_type = bool)
@@ -272,7 +276,7 @@ class Monitor(MySupport):
                 except Exception as e1:
                     os.remove(self.FeedbackLogFile)
         except Exception as e1:
-            self.LogErrorLine("Missing config file or config file entries (genmon): " + str(e1))
+            self.Console("Missing config file or config file entries (genmon): " + str(e1))
             return False
 
         return True
@@ -1039,7 +1043,19 @@ class Monitor(MySupport):
 
 #------------------- Command-line interface for monitor ------------------------
 if __name__=='__main__': #
-    ConfigFilePath = None if len(sys.argv)<2 else sys.argv[1]
+
+    try:
+        ConfigFilePath = ProgramDefaults.ConfPath
+        opts, args = getopt.getopt(sys.argv[1:],"c:",["configpath="])
+    except getopt.GetoptError:
+        console.error("Invalid command line argument.")
+        sys.exit(2)
+
+    for opt, arg in opts:
+
+        if opt in ("-c", "--configpath"):
+            ConfigFilePath = arg
+            ConfigFilePath = ConfigFilePath.strip()
 
     #Start things up
     MyMonitor = Monitor(ConfigFilePath = ConfigFilePath)

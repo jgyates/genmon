@@ -12,13 +12,14 @@
 #-------------------------------------------------------------------------------
 
 import datetime, time, sys, signal, os, threading, socket
-import atexit
+import atexit, getopt
 try:
     from genmonlib.mylog import SetupLogger
     from genmonlib.myconfig import MyConfig
     from genmonlib.myclient import ClientInterface
     from genmonlib.mythread import MyThread
     from genmonlib.mysupport import MySupport
+    from genmonlib.program_defaults import ProgramDefaults
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
@@ -139,16 +140,35 @@ def StartTransferCallBack(channel):
         log.error("Error StartTransferCallback: " + str(e1))
 
 #------------------- Command-line interface for gengpioin ----------------------
-if __name__=='__main__': # usage program.py [server_address]
-    address='127.0.0.1' if len(sys.argv)<2 else sys.argv[1]
+if __name__=='__main__':
+    address=ProgramDefaults.LocalHost
 
     try:
         console = SetupLogger("gengpioin_console", log_file = "", stream = True)
-        log = SetupLogger("gengpioin_log", "/var/log/gengpioin.log")
+        HelpStr = '\nsudo python gengpioin.py -a <IP Address or localhost> -c <path to genmon config file>\n'
+        try:
+            ConfigFilePath = ProgramDefaults.ConfPath
+            opts, args = getopt.getopt(sys.argv[1:],"hc:a:",["help","configpath=","address="])
+        except getopt.GetoptError:
+            console.error("Invalid command line argument.")
+            sys.exit(2)
+
+        for opt, arg in opts:
+            if opt == '-h':
+                console.error(HelpStr)
+                sys.exit()
+            elif opt in ("-a", "--address"):
+                address = arg
+            elif opt in ("-c", "--configpath"):
+                ConfigFilePath = arg
+                ConfigFilePath = ConfigFilePath.strip()
+
+        port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
+        log = SetupLogger("client", loglocation + "gengpioin.log")
+
         # Set the signal handler
         signal.signal(signal.SIGINT, signal_handler)
 
-        ConfigFilePath = "/etc/"
         Threads = {}
         UseCallbacks = False
         DefaultTrigger = GPIO.FALLING
@@ -196,7 +216,7 @@ if __name__=='__main__': # usage program.py [server_address]
             Settings += " Trigger Unknown "
 
         log.error("Settings: " + Settings + " bounce = " + str(DefaultBounce))
-        MyClientInterface = ClientInterface(host = address, log = log)
+        MyClientInterface = ClientInterface(host = address, port = port, log = log)
 
         #setup GPIO using Board numbering
         GPIO.setmode(GPIO.BOARD)

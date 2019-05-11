@@ -10,6 +10,8 @@
 
 from __future__ import print_function
 
+import sys, signal, os, socket, atexit, time, subprocess, json, threading, signal, errno, collections, getopt
+
 try:
     from flask import Flask, render_template, request, jsonify, session, send_file
 except Exception as e1:
@@ -17,13 +19,14 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-import sys, signal, os, socket, atexit, time, subprocess, json, threading, signal, errno, collections
 
 try:
     from genmonlib.myclient import ClientInterface
     from genmonlib.mylog import SetupLogger
     from genmonlib.myconfig import MyConfig
     from genmonlib.mymail import MyMail
+    from genmonlib.mysupport import MySupport
+    from genmonlib.program_defaults import ProgramDefaults
 
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the original github repository.\n")
@@ -56,26 +59,26 @@ bUseSecureHTTP = False
 bUseSelfSignedCert = True
 SSLContext = None
 HTTPPort = 8000
-loglocation = "./"
-clientport = 0
+loglocation = ProgramDefaults.LogPath
+clientport = ProgramDefaults.ServerPort
 log = None
 console = None
 AppPath = ""
 favicon = "favicon.ico"
-ConfigFilePath = "/etc/"
-MAIL_CONFIG = "/etc/mymail.conf"
+ConfigFilePath = ProgramDefaults.ConfPath
+MAIL_CONFIG = ConfigFilePath + "mymail.conf"
 MAIL_SECTION = "MyMail"
-GENMON_CONFIG = "/etc/genmon.conf"
+GENMON_CONFIG = ConfigFilePath + "genmon.conf"
 GENMON_SECTION = "GenMon"
-GENLOADER_CONFIG = "/etc/genloader.conf"
-GENSMS_CONFIG = "/etc/gensms.conf"
-MYMODEM_CONFIG = "/etc/mymodem.conf"
-GENPUSHOVER_CONFIG = "/etc/genpushover.conf"
-GENMQTT_CONFIG = "/etc/genmqtt.conf"
-GENSLACK_CONFIG = "/etc/genslack.conf"
-GENGPIOIN_CONFIG = "/etc/gengpioin.conf"
-GENEXERCISE_CONFIG = "/etc/genexercise.conf"
-GENEMAIL2SMS_CONFIG = "/etc/genemail2sms.conf"
+GENLOADER_CONFIG = ConfigFilePath + "genloader.conf"
+GENSMS_CONFIG = ConfigFilePath + "gensms.conf"
+MYMODEM_CONFIG = ConfigFilePath + "mymodem.conf"
+GENPUSHOVER_CONFIG = ConfigFilePath + "genpushover.conf"
+GENMQTT_CONFIG = ConfigFilePath + "genmqtt.conf"
+GENSLACK_CONFIG = ConfigFilePath + "genslack.conf"
+GENGPIOIN_CONFIG = ConfigFilePath + "gengpioin.conf"
+GENEXERCISE_CONFIG = ConfigFilePath + "genexercise.conf"
+GENEMAIL2SMS_CONFIG = ConfigFilePath + "genemail2sms.conf"
 
 Closing = False
 Restarting = False
@@ -964,13 +967,13 @@ def ReadAdvancedSettingsFromFile():
     ConfigSettings =  collections.OrderedDict()
     try:
         # This option is not displayed as it will break the link between genmon and genserv
-        ConfigSettings["server_port"] = ['int', 'Server Port', 5, 9082, "", 0, GENMON_CONFIG, GENMON_SECTION,"server_port"]
+        ConfigSettings["server_port"] = ['int', 'Server Port', 5, ProgramDefaults.ServerPort, "", 0, GENMON_CONFIG, GENMON_SECTION,"server_port"]
         # this option is not displayed as this will break the modbus comms, only for debugging
         ConfigSettings["address"] = ['string', 'Modbus slave address', 6, "9d", "", 0 , GENMON_CONFIG, GENMON_SECTION, "address"]
         ConfigSettings["response_address"] = ['string', 'Modbus slave transmit address', 6, "", "", 0 , GENMON_CONFIG, GENMON_SECTION, "response_address"]
         ConfigSettings["additional_modbus_timeout"] = ['float', 'Additional Modbus Timeout (sec)', 7, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "additional_modbus_timeout"]
         ConfigSettings["controllertype"] = ['list', 'Controller Type', 8, "generac_evo_nexus", "", "generac_evo_nexus,h_100", GENMON_CONFIG, GENMON_SECTION, "controllertype"]
-        ConfigSettings["loglocation"] = ['string', 'Log Directory',9, "/var/log/", "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "loglocation"]
+        ConfigSettings["loglocation"] = ['string', 'Log Directory',9, ProgramDefaults.LogPath, "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "loglocation"]
         ConfigSettings["enabledebug"] = ['boolean', 'Enable Debug', 10, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "enabledebug"]
         # These settings are not displayed as the auto-detect controller will set these
         # these are only to be used to override the auto-detect
@@ -1311,13 +1314,13 @@ def Restart():
     global Restarting
 
     Restarting = True
-    if not RunBashScript("startgenmon.sh restart"):
+    if not RunBashScript("startgenmon.sh restart " + ConfigFilePath):
         LogError("Error in Restart")
 
 #-------------------------------------------------------------------------------
 def Update():
     # update
-    if not RunBashScript("genmonmaint.sh updatenp"):   # update no prompt
+    if not RunBashScript("genmonmaint.sh -u -n"):   # update no prompt
         LogError("Error in Update")
     # now restart
     Restart()
@@ -1325,7 +1328,7 @@ def Update():
 #-------------------------------------------------------------------------------
 def Backup():
     # update
-    if not RunBashScript("genmonmaint.sh backup"):   # update no prompt
+    if not RunBashScript("genmonmaint.sh -b -c " + ConfigFilePath):   # backup
         LogError("Error in Backup")
 
 #-------------------------------------------------------------------------------
@@ -1425,7 +1428,7 @@ def LoadConfig():
 
         # heartbeat server port, must match value in check_generator_system.py and any calling client apps
         if ConfigFiles[GENMON_CONFIG].HasOption('server_port'):
-            clientport = ConfigFiles[GENMON_CONFIG].ReadValue('server_port', return_type = int, default = 0)
+            clientport = ConfigFiles[GENMON_CONFIG].ReadValue('server_port', return_type = int, default = ProgramDefaults.ServerPort)
 
         if ConfigFiles[GENMON_CONFIG].HasOption('loglocation'):
             loglocation = ConfigFiles[GENMON_CONFIG].ReadValue('loglocation')
@@ -1542,18 +1545,47 @@ def Close(NoExit = False):
 
 #-------------------------------------------------------------------------------
 if __name__ == "__main__":
-    address='localhost' if len(sys.argv) <=2 else sys.argv[1]
 
-    ConfigFilePath='/etc/' if len(sys.argv) <=3 else sys.argv[2]
+    address=ProgramDefaults.LocalHost
+    ConfigFilePath='/etc/'
 
+    # log errors in this module to a file
+    console = SetupLogger("genserv_console", log_file = "", stream = True)
 
+    HelpStr = '\nsudo python genserv.py -a <IP Address or localhost> -c <path to genmon config file>\n'
+
+    try:
+        ConfigFilePath = ProgramDefaults.ConfPath
+        opts, args = getopt.getopt(sys.argv[1:],"hc:a:",["help","configpath=","address="])
+    except getopt.GetoptError:
+        console.error("Invalid command line argument.")
+        sys.exit(2)
+
+    for opt, arg in opts:
+        if opt == '-h':
+            console.error(HelpStr)
+            sys.exit()
+        elif opt in ("-a", "--address"):
+            address = arg
+        elif opt in ("-c", "--configpath"):
+            ConfigFilePath = arg
+            ConfigFilePath = ConfigFilePath.strip()
     # NOTE: signal handler is not compatible with the exception handler around app.run()
     #atexit.register(Close)
     #signal.signal(signal.SIGTERM, Close)
     #signal.signal(signal.SIGINT, Close)
 
-    # log errors in this module to a file
-    console = SetupLogger("genserv_console", log_file = "", stream = True)
+    MAIL_CONFIG = ConfigFilePath + "mymail.conf"
+    GENMON_CONFIG = ConfigFilePath + "genmon.conf"
+    GENLOADER_CONFIG = ConfigFilePath + "genloader.conf"
+    GENSMS_CONFIG = ConfigFilePath + "gensms.conf"
+    MYMODEM_CONFIG = ConfigFilePath + "mymodem.conf"
+    GENPUSHOVER_CONFIG = ConfigFilePath + "genpushover.conf"
+    GENMQTT_CONFIG = ConfigFilePath + "genmqtt.conf"
+    GENSLACK_CONFIG = ConfigFilePath + "genslack.conf"
+    GENGPIOIN_CONFIG = ConfigFilePath + "gengpioin.conf"
+    GENEXERCISE_CONFIG = ConfigFilePath + "genexercise.conf"
+    GENEMAIL2SMS_CONFIG = ConfigFilePath + "genemail2sms.conf"
 
     if os.geteuid() != 0:
         LogConsole("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'.")
@@ -1579,7 +1611,6 @@ if __name__ == "__main__":
         ConfigFiles[ConfigFile].log = log
 
     LogError("Starting " + AppPath + ", Port:" + str(HTTPPort) + ", Secure HTTP: " + str(bUseSecureHTTP) + ", SelfSignedCert: " + str(bUseSelfSignedCert))
-
     # validate needed files are present
     filename = os.path.dirname(os.path.realpath(__file__)) + "/startgenmon.sh"
     if not os.path.isfile(filename):
@@ -1594,7 +1625,7 @@ if __name__ == "__main__":
     startcount = 0
     while startcount <= 4:
         try:
-            MyClientInterface = ClientInterface(host = address,port=clientport, log = log)
+            MyClientInterface = ClientInterface(host = address, port = clientport, log = log)
             break
         except Exception as e1:
             startcount += 1

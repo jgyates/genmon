@@ -13,12 +13,14 @@ from genmonlib.mycommon import MyCommon
 from genmonlib.mylog import SetupLogger
 from genmonlib.mythread import MyThread
 from genmonlib.myclient import ClientInterface
+from genmonlib.program_defaults import ProgramDefaults
 #----------  GenNotify::init--- ------------------------------------------------
 class GenNotify(MyCommon):
     def __init__(self,
-                host="127.0.0.1",
-                port=9082,
+                host=ProgramDefaults.LocalHost,
+                port=ProgramDefaults.ServerPort,
                 log = None,
+                loglocation = ProgramDefaults.LogPath,
                 onready = None,
                 onexercise = None,
                 onrun = None,
@@ -42,7 +44,7 @@ class GenNotify(MyCommon):
             self.log = log
         else:
             # log errors in this module to a file
-            self.log = SetupLogger("client", "/var/log/myclient.log")
+            self.log = SetupLogger("client", loglocation + "myclient.log")
 
         self.console = SetupLogger("notify_console", log_file = "", stream = True)
         try:
@@ -69,7 +71,7 @@ class GenNotify(MyCommon):
             startcount = 0
             while startcount <= 10:
                 try:
-                    self.Generator = ClientInterface(host = host, log = log)
+                    self.Generator = ClientInterface(host = host, port = port, log = log, loglocation = loglocation)
                     break
                 except Exception as e1:
                     startcount += 1

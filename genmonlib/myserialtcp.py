@@ -16,12 +16,13 @@ import datetime, threading, sys, socket, time
 from genmonlib.mysupport import MySupport
 from genmonlib.mylog import SetupLogger
 from genmonlib.mythread import MyThread
+from genmonlib.program_defaults import ProgramDefaults
 
 #------------ SerialTCPDevice class --------------------------------------------
 class SerialTCPDevice(MySupport):
     def __init__(self,
         log = None,
-        host = "127.0.0.1",
+        host = ProgramDefaults.LocalHost,
         port = 8899,
         config = None):
 

@@ -16,6 +16,7 @@ import datetime, threading, crcmod, sys, time, collections
 from genmonlib.modbusbase import ModbusBase
 from genmonlib.myserial import SerialDevice
 from genmonlib.myserialtcp import SerialTCPDevice
+from genmonlib.program_defaults import ProgramDefaults
 
 #--------------------- MODBUS specific Const defines for Generator class--------
 # Packet offsets

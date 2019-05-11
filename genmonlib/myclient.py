@@ -11,16 +11,17 @@ import datetime, time, sys, smtplib, signal, os, threading, socket
 
 from genmonlib.mycommon import MyCommon
 from genmonlib.mylog import SetupLogger
+from genmonlib.program_defaults import ProgramDefaults
 
 #----------  ClientInterface::init--- ------------------------------------------
 class ClientInterface(MyCommon):
-    def __init__(self, host="127.0.0.1", port=9082, log = None):
+    def __init__(self, host=ProgramDefaults.LocalHost, port=ProgramDefaults.ServerPort, log = None, loglocation = ProgramDefaults.LogPath):
         super(ClientInterface, self).__init__()
         if log != None:
             self.log = log
         else:
             # log errors in this module to a file
-            self.log = SetupLogger("client", "/var/log/myclient.log")
+            self.log = SetupLogger("client", loglocation+ "myclient.log")
 
         self.console = SetupLogger("client_console", log_file = "", stream = True)
 

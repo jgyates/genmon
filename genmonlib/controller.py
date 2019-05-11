@@ -19,6 +19,7 @@ import threading, datetime, collections, os, time, json
 
 from genmonlib.mysupport import MySupport
 from genmonlib.mythread import MyThread
+from genmonlib.program_defaults import ProgramDefaults
 
 class GeneratorController(MySupport):
     #---------------------GeneratorController::__init__-------------------------
@@ -29,7 +30,8 @@ class GeneratorController(MySupport):
         simulationfile = None,
         message = None,
         feedback = None,
-        config = None):
+        config = None,
+        ConfigFilePath = ProgramDefaults.ConfPath):
 
         super(GeneratorController, self).__init__(simulation = simulation)
         self.log = log
@@ -51,12 +53,12 @@ class GeneratorController(MySupport):
         self.NotChanged = 0         # stats for registers
         self.Changed = 0            # stats for registers
         self.TotalChanged = 0.0     # ratio of changed ragisters
-        self.MaintLog =  os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/maintlog.json"
+        self.MaintLog =  ConfigFilePath + "maintlog.json"
         self.MaintLogList = []
         self.MaintLock = threading.RLock()
-        self.OutageLog = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/outage.txt"
+        self.OutageLog = ConfigFilePath + "outage.txt"
         self.PowerLogMaxSize = 15       # 15 MB max size
-        self.PowerLog =  os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/kwlog.txt"
+        self.PowerLog =  ConfigFilePath + "kwlog.txt"
         self.PowerLogList = []
         self.PowerLock = threading.RLock()
         self.KWHoursMonth = None

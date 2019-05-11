@@ -11,10 +11,12 @@
 #-------------------------------------------------------------------------------
 
 import datetime, time, sys, signal, os, threading, socket, json
-import atexit
+import atexit, getopt
 try:
     from genmonlib.mylog import SetupLogger
     from genmonlib.myclient import ClientInterface
+    from genmonlib.mysupport import MySupport
+    from genmonlib.program_defaults import ProgramDefaults
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
@@ -33,16 +35,36 @@ def signal_handler(signal, frame):
 
 #------------------- Command-line interface for gengpio ------------------------
 if __name__=='__main__': # usage program.py [server_address]
-    address='127.0.0.1' if len(sys.argv)<2 else sys.argv[1]
+    address=ProgramDefaults.LocalHost
 
 
     try:
-        log = SetupLogger("client", "/var/log/gengpio.log")
         console = SetupLogger("gengpio_console", log_file = "", stream = True)
+        HelpStr = '\nsudo python gengpio.py -a <IP Address or localhost> -c <path to genmon config file>\n'
+        try:
+            ConfigFilePath = ProgramDefaults.ConfPath
+            opts, args = getopt.getopt(sys.argv[1:],"hc:a:",["help","configpath=","address="])
+        except getopt.GetoptError:
+            console.error("Invalid command line argument.")
+            sys.exit(2)
+
+        for opt, arg in opts:
+            if opt == '-h':
+                console.error(HelpStr)
+                sys.exit()
+            elif opt in ("-a", "--address"):
+                address = arg
+            elif opt in ("-c", "--configpath"):
+                ConfigFilePath = arg
+                ConfigFilePath = ConfigFilePath.strip()
+
+        port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
+        log = SetupLogger("client", loglocation + "gengpio.log")
+
         # Set the signal handler
         signal.signal(signal.SIGINT, signal_handler)
 
-        MyClientInterface = ClientInterface(host = address, log = log)
+        MyClientInterface = ClientInterface(host = address, port = port, log = log)
 
         #setup GPIO using Board numbering
         GPIO.setmode(GPIO.BOARD)

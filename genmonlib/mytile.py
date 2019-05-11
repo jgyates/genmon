@@ -14,6 +14,7 @@
 #-------------------------------------------------------------------------------
 
 from genmonlib.mycommon import MyCommon
+from genmonlib.program_defaults import ProgramDefaults
 
 # See http://bernii.github.io/gauge.js/ for gauage paraeters
 class MyTile (MyCommon):

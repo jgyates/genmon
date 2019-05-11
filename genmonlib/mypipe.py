@@ -13,11 +13,12 @@ import os, sys, time, json, threading
 
 from genmonlib.mysupport import MySupport
 from genmonlib.mythread import MyThread
+from genmonlib.program_defaults import ProgramDefaults
 
 #------------ MyPipe class -----------------------------------------------------
 class MyPipe(MySupport):
     #------------ MyPipe::init--------------------------------------------------
-    def __init__(self, name, callback = None, Reuse = False, log = None, simulation = False, nullpipe = False):
+    def __init__(self, name, callback = None, Reuse = False, log = None, simulation = False, nullpipe = False, ConfigFilePath = ProgramDefaults.ConfPath):
         super(MyPipe, self).__init__(simulation = simulation)
         self.log = log
         self.BasePipeName = name
@@ -31,7 +32,7 @@ class MyPipe(MySupport):
 
         self.FileAccessLock = threading.RLock()
 
-        self.FileName = os.path.dirname(os.path.realpath(__file__)) + "/" + self.BasePipeName + "_dat"
+        self.FileName = ConfigFilePath + self.BasePipeName + "_dat"
 
         try:
             if not Reuse:

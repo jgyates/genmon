@@ -22,6 +22,7 @@ from genmonlib.controller import GeneratorController
 from genmonlib.mytile import MyTile
 from genmonlib.modbus_file import ModbusFile
 from genmonlib.mymodbus import ModbusProtocol
+from genmonlib.program_defaults import ProgramDefaults
 
 #-------------------Generator specific const defines for Generator class--------
 LOG_DEPTH               = 50
@@ -2246,7 +2247,9 @@ class Evolution(GeneratorController):
         0x0a : "Under Voltage",              #  Validated on Nexus AC
         0x0B : "Low Cooling Fluid",          # Validated on Nexus Liquid Cooled
         0x0C : "Canbus Error",               # Validated on Nexus Liquid Cooled
+        0x0D : "Missing Cam Pulse",          # Validate on Nexus Liquid Cooled
         0x0F : "Govenor Fault",              # Validated on Nexus Liquid Cooled
+        0x10 : "Ignition Fault",             # Validate on Nexus Liquid Cooled
         0x14 : "Low Battery",                # Validated on Nexus Air Cooled
         0x16 : "Change Oil & Filter",        # Validated on Nexus Air Cooled
         0x17 : "Inspect Air Filter",         # Validated on Nexus Air Cooled

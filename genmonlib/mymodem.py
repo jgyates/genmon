@@ -18,16 +18,17 @@ from genmonlib.myconfig import MyConfig
 from genmonlib.mysupport import MySupport
 from genmonlib.mylog import SetupLogger
 from genmonlib.mythread import MyThread
+from genmonlib.program_defaults import ProgramDefaults
 
 #------------ MyModem class ----------------------------------------------------
 class MyModem(MySupport):
     def __init__(self,
             port = "/dev/ttyAMA0" ,
             rate = 115200,
-            loglocation = "/var/log/",
+            loglocation = ProgramDefaults.LogPath,
             log = None,
             localinit = False,
-            ConfigFilePath = None,
+            ConfigFilePath = ProgramDefaultsConfPath,
             recipient = None):
         super(MyModem, self).__init__()
 
@@ -39,7 +40,7 @@ class MyModem(MySupport):
         self.SendQueue = []
 
         if ConfigFilePath == None:
-            self.ConfigFilePath = "/etc/"
+            self.ConfigFilePath = ProgramDefaults.ConfPath
         else:
             self.ConfigFilePath = ConfigFilePath
 
@@ -97,7 +98,7 @@ class MyModem(MySupport):
         self.InitComplete = False
 
         try:
-            self.SerialDevice = SerialDevice(port, rate = rate, loglocation = loglocation, log = self.log)
+            self.SerialDevice = SerialDevice(port, rate = rate, log = self.log, loglocation = loglocation)
             self.Threads = self.MergeDicts(self.Threads, self.SerialDevice.Threads)
 
             self.Threads["SendMessageThread"] = MyThread(self.SendMessageThread, Name = "SendMessageThread")
@@ -577,10 +578,10 @@ class LTEPiHat(MyModem):
     def __init__(self,
         port = "/dev/ttyAMA0" ,
         rate=115200,
-        loglocation = "/var/log/",
+        loglocation = ProgramDefaults.LogPath,
         log = None,
         localinit = False,
-        ConfigFilePath = None,
+        ConfigFilePath = ProgramDefaults.ConfPath,
         recipient = None):
 
         # call parent constructor

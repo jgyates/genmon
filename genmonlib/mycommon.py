@@ -11,14 +11,17 @@
 
 import os, sys, time, json
 
+from genmonlib.program_defaults import ProgramDefaults
+
 #------------ MyCommon class -----------------------------------------------------
 class MyCommon(object):
+    DefaultConfPath = ProgramDefaults.ConfPath
     def __init__(self):
         self.log = None
         self.console = None
         self.Threads = {}       # Dict of mythread objects
         self.MaintainerAddress = "generatormonitor.software@gmail.com"
-        pass
+
     #------------ MyCommon::StripJson ------------------------------------------
     def StripJson(self, InputString):
         for char in '{}[]"':

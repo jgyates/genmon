@@ -13,6 +13,8 @@ import os, sys, time, collections, threading, socket, json
 
 from genmonlib.myplatform import MyPlatform
 from genmonlib.mycommon import MyCommon
+from genmonlib.myconfig import MyConfig
+from genmonlib.program_defaults import ProgramDefaults
 
 #------------ MySupport class --------------------------------------------------
 class MySupport(MyCommon):
@@ -52,7 +54,7 @@ class MySupport(MyCommon):
             #create an INET, STREAMing socket
             Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             #now connect to the server on our port
-            Socket.connect(("127.0.0.1", self.ServerSocketPort))
+            Socket.connect((ProgramDefaults.LocalHost, self.ServerSocketPort))
             Socket.close()
             return True
         except Exception as e1:
@@ -320,3 +322,16 @@ class MySupport(MyCommon):
         delta_minutes = (seconds % 3600) // 60
 
         return (delta_hours * 60 + delta_minutes)
+
+    #---------------------MyCommon::GetGenmonInitInfo---------------------------
+    @staticmethod
+    def GetGenmonInitInfo(configfilepath = MyCommon.DefaultConfPath, log = None):
+
+        if configfilepath == None or configfilepath == "":
+            configfilepath = MyCommon.DefaultConfPath
+
+        config = MyConfig(configfilepath + "genmon.conf", section = "GenMon", log = log)
+        loglocation = config.ReadValue('loglocation', default = ProgramDefaults.LogPath)
+        port = config.ReadValue('server_port', return_type = int, default = ProgramDefaults.ServerPort)
+
+        return port, loglocation

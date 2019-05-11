@@ -15,6 +15,7 @@ import datetime, threading, crcmod, sys, time
 
 from genmonlib.mysupport import MySupport
 from genmonlib.mylog import SetupLogger
+from genmonlib.program_defaults import ProgramDefaults
 
 
 #------------ ModbusBase class -------------------------------------------------

@@ -9,7 +9,7 @@
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
 
-import datetime, time, smtplib, threading
+import datetime, time, smtplib, threading, sys
 import imaplib, email, email.header
 import os
 from os.path import basename
@@ -25,6 +25,7 @@ from genmonlib.myconfig import MyConfig
 from genmonlib.mysupport import MySupport
 from genmonlib.mylog import SetupLogger
 from genmonlib.mythread import MyThread
+from genmonlib.program_defaults import ProgramDefaults
 
 #imaplib.Debug = 4
 
@@ -37,15 +38,16 @@ class MyMail(MySupport):
         processed_folder = None,
         incoming_callback = None,
         localinit = False,
-        loglocation = "/var/log/",
-        ConfigFilePath = None,
+        loglocation = ProgramDefaults.LogPath,
+        ConfigFilePath = "/etc",
+        log = None,
         start = True):
 
         self.Monitor = monitor                          # true if we receive IMAP email
         self.IncomingFolder = incoming_folder           # folder to look for incoming email
         self.ProcessedFolder = processed_folder         # folder to move mail to once processed
         self.IncomingCallback = incoming_callback       # called back with mail subject as a parameter
-        if ConfigFilePath == None:
+        if ConfigFilePath == None or ConfigFilePath == "":
             self.ConfigFilePath = "/etc/"
         else:
             self.ConfigFilePath = ConfigFilePath
@@ -67,15 +69,17 @@ class MyMail(MySupport):
             self.logfile = loglocation + "mymail.log"
             self.configfile = self.ConfigFilePath + "mymail.conf"
 
-        self.log = SetupLogger("mymail", self.logfile)
+        if log == None:
+            self.log = SetupLogger("mymail", self.logfile)
+        else:
+            self.log = log
 
-        # if mymail.conf is not in the /etc directory attempt to copy it from the
+        # if mymail.conf is present attempt to copy it from the
         # main source directory
         if not os.path.isfile(self.configfile):
             if os.path.isfile(self.ModulePath + "mymail.conf"):
                 copyfile(self.ModulePath + "mymail.conf" , self.configfile)
             else:
-                self.LogConsole("Missing config file : " + self.configfile)
                 self.LogError("Missing config file : " + self.configfile)
                 sys.exit(1)
 

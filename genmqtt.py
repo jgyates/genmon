@@ -11,7 +11,7 @@
 
 
 import datetime, time, sys, signal, os, threading, collections, json, ssl
-import atexit
+import atexit, getopt
 
 #The following is need to install the mqtt module: pip install paho-mqtt
 
@@ -28,6 +28,7 @@ try:
     from genmonlib.mysupport import MySupport
     from genmonlib.mycommon import MyCommon
     from genmonlib.mythread import MyThread
+    from genmonlib.program_defaults import ProgramDefaults
 
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
@@ -40,15 +41,16 @@ class MyGenPush(MySupport):
 
     #------------ MyGenPush::init-----------------------------------------------
     def __init__(self,
-        host="127.0.0.1",
-        port=9082,
+        host=ProgramDefaults.LocalHost,
+        port=ProgramDefaults.ServerPort,
         log = None,
         callback = None,
         polltime = None,
         blacklist = None,
         flush_interval = float('inf'),
         use_numeric = False,
-        debug = False):
+        debug = False,
+        loglocation = ProgramDefaults.LogPath):
 
         super(MyGenPush, self).__init__()
         self.Callback = callback
@@ -65,7 +67,7 @@ class MyGenPush(MySupport):
             self.log = log
         else:
             # log errors in this module to a file
-            self.log = SetupLogger("client", "/var/log/mygenpush.log")
+            self.log = SetupLogger("client", loglocation + "mygenpush.log")
 
         self.console = SetupLogger("mygenpush_console", log_file = "", stream = True)
 
@@ -79,7 +81,7 @@ class MyGenPush(MySupport):
             startcount = 0
             while startcount <= 10:
                 try:
-                    self.Generator = ClientInterface(host = host, log = log)
+                    self.Generator = ClientInterface(host = host, port = port, log = log)
                     break
                 except Exception as e1:
                     startcount += 1
@@ -207,10 +209,16 @@ class MyGenPush(MySupport):
 class MyMQTT(MyCommon):
 
     #------------ MyMQTT::init--------------------------------------------------
-    def __init__(self, log = None):
+    def __init__(self,
+        log = None,
+        loglocation = ProgramDefaults.LogPath,
+        host = ProgramDefaults.LocalHost,
+        port = ProgramDefaults.ServerPort,
+        configfilepath = ProgramDefaults.ConfPath):
+
         super(MyMQTT, self).__init__()
 
-        self.LogFileName = "/var/log/genmqtt.log"
+        self.LogFileName = loglocation + "genmqtt.log"
 
         if log != None:
             self.log = log
@@ -227,8 +235,8 @@ class MyMQTT(MyCommon):
         self.Topic = None
 
         self.MQTTAddress = None
-        self.MonitorAddress = "127.0.0.1"
-        self.Port = 1883
+        self.MonitorAddress = host
+        self.MQTTPort = 1883
         self.Topic = "generator"
         self.TopicRoot = None
         self.BlackList = None
@@ -238,7 +246,7 @@ class MyMQTT(MyCommon):
         self.Debug = False
 
         try:
-            config = MyConfig(filename = '/etc/genmqtt.conf', section = 'genmqtt', log = log)
+            config = MyConfig(filename =  configfilepath + 'genmqtt.conf', section = 'genmqtt', log = log)
 
             self.Username = config.ReadValue('username')
 
@@ -251,9 +259,9 @@ class MyMQTT(MyCommon):
                 console.error("Error: invalid MQTT server address")
                 sys.exit(1)
 
-            self.MonitorAddress = config.ReadValue('monitor_address', default = "127.0.0.1")
+            self.MonitorAddress = config.ReadValue('monitor_address', default = self.MonitorAddress)
             if self.MonitorAddress == None or not len(self.MonitorAddress):
-                self.MonitorAddress = "127.0.0.1"
+                self.MonitorAddress = ProgramDefaults.LocalHost
 
             self.MQTTPort = config.ReadValue('mqtt_port', return_type = int, default = 1883)
 
@@ -287,8 +295,8 @@ class MyMQTT(MyCommon):
             else:
                 self.FlushInterval = float('inf')
         except Exception as e1:
-            self.LogErrorLine("Error reading /etc/genmqtt.conf: " + str(e1))
-            self.console.error("Error reading /etc/genmqtt.conf: " + str(e1))
+            self.LogErrorLine("Error reading " + configfilepath + "genmqtt.conf: " + str(e1))
+            self.console.error("Error reading " + configfilepath + "genmqtt.conf: " + str(e1))
             sys.exit(1)
 
         try:
@@ -322,17 +330,17 @@ class MyMQTT(MyCommon):
                     else:
                         self.LogError("Error: invalid TLS version specified, defaulting to 1.0: " + self.TLSVersion)
                     self.MQTTclient.tls_set(ca_certs = self.CertificateAuthorityPath,cert_reqs = cert_reqs, tls_version = use_tls )
-                    self.Port = 8883    # port for SSL
+                    self.MQTTPort = 8883    # port for SSL
                 else:
                     self.LogError("Error: Unable to  find CA cert file: " + self.CertificateAuthorityPath)
 
-            self.MQTTclient.connect(self.MQTTAddress, self.Port, 60)
+            self.MQTTclient.connect(self.MQTTAddress, self.MQTTPort, 60)
 
             self.Push = MyGenPush(host = self.MonitorAddress,
                 log = self.log, callback = self.PublishCallback,
                 polltime = self.PollTime , blacklist = self.BlackList,
                 flush_interval = self.FlushInterval, use_numeric = self.UseNumeric,
-                debug = self.Debug)
+                debug = self.Debug, port = port, loglocation = loglocation)
 
             atexit.register(self.Close)
             signal.signal(signal.SIGTERM, self.Close)
@@ -382,18 +390,38 @@ class MyMQTT(MyCommon):
     def Close(self):
         self.Push.Close()
 #-------------------------------------------------------------------------------
-def Main():
+if __name__ == "__main__":
 
+    address=ProgramDefaults.LocalHost
+
+    console = SetupLogger("genmqtt_console_", log_file = "", stream = True)
+    HelpStr = '\nsudo python genmqtt.py -a <IP Address or localhost> -c <path to genmon config file>\n'
     if os.geteuid() != 0:
-        print("\nYou need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.\n")
+        console.error("\nYou need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.\n")
         sys.exit(2)
 
-    InstanceMQTT = MyMQTT()
+    try:
+        ConfigFilePath = ProgramDefaults.ConfPath
+        opts, args = getopt.getopt(sys.argv[1:],"hc:a:",["help","configpath=","address="])
+    except getopt.GetoptError:
+        console.error("Invalid command line argument.")
+        sys.exit(2)
+
+    for opt, arg in opts:
+        if opt == '-h':
+            console.error(HelpStr)
+            sys.exit()
+        elif opt in ("-a", "--address"):
+            address = arg
+        elif opt in ("-c", "--configpath"):
+            ConfigFilePath = arg
+            ConfigFilePath = ConfigFilePath.strip()
+
+    port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
+
+    InstanceMQTT = MyMQTT(host = address, port = port, loglocation = loglocation, configfilepath = ConfigFilePath)
 
     while True:
         time.sleep(0.5)
 
     sys.exit(1)
-#-------------------------------------------------------------------------------
-if __name__ == "__main__":
-    Main()

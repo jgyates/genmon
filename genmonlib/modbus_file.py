@@ -15,6 +15,7 @@ import datetime, threading, crcmod, sys, time, os, collections, json
 
 from genmonlib.modbusbase import ModbusBase
 from genmonlib.mythread import MyThread
+from genmonlib.program_defaults import ProgramDefaults
 
 #------------ ModbusBase class -------------------------------------------------
 class ModbusFile(ModbusBase):

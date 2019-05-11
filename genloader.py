@@ -11,11 +11,13 @@
 import time, sys, os, getopt, subprocess
 from subprocess import PIPE, Popen, call
 from shutil import copyfile
+from shutil import move
 
 try:
     from genmonlib.mysupport import MySupport
     from genmonlib.mylog import SetupLogger
     from genmonlib.myconfig import MyConfig
+    from genmonlib.program_defaults import ProgramDefaults
 
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
@@ -30,19 +32,17 @@ class Loader(MySupport):
         start = False,
         stop = False,
         hardstop = False,
-        loglocation = "/var/log/",
+        loglocation = ProgramDefaults.LogPath,
         log = None,
         localinit = False,
-        ConfigFilePath = None):
+        ConfigFilePath = ProgramDefaults.ConfPath):
 
         self.Start = start
         self.Stop = stop
         self.HardStop = hardstop
 
-        if ConfigFilePath == None:
-            self.ConfigFilePath = "/etc/"
-        else:
-            self.ConfigFilePath = ConfigFilePath
+
+        self.ConfigFilePath = ConfigFilePath
 
         self.ConfigFileName = "genloader.conf"
         # log errors in this module to a file
@@ -71,9 +71,15 @@ class Loader(MySupport):
 
             self.CachedConfig = {}
 
+            if not os.path.isdir(self.ConfigFilePath):
+                try:
+                    os.mkdir(self.ConfigFilePath)
+                except Exception as e1:
+                    self.LogInfo("Error creating target config directory: " + str(e1), LogLine = True)
+
             # check to see if genloader.conf is present, if not copy it from genmon directory
             if not os.path.isfile(self.configfile):
-                self.LogInfo("Warning: unable to find config file: " + self.configfile + " Copying file to /etc/ directory.")
+                self.LogInfo("Warning: unable to find config file: " + self.configfile + " Copying file to " + self.ConfigFilePath +  " directory.")
                 if os.path.isfile(self.ConfPath + self.ConfigFileName):
                     copyfile(self.ConfPath + self.ConfigFileName , self.configfile)
                 else:
@@ -126,6 +132,59 @@ class Loader(MySupport):
         except Exception as e1:
             self.LogInfo("Error in CheckSystem: " + str(e1), LogLine = True)
             return False
+
+    #---------------------------------------------------------------------------
+    @staticmethod
+    def OneTimeMaint(ConfigFilePath, log):
+
+        FileList = {
+              "feedback.json" : os.path.dirname(os.path.realpath(__file__)) + "/",
+              "outage.txt" : os.path.dirname(os.path.realpath(__file__)) + "/",
+              "kwlog.txt" : os.path.dirname(os.path.realpath(__file__)) + "/",
+              "maintlog.json" : os.path.dirname(os.path.realpath(__file__)) + "/",
+              "Feedback_dat" : os.path.dirname(os.path.realpath(__file__)) + "/genmonlib/",
+              "Message_dat" : os.path.dirname(os.path.realpath(__file__)) + "/genmonlib/",
+              'genmon.conf' : "/etc/",
+              'genserv.conf': "/etc/",
+              'gengpio.conf' : "/etc/",
+              'gengpioin.conf': "/etc/",
+              'genlog.conf' : "/etc/",
+              'gensms.conf' : "/etc/",
+              'gensms_modem.conf': "/etc/",
+              'genpushover.conf': "/etc/",
+              'gensyslog.conf' : "/etc/",
+              'genmqtt.conf' : "/etc/",
+              'genslack.conf': "/etc/",
+              'genexercise.conf' : "/etc/",
+              'genemail2sms.conf' :  "/etc/",
+              'genloader.conf' :  "/etc/",
+              'mymail.conf' : "/etc/",
+              'mymodem.conf' : "/etc/"
+        }
+        try:
+            # Check to see if we have done this already by checking files in the genmon source directory
+            if (not os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + "/Message_dat") and
+            not os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + "/maintlog.json") and
+            not os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + "/outage.txt") and
+            not os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + "/kwlog.txt")):
+                return
+            # validate target directory
+            if not os.path.isdir(ConfigFilePath):
+                try:
+                    os.mkdir(ConfigFilePath)
+                except Exception as e1:
+                    log.error("Error validating target directory: " + str(e1), LogLine = True)
+
+            # move files
+            for File, Path in FileList.items():
+                SourceFile = Path + File
+                if os.path.isfile(SourceFile):
+                    log.error("Moving " + SourceFile + " to " + ConfigFilePath )
+                    move(SourceFile , ConfigFilePath + File)
+
+        except Exception as e1:
+            log.error("Error moving files: " + str(e1), LogLine = True)
+
     #---------------------------------------------------------------------------
     def LibraryIsInstalled(self, libraryname):
 
@@ -280,6 +339,11 @@ class Loader(MySupport):
                 else:
                     TempDict['postloaddelay'] = 0
 
+                if self.config.HasOption('pid'):
+                    TempDict['pid'] = self.config.ReadValue('pid', return_type = int, default = None, NoLog = True)
+                else:
+                    TempDict['pid'] = 0
+
                 self.CachedConfig[SectionName] = TempDict
             return True
 
@@ -332,7 +396,7 @@ class Loader(MySupport):
         ErrorOccured = False
         for Module in self.LoadOrder:
             try:
-                if not self.UnloadModule(self.CachedConfig[Module]["module"], HardStop = self.CachedConfig[Module]["hardstop"]):
+                if not self.UnloadModule(self.ModulePath, self.CachedConfig[Module]["module"], pid = self.CachedConfig[Module]["pid"],HardStop = self.CachedConfig[Module]["hardstop"], UsePID = True):
                     self.LogInfo("Error stopping " + Module)
                     ErrorOccured = True
             except Exception as e1:
@@ -351,7 +415,7 @@ class Loader(MySupport):
         for Module in reversed(self.LoadOrder):
             try:
                 if self.CachedConfig[Module]["enable"]:
-                    if not self.LoadModule(self.ModulePath + self.CachedConfig[Module]["module"], args = self.CachedConfig[Module]["args"]):
+                    if not self.LoadModule(self.ModulePath, self.CachedConfig[Module]["module"], args = self.CachedConfig[Module]["args"]):
                         self.LogInfo("Error starting " + Module)
                         ErrorOccured = True
                     if not self.CachedConfig[Module]["postloaddelay"] == None and self.CachedConfig[Module]["postloaddelay"] > 0:
@@ -378,10 +442,13 @@ class Loader(MySupport):
             return False
 
     #---------------------------------------------------------------------------
-    def LoadModule(self, modulename, args = None):
+    def LoadModule(self, path, modulename, args = None):
         try:
-            self.LogConsole("Starting " + modulename)
-
+            fullmodulename = path + modulename
+            if args != None:
+                self.LogConsole("Starting " + fullmodulename + " " + args)
+            else:
+                self.LogConsole("Starting " + fullmodulename)
             try:
                 from subprocess import DEVNULL # py3k
             except ImportError:
@@ -395,49 +462,72 @@ class Loader(MySupport):
                 OutputStream = DEVNULL
             else:
                 OutputStream = subprocess.PIPE
-            if args == None:
-                # close_fds=True
-                pid = subprocess.Popen([sys.executable, modulename], stdout=OutputStream, stderr=OutputStream, stdin=OutputStream)
+
+            executelist = [sys.executable, fullmodulename]
+            if args != None:
+                executelist.extend(args.split(" "))
+            # This will make all the programs use the same config files
+            executelist.extend(["-c", self.ConfigFilePath])
+            # close_fds=True
+            pid = subprocess.Popen(executelist, stdout=OutputStream, stderr=OutputStream, stdin=OutputStream)
+            self.UpdatePID(modulename, pid.pid)
+            return True
+
+        except Exception as e1:
+            self.LogInfo("Error loading module " + modulename + ": " + str(e1), LogLine = True)
+            return False
+    #---------------------------------------------------------------------------
+    def UnloadModule(self, path, modulename, pid = None, HardStop = False, UsePID = False):
+        try:
+            LoadInfo = []
+            if UsePID:
+                if pid == None or pid == "":
+                    return True
+                LoadInfo.append("kill")
+                if HardStop or self.HardStop:
+                    LoadInfo.append('-9')
+                LoadInfo.append(str(pid))
             else:
-                pid = subprocess.Popen([sys.executable, modulename, args], stdout=OutputStream, stderr=OutputStream, stdin=OutputStream)
+                LoadInfo.append('pkill')
+                if HardStop or self.HardStop:
+                    LoadInfo.append('-9')
+                LoadInfo.append('-u')
+                LoadInfo.append('root')
+                LoadInfo.append('-f')
+                LoadInfo.append(modulename)
+
+            self.LogConsole("Stopping " + modulename)
+            process = Popen(LoadInfo, stdout=PIPE)
+            output, _error = process.communicate()
+            rc = process.returncode
+            self.UpdatePID(modulename, "")
             return True
 
         except Exception as e1:
             self.LogInfo("Error loading module: " + str(e1), LogLine = True)
             return False
     #---------------------------------------------------------------------------
-    def UnloadModule(self, modulename, HardStop = False):
+    def UpdatePID(self, modulename, pid = None):
+
         try:
-            self.LogConsole("Stopping " + modulename)
-            LoadInfo = []
-            LoadInfo.append('pkill')
-            if HardStop or self.HardStop:
-                LoadInfo.append('-9')
-            LoadInfo.append('-u')
-            LoadInfo.append('root')
-            LoadInfo.append('-f')
-            LoadInfo.append(modulename)
-
-            process = Popen(LoadInfo, stdout=PIPE)
-            output, _error = process.communicate()
-            rc = process.returncode
-            return True
-
+            filename = os.path.splitext(modulename)[0]    # remove extension
+            self.config.SetSection(filename)
+            self.config.WriteValue("pid", str(pid))
         except Exception as e1:
-            self.LogInfo("Error loading module: " + str(e1), LogLine = True)
-            return False
+            self.LogInfo("Error writing PID for " + modulename + " : " + str(e1))
 
 #------------------main---------------------------------------------------------
 if __name__ == '__main__':
 
 
-    HelpStr =  "\npython genloader.py [-s -r -x -z]\n"
+    HelpStr =  "\npython genloader.py [-s -r -x -z -c configfilepath]\n"
     HelpStr += "   Example: python genloader.py -s\n"
     HelpStr += "            python genloader.py -r\n"
     HelpStr += "\n      -s  Start Genmon modules"
     HelpStr += "\n      -r  Restart Genmon moduels"
     HelpStr += "\n      -x  Stop Genmon modules"
     HelpStr += "\n      -z  Hard stop Genmon modules"
+    HelpStr += "\n      -c  Path of genmon.conf file i.e. /etc/"
     HelpStr += "\n \n"
 
     if os.geteuid() != 0:
@@ -445,7 +535,8 @@ if __name__ == '__main__':
         sys.exit(2)
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:],"hsrxz",["help","start","restart","exit","hardstop"])
+        ConfigFilePath = ProgramDefaults.ConfPath
+        opts, args = getopt.getopt(sys.argv[1:],"hsrxzc:",["help","start","restart","exit","hardstop","configpath="])
     except getopt.GetoptError:
         print(HelpStr)
         sys.exit(2)
@@ -468,10 +559,15 @@ if __name__ == '__main__':
         elif opt in ("-z", "--hardstop"):
             HardStop = True
             StopModules = True
+        elif opt in ("-c", "--configpath"):
+            ConfigFilePath = arg
+            ConfigFilePath = ConfigFilePath.strip()
 
     if not StartModules and not StopModules:
         print("\nNo option selected.\n")
         print(HelpStr)
         sys.exit(2)
 
-    LoaderObject = Loader(start = StartModules, stop = StopModules, hardstop = HardStop)
+    Loader.OneTimeMaint(ConfigFilePath, SetupLogger("genloader1_console", log_file = "", stream = True))
+    port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = None)
+    LoaderObject = Loader(start = StartModules, stop = StopModules, hardstop = HardStop, ConfigFilePath = ConfigFilePath, loglocation = loglocation)

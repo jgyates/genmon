@@ -11,13 +11,15 @@
 #-------------------------------------------------------------------------------
 
 import datetime, time, sys, signal, os, threading, socket
-import atexit
+import atexit, getopt
 
 try:
     from genmonlib.myconfig import MyConfig
     from genmonlib.mylog import SetupLogger
     from genmonlib.mynotify import GenNotify
     from genmonlib.mymail import MyMail
+    from genmonlib.mysupport import MySupport
+    from genmonlib.program_defaults import ProgramDefaults
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
@@ -129,15 +131,15 @@ def SendNotice(Message):
 def GetSiteName():
 
     try:
-        localconfig = MyConfig(filename = '/etc/genmon.conf', section = "GenMon")
+        localconfig = MyConfig(filename = ConfigFilePath + 'genmon.conf', section = "GenMon")
         return localconfig.ReadValue('sitename', default = None)
     except Exception as e1:
         log.error("Error in GetSiteName: " + str(e1))
         console.error("Error in GetSiteName: " + str(e1))
         return None
 #------------------- Command-line interface for gengpio ------------------------
-if __name__=='__main__': # usage program.py [server_address]
-    address='127.0.0.1' if len(sys.argv)<2 else sys.argv[1]
+if __name__=='__main__':
+    address=ProgramDefaults.LocalHost
 
     # Set the signal handler
     signal.signal(signal.SIGINT, signal_handler)
@@ -147,39 +149,61 @@ if __name__=='__main__': # usage program.py [server_address]
         sys.exit(2)
 
     console = SetupLogger("emailsms_console", log_file = "", stream = True)
-    log = SetupLogger("client", "/var/log/genemail2sms.log")
+    HelpStr = '\nsudo python genemail2sms.py -a <IP Address or localhost> -c <path to genmon config file>\n'
 
-    ConfigFilePath = '/etc/'
+    try:
+        ConfigFilePath = ProgramDefaults.ConfPath
+        opts, args = getopt.getopt(sys.argv[1:],"hc:a:",["help","configpath=","address="])
+    except getopt.GetoptError:
+        console.error("Invalid command line argument.")
+        sys.exit(2)
+
+    for opt, arg in opts:
+        if opt == '-h':
+            console.error(HelpStr)
+            sys.exit()
+        elif opt in ("-a", "--address"):
+            address = arg
+        elif opt in ("-c", "--configpath"):
+            ConfigFilePath = arg
+            ConfigFilePath = ConfigFilePath.strip()
+
+    port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
+    log = SetupLogger("client", loglocation + "genemail2sms.log")
+
     if not os.path.isfile(ConfigFilePath + 'genmon.conf'):
         console.error("Missing config file : " + ConfigFilePath + 'genmon.conf')
+        log.error("Missing config file : " + ConfigFilePath + 'genmon.conf')
         sys.exit(1)
     if not os.path.isfile(ConfigFilePath + 'mymail.conf'):
         console.error("Missing config file : " + ConfigFilePath + 'mymail.conf')
+        log.error("Missing config file : " + ConfigFilePath + 'mymail.conf')
         sys.exit(1)
 
     try:
 
         SiteName = GetSiteName()
-        config = MyConfig(filename = '/etc/genemail2sms.conf', section = 'genemail2sms', log = log)
+        config = MyConfig(filename = ConfigFilePath + 'genemail2sms.conf', section = 'genemail2sms', log = log)
 
         DestinationEmail = config.ReadValue('destination', default = "")
 
+
         if DestinationEmail == "" or (not "@" in DestinationEmail):
-            log.error("Missing parameter in /etc/genemail2sms.conf")
-            console.error("Missing parameter in /etc/genemail2sms.conf")
+            log.error("Missing parameter in " + ConfigFilePath + "genemail2sms.conf")
+            console.error("Missing parameter in " + ConfigFilePath + "genemail2sms.conf")
             sys.exit(1)
 
         # init mail, start processing incoming email
-        MyMail = MyMail()
-
+        MyMail = MyMail(loglocation = loglocation, log = log, ConfigFilePath = ConfigFilePath)
     except Exception as e1:
-        log.error("Error reading /etc/genemail2sms.conf: " + str(e1))
-        console.error("Error reading /etc/genemail2sms.conf: " + str(e1))
+        log.error("Error reading " + ConfigFilePath + "genemail2sms.conf: " + str(e1))
+        console.error("Error reading " + ConfigFilePath + "genemail2sms.conf: " + str(e1))
         sys.exit(1)
     try:
-        
+
         GenNotify = GenNotify(
                                         host = address,
+                                        port = port,
                                         onready = OnReady,
                                         onexercise = OnExercise,
                                         onrun = OnRun,
@@ -189,7 +213,8 @@ if __name__=='__main__': # usage program.py [server_address]
                                         onoff = OnOff,
                                         onmanual = OnManual,
                                         onutilitychange = OnUtilityChange,
-                                        log = log)
+                                        log = log,
+                                        loglocation = loglocation)
 
         while True:
             time.sleep(1)

@@ -16,10 +16,11 @@ import datetime, threading, serial, sys
 from genmonlib.mysupport import MySupport
 from genmonlib.mylog import SetupLogger
 from genmonlib.mythread import MyThread
+from genmonlib.program_defaults import ProgramDefaults
 
 #------------ SerialDevice class -----------------------------------------------
 class SerialDevice(MySupport):
-    def __init__(self, name = '/dev/serial0', rate=9600, log = None, Parity = None, OnePointFiveStopBits = None, RtsCts = False, config = None):
+    def __init__(self, name = '/dev/serial0', rate=9600, log = None, Parity = None, OnePointFiveStopBits = None, RtsCts = False, config = None, loglocation = ProgramDefaults.LogPath):
 
         super(SerialDevice, self).__init__()
 
@@ -31,8 +32,9 @@ class SerialDevice(MySupport):
         self.DiscardedBytes = 0
         self.Restarts = 0
         self.SerialStartTime = datetime.datetime.now()     # used for com metrics
-        self.loglocation = './'
+        self.loglocation = loglocation
 
+        # This supports getting this info from genmon.conf
         if self.config != None:
             self.loglocation = self.config.ReadValue('loglocation', default = '/var/log/')
             self.DeviceName = self.config.ReadValue('port', default = '/dev/serial0')

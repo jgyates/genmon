@@ -12,6 +12,7 @@ import datetime, time, threading, collections
 
 from genmonlib.mysupport import MySupport
 from genmonlib.mythread import MyThread
+from genmonlib.program_defaults import ProgramDefaults
 
 try:
     import pyowm

@@ -16,6 +16,7 @@ import os, sys, subprocess, re, datetime
 import collections
 
 from genmonlib.mycommon import MyCommon
+from genmonlib.program_defaults import ProgramDefaults
 
 #------------ MyPlatform class -------------------------------------------------
 class MyPlatform(MyCommon):

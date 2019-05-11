@@ -10,12 +10,14 @@
 #-------------------------------------------------------------------------------
 
 import datetime, time, sys, signal, os, threading, socket
-import atexit
+import atexit, getopt
 
 try:
     from genmonlib.mylog import SetupLogger
     from genmonlib.mynotify import GenNotify
     from genmonlib.myconfig import MyConfig
+    from genmonlib.mysupport import MySupport
+    from genmonlib.program_defaults import ProgramDefaults
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
@@ -141,22 +143,41 @@ def SendNotice(Message):
        console.error("Error: " + str(e1))
 
 #------------------- Command-line interface for gengpio ------------------------
-if __name__=='__main__': # usage program.py [server_address]
-    address='127.0.0.1' if len(sys.argv)<2 else sys.argv[1]
+if __name__=='__main__':
+    address=ProgramDefaults.LocalHost
 
     # Set the signal handler
     signal.signal(signal.SIGINT, signal_handler)
+    console = SetupLogger("pushover_console", log_file = "", stream = True)
+    HelpStr = '\nsudo python genpushover.py -a <IP Address or localhost> -c <path to genmon config file>\n'
 
     if os.geteuid() != 0:
-        print("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
+        console.error("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
         sys.exit(2)
 
-    console = SetupLogger("pushover_console", log_file = "", stream = True)
-    log = SetupLogger("client", "/var/log/genpushover.log")
+    try:
+        ConfigFilePath = ProgramDefaults.ConfPath
+        opts, args = getopt.getopt(sys.argv[1:],"hc:a:",["help","configpath=","address="])
+    except getopt.GetoptError:
+        console.error("Invalid command line argument.")
+        sys.exit(2)
+
+    for opt, arg in opts:
+        if opt == '-h':
+            console.error(HelpStr)
+            sys.exit()
+        elif opt in ("-a", "--address"):
+            address = arg
+        elif opt in ("-c", "--configpath"):
+            ConfigFilePath = arg
+            ConfigFilePath = ConfigFilePath.strip()
+
+    port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
+    log = SetupLogger("client", loglocation + "genpushover.log")
 
     try:
 
-        config = MyConfig(filename = '/etc/genpushover.conf', section = 'genpushover', log = log)
+        config = MyConfig(filename = ConfigFilePath + 'genpushover.conf', section = 'genpushover', log = log)
 
         appid = config.ReadValue('appid')
         userid = config.ReadValue('userid')
@@ -179,6 +200,7 @@ if __name__=='__main__': # usage program.py [server_address]
     try:
         GenNotify = GenNotify(
                                         host = address,
+                                        port = port,
                                         onready = OnReady,
                                         onexercise = OnExercise,
                                         onrun = OnRun,
@@ -188,7 +210,8 @@ if __name__=='__main__': # usage program.py [server_address]
                                         onoff = OnOff,
                                         onmanual = OnManual,
                                         onutilitychange = OnUtilityChange,
-                                        log = log)
+                                        log = log,
+                                        loglocation = loglocation)
 
         while True:
             time.sleep(1)
