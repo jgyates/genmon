@@ -481,7 +481,7 @@ class Loader(MySupport):
         try:
             LoadInfo = []
             if UsePID:
-                if pid == None or pid == "":
+                if pid == None or pid == "" or pid == 0:
                     return True
                 LoadInfo.append("kill")
                 if HardStop or self.HardStop:
