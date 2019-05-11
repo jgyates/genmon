@@ -340,7 +340,7 @@ class Loader(MySupport):
                     TempDict['postloaddelay'] = 0
 
                 if self.config.HasOption('pid'):
-                    TempDict['pid'] = self.config.ReadValue('pid', return_type = int, default = None, NoLog = True)
+                    TempDict['pid'] = self.config.ReadValue('pid', return_type = int, default = 0, NoLog = True)
                 else:
                     TempDict['pid'] = 0
 
