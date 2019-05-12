@@ -166,7 +166,8 @@ class Loader(MySupport):
             if (not os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + "/genmonlib/Message_dat") and
             not os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + "/maintlog.json") and
             not os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + "/outage.txt") and
-            not os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + "/kwlog.txt")):
+            not os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + "/kwlog.txt") and
+            not os.path.isfile("/etc/genmon.conf")):
                 return
             # validate target directory
             if not os.path.isdir(ConfigFilePath):
