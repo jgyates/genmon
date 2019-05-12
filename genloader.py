@@ -168,7 +168,7 @@ class Loader(MySupport):
             not os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + "/outage.txt") and
             not os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + "/kwlog.txt") and
             not os.path.isfile("/etc/genmon.conf")):
-                return
+                return False
             # validate target directory
             if not os.path.isdir(ConfigFilePath):
                 try:
@@ -185,6 +185,7 @@ class Loader(MySupport):
 
         except Exception as e1:
             log.error("Error moving files: " + str(e1), LogLine = True)
+        return True
 
     #---------------------------------------------------------------------------
     def LibraryIsInstalled(self, libraryname):
@@ -569,6 +570,7 @@ if __name__ == '__main__':
         print(HelpStr)
         sys.exit(2)
 
-    Loader.OneTimeMaint(ConfigFilePath, SetupLogger("genloader1_console", log_file = "", stream = True))
+    if (Loader.OneTimeMaint(ConfigFilePath, SetupLogger("genloader1_console", log_file = "", stream = True))):
+        time.sleep(.5)
     port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = None)
     LoaderObject = Loader(start = StartModules, stop = StopModules, hardstop = HardStop, ConfigFilePath = ConfigFilePath, loglocation = loglocation)

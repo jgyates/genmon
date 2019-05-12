@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.13.09 - 2019-05-12
+- Created delay after file copy to allow file to settle before restarting on first restart after upgrade.
+
 ## V1.13.08 - 2019-05-08
 - To be extra safe, please perform a backup on your data before installing the update as some files will be moved during the upgrade
 - Added alarm codes for Nexus
