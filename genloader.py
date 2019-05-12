@@ -571,6 +571,6 @@ if __name__ == '__main__':
         sys.exit(2)
 
     if (Loader.OneTimeMaint(ConfigFilePath, SetupLogger("genloader1_console", log_file = "", stream = True))):
-        time.sleep(.5)
+        time.sleep(1)
     port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = None)
     LoaderObject = Loader(start = StartModules, stop = StopModules, hardstop = HardStop, ConfigFilePath = ConfigFilePath, loglocation = loglocation)
