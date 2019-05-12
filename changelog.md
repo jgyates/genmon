@@ -4,12 +4,13 @@ All notable changes to this project will be documented in this file. Major relea
 ## V1.13.08 - 2019-05-08
 - To be extra safe, please perform a backup on your data before installing the update as some files will be moved during the upgrade
 - Added alarm codes for Nexus
-- Update to support multiple genmon instances 
+- Update to support multiple genmon instances
 - move all working copies of conf files from /etc/ to /etc/genmon/
 - moved kwlog.txt, outage.txt and service journal data file from ./genmon to /etc/genmon/
 - Added new command line options to most programs to pass in full path to config files
 - Added TCP port command line option to ClientInterface.py
 - updates to the wiki
+- modified command line options for genmonmaint.sh to support alternate config locations. See https://github.com/jgyates/genmon/wiki/1----Software-Overview#genmonmaintsh for details
 
 ## V1.13.07 - 2019-05-03
 - Fixed bug in genexercise.py that prevented a "Start/Transfer" exercise cycle from stoping
