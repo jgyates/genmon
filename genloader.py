@@ -163,8 +163,8 @@ class Loader(MySupport):
         }
         try:
             # Check to see if we have done this already by checking files in the genmon source directory
-            if (not os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + "/Message_dat") and
-            not os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + "/maintlog.json") and
+            if (not os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + "/genmonlib/Message_dat") and
+            not os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + "/genmonlib/maintlog.json") and
             not os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + "/outage.txt") and
             not os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + "/kwlog.txt")):
                 return
