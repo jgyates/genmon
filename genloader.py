@@ -173,6 +173,8 @@ class Loader(MySupport):
             if not os.path.isdir(ConfigFilePath):
                 try:
                     os.mkdir(ConfigFilePath)
+                    if not os.access(ConfigFilePath + File, os.R_OK):
+                        pass
                 except Exception as e1:
                     log.error("Error validating target directory: " + str(e1), LogLine = True)
 
@@ -182,6 +184,8 @@ class Loader(MySupport):
                 if os.path.isfile(SourceFile):
                     log.error("Moving " + SourceFile + " to " + ConfigFilePath )
                     move(SourceFile , ConfigFilePath + File)
+                    if not os.access(ConfigFilePath + File, os.R_OK):
+                        pass
 
         except Exception as e1:
             log.error("Error moving files: " + str(e1), LogLine = True)
