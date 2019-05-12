@@ -197,17 +197,17 @@ function backupgenmon() {
     sudo rm genmon_backup.tar.gz
     mkdir genmon_backup
     mkdir ./genmon_backup/conf
-    sudo cp "$config_path"genmon.conf ./genmon_backup/conf
-    sudo cp "$config_path"mymail.conf ./genmon_backup/conf
-    sudo cp "$config_path"genloader.conf ./genmon_backup/conf
-    sudo cp "$config_path"genmqtt.conf ./genmon_backup/conf
-    sudo cp "$config_path"genpushover.conf ./genmon_backup/conf
-    sudo cp "$config_path"genslack.conf ./genmon_backup/conf
-    sudo cp "$config_path"gensms.conf ./genmon_backup/conf
-    sudo cp "$config_path"mymodem.conf ./genmon_backup/conf
-    sudo cp "$config_path"genemail2sms.conf ./genmon_backup/conf
-    sudo cp "$config_path"genexercise.conf ./genmon_backup/conf
-    sudo cp "$config_path"gengpioin.conf ./genmon_backup/conf
+    sudo cp "$config_path"genmon.conf ./genmon_backup
+    sudo cp "$config_path"mymail.conf ./genmon_backup
+    sudo cp "$config_path"genloader.conf ./genmon_backup
+    sudo cp "$config_path"genmqtt.conf ./genmon_backup
+    sudo cp "$config_path"genpushover.conf ./genmon_backup
+    sudo cp "$config_path"genslack.conf ./genmon_backup
+    sudo cp "$config_path"gensms.conf ./genmon_backup
+    sudo cp "$config_path"mymodem.conf ./genmon_backup
+    sudo cp "$config_path"genemail2sms.conf ./genmon_backup
+    sudo cp "$config_path"genexercise.conf ./genmon_backup
+    sudo cp "$config_path"gengpioin.conf ./genmon_backup
     sudo cp "$config_path"outage.txt ./genmon_backup
     sudo cp "$config_path"kwlog.txt ./genmon_backup
     sudo cp "$config_path"maintlog.json ./genmon_backup
