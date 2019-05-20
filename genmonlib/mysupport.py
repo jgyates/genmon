@@ -40,6 +40,33 @@ class MySupport(MyCommon):
         except Exception as e1:
             self.LogError("Error in  LogToFile : File: %s: %s " % (File,str(e1)))
 
+    #------------ MySupport::CopyFile-------------------------------------------
+    @staticmethod
+    def CopyFile(source, destination, move = False, log = None):
+
+        try:
+            if not os.path.isfile(source):
+                if log != None:
+                    log.error("Error in CopyFile : source file not found.")
+                return False
+
+            path = os.path.dirname(destination)
+            if not os.path.isfile(path):
+                os.mkdir(path)
+            with os.fdopen(os.open(source, os.O_RDONLY ),'r') as source_fd:
+                data = source_fd.read()
+                with os.fdopen(os.open(destination,os.O_CREAT | os.O_RDWR ),'w') as dest_fd:
+                    dest_fd.write(data)
+                    dest_fd.flush()
+                    os.fsync(dest_fd)
+
+            if move:
+                os.remove(source)
+            return True
+        except Exception as e1:
+            if log != None:
+                log.error("Error in CopyFile : " + str(e1))
+            return False
     #------------ MySupport::GetSiteName----------------------------------------
     def GetSiteName(self):
         return self.SiteName

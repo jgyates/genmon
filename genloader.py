@@ -183,7 +183,9 @@ class Loader(MySupport):
                 SourceFile = Path + File
                 if os.path.isfile(SourceFile):
                     log.error("Moving " + SourceFile + " to " + ConfigFilePath )
-                    move(SourceFile , ConfigFilePath + File)
+                    if not MySupport.CopyFile(SourceFile, ConfigFilePath + File, move = True, log = log):
+                        log.error("Error: using alternate move method")
+                        move(SourceFile , ConfigFilePath + File)
                     if not os.access(ConfigFilePath + File, os.R_OK):
                         pass
 
@@ -574,7 +576,8 @@ if __name__ == '__main__':
         print(HelpStr)
         sys.exit(2)
 
-    if (Loader.OneTimeMaint(ConfigFilePath, SetupLogger("genloader1_console", log_file = "", stream = True))):
+    tmplog = SetupLogger("genloader", "/var/log/" + "genloader.log")
+    if (Loader.OneTimeMaint(ConfigFilePath, tmplog)):
         time.sleep(1.5)
     port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = None)
     LoaderObject = Loader(start = StartModules, stop = StopModules, hardstop = HardStop, ConfigFilePath = ConfigFilePath, loglocation = loglocation)

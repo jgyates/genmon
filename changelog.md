@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.13.11 - 2019-05-20
+- Fix that will hopefully correct issues when upgrading from 1.13.07 or earlier
+
 ## V1.13.10 - 2019-05-19
 - Increased delay when copying files during upgrades from 1.13.07 or earlier. This should not effect upgrades that are after V1.13.07
 
