@@ -196,7 +196,6 @@ function backupgenmon() {
     sudo rm -r genmon_backup
     sudo rm genmon_backup.tar.gz
     mkdir genmon_backup
-    mkdir ./genmon_backup/conf
     sudo cp "$config_path"genmon.conf ./genmon_backup
     sudo cp "$config_path"mymail.conf ./genmon_backup
     sudo cp "$config_path"genloader.conf ./genmon_backup
