@@ -51,7 +51,9 @@ class MySupport(MyCommon):
                 return False
 
             path = os.path.dirname(destination)
-            if not os.path.isfile(path):
+            if not os.path.isdir(path):
+                if log != None:
+                    log.error("Creating " + path)
                 os.mkdir(path)
             with os.fdopen(os.open(source, os.O_RDONLY ),'r') as source_fd:
                 data = source_fd.read()
@@ -65,7 +67,7 @@ class MySupport(MyCommon):
             return True
         except Exception as e1:
             if log != None:
-                log.error("Error in CopyFile : " + str(e1))
+                log.error("Error in CopyFile : " + str(source) + " : "+ str(e1))
             return False
     #------------ MySupport::GetSiteName----------------------------------------
     def GetSiteName(self):

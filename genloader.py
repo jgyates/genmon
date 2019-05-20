@@ -180,15 +180,17 @@ class Loader(MySupport):
 
             # move files
             for File, Path in FileList.items():
-                SourceFile = Path + File
-                if os.path.isfile(SourceFile):
-                    log.error("Moving " + SourceFile + " to " + ConfigFilePath )
-                    if not MySupport.CopyFile(SourceFile, ConfigFilePath + File, move = True, log = log):
-                        log.error("Error: using alternate move method")
-                        move(SourceFile , ConfigFilePath + File)
-                    if not os.access(ConfigFilePath + File, os.R_OK):
-                        pass
-
+                try:
+                    SourceFile = Path + File
+                    if os.path.isfile(SourceFile):
+                        log.error("Moving " + SourceFile + " to " + ConfigFilePath )
+                        if not MySupport.CopyFile(SourceFile, ConfigFilePath + File, move = True, log = log):
+                            log.error("Error: using alternate move method")
+                            move(SourceFile , ConfigFilePath + File)
+                        if not os.access(ConfigFilePath + File, os.R_OK):
+                            pass
+                except Exception as e1:
+                    log.error("Error moving " + SourceFile)
         except Exception as e1:
             log.error("Error moving files: " + str(e1), LogLine = True)
         return True
