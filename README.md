@@ -61,6 +61,7 @@ The software supports the following features:
 - Service Journal for logging maintenance, repair, etc
 - Backup configuration files
 - Enhanced Exercise options for Evolution/Nexus controller (Exercise Transfer Switch)
+- Optional low bandwidth URL (http://ipaddress:8000/low)
 
 ![Generator Monitor Web Interface](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/Web_UI_Status.png)
 

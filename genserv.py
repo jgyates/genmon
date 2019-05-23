@@ -111,6 +111,18 @@ def root():
         return app.send_static_file('index.html')
 
 #-------------------------------------------------------------------------------
+@app.route('/low', methods=['GET'])
+def lowbandwidth():
+
+    if HTTPAuthUser != None and HTTPAuthPass != None:
+        if not session.get('logged_in'):
+            return render_template('index_lowbandwith.html')
+        else:
+            return app.send_static_file('index_lowbandwith.html')
+    else:
+        return app.send_static_file('index_lowbandwith.html')
+
+#-------------------------------------------------------------------------------
 @app.route('/internal', methods=['GET'])
 def display_internal():
 
@@ -721,7 +733,7 @@ def GetAddOns():
         AddOnCfg['genemail2sms']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "genemail2sms", default = False)
         AddOnCfg['genemail2sms']['title'] = "Mobile Carrier Email to SMS"
         AddOnCfg['genemail2sms']['description'] = "Send Genmon and utility state changes via carrier email to SMS service"
-        AddOnCfg['genemail2sms']['icon'] = "Genmon"
+        AddOnCfg['genemail2sms']['icon'] = "text"
         AddOnCfg['genemail2sms']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genemail2smspy-optional"
         AddOnCfg['genemail2sms']['parameters'] = collections.OrderedDict()
 

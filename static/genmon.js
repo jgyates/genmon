@@ -8,6 +8,7 @@ var menuElement = "status";
 var ajaxErrors = {errorCount: 0, lastSuccessTime: 0, log: ""};
 var windowActive = true;
 var latestVersion = "";
+var lowbandwidth = false;
 var resizeTimeout;
 
 var myGenerator = {sitename: "", nominalRPM: 3600, nominalfrequency: 60, Controller: "", model: "", nominalKW: 22, fueltype: "", UnsentFeedback: false, SystemHealth: false, EnhancedExerciseEnabled: false, OldExerciseParameters:[-1,-1,-1,-1,-1,-1]};
@@ -26,6 +27,10 @@ vex.defaultOptions.className = 'vex-theme-os'
 // called on window.onload
 //      sets up listener events (click menu) and inits the default page
 //*****************************************************************************
+var script_tag = document.getElementById('genmon.js');
+if (script_tag != undefined && script_tag.getAttribute("data-type") == "lowbandwidth") {
+  lowbandwidth = true;
+}
 GetStartupInfo();
 GetBaseStatus();
 SetFavIcon();
@@ -92,7 +97,7 @@ function resizeDiv() {
      $('#footer').css({'height': '30px'});
      $('#footer').css({'width': vpw + 'px'});
 
-     if ((menuElement == "status") && ($('.packery').length > 0)) {
+     if ((menuElement == "status") && ($('.packery').length > 0) && (lowbandwidth == false)) {
         var gridWidth = Math.round((vpw-240)/190);
             gridWidth = (gridWidth < 1) ? 1 : gridWidth;
         kwHistory["defaultPlotWidth"] = ((gridWidth > 4) ? 4 : (gridWidth < 1) ? 1 : gridWidth);
@@ -235,37 +240,42 @@ function DisplayStatusFull() {
     kwHistory["defaultPlotWidth"] = ((gridWidth > 4) ? 4 : (gridWidth < 1) ? 1 : gridWidth);
     kwHistory["oldDefaultPlotWidth"] = kwHistory["defaultPlotWidth"];
 
-    var outstr = 'Dashboard:<br><br>';
-    outstr += '<center><div class="packery">';
-    for (var i = 0; i < myGenerator["tiles"].length; ++i) {
-       switch (myGenerator["tiles"][i].type) {
-          case "gauge":
+
+    var outstr = '<br>';
+
+    if (lowbandwidth == false) {
+      outstr += '<center><div class="packery">';
+      for (var i = 0; i < myGenerator["tiles"].length; ++i) {
+         switch (myGenerator["tiles"][i].type) {
+           case "gauge":
              if (myGenerator["tiles"][i].subtype == "fuel") {
                outstr += '<div id="fuelField_'+i+'" class="grid-item gaugeField"><br>'+myGenerator["tiles"][i].title+'<br><div style="display: inline-block; width:100%; height:65%; position: relative;"><canvas class="gaugeCanvas" id="gauge'+i+'_bg" style="height: 100%; position: absolute; left: 0; top: 0; z-index: 1;"></canvas><canvas class="gaugeCanvas" id="gauge'+i+'" style="height: 100%; position: absolute; left: 0; top: 0; z-index: 0;"></canvas></div><br><div id="text'+i+'" class="gaugeDiv"></div></div>';
              } else {
                outstr += '<div id="gaugeField_'+i+'" class="grid-item gaugeField"><br>'+myGenerator["tiles"][i].title+'<br><canvas class="gaugeCanvas" id="gauge'+i+'"></canvas><br><div id="text'+i+'" class="gaugeDiv"></div></div>';
              }
              break;
-          case "graph":
+           case "graph":
              outstr += '<div id="plotField" class="grid-item plotField"><br>'+myGenerator["tiles"][i].title+'<br><div id="plotkW" class="kwPlotCanvas"></div><span class="kwPlotText">Time (<div class="kwPlotSelection selection" id="1h">1 hour</div> | <div class="kwPlotSelection" id="1d">1 day</div> | <div class="kwPlotSelection" id="1w">1 week</div> | <div class="kwPlotSelection" id="1m">1 month</div>)</span></div>';
              break;
-       }
+         }
+      }
+      outstr += '</div></center><br>';
     }
-    outstr += '</div></center><br>';
     $("#mydisplay").html(outstr + '<div style="clear:both" id="statusText"></div>');
 
-    $('.packery').css({'width': (vpw-240) + 'px'});
-    $('.plotField').css({'width': (kwHistory["defaultPlotWidth"] * 180)+((kwHistory["defaultPlotWidth"]-1)*10) + 'px'});
+    if (lowbandwidth == false) {
+      $('.packery').css({'width': (vpw-240) + 'px'});
+      $('.plotField').css({'width': (kwHistory["defaultPlotWidth"] * 180)+((kwHistory["defaultPlotWidth"]-1)*10) + 'px'});
 
-    $('.packery').packery({itemSelector: '.grid-item', gutter: 10, columnWidth: 85, rowHeight: 95, percentPosition: false, originLeft: true, resize: true});
+      $('.packery').packery({itemSelector: '.grid-item', gutter: 10, columnWidth: 85, rowHeight: 95, percentPosition: false, originLeft: true, resize: true});
 
-    var $itemElems = $(".grid-item");
-    $itemElems.draggable().resizable();
-    $('.packery').packery( 'bindUIDraggableEvents', $itemElems );
+      var $itemElems = $(".grid-item");
+      $itemElems.draggable().resizable();
+      $('.packery').packery( 'bindUIDraggableEvents', $itemElems );
 
-    var resizeTimeout;
-    var $itemElems = $( $('.packery').packery('getItemElements') );
-    $itemElems.on( 'resize', function( event, ui ) {
+      var resizeTimeout;
+      var $itemElems = $( $('.packery').packery('getItemElements') );
+      $itemElems.on( 'resize', function( event, ui ) {
            if ( resizeTimeout ) {
                clearTimeout( resizeTimeout );
            }
@@ -314,10 +324,10 @@ function DisplayStatusFull() {
                }
                $('.packery').packery( 'fit', ui.element[0] );
            }, 100 );
-    });
+      });
 
-    for (var i = 0; i < myGenerator["tiles"].length; ++i) {
-       switch (myGenerator["tiles"][i].type) {
+      for (var i = 0; i < myGenerator["tiles"].length; ++i) {
+        switch (myGenerator["tiles"][i].type) {
           case "gauge":
              if (myGenerator["tiles"][i].subtype == "fuel") {
                 gauge[i] = createFuel($("#gauge"+i), $("#text"+i), $("#gauge"+i+"_bg"), myGenerator["tiles"][i].maximum);
@@ -333,7 +343,8 @@ function DisplayStatusFull() {
           case "graph":
              createGraph(myGenerator["tiles"][i].title, myGenerator["tiles"][i].minimum, myGenerator["tiles"][i].maximum);
              break;
-       }
+        }
+      }
     }
 
     var url = baseurl.concat("status_json");
@@ -1021,12 +1032,13 @@ function DisplayLogs(){
 
         $("#mydisplay").html(outstr);
 
-        var date = new Date();
-        var data_helper = {};
-        var months = 1;
-        var loglines = result.split('\n');
-        var severity = 0;
-        for(var i = 0;i < loglines.length;i++){
+        if (lowbandwidth == false) {
+          var date = new Date();
+          var data_helper = {};
+          var months = 1;
+          var loglines = result.split('\n');
+          var severity = 0;
+          for(var i = 0;i < loglines.length;i++){
             if (loglines[i].indexOf("Alarm Log :") >= 0) {
                severity = 3;
             } else if (loglines[i].indexOf("Service Log :") >= 0) {
@@ -1049,13 +1061,15 @@ function DisplayLogs(){
                   }
                }
             }
+
+          }
+          var data = Object.keys(data_helper).sort().map(function(itm) { return data_helper[itm]; });
+          // var data = Object.keys(data_helper).map(itm => data_helper[itm]);
+          // var data = Object.values(data_helper);
+          // console.log(data);
+          var options = {coloring: 'genmon', start: new Date((date.getMonth()-12 < 0) ? date.getYear() - 1 + 1900 : date.getYear() + 1900, (date.getMonth()-12 < 0) ? date.getMonth()+1 : date.getMonth()-12, 1), end: new Date(date.getYear() + 1900, date.getMonth(), date.getDate()), months: months, labels: { days: true, months: true, custom: {monthLabels: "MMM 'YY"}}, tooltips: { show: true, options: {}}, legend: { show: false}};
+          $("#annualCalendar").CalendarHeatmap(data, options);
         }
-        var data = Object.keys(data_helper).sort().map(function(itm) { return data_helper[itm]; });
-        // var data = Object.keys(data_helper).map(itm => data_helper[itm]);
-        // var data = Object.values(data_helper);
-        // console.log(data);
-        var options = {coloring: 'genmon', start: new Date((date.getMonth()-12 < 0) ? date.getYear() - 1 + 1900 : date.getYear() + 1900, (date.getMonth()-12 < 0) ? date.getMonth()+1 : date.getMonth()-12, 1), end: new Date(date.getYear() + 1900, date.getMonth(), date.getDate()), months: months, labels: { days: true, months: true, custom: {monthLabels: "MMM 'YY"}}, tooltips: { show: true, options: {}}, legend: { show: false}};
-        $("#annualCalendar").CalendarHeatmap(data, options);
    }});
 }
 
@@ -2495,7 +2509,9 @@ function DisplayRegistersFull()
 
     $("#mydisplay").html(outstr);
     UpdateRegistersColor();
-    $('.registerChart').tooltipster({
+    if (lowbandwidth == false) {
+
+      $('.registerChart').tooltipster({
         minWidth: '280px',
         maxWidth: '280px',
         animation: 'fade',
@@ -2544,7 +2560,7 @@ function DisplayRegistersFull()
             $('#'+regId+'_graph3').css('display', 'none');
         }
     });
-
+  }
 }
 //*****************************************************************************
 function UpdateRegisters(init, printToScreen)
@@ -2554,6 +2570,8 @@ function UpdateRegisters(init, printToScreen)
       regHistory["historySince"] = now.format("D MMMM YYYY H:mm:ss");
       regHistory["count_60m"] = 0;
       regHistory["count_24h"] = 0;
+    } else if ((lowbandwidth == true) && (printToScreen == false)) {
+      return
     }
 
     var url = baseurl.concat("registers_json");
@@ -2728,8 +2746,8 @@ function printRegisters (type) {
     outstr += '</tr></table></center>';
     $("#printRegisterFrame").html(outstr);
 
-
-    for (var i = 0; i < plots.length; i++) {
+    if (lowbandwidth == false) {
+      for (var i = 0; i < plots.length; i++) {
         var reg_key = plots[i];
         var plot_data = [];
         for (var j = 120; j >= 0; --j) {
@@ -2740,6 +2758,7 @@ function printRegisters (type) {
                                axesDefaults: { tickOptions: { textColor: '#000000', fontSize: '8pt' }},
                                axes: { xaxis: { label: labelText, labelOptions: { fontFamily: 'Arial', textColor: '#000000', fontSize: '9pt' }, min: labelMin, max:0 } }
                              });
+      }
     }
 
     $("#printRegisterFrame").printThis({canvas: true, importCSS: false, loadCSS: "css/print.css", pageTitle:"Genmon Registers", removeScripts: true});
