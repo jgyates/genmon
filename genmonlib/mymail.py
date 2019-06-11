@@ -39,7 +39,7 @@ class MyMail(MySupport):
         incoming_callback = None,
         localinit = False,
         loglocation = ProgramDefaults.LogPath,
-        ConfigFilePath = "/etc",
+        ConfigFilePath = "/etc/",
         log = None,
         start = True):
 

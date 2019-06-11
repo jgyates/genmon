@@ -20,7 +20,16 @@ from genmonlib.program_defaults import ProgramDefaults
 
 #------------ SerialDevice class -----------------------------------------------
 class SerialDevice(MySupport):
-    def __init__(self, name = '/dev/serial0', rate=9600, log = None, Parity = None, OnePointFiveStopBits = None, RtsCts = False, config = None, loglocation = ProgramDefaults.LogPath):
+    def __init__(self,
+        name = '/dev/serial0',
+        rate=9600,
+        log = None,
+        Parity = None,
+        OnePointFiveStopBits = None,
+        sevendatabits = False,
+        RtsCts = False,
+        config = None,
+        loglocation = ProgramDefaults.LogPath):
 
         super(SerialDevice, self).__init__()
 
@@ -49,7 +58,12 @@ class SerialDevice(MySupport):
         self.SerialDevice = serial.Serial()
         self.SerialDevice.port = self.DeviceName
         self.SerialDevice.baudrate = rate
-        self.SerialDevice.bytesize = serial.EIGHTBITS     #number of bits per bytes
+        #number of bits per bytes
+        if sevendatabits == True:
+            self.SerialDevice.bytesize = serial.SEVENBITS
+        else:
+            self.SerialDevice.bytesize = serial.EIGHTBITS
+
         if Parity == None:
             self.SerialDevice.parity = serial.PARITY_NONE    #set parity check: no parity
         elif Parity == 1:
