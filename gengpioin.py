@@ -78,14 +78,14 @@ class MyGPIOInput(MySupport):
         try:
             while not self.Exiting:
                 if GPIO.event_detected(self.GPIO):
-                    log.error('Edge detected on pin ' + str(self.GPIO))
+                    self.LogError('Edge detected on pin ' + str(self.GPIO))
                     if self.Callback != None and callable(self.Callback):
                         self.Callback(self.GPIO)
                 if self.WaitForExit("GPIOInputMonitor", 1):
                     return
 
         except Exception as e1:
-            log.error("Error GPIOInputMonitor: " + str(self.GPIO)  + ": "+ str(e1))
+            self.LogErrorLine("Error GPIOInputMonitor: " + str(self.GPIO)  + ": "+ str(e1))
     #-----------------Close-----------------------------------------------------
     def Close(self):
         try:
@@ -107,7 +107,7 @@ def signal_handler(signal, frame):
         MyClientInterface.Close()
 
     except Exception as e1:
-        log.error("Error: signal_handler: " + str(e1))
+        self.LogErrorLine("Error: signal_handler: " + str(e1))
     sys.exit(0)
 
 #------------------- StopCallback ----------------------------------------------
@@ -115,9 +115,9 @@ def StopCallBack(channel):
 
     try:
         MyClientInterface.ProcessMonitorCommand("generator: setremote=stop")
-        log.error("Sent Remote Stop Command")
+        self.LogError("Sent Remote Stop Command")
     except Exception as e1:
-        log.error("Error StopCallback: " + str(e1))
+        self.LogErrorLine("Error StopCallback: " + str(e1))
 
 
 #------------------- StartCallBack ---------------------------------------------
@@ -125,9 +125,9 @@ def StartCallBack(channel):
 
     try:
         MyClientInterface.ProcessMonitorCommand("generator: setremote=start")
-        log.error("Sent Remote Start Command")
+        self.LogError("Sent Remote Start Command")
     except Exception as e1:
-        log.error("Error StartCallback: " + str(e1))
+        self.LogErrorLine("Error StartCallback: " + str(e1))
 
 
 #------------------- StartTransferCallBack -------------------------------------
@@ -135,16 +135,27 @@ def StartTransferCallBack(channel):
 
     try:
         MyClientInterface.ProcessMonitorCommand("generator: setremote=starttransfer")
-        log.error("Sent Remote Start and Transfer Command")
+        self.LogError("Sent Remote Start and Transfer Command")
     except Exception as e1:
-        log.error("Error StartTransferCallback: " + str(e1))
+        self.LogErrorLine("Error StartTransferCallback: " + str(e1))
 
+#---------------------GetErrorLine----------------------------------------------
+def GetErrorLine():
+    exc_type, exc_obj, exc_tb = sys.exc_info()
+    fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+    lineno = exc_tb.tb_lineno
+    return fname + ":" + str(lineno)
 #------------------- Command-line interface for gengpioin ----------------------
 if __name__=='__main__':
     address=ProgramDefaults.LocalHost
 
     try:
         console = SetupLogger("gengpioin_console", log_file = "", stream = True)
+
+        if os.geteuid() != 0:
+            console.error("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
+            sys.exit(2)
+
         HelpStr = '\nsudo python gengpioin.py -a <IP Address or localhost> -c <path to genmon config file>\n'
         try:
             ConfigFilePath = ProgramDefaults.ConfPath
@@ -162,10 +173,16 @@ if __name__=='__main__':
             elif opt in ("-c", "--configpath"):
                 ConfigFilePath = arg
                 ConfigFilePath = ConfigFilePath.strip()
-
+    except Exception as e1:
+        console.error("Error in init: " + str(e1) + " : " + GetErrorLine())
+        sys.exit(1)
+    try:
         port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
         log = SetupLogger("client", loglocation + "gengpioin.log")
-
+    except Exception as e1:
+        log.error("Error setting up log: " + str(e1))
+        sys.exit(1)
+    try:
         # Set the signal handler
         signal.signal(signal.SIGINT, signal_handler)
 
@@ -247,5 +264,5 @@ if __name__=='__main__':
             time.sleep(3)
 
     except Exception as e1:
-        log.error("Error: " + str(e1))
+        log.error("Error : " + str(e1))
         console.error("Error: " + str(e1))

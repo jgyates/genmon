@@ -1,10 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.13.14 - 2019-06-14
+- Corrected problem with gengpioin.py and gengpio.py that were introduced in V1.13.08
+
 ## V1.13.13 - 2019-06-11
 - Updated default values for current calculation for Evolution Liquid Cooled
 - Added option in serial library for seven data bits (current unused in this project)
-- Corrected minor issue in mail library when used in stand alone mode 
+- Corrected minor issue in mail library when used in stand alone mode
 
 ## V1.13.12 - 2019-05-22
 - Added low bandwidth page: http://IPADDRESS:8000/low

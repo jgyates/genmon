@@ -40,6 +40,11 @@ if __name__=='__main__': # usage program.py [server_address]
 
     try:
         console = SetupLogger("gengpio_console", log_file = "", stream = True)
+
+        if os.geteuid() != 0:
+            console.error("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
+            sys.exit(2)
+
         HelpStr = '\nsudo python gengpio.py -a <IP Address or localhost> -c <path to genmon config file>\n'
         try:
             ConfigFilePath = ProgramDefaults.ConfPath
@@ -58,9 +63,17 @@ if __name__=='__main__': # usage program.py [server_address]
                 ConfigFilePath = arg
                 ConfigFilePath = ConfigFilePath.strip()
 
+    except Exception as e1:
+        console.error("Error : " + str(e1))
+        sys.exit(1)
+
+    try:
         port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
         log = SetupLogger("client", loglocation + "gengpio.log")
-
+    except Exception as e1:
+        console.error("Error : " + str(e1))
+        sys.exit(1)
+    try:
         # Set the signal handler
         signal.signal(signal.SIGINT, signal_handler)
 
