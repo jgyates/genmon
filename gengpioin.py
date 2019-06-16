@@ -107,7 +107,7 @@ def signal_handler(signal, frame):
         MyClientInterface.Close()
 
     except Exception as e1:
-        self.LogErrorLine("Error: signal_handler: " + str(e1))
+        LogErrorLine("Error: signal_handler: " + str(e1))
     sys.exit(0)
 
 #------------------- StopCallback ----------------------------------------------
@@ -115,9 +115,9 @@ def StopCallBack(channel):
 
     try:
         MyClientInterface.ProcessMonitorCommand("generator: setremote=stop")
-        self.LogError("Sent Remote Stop Command")
+        LogError("Sent Remote Stop Command")
     except Exception as e1:
-        self.LogErrorLine("Error StopCallback: " + str(e1))
+        LogErrorLine("Error StopCallback: " + str(e1))
 
 
 #------------------- StartCallBack ---------------------------------------------
@@ -125,9 +125,9 @@ def StartCallBack(channel):
 
     try:
         MyClientInterface.ProcessMonitorCommand("generator: setremote=start")
-        self.LogError("Sent Remote Start Command")
+        LogError("Sent Remote Start Command")
     except Exception as e1:
-        self.LogErrorLine("Error StartCallback: " + str(e1))
+        LogErrorLine("Error StartCallback: " + str(e1))
 
 
 #------------------- StartTransferCallBack -------------------------------------
@@ -135,10 +135,23 @@ def StartTransferCallBack(channel):
 
     try:
         MyClientInterface.ProcessMonitorCommand("generator: setremote=starttransfer")
-        self.LogError("Sent Remote Start and Transfer Command")
+        LogError("Sent Remote Start and Transfer Command")
     except Exception as e1:
-        self.LogErrorLine("Error StartTransferCallback: " + str(e1))
+        LogErrorLine("Error StartTransferCallback: " + str(e1))
 
+#---------------------LogError--------------------------------------------------
+def LogError(Message):
+    if not log == None:
+        log.error(Message)
+#---------------------FatalError------------------------------------------------
+def FatalError(Message):
+    if not log == None:
+        log.error(Message)
+    raise Exception(Message)
+#---------------------LogErrorLine----------------------------------------------
+def LogErrorLine(Message):
+    if not log == None:
+        LogError(Message + " : " + GetErrorLine())
 #---------------------GetErrorLine----------------------------------------------
 def GetErrorLine():
     exc_type, exc_obj, exc_tb = sys.exc_info()

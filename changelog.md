@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.13.15 - 2019-06-15
+- Corrected problem logging with gengpioin.py
+
 ## V1.13.14 - 2019-06-14
 - Corrected problem with gengpioin.py and gengpio.py that were introduced in V1.13.08
 
