@@ -667,6 +667,8 @@ class Monitor(MySupport):
             GenMonStats.append({"Controller" : self.Controller.GetController(Actual = False)})
 
             GenMonStats.append({"Run time" : self.GetProgramRunTime()})
+            if self.Controller.PowerMeterIsSupported():
+                GenMonStats.append({"Power log file size" : self.Controller.GetPowerLogFileDetails()})
             GenMonStats.append({"Generator Monitor Version" : GENMON_VERSION})
 
             if not self.bDisablePlatformStats:

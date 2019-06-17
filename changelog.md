@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file. Major relea
 ## V1.13.16 - 2019-06-16
 - Changed warning message when power log is reaching size limit
 - Displayed estimated fuel on the Maintenance page on EvoLC diesel units that support fuel sensor
+- Added power log file size details to Monitor page
 
 ## V1.13.15 - 2019-06-15
 - Corrected problem logging with gengpioin.py

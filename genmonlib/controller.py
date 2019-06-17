@@ -57,7 +57,7 @@ class GeneratorController(MySupport):
         self.MaintLogList = []
         self.MaintLock = threading.RLock()
         self.OutageLog = ConfigFilePath + "outage.txt"
-        self.PowerLogMaxSize = 15       # 15 MB max size
+        self.PowerLogMaxSize = 15.0       # 15 MB max size
         self.PowerLog =  ConfigFilePath + "kwlog.txt"
         self.PowerLogList = []
         self.PowerLock = threading.RLock()
@@ -102,7 +102,7 @@ class GeneratorController(MySupport):
                 if self.config.HasOption('kwlog'):
                     self.PowerLog = self.config.ReadValue('kwlog')
 
-                self.PowerLogMaxSize = self.config.ReadValue('kwlogmax', return_type = int, default = 15)
+                self.PowerLogMaxSize = self.config.ReadValue('kwlogmax', return_type = float, default = 15.0)
 
                 if self.config.HasOption('nominalfrequency'):
                     self.NominalFreq = self.config.ReadValue('nominalfrequency')
@@ -713,6 +713,18 @@ class GeneratorController(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in LogToPowerLog: " + str(e1))
 
+    #------------ GeneratorController::GetPowerLogFileDetails-------------------
+    def GetPowerLogFileDetails(self):
+
+        if not self.PowerMeterIsSupported():
+            return "Not Supported"
+        try:
+            LogSize = os.path.getsize(self.PowerLog)
+            outstr = "%.2f MB of %.2f MB" %((float(LogSize) / (1024.0*1024.0)), self.PowerLogMaxSize )
+            return outstr
+        except Exception as e1:
+            self.LogErrorLine("Error in GetPowerLogFileDetails : " + str(e1))
+            return "Unknown"
     #------------ GeneratorController::PrunePowerLog----------------------------
     def PrunePowerLog(self, Minutes):
 
