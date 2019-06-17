@@ -1779,6 +1779,8 @@ class Evolution(GeneratorController):
             Maintenance["Maintenance"].append({"Fuel Type" : self.FuelType})
             if self.FuelSensorSupported():
                 Maintenance["Maintenance"].append({"Fuel Level Sensor" : self.GetFuelSensor()})
+            if self.FuelCalculationSupported():
+                Maintenance["Maintenance"].append({"Estimated Fuel In Tank" : self.GetEstimatedFuelInTank()})
 
             if self.EngineDisplacement != "Unknown":
                 Maintenance["Maintenance"].append({"Engine Displacement" : self.EngineDisplacement})
