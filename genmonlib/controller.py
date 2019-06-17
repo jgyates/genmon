@@ -726,8 +726,12 @@ class GeneratorController(MySupport):
             LogSize = os.path.getsize(self.PowerLog)
 
             if float(LogSize) / (1024*1024) >= self.PowerLogMaxSize * 0.98:
-                msgbody = "The kwlog file size is 98% of the maximum. Once the log reaches 100% of the log will be reset."
-                self.MessagePipe.SendMessage("Notice: Log file size warning" , msgbody, msgtype = "warn", onlyonce = True)
+                msgbody = "The genmon kwlog (power log) file size is 98 percent of the maximum. Once "
+                msgbody += "the log reaches 100 percent of the log will be reset. This will result "
+                msgbody += "inaccurate fuel estimation (if you are using this feature). You can  "
+                msgbody += "either increase the size of the kwlog on the advanced settings page,"
+                msgbody += "or reset your power log."
+                self.MessagePipe.SendMessage("Notice: Power Log file size warning" , msgbody, msgtype = "warn", onlyonce = True)
 
             # is the file size too big?
             if float(LogSize) / (1024*1024) >= self.PowerLogMaxSize:
