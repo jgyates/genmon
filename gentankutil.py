@@ -219,9 +219,9 @@ class GenTankData(MySupport):
             except Exception as e1:
                 self.LogErrorLine("Error in GenTankData init: "  + str(e1))
 
-            if not self.CheckGeneratorRequirement():
-                self.LogError("Requirements not met. Exiting.")
-                sys.exit(1)
+            #if not self.CheckGeneratorRequirement():
+            #    self.LogError("Requirements not met. Exiting.")
+            #    sys.exit(1)
 
             self.tank = tankutility(self.username, self.password, self.log, debug = self.Debug)
             # start thread monitor time for exercise
