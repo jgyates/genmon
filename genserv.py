@@ -79,6 +79,7 @@ GENSLACK_CONFIG = ConfigFilePath + "genslack.conf"
 GENGPIOIN_CONFIG = ConfigFilePath + "gengpioin.conf"
 GENEXERCISE_CONFIG = ConfigFilePath + "genexercise.conf"
 GENEMAIL2SMS_CONFIG = ConfigFilePath + "genemail2sms.conf"
+GENTANKUTIL_CONFIG = ConfigFilePath + "gentankutil.conf"
 
 Closing = False
 Restarting = False
@@ -743,6 +744,41 @@ def GetAddOns():
             "Email to SMS email recipient. Must be a valid email address",
             bounds = 'required email',
             display_name = "Email to SMS address")
+
+        #GENTANKUTIL
+        AddOnCfg['gentankutil'] = collections.OrderedDict()
+        AddOnCfg['gentankutil']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "gentankutil", default = False)
+        AddOnCfg['gentankutil']['title'] = "External Tank Fuel Monitor"
+        AddOnCfg['gentankutil']['description'] = "Integrates tankutility.com propane tank sensor data"
+        AddOnCfg['gentankutil']['icon'] = "Genmon"
+        AddOnCfg['gentankutil']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gentankutilpy-optional"
+        AddOnCfg['gentankutil']['parameters'] = collections.OrderedDict()
+
+        AddOnCfg['gentankutil']['parameters']['tank_name'] = CreateAddOnParam(
+            ConfigFiles[GENTANKUTIL_CONFIG].ReadValue("tank_name", return_type = str, default = ""),
+            'string',
+            "Tank name as defined in tankutility.com",
+            bounds = 'minmax:1:50',
+            display_name = "Tank Name")
+        AddOnCfg['gentankutil']['parameters']['username'] = CreateAddOnParam(
+            ConfigFiles[GENTANKUTIL_CONFIG].ReadValue("username", return_type = str, default = ""),
+            'string',
+            "Username at tankutility.com",
+            bounds = 'required email',
+            display_name = "Username")
+        AddOnCfg['gentankutil']['parameters']['password'] = CreateAddOnParam(
+            ConfigFiles[GENTANKUTIL_CONFIG].ReadValue("password", return_type = str, default = ""),
+            'string',
+            "Password at tankutility.com",
+            bounds = 'minmax:4:50',
+            display_name = "Password")
+        AddOnCfg['gentankutil']['parameters']['poll_frequency'] = CreateAddOnParam(
+            ConfigFiles[GENTANKUTIL_CONFIG].ReadValue("poll_frequency", return_type = float, default = 0),
+            'float',
+            "The duration in minutes between poll of tank data.",
+            bounds = 'number',
+            display_name = "Poll Frequency")
+
     except Exception as e1:
         LogErrorLine("Error in GetAddOns: " + str(e1))
 
@@ -807,7 +843,8 @@ def SaveAddOnSettings(query_string):
             "gengpio" : ConfigFiles[GENLOADER_CONFIG],
             "gengpioin" : ConfigFiles[GENGPIOIN_CONFIG],
             "genexercise" : ConfigFiles[GENEXERCISE_CONFIG],
-            "genemail2sms" : ConfigFiles[GENEMAIL2SMS_CONFIG]
+            "genemail2sms" : ConfigFiles[GENEMAIL2SMS_CONFIG],
+            "gentankutil" : ConfigFiles[GENTANKUTIL_CONFIG]
         }
 
         for module, entries in settings.items():   # module
@@ -819,6 +856,9 @@ def SaveAddOnSettings(query_string):
             for basesettings, basevalues in entries.items():    # base settings
                 if basesettings == 'enable':
                     ConfigFiles[GENLOADER_CONFIG].WriteValue("enable", basevalues, section = module)
+                    if module == "gentankutil":
+                        # update genmon.conf also to let it know that it should watch for external fuel data
+                        ConfigFiles[GENMON_CONFIG].WriteValue("use_external_fuel_data", basevalues, section = "genmon")
                 if basesettings == 'parameters':
                     for params, paramvalue in basevalues.items():
                         if module == "genlog" and params == "Log File Name":
@@ -1598,12 +1638,13 @@ if __name__ == "__main__":
     GENGPIOIN_CONFIG = ConfigFilePath + "gengpioin.conf"
     GENEXERCISE_CONFIG = ConfigFilePath + "genexercise.conf"
     GENEMAIL2SMS_CONFIG = ConfigFilePath + "genemail2sms.conf"
+    GENTANKUTIL_CONFIG = ConfigFilePath + "gentankutil.conf"
 
     if os.geteuid() != 0:
         LogConsole("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'.")
         sys.exit(1)
 
-    ConfigFileList = [GENMON_CONFIG, MAIL_CONFIG, GENLOADER_CONFIG, GENSMS_CONFIG, MYMODEM_CONFIG, GENPUSHOVER_CONFIG, GENMQTT_CONFIG, GENSLACK_CONFIG, GENGPIOIN_CONFIG, GENEXERCISE_CONFIG, GENEMAIL2SMS_CONFIG]
+    ConfigFileList = [GENMON_CONFIG, MAIL_CONFIG, GENLOADER_CONFIG, GENSMS_CONFIG, MYMODEM_CONFIG, GENPUSHOVER_CONFIG, GENMQTT_CONFIG, GENSLACK_CONFIG, GENGPIOIN_CONFIG, GENEXERCISE_CONFIG, GENEMAIL2SMS_CONFIG, GENTANKUTIL_CONFIG]
 
     for ConfigFile in ConfigFileList:
         if not os.path.isfile(ConfigFile):

@@ -318,6 +318,9 @@ class Evolution(GeneratorController):
                     Units = "gal"
                 Tile = MyTile(self.log, title = "Estimated Fuel", units = Units, type = "fuel", nominal = int(self.TankSize), callback = self.GetEstimatedFuelInTank, callbackparameters = (True,))
                 self.TileList.append(Tile)
+            if self.ExternalFuelDataSupported():
+                Tile = MyTile(self.log, title = "External Tank", units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True,))
+                self.TileList.append(Tile)
             if self.PowerMeterIsSupported():
                 Tile = MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = float(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
                 self.TileList.append(Tile)

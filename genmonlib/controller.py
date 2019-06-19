@@ -66,6 +66,7 @@ class GeneratorController(MySupport):
         self.RunHoursMonth = None
         self.LastHouseKeepingTime = None
         self.TileList = []        # Tile list for GUI
+        self.TankData = None
 
         self.UtilityVoltsMin = 0    # Minimum reported utility voltage above threshold
         self.UtilityVoltsMax = 0    # Maximum reported utility voltage above pickup
@@ -80,6 +81,7 @@ class GeneratorController(MySupport):
         self.Model = "Unknown"
         self.EngineDisplacement = "Unknown"
         self.TankSize = 0
+        self.UseExternalFuelData = False
 
         self.ProgramStartTime = datetime.datetime.now()     # used for com metrics
         self.OutageStartTime = self.ProgramStartTime        # if these two are the same, no outage has occured
@@ -95,6 +97,7 @@ class GeneratorController(MySupport):
                 self.bDisablePowerLog = self.config.ReadValue('disablepowerlog', return_type = bool, default = False)
                 self.SubtractFuel = self.config.ReadValue('subtractfuel', return_type = float, default = 0.0)
                 self.UserURL = self.config.ReadValue('user_url',  default = "").strip()
+                self.UseExternalFuelData = self.config.ReadValue('use_external_fuel_data', return_type = bool, default = False)
 
                 if self.config.HasOption('outagelog'):
                     self.OutageLog = self.config.ReadValue('outagelog')
@@ -1221,6 +1224,46 @@ class GeneratorController(MySupport):
     #----------  GeneratorController::GetFuelConsumptionPolynomial--------------
     def GetFuelConsumptionPolynomial(self):
         return None
+    #----------  GeneratorController::ExternalFuelDataSupported-----------------
+    def ExternalFuelDataSupported(self):
+        return self.UseExternalFuelData
+    #----------  GeneratorController::GetExternalFuelPercentage-----------------
+    def GetExternalFuelPercentage(self, ReturnFloat = False):
+
+        try:
+            if ReturnFloat:
+                DefaultReturn = 0.0
+            else:
+                DefaultReturn = "0"
+
+            if not self.ExternalFuelDataSupported():
+                return DefaultReturn
+
+            if self.TankData != None:
+                percentage =  self.TankData["Percentage"]
+                if ReturnFloat:
+                    return float(percentage)
+                else:
+                    return str(percentage)
+            else:
+                return DefaultReturn
+        except Exception as e1:
+            self.LogErrorLine("Error in GetExternalFuelPercentage: " + str(e1))
+            return DefaultReturn
+    #----------  GeneratorController::SetExternalTankData-----------------------
+    def SetExternalTankData(self, command):
+
+        try:
+            CmdList = command.split("=")
+            if len(CmdList) == 2:
+                self.TankData = json.loads(CmdList[1])
+            else:
+                self.LogError("Error in  SetExternalTankData: invalid input")
+                return "Error"
+        except Exception as e1:
+            self.LogErrorLine("Error in SetExternalTankData: " + str(e1))
+            return "Error"
+        return "OK"
     #----------  GeneratorController::AddEntryToMaintLog------------------------
     def AddEntryToMaintLog(self, EntryString):
 

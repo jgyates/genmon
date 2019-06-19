@@ -1021,6 +1021,9 @@ class HPanel(GeneratorController):
                 callback = self.GetParameter,
                 callbackparameters = (self.Reg.TOTAL_POWER_KW[REGISTER], None, None, False, True, False))
                 self.TileList.append(Tile)
+            if self.ExternalFuelDataSupported():
+                Tile = MyTile(self.log, title = "External Tank", units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True,))
+                self.TileList.append(Tile)
 
         except Exception as e1:
             self.LogErrorLine("Error in SetupTiles: " + str(e1))
