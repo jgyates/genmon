@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.13.18 - 2019-06-19
+- Fixed problem in gentankutil.py
+
 ## V1.13.17 - 2019-06-19
 - Added support for external fuel tank API for tankutility.com propane fuel monitor
 

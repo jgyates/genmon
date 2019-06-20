@@ -49,13 +49,13 @@ class tankutility(MyCommon):
             url = self.urljoin(self.BASEURL,"getToken")
             query = requests.get(url, auth=(self.username, self.password))
             if query.status_code != 200:
-                LogError("Error logging in, error code: " + str(query.status_code ))
+                self.LogError("Error logging in, error code: " + str(query.status_code ))
                 return False
             else:
                 response = query.json()
                 self.DebugOutput("Login: " + str(response))
                 if response['error'] != '':
-                    LogError("API reports an account error: " + str(response['error']))
+                    self.LogError("API reports an account error: " + str(response['error']))
                     return False
                 self.token = response['token']
                 return True
@@ -72,7 +72,7 @@ class tankutility(MyCommon):
             params = (('token', self.token),)
             query = requests.get(url, params=params)
             if query.status_code != 200:
-                LogError("Unable to obtain device list from the API, Error code: " + str(query.status_code ))
+                self.LogError("Unable to obtain device list from the API, Error code: " + str(query.status_code ))
                 return False
             else:
                 response = query.json()
@@ -161,12 +161,12 @@ class GenTankData(MySupport):
 
         super(GenTankData, self).__init__()
 
-        self.LogFileName = loglocation + "gentankdata.log"
+        self.LogFileName = loglocation + "gentankutil.log"
         self.AccessLock = threading.Lock()
         # log errors in this module to a file
-        self.log = SetupLogger("gentankdata", self.LogFileName)
+        self.log = SetupLogger("gentankutil", self.LogFileName)
 
-        self.console = SetupLogger("gentankdata_console", log_file = "", stream = True)
+        self.console = SetupLogger("gentankutil_console", log_file = "", stream = True)
 
         self.MonitorAddress = host
         self.PollTime =  2
