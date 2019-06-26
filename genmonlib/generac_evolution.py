@@ -1762,7 +1762,14 @@ class Evolution(GeneratorController):
             else:
                 msgbody += self.printToString("\nNo Alarms: 0001:%08x" % RegVal)
 
-            self.MessagePipe.SendMessage(msgsubject , msgbody, msgtype = MessageType)
+            # if option enabled and evo 2.0 detected and result invalid, do not end email.
+            sendMessage = True
+            if self.Evolution2 and self.IgnoreUnknown and not self.Reg0001IsValid(RegVal):
+                sendMessage = False
+
+            if sendMessage:
+                self.MessagePipe.SendMessage(msgsubject , msgbody, msgtype = MessageType)
+
         except Exception as e1:
             self.LogErrorLine("Error in CheckForAlarms: " + str(e1))
 
@@ -2516,7 +2523,12 @@ class Evolution(GeneratorController):
                 self.FeedbackPipe.SendFeedback("Alarm", Always = True, Message = "Reg 0001 = %08x" % RegVal, FullLogs = True )
 
         return outString
+    #------------ Evolution:Reg0001IsValid -------------------------------------
+    def Reg0001IsValid(self, regvalue):
 
+        if regvalue & 0xFFF0FF00:
+            return False
+        return True
     #------------ Evolution:GetDigitalValues -----------------------------------
     def GetDigitalValues(self, RegVal, LookUp):
 
@@ -3691,6 +3703,7 @@ class Evolution(GeneratorController):
                 self.CurrentDivider = self.config.ReadValue('currentdivider', return_type = float, default = None, NoLog = True)
                 self.CurrentOffset = self.config.ReadValue('currentoffset', return_type = float, default = None, NoLog = True)
                 self.UseFuelSensor = self.config.ReadValue('usesensorforfuelgauge', return_type = bool, default = True)
+                self.IgnoreUnknown = self.config.ReadValue('ignore_unknown', return_type = bool, default = False)
 
                 self.SerialNumberReplacement = self.config.ReadValue('serialnumberifmissing', default = None)
                 if self.SerialNumberReplacement != None and len(self.SerialNumberReplacement):
