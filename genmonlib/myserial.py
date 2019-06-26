@@ -53,6 +53,7 @@ class SerialDevice(MySupport):
             self.log = SetupLogger("myserial", self.loglocation + "myserial.log")
         else:
             self.log = log
+        self.console = SetupLogger("myserial_console", log_file = "", stream = True)
 
         #Starting serial connection
         self.SerialDevice = serial.Serial()

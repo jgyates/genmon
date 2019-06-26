@@ -118,7 +118,7 @@ class ModbusProtocol(ModbusBase):
 
         except Exception as e1:
             self.LogErrorLine("Error opening serial device: " + str(e1))
-            sys.exit(1)
+            self.FatalError("Error opening serial device.")
 
         try:
             # CRCMOD library, used for CRC calculations

@@ -19,6 +19,7 @@ import threading, datetime, collections, os, time, json
 
 from genmonlib.mysupport import MySupport
 from genmonlib.mythread import MyThread
+from genmonlib.mylog import SetupLogger
 from genmonlib.program_defaults import ProgramDefaults
 
 class GeneratorController(MySupport):
@@ -88,6 +89,7 @@ class GeneratorController(MySupport):
         self.LastOutageDuration = self.OutageStartTime - self.OutageStartTime
 
         try:
+            self.console = SetupLogger("controller_console", log_file = "", stream = True)
             if self.config != None:
                 self.SiteName = self.config.ReadValue('sitename', default = 'Home')
                 self.LogLocation = self.config.ReadValue('loglocation', default = '/var/log/')
@@ -127,10 +129,7 @@ class GeneratorController(MySupport):
                 self.SmartSwitch = self.config.ReadValue('smart_transfer_switch', return_type = bool, default = False)
 
         except Exception as e1:
-            if not reload:
                 self.FatalError("Missing config file or config file entries: " + str(e1))
-            else:
-                self.LogErrorLine("Error reloading config file" + str(e1))
 
 
     #----------  GeneratorController:StartCommonThreads-------------------------

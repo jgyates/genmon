@@ -241,6 +241,7 @@ class Evolution(GeneratorController):
 
         except Exception as e1:
             self.LogErrorLine("Error opening modbus device: " + str(e1))
+            self.LogError("Possible cause is invalid serial port specified.")
             sys.exit(1)
     #-------------Evolution:InitDevice------------------------------------------
     # One time reads, and read all registers once
@@ -693,7 +694,7 @@ class Evolution(GeneratorController):
         Controller = self.GetController()
 
         if not len(SerialNumber) or not len(Controller):
-            self.LogError("Error in LookUpSNInfo: bad input, no serial number or controller info present.")
+            self.LogError("Error in LookUpSNInfo: bad input, no serial number or controller info not present. Possible issue with serial comms.")
             return False, ReturnModel, ReturnKW
 
         if "none" in SerialNumber.lower():      # serial number is not present due to controller being replaced

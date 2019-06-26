@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.13.19 - 2019-06-25
+- Added more logging for better diagnostics when fatal errors occur (e.g. invalid serial port specified)
+- Corrected one problem with invalid file name for log file when sending logs 
+
 ## V1.13.18 - 2019-06-19
 - Fixed problem in gentankutil.py
 

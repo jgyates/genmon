@@ -129,6 +129,8 @@ class MyCommon(object):
     def FatalError(self, Message):
         if not self.log == None:
             self.log.error(Message)
+        if not self.console == None:
+            self.console.error(Message)
         raise Exception(Message)
     #---------------------MyCommon::LogErrorLine--------------------------------
     def LogErrorLine(self, Message):

@@ -69,6 +69,7 @@ class ModbusBase(MySupport ):
 
         # log errors in this module to a file
         self.log = SetupLogger("mymodbus", self.loglocation + "mymodbus.log")
+        self.console = SetupLogger("mymodbus_console", log_file = "", stream = True)
 
     #-------------ModbusBase::ProcessMasterSlaveWriteTransaction----------------
     def ProcessMasterSlaveWriteTransaction(self, Register, Length, Data):
