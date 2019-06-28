@@ -2475,7 +2475,7 @@ class Evolution(GeneratorController):
 
         strSwitch = self.GetSwitchState()
 
-        if len(strSwitch) == 0:
+        if len(strSwitch) == 0 or not "alarm" in strSwitch.lower():
             return ""
 
         outString = ""
@@ -2485,12 +2485,6 @@ class Evolution(GeneratorController):
             return ""
         RegVal = int(Value, 16)
 
-        if "alarm" in strSwitch.lower() and self.EvolutionController:
-            Value = self.GetRegisterValueFromList("05f1")   # get last error code
-            if len(Value) == 4:
-                AlarmStr = self.GetAlarmInfo(Value, ReturnNameOnly = True)
-                if not "unknown" in AlarmStr.lower():
-                    outString = AlarmStr
 
         # These codes indicate an alarm needs to be reset before the generator will run again
         AlarmValues = {
@@ -2516,11 +2510,18 @@ class Evolution(GeneratorController):
          0x34 : "Emergency Stop"        #  Validate on Evolution, occurred when E-Stop
         }
 
-        if "alarm" in strSwitch.lower() and len(outString) == 0:        # is system in alarm/warning
+        outString += AlarmValues.get(RegVal & 0x0FFFF,"UNKNOWN ALARM: %08x" % RegVal)
+        if "unknown" in outString.lower():
+            self.FeedbackPipe.SendFeedback("Alarm", Always = True, Message = "Reg 0001 = %08x" % RegVal, FullLogs = True )
 
-            outString += AlarmValues.get(RegVal & 0x0FFFF, "UNKNOWN ALARM: %08x" % RegVal)
-            if "unknown" in outString.lower():
-                self.FeedbackPipe.SendFeedback("Alarm", Always = True, Message = "Reg 0001 = %08x" % RegVal, FullLogs = True )
+        if self.EvolutionController and "unknown" in outString.lower():
+            # This method works in most cases for Evolution. Service due is an exception to
+            # this. Reg 051f is not updated with service due alarms.
+            Value = self.GetRegisterValueFromList("05f1")   # get last error code
+            if len(Value) == 4:
+                AlarmStr = self.GetAlarmInfo(Value, ReturnNameOnly = True)
+                if not "unknown" in AlarmStr.lower():
+                    outString = AlarmStr
 
         return outString
     #------------ Evolution:Reg0001IsValid -------------------------------------

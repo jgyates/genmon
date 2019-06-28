@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.13.21 - 2019-06-28
+- Slight modification to the logic used when detecting the type of alarm for Evolution controllers due to the last alarm code register not updating after a Servicee Due alarm.
+
 ## V1.13.20 - 2019-06-26
 - Added option "Ignore Unknown Values" that will ignore unknown values of modbus register 0001 for Evolution 2.0 controllers. This setting is in the advanced section in the web interface.
 
