@@ -1719,12 +1719,14 @@ class Evolution(GeneratorController):
             # now check to see if there is an alarm
             Value = self.GetRegisterValueFromList("0001")
             if len(Value) != 8:
-                return ""           # we don't have a value for this register yet
+                return              # we don't have a value for this register yet
             RegVal = int(Value, 16)
 
             if RegVal == self.LastAlarmValue:
                 return      # nothing new to report, return
 
+            if self.Evolution2 and self.IgnoreUnknown and not self.Reg0001IsValid(RegVal):
+                return
             # if we get past this point there is something to report, either first time through
             # or there is an alarm that has been set or reset
             self.LastAlarmValue = RegVal    # update the stored alarm
