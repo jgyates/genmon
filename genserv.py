@@ -1039,12 +1039,16 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["additionalrunhours"] = ['string', 'Additional Run Hours', 14, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "additionalrunhours"]
         ConfigSettings["subtractfuel"] = ['float', 'Subtract Fuel', 15, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "subtractfuel"]
         #ConfigSettings["kwlog"] = ['string', 'Power Log Name / Disable', 16, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlog"]
-        ConfigSettings["kwlogmax"] = ['string', 'Maximum size Power Log (MB)', 17, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlogmax"]
-        ConfigSettings["currentdivider"] = ['float', 'Current Divider', 18, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentdivider"]
-        ConfigSettings["currentoffset"] = ['string', 'Current Offset', 19, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentoffset"]
-        ConfigSettings["disableplatformstats"] = ['boolean', 'Disable Platform Stats', 20, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "disableplatformstats"]
-        ConfigSettings["https_port"] = ['int', 'Override HTTPS port', 21, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "https_port"]
-        ConfigSettings["user_url"] = ['string', 'User URL', 22, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "user_url"]
+        if ControllerType != 'h_100':
+            ConfigSettings["usenominallinevolts"] = ['boolean', 'Use Nominal Volts Override', 17, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "usenominallinevolts"]
+            ConfigSettings["nominallinevolts"] = ['int', 'Override nominal line voltage in UI', 18, "240", "", 0, GENMON_CONFIG, GENMON_SECTION,"nominallinevolts"]
+
+        ConfigSettings["kwlogmax"] = ['string', 'Maximum size Power Log (MB)', 19, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlogmax"]
+        ConfigSettings["currentdivider"] = ['float', 'Current Divider', 20, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentdivider"]
+        ConfigSettings["currentoffset"] = ['string', 'Current Offset', 21, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentoffset"]
+        ConfigSettings["disableplatformstats"] = ['boolean', 'Disable Platform Stats', 22, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "disableplatformstats"]
+        ConfigSettings["https_port"] = ['int', 'Override HTTPS port', 23, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "https_port"]
+        ConfigSettings["user_url"] = ['string', 'User URL', 24, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "user_url"]
 
 
         for entry, List in ConfigSettings.items():

@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.13.22 - 2019-07-06
+- Added config file options to set nominal line voltage values for non US grids (Evo and Nexus only)
+
 ## V1.13.21 - 2019-06-28
 - Slight modification to the logic used when detecting the type of alarm for Evolution controllers due to the last alarm code register not updating after a Servicee Due alarm.
 

@@ -100,7 +100,7 @@ class GeneratorController(MySupport):
                 self.SubtractFuel = self.config.ReadValue('subtractfuel', return_type = float, default = 0.0)
                 self.UserURL = self.config.ReadValue('user_url',  default = "").strip()
                 self.UseExternalFuelData = self.config.ReadValue('use_external_fuel_data', return_type = bool, default = False)
-
+                
                 if self.config.HasOption('outagelog'):
                     self.OutageLog = self.config.ReadValue('outagelog')
 

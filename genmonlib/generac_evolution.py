@@ -443,8 +443,11 @@ class Evolution(GeneratorController):
                     self.config.WriteValue("fueltype", self.FuelType)
             # Set Nominal Line Volts if three phase
             try:
-                self.NominalLineVolts = int(self.GetModelInfo( "nominalvolts"))
-            except:
+                if not self.UseNominalLineVoltsFromConfig:
+                    self.NominalLineVolts = int(self.GetModelInfo( "nominalvolts"))
+            except Exception as e1:
+                self.NominalLineVolts = 240
+                self.LogErrorLine("Error getting nominal line volts: " + str(e1))
                 pass
 
             self.EngineDisplacement = self.GetModelInfo("EngineDisplacement")
@@ -3717,6 +3720,8 @@ class Evolution(GeneratorController):
                     self.SerialNumberReplacement = None
 
                 self.AdditionalRunHours = self.config.ReadValue('additionalrunhours', return_type = float, default = 0.0, NoLog = True)
+                self.UseNominalLineVoltsFromConfig = self.config.ReadValue('usenominallinevolts', return_type = bool, default = False)
+                self.NominalLineVolts = self.config.ReadValue('nominallinevolts', return_type = int, default = 240)
 
         except Exception as e1:
             self.LogErrorLine("Missing config file or config file entries (evo/nexus): " + str(e1))

@@ -77,7 +77,8 @@ additional_modbus_timeout=Add this value (in seconds) to the modbus timeout valu
 disablepowerlog=Enable to disable the power log and current reading. Not supported on Nexus.
 subtractfuel=The amount of fuel (gal or L, depending on 'Use Metric' setting) to subtract from the fuel in tank estimate
 user_url=A user defined URL link to include in status emails sent from the software when the generator status changes
-
+usenominallinevolts = Enable overriding of the default of 240V for nominal line voltage in the UI
+nominallinevolts = Override nominal line voltage value for UI (i.e. 220, 230 in stead of 240)
 [generac_evo_nexus]
 0000=Product line
 0001=Switch, Engine and Alarm Status
