@@ -936,6 +936,11 @@ function setStartStopButtonsState(){
         $("#remotestart").css("background", "#4CAF50");
         $("#remotetransfer").css("background", "#4CAF50");
         break;
+    case "ALARM":
+        $("#remotestop").prop("disabled",false);
+        $("#remotestart").prop("disabled",false);
+        $("#remotetransfer").prop("disabled",false);
+        break;
      default:
         $("#remotestop").prop("disabled",true);
         $("#remotestart").prop("disabled",false);
