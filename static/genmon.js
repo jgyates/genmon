@@ -941,6 +941,11 @@ function setStartStopButtonsState(){
         $("#remotestart").prop("disabled",false);
         $("#remotetransfer").prop("disabled",false);
         break;
+    case "SERVICEDUE":
+        $("#remotestop").prop("disabled",false);
+        $("#remotestart").prop("disabled",false);
+        $("#remotetransfer").prop("disabled",false);
+        break;
      default:
         $("#remotestop").prop("disabled",true);
         $("#remotestart").prop("disabled",false);
