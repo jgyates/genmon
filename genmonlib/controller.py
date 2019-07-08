@@ -793,6 +793,7 @@ class GeneratorController(MySupport):
             try:
                 with self.PowerLock:
                     os.remove(self.PowerLog)
+                    time.sleep(1)
             except:
                 pass
 
