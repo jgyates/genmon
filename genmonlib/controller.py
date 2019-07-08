@@ -731,13 +731,14 @@ class GeneratorController(MySupport):
     def PrunePowerLog(self, Minutes):
 
         if not Minutes:
+            self.LogError("Clearing power log")
             return self.ClearPowerLog()
 
         try:
-            CmdString = "power_log_json=%d" % Minutes
-            PowerLog = self.GetPowerHistory(CmdString, NoReduce = True)
 
             LogSize = os.path.getsize(self.PowerLog)
+            if float(LogSize) / (1024*1024) < self.PowerLogMaxSize * 0.85:
+                return "OK"
 
             if float(LogSize) / (1024*1024) >= self.PowerLogMaxSize * 0.98:
                 msgbody = "The genmon kwlog (power log) file size is 98 percent of the maximum. Once "
@@ -753,15 +754,22 @@ class GeneratorController(MySupport):
                 self.LogError("Power Log entries deleted due to size reaching maximum.")
                 return "OK"
 
+            # if we get here the power log is 85% full or greater so let's try to reduce the size by
+            # deleting entires that are older than the input Minutes
+            CmdString = "power_log_json=%d" % Minutes
+            PowerLog = self.GetPowerHistory(CmdString, NoReduce = True)
+
             self.ClearPowerLog(NoCreate = True)
             # Write oldest log entries first
             for Items in reversed(PowerLog):
-                self.LogToFile(self.PowerLog, Items[0], Items[1])
+                self.LogToPowerLog(Items[0], Items[1])
 
+            # Add null entry at the end
             if not os.path.isfile(self.PowerLog):
                 TimeStamp = datetime.datetime.now().strftime('%x %X')
-                self.LogToFile(self.PowerLog, TimeStamp, "0.0")
+                self.LogToPowerLog(TimeStamp, "0.0")
 
+            # if the power log is now empty add one entry
             LogSize = os.path.getsize(self.PowerLog)
             if LogSize == 0:
                 TimeStamp = datetime.datetime.now().strftime('%x %X')
@@ -1072,7 +1080,7 @@ class GeneratorController(MySupport):
                 # Housekeeping on kw Log
                 if LastValue == 0:
                     if self.GetDeltaTimeMinutes(datetime.datetime.now() - LastPruneTime) > 1440 :     # check every day
-                        self.PrunePowerLog(43800 * 36)   # delete log entries greater than three years
+                        self.PrunePowerLog(60 * 24 * 30 * 36)   # delete log entries greater than three years
                         LastPruneTime = datetime.datetime.now()
 
                 if self.GetDeltaTimeMinutes(datetime.datetime.now() - LastFuelCheckTime) > 10 :         # check 10 min
