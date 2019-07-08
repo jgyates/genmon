@@ -203,9 +203,10 @@ def ProcessCommand(command):
                     if setlogstr:
                         finalcommand += "=" + setlogstr
                 if command == "add_maint_log":
-                    addlogstr = request.args.get('add_maint_log', 0, type=str)
-                    if addlogstr:
-                        finalcommand += "=" + addlogstr
+                    # use direct method instead of request.args.get due to unicoode
+                    # input for add_maint_log for international users
+                    input = request.args['add_maint_log']
+                    finalcommand += "=" + input
 
                 data = MyClientInterface.ProcessMonitorCommand(finalcommand)
 

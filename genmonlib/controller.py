@@ -100,7 +100,7 @@ class GeneratorController(MySupport):
                 self.SubtractFuel = self.config.ReadValue('subtractfuel', return_type = float, default = 0.0)
                 self.UserURL = self.config.ReadValue('user_url',  default = "").strip()
                 self.UseExternalFuelData = self.config.ReadValue('use_external_fuel_data', return_type = bool, default = False)
-                
+
                 if self.config.HasOption('outagelog'):
                     self.OutageLog = self.config.ReadValue('outagelog')
 
@@ -1264,8 +1264,10 @@ class GeneratorController(MySupport):
             return "Error"
         return "OK"
     #----------  GeneratorController::AddEntryToMaintLog------------------------
-    def AddEntryToMaintLog(self, EntryString):
+    def AddEntryToMaintLog(self, InputString):
 
+        ValidInput = False
+        EntryString = InputString
         if EntryString == None or not len(EntryString):
             return "Invalid input for Maintenance Log entry."
 
@@ -1276,25 +1278,30 @@ class GeneratorController(MySupport):
             if EntryString.strip().startswith("="):
                 EntryString = EntryString[len("="):]
                 EntryString = EntryString.strip()
-        try:
-            Entry = json.loads(EntryString)
-            # validate object
-            if not self.ValidateMaintLogEntry(Entry):
-                return "Invalid maintenance log entry"
-            self.MaintLogList.append(Entry)
-            with open(self.MaintLog, 'w') as outfile:
-                json.dump(self.MaintLogList, outfile, sort_keys = True, indent = 4, ensure_ascii = False)
-        except Exception as e1:
-            self.LogErrorLine("Error in AddEntryToMaintLog: " + str(e1))
-            return "Invalid input for Maintenance Log entry (2)."
+                ValidInput = True
 
+        if ValidInput:
+            try:
+                Entry = json.loads(EntryString)
+                # validate object
+                if not self.ValidateMaintLogEntry(Entry):
+                    return "Invalid maintenance log entry"
+                self.MaintLogList.append(Entry)
+                with open(self.MaintLog, 'w') as outfile:
+                    json.dump(self.MaintLogList, outfile, sort_keys = True, indent = 4) #, ensure_ascii = False)
+            except Exception as e1:
+                self.LogErrorLine("Error in AddEntryToMaintLog: " + str(e1))
+                return "Invalid input for Maintenance Log entry (2)."
+        else:
+            self.LogError("Error in AddEntryToMaintLog: invalid input: " + str(InputString))
+            return "Invalid input for Maintenance Log entry (3)."
         return "OK"
 
     #----------  GeneratorController::ValidateMaintLogEntry---------------------
     def ValidateMaintLogEntry(self, Entry):
 
         try:
-            # add_maint_log={"date":"01/02/2019", "type":"Repair", "comment":"Hello","hours":11.2}
+            # add_maint_log={"date":"01/02/2019 14:59", "type":"Repair", "comment":"Hello"}
             if not isinstance(Entry, dict):
                 self.LogError("Error in ValidateMaintLogEntry: Entry is not a dict")
                 return False
@@ -1304,7 +1311,7 @@ class GeneratorController(MySupport):
                 return False
 
             try:
-                EntryDate = datetime.datetime.strptime(Entry["date"], "%m/%d/%Y")
+                EntryDate = datetime.datetime.strptime(Entry["date"], "%m/%d/%Y %H:%M")
             except Exception as e1:
                 self.LogErrorLine("Error in ValidateMaintLogEntry: expecting MM/DD/YYYY : " + str(e1))
 

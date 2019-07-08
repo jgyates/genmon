@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.13.23 - 2019-07-07
+- Changes to all unicode comments to be stored in service journal
+
 ## V1.13.22 - 2019-07-06
 - Added config file options to set nominal line voltage values for non US grids (Evo and Nexus only)
 

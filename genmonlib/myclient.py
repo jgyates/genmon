@@ -63,7 +63,7 @@ class ClientInterface(MyCommon):
     def SendCommand(self, cmd):
 
         try:
-            self.Socket.sendall(cmd.encode())
+            self.Socket.sendall(cmd.encode("utf-8"))
         except Exception as e1:
             self.LogErrorLine( "Error: TX: " + str(e1))
             self.Close()
@@ -76,12 +76,12 @@ class ClientInterface(MyCommon):
             RetStatus = True
             try:
                 bytedata = self.Socket.recv(self.rxdatasize)
-                data = bytedata.decode()
+                data = bytedata.decode("utf-8")
                 if len(data):
                     if not self.CheckForStarupMessage(data) or not noeom:
                         while not self.EndOfMessage in data:
                             morebytes = self.Socket.recv(self.rxdatasize)
-                            more = morebytes.decode()
+                            more = morebytes.decode("utf-8")
                             if len(more):
                                 if self.CheckForStarupMessage(more):
                                     data = ""

@@ -1450,10 +1450,12 @@ function saveJournals(rowcount){
         ],
         onSubmit: function(e) {
            if (DisplayStrAnswer) {
+             var DisplayStr1 = "Saving Journal..."
              DisplayStrAnswer = false; // Prevent recursive calls.
              e.preventDefault();
              saveJournalsJSON(rowcount);
              var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
+             $('.vex-dialog-message').html(DisplayStr1);
              $('.vex-dialog-buttons').html(DisplayStr2);
              $('.progress-bar-fill').queue(function () {
                   $(this).css('width', '100%')
@@ -1478,8 +1480,9 @@ function saveJournalsJSON(rowcount){
 
         // send command
         var url = baseurl.concat("add_maint_log");
+        var input =  JSON.stringify(entry)
         $.getJSON(  url,
-              {add_maint_log: JSON.stringify(entry)},
+              {add_maint_log: input},
               function(result){
                  outstr = renderJournalLine(rowcount, entry["date"], entry["type"], entry["hours"], entry["comment"]);
                  $("#row_"+rowcount).replaceWith(outstr);

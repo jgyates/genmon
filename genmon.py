@@ -34,7 +34,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.13.22"
+GENMON_VERSION = "V1.13.23"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(MySupport):
@@ -436,7 +436,7 @@ class Monitor(MySupport):
     def ProcessCommand(self, command, fromsocket = False):
 
         LocalError = False
-        command = command.decode('ascii')
+        command = command.decode('utf-8')
         msgsubject = "Generator Command Response at " + self.SiteName
         if not fromsocket:
             msgbody = "\n"
@@ -889,7 +889,7 @@ class Monitor(MySupport):
                             outstr = "Retry, System Initializing"
                         else:
                             outstr = self.ProcessCommand(data, True)
-                        conn.sendall(outstr.encode())
+                        conn.sendall(outstr.encode("utf-8"))
                     else:
                         # socket closed remotely
                         break
