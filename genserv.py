@@ -87,7 +87,7 @@ ControllerType = "generac_evo_nexus"
 CriticalLock = threading.Lock()
 CachedToolTips = {}
 CachedRegisterDescriptions = {}
-
+#-------------------------------------------------------------------------------
 @app.route('/logout')
 def logout():
     try:
