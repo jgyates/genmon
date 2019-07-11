@@ -88,6 +88,16 @@ CriticalLock = threading.Lock()
 CachedToolTips = {}
 CachedRegisterDescriptions = {}
 
+@app.route('/logout')
+def logout():
+    try:
+        # remove the session data
+        if HTTPAuthUser != None and HTTPAuthPass != None:
+            session['logged_in'] = False
+            session['write_access'] = False
+        return root()
+    except Exception as e1:
+        LogError("Error on logout: " + str(e1))
 #-------------------------------------------------------------------------------
 @app.after_request
 def add_header(r):

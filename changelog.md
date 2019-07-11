@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.13.24 - 2019-07-10
+- Added URL to logout if using secure web settings: https://addressofpi/logout
+
 ## V1.13.23 - 2019-07-07
 - Changes to all unicode comments to be stored in service journal
 
