@@ -82,9 +82,9 @@ class MyCommon(object):
     def removeAlpha(self, inputStr):
         answer = ""
         for char in inputStr:
-            if not char.isalpha():
+            if not char.isalpha() and char != ' ':
                 answer += char
-        return answer
+        return answer.strip()
     #------------ MyCommon::MergeDicts -----------------------------------------
     def MergeDicts(self, x, y):
         #Given two dicts, merge them into a new dict as a shallow copy.

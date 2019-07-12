@@ -312,11 +312,11 @@ class Evolution(GeneratorController):
             if self.FuelSensorSupported():
                 Tile = MyTile(self.log, title = "Fuel", units = "%", type = "fuel", nominal = 100, callback = self.GetFuelSensor, callbackparameters = (True,))
                 self.TileList.append(Tile)
-            elif self.FuelCalculationSupported():
+            elif self.FuelConsumptionGaugeSupported():    # no gauge for NG
                 if self.UseMetric:
-                    Units = "L"
+                    Units = "L"         # no gauge for NG
                 else:
-                    Units = "gal"
+                    Units = "gal"       # no gauge for NG
                 Tile = MyTile(self.log, title = "Estimated Fuel", units = Units, type = "fuel", nominal = int(self.TankSize), callback = self.GetEstimatedFuelInTank, callbackparameters = (True,))
                 self.TileList.append(Tile)
             if self.ExternalFuelDataSupported():
@@ -480,12 +480,18 @@ class Evolution(GeneratorController):
             return False
         else:
             return True
+
+    #----------  GeneratorController::FuelConsumptionGaugeSupported-------------
+    def FuelConsumptionGaugeSupported(self):
+
+        if self.FuelCalculationSupported() and self.FuelType != "Natural Gas":
+            return True
+        return False
     #----------  GeneratorController::GetFuelConsumptionPolynomial--------------
     def GetFuelConsumptionPolynomial(self):
 
         try:
-
-            if self.FuelType == "Natural Gas" or self.FuelType == "Gasoline":
+            if self.FuelType == "Gasoline":
                 return None
             if self.EvolutionController:
                 return self.GetModelInfo("polynomial")
@@ -563,6 +569,8 @@ class Evolution(GeneratorController):
         elif Request.lower() == "enginedisplacement":
             return self.LiquidCooledParams[8]
         elif Request.lower() == "polynomial":
+            if self.FuelType == "Natural Gas" or self.FuelType == "Gasoline":
+                return None
             if len(self.LiquidCooledParams) >= 14:
                 Polynomial = []
                 Polynomial.append(float(self.LiquidCooledParams[10]))
@@ -612,26 +620,26 @@ class Evolution(GeneratorController):
                                 4 : ["20KW", "60", "120/240", "1", None, "999 cc", "240"]
                                 }
         # This should cover the guardian line
-        ModelLookUp_EvoAC = { #ID : [KW or KVA Rating, Hz Rating, Voltage Rating, Phase, Fuel Polynomial, Engine Displacement]
-                                1 : ["9KW", "60", "120/240", "1", [0, 1, 0.37, "gal"], "426 cc", "240"],
-                                2 : ["14KW", "60", "120/240", "1", [0, 1.48, 0.82, "gal"], "992 cc", "240"],
-                                3 : ["17KW", "60", "120/240", "1", [0, 3.16, 0.41, "gal"], "992 cc", "240"],
-                                4 : ["20KW", "60", "120/240", "1", [0, 2.38, 1.18, "gal"], "999 cc", "240"],
-                                5 : ["8KW", "60", "120/240", "1", [0, 1.48, 0.2, "gal"], "410 cc", "240"],
-                                7 : ["13KW", "60", "120/240", "1", [0, 1.26, 0.92, "gal"], "992 cc", "240"],
-                                8 : ["15KW", "60", "120/240", "1", [0, 1.84, 0.67, "gal"], "999 cc", "240"],
-                                9 : ["16KW", "60", "120/240", "1", [0, 0.84, 2.1, "gal"], "999 cc", "240"],
-                                10 : ["20KW", "VSCF", "120/240", "1", [0, 3.34, 0.12, "gal"], "999 cc", "240"],          #Variable Speed Constant Frequency
-                                11 : ["15KW", "ECOVSCF", "120/240", "1", [0, 2.58, 0.61, "gal"], "999 cc", "240"],       # Eco Variable Speed Constant Frequency
-                                12 : ["8KVA", "50", "220,230,240", "1", [0,  1.3, 0.21, "gal"], "530 cc", "240"],        # 3 distinct models 220, 230, 240
-                                13 : ["10KVA", "50", "220,230,240", "1", [0, 1.48, 0.37, "gal"], "992 cc", "240"],       # 3 distinct models 220, 230, 240
-                                14 : ["13KVA", "50", "220,230,240", "1", [0, 2.0, 0.39, "gal"], "992 cc", "240"],        # 3 distinct models 220, 230, 240
-                                15 : ["11KW", "60" ,"240", "1", [0, 1.5, 0.47, "gal"], "530 cc", "240"],
-                                17 : ["22KW", "60", "120/240", "1", [0, 2.74, 1.16, "gal"], "999 cc", "240"],
-                                21 : ["11KW", "60", "240 LS", "1", [0, 1.5, 0.47, "gal"], "530 cc", "240"],
-                                22 : ["7.5KW", "60", "240", "1", [0, 1.1, 0.32, "gal"], "420 cc", "240"],                # Power Pact
-                                32 : ["20KW", "60", "208 3 Phase", "3", [0, 2.34, 1.22, "gal"], "999 cc", "208"],      # Trinity G007077
-                                33 : ["Trinity", "50", "380,400,416", "3", None, None, "380"]                          # Discontinued
+        ModelLookUp_EvoAC = { #ID : [KW or KVA Rating, Hz Rating, Voltage Rating, Phase, Fuel Polynomial LP, Engine Displacement Nominal Line Voltage,Fuel Polynomial NG ]
+                                1 : ["9KW", "60", "120/240", "1", [0, 1, 0.37, "gal"], "426 cc", "240",[0, 60, 60, "cubic feet"]],
+                                2 : ["14KW", "60", "120/240", "1", [0, 1.48, 0.82, "gal"], "992 cc", "240",[0, 128, 92, "cubic feet"]],
+                                3 : ["17KW", "60", "120/240", "1", [0, 3.16, 0.41, "gal"], "992 cc", "240",[0, 240, 72, "cubic feet"]],
+                                4 : ["20KW", "60", "120/240", "1", [0, 2.38, 1.18, "gal"], "999 cc", "240",[0, 194, 107, "cubic feet"]],
+                                5 : ["8KW", "60", "120/240", "1", [0, 1.48, 0.2, "gal"], "410 cc", "240",[0, 124, 15, "cubic feet"]],
+                                7 : ["13KW", "60", "120/240", "1", [0, 1.26, 0.92, "gal"], "992 cc", "240",[0, 128, 92, "cubic feet"]],
+                                8 : ["15KW", "60", "120/240", "1", [0, 1.84, 0.67, "gal"], "999 cc", "240",[0, 144, 101, "cubic feet"]],
+                                9 : ["16KW", "60", "120/240", "1", [0, 0.84, 2.1, "gal"], "999 cc", "240",[0, 182, 127, "cubic feet"]],
+                                10 : ["20KW", "VSCF", "120/240", "1", [0, 3.34, 0.12, "gal"], "999 cc", "240",[0, 264, 18, "cubic feet"]],          #Variable Speed Constant Frequency
+                                11 : ["15KW", "ECOVSCF", "120/240", "1", [0, 2.58, 0.61, "gal"], "999 cc", "240",[0, 238, 74, "cubic feet"]],       # Eco Variable Speed Constant Frequency
+                                12 : ["8KVA", "50", "220,230,240", "1", [0,  1.3, 0.21, "gal"], "530 cc", "240",[0, 110, 28, "cubic feet"]],        # 3 distinct models 220, 230, 240
+                                13 : ["10KVA", "50", "220,230,240", "1", [0, 1.48, 0.37, "gal"], "992 cc", "240",[0, 142, 53, "cubic feet"]],       # 3 distinct models 220, 230, 240
+                                14 : ["13KVA", "50", "220,230,240", "1", [0, 2.0, 0.39, "gal"], "992 cc", "240",[0, 158, 67, "cubic feet"]],        # 3 distinct models 220, 230, 240
+                                15 : ["11KW", "60" ,"240", "1", [0, 1.5, 0.47, "gal"], "530 cc", "240",[0, 104, 55, "cubic feet"]],
+                                17 : ["22KW", "60", "120/240", "1", [0, 2.74, 1.16, "gal"], "999 cc", "240",[0, 198, 129, "cubic feet"]],
+                                21 : ["11KW", "60", "240 LS", "1", [0, 1.5, 0.47, "gal"], "530 cc", "240",[0, 104, 55, "cubic feet"]],
+                                22 : ["7.5KW", "60", "240", "1", [0, 1.1, 0.32, "gal"], "420 cc", "240",[0, 88, 29, "cubic feet"]],                # Power Pact
+                                32 : ["20KW", "60", "208 3 Phase", "3", [0, 2.34, 1.22, "gal"], "999 cc", "208",[0, 176, 131, "cubic feet"]],      # Trinity G007077
+                                33 : ["Trinity", "50", "380,400,416", "3", None, None, "380",None]                          # Discontinued
                                 }
 
         if self.SynergyController:
@@ -672,7 +680,9 @@ class Evolution(GeneratorController):
             return ModelInfo[3]
 
         elif Request.lower() == "polynomial":
-            return ModelInfo[4]
+            if self.FuelType == "Natural Gas":
+                return ModelInfo[7]     # Natural Gas
+            return ModelInfo[4]         # Liquid Propane
         elif Request.lower() == "enginedisplacement":
             if ModelInfo[5] == None:
                 return "Unknown"
@@ -1795,7 +1805,7 @@ class Evolution(GeneratorController):
             Maintenance["Maintenance"].append({"Fuel Type" : self.FuelType})
             if self.FuelSensorSupported():
                 Maintenance["Maintenance"].append({"Fuel Level Sensor" : self.GetFuelSensor()})
-            if self.FuelCalculationSupported():
+            if self.FuelConsumptionGaugeSupported():
                 Maintenance["Maintenance"].append({"Estimated Fuel In Tank" : self.GetEstimatedFuelInTank()})
 
             if self.EngineDisplacement != "Unknown":

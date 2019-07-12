@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.13.25 - 2019-07-12
+- Added initial support for fuel consumption for Evolution Air Cooled Natural Gas units. Note: NG 30 day fuel consumption is located on the maintenance page. Fuel gauge is supported for NG.
+
 ## V1.13.24 - 2019-07-10
 - Added URL to logout if using secure web settings: https://addressofpi/logout
 
@@ -11,7 +14,7 @@ All notable changes to this project will be documented in this file. Major relea
 - Added config file options to set nominal line voltage values for non US grids (Evo and Nexus only)
 
 ## V1.13.21 - 2019-06-28
-- Slight modification to the logic used when detecting the type of alarm for Evolution controllers due to the last alarm code register not updating after a Servicee Due alarm.
+- Slight modification to the logic used when detecting the type of alarm for Evolution controllers due to the last alarm code register not updating after a Service Due alarm.
 
 ## V1.13.20 - 2019-06-26
 - Added option "Ignore Unknown Values" that will ignore unknown values of modbus register 0001 for Evolution 2.0 controllers. This setting is in the advanced section in the web interface.

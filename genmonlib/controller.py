@@ -1112,6 +1112,9 @@ class GeneratorController(MySupport):
     #----------  GeneratorController::GetFuelLevel------------------------------
     def GetFuelLevel(self, ReturnFloat = False):
         # return 0 - 100 or None
+
+        if not self.FuelConsumptionGaugeSupported():
+            return None
         if not self.FuelCalculationSupported() and not self.FuelSensorSupported():
             return None
 
@@ -1134,7 +1137,8 @@ class GeneratorController(MySupport):
     #----------  GeneratorController::CheckFuelLevel----------------------------
     def CheckFuelLevel(self):
         try:
-
+            if not self.FuelConsumptionGaugeSupported():
+                return True
             if not self.FuelCalculationSupported() and not self.FuelSensorSupported():
                 return True
 
@@ -1167,6 +1171,8 @@ class GeneratorController(MySupport):
         else:
             DefaultReturn = "0"
 
+        if not self.FuelConsumptionGaugeSupported():
+            return DefaultReturn
         if not self.FuelCalculationSupported():
             return DefaultReturn
 
@@ -1178,7 +1184,6 @@ class GeneratorController(MySupport):
                 return DefaultReturn
             FuelUsed = self.removeAlpha(FuelUsed)
             FuelLeft = float(self.TankSize) - float(FuelUsed)
-
             FuelLeft = float(FuelLeft) - float(self.SubtractFuel)
 
             if FuelLeft < 0:
@@ -1200,11 +1205,14 @@ class GeneratorController(MySupport):
     #----------  GeneratorController::FuelSensorSupported------------------------
     def FuelSensorSupported(self):
         return False
-    #----------  GeneratorController::FuelCalculationSupported------------------------
+    #----------  GeneratorController::FuelCalculationSupported------------------
     def FuelCalculationSupported(self):
         return False
     #----------  GeneratorController::FuelConsumptionSupported------------------
     def FuelConsumptionSupported(self):
+        return False
+    #----------  GeneratorController::FuelConsumptionGaugeSupported-------------
+    def FuelConsumptionGaugeSupported(self):
         return False
 
     #----------  GeneratorController::GetFuelConsumption------------------------
@@ -1222,8 +1230,12 @@ class GeneratorController(MySupport):
             Consumption = (seconds / 3600) * Consumption
 
             if self.UseMetric:
-                Consumption = Consumption * 3.78541
-                return round(Consumption, 4), "L"     # convert to Liters
+                if self.FuelType == "Natural Gas":
+                    Consumption = Consumption * 0.0283168   # cubic feet to cubic meters
+                    return round(Consumption, 4), "cubic meters"       # convert to Liters
+                else:
+                    Consumption = Consumption * 3.78541     # gal to liters
+                    return round(Consumption, 4), "L"       # convert to Liters
             else:
                 return round(Consumption, 4), Polynomial[3]
         except Exception as e1:
