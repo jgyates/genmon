@@ -117,7 +117,7 @@ class GenExercise(MySupport):
                         continue
 
             except Exception as e1:
-                self.LogErrorLine("Error in mygenpush init: "  + str(e1))
+                self.LogErrorLine("Error in genexercise init: "  + str(e1))
 
             if not self.CheckGeneratorRequirement():
                 self.LogError("Requirements not met. Exiting.")
