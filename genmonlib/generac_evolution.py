@@ -69,6 +69,7 @@ class Evolution(GeneratorController):
         self.PreNexus  = False
         self.LiquidCooled = None
         self.LiquidCooledParams = None
+        self.SavedFirmwareVersion = None
         # State Info
         self.GeneratorInAlarm = False       # Flag to let the heartbeat thread know there is a problem
         self.LastAlarmValue = 0xFF  # Last Value of the Alarm / Status Register
@@ -1726,6 +1727,7 @@ class Evolution(GeneratorController):
             # update outage time, update utility low voltage and high voltage
             self.CheckForOutage()
 
+            self.CheckForFirmwareUpdate()
             # now check to see if there is an alarm
             Value = self.GetRegisterValueFromList("0001")
             if len(Value) != 8:
@@ -3470,7 +3472,7 @@ class Evolution(GeneratorController):
             self.LogErrorLine("Error in GetServiceDueDate: " + str(e1))
             return ""
 
-    #----------  ControllerGetHardwareVersion  ---------------------------------
+    #----------  Controller:GetHardwareVersion  ---------------------------------
     def GetHardwareVersion(self):
 
         Value = self.GetRegisterValueFromList("002a")
@@ -3482,7 +3484,7 @@ class Evolution(GeneratorController):
         FloatTemp = IntTemp / 100.0
         return "V%2.2f" % FloatTemp     #
 
-    #----------  ControllerGetFirmwareVersion  ---------------------------------
+    #----------  Controller:GetFirmwareVersion  ---------------------------------
     def GetFirmwareVersion(self):
         Value = self.GetRegisterValueFromList("002a")
         if len(Value) != 4:
@@ -3492,6 +3494,34 @@ class Evolution(GeneratorController):
         IntTemp = RegVal & 0xff         # low byte is firmware version
         FloatTemp = IntTemp / 100.0
         return "V%2.2f" % FloatTemp     #
+
+    #----------  ControllerCheckForFirmwareUpdate  -----------------------------
+    def CheckForFirmwareUpdate(self):
+
+        try:
+            if not self.Evolution2:
+                return
+
+            FWVersionString = self.GetFirmwareVersion()
+            if not len(FWVersionString):
+                return
+            if self.SavedFirmwareVersion == None:
+               self.SavedFirmwareVersion = FWVersionString
+            else:
+                if FWVersionString != self.SavedFirmwareVersion:
+                    # FIRMWARE VERSION CHANGED
+                    MessageType = "info"
+                    msgsubject = "Generator Notice: Firmware update at " + self.SiteName
+                    msgbody = "NOTE: This message is a notice that the version of the generator controller firmware has changed from %s to %s. \n" % (self.SavedFirmwareVersion,FWVersionString)
+                    self.LogError("Frimware Changed from %s to %s" % (self.SavedFirmwareVersion,FWVersionString))
+                    msgbody += self.DisplayStatus()
+                    self.MessagePipe.SendMessage(msgsubject , msgbody, msgtype = MessageType)
+                    self.SavedFirmwareVersion = FWVersionString
+        except Exception as e1:
+            self.LogErrorLine("Error in CheckForFirmwareUpdate : " + str(e1))
+
+        return
+
 
     #------------ Evolution:GetRunHours ----------------------------------------
     def GetRunHours(self):

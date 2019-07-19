@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.13.26 - 2019-07-12
+- Added email notification for Evolution 2 firmware
+
 ## V1.13.25 - 2019-07-12
 - Added initial support for fuel consumption for Evolution Air Cooled Natural Gas units. Note: NG 30 day fuel consumption is located on the maintenance page. Fuel gauge is supported for NG.
 
