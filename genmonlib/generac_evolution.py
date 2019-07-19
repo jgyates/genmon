@@ -2544,7 +2544,7 @@ class Evolution(GeneratorController):
     #------------ Evolution:Reg0001IsValid -------------------------------------
     def Reg0001IsValid(self, regvalue):
 
-        if regvalue & 0xFFF0FF00:
+        if regvalue & 0xFFF0FFC0:
             return False
         return True
     #------------ Evolution:GetDigitalValues -----------------------------------
