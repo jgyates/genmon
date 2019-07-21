@@ -761,7 +761,7 @@ def GetAddOns():
         AddOnCfg['gentankutil']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "gentankutil", default = False)
         AddOnCfg['gentankutil']['title'] = "External Tank Fuel Monitor"
         AddOnCfg['gentankutil']['description'] = "Integrates tankutility.com propane tank sensor data"
-        AddOnCfg['gentankutil']['icon'] = "Genmon"
+        AddOnCfg['gentankutil']['icon'] = "tankutility"
         AddOnCfg['gentankutil']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gentankutilpy-optional"
         AddOnCfg['gentankutil']['parameters'] = collections.OrderedDict()
 

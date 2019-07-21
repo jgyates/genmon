@@ -1,7 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
-## V1.13.26 - 2019-07-12
+## V1.13.27 - 2019-07-20
+- Updated icon on add-on page
+- Added fuel metric to Maintenance page for models that support fuel monitoring
+
+## V1.13.26 - 2019-07-19
 - Added email notification for Evolution 2 firmware
 
 ## V1.13.25 - 2019-07-12

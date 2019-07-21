@@ -65,6 +65,7 @@ class GeneratorController(MySupport):
         self.KWHoursMonth = None
         self.FuelMonth = None
         self.RunHoursMonth = None
+        self.FuelTotal  = None
         self.LastHouseKeepingTime = None
         self.TileList = []        # Tile list for GUI
         self.TankData = None

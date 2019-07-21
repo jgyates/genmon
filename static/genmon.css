@@ -323,8 +323,8 @@ li a:hover:not(.active) {
 
 /* Addons */
 
-.linux_small, .mqtt_small, .rpi_small, .slack_small, .twilio_small, .pushover_small, .linux, .mqtt, .pushover, .rpi, .slack, .twilio, .sms, .sms_small, .csv_small, .csv, .selftest, .selftest_small, .Genmon, .Genmon_small, .text, .text_small{
- background: url(images/addons.png) no-repeat;
+.linux_small, .mqtt_small, .rpi_small, .slack_small, .twilio_small, .pushover_small, .linux, .mqtt, .pushover, .rpi, .slack, .twilio, .sms, .sms_small, .csv_small, .csv, .selftest, .selftest_small, .Genmon, .Genmon_small, .text_small, .serveo, .tankutility, .alexa, .serveo_small, .tankutility_small, .alexa_small, .text{
+    background: url(images/addons.png) no-repeat;
 }
 
 .linux_small{
@@ -447,17 +447,54 @@ li a:hover:not(.active) {
 	height: 11px;
 }
 
-.text{
-	background-position: -261px -501px ;
-	width: 252px;
-	height: 217px;
-}
-
 .text_small{
-	background-position: -199px -503px ;
+	background-position: -201px -488px ;
 	width: 50px;
 	height: 43px;
 }
+
+.serveo{
+	background-position: -261px -604px ;
+	width: 252px;
+	height: 100px;
+}
+
+.tankutility{
+	background-position: 0 -538px ;
+	width: 252px;
+	height: 70px;
+}
+
+.alexa{
+	background-position: -1px -618px ;
+	width: 252px;
+	height: 100px;
+}
+
+.serveo_small{
+	background-position: -140px -501px ;
+	width: 50px;
+	height: 22px;
+}
+
+.tankutility_small{
+	background-position: -73px -505px ;
+	width: 50px;
+	height: 14px;
+}
+
+.alexa_small{
+	background-position: -9px -486px ;
+	width: 50px;
+	height: 50px;
+}
+
+.text{
+	background-position: -261px -479px ;
+	width: 252px;
+	height: 120px;
+}
+
 
 
 /* Classes */

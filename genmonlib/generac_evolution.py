@@ -1826,12 +1826,15 @@ class Evolution(GeneratorController):
                 if UpdateNow:
                     self.KWHoursMonth = self.GetPowerHistory("power_log_json=43200,kw")
                     self.FuelMonth = self.GetPowerHistory("power_log_json=43200,fuel")
+                    self.FuelTotal = self.GetPowerHistory("power_log_json=0,fuel")
                     self.RunHoursMonth = self.GetPowerHistory("power_log_json=43200,time")
 
                 if self.KWHoursMonth != None:
                     Maintenance["Maintenance"].append({"kW Hours in last 30 days" : str(self.KWHoursMonth) + " kWh"})
                 if self.FuelMonth != None:
                     Maintenance["Maintenance"].append({"Fuel Consumption in last 30 days" : self.FuelMonth})
+                if self.FuelTotal != None:
+                    Maintenance["Maintenance"].append({"Total Power Log Fuel Consumption" : self.FuelTotal})
                 if self.RunHoursMonth != None:
                     Maintenance["Maintenance"].append({"Run Hours in last 30 days" : str(self.RunHoursMonth) + " h"})
 
