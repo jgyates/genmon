@@ -40,7 +40,7 @@ class tankutility(MyCommon):
         self.BASEURL = "https://data.tankutility.com/api/"
         self.DeviceIDs = []
         self.DeviceCount = 0
-        self.Debug = debug
+        self.debug = debug
         self.Data = None
     #------------ tankutility::Login--------------------------------------------
     def Login(self):
@@ -53,7 +53,7 @@ class tankutility(MyCommon):
                 return False
             else:
                 response = query.json()
-                self.DebugOutput("Login: " + str(response))
+                self.LogDebug("Login: " + str(response))
                 if response['error'] != '':
                     self.LogError("API reports an account error: " + str(response['error']))
                     return False
@@ -76,7 +76,7 @@ class tankutility(MyCommon):
                 return False
             else:
                 response = query.json()
-                self.DebugOutput("GetDevices: " + str(response))
+                self.LogDebug("GetDevices: " + str(response))
                 self.DeviceIDs = response['devices']
 
                 return True
@@ -100,7 +100,7 @@ class tankutility(MyCommon):
             else:
                 response = query.json()
                 self.Data = response["device"]
-                self.DebugOutput("GetData: ID = " + str(deviceID) + " : "+ str(response))
+                self.LogDebug("GetData: ID = " + str(deviceID) + " : "+ str(response))
                 return self.Data
         except Exception as e1:
             self.LogErrorLine("Error in tankutility:GetData : " + str(e1))
@@ -143,11 +143,7 @@ class tankutility(MyCommon):
         except Exception as e1:
             self.LogErrorLine("Error in GenTankData: GetPercentage: " + str(e1))
             return 0.0
-    # ---------- GenTankData::DebugOutput---------------------------------------
-    def DebugOutput(self, Message):
 
-        if self.Debug:
-            self.LogError(Message)
 #------------ GenTankData class ------------------------------------------------
 class GenTankData(MySupport):
 
@@ -171,7 +167,7 @@ class GenTankData(MySupport):
         self.MonitorAddress = host
         self.PollTime =  2
         self.TankID = ""
-        self.Debug = False
+        self.debug = False
         configfile = ConfigFilePath + 'gentankutil.conf'
         try:
             if not os.path.isfile(configfile):
@@ -182,7 +178,7 @@ class GenTankData(MySupport):
             self.config = MyConfig(filename = configfile, section = 'gentankutil', log = self.log)
 
             self.PollTime = self.config.ReadValue('poll_frequency', return_type = float, default = 60)
-            self.Debug = self.config.ReadValue('debug', return_type = bool, default = False)
+            self.debug = self.config.ReadValue('debug', return_type = bool, default = False)
             self.username = self.config.ReadValue('username', default = "")
             self.password = self.config.ReadValue('password', default = "")
             self.tank_name = self.config.ReadValue('tank_name', default = "")
@@ -223,7 +219,7 @@ class GenTankData(MySupport):
             #    self.LogError("Requirements not met. Exiting.")
             #    sys.exit(1)
 
-            self.tank = tankutility(self.username, self.password, self.log, debug = self.Debug)
+            self.tank = tankutility(self.username, self.password, self.log, debug = self.debug)
             # start thread monitor time for exercise
             self.Threads["TankCheckThread"] = MyThread(self.TankCheckThread, Name = "TankCheckThread", start = False)
             self.Threads["TankCheckThread"].Start()
@@ -267,11 +263,6 @@ class GenTankData(MySupport):
             return False
 
 
-    # ---------- GenTankData::DebugOutput---------------------------------------
-    def DebugOutput(self, Message):
-
-        if self.Debug:
-            self.LogError(Message)
     # ---------- GenTankData::Login---------------------------------------------
     def Login(self, force = False):
 
@@ -297,7 +288,7 @@ class GenTankData(MySupport):
                 NUMBER_OF_SECONDS = 60 * 60 * 12    # 12 hours
 
                 if ((datetime.datetime.now() - LastLoginTime).total_seconds() > NUMBER_OF_SECONDS) or not len(self.TankID):
-                    self.DebugOutput("Login ")
+                    self.LogDebug("Login ")
                     if not self.Login(force = True):
                         self.LogError("Error logging in in TankCheckThread, retrying")
 
@@ -310,7 +301,7 @@ class GenTankData(MySupport):
                     dataforgenmon["Percentage"] = self.tank.GetPercentage()
 
                     retVal = self.SendCommand("generator: set_tank_data=" + json.dumps(dataforgenmon))
-                    self.DebugOutput(retVal)
+                    self.LogDebug(retVal)
                 if self.WaitForExit("TankCheckThread", float(self.PollTime * 60)):
                     return
             except Exception as e1:

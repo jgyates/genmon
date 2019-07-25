@@ -20,6 +20,7 @@ class MyCommon(object):
         self.log = None
         self.console = None
         self.Threads = {}       # Dict of mythread objects
+        self.debug = False
         self.MaintainerAddress = "generatormonitor.software@gmail.com"
 
     #------------ MyCommon::StripJson ------------------------------------------
@@ -137,6 +138,11 @@ class MyCommon(object):
         if not self.log == None:
             self.log.error(Message + " : " + self.GetErrorLine())
 
+    # ---------- MyCommon::LogDebug---------------------------------------------
+    def LogDebug(self, Message):
+
+        if self.debug:
+            self.LogError(Message)
     #---------------------MyCommon::GetErrorLine--------------------------------
     def GetErrorLine(self):
         exc_type, exc_obj, exc_tb = sys.exc_info()
