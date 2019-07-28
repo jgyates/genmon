@@ -66,20 +66,9 @@ console = None
 AppPath = ""
 favicon = "favicon.ico"
 ConfigFilePath = ProgramDefaults.ConfPath
-MAIL_CONFIG = ConfigFilePath + "mymail.conf"
+
 MAIL_SECTION = "MyMail"
-GENMON_CONFIG = ConfigFilePath + "genmon.conf"
 GENMON_SECTION = "GenMon"
-GENLOADER_CONFIG = ConfigFilePath + "genloader.conf"
-GENSMS_CONFIG = ConfigFilePath + "gensms.conf"
-MYMODEM_CONFIG = ConfigFilePath + "mymodem.conf"
-GENPUSHOVER_CONFIG = ConfigFilePath + "genpushover.conf"
-GENMQTT_CONFIG = ConfigFilePath + "genmqtt.conf"
-GENSLACK_CONFIG = ConfigFilePath + "genslack.conf"
-GENGPIOIN_CONFIG = ConfigFilePath + "gengpioin.conf"
-GENEXERCISE_CONFIG = ConfigFilePath + "genexercise.conf"
-GENEMAIL2SMS_CONFIG = ConfigFilePath + "genemail2sms.conf"
-GENTANKUTIL_CONFIG = ConfigFilePath + "gentankutil.conf"
 
 Closing = False
 Restarting = False
@@ -790,6 +779,21 @@ def GetAddOns():
             bounds = 'number',
             display_name = "Poll Frequency")
 
+        #GENALEXA
+        AddOnCfg['genalexa'] = collections.OrderedDict()
+        AddOnCfg['genalexa']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "genalexa", default = False)
+        AddOnCfg['genalexa']['title'] = "Amazon Alexa voice commands"
+        AddOnCfg['genalexa']['description'] = "Allow Amazon Alexa to start and stop the generator"
+        AddOnCfg['genalexa']['icon'] = "alexa"
+        AddOnCfg['genalexa']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genalexapy-optional"
+        AddOnCfg['genalexa']['parameters'] = collections.OrderedDict()
+
+        AddOnCfg['genalexa']['parameters']['name'] = CreateAddOnParam(
+            ConfigFiles[GENALEXA_CONFIG].ReadValue("name", return_type = str, default = ""),
+            'string',
+            "Name to call the generator device, i.e. 'generator'",
+            bounds = 'minmax:4:50',
+            display_name = "Name for generator device")
     except Exception as e1:
         LogErrorLine("Error in GetAddOns: " + str(e1))
 
@@ -855,7 +859,8 @@ def SaveAddOnSettings(query_string):
             "gengpioin" : ConfigFiles[GENGPIOIN_CONFIG],
             "genexercise" : ConfigFiles[GENEXERCISE_CONFIG],
             "genemail2sms" : ConfigFiles[GENEMAIL2SMS_CONFIG],
-            "gentankutil" : ConfigFiles[GENTANKUTIL_CONFIG]
+            "gentankutil" : ConfigFiles[GENTANKUTIL_CONFIG],
+            "genalexa" : ConfigFiles[GENALEXA_CONFIG]
         }
 
         for module, entries in settings.items():   # module
@@ -1655,12 +1660,13 @@ if __name__ == "__main__":
     GENEXERCISE_CONFIG = ConfigFilePath + "genexercise.conf"
     GENEMAIL2SMS_CONFIG = ConfigFilePath + "genemail2sms.conf"
     GENTANKUTIL_CONFIG = ConfigFilePath + "gentankutil.conf"
+    GENALEXA_CONFIG = ConfigFilePath + "genalexa.conf"
 
     if os.geteuid() != 0:
         LogConsole("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'.")
         sys.exit(1)
 
-    ConfigFileList = [GENMON_CONFIG, MAIL_CONFIG, GENLOADER_CONFIG, GENSMS_CONFIG, MYMODEM_CONFIG, GENPUSHOVER_CONFIG, GENMQTT_CONFIG, GENSLACK_CONFIG, GENGPIOIN_CONFIG, GENEXERCISE_CONFIG, GENEMAIL2SMS_CONFIG, GENTANKUTIL_CONFIG]
+    ConfigFileList = [GENMON_CONFIG, MAIL_CONFIG, GENLOADER_CONFIG, GENSMS_CONFIG, MYMODEM_CONFIG, GENPUSHOVER_CONFIG, GENMQTT_CONFIG, GENSLACK_CONFIG, GENGPIOIN_CONFIG, GENEXERCISE_CONFIG, GENEMAIL2SMS_CONFIG, GENTANKUTIL_CONFIG, GENALEXA_CONFIG]
 
     for ConfigFile in ConfigFileList:
         if not os.path.isfile(ConfigFile):

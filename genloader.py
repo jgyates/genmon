@@ -293,7 +293,7 @@ class Loader(MySupport):
         try:
 
             Sections = self.config.GetSections()
-            ValidSections = ['genmon', 'genserv', 'gengpio', 'gengpioin', 'genlog', 'gensms', 'gensms_modem', 'genpushover', 'gensyslog', 'genmqtt', 'genslack', 'genexercise', 'genemail2sms', 'gentankutil']
+            ValidSections = ['genmon', 'genserv', 'gengpio', 'gengpioin', 'genlog', 'gensms', 'gensms_modem', 'genpushover', 'gensyslog', 'genmqtt', 'genslack', 'genexercise', 'genemail2sms', 'gentankutil', 'genalexa']
             for entry in ValidSections:
                 if not entry in Sections:
                     if entry == 'genslack':
@@ -308,6 +308,9 @@ class Loader(MySupport):
                     if entry == 'gentankutil':
                         self.LogError("Warning: Missing entry: " + entry + " , adding entry")
                         self.AddEntry(section = entry, module = 'gentankutil.py', conffile = 'gentankutil.conf')
+                    if entry == 'genalexa':
+                        self.LogError("Warning: Missing entry: " + entry + " , adding entry")
+                        self.AddEntry(section = entry, module = 'genalexa.py', conffile = 'genalexa.conf')
                     else:
                         self.LogError("Warning: Missing entry: " + entry)
 
