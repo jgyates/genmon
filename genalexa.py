@@ -218,6 +218,7 @@ class upnp_device(MyCommon):
             for header in self.other_headers:
                 message += "%s\r\n" % header
         message += "\r\n"
+        self.LogDebug(message)
         temp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         temp_socket.sendto(message.encode("UTF-8"), destination)
 
