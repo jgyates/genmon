@@ -445,7 +445,11 @@ class Evolution(GeneratorController):
             # Set Nominal Line Volts if three phase
             try:
                 if not self.UseNominalLineVoltsFromConfig:
-                    self.NominalLineVolts = int(self.GetModelInfo( "nominalvolts"))
+                    nomVolts = self.GetModelInfo( "nominalvolts")
+                    if nomVolts == "Unknown":
+                        self.NominalLineVolts = 240
+                    else:
+                        self.NominalLineVolts = int(self.GetModelInfo( "nominalvolts"))
             except Exception as e1:
                 self.NominalLineVolts = 240
                 self.LogErrorLine("Error getting nominal line volts: " + str(e1))

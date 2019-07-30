@@ -275,6 +275,7 @@ class fauxmo(upnp_device):
                        "CONNECTION: close\r\n"
                        "\r\n"
                        "%s" % (len(xml), date_str, xml))
+            self.LogDebug(message)
             socket.send(message.encode("UTF-8"))
         elif data.find('SOAPACTION: "urn:Belkin:service:basicevent:1#SetBinaryState"') != -1:
             success = False
