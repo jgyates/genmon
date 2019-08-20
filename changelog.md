@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.13.29 - 2019-08-20
+- Fixed a few typos
+
 ## V1.13.28 - 2019-07-20
 - Minor update to gentankutil.py
 - Added add-on for Amazon Alexa

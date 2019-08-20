@@ -1365,7 +1365,7 @@ def UpdateConfigFile(FileName, section, Entry, Value):
 
         try:
             config = ConfigFiles[FileName]
-        except Excpetion as e1:
+        except Exception as e1:
             LogErrorLine("Unknow file in UpdateConfigFile: " + FileName + ": " + str(e1))
             return False
 

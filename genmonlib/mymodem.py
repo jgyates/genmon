@@ -28,7 +28,7 @@ class MyModem(MySupport):
             loglocation = ProgramDefaults.LogPath,
             log = None,
             localinit = False,
-            ConfigFilePath = ProgramDefaultsConfPath,
+            ConfigFilePath = ProgramDefaults.ConfPath,
             recipient = None):
         super(MyModem, self).__init__()
 
