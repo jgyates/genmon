@@ -118,34 +118,48 @@ class MyCommon(object):
             self.LogErrorLine(message)
         self.LogConsole(message)
     #---------------------MyCommon::LogConsole------------------------------------
-    def LogConsole(self, Message):
+    def LogConsole(self, Message, Error = None):
         if not self.console == None:
             self.console.error(Message)
 
     #---------------------MyCommon::LogError------------------------------------
-    def LogError(self, Message):
+    def LogError(self, Message, Error = None):
         if not self.log == None:
+            if Error != None:
+                Message = Message + " : " + self.GetErrorString(Error)
             self.log.error(Message)
     #---------------------MyCommon::FatalError----------------------------------
-    def FatalError(self, Message):
+    def FatalError(self, Message, Error = None):
+        if Error != None:
+            Message = Message + " : " + self.GetErrorString(Error)
         if not self.log == None:
             self.log.error(Message)
         if not self.console == None:
             self.console.error(Message)
         raise Exception(Message)
     #---------------------MyCommon::LogErrorLine--------------------------------
-    def LogErrorLine(self, Message):
+    def LogErrorLine(self, Message, Error = None):
         if not self.log == None:
+            if Error != None:
+                Message = Message + " : " + self.GetErrorString(Error)
             self.log.error(Message + " : " + self.GetErrorLine())
 
     # ---------- MyCommon::LogDebug---------------------------------------------
-    def LogDebug(self, Message):
+    def LogDebug(self, Message, Error = None):
 
         if self.debug:
-            self.LogError(Message)
+            self.LogError(Message, Error)
     #---------------------MyCommon::GetErrorLine--------------------------------
     def GetErrorLine(self):
         exc_type, exc_obj, exc_tb = sys.exc_info()
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
         lineno = exc_tb.tb_lineno
         return fname + ":" + str(lineno)
+
+    #---------------------MyCommon::GetErrorString------------------------------
+    def GetErrorString(self, Error):
+
+        try:
+            return str(Error)
+        except:
+            return Error
