@@ -1,8 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.13.31 - 2019-11-14
+- Added alarm code for "Battery Problem" 
+
 ## V1.13.30 - 2019-11-03
 - Update to allow outage log to display 100 instead of 50 entries
+
 ## V1.13.29 - 2019-08-20
 - Fixed a few typos
 
