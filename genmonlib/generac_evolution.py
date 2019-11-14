@@ -2528,6 +2528,7 @@ class Evolution(GeneratorController):
          0x1f : "Service Due",          #  Validate on Evolution, occurred when forced service due
          0x20 : "Service Complete",     #  Validate on Evolution, occurred when service reset
          0x2b : "Charger Missing AC",   #  Validate on EvoAC, occurred when Charger Missing AC Warning
+         0x29 : "Battery Problem",      #  Validate on EvoLC 
          0x30 : "Ruptured Tank",        #  Validate on Evolution, occurred when forced ruptured tank
          0x31 : "Low Fuel Level",       #  Validate on Evolution, occurred when Low Fuel Level
          0x32 : "Low Fuel Pressure",    #  Validate on EvoLC
