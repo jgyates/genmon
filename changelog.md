@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.13.33 - 2019-12-18
+- Added new alarm data for Evolution 2.0
+
 ## V1.13.32 - 2019-11-16
 - Added new alarm log entry for Nexus
 

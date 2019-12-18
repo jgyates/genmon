@@ -2524,6 +2524,7 @@ class Evolution(GeneratorController):
          0x10 : "Inspect Air Filter",   #  Validate on Nexus LC
          0x12 : "Check for Service",    #  Validate on Nexus AC (Spark Plugs service due?)
          0x14 : "Check Battery",        #  Validate on Nexus, occurred when Check Battery Alarm
+         0x15 : "Underspeed",           #  Validate on Evo AC 2
          0x1c : "Throttle Failure",     #  Validate on Nexus LC,
          0x1e : "Under Voltage",        #  Validate on EvoAC
          0x1f : "Service Due",          #  Validate on Evolution, occurred when forced service due
@@ -2722,6 +2723,8 @@ class Evolution(GeneratorController):
                 return "Running in Alarm"
             else:
                 return "Running"
+        elif self.BitIsEqual(RegVal, 0x000F0000, 0x00080000):
+            return "Stopped in Alarm"
         elif self.BitIsEqual(RegVal, 0x000F0000, 0x00060000):
             return "Running in Warning"
         elif self.BitIsEqual(RegVal, 0x000F0000, 0x00080000):
