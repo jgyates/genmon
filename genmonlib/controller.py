@@ -1116,7 +1116,7 @@ class GeneratorController(MySupport):
 
         if not self.FuelConsumptionGaugeSupported():
             return None
-        if not self.FuelCalculationSupported() and not self.FuelSensorSupported():
+        if not self.FuelTankCalculationSupported() and not self.FuelSensorSupported():
             return None
 
         if self.FuelSensorSupported():
@@ -1140,7 +1140,7 @@ class GeneratorController(MySupport):
         try:
             if not self.FuelConsumptionGaugeSupported():
                 return True
-            if not self.FuelCalculationSupported() and not self.FuelSensorSupported():
+            if not self.FuelTankCalculationSupported() and not self.FuelSensorSupported():
                 return True
 
             FuelLevel = self.GetFuelLevel(ReturnFloat = True)
@@ -1174,7 +1174,7 @@ class GeneratorController(MySupport):
 
         if not self.FuelConsumptionGaugeSupported():
             return DefaultReturn
-        if not self.FuelCalculationSupported():
+        if not self.FuelTankCalculationSupported():
             return DefaultReturn
 
         if self.TankSize == 0:
@@ -1206,8 +1206,8 @@ class GeneratorController(MySupport):
     #----------  GeneratorController::FuelSensorSupported------------------------
     def FuelSensorSupported(self):
         return False
-    #----------  GeneratorController::FuelCalculationSupported------------------
-    def FuelCalculationSupported(self):
+    #----------  GeneratorController::FuelTankCalculationSupported------------------
+    def FuelTankCalculationSupported(self):
         return False
     #----------  GeneratorController::FuelConsumptionSupported------------------
     def FuelConsumptionSupported(self):

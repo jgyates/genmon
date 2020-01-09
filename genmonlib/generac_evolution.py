@@ -466,8 +466,8 @@ class Evolution(GeneratorController):
             return True
         return False
 
-    #----------  GeneratorController::FuelCalculationSupported------------------
-    def FuelCalculationSupported(self):
+    #----------  GeneratorController::FuelTankCalculationSupported--------------
+    def FuelTankCalculationSupported(self):
 
         if not self.PowerMeterIsSupported():
             return False
@@ -489,7 +489,7 @@ class Evolution(GeneratorController):
     #----------  GeneratorController::FuelConsumptionGaugeSupported-------------
     def FuelConsumptionGaugeSupported(self):
 
-        if self.FuelCalculationSupported() and self.FuelType != "Natural Gas":
+        if self.FuelTankCalculationSupported() and self.FuelType != "Natural Gas":
             return True
         return False
     #----------  GeneratorController::GetFuelConsumptionPolynomial--------------
@@ -1698,7 +1698,7 @@ class Evolution(GeneratorController):
                     msgbody = "\nUtility Power Restored. Duration of outage " + OutageStr
                     self.MessagePipe.SendMessage("Outage Recovery Notice at " + self.SiteName, msgbody, msgtype = "outage")
                     try:
-                        if self.FuelCalculationSupported():
+                        if self.FuelConsumptionSupported():
                             if self.LastOutageDuration.total_seconds():
                                 FuelUsed = self.GetPowerHistory("power_log_json=%d,fuel" % self.LastOutageDuration.total_seconds())
                             else:
@@ -1826,7 +1826,7 @@ class Evolution(GeneratorController):
                 self.LastHouseKeepingTime = datetime.datetime.now()
             else:
                 UpdateNow = False
-            if self.PowerMeterIsSupported() and self.FuelCalculationSupported():
+            if self.PowerMeterIsSupported() and self.FuelConsumptionSupported():
                 if UpdateNow:
                     self.KWHoursMonth = self.GetPowerHistory("power_log_json=43200,kw")
                     self.FuelMonth = self.GetPowerHistory("power_log_json=43200,fuel")
@@ -3708,7 +3708,7 @@ class Evolution(GeneratorController):
             StartInfo["Controller"] = self.GetController(Actual = False)
             StartInfo["NominalBatteryVolts"] = "12"
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
-            StartInfo["FuelCalculation"] = self.FuelCalculationSupported()
+            StartInfo["FuelCalculation"] = self.FuelTankCalculationSupported()
             StartInfo["FuelSensor"] = self.FuelSensorSupported()
             StartInfo["FuelConsumption"] = self.FuelConsumptionSupported()
             StartInfo["UtilityVoltage"] = True
