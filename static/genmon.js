@@ -1573,10 +1573,11 @@ function TestEmailSettingsWrapperSubmit(email){
     TestEmailSettings($("#smtp_server").val(), $("#smtp_port").val(), $("#email_account").val(),
       $("#sender_account").val(),$("#sender_name").val(), email, $("#email_pw").val(),
       ($("#ssl_enabled").prop('checked')  === true ? "true" : "false"),
-      ($("#tls_disable").prop('checked')  === true ? "true" : "false"));
+      ($("#tls_disable").prop('checked') === true ? "true" : "false"),
+       ($("#smtpauth_disable").prop('checked') === true ? "true" : "false"));
 }
 
-function TestEmailSettings(smtp_server, smtp_port,email_account,sender_account,sender_name,recipient, password, use_ssl, tls_disable){
+function TestEmailSettings(smtp_server, smtp_port,email_account,sender_account,sender_name,recipient, password, use_ssl, tls_disable, smtpauth_disable){
 
     var parameters = {};
     parameters['smtp_server'] = smtp_server;
@@ -1588,6 +1589,7 @@ function TestEmailSettings(smtp_server, smtp_port,email_account,sender_account,s
     parameters['password'] = password;
     parameters['use_ssl'] = use_ssl;
     parameters['tls_disable'] = tls_disable;
+    parameters['smtpauth_disable'] = smtpauth_disable;
 
       // test email settings
       var url = baseurl.concat("test_email");

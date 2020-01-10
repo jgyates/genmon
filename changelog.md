@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.13.35 - 2020-01-09
+- Added SMTP Auth Disable configuration setting
+
 ## V1.13.34 - 2020-01-09
 - Corrected fuel calculation issue for NG systems
 

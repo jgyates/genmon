@@ -349,6 +349,12 @@ def SendTestEmail(query_string):
             tls_disable = True
         else:
             tls_disable = False
+
+        if parameters['smtpauth_disable'].lower() == 'true':
+            smtpauth_disable = True
+        else:
+            smtpauth_disable = False
+
     except Exception as e1:
         LogErrorLine("Error parsing parameters in SendTestEmail: " + str(e1))
         LogError(str(parameters))
@@ -364,7 +370,8 @@ def SendTestEmail(query_string):
               recipient = recipient,
               password = password,
               use_ssl = use_ssl,
-              tls_disable = tls_disable
+              tls_disable = tls_disable,
+              smtpauth_disable = smtpauth_disable
         )
         return ReturnMessage
     except Exception as e1:
@@ -1211,6 +1218,7 @@ def ReadSettingsFromFile():
     ConfigSettings["smtp_port"] = ['int', 'SMTP Server Port', 307, 587, "", "digits", MAIL_CONFIG, MAIL_SECTION, "smtp_port"]
     ConfigSettings["ssl_enabled"] = ['boolean', 'Use SSL Encryption', 308, False, "", "", MAIL_CONFIG, MAIL_SECTION, "ssl_enabled"]
     ConfigSettings["tls_disable"] = ['boolean', 'Disable TLS Encryption', 309, False, "", "", MAIL_CONFIG, MAIL_SECTION, "tls_disable"]
+    ConfigSettings["smtpauth_disable"] = ['boolean', 'Disable SMTP Auth', 309, False, "", "", MAIL_CONFIG, MAIL_SECTION, "smtpauth_disable"]
 
     ConfigSettings["disableimap"] = ['boolean', 'Disable Receiving Email', 400, False, "", "", MAIL_CONFIG, MAIL_SECTION, "disableimap"]
     ConfigSettings["imap_server"] = ['string', 'IMAP Server <br><small>(leave emtpy to disable)</small>', 401, "imap.gmail.com", "", "InternetAddress", MAIL_CONFIG, MAIL_SECTION, "imap_server"]
