@@ -56,6 +56,7 @@ class MyMail(MySupport):
         self.DisableEmail = False
         self.DisableIMAP = False
         self.DisableSNMP = False
+        self.DisableSmtpAuth = False
         self.SSLEnabled = False
         self.TLSDisable = False
         self.UseBCC = False
@@ -118,12 +119,12 @@ class MyMail(MySupport):
 
     #---------- MyMail.TestSendSettings ----------------------------------------
     @staticmethod
-    def TestSendSettings( smtp_server =  None, smtp_port =  587, email_account = None, sender_account = None, sender_name = None, recipient = None, password = None, use_ssl = False, tls_disable = False):
+    def TestSendSettings( smtp_server =  None, smtp_port =  587, email_account = None, sender_account = None, sender_name = None, recipient = None, password = None, use_ssl = False, tls_disable = False, smtpauth_disable = False):
 
         if smtp_server == None or not len(smtp_server):
             return "Error: Invalid SMTP server"
 
-        if email_account  == None or not len(email_account):
+        if not isinstance(smtpauth_disable , bool) and (email_account  == None or not len(email_account)):
             return "Error: Invalid email account"
 
         if sender_account  == None or not len(sender_account):
@@ -177,7 +178,7 @@ class MyMail(MySupport):
             return "Error Initializing SMTP library: " + str(e1)
 
         try:
-            if password != "":
+            if password != "" and not smtpauth_disable:
                 session.login(str(email_account), str(password))
 
             if "," in recipient:
@@ -207,6 +208,11 @@ class MyMail(MySupport):
                 self.DisableSMTP = self.config.ReadValue('disablesmtp', return_type = bool)
             else:
                 self.DisableSMTP = False
+
+            if self.config.HasOption('smtpauth_disable'):
+                self.DisableSmtpAuth = self.config.ReadValue('smtpauth_disable', return_type = bool)
+            else:
+                self.DisableSmtpAuth = False
 
             if self.config.HasOption('disableimap'):
                 self.DisableIMAP = self.config.ReadValue('disableimap', return_type = bool)
@@ -308,7 +314,8 @@ class MyMail(MySupport):
                     return
                 continue   # exit thread
             try:
-                data = self.Mailbox.login(self.EmailAccount, self.EmailPassword)
+                if not self.DisableSmtpAuth:
+                    data = self.Mailbox.login(self.EmailAccount, self.EmailPassword)
             except Exception:
                 self.LogError( "LOGIN FAILED!!! ")
                 if self.WaitForExit("EmailCommandThread", 60 ):
@@ -421,7 +428,7 @@ class MyMail(MySupport):
             return False
 
         try:
-            if self.EmailPassword != "":
+            if self.EmailPassword != "" and not self.DisableSmtpAuth:
                 session.login(str(self.EmailAccount), str(self.EmailPassword))
 
             if "," in recipient:
