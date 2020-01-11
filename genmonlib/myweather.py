@@ -191,10 +191,21 @@ class MyWeather(MySupport):
                     Data.append({"Wind" : WindString + str(round(TempDict.get("speed", 0),2)) + " " +self.GetUnits("speed", Label = True)})
                     TempDict = self.WeatherData.get_rain()
                     if len(TempDict):
-                        Data.append({"Rain in last 3 hours" : str(TempDict.get("3h", 0))})
+                        amount = TempDict.get("3h", None)
+                        if amount is not None:
+                            Data.append({"Rain in last 3 hours" : str(amount)})
+                        amount = TempDict.get("1h", None)
+                        if amount is not None:
+                            Data.append({"Rain in last hour" : str(amount)})
+
                     TempDict = self.WeatherData.get_snow()
                     if len(TempDict):
-                        Data.append({"Snow in last 3 hours" : str(TempDict.get("3h", 0))})
+                        amount = TempDict.get("3h", None)
+                        if amount is not None:
+                            Data.append({"Snow in last 3 hours" : str(amount)})
+                        amount = TempDict.get("1h", None)
+                        if amount is not None:
+                            Data.append({"Snow in last hour" : str(amount)})
 
                     TempDict = self.WeatherData.get_pressure()
                     if len(TempDict):

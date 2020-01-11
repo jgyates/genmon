@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.13.36 - 2020-01-11
+- Corrected bug in reporting of weather (rain and snow in last 1 or 3 hours)
+
 ## V1.13.35 - 2020-01-09
 - Added SMTP Auth Disable configuration setting
 
