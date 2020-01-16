@@ -24,6 +24,39 @@ var BaseRegistersDescription = {};
 vex.defaultOptions.className = 'vex-theme-os'
 
 //*****************************************************************************
+var UAbrowser = (function(){
+  var test = function(regexp) { return regexp.test(window.navigator.userAgent);}
+  switch(true){
+    case test(/edge/i): return "edge";
+    case test(/opr/i) && (!!window.opr || !!window.opera): return "opera";
+    case test(/chrome/i) && !!window.chrome: return "chrome";
+    case test(/trident/i) : return "ie";
+    case test(/firefox/i) : return "firefox";
+    case test(/safari/i): return "safari";
+    default: return "other";
+  }
+})();
+
+//*****************************************************************************
+function isMobileBrowser() {
+ if( navigator.userAgent.match(/Android/i)
+ || navigator.userAgent.match(/webOS/i)
+ || navigator.userAgent.match(/iPhone/i)
+ || navigator.userAgent.match(/iPad/i)
+ || navigator.userAgent.match(/iPod/i)
+ || navigator.userAgent.match(/BlackBerry/i)
+ || navigator.userAgent.match(/Windows Phone/i)
+ ){
+    return true;
+  }
+ else {
+    return false;
+  }
+}
+console.log(UAbrowser)
+
+
+//*****************************************************************************
 // called on window.onload
 //      sets up listener events (click menu) and inits the default page
 //*****************************************************************************
@@ -240,8 +273,13 @@ function DisplayStatusFull() {
     kwHistory["defaultPlotWidth"] = ((gridWidth > 4) ? 4 : (gridWidth < 1) ? 1 : gridWidth);
     kwHistory["oldDefaultPlotWidth"] = kwHistory["defaultPlotWidth"];
 
-
+    // This is a hack to work around mobile safari issue that makes the gauge text
+    // display incorrectly on redraw
     var outstr = '<br>';
+    var CRstr = '<br>';
+    if ((UAbrowser == "safari") && (isMobileBrowser()) && (gauge.length != 0)) {
+      CRstr = '';
+    }
 
     if (lowbandwidth == false) {
       outstr += '<center><div class="packery">';
@@ -249,9 +287,9 @@ function DisplayStatusFull() {
          switch (myGenerator["tiles"][i].type) {
            case "gauge":
              if (myGenerator["tiles"][i].subtype == "fuel") {
-               outstr += '<div id="fuelField_'+i+'" class="grid-item gaugeField"><br>'+myGenerator["tiles"][i].title+'<br><div style="display: inline-block; width:100%; height:65%; position: relative;"><canvas class="gaugeCanvas" id="gauge'+i+'_bg" style="height: 100%; position: absolute; left: 0; top: 0; z-index: 1;"></canvas><canvas class="gaugeCanvas" id="gauge'+i+'" style="height: 100%; position: absolute; left: 0; top: 0; z-index: 0;"></canvas></div><br><div id="text'+i+'" class="gaugeDiv"></div></div>';
+               outstr += '<div id="fuelField_'+i+'" class="grid-item gaugeField">'+CRstr+myGenerator["tiles"][i].title+'<br><div style="display: inline-block; width:100%; height:65%; position: relative;"><canvas class="gaugeCanvas" id="gauge'+i+'_bg" style="height: 100%; position: absolute; left: 0; top: 0; z-index: 1;"></canvas><canvas class="gaugeCanvas" id="gauge'+i+'" style="height: 100%; position: absolute; left: 0; top: 0; z-index: 0;"></canvas></div><br><div id="text'+i+'" class="gaugeDiv"></div></div>';
              } else {
-               outstr += '<div id="gaugeField_'+i+'" class="grid-item gaugeField"><br>'+myGenerator["tiles"][i].title+'<br><canvas class="gaugeCanvas" id="gauge'+i+'"></canvas><br><div id="text'+i+'" class="gaugeDiv"></div></div>';
+               outstr += '<div id="gaugeField_'+i+'" class="grid-item gaugeField">'+CRstr+myGenerator["tiles"][i].title+'<br><canvas class="gaugeCanvas" id="gauge'+i+'"></canvas><br><div id="text'+i+'" class="gaugeDiv"></div></div>';
              }
              break;
            case "graph":
