@@ -13,6 +13,8 @@ import os, sys, time, collections, threading, socket, json
 
 from genmonlib.myplatform import MyPlatform
 from genmonlib.mycommon import MyCommon
+from genmonlib.myconfig import MyConfig
+from genmonlib.program_defaults import ProgramDefaults
 
 #------------ MySupport class --------------------------------------------------
 class MySupport(MyCommon):
@@ -38,6 +40,35 @@ class MySupport(MyCommon):
         except Exception as e1:
             self.LogError("Error in  LogToFile : File: %s: %s " % (File,str(e1)))
 
+    #------------ MySupport::CopyFile-------------------------------------------
+    @staticmethod
+    def CopyFile(source, destination, move = False, log = None):
+
+        try:
+            if not os.path.isfile(source):
+                if log != None:
+                    log.error("Error in CopyFile : source file not found.")
+                return False
+
+            path = os.path.dirname(destination)
+            if not os.path.isdir(path):
+                if log != None:
+                    log.error("Creating " + path)
+                os.mkdir(path)
+            with os.fdopen(os.open(source, os.O_RDONLY ),'r') as source_fd:
+                data = source_fd.read()
+                with os.fdopen(os.open(destination,os.O_CREAT | os.O_RDWR ),'w') as dest_fd:
+                    dest_fd.write(data)
+                    dest_fd.flush()
+                    os.fsync(dest_fd)
+
+            if move:
+                os.remove(source)
+            return True
+        except Exception as e1:
+            if log != None:
+                log.error("Error in CopyFile : " + str(source) + " : "+ str(e1))
+            return False
     #------------ MySupport::GetSiteName----------------------------------------
     def GetSiteName(self):
         return self.SiteName
@@ -52,7 +83,7 @@ class MySupport(MyCommon):
             #create an INET, STREAMing socket
             Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             #now connect to the server on our port
-            Socket.connect(("127.0.0.1", self.ServerSocketPort))
+            Socket.connect((ProgramDefaults.LocalHost, self.ServerSocketPort))
             Socket.close()
             return True
         except Exception as e1:
@@ -71,6 +102,19 @@ class MySupport(MyCommon):
 
         return Platform.GetInfo()
 
+    #---------- MySupport::InternetConnected------------------------------------
+    # Note: this function, if the internet connection is not present could
+    # take some time to complete due to the network timeout
+    def InternetConnected(self):
+        try:
+            if MyPlatform.InterntConnected():
+                Status = "OK"
+            else:
+                Status = "Disconnected"
+
+            return Status
+        except Exception as e1:
+            return "Unknown" + ":" + str(e1)
     #---------- MySupport::GetDeadThreadName------------------------------------
     def GetDeadThreadName(self):
 
@@ -145,7 +189,7 @@ class MySupport(MyCommon):
             if NoString:
                 ReturnDict = collections.OrderedDict()
                 ReturnDict["unit"] = unit
-                DefaultReturn = json.dumps({'value': 0}, sort_keys=False)
+                DefaultReturn = ReturnDict
             else:
                 DefaultReturn = ""
             if isinstance(value, int):
@@ -154,14 +198,7 @@ class MySupport(MyCommon):
                 else:
                     ReturnDict["type"] = 'int'
                     ReturnDict["value"] = value
-                    return json.dumps(ReturnDict, sort_keys=False)
-            if isinstance(value, long):
-                if not NoString:
-                    return "%d %s" % (int(value), str(unit))
-                else:
-                    ReturnDict["type"] = 'long'
-                    ReturnDict["value"] = value
-                    return json.dumps(ReturnDict, sort_keys=False)
+                    return ReturnDict
             elif isinstance(value, float):
                 if not NoString:
                     return "%.2f %s" % (float(value), str(unit))
@@ -169,7 +206,14 @@ class MySupport(MyCommon):
                     ReturnDict = collections.OrderedDict()
                     ReturnDict["type"] = 'float'
                     ReturnDict["value"] = round(value, 2)
-                    return json.dumps(ReturnDict, sort_keys=False)
+                    return ReturnDict
+            elif sys.version_info[0] < 3 and isinstance(value, long):
+                if not NoString:
+                    return "%d %s" % (int(value), str(unit))
+                else:
+                    ReturnDict["type"] = 'long'
+                    ReturnDict["value"] = value
+                    return ReturnDict
             else:
                 self.LogError("Unsupported type in ValueOut: " + str(type(value)))
                 return DefaultReturn
@@ -188,10 +232,10 @@ class MySupport(MyCommon):
             ByteArray = bytearray.fromhex(input)
             if ByteArray[0] == 0:
                 return ""
-            End = ByteArray.find('\0')
+            End = ByteArray.find(b'\0')
             if End != -1:
                 ByteArray = ByteArray[:End]
-            return str(ByteArray).encode('ascii')
+            return str(ByteArray.decode('ascii'))
         except Exception as e1:
             self.LogErrorLine("Error in HexStringToString: " + str(e1))
             return ""
@@ -210,13 +254,17 @@ class MySupport(MyCommon):
 
         if isinstance(item, str):
             return item
-        if isinstance(item, unicode):
+        if sys.version_info[0] < 3 and isinstance(item, unicode):
             return str(item)
         elif callable(item):
             return item()
-        elif isinstance(item, (int, long)):
+        elif isinstance(item, int):
+            return str(item)
+        elif sys.version_info[0] < 3 and isinstance(item, (int, long)):
             return str(item)
         elif isinstance(item, float):
+            return str(item)
+        elif sys.version_info[0] >= 3 and isinstance(item, (bytes)):
             return str(item)
         else:
             self.LogError("Unable to convert type %s in GetDispatchItem" % str(type(item)))
@@ -303,3 +351,16 @@ class MySupport(MyCommon):
         delta_minutes = (seconds % 3600) // 60
 
         return (delta_hours * 60 + delta_minutes)
+
+    #---------------------MyCommon::GetGenmonInitInfo---------------------------
+    @staticmethod
+    def GetGenmonInitInfo(configfilepath = MyCommon.DefaultConfPath, log = None):
+
+        if configfilepath == None or configfilepath == "":
+            configfilepath = MyCommon.DefaultConfPath
+
+        config = MyConfig(configfilepath + "genmon.conf", section = "GenMon", log = log)
+        loglocation = config.ReadValue('loglocation', default = ProgramDefaults.LogPath)
+        port = config.ReadValue('server_port', return_type = int, default = ProgramDefaults.ServerPort)
+
+        return port, loglocation

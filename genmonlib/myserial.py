@@ -16,10 +16,20 @@ import datetime, threading, serial, sys
 from genmonlib.mysupport import MySupport
 from genmonlib.mylog import SetupLogger
 from genmonlib.mythread import MyThread
+from genmonlib.program_defaults import ProgramDefaults
 
 #------------ SerialDevice class -----------------------------------------------
 class SerialDevice(MySupport):
-    def __init__(self, name = '/dev/serial0', rate=9600, log = None, Parity = None, OnePointFiveStopBits = None, RtsCts = False, config = None):
+    def __init__(self,
+        name = '/dev/serial0',
+        rate=9600,
+        log = None,
+        Parity = None,
+        OnePointFiveStopBits = None,
+        sevendatabits = False,
+        RtsCts = False,
+        config = None,
+        loglocation = ProgramDefaults.LogPath):
 
         super(SerialDevice, self).__init__()
 
@@ -31,8 +41,9 @@ class SerialDevice(MySupport):
         self.DiscardedBytes = 0
         self.Restarts = 0
         self.SerialStartTime = datetime.datetime.now()     # used for com metrics
-        self.loglocation = './'
+        self.loglocation = loglocation
 
+        # This supports getting this info from genmon.conf
         if self.config != None:
             self.loglocation = self.config.ReadValue('loglocation', default = '/var/log/')
             self.DeviceName = self.config.ReadValue('port', default = '/dev/serial0')
@@ -42,12 +53,18 @@ class SerialDevice(MySupport):
             self.log = SetupLogger("myserial", self.loglocation + "myserial.log")
         else:
             self.log = log
+        self.console = SetupLogger("myserial_console", log_file = "", stream = True)
 
         #Starting serial connection
         self.SerialDevice = serial.Serial()
         self.SerialDevice.port = self.DeviceName
         self.SerialDevice.baudrate = rate
-        self.SerialDevice.bytesize = serial.EIGHTBITS     #number of bits per bytes
+        #number of bits per bytes
+        if sevendatabits == True:
+            self.SerialDevice.bytesize = serial.SEVENBITS
+        else:
+            self.SerialDevice.bytesize = serial.EIGHTBITS
+
         if Parity == None:
             self.SerialDevice.parity = serial.PARITY_NONE    #set parity check: no parity
         elif Parity == 1:

@@ -16,6 +16,7 @@ from genmonlib.controller import GeneratorController
 from genmonlib.mytile import MyTile
 from genmonlib.modbus_file import ModbusFile
 from genmonlib.mymodbus import ModbusProtocol
+from genmonlib.program_defaults import ProgramDefaults
 
 # Module defines ---------------------------------------------------------------
 REGISTER    = 0
@@ -31,8 +32,16 @@ EVENT_LOG_ENTRIES               = 20
 EVENT_LOG_LENGTH                = 64
 NAMEPLATE_DATA_FILE_RECORD      = "0040"      # 0x40
 NAMEPLATE_DATA_LENGTH           = 64        # Note: This is 1024 but I only read 64 due to performance
-ENGINE_DATA_FILE_RECORD         = "002a"
-ENGINE_DATA_LENGTH  = 18
+MISC_GEN_FILE_RECORD            = "002a"
+MISC_GEN_LENGTH                 = 18
+ENGINE_DATA_FILE_RECORD         = "0050"
+ENGINE_DATA_FILE_RECORD_LENGTH  = 48
+GOV_DATA_FILE_RECORD            = "00d3"
+GOV_DATA_FILE_RECORD_LENGTH     = 60        # Extra byte, actual data is 59
+GOV_DATA_SEC_FILE_RECORD        = "00d4"
+GOV_DATA_SEC_FILE_RECORD_LENGTH = 60        # Extra byte, actual data is 59
+REGULATOR_FILE_RECORD           = "00d5"
+REGULATOR_FILE_RECORD_LENGTH    = 46
 
 #---------------------HPanelReg::HPanelReg--------------------------------------
 class HPanelReg(object):
@@ -89,8 +98,28 @@ class HPanelReg(object):
     DI_STATE_2              = ["01a2", 2]            # * Different on G-Panel
     QUIETTEST_STATUS        = ["022b", 2]            # Quiet Test Status and reqest
 
+    # EXT_SW_XX regististers are for HTS/MTS/STS Switches
+    EXT_SW_GENERAL_STATUS   = ["0ea1", 2]            # External Switch General Status
+    EXT_SW_MINIC_DIAGRAM    = ["0ea2", 2]            # Ext Switch Mimic Diagram
     EXT_SW_TARGET_VOLTAGE   = ["0ea7", 2]            # External Switch Target Voltage
-    EXT_SW_AVG_UTIL_VOLTS   = ["0eb5", 2]            # External Switch Avg Utility Volts
+    EXT_SW_TARGET_FREQ      = ["0eaa", 2]            # External Switch Target Freq
+    EXT_SW_UTILITY_VOLTS_AB = ["0ead", 2]            # External Switch Utility AB Voltage
+    EXT_SW_UTILITY_VOLTS_BC = ["0eae", 2]            # External Switch Utility BC Voltage
+    EXT_SW_UTILITY_VOLTS_CA = ["0eaf", 2]            # External Switch Utility CA Voltage
+    EXT_SW_UTILITY_AMPS_A   = ["0eb0", 2]            # External Switch Utility A Amps
+    EXT_SW_UTILITY_AMPS_B   = ["0eb1", 2]            # External Switch Utility B Amps
+    EXT_SW_UTILITY_AMPS_C   = ["0eb2", 2]            # External Switch Utility C Amps
+    EXT_SW_UTILITY_AVG_VOLTS= ["0eb4", 2]            # External Switch Average Utility Volts
+    EXT_SW_UTILITY_AVG_AMPS = ["0eb5", 2]            # External Switch Average Utility Amps
+    EXT_SW_UTILITY_FREQ     = ["0eb6", 2]            # External Switch Utility Freq
+    EXT_SW_UTILITY_PF       = ["0eb7", 2]            # External Switch Utility Power Factor
+    EXT_SW_UTILITY_KW       = ["0eb8", 2]            # External Switch Utility Power
+    EXT_SW_GEN_AVG_VOLT     = ["0eb9", 2]            # External Switch Generator Average Voltage
+    EXT_SW_GEN_FREQ         = ["0eba", 2]            # External Switch Generator Freq
+    EXT_SW_BACKUP_BATT_VOLTS= ["0ebc", 2]            # External Switch Backup Battery Voltage
+    EXT_SW_VERSION          = ["0ebf", 2]            # External Switch SW Version
+    EXT_SW_SELECTED         = ["0ec0", 2]            # External Switch Selected
+
 
     #---------------------HPanelReg::hexsort------------------------------------
     #@staticmethod
@@ -103,7 +132,7 @@ class HPanelReg(object):
     #---------------------HPanelReg::GetRegList---------------------------------
     def GetRegList(self):
         RetList = []
-        for attr, value in HPanelReg.__dict__.iteritems():
+        for attr, value in HPanelReg.__dict__.items():
             if not callable(getattr(self,attr)) and not attr.startswith("__"):
                 RetList.append(value)
 
@@ -279,7 +308,7 @@ class HPanelIO(object):
         ("0087", 0x0001) : "Integrated Logic Controller Warning - Warning 1.",
         # Output 7
         ("0088", 0x8000) : "Integrated Logic Controller Warning - Warning 2.",
-        ("0088", 0x0200) : "Detected voltage phase rotation as not being A-B-C.",
+        ("0088", 0x0200) : "Emergency Stop",
         ("0088", 0x0100) : "Detected current phase rotation as not being A-B-C and not matching voltage.",
 
     }
@@ -338,8 +367,27 @@ class GPanelReg(object):
     DI_STATE_2              = ["01a2", 2]            # * Different on G-Panel
     QUIETTEST_STATUS        = ["022b", 2]            # Quiet Test Status and reqest
 
+    # EXT_SW_XX regististers are for HTS/MTS/STS Switches
+    EXT_SW_GENERAL_STATUS   = ["0ea1", 2]            # External Switch General Status
+    EXT_SW_MINIC_DIAGRAM    = ["0ea2", 2]            # Ext Switch Mimic Diagram
     EXT_SW_TARGET_VOLTAGE   = ["0ea7", 2]            # External Switch Target Voltage
-    EXT_SW_AVG_UTIL_VOLTS   = ["0eb5", 2]            # External Switch Avg Utility Volts
+    EXT_SW_TARGET_FREQ      = ["0eaa", 2]            # External Switch Target Freq
+    EXT_SW_UTILITY_VOLTS_AB = ["0ead", 2]            # External Switch Utility AB Voltage
+    EXT_SW_UTILITY_VOLTS_BC = ["0eae", 2]            # External Switch Utility BC Voltage
+    EXT_SW_UTILITY_VOLTS_CA = ["0eaf", 2]            # External Switch Utility CA Voltage
+    EXT_SW_UTILITY_AMPS_A   = ["0eb0", 2]            # External Switch Utility A Amps
+    EXT_SW_UTILITY_AMPS_B   = ["0eb1", 2]            # External Switch Utility B Amps
+    EXT_SW_UTILITY_AMPS_C   = ["0eb2", 2]            # External Switch Utility C Amps
+    EXT_SW_UTILITY_AVG_VOLTS= ["0eb4", 2]            # External Switch Average Utility Volts
+    EXT_SW_UTILITY_AVG_AMPS = ["0eb5", 2]            # External Switch Average Utility Amps
+    EXT_SW_UTILITY_FREQ     = ["0eb6", 2]            # External Switch Utility Freq
+    EXT_SW_UTILITY_PF       = ["0eb7", 2]            # External Switch Utility Power Factor
+    EXT_SW_UTILITY_KW       = ["0eb8", 2]            # External Switch Utility Power
+    EXT_SW_GEN_AVG_VOLT     = ["0eb9", 2]            # External Switch Generator Average Voltage
+    EXT_SW_GEN_FREQ         = ["0eba", 2]            # External Switch Generator Freq
+    EXT_SW_BACKUP_BATT_VOLTS= ["0ebc", 2]            # External Switch Backup Battery Voltage
+    EXT_SW_VERSION          = ["0ebf", 2]            # External Switch SW Version
+    EXT_SW_SELECTED         = ["0ec0", 2]            # External Switch Selected
 
     #---------------------GPanelReg::hexsort------------------------------------
     #@staticmethod
@@ -352,7 +400,7 @@ class GPanelReg(object):
     #---------------------GPanelReg::GetRegList---------------------------------
     def GetRegList(self):
         RetList = []
-        for attr, value in GPanelReg.__dict__.iteritems():
+        for attr, value in GPanelReg.__dict__.items():
             if not callable(getattr(self,attr)) and not attr.startswith("__"):
                 RetList.append(value)
 
@@ -570,12 +618,11 @@ class RegisterStringEnum(object):
     @staticmethod
     def GetRegList():
         RetList = []
-        for attr, value in RegisterStringEnum.__dict__.iteritems():
+        for attr, value in RegisterStringEnum.__dict__.items():
             if not callable(getattr(RegisterStringEnum(),attr)) and not attr.startswith("__"):
                 RetList.append(value)
         RetList.sort(key=RegisterStringEnum.hexsort)
         return RetList
-
 
 #---------------------Input1::Input1--------------------------------------------
 # Enum for register Input1
@@ -783,15 +830,8 @@ class HPanel(GeneratorController):
         self.LastEngineState = ""
         self.CurrentAlarmState = False
         self.VoltageConfig = None
-        self.NamePlateData = "Unknown"
-        self.FlyWheelTeeth = []
-        self.CTRatio = []
-        self.Phase = None
-        self.TargetRPM = []
         self.AlarmAccessLock = threading.RLock()     # lock to synchronize access to the logs
         self.EventAccessLock = threading.RLock()     # lock to synchronize access to the logs
-        self.AlarmLog = []
-        self.EventLog = []
         self.ControllerDetected = False
         self.HPanelDetected = True          # False if G-Panel
         self.Reg = HPanelReg()
@@ -854,6 +894,7 @@ class HPanel(GeneratorController):
         try:
             self.VoltageConfig = self.config.ReadValue('voltageconfiguration', default = "277/480")
             self.NominalBatteryVolts = int(self.config.ReadValue('nominalbattery', return_type = int, default = 24))
+            self.HTSTransferSwitch = self.config.ReadValue('hts_transfer_switch', return_type = bool, default = False)
 
         except Exception as e1:
             self.FatalError("Missing config file or config file entries (HPanel): " + str(e1))
@@ -871,6 +912,7 @@ class HPanel(GeneratorController):
             ControllerString = self.HexStringToString(self.ModBus.ProcessMasterSlaveTransaction(RegisterStringEnum.CONTROLLER_NAME[REGISTER],
                 RegisterStringEnum.CONTROLLER_NAME[LENGTH] / 2))
 
+            ControllerString = str(ControllerString)
             if not len(ControllerString):
                 self.LogError("Unable to ID controller, possiby not receiving data.")
                 self.ControllerDetected = False
@@ -907,6 +949,7 @@ class HPanel(GeneratorController):
     #-------------HPanel:SetupTiles---------------------------------------------
     def SetupTiles(self):
         try:
+            self.TileList = []
             Tile = MyTile(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = self.NominalBatteryVolts,
                 callback = self.GetParameter,
                 callbackparameters = (self.Reg.BATTERY_VOLTS[REGISTER],  None, 100.0, False, False, True))
@@ -923,13 +966,13 @@ class HPanel(GeneratorController):
             if self.NominalKW == None or self.NominalKW == "" or self.NominalKW == "Unknown":
                 self.NominalKW = "550"
 
-            Tile = MyTile(self.log, title = "Average Voltage", units = "V", type = "linevolts", nominal = NominalVoltage,
+            Tile = MyTile(self.log, title = "Voltage (Avg)", units = "V", type = "linevolts", nominal = NominalVoltage,
             callback = self.GetParameter,
             callbackparameters = (self.Reg.AVG_VOLTAGE[REGISTER], None, None, False, True, False))
             self.TileList.append(Tile)
 
             NominalCurrent = int(self.NominalKW) * 1000 / NominalVoltage
-            Tile = MyTile(self.log, title = "Average Current", units = "A", type = "current", nominal = NominalCurrent,
+            Tile = MyTile(self.log, title = "Current (Avg)", units = "A", type = "current", nominal = NominalCurrent,
             callback = self.GetParameter,
             callbackparameters = (self.Reg.AVG_CURRENT[REGISTER], None, None, False, True, False))
             self.TileList.append(Tile)
@@ -954,6 +997,20 @@ class HPanel(GeneratorController):
             callbackparameters = (self.Reg.COOLANT_TEMP[REGISTER], None, None, False, True, False))
             self.TileList.append(Tile)
 
+            if self.HTSTransferSwitch:
+                Tile = MyTile(self.log, title = "Utility Voltage (Avg)", units = "V", type = "linevolts", nominal = NominalVoltage,
+                callback = self.GetParameter,
+                callbackparameters = (self.Reg.EXT_SW_UTILITY_AVG_VOLTS[REGISTER], None, None, False, True, False))
+                self.TileList.append(Tile)
+                Tile = MyTile(self.log, title = "Utility Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq),
+                callback = self.GetParameter,
+                callbackparameters = (self.Reg.EXT_SW_UTILITY_FREQ[REGISTER], None, 100.0, False, False, True))
+                self.TileList.append(Tile)
+                Tile = MyTile(self.log, title = "Utility Power", units = "kW", type = "power", nominal = int(self.NominalKW),
+                callback = self.GetParameter,
+                callbackparameters = (self.Reg.EXT_SW_UTILITY_KW[REGISTER], None, None, False, True, False))
+                self.TileList.append(Tile)
+
             if self.PowerMeterIsSupported():
                 Tile = MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = int(self.NominalKW),
                 callback = self.GetParameter,
@@ -964,6 +1021,9 @@ class HPanel(GeneratorController):
                 callback = self.GetParameter,
                 callbackparameters = (self.Reg.TOTAL_POWER_KW[REGISTER], None, None, False, True, False))
                 self.TileList.append(Tile)
+            if self.ExternalFuelDataSupported():
+                Tile = MyTile(self.log, title = "External Tank", units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True,))
+                self.TileList.append(Tile)
 
         except Exception as e1:
             self.LogErrorLine("Error in SetupTiles: " + str(e1))
@@ -973,24 +1033,6 @@ class HPanel(GeneratorController):
     def CheckModelSpecificInfo(self):
 
         try:
-            # Read the nameplate dataGet Serial Number
-            self.NamePlateData = self.HexStringToString(self.ModBus.ProcessMasterSlaveFileReadTransaction(NAMEPLATE_DATA_FILE_RECORD, NAMEPLATE_DATA_LENGTH / 2 ))
-
-            EngineData = self.ModBus.ProcessMasterSlaveFileReadTransaction(ENGINE_DATA_FILE_RECORD, ENGINE_DATA_LENGTH / 2 )
-            if len(EngineData) >= 34:
-                try:
-                    self.FlyWheelTeeth.append(self.GetIntFromString(EngineData, 0, 2))  # Byte 1 and 2
-                    self.FlyWheelTeeth.append(self.GetIntFromString(EngineData, 2, 2))  # Byte 2 and 3
-                    self.FlyWheelTeeth.append(self.GetIntFromString(EngineData, 4, 2))  # Byte 4 and 5
-                    self.CTRatio.append(self.GetIntFromString(EngineData, 6, 2))        # Byte 6 and 7
-                    self.CTRatio.append(self.GetIntFromString(EngineData, 8, 2))        # Byte 8 and 9
-                    # Skip byte 10 and 11
-                    self.Phase = self.GetIntFromString(EngineData, 12, 1)               # Byte 12
-                    self.TargetRPM.append(self.GetIntFromString(EngineData, 13, 2))     # Byte 13 and 14
-                    self.TargetRPM.append(self.GetIntFromString(EngineData, 15, 2))     # Byte 15 and 16
-                except Exception as e1:
-                    self.LogError("Error parsing engine parameters: " + str(e1))
-
             # TODO this should be determined by reading the hardware if possible.
             if self.NominalFreq == "Unknown" or not len(self.NominalFreq):
                 self.NominalFreq = "60"
@@ -1030,9 +1072,14 @@ class HPanel(GeneratorController):
                 return 0
             StringOffset = byte_offset * 2
             StringOffsetEnd = StringOffset + (length *2)
-            if decimal:
-                return int(input_string[StringOffset:StringOffsetEnd])
-            return int(input_string[StringOffset:StringOffsetEnd], 16)
+            if StringOffset == StringOffsetEnd:
+                if decimal:
+                    return int(input_string[StringOffsetd])
+                return int(input_string[StringOffset], 16)
+            else:
+                if decimal:
+                    return int(input_string[StringOffset:StringOffsetEnd])
+                return int(input_string[StringOffset:StringOffsetEnd], 16)
         except Exception as e1:
             self.LogErrorLine("Error in GetIntFromString: " + str(e1))
             return 0
@@ -1043,6 +1090,50 @@ class HPanel(GeneratorController):
         if ReturnString:
             return self.HexStringToString(StringValue)
         return self.Strings.get(Register, "")
+
+    #-------------HPanel:GetParameterFileValue----------------------------------
+    def GetParameterFileValue(self, Register, ReturnString = False):
+
+        StringValue = self.FileData.get(Register, "")
+        if ReturnString:
+            return self.HexStringToString(StringValue)
+        return self.FileData.get(Register, "")
+
+    #-------------HPanel:GetGeneratorFileData-----------------------------------
+    def GetGeneratorFileData(self):
+
+        try:
+            # Read the nameplate dataGet Serial Number
+            self.ModBus.ProcessMasterSlaveFileReadTransaction(NAMEPLATE_DATA_FILE_RECORD, NAMEPLATE_DATA_LENGTH / 2 )
+            # Read Misc Engine data
+            self.ModBus.ProcessMasterSlaveFileReadTransaction(MISC_GEN_FILE_RECORD, MISC_GEN_LENGTH / 2 )
+            # Read Engine Data
+            self.ModBus.ProcessMasterSlaveFileReadTransaction(ENGINE_DATA_FILE_RECORD, ENGINE_DATA_FILE_RECORD_LENGTH / 2 )
+            # Read Govonor Data
+            self.ModBus.ProcessMasterSlaveFileReadTransaction(GOV_DATA_FILE_RECORD, GOV_DATA_FILE_RECORD_LENGTH / 2 )
+            # Read Secondary Govonor Data
+            self.ModBus.ProcessMasterSlaveFileReadTransaction(GOV_DATA_SEC_FILE_RECORD, GOV_DATA_SEC_FILE_RECORD_LENGTH / 2 )
+            # Read Regulator Data
+            self.ModBus.ProcessMasterSlaveFileReadTransaction(REGULATOR_FILE_RECORD, REGULATOR_FILE_RECORD_LENGTH / 2 )
+
+            self.GetGeneratorLogFileData()
+        except Exception as e1:
+            self.LogErrorLine("Error in GetGeneratorFileData: " + str(e1))
+
+    #------------ HPanel:GetGeneratorLogFileData -------------------------------
+    def GetGeneratorLogFileData(self):
+
+        try:
+            for RegValue in range(EVENT_LOG_START + EVENT_LOG_ENTRIES -1 , EVENT_LOG_START -1, -1):
+                Register = "%04x" % RegValue
+                self.ModBus.ProcessMasterSlaveFileReadTransaction(Register, EVENT_LOG_LENGTH /2)
+
+            for RegValue in range(ALARM_LOG_START + ALARM_LOG_ENTRIES -1, ALARM_LOG_START -1, -1):
+                Register = "%04x" % RegValue
+                self.ModBus.ProcessMasterSlaveFileReadTransaction(Register, ALARM_LOG_LENGTH /2)
+
+        except Exception as e1:
+            self.LogErrorLine("Error in GetGeneratorLogFileData: " + str(e1))
 
     #-------------HPanel:GetGeneratorStrings------------------------------------
     def GetGeneratorStrings(self):
@@ -1076,6 +1167,7 @@ class HPanel(GeneratorController):
                     self.LogErrorLine("Error in MasterEmulation: " + str(e1))
 
             self.GetGeneratorStrings()
+            self.GetGeneratorFileData()
             self.CheckForAlarmEvent.set()
         except Exception as e1:
             self.LogErrorLine("Error in MasterEmulation: " + str(e1))
@@ -1171,40 +1263,6 @@ class HPanel(GeneratorController):
             self.LogErrorLine("Error in ParseLogEntry: " + str(e1))
             return ""
 
-    #------------ HPanel:UpdateLog ---------------------------------------------
-    def UpdateLog(self):
-
-        try:
-            LocalEvent = []
-            for RegValue in range(EVENT_LOG_START + EVENT_LOG_ENTRIES -1 , EVENT_LOG_START -1, -1):
-                Register = "%04x" % RegValue
-                LogEntry = self.HexStringToString(self.ModBus.ProcessMasterSlaveFileReadTransaction(Register, EVENT_LOG_LENGTH /2))
-                LogEntry = self.ParseLogEntry(LogEntry, Type = "event")
-                if not len(LogEntry):
-                    continue
-                if "undefined" in LogEntry:
-                    continue
-
-                LocalEvent.append(LogEntry)
-
-            with self.EventAccessLock:
-                self.EventLog = LocalEvent
-
-            LocalAlarm = []
-            for RegValue in range(ALARM_LOG_START + ALARM_LOG_ENTRIES -1, ALARM_LOG_START -1, -1):
-                Register = "%04x" % RegValue
-                LogEntry = self.HexStringToString(self.ModBus.ProcessMasterSlaveFileReadTransaction(Register, ALARM_LOG_LENGTH /2))
-                LogEntry = self.ParseLogEntry(LogEntry, Type = "alarm")
-                if not len(LogEntry):
-                    continue
-
-                LocalAlarm.append(LogEntry)
-
-            with self.AlarmAccessLock:
-                self.AlarmLog = list(LocalAlarm)
-
-        except Exception as e1:
-            self.LogErrorLine("Error in UpdateLog: " + str(e1))
     #------------ HPanel:CheckForAlarms ----------------------------------------
     def CheckForAlarms(self):
 
@@ -1213,24 +1271,31 @@ class HPanel(GeneratorController):
                 return
             # Check for changes in engine state
             EngineState = self.GetEngineState()
+            msgbody = ""
+
+            if len(self.UserURL):
+                msgbody += "For additional information : " + self.UserURL + "\n"
             if not EngineState == self.LastEngineState:
                 self.LastEngineState = EngineState
-                self.UpdateLog()
-                # This will trigger a call to CheckForalarms with ListOutput = True
                 msgsubject = "Generator Notice: " + self.SiteName
-                msgbody = self.DisplayStatus()
-                self.MessagePipe.SendMessage(msgsubject , msgbody, msgtype = "warn")
+                if not self.SystemInAlarm():
+                    msgbody += "NOTE: This message is a notice that the state of the generator has changed. The system is not in alarm.\n"
+                    MessageType = "info"
+                else:
+                    MessageType = "warn"
+                msgbody += self.DisplayStatus()
+                self.MessagePipe.SendMessage(msgsubject , msgbody, msgtype = MessageType)
 
             # Check for Alarms
             if self.SystemInAlarm():
                 if not self.CurrentAlarmState:
                     msgsubject = "Generator Notice: ALARM Active at " + self.SiteName
-                    msgbody = self.DisplayStatus()
+                    msgbody += self.DisplayStatus()
                     self.MessagePipe.SendMessage(msgsubject , msgbody, msgtype = "warn")
             else:
                 if self.CurrentAlarmState:
                     msgsubject = "Generator Notice: ALARM Clear at " + self.SiteName
-                    msgbody = self.DisplayStatus()
+                    msgbody += self.DisplayStatus()
                     self.MessagePipe.SendMessage(msgsubject , msgbody, msgtype = "warn")
 
             self.CurrentAlarmState = self.SystemInAlarm()
@@ -1248,7 +1313,15 @@ class HPanel(GeneratorController):
 
             if Register == NAMEPLATE_DATA_FILE_RECORD:
                 return True
+            if Register == MISC_GEN_FILE_RECORD:
+                return True
             if Register == ENGINE_DATA_FILE_RECORD:
+                return True
+            if Register == GOV_DATA_FILE_RECORD:
+                return True
+            if Register == GOV_DATA_SEC_FILE_RECORD:
+                return True
+            if Register == REGULATOR_FILE_RECORD:
                 return True
             if RegInt >= ALARM_LOG_START or RegInt <= ALARM_LOG_START + ALARM_LOG_ENTRIES:
                 return True
@@ -1263,21 +1336,26 @@ class HPanel(GeneratorController):
     #------------ HPanel:RegisterIsStringRegister ------------------------------
     def RegisterIsStringRegister(self, Register):
 
-        StringList = RegisterStringEnum.GetRegList()
-        for StringReg in StringList:
-            if Register.lower() == StringReg[REGISTER].lower():
-                return True
+        try:
+            StringList = RegisterStringEnum.GetRegList()
+            for StringReg in StringList:
+                if Register.lower() == StringReg[REGISTER].lower():
+                    return True
+        except Exception as e1:
+            self.LogErrorLine("Error in RegisterIsBaseRegister: " + str(e1))
         return False
 
     #------------ HPanel:RegisterIsBaseRegister --------------------------------
     def RegisterIsBaseRegister(self, Register):
 
-        RegisterList = self.Reg.GetRegList()
-        for ListReg in RegisterList:
-            if Register.lower() == ListReg[REGISTER].lower():
-                # TODO check value length
-                return True
-
+        try:
+            RegisterList = self.Reg.GetRegList()
+            for ListReg in RegisterList:
+                if Register.lower() == ListReg[REGISTER].lower():
+                    # TODO check value length
+                    return True
+        except Exception as e1:
+            self.LogErrorLine("Error in RegisterIsBaseRegister: " + str(e1))
         return False
 
     #------------ HPanel:UpdateRegisterList ------------------------------------
@@ -1456,15 +1534,20 @@ class HPanel(GeneratorController):
             StartInfo["nominalKW"] = self.NominalKW
             StartInfo["nominalRPM"] = self.NominalRPM
             StartInfo["nominalfrequency"] = self.NominalFreq
+            StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
             StartInfo["NominalBatteryVolts"] = self.NominalBatteryVolts
+            StartInfo["FuelCalculation"] = self.FuelTankCalculationSupported()
+            StartInfo["FuelSensor"] = self.FuelSensorSupported()
+            StartInfo["FuelConsumption"] = self.FuelConsumptionSupported()
             StartInfo["Controller"] = self.GetController()
             StartInfo["UtilityVoltage"] = False
-            StartInfo["RemoteCommands"] = False
+            StartInfo["RemoteCommands"] = True      # Remote Start/ Stop/ StartTransfer
             StartInfo["ResetAlarms"] = False
             StartInfo["AckAlarms"] = True
-            StartInfo["RemoteButtons"] = False
-            StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
+            StartInfo["RemoteTransfer"] = self.HTSTransferSwitch    # Remote start and transfer command
+            StartInfo["RemoteButtons"] = False      # Remote controll of Off/Auto/Manual
             StartInfo["ExerciseControls"] = False  # self.SmartSwitch
+            StartInfo["WriteQuietMode"] = False
 
             if not NoTile:
                 StartInfo["pages"] = {
@@ -1473,6 +1556,7 @@ class HPanel(GeneratorController):
                                 "outage":False,
                                 "logs":True,
                                 "monitor": True,
+                                "maintlog" : True,
                                 "notifications": True,
                                 "settings": True,
                                 "addons": True,
@@ -1537,14 +1621,30 @@ class HPanel(GeneratorController):
             #
             #       Dict[Logs] = [ {"Alarm Log" : [Log Entry1, LogEntry2, ...]},
             #                      {"Run Log" : [Log Entry3, Log Entry 4, ...]}...]
+            LocalEvent = []
+            for RegValue in range(EVENT_LOG_START + EVENT_LOG_ENTRIES -1 , EVENT_LOG_START -1, -1):
+                Register = "%04x" % RegValue
+                LogEntry = self.GetParameterFileValue(Register, ReturnString = True)
+                LogEntry = self.ParseLogEntry(LogEntry, Type = "event")
+                if not len(LogEntry):
+                    continue
+                if "undefined" in LogEntry:
+                    continue
 
-            with self.EventAccessLock:
-                LocalEventLog = self.EventLog
+                LocalEvent.append(LogEntry)
 
-            with self.AlarmAccessLock:
-                LocalAlarmLog = self.AlarmLog
-            LogList = [ {"Alarm Log": LocalAlarmLog},
-                        {"Run Log": LocalEventLog}]
+            LocalAlarm = []
+            for RegValue in range(ALARM_LOG_START + ALARM_LOG_ENTRIES -1, ALARM_LOG_START -1, -1):
+                Register = "%04x" % RegValue
+                LogEntry = self.GetParameterFileValue(Register, ReturnString = True)
+                LogEntry = self.ParseLogEntry(LogEntry, Type = "alarm")
+                if not len(LogEntry):
+                    continue
+
+                LocalAlarm.append(LogEntry)
+
+            LogList = [ {"Alarm Log": LocalAlarm},
+                        {"Run Log": LocalEvent}]
 
             RetValue["Logs"] = LogList
 
@@ -1567,8 +1667,9 @@ class HPanel(GeneratorController):
             Maintenance["Maintenance"] = []
 
             Maintenance["Maintenance"].append({"Model" : self.Model})
-            if len(self.NamePlateData):
-                Maintenance["Maintenance"].append({"Name Plate Info" : self.NamePlateData})
+            NamePlateData = self.GetParameterFileValue(NAMEPLATE_DATA_FILE_RECORD, ReturnString = True)
+            if len(NamePlateData):
+                Maintenance["Maintenance"].append({"Name Plate Info" : NamePlateData})
             Maintenance["Maintenance"].append({"Controller" : self.GetController()})
             Maintenance["Maintenance"].append({"Controller Software Version" : self.GetParameterStringValue(RegisterStringEnum.VERSION_DATE[REGISTER], RegisterStringEnum.VERSION_DATE[RET_STRING])})
 
@@ -1585,21 +1686,19 @@ class HPanel(GeneratorController):
                 #Exercise["Exercise Time" : self.GetExerciseTime()
                 #Exercise["Exercise Duration" : self.GetExerciseDuration()
 
-            ControllerSettings = []
-            Maintenance["Maintenance"].append({"Controller Configuration" : ControllerSettings})
 
-            ControllerSettings.append({"Controller Power Up Time" : self.GetTimeFromString(self.GetParameterStringValue(RegisterStringEnum.POWER_UP_TIME[REGISTER], RegisterStringEnum.POWER_UP_TIME[RET_STRING]))})
-            ControllerSettings.append({"Controller Last Power Fail" : self.GetTimeFromString(self.GetParameterStringValue(RegisterStringEnum.LAST_POWER_FAIL[REGISTER], RegisterStringEnum.LAST_POWER_FAIL[RET_STRING]))})
-            ControllerSettings.append({"Target RPM" : str(self.TargetRPM[0]) if len(self.TargetRPM) else "Unknown"})
-            ControllerSettings.append({"Number of Flywheel Teeth" : str(self.FlyWheelTeeth[0]) if len(self.FlyWheelTeeth) else "Unknown"})
-            ControllerSettings.append({"Phase" : str(self.Phase) if self.Phase != None else "Unknown"})
-            ControllerSettings.append({"CT Ratio" : str(self.CTRatio[0]) if len(self.CTRatio) else "Unknown"})
+            Maintenance["Maintenance"].append({"Controller Power Up Time" : self.GetTimeFromString(self.GetParameterStringValue(RegisterStringEnum.POWER_UP_TIME[REGISTER], RegisterStringEnum.POWER_UP_TIME[RET_STRING]))})
+            Maintenance["Maintenance"].append({"Controller Last Power Fail" : self.GetTimeFromString(self.GetParameterStringValue(RegisterStringEnum.LAST_POWER_FAIL[REGISTER], RegisterStringEnum.LAST_POWER_FAIL[RET_STRING]))})
 
+            Maintenance["Maintenance"].append({"Generator Settings" : self.GetGeneratorSettings()})
+            Maintenance["Maintenance"].append({"Engine Settings" : self.GetEngineSettings()})
+            Maintenance["Maintenance"].append({"Governor Settings" : self.GetGovernorSettings()})
+            Maintenance["Maintenance"].append({"Regulator Settings" : self.GetRegulatorSettings()})
 
             Service = []
             Maintenance["Maintenance"].append({"Service" : Service})
 
-            Service.append({"Total Run Hours" : self.GetParameter(self.Reg.ENGINE_HOURS[REGISTER],"H", 10.0)})
+            Service.append({"Total Run Hours" : self.GetRunHours()})
 
             IOStatus = []
             Maintenance["Maintenance"].append({"I/O Status" : IOStatus})
@@ -1636,7 +1735,8 @@ class HPanel(GeneratorController):
             Status["Status"].append({"Engine":Engine})
             Status["Status"].append({"Alarms":Alarms})
             Status["Status"].append({"Battery":Battery})
-            Status["Status"].append({"Line State":Line})
+            if not self.SmartSwitch or self.HTSTransferSwitch:
+                Status["Status"].append({"Line State":Line})
             Status["Status"].append({"Time":Time})
 
             Battery.append({"Battery Voltage" : self.ValueOut(self.GetParameter(self.Reg.BATTERY_VOLTS[REGISTER], ReturnFloat = True, Divider = 100.0), "V", JSONNum)})
@@ -1679,8 +1779,41 @@ class HPanel(GeneratorController):
                 if len(AlarmList):
                     Alarms.append({"Alarm List" : AlarmList})
 
+            if not self.SmartSwitch  or self.HTSTransferSwitch:
+                if not self.SmartSwitch:
+                    Line.append({"Transfer Switch State" : self.GetTransferStatus()})
+                if self.HTSTransferSwitch:
+                    Line.append({"Target Utility Voltage" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_TARGET_VOLTAGE[REGISTER], ReturnInt = True), "V", JSONNum)})
+                    Line.append({"Target Utility Frequency" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_TARGET_FREQ[REGISTER], ReturnInt = True), "Hz", JSONNum)})
 
-            Line.append({"Transfer Switch State" : self.GetTransferStatus()})
+                    Line.append({"Utility Frequency" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_UTILITY_FREQ[REGISTER], ReturnFloat = True, Divider = 100.0), "Hz", JSONNum)})
+
+                    Line.append({"Utility Voltage A-B" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_UTILITY_VOLTS_AB[REGISTER], ReturnInt = True), "V", JSONNum)})
+                    Line.append({"Utility Voltage B-C" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_UTILITY_VOLTS_BC[REGISTER], ReturnInt = True), "V", JSONNum)})
+                    Line.append({"Utility Voltage C-A" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_UTILITY_VOLTS_CA[REGISTER], ReturnInt = True), "V", JSONNum)})
+                    Line.append({"Average Utility Voltage" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_UTILITY_AVG_VOLTS[REGISTER], ReturnInt = True), "V", JSONNum)})
+
+                    Line.append({"Utility Current Phase A" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_UTILITY_AMPS_A[REGISTER], ReturnInt = True), "A", JSONNum)})
+                    Line.append({"Utility Current Phase B" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_UTILITY_AMPS_B[REGISTER], ReturnInt = True), "A", JSONNum)})
+                    Line.append({"Utility Current Phase C" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_UTILITY_AMPS_C[REGISTER], ReturnInt = True), "A", JSONNum)})
+                    Line.append({"Average Utility Current" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_UTILITY_AVG_AMPS[REGISTER], ReturnInt = True), "A", JSONNum)})
+
+                    Line.append({"Utility Power Factor" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_UTILITY_PF[REGISTER], ReturnFloat = True, Divider = 100.0), "", JSONNum)})
+                    Line.append({"Utility Power" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_UTILITY_KW[REGISTER], ReturnInt = True), "kW", JSONNum)})
+
+                    Line.append({"Switch Reported Generator Average Voltage" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_GEN_AVG_VOLT[REGISTER], ReturnInt = True), "V", JSONNum)})
+                    Line.append({"Switch Reported Generator Average Frequency" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_GEN_FREQ[REGISTER], ReturnFloat = True, Divider = 100.0), "Hz", JSONNum)})
+
+                    Line.append({"Backup Battery Volts" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_BACKUP_BATT_VOLTS[REGISTER], ReturnFloat = True, Divider = 100.0), "V", JSONNum)})
+
+                    Line.append({"Switch Software Version" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_VERSION[REGISTER], ReturnInt = True), "", JSONNum)})
+                    Line.append({"Switch Selected" : self.ValueOut(self.GetParameter(self.Reg.EXT_SW_SELECTED[REGISTER], ReturnInt = True), "", JSONNum)})
+
+                    '''
+                    EXT_SW_GENERAL_STATUS           # External Switch General Status
+                    EXT_SW_MINIC_DIAGRAM            # Ext Switch Mimic Diagram
+
+                    '''
 
             # Generator time
             Time.append({"Monitor Time" : datetime.datetime.now().strftime("%A %B %-d, %Y %H:%M:%S")})
@@ -1693,6 +1826,117 @@ class HPanel(GeneratorController):
             return self.printToString(self.ProcessDispatch(Status,""))
 
         return Status
+
+    #------------ GeneratorController:GetRegulatorSettings ---------------------
+    def GetRegulatorSettings(self):
+
+        RegSettings = []
+        RegData = self.GetParameterFileValue(REGULATOR_FILE_RECORD)
+        if len(RegData) >= (REGULATOR_FILE_RECORD_LENGTH * 2):
+            try:
+                RegSettings.append({"Voltage KP" : str(self.GetIntFromString(RegData, 0, 2)) + " V"})           # Byte 0 and 1
+                RegSettings.append({"Voltage KI" : str(self.GetIntFromString(RegData, 2, 2)) + " V"})           # Byte 2 and 3
+                RegSettings.append({"Voltage KD" : str(self.GetIntFromString(RegData, 4, 2)) + " V"})           # Byte 4 and 5
+                RegSettings.append({"Volts Per Hz" : str(self.GetIntFromString(RegData, 14, 2))})               # Byte 14 and 15
+                RegSettings.append({"High Voltage Limit" : str(self.GetIntFromString(RegData, 18, 2)) + " V"})  # Byte 18 and 19
+                RegSettings.append({"Low Voltage Limit" : str(self.GetIntFromString(RegData, 20, 2)) + " V"})   # Byte 20 and 21
+                RegSettings.append({"Target Volts" : str(self.GetIntFromString(RegData, 6, 2)) + " V"})         # Byte 6 and 7
+                RegSettings.append({"VF Corner 1" : str(self.GetIntFromString(RegData, 10, 2)) + " Hz"})        # Byte 10 and 11
+                RegSettings.append({"VF Corner 2" : str(self.GetIntFromString(RegData, 12, 2)) + " Hz"})        # Byte 12 and 13
+                RegSettings.append({"Rated Power" : str(self.GetIntFromString(RegData, 26, 2))})                # Byte 26 and 27
+                PowerFactor = self.GetIntFromString(RegData, 24, 2)         # Byte 24 and 25
+                RegSettings.append({"Power Factor" : "%.2f" % (PowerFactor / 100)})
+                RegSettings.append({"kW Demand" : str(self.GetIntFromString(RegData, 22, 2)) + " kW"})          # Byte 22 and 23
+                RegSettings.append({"Panel Type" : str(self.GetIntFromString(RegData, 28, 2))})                 # Byte 28 and 29
+                #RegSettings.append({"Exciter Frequency Ratio" : str(self.GetIntFromString(RegData, 44, 1))})   # Byte 44
+
+            except Exception as e1:
+                self.LogErrorLine("Error parsing regulator settings: " + str(e1))
+        return RegSettings
+
+    #------------ GeneratorController:GetGovernorSettings ----------------------
+    def GetGovernorSettings(self):
+
+        GovSettings = []
+        GovData = self.GetParameterFileValue(GOV_DATA_FILE_RECORD)
+        if len(GovData) >= (GOV_DATA_FILE_RECORD_LENGTH * 2):
+            try:
+                #GovSettings.append({"Standby KP" : str(self.GetIntFromString(GovData, 0, 2))})                        # Byte 0 and 1
+                #GovSettings.append({"Standby KI" : str(self.GetIntFromString(GovData, 2, 2))})                        # Byte 2 and 3
+                #GovSettings.append({"Standby KD" : str(self.GetIntFromString(GovData, 4, 2))})                        # Byte 4 and 5
+                #GovSettings.append({"Actuator Start Position" : str(self.GetIntFromString(GovData, 20, 2))})          # Byte 20 and 21
+                #GovSettings.append({"Offset" : str(self.GetIntFromString(GovData, 22, 2))})                           # Byte 22 and 23
+                #GovSettings.append({"Full Scale" : str(self.GetIntFromString(GovData, 24, 2))})                       # Byte 24 and 25
+                GovSettings.append({"Soft Start Frequency" : str(self.GetIntFromString(GovData, 26, 2)) + " Hz"})     # Byte 26 and 26
+                #GovSettings.append({"Engine Linearization" : str(self.GetIntFromString(GovData, 28, 2))})             # Byte 28 and 29
+
+                #GovSettings.append({"Use Diesel Algorithms" : "Yes" if self.GetIntFromString(GovData, 12, 2) else "No"})   # Byte 12 - 13
+                GovFreq = self.GetIntFromString(GovData, 14, 2)         # Byte 14 and 15
+                GovSettings.append({"Governor Target Frequency" : "%.2f Hz" % (GovFreq / 100)})
+
+            except Exception as e1:
+                self.LogErrorLine("Error parsing governor settings: " + str(e1))
+        return GovSettings
+
+    #------------ GeneratorController:GetEngineSettings ------------------------
+    def GetEngineSettings(self):
+
+        EngineSettings = []
+        EngineData = self.GetParameterFileValue(ENGINE_DATA_FILE_RECORD)
+        if len(EngineData) >= (ENGINE_DATA_FILE_RECORD_LENGTH * 2):
+            try:
+                EngineSettings.append({"Engine Transfer Enable" : "Enabled" if self.GetIntFromString(EngineData, 0, 2) else "Disabled"})   # Byte 1 and 2
+                EngineSettings.append({"Preheat Enable" : "Enabled" if self.GetIntFromString(EngineData, 2, 2) else "Disabled"})           # Byte 2 and 3
+                if self.GetIntFromString(EngineData, 2, 2):
+                    EngineSettings.append({"Preheat Time" : str(self.GetIntFromString(EngineData, 4, 2)) + " s"})           # Byte 4 and 5
+                    EngineSettings.append({"Preheat Temp Limit" : str(self.GetIntFromString(EngineData, 47, 1)) + " F"})    # Byte 47
+                EngineSettings.append({"Start detection RPM" : str(self.GetIntFromString(EngineData, 6, 2))})               # Byte 6 and 7
+                EngineSettings.append({"Crank Time" : str(self.GetIntFromString(EngineData, 8, 2)) + " s"})                 # Byte 8 and 9
+                EngineSettings.append({"Alarm Hold Off Time" : str(self.GetIntFromString(EngineData, 10, 2)) + " s"})       # Byte 10 and 11
+                EngineSettings.append({"Engine Warm Up Time" : str(self.GetIntFromString(EngineData, 12, 2)) + " s"})       # Byte 12 and 13
+                EngineSettings.append({"Engine Cool Down Time" : str(self.GetIntFromString(EngineData, 14, 2)) + " s"})     # Byte 14 and 15
+                EngineSettings.append({"Pause Between Cranks Attempts" : str(self.GetIntFromString(EngineData, 16, 2)) + " s"})         # Byte 16 and 17
+                EngineSettings.append({"Start Attempts" : str(self.GetIntFromString(EngineData, 18, 2))})                   # Byte 18 and 19
+                EngineSettings.append({"Load Accept Frequency" : str(self.GetIntFromString(EngineData, 20, 2)) + " Hz"})    # Byte 20 and 21
+                EngineSettings.append({"Load Accept Voltage" : str(self.GetIntFromString(EngineData, 22, 2)) + " V"})       # Byte 22 and 23
+
+            except Exception as e1:
+                self.LogErrorLine("Error parsing engine settings: " + str(e1))
+        return EngineSettings
+
+    #------------ GeneratorController:GetGeneratorSettings ---------------------
+    def GetGeneratorSettings(self):
+
+        GeneratorSettings = []
+        FlyWheelTeeth = []
+        CTRatio = []
+        Phase = None
+        TargetRPM = []
+        GenData = self.GetParameterFileValue(MISC_GEN_FILE_RECORD)
+        if len(GenData) >= 34:
+            try:
+                FlyWheelTeeth.append(self.GetIntFromString(GenData, 0, 2))  # Byte 1 and 2
+                FlyWheelTeeth.append(self.GetIntFromString(GenData, 2, 2))  # Byte 2 and 3
+                FlyWheelTeeth.append(self.GetIntFromString(GenData, 4, 2))  # Byte 4 and 5
+                CTRatio.append(self.GetIntFromString(GenData, 6, 2))        # Byte 6 and 7
+                CTRatio.append(self.GetIntFromString(GenData, 8, 2))        # Byte 8 and 9
+                # Skip byte 10 and 11
+                Phase = self.GetIntFromString(GenData, 12, 1)               # Byte 12
+                TargetRPM.append(self.GetIntFromString(GenData, 13, 2))     # Byte 13 and 14
+                TargetRPM.append(self.GetIntFromString(GenData, 15, 2))     # Byte 15 and 16
+
+                GeneratorSettings.append({"Target RPM" : str(TargetRPM[0]) if len(TargetRPM) else "Unknown"})
+                GeneratorSettings.append({"Number of Flywheel Teeth" : str(FlyWheelTeeth[0]) if len(FlyWheelTeeth) else "Unknown"})
+                GeneratorSettings.append({"Phase" : str(Phase) if Phase != None else "Unknown"})
+                GeneratorSettings.append({"CT Ratio" : str(CTRatio[0]) if len(CTRatio) else "Unknown"})
+
+            except Exception as e1:
+                self.LogErrorLine("Error parsing generator settings: " + str(e1))
+
+        return GeneratorSettings
+    #------------ GeneratorController:GetRunHours ------------------------------
+    def GetRunHours(self):
+        return self.GetParameter(self.Reg.ENGINE_HOURS[REGISTER],"", 10.0 )
 
     #------------------- HPanel::DisplayOutage ---------------------------------
     def DisplayOutage(self, DictOut = False):
@@ -1839,20 +2083,20 @@ class HPanel(GeneratorController):
             Value = 0x0000               # writing any value to index register is valid for remote start / stop commands
             Data = []
             if Command == "start":
-                Value = 0x0001       # remote start
+                Value = 0x0080       # remote start
                 Value2 = 0x0000
                 Value3 = 0x0000
             elif Command == "stop":
                 Value = 0x0000       # remote stop
                 Value2 = 0x0000
                 Value3 = 0x0000
-            elif Command == "startstandby":
-                Value = 0x0001       # remote start (standby)
+            elif Command == "starttransfer":
+                Value = 0x0080       # remote start (standby)
                 Value2 = 0x0000
-                Value3 = 0x0001
+                Value3 = 0x0080
             elif Command == "startparallel":
-                Value = 0x0001       # remote start (parallel)
-                Value2 = 0x0001
+                Value = 0x0080       # remote start (parallel)
+                Value2 = 0x0080
                 Value3 = 0x0000
             elif Command == "quiettest":
                 Data = []

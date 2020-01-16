@@ -1,0 +1,52 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+
+<head>
+    <meta http-equiv='cache-control' content='no-cache'>
+    <meta http-equiv='expires' content='0'>
+    <meta http-equiv='pragma' content='no-cache'>
+    <title>Generator Monitor</title>
+    <script type="text/javascript" src="js/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="js/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="js/jquery.ui.touch-punch.min.js"></script>
+    <script type="text/javascript" src="js/tooltipster.bundle.min.js"></script>
+    <script type="text/javascript" src="js/vex.combined.min.js"></script>
+    <script type="text/javascript" src="js/gauge.min.js"></script>
+    <script type="text/javascript" src="js/printThis.js"></script>
+    <script type="text/javascript" src="js/moment.min.js"></script>
+    <script type="text/javascript" src="js/lc_switch.genmon.js"></script>
+    <script type="text/javascript" src="js/jquery.idealforms.genmon.js"></script>
+    <script type="text/javascript" src="js/selectize.min.js"></script>
+    <script type="text/javascript" src="js/jquery.timepicker.min.js"></script>
+    <style>
+      .loader{color:#888;position:fixed;box-sizing:border-box;left:-9999px;top:-9999px;width:0;height:0;overflow:hidden;z-index:999999}.loader:after,.loader:before{box-sizing:border-box;display:none}.loader.is-active{background-color:rgba(241,241,241,.85);width:100%;height:100%;left:0;top:0}.loader.is-active:after,.loader.is-active:before{display:block}@keyframes rotation{0%{transform:rotate(0)}to{transform:rotate(359deg)}}@keyframes blink{0%{opacity:.5}to{opacity:1}}.loader[data-text]:before{position:fixed;left:0;top:50%;color:currentColor;font-family:Helvetica,Arial,sans-serif;text-align:center;width:100%;font-size:14px}.loader[data-text=""]:before{content:"Loading"}.loader[data-text]:not([data-text=""]):before{content:attr(data-text)}.loader[data-text][data-blink]:before{animation:blink 1s linear infinite alternate}.loader-default[data-text]:before{top:calc(50% - 63px)}.loader-default:after{content:"";position:fixed;width:48px;height:48px;border:8px solid #888;border-left-color:transparent;border-radius:50%;top:calc(50% - 24px);left:calc(50% - 24px);animation:rotation 1s linear infinite}.loader-default[data-half]:after{border-right-color:transparent}.loader-default[data-inverse]:after{animation-direction:reverse}
+    </style>
+    <link rel="stylesheet" type="text/css" href="css/jquery-ui.css">
+    <link rel="stylesheet" type="text/css" href="genmon.css">
+    <link rel="stylesheet" type="text/css" href="css/tooltipster.bundle.min.css" />
+    <link rel="stylesheet" type="text/css" href="css/vex.css" />
+    <link rel="stylesheet" type="text/css" href="css/vex-theme-os.css" />
+    <link rel="stylesheet" type="text/css" href="css/lc_switch.css">
+    <link rel="stylesheet" type="text/css" href="css/jquery.idealforms.css">
+    <link rel="stylesheet" type="text/css" href="css/selectize.default.css">
+    <link rel="stylesheet" type="text/css" href="css/jquery.timepicker.min.css">
+    <link rel="icon" href="favicon.ico">
+</head>
+
+<body>
+    <div class="loader loader-default is-active" data-text="Loading Generator Monitor"></div>
+    <table id="mytable">
+      <tr><td height="30px" colspan="2"><div id="myheader"></div></td></tr>
+      <tr><td width="200px"><div id="navMenu"></div></td>
+         <td width="85%">
+           <div id="myDiv">
+               <p id="mydisplay"></p>
+           </div>
+         </td>
+      </tr>
+      <tr><td height="30px" colspan="2"><div id="footer"></div></td></tr>
+    </table>
+    <script type="text/javascript" id="genmon.js" src="genmon.js" data-type="lowbandwidth"></script>
+</body>
+
+</html>

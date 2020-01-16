@@ -16,6 +16,7 @@ import os, sys, subprocess, re, datetime
 import collections
 
 from genmonlib.mycommon import MyCommon
+from genmonlib.program_defaults import ProgramDefaults
 
 #------------ MyPlatform class -------------------------------------------------
 class MyPlatform(MyCommon):
@@ -283,3 +284,23 @@ class MyPlatform(MyCommon):
         except Exception as e1:
             pass
         return WiFiInfo
+
+    #------------ MyPlatform::InterntConnected ---------------------------------
+    # Note: this function, if the network connection is not present could
+    # take some time to complete due to the network timeout
+    @staticmethod
+    def InterntConnected():
+
+        try:
+            import httplib
+        except:
+            import http.client as httplib
+
+        conn = httplib.HTTPConnection("www.google.com", timeout=2)
+        try:
+            conn.request("HEAD", "/")
+            conn.close()
+            return True
+        except:
+            conn.close()
+            return False

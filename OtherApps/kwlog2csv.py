@@ -16,7 +16,8 @@ import getopt, os, sys, json
 sys.path.append("..") # Adds higher directory to python modules path.
 
 try:
-    from genmonlib import myclient, mylog
+    from genmonlib.program_defaults import ProgramDefaults
+    from genmonlib.mylog import SetupLogger
 except:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
@@ -40,7 +41,8 @@ def LogToFile( File, TimeDate, Value):
 if __name__=='__main__':
 
 
-    address = '127.0.0.1'
+    address = ProgramDefaults.LocalHost
+    port = ProgramDefaults.ServerPort
     fileName = ""
 
 
@@ -52,34 +54,41 @@ if __name__=='__main__':
     HelpStr += "\n \n"
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:],"ha:f:",["address=","filename="])
+        opts, args = getopt.getopt(sys.argv[1:],"ha:f:p:",["address=","filename=","port="])
     except getopt.GetoptError:
         print("Help")
         sys.exit(2)
 
-    for opt, arg in opts:
-        if opt == '-h':
-            print (HelpStr)
-            sys.exit()
-        elif opt in ("-a", "--address"):
-            address = arg
-            print ('Address is : %s' % address)
-        elif opt in ("-f", "--filename"):
-            fileName = arg
-            print ('Output file is : %s' % fileName)
+    try:
+        for opt, arg in opts:
+            if opt == '-h':
+                print (HelpStr)
+                sys.exit()
+            elif opt in ("-a", "--address"):
+                address = arg
+                print ('Address is : %s' % address)
+            elif opt in ("-p", "--port"):
+                port = int(arg)
+                print ('Port is : %s' % address)
+            elif opt in ("-f", "--filename"):
+                fileName = arg
+                print ('Output file is : %s' % fileName)
+    except Exception as e1:
+        print ("Error : " + str(e1))
+        sys.exit(2)
 
     if not len(address):
         print ("Address is : localhost")
-        address = "localhost"
+        address = ProgramDefaults.LocalHost
 
     if not len(fileName):
         print (HelpStr)
         sys.exit(2)
 
     try:
-        log = mylog.SetupLogger("client", "kwlog2csv.log")
+        log = SetupLogger("client", "kwlog2csv.log")
 
-        MyClientInterface = myclient.ClientInterface(host = address, log = log)
+        MyClientInterface = myclient.ClientInterface(host = address, port = port, log = log)
 
         data = MyClientInterface.ProcessMonitorCommand("generator: power_log_json")
 

@@ -10,6 +10,8 @@
 
 from __future__ import print_function
 
+import sys, signal, os, socket, atexit, time, subprocess, json, threading, signal, errno, collections, getopt
+
 try:
     from flask import Flask, render_template, request, jsonify, session, send_file
 except Exception as e1:
@@ -17,13 +19,14 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-import sys, signal, os, socket, atexit, time, subprocess, json, threading, signal, errno, collections
 
 try:
     from genmonlib.myclient import ClientInterface
     from genmonlib.mylog import SetupLogger
     from genmonlib.myconfig import MyConfig
     from genmonlib.mymail import MyMail
+    from genmonlib.mysupport import MySupport
+    from genmonlib.program_defaults import ProgramDefaults
 
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the original github repository.\n")
@@ -56,24 +59,16 @@ bUseSecureHTTP = False
 bUseSelfSignedCert = True
 SSLContext = None
 HTTPPort = 8000
-loglocation = "./"
-clientport = 0
+loglocation = ProgramDefaults.LogPath
+clientport = ProgramDefaults.ServerPort
 log = None
 console = None
 AppPath = ""
 favicon = "favicon.ico"
-ConfigFilePath = "/etc/"
-MAIL_CONFIG = "/etc/mymail.conf"
+ConfigFilePath = ProgramDefaults.ConfPath
+
 MAIL_SECTION = "MyMail"
-GENMON_CONFIG = "/etc/genmon.conf"
 GENMON_SECTION = "GenMon"
-GENLOADER_CONFIG = "/etc/genloader.conf"
-GENSMS_CONFIG = "/etc/gensms.conf"
-MYMODEM_CONFIG = "/etc/mymodem.conf"
-GENPUSHOVER_CONFIG = "/etc/genpushover.conf"
-GENMQTT_CONFIG = "/etc/genmqtt.conf"
-GENSLACK_CONFIG = "/etc/genslack.conf"
-GENGPIOIN_CONFIG = "/etc/gengpioin.conf"
 
 Closing = False
 Restarting = False
@@ -81,7 +76,17 @@ ControllerType = "generac_evo_nexus"
 CriticalLock = threading.Lock()
 CachedToolTips = {}
 CachedRegisterDescriptions = {}
-
+#-------------------------------------------------------------------------------
+@app.route('/logout')
+def logout():
+    try:
+        # remove the session data
+        if HTTPAuthUser != None and HTTPAuthPass != None:
+            session['logged_in'] = False
+            session['write_access'] = False
+        return root()
+    except Exception as e1:
+        LogError("Error on logout: " + str(e1))
 #-------------------------------------------------------------------------------
 @app.after_request
 def add_header(r):
@@ -104,6 +109,18 @@ def root():
             return app.send_static_file('index.html')
     else:
         return app.send_static_file('index.html')
+
+#-------------------------------------------------------------------------------
+@app.route('/low', methods=['GET'])
+def lowbandwidth():
+
+    if HTTPAuthUser != None and HTTPAuthPass != None:
+        if not session.get('logged_in'):
+            return render_template('index_lowbandwith.html')
+        else:
+            return app.send_static_file('index_lowbandwith.html')
+    else:
+        return app.send_static_file('index_lowbandwith.html')
 
 #-------------------------------------------------------------------------------
 @app.route('/internal', methods=['GET'])
@@ -157,11 +174,12 @@ def ProcessCommand(command):
             "logs", "logs_json", "monitor", "monitor_json", "registers_json", "allregs_json",
             "start_info_json", "gui_status_json", "power_log_json", "power_log_clear",
             "getbase", "getsitename","setexercise", "setquiet", "setremote",
-            "settime", "sendregisters", "sendlogfiles", "getdebug" ]:
+            "settime", "sendregisters", "sendlogfiles", "getdebug", "status_num_json",
+            "get_maint_log_json", "add_maint_log", "clear_maint_log" ]:
             finalcommand = "generator: " + command
 
             try:
-                if command in ["setexercise", "setquiet", "setremote"] and not session.get('write_access', True):
+                if command in ["setexercise", "setquiet", "setremote", "add_maint_log"] and not session.get('write_access', True):
                     return jsonify("Read Only Mode")
 
                 if command == "setexercise":
@@ -183,6 +201,11 @@ def ProcessCommand(command):
                     setlogstr = request.args.get('power_log_json', 0, type=str)
                     if setlogstr:
                         finalcommand += "=" + setlogstr
+                if command == "add_maint_log":
+                    # use direct method instead of request.args.get due to unicoode
+                    # input for add_maint_log for international users
+                    input = request.args['add_maint_log']
+                    finalcommand += "=" + input
 
                 data = MyClientInterface.ProcessMonitorCommand(finalcommand)
 
@@ -191,7 +214,8 @@ def ProcessCommand(command):
                 LogError("Error on command function: " + str(e1))
 
             if command in ["status_json", "outage_json", "maint_json", "monitor_json", "logs_json",
-                "registers_json", "allregs_json", "start_info_json", "gui_status_json", "power_log_json"]:
+                "registers_json", "allregs_json", "start_info_json", "gui_status_json", "power_log_json",
+                "status_num_json", "get_maint_log_json"]:
 
                 if command in ["start_info_json"]:
                     try:
@@ -309,6 +333,10 @@ def SendTestEmail(query_string):
         sender_account = sender_account.strip()
         if not len(sender_account):
             sender_account == None
+        sender_name = str(parameters['sender_name'])
+        sender_name = sender_name.strip()
+        if not len(sender_name):
+            sender_name == None
         recipient = str(parameters['recipient'])
         recipient = recipient.strip()
         password = str(parameters['password'])
@@ -316,6 +344,17 @@ def SendTestEmail(query_string):
             use_ssl = True
         else:
             use_ssl = False
+
+        if parameters['tls_disable'].lower() == 'true':
+            tls_disable = True
+        else:
+            tls_disable = False
+
+        if parameters['smtpauth_disable'].lower() == 'true':
+            smtpauth_disable = True
+        else:
+            smtpauth_disable = False
+
     except Exception as e1:
         LogErrorLine("Error parsing parameters in SendTestEmail: " + str(e1))
         LogError(str(parameters))
@@ -327,9 +366,12 @@ def SendTestEmail(query_string):
               smtp_port = smtp_port,
               email_account = email_account,
               sender_account = sender_account,
+              sender_name = sender_name,
               recipient = recipient,
               password = password,
-              use_ssl = use_ssl
+              use_ssl = use_ssl,
+              tls_disable = tls_disable,
+              smtpauth_disable = smtpauth_disable
         )
         return ReturnMessage
     except Exception as e1:
@@ -339,6 +381,7 @@ def SendTestEmail(query_string):
 def GetAddOns():
     AddOnCfg = collections.OrderedDict()
 
+    # Default icon name should be "Genmon" to get a generic icon
     try:
         # GENGPIO
         Temp = collections.OrderedDict()
@@ -370,6 +413,12 @@ def GetAddOns():
             "Set GPIO input internal pull up or pull down resistor.",
             bounds = 'up,down,off',
             display_name = "Internal resistor pull")
+        AddOnCfg['gengpioin']['parameters']['bounce'] = CreateAddOnParam(
+            ConfigFiles[GENGPIOIN_CONFIG].ReadValue("bounce", return_type = int, default = 0),
+            'int',
+            "Minimum interval in milliseconds between valid input channges. Zero to disable, or positive whole number.",
+            bounds = 'number',
+            display_name = "Software Debounce")
 
         #GENLOG
         AddOnCfg['genlog'] = collections.OrderedDict()
@@ -622,6 +671,136 @@ def GetAddOns():
             bounds = 'HTTPAddress',
             display_name = "Title Link")
 
+        # GENEXERCISE
+        ControllerInfo = GetControllerInfo("controller").lower()
+        if "evolution" in ControllerInfo or "nexus" in ControllerInfo:
+            AddOnCfg['genexercise'] = collections.OrderedDict()
+            AddOnCfg['genexercise']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "genexercise", default = False)
+            AddOnCfg['genexercise']['title'] = "Enhanced Exercise"
+            AddOnCfg['genexercise']['description'] = "Add additional exercise cycles with new functionality for Evolution/Nexus Controllers"
+            AddOnCfg['genexercise']['icon'] = "selftest"
+            AddOnCfg['genexercise']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genexercisepy-optional"
+            AddOnCfg['genexercise']['parameters'] = collections.OrderedDict()
+
+            AddOnCfg['genexercise']['parameters']['exercise_type'] = CreateAddOnParam(
+                ConfigFiles[GENEXERCISE_CONFIG].ReadValue("exercise_type", return_type = str, default = "Normal"),
+                'list',
+                "Quiet Exercise (reducded RPM, Hz and Voltage), Normal Exercise or Exercise with Transfer Switch Activated.",
+                bounds = 'Quiet,Normal,Transfer',
+                display_name = "Exercise Type")
+            AddOnCfg['genexercise']['parameters']['exercise_frequency'] = CreateAddOnParam(
+                ConfigFiles[GENEXERCISE_CONFIG].ReadValue("exercise_frequency", return_type = str, default = "Monthly"),
+                'list',
+                "Exercise Frequency options are Weekly, Biweekly, or Monthly",
+                bounds = 'Weekly,Biweekly,Monthly',
+                display_name = "Exercise Frequency")
+            AddOnCfg['genexercise']['parameters']['use_gen_time'] = CreateAddOnParam(
+                ConfigFiles[GENEXERCISE_CONFIG].ReadValue("use_gen_time", return_type = bool, default = False),
+                'boolean',
+                "Enable to use the generator time for the exercise cycle, otherwise it will use the system time.",
+                display_name = "Use Generator Time")
+            AddOnCfg['genexercise']['parameters']['exercise_hour'] = CreateAddOnParam(
+                ConfigFiles[GENEXERCISE_CONFIG].ReadValue("exercise_hour", return_type = int, default = 12),
+                'int',
+                "The hour of the exercise time. Valid input is 0 - 23.",
+                bounds = "required digits range:0:23",
+                display_name = "Exercise Time Hour")
+            AddOnCfg['genexercise']['parameters']['exercise_minute'] = CreateAddOnParam(
+                ConfigFiles[GENEXERCISE_CONFIG].ReadValue("exercise_minute", return_type = int, default = 0),
+                'int',
+                "The minute of the exercise time.  Valid input is 0 - 59",
+                bounds = "required digits range:0:59",
+                display_name = "Exercise Time Minute")
+            AddOnCfg['genexercise']['parameters']['exercise_day_of_month'] = CreateAddOnParam(
+                ConfigFiles[GENEXERCISE_CONFIG].ReadValue("exercise_day_of_month", return_type = int, default = 1),
+                'int',
+                "The day of month if monthly exercise is selected.",
+                bounds = "required digits range:1:28",
+                display_name = "Exercise Day of Month")
+            AddOnCfg['genexercise']['parameters']['exercise_day_of_week'] = CreateAddOnParam(
+                ConfigFiles[GENEXERCISE_CONFIG].ReadValue("exercise_day_of_week", return_type = str, default = "Monday"),
+                'list',
+                "Exercise day of the week, if Weekly or Biweekly exercise frequency is selected.",
+                bounds = "Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday",
+                display_name = "Exercise Day of the Week")
+            AddOnCfg['genexercise']['parameters']['exercise_duration'] = CreateAddOnParam(
+                ConfigFiles[GENEXERCISE_CONFIG].ReadValue("exercise_duration", return_type = float, default = 12),
+                'float',
+                "The duration of the exercise time. Note: this time does not include warmup time for Transfer type exercise cycles.",
+                bounds = 'number range:5:60',
+                display_name = "Exercise Duration")
+            AddOnCfg['genexercise']['parameters']['exercise_warmup'] = CreateAddOnParam(
+                ConfigFiles[GENEXERCISE_CONFIG].ReadValue("exercise_warmup", return_type = float, default = 0),
+                'float',
+                "The duration of the warmup time. Note: this time only appies to the transfer type of exercise cycle. Zero will disable the warmup period.",
+                bounds = 'number range:0:30',
+                display_name = "Warmup Duration")
+
+        #GENEMAIL2SMS
+        AddOnCfg['genemail2sms'] = collections.OrderedDict()
+        AddOnCfg['genemail2sms']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "genemail2sms", default = False)
+        AddOnCfg['genemail2sms']['title'] = "Mobile Carrier Email to SMS"
+        AddOnCfg['genemail2sms']['description'] = "Send Genmon and utility state changes via carrier email to SMS service"
+        AddOnCfg['genemail2sms']['icon'] = "text"
+        AddOnCfg['genemail2sms']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genemail2smspy-optional"
+        AddOnCfg['genemail2sms']['parameters'] = collections.OrderedDict()
+
+        AddOnCfg['genemail2sms']['parameters']['destination'] = CreateAddOnParam(
+            ConfigFiles[GENEMAIL2SMS_CONFIG].ReadValue("destination", return_type = str, default = ""),
+            'string',
+            "Email to SMS email recipient. Must be a valid email address",
+            bounds = 'required email',
+            display_name = "Email to SMS address")
+
+        #GENTANKUTIL
+        AddOnCfg['gentankutil'] = collections.OrderedDict()
+        AddOnCfg['gentankutil']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "gentankutil", default = False)
+        AddOnCfg['gentankutil']['title'] = "External Tank Fuel Monitor"
+        AddOnCfg['gentankutil']['description'] = "Integrates tankutility.com propane tank sensor data"
+        AddOnCfg['gentankutil']['icon'] = "tankutility"
+        AddOnCfg['gentankutil']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gentankutilpy-optional"
+        AddOnCfg['gentankutil']['parameters'] = collections.OrderedDict()
+
+        AddOnCfg['gentankutil']['parameters']['tank_name'] = CreateAddOnParam(
+            ConfigFiles[GENTANKUTIL_CONFIG].ReadValue("tank_name", return_type = str, default = ""),
+            'string',
+            "Tank name as defined in tankutility.com",
+            bounds = 'minmax:1:50',
+            display_name = "Tank Name")
+        AddOnCfg['gentankutil']['parameters']['username'] = CreateAddOnParam(
+            ConfigFiles[GENTANKUTIL_CONFIG].ReadValue("username", return_type = str, default = ""),
+            'string',
+            "Username at tankutility.com",
+            bounds = 'required email',
+            display_name = "Username")
+        AddOnCfg['gentankutil']['parameters']['password'] = CreateAddOnParam(
+            ConfigFiles[GENTANKUTIL_CONFIG].ReadValue("password", return_type = str, default = ""),
+            'string',
+            "Password at tankutility.com",
+            bounds = 'minmax:4:50',
+            display_name = "Password")
+        AddOnCfg['gentankutil']['parameters']['poll_frequency'] = CreateAddOnParam(
+            ConfigFiles[GENTANKUTIL_CONFIG].ReadValue("poll_frequency", return_type = float, default = 0),
+            'float',
+            "The duration in minutes between poll of tank data.",
+            bounds = 'number',
+            display_name = "Poll Frequency")
+
+        #GENALEXA
+        AddOnCfg['genalexa'] = collections.OrderedDict()
+        AddOnCfg['genalexa']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "genalexa", default = False)
+        AddOnCfg['genalexa']['title'] = "Amazon Alexa voice commands"
+        AddOnCfg['genalexa']['description'] = "Allow Amazon Alexa to start and stop the generator"
+        AddOnCfg['genalexa']['icon'] = "alexa"
+        AddOnCfg['genalexa']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genalexapy-optional"
+        AddOnCfg['genalexa']['parameters'] = collections.OrderedDict()
+
+        AddOnCfg['genalexa']['parameters']['name'] = CreateAddOnParam(
+            ConfigFiles[GENALEXA_CONFIG].ReadValue("name", return_type = str, default = ""),
+            'string',
+            "Name to call the generator device, i.e. 'generator'",
+            bounds = 'minmax:4:50',
+            display_name = "Name for generator device")
     except Exception as e1:
         LogErrorLine("Error in GetAddOns: " + str(e1))
 
@@ -684,7 +863,11 @@ def SaveAddOnSettings(query_string):
             "genlog" : ConfigFiles[GENLOADER_CONFIG],
             "gensyslog" : ConfigFiles[GENLOADER_CONFIG],
             "gengpio" : ConfigFiles[GENLOADER_CONFIG],
-            "gengpioin" : ConfigFiles[GENGPIOIN_CONFIG]
+            "gengpioin" : ConfigFiles[GENGPIOIN_CONFIG],
+            "genexercise" : ConfigFiles[GENEXERCISE_CONFIG],
+            "genemail2sms" : ConfigFiles[GENEMAIL2SMS_CONFIG],
+            "gentankutil" : ConfigFiles[GENTANKUTIL_CONFIG],
+            "genalexa" : ConfigFiles[GENALEXA_CONFIG]
         }
 
         for module, entries in settings.items():   # module
@@ -696,6 +879,9 @@ def SaveAddOnSettings(query_string):
             for basesettings, basevalues in entries.items():    # base settings
                 if basesettings == 'enable':
                     ConfigFiles[GENLOADER_CONFIG].WriteValue("enable", basevalues, section = module)
+                    if module == "gentankutil":
+                        # update genmon.conf also to let it know that it should watch for external fuel data
+                        ConfigFiles[GENMON_CONFIG].WriteValue("use_external_fuel_data", basevalues, section = "genmon")
                 if basesettings == 'parameters':
                     for params, paramvalue in basevalues.items():
                         if module == "genlog" and params == "Log File Name":
@@ -856,13 +1042,15 @@ def ReadAdvancedSettingsFromFile():
     ConfigSettings =  collections.OrderedDict()
     try:
         # This option is not displayed as it will break the link between genmon and genserv
-        ConfigSettings["server_port"] = ['int', 'Server Port', 5, 9082, "", 0, GENMON_CONFIG, GENMON_SECTION,"server_port"]
+        ConfigSettings["server_port"] = ['int', 'Server Port', 5, ProgramDefaults.ServerPort, "", 0, GENMON_CONFIG, GENMON_SECTION,"server_port"]
         # this option is not displayed as this will break the modbus comms, only for debugging
         ConfigSettings["address"] = ['string', 'Modbus slave address', 6, "9d", "", 0 , GENMON_CONFIG, GENMON_SECTION, "address"]
+        ConfigSettings["response_address"] = ['string', 'Modbus slave transmit address', 6, "", "", 0 , GENMON_CONFIG, GENMON_SECTION, "response_address"]
         ConfigSettings["additional_modbus_timeout"] = ['float', 'Additional Modbus Timeout (sec)', 7, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "additional_modbus_timeout"]
         ConfigSettings["controllertype"] = ['list', 'Controller Type', 8, "generac_evo_nexus", "", "generac_evo_nexus,h_100", GENMON_CONFIG, GENMON_SECTION, "controllertype"]
-        ConfigSettings["loglocation"] = ['string', 'Log Directory',9, "/var/log/", "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "loglocation"]
+        ConfigSettings["loglocation"] = ['string', 'Log Directory',9, ProgramDefaults.LogPath, "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "loglocation"]
         ConfigSettings["enabledebug"] = ['boolean', 'Enable Debug', 10, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "enabledebug"]
+        ConfigSettings["ignore_unknown"] = ['boolean', 'Ignore Unknown Values', 10, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "ignore_unknown"]
         # These settings are not displayed as the auto-detect controller will set these
         # these are only to be used to override the auto-detect
         #ConfigSettings["uselegacysetexercise"] = ['boolean', 'Use Legacy Exercise Time', 9, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "uselegacysetexercise"]
@@ -874,12 +1062,16 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["additionalrunhours"] = ['string', 'Additional Run Hours', 14, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "additionalrunhours"]
         ConfigSettings["subtractfuel"] = ['float', 'Subtract Fuel', 15, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "subtractfuel"]
         #ConfigSettings["kwlog"] = ['string', 'Power Log Name / Disable', 16, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlog"]
-        ConfigSettings["kwlogmax"] = ['string', 'Maximum size Power Log (MB)', 17, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlogmax"]
-        ConfigSettings["currentdivider"] = ['float', 'Current Divider', 18, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentdivider"]
-        ConfigSettings["currentoffset"] = ['string', 'Current Offset', 19, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentoffset"]
-        ConfigSettings["disableplatformstats"] = ['boolean', 'Disable Platform Stats', 20, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "disableplatformstats"]
-        ConfigSettings["https_port"] = ['int', 'Override HTTPS port', 21, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "https_port"]
+        if ControllerType != 'h_100':
+            ConfigSettings["usenominallinevolts"] = ['boolean', 'Use Nominal Volts Override', 17, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "usenominallinevolts"]
+            ConfigSettings["nominallinevolts"] = ['int', 'Override nominal line voltage in UI', 18, "240", "", 0, GENMON_CONFIG, GENMON_SECTION,"nominallinevolts"]
 
+        ConfigSettings["kwlogmax"] = ['string', 'Maximum size Power Log (MB)', 19, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlogmax"]
+        ConfigSettings["currentdivider"] = ['float', 'Current Divider', 20, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentdivider"]
+        ConfigSettings["currentoffset"] = ['string', 'Current Offset', 21, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentoffset"]
+        ConfigSettings["disableplatformstats"] = ['boolean', 'Disable Platform Stats', 22, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "disableplatformstats"]
+        ConfigSettings["https_port"] = ['int', 'Override HTTPS port', 23, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "https_port"]
+        ConfigSettings["user_url"] = ['string', 'User URL', 24, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "user_url"]
 
 
         for entry, List in ConfigSettings.items():
@@ -967,7 +1159,7 @@ def ReadSettingsFromFile():
     ConfigSettings["sitename"] = ['string', 'Site Name', 1, "SiteName", "", "required minmax:4:50", GENMON_CONFIG, GENMON_SECTION, "sitename"]
     ConfigSettings["use_serial_tcp"] = ['boolean', 'Enable Serial over TCP/IP', 2, False, "", "", GENMON_CONFIG, GENMON_SECTION, "use_serial_tcp"]
     ConfigSettings["port"] = ['string', 'Port for Serial Communication', 3, "/dev/serial0", "", "required UnixDevice", GENMON_CONFIG, GENMON_SECTION, "port"]
-    ConfigSettings["serial_tcp_address"] = ['string', 'Serial Server TCP/IP Address', 4, "", "", "", GENMON_CONFIG, GENMON_SECTION, "serial_tcp_address"]
+    ConfigSettings["serial_tcp_address"] = ['string', 'Serial Server TCP/IP Address', 4, "", "", "InternetAddress", GENMON_CONFIG, GENMON_SECTION, "serial_tcp_address"]
     ConfigSettings["serial_tcp_port"] = ['int', 'Serial Server TCP/IP Port', 5, "8899", "", "digits", GENMON_CONFIG, GENMON_SECTION, "serial_tcp_port"]
 
     if ControllerType != 'h_100':
@@ -994,6 +1186,7 @@ def ReadSettingsFromFile():
         Choices = "120/208,120/240,230/400,240/415,277/480,347/600"
         ConfigSettings["voltageconfiguration"] = ['list', 'Line to Neutral / Line to Line', 107, "277/480", "", Choices, GENMON_CONFIG, GENMON_SECTION, "voltageconfiguration"]
         ConfigSettings["nominalbattery"] = ['list', 'Nomonal Battery Voltage', 108, "24", "", "12,24", GENMON_CONFIG, GENMON_SECTION, "nominalbattery"]
+        ConfigSettings["hts_transfer_switch"] = ['boolean', 'HTS/MTS/STS Transfer Switch', 109, False, "", "", GENMON_CONFIG, GENMON_SECTION, "hts_transfer_switch"]
     else: #ControllerType == "generac_evo_nexus":
         ConfigSettings["enhancedexercise"] = ['boolean', 'Enhanced Exercise Time', 109, False, "", "", GENMON_CONFIG, GENMON_SECTION, "enhancedexercise"]
 
@@ -1018,11 +1211,14 @@ def ReadSettingsFromFile():
     ConfigSettings["disablesmtp"] = ['boolean', 'Disable Sending Email', 300, False, "", "", MAIL_CONFIG, MAIL_SECTION, "disablesmtp"]
     ConfigSettings["email_account"] = ['string', 'Email Account', 301, "myemail@gmail.com", "", "minmax:3:50", MAIL_CONFIG, MAIL_SECTION, "email_account"]
     ConfigSettings["email_pw"] = ['password', 'Email Password', 302, "password", "", "max:50", MAIL_CONFIG, MAIL_SECTION, "email_pw"]
-    ConfigSettings["sender_account"] = ['string', 'Sender Account', 303, "no-reply@gmail.com", "", "email", MAIL_CONFIG, MAIL_SECTION, "sender_account"]
+    ConfigSettings["sender_account"] = ['string', 'Sender Address', 303, "no-reply@gmail.com", "", "email", MAIL_CONFIG, MAIL_SECTION, "sender_account"]
+    ConfigSettings["sender_name"] = ['string', 'Sender Name', 304, "", "", "max:50", MAIL_CONFIG, MAIL_SECTION, "sender_name"]
     # email_recipient setting will be handled on the notification screen
     ConfigSettings["smtp_server"] = ['string', 'SMTP Server <br><small>(leave emtpy to disable)</small>', 305, "smtp.gmail.com", "", "InternetAddress", MAIL_CONFIG, MAIL_SECTION, "smtp_server"]
     ConfigSettings["smtp_port"] = ['int', 'SMTP Server Port', 307, 587, "", "digits", MAIL_CONFIG, MAIL_SECTION, "smtp_port"]
-    ConfigSettings["ssl_enabled"] = ['boolean', 'SMTP Server SSL Enabled', 308, False, "", "", MAIL_CONFIG, MAIL_SECTION, "ssl_enabled"]
+    ConfigSettings["ssl_enabled"] = ['boolean', 'Use SSL Encryption', 308, False, "", "", MAIL_CONFIG, MAIL_SECTION, "ssl_enabled"]
+    ConfigSettings["tls_disable"] = ['boolean', 'Disable TLS Encryption', 309, False, "", "", MAIL_CONFIG, MAIL_SECTION, "tls_disable"]
+    ConfigSettings["smtpauth_disable"] = ['boolean', 'Disable SMTP Auth', 309, False, "", "", MAIL_CONFIG, MAIL_SECTION, "smtpauth_disable"]
 
     ConfigSettings["disableimap"] = ['boolean', 'Disable Receiving Email', 400, False, "", "", MAIL_CONFIG, MAIL_SECTION, "disableimap"]
     ConfigSettings["imap_server"] = ['string', 'IMAP Server <br><small>(leave emtpy to disable)</small>', 401, "imap.gmail.com", "", "InternetAddress", MAIL_CONFIG, MAIL_SECTION, "imap_server"]
@@ -1177,7 +1373,7 @@ def UpdateConfigFile(FileName, section, Entry, Value):
 
         try:
             config = ConfigFiles[FileName]
-        except Excpetion as e1:
+        except Exception as e1:
             LogErrorLine("Unknow file in UpdateConfigFile: " + FileName + ": " + str(e1))
             return False
 
@@ -1199,13 +1395,13 @@ def Restart():
     global Restarting
 
     Restarting = True
-    if not RunBashScript("startgenmon.sh restart"):
+    if not RunBashScript("startgenmon.sh restart " + ConfigFilePath):
         LogError("Error in Restart")
 
 #-------------------------------------------------------------------------------
 def Update():
     # update
-    if not RunBashScript("genmonmaint.sh updatenp"):   # update no prompt
+    if not RunBashScript("genmonmaint.sh -u -n"):   # update no prompt
         LogError("Error in Update")
     # now restart
     Restart()
@@ -1213,7 +1409,7 @@ def Update():
 #-------------------------------------------------------------------------------
 def Backup():
     # update
-    if not RunBashScript("genmonmaint.sh backup"):   # update no prompt
+    if not RunBashScript("genmonmaint.sh -b -c " + ConfigFilePath):   # backup
         LogError("Error in Backup")
 
 #-------------------------------------------------------------------------------
@@ -1246,6 +1442,52 @@ def CheckCertFiles(CertFile, KeyFile):
 
     return True
 #-------------------------------------------------------------------------------
+def generate_adhoc_ssl_context():
+        #Generates an adhoc SSL context web server.
+        try:
+            from OpenSSL import crypto
+            import ssl
+
+            import tempfile
+            import atexit
+            from random import random
+
+            cert = crypto.X509()
+            cert.set_serial_number(int(random() * sys.maxsize))
+            cert.gmtime_adj_notBefore(0)
+            cert.gmtime_adj_notAfter(60 * 60 * 24 * 365)
+
+            subject = cert.get_subject()
+            subject.CN = '*'
+            subject.O = 'Dummy Certificate'
+
+            issuer = cert.get_issuer()
+            issuer.CN = 'Untrusted Authority'
+            issuer.O = 'Self-Signed'
+
+            pkey = crypto.PKey()
+            pkey.generate_key(crypto.TYPE_RSA, 2048)
+            cert.set_pubkey(pkey)
+            cert.sign(pkey, 'sha256')
+
+            cert_handle, cert_file = tempfile.mkstemp()
+            pkey_handle, pkey_file = tempfile.mkstemp()
+            atexit.register(os.remove, pkey_file)
+            atexit.register(os.remove, cert_file)
+
+            os.write(cert_handle, crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
+            os.write(pkey_handle, crypto.dump_privatekey(crypto.FILETYPE_PEM, pkey))
+            os.close(cert_handle)
+            os.close(pkey_handle)
+            # ctx = ssl.SSLContext(ssl.PROTOCOL_TLS)
+            ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+            ctx.load_cert_chain(cert_file, pkey_file)
+            ctx.verify_mode = ssl.CERT_NONE
+            return ctx
+        except Exception as e1:
+            LogError("Error in generate_adhoc_ssl_context: " + str(e1))
+            return None
+#-------------------------------------------------------------------------------
 def LoadConfig():
 
     global log
@@ -1267,7 +1509,7 @@ def LoadConfig():
 
         # heartbeat server port, must match value in check_generator_system.py and any calling client apps
         if ConfigFiles[GENMON_CONFIG].HasOption('server_port'):
-            clientport = ConfigFiles[GENMON_CONFIG].ReadValue('server_port', return_type = int, default = 0)
+            clientport = ConfigFiles[GENMON_CONFIG].ReadValue('server_port', return_type = int, default = ProgramDefaults.ServerPort)
 
         if ConfigFiles[GENMON_CONFIG].HasOption('loglocation'):
             loglocation = ConfigFiles[GENMON_CONFIG].ReadValue('loglocation')
@@ -1317,7 +1559,9 @@ def LoadConfig():
                 bUseSelfSignedCert = ConfigFiles[GENMON_CONFIG].ReadValue('useselfsignedcert', return_type = bool)
 
                 if bUseSelfSignedCert:
-                    SSLContext = 'adhoc'
+                    SSLContext = generate_adhoc_ssl_context()   #  create our own self signed cert
+                    if SSLContext == None:
+                        SSLContext = 'adhoc'    # Use Flask supplied self signed cert
                 else:
                     if ConfigFiles[GENMON_CONFIG].HasOption('certfile') and ConfigFiles[GENMON_CONFIG].HasOption('keyfile'):
                         CertFile = ConfigFiles[GENMON_CONFIG].ReadValue('certfile')
@@ -1382,24 +1626,55 @@ def Close(NoExit = False):
 
 #-------------------------------------------------------------------------------
 if __name__ == "__main__":
-    address='localhost' if len(sys.argv) <=2 else sys.argv[1]
 
-    ConfigFilePath='/etc/' if len(sys.argv) <=3 else sys.argv[2]
+    address=ProgramDefaults.LocalHost
+    ConfigFilePath='/etc/'
 
+    # log errors in this module to a file
+    console = SetupLogger("genserv_console", log_file = "", stream = True)
 
+    HelpStr = '\nsudo python genserv.py -a <IP Address or localhost> -c <path to genmon config file>\n'
+
+    try:
+        ConfigFilePath = ProgramDefaults.ConfPath
+        opts, args = getopt.getopt(sys.argv[1:],"hc:a:",["help","configpath=","address="])
+    except getopt.GetoptError:
+        console.error("Invalid command line argument.")
+        sys.exit(2)
+
+    for opt, arg in opts:
+        if opt == '-h':
+            console.error(HelpStr)
+            sys.exit()
+        elif opt in ("-a", "--address"):
+            address = arg
+        elif opt in ("-c", "--configpath"):
+            ConfigFilePath = arg
+            ConfigFilePath = ConfigFilePath.strip()
     # NOTE: signal handler is not compatible with the exception handler around app.run()
     #atexit.register(Close)
     #signal.signal(signal.SIGTERM, Close)
     #signal.signal(signal.SIGINT, Close)
 
-    # log errors in this module to a file
-    console = SetupLogger("genserv_console", log_file = "", stream = True)
+    MAIL_CONFIG = ConfigFilePath + "mymail.conf"
+    GENMON_CONFIG = ConfigFilePath + "genmon.conf"
+    GENLOADER_CONFIG = ConfigFilePath + "genloader.conf"
+    GENSMS_CONFIG = ConfigFilePath + "gensms.conf"
+    MYMODEM_CONFIG = ConfigFilePath + "mymodem.conf"
+    GENPUSHOVER_CONFIG = ConfigFilePath + "genpushover.conf"
+    GENMQTT_CONFIG = ConfigFilePath + "genmqtt.conf"
+    GENSLACK_CONFIG = ConfigFilePath + "genslack.conf"
+    GENGPIOIN_CONFIG = ConfigFilePath + "gengpioin.conf"
+    GENEXERCISE_CONFIG = ConfigFilePath + "genexercise.conf"
+    GENEMAIL2SMS_CONFIG = ConfigFilePath + "genemail2sms.conf"
+    GENTANKUTIL_CONFIG = ConfigFilePath + "gentankutil.conf"
+    GENALEXA_CONFIG = ConfigFilePath + "genalexa.conf"
 
     if os.geteuid() != 0:
         LogConsole("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'.")
         sys.exit(1)
 
-    ConfigFileList = [GENMON_CONFIG, MAIL_CONFIG, GENLOADER_CONFIG, GENSMS_CONFIG, MYMODEM_CONFIG, GENPUSHOVER_CONFIG, GENMQTT_CONFIG, GENSLACK_CONFIG, GENGPIOIN_CONFIG]
+    ConfigFileList = [GENMON_CONFIG, MAIL_CONFIG, GENLOADER_CONFIG, GENSMS_CONFIG, MYMODEM_CONFIG, GENPUSHOVER_CONFIG, GENMQTT_CONFIG, GENSLACK_CONFIG, GENGPIOIN_CONFIG, GENEXERCISE_CONFIG, GENEMAIL2SMS_CONFIG, GENTANKUTIL_CONFIG, GENALEXA_CONFIG]
 
     for ConfigFile in ConfigFileList:
         if not os.path.isfile(ConfigFile):
@@ -1419,7 +1694,6 @@ if __name__ == "__main__":
         ConfigFiles[ConfigFile].log = log
 
     LogError("Starting " + AppPath + ", Port:" + str(HTTPPort) + ", Secure HTTP: " + str(bUseSecureHTTP) + ", SelfSignedCert: " + str(bUseSelfSignedCert))
-
     # validate needed files are present
     filename = os.path.dirname(os.path.realpath(__file__)) + "/startgenmon.sh"
     if not os.path.isfile(filename):
@@ -1434,7 +1708,7 @@ if __name__ == "__main__":
     startcount = 0
     while startcount <= 4:
         try:
-            MyClientInterface = ClientInterface(host = address,port=clientport, log = log)
+            MyClientInterface = ClientInterface(host = address, port = clientport, log = log)
             break
         except Exception as e1:
             startcount += 1
@@ -1457,6 +1731,8 @@ if __name__ == "__main__":
         GStartInfo = json.loads(data)
     except Exception as e1:
         LogError("Error getting start info : " + str(e1))
+        LogError("Data returned from start_info_json: "  + data)
+        sys.exit(1)
 
     CacheToolTips()
     while True:

@@ -10,11 +10,13 @@
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
 
-import datetime, time, sys, signal, os, threading, socket
-import atexit
+import datetime, time, sys, signal, os, threading, socket, json
+import atexit, getopt
 try:
     from genmonlib.mylog import SetupLogger
     from genmonlib.myclient import ClientInterface
+    from genmonlib.mysupport import MySupport
+    from genmonlib.program_defaults import ProgramDefaults
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
@@ -22,7 +24,6 @@ except Exception as e1:
     sys.exit(2)
 
 import RPi.GPIO as GPIO
-
 
 
 #----------  Signal Handler ----------------------------------------------------
@@ -34,16 +35,49 @@ def signal_handler(signal, frame):
 
 #------------------- Command-line interface for gengpio ------------------------
 if __name__=='__main__': # usage program.py [server_address]
-    address='127.0.0.1' if len(sys.argv)<2 else sys.argv[1]
+    address=ProgramDefaults.LocalHost
 
 
     try:
-        log = SetupLogger("client", "/var/log/gengpio.log")
         console = SetupLogger("gengpio_console", log_file = "", stream = True)
+
+        if os.geteuid() != 0:
+            console.error("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
+            sys.exit(2)
+
+        HelpStr = '\nsudo python gengpio.py -a <IP Address or localhost> -c <path to genmon config file>\n'
+        try:
+            ConfigFilePath = ProgramDefaults.ConfPath
+            opts, args = getopt.getopt(sys.argv[1:],"hc:a:",["help","configpath=","address="])
+        except getopt.GetoptError:
+            console.error("Invalid command line argument.")
+            sys.exit(2)
+
+        for opt, arg in opts:
+            if opt == '-h':
+                console.error(HelpStr)
+                sys.exit()
+            elif opt in ("-a", "--address"):
+                address = arg
+            elif opt in ("-c", "--configpath"):
+                ConfigFilePath = arg
+                ConfigFilePath = ConfigFilePath.strip()
+
+    except Exception as e1:
+        console.error("Error : " + str(e1))
+        sys.exit(1)
+
+    try:
+        port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
+        log = SetupLogger("client", loglocation + "gengpio.log")
+    except Exception as e1:
+        console.error("Error : " + str(e1))
+        sys.exit(1)
+    try:
         # Set the signal handler
         signal.signal(signal.SIGINT, signal_handler)
 
-        MyClientInterface = ClientInterface(host = address, log = log)
+        MyClientInterface = ClientInterface(host = address, port = port, log = log)
 
         #setup GPIO using Board numbering
         GPIO.setmode(GPIO.BOARD)
@@ -63,7 +97,8 @@ if __name__=='__main__': # usage program.py [server_address]
         STATUS_OFF = 21         # OFF GPIO 9   (pin 21)
 
         # Set additional GPIO based on these error codes
-
+        ER_GENMON = 3           # Genmon is reporting errors due to modbus or internal problems GPIO 2(pin3)
+        ER_INTERNET = 5         # No internet connection GPIO3 (pin 5)
         # Overspeed/Underspeed (alarms 1200-1206, 1600-1603) GPIO 5 (pin 29)
         ER_SPEED = 29
         # Low Oil (alarm 1300) GPIO 6 (pin 31)
@@ -90,6 +125,9 @@ if __name__=='__main__': # usage program.py [server_address]
         GPIO.setup(STATUS_EXERCISING, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(STATUS_OFF, GPIO.OUT, initial=GPIO.LOW)
 
+        GPIO.setup(ER_GENMON, GPIO.OUT, initial=GPIO.LOW)
+        GPIO.setup(ER_INTERNET, GPIO.OUT, initial=GPIO.LOW)
+
         GPIO.setup(ER_SPEED, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(ER_LOW_OIL, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(ER_HIGH_TEMP, GPIO.OUT, initial=GPIO.LOW)
@@ -109,7 +147,7 @@ if __name__=='__main__': # usage program.py [server_address]
             console.info ("Evolution Controller Detected\n")
         else:
             Evolution = False
-            console.info ("Nexus Controller Detected\n")
+            console.info ("Non Evolution Controller Detected\n")
 
         while True:
 
@@ -204,7 +242,28 @@ if __name__=='__main__': # usage program.py [server_address]
                     GPIO.output(ER_GOVERNOR,GPIO.LOW)
                     GPIO.output(ER_WARNING,GPIO.LOW)
 
-            time.sleep(3)
+            # Get Genmon status
+            try:
+                data = MyClientInterface.ProcessMonitorCommand("generator: monitor_json")
+                TempDict = {}
+                TempDict = json.loads(data)
+                HealthStr = TempDict["Monitor"][0]["Generator Monitor Stats"][0]["Monitor Health"]
+                if HealthStr.lower() == "ok":
+                    GPIO.output(ER_GENMON,GPIO.LOW)
+                else:
+                    GPIO.output(ER_GENMON,GPIO.HIGH)
+            except Exception as e1:
+                log.error("Error getting monitor health: " +str(e1))
+            # get Internet Status
+            try:
+                data = MyClientInterface.ProcessMonitorCommand("generator: network_status")
+                if data.lower() == "ok":
+                    GPIO.output(ER_INTERNET,GPIO.LOW)
+                else:
+                    GPIO.output(ER_INTERNET,GPIO.HIGH)
+                time.sleep(3)
+            except Exception as e1:
+                log.error("Error getting internet status: " +str(e1))
 
     except Exception as e1:
         log.error("Error: " + str(e1))

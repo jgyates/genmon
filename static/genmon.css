@@ -7,7 +7,7 @@ strike, strong, sub, sup, tt, var,
 b, u, i, center,
 dl, dt, dd, ol, ul, li,
 fieldset, form, label, legend,
-table, caption, td, tr, 
+table, caption, td, tr,
 article, aside, canvas, details, embed,
 figure, figcaption, footer, header, hgroup,
 menu, nav, output, ruby, section, summary,
@@ -37,7 +37,7 @@ table {
     border-spacing: 0;
 }
 /* END: HTML 5 reset for older browsers */
-input, select {
+input, select, textarea {
     font-size: 100%;
     font: inherit;
     vertical-align: middle;
@@ -89,7 +89,7 @@ ul {
     list-style-type: none;
 }
 li:hover img{
-    -webkit-filter: invert(100%) !important; 
+    -webkit-filter: invert(100%) !important;
 }
 li a {
     display: block;
@@ -142,7 +142,7 @@ li a:hover:not(.active) {
 
 /* Icons */
 
-.alert_large, .alert_small, .log, .maintenance, .monitor, .notifications, .outage, .print10, .print24, .print60, .registers, .remove_bin, .settings, .status, .temp1, .temp2, .temp3, .temp4, .title-bg, .validation_ok, .validation_text, .wifi1, .wifi2, .wifi3, .wifi4, .fuel, .about, .addon{
+.alert_large, .alert_small, .log, .maintenance, .monitor, .notifications, .outage, .print10, .print24, .print60, .registers, .remove_bin, .settings, .status, .temp1, .temp2, .temp3, .temp4, .title-bg, .validation_ok, .validation_text, .wifi1, .wifi2, .wifi3, .wifi4, .fuel, .about, .addon, .journal{
 	background: url(images/sprites.png) no-repeat;
 }
 
@@ -314,10 +314,17 @@ li a:hover:not(.active) {
 	height: 20px;
 }
 
+.journal{
+	background-position: -314px -117px ;
+	width: 20px;
+	height: 20px;
+}
+
+
 /* Addons */
 
-.linux_small, .mqtt_small, .rpi_small, .slack_small, .twilio_small, .pushover_small, .linux, .mqtt, .pushover, .rpi, .slack, .twilio, .sms, .sms_small, .csv_small, .csv{
-	background: url(images/addons.png) no-repeat;
+.linux_small, .mqtt_small, .rpi_small, .slack_small, .twilio_small, .pushover_small, .linux, .mqtt, .pushover, .rpi, .slack, .twilio, .sms, .sms_small, .csv_small, .csv, .selftest, .selftest_small, .Genmon, .Genmon_small, .text_small, .serveo, .tankutility, .alexa, .serveo_small, .tankutility_small, .alexa_small, .text{
+    background: url(images/addons.png) no-repeat;
 }
 
 .linux_small{
@@ -416,6 +423,78 @@ li a:hover:not(.active) {
 	height: 93px;
 }
 
+.selftest{
+	background-position: 0 -403px ;
+	width: 252px;
+	height: 77px;
+}
+
+.selftest_small{
+	background-position: -461px -384px ;
+	width: 50px;
+	height: 15px;
+}
+
+.Genmon{
+	background-position: -260px -415px ;
+	width: 252px;
+	height: 57px;
+}
+
+.Genmon_small{
+	background-position: -400px -386px ;
+	width: 50px;
+	height: 11px;
+}
+
+.text_small{
+	background-position: -201px -488px ;
+	width: 50px;
+	height: 43px;
+}
+
+.serveo{
+	background-position: -261px -604px ;
+	width: 252px;
+	height: 100px;
+}
+
+.tankutility{
+	background-position: 0 -538px ;
+	width: 252px;
+	height: 70px;
+}
+
+.alexa{
+	background-position: -1px -618px ;
+	width: 252px;
+	height: 100px;
+}
+
+.serveo_small{
+	background-position: -140px -501px ;
+	width: 50px;
+	height: 22px;
+}
+
+.tankutility_small{
+	background-position: -73px -505px ;
+	width: 50px;
+	height: 14px;
+}
+
+.alexa_small{
+	background-position: -9px -486px ;
+	width: 50px;
+	height: 50px;
+}
+
+.text{
+	background-position: -261px -479px ;
+	width: 252px;
+	height: 120px;
+}
+
 
 
 /* Classes */
@@ -473,7 +552,7 @@ li a:hover:not(.active) {
     height: 100%;
 }
 .gaugeCanvas {
-    width:100%; 
+    width:100%;
     height:65%;
 }
 .gaugeDiv, .jsonVal {
@@ -514,7 +593,7 @@ li a:hover:not(.active) {
      width: 180px;
 }
 .grid-item {
-     float: left;  
+     float: left;
      height: 200px;
      background: #FFFFF;
      border: 0px;
@@ -536,19 +615,19 @@ li a:hover:not(.active) {
 }
 
 .registerTD {
-    border:5px solid white; 
-    background-color: #AAAAAA; 
+    border:5px solid white;
+    background-color: #AAAAAA;
     vertical-align:bottom;
     padding:5px;
     background-clip: padding-box; /* this has been added in CSS3 */
     border-radius: 10px;
 }
 .registerTD table {
-    border:2px solid #AAAAAA; 
+    border:2px solid #AAAAAA;
     height:100%;
 }
 .registerTDtitle {
-    border-bottom: 1px solid #444444; 
+    border-bottom: 1px solid #444444;
     font-size:12px;
 }
 .registerTDsubtitle {
@@ -583,20 +662,20 @@ li a:hover:not(.active) {
     cursor: pointer;
 }
 .tripleButtonLeft {
-    margin:0px; 
+    margin:0px;
     border-radius: 3px 0px 0px 3px;
 }
 .tripleButtonCenter {
-    margin:0px; 
-    border-radius: 0px; 
-    border-right:1px solid #000000; 
+    margin:0px;
+    border-radius: 0px;
+    border-right:1px solid #000000;
     border-left:1px solid #000000;
 }
 .tripleButtonRight {
-    margin:0px; 
+    margin:0px;
     border-radius: 0px 3px 3px 0px
 }
-.notificationEmail {  
+.notificationEmail {
     width: 300px;
     padding:8px 8px;
 }
@@ -624,7 +703,7 @@ li a:hover:not(.active) {
     -webkit-transition: -webkit-box-shadow .25s;
     transition: box-shadow .25s, -webkit-box-shadow .25s;
     border-radius: 6px;
-    font-size: 16px;    
+    font-size: 16px;
     width: 50%;
     background-color: #f1f1f1;
 }
@@ -690,4 +769,3 @@ li a:hover:not(.active) {
 #allsettings td {
     padding: 3px;
 }
-

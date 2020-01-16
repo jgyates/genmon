@@ -13,7 +13,7 @@
 from __future__ import print_function       # For python 3.x compatibility with print function
 
 import datetime, time, sys, signal, os, threading, socket
-import atexit, json, collections, random
+import atexit, json, collections, random, getopt
 import re
 from subprocess import PIPE, Popen
 
@@ -27,26 +27,28 @@ try:
     from genmonlib.generac_evolution import Evolution
     from genmonlib.generac_HPanel import HPanel
     from genmonlib.myweather import MyWeather
+    from genmonlib.program_defaults import ProgramDefaults
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.12.6"
+GENMON_VERSION = "V1.13.36"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(MySupport):
 
-    def __init__(self, ConfigFilePath = None):
+    def __init__(self, ConfigFilePath = ProgramDefaults.ConfPath):
         super(Monitor, self).__init__()
+
         self.ProgramName = "Generator Monitor"
         self.Version = "Unknown"
         self.log = None
         self.IsStopping = False
         self.ProgramComplete = False
-        if ConfigFilePath == None:
-            self.ConfigFilePath = "/etc/"
+        if ConfigFilePath == None or ConfigFilePath == "":
+            self.ConfigFilePath = ProgramDefaults.ConfPath
         else:
             self.ConfigFilePath = ConfigFilePath
 
@@ -54,12 +56,12 @@ class Monitor(MySupport):
         # defautl values
         self.SiteName = "Home"
         self.ServerSocket = None
-        self.ServerSocketPort = 9082    # server socket for nagios heartbeat and command/status
+        self.ServerSocketPort = ProgramDefaults.ServerPort    # server socket for nagios heartbeat and command/status
         self.IncomingEmailFolder = "Generator"
         self.ProcessedEmailFolder = "Generator/Processed"
 
-        self.FeedbackLogFile = os.path.dirname(os.path.realpath(__file__)) + "/feedback.json"
-        self.LogLocation = "/var/log/"
+        self.FeedbackLogFile = self.ConfigFilePath + "feedback.json"
+        self.LogLocation = ProgramDefaults.LogPath
         self.LastLogFileSize = 0
         self.NumberOfLogSizeErrors = 0
         # set defaults for optional parameters
@@ -103,9 +105,6 @@ class Monitor(MySupport):
             self.LogConsole("Missing config file : " + self.ConfigFilePath + 'mymail.conf')
             sys.exit(1)
 
-        # log errors in this module to a file
-        self.log = SetupLogger("genmon", self.LogLocation + "genmon.log")
-
         self.config = MyConfig(filename = self.ConfigFilePath + 'genmon.conf', section = "GenMon", log = self.console)
         # read config file
         if not self.GetConfig():
@@ -137,13 +136,18 @@ class Monitor(MySupport):
         self.Threads["InterfaceServerThread"] = MyThread(self.InterfaceServerThread, Name = "InterfaceServerThread")
 
         # init mail, start processing incoming email
-        self.mail = MyMail(monitor=True, incoming_folder = self.IncomingEmailFolder, processed_folder =self.ProcessedEmailFolder,incoming_callback = self.ProcessCommand)
+        self.mail = MyMail(monitor=True, incoming_folder = self.IncomingEmailFolder,
+            processed_folder =self.ProcessedEmailFolder,incoming_callback = self.ProcessCommand,
+            loglocation = self.LogLocation, ConfigFilePath = ConfigFilePath)
+
         self.Threads = self.MergeDicts(self.Threads, self.mail.Threads)
         self.MailInit = True
 
-        self.FeedbackPipe = MyPipe("Feedback", self.FeedbackReceiver, log = self.log)
+        self.FeedbackPipe = MyPipe("Feedback", self.FeedbackReceiver,
+            log = self.log, ConfigFilePath = self.ConfigFilePath)
         self.Threads = self.MergeDicts(self.Threads, self.FeedbackPipe.Threads)
-        self.MessagePipe = MyPipe("Message", self.MessageReceiver, log = self.log, nullpipe = self.mail.DisableSNMP)
+        self.MessagePipe = MyPipe("Message", self.MessageReceiver, log = self.log,
+            nullpipe = self.mail.DisableSNMP, ConfigFilePath = self.ConfigFilePath)
         self.Threads = self.MergeDicts(self.Threads, self.MessagePipe.Threads)
 
         try:
@@ -208,7 +212,7 @@ class Monitor(MySupport):
             if self.config.HasOption('server_port'):
                 self.ServerSocketPort = self.config.ReadValue('server_port', return_type = int)
 
-            self.LogLocation = self.config.ReadValue('loglocation', default = "/var/log/")
+            self.LogLocation = self.config.ReadValue('loglocation', default = ProgramDefaults.LogPath)
 
             if self.config.HasOption('syncdst'):
                 self.bSyncDST = self.config.ReadValue('syncdst', return_type = bool)
@@ -272,7 +276,7 @@ class Monitor(MySupport):
                 except Exception as e1:
                     os.remove(self.FeedbackLogFile)
         except Exception as e1:
-            self.LogErrorLine("Missing config file or config file entries (genmon): " + str(e1))
+            self.Console("Missing config file or config file entries (genmon): " + str(e1))
             return False
 
         return True
@@ -283,7 +287,7 @@ class Monitor(MySupport):
         try:
             if self.FeedbackEnabled:
                 for Key, Entry in self.FeedbackMessages.items():
-                    self.MessagePipe.SendMessage("Generator Monitor Submission", Entry , recipient = "generatormonitor.software@gmail.com", msgtype = "error")
+                    self.MessagePipe.SendMessage("Generator Monitor Submission", Entry , recipient = self.MaintainerAddress, files = self.GetLogFileNames(), msgtype = "error")
                 # delete unsent Messages
                 if os.path.isfile(self.FeedbackLogFile):
                     os.remove(self.FeedbackLogFile)
@@ -348,7 +352,7 @@ class Monitor(MySupport):
 
                 msgbody += "\n" + self.GetSupportData() + "\n"
                 if self.FeedbackEnabled:
-                    self.MessagePipe.SendMessage("Generator Monitor Submission", msgbody , recipient = self.MaintainerAddress, msgtype = "error")
+                    self.MessagePipe.SendMessage("Generator Monitor Submission", msgbody , recipient = self.MaintainerAddress, files = self.GetLogFileNames(), msgtype = "error")
 
                 self.FeedbackMessages[Reason] = msgbody
                 # if feedback not enabled, save the log to file
@@ -383,6 +387,24 @@ class Monitor(MySupport):
 
         return json.dumps(SupportData, sort_keys=False)
 
+    #---------- Monitor::GetLogFileNames----------------------------------------
+    def GetLogFileNames(self):
+
+        try:
+            LogList = []
+            FilesToSend = ["genmon.log", "genserv.log", "mymail.log", "myserial.log",
+                "mymodbus.log", "gengpio.log", "gengpioin.log", "gensms.log",
+                "gensms_modem.log", "genmqtt.log", "genpushover.log", "gensyslog.log",
+                "genloader.log", "myserialtcp.log", "genlog.log", "genslack.log",
+                "genexercise.log","genemail2sms.log", "gentankutil.log", "genalexa.log"]
+            for File in FilesToSend:
+                LogFile = self.LogLocation + File
+                if os.path.isfile(LogFile):
+                    LogList.append(LogFile)
+            return LogList
+        except Exception as e1:
+            return None
+
     #---------- Monitor::SendSupportInfo----------------------------------------
     def SendSupportInfo(self, SendLogs = True):
 
@@ -401,15 +423,7 @@ class Monitor(MySupport):
             msgbody += "\n" + self.GetSupportData()  + "\n"
             msgtitle = "Generator Monitor Log File Submission"
             if SendLogs == True:
-                LogList = []
-                FilesToSend = ["genmon.log", "genserv.log", "mymail.log", "myserial.log",
-                    "mymodbus.log", "gengpio.log", "gengpioin.log", "gensms.log",
-                    "gensms_modem.log", "genmqtt.log", "genpushover.log", "gensyslog.log",
-                    "genloader.log", "myserialtcp.log", "genlog.log", "genslack.log"]
-                for File in FilesToSend:
-                    LogFile = self.LogLocation + File
-                    if os.path.isfile(LogFile):
-                        LogList.append(LogFile)
+                LogList = self.GetLogFileNames()
             else:
                 msgtitle = "Generator Monitor Register Submission"
                 LogList = None
@@ -422,7 +436,7 @@ class Monitor(MySupport):
     def ProcessCommand(self, command, fromsocket = False):
 
         LocalError = False
-
+        command = command.decode('utf-8')
         msgsubject = "Generator Command Response at " + self.SiteName
         if not fromsocket:
             msgbody = "\n"
@@ -435,7 +449,7 @@ class Monitor(MySupport):
             LocalError = True
 
         if not LocalError:
-            if(not command.lower().startswith( b'generator:' )):         # PYTHON3
+            if(not command.lower().startswith( 'generator:' )):
                 msgsubject = "Error in Generator Command (command prefix)"
                 msgbody += "Invalid GENERATOR command: all commands must be prefixed by \"generator: \""
                 LocalError = True
@@ -448,7 +462,7 @@ class Monitor(MySupport):
                 msgbody += "EndOfMessage"
                 return msgbody
 
-        if command.lower().startswith(b'generator:'):
+        if command.lower().startswith('generator:'):
             command = command[len('generator:'):]
 
         CommandDict = {
@@ -463,6 +477,8 @@ class Monitor(MySupport):
             "setexercise"   : [self.Controller.SetGeneratorExerciseTime, (command.lower(),), False],
             "setquiet"      : [self.Controller.SetGeneratorQuietMode, ( command.lower(),), False],
             "setremote"     : [self.Controller.SetGeneratorRemoteCommand, (command.lower(),), False],
+            "testcommand"   : [self.Controller.TestCommand, (command.lower(),), False],
+            "network_status": [self.InternetConnected, (), False],
             "help"          : [self.DisplayHelp, (), False],                   # display help screen
             ## These commands are used by the web / socket interface only
             "power_log_json"    : [self.Controller.GetPowerHistory, (command.lower(),), True],
@@ -478,6 +494,9 @@ class Monitor(MySupport):
             "weather_json"      : [self.DisplayWeather, (True,), True],
             "outage_json"       : [self.Controller.DisplayOutage, (True,), True],
             "gui_status_json"   : [self.GetStatusForGUI, (), True],
+            "get_maint_log_json": [self.Controller.GetMaintLog, (), True],
+            "add_maint_log"     : [self.Controller.AddEntryToMaintLog, (command,), True],    # Do not do command.lower() since this input is JSON
+            "clear_maint_log"   : [self.Controller.ClearMaintLog, (), True],
             "getsitename"       : [self.GetSiteName, (), True],
             "getbase"           : [self.Controller.GetBaseStatus, (), True],    #  (UI changes color based on exercise, running , ready status)
             "gethealth"         : [self.GetSystemHealth, (), True],
@@ -485,10 +504,11 @@ class Monitor(MySupport):
             "readregvalue"      : [self.Controller.ReadRegValue, (command.lower(),), True],    # only used for debug purposes, Read Register Non Cached
             "getdebug"          : [self.GetDeadThreadName, (), True],           # only used for debug purposes. If a thread crashes it tells you the thread name
             "sendregisters"     : [self.SendSupportInfo, (False,), True],
-            "sendlogfiles"      : [self.SendSupportInfo, (True,), True]
+            "sendlogfiles"      : [self.SendSupportInfo, (True,), True],
+            "set_tank_data"     : [self.Controller.SetExternalTankData, (command,), True]
         }
 
-        CommandList = command.split(b' ')    # PYTHON3
+        CommandList = command.split(' ')
 
         ValidCommand = False
         try:
@@ -497,7 +517,7 @@ class Monitor(MySupport):
                     continue
                 item = item.strip()
                 LookUp = item
-                if b"=" in item:
+                if "=" in item:
                     BaseCmd = item.split('=')
                     LookUp = BaseCmd[0]
                 # check if we disallow write commands via email
@@ -648,6 +668,8 @@ class Monitor(MySupport):
             GenMonStats.append({"Controller" : self.Controller.GetController(Actual = False)})
 
             GenMonStats.append({"Run time" : self.GetProgramRunTime()})
+            if self.Controller.PowerMeterIsSupported():
+                GenMonStats.append({"Power log file size" : self.Controller.GetPowerLogFileDetails()})
             GenMonStats.append({"Generator Monitor Version" : GENMON_VERSION})
 
             if not self.bDisablePlatformStats:
@@ -677,7 +699,6 @@ class Monitor(MySupport):
         StartInfo["sitename"] = self.SiteName
         ControllerStartInfo = self.Controller.GetStartInfo(NoTile = NoTile)
         StartInfo = self.MergeDicts(StartInfo, ControllerStartInfo)
-
         return StartInfo
 
     #------------ Monitor::GetStatusForGUI -------------------------------------
@@ -695,6 +716,10 @@ class Monitor(MySupport):
         WeatherData = self.GetWeatherData(ForUI = True)
         if not WeatherData == None and len(WeatherData):
             Status["Weather"] = WeatherData
+        # Monitor Time
+        Status["MonitorTime"] = datetime.datetime.now().strftime("%m/%d/%Y %H:%M")
+        # Engine run hours
+        Status["RunHours"] = self.Controller.GetRunHours()
         ReturnDict = self.MergeDicts(Status, self.Controller.GetStatusForGUI())
 
         return ReturnDict
@@ -864,7 +889,7 @@ class Monitor(MySupport):
                             outstr = "Retry, System Initializing"
                         else:
                             outstr = self.ProcessCommand(data, True)
-                        conn.sendall(outstr.encode())
+                        conn.sendall(outstr.encode("utf-8"))
                     else:
                         # socket closed remotely
                         break
@@ -921,7 +946,7 @@ class Monitor(MySupport):
             except Exception as e1:
                 if self.IsStopping:
                     break
-                self.LogErrorLine("Excpetion in InterfaceServerThread" + str(e1))
+                self.LogErrorLine("Exception in InterfaceServerThread" + str(e1))
                 if self.WaitForExit("InterfaceServerThread", 0.5 ):
                     break
                 continue
@@ -1021,7 +1046,19 @@ class Monitor(MySupport):
 
 #------------------- Command-line interface for monitor ------------------------
 if __name__=='__main__': #
-    ConfigFilePath = None if len(sys.argv)<2 else sys.argv[1]
+
+    try:
+        ConfigFilePath = ProgramDefaults.ConfPath
+        opts, args = getopt.getopt(sys.argv[1:],"c:",["configpath="])
+    except getopt.GetoptError:
+        console.error("Invalid command line argument.")
+        sys.exit(2)
+
+    for opt, arg in opts:
+
+        if opt in ("-c", "--configpath"):
+            ConfigFilePath = arg
+            ConfigFilePath = ConfigFilePath.strip()
 
     #Start things up
     MyMonitor = Monitor(ConfigFilePath = ConfigFilePath)

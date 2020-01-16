@@ -15,6 +15,7 @@ import datetime, threading, crcmod, sys, time, os, collections, json
 
 from genmonlib.modbusbase import ModbusBase
 from genmonlib.mythread import MyThread
+from genmonlib.program_defaults import ProgramDefaults
 
 #------------ ModbusBase class -------------------------------------------------
 class ModbusFile(ModbusBase):
@@ -143,7 +144,7 @@ class ModbusFile(ModbusBase):
             if self.StringIsHex(Value):
                 # Not a string, just hex data in a string format
                 for i in range( 0, len(Value), 4):
-                    self.Registers["%04x" % (RegInt + (i / 4))] = Value[i:i+4]
+                    self.Registers["%04x" % (RegInt + int(i / 4))] = Value[i:i+4]
             else:
                 for i in range(0, len(Value), 2):
                     HiByte = ord(Value[i])
@@ -151,7 +152,7 @@ class ModbusFile(ModbusBase):
                         LowByte = 0
                     else:
                         LowByte = ord(Value[i+1])
-                    self.Registers["%04x" % (RegInt + (i / 2))] = "%02x%02x" % (HiByte, LowByte)
+                    self.Registers["%04x" % (RegInt + int(i / 2))] = "%02x%02x" % (HiByte, LowByte)
         return True
 
     #----------  ReadJSONFile  -------------------------------------------------

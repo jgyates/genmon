@@ -13,12 +13,14 @@ from genmonlib.mycommon import MyCommon
 from genmonlib.mylog import SetupLogger
 from genmonlib.mythread import MyThread
 from genmonlib.myclient import ClientInterface
+from genmonlib.program_defaults import ProgramDefaults
 #----------  GenNotify::init--- ------------------------------------------------
 class GenNotify(MyCommon):
     def __init__(self,
-                host="127.0.0.1",
-                port=9082,
+                host=ProgramDefaults.LocalHost,
+                port=ProgramDefaults.ServerPort,
                 log = None,
+                loglocation = ProgramDefaults.LogPath,
                 onready = None,
                 onexercise = None,
                 onrun = None,
@@ -42,7 +44,7 @@ class GenNotify(MyCommon):
             self.log = log
         else:
             # log errors in this module to a file
-            self.log = SetupLogger("client", "/var/log/myclient.log")
+            self.log = SetupLogger("client", loglocation + "myclient.log")
 
         self.console = SetupLogger("notify_console", log_file = "", stream = True)
         try:
@@ -69,7 +71,7 @@ class GenNotify(MyCommon):
             startcount = 0
             while startcount <= 10:
                 try:
-                    self.Generator = ClientInterface(host = host, log = log)
+                    self.Generator = ClientInterface(host = host, port = port, log = log, loglocation = loglocation)
                     break
                 except Exception as e1:
                     startcount += 1
@@ -98,15 +100,7 @@ class GenNotify(MyCommon):
             try:
 
                 data = self.SendCommand("generator: getbase")
-                outagedata = self.SendCommand("generator: outage_json")
-                try:
-                    OutageDict = collections.OrderedDict()
-                    OutageDict = json.loads(outagedata)
-                    OutageState = True if OutageDict["Outage"]["System In Outage"].lower() == "yes" else False
-                except Exception as e1:
-                    # The system does no support outage tracking (i.e. H-100)
-                    #self.LogErrorLine("Unable to get outage state: " + str(e1))
-                    OutageState = None
+                OutageState = self.GetOutageState()
                 if OutageState != None:
                     self.ProcessOutageState(OutageState)
 
@@ -126,6 +120,26 @@ class GenNotify(MyCommon):
                 self.LogErrorLine("Error in mynotify:MainPollingThread: " + str(e1))
                 time.sleep(3)
 
+    #----------  GenNotify::GetOutageState -------------------------------------
+    def GetOutageState(self):
+        OutageState = None
+        outagedata = self.SendCommand("generator: outage_json")
+        try:
+            OutageDict = collections.OrderedDict()
+            OutageDict = json.loads(outagedata)
+            OutageList = OutageDict["Outage"]
+            for Items in OutageList:
+                for key, value in Items.items():
+                    if key == "System In Outage":
+                        if value.lower() == "yes":
+                            return True
+                        else:
+                            return False
+        except Exception as e1:
+            # The system does no support outage tracking (i.e. H-100)
+            self.LogErrorLine("Unable to get outage state: " + str(e1))
+            OutageState = None
+        return OutageState
     #----------  GenNotify::CallEventHandler -----------------------------------
     def CallEventHandler(self, Status):
 
@@ -185,5 +199,5 @@ class GenNotify(MyCommon):
             self.KillThread("PollingThread")
             self.Generator.Close()
         except Exception as e1:
-            pass 
+            pass
         return False
