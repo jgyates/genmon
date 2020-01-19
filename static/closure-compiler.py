@@ -54,15 +54,12 @@ STYLESHEETS_OUT = 'libraries.min.css'
 
 def main():
 
-    CLOSURE_COMPILER = "closure-compiler-v20180506.jar";
-    CLOSURE_STYLESHEET = "closure-stylesheets.jar";
+    CLOSURE_COMPILER = "closure-compiler-v20180506.jar"
+    CLOSURE_STYLESHEET = "closure-stylesheets.jar"
 
     print( 'Downlaod Compilers...')
 
-    #c1file = urllib.URLopener()
-    # c1file.retrieve("https://dl.google.com/closure-compiler/compiler-latest.zip", "compiler-latest.zip")
-    #c1file.retrieve("https://dl.google.com/closure-compiler/compiler-20180805.zip", "compiler-latest.zip")
-    r = requests.get("https://dl.google.com/closure-compiler/compiler-20180805.zip", allow_redirects=True)  # to get content after redirection
+    r = requests.get("https://dl.google.com/closure-compiler/compiler-latest.zip", allow_redirects=True)  # to get content after redirection
     with open("compiler-latest.zip", 'wb') as f:
         f.write(r.content)
     zip_ref = zipfile.ZipFile("compiler-latest.zip", 'r')
