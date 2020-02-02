@@ -118,7 +118,8 @@ class Loader(MySupport):
             ['serial','pyserial'],
             ['crcmod','crcmod'],
             ['pyowm','pyowm'],
-            ['pytz','pytz']
+            ['pytz','pytz'],
+            ['pysnmp','pysnmp']
         ]
         try:
             ErrorOccured = False
@@ -293,7 +294,7 @@ class Loader(MySupport):
         try:
 
             Sections = self.config.GetSections()
-            ValidSections = ['genmon', 'genserv', 'gengpio', 'gengpioin', 'genlog', 'gensms', 'gensms_modem', 'genpushover', 'gensyslog', 'genmqtt', 'genslack', 'genexercise', 'genemail2sms', 'gentankutil', 'genalexa']
+            ValidSections = ['genmon', 'genserv', 'gengpio', 'gengpioin', 'genlog', 'gensms', 'gensms_modem', 'genpushover', 'gensyslog', 'genmqtt', 'genslack', 'genexercise', 'genemail2sms', 'gentankutil', 'genalexa', 'gensnmp']
             for entry in ValidSections:
                 if not entry in Sections:
                     if entry == 'genslack':
@@ -311,6 +312,9 @@ class Loader(MySupport):
                     if entry == 'genalexa':
                         self.LogError("Warning: Missing entry: " + entry + " , adding entry")
                         self.AddEntry(section = entry, module = 'genalexa.py', conffile = 'genalexa.conf')
+                    if entry == 'gensnmp':
+                        self.LogError("Warning: Missing entry: " + entry + " , adding entry")
+                        self.AddEntry(section = entry, module = 'gensnmp.py', conffile = 'gensnmp.conf')
                     else:
                         self.LogError("Warning: Missing entry: " + entry)
 

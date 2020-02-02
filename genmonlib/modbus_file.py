@@ -255,7 +255,7 @@ class ModbusFile(ModbusBase):
 
         SerialStats.append({"CRC Errors" : "%d " % self.CrcError})
         SerialStats.append({"CRC Percent Errors" : "%.2f" % PercentErrors})
-        SerialStats.append({"Packet Timeouts" : "%d" %  self.ComTimoutError})
+        SerialStats.append({"Timeouts Errors" : "%d" %  self.ComTimoutError})
         # Add serial stats here
 
         CurrentTime = datetime.datetime.now()

@@ -67,6 +67,7 @@ voltageconfiguration = The voltage configuration of the industrial generator.
 nominalbattery = 12 for one battery, 24 for two batteries
 controllertype = Set to h_100 for H-100 mode, otherwise the software will default to Nexus/Evolution Mode
 autofeedback = If enabled, an email will be sent to the software maintainer if critical data is missing in the software for your generator. The email will contain the contents of the generator registers. Enabling this option helps support the widest possible set of features and supported generators.
+update_check = If enabled the software will send an email notice when a software update is available.
 use_serial_tcp = If enabled, the software will use TCP over serial instead of direct serial communications
 serial_tcp_address = If Serial over TCP/IP is enabled, this parameter sets the IP address used for the serial server.
 serial_tcp_port = If Serial over TCP/IP is enabled, this parameter sets the IP port used for the serial server.

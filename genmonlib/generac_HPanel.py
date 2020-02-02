@@ -1670,7 +1670,7 @@ class HPanel(GeneratorController):
             NamePlateData = self.GetParameterFileValue(NAMEPLATE_DATA_FILE_RECORD, ReturnString = True)
             if len(NamePlateData):
                 Maintenance["Maintenance"].append({"Name Plate Info" : NamePlateData})
-            Maintenance["Maintenance"].append({"Controller" : self.GetController()})
+            Maintenance["Maintenance"].append({"Controller Detected" : self.GetController()})
             Maintenance["Maintenance"].append({"Controller Software Version" : self.GetParameterStringValue(RegisterStringEnum.VERSION_DATE[REGISTER], RegisterStringEnum.VERSION_DATE[RET_STRING])})
 
             Maintenance["Maintenance"].append({"Minimum GenLink Version" : self.GetParameterStringValue(RegisterStringEnum.MIN_GENLINK_VERSION[REGISTER], RegisterStringEnum.MIN_GENLINK_VERSION[RET_STRING])})
@@ -1742,11 +1742,11 @@ class HPanel(GeneratorController):
             Battery.append({"Battery Voltage" : self.ValueOut(self.GetParameter(self.Reg.BATTERY_VOLTS[REGISTER], ReturnFloat = True, Divider = 100.0), "V", JSONNum)})
             Battery.append({"Battery Charger Current" : self.ValueOut(self.GetParameter(self.Reg.BATTERY_CHARGE_CURRNT[REGISTER], ReturnFloat = True, Divider = 10.0), "A", JSONNum)})
 
-            Engine.append({"Engine Status" : self.GetEngineState()})
+            Engine.append({"Engine State" : self.GetEngineState()})
             Engine.append({"Generator Status" : self.GetParameterStringValue(RegisterStringEnum.GENERATOR_STATUS[REGISTER], RegisterStringEnum.GENERATOR_STATUS[RET_STRING])})
             Engine.append({"Switch State" : self.GetSwitchState()})
             Engine.append({"Output Power" : self.ValueOut(self.GetPowerOutput(ReturnFloat = True), "kW", JSONNum)})
-            Engine.append({"Output Power Factor" : self.ValueOut(self.GetParameter(self.Reg.TOTAL_PF[REGISTER], ReturnFloat = True, Divider = 100.0), "", JSONNum)})
+            Engine.append({"Power Factor" : self.ValueOut(self.GetParameter(self.Reg.TOTAL_PF[REGISTER], ReturnFloat = True, Divider = 100.0), "", JSONNum)})
             Engine.append({"RPM" : self.ValueOut(self.GetParameter(self.Reg.OUTPUT_RPM[REGISTER], ReturnInt = True), "", JSONNum)})
             Engine.append({"Frequency" : self.ValueOut(self.GetParameter(self.Reg.OUTPUT_FREQUENCY[REGISTER], ReturnFloat = True, Divider = 10.0), "Hz", JSONNum)})
             Engine.append({"Throttle Position" : self.ValueOut(self.GetParameter(self.Reg.THROTTLE_POSITION[REGISTER], ReturnInt = True), "Stp", JSONNum)})

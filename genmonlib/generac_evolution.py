@@ -1804,7 +1804,7 @@ class Evolution(GeneratorController):
             Maintenance["Maintenance"] = []
             Maintenance["Maintenance"].append({"Model" : self.Model})
             Maintenance["Maintenance"].append({"Generator Serial Number" : self.GetSerialNumber()})
-            Maintenance["Maintenance"].append({"Controller" : self.GetController()})
+            Maintenance["Maintenance"].append({"Controller Detected" : self.GetController()})
             Maintenance["Maintenance"].append({"Nominal RPM" : self.NominalRPM})
             Maintenance["Maintenance"].append({"Rated kW" : str(self.NominalKW) + " kW"})
             Maintenance["Maintenance"].append({"Nominal Frequency" : str(self.NominalFreq) + " Hz"})
@@ -1866,8 +1866,8 @@ class Evolution(GeneratorController):
                     ControllerSettings.append({"Hours of Protection" : self.GetParameter("0054", Label = "H")})
                     ControllerSettings.append({"Volts Per Hertz" : self.GetParameter("020e")})
                     ControllerSettings.append({"Gain" : self.GetParameter("0235")})
-                    ControllerSettings.append({"Rated Frequency" : self.GetParameter("005a", Label = "Hz")})
-                    ControllerSettings.append({"Rated Voltage" : self.GetParameter("0059", Label = "V")})
+                    ControllerSettings.append({"Target Frequency" : self.GetParameter("005a", Label = "Hz")})
+                    ControllerSettings.append({"Target Voltage" : self.GetParameter("0059", Label = "V")})
 
             if not self.SmartSwitch:
                 Exercise = []

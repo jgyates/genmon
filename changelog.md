@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.14.00 - 2020-02-01
+- Added SNMP Add On. See https://github.com/jgyates/genmon/wiki/1----Software-Overview#gensnmppy-optional for details
+- Changed a few labels of exported JSON data to better support SNMP and avoid namespace conflicts. There is a small chance this could effect some MQTT users depending on how deeply you have relied on namespace paths.
+- Added option to send an email if a software update is available. This can be disabled on the settings page.
+
 ## V1.13.38 - 2020-01-17
 - Changed text to "Inspect Battery" for Nexus models
 

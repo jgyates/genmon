@@ -80,6 +80,7 @@ function updatelibraries() {
   sudo $pipcommand install twilio -U
   sudo $pipcommand install chump -U
   sudo $pipcommand install paho-mqtt -U
+  sudo $pipcommand install pysnmp -U
   echo "Done."
 }
 
@@ -133,6 +134,8 @@ function installgenmon() {
     sudo $pipcommand install twilio
     sudo $pipcommand install chump
     sudo $pipcommand install paho-mqtt
+    sudo $pipcommand install pysnmp
+
     sudo chmod 775 "$genmondir/startgenmon.sh"
     sudo chmod 775 "$genmondir/genmonmaint.sh"
     installrpirtscts

@@ -801,6 +801,35 @@ def GetAddOns():
             "Name to call the generator device, i.e. 'generator'",
             bounds = 'minmax:4:50',
             display_name = "Name for generator device")
+
+        #GENSNMP
+        AddOnCfg['gensnmp'] = collections.OrderedDict()
+        AddOnCfg['gensnmp']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "gensnmp", default = False)
+        AddOnCfg['gensnmp']['title'] = "SNMP Support"
+        AddOnCfg['gensnmp']['description'] = "Allow Genmopn to respond to SNMP requests"
+        AddOnCfg['gensnmp']['icon'] = "Genmon"
+        AddOnCfg['gensnmp']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gensnmppy-optional"
+        AddOnCfg['gensnmp']['parameters'] = collections.OrderedDict()
+
+        AddOnCfg['gensnmp']['parameters']['poll_frequency'] = CreateAddOnParam(
+            ConfigFiles[GENSNMP_CONFIG].ReadValue("poll_frequency", return_type = float, default = 2.0),
+            'float',
+            "The time in seconds between requesting status from genmon. The default value is 2 seconds.",
+            bounds = 'number',
+            display_name = "Poll Interval")
+        AddOnCfg['gensnmp']['parameters']['enterpriseid'] = CreateAddOnParam(
+            ConfigFiles[GENSNMP_CONFIG].ReadValue("enterpriseid", return_type = int, default = 9999),
+            'int',
+            "The enterprise ID used in the SNMP Object Identifier (OID).",
+            bounds = 'required digits',
+            display_name = "Enterprise ID")
+        AddOnCfg['gensnmp']['parameters']['community'] = CreateAddOnParam(
+            ConfigFiles[GENSNMP_CONFIG].ReadValue("community", return_type = str, default = "public"),
+            'string',
+            "SNMP Community string",
+            bounds = 'minmax:4:50',
+            display_name = "SNMP Community")
+
     except Exception as e1:
         LogErrorLine("Error in GetAddOns: " + str(e1))
 
@@ -867,7 +896,8 @@ def SaveAddOnSettings(query_string):
             "genexercise" : ConfigFiles[GENEXERCISE_CONFIG],
             "genemail2sms" : ConfigFiles[GENEMAIL2SMS_CONFIG],
             "gentankutil" : ConfigFiles[GENTANKUTIL_CONFIG],
-            "genalexa" : ConfigFiles[GENALEXA_CONFIG]
+            "genalexa" : ConfigFiles[GENALEXA_CONFIG],
+            "gensnmp" : ConfigFiles[GENSNMP_CONFIG]
         }
 
         for module, entries in settings.items():   # module
@@ -1171,6 +1201,7 @@ def ReadSettingsFromFile():
     ConfigSettings["optimizeforslowercpu"] = ['boolean', 'Optimize for slower CPUs', 25, False, "", "", GENMON_CONFIG, GENMON_SECTION, "optimizeforslowercpu"]
     ConfigSettings["disablepowerlog"] = ['boolean', 'Disable Power / Current Display', 26, False, "", "", GENMON_CONFIG, GENMON_SECTION, "disablepowerlog"]
     ConfigSettings["autofeedback"] = ['boolean', 'Automated Feedback', 29, False, "", "", GENMON_CONFIG, GENMON_SECTION, "autofeedback"]
+    ConfigSettings["update_check"] = ['boolean', 'Check for Software Update', 30, True, "", "", GENMON_CONFIG, GENMON_SECTION, "update_check"]
 
     ConfigSettings["nominalfrequency"] = ['list', 'Rated Frequency', 101, "60", "", "50,60", GENMON_CONFIG, GENMON_SECTION, "nominalfrequency"]
     ConfigSettings["nominalrpm"] = ['int', 'Nominal RPM', 102, "3600", "", "required digits range:1500:4000", GENMON_CONFIG, GENMON_SECTION, "nominalrpm"]
@@ -1669,12 +1700,13 @@ if __name__ == "__main__":
     GENEMAIL2SMS_CONFIG = ConfigFilePath + "genemail2sms.conf"
     GENTANKUTIL_CONFIG = ConfigFilePath + "gentankutil.conf"
     GENALEXA_CONFIG = ConfigFilePath + "genalexa.conf"
+    GENSNMP_CONFIG = ConfigFilePath + "gensnmp.conf"
 
     if os.geteuid() != 0:
         LogConsole("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'.")
         sys.exit(1)
 
-    ConfigFileList = [GENMON_CONFIG, MAIL_CONFIG, GENLOADER_CONFIG, GENSMS_CONFIG, MYMODEM_CONFIG, GENPUSHOVER_CONFIG, GENMQTT_CONFIG, GENSLACK_CONFIG, GENGPIOIN_CONFIG, GENEXERCISE_CONFIG, GENEMAIL2SMS_CONFIG, GENTANKUTIL_CONFIG, GENALEXA_CONFIG]
+    ConfigFileList = [GENMON_CONFIG, MAIL_CONFIG, GENLOADER_CONFIG, GENSMS_CONFIG, MYMODEM_CONFIG, GENPUSHOVER_CONFIG, GENMQTT_CONFIG, GENSLACK_CONFIG, GENGPIOIN_CONFIG, GENEXERCISE_CONFIG, GENEMAIL2SMS_CONFIG, GENTANKUTIL_CONFIG, GENALEXA_CONFIG, GENSNMP_CONFIG]
 
     for ConfigFile in ConfigFileList:
         if not os.path.isfile(ConfigFile):

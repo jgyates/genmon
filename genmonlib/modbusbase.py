@@ -100,8 +100,8 @@ class ModbusBase(MySupport ):
 
         SerialStats.append({"CRC Errors" : "%d " % self.CrcError})
         SerialStats.append({"CRC Percent Errors" : ("%.2f" % (PercentErrors * 100)) + "%"})
-        SerialStats.append({"Packet Timeouts" : "%d" %  self.ComTimoutError})
-        SerialStats.append({"Packet Timeouts Percent Errors" : ("%.2f" % (PercentTimeoutErrors * 100)) + "%"})
+        SerialStats.append({"Timeout Errors" : "%d" %  self.ComTimoutError})
+        SerialStats.append({"Timeout Percent Errors" : ("%.2f" % (PercentTimeoutErrors * 100)) + "%"})
         SerialStats.append({"Modbus Exceptions" : self.SlaveException})
         SerialStats.append({"Validation Errors" : self.ComValidationError})
         SerialStats.append({"Invalid Data" : self.UnexpectedData})
