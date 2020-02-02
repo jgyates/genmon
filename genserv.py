@@ -806,7 +806,7 @@ def GetAddOns():
         AddOnCfg['gensnmp'] = collections.OrderedDict()
         AddOnCfg['gensnmp']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "gensnmp", default = False)
         AddOnCfg['gensnmp']['title'] = "SNMP Support"
-        AddOnCfg['gensnmp']['description'] = "Allow Genmopn to respond to SNMP requests"
+        AddOnCfg['gensnmp']['description'] = "Allow Genmon to respond to SNMP requests"
         AddOnCfg['gensnmp']['icon'] = "Genmon"
         AddOnCfg['gensnmp']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gensnmppy-optional"
         AddOnCfg['gensnmp']['parameters'] = collections.OrderedDict()
