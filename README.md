@@ -62,6 +62,7 @@ The software supports the following features:
 - Backup configuration files
 - Enhanced Exercise options for Evolution/Nexus controller (Exercise Transfer Switch)
 - Optional low bandwidth URL (http://ipaddress:8000/low)
+- Firmware update notification for Evolution 2.0
 - SNMP monitoring
 
 ![Generator Monitor Web Interface](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/Web_UI_Status.png)
