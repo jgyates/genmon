@@ -867,6 +867,7 @@ class Monitor(MySupport):
                                     msgbody = "\nA software update is available for the " + self.ProgramName + ". The new version (" + value + ") can be updated on the About page of the web interface. You can disable this email from being sent on the Settings page."
                                     if len(self.UserURL):
                                         msgbody += "\n\nWeb Interface URL: " + self.UserURL
+                                    msgbody += "\n\nChange Log: https://raw.githubusercontent.com/jgyates/genmon/master/changelog.md"
                                     self.MessagePipe.SendMessage(title , msgbody, msgtype = "info", onlyonce = True)
 
                 except Exception as e1:
