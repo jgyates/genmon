@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.14.02 - 2020-02-08
+- Added SNMP graphic on add on page
+
 ## V1.14.01 - 2020-02-02
 - Minor change to logic in gensnmp.py to avoid namespace collision
 - Correct typo

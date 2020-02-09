@@ -323,8 +323,8 @@ li a:hover:not(.active) {
 
 /* Addons */
 
-.linux_small, .mqtt_small, .rpi_small, .slack_small, .twilio_small, .pushover_small, .linux, .mqtt, .pushover, .rpi, .slack, .twilio, .sms, .sms_small, .csv_small, .csv, .selftest, .selftest_small, .Genmon, .Genmon_small, .text_small, .serveo, .tankutility, .alexa, .serveo_small, .tankutility_small, .alexa_small, .text{
-    background: url(images/addons.png) no-repeat;
+.linux_small, .mqtt_small, .rpi_small, .slack_small, .twilio_small, .pushover_small, .linux, .mqtt, .pushover, .rpi, .slack, .twilio, .sms, .sms_small, .csv_small, .csv, .selftest, .selftest_small, .Genmon, .Genmon_small, .text_small, .serveo, .alexa, .serveo_small, .tankutility_small, .alexa_small, .text, .tankutility, .snmp, .snmp_small{
+	background: url(images/addons.png) no-repeat;
 }
 
 .linux_small{
@@ -459,12 +459,6 @@ li a:hover:not(.active) {
 	height: 100px;
 }
 
-.tankutility{
-	background-position: 0 -538px ;
-	width: 252px;
-	height: 70px;
-}
-
 .alexa{
 	background-position: -1px -618px ;
 	width: 252px;
@@ -493,6 +487,24 @@ li a:hover:not(.active) {
 	background-position: -261px -479px ;
 	width: 252px;
 	height: 120px;
+}
+
+.tankutility{
+	background-position: 0 -538px ;
+	width: 252px;
+	height: 70px;
+}
+
+.snmp{
+	background-position: -261px -712px ;
+	width: 252px;
+	height: 75px;
+}
+
+.snmp_small{
+	background-position: -198px -732px ;
+	width: 50px;
+	height: 15px;
 }
 
 
