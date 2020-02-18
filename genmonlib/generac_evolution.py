@@ -1795,7 +1795,7 @@ class Evolution(GeneratorController):
             self.LogErrorLine("Error in CheckForAlarms: " + str(e1))
 
     #------------ Evolution:DisplayMaintenance ---------------------------------
-    def DisplayMaintenance (self, DictOut = False):
+    def DisplayMaintenance (self, DictOut = False, JSONNum = False):
 
         try:
             # use ordered dict to maintain order of output
@@ -1810,15 +1810,21 @@ class Evolution(GeneratorController):
             Maintenance["Maintenance"].append({"Nominal Frequency" : str(self.NominalFreq) + " Hz"})
             Maintenance["Maintenance"].append({"Fuel Type" : self.FuelType})
             if self.FuelSensorSupported():
-                Maintenance["Maintenance"].append({"Fuel Level Sensor" : self.GetFuelSensor()})
+                Maintenance["Maintenance"].append({"Fuel Level Sensor" : self.ValueOut(self.GetFuelSensor(ReturnInt = True), "%", JSONNum)})
             if self.FuelConsumptionGaugeSupported():
-                Maintenance["Maintenance"].append({"Estimated Fuel In Tank" : self.GetEstimatedFuelInTank()})
+                if self.UseMetric:
+                    Units = "L"
+                else:
+                    Units = "gal"
+                Maintenance["Maintenance"].append({"Estimated Fuel In Tank" : self.ValueOut(self.GetEstimatedFuelInTank(ReturnFloat = True), Units, JSONNum)})
+
 
             if self.EngineDisplacement != "Unknown":
-                Maintenance["Maintenance"].append({"Engine Displacement" : self.EngineDisplacement})
+                Maintenance["Maintenance"].append({"Engine Displacement" : self.UnitsOut( self.EngineDisplacement, type = float, NoString = JSONNum)})
+
 
             if self.EvolutionController and self.Evolution2:
-                Maintenance["Maintenance"].append({"Ambient Temperature Sensor" : self.GetParameter("05ed", Label = "F")})
+                Maintenance["Maintenance"].append({"Ambient Temperature Sensor" : self.ValueOut(self.GetParameter("05ed", ReturnInt = True), "F", JSONNum)})
 
             # Only update power log related info once a min for performance reasons
             if self.LastHouseKeepingTime == None or self.GetDeltaTimeMinutes(datetime.datetime.now() - self.LastHouseKeepingTime) >= 1 :
@@ -1834,40 +1840,40 @@ class Evolution(GeneratorController):
                     self.RunHoursMonth = self.GetPowerHistory("power_log_json=43200,time")
 
                 if self.KWHoursMonth != None:
-                    Maintenance["Maintenance"].append({"kW Hours in last 30 days" : str(self.KWHoursMonth) + " kWh"})
+                    Maintenance["Maintenance"].append({"kW Hours in last 30 days" : self.UnitsOut(str(self.KWHoursMonth) + " kWh", type = float, NoString = JSONNum)})
                 if self.FuelMonth != None:
-                    Maintenance["Maintenance"].append({"Fuel Consumption in last 30 days" : self.FuelMonth})
+                    Maintenance["Maintenance"].append({"Fuel Consumption in last 30 days" : self.UnitsOut(self.FuelMonth, type = float, NoString = JSONNum)})
                 if self.FuelTotal != None:
-                    Maintenance["Maintenance"].append({"Total Power Log Fuel Consumption" : self.FuelTotal})
+                    Maintenance["Maintenance"].append({"Total Power Log Fuel Consumption" : self.UnitsOut(self.FuelTotal, type = float, NoString = JSONNum)})
                 if self.RunHoursMonth != None:
-                    Maintenance["Maintenance"].append({"Run Hours in last 30 days" : str(self.RunHoursMonth) + " h"})
+                    Maintenance["Maintenance"].append({"Run Hours in last 30 days" : self.UnitsOut(str(self.RunHoursMonth) + " h", type = float, NoString = JSONNum)})
 
 
             ControllerSettings = []
             Maintenance["Maintenance"].append({"Controller Settings" : ControllerSettings})
 
             if self.EvolutionController and not self.LiquidCooled:
-                ControllerSettings.append({"Calibrate Current 1" : self.GetParameter("05f6")})
-                ControllerSettings.append({"Calibrate Current 2" : self.GetParameter("05f7")})
+                ControllerSettings.append({"Calibrate Current 1" : self.ValueOut(self.GetParameter("05f6", ReturnInt = True), "", JSONNum)})
+                ControllerSettings.append({"Calibrate Current 2" : self.ValueOut(self.GetParameter("05f7", ReturnInt = True), "", JSONNum)})
 
             if not self.PreNexus:
-                ControllerSettings.append({"Calibrate Volts" : self.GetParameter("0208")})
+                ControllerSettings.append({"Calibrate Volts" : self.ValueOut(self.GetParameter("0208", ReturnInt = True), "", JSONNum)})
 
             ControllerSettings.append({"Nominal Line Voltage" : str(self.GetModelInfo( "nominalvolts")) +  " V"})
             ControllerSettings.append({"Rated Max Power" : str(self.GetModelInfo( "kw")) +  " kW"})
             if self.LiquidCooled:
 
-                ControllerSettings.append({"Param Group" : self.GetParameter("020a")})
-                ControllerSettings.append({"Voltage Code" : self.GetParameter("020b")})
+                ControllerSettings.append({"Param Group" : self.ValueOut(self.GetParameter("020a", ReturnInt = True), "", JSONNum)})
+                ControllerSettings.append({"Voltage Code" : self.ValueOut(self.GetParameter("020b", ReturnInt = True), "", JSONNum)})
                 ControllerSettings.append({"Phase" : self.GetLiquidCooledModelInfo( "phase")})
 
                 if self.EvolutionController and self.LiquidCooled:
                     # get total hours since activation
-                    ControllerSettings.append({"Hours of Protection" : self.GetParameter("0054", Label = "H")})
-                    ControllerSettings.append({"Volts Per Hertz" : self.GetParameter("020e")})
-                    ControllerSettings.append({"Gain" : self.GetParameter("0235")})
-                    ControllerSettings.append({"Target Frequency" : self.GetParameter("005a", Label = "Hz")})
-                    ControllerSettings.append({"Target Voltage" : self.GetParameter("0059", Label = "V")})
+                    ControllerSettings.append({"Hours of Protection" : self.ValueOut(self.GetParameter("0054", ReturnInt = True), "h", JSONNum)})
+                    ControllerSettings.append({"Volts Per Hertz" : self.ValueOut(self.GetParameter("020e", ReturnInt = True), "", JSONNum)})
+                    ControllerSettings.append({"Gain" : self.ValueOut(self.GetParameter("0235", ReturnInt = True), "", JSONNum)})
+                    ControllerSettings.append({"Target Frequency" : self.ValueOut(self.GetParameter("005a", ReturnInt = True), "Hz", JSONNum)})
+                    ControllerSettings.append({"Target Voltage" : self.ValueOut(self.GetParameter("0059", ReturnInt = True), "V", JSONNum)})
 
             if not self.SmartSwitch:
                 Exercise = []
@@ -1901,7 +1907,7 @@ class Evolution(GeneratorController):
                     if not self.LiquidCooled:
                         Service.append({"Battery Check Due" : self.GetServiceDueDate("BATTERY")})
 
-            Service.append({"Total Run Hours" : self.GetRunHours()})
+            Service.append({"Total Run Hours" : self.ValueOut(self.GetRunHours(ReturnFloat = True), "h", JSONNum)})
             Service.append({"Hardware Version" : self.GetHardwareVersion()})
             Service.append({"Firmware Version" : self.GetFirmwareVersion()})
 
@@ -3536,7 +3542,7 @@ class Evolution(GeneratorController):
 
 
     #------------ Evolution:GetRunHours ----------------------------------------
-    def GetRunHours(self):
+    def GetRunHours(self, ReturnFloat = False):
 
         try:
             RunHours = None
@@ -3552,13 +3558,18 @@ class Evolution(GeneratorController):
                     RunHours = "0.0"
                 if self.AdditionalRunHours != None:
                     RunHours = float(RunHours) + float(self.AdditionalRunHours)
-
-            return str(RunHours)
+            if ReturnFloat:
+                return float(RunHours)
+            else:
+                return str(RunHours)
         except Exception as e1:
             self.LogErrorLine("Error getting run hours: " + str(RunHours) + ":" + str(self.AdditionalRunHours) + ": "+ str(e1))
-            return "Unknown"
+            if ReturnFloat:
+                return 0.0
+            else:
+                return "0.0"
     #------------------- Evolution:DisplayOutage -------------------------------
-    def DisplayOutage(self, DictOut = False):
+    def DisplayOutage(self, DictOut = False, JSONNum = False):
 
         try:
 
@@ -3578,20 +3589,17 @@ class Evolution(GeneratorController):
             Outage["Outage"].append({"System In Outage" : "Yes" if self.SystemInOutage else "No"})
 
              # get utility voltage
-            Value = self.GetUtilityVoltage()
-            if len(Value):
-                Outage["Outage"].append({"Utility Voltage" : Value})
+            Outage["Outage"].append({"Utility Voltage" : self.ValueOut(self.GetUtilityVoltage(ReturnInt = True), "V", JSONNum)})
+            Outage["Outage"].append({"Utility Voltage Minimum" : self.ValueOut(self.UtilityVoltsMin, "V", JSONNum)})
+            Outage["Outage"].append({"Utility Voltage Maximum" : self.ValueOut(self.UtilityVoltsMax, "V", JSONNum)})
 
-            Outage["Outage"].append({"Utility Voltage Minimum" : "%d V " % (self.UtilityVoltsMin)})
-            Outage["Outage"].append({"Utility Voltage Maximum" : "%d V " % (self.UtilityVoltsMax)})
-
-            Outage["Outage"].append({"Utility Threshold Voltage" : self.GetThresholdVoltage()})
+            Outage["Outage"].append({"Utility Threshold Voltage" : self.ValueOut(self.GetThresholdVoltage(ReturnInt = True), "V", JSONNum)})
 
             if (self.EvolutionController and self.LiquidCooled) or (self.EvolutionController and self.Evolution2):
-                Outage["Outage"].append({"Utility Pickup Voltage" : self.GetPickUpVoltage()})
+                Outage["Outage"].append({"Utility Pickup Voltage" : self.ValueOut(self.GetPickUpVoltage(ReturnInt = True), "V", JSONNum)})
 
             if self.EvolutionController:
-                Outage["Outage"].append({"Startup Delay" : self.GetStartupDelay()})
+                Outage["Outage"].append({"Startup Delay" : self.UnitsOut( self.GetStartupDelay(), type = int, NoString = JSONNum)})
 
             Outage["Outage"].append({"Outage Log" : self.DisplayOutageHistory()})
 

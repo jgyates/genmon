@@ -1658,7 +1658,7 @@ class HPanel(GeneratorController):
         return RetValue
 
     #------------ HPanel::DisplayMaintenance -----------------------------------
-    def DisplayMaintenance (self, DictOut = False):
+    def DisplayMaintenance (self, DictOut = False, JSONNum = False):
 
         try:
             # use ordered dict to maintain order of output
@@ -1939,7 +1939,7 @@ class HPanel(GeneratorController):
         return self.GetParameter(self.Reg.ENGINE_HOURS[REGISTER],"", 10.0 )
 
     #------------------- HPanel::DisplayOutage ---------------------------------
-    def DisplayOutage(self, DictOut = False):
+    def DisplayOutage(self, DictOut = False, JSONNum = False):
 
         try:
             Outage = collections.OrderedDict()

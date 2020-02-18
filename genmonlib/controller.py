@@ -438,21 +438,21 @@ class GeneratorController(MySupport):
             self.LogErrorLine("Error in DisplayLogs: " + str(e1))
 
     #------------ GeneratorController::DisplayMaintenance ----------------------
-    def DisplayMaintenance (self, DictOut = False):
+    def DisplayMaintenance (self, DictOut = False, JSONNum = False):
         try:
             pass
         except Exception as e1:
             self.LogErrorLine("Error in DisplayMaintenance: " + str(e1))
 
     #------------ GeneratorController::DisplayStatus ---------------------------
-    def DisplayStatus(self, DictOut = False):
+    def DisplayStatus(self, DictOut = False, JSONNum = False):
         try:
             pass
         except Exception as e1:
             self.LogErrorLine("Error in DisplayStatus: " + str(e1))
 
     #------------------- GeneratorController::DisplayOutage --------------------
-    def DisplayOutage(self, DictOut = False):
+    def DisplayOutage(self, DictOut = False, JSONNum = False):
         try:
             pass
         except Exception as e1:

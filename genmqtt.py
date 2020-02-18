@@ -120,11 +120,15 @@ class MyGenPush(MySupport):
 
                 if not self.UseNumeric:
                     statusdata = self.SendCommand("generator: status_json")
+                    maintdata = self.SendCommand("generator: maint_json")
+                    outagedata = self.SendCommand("generator: outage_json")
+                    monitordata = self.SendCommand("generator: monitor_json")
                 else:
                     statusdata = self.SendCommand("generator: status_num_json")
-                outagedata = self.SendCommand("generator: outage_json")
-                monitordata = self.SendCommand("generator: monitor_json")
-                maintdata = self.SendCommand("generator: maint_json")
+                    maintdata = self.SendCommand("generator: maint_num_json")
+                    outagedata = self.SendCommand("generator: outage_num_json")
+                    monitordata = self.SendCommand("generator: monitor_num_json")
+
                 try:
                     GenmonDict = {}
                     TempDict = {}

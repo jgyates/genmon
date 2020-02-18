@@ -182,6 +182,28 @@ class MySupport(MyCommon):
 
         return Thread.Wait(timeout)
 
+    #------------ MySupport::SplitUnits ----------------------------------------
+    def UnitsOut(self, input, type = None, NoString = False):
+
+        try:
+            if not NoString:
+                return input
+            InputArray = input.strip().split(" ")
+            if len(InputArray) == 2:
+                if type == int:
+                    InputArray[0] = int(InputArray[0])
+                elif type == float:
+                    InputArray[0] = float(InputArray[0])
+                else:
+                    self.LogError("Invalid type for UnitsOut: " + input)
+                    return input
+                return self.ValueOut(value = InputArray[0], unit = InputArray[1], NoString = NoString)
+            else:
+                self.LogError("Invalid input for UnitsOut: " + input)
+                return input
+        except Exception as e1:
+            self.LogErrorLine("Error in SplitUnits: " + str(e1))
+            return input
     #------------ MySupport::ValueOut ------------------------------------------
     def ValueOut(self, value, unit, NoString = False):
         try:
@@ -203,7 +225,6 @@ class MySupport(MyCommon):
                 if not NoString:
                     return "%.2f %s" % (float(value), str(unit))
                 else:
-                    ReturnDict = collections.OrderedDict()
                     ReturnDict["type"] = 'float'
                     ReturnDict["value"] = round(value, 2)
                     return ReturnDict

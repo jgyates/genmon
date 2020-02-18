@@ -34,7 +34,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.14.02"
+GENMON_VERSION = "V1.14.03"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(MySupport):
@@ -496,9 +496,12 @@ class Monitor(MySupport):
             "status_json"       : [self.Controller.DisplayStatus, (True,), True],
             "status_num_json"   : [self.Controller.DisplayStatus, (True,True), True],
             "maint_json"        : [self.Controller.DisplayMaintenance, (True,), True],
+            "maint_num_json"    : [self.Controller.DisplayMaintenance, (True,True), True],
             "monitor_json"      : [self.DisplayMonitor, (True,), True],
+            "monitor_num_json"  : [self.DisplayMonitor, (True,True), True],
             "weather_json"      : [self.DisplayWeather, (True,), True],
             "outage_json"       : [self.Controller.DisplayOutage, (True,), True],
+            "outage_num_json"   : [self.Controller.DisplayOutage, (True,True), True],
             "gui_status_json"   : [self.GetStatusForGUI, (), True],
             "get_maint_log_json": [self.Controller.GetMaintLog, (), True],
             "add_maint_log"     : [self.Controller.AddEntryToMaintLog, (command,), True],    # Do not do command.lower() since this input is JSON
@@ -659,7 +662,7 @@ class Monitor(MySupport):
         return WeatherData
 
     #------------ Monitor::DisplayMonitor --------------------------------------
-    def DisplayMonitor(self, DictOut = False):
+    def DisplayMonitor(self, DictOut = False, JSONNum = False):
 
         try:
             Monitor = collections.OrderedDict()

@@ -1,5 +1,8 @@
-# Changelog
+# Change Log
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
+
+## V1.14.03 - 2020-02-17
+- Updated MQTT support to allow numeric values for Maintenance and Outage related data (Evo/Nexus)
 
 ## V1.14.02 - 2020-02-08
 - Added SNMP graphic on add on page

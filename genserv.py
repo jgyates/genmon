@@ -609,7 +609,7 @@ def GetAddOns():
         AddOnCfg['genmqtt']['parameters']['numeric_json'] = CreateAddOnParam(
             ConfigFiles[GENMQTT_CONFIG].ReadValue("numeric_json", return_type = bool, default = False),
             'boolean',
-            "If enabled will return numeric values in the Status topic as a JSON string which can be converted to an object with integer or float values.",
+            "If enabled will return numeric values in the Status, Maintenance (Evo/Nexus only) and Outage topics as a JSON string which can be converted to an object with integer or float values.",
             bounds = '',
             display_name = "JSON for Numerics")
         AddOnCfg['genmqtt']['parameters']['cert_authority_path'] = CreateAddOnParam(
