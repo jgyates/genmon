@@ -16,6 +16,7 @@ import datetime, threading, crcmod, sys, time, collections
 from genmonlib.modbusbase import ModbusBase
 from genmonlib.myserial import SerialDevice
 from genmonlib.myserialtcp import SerialTCPDevice
+from genmonlib.program_defaults import ProgramDefaults
 
 #--------------------- MODBUS specific Const defines for Generator class--------
 # Packet offsets
@@ -117,7 +118,7 @@ class ModbusProtocol(ModbusBase):
 
         except Exception as e1:
             self.LogErrorLine("Error opening serial device: " + str(e1))
-            sys.exit(1)
+            self.FatalError("Error opening serial device.")
 
         try:
             # CRCMOD library, used for CRC calculations
@@ -151,6 +152,17 @@ class ModbusProtocol(ModbusBase):
             self.LogErrorLine("Error in GetExceptionString: " + str(e1))
 
         return ""
+    # ---------- ModbusProtocol::CheckResponseAddress---------------------------
+    def CheckResponseAddress(self, Address):
+
+        if Address == self.Address:
+            return True
+        if self.ResponseAddress == None:
+            return False
+        if Address == self.ResponseAddress:
+            return True
+        return False
+
     # ---------- ModbusProtocol::GetPacketFromSlave-----------------------------
     #  This function returns two values, the first is boolean. The seconds is
     #  a packet (list). If the return value is True and an empty packet, then
@@ -165,7 +177,7 @@ class ModbusProtocol(ModbusBase):
             if not len(self.Slave.Buffer):
                 return True, EmptyPacket
 
-            if self.Slave.Buffer[MBUS_OFF_ADDRESS] != self.Address:
+            if not self.CheckResponseAddress(self.Slave.Buffer[MBUS_OFF_ADDRESS]):
                 self.DiscardByte()
                 self.Flush()
                 return False, EmptyPacket
@@ -255,7 +267,7 @@ class ModbusProtocol(ModbusBase):
         try:
             MasterPacket = []
 
-            MasterPacket = self.CreateMasterPacket(Register, length = Length, command = MBUS_CMD_WRITE_REGS, data = Data)
+            MasterPacket = self.CreateMasterPacket(Register, length = int(Length), command = MBUS_CMD_WRITE_REGS, data = Data)
 
             if len(MasterPacket) == 0:
                 return False
@@ -271,7 +283,7 @@ class ModbusProtocol(ModbusBase):
         MasterPacket = []
 
         try:
-            MasterPacket = self.CreateMasterPacket(Register, length = Length)
+            MasterPacket = self.CreateMasterPacket(Register, length = int(Length))
 
             if len(MasterPacket) == 0:
                 return ""
@@ -288,7 +300,7 @@ class ModbusProtocol(ModbusBase):
         MasterPacket = []
 
         try:
-            MasterPacket = self.CreateMasterPacket(Register, length = Length, command = MBUS_CMD_READ_FILE, file_num = file_num)
+            MasterPacket = self.CreateMasterPacket(Register, length = int(Length), command = MBUS_CMD_READ_FILE, file_num = file_num)
 
             if len(MasterPacket) == 0:
                 return ""
@@ -492,7 +504,7 @@ class ModbusProtocol(ModbusBase):
             if MasterPacket[MBUS_OFF_ADDRESS] != self.Address:
                 self.LogError("Validation Error: Invalid address in UpdateRegistersFromPacket (Master)")
                 return "Error"
-            if SlavePacket[MBUS_OFF_ADDRESS] != self.Address:
+            if not self.CheckResponseAddress(SlavePacket[MBUS_OFF_ADDRESS]):
                 self.LogError("Validation Error: Invalid address in UpdateRegistersFromPacket (Slave)")
                 return "Error"
             if not SlavePacket[MBUS_OFF_COMMAND] in [MBUS_CMD_READ_REGS, MBUS_CMD_WRITE_REGS, MBUS_CMD_READ_FILE]:
@@ -601,10 +613,10 @@ class ModbusProtocol(ModbusBase):
             return 0
     # ---------- ModbusProtocol::GetCommStats-----------------------------------
     def GetCommStats(self):
-        SerialStats = collections.OrderedDict()
+        SerialStats = []
 
         try:
-            SerialStats["Packet Count"] = "M: %d, S: %d" % (self.TxPacketCount, self.RxPacketCount)
+            SerialStats.append({"Packet Count" : "M: %d, S: %d" % (self.TxPacketCount, self.RxPacketCount)})
 
             if self.CrcError == 0 or self.TxPacketCount == 0:
                 PercentErrors = 0.0
@@ -616,26 +628,26 @@ class ModbusProtocol(ModbusBase):
             else:
                 PercentTimeoutErrors = float(self.ComTimoutError) / float(self.TxPacketCount)
 
-            SerialStats["CRC Errors"] = "%d " % self.CrcError
-            SerialStats["CRC Percent Errors"] = ("%.2f" % (PercentErrors * 100)) + "%"
-            SerialStats["Packet Timeouts"] = "%d" %  self.ComTimoutError
-            SerialStats["Packet Timeouts Percent Errors"] = ("%.2f" % (PercentTimeoutErrors * 100)) + "%"
-            SerialStats["Modbus Exceptions"] = self.SlaveException
-            SerialStats["Validation Errors"] = self.ComValidationError
-            SerialStats["Invalid Data"] = self.UnexpectedData
+            SerialStats.append({"CRC Errors" : "%d " % self.CrcError})
+            SerialStats.append({"CRC Percent Errors" : ("%.2f" % (PercentErrors * 100)) + "%"})
+            SerialStats.append({"Timeout Errors" : "%d" %  self.ComTimoutError})
+            SerialStats.append({"Timeout Percent Errors" : ("%.2f" % (PercentTimeoutErrors * 100)) + "%"})
+            SerialStats.append({"Modbus Exceptions" : self.SlaveException})
+            SerialStats.append({"Validation Errors" : self.ComValidationError})
+            SerialStats.append({"Invalid Data" : self.UnexpectedData})
             # add serial stats
-            SerialStats["Discarded Bytes"] = "%d" % self.Slave.DiscardedBytes
-            SerialStats["Comm Restarts"] = "%d" % self.Slave.Restarts
+            SerialStats.append({"Discarded Bytes" : "%d" % self.Slave.DiscardedBytes})
+            SerialStats.append({"Comm Restarts" : "%d" % self.Slave.Restarts})
 
             CurrentTime = datetime.datetime.now()
             #
             Delta = CurrentTime - self.ModbusStartTime        # yields a timedelta object
             PacketsPerSecond = float((self.TxPacketCount + self.RxPacketCount)) / float(Delta.total_seconds())
-            SerialStats["Packets Per Second"] = "%.2f" % (PacketsPerSecond)
+            SerialStats.append({"Packets Per Second" : "%.2f" % (PacketsPerSecond)})
 
             if self.RxPacketCount:
                 AvgTransactionTime = float(self.TotalElapsedPacketeTime / self.RxPacketCount)
-                SerialStats["Average Transaction Time"] = "%.4f sec" % (AvgTransactionTime)
+                SerialStats.append({"Average Transaction Time" : "%.4f sec" % (AvgTransactionTime)})
         except Exception as e1:
             self.LogErrorLine("Error in GetCommStats: " + str(e1))
         return SerialStats

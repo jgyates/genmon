@@ -155,7 +155,7 @@ form {
   left:50%;
   height:240px;
   width:300px;
-  margin-top:-140px; /* this is half the height of your div*/  
+  margin-top:-140px; /* this is half the height of your div*/
   margin-left:-150px; /*this is half of width of your div*/
 }
 form:after {
@@ -228,12 +228,12 @@ label > span {
 <form action="/" method="POST">
   <h2>Generator Monitoring</h2>
   <div class="ffl-wrapper">
-    <label for="username" class="ffl-label">Username</label>
-    <input type="text" id="username" name="username">
+    <label for="username" class="ffl-label"></label>
+    <input type="text" id="username" name="username" placeholder="Username">
   </div>
   <div class="ffl-wrapper">
-    <label for="password" class="ffl-label">Password</label>
-    <input type="password" id="password" name="password">
+    <label for="password" class="ffl-label"></label>
+    <input type="password" id="password" name="password" placeholder="Password">
   </div>
   <button type="submit">Log In</button>
 </form>
@@ -241,6 +241,6 @@ label > span {
 <script type="text/javascript">
   $('.ffl-wrapper').floatingFormLabels();
 </script>
-  
+
 {% endif %}
 {% endblock %}

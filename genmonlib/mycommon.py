@@ -11,14 +11,18 @@
 
 import os, sys, time, json
 
+from genmonlib.program_defaults import ProgramDefaults
+
 #------------ MyCommon class -----------------------------------------------------
 class MyCommon(object):
+    DefaultConfPath = ProgramDefaults.ConfPath
     def __init__(self):
         self.log = None
         self.console = None
         self.Threads = {}       # Dict of mythread objects
+        self.debug = False
         self.MaintainerAddress = "generatormonitor.software@gmail.com"
-        pass
+
     #------------ MyCommon::StripJson ------------------------------------------
     def StripJson(self, InputString):
         for char in '{}[]"':
@@ -61,21 +65,49 @@ class MyCommon(object):
 
         # end printToString
 
+    #---------- MyCommon:FindDictValueInListByKey ------------------------------
+    def FindDictValueInListByKey(self, key, listname):
+
+        try:
+            for item in listname:
+                if isinstance(item, dict):
+                    for dictkey, value in item.items():
+                        if dictkey.lower() == key.lower():
+                            return value
+        except Exception as e1:
+            self.LogErrorLine("Error in FindDictInList: " + str(e1))
+        return None
     #----------  MyCommon::removeAlpha------------------------------------------
     # used to remove alpha characters from string so the string contains a
     # float value (leaves all special characters)
     def removeAlpha(self, inputStr):
         answer = ""
         for char in inputStr:
-            if not char.isalpha():
+            if not char.isalpha() and char != ' ':
                 answer += char
-        return answer
+        return answer.strip()
     #------------ MyCommon::MergeDicts -----------------------------------------
     def MergeDicts(self, x, y):
         #Given two dicts, merge them into a new dict as a shallow copy.
         z = x.copy()
         z.update(y)
         return z
+
+    #---------------------MyCommon:urljoin--------------------------------------
+    def urljoin(self, *parts):
+        # first strip extra forward slashes (except http:// and the likes) and
+        # create list
+        part_list = []
+        for part in parts:
+            p = str(part)
+            if p.endswith('//'):
+                p = p[0:-1]
+            else:
+                p = p.strip('/')
+            part_list.append(p)
+        # join everything together
+        url = '/'.join(part_list)
+        return url
 
     #---------------------------------------------------------------------------
     def LogInfo(self, message, LogLine = False):
@@ -86,27 +118,48 @@ class MyCommon(object):
             self.LogErrorLine(message)
         self.LogConsole(message)
     #---------------------MyCommon::LogConsole------------------------------------
-    def LogConsole(self, Message):
+    def LogConsole(self, Message, Error = None):
         if not self.console == None:
             self.console.error(Message)
 
     #---------------------MyCommon::LogError------------------------------------
-    def LogError(self, Message):
+    def LogError(self, Message, Error = None):
         if not self.log == None:
+            if Error != None:
+                Message = Message + " : " + self.GetErrorString(Error)
             self.log.error(Message)
     #---------------------MyCommon::FatalError----------------------------------
-    def FatalError(self, Message):
+    def FatalError(self, Message, Error = None):
+        if Error != None:
+            Message = Message + " : " + self.GetErrorString(Error)
         if not self.log == None:
             self.log.error(Message)
+        if not self.console == None:
+            self.console.error(Message)
         raise Exception(Message)
     #---------------------MyCommon::LogErrorLine--------------------------------
-    def LogErrorLine(self, Message):
+    def LogErrorLine(self, Message, Error = None):
         if not self.log == None:
+            if Error != None:
+                Message = Message + " : " + self.GetErrorString(Error)
             self.log.error(Message + " : " + self.GetErrorLine())
 
+    # ---------- MyCommon::LogDebug---------------------------------------------
+    def LogDebug(self, Message, Error = None):
+
+        if self.debug:
+            self.LogError(Message, Error)
     #---------------------MyCommon::GetErrorLine--------------------------------
     def GetErrorLine(self):
         exc_type, exc_obj, exc_tb = sys.exc_info()
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
         lineno = exc_tb.tb_lineno
         return fname + ":" + str(lineno)
+
+    #---------------------MyCommon::GetErrorString------------------------------
+    def GetErrorString(self, Error):
+
+        try:
+            return str(Error)
+        except:
+            return Error

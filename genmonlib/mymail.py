@@ -9,7 +9,7 @@
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
 
-import datetime, time, smtplib, threading
+import datetime, time, smtplib, threading, sys
 import imaplib, email, email.header
 import os
 from os.path import basename
@@ -25,6 +25,7 @@ from genmonlib.myconfig import MyConfig
 from genmonlib.mysupport import MySupport
 from genmonlib.mylog import SetupLogger
 from genmonlib.mythread import MyThread
+from genmonlib.program_defaults import ProgramDefaults
 
 #imaplib.Debug = 4
 
@@ -37,15 +38,16 @@ class MyMail(MySupport):
         processed_folder = None,
         incoming_callback = None,
         localinit = False,
-        loglocation = "/var/log/",
-        ConfigFilePath = None,
+        loglocation = ProgramDefaults.LogPath,
+        ConfigFilePath = "/etc/",
+        log = None,
         start = True):
 
         self.Monitor = monitor                          # true if we receive IMAP email
         self.IncomingFolder = incoming_folder           # folder to look for incoming email
         self.ProcessedFolder = processed_folder         # folder to move mail to once processed
         self.IncomingCallback = incoming_callback       # called back with mail subject as a parameter
-        if ConfigFilePath == None:
+        if ConfigFilePath == None or ConfigFilePath == "":
             self.ConfigFilePath = "/etc/"
         else:
             self.ConfigFilePath = ConfigFilePath
@@ -54,7 +56,9 @@ class MyMail(MySupport):
         self.DisableEmail = False
         self.DisableIMAP = False
         self.DisableSNMP = False
+        self.DisableSmtpAuth = False
         self.SSLEnabled = False
+        self.TLSDisable = False
         self.UseBCC = False
         self.Threads = {}                               # Dict of mythread objects
         self.ModulePath = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/"
@@ -66,15 +70,17 @@ class MyMail(MySupport):
             self.logfile = loglocation + "mymail.log"
             self.configfile = self.ConfigFilePath + "mymail.conf"
 
-        self.log = SetupLogger("mymail", self.logfile)
+        if log == None:
+            self.log = SetupLogger("mymail", self.logfile)
+        else:
+            self.log = log
 
-        # if mymail.conf is not in the /etc directory attempt to copy it from the
+        # if mymail.conf is present attempt to copy it from the
         # main source directory
         if not os.path.isfile(self.configfile):
             if os.path.isfile(self.ModulePath + "mymail.conf"):
                 copyfile(self.ModulePath + "mymail.conf" , self.configfile)
             else:
-                self.LogConsole("Missing config file : " + self.configfile)
                 self.LogError("Missing config file : " + self.configfile)
                 sys.exit(1)
 
@@ -113,12 +119,12 @@ class MyMail(MySupport):
 
     #---------- MyMail.TestSendSettings ----------------------------------------
     @staticmethod
-    def TestSendSettings( smtp_server =  None, smtp_port =  587, email_account = None, sender_account = None, recipient = None, password = None, use_ssl = False):
+    def TestSendSettings( smtp_server =  None, smtp_port =  587, email_account = None, sender_account = None, sender_name = None, recipient = None, password = None, use_ssl = False, tls_disable = False, smtpauth_disable = False):
 
         if smtp_server == None or not len(smtp_server):
             return "Error: Invalid SMTP server"
 
-        if email_account  == None or not len(email_account):
+        if not isinstance(smtpauth_disable , bool) and (email_account  == None or not len(email_account)):
             return "Error: Invalid email account"
 
         if sender_account  == None or not len(sender_account):
@@ -128,20 +134,27 @@ class MyMail(MySupport):
             return "Error: Invalid email recipient"
 
         if password  == None or not len(password):
-            return "Error: Invalid email recipient"
+            password = ""
 
         if smtp_port == None or not isinstance(smtp_port , int):
             return "Error: Invalid SMTP port"
 
         if use_ssl == None or not isinstance(use_ssl , bool):
             return "Error: Invalid Use SSL value"
+
+        if tls_disable == None or not isinstance(tls_disable , bool):
+            return "Error: Invalid TLS Disable value"
         # update date
         dtstamp=datetime.datetime.now().strftime('%a %d-%b-%Y')
         # update time
         tmstamp=datetime.datetime.now().strftime('%I:%M:%S %p')
 
         msg = MIMEMultipart()
-        msg['From'] = sender_account
+        if sender_name == None or not len(sender_name):
+            msg['From'] = sender_account
+        else:
+            msg['From'] = sender_name + " <" + sender_account + ">"
+
         msg['To'] = recipient
         msg['Date'] = formatdate(localtime=True)
         msg['Subject'] = "Genmon Test Email"
@@ -156,7 +169,8 @@ class MyMail(MySupport):
                  session.ehlo()
             else:
                  session = smtplib.SMTP(smtp_server, smtp_port)
-                 session.starttls()
+                 if not tls_disable:
+                     session.starttls()
                  session.ehlo
                  # this allows support for simple TLS
         except Exception as e1:
@@ -164,7 +178,7 @@ class MyMail(MySupport):
             return "Error Initializing SMTP library: " + str(e1)
 
         try:
-            if password != "":
+            if password != "" and not smtpauth_disable:
                 session.login(str(email_account), str(password))
 
             if "," in recipient:
@@ -195,6 +209,11 @@ class MyMail(MySupport):
             else:
                 self.DisableSMTP = False
 
+            if self.config.HasOption('smtpauth_disable'):
+                self.DisableSmtpAuth = self.config.ReadValue('smtpauth_disable', return_type = bool)
+            else:
+                self.DisableSmtpAuth = False
+
             if self.config.HasOption('disableimap'):
                 self.DisableIMAP = self.config.ReadValue('disableimap', return_type = bool)
             else:
@@ -203,12 +222,19 @@ class MyMail(MySupport):
             if self.config.HasOption('usebcc'):
                 self.UseBCC = self.config.ReadValue('usebcc', return_type = bool)
 
-            self.EmailPassword = self.config.ReadValue('email_pw')
+            self.EmailPassword = self.config.ReadValue('email_pw', default = "")
+            self.EmailPassword =  self.EmailPassword.strip()
             self.EmailAccount = self.config.ReadValue('email_account')
             if self.config.HasOption('sender_account'):
                 self.SenderAccount = self.config.ReadValue('sender_account')
+                self.SenderAccount = self.SenderAccount.strip()
+                if not len(self.SenderAccount):
+                    self.SenderAccount = self.EmailAccount
             else:
                 self.SenderAccount = self.EmailAccount
+
+            self.SenderName = self.config.ReadValue('sender_name', default = None)
+
             # SMTP Recepients
             self.EmailRecipient = self.config.ReadValue('email_recipient')
             self.EmailRecipientByType = {}
@@ -238,6 +264,9 @@ class MyMail(MySupport):
 
             if self.config.HasOption('ssl_enabled'):
                 self.SSLEnabled = self.config.ReadValue('ssl_enabled', return_type = bool)
+
+            self.TLSDisable = self.config.ReadValue('tls_disable', return_type = bool, default = False)
+
         except Exception as e1:
                 self.LogErrorLine("ERROR: Unable to read config file : " + str(e1))
                 sys.exit(1)
@@ -285,7 +314,8 @@ class MyMail(MySupport):
                     return
                 continue   # exit thread
             try:
-                data = self.Mailbox.login(self.EmailAccount, self.EmailPassword)
+                if not self.DisableSmtpAuth:
+                    data = self.Mailbox.login(self.EmailAccount, self.EmailPassword)
             except Exception:
                 self.LogError( "LOGIN FAILED!!! ")
                 if self.WaitForExit("EmailCommandThread", 60 ):
@@ -324,7 +354,7 @@ class MyMail(MySupport):
                     if self.WaitForExit("EmailCommandThread", 15 ):
                         return
                 except Exception as e1:
-                    self.LogErrorLine("Resetting email thread" + str(e1))
+                    self.LogErrorLine("Resetting email thread : " + str(e1))
                     if self.WaitForExit("EmailCommandThread", 60 ):  # 60 sec
                         return
                     break
@@ -347,7 +377,12 @@ class MyMail(MySupport):
         tmstamp=datetime.datetime.now().strftime('%I:%M:%S %p')
 
         msg = MIMEMultipart()
-        msg['From'] = self.SenderAccount
+        if self.SenderName == None or not len(self.SenderName):
+            msg['From'] = self.SenderAccount
+        else:
+            msg['From'] = self.SenderName + " <" + self.SenderAccount + ">"
+            self.LogError(msg['From'])
+
         if self.UseBCC:
             msg['Bcc'] = recipient
         else:
@@ -384,7 +419,8 @@ class MyMail(MySupport):
                  session.ehlo()
             else:
                  session = smtplib.SMTP(self.SMTPServer, self.SMTPPort)
-                 session.starttls()
+                 if not self.TLSDisable:
+                     session.starttls()
                  session.ehlo
                  # this allows support for simple TLS
         except Exception as e1:
@@ -392,7 +428,7 @@ class MyMail(MySupport):
             return False
 
         try:
-            if self.EmailPassword != "":
+            if self.EmailPassword != "" and not self.DisableSmtpAuth:
                 session.login(str(self.EmailAccount), str(self.EmailPassword))
 
             if "," in recipient:

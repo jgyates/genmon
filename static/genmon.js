@@ -8,6 +8,7 @@ var menuElement = "status";
 var ajaxErrors = {errorCount: 0, lastSuccessTime: 0, log: ""};
 var windowActive = true;
 var latestVersion = "";
+var lowbandwidth = false;
 var resizeTimeout;
 
 var myGenerator = {sitename: "", nominalRPM: 3600, nominalfrequency: 60, Controller: "", model: "", nominalKW: 22, fueltype: "", UnsentFeedback: false, SystemHealth: false, EnhancedExerciseEnabled: false, OldExerciseParameters:[-1,-1,-1,-1,-1,-1]};
@@ -23,9 +24,46 @@ var BaseRegistersDescription = {};
 vex.defaultOptions.className = 'vex-theme-os'
 
 //*****************************************************************************
+var UAbrowser = (function(){
+  var test = function(regexp) { return regexp.test(window.navigator.userAgent);}
+  switch(true){
+    case test(/edge/i): return "edge";
+    case test(/opr/i) && (!!window.opr || !!window.opera): return "opera";
+    case test(/chrome/i) && !!window.chrome: return "chrome";
+    case test(/trident/i) : return "ie";
+    case test(/firefox/i) : return "firefox";
+    case test(/safari/i): return "safari";
+    default: return "other";
+  }
+})();
+
+//*****************************************************************************
+function isMobileBrowser() {
+ if( navigator.userAgent.match(/Android/i)
+ || navigator.userAgent.match(/webOS/i)
+ || navigator.userAgent.match(/iPhone/i)
+ || navigator.userAgent.match(/iPad/i)
+ || navigator.userAgent.match(/iPod/i)
+ || navigator.userAgent.match(/BlackBerry/i)
+ || navigator.userAgent.match(/Windows Phone/i)
+ ){
+    return true;
+  }
+ else {
+    return false;
+  }
+}
+console.log(UAbrowser)
+
+
+//*****************************************************************************
 // called on window.onload
 //      sets up listener events (click menu) and inits the default page
 //*****************************************************************************
+var script_tag = document.getElementById('genmon.js');
+if (script_tag != undefined && script_tag.getAttribute("data-type") == "lowbandwidth") {
+  lowbandwidth = true;
+}
 GetStartupInfo();
 GetBaseStatus();
 SetFavIcon();
@@ -92,7 +130,7 @@ function resizeDiv() {
      $('#footer').css({'height': '30px'});
      $('#footer').css({'width': vpw + 'px'});
 
-     if ((menuElement == "status") && ($('.packery').length > 0)) {
+     if ((menuElement == "status") && ($('.packery').length > 0) && (lowbandwidth == false)) {
         var gridWidth = Math.round((vpw-240)/190);
             gridWidth = (gridWidth < 1) ? 1 : gridWidth;
         kwHistory["defaultPlotWidth"] = ((gridWidth > 4) ? 4 : (gridWidth < 1) ? 1 : gridWidth);
@@ -148,11 +186,12 @@ function GetQueryStringParams(sParam) {
     var sPageURL = window.location.search.substring(1);
     var sURLVariables = sPageURL.split('&');
     for (var i = 0; i < sURLVariables.length; i++) {
-	var sParameterName = sURLVariables[i].split('=');
-	if (sParameterName[0] == sParam)
-	   return sParameterName[1];
-    }
+      var sParameterName = sURLVariables[i].split('=');
+      if (sParameterName[0] == sParam)
+        return sParameterName[1];
+        }
 }
+
 
 //*****************************************************************************
 // called when setting a remote command
@@ -202,6 +241,8 @@ function CreateMenu() {
        outstr += '<li id="monitor"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="monitor" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Monitor</td></tr></table></a></li>';
     if (myGenerator["pages"]["notifications"] == true)
        outstr += '<li id="notifications"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="notifications" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Notifications</td></tr></table></a></li>';
+    if (myGenerator["pages"]["maintlog"] == true)
+       outstr += '<li id="journal"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="journal" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Service Journal</td></tr></table></a></li>';
     if (myGenerator["pages"]["settings"] == true)
        outstr += '<li id="settings"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="settings" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Settings</td></tr></table></a></li>';
     if (myGenerator["pages"]["addons"] == true)
@@ -214,7 +255,7 @@ function CreateMenu() {
 
     var page = GetQueryStringParams('page');
 
-    MenuClick(((page != undefined) && (jQuery.inArray( page, ["status", "maint", "outage", "logs", "monitor", "notifications", "settings", "addons", "about"] ))) ? page : "status");
+    MenuClick(((page != undefined) && (jQuery.inArray( page, ["status", "maint", "outage", "logs", "monitor", "notifications", "journal", "settings", "addons", "about"] ))) ? page : "status");
 
     $(".loader").removeClass("is-active");
 }
@@ -232,37 +273,47 @@ function DisplayStatusFull() {
     kwHistory["defaultPlotWidth"] = ((gridWidth > 4) ? 4 : (gridWidth < 1) ? 1 : gridWidth);
     kwHistory["oldDefaultPlotWidth"] = kwHistory["defaultPlotWidth"];
 
-    var outstr = 'Dashboard:<br><br>';
-    outstr += '<center><div class="packery">';
-    for (var i = 0; i < myGenerator["tiles"].length; ++i) {
-       switch (myGenerator["tiles"][i].type) {
-          case "gauge":
+    // This is a hack to work around mobile safari issue that makes the gauge text
+    // display incorrectly on redraw
+    var outstr = '<br>';
+    var CRstr = '<br>';
+    if ((UAbrowser == "safari") && (isMobileBrowser()) && (gauge.length != 0)) {
+      CRstr = '';
+    }
+
+    if (lowbandwidth == false) {
+      outstr += '<center><div class="packery">';
+      for (var i = 0; i < myGenerator["tiles"].length; ++i) {
+         switch (myGenerator["tiles"][i].type) {
+           case "gauge":
              if (myGenerator["tiles"][i].subtype == "fuel") {
-               outstr += '<div id="fuelField_'+i+'" class="grid-item gaugeField"><br>'+myGenerator["tiles"][i].title+'<br><div style="display: inline-block; width:100%; height:65%; position: relative;"><canvas class="gaugeCanvas" id="gauge'+i+'_bg" style="height: 100%; position: absolute; left: 0; top: 0; z-index: 1;"></canvas><canvas class="gaugeCanvas" id="gauge'+i+'" style="height: 100%; position: absolute; left: 0; top: 0; z-index: 0;"></canvas></div><br><div id="text'+i+'" class="gaugeDiv"></div></div>';
+               outstr += '<div id="fuelField_'+i+'" class="grid-item gaugeField">'+CRstr+myGenerator["tiles"][i].title+'<br><div style="display: inline-block; width:100%; height:65%; position: relative;"><canvas class="gaugeCanvas" id="gauge'+i+'_bg" style="height: 100%; position: absolute; left: 0; top: 0; z-index: 1;"></canvas><canvas class="gaugeCanvas" id="gauge'+i+'" style="height: 100%; position: absolute; left: 0; top: 0; z-index: 0;"></canvas></div><br><div id="text'+i+'" class="gaugeDiv"></div></div>';
              } else {
-               outstr += '<div id="gaugeField_'+i+'" class="grid-item gaugeField"><br>'+myGenerator["tiles"][i].title+'<br><canvas class="gaugeCanvas" id="gauge'+i+'"></canvas><br><div id="text'+i+'" class="gaugeDiv"></div></div>';
+               outstr += '<div id="gaugeField_'+i+'" class="grid-item gaugeField">'+CRstr+myGenerator["tiles"][i].title+'<br><canvas class="gaugeCanvas" id="gauge'+i+'"></canvas><br><div id="text'+i+'" class="gaugeDiv"></div></div>';
              }
              break;
-          case "graph":
+           case "graph":
              outstr += '<div id="plotField" class="grid-item plotField"><br>'+myGenerator["tiles"][i].title+'<br><div id="plotkW" class="kwPlotCanvas"></div><span class="kwPlotText">Time (<div class="kwPlotSelection selection" id="1h">1 hour</div> | <div class="kwPlotSelection" id="1d">1 day</div> | <div class="kwPlotSelection" id="1w">1 week</div> | <div class="kwPlotSelection" id="1m">1 month</div>)</span></div>';
              break;
-       }
+         }
+      }
+      outstr += '</div></center><br>';
     }
-    outstr += '</div></center><br>';
     $("#mydisplay").html(outstr + '<div style="clear:both" id="statusText"></div>');
 
-    $('.packery').css({'width': (vpw-240) + 'px'});
-    $('.plotField').css({'width': (kwHistory["defaultPlotWidth"] * 180)+((kwHistory["defaultPlotWidth"]-1)*10) + 'px'});
+    if (lowbandwidth == false) {
+      $('.packery').css({'width': (vpw-240) + 'px'});
+      $('.plotField').css({'width': (kwHistory["defaultPlotWidth"] * 180)+((kwHistory["defaultPlotWidth"]-1)*10) + 'px'});
 
-    $('.packery').packery({itemSelector: '.grid-item', gutter: 10, columnWidth: 85, rowHeight: 95, percentPosition: false, originLeft: true, resize: true});
+      $('.packery').packery({itemSelector: '.grid-item', gutter: 10, columnWidth: 85, rowHeight: 95, percentPosition: false, originLeft: true, resize: true});
 
-    var $itemElems = $(".grid-item");
-    $itemElems.draggable().resizable();
-    $('.packery').packery( 'bindUIDraggableEvents', $itemElems );
+      var $itemElems = $(".grid-item");
+      $itemElems.draggable().resizable();
+      $('.packery').packery( 'bindUIDraggableEvents', $itemElems );
 
-    var resizeTimeout;
-    var $itemElems = $( $('.packery').packery('getItemElements') );
-    $itemElems.on( 'resize', function( event, ui ) {
+      var resizeTimeout;
+      var $itemElems = $( $('.packery').packery('getItemElements') );
+      $itemElems.on( 'resize', function( event, ui ) {
            if ( resizeTimeout ) {
                clearTimeout( resizeTimeout );
            }
@@ -311,10 +362,10 @@ function DisplayStatusFull() {
                }
                $('.packery').packery( 'fit', ui.element[0] );
            }, 100 );
-    });
+      });
 
-    for (var i = 0; i < myGenerator["tiles"].length; ++i) {
-       switch (myGenerator["tiles"][i].type) {
+      for (var i = 0; i < myGenerator["tiles"].length; ++i) {
+        switch (myGenerator["tiles"][i].type) {
           case "gauge":
              if (myGenerator["tiles"][i].subtype == "fuel") {
                 gauge[i] = createFuel($("#gauge"+i), $("#text"+i), $("#gauge"+i+"_bg"), myGenerator["tiles"][i].maximum);
@@ -330,7 +381,8 @@ function DisplayStatusFull() {
           case "graph":
              createGraph(myGenerator["tiles"][i].title, myGenerator["tiles"][i].minimum, myGenerator["tiles"][i].maximum);
              break;
-       }
+        }
+      }
     }
 
     var url = baseurl.concat("status_json");
@@ -340,45 +392,65 @@ function DisplayStatusFull() {
     }});
     return;
 }
-
 //*****************************************************************************
-function json2html(json, intent, parentkey) {
+function getItem(json, parentkey)  {
+
+  var outstr = '';
+  if (typeof json === 'string') {
+    outstr += '<div class="jsonVal" id="'+parentkey.replace(/ /g, '_')+'">' + json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div><br>';
+  } else if (typeof json === 'number') {
+    outstr += '<div class="jsonVal" id="'+parentkey.replace(/ /g, '_')+'">' + json + '</div><br>';
+  } else if (typeof json === 'boolean') {
+    outstr += '<div class="jsonVal" id="'+parentkey.replace(/ /g, '_')+'">' + json + '</div><br>';
+  } else if (json === null) {
+    outstr += '<div class="jsonVal" id="'+parentkey.replace(/ /g, '_')+'">null</div><br>';
+  } else {
+    console.log("unexpected type in getItem: " + (typeof json));
+  }
+  return outstr
+}
+//*****************************************************************************
+function json2html(json, indent, parentkey) {
+
+    if ((typeof json === 'string') || (typeof json === 'number') || (typeof json === 'boolean') || (typeof json === null)) {
+        console.log("unexpected type in json2html (1): " + (typeof json));
+        return ""
+    }
     var outstr = '';
-    if (typeof json === 'string') {
-      outstr += '<div class="jsonVal" id="'+parentkey.replace(/ /g, '_')+'">' + json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div><br>';
-    } else if (typeof json === 'number') {
-      outstr += '<div class="jsonVal" id="'+parentkey.replace(/ /g, '_')+'">' + json + '</div><br>';
-    } else if (typeof json === 'boolean') {
-      outstr += '<div class="jsonVal" id="'+parentkey.replace(/ /g, '_')+'">' + json + '</div><br>';
-    } else if (json === null) {
-      outstr += '<div class="jsonVal" id="'+parentkey.replace(/ /g, '_')+'">null</div><br>';
-    }
-    else if (json instanceof Array) {
-      if (json.length > 0) {
-        intent += "&nbsp;&nbsp;&nbsp;&nbsp;";
-        for (var i = 0; i < json.length; ++i) {
-          outstr += intent + json2html(json[i], intent, parentkey+"_"+i);
-        }
-      }
-    }
-    else if (typeof json === 'object') {
+    if (typeof json === 'object') {
       var key_count = Object.keys(json).length;
-      if (key_count > 0) {
-        intent += "&nbsp;&nbsp;&nbsp;&nbsp;";
-        for (var key in json) {
-          if (json.hasOwnProperty(key)) {
-            if ((typeof json[key] === 'string') || (typeof json[key] === 'number') || (typeof json[key] === 'boolean') || (typeof json[key] === null)) {
-               outstr += intent + key + ' : ' + json2html(json[key], intent, key);
-            } else {
-               outstr += "<br>" + intent + key + ' :<br>' + json2html(json[key], intent, key);
+      if (key_count <= 0) {
+        console.log("key count invalid in json2html: " + key_count);
+        return outstr
+      }
+      for (var key in json) {
+        if (json.hasOwnProperty(key) == false) {
+          console.log("no property of key in json2html: " + key);
+          return outstr
+        }
+        if (json[key].constructor === Array) {
+            if (json[key].length > 0) {
+              outstr += "<br>" + indent + key + ' :<br>';   // + json2html(json[key], indent, key);
+              for (var i = 0; i < json[key].length; ++i) {
+                if (typeof json[key][i] === 'object') {
+                  outstr +=  json2html(json[key][i], indent + "&nbsp;&nbsp;&nbsp;&nbsp;", parentkey+"_"+i);
+                } else {
+                  outstr += indent + "&nbsp;&nbsp;&nbsp;&nbsp;" +  getItem(json[key][i], key);
+                }
+              }
             }
-          }
+        } else if (typeof json[key] === 'object') {
+           outstr += "<br>" + indent + key + ' :<br>' + json2html(json[key], indent + "&nbsp;&nbsp;&nbsp;&nbsp;", key);
+        } else if ((typeof json[key] === 'string') || (typeof json[key] === 'number') || (typeof json[key] === 'boolean') || (typeof json[key] === null)) {
+           outstr += indent + key + ' : ' + getItem(json[key], key); //parentkey);
+        } else {
+          console.log("unexpected type in json2html (2): " + parentkey + " : "+  json[key] + " : "+ (typeof json[key]));
         }
       }
     }
+
     return outstr;
 }
-
 //*****************************************************************************
 function createGauge(pCanvas, pText, pTextPrecision, pMin, pMax, pLabels, pZones, pDiv, pSubDiv) {
     var opts = {
@@ -648,12 +720,15 @@ function DisplayMaintenance(){
                }
                outstr += '</select>';
 
-               //Create and append select list
-               outstr += '&nbsp;&nbsp;<select id="quietmode">';
-               outstr += '<option value="On" ' + (myGenerator['QuietMode'] == "On"  ? ' selected="selected" ' : '') + '>Quiet Mode On </option>';
-               outstr += '<option value="Off"' + (myGenerator['QuietMode'] == "Off" ? ' selected="selected" ' : '') + '>Quiet Mode Off</option>';
-               outstr += '</select><br><br>';
+               if (myGenerator['WriteQuietMode'] == true) {
+                 //Create and append select list
+                 outstr += '&nbsp;&nbsp;<select id="quietmode">';
+                 outstr += '<option value="On" ' + (myGenerator['QuietMode'] == "On"  ? ' selected="selected" ' : '') + '>Quiet Mode On </option>';
+                 outstr += '<option value="Off"' + (myGenerator['QuietMode'] == "Off" ? ' selected="selected" ' : '') + '>Quiet Mode Off</option>';
+                 outstr += '</select>';
+               }
 
+               outstr += '<br><br>'
                outstr += '&nbsp;&nbsp;<button id="setexercisebutton" onClick="saveMaintenance();">Set Exercise Time</button>';
             }
 
@@ -664,15 +739,16 @@ function DisplayMaintenance(){
                outstr += '<br><br>Remote Commands:<br><br>';
                outstr += '&nbsp;&nbsp;&nbsp;&nbsp;<button class="tripleButtonLeft" id="remotestop" onClick="SetClick(\'stop\');">Stop Generator</button>';
                outstr += '<button class="tripleButtonCenter" id="remotestart" onClick="SetClick(\'start\');">Start Generator</button>';
-               outstr += '<button class="tripleButtonRight"  id="remotetransfer" onClick="SetClick(\'starttransfer\');">Start Generator and Transfer</button>';
+               if (myGenerator['RemoteTransfer'] == true) {
+                 outstr += '<button class="tripleButtonRight"  id="remotetransfer" onClick="SetClick(\'starttransfer\');">Start Generator and Transfer</button>';
+               }
 
             }
 
             if (myGenerator['ResetAlarms'] == true || myGenerator['AckAlarms'] == true){
                outstr += '<br><br>Alarm Condition:<br><br>';
-               outstr += '&nbsp;&nbsp;';
                if (myGenerator['ResetAlarms'] == true) {
-                 outstr += '&nbsp;&nbsp;<button id="resetalarm" onClick="SetClick(\'resetalarm\');">Reset Alarm</button><br>';
+                  outstr += '&nbsp;&nbsp;<button id="resetalarm" onClick="SetClick(\'resetalarm\');">Reset Alarm</button><br>';
                }
                if (myGenerator['AckAlarms'] == true) {
                   outstr += '&nbsp;&nbsp;<button id="ackalarm" onClick="SetClick(\'ackalarm\');">Acknowledge Alarm</button><br>';
@@ -844,10 +920,12 @@ function SetPowerLogReset(){
 function DisplayMaintenanceUpdate(){
 
     if (myGenerator["write_access"] == true) {
+        /*
+        // This code has been removed as it update the UI incorrectly
         $("#Exercise_Time").html(myGenerator['ExerciseFrequency'] + ' ' +
                                  myGenerator['ExerciseDay'] + ' ' + myGenerator['ExerciseHour'] + ':' + myGenerator['ExerciseMinute'] +
                                  ' Quiet Mode ' + myGenerator['QuietMode']);
-
+        */
         if ((myGenerator['EnhancedExerciseEnabled'] == true) && (myGenerator['ExerciseFrequency'] != myGenerator['OldExerciseParameters'][4])) {
             $("#ExerciseFrequency").val(myGenerator['ExerciseFrequency']);
             setExerciseSelection();
@@ -895,6 +973,16 @@ function setStartStopButtonsState(){
         $("#remotetransfer").prop("disabled",true);
         $("#remotestart").css("background", "#4CAF50");
         $("#remotetransfer").css("background", "#4CAF50");
+        break;
+    case "ALARM":
+        $("#remotestop").prop("disabled",false);
+        $("#remotestart").prop("disabled",false);
+        $("#remotetransfer").prop("disabled",false);
+        break;
+    case "SERVICEDUE":
+        $("#remotestop").prop("disabled",false);
+        $("#remotestart").prop("disabled",false);
+        $("#remotetransfer").prop("disabled",false);
         break;
      default:
         $("#remotestop").prop("disabled",true);
@@ -962,10 +1050,13 @@ function saveMaintenance(){
                                 function(result){});
 
                     // set quite mode
-                    var url = baseurl.concat("setquiet");
-                    $.getJSON(  url,
-                                {setquiet: strQuiet},
-                                function(result){});
+                    if (myGenerator['WriteQuietMode'] == true) {
+                      var url = baseurl.concat("setquiet");
+                      $.getJSON(  url,
+                                  {setquiet: strQuiet},
+                                  function(result){});
+                    }
+
                  }
             }
         });
@@ -989,12 +1080,13 @@ function DisplayLogs(){
 
         $("#mydisplay").html(outstr);
 
-        var date = new Date();
-        var data_helper = {};
-        var months = 1;
-        var loglines = result.split('\n');
-        var severity = 0;
-        for(var i = 0;i < loglines.length;i++){
+        if (lowbandwidth == false) {
+          var date = new Date();
+          var data_helper = {};
+          var months = 1;
+          var loglines = result.split('\n');
+          var severity = 0;
+          for(var i = 0;i < loglines.length;i++){
             if (loglines[i].indexOf("Alarm Log :") >= 0) {
                severity = 3;
             } else if (loglines[i].indexOf("Service Log :") >= 0) {
@@ -1004,11 +1096,11 @@ function DisplayLogs(){
             } else {
                var matches = loglines[i].match(/^\s*(\d+)\/(\d+)\/(\d+) (\d+:\d+:\d+) (.*)$/i)
                if ((matches != undefined) && (matches.length == 6)) {
-                  if ((12*matches[3]+1*matches[1]+12) <  (12*(date.getYear()-100) + date.getMonth() + 1)) {
+                  if ((12*matches[3]+1*matches[1]+12) <= (12*(date.getYear()-100) + date.getMonth() + 1)) {
                   } else if (data_helper[matches.slice(1,3).join("/")] == undefined) {
                       data_helper[matches.slice(1,3).join("/")] = {count: severity, date: '20'+matches[3]+'-'+matches[1]+'-'+matches[2], dateFormatted: matches[2]+' '+MonthsOfYearArray[(matches[1] -1)]+' 20'+matches[3], title: matches[5].trim()};
-                      if (((12*(date.getYear()-100) + date.getMonth() + 1)-(12*matches[3]+1*matches[1])) > months) {
-                          months = (12*(date.getYear()-100) + date.getMonth() + 1)-(12*matches[3]+1*matches[1])
+                      if (((12*(date.getYear()-100) + date.getMonth() + 1)-(12*matches[3]+1*matches[1])+1) > months) {
+                          months = (12*(date.getYear()-100) + date.getMonth() + 1)-(12*matches[3]+1*matches[1])+1
                       }
                   } else {
                       data_helper[matches.slice(1,3).join("/")]["title"] = data_helper[matches.slice(1,3).join("/")]["title"] + "<br>" + matches[5].trim();
@@ -1017,13 +1109,15 @@ function DisplayLogs(){
                   }
                }
             }
+
+          }
+          var data = Object.keys(data_helper).sort().map(function(itm) { return data_helper[itm]; });
+          // var data = Object.keys(data_helper).map(itm => data_helper[itm]);
+          // var data = Object.values(data_helper);
+          // console.log(data);
+          var options = {coloring: 'genmon', start: new Date((date.getMonth()-12 < 0) ? date.getYear() - 1 + 1900 : date.getYear() + 1900, (date.getMonth()-12 < 0) ? date.getMonth()+1 : date.getMonth()-12, 1), end: new Date(date.getYear() + 1900, date.getMonth(), date.getDate()), months: months, labels: { days: true, months: true, custom: {monthLabels: "MMM 'YY"}}, tooltips: { show: true, options: {}}, legend: { show: false}};
+          $("#annualCalendar").CalendarHeatmap(data, options);
         }
-        var data = Object.keys(data_helper).map(function(itm) { return data_helper[itm]; });
-        // var data = Object.keys(data_helper).map(itm => data_helper[itm]);
-        // var data = Object.values(data_helper);
-        // console.log(data);
-        var options = {coloring: 'genmon', months: months, labels: { days: true, months: true, custom: {monthLabels: "MMM 'YY"}}, tooltips: { show: true, options: {}}, legend: { show: false}};
-        $("#annualCalendar").CalendarHeatmap(data, options);
    }});
 }
 
@@ -1038,47 +1132,58 @@ function DisplayMonitor(){
 
         var outstr = json2html(result, "", "root");
 
-
         $("#mydisplay").html(outstr);
 
         if ($("#CPU_Temperature").length > 0) {
            temp_img = "temp1";
+           cpu_temp = $("#CPU_Temperature").text();
+           cpu_temp_num = parseInt(cpu_temp.replace(/C/g, '').trim());
+           if (cpu_temp.indexOf("F") > 0 ) {
+              cpu_temp_num = Math.round((parseInt(cpu_temp.replace(/F/g, '').trim()) - 32) * 5 / 9);
+           }
            switch (true) {
-              case (parseInt(prevStatusValues["PlatformStats"]["CPU Temperature"].replace(/C/g, '').trim()) > 85):
+              case (cpu_temp_num > 85):
                   temp_img = "temp4";
                   break;
-              case (parseInt(prevStatusValues["PlatformStats"]["CPU Temperature"].replace(/C/g, '').trim()) > 75):
+              case (cpu_temp_num > 75):
                   temp_img = "temp3";
                   break;
-              case (parseInt(prevStatusValues["PlatformStats"]["CPU Temperature"].replace(/C/g, '').trim()) > 50):
+              case (cpu_temp_num > 50):
                   temp_img = "temp2";
                   break;
            }
-           $("#CPU_Temperature").html('<div style="display: inline-block; position: relative;">'+result["Monitor"]["Platform Stats"]["CPU Temperature"] + '<img style="position: absolute;top:-10px;left:75px" class="'+ temp_img +'" src="images/transparent.png"></div>');
+           $("#CPU_Temperature").html('<div style="display: inline-block; position: relative;">' + cpu_temp + '<img style="position: absolute;top:-10px;left:75px" class="'+ temp_img +'" src="images/transparent.png"></div>');
         }
 
         if ($("#WLAN_Signal_Level").length > 0) {
            wifi_img = "wifi1";
+           wifi_level = $("#WLAN_Signal_Level").text();
            switch (true) {
-              case (parseInt(prevStatusValues["PlatformStats"]["WLAN Signal Level"].replace(/dBm/g, '').trim()) > -67):
+              case (parseInt(wifi_level.replace(/dBm/g, '').trim()) > -67):
                   wifi_img = "wifi4";
                   break;
-              case (parseInt(prevStatusValues["PlatformStats"]["WLAN Signal Level"].replace(/dBm/g, '').trim()) > -70):
+              case (parseInt(wifi_level.replace(/dBm/g, '').trim()) > -70):
                   wifi_img = "wifi3";
                   break;
-              case (parseInt(prevStatusValues["PlatformStats"]["WLAN Signal Level"].replace(/dBm/g, '').trim()) > -80):
+              case (parseInt(wifi_level.replace(/dBm/g, '').trim()) > -80):
                   wifi_img = "wifi2";
                   break;
            }
-           $("#WLAN_Signal_Level").html('<div style="display: inline-block; position: relative;">'+result["Monitor"]["Platform Stats"]["WLAN Signal Level"] + '<img style="position: absolute;top:-10px;left:110px" class="'+ wifi_img +'" src="images/transparent.png"></div>');
+           $("#WLAN_Signal_Level").html('<div style="display: inline-block; position: relative;">' + wifi_level + '<img style="position: absolute;top:-10px;left:110px" class="'+ wifi_img +'" src="images/transparent.png"></div>');
         }
         if ($("#Conditions").length > 0) {
-           $("#Conditions").html('<div style="display: inline-block; position: relative;">'+result["Monitor"]["Weather"]["Conditions"] + '<img class="greyscale" style="position: absolute;top:-30px;left:160px" src="http://openweathermap.org/img/w/' + prevStatusValues["Weather"]["icon"] + '.png"></div>');
+           weatherCondition = $("#Conditions").text()
+           weatherIcon = "unknown.png"
+           jQuery.each(prevStatusValues["Weather"], function( i, val ) {
+             if (Object.keys(val)[0] == "icon") {
+               weatherIcon = val["icon"];
+             }
+           });
+           $("#Conditions").html('<div style="display: inline-block; position: relative;">' + weatherCondition + '<img class="greyscale" style="position: absolute;top:-30px;left:160px" src="https://openweathermap.org/img/w/' + weatherIcon + '.png"></div>');
         }
 
    }});
 }
-
 
 //*****************************************************************************
 // Display the Notification Tab
@@ -1252,26 +1357,294 @@ function saveNotificationsJSON(){
         GenmonAlert("Error: invalid selection");
     }
 }
+
+
+//*****************************************************************************
+// Display the Journal Tab
+//*****************************************************************************
+
+// Additional Carriers are listed here: https://teamunify.uservoice.com/knowledgebase/articles/57460-communication-email-to-sms-gateway-list
+
+function DisplayJournal(){
+    var url = baseurl.concat("get_maint_log_json");
+    $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
+        processAjaxSuccess();
+
+        var  outstr = 'Journal Entires:<br><br>';
+        outstr += '<table id="alljournal" border="0" style="border-collapse: separate; border-spacing: 10px;" width="100%"><tbody>';
+
+        $.each(Object.keys(result), function(i, key) {
+            outstr += renderJournalLine(i, result[i]["date"], result[i]["type"], result[i]["hours"], result[i]["comment"]);
+        });
+        outstr += '</tbody></table><br>';
+        outstr += '<button value="+Add" id="addJournalRow">+Add</button>';
+        outstr += '<br><br><button value="Clear" id="clearJournal">Clear Journal</button>';
+
+        $("#mydisplay").html(outstr);
+
+        var rowcount = Object.keys(result).length;
+
+        $(document).ready(function() {
+           $("#addJournalRow").click(function () {
+                  var outstr = emptyJournalLine(rowcount, myGenerator['MonitorTime'], "", isNaN(parseFloat(myGenerator['RunHours'])) ? "" : parseFloat(myGenerator['RunHours']))
+                  if ($("#alljournal").length > 0) {
+                      $("#alljournal").append(outstr);
+                  } else {
+                      $("#alljournal").append(outstr);
+                  }
+                  $("input[name^='time_"+rowcount+"']").timepicker({ 'timeFormat': 'H:i' });
+                  $("input[name^='date_"+rowcount+"']").datepicker({ dateFormat: 'mm/dd/yy' })
+                  rowcount++;
+           });
+
+           $("#clearJournal").click(function () {
+              ClearJournal();
+           });
+
+        });
+   }});
+}
+//*****************************************************************************
+function renderJournalLine(rowcount, date, type, hours, comment) {
+
+   var outstr = '<tr id="row_' + rowcount + '"><td align="center">';
+   outstr += '  <div class="card" style="width:80%;align:center;" name="journal_' + rowcount + '">';
+   outstr += '     <div style="width:100%; background-color:#e1e1e1; border-radius: 6px 6px 0px 0px; float:left; padding-top:10px; padding-bottom:10px;">';
+   outstr += '         <table width="90%"><tr><td width="33%">Date: '+date+'</td><td width="33%">Type: '+type+'</td><td width="33%">Service Hours: '+hours+'</td></table>';
+   outstr += '     </div>';
+   outstr += '     <div style="clear: both;"></div>';
+   outstr += '     <div style="margin:10px;font-size: 15px;">'+comment+'</center></div>';
+   outstr += '     <div style="clear: both;"></div><br>';
+   outstr += '  </div>';
+   outstr += '</td>';
+
+   return outstr;
+}
+
+function emptyJournalLine(rowcount, date, type, hours, comment) {
+   var outstr = '<tr id="row_' + rowcount + '"><td align="center">';
+   outstr += '<form id="formNotifications">';
+   outstr += '  <div class="card" style="width:80%;align:center;" name="journal_' + rowcount + '">';
+   outstr += '     <div style="width:100%; background-color:#e1e1e1; border-radius: 6px 6px 0px 0px; float:left; padding-top:10px; padding-bottom:10px;">';
+   outstr += '         <center><table width="80%">';
+   outstr += '           <tr><td align="right" style="padding:3px">Date: &nbsp;&nbsp;&nbsp;</td><td style="padding:3px"><input id="date_' + rowcount + '" name="date_' + rowcount + '" type="text" value="'+date.split(" ")[0]+'">&nbsp;<input id="time_' + rowcount + '" name="time_' + rowcount + '" type="text" value="'+date.split(" ")[1]+'"></td></tr>';
+   outstr += '           <tr><td align="right" style="padding:3px">Type: &nbsp;&nbsp;&nbsp;</td><td style="padding:3px"><select id="type_' + rowcount + '" name="type_' + rowcount + '" ><option value="repair">Repair</option><option value="check">Check</option><option value="observation">Observation</option><option value="maintenance">Maintenance</option></select></td></tr>';
+   outstr += '           <tr><td align="right" style="padding:3px">Service Hours: &nbsp;&nbsp;&nbsp;</td><td style="padding:3px"><input id="hours_' + rowcount + '" name="hours_' + rowcount + '" type="text" value="'+hours+'"></td></tr>';
+   outstr += '         </table></center>';
+   outstr += '     </div>';
+   outstr += '     <div style="clear: both;"></div>';
+   outstr += '     <div style="margin:15px;font-size: 15px;"><textarea id="comment_' + rowcount + '" name="comment_' + rowcount + '" rows="4" style="width:100%;"></textarea></center></div>';
+   outstr += '     <div style="clear: both;"></div>';
+   outstr += '     <button id="setjournalbutton" onClick="saveJournals(' + rowcount + '); return false;">Save</button>';
+   outstr += '     <div style="clear: both;"></div><br>';
+   outstr += '  </div>';
+   outstr += '</form>';
+   outstr += '</td>';
+
+   return outstr;
+
+}
+
+
+//*****************************************************************************
+// called when Save Journals is clicked
+//*****************************************************************************
+function saveJournals(rowcount){
+
+    var DisplayStr = "Save journal? Are you sure?";
+    var DisplayStrAnswer = false;
+    var DisplayStrButtons = {
+        NO: {
+          text: 'Cancel',
+          type: 'button',
+          className: 'vex-dialog-button-secondary',
+          click: function noClick () {
+            DisplayStrAnswer = false
+            this.close()
+          }
+        },
+        YES: {
+          text: 'OK',
+          type: 'submit',
+          className: 'vex-dialog-button-primary',
+          click: function yesClick () {
+            DisplayStrAnswer = true
+          }
+        }
+    }
+
+    validationResult = ValidateJournalEntry($("input[name^='date_"+rowcount+"']").val(), $("input[name^='time_"+rowcount+"']").val(), $("select[name^='type_"+rowcount+"']").val(), $("input[name^='hours_"+rowcount+"']").val(), $("textarea[name^='comment_"+rowcount+"']").val());
+    if (validationResult != "OK") {
+       GenmonAlert("Data value not correct.<br>"+validationResult);
+       return false;
+    }
+
+    vex.dialog.open({
+        unsafeMessage: DisplayStr,
+        overlayClosesOnClick: false,
+        buttons: [
+           DisplayStrButtons.NO,
+           DisplayStrButtons.YES
+        ],
+        onSubmit: function(e) {
+           if (DisplayStrAnswer) {
+             var DisplayStr1 = "Saving Journal..."
+             DisplayStrAnswer = false; // Prevent recursive calls.
+             e.preventDefault();
+             saveJournalsJSON(rowcount);
+             var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
+             $('.vex-dialog-message').html(DisplayStr1);
+             $('.vex-dialog-buttons').html(DisplayStr2);
+             $('.progress-bar-fill').queue(function () {
+                  $(this).css('width', '100%')
+             });
+             setTimeout(function(){ vex.closeAll();}, 2000);
+           }
+        }
+    })
+}
+
+//*****************************************************************************
+function saveJournalsJSON(rowcount){
+    try {
+        var fields = {};
+
+        var entry = {
+            date: $("input[name^='date_"+rowcount+"']").val()+" "+$("input[name^='time_"+rowcount+"']").val(),   // Format is text string:  MM/DD/YYYY
+            type: $("select[name^='type_"+rowcount+"']").val(),                                                  // Values are string: "Repair", "Maintenance", "Check" or "Observation"
+            hours: parseFloat($("input[name^='hours_"+rowcount+"']").val()),                                       // Must be a number (integer or floating point)
+            comment: $("textarea[name^='comment_"+rowcount+"']").val()                                           // Text string
+            };
+
+        // send command
+        var url = baseurl.concat("add_maint_log");
+        var input =  JSON.stringify(entry)
+        $.getJSON(  url,
+              {add_maint_log: input},
+              function(result){
+                 outstr = renderJournalLine(rowcount, entry["date"], entry["type"], entry["hours"], entry["comment"]);
+                 $("#row_"+rowcount).replaceWith(outstr);
+        });
+
+
+    } catch(err) {
+        GenmonAlert("Error: invalid selection");
+    }
+}
+
+//*****************************************************************************
+// called when adding an  entry to the maint log
+//*****************************************************************************
+function ValidateJournalEntry(date, time, type, hours, comment){
+
+  if ((typeof date != 'string') || (typeof time != 'string') || (typeof type != 'string') || (typeof hours != 'string') || (typeof comment != "string")){
+    return "Invalid type for Maint Log Entry "
+  }
+
+  hoursFloat = parseFloat(hours)
+  if ((typeof hoursFloat != "number") || isNaN(hoursFloat) || (hoursFloat == 0)){
+    return "Service Hours is not a number or 0"
+  }
+
+  // check type
+  if ((type.toLowerCase() !== 'repair') &&
+      (type.toLowerCase() !== 'check') &&
+      (type.toLowerCase() !== 'observation') &&
+      (type.toLowerCase() !== 'maintenance')) {
+          return "Invalid value for Type"
+  }
+
+  if (comment.trim() == "") {
+     return "Comment field must not be blank";
+  }
+
+  // check date
+  var date_regex = /^(0[1-9]|1[0-2])\/(0[1-9]|1\d|2\d|3[01])\/(19|20)\d{2}$/ ;
+  if(!(date_regex.test(date)))
+  {
+      return "Invalid date format, expecting MM/DD/YYYY: " + date;
+  }
+
+  var time_regex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/ ;
+  if(!(time_regex.test(time)))
+  {
+      return "Invalid time format, expecting HH:MM " + time;
+  }
+
+  return "OK"
+}
+
+//*****************************************************************************
+// called when adding an  entry to the maint log
+//*****************************************************************************
+function ClearJournal(){
+
+    vex.dialog.confirm({
+        unsafeMessage: 'Clear the Service Journal? This action cannot be undone.<br>',
+        overlayClosesOnClick: false,
+        callback: function (value) {
+             if (value == false) {
+                return;
+             } else {
+                var url = baseurl.concat("clear_maint_log");
+                $.getJSON(  url,
+                   {},
+                   function(result){
+                     $("#alljournal").empty();
+                   });
+             }
+        }
+    });
+}
+
+
 //*****************************************************************************
 // test email
 //*****************************************************************************
-function TestEmailSettings(smtp_server, smtp_port,email_account,sender_account,recipient, password, use_ssl){
+function TestEmailSettingsWrapper(){
+    GenmonPrompt("Sending Test Email", "recepient:", $("#email_account").val());
+}
+
+function TestEmailSettingsWrapperSubmit(email){
+    $('.vex-dialog-message').html("<h4>Sending...</h4>");
+    $('.vex-dialog-buttons').hide();
+    TestEmailSettings($("#smtp_server").val(), $("#smtp_port").val(), $("#email_account").val(),
+      $("#sender_account").val(),$("#sender_name").val(), email, $("#email_pw").val(),
+      ($("#ssl_enabled").prop('checked')  === true ? "true" : "false"),
+      ($("#tls_disable").prop('checked') === true ? "true" : "false"),
+       ($("#smtpauth_disable").prop('checked') === true ? "true" : "false"));
+}
+
+function TestEmailSettings(smtp_server, smtp_port,email_account,sender_account,sender_name,recipient, password, use_ssl, tls_disable, smtpauth_disable){
 
     var parameters = {};
     parameters['smtp_server'] = smtp_server;
     parameters['smtp_port'] = smtp_port;
     parameters['email_account'] = email_account;
     parameters['sender_account'] = sender_account;
+    parameters['sender_name'] = sender_name;
     parameters['recipient'] = recipient;
     parameters['password'] = password;
     parameters['use_ssl'] = use_ssl;
+    parameters['tls_disable'] = tls_disable;
+    parameters['smtpauth_disable'] = smtpauth_disable;
 
       // test email settings
       var url = baseurl.concat("test_email");
-      $.getJSON(  url,
+      $.get(  url,
                   {test_email: JSON.stringify(parameters)},
-                  function(result){
-                    GenmonAlert(result)
+                  function (result, status) {
+                    if ((status == "success") && (result == "Success")) {
+                       vex.dialog.buttons.YES.text = 'OK';
+                       $('.vex-dialog-message').html("Test email sent successfully. Please verify that you received the email.");
+                       $('.vex-dialog-button-primary').text("OK");
+                       $('.vex-dialog-button-secondary').hide();
+                       $('.vex-dialog-buttons').show();
+                    } else {
+                       vex.dialog.buttons.YES.text = 'Close';
+                       GenmonAlert("An error occured: <br>"+result+"<br><br>Please try again.");
+                       $('.vex-dialog-button-primary').text("Close");
+                    }
       });
 }
 //*****************************************************************************
@@ -1312,6 +1685,8 @@ function DisplaySettings(){
               outstr += '</td><td nowrap>&nbsp;&nbsp;Optional - Outbound Email Settings&nbsp;&nbsp;</td><td width="80%"><hr></td></tr></table>';
               outstr += '<fieldset id="'+key+'Section"><table id="allsettings" border="0">';
             } else if (key == "disableimap") {
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px" colspan="2"><button type="button" style="margin-left: 0px; background: #bbbbbb; cursor:pointer; padding: .5em .5em; border: 0; border-radius: 3.01px; font-family: inherit;" '+
+                        ' id="testsettingsbutton" onClick="TestEmailSettingsWrapper();return false;">Test Email Settings</button></td></tr>';
               outstr += '</table></fieldset><br><br><table width="100%" border="0"><tr><td nowrap width="90px">';
               outstr += printSettingsField(result[key][0], key, !result[key][3], "", "", "toggleSectionInverse(true, '"+key+"');");
               outstr += '</td><td nowrap>&nbsp;&nbsp;Optional - Inbound Email Commands Processing&nbsp;&nbsp;</td><td width="80%"><hr></td></tr></table>';
@@ -1372,7 +1747,7 @@ function DisplaySettings(){
              return regex.test(value);
            },
            InternetAddress: function(input, value, arg1, arg2) {
-             var regex = RegExp("^(([a-z0-9]+([\-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))$", 'g');
+             var regex = RegExp("^((([a-z0-9]+([\-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))|((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\/.*)?))$", 'g');
              return regex.test(value);
            },
            IPAddress: function(input, value, arg1, arg2) {
@@ -2070,6 +2445,9 @@ function updateSoftware(){
        url: url,
        dataType: "json",
        timeout: 0,
+       headers: {
+          "Cache-Control": "no-cache"
+        },
        success: function(results){
              /// THIS IS NOT AN EXPECTED RESPONSE!!! genserv.py is expected to restart on it's own before returning a valid value;
              vex.closeAll();
@@ -2109,6 +2487,7 @@ function backupFiles(){
 }
 //*****************************************************************************
 function submitRegisters(){
+
     vex.dialog.confirm({
         unsafeMessage: 'Send the contents of your generator registers to the developer for compatibility testing?<br>',
         overlayClosesOnClick: false,
@@ -2183,7 +2562,9 @@ function DisplayRegistersFull()
 
     $("#mydisplay").html(outstr);
     UpdateRegistersColor();
-    $('.registerChart').tooltipster({
+    if (lowbandwidth == false) {
+
+      $('.registerChart').tooltipster({
         minWidth: '280px',
         maxWidth: '280px',
         animation: 'fade',
@@ -2232,7 +2613,7 @@ function DisplayRegistersFull()
             $('#'+regId+'_graph3').css('display', 'none');
         }
     });
-
+  }
 }
 //*****************************************************************************
 function UpdateRegisters(init, printToScreen)
@@ -2242,72 +2623,79 @@ function UpdateRegisters(init, printToScreen)
       regHistory["historySince"] = now.format("D MMMM YYYY H:mm:ss");
       regHistory["count_60m"] = 0;
       regHistory["count_24h"] = 0;
+    } else if ((lowbandwidth == true) && (printToScreen == false)) {
+      return
     }
 
     var url = baseurl.concat("registers_json");
     $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(RegData){
         processAjaxSuccess();
 
-        $.each(RegData.Registers["Base Registers"], function(i, item) {
-            var reg_key = Object.keys(item)[0]
-            var reg_val = item[Object.keys(item)[0]];
+        try{
+            $.each(RegData.Registers["Base Registers"], function(i, item) {
+                var reg_key = Object.keys(item)[0]
+                var reg_val = item[Object.keys(item)[0]];
 
-            if ((init) || (regHistory["_10m"][reg_key] == undefined)) {
-                regHistory["updateTime"][reg_key] = 0;
-                regHistory["_10m"][reg_key] = [reg_val];
-                regHistory["_60m"][reg_key] = [reg_val, reg_val];
-                regHistory["_24h"][reg_key] = [reg_val, reg_val];
-            } else {
-               if (reg_val != regHistory["_10m"][reg_key][0]) {
-                  regHistory["updateTime"][reg_key] = new Date().getTime();
+                if ((init) || (regHistory["_10m"][reg_key] == undefined)) {
+                    regHistory["updateTime"][reg_key] = 0;
+                    regHistory["_10m"][reg_key] = [reg_val];
+                    regHistory["_60m"][reg_key] = [reg_val, reg_val];
+                    regHistory["_24h"][reg_key] = [reg_val, reg_val];
+                } else {
+                   if (reg_val != regHistory["_10m"][reg_key][0]) {
+                      regHistory["updateTime"][reg_key] = new Date().getTime();
 
-                  if (printToScreen) {
-                    var outstr  = ((reg_key == "01f4") ? '<span class="registerTDvalMedium">HEX:<br>' + reg_val + '</span>' : 'HEX: '+reg_val) + '<br>';
-                        outstr += ((reg_key == "01f4") ? '' : '<span class="registerTDvalSmall">DEC: ' + parseInt(reg_val, 16) + ' | HI:LO: '+parseInt(reg_val.substring(0,2), 16)+':'+parseInt(reg_val.substring(2,4), 16)+'</span>');
-                    $("#content_"+reg_key).html(outstr);
-                  }
-               }
-            }
-            regHistory["_10m"][reg_key].unshift(reg_val);
-            if  (regHistory["_10m"][reg_key].length > 120) {
-               var removed = regHistory["_10m"][reg_key].pop  // remove the last element
-            }
+                      if (printToScreen) {
+                        var outstr  = ((reg_key == "01f4") ? '<span class="registerTDvalMedium">HEX:<br>' + reg_val + '</span>' : 'HEX: '+reg_val) + '<br>';
+                            outstr += ((reg_key == "01f4") ? '' : '<span class="registerTDvalSmall">DEC: ' + parseInt(reg_val, 16) + ' | HI:LO: '+parseInt(reg_val.substring(0,2), 16)+':'+parseInt(reg_val.substring(2,4), 16)+'</span>');
+                        $("#content_"+reg_key).html(outstr);
+                      }
+                   }
+                }
+                regHistory["_10m"][reg_key].unshift(reg_val);
+                if  (regHistory["_10m"][reg_key].length > 120) {
+                   var removed = regHistory["_10m"][reg_key].pop  // remove the last element
+                }
 
-            if (regHistory["count_60m"] >= 12) {
-               var min = 0;
-               var max = 0;
-               for (var i = 1; i <12; i++) {
-                   if (regHistory["_10m"][reg_key][i] > regHistory["_10m"][reg_key][max])
-                      max = i;
-                   if (regHistory["_10m"][reg_key][i] < regHistory["_10m"][reg_key][min])
-                      min = i;
-               }
-               regHistory["_60m"][reg_key].unshift(regHistory["_10m"][reg_key][((min > max) ? min : max)], regHistory["_10m"][reg_key][((min > max) ? max : min)]);
+                if (regHistory["count_60m"] >= 12) {
+                   var min = 0;
+                   var max = 0;
+                   for (var i = 1; i <12; i++) {
+                       if (regHistory["_10m"][reg_key][i] > regHistory["_10m"][reg_key][max])
+                          max = i;
+                       if (regHistory["_10m"][reg_key][i] < regHistory["_10m"][reg_key][min])
+                          min = i;
+                   }
+                   regHistory["_60m"][reg_key].unshift(regHistory["_10m"][reg_key][((min > max) ? min : max)], regHistory["_10m"][reg_key][((min > max) ? max : min)]);
 
-               if  (regHistory["_60m"][reg_key].length > 120)
-                 regHistory["_60m"][reg_key].splice(-2, 2);  // remove the last 2 element
-            }
+                   if  (regHistory["_60m"][reg_key].length > 120)
+                     regHistory["_60m"][reg_key].splice(-2, 2);  // remove the last 2 element
+                }
 
-            if (regHistory["count_24h"] >= 288) {
-               var min = 0;
-               var max = 0;
-               for (var i = 1; i <24; i++) {
-                   if (regHistory["_60m"][reg_key][i] > regHistory["_60m"][reg_key][max])
-                      max = i;
-                   if (regHistory["_60m"][reg_key][i] < regHistory["_60m"][reg_key][min])
-                      min = i;
-               }
-               regHistory["_24h"][reg_key].unshift(regHistory["_60m"][reg_key][((min > max) ? min : max)], regHistory["_60m"][reg_key][((min > max) ? max : min)]);
+                if (regHistory["count_24h"] >= 288) {
+                   var min = 0;
+                   var max = 0;
+                   for (var i = 1; i <24; i++) {
+                       if (regHistory["_60m"][reg_key][i] > regHistory["_60m"][reg_key][max])
+                          max = i;
+                       if (regHistory["_60m"][reg_key][i] < regHistory["_60m"][reg_key][min])
+                          min = i;
+                   }
+                   regHistory["_24h"][reg_key].unshift(regHistory["_60m"][reg_key][((min > max) ? min : max)], regHistory["_60m"][reg_key][((min > max) ? max : min)]);
 
-               if  (regHistory["_24h"][reg_key].length > 120)
-                 regHistory["_24h"][reg_key].splice(-2, 2);  // remove the last 2 element
-            }
-        });
-        regHistory["count_60m"] = ((regHistory["count_60m"] >= 12) ? 0 : regHistory["count_60m"]+1);
-        regHistory["count_24h"] = ((regHistory["count_24h"] >= 288) ? 0 : regHistory["count_24h"]+1);
+                   if  (regHistory["_24h"][reg_key].length > 120)
+                     regHistory["_24h"][reg_key].splice(-2, 2);  // remove the last 2 element
+                }
+            });
+            regHistory["count_60m"] = ((regHistory["count_60m"] >= 12) ? 0 : regHistory["count_60m"]+1);
+            regHistory["count_24h"] = ((regHistory["count_24h"] >= 288) ? 0 : regHistory["count_24h"]+1);
 
-        if (printToScreen)
-           UpdateRegistersColor();
+            if (printToScreen)
+               UpdateRegistersColor();
+          }
+          catch(err){
+              console.log("Error in UpdateRegisters" + err)
+          }
     }});
 }
 //*****************************************************************************
@@ -2411,8 +2799,8 @@ function printRegisters (type) {
     outstr += '</tr></table></center>';
     $("#printRegisterFrame").html(outstr);
 
-
-    for (var i = 0; i < plots.length; i++) {
+    if (lowbandwidth == false) {
+      for (var i = 0; i < plots.length; i++) {
         var reg_key = plots[i];
         var plot_data = [];
         for (var j = 120; j >= 0; --j) {
@@ -2423,6 +2811,7 @@ function printRegisters (type) {
                                axesDefaults: { tickOptions: { textColor: '#000000', fontSize: '8pt' }},
                                axes: { xaxis: { label: labelText, labelOptions: { fontFamily: 'Arial', textColor: '#000000', fontSize: '9pt' }, min: labelMin, max:0 } }
                              });
+      }
     }
 
     $("#printRegisterFrame").printThis({canvas: true, importCSS: false, loadCSS: "css/print.css", pageTitle:"Genmon Registers", removeScripts: true});
@@ -2626,6 +3015,9 @@ function MenuClick(page)
             case "notifications":
                 DisplayNotifications();
                 break;
+            case "journal":
+                DisplayJournal();
+                break;
             case "settings":
                 DisplaySettings();
                 break;
@@ -2786,6 +3178,36 @@ function GenmonAlert(msg)
        vex.dialog.alert({ unsafeMessage: '<table><tr><td valign="middle" width="200px" align="center"><img class="alert_large" src="images/transparent.png" width="64px" height="64px"></td><td valign="middle" width="70%">'+msg+'</td></tr></table>'});
 }
 
+function GenmonPrompt(title, msg, placeholder)
+{
+       vex.closeAll();
+       vex.dialog.buttons.YES.text = 'Send';
+       vex.dialog.open({ onSubmit: function(e) {
+           e.preventDefault();
+           if (vex.dialog.buttons.YES.text == "Send") {
+             TestEmailSettingsWrapperSubmit($("#promptField").val())
+           } else {
+             vex.closeAll();
+           }
+        },
+        unsafeMessage:  [title, "<br>",
+        '<style>',
+            '.vex-custom-field-wrapper {',
+                'margin: 1em 0;',
+            '}',
+            '.vex-custom-field-wrapper > label {',
+                'display: inline-block;',
+                'margin-bottom: .2em;',
+            '}',
+        '</style>',
+        '<div class="vex-custom-field-wrapper">',
+            '<label for="date">'+msg+'</label>',
+            '<div class="vex-custom-input-wrapper">',
+                '<input name="promptField" style="width:100%" id="promptField" type="text" value="' + placeholder + '" />',
+            '</div>',
+        '</div>'].join(''), overlayClosesOnClick: false});
+}
+
 //*****************************************************************************
 // UpdateDisplay
 //*****************************************************************************
@@ -2801,7 +3223,7 @@ function UpdateDisplay()
         DisplayLogs();
     } else if (menuElement == "monitor") {
         DisplayMonitor();
-    } else if ((menuElement != "settings") && (menuElement != "notifications") && (menuElement != "addons") && (menuElement != "about") && (menuElement != "adv_settings")) {
+    } else if ((menuElement != "settings") && (menuElement != "notifications") && (menuElement != "journal") && (menuElement != "addons") && (menuElement != "about") && (menuElement != "adv_settings")) {
         GetDisplayValues(menuElement);
     }
 
@@ -2819,95 +3241,104 @@ function GetBaseStatus()
     $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
         processAjaxSuccess();
 
-        myGenerator['ExerciseDay'] = result['ExerciseInfo']['Day'];
-        myGenerator['ExerciseHour'] = result['ExerciseInfo']['Hour'];
-        myGenerator['ExerciseMinute'] = result['ExerciseInfo']['Minute'];
-        myGenerator['QuietMode'] = result['ExerciseInfo']['QuietMode'];
-        myGenerator['ExerciseFrequency'] = result['ExerciseInfo']['Frequency'];
-        myGenerator['EnhancedExerciseEnabled'] = ((result['ExerciseInfo']['EnhancedExerciseMode'] === "False") ? false : true);
+        try {
+          myGenerator['ExerciseDay'] = result['ExerciseInfo']['Day'];
+          myGenerator['ExerciseHour'] = result['ExerciseInfo']['Hour'];
+          myGenerator['ExerciseMinute'] = result['ExerciseInfo']['Minute'];
+          myGenerator['QuietMode'] = result['ExerciseInfo']['QuietMode'];
+          myGenerator['ExerciseFrequency'] = result['ExerciseInfo']['Frequency'];
+          myGenerator['EnhancedExerciseEnabled'] = ((result['ExerciseInfo']['EnhancedExerciseMode'] === "False") ? false : true);
 
-        if ((menuElement == "status") && (gauge.length > 0)) {
-           for (var i = 0; i < result.tiles.length; ++i) {
-             switch (myGenerator["tiles"][i].type) {
-                case "gauge":
-                   gauge[i].set(result.tiles[i].value);
-                   $("#text"+i).html(result.tiles[i].text);
-                   break;
-                case "graph":
-                   if (kwHistory["data"].length > 0) { /// Otherwise initialization has not finished
+          myGenerator['MonitorTime'] = result['MonitorTime'];
+          myGenerator['RunHours'] = result['RunHours'];
 
-                      if ((result.tiles[i].value != 0) && (kwHistory["data"][0][1] == 0)) {
-                         // make sure we add a 0 before the graph goes up, to ensure the interpolation works
-                         kwHistory["data"].unshift([(new moment()).add(-2, "s").format("YYYY-MM-DD HH:mm:ss"), 0]);
-                      }
 
-                      if ((result.tiles[i].value != 0) || (kwHistory["data"][0][1] != 0)) {
-                         kwHistory["data"].unshift([(new moment()).format("YYYY-MM-DD HH:mm:ss"), result.tiles[i].value]);
-                      }
-                      if  (kwHistory["data"].length > 10000) {
-                         var removed = kwHistory["data"].pop  // remove the last element
-                      }
+          if ((menuElement == "status") && (gauge.length > 0)) {
+             for (var i = 0; i < result.tiles.length; ++i) {
+               switch (myGenerator["tiles"][i].type) {
+                  case "gauge":
+                     gauge[i].set(result.tiles[i].value);
+                     $("#text"+i).html(result.tiles[i].text);
+                     break;
+                  case "graph":
+                     if (kwHistory["data"].length > 0) { /// Otherwise initialization has not finished
 
-                      if ((menuElement == "status") && (myGenerator["PowerGraph"] == true)) {
-                         printKwPlot(result.tiles[i].value);
-                      }
-                   }
-                   break;
+                        if ((result.tiles[i].value != 0) && (kwHistory["data"][0][1] == 0)) {
+                           // make sure we add a 0 before the graph goes up, to ensure the interpolation works
+                           kwHistory["data"].unshift([(new moment()).add(-2, "s").format("YYYY-MM-DD HH:mm:ss"), 0]);
+                        }
+
+                        if ((result.tiles[i].value != 0) || (kwHistory["data"][0][1] != 0)) {
+                           kwHistory["data"].unshift([(new moment()).format("YYYY-MM-DD HH:mm:ss"), result.tiles[i].value]);
+                        }
+                        if  (kwHistory["data"].length > 10000) {
+                           var removed = kwHistory["data"].pop  // remove the last element
+                        }
+
+                        if ((menuElement == "status") && (myGenerator["PowerGraph"] == true)) {
+                           printKwPlot(result.tiles[i].value);
+                        }
+                     }
+                     break;
+               }
              }
-           }
-        }
+          }
 
-        if (result['SystemHealth'].toUpperCase() != "OK") {
-          myGenerator['SystemHealth'] = true;
-          var tempMsg = '<b><span style="font-size:14px">GENMON SYSTEM WARNING</span></b><br>'+result['SystemHealth'];
-          $("#footer").addClass("alert");
-          $("#ajaxWarning").show(400);
-          $('#ajaxWarning').tooltipster('content', tempMsg);
-        } else if (result['UnsentFeedback'].toLowerCase() == "true") {
-          myGenerator['UnsentFeedback'] = true;
-          var tempMsg = '<b><span style="font-size:14px">UNKNOWN ERROR OCCURED</span></b><br>The software had encountered unknown status from<br>your generator.<br>This status could be used to improve the software.<br>To send the contents of your generator registers to<br>the software developer please enable "Auto Feedback"<br>on the Settings page.';
-          $("#footer").addClass("alert");
-          $("#ajaxWarning").show(400);
-          $('#ajaxWarning').tooltipster('content', tempMsg);
-        } else { // Note - this claus only get's executed if the ajax connection worked. Hence no need to check ajaxErrors["errorCount"]
-          myGenerator['UnsentFeedback'] = false;
-          myGenerator['SystemHealth'] = false;
-          $("#footer").removeClass("alert");
-          $("#ajaxWarning").hide(400);
-        }
+          if (result['SystemHealth'].toUpperCase() != "OK") {
+            myGenerator['SystemHealth'] = true;
+            var tempMsg = '<b><span style="font-size:14px">GENMON SYSTEM WARNING</span></b><br>'+result['SystemHealth'];
+            $("#footer").addClass("alert");
+            $("#ajaxWarning").show(400);
+            $('#ajaxWarning').tooltipster('content', tempMsg);
+          } else if (result['UnsentFeedback'].toLowerCase() == "true") {
+            myGenerator['UnsentFeedback'] = true;
+            var tempMsg = '<b><span style="font-size:14px">UNKNOWN ERROR OCCURED</span></b><br>The software had encountered unknown status from<br>your generator.<br>This status could be used to improve the software.<br>To send the contents of your generator registers to<br>the software developer please enable "Auto Feedback"<br>on the Settings page.';
+            $("#footer").addClass("alert");
+            $("#ajaxWarning").show(400);
+            $('#ajaxWarning').tooltipster('content', tempMsg);
+          } else { // Note - this claus only get's executed if the ajax connection worked. Hence no need to check ajaxErrors["errorCount"]
+            myGenerator['UnsentFeedback'] = false;
+            myGenerator['SystemHealth'] = false;
+            $("#footer").removeClass("alert");
+            $("#ajaxWarning").hide(400);
+          }
 
-        switchState = result['switchstate'];
-        baseState = result['basestatus'];
-        // active, activealarm, activeexercise
-        if (baseState != currentbaseState) {
+          switchState = result['switchstate'];
+          baseState = result['basestatus'];
+          // active, activealarm, activeexercise
+          if (baseState != currentbaseState) {
 
-            // it changed so remove the old class
-            RemoveClass();
+              // it changed so remove the old class
+              RemoveClass();
 
-            if(baseState === "READY")
-                currentClass = "active";
-            if(baseState === "ALARM")
-                currentClass = "activealarm";
-            if(baseState === "EXERCISING")
-                currentClass = "activeexercise";
-            if(baseState === "RUNNING")
-                currentClass = "activerun";
-            if(baseState === "RUNNING-MANUAL")
-                currentClass = "activerunmanual";
-            if(baseState === "SERVICEDUE")
-                currentClass = "activeservice";
-            if(baseState === "OFF")
-                currentClass = "activeoff";
-            if(baseState === "MANUAL")
-                currentClass = "activemanual";
+              if(baseState === "READY")
+                  currentClass = "active";
+              if(baseState === "ALARM")
+                  currentClass = "activealarm";
+              if(baseState === "EXERCISING")
+                  currentClass = "activeexercise";
+              if(baseState === "RUNNING")
+                  currentClass = "activerun";
+              if(baseState === "RUNNING-MANUAL")
+                  currentClass = "activerunmanual";
+              if(baseState === "SERVICEDUE")
+                  currentClass = "activeservice";
+              if(baseState === "OFF")
+                  currentClass = "activeoff";
+              if(baseState === "MANUAL")
+                  currentClass = "activemanual";
 
-            currentbaseState = baseState;
-            // Added active to selected class
-            $("#"+menuElement).find("a").addClass(GetCurrentClass());
-        }
+              currentbaseState = baseState;
+              // Added active to selected class
+              $("#"+menuElement).find("a").addClass(GetCurrentClass());
+          }
 
-        prevStatusValues = result;
-        return
+          prevStatusValues = result;
+          return
+    }
+    catch(err){
+      console.log("Error in GetBaseStatus: " + err);
+    }
    }});
 
    return

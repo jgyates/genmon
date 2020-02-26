@@ -1,5 +1,282 @@
-# Changelog
+# Change Log
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
+
+## V1.14.03 - 2020-02-17
+- Updated MQTT support to allow numeric values for Maintenance and Outage related data (Evo/Nexus)
+
+## V1.14.02 - 2020-02-08
+- Added SNMP graphic on add on page
+
+## V1.14.01 - 2020-02-02
+- Minor change to logic in gensnmp.py to avoid namespace collision
+- Correct typo
+
+## V1.14.00 - 2020-02-01
+- Added SNMP Add On. See https://github.com/jgyates/genmon/wiki/1----Software-Overview#gensnmppy-optional for details
+- Changed a few labels of exported JSON data to better support SNMP and avoid namespace conflicts. There is a small chance this could effect some MQTT users depending on how deeply you have relied on namespace paths.
+- Added option to send an email if a software update is available. This can be disabled on the settings page.
+- Note: The update may take slightly longer since a new library has to be installed during the update process.
+
+## V1.13.38 - 2020-01-17
+- Changed text to "Inspect Battery" for Nexus models
+
+## V1.13.37 - 2020-01-16
+- Workaround for bug in gauge display for Safari mobile browsers
+
+## V1.13.36 - 2020-01-11
+- Corrected bug in reporting of weather (rain and snow in last 1 or 3 hours)
+
+## V1.13.35 - 2020-01-09
+- Added SMTP Auth Disable configuration setting
+
+## V1.13.34 - 2020-01-09
+- Corrected fuel calculation issue for NG systems
+
+## V1.13.33 - 2019-12-18
+- Added new alarm data for Evolution 2.0
+
+## V1.13.32 - 2019-11-16
+- Added new alarm log entry for Nexus
+
+## V1.13.31 - 2019-11-14
+- Added alarm code for "Battery Problem"
+
+## V1.13.30 - 2019-11-03
+- Update to allow outage log to display 100 instead of 50 entries
+
+## V1.13.29 - 2019-08-20
+- Fixed a few typos
+
+## V1.13.28 - 2019-07-20
+- Minor update to gentankutil.py
+- Added add-on for Amazon Alexa
+
+## V1.13.27 - 2019-07-20
+- Updated icon on add-on page
+- Added fuel metric to Maintenance page for models that support fuel monitoring
+
+## V1.13.26 - 2019-07-19
+- Added email notification for Evolution 2 firmware
+
+## V1.13.25 - 2019-07-12
+- Added initial support for fuel consumption for Evolution Air Cooled Natural Gas units. Note: NG 30 day fuel consumption is located on the maintenance page. Fuel gauge is supported for NG.
+
+## V1.13.24 - 2019-07-10
+- Added URL to logout if using secure web settings: https://addressofpi/logout
+
+## V1.13.23 - 2019-07-07
+- Changes to all unicode comments to be stored in service journal
+
+## V1.13.22 - 2019-07-06
+- Added config file options to set nominal line voltage values for non US grids (Evo and Nexus only)
+
+## V1.13.21 - 2019-06-28
+- Slight modification to the logic used when detecting the type of alarm for Evolution controllers due to the last alarm code register not updating after a Service Due alarm.
+
+## V1.13.20 - 2019-06-26
+- Added option "Ignore Unknown Values" that will ignore unknown values of modbus register 0001 for Evolution 2.0 controllers. This setting is in the advanced section in the web interface.
+
+## V1.13.19 - 2019-06-25
+- Added more logging for better diagnostics when fatal errors occur (e.g. invalid serial port specified)
+- Corrected one problem with invalid file name for log file when sending logs
+
+## V1.13.18 - 2019-06-19
+- Fixed problem in gentankutil.py
+
+## V1.13.17 - 2019-06-19
+- Added support for external fuel tank API for tankutility.com propane fuel monitor
+
+## V1.13.16 - 2019-06-16
+- Changed warning message when power log is reaching size limit
+- Displayed estimated fuel on the Maintenance page on EvoLC diesel units that support fuel sensor
+- Added power log file size details to Monitor page
+
+## V1.13.15 - 2019-06-15
+- Corrected problem logging with gengpioin.py
+
+## V1.13.14 - 2019-06-14
+- Corrected problem with gengpioin.py and gengpio.py that were introduced in V1.13.08
+
+## V1.13.13 - 2019-06-11
+- Updated default values for current calculation for Evolution Liquid Cooled
+- Added option in serial library for seven data bits (current unused in this project)
+- Corrected minor issue in mail library when used in stand alone mode
+
+## V1.13.12 - 2019-05-22
+- Added low bandwidth page: http://IPADDRESS:8000/low
+
+## V1.13.11 - 2019-05-20
+- Fix that will hopefully correct issues when upgrading from 1.13.07 or earlier
+
+## V1.13.10 - 2019-05-19
+- Increased delay when copying files during upgrades from 1.13.07 or earlier. This should not effect upgrades that are after V1.13.07
+
+## V1.13.09 - 2019-05-12
+- Created delay after file copy to allow file to settle before restarting on first restart after upgrade.
+
+## V1.13.08 - 2019-05-08
+- To be extra safe, please perform a backup on your data before installing the update as some files will be moved during the upgrade
+- Added alarm codes for Nexus
+- Update to support multiple genmon instances
+- move all working copies of conf files from /etc/ to /etc/genmon/
+- moved kwlog.txt, outage.txt and service journal data file from ./genmon to /etc/genmon/
+- Added new command line options to most programs to pass in full path to config files
+- Added TCP port command line option to ClientInterface.py
+- updates to the wiki
+- modified command line options for genmonmaint.sh to support alternate config locations. See https://github.com/jgyates/genmon/wiki/1----Software-Overview#genmonmaintsh for details
+
+## V1.13.07 - 2019-05-03
+- Fixed bug in genexercise.py that prevented a "Start/Transfer" exercise cycle from stoping
+
+## V1.13.06 - 2019-05-03
+- Fixed problem with Nexus controllers not properly showing "Start and Transfer" button in web interface
+- Modified Enhanced Exercise add on program to support Nexus controllers
+
+## V1.13.05 - 2019-05-03
+- Corrected typo in gengpio.py
+- Added additional error checking in genmon.js
+
+## V1.13.04 - 2019-05-01
+- Corrected display anomaly in web UI
+
+## V1.13.03 - 2019-04-30
+- Removed the ability to set quiet mode for Nexus and Air Cooled Evolution as this does not appear to be supported in the firmware.
+s
+## V1.13.02 - 2019-04-26
+- Improved startup error handling to better respond if there are serial issues preventing the software from identifying the controller
+
+## V1.13.01 - 2019-04-22
+- Corrected one typo
+- Added code for debugging purposes
+
+## V1.13.00 - 2019-04-20
+- Added Add On for Email to SMS support
+
+## V1.12.33 - 2019-04-17
+- Support for Evolution Liquid Cooled Three phase
+
+## V1.12.32 - 2019-03-30
+- Added H-100 and G-Panel Regulator, Governor and Engine data
+- Added new alarm code for Nexus
+
+## V1.12.31 - 2019-03-29
+- Added more register reads in H and G Panel controller (need register submissions to complete adding more data to UI)
+- Corrected bug in /OtherApps/modbusdump.py
+- Update for 2008 model Pre-Nexus controllers (i.e. made in 2008 and do not have Nexus printed on them). Previously these controllers were not supported. See https://github.com/jgyates/genmon/wiki/Appendix-D-Known-Issues item 6 for more details.
+
+## V1.12.30 - 2019-03-20
+- H and G Panel update to address log responsiveness
+
+## V1.12.29 - 2019-03-19
+- Add user defined URL to email messages (see advanced page)
+- Modified H-100 email format to include explanation of email
+
+## V1.12.28 - 2019-03-18
+- Update for H and G Panel remote start / stop commands
+
+## V1.12.27 - 2019-03-15
+- Corrected problem with genercise.py to reduce unneeded writing to log file.
+
+## V1.12.26 - 2019-03-12
+- Initial support for HTS, MTS, STS transfer switches for H-Panel and G-Panel controllers
+
+## V1.12.25 - 2019-03-10
+- Added the ability to use floating point values for run hours in the service journal
+
+## V1.12.24 - 2019-03-08
+- Remove Line State for G Panel and H Panel if Smart Transfer Switch option is enabled
+
+## V1.12.23 - 2019-03-06
+- Minor update to email password validation
+- Change to allow test email to be sent without a password
+- Added option in Evolution Enhanced Exercise Add On to allow use of generator time instead of system time.
+
+## V1.12.22 - 2019-03-02
+- Fix bug in H-Panel code that was introduced with V1.12.21
+
+## V1.12.21 - 2019-02-25
+- Added Service Journal for creating a user journal of service and repair activities
+- Modified backup to  include the Service Journal.
+- Added new Add On functionality for enhanced exercise features (Transfer Exercise). This is available for Evolution Controllers only.
+- Updated gengpio.py to add GPIO pins for Monitor Health and Internet Connectivity Status
+
+## V1.12.20 - 2019-02-24
+- Updated alarm data for H-Panel for Emergency Stop
+
+## V1.12.19 - 2019-02-21
+- Added sender name in email settings
+- Fixed test email functional to support disabling TLS
+
+## V1.12.18 - 2019-02-08
+- Added battery check service due date for EvoAC
+
+## V1.12.17 - 2019-02-07
+- Initial update for maintenance log feature. GUI still needs work.
+- Corrected the display of the Run/Event log and Alarm log for the H-Panel and G-Panel Industrial controllers. This now displays the logs with the newest entries first.
+
+## V1.12.16 - 2019-02-02
+- Removed reset alarm from web interface for EvoAC as more testing is needed on this feature.
+
+## V1.12.15 - 2019-01-25
+- Added option to disable TLS encryption
+
+## V1.12.14 - 2019-01-23
+- Corrected issue with outage log reporting incorrect fuel usage for outages of zero duration
+
+## V1.12.13 - 2019-01-22
+- Added method to generate self signed key instead of using the Flask key by default. This will make Secure WebServer more reliable
+- Corrected typo in /conf/gengpioin.conf
+
+## V1.12.12 - 2019-01-21
+- Fixed problem with outage notifications in mynotify.py (effects add on programs) introduced in 1.12.2
+- Added more info relating to fuel estimation to help in troubleshooting issues.
+- Fixed formatting issue with login page for secure web settings
+- Improved message in low fuel warning email (only for controllers with fuel estimate calculations)
+
+## V1.12.11 - 2019-01-15
+- Added new alarm code for NexusLC
+
+## V1.12.10 - 2019-01-09
+- Added entry to outage log for fuel consumption if fuel consumption supported by your generator
+
+## V1.12.9 - 2019-01-06
+- Fixed one problem with genloader.py load ordering
+- More updates for Python3 support
+
+## V1.12.8 - 2019-01-06
+- Updated install script to force pyowm version 2.9.0. Version 2.10 is python 3 only
+- Minor update to genmon.js to better convert JSON to HTML
+
+## V1.12.7 - 2019-01-02
+- Update for gengpioin.py triggers, added software debounce option to UI
+- Minor mod to genserv.py for debugging purposes
+- Updated code that returns numeric values for MQTT so JSON is not parsed twice
+
+## V1.12.6 - 2018-12-31
+- Added additional debug print for troubleshooting
+- Added new field for future features
+- Corrected spacing in an existing log entry
+
+## V1.12.5 - 2018-12-28
+- Update to allow GPIO Input parameters for pull up/down resistor and GPIO input trigger
+
+## V1.12.4 - 2018-12-28
+- Fixed bug with openweathermap icon
+
+## V1.12.3 - 2018-12-27
+- Changed link to download openweathermap icon
+- Added functionality to mynotify.py for future features
+
+## V1.12.2 - 2018-12-23
+- Changed format of JSON for better compatibility with external apps and exporting data
+- Minor mods to issue template
+- Corrected problem with simulation code
+- Added feature to test the email send settings
+- Fixed issue with graphic on logs page
+- Added run hours in last 30 days on Maintenance page for system that support power log
+
+## V1.12.1 - 2018-12-18
+- Added error code for change air filter alarm
 
 ## V1.12.0 - 2018-12-13
 - Python 3 updates, still recommend using Python 2.7 as it has been tested more, but this update allows for greater compatibility with Python 3.5
@@ -59,7 +336,7 @@ All notable changes to this project will be documented in this file. Major relea
 - Corrected potential problem with a warning email about the power log being sent multiple times
 
 ## V1.11.20 - 2018-11-06
-- Updated current calculation algorithm for Evolution Liquid Cooled. See https://github.com/jgyates/genmon/wiki/Appendix-4-Known-Issues for additional details.
+- Updated current calculation algorithm for Evolution Liquid Cooled. See https://github.com/jgyates/genmon/wiki/Appendix-D-Known-Issues for additional details.
 
 ## V1.11.19 - 2018-10-31
 - Added email notice when communications with controller has been lost (and restored)
@@ -155,5 +432,5 @@ All notable changes to this project will be documented in this file. Major relea
 - Added program genslack.py. This program will send notifications via the [Slack](www.slack.com) messaging service. Thanks @naterenbarger for this addition.
 - Updated install script to support all add-on program library requirements
 - Added support for Evolution 2.0
-- Added support for serial over TCP/IP (additional hardware required) See [this page for details](https://github.com/jgyates/genmon/wiki/Appendix-6----Serial-over-IP)
+- Added support for serial over TCP/IP (additional hardware required) See [this page for details](https://github.com/jgyates/genmon/wiki/Appendix-F----Serial-over-IP)
 - Added advanced Modbus error handling for H-100 controllers

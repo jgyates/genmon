@@ -16,6 +16,7 @@ import os, sys, subprocess, re, datetime
 import collections
 
 from genmonlib.mycommon import MyCommon
+from genmonlib.program_defaults import ProgramDefaults
 
 #------------ MyPlatform class -------------------------------------------------
 class MyPlatform(MyCommon):
@@ -30,16 +31,16 @@ class MyPlatform(MyCommon):
 
         PlatformInfo = self.GetPlatformInfo()
         OSInfo = self.GetOSInfo()
-
         if OSInfo == None and PlatformInfo == None:
-            return {}
+            return []
 
         if PlatformInfo == None:
             return OSInfo
         if OSInfo == None:
             return PlatformInfo
 
-        return self.MergeDicts(PlatformInfo, OSInfo)
+        PlatformInfo.extend(OSInfo)
+        return PlatformInfo
 
     #------------ MyPlatform::GetPlatformInfo-----------------------------------
     def GetPlatformInfo(self):
@@ -100,18 +101,18 @@ class MyPlatform(MyCommon):
 
         if not self.IsPlatformRaspberryPi():
             return None
-        PiInfo = collections.OrderedDict()
+        PiInfo = []
 
         try:
             try:
                 process = Popen(['/opt/vc/bin/vcgencmd', 'measure_temp'], stdout=PIPE)
                 output, _error = process.communicate()
                 if self.UseMetric:
-                    PiInfo["CPU Temperature"] = "%.2f C" % float(output[output.index('=') + 1:output.rindex("'")])
+                    PiInfo.append({"CPU Temperature" : "%.2f C" % float(output[output.index('=') + 1:output.rindex("'")])})
                 else:
-                    PiInfo["CPU Temperature"] = "%.2f F" % self.ConvertCelsiusToFahrenheit(float(output[output.index('=') + 1:output.rindex("'")]))
+                    PiInfo.append({"CPU Temperature" : "%.2f F" % self.ConvertCelsiusToFahrenheit(float(output[output.index('=') + 1:output.rindex("'")]))})
             except Exception as e1:
-                self.LogError(str(e1))
+                #self.LogErrorLine(str(e1))
                 # for non rasbpian based systems
                 process = Popen(['cat', '/sys/class/thermal/thermal_zone0/temp'], stdout=PIPE)
                 output, _error = process.communicate()
@@ -119,18 +120,18 @@ class MyPlatform(MyCommon):
                     TempStr = str(float(output) / 1000) + " C"
                 else:
                     TempStr = str(self.ConvertCelsiusToFahrenheit(float(output) / 1000)) + " F"
-                PiInfo["CPU Temperature"] = TempStr
+                PiInfo.append({"CPU Temperature" : TempStr})
 
             try:
                 process = Popen(['cat', '/proc/device-tree/model'], stdout=PIPE)
                 output, _error = process.communicate()
-                PiInfo["Pi Model"] = str(output.encode('ascii', 'ignore')).rstrip("\x00")
+                PiInfo.append({"Pi Model" : str(output.encode('ascii', 'ignore')).rstrip("\x00")})
             except:
                 pass
             try:
                 file = open("/sys/devices/platform/soc/soc:firmware/get_throttled")
                 status = file.read()
-                PiInfo = self.MergeDicts(PiInfo, self.ParseThrottleStatus(int(status, 16)))
+                PiInfo.extend(self.ParseThrottleStatus(int(status, 16)))
             except Exception as e1:
                 pass
 
@@ -142,7 +143,7 @@ class MyPlatform(MyCommon):
     #------------ MyPlatform::ParseThrottleStatus ------------------------------
     def ParseThrottleStatus(self, status):
 
-        PiThrottleInfo = collections.OrderedDict()
+        PiThrottleInfo = []
 
         StatusStr = ""
 
@@ -154,7 +155,7 @@ class MyPlatform(MyCommon):
         if StatusStr == "":
             StatusStr += "OK"
 
-        PiThrottleInfo["Pi CPU Frequency Throttling"] = StatusStr
+        PiThrottleInfo.append({"Pi CPU Frequency Throttling" : StatusStr})
 
         StatusStr = ""
         if (status & 0x20000):
@@ -165,7 +166,7 @@ class MyPlatform(MyCommon):
         if StatusStr == "":
             StatusStr += "OK"
 
-        PiThrottleInfo["Pi ARM Frequency Cap"] = StatusStr
+        PiThrottleInfo.append({"Pi ARM Frequency Cap" : StatusStr})
 
         StatusStr = ""
         if (status & 0x10000):
@@ -176,7 +177,7 @@ class MyPlatform(MyCommon):
         if StatusStr == "":
             StatusStr += "OK"
 
-        PiThrottleInfo["Pi Undervoltage"] = StatusStr
+        PiThrottleInfo.append({"Pi Undervoltage" : StatusStr})
         return PiThrottleInfo
 
     #------------ MyPlatform::GetThrottledStatus -------------------------------
@@ -197,12 +198,12 @@ class MyPlatform(MyCommon):
 
         if not self.IsOSLinux():
             return None
-        LinuxInfo = collections.OrderedDict()
+        LinuxInfo = []
 
         try:
             CPU_Pct=str(round(float(os.popen('''grep 'cpu ' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage }' ''').readline()),2))
             if len(CPU_Pct):
-                LinuxInfo["CPU Utilization"] = CPU_Pct + "%"
+                LinuxInfo.append({"CPU Utilization" : CPU_Pct + "%"})
         except:
             pass
         try:
@@ -214,24 +215,24 @@ class MyPlatform(MyCommon):
                     k,v = line.rstrip().split("=")
                     # .strip('"') will remove if there or else do nothing
                     OSReleaseInfo[k] = v.strip('"')
-                LinuxInfo["OS Name"] = OSReleaseInfo["NAME"]
-                LinuxInfo["OS Version"] = OSReleaseInfo["VERSION"]
+                LinuxInfo.append({"OS Name" : OSReleaseInfo["NAME"]})
+                LinuxInfo.append({"OS Version" : OSReleaseInfo["VERSION"]})
 
             try:
                 with open('/proc/uptime', 'r') as f:
                     uptime_seconds = float(f.readline().split()[0])
                     uptime_string = str(datetime.timedelta(seconds = uptime_seconds))
-                    LinuxInfo["System Uptime"] = uptime_string.split(".")[0]    # remove microseconds
+                    LinuxInfo.append({"System Uptime" : uptime_string.split(".")[0] })   # remove microseconds
             except Exception as e1:
                 pass
 
             try:
                 adapter = os.popen("ip link | grep BROADCAST | grep -v NO-CARRIER | grep -m 1 LOWER_UP  | awk -F'[:. ]' '{print $3}'").readline().rstrip("\n")
                 #output, _error = process.communicate()
-                LinuxInfo["Network Interface Used"] = adapter
+                LinuxInfo.append({"Network Interface Used" : adapter})
                 try:
                     if adapter.startswith('wl'):
-                        LinuxInfo = self.MergeDicts(LinuxInfo, self.GetWiFiInfo(adapter))
+                        LinuxInfo.extend(self.GetWiFiInfo(adapter))
                 except Exception as e1:
                     pass
             except:
@@ -262,7 +263,7 @@ class MyPlatform(MyCommon):
     #------------ MyPlatform::GetWiFiInfo --------------------------------------
     def GetWiFiInfo(self, adapter):
 
-        WiFiInfo = collections.OrderedDict()
+        WiFiInfo = []
 
         try:
             with open("/proc/net/wireless", "r") as f:
@@ -271,15 +272,35 @@ class MyPlatform(MyCommon):
                         continue
                     ListItems = line.split()
                     if len(ListItems) > 4:
-                        WiFiInfo["WLAN Signal Level"] = ListItems[3].replace(".", "") + " dBm"
+                        WiFiInfo.append({"WLAN Signal Level" : ListItems[3].replace(".", "") + " dBm"})
                         # Note that some WLAN drivers make this value based from 0 - 70, others are 0-100
                         # There is no standard on the range
                         try:
-                            WiFiInfo["WLAN Signal Quality"] = self.GetWiFiSignalQuality(adapter)
+                            WiFiInfo.append({"WLAN Signal Quality" : self.GetWiFiSignalQuality(adapter)})
                         except:
-                            WiFiInfo["WLAN Signal Quality"] = ListItems[2].replace(".", "")  + "/70"
+                            WiFiInfo.append({"WLAN Signal Quality" : ListItems[2].replace(".", "")  + "/70"})
 
-                        WiFiInfo["WLAN Signal Noise"] = ListItems[4].replace(".", "") + " dBm"
+                        WiFiInfo.append({"WLAN Signal Noise" : ListItems[4].replace(".", "") + " dBm"})
         except Exception as e1:
             pass
         return WiFiInfo
+
+    #------------ MyPlatform::InterntConnected ---------------------------------
+    # Note: this function, if the network connection is not present could
+    # take some time to complete due to the network timeout
+    @staticmethod
+    def InterntConnected():
+
+        try:
+            import httplib
+        except:
+            import http.client as httplib
+
+        conn = httplib.HTTPConnection("www.google.com", timeout=2)
+        try:
+            conn.request("HEAD", "/")
+            conn.close()
+            return True
+        except:
+            conn.close()
+            return False

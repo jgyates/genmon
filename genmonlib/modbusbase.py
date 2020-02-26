@@ -15,6 +15,7 @@ import datetime, threading, crcmod, sys, time
 
 from genmonlib.mysupport import MySupport
 from genmonlib.mylog import SetupLogger
+from genmonlib.program_defaults import ProgramDefaults
 
 
 #------------ ModbusBase class -------------------------------------------------
@@ -44,6 +45,8 @@ class ModbusBase(MySupport ):
         self.UnexpectedData = 0
         self.SlowCPUOptimization = False
         self.UseTCP = False
+        self.AdditionalModbusTimeout = 0
+        self.ResponseAddress = None         # Used if recieve packes have a different address than sent packets
 
         if self.config != None:
             self.loglocation = self.config.ReadValue('loglocation', default = '/var/log/')
@@ -51,6 +54,12 @@ class ModbusBase(MySupport ):
             self.UseTCP = self.config.ReadValue('use_serial_tcp', return_type = bool, default = False)
             self.Address = int(self.config.ReadValue('address', default = '9d'),16)         # modbus address
             self.AdditionalModbusTimeout = self.config.ReadValue('additional_modbus_timeout', return_type = float, default = 0.0)
+            ResponseAddressStr = self.config.ReadValue('response_address', default = None)
+            if ResponseAddressStr != None:
+                try:
+                    self.ResponseAddress = int(ResponseAddressStr,16)         # response modbus address
+                except:
+                    self.ResponseAddress = None
         else:
             self.loglocation = default = './'
 
@@ -60,6 +69,7 @@ class ModbusBase(MySupport ):
 
         # log errors in this module to a file
         self.log = SetupLogger("mymodbus", self.loglocation + "mymodbus.log")
+        self.console = SetupLogger("mymodbus_console", log_file = "", stream = True)
 
     #-------------ModbusBase::ProcessMasterSlaveWriteTransaction----------------
     def ProcessMasterSlaveWriteTransaction(self, Register, Length, Data):
@@ -74,9 +84,9 @@ class ModbusBase(MySupport ):
         return
     # ---------- ModbusBase::GetCommStats---------------------------------------
     def GetCommStats(self):
-        SerialStats = collections.OrderedDict()
+        SerialStats = []
 
-        SerialStats["Packet Count"] = "M: %d, S: %d" % (self.TxPacketCount, self.RxPacketCount)
+        SerialStats.append({"Packet Count" : "M: %d, S: %d" % (self.TxPacketCount, self.RxPacketCount)})
 
         if self.CrcError == 0 or self.TxPacketCount == 0:
             PercentErrors = 0.0
@@ -88,24 +98,24 @@ class ModbusBase(MySupport ):
         else:
             PercentTimeoutErrors = float(self.ComTimoutError) / float(self.TxPacketCount)
 
-        SerialStats["CRC Errors"] = "%d " % self.CrcError
-        SerialStats["CRC Percent Errors"] = ("%.2f" % (PercentErrors * 100)) + "%"
-        SerialStats["Packet Timeouts"] = "%d" %  self.ComTimoutError
-        SerialStats["Packet Timeouts Percent Errors"] = ("%.2f" % (PercentTimeoutErrors * 100)) + "%"
-        SerialStats["Modbus Exceptions"] = self.SlaveException
-        SerialStats["Validation Errors"] = self.ComValidationError
-        SerialStats["Invalid Data"] = self.UnexpectedData
+        SerialStats.append({"CRC Errors" : "%d " % self.CrcError})
+        SerialStats.append({"CRC Percent Errors" : ("%.2f" % (PercentErrors * 100)) + "%"})
+        SerialStats.append({"Timeout Errors" : "%d" %  self.ComTimoutError})
+        SerialStats.append({"Timeout Percent Errors" : ("%.2f" % (PercentTimeoutErrors * 100)) + "%"})
+        SerialStats.append({"Modbus Exceptions" : self.SlaveException})
+        SerialStats.append({"Validation Errors" : self.ComValidationError})
+        SerialStats.append({"Invalid Data" : self.UnexpectedData})
         # Add serial stats here
         CurrentTime = datetime.datetime.now()
 
         #
         Delta = CurrentTime - self.ModbusStartTime        # yields a timedelta object
         PacketsPerSecond = float((self.TxPacketCount + self.RxPacketCount)) / float(Delta.total_seconds())
-        SerialStats["Packets Per Second"] = "%.2f" % (PacketsPerSecond)
+        SerialStats.append({"Packets Per Second" : "%.2f" % (PacketsPerSecond)})
 
         if self.ModBus.RxPacketCount:
             AvgTransactionTime = float(self.TotalElapsedPacketeTime / self.RxPacketCount)
-            SerialStats["Average Transaction Time"] = "%.4f sec" % (AvgTransactionTime)
+            SerialStats.append({"Average Transaction Time" : "%.4f sec" % (AvgTransactionTime)})
 
         return SerialStats
     # ---------- ModbusBase::ResetCommStats-------------------------------------

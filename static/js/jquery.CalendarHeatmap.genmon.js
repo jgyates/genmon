@@ -73,7 +73,10 @@
                     .endOf( "month" )
                     .isoWeek();
                 if ( s > e ) {
-                    e += s;
+                    e =  moment()
+                    .set( { "year": year, "month": month } )
+                    .endOf( "month" ).subtract(7, 'days')
+                    .isoWeek()+1;
                 }
                 return e - s + 1;
             },

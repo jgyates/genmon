@@ -13,12 +13,14 @@
 #
 #-------------------------------------------------------------------------------
 
-import threading, datetime, collections, os, time
+import threading, datetime, collections, os, time, json
 # NOTE: collections OrderedDict is used for dicts that are displayed to the UI
 
 
 from genmonlib.mysupport import MySupport
-from genmonlib.mythread import MyThread 
+from genmonlib.mythread import MyThread
+from genmonlib.mylog import SetupLogger
+from genmonlib.program_defaults import ProgramDefaults
 
 class GeneratorController(MySupport):
     #---------------------GeneratorController::__init__-------------------------
@@ -29,7 +31,8 @@ class GeneratorController(MySupport):
         simulationfile = None,
         message = None,
         feedback = None,
-        config = None):
+        config = None,
+        ConfigFilePath = ProgramDefaults.ConfPath):
 
         super(GeneratorController, self).__init__(simulation = simulation)
         self.log = log
@@ -51,15 +54,21 @@ class GeneratorController(MySupport):
         self.NotChanged = 0         # stats for registers
         self.Changed = 0            # stats for registers
         self.TotalChanged = 0.0     # ratio of changed ragisters
-        self.OutageLog = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/outage.txt"
-        self.PowerLogMaxSize = 15       # 15 MB max size
-        self.PowerLog =  os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/kwlog.txt"
+        self.MaintLog =  ConfigFilePath + "maintlog.json"
+        self.MaintLogList = []
+        self.MaintLock = threading.RLock()
+        self.OutageLog = ConfigFilePath + "outage.txt"
+        self.PowerLogMaxSize = 15.0       # 15 MB max size
+        self.PowerLog =  ConfigFilePath + "kwlog.txt"
         self.PowerLogList = []
         self.PowerLock = threading.RLock()
         self.KWHoursMonth = None
         self.FuelMonth = None
+        self.RunHoursMonth = None
+        self.FuelTotal  = None
         self.LastHouseKeepingTime = None
         self.TileList = []        # Tile list for GUI
+        self.TankData = None
 
         self.UtilityVoltsMin = 0    # Minimum reported utility voltage above threshold
         self.UtilityVoltsMax = 0    # Maximum reported utility voltage above pickup
@@ -74,12 +83,14 @@ class GeneratorController(MySupport):
         self.Model = "Unknown"
         self.EngineDisplacement = "Unknown"
         self.TankSize = 0
+        self.UseExternalFuelData = False
 
         self.ProgramStartTime = datetime.datetime.now()     # used for com metrics
         self.OutageStartTime = self.ProgramStartTime        # if these two are the same, no outage has occured
         self.LastOutageDuration = self.OutageStartTime - self.OutageStartTime
 
         try:
+            self.console = SetupLogger("controller_console", log_file = "", stream = True)
             if self.config != None:
                 self.SiteName = self.config.ReadValue('sitename', default = 'Home')
                 self.LogLocation = self.config.ReadValue('loglocation', default = '/var/log/')
@@ -88,7 +99,8 @@ class GeneratorController(MySupport):
                 self.bDisplayUnknownSensors = self.config.ReadValue('displayunknown', return_type = bool, default = False)
                 self.bDisablePowerLog = self.config.ReadValue('disablepowerlog', return_type = bool, default = False)
                 self.SubtractFuel = self.config.ReadValue('subtractfuel', return_type = float, default = 0.0)
-
+                self.UserURL = self.config.ReadValue('user_url',  default = "").strip()
+                self.UseExternalFuelData = self.config.ReadValue('use_external_fuel_data', return_type = bool, default = False)
 
                 if self.config.HasOption('outagelog'):
                     self.OutageLog = self.config.ReadValue('outagelog')
@@ -96,7 +108,7 @@ class GeneratorController(MySupport):
                 if self.config.HasOption('kwlog'):
                     self.PowerLog = self.config.ReadValue('kwlog')
 
-                self.PowerLogMaxSize = self.config.ReadValue('kwlogmax', return_type = int, default = 15)
+                self.PowerLogMaxSize = self.config.ReadValue('kwlogmax', return_type = float, default = 15.0)
 
                 if self.config.HasOption('nominalfrequency'):
                     self.NominalFreq = self.config.ReadValue('nominalfrequency')
@@ -118,10 +130,7 @@ class GeneratorController(MySupport):
                 self.SmartSwitch = self.config.ReadValue('smart_transfer_switch', return_type = bool, default = False)
 
         except Exception as e1:
-            if not reload:
                 self.FatalError("Missing config file or config file entries: " + str(e1))
-            else:
-                self.LogErrorLine("Error reloading config file" + str(e1))
 
 
     #----------  GeneratorController:StartCommonThreads-------------------------
@@ -149,6 +158,8 @@ class GeneratorController(MySupport):
                 return
             while True:
                 try:
+                    if not self.InitComplete:
+                        self.InitDevice()
                     self.MasterEmulation()
                     if self.IsStopSignaled("ProcessThread"):
                         break
@@ -176,6 +187,9 @@ class GeneratorController(MySupport):
             except Exception as e1:
                 self.LogErrorLine("Error in  CheckAlarmThread" + str(e1))
 
+    #----------  GeneratorController:TestCommand--------------------------------
+    def TestCommand(self):
+        return "Not Supported"
     #----------  GeneratorController:DebugThread--------------------------------
     def DebugThread(self):
 
@@ -424,21 +438,21 @@ class GeneratorController(MySupport):
             self.LogErrorLine("Error in DisplayLogs: " + str(e1))
 
     #------------ GeneratorController::DisplayMaintenance ----------------------
-    def DisplayMaintenance (self, DictOut = False):
+    def DisplayMaintenance (self, DictOut = False, JSONNum = False):
         try:
             pass
         except Exception as e1:
             self.LogErrorLine("Error in DisplayMaintenance: " + str(e1))
 
     #------------ GeneratorController::DisplayStatus ---------------------------
-    def DisplayStatus(self, DictOut = False):
+    def DisplayStatus(self, DictOut = False, JSONNum = False):
         try:
             pass
         except Exception as e1:
             self.LogErrorLine("Error in DisplayStatus: " + str(e1))
 
     #------------------- GeneratorController::DisplayOutage --------------------
-    def DisplayOutage(self, DictOut = False):
+    def DisplayOutage(self, DictOut = False, JSONNum = False):
         try:
             pass
         except Exception as e1:
@@ -540,6 +554,9 @@ class GeneratorController(MySupport):
     def GetCommStatus(self):
         return self.ModBus.GetCommStats()
 
+    #------------ GeneratorController:GetRunHours ------------------------------
+    def GetRunHours(self):
+        return "Unknown"
     #------------ GeneratorController:GetBaseStatus ----------------------------
     # return one of the following: "ALARM", "SERVICEDUE", "EXERCISING", "RUNNING",
     # "RUNNING-MANUAL", "OFF", "MANUAL", "READY"
@@ -648,19 +665,41 @@ class GeneratorController(MySupport):
                     if line[0] == "#":              # comment?
                         continue
                     Items = line.split(",")
-                    if len(Items) != 2 and len(Items) != 3:
+                    # Three items is for duration greater than 24 hours, i.e 1 day, 08:12
+                    if len(Items) < 2:
                         continue
-                    if len(Items) == 3:
-                        strDuration = Items[1] + "," + Items[2]
-                    else:
+                    strDuration = ""
+                    strFuel = ""
+                    if len(Items)  == 2:
+                        # Only date and duration less than a day
                         strDuration = Items[1]
+                    elif (len(Items) == 3) and ("day" in Items[1]):
+                        #  date and outage greater than 24 hours
+                        strDuration  = Items[1] + "," + Items[2]
+                    elif len(Items) == 3:
+                        # date, outage less than 1 day, and fuel
+                        strDuration = Items[1]
+                        strFuel = Items[2]
+                    elif len(Items) == 4 and ("day" in Items[1]):
+                        # date, outage less greater than 1 day, and fuel
+                        strDuration = Items[1] + "," + Items[2]
+                        strFuel = Items[3]
+                    else:
+                        continue
 
-                    OutageLog.insert(0, [Items[0], strDuration])
-                    if len(OutageLog) > 50:     # limit log to 50 entries
+                    if len(strDuration)  and len(strFuel):
+                        OutageLog.insert(0, [Items[0], strDuration, strFuel])
+                    elif len(strDuration):
+                        OutageLog.insert(0, [Items[0], strDuration])
+
+                    if len(OutageLog) > 100:     # limit log to 100 entries
                         OutageLog.pop()
 
             for Items in OutageLog:
-                LogHistory.append("%s, Duration: %s" % (Items[0], Items[1]))
+                if len(Items) == 2:
+                    LogHistory.append("%s, Duration: %s" % (Items[0], Items[1]))
+                elif len(Items) == 3:
+                    LogHistory.append("%s, Duration: %s, Estimated Fuel: %s" % (Items[0], Items[1], Items[2]))
 
             return LogHistory
 
@@ -677,21 +716,38 @@ class GeneratorController(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in LogToPowerLog: " + str(e1))
 
+    #------------ GeneratorController::GetPowerLogFileDetails-------------------
+    def GetPowerLogFileDetails(self):
+
+        if not self.PowerMeterIsSupported():
+            return "Not Supported"
+        try:
+            LogSize = os.path.getsize(self.PowerLog)
+            outstr = "%.2f MB of %.2f MB" %((float(LogSize) / (1024.0*1024.0)), self.PowerLogMaxSize )
+            return outstr
+        except Exception as e1:
+            self.LogErrorLine("Error in GetPowerLogFileDetails : " + str(e1))
+            return "Unknown"
     #------------ GeneratorController::PrunePowerLog----------------------------
     def PrunePowerLog(self, Minutes):
 
         if not Minutes:
+            self.LogError("Clearing power log")
             return self.ClearPowerLog()
 
         try:
-            CmdString = "power_log_json=%d" % Minutes
-            PowerLog = self.GetPowerHistory(CmdString, NoReduce = True)
 
             LogSize = os.path.getsize(self.PowerLog)
+            if float(LogSize) / (1024*1024) < self.PowerLogMaxSize * 0.85:
+                return "OK"
 
             if float(LogSize) / (1024*1024) >= self.PowerLogMaxSize * 0.98:
-                msgbody = "The kwlog file size is 98% of the maximum. Once the log reaches 100% of the log will be reset."
-                self.MessagePipe.SendMessage("Notice: Log file size warning" , msgbody, msgtype = "warn", onlyonce = True)
+                msgbody = "The genmon kwlog (power log) file size is 98 percent of the maximum. Once "
+                msgbody += "the log reaches 100 percent of the log will be reset. This will result "
+                msgbody += "inaccurate fuel estimation (if you are using this feature). You can  "
+                msgbody += "either increase the size of the kwlog on the advanced settings page,"
+                msgbody += "or reset your power log."
+                self.MessagePipe.SendMessage("Notice: Power Log file size warning" , msgbody, msgtype = "warn", onlyonce = True)
 
             # is the file size too big?
             if float(LogSize) / (1024*1024) >= self.PowerLogMaxSize:
@@ -699,15 +755,22 @@ class GeneratorController(MySupport):
                 self.LogError("Power Log entries deleted due to size reaching maximum.")
                 return "OK"
 
+            # if we get here the power log is 85% full or greater so let's try to reduce the size by
+            # deleting entires that are older than the input Minutes
+            CmdString = "power_log_json=%d" % Minutes
+            PowerLog = self.GetPowerHistory(CmdString, NoReduce = True)
+
             self.ClearPowerLog(NoCreate = True)
             # Write oldest log entries first
             for Items in reversed(PowerLog):
-                self.LogToFile(self.PowerLog, Items[0], Items[1])
+                self.LogToPowerLog(Items[0], Items[1])
 
+            # Add null entry at the end
             if not os.path.isfile(self.PowerLog):
                 TimeStamp = datetime.datetime.now().strftime('%x %X')
-                self.LogToFile(self.PowerLog, TimeStamp, "0.0")
+                self.LogToPowerLog(TimeStamp, "0.0")
 
+            # if the power log is now empty add one entry
             LogSize = os.path.getsize(self.PowerLog)
             if LogSize == 0:
                 TimeStamp = datetime.datetime.now().strftime('%x %X')
@@ -729,7 +792,9 @@ class GeneratorController(MySupport):
             if not os.path.isfile(self.PowerLog):
                 return "Power Log is empty"
             try:
-                os.remove(self.PowerLog)
+                with self.PowerLock:
+                    os.remove(self.PowerLog)
+                    time.sleep(1)
             except:
                 pass
 
@@ -745,14 +810,6 @@ class GeneratorController(MySupport):
             self.LogErrorLine("Error in  ClearPowerLog: " + str(e1))
             return "Error in  ClearPowerLog: " + str(e1)
 
-    #------------ GeneratorController::ReducePowerSamples-----------------------
-    def ReducePowerSamples2(self, PowerList, MaxSize):
-        NewList = []
-        try:
-            pass
-        except Exception as e1:
-            self.LogErrorLine("Error in ReducePowerSamples: " + str(e1))
-        return []
     #------------ GeneratorController::ReducePowerSamples-----------------------
     def ReducePowerSamples(self, PowerList, MaxSize):
 
@@ -864,7 +921,7 @@ class GeneratorController(MySupport):
                         PowerList.insert(0, [Items[0], Items[1]])
 
             except Exception as e1:
-                self.LogErrorLine("Error in  GetPowerHistory (parse file): " + str(e1))
+                self.LogErrorLine("Error in  ReadPowerLogFromFile (parse file): " + str(e1))
 
             if len(PowerList) > 500 and not NoReduce:
                 PowerList = self.ReducePowerSamples(PowerList, 500)
@@ -876,6 +933,7 @@ class GeneratorController(MySupport):
 
         KWHours = False
         FuelConsumption = False
+        RunHours = False
         msgbody = "Invalid command syntax for command power_log_json"
 
         try:
@@ -910,6 +968,8 @@ class GeneratorController(MySupport):
                         KWHours = True
                     elif ParseList[1].strip().lower() == "fuel":
                         FuelConsumption = True
+                    elif ParseList[1].strip().lower() == "time":
+                        RunHours = True
                 else:
                     self.LogError("Validation Error: Error parsing command string in GetPowerHistory (parse3): " + CmdString)
                     return msgbody
@@ -938,6 +998,9 @@ class GeneratorController(MySupport):
                 if Consumption == None:
                     return "Unknown"
                 return "%.2f %s" % (Consumption, Label)
+            if RunHours:
+                AvgPower, TotalSeconds = self.GetAveragePower(PowerList)
+                return "%.2f" % (TotalSeconds / 60.0 / 60.0)
 
             return PowerList
 
@@ -1019,7 +1082,7 @@ class GeneratorController(MySupport):
                 # Housekeeping on kw Log
                 if LastValue == 0:
                     if self.GetDeltaTimeMinutes(datetime.datetime.now() - LastPruneTime) > 1440 :     # check every day
-                        self.PrunePowerLog(43800 * 36)   # delete log entries greater than three years
+                        self.PrunePowerLog(60 * 24 * 30 * 36)   # delete log entries greater than three years
                         LastPruneTime = datetime.datetime.now()
 
                 if self.GetDeltaTimeMinutes(datetime.datetime.now() - LastFuelCheckTime) > 10 :         # check 10 min
@@ -1050,7 +1113,10 @@ class GeneratorController(MySupport):
     #----------  GeneratorController::GetFuelLevel------------------------------
     def GetFuelLevel(self, ReturnFloat = False):
         # return 0 - 100 or None
-        if not self.FuelCalculationSupported() and not self.FuelSensorSupported():
+
+        if not self.FuelConsumptionGaugeSupported():
+            return None
+        if not self.FuelTankCalculationSupported() and not self.FuelSensorSupported():
             return None
 
         if self.FuelSensorSupported():
@@ -1072,8 +1138,9 @@ class GeneratorController(MySupport):
     #----------  GeneratorController::CheckFuelLevel----------------------------
     def CheckFuelLevel(self):
         try:
-
-            if not self.FuelCalculationSupported() and not self.FuelSensorSupported():
+            if not self.FuelConsumptionGaugeSupported():
+                return True
+            if not self.FuelTankCalculationSupported() and not self.FuelSensorSupported():
                 return True
 
             FuelLevel = self.GetFuelLevel(ReturnFloat = True)
@@ -1083,11 +1150,13 @@ class GeneratorController(MySupport):
 
             if FuelLevel <= 10:    # Ten percent left
                 msgbody = "Warning: The estimated fuel in the tank is at or below 10%"
-                self.MessagePipe.SendMessage("Warning: Fuel Level at or below 10%" , msgbody, msgtype = "warn", onlyonce = True)
+                title = "Warning: Fuel Level Low (10%) at " + self.SiteName
+                self.MessagePipe.SendMessage(title , msgbody, msgtype = "warn", onlyonce = True)
                 return False
             elif FuelLevel <= 20:    # 20 percent left
                 msgbody = "Warning: The estimated fuel in the tank is at or below 20%"
-                self.MessagePipe.SendMessage("Warning: Fuel Level at or below 20%" , msgbody, msgtype = "warn", onlyonce = True)
+                title = "Warning: Fuel Level Low (20%) at " + self.SiteName
+                self.MessagePipe.SendMessage(title , msgbody, msgtype = "warn", onlyonce = True)
                 return False
             else:
                 return True
@@ -1103,7 +1172,9 @@ class GeneratorController(MySupport):
         else:
             DefaultReturn = "0"
 
-        if not self.FuelCalculationSupported():
+        if not self.FuelConsumptionGaugeSupported():
+            return DefaultReturn
+        if not self.FuelTankCalculationSupported():
             return DefaultReturn
 
         if self.TankSize == 0:
@@ -1114,7 +1185,6 @@ class GeneratorController(MySupport):
                 return DefaultReturn
             FuelUsed = self.removeAlpha(FuelUsed)
             FuelLeft = float(self.TankSize) - float(FuelUsed)
-
             FuelLeft = float(FuelLeft) - float(self.SubtractFuel)
 
             if FuelLeft < 0:
@@ -1136,11 +1206,14 @@ class GeneratorController(MySupport):
     #----------  GeneratorController::FuelSensorSupported------------------------
     def FuelSensorSupported(self):
         return False
-    #----------  GeneratorController::FuelCalculationSupported------------------------
-    def FuelCalculationSupported(self):
+    #----------  GeneratorController::FuelTankCalculationSupported------------------
+    def FuelTankCalculationSupported(self):
         return False
     #----------  GeneratorController::FuelConsumptionSupported------------------
     def FuelConsumptionSupported(self):
+        return False
+    #----------  GeneratorController::FuelConsumptionGaugeSupported-------------
+    def FuelConsumptionGaugeSupported(self):
         return False
 
     #----------  GeneratorController::GetFuelConsumption------------------------
@@ -1158,8 +1231,12 @@ class GeneratorController(MySupport):
             Consumption = (seconds / 3600) * Consumption
 
             if self.UseMetric:
-                Consumption = Consumption * 3.78541
-                return round(Consumption, 4), "L"     # convert to Liters
+                if self.FuelType == "Natural Gas":
+                    Consumption = Consumption * 0.0283168   # cubic feet to cubic meters
+                    return round(Consumption, 4), "cubic meters"       # convert to Liters
+                else:
+                    Consumption = Consumption * 3.78541     # gal to liters
+                    return round(Consumption, 4), "L"       # convert to Liters
             else:
                 return round(Consumption, 4), Polynomial[3]
         except Exception as e1:
@@ -1168,6 +1245,152 @@ class GeneratorController(MySupport):
     #----------  GeneratorController::GetFuelConsumptionPolynomial--------------
     def GetFuelConsumptionPolynomial(self):
         return None
+    #----------  GeneratorController::ExternalFuelDataSupported-----------------
+    def ExternalFuelDataSupported(self):
+        return self.UseExternalFuelData
+    #----------  GeneratorController::GetExternalFuelPercentage-----------------
+    def GetExternalFuelPercentage(self, ReturnFloat = False):
+
+        try:
+            if ReturnFloat:
+                DefaultReturn = 0.0
+            else:
+                DefaultReturn = "0"
+
+            if not self.ExternalFuelDataSupported():
+                return DefaultReturn
+
+            if self.TankData != None:
+                percentage =  self.TankData["Percentage"]
+                if ReturnFloat:
+                    return float(percentage)
+                else:
+                    return str(percentage)
+            else:
+                return DefaultReturn
+        except Exception as e1:
+            self.LogErrorLine("Error in GetExternalFuelPercentage: " + str(e1))
+            return DefaultReturn
+    #----------  GeneratorController::SetExternalTankData-----------------------
+    def SetExternalTankData(self, command):
+
+        try:
+            CmdList = command.split("=")
+            if len(CmdList) == 2:
+                self.TankData = json.loads(CmdList[1])
+            else:
+                self.LogError("Error in  SetExternalTankData: invalid input")
+                return "Error"
+        except Exception as e1:
+            self.LogErrorLine("Error in SetExternalTankData: " + str(e1))
+            return "Error"
+        return "OK"
+    #----------  GeneratorController::AddEntryToMaintLog------------------------
+    def AddEntryToMaintLog(self, InputString):
+
+        ValidInput = False
+        EntryString = InputString
+        if EntryString == None or not len(EntryString):
+            return "Invalid input for Maintenance Log entry."
+
+        EntryString = EntryString.strip()
+        if EntryString.startswith("add_maint_log"):
+            EntryString = EntryString[len('add_maint_log'):]
+            EntryString = EntryString.strip()
+            if EntryString.strip().startswith("="):
+                EntryString = EntryString[len("="):]
+                EntryString = EntryString.strip()
+                ValidInput = True
+
+        if ValidInput:
+            try:
+                Entry = json.loads(EntryString)
+                # validate object
+                if not self.ValidateMaintLogEntry(Entry):
+                    return "Invalid maintenance log entry"
+                self.MaintLogList.append(Entry)
+                with open(self.MaintLog, 'w') as outfile:
+                    json.dump(self.MaintLogList, outfile, sort_keys = True, indent = 4) #, ensure_ascii = False)
+            except Exception as e1:
+                self.LogErrorLine("Error in AddEntryToMaintLog: " + str(e1))
+                return "Invalid input for Maintenance Log entry (2)."
+        else:
+            self.LogError("Error in AddEntryToMaintLog: invalid input: " + str(InputString))
+            return "Invalid input for Maintenance Log entry (3)."
+        return "OK"
+
+    #----------  GeneratorController::ValidateMaintLogEntry---------------------
+    def ValidateMaintLogEntry(self, Entry):
+
+        try:
+            # add_maint_log={"date":"01/02/2019 14:59", "type":"Repair", "comment":"Hello"}
+            if not isinstance(Entry, dict):
+                self.LogError("Error in ValidateMaintLogEntry: Entry is not a dict")
+                return False
+
+            if not isinstance(Entry["date"], str) and not isinstance(Entry["date"], unicode):
+                self.LogError("Error in ValidateMaintLogEntry: Entry date is not a string: " + str(type(Entry["date"])))
+                return False
+
+            try:
+                EntryDate = datetime.datetime.strptime(Entry["date"], "%m/%d/%Y %H:%M")
+            except Exception as e1:
+                self.LogErrorLine("Error in ValidateMaintLogEntry: expecting MM/DD/YYYY : " + str(e1))
+
+            if not isinstance(Entry["type"], str) and not isinstance(Entry["type"], unicode):
+                self.LogError("Error in ValidateMaintLogEntry: Entry type is not a string: " + str(type(Entry["hours"])))
+                return False
+            if not Entry["type"].lower() in ["maintenance", "check", "repair", "observation"]:
+                self.LogError("Error in ValidateMaintLogEntry: Invalid type: " + str(Entry["type"]))
+
+            Entry["type"] = Entry["type"].title()
+
+            if not isinstance(Entry["hours"], int) and not isinstance(Entry["hours"], float) :
+                self.LogError("Error in ValidateMaintLogEntry: Entry type is not a number: " + str(type(Entry["hours"])))
+                return False
+            if not isinstance(Entry["comment"], str) and not isinstance(Entry["comment"], unicode):
+                self.LogError("Error in ValidateMaintLogEntry: Entry comment is not a string: " + str(type(Entry["comment"])))
+
+        except Exception as e1:
+            self.LogErrorLine("Error in ValidateMaintLogEntry: " + str(e1))
+            return False
+
+        return True
+    #----------  GeneratorController::GetMaintLog-------------------------------
+    def GetMaintLog(self):
+
+        try:
+            if len(self.MaintLogList):
+                return json.dumps(self.MaintLogList)
+            if os.path.isfile(self.MaintLog):
+                try:
+                    with open(self.MaintLog) as infile:
+                        self.MaintLogList = json.load(infile)
+                        return json.dumps(self.MaintLogList)
+                except Exception as e1:
+                    self.LogErrorLine("Error in GetMaintLog: " + str(e1))
+        except Exception as e1:
+            self.LogErrorLine("Error in GetMaintLog (2): " + str(e1))
+
+        return "[]"
+
+    #----------  GeneratorController::ClearMaintLog-------------------------------
+    def ClearMaintLog(self):
+        try:
+            if len(self.MaintLog) and os.path.isfile(self.MaintLog):
+                try:
+                    with self.MaintLock:
+                        os.remove(self.MaintLog)
+                except:
+                    pass
+
+            self.MaintLogList = []
+
+            return "Maintenance Log cleared"
+        except Exception as e1:
+            self.LogErrorLine("Error in  ClearMaintLog: " + str(e1))
+            return "Error in  ClearMaintLog: " + str(e1)
+
     #----------  GeneratorController::Close-------------------------------------
     def Close(self):
 

@@ -9,6 +9,7 @@ This project will monitor a backup generator that utilizes the Generac Controlle
 * The H-100 controller is used in industrial generators from Generac and Eaton.
 * Generac G-Panel based Industrial Controllers
 * Generac PowerPact
+* [2008 Era Generac Pre-Nexus](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/2008-PreNexusController.jpg) controllers. See [this](https://github.com/jgyates/genmon/wiki/Appendix-D-Known-Issues) page for more info.
 
 The project is written mostly in python and has been tested with a Raspberry Pi 3 (Pi Zero, Pi Zero W, Pi 2 and Pi 3b+ have also been validated). To use this project you would need to create a physical enclosure for your raspberry pi and possibly [make a cable](https://github.com/jgyates/genmon/wiki/3.1--Making-a-Cable) to connect the raspberry pi to the generator controller or purchase [pre-assembled hardware](https://github.com/jgyates/genmon/wiki#pre-assembled-hardware). If you are comfortable doing these things and you have a backup generator that has a supported controller then this project may be of interest to you.
 
@@ -16,7 +17,7 @@ The project is written mostly in python and has been tested with a Raspberry Pi 
 The software supports the following features:
 
 * Monitoring of the generator to to detect and report the following:
-    * Maintenance, Start / Stop and Alarm Logs (No Maintenance log exist on Nexus)
+    * Maintenance, Start / Stop and Alarm Logs (No Maintenance log exist on Nexus or Industrial Gens)
     * Display Generator Serial Number
     * Generator warnings and faults
     * Generator Status:
@@ -29,7 +30,7 @@ The software supports the following features:
             - Generator Controller Time
             - Line State
                 - Utility Voltage Level
-                - Transfer Switch State (Evolution liquid cooled models only)
+                - Transfer Switch State (Evolution liquid cooled model and Industrial Gens with HTS/MTS/STS Transfer Switches models only)
         * Outage Information
             - Time since last outage
             - Current Utility Voltage
@@ -57,6 +58,12 @@ The software supports the following features:
 - Power, Current output on selected models
 - Fuel consumption on selected models
 - MQTT integration for third party home automation support
+- Service Journal for logging maintenance, repair, etc
+- Backup configuration files
+- Enhanced Exercise options for Evolution/Nexus controller (Exercise Transfer Switch)
+- Optional low bandwidth URL (http://ipaddress:8000/low)
+- Firmware update notification for Evolution 2.0
+- SNMP monitoring
 
 ![Generator Monitor Web Interface](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/Web_UI_Status.png)
 
@@ -68,7 +75,9 @@ This project is free to use under the posted license agreement. It was written a
 ## Pre-Assembled Hardware
 This project is open source and ideal for those who like to tinker, however pre-assembled hardware and cables are available for anyone interested on via ebay.com from this source:
 
-* [Pre-Assembled Pi and Cable](https://www.ebay.com/itm/Generac-Generator-Monitor-Device-Powered-by-GenMon-github-by-jgyates/263944254074?hash=item3d744db27a:g:xvAAAOSw8H1boD0R:rk:1:pf:0)
+* [Pre-Assembled Pi and Cable using the built in internal antenna](https://www.ebay.com/itm/264200240940)
+* [Pre-Assembled Pi and Cable with external wi-fi Antenna](https://www.ebay.com/itm/GenPi-Generac-Gen-Monitor-powered-by-GenMon-W-New-Easy-Setup-W-Ext-Ant/264297841518)
+* [Pre-loaded SD Card](https://www.ebay.com/itm/GenPi-Generac-Monitor-by-GenMon-W-New-Setup-SDcard-w-Software-Only/264216642416)
 
 
 ## Testing

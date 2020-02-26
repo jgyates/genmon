@@ -17,6 +17,8 @@ import atexit, getopt
 try:
     from genmonlib.mylog import SetupLogger
     from genmonlib.myclient import ClientInterface
+    from genmonlib.mysupport import MySupport
+    from genmonlib.program_defaults import ProgramDefaults
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
@@ -51,14 +53,15 @@ def LogDataToFile(fileName, time, Event):
 if __name__=='__main__':
 
 
-    address = '127.0.0.1'
+    address = ProgramDefaults.LocalHost
     fileName = ""
 
-    HelpStr = '\npython genlog.py -a <IP Address or localhost> -f <outputfile>\n'
+    HelpStr = '\npython genlog.py -a <IP Address or localhost> -f <outputfile> -c <config file path>\n'
 
     try:
+        ConfigFilePath = ProgramDefaults.ConfPath
         console = SetupLogger("genlog_console", log_file = "", stream = True)
-        opts, args = getopt.getopt(sys.argv[1:],"ha:f:",["address=","filename="])
+        opts, args = getopt.getopt(sys.argv[1:],"ha:f:c:",["help","address=","filename=", "configpath="])
     except getopt.GetoptError:
         console.error(HelpStr)
         sys.exit(2)
@@ -72,19 +75,27 @@ if __name__=='__main__':
         elif opt in ("-f", "--filename"):
             fileName = arg
             fileName = fileName.strip()
+        elif opt in ("-c", "--configpath"):
+            ConfigFilePath = arg
+            ConfigFilePath = ConfigFilePath.strip()
 
     console.error('Address is ' + address)
     console.error('Output file is ' + fileName)
+    console.error("Config File Path is " + ConfigFilePath)
+
+
     if not len(fileName):
         console.error(HelpStr)
         sys.exit(2)
 
+    port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
+    log = SetupLogger("client", loglocation + "genlog.log")
+
     try:
-        log = SetupLogger("client", "/var/log/genlog.log")
         # Set the signal handler
         signal.signal(signal.SIGINT, signal_handler)
 
-        MyClientInterface = ClientInterface(host = address, log = log)
+        MyClientInterface = ClientInterface(host = address, port = port, log = log)
 
         LastEvent = ""
 

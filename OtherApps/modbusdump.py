@@ -66,7 +66,7 @@ if __name__=='__main__': #
                 print ('Address is : %x' % modbusaddress)
             elif opt in ("-p", "--port"):
                 device = arg
-                print ('Port is :', device)
+                print ('Port is : %s' % device)
             elif opt in ("-r", "--rate"):
                 baudrate = int(arg)
                 print ('Baud Rate : ' + str(baudrate))
@@ -75,7 +75,7 @@ if __name__=='__main__': #
                 print ('Start Register : ' + str(startregister))
             elif opt in ("-e", "--end"):
                 endregister =  int(arg)
-                print ('Start Register : ' + str(endregister))
+                print ('End Register : ' + str(endregister))
             elif opt in ("-x", "--parity"):
                 parity =  int(arg)
                 print ('Parity : ' + str(parity))
@@ -104,7 +104,8 @@ if __name__=='__main__': #
 
     modbus = None
     try:
-        modbus = ModbusProtocol(RegisterResults, modbusaddress, device, baudrate, Parity = parity, OnePointFiveStopBits = OnePointFiveStopBits)
+        modbus = ModbusProtocol(updatecallback = RegisterResults, address = modbusaddress, name = device,
+            rate = baudrate, Parity = parity, OnePointFiveStopBits = OnePointFiveStopBits)
         pass
     except Exception as e1:
         print( "Error opening serial device...: " + str(e1))
@@ -117,5 +118,5 @@ if __name__=='__main__': #
         print("Error reading device: " + str(e1))
         sys.exit(2)
 
-    print("OK")
+    print("Program Complete")
     sys.exit(1)
