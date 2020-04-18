@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.14.04 - 2020-04-18
+- Updated MQTT support to allow sending commands to genmon
+
 ## V1.14.03 - 2020-02-17
 - Updated MQTT support to allow numeric values for Maintenance and Outage related data (Evo/Nexus)
 

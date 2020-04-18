@@ -56,7 +56,7 @@ class MyGenPush(MySupport):
         self.Callback = callback
 
         self.UseNumeric = use_numeric
-        self.Debug = debug
+        self.debug = debug
 
         if polltime == None:
             self.PollTime = 3
@@ -86,7 +86,7 @@ class MyGenPush(MySupport):
                 except Exception as e1:
                     startcount += 1
                     if startcount >= 10:
-                        self.console.info("genmon not loaded.")
+                        self.LogDebug("genmon not loaded.")
                         self.LogError("Unable to connect to genmon.")
                         sys.exit(1)
                     time.sleep(1)
@@ -236,18 +236,16 @@ class MyMQTT(MyCommon):
 
         self.Username = None
         self.Password = None
-        self.Topic = None
 
         self.MQTTAddress = None
         self.MonitorAddress = host
         self.MQTTPort = 1883
-        self.Topic = "generator"
         self.TopicRoot = None
         self.BlackList = None
         self.UseNumeric = False
         self.PollTime = 2
         self.FlushInterval = float('inf')   # default to inifite flush interval (e.g., never)
-        self.Debug = False
+        self.debug = False
 
         try:
             config = MyConfig(filename =  configfilepath + 'genmqtt.conf', section = 'genmqtt', log = log)
@@ -273,7 +271,13 @@ class MyMQTT(MyCommon):
 
             self.UseNumeric = config.ReadValue('numeric_json', return_type = bool, default = False)
 
-            self.TopicRoot = config.ReadValue('root_topic')
+            self.TopicRoot = config.ReadValue('root_topic', return_type = str, default = "generator")
+
+            if self.TopicRoot != None:
+                self.TopicRoot = self.TopicRoot.strip()
+
+            if self.TopicRoot == None or not len(self.TopicRoot):
+                self.TopicRoot = "generator"
 
             #http://www.steves-internet-guide.com/mosquitto-tls/
             self.CertificateAuthorityPath =  config.ReadValue('cert_authority_path', default = "")
@@ -290,7 +294,7 @@ class MyMQTT(MyCommon):
                         for Items in BList:
                             self.BlackList.append(Items.strip())
 
-            self.Debug = config.ReadValue('debug', return_type = bool, default = False)
+            self.debug = config.ReadValue('debug', return_type = bool, default = False)
 
             if config.HasOption('flush_interval'):
                 self.FlushInterval = config.ReadValue('flush_interval', return_type = float, default = float('inf'))
@@ -344,7 +348,7 @@ class MyMQTT(MyCommon):
                 log = self.log, callback = self.PublishCallback,
                 polltime = self.PollTime , blacklist = self.BlackList,
                 flush_interval = self.FlushInterval, use_numeric = self.UseNumeric,
-                debug = self.Debug, port = port, loglocation = loglocation)
+                debug = self.debug, port = port, loglocation = loglocation)
 
             atexit.register(self.Close)
             signal.signal(signal.SIGTERM, self.Close)
@@ -365,8 +369,8 @@ class MyMQTT(MyCommon):
             else:
                 FullPath = str(name)
 
-            if self.Debug:
-                self.console.info("Publish:  " + FullPath  + ": " + str(value) + ": " + str(type(value)))
+            if self.debug:
+                self.LogDebug("Publish:  " + FullPath  + ": " + str(value) + ": " + str(type(value)))
 
             self.MQTTclient.publish(FullPath, value)
         except Exception as e1:
@@ -377,18 +381,30 @@ class MyMQTT(MyCommon):
     def on_connect(self, client, userdata, flags, rc):
         if rc != 0:
             self.LogError("Error connecting to MQTT server: return code: " + str(rc))
-        self.console.info("Connected with result code "+str(rc))
+        self.LogDebug("Connected with result code "+str(rc))
 
         # Subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will be renewed.
-        self.MQTTclient.subscribe(self.Topic + "/#")
+        self.MQTTclient.subscribe(self.TopicRoot + "/#")
 
     #------------ MyMQTT::on_message--------------------------------------------
     # The callback for when a PUBLISH message is received from the server.
-    def on_message(self, client, userdata, msg):
+    def on_message(self, client, userdata, message):
 
-        if self.Debug:
-            self.console.info("Confirmed: " + msg.topic + ": " + str(msg.payload))
+        try:
+            if self.debug:
+                self.LogDebug("Confirmed: " + message.topic + ": " + str(message.payload))
+            # parse topic
+            command = str(message.payload.decode("utf-8"))
+            if message.topic.lower() != (self.TopicRoot + "/command"):
+                return
+
+            # write command
+            if command != None and len(command):
+                self.Push.SendCommand("generator: " + command)
+                self.LogDebug("Command Sent: " + command)
+        except Exception as e1:
+            self.LogErrorLine("Error in MyMQTT:on_message: " + str(e1))
 
     # ---------- MyMQTT::Close--------------------------------------------------
     def Close(self):
