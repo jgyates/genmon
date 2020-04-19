@@ -275,6 +275,7 @@ class MyMQTT(MyCommon):
 
             if self.TopicRoot != None:
                 self.TopicRoot = self.TopicRoot.strip()
+                self.LogDebug("Root Topic : " + self.TopicRoot)
 
             if self.TopicRoot == None or not len(self.TopicRoot):
                 self.TopicRoot = None
@@ -405,7 +406,7 @@ class MyMQTT(MyCommon):
             else:
                 FullPath = "generator/command"
 
-            if message.topic.lower() != (FullPath):
+            if message.topic.lower() != (FullPath.lower()):
                 return
 
             # write command
