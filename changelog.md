@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.14.05 - 2020-04-18
+- Corrected on bug introduced in 1.14.05
+
 ## V1.14.04 - 2020-04-18
 - Updated MQTT support to allow sending commands to genmon
 

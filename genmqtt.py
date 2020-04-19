@@ -271,13 +271,13 @@ class MyMQTT(MyCommon):
 
             self.UseNumeric = config.ReadValue('numeric_json', return_type = bool, default = False)
 
-            self.TopicRoot = config.ReadValue('root_topic', return_type = str, default = "generator")
+            self.TopicRoot = config.ReadValue('root_topic')
 
             if self.TopicRoot != None:
                 self.TopicRoot = self.TopicRoot.strip()
 
             if self.TopicRoot == None or not len(self.TopicRoot):
-                self.TopicRoot = "generator"
+                self.TopicRoot = None
 
             #http://www.steves-internet-guide.com/mosquitto-tls/
             self.CertificateAuthorityPath =  config.ReadValue('cert_authority_path', default = "")
@@ -385,7 +385,11 @@ class MyMQTT(MyCommon):
 
         # Subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will be renewed.
-        self.MQTTclient.subscribe(self.TopicRoot + "/#")
+        if self.TopicRoot != None and len(self.TopicRoot):
+            FullPath = self.TopicRoot + "/generator"
+        else:
+            FullPath = "generator"
+        self.MQTTclient.subscribe(FullPath + "/#")
 
     #------------ MyMQTT::on_message--------------------------------------------
     # The callback for when a PUBLISH message is received from the server.
@@ -396,7 +400,12 @@ class MyMQTT(MyCommon):
                 self.LogDebug("Confirmed: " + message.topic + ": " + str(message.payload))
             # parse topic
             command = str(message.payload.decode("utf-8"))
-            if message.topic.lower() != (self.TopicRoot + "/command"):
+            if self.TopicRoot != None and len(self.TopicRoot):
+                FullPath = self.TopicRoot + "/generator/command"
+            else:
+                FullPath = "generator/command"
+
+            if message.topic.lower() != (FullPath):
                 return
 
             # write command
