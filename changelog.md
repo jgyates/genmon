@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.14.06 - 2020-04-29
+- Added error log code for Nexus
+
 ## V1.14.05 - 2020-04-18
 - Corrected on bug introduced in 1.14.05
 
