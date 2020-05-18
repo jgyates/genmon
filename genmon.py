@@ -34,7 +34,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.14.07"
+GENMON_VERSION = "V1.14.08"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(MySupport):
@@ -812,9 +812,14 @@ class Monitor(MySupport):
 
         NoticeSent = False
         LastActiveTime = datetime.datetime.now()
+        counter = 0
         while True:
             if self.WaitForExit("ComWatchDog", 1):
                 return
+            if counter > 30:
+                self.LogError("WARNING: Initilization not complete after 30 seconds, possible communication failure. Check cabling.")
+                break
+            counter += 1
             if self.Controller.InitComplete:
                 break
 

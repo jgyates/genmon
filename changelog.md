@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.14.08 - 2020-05-18
+- Updated the logic in the code to detect communication failures to include failed comms on a reboot.
+
 ## V1.14.07 - 2020-05-18
 - Added advanced setting for userdefined.json path other than the default.  
 
