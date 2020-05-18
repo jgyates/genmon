@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.14.07 - 2020-05-18
+- Added advanced setting for userdefined.json path other than the default.  
+
 ## V1.14.06 - 2020-04-29
 - Added error log code for Nexus
 

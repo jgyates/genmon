@@ -21,6 +21,7 @@ server_port = The TCP port used internally by genmon for communicating with the 
 address = The Modbus slave address in hexadecimal. This value is 9d for Evolution / Nexus, and typically 64 for industrial generators.
 response_address = Only used for Pre Nexus 2008 Generac controllers. Should be 41 if Pre-Nexus controller is present.
 loglocation = Location of log files. Full path must be specified.
+userdatalocation = Location of user defined JSON data (userdefined.json) to be displayed on Monitor page. Full path must be specified.
 enabledebug = Enable code to support reverse engineering of registers. This option, when enabled creates a thread that will monitor registers in the controller and send notifications to the developer of changed registers. Not used in normal operation.
 ignore_unknown = Ignore unknown values for modbus register 0001 for Evolution 2.0
 displayunknown = Display the contents of additional registers that appear to be associated with sensors of some type.
