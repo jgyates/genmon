@@ -1,6 +1,21 @@
 # Change Log
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.14.08 - 2020-05-18
+- Updated the logic in the code to detect communication failures to include failed comms on a reboot.
+
+## V1.14.07 - 2020-05-18
+- Added advanced setting for userdefined.json path other than the default.  
+
+## V1.14.06 - 2020-04-29
+- Added error log code for Nexus
+
+## V1.14.05 - 2020-04-18
+- Corrected on bug introduced in 1.14.05
+
+## V1.14.04 - 2020-04-18
+- Updated MQTT support to allow sending commands to genmon
+
 ## V1.14.03 - 2020-02-17
 - Updated MQTT support to allow numeric values for Maintenance and Outage related data (Evo/Nexus)
 

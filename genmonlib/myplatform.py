@@ -13,7 +13,7 @@
 #-------------------------------------------------------------------------------
 from subprocess import PIPE, Popen
 import os, sys, subprocess, re, datetime
-import collections
+import collections, datetime
 
 from genmonlib.mycommon import MyCommon
 from genmonlib.program_defaults import ProgramDefaults
@@ -29,18 +29,25 @@ class MyPlatform(MyCommon):
     #------------ MyPlatform::GetInfo-------------------------------------------
     def GetInfo(self):
 
+        Info = []
+
         PlatformInfo = self.GetPlatformInfo()
+
+        if PlatformInfo != None:
+            Info.extend(PlatformInfo)
+
         OSInfo = self.GetOSInfo()
-        if OSInfo == None and PlatformInfo == None:
-            return []
 
-        if PlatformInfo == None:
-            return OSInfo
-        if OSInfo == None:
-            return PlatformInfo
+        if OSInfo != None:
+            Info.extend(OSInfo)
 
-        PlatformInfo.extend(OSInfo)
-        return PlatformInfo
+        Info.append({"System Time" : self.GetSystemTime()})
+        return Info
+
+    #------------ MyPlatform::GetSystemTime-------------------------------------
+    def GetSystemTime(self):
+
+        return datetime.datetime.now().strftime("%A %B %-d, %Y %H:%M:%S")
 
     #------------ MyPlatform::GetPlatformInfo-----------------------------------
     def GetPlatformInfo(self):

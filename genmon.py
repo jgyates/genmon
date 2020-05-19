@@ -34,7 +34,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.14.03"
+GENMON_VERSION = "V1.14.08"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(MySupport):
@@ -214,6 +214,8 @@ class Monitor(MySupport):
                 self.ServerSocketPort = self.config.ReadValue('server_port', return_type = int)
 
             self.LogLocation = self.config.ReadValue('loglocation', default = ProgramDefaults.LogPath)
+
+            self.UserDefinedDataPath = self.config.ReadValue('userdatalocation', default = os.path.dirname(os.path.realpath(__file__)) + "/")
 
             if self.config.HasOption('syncdst'):
                 self.bSyncDST = self.config.ReadValue('syncdst', return_type = bool)
@@ -629,7 +631,7 @@ class Monitor(MySupport):
     def GetUserDefinedData(self):
 
         try:
-            FileName = os.path.dirname(os.path.realpath(__file__)) + "/userdefined.json"
+            FileName = self.UserDefinedDataPath + "userdefined.json"
 
             if not os.path.isfile(FileName):
                 return None
@@ -810,9 +812,14 @@ class Monitor(MySupport):
 
         NoticeSent = False
         LastActiveTime = datetime.datetime.now()
+        counter = 0
         while True:
             if self.WaitForExit("ComWatchDog", 1):
                 return
+            if counter > 30:
+                self.LogError("WARNING: Initilization not complete after 30 seconds, possible communication failure. Check cabling.")
+                break
+            counter += 1
             if self.Controller.InitComplete:
                 break
 
