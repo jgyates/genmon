@@ -260,14 +260,14 @@ function printhelp() {
 # main entry
 
 
-while getopts ":hpbirunc:Cs" opt; do
+while getopts ":hp:birunc:Cs" opt; do
   case ${opt} in
     h )
       printhelp
       exit 0
       ;;
     p )
-      setuppython3
+      setuppython3 $OPTARG
       ;;
     c )
       config_path=$OPTARG
