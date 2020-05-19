@@ -2,6 +2,7 @@
 
 genmondir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 linetoadd="@reboot sleep 30 && /bin/bash $genmondir/startgenmon.sh start"
+linetoaddpython3="@reboot sleep 30 && /bin/bash $genmondir/startgenmon.sh -p 3 start"
 tempfile='/tmp/gmtemp'
 installnotice="This script will install libraries needed by genmon. \
 This script assumes you have already downloaded the genmon project via 'git'. \
@@ -180,10 +181,16 @@ function updatecrontab() {
     result=$(grep -i "startgenmon.sh" /tmp/gmtemp)
     if [ "$result" == "" ]
         then
-            echo "Updating crontab..."
-            echo "adding < $linetoadd > to crontab"
-            echo "$linetoadd" >> $tempfile
-            sudo crontab  $tempfile
+            if [ "$usepython3" == true ]
+                then
+                    echo "Updating crontab..."
+                    echo "adding < $linetoaddpython3 > to crontab"
+                    echo "$linetoaddpython3" >> $tempfile
+                    sudo crontab  $tempfile
+                else
+                    echo "adding < $linetoadd > to crontab"
+                    echo "$linetoadd" >> $tempfile
+                    sudo crontab  $tempfile
         else
             echo "Crontab already contains genmon start script:"
             echo "$result"
