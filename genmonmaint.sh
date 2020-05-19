@@ -181,16 +181,10 @@ function updatecrontab() {
     result=$(grep -i "startgenmon.sh" /tmp/gmtemp)
     if [ "$result" == "" ]
         then
-            if [ "$usepython3" == true ]
-                then
-                    echo "Updating crontab..."
-                    echo "adding < $linetoaddpython3 > to crontab"
-                    echo "$linetoaddpython3" >> $tempfile
-                    sudo crontab  $tempfile
-                else
-                    echo "adding < $linetoadd > to crontab"
-                    echo "$linetoadd" >> $tempfile
-                    sudo crontab  $tempfile
+            echo "Updating crontab..."
+            echo "adding < $linetoadd > to crontab"
+            echo "$linetoadd" >> $tempfile
+            sudo crontab  $tempfile
         else
             echo "Crontab already contains genmon start script:"
             echo "$result"
