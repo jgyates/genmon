@@ -45,6 +45,7 @@ while getopts ":c:p:h" opt; do
       exit 1
       ;;
   esac
+done
 case "$2" in
   start)
     echo "Starting genmon python scripts"
