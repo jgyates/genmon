@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file. Major relea
 ## V1.14.08 - 2020-05-18
 - Updated the logic in the code to detect communication failures to include failed comms on a reboot.
 - Corrected python3 install script (@liltux)
+- Corrected minor issue with startgenmon.sh
 
 ## V1.14.07 - 2020-05-18
 - Added advanced setting for userdefined.json path other than the default.  
