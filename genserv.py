@@ -1427,7 +1427,7 @@ def Restart():
     global Restarting
 
     Restarting = True
-    if not RunBashScript("startgenmon.sh -a restart " + ConfigFilePath):
+    if not RunBashScript("startgenmon.sh restart " + ConfigFilePath):
         LogError("Error in Restart")
 
 #-------------------------------------------------------------------------------

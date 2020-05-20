@@ -3,7 +3,6 @@
 genmondir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 pycmd="python"
 configpath=""
-genmonaction="nonsense"
 
 #-------------------------------------------------------------------------------
 function printhelp() {
@@ -11,19 +10,12 @@ function printhelp() {
   echo ""
   echo "Usage: "
   echo ""
-  echo "    startgenmon.sh <options> "
-  echo ""
-  echo "Example: "
-  echo ""
-  echo "    startgenmon.sh -a start -c /home/pi/conf/ -p 3"
+  echo "    startgenmon.sh <options> <action>"
   echo ""
   echo "Options:"
   echo ""
-  echo "  -a           Specifiy Action"
   echo "  -c           Specifiy full path to config file directory"
-  echo "                  default=/etc/genmon/"
-  echo "  -p           Use python3 instead of python(2) in linux"
-  echo "                  default=python"
+  echo "  -p           Use python 3 instead of python 2.7"
   echo "  -h           Display help"
   echo ""
   echo "Actions:"
@@ -35,14 +27,11 @@ function printhelp() {
 #-------------------------------------------------------------------------------
 # main entry
 
-while getopts ":a:c:p:h" opt; do
+while getopts ":c:p:h" opt; do
   case ${opt} in
     h )
       printhelp
       exit 0
-      ;;
-    a )
-      genmonaction="$OPTARG"
       ;;
     p )
       pycmd="python$OPTARG"
@@ -57,7 +46,7 @@ while getopts ":a:c:p:h" opt; do
       ;;
   esac
 done
-case "$genmonaction" in
+case "$2" in
   start)
     echo "Starting genmon python scripts"
     sudo $pycmd "$genmondir/genloader.py" -s $configpath
