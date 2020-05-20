@@ -1,7 +1,7 @@
 #!/bin/bash
 
 genmondir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-linetoadd="@reboot sleep 30 && /bin/bash $genmondir/startgenmon.sh -a start"
+linetoadd="@reboot sleep 30 && /bin/bash $genmondir/startgenmon.sh start"
 tempfile='/tmp/gmtemp'
 installnotice="This script will install libraries needed by genmon. \
 This script assumes you have already downloaded the genmon project via 'git'. \
@@ -49,7 +49,6 @@ function setuppython3() {
     echo 'Setting up for Python 3.x...'
     pipcommand="pip3"
     pythoncommand="python3"
-    linetoadd="$linetoadd -p 3 "
   else
     echo 'Setting up for Python 2.7...'
     pipcommand="pip"
@@ -272,7 +271,6 @@ while getopts ":hp:birunc:Cs" opt; do
       ;;
     c )
       config_path=$OPTARG
-      linetoadd="$linetoadd -c $OPTARG"
       ;;
     C )
       cleanpython_opt=true
