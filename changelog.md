@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.14.09 - 2020-05-18
+- Corrected minor issue with startgenmon.sh and python3
+- changed command line to be more consistant across options
+
 ## V1.14.08 - 2020-05-18
 - Updated the logic in the code to detect communication failures to include failed comms on a reboot.
 - Corrected python3 install script (@liltux)
