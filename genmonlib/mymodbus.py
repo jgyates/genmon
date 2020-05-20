@@ -73,7 +73,7 @@ MBUS_CMD_READ_FILE      = 0x14
 MBUS_FILE_TYPE_VALUE    = 0x06
 MBUS_ERROR_BIT          = 0x80
 
-# Exceprtion codes
+# Exception codes
 MBUS_EXCEP_FUNCTION     = 0x01      # Illegal Function
 MBUS_EXCEP_ADDRESS      = 0x02      # Illegal Address
 MBUS_EXCEP_DATA         = 0x03      # Illegal Data Value

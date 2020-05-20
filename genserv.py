@@ -1426,17 +1426,30 @@ def Restart():
 
     global Restarting
 
-    Restarting = True
-    if not RunBashScript("startgenmon.sh restart " + ConfigFilePath):
-        LogError("Error in Restart")
-
+    try:
+        Restarting = True
+        if sys.version_info >= (3, 0):
+            if not RunBashScript("startgenmon.sh restart -p 3 -c " + ConfigFilePath):
+                LogError("Error in Restart")
+        else:
+            if not RunBashScript("startgenmon.sh restart -c " + ConfigFilePath):
+                LogError("Error in Restart")
+    except Exception as e1:
+        LogErrorLine("Error in Restart: " + str(e1))
 #-------------------------------------------------------------------------------
 def Update():
     # update
-    if not RunBashScript("genmonmaint.sh -u -n"):   # update no prompt
-        LogError("Error in Update")
-    # now restart
-    Restart()
+    try:
+        if sys.version_info >= (3, 0):
+            if not RunBashScript("genmonmaint.sh -u -n -p 3"):
+                LogError("Error in Update")
+        else:
+            if not RunBashScript("genmonmaint.sh -u -n"):   # update no prompt
+                LogError("Error in Update")
+        # now restart
+        Restart()
+    except Exception as e1:
+        LogErrorLine("Error in Update: " + str(e1))
 
 #-------------------------------------------------------------------------------
 def Backup():

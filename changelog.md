@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.14.10 - 2020-05-18
+- More updates for Python3
+- corrected type in comment in mymodbus.py
+
 ## V1.14.09 - 2020-05-18
 - Corrected minor issue with startgenmon.sh and python3
 - changed command line to be more consistant across options

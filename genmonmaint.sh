@@ -1,7 +1,7 @@
 #!/bin/bash
 
 genmondir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-linetoadd="@reboot sleep 30 && /bin/bash $genmondir/startgenmon.sh -a start"
+linetoadd="@reboot sleep 30 && /bin/bash $genmondir/startgenmon.sh start"
 tempfile='/tmp/gmtemp'
 installnotice="This script will install libraries needed by genmon. \
 This script assumes you have already downloaded the genmon project via 'git'. \
@@ -114,11 +114,11 @@ function installgenmon() {
 
     echo "Installing...."
     # possibly use "sudo easy_install3 -U pip"
-    sudo apt-get update
+    sudo apt-get -yqq update
     if [ "$usepython3" = true ] ; then
-      sudo apt-get install python3-pip
+      sudo apt-get -yqq install python3-pip
     else
-      sudo apt-get install python-pip
+      sudo apt-get -yqq install python-pip
     fi
     sudo $pipcommand install crcmod
     sudo $pipcommand install configparser
@@ -130,7 +130,7 @@ function installgenmon() {
       sudo $pipcommand install pyowm==2.9.0
     fi
     sudo $pipcommand install pytz
-    sudo apt-get install build-essential libssl-dev libffi-dev python-dev
+    sudo apt-get -yqq install build-essential libssl-dev libffi-dev python-dev
     sudo $pipcommand install pyopenssl
     sudo $pipcommand install twilio
     sudo $pipcommand install chump
