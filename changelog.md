@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.14.11 - 2020-05-28
+- Minor update to fix corrupted genloader.conf, file if it occurs
+- updated genmonmaint.sh that will improve crontab update
+
 ## V1.14.10 - 2020-05-20
 - More updates for Python3
 - corrected type in comment in mymodbus.py

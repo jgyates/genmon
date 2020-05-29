@@ -80,10 +80,7 @@ class Loader(MySupport):
             # check to see if genloader.conf is present, if not copy it from genmon directory
             if not os.path.isfile(self.configfile):
                 self.LogInfo("Warning: unable to find config file: " + self.configfile + " Copying file to " + self.ConfigFilePath +  " directory.")
-                if os.path.isfile(self.ConfPath + self.ConfigFileName):
-                    copyfile(self.ConfPath + self.ConfigFileName , self.configfile)
-                else:
-                    self.LogInfo("Unable to find config file.")
+                if not self.CopyConfFile():
                     sys.exit(2)
 
             self.config = MyConfig(filename = self.configfile, section = "genmon", log = self.log)
@@ -92,6 +89,7 @@ class Loader(MySupport):
                 sys.exit(2)
 
             if not self.ValidateConfig():
+                self.CopyConfFile()
                 self.LogInfo("Error validating config. Exiting")
                 sys.exit(2)
 
@@ -106,6 +104,16 @@ class Loader(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in init: " + str(e1))
 
+    #---------------------------------------------------------------------------
+    def CopyConfFile(self):
+
+        if os.path.isfile(self.ConfPath + self.ConfigFileName):
+            copyfile(self.ConfPath + self.ConfigFileName , self.configfile)
+            return True
+        else:
+            self.LogInfo("Unable to find config file.")
+            return False
+            sys.exit(2)
     #---------------------------------------------------------------------------
     def CheckSystem(self):
 

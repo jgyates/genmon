@@ -191,7 +191,7 @@ function updatecrontab() {
             echo "$result"
             echo "to"
             echo "$linetoadd"
-            sed -i "s~${result/\&\&/\\\&\\\&}~${linetoadd/\&\&/\\\&\\\&}~g" /tmp/gmtemp
+            sed -i "s~${result/\&\&/\\\&\\\&}~${linetoadd/\&\&/\\\&\\\&}~g" $tempfile
             sudo crontab $tempfile
         else
             echo "Crontab already contains genmon start script:"

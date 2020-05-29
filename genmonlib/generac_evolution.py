@@ -1959,7 +1959,6 @@ class Evolution(GeneratorController):
         if self.EvolutionController and self.Evolution2:
             Sensors.append({"Battery Charger Sensor" : self.GetParameter("05ee", Divider = 100.0)})
             Sensors.append({"Battery Status (Sensor)" : self.GetBatteryStatusAlternate()})
-            Sensors.append({"Unknown Sesnor 33" : self.GetParameter("0033")})
 
         if not self.LiquidCooled:       # Nexus AC and Evo AC
 
@@ -1968,17 +1967,23 @@ class Evolution(GeneratorController):
             if len(Value):
                 FloatTemp = int(Value) / 100.0
                 FloatStr = "%.2f" % FloatTemp
-                Sensors.append({"Unsupported Sensor 1" : FloatStr})
+                Sensors.append({"Unsupported Sensor 1 (0x0032)" : FloatStr})
 
             Value = self.GetUnknownSensor("0033")
             if len(Value):
-                Sensors.append({"Unsupported Sensor 2" : Value})
+                Sensors.append({"Unsupported Sensor 2 (0x0033)" : Value})
 
             # return -2 thru 2
             Value = self.GetUnknownSensor("0034")
             if len(Value):
                 SignedStr = str(self.signed16( int(Value)))
-                Sensors.append({"Unsupported Sensor 3" : SignedStr})
+                Sensors.append({"Unsupported Sensor 3 (0x0034)" : SignedStr})
+
+            # return -2 thru 2
+            Value = self.GetUnknownSensor("0037")
+            if len(Value):
+                SignedStr = str(self.signed16( int(Value)))
+                Sensors.append({"Unsupported Sensor 4 (0x0037)" : SignedStr})
 
         return Sensors
 
