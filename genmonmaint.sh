@@ -185,6 +185,14 @@ function updatecrontab() {
             echo "adding < $linetoadd > to crontab"
             echo "$linetoadd" >> $tempfile
             sudo crontab  $tempfile
+    elif [ "$result" != "$linetoadd" ]
+        then
+            echo "Crontab has an incorrect configuration, updating:"
+            echo "$result"
+            echo "to"
+            echo "$linetoadd"
+            sed -i "s~${result/\&\&/\\\&\\\&}~${linetoadd/\&\&/\\\&\\\&}~g" /tmp/gmtemp
+            sudo crontab $tempfile
         else
             echo "Crontab already contains genmon start script:"
             echo "$result"
