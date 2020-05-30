@@ -130,7 +130,7 @@ function installgenmon() {
       sudo $pipcommand install pyowm==2.9.0
     fi
     sudo $pipcommand install pytz
-    sudo apt-get -yqq install build-essential libssl-dev libffi-dev python-dev python-ldap
+    sudo apt-get -yqq install build-essential libssl-dev libffi-dev python-dev
     sudo $pipcommand install pyopenssl
     sudo $pipcommand install twilio
     sudo $pipcommand install chump
