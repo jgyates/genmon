@@ -1597,35 +1597,29 @@ def LoadConfig():
                         HTTPAuthPass_RO = ConfigFiles[GENMON_CONFIG].ReadValue('http_pass_ro', default = "")
                         HTTPAuthPass_RO = HTTPAuthPass_RO.strip()
 
-        # user name and password require usehttps = True
-        if bUseSecureHTTP:
-<<<<<<< Updated upstream
-            if ConfigFiles[GENMON_CONFIG].HasOption('http_user'):
-                HTTPAuthUser = ConfigFiles[GENMON_CONFIG].ReadValue('http_user', default = "")
-                HTTPAuthUser = HTTPAuthUser.strip()
-                 # No user name or pass specified, disable
-                if HTTPAuthUser == "":
-                    HTTPAuthUser = None
-                    HTTPAuthPass = None
-                elif ConfigFiles[GENMON_CONFIG].HasOption('http_pass'):
-                    HTTPAuthPass = ConfigFiles[GENMON_CONFIG].ReadValue('http_pass', default = "")
-                    HTTPAuthPass = HTTPAuthPass.strip()
-                if HTTPAuthUser != None and HTTPAuthPass != None:
-                    if ConfigFiles[GENMON_CONFIG].HasOption('http_user_ro'):
-                        HTTPAuthUser_RO = ConfigFiles[GENMON_CONFIG].ReadValue('http_user_ro', default = "")
-                        HTTPAuthUser_RO = HTTPAuthUser_RO.strip()
-                        if HTTPAuthUser_RO == "":
-                            HTTPAuthUser_RO = None
-                            HTTPAuthPass_RO = None
-                        elif ConfigFiles[GENMON_CONFIG].HasOption('http_pass_ro'):
-                            HTTPAuthPass_RO = ConfigFiles[GENMON_CONFIG].ReadValue('http_pass_ro', default = "")
-                            HTTPAuthPass_RO = HTTPAuthPass_RO.strip()
+        if ConfigFiles[GENMON_CONFIG].HasOption('http_user'):
+            HTTPAuthUser = ConfigFiles[GENMON_CONFIG].ReadValue('http_user', default = "")
+            HTTPAuthUser = HTTPAuthUser.strip()
+                # No user name or pass specified, disable
+            if HTTPAuthUser == "":
+                HTTPAuthUser = None
+                HTTPAuthPass = None
+            elif ConfigFiles[GENMON_CONFIG].HasOption('http_pass'):
+                HTTPAuthPass = ConfigFiles[GENMON_CONFIG].ReadValue('http_pass', default = "")
+                HTTPAuthPass = HTTPAuthPass.strip()
+            if HTTPAuthUser != None and HTTPAuthPass != None:
+                if ConfigFiles[GENMON_CONFIG].HasOption('http_user_ro'):
+                    HTTPAuthUser_RO = ConfigFiles[GENMON_CONFIG].ReadValue('http_user_ro', default = "")
+                    HTTPAuthUser_RO = HTTPAuthUser_RO.strip()
+                    if HTTPAuthUser_RO == "":
+                        HTTPAuthUser_RO = None
+                        HTTPAuthPass_RO = None
+                    elif ConfigFiles[GENMON_CONFIG].HasOption('http_pass_ro'):
+                        HTTPAuthPass_RO = ConfigFiles[GENMON_CONFIG].ReadValue('http_pass_ro', default = "")
+                        HTTPAuthPass_RO = HTTPAuthPass_RO.strip()
 
-=======
->>>>>>> Stashed changes
+        if bUseSecureHTTP:
             HTTPSPort = ConfigFiles[GENMON_CONFIG].ReadValue('https_port', return_type = int, default = 443)
-
-        if bUseSecureHTTP:
             app.secret_key = os.urandom(12)
             OldHTTPPort = HTTPPort
             HTTPPort = HTTPSPort
