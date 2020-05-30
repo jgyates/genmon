@@ -2072,7 +2072,7 @@ function DisplayAddons(){
             gridWidth = (gridWidth < 1) ? 1 : gridWidth;
         var currentGrid = 1;
 
-        var  outstr = 'Available Add-ons ok:<br><br>';
+        var  outstr = 'Available Add-ons:<br><br>';
         outstr += '<table border="0" style="border-collapse: separate; border-spacing: 20px;" width="100%"><tbody><tr><td valign="top">';
 
         $.each(Object.keys(result), function(i, addon) {
