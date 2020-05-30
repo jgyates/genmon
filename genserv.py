@@ -1231,9 +1231,9 @@ def ReadSettingsFromFile():
     ConfigSettings["keyfile"] = ['string', 'https Key File', 204, "", "", "UnixFile", GENMON_CONFIG, GENMON_SECTION, "keyfile"]
     ConfigSettings["certfile"] = ['string', 'https Certificate File', 205, "", "", "UnixFile", GENMON_CONFIG, GENMON_SECTION, "certfile"]
     ConfigSettings["http_user"] = ['string', 'Web Username', 206, "", "", "minmax:4:50", GENMON_CONFIG, GENMON_SECTION, "http_user"]
-    ConfigSettings["http_pass"] = ['string', 'Web Password', 207, "", "", "minmax:4:50", GENMON_CONFIG, GENMON_SECTION, "http_pass"]
+    ConfigSettings["http_pass"] = ['password', 'Web Password', 207, "", "", "minmax:4:50", GENMON_CONFIG, GENMON_SECTION, "http_pass"]
     ConfigSettings["http_user_ro"] = ['string', 'Limited Rights User Username', 208, "", "", "minmax:4:50", GENMON_CONFIG, GENMON_SECTION, "http_user_ro"]
-    ConfigSettings["http_pass_ro"] = ['string', 'Limited Rights User Password', 209, "", "", "minmax:4:50", GENMON_CONFIG, GENMON_SECTION, "http_pass_ro"]
+    ConfigSettings["http_pass_ro"] = ['password', 'Limited Rights User Password', 209, "", "", "minmax:4:50", GENMON_CONFIG, GENMON_SECTION, "http_pass_ro"]
     ConfigSettings["http_port"] = ['int', 'Port of WebServer', 210, 8000, "", "required digits", GENMON_CONFIG, GENMON_SECTION, "http_port"]
     ConfigSettings["favicon"] = ['string', 'FavIcon', 220, "", "", "minmax:8:255", GENMON_CONFIG, GENMON_SECTION, "favicon"]
     # This does not appear to work on reload, some issue with Flask
