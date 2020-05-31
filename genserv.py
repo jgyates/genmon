@@ -101,13 +101,17 @@ def add_header(r):
 #-------------------------------------------------------------------------------
 @app.route('/', methods=['GET'])
 def root():
-
+    print("root 1")
     if HTTPAuthUser != None and HTTPAuthPass != None:
+        print("root 2")
         if not session.get('logged_in'):
+            print("root 3")
             return render_template('login.html')
         else:
+            print("root 4")
             return app.send_static_file('index.html')
     else:
+        print("root 5")
         return app.send_static_file('index.html')
 
 #-------------------------------------------------------------------------------
@@ -138,18 +142,33 @@ def display_internal():
 @app.route('/', methods=['POST'])
 def do_admin_login():
 
-    if request.form['password'] == HTTPAuthPass and request.form['username'] == HTTPAuthUser:
-        session['logged_in'] = True
-        session['write_access'] = True
-        LogError("Admin Login")
-        return root()
-    elif request.form['password'] == HTTPAuthPass_RO and request.form['username'] == HTTPAuthUser_RO:
-        session['logged_in'] = True
-        session['write_access'] = False
-        LogError("Limited Rights Login")
-        return root()
-    else:
-        return render_template('login.html')
+
+    try:
+        from flask import Flask, render_template, request, jsonify, session, send_file
+        print("do_admin_login 1")
+        if request.form['password'] == HTTPAuthPass and request.form['username'] == HTTPAuthUser:
+            print("do_admin_login 2")
+            session['logged_in'] = True
+            print("do_admin_login 2.1")
+            session['write_access'] = True
+            print("do_admin_login 2.2")
+            LogError("Admin Login")
+            print("do_admin_login 3")
+            return root()
+        elif request.form['password'] == HTTPAuthPass_RO and request.form['username'] == HTTPAuthUser_RO:
+            print("do_admin_login 4")
+            session['logged_in'] = True
+            session['write_access'] = False
+            LogError("Limited Rights Login")
+            print("do_admin_login 5")
+            return root()
+        else:
+            print("do_admin_login 6")
+            return render_template('login.html')
+    except Exception as e1:
+        print("Error: " + str(e1))
+        sys.exit(2)
+    return render_template('login.html')
 
 #-------------------------------------------------------------------------------
 @app.route("/cmd/<command>")
@@ -1571,33 +1590,8 @@ def LoadConfig():
         if ConfigFiles[GENMON_CONFIG].HasOption('favicon'):
             favicon = ConfigFiles[GENMON_CONFIG].ReadValue('favicon')
 
-        if ConfigFiles[GENMON_CONFIG].HasOption('ldap_server'):
-            LdapServer = ConfigFiles[GENMON_CONFIG].ReadValue('ldap_server', default = "")
-            LdapServer = LdapServer.strip()
-            if LdapServer == "":
-                LdapServer = None
         if ConfigFiles[GENMON_CONFIG].HasOption('http_user'):
-            HTTPAuthUser = ConfigFiles[GENMON_CONFIG].ReadValue('http_user', default = "")
-            HTTPAuthUser = HTTPAuthUser.strip()
-                # No user name or pass specified, disable
-            if HTTPAuthUser == "":
-                HTTPAuthUser = None
-                HTTPAuthPass = None
-            elif ConfigFiles[GENMON_CONFIG].HasOption('http_pass'):
-                HTTPAuthPass = ConfigFiles[GENMON_CONFIG].ReadValue('http_pass', default = "")
-                HTTPAuthPass = HTTPAuthPass.strip()
-            if HTTPAuthUser != None and HTTPAuthPass != None:
-                if ConfigFiles[GENMON_CONFIG].HasOption('http_user_ro'):
-                    HTTPAuthUser_RO = ConfigFiles[GENMON_CONFIG].ReadValue('http_user_ro', default = "")
-                    HTTPAuthUser_RO = HTTPAuthUser_RO.strip()
-                    if HTTPAuthUser_RO == "":
-                        HTTPAuthUser_RO = None
-                        HTTPAuthPass_RO = None
-                    elif ConfigFiles[GENMON_CONFIG].HasOption('http_pass_ro'):
-                        HTTPAuthPass_RO = ConfigFiles[GENMON_CONFIG].ReadValue('http_pass_ro', default = "")
-                        HTTPAuthPass_RO = HTTPAuthPass_RO.strip()
-
-        if ConfigFiles[GENMON_CONFIG].HasOption('http_user'):
+            app.secret_key = os.urandom(12)
             HTTPAuthUser = ConfigFiles[GENMON_CONFIG].ReadValue('http_user', default = "")
             HTTPAuthUser = HTTPAuthUser.strip()
                 # No user name or pass specified, disable
@@ -1620,7 +1614,6 @@ def LoadConfig():
 
         if bUseSecureHTTP:
             HTTPSPort = ConfigFiles[GENMON_CONFIG].ReadValue('https_port', return_type = int, default = 443)
-            app.secret_key = os.urandom(12)
             OldHTTPPort = HTTPPort
             HTTPPort = HTTPSPort
             if ConfigFiles[GENMON_CONFIG].HasOption('useselfsignedcert'):
