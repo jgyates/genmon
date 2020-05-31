@@ -85,7 +85,7 @@ CachedRegisterDescriptions = {}
 def logout():
     try:
         # remove the session data
-        if HTTPAuthUser != None and HTTPAuthPass != None:
+        if HTTPAuthUser != None and HTTPAuthPass != None or LdapServer != None:
             session['logged_in'] = False
             session['write_access'] = False
         return root()
@@ -106,7 +106,7 @@ def add_header(r):
 @app.route('/', methods=['GET'])
 def root():
 
-    if HTTPAuthUser != None and HTTPAuthPass != None:
+    if HTTPAuthUser != None and HTTPAuthPass != None or LdapServer != None:
         if not session.get('logged_in'):
             return render_template('login.html')
         else:
@@ -118,7 +118,7 @@ def root():
 @app.route('/low', methods=['GET'])
 def lowbandwidth():
 
-    if HTTPAuthUser != None and HTTPAuthPass != None:
+    if HTTPAuthUser != None and HTTPAuthPass != None or LdapServer != None:
         if not session.get('logged_in'):
             return render_template('index_lowbandwith.html')
         else:
@@ -130,7 +130,7 @@ def lowbandwidth():
 @app.route('/internal', methods=['GET'])
 def display_internal():
 
-    if HTTPAuthUser != None and HTTPAuthPass != None:
+    if HTTPAuthUser != None and HTTPAuthPass != None or LdapServer != None:
         if not session.get('logged_in'):
             return render_template('login.html')
         else:
@@ -192,7 +192,6 @@ def doLdapLogin(username, password):
         if type(result[1]) is dict:
             for groupList in result[1].values():
                 for group in groupList:
-                    LogError("Group: " + group)
                     if group.upper().find("CN="+LdapAdminGroup.upper()+",") >= 0:
                         HasAdmin = True
                     elif group.upper().find("CN="+LdapReadOnlyGroup.upper()+",") >= 0:
