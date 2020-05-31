@@ -1614,6 +1614,7 @@ def LoadConfig():
                         if CheckCertFiles(CertFile, KeyFile):
                             SSLContext = (CertFile, KeyFile)    # tuple
                         else:
+                            # if we get here then we have a username/login, but do not use SSL
                             HTTPPort = OldHTTPPort
                             SSLContext = None
             else:
