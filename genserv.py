@@ -56,6 +56,7 @@ HTTPAuthUser_RO = None
 HTTPAuthPass_RO = None
 
 bUseSecureHTTP = False
+bInsecureLogin = False
 bUseSelfSignedCert = True
 SSLContext = None
 HTTPPort = 8000
@@ -1539,6 +1540,7 @@ def LoadConfig():
     global clientport
     global loglocation
     global bUseSecureHTTP
+    global bInsecureLogin
     global HTTPPort
     global HTTPAuthUser
     global HTTPAuthPass
@@ -1565,15 +1567,18 @@ def LoadConfig():
         if ConfigFiles[GENMON_CONFIG].HasOption('usehttps'):
             bUseSecureHTTP = ConfigFiles[GENMON_CONFIG].ReadValue('usehttps', return_type = bool)
 
+        if ConfigFiles[GENMON_CONFIG].HasOption('allowinsecurelogin'):
+            bInsecureLogin = ConfigFiles[GENMON_CONFIG].ReadValue('allowinsecurelogin', return_type = bool)
+
         if ConfigFiles[GENMON_CONFIG].HasOption('http_port'):
             HTTPPort = ConfigFiles[GENMON_CONFIG].ReadValue('http_port', return_type = int, default = 8000)
 
         if ConfigFiles[GENMON_CONFIG].HasOption('favicon'):
             favicon = ConfigFiles[GENMON_CONFIG].ReadValue('favicon')
 
-        # user name and password require usehttps = True
-        if bUseSecureHTTP:
+        if bUseSecureHTTP or bInsecureLogin:
             if ConfigFiles[GENMON_CONFIG].HasOption('http_user'):
+                app.secret_key = os.urandom(12)
                 HTTPAuthUser = ConfigFiles[GENMON_CONFIG].ReadValue('http_user', default = "")
                 HTTPAuthUser = HTTPAuthUser.strip()
                  # No user name or pass specified, disable
@@ -1594,10 +1599,8 @@ def LoadConfig():
                             HTTPAuthPass_RO = ConfigFiles[GENMON_CONFIG].ReadValue('http_pass_ro', default = "")
                             HTTPAuthPass_RO = HTTPAuthPass_RO.strip()
 
-            HTTPSPort = ConfigFiles[GENMON_CONFIG].ReadValue('https_port', return_type = int, default = 443)
-
         if bUseSecureHTTP:
-            app.secret_key = os.urandom(12)
+            HTTPSPort = ConfigFiles[GENMON_CONFIG].ReadValue('https_port', return_type = int, default = 443)
             OldHTTPPort = HTTPPort
             HTTPPort = HTTPSPort
             if ConfigFiles[GENMON_CONFIG].HasOption('useselfsignedcert'):
