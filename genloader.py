@@ -127,7 +127,8 @@ class Loader(MySupport):
             ['crcmod','crcmod'],
             ['pyowm','pyowm'],
             ['pytz','pytz'],
-            ['pysnmp','pysnmp']
+            ['pysnmp','pysnmp'],
+            ['ldap3','ldap3']
         ]
         try:
             ErrorOccured = False
