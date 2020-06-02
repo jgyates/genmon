@@ -165,37 +165,28 @@ def doLdapLogin(username, password):
     if LdapServer == None or LdapServer == "":
         return False
     try:
-        import ldap
-    except ImportError:
-        LogError("LDAP import not found, run 'sudo apt-get -y install python-ldap'")
-        return False
-
-    conn = ldap.initialize(LdapServer)
-    conn.protocol_version = 3
-    conn.set_option(ldap.OPT_REFERRALS, 0)
-    try:
-        conn.simple_bind_s(username, password)
-    except:
-        LogError("Invalid login via LDAP: " + username)
+        from ldap3 import Server, Connection, ALL, NTLM
+    except ImportError as importException:
+        LogError("LDAP3 import not found, run 'sudo pip install ldap3 && sudo pip3 install ldap3'")
+        LogError(importException)
         return False
 
     HasAdmin = False
     HasReadOnly = False
     SplitName = username.split('\\')
+    DomainName = SplitName[0]
+    DomainName = DomainName.strip()
     AccountName = SplitName[1]
     AccountName = AccountName.strip()
-    ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
-    search_filter="(&(objectClass=*)(member=uid="+AccountName+",$LdapBase))"
-    account_filter = "sAMAccountName="+AccountName
-    results = conn.search_s(LdapBase, ldap.SCOPE_SUBTREE, account_filter, ['memberOf'])
-    for result in results:
-        if type(result[1]) is dict:
-            for groupList in result[1].values():
-                for group in groupList:
-                    if group.upper().find("CN="+LdapAdminGroup.upper()+",") >= 0:
-                        HasAdmin = True
-                    elif group.upper().find("CN="+LdapReadOnlyGroup.upper()+",") >= 0:
-                        HasReadOnly = True
+    server = Server(LdapServer, get_info=ALL)
+    conn = Connection(server, user='{}\\{}'.format(DomainName, AccountName), password=password, authentication=NTLM, auto_bind=True)
+    conn.search('dc=skipfire,dc=local', '(&(objectclass=user)(sAMAccountName='+AccountName+'))', attributes=['memberOf'])
+    for user in sorted(conn.entries):
+        for group in user.memberOf:
+            if group.upper().find("CN="+LdapAdminGroup.upper()) >= 0:
+                HasAdmin = True
+            elif group.upper().find("CN="+LdapReadOnlyGroup.upper()) >= 0:
+                HasReadOnly = True
 
     session['logged_in'] = HasAdmin or HasReadOnly
     session['write_access'] = HasAdmin
