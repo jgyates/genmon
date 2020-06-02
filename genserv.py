@@ -120,7 +120,7 @@ def lowbandwidth():
 
     if HTTPAuthUser != None and HTTPAuthPass != None or LdapServer != None:
         if not session.get('logged_in'):
-            return render_template('index_lowbandwith.html')
+            return render_template('login.html')
         else:
             return app.send_static_file('index_lowbandwith.html')
     else:
