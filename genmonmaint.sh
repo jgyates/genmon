@@ -82,6 +82,7 @@ function updatelibraries() {
   sudo $pipcommand install chump -U
   sudo $pipcommand install paho-mqtt -U
   sudo $pipcommand install pysnmp -U
+  sudo $pipcommand install ldap3 -U
   echo "Done."
 }
 
@@ -136,6 +137,7 @@ function installgenmon() {
     sudo $pipcommand install chump
     sudo $pipcommand install paho-mqtt
     sudo $pipcommand install pysnmp
+    sudo $pipcommand install ldap3
 
     sudo chmod 775 "$genmondir/startgenmon.sh"
     sudo chmod 775 "$genmondir/genmonmaint.sh"
