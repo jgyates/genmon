@@ -54,6 +54,10 @@ HTTPAuthUser = None
 HTTPAuthPass = None
 HTTPAuthUser_RO = None
 HTTPAuthPass_RO = None
+LdapServer = None
+LdapBase = None
+LdapAdminGroup = None
+LdapReadOnlyGroup = None
 
 bUseSecureHTTP = False
 bUseSelfSignedCert = True
@@ -81,7 +85,7 @@ CachedRegisterDescriptions = {}
 def logout():
     try:
         # remove the session data
-        if HTTPAuthUser != None and HTTPAuthPass != None:
+        if HTTPAuthUser != None and HTTPAuthPass != None or LdapServer != None:
             session['logged_in'] = False
             session['write_access'] = False
         return root()
@@ -102,7 +106,7 @@ def add_header(r):
 @app.route('/', methods=['GET'])
 def root():
 
-    if HTTPAuthUser != None and HTTPAuthPass != None:
+    if HTTPAuthUser != None and HTTPAuthPass != None or LdapServer != None:
         if not session.get('logged_in'):
             return render_template('login.html')
         else:
@@ -114,7 +118,7 @@ def root():
 @app.route('/low', methods=['GET'])
 def lowbandwidth():
 
-    if HTTPAuthUser != None and HTTPAuthPass != None:
+    if HTTPAuthUser != None and HTTPAuthPass != None or LdapServer != None:
         if not session.get('logged_in'):
             return render_template('index_lowbandwith.html')
         else:
@@ -126,7 +130,7 @@ def lowbandwidth():
 @app.route('/internal', methods=['GET'])
 def display_internal():
 
-    if HTTPAuthUser != None and HTTPAuthPass != None:
+    if HTTPAuthUser != None and HTTPAuthPass != None or LdapServer != None:
         if not session.get('logged_in'):
             return render_template('login.html')
         else:
@@ -148,8 +152,52 @@ def do_admin_login():
         session['write_access'] = False
         LogError("Limited Rights Login")
         return root()
+    elif doLdapLogin(request.form['username'], request.form['password']):
+        return root()
+    elif request.form['username'] != "":
+        LogError("Invalid login: " + request.form['username'])
+        return render_template('login.html')
     else:
         return render_template('login.html')
+
+#-------------------------------------------------------------------------------
+def doLdapLogin(username, password):
+    if LdapServer == None or LdapServer == "":
+        return False
+    try:
+        from ldap3 import Server, Connection, ALL, NTLM
+    except ImportError as importException:
+        LogError("LDAP3 import not found, run 'sudo pip install ldap3 && sudo pip3 install ldap3'")
+        LogError(importException)
+        return False
+
+    HasAdmin = False
+    HasReadOnly = False
+    SplitName = username.split('\\')
+    DomainName = SplitName[0]
+    DomainName = DomainName.strip()
+    AccountName = SplitName[1]
+    AccountName = AccountName.strip()
+    server = Server(LdapServer, get_info=ALL)
+    conn = Connection(server, user='{}\\{}'.format(DomainName, AccountName), password=password, authentication=NTLM, auto_bind=True)
+    conn.search('dc=skipfire,dc=local', '(&(objectclass=user)(sAMAccountName='+AccountName+'))', attributes=['memberOf'])
+    for user in sorted(conn.entries):
+        for group in user.memberOf:
+            if group.upper().find("CN="+LdapAdminGroup.upper()) >= 0:
+                HasAdmin = True
+            elif group.upper().find("CN="+LdapReadOnlyGroup.upper()) >= 0:
+                HasReadOnly = True
+
+    session['logged_in'] = HasAdmin or HasReadOnly
+    session['write_access'] = HasAdmin
+    if HasAdmin:
+        LogError("Admin Login via LDAP")
+    elif HasReadOnly:
+        LogError("Limited Rights Login via LDAP")
+    else:
+        LogError("No rights for valid login via LDAP")
+
+    return HasAdmin or HasReadOnly
 
 #-------------------------------------------------------------------------------
 @app.route("/cmd/<command>")
@@ -1539,6 +1587,11 @@ def LoadConfig():
     global clientport
     global loglocation
     global bUseSecureHTTP
+    global LdapServer
+    global LdapBase
+    global LdapAdminGroup
+    global LdapReadOnlyGroup
+
     global HTTPPort
     global HTTPAuthUser
     global HTTPAuthPass
@@ -1550,6 +1603,11 @@ def LoadConfig():
     HTTPAuthPass = None
     HTTPAuthUser = None
     SSLContext = None
+    LdapServer = None
+    LdapBase = None
+    LdapAdminGroup = None
+    LdapReadOnlyGroup = None
+
     try:
 
         # heartbeat server port, must match value in check_generator_system.py and any calling client apps
@@ -1573,6 +1631,27 @@ def LoadConfig():
 
         # user name and password require usehttps = True
         if bUseSecureHTTP:
+            if ConfigFiles[GENMON_CONFIG].HasOption('ldap_server'):
+                LdapServer = ConfigFiles[GENMON_CONFIG].ReadValue('ldap_server', default = "")
+                LdapServer = LdapServer.strip()
+                if LdapServer == "":
+                    LdapServer = None
+                else:
+                    if ConfigFiles[GENMON_CONFIG].HasOption('ldap_base'):
+                        LdapBase = ConfigFiles[GENMON_CONFIG].ReadValue('ldap_base', default = "")
+                    if ConfigFiles[GENMON_CONFIG].HasOption('ldap_admingroup'):
+                        LdapAdminGroup = ConfigFiles[GENMON_CONFIG].ReadValue('ldap_admingroup', default = "")
+                    if ConfigFiles[GENMON_CONFIG].HasOption('ldap_readonlygroup'):
+                        LdapReadOnlyGroup = ConfigFiles[GENMON_CONFIG].ReadValue('ldap_readonlygroup', default = "")
+                    if LdapBase == "":
+                        LdapBase = None
+                    if LdapAdminGroup == "":
+                        LdapAdminGroup = None
+                    if LdapReadOnlyGroup == "":
+                        LdapReadOnlyGroup = None
+                    if LdapReadOnlyGroup == None and LdapAdminGroup == None or LdapBase == None:
+                        LdapServer = None
+
             if ConfigFiles[GENMON_CONFIG].HasOption('http_user'):
                 HTTPAuthUser = ConfigFiles[GENMON_CONFIG].ReadValue('http_user', default = "")
                 HTTPAuthUser = HTTPAuthUser.strip()
