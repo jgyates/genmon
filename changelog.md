@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.14.13 - 2020-06-16
+- Corrected on python3 issue with genloader when attempting to load uninstalled libraries.
+
 ## V1.14.12 - 2020-06-02
 - Added support for LDAP based login (@skipfire) (see /conf/genmon.conf for settings)
 

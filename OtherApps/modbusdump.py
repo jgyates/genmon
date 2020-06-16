@@ -27,6 +27,27 @@ def RegisterResults(Register, Value):
 
     print(Register + ":" + Value)
 
+#------------ TestAllAddresses -------------------------------------------------
+def TestAllAddresses():
+
+    try:
+        modbus = ModbusProtocol(updatecallback = RegisterResults, address = 0, name = device,
+            rate = baudrate, Parity = parity, OnePointFiveStopBits = OnePointFiveStopBits)
+    except Exception as e1:
+        print( "Test all: Error opening serial device...: " + str(e1))
+        return False
+
+    try:
+        for Address in range(0, 0x100):
+            modbus.Address = Address
+            print("Testing modbus address %02x" % Address)
+            for Reg in range(startregister , endregister):
+                RegStr = "%04x" % Reg
+                modbus.ProcessMasterSlaveTransaction(RegStr, 1)
+    except Exception as e1:
+        print("Error reading device: " + str(e1))
+        return False
+
 #------------------- Command-line interface for monitor -----------------------#
 if __name__=='__main__': #
 
@@ -43,7 +64,7 @@ if __name__=='__main__': #
     HelpStr += "\n"
     HelpStr += "\n      -r  Baud rate of serial port (9600, 115300, etc)"
     HelpStr += "\n      -p  Operating System device name of the serail port (/dev/serial0)"
-    HelpStr += "\n      -a  Modbus address to query in hexidecimal, 0 - ff. (e.g. 9d, 10, ff)"
+    HelpStr += "\n      -a  Modbus address to query in hexidecimal, 0 - ff (e.g. 9d, 10, ff) or 'all' to probe all addresses"
     HelpStr += "\n      -s  Starting modbus register to read (decimal number)"
     HelpStr += "\n      -e  Ending modbus register to read (decimal number, must be greater than start register)"
     HelpStr += "\n      -b  Stop bits. If omitted 1 stop bit, if present use 1.5 stop bits"
@@ -62,8 +83,18 @@ if __name__=='__main__': #
                 print (HelpStr)
                 sys.exit()
             elif opt in ("-a", "--address"):
-                modbusaddress = int(arg,16)
-                print ('Address is : %x' % modbusaddress)
+                try:
+                    modbusaddress = int(arg,16)
+                    print ('Address is : %x' % modbusaddress)
+                except:
+                    try:
+                        if arg.lower() == "all":
+                            modbusaddress = "all"
+                            print ('Address is : %s' % arg)
+                        else:
+                            print("Error parsing modbus address: %s" % modbusaddress)
+                    except:
+                        print("Error parsing modbus address: %s" % modbusaddress)
             elif opt in ("-p", "--port"):
                 device = arg
                 print ('Port is : %s' % device)
@@ -87,7 +118,17 @@ if __name__=='__main__': #
         print (HelpStr)
         sys.exit(2)
 
-    if device == None or baudrate == None or startregister == None or endregister == None or modbusaddress == None or startregister > endregister or modbusaddress > 255:
+    if device == None or baudrate == None or startregister == None or endregister == None or modbusaddress == None or startregister > endregister :
+        print (HelpStr)
+        sys.exit(2)
+
+    if isinstance(modbusaddress, str) and modbusaddress.lower() != "all":
+        print("Invalid modbus address parameter: %s" % modbusaddress)
+        print (HelpStr)
+        sys.exit(2)
+
+    if isinstance(modbusaddress, int) and (modbusaddress > 255 or modbusaddress < 0):
+        print("Invalid modbus address: %02x" % modbusaddress)
         print (HelpStr)
         sys.exit(2)
 
@@ -103,20 +144,24 @@ if __name__=='__main__': #
 
 
     modbus = None
-    try:
-        modbus = ModbusProtocol(updatecallback = RegisterResults, address = modbusaddress, name = device,
-            rate = baudrate, Parity = parity, OnePointFiveStopBits = OnePointFiveStopBits)
-        pass
-    except Exception as e1:
-        print( "Error opening serial device...: " + str(e1))
-        sys.exit(2)
-    try:
-        for Reg in range(startregister , endregister):
-            RegStr = "%04x" % Reg
-            modbus.ProcessMasterSlaveTransaction(RegStr, 1)
-    except Exception as e1:
-        print("Error reading device: " + str(e1))
-        sys.exit(2)
+    if modbusaddress != "all":
+
+        try:
+            modbus = ModbusProtocol(updatecallback = RegisterResults, address = modbusaddress, name = device,
+                rate = baudrate, Parity = parity, OnePointFiveStopBits = OnePointFiveStopBits)
+        except Exception as e1:
+            print( "Error opening serial device...: " + str(e1))
+            sys.exit(2)
+        try:
+            for Reg in range(startregister , endregister):
+                RegStr = "%04x" % Reg
+                modbus.ProcessMasterSlaveTransaction(RegStr, 1)
+        except Exception as e1:
+            print("Error reading device: " + str(e1))
+            sys.exit(2)
+    else:
+        if not TestAllAddresses():
+            sys.exit(2)
 
     print("Program Complete")
     sys.exit(1)

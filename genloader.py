@@ -219,7 +219,12 @@ class Loader(MySupport):
     def InstallLibrary(self, libraryname):
 
         try:
-            process = Popen(['pip','install', libraryname], stdout=PIPE, stderr=PIPE)
+            if sys.version_info[0] < 3:
+                pipProgram = "pip"
+            else:
+                pipProgram = "pip3"
+
+            process = Popen([pipProgram,'install', libraryname], stdout=PIPE, stderr=PIPE)
             output, _error = process.communicate()
 
             if _error:
