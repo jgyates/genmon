@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.14.14 - 2020-06-18
+- Updated Evo AC power calculation based on new data from @sefs85, you can revert to the old method in advanced settings "Use Legacy Power Calculation". Unless you have a 22kw Evolution (which has no CTs install form the factory so it can not read the current) it is recomended that you use this new method. You will likley need to remove any Current Divider or Current Offset settings on the advance page.
+
 ## V1.14.13 - 2020-06-16
 - Corrected on python3 issue with genloader when attempting to load uninstalled libraries.
 

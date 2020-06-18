@@ -1148,9 +1148,11 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["kwlogmax"] = ['string', 'Maximum size Power Log (MB)', 19, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlogmax"]
         ConfigSettings["currentdivider"] = ['float', 'Current Divider', 20, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentdivider"]
         ConfigSettings["currentoffset"] = ['string', 'Current Offset', 21, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentoffset"]
-        ConfigSettings["disableplatformstats"] = ['boolean', 'Disable Platform Stats', 22, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "disableplatformstats"]
-        ConfigSettings["https_port"] = ['int', 'Override HTTPS port', 23, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "https_port"]
-        ConfigSettings["user_url"] = ['string', 'User URL', 24, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "user_url"]
+        ConfigSettings["legacy_power"] = ['boolean', 'Use Legacy Power Calculation', 22, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "legacy_power"]
+
+        ConfigSettings["disableplatformstats"] = ['boolean', 'Disable Platform Stats', 23, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "disableplatformstats"]
+        ConfigSettings["https_port"] = ['int', 'Override HTTPS port', 24, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "https_port"]
+        ConfigSettings["user_url"] = ['string', 'User URL', 25, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "user_url"]
 
 
         for entry, List in ConfigSettings.items():

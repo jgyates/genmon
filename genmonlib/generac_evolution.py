@@ -1960,6 +1960,7 @@ class Evolution(GeneratorController):
             Sensors.append({"Battery Charger Sensor" : self.GetParameter("05ee", Divider = 100.0)})
             Sensors.append({"Battery Status (Sensor)" : self.GetBatteryStatusAlternate()})
 
+
         if not self.LiquidCooled:       # Nexus AC and Evo AC
 
             # starts  0x4000 when idle, ramps up to ~0x2e6a while running
@@ -1979,11 +1980,10 @@ class Evolution(GeneratorController):
                 SignedStr = str(self.signed16( int(Value)))
                 Sensors.append({"Unsupported Sensor 3 (0x0034)" : SignedStr})
 
-            # return -2 thru 2
-            Value = self.GetUnknownSensor("0037")
+            #
+            Value = self.GetUnknownSensor("003a")
             if len(Value):
-                SignedStr = str(self.signed16( int(Value)))
-                Sensors.append({"Unsupported Sensor 4 (0x0037)" : SignedStr})
+                Sensors.append({"Unsupported Sensor 4 (0x003a) Throttle?" : Value})
 
         return Sensors
 
@@ -2997,12 +2997,21 @@ class Evolution(GeneratorController):
                 CurrentOutput = abs(CurrentOutput)
 
             elif self.EvolutionController and not self.LiquidCooled:
-                Value = self.GetRegisterValueFromList("003a")
-                DebugInfo += Value
-                if len(Value):
-                    CurrentFloat = int(Value,16)
+                if not self.LegacyPower:
+                    Value = self.GetRegisterValueFromList("05f4")
+                    Value2 = self.GetRegisterValueFromList("05f5")
+                    DebugInfo += Value
+                    if len(Value) and len(Value2):
+                        CurrentFloat = int(Value,16) + int(Value2,16)
+                    else:
+                        CurrentFloat = 0.0
                 else:
-                    CurrentFloat = 0.0
+                    Value = self.GetRegisterValueFromList("003a")
+                    DebugInfo += Value
+                    if len(Value):
+                        CurrentFloat = int(Value,16)
+                    else:
+                        CurrentFloat = 0.0
 
                 CurrentFloat = self.signed32(CurrentFloat)
                 CurrentFloat = abs(CurrentFloat)
@@ -3041,7 +3050,10 @@ class Evolution(GeneratorController):
 
                 if self.CurrentDivider == None or self.CurrentDivider <= 0:
                     if LookUpReturn == None:
-                        Divisor = (22.0 / float(self.NominalKW)) * 22       # Default Divisor
+                        if not self.LegacyPower:
+                            Divisor = 20.0       # Default Divisor This is 20 because CT1 + CT2 / 2 is average / 10 again because the CT is divide by 10
+                        else:
+                            Divisor = (22.0 / float(self.NominalKW)) * 22       # Default Divisor
                     else:
                         Divisor = LookUpReturn
                 else:
@@ -3776,6 +3788,7 @@ class Evolution(GeneratorController):
                 self.CurrentOffset = self.config.ReadValue('currentoffset', return_type = float, default = None, NoLog = True)
                 self.UseFuelSensor = self.config.ReadValue('usesensorforfuelgauge', return_type = bool, default = True)
                 self.IgnoreUnknown = self.config.ReadValue('ignore_unknown', return_type = bool, default = False)
+                self.LegacyPower = self.config.ReadValue('legacy_power', return_type = bool, default = False)
 
                 self.SerialNumberReplacement = self.config.ReadValue('serialnumberifmissing', default = None)
                 if self.SerialNumberReplacement != None and len(self.SerialNumberReplacement):
