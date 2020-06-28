@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.14.15 - 2020-06-28
+- Added more error handling for modbus exceptions
+- Added firmware version to Evo log file submissions
+
 ## V1.14.14 - 2020-06-18
 - Updated Evo AC power calculation based on new data from @sefs85, you can revert to the old method in advanced settings "Use Legacy Power Calculation". Unless you have a 22kw Evolution (which has no CTs install form the factory so it can not read the current) it is recomended that you use this new method. You will likley need to remove any Current Divider or Current Offset settings on the advance page.
 

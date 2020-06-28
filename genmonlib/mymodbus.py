@@ -145,6 +145,27 @@ class ModbusProtocol(ModbusBase):
                 MBUS_EXCEP_GATEWAY_TG : "Gateway Target Device Failed to Respond"
              }
 
+            if Code == MBUS_EXCEP_FUNCTION:
+                 self.ExcepFunction += 1
+            elif Code == MBUS_EXCEP_ADDRESS:
+                self.ExcepAddress += 1
+            elif Code == MBUS_EXCEP_DATA:
+                self.ExcepData += 1
+            elif Code == MBUS_EXCEP_SLAVE_FAIL:
+                self.ExcepSlave += 1
+            elif Code == MBUS_EXCEP_ACK:
+                self.ExcepAck += 1
+            elif Code == MBUS_EXCEP_BUSY:
+                self.ExcepBusy += 1
+            elif Code == MBUS_EXCEP_NACK:
+                self.ExcepNack += 1
+            elif Code == MBUS_EXCEP_MEM_PE:
+                self.ExcepMemPe += 1
+            elif Code == MBUS_EXCEP_GATEWAY:
+                self.ExcepGateway += 1
+            elif Code == MBUS_EXCEP_GATEWAY_TG:
+                self.ExcepGateWayTg += 1
+
             ReturnString = LookUp.get(Code, "Unknown")
             ReturnString = ReturnString + (": %02x" % Code)
             return ReturnString
@@ -190,7 +211,7 @@ class ModbusProtocol(ModbusBase):
                     Packet.append(self.Slave.Buffer.pop(0))  # pop Address, Function, Excetion code, and CRC
                 if self.CheckCRC(Packet):
                     self.RxPacketCount += 1
-                    self.SlaveException += 1
+                    self.ModbusException += 1
                     self.LogError("Modbus Exception: " + self.GetExceptionString(Packet[MBUS_OFF_EXCEPTION]) + " , Modbus Command: " + ("%02x" % Packet[MBUS_OFF_COMMAND]))
                 else:
                     self.CrcError += 1
@@ -253,7 +274,7 @@ class ModbusProtocol(ModbusBase):
                 return False, EmptyPacket
         except Exception as e1:
             self.LogErrorLine("Error in GetPacketFromSlave: " + str(e1))
-            self.SlaveException += 1
+            self.ComValidationError += 1
             return False, EmptyPacket
     # ---------- GeneratorDevice::DiscardByte-----------------------------------
     def DiscardByte(self):
@@ -632,7 +653,7 @@ class ModbusProtocol(ModbusBase):
             SerialStats.append({"CRC Percent Errors" : ("%.2f" % (PercentErrors * 100)) + "%"})
             SerialStats.append({"Timeout Errors" : "%d" %  self.ComTimoutError})
             SerialStats.append({"Timeout Percent Errors" : ("%.2f" % (PercentTimeoutErrors * 100)) + "%"})
-            SerialStats.append({"Modbus Exceptions" : self.SlaveException})
+            SerialStats.append({"Modbus Exceptions" : self.ModbusException})
             SerialStats.append({"Validation Errors" : self.ComValidationError})
             SerialStats.append({"Invalid Data" : self.UnexpectedData})
             # add serial stats

@@ -39,7 +39,17 @@ class ModbusBase(MySupport ):
         self.TxPacketCount = 0
         self.ComTimoutError = 0
         self.TotalElapsedPacketeTime = 0
-        self.SlaveException = 0
+        self.ModbusException = 0
+        self.ExcepFunction = 0
+        self.ExcepAddress = 0
+        self.ExcepData = 0
+        self.ExcepSlave = 0
+        self.ExcepAck = 0
+        self.ExcepBusy = 0
+        self.ExcepNack = 0
+        self.ExcepMemPe = 0
+        self.ExcepGateway = 0
+        self.ExcepGateWayTg = 0
         self.CrcError = 0
         self.ComValidationError = 0
         self.UnexpectedData = 0
@@ -102,7 +112,7 @@ class ModbusBase(MySupport ):
         SerialStats.append({"CRC Percent Errors" : ("%.2f" % (PercentErrors * 100)) + "%"})
         SerialStats.append({"Timeout Errors" : "%d" %  self.ComTimoutError})
         SerialStats.append({"Timeout Percent Errors" : ("%.2f" % (PercentTimeoutErrors * 100)) + "%"})
-        SerialStats.append({"Modbus Exceptions" : self.SlaveException})
+        SerialStats.append({"Modbus Exceptions" : self.ModbusException})
         SerialStats.append({"Validation Errors" : self.ComValidationError})
         SerialStats.append({"Invalid Data" : self.UnexpectedData})
         # Add serial stats here
@@ -125,7 +135,17 @@ class ModbusBase(MySupport ):
         self.CrcError = 0
         self.ComTimoutError = 0
         self.ComValidationError = 0
-        self.SlaveException = 0
+        self.ModbusException = 0
+        self.ExcepFunction = 0
+        self.ExcepAddress = 0
+        self.ExcepData = 0
+        self.ExcepSlave = 0
+        self.ExcepAck = 0
+        self.ExcepBusy = 0
+        self.ExcepNack = 0
+        self.ExcepMemPe = 0
+        self.ExcepGateway = 0
+        self.ExcepGateWayTg = 0
         self.TotalElapsedPacketeTime = 0
         self.ModbusStartTime = datetime.datetime.now()     # used for com metrics
         pass

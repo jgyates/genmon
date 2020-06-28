@@ -3511,26 +3511,34 @@ class Evolution(GeneratorController):
     #----------  Controller:GetHardwareVersion  ---------------------------------
     def GetHardwareVersion(self):
 
-        Value = self.GetRegisterValueFromList("002a")
-        if len(Value) != 4:
-            return ""
-        RegVal = int(Value, 16)
+        try:
+            Value = self.GetRegisterValueFromList("002a")
+            if len(Value) != 4:
+                return ""
+            RegVal = int(Value, 16)
 
-        IntTemp = RegVal >> 8           # high byte is firmware version
-        FloatTemp = IntTemp / 100.0
-        return "V%2.2f" % FloatTemp     #
+            IntTemp = RegVal >> 8           # high byte is firmware version
+            FloatTemp = IntTemp / 100.0
+            return "V%2.2f" % FloatTemp     #
+        except Exception as e1:
+            self.LogErrorLine("Error in GetHardwareVersion: " + str(e1))
+            return ""
 
     #----------  Controller:GetFirmwareVersion  ---------------------------------
     def GetFirmwareVersion(self):
-        Value = self.GetRegisterValueFromList("002a")
-        if len(Value) != 4:
+
+        try:
+            Value = self.GetRegisterValueFromList("002a")
+            if len(Value) != 4:
+                return ""
+            RegVal = int(Value, 16)
+
+            IntTemp = RegVal & 0xff         # low byte is firmware version
+            FloatTemp = IntTemp / 100.0
+            return "V%2.2f" % FloatTemp     #
+        except Exception as e1:
+            self.LogErrorLine("Error in GetFirmwareVersion: " + str(e1))
             return ""
-        RegVal = int(Value, 16)
-
-        IntTemp = RegVal & 0xff         # low byte is firmware version
-        FloatTemp = IntTemp / 100.0
-        return "V%2.2f" % FloatTemp     #
-
     #----------  ControllerCheckForFirmwareUpdate  -----------------------------
     def CheckForFirmwareUpdate(self):
 
@@ -3732,6 +3740,7 @@ class Evolution(GeneratorController):
             StartInfo["nominalRPM"] = self.NominalRPM
             StartInfo["nominalfrequency"] = self.NominalFreq
             StartInfo["Controller"] = self.GetController(Actual = False)
+            StartInfo["Actual"] = self.GetController(Actual = True)
             StartInfo["NominalBatteryVolts"] = "12"
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
             StartInfo["FuelCalculation"] = self.FuelTankCalculationSupported()
@@ -3745,6 +3754,8 @@ class Evolution(GeneratorController):
             StartInfo["RemoteButtons"] = self.RemoteButtonsSupported()  # On, Off , Auto
             StartInfo["ExerciseControls"] = not self.SmartSwitch
             StartInfo["WriteQuietMode"] = self.EvolutionController and self.LiquidCooled
+            StartInfo["Firmware"] = self.GetFirmwareVersion()
+            StartInfo["Hardware"] = self.GetHardwareVersion()
 
             if not NoTile:
                 StartInfo["pages"] = {
