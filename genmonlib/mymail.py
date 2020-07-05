@@ -311,16 +311,16 @@ class MyMail(MySupport):
             except Exception:
                 self.LogError( "No Internet Connection! ")
                 if self.WaitForExit("EmailCommandThread", 120 ):
-                    return
-                continue   # exit thread
+                    return # exit thread
+                continue
             try:
                 if not self.DisableSmtpAuth:
                     data = self.Mailbox.login(self.EmailAccount, self.EmailPassword)
             except Exception:
                 self.LogError( "LOGIN FAILED!!! ")
                 if self.WaitForExit("EmailCommandThread", 60 ):
-                    return
-                continue   # exit thread
+                    return # exit thread
+                continue
             while True:
                 try:
                     rv, data = self.Mailbox.select(self.IncomingFolder)

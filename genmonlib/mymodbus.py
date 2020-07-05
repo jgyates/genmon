@@ -438,7 +438,7 @@ class ModbusProtocol(ModbusBase):
             if command == MBUS_CMD_READ_REGS:
                 Packet.append(self.Address)                 # address
                 Packet.append(command)                      # command
-                Packet.append(RegisterInt >> 8)             # reg higy
+                Packet.append(RegisterInt >> 8)             # reg high
                 Packet.append(RegisterInt & 0x00FF)         # reg low
                 Packet.append(length >> 8)                  # length high
                 Packet.append(length & 0x00FF)              # length low

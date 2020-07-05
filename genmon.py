@@ -34,7 +34,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.14.15"
+GENMON_VERSION = "V1.14.16"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(MySupport):
@@ -404,7 +404,7 @@ class Monitor(MySupport):
                 "gensms_modem.log", "genmqtt.log", "genpushover.log", "gensyslog.log",
                 "genloader.log", "myserialtcp.log", "genlog.log", "genslack.log",
                 "genexercise.log","genemail2sms.log", "gentankutil.log", "genalexa.log",
-                "gensnmp.log"]
+                "gensnmp.log","gentemp.log"]
             for File in FilesToSend:
                 LogFile = self.LogLocation + File
                 if os.path.isfile(LogFile):
@@ -516,7 +516,8 @@ class Monitor(MySupport):
             "getdebug"          : [self.GetDeadThreadName, (), True],           # only used for debug purposes. If a thread crashes it tells you the thread name
             "sendregisters"     : [self.SendSupportInfo, (False,), True],
             "sendlogfiles"      : [self.SendSupportInfo, (True,), True],
-            "set_tank_data"     : [self.Controller.SetExternalTankData, (command,), True]
+            "set_tank_data"     : [self.Controller.SetExternalTankData, (command,), True],
+            "set_temp_data"     : [self.Controller.SetExternalTemperatureData, (command,), True]
         }
 
         CommandList = command.split(' ')

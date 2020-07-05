@@ -69,6 +69,9 @@ class GeneratorController(MySupport):
         self.LastHouseKeepingTime = None
         self.TileList = []        # Tile list for GUI
         self.TankData = None
+        self.ExternalDataLock = threading.RLock()
+        self.ExternalTempData = None
+        self.ExternalTempDataTime = None
 
         self.UtilityVoltsMin = 0    # Minimum reported utility voltage above threshold
         self.UtilityVoltsMax = 0    # Maximum reported utility voltage above pickup
@@ -1390,6 +1393,29 @@ class GeneratorController(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in  ClearMaintLog: " + str(e1))
             return "Error in  ClearMaintLog: " + str(e1)
+
+    #----------  GeneratorController::SetExternalTemperatureData----------------
+    def SetExternalTemperatureData(self, command):
+
+        try:
+            if not isinstance(command, str) and not isinstance(command, unicode) :
+                self.LogErrorLine("Error in SetExternalTemperatureData, invalid data: " + str(type(command)))
+                return "Error"
+
+            with self.ExternalDataLock:
+                CmdList = command.split("=")
+                if len(CmdList) == 2:
+                    self.ExternalTempData = json.loads(CmdList[1])
+                    self.ExternalTempDataTime = datetime.datetime.now()
+                else:
+                    self.LogError("Error in  SetExternalTemperatureData: invalid input: " + str(len(CmdList)))
+                    return "Error"
+
+        except Exception as e1:
+            self.LogErrorLine("Error in SetExternalTemperatureData: " + str(e1))
+            return "Error"
+
+        return "OK"
 
     #----------  GeneratorController::Close-------------------------------------
     def Close(self):

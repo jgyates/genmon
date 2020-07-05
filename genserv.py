@@ -878,6 +878,39 @@ def GetAddOns():
             bounds = 'minmax:4:50',
             display_name = "SNMP Community")
 
+        # GENTEMP
+        AddOnCfg['gentemp'] = collections.OrderedDict()
+        AddOnCfg['gentemp']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "gentemp", default = False)
+        AddOnCfg['gentemp']['title'] = "External Temperature Sensors"
+        AddOnCfg['gentemp']['description'] = "Allow the display of external temperature sensor data"
+        AddOnCfg['gentemp']['icon'] = "Genmon"
+        AddOnCfg['gentemp']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gentemppy-optional"
+        AddOnCfg['gentemp']['parameters'] = collections.OrderedDict()
+
+        AddOnCfg['gentemp']['parameters']['poll_frequency'] = CreateAddOnParam(
+            ConfigFiles[GENTEMP_CONFIG].ReadValue("poll_frequency", return_type = float, default = 2.0),
+            'float',
+            "The time in seconds that the temperature data is polled. The default value is 2 seconds.",
+            bounds = 'number',
+            display_name = "Poll Interval")
+        AddOnCfg['gentemp']['parameters']['use_metric'] = CreateAddOnParam(
+            ConfigFiles[GENTEMP_CONFIG].ReadValue("use_metric", return_type = bool, default = False),
+            'boolean',
+            "enable to use Celsius, disable for Fahrenheit",
+            bounds = 's',
+            display_name = "Use Metric")
+        AddOnCfg['gentemp']['parameters']['blacklist'] = CreateAddOnParam(
+            ConfigFiles[GENTEMP_CONFIG].ReadValue("blacklist", return_type = str, default = ""),
+            'string',
+            "Comma seperated blacklist. If these vaues are found in 1 wire temperature sensor device names the sensor will be ignored.",
+            bounds = '',
+            display_name = "Sensor Device Blacklist")
+        AddOnCfg['gentemp']['parameters']['device_labels'] = CreateAddOnParam(
+            ConfigFiles[GENTEMP_CONFIG].ReadValue("device_labels", return_type = str, default = ""),
+            'string',
+            "Comma seperated list of sensor names. These names will be displayed for each sensor. DS18B20 sensors are first, then type K thermocouples. Blacklisted devices are skipped.",
+            bounds = '',
+            display_name = "Sensor Names")
     except Exception as e1:
         LogErrorLine("Error in GetAddOns: " + str(e1))
 
@@ -945,7 +978,8 @@ def SaveAddOnSettings(query_string):
             "genemail2sms" : ConfigFiles[GENEMAIL2SMS_CONFIG],
             "gentankutil" : ConfigFiles[GENTANKUTIL_CONFIG],
             "genalexa" : ConfigFiles[GENALEXA_CONFIG],
-            "gensnmp" : ConfigFiles[GENSNMP_CONFIG]
+            "gensnmp" : ConfigFiles[GENSNMP_CONFIG],
+            "gentemp" : ConfigFiles[GENTEMP_CONFIG]
         }
 
         for module, entries in settings.items():   # module
@@ -1797,12 +1831,16 @@ if __name__ == "__main__":
     GENTANKUTIL_CONFIG = ConfigFilePath + "gentankutil.conf"
     GENALEXA_CONFIG = ConfigFilePath + "genalexa.conf"
     GENSNMP_CONFIG = ConfigFilePath + "gensnmp.conf"
+    GENTEMP_CONFIG = ConfigFilePath + "gentemp.conf"
 
     if os.geteuid() != 0:
         LogConsole("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'.")
         sys.exit(1)
 
-    ConfigFileList = [GENMON_CONFIG, MAIL_CONFIG, GENLOADER_CONFIG, GENSMS_CONFIG, MYMODEM_CONFIG, GENPUSHOVER_CONFIG, GENMQTT_CONFIG, GENSLACK_CONFIG, GENGPIOIN_CONFIG, GENEXERCISE_CONFIG, GENEMAIL2SMS_CONFIG, GENTANKUTIL_CONFIG, GENALEXA_CONFIG, GENSNMP_CONFIG]
+    ConfigFileList = [GENMON_CONFIG, MAIL_CONFIG, GENLOADER_CONFIG, GENSMS_CONFIG,
+        MYMODEM_CONFIG, GENPUSHOVER_CONFIG, GENMQTT_CONFIG, GENSLACK_CONFIG,
+        GENGPIOIN_CONFIG, GENEXERCISE_CONFIG, GENEMAIL2SMS_CONFIG,
+        GENTANKUTIL_CONFIG, GENALEXA_CONFIG, GENSNMP_CONFIG,GENTEMP_CONFIG]
 
     for ConfigFile in ConfigFileList:
         if not os.path.isfile(ConfigFile):

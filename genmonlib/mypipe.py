@@ -85,6 +85,7 @@ class MyPipe(MySupport):
                 # since realines is blocking, check if the file is non zero before we attempt to read
                 if not os.path.getsize(self.FileName):
                     continue
+                
                 ValueList = self.ReadLines()
                 if len(ValueList):
                     for Value in ValueList:

@@ -176,7 +176,7 @@ class GenSNMP(MySupport):
     def GetGeneratorInfo(self):
 
         try:
-            data = self.SendCommand("status_num_json")
+            data = self.SendCommand("generator: status_num_json")
             TempDict = {}
             TempDict = json.loads(data)
             return TempDict

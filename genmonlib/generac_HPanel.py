@@ -1737,6 +1737,14 @@ class HPanel(GeneratorController):
             Status["Status"].append({"Battery":Battery})
             if not self.SmartSwitch or self.HTSTransferSwitch:
                 Status["Status"].append({"Line State":Line})
+
+            with self.ExternalDataLock:
+                try:
+                    if self.ExternalTempData != None:
+                        Status["Status"].append(self.ExternalTempData)
+                except Exception as e1:
+                    self.LogErrorLine("Error in DisplayStatus: " + str(e1))
+                    
             Status["Status"].append({"Time":Time})
 
             Battery.append({"Battery Voltage" : self.ValueOut(self.GetParameter(self.Reg.BATTERY_VOLTS[REGISTER], ReturnFloat = True, Divider = 100.0), "V", JSONNum)})

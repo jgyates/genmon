@@ -3650,6 +3650,13 @@ class Evolution(GeneratorController):
 
             Status["Status"].append({"Engine":Engine})
             Status["Status"].append({"Line":Line})
+            with self.ExternalDataLock:
+                try:
+                    if self.ExternalTempData != None:
+                        Status["Status"].append(self.ExternalTempData)
+                except Exception as e1:
+                    self.LogErrorLine("Error in DisplayStatus: " + str(e1))
+
             Status["Status"].append({"Last Log Entries":self.DisplayLogs(AllLogs = False, DictOut = True)})
             Status["Status"].append({"Time":Time})
 
@@ -3692,6 +3699,7 @@ class Evolution(GeneratorController):
             if self.EvolutionController and self.LiquidCooled:
                 Line.append({"Utility Pickup Voltage" : self.ValueOut(self.GetPickUpVoltage(ReturnInt = True), "V", JSONNum)})
                 Line.append({"Set Output Voltage" : self.ValueOut(self.GetSetOutputVoltage(ReturnInt = True), "V", JSONNum)})
+
 
             # Generator time
             Time.append({"Monitor Time" : datetime.datetime.now().strftime("%A %B %-d, %Y %H:%M:%S")})

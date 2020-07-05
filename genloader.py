@@ -138,6 +138,10 @@ class Loader(MySupport):
                     if not self.InstallLibrary(Module[1]):
                         self.LogInfo("Error: unable to install library " + Module[1])
                         ErrorOccured = True
+                    if Module[0] == "ldap3":
+                        # This will correct and issue with the ldap3 modbule not being recogonized in LibrayIsInstalled
+                        self.InstallLibrary("pyasn1", update = True)
+
             return not ErrorOccured
         except Exception as e1:
             self.LogInfo("Error in CheckSystem: " + str(e1), LogLine = True)
@@ -216,7 +220,7 @@ class Loader(MySupport):
             return False
 
     #---------------------------------------------------------------------------
-    def InstallLibrary(self, libraryname):
+    def InstallLibrary(self, libraryname, update = False):
 
         try:
             if sys.version_info[0] < 3:
@@ -224,7 +228,12 @@ class Loader(MySupport):
             else:
                 pipProgram = "pip3"
 
-            process = Popen([pipProgram,'install', libraryname], stdout=PIPE, stderr=PIPE)
+            if update:
+                install_list = [pipProgram, 'install', libraryname, '-U']
+            else:
+                install_list = [pipProgram, 'install', libraryname]
+
+            process = Popen(install_list, stdout=PIPE, stderr=PIPE)
             output, _error = process.communicate()
 
             if _error:
@@ -308,7 +317,9 @@ class Loader(MySupport):
         try:
 
             Sections = self.config.GetSections()
-            ValidSections = ['genmon', 'genserv', 'gengpio', 'gengpioin', 'genlog', 'gensms', 'gensms_modem', 'genpushover', 'gensyslog', 'genmqtt', 'genslack', 'genexercise', 'genemail2sms', 'gentankutil', 'genalexa', 'gensnmp']
+            ValidSections = ['genmon', 'genserv', 'gengpio', 'gengpioin', 'genlog', 'gensms', 'gensms_modem',
+            'genpushover', 'gensyslog', 'genmqtt', 'genslack', 'genexercise', 'genemail2sms', 'gentankutil',
+            'genalexa', 'gensnmp', 'gentemp']
             for entry in ValidSections:
                 if not entry in Sections:
                     if entry == 'genslack':
@@ -329,6 +340,9 @@ class Loader(MySupport):
                     if entry == 'gensnmp':
                         self.LogError("Warning: Missing entry: " + entry + " , adding entry")
                         self.AddEntry(section = entry, module = 'gensnmp.py', conffile = 'gensnmp.conf')
+                    if entry == 'gentemp':
+                        self.LogError("Warning: Missing entry: " + entry + " , adding entry")
+                        self.AddEntry(section = entry, module = 'gentemp.py', conffile = 'gentemp.conf')
                     else:
                         self.LogError("Warning: Missing entry: " + entry)
 

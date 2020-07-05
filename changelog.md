@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.14.16 - 2020-07-05
+- Added Add-On module for displaying external temperature sensor data from 1 wire interfaces. See https://github.com/jgyates/genmon/wiki/1----Software-Overview#gentemppy-optional
+- Corrected problem with ldap3 library reporting not present when it actually is installed
+
 ## V1.14.15 - 2020-06-28
 - Added more error handling for modbus exceptions
 - Added firmware version to Evo log file submissions
