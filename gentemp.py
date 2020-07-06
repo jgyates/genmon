@@ -153,13 +153,14 @@ class GenTemp(MySupport):
         DeviceList = []
         try:
             # enum DS18B20 temp sensors
-            for sensor in glob.glob("/sys/bus/w1/devices/28-00*/w1_slave"):
+            for sensor in glob.glob("/sys/bus/w1/devices/28-*/w1_slave"):
                 if not self.CheckBlackList(sensor) and self.DeviceValid(sensor):
                     self.LogDebug("Found DS18B20 : " + sensor)
                     DeviceList.append(sensor)
 
             # enum type K thermocouples
-            for sensor in glob.glob("/sys/bus/w1/devices/w1_bus_master*/3b-*/w1_slave"):
+            #for sensor in glob.glob("/sys/bus/w1/devices/w1_bus_master*/3b-*/w1_slave"):
+            for sensor in glob.glob("/sys/bus/w1/devices/3b-*/w1_slave"):
                 if not self.CheckBlackList(sensor) and self.DeviceValid(sensor):
                     self.LogDebug("Found type K thermocouple : " + sensor)
                     DeviceList.append(sensor)
@@ -217,15 +218,12 @@ class GenTemp(MySupport):
     def GetIDFromDeviceName(self, device):
 
         try:
-            if "28-" in device:
+            if "28-" in device or "3b-" in device:
                 id = device.split("/")[5]
-                return id
-            elif "3b-" in device:
-                id = device.split("/")[6]
                 return id
         except Exception as e1:
             self.LogErrorLine("Error in GetIDFromDeviceName for " + device + " : " + str(e1))
-            return "UNKNOWN_ID"
+        return "UNKNOWN_ID"
 
     #------------ GenTemp::ConvertCelsiusToFahrenheit --------------------------
     def ConvertCelsiusToFahrenheit(self, Celsius):
