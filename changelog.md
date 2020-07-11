@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.14.17 - 2020-07-10
+- Added new alarm code for Evo (instantanious alarm for High Temp)
+- Added software update to Monitor->Generator Monitor Stats->Update Available
+
 ## V1.14.16 - 2020-07-05
 - Added Add-On module for displaying external temperature sensor data from 1 wire interfaces. See https://github.com/jgyates/genmon/wiki/1----Software-Overview#gentemppy-optional
 - Corrected problem with ldap3 library reporting not present when it actually is installed

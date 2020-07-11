@@ -34,7 +34,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.14.16"
+GENMON_VERSION = "V1.14.17"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(MySupport):
@@ -83,6 +83,7 @@ class Monitor(MySupport):
         self.WeatherMinimum = True
         self.DisableWeather = False
         self.MyWeather = None
+        self.UpdateAvailable = False
 
         # Time Sync Related Data
         self.bSyncTime = False          # Sync gen to system time
@@ -683,6 +684,7 @@ class Monitor(MySupport):
             if self.Controller.PowerMeterIsSupported():
                 GenMonStats.append({"Power log file size" : self.Controller.GetPowerLogFileDetails()})
             GenMonStats.append({"Generator Monitor Version" : GENMON_VERSION})
+            GenMonStats.append({"Update Available" : "Yes" if self.UpdateAvailable else "No"})
 
             if not self.bDisablePlatformStats:
                 PlatformStats = self.GetPlatformStats()
@@ -880,6 +882,7 @@ class Monitor(MySupport):
                                         msgbody += "\n\nWeb Interface URL: " + self.UserURL
                                     msgbody += "\n\nChange Log: https://raw.githubusercontent.com/jgyates/genmon/master/changelog.md"
                                     self.MessagePipe.SendMessage(title , msgbody, msgtype = "info", onlyonce = True)
+                                    self.UpdateAvailable = True
 
                 except Exception as e1:
                     self.LogErrorLine("Error checking for software update: " + str(e1))
