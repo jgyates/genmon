@@ -34,7 +34,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.14.17"
+GENMON_VERSION = "V1.14.18"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(MySupport):
@@ -584,7 +584,8 @@ class Monitor(MySupport):
         outstring += self.printToString("   settime     - set generator time to system time")
         outstring += self.printToString("   setexercise - set the exercise time of the generator. ")
         outstring += self.printToString("                      i.e. setexercise=Monday,13:30,Weekly")
-        outstring += self.printToString("                   if Enhanced Exercise Frequency is supported by your generator:")
+        outstring += self.printToString("                  if Enhanced Exercise Frequency is supported by")
+        outstring += self.printToString("                  your generator:")
         outstring += self.printToString("                      i.e. setexercise=Monday,13:30,BiWeekly")
         outstring += self.printToString("                      i.e. setexercise=15,13:30,Monthly")
         outstring += self.printToString("   setquiet    - enable or disable exercise quiet mode, ")
@@ -593,6 +594,10 @@ class Monitor(MySupport):
         outstring += self.printToString("                      where command is start, stop, starttransfer,")
         outstring += self.printToString("                      startexercise. i.e. setremote=start")
         outstring += self.printToString("   help        - Display help on commands")
+        outstring += self.printToString("   exit        - Exit this program")
+        outstring += self.printToString("   sendlogfiles - Send log files to the developer if outbound email is setup.")
+        outstring += self.printToString("                      is setup.")
+
         outstring += self.printToString("\n")
 
         outstring += self.printToString("To clear the Alarm/Warning message, press OFF on the control panel keypad")

@@ -1187,6 +1187,7 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["disableplatformstats"] = ['boolean', 'Disable Platform Stats', 23, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "disableplatformstats"]
         ConfigSettings["https_port"] = ['int', 'Override HTTPS port', 24, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "https_port"]
         ConfigSettings["user_url"] = ['string', 'User URL', 25, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "user_url"]
+        ConfigSettings["extend_wait"] = ['int', 'Extend email retry', 26, "0", "", 0, MAIL_CONFIG, MAIL_SECTION,"extend_wait"]
 
 
         for entry, List in ConfigSettings.items():

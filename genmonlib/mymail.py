@@ -60,6 +60,7 @@ class MyMail(MySupport):
         self.SSLEnabled = False
         self.TLSDisable = False
         self.UseBCC = False
+        self.ExtendWait = 0
         self.Threads = {}                               # Dict of mythread objects
         self.ModulePath = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/"
         # log errors in this module to a file
@@ -221,6 +222,8 @@ class MyMail(MySupport):
 
             if self.config.HasOption('usebcc'):
                 self.UseBCC = self.config.ReadValue('usebcc', return_type = bool)
+
+            self.ExtendWait = self.config.ReadValue('extend_wait', return_type = int, default = 0)
 
             self.EmailPassword = self.config.ReadValue('email_pw', default = "")
             self.EmailPassword =  self.EmailPassword.strip()
@@ -468,7 +471,7 @@ class MyMail(MySupport):
                 if MailError:
                     self.EmailSendQueue.insert(len(self.EmailSendQueue),EmailItems)
                     # sleep for 2 min and try again
-                    if self.WaitForExit("SendMailThread", 120 ):
+                    if self.WaitForExit("SendMailThread", 120 + self.ExtendWait):
                         return
 
             if self.WaitForExit("SendMailThread", 2 ):

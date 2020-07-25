@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.14.18 - 2020-07-24
+- Added new advanced setting to extend email retry delay on failed attempt to send emails
+- Added reading of two new registers for possible display of new settings (Two Wire Start for Evo)
+
 ## V1.14.17 - 2020-07-10
 - Added new alarm code for Evo (instantanious alarm for High Temp)
 - Added software update to Monitor->Generator Monitor Stats->Update Available

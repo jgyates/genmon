@@ -152,6 +152,7 @@ class Evolution(GeneratorController):
                     "0033" : [2, 0],     # Evo AC   (Status?)
                     "0034" : [2, 0],     # Evo AC   (Status?) Goes from FFFF 0000 00001 (Nexus and Evo AC)
                     "0032" : [2, 0],     # Evo AC   (Sensor?) starts  0x4000 ramps up to ~0x02f0
+                    "0035" : [2, 0],     # Evo AC    Unknown
                     "0036" : [2, 0],     # Evo AC   (Sensor?) Unknown
                     "0037" : [2, 0],     # CT Sensor (EvoAC)
                     "0038" : [2, 0],     # Evo AC   (Sensor?)       FFFE, FFFF, 0001, 0002 random - not linear
@@ -163,6 +164,7 @@ class Evolution(GeneratorController):
                     "020c" : [2, 0],     #  Fuel Type (EvoLC, NexusLC)
                     "020e" : [2, 0],     # Volts Per Hertz (EvoLC)
                     "0235" : [2, 0],     # Gain (EvoLC)
+                    "0236" : [2, 0],     # Two Wire Start (EvoAC)
                     "0237" : [2, 0],     # Set Voltage (Evo LC)
                     "0239" : [2, 0],     # Startup Delay (Evo LC)
                     "023b" : [2, 0],     # Pick Up Voltage (Evo LC only)
