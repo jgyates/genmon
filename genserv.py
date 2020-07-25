@@ -1194,6 +1194,8 @@ def ReadAdvancedSettingsFromFile():
             if List[6] == GENMON_CONFIG:
                 # filename, section = None, type = "string", entry, default = "", bounds = None):
                 (ConfigSettings[entry])[3] = ReadSingleConfigValue(entry = List[8], filename = GENMON_CONFIG, section =  List[7], type = List[0], default = List[3], bounds = List[5])
+            elif List[6] == MAIL_CONFIG:
+                (ConfigSettings[entry])[3] = ReadSingleConfigValue(entry = List[8], filename = MAIL_CONFIG, section =  List[7], type = List[0], default = List[3], bounds = List[5])
             else:
                 LogError("Invaild Config File in ReadAdvancedSettingsFromFile: " + str(List[6]))
 
