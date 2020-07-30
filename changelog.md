@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.14.20 - 2020-07-30
+- Added support for 11kw Nexus that was missing in generator identification
+
 ## V1.14.19 - 2020-07-29
 - Added new support function to get full register data from the browser. Useful for debugging if email is not working.
 

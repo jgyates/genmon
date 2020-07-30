@@ -622,6 +622,7 @@ class Evolution(GeneratorController):
         # Nexus AC
         ModelLookUp_NexusAC = {
                                 0 : ["8KW", "60", "120/240", "1", None, "410 cc", "240"],
+                                1 : ["11KW", "60", "120/240", "1", None, "530 cc", "240"],
                                 2 : ["14KW", "60", "120/240", "1", None, "992 cc", "240"],
                                 3 : ["15KW", "60", "120/240", "1", None, "992 cc", "240"],
                                 4 : ["20KW", "60", "120/240", "1", None, "999 cc", "240"]
