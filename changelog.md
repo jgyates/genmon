@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.14.19 - 2020-07-29
+- Added new support function to get full register data from the browser. Useful for debugging if email is not working.
+
 ## V1.14.18 - 2020-07-24
 - Added new advanced setting to extend email retry delay on failed attempt to send emails
 - Added reading of two new registers for possible display of new settings (Two Wire Start for Evo)

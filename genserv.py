@@ -223,7 +223,7 @@ def ProcessCommand(command):
             "start_info_json", "gui_status_json", "power_log_json", "power_log_clear",
             "getbase", "getsitename","setexercise", "setquiet", "setremote",
             "settime", "sendregisters", "sendlogfiles", "getdebug", "status_num_json",
-            "get_maint_log_json", "add_maint_log", "clear_maint_log" ]:
+            "get_maint_log_json", "add_maint_log", "clear_maint_log","support_data_json" ]:
             finalcommand = "generator: " + command
 
             try:
@@ -263,7 +263,7 @@ def ProcessCommand(command):
 
             if command in ["status_json", "outage_json", "maint_json", "monitor_json", "logs_json",
                 "registers_json", "allregs_json", "start_info_json", "gui_status_json", "power_log_json",
-                "status_num_json", "get_maint_log_json"]:
+                "status_num_json", "get_maint_log_json", "support_data_json"]:
 
                 if command in ["start_info_json"]:
                     try:

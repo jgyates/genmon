@@ -34,7 +34,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.14.18"
+GENMON_VERSION = "V1.14.19"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(MySupport):
@@ -517,6 +517,7 @@ class Monitor(MySupport):
             "getdebug"          : [self.GetDeadThreadName, (), True],           # only used for debug purposes. If a thread crashes it tells you the thread name
             "sendregisters"     : [self.SendSupportInfo, (False,), True],
             "sendlogfiles"      : [self.SendSupportInfo, (True,), True],
+            "support_data_json" : [self.GetSupportData, (), True],
             "set_tank_data"     : [self.Controller.SetExternalTankData, (command,), True],
             "set_temp_data"     : [self.Controller.SetExternalTemperatureData, (command,), True]
         }
