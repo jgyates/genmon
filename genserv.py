@@ -56,6 +56,7 @@ HTTPAuthUser_RO = None
 HTTPAuthPass_RO = None
 LdapServer = None
 LdapBase = None
+DomainNetbios = None
 LdapAdminGroup = None
 LdapReadOnlyGroup = None
 
@@ -173,20 +174,28 @@ def doLdapLogin(username, password):
 
     HasAdmin = False
     HasReadOnly = False
-    SplitName = username.split('\\')
-    DomainName = SplitName[0]
-    DomainName = DomainName.strip()
-    AccountName = SplitName[1]
-    AccountName = AccountName.strip()
-    server = Server(LdapServer, get_info=ALL)
-    conn = Connection(server, user='{}\\{}'.format(DomainName, AccountName), password=password, authentication=NTLM, auto_bind=True)
-    conn.search('dc=skipfire,dc=local', '(&(objectclass=user)(sAMAccountName='+AccountName+'))', attributes=['memberOf'])
-    for user in sorted(conn.entries):
-        for group in user.memberOf:
-            if group.upper().find("CN="+LdapAdminGroup.upper()) >= 0:
-                HasAdmin = True
-            elif group.upper().find("CN="+LdapReadOnlyGroup.upper()) >= 0:
-                HasReadOnly = True
+    try:
+        SplitName = username.split('\\')
+        DomainName = SplitName[0]
+        DomainName = DomainName.strip()
+        AccountName = SplitName[1]
+        AccountName = AccountName.strip()
+    except IndexError:
+        LogError("Using domain name in config file")
+        DomainName = DomainNetbios
+        AccountName = username.strip()
+    try:
+        server = Server(LdapServer, get_info=ALL)
+        conn = Connection(server, user='{}\\{}'.format(DomainName, AccountName), password=password, authentication=NTLM, auto_bind=True)
+        conn.search(LdapBase, '(&(objectclass=user)(sAMAccountName='+AccountName+'))', attributes=['memberOf'])
+        for user in sorted(conn.entries):
+            for group in user.memberOf:
+                if group.upper().find("CN="+LdapAdminGroup.upper()) >= 0:
+                    HasAdmin = True
+                elif group.upper().find("CN="+LdapReadOnlyGroup.upper()) >= 0:
+                    HasReadOnly = True
+    except Exception:
+        LogError("Error in LDAP login. Check credentials and config parameters")
 
     session['logged_in'] = HasAdmin or HasReadOnly
     session['write_access'] = HasAdmin
@@ -195,7 +204,7 @@ def doLdapLogin(username, password):
     elif HasReadOnly:
         LogError("Limited Rights Login via LDAP")
     else:
-        LogError("No rights for valid login via LDAP")
+        LogError("No rights for login via LDAP")
 
     return HasAdmin or HasReadOnly
 
@@ -1628,6 +1637,7 @@ def LoadConfig():
     global bUseSecureHTTP
     global LdapServer
     global LdapBase
+    global DomainNetbios
     global LdapAdminGroup
     global LdapReadOnlyGroup
 
@@ -1644,6 +1654,7 @@ def LoadConfig():
     SSLContext = None
     LdapServer = None
     LdapBase = None
+    DomainNetbios = None
     LdapAdminGroup = None
     LdapReadOnlyGroup = None
 
@@ -1678,17 +1689,21 @@ def LoadConfig():
                 else:
                     if ConfigFiles[GENMON_CONFIG].HasOption('ldap_base'):
                         LdapBase = ConfigFiles[GENMON_CONFIG].ReadValue('ldap_base', default = "")
+                    if ConfigFiles[GENMON_CONFIG].HasOption('domain_netbios'):
+                        DomainNetbios = ConfigFiles[GENMON_CONFIG].ReadValue('domain_netbios', default = "")
                     if ConfigFiles[GENMON_CONFIG].HasOption('ldap_admingroup'):
                         LdapAdminGroup = ConfigFiles[GENMON_CONFIG].ReadValue('ldap_admingroup', default = "")
                     if ConfigFiles[GENMON_CONFIG].HasOption('ldap_readonlygroup'):
                         LdapReadOnlyGroup = ConfigFiles[GENMON_CONFIG].ReadValue('ldap_readonlygroup', default = "")
                     if LdapBase == "":
                         LdapBase = None
+                    if DomainNetbios == "":
+                        DomainNetbios = None
                     if LdapAdminGroup == "":
                         LdapAdminGroup = None
                     if LdapReadOnlyGroup == "":
                         LdapReadOnlyGroup = None
-                    if LdapReadOnlyGroup == None and LdapAdminGroup == None or LdapBase == None:
+                    if LdapReadOnlyGroup == None and LdapAdminGroup == None or LdapBase == None or DomainNetbios == None:
                         LdapServer = None
 
             if ConfigFiles[GENMON_CONFIG].HasOption('http_user'):
