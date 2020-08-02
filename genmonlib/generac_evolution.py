@@ -468,44 +468,80 @@ class Evolution(GeneratorController):
             return True
         return False
 
-    #----------  GeneratorController::FuelTankCalculationSupported--------------
-    def FuelTankCalculationSupported(self):
-
-        if not self.PowerMeterIsSupported():
-            return False
-        if not self.FuelConsumptionSupported():
-            return False
-
-        if self.TankSize == 0:
-            return False
-        return True
-
-    #----------  GeneratorController::FuelConsumptionSupported------------------
-    def FuelConsumptionSupported(self):
-
-        if self.GetFuelConsumptionPolynomial() == None:
-            return False
-        else:
-            return True
-
-    #----------  GeneratorController::FuelConsumptionGaugeSupported-------------
-    def FuelConsumptionGaugeSupported(self):
-
-        if self.FuelTankCalculationSupported() and self.FuelType != "Natural Gas":
-            return True
-        return False
-    #----------  GeneratorController::GetFuelConsumptionPolynomial--------------
-    def GetFuelConsumptionPolynomial(self):
+    #----------  GeneratorController::GetFuelConsumptionDataPoints--------------
+    def GetFuelConsumptionDataPoints(self):
 
         try:
             if self.FuelType == "Gasoline":
                 return None
             if self.EvolutionController:
-                return self.GetModelInfo("polynomial")
+                return self.GetFuelParamsFromFile()
 
         except Exception as e1:
-            self.LogErrorLine("Error in GetFuelConsumptionPolynomial: " + str(e1))
+            self.LogErrorLine("Error in GetFuelConsumptionDataPoints: " + str(e1))
         return None
+
+    #------------ Evolution:GetFuelParamsFromFile-------------------------------
+    def GetFuelParamsFromFile(self):
+
+        try:
+            ReturnPoints = []
+            if not self.EvolutionController:
+                return []
+            if self.LiquidCooled:
+                FileName = "EvoLC_Fuel.txt"
+            else:
+                FileName = "EvoAC_Fuel.txt"
+
+            FullFileName = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/data/" + FileName
+            ReturnList = self.ReadCSVFile(FullFileName)
+
+            for Item in ReturnList:
+                if len(Item) < 9:
+                    continue
+                if self.LiquidCooled:
+                    try:
+                        if int(Item[0]) != int(self.NominalKW):
+                            continue
+                        if Item[1] != self.FuelType:
+                            continue
+                        ReturnPoints.append(float(Item[4])) # 50%
+                        ReturnPoints.append(float(Item[5])) # 50% Rate
+                        ReturnPoints.append(float(Item[8])) # 100%
+                        ReturnPoints.append(float(Item[9])) # 100% Rate
+                        ReturnPoints.append(Item[10])       # Units
+                        return ReturnPoints
+                    except Exception as e1:
+                        self.LogErrorLine("Error in GetFuelParamsFromFile (LC): " + str(e1))
+                        continue
+
+                else:   # Air Cooled
+                    try:
+                        Value = self.GetRegisterValueFromList("0019")
+                        if not len(Value):
+                            return []
+
+                        if int(Item[0]) != int(Value,16):   #model ID match
+                            continue
+
+                        if str(Item[2].strip()) != str(self.FuelType.strip()):
+                            continue
+
+                        ReturnPoints.append(float(Item[4]))     # 50%
+                        ReturnPoints.append(float(Item[5]))     # 50% Rate
+                        ReturnPoints.append(float(Item[6]))     # 100%
+                        ReturnPoints.append(float(Item[7]))     # 100% Rate
+                        ReturnPoints.append(Item[8])           # Units
+                        return ReturnPoints
+                    except Exception as e1:
+                        self.LogErrorLine("Error in GetFuelParamsFromFile (AC): " + str(e1))
+                        continue
+
+
+        except Exception as e1:
+            self.LogErrorLine("Error in GetFuelParamsFromFile: " + str(e1))
+
+        return []
 
     #------------ Evolution:GetLiquidCooledParams-------------------------------
     def GetLiquidCooledParams(self, ParamGroup, VoltageCode):
@@ -532,25 +568,21 @@ class Evolution(GeneratorController):
                 FileName = "NexusLCParam.txt"
 
             FullFileName = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/data/" + FileName
-            with open(FullFileName,"r") as ParamFile:
-                for line in ParamFile:
-                    line = line.strip()             # remove newline at beginning / end and trailing whitespace
-                    if not len(line):
-                        continue
-                    if line[0] == "#":              # comment?
-                        continue
-                    Items = line.split(",")
-                    if len(Items) < 9:
-                        continue
-                    # Lookup Param Group and # Voltage Code to find kw, phase, etc
-                    if ParamGroup == int(Items[4]) and VoltageCode == int(Items[5] ):
-                        return Items
+            ReturnList = self.ReadCSVFile(FullFileName)
+
+            for Item in ReturnList:
+                if len(Item) < 9:
+                    continue
+                # Lookup Param Group and # Voltage Code to find kw, phase, etc
+                if ParamGroup == int(Item[4]) and VoltageCode == int(Item[5] ):
+                    return Item
 
             self.LogError("Unable to find match for Param Group and Voltage Code: " + str(ParamGroup) + ", " + str(VoltageCode))
         except Exception as e1:
             self.LogErrorLine("Error in GetLiquidCooledParams: " + str(e1))
 
         return None
+
     #------------ Evolution:GetLiquidCooledModelInfo----------------------------
     def GetLiquidCooledModelInfo(self, Request):
 
@@ -575,16 +607,6 @@ class Evolution(GeneratorController):
             return self.LiquidCooledParams[3]
         elif Request.lower() == "enginedisplacement":
             return self.LiquidCooledParams[8]
-        elif Request.lower() == "polynomial":
-            if self.FuelType == "Natural Gas" or self.FuelType == "Gasoline":
-                return None
-            if len(self.LiquidCooledParams) >= 14:
-                Polynomial = []
-                Polynomial.append(float(self.LiquidCooledParams[10]))
-                Polynomial.append(float(self.LiquidCooledParams[11]))
-                Polynomial.append(float(self.LiquidCooledParams[12]))
-                Polynomial.append(self.LiquidCooledParams[13])
-                return Polynomial
         elif Request.lower() == "nominalvolts":
             return self.LiquidCooledParams[1]
         elif Request.lower() == "fuel":
@@ -616,43 +638,39 @@ class Evolution(GeneratorController):
         if self.LiquidCooled:
             return "Unknown"
 
-        # List format: [Rated kW, Freq, Voltage, Phase, Fuel Consumption Polynomial, Engine Displacement, Line Voltage]
-        UnknownList = ["Unknown", "Unknown", "Unknown", "Unknown", None, "Unknown", "Unknown"]
+        # List format: [Rated kW, Freq, Voltage, Phase, Engine Displacement, Line Voltage]
+        UnknownList = ["Unknown", "Unknown", "Unknown", "Unknown", "Unknown", "Unknown"]
 
         # Nexus AC
         ModelLookUp_NexusAC = {
-                                0 : ["8KW", "60", "120/240", "1", None, "410 cc", "240"],
-                                1 : ["11KW", "60", "120/240", "1", None, "530 cc", "240"],
-                                2 : ["14KW", "60", "120/240", "1", None, "992 cc", "240"],
-                                3 : ["15KW", "60", "120/240", "1", None, "992 cc", "240"],
-                                4 : ["20KW", "60", "120/240", "1", None, "999 cc", "240"]
+                                0 : ["8KW", "60", "120/240", "1", "410 cc", "240"],
+                                1 : ["11KW", "60", "120/240", "1", "530 cc", "240"],
+                                2 : ["14KW", "60", "120/240", "1", "992 cc", "240"],
+                                3 : ["15KW", "60", "120/240", "1", "992 cc", "240"],
+                                4 : ["20KW", "60", "120/240", "1", "999 cc", "240"]
                                 }
         # This should cover the guardian line
-        ModelLookUp_EvoAC = { #ID : [KW or KVA Rating, Hz Rating, Voltage Rating, Phase, Fuel Polynomial LP, Engine Displacement Nominal Line Voltage,Fuel Polynomial NG ]
-                                1 : ["9KW", "60", "120/240", "1", [0, 1, 0.37, "gal"], "426 cc", "240",[0, 60, 60, "cubic feet"]],
-                                2 : ["14KW", "60", "120/240", "1", [0, 1.48, 0.82, "gal"], "992 cc", "240",[0, 128, 92, "cubic feet"]],
-                                3 : ["17KW", "60", "120/240", "1", [0, 3.16, 0.41, "gal"], "992 cc", "240",[0, 240, 72, "cubic feet"]],
-                                4 : ["20KW", "60", "120/240", "1", [0, 2.38, 1.18, "gal"], "999 cc", "240",[0, 194, 107, "cubic feet"]],
-                                5 : ["8KW", "60", "120/240", "1", [0, 1.48, 0.2, "gal"], "410 cc", "240",[0, 124, 15, "cubic feet"]],
-                                7 : ["13KW", "60", "120/240", "1", [0, 1.26, 0.92, "gal"], "992 cc", "240",[0, 128, 92, "cubic feet"]],
-                                8 : ["15KW", "60", "120/240", "1", [0, 1.84, 0.67, "gal"], "999 cc", "240",[0, 144, 101, "cubic feet"]],
-                                9 : ["16KW", "60", "120/240", "1", [0, 0.84, 2.1, "gal"], "999 cc", "240",[0, 182, 127, "cubic feet"]],
-                                10 : ["20KW", "VSCF", "120/240", "1", [0, 3.34, 0.12, "gal"], "999 cc", "240",[0, 264, 18, "cubic feet"]],          #Variable Speed Constant Frequency
-                                11 : ["15KW", "ECOVSCF", "120/240", "1", [0, 2.58, 0.61, "gal"], "999 cc", "240",[0, 238, 74, "cubic feet"]],       # Eco Variable Speed Constant Frequency
-                                12 : ["8KVA", "50", "220,230,240", "1", [0,  1.3, 0.21, "gal"], "530 cc", "240",[0, 110, 28, "cubic feet"]],        # 3 distinct models 220, 230, 240
-                                13 : ["10KVA", "50", "220,230,240", "1", [0, 1.48, 0.37, "gal"], "992 cc", "240",[0, 142, 53, "cubic feet"]],       # 3 distinct models 220, 230, 240
-                                14 : ["13KVA", "50", "220,230,240", "1", [0, 2.0, 0.39, "gal"], "992 cc", "240",[0, 158, 67, "cubic feet"]],        # 3 distinct models 220, 230, 240
-                                15 : ["11KW", "60" ,"240", "1", [0, 1.5, 0.47, "gal"], "530 cc", "240",[0, 104, 55, "cubic feet"]],
-                                17 : ["22KW", "60", "120/240", "1", [0, 2.74, 1.16, "gal"], "999 cc", "240",[0, 198, 129, "cubic feet"]],
-                                21 : ["11KW", "60", "240 LS", "1", [0, 1.5, 0.47, "gal"], "530 cc", "240",[0, 104, 55, "cubic feet"]],
-                                22 : ["7.5KW", "60", "240", "1", [0, 1.1, 0.32, "gal"], "420 cc", "240",[0, 88, 29, "cubic feet"]],                # Power Pact
-                                32 : ["20KW", "60", "208 3 Phase", "3", [0, 2.34, 1.22, "gal"], "999 cc", "208",[0, 176, 131, "cubic feet"]],      # Trinity G007077
-                                33 : ["Trinity", "50", "380,400,416", "3", None, None, "380",None]                          # Discontinued
+        ModelLookUp_EvoAC = { #ID : [KW or KVA Rating, Hz Rating, Voltage Rating, Phase, Engine Displacement Nominal Line Voltage ]
+                                1 : ["9KW", "60", "120/240", "1", "426 cc", "240"],
+                                2 : ["14KW", "60", "120/240", "1", "992 cc", "240"],
+                                3 : ["17KW", "60", "120/240", "1", "992 cc", "240"],
+                                4 : ["20KW", "60", "120/240", "1", "999 cc", "240"],
+                                5 : ["8KW", "60", "120/240", "1", "410 cc", "240"],
+                                7 : ["13KW", "60", "120/240", "1", "992 cc", "240"],
+                                8 : ["15KW", "60", "120/240", "1", "999 cc", "240"],
+                                9 : ["16KW", "60", "120/240", "1", "999 cc", "240"],
+                                10 : ["20KW", "VSCF", "120/240", "1", "999 cc", "240"],          # Variable Speed Constant Frequency
+                                11 : ["15KW", "ECOVSCF", "120/240", "1", "999 cc", "240"],       # Eco Variable Speed Constant Frequency
+                                12 : ["8KVA", "50", "220,230,240", "1", "530 cc", "240"],        # 3 distinct models 220, 230, 240
+                                13 : ["10KVA", "50", "220,230,240", "1", "992 cc", "240"],       # 3 distinct models 220, 230, 240
+                                14 : ["13KVA", "50", "220,230,240", "1", "992 cc", "240"],       # 3 distinct models 220, 230, 240
+                                15 : ["11KW", "60" ,"240", "1", "530 cc", "240"],
+                                17 : ["22KW", "60", "120/240", "1", "999 cc", "240"],
+                                21 : ["11KW", "60", "240 LS", "1", "530 cc", "240"],
+                                22 : ["7.5KW", "60", "240", "1", "420 cc", "240"],              # Power Pact
+                                32 : ["20KW", "60", "208 3 Phase", "3", "999 cc", "208"],       # Trinity G007077
+                                33 : ["Trinity", "50", "380,400,416", "3", None, "380"]         # Discontinued
                                 }
-
-        if self.SynergyController:
-            # If Synergy Controller, replace consumption polynomial
-            ModelLookUp_EvoAC[10][4] = [0, 3.34, 0.12, "gal"]
 
         LookUp = None
         if self.EvolutionController:
@@ -687,17 +705,13 @@ class Evolution(GeneratorController):
         elif Request.lower() == "phase":
             return ModelInfo[3]
 
-        elif Request.lower() == "polynomial":
-            if self.FuelType == "Natural Gas":
-                return ModelInfo[7]     # Natural Gas
-            return ModelInfo[4]         # Liquid Propane
         elif Request.lower() == "enginedisplacement":
-            if ModelInfo[5] == None:
+            if ModelInfo[4] == None:
                 return "Unknown"
             else:
-                return ModelInfo[5]
+                return ModelInfo[4]
         elif Request.lower() == "nominalvolts":
-            return ModelInfo[6]
+            return ModelInfo[5]
         return "Unknown"
 
     #---------------------------------------------------------------------------
@@ -1814,12 +1828,15 @@ class Evolution(GeneratorController):
             Maintenance["Maintenance"].append({"Fuel Type" : self.FuelType})
             if self.FuelSensorSupported():
                 Maintenance["Maintenance"].append({"Fuel Level Sensor" : self.ValueOut(self.GetFuelSensor(ReturnInt = True), "%", JSONNum)})
-            if self.FuelConsumptionGaugeSupported():
+            if self.FuelTankCalculationSupported():
                 if self.UseMetric:
                     Units = "L"
                 else:
                     Units = "gal"
                 Maintenance["Maintenance"].append({"Estimated Fuel In Tank" : self.ValueOut(self.GetEstimatedFuelInTank(ReturnFloat = True), Units, JSONNum)})
+                RemainingFuelTimeFloat = self.GetRemainingFuelTime(ReturnFloat = True)
+                if RemainingFuelTimeFloat != None:
+                    Maintenance["Maintenance"].append({"Hours of Fuel Remaining" : self.ValueOut(RemainingFuelTimeFloat, "h", JSONNum)})
 
 
             if self.EngineDisplacement != "Unknown":
@@ -1949,7 +1966,7 @@ class Evolution(GeneratorController):
              # get UKS
             Value = self.GetUnknownSensor("05ed")
             if len(Value):
-                # Shift by one then  apply this polynomial
+                # Shift by one then  apply this formula
                 # The shift by one appears
                 # Sensor values odd below 60 decimal, even above 60 decimal (60 shift right 1 is 30 which is 11.5C or 52.7F)
                 SensorValue = int(Value) >> 1

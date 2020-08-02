@@ -895,6 +895,10 @@ class HPanel(GeneratorController):
             self.VoltageConfig = self.config.ReadValue('voltageconfiguration', default = "277/480")
             self.NominalBatteryVolts = int(self.config.ReadValue('nominalbattery', return_type = int, default = 24))
             self.HTSTransferSwitch = self.config.ReadValue('hts_transfer_switch', return_type = bool, default = False)
+            self.FuelUnits = self.config.ReadValue('fuel_units', default = "gal")
+            self.FuelHalfRate = self.config.ReadValue('half_rate', return_type = float, default = 0.0)
+            self.FuelFullRate = self.config.ReadValue('full_rate', return_type = float, default = 0.0)
+            self.UseFuelSensor = self.config.ReadValue('usesensorforfuelgauge', return_type = bool, default = True)
 
         except Exception as e1:
             self.FatalError("Missing config file or config file entries (HPanel): " + str(e1))
@@ -1009,6 +1013,17 @@ class HPanel(GeneratorController):
                 Tile = MyTile(self.log, title = "Utility Power", units = "kW", type = "power", nominal = int(self.NominalKW),
                 callback = self.GetParameter,
                 callbackparameters = (self.Reg.EXT_SW_UTILITY_KW[REGISTER], None, None, False, True, False))
+                self.TileList.append(Tile)
+
+            if self.FuelSensorSupported():
+                Tile = MyTile(self.log, title = "Fuel", units = "%", type = "fuel", nominal = 100, callback = self.GetFuelSensor, callbackparameters = (True,))
+                self.TileList.append(Tile)
+            elif self.FuelConsumptionGaugeSupported():    # no gauge for NG
+                if self.UseMetric:
+                    Units = "L"         # no gauge for NG
+                else:
+                    Units = "gal"       # no gauge for NG
+                Tile = MyTile(self.log, title = "Estimated Fuel", units = Units, type = "fuel", nominal = int(self.TankSize), callback = self.GetEstimatedFuelInTank, callbackparameters = (True,))
                 self.TileList.append(Tile)
 
             if self.PowerMeterIsSupported():
@@ -1679,6 +1694,40 @@ class HPanel(GeneratorController):
             Maintenance["Maintenance"].append({"Nominal Frequency" : self.NominalFreq})
             Maintenance["Maintenance"].append({"Fuel Type" : self.FuelType})
 
+            if self.FuelSensorSupported():
+                Maintenance["Maintenance"].append({"Fuel Level Sensor" : self.ValueOut(self.GetFuelSensor(ReturnInt = True), "%", JSONNum)})
+
+            if self.FuelTankCalculationSupported():
+                if self.UseMetric:
+                    Units = "L"
+                else:
+                    Units = "gal"
+                Maintenance["Maintenance"].append({"Estimated Fuel In Tank" : self.ValueOut(self.GetEstimatedFuelInTank(ReturnFloat = True), Units, JSONNum)})
+                RemainingFuelTimeFloat = self.GetRemainingFuelTime(ReturnFloat = True)
+                if RemainingFuelTimeFloat != None:
+                    Maintenance["Maintenance"].append({"Hours of Fuel Remaining" : self.ValueOut(RemainingFuelTimeFloat, "h", JSONNum)})
+            # Only update power log related info once a min for performance reasons
+            if self.LastHouseKeepingTime == None or self.GetDeltaTimeMinutes(datetime.datetime.now() - self.LastHouseKeepingTime) >= 1 :
+                UpdateNow = True
+                self.LastHouseKeepingTime = datetime.datetime.now()
+            else:
+                UpdateNow = False
+            if self.PowerMeterIsSupported() and self.FuelConsumptionSupported():
+                if UpdateNow:
+                    self.KWHoursMonth = self.GetPowerHistory("power_log_json=43200,kw")
+                    self.FuelMonth = self.GetPowerHistory("power_log_json=43200,fuel")
+                    self.FuelTotal = self.GetPowerHistory("power_log_json=0,fuel")
+                    self.RunHoursMonth = self.GetPowerHistory("power_log_json=43200,time")
+
+                if self.KWHoursMonth != None:
+                    Maintenance["Maintenance"].append({"kW Hours in last 30 days" : self.UnitsOut(str(self.KWHoursMonth) + " kWh", type = float, NoString = JSONNum)})
+                if self.FuelMonth != None:
+                    Maintenance["Maintenance"].append({"Fuel Consumption in last 30 days" : self.UnitsOut(self.FuelMonth, type = float, NoString = JSONNum)})
+                if self.FuelTotal != None:
+                    Maintenance["Maintenance"].append({"Total Power Log Fuel Consumption" : self.UnitsOut(self.FuelTotal, type = float, NoString = JSONNum)})
+                if self.RunHoursMonth != None:
+                    Maintenance["Maintenance"].append({"Run Hours in last 30 days" : self.UnitsOut(str(self.RunHoursMonth) + " h", type = float, NoString = JSONNum)})
+
             if not self.SmartSwitch:
                 pass
                 Exercise = []
@@ -1744,7 +1793,7 @@ class HPanel(GeneratorController):
                         Status["Status"].append(self.ExternalTempData)
                 except Exception as e1:
                     self.LogErrorLine("Error in DisplayStatus: " + str(e1))
-                    
+
             Status["Status"].append({"Time":Time})
 
             Battery.append({"Battery Voltage" : self.ValueOut(self.GetParameter(self.Reg.BATTERY_VOLTS[REGISTER], ReturnFloat = True, Divider = 100.0), "V", JSONNum)})
@@ -2264,3 +2313,31 @@ class HPanel(GeneratorController):
     # returns a one line status for example : switch state and engine state
     def GetOneLineStatus(self):
         return self.GetSwitchState() + " : " + self.GetEngineState()
+
+    #----------  GeneratorController::FuelSensorSupported------------------------
+    def FuelSensorSupported(self):
+
+        if self.UseFuelSensor:
+            return True
+        return False
+
+    #------------ Evolution:GetFuelSensor --------------------------------------
+    def GetFuelSensor(self, ReturnInt = False):
+
+        if not self.FuelSensorSupported():
+            return None
+
+        return self.GetParameter(self.Reg.FUEL_LEVEL[REGISTER], ReturnInt = ReturnInt)
+
+    #----------  GeneratorController::GetFuelConsumptionDataPoints--------------
+    def GetFuelConsumptionDataPoints(self):
+
+        try:
+            if self.FuelHalfRate == 0 or self.FuelFullRate == 0:
+                return None
+
+            return [.5, float(self.FuelHalfRate), 1.0, float(self.FuelFullRate), self.FuelUnits]
+
+        except Exception as e1:
+            self.LogErrorLine("Error in GetFuelConsumptionDataPoints: " + str(e1))
+        return None

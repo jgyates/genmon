@@ -1,6 +1,14 @@
 # Change Log
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.14.21 - 2020-08-02
+- Updated backup function to include all add on program settings
+- Corrected problems with fuel consumption calculation for Evolution
+- Added estimated hours remaing in tank for fuel consumption
+- Added fuel consumption method for industrial controllers, see https://github.com/jgyates/genmon/wiki/Appendix-H-Monitoring-Fuel-and-Power-Usage
+- Added option to display fuel sensor gauge for industrial controllers
+- Fixed LDAP bug, thanks @magomez96
+
 ## V1.14.20 - 2020-07-30
 - Added support for 11kw Nexus that was missing in generator identification
 

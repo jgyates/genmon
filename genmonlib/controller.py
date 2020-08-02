@@ -104,6 +104,11 @@ class GeneratorController(MySupport):
                 self.SubtractFuel = self.config.ReadValue('subtractfuel', return_type = float, default = 0.0)
                 self.UserURL = self.config.ReadValue('user_url',  default = "").strip()
                 self.UseExternalFuelData = self.config.ReadValue('use_external_fuel_data', return_type = bool, default = False)
+                self.EstimateLoad = self.config.ReadValue('estimated_load', return_type = float, default = 0.50)
+                if self.EstimateLoad < 0:
+                    self.EstimateLoad = 0
+                if self.EstimateLoad > 1:
+                    self.EstimateLoad = 1
 
                 if self.config.HasOption('outagelog'):
                     self.OutageLog = self.config.ReadValue('outagelog')
@@ -1209,26 +1214,89 @@ class GeneratorController(MySupport):
     #----------  GeneratorController::FuelSensorSupported------------------------
     def FuelSensorSupported(self):
         return False
-    #----------  GeneratorController::FuelTankCalculationSupported------------------
+    #----------  GeneratorController::FuelTankCalculationSupported--------------
     def FuelTankCalculationSupported(self):
-        return False
+
+        if not self.PowerMeterIsSupported():
+            return False
+        if not self.FuelConsumptionSupported():
+            return False
+
+        if self.TankSize == 0:
+            return False
+
+        if self.FuelType == "Natural Gas":
+            return False
+        return True
     #----------  GeneratorController::FuelConsumptionSupported------------------
     def FuelConsumptionSupported(self):
-        return False
+
+        if self.GetFuelConsumptionDataPoints() == None:
+            return False
+        else:
+            return True
     #----------  GeneratorController::FuelConsumptionGaugeSupported-------------
     def FuelConsumptionGaugeSupported(self):
+
+        if self.FuelTankCalculationSupported() and self.FuelType != "Natural Gas":
+            return True
         return False
 
+    #----------  GeneratorController::GetRemainingFuelTime------------------------
+    def GetRemainingFuelTime(self, ReturnFloat = False):
+
+        try:
+            if not self.FuelConsumptionGaugeSupported():
+                return None
+            if not self.FuelTankCalculationSupported() and not self.FuelSensorSupported():
+                return None
+            if self.TankSize == 0:
+                return None
+
+            FuelLevel = self.GetEstimatedFuelInTank(ReturnFloat = True)
+            #FuelLevel = self.GetFuelLevel(ReturnFloat = True)
+            if FuelLevel == None:
+                return None
+            #FuelRemaining = float(self.TankSize) * (FuelLevel/100)
+            FuelRemaining = FuelLevel
+
+            FuelPerHour, Units = self.GetFuelConsumption(self.EstimateLoad * int(self.NominalKW), 60 * 60)
+            if FuelPerHour == None or not len(Units):
+                return None
+            if FuelPerHour == 0:
+                return None
+            
+            HoursRemaining = FuelRemaining / FuelPerHour
+
+            if ReturnFloat:
+                return float(HoursRemaining)
+            else:
+                return "%.2f h" % HoursRemaining
+        except Exception as e1:
+            self.LogErrorLine("Error in GetRemainingFuelTime: " + str(e1))
+            return None
     #----------  GeneratorController::GetFuelConsumption------------------------
     def GetFuelConsumption(self, kw, seconds):
         try:
-            Polynomial = self.GetFuelConsumptionPolynomial()
-            if Polynomial == None or len(Polynomial) != 4:
+            ConsumptionData = self.GetFuelConsumptionDataPoints()
+
+            if ConsumptionData == None or len(ConsumptionData) != 5:
                 return None, ""
 
             Load = kw / int(self.NominalKW)
-            # Consumption of load for 1 hour
-            Consumption = (Polynomial[0] * (Load ** 2)) + (Polynomial[1] * Load) + Polynomial[2]
+            X1 = ConsumptionData[0]
+            Y1 = ConsumptionData[1]
+            X2 = ConsumptionData[2]
+            Y2 = ConsumptionData[3]
+            Units = ConsumptionData[4]
+
+            Slope = (Y2 - Y1) / (X2 - X1)   # Slope of fuel consumption plot (it is very close to if not linear in most cases)
+            # now use point slope equation to find consumption for one hour
+            # percent load is X2, Consumption is Y2, 100% (1.0) is X1 and Rate 100% is Y1
+            # Y1-Y2= SLOPE(X1-X2)
+            X2 = Load
+            Y2 = (((Slope * X1)- (Slope * X2)) - Y1) * -1
+            Consumption = Y2
 
             # now compensate for time
             Consumption = (seconds / 3600) * Consumption
@@ -1241,12 +1309,19 @@ class GeneratorController(MySupport):
                     Consumption = Consumption * 3.78541     # gal to liters
                     return round(Consumption, 4), "L"       # convert to Liters
             else:
-                return round(Consumption, 4), Polynomial[3]
+                return round(Consumption, 4), Units
         except Exception as e1:
             self.LogErrorLine("Error in GetFuelConsumption: " + str(e1))
             return None, ""
-    #----------  GeneratorController::GetFuelConsumptionPolynomial--------------
-    def GetFuelConsumptionPolynomial(self):
+    #----------  GeneratorController::GetFuelConsumptionDataPoints--------------
+    def GetFuelConsumptionDataPoints(self):
+
+        # Data points are expressed in a list [.50,50% fuel rate,1.0, 100% fuel rate, units]
+
+        #The general rule of thumb for fuel consumption for diesel is 7% of the
+        # rated generator output (Example: 200 kW x 7% = 1.4 gallon per hour at full load).
+        # For Larger diesel generators KW * 7% = Fuel per hour
+        # for 60 kw and below diesle generators KW * 8.5%  = Fuel per hour
         return None
     #----------  GeneratorController::ExternalFuelDataSupported-----------------
     def ExternalFuelDataSupported(self):
