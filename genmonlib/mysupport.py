@@ -373,7 +373,27 @@ class MySupport(MyCommon):
 
         return (delta_hours * 60 + delta_minutes)
 
-    #---------------------MyCommon::GetGenmonInitInfo---------------------------
+    #---------------------MySupport::ReadCSVFile--------------------------------
+    # read a CSV file, return a list of lists
+    # lines starting with # will be ignored as they will treated as comments
+    def ReadCSVFile(self, FileName):
+        try:
+            ReturnedList = []
+            with open(FileName,"r") as CSVFile:
+                for line in CSVFile:
+                    line = line.strip()             # remove newline at beginning / end and trailing whitespace
+                    if not len(line):
+                        continue
+                    if line[0] == "#":              # comment?
+                        continue
+                    Items = line.split(",")
+                    ReturnedList.append(Items)
+
+            return ReturnedList
+        except Exception as e1:
+            self.LogErrorLine("Error in ReadCSVFile: " + FileName + " : " + str(e1))
+            return []
+    #---------------------MySupport::GetGenmonInitInfo--------------------------
     @staticmethod
     def GetGenmonInitInfo(configfilepath = MyCommon.DefaultConfPath, log = None):
 

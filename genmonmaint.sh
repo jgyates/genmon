@@ -224,6 +224,12 @@ function backupgenmon() {
     sudo cp "$config_path"genemail2sms.conf ./genmon_backup
     sudo cp "$config_path"genexercise.conf ./genmon_backup
     sudo cp "$config_path"gengpioin.conf ./genmon_backup
+    sudo cp "$config_path"genalexa.conf ./genmon_backup
+    sudo cp "$config_path"genemail2sms.conf ./genmon_backup
+    sudo cp "$config_path"genexercise.conf ./genmon_backup
+    sudo cp "$config_path"gensnmp.conf ./genmon_backup
+    sudo cp "$config_path"gentankutil.conf ./genmon_backup
+    sudo cp "$config_path"gentemp.conf ./genmon_backup
     sudo cp "$config_path"outage.txt ./genmon_backup
     sudo cp "$config_path"kwlog.txt ./genmon_backup
     sudo cp "$config_path"maintlog.json ./genmon_backup

@@ -79,10 +79,14 @@ serialnumberifmissing= If the serial number is not present due to the controller
 additionalrunhours= Nexus controllers (not Evolution) do not have the ability to set the run hours. If your controller has been replaced you can use this entry to add hours to the Run Hours reported by the in the UI. Note: If this option is used it will only modify the run hours displayed in the web interface. It will not affect the controllers internal maintenance counters. This value must be a numeric value.
 additional_modbus_timeout=Add this value (in seconds) to the modbus timeout value. Floating point value.
 disablepowerlog=Enable to disable the power log and current reading. Not supported on Nexus.
+estimated_load=The percent load (expesses a a decimal value i.e. .5 = 50%) used when estimating the run hours left until the tank is empty.
 subtractfuel=The amount of fuel (gal or L, depending on 'Use Metric' setting) to subtract from the fuel in tank estimate
 user_url=A user defined URL link to include in status emails sent from the software when the generator status changes
 usenominallinevolts = Enable overriding of the default of 240V for nominal line voltage in the UI
 nominallinevolts = Override nominal line voltage value for UI (i.e. 220, 230 in stead of 240)
+fuel_units=Units of Fuel Rate Half and Full Load parameters
+fuel_half=The volume of fuel used in an hour at half the rated load. Set to zero to disable fuel estimation.
+fuel_full=The volume of fuel used in an hour at the full rated load. Set to zero to disable fuel estimation.
 extend_wait = Number of additional seconds to wait to retry sending failed emails.
 [generac_evo_nexus]
 0000=Product line
