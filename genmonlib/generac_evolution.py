@@ -36,8 +36,8 @@ SERVICE_LOG_STARTING_REG= 0x04e2    # the most current service log entry should 
 SERVICE_LOG_STRIDE      = 4
 SERVICE_LOG_END_REG     = ((SERVICE_LOG_STARTING_REG + (SERVICE_LOG_STRIDE * LOG_DEPTH)) - SERVICE_LOG_STRIDE)
 # Register for Model number
-MODEL_REG               = 0x01f4
-MODEL_REG_LENGTH        = 5
+SERIAL_NUM_REG          = 0x01f4
+SERIAL_NUM_REG_LENGTH   = 5
 
 NEXUS_ALARM_LOG_STARTING_REG    = 0x064
 NEXUS_ALARM_LOG_STRIDE          = 4
@@ -251,7 +251,7 @@ class Evolution(GeneratorController):
     def InitDevice(self):
 
         try:
-            self.ModBus.ProcessMasterSlaveTransaction("%04x" % MODEL_REG, MODEL_REG_LENGTH)
+            self.ModBus.ProcessMasterSlaveTransaction("%04x" % SERIAL_NUM_REG, SERIAL_NUM_REG_LENGTH)
 
             self.DetectController()
 
@@ -983,6 +983,13 @@ class Evolution(GeneratorController):
             self.ModBus.ProcessMasterSlaveTransaction(Reg, int(Info[self.REGLEN] / 2))
             counter += 1
 
+        # check that we have the serial number, if we do not then retry
+        RegStr = "%04x" % SERIAL_NUM_REG
+        Value = self.GetRegisterValueFromList(RegStr)       # Serial Number Register
+        if len(Value) != 20:
+            self.ModBus.ProcessMasterSlaveTransaction("%04x" % SERIAL_NUM_REG, SERIAL_NUM_REG_LENGTH)
+
+
     #-------------Evolution:UpdateLogRegistersAsMaster--------------------------
     def UpdateLogRegistersAsMaster(self):
 
@@ -1540,7 +1547,7 @@ class Evolution(GeneratorController):
             if len(Value) != 16:      # Nexus alarm reg is 16 chars, no alarm codes
                 self.LogError("Validation Error: Invalid register length (Nexus Alarm) %s %s" % (Register, Value))
                 ValidationOK = False
-        elif int(Register,16) == MODEL_REG:
+        elif int(Register,16) == SERIAL_NUM_REG:
             if len(Value) != 20:
                 self.LogError("Validation Error: Invalid register length (Model) %s %s" % (Register, Value))
                 ValidationOK = False
@@ -1563,7 +1570,7 @@ class Evolution(GeneratorController):
             return True
         elif int(Register,16) >=  NEXUS_ALARM_LOG_STARTING_REG and int(Register,16) <= NEXUS_ALARM_LOG_END_REG and (not self.EvolutionController):
             return True
-        elif int(Register,16) == MODEL_REG:
+        elif int(Register,16) == SERIAL_NUM_REG:
             return True
         return False
 
@@ -1632,7 +1639,7 @@ class Evolution(GeneratorController):
                 ##
                 RegList.append({Register:Value})
 
-            Register = "%04x" % MODEL_REG
+            Register = "%04x" % SERIAL_NUM_REG
             Value = self.GetRegisterValueFromList(Register)
             if len(Value) != 0:
                 RegList.append({Register:Value})
@@ -2480,9 +2487,11 @@ class Evolution(GeneratorController):
 
         if self.PreNexus:
             return "Unknown"
-        RegStr = "%04x" % MODEL_REG
+        RegStr = "%04x" % SERIAL_NUM_REG
         Value = self.GetRegisterValueFromList(RegStr)       # Serial Number Register
         if len(Value) != 20:
+            # retry reading serial number
+            self.ModBus.ProcessMasterSlaveTransaction("%04x" % SERIAL_NUM_REG, SERIAL_NUM_REG_LENGTH)
             return ""
 
         if Value[0] == 'f' and Value[1] == 'f':
