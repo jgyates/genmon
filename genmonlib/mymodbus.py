@@ -107,7 +107,7 @@ class ModbusProtocol(ModbusBase):
 
 
             if self.UseTCP:
-                self.ModBusPacketTimoutMS = self.ModBusPacketTimoutMS
+                self.ModBusPacketTimoutMS = self.ModBusPacketTimoutMS + 2000
             #Starting serial connection
             if self.UseTCP:
                 self.Slave = SerialTCPDevice(config = self.config)
