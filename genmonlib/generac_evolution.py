@@ -752,7 +752,11 @@ class Evolution(GeneratorController):
                 return False, ReturnModel, ReturnKW
 
             try:
-                data1 = r1.read()
+                if sys.version_info[0] < 3:
+                    data1 = r1.read()                                   # Python 2.x
+                else:
+                    encoding = r1.info().get_param('charset', 'utf8')   # Python 3.x 
+                    data1 = r1.read().decode(encoding)
                 data2 = re.sub(myregex, '', data1)
                 myresponse1 = json.loads(data2)
                 ModelNumber = myresponse1["SerialNumber"]["ModelNumber"]
@@ -787,7 +791,13 @@ class Evolution(GeneratorController):
                     conn.request("GET", "/GeneracCorporate/WebServices/GeneracSelfHelpWebService.asmx/GetProductById?productId="+productId, "",
                         headers={"User-Agent": "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)"})
                 r1 = conn.getresponse()
-                data1 = r1.read()
+
+                if sys.version_info[0] < 3:
+                    data1 = r1.read()                                   # Python 2.x
+                else:
+                    encoding = r1.info().get_param('charset', 'utf8')   # Python 3.x
+                    data1 = r1.read().decode(encoding)
+
                 conn.close()
                 data2 = re.sub(myregex, '', data1)
             except Exception as e1:

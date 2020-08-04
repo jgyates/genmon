@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.14.22 - 2020-08-03
+ - Corrected bug in model lookup code for python 3.x
+
 ## V1.14.21 - 2020-08-02
 - Updated backup function to include all add on program settings
 - Corrected problems with fuel consumption calculation for Evolution
