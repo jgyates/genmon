@@ -163,6 +163,8 @@ class Evolution(GeneratorController):
                     "020b" : [2, 0],     # Voltage Code (EvoLC, NexusLC)
                     "020c" : [2, 0],     #  Fuel Type (EvoLC, NexusLC)
                     "020e" : [2, 0],     # Volts Per Hertz (EvoLC)
+                    "0212" : [2, 0],     # Unknown status data
+                    "0213" : [2, 0],     # Unknown maintenance data
                     "0235" : [2, 0],     # Gain (EvoLC)
                     "0236" : [2, 0],     # Two Wire Start (EvoAC)
                     "0237" : [2, 0],     # Set Voltage (Evo LC)
@@ -755,7 +757,7 @@ class Evolution(GeneratorController):
                 if sys.version_info[0] < 3:
                     data1 = r1.read()                                   # Python 2.x
                 else:
-                    encoding = r1.info().get_param('charset', 'utf8')   # Python 3.x 
+                    encoding = r1.info().get_param('charset', 'utf8')   # Python 3.x
                     data1 = r1.read().decode(encoding)
                 data2 = re.sub(myregex, '', data1)
                 myresponse1 = json.loads(data2)
