@@ -165,6 +165,7 @@ class Evolution(GeneratorController):
                     "020e" : [2, 0],     # Volts Per Hertz (EvoLC)
                     "0212" : [2, 0],     # Unknown status data
                     "0213" : [2, 0],     # Unknown maintenance data
+                    "004c" : [2, 0],     # Unknown register data
                     "0235" : [2, 0],     # Gain (EvoLC)
                     "0236" : [2, 0],     # Two Wire Start (EvoAC)
                     "0237" : [2, 0],     # Set Voltage (Evo LC)
