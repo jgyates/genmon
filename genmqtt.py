@@ -236,7 +236,7 @@ class MyMQTT(MyCommon):
 
         self.Username = None
         self.Password = None
-
+        self.MQTTHomeassistant = False
         self.MQTTAddress = None
         self.MonitorAddress = host
         self.MQTTPort = 1883
@@ -255,7 +255,7 @@ class MyMQTT(MyCommon):
             self.Password = config.ReadValue('password')
 
             self.MQTTAddress = config.ReadValue('mqtt_address')
-
+            
             if self.MQTTAddress == None or not len(self.MQTTAddress):
                 log.error("Error: invalid MQTT server address")
                 console.error("Error: invalid MQTT server address")
@@ -301,6 +301,18 @@ class MyMQTT(MyCommon):
                 self.FlushInterval = config.ReadValue('flush_interval', return_type = float, default = float('inf'))
                 if self.FlushInterval == 0:
                     self.FlushInterval = float('inf')
+
+            if config.HasOption('mqtt_homeassistant'):
+                self.MQTTHomeassistant = config.ReadValue('mqtt_homeassistant', return_type = bool, default = False)
+                if self.MQTTHomeassistant:
+                    if self.TopicRoot != None:
+                        self.TopicRoot = None
+                        self.LogDebug("*** Root Topic REMOVED For HomeAssistant ***")
+                    if self.UseNumeric:
+                        self.UseNumeric = False
+                        self.LogDebug("*** JSON for Numerics DISABLED For HomeAssistant ***")
+                    
+
             else:
                 self.FlushInterval = float('inf')
         except Exception as e1:
@@ -369,7 +381,10 @@ class MyMQTT(MyCommon):
                 FullPath = self.TopicRoot + "/" + str(name)
             else:
                 FullPath = str(name)
-
+            # Check for homeassistant
+            if self.MQTTHomeassistant:
+                #Homeassistant can not have spaces in topics, Remove all spaces
+                FullPath = FullPath.replace(" ", "_")
             if self.debug:
                 self.LogDebug("Publish:  " + FullPath  + ": " + str(value) + ": " + str(type(value)))
 
@@ -391,6 +406,19 @@ class MyMQTT(MyCommon):
         else:
             FullPath = "generator"
         self.MQTTclient.subscribe(FullPath + "/#")
+
+        if self.MQTTHomeassistant:
+            # post to configuration topics for homeassistant to pick up
+            self.MQTTclient.publish("homeassistant/sensor/generator/line_volt/config", "{\"name\": \"Line Voltage\", \"unit_of_measurement\": \"V\", \"state_topic\": \"generator/Outage/Utility_Voltage\", \"value_template\": \"{{ value | regex_replace('[^0-9.-]+','') | float }}\" }")
+            self.MQTTclient.publish("homeassistant/sensor/generator/batt_volt/config", "{\"name\": \"Battery Voltage\", \"unit_of_measurement\": \"V\", \"state_topic\": \"generator/Status/Engine/Battery_Voltage\", \"value_template\": \"{{ value | regex_replace('[^0-9.-]+','') | float }}\" }")
+            self.MQTTclient.publish("homeassistant/sensor/generator/out_volt/config", "{\"name\": \"Output Voltage\", \"unit_of_measurement\": \"V\", \"state_topic\": \"generator/Status/Engine/Output_Voltage\", \"value_template\": \"{{ value | regex_replace('[^0-9.-]+','') | float }}\" }")
+            self.MQTTclient.publish("homeassistant/sensor/generator/out_current/config", "{\"name\": \"Output Current\", \"unit_of_measurement\": \"A\", \"state_topic\": \"generator/Status/Engine/Output_Current\", \"value_template\": \"{{ value | regex_replace('[^0-9.-]+','') | float }}\" }")
+            self.MQTTclient.publish("homeassistant/binary_sensor/generator/system_in_outage/config", "{\"name\": \"System In Outage\", \"state_topic\": \"generator/Outage/System_In_Outage\", \"payload_off\": \"No\" }")
+            self.MQTTclient.publish("homeassistant/sensor/generator/out_kw/config", "{\"name\": \"KW Used\", \"unit_of_measurement\": \"kW\", \"state_topic\": \"generator/Status/Engine/Output_Power_(Single_Phase)\", \"value_template\": \"{{ value | regex_replace('[^0-9.-]+','') | float }}\" }")
+            self.MQTTclient.publish("homeassistant/sensor/generator/batt_charge/config", "{\"name\": \"Battery Charge Current\", \"unit_of_measurement\": \"A\", \"state_topic\": \"generator/Status/Engine/Unsupported_Sensors/Battery_Charger_Sensor\", \"value_template\": \"{{ value | regex_replace('[^0-9.-]+','') | float }}\" }")
+            self.MQTTclient.publish("homeassistant/sensor/generator/ext_temp/config", "{\"name\": \"Ambient Temperature\", \"unit_of_measurement\": \"F\", \"state_topic\": \"generator/Maintenance/Ambient_Temperature_Sensor\", \"value_template\": \"{{ value | regex_replace('[^0-9.-]+','') | float }}\" }")
+            self.MQTTclient.publish("homeassistant/sensor/generator/wifi_signal/config", "{\"name\": \"WiFi Signal Strength\", \"unit_of_measurement\": \"dBm\", \"state_topic\": \"generator/Monitor/Platform_Stats/WLAN_Signal_Level\", \"value_template\": \"{{ value | regex_replace('[^0-9.-]+','') | float }}\" }")
+
 
     #------------ MyMQTT::on_message--------------------------------------------
     # The callback for when a PUBLISH message is received from the server.
