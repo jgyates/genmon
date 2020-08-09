@@ -687,6 +687,12 @@ def GetAddOns():
             "(Optional) Defines the certificate requirements that the client imposes on the broker. Used if Certificate Authority file is used.",
             bounds = 'None,Optional,Required',
             display_name = "Certificate Requirements")
+        AddOnCfg['genmqtt']['parameters']['mqtt_homeassistant'] = CreateAddOnParam(
+            ConfigFiles[GENMQTT_CONFIG].ReadValue("mqtt_homeassistant", return_type = bool, default = False),
+            'boolean',
+            "Optional. Sends special MQTT messages for HomeAssistant to automatically Pick up, Record and display Genmon stats as sensors. With HomeAssistant and the MQTT intergration /r/n DISABLES JSON for Numerics AND Root Topic"
+            bounds = '',
+            display_name = "Home Assistant Auto Configuration")
 
 
         #GENSLACK
