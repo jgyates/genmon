@@ -91,11 +91,64 @@ class MyGenPush(MySupport):
                         sys.exit(1)
                     time.sleep(1)
                     continue
+
+            self.GetGeneratorStartInfo()
             # start thread to accept incoming sockets for nagios heartbeat
-            self.Threads["PollingThread"] = MyThread(self.MainPollingThread, Name = "PollingThread")
+            self.Threads["PollingThread"] = MyThread(self.MainPollingThread, Name = "PollingThread", start = False)
+            self.Threads["PollingThread"].Start()
 
         except Exception as e1:
             self.LogErrorLine("Error in mygenpush init: "  + str(e1))
+
+    #----------  MyGenPush::ControllerIsEvolutionNexus -------------------------
+    def ControllerIsEvolutionNexus(self):
+        try:
+            if self.ControllerIsEvolution() or self.ControllerIsNexus:
+                return True
+            return False
+        except Exception as e1:
+            self.LogErrorLine("Error in ControllerIsEvolutionNexus: " + str(e1))
+            return False
+
+    #----------  MyGenPush::ControllerIsEvolution ------------------------------
+    def ControllerIsEvolution(self):
+        try:
+            if "evolution" in self.StartInfo["Controller"].lower():
+                return True
+            return False
+        except Exception as e1:
+            self.LogErrorLine("Error in ControllerIsEvolution: " + str(e1))
+            return False
+    #----------  MyGenPush::ControllerIsNexius ---------------------------------
+    def ControllerIsNexius(self):
+        try:
+            if "nexus" in self.StartInfo["Controller"].lower():
+                return True
+            return False
+        except Exception as e1:
+            self.LogErrorLine("Error in ControllerIsNexius: " + str(e1))
+            return False
+    #----------  MyGenPush::ControllerIsGeneracH100 ----------------------------
+    def ControllerIsGeneracH100(self):
+        try:
+            if "h-100" in self.StartInfo["Controller"].lower() or "g-panel" in self.StartInfo["Controller"].lower():
+                return True
+            return False
+        except Exception as e1:
+            self.LogErrorLine("Error in ControllerIsGeneracH100: " + str(e1))
+            return False
+    #----------  MyGenPush::GetGeneratorStartInfo ------------------------------
+    def GetGeneratorStartInfo(self):
+
+        try:
+            data = self.SendCommand("generator: start_info_json")
+            self.StartInfo = {}
+            self.StartInfo = json.loads(data)
+
+            return True
+        except Exception as e1:
+            self.LogErrorLine("Error in GetGeneratorStartInfo: " + str(e1))
+            return False
 
     #----------  MyGenPush::SendCommand ----------------------------------------
     def SendCommand(self, Command):
@@ -243,6 +296,7 @@ class MyMQTT(MyCommon):
         self.TopicRoot = None
         self.BlackList = None
         self.UseNumeric = False
+        self.RemoveSpaces = False
         self.PollTime = 2
         self.FlushInterval = float('inf')   # default to inifite flush interval (e.g., never)
         self.debug = False
@@ -270,6 +324,8 @@ class MyMQTT(MyCommon):
             self.PollTime = config.ReadValue('poll_interval', return_type = float, default = 2.0)
 
             self.UseNumeric = config.ReadValue('numeric_json', return_type = bool, default = False)
+
+            self.RemoveSpaces = config.ReadValue('remove_spaces', return_type = bool, default = False)
 
             self.TopicRoot = config.ReadValue('root_topic')
 
@@ -369,6 +425,9 @@ class MyMQTT(MyCommon):
                 FullPath = self.TopicRoot + "/" + str(name)
             else:
                 FullPath = str(name)
+
+            if self.self.RemoveSpaces:
+                FullPath = FullPath.replace(" ", "_")
 
             if self.debug:
                 self.LogDebug("Publish:  " + FullPath  + ": " + str(value) + ": " + str(type(value)))
