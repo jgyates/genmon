@@ -172,17 +172,6 @@ class GenSNMP(MySupport):
             self.LogErrorLine("Error in GenSNMP init: " + str(e1))
             self.LogConsole("Error in GenSNMP init: " + str(e1))
             sys.exit(1)
-    #----------  GenSNMP::GetGeneratorInfo -------------------------------------
-    def GetGeneratorInfo(self):
-
-        try:
-            data = self.SendCommand("generator: status_num_json")
-            TempDict = {}
-            TempDict = json.loads(data)
-            return TempDict
-        except Exception as e1:
-            self.LogErrorLine("Error in GenSNMP GetGeneratorInfo: " + str(e1))
-            return {}
     #----------  GenSNMP::ControllerIsEvolutionNexus --------------------------------
     def ControllerIsEvolutionNexus(self):
         try:
@@ -212,7 +201,7 @@ class GenSNMP(MySupport):
 
             return True
         except Exception as e1:
-            self.LogErrorLine("Error in CheckGeneratorRequirement: " + str(e1))
+            self.LogErrorLine("Error in GetGeneratorStartInfo: " + str(e1))
             return False
 
     #----------  GenSNMP::UpateSNMPData ----------------------------------------
@@ -331,6 +320,8 @@ class GenSNMP(MySupport):
                 self.AddOID((CtlID,1,0,12),return_type = str, description = "Fuel30", default = " ", keywords = ["Maintenance","Fuel Consumption in last 30 days"])
                 self.AddOID((CtlID,1,0,13),return_type = str, description = "TotalFuelUsed", default = " ", keywords = ["Maintenance","Total Power Log Fuel Consumption"])
                 self.AddOID((CtlID,1,0,14),return_type = str, description = "RunHours30", default = " ", keywords = ["Maintenance","Run Hours in last 30 days"])
+                self.AddOID((CtlID,1,0,15),return_type = str, description = "EstHoursInTank", default = " ", keywords = ["Maintenance","Hours of Fuel Remaining"])
+
                 #Maintenance->Controller Settings
                 self.AddOID((CtlID,1,1,0),return_type = str, description = "CalCurrent1", default = " ", keywords = ["Maintenance/Controller Settings","Calibrate Current 1"])
                 self.AddOID((CtlID,1,1,1),return_type = str, description = "CalCurrent1", default = " ", keywords = ["Maintenance/Controller Settings","Calibrate Current 2"])

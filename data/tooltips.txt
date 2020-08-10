@@ -88,6 +88,7 @@ fuel_units=Units of Fuel Rate Half and Full Load parameters
 fuel_half=The volume of fuel used in an hour at half the rated load. Set to zero to disable fuel estimation.
 fuel_full=The volume of fuel used in an hour at the full rated load. Set to zero to disable fuel estimation.
 extend_wait = Number of additional seconds to wait to retry sending failed emails.
+min_outage_duration = Outages less than this time in seconds will not be logged. Notifications will still be sent if enabled.
 [generac_evo_nexus]
 0000=Product line
 0001=Switch, Engine and Alarm Status
