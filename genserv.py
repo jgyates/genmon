@@ -914,7 +914,7 @@ def GetAddOns():
         AddOnCfg['gentemp']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "gentemp", default = False)
         AddOnCfg['gentemp']['title'] = "External Temperature Sensors"
         AddOnCfg['gentemp']['description'] = "Allow the display of external temperature sensor data"
-        AddOnCfg['gentemp']['icon'] = "Genmon"
+        AddOnCfg['gentemp']['icon'] = "rpi"
         AddOnCfg['gentemp']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gentemppy-optional"
         AddOnCfg['gentemp']['parameters'] = collections.OrderedDict()
 
