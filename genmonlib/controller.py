@@ -1129,14 +1129,14 @@ class GeneratorController(MySupport):
     def GetFuelLevel(self, ReturnFloat = False):
         # return 0 - 100 or None
 
-        if not ExternalFuelDataSupported() and not self.FuelTankCalculationSupported() and not self.FuelSensorSupported():
+        if not self.ExternalFuelDataSupported() and not self.FuelTankCalculationSupported() and not self.FuelSensorSupported():
             return None
 
         if self.FuelSensorSupported():
             FuelLevel = float(self.GetFuelSensor(ReturnInt = True))
-        elif:
+        elif self.ExternalFuelDataSupported():
             FuelLevel = self.GetExternalFuelPercentage(ReturnFloat = True)
-        else:
+        elif self.FuelTankCalculationSupported():
             if self.TankSize == 0:
                 return None
             FuelInTank = self.GetEstimatedFuelInTank(ReturnFloat = True)
@@ -1145,7 +1145,8 @@ class GeneratorController(MySupport):
                 FuelLevel = 100
             else:
                 FuelLevel = float(FuelInTank) / float(self.TankSize) * 100
-
+        else:
+            FuelLevel = 0
         if ReturnFloat:
             return float(FuelLevel)
         else:
