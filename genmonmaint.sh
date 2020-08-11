@@ -84,6 +84,7 @@ function updatelibraries() {
   sudo $pipcommand install pysnmp -U
   sudo $pipcommand install ldap3 -U
   sudo $pipcommand install pyasn1 -U
+  sudo $pipcommand install smbus -U
   echo "Done."
 }
 
@@ -139,6 +140,7 @@ function installgenmon() {
     sudo $pipcommand install paho-mqtt
     sudo $pipcommand install pysnmp
     sudo $pipcommand install ldap3
+    sudo $pipcommand install smbus
     # correct problem with LDAP3 module install
     sudo $pipcommand install pyasn1 -U
 

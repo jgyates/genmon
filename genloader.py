@@ -128,7 +128,8 @@ class Loader(MySupport):
             ['pyowm','pyowm'],
             ['pytz','pytz'],
             ['pysnmp','pysnmp'],
-            ['ldap3','ldap3']
+            ['ldap3','ldap3'],
+            ['smbus','smbus']
         ]
         try:
             ErrorOccured = False
@@ -319,7 +320,7 @@ class Loader(MySupport):
             Sections = self.config.GetSections()
             ValidSections = ['genmon', 'genserv', 'gengpio', 'gengpioin', 'genlog', 'gensms', 'gensms_modem',
             'genpushover', 'gensyslog', 'genmqtt', 'genslack', 'genexercise', 'genemail2sms', 'gentankutil',
-            'genalexa', 'gensnmp', 'gentemp']
+            'gentankdiy','genalexa', 'gensnmp', 'gentemp']
             for entry in ValidSections:
                 if not entry in Sections:
                     if entry == 'genslack':
@@ -343,6 +344,9 @@ class Loader(MySupport):
                     if entry == 'gentemp':
                         self.LogError("Warning: Missing entry: " + entry + " , adding entry")
                         self.AddEntry(section = entry, module = 'gentemp.py', conffile = 'gentemp.conf')
+                    if entry == 'gentankdiy':
+                        self.LogError("Warning: Missing entry: " + entry + " , adding entry")
+                        self.AddEntry(section = entry, module = 'gentankdiy.py', conffile = 'gentankdiy.conf')
                     else:
                         self.LogError("Warning: Missing entry: " + entry)
 

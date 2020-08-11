@@ -318,6 +318,9 @@ class Evolution(GeneratorController):
             if self.FuelSensorSupported():
                 Tile = MyTile(self.log, title = "Fuel", units = "%", type = "fuel", nominal = 100, callback = self.GetFuelSensor, callbackparameters = (True,))
                 self.TileList.append(Tile)
+            elif self.ExternalFuelDataSupported():
+                Tile = MyTile(self.log, title = "External Tank", units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True,))
+                self.TileList.append(Tile)
             elif self.FuelConsumptionGaugeSupported():    # no gauge for NG
                 if self.UseMetric:
                     Units = "L"         # no gauge for NG
@@ -325,9 +328,7 @@ class Evolution(GeneratorController):
                     Units = "gal"       # no gauge for NG
                 Tile = MyTile(self.log, title = "Estimated Fuel", units = Units, type = "fuel", nominal = int(self.TankSize), callback = self.GetEstimatedFuelInTank, callbackparameters = (True,))
                 self.TileList.append(Tile)
-            if self.ExternalFuelDataSupported():
-                Tile = MyTile(self.log, title = "External Tank", units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True,))
-                self.TileList.append(Tile)
+
             if self.PowerMeterIsSupported():
                 Tile = MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = float(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
                 self.TileList.append(Tile)
@@ -1749,7 +1750,8 @@ class Evolution(GeneratorController):
                     except Exception as e1:
                         self.LogErrorLine("Error recording fuel usage for outage: " + str(e1))
                     # log outage to file
-                    self.LogToFile(self.OutageLog, self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"), OutageStr)
+                    if self.self.LastOutageDuration.total_seconds() > self.MinimumOutageDuration:
+                        self.LogToFile(self.OutageLog, self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"), OutageStr)
             else:
                 if UtilityVolts < ThresholdVoltage:
                     self.SystemInOutage = True

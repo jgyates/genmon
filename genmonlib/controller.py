@@ -58,6 +58,7 @@ class GeneratorController(MySupport):
         self.MaintLogList = []
         self.MaintLock = threading.RLock()
         self.OutageLog = ConfigFilePath + "outage.txt"
+        self.MinimumOutageDuration = 0
         self.PowerLogMaxSize = 15.0       # 15 MB max size
         self.PowerLog =  ConfigFilePath + "kwlog.txt"
         self.PowerLogList = []
@@ -103,7 +104,12 @@ class GeneratorController(MySupport):
                 self.bDisablePowerLog = self.config.ReadValue('disablepowerlog', return_type = bool, default = False)
                 self.SubtractFuel = self.config.ReadValue('subtractfuel', return_type = float, default = 0.0)
                 self.UserURL = self.config.ReadValue('user_url',  default = "").strip()
+                # for gentankutil
                 self.UseExternalFuelData = self.config.ReadValue('use_external_fuel_data', return_type = bool, default = False)
+                if not self.UseExternalFuelData:
+                    # for gentankdiy
+                    self.UseExternalFuelData = self.config.ReadValue('use_external_fuel_data_diy', return_type = bool, default = False)
+
                 self.EstimateLoad = self.config.ReadValue('estimated_load', return_type = float, default = 0.50)
                 if self.EstimateLoad < 0:
                     self.EstimateLoad = 0
@@ -116,6 +122,7 @@ class GeneratorController(MySupport):
                 if self.config.HasOption('kwlog'):
                     self.PowerLog = self.config.ReadValue('kwlog')
 
+                self.MinimumOutageDuration = self.config.ReadValue('min_outage_duration', return_type = int, default = 0)
                 self.PowerLogMaxSize = self.config.ReadValue('kwlogmax', return_type = float, default = 15.0)
 
                 if self.config.HasOption('nominalfrequency'):
@@ -1265,7 +1272,7 @@ class GeneratorController(MySupport):
                 return None
             if FuelPerHour == 0:
                 return None
-            
+
             HoursRemaining = FuelRemaining / FuelPerHour
 
             if ReturnFloat:

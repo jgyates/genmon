@@ -669,6 +669,12 @@ def GetAddOns():
             "If enabled will return numeric values in the Status, Maintenance (Evo/Nexus only) and Outage topics as a JSON string which can be converted to an object with integer or float values.",
             bounds = '',
             display_name = "JSON for Numerics")
+        AddOnCfg['genmqtt']['parameters']['remove_spaces'] = CreateAddOnParam(
+            ConfigFiles[GENMQTT_CONFIG].ReadValue("remove_spaces", return_type = bool, default = False),
+            'boolean',
+            "If enabled any spaces in the topic path will be converted to underscores",
+            bounds = '',
+            display_name = "Remove Spaces in Topic Path")
         AddOnCfg['genmqtt']['parameters']['cert_authority_path'] = CreateAddOnParam(
             ConfigFiles[GENMQTT_CONFIG].ReadValue("cert_authority_path", return_type = str, default = ""),
             'string',
@@ -843,6 +849,22 @@ def GetAddOns():
             bounds = 'number',
             display_name = "Poll Frequency")
 
+        #GENTANKDIY
+        AddOnCfg['gentankdiy'] = collections.OrderedDict()
+        AddOnCfg['gentankdiy']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "gentankdiy", default = False)
+        AddOnCfg['gentankdiy']['title'] = "DIY Fuel Tank Gauge Sensor"
+        AddOnCfg['gentankdiy']['description'] = "Integrates DIY tank gauge sesnor for Genmon"
+        AddOnCfg['gentankdiy']['icon'] = "rpi"
+        AddOnCfg['gentankdiy']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gentankdiypy-optional"
+        AddOnCfg['gentankdiy']['parameters'] = collections.OrderedDict()
+
+        AddOnCfg['gentankdiy']['parameters']['poll_frequency'] = CreateAddOnParam(
+            ConfigFiles[GENTANKDIY_CONFIG].ReadValue("poll_frequency", return_type = float, default = 0),
+            'float',
+            "The duration in minutes between poll of tank data.",
+            bounds = 'number',
+            display_name = "Poll Frequency")
+
         #GENALEXA
         AddOnCfg['genalexa'] = collections.OrderedDict()
         AddOnCfg['genalexa']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "genalexa", default = False)
@@ -986,6 +1008,7 @@ def SaveAddOnSettings(query_string):
             "genexercise" : ConfigFiles[GENEXERCISE_CONFIG],
             "genemail2sms" : ConfigFiles[GENEMAIL2SMS_CONFIG],
             "gentankutil" : ConfigFiles[GENTANKUTIL_CONFIG],
+            "gentankdiy" : ConfigFiles[GENTANKDIY_CONFIG],
             "genalexa" : ConfigFiles[GENALEXA_CONFIG],
             "gensnmp" : ConfigFiles[GENSNMP_CONFIG],
             "gentemp" : ConfigFiles[GENTEMP_CONFIG]
@@ -1003,6 +1026,9 @@ def SaveAddOnSettings(query_string):
                     if module == "gentankutil":
                         # update genmon.conf also to let it know that it should watch for external fuel data
                         ConfigFiles[GENMON_CONFIG].WriteValue("use_external_fuel_data", basevalues, section = "genmon")
+                    if module == "gentankdiy":
+                        # update genmon.conf also to let it know that it should watch for external fuel data
+                        ConfigFiles[GENMON_CONFIG].WriteValue("use_external_fuel_data_diy", basevalues, section = "genmon")
                 if basesettings == 'parameters':
                     for params, paramvalue in basevalues.items():
                         if module == "genlog" and params == "Log File Name":
@@ -1202,6 +1228,7 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["https_port"] = ['int', 'Override HTTPS port', 25, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "https_port"]
         ConfigSettings["user_url"] = ['string', 'User URL', 26, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "user_url"]
         ConfigSettings["extend_wait"] = ['int', 'Extend email retry', 27, "0", "", 0, MAIL_CONFIG, MAIL_SECTION,"extend_wait"]
+        ConfigSettings["min_outage_duration"] = ['int', 'Minimum Outage Duration', 28, "0", "", 0, GENMON_CONFIG, GENMON_SECTION,"min_outage_duration"]
 
 
         for entry, List in ConfigSettings.items():
@@ -1853,6 +1880,7 @@ if __name__ == "__main__":
     GENEXERCISE_CONFIG = ConfigFilePath + "genexercise.conf"
     GENEMAIL2SMS_CONFIG = ConfigFilePath + "genemail2sms.conf"
     GENTANKUTIL_CONFIG = ConfigFilePath + "gentankutil.conf"
+    GENTANKDIY_CONFIG = ConfigFilePath + "gentankdiy.conf"
     GENALEXA_CONFIG = ConfigFilePath + "genalexa.conf"
     GENSNMP_CONFIG = ConfigFilePath + "gensnmp.conf"
     GENTEMP_CONFIG = ConfigFilePath + "gentemp.conf"
@@ -1864,7 +1892,8 @@ if __name__ == "__main__":
     ConfigFileList = [GENMON_CONFIG, MAIL_CONFIG, GENLOADER_CONFIG, GENSMS_CONFIG,
         MYMODEM_CONFIG, GENPUSHOVER_CONFIG, GENMQTT_CONFIG, GENSLACK_CONFIG,
         GENGPIOIN_CONFIG, GENEXERCISE_CONFIG, GENEMAIL2SMS_CONFIG,
-        GENTANKUTIL_CONFIG, GENALEXA_CONFIG, GENSNMP_CONFIG,GENTEMP_CONFIG]
+        GENTANKUTIL_CONFIG, GENTANKDIY_CONFIG, GENALEXA_CONFIG, GENSNMP_CONFIG,
+        GENTEMP_CONFIG]
 
     for ConfigFile in ConfigFileList:
         if not os.path.isfile(ConfigFile):

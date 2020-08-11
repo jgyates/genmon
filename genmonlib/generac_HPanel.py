@@ -1018,6 +1018,9 @@ class HPanel(GeneratorController):
             if self.FuelSensorSupported():
                 Tile = MyTile(self.log, title = "Fuel", units = "%", type = "fuel", nominal = 100, callback = self.GetFuelSensor, callbackparameters = (True,))
                 self.TileList.append(Tile)
+            elif self.ExternalFuelDataSupported():
+                Tile = MyTile(self.log, title = "External Tank", units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True,))
+                self.TileList.append(Tile)
             elif self.FuelConsumptionGaugeSupported():    # no gauge for NG
                 if self.UseMetric:
                     Units = "L"         # no gauge for NG
@@ -1035,9 +1038,6 @@ class HPanel(GeneratorController):
                 Tile = MyTile(self.log, title = "kW Output", type = "powergraph", nominal = int(self.NominalKW),
                 callback = self.GetParameter,
                 callbackparameters = (self.Reg.TOTAL_POWER_KW[REGISTER], None, None, False, True, False))
-                self.TileList.append(Tile)
-            if self.ExternalFuelDataSupported():
-                Tile = MyTile(self.log, title = "External Tank", units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True,))
                 self.TileList.append(Tile)
 
         except Exception as e1:
