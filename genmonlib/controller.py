@@ -1154,7 +1154,7 @@ class GeneratorController(MySupport):
     #----------  GeneratorController::CheckFuelLevel----------------------------
     def CheckFuelLevel(self):
         try:
-            if not ExternalFuelDataSupported() and not self.FuelTankCalculationSupported() and not self.FuelSensorSupported():
+            if not self.ExternalFuelDataSupported() and not self.FuelTankCalculationSupported() and not self.FuelSensorSupported():
                 return True
 
             FuelLevel = self.GetFuelLevel(ReturnFloat = True)
