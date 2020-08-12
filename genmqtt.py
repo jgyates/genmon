@@ -100,6 +100,16 @@ class MyGenPush(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in mygenpush init: "  + str(e1))
 
+    #----------  MyGenPush::ControllerIsEvolution2 -----------------------------
+    def ControllerIsEvolution2(self):
+        try:
+            if "evolution 2.0" in self.StartInfo["Controller"].lower():
+                return True
+            return False
+        except Exception as e1:
+            self.LogErrorLine("Error in ControllerIsEvolution2: " + str(e1))
+            return False
+
     #----------  MyGenPush::ControllerIsEvolutionNexus -------------------------
     def ControllerIsEvolutionNexus(self):
         try:
@@ -320,13 +330,9 @@ class MyMQTT(MyCommon):
                 self.MonitorAddress = ProgramDefaults.LocalHost
 
             self.MQTTPort = config.ReadValue('mqtt_port', return_type = int, default = 1883)
-
             self.PollTime = config.ReadValue('poll_interval', return_type = float, default = 2.0)
-
             self.UseNumeric = config.ReadValue('numeric_json', return_type = bool, default = False)
-
             self.RemoveSpaces = config.ReadValue('remove_spaces', return_type = bool, default = False)
-
             self.TopicRoot = config.ReadValue('root_topic')
 
             if self.TopicRoot != None:
@@ -383,7 +389,7 @@ class MyMQTT(MyCommon):
                     elif self.CertReqs.lower() == "none":
                         cert_reqs = ssl.CERT_NONE
                     else:
-                        self.LogError("Error: invalid cert required specified, defaulting to required: " + self.self.CertReq)
+                        self.LogError("Error: invalid cert required specified, defaulting to required: " + self.CertReq)
 
                     use_tls = ssl.PROTOCOL_TLSv1
                     if self.TLSVersion == "1.0" or self.TLSVersion == "1":
@@ -416,17 +422,23 @@ class MyMQTT(MyCommon):
             self.LogErrorLine("Error in MyMQTT init: " + str(e1))
             self.console.error("Error in MyMQTT init: " + str(e1))
             sys.exit(1)
+    #------------ MyMQTT::AppendRoot---------------------------------------
+    def AppendRoot(self, name):
+
+        if self.TopicRoot != None and len(self.TopicRoot):
+            ReturnPath = self.TopicRoot + "/" + str(name)
+        else:
+            ReturnPath = str(name)
+        return ReturnPath
+
     #------------ MyMQTT::PublishCallback---------------------------------------
     # Callback to publish data via MQTT
     def PublishCallback(self, name, value):
 
         try:
-            if self.TopicRoot != None and len(self.TopicRoot):
-                FullPath = self.TopicRoot + "/" + str(name)
-            else:
-                FullPath = str(name)
+            FullPath = self.AppendRoot(name)
 
-            if self.self.RemoveSpaces:
+            if self.RemoveSpaces:
                 FullPath = FullPath.replace(" ", "_")
 
             if self.debug:
@@ -439,17 +451,23 @@ class MyMQTT(MyCommon):
     #------------ MyMQTT::on_connect--------------------------------------------
     # The callback for when the client receives a CONNACK response from the server.
     def on_connect(self, client, userdata, flags, rc):
-        if rc != 0:
-            self.LogError("Error connecting to MQTT server: return code: " + str(rc))
-        self.LogDebug("Connected with result code "+str(rc))
 
-        # Subscribing in on_connect() means that if we lose the connection and
-        # reconnect then subscriptions will be renewed.
-        if self.TopicRoot != None and len(self.TopicRoot):
-            FullPath = self.TopicRoot + "/generator"
-        else:
-            FullPath = "generator"
-        self.MQTTclient.subscribe(FullPath + "/#")
+        try:
+            if rc != 0:
+                self.LogError("Error connecting to MQTT server: return code: " + str(rc))
+            self.LogDebug("Connected with result code "+str(rc))
+
+            # Subscribing in on_connect() means that if we lose the connection and
+            # reconnect then subscriptions will be renewed.
+            if self.TopicRoot != None and len(self.TopicRoot):
+                FullPath = self.TopicRoot + "/generator"
+            else:
+                FullPath = "generator"
+            self.MQTTclient.subscribe(FullPath + "/#")
+
+        except Exception as e1:
+            self.LogErrorLine("Error in MyMQTT:on_connect: " + str(e1))
+
 
     #------------ MyMQTT::on_message--------------------------------------------
     # The callback for when a PUBLISH message is received from the server.

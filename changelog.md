@@ -1,6 +1,12 @@
 # Change Log
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.14.23 - 2020-08-09
+ - Minor update to add on gensnmp (added estimated hours in tank remaining)
+ - Added ability to have MQTT topics without spaces in add on genmqtt
+ - Added support for DIY fuel gauge (https://github.com/jgyates/genmon/wiki/Appendix-L-Adding-a-Propane-Fuel-Gauge-to-Genmon)
+ - Added advanced setting to disallow logging of short outages
+
 ## V1.14.22 - 2020-08-03
  - Corrected bug in model lookup code for python 3.x
 
