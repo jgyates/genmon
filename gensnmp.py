@@ -204,8 +204,8 @@ class GenSNMP(MySupport):
             self.LogErrorLine("Error in GetGeneratorStartInfo: " + str(e1))
             return False
 
-    #----------  GenSNMP::UpateSNMPData ----------------------------------------
-    def UpateSNMPData(self, Path, Value):
+    #----------  GenSNMP::UpdateSNMPData ----------------------------------------
+    def UpdateSNMPData(self, Path, Value):
 
         try:
             oid = self.GetOID(Path)
@@ -217,10 +217,10 @@ class GenSNMP(MySupport):
             elif self.mibDataIdx[oid].return_type == int:
                 self.mibDataIdx[oid].value = int(self.removeAlpha(Value))
             else:
-                self.LogError("Invalid type in UpateSNMPData: " + str(self.mibDataIdx[oid].return_type))
+                self.LogError("Invalid type in UpdateSNMPData: " + str(self.mibDataIdx[oid].return_type))
                 self.mibDataIdx[oid].value = Value
         except Exception as e1:
-            self.LogErrorLine("Error in UpateSNMPData: " + str(e1))
+            self.LogErrorLine("Error in UpdateSNMPData: " + str(e1))
 
     #----------  GenSNMP::GetOID -----------------------------------------------
     def GetOID(self, path):
@@ -621,7 +621,7 @@ class GenSNMP(MySupport):
 
             if LastValue == None or LastValue != Value:
                 self.LastValues[str(Path)] = Value
-                self.UpateSNMPData(Path, Value)
+                self.UpdateSNMPData(Path, Value)
 
         except Exception as e1:
              self.LogErrorLine("Error in mygenpush:CheckForChanges: " + str(e1))
