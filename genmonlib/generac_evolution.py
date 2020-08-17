@@ -1750,7 +1750,7 @@ class Evolution(GeneratorController):
                     except Exception as e1:
                         self.LogErrorLine("Error recording fuel usage for outage: " + str(e1))
                     # log outage to file
-                    if self.self.LastOutageDuration.total_seconds() > self.MinimumOutageDuration:
+                    if self.LastOutageDuration.total_seconds() > self.MinimumOutageDuration:
                         self.LogToFile(self.OutageLog, self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"), OutageStr)
             else:
                 if UtilityVolts < ThresholdVoltage:
