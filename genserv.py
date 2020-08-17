@@ -649,7 +649,7 @@ def GetAddOns():
             ConfigFiles[GENMQTT_CONFIG].ReadValue("root_topic", return_type = str, default = ""),
             'string',
             "(Optional) Prepend this value to the MQTT data path i.e. 'Home' would result in 'Home/generator/...''",
-            bounds = 'minmax 1:50',
+            bounds = 'minmax:1:50',
             display_name = "Root Topic")
         AddOnCfg['genmqtt']['parameters']['blacklist'] = CreateAddOnParam(
             ConfigFiles[GENMQTT_CONFIG].ReadValue("blacklist", return_type = str, default = ""),
