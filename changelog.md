@@ -3,6 +3,7 @@ All notable changes to this project will be documented in this file. Major relea
 
 ## V1.14.24 - 2020-17-09
 - Corrected bug introduced in V1.14.23 that prevented logging of outages
+- Added new alarm code for Nexus Liquid Cooled
 
 ## V1.14.23 - 2020-08-09
  - Minor update to add on gensnmp (added estimated hours in tank remaining)

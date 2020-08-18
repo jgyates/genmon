@@ -2346,6 +2346,7 @@ class Evolution(GeneratorController):
         0x16 : "Change Oil & Filter",        # Validated on Nexus Air Cooled
         0x17 : "Inspect Air Filter",         # Validated on Nexus Air Cooled
         0x19 : "Inspect Spark Plugs",        # Validated on Nexus Air Cooled
+        0x1a : "Missing Cam Pulse",          # Validate on Nexus Liquid Cooled
         0x1b : "Inspect Battery",            # Validated on Nexus Air Cooled
         0x1E : "Low Fuel Pressure",          # Validated on Nexus Liquid Cooled
         0x21 : "Service Schedule A",         # Validated on Nexus Liquid Cooled
