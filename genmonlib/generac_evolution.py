@@ -2346,7 +2346,6 @@ class Evolution(GeneratorController):
         0x16 : "Change Oil & Filter",        # Validated on Nexus Air Cooled
         0x17 : "Inspect Air Filter",         # Validated on Nexus Air Cooled
         0x19 : "Inspect Spark Plugs",        # Validated on Nexus Air Cooled
-        0x1a : "Missing Cam Pulse",          # Validate on Nexus Liquid Cooled
         0x1b : "Inspect Battery",            # Validated on Nexus Air Cooled
         0x1E : "Low Fuel Pressure",          # Validated on Nexus Liquid Cooled
         0x21 : "Service Schedule A",         # Validated on Nexus Liquid Cooled
@@ -2583,6 +2582,7 @@ class Evolution(GeneratorController):
          0x12 : "Check for Service",    #  Validate on Nexus AC (Spark Plugs service due?)
          0x14 : "Check Battery",        #  Validate on Nexus, occurred when Check Battery Alarm
          0x15 : "Underspeed",           #  Validate on Evo AC 2
+         0x1a : "Missing Cam Pulse",    # Validate on Nexus Liquid Cooled
          0x1c : "Throttle Failure",     #  Validate on Nexus LC,
          0x1e : "Under Voltage",        #  Validate on EvoAC
          0x1f : "Service Due",          #  Validate on Evolution, occurred when forced service due
