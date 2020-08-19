@@ -1,9 +1,11 @@
 # Change Log
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.14.25 - 2020-19-09
+- Added new alarm code for Nexus Liquid Cooled and Evoltion Air Cooled
+
 ## V1.14.24 - 2020-17-09
 - Corrected bug introduced in V1.14.23 that prevented logging of outages
-- Added new alarm code for Nexus Liquid Cooled
 
 ## V1.14.23 - 2020-08-09
  - Minor update to add on gensnmp (added estimated hours in tank remaining)
