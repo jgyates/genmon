@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.14.26 - 2020-19-09
+- Minor modification to gentankutil add on to compensate for changed web login at tankutility.com 
+
 ## V1.14.25 - 2020-19-09
 - Added new alarm code for Nexus Liquid Cooled and Evoltion Air Cooled
 
