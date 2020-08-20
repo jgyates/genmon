@@ -54,9 +54,12 @@ class tankutility(MyCommon):
             else:
                 response = query.json()
                 self.LogDebug("Login: " + str(response))
-                if response['error'] != '':
-                    self.LogError("API reports an account error: " + str(response['error']))
-                    return False
+                try:
+                    if response['error'] != '':
+                        self.LogError("API reports an account error: " + str(response['error']))
+                        return False
+                except:
+                    pass
                 self.token = response['token']
                 return True
         except Exception as e1:
