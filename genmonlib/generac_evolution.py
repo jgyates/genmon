@@ -22,6 +22,7 @@ from genmonlib.controller import GeneratorController
 from genmonlib.mytile import MyTile
 from genmonlib.modbus_file import ModbusFile
 from genmonlib.mymodbus import ModbusProtocol
+#from genmonlib.modbus_evo2 import ModbusEvo2
 from genmonlib.program_defaults import ProgramDefaults
 
 #-------------------Generator specific const defines for Generator class--------
@@ -136,6 +137,7 @@ class Evolution(GeneratorController):
                     "002d" : [2, 0],     # Evo AC   (Weekly, Biweekly, Monthly)
                     "002e" : [2, 0],     # Evo      (Exercise Time) Exercise Day Sunday =0, Monday=1
                     "002f" : [2, 0],     # Evo      (Quiet Mode)
+                    "0051" : [2, 0],     # Bootcode Version
                     "0054" : [2, 0],     # Hours since generator activation (hours of protection) (Evo LC only)
                     "0055" : [2, 0],     # Unknown
                     "0056" : [2, 0],     # Unknown Looks like some status bits (0000 to 0003, back to 0000 on stop)
@@ -237,6 +239,8 @@ class Evolution(GeneratorController):
                     inputfile = self.SimulationFile,
                     config = self.config)
             else:
+                #self.ModBus = ModbusEvo2(self.UpdateRegisterList,
+                #    config = self.config)
                 self.ModBus = ModbusProtocol(self.UpdateRegisterList,
                     config = self.config)
 
@@ -254,24 +258,24 @@ class Evolution(GeneratorController):
     def InitDevice(self):
 
         try:
-            self.ModBus.ProcessMasterSlaveTransaction("%04x" % SERIAL_NUM_REG, SERIAL_NUM_REG_LENGTH)
+            self.ModBus.ProcessTransaction("%04x" % SERIAL_NUM_REG, SERIAL_NUM_REG_LENGTH)
 
             self.DetectController()
 
             if self.EvolutionController:
-                self.ModBus.ProcessMasterSlaveTransaction("%04x" % ALARM_LOG_STARTING_REG, ALARM_LOG_STRIDE)
+                self.ModBus.ProcessTransaction("%04x" % ALARM_LOG_STARTING_REG, ALARM_LOG_STRIDE)
             else:
-                self.ModBus.ProcessMasterSlaveTransaction("%04x" % NEXUS_ALARM_LOG_STARTING_REG, NEXUS_ALARM_LOG_STRIDE)
+                self.ModBus.ProcessTransaction("%04x" % NEXUS_ALARM_LOG_STARTING_REG, NEXUS_ALARM_LOG_STRIDE)
 
-            self.ModBus.ProcessMasterSlaveTransaction("%04x" % START_LOG_STARTING_REG, START_LOG_STRIDE)
+            self.ModBus.ProcessTransaction("%04x" % START_LOG_STARTING_REG, START_LOG_STRIDE)
 
             if self.EvolutionController:
-                self.ModBus.ProcessMasterSlaveTransaction("%04x" % SERVICE_LOG_STARTING_REG, SERVICE_LOG_STRIDE)
+                self.ModBus.ProcessTransaction("%04x" % SERVICE_LOG_STARTING_REG, SERVICE_LOG_STRIDE)
 
             for PrimeReg, PrimeInfo in self.PrimeRegisters.items():
                 if self.IsStopping:
                     break
-                self.ModBus.ProcessMasterSlaveTransaction(PrimeReg, int(PrimeInfo[self.REGLEN] / 2))
+                self.ModBus.ProcessTransaction(PrimeReg, int(PrimeInfo[self.REGLEN] / 2))
 
             for Reg, Info in self.BaseRegisters.items():
                 if self.IsStopping:
@@ -279,7 +283,7 @@ class Evolution(GeneratorController):
                 #The divide by 2 is due to the diference in the values in our dict are bytes
                 # but modbus makes register request in word increments so the request needs to
                 # in word multiples, not bytes
-                self.ModBus.ProcessMasterSlaveTransaction(Reg, int(Info[self.REGLEN] / 2))
+                self.ModBus.ProcessTransaction(Reg, int(Info[self.REGLEN] / 2))
 
             # check for model specific info in read from conf file, if not there then add some defaults
             if not self.IsStopping:
@@ -856,7 +860,7 @@ class Evolution(GeneratorController):
 
         UnknownController = False
         # issue modbus read
-        self.ModBus.ProcessMasterSlaveTransaction("0000", 1)
+        self.ModBus.ProcessTransaction("0000", 1)
 
         # read register from cached list.
         Value = self.GetRegisterValueFromList("0000")
@@ -983,7 +987,7 @@ class Evolution(GeneratorController):
 
             if counter % 6 == 0:
                 for PrimeReg, PrimeInfo in self.PrimeRegisters.items():
-                    self.ModBus.ProcessMasterSlaveTransaction(PrimeReg, int(PrimeInfo[self.REGLEN] / 2))
+                    self.ModBus.ProcessTransaction(PrimeReg, int(PrimeInfo[self.REGLEN] / 2))
                     if self.IsStopping:
                         return
                 # check for unknown events (i.e. events we are not decoded) and send an email if they occur
@@ -994,14 +998,14 @@ class Evolution(GeneratorController):
             # The divide by 2 is due to the diference in the values in our dict are bytes
             # but modbus makes register request in word increments so the request needs to
             # in word multiples, not bytes
-            self.ModBus.ProcessMasterSlaveTransaction(Reg, int(Info[self.REGLEN] / 2))
+            self.ModBus.ProcessTransaction(Reg, int(Info[self.REGLEN] / 2))
             counter += 1
 
         # check that we have the serial number, if we do not then retry
         RegStr = "%04x" % SERIAL_NUM_REG
         Value = self.GetRegisterValueFromList(RegStr)       # Serial Number Register
         if len(Value) != 20:
-            self.ModBus.ProcessMasterSlaveTransaction("%04x" % SERIAL_NUM_REG, SERIAL_NUM_REG_LENGTH)
+            self.ModBus.ProcessTransaction("%04x" % SERIAL_NUM_REG, SERIAL_NUM_REG_LENGTH)
 
 
     #-------------Evolution:UpdateLogRegistersAsMaster--------------------------
@@ -1010,7 +1014,7 @@ class Evolution(GeneratorController):
         # Start / Stop Log
         for Register in self.LogRange(START_LOG_STARTING_REG , LOG_DEPTH,START_LOG_STRIDE):
             RegStr = "%04x" % Register
-            self.ModBus.ProcessMasterSlaveTransaction(RegStr, START_LOG_STRIDE)
+            self.ModBus.ProcessTransaction(RegStr, START_LOG_STRIDE)
             if self.IsStopping:
                 return
 
@@ -1018,20 +1022,20 @@ class Evolution(GeneratorController):
             # Service Log
             for Register in self.LogRange(SERVICE_LOG_STARTING_REG , LOG_DEPTH, SERVICE_LOG_STRIDE):
                 RegStr = "%04x" % Register
-                self.ModBus.ProcessMasterSlaveTransaction(RegStr, SERVICE_LOG_STRIDE)
+                self.ModBus.ProcessTransaction(RegStr, SERVICE_LOG_STRIDE)
                 if self.IsStopping:
                     return
             # Alarm Log
             for Register in self.LogRange(ALARM_LOG_STARTING_REG , LOG_DEPTH, ALARM_LOG_STRIDE):
                 RegStr = "%04x" % Register
-                self.ModBus.ProcessMasterSlaveTransaction(RegStr, ALARM_LOG_STRIDE)
+                self.ModBus.ProcessTransaction(RegStr, ALARM_LOG_STRIDE)
                 if self.IsStopping:
                     return
         else:
             # Alarm Log
             for Register in self.LogRange(NEXUS_ALARM_LOG_STARTING_REG , LOG_DEPTH, NEXUS_ALARM_LOG_STRIDE):
                 RegStr = "%04x" % Register
-                self.ModBus.ProcessMasterSlaveTransaction(RegStr, NEXUS_ALARM_LOG_STRIDE)
+                self.ModBus.ProcessTransaction(RegStr, NEXUS_ALARM_LOG_STRIDE)
                 if self.IsStopping:
                     return
 
@@ -1148,7 +1152,7 @@ class Evolution(GeneratorController):
                 Data.append(HighByte)           # Value for indexed register (High byte)
                 Data.append(LowByte)            # Value for indexed register (Low byte)
 
-                self.ModBus.ProcessMasterSlaveWriteTransaction("0004", len(Data) / 2, Data)
+                self.ModBus.ProcessWriteTransaction("0004", len(Data) / 2, Data)
 
                 LowByte = register & 0x00FF
                 HighByte = register >> 8
@@ -1156,7 +1160,7 @@ class Evolution(GeneratorController):
                 Data.append(HighByte)           # indexed register to be written (High byte)
                 Data.append(LowByte)            # indexed register to be written (Low byte)
 
-                self.ModBus.ProcessMasterSlaveWriteTransaction("0003", len(Data) / 2, Data)
+                self.ModBus.ProcessWriteTransaction("0003", len(Data) / 2, Data)
         except Exception as e1:
             self.LogErrorLine("Error in WriteIndexedRegister: " + str(e1))
 
@@ -1333,20 +1337,20 @@ class Evolution(GeneratorController):
                 else:
                     self.LogError("Validation Error: Invalid exercise frequency. " + CmdString)
                     return msgbody
-                self.ModBus.ProcessMasterSlaveWriteTransaction("002d", len(Data) / 2, Data)
+                self.ModBus.ProcessWriteTransaction("002d", len(Data) / 2, Data)
 
             Data = []
             Data.append(0x00)               #
             Data.append(Day)                # Day
 
-            self.ModBus.ProcessMasterSlaveWriteTransaction("002e", len(Data) / 2, Data)
+            self.ModBus.ProcessWriteTransaction("002e", len(Data) / 2, Data)
 
             #
             Data = []
             Data.append(Hour)                  #
             Data.append(Minute)                #
 
-            self.ModBus.ProcessMasterSlaveWriteTransaction("002c", len(Data) / 2, Data)
+            self.ModBus.ProcessWriteTransaction("002c", len(Data) / 2, Data)
 
         return  "Set Exercise Time Command sent"
 
@@ -1476,7 +1480,7 @@ class Evolution(GeneratorController):
         Data= []
         Data.append(0x00)
         Data.append(ModeValue)
-        self.ModBus.ProcessMasterSlaveWriteTransaction("002f", len(Data) / 2, Data)
+        self.ModBus.ProcessWriteTransaction("002f", len(Data) / 2, Data)
 
         return "Set Quiet Mode Command sent"
 
@@ -1503,7 +1507,7 @@ class Evolution(GeneratorController):
         # Note: Day of week should always be zero when setting time
         Data.append(0)                  #0010
         Data.append(d.year - 2000)
-        self.ModBus.ProcessMasterSlaveWriteTransaction("000e", len(Data) / 2, Data)
+        self.ModBus.ProcessWriteTransaction("000e", len(Data) / 2, Data)
 
     #------------ Evolution:GetRegisterLength ----------------------------------
     def GetRegisterLength(self, Register):
@@ -2506,7 +2510,7 @@ class Evolution(GeneratorController):
         Value = self.GetRegisterValueFromList(RegStr)       # Serial Number Register
         if len(Value) != 20:
             # retry reading serial number
-            self.ModBus.ProcessMasterSlaveTransaction("%04x" % SERIAL_NUM_REG, SERIAL_NUM_REG_LENGTH)
+            self.ModBus.ProcessTransaction("%04x" % SERIAL_NUM_REG, SERIAL_NUM_REG_LENGTH)
             return ""
 
         if Value[0] == 'f' and Value[1] == 'f':

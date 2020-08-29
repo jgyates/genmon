@@ -62,7 +62,10 @@ class ModbusBase(MySupport ):
             self.loglocation = self.config.ReadValue('loglocation', default = '/var/log/')
             self.SlowCPUOptimization = self.config.ReadValue('optimizeforslowercpu', return_type = bool, default = False)
             self.UseTCP = self.config.ReadValue('use_serial_tcp', return_type = bool, default = False)
-            self.Address = int(self.config.ReadValue('address', default = '9d'),16)         # modbus address
+            try:
+                self.Address = int(self.config.ReadValue('address', default = '9d'),16)         # modbus address
+            except:
+                self.Address = 0x9d
             self.AdditionalModbusTimeout = self.config.ReadValue('additional_modbus_timeout', return_type = float, default = 0.0)
             ResponseAddressStr = self.config.ReadValue('response_address', default = None)
             if ResponseAddressStr != None:
@@ -81,16 +84,16 @@ class ModbusBase(MySupport ):
         self.log = SetupLogger("mymodbus", self.loglocation + "mymodbus.log")
         self.console = SetupLogger("mymodbus_console", log_file = "", stream = True)
 
-    #-------------ModbusBase::ProcessMasterSlaveWriteTransaction----------------
-    def ProcessMasterSlaveWriteTransaction(self, Register, Length, Data):
+    #-------------ModbusBase::ProcessWriteTransaction---------------------------
+    def ProcessWriteTransaction(self, Register, Length, Data):
         return
 
-    #-------------ModbusBase::ProcessMasterSlaveTransaction--------------------
-    def ProcessMasterSlaveTransaction(self, Register, Length, skipupdate = False, ReturnString = False):
+    #-------------ModbusBase::ProcessTransaction--------------------------------
+    def ProcessTransaction(self, Register, Length, skipupdate = False, ReturnString = False):
         return
 
-    #-------------ModbusProtocol::ProcessMasterSlaveFileReadTransaction---------
-    def ProcessMasterSlaveFileReadTransaction(self, Register, Length, skipupdate = False, file_num = 1, ReturnString = False):
+    #-------------ModbusProtocol::ProcessFileReadTransaction--------------------
+    def ProcessFileReadTransaction(self, Register, Length, skipupdate = False, file_num = 1, ReturnString = False):
         return
     # ---------- ModbusBase::GetCommStats---------------------------------------
     def GetCommStats(self):

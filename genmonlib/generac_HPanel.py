@@ -913,7 +913,7 @@ class HPanel(GeneratorController):
             if self.ControllerDetected:
                 return True
 
-            ControllerString = self.HexStringToString(self.ModBus.ProcessMasterSlaveTransaction(RegisterStringEnum.CONTROLLER_NAME[REGISTER],
+            ControllerString = self.HexStringToString(self.ModBus.ProcessTransaction(RegisterStringEnum.CONTROLLER_NAME[REGISTER],
                 RegisterStringEnum.CONTROLLER_NAME[LENGTH] / 2))
 
             ControllerString = str(ControllerString)
@@ -1119,17 +1119,17 @@ class HPanel(GeneratorController):
 
         try:
             # Read the nameplate dataGet Serial Number
-            self.ModBus.ProcessMasterSlaveFileReadTransaction(NAMEPLATE_DATA_FILE_RECORD, NAMEPLATE_DATA_LENGTH / 2 )
+            self.ModBus.ProcessFileReadTransaction(NAMEPLATE_DATA_FILE_RECORD, NAMEPLATE_DATA_LENGTH / 2 )
             # Read Misc Engine data
-            self.ModBus.ProcessMasterSlaveFileReadTransaction(MISC_GEN_FILE_RECORD, MISC_GEN_LENGTH / 2 )
+            self.ModBus.ProcessFileReadTransaction(MISC_GEN_FILE_RECORD, MISC_GEN_LENGTH / 2 )
             # Read Engine Data
-            self.ModBus.ProcessMasterSlaveFileReadTransaction(ENGINE_DATA_FILE_RECORD, ENGINE_DATA_FILE_RECORD_LENGTH / 2 )
+            self.ModBus.ProcessFileReadTransaction(ENGINE_DATA_FILE_RECORD, ENGINE_DATA_FILE_RECORD_LENGTH / 2 )
             # Read Govonor Data
-            self.ModBus.ProcessMasterSlaveFileReadTransaction(GOV_DATA_FILE_RECORD, GOV_DATA_FILE_RECORD_LENGTH / 2 )
+            self.ModBus.ProcessFileReadTransaction(GOV_DATA_FILE_RECORD, GOV_DATA_FILE_RECORD_LENGTH / 2 )
             # Read Secondary Govonor Data
-            self.ModBus.ProcessMasterSlaveFileReadTransaction(GOV_DATA_SEC_FILE_RECORD, GOV_DATA_SEC_FILE_RECORD_LENGTH / 2 )
+            self.ModBus.ProcessFileReadTransaction(GOV_DATA_SEC_FILE_RECORD, GOV_DATA_SEC_FILE_RECORD_LENGTH / 2 )
             # Read Regulator Data
-            self.ModBus.ProcessMasterSlaveFileReadTransaction(REGULATOR_FILE_RECORD, REGULATOR_FILE_RECORD_LENGTH / 2 )
+            self.ModBus.ProcessFileReadTransaction(REGULATOR_FILE_RECORD, REGULATOR_FILE_RECORD_LENGTH / 2 )
 
             self.GetGeneratorLogFileData()
         except Exception as e1:
@@ -1141,11 +1141,11 @@ class HPanel(GeneratorController):
         try:
             for RegValue in range(EVENT_LOG_START + EVENT_LOG_ENTRIES -1 , EVENT_LOG_START -1, -1):
                 Register = "%04x" % RegValue
-                self.ModBus.ProcessMasterSlaveFileReadTransaction(Register, EVENT_LOG_LENGTH /2)
+                self.ModBus.ProcessFileReadTransaction(Register, EVENT_LOG_LENGTH /2)
 
             for RegValue in range(ALARM_LOG_START + ALARM_LOG_ENTRIES -1, ALARM_LOG_START -1, -1):
                 Register = "%04x" % RegValue
-                self.ModBus.ProcessMasterSlaveFileReadTransaction(Register, ALARM_LOG_LENGTH /2)
+                self.ModBus.ProcessFileReadTransaction(Register, ALARM_LOG_LENGTH /2)
 
         except Exception as e1:
             self.LogErrorLine("Error in GetGeneratorLogFileData: " + str(e1))
@@ -1158,7 +1158,7 @@ class HPanel(GeneratorController):
                 try:
                     if self.IsStopping:
                         return
-                    self.ModBus.ProcessMasterSlaveTransaction(RegisterList[REGISTER], RegisterList[LENGTH] / 2)
+                    self.ModBus.ProcessTransaction(RegisterList[REGISTER], RegisterList[LENGTH] / 2)
                 except Exception as e1:
                     self.LogErrorLine("Error in GetGeneratorStrings: " + str(e1))
 
@@ -1177,7 +1177,7 @@ class HPanel(GeneratorController):
                 try:
                     if self.IsStopping:
                         return
-                    self.ModBus.ProcessMasterSlaveTransaction(RegisterList[REGISTER], RegisterList[LENGTH] / 2)
+                    self.ModBus.ProcessTransaction(RegisterList[REGISTER], RegisterList[LENGTH] / 2)
                 except Exception as e1:
                     self.LogErrorLine("Error in MasterEmulation: " + str(e1))
 
@@ -2063,7 +2063,7 @@ class HPanel(GeneratorController):
             Data= []
             Data.append(d.hour)             #GEN_TIME_HR_MIN
             Data.append(d.minute)
-            self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.GEN_TIME_HR_MIN[REGISTER], len(Data) / 2, Data)
+            self.ModBus.ProcessWriteTransaction(self.Reg.GEN_TIME_HR_MIN[REGISTER], len(Data) / 2, Data)
 
             DayOfWeek = d.weekday()     # returns Monday is 0 and Sunday is 6
             # expects Sunday = 1, Saturday = 7
@@ -2074,18 +2074,18 @@ class HPanel(GeneratorController):
             Data= []
             Data.append(d.second)           #GEN_TIME_SEC_DYWK
             Data.append(DayOfWeek)                  #Day of Week is always zero
-            self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.GEN_TIME_SEC_DYWK[REGISTER], len(Data) / 2, Data)
+            self.ModBus.ProcessWriteTransaction(self.Reg.GEN_TIME_SEC_DYWK[REGISTER], len(Data) / 2, Data)
 
             Data= []
             Data.append(d.month)            #GEN_TIME_MONTH_DAY
             Data.append(d.day)              # low byte is day of month
-            self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.GEN_TIME_MONTH_DAY[REGISTER], len(Data) / 2, Data)
+            self.ModBus.ProcessWriteTransaction(self.Reg.GEN_TIME_MONTH_DAY[REGISTER], len(Data) / 2, Data)
 
             Data= []
             # Note: Day of week should always be zero when setting time
             Data.append(d.year - 2000)      # GEN_TIME_YR
             Data.append(0)                  #
-            self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.GEN_TIME_YR[REGISTER], len(Data) / 2, Data)
+            self.ModBus.ProcessWriteTransaction(self.Reg.GEN_TIME_YR[REGISTER], len(Data) / 2, Data)
 
         except Exception as e1:
             self.LogErrorLine("Error in SetGeneratorTimeDate: " + str(e1))
@@ -2159,19 +2159,19 @@ class HPanel(GeneratorController):
                 Data = []
                 Data.append(0)
                 Data.append(1)
-                self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.QUIETTEST_STATUS[REGISTER], len(Data) / 2, Data)
+                self.ModBus.ProcessWriteTransaction(self.Reg.QUIETTEST_STATUS[REGISTER], len(Data) / 2, Data)
                 return "Remote command sent successfully (quiettest)"
             elif Command == "quietteststop":
                 Data = []
                 Data.append(0)
                 Data.append(0)
-                self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.QUIETTEST_STATUS[REGISTER], len(Data) / 2, Data)
+                self.ModBus.ProcessWriteTransaction(self.Reg.QUIETTEST_STATUS[REGISTER], len(Data) / 2, Data)
                 return "Remote command sent successfully (quietteststop)"
             elif Command == "ackalarm":
                 Data = []
                 Data.append(0)
                 Data.append(1)
-                self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.ALARM_ACK[REGISTER], len(Data) / 2, Data)
+                self.ModBus.ProcessWriteTransaction(self.Reg.ALARM_ACK[REGISTER], len(Data) / 2, Data)
                 return "Remote command sent successfully (ackalarm)"
 
                 '''
@@ -2180,19 +2180,19 @@ class HPanel(GeneratorController):
                     Data = []
                     Data.append(0)
                     Data.append(0)
-                    self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.SWITCH_STATE[REGISTER], len(Data) / 2, Data)
+                    self.ModBus.ProcessWriteTransaction(self.Reg.SWITCH_STATE[REGISTER], len(Data) / 2, Data)
                     return "Remote command sent successfully (off)"
                 elif Command == "auto":
                     Data = []
                     Data.append(1)
                     Data.append(0)
-                    self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.SWITCH_STATE[REGISTER], len(Data) / 2, Data)
+                    self.ModBus.ProcessWriteTransaction(self.Reg.SWITCH_STATE[REGISTER], len(Data) / 2, Data)
                     return "Remote command sent successfully (auto)"
                 elif Command == "manual":
                     Data = []
                     Data.append(0)
                     Data.append(1)
-                    self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.SWITCH_STATE[REGISTER], len(Data) / 2, Data)
+                    self.ModBus.ProcessWriteTransaction(self.Reg.SWITCH_STATE[REGISTER], len(Data) / 2, Data)
                     return "Remote command sent successfully (manual)"
                 '''
             else:
@@ -2206,7 +2206,7 @@ class HPanel(GeneratorController):
             Data.append(Value3 & 0x00FF)        # value written (Low byte)
 
             ## Write 3 regs at once
-            self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.START_BITS[REGISTER], len(Data) / 2, Data)
+            self.ModBus.ProcessWriteTransaction(self.Reg.START_BITS[REGISTER], len(Data) / 2, Data)
 
             return "Remote command sent successfully"
         except Exception as e1:

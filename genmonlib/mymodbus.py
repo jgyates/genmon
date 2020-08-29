@@ -282,8 +282,9 @@ class ModbusProtocol(ModbusBase):
         discard = self.Slave.DiscardByte()
         self.LogError("Discarding byte slave: %02x" % (discard))
 
-    #-------------ModbusProtocol::ProcessMasterSlaveWriteTransaction------------
-    def ProcessMasterSlaveWriteTransaction(self, Register, Length, Data):
+    #-------------ModbusProtocol::PWT-------------------------------------------
+    # called from derived calls to get to overridded function ProcessWriteTransaction
+    def PWT(self, Register, Length, Data):
 
         try:
             MasterPacket = []
@@ -295,11 +296,16 @@ class ModbusProtocol(ModbusBase):
 
             return self.ProcessOneTransaction(MasterPacket, skipupdate = True)   # True to skip writing results to cached reg values
         except Exception as e1:
-            self.LogErrorLine("Error in ProcessMasterSlaveWriteTransaction: " + str(e1))
+            self.LogErrorLine("Error in ProcessWriteTransaction: " + str(e1))
             return False
 
-    #-------------ModbusProtocol::ProcessMasterSlaveTransaction-----------------
-    def ProcessMasterSlaveTransaction(self, Register, Length, skipupdate = False, ReturnString = False):
+    #-------------ModbusProtocol::ProcessWriteTransaction-----------------------
+    def ProcessWriteTransaction(self, Register, Length, Data):
+        return self.PWT(Register, Length, Data)
+
+    #-------------ModbusProtocol::PT--------------------------------------------
+    # called from derived calls to get to overridded function ProcessTransaction
+    def PT(self, Register, Length, skipupdate = False, ReturnString = False):
 
         MasterPacket = []
 
@@ -312,11 +318,15 @@ class ModbusProtocol(ModbusBase):
             return self.ProcessOneTransaction(MasterPacket, skipupdate = skipupdate, ReturnString = ReturnString)     # don't log
 
         except Exception as e1:
-            self.LogErrorLine("Error in ProcessMasterSlaveTransaction: " + str(e1))
+            self.LogErrorLine("Error in ProcessTransaction: " + str(e1))
             return ""
 
-    #-------------ModbusProtocol::ProcessMasterSlaveFileReadTransaction---------
-    def ProcessMasterSlaveFileReadTransaction(self, Register, Length, skipupdate = False, file_num = 1, ReturnString = False):
+    #-------------ModbusProtocol::ProcessTransaction----------------------------
+    def ProcessTransaction(self, Register, Length, skipupdate = False, ReturnString = False):
+        return self.ProcessTransaction(Register, Length, skipupdate, ReturnString)
+
+    #-------------ModbusProtocol::ProcessFileReadTransaction--------------------
+    def ProcessFileReadTransaction(self, Register, Length, skipupdate = False, file_num = 1, ReturnString = False):
 
         MasterPacket = []
 
@@ -329,7 +339,7 @@ class ModbusProtocol(ModbusBase):
             return self.ProcessOneTransaction(MasterPacket, skipupdate = skipupdate, ReturnString = ReturnString)     # don't log
 
         except Exception as e1:
-            self.LogErrorLine("Error in ProcessMasterSlaveFileReadTransaction: " + str(e1))
+            self.LogErrorLine("Error in ProcessFileReadTransaction: " + str(e1))
             return ""
 
     #------------ModbusProtocol::ProcessOneTransaction--------------------------
@@ -384,8 +394,8 @@ class ModbusProtocol(ModbusBase):
                 # update our cached register dict
                 ReturnRegValue = self.UpdateRegistersFromPacket(MasterPacket, SlavePacket, SkipUpdate = skipupdate, ReturnString = ReturnString)
                 if ReturnRegValue == "Error":
-                    self.LogError("Master: " + str(MasterPacket))
-                    self.LogError("Slave: " + str(SlavePacket))
+                    self.LogHexList(MasterPacket, prefix = "Master")
+                    self.LogHexList(SlavePacket, prefix = "Slave")
                     self.ComValidationError += 1
                     self.Flush()
                     ReturnRegValue = ""
@@ -511,7 +521,7 @@ class ModbusProtocol(ModbusBase):
             self.TxPacketCount += 1
         except Exception as e1:
             self.LogErrorLine("Error in SendPacketAsMaster: " + str(e1))
-            self.LogError("Packet: " + str(Packet))
+            self.LogHexList(Packet, prefix = "Packet")
 
     # ---------- ModbusProtocol::UpdateRegistersFromPacket----------------------
     #    Update our internal register list based on the request/response packet
@@ -612,7 +622,7 @@ class ModbusProtocol(ModbusBase):
             return True
         except Exception as e1:
             self.LogErrorLine("Error in CheckCRC: " + str(e1))
-            self.LogError("Packet: " + str(Packet))
+            self.LogHexList(Packet, prefix = "Packet")
             return False
 
      #------------ModbusProtocol::GetCRC----------------------------------------
@@ -630,7 +640,7 @@ class ModbusProtocol(ModbusBase):
             return results
         except Exception as e1:
             self.LogErrorLine("Error in GetCRC: " + str(e1))
-            self.LogError("Packet: " + str(Packet))
+            self.LogHexList(Packet, prefix = "Packet")
             return 0
     # ---------- ModbusProtocol::GetCommStats-----------------------------------
     def GetCommStats(self):

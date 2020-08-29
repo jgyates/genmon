@@ -77,12 +77,12 @@ class ModbusFile(ModbusBase):
                 self.LogInfo("Error parsing input data")
             time.sleep(5)
 
-    #-------------ModbusBase::ProcessMasterSlaveWriteTransaction----------------
-    def ProcessMasterSlaveWriteTransaction(self, Register, Length, Data):
+    #-------------ModbusBase::ProcessWriteTransaction---------------------------
+    def ProcessWriteTransaction(self, Register, Length, Data):
         return
 
-    #-------------ModbusBase::ProcessMasterSlaveTransaction--------------------
-    def ProcessMasterSlaveTransaction(self, Register, Length, skipupdate = False, ReturnString = False):
+    #-------------ModbusBase::ProcessTransaction--------------------------------
+    def ProcessTransaction(self, Register, Length, skipupdate = False, ReturnString = False):
 
         # TODO need more validation
 
@@ -113,8 +113,8 @@ class ModbusFile(ModbusBase):
 
         return RegValue
 
-    #-------------ModbusProtocol::ProcessMasterSlaveFileReadTransaction---------
-    def ProcessMasterSlaveFileReadTransaction(self, Register, Length, skipupdate = False, file_num = 1, ReturnString = False):
+    #-------------ModbusProtocol::ProcessFileReadTransaction---------
+    def ProcessFileReadTransaction(self, Register, Length, skipupdate = False, file_num = 1, ReturnString = False):
 
         RegValue = self.FileData.get(Register, "")
 

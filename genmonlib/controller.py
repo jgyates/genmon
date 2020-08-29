@@ -241,7 +241,7 @@ class GeneratorController(MySupport):
                     if self.WaitForExit("DebugThread", 0.25):  #
                         return
                     Register = "%04x" % Reg
-                    NewValue = self.ModBus.ProcessMasterSlaveTransaction(Register, 1, skipupdate = True)
+                    NewValue = self.ModBus.ProcessTransaction(Register, 1, skipupdate = True)
                     if not len(NewValue):
                         continue
                     OldValue = RegistersUnderTest.get(Register, "")
@@ -641,7 +641,7 @@ class GeneratorController(MySupport):
 
             Register = CmdList[1].strip()
 
-            RegValue = self.ModBus.ProcessMasterSlaveTransaction( Register, 1, skipupdate = True)
+            RegValue = self.ModBus.ProcessTransaction( Register, 1, skipupdate = True)
 
             if RegValue == "":
                 self.LogError("Validation Error: Register  not known (ReadRegValue):" + Register)

@@ -109,6 +109,17 @@ class MyCommon(object):
         url = '/'.join(part_list)
         return url
 
+    #-------------MyCommon::LogHexList------------------------------------------
+    def LogHexList(self, listname, prefix = None):
+
+        try:
+            if prefix != None:
+                self.LogError(prefix + " = [" + ",".join("0x{:02x}".format(num) for num in listname) + "]")
+            else:
+                self.LogError("[" + ",".join("0x{:02x}".format(num) for num in listname) + "]")
+        except Exception as e1:
+            self.LogErrorLine("Error in LogHexList: " + str(e1))
+
     #---------------------------------------------------------------------------
     def LogInfo(self, message, LogLine = False):
 
