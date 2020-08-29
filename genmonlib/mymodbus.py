@@ -323,7 +323,7 @@ class ModbusProtocol(ModbusBase):
 
     #-------------ModbusProtocol::ProcessTransaction----------------------------
     def ProcessTransaction(self, Register, Length, skipupdate = False, ReturnString = False):
-        return self.ProcessTransaction(Register, Length, skipupdate, ReturnString)
+        return self.PT(Register, Length, skipupdate, ReturnString)
 
     #-------------ModbusProtocol::ProcessFileReadTransaction--------------------
     def ProcessFileReadTransaction(self, Register, Length, skipupdate = False, file_num = 1, ReturnString = False):
