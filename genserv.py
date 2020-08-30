@@ -160,12 +160,7 @@ def do_admin_login():
         return render_template('login.html')
     else:
         return render_template('login.html')
-#-------------------------------------------------------------------------------
-def LoginActive():
 
-    if LoginActive():
-        return True
-    return False
 #-------------------------------------------------------------------------------
 def doLdapLogin(username, password):
     if LdapServer == None or LdapServer == "":
@@ -384,6 +379,12 @@ def ProcessCommand(command):
         LogErrorLine("Error in Process Command: " + command + ": " + str(e1))
         return render_template('command_template.html', command = command)
 
+#-------------------------------------------------------------------------------
+def LoginActive():
+
+    if HTTPAuthUser != None and HTTPAuthPass != None or LdapServer != None:
+        return True
+    return False
 #-------------------------------------------------------------------------------
 def SendTestEmail(query_string):
     try:
