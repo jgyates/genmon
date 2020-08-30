@@ -86,7 +86,7 @@ CachedRegisterDescriptions = {}
 def logout():
     try:
         # remove the session data
-        if HTTPAuthUser != None and HTTPAuthPass != None or LdapServer != None:
+        if LoginActive():
             session['logged_in'] = False
             session['write_access'] = False
         return root()
@@ -107,7 +107,7 @@ def add_header(r):
 @app.route('/', methods=['GET'])
 def root():
 
-    if HTTPAuthUser != None and HTTPAuthPass != None or LdapServer != None:
+    if LoginActive():
         if not session.get('logged_in'):
             return render_template('login.html')
         else:
@@ -119,7 +119,7 @@ def root():
 @app.route('/low', methods=['GET'])
 def lowbandwidth():
 
-    if HTTPAuthUser != None and HTTPAuthPass != None or LdapServer != None:
+    if LoginActive():
         if not session.get('logged_in'):
             return render_template('login.html')
         else:
@@ -131,7 +131,7 @@ def lowbandwidth():
 @app.route('/internal', methods=['GET'])
 def display_internal():
 
-    if HTTPAuthUser != None and HTTPAuthPass != None or LdapServer != None:
+    if LoginActive():
         if not session.get('logged_in'):
             return render_template('login.html')
         else:
@@ -160,7 +160,12 @@ def do_admin_login():
         return render_template('login.html')
     else:
         return render_template('login.html')
+#-------------------------------------------------------------------------------
+def LoginActive():
 
+    if LoginActive():
+        return True
+    return False
 #-------------------------------------------------------------------------------
 def doLdapLogin(username, password):
     if LdapServer == None or LdapServer == "":
@@ -291,6 +296,7 @@ def ProcessCommand(command):
                         if not StartInfo["write_access"]:
                             StartInfo["pages"]["settings"] = False
                             StartInfo["pages"]["notifications"] = False
+                        StartInfo["LoginActive"] = LoginActive()
                         data = json.dumps(StartInfo, sort_keys=False)
                     except Exception as e1:
                         LogErrorLine("Error in JSON parse / decode: " + str(e1))
