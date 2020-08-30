@@ -150,6 +150,7 @@ min_outage_duration = Outages less than this time in seconds will not be logged.
 0237=Set Output Voltage (EvoLC)
 0239=Startup Delay (EvoLC)
 0208=Calibrate Volts
+0213=Wifi Module Signal Strength RSSI (Evo2)
 020a=Param Group (EvoLC, NexusLC)
 020b=Voltage Code (EvoLC, NexusLC)
 020c=Fuel Type (EvoLC, NexusLC)
