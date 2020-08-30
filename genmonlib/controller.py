@@ -1515,7 +1515,7 @@ class GeneratorController(MySupport):
                         return "Invalid edit maintenance log entry"
 
                     if not len(MaintLog):
-                        self.LogError("Error in  DeleteMaintLogRow: maint log is empty")
+                        self.LogError("Error in  EditMaintLogRow: maint log is empty")
                         return "Error"
                     MaintLog.remove(int(index))
                     # save log
