@@ -232,7 +232,8 @@ def ProcessCommand(command):
             "start_info_json", "gui_status_json", "power_log_json", "power_log_clear",
             "getbase", "getsitename","setexercise", "setquiet", "setremote",
             "settime", "sendregisters", "sendlogfiles", "getdebug", "status_num_json",
-            "get_maint_log_json", "add_maint_log", "clear_maint_log","support_data_json" ]:
+            "get_maint_log_json", "add_maint_log", "clear_maint_log", "delete_row_maint_log",
+            "edit_row_maint_log", "support_data_json" ]:
             finalcommand = "generator: " + command
 
             try:
@@ -263,7 +264,16 @@ def ProcessCommand(command):
                     # input for add_maint_log for international users
                     input = request.args['add_maint_log']
                     finalcommand += "=" + input
-
+                if command == "delete_row_maint_log":
+                    # use direct method instead of request.args.get due to unicoode
+                    # input for add_maint_log for international users
+                    input = request.args['delete_row_maint_log']
+                    finalcommand += "=" + input
+                if command == "edit_row_maint_log":
+                    # use direct method instead of request.args.get due to unicoode
+                    # input for add_maint_log for international users
+                    input = request.args['edit_row_maint_log']
+                    finalcommand += "=" + input
                 data = MyClientInterface.ProcessMonitorCommand(finalcommand)
 
             except Exception as e1:

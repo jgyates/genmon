@@ -1458,6 +1458,16 @@ class GeneratorController(MySupport):
 
         return "[]"
 
+    #----------  GeneratorController::UpdateMaintLog----------------------------
+    def SaveMaintLog(self, NewLog):
+        try:
+            self.MaintLogList = MaintLog
+            with open(self.MaintLog, 'w') as outfile:
+                json.dump(self.MaintLogList, outfile, sort_keys = True, indent = 4) #, ensure_ascii = False)
+
+        except Exception as e1:
+            self.LogErrorLine("Error in  DeleteMaintLogRow: " + str(e1))
+            return "Error in  DeleteMaintLogRow: " + str(e1)
     #----------  GeneratorController::ClearMaintLog-------------------------------
     def ClearMaintLog(self):
         try:
@@ -1475,6 +1485,72 @@ class GeneratorController(MySupport):
             self.LogErrorLine("Error in  ClearMaintLog: " + str(e1))
             return "Error in  ClearMaintLog: " + str(e1)
 
+    #----------  GeneratorController::EditMaintLogRow---------------------------
+    def EditMaintLogRow(self, InputString):
+
+        # { index : {maint log entry}}
+        self.LogError("Edit: " + command)
+        ValidInput = False
+        EntryString = InputString
+        if EntryString == None or not len(EntryString):
+            return "Invalid input for Edit Maintenance Log entry."
+
+        EntryString = EntryString.strip()
+        if EntryString.startswith("edit_row_maint_log"):
+            EntryString = EntryString[len('edit_row_maint_log'):]
+            EntryString = EntryString.strip()
+            if EntryString.strip().startswith("="):
+                EntryString = EntryString[len("="):]
+                EntryString = EntryString.strip()
+                ValidInput = True
+
+        if ValidInput:
+            try:
+                EntryDict = json.loads(EntryString)
+                MaintLog = self.GetMaintLog()
+                for index, Entry in EntryDict.items():
+                    # validate object
+                    if not self.ValidateMaintLogEntry(Entry):
+                        self.LogError("Error in EditMaintLogRow: failed validate entry in update")
+                        return "Invalid edit maintenance log entry"
+
+                    if not len(MaintLog):
+                        self.LogError("Error in  DeleteMaintLogRow: maint log is empty")
+                        return "Error"
+                    MaintLog.remove(int(index))
+                    # save log
+                    MaintLog.insert(int(index), Entry)
+                self.SaveMaintLog(MaintLog)
+
+            except Exception as e1:
+                self.LogErrorLine("Error in EditMaintLogRow: " + str(e1))
+                return "Invalid input for Edit Maintenance Log entry (2)."
+        else:
+            self.LogError("Error in EditMaintLogRow: invalid input: " + str(InputString))
+            return "Invalid input for Edit Maintenance Log entry (3)."
+        return "OK"
+
+    #----------  GeneratorController::DeleteMaintLogRow-------------------------
+    def DeleteMaintLogRow(self, command):
+
+        try:
+            self.LogError("Delete: " + command)
+            CmdList = command.split("=")
+            if len(CmdList) == 2:
+                index = int(CmdList[1])
+                MaintLog = self.GetMaintLog()
+                if not len(MaintLog):
+                    self.LogError("Error in  DeleteMaintLogRow: maint log is empty")
+                    return "Error"
+                MaintLog.remove(index)
+                # save log
+                self.SaveMaintLog(MaintLog)
+            else:
+                self.LogError("Error in  DeleteMaintLogRow: invalid input: " + str(CmdList))
+                return "Error"
+        except Exception as e1:
+            self.LogErrorLine("Error in  DeleteMaintLogRow: " + str(e1))
+            return "Error in  DeleteMaintLogRow: " + str(e1)
     #----------  GeneratorController::SetExternalTemperatureData----------------
     def SetExternalTemperatureData(self, command):
 

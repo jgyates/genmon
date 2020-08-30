@@ -508,6 +508,8 @@ class Monitor(MySupport):
             "gui_status_json"   : [self.GetStatusForGUI, (), True],
             "get_maint_log_json": [self.Controller.GetMaintLog, (), True],
             "add_maint_log"     : [self.Controller.AddEntryToMaintLog, (command,), True],    # Do not do command.lower() since this input is JSON
+            "delete_row_maint_log" : [self.Controller.DeleteMaintLogRow, (command.lower(),), True],
+            "edit_row_maint_log" : [self.Controller.EditMaintLogRow, (command,), True],    # Do not do command.lower() since this input is JSON
             "clear_maint_log"   : [self.Controller.ClearMaintLog, (), True],
             "getsitename"       : [self.GetSiteName, (), True],
             "getbase"           : [self.Controller.GetBaseStatus, (), True],    #  (UI changes color based on exercise, running , ready status)
