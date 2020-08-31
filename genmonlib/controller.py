@@ -1440,8 +1440,8 @@ class GeneratorController(MySupport):
             return False
 
         return True
-    #----------  GeneratorController::GetMaintLog-------------------------------
-    def GetMaintLog(self):
+    #----------  GeneratorController::GetMaintLogJSON---------------------------
+    def GetMaintLogJSON(self):
 
         try:
             if len(self.MaintLogList):
@@ -1452,22 +1452,40 @@ class GeneratorController(MySupport):
                         self.MaintLogList = json.load(infile)
                         return json.dumps(self.MaintLogList)
                 except Exception as e1:
-                    self.LogErrorLine("Error in GetMaintLog: " + str(e1))
+                    self.LogErrorLine("Error in GetMaintLogJSON: " + str(e1))
         except Exception as e1:
-            self.LogErrorLine("Error in GetMaintLog (2): " + str(e1))
+            self.LogErrorLine("Error in GetMaintLogJSON (2): " + str(e1))
 
         return "[]"
+
+    #----------  GeneratorController::GetMaintLogDict---------------------------
+    def GetMaintLogDict(self):
+        try:
+            if len(self.MaintLogList):
+                return self.MaintLogList
+            if os.path.isfile(self.MaintLog):
+                try:
+                    with open(self.MaintLog) as infile:
+                        self.MaintLogList = json.load(infile)
+                        return self.MaintLogList
+                except Exception as e1:
+                    self.LogErrorLine("Error in GetMaintLogDict: " + str(e1))
+                    return []
+        except Exception as e1:
+            self.LogErrorLine("Error in GetMaintLogDict (2): " + str(e1))
+
+        return []
 
     #----------  GeneratorController::UpdateMaintLog----------------------------
     def SaveMaintLog(self, NewLog):
         try:
-            self.MaintLogList = MaintLog
+            self.MaintLogList = NewLog
             with open(self.MaintLog, 'w') as outfile:
                 json.dump(self.MaintLogList, outfile, sort_keys = True, indent = 4) #, ensure_ascii = False)
 
         except Exception as e1:
-            self.LogErrorLine("Error in  DeleteMaintLogRow: " + str(e1))
-            return "Error in  DeleteMaintLogRow: " + str(e1)
+            self.LogErrorLine("Error in SaveMaintLog: " + str(e1))
+            return "Error in SaveMaintLog: " + str(e1)
     #----------  GeneratorController::ClearMaintLog-------------------------------
     def ClearMaintLog(self):
         try:
@@ -1484,6 +1502,7 @@ class GeneratorController(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in  ClearMaintLog: " + str(e1))
             return "Error in  ClearMaintLog: " + str(e1)
+        return "OK"
 
     #----------  GeneratorController::EditMaintLogRow---------------------------
     def EditMaintLogRow(self, InputString):
@@ -1507,7 +1526,7 @@ class GeneratorController(MySupport):
         if ValidInput:
             try:
                 EntryDict = json.loads(EntryString)
-                MaintLog = self.GetMaintLog()
+                MaintLog = self.GetMaintLogDict()
                 for index, Entry in EntryDict.items():
                     # validate object
                     if not self.ValidateMaintLogEntry(Entry):
@@ -1517,7 +1536,7 @@ class GeneratorController(MySupport):
                     if not len(MaintLog):
                         self.LogError("Error in  EditMaintLogRow: maint log is empty")
                         return "Error"
-                    MaintLog.remove(int(index))
+                    del MaintLog[int(index)]
                     # save log
                     MaintLog.insert(int(index), Entry)
                 self.SaveMaintLog(MaintLog)
@@ -1534,23 +1553,24 @@ class GeneratorController(MySupport):
     def DeleteMaintLogRow(self, command):
 
         try:
-            self.LogError("Delete: " + command)
             CmdList = command.split("=")
             if len(CmdList) == 2:
                 index = int(CmdList[1])
-                MaintLog = self.GetMaintLog()
+                MaintLog = self.GetMaintLogDict()
                 if not len(MaintLog):
                     self.LogError("Error in  DeleteMaintLogRow: maint log is empty")
                     return "Error"
-                MaintLog.remove(index)
+
+                del MaintLog[int(index)]
                 # save log
                 self.SaveMaintLog(MaintLog)
             else:
                 self.LogError("Error in  DeleteMaintLogRow: invalid input: " + str(CmdList))
                 return "Error"
         except Exception as e1:
-            self.LogErrorLine("Error in  DeleteMaintLogRow: " + str(e1))
-            return "Error in  DeleteMaintLogRow: " + str(e1)
+            self.LogErrorLine("Error in DeleteMaintLogRow: " + str(e1))
+            return "Error in DeleteMaintLogRow: " + str(e1)
+        return "OK"
     #----------  GeneratorController::SetExternalTemperatureData----------------
     def SetExternalTemperatureData(self, command):
 

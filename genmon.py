@@ -506,7 +506,7 @@ class Monitor(MySupport):
             "outage_json"       : [self.Controller.DisplayOutage, (True,), True],
             "outage_num_json"   : [self.Controller.DisplayOutage, (True,True), True],
             "gui_status_json"   : [self.GetStatusForGUI, (), True],
-            "get_maint_log_json": [self.Controller.GetMaintLog, (), True],
+            "get_maint_log_json": [self.Controller.GetMaintLogJSON, (), True],
             "add_maint_log"     : [self.Controller.AddEntryToMaintLog, (command,), True],    # Do not do command.lower() since this input is JSON
             "delete_row_maint_log" : [self.Controller.DeleteMaintLogRow, (command.lower(),), True],
             "edit_row_maint_log" : [self.Controller.EditMaintLogRow, (command,), True],    # Do not do command.lower() since this input is JSON
