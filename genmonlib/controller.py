@@ -1508,7 +1508,7 @@ class GeneratorController(MySupport):
     def EditMaintLogRow(self, InputString):
 
         # { index : {maint log entry}}
-        self.LogError("Edit: " + command)
+        self.LogError("Edit: " + InputString)
         ValidInput = False
         EntryString = InputString
         if EntryString == None or not len(EntryString):
