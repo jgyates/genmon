@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
 
+## V1.14.28 - 2020-31-09
+- Added logout button in top right if using username/password to login to the web interface. Thanks @buschauer
+- Made the service journal editable. Thanks @buschauer
+
 ## V1.14.27 - 2020-29-09
 - Design update in preperation for future updates
 

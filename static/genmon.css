@@ -142,7 +142,7 @@ li a:hover:not(.active) {
 
 /* Icons */
 
-.alert_large, .alert_small, .log, .maintenance, .monitor, .notifications, .outage, .print10, .print24, .print60, .registers, .remove_bin, .settings, .status, .temp1, .temp2, .temp3, .temp4, .title-bg, .validation_ok, .validation_text, .wifi1, .wifi2, .wifi3, .wifi4, .fuel, .about, .addon, .journal{
+.alert_large, .alert_small, .log, .maintenance, .monitor, .notifications, .outage, .print10, .print24, .print60, .registers, .remove_bin, .settings, .status, .temp1, .temp2, .temp3, .temp4, .title-bg, .validation_ok, .validation_text, .wifi1, .wifi2, .wifi3, .wifi4, .fuel, .about, .addon, .journal, .logout, .edit {
 	background: url(images/sprites.png) no-repeat;
 }
 
@@ -212,8 +212,20 @@ li a:hover:not(.active) {
 	height: 20px;
 }
 
+.logout{
+	background-position: -355px -118px ;
+	width: 20px;
+	height: 20px;
+}
+
 .remove_bin{
 	background-position: -210px -164px ;
+	width: 24px;
+	height: 24px;
+}
+
+.edit{
+	background-position: -355px -167px ;
 	width: 24px;
 	height: 24px;
 }

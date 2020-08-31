@@ -103,10 +103,12 @@ def add_header(r):
     r.headers["Expires"] = "0"
 
     return r
+
 #-------------------------------------------------------------------------------
 @app.route('/', methods=['GET'])
 def root():
 
+    LogError("Root")
     if LoginActive():
         if not session.get('logged_in'):
             return render_template('login.html')
@@ -114,6 +116,18 @@ def root():
             return app.send_static_file('index.html')
     else:
         return app.send_static_file('index.html')
+
+#-------------------------------------------------------------------------------
+@app.route('/verbose', methods=['GET'])
+def verbose():
+
+    if LoginActive():
+        if not session.get('logged_in'):
+            return render_template('login.html')
+        else:
+            return app.send_static_file('index_verbose.html')
+    else:
+        return app.send_static_file('index_verbose.html')
 
 #-------------------------------------------------------------------------------
 @app.route('/low', methods=['GET'])
