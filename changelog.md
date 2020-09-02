@@ -1,5 +1,8 @@
 # Change Log
-All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
+All notable changes to this project will be documented in this file. 
+
+## V1.14.29 - 2020-02-10
+- Added more info to upgrade and communications failure notice emails
 
 ## V1.14.28 - 2020-31-09
 - Added logout button in top right if using username/password to login to the web interface. Thanks @buschauer

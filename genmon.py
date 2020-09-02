@@ -34,7 +34,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.14.28"
+GENMON_VERSION = "V1.14.29"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(MySupport):
@@ -128,6 +128,8 @@ class Monitor(MySupport):
             self.Version = GENMON_VERSION
 
         self.ProgramStartTime = datetime.datetime.now()     # used for com metrics
+        # this will wait one day for an update, change to
+        #  datetime.datetime(1, 1, 1, 0, 0) to check immediately on load
         self.LastSofwareUpdateCheck = datetime.datetime.now()
 
         atexit.register(self.Close)
@@ -849,12 +851,16 @@ class Monitor(MySupport):
                     LastActiveTime = datetime.datetime.now()
                     if NoticeSent:
                         NoticeSent = False
-                        self.MessagePipe.SendMessage("Generator Monitor Communication Restored at " + self.SiteName, "Generator Monitor communications with the controller has been restored at " + self.SiteName , msgtype = "info")
+                        msgbody = "Generator Monitor communications with the controller has been restored at " + self.SiteName
+                        msgbody += "\n" + self.DisplayMonitor()
+                        self.MessagePipe.SendMessage("Generator Monitor Communication Restored at " + self.SiteName, msgbody , msgtype = "info")
                 else:
                     if self.GetDeltaTimeMinutes(datetime.datetime.now() - LastActiveTime) > 1 :
                         if not NoticeSent:
                             NoticeSent = True
-                            self.MessagePipe.SendMessage("Generator Monitor Communication WARNING at " + self.SiteName, "Generator Monitor is not communicating with the controller at " + self.SiteName , msgtype = "error")
+                            msgbody = "Generator Monitor is not communicating with the controller at " + self.SiteName
+                            msgbody += "\n" + self.DisplayMonitor()
+                            self.MessagePipe.SendMessage("Generator Monitor Communication WARNING at " + self.SiteName, msgbody , msgtype = "error")
 
             except Exception as e1:
                 self.LogErrorLine("Error in ComWatchDog: " + str(e1))
@@ -885,7 +891,7 @@ class Monitor(MySupport):
                                 if value != GENMON_VERSION:
                                     # Update Available
                                     title = self.ProgramName + " Software Update " + value + " is available for site " + self.SiteName
-                                    msgbody = "\nA software update is available for the " + self.ProgramName + ". The new version (" + value + ") can be updated on the About page of the web interface. You can disable this email from being sent on the Settings page."
+                                    msgbody = "\nA software update is available for the " + self.ProgramName + ". The new version (" + value + ") can be updated on the About page of the web interface. The current version installed is " + GENMON_VERSION + ". You can disable this email from being sent on the Settings page."
                                     if len(self.UserURL):
                                         msgbody += "\n\nWeb Interface URL: " + self.UserURL
                                     msgbody += "\n\nChange Log: https://raw.githubusercontent.com/jgyates/genmon/master/changelog.md"
