@@ -54,7 +54,9 @@ class SerialTCPDevice(MySupport):
         else:
             self.log = log
 
-        #Starting serial connection
+        if self.host == None or self.port == None:
+            self.LogError("Invalid setting for host or port in myserialtcp")
+        #Starting tcp connection
         self.Connect()
 
         self.IsOpen = True

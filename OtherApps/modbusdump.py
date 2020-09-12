@@ -43,7 +43,7 @@ def TestAllAddresses():
             print("Testing modbus address %02x" % Address)
             for Reg in range(startregister , endregister):
                 RegStr = "%04x" % Reg
-                modbus.ProcessMasterSlaveTransaction(RegStr, 1)
+                modbus.ProcessTransaction(RegStr, 1)
 
         DisplayComErrors(modbus)
     except Exception as e1:
@@ -125,9 +125,13 @@ if __name__=='__main__': #
     parity = None
     stopbits = None
     writevalue = None
+    useTCP = False
+    hostIP = None
+    TCPport = None
 
     HelpStr = '\npython mobusdump.py -r <Baud Rate> -p <serial port> -a <modbus address to query> -s <start modbus register>  -e <end modbus register>\n'
-    HelpStr += "\n   Example: python mobusdump.py -r 9600 -p /dev/serial0 -a 9d -s 5 -e 100 \n"
+    HelpStr += "\n   Example: python modbusdump.py -r 9600 -p /dev/serial0 -a 9d -s 5 -e 100 \n"
+    HelpStr += "\n   Example: python modbusdump.py -i 192.168.1.10 -t 9988 -a 9d -s 5 -e 100 \n"
     HelpStr += "\n"
     HelpStr += "\n      -r  Baud rate of serial port (9600, 115300, etc)"
     HelpStr += "\n      -p  Operating System device name of the serail port (/dev/serial0)"
@@ -137,10 +141,12 @@ if __name__=='__main__': #
     HelpStr += "\n      -b  Stop bits. If omitted 1 stop bit, if present use 1.5 stop bits"
     HelpStr += "\n      -x  Omit for no parity. -x 1 for odd parity, -x 2 for even parity"
     HelpStr += "\n      -w  write this value to register instead of read. Start register is used as register"
+    HelpStr += "\n      -i  IP address if modbus over TCP is used"
+    HelpStr += "\n      -t  TCP port if modbus over TCP is used"
     HelpStr += "\n \n"
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:],"bhr:p:s:e:a:x:w:",["rate=","port=","start=","end=","address=", "parity=","write="])
+        opts, args = getopt.getopt(sys.argv[1:],"bhr:p:s:e:a:x:w:i:t:",["rate=","port=","start=","end=","address=", "parity=","write=","ip=","tcpport="])
     except getopt.GetoptError:
         print(HelpStr)
         sys.exit(2)
@@ -183,12 +189,20 @@ if __name__=='__main__': #
                 print ('1.5 Stop Bits : ' + str(stopbits))
             elif opt in ("-w", "--write"):
                 writevalue = int(arg,16)
+            elif opt in ("-i", "--ip"):
+                hostIP = arg
+                print ('IP Address : ' + hostIP)
+            elif opt in ("-t", "--tcpport"):
+                TCPport = int(arg)
+                print ('IP Address : %d' % TCPport)
 
     except Exception as e1:
         print (HelpStr)
         sys.exit(2)
 
-    if device == None or baudrate == None or startregister == None or modbusaddress == None:
+    if TCPport != None and hostIP != None:
+        useTCP = True
+    elif device == None or baudrate == None or startregister == None or modbusaddress == None:
         print(HelpStr)
         sys.exit(2)
     if writevalue == None:
@@ -227,15 +241,19 @@ if __name__=='__main__': #
         elif modbusaddress != "all":
 
             try:
-                modbus = ModbusProtocol(updatecallback = RegisterResults, address = modbusaddress, name = device,
-                    rate = baudrate, Parity = parity, OnePointFiveStopBits = OnePointFiveStopBits)
+                if not useTCP:
+                    modbus = ModbusProtocol(updatecallback = RegisterResults, address = modbusaddress, name = device,
+                        rate = baudrate, Parity = parity, OnePointFiveStopBits = OnePointFiveStopBits)
+                else:
+                    modbus = ModbusProtocol(updatecallback = RegisterResults, address = modbusaddress, host = hostIP,
+                        port = TCPport)
             except Exception as e1:
                 print( "Error opening serial device...: " + str(e1))
                 sys.exit(2)
             try:
                 for Reg in range(startregister , endregister):
                     RegStr = "%04x" % Reg
-                    modbus.ProcessMasterSlaveTransaction(RegStr, 1)
+                    modbus.ProcessTransaction(RegStr, 1)
             except Exception as e1:
                 print("Error reading device: " + str(e1))
                 sys.exit(2)

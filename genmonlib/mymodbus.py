@@ -94,11 +94,17 @@ class ModbusProtocol(ModbusBase):
         rate=9600,
         Parity = None,
         OnePointFiveStopBits = None,
-        config = None):
+        config = None,
+        host = None,
+        port = None):
 
         super(ModbusProtocol, self).__init__(updatecallback = updatecallback, address = address, name = name, rate = rate, config = config)
 
         try:
+
+            if host != None and port != None and self.config == None:
+                # in this instance we do not use a config file, but config comes from command line
+                self.UseTCP = True
 
             # ~3000 for 9600               bit time * 10 bits * 10 char * 2 packets + wait time(3000) (convert to ms * 1000)
             self.ModBusPacketTimoutMS = (((((1/float(rate)) * 10.0) * 10.0 * 2.0) *1000.0)  + 3000.0)     # .00208
@@ -110,7 +116,7 @@ class ModbusProtocol(ModbusBase):
                 self.ModBusPacketTimoutMS = self.ModBusPacketTimoutMS + 2000
             #Starting serial connection
             if self.UseTCP:
-                self.Slave = SerialTCPDevice(config = self.config)
+                self.Slave = SerialTCPDevice(config = self.config, host = host, port = port)
             else:
                 self.Slave = SerialDevice(name = name, rate = rate, Parity = Parity, OnePointFiveStopBits = OnePointFiveStopBits, config = self.config)
             self.Threads = self.MergeDicts(self.Threads, self.Slave.Threads)
