@@ -367,11 +367,11 @@ class MySupport(MyCommon):
     #----------  MySupport::GetDeltaTimeMinutes-------------------------------
     def GetDeltaTimeMinutes(self, DeltaTime):
 
-        days, seconds = DeltaTime.days, DeltaTime.seconds
-        delta_hours = days * 24 + seconds // 3600
-        delta_minutes = (seconds % 3600) // 60
+        days, seconds = float(DeltaTime.days), float(DeltaTime.seconds)
+        delta_hours = days * 24.0 + seconds // 3600.0
+        delta_minutes = (seconds % 3600.0) // 60.0
 
-        return (delta_hours * 60 + delta_minutes)
+        return (delta_hours * 60.0 + delta_minutes)
 
     #---------------------MySupport::ReadCSVFile--------------------------------
     # read a CSV file, return a list of lists

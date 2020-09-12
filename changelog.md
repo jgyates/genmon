@@ -1,23 +1,27 @@
 # Change Log
-All notable changes to this project will be documented in this file. 
+All notable changes to this project will be documented in this file.
 
-## V1.14.29 - 2020-02-10
+## V1.14.29 - 2020-09-11
+- Updagte to MQTT support to allow list of strings to be a parameter
+- Added advanced parameter to better support weak wifi signals on serial over TCP
+
+## V1.14.29 - 2020-09-02
 - Added more info to upgrade and communications failure notice emails
 
-## V1.14.28 - 2020-31-09
+## V1.14.28 - 2020-08-31
 - Added logout button in top right if using username/password to login to the web interface. Thanks @buschauer
 - Made the service journal editable. Thanks @buschauer
 
-## V1.14.27 - 2020-29-09
+## V1.14.27 - 2020-08-29
 - Design update in preperation for future updates
 
-## V1.14.26 - 2020-19-09
+## V1.14.26 - 2020-08-19
 - Minor modification to gentankutil add on to compensate for changed web login at tankutility.com
 
-## V1.14.25 - 2020-19-09
+## V1.14.25 - 2020-08-19
 - Added new alarm code for Nexus Liquid Cooled and Evoltion Air Cooled
 
-## V1.14.24 - 2020-17-09
+## V1.14.24 - 2020-08-17
 - Corrected bug introduced in V1.14.23 that prevented logging of outages
 
 ## V1.14.23 - 2020-08-09

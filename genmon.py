@@ -34,7 +34,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.14.29"
+GENMON_VERSION = "V1.14.30"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(MySupport):
@@ -259,6 +259,8 @@ class Monitor(MySupport):
 
             if self.config.HasOption('optimizeforslowercpu'):
                 self.SlowCPUOptimization = self.config.ReadValue('optimizeforslowercpu', return_type = bool)
+
+            self.AdditionalWatchdogTime = self.config.ReadValue('watchdog_addition', return_type = int, default = 0)
 
             if self.config.HasOption('version'):
                 self.Version = self.config.ReadValue('version')
@@ -841,6 +843,9 @@ class Monitor(MySupport):
         else:
             WatchDogPollTime = 2
 
+
+        WatchDogPollTime += self.AdditionalWatchdogTime
+
         while True:
             try:
                 # check for software update
@@ -855,7 +860,7 @@ class Monitor(MySupport):
                         msgbody += "\n" + self.DisplayMonitor()
                         self.MessagePipe.SendMessage("Generator Monitor Communication Restored at " + self.SiteName, msgbody , msgtype = "info")
                 else:
-                    if self.GetDeltaTimeMinutes(datetime.datetime.now() - LastActiveTime) > 1 :
+                    if self.GetDeltaTimeMinutes(datetime.datetime.now() - LastActiveTime) > (1 + self.AdditionalWatchdogTime) :
                         if not NoticeSent:
                             NoticeSent = True
                             msgbody = "Generator Monitor is not communicating with the controller at " + self.SiteName

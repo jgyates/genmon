@@ -78,6 +78,7 @@ smart_transfer_switch = If enabled a smart transfer switch is utilized and the g
 serialnumberifmissing= If the serial number is not present due to the controller being replaced you can override the missing serial number and still have the software lookup model information. This is a numeric value that must be ten digits. Pad leading zeros if you serial number is less than 10 digits.
 additionalrunhours= Nexus controllers (not Evolution) do not have the ability to set the run hours. If your controller has been replaced you can use this entry to add hours to the Run Hours reported by the in the UI. Note: If this option is used it will only modify the run hours displayed in the web interface. It will not affect the controllers internal maintenance counters. This value must be a numeric value.
 additional_modbus_timeout=Add this value (in seconds) to the modbus timeout value. Floating point value.
+watchdog_addition=Additionl delay before a communication timeout notification
 disablepowerlog=Enable to disable the power log and current reading. Not supported on Nexus.
 estimated_load=The percent load (expesses a a decimal value i.e. .5 = 50%) used when estimating the run hours left until the tank is empty.
 subtractfuel=The amount of fuel (gal or L, depending on 'Use Metric' setting) to subtract from the fuel in tank estimate

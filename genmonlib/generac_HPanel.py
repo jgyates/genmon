@@ -2223,7 +2223,7 @@ class HPanel(GeneratorController):
         return self.GetParameterStringValue(RegisterStringEnum.CONTROLLER_NAME[REGISTER], RegisterStringEnum.CONTROLLER_NAME[RET_STRING])
 
     #----------  HPanel:ComminicationsIsActive  --------------------------------
-    # Called every 2 seconds, if communictions are failing, return False, otherwise
+    # Called every few seconds, if communictions are failing, return False, otherwise
     # True
     def ComminicationsIsActive(self):
         if self.LastRxPacketCount == self.ModBus.RxPacketCount:
