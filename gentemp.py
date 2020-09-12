@@ -225,10 +225,7 @@ class GenTemp(MySupport):
             self.LogErrorLine("Error in GetIDFromDeviceName for " + device + " : " + str(e1))
         return "UNKNOWN_ID"
 
-    #------------ GenTemp::ConvertCelsiusToFahrenheit --------------------------
-    def ConvertCelsiusToFahrenheit(self, Celsius):
-
-        return (9.0/5.0 * float(Celsius) + 32.0)
+    
     #----------  GenTemp::SendCommand ------------------------------------------
     def SendCommand(self, Command):
 

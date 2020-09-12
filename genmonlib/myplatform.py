@@ -98,11 +98,6 @@ class MyPlatform(MyCommon):
 
         return True
 
-    #------------ MyPlatform::ConvertCelsiusToFahrenheit -----------------------
-    def ConvertCelsiusToFahrenheit(self, Celsius):
-
-        return (9.0/5.0 * Celsius + 32)
-
     #------------ MyPlatform::GetRaspberryPiInfo -------------------------------
     def GetRaspberryPiInfo(self):
 

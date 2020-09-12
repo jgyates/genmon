@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 ## V1.14.29 - 2020-09-11
 - Updagte to MQTT support to allow list of strings to be a parameter
 - Added advanced parameter to better support weak wifi signals on serial over TCP
+- Made Evolution 2.0 Ambient temp sensor display respond to Use Metric setting
 
 ## V1.14.29 - 2020-09-02
 - Added more info to upgrade and communications failure notice emails

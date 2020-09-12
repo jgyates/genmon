@@ -166,7 +166,7 @@ class Evolution(GeneratorController):
                     "020c" : [2, 0],     #  Fuel Type (EvoLC, NexusLC)
                     "020e" : [2, 0],     # Volts Per Hertz (EvoLC)
                     "0212" : [2, 0],     # Unknown status data
-                    "0213" : [2, 0],     # Unknown maintenance data
+                    "0213" : [2, 0],     # Wifi Signal Strength RSSI (Evo2)
                     "004c" : [2, 0],     # Unknown register data
                     "0235" : [2, 0],     # Gain (EvoLC)
                     "0236" : [2, 0],     # Two Wire Start (EvoAC)
@@ -193,7 +193,7 @@ class Evolution(GeneratorController):
                     "0258" : [2, 0],     #  Unknown (EvoLC, NexusLC) Some type of setting
                     "025a" : [2, 0],     #  Unknown (EvoLC)
                     "005c" : [2, 0],     # Unknown , possible model reg on EvoLC
-                    "05ed" : [2, 0],     # Ambient Temp Sensor (EvoLC)
+                    "05ed" : [2, 0],     # Ambient Temp Sensor (EvoLC, Evo2)
                     "05ee" : [2, 0],     # (CT on Battery Charger)
                     "05f2" : [2, 0],     # Unknown (EvoLC)
                     "05f3" : [2, 0],     # EvoAC, EvoLC, counter of some type
@@ -1870,7 +1870,11 @@ class Evolution(GeneratorController):
 
 
             if self.EvolutionController and self.Evolution2:
-                Maintenance["Maintenance"].append({"Ambient Temperature Sensor" : self.ValueOut(self.GetParameter("05ed", ReturnInt = True), "F", JSONNum)})
+                if self.UseMetric:
+                    Value = self.ConvertFahrenheitToCelsius(self.GetParameter("05ed", ReturnInt = True))
+                    Maintenance["Maintenance"].append({"Ambient Temperature Sensor" : self.ValueOut(Value, "C", JSONNum)})
+                else:
+                    Maintenance["Maintenance"].append({"Ambient Temperature Sensor" : self.ValueOut(self.GetParameter("05ed", ReturnInt = True), "F", JSONNum)})
 
             # Only update power log related info once a min for performance reasons
             if self.LastHouseKeepingTime == None or self.GetDeltaTimeMinutes(datetime.datetime.now() - self.LastHouseKeepingTime) >= 1 :
@@ -3880,7 +3884,7 @@ class Evolution(GeneratorController):
 
         return True
     #----------  Evolution::ComminicationsIsActive  ----------------------------
-    # Called every 2 seconds
+    # Called every few seconds
     def ComminicationsIsActive(self):
 
         if self.LastRxPacketCount == self.ModBus.RxPacketCount:

@@ -23,6 +23,16 @@ class MyCommon(object):
         self.debug = False
         self.MaintainerAddress = "generatormonitor.software@gmail.com"
 
+    #------------ MyCommon::ConvertCelsiusToFahrenheit -------------------------
+    def ConvertCelsiusToFahrenheit(self, Celsius):
+
+        return ((Celsius * 9.0/5.0) + 32.0)
+
+    #------------ MyCommon::ConvertFahrenheitToCelsius -------------------------
+    def ConvertFahrenheitToCelsius(self, Fahrenheit):
+
+        return ((Fahrenheit - 32.0) * 5.0/9.0)
+
     #------------ MyCommon::StripJson ------------------------------------------
     def StripJson(self, InputString):
         for char in '{}[]"':
