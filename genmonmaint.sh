@@ -85,6 +85,11 @@ function updatelibraries() {
   sudo $pipcommand install ldap3 -U
   sudo $pipcommand install pyasn1 -U
   sudo $pipcommand install smbus -U
+  if [ "$usepython3" = true ] ; then
+    sudo $pipcommand install pyotp -U
+  else
+    sudo $pipcommand install pyotp==2.3.0 -U
+  fi
   echo "Done."
 }
 
@@ -141,6 +146,12 @@ function installgenmon() {
     sudo $pipcommand install pysnmp
     sudo $pipcommand install ldap3
     sudo $pipcommand install smbus
+    sudo $pipcommand install pyotp
+    if [ "$usepython3" = true ] ; then
+      sudo $pipcommand install pyotp
+    else
+      sudo $pipcommand install pyotp==2.3.0
+    fi
     # correct problem with LDAP3 module install
     sudo $pipcommand install pyasn1 -U
 

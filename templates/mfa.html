@@ -1,0 +1,242 @@
+<script type="text/javascript" src="jquery-3.3.1.min.js"></script>
+<script type="text/javascript">
+(function (global, factory) {
+    if (typeof define === 'function' && define.amd) {
+        // AMD
+        define(['jquery'], factory);
+    } else if (typeof exports === 'object') {
+        // CommonJS
+        factory(require('jquery'));
+    } else {
+        // Browser globals
+        factory(global.jQuery);
+    }
+}(this, function ($) {
+    var pluginName = 'floatingFormLabels',
+        defaults = {
+            label: '.ffl-label',
+            formElements: 'input, textarea',
+            floatedClass: 'ffl-floated'
+        };
+
+    function FloatingFormLabels (element, options) {
+        this._name = pluginName;
+        this.el = $(element);
+        this.options = $.extend({}, defaults, options);
+        this.label = this.el.find(this.options.label);
+        this.input = this.el.find(this.options.formElements);
+        this.floated = false;
+        this._init();
+    }
+
+    FloatingFormLabels.prototype = {
+        _init: function () {
+            var scope = this;
+
+            this._toggleClass(this._isFloated());
+
+            if (this._hasPlaceholder()) {
+                this._toggleClass(true);
+                return;
+            }
+
+            this.input.on({
+                'focus.ffl': function () {
+                    scope._toggleClass(true);
+                },
+                'blur.ffl': function () {
+                    scope._toggleClass(scope._isFloated());
+                },
+                'change.ffl': function () {
+                    scope._toggleClass(true);
+                }
+            });
+
+            this.el.trigger('init.ffl', this);
+        },
+        _hasPlaceholder: function () {
+            if (typeof this.input.attr('placeholder') !== 'undefined') {
+                return true;
+            }
+            return false;
+        },
+        _isFloated: function () {
+            if (this.input.val() === '' || this.input.val() === null || this.input.val().length === 0) {
+                return false;
+            }
+
+            return true;
+        },
+        _toggleClass: function (floated) {
+            if (floated) {
+                this.el.addClass(this.options.floatedClass);
+                this.floated = true;
+            } else {
+                this.el.removeClass(this.options.floatedClass);
+                this.floated = false;
+            }
+            this.label.trigger('toggle.ffl', this);
+        },
+        destroy: function () {
+            this.input.off('.ffl');
+            this.el.removeClass(this.options.floatedClass).removeData(pluginName);
+        }
+    };
+
+    $.fn[pluginName] = function (options) {
+        var instance,
+            args = Array.prototype.slice.call(arguments, 1);
+
+        return this.each(function () {
+            if (!$.data(this, pluginName)) {
+                $.data(this, pluginName, new FloatingFormLabels(this, options));
+            } else if (typeof options === 'string') {
+                // call public methods with its own parameters
+                instance = $.data(this, pluginName);
+                instance[options].apply(instance, args);
+            }
+        });
+    };
+}));
+</script>
+<style>
+body {
+    background: radial-gradient(#d1d1d1, #f1f1f1);
+    height: 100%;
+    margin: 0;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+h2 {
+  text-align: center;
+  line-height: 120%;
+}
+.ffl-wrapper {
+  position: relative;
+  display: block;
+  padding-top: 1rem;
+}
+.ffl-wrapper .ffl-label {
+  transition-property: all;
+  transition-duration: 200ms;
+  transition-timing-function: ease;
+  transition-delay: 0s;
+  position: absolute;
+  white-space: nowrap;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  pointer-events: none;
+  top: 1.25rem;
+}
+.ffl-wrapper.ffl-floated .ffl-label {
+  top: 0;
+}
+
+.ffl-label {
+  color: #909090;
+  line-height: 1.2;
+}
+.ffl-floated .ffl-label {
+  color: #4CAF50;
+  font-size: 0.75rem;
+}
+
+form {
+  border-radius: 10px;
+  max-width: 30rem;
+  margin: 2rem auto 0;
+  background-color: #ffffff;
+  padding: 1rem;
+  font-family: Arial;
+  font-weight: bold;
+  position:absolute;
+  top:50%;
+  left:50%;
+  height:240px;
+  width:300px;
+  margin-top:-140px; /* this is half the height of your div*/
+  margin-left:-150px; /*this is half of width of your div*/
+}
+form:after {
+  content: "";
+  display: block;
+  clear: both;
+}
+
+input,
+textarea,
+select {
+  transition: border-bottom 100ms ease;
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin-bottom: 1rem;
+  box-shadow: none;
+  appearance: none;
+  outline: none;
+  background-color: transparent;
+  border-style: none;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: rgba(0, 0, 0, 0.2);
+  height: 1.875rem;
+}
+input:hover,
+textarea:hover,
+select:hover {
+  border-bottom-width: 1px;
+  border-bottom-color: #909090;
+}
+input:focus,
+textarea:focus,
+select:focus {
+  border-bottom-width: 1px;
+  border-bottom-color: #4CAF50;
+}
+
+textarea {
+  resize: none;
+  min-height: 1.875rem;
+}
+
+label > span {
+  color: #cccccc;
+}
+
+[type="submit"] {
+  transition: background-color 0.3s ease;
+  border: none;
+  background-color: #4CAF50;
+  color: #ffffff;
+  padding: 0.5rem 1rem;
+  text-transform: uppercase;
+  cursor: pointer;
+  margin-top: 1rem;
+  float: right;
+}
+[type="submit"]:hover, [type="submit"]:focus {
+  background-color: #027bda;
+}
+</style>
+{% block body %}
+{% if session['logged_in'] %}
+<form action="/mfa" method="POST">
+  <h2>Generator Monitoring Multi-Factor Authentication</h2>
+  <div class="ffl-wrapper">
+    <label for="code" class="ffl-label"></label>
+    <input type="text" id="code" name="code" placeholder="Code">
+  </div>
+  <button type="submit">Authenticate</button>
+</form>
+
+<script type="text/javascript">
+  $('.ffl-wrapper').floatingFormLabels();
+</script>
+
+{% else %}
+
+<p>You must login first!</p>
+
+{% endif %}
+{% endblock %}

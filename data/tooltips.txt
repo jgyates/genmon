@@ -45,6 +45,7 @@ http_pass_ro = Sets the password of the limited rights user. Leave blank to disa
 http_port = HTTP port to be used by the web server.
 https_port = Port to override the secure web server port (https). The default value is 443.
 favicon = favicon for website. This is an optional parameter and default is "favicon.ico". This may not work in older browsers
+usemfa = Use Multi-Factor Authentication. You must use a Multi-Factor Authenticator app like Goolge Authenticator or Authy to use this feature.
 kwlogmax = Override the maximum size of the kW log. The default is 15MB.
 kwlog = Full path to override the default kW log. If this option is present but empty the kW log will be disabled.
 currentdivider = This is a value to override the divisor used to calculate the current for Evolution units. This value is expressed in floating point. Leave blank to use the default value.

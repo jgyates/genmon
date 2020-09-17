@@ -120,23 +120,24 @@ class Loader(MySupport):
         # this function checks the system to see if the required libraries are
         # installed. If they are not then an attempt is made to install them.
         ModuleList = [
-            # [import name , install name]
-            ['flask','flask'],
-            ['configparser','configparser'],
-            ['serial','pyserial'],
-            ['crcmod','crcmod'],
-            ['pyowm','pyowm'],
-            ['pytz','pytz'],
-            ['pysnmp','pysnmp'],
-            ['ldap3','ldap3'],
-            ['smbus','smbus']
+            # [import name , install name, Python2.7 version]
+            ['flask','flask', None],                # Web server
+            ['configparser','configparser',None],   # reading config files
+            ['serial','pyserial',None],             # Serial
+            ['crcmod','crcmod',None],               # Modbus CRC
+            ['pyowm','pyowm','2.9.0'],              # Open Weather API
+            ['pytz','pytz',None],                   # Time zone support
+            ['pysnmp','pysnmp',None],               # SNMP
+            ['ldap3','ldap3',None],                 # LDAP
+            ['smbus','smbus',None],                 # SMBus reading of temp sensors
+            ['pyotp','pyotp','2.3.0']               # 2FA support
         ]
         try:
             ErrorOccured = False
             for Module in ModuleList:
                 if not self.LibraryIsInstalled(Module[0]):
                     self.LogInfo("Warning: required library " + Module[1] + " not installed. Attempting to install....")
-                    if not self.InstallLibrary(Module[1]):
+                    if not self.InstallLibrary(Module[1], version = Module[2]):
                         self.LogInfo("Error: unable to install library " + Module[1])
                         ErrorOccured = True
                     if Module[0] == "ldap3":
@@ -221,13 +222,16 @@ class Loader(MySupport):
             return False
 
     #---------------------------------------------------------------------------
-    def InstallLibrary(self, libraryname, update = False):
+    def InstallLibrary(self, libraryname, update = False, version = None):
 
         try:
             if sys.version_info[0] < 3:
                 pipProgram = "pip"
+                if version != None:
+                    libraryname = libraryname + "=="+ version
             else:
                 pipProgram = "pip3"
+
 
             if update:
                 install_list = [pipProgram, 'install', libraryname, '-U']

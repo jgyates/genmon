@@ -2030,10 +2030,6 @@ class Evolution(GeneratorController):
                 SignedStr = str(self.signed16( int(Value)))
                 Sensors.append({"Unsupported Sensor 3 (0x0034)" : SignedStr})
 
-            #
-            Value = self.GetUnknownSensor("003a")
-            if len(Value):
-                Sensors.append({"Unsupported Sensor 4 (0x003a) Throttle?" : Value})
 
         return Sensors
 

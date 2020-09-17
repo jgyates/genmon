@@ -262,6 +262,14 @@ class MyPlatform(MyCommon):
         except Exception as e1:
             return ""
 
+    #------------ MyPlatform::GetWiFiSSID --------------------------------------
+    def GetWiFiSSID(self, adapter):
+        try:
+            result = subprocess.check_output(['iwconfig', adapter])
+            match = re.search('ESSID:"([\s\S]*?)"', result)
+            return match.group(1)
+        except Exception as e1:
+            return ""
     #------------ MyPlatform::GetWiFiInfo --------------------------------------
     def GetWiFiInfo(self, adapter):
 
@@ -283,6 +291,9 @@ class MyPlatform(MyCommon):
                             WiFiInfo.append({"WLAN Signal Quality" : ListItems[2].replace(".", "")  + "/70"})
 
                         WiFiInfo.append({"WLAN Signal Noise" : ListItems[4].replace(".", "") + " dBm"})
+            essid = self.GetWiFiSSID(adapter)
+            if essid != None and essid != "":
+                WiFiInfo.append({"WLAN ESSID" : essid})
         except Exception as e1:
             pass
         return WiFiInfo

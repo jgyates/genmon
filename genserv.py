@@ -13,12 +13,18 @@ from __future__ import print_function
 import sys, signal, os, socket, atexit, time, subprocess, json, threading, signal, errno, collections, getopt
 
 try:
-    from flask import Flask, render_template, request, jsonify, session, send_file
+    from flask import Flask, render_template, request, jsonify, session, send_file, redirect, url_for
 except Exception as e1:
     print("\n\nThis program requires the Flask library. Please see the project documentation at https://github.com/jgyates/genmon.\n")
     print("Error: " + str(e1))
     sys.exit(2)
 
+try:
+    import pyotp
+except Exception as e1:
+    print("\n\nThis program requires the pyotp library. Please see the project documentation at https://github.com/jgyates/genmon.\n")
+    print("Error: " + str(e1))
+    sys.exit(2)
 
 try:
     from genmonlib.myclient import ClientInterface
@@ -60,6 +66,10 @@ DomainNetbios = None
 LdapAdminGroup = None
 LdapReadOnlyGroup = None
 
+mail = None
+bUseMFA = False
+SecretMFAKey = None
+MFA_URL = None
 bUseSecureHTTP = False
 bUseSelfSignedCert = True
 SSLContext = None
@@ -89,7 +99,8 @@ def logout():
         if LoginActive():
             session['logged_in'] = False
             session['write_access'] = False
-        return root()
+            session['mfa_ok'] = False
+        return redirect(url_for('root'))
     except Exception as e1:
         LogError("Error on logout: " + str(e1))
 #-------------------------------------------------------------------------------
@@ -108,51 +119,63 @@ def add_header(r):
 @app.route('/', methods=['GET'])
 def root():
 
-    LogError("Root")
-    if LoginActive():
-        if not session.get('logged_in'):
-            return render_template('login.html')
-        else:
-            return app.send_static_file('index.html')
-    else:
-        return app.send_static_file('index.html')
+    return ServePage('index.html')
 
 #-------------------------------------------------------------------------------
 @app.route('/verbose', methods=['GET'])
 def verbose():
 
-    if LoginActive():
-        if not session.get('logged_in'):
-            return render_template('login.html')
-        else:
-            return app.send_static_file('index_verbose.html')
-    else:
-        return app.send_static_file('index_verbose.html')
+    return ServePage('index_verbose.html')
 
 #-------------------------------------------------------------------------------
 @app.route('/low', methods=['GET'])
 def lowbandwidth():
 
-    if LoginActive():
-        if not session.get('logged_in'):
-            return render_template('login.html')
-        else:
-            return app.send_static_file('index_lowbandwith.html')
-    else:
-        return app.send_static_file('index_lowbandwith.html')
+    return ServePage('index_lowbandwith.html')
 
 #-------------------------------------------------------------------------------
 @app.route('/internal', methods=['GET'])
 def display_internal():
 
+    return ServePage('internal.html')
+
+#-------------------------------------------------------------------------------
+def ServePage(page_file):
+
     if LoginActive():
         if not session.get('logged_in'):
             return render_template('login.html')
         else:
-            return app.send_static_file('internal.html')
+            return app.send_static_file(page_file)
     else:
-        return app.send_static_file('internal.html')
+        return app.send_static_file(page_file)
 
+#-------------------------------------------------------------------------------
+@app.route('/mfa', methods=['POST'])
+def mfa_auth():
+
+    try:
+        if bUseMFA:
+            if ValidateOTP(request.form['code']):
+                session['mfa_ok'] = True
+                return redirect(url_for('root'))
+            else:
+                session['mfa_ok'] = False
+                return redirect(url_for('logout'))
+        else:
+            return redirect(url_for('root'))
+    except Exception as e1:
+        LogErrorLine("Error in mfa_auth: " + str(e1))
+
+    return render_template('login.html')
+#-------------------------------------------------------------------------------
+def admin_login_helper():
+
+    if bUseMFA:
+        GetOTP()
+        return render_template('mfa.html')
+    else:
+        return redirect(url_for('root'))
 #-------------------------------------------------------------------------------
 @app.route('/', methods=['POST'])
 def do_admin_login():
@@ -161,14 +184,14 @@ def do_admin_login():
         session['logged_in'] = True
         session['write_access'] = True
         LogError("Admin Login")
-        return root()
+        return admin_login_helper()
     elif request.form['password'] == HTTPAuthPass_RO and request.form['username'] == HTTPAuthUser_RO:
         session['logged_in'] = True
         session['write_access'] = False
         LogError("Limited Rights Login")
-        return root()
+        return admin_login_helper()
     elif doLdapLogin(request.form['username'], request.form['password']):
-        return root()
+        return admin_login_helper()
     elif request.form['username'] != "":
         LogError("Invalid login: " + request.form['username'])
         return render_template('login.html')
@@ -1397,7 +1420,9 @@ def ReadSettingsFromFile():
     ConfigSettings["http_pass_ro"] = ['password', 'Limited Rights User Password', 209, "", "", "minmax:4:50", GENMON_CONFIG, GENMON_SECTION, "http_pass_ro"]
     ConfigSettings["http_port"] = ['int', 'Port of WebServer', 210, 8000, "", "required digits", GENMON_CONFIG, GENMON_SECTION, "http_port"]
     ConfigSettings["favicon"] = ['string', 'FavIcon', 220, "", "", "minmax:8:255", GENMON_CONFIG, GENMON_SECTION, "favicon"]
-    # This does not appear to work on reload, some issue with Flask
+    #ConfigSettings["usemfa"] = ['boolean', 'Use Multi-Factor Authentication', 221, False, "", "", GENMON_CONFIG, GENMON_SECTION, "usemfa"]
+    # this value is for display only, it can not be changed by the web app
+    #ConfigSettings["mfa_url"] = ['qrcode', 'MFA QRCode', 222, MFA_URL, "", "", None, None, "mfa_url"]
 
     #
     #ConfigSettings["disableemail"] = ['boolean', 'Disable Email Usage', 300, True, "", "", MAIL_CONFIG, MAIL_SECTION, "disableemail"]
@@ -1432,6 +1457,9 @@ def ReadSettingsFromFile():
                 (ConfigSettings[entry])[3] = ReadSingleConfigValue(entry = List[8], filename = GENMON_CONFIG, section =  List[7], type = List[0], default = List[3], bounds = List[5])
             elif List[6] == MAIL_CONFIG:
                 (ConfigSettings[entry])[3] = ReadSingleConfigValue(entry = List[8], filename = MAIL_CONFIG, section = List[7], type = List[0], default = List[3])
+            elif List[6] == None:
+                # intentionally do not write or read from config file
+                pass
             else:
                 LogError("Invaild Config File in ReadSettingsFromFile: " + str(List[6]))
 
@@ -1564,6 +1592,12 @@ def UpdateConfigFile(FileName, section, Entry, Value):
 
     try:
 
+        if FileName == None or section == None or Entry == None or Value == None:
+            LogError("Error2")
+            return False
+        if FileName == "" or section == "" or Entry == "":
+            LogError("Error1")
+            return False
         try:
             config = ConfigFiles[FileName]
         except Exception as e1:
@@ -1699,6 +1733,8 @@ def LoadConfig():
     global log
     global clientport
     global loglocation
+    global bUseMFA
+    global SecretMFAKey
     global bUseSecureHTTP
     global LdapServer
     global LdapBase
@@ -1734,6 +1770,15 @@ def LoadConfig():
 
         # log errors in this module to a file
         log = SetupLogger("genserv", loglocation + "genserv.log")
+
+        bUseMFA = ConfigFiles[GENMON_CONFIG].ReadValue('usemfa', return_type = bool, default = False)
+        SecretMFAKey = ConfigFiles[GENMON_CONFIG].ReadValue('secretmfa', default = None)
+
+        if SecretMFAKey == None or SecretMFAKey == "":
+            SecretMFAKey = str(pyotp.random_base32())
+            ConfigFiles[GENMON_CONFIG].WriteValue('secretmfa', str(SecretMFAKey))
+
+        SetupMFA()
 
         if ConfigFiles[GENMON_CONFIG].HasOption('usehttps'):
             bUseSecureHTTP = ConfigFiles[GENMON_CONFIG].ReadValue('usehttps', return_type = bool)
@@ -1824,6 +1869,42 @@ def LoadConfig():
     except Exception as e1:
         LogConsole("Missing config file or config file entries: " + str(e1))
         return False
+
+#---------------------ValidateOTP-----------------------------------------------
+def ValidateOTP(password):
+
+    if bUseMFA:
+        try:
+            TimeOTP = pyotp.TOTP(SecretMFAKey, interval=60)
+            return TimeOTP.verify(password)
+        except Exception as e1:
+            LogErrorLine("Error in ValidateOTP: " + str(e1))
+    return False
+#---------------------GetOTP----------------------------------------------------
+def GetOTP():
+    try:
+        if bUseMFA:
+            TimeOTP = pyotp.TOTP(SecretMFAKey, interval=60)
+            OTP = TimeOTP.now()
+            msgbody = "\nThis password will expire in 30 seconds: " + str(OTP)
+            msgbody += "\n" + str(MFA_URL )
+            mail.sendEmail("Generator Monitor login one time password", msgbody)
+            return OTP
+    except Exception as e1:
+        LogErrorLine("Error in GetOTP: " + str(e1))
+
+#---------------------SetupMFA--------------------------------------------------
+def SetupMFA():
+
+    global MFA_URL
+    global mail
+
+    try:
+        mail = MyMail(ConfigFilePath = ConfigFilePath)
+        MFA_URL = pyotp.totp.TOTP(SecretMFAKey).provisioning_uri(mail.SenderAccount, issuer_name="Genmon")
+        #MFA_URL += "&image=https://raw.githubusercontent.com/jgyates/genmon/master/static/images/Genmon.png"
+    except Exception as e1:
+        LogErrorLine("Error setting up 2FA: " + str(e1))
 
 #---------------------LogConsole------------------------------------------------
 def LogConsole( Message):
@@ -1941,8 +2022,10 @@ if __name__ == "__main__":
         LogConsole("Error reading configuraiton file.")
         sys.exit(1)
 
+
     for ConfigFile in ConfigFileList:
         ConfigFiles[ConfigFile].log = log
+
 
     LogError("Starting " + AppPath + ", Port:" + str(HTTPPort) + ", Secure HTTP: " + str(bUseSecureHTTP) + ", SelfSignedCert: " + str(bUseSelfSignedCert))
     # validate needed files are present
