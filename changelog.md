@@ -3,6 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## V1.14.31 - 2020-09-17
 - Added ESSID to WiFi platform information
+- Updated myplaform.py to detect Pi4 and display CPU temp
 
 ## V1.14.30 - 2020-09-11
 - Updagte to MQTT support to allow list of strings to be a parameter
