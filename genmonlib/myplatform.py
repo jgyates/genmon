@@ -80,7 +80,7 @@ class MyPlatform(MyCommon):
                         found = True
                         label, value = line.strip().split(':', 1)
                         value = value.strip()
-                        if value not in ('BCM2708','BCM2709','BCM2835','BCM2836'):
+                        if value not in ('BCM2708','BCM2709','BCM2835','BCM2836','BCM2711'):
                             if raise_on_errors:
                                 raise ValueError('This system does not appear to be a Raspberry Pi.')
                             else:
