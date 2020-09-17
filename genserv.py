@@ -1593,10 +1593,8 @@ def UpdateConfigFile(FileName, section, Entry, Value):
     try:
 
         if FileName == None or section == None or Entry == None or Value == None:
-            LogError("Error2")
             return False
         if FileName == "" or section == "" or Entry == "":
-            LogError("Error1")
             return False
         try:
             config = ConfigFiles[FileName]
