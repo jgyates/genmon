@@ -31,6 +31,7 @@ MINIFY_SCRIPTS = [
     'js/jquery.idealforms.genmon.js',
     'js/jquery.CalendarHeatmap.genmon.js',
     'js/jquery.timepicker.min.js',
+    'js/jquery.qrcode.min.js',
     'genmon.js'
     ]
 NON_MINIFY_SCRIPTS = [

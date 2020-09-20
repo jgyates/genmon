@@ -20,6 +20,7 @@ var baseurl = pathname.concat("cmd/");
 var DaysOfWeekArray = ["Sunday","Monday","Tuesday","Wednesday", "Thursday", "Friday", "Saturday"];
 var MonthsOfYearArray = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 var BaseRegistersDescription = {};
+var QR_Code_URL = "";
 
 vex.defaultOptions.className = 'vex-theme-os'
 
@@ -1783,6 +1784,12 @@ function DisplaySettings(){
                 outstr += '<br><button type="button" id="weathercityname" onclick="lookupLocation()">Look Up</button>';
               }
               outstr += '</td></tr>';
+            } else if (key == "usemfa") {
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "toggleSectionInverse(true, 'usemfa');") + '</td></tr>';
+              outstr += '</table></fieldset><fieldset id="'+key+'Section"><table id="allsettings" border="0">';
+            } else if (key == "mfa_url") {
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td><div id="qrcode"></div></td></tr>'
+              QR_Code_URL = result[key][3];
             } else {
               outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
             }
@@ -1792,6 +1799,9 @@ function DisplaySettings(){
 
         $("#mydisplay").html(outstr);
         $('input').lc_switch();
+        if (QR_Code_URL != "") {
+          $("#qrcode").qrcode({width: 164,height: 164,text: QR_Code_URL});
+        } 
         $.extend($.idealforms.rules, {
            // The rule is added as "ruleFunction:arg1:arg2"
            HTTPAddress: function(input, value, arg1, arg2) {
@@ -1841,6 +1851,7 @@ function DisplaySettings(){
         useSerialTCPChange(false);
         useFullTank(false);
         toggleSection(false, "useselfsignedcert");
+        toggleSectionInverse(false, "usemfa");
         toggleSectionInverse(false, "disablesmtp");
         toggleSectionInverse(false, "disableimap");
         toggleSectionInverse(false, "disableweather");
@@ -1861,6 +1872,9 @@ function usehttpsChange(animation) {
    if ($("#usehttps").is(":checked")) {
       $("#noneSecuritySettings").hide((animation ? 300 : 0));
       $("#usehttpsSection").show((animation ? 300 : 0));
+      if ($("#usemfa").is(":checked")) {
+        $("#usemfaSection").show((animation ? 300 : 0));
+      }
 
       if (!$("#useselfsignedcert").is(":checked")) {
          $("#useselfsignedcertSettings").show((animation ? 300 : 0));
@@ -1868,6 +1882,7 @@ function usehttpsChange(animation) {
    } else {
       $("#usehttpsSection").hide((animation ? 300 : 0));
       $("#noneSecuritySettings").show((animation ? 300 : 0));
+      $("#usemfaSection").hide((animation ? 300 : 0));
    }
    if (($('#http_port').val() == $('#http_port').attr('oldValue')) && ($("#usehttps").attr('oldValue') == ($("#usehttps").prop('checked') === true ? "true" : "false"))){
       $("#newURLnotify").hide((animation ? 300 : 0));

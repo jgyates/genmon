@@ -172,7 +172,7 @@ def mfa_auth():
 def admin_login_helper():
 
     if bUseMFA:
-        GetOTP()
+        #GetOTP()
         return render_template('mfa.html')
     else:
         return redirect(url_for('root'))
@@ -1420,9 +1420,9 @@ def ReadSettingsFromFile():
     ConfigSettings["http_pass_ro"] = ['password', 'Limited Rights User Password', 209, "", "", "minmax:4:50", GENMON_CONFIG, GENMON_SECTION, "http_pass_ro"]
     ConfigSettings["http_port"] = ['int', 'Port of WebServer', 215, 8000, "", "required digits", GENMON_CONFIG, GENMON_SECTION, "http_port"]
     ConfigSettings["favicon"] = ['string', 'FavIcon', 220, "", "", "minmax:8:255", GENMON_CONFIG, GENMON_SECTION, "favicon"]
-    #ConfigSettings["usemfa"] = ['boolean', 'Use Multi-Factor Authentication', 210, False, "", "", GENMON_CONFIG, GENMON_SECTION, "usemfa"]
+    ConfigSettings["usemfa"] = ['boolean', 'Use Multi-Factor Authentication', 210, False, "", "", GENMON_CONFIG, GENMON_SECTION, "usemfa"]
     # this value is for display only, it can not be changed by the web app
-    #ConfigSettings["mfa_url"] = ['qrcode', 'MFA QRCode', 211, MFA_URL, "", "", None, None, "mfa_url"]
+    ConfigSettings["mfa_url"] = ['qrcode', 'MFA QRCode', 211, MFA_URL, "", "", None, None, "mfa_url"]
 
     #
     #ConfigSettings["disableemail"] = ['boolean', 'Disable Email Usage', 300, True, "", "", MAIL_CONFIG, MAIL_SECTION, "disableemail"]
@@ -1873,7 +1873,7 @@ def ValidateOTP(password):
 
     if bUseMFA:
         try:
-            TimeOTP = pyotp.TOTP(SecretMFAKey, interval=60)
+            TimeOTP = pyotp.TOTP(SecretMFAKey, interval=30)
             return TimeOTP.verify(password)
         except Exception as e1:
             LogErrorLine("Error in ValidateOTP: " + str(e1))
@@ -1882,10 +1882,9 @@ def ValidateOTP(password):
 def GetOTP():
     try:
         if bUseMFA:
-            TimeOTP = pyotp.TOTP(SecretMFAKey, interval=60)
+            TimeOTP = pyotp.TOTP(SecretMFAKey, interval=30)
             OTP = TimeOTP.now()
             msgbody = "\nThis password will expire in 30 seconds: " + str(OTP)
-            msgbody += "\n" + str(MFA_URL )
             mail.sendEmail("Generator Monitor login one time password", msgbody)
             return OTP
     except Exception as e1:

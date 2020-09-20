@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.14.32 - 2020-09-20
+- Added multi-factor authentication to web interface settings
+
 ## V1.14.31 - 2020-09-17
 - Added ESSID to WiFi platform information
 - Updated myplaform.py to detect Pi4 and display CPU temp
