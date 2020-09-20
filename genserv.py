@@ -1418,11 +1418,11 @@ def ReadSettingsFromFile():
     ConfigSettings["http_pass"] = ['password', 'Web Password', 207, "", "", "minmax:4:50", GENMON_CONFIG, GENMON_SECTION, "http_pass"]
     ConfigSettings["http_user_ro"] = ['string', 'Limited Rights User Username', 208, "", "", "minmax:4:50", GENMON_CONFIG, GENMON_SECTION, "http_user_ro"]
     ConfigSettings["http_pass_ro"] = ['password', 'Limited Rights User Password', 209, "", "", "minmax:4:50", GENMON_CONFIG, GENMON_SECTION, "http_pass_ro"]
-    ConfigSettings["http_port"] = ['int', 'Port of WebServer', 210, 8000, "", "required digits", GENMON_CONFIG, GENMON_SECTION, "http_port"]
+    ConfigSettings["http_port"] = ['int', 'Port of WebServer', 215, 8000, "", "required digits", GENMON_CONFIG, GENMON_SECTION, "http_port"]
     ConfigSettings["favicon"] = ['string', 'FavIcon', 220, "", "", "minmax:8:255", GENMON_CONFIG, GENMON_SECTION, "favicon"]
-    #ConfigSettings["usemfa"] = ['boolean', 'Use Multi-Factor Authentication', 221, False, "", "", GENMON_CONFIG, GENMON_SECTION, "usemfa"]
+    #ConfigSettings["usemfa"] = ['boolean', 'Use Multi-Factor Authentication', 210, False, "", "", GENMON_CONFIG, GENMON_SECTION, "usemfa"]
     # this value is for display only, it can not be changed by the web app
-    #ConfigSettings["mfa_url"] = ['qrcode', 'MFA QRCode', 222, MFA_URL, "", "", None, None, "mfa_url"]
+    #ConfigSettings["mfa_url"] = ['qrcode', 'MFA QRCode', 211, MFA_URL, "", "", None, None, "mfa_url"]
 
     #
     #ConfigSettings["disableemail"] = ['boolean', 'Disable Email Usage', 300, True, "", "", MAIL_CONFIG, MAIL_SECTION, "disableemail"]
