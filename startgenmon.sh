@@ -55,7 +55,7 @@ while (( "$#" )); do
       ;;
     -c)
       if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
-        config_path=$2
+        config_path="-c $2"
         shift 2
       else
         echo "Error: Argument for $1 is missing" >&2
