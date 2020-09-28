@@ -1,6 +1,11 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.14.33 - 2020-09-28
+- Updated myplatform.py to reflects some raspbian updates
+- moves some constants around in the modbus code in preperation for future modifications
+- Updated gensnmp.py to include OID for H and G Panel alarm list
+
 ## V1.14.32 - 2020-09-20
 - Added multi-factor authentication to web interface settings
 

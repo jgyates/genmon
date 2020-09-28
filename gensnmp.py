@@ -380,6 +380,8 @@ class GenSNMP(MySupport):
                 # Alarms
                 self.AddOID((CtlID,0,1,0),return_type = str, description = "ActiveAlarms", default = " ", keywords = ["Status/Alarms","Number of Active Alarms"])
                 self.AddOID((CtlID,0,1,1),return_type = str, description = "AckAlarms", default = " ", keywords = ["Status/Alarms","Number of Acknowledged Alarms"])
+                self.AddOID((CtlID,0,1,2),return_type = str, description = "AlarmList", default = " ", keywords = ["Status/Alarms","Alarm List"])
+
                 # Battery
                 self.AddOID((CtlID,0,2,0),return_type = str, description = "BatteryVoltage", default = " ", keywords = ["Status/Battery","Battery Voltage"])
                 self.AddOID((CtlID,0,2,1),return_type = str, description = "BatteryCurrent", default = " ", keywords = ["Status/Battery","Battery Charger Current"])

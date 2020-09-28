@@ -131,9 +131,9 @@ class MyPlatform(MyCommon):
             except:
                 pass
             try:
-                file = open("/sys/devices/platform/soc/soc:firmware/get_throttled")
-                status = file.read()
-                PiInfo.extend(self.ParseThrottleStatus(int(status, 16)))
+                ThrottledStatus = self.GetThrottledStatus()
+                if len(ThrottledStatus):
+                    PiInfo.extend(ThrottledStatus)
             except Exception as e1:
                 pass
 
@@ -183,17 +183,23 @@ class MyPlatform(MyCommon):
         return PiThrottleInfo
 
     #------------ MyPlatform::GetThrottledStatus -------------------------------
-    def GetThrottledStatus():
+    def GetThrottledStatus(self):
 
         try:
-            file = open("/sys/devices/platform/soc/soc:firmware/get_throttled")
-            status = file.read()
+            process = Popen(['/opt/vc/bin/vcgencmd', 'get_throttled'], stdout=PIPE)
+            output, _error = process.communicate()
+            hex_val = output.split("=")[1].strip()
+            get_throttled = int(hex_val, 16)
+            return self.ParseThrottleStatus(get_throttled)
 
-            get_throttled = int(status, 16)
-            StatusStr = ParseThrottleStatus(get_throttled)
-
-        except:
-            pass
+        except Exception as e1:
+            try:
+                # this method is depricated
+                file = open("/sys/devices/platform/soc/soc:firmware/get_throttled")
+                status = file.read()
+                return self.ParseThrottleStatus(int(status))
+            except Exception as e1:
+                return []
 
     #------------ MyPlatform::GetLinuxInfo -------------------------------------
     def GetLinuxInfo(self):
