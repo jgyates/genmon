@@ -122,7 +122,9 @@ class Loader(MySupport):
         ModuleList = [
             # [import name , install name, Python2.7 version]
             ['flask','flask', None],                # Web server
-            ['configparser','configparser',None],   # reading config files
+            # we will not use the check for configparser as this look like it is in backports on 2.7
+            # and our myconfig modules uses the default so this generates an error that is not warranted
+            #['configparser','configparser',None],   # reading config files
             ['serial','pyserial',None],             # Serial
             ['crcmod','crcmod',None],               # Modbus CRC
             ['pyowm','pyowm','2.9.0'],              # Open Weather API

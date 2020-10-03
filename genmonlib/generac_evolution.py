@@ -22,7 +22,7 @@ from genmonlib.controller import GeneratorController
 from genmonlib.mytile import MyTile
 from genmonlib.modbus_file import ModbusFile
 from genmonlib.mymodbus import ModbusProtocol
-#from genmonlib.modbus_evo2 import ModbusEvo2
+from genmonlib.modbus_evo2 import ModbusEvo2
 from genmonlib.program_defaults import ProgramDefaults
 
 #-------------------Generator specific const defines for Generator class--------
@@ -239,9 +239,9 @@ class Evolution(GeneratorController):
                     inputfile = self.SimulationFile,
                     config = self.config)
             else:
-                #self.ModBus = ModbusEvo2(self.UpdateRegisterList,
-                #    config = self.config)
-                self.ModBus = ModbusProtocol(self.UpdateRegisterList,
+                # ModbusEvo2 is a filter to ModbusProtocol class, this will handle Nexus and Evo traffic as well
+                # and Evo2 specific as needed
+                self.ModBus = ModbusEvo2(self.UpdateRegisterList,
                     config = self.config)
 
             self.Threads = self.MergeDicts(self.Threads, self.ModBus.Threads)

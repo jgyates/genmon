@@ -130,7 +130,7 @@ class ModbusProtocol(ModbusBase):
     #  a packet (list). If the return value is True and an empty packet, then
     #  keep looking because the data has not arrived yet, if return is False there
     #  is and error. If True and a non empty packet then it is valid data
-    def GetPacketFromSlave(self):
+    def GetPacketFromSlave(self, min_response_override = None):
 
         LocalErrorCount = 0
         Packet = []
@@ -158,8 +158,12 @@ class ModbusProtocol(ModbusBase):
                     self.CrcError += 1
                 return False, Packet
 
-            if len(self.Slave.Buffer) < self.MIN_PACKET_RESPONSE_LENGTH:
-                return True, EmptyPacket   # No full packet ready
+            if min_response_override != None:
+                if len(self.Slave.Buffer) < min_response_override:
+                    return True, EmptyPacket   # No full packet ready
+            else:
+                if len(self.Slave.Buffer) < self.MIN_PACKET_RESPONSE_LENGTH:
+                    return True, EmptyPacket   # No full packet ready
 
             if  self.Slave.Buffer[self.MBUS_OFF_COMMAND] in [self.MBUS_CMD_READ_REGS]:
                 # it must be a read command response
@@ -225,7 +229,7 @@ class ModbusProtocol(ModbusBase):
 
     #-------------ModbusProtocol::PWT-------------------------------------------
     # called from derived calls to get to overridded function ProcessWriteTransaction
-    def _PWT(self, Register, Length, Data):
+    def _PWT(self, Register, Length, Data, min_response_override = None):
 
         try:
             MasterPacket = []
@@ -235,7 +239,8 @@ class ModbusProtocol(ModbusBase):
             if len(MasterPacket) == 0:
                 return False
 
-            return self.ProcessOneTransaction(MasterPacket, skipupdate = True)   # True to skip writing results to cached reg values
+            #skipupdate=True to skip writing results to cached reg values
+            return self.ProcessOneTransaction(MasterPacket, skipupdate = True, min_response_override = min_response_override)
         except Exception as e1:
             self.LogErrorLine("Error in ProcessWriteTransaction: " + str(e1))
             return False
@@ -284,7 +289,7 @@ class ModbusProtocol(ModbusBase):
             return ""
 
     #------------ModbusProtocol::ProcessOneTransaction--------------------------
-    def ProcessOneTransaction(self, MasterPacket, skipupdate = False, ReturnString = False):
+    def ProcessOneTransaction(self, MasterPacket, skipupdate = False, ReturnString = False, min_response_override = None):
 
         try:
             with self.CommAccessLock:       # this lock should allow calls from multiple threads
@@ -306,7 +311,7 @@ class ModbusProtocol(ModbusBase):
 
                     if self.IsStopping:
                         return ""
-                    RetVal, SlavePacket = self.GetPacketFromSlave()
+                    RetVal, SlavePacket = self.GetPacketFromSlave(min_response_override = min_response_override)
 
                     if RetVal == True and len(SlavePacket) != 0:    # we receive a packet
                         self.TotalElapsedPacketeTime += (self.MillisecondsElapsed(SentTime) / 1000)

@@ -41,7 +41,7 @@ class ModbusBase(MySupport ):
     MBUS_OFF_LENGTH_LOW         = 0x05
     MBUS_OFF_WR_REQ_BYTE_COUNT  = 0x06
     MBUS_OFF_READ_REG_RES_DATA  = 0x03
-    MBUS_OFF_WRITE_REG_REQ_DATA = 0x07 
+    MBUS_OFF_WRITE_REG_REQ_DATA = 0x07
 
     # Field Sizes
     MBUS_ADDRESS_SIZE       = 0x01
@@ -127,8 +127,10 @@ class ModbusBase(MySupport ):
         self.UseTCP = False
         self.AdditionalModbusTimeout = 0
         self.ResponseAddress = None         # Used if recieve packes have a different address than sent packets
+        self.debug = False
 
         if self.config != None:
+            self.debug = self.config.ReadValue('debug', return_type = bool, default = False)
             self.loglocation = self.config.ReadValue('loglocation', default = '/var/log/')
             self.SlowCPUOptimization = self.config.ReadValue('optimizeforslowercpu', return_type = bool, default = False)
             self.UseTCP = self.config.ReadValue('use_serial_tcp', return_type = bool, default = False)

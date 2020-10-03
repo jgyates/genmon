@@ -747,6 +747,12 @@ def GetAddOns():
             "(Optional) Defines the certificate requirements that the client imposes on the broker. Used if Certificate Authority file is used.",
             bounds = 'None,Optional,Required',
             display_name = "Certificate Requirements")
+        AddOnCfg['genmqtt']['parameters']['client_id'] = CreateAddOnParam(
+            ConfigFiles[GENMQTT_CONFIG].ReadValue("client_id", return_type = str, default = "genmon"),
+            'string',
+            "Unique identifer. Must be unique for each instance of genmon running on a given system. ",
+            bounds = '',
+            display_name = "Client ID")
 
 
         #GENSLACK

@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.15.00 - 2020-10-02
+- Implimented fix for Evolution 2 firmware 1.1x
+- Added client id parameter for genmqtt add on 
+
 ## V1.14.33 - 2020-09-28
 - Updated myplatform.py to reflects some raspbian updates
 - moves some constants around in the modbus code in preperation for future modifications

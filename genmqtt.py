@@ -332,6 +332,8 @@ class MyMQTT(MyCommon):
 
             self.Password = config.ReadValue('password')
 
+            self.ClientID = config.ReadValue('client_id', default = "genmon")
+
             self.MQTTAddress = config.ReadValue('mqtt_address')
 
             if self.MQTTAddress == None or not len(self.MQTTAddress):
@@ -385,7 +387,7 @@ class MyMQTT(MyCommon):
             sys.exit(1)
 
         try:
-            self.MQTTclient = mqtt.Client(client_id = "genmon")
+            self.MQTTclient = mqtt.Client(client_id = self.ClientID)
             if self.Username != None and len(self.Username) and self.Password != None:
                 self.MQTTclient.username_pw_set(self.Username, password=self.Password)
 
