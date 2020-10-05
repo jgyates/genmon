@@ -34,7 +34,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.15.00"
+GENMON_VERSION = "V1.15.01"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(MySupport):
@@ -386,18 +386,26 @@ class Monitor(MySupport):
     def GetSupportData(self):
 
         SupportData = collections.OrderedDict()
-        SupportData["Program Run Time"] = self.GetProgramRunTime()
-        SupportData["Monitor Health"] = self.GetSystemHealth()
-        SupportData["StartInfo"] = self.GetStartInfo(NoTile = True)
-        if not self.bDisablePlatformStats:
-            SupportData["PlatformStats"] = self.GetPlatformStats()
-        SupportData["Data"] = self.Controller.DisplayRegisters(AllRegs = True, DictOut = True)
-        # Raw Modbus data
-        SupportData["Registers"] = self.Controller.Registers
-        SupportData["Strings"] = self.Controller.Strings
-        SupportData["FileData"] = self.Controller.FileData
+        try:
+            SupportData["Program Run Time"] = self.GetProgramRunTime()
+            SupportData["Monitor Health"] = self.GetSystemHealth()
+            SupportData["StartInfo"] = self.GetStartInfo(NoTile = True)
+            if not self.bDisablePlatformStats:
+                SupportData["PlatformStats"] = self.GetPlatformStats()
+            SupportData["Data"] = self.Controller.DisplayRegisters(AllRegs = True, DictOut = True)
+            # Raw Modbus data
+            SupportData["Registers"] = self.Controller.Registers
+            SupportData["Strings"] = self.Controller.Strings
+            SupportData["FileData"] = self.Controller.FileData
+        except Exception as e1:
+            self.LogErrorLine("Error in GetSupportData: " + str(e1))
 
-        return json.dumps(SupportData, sort_keys=False)
+        try:
+            # indent 4 will keep some mail servers from having problems.
+            return json.dumps(SupportData, indent=4, sort_keys=False)
+        except Exception as e1:
+            self.LogErrorLine("Error in GetSupportData (2): " + str(e1))
+            return "Error Getting JSON data: " + str(e1)
 
     #---------- Monitor::GetLogFileNames----------------------------------------
     def GetLogFileNames(self):
@@ -433,6 +441,7 @@ class Monitor(MySupport):
 
             msgbody += self.Controller.DisplayRegisters(AllRegs = True)
 
+            # get data in JSON format
             msgbody += "\n" + self.GetSupportData()  + "\n"
             msgtitle = "Generator Monitor Log File Submission"
             if SendLogs == True:

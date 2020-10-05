@@ -1,9 +1,12 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.15.01 - 2020-10-05
+- Minor update that changes the format of register and log submissions to comply with RFC 2821 #4.5.3.1.
+
 ## V1.15.00 - 2020-10-02
 - Implimented fix for Evolution 2 firmware 1.1x
-- Added client id parameter for genmqtt add on 
+- Added client id parameter for genmqtt add on
 
 ## V1.14.33 - 2020-09-28
 - Updated myplatform.py to reflects some raspbian updates
