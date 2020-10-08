@@ -893,7 +893,7 @@ class Monitor(MySupport):
                 try:
                     import urllib2
                     url = "https://raw.githubusercontent.com/jgyates/genmon/master/genmon.py"
-                    data = urllib2.urlopen(url).read(20000) # read only 2000 chars
+                    data = urllib2.urlopen(url).read(4000) # read only first 4000 chars
                     data = data.split("\n") # then split it into lines
 
                     for line in data:

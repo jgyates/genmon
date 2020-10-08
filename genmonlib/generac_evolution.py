@@ -740,19 +740,19 @@ class Evolution(GeneratorController):
             self.LogError("Error in LookUpSNInfo: bad input, no serial number or controller info not present. Possible issue with serial comms.")
             return False, ReturnModel, ReturnKW
 
-        if "none" in SerialNumber.lower():      # serial number is not present due to controller being replaced
+        if "none" in SerialNumber.lower() or "unknown" in SerialNumber.lower():      # serial number is not present due to controller being replaced
             self.LogError("Error in LookUpSNInfo: No valid serial number, controller likely replaced.")
             return False, ReturnModel, ReturnKW
 
         try:
             # for diagnostic reasons we will log the internet search
-            self.LogError("Looking up model info on internet")
+            self.LogError("Looking up model info on internet using SN: " + str(SerialNumber))
             myregex = re.compile('<.*?>')
 
             try:
                 conn = HTTPSConnection("www.generac.com", 443, timeout=10)
                 conn.request("GET", "/GeneracCorporate/WebServices/GeneracSelfHelpWebService.asmx/GetSearchResults?query=" + SerialNumber, "",
-                        headers={"User-Agent": "Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)"})
+                        headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36 Edge/17.17134"})
                 r1 = conn.getresponse()
             except Exception as e1:
                 conn.close()
@@ -2505,6 +2505,9 @@ class Evolution(GeneratorController):
         # at present I am guessing that the 3 that is interleaved in this data is the line of gensets (air cooled may be 03?)
 
         if self.PreNexus:
+            # Pre-Nexus does not have a serial number
+            if self.SerialNumberReplacement != None:
+                return self.SerialNumberReplacement
             return "Unknown"
         RegStr = "%04x" % SERIAL_NUM_REG
         Value = self.GetRegisterValueFromList(RegStr)       # Serial Number Register
@@ -2513,7 +2516,8 @@ class Evolution(GeneratorController):
             self.ModBus.ProcessTransaction("%04x" % SERIAL_NUM_REG, SERIAL_NUM_REG_LENGTH)
             return ""
 
-        if Value[0] == 'f' and Value[1] == 'f':
+        # all nexus and evolution models should have all "f" for values.
+        if (Value[0] == 'f' and Value[1] == 'f'):
             if self.SerialNumberReplacement != None:
                 return self.SerialNumberReplacement
             # this occurs if the controller has been replaced

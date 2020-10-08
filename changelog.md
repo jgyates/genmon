@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.15.02 - 2020-10-07
+- Minor fix to allow some pre-Nexus models to correctly perform a model lookup
+
 ## V1.15.01 - 2020-10-05
 - Minor update that changes the format of register and log submissions to comply with RFC 2821 #4.5.3.1.
 
