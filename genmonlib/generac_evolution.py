@@ -2365,7 +2365,6 @@ class Evolution(GeneratorController):
         if self.PreNexus:
             Month,Day,Year,Hour,Min, Seconds, LogCode = self.ParsePreNexusLog( Value, LogBase = LogBase)
             if Month == None:
-                self.LogError("Error in ParsePreNexusLog length check")
                 return ""
         else:
             if len(Value) > 20:
