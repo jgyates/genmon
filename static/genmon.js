@@ -1695,7 +1695,7 @@ function TestEmailSettings(smtp_server, smtp_port,email_account,sender_account,s
                        $('.vex-dialog-buttons').show();
                     } else {
                        vex.dialog.buttons.YES.text = 'Close';
-                       GenmonAlert("An error occured: <br>"+result+"<br><br>Please try again.");
+                       GenmonAlert("An error occurred: <br>"+result+"<br><br>Please try again.");
                        $('.vex-dialog-button-primary').text("Close");
                     }
       });
@@ -1801,7 +1801,7 @@ function DisplaySettings(){
         $('input').lc_switch();
         if (QR_Code_URL != "") {
           $("#qrcode").qrcode({width: 164,height: 164,text: QR_Code_URL});
-        } 
+        }
         $.extend($.idealforms.rules, {
            // The rule is added as "ruleFunction:arg1:arg2"
            HTTPAddress: function(input, value, arg1, arg2) {
