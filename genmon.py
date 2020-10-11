@@ -181,7 +181,7 @@ class Monitor(MySupport):
         # send mail to tell we are starting
         self.MessagePipe.SendMessage("Generator Monitor Starting at " + self.SiteName, "Generator Monitor Starting at " + self.SiteName , msgtype = "info")
 
-        self.LogError("GenMon Loaded for site: " + self.SiteName)
+        self.LogError("GenMon Loaded for site: " + self.SiteName + " using python " + str(sys.version_info.major) + "." + str(sys.version_info.minor))
 
     # ------------------------ Monitor::StartThreads----------------------------
     def StartThreads(self, reload = False):
@@ -732,6 +732,7 @@ class Monitor(MySupport):
         StartInfo = collections.OrderedDict()
         StartInfo["version"] = GENMON_VERSION
         StartInfo["sitename"] = self.SiteName
+        StartInfo["python"] = str(sys.version_info.major) + "." + str(sys.version_info.minor)
         ControllerStartInfo = self.Controller.GetStartInfo(NoTile = NoTile)
         StartInfo = self.MergeDicts(StartInfo, ControllerStartInfo)
         return StartInfo
