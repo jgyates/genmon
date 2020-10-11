@@ -90,8 +90,14 @@ class Loader(MySupport):
 
             if not self.ValidateConfig():
                 self.CopyConfFile()
-                self.LogInfo("Error validating config. Exiting")
-                sys.exit(2)
+                self.LogInfo("Error validating config. Retrying..")
+                self.config = MyConfig(filename = self.configfile, section = "genmon", log = self.log)
+                if not self.GetConfig():
+                    self.LogInfo("Error reading config file, 2nd attempt, Exiting")
+                    sys.exit(2)
+                if not self.ValidateConfig():
+                    self.LogInfo("Error validating config file, Exiting")
+                    sys.exit(2)
 
             self.LoadOrder = self.GetLoadOrder()
 
@@ -282,6 +288,16 @@ class Loader(MySupport):
                 self.LogInfo("Error validating config for " + Module + " : " + str(e1), LogLine = True)
                 return False
 
+        try:
+            if not self.CachedConfig["genmon"]["enable"]:
+                self.LogError("Warning: Genmon is not enabled, assume corrupt file.")
+                ErrorOccured = True
+            if not self.CachedConfig["genserv"]["enable"]:
+                self.LogError("Warning: Genserv is not enabled")
+
+        except Exception as e1:
+            self.LogErrorLine("Error in ValidateConfig, possible corrupt file. " + str(e1))
+            ErrorOccured = True
         return not ErrorOccured
 
     #---------------------------------------------------------------------------

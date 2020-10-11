@@ -8,16 +8,13 @@
 #
 # MODIFICATIONS:
 #
-# USAGE: This is the base class of used to abstract gauges and graphs, etc
-# LogError or FatalError should be used to log errors or fatal errors.
-#
 #-------------------------------------------------------------------------------
 
-import threading
-try:
-    from ConfigParser import RawConfigParser
-except ImportError as e:
-    from configparser import RawConfigParser
+import threading, sys
+if sys.version_info.major < 3:
+    from ConfigParser import ConfigParser
+else:
+    from configparser import ConfigParser
 
 from genmonlib.mycommon import MyCommon
 from genmonlib.program_defaults import ProgramDefaults
@@ -34,7 +31,7 @@ class MyConfig (MyCommon):
         self.CriticalLock = threading.Lock()        # Critical Lock (writing conf file)
         self.InitComplete = False
         try:
-            self.config = RawConfigParser()
+            self.config = ConfigParser()
             self.config.read(self.FileName)
 
             if self.Section == None:
@@ -98,9 +95,32 @@ class MyConfig (MyCommon):
                 self.LogErrorLine("Error in MyConfig:ReadValue: " + Entry + ": " + str(e1))
             return default
 
-
     #---------------------MyConfig::WriteSection--------------------------------
     def WriteSection(self, SectionName):
+
+        if self.Simulation:
+            return True
+
+        SectionList = self.GetSections()
+
+        if SectionName in SectionList:
+            self.LogError("Error in WriteSection: Section already exist.")
+            return True
+        try:
+            with self.CriticalLock:
+                with open(self.FileName, "w") as ConfigFile:
+                    if sys.version_info.major < 3:
+                        self.config.add_section(SectionName)
+                    else:
+                        self.config[SectionName] = {}
+                    self.config.write(ConfigFile)
+            return True
+        except Exception as e1:
+            self.LogErrorLine("Error in WriteSection: " + str(e1))
+            return False
+
+    #---------------------MyConfig::WriteSection--------------------------------
+    def old_WriteSection(self, SectionName):
 
         if self.Simulation:
             return True
@@ -125,6 +145,32 @@ class MyConfig (MyCommon):
 
     #---------------------MyConfig::WriteValue----------------------------------
     def WriteValue(self, Entry, Value, remove = False, section = None):
+
+        if self.Simulation:
+            return
+
+        if section != None:
+            self.SetSection(section)
+
+        try:
+            with self.CriticalLock:
+                if sys.version_info.major < 3:
+                    self.config.set(self.Section, Entry, Value)
+                else:
+                    section_data = self.config[self.Section]
+                    section_data[Entry] = Value
+
+                #Write changes back to file
+                with open(self.FileName, "w") as ConfigFile:
+                    self.config.write(ConfigFile)
+                return True
+
+        except Exception as e1:
+            self.LogErrorLine("Error in WriteValue: " + str(e1))
+            return False
+
+    #---------------------MyConfig::WriteValue----------------------------------
+    def old_WriteValue(self, Entry, Value, remove = False, section = None):
 
         if self.Simulation:
             return
@@ -187,7 +233,7 @@ class MyConfig (MyCommon):
             return True
 
         except Exception as e1:
-            self.LogError("Error in WriteValue: " + str(e1))
+            self.LogErrorLine("Error in WriteValue: " + str(e1))
             return False
 
     #---------------------MyConfig::GetSectionName------------------------------
