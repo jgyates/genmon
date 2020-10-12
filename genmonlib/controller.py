@@ -1269,7 +1269,7 @@ class GeneratorController(MySupport):
 
             if PowerValue == 0:
                 return None
-                
+
             FuelPerHour, Units = self.GetFuelConsumption(PowerValue, 60 * 60)
             if FuelPerHour == None or not len(Units):
                 return None
@@ -1280,7 +1280,7 @@ class GeneratorController(MySupport):
                 # make sure our units are correct
                 if Units.lower() == "cubic feet" and self.UseMetric == False:
                     # this means that fuel left is gallons and fuel per hour is cubic feet
-                    # so convert remaining fule from gallongs to cu ft
+                    # so convert remaining fuel from gallons to cu ft
                     # 1 gal = 0.133681 cu ft
                     FuelRemaining = FuelRemaining * 0.1336
                 if Units.lower() == "gal" and self.UseMetric == True:
