@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 - Added additional checks to look for corrupt config file and restore the file if corrupted
 - Changed some add on fields to hide passwords
 - Allow external tank data to be used in calculating time remaining until tank empty
+- Update typos
 
 ## V1.15.02 - 2020-10-07
 - Minor fix to allow some pre-Nexus models to correctly perform a model lookup
