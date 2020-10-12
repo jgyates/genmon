@@ -83,6 +83,9 @@ watchdog_addition=Additionl delay before a communication timeout notification
 disablepowerlog=Enable to disable the power log and current reading. Not supported on Nexus.
 estimated_load=The percent load (expesses a a decimal value i.e. .5 = 50 percent) used when estimating the run hours left until the tank is empty.
 subtractfuel=The amount of fuel (gal or L, depending on 'Use Metric' setting) to subtract from the fuel in tank estimate
+half_rate=The unit of fuel for Half and Full Rate parameters
+full_rate=The number of units of fuel consumed by your generator at a full load
+fuel_units=The number of units of fuel consumed by your generator at a half load
 user_url=A user defined URL link to include in status emails sent from the software when the generator status changes
 usenominallinevolts = Enable overriding of the default of 240V for nominal line voltage in the UI
 nominallinevolts = Override nominal line voltage value for UI (i.e. 220, 230 in stead of 240)
