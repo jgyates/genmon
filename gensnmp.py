@@ -595,20 +595,35 @@ class GenSNMP(MySupport):
                    self.CheckDictForChanges(item, CurrentPath)
                elif isinstance(item, list):
                    CurrentPath = PathPrefix + "/" + str(key)
-                   for listitem in item:
-                       if isinstance(listitem, dict):
-                           self.CheckDictForChanges(listitem, CurrentPath)
-                       elif isinstance(listitem, str) or isinstance(listitem, unicode):
-                           CurrentPath = PathPrefix + "/" + str(key)
-                           #todo list support
-                           pass
-                       else:
-                           self.LogError("Invalid type in CheckDictForChanges: %s %s (2)" % (key, str(type(listitem))))
+                   if self.ListIsStrings(item):
+                       # if this is a list of strings, the join the list to one comma separated string
+                       self.CheckForChanges(CurrentPath, ', '.join(item))
+                   else:
+                       for listitem in item:
+                           if isinstance(listitem, dict):
+                               self.CheckDictForChanges(listitem, CurrentPath)
+                           else:
+                               self.LogError("Invalid type in CheckDictForChanges: %s %s (2)" % (key, str(type(listitem))))
                else:
                    CurrentPath = PathPrefix + "/" + str(key)
                    self.CheckForChanges(CurrentPath, item)
         else:
            self.LogError("Invalid type in CheckDictForChanges %s " % str(type(node)))
+
+    # ---------- GenSNMP::ListIsStrings-----------------------------------------
+    # return true if every element of list is a string
+    def ListIsStrings(self, listinput):
+
+        try:
+            if not isinstance(listinput, list):
+                return False
+            for item in listinput:
+                if not (isinstance(item, str) or isinstance(item, unicode)):
+                    return False
+            return True
+        except Exception as e1:
+            self.LogErrorLine("Error in ListIsStrings: " + str(e1))
+            return False
 
     # ---------- GenSNMP::CheckForChanges-------------------------------------
     def CheckForChanges(self, Path, Value):
