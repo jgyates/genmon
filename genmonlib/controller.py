@@ -1249,7 +1249,7 @@ class GeneratorController(MySupport):
         return False
 
     #----------  GeneratorController::GetRemainingFuelTime------------------------
-    def GetRemainingFuelTime(self, ReturnFloat = False):
+    def GetRemainingFuelTime(self, ReturnFloat = False, Actual = False):
 
         try:
             if not self.FuelConsumptionGaugeSupported():
@@ -1262,19 +1262,37 @@ class GeneratorController(MySupport):
             FuelLevel = self.GetFuelLevel(ReturnFloat = True)
             FuelRemaining = self.TankSize * (FuelLevel / 100.0)
 
-            FuelPerHour, Units = self.GetFuelConsumption(self.EstimateLoad * int(self.NominalKW), 60 * 60)
+            if Actual:
+                PowerValue = self.GetPowerOutput(ReturnFloat = True)
+            else:
+                PowerValue = self.EstimateLoad * int(self.NominalKW)
+
+            if PowerValue == 0:
+                return None
+                
+            FuelPerHour, Units = self.GetFuelConsumption(PowerValue, 60 * 60)
             if FuelPerHour == None or not len(Units):
                 return None
             if FuelPerHour == 0:
                 return None
 
             try:
+                # make sure our units are correct
                 if Units.lower() == "cubic feet" and self.UseMetric == False:
+                    # this means that fuel left is gallons and fuel per hour is cubic feet
+                    # so convert remaining fule from gallongs to cu ft
                     # 1 gal = 0.133681 cu ft
                     FuelRemaining = FuelRemaining * 0.1336
                 if Units.lower() == "gal" and self.UseMetric == True:
-                    # 1 cu ft = 7.48052 gal
-                    FuelRemaining = FuelRemaining * 7.48052
+                    # this mean that fuel left is Liters, and fuel per hour is gallons
+                    # so convert remaining fuel to gallons
+                    # 1 L =  0.264172 gal
+                    FuelRemaining = FuelRemaining * 0.264172
+                if Units.lower() == "cubic feet" and self.UseMetric == True:
+                    # this means that fuel left is Liters and fuel per hour is cu feet
+                    # so convert remaing fuel to cubic feet
+                    # 1 L = 0.0353147 cu ft
+                    FuelRemaining = FuelRemaining * 0.0353147
             except:
                 pass
             HoursRemaining = FuelRemaining / FuelPerHour
