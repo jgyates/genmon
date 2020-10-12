@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - Changed some add on fields to hide passwords
 - Allow external tank data to be used in calculating time remaining until tank empty
 - Update typos
+- Update to gensnmp.py to fix issue with H100 alarm list
 
 ## V1.15.02 - 2020-10-07
 - Minor fix to allow some pre-Nexus models to correctly perform a model lookup
