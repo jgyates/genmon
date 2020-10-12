@@ -1268,6 +1268,15 @@ class GeneratorController(MySupport):
             if FuelPerHour == 0:
                 return None
 
+            try:
+                if Units.lower() == "cubic feet" and self.UseMetric == False:
+                    # 1 gal = 0.133681 cu ft
+                    FuelRemaining = FuelRemaining * 0.1336
+                if Units.lower() == "gal" and self.UseMetric == True:
+                    # 1 cu ft = 7.48052 gal
+                    FuelRemaining = FuelRemaining * 7.48052
+            except:
+                pass
             HoursRemaining = FuelRemaining / FuelPerHour
 
             if ReturnFloat:
