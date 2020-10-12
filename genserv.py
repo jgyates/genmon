@@ -689,7 +689,7 @@ def GetAddOns():
             display_name = "MQTT Authentication Username")
         AddOnCfg['genmqtt']['parameters']['password'] = CreateAddOnParam(
             ConfigFiles[GENMQTT_CONFIG].ReadValue("password", return_type = str, default = ""),
-            'string',
+            'password',
             "This value is used for the password if your MQTT server requires authentication. Leave blank for no authentication or no password.",
             bounds = 'minmax:4:50',
             display_name = "MQTT Authentication Password")
@@ -898,7 +898,7 @@ def GetAddOns():
             display_name = "Username")
         AddOnCfg['gentankutil']['parameters']['password'] = CreateAddOnParam(
             ConfigFiles[GENTANKUTIL_CONFIG].ReadValue("password", return_type = str, default = ""),
-            'string',
+            'password',
             "Password at tankutility.com",
             bounds = 'minmax:4:50',
             display_name = "Password")

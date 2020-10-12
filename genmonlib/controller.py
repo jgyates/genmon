@@ -1254,17 +1254,13 @@ class GeneratorController(MySupport):
         try:
             if not self.FuelConsumptionGaugeSupported():
                 return None
-            if not self.FuelTankCalculationSupported() and not self.FuelSensorSupported():
+            if not self.ExternalFuelDataSupported() and not self.FuelTankCalculationSupported() and not self.FuelSensorSupported():
                 return None
             if self.TankSize == 0:
                 return None
 
-            FuelLevel = self.GetEstimatedFuelInTank(ReturnFloat = True)
-
-            if FuelLevel == None:
-                return None
-
-            FuelRemaining = FuelLevel
+            FuelLevel = self.GetFuelLevel(ReturnFloat = True)
+            FuelRemaining = self.TankSize * (FuelLevel / 100.0)
 
             FuelPerHour, Units = self.GetFuelConsumption(self.EstimateLoad * int(self.NominalKW), 60 * 60)
             if FuelPerHour == None or not len(Units):
