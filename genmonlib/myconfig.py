@@ -86,7 +86,7 @@ class MyConfig (MyCommon):
                 elif return_type == int:
                     return self.config.getint(self.Section, Entry)
                 else:
-                    self.LogErrorLine("Error in MyConfig:ReadValue: invalid type:" + str(return_type))
+                    self.LogErrorLine("Warning in MyConfig:ReadValue: invalid type or missing value, using default :" + str(return_type))
                     return default
             else:
                 return default
