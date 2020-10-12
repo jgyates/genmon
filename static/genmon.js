@@ -1375,7 +1375,7 @@ function DisplayJournal(){
         processAjaxSuccess();
         allJournalEntries = result
 
-        var  outstr = 'Journal Entires:<br><br>';
+        var  outstr = 'Journal Entries:<br><br>';
         outstr += '<table id="alljournal" border="0" style="border-collapse: separate; border-spacing: 10px;" width="100%"><tbody>';
 
         $.each(Object.keys(result), function(i, key) {
