@@ -1278,23 +1278,32 @@ class GeneratorController(MySupport):
 
             try:
                 # make sure our units are correct
+                # 1 cubic foot propane = 0.0278 gallons propane
+                # 1 gallon propane = 35.97 cubic feet propane
+                # 1 cubic foot natural gas = 0.012 gallons natural gas
+                # 1 gallon natural gas = 82.62 cubic feet natural gas
                 if Units.lower() == "cubic feet" and self.UseMetric == False:
                     # this means that fuel left is gallons and fuel per hour is cubic feet
                     # so convert remaining fuel from gallons to cu ft
-                    # 1 gal = 0.133681 cu ft
-                    FuelRemaining = FuelRemaining * 0.1336
-                if Units.lower() == "gal" and self.UseMetric == True:
+                    if self.FuelType == "Natural Gas":
+                        # 1 gallon natural gas = 82.62 cubic feet natural gas
+                        FuelRemaining = FuelRemaining * 82.62
+                    else:
+                        # 1 gallon propane = 35.97 cubic feet propane
+                        FuelRemaining = FuelRemaining * 35.97
+                elif Units.lower() == "gal" and self.UseMetric == True:
                     # this mean that fuel left is Liters, and fuel per hour is gallons
                     # so convert remaining fuel to gallons
                     # 1 L =  0.264172 gal
                     FuelRemaining = FuelRemaining * 0.264172
-                if Units.lower() == "cubic feet" and self.UseMetric == True:
+                elif Units.lower() == "cubic feet" and self.UseMetric == True:
                     # this means that fuel left is Liters and fuel per hour is cu feet
                     # so convert remaing fuel to cubic feet
                     # 1 L = 0.0353147 cu ft
                     FuelRemaining = FuelRemaining * 0.0353147
-            except:
-                pass
+            except Exception as e1:
+                self.LogErrorLine("Error in GetRemainingFuelTime (2): " + str(e1))
+
             HoursRemaining = FuelRemaining / FuelPerHour
 
             if ReturnFloat:
