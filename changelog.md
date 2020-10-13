@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Update typos
 - Update to gensnmp.py to fix issue with H100 alarm list
 - Update to include fuel remainging based on estimated and current load assumptions
+- Added Fuel In Tank output on Maintenance page
 
 ## V1.15.02 - 2020-10-07
 - Minor fix to allow some pre-Nexus models to correctly perform a model lookup

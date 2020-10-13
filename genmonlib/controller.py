@@ -1125,6 +1125,28 @@ class GeneratorController(MySupport):
             except Exception as e1:
                 self.LogErrorLine("Error in PowerMeter: " + str(e1))
 
+    #----------  GeneratorController::GetFuelInTank------------------------------
+    def GetFuelInTank(self, ReturnFloat = False):
+
+        try:
+            if self.TankSize == 0:
+                return None
+
+            if self.UseMetric:
+                Units = "L"
+            else:
+                Units = "gal"
+
+            FuelLevel = self.GetFuelLevel(ReturnFloat = True)
+            FuelLevel = (FuelLevel * 0.01) * float(self.TankSize)
+
+            if ReturnFloat:
+                return float(FuelLevel)
+            else:
+                return "%.2f %s" % (FuelLevel, Units)
+        except Exception as e1:
+            self.LogErrorLine("Error in GetFuelInTank: " + str(e1))
+            return None
     #----------  GeneratorController::GetFuelLevel------------------------------
     def GetFuelLevel(self, ReturnFloat = False):
         # return 0 - 100 or None

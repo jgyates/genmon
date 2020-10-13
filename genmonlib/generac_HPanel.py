@@ -1694,16 +1694,25 @@ class HPanel(GeneratorController):
             Maintenance["Maintenance"].append({"Nominal Frequency" : self.NominalFreq})
             Maintenance["Maintenance"].append({"Fuel Type" : self.FuelType})
 
+            if self.UseMetric:
+                Units = "L"
+            else:
+                Units = "gal"
+
             if self.FuelSensorSupported():
-                Maintenance["Maintenance"].append({"Fuel Level Sensor" : self.ValueOut(self.GetFuelSensor(ReturnInt = True), "%", JSONNum)})
+                FuelValue = self.GetFuelSensor(ReturnInt = True)
+                Maintenance["Maintenance"].append({"Fuel Level Sensor" : self.ValueOut(FuelValue, "%", JSONNum)})
+                FuelValue = self.GetFuelInTank(ReturnFloat = True)
+                if FuelValue != None:
+                    Maintenance["Maintenance"].append({"Fuel In Tank (Sensor)" : self.ValueOut(FuelValue, Units, JSONNum)})
             elif self.ExternalFuelDataSupported():
-                Maintenance["Maintenance"].append({"Fuel Level Sensor" : self.ValueOut(self.GetExternalFuelPercentage(ReturnFloat = True), "%", JSONNum)})
+                FuelValue = self.GetExternalFuelPercentage(ReturnFloat = True)
+                Maintenance["Maintenance"].append({"Fuel Level Sensor" : self.ValueOut(FuelValue, "%", JSONNum)})
+                FuelValue = self.GetFuelInTank(ReturnFloat = True)
+                if FuelValue != None:
+                    Maintenance["Maintenance"].append({"Fuel In Tank (Sensor)" : self.ValueOut(FuelValue, Units, JSONNum)})
 
             if self.FuelTankCalculationSupported():
-                if self.UseMetric:
-                    Units = "L"
-                else:
-                    Units = "gal"
                 Maintenance["Maintenance"].append({"Estimated Fuel In Tank " : self.ValueOut(self.GetEstimatedFuelInTank(ReturnFloat = True), Units, JSONNum)})
 
                 DisplayText = "Hours of Fuel Remaining (Estimated %.02f Load )" % self.EstimateLoad

@@ -322,6 +322,7 @@ class GenSNMP(MySupport):
                 self.AddOID((CtlID,1,0,14),return_type = str, description = "RunHours30", default = " ", keywords = ["Maintenance","Run Hours in last 30 days"])
                 self.AddOID((CtlID,1,0,15),return_type = str, description = "EstHoursInTank", default = " ", keywords = ["Maintenance","Hours of Fuel Remaining","Estimated"])
                 self.AddOID((CtlID,1,0,16),return_type = str, description = "LoadHoursInTank", default = " ", keywords = ["Maintenance","Hours of Fuel Remaining","Current"])
+                self.AddOID((CtlID,1,0,17),return_type = str, description = "FuelInTank", default = " ", keywords = ["Maintenance","Fuel In Tank (Sensor)"])
 
                 #Maintenance->Controller Settings
                 self.AddOID((CtlID,1,1,0),return_type = str, description = "CalCurrent1", default = " ", keywords = ["Maintenance/Controller Settings","Calibrate Current 1"])
@@ -392,6 +393,7 @@ class GenSNMP(MySupport):
                 # Status Time
                 self.AddOID((CtlID,0,3,0),return_type = str, description = "MonitorTime", default = " ", keywords = ["Status/Time","Monitor Time"])
                 self.AddOID((CtlID,0,3,1),return_type = str, description = "GeneratorTime", default = " ", keywords = ["Status/Time","Generator Time"])
+                # TODO selected H-100 Maint items?
 
             # Monitor->Generator Monitor Stats
             self.AddOID((CtlID,4,0,0),return_type = str, description = "MonitorHealth", default = "Unknown", keywords = ["Monitor","Monitor Health"])

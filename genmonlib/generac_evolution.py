@@ -1852,16 +1852,26 @@ class Evolution(GeneratorController):
             Maintenance["Maintenance"].append({"Rated kW" : str(self.NominalKW) + " kW"})
             Maintenance["Maintenance"].append({"Nominal Frequency" : str(self.NominalFreq) + " Hz"})
             Maintenance["Maintenance"].append({"Fuel Type" : self.FuelType})
+            if self.UseMetric:
+                Units = "L"
+            else:
+                Units = "gal"
+
             if self.FuelSensorSupported():
-                Maintenance["Maintenance"].append({"Fuel Level Sensor" : self.ValueOut(self.GetFuelSensor(ReturnInt = True), "%", JSONNum)})
+                FuelValue = self.GetFuelSensor(ReturnInt = True)
+                Maintenance["Maintenance"].append({"Fuel Level Sensor" : self.ValueOut(FuelValue, "%", JSONNum)})
+                FuelValue = self.GetFuelInTank(ReturnFloat = True)
+                if FuelValue != None:
+                    Maintenance["Maintenance"].append({"Fuel In Tank (Sensor)" : self.ValueOut(FuelValue, Units, JSONNum)})
             elif self.ExternalFuelDataSupported():
-                Maintenance["Maintenance"].append({"Fuel Level Sensor" : self.ValueOut(self.GetExternalFuelPercentage(ReturnFloat = True), "%", JSONNum)})
+                FuelValue = self.GetExternalFuelPercentage(ReturnFloat = True)
+                Maintenance["Maintenance"].append({"Fuel Level Sensor" : self.ValueOut(FuelValue, "%", JSONNum)})
+                FuelValue = self.GetFuelInTank(ReturnFloat = True)
+                if FuelValue != None:
+                    Maintenance["Maintenance"].append({"Fuel In Tank (Sensor)" : self.ValueOut(FuelValue, Units, JSONNum)})
+
             if self.FuelTankCalculationSupported():
-                if self.UseMetric:
-                    Units = "L"
-                else:
-                    Units = "gal"
-                Maintenance["Maintenance"].append({"Estimated Fuel In Tank" : self.ValueOut(self.GetEstimatedFuelInTank(ReturnFloat = True), Units, JSONNum)})
+                Maintenance["Maintenance"].append({"Estimated Fuel In Tank " : self.ValueOut(self.GetEstimatedFuelInTank(ReturnFloat = True), Units, JSONNum)})
 
                 DisplayText = "Hours of Fuel Remaining (Estimated %.02f Load )" % self.EstimateLoad
                 RemainingFuelTimeFloat = self.GetRemainingFuelTime(ReturnFloat = True)
@@ -1871,7 +1881,6 @@ class Evolution(GeneratorController):
                 RemainingFuelTimeFloat = self.GetRemainingFuelTime(ReturnFloat = True, Actual = True)
                 if RemainingFuelTimeFloat != None:
                     Maintenance["Maintenance"].append({"Hours of Fuel Remaining (Current Load)" : self.ValueOut(RemainingFuelTimeFloat, "h", JSONNum)})
-
 
             if self.EngineDisplacement != "Unknown":
                 Maintenance["Maintenance"].append({"Engine Displacement" : self.UnitsOut( self.EngineDisplacement, type = float, NoString = JSONNum)})
