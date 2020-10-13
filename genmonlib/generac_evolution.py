@@ -1854,13 +1854,15 @@ class Evolution(GeneratorController):
             Maintenance["Maintenance"].append({"Fuel Type" : self.FuelType})
             if self.FuelSensorSupported():
                 Maintenance["Maintenance"].append({"Fuel Level Sensor" : self.ValueOut(self.GetFuelSensor(ReturnInt = True), "%", JSONNum)})
+            elif self.ExternalFuelDataSupported():
+                Maintenance["Maintenance"].append({"Fuel Level Sensor" : self.ValueOut(self.GetExternalFuelPercentage(ReturnInt = True), "%", JSONNum)})
             if self.FuelTankCalculationSupported():
                 if self.UseMetric:
                     Units = "L"
                 else:
                     Units = "gal"
                 Maintenance["Maintenance"].append({"Estimated Fuel In Tank" : self.ValueOut(self.GetEstimatedFuelInTank(ReturnFloat = True), Units, JSONNum)})
-                
+
                 DisplayText = "Hours of Fuel Remaining (Estimated %.02f Load )" % self.EstimateLoad
                 RemainingFuelTimeFloat = self.GetRemainingFuelTime(ReturnFloat = True)
                 if RemainingFuelTimeFloat != None:

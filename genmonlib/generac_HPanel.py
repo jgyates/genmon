@@ -1696,6 +1696,8 @@ class HPanel(GeneratorController):
 
             if self.FuelSensorSupported():
                 Maintenance["Maintenance"].append({"Fuel Level Sensor" : self.ValueOut(self.GetFuelSensor(ReturnInt = True), "%", JSONNum)})
+            elif self.ExternalFuelDataSupported():
+                Maintenance["Maintenance"].append({"Fuel Level Sensor" : self.ValueOut(self.GetExternalFuelPercentage(ReturnInt = True), "%", JSONNum)})
 
             if self.FuelTankCalculationSupported():
                 if self.UseMetric:
