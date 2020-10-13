@@ -223,7 +223,8 @@ class MyMail(MySupport):
             if self.config.HasOption('usebcc'):
                 self.UseBCC = self.config.ReadValue('usebcc', return_type = bool)
 
-            self.ExtendWait = self.config.ReadValue('extend_wait', return_type = int, default = 0)
+            if self.config.HasOption('extend_wait'):
+                self.ExtendWait = self.config.ReadValue('extend_wait', return_type = int, default = 0)
 
             self.EmailPassword = self.config.ReadValue('email_pw', default = "")
             self.EmailPassword =  self.EmailPassword.strip()
