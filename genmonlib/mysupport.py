@@ -189,7 +189,9 @@ class MySupport(MyCommon):
             if not NoString:
                 return input
             InputArray = input.strip().split(" ")
-            if len(InputArray) == 2:
+            if len(InputArray) == 2 or len(InputArray) == 3:
+                if len(InputArray) == 3:    # this handles two word untis like 'cubic feet'
+                    InputArray[1] = InputArray[1] + " " + InputArray[2]
                 if type == int:
                     InputArray[0] = int(InputArray[0])
                 elif type == float:
