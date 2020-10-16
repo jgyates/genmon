@@ -17,6 +17,8 @@ function setuppython3() {
     usepython3=false
   elif [ $1 == "3" ]; then
     usepython3=true
+  elif [ $1 == "2" ]; then
+    usepython3=false
   else
     usepython3=false
   fi

@@ -34,7 +34,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.15.03"
+GENMON_VERSION = "V1.15.04"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(MySupport):
@@ -849,9 +849,14 @@ class Monitor(MySupport):
                 break
 
         if self.Controller.ModBus.UseTCP:
-            WatchDogPollTime = 8
+            WatchDogPollTime = 8.0
         else:
-            WatchDogPollTime = 2
+            WatchDogPollTime = 2.0
+
+        try:
+            WatchDogPollTime += float(self.Controller.ModBus.ModBusPacketTimoutMS / 1000)
+        except:
+            self.LogErrorLine("Error in ComWatchDog: " + str(e1))
 
 
         WatchDogPollTime += self.AdditionalWatchdogTime
@@ -892,8 +897,14 @@ class Monitor(MySupport):
                 self.LastSofwareUpdateCheck = datetime.datetime.now()
                 # Do the check
                 try:
-                    import urllib2
                     url = "https://raw.githubusercontent.com/jgyates/genmon/master/genmon.py"
+                    try:
+                        # For Python 3.0 and later
+                        from urllib.request import urlopen
+                    except ImportError:
+                        # Fall back to Python 2's urllib2
+                        from urllib2 import urlopen
+
                     data = urllib2.urlopen(url).read(4000) # read only first 4000 chars
                     data = data.split("\n") # then split it into lines
 

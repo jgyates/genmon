@@ -585,7 +585,7 @@ class Evolution(GeneratorController):
                 if ParamGroup == int(Item[4]) and VoltageCode == int(Item[5] ):
                     return Item
 
-            self.LogError("Unable to find match for Param Group and Voltage Code: " + str(ParamGroup) + ", " + str(VoltageCode))
+            self.LogDebug("Unable to find match for Param Group and Voltage Code: " + str(ParamGroup) + ", " + str(VoltageCode))
         except Exception as e1:
             self.LogErrorLine("Error in GetLiquidCooledParams: " + str(e1))
 

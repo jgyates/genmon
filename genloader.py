@@ -142,6 +142,10 @@ class Loader(MySupport):
         ]
         try:
             ErrorOccured = False
+
+            # This will check if pip is installed 
+            #if "linux" in sys.platform:
+            #    self.CheckBaseSoftware()
             for Module in ModuleList:
                 if not self.LibraryIsInstalled(Module[0]):
                     self.LogInfo("Warning: required library " + Module[1] + " not installed. Attempting to install....")
@@ -155,6 +159,54 @@ class Loader(MySupport):
             return not ErrorOccured
         except Exception as e1:
             self.LogInfo("Error in CheckSystem: " + str(e1), LogLine = True)
+            return False
+
+    #---------------------------------------------------------------------------
+    def CheckBaseSoftware(self):
+
+        try:
+            if sys.version_info[0] < 3:
+                pipProgram = "pip"
+            else:
+                pipProgram = "pip3"
+
+            install_list = [pipProgram, '-V']
+            process = Popen(install_list, stdout=PIPE, stderr=PIPE)
+            output, _error = process.communicate()
+
+            if _error:
+                self.LogInfo("Error in CheckBaseSoftware  : " + libraryname + " : " + str(_error))
+            rc = process.returncode
+
+            return True
+        except Exception as e1:
+            self.LogInfo("Error in CheckBaseSoftware: " + str(e1), LogLine = True)
+            self.InstallBaseSoftware()
+            return False
+
+    #---------------------------------------------------------------------------
+    def InstallBaseSoftware(self):
+
+        try:
+            if sys.version_info[0] < 3:
+                pipProgram = "python-pip"
+            else:
+                pipProgram = "python3-pip"
+
+            install_list = ["sudo","apt-get","-yqq","update"]
+            process = Popen(install_list, stdout=PIPE, stderr=PIPE)
+            output, _error = process.communicate()
+
+            if _error:
+                self.LogInfo("Error in InstallBaseSoftware  : " + libraryname + " : " + str(_error))
+            rc = process.returncode
+
+            install_list = ["sudo","apt-get","-yqq","install", pipProgram]
+            process = Popen(install_list, stdout=PIPE, stderr=PIPE)
+            output, _error = process.communicate()
+            return True
+        except Exception as e1:
+            self.LogInfo("Error in CheckBaseSoftware: " + str(e1), LogLine = True)
             return False
 
     #---------------------------------------------------------------------------

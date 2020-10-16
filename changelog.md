@@ -1,12 +1,17 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.15.04 - 2020-10-16
+- Minor update to correct issue with software update check when using python 3.x
+- Minor improvements that could help bad wifi when using serial over TCP over wifi
+- Update to install script that will make move from python 2.7 to 3.x easier
+
 ## V1.15.03 - 2020-10-11
 - Minor update to correct issue with writing config file
 - Added additional checks to look for corrupt config file and restore the file if corrupted
 - Changed some add on fields to hide passwords
 - Allow external tank data to be used in calculating time remaining until tank empty
-- Update typos
+- Correct typos
 - Update to gensnmp.py to fix issue with H100 alarm list
 - Update to include fuel remainging based on estimated and current load assumptions
 - Added Fuel In Tank output on Maintenance page

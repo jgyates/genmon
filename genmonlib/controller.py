@@ -73,6 +73,7 @@ class GeneratorController(MySupport):
         self.ExternalDataLock = threading.RLock()
         self.ExternalTempData = None
         self.ExternalTempDataTime = None
+        self.debug = False
 
         self.UtilityVoltsMin = 0    # Minimum reported utility voltage above threshold
         self.UtilityVoltsMax = 0    # Maximum reported utility voltage above pickup
@@ -175,7 +176,8 @@ class GeneratorController(MySupport):
                 try:
                     if not self.InitComplete:
                         self.InitDevice()
-                    self.MasterEmulation()
+                    else:
+                        self.MasterEmulation()
                     if self.IsStopSignaled("ProcessThread"):
                         break
                     if self.IsStopping:

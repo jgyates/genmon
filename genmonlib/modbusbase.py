@@ -126,6 +126,7 @@ class ModbusBase(MySupport ):
         self.SlowCPUOptimization = False
         self.UseTCP = False
         self.AdditionalModbusTimeout = 0
+        self.ModBusPacketTimoutMS = 0
         self.ResponseAddress = None         # Used if recieve packes have a different address than sent packets
         self.debug = False
 
