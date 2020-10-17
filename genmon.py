@@ -905,7 +905,7 @@ class Monitor(MySupport):
                         # Fall back to Python 2's urllib2
                         from urllib2 import urlopen
 
-                    data = urllib2.urlopen(url).read(4000) # read only first 4000 chars
+                    data = urlopen(url).read(4000) # read only first 4000 chars
                     data = data.split("\n") # then split it into lines
 
                     for line in data:
