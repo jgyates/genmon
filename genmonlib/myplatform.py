@@ -109,6 +109,8 @@ class MyPlatform(MyCommon):
             try:
                 process = Popen(['/opt/vc/bin/vcgencmd', 'measure_temp'], stdout=PIPE)
                 output, _error = process.communicate()
+                if sys.version_info[0] >= 3:
+                    output = str(output)    # convert byte array to string for python3
                 if self.UseMetric:
                     PiInfo.append({"CPU Temperature" : "%.2f C" % float(output[output.index('=') + 1:output.rindex("'")])})
                 else:
