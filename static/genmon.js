@@ -232,7 +232,7 @@ function CreateMenu() {
 
     SetHeaderValues();
     $("#footer").html('<table border="0" width="100%" height="30px"><tr><td width="5%"><img class="tooltip alert_small" id="ajaxWarning" src="images/transparent.png" height="28px" width="28px" style="display: none;"></td><td width="90%"><a href="https://github.com/jgyates/genmon" target="_blank">GenMon Project on GitHub</a></td><td width="5%"></td></tr></table>');
-    $('#ajaxWarning').tooltipster({minWidth: '280px', maxWidth: '480px', animation: 'fade', updateAnimation: 'null', contentAsHTML: 'true', delay: 100, animationDuration: 200, side: ['top', 'left'], content: "No Communicatikon Errors occured"});
+    $('#ajaxWarning').tooltipster({minWidth: '280px', maxWidth: '480px', animation: 'fade', updateAnimation: 'null', contentAsHTML: 'true', delay: 100, animationDuration: 200, side: ['top', 'left'], content: "No Communication Errors occured"});
 
     if (myGenerator["pages"]["status"] == true)
        outstr += '<li id="status"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="status" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Status</td></tr></table></a></li>';

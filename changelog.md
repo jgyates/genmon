@@ -1,6 +1,12 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.15.05 - 2020-10-18
+- Added alarm code for Fuse Problem with Evoltuion Air Cooled
+- Reverted to older config file write functions as the new ones did not provide the benefit expected
+- Corrected one typo
+- Fix for checking for software update bug
+
 ## V1.15.04 - 2020-10-16
 - Minor update to correct issue with software update check when using python 3.x
 - Minor improvements that could help bad wifi when using serial over TCP over wifi

@@ -96,7 +96,7 @@ class MyConfig (MyCommon):
             return default
 
     #---------------------MyConfig::WriteSection--------------------------------
-    def WriteSection(self, SectionName):
+    def alt_WriteSection(self, SectionName):
 
         if self.Simulation:
             return True
@@ -120,7 +120,7 @@ class MyConfig (MyCommon):
             return False
 
     #---------------------MyConfig::WriteSection--------------------------------
-    def old_WriteSection(self, SectionName):
+    def WriteSection(self, SectionName):
 
         if self.Simulation:
             return True
@@ -144,7 +144,7 @@ class MyConfig (MyCommon):
             return False
 
     #---------------------MyConfig::WriteValue----------------------------------
-    def WriteValue(self, Entry, Value, remove = False, section = None):
+    def alt_WriteValue(self, Entry, Value, remove = False, section = None):
 
         if self.Simulation:
             return
@@ -170,7 +170,7 @@ class MyConfig (MyCommon):
             return False
 
     #---------------------MyConfig::WriteValue----------------------------------
-    def old_WriteValue(self, Entry, Value, remove = False, section = None):
+    def WriteValue(self, Entry, Value, remove = False, section = None):
 
         if self.Simulation:
             return
