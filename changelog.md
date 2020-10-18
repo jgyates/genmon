@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 - Reverted to older config file write functions as the new ones did not provide the benefit expected
 - Corrected one typo
 - Fix for checking for software update bug
+- Additional minor fix for pyton 3.x
 
 ## V1.15.04 - 2020-10-16
 - Minor update to correct issue with software update check when using python 3.x
