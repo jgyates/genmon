@@ -119,9 +119,11 @@ class MyPlatform(MyCommon):
                 process = Popen(['cat', '/sys/class/thermal/thermal_zone0/temp'], stdout=PIPE)
                 output, _error = process.communicate()
                 if self.UseMetric:
-                    TempStr = str(float(output) / 1000) + " C"
+                    TempFloat = float(float(output) / 1000)
+                    TempStr =  "%.2f C" % TempFloat
                 else:
-                    TempStr = str(self.ConvertCelsiusToFahrenheit(float(output) / 1000)) + " F"
+                    TempFloat = float(self.ConvertCelsiusToFahrenheit(float(output) / 1000))
+                    TempStr =  "%.2f F" % TempFloat
                 PiInfo.append({"CPU Temperature" : TempStr})
 
             try:
