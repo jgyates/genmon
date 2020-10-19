@@ -953,92 +953,93 @@ class HPanel(GeneratorController):
     #-------------HPanel:SetupTiles---------------------------------------------
     def SetupTiles(self):
         try:
-            self.TileList = []
-            Tile = MyTile(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = self.NominalBatteryVolts,
-                callback = self.GetParameter,
-                callbackparameters = (self.Reg.BATTERY_VOLTS[REGISTER],  None, 100.0, False, False, True))
-            self.TileList.append(Tile)
-
-            # Nominal Voltage for gauge
-            if self.VoltageConfig != None:
-                #Valid settings are: 120/208, 120/240, 230/400, 240/415, 277/480, 347/600
-                VoltageConfigList = self.VoltageConfig.split("/")
-                NominalVoltage = int(VoltageConfigList[1])
-            else:
-                NominalVoltage = 600
-
-            if self.NominalKW == None or self.NominalKW == "" or self.NominalKW == "Unknown":
-                self.NominalKW = "550"
-
-            Tile = MyTile(self.log, title = "Voltage (Avg)", units = "V", type = "linevolts", nominal = NominalVoltage,
-            callback = self.GetParameter,
-            callbackparameters = (self.Reg.AVG_VOLTAGE[REGISTER], None, None, False, True, False))
-            self.TileList.append(Tile)
-
-            NominalCurrent = int(self.NominalKW) * 1000 / NominalVoltage
-            Tile = MyTile(self.log, title = "Current (Avg)", units = "A", type = "current", nominal = NominalCurrent,
-            callback = self.GetParameter,
-            callbackparameters = (self.Reg.AVG_CURRENT[REGISTER], None, None, False, True, False))
-            self.TileList.append(Tile)
-
-            if self.NominalFreq == None or self.NominalFreq == "" or self.NominalFreq == "Unknown":
-                self.NominalFreq = "60"
-            Tile = MyTile(self.log, title = "Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq),
-            callback = self.GetParameter,
-            callbackparameters = (self.Reg.OUTPUT_FREQUENCY[REGISTER], None, 10.0, False, False, True))
-            self.TileList.append(Tile)
-
-            if self.NominalRPM == None or self.NominalRPM == "" or self.NominalRPM == "Unknown":
-                self.NominalRPM = "3600"
-            Tile = MyTile(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM),
-            callback = self.GetParameter,
-            callbackparameters = (self.Reg.OUTPUT_RPM[REGISTER], None, None, False, True, False))
-            self.TileList.append(Tile)
-
-            # water temp between 170 and 200 is a normal range for a gen. most have a 180f thermostat
-            Tile = MyTile(self.log, title = "Coolant Temp", units = "F", type = "temperature", subtype = "coolant", nominal = 180, maximum = 300,
-            callback = self.GetParameter,
-            callbackparameters = (self.Reg.COOLANT_TEMP[REGISTER], None, None, False, True, False))
-            self.TileList.append(Tile)
-
-            if self.HTSTransferSwitch:
-                Tile = MyTile(self.log, title = "Utility Voltage (Avg)", units = "V", type = "linevolts", nominal = NominalVoltage,
-                callback = self.GetParameter,
-                callbackparameters = (self.Reg.EXT_SW_UTILITY_AVG_VOLTS[REGISTER], None, None, False, True, False))
-                self.TileList.append(Tile)
-                Tile = MyTile(self.log, title = "Utility Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq),
-                callback = self.GetParameter,
-                callbackparameters = (self.Reg.EXT_SW_UTILITY_FREQ[REGISTER], None, 100.0, False, False, True))
-                self.TileList.append(Tile)
-                Tile = MyTile(self.log, title = "Utility Power", units = "kW", type = "power", nominal = int(self.NominalKW),
-                callback = self.GetParameter,
-                callbackparameters = (self.Reg.EXT_SW_UTILITY_KW[REGISTER], None, None, False, True, False))
+            with self.ExternalDataLock:
+                self.TileList = []
+                Tile = MyTile(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = self.NominalBatteryVolts,
+                    callback = self.GetParameter,
+                    callbackparameters = (self.Reg.BATTERY_VOLTS[REGISTER],  None, 100.0, False, False, True))
                 self.TileList.append(Tile)
 
-            if self.FuelSensorSupported():
-                Tile = MyTile(self.log, title = "Fuel", units = "%", type = "fuel", nominal = 100, callback = self.GetFuelSensor, callbackparameters = (True,))
-                self.TileList.append(Tile)
-            elif self.ExternalFuelDataSupported():
-                Tile = MyTile(self.log, title = "External Tank", units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True,))
-                self.TileList.append(Tile)
-            elif self.FuelConsumptionGaugeSupported():    # no gauge for NG
-                if self.UseMetric:
-                    Units = "L"         # no gauge for NG
+                # Nominal Voltage for gauge
+                if self.VoltageConfig != None:
+                    #Valid settings are: 120/208, 120/240, 230/400, 240/415, 277/480, 347/600
+                    VoltageConfigList = self.VoltageConfig.split("/")
+                    NominalVoltage = int(VoltageConfigList[1])
                 else:
-                    Units = "gal"       # no gauge for NG
-                Tile = MyTile(self.log, title = "Estimated Fuel", units = Units, type = "fuel", nominal = int(self.TankSize), callback = self.GetEstimatedFuelInTank, callbackparameters = (True,))
+                    NominalVoltage = 600
+
+                if self.NominalKW == None or self.NominalKW == "" or self.NominalKW == "Unknown":
+                    self.NominalKW = "550"
+
+                Tile = MyTile(self.log, title = "Voltage (Avg)", units = "V", type = "linevolts", nominal = NominalVoltage,
+                callback = self.GetParameter,
+                callbackparameters = (self.Reg.AVG_VOLTAGE[REGISTER], None, None, False, True, False))
                 self.TileList.append(Tile)
 
-            if self.PowerMeterIsSupported():
-                Tile = MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = int(self.NominalKW),
+                NominalCurrent = int(self.NominalKW) * 1000 / NominalVoltage
+                Tile = MyTile(self.log, title = "Current (Avg)", units = "A", type = "current", nominal = NominalCurrent,
                 callback = self.GetParameter,
-                callbackparameters = (self.Reg.TOTAL_POWER_KW[REGISTER], None, None, False, True, False))
+                callbackparameters = (self.Reg.AVG_CURRENT[REGISTER], None, None, False, True, False))
                 self.TileList.append(Tile)
 
-                Tile = MyTile(self.log, title = "kW Output", type = "powergraph", nominal = int(self.NominalKW),
+                if self.NominalFreq == None or self.NominalFreq == "" or self.NominalFreq == "Unknown":
+                    self.NominalFreq = "60"
+                Tile = MyTile(self.log, title = "Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq),
                 callback = self.GetParameter,
-                callbackparameters = (self.Reg.TOTAL_POWER_KW[REGISTER], None, None, False, True, False))
+                callbackparameters = (self.Reg.OUTPUT_FREQUENCY[REGISTER], None, 10.0, False, False, True))
                 self.TileList.append(Tile)
+
+                if self.NominalRPM == None or self.NominalRPM == "" or self.NominalRPM == "Unknown":
+                    self.NominalRPM = "3600"
+                Tile = MyTile(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM),
+                callback = self.GetParameter,
+                callbackparameters = (self.Reg.OUTPUT_RPM[REGISTER], None, None, False, True, False))
+                self.TileList.append(Tile)
+
+                # water temp between 170 and 200 is a normal range for a gen. most have a 180f thermostat
+                Tile = MyTile(self.log, title = "Coolant Temp", units = "F", type = "temperature", subtype = "coolant", nominal = 180, maximum = 300,
+                callback = self.GetParameter,
+                callbackparameters = (self.Reg.COOLANT_TEMP[REGISTER], None, None, False, True, False))
+                self.TileList.append(Tile)
+
+                if self.HTSTransferSwitch:
+                    Tile = MyTile(self.log, title = "Utility Voltage (Avg)", units = "V", type = "linevolts", nominal = NominalVoltage,
+                    callback = self.GetParameter,
+                    callbackparameters = (self.Reg.EXT_SW_UTILITY_AVG_VOLTS[REGISTER], None, None, False, True, False))
+                    self.TileList.append(Tile)
+                    Tile = MyTile(self.log, title = "Utility Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq),
+                    callback = self.GetParameter,
+                    callbackparameters = (self.Reg.EXT_SW_UTILITY_FREQ[REGISTER], None, 100.0, False, False, True))
+                    self.TileList.append(Tile)
+                    Tile = MyTile(self.log, title = "Utility Power", units = "kW", type = "power", nominal = int(self.NominalKW),
+                    callback = self.GetParameter,
+                    callbackparameters = (self.Reg.EXT_SW_UTILITY_KW[REGISTER], None, None, False, True, False))
+                    self.TileList.append(Tile)
+
+                if self.FuelSensorSupported():
+                    Tile = MyTile(self.log, title = "Fuel", units = "%", type = "fuel", nominal = 100, callback = self.GetFuelSensor, callbackparameters = (True,))
+                    self.TileList.append(Tile)
+                elif self.ExternalFuelDataSupported():
+                    Tile = MyTile(self.log, title = "External Tank", units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True,))
+                    self.TileList.append(Tile)
+                elif self.FuelConsumptionGaugeSupported():    # no gauge for NG
+                    if self.UseMetric:
+                        Units = "L"         # no gauge for NG
+                    else:
+                        Units = "gal"       # no gauge for NG
+                    Tile = MyTile(self.log, title = "Estimated Fuel", units = Units, type = "fuel", nominal = int(self.TankSize), callback = self.GetEstimatedFuelInTank, callbackparameters = (True,))
+                    self.TileList.append(Tile)
+
+                if self.PowerMeterIsSupported():
+                    Tile = MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = int(self.NominalKW),
+                    callback = self.GetParameter,
+                    callbackparameters = (self.Reg.TOTAL_POWER_KW[REGISTER], None, None, False, True, False))
+                    self.TileList.append(Tile)
+
+                    Tile = MyTile(self.log, title = "kW Output", type = "powergraph", nominal = int(self.NominalKW),
+                    callback = self.GetParameter,
+                    callbackparameters = (self.Reg.TOTAL_POWER_KW[REGISTER], None, None, False, True, False))
+                    self.TileList.append(Tile)
 
         except Exception as e1:
             self.LogErrorLine("Error in SetupTiles: " + str(e1))

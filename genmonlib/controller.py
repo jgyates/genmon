@@ -1417,7 +1417,11 @@ class GeneratorController(MySupport):
         try:
             CmdList = command.split("=")
             if len(CmdList) == 2:
-                self.TankData = json.loads(CmdList[1])
+                with self.ExternalDataLock:
+                    self.TankData = json.loads(CmdList[1])
+                if not self.UseExternalFuelData:
+                    self.UseExternalFuelData = True
+                    self.SetupTiles()
             else:
                 self.LogError("Error in  SetExternalTankData: invalid input")
                 return "Error"

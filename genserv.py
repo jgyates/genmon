@@ -1083,12 +1083,14 @@ def SaveAddOnSettings(query_string):
             for basesettings, basevalues in entries.items():    # base settings
                 if basesettings == 'enable':
                     ConfigFiles[GENLOADER_CONFIG].WriteValue("enable", basevalues, section = module)
+                    # TODO This may not be needed now
                     if module == "gentankutil":
                         # update genmon.conf also to let it know that it should watch for external fuel data
                         ConfigFiles[GENMON_CONFIG].WriteValue("use_external_fuel_data", basevalues, section = "genmon")
                     if module == "gentankdiy":
                         # update genmon.conf also to let it know that it should watch for external fuel data
                         ConfigFiles[GENMON_CONFIG].WriteValue("use_external_fuel_data_diy", basevalues, section = "genmon")
+
                 if basesettings == 'parameters':
                     for params, paramvalue in basevalues.items():
                         if module == "genlog" and params == "Log File Name":
@@ -1481,12 +1483,12 @@ def GetAllConfigValues(FileName, section):
 
     ReturnDict = {}
     try:
-        config = MyConfig(filename = FileName, section = section)
+        config = MyConfig(filename = FileName, section = section, log = log)
 
         for (key, value) in config.GetList():
             ReturnDict[key.lower()] = value
     except Exception as e1:
-        LogErrorLine("Error GetAllConfigValues: " + FileName + ": "+ str(e1) )
+        LogErrorLine("Error GetAllConfigValues: " + FileName + ": " + section + ": " + str(e1) )
 
     return ReturnDict
 

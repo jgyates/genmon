@@ -301,43 +301,44 @@ class Evolution(GeneratorController):
     def SetupTiles(self):
 
         try:
-            self.TileList = []
-            Tile = MyTile(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = 12, callback = self.GetBatteryVoltage, callbackparameters = (True,))
-            self.TileList.append(Tile)
-            Tile = MyTile(self.log, title = "Utility Voltage", units = "V", type = "linevolts", nominal = self.NominalLineVolts, callback = self.GetUtilityVoltage, callbackparameters = (True,))
-            self.TileList.append(Tile)
-            Tile = MyTile(self.log, title = "Output Voltage", units = "V", type = "linevolts", nominal = self.NominalLineVolts, callback = self.GetVoltageOutput, callbackparameters = (True,))
-            self.TileList.append(Tile)
-
-            if self.NominalFreq == None or self.NominalFreq == "" or self.NominalFreq == "Unknown":
-                self.NominalFreq = "60"
-            Tile = MyTile(self.log, title = "Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq), callback = self.GetFrequency, callbackparameters = (False, True))
-            self.TileList.append(Tile)
-
-            if self.NominalRPM == None or self.NominalRPM == "" or self.NominalRPM == "Unknown":
-                self.NominalRPM = "3600"
-            Tile = MyTile(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM), callback = self.GetRPM, callbackparameters = (True,))
-            self.TileList.append(Tile)
-
-            if self.FuelSensorSupported():
-                Tile = MyTile(self.log, title = "Fuel", units = "%", type = "fuel", nominal = 100, callback = self.GetFuelSensor, callbackparameters = (True,))
+            with self.ExternalDataLock:
+                self.TileList = []
+                Tile = MyTile(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = 12, callback = self.GetBatteryVoltage, callbackparameters = (True,))
                 self.TileList.append(Tile)
-            elif self.ExternalFuelDataSupported():
-                Tile = MyTile(self.log, title = "External Tank", units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True,))
+                Tile = MyTile(self.log, title = "Utility Voltage", units = "V", type = "linevolts", nominal = self.NominalLineVolts, callback = self.GetUtilityVoltage, callbackparameters = (True,))
                 self.TileList.append(Tile)
-            elif self.FuelConsumptionGaugeSupported():    # no gauge for NG
-                if self.UseMetric:
-                    Units = "L"         # no gauge for NG
-                else:
-                    Units = "gal"       # no gauge for NG
-                Tile = MyTile(self.log, title = "Estimated Fuel", units = Units, type = "fuel", nominal = int(self.TankSize), callback = self.GetEstimatedFuelInTank, callbackparameters = (True,))
+                Tile = MyTile(self.log, title = "Output Voltage", units = "V", type = "linevolts", nominal = self.NominalLineVolts, callback = self.GetVoltageOutput, callbackparameters = (True,))
                 self.TileList.append(Tile)
 
-            if self.PowerMeterIsSupported():
-                Tile = MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = float(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
+                if self.NominalFreq == None or self.NominalFreq == "" or self.NominalFreq == "Unknown":
+                    self.NominalFreq = "60"
+                Tile = MyTile(self.log, title = "Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq), callback = self.GetFrequency, callbackparameters = (False, True))
                 self.TileList.append(Tile)
-                Tile = MyTile(self.log, title = "kW Output", type = "powergraph", nominal = float(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
+
+                if self.NominalRPM == None or self.NominalRPM == "" or self.NominalRPM == "Unknown":
+                    self.NominalRPM = "3600"
+                Tile = MyTile(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM), callback = self.GetRPM, callbackparameters = (True,))
                 self.TileList.append(Tile)
+
+                if self.FuelSensorSupported():
+                    Tile = MyTile(self.log, title = "Fuel", units = "%", type = "fuel", nominal = 100, callback = self.GetFuelSensor, callbackparameters = (True,))
+                    self.TileList.append(Tile)
+                elif self.ExternalFuelDataSupported():
+                    Tile = MyTile(self.log, title = "External Tank", units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True,))
+                    self.TileList.append(Tile)
+                elif self.FuelConsumptionGaugeSupported():    # no gauge for NG
+                    if self.UseMetric:
+                        Units = "L"         # no gauge for NG
+                    else:
+                        Units = "gal"       # no gauge for NG
+                    Tile = MyTile(self.log, title = "Estimated Fuel", units = Units, type = "fuel", nominal = int(self.TankSize), callback = self.GetEstimatedFuelInTank, callbackparameters = (True,))
+                    self.TileList.append(Tile)
+
+                if self.PowerMeterIsSupported():
+                    Tile = MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = float(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
+                    self.TileList.append(Tile)
+                    Tile = MyTile(self.log, title = "kW Output", type = "powergraph", nominal = float(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
+                    self.TileList.append(Tile)
 
         except Exception as e1:
             self.LogErrorLine("Error in SetupTiles: " + str(e1))

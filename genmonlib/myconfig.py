@@ -50,8 +50,12 @@ class MyConfig (MyCommon):
 
     #---------------------MyConfig::GetList-------------------------------------
     def GetList(self):
+        try:
+            return self.config.items(self.Section)
 
-        return self.config.items(self.Section)
+        except Exception as e1:
+            self.LogErrorLine("Error in MyConfig:GetList: " + self.Section + ": " + str(e1))
+            return None
 
     #---------------------MyConfig::GetSections---------------------------------
     def GetSections(self):
