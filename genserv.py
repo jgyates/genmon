@@ -1771,12 +1771,6 @@ def LoadConfig():
         if ConfigFiles[GENMON_CONFIG].HasOption('server_port'):
             clientport = ConfigFiles[GENMON_CONFIG].ReadValue('server_port', return_type = int, default = ProgramDefaults.ServerPort)
 
-        if ConfigFiles[GENMON_CONFIG].HasOption('loglocation'):
-            loglocation = ConfigFiles[GENMON_CONFIG].ReadValue('loglocation')
-
-        # log errors in this module to a file
-        log = SetupLogger("genserv", loglocation + "genserv.log")
-
         bUseMFA = ConfigFiles[GENMON_CONFIG].ReadValue('usemfa', return_type = bool, default = False)
         SecretMFAKey = ConfigFiles[GENMON_CONFIG].ReadValue('secretmfa', default = None)
 
@@ -2020,7 +2014,16 @@ if __name__ == "__main__":
 
     ConfigFiles = {}
     for ConfigFile in ConfigFileList:
-        ConfigFiles[ConfigFile] = MyConfig(filename = ConfigFile, log = console)
+        if log == None:
+            configlog = console
+        else:
+            configlog = log
+        ConfigFiles[ConfigFile] = MyConfig(filename = ConfigFile, log = configlog)
+        if ConfigFile == GENMON_CONFIG:
+            if ConfigFiles[GENMON_CONFIG].HasOption('loglocation'):
+                loglocation = ConfigFiles[GENMON_CONFIG].ReadValue('loglocation')
+                # log errors in this module to a file
+                log = SetupLogger("genserv", loglocation + "genserv.log")
 
     AppPath = sys.argv[0]
     if not LoadConfig():
