@@ -6,6 +6,7 @@
 PARAMS=""
 genmondir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 pythoncommand="python"
+pipcommand="pip"
 config_path=""
 usepython3=false
 found_action=false

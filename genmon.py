@@ -906,6 +906,7 @@ class Monitor(MySupport):
                         from urllib2 import urlopen
 
                     data = urlopen(url).read(4000) # read only first 4000 chars
+                    data = data.decode('ascii')
                     data = data.split("\n") # then split it into lines
 
                     for line in data:
