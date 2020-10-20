@@ -160,7 +160,7 @@ if __name__=='__main__':
             ConfigFilePath = ConfigFilePath.strip()
 
     port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
-    log = SetupLogger("client", loglocation + "gensms_modem.log")
+    log = SetupLogger("client", os.path.join(loglocation, "gensms_modem.log"))
 
     try:
 

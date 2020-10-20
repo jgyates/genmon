@@ -407,7 +407,7 @@ def ProcessCommand(command):
                 Backup()    # Create backup file
                 # Now send the file
                 pathtofile = os.path.dirname(os.path.realpath(__file__))
-                return send_file(pathtofile + "/genmon_backup.tar.gz", as_attachment=True)
+                return send_file(os.path.join(pathtofile, "genmon_backup.tar.gz"), as_attachment=True)
         elif command in ["test_email"]:
             return SendTestEmail(request.args.get('test_email', default = None, type=str))
         else:
@@ -913,7 +913,7 @@ def GetAddOns():
         AddOnCfg['gentankdiy'] = collections.OrderedDict()
         AddOnCfg['gentankdiy']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "gentankdiy", default = False)
         AddOnCfg['gentankdiy']['title'] = "DIY Fuel Tank Gauge Sensor"
-        AddOnCfg['gentankdiy']['description'] = "Integrates DIY tank gauge sesnor for Genmon"
+        AddOnCfg['gentankdiy']['description'] = "Integrates DIY tank gauge sensor for Genmon"
         AddOnCfg['gentankdiy']['icon'] = "rpi"
         AddOnCfg['gentankdiy']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gentankdiypy-optional"
         AddOnCfg['gentankdiy']['parameters'] = collections.OrderedDict()
@@ -1259,7 +1259,7 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["watchdog_addition"] = ['float', 'Additional Watchdog Timeout (sec)', 8, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "watchdog_addition"]
         ConfigSettings["controllertype"] = ['list', 'Controller Type', 9, "generac_evo_nexus", "", "generac_evo_nexus,h_100", GENMON_CONFIG, GENMON_SECTION, "controllertype"]
         ConfigSettings["loglocation"] = ['string', 'Log Directory',10, ProgramDefaults.LogPath, "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "loglocation"]
-        ConfigSettings["userdatalocation"] = ['string', 'User Defined Data Directory',11, os.path.dirname(os.path.realpath(__file__))  + "/", "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "userdatalocation"]
+        ConfigSettings["userdatalocation"] = ['string', 'User Defined Data Directory',11, os.path.dirname(os.path.realpath(__file__)), "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "userdatalocation"]
         ConfigSettings["enabledebug"] = ['boolean', 'Enable Debug', 12, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "enabledebug"]
         ConfigSettings["ignore_unknown"] = ['boolean', 'Ignore Unknown Values', 13, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "ignore_unknown"]
         # These settings are not displayed as the auto-detect controller will set these
@@ -1546,9 +1546,9 @@ def CacheToolTips():
 
             except Exception as e1:
                 LogError("Error reading Controller Type for H-100: " + str(e1))
-        CachedRegisterDescriptions = GetAllConfigValues(pathtofile + "/data/tooltips.txt", config_section)
+        CachedRegisterDescriptions = GetAllConfigValues(os.path.join(pathtofile, "data/tooltips.txt"), config_section)
 
-        CachedToolTips = GetAllConfigValues(pathtofile + "/data/tooltips.txt", "ToolTips")
+        CachedToolTips = GetAllConfigValues(os.path.join(pathtofile, "data/tooltips.txt"), "ToolTips")
 
     except Exception as e1:
         LogErrorLine("Error reading tooltips.txt " + str(e1) )
@@ -1662,9 +1662,10 @@ def Backup():
 def RunBashScript(ScriptName):
     try:
         pathtoscript = os.path.dirname(os.path.realpath(__file__))
+        script = os.path.join(pathtoscript, ScriptName)
         command = "/bin/bash "
-        LogError("Script: " + command + pathtoscript + "/" + ScriptName)
-        subprocess.call(command + pathtoscript + "/" + ScriptName, shell=True)
+        LogError("Script: " + command + script)
+        subprocess.call(command + script, shell=True)
         return True
 
     except Exception as e1:
@@ -1952,7 +1953,6 @@ def Close(NoExit = False):
 if __name__ == "__main__":
 
     address=ProgramDefaults.LocalHost
-    ConfigFilePath='/etc/'
 
     # log errors in this module to a file
     console = SetupLogger("genserv_console", log_file = "", stream = True)
@@ -2023,7 +2023,7 @@ if __name__ == "__main__":
             if ConfigFiles[GENMON_CONFIG].HasOption('loglocation'):
                 loglocation = ConfigFiles[GENMON_CONFIG].ReadValue('loglocation')
                 # log errors in this module to a file
-                log = SetupLogger("genserv", loglocation + "genserv.log")
+                log = SetupLogger("genserv", os.path.join(loglocation, "genserv.log"))
 
     AppPath = sys.argv[0]
     if not LoadConfig():
@@ -2037,12 +2037,12 @@ if __name__ == "__main__":
 
     LogError("Starting " + AppPath + ", Port:" + str(HTTPPort) + ", Secure HTTP: " + str(bUseSecureHTTP) + ", SelfSignedCert: " + str(bUseSelfSignedCert))
     # validate needed files are present
-    filename = os.path.dirname(os.path.realpath(__file__)) + "/startgenmon.sh"
+    filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "startgenmon.sh")
     if not os.path.isfile(filename):
         LogError("Required file missing : startgenmon.sh")
         sys.exit(1)
 
-    filename = os.path.dirname(os.path.realpath(__file__)) + "/genmonmaint.sh"
+    filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "genmonmaint.sh")
     if not os.path.isfile(filename):
         LogError("Required file missing : genmonmaint.sh")
         sys.exit(1)

@@ -566,7 +566,7 @@ if __name__=='__main__':
         sys.exit(1)
     try:
         port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
-        log = SetupLogger("client", loglocation + "genalexa.log")
+        log = SetupLogger("client", os.path.join(loglocation, "genalexa.log"))
     except Exception as e1:
         print("Error setting up log: " + str(e1))
         sys.exit(1)
@@ -574,11 +574,11 @@ if __name__=='__main__':
         # Set the signal handler
         signal.signal(signal.SIGINT, signal_handler)
 
-        if not os.path.isfile(ConfigFilePath + 'genalexa.conf'):
+        if not os.path.isfile(os.path.join(ConfigFilePath, 'genalexa.conf')):
             console.error("Error: config file not found")
             log.error("Error: config file not found")
             sys.exit(1)
-        config = MyConfig(filename = ConfigFilePath + 'genalexa.conf', section = 'genalexa', log = log)
+        config = MyConfig(filename = os.path.join(ConfigFilePath, 'genalexa.conf'), section = 'genalexa', log = log)
         FauxmoName = config.ReadValue('name', default = " generator")
         FauxmoPort = config.ReadValue('port', return_type = int, default = 52004)
         Debug = config.ReadValue('debug', return_type = bool, default = False)

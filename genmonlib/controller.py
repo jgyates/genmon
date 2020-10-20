@@ -54,13 +54,13 @@ class GeneratorController(MySupport):
         self.NotChanged = 0         # stats for registers
         self.Changed = 0            # stats for registers
         self.TotalChanged = 0.0     # ratio of changed ragisters
-        self.MaintLog =  ConfigFilePath + "maintlog.json"
+        self.MaintLog =  os.path.join(ConfigFilePath, "maintlog.json")
         self.MaintLogList = []
         self.MaintLock = threading.RLock()
-        self.OutageLog = ConfigFilePath + "outage.txt"
+        self.OutageLog = os.path.join(ConfigFilePath, "outage.txt")
         self.MinimumOutageDuration = 0
         self.PowerLogMaxSize = 15.0       # 15 MB max size
-        self.PowerLog =  ConfigFilePath + "kwlog.txt"
+        self.PowerLog =  os.path.join(ConfigFilePath, "kwlog.txt")
         self.PowerLogList = []
         self.PowerLock = threading.RLock()
         self.KWHoursMonth = None

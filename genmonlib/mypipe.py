@@ -32,7 +32,7 @@ class MyPipe(MySupport):
 
         self.FileAccessLock = threading.RLock()
 
-        self.FileName = ConfigFilePath + self.BasePipeName + "_dat"
+        self.FileName = os.path.join(ConfigFilePath, self.BasePipeName + "_dat")
 
         try:
             if not Reuse:
@@ -85,7 +85,7 @@ class MyPipe(MySupport):
                 # since realines is blocking, check if the file is non zero before we attempt to read
                 if not os.path.getsize(self.FileName):
                     continue
-                
+
                 ValueList = self.ReadLines()
                 if len(ValueList):
                     for Value in ValueList:

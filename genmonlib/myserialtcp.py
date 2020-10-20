@@ -11,7 +11,7 @@
 
 from __future__ import print_function       # For python 3.x compatibility with print function
 
-import datetime, threading, sys, socket, time
+import datetime, threading, sys, socket, time, os
 
 from genmonlib.mysupport import MySupport
 from genmonlib.mylog import SetupLogger
@@ -50,7 +50,7 @@ class SerialTCPDevice(MySupport):
         # log errors in this module to a file
         self.console = SetupLogger("myserialtcp_console", log_file = "", stream = True)
         if log == None:
-            self.log = SetupLogger("myserialtcp", self.loglocation + "myserialtcp.log")
+            self.log = SetupLogger("myserialtcp", os.path.join(self.loglocation, "myserialtcp.log"))
         else:
             self.log = log
 

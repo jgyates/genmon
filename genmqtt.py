@@ -67,7 +67,7 @@ class MyGenPush(MySupport):
             self.log = log
         else:
             # log errors in this module to a file
-            self.log = SetupLogger("client", loglocation + "mygenpush.log")
+            self.log = SetupLogger("client", os.path.join(loglocation, "mygenpush.log"))
 
         self.console = SetupLogger("mygenpush_console", log_file = "", stream = True)
 
@@ -254,8 +254,12 @@ class MyGenPush(MySupport):
             if not isinstance(listinput, list):
                 return False
             for item in listinput:
-                if not (isinstance(item, str) or isinstance(item, unicode)):
-                    return False
+                if sys.version_info[0] < 3:
+                    if not (isinstance(item, str) or isinstance(item, unicode)):
+                        return False
+                else:
+                    if not (isinstance(item, str) or isinstance(item, bytes)):
+                        return False
             return True
         except Exception as e1:
             self.LogErrorLine("Error in ListIsStrings: " + str(e1))
@@ -299,7 +303,7 @@ class MyMQTT(MyCommon):
 
         super(MyMQTT, self).__init__()
 
-        self.LogFileName = loglocation + "genmqtt.log"
+        self.LogFileName = os.path.join(loglocation, "genmqtt.log")
 
         if log != None:
             self.log = log
@@ -326,7 +330,7 @@ class MyMQTT(MyCommon):
         self.debug = False
 
         try:
-            config = MyConfig(filename =  configfilepath + 'genmqtt.conf', section = 'genmqtt', log = log)
+            config = MyConfig(filename =  os.path.join(configfilepath, 'genmqtt.conf'), section = 'genmqtt', log = log)
 
             self.Username = config.ReadValue('username')
 
@@ -382,8 +386,8 @@ class MyMQTT(MyCommon):
             else:
                 self.FlushInterval = float('inf')
         except Exception as e1:
-            self.LogErrorLine("Error reading " + configfilepath + "genmqtt.conf: " + str(e1))
-            self.console.error("Error reading " + configfilepath + "genmqtt.conf: " + str(e1))
+            self.LogErrorLine("Error reading " + os.path.join(configfilepath, "genmqtt.conf") + " : " + str(e1))
+            self.console.error("Error reading " + os.path.join(configfilepath, "genmqtt.conf") + " : " + str(e1))
             sys.exit(1)
 
         try:

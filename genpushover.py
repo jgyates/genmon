@@ -173,11 +173,11 @@ if __name__=='__main__':
             ConfigFilePath = ConfigFilePath.strip()
 
     port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
-    log = SetupLogger("client", loglocation + "genpushover.log")
+    log = SetupLogger("client", os.path.join(loglocation, "genpushover.log"))
 
     try:
 
-        config = MyConfig(filename = ConfigFilePath + 'genpushover.conf', section = 'genpushover', log = log)
+        config = MyConfig(filename = os.path.join(ConfigFilePath, 'genpushover.conf'), section = 'genpushover', log = log)
 
         appid = config.ReadValue('appid')
         userid = config.ReadValue('userid')
@@ -194,8 +194,8 @@ if __name__=='__main__':
             sys.exit(2)
 
     except Exception as e1:
-        log.error("Error reading /etc/genpushover.conf: " + str(e1))
-        console.error("Error reading /etc/genpushover.conf: " + str(e1))
+        log.error("Error reading " +  os.path.join(ConfigFilePath, 'genpushover.conf') +": " + str(e1))
+        console.error("Error reading " +  os.path.join(ConfigFilePath, 'genpushover.conf') +": " + str(e1))
         sys.exit(1)
     try:
         GenNotify = GenNotify(

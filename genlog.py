@@ -89,7 +89,7 @@ if __name__=='__main__':
         sys.exit(2)
 
     port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
-    log = SetupLogger("client", loglocation + "genlog.log")
+    log = SetupLogger("client", os.path.join(loglocation, "genlog.log"))
 
     try:
         # Set the signal handler

@@ -41,7 +41,7 @@ class GenExercise(MySupport):
 
         super(GenExercise, self).__init__()
 
-        self.LogFileName = loglocation + "genexercise.log"
+        self.LogFileName = os.path.join(loglocation, "genexercise.log")
         self.AccessLock = threading.Lock()
         # log errors in this module to a file
         self.log = SetupLogger("genexercise", self.LogFileName)
@@ -54,7 +54,7 @@ class GenExercise(MySupport):
         self.Debug = False
 
         try:
-            self.config = MyConfig(filename = ConfigFilePath + 'genexercise.conf', section = 'genexercise', log = self.log)
+            self.config = MyConfig(filename = os.path.join(ConfigFilePath, 'genexercise.conf'), section = 'genexercise', log = self.log)
 
             self.ExerciseType = self.config.ReadValue('exercise_type', default = "Normal")
             self.ExerciseHour = self.config.ReadValue('exercise_hour', return_type = int, default = 12)
@@ -95,8 +95,8 @@ class GenExercise(MySupport):
                 self.MonitorAddress = ProgramDefaults.LocalHost
 
         except Exception as e1:
-            self.LogErrorLine("Error reading " + ConfigFilePath + "genexercise.conf: " + str(e1))
-            self.console.error("Error reading " + ConfigFilePath + "genexercise.conf: " + str(e1))
+            self.LogErrorLine("Error reading " + os.path.join(ConfigFilePath, "genexercise.conf") + ": " + str(e1))
+            self.console.error("Error reading " + os.path.join(ConfigFilePath, "genexercise.conf") + ": " + str(e1))
             sys.exit(1)
 
         try:

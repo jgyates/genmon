@@ -1,6 +1,12 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.15.06 - 2020-10-20
+- added python functions to aid in portablity (os.path.join)
+- Corrected typo in web interface (thanks @danielforster)
+- More minor corrections for python 3.x
+- Moved location of version info in source tree for maintenance reasons. This required a small change in the sotware update check code
+
 ## V1.15.05 - 2020-10-18
 - Added alarm code for Fuse Problem with Evoltuion Air Cooled
 - Reverted to older config file write functions as the new ones did not provide the benefit expected

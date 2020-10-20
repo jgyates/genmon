@@ -69,7 +69,7 @@ if __name__=='__main__': # usage program.py [server_address]
 
     try:
         port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
-        log = SetupLogger("client", loglocation + "gengpio.log")
+        log = SetupLogger("client", os.path.join(loglocation, "gengpio.log"))
     except Exception as e1:
         console.error("Error : " + str(e1))
         sys.exit(1)

@@ -44,7 +44,7 @@ class GenNotify(MyCommon):
             self.log = log
         else:
             # log errors in this module to a file
-            self.log = SetupLogger("client", loglocation + "myclient.log")
+            self.log = SetupLogger("client", os.path.join(loglocation, "myclient.log"))
 
         self.console = SetupLogger("notify_console", log_file = "", stream = True)
         try:

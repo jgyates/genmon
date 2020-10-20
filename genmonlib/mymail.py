@@ -62,14 +62,14 @@ class MyMail(MySupport):
         self.UseBCC = False
         self.ExtendWait = 0
         self.Threads = {}                               # Dict of mythread objects
-        self.ModulePath = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/"
+        self.ModulePath = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
         # log errors in this module to a file
         if localinit == True:
             self.logfile = "mymail.log"
             self.configfile = "mymail.conf"
         else:
-            self.logfile = loglocation + "mymail.log"
-            self.configfile = self.ConfigFilePath + "mymail.conf"
+            self.logfile = os.path.join(loglocation, "mymail.log")
+            self.configfile = os.path.join(self.ConfigFilePath, "mymail.conf")
 
         if log == None:
             self.log = SetupLogger("mymail", self.logfile)
@@ -79,8 +79,8 @@ class MyMail(MySupport):
         # if mymail.conf is present attempt to copy it from the
         # main source directory
         if not os.path.isfile(self.configfile):
-            if os.path.isfile(self.ModulePath + "mymail.conf"):
-                copyfile(self.ModulePath + "mymail.conf" , self.configfile)
+            if os.path.join(os.path.isfile(self.ModulePath, "mymail.conf")):
+                copyfile(os.path.join(self.ModulePath, "mymail.conf") , self.configfile)
             else:
                 self.LogError("Missing config file : " + self.configfile)
                 sys.exit(1)

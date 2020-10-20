@@ -21,7 +21,7 @@ class ClientInterface(MyCommon):
             self.log = log
         else:
             # log errors in this module to a file
-            self.log = SetupLogger("client", loglocation+ "myclient.log")
+            self.log = SetupLogger("client", os.path.join(loglocation, "myclient.log"))
 
         self.console = SetupLogger("client_console", log_file = "", stream = True)
 

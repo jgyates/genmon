@@ -404,7 +404,7 @@ class MySupport(MyCommon):
         if configfilepath == None or configfilepath == "":
             configfilepath = MyCommon.DefaultConfPath
 
-        config = MyConfig(configfilepath + "genmon.conf", section = "GenMon", log = log)
+        config = MyConfig(os.path.join(configfilepath, "genmon.conf"), section = "GenMon", log = log)
         loglocation = config.ReadValue('loglocation', default = ProgramDefaults.LogPath)
         port = config.ReadValue('server_port', return_type = int, default = ProgramDefaults.ServerPort)
 

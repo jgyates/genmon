@@ -11,7 +11,7 @@
 
 from __future__ import print_function       # For python 3.x compatibility with print function
 
-import datetime, threading, crcmod, sys, time
+import datetime, threading, crcmod, sys, time, os
 
 from genmonlib.mysupport import MySupport
 from genmonlib.mylog import SetupLogger
@@ -132,7 +132,7 @@ class ModbusBase(MySupport ):
 
         if self.config != None:
             self.debug = self.config.ReadValue('debug', return_type = bool, default = False)
-            self.loglocation = self.config.ReadValue('loglocation', default = '/var/log/')
+            self.loglocation = self.config.ReadValue('loglocation', default = ProgramDefaults.LogPath)
             self.SlowCPUOptimization = self.config.ReadValue('optimizeforslowercpu', return_type = bool, default = False)
             self.UseTCP = self.config.ReadValue('use_serial_tcp', return_type = bool, default = False)
             try:
@@ -154,7 +154,7 @@ class ModbusBase(MySupport ):
         self.ModbusStartTime = datetime.datetime.now()     # used for com metrics
 
         # log errors in this module to a file
-        self.log = SetupLogger("mymodbus", self.loglocation + "mymodbus.log")
+        self.log = SetupLogger("mymodbus", os.path.join(self.loglocation, "mymodbus.log"))
         self.console = SetupLogger("mymodbus_console", log_file = "", stream = True)
 
     #-------------ModbusBase::ProcessWriteTransaction---------------------------

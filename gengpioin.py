@@ -191,7 +191,7 @@ if __name__=='__main__':
         sys.exit(1)
     try:
         port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
-        log = SetupLogger("client", loglocation + "gengpioin.log")
+        log = SetupLogger("client", os.path.join(loglocation, "gengpioin.log"))
     except Exception as e1:
         log.error("Error setting up log: " + str(e1))
         sys.exit(1)
@@ -205,8 +205,8 @@ if __name__=='__main__':
         DefaultPullup = GPIO.PUD_UP
         DefaultBounce = 0
 
-        if os.path.isfile(ConfigFilePath + 'gengpioin.conf'):
-            config = MyConfig(filename = ConfigFilePath + 'gengpioin.conf', section = 'gengpioin', log = log)
+        if os.path.isfile(os.path.join(ConfigFilePath, 'gengpioin.conf')):
+            config = MyConfig(filename = os.path.join(ConfigFilePath, 'gengpioin.conf'), section = 'gengpioin', log = log)
             Trigger = config.ReadValue('trigger', default = "falling")
             if Trigger.lower() == "rising":
                 DefaultTrigger = GPIO.RISING

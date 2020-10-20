@@ -49,7 +49,7 @@ class ModbusFile(ModbusBase):
         self.FileData = {}
 
         if self.InputFile == None:
-            self.InputFile = os.path.dirname(os.path.realpath(__file__)) + "/modbusregs.txt"
+            self.InputFile = os.path.join(os.path.dirname(os.path.realpath(__file__)), "modbusregs.txt")
 
         if not os.path.isfile(self.InputFile):
             self.LogError("Error: File not present: " + self.InputFile)

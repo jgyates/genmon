@@ -51,7 +51,7 @@ class GenTemp(MySupport):
 
         super(GenTemp, self).__init__()
 
-        self.LogFileName = loglocation + "gentemp.log"
+        self.LogFileName = os.path.join(loglocation, "gentemp.log")
         self.AccessLock = threading.Lock()
         # log errors in this module to a file
         self.log = SetupLogger("gentemp", self.LogFileName)
@@ -65,7 +65,7 @@ class GenTemp(MySupport):
         self.PollTime = 1
         self.BlackList = None
 
-        configfile = ConfigFilePath + 'gentemp.conf'
+        configfile = os.path.join(ConfigFilePath, 'gentemp.conf')
         try:
             if not os.path.isfile(configfile):
                 self.LogConsole("Missing config file : " + configfile)
@@ -225,7 +225,7 @@ class GenTemp(MySupport):
             self.LogErrorLine("Error in GetIDFromDeviceName for " + device + " : " + str(e1))
         return "UNKNOWN_ID"
 
-    
+
     #----------  GenTemp::SendCommand ------------------------------------------
     def SendCommand(self, Command):
 

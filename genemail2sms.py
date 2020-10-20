@@ -169,35 +169,35 @@ if __name__=='__main__':
             ConfigFilePath = ConfigFilePath.strip()
 
     port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
-    log = SetupLogger("client", loglocation + "genemail2sms.log")
+    log = SetupLogger("client", os.path.join(loglocation, "genemail2sms.log"))
 
-    if not os.path.isfile(ConfigFilePath + 'genmon.conf'):
-        console.error("Missing config file : " + ConfigFilePath + 'genmon.conf')
-        log.error("Missing config file : " + ConfigFilePath + 'genmon.conf')
+    if not os.path.isfile(os.path.join(ConfigFilePath, 'genmon.conf')):
+        console.error("Missing config file : " + os.path.join(ConfigFilePath, 'genmon.conf'))
+        log.error("Missing config file : " + os.path.join(ConfigFilePath, 'genmon.conf'))
         sys.exit(1)
-    if not os.path.isfile(ConfigFilePath + 'mymail.conf'):
-        console.error("Missing config file : " + ConfigFilePath + 'mymail.conf')
-        log.error("Missing config file : " + ConfigFilePath + 'mymail.conf')
+    if not os.path.isfile(os.path.join(ConfigFilePath, 'mymail.conf')):
+        console.error("Missing config file : " + os.path.join(ConfigFilePath, 'mymail.conf'))
+        log.error("Missing config file : " + os.path.join(ConfigFilePath, 'mymail.conf'))
         sys.exit(1)
 
     try:
 
         SiteName = GetSiteName()
-        config = MyConfig(filename = ConfigFilePath + 'genemail2sms.conf', section = 'genemail2sms', log = log)
+        config = MyConfig(filename = os.path.join(ConfigFilePath, 'genemail2sms.conf'), section = 'genemail2sms', log = log)
 
         DestinationEmail = config.ReadValue('destination', default = "")
 
 
         if DestinationEmail == "" or (not "@" in DestinationEmail):
-            log.error("Missing parameter in " + ConfigFilePath + "genemail2sms.conf")
-            console.error("Missing parameter in " + ConfigFilePath + "genemail2sms.conf")
+            log.error("Missing parameter in " + os.path.join(ConfigFilePath, 'genemail2sms.conf'))
+            console.error("Missing parameter in " + os.path.join(ConfigFilePath, 'genemail2sms.conf'))
             sys.exit(1)
 
         # init mail, start processing incoming email
         MyMail = MyMail(loglocation = loglocation, log = log, ConfigFilePath = ConfigFilePath)
     except Exception as e1:
-        log.error("Error reading " + ConfigFilePath + "genemail2sms.conf: " + str(e1))
-        console.error("Error reading " + ConfigFilePath + "genemail2sms.conf: " + str(e1))
+        log.error("Error reading " + os.path.join(ConfigFilePath, 'genemail2sms.conf') + ": " + str(e1))
+        console.error("Error reading " + os.path.join(ConfigFilePath, 'genemail2sms.conf') + ": " + str(e1))
         sys.exit(1)
     try:
 

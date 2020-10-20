@@ -48,11 +48,11 @@ class MyModem(MySupport):
         if localinit == True:
             self.configfile = "mymodem.conf"
         else:
-            self.configfile = self.ConfigFilePath + "mymodem.conf"
+            self.configfile = os.path.join(self.ConfigFilePath, "mymodem.conf")
 
         # log errors in this module to a file
         if log == None:
-            self.log = SetupLogger("mymodem", loglocation + "mymodem.log")
+            self.log = SetupLogger("mymodem", os.path.join(loglocation, "mymodem.log"))
         else:
             self.log = log
 

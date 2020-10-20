@@ -163,10 +163,10 @@ if __name__=='__main__':
             ConfigFilePath = ConfigFilePath.strip()
 
     port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
-    log = SetupLogger("client", loglocation + "genslack.log")
+    log = SetupLogger("client", os.path.join(loglocation, "genslack.log"))
 
     try:
-        config = MyConfig(filename = ConfigFilePath + 'genslack.conf', section = 'genslack', log = log)
+        config = MyConfig(filename = os.path.join(ConfigFilePath, 'genslack.conf'), section = 'genslack', log = log)
 
         webhook_url = config.ReadValue('webhook_url', default = None)
         channel = config.ReadValue('channel', default = None)
@@ -200,8 +200,8 @@ if __name__=='__main__':
             sys.exit(2)
 
     except Exception as e1:
-        log.error("Error reading /etc/genslack.conf: " + str(e1))
-        console.error("Error reading /etc/genslack.conf: " + str(e1))
+        log.error("Error reading genslack.conf: " + str(e1))
+        console.error("Error reading genslack.conf: " + str(e1))
         sys.exit(1)
 
     try:

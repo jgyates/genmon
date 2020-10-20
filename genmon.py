@@ -34,8 +34,6 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.15.05"
-
 #------------ Monitor class ----------------------------------------------------
 class Monitor(MySupport):
 
@@ -60,7 +58,7 @@ class Monitor(MySupport):
         self.IncomingEmailFolder = "Generator"
         self.ProcessedEmailFolder = "Generator/Processed"
 
-        self.FeedbackLogFile = self.ConfigFilePath + "feedback.json"
+        self.FeedbackLogFile = os.path.join(self.ConfigFilePath, "feedback.json")
         self.LogLocation = ProgramDefaults.LogPath
         self.LastLogFileSize = 0
         self.NumberOfLogSizeErrors = 0
@@ -99,21 +97,21 @@ class Monitor(MySupport):
             self.LogConsole("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'.")
             sys.exit(1)
 
-        if not os.path.isfile(self.ConfigFilePath + 'genmon.conf'):
-            self.LogConsole("Missing config file : " + self.ConfigFilePath + 'genmon.conf')
+        if not os.path.isfile(os.path.join(self.ConfigFilePath, 'genmon.conf')):
+            self.LogConsole("Missing config file : " + os.path.join(self.ConfigFilePath, 'genmon.conf'))
             sys.exit(1)
-        if not os.path.isfile(self.ConfigFilePath + 'mymail.conf'):
-            self.LogConsole("Missing config file : " + self.ConfigFilePath + 'mymail.conf')
+        if not os.path.isfile(os.path.join(self.ConfigFilePath, 'mymail.conf')):
+            self.LogConsole("Missing config file : " + os.path.join(self.ConfigFilePath, 'mymail.conf'))
             sys.exit(1)
 
-        self.config = MyConfig(filename = self.ConfigFilePath + 'genmon.conf', section = "GenMon", log = self.console)
+        self.config = MyConfig(filename = os.path.join(self.ConfigFilePath, 'genmon.conf'), section = "GenMon", log = self.console)
         # read config file
         if not self.GetConfig():
             self.LogConsole("Failure in Monitor GetConfig")
             sys.exit(1)
 
         # log errors in this module to a file
-        self.log = SetupLogger("genmon", self.LogLocation + "genmon.log")
+        self.log = SetupLogger("genmon", os.path.join(self.LogLocation, "genmon.log"))
 
         self.config.log = self.log
 
@@ -124,8 +122,8 @@ class Monitor(MySupport):
 
 
         if self.NewInstall:
-            self.LogError("New version detected: Old = %s, New = %s" % (self.Version, GENMON_VERSION))
-            self.Version = GENMON_VERSION
+            self.LogError("New version detected: Old = %s, New = %s" % (self.Version, ProgramDefaults.GENMON_VERSION))
+            self.Version = ProgramDefaults.GENMON_VERSION
 
         self.ProgramStartTime = datetime.datetime.now()     # used for com metrics
         # this will wait one day for an update, change to
@@ -218,7 +216,7 @@ class Monitor(MySupport):
 
             self.LogLocation = self.config.ReadValue('loglocation', default = ProgramDefaults.LogPath)
 
-            self.UserDefinedDataPath = self.config.ReadValue('userdatalocation', default = os.path.dirname(os.path.realpath(__file__)) + "/")
+            self.UserDefinedDataPath = self.config.ReadValue('userdatalocation', default = os.path.dirname(os.path.realpath(__file__)))
 
             if self.config.HasOption('syncdst'):
                 self.bSyncDST = self.config.ReadValue('syncdst', return_type = bool)
@@ -264,13 +262,13 @@ class Monitor(MySupport):
 
             if self.config.HasOption('version'):
                 self.Version = self.config.ReadValue('version')
-                if not self.Version == GENMON_VERSION:
-                    self.config.WriteValue('version', GENMON_VERSION)
+                if not self.Version == ProgramDefaults.GENMON_VERSION:
+                    self.config.WriteValue('version', ProgramDefaults.GENMON_VERSION)
                     self.NewInstall = True
             else:
-                self.config.WriteValue('version', GENMON_VERSION)
+                self.config.WriteValue('version', ProgramDefaults.GENMON_VERSION)
                 self.NewInstall = True
-                self.Version = GENMON_VERSION
+                self.Version = ProgramDefaults.GENMON_VERSION
             if self.config.HasOption("autofeedback"):
                 self.FeedbackEnabled = self.config.ReadValue('autofeedback', return_type = bool)
             else:
@@ -654,7 +652,7 @@ class Monitor(MySupport):
     def GetUserDefinedData(self):
 
         try:
-            FileName = self.UserDefinedDataPath + "userdefined.json"
+            FileName = os.path.join(self.UserDefinedDataPath, "userdefined.json")
 
             if not os.path.isfile(FileName):
                 return None
@@ -704,7 +702,7 @@ class Monitor(MySupport):
             GenMonStats.append({"Run time" : self.GetProgramRunTime()})
             if self.Controller.PowerMeterIsSupported():
                 GenMonStats.append({"Power log file size" : self.Controller.GetPowerLogFileDetails()})
-            GenMonStats.append({"Generator Monitor Version" : GENMON_VERSION})
+            GenMonStats.append({"Generator Monitor Version" : ProgramDefaults.GENMON_VERSION})
             GenMonStats.append({"Update Available" : "Yes" if self.UpdateAvailable else "No"})
 
             if not self.bDisablePlatformStats:
@@ -730,7 +728,7 @@ class Monitor(MySupport):
     def GetStartInfo(self, NoTile = False):
 
         StartInfo = collections.OrderedDict()
-        StartInfo["version"] = GENMON_VERSION
+        StartInfo["version"] = ProgramDefaults.GENMON_VERSION
         StartInfo["sitename"] = self.SiteName
         StartInfo["python"] = str(sys.version_info.major) + "." + str(sys.version_info.minor)
         ControllerStartInfo = self.Controller.GetStartInfo(NoTile = NoTile)
@@ -897,7 +895,7 @@ class Monitor(MySupport):
                 self.LastSofwareUpdateCheck = datetime.datetime.now()
                 # Do the check
                 try:
-                    url = "https://raw.githubusercontent.com/jgyates/genmon/master/genmon.py"
+                    url = "https://raw.githubusercontent.com/jgyates/genmon/master/genmonlib/program_defaults.py"
                     try:
                         # For Python 3.0 and later
                         from urllib.request import urlopen
@@ -915,10 +913,10 @@ class Monitor(MySupport):
                             import re
                             quoted = re.compile('"([^"]*)"')
                             for value in quoted.findall(line):
-                                if value != GENMON_VERSION:
+                                if value != ProgramDefaults.GENMON_VERSION:
                                     # Update Available
                                     title = self.ProgramName + " Software Update " + value + " is available for site " + self.SiteName
-                                    msgbody = "\nA software update is available for the " + self.ProgramName + ". The new version (" + value + ") can be updated on the About page of the web interface. The current version installed is " + GENMON_VERSION + ". You can disable this email from being sent on the Settings page."
+                                    msgbody = "\nA software update is available for the " + self.ProgramName + ". The new version (" + value + ") can be updated on the About page of the web interface. The current version installed is " + ProgramDefaults.GENMON_VERSION + ". You can disable this email from being sent on the Settings page."
                                     if len(self.UserURL):
                                         msgbody += "\n\nWeb Interface URL: " + self.UserURL
                                     msgbody += "\n\nChange Log: https://raw.githubusercontent.com/jgyates/genmon/master/changelog.md"
@@ -938,7 +936,7 @@ class Monitor(MySupport):
             if not self.Controller.InitComplete:
                 return True
 
-            LogFile = self.LogLocation + "genmon.log"
+            LogFile = os.path.join(self.LogLocation, "genmon.log")
 
             LogFileSize = os.path.getsize(LogFile)
             if LogFileSize <= self.LastLogFileSize:     # log is unchanged or has rotated

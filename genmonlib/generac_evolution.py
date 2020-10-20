@@ -225,7 +225,7 @@ class Evolution(GeneratorController):
             self.LogError("Failure in Controller GetConfig: " + str(e1))
             sys.exit(1)
         try:
-            self.AlarmFile = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/data/ALARMS.txt"
+            self.AlarmFile = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "data", "ALARMS.txt")
             with open(self.AlarmFile,"r") as AlarmFile:     #
                 pass
         except Exception as e1:
@@ -502,7 +502,7 @@ class Evolution(GeneratorController):
             else:
                 FileName = "EvoAC_Fuel.txt"
 
-            FullFileName = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/data/" + FileName
+            FullFileName = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "data",  FileName)
             ReturnList = self.ReadCSVFile(FullFileName)
 
             for Item in ReturnList:
@@ -576,7 +576,7 @@ class Evolution(GeneratorController):
             else:
                 FileName = "NexusLCParam.txt"
 
-            FullFileName = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/data/" + FileName
+            FullFileName = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "data", FileName)
             ReturnList = self.ReadCSVFile(FullFileName)
 
             for Item in ReturnList:

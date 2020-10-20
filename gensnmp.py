@@ -621,8 +621,12 @@ class GenSNMP(MySupport):
             if not isinstance(listinput, list):
                 return False
             for item in listinput:
-                if not (isinstance(item, str) or isinstance(item, unicode)):
-                    return False
+                if sys.version_info[0] < 3:
+                    if not (isinstance(item, str) or isinstance(item, unicode)):
+                        return False
+                else:
+                    if not (isinstance(item, str) or isinstance(item, bytes)):
+                        return False
             return True
         except Exception as e1:
             self.LogErrorLine("Error in ListIsStrings: " + str(e1))
@@ -679,7 +683,7 @@ if __name__ == "__main__":
             ConfigFilePath = ConfigFilePath.strip()
 
     port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
-    log = SetupLogger("client", loglocation + "gensnmp.log")
+    log = SetupLogger("client", os.path.join(loglocation, "gensnmp.log"))
 
     GenSNMPInstance = GenSNMP(log = log, loglocation = loglocation, ConfigFilePath = ConfigFilePath, host = address, port = port)
 

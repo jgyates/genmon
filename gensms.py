@@ -173,7 +173,7 @@ if __name__=='__main__':
 
     try:
 
-        config = MyConfig(filename = ConfigFilePath + 'gensms.conf', section = 'gensms', log = log)
+        config = MyConfig(filename = os.path.join(ConfigFilePath, 'gensms.conf'), section = 'gensms', log = log)
 
         account_sid = config.ReadValue('accountsid', default = "")
         auth_token = config.ReadValue('authtoken', default = "")
@@ -181,13 +181,13 @@ if __name__=='__main__':
         from_number = config.ReadValue('from_number', default = "")
 
         if account_sid == "" or auth_token == "" or to_number == "" or from_number == "":
-            log.error("Missing parameter in " + ConfigFilePath + "gensms.conf")
-            console.error("Missing parameter in " + ConfigFilePath + "gensms.conf")
+            log.error("Missing parameter in " +  os.path.join(ConfigFilePath, 'gensms.conf'))
+            console.error("Missing parameter in " +  os.path.join(ConfigFilePath, 'gensms.conf'))
             sys.exit(1)
 
     except Exception as e1:
-        log.error("Error reading " + ConfigFilePath + "gensms.conf: " + str(e1))
-        console.error("Error reading " + ConfigFilePath + "gensms.conf: " + str(e1))
+        log.error("Error reading " + os.path.join(ConfigFilePath, 'gensms.conf') + ": " + str(e1))
+        console.error("Error reading " + os.path.join(ConfigFilePath, 'gensms.conf') + ": " + str(e1))
         sys.exit(1)
     try:
         GenNotify = GenNotify(

@@ -160,7 +160,7 @@ class GenTankData(MySupport):
 
         super(GenTankData, self).__init__()
 
-        self.LogFileName = loglocation + "gentankutil.log"
+        self.LogFileName = os.path.join(loglocation, "gentankutil.log")
         self.AccessLock = threading.Lock()
         # log errors in this module to a file
         self.log = SetupLogger("gentankutil", self.LogFileName)
@@ -171,7 +171,7 @@ class GenTankData(MySupport):
         self.PollTime =  2
         self.TankID = ""
         self.debug = False
-        configfile = ConfigFilePath + 'gentankutil.conf'
+        configfile = os.path.join(ConfigFilePath, 'gentankutil.conf')
         try:
             if not os.path.isfile(configfile):
                 self.LogConsole("Missing config file : " + configfile)
