@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.15.07 - 2020-10-25
+- Added new alarm code for Evolution
+- Improvement on error recovery on time out errors (mostly occuring on bad wifi connections with serial over TCP)
+
 ## V1.15.06 - 2020-10-20
 - added python functions to aid in portablity (os.path.join)
 - Corrected typo in web interface (thanks @danielforster)

@@ -34,7 +34,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.15.06"
+GENMON_VERSION = "V1.15.07"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(MySupport):
@@ -733,6 +733,14 @@ class Monitor(MySupport):
         StartInfo["version"] = ProgramDefaults.GENMON_VERSION
         StartInfo["sitename"] = self.SiteName
         StartInfo["python"] = str(sys.version_info.major) + "." + str(sys.version_info.minor)
+        try:
+            import time
+            if self.is_dst:
+                StartInfo["zone"] = time.tzname[1]
+            else:
+                StartInfo["zone"] = time.tzname[0]
+        except:
+            pass
         ControllerStartInfo = self.Controller.GetStartInfo(NoTile = NoTile)
         StartInfo = self.MergeDicts(StartInfo, ControllerStartInfo)
         return StartInfo

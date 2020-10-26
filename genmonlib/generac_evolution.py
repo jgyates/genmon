@@ -988,9 +988,20 @@ class Evolution(GeneratorController):
 
             if counter % 6 == 0:
                 for PrimeReg, PrimeInfo in self.PrimeRegisters.items():
+                    localTimeoutCount = self.ModBus.ComTimoutError
                     self.ModBus.ProcessTransaction(PrimeReg, int(PrimeInfo[self.REGLEN] / 2))
                     if self.IsStopping:
                         return
+                    if localTimeoutCount != self.ModBus.ComTimoutError and self.ModBus.RxPacketCount:
+                        # if we get here a timeout occured, and we have recieved at least one good packet
+                        # this logic is to keep from receiving a packet that we have already requested once we
+                        # timeout and start to request another
+                        # Wait for a bit to allow any missed response from the controller to arrive
+                        # otherwise this could get us out of sync
+                        # This assumes MasterEmulation is called from ProcessThread
+                        if self.WaitForExit("ProcessThread", float(self.ModBus.ModBusPacketTimoutMS / 1000.0)):  #
+                            return
+                        self.ModBus.Flush()
                 # check for unknown events (i.e. events we are not decoded) and send an email if they occur
                 self.CheckForAlarmEvent.set()
 
@@ -2615,6 +2626,7 @@ class Evolution(GeneratorController):
          0x24 : "Overload",             #  Validate on Evolution Air Cooled
          0x28 : "Fuse Problem",         #  Validate on Evolution Air Cooled
          0x29 : "Battery Problem",      #  Validate on EvoLC
+         0x2a : "Charger Warning",      #  Validate on EvoAC 2
          0x2b : "Charger Missing AC",   #  Validate on EvoAC, occurred when Charger Missing AC Warning
          0x30 : "Ruptured Tank",        #  Validate on Evolution, occurred when forced ruptured tank
          0x31 : "Low Fuel Level",       #  Validate on Evolution, occurred when Low Fuel Level

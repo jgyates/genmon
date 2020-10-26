@@ -1136,18 +1136,33 @@ class HPanel(GeneratorController):
         except Exception as e1:
             self.LogErrorLine("Error in GetGeneratorFileData: " + str(e1))
 
+    #------------ HPanel:WaitAndPergeforTimeout --------------------------------
+    def WaitAndPergeforTimeout(self):
+        # if we get here a timeout occured, and we have recieved at least one good packet
+        # this logic is to keep from receiving a packet that we have already requested once we
+        # timeout and start to request another
+        # Wait for a bit to allow any missed response from the controller to arrive
+        # otherwise this could get us out of sync
+        # This assumes MasterEmulation is called from ProcessThread
+        if self.WaitForExit("ProcessThread", float(self.ModBus.ModBusPacketTimoutMS / 1000.0)):  #
+            return
+        self.ModBus.Flush()
     #------------ HPanel:GetGeneratorLogFileData -------------------------------
     def GetGeneratorLogFileData(self):
 
         try:
             for RegValue in range(EVENT_LOG_START + EVENT_LOG_ENTRIES -1 , EVENT_LOG_START -1, -1):
                 Register = "%04x" % RegValue
+                localTimeoutCount = self.ModBus.ComTimoutError
                 self.ModBus.ProcessFileReadTransaction(Register, EVENT_LOG_LENGTH /2)
-
+                if localTimeoutCount != self.ModBus.ComTimoutError and self.ModBus.RxPacketCount:
+                    self.WaitAndPergeforTimeout()
             for RegValue in range(ALARM_LOG_START + ALARM_LOG_ENTRIES -1, ALARM_LOG_START -1, -1):
                 Register = "%04x" % RegValue
+                localTimeoutCount = self.ModBus.ComTimoutError
                 self.ModBus.ProcessFileReadTransaction(Register, ALARM_LOG_LENGTH /2)
-
+                if localTimeoutCount != self.ModBus.ComTimoutError and self.ModBus.RxPacketCount:
+                    self.WaitAndPergeforTimeout()
         except Exception as e1:
             self.LogErrorLine("Error in GetGeneratorLogFileData: " + str(e1))
 
@@ -1159,7 +1174,11 @@ class HPanel(GeneratorController):
                 try:
                     if self.IsStopping:
                         return
+                    localTimeoutCount = self.ModBus.ComTimoutError
                     self.ModBus.ProcessTransaction(RegisterList[REGISTER], RegisterList[LENGTH] / 2)
+                    if localTimeoutCount != self.ModBus.ComTimoutError and self.ModBus.RxPacketCount:
+                        self.WaitAndPergeforTimeout()
+
                 except Exception as e1:
                     self.LogErrorLine("Error in GetGeneratorStrings: " + str(e1))
 
@@ -1178,7 +1197,11 @@ class HPanel(GeneratorController):
                 try:
                     if self.IsStopping:
                         return
+                    localTimeoutCount = self.ModBus.ComTimoutError
                     self.ModBus.ProcessTransaction(RegisterList[REGISTER], RegisterList[LENGTH] / 2)
+                    if localTimeoutCount != self.ModBus.ComTimoutError and self.ModBus.RxPacketCount:
+                        if localTimeoutCount != self.ModBus.ComTimoutError and self.ModBus.RxPacketCount:
+                            self.WaitAndPergeforTimeout()
                 except Exception as e1:
                     self.LogErrorLine("Error in MasterEmulation: " + str(e1))
 
