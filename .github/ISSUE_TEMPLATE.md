@@ -31,5 +31,5 @@ If you need to send you logs and registers to the developer, if your email is se
 ### Your Environment
 
 - Generator Model: {Please write here}
-- Generator Registers: Submit via the About page
+- Genmon Logs: Submit via the About page
 - Genmon Version: {Please write here}
