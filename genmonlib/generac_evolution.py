@@ -989,10 +989,12 @@ class Evolution(GeneratorController):
             if counter % 6 == 0:
                 for PrimeReg, PrimeInfo in self.PrimeRegisters.items():
                     localTimeoutCount = self.ModBus.ComTimoutError
+                    localSyncError = self.ModBus.ComSyncError
                     self.ModBus.ProcessTransaction(PrimeReg, int(PrimeInfo[self.REGLEN] / 2))
                     if self.IsStopping:
                         return
-                    if localTimeoutCount != self.ModBus.ComTimoutError and self.ModBus.RxPacketCount:
+                    if ((localSyncError != self.ModBus.ComSyncError or localTimeoutCount != self.ModBus.ComTimoutError)
+                    and self.ModBus.RxPacketCount):
                         # if we get here a timeout occured, and we have recieved at least one good packet
                         # this logic is to keep from receiving a packet that we have already requested once we
                         # timeout and start to request another
@@ -1612,12 +1614,13 @@ class Evolution(GeneratorController):
         # Validate Register by length
         if len(Register) != 4 or len(Value) < 4:
             self.LogError("Validation Error: Invalid data in UpdateRegisterList: %s %s" % (Register, Value))
+            return False
 
         if not self.RegisterIsKnown(Register):
             self.LogError("Unexpected Register received: " + Register)
-            return
+            return False
         if not self.ValidateRegister(Register, Value):
-            return
+            return False
         RegValue = self.Registers.get(Register, "")
 
         if RegValue == "":
@@ -1630,6 +1633,7 @@ class Evolution(GeneratorController):
             self.Changed += 1
         else:
             self.NotChanged += 1
+        return True
 
     #------------ Evolution:RegisterIsKnown ------------------------------------
     def RegisterIsKnown(self, Register):

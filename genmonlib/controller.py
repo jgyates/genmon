@@ -128,10 +128,16 @@ class GeneratorController(MySupport):
 
                 if self.config.HasOption('nominalfrequency'):
                     self.NominalFreq = self.config.ReadValue('nominalfrequency')
+                    if not self.StringIsInt(self.NominalFreq):
+                        self.NominalFreq = "Unknown"
                 if self.config.HasOption('nominalRPM'):
                     self.NominalRPM = self.config.ReadValue('nominalRPM')
+                    if not self.StringIsInt(self.NominalRPM):
+                        self.NominalRPM = "Unknown"
                 if self.config.HasOption('nominalKW'):
                     self.NominalKW = self.config.ReadValue('nominalKW')
+                    if not self.StringIsInt(self.NominalKW):
+                        self.NominalKW = "Unknown"
                 if self.config.HasOption('model'):
                     self.Model = self.config.ReadValue('model')
 

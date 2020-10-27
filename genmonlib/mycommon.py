@@ -23,6 +23,15 @@ class MyCommon(object):
         self.debug = False
         self.MaintainerAddress = "generatormonitor.software@gmail.com"
 
+    #------------ MyCommon::StringIsInt ----------------------------------------
+    def StringIsInt(self, value):
+
+        try:
+            temp = int(value)
+            return True
+        except:
+            return False
+
     #------------ MyCommon::ConvertCelsiusToFahrenheit -------------------------
     def ConvertCelsiusToFahrenheit(self, Celsius):
 

@@ -1154,14 +1154,18 @@ class HPanel(GeneratorController):
             for RegValue in range(EVENT_LOG_START + EVENT_LOG_ENTRIES -1 , EVENT_LOG_START -1, -1):
                 Register = "%04x" % RegValue
                 localTimeoutCount = self.ModBus.ComTimoutError
+                localSyncError = self.ModBus.ComSyncError
                 self.ModBus.ProcessFileReadTransaction(Register, EVENT_LOG_LENGTH /2)
-                if localTimeoutCount != self.ModBus.ComTimoutError and self.ModBus.RxPacketCount:
+                if ((localSyncError != self.ModBus.ComSyncError or localTimeoutCount != self.ModBus.ComTimoutError)
+                    and self.ModBus.RxPacketCount):
                     self.WaitAndPergeforTimeout()
             for RegValue in range(ALARM_LOG_START + ALARM_LOG_ENTRIES -1, ALARM_LOG_START -1, -1):
                 Register = "%04x" % RegValue
                 localTimeoutCount = self.ModBus.ComTimoutError
+                localSyncError = self.ModBus.ComSyncError
                 self.ModBus.ProcessFileReadTransaction(Register, ALARM_LOG_LENGTH /2)
-                if localTimeoutCount != self.ModBus.ComTimoutError and self.ModBus.RxPacketCount:
+                if ((localSyncError != self.ModBus.ComSyncError or localTimeoutCount != self.ModBus.ComTimoutError)
+                    and self.ModBus.RxPacketCount):
                     self.WaitAndPergeforTimeout()
         except Exception as e1:
             self.LogErrorLine("Error in GetGeneratorLogFileData: " + str(e1))
@@ -1175,8 +1179,10 @@ class HPanel(GeneratorController):
                     if self.IsStopping:
                         return
                     localTimeoutCount = self.ModBus.ComTimoutError
+                    localSyncError = self.ModBus.ComSyncError
                     self.ModBus.ProcessTransaction(RegisterList[REGISTER], RegisterList[LENGTH] / 2)
-                    if localTimeoutCount != self.ModBus.ComTimoutError and self.ModBus.RxPacketCount:
+                    if ((localSyncError != self.ModBus.ComSyncError or localTimeoutCount != self.ModBus.ComTimoutError)
+                        and self.ModBus.RxPacketCount):
                         self.WaitAndPergeforTimeout()
 
                 except Exception as e1:
@@ -1198,10 +1204,11 @@ class HPanel(GeneratorController):
                     if self.IsStopping:
                         return
                     localTimeoutCount = self.ModBus.ComTimoutError
+                    localSyncError = self.ModBus.ComSyncError
                     self.ModBus.ProcessTransaction(RegisterList[REGISTER], RegisterList[LENGTH] / 2)
-                    if localTimeoutCount != self.ModBus.ComTimoutError and self.ModBus.RxPacketCount:
-                        if localTimeoutCount != self.ModBus.ComTimoutError and self.ModBus.RxPacketCount:
-                            self.WaitAndPergeforTimeout()
+                    if ((localSyncError != self.ModBus.ComSyncError or localTimeoutCount != self.ModBus.ComTimoutError)
+                        and self.ModBus.RxPacketCount):
+                        self.WaitAndPergeforTimeout()
                 except Exception as e1:
                     self.LogErrorLine("Error in MasterEmulation: " + str(e1))
 
@@ -1403,6 +1410,7 @@ class HPanel(GeneratorController):
         try:
             if len(Register) != 4:
                 self.LogError("Validation Error: Invalid register value in UpdateRegisterList: %s %s" % (Register, Value))
+                return False
 
             if self.RegisterIsBaseRegister(Register) and not IsFile:
                 self.Registers[Register] = Value
@@ -1412,8 +1420,11 @@ class HPanel(GeneratorController):
                 self.FileData[Register] = Value
             else:
                 self.LogError("Error in UpdateRegisterList: Unknown Register " + Register + ":" + Value + ": IsFile: " + str(IsFile) + ": " + "IsString: " + str(IsString))
+                return False
+            return True
         except Exception as e1:
             self.LogErrorLine("Error in UpdateRegisterList: " + str(e1))
+            return False
 
     #---------------------HPanel::SystemInAlarm---------------------------------
     # return True if generator is in alarm, else False

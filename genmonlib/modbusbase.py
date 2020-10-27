@@ -122,6 +122,7 @@ class ModbusBase(MySupport ):
         self.ExcepGateWayTg = 0
         self.CrcError = 0
         self.ComValidationError = 0
+        self.ComSyncError = 0
         self.UnexpectedData = 0
         self.SlowCPUOptimization = False
         self.UseTCP = False
@@ -190,6 +191,7 @@ class ModbusBase(MySupport ):
         SerialStats.append({"Timeout Percent Errors" : ("%.2f" % (PercentTimeoutErrors * 100)) + "%"})
         SerialStats.append({"Modbus Exceptions" : self.ModbusException})
         SerialStats.append({"Validation Errors" : self.ComValidationError})
+        SerialStats.append({"Sync Errors" : self.ComSyncError})
         SerialStats.append({"Invalid Data" : self.UnexpectedData})
         # Add serial stats here
         CurrentTime = datetime.datetime.now()
@@ -211,6 +213,7 @@ class ModbusBase(MySupport ):
         self.CrcError = 0
         self.ComTimoutError = 0
         self.ComValidationError = 0
+        self.ComSyncError = 0
         self.ModbusException = 0
         self.ExcepFunction = 0
         self.ExcepAddress = 0

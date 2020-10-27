@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.15.08 - 2020-10-27
+- Additional parameter validation for values read from conf file
+- More recovery / error handling for long latency modbus response 
+
 ## V1.15.07 - 2020-10-25
 - Added new alarm code for Evolution
 - Improvement on error recovery on time out errors (mostly occuring on bad wifi connections with serial over TCP)

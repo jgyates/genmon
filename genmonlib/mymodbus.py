@@ -526,9 +526,11 @@ class ModbusProtocol(ModbusBase):
                 if not SkipUpdate:
                     if not self.UpdateRegisterList == None:
                         if not ReturnString:
-                            self.UpdateRegisterList(Register, RegisterValue)
+                            if not self.UpdateRegisterList(Register, RegisterValue):
+                                self.ComSyncError += 1
                         else:
-                            self.UpdateRegisterList(Register, RegisterStringValue, IsString = True)
+                            if not self.UpdateRegisterList(Register, RegisterStringValue, IsString = True):
+                                self.ComSyncError += 1
 
             if MasterPacket[self.MBUS_OFF_COMMAND] == self.MBUS_CMD_READ_FILE:
                 payloadLen = SlavePacket[self.MBUS_OFF_FILE_PAYLOAD_LEN]
@@ -541,9 +543,11 @@ class ModbusProtocol(ModbusBase):
 
                 if not SkipUpdate:
                     if not ReturnString:
-                        self.UpdateRegisterList(Register, RegisterValue, IsFile = True)
+                        if not self.UpdateRegisterList(Register, RegisterValue, IsFile = True):
+                            self.ComSyncError += 1
                     else:
-                        self.UpdateRegisterList(Register, RegisterStringValue, IsString = True, IsFile = True)
+                        if not self.UpdateRegisterList(Register, RegisterStringValue, IsString = True, IsFile = True):
+                            self.ComSyncError += 1
                 pass
             if ReturnString:
                 return str(RegisterStringValue)
@@ -615,6 +619,7 @@ class ModbusProtocol(ModbusBase):
             SerialStats.append({"Timeout Percent Errors" : ("%.2f" % (PercentTimeoutErrors * 100)) + "%"})
             SerialStats.append({"Modbus Exceptions" : self.ModbusException})
             SerialStats.append({"Validation Errors" : self.ComValidationError})
+            SerialStats.append({"Sync Errors" : self.ComSyncError})
             SerialStats.append({"Invalid Data" : self.UnexpectedData})
             # add serial stats
             SerialStats.append({"Discarded Bytes" : "%d" % self.Slave.DiscardedBytes})
