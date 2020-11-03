@@ -274,7 +274,7 @@ def ProcessCommand(command):
             finalcommand = "generator: " + command
 
             try:
-                if command in ["setexercise", "setquiet", "setremote", "add_maint_log"] and not session.get('write_access', True):
+                if command in ["setexercise", "setquiet", "setremote", "add_maint_log", "delete_row_maint_log", "edit_row_maint_log"] and not session.get('write_access', True):
                     return jsonify("Read Only Mode")
 
                 if command == "setexercise":

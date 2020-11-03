@@ -382,11 +382,18 @@ class MyMail(MySupport):
 
         msg = MIMEMultipart()
         if self.SenderName == None or not len(self.SenderName):
-            msg['From'] = self.SenderAccount
+            msg['From'] = "<" + self.SenderAccount + ">"
         else:
             msg['From'] = self.SenderName + " <" + self.SenderAccount + ">"
             self.LogError(msg['From'])
 
+        try:
+            recipientList = recipient.strip().split(",")
+            recipient = ">,<"
+            recipient = recipient.join(recipientList)
+            recipient = "<" + recipient + ">"
+        except:
+            self.LogErrorLine("Error parsing recipient format")
         if self.UseBCC:
             msg['Bcc'] = recipient
         else:
