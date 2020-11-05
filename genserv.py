@@ -1980,22 +1980,22 @@ if __name__ == "__main__":
     #signal.signal(signal.SIGTERM, Close)
     #signal.signal(signal.SIGINT, Close)
 
-    MAIL_CONFIG = ConfigFilePath + "mymail.conf"
-    GENMON_CONFIG = ConfigFilePath + "genmon.conf"
-    GENLOADER_CONFIG = ConfigFilePath + "genloader.conf"
-    GENSMS_CONFIG = ConfigFilePath + "gensms.conf"
-    MYMODEM_CONFIG = ConfigFilePath + "mymodem.conf"
-    GENPUSHOVER_CONFIG = ConfigFilePath + "genpushover.conf"
-    GENMQTT_CONFIG = ConfigFilePath + "genmqtt.conf"
-    GENSLACK_CONFIG = ConfigFilePath + "genslack.conf"
-    GENGPIOIN_CONFIG = ConfigFilePath + "gengpioin.conf"
-    GENEXERCISE_CONFIG = ConfigFilePath + "genexercise.conf"
-    GENEMAIL2SMS_CONFIG = ConfigFilePath + "genemail2sms.conf"
-    GENTANKUTIL_CONFIG = ConfigFilePath + "gentankutil.conf"
-    GENTANKDIY_CONFIG = ConfigFilePath + "gentankdiy.conf"
-    GENALEXA_CONFIG = ConfigFilePath + "genalexa.conf"
-    GENSNMP_CONFIG = ConfigFilePath + "gensnmp.conf"
-    GENTEMP_CONFIG = ConfigFilePath + "gentemp.conf"
+    MAIL_CONFIG = os.path.join(ConfigFilePath, "mymail.conf")
+    GENMON_CONFIG = os.path.join(ConfigFilePath, "genmon.conf")
+    GENLOADER_CONFIG = os.path.join(ConfigFilePath, "genloader.conf")
+    GENSMS_CONFIG = os.path.join(ConfigFilePath, "gensms.conf")
+    MYMODEM_CONFIG = os.path.join(ConfigFilePath, "mymodem.conf")
+    GENPUSHOVER_CONFIG = os.path.join(ConfigFilePath, "genpushover.conf")
+    GENMQTT_CONFIG = os.path.join(ConfigFilePath, "genmqtt.conf")
+    GENSLACK_CONFIG = os.path.join(ConfigFilePath, "genslack.conf")
+    GENGPIOIN_CONFIG = os.path.join(ConfigFilePath, "gengpioin.conf")
+    GENEXERCISE_CONFIG = os.path.join(ConfigFilePath, "genexercise.conf")
+    GENEMAIL2SMS_CONFIG = os.path.join(ConfigFilePath, "genemail2sms.conf")
+    GENTANKUTIL_CONFIG = os.path.join(ConfigFilePath, "gentankutil.conf")
+    GENTANKDIY_CONFIG = os.path.join(ConfigFilePath, "gentankdiy.conf")
+    GENALEXA_CONFIG = os.path.join(ConfigFilePath, "genalexa.conf")
+    GENSNMP_CONFIG = os.path.join(ConfigFilePath, "gensnmp.conf")
+    GENTEMP_CONFIG = os.path.join(ConfigFilePath, "gentemp.conf")
 
     if os.geteuid() != 0:
         LogConsole("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'.")

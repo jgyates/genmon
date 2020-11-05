@@ -1,9 +1,15 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.15.09 - 2020-11-05
+- Rounded value written to power log to 3 decimal places (Evolution)
+- Corrected issue with email errors relating to RFC2821 (see https://tools.ietf.org/html/rfc2821#section-3.3)
+- More improvements to better detect and recover modbus sync issues when using serial over TCP with weak wifi signals
+- Improvemnt in gensnmp.py to clean up on restarts (thanks @liltux)
+
 ## V1.15.08 - 2020-10-27
 - Additional parameter validation for values read from conf file
-- More recovery / error handling for long latency modbus response 
+- More recovery / error handling for long latency modbus response
 
 ## V1.15.07 - 2020-10-25
 - Added new alarm code for Evolution

@@ -89,6 +89,8 @@ class GeneratorController(MySupport):
         self.EngineDisplacement = "Unknown"
         self.TankSize = 0
         self.UseExternalFuelData = False
+        self.UseExternalCTData = False
+        self.ExternalCTData = None
 
         self.ProgramStartTime = datetime.datetime.now()     # used for com metrics
         self.OutageStartTime = self.ProgramStartTime        # if these two are the same, no outage has occured
@@ -105,6 +107,7 @@ class GeneratorController(MySupport):
                 self.bDisablePowerLog = self.config.ReadValue('disablepowerlog', return_type = bool, default = False)
                 self.SubtractFuel = self.config.ReadValue('subtractfuel', return_type = float, default = 0.0)
                 self.UserURL = self.config.ReadValue('user_url',  default = "").strip()
+                self.UseExternalCTData = self.config.ReadValue('use_external_power_data', return_type = bool, default = False)
                 # for gentankutil
                 self.UseExternalFuelData = self.config.ReadValue('use_external_fuel_data', return_type = bool, default = False)
                 if not self.UseExternalFuelData:
@@ -332,7 +335,7 @@ class GeneratorController(MySupport):
             if not Divider == None:
                 FloatValue = IntValue / Divider
                 if ReturnFloat:
-                    return FloatValue
+                    return round(FloatValue,3)
                 return "%2.1f %s" % (FloatValue, LabelStr)
             return "%d %s" % (IntValue, LabelStr)
         except Exception as e1:
@@ -371,7 +374,7 @@ class GeneratorController(MySupport):
             if not Divider == None:
                 FloatValue = IntValue / Divider
                 if ReturnFloat:
-                    return FloatValue
+                    return round(FloatValue,3)
                 if not Label == None:
                     return "%.2f %s" % (FloatValue, Label)
                 else:
@@ -1048,10 +1051,7 @@ class GeneratorController(MySupport):
                 struct_time = time.strptime(Items[0], "%x %X")
                 LogEntryTime = datetime.datetime.fromtimestamp(time.mktime(struct_time))
 
-                if LastTime != None:
-                    if LogEntryTime > LastTime:
-                        self.LogError("Error in GetAveragePower: time sequence error")
-
+                # Changes in Daylight savings time will effect this
                 if LastTime == None or Power == 0:
                     TotalTime += LogEntryTime - LogEntryTime
                 else:
@@ -1435,6 +1435,39 @@ class GeneratorController(MySupport):
             self.LogErrorLine("Error in SetExternalTankData: " + str(e1))
             return "Error"
         return "OK"
+
+    #----------  GeneratorController::SetExternalCTData-------------------------
+    def SetExternalCTData(self, command):
+        try:
+            CmdList = command.split("=")
+            if len(CmdList) == 2:
+                with self.ExternalDataLock:
+                    self.ExternalCTData = json.loads(CmdList[1])
+                if not self.UseExternalCTData:
+                    self.UseExternalCTData = True
+                    self.SetupTiles()
+            else:
+                self.LogError("Error in  SetExternalTankData: invalid input")
+                return "Error"
+        except Exception as e1:
+            self.LogErrorLine("Error in SetExternalCTData: " + str(e1))
+            return "Error"
+        return "OK"
+
+    #----------  GeneratorController::GetExternalCTData-------------------------
+    def GetExternalCTData(self):
+        try:
+            if not self.UseExternalCTData:
+                return None
+            if self.ExternalCTData != None:
+                with self.ExternalDataLock:
+                    return self.ExternalCTData.copy()
+            else:
+                return None
+        except Exception as e1:
+            self.LogErrorLine("Error in GetExternalCTData: " + str(e1))
+            return None
+        return None
     #----------  GeneratorController::AddEntryToMaintLog------------------------
     def AddEntryToMaintLog(self, InputString):
 

@@ -34,7 +34,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.15.08"
+GENMON_VERSION = "V1.15.09"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(MySupport):
@@ -534,7 +534,8 @@ class Monitor(MySupport):
             "sendlogfiles"      : [self.SendSupportInfo, (True,), True],
             "support_data_json" : [self.GetSupportData, (), True],
             "set_tank_data"     : [self.Controller.SetExternalTankData, (command,), True],
-            "set_temp_data"     : [self.Controller.SetExternalTemperatureData, (command,), True]
+            "set_temp_data"     : [self.Controller.SetExternalTemperatureData, (command,), True],
+            "set_power_data"    : [self.Controller.SetExternalCTData, (command,), True]
         }
 
         CommandList = command.split(' ')
@@ -820,6 +821,7 @@ class Monitor(MySupport):
                     # set new time
                     self.StartTimeThread()           # start settime thread
                     self.MessagePipe.SendMessage("Generator Time Update at " + self.SiteName, "Time updated due to daylight savings time change", msgtype = "info")
+                    self.LogError("DST change")
 
             if self.bSyncTime:
                 # update gen time

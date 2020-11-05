@@ -114,8 +114,7 @@ class Evolution(GeneratorController):
                     "0007" : [2, 0],     # Engine RPM  (Nexus, EvoAC, EvoLC)
                     "0008" : [2, 0],     # Freq - value includes Hz to the tenths place i.e. 59.9 Hz (Nexus, EvoAC, EvoLC)
                     "000a" : [2, 0],     # battery voltage Volts to  tenths place i.e. 13.9V (Nexus, EvoAC, EvoLC)
-                    "000b" : [2, 0],     # engine run time hours High
-                    "000c" : [2, 0],     # engine run time hours Low
+                    "000b" : [4, 0],     # engine run time hours (000b=high,000c=low)
                     "000e" : [2, 0],     # Read / Write: Generator Time Hi byte = hours, Lo byte = min (Nexus, EvoAC, EvoLC)
                     "000f" : [2, 0],     # Read / Write: Generator Time Hi byte = month, Lo byte = day of the month (Nexus, EvoAC, EvoLC)
                     "0010" : [2, 0],     # Read / Write: Generator Time = Hi byte Day of Week 00=Sunday 01=Monday, Lo byte = last 2 digits of year (Nexus, EvoAC, EvoLC)
@@ -146,8 +145,7 @@ class Evolution(GeneratorController):
                     "0059" : [2, 0],     # Rated Volts (EvoLC)
                     "005a" : [2, 0],     # Rated Hz (EvoLC)
                     "005d" : [2, 0],     # Fuel Pressure Sensor, Moves between 0x55 - 0x58 continuously even when engine off
-                    "005e" : [2, 0],     # Total engine time in minutes High (EvoLC)
-                    "005f" : [2, 0],     # Total engine time in minutes Low  (EvoLC)
+                    "005e" : [4, 0],     # Total engine time in minutes  (EvoLC) 005e= high, 005f=low
                     "000d" : [2, 0],     # Bit changes when the controller is updating registers.
                     "003c" : [2, 0],     # Raw RPM Sensor Data (Hall Sensor)
                     "05fa" : [2, 0],     # Evo AC   (Status?)
@@ -3042,6 +3040,72 @@ class Evolution(GeneratorController):
         # get RPM
         return self.GetParameter("0007", ReturnInt = ReturnInt)
 
+    #------------ Evolution:ReturnFormat ---------------------------------------
+    def ReturnFormat(sefl, value, units, ReturnFloat):
+
+        if ReturnFloat:
+            return round(float(value), 2)
+        else:
+            return ("%.2f " + units) % float(value)
+
+    #------------ Evolution:CheckExternalCTData --------------------------------
+    def CheckExternalCTData(self, request = 'current', ReturnFloat = False):
+        try:
+            if not self.UseExternalCTData:
+                return None
+            ExternalData = self.GetExternalCTData()
+
+            if ExternalData == None:
+                return None
+
+            # This assumes the following format:
+            # NOTE: all fields are optional
+            # { "strict" : True or False (true requires and outage to use the data)
+            #   "current" : float value in amps
+            #   "power"   : float value in kW
+            #   "powerfactor" : float value (default is 1.0) used if converting from current to power or power to current
+            # }
+            if 'strict' in ExternalData:
+                strict = ExternalData['strict']
+            else:
+                strict = False
+
+            if strict:
+                if self.EvolutionController and self.LiquidCooled:
+                    if(self.GetTransferStatus().lower() != 'generator'):
+                        return None
+                if not self.SystemInOutage:
+                    return None
+
+            if request.lower() == 'current' and 'current' in ExternalData:
+                return self.ReturnFormat(ExternalData['current'],"A", ReturnFloat)
+
+            if request.lower() == 'power' and 'power' in ExternalData:
+                return self.ReturnFormat(ExternalData['power'],"kW", ReturnFloat)
+
+            # if we get here we must convert the data.
+            VoltageFloat = float(self.GetVoltageOutput(ReturnInt = True))
+            if 'powerfactor' in ExternalData:
+                powerfactor = ExternalData['powerfactor']
+            else:
+                powerfactor = 1.0
+
+            if request.lower() == 'current' and 'power' in ExternalData:
+                if VoltageFloat == 0:
+                    return self.ReturnFormat(0.0,"A", ReturnFloat)
+                PowerFloat = float(ExternalData['power']) * 1000.0
+                # I(A) = P(W) / (PF x V(V))
+                CurrentFloat = round(PowerFloat / (powerfactor * VoltageFloat), 2)
+                return self.ReturnFormat(CurrentFloat,"A", ReturnFloat)
+            if request.lower() == 'power' and 'current' in ExternalData:
+                CurrentFloat = float(ExternalData['current'])
+                # P(W) = PF x I(A) x V(V)
+                PowerFloat = (powerfactor * CurrentFloat * VoltageFloat) / 1000
+                return self.ReturnFormat(PowerFloat,"kW", ReturnFloat)
+            return None
+        except Exception as e1:
+            self.LogErrorLine("Error in CheckExternalCTData: " + str(e1))
+            return None
     #------------ Evolution:GetCurrentOutput -----------------------------------
     def GetCurrentOutput(self, ReturnFloat = False):
 
@@ -3063,6 +3127,10 @@ class Evolution(GeneratorController):
             # report null if engine is not running
             if "Stopped" in EngineState or "Off" in EngineState or not len(EngineState):
                 return DefaultReturn
+
+            ReturnValue = self.CheckExternalCTData(request = 'current', ReturnFloat = ReturnFloat)
+            if ReturnValue !=  None:
+                return ReturnValue
 
             if self.EvolutionController and self.LiquidCooled:
                 Value = self.GetRegisterValueFromList("0058")   # Hall Effect Sensor
@@ -3153,6 +3221,8 @@ class Evolution(GeneratorController):
 
                 CurrentOutput = round((CurrentFloat + CurrentOffset) / Divisor, 2)
 
+            else:
+                CurrentOutput = 0.0
             # is the current out of bounds?
             # NOTE: This occurs if the EvoAC current transformers are not properly calibrated, or so we think.
             BaseStatus = self.GetBaseStatus()
@@ -3168,7 +3238,7 @@ class Evolution(GeneratorController):
                     else:
                         CurrentOutput = round((float(self.NominalKW) * 1000) / self.NominalLineVolts, 2)
             if ReturnFloat:
-                return CurrentOutput
+                return round(CurrentOutput, 2)
 
             return "%.2f A" % CurrentOutput
         except Exception as e1:
@@ -3223,7 +3293,7 @@ class Evolution(GeneratorController):
 
         EngineState = self.GetEngineState()
         # report null if engine is not running
-        if "Stopped" in EngineState or "Off" in EngineState or not len(EngineState):
+        if  not len(EngineState) or "stopped" in EngineState.lower() or "off" in EngineState.lower():
             return DefaultReturn
 
         Current = self.GetCurrentOutput(ReturnFloat = True)
@@ -3235,7 +3305,7 @@ class Evolution(GeneratorController):
             PowerOut = Voltage * Current
 
         if ReturnFloat:
-            return PowerOut / 1000.0
+            return round((PowerOut / 1000.0), 3)
         return "%.2f kW" % (PowerOut / 1000.0)
 
 
@@ -3663,12 +3733,12 @@ class Evolution(GeneratorController):
             RunHours = None
             if not self.EvolutionController or not self.LiquidCooled:
                 # get total hours running
-                RunHours =  self.GetParameterLong("000c", "000b", ReturnInt = True)
+                RunHours =  self.GetParameter("000b", ReturnInt = True)
                 if self.AdditionalRunHours != None:
                     RunHours = int(RunHours) + int(self.AdditionalRunHours)
             else:
                 # Run minutes / 60
-                RunHours = self.GetParameterLong("005f", "005e", Divider = 60.0)
+                RunHours = self.GetParameter("005e", Divider = 60.0)
                 if not len(RunHours):
                     RunHours = "0.0"
                 if self.AdditionalRunHours != None:
@@ -3939,6 +4009,8 @@ class Evolution(GeneratorController):
 
         if self.bDisablePowerLog:
             return False
+        if self.UseExternalCTData:
+            return True
         if not self.EvolutionController:    # Not supported by Nexus at this time
             return False
 

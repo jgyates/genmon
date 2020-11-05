@@ -1392,7 +1392,7 @@ class HPanel(GeneratorController):
         return False
 
     #------------ HPanel:RegisterIsBaseRegister --------------------------------
-    def RegisterIsBaseRegister(self, Register):
+    def RegisterIsBaseRegister(self, Register, Value):
 
         try:
             RegisterList = self.Reg.GetRegList()
@@ -1412,11 +1412,14 @@ class HPanel(GeneratorController):
                 self.LogError("Validation Error: Invalid register value in UpdateRegisterList: %s %s" % (Register, Value))
                 return False
 
-            if self.RegisterIsBaseRegister(Register) and not IsFile:
+            if not IsFile and self.RegisterIsBaseRegister(Register, Value):
+                # TODO validate register length
                 self.Registers[Register] = Value
-            elif self.RegisterIsStringRegister(Register) and not IsFile:
+            elif not IsFile and self.RegisterIsStringRegister(Register):
+                # TODO validate register string length
                 self.Strings[Register] = Value
-            elif self.RegisterIsFileRecord(Register) and IsFile:
+            elif IsFile and self.RegisterIsFileRecord(Register):
+                # todo validate file data length
                 self.FileData[Register] = Value
             else:
                 self.LogError("Error in UpdateRegisterList: Unknown Register " + Register + ":" + Value + ": IsFile: " + str(IsFile) + ": " + "IsString: " + str(IsString))
@@ -2295,6 +2298,8 @@ class HPanel(GeneratorController):
 
         if self.bDisablePowerLog:
             return False
+        if self.UseExternalCTData:
+            return True
         return True
 
     #---------------------HPanel::GetPowerOutput--------------------------------
@@ -2303,10 +2308,46 @@ class HPanel(GeneratorController):
     # return kW with units i.e. "2.45kW"
     def GetPowerOutput(self, ReturnFloat = False):
 
+        #return self.GetPowerOutputAlt(ReturnFloat = ReturnFloat)
         if ReturnFloat:
             return self.GetParameter(self.Reg.TOTAL_POWER_KW[REGISTER], ReturnFloat = True)
         else:
             return self.GetParameter(self.Reg.TOTAL_POWER_KW[REGISTER], "kW", ReturnFloat = False)
+
+    #------------ HPanel:GetPowerOutputAlt -------------------------------------
+    def GetPowerOutputAlt(self, ReturnFloat = False):
+
+        if ReturnFloat:
+            DefaultReturn = 0.0
+        else:
+            DefaultReturn = "0 kW"
+
+        if not self.PowerMeterIsSupported():
+            return DefaultReturn
+
+        EngineState = self.GetEngineState()
+        # report null if engine is not running
+        if not len(EngineState) or "stop" in EngineState.lower() or "off" in EngineState.lower():
+            return DefaultReturn
+
+        Current = float(self.GetParameter(self.Reg.AVG_CURRENT[REGISTER],ReturnInt = True))
+        Voltage = float(self.GetParameter(self.Reg.AVG_VOLTAGE[REGISTER],ReturnInt = True))
+        powerfactor = self.GetParameter(self.Reg.TOTAL_PF[REGISTER], ReturnFloat = True, Divider = 100.0)
+
+        PowerOut = 0.0
+        try:
+            if not Current == 0:
+                # P(W) = PF x I(A) x V(V)
+                # this calculation is for single phase but we are using average voltage and current
+                # watts is the unit
+                PowerOut = powerfactor * Voltage * Current
+        except:
+            PowerOut = 0.0
+
+        # return kW
+        if ReturnFloat:
+            return round((PowerOut / 1000.0), 3)
+        return "%.2f kW" % (PowerOut / 1000.0)
 
     #----------  HPanel:GetCommStatus  -----------------------------------------
     # return Dict with communication stats

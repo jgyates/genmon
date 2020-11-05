@@ -99,8 +99,7 @@ min_outage_duration = Outages less than this time in seconds will not be logged.
 0007=Engine RPM
 0008=Engine Frequency Hz
 000a=Battery Voltage
-000b=Engine Run Hours High (Nexus, EvoAC)
-000c=Engine Run Hours Low (Nexus, EvoAC)
+000b=Engine Run Hours (Nexus, EvoAC)
 000e=Generator Time HH:MM
 000f=Generator Time Hi = month, Lo = day of the month
 0010=Generator Time Hi Day of Week, Lo = year
@@ -132,8 +131,7 @@ min_outage_duration = Outages less than this time in seconds will not be logged.
 0058=Hall Effect Sensor (EvoLC)
 0059=Rated Volts (EvolLC)
 005a=Rated Frequency (EvoLC)
-005e=Engine Run Minutes High (EvoLC)
-005f=Engine Run Minutes Low (EvoLC)
+005e=Engine Run Minutes (EvoLC)
 000d=Bit changes when the controller is updating registers.
 003c=Raw RPM Sensor
 005d=Fuel Level Sensor (EvoLC)

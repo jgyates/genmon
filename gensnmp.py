@@ -106,8 +106,9 @@ class GenSNMP(MySupport):
         self.log = SetupLogger("gensnmp", self.LogFileName)
 
         self.console = SetupLogger("gensnmp_console", log_file = "", stream = True)
-
+        self.mibData = []
         self.LastValues = {}
+        self.transportDispatcher = None
 
         self.MonitorAddress = host
         self.debug = False
@@ -164,8 +165,8 @@ class GenSNMP(MySupport):
             self.Threads["SNMPThread"].Start()
 
             atexit.register(self.Close)
-            #signal.signal(signal.SIGTERM, self.Close)
-            #signal.signal(signal.SIGINT, self.Close)
+            signal.signal(signal.SIGTERM, self.Close)
+            signal.signal(signal.SIGINT, self.Close)
             self.SetupSNMP() # Must be last since we do not return from this call
 
         except Exception as e1:
@@ -208,6 +209,8 @@ class GenSNMP(MySupport):
     def UpdateSNMPData(self, Path, Value):
 
         try:
+            if self.transportDispatcher == None:
+                return
             oid = self.GetOID(Path)
             if oid == None:
                 return
@@ -269,11 +272,9 @@ class GenSNMP(MySupport):
                 self.LogError("Error: Invalid controller type")
                 return
 
-            self.mibData = [
-                # sorted by object name
-                MyOID((1,3,6,1,2,1,1,1),return_type = str, description = "SysDescr", default = "Genmon Generator Monitor",log = self.log),
-                MyOID((1,3,6,1,2,1,1,3,0),return_type = type(TimeTicks), description = "Uptime",log = self.log)
-            ]
+            self.mibData.append(MyOID((1,3,6,1,2,1,1,1),return_type = str, description = "SysDescr", default = "Genmon Generator Monitor",log = self.log))
+            self.mibData.append(MyOID((1,3,6,1,2,1,1,3,0),return_type = type(TimeTicks), description = "Uptime",log = self.log))
+
             if self.ControllerIsEvolutionNexus():
                 self.LogDebug("Evo/Nexus")
                 # Status Engine
@@ -430,40 +431,52 @@ class GenSNMP(MySupport):
             for mibVar in self.mibData:
                 self.mibDataIdx[mibVar.name] = mibVar
 
-            transportDispatcher = AsyncoreDispatcher()
-            transportDispatcher.registerRecvCbFun(self.SnmpCallbackFunction)
+            self.transportDispatcher = AsyncoreDispatcher()
+            self.transportDispatcher.registerRecvCbFun(self.SnmpCallbackFunction)
 
             # UDP/IPv4
-            transportDispatcher.registerTransport(
+            self.transportDispatcher.registerTransport(
                 udp.domainName, udp.UdpSocketTransport().openServerMode(('0.0.0.0', 161))
             )
 
             # UDP/IPv6
-            transportDispatcher.registerTransport(
+            self.transportDispatcher.registerTransport(
                 udp6.domainName, udp6.Udp6SocketTransport().openServerMode(('::', 161))
             )
 
             ## Local domain socket
-            # transportDispatcher.registerTransport(
+            # self.transportDispatcher.registerTransport(
             #    unix.domainName, unix.UnixSocketTransport().openServerMode('/tmp/snmp-agent')
             # )
 
-            transportDispatcher.jobStarted(1)
+            self.transportDispatcher.jobStarted(1)
 
-            while True:
-                try:
-                    # Dispatcher will never finish as job#1 never reaches zero
-                    transportDispatcher.runDispatcher()
-                except Exception as e1:
-                    transportDispatcher.closeDispatcher()
+            try:
+                # Dispatcher will never finish as job#1 never reaches zero
+                if self.transportDispatcher != None:
+                    self.transportDispatcher.runDispatcher()
+            except Exception as e1:
+                self.SnmpClose()
+                if self.transportDispatcher != None:
                     self.LogErrorLine("Fatal Error in SetupSNMP: " + str(e1))
-
+                else:
+                    # we are exiting
+                    self.LogDebug("Exit Snmp Engine")
 
         except Exception as e1:
             self.LogErrorLine("Error in SetupSNMP: " + str(e1))
+            self.SnmpClose()
+
+    #----------  GenSNMP::SnmpClose --------------------------------------------
+    def SnmpClose(self):
+
+        if self.transportDispatcher != None:
+            self.transportDispatcher.closeDispatcher()
+            self.LogDebug("Dispatcher Closed")
+            self.transportDispatcher = None
 
     #----------  GenSNMP::SnmpCallbackFunction ---------------------------------
-    def SnmpCallbackFunction(self,transportDispatcher, transportDomain, transportAddress, wholeMsg):
+    def SnmpCallbackFunction(self, transportDispatcher, transportDomain, transportAddress, wholeMsg):
         while wholeMsg:
             try:
                 msgVer = api.decodeMessageVersion(wholeMsg)
@@ -573,12 +586,14 @@ class GenSNMP(MySupport):
                     self.CheckDictForChanges(GenmonDict, "home")
 
                     if self.WaitForExit("SNMPThread", float(self.PollTime)):
+                        self.SnmpClose()
                         return
                 except Exception as e1:
                     self.LogErrorLine("Error in SNMPThread: (parse) : " + str(e1))
             except Exception as e1:
                 self.LogErrorLine("Error in SNMPThread: " + str(e1))
                 if self.WaitForExit("SNMPThread", float(self.PollTime * 60)):
+                    self.SnmpClose()
                     return
 
     #------------ GenSNMP::CheckDictForChanges -------------------------------
@@ -654,6 +669,7 @@ class GenSNMP(MySupport):
     def Close(self):
         self.LogError("GenSNMP Exit")
         self.KillThread("SNMPThread")
+        self.SnmpClose()
         self.Generator.Close()
 #-------------------------------------------------------------------------------
 if __name__ == "__main__":
@@ -686,8 +702,5 @@ if __name__ == "__main__":
     log = SetupLogger("client", os.path.join(loglocation, "gensnmp.log"))
 
     GenSNMPInstance = GenSNMP(log = log, loglocation = loglocation, ConfigFilePath = ConfigFilePath, host = address, port = port)
-
-    while True:
-        time.sleep(0.5)
 
     sys.exit(1)
