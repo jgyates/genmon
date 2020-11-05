@@ -109,7 +109,7 @@
 2710!WARNING!Ruptured Tank!The system detected fuel in the outer basin tank and has triggered the warning.!Ruptured or leaky tank or bad sensor
 2730!WARNING!Exercise Not Set!Exercise has never been set!No further description
 2750!WARNING!Low Battery!Battery voltage below 12.1V for greater than 60 seconds!No further description
-2760!WARNING!Battery Problem!Completed 26 hour charge cycle, battery volt- age below 12.52V or current draw from charger still greater than 600mA!No further description
+2760!WARNING!Battery Problem!Completed 26 hour charge cycle, battery voltage below 12.52V or current draw from charger still greater than 600mA!No further description
 2770!WARNING!Charger Warning!Battery voltage above 16.1V!No further description
 2780!WARNING!Charger Missing AC!During charging, AC input to battery charger missing for greater than 5 minutes!No further description
 2790!WARNING!SEEPROM Abuse!Controller wrote to the EEPROM more than 500 times in less than 4 minutes!No further description
