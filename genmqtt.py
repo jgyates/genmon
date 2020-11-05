@@ -57,6 +57,7 @@ class MyGenPush(MySupport):
 
         self.UseNumeric = use_numeric
         self.debug = debug
+        self.Exiting = False
 
         if polltime == None:
             self.PollTime = 3
@@ -287,6 +288,7 @@ class MyGenPush(MySupport):
              self.LogErrorLine("Error in mygenpush:CheckForChanges: " + str(e1))
     # ---------- MyGenPush::Close-----------------------------------------------
     def Close(self):
+        self.Exiting = True
         self.KillThread("PollingThread")
         self.Generator.Close()
 
@@ -315,6 +317,7 @@ class MyMQTT(MyCommon):
         # test
         self.console = SetupLogger("mymqtt_console", log_file = "", stream = True)
 
+        self.Exiting = False
         self.Username = None
         self.Password = None
 
@@ -515,7 +518,9 @@ class MyMQTT(MyCommon):
 
     # ---------- MyMQTT::Close--------------------------------------------------
     def Close(self):
+        self.LogDebug("Exiting MyMQTT")
         self.Push.Close()
+        self.Exiting = True
 #-------------------------------------------------------------------------------
 if __name__ == "__main__":
 
@@ -548,7 +553,7 @@ if __name__ == "__main__":
 
     InstanceMQTT = MyMQTT(host = address, port = port, loglocation = loglocation, configfilepath = ConfigFilePath)
 
-    while True:
+    while not InstanceMQTT.Exiting:
         time.sleep(0.5)
 
     sys.exit(1)

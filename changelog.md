@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 - Corrected issue with email errors relating to RFC2821 (see https://tools.ietf.org/html/rfc2821#section-3.3)
 - More improvements to better detect and recover modbus sync issues when using serial over TCP with weak wifi signals
 - Improvemnt in gensnmp.py to clean up on restarts (thanks @liltux)
+- Minor cleanup on genmqtt.py
 
 ## V1.15.08 - 2020-10-27
 - Additional parameter validation for values read from conf file
