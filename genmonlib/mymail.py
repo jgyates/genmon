@@ -152,9 +152,14 @@ class MyMail(MySupport):
 
         msg = MIMEMultipart()
         if sender_name == None or not len(sender_name):
-            msg['From'] = sender_account
+            msg['From'] = "<" + sender_account + ">"
         else:
             msg['From'] = sender_name + " <" + sender_account + ">"
+
+        recipientList = recipient.strip().split(",")
+        recipient = ">,<"
+        recipient = recipient.join(recipientList)
+        recipient = "<" + recipient + ">"
 
         msg['To'] = recipient
         msg['Date'] = formatdate(localtime=True)

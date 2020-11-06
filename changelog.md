@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - More improvements to better detect and recover modbus sync issues when using serial over TCP with weak wifi signals
 - Improvemnt in gensnmp.py to clean up on restarts (thanks @liltux)
 - Minor cleanup on genmqtt.py
+- Cleanup saving of settings web app redirect when using secure login (thanks @curtis1757)
 
 ## V1.15.08 - 2020-10-27
 - Additional parameter validation for values read from conf file
