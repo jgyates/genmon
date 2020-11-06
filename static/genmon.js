@@ -1780,7 +1780,7 @@ function DisplaySettings(){
               outstr += '<tr><td width="25px">&nbsp;</td><td bgcolor="#ffcccc" width="300px">' + result[key][1] + '</td><td bgcolor="#ffcccc">' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
             } else if (key == "weatherlocation") {
               outstr += '<tr><td width="25px">&nbsp;</td><td valign="top" width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]);
-              if (usehttps == true) {
+              if (httpsUsed() == true) {
                 outstr += '<br><button type="button" id="weathercityname" onclick="lookupLocation()">Look Up</button>';
               }
               outstr += '</td></tr>';
@@ -1921,7 +1921,7 @@ function toggleSectionInverse(animation, section) {
 //*****************************************************************************
 function lookupLocation() {
     if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(locationSuccess, locationError);
+        navigator.geolocation.getCurrentPosition(locationSuccess, locationError, {timeout:10000});
     } else {
         GenmonAlert("Your browser does not support Geolocation!");
     }
@@ -1947,6 +1947,11 @@ function locationError(error) {
 //*****************************************************************************
 function locationSuccess(position) {
     try {
+            if ($('#weatherkey').val().length < 1 ) {
+              GenmonAlert("API key is required for city lookup.");
+              return;
+            }
+
             var weatherAPI = '//api.openweathermap.org/data/2.5/forecast?lat=' + position.coords.latitude + '&lon=' + position.coords.longitude + '&lang=en&APPID='+$('#weatherkey').val();
             $.getJSON(weatherAPI, function (response) {
                 $('#weatherlocation').val(response.city.id);
@@ -2332,6 +2337,14 @@ function saveAddon(addon, addonTitle){
         }
     })
 }
+
+//*****************************************************************************
+function httpsUsed() {
+
+    var url = window.location.href;
+    return url.includes("https:")
+}
+
 //*****************************************************************************
 function gotoLogin() {
 
