@@ -504,6 +504,21 @@ def GetAddOns():
         AddOnCfg['gengpio']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gengpiopy-optional"
         AddOnCfg['gengpio']['parameters'] = None
 
+        #GENGPIOLEDBLINK
+        AddOnCfg['gengpioledblink'] = collections.OrderedDict()
+        AddOnCfg['gengpioledblink']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "gengpioledblink", default = False)
+        AddOnCfg['gengpioledblink']['title'] = "Genmon GPIO Output to blink LED"
+        AddOnCfg['gengpioledblink']['description'] = "Genmon will blink LED connected to GPIO pin to indicate genmon status"
+        AddOnCfg['gengpioledblink']['icon'] = "rpi"
+        AddOnCfg['gengpioledblink']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gengpiopy-optional" #<--need to update
+        AddOnCfg['gengpioledblink']['parameters'] =  collections.OrderedDict()
+        AddOnCfg['gengpioledblink']['parameters']['ledpin'] = CreateAddOnParam(
+            ConfigFiles[GENGPIOLEDBLINK_CONFIG].ReadValue("ledpin", return_type = int, default = 12),
+            'int',
+            "GPIO pin # that LED to blink is connected to",
+            bounds = "required digits range:0:27",
+            display_name = "GPIO LED pin")
+
         # GENGPIOIN
         AddOnCfg['gengpioin'] = collections.OrderedDict()
         AddOnCfg['gengpioin']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "gengpioin", default = False)
@@ -925,6 +940,22 @@ def GetAddOns():
             bounds = 'number',
             display_name = "Poll Frequency")
 
+        #GENTANKDIY2
+        AddOnCfg['gentankdiy2'] = collections.OrderedDict()
+        AddOnCfg['gentankdiy2']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "gentankdiy2", default = False)
+        AddOnCfg['gentankdiy2']['title'] = "TLE5501 DIY Fuel Tank Gauge Sensor"
+        AddOnCfg['gentankdiy2']['description'] = "Integrates DIY tank gauge sensor using TLE5501 Hall Effect IC for Genmon"
+        AddOnCfg['gentankdiy2']['icon'] = "rpi"
+        AddOnCfg['gentankdiy2']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gentankdiypy-optional" #<--need to update
+        AddOnCfg['gentankdiy2']['parameters'] = collections.OrderedDict()
+
+        AddOnCfg['gentankdiy2']['parameters']['poll_frequency'] = CreateAddOnParam(
+            ConfigFiles[GENTANKDIY2_CONFIG].ReadValue("poll_frequency", return_type = float, default = 60.0),
+            'float',
+            "The duration in minutes between poll of tank data.",
+            bounds = 'number',
+            display_name = "Poll Frequency")
+
         #GENALEXA
         AddOnCfg['genalexa'] = collections.OrderedDict()
         AddOnCfg['genalexa']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "genalexa", default = False)
@@ -1070,11 +1101,13 @@ def SaveAddOnSettings(query_string):
             "genlog" : ConfigFiles[GENLOADER_CONFIG],
             "gensyslog" : ConfigFiles[GENLOADER_CONFIG],
             "gengpio" : ConfigFiles[GENLOADER_CONFIG],
+            "gengpioledblink" : ConfigFiles[GENGPIOLEDBLINK_CONFIG],
             "gengpioin" : ConfigFiles[GENGPIOIN_CONFIG],
             "genexercise" : ConfigFiles[GENEXERCISE_CONFIG],
             "genemail2sms" : ConfigFiles[GENEMAIL2SMS_CONFIG],
             "gentankutil" : ConfigFiles[GENTANKUTIL_CONFIG],
             "gentankdiy" : ConfigFiles[GENTANKDIY_CONFIG],
+            "gentankdiy2" : ConfigFiles[GENTANKDIY2_CONFIG],
             "genalexa" : ConfigFiles[GENALEXA_CONFIG],
             "gensnmp" : ConfigFiles[GENSNMP_CONFIG],
             "gentemp" : ConfigFiles[GENTEMP_CONFIG]
@@ -1093,7 +1126,7 @@ def SaveAddOnSettings(query_string):
                     if module == "gentankutil":
                         # update genmon.conf also to let it know that it should watch for external fuel data
                         ConfigFiles[GENMON_CONFIG].WriteValue("use_external_fuel_data", basevalues, section = "genmon")
-                    if module == "gentankdiy":
+                    if module == "gentankdiy" or module == "gentankdiy2":
                         # update genmon.conf also to let it know that it should watch for external fuel data
                         ConfigFiles[GENMON_CONFIG].WriteValue("use_external_fuel_data_diy", basevalues, section = "genmon")
 
@@ -1959,7 +1992,9 @@ def Close(NoExit = False):
 if __name__ == "__main__":
 
     address=ProgramDefaults.LocalHost
-
+    #ConfigFilePath='/etc/'
+    ConfigFilePath=ProgramDefaults.ConfPath #Windows change
+  
     # log errors in this module to a file
     console = SetupLogger("genserv_console", log_file = "", stream = True)
 
@@ -1995,23 +2030,23 @@ if __name__ == "__main__":
     GENMQTT_CONFIG = os.path.join(ConfigFilePath, "genmqtt.conf")
     GENSLACK_CONFIG = os.path.join(ConfigFilePath, "genslack.conf")
     GENGPIOIN_CONFIG = os.path.join(ConfigFilePath, "gengpioin.conf")
+    GENGPIOLEDBLINK_CONFIG = os.path.join(ConfigFilePath, "gengpioledblink.conf")
     GENEXERCISE_CONFIG = os.path.join(ConfigFilePath, "genexercise.conf")
     GENEMAIL2SMS_CONFIG = os.path.join(ConfigFilePath, "genemail2sms.conf")
     GENTANKUTIL_CONFIG = os.path.join(ConfigFilePath, "gentankutil.conf")
     GENTANKDIY_CONFIG = os.path.join(ConfigFilePath, "gentankdiy.conf")
+    GENTANKDIY2_CONFIG = os.path.join(ConfigFilePath, "gentankdiy2.conf")
     GENALEXA_CONFIG = os.path.join(ConfigFilePath, "genalexa.conf")
     GENSNMP_CONFIG = os.path.join(ConfigFilePath, "gensnmp.conf")
     GENTEMP_CONFIG = os.path.join(ConfigFilePath, "gentemp.conf")
 
-    if os.geteuid() != 0:
-        LogConsole("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'.")
-        sys.exit(1)
+    MySupport.CheckRootPrivileges()
 
     ConfigFileList = [GENMON_CONFIG, MAIL_CONFIG, GENLOADER_CONFIG, GENSMS_CONFIG,
-        MYMODEM_CONFIG, GENPUSHOVER_CONFIG, GENMQTT_CONFIG, GENSLACK_CONFIG,
+        MYMODEM_CONFIG, GENPUSHOVER_CONFIG, GENMQTT_CONFIG, GENSLACK_CONFIG, GENGPIOLEDBLINK_CONFIG,
         GENGPIOIN_CONFIG, GENEXERCISE_CONFIG, GENEMAIL2SMS_CONFIG,
-        GENTANKUTIL_CONFIG, GENTANKDIY_CONFIG, GENALEXA_CONFIG, GENSNMP_CONFIG,
-        GENTEMP_CONFIG]
+        GENTANKUTIL_CONFIG, GENTANKDIY_CONFIG, GENTANKDIY2_CONFIG, GENALEXA_CONFIG,
+        GENSNMP_CONFIG, GENTEMP_CONFIG]
 
     for ConfigFile in ConfigFileList:
         if not os.path.isfile(ConfigFile):

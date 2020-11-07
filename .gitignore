@@ -1,6 +1,11 @@
 outage.txt
 kwlog.txt
 
+#Visual Studio specific files
+*.pyproj
+*.user
+*.sln
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

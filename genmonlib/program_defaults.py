@@ -9,11 +9,21 @@
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
 
+import sys
 
 #------------ ProgramDefaults class ---------------------------------------------
 class ProgramDefaults(object):
-    ConfPath = "/etc/genmon/"
-    LogPath = "/var/log/"
+
+    if 'win' in sys.platform:  
+        
+        #--Windows change, not sure these are the best paths to use in Windows, but they can work
+        
+        ConfPath = ".\\conf\\"
+        LogPath = ".\\log\\"
+    else:
+        ConfPath = "/etc/genmon/"
+        LogPath = "/var/log/"
+
     ServerPort = 9082
     LocalHost =  "127.0.0.1"
     GENMON_VERSION = "V1.15.09"

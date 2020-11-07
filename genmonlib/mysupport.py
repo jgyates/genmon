@@ -102,6 +102,18 @@ class MySupport(MyCommon):
 
         return Platform.GetInfo()
 
+    #------------ MySupport::IsOSWindows-------------------------------
+    @staticmethod
+    def IsOSWindows():
+        return 'win' in sys.platform
+
+    #------------ MySupport::CheckRootPrivileges-------------------------------
+    @staticmethod
+    def CheckRootPrivileges():
+        if (not MySupport.IsOSWindows) and (os.geteuid() != 0):
+            print("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
+            sys.exit(2)
+
     #---------- MySupport::InternetConnected------------------------------------
     # Note: this function, if the internet connection is not present could
     # take some time to complete due to the network timeout
