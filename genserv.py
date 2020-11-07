@@ -968,6 +968,12 @@ def GetAddOns():
             "SNMP Community string",
             bounds = 'minmax:4:50',
             display_name = "SNMP Community")
+        AddOnCfg['gensnmp']['parameters']['use_numeric'] = CreateAddOnParam(
+            ConfigFiles[GENSNMP_CONFIG].ReadValue("use_numeric", return_type = bool, default = False),
+            'boolean',
+            "If enabled will return numeric values (no units) in the Status, Maintenance (Evo/Nexus only) and Outage data.",
+            bounds = '',
+            display_name = "Numerics only")
 
         # GENTEMP
         AddOnCfg['gentemp'] = collections.OrderedDict()

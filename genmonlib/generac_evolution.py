@@ -2017,7 +2017,7 @@ class Evolution(GeneratorController):
         # Nexus and Evo Air Cooled: ramps up to 600 decimal on LP/NG   (3600 RPM)
         # this is possibly raw data from RPM sensor
         Sensors.append({"Raw RPM Sensor" : self.GetParameter("003c")})
-        Sensors.append({"Frequency (Calculated)" : self.GetFrequency(Calculate = True)})
+        Sensors.append({"Hz (Calculated)" : self.GetFrequency(Calculate = True)})
 
         if self.EvolutionController and self.LiquidCooled:
             # get total hours since activation
@@ -3851,8 +3851,8 @@ class Evolution(GeneratorController):
 
             Line.append({"Utility Voltage" : self.ValueOut(self.GetUtilityVoltage(ReturnInt = True), "V", JSONNum)})
             #
-            Line.append({"Utility Voltage Max" : self.ValueOut(self.UtilityVoltsMax, "V", JSONNum)})
-            Line.append({"Utility Voltage Min" : self.ValueOut(self.UtilityVoltsMin, "V", JSONNum)})
+            Line.append({"Utility Max Voltage" : self.ValueOut(self.UtilityVoltsMax, "V", JSONNum)})
+            Line.append({"Utility Min Voltage" : self.ValueOut(self.UtilityVoltsMin, "V", JSONNum)})
             Line.append({"Utility Threshold Voltage" : self.ValueOut(self.GetThresholdVoltage(ReturnInt = True), "V", JSONNum)})
 
             if self.EvolutionController and self.LiquidCooled:

@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Minor cleanup on genmqtt.py
 - Cleanup saving of settings web app redirect when using secure login (thanks @curtis1757)
 - Additional checks added for weather API city lookup
+- gensnmp.py updates to allow an option to not display units for numeric values in SNMP responses
 
 ## V1.15.08 - 2020-10-27
 - Additional parameter validation for values read from conf file

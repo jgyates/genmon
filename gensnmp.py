@@ -110,10 +110,11 @@ class GenSNMP(MySupport):
         self.LastValues = {}
         self.transportDispatcher = None
 
+        self.UseNumeric = False
         self.MonitorAddress = host
         self.debug = False
         self.PollTime = 1
-        self.BlackList = [] #["Monitor"]
+        self.BlackList = ["Outage"] #["Monitor"]
         configfile = ConfigFilePath + 'gensnmp.conf'
         try:
             if not os.path.isfile(configfile):
@@ -282,21 +283,21 @@ class GenSNMP(MySupport):
                 self.AddOID((CtlID,0,0,1),return_type = str, description = "EngineState", default = "Unknown", keywords = ["Status/Engine","Engine State"])
                 self.AddOID((CtlID,0,0,2),return_type = str, description = "ActiveRelays", default = "", keywords = ["Status/Engine","Active Relays"])
                 self.AddOID((CtlID,0,0,3),return_type = str, description = "ActiveSensors", default = "", keywords = ["Status/Engine","Active Sensors"])
-                self.AddOID((CtlID,0,0,4),return_type = str, description = "BatteryVolts", default = "0.0 V", keywords = ["Status/Engine","Battery Voltage"])
-                self.AddOID((CtlID,0,0,5),return_type = str, description = "BatteryStatus", default = " ", keywords = ["Status/Engine","Battery Status"])
+                self.AddOID((CtlID,0,0,4),return_type = str, description = "BatteryVolts", default = "", keywords = ["Status/Engine","Battery Voltage"])
+                self.AddOID((CtlID,0,0,5),return_type = str, description = "BatteryStatus", default = "", keywords = ["Status/Engine","Battery Status"])
                 self.AddOID((CtlID,0,0,6),return_type = str, description = "RPM", default = "", keywords = ["Status/Engine","RPM"])
-                self.AddOID((CtlID,0,0,7),return_type = str, description = "Frequency", default = "0 Hz", keywords = ["Status/Engine","Frequency"])
-                self.AddOID((CtlID,0,0,8),return_type = str, description = "OutputVoltage", default = "0 V", keywords = ["Status/Engine","Output Voltage"])
-                self.AddOID((CtlID,0,0,9),return_type = str, description = "OutputCurrent", default = "0 A", keywords = ["Status/Engine","Output Current"])
-                self.AddOID((CtlID,0,0,10),return_type = str, description = "OutputPower", default = "0 kW", keywords = ["Status/Engine","Output Power"])
+                self.AddOID((CtlID,0,0,7),return_type = str, description = "Frequency", default = "", keywords = ["Status/Engine","Frequency"])
+                self.AddOID((CtlID,0,0,8),return_type = str, description = "OutputVoltage", default = "", keywords = ["Status/Engine","Output Voltage"])
+                self.AddOID((CtlID,0,0,9),return_type = str, description = "OutputCurrent", default = "", keywords = ["Status/Engine","Output Current"])
+                self.AddOID((CtlID,0,0,10),return_type = str, description = "OutputPower", default = "", keywords = ["Status/Engine","Output Power"])
                 self.AddOID((CtlID,0,0,11),return_type = str, description = "RotorPoles", default = "", keywords = ["Status/Engine","Rotor Poles"])
                 # Status Line
-                self.AddOID((CtlID,0,1,0),return_type = str, description = "UtilityVoltage", default = "0 V", keywords = ["Status/Line","Utility Voltage"])
-                self.AddOID((CtlID,0,1,1),return_type = str, description = "UtilityVoltageMax", default = "0 V", keywords = ["Status/Line","Utility Voltage Max"])
-                self.AddOID((CtlID,0,1,2),return_type = str, description = "UtilityVoltageMin", default = "0 V", keywords = ["Status/Line","Utility Voltage Min"])
-                self.AddOID((CtlID,0,1,3),return_type = str, description = "UtilityThresholdVoltage", default = "0 V", keywords = ["Status/Line","Utility Threshold Voltage"])
-                self.AddOID((CtlID,0,1,4),return_type = str, description = "UtilityPickupVoltage", default = "0 V", keywords = ["Status/Line","Utility Pickup Voltage"])
-                self.AddOID((CtlID,0,1,4),return_type = str, description = "SetOutputVoltage", default = "0 V", keywords = ["Status/Line","Set Output Voltage"])
+                self.AddOID((CtlID,0,1,0),return_type = str, description = "UtilityVoltage", default = "", keywords = ["Status/Line","Utility Voltage"])
+                self.AddOID((CtlID,0,1,1),return_type = str, description = "UtilityVoltageMax", default = "", keywords = ["Status/Line","Utility Max Voltage"])
+                self.AddOID((CtlID,0,1,2),return_type = str, description = "UtilityVoltageMin", default = "", keywords = ["Status/Line","Utility Min Voltage"])
+                self.AddOID((CtlID,0,1,3),return_type = str, description = "UtilityThresholdVoltage", default = "", keywords = ["Status/Line","Utility Threshold Voltage"])
+                self.AddOID((CtlID,0,1,4),return_type = str, description = "UtilityPickupVoltage", default = "", keywords = ["Status/Line","Utility Pickup Voltage"])
+                self.AddOID((CtlID,0,1,4),return_type = str, description = "SetOutputVoltage", default = "", keywords = ["Status/Line","Set Output Voltage"])
                 # Status Last Alarms
                 self.AddOID((CtlID,0,2,0),return_type = str, description = "LastAlarmLog", default = " ", keywords = ["Status","Last Log","Alarm Log"])
                 self.AddOID((CtlID,0,2,1),return_type = str, description = "LastServiceLog", default = " ", keywords = ["Status","Last Log","Service Log"])
@@ -567,11 +568,14 @@ class GenSNMP(MySupport):
             try:
                 if not self.UseNumeric:
                     statusdata = self.SendCommand("generator: status_json")
+                    maintdata = self.SendCommand("generator: maint_json")
+                    outagedata = self.SendCommand("generator: outage_json")
+                    monitordata = self.SendCommand("generator: monitor_json")
                 else:
                     statusdata = self.SendCommand("generator: status_num_json")
-                outagedata = self.SendCommand("generator: outage_json")
-                monitordata = self.SendCommand("generator: monitor_json")
-                maintdata = self.SendCommand("generator: maint_json")
+                    outagedata = self.SendCommand("generator: outage_num_json")
+                    monitordata = self.SendCommand("generator: monitor_num_json")
+                    maintdata = self.SendCommand("generator: maint_num_json")
                 try:
                     GenmonDict = {}
                     TempDict = {}
@@ -596,7 +600,19 @@ class GenSNMP(MySupport):
                     self.SnmpClose()
                     return
 
-    #------------ GenSNMP::CheckDictForChanges -------------------------------
+    #------------ GenSNMP::DictIsNumeric ---------------------------------------
+    def DictIsNumeric(self, node):
+
+        try:
+            if not self.UseNumeric:
+                return False
+            if isinstance(node, dict) and "type" in node and "value" in node and "unit" in node:
+                return True
+            return False
+        except Exception as e1:
+            self.LogErrorLine("Error in DictIsNumeric: " + str(e1))
+            return False
+    #------------ GenSNMP::CheckDictForChanges ---------------------------------
     # This function is recursive, it will turn a nested dict into a flat dict keys
     # that have a directory structure with corrposonding values and determine if
     # anyting changed. If it has then call our callback function
@@ -609,8 +625,12 @@ class GenSNMP(MySupport):
         if isinstance(node, dict):
            for key, item in node.items():
                if isinstance(item, dict):
-                   CurrentPath = PathPrefix + "/" + str(key)
-                   self.CheckDictForChanges(item, CurrentPath)
+                   if not self.DictIsNumeric(item):
+                       CurrentPath = PathPrefix + "/" + str(key)
+                       self.CheckDictForChanges(item, CurrentPath)
+                   else:
+                       CurrentPath = PathPrefix + "/" + str(key)
+                       self.CheckForChanges(CurrentPath, str(item["value"]))
                elif isinstance(item, list):
                    CurrentPath = PathPrefix + "/" + str(key)
                    if self.ListIsStrings(item):
@@ -619,7 +639,11 @@ class GenSNMP(MySupport):
                    else:
                        for listitem in item:
                            if isinstance(listitem, dict):
-                               self.CheckDictForChanges(listitem, CurrentPath)
+                               if not self.DictIsNumeric(item):
+                                   self.CheckDictForChanges(listitem, CurrentPath)
+                               else:
+                                   CurrentPath = PathPrefix + "/" + str(key)
+                                   self.CheckForChanges(CurrentPath, str(item["value"]))
                            else:
                                self.LogError("Invalid type in CheckDictForChanges: %s %s (2)" % (key, str(type(listitem))))
                else:
@@ -667,7 +691,7 @@ class GenSNMP(MySupport):
 
     # ----------GenSNMP::Close----------------------------------------------
     def Close(self):
-        self.LogError("GenSNMP Exit")
+        self.LogDebug("GenSNMP Exit")
         self.KillThread("SNMPThread")
         self.SnmpClose()
         self.Generator.Close()
