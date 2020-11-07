@@ -165,10 +165,10 @@ if __name__=='__main__':
     try:
         console = SetupLogger("gengpioin_console", log_file = "", stream = True)
 
-        if os.geteuid() != 0:
+        if MySupport.NoRootPrivileges():
             console.error("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
             sys.exit(2)
-
+ 
         HelpStr = '\nsudo python gengpioin.py -a <IP Address or localhost> -c <path to genmon config file>\n'
         try:
             ConfigFilePath = ProgramDefaults.ConfPath

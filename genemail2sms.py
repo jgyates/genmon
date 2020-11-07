@@ -144,11 +144,12 @@ if __name__=='__main__':
     # Set the signal handler
     signal.signal(signal.SIGINT, signal_handler)
 
-    if os.geteuid() != 0:
-        print("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
+    console = SetupLogger("emailsms_console", log_file = "", stream = True)
+
+    if MySupport.NoRootPrivileges():
+        console.error("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
         sys.exit(2)
 
-    console = SetupLogger("emailsms_console", log_file = "", stream = True)
     HelpStr = '\nsudo python genemail2sms.py -a <IP Address or localhost> -c <path to genmon config file>\n'
 
     try:

@@ -700,8 +700,9 @@ if __name__ == "__main__":
 
     console = SetupLogger("GenSNMP_console", log_file = "", stream = True)
     HelpStr = '\nsudo python gensnmp.py -a <IP Address or localhost> -c <path to genmon config file>\n'
-    if os.geteuid() != 0:
-        console.error("\nYou need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.\n")
+
+    if MySupport.NoRootPrivileges():
+        console.error("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
         sys.exit(2)
 
     try:

@@ -41,7 +41,7 @@ class Monitor(MySupport):
 
     def __init__(self, ConfigFilePath = ProgramDefaults.ConfPath):
         super(Monitor, self).__init__()
-
+        
         self.ProgramName = "Generator Monitor"
         self.Version = "Unknown"
         self.log = None
@@ -95,8 +95,8 @@ class Monitor(MySupport):
 
         self.console = SetupLogger("genmon_console", log_file = "", stream = True)
 
-        if os.geteuid() != 0:
-            self.LogConsole("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'.")
+        if MySupport.NoRootPrivileges():
+            self.LogConsole("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
             sys.exit(1)
 
         if not os.path.isfile(os.path.join(self.ConfigFilePath, 'genmon.conf')):
@@ -413,7 +413,7 @@ class Monitor(MySupport):
         try:
             LogList = []
             FilesToSend = ["genmon.log", "genserv.log", "mymail.log", "myserial.log",
-                "mymodbus.log", "gengpio.log", "gengpioin.log", "gensms.log",
+                "mymodbus.log", "gengpio.log", "gengpioledblink.log", "gengpioin.log", "gensms.log",
                 "gensms_modem.log", "genmqtt.log", "genpushover.log", "gensyslog.log",
                 "genloader.log", "myserialtcp.log", "genlog.log", "genslack.log",
                 "genexercise.log","genemail2sms.log", "gentankutil.log", "genalexa.log",
