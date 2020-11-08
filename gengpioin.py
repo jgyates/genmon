@@ -165,7 +165,7 @@ if __name__=='__main__':
     try:
         console = SetupLogger("gengpioin_console", log_file = "", stream = True)
 
-        if os.geteuid() != 0:
+        if not MySupport.PermissionsOK():
             console.error("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
             sys.exit(2)
 

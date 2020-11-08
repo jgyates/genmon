@@ -291,7 +291,7 @@ if __name__ == "__main__":
 
     console = SetupLogger("GenTemp_console", log_file = "", stream = True)
     HelpStr = '\nsudo python gentemp.py -a <IP Address or localhost> -c <path to genmon config file>\n'
-    if os.geteuid() != 0:
+    if not MySupport.PermissionsOK():
         console.error("\nYou need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.\n")
         sys.exit(2)
 

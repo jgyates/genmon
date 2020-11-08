@@ -63,11 +63,22 @@ class MyPlatform(MyCommon):
         if self.IsOSLinux():
             return self.GetLinuxInfo()
         return None
+
+
     #------------ MyPlatform::IsOSLinux-----------------------------------------
-    def IsOSLinux(self):
+    @staticmethod
+    def IsOSLinux():
 
         if "linux" in sys.platform:
             return True
+        return False
+    #------------ MyPlatform::IsOSWindows-----------------------------------------
+    @staticmethod
+    def IsOSWindows():
+
+        if "win" in sys.platform:
+            return True
+        return False
 
     #------------ MyPlatform::IsPlatformRaspberryPi-----------------------------
     def IsPlatformRaspberryPi(self, raise_on_errors=False):
@@ -208,7 +219,7 @@ class MyPlatform(MyCommon):
     #------------ MyPlatform::GetLinuxInfo -------------------------------------
     def GetLinuxInfo(self):
 
-        if not self.IsOSLinux():
+        if not self.IsOSLinux():  # call staticfuntion
             return None
         LinuxInfo = []
 

@@ -144,7 +144,7 @@ if __name__=='__main__':
     # Set the signal handler
     signal.signal(signal.SIGINT, signal_handler)
 
-    if os.geteuid() != 0:
+    if not MySupport.PermissionsOK():
         print("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
         sys.exit(2)
 

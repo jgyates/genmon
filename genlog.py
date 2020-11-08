@@ -61,6 +61,11 @@ if __name__=='__main__':
     try:
         ConfigFilePath = ProgramDefaults.ConfPath
         console = SetupLogger("genlog_console", log_file = "", stream = True)
+
+        if not MySupport.PermissionsOK():
+            console.error("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
+            sys.exit(2)
+
         opts, args = getopt.getopt(sys.argv[1:],"ha:f:c:",["help","address=","filename=", "configpath="])
     except getopt.GetoptError:
         console.error(HelpStr)

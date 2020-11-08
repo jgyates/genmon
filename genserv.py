@@ -2003,7 +2003,7 @@ if __name__ == "__main__":
     GENSNMP_CONFIG = os.path.join(ConfigFilePath, "gensnmp.conf")
     GENTEMP_CONFIG = os.path.join(ConfigFilePath, "gentemp.conf")
 
-    if os.geteuid() != 0:
+    if not MySupport.PermissionsOK():
         LogConsole("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'.")
         sys.exit(1)
 

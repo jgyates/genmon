@@ -95,7 +95,7 @@ class Monitor(MySupport):
 
         self.console = SetupLogger("genmon_console", log_file = "", stream = True)
 
-        if os.geteuid() != 0:
+        if not MySupport.PermissionsOK():
             self.LogConsole("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'.")
             sys.exit(1)
 

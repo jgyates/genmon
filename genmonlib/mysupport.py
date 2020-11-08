@@ -409,3 +409,14 @@ class MySupport(MyCommon):
         port = config.ReadValue('server_port', return_type = int, default = ProgramDefaults.ServerPort)
 
         return port, loglocation
+
+    #---------------------MySupport::PermissionsOK------------------------------
+    @staticmethod
+    def PermissionsOK():
+
+        if MyPlatform.IsOSLinux() and os.geteuid() == 0:
+            return True
+        if MyPlatform.IsOSWindows():
+            return True
+        else:
+            return False
