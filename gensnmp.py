@@ -115,12 +115,15 @@ class GenSNMP(MySupport):
         self.debug = False
         self.PollTime = 1
         self.BlackList = ["Outage"] #["Monitor"]
-        configfile = ConfigFilePath + 'gensnmp.conf'
+        configfile = os.path.join(ConfigFilePath , 'gensnmp.conf')
         try:
             if not os.path.isfile(configfile):
                 self.LogConsole("Missing config file : " + configfile)
                 self.LogError("Missing config file : " + configfile)
                 sys.exit(1)
+
+            self.genmon_config = MyConfig(filename = os.path.join(ConfigFilePath, 'genmon.conf'), section = 'GenMon', log = self.log)
+            self.ControllerSelected = self.genmon_config.ReadValue('controllertype', default = "generac_evo_nexus")
 
             self.config = MyConfig(filename = configfile, section = 'gensnmp', log = self.log)
 
@@ -152,6 +155,7 @@ class GenSNMP(MySupport):
             atexit.register(self.Close)
             signal.signal(signal.SIGTERM, self.Close)
             signal.signal(signal.SIGINT, self.Close)
+
             self.SetupSNMP() # Must be last since we do not return from this call
 
         except Exception as e1:
@@ -161,9 +165,9 @@ class GenSNMP(MySupport):
     #----------  GenSNMP::ControllerIsEvolutionNexus --------------------------------
     def ControllerIsEvolutionNexus(self):
         try:
-            if not "evolution" in self.StartInfo["Controller"].lower() and not "nexus" in self.StartInfo["Controller"].lower():
-                return False
-            return True
+            if "evolution" in self.StartInfo["Controller"].lower() or "nexus" in self.StartInfo["Controller"].lower():
+                return True
+            return False
         except Exception as e1:
             self.LogErrorLine("Error in ControllerIsEvolutionNexus: " + str(e1))
             return False
@@ -171,9 +175,9 @@ class GenSNMP(MySupport):
     #----------  GenSNMP::ControllerIsGeneracH100 ------------------------------
     def ControllerIsGeneracH100(self):
         try:
-            if not "h-100" in self.StartInfo["Controller"].lower() and not "g-panel" in self.StartInfo["Controller"].lower():
-                return False
-            return True
+            if "h-100" in self.StartInfo["Controller"].lower() or "g-panel" in self.StartInfo["Controller"].lower():
+                return True
+            return False
         except Exception as e1:
             self.LogErrorLine("Error in ControllerIsGeneracH100: " + str(e1))
             return False
@@ -249,18 +253,19 @@ class GenSNMP(MySupport):
     def SetupSNMP(self):
 
         try:
-            if self.ControllerIsEvolutionNexus():
+            if self.ControllerIsEvolutionNexus() or self.ControllerSelected == "generac_evo_nexus":
                 CtlID = 0
-            elif self.ControllerIsGeneracH100():
+            elif self.ControllerIsGeneracH100() or self.ControllerSelected == "h_100":
                 CtlID = 1
             else:
                 self.LogError("Error: Invalid controller type")
+                self.LogError(str(self.ControllerSelected))
                 return
 
             self.mibData.append(MyOID((1,3,6,1,2,1,1,1),return_type = str, description = "SysDescr", default = "Genmon Generator Monitor",log = self.log))
             self.mibData.append(MyOID((1,3,6,1,2,1,1,3,0),return_type = type(TimeTicks), description = "Uptime",log = self.log))
 
-            if self.ControllerIsEvolutionNexus():
+            if self.ControllerIsEvolutionNexus() or self.ControllerSelected == "generac_evo_nexus":
                 self.LogDebug("Evo/Nexus")
                 # Status Engine
                 self.AddOID((CtlID,0,0,0),return_type = str, description = "SwitchState", default = "Unknown", keywords = ["Status/Engine","Switch State"])
@@ -339,7 +344,7 @@ class GenSNMP(MySupport):
                 self.AddOID((CtlID,1,3,8),return_type = str, description = "HardwareVersion", default = " ", keywords = ["Maintenance/Service","Hardware Version"])
                 self.AddOID((CtlID,1,3,9),return_type = str, description = "FirmwareVersion", default = " ", keywords = ["Maintenance/Service","Firmware Version"])
 
-            if self.ControllerIsGeneracH100():
+            elif self.ControllerIsGeneracH100() or self.ControllerSelected == "h_100":
                 self.LogDebug("H-100/GPanel")
                 # Engine
                 self.AddOID((CtlID,0,0,0),return_type = str, description = "SwitchState", default = " ", keywords = ["Status/Engine","Switch State"])
@@ -347,8 +352,8 @@ class GenSNMP(MySupport):
                 self.AddOID((CtlID,0,0,2),return_type = str, description = "GeneratorStatus", default = " ", keywords = ["Status/Engine","Generator Status"])
                 self.AddOID((CtlID,0,0,3),return_type = str, description = "OutputPower", default = " ", keywords = ["Status/Engine","Output Power"])
                 self.AddOID((CtlID,0,0,4),return_type = str, description = "OutputPowerFactor", default = " ", keywords = ["Status/Engine","Power Factor"])
-                self.AddOID((CtlID,0,0,5),return_type = str, description = "RPM", default = 0, keywords = ["Status/Engine","RPM"])
-                self.AddOID((CtlID,0,0,6),return_type = str, description = "Frequency", default = " ", keywords = ["Status/Engine","Frequency"])
+                self.AddOID((CtlID,0,0,5),return_type = str, description = "RPM", default = 0, keywords = ["Status/Engine/RPM"])
+                self.AddOID((CtlID,0,0,6),return_type = str, description = "Frequency", default = " ", keywords = ["Status/Engine/Frequency"])
                 self.AddOID((CtlID,0,0,7),return_type = str, description = "ThrottlePosition", default = " ", keywords = ["Status/Engine","Throttle Position"])
                 self.AddOID((CtlID,0,0,8),return_type = str, description = "CoolantTemp", default = " ", keywords = ["Status/Engine","Coolant Temp"])
                 self.AddOID((CtlID,0,0,9),return_type = str, description = "CoolantLevel", default = " ", keywords = ["Status/Engine","Coolant Level"])
