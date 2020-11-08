@@ -89,23 +89,7 @@ class GenTankData(MySupport):
 
         try:
 
-            try:
-                startcount = 0
-                while startcount <= 10:
-                    try:
-                        self.Generator = ClientInterface(host = self.MonitorAddress, port = port, log = self.log)
-                        break
-                    except Exception as e1:
-                        startcount += 1
-                        if startcount >= 10:
-                            self.console.info("genmon not loaded.")
-                            self.LogError("Unable to connect to genmon.")
-                            sys.exit(1)
-                        time.sleep(1)
-                        continue
-
-            except Exception as e1:
-                self.LogErrorLine("Error in GenTankData init: "  + str(e1))
+            self.Generator = ClientInterface(host = self.MonitorAddress, port = port, log = self.log)
 
             # start thread monitor time for exercise
             self.Threads["TankCheckThread"] = MyThread(self.TankCheckThread, Name = "TankCheckThread", start = False)

@@ -2053,18 +2053,7 @@ if __name__ == "__main__":
         LogError("Required file missing : genmonmaint.sh")
         sys.exit(1)
 
-    startcount = 0
-    while startcount <= 4:
-        try:
-            MyClientInterface = ClientInterface(host = address, port = clientport, log = log)
-            break
-        except Exception as e1:
-            startcount += 1
-            if startcount >= 4:
-                LogConsole("Error: genmon not loaded.")
-                sys.exit(1)
-            time.sleep(1)
-            continue
+    MyClientInterface = ClientInterface(host = address, port = clientport, log = log)
 
     Start = datetime.datetime.now()
 

@@ -79,19 +79,7 @@ class MyGenPush(MySupport):
         self.LastChange = {}
 
         try:
-            startcount = 0
-            while startcount <= 10:
-                try:
-                    self.Generator = ClientInterface(host = host, port = port, log = log)
-                    break
-                except Exception as e1:
-                    startcount += 1
-                    if startcount >= 10:
-                        self.LogDebug("genmon not loaded.")
-                        self.LogError("Unable to connect to genmon.")
-                        sys.exit(1)
-                    time.sleep(1)
-                    continue
+            self.Generator = ClientInterface(host = host, port = port, log = log)
 
             self.GetGeneratorStartInfo()
             # start thread to accept incoming sockets for nagios heartbeat

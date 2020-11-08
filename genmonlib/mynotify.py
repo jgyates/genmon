@@ -68,18 +68,8 @@ class GenNotify(MyCommon):
             if onutilitychange != None:
                 self.Events["OUTAGE"] = onutilitychange
 
-            startcount = 0
-            while startcount <= 10:
-                try:
-                    self.Generator = ClientInterface(host = host, port = port, log = log, loglocation = loglocation)
-                    break
-                except Exception as e1:
-                    startcount += 1
-                    if startcount >= 10:
-                        self.console.info("genmon not loaded.")
-                        sys.exit(1)
-                    time.sleep(1)
-                    continue
+
+            self.Generator = ClientInterface(host = host, port = port, log = log, loglocation = loglocation)
 
             self.Threads["PollingThread"] = MyThread(self.MainPollingThread, Name = "PollingThread", start = start)
             self.Started = start
