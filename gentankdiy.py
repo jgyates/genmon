@@ -126,11 +126,11 @@ class GenTankData(MySupport):
 
                 dataforgenmon = {}
 
-                tankdata = self.GetGaugeData()
+                tankdata = self.gauge.GetGaugeData()
                 if tankdata != None:
                     dataforgenmon["Tank Name"] = "External Tank"
                     dataforgenmon["Capacity"] = 0
-                    dataforgenmon["Percentage"] = self.gauge.GetGaugeData()
+                    dataforgenmon["Percentage"] = tankdata
 
                     retVal = self.SendCommand("generator: set_tank_data=" + json.dumps(dataforgenmon))
                     self.LogDebug(retVal)
