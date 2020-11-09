@@ -531,6 +531,21 @@ def GetAddOns():
             bounds = 'number',
             display_name = "Software Debounce")
 
+        #GENGPIOLEDBLINK
+        AddOnCfg['gengpioledblink'] = collections.OrderedDict()
+        AddOnCfg['gengpioledblink']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "gengpioledblink", default = False)
+        AddOnCfg['gengpioledblink']['title'] = "Genmon GPIO Output to blink LED"
+        AddOnCfg['gengpioledblink']['description'] = "Genmon will blink LED connected to GPIO pin to indicate genmon status"
+        AddOnCfg['gengpioledblink']['icon'] = "rpi"
+        AddOnCfg['gengpioledblink']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gengpioledblinkpy-optional"
+        AddOnCfg['gengpioledblink']['parameters'] =  collections.OrderedDict()
+        AddOnCfg['gengpioledblink']['parameters']['ledpin'] = CreateAddOnParam(
+            ConfigFiles[GENGPIOLEDBLINK_CONFIG].ReadValue("ledpin", return_type = int, default = 12),
+            'int',
+            "GPIO pin number that an LED is connected (valid numbers are 0 - 27)",
+            bounds = "required digits range:0:27",
+            display_name = "GPIO LED pin")
+
         #GENLOG
         AddOnCfg['genlog'] = collections.OrderedDict()
         AddOnCfg['genlog']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "genlog", default = False)
@@ -924,6 +939,12 @@ def GetAddOns():
             "The duration in minutes between poll of tank data.",
             bounds = 'number',
             display_name = "Poll Frequency")
+        AddOnCfg['gentankdiy']['parameters']['gauge_type'] = CreateAddOnParam(
+            ConfigFiles[GENTANKDIY_CONFIG].ReadValue("gauge_type", return_type = str, default = '1'),
+            'list',
+            "DIY sensor type. Valid optios are Type 1 and Type 2.",
+            bounds = '1,2',
+            display_name = "Sensor Type")
 
         #GENALEXA
         AddOnCfg['genalexa'] = collections.OrderedDict()
@@ -1071,6 +1092,7 @@ def SaveAddOnSettings(query_string):
             "gensyslog" : ConfigFiles[GENLOADER_CONFIG],
             "gengpio" : ConfigFiles[GENLOADER_CONFIG],
             "gengpioin" : ConfigFiles[GENGPIOIN_CONFIG],
+            "gengpioledblink" : ConfigFiles[GENGPIOLEDBLINK_CONFIG],
             "genexercise" : ConfigFiles[GENEXERCISE_CONFIG],
             "genemail2sms" : ConfigFiles[GENEMAIL2SMS_CONFIG],
             "gentankutil" : ConfigFiles[GENTANKUTIL_CONFIG],
@@ -1958,29 +1980,8 @@ def Close(NoExit = False):
 #-------------------------------------------------------------------------------
 if __name__ == "__main__":
 
-    address=ProgramDefaults.LocalHost
+    console, ConfigFilePath, address, port, loglocation, log = MySupport.SetupAddOnProgram("genserv")
 
-    # log errors in this module to a file
-    console = SetupLogger("genserv_console", log_file = "", stream = True)
-
-    HelpStr = '\nsudo python genserv.py -a <IP Address or localhost> -c <path to genmon config file>\n'
-
-    try:
-        ConfigFilePath = ProgramDefaults.ConfPath
-        opts, args = getopt.getopt(sys.argv[1:],"hc:a:",["help","configpath=","address="])
-    except getopt.GetoptError:
-        console.error("Invalid command line argument.")
-        sys.exit(2)
-
-    for opt, arg in opts:
-        if opt == '-h':
-            console.error(HelpStr)
-            sys.exit()
-        elif opt in ("-a", "--address"):
-            address = arg
-        elif opt in ("-c", "--configpath"):
-            ConfigFilePath = arg
-            ConfigFilePath = ConfigFilePath.strip()
     # NOTE: signal handler is not compatible with the exception handler around app.run()
     #atexit.register(Close)
     #signal.signal(signal.SIGTERM, Close)
@@ -1995,6 +1996,7 @@ if __name__ == "__main__":
     GENMQTT_CONFIG = os.path.join(ConfigFilePath, "genmqtt.conf")
     GENSLACK_CONFIG = os.path.join(ConfigFilePath, "genslack.conf")
     GENGPIOIN_CONFIG = os.path.join(ConfigFilePath, "gengpioin.conf")
+    GENGPIOLEDBLINK_CONFIG = os.path.join(ConfigFilePath, "gengpioledblink.conf")
     GENEXERCISE_CONFIG = os.path.join(ConfigFilePath, "genexercise.conf")
     GENEMAIL2SMS_CONFIG = os.path.join(ConfigFilePath, "genemail2sms.conf")
     GENTANKUTIL_CONFIG = os.path.join(ConfigFilePath, "gentankutil.conf")
@@ -2003,15 +2005,11 @@ if __name__ == "__main__":
     GENSNMP_CONFIG = os.path.join(ConfigFilePath, "gensnmp.conf")
     GENTEMP_CONFIG = os.path.join(ConfigFilePath, "gentemp.conf")
 
-    if not MySupport.PermissionsOK():
-        LogConsole("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'.")
-        sys.exit(1)
-
     ConfigFileList = [GENMON_CONFIG, MAIL_CONFIG, GENLOADER_CONFIG, GENSMS_CONFIG,
         MYMODEM_CONFIG, GENPUSHOVER_CONFIG, GENMQTT_CONFIG, GENSLACK_CONFIG,
-        GENGPIOIN_CONFIG, GENEXERCISE_CONFIG, GENEMAIL2SMS_CONFIG,
-        GENTANKUTIL_CONFIG, GENTANKDIY_CONFIG, GENALEXA_CONFIG, GENSNMP_CONFIG,
-        GENTEMP_CONFIG]
+        GENGPIOIN_CONFIG, GENGPIOLEDBLINK_CONFIG, GENEXERCISE_CONFIG,
+        GENEMAIL2SMS_CONFIG, GENTANKUTIL_CONFIG, GENTANKDIY_CONFIG,
+        GENALEXA_CONFIG, GENSNMP_CONFIG, GENTEMP_CONFIG]
 
     for ConfigFile in ConfigFileList:
         if not os.path.isfile(ConfigFile):
@@ -2025,11 +2023,6 @@ if __name__ == "__main__":
         else:
             configlog = log
         ConfigFiles[ConfigFile] = MyConfig(filename = ConfigFile, log = configlog)
-        if ConfigFile == GENMON_CONFIG:
-            if ConfigFiles[GENMON_CONFIG].HasOption('loglocation'):
-                loglocation = ConfigFiles[GENMON_CONFIG].ReadValue('loglocation')
-                # log errors in this module to a file
-                log = SetupLogger("genserv", os.path.join(loglocation, "genserv.log"))
 
     AppPath = sys.argv[0]
     if not LoadConfig():

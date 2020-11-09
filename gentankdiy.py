@@ -21,6 +21,7 @@ try:
     from genmonlib.mycommon import MyCommon
     from genmonlib.mythread import MyThread
     from genmonlib.program_defaults import ProgramDefaults
+    from genmonlib.gaugediy import GaugeDIY1, GaugeDIY2
     import smbus
 
 except Exception as e1:
@@ -33,34 +34,23 @@ except Exception as e1:
 #------------ GenTankData class ------------------------------------------------
 class GenTankData(MySupport):
 
-    # The device is the ADS1115 I2C ADC
-    # reference python http://www.smartypies.com/projects/ads1115-with-raspberrypi-and-python/ads1115runner/
-    RESET_ADDRESS = 0b0000000
-    RESET_COMMAND = 0b00000110
-    POINTER_CONVERSION = 0x0
-    POINTER_CONFIGURATION = 0x1
-    POINTER_LOW_THRESHOLD = 0x2
-    POINTER_HIGH_THRESHOLD = 0x3
     #------------ GenTankData::init---------------------------------------------
     def __init__(self,
         log = None,
         loglocation = ProgramDefaults.LogPath,
         ConfigFilePath = MyCommon.DefaultConfPath,
         host = ProgramDefaults.LocalHost,
-        port = ProgramDefaults.ServerPort):
+        port = ProgramDefaults.ServerPort,
+        console = None):
 
         super(GenTankData, self).__init__()
 
         self.LogFileName = os.path.join(loglocation, "gentankdiy.log")
         self.AccessLock = threading.Lock()
-        # log errors in this module to a file
-        self.log = SetupLogger("gentankdiy", self.LogFileName)
 
-        self.console = SetupLogger("gentankdiy_console", log_file = "", stream = True)
-
+        self.log = log
+        self.console = console
         self.MonitorAddress = host
-        self.PollTime =  2
-        self.debug = False
 
         configfile = os.path.join(ConfigFilePath, 'gentankdiy.conf')
         try:
@@ -71,13 +61,7 @@ class GenTankData(MySupport):
 
             self.config = MyConfig(filename = configfile, section = 'gentankdiy', log = self.log)
 
-            self.PollTime = self.config.ReadValue('poll_frequency', return_type = float, default = 60)
-            self.debug = self.config.ReadValue('debug', return_type = bool, default = False)
-            self.i2c_address = self.config.ReadValue('i2c_address', return_type = int, default = 72)
-            self.mv_per_step = self.config.ReadValue('mv_per_step', return_type = int, default = 125)
-            self.Multiplier = self.config.ReadValue('volts_to_percent_multiplier', return_type = float, default = 20.0)
-            # I2C channel 1 is connected to the GPIO pins
-            self.i2c_channel = self.config.ReadValue('i2c_channel', return_type = int, default = 1)
+            self.gauge_type = self.config.ReadValue('gauge_type', return_type = int, default = 1)
 
             if self.MonitorAddress == None or not len(self.MonitorAddress):
                 self.MonitorAddress = ProgramDefaults.LocalHost
@@ -88,13 +72,21 @@ class GenTankData(MySupport):
             sys.exit(1)
 
         try:
+            if self.gauge_type == 1:
+                self.gauge = GaugeDIY1(self.config, log = self.log, console = self.console)
+            elif self.gauge_type == 2:
+                self.gauge = GaugeDIY2(self.config, log = self.log, console = self.console)
+            else:
+                self.LogError("Invalid guage type: " + str(self.gauge_type))
+                sys.exit(1)
 
+            self.debug = self.gauge.debug
             self.Generator = ClientInterface(host = self.MonitorAddress, port = port, log = self.log)
 
             # start thread monitor time for exercise
             self.Threads["TankCheckThread"] = MyThread(self.TankCheckThread, Name = "TankCheckThread", start = False)
 
-            if not self.InitADC():
+            if not self.gauge.InitADC():
                 self.LogError("InitADC failed, exiting")
                 sys.exit(1)
 
@@ -124,65 +116,6 @@ class GenTankData(MySupport):
 
         return data
 
-    # ---------- GenTankData::InitADC-------------------------------------------
-    def InitADC(self):
-
-        try:
-
-            # I2C channel 1 is connected to the GPIO pins
-            self.I2Cbus = smbus.SMBus(self.i2c_channel)
-
-            # Reset ADC
-            self.I2Cbus.write_byte(self.RESET_ADDRESS, self.RESET_COMMAND)
-
-            # set config register  and start conversion
-            # ANC1 and GND, 4.096v, 128s/s
-            # Customized - Port A0 and 4.096 V input
-            # 0b11000011; # bit 15-8  = 0xC3
-            # bit 15 flag bit for single shot
-            # Bits 14-12 input selection:
-            # 100 ANC0; 101 ANC1; 110 ANC2; 111 ANC3
-            # Bits 11-9 Amp gain. Default to 010 here 001 P19
-            # Bit 8 Operational mode of the ADS1115.
-            # 0 : Continuous conversion mode
-            # 1 : Power-down single-shot mode (default)
-            CONFIG_VALUE_1 = 0xC3
-            # bits 7-0  0b10000101 = 0x85
-            # Bits 7-5 data rate default to 100 for 128SPS
-            # Bits 4-0  comparator functions see spec sheet.
-            CONFIG_VALUE_2 = 0x85
-            self.I2Cbus.write_i2c_block_data(self.i2c_address, self.POINTER_CONFIGURATION, [CONFIG_VALUE_1,CONFIG_VALUE_2] )
-
-            self.LogDebug("I2C Init complete: success")
-
-        except Exception as e1:
-            self.LogErrorLine("Error calling InitADC: " + str(e1))
-            return False
-
-        return True
-    # ---------- GenTankData::GetGaugeData--------------------------------------
-    def GetGaugeData(self):
-        try:
-
-            val = self.I2Cbus.read_i2c_block_data(self.i2c_address, self.POINTER_CONVERSION, 2)
-
-            self.LogDebug(str(val))
-            # convert display results
-            reading = val[0] << 8 | val[1]
-
-            if (reading < 0):
-                reading = 0
-
-            #reading = self.I2Cbus.read_word_data(self.i2c_address, self.i2c_channel)
-            volts = round(float(reading * (float(self.mv_per_step) / 1000000.0)),2)
-            gauge_data = float(self.Multiplier) * volts
-            self.LogDebug("Reading Gauge Data: %4.2f%%" % gauge_data)
-            return gauge_data
-
-        except Exception as e1:
-            self.LogErrorLine("Error calling  GetGaugeData: " + str(e1))
-            return 0.0
-
     # ---------- GenTankData::TankCheckThread-----------------------------------
     def TankCheckThread(self):
 
@@ -197,52 +130,29 @@ class GenTankData(MySupport):
                 if tankdata != None:
                     dataforgenmon["Tank Name"] = "External Tank"
                     dataforgenmon["Capacity"] = 0
-                    dataforgenmon["Percentage"] = self.GetGaugeData()
+                    dataforgenmon["Percentage"] = self.gauge.GetGaugeData()
 
                     retVal = self.SendCommand("generator: set_tank_data=" + json.dumps(dataforgenmon))
                     self.LogDebug(retVal)
-                if self.WaitForExit("TankCheckThread", float(self.PollTime * 60)):
+                if self.WaitForExit("TankCheckThread", float(self.gauge.PollTime * 60)):
                     return
             except Exception as e1:
                 self.LogErrorLine("Error in TankCheckThread: " + str(e1))
-                if self.WaitForExit("TankCheckThread", float(self.PollTime * 60)):
+                if self.WaitForExit("TankCheckThread", float(self.gauge.PollTime * 60)):
                     return
 
     # ----------GenTankData::Close----------------------------------------------
     def Close(self):
+
         self.KillThread("TankCheckThread")
+        self.gauge.Close()
         self.Generator.Close()
 #-------------------------------------------------------------------------------
 if __name__ == "__main__":
 
-    console = SetupLogger("gentankdata_console", log_file = "", stream = True)
-    HelpStr = '\nsudo python gentankdata.py -a <IP Address or localhost> -c <path to genmon config file>\n'
-    if not MySupport.PermissionsOK():
-        console.error("\nYou need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.\n")
-        sys.exit(2)
+    console, ConfigFilePath, address, port, loglocation, log = MySupport.SetupAddOnProgram("gentankdiy")
 
-    try:
-        ConfigFilePath = ProgramDefaults.ConfPath
-        address = ProgramDefaults.LocalHost
-        opts, args = getopt.getopt(sys.argv[1:],"hc:a:",["help","configpath=","address="])
-    except getopt.GetoptError:
-        console.error("Invalid command line argument.")
-        sys.exit(2)
-
-    for opt, arg in opts:
-        if opt == '-h':
-            console.error(HelpStr)
-            sys.exit()
-        elif opt in ("-a", "--address"):
-            address = arg
-        elif opt in ("-c", "--configpath"):
-            ConfigFilePath = arg
-            ConfigFilePath = ConfigFilePath.strip()
-
-    port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
-    log = SetupLogger("client", loglocation + "gentankdata.log")
-
-    GenTankDataInstance = GenTankData(log = log, loglocation = loglocation, ConfigFilePath = ConfigFilePath, host = address, port = port)
+    GenTankDataInstance = GenTankData(log = log, loglocation = loglocation, ConfigFilePath = ConfigFilePath, host = address, port = port, console = console)
 
     while True:
         time.sleep(0.5)

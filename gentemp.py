@@ -47,16 +47,17 @@ class GenTemp(MySupport):
         loglocation = ProgramDefaults.LogPath,
         ConfigFilePath = MyCommon.DefaultConfPath,
         host = ProgramDefaults.LocalHost,
-        port = ProgramDefaults.ServerPort):
+        port = ProgramDefaults.ServerPort,
+        console = None):
 
         super(GenTemp, self).__init__()
 
         self.LogFileName = os.path.join(loglocation, "gentemp.log")
         self.AccessLock = threading.Lock()
         # log errors in this module to a file
-        self.log = SetupLogger("gentemp", self.LogFileName)
+        self.log = log
 
-        self.console = SetupLogger("gentemp_console", log_file = "", stream = True)
+        self.console = console
 
         self.LastValues = {}
 
@@ -105,6 +106,8 @@ class GenTemp(MySupport):
             self.Threads["GenTempThread"].Start()
 
             atexit.register(self.Close)
+            signal.signal(signal.SIGTERM, self.Close)
+            signal.signal(signal.SIGINT, self.Close)
 
         except Exception as e1:
             self.LogErrorLine("Error in GenTemp init: " + str(e1))
@@ -272,34 +275,8 @@ class GenTemp(MySupport):
 #-------------------------------------------------------------------------------
 if __name__ == "__main__":
 
-    console = SetupLogger("GenTemp_console", log_file = "", stream = True)
-    HelpStr = '\nsudo python gentemp.py -a <IP Address or localhost> -c <path to genmon config file>\n'
-    if not MySupport.PermissionsOK():
-        console.error("\nYou need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.\n")
-        sys.exit(2)
-
-    try:
-        ConfigFilePath = ProgramDefaults.ConfPath
-        address = ProgramDefaults.LocalHost
-        opts, args = getopt.getopt(sys.argv[1:],"hc:a:",["help","configpath=","address="])
-    except getopt.GetoptError:
-        console.error("Invalid command line argument.")
-        sys.exit(2)
-
-    for opt, arg in opts:
-        if opt == '-h':
-            console.error(HelpStr)
-            sys.exit()
-        elif opt in ("-a", "--address"):
-            address = arg
-        elif opt in ("-c", "--configpath"):
-            ConfigFilePath = arg
-            ConfigFilePath = ConfigFilePath.strip()
-
-    port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
-    log = SetupLogger("client", loglocation + "gentemp.log")
-
-    GenTempInstance = GenTemp(log = log, loglocation = loglocation, ConfigFilePath = ConfigFilePath, host = address, port = port)
+    console, ConfigFilePath, address, port, loglocation, log = MySupport.SetupAddOnProgram("gentemp")
+    GenTempInstance = GenTemp(log = log, loglocation = loglocation, ConfigFilePath = ConfigFilePath, host = address, port = port, console = console)
 
     while True:
         time.sleep(0.5)

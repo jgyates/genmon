@@ -160,42 +160,9 @@ def GetErrorLine():
     return fname + ":" + str(lineno)
 #------------------- Command-line interface for gengpioin ----------------------
 if __name__=='__main__':
-    address=ProgramDefaults.LocalHost
 
     try:
-        console = SetupLogger("gengpioin_console", log_file = "", stream = True)
-
-        if not MySupport.PermissionsOK():
-            console.error("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
-            sys.exit(2)
-
-        HelpStr = '\nsudo python gengpioin.py -a <IP Address or localhost> -c <path to genmon config file>\n'
-        try:
-            ConfigFilePath = ProgramDefaults.ConfPath
-            opts, args = getopt.getopt(sys.argv[1:],"hc:a:",["help","configpath=","address="])
-        except getopt.GetoptError:
-            console.error("Invalid command line argument.")
-            sys.exit(2)
-
-        for opt, arg in opts:
-            if opt == '-h':
-                console.error(HelpStr)
-                sys.exit()
-            elif opt in ("-a", "--address"):
-                address = arg
-            elif opt in ("-c", "--configpath"):
-                ConfigFilePath = arg
-                ConfigFilePath = ConfigFilePath.strip()
-    except Exception as e1:
-        console.error("Error in init: " + str(e1) + " : " + GetErrorLine())
-        sys.exit(1)
-    try:
-        port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
-        log = SetupLogger("client", os.path.join(loglocation, "gengpioin.log"))
-    except Exception as e1:
-        log.error("Error setting up log: " + str(e1))
-        sys.exit(1)
-    try:
+        console, ConfigFilePath, address, port, loglocation, log = MySupport.SetupAddOnProgram("gengpioin")
         # Set the signal handler
         signal.signal(signal.SIGINT, signal_handler)
 

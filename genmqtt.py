@@ -50,7 +50,8 @@ class MyGenPush(MySupport):
         flush_interval = float('inf'),
         use_numeric = False,
         debug = False,
-        loglocation = ProgramDefaults.LogPath):
+        loglocation = ProgramDefaults.LogPath,
+        console = None):
 
         super(MyGenPush, self).__init__()
         self.Callback = callback
@@ -70,7 +71,7 @@ class MyGenPush(MySupport):
             # log errors in this module to a file
             self.log = SetupLogger("client", os.path.join(loglocation, "mygenpush.log"))
 
-        self.console = SetupLogger("mygenpush_console", log_file = "", stream = True)
+        self.console = console
 
         self.AccessLock = threading.Lock()
         self.BlackList = blacklist
@@ -289,21 +290,13 @@ class MyMQTT(MyCommon):
         loglocation = ProgramDefaults.LogPath,
         host = ProgramDefaults.LocalHost,
         port = ProgramDefaults.ServerPort,
-        configfilepath = ProgramDefaults.ConfPath):
+        configfilepath = ProgramDefaults.ConfPath,
+        console = None):
 
         super(MyMQTT, self).__init__()
 
-        self.LogFileName = os.path.join(loglocation, "genmqtt.log")
-
-        if log != None:
-            self.log = log
-        else:
-            # log errors in this module to a file
-            self.log = SetupLogger("client", self.LogFileName)
-
-        # cleanup
-        # test
-        self.console = SetupLogger("mymqtt_console", log_file = "", stream = True)
+        self.log = log
+        self.console = console
 
         self.Exiting = False
         self.Username = None
@@ -512,34 +505,9 @@ class MyMQTT(MyCommon):
 #-------------------------------------------------------------------------------
 if __name__ == "__main__":
 
-    address=ProgramDefaults.LocalHost
+    console, ConfigFilePath, address, port, loglocation, log = MySupport.SetupAddOnProgram("genmqtt")
 
-    console = SetupLogger("genmqtt_console_", log_file = "", stream = True)
-    HelpStr = '\nsudo python genmqtt.py -a <IP Address or localhost> -c <path to genmon config file>\n'
-    if not MySupport.PermissionsOK():
-        console.error("\nYou need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.\n")
-        sys.exit(2)
-
-    try:
-        ConfigFilePath = ProgramDefaults.ConfPath
-        opts, args = getopt.getopt(sys.argv[1:],"hc:a:",["help","configpath=","address="])
-    except getopt.GetoptError:
-        console.error("Invalid command line argument.")
-        sys.exit(2)
-
-    for opt, arg in opts:
-        if opt == '-h':
-            console.error(HelpStr)
-            sys.exit()
-        elif opt in ("-a", "--address"):
-            address = arg
-        elif opt in ("-c", "--configpath"):
-            ConfigFilePath = arg
-            ConfigFilePath = ConfigFilePath.strip()
-
-    port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
-
-    InstanceMQTT = MyMQTT(host = address, port = port, loglocation = loglocation, configfilepath = ConfigFilePath)
+    InstanceMQTT = MyMQTT(host = address, port = port, loglocation = loglocation, configfilepath = ConfigFilePath, console = console)
 
     while not InstanceMQTT.Exiting:
         time.sleep(0.5)

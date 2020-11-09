@@ -134,37 +134,11 @@ def SendNotice(Message):
 
 #------------------- Command-line interface for gengpio ------------------------
 if __name__=='__main__':
-    address=ProgramDefaults.LocalHost
+
+    console, ConfigFilePath, address, port, loglocation, log = MySupport.SetupAddOnProgram("genslack")
 
     # Set the signal handler
     signal.signal(signal.SIGINT, signal_handler)
-
-    console = SetupLogger("slack_console", log_file = "", stream = True)
-    HelpStr = '\nsudo python genslack.py -a <IP Address or localhost> -c <path to genmon config file>\n'
-    if not MySupport.PermissionsOK():
-        console.error("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
-        sys.exit(2)
-
-    try:
-        ConfigFilePath = ProgramDefaults.ConfPath
-        opts, args = getopt.getopt(sys.argv[1:],"hc:a:",["configpath=","address="])
-    except getopt.GetoptError:
-        console.error("Invalid command line argument.")
-        sys.exit(2)
-
-    for opt, arg in opts:
-        if opt == '-h':
-            console.error(HelpStr)
-            sys.exit()
-        elif opt in ("-a", "--address"):
-            address = arg
-        elif opt in ("-c", "--configpath"):
-            ConfigFilePath = arg
-            ConfigFilePath = ConfigFilePath.strip()
-
-    port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
-    log = SetupLogger("client", os.path.join(loglocation, "genslack.log"))
-
     try:
         config = MyConfig(filename = os.path.join(ConfigFilePath, 'genslack.conf'), section = 'genslack', log = log)
 
@@ -218,7 +192,8 @@ if __name__=='__main__':
                                         onmanual = OnManual,
                                         onutilitychange = OnUtilityChange,
                                         log = log,
-                                        loglocation = loglocation)
+                                        loglocation = loglocation,
+                                        console = console)
 
         while True:
             time.sleep(1)

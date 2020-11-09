@@ -30,7 +30,8 @@ class GenNotify(MyCommon):
                 onoff = None,
                 onmanual = None,
                 onutilitychange = None,
-                start = True):
+                start = True,
+                console = None):
 
         super(GenNotify, self).__init__()
 
@@ -40,13 +41,10 @@ class GenNotify(MyCommon):
         self.LastOutageStatus = None
         self.Events = {}            # Dict for handling events
 
-        if log != None:
-            self.log = log
-        else:
-            # log errors in this module to a file
-            self.log = SetupLogger("client", os.path.join(loglocation, "myclient.log"))
 
-        self.console = SetupLogger("notify_console", log_file = "", stream = True)
+        self.log = log
+        self.console = console
+        
         try:
             # init event callbacks
             if onready != None:

@@ -96,16 +96,16 @@ class GenSNMP(MySupport):
         loglocation = ProgramDefaults.LogPath,
         ConfigFilePath = MyCommon.DefaultConfPath,
         host = ProgramDefaults.LocalHost,
-        port = ProgramDefaults.ServerPort):
+        port = ProgramDefaults.ServerPort,
+        console = None):
 
         super(GenSNMP, self).__init__()
 
-        self.LogFileName = loglocation + "gensnmp.log"
         self.AccessLock = threading.Lock()
-        # log errors in this module to a file
-        self.log = SetupLogger("gensnmp", self.LogFileName)
 
-        self.console = SetupLogger("gensnmp_console", log_file = "", stream = True)
+        self.log = log
+        self.console = console
+
         self.mibData = []
         self.LastValues = {}
         self.transportDispatcher = None
@@ -687,33 +687,8 @@ class GenSNMP(MySupport):
 #-------------------------------------------------------------------------------
 if __name__ == "__main__":
 
-    console = SetupLogger("GenSNMP_console", log_file = "", stream = True)
-    HelpStr = '\nsudo python gensnmp.py -a <IP Address or localhost> -c <path to genmon config file>\n'
-    if not MySupport.PermissionsOK():
-        console.error("\nYou need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.\n")
-        sys.exit(2)
+    console, ConfigFilePath, address, port, loglocation, log = MySupport.SetupAddOnProgram("gensnmp")
 
-    try:
-        ConfigFilePath = ProgramDefaults.ConfPath
-        address = ProgramDefaults.LocalHost
-        opts, args = getopt.getopt(sys.argv[1:],"hc:a:",["help","configpath=","address="])
-    except getopt.GetoptError:
-        console.error("Invalid command line argument.")
-        sys.exit(2)
-
-    for opt, arg in opts:
-        if opt == '-h':
-            console.error(HelpStr)
-            sys.exit()
-        elif opt in ("-a", "--address"):
-            address = arg
-        elif opt in ("-c", "--configpath"):
-            ConfigFilePath = arg
-            ConfigFilePath = ConfigFilePath.strip()
-
-    port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
-    log = SetupLogger("client", os.path.join(loglocation, "gensnmp.log"))
-
-    GenSNMPInstance = GenSNMP(log = log, loglocation = loglocation, ConfigFilePath = ConfigFilePath, host = address, port = port)
+    GenSNMPInstance = GenSNMP(log = log, loglocation = loglocation, ConfigFilePath = ConfigFilePath, host = address, port = port, console = console)
 
     sys.exit(1)
