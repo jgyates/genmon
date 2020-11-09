@@ -1928,7 +1928,7 @@ def SetupMFA():
     global mail
 
     try:
-        mail = MyMail(ConfigFilePath = ConfigFilePath)
+        #mail = MyMail(ConfigFilePath = ConfigFilePath)
         MFA_URL = pyotp.totp.TOTP(SecretMFAKey).provisioning_uri(mail.SenderAccount, issuer_name="Genmon")
         #MFA_URL += "&image=https://raw.githubusercontent.com/jgyates/genmon/master/static/images/Genmon.png"
     except Exception as e1:

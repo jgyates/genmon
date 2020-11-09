@@ -27,8 +27,6 @@ from genmonlib.mylog import SetupLogger
 from genmonlib.mythread import MyThread
 from genmonlib.program_defaults import ProgramDefaults
 
-#imaplib.Debug = 4
-
 
 #------------ MyMail class -----------------------------------------------------
 class MyMail(MySupport):
@@ -62,6 +60,7 @@ class MyMail(MySupport):
         self.UseBCC = False
         self.ExtendWait = 0
         self.Threads = {}                               # Dict of mythread objects
+        self.debug = False
         self.ModulePath = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
         # log errors in this module to a file
         if localinit == True:
@@ -84,7 +83,6 @@ class MyMail(MySupport):
             else:
                 self.LogError("Missing config file : " + self.configfile)
                 sys.exit(1)
-
 
         self.config = MyConfig(filename = self.configfile, section = "MyMail", log = self.log)
 
@@ -157,6 +155,7 @@ class MyMail(MySupport):
             msg['From'] = sender_name + " <" + sender_account + ">"
 
         recipientList = recipient.strip().split(",")
+        recipientList = map(str.strip, recipientList)
         recipient = ">,<"
         recipient = recipient.join(recipientList)
         recipient = "<" + recipient + ">"
@@ -230,6 +229,8 @@ class MyMail(MySupport):
 
             if self.config.HasOption('extend_wait'):
                 self.ExtendWait = self.config.ReadValue('extend_wait', return_type = int, default = 0)
+
+            self.debug = self.config.ReadValue('debug', return_type = bool, default = False)
 
             self.EmailPassword = self.config.ReadValue('email_pw', default = "")
             self.EmailPassword =  self.EmailPassword.strip()
@@ -317,6 +318,8 @@ class MyMail(MySupport):
             # start email command thread
             try:
                 self.Mailbox = imaplib.IMAP4_SSL(self.IMAPServer)
+                if self.debug:
+                    self.Mailbox.Debug = 4
             except Exception:
                 self.LogError( "No Internet Connection! ")
                 if self.WaitForExit("EmailCommandThread", 120 ):
@@ -394,6 +397,7 @@ class MyMail(MySupport):
 
         try:
             recipientList = recipient.strip().split(",")
+            recipientList = map(str.strip, recipientList)
             recipient = ">,<"
             recipient = recipient.join(recipientList)
             recipient = "<" + recipient + ">"
@@ -438,6 +442,12 @@ class MyMail(MySupport):
                  if not self.TLSDisable:
                      session.starttls()
                  session.ehlo
+            try:
+                if self.debug:
+                    pass
+                    #session.set_debuglevel(1)     # for some reason login fails when this enabled
+            except Excetpion as e1:
+                self.LogErrorLine("Error setting debug level: " + str(e1))
                  # this allows support for simple TLS
         except Exception as e1:
             self.LogErrorLine("Error SMTP Init : SSL:<" + str(self.SSLEnabled)  + ">: " + str(e1))
