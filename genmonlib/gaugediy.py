@@ -126,7 +126,7 @@ class GaugeDIY1(GaugeDIY):
     # ---------- GaugeDIY::Close------------------------------------------------
     def Close(self):
         try:
-            self.I2CBus.close()
+            self.I2Cbus.close()
         except Exception as e1:
             self.LogErrorLine("Error in GagueDIY1:Close: " + str(e1))
 
@@ -323,6 +323,6 @@ class GaugeDIY2(GaugeDIY):
     # ---------- GaugeDIY::Close------------------------------------------------
     def Close(self):
         try:
-            self.I2CBus.close()
+            self.I2Cbus.close()
         except Exception as e1:
             self.LogErrorLine("Error in GagueDIY2:Close: " + str(e1))
