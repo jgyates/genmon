@@ -100,6 +100,7 @@ class MyConfig (MyCommon):
             return default
 
     #---------------------MyConfig::WriteSection--------------------------------
+    # NOTE: This will remove comments from the config file
     def alt_WriteSection(self, SectionName):
 
         if self.Simulation:
@@ -148,6 +149,7 @@ class MyConfig (MyCommon):
             return False
 
     #---------------------MyConfig::WriteValue----------------------------------
+    # NOTE: This will remove comments from the config file
     def alt_WriteValue(self, Entry, Value, remove = False, section = None):
 
         if self.Simulation:
