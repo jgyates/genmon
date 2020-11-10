@@ -408,6 +408,12 @@ def ProcessCommand(command):
                 # Now send the file
                 pathtofile = os.path.dirname(os.path.realpath(__file__))
                 return send_file(os.path.join(pathtofile, "genmon_backup.tar.gz"), as_attachment=True)
+        elif command in ["get_logs"]:
+            if session.get('write_access', True):
+                GetLogs()    # Create log archive file
+                # Now send the file
+                pathtofile = os.path.dirname(os.path.realpath(__file__))
+                return send_file(os.path.join(pathtofile, "genmon_logs.tar.gz"), as_attachment=True)
         elif command in ["test_email"]:
             return SendTestEmail(request.args.get('test_email', default = None, type=str))
         else:
@@ -1681,6 +1687,11 @@ def Update():
         LogErrorLine("Error in Update: " + str(e1))
 
 #-------------------------------------------------------------------------------
+def GetLogs():
+    # update
+    if not RunBashScript("genmonmaint.sh -l " + loglocation):   # archive logs
+        LogError("Error in GetLogs")
+#-------------------------------------------------------------------------------
 def Backup():
     # update
     if not RunBashScript("genmonmaint.sh -b -c " + ConfigFilePath):   # backup
@@ -1928,7 +1939,7 @@ def SetupMFA():
     global mail
 
     try:
-        #mail = MyMail(ConfigFilePath = ConfigFilePath)
+        mail = MyMail(ConfigFilePath = ConfigFilePath)
         MFA_URL = pyotp.totp.TOTP(SecretMFAKey).provisioning_uri(mail.SenderAccount, issuer_name="Genmon")
         #MFA_URL += "&image=https://raw.githubusercontent.com/jgyates/genmon/master/static/images/Genmon.png"
     except Exception as e1:

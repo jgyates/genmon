@@ -19,8 +19,10 @@ pipcommand="pip"
 pythoncommand="python"
 OPTIND=1         # Reset in case getopts has been used previously in the shell.
 config_path="/etc/genmon/"
+log_path="/var/log/"
 install_opt=false
 backup_opt=false
+log_opt=false
 refresh_opt=false
 update_opt=false
 noprompt_opt=false
@@ -220,6 +222,48 @@ function updatecrontab() {
 }
 
 #-------------------------------------------------------------------------------
+# archive log files
+function archivelogs() {
+
+    echo "Archive log files from $log_path ..."
+    cd $genmondir
+    sudo rm -r genmon_logs
+    sudo rm genmon_logs.tar.gz
+    mkdir genmon_logs
+
+    sudo cp "$log_path"genmon.log ./genmon_logs
+    sudo cp "$log_path"genserv.log ./genmon_logs
+    sudo cp "$log_path"mymail.log ./genmon_logs
+    sudo cp "$log_path"myserial.log ./genmon_logs
+    sudo cp "$log_path"mymodbus.log ./genmon_logs
+    sudo cp "$log_path"gengpio.log ./genmon_logs
+    sudo cp "$log_path"gengpioin.log ./genmon_logs
+    sudo cp "$log_path"gensyslog.log ./genmon_logs
+    sudo cp "$log_path"myserialtcp.log ./genmon_logs
+    sudo cp "$log_path"genlog.log ./genmon_logs
+    sudo cp "$log_path"genloader.log ./genmon_logs
+    sudo cp "$log_path"genmqtt.log ./genmon_logs
+    sudo cp "$log_path"genpushover.log ./genmon_logs
+    sudo cp "$log_path"genslack.log ./genmon_logs
+    sudo cp "$log_path"gensms.log ./genmon_logs
+    sudo cp "$log_path"gensms_modem.log ./genmon_logs
+    sudo cp "$log_path"genemail2sms.log ./genmon_logs
+    sudo cp "$log_path"genexercise.log ./genmon_logs
+    sudo cp "$log_path"gengpioin.log ./genmon_logs
+    sudo cp "$log_path"genalexa.log ./genmon_logs
+    sudo cp "$log_path"genemail2sms.log ./genmon_logs
+    sudo cp "$log_path"genexercise.log ./genmon_logs
+    sudo cp "$log_path"gensnmp.log ./genmon_logs
+    sudo cp "$log_path"gentankutil.log ./genmon_logs
+    sudo cp "$log_path"gentankdiy.log ./genmon_logs
+    sudo cp "$log_path"gentemp.log ./genmon_logs
+    sudo cp "$log_path"gengpioledblink.log ./genmon_backup
+    tar -zcvf genmon_logs.tar.gz genmon_logs/
+    sudo rm -r genmon_backup
+    echo "Done."
+}
+
+#-------------------------------------------------------------------------------
 # backup genmon
 function backupgenmon() {
 
@@ -245,6 +289,8 @@ function backupgenmon() {
     sudo cp "$config_path"gensnmp.conf ./genmon_backup
     sudo cp "$config_path"gentankutil.conf ./genmon_backup
     sudo cp "$config_path"gentemp.conf ./genmon_backup
+    sudo cp "$config_path"gentankdiy.conf ./genmon_backup
+    sudo cp "$config_path"gengpioledblink.conf ./genmon_backup
     sudo cp "$config_path"outage.txt ./genmon_backup
     sudo cp "$config_path"kwlog.txt ./genmon_backup
     sudo cp "$config_path"maintlog.json ./genmon_backup
@@ -287,6 +333,7 @@ function printhelp() {
   echo "  -c           Specifiy full path to config file directory"
   echo "  -p           Specifiy 2 or 3 for python version. 2 is default"
   echo "  -s           Just copy conf files"
+  echo "  -l           Specifiy the full path of the log directory to archive"
   echo "  -h           Display help"
   echo ""
 }
@@ -295,7 +342,7 @@ function printhelp() {
 # main entry
 
 
-while getopts ":hp:birunc:Cs" opt; do
+while getopts ":hp:birunc:Csl:" opt; do
   case ${opt} in
     h )
       printhelp
@@ -310,6 +357,10 @@ while getopts ":hp:birunc:Cs" opt; do
       ;;
     C )
       cleanpython_opt=true
+      ;;
+    l )
+      log_path=$OPTARG
+      log_opt=true
       ;;
     s )
       copyfiles_opt=true
@@ -369,6 +420,10 @@ fi
 
 if [ "$backup_opt" = true ] ; then
   backupgenmon
+fi
+
+if [ "$log_opt" = true ] ; then
+  archivelogs
 fi
 
 if [ "$refresh_opt" = true ] ; then
