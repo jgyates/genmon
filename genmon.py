@@ -132,7 +132,6 @@ class Monitor(MySupport):
         #  datetime.datetime(1, 1, 1, 0, 0) to check immediately on load
         self.LastSofwareUpdateCheck = datetime.datetime.now()
 
-        atexit.register(self.Close)
         signal.signal(signal.SIGTERM, self.SignalClose)
         signal.signal(signal.SIGINT, self.SignalClose)
 

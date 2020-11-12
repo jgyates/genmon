@@ -92,7 +92,6 @@ class GenTankData(MySupport):
 
             self.Threads["TankCheckThread"].Start()
 
-            atexit.register(self.Close)
             signal.signal(signal.SIGTERM, self.SignalClose)
             signal.signal(signal.SIGINT, self.SignalClose)
 

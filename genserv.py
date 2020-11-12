@@ -1972,6 +1972,10 @@ def GetErrorLine():
     return fname + ":" + str(lineno)
 
 #-------------------------------------------------------------------------------
+def SignalClose(signum, frame):
+
+    Close()
+#-------------------------------------------------------------------------------
 def Close(NoExit = False):
 
     global Closing
@@ -1993,10 +1997,8 @@ if __name__ == "__main__":
 
     console, ConfigFilePath, address, port, loglocation, log = MySupport.SetupAddOnProgram("genserv")
 
-    # NOTE: signal handler is not compatible with the exception handler around app.run()
-    #atexit.register(Close)
-    #signal.signal(signal.SIGTERM, Close)
-    #signal.signal(signal.SIGINT, Close)
+    signal.signal(signal.SIGTERM, SignalClose)
+    signal.signal(signal.SIGINT, SignalClose)
 
     MAIL_CONFIG = os.path.join(ConfigFilePath, "mymail.conf")
     GENMON_CONFIG = os.path.join(ConfigFilePath, "genmon.conf")

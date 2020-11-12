@@ -417,7 +417,6 @@ class MyMQTT(MyCommon):
                 flush_interval = self.FlushInterval, use_numeric = self.UseNumeric,
                 debug = self.debug, port = port, loglocation = loglocation)
 
-            atexit.register(self.Close)
             signal.signal(signal.SIGTERM, self.SignalClose)
             signal.signal(signal.SIGINT, self.SignalClose)
 

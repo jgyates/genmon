@@ -105,7 +105,6 @@ class GenTemp(MySupport):
             self.Threads["GenTempThread"] = MyThread(self.GenTempThread, Name = "GenTempThread", start = False)
             self.Threads["GenTempThread"].Start()
 
-            atexit.register(self.Close)
             signal.signal(signal.SIGTERM, self.SignalClose)
             signal.signal(signal.SIGINT, self.SignalClose)
 

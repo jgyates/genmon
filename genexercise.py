@@ -122,7 +122,7 @@ class GenExercise(MySupport):
                 self.DebugOutput("Debug Enabled")
             except Exception as e1:
                 self.LogErrorLine(str(e1))
-            atexit.register(self.Close)
+
             signal.signal(signal.SIGTERM, self.SignalClose)
             signal.signal(signal.SIGINT, self.SignalClose)
 
@@ -323,7 +323,7 @@ class GenExercise(MySupport):
 
     # ----------GenExercise::SignalClose----------------------------------------
     def SignalClose(self, signum, frame):
-        
+
         self.Close()
         sys.exit(1)
 
