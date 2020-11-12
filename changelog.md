@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 - Added new tank sensor type for gentankdiy.py add on (thanks @curtis1757)
 - Misc code optimizations for maintenance purposes
 - Fixed bug in shutdown code
+- Minor change improve error checking in genlaoder
 
 ## V1.15.09 - 2020-11-05
 - Rounded value written to power log to 3 decimal places (Evolution)

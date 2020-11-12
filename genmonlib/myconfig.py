@@ -113,7 +113,8 @@ class MyConfig (MyCommon):
             return True
         try:
             with self.CriticalLock:
-                with open(self.FileName, "w") as ConfigFile:
+                # open in unbuffered mode
+                with open(self.FileName, "w", 0) as ConfigFile:
                     if sys.version_info.major < 3:
                         self.config.add_section(SectionName)
                     else:
@@ -137,7 +138,8 @@ class MyConfig (MyCommon):
             return True
         try:
             with self.CriticalLock:
-                with open(self.FileName, "a") as ConfigFile:
+                # open in unbuffered mode
+                with open(self.FileName, "a", 0) as ConfigFile:
                     ConfigFile.write("[" + SectionName + "]")
                     ConfigFile.flush()
                     ConfigFile.close()
@@ -167,7 +169,7 @@ class MyConfig (MyCommon):
                     section_data[Entry] = Value
 
                 #Write changes back to file
-                with open(self.FileName, "w") as ConfigFile:
+                with open(self.FileName, "w", 0) as ConfigFile:
                     self.config.write(ConfigFile)
                 return True
 
@@ -192,7 +194,8 @@ class MyConfig (MyCommon):
                 FileString = ConfigFile.read()
                 ConfigFile.close()
 
-                ConfigFile = open(self.FileName,'w')
+                # open in unbuffered mode
+                ConfigFile = open(self.FileName,'w', 0)
                 for line in FileString.splitlines():
                     if not line.isspace():                  # blank lines
                         newLine = line.strip()              # strip leading spaces

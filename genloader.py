@@ -85,6 +85,12 @@ class Loader(MySupport):
 
             self.config = MyConfig(filename = self.configfile, section = "genmon", log = self.log)
             if not self.GetConfig():
+                self.CopyConfFile()
+                self.LogInfo("Error validating config. Retrying..")
+                self.config = MyConfig(filename = self.configfile, section = "genmon", log = self.log)
+                if not self.GetConfig():
+                    self.LogInfo("Error reading config file, 2nd attempt (1), Exiting")
+                    sys.exit(2)
                 self.LogInfo("Error reading config file. Exiting")
                 sys.exit(2)
 
@@ -93,7 +99,7 @@ class Loader(MySupport):
                 self.LogInfo("Error validating config. Retrying..")
                 self.config = MyConfig(filename = self.configfile, section = "genmon", log = self.log)
                 if not self.GetConfig():
-                    self.LogInfo("Error reading config file, 2nd attempt, Exiting")
+                    self.LogInfo("Error reading config file, 2nd attempt (2), Exiting")
                     sys.exit(2)
                 if not self.ValidateConfig():
                     self.LogInfo("Error validating config file, Exiting")
@@ -397,6 +403,9 @@ class Loader(MySupport):
             'gentankdiy','genalexa', 'gensnmp', 'gentemp', 'gengpioledblink']
             for entry in ValidSections:
                 if not entry in Sections:
+                    if entry == 'genmon' or entry == 'genserv':
+                        self.LogError("Warning: Missing entry: " + entry + " , file corruption. ")
+                        return False
                     if entry == 'genslack':
                         self.LogError("Warning: Missing entry: " + entry + " , adding entry")
                         self.AddEntry(section = entry, module = 'genslack.py', conffile = 'genslack.conf')
@@ -479,6 +488,7 @@ class Loader(MySupport):
         except Exception as e1:
             self.LogInfo("Error parsing config file: " + str(e1), LogLine = True)
             return False
+        return True
 
     #---------------------------------------------------------------------------
     def ConvertToInt(self, value, default = None):
