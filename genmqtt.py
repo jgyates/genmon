@@ -418,8 +418,8 @@ class MyMQTT(MyCommon):
                 debug = self.debug, port = port, loglocation = loglocation)
 
             atexit.register(self.Close)
-            signal.signal(signal.SIGTERM, self.Close)
-            signal.signal(signal.SIGINT, self.Close)
+            signal.signal(signal.SIGTERM, self.SignalClose)
+            signal.signal(signal.SIGINT, self.SignalClose)
 
             self.MQTTclient.loop_start()
         except Exception as e1:
@@ -497,6 +497,11 @@ class MyMQTT(MyCommon):
         except Exception as e1:
             self.LogErrorLine("Error in MyMQTT:on_message: " + str(e1))
 
+    # ----------MyMQTT::SignalClose---------------------------------------------
+    def SignalClose(self, signum, frame):
+
+        self.Close()
+        sys.exit(1)
     # ---------- MyMQTT::Close--------------------------------------------------
     def Close(self):
         self.LogDebug("Exiting MyMQTT")

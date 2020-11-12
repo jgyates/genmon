@@ -123,8 +123,8 @@ class GenExercise(MySupport):
             except Exception as e1:
                 self.LogErrorLine(str(e1))
             atexit.register(self.Close)
-            signal.signal(signal.SIGTERM, self.Close)
-            signal.signal(signal.SIGINT, self.Close)
+            signal.signal(signal.SIGTERM, self.SignalClose)
+            signal.signal(signal.SIGINT, self.SignalClose)
 
         except Exception as e1:
             self.LogErrorLine("Error in GenExercise init: " + str(e1))
@@ -320,6 +320,12 @@ class GenExercise(MySupport):
                 self.LogErrorLine("Error in ExerciseThread: " + str(e1))
                 if self.WaitForExit("ExerciseThread", float(self.PollTime)):
                     return
+
+    # ----------GenExercise::SignalClose----------------------------------------
+    def SignalClose(self, signum, frame):
+        
+        self.Close()
+        sys.exit(1)
 
     # ----------GenExercise::Close----------------------------------------------
     def Close(self):

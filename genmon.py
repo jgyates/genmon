@@ -133,8 +133,8 @@ class Monitor(MySupport):
         self.LastSofwareUpdateCheck = datetime.datetime.now()
 
         atexit.register(self.Close)
-        signal.signal(signal.SIGTERM, self.Close)
-        signal.signal(signal.SIGINT, self.Close)
+        signal.signal(signal.SIGTERM, self.SignalClose)
+        signal.signal(signal.SIGINT, self.SignalClose)
 
         # start thread to accept incoming sockets for nagios heartbeat and command / status clients
         self.Threads["InterfaceServerThread"] = MyThread(self.InterfaceServerThread, Name = "InterfaceServerThread")
@@ -1071,6 +1071,12 @@ class Monitor(MySupport):
             self.ServerSocket.close()
             self.ServerSocket = None
         #
+
+    # ----------Monitor::SignalClose--------------------------------------------
+    def SignalClose(self, signum, frame):
+
+        self.Close()
+        sys.exit(1)
 
     #---------------------Monitor::Close----------------------------------------
     def Close(self):

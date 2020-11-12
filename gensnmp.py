@@ -153,8 +153,8 @@ class GenSNMP(MySupport):
             self.Threads["SNMPThread"].Start()
 
             atexit.register(self.Close)
-            signal.signal(signal.SIGTERM, self.Close)
-            signal.signal(signal.SIGINT, self.Close)
+            signal.signal(signal.SIGTERM, self.SignalClose)
+            signal.signal(signal.SIGINT, self.SignalClose)
 
             self.SetupSNMP() # Must be last since we do not return from this call
 
@@ -677,6 +677,12 @@ class GenSNMP(MySupport):
 
         except Exception as e1:
              self.LogErrorLine("Error in mygenpush:CheckForChanges: " + str(e1))
+
+    # ----------GenSNMP::SignalClose--------------------------------------------
+    def SignalClose(self, signum, frame):
+
+        self.Close()
+        sys.exit(1)
 
     # ----------GenSNMP::Close----------------------------------------------
     def Close(self):

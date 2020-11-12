@@ -106,8 +106,8 @@ class GenTemp(MySupport):
             self.Threads["GenTempThread"].Start()
 
             atexit.register(self.Close)
-            signal.signal(signal.SIGTERM, self.Close)
-            signal.signal(signal.SIGINT, self.Close)
+            signal.signal(signal.SIGTERM, self.SignalClose)
+            signal.signal(signal.SIGINT, self.SignalClose)
 
         except Exception as e1:
             self.LogErrorLine("Error in GenTemp init: " + str(e1))
@@ -266,6 +266,12 @@ class GenTemp(MySupport):
                 if self.WaitForExit("GenTempThread", float(self.PollTime * 60)):
                     return
 
+
+    # ----------GenTemp::SignalClose--------------------------------------------
+    def SignalClose(self, signum, frame):
+
+        self.Close()
+        sys.exit(1)
 
     # ----------GenTemp::Close----------------------------------------------
     def Close(self):
