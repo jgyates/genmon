@@ -1976,7 +1976,7 @@ def SignalClose(signum, frame):
 
     Close()
 #-------------------------------------------------------------------------------
-def Close(NoExit = False):
+def Close():
 
     global Closing
 
@@ -1988,9 +1988,7 @@ def Close(NoExit = False):
     except Exception as e1:
         LogErrorLine("Error in close: " + str(e1))
 
-    LogError("genserv closed.")
-    if not NoExit:
-        sys.exit(0)
+    sys.exit(0)
 
 #-------------------------------------------------------------------------------
 if __name__ == "__main__":
