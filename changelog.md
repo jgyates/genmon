@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - Fixed bug in shutdown code
 - Minor change improve error checking in genlaoder
 - Additional error checking for power log entries
+- Added new alarm message for Evolution 2
 
 ## V1.15.09 - 2020-11-05
 - Rounded value written to power log to 3 decimal places (Evolution)

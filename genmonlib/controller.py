@@ -1501,8 +1501,9 @@ class GeneratorController(MySupport):
                 if not self.ValidateMaintLogEntry(Entry):
                     return "Invalid maintenance log entry"
                 self.MaintLogList.append(Entry)
-                with open(self.MaintLog, 'w', 0) as outfile:
+                with open(self.MaintLog, 'w') as outfile:
                     json.dump(self.MaintLogList, outfile, sort_keys = True, indent = 4) #, ensure_ascii = False)
+                    outfile.flush()
             except Exception as e1:
                 self.LogErrorLine("Error in AddEntryToMaintLog: " + str(e1))
                 return "Invalid input for Maintenance Log entry (2)."
@@ -1588,8 +1589,9 @@ class GeneratorController(MySupport):
     def SaveMaintLog(self, NewLog):
         try:
             self.MaintLogList = NewLog
-            with open(self.MaintLog, 'w', 0) as outfile:
+            with open(self.MaintLog, 'w') as outfile:
                 json.dump(self.MaintLogList, outfile, sort_keys = True, indent = 4) #, ensure_ascii = False)
+                outfile.flush()
 
         except Exception as e1:
             self.LogErrorLine("Error in SaveMaintLog: " + str(e1))

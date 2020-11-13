@@ -2358,7 +2358,8 @@ class Evolution(GeneratorController):
         0x3c : "Schedule B Serviced",
         0x3d : "Schedule A Serviced",
         0x3e : "Battery Maintained",
-        0x3f : "Maintenance Reset"
+        0x3f : "Maintenance Reset",
+        0x78 : "No Wi-Fi Module"             # Validated on Evolution 2 Air Cooled
         }
 
         NexusAlarmLogDecoder = {
