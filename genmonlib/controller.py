@@ -904,8 +904,12 @@ class GeneratorController(MySupport):
             CurrentTime = datetime.datetime.now()
 
             for Time, Power in reversed(PowerList):
-                struct_time = time.strptime(Time, "%x %X")
-                LogEntryTime = datetime.datetime.fromtimestamp(time.mktime(struct_time))
+                try:
+                    struct_time = time.strptime(Time, "%x %X")
+                    LogEntryTime = datetime.datetime.fromtimestamp(time.mktime(struct_time))
+                except Exception as e1:
+                    self.LogError("Error in GetPowerLogForMinutes: " + str(e1))
+                    continue
                 Delta = CurrentTime - LogEntryTime
                 if self.GetDeltaTimeMinutes(Delta) < Minutes :
                     ReturnList.insert(0, [Time, Power])
@@ -1048,8 +1052,13 @@ class GeneratorController(MySupport):
             LastTime = None
             for Items in PowerList:
                 Power = float(Items[1])
-                struct_time = time.strptime(Items[0], "%x %X")
-                LogEntryTime = datetime.datetime.fromtimestamp(time.mktime(struct_time))
+                try:
+                    # This should be date time
+                    struct_time = time.strptime(Items[0], "%x %X")
+                    LogEntryTime = datetime.datetime.fromtimestamp(time.mktime(struct_time))
+                except Exception as e1:
+                    self.LogError("Invalid time entry in power log: " + str(e1))
+                    continue
 
                 # Changes in Daylight savings time will effect this
                 if LastTime == None or Power == 0:
@@ -1492,7 +1501,7 @@ class GeneratorController(MySupport):
                 if not self.ValidateMaintLogEntry(Entry):
                     return "Invalid maintenance log entry"
                 self.MaintLogList.append(Entry)
-                with open(self.MaintLog, 'w') as outfile:
+                with open(self.MaintLog, 'w', 0) as outfile:
                     json.dump(self.MaintLogList, outfile, sort_keys = True, indent = 4) #, ensure_ascii = False)
             except Exception as e1:
                 self.LogErrorLine("Error in AddEntryToMaintLog: " + str(e1))
@@ -1579,7 +1588,7 @@ class GeneratorController(MySupport):
     def SaveMaintLog(self, NewLog):
         try:
             self.MaintLogList = NewLog
-            with open(self.MaintLog, 'w') as outfile:
+            with open(self.MaintLog, 'w', 0) as outfile:
                 json.dump(self.MaintLogList, outfile, sort_keys = True, indent = 4) #, ensure_ascii = False)
 
         except Exception as e1:

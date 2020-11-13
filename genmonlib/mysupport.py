@@ -32,7 +32,7 @@ class MySupport(MyCommon):
             return ""
 
         try:
-            with open(File,"a") as LogFile:     #opens file
+            with open(File,"a", 0) as LogFile:     #opens file
                 if Value2 != None:
                     LogFile.write(TimeDate + "," + Value + "," + Value2 + "\n")
                 else:

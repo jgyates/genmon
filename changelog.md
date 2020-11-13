@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 - Misc code optimizations for maintenance purposes
 - Fixed bug in shutdown code
 - Minor change improve error checking in genlaoder
+- Additional error checking for power log entries
 
 ## V1.15.09 - 2020-11-05
 - Rounded value written to power log to 3 decimal places (Evolution)
