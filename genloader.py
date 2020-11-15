@@ -91,8 +91,6 @@ class Loader(MySupport):
                 if not self.GetConfig():
                     self.LogInfo("Error reading config file, 2nd attempt (1), Exiting")
                     sys.exit(2)
-                self.LogInfo("Error reading config file. Exiting")
-                sys.exit(2)
 
             if not self.ValidateConfig():
                 self.CopyConfFile()
