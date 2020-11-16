@@ -560,7 +560,7 @@ def GetAddOns():
         AddOnCfg['genlog']['icon'] = "csv"
         AddOnCfg['genlog']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genlogpy-optional"
         AddOnCfg['genlog']['parameters'] = collections.OrderedDict()
-        Args = ConfigFiles[GENLOADER_CONFIG].ReadValue("args", return_type = str, section = "genlog", default = False)
+        Args = ConfigFiles[GENLOADER_CONFIG].ReadValue("args", return_type = str, section = "genlog", default = '-f /home/pi/genmon/LogFile.csv')
         ArgList = Args.split()
         if len(ArgList) == 2:
             Value = ArgList[1]
