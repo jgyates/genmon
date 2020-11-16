@@ -401,8 +401,8 @@ class MyMail(MySupport):
             recipient = ">,<"
             recipient = recipient.join(recipientList)
             recipient = "<" + recipient + ">"
-        except:
-            self.LogErrorLine("Error parsing recipient format")
+        except Exception as e1:
+            self.LogErrorLine("Error parsing recipient format: " + str(e1))
         if self.UseBCC:
             msg['Bcc'] = recipient
         else:
