@@ -409,9 +409,11 @@ class MySupport(MyCommon):
         except:
             return False    # incase psutil is not installed load anyway
         try:
+            prog_name = os.path.basename(prog_name)
             for q in psutil.process_iter():
                 if q.name().lower().startswith('python'):
-                    if len(q.cmdline())>1 and prog_name in q.cmdline()[1] and q.pid !=os.getpid():
+                    script_name = os.path.basename(q.cmdline()[1])
+                    if len(q.cmdline())>1 and prog_name == script_name and q.pid != os.getpid():
                         return True
         except Exception as e1:
             if log != None:
@@ -453,6 +455,8 @@ class MySupport(MyCommon):
 
             log = SetupLogger("client_" + prog_name, os.path.join(loglocation, prog_name + ".log"))
 
+            if not prog_name.lower().endswith(".py"):
+                prog_name += ".py"
             if MySupport.IsRunning(prog_name = prog_name, log = log, multi_instance = multi_instance):
                 raise Exception("The program %s is already loaded" % prog_name)
 
