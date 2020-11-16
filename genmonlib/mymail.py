@@ -154,11 +154,14 @@ class MyMail(MySupport):
         else:
             msg['From'] = sender_name + " <" + sender_account + ">"
 
-        recipientList = recipient.strip().split(",")
-        recipientList = map(str.strip, recipientList)
-        recipient = ">,<"
-        recipient = recipient.join(recipientList)
-        recipient = "<" + recipient + ">"
+        try:
+            recipientList = recipient.strip().split(",")
+            recipientList = map(str.strip, recipientList)
+            recipienttemp = ">,<"
+            recipienttemp = recipienttemp.join(recipientList)
+            recipient = "<" + recipienttemp + ">"
+        except Exceptin as e1:
+            pass
 
         msg['To'] = recipient
         msg['Date'] = formatdate(localtime=True)
@@ -398,9 +401,9 @@ class MyMail(MySupport):
         try:
             recipientList = recipient.strip().split(",")
             recipientList = map(str.strip, recipientList)
-            recipient = ">,<"
-            recipient = recipient.join(recipientList)
-            recipient = "<" + recipient + ">"
+            recipienttemp = ">,<"
+            recipienttemp = recipienttemp.join(recipientList)
+            recipient = "<" + recipienttemp + ">"
         except Exception as e1:
             self.LogErrorLine("Error parsing recipient format: " + str(e1))
         if self.UseBCC:
