@@ -142,7 +142,8 @@ class Loader(MySupport):
             ['pysnmp','pysnmp',None],               # SNMP
             ['ldap3','ldap3',None],                 # LDAP
             ['smbus','smbus',None],                 # SMBus reading of temp sensors
-            ['pyotp','pyotp','2.3.0']               # 2FA support
+            ['pyotp','pyotp','2.3.0'],              # 2FA support
+            ['psutil','psutil',None]                # process utilities
         ]
         try:
             ErrorOccured = False
@@ -443,31 +444,37 @@ class Loader(MySupport):
                 if self.config.HasOption('module'):
                     TempDict['module'] = self.config.ReadValue('module')
                 else:
+                    self.LogError("Error in GetConfig: expcting module in section " + str(SectionName))
                     TempDict['module'] = None
 
                 if self.config.HasOption('enable'):
                     TempDict['enable'] = self.config.ReadValue('enable', return_type = bool)
                 else:
+                    self.LogError("Error in GetConfig: expcting enable in section " + str(SectionName))
                     TempDict['enable'] = False
 
                 if self.config.HasOption('hardstop'):
                     TempDict['hardstop'] = self.config.ReadValue('hardstop', return_type = bool)
                 else:
+                    self.LogError("Error in GetConfig: expcting hardstop in section " + str(SectionName))
                     TempDict['hardstop'] = False
 
                 if self.config.HasOption('conffile'):
                     TempDict['conffile'] = self.config.ReadValue('conffile')
                 else:
+                    self.LogError("Error in GetConfig: expcting confile in section " + str(SectionName))
                     TempDict['conffile'] = None
 
                 if self.config.HasOption('args'):
                     TempDict['args'] = self.config.ReadValue('args')
                 else:
+                    self.LogError("Error in GetConfig: expcting args in section " + str(SectionName))
                     TempDict['args'] = None
 
                 if self.config.HasOption('priority'):
                     TempDict['priority'] = self.config.ReadValue('priority', return_type = int, default = None)
                 else:
+                    self.LogError("Error in GetConfig: expcting priority in section " + str(SectionName))
                     TempDict['priority'] = None
 
                 if self.config.HasOption('postloaddelay'):
@@ -612,8 +619,7 @@ class Loader(MySupport):
             executelist.extend(["-c", self.ConfigFilePath])
             # close_fds=True
             pid = subprocess.Popen(executelist, stdout=OutputStream, stderr=OutputStream, stdin=OutputStream)
-            self.UpdatePID(modulename, pid.pid)
-            return True
+            return self.UpdatePID(modulename, pid.pid)
 
         except Exception as e1:
             self.LogInfo("Error loading module " + path + ": "+ modulename + ": " + str(e1), LogLine = True)
@@ -642,8 +648,7 @@ class Loader(MySupport):
             process = Popen(LoadInfo, stdout=PIPE)
             output, _error = process.communicate()
             rc = process.returncode
-            self.UpdatePID(modulename, "")
-            return True
+            return self.UpdatePID(modulename, "")
 
         except Exception as e1:
             self.LogInfo("Error loading module: " + str(e1), LogLine = True)
@@ -653,10 +658,15 @@ class Loader(MySupport):
 
         try:
             filename = os.path.splitext(modulename)[0]    # remove extension
-            self.config.SetSection(filename)
+            if not self.config.SetSection(filename):
+                self.LogError("Error settting section name in UpdatePID: " + str(filename))
+                return False
             self.config.WriteValue("pid", str(pid))
+            return True
         except Exception as e1:
             self.LogInfo("Error writing PID for " + modulename + " : " + str(e1))
+            return False
+        return True
 
 #------------------main---------------------------------------------------------
 if __name__ == '__main__':
@@ -713,5 +723,10 @@ if __name__ == '__main__':
     tmplog = SetupLogger("genloader", "/var/log/" + "genloader.log")
     if (Loader.OneTimeMaint(ConfigFilePath, tmplog)):
         time.sleep(1.5)
-    port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = None)
+    port, loglocation, multi_instance = MySupport.GetGenmonInitInfo(ConfigFilePath, log = None)
+
+    if MySupport.IsRunning(os.path.basename(__file__), multi_instance = multi_instance):
+        print("\ngenloader already running.")
+        sys.exit(2)
+
     LoaderObject = Loader(start = StartModules, stop = StopModules, hardstop = HardStop, ConfigFilePath = ConfigFilePath, loglocation = loglocation)

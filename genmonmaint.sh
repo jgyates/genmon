@@ -89,6 +89,7 @@ function updatelibraries() {
   sudo $pipcommand install ldap3 -U
   sudo $pipcommand install pyasn1 -U
   sudo $pipcommand install smbus -U
+  sudo $pipcommand install psutil -U
   if [ "$usepython3" = true ] ; then
     sudo $pipcommand install pyotp -U
   else
@@ -150,7 +151,7 @@ function installgenmon() {
     sudo $pipcommand install pysnmp
     sudo $pipcommand install ldap3
     sudo $pipcommand install smbus
-    sudo $pipcommand install pyotp
+    sudo $pipcommand install psutil
     if [ "$usepython3" = true ] ; then
       sudo $pipcommand install pyotp
     else

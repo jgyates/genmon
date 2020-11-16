@@ -34,7 +34,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.15.10"
+GENMON_VERSION = "V1.15.11"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(MySupport):
@@ -117,11 +117,16 @@ class Monitor(MySupport):
 
         self.config.log = self.log
 
-        if self.IsLoaded():
+        if self.IsLoaded(): # this checks based on the port used for the API
             self.LogConsole("ERROR: genmon.py is already loaded.")
             self.LogError("ERROR: genmon.py is already loaded.")
             sys.exit(1)
 
+        # this check is based on the file name.
+        if MySupport.IsRunning(os.path.basename(__file__), multi_instance = self.multi_instance):
+            self.LogConsole("ERROR: genmon.py is already loaded.")
+            self.LogError("ERROR: genmon.py is already loaded (2).")
+            sys.exit(1)
 
         if self.NewInstall:
             self.LogError("New version detected: Old = %s, New = %s" % (self.Version, ProgramDefaults.GENMON_VERSION))
@@ -205,6 +210,8 @@ class Monitor(MySupport):
         try:
             if self.config.HasOption('sitename'):
                 self.SiteName = self.config.ReadValue('sitename')
+
+            self.multi_instance =  self.config.ReadValue('multi_instance', return_type = bool, default = False)
 
             if self.config.HasOption('incoming_mail_folder'):
                 self.IncomingEmailFolder = self.config.ReadValue('incoming_mail_folder')     # imap folder for incoming mail
@@ -717,9 +724,11 @@ class Monitor(MySupport):
                 MonitorData.append({"Weather" : WeatherData})
 
             UserData = self.GetUserDefinedData()
-            if not UserData == None and len(UserData):
-                MonitorData.append({"External Data" : UserData})
-
+            if UserData != None and len(UserData):
+                try:
+                    MonitorData.append({"External Data" : UserData})
+                except Exception as e1:
+                    self.LogErrorLine("Error in appending user data: " + str(e1))
             if not DictOut:
                 return self.printToString(self.ProcessDispatch(Monitor,""))
         except Exception as e1:

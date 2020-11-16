@@ -398,8 +398,28 @@ class MySupport(MyCommon):
         except Exception as e1:
             self.LogErrorLine("Error in ReadCSVFile: " + FileName + " : " + str(e1))
             return []
+    #------------ MySupport::IsRunning------------------------------------------
+    @staticmethod
+    def IsRunning(prog_name, log = None, multi_instance = False):
 
-    #------------ MySupport::SetupAddOnProgram------------------------------------------
+        if multi_instance:  # do we allow multiple instances
+            return False    # return False so the program will load anyway
+        try:
+            import psutil
+        except:
+            return False    # incase psutil is not installed load anyway
+        try:
+            for q in psutil.process_iter():
+                if q.name().lower().startswith('python'):
+                    if len(q.cmdline())>1 and prog_name in q.cmdline()[1] and q.pid !=os.getpid():
+                        return True
+        except Exception as e1:
+            if log != None:
+                log.error("Error in IsRunning: " + str(e1))
+
+        return False
+
+    #------------ MySupport::SetupAddOnProgram----------------------------------
     @staticmethod
     def SetupAddOnProgram(prog_name):
         console = SetupLogger(prog_name + "_console", log_file = "", stream = True)
@@ -429,11 +449,16 @@ class MySupport(MyCommon):
                 ConfigFilePath = arg.strip()
 
         try:
-            port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
+            port, loglocation, multi_instance = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
 
             log = SetupLogger("client_" + prog_name, os.path.join(loglocation, prog_name + ".log"))
+
+            if MySupport.IsRunning(prog_name = prog_name, log = log, multi_instance = multi_instance):
+                raise Exception("The program %s is already loaded" % prog_name)
+
         except Exception as e1:
             console.error("Error : " + str(e1))
+            log.error("Error : " + str(e1))
             sys.exit(1)
 
         return console, ConfigFilePath, address, port, loglocation, log
@@ -448,8 +473,8 @@ class MySupport(MyCommon):
         config = MyConfig(os.path.join(configfilepath, "genmon.conf"), section = "GenMon", log = log)
         loglocation = config.ReadValue('loglocation', default = ProgramDefaults.LogPath)
         port = config.ReadValue('server_port', return_type = int, default = ProgramDefaults.ServerPort)
-
-        return port, loglocation
+        multi_instance = config.ReadValue('multi_instance', return_type = bool, default = False)
+        return port, loglocation, multi_instance
 
     #---------------------MySupport::PermissionsOK------------------------------
     @staticmethod

@@ -84,8 +84,8 @@ class MyGenPush(MySupport):
 
             self.GetGeneratorStartInfo()
             # start thread to accept incoming sockets for nagios heartbeat
-            self.Threads["PollingThread"] = MyThread(self.MainPollingThread, Name = "PollingThread", start = False)
-            self.Threads["PollingThread"].Start()
+            self.Threads["MainPollingThread"] = MyThread(self.MainPollingThread, Name = "MainPollingThread", start = False)
+            self.Threads["MainPollingThread"].Start()
 
         except Exception as e1:
             self.LogErrorLine("Error in mygenpush init: "  + str(e1))
@@ -198,14 +198,14 @@ class MyGenPush(MySupport):
                 except Exception as e1:
                     self.LogErrorLine("Unable to get status: " + str(e1))
 
-                if self.WaitForExit("PollingThread", float(self.PollTime)):
+                if self.WaitForExit("MainPollingThread", float(self.PollTime)):
                     return
             except Exception as e1:
                 self.LogErrorLine("Error in mynotify:MainPollingThread: " + str(e1))
-                if self.WaitForExit("PollingThread", float(self.PollTime)):
+                if self.WaitForExit("MainPollingThread", float(self.PollTime)):
                     return
 
-    #------------ MySupport::CheckDictForChanges -------------------------------
+    #------------ MyGenPush::CheckDictForChanges -------------------------------
     # This function is recursive, it will turn a nested dict into a flat dict keys
     # that have a directory structure with corrposonding values and determine if
     # anyting changed. If it has then call our callback function
@@ -278,7 +278,7 @@ class MyGenPush(MySupport):
     # ---------- MyGenPush::Close-----------------------------------------------
     def Close(self):
         self.Exiting = True
-        self.KillThread("PollingThread")
+        self.KillThread("MainPollingThread")
         self.Generator.Close()
 
 #------------ MyMQTT class -----------------------------------------------------
@@ -381,7 +381,7 @@ class MyMQTT(MyCommon):
 
             self.MQTTclient.on_connect = self.on_connect
             self.MQTTclient.on_message = self.on_message
-
+            self.MQTTclient.on_disconnect = self.on_disconnect
 
             if len(self.CertificateAuthorityPath):
                 if os.path.isfile(self.CertificateAuthorityPath):
@@ -451,6 +451,11 @@ class MyMQTT(MyCommon):
         except Exception as e1:
             self.LogErrorLine("Error in MyMQTT:PublishCallback: " + str(e1))
 
+    #------------ MyMQTT::on_disconnect-----------------------------------------
+    def on_disconnect(client, userdata,rc=0):
+
+        self.LogError("DisConnected result code " + str(rc))
+
     #------------ MyMQTT::on_connect--------------------------------------------
     # The callback for when the client receives a CONNACK response from the server.
     def on_connect(self, client, userdata, flags, rc):
@@ -504,8 +509,11 @@ class MyMQTT(MyCommon):
     # ---------- MyMQTT::Close--------------------------------------------------
     def Close(self):
         self.LogDebug("Exiting MyMQTT")
-        self.Push.Close()
+
+        self.MQTTclient.loop_stop()
         self.Exiting = True
+        self.Push.Close()
+
 #-------------------------------------------------------------------------------
 if __name__ == "__main__":
 

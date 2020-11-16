@@ -433,7 +433,9 @@ function json2html(json, indent, parentkey) {
           console.log("no property of key in json2html: " + key);
           return outstr
         }
-        if (json[key].constructor === Array) {
+        if (json[key] === null) {
+          outstr += indent + key + ' : ' + getItem(json[key], key); //parentkey);
+        } else if (json[key].constructor === Array) {
             if (json[key].length > 0) {
               outstr += "<br>" + indent + key + ' :<br>';   // + json2html(json[key], indent, key);
               for (var i = 0; i < json[key].length; ++i) {

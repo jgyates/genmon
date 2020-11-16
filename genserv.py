@@ -1326,6 +1326,7 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["user_url"] = ['string', 'User URL', 27, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "user_url"]
         ConfigSettings["extend_wait"] = ['int', 'Extend email retry', 28, "0", "", 0, MAIL_CONFIG, MAIL_SECTION,"extend_wait"]
         ConfigSettings["min_outage_duration"] = ['int', 'Minimum Outage Duration', 29, "0", "", 0, GENMON_CONFIG, GENMON_SECTION,"min_outage_duration"]
+        ConfigSettings["multi_instance"] = ['boolean', 'Allow Multiple Genmon Instances', 30, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "multi_instance"]
 
 
         for entry, List in ConfigSettings.items():
@@ -2076,16 +2077,13 @@ if __name__ == "__main__":
         sys.exit(1)
 
     CacheToolTips()
-    while True:
-        try:
-            app.run(host="0.0.0.0", port=HTTPPort, threaded = True, ssl_context=SSLContext, use_reloader = False, debug = False)
+    try:
+        app.run(host="0.0.0.0", port=HTTPPort, threaded = True, ssl_context=SSLContext, use_reloader = False, debug = False)
 
-        except Exception as e1:
-            LogErrorLine("Error in app.run: " + str(e1))
-            #Errno 98
-            if e1.errno != errno.EADDRINUSE: # and e1.errno != errno.EIO:
-                sys.exit(1)
-            time.sleep(2)
-            if Closing:
-                sys.exit(0)
-            Restart()
+    except Exception as e1:
+        LogErrorLine("Error in app.run: " + str(e1))
+        #Errno 98
+        if e1.errno != errno.EADDRINUSE: # and e1.errno != errno.EIO:
+            sys.exit(1)
+
+        sys.exit(0)

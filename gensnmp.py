@@ -459,10 +459,17 @@ class GenSNMP(MySupport):
     #----------  GenSNMP::SnmpClose --------------------------------------------
     def SnmpClose(self):
 
-        if self.transportDispatcher != None:
-            self.transportDispatcher.closeDispatcher()
-            self.LogDebug("Dispatcher Closed")
-            self.transportDispatcher = None
+        try:
+            if self.transportDispatcher != None:
+                self.transportDispatcher.jobFinished(1)
+                self.transportDispatcher.unregisterRecvCbFun(recvId=None)
+                self.transportDispatcher.unregisterTransport(udp.domainName)
+                self.transportDispatcher.unregisterTransport(udp6.domainName)
+                self.transportDispatcher.closeDispatcher()
+                self.LogDebug("Dispatcher Closed")
+                self.transportDispatcher = None
+        except Exception as e1:
+            self.LogErrorLine("Error in SnmpClose: " + str(e1))
 
     #----------  GenSNMP::SnmpCallbackFunction ---------------------------------
     def SnmpCallbackFunction(self, transportDispatcher, transportDomain, transportAddress, wholeMsg):
@@ -680,15 +687,22 @@ class GenSNMP(MySupport):
     # ----------GenSNMP::SignalClose--------------------------------------------
     def SignalClose(self, signum, frame):
 
-        self.Close()
+        try:
+            self.Close()
+        except Exception as e1:
+            self.LogErrorLine("Error in SignalClose: " + str(e1))
         sys.exit(1)
 
     # ----------GenSNMP::Close----------------------------------------------
     def Close(self):
-        self.LogDebug("GenSNMP Exit")
-        self.KillThread("SNMPThread")
-        self.SnmpClose()
-        self.Generator.Close()
+
+        try:
+            self.LogDebug("GenSNMP Exit")
+            self.KillThread("SNMPThread")
+            self.SnmpClose()
+            self.Generator.Close()
+        except Exception as e1:
+            self.LogErrorLine("Error in Close: " + str(e1))
 #-------------------------------------------------------------------------------
 if __name__ == "__main__":
 
