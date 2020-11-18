@@ -3324,7 +3324,9 @@ class Evolution(GeneratorController):
                 elif not self.EvolutionController and self.LiquidCooled:
                     # Nexus Liquid Cooled
                     FloatTemp = self.GetParameter("0008", ReturnFloat = True, Divider = 1.0, Label = "Hz")
-                    FloatTemp = FloatTemp * 2.0
+                    # TODO this should be optiona
+                    if self.NexusLegacyFreq:
+                        FloatTemp = FloatTemp * 2.0
                     if ReturnFloat:
                         return FloatTemp
 
@@ -3968,6 +3970,7 @@ class Evolution(GeneratorController):
                 self.UseFuelSensor = self.config.ReadValue('usesensorforfuelgauge', return_type = bool, default = True)
                 self.IgnoreUnknown = self.config.ReadValue('ignore_unknown', return_type = bool, default = False)
                 self.LegacyPower = self.config.ReadValue('legacy_power', return_type = bool, default = False)
+                self.NexusLegacyFreq = self.config.ReadValue('nexus_legacy_freq', return_type = bool, default = True)
 
                 self.SerialNumberReplacement = self.config.ReadValue('serialnumberifmissing', default = None)
                 if self.SerialNumberReplacement != None and len(self.SerialNumberReplacement):
