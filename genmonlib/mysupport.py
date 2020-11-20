@@ -276,7 +276,9 @@ class MySupport(MyCommon):
         except:
             return False
     #------------ MySupport::GetDispatchItem -----------------------------------
-    def GetDispatchItem(self, item):
+    def GetDispatchItem(self, item, key = None):
+
+        NoneType = type(None)
 
         if isinstance(item, str):
             return item
@@ -292,9 +294,11 @@ class MySupport(MyCommon):
             return str(item)
         elif sys.version_info[0] >= 3 and isinstance(item, (bytes)):
             return str(item)
+        elif isinstance(item, NoneType):
+            return "None"
         else:
             self.LogError("Unable to convert type %s in GetDispatchItem" % str(type(item)))
-            self.LogError("Item: " + str(item))
+            self.LogError("Item: " + str(key) + ":" + str(item))
             return ""
 
     #------------ MySupport::ProcessDispatch -----------------------------------
@@ -321,7 +325,7 @@ class MySupport(MyCommon):
                         else:
                             self.LogError("Invalid type in ProcessDispatch %s " % str(type(node)))
                 else:
-                    InputBuffer[key] = self.GetDispatchItem(item)
+                    InputBuffer[key] = self.GetDispatchItem(item, key = key)
         else:
             self.LogError("Invalid type in ProcessDispatch %s " % str(type(node)))
 
@@ -346,11 +350,11 @@ class MySupport(MyCommon):
                         if isinstance(listitem, dict):
                             InputBuffer = self.ProcessDispatchToString(listitem, InputBuffer, indent + 1)
                         elif isinstance(listitem, str) or isinstance(listitem, unicode):
-                            InputBuffer += (("    " * (indent +1)) +  self.GetDispatchItem(listitem) + "\n")
+                            InputBuffer += (("    " * (indent +1)) +  self.GetDispatchItem(listitem, key = key) + "\n")
                         else:
                             self.LogError("Invalid type in ProcessDispatchToString %s %s (2)" % (key, str(type(listitem))))
                 else:
-                    InputBuffer += (("    " * indent) + str(key) + " : " +  self.GetDispatchItem(item) + "\n")
+                    InputBuffer += (("    " * indent) + str(key) + " : " +  self.GetDispatchItem(item, key = key) + "\n")
         else:
             self.LogError("Invalid type in ProcessDispatchToString %s " % str(type(node)))
         return InputBuffer

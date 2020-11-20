@@ -732,7 +732,7 @@ class Evolution(GeneratorController):
         ReturnKW = "Unknown"
         ReturnModel = "Unknown"
 
-        SerialNumber = self.GetSerialNumber()
+        SerialNumber = self.GetSerialNumber(retry = True)
         Controller = self.GetController()
 
         if not len(SerialNumber) or not len(Controller):
@@ -2528,7 +2528,7 @@ class Evolution(GeneratorController):
         return "Error Code Unknown: %04d\n" % AlarmCode
 
     #------------ Evolution:GetSerialNumber ------------------------------------
-    def GetSerialNumber(self):
+    def GetSerialNumber(self, retry = False):
 
         # serial number format:
         # Hex Register Values:  30 30 30 37 37 32 32 39 38 37 -> High part of each byte = 3, low part is SN
@@ -2544,7 +2544,8 @@ class Evolution(GeneratorController):
         Value = self.GetRegisterValueFromList(RegStr)       # Serial Number Register
         if len(Value) != 20:
             # retry reading serial number
-            self.ModBus.ProcessTransaction("%04x" % SERIAL_NUM_REG, SERIAL_NUM_REG_LENGTH)
+            if retry:
+                self.ModBus.ProcessTransaction("%04x" % SERIAL_NUM_REG, SERIAL_NUM_REG_LENGTH)
             return ""
 
         # all nexus and evolution models should have all "f" for values.
@@ -3904,6 +3905,9 @@ class Evolution(GeneratorController):
 
         StartInfo = {}
         try:
+            EvoLC = self.EvolutionController and self.LiquidCooled
+            if EvoLC is None:
+                EvoLC = False
             StartInfo["fueltype"] = self.FuelType
             StartInfo["model"] = self.Model
             StartInfo["nominalKW"] = self.NominalKW
@@ -3918,12 +3922,12 @@ class Evolution(GeneratorController):
             StartInfo["FuelConsumption"] = self.FuelConsumptionSupported()
             StartInfo["UtilityVoltage"] = True
             StartInfo["RemoteCommands"] = not self.SmartSwitch  # Start and Stop
-            StartInfo["ResetAlarms"] = self.EvolutionController and self.LiquidCooled
+            StartInfo["ResetAlarms"] = EvoLC
             StartInfo["AckAlarms"] = False
             StartInfo["RemoteTransfer"] = not self.SmartSwitch      # Start / Transfer
             StartInfo["RemoteButtons"] = self.RemoteButtonsSupported()  # On, Off , Auto
             StartInfo["ExerciseControls"] = not self.SmartSwitch
-            StartInfo["WriteQuietMode"] = self.EvolutionController and self.LiquidCooled
+            StartInfo["WriteQuietMode"] = EvoLC
             StartInfo["Firmware"] = self.GetFirmwareVersion()
             StartInfo["Hardware"] = self.GetHardwareVersion()
 
