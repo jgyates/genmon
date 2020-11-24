@@ -258,9 +258,9 @@ function archivelogs() {
     sudo cp "$log_path"gentankutil.log ./genmon_logs
     sudo cp "$log_path"gentankdiy.log ./genmon_logs
     sudo cp "$log_path"gentemp.log ./genmon_logs
-    sudo cp "$log_path"gengpioledblink.log ./genmon_backup
+    sudo cp "$log_path"gengpioledblink.log ./genmon_logs
     tar -zcvf genmon_logs.tar.gz genmon_logs/
-    sudo rm -r genmon_backup
+    sudo rm -r genmon_logs
     echo "Done."
 }
 
