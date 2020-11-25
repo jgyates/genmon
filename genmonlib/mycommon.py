@@ -182,9 +182,12 @@ class MyCommon(object):
     #---------------------MyCommon::GetErrorLine--------------------------------
     def GetErrorLine(self):
         exc_type, exc_obj, exc_tb = sys.exc_info()
-        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-        lineno = exc_tb.tb_lineno
-        return fname + ":" + str(lineno)
+        if exc_tb == None:
+            return ""
+        else:
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            lineno = exc_tb.tb_lineno
+            return fname + ":" + str(lineno)
 
     #---------------------MyCommon::GetErrorString------------------------------
     def GetErrorString(self, Error):

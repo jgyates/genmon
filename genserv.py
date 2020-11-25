@@ -270,7 +270,7 @@ def ProcessCommand(command):
             "getbase", "getsitename","setexercise", "setquiet", "setremote",
             "settime", "sendregisters", "sendlogfiles", "getdebug", "status_num_json",
             "get_maint_log_json", "add_maint_log", "clear_maint_log", "delete_row_maint_log",
-            "edit_row_maint_log", "support_data_json" ]:
+            "edit_row_maint_log", "support_data_json", 'fuel_log_clear' ]:
             finalcommand = "generator: " + command
 
             try:
@@ -1319,18 +1319,21 @@ def ReadAdvancedSettingsFromFile():
             ConfigSettings["half_rate"] = ['float', 'Fuel Rate Half Load', 19, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "half_rate"]
             ConfigSettings["full_rate"] = ['float', 'Fuel Rate Full Load', 20, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "full_rate"]
 
+        ConfigSettings["enable_fuel_log"] = ['boolean', 'Log Fuel Level to File', 23, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "enable_fuel_log"]
+        ConfigSettings["fuel_log_freq"] = ['float', 'Fuel Log Frequency', 24, "15.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "fuel_log_freq"]
+        #ConfigSettings["fuel_log"] = ['string', 'Fuel Log Path and File Name', 25, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "/etc/genmon/fuellog.txt"]
 
-        ConfigSettings["kwlogmax"] = ['string', 'Maximum size Power Log (MB)', 21, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlogmax"]
-        ConfigSettings["currentdivider"] = ['float', 'Current Divider', 22, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentdivider"]
-        ConfigSettings["currentoffset"] = ['string', 'Current Offset', 23, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentoffset"]
-        ConfigSettings["legacy_power"] = ['boolean', 'Use Legacy Power Calculation', 24, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "legacy_power"]
+        ConfigSettings["kwlogmax"] = ['string', 'Maximum size Power Log (MB)', 31, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlogmax"]
+        ConfigSettings["currentdivider"] = ['float', 'Current Divider', 32, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentdivider"]
+        ConfigSettings["currentoffset"] = ['string', 'Current Offset', 33, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentoffset"]
+        ConfigSettings["legacy_power"] = ['boolean', 'Use Legacy Power Calculation', 34, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "legacy_power"]
 
-        ConfigSettings["disableplatformstats"] = ['boolean', 'Disable Platform Stats', 25, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "disableplatformstats"]
-        ConfigSettings["https_port"] = ['int', 'Override HTTPS port', 26, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "https_port"]
-        ConfigSettings["user_url"] = ['string', 'User URL', 27, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "user_url"]
-        ConfigSettings["extend_wait"] = ['int', 'Extend email retry', 28, "0", "", 0, MAIL_CONFIG, MAIL_SECTION,"extend_wait"]
-        ConfigSettings["min_outage_duration"] = ['int', 'Minimum Outage Duration', 29, "0", "", 0, GENMON_CONFIG, GENMON_SECTION,"min_outage_duration"]
-        ConfigSettings["multi_instance"] = ['boolean', 'Allow Multiple Genmon Instances', 30, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "multi_instance"]
+        ConfigSettings["disableplatformstats"] = ['boolean', 'Disable Platform Stats', 35, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "disableplatformstats"]
+        ConfigSettings["https_port"] = ['int', 'Override HTTPS port', 36, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "https_port"]
+        ConfigSettings["user_url"] = ['string', 'User URL', 37, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "user_url"]
+        ConfigSettings["extend_wait"] = ['int', 'Extend email retry', 38, "0", "", 0, MAIL_CONFIG, MAIL_SECTION,"extend_wait"]
+        ConfigSettings["min_outage_duration"] = ['int', 'Minimum Outage Duration', 39, "0", "", 0, GENMON_CONFIG, GENMON_SECTION,"min_outage_duration"]
+        ConfigSettings["multi_instance"] = ['boolean', 'Allow Multiple Genmon Instances', 40, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "multi_instance"]
 
 
         for entry, List in ConfigSettings.items():

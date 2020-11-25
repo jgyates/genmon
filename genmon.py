@@ -511,6 +511,7 @@ class Monitor(MySupport):
             ## These commands are used by the web / socket interface only
             "power_log_json"    : [self.Controller.GetPowerHistory, (command.lower(),), True],
             "power_log_clear"   : [self.Controller.ClearPowerLog, (), True],
+            "fuel_log_clear"    : [self.Controller.ClearFuelLog, (), True],
             "start_info_json"   : [self.GetStartInfo, (), True],
             "registers_json"    : [self.Controller.DisplayRegisters, (False, True), True],  # display registers
             "allregs_json"      : [self.Controller.DisplayRegisters, (True, True), True],   # display registers

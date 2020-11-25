@@ -61,6 +61,8 @@ class GeneratorController(MySupport):
         self.MinimumOutageDuration = 0
         self.PowerLogMaxSize = 15.0       # 15 MB max size
         self.PowerLog =  os.path.join(ConfigFilePath, "kwlog.txt")
+        self.FuelLog =  os.path.join(ConfigFilePath, "fuellog.txt")
+        self.FuelLock = threading.RLock()
         self.PowerLogList = []
         self.PowerLock = threading.RLock()
         self.KWHoursMonth = None
@@ -126,6 +128,13 @@ class GeneratorController(MySupport):
                 if self.config.HasOption('kwlog'):
                     self.PowerLog = self.config.ReadValue('kwlog')
 
+                if self.config.HasOption('fuel_log'):
+                    self.FuelLog = self.config.ReadValue('fuel_log')
+                    self.FuelLog = self.FuelLog.strip()
+
+                self.UseFuelLog = self.config.ReadValue('enable_fuel_log', return_type = bool, default = False)
+                self.FuelLogFrequency = self.config.ReadValue('fuel_log_freq', return_type = float, default = 15.0)
+
                 self.MinimumOutageDuration = self.config.ReadValue('min_outage_duration', return_type = int, default = 0)
                 self.PowerLogMaxSize = self.config.ReadValue('kwlogmax', return_type = float, default = 15.0)
 
@@ -172,6 +181,9 @@ class GeneratorController(MySupport):
         # start thread for kw log
         self.Threads["PowerMeter"] = MyThread(self.PowerMeter, Name = "PowerMeter")
 
+        if self.UseFuelLog:
+            self.Threads["FuelLogger"] = MyThread(self.FuelLogger, Name = "FuelLogger")
+
     # ---------- GeneratorController:ProcessThread------------------------------
     #  read registers, remove items from Buffer, form packets, store register data
     def ProcessThread(self):
@@ -194,7 +206,7 @@ class GeneratorController(MySupport):
                 except Exception as e1:
                     self.LogErrorLine("Error in Controller ProcessThread (1), continue: " + str(e1))
         except Exception as e1:
-            self.LogErrorLine("Exiting Controller ProcessThread (2)" + str(e1))
+            self.LogErrorLine("Exiting Controller ProcessThread (2): " + str(e1))
 
     # ---------- GeneratorController:CheckAlarmThread---------------------------
     #  When signaled, this thread will check for alarms
@@ -211,11 +223,72 @@ class GeneratorController(MySupport):
                     self.CheckForAlarms()
 
             except Exception as e1:
-                self.LogErrorLine("Error in  CheckAlarmThread" + str(e1))
+                self.LogErrorLine("Error in  CheckAlarmThread: " + str(e1))
 
     #----------  GeneratorController:TestCommand--------------------------------
     def TestCommand(self):
         return "Not Supported"
+
+    #----------  GeneratorController:GeneratorIsRunning-------------------------
+    def GeneratorIsRunning(self):
+
+        return (self.GetBaseStatus() in ["EXERCISING", "RUNNING", "RUNNING-MANUAL"])
+
+    #----------  GeneratorController:FuelLogger---------------------------------
+    def FuelLogger(self):
+
+        if not self.UseFuelLog:
+            return
+
+        while True:
+            if self.InitComplete:
+                break
+            if self.WaitForExit("FuelLogger", 1):
+                return
+
+        LastFuelValue = None
+
+        while True:
+            try:
+                if LastFuelValue != None and self.WaitForExit("FuelLogger", self.FuelLogFrequency * 60.0):
+                    return
+
+                if not self.ExternalFuelDataSupported() and not self.FuelTankCalculationSupported() and not self.FuelSensorSupported():
+                    # this is an invalid setting so we do nothing, we do not exit to not flag a dead thread warning
+                    continue
+
+                FuelValue = self.GetFuelLevel(ReturnFloat = True)
+
+                if FuelValue == LastFuelValue:
+                    continue
+
+                LastFuelValue = FuelValue
+                TimeStamp = datetime.datetime.now().strftime('%x %X')
+                with self.FuelLock:
+                    self.LogToFile(self.FuelLog, TimeStamp, str(FuelValue))
+
+            except Exception as e1:
+                self.LogErrorLine("Error in  FuelLogger: " + str(e1))
+
+    #------------ GeneratorController::ClearFuelLog-----------------------------
+    def ClearFuelLog(self):
+
+        try:
+            if not len(self.FuelLog):
+                return "Fuel Not Present"
+
+            if not os.path.isfile(self.FuelLog):
+                return "Power Log is empty"
+
+            with self.FuelLock:
+                os.remove(self.FuelLog)
+                time.sleep(1)
+
+            return "Fuel Log cleared"
+        except Exception as e1:
+            self.LogErrorLine("Error in  ClearFuelLog: " + str(e1))
+            return "Error in  ClearFuelLog: " + str(e1)
+
     #----------  GeneratorController:DebugThread--------------------------------
     def DebugThread(self):
 

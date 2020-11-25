@@ -294,6 +294,7 @@ function backupgenmon() {
     sudo cp "$config_path"gengpioledblink.conf ./genmon_backup
     sudo cp "$config_path"outage.txt ./genmon_backup
     sudo cp "$config_path"kwlog.txt ./genmon_backup
+    sudo cp "$config_path"fuellog.txt ./genmon_backup
     sudo cp "$config_path"maintlog.json ./genmon_backup
     tar -zcvf genmon_backup.tar.gz genmon_backup/
     sudo rm -r genmon_backup
