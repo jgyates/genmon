@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - removed restart code / while loop in genserv.py that is likley the cause of intermittant corruption of conf file
 - Added option to use alternate reading for frequency for Nexus Liquid Cooled units
 - Minor updates to help with debugging
+- Minor update to genexercise.py to allow exercising when service is due
 
 ## V1.15.10 - 2020-11-09
 - Added new tank sensor type for gentankdiy.py add on (thanks @curtis1757)
