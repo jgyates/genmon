@@ -180,8 +180,8 @@ class GenExercise(MySupport):
     def ReadyToExercise(self):
 
         status = self.SendCommand("generator: getbase")
-        if not status.lower() in ["ready"]:
-            self.LogError("Generator not in Ready state, exercise cycle not started")
+        if not status.lower() in ["ready","servicedue"]:
+            self.LogError("Generator not in Ready state, exercise cycle not started: " + str(status))
             return False
         return True
     # ---------- GenExercise::StartExercise-------------------------------------
