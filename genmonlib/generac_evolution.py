@@ -3484,6 +3484,8 @@ class Evolution(GeneratorController):
     def GetBaseStatus(self):
 
         if self.SystemInAlarm():
+            if self.ServiceIsDue(AlarmOnly = True):
+                return "SERVICEDUE"
             return "ALARM"
 
         if self.ServiceIsDue():
@@ -3507,7 +3509,7 @@ class Evolution(GeneratorController):
                 return "READY"
 
     #------------ Evolution:ServiceIsDue ---------------------------------------
-    def ServiceIsDue(self):
+    def ServiceIsDue(self, AlarmOnly = False):
 
         # get Hours until next service
         Value = self.GetRegisterValueFromList("0001")
@@ -3518,8 +3520,14 @@ class Evolution(GeneratorController):
 
         # service due alarm?
         if self.BitIsEqual(HexValue,   0xFFF0FFFF, 0x0000001F):
+            # is the Service Due Alarm Active?
             return True
 
+        if AlarmOnly:
+            return False
+
+        # The rest of this function reads the service counters directly to see if the
+        # service is due in the next day
         # get Hours until next service
         if self.EvolutionController:
             ServiceList = ["A","B"]
