@@ -976,7 +976,7 @@ class HPanel(GeneratorController):
                 callbackparameters = (self.Reg.AVG_VOLTAGE[REGISTER], None, None, False, True, False))
                 self.TileList.append(Tile)
 
-                NominalCurrent = int(self.NominalKW) * 1000 / NominalVoltage
+                NominalCurrent = float(self.NominalKW) * 1000 / NominalVoltage
                 Tile = MyTile(self.log, title = "Current (Avg)", units = "A", type = "current", nominal = NominalCurrent,
                 callback = self.GetParameter,
                 callbackparameters = (self.Reg.AVG_CURRENT[REGISTER], None, None, False, True, False))
@@ -1011,7 +1011,7 @@ class HPanel(GeneratorController):
                     callback = self.GetParameter,
                     callbackparameters = (self.Reg.EXT_SW_UTILITY_FREQ[REGISTER], None, 100.0, False, False, True))
                     self.TileList.append(Tile)
-                    Tile = MyTile(self.log, title = "Utility Power", units = "kW", type = "power", nominal = int(self.NominalKW),
+                    Tile = MyTile(self.log, title = "Utility Power", units = "kW", type = "power", nominal = float(self.NominalKW),
                     callback = self.GetParameter,
                     callbackparameters = (self.Reg.EXT_SW_UTILITY_KW[REGISTER], None, None, False, True, False))
                     self.TileList.append(Tile)
@@ -1031,12 +1031,12 @@ class HPanel(GeneratorController):
                     self.TileList.append(Tile)
 
                 if self.PowerMeterIsSupported():
-                    Tile = MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = int(self.NominalKW),
+                    Tile = MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = float(self.NominalKW),
                     callback = self.GetParameter,
                     callbackparameters = (self.Reg.TOTAL_POWER_KW[REGISTER], None, None, False, True, False))
                     self.TileList.append(Tile)
 
-                    Tile = MyTile(self.log, title = "kW Output", type = "powergraph", nominal = int(self.NominalKW),
+                    Tile = MyTile(self.log, title = "kW Output", type = "powergraph", nominal = float(self.NominalKW),
                     callback = self.GetParameter,
                     callbackparameters = (self.Reg.TOTAL_POWER_KW[REGISTER], None, None, False, True, False))
                     self.TileList.append(Tile)

@@ -148,7 +148,7 @@ class GeneratorController(MySupport):
                         self.NominalRPM = "Unknown"
                 if self.config.HasOption('nominalKW'):
                     self.NominalKW = self.config.ReadValue('nominalKW')
-                    if not self.StringIsInt(self.NominalKW):
+                    if not self.StringIsFloat(self.NominalKW):
                         self.NominalKW = "Unknown"
                 if self.config.HasOption('model'):
                     self.Model = self.config.ReadValue('model')
@@ -255,6 +255,7 @@ class GeneratorController(MySupport):
 
                 if not self.ExternalFuelDataSupported() and not self.FuelTankCalculationSupported() and not self.FuelSensorSupported():
                     # this is an invalid setting so we do nothing, we do not exit to not flag a dead thread warning
+                    LastFuelValue = 0.0
                     continue
 
                 FuelValue = self.GetFuelLevel(ReturnFloat = True)
@@ -1377,7 +1378,7 @@ class GeneratorController(MySupport):
             if Actual:
                 PowerValue = self.GetPowerOutput(ReturnFloat = True)
             else:
-                PowerValue = self.EstimateLoad * int(self.NominalKW)
+                PowerValue = self.EstimateLoad * float(self.NominalKW)
 
             if PowerValue == 0:
                 return None
@@ -1433,7 +1434,7 @@ class GeneratorController(MySupport):
             if ConsumptionData == None or len(ConsumptionData) != 5:
                 return None, ""
 
-            Load = kw / int(self.NominalKW)
+            Load = kw / float(self.NominalKW)
             X1 = ConsumptionData[0]
             Y1 = ConsumptionData[1]
             X2 = ConsumptionData[2]

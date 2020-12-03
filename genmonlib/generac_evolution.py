@@ -508,7 +508,7 @@ class Evolution(GeneratorController):
                     continue
                 if self.LiquidCooled:
                     try:
-                        if int(Item[0]) != int(self.NominalKW):
+                        if float(Item[0]) != float(self.NominalKW):
                             continue
                         if Item[1] != self.FuelType:
                             continue

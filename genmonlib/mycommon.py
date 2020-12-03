@@ -32,6 +32,15 @@ class MyCommon(object):
         except:
             return False
 
+    #------------ MyCommon::StringIsFloat --------------------------------------
+    def StringIsFloat(self, value):
+
+        try:
+            temp = float(value)
+            return True
+        except:
+            return False
+
     #------------ MyCommon::ConvertCelsiusToFahrenheit -------------------------
     def ConvertCelsiusToFahrenheit(self, Celsius):
 
