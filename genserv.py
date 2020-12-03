@@ -2092,5 +2092,11 @@ if __name__ == "__main__":
         #Errno 98
         if e1.errno != errno.EADDRINUSE: # and e1.errno != errno.EIO:
             sys.exit(1)
-
+        # retry once
+        try:
+            LogError("Retrying app.run()")
+            time.sleep(2)
+            app.run(host="0.0.0.0", port=HTTPPort, threaded = True, ssl_context=SSLContext, use_reloader = False, debug = False)
+        except Exception as e2:
+            LogErrorLine("Error in app.run (2): " + str(e2))
         sys.exit(0)
