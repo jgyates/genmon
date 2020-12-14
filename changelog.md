@@ -1,6 +1,11 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.15.12 - 2020-12-14
+- Minor updates to recieving mail for python 3 compatiblity
+- Minor updates to help with debugging
+- Minor update to genexercise.py to allow exercising when service is due
+
 ## V1.15.11 - 2020-11-15
 - A new library was added so the restart after the upgrade may take a few seconds longer than ususal
 - Improvements for start/stop of programs.
@@ -9,8 +14,6 @@ All notable changes to this project will be documented in this file.
 - shutdown cleanup improved for genmqtt.py and gensnmp.py
 - removed restart code / while loop in genserv.py that is likley the cause of intermittant corruption of conf file
 - Added option to use alternate reading for frequency for Nexus Liquid Cooled units
-- Minor updates to help with debugging
-- Minor update to genexercise.py to allow exercising when service is due
 
 ## V1.15.10 - 2020-11-09
 - Added new tank sensor type for gentankdiy.py add on (thanks @curtis1757)

@@ -357,10 +357,16 @@ class MyMail(MySupport):
                             if self.WaitForExit("EmailCommandThread", 15 ):
                                 return
                             continue
-                        msg = email.message_from_string(data[0][1])
-                        decode = email.header.decode_header(msg['Subject'])[0]
-                        subject = unicode(decode[0])
-
+                        if sys.version_info[0] < 3: #PYTHON 2
+                            msg = email.message_from_string(data[0][1])
+                        else:                       #PYTHON 3
+                            msg = email.message_from_bytes(data[0][1])
+                        decode_val = email.header.decode_header(msg['Subject'])[0]
+                        if sys.version_info[0] < 3: #PYTHON 2
+                            subject = unicode(decode_val[0])
+                            subject = subject.decode('utf-8')
+                        else:                       #PYTHON 3
+                            subject = decode_val[0]
                         self.IncomingCallback(subject)
 
                         # move the message to processed folder
