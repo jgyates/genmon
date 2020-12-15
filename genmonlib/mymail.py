@@ -455,7 +455,7 @@ class MyMail(MySupport):
                 if self.debug:
                     pass
                     #session.set_debuglevel(1)     # for some reason login fails when this enabled
-            except Excetpion as e1:
+            except Exception as e1:
                 self.LogErrorLine("Error setting debug level: " + str(e1))
                  # this allows support for simple TLS
         except Exception as e1:
