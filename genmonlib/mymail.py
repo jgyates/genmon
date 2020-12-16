@@ -156,7 +156,7 @@ class MyMail(MySupport):
 
         try:
             recipientList = recipient.strip().split(",")
-            recipientList = map(str.strip, recipientList)
+            recipientList = map(lambda x:x.strip(),recipientList)
             recipienttemp = ">,<"
             recipienttemp = recipienttemp.join(recipientList)
             recipient = "<" + recipienttemp + ">"
@@ -406,7 +406,7 @@ class MyMail(MySupport):
 
         try:
             recipientList = recipient.strip().split(",")
-            recipientList = map(str.strip, recipientList)
+            recipientList = map(lambda x:x.strip(),recipientList)
             recipienttemp = ">,<"
             recipienttemp = recipienttemp.join(recipientList)
             recipient = "<" + recipienttemp + ">"
