@@ -1,11 +1,14 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.15.13 - 2020-12-14
+- Remove output voltage display for pre-nexus controllers
+- Minor update to genexercise.py to allow exercising when service is due
+- correct minor bug in in mymail.py
+
 ## V1.15.12 - 2020-12-14
 - Minor updates to recieving mail for python 3 compatiblity
 - Minor updates to help with debugging
-- Minor update to genexercise.py to allow exercising when service is due
-- correct minor bug in in mymail.py
 
 ## V1.15.11 - 2020-11-15
 - A new library was added so the restart after the upgrade may take a few seconds longer than ususal

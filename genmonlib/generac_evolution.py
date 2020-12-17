@@ -305,8 +305,10 @@ class Evolution(GeneratorController):
                 self.TileList.append(Tile)
                 Tile = MyTile(self.log, title = "Utility Voltage", units = "V", type = "linevolts", nominal = self.NominalLineVolts, callback = self.GetUtilityVoltage, callbackparameters = (True,))
                 self.TileList.append(Tile)
-                Tile = MyTile(self.log, title = "Output Voltage", units = "V", type = "linevolts", nominal = self.NominalLineVolts, callback = self.GetVoltageOutput, callbackparameters = (True,))
-                self.TileList.append(Tile)
+
+                if not self.PreNexus:
+                    Tile = MyTile(self.log, title = "Output Voltage", units = "V", type = "linevolts", nominal = self.NominalLineVolts, callback = self.GetVoltageOutput, callbackparameters = (True,))
+                    self.TileList.append(Tile)
 
                 if self.NominalFreq == None or self.NominalFreq == "" or self.NominalFreq == "Unknown":
                     self.NominalFreq = "60"
@@ -3847,7 +3849,8 @@ class Evolution(GeneratorController):
             Engine.append({"RPM" : self.ValueOut(self.GetRPM(ReturnInt = True), "", JSONNum)})
 
             Engine.append({"Frequency" : self.ValueOut(self.GetFrequency(ReturnFloat = True), "Hz", JSONNum)})
-            Engine.append({"Output Voltage" : self.ValueOut(self.GetVoltageOutput(ReturnInt = True), "V", JSONNum)})
+            if not self.PreNexus:
+                Engine.append({"Output Voltage" : self.ValueOut(self.GetVoltageOutput(ReturnInt = True), "V", JSONNum)})
 
             if self.PowerMeterIsSupported():
                 Engine.append({"Output Current" : self.ValueOut(self.GetCurrentOutput(ReturnFloat = True), "A", JSONNum)})
