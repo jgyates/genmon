@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## V1.15.13 - 2020-12-14
 - Remove output voltage display for pre-nexus controllers
-- Minor update to genexercise.py to allow exercising when service is due
+- Minor update to genexercise.py to allow exercising when service is due alarm is active
 - correct minor bug in in mymail.py
 
 ## V1.15.12 - 2020-12-14
