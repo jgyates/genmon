@@ -105,6 +105,18 @@ class MyCommon(object):
         except Exception as e1:
             self.LogErrorLine("Error in FindDictInList: " + str(e1))
         return None
+
+    #----------  MyCommon::removeNonPrintable-----------------------------------
+    def removeNonPrintable(self, inputStr):
+
+        try:
+            import re
+            # remove any non printable chars
+            inputStr = re.sub(r'[^\x00-\x7f]',r'', inputStr)
+            return inputStr
+        except:
+            return inputStr
+
     #----------  MyCommon::removeAlpha------------------------------------------
     # used to remove alpha characters from string so the string contains a
     # float value (leaves all special characters)

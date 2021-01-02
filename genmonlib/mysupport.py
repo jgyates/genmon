@@ -25,18 +25,25 @@ class MySupport(MyCommon):
         self.CriticalLock = threading.Lock()        # Critical Lock (writing conf file)
 
     #------------ MySupport::LogToFile------------------------------------------
-    def LogToFile(self, File, TimeDate, Value, Value2 = None):
+    def LogToFile(self, File, *argv):
         if self.Simulation:
             return
         if not len(File):
             return ""
 
+        if not len(argv):
+            return ""
         try:
+            modarg = []
+            # remove any non printable chars
+            for arg in argv:
+                arg = self.removeNonPrintable(arg)
+                if len(arg):
+                    modarg.append(arg)
+            outdata = ","
+            outdata = outdata.join(modarg) + "\n"
             with open(File,"a") as LogFile:     #opens file
-                if Value2 != None:
-                    LogFile.write(TimeDate + "," + Value + "," + Value2 + "\n")
-                else:
-                    LogFile.write(TimeDate + "," + Value + "\n")
+                LogFile.write(outdata)
                 LogFile.flush()
         except Exception as e1:
             self.LogError("Error in  LogToFile : File: %s: %s " % (File,str(e1)))

@@ -240,6 +240,7 @@ class GeneratorController(MySupport):
         if not self.UseFuelLog:
             return
 
+        time.sleep(0.25)
         while True:
             if self.InitComplete:
                 break
@@ -764,6 +765,7 @@ class GeneratorController(MySupport):
                         continue
                     if line[0] == "#":              # comment?
                         continue
+                    line = self.removeNonPrintable(line)
                     Items = line.split(",")
                     # Three items is for duration greater than 24 hours, i.e 1 day, 08:12
                     if len(Items) < 2:
@@ -810,6 +812,11 @@ class GeneratorController(MySupport):
     def LogToPowerLog(self, TimeStamp, Value):
 
         try:
+            TimeStamp = self.removeNonPrintable(TimeStamp)
+            Value = self.removeNonPrintable(Value)
+            if not len(TimeStamp) or not len(Value):
+                self.LogError("Invalid entry in LogToPowerLog: " + str(TimeStamp) + "," + str(Value))
+                return
             if len(self.PowerLogList):
                 self.PowerLogList.insert(0, [TimeStamp, Value])
             self.LogToFile(self.PowerLog, TimeStamp, Value)
@@ -982,7 +989,7 @@ class GeneratorController(MySupport):
                     struct_time = time.strptime(Time, "%x %X")
                     LogEntryTime = datetime.datetime.fromtimestamp(time.mktime(struct_time))
                 except Exception as e1:
-                    self.LogError("Error in GetPowerLogForMinutes: " + str(e1))
+                    self.LogErrorLine("Error in GetPowerLogForMinutes: " + str(e1))
                     continue
                 Delta = CurrentTime - LogEntryTime
                 if self.GetDeltaTimeMinutes(Delta) < Minutes :
@@ -1017,6 +1024,7 @@ class GeneratorController(MySupport):
                             continue
                         if line[0] == "#":                  # comment
                             continue
+                        line = self.removeNonPrintable(line)
                         Items = line.split(",")
                         if len(Items) != 2:
                             continue

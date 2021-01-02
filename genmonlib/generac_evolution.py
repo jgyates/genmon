@@ -2003,10 +2003,10 @@ class Evolution(GeneratorController):
         return Maintenance
     #------------ Evolution:signed16--------------------------------------------
     def signed16(self, value):
-        return -(value & 0x8000) | (value & 0x7fff)
+        return -(int(value) & 0x8000) | (int(value) & 0x7fff)
     #------------ Evolution:signed32--------------------------------------------
     def signed32(self, value):
-        return -(value & 0x80000000) | (value & 0x7fffffff)
+        return -(int(value) & 0x80000000) | (int(value) & 0x7fffffff)
     #------------ Evolution:DisplayUnknownSensors-------------------------------
     def DisplayUnknownSensors(self):
 
