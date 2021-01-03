@@ -112,7 +112,7 @@ class MyCommon(object):
         try:
             import re
             # remove any non printable chars
-            inputStr = re.sub(r'[^\x00-\x7f]',r'', inputStr)
+            inputStr = re.sub(r'[^\x20-\x7f]',r'', inputStr)
             return inputStr
         except:
             return inputStr
