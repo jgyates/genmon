@@ -409,6 +409,7 @@ class MyMQTT(MyCommon):
                 else:
                     self.LogError("Error: Unable to  find CA cert file: " + self.CertificateAuthorityPath)
 
+            self.LogDebug("Connecting to " + self.MQTTAddress +  ":" + str(self.MQTTPort))
             self.MQTTclient.connect(self.MQTTAddress, self.MQTTPort, 60)
 
             self.Push = MyGenPush(host = self.MonitorAddress,
@@ -519,7 +520,7 @@ if __name__ == "__main__":
 
     console, ConfigFilePath, address, port, loglocation, log = MySupport.SetupAddOnProgram("genmqtt")
 
-    InstanceMQTT = MyMQTT(host = address, port = port, loglocation = loglocation, configfilepath = ConfigFilePath, console = console)
+    InstanceMQTT = MyMQTT(host = address, port = port, log = log, loglocation = loglocation, configfilepath = ConfigFilePath, console = console)
 
     while not InstanceMQTT.Exiting:
         time.sleep(0.5)
