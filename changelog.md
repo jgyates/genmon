@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.15.15 - 2021-01-11
+- Update to allow I2C channel values greater than 2 for gentankdiy
+
 ## V1.15.14 - 2021-01-01
 - minor Python 3 update
 - Change that removes / prevents non ascii from power log or outage log
