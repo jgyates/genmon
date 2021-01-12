@@ -13,13 +13,15 @@
 
 from __future__ import print_function
 
-import time, sys, os, math
+import glob, time, sys, os, math
 import smbus
 
 from genmonlib.myconfig import MyConfig
 from genmonlib.mysupport import MySupport
 
 class GaugeDIY(MySupport):
+    I2C_DEV_PREFIX = '/dev/i2c-'
+
     # ---------- GaugeDIY::__init__---------------------------------------------
     def __init__(self, config, log = None, console = None):
         super(GaugeDIY, self).__init__()
@@ -34,7 +36,9 @@ class GaugeDIY(MySupport):
         self.PollTime = self.config.ReadValue('poll_frequency', return_type = float, default = 60)
 
         self.i2c_channel = self.config.ReadValue('i2c_channel', return_type = int, default = 1)
-        assert self.i2c_channel in [1,2], "'i2c_channel' must be 1 or 2"
+        available_i2c_channels = [int(n[len(self.I2C_DEV_PREFIX):]) for n in glob.glob(self.I2C_DEV_PREFIX + '[0-9]*')]
+        assert self.i2c_channel is not None, "No available i2c_channel found."
+        assert self.i2c_channel in available_i2c_channels, "'i2c_channel' must be one of {}".format(available_i2c_channels)
 
         self.i2c_address = self.config.ReadValue('i2c_address', return_type = int, default = 72)  # 0x48
 
