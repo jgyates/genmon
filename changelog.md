@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.15.16 - 2021-01-15
+- Added model recognition for Evolution 2.0 24kW  (Thanks @chia9876)
+
 ## V1.15.15 - 2021-01-11
 - Update to allow I2C channel values greater than 2 for gentankdiy
 

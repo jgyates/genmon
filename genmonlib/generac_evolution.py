@@ -681,6 +681,9 @@ class Evolution(GeneratorController):
                                 33 : ["Trinity", "50", "380,400,416", "3", None, "380"]         # Discontinued
                                 }
 
+        if self.Evolution2:
+            ModelLookUp_EvoAC[21] = ["24KW", "60", "120/240", "1", "999 cc", "240"] # Evo G0072100 Evo2 24kw 
+
         LookUp = None
         if self.EvolutionController:
             LookUp = ModelLookUp_EvoAC
