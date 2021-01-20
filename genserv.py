@@ -180,12 +180,12 @@ def admin_login_helper():
 @app.route('/', methods=['POST'])
 def do_admin_login():
 
-    if request.form['password'] == HTTPAuthPass and request.form['username'] == HTTPAuthUser:
+    if request.form['password'] == HTTPAuthPass and request.form['username'].lower() == HTTPAuthUser.lower():
         session['logged_in'] = True
         session['write_access'] = True
         LogError("Admin Login")
         return admin_login_helper()
-    elif request.form['password'] == HTTPAuthPass_RO and request.form['username'] == HTTPAuthUser_RO:
+    elif request.form['password'] == HTTPAuthPass_RO and request.form['username'].lower() == HTTPAuthUser_RO.lower():
         session['logged_in'] = True
         session['write_access'] = False
         LogError("Limited Rights Login")
