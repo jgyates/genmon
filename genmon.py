@@ -184,7 +184,7 @@ class Monitor(MySupport):
 
         # send mail to tell we are starting
         IP = self.GetNetworkIp()
-        self.MessagePipe.SendMessage("Generator Monitor Starting at " + self.SiteName, "Generator Monitor Starting at " + self.SiteName + "on IP address " + IP, msgtype = "info")
+        self.MessagePipe.SendMessage("Generator Monitor Starting at " + self.SiteName, "Generator Monitor Starting at " + self.SiteName + " using IP address " + IP, msgtype = "info")
 
         self.LogError("GenMon Loaded for site: " + self.SiteName + " using python " + str(sys.version_info.major) + "." + str(sys.version_info.minor))
 
