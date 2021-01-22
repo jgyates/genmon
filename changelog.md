@@ -3,7 +3,8 @@ All notable changes to this project will be documented in this file.
 
 ## V1.15.16 - 2021-01-15
 - Added model recognition for Evolution 2.0 24kW  (Thanks @chia9876)
-- Made username for web login case insensitive for admin and read only users 
+- Made username for web login case insensitive for admin and read only users
+- Added IP address in start up message
 
 ## V1.15.15 - 2021-01-11
 - Update to allow I2C channel values greater than 2 for gentankdiy

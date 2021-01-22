@@ -409,6 +409,13 @@ class MySupport(MyCommon):
         except Exception as e1:
             self.LogErrorLine("Error in ReadCSVFile: " + FileName + " : " + str(e1))
             return []
+
+    #------------ MySupport::GetNetworkIp---------------------------------------
+    def GetNetworkIp(self):
+        try:
+            return(str((([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] if not ip.startswith("127.")] or [[(s.connect(("8.8.8.8", 53)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]]) + ["no IP found"])[0]))
+        except:
+            return "Unknown"
     #------------ MySupport::IsRunning------------------------------------------
     @staticmethod
     def IsRunning(prog_name, log = None, multi_instance = False):

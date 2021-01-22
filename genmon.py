@@ -183,7 +183,8 @@ class Monitor(MySupport):
         self.ProcessFeedbackInfo()
 
         # send mail to tell we are starting
-        self.MessagePipe.SendMessage("Generator Monitor Starting at " + self.SiteName, "Generator Monitor Starting at " + self.SiteName , msgtype = "info")
+        IP = self.GetNetworkIp()
+        self.MessagePipe.SendMessage("Generator Monitor Starting at " + self.SiteName, "Generator Monitor Starting at " + self.SiteName + "on IP address " + IP, msgtype = "info")
 
         self.LogError("GenMon Loaded for site: " + self.SiteName + " using python " + str(sys.version_info.major) + "." + str(sys.version_info.minor))
 
