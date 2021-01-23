@@ -964,12 +964,18 @@ class GeneratorController(MySupport):
             for Count in range(Extra):
                 # assume first and last sampels are zero samples so don't select thoes
                 repeat = True
-                while (repeat):
+                removeAttempt = 0   # only try this so many times
+                while (repeat and removeAttempt < MaxSize):
+                    removeAttempt += 1
                     position = random.randint(1, len(NewList) - 2)
                     if float(NewList[position][1]) != 0:
                         Entry = NewList.pop(position)
                         repeat = False
 
+            # This will just remove all samples but the first MaxSize. This will only do anything if the above
+            # code failes to find valid samples to remove (i.e. all samples are zero)
+            if len(NewList) > MaxSize:
+                NewList = NewList[:MaxSize]
             return NewList
         except Exception as e1:
             self.LogErrorLine("Error in RemovePowerSamples: %s" % str(e1))
@@ -1100,7 +1106,6 @@ class GeneratorController(MySupport):
             #if not KWHours and len(PowerList) > 500 and Minutes and not NoReduce:
             if len(PowerList) > 500 and Minutes and not NoReduce:
                 PowerList = self.ReducePowerSamples(PowerList, 500)
-
             if KWHours:
                 AvgPower, TotalSeconds = self.GetAveragePower(PowerList)
                 return "%.2f" % ((TotalSeconds / 3600) * AvgPower)
