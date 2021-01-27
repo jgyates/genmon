@@ -899,6 +899,7 @@ class HPanel(GeneratorController):
             self.FuelHalfRate = self.config.ReadValue('half_rate', return_type = float, default = 0.0)
             self.FuelFullRate = self.config.ReadValue('full_rate', return_type = float, default = 0.0)
             self.UseFuelSensor = self.config.ReadValue('usesensorforfuelgauge', return_type = bool, default = True)
+            self.UseCalculatedPower = self.config.ReadValue('usecalculatedpower', return_type = bool, default = False)
 
         except Exception as e1:
             self.FatalError("Missing config file or config file entries (HPanel): " + str(e1))
@@ -2308,7 +2309,8 @@ class HPanel(GeneratorController):
     # return kW with units i.e. "2.45kW"
     def GetPowerOutput(self, ReturnFloat = False):
 
-        #return self.GetPowerOutputAlt(ReturnFloat = ReturnFloat)
+        if self.UseCalculatedPower:
+            return self.GetPowerOutputAlt(ReturnFloat = ReturnFloat)
         if ReturnFloat:
             return self.GetParameter(self.Reg.TOTAL_POWER_KW[REGISTER], ReturnFloat = True)
         else:

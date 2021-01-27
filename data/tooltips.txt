@@ -96,6 +96,7 @@ nexus_legacy_freq = If enabled, the software will use the older method for readi
 extend_wait = Number of additional seconds to wait to retry sending failed emails.
 min_outage_duration = Outages less than this time in seconds will not be logged. Notifications will still be sent if enabled.
 multi_instance = If Enabled this setting will allow multiple instances of genmon to be used on one system. Note that other settings will also need to be changed. See the wiki for additional details.
+usecalculatedpower=Calculate power output from power factor, average current and average voltage
 [generac_evo_nexus]
 0000=Product line
 0001=Switch, Engine and Alarm Status
