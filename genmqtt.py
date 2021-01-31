@@ -409,6 +409,10 @@ class MyMQTT(MyCommon):
                 else:
                     self.LogError("Error: Unable to  find CA cert file: " + self.CertificateAuthorityPath)
 
+            # setup last will and testament
+            self.LastWillTopic = self.AppendRoot("generator/client_status")
+            self.MQTTclient.will_set(self.LastWillTopic, payload="Offline", qos=0, retain=True)
+            # connect
             self.LogDebug("Connecting to " + self.MQTTAddress +  ":" + str(self.MQTTPort))
             self.MQTTclient.connect(self.MQTTAddress, self.MQTTPort, 60)
 
@@ -473,6 +477,9 @@ class MyMQTT(MyCommon):
             else:
                 FullPath = "generator"
             self.MQTTclient.subscribe(FullPath + "/#")
+
+            # Setup Last Will value
+            self.MQTTclient.publish(self.LastWillTopic, "Online")
 
         except Exception as e1:
             self.LogErrorLine("Error in MyMQTT:on_connect: " + str(e1))
