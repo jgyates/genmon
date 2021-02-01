@@ -460,6 +460,8 @@ class MyMQTT(MyCommon):
     def on_disconnect(client, userdata,rc=0):
 
         self.LogError("DisConnected result code " + str(rc))
+        self.MQTTclient.publish(self.LastWillTopic, payload = "Offline", retain = True)
+
 
     #------------ MyMQTT::on_connect--------------------------------------------
     # The callback for when the client receives a CONNACK response from the server.
@@ -479,7 +481,8 @@ class MyMQTT(MyCommon):
             self.MQTTclient.subscribe(FullPath + "/#")
 
             # Setup Last Will value
-            self.MQTTclient.publish(self.LastWillTopic, "Online")
+            self.MQTTclient.publish(self.LastWillTopic, payload = "Online", retain = True)
+
 
         except Exception as e1:
             self.LogErrorLine("Error in MyMQTT:on_connect: " + str(e1))
@@ -517,8 +520,7 @@ class MyMQTT(MyCommon):
     # ---------- MyMQTT::Close--------------------------------------------------
     def Close(self):
         self.LogDebug("Exiting MyMQTT")
-
-        self.MQTTclient.loop_stop()
+        self.MQTTclient.loop_stop(force = True)
         self.Exiting = True
         self.Push.Close()
 
