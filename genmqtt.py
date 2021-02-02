@@ -520,9 +520,9 @@ class MyMQTT(MyCommon):
     # ---------- MyMQTT::Close--------------------------------------------------
     def Close(self):
         self.LogDebug("Exiting MyMQTT")
-        self.MQTTclient.loop_stop(force = True)
         self.Exiting = True
         self.Push.Close()
+        self.MQTTclient.loop_stop(force = True)
 
 #-------------------------------------------------------------------------------
 if __name__ == "__main__":
