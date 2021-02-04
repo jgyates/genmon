@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 - Added IP address in start up message
 - Updated power log reduction code to improve situations where power log is filled with zeros
 - Added advanced option for H-100 to calculate the output power based on average current, average voltage and power factor.
+- Updated log entry for Nexus Air Cooled
 
 ## V1.15.16 - 2021-01-15
 - Added model recognition for Evolution 2.0 24kW  (Thanks @chia9876)

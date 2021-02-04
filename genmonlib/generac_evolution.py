@@ -682,7 +682,7 @@ class Evolution(GeneratorController):
                                 }
 
         if self.Evolution2:
-            ModelLookUp_EvoAC[21] = ["24KW", "60", "120/240", "1", "999 cc", "240"] # Evo G0072100 Evo2 24kw 
+            ModelLookUp_EvoAC[21] = ["24KW", "60", "120/240", "1", "999 cc", "240"] # Evo G0072100 Evo2 24kw
 
         LookUp = None
         if self.EvolutionController:
@@ -2386,6 +2386,7 @@ class Evolution(GeneratorController):
         0x14 : "Low Battery",                # Validated on Nexus Air Cooled
         0x16 : "Change Oil & Filter",        # Validated on Nexus Air Cooled
         0x17 : "Inspect Air Filter",         # Validated on Nexus Air Cooled
+        0x18 : "Change Air Filter",          # Validated on Nexus Air Cooled
         0x19 : "Inspect Spark Plugs",        # Validated on Nexus Air Cooled
         0x1b : "Inspect Battery",            # Validated on Nexus Air Cooled
         0x1E : "Low Fuel Pressure",          # Validated on Nexus Liquid Cooled
