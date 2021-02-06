@@ -457,9 +457,9 @@ class MyMQTT(MyCommon):
             self.LogErrorLine("Error in MyMQTT:PublishCallback: " + str(e1))
 
     #------------ MyMQTT::on_disconnect-----------------------------------------
-    def on_disconnect(client, userdata,rc=0):
+    def on_disconnect(self, client, userdata, rc=0):
 
-        self.LogError("DisConnected result code " + str(rc))
+        self.LogInfo("Disconnected from " + self.MQTTAddress + " result code: " + str(rc))
         self.MQTTclient.publish(self.LastWillTopic, payload = "Offline", retain = True)
 
 
@@ -470,7 +470,7 @@ class MyMQTT(MyCommon):
         try:
             if rc != 0:
                 self.LogError("Error connecting to MQTT server: return code: " + str(rc))
-            self.LogDebug("Connected with result code "+str(rc))
+            self.LogInfo("Connected to " + self.MQTTAddress + " result code: "+ str(rc))
 
             # Subscribing in on_connect() means that if we lose the connection and
             # reconnect then subscriptions will be renewed.
