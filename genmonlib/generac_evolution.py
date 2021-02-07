@@ -1934,6 +1934,12 @@ class Evolution(GeneratorController):
                 if self.RunHoursMonth != None:
                     Maintenance["Maintenance"].append({"Run Hours in last 30 days" : self.UnitsOut(str(self.RunHoursMonth) + " h", type = float, NoString = JSONNum)})
 
+            ReturnValue = self.CheckExternalCTData(request = 'current', ReturnFloat = True)
+            if ReturnValue !=  None:
+                Maintenance["Maintenance"].append({"External Current" : self.ValueOut(ReturnValue, "A", JSONNum)})
+            ReturnValue = self.CheckExternalCTData(request = 'power', ReturnFloat = True)
+            if ReturnValue !=  None:
+                Maintenance["Maintenance"].append({"External Power" : self.ValueOut(ReturnValue, "kW", JSONNum)})
 
             ControllerSettings = []
             Maintenance["Maintenance"].append({"Controller Settings" : ControllerSettings})
@@ -3094,7 +3100,7 @@ class Evolution(GeneratorController):
             # if we get here we must convert the data.
             VoltageFloat = float(self.GetVoltageOutput(ReturnInt = True))
             if 'powerfactor' in ExternalData:
-                powerfactor = ExternalData['powerfactor']
+                powerfactor = float(ExternalData['powerfactor'])
             else:
                 powerfactor = 1.0
 
