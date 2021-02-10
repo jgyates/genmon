@@ -1941,6 +1941,14 @@ class Evolution(GeneratorController):
             if ReturnValue !=  None:
                 Maintenance["Maintenance"].append({"External Power" : self.ValueOut(ReturnValue, "kW", JSONNum)})
 
+            if self.FuelLevelOK != None:
+                if self.FuelLevelOK:
+                    level = "OK"
+                else:
+                    level = "Low"
+                Maintenance["Maintenance"].append({"Fuel Level State" : level})
+
+
             ControllerSettings = []
             Maintenance["Maintenance"].append({"Controller Settings" : ControllerSettings})
 

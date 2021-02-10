@@ -1785,6 +1785,13 @@ class HPanel(GeneratorController):
                 if self.RunHoursMonth != None:
                     Maintenance["Maintenance"].append({"Run Hours in last 30 days" : self.UnitsOut(str(self.RunHoursMonth) + " h", type = float, NoString = JSONNum)})
 
+            if self.FuelLevelOK != None:
+                if self.FuelLevelOK:
+                    level = "OK"
+                else:
+                    level = "Low"
+                Maintenance["Maintenance"].append({"Fuel Level State" : level})
+
             if not self.SmartSwitch:
                 pass
                 Exercise = []
@@ -2057,11 +2064,10 @@ class HPanel(GeneratorController):
 
         try:
             Outage = collections.OrderedDict()
-            OutageData = collections.OrderedDict()
-            Outage["Outage"] = OutageData
+            Outage["Outage"] = []
 
-            OutageData["Status"] = "Not Supported"
-            OutageData["System In Outage"] = "No"       # mynotify.py checks this
+            Outage["Outage"].append({"Status" : "Not Supported"})
+            Outage["Outage"].append({"System In Outage" : "No"})    # mynotify.py checks this
 
         except Exception as e1:
             self.LogErrorLine("Error in DisplayOutage: " + str(e1))

@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.15.19 - 2021-02-10
+- Updaed mynotify.py to add notifications for software update, low fuel notice, and internal errors (e.g. communication errros etc.). This allows genslack, genpushover, gensms, gensms_modem, gensyslog and genemail2sms to support these additional notices.
+
 ## V1.15.18 - 2021-02-05
 - Corrected bug in on_disconnect in genmqtt.py (thanks @notjj)
 - Updated log entry for Nexus Air Cooled

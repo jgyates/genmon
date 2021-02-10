@@ -75,6 +75,7 @@ class GeneratorController(MySupport):
         self.ExternalDataLock = threading.RLock()
         self.ExternalTempData = None
         self.ExternalTempDataTime = None
+        self.FuelLevelOK = None     # used in mynotify.py
         self.debug = False
 
         self.UtilityVoltsMin = 0    # Minimum reported utility voltage above threshold
@@ -1292,13 +1293,16 @@ class GeneratorController(MySupport):
                 msgbody = "Warning: The estimated fuel in the tank is at or below 10%"
                 title = "Warning: Fuel Level Low (10%) at " + self.SiteName
                 self.MessagePipe.SendMessage(title , msgbody, msgtype = "warn", onlyonce = True)
+                self.FuelLevelOK = False
                 return False
             elif FuelLevel <= 20:    # 20 percent left
                 msgbody = "Warning: The estimated fuel in the tank is at or below 20%"
                 title = "Warning: Fuel Level Low (20%) at " + self.SiteName
                 self.MessagePipe.SendMessage(title , msgbody, msgtype = "warn", onlyonce = True)
+                self.FuelLevelOK = False
                 return False
             else:
+                self.FuelLevelOK = True
                 return True
 
         except Exception as e1:
