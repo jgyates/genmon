@@ -31,8 +31,12 @@ def RegisterResults(Register, Value):
 def TestAllAddresses():
 
     try:
-        modbus = ModbusProtocol(updatecallback = RegisterResults, address = 0, name = device,
-            rate = baudrate, Parity = parity, OnePointFiveStopBits = OnePointFiveStopBits)
+        if not useTCP:
+            modbus = ModbusProtocol(updatecallback = RegisterResults, address = 0, name = device,
+                rate = baudrate, Parity = parity, OnePointFiveStopBits = OnePointFiveStopBits)
+        else:
+            modbus = ModbusProtocol(updatecallback = RegisterResults, address = modbusaddress, host = hostIP,
+                port = TCPport)
     except Exception as e1:
         print( "Test all: Error opening serial device...: " + str(e1))
         return False
@@ -202,6 +206,7 @@ if __name__=='__main__': #
 
     if TCPport != None and hostIP != None:
         useTCP = True
+        print("Using serial over TCP.")
     elif device == None or baudrate == None or startregister == None or modbusaddress == None:
         print(HelpStr)
         sys.exit(2)

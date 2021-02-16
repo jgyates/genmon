@@ -26,7 +26,7 @@ class ModbusProtocol(ModbusBase):
         updatecallback,
         address = 0x9d,
         name = "/dev/serial0",
-        rate=9600,
+        rate = 9600,
         Parity = None,
         OnePointFiveStopBits = None,
         config = None,
@@ -42,7 +42,7 @@ class ModbusProtocol(ModbusBase):
                 self.UseTCP = True
 
             # ~3000 for 9600               bit time * 10 bits * 10 char * 2 packets + wait time(3000) (convert to ms * 1000)
-            self.ModBusPacketTimoutMS = (((((1/float(rate)) * 10.0) * 10.0 * 2.0) *1000.0)  + 3000.0)     # .00208
+            self.ModBusPacketTimoutMS = (((((1/float(self.Rate)) * 10.0) * 10.0 * 2.0) *1000.0)  + 3000.0)     # .00208
 
             self.ModBusPacketTimoutMS += self.AdditionalModbusTimeout * 1000.0
 
@@ -58,8 +58,8 @@ class ModbusProtocol(ModbusBase):
 
 
         except Exception as e1:
-            self.LogErrorLine("Error opening serial device: " + str(e1))
-            self.FatalError("Error opening serial device.")
+            self.LogErrorLine("Error opening modbus device: " + str(e1))
+            self.FatalError("Error opening modbus device.")
 
         try:
             # CRCMOD library, used for CRC calculations

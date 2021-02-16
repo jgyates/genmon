@@ -94,7 +94,7 @@ class ModbusBase(MySupport ):
         updatecallback,
         address = 0x9d,
         name = "/dev/serial",
-        rate=9600,
+        rate = 9600,
         config = None):
 
         super(ModbusBase, self).__init__()
