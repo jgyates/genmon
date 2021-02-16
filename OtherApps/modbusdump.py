@@ -194,7 +194,7 @@ if __name__=='__main__': #
                 print ('IP Address : ' + hostIP)
             elif opt in ("-t", "--tcpport"):
                 TCPport = int(arg)
-                print ('IP Address : %d' % TCPport)
+                print ('TCP Port : %d' % TCPport)
 
     except Exception as e1:
         print (HelpStr)
