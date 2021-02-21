@@ -54,9 +54,12 @@ class tankutility(MyCommon):
             else:
                 response = query.json()
                 self.LogDebug("Login: " + str(response))
-                if response['error'] != '':
-                    self.LogError("API reports an account error: " + str(response['error']))
-                    return False
+                try:
+                    if response['error'] != '':
+                        self.LogError("API reports an account error: " + str(response['error']))
+                        return False
+                except:
+                    pass
                 self.token = response['token']
                 return True
         except Exception as e1:
@@ -153,22 +156,22 @@ class GenTankData(MySupport):
         loglocation = ProgramDefaults.LogPath,
         ConfigFilePath = MyCommon.DefaultConfPath,
         host = ProgramDefaults.LocalHost,
-        port = ProgramDefaults.ServerPort):
+        port = ProgramDefaults.ServerPort,
+        console = None):
 
         super(GenTankData, self).__init__()
 
-        self.LogFileName = loglocation + "gentankutil.log"
+        self.LogFileName = os.path.join(loglocation, "gentankutil.log")
         self.AccessLock = threading.Lock()
-        # log errors in this module to a file
-        self.log = SetupLogger("gentankutil", self.LogFileName)
 
-        self.console = SetupLogger("gentankutil_console", log_file = "", stream = True)
+        self.log = log
+        self.console = console
 
         self.MonitorAddress = host
         self.PollTime =  2
         self.TankID = ""
         self.debug = False
-        configfile = ConfigFilePath + 'gentankutil.conf'
+        configfile = os.path.join(ConfigFilePath, 'gentankutil.conf')
         try:
             if not os.path.isfile(configfile):
                 self.LogConsole("Missing config file : " + configfile)
@@ -196,24 +199,7 @@ class GenTankData(MySupport):
             sys.exit(1)
 
         try:
-
-            try:
-                startcount = 0
-                while startcount <= 10:
-                    try:
-                        self.Generator = ClientInterface(host = self.MonitorAddress, port = port, log = self.log)
-                        break
-                    except Exception as e1:
-                        startcount += 1
-                        if startcount >= 10:
-                            self.console.info("genmon not loaded.")
-                            self.LogError("Unable to connect to genmon.")
-                            sys.exit(1)
-                        time.sleep(1)
-                        continue
-
-            except Exception as e1:
-                self.LogErrorLine("Error in GenTankData init: "  + str(e1))
+            self.Generator = ClientInterface(host = self.MonitorAddress, port = port, log = self.log)
 
             #if not self.CheckGeneratorRequirement():
             #    self.LogError("Requirements not met. Exiting.")
@@ -224,9 +210,8 @@ class GenTankData(MySupport):
             self.Threads["TankCheckThread"] = MyThread(self.TankCheckThread, Name = "TankCheckThread", start = False)
             self.Threads["TankCheckThread"].Start()
 
-            atexit.register(self.Close)
-            signal.signal(signal.SIGTERM, self.Close)
-            signal.signal(signal.SIGINT, self.Close)
+            signal.signal(signal.SIGTERM, self.SignalClose)
+            signal.signal(signal.SIGINT, self.SignalClose)
 
         except Exception as e1:
             self.LogErrorLine("Error in GenTankData init: " + str(e1))
@@ -309,6 +294,12 @@ class GenTankData(MySupport):
                 if self.WaitForExit("TankCheckThread", float(self.PollTime * 60)):
                     return
 
+    # ----------GenTankData::SignalClose----------------------------------------
+    def SignalClose(self, signum, frame):
+
+        self.Close()
+        sys.exit(1)
+
     # ----------GenTankData::Close----------------------------------------------
     def Close(self):
         self.KillThread("TankCheckThread")
@@ -316,34 +307,9 @@ class GenTankData(MySupport):
 #-------------------------------------------------------------------------------
 if __name__ == "__main__":
 
-    console = SetupLogger("gentankdata_console", log_file = "", stream = True)
-    HelpStr = '\nsudo python gentankdata.py -a <IP Address or localhost> -c <path to genmon config file>\n'
-    if os.geteuid() != 0:
-        console.error("\nYou need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.\n")
-        sys.exit(2)
+    console, ConfigFilePath, address, port, loglocation, log = MySupport.SetupAddOnProgram("gentankutil")
 
-    try:
-        ConfigFilePath = ProgramDefaults.ConfPath
-        address = ProgramDefaults.LocalHost
-        opts, args = getopt.getopt(sys.argv[1:],"hc:a:",["help","configpath=","address="])
-    except getopt.GetoptError:
-        console.error("Invalid command line argument.")
-        sys.exit(2)
-
-    for opt, arg in opts:
-        if opt == '-h':
-            console.error(HelpStr)
-            sys.exit()
-        elif opt in ("-a", "--address"):
-            address = arg
-        elif opt in ("-c", "--configpath"):
-            ConfigFilePath = arg
-            ConfigFilePath = ConfigFilePath.strip()
-
-    port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
-    log = SetupLogger("client", loglocation + "gentankdata.log")
-
-    GenTankDataInstance = GenTankData(log = log, loglocation = loglocation, ConfigFilePath = ConfigFilePath, host = address, port = port)
+    GenTankDataInstance = GenTankData(log = log, loglocation = loglocation, ConfigFilePath = ConfigFilePath, host = address, port = port, console = console)
 
     while True:
         time.sleep(0.5)

@@ -63,11 +63,22 @@ class MyPlatform(MyCommon):
         if self.IsOSLinux():
             return self.GetLinuxInfo()
         return None
+
+
     #------------ MyPlatform::IsOSLinux-----------------------------------------
-    def IsOSLinux(self):
+    @staticmethod
+    def IsOSLinux():
 
         if "linux" in sys.platform:
             return True
+        return False
+    #------------ MyPlatform::IsOSWindows-----------------------------------------
+    @staticmethod
+    def IsOSWindows():
+
+        if "win" in sys.platform:
+            return True
+        return False
 
     #------------ MyPlatform::IsPlatformRaspberryPi-----------------------------
     def IsPlatformRaspberryPi(self, raise_on_errors=False):
@@ -80,7 +91,7 @@ class MyPlatform(MyCommon):
                         found = True
                         label, value = line.strip().split(':', 1)
                         value = value.strip()
-                        if value not in ('BCM2708','BCM2709','BCM2835','BCM2836'):
+                        if value not in ('BCM2708','BCM2709','BCM2835','BCM2836','BCM2711'):
                             if raise_on_errors:
                                 raise ValueError('This system does not appear to be a Raspberry Pi.')
                             else:
@@ -98,11 +109,6 @@ class MyPlatform(MyCommon):
 
         return True
 
-    #------------ MyPlatform::ConvertCelsiusToFahrenheit -----------------------
-    def ConvertCelsiusToFahrenheit(self, Celsius):
-
-        return (9.0/5.0 * Celsius + 32)
-
     #------------ MyPlatform::GetRaspberryPiInfo -------------------------------
     def GetRaspberryPiInfo(self):
 
@@ -114,6 +120,8 @@ class MyPlatform(MyCommon):
             try:
                 process = Popen(['/opt/vc/bin/vcgencmd', 'measure_temp'], stdout=PIPE)
                 output, _error = process.communicate()
+                if sys.version_info[0] >= 3:
+                    output = str(output)    # convert byte array to string for python3
                 if self.UseMetric:
                     PiInfo.append({"CPU Temperature" : "%.2f C" % float(output[output.index('=') + 1:output.rindex("'")])})
                 else:
@@ -124,9 +132,11 @@ class MyPlatform(MyCommon):
                 process = Popen(['cat', '/sys/class/thermal/thermal_zone0/temp'], stdout=PIPE)
                 output, _error = process.communicate()
                 if self.UseMetric:
-                    TempStr = str(float(output) / 1000) + " C"
+                    TempFloat = float(float(output) / 1000)
+                    TempStr =  "%.2f C" % TempFloat
                 else:
-                    TempStr = str(self.ConvertCelsiusToFahrenheit(float(output) / 1000)) + " F"
+                    TempFloat = float(self.ConvertCelsiusToFahrenheit(float(output) / 1000))
+                    TempStr =  "%.2f F" % TempFloat
                 PiInfo.append({"CPU Temperature" : TempStr})
 
             try:
@@ -136,9 +146,9 @@ class MyPlatform(MyCommon):
             except:
                 pass
             try:
-                file = open("/sys/devices/platform/soc/soc:firmware/get_throttled")
-                status = file.read()
-                PiInfo.extend(self.ParseThrottleStatus(int(status, 16)))
+                ThrottledStatus = self.GetThrottledStatus()
+                if len(ThrottledStatus):
+                    PiInfo.extend(ThrottledStatus)
             except Exception as e1:
                 pass
 
@@ -188,22 +198,28 @@ class MyPlatform(MyCommon):
         return PiThrottleInfo
 
     #------------ MyPlatform::GetThrottledStatus -------------------------------
-    def GetThrottledStatus():
+    def GetThrottledStatus(self):
 
         try:
-            file = open("/sys/devices/platform/soc/soc:firmware/get_throttled")
-            status = file.read()
+            process = Popen(['/opt/vc/bin/vcgencmd', 'get_throttled'], stdout=PIPE)
+            output, _error = process.communicate()
+            hex_val = output.split("=")[1].strip()
+            get_throttled = int(hex_val, 16)
+            return self.ParseThrottleStatus(get_throttled)
 
-            get_throttled = int(status, 16)
-            StatusStr = ParseThrottleStatus(get_throttled)
-
-        except:
-            pass
+        except Exception as e1:
+            try:
+                # this method is depricated
+                file = open("/sys/devices/platform/soc/soc:firmware/get_throttled")
+                status = file.read()
+                return self.ParseThrottleStatus(int(status))
+            except Exception as e1:
+                return []
 
     #------------ MyPlatform::GetLinuxInfo -------------------------------------
     def GetLinuxInfo(self):
 
-        if not self.IsOSLinux():
+        if not self.IsOSLinux():  # call staticfuntion
             return None
         LinuxInfo = []
 
@@ -267,6 +283,14 @@ class MyPlatform(MyCommon):
         except Exception as e1:
             return ""
 
+    #------------ MyPlatform::GetWiFiSSID --------------------------------------
+    def GetWiFiSSID(self, adapter):
+        try:
+            result = subprocess.check_output(['iwconfig', adapter])
+            match = re.search('ESSID:"([\s\S]*?)"', result)
+            return match.group(1)
+        except Exception as e1:
+            return ""
     #------------ MyPlatform::GetWiFiInfo --------------------------------------
     def GetWiFiInfo(self, adapter):
 
@@ -288,6 +312,9 @@ class MyPlatform(MyCommon):
                             WiFiInfo.append({"WLAN Signal Quality" : ListItems[2].replace(".", "")  + "/70"})
 
                         WiFiInfo.append({"WLAN Signal Noise" : ListItems[4].replace(".", "") + " dBm"})
+            essid = self.GetWiFiSSID(adapter)
+            if essid != None and essid != "":
+                WiFiInfo.append({"WLAN ESSID" : essid})
         except Exception as e1:
             pass
         return WiFiInfo

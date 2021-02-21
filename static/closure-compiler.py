@@ -31,6 +31,7 @@ MINIFY_SCRIPTS = [
     'js/jquery.idealforms.genmon.js',
     'js/jquery.CalendarHeatmap.genmon.js',
     'js/jquery.timepicker.min.js',
+    'js/jquery.qrcode.min.js',
     'genmon.js'
     ]
 NON_MINIFY_SCRIPTS = [
@@ -54,20 +55,23 @@ STYLESHEETS_OUT = 'libraries.min.css'
 
 def main():
 
-    CLOSURE_COMPILER = "closure-compiler-v20180506.jar"
+    CLOSURE_COMPILER = "closure-compiler-v20200719.jar"
     CLOSURE_STYLESHEET = "closure-stylesheets.jar"
 
     print( 'Downlaod Compilers...')
 
-    r = requests.get("https://dl.google.com/closure-compiler/compiler-latest.zip", allow_redirects=True)  # to get content after redirection
-    with open("compiler-latest.zip", 'wb') as f:
+    r = requests.get("https://repo1.maven.org/maven2/com/google/javascript/closure-compiler/v20200719/closure-compiler-v20200719.jar", allow_redirects=True)  # to get content after redirection
+    with open(CLOSURE_COMPILER, 'wb') as f:
         f.write(r.content)
-    zip_ref = zipfile.ZipFile("compiler-latest.zip", 'r')
-    filenames = zip_ref.namelist()
-    CLOSURE_COMPILER = list(filter(lambda x: re.search(r'.jar', x), filenames))[0]
-    zip_ref.extract(CLOSURE_COMPILER, '.')
-    zip_ref.close()
-    os.remove("compiler-latest.zip")
+    # r = requests.get("https://dl.google.com/closure-compiler/compiler-latest.zip", allow_redirects=True)  # to get content after redirection
+    # with open("compiler-latest.zip", 'wb') as f:
+    #    f.write(r.content)
+    # zip_ref = zipfile.ZipFile("compiler-latest.zip", 'r')
+    # filenames = zip_ref.namelist()
+    # CLOSURE_COMPILER = list(filter(lambda x: re.search(r'.jar', x), filenames))[0]
+    # zip_ref.extract(CLOSURE_COMPILER, '.')
+    # zip_ref.close()
+    # os.remove("compiler-latest.zip")
 
     print( "Downloaded: "+CLOSURE_COMPILER)
 

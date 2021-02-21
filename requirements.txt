@@ -1,4 +1,4 @@
-flask
+Flask
 configparser
 pyserial
 crcmod
@@ -8,3 +8,8 @@ pyopenssl
 twilio
 chump
 paho-mqtt
+smbus
+pysnmp
+ldap3
+pyasn1
+pyotp==2.3.0

@@ -5,13 +5,13 @@ var currentbaseState = "READY"; // menus change on this var
 var switchState = "Auto";        // updated on a time
 var currentClass = "active";    // CSS class for menu color
 var menuElement = "status";
-var ajaxErrors = {errorCount: 0, lastSuccessTime: 0, log: ""};
+var ajaxErrors = {errorCount: 0, lastSuccessTime: moment(), log: ""};
 var windowActive = true;
 var latestVersion = "";
 var lowbandwidth = false;
 var resizeTimeout;
 
-var myGenerator = {sitename: "", nominalRPM: 3600, nominalfrequency: 60, Controller: "", model: "", nominalKW: 22, fueltype: "", UnsentFeedback: false, SystemHealth: false, EnhancedExerciseEnabled: false, OldExerciseParameters:[-1,-1,-1,-1,-1,-1]};
+var myGenerator = {sitename: "", nominalRPM: 3600, nominalfrequency: 60, Controller: "", model: "", nominalKW: 22, fueltype: "", UnsentFeedback: false, SystemHealth: false, EnhancedExerciseEnabled: false, LoginActive: false, OldExerciseParameters:[-1,-1,-1,-1,-1,-1]};
 var regHistory = {updateTime: {}, _10m: {}, _60m: {}, _24h: {}, historySince: "", count_60m: 0, count_24h: 0};
 var kwHistory = {data: [], plot:"", kwDuration: "h", tickInterval: "10 minutes", formatString: "%H:%M", defaultPlotWidth: 4, oldDefaultPlotWidth: 4};
 var prevStatusValues = {};
@@ -20,8 +20,10 @@ var baseurl = pathname.concat("cmd/");
 var DaysOfWeekArray = ["Sunday","Monday","Tuesday","Wednesday", "Thursday", "Friday", "Saturday"];
 var MonthsOfYearArray = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 var BaseRegistersDescription = {};
+var QR_Code_URL = "";
 
 vex.defaultOptions.className = 'vex-theme-os'
+
 
 //*****************************************************************************
 var UAbrowser = (function(){
@@ -53,8 +55,7 @@ function isMobileBrowser() {
     return false;
   }
 }
-console.log(UAbrowser)
-
+// console.log(UAbrowser)
 
 //*****************************************************************************
 // called on window.onload
@@ -105,7 +106,11 @@ function processAjaxError(xhr, ajaxOptions, thrownError) {
     // alert(thrownError);
     ajaxErrors["errorCount"]++;
     if (ajaxErrors["errorCount"]>5) {
-      var tempMsg = '<b><span style="font-size:14px">Disconnected from server</span></b><br>'+ajaxErrors["errorCount"]+' messages missed since '+ajaxErrors["lastSuccessTime"].format("H:mm:ss")+"</b><br><br>"+((ajaxErrors["log"].length>500) ? ajaxErrors["log"].substring(0, 500)+"<br>[...]" : ajaxErrors["log"]);
+      var lastSuccessTime = "N/A"
+      if (ajaxErrors["lastSuccessTime"] != undefined) {
+         lastSuccessTime = ajaxErrors["lastSuccessTime"].format("H:mm:ss")
+      }
+      var tempMsg = '<b><span style="font-size:14px">Disconnected from server</span></b><br>'+ajaxErrors["errorCount"]+' messages missed since '+lastSuccessTime+"</b><br><br>"+((ajaxErrors["log"].length>500) ? ajaxErrors["log"].substring(0, 500)+"<br>[...]" : ajaxErrors["log"]);
       $("#footer").addClass("alert");
       $("#ajaxWarning").show(400);
       $('#ajaxWarning').tooltipster('content', tempMsg);
@@ -227,7 +232,7 @@ function CreateMenu() {
 
     SetHeaderValues();
     $("#footer").html('<table border="0" width="100%" height="30px"><tr><td width="5%"><img class="tooltip alert_small" id="ajaxWarning" src="images/transparent.png" height="28px" width="28px" style="display: none;"></td><td width="90%"><a href="https://github.com/jgyates/genmon" target="_blank">GenMon Project on GitHub</a></td><td width="5%"></td></tr></table>');
-    $('#ajaxWarning').tooltipster({minWidth: '280px', maxWidth: '480px', animation: 'fade', updateAnimation: 'null', contentAsHTML: 'true', delay: 100, animationDuration: 200, side: ['top', 'left'], content: "No Communicatikon Errors occured"});
+    $('#ajaxWarning').tooltipster({minWidth: '280px', maxWidth: '480px', animation: 'fade', updateAnimation: 'null', contentAsHTML: 'true', delay: 100, animationDuration: 200, side: ['top', 'left'], content: "No Communication Errors occured"});
 
     if (myGenerator["pages"]["status"] == true)
        outstr += '<li id="status"><a><table width="100%" height="100%"><tr><td width="28px" align="right" valign="middle"><img class="status" src="images/transparent.png" width="20px" height="20px"></td><td valign="middle">&nbsp;Status</td></tr></table></a></li>';
@@ -428,7 +433,9 @@ function json2html(json, indent, parentkey) {
           console.log("no property of key in json2html: " + key);
           return outstr
         }
-        if (json[key].constructor === Array) {
+        if (json[key] === null) {
+          outstr += indent + key + ' : ' + getItem(json[key], key); //parentkey);
+        } else if (json[key].constructor === Array) {
             if (json[key].length > 0) {
               outstr += "<br>" + indent + key + ' :<br>';   // + json2html(json[key], indent, key);
               for (var i = 0; i < json[key].length; ++i) {
@@ -1326,7 +1333,7 @@ function saveNotifications(){
              $('.progress-bar-fill').queue(function () {
                   $(this).css('width', '100%')
              });
-             setTimeout(function(){ vex.closeAll();}, 10000);
+             setTimeout(function(){ vex.closeAll();gotoLogin();}, 10000);
            }
         }
     })
@@ -1363,14 +1370,14 @@ function saveNotificationsJSON(){
 // Display the Journal Tab
 //*****************************************************************************
 
-// Additional Carriers are listed here: https://teamunify.uservoice.com/knowledgebase/articles/57460-communication-email-to-sms-gateway-list
-
 function DisplayJournal(){
     var url = baseurl.concat("get_maint_log_json");
+    var allJournalEntries
     $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
         processAjaxSuccess();
+        allJournalEntries = result
 
-        var  outstr = 'Journal Entires:<br><br>';
+        var  outstr = 'Journal Entries:<br><br>';
         outstr += '<table id="alljournal" border="0" style="border-collapse: separate; border-spacing: 10px;" width="100%"><tbody>';
 
         $.each(Object.keys(result), function(i, key) {
@@ -1382,19 +1389,30 @@ function DisplayJournal(){
 
         $("#mydisplay").html(outstr);
 
-        var rowcount = Object.keys(result).length;
+        $(".edit#editJournalRow").on('click', function() {
+           id = $(this).attr("row");
+           var outstr = emptyJournalLine("amend", id, allJournalEntries[id]["date"], allJournalEntries[id]["type"], allJournalEntries[id]["hours"], allJournalEntries[id]["comment"])
+           $("#row_"+id).replaceWith(outstr);
+           $("input[name^='time_"+id+"']").timepicker({ 'timeFormat': 'H:i' });
+           $("input[name^='date_"+id+"']").datepicker({ dateFormat: 'mm/dd/yy' })
+        });
+
+        $(".remove_bin#deleteJournalRow").on('click', function() {
+           id = $(this).attr("row");
+           DeleteJournalRow(id);
+        });
 
         $(document).ready(function() {
            $("#addJournalRow").click(function () {
-                  var outstr = emptyJournalLine(rowcount, myGenerator['MonitorTime'], "", isNaN(parseFloat(myGenerator['RunHours'])) ? "" : parseFloat(myGenerator['RunHours']))
+                  id = $("#alljournal").length
+                  var outstr = emptyJournalLine("add", id, myGenerator['MonitorTime'], "", isNaN(parseFloat(myGenerator['RunHours'])) ? "" : parseFloat(myGenerator['RunHours']), "")
                   if ($("#alljournal").length > 0) {
                       $("#alljournal").append(outstr);
                   } else {
                       $("#alljournal").append(outstr);
                   }
-                  $("input[name^='time_"+rowcount+"']").timepicker({ 'timeFormat': 'H:i' });
-                  $("input[name^='date_"+rowcount+"']").datepicker({ dateFormat: 'mm/dd/yy' })
-                  rowcount++;
+                  $("input[name^='time_"+id+"']").timepicker({ 'timeFormat': 'H:i' });
+                  $("input[name^='date_"+id+"']").datepicker({ dateFormat: 'mm/dd/yy' })
            });
 
            $("#clearJournal").click(function () {
@@ -1410,7 +1428,7 @@ function renderJournalLine(rowcount, date, type, hours, comment) {
    var outstr = '<tr id="row_' + rowcount + '"><td align="center">';
    outstr += '  <div class="card" style="width:80%;align:center;" name="journal_' + rowcount + '">';
    outstr += '     <div style="width:100%; background-color:#e1e1e1; border-radius: 6px 6px 0px 0px; float:left; padding-top:10px; padding-bottom:10px;">';
-   outstr += '         <table width="90%"><tr><td width="33%">Date: '+date+'</td><td width="33%">Type: '+type+'</td><td width="33%">Service Hours: '+hours+'</td></table>';
+   outstr += '         <table width="90%"><tr><td width="30%">Date: '+date+'</td><td width="30%">Type: '+type+'</td><td width="30%">Service Hours: '+hours+'</td><td width="10%" align="right"><img id="editJournalRow" row="'+ rowcount +'" class="edit" src="images/transparent.png" width="24px" height="24px">&nbsp<img id="deleteJournalRow" row="'+ rowcount +'" class="remove_bin" src="images/transparent.png" width="24px" height="24px"></td></table>';
    outstr += '     </div>';
    outstr += '     <div style="clear: both;"></div>';
    outstr += '     <div style="margin:10px;font-size: 15px;">'+comment+'</center></div>';
@@ -1421,21 +1439,24 @@ function renderJournalLine(rowcount, date, type, hours, comment) {
    return outstr;
 }
 
-function emptyJournalLine(rowcount, date, type, hours, comment) {
+function emptyJournalLine(rowtype, rowcount, date, type, hours, comment) {
+   if (comment == undefined) {
+     comment = ""
+   }
    var outstr = '<tr id="row_' + rowcount + '"><td align="center">';
    outstr += '<form id="formNotifications">';
    outstr += '  <div class="card" style="width:80%;align:center;" name="journal_' + rowcount + '">';
    outstr += '     <div style="width:100%; background-color:#e1e1e1; border-radius: 6px 6px 0px 0px; float:left; padding-top:10px; padding-bottom:10px;">';
    outstr += '         <center><table width="80%">';
    outstr += '           <tr><td align="right" style="padding:3px">Date: &nbsp;&nbsp;&nbsp;</td><td style="padding:3px"><input id="date_' + rowcount + '" name="date_' + rowcount + '" type="text" value="'+date.split(" ")[0]+'">&nbsp;<input id="time_' + rowcount + '" name="time_' + rowcount + '" type="text" value="'+date.split(" ")[1]+'"></td></tr>';
-   outstr += '           <tr><td align="right" style="padding:3px">Type: &nbsp;&nbsp;&nbsp;</td><td style="padding:3px"><select id="type_' + rowcount + '" name="type_' + rowcount + '" ><option value="repair">Repair</option><option value="check">Check</option><option value="observation">Observation</option><option value="maintenance">Maintenance</option></select></td></tr>';
+   outstr += '           <tr><td align="right" style="padding:3px">Type: &nbsp;&nbsp;&nbsp;</td><td style="padding:3px"><select id="type_' + rowcount + '" name="type_' + rowcount + '" ><option value="Repair">Repair</option><option value="Check">Check</option><option value="Observation">Observation</option><option value="Maintenance">Maintenance</option></select></td></tr>';
    outstr += '           <tr><td align="right" style="padding:3px">Service Hours: &nbsp;&nbsp;&nbsp;</td><td style="padding:3px"><input id="hours_' + rowcount + '" name="hours_' + rowcount + '" type="text" value="'+hours+'"></td></tr>';
    outstr += '         </table></center>';
    outstr += '     </div>';
    outstr += '     <div style="clear: both;"></div>';
-   outstr += '     <div style="margin:15px;font-size: 15px;"><textarea id="comment_' + rowcount + '" name="comment_' + rowcount + '" rows="4" style="width:100%;"></textarea></center></div>';
+   outstr += '     <div style="margin:15px;font-size: 15px;"><textarea id="comment_' + rowcount + '" name="comment_' + rowcount + '" rows="4" style="width:100%;">'+comment+'</textarea></center></div>';
    outstr += '     <div style="clear: both;"></div>';
-   outstr += '     <button id="setjournalbutton" onClick="saveJournals(' + rowcount + '); return false;">Save</button>';
+   outstr += '     <button id="setjournalbutton" onClick="saveJournals(\'' + rowtype + '\', ' + rowcount + '); return false;">Save</button>';
    outstr += '     <div style="clear: both;"></div><br>';
    outstr += '  </div>';
    outstr += '</form>';
@@ -1449,7 +1470,7 @@ function emptyJournalLine(rowcount, date, type, hours, comment) {
 //*****************************************************************************
 // called when Save Journals is clicked
 //*****************************************************************************
-function saveJournals(rowcount){
+function saveJournals(rowtype, rowcount){
 
     var DisplayStr = "Save journal? Are you sure?";
     var DisplayStrAnswer = false;
@@ -1491,7 +1512,7 @@ function saveJournals(rowcount){
              var DisplayStr1 = "Saving Journal..."
              DisplayStrAnswer = false; // Prevent recursive calls.
              e.preventDefault();
-             saveJournalsJSON(rowcount);
+             saveJournalsJSON(rowtype, rowcount);
              var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
              $('.vex-dialog-message').html(DisplayStr1);
              $('.vex-dialog-buttons').html(DisplayStr2);
@@ -1505,7 +1526,7 @@ function saveJournals(rowcount){
 }
 
 //*****************************************************************************
-function saveJournalsJSON(rowcount){
+function saveJournalsJSON(rowtype, rowcount){
     try {
         var fields = {};
 
@@ -1517,15 +1538,27 @@ function saveJournalsJSON(rowcount){
             };
 
         // send command
-        var url = baseurl.concat("add_maint_log");
-        var input =  JSON.stringify(entry)
-        $.getJSON(  url,
-              {add_maint_log: input},
-              function(result){
-                 outstr = renderJournalLine(rowcount, entry["date"], entry["type"], entry["hours"], entry["comment"]);
-                 $("#row_"+rowcount).replaceWith(outstr);
-        });
-
+        if (rowtype == "add") {
+           var url = baseurl.concat("add_maint_log");
+           var input =  JSON.stringify(entry)
+           $.getJSON(  url,
+                 {add_maint_log: input},
+                 function(result){
+                    outstr = renderJournalLine(rowcount, entry["date"], entry["type"], entry["hours"], entry["comment"]);
+                    $("#row_"+rowcount).replaceWith(outstr);
+           });
+        } else if (rowtype == "amend") {
+           var url = baseurl.concat("edit_row_maint_log");
+           var input =  JSON.stringify(entry)
+           $.getJSON(  url,
+                 {edit_row_maint_log: "{\""+rowcount+"\": "+input+"}"},
+                 function(result){
+                    // The following 2 lines don't update the ".on('click'"... Probably a jquery issue.
+                    // outstr = renderJournalLine(rowcount, entry["date"], entry["type"], entry["hours"], entry["comment"]);
+                    // $("#row_"+rowcount).replaceWith(outstr);
+                    DisplayJournal();
+           });
+        }
 
     } catch(err) {
         GenmonAlert("Error: invalid selection");
@@ -1597,6 +1630,28 @@ function ClearJournal(){
     });
 }
 
+function DeleteJournalRow(id){
+
+    vex.dialog.confirm({
+        unsafeMessage: 'Delete the Journal Entry '+id+'? This action cannot be undone.<br>',
+        overlayClosesOnClick: false,
+        callback: function (value) {
+             if (value == false) {
+                return;
+             } else {
+                var url = baseurl.concat("delete_row_maint_log");
+                // var input =  JSON.stringify({id: id})
+                $.getJSON(  url,
+                   {delete_row_maint_log: id},
+                   function(result){
+                     // $("#row_"+id).empty();
+                     DisplayJournal();
+                   });
+             }
+        }
+    });
+}
+
 
 //*****************************************************************************
 // test email
@@ -1642,7 +1697,7 @@ function TestEmailSettings(smtp_server, smtp_port,email_account,sender_account,s
                        $('.vex-dialog-buttons').show();
                     } else {
                        vex.dialog.buttons.YES.text = 'Close';
-                       GenmonAlert("An error occured: <br>"+result+"<br><br>Please try again.");
+                       GenmonAlert("An error occurred: <br>"+result+"<br><br>Please try again.");
                        $('.vex-dialog-button-primary').text("Close");
                     }
       });
@@ -1727,10 +1782,16 @@ function DisplaySettings(){
               outstr += '<tr><td width="25px">&nbsp;</td><td bgcolor="#ffcccc" width="300px">' + result[key][1] + '</td><td bgcolor="#ffcccc">' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
             } else if (key == "weatherlocation") {
               outstr += '<tr><td width="25px">&nbsp;</td><td valign="top" width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]);
-              if (usehttps == true) {
+              if (httpsUsed() == true) {
                 outstr += '<br><button type="button" id="weathercityname" onclick="lookupLocation()">Look Up</button>';
               }
               outstr += '</td></tr>';
+            } else if (key == "usemfa") {
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5], "toggleSectionInverse(true, 'usemfa');") + '</td></tr>';
+              outstr += '</table></fieldset><fieldset id="'+key+'Section"><table id="allsettings" border="0">';
+            } else if (key == "mfa_url") {
+              outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td><div id="qrcode"></div></td></tr>'
+              QR_Code_URL = result[key][3];
             } else {
               outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
             }
@@ -1740,6 +1801,9 @@ function DisplaySettings(){
 
         $("#mydisplay").html(outstr);
         $('input').lc_switch();
+        if (QR_Code_URL != "") {
+          $("#qrcode").qrcode({width: 164,height: 164,text: QR_Code_URL});
+        }
         $.extend($.idealforms.rules, {
            // The rule is added as "ruleFunction:arg1:arg2"
            HTTPAddress: function(input, value, arg1, arg2) {
@@ -1789,6 +1853,7 @@ function DisplaySettings(){
         useSerialTCPChange(false);
         useFullTank(false);
         toggleSection(false, "useselfsignedcert");
+        toggleSectionInverse(false, "usemfa");
         toggleSectionInverse(false, "disablesmtp");
         toggleSectionInverse(false, "disableimap");
         toggleSectionInverse(false, "disableweather");
@@ -1809,6 +1874,9 @@ function usehttpsChange(animation) {
    if ($("#usehttps").is(":checked")) {
       $("#noneSecuritySettings").hide((animation ? 300 : 0));
       $("#usehttpsSection").show((animation ? 300 : 0));
+      if ($("#usemfa").is(":checked")) {
+        $("#usemfaSection").show((animation ? 300 : 0));
+      }
 
       if (!$("#useselfsignedcert").is(":checked")) {
          $("#useselfsignedcertSettings").show((animation ? 300 : 0));
@@ -1816,6 +1884,7 @@ function usehttpsChange(animation) {
    } else {
       $("#usehttpsSection").hide((animation ? 300 : 0));
       $("#noneSecuritySettings").show((animation ? 300 : 0));
+      $("#usemfaSection").hide((animation ? 300 : 0));
    }
    if (($('#http_port').val() == $('#http_port').attr('oldValue')) && ($("#usehttps").attr('oldValue') == ($("#usehttps").prop('checked') === true ? "true" : "false"))){
       $("#newURLnotify").hide((animation ? 300 : 0));
@@ -1854,7 +1923,7 @@ function toggleSectionInverse(animation, section) {
 //*****************************************************************************
 function lookupLocation() {
     if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(locationSuccess, locationError);
+        navigator.geolocation.getCurrentPosition(locationSuccess, locationError, {timeout:10000});
     } else {
         GenmonAlert("Your browser does not support Geolocation!");
     }
@@ -1880,6 +1949,11 @@ function locationError(error) {
 //*****************************************************************************
 function locationSuccess(position) {
     try {
+            if ($('#weatherkey').val().length < 1 ) {
+              GenmonAlert("API key is required for city lookup.");
+              return;
+            }
+
             var weatherAPI = '//api.openweathermap.org/data/2.5/forecast?lat=' + position.coords.latitude + '&lon=' + position.coords.longitude + '&lang=en&APPID='+$('#weatherkey').val();
             $.getJSON(weatherAPI, function (response) {
                 $('#weatherlocation').val(response.city.id);
@@ -2014,6 +2088,7 @@ function saveSettings(){
                 if ($('#fueltype').val() != $('#fueltype').attr('oldValue')) { myGenerator["fueltype"] = $('#fueltype').val(); }
                 if ($('#favicon').val() != $('#favicon').attr('oldValue')) { changeFavicon($('#favicon').val()); }
                 if (($('#enhancedexercise').prop('checked')  === true ? "true" : "false") != $('#enhancedexercise').attr('oldValue')) { myGenerator['EnhancedExerciseEnabled'] = ($('#enhancedexercise').prop('checked')  === true ? "true" : "false") }
+                gotoLogin();
              }, 10000);
            }
         }
@@ -2257,10 +2332,26 @@ function saveAddon(addon, addonTitle){
              });
              setTimeout(function(){
                 vex.closeAll();
+                gotoLogin();
              }, 10000);
+
            }
         }
     })
+}
+
+//*****************************************************************************
+function httpsUsed() {
+
+    var url = window.location.href;
+    return url.includes("https:")
+}
+
+//*****************************************************************************
+function gotoLogin() {
+
+    var url = window.location.href.split("/")[0].split("?")[0];
+    window.location.href = url.concat("/logout");
 }
 //*****************************************************************************
 function saveAddonJSON(addon) {
@@ -2329,12 +2420,13 @@ function DisplayAbout(){
     if (myGenerator["write_access"] == true) {
        if (latestVersion == "") {
          // var url = "https://api.github.com/repos/jgyates/genmon/releases";
-         var url = "https://raw.githubusercontent.com/jgyates/genmon/master/genmon.py";
+         var url = "https://raw.githubusercontent.com/jgyates/genmon/master/genmonlib/program_defaults.py";
          $.ajax({dataType: "html", url: url, timeout: 4000, error: function(result) {
                console.log("got an error when looking up latest version");
                latestVersion = "unknown";
          }, success: function(result) {
-               latestVersion = replaceAll((jQuery.grep(result.split("\n"), function( a ) { return (a.indexOf("GENMON_VERSION") >= 0); }))[0].split(" ")[2], '"', '');
+               latestVersion = replaceAll((jQuery.grep(result.split("\n"), function( a ) { return (a.indexOf("GENMON_VERSION") >= 0); }))[0].split("=")[1], '"', '');
+               latestVersion = latestVersion.trim()
                if (latestVersion != myGenerator["version"]) {
                      $('#updateNeeded').hide().html("<br>&nbsp;&nbsp;&nbsp;&nbsp;You are not running the latest version.<br>&nbsp;&nbsp;&nbsp;&nbsp;Current Version: " + myGenerator["version"] +"<br>&nbsp;&nbsp;&nbsp;&nbsp;New Version: " + latestVersion+"<br><br>").fadeIn(1000);
                }
@@ -3037,6 +3129,11 @@ function MenuClick(page)
                    DisplayRegistersFull();
                 }
                 break;
+            case "logout":
+                var getUrl = window.location;
+                var baseUrl = getUrl.protocol + "//" + getUrl.host;
+                window.location.href = baseUrl.concat("/logout");
+                break;
             default:
                 break;
         }
@@ -3110,9 +3207,13 @@ function GetStartupInfo()
 //*****************************************************************************
 function SetHeaderValues()
 {
-   var HeaderStr = '<table border="0" width="100%" height="30px"><tr><td width="30px"></td><td width="90%">Generator Monitor at ' + myGenerator["sitename"] + '</td><td width="30px"><img id="registers" class="registers" src="images/transparent.png" width="20px" height="20px"></td></tr></table>';
+   var HeaderStr = '<table border="0" width="100%" height="30px"><tr><td width="30px"></td><td width="90%">Generator Monitor at ' + myGenerator["sitename"] + '</td><td width="30px"><img id="logout" src="images/transparent.png" width="20px" height="20px">&nbsp;<img id="registers" class="registers" src="images/transparent.png" width="20px" height="20px"></td></tr></table>';
    $("#myheader").html(HeaderStr);
    $("#registers").on('click',  function() {  MenuClick("registers");});
+   if (myGenerator["LoginActive"] == true) {
+       $("#logout").addClass("logout");
+       $("#logout").on('click',  function() {  MenuClick("logout");});
+   }
 }
 
 

@@ -47,16 +47,17 @@ class GenTemp(MySupport):
         loglocation = ProgramDefaults.LogPath,
         ConfigFilePath = MyCommon.DefaultConfPath,
         host = ProgramDefaults.LocalHost,
-        port = ProgramDefaults.ServerPort):
+        port = ProgramDefaults.ServerPort,
+        console = None):
 
         super(GenTemp, self).__init__()
 
-        self.LogFileName = loglocation + "gentemp.log"
+        self.LogFileName = os.path.join(loglocation, "gentemp.log")
         self.AccessLock = threading.Lock()
         # log errors in this module to a file
-        self.log = SetupLogger("gentemp", self.LogFileName)
+        self.log = log
 
-        self.console = SetupLogger("gentemp_console", log_file = "", stream = True)
+        self.console = console
 
         self.LastValues = {}
 
@@ -65,7 +66,7 @@ class GenTemp(MySupport):
         self.PollTime = 1
         self.BlackList = None
 
-        configfile = ConfigFilePath + 'gentemp.conf'
+        configfile = os.path.join(ConfigFilePath, 'gentemp.conf')
         try:
             if not os.path.isfile(configfile):
                 self.LogConsole("Missing config file : " + configfile)
@@ -92,24 +93,7 @@ class GenTemp(MySupport):
 
         try:
 
-            try:
-                startcount = 0
-                while startcount <= 10:
-                    try:
-                        self.Generator = ClientInterface(host = self.MonitorAddress, port = port, log = self.log)
-                        break
-                    except Exception as e1:
-                        startcount += 1
-                        if startcount >= 10:
-                            self.LogConsole("genmon not loaded.")
-                            self.LogError("Unable to connect to genmon.")
-                            sys.exit(1)
-                        time.sleep(1)
-                        continue
-
-            except Exception as e1:
-                self.LogErrorLine("Error in GenTempThread init: "  + str(e1))
-
+            self.Generator = ClientInterface(host = self.MonitorAddress, port = port, log = self.log)
             self.DeviceList = self.EnumDevices()
 
             if not len(self.DeviceList):
@@ -121,7 +105,8 @@ class GenTemp(MySupport):
             self.Threads["GenTempThread"] = MyThread(self.GenTempThread, Name = "GenTempThread", start = False)
             self.Threads["GenTempThread"].Start()
 
-            atexit.register(self.Close)
+            signal.signal(signal.SIGTERM, self.SignalClose)
+            signal.signal(signal.SIGINT, self.SignalClose)
 
         except Exception as e1:
             self.LogErrorLine("Error in GenTemp init: " + str(e1))
@@ -225,10 +210,7 @@ class GenTemp(MySupport):
             self.LogErrorLine("Error in GetIDFromDeviceName for " + device + " : " + str(e1))
         return "UNKNOWN_ID"
 
-    #------------ GenTemp::ConvertCelsiusToFahrenheit --------------------------
-    def ConvertCelsiusToFahrenheit(self, Celsius):
 
-        return (9.0/5.0 * float(Celsius) + 32.0)
     #----------  GenTemp::SendCommand ------------------------------------------
     def SendCommand(self, Command):
 
@@ -284,6 +266,12 @@ class GenTemp(MySupport):
                     return
 
 
+    # ----------GenTemp::SignalClose--------------------------------------------
+    def SignalClose(self, signum, frame):
+
+        self.Close()
+        sys.exit(1)
+
     # ----------GenTemp::Close----------------------------------------------
     def Close(self):
         self.LogError("GenTemp Exit")
@@ -292,34 +280,8 @@ class GenTemp(MySupport):
 #-------------------------------------------------------------------------------
 if __name__ == "__main__":
 
-    console = SetupLogger("GenTemp_console", log_file = "", stream = True)
-    HelpStr = '\nsudo python gentemp.py -a <IP Address or localhost> -c <path to genmon config file>\n'
-    if os.geteuid() != 0:
-        console.error("\nYou need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.\n")
-        sys.exit(2)
-
-    try:
-        ConfigFilePath = ProgramDefaults.ConfPath
-        address = ProgramDefaults.LocalHost
-        opts, args = getopt.getopt(sys.argv[1:],"hc:a:",["help","configpath=","address="])
-    except getopt.GetoptError:
-        console.error("Invalid command line argument.")
-        sys.exit(2)
-
-    for opt, arg in opts:
-        if opt == '-h':
-            console.error(HelpStr)
-            sys.exit()
-        elif opt in ("-a", "--address"):
-            address = arg
-        elif opt in ("-c", "--configpath"):
-            ConfigFilePath = arg
-            ConfigFilePath = ConfigFilePath.strip()
-
-    port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
-    log = SetupLogger("client", loglocation + "gentemp.log")
-
-    GenTempInstance = GenTemp(log = log, loglocation = loglocation, ConfigFilePath = ConfigFilePath, host = address, port = port)
+    console, ConfigFilePath, address, port, loglocation, log = MySupport.SetupAddOnProgram("gentemp")
+    GenTempInstance = GenTemp(log = log, loglocation = loglocation, ConfigFilePath = ConfigFilePath, host = address, port = port, console = console)
 
     while True:
         time.sleep(0.5)

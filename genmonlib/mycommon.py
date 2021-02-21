@@ -23,6 +23,34 @@ class MyCommon(object):
         self.debug = False
         self.MaintainerAddress = "generatormonitor.software@gmail.com"
 
+    #------------ MyCommon::StringIsInt ----------------------------------------
+    def StringIsInt(self, value):
+
+        try:
+            temp = int(value)
+            return True
+        except:
+            return False
+
+    #------------ MyCommon::StringIsFloat --------------------------------------
+    def StringIsFloat(self, value):
+
+        try:
+            temp = float(value)
+            return True
+        except:
+            return False
+
+    #------------ MyCommon::ConvertCelsiusToFahrenheit -------------------------
+    def ConvertCelsiusToFahrenheit(self, Celsius):
+
+        return ((Celsius * 9.0/5.0) + 32.0)
+
+    #------------ MyCommon::ConvertFahrenheitToCelsius -------------------------
+    def ConvertFahrenheitToCelsius(self, Fahrenheit):
+
+        return ((Fahrenheit - 32.0) * 5.0/9.0)
+
     #------------ MyCommon::StripJson ------------------------------------------
     def StripJson(self, InputString):
         for char in '{}[]"':
@@ -77,6 +105,18 @@ class MyCommon(object):
         except Exception as e1:
             self.LogErrorLine("Error in FindDictInList: " + str(e1))
         return None
+
+    #----------  MyCommon::removeNonPrintable-----------------------------------
+    def removeNonPrintable(self, inputStr):
+
+        try:
+            import re
+            # remove any non printable chars
+            inputStr = re.sub(r'[^\x20-\x7f]',r'', inputStr)
+            return inputStr
+        except:
+            return inputStr
+
     #----------  MyCommon::removeAlpha------------------------------------------
     # used to remove alpha characters from string so the string contains a
     # float value (leaves all special characters)
@@ -108,6 +148,17 @@ class MyCommon(object):
         # join everything together
         url = '/'.join(part_list)
         return url
+
+    #-------------MyCommon::LogHexList------------------------------------------
+    def LogHexList(self, listname, prefix = None):
+
+        try:
+            if prefix != None:
+                self.LogError(prefix + " = [" + ",".join("0x{:02x}".format(num) for num in listname) + "]")
+            else:
+                self.LogError("[" + ",".join("0x{:02x}".format(num) for num in listname) + "]")
+        except Exception as e1:
+            self.LogErrorLine("Error in LogHexList: " + str(e1))
 
     #---------------------------------------------------------------------------
     def LogInfo(self, message, LogLine = False):
@@ -152,9 +203,12 @@ class MyCommon(object):
     #---------------------MyCommon::GetErrorLine--------------------------------
     def GetErrorLine(self):
         exc_type, exc_obj, exc_tb = sys.exc_info()
-        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-        lineno = exc_tb.tb_lineno
-        return fname + ":" + str(lineno)
+        if exc_tb == None:
+            return ""
+        else:
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            lineno = exc_tb.tb_lineno
+            return fname + ":" + str(lineno)
 
     #---------------------MyCommon::GetErrorString------------------------------
     def GetErrorString(self, Error):

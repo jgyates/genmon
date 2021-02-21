@@ -30,7 +30,11 @@ class GenNotify(MyCommon):
                 onoff = None,
                 onmanual = None,
                 onutilitychange = None,
-                start = True):
+                onsoftwareupdate = None,
+                onsystemhealth = None,
+                onfuelstate = None,
+                start = True,
+                console = None):
 
         super(GenNotify, self).__init__()
 
@@ -38,15 +42,15 @@ class GenNotify(MyCommon):
         self.Threads = {}
         self.LastEvent = None
         self.LastOutageStatus = None
+        self.LastSoftwareUpdateStatus = None
+        self.LastSystemHealth = None
+        self.LastFuelWarningStatus = None
         self.Events = {}            # Dict for handling events
 
-        if log != None:
-            self.log = log
-        else:
-            # log errors in this module to a file
-            self.log = SetupLogger("client", loglocation + "myclient.log")
 
-        self.console = SetupLogger("notify_console", log_file = "", stream = True)
+        self.log = log
+        self.console = console
+
         try:
             # init event callbacks
             if onready != None:
@@ -67,19 +71,15 @@ class GenNotify(MyCommon):
                 self.Events["MANUAL"] = onmanual
             if onutilitychange != None:
                 self.Events["OUTAGE"] = onutilitychange
+            if onsoftwareupdate != None:
+                self.Events["SOFTWAREUPDATE"] = onsoftwareupdate
+            if onsystemhealth != None:
+                self.Events["SYSTEMHEALTH"] = onsystemhealth
+            if onfuelstate != None:
+                self.Events["FUELWARNING"] = onfuelstate
 
-            startcount = 0
-            while startcount <= 10:
-                try:
-                    self.Generator = ClientInterface(host = host, port = port, log = log, loglocation = loglocation)
-                    break
-                except Exception as e1:
-                    startcount += 1
-                    if startcount >= 10:
-                        self.console.info("genmon not loaded.")
-                        sys.exit(1)
-                    time.sleep(1)
-                    continue
+
+            self.Generator = ClientInterface(host = host, port = port, log = log, loglocation = loglocation)
 
             self.Threads["PollingThread"] = MyThread(self.MainPollingThread, Name = "PollingThread", start = start)
             self.Started = start
@@ -99,10 +99,10 @@ class GenNotify(MyCommon):
         while True:
             try:
 
-                data = self.SendCommand("generator: getbase")
                 OutageState = self.GetOutageState()
-                if OutageState != None:
-                    self.ProcessOutageState(OutageState)
+                self.GetMonitorState()
+                self.GetMaintState()
+                data = self.SendCommand("generator: getbase")
 
                 if self.LastEvent == data:
                     time.sleep(3)
@@ -130,16 +130,96 @@ class GenNotify(MyCommon):
             OutageList = OutageDict["Outage"]
             for Items in OutageList:
                 for key, value in Items.items():
+                    if key == "Status" and value == "Not Supported":
+                        return None
                     if key == "System In Outage":
                         if value.lower() == "yes":
-                            return True
+                            OutageState = True
                         else:
-                            return False
+                            OutageState = False
         except Exception as e1:
             # The system does no support outage tracking (i.e. H-100)
             self.LogErrorLine("Unable to get outage state: " + str(e1))
             OutageState = None
+
+        if OutageState != None:
+            self.ProcessEventData("OUTAGE", OutageState, self.LastOutageStatus)
+            self.LastOutageStatus = OutageState
+
         return OutageState
+    #----------  GenNotify::GetMonitorState ------------------------------------
+    def GetMonitorState(self):
+        UpdateAvailable = None
+
+        try:
+            monitordata = self.SendCommand("generator: monitor_json")
+            GenDict = collections.OrderedDict()
+            GenDict = json.loads(monitordata)
+            GenList = GenDict["Monitor"][0]["Generator Monitor Stats"]
+            for Items in GenList:
+                for key, value in Items.items():
+                    if key == "Update Available":
+                        if value.lower() == "yes":
+                            UpdateAvailable = True
+                        else:
+                            UpdateAvailable = False
+                        self.ProcessEventData("SOFTWAREUPDATE", UpdateAvailable, self.LastSoftwareUpdateStatus)
+                        self.LastSoftwareUpdateStatus = UpdateAvailable
+                    if key == "Monitor Health":
+                        self.ProcessEventData("SYSTEMHEALTH", value, self.LastSystemHealth)
+                        self.LastSystemHealth = value
+        except Exception as e1:
+            # The system does no support outage tracking (i.e. H-100)
+            self.LogErrorLine("Unable to get moniotr state: " + str(e1))
+            UpdateAvailable = None
+        return UpdateAvailable
+
+    #----------  GenNotify::GetMaintState --------------------------------------
+    def GetMaintState(self):
+        FuelOK = None
+
+        try:
+            maintdata = self.SendCommand("generator: maint_json")
+            GenDict = collections.OrderedDict()
+            GenDict = json.loads(maintdata)
+            GenList = GenDict["Maintenance"]
+            for Items in GenList:
+                for key, value in Items.items():
+                    if key == "Fuel Level State":
+                        if value.lower() == "OK":
+                            FuelOK = True
+                        else:
+                            FuelOK = False
+                        self.ProcessEventData("FUELWARNING", FuelOK, self.LastFuelWarningStatus)
+                        self.LastFuelWarningStatus = FuelOK
+
+        except Exception as e1:
+            # The system does no support outage tracking (i.e. H-100)
+            self.LogErrorLine("Unable to get maint state: " + str(e1))
+            FuelOK = None
+        return FuelOK
+    #----------  GenNotify::ProcessEventData --------------------------------
+    def ProcessEventData(self, name, eventdata, lastvalue):
+
+        try:
+            if eventdata == None:
+                return
+            if lastvalue == eventdata:
+                return
+
+            lastvalue = eventdata
+            EventCallback = self.Events.get(name, None)
+
+            if EventCallback != None:
+                if callable(EventCallback):
+                    EventCallback(lastvalue)
+                else:
+                    self.LogError("Invalid Callback in ProcessEventData : " + name + ": " + str(EventCallback))
+            else:
+                self.LogError("Invalid Callback in ProcessEventData : None : "  + name)
+        except Exception as e1:
+            self.LogErrorLine("Error in ProcessEventData: "  + name + ": " + str(e1))
+
     #----------  GenNotify::CallEventHandler -----------------------------------
     def CallEventHandler(self, Status):
 
@@ -157,26 +237,6 @@ class GenNotify(MyCommon):
                 self.LogError("Invalid Callback in CallEventHandler : None")
         except Exception as e1:
             self.LogErrorLine("Error in CallEventHandler: " + str(e1))
-
-    #----------  GenNotify::ProcessOutageState ---------------------------------
-    def ProcessOutageState(self, outagestate):
-
-        try:
-            if self.LastOutageStatus == outagestate:
-                return
-
-            self.LastOutageStatus = outagestate
-            EventCallback = self.Events.get("OUTAGE", None)
-
-            if EventCallback != None:
-                if callable(EventCallback):
-                    EventCallback(self.LastOutageStatus)
-                else:
-                    self.LogError("Invalid Callback in ProcessOutageState : " + str(EventCallback))
-            else:
-                self.LogError("Invalid Callback in ProcessOutageState : None")
-        except Exception as e1:
-            self.LogErrorLine("Error in ProcessOutageState: " + str(e1))
 
     #----------  GenNotify::SendCommand ----------------------------------------
     def SendCommand(self, Command):

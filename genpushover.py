@@ -123,6 +123,30 @@ def OnUtilityChange(Active):
         SendNotice("Utility Service is Up")
         console.info("Utility Service is Up")
 
+#----------  OnSoftwareUpdate --------------------------------------------------
+def OnSoftwareUpdate(Active):
+
+    if Active:
+        console.info("Software Update Available")
+        SendNotice("Software Update Available")
+    else:
+        SendNotice("Software Is Up To Date")
+        console.info("Software Is Up To Date")
+
+#----------  OnSystemHealth ----------------------------------------------------
+def OnSystemHealth(Notice):
+    SendNotice("System Health : " + Notice)
+    console.info("System Health : " + Notice)
+
+#----------  OnFuelState -------------------------------------------------------
+def OnFuelState(Active):
+    if Active: # True is OK
+        console.info("Fuel Level is OK")
+        SendNotice("Fuel Level is OK")
+    else:  # False = Low
+        SendNotice("Fuel Level is Low")
+        console.info("Fuel Level is Low")
+
 #----------  SendNotice --------------------------------------------------------
 def SendNotice(Message):
 
@@ -144,40 +168,15 @@ def SendNotice(Message):
 
 #------------------- Command-line interface for gengpio ------------------------
 if __name__=='__main__':
-    address=ProgramDefaults.LocalHost
+
+    console, ConfigFilePath, address, port, loglocation, log = MySupport.SetupAddOnProgram("genpushover")
 
     # Set the signal handler
     signal.signal(signal.SIGINT, signal_handler)
-    console = SetupLogger("pushover_console", log_file = "", stream = True)
-    HelpStr = '\nsudo python genpushover.py -a <IP Address or localhost> -c <path to genmon config file>\n'
-
-    if os.geteuid() != 0:
-        console.error("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
-        sys.exit(2)
-
-    try:
-        ConfigFilePath = ProgramDefaults.ConfPath
-        opts, args = getopt.getopt(sys.argv[1:],"hc:a:",["help","configpath=","address="])
-    except getopt.GetoptError:
-        console.error("Invalid command line argument.")
-        sys.exit(2)
-
-    for opt, arg in opts:
-        if opt == '-h':
-            console.error(HelpStr)
-            sys.exit()
-        elif opt in ("-a", "--address"):
-            address = arg
-        elif opt in ("-c", "--configpath"):
-            ConfigFilePath = arg
-            ConfigFilePath = ConfigFilePath.strip()
-
-    port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
-    log = SetupLogger("client", loglocation + "genpushover.log")
 
     try:
 
-        config = MyConfig(filename = ConfigFilePath + 'genpushover.conf', section = 'genpushover', log = log)
+        config = MyConfig(filename = os.path.join(ConfigFilePath, 'genpushover.conf'), section = 'genpushover', log = log)
 
         appid = config.ReadValue('appid')
         userid = config.ReadValue('userid')
@@ -194,8 +193,8 @@ if __name__=='__main__':
             sys.exit(2)
 
     except Exception as e1:
-        log.error("Error reading /etc/genpushover.conf: " + str(e1))
-        console.error("Error reading /etc/genpushover.conf: " + str(e1))
+        log.error("Error reading " +  os.path.join(ConfigFilePath, 'genpushover.conf') +": " + str(e1))
+        console.error("Error reading " +  os.path.join(ConfigFilePath, 'genpushover.conf') +": " + str(e1))
         sys.exit(1)
     try:
         GenNotify = GenNotify(
@@ -210,8 +209,12 @@ if __name__=='__main__':
                                         onoff = OnOff,
                                         onmanual = OnManual,
                                         onutilitychange = OnUtilityChange,
+                                        onsoftwareupdate = OnSoftwareUpdate,
+                                        onsystemhealth = OnSystemHealth,
+                                        onfuelstate = OnFuelState,
                                         log = log,
-                                        loglocation = loglocation)
+                                        loglocation = loglocation,
+                                        console = console)
 
         while True:
             time.sleep(1)

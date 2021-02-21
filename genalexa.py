@@ -535,50 +535,18 @@ def signal_handler(signal, frame):
 
 #------------------- Command-line interface for gengpioin ----------------------
 if __name__=='__main__':
-    address=ProgramDefaults.LocalHost
 
     try:
-        console = SetupLogger("genalexa_console", log_file = "", stream = True)
+        console, ConfigFilePath, address, port, loglocation, log = MySupport.SetupAddOnProgram("genalexa")
 
-        if os.geteuid() != 0:
-            console.error("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
-            sys.exit(2)
-
-        HelpStr = '\nsudo python genalexa.py -a <IP Address or localhost> -c <path to genmon config file>\n'
-        try:
-            ConfigFilePath = ProgramDefaults.ConfPath
-            opts, args = getopt.getopt(sys.argv[1:],"hc:a:",["help","configpath=","address="])
-        except getopt.GetoptError:
-            console.error("Invalid command line argument.")
-            sys.exit(2)
-
-        for opt, arg in opts:
-            if opt == '-h':
-                console.error(HelpStr)
-                sys.exit()
-            elif opt in ("-a", "--address"):
-                address = arg
-            elif opt in ("-c", "--configpath"):
-                ConfigFilePath = arg
-                ConfigFilePath = ConfigFilePath.strip()
-    except Exception as e1:
-        console.error("Error in init: " + str(e1) + " : " + GetErrorLine())
-        sys.exit(1)
-    try:
-        port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
-        log = SetupLogger("client", loglocation + "genalexa.log")
-    except Exception as e1:
-        print("Error setting up log: " + str(e1))
-        sys.exit(1)
-    try:
         # Set the signal handler
         signal.signal(signal.SIGINT, signal_handler)
 
-        if not os.path.isfile(ConfigFilePath + 'genalexa.conf'):
+        if not os.path.isfile(os.path.join(ConfigFilePath, 'genalexa.conf')):
             console.error("Error: config file not found")
             log.error("Error: config file not found")
             sys.exit(1)
-        config = MyConfig(filename = ConfigFilePath + 'genalexa.conf', section = 'genalexa', log = log)
+        config = MyConfig(filename = os.path.join(ConfigFilePath, 'genalexa.conf'), section = 'genalexa', log = log)
         FauxmoName = config.ReadValue('name', default = " generator")
         FauxmoPort = config.ReadValue('port', return_type = int, default = 52004)
         Debug = config.ReadValue('debug', return_type = bool, default = False)

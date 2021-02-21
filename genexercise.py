@@ -37,16 +37,15 @@ class GenExercise(MySupport):
         loglocation = ProgramDefaults.LogPath,
         ConfigFilePath = MyCommon.DefaultConfPath,
         host = ProgramDefaults.LocalHost,
-        port = ProgramDefaults.ServerPort):
+        port = ProgramDefaults.ServerPort,
+        console = None):
 
         super(GenExercise, self).__init__()
 
-        self.LogFileName = loglocation + "genexercise.log"
         self.AccessLock = threading.Lock()
-        # log errors in this module to a file
-        self.log = SetupLogger("genexercise", self.LogFileName)
 
-        self.console = SetupLogger("genexercise_console", log_file = "", stream = True)
+        self.log = log
+        self.console = console
 
         self.MonitorAddress = host
         self.PollTime =  2
@@ -54,7 +53,7 @@ class GenExercise(MySupport):
         self.Debug = False
 
         try:
-            self.config = MyConfig(filename = ConfigFilePath + 'genexercise.conf', section = 'genexercise', log = self.log)
+            self.config = MyConfig(filename = os.path.join(ConfigFilePath, 'genexercise.conf'), section = 'genexercise', log = self.log)
 
             self.ExerciseType = self.config.ReadValue('exercise_type', default = "Normal")
             self.ExerciseHour = self.config.ReadValue('exercise_hour', return_type = int, default = 12)
@@ -95,29 +94,13 @@ class GenExercise(MySupport):
                 self.MonitorAddress = ProgramDefaults.LocalHost
 
         except Exception as e1:
-            self.LogErrorLine("Error reading " + ConfigFilePath + "genexercise.conf: " + str(e1))
-            self.console.error("Error reading " + ConfigFilePath + "genexercise.conf: " + str(e1))
+            self.LogErrorLine("Error reading " + os.path.join(ConfigFilePath, "genexercise.conf") + ": " + str(e1))
+            self.console.error("Error reading " + os.path.join(ConfigFilePath, "genexercise.conf") + ": " + str(e1))
             sys.exit(1)
 
         try:
 
-            try:
-                startcount = 0
-                while startcount <= 10:
-                    try:
-                        self.Generator = ClientInterface(host = self.MonitorAddress, port = port, log = self.log)
-                        break
-                    except Exception as e1:
-                        startcount += 1
-                        if startcount >= 10:
-                            self.console.info("genmon not loaded.")
-                            self.LogError("Unable to connect to genmon.")
-                            sys.exit(1)
-                        time.sleep(1)
-                        continue
-
-            except Exception as e1:
-                self.LogErrorLine("Error in genexercise init: "  + str(e1))
+            self.Generator = ClientInterface(host = self.MonitorAddress, port = port, log = self.log)
 
             if not self.CheckGeneratorRequirement():
                 self.LogError("Requirements not met. Exiting.")
@@ -139,9 +122,9 @@ class GenExercise(MySupport):
                 self.DebugOutput("Debug Enabled")
             except Exception as e1:
                 self.LogErrorLine(str(e1))
-            atexit.register(self.Close)
-            signal.signal(signal.SIGTERM, self.Close)
-            signal.signal(signal.SIGINT, self.Close)
+
+            signal.signal(signal.SIGTERM, self.SignalClose)
+            signal.signal(signal.SIGINT, self.SignalClose)
 
         except Exception as e1:
             self.LogErrorLine("Error in GenExercise init: " + str(e1))
@@ -197,8 +180,8 @@ class GenExercise(MySupport):
     def ReadyToExercise(self):
 
         status = self.SendCommand("generator: getbase")
-        if not status.lower() in ["ready"]:
-            self.LogError("Generator not in Ready state, exercise cycle not started")
+        if not status.lower() in ["ready","servicedue"]:
+            self.LogError("Generator not in Ready state, exercise cycle not started: " + str(status))
             return False
         return True
     # ---------- GenExercise::StartExercise-------------------------------------
@@ -338,6 +321,12 @@ class GenExercise(MySupport):
                 if self.WaitForExit("ExerciseThread", float(self.PollTime)):
                     return
 
+    # ----------GenExercise::SignalClose----------------------------------------
+    def SignalClose(self, signum, frame):
+
+        self.Close()
+        sys.exit(1)
+
     # ----------GenExercise::Close----------------------------------------------
     def Close(self):
         self.KillThread("ExerciseThread")
@@ -356,34 +345,9 @@ class GenExercise(MySupport):
 #-------------------------------------------------------------------------------
 if __name__ == "__main__":
 
-    console = SetupLogger("genexerciselog_console", log_file = "", stream = True)
-    HelpStr = '\nsudo python genexercise.py -a <IP Address or localhost> -c <path to genmon config file>\n'
-    if os.geteuid() != 0:
-        console.error("\nYou need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.\n")
-        sys.exit(2)
+    console, ConfigFilePath, address, port, loglocation, log = MySupport.SetupAddOnProgram("genexercise")
 
-    try:
-        ConfigFilePath = ProgramDefaults.ConfPath
-        address = ProgramDefaults.LocalHost
-        opts, args = getopt.getopt(sys.argv[1:],"hc:a:",["help","configpath=","address="])
-    except getopt.GetoptError:
-        console.error("Invalid command line argument.")
-        sys.exit(2)
-
-    for opt, arg in opts:
-        if opt == '-h':
-            console.error(HelpStr)
-            sys.exit()
-        elif opt in ("-a", "--address"):
-            address = arg
-        elif opt in ("-c", "--configpath"):
-            ConfigFilePath = arg
-            ConfigFilePath = ConfigFilePath.strip()
-
-    port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
-    log = SetupLogger("client", loglocation + "genexercise.log")
-
-    GenExerciseInstance = GenExercise(log = log, loglocation = loglocation, ConfigFilePath = ConfigFilePath, host = address, port = port)
+    GenExerciseInstance = GenExercise(log = log, loglocation = loglocation, ConfigFilePath = ConfigFilePath, host = address, port = port, console = console)
 
     while True:
         time.sleep(0.5)

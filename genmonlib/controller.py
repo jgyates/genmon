@@ -54,12 +54,15 @@ class GeneratorController(MySupport):
         self.NotChanged = 0         # stats for registers
         self.Changed = 0            # stats for registers
         self.TotalChanged = 0.0     # ratio of changed ragisters
-        self.MaintLog =  ConfigFilePath + "maintlog.json"
+        self.MaintLog =  os.path.join(ConfigFilePath, "maintlog.json")
         self.MaintLogList = []
         self.MaintLock = threading.RLock()
-        self.OutageLog = ConfigFilePath + "outage.txt"
+        self.OutageLog = os.path.join(ConfigFilePath, "outage.txt")
+        self.MinimumOutageDuration = 0
         self.PowerLogMaxSize = 15.0       # 15 MB max size
-        self.PowerLog =  ConfigFilePath + "kwlog.txt"
+        self.PowerLog =  os.path.join(ConfigFilePath, "kwlog.txt")
+        self.FuelLog =  os.path.join(ConfigFilePath, "fuellog.txt")
+        self.FuelLock = threading.RLock()
         self.PowerLogList = []
         self.PowerLock = threading.RLock()
         self.KWHoursMonth = None
@@ -72,6 +75,8 @@ class GeneratorController(MySupport):
         self.ExternalDataLock = threading.RLock()
         self.ExternalTempData = None
         self.ExternalTempDataTime = None
+        self.FuelLevelOK = None     # used in mynotify.py
+        self.debug = False
 
         self.UtilityVoltsMin = 0    # Minimum reported utility voltage above threshold
         self.UtilityVoltsMax = 0    # Maximum reported utility voltage above pickup
@@ -87,6 +92,8 @@ class GeneratorController(MySupport):
         self.EngineDisplacement = "Unknown"
         self.TankSize = 0
         self.UseExternalFuelData = False
+        self.UseExternalCTData = False
+        self.ExternalCTData = None
 
         self.ProgramStartTime = datetime.datetime.now()     # used for com metrics
         self.OutageStartTime = self.ProgramStartTime        # if these two are the same, no outage has occured
@@ -103,7 +110,18 @@ class GeneratorController(MySupport):
                 self.bDisablePowerLog = self.config.ReadValue('disablepowerlog', return_type = bool, default = False)
                 self.SubtractFuel = self.config.ReadValue('subtractfuel', return_type = float, default = 0.0)
                 self.UserURL = self.config.ReadValue('user_url',  default = "").strip()
+                self.UseExternalCTData = self.config.ReadValue('use_external_power_data', return_type = bool, default = False)
+                # for gentankutil
                 self.UseExternalFuelData = self.config.ReadValue('use_external_fuel_data', return_type = bool, default = False)
+                if not self.UseExternalFuelData:
+                    # for gentankdiy
+                    self.UseExternalFuelData = self.config.ReadValue('use_external_fuel_data_diy', return_type = bool, default = False)
+
+                self.EstimateLoad = self.config.ReadValue('estimated_load', return_type = float, default = 0.50)
+                if self.EstimateLoad < 0:
+                    self.EstimateLoad = 0
+                if self.EstimateLoad > 1:
+                    self.EstimateLoad = 1
 
                 if self.config.HasOption('outagelog'):
                     self.OutageLog = self.config.ReadValue('outagelog')
@@ -111,14 +129,28 @@ class GeneratorController(MySupport):
                 if self.config.HasOption('kwlog'):
                     self.PowerLog = self.config.ReadValue('kwlog')
 
+                if self.config.HasOption('fuel_log'):
+                    self.FuelLog = self.config.ReadValue('fuel_log')
+                    self.FuelLog = self.FuelLog.strip()
+
+                self.UseFuelLog = self.config.ReadValue('enable_fuel_log', return_type = bool, default = False)
+                self.FuelLogFrequency = self.config.ReadValue('fuel_log_freq', return_type = float, default = 15.0)
+
+                self.MinimumOutageDuration = self.config.ReadValue('min_outage_duration', return_type = int, default = 0)
                 self.PowerLogMaxSize = self.config.ReadValue('kwlogmax', return_type = float, default = 15.0)
 
                 if self.config.HasOption('nominalfrequency'):
                     self.NominalFreq = self.config.ReadValue('nominalfrequency')
+                    if not self.StringIsInt(self.NominalFreq):
+                        self.NominalFreq = "Unknown"
                 if self.config.HasOption('nominalRPM'):
                     self.NominalRPM = self.config.ReadValue('nominalRPM')
+                    if not self.StringIsInt(self.NominalRPM):
+                        self.NominalRPM = "Unknown"
                 if self.config.HasOption('nominalKW'):
                     self.NominalKW = self.config.ReadValue('nominalKW')
+                    if not self.StringIsFloat(self.NominalKW):
+                        self.NominalKW = "Unknown"
                 if self.config.HasOption('model'):
                     self.Model = self.config.ReadValue('model')
 
@@ -150,6 +182,9 @@ class GeneratorController(MySupport):
         # start thread for kw log
         self.Threads["PowerMeter"] = MyThread(self.PowerMeter, Name = "PowerMeter")
 
+        if self.UseFuelLog:
+            self.Threads["FuelLogger"] = MyThread(self.FuelLogger, Name = "FuelLogger")
+
     # ---------- GeneratorController:ProcessThread------------------------------
     #  read registers, remove items from Buffer, form packets, store register data
     def ProcessThread(self):
@@ -163,7 +198,8 @@ class GeneratorController(MySupport):
                 try:
                     if not self.InitComplete:
                         self.InitDevice()
-                    self.MasterEmulation()
+                    else:
+                        self.MasterEmulation()
                     if self.IsStopSignaled("ProcessThread"):
                         break
                     if self.IsStopping:
@@ -171,7 +207,7 @@ class GeneratorController(MySupport):
                 except Exception as e1:
                     self.LogErrorLine("Error in Controller ProcessThread (1), continue: " + str(e1))
         except Exception as e1:
-            self.LogErrorLine("Exiting Controller ProcessThread (2)" + str(e1))
+            self.LogErrorLine("Exiting Controller ProcessThread (2): " + str(e1))
 
     # ---------- GeneratorController:CheckAlarmThread---------------------------
     #  When signaled, this thread will check for alarms
@@ -188,11 +224,74 @@ class GeneratorController(MySupport):
                     self.CheckForAlarms()
 
             except Exception as e1:
-                self.LogErrorLine("Error in  CheckAlarmThread" + str(e1))
+                self.LogErrorLine("Error in  CheckAlarmThread: " + str(e1))
 
     #----------  GeneratorController:TestCommand--------------------------------
     def TestCommand(self):
         return "Not Supported"
+
+    #----------  GeneratorController:GeneratorIsRunning-------------------------
+    def GeneratorIsRunning(self):
+
+        return (self.GetBaseStatus() in ["EXERCISING", "RUNNING", "RUNNING-MANUAL"])
+
+    #----------  GeneratorController:FuelLogger---------------------------------
+    def FuelLogger(self):
+
+        if not self.UseFuelLog:
+            return
+
+        time.sleep(0.25)
+        while True:
+            if self.InitComplete:
+                break
+            if self.WaitForExit("FuelLogger", 1):
+                return
+
+        LastFuelValue = None
+
+        while True:
+            try:
+                if LastFuelValue != None and self.WaitForExit("FuelLogger", self.FuelLogFrequency * 60.0):
+                    return
+
+                if not self.ExternalFuelDataSupported() and not self.FuelTankCalculationSupported() and not self.FuelSensorSupported():
+                    # this is an invalid setting so we do nothing, we do not exit to not flag a dead thread warning
+                    LastFuelValue = 0.0
+                    continue
+
+                FuelValue = self.GetFuelLevel(ReturnFloat = True)
+
+                if FuelValue == LastFuelValue:
+                    continue
+
+                LastFuelValue = FuelValue
+                TimeStamp = datetime.datetime.now().strftime('%x %X')
+                with self.FuelLock:
+                    self.LogToFile(self.FuelLog, TimeStamp, str(FuelValue))
+
+            except Exception as e1:
+                self.LogErrorLine("Error in  FuelLogger: " + str(e1))
+
+    #------------ GeneratorController::ClearFuelLog-----------------------------
+    def ClearFuelLog(self):
+
+        try:
+            if not len(self.FuelLog):
+                return "Fuel Not Present"
+
+            if not os.path.isfile(self.FuelLog):
+                return "Power Log is empty"
+
+            with self.FuelLock:
+                os.remove(self.FuelLog)
+                time.sleep(1)
+
+            return "Fuel Log cleared"
+        except Exception as e1:
+            self.LogErrorLine("Error in  ClearFuelLog: " + str(e1))
+            return "Error in  ClearFuelLog: " + str(e1)
+
     #----------  GeneratorController:DebugThread--------------------------------
     def DebugThread(self):
 
@@ -229,7 +328,7 @@ class GeneratorController(MySupport):
                     if self.WaitForExit("DebugThread", 0.25):  #
                         return
                     Register = "%04x" % Reg
-                    NewValue = self.ModBus.ProcessMasterSlaveTransaction(Register, 1, skipupdate = True)
+                    NewValue = self.ModBus.ProcessTransaction(Register, 1, skipupdate = True)
                     if not len(NewValue):
                         continue
                     OldValue = RegistersUnderTest.get(Register, "")
@@ -312,7 +411,7 @@ class GeneratorController(MySupport):
             if not Divider == None:
                 FloatValue = IntValue / Divider
                 if ReturnFloat:
-                    return FloatValue
+                    return round(FloatValue,3)
                 return "%2.1f %s" % (FloatValue, LabelStr)
             return "%d %s" % (IntValue, LabelStr)
         except Exception as e1:
@@ -351,7 +450,7 @@ class GeneratorController(MySupport):
             if not Divider == None:
                 FloatValue = IntValue / Divider
                 if ReturnFloat:
-                    return FloatValue
+                    return round(FloatValue,3)
                 if not Label == None:
                     return "%.2f %s" % (FloatValue, Label)
                 else:
@@ -525,7 +624,7 @@ class GeneratorController(MySupport):
         return "Test Controller"
 
     #----------  GeneratorController:ComminicationsIsActive  -------------------
-    # Called every 2 seconds, if communictions are failing, return False, otherwise
+    # Called every few seconds, if communictions are failing, return False, otherwise
     # True
     def ComminicationsIsActive(self):
         return False
@@ -629,7 +728,7 @@ class GeneratorController(MySupport):
 
             Register = CmdList[1].strip()
 
-            RegValue = self.ModBus.ProcessMasterSlaveTransaction( Register, 1, skipupdate = True)
+            RegValue = self.ModBus.ProcessTransaction( Register, 1, skipupdate = True)
 
             if RegValue == "":
                 self.LogError("Validation Error: Register  not known (ReadRegValue):" + Register)
@@ -667,6 +766,7 @@ class GeneratorController(MySupport):
                         continue
                     if line[0] == "#":              # comment?
                         continue
+                    line = self.removeNonPrintable(line)
                     Items = line.split(",")
                     # Three items is for duration greater than 24 hours, i.e 1 day, 08:12
                     if len(Items) < 2:
@@ -713,6 +813,11 @@ class GeneratorController(MySupport):
     def LogToPowerLog(self, TimeStamp, Value):
 
         try:
+            TimeStamp = self.removeNonPrintable(TimeStamp)
+            Value = self.removeNonPrintable(Value)
+            if not len(TimeStamp) or not len(Value):
+                self.LogError("Invalid entry in LogToPowerLog: " + str(TimeStamp) + "," + str(Value))
+                return
             if len(self.PowerLogList):
                 self.PowerLogList.insert(0, [TimeStamp, Value])
             self.LogToFile(self.PowerLog, TimeStamp, Value)
@@ -860,12 +965,18 @@ class GeneratorController(MySupport):
             for Count in range(Extra):
                 # assume first and last sampels are zero samples so don't select thoes
                 repeat = True
-                while (repeat):
+                removeAttempt = 0   # only try this so many times
+                while (repeat and removeAttempt < MaxSize):
+                    removeAttempt += 1
                     position = random.randint(1, len(NewList) - 2)
                     if float(NewList[position][1]) != 0:
                         Entry = NewList.pop(position)
                         repeat = False
 
+            # This will just remove all samples but the first MaxSize. This will only do anything if the above
+            # code failes to find valid samples to remove (i.e. all samples are zero)
+            if len(NewList) > MaxSize:
+                NewList = NewList[:MaxSize]
             return NewList
         except Exception as e1:
             self.LogErrorLine("Error in RemovePowerSamples: %s" % str(e1))
@@ -881,8 +992,12 @@ class GeneratorController(MySupport):
             CurrentTime = datetime.datetime.now()
 
             for Time, Power in reversed(PowerList):
-                struct_time = time.strptime(Time, "%x %X")
-                LogEntryTime = datetime.datetime.fromtimestamp(time.mktime(struct_time))
+                try:
+                    struct_time = time.strptime(Time, "%x %X")
+                    LogEntryTime = datetime.datetime.fromtimestamp(time.mktime(struct_time))
+                except Exception as e1:
+                    self.LogErrorLine("Error in GetPowerLogForMinutes: " + str(e1))
+                    continue
                 Delta = CurrentTime - LogEntryTime
                 if self.GetDeltaTimeMinutes(Delta) < Minutes :
                     ReturnList.insert(0, [Time, Power])
@@ -916,6 +1031,7 @@ class GeneratorController(MySupport):
                             continue
                         if line[0] == "#":                  # comment
                             continue
+                        line = self.removeNonPrintable(line)
                         Items = line.split(",")
                         if len(Items) != 2:
                             continue
@@ -991,7 +1107,6 @@ class GeneratorController(MySupport):
             #if not KWHours and len(PowerList) > 500 and Minutes and not NoReduce:
             if len(PowerList) > 500 and Minutes and not NoReduce:
                 PowerList = self.ReducePowerSamples(PowerList, 500)
-
             if KWHours:
                 AvgPower, TotalSeconds = self.GetAveragePower(PowerList)
                 return "%.2f" % ((TotalSeconds / 3600) * AvgPower)
@@ -1025,13 +1140,15 @@ class GeneratorController(MySupport):
             LastTime = None
             for Items in PowerList:
                 Power = float(Items[1])
-                struct_time = time.strptime(Items[0], "%x %X")
-                LogEntryTime = datetime.datetime.fromtimestamp(time.mktime(struct_time))
+                try:
+                    # This should be date time
+                    struct_time = time.strptime(Items[0], "%x %X")
+                    LogEntryTime = datetime.datetime.fromtimestamp(time.mktime(struct_time))
+                except Exception as e1:
+                    self.LogError("Invalid time entry in power log: " + str(e1))
+                    continue
 
-                if LastTime != None:
-                    if LogEntryTime > LastTime:
-                        self.LogError("Error in GetAveragePower: time sequence error")
-
+                # Changes in Daylight savings time will effect this
                 if LastTime == None or Power == 0:
                     TotalTime += LogEntryTime - LogEntryTime
                 else:
@@ -1113,18 +1230,40 @@ class GeneratorController(MySupport):
             except Exception as e1:
                 self.LogErrorLine("Error in PowerMeter: " + str(e1))
 
+    #----------  GeneratorController::GetFuelInTank------------------------------
+    def GetFuelInTank(self, ReturnFloat = False):
+
+        try:
+            if self.TankSize == 0:
+                return None
+
+            if self.UseMetric:
+                Units = "L"
+            else:
+                Units = "gal"
+
+            FuelLevel = self.GetFuelLevel(ReturnFloat = True)
+            FuelLevel = (FuelLevel * 0.01) * float(self.TankSize)
+
+            if ReturnFloat:
+                return float(FuelLevel)
+            else:
+                return "%.2f %s" % (FuelLevel, Units)
+        except Exception as e1:
+            self.LogErrorLine("Error in GetFuelInTank: " + str(e1))
+            return None
     #----------  GeneratorController::GetFuelLevel------------------------------
     def GetFuelLevel(self, ReturnFloat = False):
         # return 0 - 100 or None
 
-        if not self.FuelConsumptionGaugeSupported():
-            return None
-        if not self.FuelTankCalculationSupported() and not self.FuelSensorSupported():
+        if not self.ExternalFuelDataSupported() and not self.FuelTankCalculationSupported() and not self.FuelSensorSupported():
             return None
 
         if self.FuelSensorSupported():
             FuelLevel = float(self.GetFuelSensor(ReturnInt = True))
-        else:
+        elif self.ExternalFuelDataSupported():
+            FuelLevel = self.GetExternalFuelPercentage(ReturnFloat = True)
+        elif self.FuelTankCalculationSupported():
             if self.TankSize == 0:
                 return None
             FuelInTank = self.GetEstimatedFuelInTank(ReturnFloat = True)
@@ -1133,7 +1272,8 @@ class GeneratorController(MySupport):
                 FuelLevel = 100
             else:
                 FuelLevel = float(FuelInTank) / float(self.TankSize) * 100
-
+        else:
+            FuelLevel = 0
         if ReturnFloat:
             return float(FuelLevel)
         else:
@@ -1141,9 +1281,7 @@ class GeneratorController(MySupport):
     #----------  GeneratorController::CheckFuelLevel----------------------------
     def CheckFuelLevel(self):
         try:
-            if not self.FuelConsumptionGaugeSupported():
-                return True
-            if not self.FuelTankCalculationSupported() and not self.FuelSensorSupported():
+            if not self.ExternalFuelDataSupported() and not self.FuelTankCalculationSupported() and not self.FuelSensorSupported():
                 return True
 
             FuelLevel = self.GetFuelLevel(ReturnFloat = True)
@@ -1155,13 +1293,16 @@ class GeneratorController(MySupport):
                 msgbody = "Warning: The estimated fuel in the tank is at or below 10%"
                 title = "Warning: Fuel Level Low (10%) at " + self.SiteName
                 self.MessagePipe.SendMessage(title , msgbody, msgtype = "warn", onlyonce = True)
+                self.FuelLevelOK = False
                 return False
             elif FuelLevel <= 20:    # 20 percent left
                 msgbody = "Warning: The estimated fuel in the tank is at or below 20%"
                 title = "Warning: Fuel Level Low (20%) at " + self.SiteName
                 self.MessagePipe.SendMessage(title , msgbody, msgtype = "warn", onlyonce = True)
+                self.FuelLevelOK = False
                 return False
             else:
+                self.FuelLevelOK = True
                 return True
 
         except Exception as e1:
@@ -1209,26 +1350,121 @@ class GeneratorController(MySupport):
     #----------  GeneratorController::FuelSensorSupported------------------------
     def FuelSensorSupported(self):
         return False
-    #----------  GeneratorController::FuelTankCalculationSupported------------------
+    #----------  GeneratorController::FuelTankCalculationSupported--------------
     def FuelTankCalculationSupported(self):
-        return False
+
+        if not self.PowerMeterIsSupported():
+            return False
+        if not self.FuelConsumptionSupported():
+            return False
+
+        if self.TankSize == 0:
+            return False
+
+        if self.FuelType == "Natural Gas":
+            return False
+        return True
     #----------  GeneratorController::FuelConsumptionSupported------------------
     def FuelConsumptionSupported(self):
-        return False
+
+        if self.GetFuelConsumptionDataPoints() == None:
+            return False
+        else:
+            return True
     #----------  GeneratorController::FuelConsumptionGaugeSupported-------------
     def FuelConsumptionGaugeSupported(self):
+
+        if self.FuelTankCalculationSupported() and self.FuelType != "Natural Gas":
+            return True
         return False
 
+    #----------  GeneratorController::GetRemainingFuelTime------------------------
+    def GetRemainingFuelTime(self, ReturnFloat = False, Actual = False):
+
+        try:
+            if not self.FuelConsumptionGaugeSupported():
+                return None
+            if not self.ExternalFuelDataSupported() and not self.FuelTankCalculationSupported() and not self.FuelSensorSupported():
+                return None
+            if self.TankSize == 0:
+                return None
+
+            FuelLevel = self.GetFuelLevel(ReturnFloat = True)
+            FuelRemaining = self.TankSize * (FuelLevel / 100.0)
+
+            if Actual:
+                PowerValue = self.GetPowerOutput(ReturnFloat = True)
+            else:
+                PowerValue = self.EstimateLoad * float(self.NominalKW)
+
+            if PowerValue == 0:
+                return None
+
+            FuelPerHour, Units = self.GetFuelConsumption(PowerValue, 60 * 60)
+            if FuelPerHour == None or not len(Units):
+                return None
+            if FuelPerHour == 0:
+                return None
+
+            try:
+                # make sure our units are correct
+                # 1 cubic foot propane = 0.0278 gallons propane
+                # 1 gallon propane = 35.97 cubic feet propane
+                # 1 cubic foot natural gas = 0.012 gallons natural gas
+                # 1 gallon natural gas = 82.62 cubic feet natural gas
+                if Units.lower() == "cubic feet" and self.UseMetric == False:
+                    # this means that fuel left is gallons and fuel per hour is cubic feet
+                    # so convert remaining fuel from gallons to cu ft
+                    if self.FuelType == "Natural Gas":
+                        # 1 gallon natural gas = 82.62 cubic feet natural gas
+                        FuelRemaining = FuelRemaining * 82.62
+                    else:
+                        # 1 gallon propane = 35.97 cubic feet propane
+                        FuelRemaining = FuelRemaining * 35.97
+                elif Units.lower() == "gal" and self.UseMetric == True:
+                    # this mean that fuel left is Liters, and fuel per hour is gallons
+                    # so convert remaining fuel to gallons
+                    # 1 L =  0.264172 gal
+                    FuelRemaining = FuelRemaining * 0.264172
+                elif Units.lower() == "cubic feet" and self.UseMetric == True:
+                    # this means that fuel left is Liters and fuel per hour is cu feet
+                    # so convert remaing fuel to cubic feet
+                    # 1 L = 0.0353147 cu ft
+                    FuelRemaining = FuelRemaining * 0.0353147
+            except Exception as e1:
+                self.LogErrorLine("Error in GetRemainingFuelTime (2): " + str(e1))
+
+            HoursRemaining = FuelRemaining / FuelPerHour
+
+            if ReturnFloat:
+                return float(HoursRemaining)
+            else:
+                return "%.2f h" % HoursRemaining
+        except Exception as e1:
+            self.LogErrorLine("Error in GetRemainingFuelTime: " + str(e1))
+            return None
     #----------  GeneratorController::GetFuelConsumption------------------------
     def GetFuelConsumption(self, kw, seconds):
         try:
-            Polynomial = self.GetFuelConsumptionPolynomial()
-            if Polynomial == None or len(Polynomial) != 4:
+            ConsumptionData = self.GetFuelConsumptionDataPoints()
+
+            if ConsumptionData == None or len(ConsumptionData) != 5:
                 return None, ""
 
-            Load = kw / int(self.NominalKW)
-            # Consumption of load for 1 hour
-            Consumption = (Polynomial[0] * (Load ** 2)) + (Polynomial[1] * Load) + Polynomial[2]
+            Load = kw / float(self.NominalKW)
+            X1 = ConsumptionData[0]
+            Y1 = ConsumptionData[1]
+            X2 = ConsumptionData[2]
+            Y2 = ConsumptionData[3]
+            Units = ConsumptionData[4]
+
+            Slope = (Y2 - Y1) / (X2 - X1)   # Slope of fuel consumption plot (it is very close to if not linear in most cases)
+            # now use point slope equation to find consumption for one hour
+            # percent load is X2, Consumption is Y2, 100% (1.0) is X1 and Rate 100% is Y1
+            # Y1-Y2= SLOPE(X1-X2)
+            X2 = Load
+            Y2 = (((Slope * X1)- (Slope * X2)) - Y1) * -1
+            Consumption = Y2
 
             # now compensate for time
             Consumption = (seconds / 3600) * Consumption
@@ -1241,12 +1477,19 @@ class GeneratorController(MySupport):
                     Consumption = Consumption * 3.78541     # gal to liters
                     return round(Consumption, 4), "L"       # convert to Liters
             else:
-                return round(Consumption, 4), Polynomial[3]
+                return round(Consumption, 4), Units
         except Exception as e1:
             self.LogErrorLine("Error in GetFuelConsumption: " + str(e1))
             return None, ""
-    #----------  GeneratorController::GetFuelConsumptionPolynomial--------------
-    def GetFuelConsumptionPolynomial(self):
+    #----------  GeneratorController::GetFuelConsumptionDataPoints--------------
+    def GetFuelConsumptionDataPoints(self):
+
+        # Data points are expressed in a list [.50,50% fuel rate,1.0, 100% fuel rate, units]
+
+        #The general rule of thumb for fuel consumption for diesel is 7% of the
+        # rated generator output (Example: 200 kW x 7% = 1.4 gallon per hour at full load).
+        # For Larger diesel generators KW * 7% = Fuel per hour
+        # for 60 kw and below diesle generators KW * 8.5%  = Fuel per hour
         return None
     #----------  GeneratorController::ExternalFuelDataSupported-----------------
     def ExternalFuelDataSupported(self):
@@ -1280,7 +1523,11 @@ class GeneratorController(MySupport):
         try:
             CmdList = command.split("=")
             if len(CmdList) == 2:
-                self.TankData = json.loads(CmdList[1])
+                with self.ExternalDataLock:
+                    self.TankData = json.loads(CmdList[1])
+                if not self.UseExternalFuelData:
+                    self.UseExternalFuelData = True
+                    self.SetupTiles()
             else:
                 self.LogError("Error in  SetExternalTankData: invalid input")
                 return "Error"
@@ -1288,6 +1535,39 @@ class GeneratorController(MySupport):
             self.LogErrorLine("Error in SetExternalTankData: " + str(e1))
             return "Error"
         return "OK"
+
+    #----------  GeneratorController::SetExternalCTData-------------------------
+    def SetExternalCTData(self, command):
+        try:
+            CmdList = command.split("=")
+            if len(CmdList) == 2:
+                with self.ExternalDataLock:
+                    self.ExternalCTData = json.loads(CmdList[1])
+                if not self.UseExternalCTData:
+                    self.UseExternalCTData = True
+                    self.SetupTiles()
+            else:
+                self.LogError("Error in  SetExternalTankData: invalid input")
+                return "Error"
+        except Exception as e1:
+            self.LogErrorLine("Error in SetExternalCTData: " + str(e1))
+            return "Error"
+        return "OK"
+
+    #----------  GeneratorController::GetExternalCTData-------------------------
+    def GetExternalCTData(self):
+        try:
+            if not self.UseExternalCTData:
+                return None
+            if self.ExternalCTData != None:
+                with self.ExternalDataLock:
+                    return self.ExternalCTData.copy()
+            else:
+                return None
+        except Exception as e1:
+            self.LogErrorLine("Error in GetExternalCTData: " + str(e1))
+            return None
+        return None
     #----------  GeneratorController::AddEntryToMaintLog------------------------
     def AddEntryToMaintLog(self, InputString):
 
@@ -1314,6 +1594,7 @@ class GeneratorController(MySupport):
                 self.MaintLogList.append(Entry)
                 with open(self.MaintLog, 'w') as outfile:
                     json.dump(self.MaintLogList, outfile, sort_keys = True, indent = 4) #, ensure_ascii = False)
+                    outfile.flush()
             except Exception as e1:
                 self.LogErrorLine("Error in AddEntryToMaintLog: " + str(e1))
                 return "Invalid input for Maintenance Log entry (2)."
@@ -1359,8 +1640,8 @@ class GeneratorController(MySupport):
             return False
 
         return True
-    #----------  GeneratorController::GetMaintLog-------------------------------
-    def GetMaintLog(self):
+    #----------  GeneratorController::GetMaintLogJSON---------------------------
+    def GetMaintLogJSON(self):
 
         try:
             if len(self.MaintLogList):
@@ -1371,12 +1652,41 @@ class GeneratorController(MySupport):
                         self.MaintLogList = json.load(infile)
                         return json.dumps(self.MaintLogList)
                 except Exception as e1:
-                    self.LogErrorLine("Error in GetMaintLog: " + str(e1))
+                    self.LogErrorLine("Error in GetMaintLogJSON: " + str(e1))
         except Exception as e1:
-            self.LogErrorLine("Error in GetMaintLog (2): " + str(e1))
+            self.LogErrorLine("Error in GetMaintLogJSON (2): " + str(e1))
 
         return "[]"
 
+    #----------  GeneratorController::GetMaintLogDict---------------------------
+    def GetMaintLogDict(self):
+        try:
+            if len(self.MaintLogList):
+                return self.MaintLogList
+            if os.path.isfile(self.MaintLog):
+                try:
+                    with open(self.MaintLog) as infile:
+                        self.MaintLogList = json.load(infile)
+                        return self.MaintLogList
+                except Exception as e1:
+                    self.LogErrorLine("Error in GetMaintLogDict: " + str(e1))
+                    return []
+        except Exception as e1:
+            self.LogErrorLine("Error in GetMaintLogDict (2): " + str(e1))
+
+        return []
+
+    #----------  GeneratorController::UpdateMaintLog----------------------------
+    def SaveMaintLog(self, NewLog):
+        try:
+            self.MaintLogList = NewLog
+            with open(self.MaintLog, 'w') as outfile:
+                json.dump(self.MaintLogList, outfile, sort_keys = True, indent = 4) #, ensure_ascii = False)
+                outfile.flush()
+
+        except Exception as e1:
+            self.LogErrorLine("Error in SaveMaintLog: " + str(e1))
+            return "Error in SaveMaintLog: " + str(e1)
     #----------  GeneratorController::ClearMaintLog-------------------------------
     def ClearMaintLog(self):
         try:
@@ -1393,7 +1703,74 @@ class GeneratorController(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in  ClearMaintLog: " + str(e1))
             return "Error in  ClearMaintLog: " + str(e1)
+        return "OK"
 
+    #----------  GeneratorController::EditMaintLogRow---------------------------
+    def EditMaintLogRow(self, InputString):
+
+        # { index : {maint log entry}}
+        ValidInput = False
+        EntryString = InputString
+        if EntryString == None or not len(EntryString):
+            return "Invalid input for Edit Maintenance Log entry."
+
+        EntryString = EntryString.strip()
+        if EntryString.startswith("edit_row_maint_log"):
+            EntryString = EntryString[len('edit_row_maint_log'):]
+            EntryString = EntryString.strip()
+            if EntryString.strip().startswith("="):
+                EntryString = EntryString[len("="):]
+                EntryString = EntryString.strip()
+                ValidInput = True
+
+        if ValidInput:
+            try:
+                EntryDict = json.loads(EntryString)
+                MaintLog = self.GetMaintLogDict()
+                for index, Entry in EntryDict.items():
+                    # validate object
+                    if not self.ValidateMaintLogEntry(Entry):
+                        self.LogError("Error in EditMaintLogRow: failed validate entry in update")
+                        return "Invalid edit maintenance log entry"
+
+                    if not len(MaintLog):
+                        self.LogError("Error in  EditMaintLogRow: maint log is empty")
+                        return "Error"
+                    del MaintLog[int(index)]
+                    # save log
+                    MaintLog.insert(int(index), Entry)
+                self.SaveMaintLog(MaintLog)
+
+            except Exception as e1:
+                self.LogErrorLine("Error in EditMaintLogRow: " + str(e1))
+                return "Invalid input for Edit Maintenance Log entry (2)."
+        else:
+            self.LogError("Error in EditMaintLogRow: invalid input: " + str(InputString))
+            return "Invalid input for Edit Maintenance Log entry (3)."
+        return "OK"
+
+    #----------  GeneratorController::DeleteMaintLogRow-------------------------
+    def DeleteMaintLogRow(self, command):
+
+        try:
+            CmdList = command.split("=")
+            if len(CmdList) == 2:
+                index = int(CmdList[1])
+                MaintLog = self.GetMaintLogDict()
+                if not len(MaintLog):
+                    self.LogError("Error in  DeleteMaintLogRow: maint log is empty")
+                    return "Error"
+
+                del MaintLog[int(index)]
+                # save log
+                self.SaveMaintLog(MaintLog)
+            else:
+                self.LogError("Error in  DeleteMaintLogRow: invalid input: " + str(CmdList))
+                return "Error"
+        except Exception as e1:
+            self.LogErrorLine("Error in DeleteMaintLogRow: " + str(e1))
+            return "Error in DeleteMaintLogRow: " + str(e1)
+        return "OK"
     #----------  GeneratorController::SetExternalTemperatureData----------------
     def SetExternalTemperatureData(self, command):
 

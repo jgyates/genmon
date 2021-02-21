@@ -114,6 +114,30 @@ def OnUtilityChange(Active):
         SendNotice("Utility Service is Up")
         console.info("Utility Service is Up")
 
+#----------  OnSoftwareUpdate --------------------------------------------------
+def OnSoftwareUpdate(Active):
+
+    if Active:
+        console.info("Software Update Available")
+        SendNotice("Software Update Available")
+    else:
+        SendNotice("Software Is Up To Date")
+        console.info("Software Is Up To Date")
+
+#----------  OnSystemHealth ----------------------------------------------------
+def OnSystemHealth(Notice):
+    SendNotice("System Health : " + Notice)
+    console.info("System Health : " + Notice)
+
+#----------  OnFuelState -------------------------------------------------------
+def OnFuelState(Active):
+    if Active: # True is OK
+        console.info("Fuel Level is OK")
+        SendNotice("Fuel Level is OK")
+    else:  # False = Low
+        SendNotice("Fuel Level is Low")
+        console.info("Fuel Level is Low")
+
 #----------  SendNotice --------------------------------------------------------
 def SendNotice(Message):
 
@@ -139,65 +163,40 @@ def GetSiteName():
         return None
 #------------------- Command-line interface for gengpio ------------------------
 if __name__=='__main__':
-    address=ProgramDefaults.LocalHost
+
+    console, ConfigFilePath, address, port, loglocation, log = MySupport.SetupAddOnProgram("genemail2sms")
 
     # Set the signal handler
     signal.signal(signal.SIGINT, signal_handler)
 
-    if os.geteuid() != 0:
-        print("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
-        sys.exit(2)
 
-    console = SetupLogger("emailsms_console", log_file = "", stream = True)
-    HelpStr = '\nsudo python genemail2sms.py -a <IP Address or localhost> -c <path to genmon config file>\n'
-
-    try:
-        ConfigFilePath = ProgramDefaults.ConfPath
-        opts, args = getopt.getopt(sys.argv[1:],"hc:a:",["help","configpath=","address="])
-    except getopt.GetoptError:
-        console.error("Invalid command line argument.")
-        sys.exit(2)
-
-    for opt, arg in opts:
-        if opt == '-h':
-            console.error(HelpStr)
-            sys.exit()
-        elif opt in ("-a", "--address"):
-            address = arg
-        elif opt in ("-c", "--configpath"):
-            ConfigFilePath = arg
-            ConfigFilePath = ConfigFilePath.strip()
-
-    port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
-    log = SetupLogger("client", loglocation + "genemail2sms.log")
-
-    if not os.path.isfile(ConfigFilePath + 'genmon.conf'):
-        console.error("Missing config file : " + ConfigFilePath + 'genmon.conf')
-        log.error("Missing config file : " + ConfigFilePath + 'genmon.conf')
+    if not os.path.isfile(os.path.join(ConfigFilePath, 'genmon.conf')):
+        console.error("Missing config file : " + os.path.join(ConfigFilePath, 'genmon.conf'))
+        log.error("Missing config file : " + os.path.join(ConfigFilePath, 'genmon.conf'))
         sys.exit(1)
-    if not os.path.isfile(ConfigFilePath + 'mymail.conf'):
-        console.error("Missing config file : " + ConfigFilePath + 'mymail.conf')
-        log.error("Missing config file : " + ConfigFilePath + 'mymail.conf')
+    if not os.path.isfile(os.path.join(ConfigFilePath, 'mymail.conf')):
+        console.error("Missing config file : " + os.path.join(ConfigFilePath, 'mymail.conf'))
+        log.error("Missing config file : " + os.path.join(ConfigFilePath, 'mymail.conf'))
         sys.exit(1)
 
     try:
 
         SiteName = GetSiteName()
-        config = MyConfig(filename = ConfigFilePath + 'genemail2sms.conf', section = 'genemail2sms', log = log)
+        config = MyConfig(filename = os.path.join(ConfigFilePath, 'genemail2sms.conf'), section = 'genemail2sms', log = log)
 
         DestinationEmail = config.ReadValue('destination', default = "")
 
 
         if DestinationEmail == "" or (not "@" in DestinationEmail):
-            log.error("Missing parameter in " + ConfigFilePath + "genemail2sms.conf")
-            console.error("Missing parameter in " + ConfigFilePath + "genemail2sms.conf")
+            log.error("Missing parameter in " + os.path.join(ConfigFilePath, 'genemail2sms.conf'))
+            console.error("Missing parameter in " + os.path.join(ConfigFilePath, 'genemail2sms.conf'))
             sys.exit(1)
 
         # init mail, start processing incoming email
         MyMail = MyMail(loglocation = loglocation, log = log, ConfigFilePath = ConfigFilePath)
     except Exception as e1:
-        log.error("Error reading " + ConfigFilePath + "genemail2sms.conf: " + str(e1))
-        console.error("Error reading " + ConfigFilePath + "genemail2sms.conf: " + str(e1))
+        log.error("Error reading " + os.path.join(ConfigFilePath, 'genemail2sms.conf') + ": " + str(e1))
+        console.error("Error reading " + os.path.join(ConfigFilePath, 'genemail2sms.conf') + ": " + str(e1))
         sys.exit(1)
     try:
 
@@ -213,8 +212,12 @@ if __name__=='__main__':
                                         onoff = OnOff,
                                         onmanual = OnManual,
                                         onutilitychange = OnUtilityChange,
+                                        onsoftwareupdate = OnSoftwareUpdate,
+                                        onsystemhealth = OnSystemHealth,
+                                        onfuelstate = OnFuelState,
                                         log = log,
-                                        loglocation = loglocation)
+                                        loglocation = loglocation,
+                                        console = console)
 
         while True:
             time.sleep(1)

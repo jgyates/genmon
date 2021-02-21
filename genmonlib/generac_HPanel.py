@@ -895,6 +895,11 @@ class HPanel(GeneratorController):
             self.VoltageConfig = self.config.ReadValue('voltageconfiguration', default = "277/480")
             self.NominalBatteryVolts = int(self.config.ReadValue('nominalbattery', return_type = int, default = 24))
             self.HTSTransferSwitch = self.config.ReadValue('hts_transfer_switch', return_type = bool, default = False)
+            self.FuelUnits = self.config.ReadValue('fuel_units', default = "gal")
+            self.FuelHalfRate = self.config.ReadValue('half_rate', return_type = float, default = 0.0)
+            self.FuelFullRate = self.config.ReadValue('full_rate', return_type = float, default = 0.0)
+            self.UseFuelSensor = self.config.ReadValue('usesensorforfuelgauge', return_type = bool, default = True)
+            self.UseCalculatedPower = self.config.ReadValue('usecalculatedpower', return_type = bool, default = False)
 
         except Exception as e1:
             self.FatalError("Missing config file or config file entries (HPanel): " + str(e1))
@@ -909,7 +914,7 @@ class HPanel(GeneratorController):
             if self.ControllerDetected:
                 return True
 
-            ControllerString = self.HexStringToString(self.ModBus.ProcessMasterSlaveTransaction(RegisterStringEnum.CONTROLLER_NAME[REGISTER],
+            ControllerString = self.HexStringToString(self.ModBus.ProcessTransaction(RegisterStringEnum.CONTROLLER_NAME[REGISTER],
                 RegisterStringEnum.CONTROLLER_NAME[LENGTH] / 2))
 
             ControllerString = str(ControllerString)
@@ -949,81 +954,93 @@ class HPanel(GeneratorController):
     #-------------HPanel:SetupTiles---------------------------------------------
     def SetupTiles(self):
         try:
-            self.TileList = []
-            Tile = MyTile(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = self.NominalBatteryVolts,
-                callback = self.GetParameter,
-                callbackparameters = (self.Reg.BATTERY_VOLTS[REGISTER],  None, 100.0, False, False, True))
-            self.TileList.append(Tile)
-
-            # Nominal Voltage for gauge
-            if self.VoltageConfig != None:
-                #Valid settings are: 120/208, 120/240, 230/400, 240/415, 277/480, 347/600
-                VoltageConfigList = self.VoltageConfig.split("/")
-                NominalVoltage = int(VoltageConfigList[1])
-            else:
-                NominalVoltage = 600
-
-            if self.NominalKW == None or self.NominalKW == "" or self.NominalKW == "Unknown":
-                self.NominalKW = "550"
-
-            Tile = MyTile(self.log, title = "Voltage (Avg)", units = "V", type = "linevolts", nominal = NominalVoltage,
-            callback = self.GetParameter,
-            callbackparameters = (self.Reg.AVG_VOLTAGE[REGISTER], None, None, False, True, False))
-            self.TileList.append(Tile)
-
-            NominalCurrent = int(self.NominalKW) * 1000 / NominalVoltage
-            Tile = MyTile(self.log, title = "Current (Avg)", units = "A", type = "current", nominal = NominalCurrent,
-            callback = self.GetParameter,
-            callbackparameters = (self.Reg.AVG_CURRENT[REGISTER], None, None, False, True, False))
-            self.TileList.append(Tile)
-
-            if self.NominalFreq == None or self.NominalFreq == "" or self.NominalFreq == "Unknown":
-                self.NominalFreq = "60"
-            Tile = MyTile(self.log, title = "Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq),
-            callback = self.GetParameter,
-            callbackparameters = (self.Reg.OUTPUT_FREQUENCY[REGISTER], None, 10.0, False, False, True))
-            self.TileList.append(Tile)
-
-            if self.NominalRPM == None or self.NominalRPM == "" or self.NominalRPM == "Unknown":
-                self.NominalRPM = "3600"
-            Tile = MyTile(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM),
-            callback = self.GetParameter,
-            callbackparameters = (self.Reg.OUTPUT_RPM[REGISTER], None, None, False, True, False))
-            self.TileList.append(Tile)
-
-            # water temp between 170 and 200 is a normal range for a gen. most have a 180f thermostat
-            Tile = MyTile(self.log, title = "Coolant Temp", units = "F", type = "temperature", subtype = "coolant", nominal = 180, maximum = 300,
-            callback = self.GetParameter,
-            callbackparameters = (self.Reg.COOLANT_TEMP[REGISTER], None, None, False, True, False))
-            self.TileList.append(Tile)
-
-            if self.HTSTransferSwitch:
-                Tile = MyTile(self.log, title = "Utility Voltage (Avg)", units = "V", type = "linevolts", nominal = NominalVoltage,
-                callback = self.GetParameter,
-                callbackparameters = (self.Reg.EXT_SW_UTILITY_AVG_VOLTS[REGISTER], None, None, False, True, False))
-                self.TileList.append(Tile)
-                Tile = MyTile(self.log, title = "Utility Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq),
-                callback = self.GetParameter,
-                callbackparameters = (self.Reg.EXT_SW_UTILITY_FREQ[REGISTER], None, 100.0, False, False, True))
-                self.TileList.append(Tile)
-                Tile = MyTile(self.log, title = "Utility Power", units = "kW", type = "power", nominal = int(self.NominalKW),
-                callback = self.GetParameter,
-                callbackparameters = (self.Reg.EXT_SW_UTILITY_KW[REGISTER], None, None, False, True, False))
+            with self.ExternalDataLock:
+                self.TileList = []
+                Tile = MyTile(self.log, title = "Battery Voltage", units = "V", type = "batteryvolts", nominal = self.NominalBatteryVolts,
+                    callback = self.GetParameter,
+                    callbackparameters = (self.Reg.BATTERY_VOLTS[REGISTER],  None, 100.0, False, False, True))
                 self.TileList.append(Tile)
 
-            if self.PowerMeterIsSupported():
-                Tile = MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = int(self.NominalKW),
+                # Nominal Voltage for gauge
+                if self.VoltageConfig != None:
+                    #Valid settings are: 120/208, 120/240, 230/400, 240/415, 277/480, 347/600
+                    VoltageConfigList = self.VoltageConfig.split("/")
+                    NominalVoltage = int(VoltageConfigList[1])
+                else:
+                    NominalVoltage = 600
+
+                if self.NominalKW == None or self.NominalKW == "" or self.NominalKW == "Unknown":
+                    self.NominalKW = "550"
+
+                Tile = MyTile(self.log, title = "Voltage (Avg)", units = "V", type = "linevolts", nominal = NominalVoltage,
                 callback = self.GetParameter,
-                callbackparameters = (self.Reg.TOTAL_POWER_KW[REGISTER], None, None, False, True, False))
+                callbackparameters = (self.Reg.AVG_VOLTAGE[REGISTER], None, None, False, True, False))
                 self.TileList.append(Tile)
 
-                Tile = MyTile(self.log, title = "kW Output", type = "powergraph", nominal = int(self.NominalKW),
+                NominalCurrent = float(self.NominalKW) * 1000 / NominalVoltage
+                Tile = MyTile(self.log, title = "Current (Avg)", units = "A", type = "current", nominal = NominalCurrent,
                 callback = self.GetParameter,
-                callbackparameters = (self.Reg.TOTAL_POWER_KW[REGISTER], None, None, False, True, False))
+                callbackparameters = (self.Reg.AVG_CURRENT[REGISTER], None, None, False, True, False))
                 self.TileList.append(Tile)
-            if self.ExternalFuelDataSupported():
-                Tile = MyTile(self.log, title = "External Tank", units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True,))
+
+                if self.NominalFreq == None or self.NominalFreq == "" or self.NominalFreq == "Unknown":
+                    self.NominalFreq = "60"
+                Tile = MyTile(self.log, title = "Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq),
+                callback = self.GetParameter,
+                callbackparameters = (self.Reg.OUTPUT_FREQUENCY[REGISTER], None, 10.0, False, False, True))
                 self.TileList.append(Tile)
+
+                if self.NominalRPM == None or self.NominalRPM == "" or self.NominalRPM == "Unknown":
+                    self.NominalRPM = "3600"
+                Tile = MyTile(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM),
+                callback = self.GetParameter,
+                callbackparameters = (self.Reg.OUTPUT_RPM[REGISTER], None, None, False, True, False))
+                self.TileList.append(Tile)
+
+                # water temp between 170 and 200 is a normal range for a gen. most have a 180f thermostat
+                Tile = MyTile(self.log, title = "Coolant Temp", units = "F", type = "temperature", subtype = "coolant", nominal = 180, maximum = 300,
+                callback = self.GetParameter,
+                callbackparameters = (self.Reg.COOLANT_TEMP[REGISTER], None, None, False, True, False))
+                self.TileList.append(Tile)
+
+                if self.HTSTransferSwitch:
+                    Tile = MyTile(self.log, title = "Utility Voltage (Avg)", units = "V", type = "linevolts", nominal = NominalVoltage,
+                    callback = self.GetParameter,
+                    callbackparameters = (self.Reg.EXT_SW_UTILITY_AVG_VOLTS[REGISTER], None, None, False, True, False))
+                    self.TileList.append(Tile)
+                    Tile = MyTile(self.log, title = "Utility Frequency", units = "Hz", type = "frequency", nominal = int(self.NominalFreq),
+                    callback = self.GetParameter,
+                    callbackparameters = (self.Reg.EXT_SW_UTILITY_FREQ[REGISTER], None, 100.0, False, False, True))
+                    self.TileList.append(Tile)
+                    Tile = MyTile(self.log, title = "Utility Power", units = "kW", type = "power", nominal = float(self.NominalKW),
+                    callback = self.GetParameter,
+                    callbackparameters = (self.Reg.EXT_SW_UTILITY_KW[REGISTER], None, None, False, True, False))
+                    self.TileList.append(Tile)
+
+                if self.FuelSensorSupported():
+                    Tile = MyTile(self.log, title = "Fuel", units = "%", type = "fuel", nominal = 100, callback = self.GetFuelSensor, callbackparameters = (True,))
+                    self.TileList.append(Tile)
+                elif self.ExternalFuelDataSupported():
+                    Tile = MyTile(self.log, title = "External Tank", units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True,))
+                    self.TileList.append(Tile)
+                elif self.FuelConsumptionGaugeSupported():    # no gauge for NG
+                    if self.UseMetric:
+                        Units = "L"         # no gauge for NG
+                    else:
+                        Units = "gal"       # no gauge for NG
+                    Tile = MyTile(self.log, title = "Estimated Fuel", units = Units, type = "fuel", nominal = int(self.TankSize), callback = self.GetEstimatedFuelInTank, callbackparameters = (True,))
+                    self.TileList.append(Tile)
+
+                if self.PowerMeterIsSupported():
+                    Tile = MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = float(self.NominalKW),
+                    callback = self.GetParameter,
+                    callbackparameters = (self.Reg.TOTAL_POWER_KW[REGISTER], None, None, False, True, False))
+                    self.TileList.append(Tile)
+
+                    Tile = MyTile(self.log, title = "kW Output", type = "powergraph", nominal = float(self.NominalKW),
+                    callback = self.GetParameter,
+                    callbackparameters = (self.Reg.TOTAL_POWER_KW[REGISTER], None, None, False, True, False))
+                    self.TileList.append(Tile)
 
         except Exception as e1:
             self.LogErrorLine("Error in SetupTiles: " + str(e1))
@@ -1104,34 +1121,53 @@ class HPanel(GeneratorController):
 
         try:
             # Read the nameplate dataGet Serial Number
-            self.ModBus.ProcessMasterSlaveFileReadTransaction(NAMEPLATE_DATA_FILE_RECORD, NAMEPLATE_DATA_LENGTH / 2 )
+            self.ModBus.ProcessFileReadTransaction(NAMEPLATE_DATA_FILE_RECORD, NAMEPLATE_DATA_LENGTH / 2 )
             # Read Misc Engine data
-            self.ModBus.ProcessMasterSlaveFileReadTransaction(MISC_GEN_FILE_RECORD, MISC_GEN_LENGTH / 2 )
+            self.ModBus.ProcessFileReadTransaction(MISC_GEN_FILE_RECORD, MISC_GEN_LENGTH / 2 )
             # Read Engine Data
-            self.ModBus.ProcessMasterSlaveFileReadTransaction(ENGINE_DATA_FILE_RECORD, ENGINE_DATA_FILE_RECORD_LENGTH / 2 )
+            self.ModBus.ProcessFileReadTransaction(ENGINE_DATA_FILE_RECORD, ENGINE_DATA_FILE_RECORD_LENGTH / 2 )
             # Read Govonor Data
-            self.ModBus.ProcessMasterSlaveFileReadTransaction(GOV_DATA_FILE_RECORD, GOV_DATA_FILE_RECORD_LENGTH / 2 )
+            self.ModBus.ProcessFileReadTransaction(GOV_DATA_FILE_RECORD, GOV_DATA_FILE_RECORD_LENGTH / 2 )
             # Read Secondary Govonor Data
-            self.ModBus.ProcessMasterSlaveFileReadTransaction(GOV_DATA_SEC_FILE_RECORD, GOV_DATA_SEC_FILE_RECORD_LENGTH / 2 )
+            self.ModBus.ProcessFileReadTransaction(GOV_DATA_SEC_FILE_RECORD, GOV_DATA_SEC_FILE_RECORD_LENGTH / 2 )
             # Read Regulator Data
-            self.ModBus.ProcessMasterSlaveFileReadTransaction(REGULATOR_FILE_RECORD, REGULATOR_FILE_RECORD_LENGTH / 2 )
+            self.ModBus.ProcessFileReadTransaction(REGULATOR_FILE_RECORD, REGULATOR_FILE_RECORD_LENGTH / 2 )
 
             self.GetGeneratorLogFileData()
         except Exception as e1:
             self.LogErrorLine("Error in GetGeneratorFileData: " + str(e1))
 
+    #------------ HPanel:WaitAndPergeforTimeout --------------------------------
+    def WaitAndPergeforTimeout(self):
+        # if we get here a timeout occured, and we have recieved at least one good packet
+        # this logic is to keep from receiving a packet that we have already requested once we
+        # timeout and start to request another
+        # Wait for a bit to allow any missed response from the controller to arrive
+        # otherwise this could get us out of sync
+        # This assumes MasterEmulation is called from ProcessThread
+        if self.WaitForExit("ProcessThread", float(self.ModBus.ModBusPacketTimoutMS / 1000.0)):  #
+            return
+        self.ModBus.Flush()
     #------------ HPanel:GetGeneratorLogFileData -------------------------------
     def GetGeneratorLogFileData(self):
 
         try:
             for RegValue in range(EVENT_LOG_START + EVENT_LOG_ENTRIES -1 , EVENT_LOG_START -1, -1):
                 Register = "%04x" % RegValue
-                self.ModBus.ProcessMasterSlaveFileReadTransaction(Register, EVENT_LOG_LENGTH /2)
-
+                localTimeoutCount = self.ModBus.ComTimoutError
+                localSyncError = self.ModBus.ComSyncError
+                self.ModBus.ProcessFileReadTransaction(Register, EVENT_LOG_LENGTH /2)
+                if ((localSyncError != self.ModBus.ComSyncError or localTimeoutCount != self.ModBus.ComTimoutError)
+                    and self.ModBus.RxPacketCount):
+                    self.WaitAndPergeforTimeout()
             for RegValue in range(ALARM_LOG_START + ALARM_LOG_ENTRIES -1, ALARM_LOG_START -1, -1):
                 Register = "%04x" % RegValue
-                self.ModBus.ProcessMasterSlaveFileReadTransaction(Register, ALARM_LOG_LENGTH /2)
-
+                localTimeoutCount = self.ModBus.ComTimoutError
+                localSyncError = self.ModBus.ComSyncError
+                self.ModBus.ProcessFileReadTransaction(Register, ALARM_LOG_LENGTH /2)
+                if ((localSyncError != self.ModBus.ComSyncError or localTimeoutCount != self.ModBus.ComTimoutError)
+                    and self.ModBus.RxPacketCount):
+                    self.WaitAndPergeforTimeout()
         except Exception as e1:
             self.LogErrorLine("Error in GetGeneratorLogFileData: " + str(e1))
 
@@ -1143,7 +1179,13 @@ class HPanel(GeneratorController):
                 try:
                     if self.IsStopping:
                         return
-                    self.ModBus.ProcessMasterSlaveTransaction(RegisterList[REGISTER], RegisterList[LENGTH] / 2)
+                    localTimeoutCount = self.ModBus.ComTimoutError
+                    localSyncError = self.ModBus.ComSyncError
+                    self.ModBus.ProcessTransaction(RegisterList[REGISTER], RegisterList[LENGTH] / 2)
+                    if ((localSyncError != self.ModBus.ComSyncError or localTimeoutCount != self.ModBus.ComTimoutError)
+                        and self.ModBus.RxPacketCount):
+                        self.WaitAndPergeforTimeout()
+
                 except Exception as e1:
                     self.LogErrorLine("Error in GetGeneratorStrings: " + str(e1))
 
@@ -1162,7 +1204,12 @@ class HPanel(GeneratorController):
                 try:
                     if self.IsStopping:
                         return
-                    self.ModBus.ProcessMasterSlaveTransaction(RegisterList[REGISTER], RegisterList[LENGTH] / 2)
+                    localTimeoutCount = self.ModBus.ComTimoutError
+                    localSyncError = self.ModBus.ComSyncError
+                    self.ModBus.ProcessTransaction(RegisterList[REGISTER], RegisterList[LENGTH] / 2)
+                    if ((localSyncError != self.ModBus.ComSyncError or localTimeoutCount != self.ModBus.ComTimoutError)
+                        and self.ModBus.RxPacketCount):
+                        self.WaitAndPergeforTimeout()
                 except Exception as e1:
                     self.LogErrorLine("Error in MasterEmulation: " + str(e1))
 
@@ -1346,7 +1393,7 @@ class HPanel(GeneratorController):
         return False
 
     #------------ HPanel:RegisterIsBaseRegister --------------------------------
-    def RegisterIsBaseRegister(self, Register):
+    def RegisterIsBaseRegister(self, Register, Value):
 
         try:
             RegisterList = self.Reg.GetRegList()
@@ -1364,17 +1411,24 @@ class HPanel(GeneratorController):
         try:
             if len(Register) != 4:
                 self.LogError("Validation Error: Invalid register value in UpdateRegisterList: %s %s" % (Register, Value))
+                return False
 
-            if self.RegisterIsBaseRegister(Register) and not IsFile:
+            if not IsFile and self.RegisterIsBaseRegister(Register, Value):
+                # TODO validate register length
                 self.Registers[Register] = Value
-            elif self.RegisterIsStringRegister(Register) and not IsFile:
+            elif not IsFile and self.RegisterIsStringRegister(Register):
+                # TODO validate register string length
                 self.Strings[Register] = Value
-            elif self.RegisterIsFileRecord(Register) and IsFile:
+            elif IsFile and self.RegisterIsFileRecord(Register):
+                # todo validate file data length
                 self.FileData[Register] = Value
             else:
                 self.LogError("Error in UpdateRegisterList: Unknown Register " + Register + ":" + Value + ": IsFile: " + str(IsFile) + ": " + "IsString: " + str(IsString))
+                return False
+            return True
         except Exception as e1:
             self.LogErrorLine("Error in UpdateRegisterList: " + str(e1))
+            return False
 
     #---------------------HPanel::SystemInAlarm---------------------------------
     # return True if generator is in alarm, else False
@@ -1679,6 +1733,65 @@ class HPanel(GeneratorController):
             Maintenance["Maintenance"].append({"Nominal Frequency" : self.NominalFreq})
             Maintenance["Maintenance"].append({"Fuel Type" : self.FuelType})
 
+            if self.UseMetric:
+                Units = "L"
+            else:
+                Units = "gal"
+
+            if self.FuelSensorSupported():
+                FuelValue = self.GetFuelSensor(ReturnInt = True)
+                Maintenance["Maintenance"].append({"Fuel Level Sensor" : self.ValueOut(FuelValue, "%", JSONNum)})
+                FuelValue = self.GetFuelInTank(ReturnFloat = True)
+                if FuelValue != None:
+                    Maintenance["Maintenance"].append({"Fuel In Tank (Sensor)" : self.ValueOut(FuelValue, Units, JSONNum)})
+            elif self.ExternalFuelDataSupported():
+                FuelValue = self.GetExternalFuelPercentage(ReturnFloat = True)
+                Maintenance["Maintenance"].append({"Fuel Level Sensor" : self.ValueOut(FuelValue, "%", JSONNum)})
+                FuelValue = self.GetFuelInTank(ReturnFloat = True)
+                if FuelValue != None:
+                    Maintenance["Maintenance"].append({"Fuel In Tank (Sensor)" : self.ValueOut(FuelValue, Units, JSONNum)})
+
+            if self.FuelTankCalculationSupported():
+                Maintenance["Maintenance"].append({"Estimated Fuel In Tank " : self.ValueOut(self.GetEstimatedFuelInTank(ReturnFloat = True), Units, JSONNum)})
+
+                DisplayText = "Hours of Fuel Remaining (Estimated %.02f Load )" % self.EstimateLoad
+                RemainingFuelTimeFloat = self.GetRemainingFuelTime(ReturnFloat = True)
+                if RemainingFuelTimeFloat != None:
+                    Maintenance["Maintenance"].append({DisplayText : self.ValueOut(RemainingFuelTimeFloat, "h", JSONNum)})
+
+                RemainingFuelTimeFloat = self.GetRemainingFuelTime(ReturnFloat = True, Actual = True)
+                if RemainingFuelTimeFloat != None:
+                    Maintenance["Maintenance"].append({"Hours of Fuel Remaining (Current Load)" : self.ValueOut(RemainingFuelTimeFloat, "h", JSONNum)})
+
+            # Only update power log related info once a min for performance reasons
+            if self.LastHouseKeepingTime == None or self.GetDeltaTimeMinutes(datetime.datetime.now() - self.LastHouseKeepingTime) >= 1 :
+                UpdateNow = True
+                self.LastHouseKeepingTime = datetime.datetime.now()
+            else:
+                UpdateNow = False
+            if self.PowerMeterIsSupported() and self.FuelConsumptionSupported():
+                if UpdateNow:
+                    self.KWHoursMonth = self.GetPowerHistory("power_log_json=43200,kw")
+                    self.FuelMonth = self.GetPowerHistory("power_log_json=43200,fuel")
+                    self.FuelTotal = self.GetPowerHistory("power_log_json=0,fuel")
+                    self.RunHoursMonth = self.GetPowerHistory("power_log_json=43200,time")
+
+                if self.KWHoursMonth != None:
+                    Maintenance["Maintenance"].append({"kW Hours in last 30 days" : self.UnitsOut(str(self.KWHoursMonth) + " kWh", type = float, NoString = JSONNum)})
+                if self.FuelMonth != None:
+                    Maintenance["Maintenance"].append({"Fuel Consumption in last 30 days" : self.UnitsOut(self.FuelMonth, type = float, NoString = JSONNum)})
+                if self.FuelTotal != None:
+                    Maintenance["Maintenance"].append({"Total Power Log Fuel Consumption" : self.UnitsOut(self.FuelTotal, type = float, NoString = JSONNum)})
+                if self.RunHoursMonth != None:
+                    Maintenance["Maintenance"].append({"Run Hours in last 30 days" : self.UnitsOut(str(self.RunHoursMonth) + " h", type = float, NoString = JSONNum)})
+
+            if self.FuelLevelOK != None:
+                if self.FuelLevelOK:
+                    level = "OK"
+                else:
+                    level = "Low"
+                Maintenance["Maintenance"].append({"Fuel Level State" : level})
+
             if not self.SmartSwitch:
                 pass
                 Exercise = []
@@ -1744,7 +1857,7 @@ class HPanel(GeneratorController):
                         Status["Status"].append(self.ExternalTempData)
                 except Exception as e1:
                     self.LogErrorLine("Error in DisplayStatus: " + str(e1))
-                    
+
             Status["Status"].append({"Time":Time})
 
             Battery.append({"Battery Voltage" : self.ValueOut(self.GetParameter(self.Reg.BATTERY_VOLTS[REGISTER], ReturnFloat = True, Divider = 100.0), "V", JSONNum)})
@@ -1951,11 +2064,10 @@ class HPanel(GeneratorController):
 
         try:
             Outage = collections.OrderedDict()
-            OutageData = collections.OrderedDict()
-            Outage["Outage"] = OutageData
+            Outage["Outage"] = []
 
-            OutageData["Status"] = "Not Supported"
-            OutageData["System In Outage"] = "No"       # mynotify.py checks this
+            Outage["Outage"].append({"Status" : "Not Supported"})
+            Outage["Outage"].append({"System In Outage" : "No"})    # mynotify.py checks this
 
         except Exception as e1:
             self.LogErrorLine("Error in DisplayOutage: " + str(e1))
@@ -2014,7 +2126,7 @@ class HPanel(GeneratorController):
             Data= []
             Data.append(d.hour)             #GEN_TIME_HR_MIN
             Data.append(d.minute)
-            self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.GEN_TIME_HR_MIN[REGISTER], len(Data) / 2, Data)
+            self.ModBus.ProcessWriteTransaction(self.Reg.GEN_TIME_HR_MIN[REGISTER], len(Data) / 2, Data)
 
             DayOfWeek = d.weekday()     # returns Monday is 0 and Sunday is 6
             # expects Sunday = 1, Saturday = 7
@@ -2025,18 +2137,18 @@ class HPanel(GeneratorController):
             Data= []
             Data.append(d.second)           #GEN_TIME_SEC_DYWK
             Data.append(DayOfWeek)                  #Day of Week is always zero
-            self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.GEN_TIME_SEC_DYWK[REGISTER], len(Data) / 2, Data)
+            self.ModBus.ProcessWriteTransaction(self.Reg.GEN_TIME_SEC_DYWK[REGISTER], len(Data) / 2, Data)
 
             Data= []
             Data.append(d.month)            #GEN_TIME_MONTH_DAY
             Data.append(d.day)              # low byte is day of month
-            self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.GEN_TIME_MONTH_DAY[REGISTER], len(Data) / 2, Data)
+            self.ModBus.ProcessWriteTransaction(self.Reg.GEN_TIME_MONTH_DAY[REGISTER], len(Data) / 2, Data)
 
             Data= []
             # Note: Day of week should always be zero when setting time
             Data.append(d.year - 2000)      # GEN_TIME_YR
             Data.append(0)                  #
-            self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.GEN_TIME_YR[REGISTER], len(Data) / 2, Data)
+            self.ModBus.ProcessWriteTransaction(self.Reg.GEN_TIME_YR[REGISTER], len(Data) / 2, Data)
 
         except Exception as e1:
             self.LogErrorLine("Error in SetGeneratorTimeDate: " + str(e1))
@@ -2110,19 +2222,19 @@ class HPanel(GeneratorController):
                 Data = []
                 Data.append(0)
                 Data.append(1)
-                self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.QUIETTEST_STATUS[REGISTER], len(Data) / 2, Data)
+                self.ModBus.ProcessWriteTransaction(self.Reg.QUIETTEST_STATUS[REGISTER], len(Data) / 2, Data)
                 return "Remote command sent successfully (quiettest)"
             elif Command == "quietteststop":
                 Data = []
                 Data.append(0)
                 Data.append(0)
-                self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.QUIETTEST_STATUS[REGISTER], len(Data) / 2, Data)
+                self.ModBus.ProcessWriteTransaction(self.Reg.QUIETTEST_STATUS[REGISTER], len(Data) / 2, Data)
                 return "Remote command sent successfully (quietteststop)"
             elif Command == "ackalarm":
                 Data = []
                 Data.append(0)
                 Data.append(1)
-                self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.ALARM_ACK[REGISTER], len(Data) / 2, Data)
+                self.ModBus.ProcessWriteTransaction(self.Reg.ALARM_ACK[REGISTER], len(Data) / 2, Data)
                 return "Remote command sent successfully (ackalarm)"
 
                 '''
@@ -2131,19 +2243,19 @@ class HPanel(GeneratorController):
                     Data = []
                     Data.append(0)
                     Data.append(0)
-                    self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.SWITCH_STATE[REGISTER], len(Data) / 2, Data)
+                    self.ModBus.ProcessWriteTransaction(self.Reg.SWITCH_STATE[REGISTER], len(Data) / 2, Data)
                     return "Remote command sent successfully (off)"
                 elif Command == "auto":
                     Data = []
                     Data.append(1)
                     Data.append(0)
-                    self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.SWITCH_STATE[REGISTER], len(Data) / 2, Data)
+                    self.ModBus.ProcessWriteTransaction(self.Reg.SWITCH_STATE[REGISTER], len(Data) / 2, Data)
                     return "Remote command sent successfully (auto)"
                 elif Command == "manual":
                     Data = []
                     Data.append(0)
                     Data.append(1)
-                    self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.SWITCH_STATE[REGISTER], len(Data) / 2, Data)
+                    self.ModBus.ProcessWriteTransaction(self.Reg.SWITCH_STATE[REGISTER], len(Data) / 2, Data)
                     return "Remote command sent successfully (manual)"
                 '''
             else:
@@ -2157,7 +2269,7 @@ class HPanel(GeneratorController):
             Data.append(Value3 & 0x00FF)        # value written (Low byte)
 
             ## Write 3 regs at once
-            self.ModBus.ProcessMasterSlaveWriteTransaction(self.Reg.START_BITS[REGISTER], len(Data) / 2, Data)
+            self.ModBus.ProcessWriteTransaction(self.Reg.START_BITS[REGISTER], len(Data) / 2, Data)
 
             return "Remote command sent successfully"
         except Exception as e1:
@@ -2174,7 +2286,7 @@ class HPanel(GeneratorController):
         return self.GetParameterStringValue(RegisterStringEnum.CONTROLLER_NAME[REGISTER], RegisterStringEnum.CONTROLLER_NAME[RET_STRING])
 
     #----------  HPanel:ComminicationsIsActive  --------------------------------
-    # Called every 2 seconds, if communictions are failing, return False, otherwise
+    # Called every few seconds, if communictions are failing, return False, otherwise
     # True
     def ComminicationsIsActive(self):
         if self.LastRxPacketCount == self.ModBus.RxPacketCount:
@@ -2193,6 +2305,8 @@ class HPanel(GeneratorController):
 
         if self.bDisablePowerLog:
             return False
+        if self.UseExternalCTData:
+            return True
         return True
 
     #---------------------HPanel::GetPowerOutput--------------------------------
@@ -2201,10 +2315,47 @@ class HPanel(GeneratorController):
     # return kW with units i.e. "2.45kW"
     def GetPowerOutput(self, ReturnFloat = False):
 
+        if self.UseCalculatedPower:
+            return self.GetPowerOutputAlt(ReturnFloat = ReturnFloat)
         if ReturnFloat:
             return self.GetParameter(self.Reg.TOTAL_POWER_KW[REGISTER], ReturnFloat = True)
         else:
             return self.GetParameter(self.Reg.TOTAL_POWER_KW[REGISTER], "kW", ReturnFloat = False)
+
+    #------------ HPanel:GetPowerOutputAlt -------------------------------------
+    def GetPowerOutputAlt(self, ReturnFloat = False):
+
+        if ReturnFloat:
+            DefaultReturn = 0.0
+        else:
+            DefaultReturn = "0 kW"
+
+        if not self.PowerMeterIsSupported():
+            return DefaultReturn
+
+        EngineState = self.GetEngineState()
+        # report null if engine is not running
+        if not len(EngineState) or "stop" in EngineState.lower() or "off" in EngineState.lower():
+            return DefaultReturn
+
+        Current = float(self.GetParameter(self.Reg.AVG_CURRENT[REGISTER],ReturnInt = True))
+        Voltage = float(self.GetParameter(self.Reg.AVG_VOLTAGE[REGISTER],ReturnInt = True))
+        powerfactor = self.GetParameter(self.Reg.TOTAL_PF[REGISTER], ReturnFloat = True, Divider = 100.0)
+
+        PowerOut = 0.0
+        try:
+            if not Current == 0:
+                # P(W) = PF x I(A) x V(V)
+                # this calculation is for single phase but we are using average voltage and current
+                # watts is the unit
+                PowerOut = powerfactor * Voltage * Current
+        except:
+            PowerOut = 0.0
+
+        # return kW
+        if ReturnFloat:
+            return round((PowerOut / 1000.0), 3)
+        return "%.2f kW" % (PowerOut / 1000.0)
 
     #----------  HPanel:GetCommStatus  -----------------------------------------
     # return Dict with communication stats
@@ -2264,3 +2415,31 @@ class HPanel(GeneratorController):
     # returns a one line status for example : switch state and engine state
     def GetOneLineStatus(self):
         return self.GetSwitchState() + " : " + self.GetEngineState()
+
+    #----------  GeneratorController::FuelSensorSupported------------------------
+    def FuelSensorSupported(self):
+
+        if self.UseFuelSensor:
+            return True
+        return False
+
+    #------------ Evolution:GetFuelSensor --------------------------------------
+    def GetFuelSensor(self, ReturnInt = False):
+
+        if not self.FuelSensorSupported():
+            return None
+
+        return self.GetParameter(self.Reg.FUEL_LEVEL[REGISTER], ReturnInt = ReturnInt)
+
+    #----------  GeneratorController::GetFuelConsumptionDataPoints--------------
+    def GetFuelConsumptionDataPoints(self):
+
+        try:
+            if self.FuelHalfRate == 0 or self.FuelFullRate == 0:
+                return None
+
+            return [.5, float(self.FuelHalfRate), 1.0, float(self.FuelFullRate), self.FuelUnits]
+
+        except Exception as e1:
+            self.LogErrorLine("Error in GetFuelConsumptionDataPoints: " + str(e1))
+        return None
