@@ -227,9 +227,9 @@ def doLdapLogin(username, password):
         conn.search(LdapBase, '(&(objectclass=user)(sAMAccountName='+AccountName+'))', attributes=['memberOf'])
         for user in sorted(conn.entries):
             for group in user.memberOf:
-                if group.upper().find("CN="+LdapAdminGroup.upper()) >= 0:
+                if group.upper().find("CN="+LdapAdminGroup.upper()+",") >= 0:
                     HasAdmin = True
-                elif group.upper().find("CN="+LdapReadOnlyGroup.upper()) >= 0:
+                elif group.upper().find("CN="+LdapReadOnlyGroup.upper()+",") >= 0:
                     HasReadOnly = True
     except Exception:
         LogError("Error in LDAP login. Check credentials and config parameters")
