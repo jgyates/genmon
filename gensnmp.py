@@ -180,6 +180,15 @@ class GenSNMP(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in ControllerIsGeneracH100: " + str(e1))
             return False
+    #----------  GenSNMP::ControllerIsGeneracPowerZone -------------------------
+    def ControllerIsGeneracPowerZone(self):
+        try:
+            if "powerzone" in self.StartInfo["Controller"].lower():
+                return True
+            return False
+        except Exception as e1:
+            self.LogErrorLine("Error in ControllerIsPowerZone: " + str(e1))
+            return False
     #----------  GenSNMP::GetGeneratorStartInfo --------------------------------
     def GetGeneratorStartInfo(self):
 
@@ -256,6 +265,8 @@ class GenSNMP(MySupport):
                 CtlID = 0
             elif self.ControllerIsGeneracH100() or self.ControllerSelected == "h_100":
                 CtlID = 1
+            elif self.ControllerIsGeneracPowerZone() or self.ControllerSelected == "powerzone":
+                CtlID = 2
             else:
                 self.LogError("Error: Invalid controller type")
                 self.LogError(str(self.ControllerSelected))
@@ -385,7 +396,43 @@ class GenSNMP(MySupport):
                 self.AddOID((CtlID,0,3,0),return_type = str, description = "MonitorTime", default = " ", keywords = ["Status/Time","Monitor Time"])
                 self.AddOID((CtlID,0,3,1),return_type = str, description = "GeneratorTime", default = " ", keywords = ["Status/Time","Generator Time"])
                 # TODO selected H-100 Maint items?
+            elif self.ControllerIsGeneracPowerZone() or self.ControllerSelected == "powerzone":
+                self.LogDebug("H-100/GPanel")
+                # Engine
+                self.AddOID((CtlID,0,0,0),return_type = str, description = "SwitchState", default = " ", keywords = ["Status/Engine","Switch State"])
+                self.AddOID((CtlID,0,0,1),return_type = str, description = "EngineStatus", default = " ", keywords = ["Status/Engine","Engine State"])
+                self.AddOID((CtlID,0,0,2),return_type = str, description = "GeneratorStatus", default = " ", keywords = ["Status/Engine","Generator Status"])
+                self.AddOID((CtlID,0,0,3),return_type = str, description = "OutputPower", default = " ", keywords = ["Status/Engine","Output Power"])
+                self.AddOID((CtlID,0,0,4),return_type = str, description = "OutputPowerFactor", default = " ", keywords = ["Status/Engine","Power Factor"])
+                self.AddOID((CtlID,0,0,5),return_type = str, description = "RPM", default = 0, keywords = ["Status/Engine/RPM"])
+                self.AddOID((CtlID,0,0,6),return_type = str, description = "Frequency", default = " ", keywords = ["Status/Engine/Frequency"])
+                self.AddOID((CtlID,0,0,7),return_type = str, description = "ThrottlePosition", default = " ", keywords = ["Status/Engine","Throttle Position"])
+                self.AddOID((CtlID,0,0,8),return_type = str, description = "CoolantTemp", default = " ", keywords = ["Status/Engine","Coolant Temp"])
+                self.AddOID((CtlID,0,0,9),return_type = str, description = "CoolantLevel", default = " ", keywords = ["Status/Engine","Coolant Level"])
+                self.AddOID((CtlID,0,0,10),return_type = str, description = "OilPressure", default = " ", keywords = ["Status/Engine","Oil Pressure"])
+                self.AddOID((CtlID,0,0,11),return_type = str, description = "OilTemp", default = " ", keywords = ["Status/Engine","Oil Temp"])
+                self.AddOID((CtlID,0,0,12),return_type = str, description = "FuelLevel", default = " ", keywords = ["Status/Engine","Fuel Level"])
+                self.AddOID((CtlID,0,0,13),return_type = str, description = "OxygeSensor", default = " ", keywords = ["Status/Engine","Oxygen Sensor"])
+                self.AddOID((CtlID,0,0,14),return_type = str, description = "CurrentPhaseA", default = " ", keywords = ["Status/Engine","Current Phase A"])
+                self.AddOID((CtlID,0,0,15),return_type = str, description = "CurrentPhaseB", default = " ", keywords = ["Status/Engine","Current Phase B"])
+                self.AddOID((CtlID,0,0,16),return_type = str, description = "CurrentPhaseC", default = " ", keywords = ["Status/Engine","Current Phase C"])
+                self.AddOID((CtlID,0,0,17),return_type = str, description = "AvgCurrent", default = " ", keywords = ["Status/Engine","Average Current"])
+                self.AddOID((CtlID,0,0,18),return_type = str, description = "VoltageAB", default = " ", keywords = ["Status/Engine","Voltage A-B"])
+                self.AddOID((CtlID,0,0,19),return_type = str, description = "VoltageBC", default = " ", keywords = ["Status/Engine","Voltage B-C"])
+                self.AddOID((CtlID,0,0,20),return_type = str, description = "VoltageCA", default = " ", keywords = ["Status/Engine","Voltage C-A"])
+                self.AddOID((CtlID,0,0,21),return_type = str, description = "AvgVoltage", default = " ", keywords = ["Status/Engine","Average Voltage"])
+                self.AddOID((CtlID,0,0,22),return_type = str, description = "AirFuelDutyCycle", default = " ", keywords = ["Status/Engine","Air Fuel Duty Cycle" ])
+                # Alarms
+                self.AddOID((CtlID,0,1,2),return_type = str, description = "AlarmList", default = " ", keywords = ["Status/Alarms","Alarm List"])
 
+                # Battery
+                self.AddOID((CtlID,0,2,0),return_type = str, description = "BatteryVoltage", default = " ", keywords = ["Status/Battery","Battery Voltage"])
+                self.AddOID((CtlID,0,2,1),return_type = str, description = "BatteryCurrent", default = " ", keywords = ["Status/Battery","Battery Charger Current"])
+
+                # TODO add HTS switch info
+                # Status Time
+                self.AddOID((CtlID,0,3,0),return_type = str, description = "MonitorTime", default = " ", keywords = ["Status/Time","Monitor Time"])
+                self.AddOID((CtlID,0,3,1),return_type = str, description = "GeneratorTime", default = " ", keywords = ["Status/Time","Generator Time"])
             # Monitor->Generator Monitor Stats
             self.AddOID((CtlID,4,0,0),return_type = str, description = "MonitorHealth", default = "Unknown", keywords = ["Monitor","Monitor Health"])
             self.AddOID((CtlID,4,0,1),return_type = str, description = "RunTime", default = "Unknown", keywords = ["Monitor","Run time"])

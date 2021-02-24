@@ -137,6 +137,16 @@ class MyGenPush(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in ControllerIsGeneracH100: " + str(e1))
             return False
+    #----------  MyGenPush::ControllerIsGeneracPowerZone -----------------------
+    def ControllerIsGeneracPowerZone(self):
+        try:
+            if "powerzone" in self.StartInfo["Controller"].lower():
+                return True
+            return False
+        except Exception as e1:
+            self.LogErrorLine("Error in ControllerIsGeneracPowerZone: " + str(e1))
+            return False
+
     #----------  MyGenPush::GetGeneratorStartInfo ------------------------------
     def GetGeneratorStartInfo(self):
 

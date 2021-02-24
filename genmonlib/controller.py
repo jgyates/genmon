@@ -731,7 +731,7 @@ class GeneratorController(MySupport):
             RegValue = self.ModBus.ProcessTransaction( Register, 1, skipupdate = True)
 
             if RegValue == "":
-                self.LogError("Validation Error: Register  not known (ReadRegValue):" + Register)
+                self.LogError("Validation Error: Register not known (ReadRegValue):" + Register)
                 msgbody = "Unsupported Register: " + Register
                 return msgbody
 
@@ -739,6 +739,47 @@ class GeneratorController(MySupport):
 
         except Exception as e1:
             self.LogErrorLine("Validation Error: Error parsing command string in ReadRegValue: " + CmdString)
+            self.LogError( str(e1))
+            return msgbody
+
+        return msgbody
+
+    #------------ GeneratorController:WriteRegValue ---------------------------
+    def WriteRegValue(self, CmdString):
+
+        # extract quiet mode setting from Command String
+        #Format we are looking for is "writeregvalue=01f4,aa"
+        msgbody = "Invalid command syntax for command writeregvalue"
+        try:
+
+            CmdList = CmdString.split("=")
+            if len(CmdList) != 2:
+                self.LogError("Validation Error: Error parsing command string in WriteRegValue (parse): " + CmdString)
+                return msgbody
+
+            CmdList[0] = CmdList[0].strip()
+
+            if not CmdList[0].lower() == "writeregvalue":
+                self.LogError("Validation Error: Error parsing command string in WriteRegValue (parse2): " + CmdString)
+                return msgbody
+
+            ParsedList = CmdList[1].split(",")
+
+            if len(ParsedList) != 2:
+                self.LogError("Validation Error: Error parsing command string in WriteRegValue (parse3): " + CmdString)
+                return msgbody
+            Register = ParsedList[0].strip()
+            Value = ParsedList[1].strip()
+            Data = []
+            Data.append(0)
+            Data.append(int(Value,16))
+            RegValue = self.ModBus.ProcessWriteTransaction( Register, len(Data) / 2, Data)
+
+            if RegValue == "":
+                msgbody = "OK"
+
+        except Exception as e1:
+            self.LogErrorLine("Validation Error: Error parsing command string in WriteRegValue: " + CmdString)
             self.LogError( str(e1))
             return msgbody
 
