@@ -36,7 +36,7 @@ def TestAllAddresses():
                 rate = baudrate, Parity = parity, OnePointFiveStopBits = OnePointFiveStopBits)
         else:
             modbus = ModbusProtocol(updatecallback = RegisterResults, address = modbusaddress, host = hostIP,
-                port = TCPport)
+                port = TCPport, modbustcp = ModbusTCP)
     except Exception as e1:
         print( "Test all: Error opening serial device...: " + str(e1))
         return False
@@ -132,6 +132,7 @@ if __name__=='__main__': #
     useTCP = False
     hostIP = None
     TCPport = None
+    ModbusTCP = False
 
     HelpStr = '\npython mobusdump.py -r <Baud Rate> -p <serial port> -a <modbus address to query> -s <start modbus register>  -e <end modbus register>\n'
     HelpStr += "\n   Example: python modbusdump.py -r 9600 -p /dev/serial0 -a 9d -s 5 -e 100 \n"
@@ -147,10 +148,11 @@ if __name__=='__main__': #
     HelpStr += "\n      -w  write this value to register instead of read. Start register is used as register"
     HelpStr += "\n      -i  IP address if modbus over TCP is used"
     HelpStr += "\n      -t  TCP port if modbus over TCP is used"
+    HelpStr += "\n      -m  Use Modbus TCP, if omitted and IP and port provided then use Modbus RTU over TCP"
     HelpStr += "\n \n"
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:],"bhr:p:s:e:a:x:w:i:t:",["rate=","port=","start=","end=","address=", "parity=","write=","ip=","tcpport="])
+        opts, args = getopt.getopt(sys.argv[1:],"mbhr:p:s:e:a:x:w:i:t:",["rate=","port=","start=","end=","address=", "parity=","write=","ip=","tcpport="])
     except getopt.GetoptError:
         print(HelpStr)
         sys.exit(2)
@@ -199,6 +201,9 @@ if __name__=='__main__': #
             elif opt in ("-t", "--tcpport"):
                 TCPport = int(arg)
                 print ('TCP Port : %d' % TCPport)
+            elif opt in ("-m", "--modbustcp"):
+                ModbusTCP = True
+                print ('Use Modbus TCP protocol')
 
     except Exception as e1:
         print (HelpStr)
@@ -251,7 +256,7 @@ if __name__=='__main__': #
                         rate = baudrate, Parity = parity, OnePointFiveStopBits = OnePointFiveStopBits)
                 else:
                     modbus = ModbusProtocol(updatecallback = RegisterResults, address = modbusaddress, host = hostIP,
-                        port = TCPport)
+                        port = TCPport, modbustcp = ModbusTCP)
             except Exception as e1:
                 print( "Error opening serial device...: " + str(e1))
                 sys.exit(2)

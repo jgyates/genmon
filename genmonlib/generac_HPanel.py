@@ -31,9 +31,9 @@ EVENT_LOG_START                 = 0x0c15
 EVENT_LOG_ENTRIES               = 20
 EVENT_LOG_LENGTH                = 64
 NAMEPLATE_DATA_FILE_RECORD      = "0040"      # 0x40
-NAMEPLATE_DATA_LENGTH           = 64        # Note: This is 1024 but I only read 64 due to performance
+NAMEPLATE_DATA_LENGTH           = 64        # Note: This is 1024 but I only read 64
 MISC_GEN_FILE_RECORD            = "002a"
-MISC_GEN_LENGTH                 = 18
+MISC_GEN_FILE_RECORD_LENGTH     = 18
 ENGINE_DATA_FILE_RECORD         = "0050"
 ENGINE_DATA_FILE_RECORD_LENGTH  = 48
 GOV_DATA_FILE_RECORD            = "00d3"
@@ -1091,7 +1091,7 @@ class HPanel(GeneratorController):
             StringOffsetEnd = StringOffset + (length *2)
             if StringOffset == StringOffsetEnd:
                 if decimal:
-                    return int(input_string[StringOffsetd])
+                    return int(input_string[StringOffset])
                 return int(input_string[StringOffset], 16)
             else:
                 if decimal:
@@ -1123,7 +1123,7 @@ class HPanel(GeneratorController):
             # Read the nameplate dataGet Serial Number
             self.ModBus.ProcessFileReadTransaction(NAMEPLATE_DATA_FILE_RECORD, NAMEPLATE_DATA_LENGTH / 2 )
             # Read Misc Engine data
-            self.ModBus.ProcessFileReadTransaction(MISC_GEN_FILE_RECORD, MISC_GEN_LENGTH / 2 )
+            self.ModBus.ProcessFileReadTransaction(MISC_GEN_FILE_RECORD, MISC_GEN_FILE_RECORD_LENGTH / 2 )
             # Read Engine Data
             self.ModBus.ProcessFileReadTransaction(ENGINE_DATA_FILE_RECORD, ENGINE_DATA_FILE_RECORD_LENGTH / 2 )
             # Read Govonor Data
@@ -2034,7 +2034,7 @@ class HPanel(GeneratorController):
         Phase = None
         TargetRPM = []
         GenData = self.GetParameterFileValue(MISC_GEN_FILE_RECORD)
-        if len(GenData) >= 34:
+        if len(GenData) >= (MISC_GEN_FILE_RECORD_LENGTH * 2):
             try:
                 FlyWheelTeeth.append(self.GetIntFromString(GenData, 0, 2))  # Byte 1 and 2
                 FlyWheelTeeth.append(self.GetIntFromString(GenData, 2, 2))  # Byte 2 and 3
