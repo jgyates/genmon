@@ -44,14 +44,14 @@ class tankutility(MyCommon):
             url = self.urljoin(self.BASEURL,"getToken")
             query = requests.get(url, auth=(self.username, self.password))
             if query.status_code != 200:
-                self.LogError("Error logging in, error code: " + str(query.status_code ))
+                self.LogError("tankutility: Error logging in, error code: " + str(query.status_code ))
                 return False
             else:
                 response = query.json()
                 self.LogDebug("Login: " + str(response))
                 try:
                     if response['error'] != '':
-                        self.LogError("API reports an account error: " + str(response['error']))
+                        self.LogError("tankutility: API reports an account error: " + str(response['error']))
                         return False
                 except:
                     pass
@@ -70,11 +70,11 @@ class tankutility(MyCommon):
             params = (('token', self.token),)
             query = requests.get(url, params=params)
             if query.status_code != 200:
-                self.LogError("Unable to obtain device list from the API, Error code: " + str(query.status_code ))
+                self.LogError("tankutility: Unable to obtain device list from the API, Error code: " + str(query.status_code ))
                 return False
             else:
                 response = query.json()
-                self.LogDebug("GetDevices: " + str(response))
+                self.LogDebug("tankutility: GetDevices: " + str(response))
                 self.DeviceIDs = response['devices']
 
                 return True
@@ -87,18 +87,18 @@ class tankutility(MyCommon):
             if not len(deviceID):
                 return None
             if not len(self.token):
-                self.LogError("Error in tankutility::GetDevices: not logged in")
+                self.LogError("Error in tankutility::GetData: not logged in")
                 return None
             url = self.urljoin(self.BASEURL,"devices", deviceID)
             params = (('token', self.token),)
             query = requests.get(url, params=params)
             if query.status_code != 200:
-                self.LogError("Unable to obtain device info from the API, Error code: " + str(query.status_code ) + ": " + str(deviceID))
+                self.LogError("tankutility: Unable to obtain device info from the API, Error code: " + str(query.status_code ) + ": " + str(deviceID))
                 return None
             else:
                 response = query.json()
                 self.Data = response["device"]
-                self.LogDebug("GetData: ID = " + str(deviceID) + " : "+ str(response))
+                self.LogDebug("tankutility: GetData: ID = " + str(deviceID) + " : "+ str(response))
                 return self.Data
         except Exception as e1:
             self.LogErrorLine("Error in tankutility:GetData : " + str(e1))
@@ -107,10 +107,10 @@ class tankutility(MyCommon):
     def GetIDFromName(self, name):
         try:
             if not self.GetDevices():
-                self.LogError("GetDevices failed in tankutility:GetIDFromName")
+                self.LogError("tankutility: GetDevices failed in tankutility:GetIDFromName")
                 return ""
             if not len(self.DeviceIDs):
-                self.LogError("Not devices returned in tankutility:GetIDFromName")
+                self.LogError("Not devices returned in tankutility: GetIDFromName")
                 return ""
             name = name.strip()
             if name == "" or name == None:      # assume only one device
@@ -126,12 +126,26 @@ class tankutility(MyCommon):
         except Exception as e1:
             self.LogErrorLine("Error in tankutility:GetIDFromName: " + str(e1))
             return ""
+    # ---------- GenTankData::GetReadingTemperature-----------------------------
+    def GetReadingTemperature(self):
+        try:
+            return self.Data["lastReading"]["temperature"]
+        except Exception as e1:
+            self.LogErrorLine("tankutility: Error in GetReadingTemperature: " + str(e1))
+            return 0
+    # ---------- GenTankData::GetReadingTime------------------------------------
+    def GetReadingEpochTime(self):
+        try:
+            return self.Data["lastReading"]["time"]
+        except Exception as e1:
+            self.LogErrorLine("tankutility: Error in GetReadingTime: " + str(e1))
+            return 0
     # ---------- GenTankData::GetCapacity---------------------------------------
     def GetCapacity(self):
         try:
             return self.Data["capacity"]
         except Exception as e1:
-            self.LogErrorLine("Error in GenTankData: GetCapacity: " + str(e1))
+            self.LogErrorLine("tankutility: Error in GetCapacity: " + str(e1))
             return 0
 
     # ---------- GenTankData::GetPercentage-------------------------------------
@@ -139,5 +153,5 @@ class tankutility(MyCommon):
         try:
             return round(float(self.Data["lastReading"]["tank"]),2)
         except Exception as e1:
-            self.LogErrorLine("Error in GenTankData: GetPercentage: " + str(e1))
+            self.LogErrorLine("tankutility: Error in GetPercentage: " + str(e1))
             return 0.0
