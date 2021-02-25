@@ -200,7 +200,7 @@ def do_admin_login():
 
 #-------------------------------------------------------------------------------
 def doLdapLogin(username, password):
-    if LdapServer == None or LdapServer == "":
+    if LdapServer is None or LdapServer == "":
         return False
     try:
         from ldap3 import Server, Connection, ALL, NTLM
@@ -231,6 +231,7 @@ def doLdapLogin(username, password):
                     HasAdmin = True
                 elif group.upper().find("CN="+LdapReadOnlyGroup.upper()+",") >= 0:
                     HasReadOnly = True
+        conn.unbind()
     except Exception:
         LogError("Error in LDAP login. Check credentials and config parameters")
 
