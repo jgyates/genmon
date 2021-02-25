@@ -231,6 +231,7 @@ def doLdapLogin(username, password):
                     HasAdmin = True
                 elif group.upper().find("CN="+LdapReadOnlyGroup.upper()+",") >= 0:
                     HasReadOnly = True
+        conn.unbind()
     except Exception:
         LogError("Error in LDAP login. Check credentials and config parameters")
 
