@@ -200,7 +200,7 @@ def do_admin_login():
 
 #-------------------------------------------------------------------------------
 def doLdapLogin(username, password):
-    if LdapServer is None or LdapServer == "":
+    if LdapServer == None or LdapServer == "":
         return False
     try:
         from ldap3 import Server, Connection, ALL, NTLM
