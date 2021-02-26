@@ -1,6 +1,16 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.16.0  -2021-02-24
+- Initial support for Generac PowerZone, log support not currently supported 
+- Update to genmqtt and gensnmp for powerzone support
+
+## V1.15.20 - 2021-02-26
+- Update for gensms add on to allow multiple recipients
+- Update for OtherApps/modbusdump.py for modbus TCP support
+- Minor tweak to gentankutil for maintenance reasons
+- added support for Modbus TCP (existing support for Modbus serial over TCP is still supported also)
+
 ## V1.15.19 - 2021-02-10
 - Updated mynotify.py to add notifications for software update, low fuel notice, and internal errors (e.g. communication errros etc.). This allows genslack, genpushover, gensms, gensms_modem, gensyslog and genemail2sms to support these additional notices.
 

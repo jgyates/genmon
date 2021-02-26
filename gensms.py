@@ -152,12 +152,14 @@ def SendNotice(Message):
 
         client = Client(account_sid, auth_token)
 
-        message = client.messages.create(
-            to= to_number,
-            from_ = from_number,
-            body = Message)
-
-        console.info(message.sid)
+        # send to multiple recipient(s)
+        for recipient in to_number_list:
+            recipient = recipient.strip()
+            message = client.messages.create(
+                to = recipient,
+                from_ = from_number,
+                body = Message)
+            console.info(message.sid)
 
     except Exception as e1:
         log.error("Error: " + str(e1))
@@ -179,6 +181,8 @@ if __name__=='__main__':
         auth_token = config.ReadValue('authtoken', default = "")
         to_number = config.ReadValue('to_number', default = "")
         from_number = config.ReadValue('from_number', default = "")
+
+        to_number_list = to_number.split(",")
 
         if account_sid == "" or auth_token == "" or to_number == "" or from_number == "":
             log.error("Missing parameter in " +  os.path.join(ConfigFilePath, 'gensms.conf'))

@@ -599,7 +599,7 @@ def GetAddOns():
         AddOnCfg['gensms']['parameters']['to_number'] = CreateAddOnParam(
             ConfigFiles[GENSMS_CONFIG].ReadValue("to_number", return_type = str, default = ""),
             'string',
-            "Mobile number to send SMS message to. This can be any mobile number.",
+            "Mobile number to send SMS message to. This can be any mobile number. Separate multilpe recipients with commas.",
             bounds = 'required InternationalPhone',
             display_name = "Recipient Phone Number")
         AddOnCfg['gensms']['parameters']['from_number'] = CreateAddOnParam(
