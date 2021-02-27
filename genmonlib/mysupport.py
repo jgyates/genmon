@@ -475,8 +475,17 @@ class MySupport(MyCommon):
 
             if not prog_name.lower().endswith(".py"):
                 prog_name += ".py"
-            if MySupport.IsRunning(prog_name = prog_name, log = log, multi_instance = multi_instance):
-                raise Exception("The program %s is already loaded" % prog_name)
+
+            attempts = 0
+            while True:
+                if MySupport.IsRunning(prog_name = prog_name, log = log, multi_instance = multi_instance):
+                    if attempts >= 4:
+                        raise Exception("The program %s is already loaded" % prog_name)
+                    else:
+                        attempts += 1
+                        time.sleep(1)
+                else:
+                    break
 
         except Exception as e1:
             console.error("Error : " + str(e1))
