@@ -1,8 +1,8 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
-## V1.16.0  -2021-02-24
-- Initial support for Generac PowerZone, log support not currently supported 
+## V1.16.00  -2021-02-24
+- Initial support for Generac PowerZone, log support not currently supported
 - Update to genmqtt and gensnmp for powerzone support
 
 ## V1.15.20 - 2021-02-26
