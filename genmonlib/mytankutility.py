@@ -98,6 +98,7 @@ class tankutility(MyCommon):
             else:
                 response = query.json()
                 self.Data = response["device"]
+                self.LogError(str(self.Data))
                 self.LogDebug("tankutility: GetData: ID = " + str(deviceID) + " : "+ str(response))
                 return self.Data
         except Exception as e1:
@@ -146,8 +147,33 @@ class tankutility(MyCommon):
             return self.Data["capacity"]
         except Exception as e1:
             self.LogErrorLine("tankutility: Error in GetCapacity: " + str(e1))
-            return 0
-
+            return
+    # ---------- GenTankData::GetFuelType---------------------------------------
+    def GetFuelType(self):
+        try:
+            return self.Data["fuel_type"]
+        except Exception as e1:
+            self.LogErrorLine("tankutility: Error in GetFuelType: " + str(e1))
+            return "Unknown"
+    # ---------- GenTankData::GetFuelType---------------------------------------
+    def GetBattery(self):
+        try:
+            if self.Data["battery_crit"]:
+                return "Critical"
+            elif self.Data["battery_warn"]:
+                return "Warning"
+            else:
+                return "OK"
+        except Exception as e1:
+            self.LogErrorLine("tankutility: Error in GetBattery: " + str(e1))
+            return "Unknown"
+    # ---------- GenTankData::GetAddress-------------------------------------
+    def GetAddress(self):
+        try:
+            return self.Data["address"]
+        except Exception as e1:
+            self.LogErrorLine("tankutility: Error in GetAddress: " + str(e1))
+            return "Unknown"
     # ---------- GenTankData::GetPercentage-------------------------------------
     def GetPercentage(self):
         try:
@@ -155,3 +181,10 @@ class tankutility(MyCommon):
         except Exception as e1:
             self.LogErrorLine("tankutility: Error in GetPercentage: " + str(e1))
             return 0.0
+    # ---------- GenTankData::GetRSSI-------------------------------------
+    def GetRSSI(self):
+        try:
+            return self.Data["telemetry"][0]["rssi"]
+        except Exception as e1:
+            self.LogErrorLine("tankutility: Error in GetRSSI: " + str(e1))
+            return "Unknown"
