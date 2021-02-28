@@ -20,6 +20,7 @@ try:
     from genmonlib.mysupport import MySupport
     from genmonlib.mycommon import MyCommon
     from genmonlib.mythread import MyThread
+    from genmonlib.mytankutility import tankutility
     from genmonlib.program_defaults import ProgramDefaults
 
 except Exception as e1:
@@ -28,121 +29,6 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-class tankutility(MyCommon):
-
-    #------------ tankutility::init---------------------------------------------
-    def __init__(self, username, password, log, debug = False):
-
-        self.log = log
-        self.username = username
-        self.password = password
-        self.token = ""
-        self.BASEURL = "https://data.tankutility.com/api/"
-        self.DeviceIDs = []
-        self.DeviceCount = 0
-        self.debug = debug
-        self.Data = None
-    #------------ tankutility::Login--------------------------------------------
-    def Login(self):
-        try:
-            ## Register user name and password with the API and get an authorization token for subsequent queries
-            url = self.urljoin(self.BASEURL,"getToken")
-            query = requests.get(url, auth=(self.username, self.password))
-            if query.status_code != 200:
-                self.LogError("Error logging in, error code: " + str(query.status_code ))
-                return False
-            else:
-                response = query.json()
-                self.LogDebug("Login: " + str(response))
-                if response['error'] != '':
-                    self.LogError("API reports an account error: " + str(response['error']))
-                    return False
-                self.token = response['token']
-                return True
-        except Exception as e1:
-            self.LogErrorLine("Error in tankutility:Login: " + str(e1))
-            return False
-    #------------ tankutility::GetDevices---------------------------------------
-    def GetDevices(self):
-        try:
-            if not len(self.token):
-                self.LogError("Error in tankutility::GetDevices: not logged in")
-                return False
-            url = self.urljoin(self.BASEURL,"devices")
-            params = (('token', self.token),)
-            query = requests.get(url, params=params)
-            if query.status_code != 200:
-                self.LogError("Unable to obtain device list from the API, Error code: " + str(query.status_code ))
-                return False
-            else:
-                response = query.json()
-                self.LogDebug("GetDevices: " + str(response))
-                self.DeviceIDs = response['devices']
-
-                return True
-        except Exception as e1:
-            self.LogErrorLine("Error in tankutility:GetDevices : " + str(e1))
-            return False
-    #------------ tankutility::GetData------------------------------------------
-    def GetData(self, deviceID):
-        try:
-            if not len(deviceID):
-                return None
-            if not len(self.token):
-                self.LogError("Error in tankutility::GetDevices: not logged in")
-                return None
-            url = self.urljoin(self.BASEURL,"devices", deviceID)
-            params = (('token', self.token),)
-            query = requests.get(url, params=params)
-            if query.status_code != 200:
-                self.LogError("Unable to obtain device info from the API, Error code: " + str(query.status_code ) + ": " + str(deviceID))
-                return None
-            else:
-                response = query.json()
-                self.Data = response["device"]
-                self.LogDebug("GetData: ID = " + str(deviceID) + " : "+ str(response))
-                return self.Data
-        except Exception as e1:
-            self.LogErrorLine("Error in tankutility:GetData : " + str(e1))
-            return None
-    #------------ tankutility::GetIDFromName------------------------------------------
-    def GetIDFromName(self, name):
-        try:
-            if not self.GetDevices():
-                self.LogError("GetDevices failed in tankutility:GetIDFromName")
-                return ""
-            if not len(self.DeviceIDs):
-                self.LogError("Not devices returned in tankutility:GetIDFromName")
-                return ""
-            name = name.strip()
-            if name == "" or name == None:      # assume only one device
-                return self.DeviceIDs[0]
-            for device in self.DeviceIDs:
-                tankdata = self.GetData(device)
-                if tankdata == None:
-                    continue
-                if tankdata["name"].lower() == name.lower():
-                    self.Data = tankdata
-                    return device
-            return ""
-        except Exception as e1:
-            self.LogErrorLine("Error in tankutility:GetIDFromName: " + str(e1))
-            return ""
-    # ---------- GenTankData::GetCapacity---------------------------------------
-    def GetCapacity(self):
-        try:
-            return self.Data["capacity"]
-        except Exception as e1:
-            self.LogErrorLine("Error in GenTankData: GetCapacity: " + str(e1))
-            return 0
-
-    # ---------- GenTankData::GetPercentage-------------------------------------
-    def GetPercentage(self):
-        try:
-            return round(float(self.Data["lastReading"]["tank"]),2)
-        except Exception as e1:
-            self.LogErrorLine("Error in GenTankData: GetPercentage: " + str(e1))
-            return 0.0
 
 #------------ GenTankData class ------------------------------------------------
 class GenTankData(MySupport):
@@ -153,22 +39,22 @@ class GenTankData(MySupport):
         loglocation = ProgramDefaults.LogPath,
         ConfigFilePath = MyCommon.DefaultConfPath,
         host = ProgramDefaults.LocalHost,
-        port = ProgramDefaults.ServerPort):
+        port = ProgramDefaults.ServerPort,
+        console = None):
 
         super(GenTankData, self).__init__()
 
-        self.LogFileName = loglocation + "gentankutil.log"
+        self.LogFileName = os.path.join(loglocation, "gentankutil.log")
         self.AccessLock = threading.Lock()
-        # log errors in this module to a file
-        self.log = SetupLogger("gentankutil", self.LogFileName)
 
-        self.console = SetupLogger("gentankutil_console", log_file = "", stream = True)
+        self.log = log
+        self.console = console
 
         self.MonitorAddress = host
         self.PollTime =  2
         self.TankID = ""
         self.debug = False
-        configfile = ConfigFilePath + 'gentankutil.conf'
+        configfile = os.path.join(ConfigFilePath, 'gentankutil.conf')
         try:
             if not os.path.isfile(configfile):
                 self.LogConsole("Missing config file : " + configfile)
@@ -196,24 +82,7 @@ class GenTankData(MySupport):
             sys.exit(1)
 
         try:
-
-            try:
-                startcount = 0
-                while startcount <= 10:
-                    try:
-                        self.Generator = ClientInterface(host = self.MonitorAddress, port = port, log = self.log)
-                        break
-                    except Exception as e1:
-                        startcount += 1
-                        if startcount >= 10:
-                            self.console.info("genmon not loaded.")
-                            self.LogError("Unable to connect to genmon.")
-                            sys.exit(1)
-                        time.sleep(1)
-                        continue
-
-            except Exception as e1:
-                self.LogErrorLine("Error in GenTankData init: "  + str(e1))
+            self.Generator = ClientInterface(host = self.MonitorAddress, port = port, log = self.log)
 
             #if not self.CheckGeneratorRequirement():
             #    self.LogError("Requirements not met. Exiting.")
@@ -224,9 +93,8 @@ class GenTankData(MySupport):
             self.Threads["TankCheckThread"] = MyThread(self.TankCheckThread, Name = "TankCheckThread", start = False)
             self.Threads["TankCheckThread"].Start()
 
-            atexit.register(self.Close)
-            signal.signal(signal.SIGTERM, self.Close)
-            signal.signal(signal.SIGINT, self.Close)
+            signal.signal(signal.SIGTERM, self.SignalClose)
+            signal.signal(signal.SIGINT, self.SignalClose)
 
         except Exception as e1:
             self.LogErrorLine("Error in GenTankData init: " + str(e1))
@@ -309,6 +177,12 @@ class GenTankData(MySupport):
                 if self.WaitForExit("TankCheckThread", float(self.PollTime * 60)):
                     return
 
+    # ----------GenTankData::SignalClose----------------------------------------
+    def SignalClose(self, signum, frame):
+
+        self.Close()
+        sys.exit(1)
+
     # ----------GenTankData::Close----------------------------------------------
     def Close(self):
         self.KillThread("TankCheckThread")
@@ -316,34 +190,9 @@ class GenTankData(MySupport):
 #-------------------------------------------------------------------------------
 if __name__ == "__main__":
 
-    console = SetupLogger("gentankdata_console", log_file = "", stream = True)
-    HelpStr = '\nsudo python gentankdata.py -a <IP Address or localhost> -c <path to genmon config file>\n'
-    if os.geteuid() != 0:
-        console.error("\nYou need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.\n")
-        sys.exit(2)
+    console, ConfigFilePath, address, port, loglocation, log = MySupport.SetupAddOnProgram("gentankutil")
 
-    try:
-        ConfigFilePath = ProgramDefaults.ConfPath
-        address = ProgramDefaults.LocalHost
-        opts, args = getopt.getopt(sys.argv[1:],"hc:a:",["help","configpath=","address="])
-    except getopt.GetoptError:
-        console.error("Invalid command line argument.")
-        sys.exit(2)
-
-    for opt, arg in opts:
-        if opt == '-h':
-            console.error(HelpStr)
-            sys.exit()
-        elif opt in ("-a", "--address"):
-            address = arg
-        elif opt in ("-c", "--configpath"):
-            ConfigFilePath = arg
-            ConfigFilePath = ConfigFilePath.strip()
-
-    port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
-    log = SetupLogger("client", loglocation + "gentankdata.log")
-
-    GenTankDataInstance = GenTankData(log = log, loglocation = loglocation, ConfigFilePath = ConfigFilePath, host = address, port = port)
+    GenTankDataInstance = GenTankData(log = log, loglocation = loglocation, ConfigFilePath = ConfigFilePath, host = address, port = port, console = console)
 
     while True:
         time.sleep(0.5)

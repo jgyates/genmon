@@ -61,6 +61,17 @@ if __name__=='__main__':
     try:
         ConfigFilePath = ProgramDefaults.ConfPath
         console = SetupLogger("genlog_console", log_file = "", stream = True)
+
+        port, loglocation, multi_instance = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
+
+        if not MySupport.PermissionsOK():
+            console.error("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
+            sys.exit(2)
+
+        if MySupport.IsRunning(os.path.basename(__file__), multi_instance = multi_instance):
+            console.error("The program %s is already loaded" % os.path.basename(__file__))
+            sys.exit(2)
+
         opts, args = getopt.getopt(sys.argv[1:],"ha:f:c:",["help","address=","filename=", "configpath="])
     except getopt.GetoptError:
         console.error(HelpStr)
@@ -88,8 +99,8 @@ if __name__=='__main__':
         console.error(HelpStr)
         sys.exit(2)
 
-    port, loglocation = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
-    log = SetupLogger("client", loglocation + "genlog.log")
+
+    log = SetupLogger("client", os.path.join(loglocation, "genlog.log"))
 
     try:
         # Set the signal handler

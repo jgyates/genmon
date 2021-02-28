@@ -11,114 +11,67 @@
 
 from __future__ import print_function       # For python 3.x compatibility with print function
 
-import datetime, threading, crcmod, sys, time, collections
+import datetime, threading, crcmod, sys, time, collections, os
 
 from genmonlib.modbusbase import ModbusBase
 from genmonlib.myserial import SerialDevice
 from genmonlib.myserialtcp import SerialTCPDevice
 from genmonlib.program_defaults import ProgramDefaults
 
-#--------------------- MODBUS specific Const defines for Generator class--------
-# Packet offsets
-MBUS_OFF_ADDRESS            = 0x00
-MBUS_OFF_COMMAND            = 0x01
-MBUS_OFF_EXCEPTION          = 0x02
-MBUS_OFF_RESPONSE_LEN       = 0x02
-MBUS_OFF_FILE_TYPE          = 0x04      # offset in response packet
-MBUS_OFF_FILE_PAYLOAD_LEN   = 0x03
-MBUS_OFF_FILE_PAYLOAD       = 0x05
-MBUS_OFF_REGISTER_HI        = 0x02
-MBUS_OFF_REGISTER_LOW       = 0x03
-MBUS_OFF_FILE_NUM_HI        = 0x04
-MBUS_OFF_FILE_NUM_LOW       = 0x05
-MBUS_OFF_FILE_RECORD_HI     = 0x06
-MBUS_OFF_FILE_RECORD_LOW    = 0x07
-MBUS_OFF_RECORD_LENGTH_HI   = 0x08
-MBUS_OFF_RECORD_LENGTH_LOW  = 0x09
-MBUS_OFF_LENGTH_HI          = 0x04
-MBUS_OFF_LENGTH_LOW         = 0x05
-MBUS_OFF_WR_REQ_BYTE_COUNT  = 0x06
-
-# Field Sizes
-MBUS_ADDRESS_SIZE       = 0x01
-MBUS_COMMAND_SIZE       = 0x01
-MBUS_CRC_SIZE           = 0x02
-MBUS_RES_LENGTH_SIZE    = 0x01
-MBUS_FILE_TYPE_SIZE     = 0x01
-
-# Packet lengths
-MBUS_RES_PAYLOAD_SIZE_MINUS_LENGTH  = MBUS_ADDRESS_SIZE + MBUS_COMMAND_SIZE + MBUS_RES_LENGTH_SIZE + MBUS_CRC_SIZE
-MBUS_FILE_READ_PAYLOAD_SIZE_MINUS_LENGTH = MBUS_ADDRESS_SIZE + MBUS_COMMAND_SIZE + MBUS_RES_LENGTH_SIZE + MBUS_CRC_SIZE
-MIN_PACKET_ERR_LENGTH                   = 0x05
-MIN_PACKET_RESPONSE_LENGTH              = 0x07
-MIN_PACKET_MIN_WRITE_RESPONSE_LENGTH    = 0x08
-MBUS_READ_FILE_REQUEST_PAYLOAD_LENGTH   = 0x07
-MIN_REQ_PACKET_LENGTH                   = 0x08
-MIN_WR_REQ_PACKET_LENGTH                = 0x09
-MIN_FILE_READ_REQ_PACKET_LENGTH         = 0x0C
-MAX_MODBUS_PACKET_SIZE                  = 0x100
-# Varible limits
-MAX_REGISTER                            = 0xffff
-MIN_REGISTER                            = 0x0
-MAX_FILE_RECORD_NUM                     = 0x270F
-MIN_FILE_RECORD_NUM                     = 0x0
-MAX_FILE_NUMBER                         = 0xFFFF
-MIN_FILE_NUMBER                         = 0x01
-# commands
-MBUS_CMD_READ_REGS      = 0x03
-MBUS_CMD_WRITE_REGS     = 0x10
-MBUS_CMD_READ_FILE      = 0x14
-
-# Values
-MBUS_FILE_TYPE_VALUE    = 0x06
-MBUS_ERROR_BIT          = 0x80
-
-# Exception codes
-MBUS_EXCEP_FUNCTION     = 0x01      # Illegal Function
-MBUS_EXCEP_ADDRESS      = 0x02      # Illegal Address
-MBUS_EXCEP_DATA         = 0x03      # Illegal Data Value
-MBUS_EXCEP_SLAVE_FAIL   = 0x04      # Slave Device Failure
-MBUS_EXCEP_ACK          = 0x05      # Acknowledge
-MBUS_EXCEP_BUSY         = 0x06      # Slave Device Busy
-MBUS_EXCEP_NACK         = 0x07      # Negative Acknowledge
-MBUS_EXCEP_MEM_PE       = 0x08      # Memory Parity Error
-MBUS_EXCEP_GATEWAY      = 0x10      # Gateway Path Unavailable
-MBUS_EXCEP_GATEWAY_TG   = 0x11      #Gateway Target Device Failed to Respond
 
 #------------ ModbusProtocol class ---------------------------------------------
 class ModbusProtocol(ModbusBase):
+
     def __init__(self,
         updatecallback,
         address = 0x9d,
         name = "/dev/serial0",
-        rate=9600,
+        rate = 9600,
         Parity = None,
         OnePointFiveStopBits = None,
-        config = None):
+        config = None,
+        host = None,
+        port = None,
+        modbustcp = False):     # True of Modbus TCP, else if TCP then assume serial over TCP (Modbus RTU over serial)
 
         super(ModbusProtocol, self).__init__(updatecallback = updatecallback, address = address, name = name, rate = rate, config = config)
 
         try:
+            if config == None:
+                self.ModbusTCP = modbustcp
+                self.Host = host
+                self.Port = port
+            self.TransactionID = 0
+
+            if host != None and port != None and self.config == None:
+                # in this instance we do not use a config file, but config comes from command line
+                self.UseTCP = True
 
             # ~3000 for 9600               bit time * 10 bits * 10 char * 2 packets + wait time(3000) (convert to ms * 1000)
-            self.ModBusPacketTimoutMS = (((((1/float(rate)) * 10.0) * 10.0 * 2.0) *1000.0)  + 3000.0)     # .00208
+            self.ModBusPacketTimoutMS = (((((1/float(self.Rate)) * 10.0) * 10.0 * 2.0) *1000.0)  + 3000.0)     # .00208
 
             self.ModBusPacketTimoutMS += self.AdditionalModbusTimeout * 1000.0
 
+            if self.ModbusTCP:
+                self.MIN_PACKET_RESPONSE_LENGTH -= 2
+                self.MBUS_RES_PAYLOAD_SIZE_MINUS_LENGTH -= 2
+                self.MBUS_FILE_READ_PAYLOAD_SIZE_MINUS_LENGTH -= 2
+                self.MBUS_CRC_SIZE = 0
+                self.MIN_PACKET_ERR_LENGTH -= 2
 
             if self.UseTCP:
-                self.ModBusPacketTimoutMS = self.ModBusPacketTimoutMS
+                self.ModBusPacketTimoutMS = self.ModBusPacketTimoutMS + 2000
             #Starting serial connection
             if self.UseTCP:
-                self.Slave = SerialTCPDevice(config = self.config)
+                self.Slave = SerialTCPDevice(config = self.config, host = host, port = port)
             else:
                 self.Slave = SerialDevice(name = name, rate = rate, Parity = Parity, OnePointFiveStopBits = OnePointFiveStopBits, config = self.config)
             self.Threads = self.MergeDicts(self.Threads, self.Slave.Threads)
 
 
         except Exception as e1:
-            self.LogErrorLine("Error opening serial device: " + str(e1))
-            self.FatalError("Error opening serial device.")
+            self.LogErrorLine("Error opening modbus device: " + str(e1))
+            self.FatalError("Error opening modbus device.")
 
         try:
             # CRCMOD library, used for CRC calculations
@@ -133,17 +86,38 @@ class ModbusProtocol(ModbusBase):
         try:
 
             LookUp = {
-                MBUS_EXCEP_FUNCTION : "Illegal Function",
-                MBUS_EXCEP_ADDRESS : "Illegal Address",
-                MBUS_EXCEP_DATA : "Illegal Data Value",
-                MBUS_EXCEP_SLAVE_FAIL : "Slave Device Failure",
-                MBUS_EXCEP_ACK : "Acknowledge",
-                MBUS_EXCEP_BUSY : "Slave Device Busy",
-                MBUS_EXCEP_NACK : "Negative Acknowledge",
-                MBUS_EXCEP_MEM_PE : "Memory Parity Error",
-                MBUS_EXCEP_GATEWAY : "Gateway Path Unavailable",
-                MBUS_EXCEP_GATEWAY_TG : "Gateway Target Device Failed to Respond"
+                self.MBUS_EXCEP_FUNCTION : "Illegal Function",
+                self.MBUS_EXCEP_ADDRESS : "Illegal Address",
+                self.MBUS_EXCEP_DATA : "Illegal Data Value",
+                self.MBUS_EXCEP_SLAVE_FAIL : "Slave Device Failure",
+                self.MBUS_EXCEP_ACK : "Acknowledge",
+                self.MBUS_EXCEP_BUSY : "Slave Device Busy",
+                self.MBUS_EXCEP_NACK : "Negative Acknowledge",
+                self.MBUS_EXCEP_MEM_PE : "Memory Parity Error",
+                self.MBUS_EXCEP_GATEWAY : "Gateway Path Unavailable",
+                self.MBUS_EXCEP_GATEWAY_TG : "Gateway Target Device Failed to Respond"
              }
+
+            if Code == self.MBUS_EXCEP_FUNCTION:
+                 self.ExcepFunction += 1
+            elif Code == self.MBUS_EXCEP_ADDRESS:
+                self.ExcepAddress += 1
+            elif Code == self.MBUS_EXCEP_DATA:
+                self.ExcepData += 1
+            elif Code == self.MBUS_EXCEP_SLAVE_FAIL:
+                self.ExcepSlave += 1
+            elif Code == self.MBUS_EXCEP_ACK:
+                self.ExcepAck += 1
+            elif Code == self.MBUS_EXCEP_BUSY:
+                self.ExcepBusy += 1
+            elif Code == self.MBUS_EXCEP_NACK:
+                self.ExcepNack += 1
+            elif Code == self.MBUS_EXCEP_MEM_PE:
+                self.ExcepMemPe += 1
+            elif Code == self.MBUS_EXCEP_GATEWAY:
+                self.ExcepGateway += 1
+            elif Code == self.MBUS_EXCEP_GATEWAY_TG:
+                self.ExcepGateWayTg += 1
 
             ReturnString = LookUp.get(Code, "Unknown")
             ReturnString = ReturnString + (": %02x" % Code)
@@ -168,7 +142,7 @@ class ModbusProtocol(ModbusBase):
     #  a packet (list). If the return value is True and an empty packet, then
     #  keep looking because the data has not arrived yet, if return is False there
     #  is and error. If True and a non empty packet then it is valid data
-    def GetPacketFromSlave(self):
+    def GetPacketFromSlave(self, min_response_override = None):
 
         LocalErrorCount = 0
         Packet = []
@@ -177,36 +151,78 @@ class ModbusProtocol(ModbusBase):
             if not len(self.Slave.Buffer):
                 return True, EmptyPacket
 
-            if not self.CheckResponseAddress(self.Slave.Buffer[MBUS_OFF_ADDRESS]):
-                self.DiscardByte()
+            if self.ModbusTCP:
+                # byte 0:   transaction identifier - copied by server - usually 0
+                # byte 1:   transaction identifier - copied by server - usually 0
+                # byte 2:   protocol identifier = 0
+                # byte 3:   protocol identifier = 0
+                # byte 4:   length field (upper byte) = 0 (since all messages are smaller than 256)
+                # byte 5:   length field (lower byte) = number of bytes following
+                # byte 6:   unit identifier (previously 'slave address')
+                # byte 7:   MODBUS function code
+                # byte 8 on:    data as needed
+
+
+                if len(self.Slave.Buffer) < (self.MIN_PACKET_ERR_LENGTH + self.MODBUS_TCP_HEADER_SIZE):
+                    return True, EmptyPacket
+
+                # transaction ID must match
+                rxID = ((self.Slave.Buffer[0] <<8) | (self.Slave.Buffer[1] & 0xFF))
+                if self.CurrentTransactionID != rxID:
+                    self.LogError("ModbusTCP transaction ID mismatch: %x %x" % (self.CurrentTransactionID, rxID))
+                    self.DiscardByte(reason = "Transaction ID")
+                    self.Flush()
+                    return False, EmptyPacket
+                # protocol ID is zero
+                if self.Slave.Buffer[2] != 0 or self.Slave.Buffer[3] != 0:
+                    self.LogError("ModbusTCP protocool ID non zero: %x %x" % (self.Slave.Buffer[2], self.Slave.Buffer[3]))
+                    self.DiscardByte(reason = "protocol error")
+                    self.Flush()
+                    return False, EmptyPacket
+                # Modbus TCP payload length
+                ModbusTCPLength = ((self.Slave.Buffer[4] <<8) | (self.Slave.Buffer[5] & 0xFF))
+                if len(self.Slave.Buffer[6:]) != ModbusTCPLength:
+                    # more data is needed
+                    return True, EmptyPacket
+
+                # remove modbud TCP header
+                for i in range(0, self.MODBUS_TCP_HEADER_SIZE):
+                    self.Slave.Buffer.pop(0)
+
+            if not self.CheckResponseAddress(self.Slave.Buffer[self.MBUS_OFF_ADDRESS]):
+                self.DiscardByte(reason = "Response Address")
                 self.Flush()
                 return False, EmptyPacket
 
-            if len(self.Slave.Buffer) < MIN_PACKET_ERR_LENGTH:
+            if len(self.Slave.Buffer) < self.MIN_PACKET_ERR_LENGTH:
                 return True, EmptyPacket   # No full packet ready
 
-            if self.Slave.Buffer[MBUS_OFF_COMMAND] & MBUS_ERROR_BIT:
-                for i in range(0, MIN_PACKET_ERR_LENGTH):
+            if self.Slave.Buffer[self.MBUS_OFF_COMMAND] & self.MBUS_ERROR_BIT:
+                for i in range(0, self.MIN_PACKET_ERR_LENGTH):
                     Packet.append(self.Slave.Buffer.pop(0))  # pop Address, Function, Excetion code, and CRC
                 if self.CheckCRC(Packet):
                     self.RxPacketCount += 1
-                    self.SlaveException += 1
-                    self.LogError("Modbus Exception: " + self.GetExceptionString(Packet[MBUS_OFF_EXCEPTION]) + " , Modbus Command: " + ("%02x" % Packet[MBUS_OFF_COMMAND]))
+                    self.ModbusException += 1
+                    self.LogError("Modbus Exception: " + self.GetExceptionString(Packet[self.MBUS_OFF_EXCEPTION]) + " , Modbus Command: " + ("%02x" % Packet[self.MBUS_OFF_COMMAND]))
                 else:
                     self.CrcError += 1
                 return False, Packet
 
-            if len(self.Slave.Buffer) < MIN_PACKET_RESPONSE_LENGTH:
-                return True, EmptyPacket   # No full packet ready
+            if min_response_override != None:
+                if len(self.Slave.Buffer) < min_response_override:
+                    return True, EmptyPacket   # No full packet ready
+            else:
+                if len(self.Slave.Buffer) < self.MIN_PACKET_RESPONSE_LENGTH:
+                    return True, EmptyPacket   # No full packet ready
 
-            if  self.Slave.Buffer[MBUS_OFF_COMMAND] in [MBUS_CMD_READ_REGS]:
+            if  self.Slave.Buffer[self.MBUS_OFF_COMMAND] in [self.MBUS_CMD_READ_REGS]:
                 # it must be a read command response
-                length = self.Slave.Buffer[MBUS_OFF_RESPONSE_LEN]   # our packet tells us the length of the payload
+                length = self.Slave.Buffer[self.MBUS_OFF_RESPONSE_LEN]   # our packet tells us the length of the payload
                 # if the full length of the packet has not arrived, return and try again
-                if (length + MBUS_RES_PAYLOAD_SIZE_MINUS_LENGTH) > len(self.Slave.Buffer):
+                if (length + self.MBUS_RES_PAYLOAD_SIZE_MINUS_LENGTH) > len(self.Slave.Buffer):
                     return True, EmptyPacket
 
-                for i in range(0, length + MBUS_RES_PAYLOAD_SIZE_MINUS_LENGTH):
+                for i in range(0, length + self.MBUS_RES_PAYLOAD_SIZE_MINUS_LENGTH):
                     Packet.append(self.Slave.Buffer.pop(0))  # pop Address, Function, Length, message and CRC
 
                 if self.CheckCRC(Packet):
@@ -215,11 +231,11 @@ class ModbusProtocol(ModbusBase):
                 else:
                     self.CrcError += 1
                     return False, Packet
-            elif self.Slave.Buffer[MBUS_OFF_COMMAND] in [MBUS_CMD_WRITE_REGS]:
+            elif self.Slave.Buffer[self.MBUS_OFF_COMMAND] in [self.MBUS_CMD_WRITE_REGS]:
                 # it must be a write command response
-                if len(self.Slave.Buffer) < MIN_PACKET_MIN_WRITE_RESPONSE_LENGTH:
+                if len(self.Slave.Buffer) < self.MIN_PACKET_MIN_WRITE_RESPONSE_LENGTH:
                     return True, EmptyPacket
-                for i in range(0, MIN_PACKET_MIN_WRITE_RESPONSE_LENGTH):
+                for i in range(0, self.MIN_PACKET_MIN_WRITE_RESPONSE_LENGTH):
                     Packet.append(self.Slave.Buffer.pop(0))    # address, function, address hi, address low, quantity hi, quantity low, CRC high, crc low
 
                 if self.CheckCRC(Packet):
@@ -228,17 +244,20 @@ class ModbusProtocol(ModbusBase):
                 else:
                     self.CrcError += 1
                     return False, Packet
-            elif self.Slave.Buffer[MBUS_OFF_COMMAND] in [MBUS_CMD_READ_FILE]:
-                length = self.Slave.Buffer[MBUS_OFF_RESPONSE_LEN]   # our packet tells us the length of the payload
-                if self.Slave.Buffer[MBUS_OFF_FILE_TYPE] != MBUS_FILE_TYPE_VALUE:
+            elif self.Slave.Buffer[self.MBUS_OFF_COMMAND] in [self.MBUS_CMD_READ_FILE]:
+                length = self.Slave.Buffer[self.MBUS_OFF_RESPONSE_LEN]   # our packet tells us the length of the payload
+                if self.Slave.Buffer[self.MBUS_OFF_FILE_TYPE] != self.MBUS_FILE_TYPE_VALUE:
                     self.LogError("Invalid modbus file record type")
                     self.ComValidationError += 1
                     return False, EmptyPacket
                 # if the full length of the packet has not arrived, return and try again
-                if (length + MBUS_FILE_READ_PAYLOAD_SIZE_MINUS_LENGTH) > len(self.Slave.Buffer):
+                if (length + self.MBUS_FILE_READ_PAYLOAD_SIZE_MINUS_LENGTH) > len(self.Slave.Buffer):
                     return True, EmptyPacket
-                for i in range(0, length + MBUS_FILE_READ_PAYLOAD_SIZE_MINUS_LENGTH):
+                for i in range(0, length + self.MBUS_FILE_READ_PAYLOAD_SIZE_MINUS_LENGTH):
                     Packet.append(self.Slave.Buffer.pop(0))  # pop Address, Function, Length, message and CRC
+
+                if len(self.Slave.Buffer):
+                    self.LogHexList(self.Slave.Buffer, prefix = "Left Over")
 
                 if self.CheckCRC(Packet):
                     self.RxPacketCount += 1
@@ -248,73 +267,94 @@ class ModbusProtocol(ModbusBase):
                     return False, Packet
             else:
                 # received a  response to a command we do not support
-                self.DiscardByte()
+                self.DiscardByte(reason = "Invalid Modbus command")
                 self.Flush()
                 return False, EmptyPacket
         except Exception as e1:
             self.LogErrorLine("Error in GetPacketFromSlave: " + str(e1))
-            self.SlaveException += 1
+            self.ComValidationError += 1
             return False, EmptyPacket
     # ---------- GeneratorDevice::DiscardByte-----------------------------------
-    def DiscardByte(self):
+    def DiscardByte(self, reason = None):
 
         discard = self.Slave.DiscardByte()
-        self.LogError("Discarding byte slave: %02x" % (discard))
+        if reason == None:
+            reason = "Unknown"
+        self.LogError("Discarding byte slave: %02x : %s " % (discard, str(reason)))
 
-    #-------------ModbusProtocol::ProcessMasterSlaveWriteTransaction------------
-    def ProcessMasterSlaveWriteTransaction(self, Register, Length, Data):
+    #-------------ModbusProtocol::PWT-------------------------------------------
+    # called from derived calls to get to overridded function ProcessWriteTransaction
+    def _PWT(self, Register, Length, Data, min_response_override = None):
 
         try:
-            MasterPacket = []
+            with self.CommAccessLock:
+                MasterPacket = []
 
-            MasterPacket = self.CreateMasterPacket(Register, length = int(Length), command = MBUS_CMD_WRITE_REGS, data = Data)
+                MasterPacket = self.CreateMasterPacket(Register, length = int(Length), command = self.MBUS_CMD_WRITE_REGS, data = Data)
 
-            if len(MasterPacket) == 0:
-                return False
+                if len(MasterPacket) == 0:
+                    return False
 
-            return self.ProcessOneTransaction(MasterPacket, skipupdate = True)   # True to skip writing results to cached reg values
+                #skipupdate=True to skip writing results to cached reg values
+                return self.ProcessOneTransaction(MasterPacket, skipupdate = True, min_response_override = min_response_override)
         except Exception as e1:
-            self.LogErrorLine("Error in ProcessMasterSlaveWriteTransaction: " + str(e1))
+            self.LogErrorLine("Error in ProcessWriteTransaction: " + str(e1))
             return False
 
-    #-------------ModbusProtocol::ProcessMasterSlaveTransaction-----------------
-    def ProcessMasterSlaveTransaction(self, Register, Length, skipupdate = False, ReturnString = False):
+    #-------------ModbusProtocol::ProcessWriteTransaction-----------------------
+    def ProcessWriteTransaction(self, Register, Length, Data):
+        return self._PWT(Register, Length, Data)
+
+    #-------------ModbusProtocol::PT--------------------------------------------
+    # called from derived calls to get to overridded function ProcessTransaction
+    def _PT(self, Register, Length, skipupdate = False, ReturnString = False):
 
         MasterPacket = []
 
         try:
-            MasterPacket = self.CreateMasterPacket(Register, length = int(Length))
+            with self.CommAccessLock:
+                MasterPacket = self.CreateMasterPacket(Register, length = int(Length))
 
-            if len(MasterPacket) == 0:
-                return ""
+                if len(MasterPacket) == 0:
+                    return ""
 
-            return self.ProcessOneTransaction(MasterPacket, skipupdate = skipupdate, ReturnString = ReturnString)     # don't log
+                return self.ProcessOneTransaction(MasterPacket, skipupdate = skipupdate, ReturnString = ReturnString)     # don't log
 
         except Exception as e1:
-            self.LogErrorLine("Error in ProcessMasterSlaveTransaction: " + str(e1))
+            self.LogErrorLine("Error in ProcessTransaction: " + str(e1))
             return ""
 
-    #-------------ModbusProtocol::ProcessMasterSlaveFileReadTransaction---------
-    def ProcessMasterSlaveFileReadTransaction(self, Register, Length, skipupdate = False, file_num = 1, ReturnString = False):
+    #-------------ModbusProtocol::ProcessTransaction----------------------------
+    def ProcessTransaction(self, Register, Length, skipupdate = False, ReturnString = False):
+        return self._PT(Register, Length, skipupdate, ReturnString)
+
+    #-------------ModbusProtocol::ProcessFileReadTransaction--------------------
+    def ProcessFileReadTransaction(self, Register, Length, skipupdate = False, file_num = 1, ReturnString = False):
 
         MasterPacket = []
 
         try:
-            MasterPacket = self.CreateMasterPacket(Register, length = int(Length), command = MBUS_CMD_READ_FILE, file_num = file_num)
+            with self.CommAccessLock:
+                MasterPacket = self.CreateMasterPacket(Register, length = int(Length), command = self.MBUS_CMD_READ_FILE, file_num = file_num)
 
-            if len(MasterPacket) == 0:
-                return ""
+                if len(MasterPacket) == 0:
+                    return ""
 
-            return self.ProcessOneTransaction(MasterPacket, skipupdate = skipupdate, ReturnString = ReturnString)     # don't log
+                return self.ProcessOneTransaction(MasterPacket, skipupdate = skipupdate, ReturnString = ReturnString)     # don't log
 
         except Exception as e1:
-            self.LogErrorLine("Error in ProcessMasterSlaveFileReadTransaction: " + str(e1))
+            self.LogErrorLine("Error in ProcessFileReadTransaction: " + str(e1))
             return ""
 
     #------------ModbusProtocol::ProcessOneTransaction--------------------------
-    def ProcessOneTransaction(self, MasterPacket, skipupdate = False, ReturnString = False):
+    def ProcessOneTransaction(self, MasterPacket, skipupdate = False, ReturnString = False, min_response_override = None):
 
         try:
+            if self.ModbusTCP:
+                PacketOffset = self.MODBUS_TCP_HEADER_SIZE
+            else:
+                PacketOffset = 0
+
             with self.CommAccessLock:       # this lock should allow calls from multiple threads
 
                 if len(self.Slave.Buffer):
@@ -334,14 +374,15 @@ class ModbusProtocol(ModbusBase):
 
                     if self.IsStopping:
                         return ""
-                    RetVal, SlavePacket = self.GetPacketFromSlave()
+                    RetVal, SlavePacket = self.GetPacketFromSlave(min_response_override = min_response_override)
 
                     if RetVal == True and len(SlavePacket) != 0:    # we receive a packet
                         self.TotalElapsedPacketeTime += (self.MillisecondsElapsed(SentTime) / 1000)
                         break
                     if RetVal == False:
-                        self.LogError("Error Receiving slave packet for register %04x" % (self.GetRegisterFromPacket(MasterPacket) ))
+                        self.LogError("Error Receiving slave packet for register %04x" % (self.GetRegisterFromPacket(MasterPacket, offset = PacketOffset) ))
                         # Errors returned here are logged in GetPacketFromSlave
+                        time.sleep(1)
                         self.Flush()
                         return ""
 
@@ -354,17 +395,17 @@ class ModbusProtocol(ModbusBase):
                     # in between should give us about 25ms
                     if msElapsed > self.ModBusPacketTimoutMS:
                         self.ComTimoutError += 1
-                        self.LogError("Error: timeout receiving slave packet for register %04x Buffer:%d" % (self.GetRegisterFromPacket(MasterPacket), len(self.Slave.Buffer)) )
+                        self.LogError("Error: timeout receiving slave packet for register %04x Buffer: %d" % (self.GetRegisterFromPacket(MasterPacket, offset = PacketOffset), len(self.Slave.Buffer)) )
                         if len(self.Slave.Buffer):
-                            self.LogError("Buffer: " + str(self.Slave.Buffer))
+                            self.LogHexList(self.Slave.Buffer, prefix = "Buffer")
                         self.Flush()
                         return ""
 
                 # update our cached register dict
                 ReturnRegValue = self.UpdateRegistersFromPacket(MasterPacket, SlavePacket, SkipUpdate = skipupdate, ReturnString = ReturnString)
                 if ReturnRegValue == "Error":
-                    self.LogError("Master: " + str(MasterPacket))
-                    self.LogError("Slave: " + str(SlavePacket))
+                    self.LogHexList(MasterPacket, prefix = "Master")
+                    self.LogHexList(SlavePacket, prefix = "Slave")
                     self.ComValidationError += 1
                     self.Flush()
                     ReturnRegValue = ""
@@ -384,13 +425,14 @@ class ModbusProtocol(ModbusBase):
         return Delta.total_seconds() * 1000
 
     #------------GetRegisterFromPacket -----------------------------------------
-    def GetRegisterFromPacket(self, Packet):
+    def GetRegisterFromPacket(self, Packet, offset = 0):
         try:
             Register = 0
-            if Packet[MBUS_OFF_COMMAND] == MBUS_CMD_READ_FILE:
-                Register = Packet[MBUS_OFF_FILE_RECORD_HI] << 8 |  Packet[MBUS_OFF_FILE_RECORD_LOW] & 0x00FF
+
+            if Packet[self.MBUS_OFF_COMMAND + offset] == self.MBUS_CMD_READ_FILE:
+                Register = Packet[self.MBUS_OFF_FILE_RECORD_HI + offset] << 8 |  Packet[self.MBUS_OFF_FILE_RECORD_LOW + offset] & 0x00FF
             else:
-                Register = Packet[MBUS_OFF_REGISTER_HI] << 8 |  Packet[MBUS_OFF_REGISTER_LOW] & 0x00FF
+                Register = Packet[self.MBUS_OFF_REGISTER_HI + offset] << 8 |  Packet[self.MBUS_OFF_REGISTER_LOW + offset] & 0x00FF
             return Register
         except Exception as e1:
             self.LogErrorLine("Error in GetRegisterFromPacket: " + str(e1))
@@ -399,33 +441,34 @@ class ModbusProtocol(ModbusBase):
     # ---------- ModbusProtocol::CreateMasterPacket-----------------------------
     # the length is the register length in words, as required by modbus
     # build Packet
-    def CreateMasterPacket(self, register, length = 1, command = MBUS_CMD_READ_REGS, data=[], file_num = 1):
+    def CreateMasterPacket(self, register, length = 1, command = 0x03, data=[], file_num = 1):
 
         Packet = []
         try:
             RegisterInt = int(register,16)
 
-            if RegisterInt < MIN_REGISTER or RegisterInt > MAX_REGISTER:
+            if RegisterInt < self.MIN_REGISTER or RegisterInt > self.MAX_REGISTER:
                 self.ComValidationError += 1
                 self.LogError("Validation Error: CreateMasterPacket maximum regiseter value exceeded: " + str(register))
                 return []
-            if file_num < MIN_FILE_NUMBER or file_num > MAX_FILE_NUMBER:
+            if file_num < self.MIN_FILE_NUMBER or file_num > self.MAX_FILE_NUMBER:
                 self.ComValidationError += 1
                 self.LogError("Validation Error: CreateMasterPacket maximum file number value exceeded: " + str(file_num))
                 return []
 
-            if command == MBUS_CMD_READ_REGS:
+            if command == self.MBUS_CMD_READ_REGS:
                 Packet.append(self.Address)                 # address
                 Packet.append(command)                      # command
-                Packet.append(RegisterInt >> 8)             # reg higy
+                Packet.append(RegisterInt >> 8)             # reg high
                 Packet.append(RegisterInt & 0x00FF)         # reg low
                 Packet.append(length >> 8)                  # length high
                 Packet.append(length & 0x00FF)              # length low
                 CRCValue = self.GetCRC(Packet)
-                Packet.append(CRCValue & 0x00FF)            # CRC low
-                Packet.append(CRCValue >> 8)                # CRC high
+                if CRCValue != None:
+                    Packet.append(CRCValue & 0x00FF)            # CRC low
+                    Packet.append(CRCValue >> 8)                # CRC high
 
-            elif command == MBUS_CMD_WRITE_REGS:
+            elif command == self.MBUS_CMD_WRITE_REGS:
                 if len(data) == 0:
                     self.LogError("Validation Error: CreateMasterPacket invalid length (1) %x %x" % (len(data), length))
                     self.ComValidationError += 1
@@ -444,20 +487,21 @@ class ModbusProtocol(ModbusBase):
                 for b in range(0, len(data)):
                     Packet.append(data[b])                  # data
                 CRCValue = self.GetCRC(Packet)
-                Packet.append(CRCValue & 0x00FF)            # CRC low
-                Packet.append(CRCValue >> 8)                # CRC high
+                if CRCValue != None:
+                    Packet.append(CRCValue & 0x00FF)            # CRC low
+                    Packet.append(CRCValue >> 8)                # CRC high
 
-            elif command == MBUS_CMD_READ_FILE:
+            elif command == self.MBUS_CMD_READ_FILE:
 
                 # Note, we only support one sub request at at time
-                if RegisterInt < MIN_FILE_RECORD_NUM or RegisterInt > MAX_FILE_RECORD_NUM:
+                if RegisterInt < self.MIN_FILE_RECORD_NUM or RegisterInt > self.MAX_FILE_RECORD_NUM:
                     self.ComValidationError += 1
                     self.LogError("Validation Error: CreateMasterPacket maximum regiseter (record number) value exceeded: " + str(register))
                     return []
                 Packet.append(self.Address)                 # address
                 Packet.append(command)                      # command
-                Packet.append(MBUS_READ_FILE_REQUEST_PAYLOAD_LENGTH)     # Byte count
-                Packet.append(MBUS_FILE_TYPE_VALUE)         # always same value
+                Packet.append(self.MBUS_READ_FILE_REQUEST_PAYLOAD_LENGTH)     # Byte count
+                Packet.append(self.MBUS_FILE_TYPE_VALUE)         # always same value
                 Packet.append(file_num >> 8)                # File Number hi
                 Packet.append(file_num & 0x00FF)            # File Number low
                 Packet.append(RegisterInt >> 8)             # register (file record number) high
@@ -465,8 +509,9 @@ class ModbusProtocol(ModbusBase):
                 Packet.append(length >> 8)                  # Length to return hi
                 Packet.append(length & 0x00FF)              # Length to return lo
                 CRCValue = self.GetCRC(Packet)
-                Packet.append(CRCValue & 0x00FF)            # CRC low
-                Packet.append(CRCValue >> 8)                # CRC high
+                if CRCValue != None:
+                    Packet.append(CRCValue & 0x00FF)            # CRC low
+                    Packet.append(CRCValue >> 8)                # CRC high
             else:
                 self.LogError("Validation Error: Invalid command in CreateMasterPacket!")
                 self.ComValidationError += 1
@@ -474,12 +519,57 @@ class ModbusProtocol(ModbusBase):
         except Exception as e1:
             self.LogErrorLine("Error in CreateMasterPacket: " + str(e1))
 
-        if len(Packet) > MAX_MODBUS_PACKET_SIZE:
+        if len(Packet) > self.MAX_MODBUS_PACKET_SIZE:
             self.LogError("Validation Error: CreateMasterPacket: Packet size exceeds max size")
             self.ComValidationError += 1
             return []
 
+        if self.ModbusTCP:
+            return self.ConvertToModbusModbusTCP(Packet)
         return Packet
+
+    #-------------ModbusProtocol::GetTransactionID------------------------------
+    def GetTransactionID(self):
+
+        ID = self.TransactionID
+        self.CurrentTransactionID = ID
+        self.TransactionID += 1
+        if self.TransactionID > 0xffff:
+            self.TransactionID = 0
+
+        return ID
+
+    #-------------ModbusProtocol::ConvertToModbusModbusTCP----------------------
+    def ConvertToModbusModbusTCP(self, Packet):
+
+        # byte 0:   transaction identifier - copied by server - usually 0
+        # byte 1:   transaction identifier - copied by server - usually 0
+        # byte 2:   protocol identifier = 0
+        # byte 3:   protocol identifier = 0
+        # byte 4:   length field (upper byte) = 0 (since all messages are smaller than 256)
+        # byte 5:   length field (lower byte) = number of bytes following
+        # byte 6:   unit identifier (previously 'slave address')
+        # byte 7:   MODBUS function code
+        # byte 8 on:    data as needed
+        try:
+            if not self.ModbusTCP:
+                return Packet
+            # remove last two bytes of CRC
+            Packet.pop()
+            Packet.pop()
+            length = len(Packet)
+            # byte 6 (slave address) is already provided in the Packet argument
+            Packet.insert(0,length & 0xff)            # byte 5:   length field (lower byte) = number of bytes following
+            Packet.insert(0,length & 0xff00)          # byte 4:   length field (upper byte) = 0 (since all messages are smaller than 256)
+            Packet.insert(0,0)                        # byte 3:   protocol identifier = 0
+            Packet.insert(0,0)                        # byte 2:   protocol identifier = 0
+            TransactionID = self.GetTransactionID()
+            Packet.insert(0, TransactionID & 0xff)      # byte 1:   transaction identifier (low)- copied by server - usually 0
+            Packet.insert(0, (TransactionID & 0xff00) >> 8)    # byte 0:   transaction identifier (high)- copied by server - usually 0
+            return Packet
+        except Exception as e1:
+            self.LogErrorLine("Error in CreateModbusTCPHeader: " + str(e1))
+            return []
 
     #-------------ModbusProtocol::SendPacketAsMaster----------------------------
     def SendPacketAsMaster(self, Packet):
@@ -490,37 +580,48 @@ class ModbusProtocol(ModbusBase):
             self.TxPacketCount += 1
         except Exception as e1:
             self.LogErrorLine("Error in SendPacketAsMaster: " + str(e1))
-            self.LogError("Packet: " + str(Packet))
+            self.LogHexList(Packet, prefix = "Packet")
 
     # ---------- ModbusProtocol::UpdateRegistersFromPacket----------------------
     #    Update our internal register list based on the request/response packet
     def UpdateRegistersFromPacket(self, MasterPacket, SlavePacket, SkipUpdate = False, ReturnString = False):
+        return self._URFP(MasterPacket, SlavePacket, SkipUpdate, ReturnString)
+
+    # ---------- ModbusProtocol::URFP-------------------------------------------
+    #    Called from UpdateRegistersFromPacket
+    def _URFP(self, MasterPacket, SlavePacket, SkipUpdate = False, ReturnString = False):
 
         try:
-            if len(MasterPacket) < MIN_PACKET_RESPONSE_LENGTH or len(SlavePacket) < MIN_PACKET_RESPONSE_LENGTH:
+
+            if len(MasterPacket) < self.MIN_PACKET_RESPONSE_LENGTH or len(SlavePacket) < self.MIN_PACKET_RESPONSE_LENGTH:
                 self.LogError("Validation Error, length: Master" + str(len(MasterPacket)) + " Slave: " + str(len(SlavePacket)))
                 return "Error"
 
-            if MasterPacket[MBUS_OFF_ADDRESS] != self.Address:
+            if self.ModbusTCP:
+                PacketOffset = self.MODBUS_TCP_HEADER_SIZE
+            else:
+                PacketOffset = 0
+            if MasterPacket[self.MBUS_OFF_ADDRESS + PacketOffset] != self.Address:
                 self.LogError("Validation Error: Invalid address in UpdateRegistersFromPacket (Master)")
                 return "Error"
-            if not self.CheckResponseAddress(SlavePacket[MBUS_OFF_ADDRESS]):
+            if not self.CheckResponseAddress(SlavePacket[self.MBUS_OFF_ADDRESS]):
                 self.LogError("Validation Error: Invalid address in UpdateRegistersFromPacket (Slave)")
                 return "Error"
-            if not SlavePacket[MBUS_OFF_COMMAND] in [MBUS_CMD_READ_REGS, MBUS_CMD_WRITE_REGS, MBUS_CMD_READ_FILE]:
-                self.LogError("Validation Error: Unknown Function slave %02x %02x" %  (SlavePacket[MBUS_OFF_ADDRESS],SlavePacket[MBUS_OFF_COMMAND]))
+            if not SlavePacket[self.MBUS_OFF_COMMAND] in [self.MBUS_CMD_READ_REGS, self.MBUS_CMD_WRITE_REGS, self.MBUS_CMD_READ_FILE]:
+                self.LogError("Validation Error: Unknown Function slave %02x %02x" %  (SlavePacket[self.MBUS_OFF_ADDRESS],SlavePacket[self.MBUS_OFF_COMMAND]))
                 return "Error"
-            if not MasterPacket[MBUS_OFF_COMMAND] in [MBUS_CMD_READ_REGS, MBUS_CMD_WRITE_REGS, MBUS_CMD_READ_FILE]:
-                self.LogError("Validation Error: Unknown Function master %02x %02x" %  (MasterPacket[MBUS_OFF_ADDRESS],MasterPacket[MBUS_OFF_COMMAND]))
+            if not MasterPacket[self.MBUS_OFF_COMMAND + PacketOffset] in [self.MBUS_CMD_READ_REGS, self.MBUS_CMD_WRITE_REGS, self.MBUS_CMD_READ_FILE]:
+                self.LogError("Validation Error: Unknown Function master %02x %02x" %  (MasterPacket[self.MBUS_OFF_ADDRESS],MasterPacket[self.MBUS_OFF_COMMAND]))
                 return "Error"
 
-            if MasterPacket[MBUS_OFF_COMMAND] != SlavePacket[MBUS_OFF_COMMAND]:
-                self.LogError("Validation Error: Command Mismatch :" + str(MasterPacket[MBUS_OFF_COMMAND]) + ":" + str(SlavePacket[MBUS_OFF_COMMAND]))
+            if MasterPacket[self.MBUS_OFF_COMMAND + PacketOffset] != SlavePacket[self.MBUS_OFF_COMMAND]:
+                self.LogError("Validation Error: Command Mismatch :" + str(MasterPacket[self.MBUS_OFF_COMMAND]) + ":" + str(SlavePacket[self.MBUS_OFF_COMMAND]))
                 return "Error"
 
              # get register from master packet
-            Register = "%04x" % (self.GetRegisterFromPacket(MasterPacket))
-            if MasterPacket[MBUS_OFF_COMMAND] == MBUS_CMD_WRITE_REGS:
+            Register = "%04x" % (self.GetRegisterFromPacket(MasterPacket, offset = PacketOffset))
+
+            if MasterPacket[self.MBUS_OFF_COMMAND + PacketOffset] == self.MBUS_CMD_WRITE_REGS:
                 # get register from slave packet
                 SlaveRegister = "%04x" % (self.GetRegisterFromPacket(SlavePacket))
                 if SlaveRegister != Register:
@@ -529,11 +630,11 @@ class ModbusProtocol(ModbusBase):
 
             RegisterValue = ""
             RegisterStringValue = ""
-            if MasterPacket[MBUS_OFF_COMMAND] == MBUS_CMD_READ_REGS:
+            if MasterPacket[self.MBUS_OFF_COMMAND + PacketOffset] == self.MBUS_CMD_READ_REGS:
                 # get value from slave packet
-                length = SlavePacket[MBUS_OFF_RESPONSE_LEN]
-                if (length + MBUS_RES_PAYLOAD_SIZE_MINUS_LENGTH) > len(SlavePacket):
-                    self.LogError("Validation Error: Slave Lenght : " + length +  ":" + len(SlavePacket))
+                length = SlavePacket[self.MBUS_OFF_RESPONSE_LEN]
+                if (length + self.MBUS_RES_PAYLOAD_SIZE_MINUS_LENGTH) > len(SlavePacket):
+                    self.LogError("Validation Error: Slave Length : " + length +  ":" + len(SlavePacket))
                     return "Error"
 
                 for i in range(3, length+3):
@@ -545,14 +646,18 @@ class ModbusProtocol(ModbusBase):
                 if not SkipUpdate:
                     if not self.UpdateRegisterList == None:
                         if not ReturnString:
-                            self.UpdateRegisterList(Register, RegisterValue)
+                            if not self.UpdateRegisterList(Register, RegisterValue):
+                                self.ComSyncError += 1
+                                return "Error"
                         else:
-                            self.UpdateRegisterList(Register, RegisterStringValue, IsString = True)
+                            if not self.UpdateRegisterList(Register, RegisterStringValue, IsString = True):
+                                self.ComSyncError += 1
+                                return "Error"
 
-            if MasterPacket[MBUS_OFF_COMMAND] == MBUS_CMD_READ_FILE:
-                payloadLen = SlavePacket[MBUS_OFF_FILE_PAYLOAD_LEN]
+            if MasterPacket[self.MBUS_OFF_COMMAND + PacketOffset] == self.MBUS_CMD_READ_FILE:
+                payloadLen = SlavePacket[self.MBUS_OFF_FILE_PAYLOAD_LEN]
                 payloadLen -= 1
-                for i  in range (MBUS_OFF_FILE_PAYLOAD, MBUS_OFF_FILE_PAYLOAD + payloadLen):
+                for i  in range (self.MBUS_OFF_FILE_PAYLOAD, (self.MBUS_OFF_FILE_PAYLOAD + payloadLen + 1)):
                     RegisterValue += "%02x" % SlavePacket[i]
                     if ReturnString:
                         if SlavePacket[i]:
@@ -560,10 +665,14 @@ class ModbusProtocol(ModbusBase):
 
                 if not SkipUpdate:
                     if not ReturnString:
-                        self.UpdateRegisterList(Register, RegisterValue, IsFile = True)
+                        if not self.UpdateRegisterList(Register, RegisterValue, IsFile = True):
+                            self.ComSyncError += 1
+                            return "Error"
                     else:
-                        self.UpdateRegisterList(Register, RegisterStringValue, IsString = True, IsFile = True)
-                pass
+                        if not self.UpdateRegisterList(Register, RegisterStringValue, IsString = True, IsFile = True):
+                            self.ComSyncError += 1
+                            return "Error"
+
             if ReturnString:
                 return str(RegisterStringValue)
             return str(RegisterValue)
@@ -575,6 +684,9 @@ class ModbusProtocol(ModbusBase):
     def CheckCRC(self, Packet):
 
         try:
+            if self.ModbusTCP:
+                return True
+
             if len(Packet) == 0:
                 return False
             ByteArray = bytearray(Packet[:len(Packet)-2])
@@ -591,14 +703,14 @@ class ModbusProtocol(ModbusBase):
             return True
         except Exception as e1:
             self.LogErrorLine("Error in CheckCRC: " + str(e1))
-            self.LogError("Packet: " + str(Packet))
+            self.LogHexList(Packet, prefix = "Packet")
             return False
 
      #------------ModbusProtocol::GetCRC----------------------------------------
     def GetCRC(self, Packet):
         try:
             if len(Packet) == 0:
-                return False
+                return None
             ByteArray = bytearray(Packet)
 
             if sys.version_info[0] < 3:
@@ -609,8 +721,8 @@ class ModbusProtocol(ModbusBase):
             return results
         except Exception as e1:
             self.LogErrorLine("Error in GetCRC: " + str(e1))
-            self.LogError("Packet: " + str(Packet))
-            return 0
+            self.LogHexList(Packet, prefix = "Packet")
+            return None
     # ---------- ModbusProtocol::GetCommStats-----------------------------------
     def GetCommStats(self):
         SerialStats = []
@@ -632,8 +744,9 @@ class ModbusProtocol(ModbusBase):
             SerialStats.append({"CRC Percent Errors" : ("%.2f" % (PercentErrors * 100)) + "%"})
             SerialStats.append({"Timeout Errors" : "%d" %  self.ComTimoutError})
             SerialStats.append({"Timeout Percent Errors" : ("%.2f" % (PercentTimeoutErrors * 100)) + "%"})
-            SerialStats.append({"Modbus Exceptions" : self.SlaveException})
+            SerialStats.append({"Modbus Exceptions" : self.ModbusException})
             SerialStats.append({"Validation Errors" : self.ComValidationError})
+            SerialStats.append({"Sync Errors" : self.ComSyncError})
             SerialStats.append({"Invalid Data" : self.UnexpectedData})
             # add serial stats
             SerialStats.append({"Discarded Bytes" : "%d" % self.Slave.DiscardedBytes})

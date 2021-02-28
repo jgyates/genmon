@@ -64,6 +64,7 @@ The software supports the following features:
 - Optional low bandwidth URL (http://ipaddress:8000/low)
 - Firmware update notification for Evolution 2.0
 - SNMP monitoring
+- Optional LDAP authentication to web interface
 
 ![Generator Monitor Web Interface](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/Web_UI_Status.png)
 

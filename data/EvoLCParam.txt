@@ -1,4 +1,4 @@
-#kW,Volts,Frequency,Phase,Parameter Group,Voltage Code,Emission,Unit Voltage Code,Engine,Fuel
+#kW,Volts,Frequency,Phase,Parameter Group,Voltage Code,Emission,Unit Voltage Code,Engine,Fuel,Fuel Consumption(3), units
 12,220,50,1,10,12312,N,M,2.3 L,Diesel,0.105,0.547,1.64,gal
 15,240,60,1,5,24,N,A,2.3 L,Diesel,0.015,0.251,0.24,gal
 15,208,60,3,5,2072,N,G,2.3 L,Diesel,0.015,0.251,0.24,gal

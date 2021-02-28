@@ -58,19 +58,7 @@ if __name__=='__main__': # usage program.py [server_address] [port]
     # Set the signal handler
     signal.signal(signal.SIGINT, signal_handler)
 
-    startcount = 0
-    while startcount <= 2:
-        try:
-            MyClientInterface = ClientInterface(host = address, port = port, log = log)
-            break
-        except Exception as e1:
-            startcount += 1
-            if startcount >= 2:
-                console.error("Error: genmon not loaded.")
-                sys.exit(1)
-            time.sleep(1)
-            continue
-
+    MyClientInterface = ClientInterface(host = address, port = port, log = log)
 
     try:
 

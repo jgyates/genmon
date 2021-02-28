@@ -6,6 +6,7 @@
 PARAMS=""
 genmondir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 pythoncommand="python"
+pipcommand="pip"
 config_path=""
 usepython3=false
 found_action=false
@@ -17,6 +18,8 @@ function setuppython3() {
     usepython3=false
   elif [ $1 == "3" ]; then
     usepython3=true
+  elif [ $1 == "2" ]; then
+    usepython3=false
   else
     usepython3=false
   fi
@@ -55,7 +58,7 @@ while (( "$#" )); do
       ;;
     -c)
       if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
-        config_path=$2
+        config_path="-c $2"
         shift 2
       else
         echo "Error: Argument for $1 is missing" >&2

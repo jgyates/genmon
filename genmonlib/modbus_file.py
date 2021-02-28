@@ -49,7 +49,7 @@ class ModbusFile(ModbusBase):
         self.FileData = {}
 
         if self.InputFile == None:
-            self.InputFile = os.path.dirname(os.path.realpath(__file__)) + "/modbusregs.txt"
+            self.InputFile = os.path.join(os.path.dirname(os.path.realpath(__file__)), "modbusregs.txt")
 
         if not os.path.isfile(self.InputFile):
             self.LogError("Error: File not present: " + self.InputFile)
@@ -77,12 +77,12 @@ class ModbusFile(ModbusBase):
                 self.LogInfo("Error parsing input data")
             time.sleep(5)
 
-    #-------------ModbusBase::ProcessMasterSlaveWriteTransaction----------------
-    def ProcessMasterSlaveWriteTransaction(self, Register, Length, Data):
+    #-------------ModbusBase::ProcessWriteTransaction---------------------------
+    def ProcessWriteTransaction(self, Register, Length, Data):
         return
 
-    #-------------ModbusBase::ProcessMasterSlaveTransaction--------------------
-    def ProcessMasterSlaveTransaction(self, Register, Length, skipupdate = False, ReturnString = False):
+    #-------------ModbusBase::ProcessTransaction--------------------------------
+    def ProcessTransaction(self, Register, Length, skipupdate = False, ReturnString = False):
 
         # TODO need more validation
 
@@ -113,8 +113,8 @@ class ModbusFile(ModbusBase):
 
         return RegValue
 
-    #-------------ModbusProtocol::ProcessMasterSlaveFileReadTransaction---------
-    def ProcessMasterSlaveFileReadTransaction(self, Register, Length, skipupdate = False, file_num = 1, ReturnString = False):
+    #-------------ModbusProtocol::ProcessFileReadTransaction---------
+    def ProcessFileReadTransaction(self, Register, Length, skipupdate = False, file_num = 1, ReturnString = False):
 
         RegValue = self.FileData.get(Register, "")
 

@@ -27,8 +27,6 @@ from genmonlib.mylog import SetupLogger
 from genmonlib.mythread import MyThread
 from genmonlib.program_defaults import ProgramDefaults
 
-#imaplib.Debug = 4
-
 
 #------------ MyMail class -----------------------------------------------------
 class MyMail(MySupport):
@@ -60,15 +58,17 @@ class MyMail(MySupport):
         self.SSLEnabled = False
         self.TLSDisable = False
         self.UseBCC = False
+        self.ExtendWait = 0
         self.Threads = {}                               # Dict of mythread objects
-        self.ModulePath = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/"
+        self.debug = False
+        self.ModulePath = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
         # log errors in this module to a file
         if localinit == True:
             self.logfile = "mymail.log"
             self.configfile = "mymail.conf"
         else:
-            self.logfile = loglocation + "mymail.log"
-            self.configfile = self.ConfigFilePath + "mymail.conf"
+            self.logfile = os.path.join(loglocation, "mymail.log")
+            self.configfile = os.path.join(self.ConfigFilePath, "mymail.conf")
 
         if log == None:
             self.log = SetupLogger("mymail", self.logfile)
@@ -78,12 +78,11 @@ class MyMail(MySupport):
         # if mymail.conf is present attempt to copy it from the
         # main source directory
         if not os.path.isfile(self.configfile):
-            if os.path.isfile(self.ModulePath + "mymail.conf"):
-                copyfile(self.ModulePath + "mymail.conf" , self.configfile)
+            if os.path.join(os.path.isfile(self.ModulePath, "mymail.conf")):
+                copyfile(os.path.join(self.ModulePath, "mymail.conf") , self.configfile)
             else:
                 self.LogError("Missing config file : " + self.configfile)
                 sys.exit(1)
-
 
         self.config = MyConfig(filename = self.configfile, section = "MyMail", log = self.log)
 
@@ -151,9 +150,18 @@ class MyMail(MySupport):
 
         msg = MIMEMultipart()
         if sender_name == None or not len(sender_name):
-            msg['From'] = sender_account
+            msg['From'] = "<" + sender_account + ">"
         else:
             msg['From'] = sender_name + " <" + sender_account + ">"
+
+        try:
+            recipientList = recipient.strip().split(",")
+            recipientList = map(lambda x:x.strip(),recipientList)
+            recipienttemp = ">,<"
+            recipienttemp = recipienttemp.join(recipientList)
+            recipient = "<" + recipienttemp + ">"
+        except Exceptin as e1:
+            pass
 
         msg['To'] = recipient
         msg['Date'] = formatdate(localtime=True)
@@ -221,6 +229,11 @@ class MyMail(MySupport):
 
             if self.config.HasOption('usebcc'):
                 self.UseBCC = self.config.ReadValue('usebcc', return_type = bool)
+
+            if self.config.HasOption('extend_wait'):
+                self.ExtendWait = self.config.ReadValue('extend_wait', return_type = int, default = 0)
+
+            self.debug = self.config.ReadValue('debug', return_type = bool, default = False)
 
             self.EmailPassword = self.config.ReadValue('email_pw', default = "")
             self.EmailPassword =  self.EmailPassword.strip()
@@ -308,19 +321,21 @@ class MyMail(MySupport):
             # start email command thread
             try:
                 self.Mailbox = imaplib.IMAP4_SSL(self.IMAPServer)
+                if self.debug:
+                    self.Mailbox.Debug = 4
             except Exception:
                 self.LogError( "No Internet Connection! ")
                 if self.WaitForExit("EmailCommandThread", 120 ):
-                    return
-                continue   # exit thread
+                    return # exit thread
+                continue
             try:
                 if not self.DisableSmtpAuth:
                     data = self.Mailbox.login(self.EmailAccount, self.EmailPassword)
             except Exception:
                 self.LogError( "LOGIN FAILED!!! ")
                 if self.WaitForExit("EmailCommandThread", 60 ):
-                    return
-                continue   # exit thread
+                    return # exit thread
+                continue
             while True:
                 try:
                     rv, data = self.Mailbox.select(self.IncomingFolder)
@@ -342,10 +357,16 @@ class MyMail(MySupport):
                             if self.WaitForExit("EmailCommandThread", 15 ):
                                 return
                             continue
-                        msg = email.message_from_string(data[0][1])
-                        decode = email.header.decode_header(msg['Subject'])[0]
-                        subject = unicode(decode[0])
-
+                        if sys.version_info[0] < 3: #PYTHON 2
+                            msg = email.message_from_string(data[0][1])
+                        else:                       #PYTHON 3
+                            msg = email.message_from_bytes(data[0][1])
+                        decode_val = email.header.decode_header(msg['Subject'])[0]
+                        if sys.version_info[0] < 3: #PYTHON 2
+                            subject = unicode(decode_val[0])
+                            subject = subject.decode('utf-8')
+                        else:                       #PYTHON 3
+                            subject = decode_val[0]
                         self.IncomingCallback(subject)
 
                         # move the message to processed folder
@@ -378,11 +399,19 @@ class MyMail(MySupport):
 
         msg = MIMEMultipart()
         if self.SenderName == None or not len(self.SenderName):
-            msg['From'] = self.SenderAccount
+            msg['From'] = "<" + self.SenderAccount + ">"
         else:
             msg['From'] = self.SenderName + " <" + self.SenderAccount + ">"
             self.LogError(msg['From'])
 
+        try:
+            recipientList = recipient.strip().split(",")
+            recipientList = map(lambda x:x.strip(),recipientList)
+            recipienttemp = ">,<"
+            recipienttemp = recipienttemp.join(recipientList)
+            recipient = "<" + recipienttemp + ">"
+        except Exception as e1:
+            self.LogErrorLine("Error parsing recipient format: " + str(e1))
         if self.UseBCC:
             msg['Bcc'] = recipient
         else:
@@ -422,6 +451,12 @@ class MyMail(MySupport):
                  if not self.TLSDisable:
                      session.starttls()
                  session.ehlo
+            try:
+                if self.debug:
+                    pass
+                    #session.set_debuglevel(1)     # for some reason login fails when this enabled
+            except Exception as e1:
+                self.LogErrorLine("Error setting debug level: " + str(e1))
                  # this allows support for simple TLS
         except Exception as e1:
             self.LogErrorLine("Error SMTP Init : SSL:<" + str(self.SSLEnabled)  + ">: " + str(e1))
@@ -468,7 +503,7 @@ class MyMail(MySupport):
                 if MailError:
                     self.EmailSendQueue.insert(len(self.EmailSendQueue),EmailItems)
                     # sleep for 2 min and try again
-                    if self.WaitForExit("SendMailThread", 120 ):
+                    if self.WaitForExit("SendMailThread", 120 + self.ExtendWait):
                         return
 
             if self.WaitForExit("SendMailThread", 2 ):

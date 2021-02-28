@@ -1,5 +1,206 @@
 # Change Log
-All notable changes to this project will be documented in this file. Major releases are documented [here](https://github.com/jgyates/genmon/releases)
+All notable changes to this project will be documented in this file.
+
+## V1.16.00  -2021-02-24
+- Initial support for Generac PowerZone, log support not currently supported
+- Update to genmqtt and gensnmp for powerzone support
+
+## V1.15.20 - 2021-02-26
+- Update for gensms add on to allow multiple recipients
+- Update for OtherApps/modbusdump.py for modbus TCP support
+- Minor tweak to gentankutil for maintenance reasons
+- added support for Modbus TCP (existing support for Modbus serial over TCP is still supported also)
+
+## V1.15.19 - 2021-02-10
+- Updated mynotify.py to add notifications for software update, low fuel notice, and internal errors (e.g. communication errros etc.). This allows genslack, genpushover, gensms, gensms_modem, gensyslog and genemail2sms to support these additional notices.
+
+## V1.15.18 - 2021-02-05
+- Corrected bug in on_disconnect in genmqtt.py (thanks @notjj)
+- Updated log entry for Nexus Air Cooled
+
+## V1.15.17 - 2021-01-31
+- Added MQTT last will and testament support for notifications of offline client.
+- Added IP address in start up message
+- Updated power log reduction code to improve situations where power log is filled with zeros
+- Added advanced option for H-100 to calculate the output power based on average current, average voltage and power factor.
+
+
+## V1.15.16 - 2021-01-15
+- Added model recognition for Evolution 2.0 24kW  (Thanks @chia9876)
+- Made username for web login case insensitive for admin and read only users
+
+## V1.15.15 - 2021-01-11
+- Update to allow I2C channel values greater than 2 for gentankdiy
+
+## V1.15.14 - 2021-01-01
+- minor Python 3 update
+- Change that removes / prevents non ascii from power log or outage log
+
+## V1.15.13 - 2020-12-14
+- Remove output voltage display for pre-nexus controllers
+- Minor update to genexercise.py to allow exercising when service is due alarm is active
+- correct minor bug in in mymail.py
+
+## V1.15.12 - 2020-12-14
+- Minor updates to recieving mail for python 3 compatiblity
+- Minor updates to help with debugging
+
+## V1.15.11 - 2020-11-15
+- A new library was added so the restart after the upgrade may take a few seconds longer than ususal
+- Improvements for start/stop of programs.
+- Added new check to disallow loading multiple instances of any genmon program unless multi_instance option is set to True. see https://github.com/jgyates/genmon/wiki/Appendix-J-Multiple-Instances-of-Genmon for additional details.
+- Update in javascript to handle userdefined JSON data with null entries
+- shutdown cleanup improved for genmqtt.py and gensnmp.py
+- removed restart code / while loop in genserv.py that is likley the cause of intermittant corruption of conf file
+- Added option to use alternate reading for frequency for Nexus Liquid Cooled units
+
+## V1.15.10 - 2020-11-09
+- Added new tank sensor type for gentankdiy.py add on (thanks @curtis1757)
+- Misc code optimizations for maintenance purposes
+- Fixed bug in shutdown code
+- Minor change improve error checking in genlaoder
+- Additional error checking for power log entries
+- Added new alarm message for Evolution 2
+
+## V1.15.09 - 2020-11-05
+- Rounded value written to power log to 3 decimal places (Evolution)
+- Corrected issue with email errors relating to RFC2821 (see https://tools.ietf.org/html/rfc2821#section-3.3)
+- More improvements to better detect and recover modbus sync issues when using serial over TCP with weak wifi signals
+- Improvemnt in gensnmp.py to clean up on restarts (thanks @liltux)
+- Minor cleanup on genmqtt.py
+- Cleanup saving of settings web app redirect when using secure login (thanks @curtis1757)
+- Additional checks added for weather API city lookup
+- gensnmp.py updates to allow an option to not display units for numeric values in SNMP responses, bug fix
+
+## V1.15.08 - 2020-10-27
+- Additional parameter validation for values read from conf file
+- More recovery / error handling for long latency modbus response
+
+## V1.15.07 - 2020-10-25
+- Added new alarm code for Evolution
+- Improvement on error recovery on time out errors (mostly occuring on bad wifi connections with serial over TCP)
+
+## V1.15.06 - 2020-10-20
+- added python functions to aid in portablity (os.path.join)
+- Corrected typo in web interface (thanks @danielforster)
+- More minor corrections for python 3.x
+- Moved location of version info in source tree for maintenance reasons. This required a small change in the sotware update check code
+
+## V1.15.05 - 2020-10-18
+- Added alarm code for Fuse Problem with Evoltuion Air Cooled
+- Reverted to older config file write functions as the new ones did not provide the benefit expected
+- Corrected one typo
+- Fix for checking for software update bug
+- Additional minor fix for pyton 3.x
+
+## V1.15.04 - 2020-10-16
+- Minor update to correct issue with software update check when using python 3.x
+- Minor improvements that could help bad wifi when using serial over TCP over wifi
+- Update to install script that will make move from python 2.7 to 3.x easier
+
+## V1.15.03 - 2020-10-11
+- Minor update to correct issue with writing config file
+- Added additional checks to look for corrupt config file and restore the file if corrupted
+- Changed some add on fields to hide passwords
+- Allow external tank data to be used in calculating time remaining until tank empty
+- Correct typos
+- Update to gensnmp.py to fix issue with H100 alarm list
+- Update to include fuel remainging based on estimated and current load assumptions
+- Added Fuel In Tank output on Maintenance page
+
+## V1.15.02 - 2020-10-07
+- Minor fix to allow some pre-Nexus models to correctly perform a model lookup
+
+## V1.15.01 - 2020-10-05
+- Minor update that changes the format of register and log submissions to comply with RFC 2821 #4.5.3.1.
+
+## V1.15.00 - 2020-10-02
+- Implimented fix for Evolution 2 firmware 1.1x
+- Added client id parameter for genmqtt add on
+
+## V1.14.33 - 2020-09-28
+- Updated myplatform.py to reflects some raspbian updates
+- moves some constants around in the modbus code in preperation for future modifications
+- Updated gensnmp.py to include OID for H and G Panel alarm list
+
+## V1.14.32 - 2020-09-20
+- Added multi-factor authentication to web interface settings
+
+## V1.14.31 - 2020-09-17
+- Added ESSID to WiFi platform information
+- Updated myplaform.py to detect Pi4 and display CPU temp
+
+## V1.14.30 - 2020-09-11
+- Updagte to MQTT support to allow list of strings to be a parameter
+- Added advanced parameter to better support weak wifi signals on serial over TCP
+- Made Evolution 2.0 Ambient temp sensor display respond to Use Metric setting
+
+## V1.14.29 - 2020-09-02
+- Added more info to upgrade and communications failure notice emails
+
+## V1.14.28 - 2020-08-31
+- Added logout button in top right if using username/password to login to the web interface. Thanks @buschauer
+- Made the service journal editable. Thanks @buschauer
+
+## V1.14.27 - 2020-08-29
+- Design update in preperation for future updates
+
+## V1.14.26 - 2020-08-19
+- Minor modification to gentankutil add on to compensate for changed web login at tankutility.com
+
+## V1.14.25 - 2020-08-19
+- Added new alarm code for Nexus Liquid Cooled and Evoltion Air Cooled
+
+## V1.14.24 - 2020-08-17
+- Corrected bug introduced in V1.14.23 that prevented logging of outages
+
+## V1.14.23 - 2020-08-09
+ - Minor update to add on gensnmp (added estimated hours in tank remaining)
+ - Added ability to have MQTT topics without spaces in add on genmqtt
+ - Added support for DIY fuel gauge (https://github.com/jgyates/genmon/wiki/Appendix-L-Adding-a-Propane-Fuel-Gauge-to-Genmon)
+ - Added advanced setting to disallow logging of short outages
+
+## V1.14.22 - 2020-08-03
+ - Corrected bug in model lookup code for python 3.x
+
+## V1.14.21 - 2020-08-02
+- Updated backup function to include all add on program settings
+- Corrected problems with fuel consumption calculation for Evolution
+- Added estimated hours remaing in tank for fuel consumption
+- Added fuel consumption method for industrial controllers, see https://github.com/jgyates/genmon/wiki/Appendix-H-Monitoring-Fuel-and-Power-Usage
+- Added option to display fuel sensor gauge for industrial controllers
+- Fixed LDAP bug, thanks @magomez96
+
+## V1.14.20 - 2020-07-30
+- Added support for 11kw Nexus that was missing in generator identification
+
+## V1.14.19 - 2020-07-29
+- Added new support function to get full register data from the browser. Useful for debugging if email is not working.
+
+## V1.14.18 - 2020-07-24
+- Added new advanced setting to extend email retry delay on failed attempt to send emails
+- Added reading of two new registers for possible display of new settings (Two Wire Start for Evo)
+
+## V1.14.17 - 2020-07-10
+- Added new alarm code for Evo (instantanious alarm for High Temp)
+- Added software update to Monitor->Generator Monitor Stats->Update Available
+
+## V1.14.16 - 2020-07-05
+- Added Add-On module for displaying external temperature sensor data from 1 wire interfaces. See https://github.com/jgyates/genmon/wiki/1----Software-Overview#gentemppy-optional
+- Corrected problem with ldap3 library reporting not present when it actually is installed
+
+## V1.14.15 - 2020-06-28
+- Added more error handling for modbus exceptions
+- Added firmware version to Evo log file submissions
+
+## V1.14.14 - 2020-06-18
+- Updated Evo AC power calculation based on new data from @sefs85, you can revert to the old method in advanced settings "Use Legacy Power Calculation". Unless you have a 22kw Evolution (which has no CTs install form the factory so it can not read the current) it is recomended that you use this new method. You will likley need to remove any Current Divider or Current Offset settings on the advance page.
+
+## V1.14.13 - 2020-06-16
+- Corrected on python3 issue with genloader when attempting to load uninstalled libraries.
+
+## V1.14.12 - 2020-06-02
+- Added support for LDAP based login (@skipfire) (see /conf/genmon.conf for settings)
 
 ## V1.14.11 - 2020-05-28
 - Minor update to fix corrupted genloader.conf, file if it occurs

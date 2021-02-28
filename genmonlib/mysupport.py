@@ -9,10 +9,11 @@
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
 
-import os, sys, time, collections, threading, socket, json
+import os, sys, time, collections, threading, socket, json, getopt
 
 from genmonlib.myplatform import MyPlatform
 from genmonlib.mycommon import MyCommon
+from genmonlib.mylog import SetupLogger
 from genmonlib.myconfig import MyConfig
 from genmonlib.program_defaults import ProgramDefaults
 
@@ -24,18 +25,25 @@ class MySupport(MyCommon):
         self.CriticalLock = threading.Lock()        # Critical Lock (writing conf file)
 
     #------------ MySupport::LogToFile------------------------------------------
-    def LogToFile(self, File, TimeDate, Value, Value2 = None):
+    def LogToFile(self, File, *argv):
         if self.Simulation:
             return
         if not len(File):
             return ""
 
+        if not len(argv):
+            return ""
         try:
+            modarg = []
+            # remove any non printable chars
+            for arg in argv:
+                arg = self.removeNonPrintable(arg)
+                if len(arg):
+                    modarg.append(arg)
+            outdata = ","
+            outdata = outdata.join(modarg) + "\n"
             with open(File,"a") as LogFile:     #opens file
-                if Value2 != None:
-                    LogFile.write(TimeDate + "," + Value + "," + Value2 + "\n")
-                else:
-                    LogFile.write(TimeDate + "," + Value + "\n")
+                LogFile.write(outdata)
                 LogFile.flush()
         except Exception as e1:
             self.LogError("Error in  LogToFile : File: %s: %s " % (File,str(e1)))
@@ -189,7 +197,11 @@ class MySupport(MyCommon):
             if not NoString:
                 return input
             InputArray = input.strip().split(" ")
-            if len(InputArray) == 2:
+            if len(InputArray) == 1:
+                return input
+            if len(InputArray) == 2 or len(InputArray) == 3:
+                if len(InputArray) == 3:    # this handles two word untis like 'cubic feet'
+                    InputArray[1] = InputArray[1] + " " + InputArray[2]
                 if type == int:
                     InputArray[0] = int(InputArray[0])
                 elif type == float:
@@ -271,7 +283,9 @@ class MySupport(MyCommon):
         except:
             return False
     #------------ MySupport::GetDispatchItem -----------------------------------
-    def GetDispatchItem(self, item):
+    def GetDispatchItem(self, item, key = None):
+
+        NoneType = type(None)
 
         if isinstance(item, str):
             return item
@@ -287,9 +301,11 @@ class MySupport(MyCommon):
             return str(item)
         elif sys.version_info[0] >= 3 and isinstance(item, (bytes)):
             return str(item)
+        elif isinstance(item, NoneType):
+            return "None"
         else:
             self.LogError("Unable to convert type %s in GetDispatchItem" % str(type(item)))
-            self.LogError("Item: " + str(item))
+            self.LogError("Item: " + str(key) + ":" + str(item))
             return ""
 
     #------------ MySupport::ProcessDispatch -----------------------------------
@@ -316,7 +332,7 @@ class MySupport(MyCommon):
                         else:
                             self.LogError("Invalid type in ProcessDispatch %s " % str(type(node)))
                 else:
-                    InputBuffer[key] = self.GetDispatchItem(item)
+                    InputBuffer[key] = self.GetDispatchItem(item, key = key)
         else:
             self.LogError("Invalid type in ProcessDispatch %s " % str(type(node)))
 
@@ -341,11 +357,11 @@ class MySupport(MyCommon):
                         if isinstance(listitem, dict):
                             InputBuffer = self.ProcessDispatchToString(listitem, InputBuffer, indent + 1)
                         elif isinstance(listitem, str) or isinstance(listitem, unicode):
-                            InputBuffer += (("    " * (indent +1)) +  self.GetDispatchItem(listitem) + "\n")
+                            InputBuffer += (("    " * (indent +1)) +  self.GetDispatchItem(listitem, key = key) + "\n")
                         else:
                             self.LogError("Invalid type in ProcessDispatchToString %s %s (2)" % (key, str(type(listitem))))
                 else:
-                    InputBuffer += (("    " * indent) + str(key) + " : " +  self.GetDispatchItem(item) + "\n")
+                    InputBuffer += (("    " * indent) + str(key) + " : " +  self.GetDispatchItem(item, key = key) + "\n")
         else:
             self.LogError("Invalid type in ProcessDispatchToString %s " % str(type(node)))
         return InputBuffer
@@ -367,21 +383,137 @@ class MySupport(MyCommon):
     #----------  MySupport::GetDeltaTimeMinutes-------------------------------
     def GetDeltaTimeMinutes(self, DeltaTime):
 
-        days, seconds = DeltaTime.days, DeltaTime.seconds
-        delta_hours = days * 24 + seconds // 3600
-        delta_minutes = (seconds % 3600) // 60
+        days, seconds = float(DeltaTime.days), float(DeltaTime.seconds)
+        delta_hours = days * 24.0 + seconds // 3600.0
+        delta_minutes = (seconds % 3600.0) // 60.0
 
-        return (delta_hours * 60 + delta_minutes)
+        return (delta_hours * 60.0 + delta_minutes)
 
-    #---------------------MyCommon::GetGenmonInitInfo---------------------------
+    #---------------------MySupport::ReadCSVFile--------------------------------
+    # read a CSV file, return a list of lists
+    # lines starting with # will be ignored as they will treated as comments
+    def ReadCSVFile(self, FileName):
+        try:
+            ReturnedList = []
+            with open(FileName,"r") as CSVFile:
+                for line in CSVFile:
+                    line = line.strip()             # remove newline at beginning / end and trailing whitespace
+                    if not len(line):
+                        continue
+                    if line[0] == "#":              # comment?
+                        continue
+                    Items = line.split(",")
+                    ReturnedList.append(Items)
+
+            return ReturnedList
+        except Exception as e1:
+            self.LogErrorLine("Error in ReadCSVFile: " + FileName + " : " + str(e1))
+            return []
+
+    #------------ MySupport::GetNetworkIp---------------------------------------
+    def GetNetworkIp(self):
+        try:
+            return(str((([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] if not ip.startswith("127.")] or [[(s.connect(("8.8.8.8", 53)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]]) + ["no IP found"])[0]))
+        except:
+            return "Unknown"
+    #------------ MySupport::IsRunning------------------------------------------
+    @staticmethod
+    def IsRunning(prog_name, log = None, multi_instance = False):
+
+        if multi_instance:  # do we allow multiple instances
+            return False    # return False so the program will load anyway
+        try:
+            import psutil
+        except:
+            return False    # incase psutil is not installed load anyway
+        try:
+            prog_name = os.path.basename(prog_name)
+            for q in psutil.process_iter():
+                if q.name().lower().startswith('python'):
+                    script_name = os.path.basename(q.cmdline()[1])
+                    if len(q.cmdline())>1 and prog_name == script_name and q.pid != os.getpid():
+                        return True
+        except Exception as e1:
+            if log != None:
+                log.error("Error in IsRunning: " + str(e1))
+
+        return False
+
+    #------------ MySupport::SetupAddOnProgram----------------------------------
+    @staticmethod
+    def SetupAddOnProgram(prog_name):
+        console = SetupLogger(prog_name + "_console", log_file = "", stream = True)
+
+        if not MySupport.PermissionsOK():
+            console.error("\nYou need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.\n")
+            sys.exit(2)
+
+        HelpStr = '\nsudo python ' + prog_name + '.py -a <IP Address or localhost> -c <path to ' + prog_name + ' config file>\n'
+
+        ConfigFilePath = ProgramDefaults.ConfPath
+        address = ProgramDefaults.LocalHost
+
+        try:
+            opts, args = getopt.getopt(sys.argv[1:],"hc:a:",["help","configpath=","address="])
+        except getopt.GetoptError:
+            console.error("Invalid command line argument.")
+            sys.exit(2)
+
+        for opt, arg in opts:
+            if opt == '-h':
+                console.error(HelpStr)
+                sys.exit()
+            elif opt in ("-a", "--address"):
+                address = arg
+            elif opt in ("-c", "--configpath"):
+                ConfigFilePath = arg.strip()
+
+        try:
+            port, loglocation, multi_instance = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
+
+            log = SetupLogger("client_" + prog_name, os.path.join(loglocation, prog_name + ".log"))
+
+            if not prog_name.lower().endswith(".py"):
+                prog_name += ".py"
+
+            attempts = 0
+            while True:
+                if MySupport.IsRunning(prog_name = prog_name, log = log, multi_instance = multi_instance):
+                    if attempts >= 4:
+                        raise Exception("The program %s is already loaded" % prog_name)
+                    else:
+                        attempts += 1
+                        time.sleep(1)
+                else:
+                    break
+
+        except Exception as e1:
+            console.error("Error : " + str(e1))
+            log.error("Error : " + str(e1))
+            sys.exit(1)
+
+        return console, ConfigFilePath, address, port, loglocation, log
+
+    #---------------------MySupport::GetGenmonInitInfo--------------------------
     @staticmethod
     def GetGenmonInitInfo(configfilepath = MyCommon.DefaultConfPath, log = None):
 
         if configfilepath == None or configfilepath == "":
             configfilepath = MyCommon.DefaultConfPath
 
-        config = MyConfig(configfilepath + "genmon.conf", section = "GenMon", log = log)
+        config = MyConfig(os.path.join(configfilepath, "genmon.conf"), section = "GenMon", log = log)
         loglocation = config.ReadValue('loglocation', default = ProgramDefaults.LogPath)
         port = config.ReadValue('server_port', return_type = int, default = ProgramDefaults.ServerPort)
+        multi_instance = config.ReadValue('multi_instance', return_type = bool, default = False)
+        return port, loglocation, multi_instance
 
-        return port, loglocation
+    #---------------------MySupport::PermissionsOK------------------------------
+    @staticmethod
+    def PermissionsOK():
+
+        if MyPlatform.IsOSLinux() and os.geteuid() == 0:
+            return True
+        if MyPlatform.IsOSWindows():
+            return True
+        else:
+            return False

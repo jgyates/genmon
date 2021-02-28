@@ -21,7 +21,7 @@ class ClientInterface(MyCommon):
             self.log = log
         else:
             # log errors in this module to a file
-            self.log = SetupLogger("client", loglocation+ "myclient.log")
+            self.log = SetupLogger("client", os.path.join(loglocation, "myclient.log"))
 
         self.console = SetupLogger("client_console", log_file = "", stream = True)
 
@@ -30,7 +30,7 @@ class ClientInterface(MyCommon):
         self.rxdatasize = 2000
         self.host = host
         self.port = port
-
+        self.max_reties = 10
         self.Connect()
 
     #----------  ClientInterface::Connect --------------------------------------
@@ -50,7 +50,7 @@ class ClientInterface(MyCommon):
                 return
             except Exception as e1:
                 retries += 1
-                if retries >= 5:
+                if retries >= self.max_reties:
                     self.LogErrorLine("Error: Connect : " + str(e1))
                     self.console.error("Genmon not loaded.")
                     sys.exit(1)

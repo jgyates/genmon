@@ -1,0 +1,37 @@
+#Reg0019,KW,Fuel,Hz,50%,Rate 50%,100%,Rate 100%,Units
+22,7.5,Propane,60,0.5,0.87,1,1.42,gal
+22,7.5,Natural Gas,60,0.5,73,1,117,cubic feet
+5,8,Propane,60,0.5,0.94,1,1.68,gal
+5,8,Natural Gas,60,0.5,77,1,139,cubic feet
+1,9,Propane,60,0.5,0.87,1,1.37,gal
+1,9,Natural Gas,60,0.5,90,1,120,cubic feet
+15,11,Propane,60,0.5,1.22,1,1.97,gal
+15,11,Natural Gas,60,0.5,107,1,159,cubic feet
+21,11,Propane,60,0.5,1.18,1,1.92,gal
+21,11,Natural Gas,60,0.5,124,1,195,cubic feet
+7,13,Propane,60,0.5,1.55,1,2.18,gal
+7,13,Natural Gas,60,0.5,156,1,220,cubic feet
+2,14,Propane,60,0.5,1.56,1,2.3,gal
+2,14,Natural Gas,60,0.5,156,1,220,cubic feet
+8,15,Propane,60,0.5,1.59,1,2.51,gal
+8,15,Natural Gas,60,0.5,173,1,245,cubic feet
+11,15,Propane,60,0.5,1.9,1,3.19,gal
+11,15,Natural Gas,60,0.5,193,1,312,cubic feet
+9,16,Propane,60,0.5,2.52,1,2.94,gal
+9,16,Natural Gas,60,0.5,218,1,309,cubic feet
+3,17,Propane,60,0.5,1.99,1,3.57,gal
+3,17,Natural Gas,60,0.5,192,1,312,cubic feet
+4,20,Propane,60,0.5,2.37,1,3.56,gal
+4,20,Natural Gas,60,0.5,204,1,301,cubic feet
+10,20,Propane,60,0.5,1.79,1,3.46,gal
+10,20,Natural Gas,60,0.5,150,1,282,cubic feet
+17,22,Propane,60,0.5,2.53,1,3.9,gal
+17,22,Natural Gas,60,0.5,228,1,327,cubic feet
+32,20,Propane,60,0.5,2.39,1,3.56,gal
+32,20,Natural Gas,60,0.5,219,1,307,cubic feet
+12,8VA,Propane,50,0.5,0.9,1,1.52,gal
+12,8VA,Natural Gas,50,0.5,83,1,138,cubic feet
+13,10VA,Propane,50,0.5,1.18,1,1.92,gal
+13,10VA,Natural Gas,50,0.5,124,1,195,cubic feet
+14,13VA,Propane,50,0.5,1.52,1,2.52,gal
+14,13VA,Natural Gas,50,0.5,146,1,225,cubic feet
