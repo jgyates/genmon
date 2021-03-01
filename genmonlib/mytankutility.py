@@ -98,7 +98,6 @@ class tankutility(MyCommon):
             else:
                 response = query.json()
                 self.Data = response["device"]
-                self.LogError(str(self.Data))
                 self.LogDebug("tankutility: GetData: ID = " + str(deviceID) + " : "+ str(response))
                 return self.Data
         except Exception as e1:
