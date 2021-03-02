@@ -1,7 +1,12 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
-## V1.16.00  -2021-02-24
+
+## V1.16.01  -2021-03-01
+- Minor update to code that checks for previously installed modules
+- Minor update to genloader to check if module is loaded before attempting to load
+
+## V1.16.00  -2021-02-28
 - Initial support for Generac PowerZone, log support not currently supported
 - Update to genmqtt and gensnmp for powerzone support
 

@@ -559,6 +559,22 @@ class Loader(MySupport):
         for Module in reversed(self.LoadOrder):
             try:
                 if self.CachedConfig[Module]["enable"]:
+                    if not multi_instance:
+                        # check that module is not loaded already, if it is then force it (hard) to unload
+                        attempts = 0
+                        while True:
+                            if MySupport.IsRunning(prog_name = self.CachedConfig[Module]["module"], log = self.log, multi_instance = multi_instance):
+                                # if loaded then kill it
+                                if attempts >= 4:
+                                    # kill it
+                                    if not self.UnloadModule(self.ModulePath, self.CachedConfig[Module]["module"], pid = None, HardStop = True, UsePID = False):
+                                        self.LogInfo("Error killing " +  self.CachedConfig[Module]["module"])
+                                else:
+                                    attempts += 1
+                                    time.sleep(1)
+                            else:
+                                break
+
                     if not self.LoadModule(self.ModulePath, self.CachedConfig[Module]["module"], args = self.CachedConfig[Module]["args"]):
                         self.LogInfo("Error starting " + Module)
                         ErrorOccured = True
