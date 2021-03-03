@@ -253,7 +253,8 @@ class ModbusProtocol(ModbusBase):
                 # if the full length of the packet has not arrived, return and try again
                 if (length + self.MBUS_FILE_READ_PAYLOAD_SIZE_MINUS_LENGTH) > len(self.Slave.Buffer):
                     return True, EmptyPacket
-                for i in range(0, length + self.MBUS_FILE_READ_PAYLOAD_SIZE_MINUS_LENGTH):
+                # we will copy the entire buffer, this will be validated at a later time
+                for i in range(0, len(self.Slave.Buffer)):
                     Packet.append(self.Slave.Buffer.pop(0))  # pop Address, Function, Length, message and CRC
 
                 if len(self.Slave.Buffer):
@@ -656,8 +657,10 @@ class ModbusProtocol(ModbusBase):
 
             if MasterPacket[self.MBUS_OFF_COMMAND + PacketOffset] == self.MBUS_CMD_READ_FILE:
                 payloadLen = SlavePacket[self.MBUS_OFF_FILE_PAYLOAD_LEN]
-                payloadLen -= 1
-                for i  in range (self.MBUS_OFF_FILE_PAYLOAD, (self.MBUS_OFF_FILE_PAYLOAD + payloadLen + 1)):
+                if not self.ModbusTCP:
+                    # TODO This is emperical
+                    payloadLen -= 1
+                for i  in range (self.MBUS_OFF_FILE_PAYLOAD, (self.MBUS_OFF_FILE_PAYLOAD + payloadLen)):
                     RegisterValue += "%02x" % SlavePacket[i]
                     if ReturnString:
                         if SlavePacket[i]:

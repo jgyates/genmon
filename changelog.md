@@ -1,6 +1,8 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.16.02  -2021-03-02
+- Corrected bug in H-100, G-Panel and PowerZone modbus file handling
 
 ## V1.16.01  -2021-03-01
 - Minor update to code that checks for previously installed modules
