@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.16.03  -2021-03-03
+- Updated fix for modbus file handling (only specific to industurial controllers). Powerzone controllers handle modbus file register access a little differently and this update handles that differece.
+
 ## V1.16.02  -2021-03-02
 - Corrected bug in H-100, G-Panel and PowerZone modbus file handling
 

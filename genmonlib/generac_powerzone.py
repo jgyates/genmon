@@ -512,6 +512,7 @@ class PowerZone(GeneratorController):
                 self.ModBus = ModbusProtocol(self.UpdateRegisterList,
                     config = self.config)
 
+            self.ModBus.AlternateFileProtocol = True
             self.Threads = self.MergeDicts(self.Threads, self.ModBus.Threads)
             self.LastRxPacketCount = self.ModBus.RxPacketCount
 

@@ -42,6 +42,7 @@ class ModbusProtocol(ModbusBase):
                 self.Host = host
                 self.Port = port
             self.TransactionID = 0
+            self.AlternateFileProtocol = False
 
             if host != None and port != None and self.config == None:
                 # in this instance we do not use a config file, but config comes from command line
@@ -657,7 +658,7 @@ class ModbusProtocol(ModbusBase):
 
             if MasterPacket[self.MBUS_OFF_COMMAND + PacketOffset] == self.MBUS_CMD_READ_FILE:
                 payloadLen = SlavePacket[self.MBUS_OFF_FILE_PAYLOAD_LEN]
-                if not self.ModbusTCP:
+                if not self.AlternateFileProtocol:
                     # TODO This is emperical
                     payloadLen -= 1
                 for i  in range (self.MBUS_OFF_FILE_PAYLOAD, (self.MBUS_OFF_FILE_PAYLOAD + payloadLen)):
