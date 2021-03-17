@@ -254,6 +254,26 @@ class MySupport(MyCommon):
             self.LogErrorLine("Error in ValueOut: " + str(e1))
             return DefaultReturn
 
+    #-------------MySupport:GetIntFromString------------------------------------
+    def GetIntFromString(self, input_string, byte_offset, length = 1, decimal = False):
+
+        try:
+            if len(input_string) < byte_offset + length:
+                self.LogError("Invalid length in GetIntFromString: " + str(input_string))
+                return 0
+            StringOffset = byte_offset * 2
+            StringOffsetEnd = StringOffset + (length *2)
+            if StringOffset == StringOffsetEnd:
+                if decimal:
+                    return int(input_string[StringOffset])
+                return int(input_string[StringOffset], 16)
+            else:
+                if decimal:
+                    return int(input_string[StringOffset:StringOffsetEnd])
+                return int(input_string[StringOffset:StringOffsetEnd], 16)
+        except Exception as e1:
+            self.LogErrorLine("Error in GetIntFromString: " + str(e1))
+            return 0
     #----------  MySupport::HexStringToString  ---------------------------------
     def HexStringToString(self, input):
 

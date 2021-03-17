@@ -3347,7 +3347,7 @@ class Evolution(GeneratorController):
                 elif not self.EvolutionController and self.LiquidCooled:
                     # Nexus Liquid Cooled
                     FloatTemp = self.GetParameter("0008", ReturnFloat = True, Divider = 1.0, Label = "Hz")
-                    # TODO this should be optiona
+                    # this is optional
                     if self.NexusLegacyFreq:
                         FloatTemp = FloatTemp * 2.0
                     if ReturnFloat:
@@ -3356,7 +3356,11 @@ class Evolution(GeneratorController):
                     return "%2.1f Hz" % FloatTemp
                 else:
                     # Nexus and Evolution Air Cooled
-                    return self.GetParameter("0008", ReturnFloat = ReturnFloat, Divider = 1.0, Label = "Hz")
+                    if self.SynergyController:
+                        Divisor = 10.0
+                    else:
+                        Divisor = 1.0
+                    return self.GetParameter("0008", ReturnFloat = ReturnFloat, Divider = Divisor, Label = "Hz")
 
             else:
                 # (RPM * Poles) / 2 * 60

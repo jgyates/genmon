@@ -267,6 +267,28 @@ class ModbusProtocol(ModbusBase):
                 else:
                     self.CrcError += 1
                     return False, Packet
+            elif self.Slave.Buffer[self.MBUS_OFF_COMMAND] in [self.MBUS_CMD_WRITE_FILE]:
+                length = self.Slave.Buffer[self.MBUS_OFF_RESPONSE_LEN]   # our packet tells us the length of the payload
+                if self.Slave.Buffer[self.MBUS_OFF_WRITE_FILE_TYPE] != self.MBUS_FILE_TYPE_VALUE:
+                    self.LogError("Invalid modbus write file record type")
+                    self.ComValidationError += 1
+                    return False, EmptyPacket
+                # if the full length of the packet has not arrived, return and try again
+                if (length + self.MBUS_FILE_READ_PAYLOAD_SIZE_MINUS_LENGTH) > len(self.Slave.Buffer):
+                    return True, EmptyPacket
+                # we will copy the entire buffer, this will be validated at a later time
+                for i in range(0, len(self.Slave.Buffer)):
+                    Packet.append(self.Slave.Buffer.pop(0))  # pop Address, Function, Length, message and CRC
+
+                if len(self.Slave.Buffer):
+                    self.LogHexList(self.Slave.Buffer, prefix = "Left Over")
+
+                if self.CheckCRC(Packet):
+                    self.RxPacketCount += 1
+                    return True, Packet
+                else:
+                    self.CrcError += 1
+                    return False, Packe
             else:
                 # received a  response to a command we do not support
                 self.DiscardByte(reason = "Invalid Modbus command")
@@ -346,6 +368,25 @@ class ModbusProtocol(ModbusBase):
 
         except Exception as e1:
             self.LogErrorLine("Error in ProcessFileReadTransaction: " + str(e1))
+            return ""
+
+    #-------------ModbusProtocol::ProcessFileWriteTransaction-------------------
+    def ProcessFileWriteTransaction(self, Register, Length, Data, file_num = 1, min_response_override = None):
+
+        MasterPacket = []
+
+        try:
+            with self.CommAccessLock:
+                MasterPacket = self.CreateMasterPacket(Register, length = int(Length), command = self.MBUS_CMD_WRITE_FILE, file_num = file_num, data = Data)
+
+                if len(MasterPacket) == 0:
+                    return ""
+
+                #skipupdate=True to skip writing results to cached reg values
+                return self.ProcessOneTransaction(MasterPacket, skipupdate = True, min_response_override = min_response_override)
+
+        except Exception as e1:
+            self.LogErrorLine("Error in ProcessFileWriteTransaction: " + str(e1))
             return ""
 
     #------------ModbusProtocol::ProcessOneTransaction--------------------------
@@ -431,7 +472,7 @@ class ModbusProtocol(ModbusBase):
         try:
             Register = 0
 
-            if Packet[self.MBUS_OFF_COMMAND + offset] == self.MBUS_CMD_READ_FILE:
+            if Packet[self.MBUS_OFF_COMMAND + offset] in [self.MBUS_CMD_READ_FILE,self.MBUS_CMD_WRITE_FILE] :
                 Register = Packet[self.MBUS_OFF_FILE_RECORD_HI + offset] << 8 |  Packet[self.MBUS_OFF_FILE_RECORD_LOW + offset] & 0x00FF
             else:
                 Register = Packet[self.MBUS_OFF_REGISTER_HI + offset] << 8 |  Packet[self.MBUS_OFF_REGISTER_LOW + offset] & 0x00FF
@@ -503,7 +544,7 @@ class ModbusProtocol(ModbusBase):
                 Packet.append(self.Address)                 # address
                 Packet.append(command)                      # command
                 Packet.append(self.MBUS_READ_FILE_REQUEST_PAYLOAD_LENGTH)     # Byte count
-                Packet.append(self.MBUS_FILE_TYPE_VALUE)         # always same value
+                Packet.append(self.MBUS_FILE_TYPE_VALUE)    # always same value
                 Packet.append(file_num >> 8)                # File Number hi
                 Packet.append(file_num & 0x00FF)            # File Number low
                 Packet.append(RegisterInt >> 8)             # register (file record number) high
@@ -514,6 +555,33 @@ class ModbusProtocol(ModbusBase):
                 if CRCValue != None:
                     Packet.append(CRCValue & 0x00FF)            # CRC low
                     Packet.append(CRCValue >> 8)                # CRC high
+            elif command == self.MBUS_CMD_WRITE_FILE:
+                # Note, we only support one sub request at at time
+                if RegisterInt < self.MIN_FILE_RECORD_NUM or RegisterInt > self.MAX_FILE_RECORD_NUM:
+                    self.ComValidationError += 1
+                    self.LogError("Validation Error: CreateMasterPacket maximum regiseter (write record number) value exceeded: " + str(register))
+                    return []
+                if len(data)/2 != length:
+                    self.LogError("Validation Error: CreateMasterPacket invalid length (3) %x %x" % (len(data), length))
+                    self.ComValidationError += 1
+                    return []
+                Packet.append(self.Address)                 # address
+                Packet.append(command)                      # command
+                Packet.append(length * 2 + self.MBUS_FILE_WRITE_REQ_SIZE_MINUS_LENGTH)  # packet payload size from here
+                Packet.append(self.MBUS_FILE_TYPE_VALUE)    # always same value
+                Packet.append(file_num >> 8)                # File Number hi
+                Packet.append(file_num & 0x00FF)            # File Number low
+                Packet.append(RegisterInt >> 8)             # register (file record number) high
+                Packet.append(RegisterInt & 0x00FF)         # register (file record number) low
+                Packet.append(length >> 8)                  # Length to return hi
+                Packet.append(length & 0x00FF)              # Length to return lo
+                for b in range(0, len(data)):
+                    Packet.append(data[b])                  # data
+                CRCValue = self.GetCRC(Packet)
+                if CRCValue != None:
+                    Packet.append(CRCValue & 0x00FF)            # CRC low
+                    Packet.append(CRCValue >> 8)                # CRC high
+
             else:
                 self.LogError("Validation Error: Invalid command in CreateMasterPacket!")
                 self.ComValidationError += 1
@@ -609,10 +677,10 @@ class ModbusProtocol(ModbusBase):
             if not self.CheckResponseAddress(SlavePacket[self.MBUS_OFF_ADDRESS]):
                 self.LogError("Validation Error: Invalid address in UpdateRegistersFromPacket (Slave)")
                 return "Error"
-            if not SlavePacket[self.MBUS_OFF_COMMAND] in [self.MBUS_CMD_READ_REGS, self.MBUS_CMD_WRITE_REGS, self.MBUS_CMD_READ_FILE]:
+            if not SlavePacket[self.MBUS_OFF_COMMAND] in [self.MBUS_CMD_READ_REGS, self.MBUS_CMD_WRITE_REGS, self.MBUS_CMD_READ_FILE, self.MBUS_CMD_WRITE_FILE]:
                 self.LogError("Validation Error: Unknown Function slave %02x %02x" %  (SlavePacket[self.MBUS_OFF_ADDRESS],SlavePacket[self.MBUS_OFF_COMMAND]))
                 return "Error"
-            if not MasterPacket[self.MBUS_OFF_COMMAND + PacketOffset] in [self.MBUS_CMD_READ_REGS, self.MBUS_CMD_WRITE_REGS, self.MBUS_CMD_READ_FILE]:
+            if not MasterPacket[self.MBUS_OFF_COMMAND + PacketOffset] in [self.MBUS_CMD_READ_REGS, self.MBUS_CMD_WRITE_REGS, self.MBUS_CMD_READ_FILE, self.MBUS_CMD_WRITE_FILE]:
                 self.LogError("Validation Error: Unknown Function master %02x %02x" %  (MasterPacket[self.MBUS_OFF_ADDRESS],MasterPacket[self.MBUS_OFF_COMMAND]))
                 return "Error"
 
@@ -623,7 +691,7 @@ class ModbusProtocol(ModbusBase):
              # get register from master packet
             Register = "%04x" % (self.GetRegisterFromPacket(MasterPacket, offset = PacketOffset))
 
-            if MasterPacket[self.MBUS_OFF_COMMAND + PacketOffset] == self.MBUS_CMD_WRITE_REGS:
+            if MasterPacket[self.MBUS_OFF_COMMAND + PacketOffset] in [self.MBUS_CMD_WRITE_REGS, self.MBUS_CMD_WRITE_FILE]:
                 # get register from slave packet
                 SlaveRegister = "%04x" % (self.GetRegisterFromPacket(SlavePacket))
                 if SlaveRegister != Register:

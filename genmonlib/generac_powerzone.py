@@ -23,17 +23,6 @@ REGISTER    = 0
 LENGTH      = 1
 RET_STRING  = 2
 
-NAMEPLATE_DATA_FILE_RECORD      = "0112"    #
-NAMEPLATE_DATA_LENGTH           = 64        # in bytes
-GOV_DATA_FILE_RECORD            = "01a4"
-GOV_DATA_FILE_RECORD_LENGTH     = 56
-REGULATOR_FILE_RECORD           = "01a6"
-REGULATOR_FILE_RECORD_LENGTH    = 44
-ENGINE_DATA_FILE_RECORD         = "0122"
-ENGINE_DATA_FILE_RECORD_LENGTH  = 64
-MISC_GEN_FILE_RECORD            = "0109"
-MISC_GEN_FILE_RECORD_LENGTH     = 14
-
 '''
 EVENT_LOG                       = "0c01"
 EVENT_LOG_2                     = "0c02"
@@ -146,7 +135,7 @@ class PowerZoneReg(object):
         # 2 = Manual
         # 4 = Auto
 
-    #MAINT_LIFE_REMAINING       = ["0167", 9]        #
+    KEYSWITCH_OVERRIDE         = ["0170", 2]
 
 
     BATTERY_CHARGER_CURRENT    = ["01b7", 2]        # Divide by 100
@@ -416,21 +405,12 @@ class PowerZoneIO(object):
 #---------------------------RegisterStringEnum:RegisterStringEnum---------------
 class RegisterStringEnum(object):
 
-    # These Values are the same for H-Panel, and G-Panel
     # Note, the first value is the register (in hex string), the second is the numbert of bytes
     # third is if the result is stored as a string
-    CURRENT_ALARM_LOG           =   ["05f8", 2, False]            #
-    '''
-    VERSION_DATE                =   ["0040", 0x40, True]
-    LAST_POWER_FAIL             =   ["0104", 0x08, False]
-    POWER_UP_TIME               =   ["0108", 0x08, False]
-    ENGINE_STATUS               =   ["0133", 0x40, True]
-    GENERATOR_STATUS            =   ["0153", 0x40, True]
-    GENERATOR_DATA_TIME         =   ["0173", 0x40, False]
-    MIN_GENLINK_VERSION         =   ["0060", 0x40, True]
-    MAINT_LIFE                  =   ["0193", 0x12, False]
-    ENGINE_KW_HOURS             =   ["0236", 0x08, False]
-    '''
+    PRODUCT_VERSION_DATE        = ["000a", 192, False]
+    MAINT_LIFE_REMAINING        = ["0167", 18, False]
+    CURRENT_ALARM_LOG           = ["058f", 202, False]
+
     #---------------------RegisterStringEnum::hexsort---------------------------
     @staticmethod
     def hexsort( e):
@@ -446,6 +426,43 @@ class RegisterStringEnum(object):
             if not callable(getattr(RegisterStringEnum(),attr)) and not attr.startswith("__"):
                 RetList.append(value)
         RetList.sort(key=RegisterStringEnum.hexsort)
+        return RetList
+
+#---------------------------RegisterFileEnum:RegisterFileEnum-------------------
+class RegisterFileEnum(object):
+
+    # Note, the first value is the register (in hex string), the second is the numbert of bytes
+    # third is if the result is stored as a string
+
+    # Nameplate, Serial Number, etc
+    SN_DATA_FILE_RECORD             = ["0112", 64]
+    ALT_SN_DATA_FILE_RECORD         = ["0113", 64]
+    MODEL_FILE_RECORD               = ["0114", 64]
+    PRODUCTION_DATE_COUNTRY_FILE_RECORD     = ["0115", 64]
+    NP_SPECS_1_FILE_RECORD          = ["0116", 64]
+    NP_SPECS_2_FILE_RECORD          = ["0117", 64]
+    NP_SPECS_3_FILE_RECORD          = ["0118", 64]
+
+    GOV_DATA_FILE_RECORD            = ["01a4", 56]
+    REGULATOR_FILE_RECORD           = ["01a6", 44]
+    ENGINE_DATA_FILE_RECORD         = ["0122", 64]
+    MISC_GEN_FILE_RECORD            = ["0109", 14]
+
+    #---------------------RegisterFileEnum::hexsort---------------------------
+    @staticmethod
+    def hexsort( e):
+        try:
+            return int(e[REGISTER],16)
+        except:
+            return 0
+    #---------------------RegisterFileEnum::GetRegList------------------------
+    @staticmethod
+    def GetRegList():
+        RetList = []
+        for attr, value in RegisterFileEnum.__dict__.items():
+            if not callable(getattr(RegisterFileEnum(),attr)) and not attr.startswith("__"):
+                RetList.append(value)
+        RetList.sort(key=RegisterFileEnum.hexsort)
         return RetList
 
 class PowerZone(GeneratorController):
@@ -563,6 +580,13 @@ class PowerZone(GeneratorController):
         try:
             self.IdentifyController()
             self.MasterEmulation()
+            '''
+            Register = "%04x" % EVENT_LOG_START
+            Data = []
+            Data.append(0x00)
+            Data.append(0x13)
+            self.ModBus.ProcessFileWriteTransaction(Register, len(Data) / 2, Data)
+            '''
             self.CheckModelSpecificInfo()
             self.SetupTiles()
             self.InitComplete = True
@@ -683,74 +707,28 @@ class PowerZone(GeneratorController):
         except Exception as e1:
             self.LogErrorLine("Error in CheckModelSpecificInfo: " + str(e1))
         return
-    #-------------PowerZone:GetIntFromString------------------------------------
-    def GetIntFromString(self, input_string, byte_offset, length = 1, decimal = False):
-
-        try:
-            if len(input_string) < byte_offset + length:
-                self.LogError("Invalid length in GetIntFromString: " + str(input_string))
-                return 0
-            StringOffset = byte_offset * 2
-            StringOffsetEnd = StringOffset + (length *2)
-            if StringOffset == StringOffsetEnd:
-                if decimal:
-                    return int(input_string[StringOffset])
-                return int(input_string[StringOffset], 16)
-            else:
-                if decimal:
-                    return int(input_string[StringOffset:StringOffsetEnd])
-                return int(input_string[StringOffset:StringOffsetEnd], 16)
-        except Exception as e1:
-            self.LogErrorLine("Error in GetIntFromString: " + "[" + input_string+"]" + str(e1))
-            return 0
-    #-------------PowerZone:GetParameterStringValue-----------------------------
-    def GetParameterStringValue(self, Register, ReturnString = False):
-
-        StringValue = self.Strings.get(Register, "")
-        if ReturnString:
-            return self.HexStringToString(StringValue)
-        return self.Strings.get(Register, "")
-
-    #-------------PowerZone:GetParameterFileValue-------------------------------
-    def GetParameterFileValue(self, Register, ReturnString = False):
-
-        StringValue = self.FileData.get(Register, "")
-        if ReturnString:
-            return self.HexStringToString(StringValue)
-        return self.FileData.get(Register, "")
 
     #-------------PowerZone:GetGeneratorFileData--------------------------------
     def GetGeneratorFileData(self):
 
         try:
-            # Read the nameplate dataGet Serial Number
-            self.ModBus.ProcessFileReadTransaction(NAMEPLATE_DATA_FILE_RECORD, NAMEPLATE_DATA_LENGTH / 2 )
-            # Read Govonor Data
-            self.ModBus.ProcessFileReadTransaction(GOV_DATA_FILE_RECORD, GOV_DATA_FILE_RECORD_LENGTH / 2 )
-            # Read Regulator Data
-            self.ModBus.ProcessFileReadTransaction(REGULATOR_FILE_RECORD, REGULATOR_FILE_RECORD_LENGTH / 2 )
-            # Read Engine Data
-            self.ModBus.ProcessFileReadTransaction(ENGINE_DATA_FILE_RECORD, ENGINE_DATA_FILE_RECORD_LENGTH / 2 )
-            # Read Misc Engine data
-            self.ModBus.ProcessFileReadTransaction(MISC_GEN_FILE_RECORD, MISC_GEN_FILE_RECORD_LENGTH / 2 )
-            '''
-            # ALARM log
-            self.ModBus.ProcessFileReadTransaction(ALARM_LOG, ALARM_LOG_LENGTH / 2 )
-            self.ModBus.ProcessFileReadTransaction(ALARM_LOG_2, ALARM_LOG_LENGTH / 2 )
-            self.ModBus.ProcessFileReadTransaction(ALARM_LOG_3, ALARM_LOG_LENGTH / 2 )
-            self.ModBus.ProcessFileReadTransaction(ALARM_LOG_4, ALARM_LOG_LENGTH / 2 )
-            self.ModBus.ProcessFileReadTransaction(ALARM_LOG_5, ALARM_LOG_LENGTH / 2 )
-            # EVENT log
-            self.ModBus.ProcessFileReadTransaction(EVENT_LOG, EVENT_LOG_LENGTH / 2 )
-            self.ModBus.ProcessFileReadTransaction(EVENT_LOG_2, EVENT_LOG_LENGTH / 2 )
-            self.ModBus.ProcessFileReadTransaction(EVENT_LOG_3, EVENT_LOG_LENGTH / 2 )
-            self.ModBus.ProcessFileReadTransaction(EVENT_LOG_4, EVENT_LOG_LENGTH / 2 )
-            self.ModBus.ProcessFileReadTransaction(EVENT_LOG_5, EVENT_LOG_LENGTH / 2 )
-            '''
-            self.GetGeneratorLogFileData()
+            for RegisterList in RegisterFileEnum.GetRegList():
+                try:
+                    if self.IsStopping:
+                        return
+                    localTimeoutCount = self.ModBus.ComTimoutError
+                    localSyncError = self.ModBus.ComSyncError
+                    self.ModBus.ProcessFileReadTransaction(RegisterList[REGISTER], RegisterList[LENGTH] / 2)
+                    if ((localSyncError != self.ModBus.ComSyncError or localTimeoutCount != self.ModBus.ComTimoutError)
+                        and self.ModBus.RxPacketCount):
+                        self.WaitAndPergeforTimeout()
 
+                except Exception as e1:
+                    self.LogErrorLine("Error in GetGeneratorFileData (1): " + str(e1))
+
+            self.GetGeneratorLogFileData()
         except Exception as e1:
-            self.LogErrorLine("Error in GetGeneratorFileData: " + str(e1))
+            self.LogErrorLine("Error in GetGeneratorFileData: (2)" + str(e1))
 
     #------------ PowerZone:WaitAndPergeforTimeout -----------------------------
     def WaitAndPergeforTimeout(self):
@@ -831,7 +809,7 @@ class PowerZone(GeneratorController):
                 except Exception as e1:
                     self.LogErrorLine("Error in MasterEmulation: " + str(e1))
 
-            #self.GetGeneratorStrings()
+            self.GetGeneratorStrings()
             self.GetGeneratorFileData()
             self.CheckForAlarmEvent.set()
         except Exception as e1:
@@ -888,33 +866,59 @@ class PowerZone(GeneratorController):
             if not len(Entry):
                 return ""
 
-            # get time
-            RetList = re.findall(r'\d{1,2}:\d{1,2}:\d{1,2}', Entry)
-            if RetList == None or not len(RetList):
-                self.LogError("ParseLogEntry: No Time found in log entry")
-                return Entry
-            EntryTime = RetList[0]
-            # get date
-            RetList = re.findall(r'\d{1,2}/\d{1,2}/\d{1,2}', Entry)
-            if RetList == None or not len(RetList):
-                self.LogError("ParseLogEntry: No date found in log entry")
-                return Entry
-            EntryDate = RetList[0]
+            if Type == "event":
+                '''
+                description_1: bytes: 1, offset: 4
+                comparison: bytes: 1, offset: 4, bitmask: 224
+                message_type: bytes: 1, offset: 5, bitmask: 192
+                description_2: bytes: 1, offset: 5
 
-            Entry = Entry.replace(EntryDate, "")
-            Entry = Entry.replace(EntryTime, "")
+                '''
+                channel = self.GetIntFromString(Entry, 0, 2)
+                if channel == 0xffff:
+                    # no entry
+                    return ""
+                functionCode = self.GetIntFromString(Entry, 2, 2)
+                description_1 = self.GetIntFromString(Entry, 4, 1)
+                description_2 = self.GetIntFromString(Entry, 5, 1)
+                hour = self.GetIntFromString(Entry, 6, 1)
+                min = self.GetIntFromString(Entry, 7, 1)
+                milli = self.GetIntFromString(Entry, 8, 2)
+                month = self.GetIntFromString(Entry, 10, 1)
+                date = self.GetIntFromString(Entry, 11, 1)
+                year = self.GetIntFromString(Entry, 12, 1)
+                triggerValue = self.GetIntFromString(Entry, 14, 4)
+                Entry = "Channel: " + str(channel)
+                Entry += " Function Code: " + str(functionCode)
+                Entry += " description 1: " + str(description_1)
+                Entry += " description 2: " + str(description_2)
+                Entry += " " + str(month) + "/" + str(date) + "/" + str(year)
+                Entry += " " + str(hour) + ":" + str(min) + ":" + str(milli)
+                Entry += " " + str(triggerValue)
+            if Type == "alarm":
+                '''
+                description_1: bytes: 1, offset: 4
+                setPointType: bytes: 1, offset: 4, bitmask: 128
+                fault_type: bytes: 1, offset: 4, bitmask: 96
+                dtc:  bytes: 1, offset: 4, bitmask: 16
+                fault_number:  bytes: 1, offset: 4, bitmask: 14
+                message_type:  bytes: 1, offset: 5, bitmask: 192
+                description_2:  bytes: 1, offset: 5
 
-            Entry = Entry.strip()
-
-            Entry = Entry.replace("  ", "")
-            if Type.lower() == "alarm":
-                Entry = Entry.replace("(?)","Shutdown")
-
-            elif Type.lower() == "event":
-                Entry = Entry.replace("()", "")
-
-            Entry = EntryDate + " " + EntryTime + " " + Entry
-
+                '''
+                channel = self.GetIntFromString(Entry, 0, 2)
+                if channel == 0xffff:
+                    # no entry
+                    return ""
+                functionCode = self.GetIntFromString(Entry, 2, 2)
+                description_1 = self.GetIntFromString(Entry, 4, 1)
+                description_2 = self.GetIntFromString(Entry, 5, 1)
+                hour = self.GetIntFromString(Entry, 6, 1)
+                min = self.GetIntFromString(Entry, 7, 1)
+                milli = self.GetIntFromString(Entry, 8, 2)
+                month = self.GetIntFromString(Entry, 10, 1)
+                date = self.GetIntFromString(Entry, 11, 1)
+                year = self.GetIntFromString(Entry, 12, 1)
             return Entry
         except Exception as e1:
             self.LogErrorLine("Error in ParseLogEntry: " + str(e1))
@@ -966,24 +970,14 @@ class PowerZone(GeneratorController):
     def RegisterIsFileRecord(self, Register, Value):
 
         try:
+
+            FileList = RegisterFileEnum.GetRegList()
+            for FileReg in FileList:
+                if Register.lower() == FileReg[REGISTER].lower():
+                    return True
+
             RegInt = int(Register,16)
 
-            if Register == NAMEPLATE_DATA_FILE_RECORD:
-                return True
-            if Register == REGULATOR_FILE_RECORD:
-                return True
-            if Register == GOV_DATA_FILE_RECORD:
-                return True
-            if Register == ENGINE_DATA_FILE_RECORD:
-                return True
-            if Register == MISC_GEN_FILE_RECORD:
-                return True
-            '''
-            if Register == ALARM_LOG:
-                return True
-            if Register == EVENT_LOG:
-                return True
-            '''
             if RegInt >= ALARM_LOG_START and RegInt <= (ALARM_LOG_START + ALARM_LOG_ENTRIES):
                 return True
             if RegInt >= EVENT_LOG_START and RegInt <= (EVENT_LOG_START + EVENT_LOG_ENTRIES):
@@ -1034,6 +1028,9 @@ class PowerZone(GeneratorController):
 
             if not IsFile and self.RegisterIsBaseRegister(Register, Value, validate_length = True):
                 self.Registers[Register] = Value
+            elif not IsFile and self.RegisterIsStringRegister(Register):
+                # TODO validate register string length
+                self.Strings[Register] = Value
             elif IsFile and self.RegisterIsFileRecord(Register, Value):
                 # todo validate file data length
                 self.FileData[Register] = Value
@@ -1074,12 +1071,15 @@ class PowerZone(GeneratorController):
             # 1 = Off
             # 2 = Manual
             # 4 = Auto
+            # 8 = Remote Start
             if SwitchState == 2:
                 return "Manual"
             elif SwitchState == 4:
                 return "Auto"
             elif SwitchState == 1:
                 return "Off"
+            elif SwitchState == 8:
+                return "Remote Start"
             else:
                 return "Unknown"
         except Exception as e1:
@@ -1377,31 +1377,49 @@ class PowerZone(GeneratorController):
             #       Dict[Logs] = [ {"Alarm Log" : [Log Entry1, LogEntry2, ...]},
             #                      {"Run Log" : [Log Entry3, Log Entry 4, ...]}...]
             LocalEvent = []
-            '''
-            for RegValue in range(EVENT_LOG_START + EVENT_LOG_ENTRIES -1 , EVENT_LOG_START -1, -1):
+            LogRawData = ""
+            for RegValue in range(EVENT_LOG_START, EVENT_LOG_START + EVENT_LOG_ENTRIES -1 , +1):
                 Register = "%04x" % RegValue
-                LogEntry = self.GetParameterFileValue(Register, ReturnString = True)
-                LogEntry = self.ParseLogEntry(LogEntry, Type = "event")
-                if not len(LogEntry):
-                    continue
-                if "undefined" in LogEntry:
-                    continue
+                LogRawData += self.GetParameterFileValue(Register, ReturnString = False)
 
-                LocalEvent.append(LogEntry)
+            if len(LogRawData) != 0:
+                CurrentIndex = self.GetIntFromString(LogRawData, 0, 2)
+                LogRawData = LogRawData[4:]
+                EntrySize = 17*2
+                RawEntry = ""
+                for index in range(0, len(LogRawData), EntrySize):
+                    if (index + EntrySize) <= len(LogRawData):
+                        LogEntry = self.ParseLogEntry(LogRawData[index: index+EntrySize], Type = "event")
+                        if not len(LogEntry):
+                            continue
+                        if "undefined" in LogEntry:
+                            continue
+                        LocalEvent.append(LogEntry)
 
             LocalAlarm = []
-            for RegValue in range(ALARM_LOG_START + ALARM_LOG_ENTRIES -1, ALARM_LOG_START -1, -1):
-                Register = "%04x" % RegValue
-                LogEntry = self.GetParameterFileValue(Register, ReturnString = True)
-                LogEntry = self.ParseLogEntry(LogEntry, Type = "alarm")
-                if not len(LogEntry):
-                    continue
 
-                LocalAlarm.append(LogEntry)
+            LogRawData = ""
+            for RegValue in range(ALARM_LOG_START, ALARMLOG_LOG_START + ALARM_LOG_ENTRIES -1 , +1):
+                Register = "%04x" % RegValue
+                LogRawData += self.GetParameterFileValue(Register, ReturnString = False)
+
+            if len(LogRawData) != 0:
+                CurrentIndex = self.GetIntFromString(LogRawData, 0, 2)
+                LogRawData = LogRawData[4:]
+                EntrySize = 17*2
+                RawEntry = ""
+                for index in range(0, len(LogRawData), EntrySize):
+                    if (index + EntrySize) <= len(LogRawData):
+                        LogEntry = self.ParseLogEntry(LogRawData[index: index+EntrySize], Type = "event")
+                        if not len(LogEntry):
+                            continue
+                        if "undefined" in LogEntry:
+                            continue
+                        LocalEvent.append(LogEntry)
 
             LogList = [ {"Alarm Log": LocalAlarm},
                         {"Run Log": LocalEvent}]
-            '''
+
             RetValue["Logs"] = LogList
 
 
@@ -1421,18 +1439,69 @@ class PowerZone(GeneratorController):
             # ordered dict to handle evo vs nexus functions
             Maintenance = collections.OrderedDict()
             Maintenance["Maintenance"] = []
-
-            Maintenance["Maintenance"].append({"Model" : self.Model})
-            NamePlateData = self.GetParameterFileValue(NAMEPLATE_DATA_FILE_RECORD, ReturnString = True)
+            Nameplate = []
+            Maintenance["Maintenance"].append({"Nameplate Data": Nameplate})
+            # these offsets are doubled since we are dealing with Hex ASCII string
+            MARK_32 = 32*2
+            MARK_10 = 10*2
+            MARK_20 = 20*2
+            MARK_30 = 30*2
+            MARK_40 = 40*2
+            MARK_50 = 50*2
+            NamePlateData = self.GetParameterFileValue(RegisterFileEnum.SN_DATA_FILE_RECORD[REGISTER], ReturnString = True)
             if len(NamePlateData):
-                Maintenance["Maintenance"].append({"Name Plate Info" : NamePlateData})
+                Nameplate.append({"Serial Number" : NamePlateData})
+            NamePlateData = self.GetParameterFileValue(RegisterFileEnum.ALT_SN_DATA_FILE_RECORD[REGISTER], ReturnString = True)
+            if len(NamePlateData):
+                Nameplate.append({"Alternate Number" : NamePlateData})
+            # the following nameplate entries return hex strings and will be converted to ASCII after parsing
+            NamePlateData = self.GetParameterFileValue(RegisterFileEnum.MODEL_FILE_RECORD[REGISTER], ReturnString = False)
+            if len(NamePlateData) >= MARK_32:
+                Nameplate.append({"Generator Model" : self.HexStringToString(NamePlateData[:MARK_32])})
+            if len(NamePlateData) >= RegisterFileEnum.MODEL_FILE_RECORD[LENGTH]:
+                Nameplate.append({"Model" : self.HexStringToString(NamePlateData[MARK_32:])})
+            NamePlateData = self.GetParameterFileValue(RegisterFileEnum.PRODUCTION_DATE_COUNTRY_FILE_RECORD[REGISTER], ReturnString = False)
+            if len(NamePlateData) >= MARK_32:
+                Nameplate.append({"Production Date" : self.HexStringToString(NamePlateData[:MARK_32])})
+            if len(NamePlateData) >= RegisterFileEnum.PRODUCTION_DATE_COUNTRY_FILE_RECORD[LENGTH]:
+                Nameplate.append({"Country of Origin" : self.HexStringToString(NamePlateData[MARK_32:])})
+            NamePlateData = self.GetParameterFileValue(RegisterFileEnum.NP_SPECS_1_FILE_RECORD[REGISTER], ReturnString = False)
+            if len(NamePlateData) >= MARK_10:
+                Nameplate.append({"kW" : self.HexStringToString(NamePlateData[:MARK_10])})
+            if len(NamePlateData) >= MARK_20:
+                Nameplate.append({"kVA" : self.HexStringToString(NamePlateData[MARK_10:MARK_20])})
+            if len(NamePlateData) >= MARK_30:
+                Nameplate.append({"Hz" : self.HexStringToString(NamePlateData[MARK_20:MARK_30])})
+            if len(NamePlateData) >= MARK_40:
+                Nameplate.append({"Power Factor" : self.HexStringToString(NamePlateData[MARK_30:MARK_40])})
+            if len(NamePlateData) >= MARK_50:
+                Nameplate.append({"Upsize Alternate kW" : self.HexStringToString(NamePlateData[MARK_40:MARK_50])})
+            NamePlateData = self.GetParameterFileValue(RegisterFileEnum.NP_SPECS_2_FILE_RECORD[REGISTER], ReturnString = False)
+            if len(NamePlateData) >= MARK_10:
+                Nameplate.append({"Upsize Alternate kVA" : self.HexStringToString(NamePlateData[:MARK_10])})
+            if len(NamePlateData) >= MARK_20:
+                Nameplate.append({"Volts" : self.HexStringToString(NamePlateData[MARK_10:MARK_20])})
+            if len(NamePlateData) >= MARK_30:
+                Nameplate.append({"Amps" : self.HexStringToString(NamePlateData[MARK_20:MARK_30])})
+            if len(NamePlateData) >= MARK_40:
+                Nameplate.append({"Engine RPM" : self.HexStringToString(NamePlateData[MARK_30:MARK_40])})
+            if len(NamePlateData) >= MARK_50:
+                Nameplate.append({"Alternate RPM" : self.HexStringToString(NamePlateData[MARK_40:MARK_50])})
+            NamePlateData = self.GetParameterFileValue(RegisterFileEnum.NP_SPECS_3_FILE_RECORD[REGISTER], ReturnString = False)
+            if len(NamePlateData) >= MARK_10:
+                Nameplate.append({"Breaker kW" : self.HexStringToString(NamePlateData[:MARK_10])})
+            if len(NamePlateData) >= MARK_20:
+                Nameplate.append({"Breaker Amps" : self.HexStringToString(NamePlateData[MARK_10:MARK_20])})
+
+            ProductVersion = self.GetParameterStringValue(RegisterStringEnum.PRODUCT_VERSION_DATE[REGISTER], ReturnString = True)
+            if len(ProductVersion):
+                Maintenance["Maintenance"].append({"Firmware" : str(ProductVersion)})
+            Maintenance["Maintenance"].append({"Model" : self.Model})
             Maintenance["Maintenance"].append({"Controller Detected" : self.GetController()})
             Maintenance["Maintenance"].append({"Nominal RPM" : self.NominalRPM})
             Maintenance["Maintenance"].append({"Rated kW" : self.NominalKW})
             Maintenance["Maintenance"].append({"Nominal Frequency" : self.NominalFreq})
             Maintenance["Maintenance"].append({"Fuel Type" : self.FuelType})
-
-            Maintenance["Maintenance"].append({"Maintenance Life Remaining" : self.ValueOut(self.GetParameter(self.Reg.MIN_MAINT_REMAIN[REGISTER], ReturnInt = True), "%", JSONNum)})
 
             if self.UseMetric:
                 Units = "L"
@@ -1500,6 +1569,8 @@ class PowerZone(GeneratorController):
                 #Exercise["Exercise Time" : self.GetExerciseTime()
                 #Exercise["Exercise Duration" : self.GetExerciseDuration()
 
+            Maintenance["Maintenance"].append({"Maintenance Life Remaining" : self.ValueOut(self.GetParameter(self.Reg.MIN_MAINT_REMAIN[REGISTER], ReturnInt = True), "%", JSONNum)})
+            Maintenance["Maintenance"].append({"Maintenance Times" :self.GetMaintTimes()})
             Maintenance["Maintenance"].append({"Generator Settings" : self.GetGeneratorSettings()})
             Maintenance["Maintenance"].append({"Engine Settings" : self.GetEngineSettings()})
             Maintenance["Maintenance"].append({"Governor Settings" : self.GetGovernorSettings()})
@@ -1641,9 +1712,9 @@ class PowerZone(GeneratorController):
     def GetRegulatorSettings(self):
 
         RegSettings = []
-        RegData = self.GetParameterFileValue(REGULATOR_FILE_RECORD)
+        RegData = self.GetParameterFileValue(RegisterFileEnum.REGULATOR_FILE_RECORD[REGISTER])
 
-        if len(RegData) >= ((REGULATOR_FILE_RECORD_LENGTH * 2)):
+        if len(RegData) >= ((RegisterFileEnum.REGULATOR_FILE_RECORD[LENGTH] * 2)):
             try:
                 RegSettings.append({"Voltage KP" : str(self.GetIntFromString(RegData, 0, 2)) + " V"})           # Byte 0 and 1
                 RegSettings.append({"Voltage KI" : str(self.GetIntFromString(RegData, 2, 2)) + " V"})           # Byte 2 and 3
@@ -1670,8 +1741,8 @@ class PowerZone(GeneratorController):
 
         GovSettings = []
 
-        GovData = self.GetParameterFileValue(GOV_DATA_FILE_RECORD)
-        if len(GovData) >= ((GOV_DATA_FILE_RECORD_LENGTH * 2)):
+        GovData = self.GetParameterFileValue(RegisterFileEnum.GOV_DATA_FILE_RECORD[REGISTER])
+        if len(GovData) >= ((RegisterFileEnum.GOV_DATA_FILE_RECORD[LENGTH] * 2)):
             try:
                 #GovSettings.append({"Standby KP" : str(self.GetIntFromString(GovData, 0, 2))})                        # Byte 0 and 1
                 #GovSettings.append({"Standby KI" : str(self.GetIntFromString(GovData, 2, 2))})                        # Byte 2 and 3
@@ -1694,8 +1765,8 @@ class PowerZone(GeneratorController):
     def GetEngineSettings(self):
 
         EngineSettings = []
-        EngineData = self.GetParameterFileValue(ENGINE_DATA_FILE_RECORD)
-        if len(EngineData) >= ((ENGINE_DATA_FILE_RECORD_LENGTH * 2)):
+        EngineData = self.GetParameterFileValue(RegisterFileEnum.ENGINE_DATA_FILE_RECORD[REGISTER])
+        if len(EngineData) >= ((RegisterFileEnum.ENGINE_DATA_FILE_RECORD[LENGTH] * 2)):
             try:
                 EngineSettings.append({"Engine Transfer Enable" : "Enabled" if self.GetIntFromString(EngineData, 0, 2) else "Disabled"})   # Byte 1 and 2
                 EngineSettings.append({"Preheat Enable" : "Enabled" if self.GetIntFromString(EngineData, 2, 2) else "Disabled"})           # Byte 2 and 3
@@ -1716,14 +1787,47 @@ class PowerZone(GeneratorController):
                 self.LogErrorLine("Error parsing engine settings: " + str(e1))
         return EngineSettings
 
+    #------------ GeneratorController:GetMaintTimes ----------------------------
+    def GetMaintTimes(self):
+        MaintTimes = []
+
+        MaintData = self.GetParameterStringValue(RegisterStringEnum.MAINT_LIFE_REMAINING[REGISTER], RegisterStringEnum.MAINT_LIFE_REMAINING[RET_STRING])
+
+        if len(MaintData) >= (RegisterStringEnum.MAINT_LIFE_REMAINING[LENGTH]):
+            try:
+
+                OilLife = self.GetIntFromString(MaintData, 0, 2)  # Byte 1 and 2
+                OilFilterLife = self.GetIntFromString(MaintData, 2, 2)  # Byte 2 and 3
+                SparkPlugLife = self.GetIntFromString(MaintData, 4, 2)
+                AirFilterLife = self.GetIntFromString(MaintData, 6, 2)
+                BatteryLife = self.GetIntFromString(MaintData, 8, 2)
+                GeneralMaintLife = self.GetIntFromString(MaintData, 10, 2)
+                UtilityTransferLife = self.GetIntFromString(MaintData, 12, 2)
+                GeneratorTransferLife = self.GetIntFromString(MaintData, 14, 2)
+                BioFuelLife = self.GetIntFromString(MaintData, 16, 2)
+
+                MaintTimes.append({"Oil Life" : str(OilLife / 100.0) + " %"})
+                MaintTimes.append({"Oil Filter Life" : str(OilLife / 100.0) + " %"})
+                MaintTimes.append({"Spark Plug Life" : str(SparkPlugLife / 100.0) + " %"})
+                MaintTimes.append({"Battery Life" : str(BatteryLife / 100.0) + " %"})
+                MaintTimes.append({"General Maintenance Life" : str(GeneralMaintLife / 100.0) + " %"})
+                MaintTimes.append({"Utility Transfer Life" : str(UtilityTransferLife / 100.0) + " %"})
+                MaintTimes.append({"Generator Transfer Life" : str(GeneratorTransferLife / 100.0) + " %"})
+                MaintTimes.append({"Bio Fuel Life" : str(BioFuelLife / 100.0) + " %"})
+
+            except Exception as e1:
+                self.LogErrorLine("Error parsing maint times: " + str(e1))
+
+        return MaintTimes
+
     #------------ GeneratorController:GetGeneratorSettings ---------------------
     def GetGeneratorSettings(self):
 
         GeneratorSettings = []
         FlyWheelTeeth = []
         Phase = None
-        GenData = self.GetParameterFileValue(MISC_GEN_FILE_RECORD)
-        if len(GenData) >= ((MISC_GEN_FILE_RECORD_LENGTH * 2)):
+        GenData = self.GetParameterFileValue(RegisterFileEnum.MISC_GEN_FILE_RECORD[REGISTER])
+        if len(GenData) >= ((RegisterFileEnum.MISC_GEN_FILE_RECORD[LENGTH] * 2)):
             try:
                 FlyWheelTeeth.append(self.GetIntFromString(GenData, 0, 2))  # Byte 1 and 2
                 FlyWheelTeeth.append(self.GetIntFromString(GenData, 2, 2))  # Byte 2 and 3

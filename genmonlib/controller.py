@@ -353,6 +353,36 @@ class GeneratorController(MySupport):
             except Exception as e1:
                 self.LogErrorLine("Error in DebugThread: " + str(e1))
 
+    #-------------GeneratorController:GetParameterStringValue-------------------
+    def GetParameterStringValue(self, Register, ReturnString = False, offset = None, max = None):
+
+        StringValue = self.Strings.get(Register, "")
+        if ReturnString:
+            if offset == None:
+                return self.HexStringToString(StringValue)
+            elif offset != None and max != None:
+                return self.HexStringToString(StringValue[offset: max])
+            elif offset != None and max == None:
+                return self.HexStringToString(StringValue[offset:])
+            elif offset == None and max != None:
+                return self.HexStringToString(StringValue[:max])
+        return StringValue
+
+    #-------------GeneratorController:GetParameterFileValue---------------------
+    def GetParameterFileValue(self, Register, ReturnString = False, offset = None, max = None):
+
+        StringValue = self.FileData.get(Register, "")
+        if ReturnString:
+            if offset == None:
+                return self.HexStringToString(StringValue)
+            elif offset != None and max != None:
+                return self.HexStringToString(StringValue[offset: max])
+            elif offset != None and max == None:
+                return self.HexStringToString(StringValue[offset:])
+            elif offset == None and max != None:
+                return self.HexStringToString(StringValue[:max])
+        return StringValue
+
     #------------ GeneratorController:GetRegisterValueFromList -----------------
     def GetRegisterValueFromList(self,Register):
 
