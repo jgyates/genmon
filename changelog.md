@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 
 ## V1.16.04  -2021-03-17
-- Update for Evolution Synergy to fix frequency values.
+- Update for Evolution Synergy to fix frequency values (https://github.com/jgyates/genmon/issues/521).
 - Minor update for PowerZone
 
 ## V1.16.03  -2021-03-03
