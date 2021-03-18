@@ -2657,7 +2657,8 @@ class Evolution(GeneratorController):
          0x30 : "Ruptured Tank",        #  Validate on Evolution, occurred when forced ruptured tank
          0x31 : "Low Fuel Level",       #  Validate on Evolution, occurred when Low Fuel Level
          0x32 : "Low Fuel Pressure",    #  Validate on EvoLC
-         0x34 : "Emergency Stop"        #  Validate on Evolution, occurred when E-Stop
+         0x34 : "Emergency Stop",       #  Validate on Evolution, occurred when E-Stop
+         0x38 : "Very Low Battery"      #  Validate on Evolutio Air Cooled
         }
 
         outString += AlarmValues.get(RegVal & 0x0FFFF,"UNKNOWN ALARM: %08x" % RegVal)
