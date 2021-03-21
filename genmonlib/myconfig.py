@@ -106,6 +106,8 @@ class MyConfig (MyCommon):
         if self.Simulation:
             return True
 
+        if not self.InitComplete:
+            return False
         SectionList = self.GetSections()
 
         if SectionName in SectionList:
@@ -131,6 +133,8 @@ class MyConfig (MyCommon):
         if self.Simulation:
             return True
 
+        if not self.InitComplete:
+            return False
         SectionList = self.GetSections()
 
         if SectionName in SectionList:
@@ -157,6 +161,8 @@ class MyConfig (MyCommon):
         if self.Simulation:
             return
 
+        if not self.InitComplete:
+            return False
         if section != None:
             self.SetSection(section)
 
@@ -183,6 +189,9 @@ class MyConfig (MyCommon):
         if self.Simulation:
             return
 
+        if not self.InitComplete:
+            return False
+            
         if section != None:
             self.SetSection(section)
 
