@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 - Update for Evolution Synergy to fix frequency values (https://github.com/jgyates/genmon/issues/521)
 - Minor update for PowerZone
 - Added new alarm code for Evolution
+- Minor python 3 updates to myplatform.py
 
 ## V1.16.03  -2021-03-03
 - Updated fix for modbus file handling (only specific to industurial controllers). Powerzone controllers handle modbus file register access a little differently and this update handles that differece.
