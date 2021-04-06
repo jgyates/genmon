@@ -1,5 +1,5 @@
 # Feature Request List
-
+- [Ability to control update alerts through Pushover](https://github.com/jgyates/genmon/issues/523) @danodemano 
 - [TX Industrial Switch support](https://github.com/jgyates/genmon/issues/463) @unsword01
 - [Power Zone Pro Digital Control Panel](https://github.com/jgyates/genmon/issues/435) @tracerrx
 - [Unified web interface for running multiple instances of generator monitor](https://github.com/jgyates/genmon/issues/260) - @KUBAllen
