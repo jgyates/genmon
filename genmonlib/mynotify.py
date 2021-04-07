@@ -44,7 +44,7 @@ class GenNotify(MyCommon):
         self.LastOutageStatus = None
         self.LastSoftwareUpdateStatus = None
         self.LastSystemHealth = None
-        self.LastFuelWarningStatus = None
+        self.LastFuelWarningStatus = True
         self.Events = {}            # Dict for handling events
 
 
@@ -186,7 +186,7 @@ class GenNotify(MyCommon):
             for Items in GenList:
                 for key, value in Items.items():
                     if key == "Fuel Level State":
-                        if value.lower() == "OK":
+                        if value.lower() == "ok":
                             FuelOK = True
                         else:
                             FuelOK = False
