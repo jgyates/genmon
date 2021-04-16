@@ -163,8 +163,8 @@ def SendNotice(Message):
        console.info(message.id)
 
     except Exception as e1:
-       log.error("Error: " + str(e1))
-       console.error("Error: " + str(e1))
+       log.error("Send Notice Error: " + str(e1))
+       console.error("Send Notice Error: " + str(e1))
 
 #------------------- Command-line interface for gengpio ------------------------
 if __name__=='__main__':
