@@ -1312,9 +1312,10 @@ def ReadAdvancedSettingsFromFile():
         if ControllerType != 'h_100':
             ConfigSettings["usenominallinevolts"] = ['boolean', 'Use Nominal Volts Override', 18, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "usenominallinevolts"]
             ConfigSettings["nominallinevolts"] = ['int', 'Override nominal line voltage in UI', 19, "240", "", 0, GENMON_CONFIG, GENMON_SECTION,"nominallinevolts"]
+            ConfigSettings["outage_notice_delay"] = ['int', 'Outage Notice Delay', 20, "0", "", 0, GENMON_CONFIG, GENMON_SECTION, "outage_notice_delay"]
             ControllerInfo = GetControllerInfo("controller").lower()
             if "nexus" in ControllerInfo:
-                ConfigSettings["nexus_legacy_freq"] = ['boolean', 'Use Nexus Legacy Frequency', 20, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "nexus_legacy_freq"]
+                ConfigSettings["nexus_legacy_freq"] = ['boolean', 'Use Nexus Legacy Frequency', 21, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "nexus_legacy_freq"]
         else:
             ConfigSettings["fuel_units"] = ['list', 'Fuel Units', 18, "gal", "", "gal,cubic feet", GENMON_CONFIG, GENMON_SECTION, "fuel_units"]
             ConfigSettings["half_rate"] = ['float', 'Fuel Rate Half Load', 19, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "half_rate"]

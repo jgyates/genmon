@@ -97,7 +97,9 @@ class GeneratorController(MySupport):
 
         self.ProgramStartTime = datetime.datetime.now()     # used for com metrics
         self.OutageStartTime = self.ProgramStartTime        # if these two are the same, no outage has occured
+        self.OutageNoticeDelayTime = None
         self.LastOutageDuration = self.OutageStartTime - self.OutageStartTime
+        self.OutageNoticeDelay = 0
 
         try:
             self.console = SetupLogger("controller_console", log_file = "", stream = True)
@@ -163,6 +165,8 @@ class GeneratorController(MySupport):
                 self.TankSize = self.config.ReadValue('tanksize', return_type = int, default  = 0)
 
                 self.SmartSwitch = self.config.ReadValue('smart_transfer_switch', return_type = bool, default = False)
+
+                self.OutageNoticeDelay = self.config.ReadValue('outage_notice_delay', return_type = int, default = 0)
 
         except Exception as e1:
                 self.FatalError("Missing config file or config file entries: " + str(e1))

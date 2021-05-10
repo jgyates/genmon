@@ -1779,13 +1779,35 @@ class Evolution(GeneratorController):
                         self.LogToFile(self.OutageLog, self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"), OutageStr)
             else:
                 if UtilityVolts < ThresholdVoltage:
-                    self.SystemInOutage = True
-                    self.OutageStartTime = datetime.datetime.now()
-                    msgbody = "\nUtility Power Out at " + self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S")
-                    self.MessagePipe.SendMessage("Outage Notice at " + self.SiteName, msgbody, msgtype = "outage")
+                    if self.CheckOutageNoticeDelay():
+                        self.SystemInOutage = True
+                        self.OutageStartTime = datetime.datetime.now()
+                        msgbody = "\nUtility Power Out at " + self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S")
+                        self.MessagePipe.SendMessage("Outage Notice at " + self.SiteName, msgbody, msgtype = "outage")
+                else:
+                    self.OutageNoticeDelayTime = None
         except Exception as e1:
             self.LogErrorLine("Error in CheckForOutage: " + str(e1))
 
+    #------------ Evolution:CheckOutageNoticeDelay -----------------------------
+    def CheckOutageNoticeDelay(self):
+
+        try:
+            if self.OutageNoticeDelay == 0:
+                return True
+
+            if self.OutageNoticeDelayTime == None:
+                self.OutageNoticeDelayTime = datetime.datetime.now()
+                return False
+
+            OutageNoticeDelta = datetime.datetime.now() - self.OutageNoticeDelayTime
+            if self.OutageNoticeDelay > OutageNoticeDelta.total_seconds():
+                return False
+
+            self.OutageNoticeDelayTime = None
+        except Exception as e1:
+            self.LogErrorLine("Error in CheckOutageNoticeDelay: " + str(e1))
+        return True
     #------------ Evolution:CheckForAlarms -------------------------------------
     # Note this must be called from the Process thread since it queries the log registers
     # when in master emulation mode
