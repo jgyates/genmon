@@ -3,6 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## V1.16.06  -2021-05-10
 - Added Advanced Option to allow for a delay in outage notices (Evolution and Nexus only)
+- Minor update to UI to correct incorrect display on Nexus controllers when setting the exercise time
 
 ## V1.16.05  -2021-04-07
 - Minor python 3 updates to myplatform.py

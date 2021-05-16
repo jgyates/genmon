@@ -1043,8 +1043,13 @@ function saveMaintenance(){
         var strChoice       = ((myGenerator['EnhancedExerciseEnabled'] == true) ? $("#ExerciseFrequency").val() : "Weekly");
         var strExerciseTime = strDays + "," + strHours + ":" + strMinutes + "," + strChoice;
 
+        var DisplayMsg = "Set exercise time to<br>" + strExerciseTime + ", " + strQuiet + "?";
+
+        if (myGenerator['WriteQuietMode'] == false) {
+            DisplayMsg = "Set exercise time to<br>" + strExerciseTime + "?";
+        }
         vex.dialog.confirm({
-            unsafeMessage: "Set exercise time to<br>" + strExerciseTime + ", " + strQuiet + "?",
+            unsafeMessage: DisplayMsg,
             overlayClosesOnClick: false,
             callback: function (value) {
                  if (value == false) {
@@ -1056,7 +1061,7 @@ function saveMaintenance(){
                                 {setexercise: strExerciseTime},
                                 function(result){});
 
-                    // set quite mode
+                    // set quiet mode
                     if (myGenerator['WriteQuietMode'] == true) {
                       var url = baseurl.concat("setquiet");
                       $.getJSON(  url,
