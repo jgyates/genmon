@@ -500,7 +500,10 @@ class Evolution(GeneratorController):
             if self.LiquidCooled:
                 FileName = "EvoLC_Fuel.txt"
             else:
-                FileName = "EvoAC_Fuel.txt"
+                if self.Evolution2:
+                    FileName = "EvoAC2_Fuel.txt"
+                else:
+                    FileName = "EvoAC_Fuel.txt"
 
             FullFileName = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "data",  FileName)
             ReturnList = self.ReadCSVFile(FullFileName)
@@ -686,6 +689,7 @@ class Evolution(GeneratorController):
             ModelLookUp_EvoAC[17] = ["20KW", "60", "120/240", "1", "999 cc", "240"] # Evo2 20kW
             ModelLookUp_EvoAC[21] = ["24KW", "60", "120/240", "1", "999 cc", "240"] # Evo G0072100 Evo2 24kw
             ModelLookUp_EvoAC[22] = ["16KW", "60", "120/240", "1", "816 cc", "240"] # Evo G0071760
+            ModelLookUp_EvoAC[11] = ["20KW", "50", "208 3 Phase", "3", "999 cc", "208"],       # 3 phase export
 
         LookUp = None
         if self.EvolutionController:
