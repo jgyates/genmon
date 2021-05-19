@@ -685,6 +685,7 @@ class Evolution(GeneratorController):
             ModelLookUp_EvoAC[8] = ["22KW", "60", "120/240", "1", "999 cc", "240"] # Evo G0072100 Evo2 24kw
             ModelLookUp_EvoAC[17] = ["20KW", "60", "120/240", "1", "999 cc", "240"] # Evo2 20kW
             ModelLookUp_EvoAC[21] = ["24KW", "60", "120/240", "1", "999 cc", "240"] # Evo G0072100 Evo2 24kw
+            ModelLookUp_EvoAC[22] = ["16KW", "60", "120/240", "1", "816 cc", "240"] # Evo G0071760
 
         LookUp = None
         if self.EvolutionController:
