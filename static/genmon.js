@@ -231,7 +231,7 @@ function CreateMenu() {
     var outstr = '';
 
     SetHeaderValues();
-    $("#footer").html('<table border="0" width="100%" height="30px"><tr><td width="5%"><img class="tooltip alert_small" id="ajaxWarning" src="images/transparent.png" height="28px" width="28px" style="display: none;"></td><td width="90%"><a href="https://github.com/jgyates/genmon" target="_blank">GenMon Project on GitHub</a></td><td width="5%"></td></tr></table>');
+    $("#footer").html('<table border="0" width="100%" height="30px"><tr><td width="5%"><img class="tooltip alert_small" id="ajaxWarning" src="images/transparent.png" height="28px" width="28px" style="display: none;"></td><td width="90%"><a href="https://github.com/jgyates/genmon" target="_blank">GenMon Project on GitHub</a></td><td width="5%" id="footerWeather" valign="middle" nowrap></td></tr></table>');
     $('#ajaxWarning').tooltipster({minWidth: '280px', maxWidth: '480px', animation: 'fade', updateAnimation: 'null', contentAsHTML: 'true', delay: 100, animationDuration: 200, side: ['top', 'left'], content: "No Communication Errors occured"});
 
     if (myGenerator["pages"]["status"] == true)
@@ -770,7 +770,7 @@ function DisplayMaintenance(){
             }
 
             if (myGenerator['PowerGraph'] == true) {
-               outstr += '<br>Reset:<br><br>';
+               outstr += '<br><br>Reset:<br><br>';
                outstr += '&nbsp;&nbsp;<button id="settimebutton" onClick="SetPowerLogReset();">Reset Power Log & Fuel Estimate</button>';
             }
 
@@ -2620,6 +2620,39 @@ function submitLogs(){
     });
 }
 
+//*****************************************************************************
+function sendServerCommand(cmd){
+
+    var msg = "";
+
+    switch (cmd) {
+       case "restart":
+          msg = 'Restart Genmon Software?<br><span class="confirmSmall">Are you sure you want to restart your Genmon software?</span>';
+          break;
+       case "reboot":
+          msg = 'Reboot System?<br><span class="confirmSmall">Are you sure you want to reboot your Genmon host?</span>';
+          break;
+       case "shutdown":
+          msg = 'Shutdown System?<br><span class="confirmSmall">Are you sure you want to shutdown your genmon host? NOTE: THIS CANNOT BE UNDONE VIA THE GUI OR COMMAND LINE AND YOU MAY HAVE TO ACCESS YOUR GENERATOR TO PHYSICALLY RESTART THE HOST AGAIN.</span>';
+          break;
+    }
+
+    vex.dialog.confirm({
+        unsafeMessage: msg,
+        overlayClosesOnClick: false,
+        callback: function (value) {
+             if (value == false) {
+                return;
+             } else {
+                var url = baseurl.concat(cmd);
+                $.getJSON(  url,
+                   {},
+                   function(result){});
+             }
+        }
+    });
+}
+
 
 //*****************************************************************************
 // DisplayRegisters - Shows the raw register data.
@@ -2936,6 +2969,13 @@ function DisplayAdvancedSettings(){
             var key = settings[index];
             outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">' + result[key][1] + '</td><td>' + printSettingsField(result[key][0], key, result[key][3], result[key][4], result[key][5]) + '</td></tr>';
         }
+        outstr += '</table></fieldset></form>';
+
+        outstr += '<table id="allactions" border="0">';
+        outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">Restart Genmon Software</td><td><button style="margin-left:0px; margin-top:5px" id="callcmdrestart" onClick="sendServerCommand(\'restart\')">Restart</button></td></tr>';
+        outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">Reboot System</td><td><button style="margin-left:0px; margin-top:5px" id="callcmdreboot" onClick="sendServerCommand(\'reboot\')">Reboot</button></td></tr>';
+        outstr += '<tr><td width="25px">&nbsp;</td><td width="300px">Shutdown System</td><td><button style="margin-left:0px; margin-top:5px" id="callcmdshutdown" onClick="sendServerCommand(\'shutdown\')">Shutdown</button></td></tr>';
+
         outstr += '</table></fieldset></form><br>';
         outstr += '<button id="setadvancedsettingsbutton" onClick="saveAdvancedSettings()">Save</button>';
 
@@ -3409,6 +3449,31 @@ function GetBaseStatus()
             myGenerator['SystemHealth'] = false;
             $("#footer").removeClass("alert");
             $("#ajaxWarning").hide(400);
+          }
+
+          if (result['Weather'].length > 5) {
+            weatherCondition = "Unknown"
+            weatherIcon = "unknown.png"
+            weatherTemp = "unknown"
+            weatherWind = "unknown"
+            jQuery.each(result["Weather"], function( i, val ) {
+               if (Object.keys(val)[0] == "icon") {
+                  weatherIcon = val["icon"];
+               }
+               if (Object.keys(val)[0] == "Conditions") {
+                  weatherCondition = val["Conditions"];
+               }
+               if (Object.keys(val)[0] == "Current Temperature") {
+                  weatherTemp = val["Current Temperature"];
+               }
+               if (Object.keys(val)[0] == "Wind") {
+                  weatherWind = val["Wind"].replace(/\(.*\)/g, "").replace(/,/g, "");
+               }
+            });
+            if ((weatherIcon != "unknown.png") && (weatherTemp != "unknown") && (weatherWind != "unknown")) {
+               var tempMsg = '<table style="padding:0px;margin:0px"><tr><td><img class="greyscale" style="padding:0px;margins:0px;height:25px" src="https://openweathermap.org/img/w/' + weatherIcon + '.png"></td><td align="left" valign="middle"><b><font size="-2"><div style="line-height:9px;">'+weatherTemp+'<br>'+weatherWind+'</div></font></b></td><td>&nbsp;&nbsp;&nbsp;</td></tr></table>';
+               $('#footerWeather').html(tempMsg);
+            }
           }
 
           switchState = result['switchstate'];

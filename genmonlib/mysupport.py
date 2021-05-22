@@ -450,15 +450,26 @@ class MySupport(MyCommon):
             prog_name = os.path.basename(prog_name)
             for q in psutil.process_iter():
                 if q.name().lower().startswith('python'):
-                    script_name = os.path.basename(q.cmdline()[1])
-                    if len(q.cmdline())>1 and prog_name == script_name and q.pid != os.getpid():
-                        return True
+                    if len(q.cmdline())>1:
+                        script_name = os.path.basename(q.cmdline()[1])
+                        if len(q.cmdline())>1 and prog_name == script_name and q.pid != os.getpid():
+                            return True
         except Exception as e1:
             if log != None:
-                log.error("Error in IsRunning: " + str(e1))
-
+                log.error("Error in IsRunning: " + str(e1) + ": " + MySupport.GetErrorLine())
+                return True
         return False
 
+    #---------------------MySupport::GetErrorLine--------------------------------
+    @staticmethod
+    def GetErrorLine():
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        if exc_tb == None:
+            return ""
+        else:
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            lineno = exc_tb.tb_lineno
+            return fname + ":" + str(lineno)
     #------------ MySupport::SetupAddOnProgram----------------------------------
     @staticmethod
     def SetupAddOnProgram(prog_name):
@@ -490,7 +501,6 @@ class MySupport(MyCommon):
 
         try:
             port, loglocation, multi_instance = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
-
             log = SetupLogger("client_" + prog_name, os.path.join(loglocation, prog_name + ".log"))
 
             if not prog_name.lower().endswith(".py"):
@@ -509,7 +519,7 @@ class MySupport(MyCommon):
 
         except Exception as e1:
             console.error("Error : " + str(e1))
-            log.error("Error : " + str(e1))
+            log.error("Error : " + str(e1) + ": " + MySupport.GetErrorLine())
             sys.exit(1)
 
         return console, ConfigFilePath, address, port, loglocation, log

@@ -403,6 +403,10 @@ def ProcessCommand(command):
             if session.get('write_access', True):
                 Shutdown()
                 sys.exit(0)
+        elif command in ["reboot"]:
+            if session.get('write_access', True):
+                Reboot()
+                sys.exit(0)
         elif command in ["backup"]:
             if session.get('write_access', True):
                 Backup()    # Create backup file
@@ -1663,6 +1667,11 @@ def UpdateConfigFile(FileName, section, Entry, Value):
     except Exception as e1:
         LogErrorLine("Error Update Config File (UpdateConfigFile): " + str(e1))
         return False
+
+#-------------------------------------------------------------------------------
+# This will reboot the pi
+def Reboot():
+    os.system("sudo reboot now")
 
 #-------------------------------------------------------------------------------
 # This will shutdown the pi

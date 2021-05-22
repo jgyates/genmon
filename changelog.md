@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.16.08  -2021-05-22
+- Added restart, reboot and shutdown feature on the advanced page.
+- Minor updates for formatting and error reporting 
+
 ## V1.16.07  -2021-05-19
 - Added  engine displacement data Evo2 16kw
 - Updated fuel calculation for some Evo2 models
