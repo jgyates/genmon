@@ -3451,7 +3451,7 @@ function GetBaseStatus()
             $("#ajaxWarning").hide(400);
           }
 
-          if (result['Weather'].length > 5) {
+          if (result['Weather'] != undefined && result['Weather'].length > 5) {
             weatherCondition = "Unknown"
             weatherIcon = "unknown.png"
             weatherTemp = "unknown"

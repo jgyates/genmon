@@ -1,9 +1,12 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.16.09  -2021-05-25
+- Corrected bug in web app that displays weather on the lower right. Error occured if weather reporting was disabled (thanks @speters0)
+
 ## V1.16.08  -2021-05-22
 - Added restart, reboot and shutdown feature on the advanced page.
-- Minor updates for formatting and error reporting 
+- Minor updates for formatting and error reporting
 
 ## V1.16.07  -2021-05-19
 - Added  engine displacement data Evo2 16kw
