@@ -123,6 +123,30 @@ def OnUtilityChange(Active):
         SendNotice("Utility Service is Up")
         console.info("Utility Service is Up")
 
+#----------  OnSoftwareUpdate --------------------------------------------------
+def OnSoftwareUpdate(Active):
+
+    if Active:
+        console.info("Software Update Available")
+        SendNotice("Software Update Available")
+    else:
+        SendNotice("Software Is Up To Date")
+        console.info("Software Is Up To Date")
+
+#----------  OnSystemHealth ----------------------------------------------------
+def OnSystemHealth(Notice):
+    SendNotice("System Health : " + Notice)
+    console.info("System Health : " + Notice)
+
+#----------  OnFuelState -------------------------------------------------------
+def OnFuelState(Active):
+    if Active: # True is OK
+        console.info("Fuel Level is OK")
+        SendNotice("Fuel Level is OK")
+    else:  # False = Low
+        SendNotice("Fuel Level is Low")
+        console.info("Fuel Level is Low")
+
 #----------  SendNotice --------------------------------------------------------
 def SendNotice(Message):
 
@@ -139,8 +163,8 @@ def SendNotice(Message):
        console.info(message.id)
 
     except Exception as e1:
-       log.error("Error: " + str(e1))
-       console.error("Error: " + str(e1))
+       log.error("Send Notice Error: " + str(e1))
+       console.error("Send Notice Error: " + str(e1))
 
 #------------------- Command-line interface for gengpio ------------------------
 if __name__=='__main__':
@@ -185,6 +209,9 @@ if __name__=='__main__':
                                         onoff = OnOff,
                                         onmanual = OnManual,
                                         onutilitychange = OnUtilityChange,
+                                        onsoftwareupdate = OnSoftwareUpdate,
+                                        onsystemhealth = OnSystemHealth,
+                                        onfuelstate = OnFuelState,
                                         log = log,
                                         loglocation = loglocation,
                                         console = console)

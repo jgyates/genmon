@@ -142,7 +142,9 @@ class MyPlatform(MyCommon):
             try:
                 process = Popen(['cat', '/proc/device-tree/model'], stdout=PIPE)
                 output, _error = process.communicate()
-                PiInfo.append({"Pi Model" : str(output.encode('ascii', 'ignore')).rstrip("\x00")})
+                if sys.version_info[0] >= 3:
+                    output = output.decode("utf-8")
+                PiInfo.append({"Pi Model" : str(output).rstrip("\x00")})
             except:
                 pass
             try:
@@ -269,6 +271,8 @@ class MyPlatform(MyCommon):
     def GetWiFiSignalStrength(self, adapter):
         try:
             result = subprocess.check_output(['iw', adapter, 'link'])
+            if sys.version_info[0] >= 3:
+                result = result.decode("utf-8")
             match = re.search('signal: -(\d+) dBm', result)
             return match.group(1)
         except Exception as e1:
@@ -278,6 +282,8 @@ class MyPlatform(MyCommon):
     def GetWiFiSignalQuality(self, adapter):
         try:
             result = subprocess.check_output(['iwconfig', adapter])
+            if sys.version_info[0] >= 3:
+                result = result.decode("utf-8")
             match = re.search('Link Quality=([\s\S]*?) ', result)
             return match.group(1)
         except Exception as e1:
@@ -287,6 +293,8 @@ class MyPlatform(MyCommon):
     def GetWiFiSSID(self, adapter):
         try:
             result = subprocess.check_output(['iwconfig', adapter])
+            if sys.version_info[0] >= 3:
+                result = result.decode("utf-8")
             match = re.search('ESSID:"([\s\S]*?)"', result)
             return match.group(1)
         except Exception as e1:

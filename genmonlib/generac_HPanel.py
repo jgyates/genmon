@@ -31,9 +31,9 @@ EVENT_LOG_START                 = 0x0c15
 EVENT_LOG_ENTRIES               = 20
 EVENT_LOG_LENGTH                = 64
 NAMEPLATE_DATA_FILE_RECORD      = "0040"      # 0x40
-NAMEPLATE_DATA_LENGTH           = 64        # Note: This is 1024 but I only read 64 due to performance
+NAMEPLATE_DATA_LENGTH           = 64        # Note: This is 1024 but I only read 64
 MISC_GEN_FILE_RECORD            = "002a"
-MISC_GEN_LENGTH                 = 18
+MISC_GEN_FILE_RECORD_LENGTH     = 18
 ENGINE_DATA_FILE_RECORD         = "0050"
 ENGINE_DATA_FILE_RECORD_LENGTH  = 48
 GOV_DATA_FILE_RECORD            = "00d3"
@@ -1080,41 +1080,6 @@ class HPanel(GeneratorController):
         except Exception as e1:
             self.LogErrorLine("Error in CheckModelSpecificInfo: " + str(e1))
         return
-    #-------------HPanel:GetIntFromString---------------------------------------
-    def GetIntFromString(self, input_string, byte_offset, length = 1, decimal = False):
-
-        try:
-            if len(input_string) < byte_offset + length:
-                self.LogError("Invalid length in GetIntFromString: " + str(input_string))
-                return 0
-            StringOffset = byte_offset * 2
-            StringOffsetEnd = StringOffset + (length *2)
-            if StringOffset == StringOffsetEnd:
-                if decimal:
-                    return int(input_string[StringOffsetd])
-                return int(input_string[StringOffset], 16)
-            else:
-                if decimal:
-                    return int(input_string[StringOffset:StringOffsetEnd])
-                return int(input_string[StringOffset:StringOffsetEnd], 16)
-        except Exception as e1:
-            self.LogErrorLine("Error in GetIntFromString: " + str(e1))
-            return 0
-    #-------------HPanel:GetParameterStringValue--------------------------------
-    def GetParameterStringValue(self, Register, ReturnString = False):
-
-        StringValue = self.Strings.get(Register, "")
-        if ReturnString:
-            return self.HexStringToString(StringValue)
-        return self.Strings.get(Register, "")
-
-    #-------------HPanel:GetParameterFileValue----------------------------------
-    def GetParameterFileValue(self, Register, ReturnString = False):
-
-        StringValue = self.FileData.get(Register, "")
-        if ReturnString:
-            return self.HexStringToString(StringValue)
-        return self.FileData.get(Register, "")
 
     #-------------HPanel:GetGeneratorFileData-----------------------------------
     def GetGeneratorFileData(self):
@@ -1123,7 +1088,7 @@ class HPanel(GeneratorController):
             # Read the nameplate dataGet Serial Number
             self.ModBus.ProcessFileReadTransaction(NAMEPLATE_DATA_FILE_RECORD, NAMEPLATE_DATA_LENGTH / 2 )
             # Read Misc Engine data
-            self.ModBus.ProcessFileReadTransaction(MISC_GEN_FILE_RECORD, MISC_GEN_LENGTH / 2 )
+            self.ModBus.ProcessFileReadTransaction(MISC_GEN_FILE_RECORD, MISC_GEN_FILE_RECORD_LENGTH / 2 )
             # Read Engine Data
             self.ModBus.ProcessFileReadTransaction(ENGINE_DATA_FILE_RECORD, ENGINE_DATA_FILE_RECORD_LENGTH / 2 )
             # Read Govonor Data
@@ -1785,6 +1750,13 @@ class HPanel(GeneratorController):
                 if self.RunHoursMonth != None:
                     Maintenance["Maintenance"].append({"Run Hours in last 30 days" : self.UnitsOut(str(self.RunHoursMonth) + " h", type = float, NoString = JSONNum)})
 
+            if self.FuelLevelOK != None:
+                if self.FuelLevelOK:
+                    level = "OK"
+                else:
+                    level = "Low"
+                Maintenance["Maintenance"].append({"Fuel Level State" : level})
+
             if not self.SmartSwitch:
                 pass
                 Exercise = []
@@ -2027,7 +1999,7 @@ class HPanel(GeneratorController):
         Phase = None
         TargetRPM = []
         GenData = self.GetParameterFileValue(MISC_GEN_FILE_RECORD)
-        if len(GenData) >= 34:
+        if len(GenData) >= (MISC_GEN_FILE_RECORD_LENGTH * 2):
             try:
                 FlyWheelTeeth.append(self.GetIntFromString(GenData, 0, 2))  # Byte 1 and 2
                 FlyWheelTeeth.append(self.GetIntFromString(GenData, 2, 2))  # Byte 2 and 3
@@ -2057,11 +2029,10 @@ class HPanel(GeneratorController):
 
         try:
             Outage = collections.OrderedDict()
-            OutageData = collections.OrderedDict()
-            Outage["Outage"] = OutageData
+            Outage["Outage"] = []
 
-            OutageData["Status"] = "Not Supported"
-            OutageData["System In Outage"] = "No"       # mynotify.py checks this
+            Outage["Outage"].append({"Status" : "Not Supported"})
+            Outage["Outage"].append({"System In Outage" : "No"})    # mynotify.py checks this
 
         except Exception as e1:
             self.LogErrorLine("Error in DisplayOutage: " + str(e1))

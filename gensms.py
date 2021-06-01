@@ -121,6 +121,30 @@ def OnUtilityChange(Active):
         SendNotice("Utility Service is Up")
         console.info("Utility Service is Up")
 
+#----------  OnSoftwareUpdate --------------------------------------------------
+def OnSoftwareUpdate(Active):
+
+    if Active:
+        console.info("Software Update Available")
+        SendNotice("Software Update Available")
+    else:
+        SendNotice("Software Is Up To Date")
+        console.info("Software Is Up To Date")
+
+#----------  OnSystemHealth ----------------------------------------------------
+def OnSystemHealth(Notice):
+    SendNotice("System Health : " + Notice)
+    console.info("System Health : " + Notice)
+
+#----------  OnFuelState -------------------------------------------------------
+def OnFuelState(Active):
+    if Active: # True is OK
+        console.info("Fuel Level is OK")
+        SendNotice("Fuel Level is OK")
+    else:  # False = Low
+        SendNotice("Fuel Level is Low")
+        console.info("Fuel Level is Low")
+
 #----------  SendNotice --------------------------------------------------------
 def SendNotice(Message):
 
@@ -128,12 +152,14 @@ def SendNotice(Message):
 
         client = Client(account_sid, auth_token)
 
-        message = client.messages.create(
-            to= to_number,
-            from_ = from_number,
-            body = Message)
-
-        console.info(message.sid)
+        # send to multiple recipient(s)
+        for recipient in to_number_list:
+            recipient = recipient.strip()
+            message = client.messages.create(
+                to = recipient,
+                from_ = from_number,
+                body = Message)
+            console.info(message.sid)
 
     except Exception as e1:
         log.error("Error: " + str(e1))
@@ -155,6 +181,8 @@ if __name__=='__main__':
         auth_token = config.ReadValue('authtoken', default = "")
         to_number = config.ReadValue('to_number', default = "")
         from_number = config.ReadValue('from_number', default = "")
+
+        to_number_list = to_number.split(",")
 
         if account_sid == "" or auth_token == "" or to_number == "" or from_number == "":
             log.error("Missing parameter in " +  os.path.join(ConfigFilePath, 'gensms.conf'))
@@ -178,6 +206,9 @@ if __name__=='__main__':
                                         onoff = OnOff,
                                         onmanual = OnManual,
                                         onutilitychange = OnUtilityChange,
+                                        onsoftwareupdate = OnSoftwareUpdate,
+                                        onsystemhealth = OnSystemHealth,
+                                        onfuelstate = OnFuelState,
                                         log = log,
                                         loglocation = loglocation,
                                         console = console)

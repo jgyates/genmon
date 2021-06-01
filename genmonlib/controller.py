@@ -75,6 +75,7 @@ class GeneratorController(MySupport):
         self.ExternalDataLock = threading.RLock()
         self.ExternalTempData = None
         self.ExternalTempDataTime = None
+        self.FuelLevelOK = None     # used in mynotify.py
         self.debug = False
 
         self.UtilityVoltsMin = 0    # Minimum reported utility voltage above threshold
@@ -96,7 +97,9 @@ class GeneratorController(MySupport):
 
         self.ProgramStartTime = datetime.datetime.now()     # used for com metrics
         self.OutageStartTime = self.ProgramStartTime        # if these two are the same, no outage has occured
+        self.OutageNoticeDelayTime = None
         self.LastOutageDuration = self.OutageStartTime - self.OutageStartTime
+        self.OutageNoticeDelay = 0
 
         try:
             self.console = SetupLogger("controller_console", log_file = "", stream = True)
@@ -162,6 +165,8 @@ class GeneratorController(MySupport):
                 self.TankSize = self.config.ReadValue('tanksize', return_type = int, default  = 0)
 
                 self.SmartSwitch = self.config.ReadValue('smart_transfer_switch', return_type = bool, default = False)
+
+                self.OutageNoticeDelay = self.config.ReadValue('outage_notice_delay', return_type = int, default = 0)
 
         except Exception as e1:
                 self.FatalError("Missing config file or config file entries: " + str(e1))
@@ -351,6 +356,36 @@ class GeneratorController(MySupport):
 
             except Exception as e1:
                 self.LogErrorLine("Error in DebugThread: " + str(e1))
+
+    #-------------GeneratorController:GetParameterStringValue-------------------
+    def GetParameterStringValue(self, Register, ReturnString = False, offset = None, max = None):
+
+        StringValue = self.Strings.get(Register, "")
+        if ReturnString:
+            if offset == None:
+                return self.HexStringToString(StringValue)
+            elif offset != None and max != None:
+                return self.HexStringToString(StringValue[offset: max])
+            elif offset != None and max == None:
+                return self.HexStringToString(StringValue[offset:])
+            elif offset == None and max != None:
+                return self.HexStringToString(StringValue[:max])
+        return StringValue
+
+    #-------------GeneratorController:GetParameterFileValue---------------------
+    def GetParameterFileValue(self, Register, ReturnString = False, offset = None, max = None):
+
+        StringValue = self.FileData.get(Register, "")
+        if ReturnString:
+            if offset == None:
+                return self.HexStringToString(StringValue)
+            elif offset != None and max != None:
+                return self.HexStringToString(StringValue[offset: max])
+            elif offset != None and max == None:
+                return self.HexStringToString(StringValue[offset:])
+            elif offset == None and max != None:
+                return self.HexStringToString(StringValue[:max])
+        return StringValue
 
     #------------ GeneratorController:GetRegisterValueFromList -----------------
     def GetRegisterValueFromList(self,Register):
@@ -730,7 +765,7 @@ class GeneratorController(MySupport):
             RegValue = self.ModBus.ProcessTransaction( Register, 1, skipupdate = True)
 
             if RegValue == "":
-                self.LogError("Validation Error: Register  not known (ReadRegValue):" + Register)
+                self.LogError("Validation Error: Register not known (ReadRegValue):" + Register)
                 msgbody = "Unsupported Register: " + Register
                 return msgbody
 
@@ -738,6 +773,47 @@ class GeneratorController(MySupport):
 
         except Exception as e1:
             self.LogErrorLine("Validation Error: Error parsing command string in ReadRegValue: " + CmdString)
+            self.LogError( str(e1))
+            return msgbody
+
+        return msgbody
+
+    #------------ GeneratorController:WriteRegValue ---------------------------
+    def WriteRegValue(self, CmdString):
+
+        # extract quiet mode setting from Command String
+        #Format we are looking for is "writeregvalue=01f4,aa"
+        msgbody = "Invalid command syntax for command writeregvalue"
+        try:
+
+            CmdList = CmdString.split("=")
+            if len(CmdList) != 2:
+                self.LogError("Validation Error: Error parsing command string in WriteRegValue (parse): " + CmdString)
+                return msgbody
+
+            CmdList[0] = CmdList[0].strip()
+
+            if not CmdList[0].lower() == "writeregvalue":
+                self.LogError("Validation Error: Error parsing command string in WriteRegValue (parse2): " + CmdString)
+                return msgbody
+
+            ParsedList = CmdList[1].split(",")
+
+            if len(ParsedList) != 2:
+                self.LogError("Validation Error: Error parsing command string in WriteRegValue (parse3): " + CmdString)
+                return msgbody
+            Register = ParsedList[0].strip()
+            Value = ParsedList[1].strip()
+            Data = []
+            Data.append(0)
+            Data.append(int(Value,16))
+            RegValue = self.ModBus.ProcessWriteTransaction( Register, len(Data) / 2, Data)
+
+            if RegValue == "":
+                msgbody = "OK"
+
+        except Exception as e1:
+            self.LogErrorLine("Validation Error: Error parsing command string in WriteRegValue: " + CmdString)
             self.LogError( str(e1))
             return msgbody
 
@@ -1292,13 +1368,16 @@ class GeneratorController(MySupport):
                 msgbody = "Warning: The estimated fuel in the tank is at or below 10%"
                 title = "Warning: Fuel Level Low (10%) at " + self.SiteName
                 self.MessagePipe.SendMessage(title , msgbody, msgtype = "warn", onlyonce = True)
+                self.FuelLevelOK = False
                 return False
             elif FuelLevel <= 20:    # 20 percent left
                 msgbody = "Warning: The estimated fuel in the tank is at or below 20%"
                 title = "Warning: Fuel Level Low (20%) at " + self.SiteName
                 self.MessagePipe.SendMessage(title , msgbody, msgtype = "warn", onlyonce = True)
+                self.FuelLevelOK = False
                 return False
             else:
+                self.FuelLevelOK = True
                 return True
 
         except Exception as e1:

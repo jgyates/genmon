@@ -78,7 +78,7 @@ if __name__=='__main__': # usage SerialTest.py [port]
         print("waiting to received data....")
         ReceivedString = serialPort.readline()
 
-        if TestString != ReceivedString:
+        if TestString != ReceivedString.decode("UTF-8"):
             print("FAILED: Sent data does not match receive. Received %d bytes" % len(ReceivedString))
         else:
             print("PASSED! Loopback successful")

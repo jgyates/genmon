@@ -227,10 +227,11 @@ def doLdapLogin(username, password):
         conn.search(LdapBase, '(&(objectclass=user)(sAMAccountName='+AccountName+'))', attributes=['memberOf'])
         for user in sorted(conn.entries):
             for group in user.memberOf:
-                if group.upper().find("CN="+LdapAdminGroup.upper()) >= 0:
+                if group.upper().find("CN="+LdapAdminGroup.upper()+",") >= 0:
                     HasAdmin = True
-                elif group.upper().find("CN="+LdapReadOnlyGroup.upper()) >= 0:
+                elif group.upper().find("CN="+LdapReadOnlyGroup.upper()+",") >= 0:
                     HasReadOnly = True
+        conn.unbind()
     except Exception:
         LogError("Error in LDAP login. Check credentials and config parameters")
 
@@ -401,6 +402,10 @@ def ProcessCommand(command):
         elif command in ["shutdown"]:
             if session.get('write_access', True):
                 Shutdown()
+                sys.exit(0)
+        elif command in ["reboot"]:
+            if session.get('write_access', True):
+                Reboot()
                 sys.exit(0)
         elif command in ["backup"]:
             if session.get('write_access', True):
@@ -598,7 +603,7 @@ def GetAddOns():
         AddOnCfg['gensms']['parameters']['to_number'] = CreateAddOnParam(
             ConfigFiles[GENSMS_CONFIG].ReadValue("to_number", return_type = str, default = ""),
             'string',
-            "Mobile number to send SMS message to. This can be any mobile number.",
+            "Mobile number to send SMS message to. This can be any mobile number. Separate multilpe recipients with commas.",
             bounds = 'required InternationalPhone',
             display_name = "Recipient Phone Number")
         AddOnCfg['gensms']['parameters']['from_number'] = CreateAddOnParam(
@@ -1291,14 +1296,13 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["response_address"] = ['string', 'Modbus slave transmit address', 6, "", "", 0 , GENMON_CONFIG, GENMON_SECTION, "response_address"]
         ConfigSettings["additional_modbus_timeout"] = ['float', 'Additional Modbus Timeout (sec)', 7, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "additional_modbus_timeout"]
         ConfigSettings["watchdog_addition"] = ['float', 'Additional Watchdog Timeout (sec)', 8, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "watchdog_addition"]
-        ConfigSettings["controllertype"] = ['list', 'Controller Type', 9, "generac_evo_nexus", "", "generac_evo_nexus,h_100", GENMON_CONFIG, GENMON_SECTION, "controllertype"]
+        ConfigSettings["controllertype"] = ['list', 'Controller Type', 9, "generac_evo_nexus", "", "generac_evo_nexus,h_100,powerzone", GENMON_CONFIG, GENMON_SECTION, "controllertype"]
         ConfigSettings["loglocation"] = ['string', 'Log Directory',10, ProgramDefaults.LogPath, "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "loglocation"]
         ConfigSettings["userdatalocation"] = ['string', 'User Defined Data Directory',11, os.path.dirname(os.path.realpath(__file__)), "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "userdatalocation"]
         ConfigSettings["enabledebug"] = ['boolean', 'Enable Debug', 12, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "enabledebug"]
         ConfigSettings["ignore_unknown"] = ['boolean', 'Ignore Unknown Values', 13, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "ignore_unknown"]
         # These settings are not displayed as the auto-detect controller will set these
         # these are only to be used to override the auto-detect
-        #ConfigSettings["uselegacysetexercise"] = ['boolean', 'Use Legacy Exercise Time', 9, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "uselegacysetexercise"]
         #ConfigSettings["liquidcooled"] = ['boolean', 'Force Controller Type (cooling)', 10, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "liquidcooled"]
         #ConfigSettings["evolutioncontroller"] = ['boolean', 'Force Controller Type (Evo/Nexus)', 11, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "evolutioncontroller"]
         # remove outage log, this will always be in the same location
@@ -1309,32 +1313,35 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["subtractfuel"] = ['float', 'Subtract Fuel', 17, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "subtractfuel"]
         #ConfigSettings["kwlog"] = ['string', 'Power Log Name / Disable', 16, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlog"]
         if ControllerType != 'h_100':
-            ConfigSettings["usenominallinevolts"] = ['boolean', 'Use Nominal Volts Override', 18, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "usenominallinevolts"]
-            ConfigSettings["nominallinevolts"] = ['int', 'Override nominal line voltage in UI', 19, "240", "", 0, GENMON_CONFIG, GENMON_SECTION,"nominallinevolts"]
+            ConfigSettings["usenominallinevolts"] = ['boolean', 'Use Nominal Volts Override', 25, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "usenominallinevolts"]
+            ConfigSettings["nominallinevolts"] = ['int', 'Override nominal line voltage in UI', 26, "240", "", 0, GENMON_CONFIG, GENMON_SECTION,"nominallinevolts"]
+            ConfigSettings["outage_notice_delay"] = ['int', 'Outage Notice Delay', 27, "0", "", 0, GENMON_CONFIG, GENMON_SECTION, "outage_notice_delay"]
             ControllerInfo = GetControllerInfo("controller").lower()
             if "nexus" in ControllerInfo:
-                ConfigSettings["nexus_legacy_freq"] = ['boolean', 'Use Nexus Legacy Frequency', 20, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "nexus_legacy_freq"]
+                ConfigSettings["nexus_legacy_freq"] = ['boolean', 'Use Nexus Legacy Frequency', 28, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "nexus_legacy_freq"]
+                # this is setup automatically for Nexus controllers
+                #ConfigSettings["uselegacysetexercise"] = ['boolean', 'Use Legacy Exercise Time', 29, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "uselegacysetexercise"]
         else:
-            ConfigSettings["fuel_units"] = ['list', 'Fuel Units', 18, "gal", "", "gal,cubic feet", GENMON_CONFIG, GENMON_SECTION, "fuel_units"]
-            ConfigSettings["half_rate"] = ['float', 'Fuel Rate Half Load', 19, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "half_rate"]
-            ConfigSettings["full_rate"] = ['float', 'Fuel Rate Full Load', 20, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "full_rate"]
-            ConfigSettings["usecalculatedpower"] = ['boolean', 'Use Calculated Power', 21, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "usecalculatedpower"]
+            ConfigSettings["fuel_units"] = ['list', 'Fuel Units', 25, "gal", "", "gal,cubic feet", GENMON_CONFIG, GENMON_SECTION, "fuel_units"]
+            ConfigSettings["half_rate"] = ['float', 'Fuel Rate Half Load', 26, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "half_rate"]
+            ConfigSettings["full_rate"] = ['float', 'Fuel Rate Full Load', 27, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "full_rate"]
+            ConfigSettings["usecalculatedpower"] = ['boolean', 'Use Calculated Power', 28, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "usecalculatedpower"]
 
-        ConfigSettings["enable_fuel_log"] = ['boolean', 'Log Fuel Level to File', 23, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "enable_fuel_log"]
-        ConfigSettings["fuel_log_freq"] = ['float', 'Fuel Log Frequency', 24, "15.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "fuel_log_freq"]
-        #ConfigSettings["fuel_log"] = ['string', 'Fuel Log Path and File Name', 25, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "/etc/genmon/fuellog.txt"]
+        ConfigSettings["enable_fuel_log"] = ['boolean', 'Log Fuel Level to File', 30, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "enable_fuel_log"]
+        ConfigSettings["fuel_log_freq"] = ['float', 'Fuel Log Frequency', 31, "15.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "fuel_log_freq"]
+        #ConfigSettings["fuel_log"] = ['string', 'Fuel Log Path and File Name', 32, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "/etc/genmon/fuellog.txt"]
 
-        ConfigSettings["kwlogmax"] = ['string', 'Maximum size Power Log (MB)', 31, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlogmax"]
-        ConfigSettings["currentdivider"] = ['float', 'Current Divider', 32, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentdivider"]
-        ConfigSettings["currentoffset"] = ['string', 'Current Offset', 33, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentoffset"]
-        ConfigSettings["legacy_power"] = ['boolean', 'Use Legacy Power Calculation', 34, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "legacy_power"]
+        ConfigSettings["kwlogmax"] = ['string', 'Maximum size Power Log (MB)', 50, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlogmax"]
+        ConfigSettings["currentdivider"] = ['float', 'Current Divider', 51, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentdivider"]
+        ConfigSettings["currentoffset"] = ['string', 'Current Offset', 52, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentoffset"]
+        ConfigSettings["legacy_power"] = ['boolean', 'Use Legacy Power Calculation', 53, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "legacy_power"]
 
-        ConfigSettings["disableplatformstats"] = ['boolean', 'Disable Platform Stats', 35, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "disableplatformstats"]
-        ConfigSettings["https_port"] = ['int', 'Override HTTPS port', 36, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "https_port"]
-        ConfigSettings["user_url"] = ['string', 'User URL', 37, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "user_url"]
-        ConfigSettings["extend_wait"] = ['int', 'Extend email retry', 38, "0", "", 0, MAIL_CONFIG, MAIL_SECTION,"extend_wait"]
-        ConfigSettings["min_outage_duration"] = ['int', 'Minimum Outage Duration', 39, "0", "", 0, GENMON_CONFIG, GENMON_SECTION,"min_outage_duration"]
-        ConfigSettings["multi_instance"] = ['boolean', 'Allow Multiple Genmon Instances', 40, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "multi_instance"]
+        ConfigSettings["disableplatformstats"] = ['boolean', 'Disable Platform Stats', 60, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "disableplatformstats"]
+        ConfigSettings["https_port"] = ['int', 'Override HTTPS port', 61, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "https_port"]
+        ConfigSettings["user_url"] = ['string', 'User URL', 62, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "user_url"]
+        ConfigSettings["extend_wait"] = ['int', 'Extend email retry', 63, "0", "", 0, MAIL_CONFIG, MAIL_SECTION,"extend_wait"]
+        ConfigSettings["min_outage_duration"] = ['int', 'Minimum Outage Duration', 64, "0", "", 0, GENMON_CONFIG, GENMON_SECTION,"min_outage_duration"]
+        ConfigSettings["multi_instance"] = ['boolean', 'Allow Multiple Genmon Instances', 65, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "multi_instance"]
 
 
         for entry, List in ConfigSettings.items():
@@ -1426,6 +1433,7 @@ def ReadSettingsFromFile():
     ConfigSettings["port"] = ['string', 'Port for Serial Communication', 3, "/dev/serial0", "", "required UnixDevice", GENMON_CONFIG, GENMON_SECTION, "port"]
     ConfigSettings["serial_tcp_address"] = ['string', 'Serial Server TCP/IP Address', 4, "", "", "InternetAddress", GENMON_CONFIG, GENMON_SECTION, "serial_tcp_address"]
     ConfigSettings["serial_tcp_port"] = ['int', 'Serial Server TCP/IP Port', 5, "8899", "", "digits", GENMON_CONFIG, GENMON_SECTION, "serial_tcp_port"]
+    ConfigSettings["modbus_tcp"] = ['boolean', 'Use Modbus TCP protocol', 6, False, "", "", GENMON_CONFIG, GENMON_SECTION, "modbus_tcp"]
 
     if ControllerType != 'h_100':
         ConfigSettings["disableoutagecheck"] = ['boolean', 'Do Not Check for Outages', 17, False, "", "", GENMON_CONFIG, GENMON_SECTION, "disableoutagecheck"]
@@ -1448,7 +1456,7 @@ def ReadSettingsFromFile():
     if "liquid cooled" in ControllerInfo and "evolution" in ControllerInfo and GetControllerInfo("fueltype").lower() == "diesel":
         ConfigSettings["usesensorforfuelgauge"] = ['boolean', 'Use Sensor for Fuel Gauge', 106, True, "", "", GENMON_CONFIG, GENMON_SECTION, "usesensorforfuelgauge"]
 
-    if ControllerType == 'h_100':
+    if ControllerType == 'h_100' or ControllerType == "powerzone":
         Choices = "120/208,120/240,230/400,240/415,277/480,347/600"
         ConfigSettings["voltageconfiguration"] = ['list', 'Line to Neutral / Line to Line', 107, "277/480", "", Choices, GENMON_CONFIG, GENMON_SECTION, "voltageconfiguration"]
         ConfigSettings["nominalbattery"] = ['list', 'Nomonal Battery Voltage', 108, "24", "", "12,24", GENMON_CONFIG, GENMON_SECTION, "nominalbattery"]
@@ -1659,6 +1667,11 @@ def UpdateConfigFile(FileName, section, Entry, Value):
     except Exception as e1:
         LogErrorLine("Error Update Config File (UpdateConfigFile): " + str(e1))
         return False
+
+#-------------------------------------------------------------------------------
+# This will reboot the pi
+def Reboot():
+    os.system("sudo reboot now")
 
 #-------------------------------------------------------------------------------
 # This will shutdown the pi

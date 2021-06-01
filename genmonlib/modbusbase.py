@@ -26,7 +26,8 @@ class ModbusBase(MySupport ):
     MBUS_OFF_COMMAND            = 0x01
     MBUS_OFF_EXCEPTION          = 0x02
     MBUS_OFF_RESPONSE_LEN       = 0x02
-    MBUS_OFF_FILE_TYPE          = 0x04      # offset in response packet
+    MBUS_OFF_FILE_TYPE          = 0x04      # offset in response packet (file read)
+    MBUS_OFF_WRITE_FILE_TYPE    = 0x03      # offset in response packet
     MBUS_OFF_FILE_PAYLOAD_LEN   = 0x03
     MBUS_OFF_FILE_PAYLOAD       = 0x05
     MBUS_OFF_REGISTER_HI        = 0x02
@@ -49,10 +50,15 @@ class ModbusBase(MySupport ):
     MBUS_CRC_SIZE           = 0x02
     MBUS_RES_LENGTH_SIZE    = 0x01
     MBUS_FILE_TYPE_SIZE     = 0x01
+    MBUS_FILE_NUN_SIZE      = 0x02
+    MBUS_RECORD_NUM_SIZE    = 0x02
+    MBUS_RECORD_LENGTH_SIZE = 0x02
 
     # Packet lengths
+    MODBUS_TCP_HEADER_SIZE   = 0x06
     MBUS_RES_PAYLOAD_SIZE_MINUS_LENGTH  = MBUS_ADDRESS_SIZE + MBUS_COMMAND_SIZE + MBUS_RES_LENGTH_SIZE + MBUS_CRC_SIZE
-    MBUS_FILE_READ_PAYLOAD_SIZE_MINUS_LENGTH = MBUS_ADDRESS_SIZE + MBUS_COMMAND_SIZE + MBUS_RES_LENGTH_SIZE + MBUS_CRC_SIZE
+    MBUS_FILE_READ_PAYLOAD_SIZE_MINUS_LENGTH = MBUS_ADDRESS_SIZE + MBUS_COMMAND_SIZE + MBUS_RES_LENGTH_SIZE + MBUS_CRC_SIZE # include bytes not in count
+    MBUS_FILE_WRITE_REQ_SIZE_MINUS_LENGTH = MBUS_FILE_TYPE_SIZE + MBUS_FILE_NUN_SIZE + MBUS_RECORD_NUM_SIZE + MBUS_RECORD_LENGTH_SIZE
     MIN_PACKET_ERR_LENGTH                   = 0x05
     MIN_PACKET_RESPONSE_LENGTH              = 0x07
     MIN_PACKET_MIN_WRITE_RESPONSE_LENGTH    = 0x08
@@ -64,7 +70,7 @@ class ModbusBase(MySupport ):
     # Varible limits
     MAX_REGISTER                            = 0xffff
     MIN_REGISTER                            = 0x0
-    MAX_FILE_RECORD_NUM                     = 0x270F
+    MAX_FILE_RECORD_NUM                     = 0x270F    # 9999 decimal
     MIN_FILE_RECORD_NUM                     = 0x0
     MAX_FILE_NUMBER                         = 0xFFFF
     MIN_FILE_NUMBER                         = 0x01
@@ -72,6 +78,7 @@ class ModbusBase(MySupport ):
     MBUS_CMD_READ_REGS      = 0x03
     MBUS_CMD_WRITE_REGS     = 0x10
     MBUS_CMD_READ_FILE      = 0x14
+    MBUS_CMD_WRITE_FILE     = 0x15
 
     # Values
     MBUS_FILE_TYPE_VALUE    = 0x06
@@ -94,7 +101,7 @@ class ModbusBase(MySupport ):
         updatecallback,
         address = 0x9d,
         name = "/dev/serial",
-        rate=9600,
+        rate = 9600,
         config = None):
 
         super(ModbusBase, self).__init__()
@@ -136,6 +143,7 @@ class ModbusBase(MySupport ):
             self.loglocation = self.config.ReadValue('loglocation', default = ProgramDefaults.LogPath)
             self.SlowCPUOptimization = self.config.ReadValue('optimizeforslowercpu', return_type = bool, default = False)
             self.UseTCP = self.config.ReadValue('use_serial_tcp', return_type = bool, default = False)
+            self.ModbusTCP = self.config.ReadValue('modbus_tcp', return_type = bool, default = False)
             try:
                 self.Address = int(self.config.ReadValue('address', default = '9d'),16)         # modbus address
             except:
@@ -168,6 +176,10 @@ class ModbusBase(MySupport ):
 
     #-------------ModbusProtocol::ProcessFileReadTransaction--------------------
     def ProcessFileReadTransaction(self, Register, Length, skipupdate = False, file_num = 1, ReturnString = False):
+        return
+
+    #-------------ModbusProtocol::ProcessFileWriteTransaction-------------------
+    def ProcessFileWriteTransaction(self, Register, Length, Data, file_num = 1, min_response_override = None):
         return
     # ---------- ModbusBase::GetCommStats---------------------------------------
     def GetCommStats(self):

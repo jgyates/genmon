@@ -96,7 +96,7 @@ class MyConfig (MyCommon):
                 return default
         except Exception as e1:
             if not NoLog:
-                self.LogErrorLine("Error in MyConfig:ReadValue: " + Entry + ": " + str(e1))
+                self.LogErrorLine("Error in MyConfig:ReadValue: " + self.Section + ": " + Entry + ": " + str(e1))
             return default
 
     #---------------------MyConfig::WriteSection--------------------------------
@@ -106,6 +106,8 @@ class MyConfig (MyCommon):
         if self.Simulation:
             return True
 
+        if not self.InitComplete:
+            return False
         SectionList = self.GetSections()
 
         if SectionName in SectionList:
@@ -131,6 +133,8 @@ class MyConfig (MyCommon):
         if self.Simulation:
             return True
 
+        if not self.InitComplete:
+            return False
         SectionList = self.GetSections()
 
         if SectionName in SectionList:
@@ -157,6 +161,8 @@ class MyConfig (MyCommon):
         if self.Simulation:
             return
 
+        if not self.InitComplete:
+            return False
         if section != None:
             self.SetSection(section)
 
@@ -183,6 +189,9 @@ class MyConfig (MyCommon):
         if self.Simulation:
             return
 
+        if not self.InitComplete:
+            return False
+            
         if section != None:
             self.SetSection(section)
 

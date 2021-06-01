@@ -77,7 +77,9 @@ if __name__=='__main__':
 
         Socket.close()
 
-        if TestString != ReceivedString:
+        ReceivedString = ReceivedString.decode("UTF-8")
+
+        if TestString != ReceivedString.decode("UTF-8"):
             print("FAILED: Sent data does not match receive. Received %d bytes" % len(ReceivedString))
         else:
             print("PASSED! Loopback successful")
