@@ -227,6 +227,7 @@ class Loader(MySupport):
               "Message_dat" : os.path.dirname(os.path.realpath(__file__)) + "/genmonlib/",
               'genmon.conf' : "/etc/",
               'genserv.conf': "/etc/",
+              'gengpio_relayboard' : "/etc/",
               'gengpio.conf' : "/etc/",
               'gengpioin.conf': "/etc/",
               'genlog.conf' : "/etc/",
@@ -397,7 +398,7 @@ class Loader(MySupport):
         try:
 
             Sections = self.config.GetSections()
-            ValidSections = ['genmon', 'genserv', 'gengpio', 'gengpioin', 'genlog', 'gensms', 'gensms_modem',
+            ValidSections = ['genmon', 'genserv', 'gengpio_relayboard', 'gengpio', 'gengpioin', 'genlog', 'gensms', 'gensms_modem',
             'genpushover', 'gensyslog', 'genmqtt', 'genslack', 'genexercise', 'genemail2sms', 'gentankutil',
             'gentankdiy','genalexa', 'gensnmp', 'gentemp', 'gengpioledblink']
             for entry in ValidSections:
