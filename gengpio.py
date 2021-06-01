@@ -53,55 +53,68 @@ if __name__=='__main__': # usage program.py [server_address]
 
         # These are the GPIP pins numbers on the Raspberry PI GPIO header
         # https://www.element14.com/community/servlet/JiveServlet/previewBody/73950-102-10-339300/pi3_gpio.png
+        
+        # For use with a gengpio.conf file to specify different pins or pin uses.
+        if os.path.isfile(os.path.join(ConfigFilePath, 'gengpio.conf')):
+            config = MyConfig(filename = os.path.join(ConfigFilePath, 'gengpio.conf'), section = 'gengpio', log = log)
+            
+            # Below here is where you will specify the settings assigned by your specific gengpio.conf file.
+            # You will need to follow this format below.  If using default settings delete any gengpio.conf file
+            # in your configurations folder (typically /etc/genmon/).
+            # STATUS_ALARM = config.ReadValue('STATUS_ALARM', return_type = int)
+            # GPIO.setup(STATUS_READY, GPIO.OUT, initial=GPIO.HIGH)
+            # ... More GPIO assignments and setups as needed for special use case.
+            
+        # This section will leave as standard default if no config file is present.
+        else :
+            STATUS_READY = 16       # READY GPIO 23 (pin 16)
+            STATUS_ALARM = 18       # ALARM GPIO 24 (pin 18)
+            STATUS_SERVICE = 22     # SERVICE DUE GPIO 25 (pin 22)
+            STATUS_RUNNING = 26     # RUNNING GPIO 7 (pin 26)
+            STATUS_EXERCISING = 24  # EXERCISING GPIO 8 (pin 24)
+            STATUS_OFF = 21         # OFF GPIO 9   (pin 21)
 
-        STATUS_READY = 16       # READY GPIO 23 (pin 16)
-        STATUS_ALARM = 18       # ALARM GPIO 24 (pin 18)
-        STATUS_SERVICE = 22     # SERVICE DUE GPIO 25 (pin 22)
-        STATUS_RUNNING = 26     # RUNNING GPIO 7 (pin 26)
-        STATUS_EXERCISING = 24  # EXERCISING GPIO 8 (pin 24)
-        STATUS_OFF = 21         # OFF GPIO 9   (pin 21)
+            # Set additional GPIO based on these error codes
+            ER_GENMON = 3           # Genmon is reporting errors due to modbus or internal problems GPIO 2(pin3)
+            ER_INTERNET = 5         # No internet connection GPIO3 (pin 5)
+            # Overspeed/Underspeed (alarms 1200-1206, 1600-1603) GPIO 5 (pin 29)
+            ER_SPEED = 29
+            # Low Oil (alarm 1300) GPIO 6 (pin 31)
+            ER_LOW_OIL = 31
+            # High Temp (alarm 1400) GPIO 13 (pin 33
+            ER_HIGH_TEMP = 33
+            # RPM Sensor (alarm 1500-1521) GPIO 19 (pin 35)
+            ER_RPM_SENSE = 35
+            # Overvoltage/Undervoltage (alarm1800-1803, 1900-1906) GPIO 26 (pin 37)
+            ER_VOLTAGE = 37
+            # Overcrank (alarm 1100-1101) GPIO 21 (pin 40)
+            ER_OVERCRANK = 40
+            # Overload (alarm 2100-2103) GPIO 20 (pin 38)
+            ER_OVERLOAD = 38
+            # Governor (alarm 2500-2502) GPIO 16 (pin 36)
+            ER_GOVERNOR = 36
+            # Evolution Air Cooled Warning GPIO 12 (pin 32)
+            ER_WARNING = 32
 
-        # Set additional GPIO based on these error codes
-        ER_GENMON = 3           # Genmon is reporting errors due to modbus or internal problems GPIO 2(pin3)
-        ER_INTERNET = 5         # No internet connection GPIO3 (pin 5)
-        # Overspeed/Underspeed (alarms 1200-1206, 1600-1603) GPIO 5 (pin 29)
-        ER_SPEED = 29
-        # Low Oil (alarm 1300) GPIO 6 (pin 31)
-        ER_LOW_OIL = 31
-        # High Temp (alarm 1400) GPIO 13 (pin 33
-        ER_HIGH_TEMP = 33
-        # RPM Sensor (alarm 1500-1521) GPIO 19 (pin 35)
-        ER_RPM_SENSE = 35
-        # Overvoltage/Undervoltage (alarm1800-1803, 1900-1906) GPIO 26 (pin 37)
-        ER_VOLTAGE = 37
-        # Overcrank (alarm 1100-1101) GPIO 21 (pin 40)
-        ER_OVERCRANK = 40
-        # Overload (alarm 2100-2103) GPIO 20 (pin 38)
-        ER_OVERLOAD = 38
-        # Governor (alarm 2500-2502) GPIO 16 (pin 36)
-        ER_GOVERNOR = 36
-        # Evolution Air Cooled Warning GPIO 12 (pin 32)
-        ER_WARNING = 32
+            GPIO.setup(STATUS_READY, GPIO.OUT, initial=GPIO.LOW)
+            GPIO.setup(STATUS_ALARM, GPIO.OUT, initial=GPIO.LOW)
+            GPIO.setup(STATUS_SERVICE, GPIO.OUT, initial=GPIO.LOW)
+            GPIO.setup(STATUS_RUNNING, GPIO.OUT, initial=GPIO.LOW)
+            GPIO.setup(STATUS_EXERCISING, GPIO.OUT, initial=GPIO.LOW)
+            GPIO.setup(STATUS_OFF, GPIO.OUT, initial=GPIO.LOW)
 
-        GPIO.setup(STATUS_READY, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(STATUS_ALARM, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(STATUS_SERVICE, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(STATUS_RUNNING, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(STATUS_EXERCISING, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(STATUS_OFF, GPIO.OUT, initial=GPIO.LOW)
+            GPIO.setup(ER_GENMON, GPIO.OUT, initial=GPIO.LOW)
+            GPIO.setup(ER_INTERNET, GPIO.OUT, initial=GPIO.LOW)
 
-        GPIO.setup(ER_GENMON, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(ER_INTERNET, GPIO.OUT, initial=GPIO.LOW)
-
-        GPIO.setup(ER_SPEED, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(ER_LOW_OIL, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(ER_HIGH_TEMP, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(ER_RPM_SENSE, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(ER_VOLTAGE, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(ER_OVERCRANK, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(ER_OVERLOAD, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(ER_GOVERNOR, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(ER_WARNING, GPIO.OUT, initial=GPIO.LOW)
+            GPIO.setup(ER_SPEED, GPIO.OUT, initial=GPIO.LOW)
+            GPIO.setup(ER_LOW_OIL, GPIO.OUT, initial=GPIO.LOW)
+            GPIO.setup(ER_HIGH_TEMP, GPIO.OUT, initial=GPIO.LOW)
+            GPIO.setup(ER_RPM_SENSE, GPIO.OUT, initial=GPIO.LOW)
+            GPIO.setup(ER_VOLTAGE, GPIO.OUT, initial=GPIO.LOW)
+            GPIO.setup(ER_OVERCRANK, GPIO.OUT, initial=GPIO.LOW)
+            GPIO.setup(ER_OVERLOAD, GPIO.OUT, initial=GPIO.LOW)
+            GPIO.setup(ER_GOVERNOR, GPIO.OUT, initial=GPIO.LOW)
+            GPIO.setup(ER_WARNING, GPIO.OUT, initial=GPIO.LOW)
 
         LastEvent = ""
 
