@@ -64,6 +64,9 @@ if __name__=='__main__': # usage program.py [server_address]
             # STATUS_ALARM = config.ReadValue('STATUS_ALARM', return_type = int)
             # GPIO.setup(STATUS_READY, GPIO.OUT, initial=GPIO.HIGH)
             # ... More GPIO assignments and setups as needed for special use case.
+            #
+            # Then we will need a tuple of all the values configure.
+            # GPIO_OUTPUTS = ('STATUS_ALARM', ...)
             
         # This section will leave as standard default if no config file is present.
         else :
@@ -115,7 +118,10 @@ if __name__=='__main__': # usage program.py [server_address]
             GPIO.setup(ER_OVERLOAD, GPIO.OUT, initial=GPIO.LOW)
             GPIO.setup(ER_GOVERNOR, GPIO.OUT, initial=GPIO.LOW)
             GPIO.setup(ER_WARNING, GPIO.OUT, initial=GPIO.LOW)
-
+            
+            GPIO_OUTPUTS = ('STATUS_READY', 'STATUS_ALARM', 'STATUS_SERVICE', 'STATUS_RUNNING', 'STATUS_EXERCISING', 'STATUS_OFF', 'ER_GENMON', 'ER_INTERNET', 'ER_SPEED',
+                            'ER_LOW_OIL', 'ER_HIGH_TEMP', 'ER_RPM_SENSE', 'ER_VOLTAGE', 'ER_OVERCRANK', 'ER_OVERLOAD', 'ER_GOVERNOR', 'ER_WARNING')
+            
         LastEvent = ""
 
         data = MyClientInterface.ProcessMonitorCommand("generator: monitor")
@@ -136,35 +142,41 @@ if __name__=='__main__': # usage program.py [server_address]
                 LastEvent = data
                 console.info ("State: " + data)
 
-                if data == "READY":
-                    GPIO.output(STATUS_READY,GPIO.HIGH)
-                else:
-                    GPIO.output(STATUS_READY,GPIO.LOW)
+                if 'STATUS_READY' in GPIO_OUTPUTS:
+                    if data == "READY":
+                        GPIO.output(STATUS_READY,GPIO.HIGH)
+                    else:
+                        GPIO.output(STATUS_READY,GPIO.LOW)
 
-                if data == "EXERCISING":
-                    GPIO.output(STATUS_EXERCISING,GPIO.HIGH)
-                else:
-                    GPIO.output(STATUS_EXERCISING,GPIO.LOW)
+                if 'STATUS_EXERCISING' in GPIO_OUTPUTS:
+                    if data == "EXERCISING":
+                        GPIO.output(STATUS_EXERCISING,GPIO.HIGH)
+                    else:
+                        GPIO.output(STATUS_EXERCISING,GPIO.LOW)
 
-                if data == "RUNNING" or data == "RUNNING-MANUAL":
-                    GPIO.output(STATUS_RUNNING,GPIO.HIGH)
-                else:
-                    GPIO.output(STATUS_RUNNING,GPIO.LOW)
+                if 'STATUS_RUNNING' in GPIO_OUTPUTS:
+                    if data == "RUNNING" or data == "RUNNING-MANUAL":
+                        GPIO.output(STATUS_RUNNING,GPIO.HIGH)
+                    else:
+                        GPIO.output(STATUS_RUNNING,GPIO.LOW)
 
-                if data == "ALARM":
-                    GPIO.output(STATUS_ALARM,GPIO.HIGH)
-                else:
-                    GPIO.output(STATUS_ALARM,GPIO.LOW)
+                if 'STATUS_ALARM' in GPIO_OUTPUTS:
+                    if data == "ALARM":
+                        GPIO.output(STATUS_ALARM,GPIO.HIGH)
+                    else:
+                        GPIO.output(STATUS_ALARM,GPIO.LOW)
 
-                if data == "SERVICEDUE":
-                    GPIO.output(STATUS_SERVICE,GPIO.HIGH)
-                else:
-                    GPIO.output(STATUS_SERVICE, GPIO.LOW)
+                if 'STATUS_SERVICE' in GPIO_OUTPUTS:
+                    if data == "SERVICEDUE":
+                        GPIO.output(STATUS_SERVICE,GPIO.HIGH)
+                    else:
+                        GPIO.output(STATUS_SERVICE, GPIO.LOW)
 
-                if data == "OFF" or data == "MANUAL":
-                    GPIO.output(STATUS_OFF,GPIO.HIGH)
-                else:
-                    GPIO.output(STATUS_OFF, GPIO.LOW)
+                if 'STATUS_OFF' in GPIO_OUTPUTS:
+                    if data == "OFF" or data == "MANUAL":
+                        GPIO.output(STATUS_OFF,GPIO.HIGH)
+                    else:
+                        GPIO.output(STATUS_OFF, GPIO.LOW)
 
 
                 if data == "ALARM" and Evolution:     # Last Error Code not supported by Nexus
@@ -174,51 +186,60 @@ if __name__=='__main__': # usage program.py [server_address]
                     LastErrorCode = int(data,16)
 
                     # Overspeed/Underspeed (alarms 1200-1206, 1600-1603)
-                    if 1200 <= LastErrorCode <= 1206 or 1600 <= LastErrorCode <= 1603:
+                    if 1200 <= LastErrorCode <= 1206 or 1600 <= LastErrorCode <= 1603 and 'ER_SPEED' in GPIO_OUTPUTS:
                         GPIO.output(ER_SPEED,GPIO.HIGH)
 
                     # Low Oil (alarm 1300)
-                    if LastErrorCode == 1300:
+                    if LastErrorCode == 1300 and 'ER_LOW_OIL' in GPIO_OUTPUTS:
                         GPIO.output(ER_LOW_OIL,GPIO.HIGH)
 
                     # High Temp (alarm 1400)
-                    if LastErrorCode == 1400:
+                    if LastErrorCode == 1400 and 'ER_HIGH_TEMP' in GPIO_OUTPUTS:
                         GPIO.output(ER_HIGH_TEMP,GPIO.HIGH)
 
                     # RPM Sensor (alarm 1500-1521)
-                    if 1500 <= LastErrorCode <= 1521:
+                    if 1500 <= LastErrorCode <= 1521 and 'ER_RPM_SENSE' in GPIO_OUTPUTS:
                         GPIO.output(ER_RPM_SENSE,GPIO.HIGH)
 
                     # Overvoltage/Undervoltage (alarm 1800-1803, 1900-1906)
-                    if 1800 <= LastErrorCode <= 1803 or 1900 <= LastErrorCode <= 1906:
+                    if 1800 <= LastErrorCode <= 1803 or 1900 <= LastErrorCode <= 1906 and 'ER_VOLTAGE' in GPIO_OUTPUTS:
                         GPIO.output(ER_VOLTAGE,GPIO.HIGH)
 
                     # Overcrank (alarm 1100-1101)
-                    if 1100 <= LastErrorCode <= 1101:
+                    if 1100 <= LastErrorCode <= 1101 and 'ER_OVERCRANK' in GPIO_OUTPUTS:
                         GPIO.output(ER_OVERCRANK,GPIO.HIGH)
 
                     # Overload (alarm 2100-2103)
-                    if 2100 <= LastErrorCode <= 2103:
+                    if 2100 <= LastErrorCode <= 2103 and 'ER_OVERLOAD' in GPIO_OUTPUTS:
                         GPIO.output(ER_OVERLOAD,GPIO.HIGH)
 
                     # Governor (alarm 2500-2502)
-                    if 2500 <= LastErrorCode <= 2502:
+                    if 2500 <= LastErrorCode <= 2502 and 'ER_GOVERNOR' in GPIO_OUTPUTS:
                         GPIO.output(ER_GOVERNOR,GPIO.HIGH)
 
                     # Warning (alarm 0000)
-                    if 0000 == LastErrorCode:
+                    if 0000 == LastErrorCode and 'ER_WARNING' in GPIO_OUTPUTS:
                         GPIO.output(ER_WARNING,GPIO.HIGH)
 
                 else:
-                    GPIO.output(ER_SPEED,GPIO.LOW)
-                    GPIO.output(ER_LOW_OIL,GPIO.LOW)
-                    GPIO.output(ER_HIGH_TEMP,GPIO.LOW)
-                    GPIO.output(ER_RPM_SENSE,GPIO.LOW)
-                    GPIO.output(ER_VOLTAGE,GPIO.LOW)
-                    GPIO.output(ER_OVERCRANK,GPIO.LOW)
-                    GPIO.output(ER_OVERLOAD,GPIO.LOW)
-                    GPIO.output(ER_GOVERNOR,GPIO.LOW)
-                    GPIO.output(ER_WARNING,GPIO.LOW)
+                    if 'ER_SPEED' in GPIO_OUTPUTS:
+                        GPIO.output(ER_SPEED,GPIO.LOW)
+                    if 'ER_LOW_OIL' in GPIO_OUTPUTS:
+                        GPIO.output(ER_LOW_OIL,GPIO.LOW)
+                    if 'ER_HIGH_TEMP' in GPIO_OUTPUTS:
+                        GPIO.output(ER_HIGH_TEMP,GPIO.LOW)
+                    if 'ER_RPM_SENSE' in GPIO_OUTPUTS:
+                        GPIO.output(ER_RPM_SENSE,GPIO.LOW)
+                    if 'ER_VOLTAGE' in GPIO_OUTPUTS:
+                        GPIO.output(ER_VOLTAGE,GPIO.LOW)
+                    if 'ER_OVERCRANK' in GPIO_OUTPUTS:
+                        GPIO.output(ER_OVERCRANK,GPIO.LOW)
+                    if 'ER_OVERLOAD' in GPIO_OUTPUTS:
+                        GPIO.output(ER_OVERLOAD,GPIO.LOW)
+                    if 'ER_GOVERNOR' in GPIO_OUTPUTS:
+                        GPIO.output(ER_GOVERNOR,GPIO.LOW)
+                    if 'ER_WARNING' in GPIO_OUTPUTS:
+                        GPIO.output(ER_WARNING,GPIO.LOW)
 
             # Get Genmon status
             try:
@@ -226,20 +247,22 @@ if __name__=='__main__': # usage program.py [server_address]
                 TempDict = {}
                 TempDict = json.loads(data)
                 HealthStr = TempDict["Monitor"][0]["Generator Monitor Stats"][0]["Monitor Health"]
-                if HealthStr.lower() == "ok":
-                    GPIO.output(ER_GENMON,GPIO.LOW)
-                else:
-                    GPIO.output(ER_GENMON,GPIO.HIGH)
+                if 'ER_GENMON' in GPIO_OUTPUTS:
+                    if HealthStr.lower() == "ok":
+                        GPIO.output(ER_GENMON,GPIO.LOW)
+                    else:
+                        GPIO.output(ER_GENMON,GPIO.HIGH)
             except Exception as e1:
                 log.error("Error getting monitor health: " +str(e1))
             # get Internet Status
             try:
                 data = MyClientInterface.ProcessMonitorCommand("generator: network_status")
-                if data.lower() == "ok":
-                    GPIO.output(ER_INTERNET,GPIO.LOW)
-                else:
-                    GPIO.output(ER_INTERNET,GPIO.HIGH)
-                time.sleep(3)
+                if 'ER_INTERNET' in GPIO_OUTPUTS:
+                    if data.lower() == "ok":
+                        GPIO.output(ER_INTERNET,GPIO.LOW)
+                    else:
+                        GPIO.output(ER_INTERNET,GPIO.HIGH)
+                    time.sleep(3)
             except Exception as e1:
                 log.error("Error getting internet status: " +str(e1))
 
