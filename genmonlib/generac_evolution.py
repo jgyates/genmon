@@ -500,7 +500,10 @@ class Evolution(GeneratorController):
             if self.LiquidCooled:
                 FileName = "EvoLC_Fuel.txt"
             else:
-                FileName = "EvoAC_Fuel.txt"
+                if self.Evolution2:
+                    FileName = "EvoAC2_Fuel.txt"
+                else:
+                    FileName = "EvoAC_Fuel.txt"
 
             FullFileName = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "data",  FileName)
             ReturnList = self.ReadCSVFile(FullFileName)
@@ -685,6 +688,8 @@ class Evolution(GeneratorController):
             ModelLookUp_EvoAC[8] = ["22KW", "60", "120/240", "1", "999 cc", "240"] # Evo G0072100 Evo2 24kw
             ModelLookUp_EvoAC[17] = ["20KW", "60", "120/240", "1", "999 cc", "240"] # Evo2 20kW
             ModelLookUp_EvoAC[21] = ["24KW", "60", "120/240", "1", "999 cc", "240"] # Evo G0072100 Evo2 24kw
+            ModelLookUp_EvoAC[22] = ["16KW", "60", "120/240", "1", "816 cc", "240"] # Evo G0071760
+            ModelLookUp_EvoAC[11] = ["20KW", "50", "208 3 Phase", "3", "999 cc", "208"],       # 3 phase export
 
         LookUp = None
         if self.EvolutionController:
@@ -1779,13 +1784,35 @@ class Evolution(GeneratorController):
                         self.LogToFile(self.OutageLog, self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"), OutageStr)
             else:
                 if UtilityVolts < ThresholdVoltage:
-                    self.SystemInOutage = True
-                    self.OutageStartTime = datetime.datetime.now()
-                    msgbody = "\nUtility Power Out at " + self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S")
-                    self.MessagePipe.SendMessage("Outage Notice at " + self.SiteName, msgbody, msgtype = "outage")
+                    if self.CheckOutageNoticeDelay():
+                        self.SystemInOutage = True
+                        self.OutageStartTime = datetime.datetime.now()
+                        msgbody = "\nUtility Power Out at " + self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S")
+                        self.MessagePipe.SendMessage("Outage Notice at " + self.SiteName, msgbody, msgtype = "outage")
+                else:
+                    self.OutageNoticeDelayTime = None
         except Exception as e1:
             self.LogErrorLine("Error in CheckForOutage: " + str(e1))
 
+    #------------ Evolution:CheckOutageNoticeDelay -----------------------------
+    def CheckOutageNoticeDelay(self):
+
+        try:
+            if self.OutageNoticeDelay == 0:
+                return True
+
+            if self.OutageNoticeDelayTime == None:
+                self.OutageNoticeDelayTime = datetime.datetime.now()
+                return False
+
+            OutageNoticeDelta = datetime.datetime.now() - self.OutageNoticeDelayTime
+            if self.OutageNoticeDelay > OutageNoticeDelta.total_seconds():
+                return False
+
+            self.OutageNoticeDelayTime = None
+        except Exception as e1:
+            self.LogErrorLine("Error in CheckOutageNoticeDelay: " + str(e1))
+        return True
     #------------ Evolution:CheckForAlarms -------------------------------------
     # Note this must be called from the Process thread since it queries the log registers
     # when in master emulation mode
@@ -2657,7 +2684,8 @@ class Evolution(GeneratorController):
          0x30 : "Ruptured Tank",        #  Validate on Evolution, occurred when forced ruptured tank
          0x31 : "Low Fuel Level",       #  Validate on Evolution, occurred when Low Fuel Level
          0x32 : "Low Fuel Pressure",    #  Validate on EvoLC
-         0x34 : "Emergency Stop"        #  Validate on Evolution, occurred when E-Stop
+         0x34 : "Emergency Stop",       #  Validate on Evolution, occurred when E-Stop
+         0x38 : "Very Low Battery"      #  Validate on Evolutio Air Cooled
         }
 
         outString += AlarmValues.get(RegVal & 0x0FFFF,"UNKNOWN ALARM: %08x" % RegVal)
@@ -3347,7 +3375,7 @@ class Evolution(GeneratorController):
                 elif not self.EvolutionController and self.LiquidCooled:
                     # Nexus Liquid Cooled
                     FloatTemp = self.GetParameter("0008", ReturnFloat = True, Divider = 1.0, Label = "Hz")
-                    # TODO this should be optiona
+                    # this is optional
                     if self.NexusLegacyFreq:
                         FloatTemp = FloatTemp * 2.0
                     if ReturnFloat:
@@ -3356,7 +3384,11 @@ class Evolution(GeneratorController):
                     return "%2.1f Hz" % FloatTemp
                 else:
                     # Nexus and Evolution Air Cooled
-                    return self.GetParameter("0008", ReturnFloat = ReturnFloat, Divider = 1.0, Label = "Hz")
+                    if self.SynergyController:
+                        Divisor = 10.0
+                    else:
+                        Divisor = 1.0
+                    return self.GetParameter("0008", ReturnFloat = ReturnFloat, Divider = Divisor, Label = "Hz")
 
             else:
                 # (RPM * Poles) / 2 * 60

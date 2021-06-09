@@ -1,7 +1,41 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
-## V1.16.00  -2021-02-24
+## V1.16.09  -2021-05-25
+- Corrected bug in web app that displays weather on the lower right. Error occured if weather reporting was disabled (thanks @speters0)
+
+## V1.16.08  -2021-05-22
+- Added restart, reboot and shutdown feature on the advanced page.
+- Minor updates for formatting and error reporting
+
+## V1.16.07  -2021-05-19
+- Added  engine displacement data Evo2 16kw
+- Updated fuel calculation for some Evo2 models
+
+## V1.16.06  -2021-05-10
+- Added Advanced Option to allow for a delay in outage notices (Evolution and Nexus only)
+- Minor update to UI to correct incorrect display on Nexus controllers when setting the exercise time
+
+## V1.16.05  -2021-04-07
+- Minor python 3 updates to myplatform.py
+- Fixed bug in short message notifications of low fuel
+
+## V1.16.04  -2021-03-17
+- Update for Evolution Synergy to fix frequency values (https://github.com/jgyates/genmon/issues/521)
+- Minor update for PowerZone
+- Added new alarm code for Evolution
+
+## V1.16.03  -2021-03-03
+- Updated fix for modbus file handling (only specific to industurial controllers). Powerzone controllers handle modbus file register access a little differently and this update handles that differece.
+
+## V1.16.02  -2021-03-02
+- Corrected bug in H-100, G-Panel and PowerZone modbus file handling
+
+## V1.16.01  -2021-03-01
+- Minor update to code that checks for previously installed modules
+- Minor update to genloader to check if module is loaded before attempting to load
+
+## V1.16.00  -2021-02-28
 - Initial support for Generac PowerZone, log support not currently supported
 - Update to genmqtt and gensnmp for powerzone support
 
