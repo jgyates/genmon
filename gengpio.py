@@ -13,6 +13,7 @@
 import datetime, time, sys, signal, os, threading, socket, json
 import atexit, getopt
 try:
+    from genmonlib.myconfig import MyConfig
     from genmonlib.mylog import SetupLogger
     from genmonlib.myclient import ClientInterface
     from genmonlib.mysupport import MySupport
@@ -44,6 +45,7 @@ if __name__=='__main__': # usage program.py [server_address]
 
         MyClientInterface = ClientInterface(host = address, port = port, log = log)
 
+        config = MyConfig(filename =  os.path.join(ConfigFilePath, 'gengpio.conf'), section = 'gengpio', log = log)
         #setup GPIO using Board numbering
         GPIO.setmode(GPIO.BOARD)
 
@@ -53,35 +55,25 @@ if __name__=='__main__': # usage program.py [server_address]
 
         # These are the GPIP pins numbers on the Raspberry PI GPIO header
         # https://www.element14.com/community/servlet/JiveServlet/previewBody/73950-102-10-339300/pi3_gpio.png
-
-        STATUS_READY = 16       # READY GPIO 23 (pin 16)
-        STATUS_ALARM = 18       # ALARM GPIO 24 (pin 18)
-        STATUS_SERVICE = 22     # SERVICE DUE GPIO 25 (pin 22)
-        STATUS_RUNNING = 26     # RUNNING GPIO 7 (pin 26)
-        STATUS_EXERCISING = 24  # EXERCISING GPIO 8 (pin 24)
-        STATUS_OFF = 21         # OFF GPIO 9   (pin 21)
+        STATUS_READY = config.ReadValue('STATUS_READY', return_type = int, default = 16)
+        STATUS_ALARM = config.ReadValue('STATUS_ALARM', return_type = int, default = 18)
+        STATUS_SERVICE = config.ReadValue('STATUS_SERVICE', return_type = int, default = 22)
+        STATUS_RUNNING = config.ReadValue('STATUS_RUNNING', return_type = int, default = 26)
+        STATUS_EXERCISING = config.ReadValue('STATUS_EXERCISING', return_type = int, default = 24)
+        STATUS_OFF = config.ReadValue('STATUS_OFF', return_type = int, default = 21)
 
         # Set additional GPIO based on these error codes
-        ER_GENMON = 3           # Genmon is reporting errors due to modbus or internal problems GPIO 2(pin3)
-        ER_INTERNET = 5         # No internet connection GPIO3 (pin 5)
-        # Overspeed/Underspeed (alarms 1200-1206, 1600-1603) GPIO 5 (pin 29)
-        ER_SPEED = 29
-        # Low Oil (alarm 1300) GPIO 6 (pin 31)
-        ER_LOW_OIL = 31
-        # High Temp (alarm 1400) GPIO 13 (pin 33
-        ER_HIGH_TEMP = 33
-        # RPM Sensor (alarm 1500-1521) GPIO 19 (pin 35)
-        ER_RPM_SENSE = 35
-        # Overvoltage/Undervoltage (alarm1800-1803, 1900-1906) GPIO 26 (pin 37)
-        ER_VOLTAGE = 37
-        # Overcrank (alarm 1100-1101) GPIO 21 (pin 40)
-        ER_OVERCRANK = 40
-        # Overload (alarm 2100-2103) GPIO 20 (pin 38)
-        ER_OVERLOAD = 38
-        # Governor (alarm 2500-2502) GPIO 16 (pin 36)
-        ER_GOVERNOR = 36
-        # Evolution Air Cooled Warning GPIO 12 (pin 32)
-        ER_WARNING = 32
+        ER_GENMON = config.ReadValue('ER_GENMON', return_type = int, default = 3)
+        ER_INTERNET = config.ReadValue('ER_INTERNET', return_type = int, default = 5)
+        ER_SPEED = config.ReadValue('ER_SPEED', return_type = int, default = 29)
+        ER_LOW_OIL = config.ReadValue('ER_LOW_OIL', return_type = int, default = 31)
+        ER_HIGH_TEMP = config.ReadValue('ER_HIGH_TEMP', return_type = int, default = 33)
+        ER_RPM_SENSE = config.ReadValue('ER_RPM_SENSE', return_type = int, default = 35)
+        ER_VOLTAGE = config.ReadValue('ER_VOLTAGE', return_type = int, default = 37)
+        ER_OVERCRANK = config.ReadValue('ER_OVERCRANK', return_type = int, default = 40)
+        ER_OVERLOAD = config.ReadValue('ER_OVERLOAD', return_type = int, default = 38)
+        ER_GOVERNOR = config.ReadValue('ER_GOVERNOR', return_type = int, default = 36)
+        ER_WARNING = config.ReadValue('ER_WARNING', return_type = int, default = 32)
 
         GPIO.setup(STATUS_READY, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(STATUS_ALARM, GPIO.OUT, initial=GPIO.LOW)

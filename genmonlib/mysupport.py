@@ -430,6 +430,17 @@ class MySupport(MyCommon):
             self.LogErrorLine("Error in ReadCSVFile: " + FileName + " : " + str(e1))
             return []
 
+    #------------ MySupport::GetWANIp-------------------------------------------
+    def GetWANIp(self):
+
+        try:
+            import requests
+            ip = requests.get('http://ipinfo.io/json').json()['ip']
+            return ip.strip()
+        except Exception as e1:
+            self.LogErrorLine("Error getting WAN IP: " + str(e1))
+            return "Unknown"
+
     #------------ MySupport::GetNetworkIp---------------------------------------
     def GetNetworkIp(self):
         try:

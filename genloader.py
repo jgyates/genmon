@@ -388,6 +388,16 @@ class Loader(MySupport):
                     self.config.WriteValue('conffile', "gengpioin.conf", section = "gengpioin")
                     self.LogError("Updated entry gengpioin.conf")
 
+            self.config.SetSection("gengpio")
+            if not self.config.HasOption('conffile'):
+                self.config.WriteValue('conffile', "gengpio.conf", section = "gengpio")
+                self.LogError("Updated entry gengpio.conf")
+            else:
+                defValue = self.config.ReadValue('conffile', default = "")
+                if not len(defValue):
+                    self.config.WriteValue('conffile', "gengpio.conf", section = "gengpio")
+                    self.LogError("Updated entry gengpio.conf")
+
         except Exception as e1:
             self.LogInfo("Error in UpdateIfNeeded: " + str(e1), LogLine = True)
 

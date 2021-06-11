@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.16.10  -2021-06-11
+- Added gengpio.conf file to set GPIO pins to values other than the default.
+
 ## V1.16.09  -2021-05-25
 - Corrected bug in web app that displays weather on the lower right. Error occured if weather reporting was disabled (thanks @speters0)
 

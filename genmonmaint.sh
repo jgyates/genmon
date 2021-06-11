@@ -283,6 +283,7 @@ function backupgenmon() {
     sudo cp "$config_path"mymodem.conf ./genmon_backup
     sudo cp "$config_path"genemail2sms.conf ./genmon_backup
     sudo cp "$config_path"genexercise.conf ./genmon_backup
+    sudo cp "$config_path"gengpio.conf ./genmon_backup
     sudo cp "$config_path"gengpioin.conf ./genmon_backup
     sudo cp "$config_path"genalexa.conf ./genmon_backup
     sudo cp "$config_path"genemail2sms.conf ./genmon_backup
