@@ -1435,7 +1435,7 @@ def ReadSettingsFromFile():
     ConfigSettings["serial_tcp_port"] = ['int', 'Serial Server TCP/IP Port', 5, "8899", "", "digits", GENMON_CONFIG, GENMON_SECTION, "serial_tcp_port"]
     ConfigSettings["modbus_tcp"] = ['boolean', 'Use Modbus TCP protocol', 6, False, "", "", GENMON_CONFIG, GENMON_SECTION, "modbus_tcp"]
 
-    if ControllerType != 'h_100':
+    if ControllerType == 'generac_evo_nexus':
         ConfigSettings["disableoutagecheck"] = ['boolean', 'Do Not Check for Outages', 17, False, "", "", GENMON_CONFIG, GENMON_SECTION, "disableoutagecheck"]
 
     ConfigSettings["syncdst"] = ['boolean', 'Sync Daylight Savings Time', 22, False, "", "", GENMON_CONFIG, GENMON_SECTION, "syncdst"]
@@ -1467,6 +1467,9 @@ def ReadSettingsFromFile():
 
     ConfigSettings["smart_transfer_switch"] = ['boolean', 'Smart Transfer Switch', 110, False, "", "", GENMON_CONFIG, GENMON_SECTION, "smart_transfer_switch"]
     ConfigSettings["displayunknown"] = ['boolean', 'Display Unknown Sensors', 111, False, "", "", GENMON_CONFIG, GENMON_SECTION, "displayunknown"]
+
+    if ControllerType == 'h_100':
+        ConfigSettings["industrialoutagecheck"] = ['boolean', 'Outage Notice on Transfer State Change', 112, False, "", "", GENMON_CONFIG, GENMON_SECTION, "industrialoutagecheck"]
 
     # These do not appear to work on reload, some issue with Flask
     ConfigSettings["usehttps"] = ['boolean', 'Use Secure Web Settings', 200, False, "", "", GENMON_CONFIG, GENMON_SECTION, "usehttps"]

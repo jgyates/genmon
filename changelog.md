@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.16.11  -2021-06-16
+- Added option to notify of transfer state changes on H and G Panel controllers. Note: the proper connections from your switch to the controller must be setup for this to work properly.
+
 ## V1.16.10  -2021-06-11
 - Added gengpio.conf file to set GPIO pins to values other than the default.
 

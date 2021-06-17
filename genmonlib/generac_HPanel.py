@@ -892,6 +892,7 @@ class HPanel(GeneratorController):
     def GetConfig(self):
 
         try:
+            self.IndustrialOutageCheck = self.config.ReadValue('industrialoutagecheck', return_type = bool, default = False)
             self.VoltageConfig = self.config.ReadValue('voltageconfiguration', default = "277/480")
             self.NominalBatteryVolts = int(self.config.ReadValue('nominalbattery', return_type = int, default = 24))
             self.HTSTransferSwitch = self.config.ReadValue('hts_transfer_switch', return_type = bool, default = False)
@@ -1275,6 +1276,30 @@ class HPanel(GeneratorController):
             self.LogErrorLine("Error in ParseLogEntry: " + str(e1))
             return ""
 
+    #------------ HPanel:CheckForOutage ----------------------------------------
+    def CheckForOutage(self):
+
+        try:
+
+            if not self.IndustrialOutageCheck:
+                return
+            # Optionally get transfer switch status
+            if self.GetTransferStatus().lower() == "generator":
+                if not self.SystemInOutage:
+                    self.OutageStartTime = datetime.datetime.now()
+                    msgbody = "\nUtility Power Out at " + self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S")
+                    self.MessagePipe.SendMessage("Outage Notice at " + self.SiteName, msgbody, msgtype = "outage")
+                self.SystemInOutage = True
+            else:
+                if self.SystemInOutage:
+                    self.LastOutageDuration = datetime.datetime.now() - self.OutageStartTime
+                    OutageStr = str(self.LastOutageDuration).split(".")[0]  # remove microseconds from string
+                    msgbody = "\nUtility Power Restored. Duration of outage " + OutageStr
+                    self.MessagePipe.SendMessage("Outage Recovery Notice at " + self.SiteName, msgbody, msgtype = "outage")
+                self.SystemInOutage = False
+
+        except Exception as e1:
+            self.LogErrorLine("Error in CheckForOutage: " + str(e1))
     #------------ HPanel:CheckForAlarms ----------------------------------------
     def CheckForAlarms(self):
 
@@ -1284,6 +1309,8 @@ class HPanel(GeneratorController):
             # Check for changes in engine state
             EngineState = self.GetEngineState()
             msgbody = ""
+
+            self.CheckForOutage()
 
             if len(self.UserURL):
                 msgbody += "For additional information : " + self.UserURL + "\n"
@@ -2030,9 +2057,11 @@ class HPanel(GeneratorController):
         try:
             Outage = collections.OrderedDict()
             Outage["Outage"] = []
-
-            Outage["Outage"].append({"Status" : "Not Supported"})
-            Outage["Outage"].append({"System In Outage" : "No"})    # mynotify.py checks this
+            if not self.IndustrialOutageCheck:
+                Outage["Outage"].append({"Status" : "Not Supported"})
+            else:
+                Outage["Outage"].append({"Status" : "Yes" if self.SystemInOutage else "No"})
+            Outage["Outage"].append({"System In Outage" : "Yes" if self.SystemInOutage else "No"})
 
         except Exception as e1:
             self.LogErrorLine("Error in DisplayOutage: " + str(e1))

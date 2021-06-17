@@ -1860,7 +1860,7 @@ class PowerZone(GeneratorController):
             Outage["Outage"] = []
 
             Outage["Outage"].append({"Status" : "Not Supported"})
-            Outage["Outage"].append({"System In Outage" : "No"})    # mynotify.py checks this
+            Outage["Outage"].append({"System In Outage" : "Yes" if self.SystemInOutage else "No"})
 
         except Exception as e1:
             self.LogErrorLine("Error in DisplayOutage: " + str(e1))
