@@ -77,7 +77,7 @@ class GenTankData(MySupport):
             elif self.gauge_type == 2:
                 self.gauge = GaugeDIY2(self.config, log = self.log, console = self.console)
             else:
-                self.LogError("Invalid guage type: " + str(self.gauge_type))
+                self.LogError("Invalid gauge type: " + str(self.gauge_type))
                 sys.exit(1)
 
             self.debug = self.gauge.debug
