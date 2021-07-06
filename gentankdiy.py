@@ -63,6 +63,8 @@ class GenTankData(MySupport):
 
             self.gauge_type = self.config.ReadValue('gauge_type', return_type = int, default = 1)
 
+            self.nb_tanks = self.config.ReadValue('nb_tanks', return_type = int, default = 1)
+
             if self.MonitorAddress == None or not len(self.MonitorAddress):
                 self.MonitorAddress = ProgramDefaults.LocalHost
 
@@ -78,6 +80,10 @@ class GenTankData(MySupport):
                 self.gauge = GaugeDIY2(self.config, log = self.log, console = self.console)
             else:
                 self.LogError("Invalid gauge type: " + str(self.gauge_type))
+                sys.exit(1)
+
+            if not self.nb_tanks in [1,2]:
+                self.LogError("Invalid Number of tanks (nb_tanks), 1 or 2 accepted: " + str(self.nb_tanks))
                 sys.exit(1)
 
             self.debug = self.gauge.debug
@@ -130,6 +136,10 @@ class GenTankData(MySupport):
                     dataforgenmon["Tank Name"] = "External Tank"
                     dataforgenmon["Capacity"] = 0
                     dataforgenmon["Percentage"] = tankdata
+                    if self.nb_tanks == 2:
+                       tankdata2 = self.gauge.GetGaugeData(twotaks = True)                
+                       if tankdata2 != None:
+                           dataforgenmon["Percentage2"] = tankdata2
 
                     retVal = self.SendCommand("generator: set_tank_data=" + json.dumps(dataforgenmon))
                     self.LogDebug(retVal)

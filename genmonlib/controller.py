@@ -1570,7 +1570,7 @@ class GeneratorController(MySupport):
     def ExternalFuelDataSupported(self):
         return self.UseExternalFuelData
     #----------  GeneratorController::GetExternalFuelPercentage-----------------
-    def GetExternalFuelPercentage(self, ReturnFloat = False):
+    def GetExternalFuelPercentage(self, ReturnFloat = False, TankNumber = 0):
 
         try:
             if ReturnFloat:
@@ -1582,7 +1582,15 @@ class GeneratorController(MySupport):
                 return DefaultReturn
 
             if self.TankData != None:
-                percentage =  self.TankData["Percentage"]
+                if TankNumber == 1:
+                    percentage =  self.TankData["Percentage"]
+                if TankNumber == 2:
+                    percentage =  self.TankData["Percentage2"]
+                if TankNumber == 0:
+                    if "Percentage2" in self.TankData:
+                        percentage = (float(self.TankData["Percentage"]) + float(self.TankData["Percentage2"])) / 2
+                    else:
+                        percentage = self.TankData["Percentage"]
                 if ReturnFloat:
                     return float(percentage)
                 else:

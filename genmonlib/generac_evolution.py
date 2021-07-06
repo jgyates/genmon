@@ -82,6 +82,7 @@ class Evolution(GeneratorController):
         self.SerialNumberReplacement = None
         self.AdditionalRunHours = None
         self.NominalLineVolts = 240
+        self.CheckFirmwareVerionsTime = datetime.datetime.now()     # used for com metrics
 
         self.DaysOfWeek = { 0: "Sunday",    # decode for register values with day of week
                             1: "Monday",
@@ -324,8 +325,18 @@ class Evolution(GeneratorController):
                     Tile = MyTile(self.log, title = "Fuel", units = "%", type = "fuel", nominal = 100, callback = self.GetFuelSensor, callbackparameters = (True,))
                     self.TileList.append(Tile)
                 elif self.ExternalFuelDataSupported():
-                    Tile = MyTile(self.log, title = "External Tank", units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True,))
+                    if "Percentage2" in self.TankData:
+                        TwoTanks = True
+                        ExternalTankTitle = "External Tank 1"
+                    else:
+                        TwoTanks = False
+                        ExternalTankTitle = "External Tank"
+                    Tile = MyTile(self.log, title = ExternalTankTitle, units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True, 1))
                     self.TileList.append(Tile)
+                    if TwoTanks:
+                        ExternalTankTitle = "External Tank 2"
+                        Tile = MyTile(self.log, title = ExternalTankTitle, units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True, 2))
+                        self.TileList.append(Tile)
                 elif self.FuelConsumptionGaugeSupported():    # no gauge for NG
                     if self.UseMetric:
                         Units = "L"         # no gauge for NG
@@ -3772,6 +3783,10 @@ class Evolution(GeneratorController):
             if not self.Evolution2:
                 return
 
+            if self.GetDeltaTimeMinutes(datetime.datetime.now() - self.CheckFirmwareVerionsTime) < 60 :     # check every hour
+                return
+
+            self.CheckFirmwareVerionsTime = datetime.datetime.now()
             FWVersionString = self.GetFirmwareVersion()
             if not len(FWVersionString):
                 return

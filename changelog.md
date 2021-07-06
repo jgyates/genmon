@@ -1,6 +1,11 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.16.12  -2021-07-01
+- Added option to change the GPIO pins used with the add on gengpioin. Change the settings in the gengpioin.conf file.
+- Changed the frequency of the firmware update check for Evolution 2.0 to every hours instead of many times per hour. This reduces the chance of ivalid notices when communication errors are occuring.
+- Update to gentankdiy to optionally support two tanks (see /conf/gentankdiy.conf for details). This applies to the DIY gauge type 1 only. Type 2 still only supports only one gauge.
+
 ## V1.16.11  -2021-06-16
 - Added option to notify of transfer state changes on H and G Panel controllers. Note: the proper connections from your switch to the controller must be setup for this to work properly.
 
