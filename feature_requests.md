@@ -1,4 +1,6 @@
 # Feature Request List
+- [add support for a Cummins Quiet Connect generator](https://github.com/jgyates/genmon/issues/553) @derekatkins
+- [Suggestion for printer-friendly Service Journal page](https://github.com/jgyates/genmon/issues/550) @johnsdiyplayground
 - [Ability to control update alerts through Pushover](https://github.com/jgyates/genmon/issues/523) @danodemano
 - [TX Industrial Switch support](https://github.com/jgyates/genmon/issues/463) @unsword01
 - [Unified web interface for running multiple instances of generator monitor](https://github.com/jgyates/genmon/issues/260) - @KUBAllen
