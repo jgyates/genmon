@@ -105,10 +105,12 @@ class GaugeDIY1(GaugeDIY):
             # Bit 8 Operational mode of the ADS1115.
             # 0 : Continuous conversion mode
             # 1 : Power-down single-shot mode (default)
+            
             if not tanktwo:
-                CONFIG_VALUE_1 = 0xC3
+                CONFIG_VALUE_1 = 0xC3 # 1 100 001 1 --> Begin a single conversion, AIN(pos) = AIN0 and AIN(neg) = GND, Gain ±4.096V, Power-down single-shot mode (default)
             else:
-                CONFIG_VALUE_1 = 0xDC
+                CONFIG_VALUE_1 = 0xD3 # 1 101 001 1 --> Begin a single conversion, AIN(pos) = AIN1 and AIN(neg) = GND, Gain ±4.096V, Power-down single-shot mode (default)
+ 
             # bits 7-0  0b10000101 = 0x85
             # Bits 7-5 data rate default to 100 for 128SPS
             # Bits 4-0  comparator functions see spec sheet.
@@ -123,6 +125,8 @@ class GaugeDIY1(GaugeDIY):
         try:
 
             self.PreReadCommand(tanktwo = tanktwo)
+
+            time.sleep(1) # Wait a second so the Analog-to-Digital Converter has time to process the command.
 
             val = self.I2Cbus.read_i2c_block_data(self.i2c_address, self.POINTER_CONVERSION, 2)
 

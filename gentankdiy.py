@@ -137,7 +137,7 @@ class GenTankData(MySupport):
                     dataforgenmon["Capacity"] = 0
                     dataforgenmon["Percentage"] = tankdata
                     if self.nb_tanks == 2:
-                       tankdata2 = self.gauge.GetGaugeData(twotaks = True)                
+                       tankdata2 = self.gauge.GetGaugeData(tanktwo = True)                
                        if tankdata2 != None:
                            dataforgenmon["Percentage2"] = tankdata2
 
