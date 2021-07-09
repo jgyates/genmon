@@ -1604,11 +1604,14 @@ class GeneratorController(MySupport):
     def SetExternalTankData(self, command):
 
         try:
+            bInitTiles = False
             CmdList = command.split("=")
             if len(CmdList) == 2:
                 with self.ExternalDataLock:
+                    if self.TankData == None:
+                        bInitTiles = True
                     self.TankData = json.loads(CmdList[1])
-                if not self.UseExternalFuelData:
+                if bInitTiles:
                     self.UseExternalFuelData = True
                     self.SetupTiles()
             else:
@@ -1622,11 +1625,14 @@ class GeneratorController(MySupport):
     #----------  GeneratorController::SetExternalCTData-------------------------
     def SetExternalCTData(self, command):
         try:
+            bInitTiles = False
             CmdList = command.split("=")
             if len(CmdList) == 2:
                 with self.ExternalDataLock:
+                    if self.TankData == None:
+                        bInitTiles = True
                     self.ExternalCTData = json.loads(CmdList[1])
-                if not self.UseExternalCTData:
+                if bInitTiles:
                     self.UseExternalCTData = True
                     self.SetupTiles()
             else:

@@ -137,11 +137,12 @@ class GenTankData(MySupport):
                     dataforgenmon["Capacity"] = 0
                     dataforgenmon["Percentage"] = tankdata
                     if self.nb_tanks == 2:
-                       tankdata2 = self.gauge.GetGaugeData(tanktwo = True)                
+                       tankdata2 = self.gauge.GetGaugeData(tanktwo = True)
                        if tankdata2 != None:
                            dataforgenmon["Percentage2"] = tankdata2
 
                     retVal = self.SendCommand("generator: set_tank_data=" + json.dumps(dataforgenmon))
+                    self.LogDebug(json.dumps(dataforgenmon))
                     self.LogDebug(retVal)
                 if self.WaitForExit("TankCheckThread", float(self.gauge.PollTime * 60)):
                     return

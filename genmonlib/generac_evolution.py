@@ -325,15 +325,13 @@ class Evolution(GeneratorController):
                     Tile = MyTile(self.log, title = "Fuel", units = "%", type = "fuel", nominal = 100, callback = self.GetFuelSensor, callbackparameters = (True,))
                     self.TileList.append(Tile)
                 elif self.ExternalFuelDataSupported():
-                    if "Percentage2" in self.TankData:
-                        TwoTanks = True
+                    if self.TankData != None and "Percentage2" in self.TankData:
                         ExternalTankTitle = "External Tank 1"
                     else:
-                        TwoTanks = False
                         ExternalTankTitle = "External Tank"
                     Tile = MyTile(self.log, title = ExternalTankTitle, units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True, 1))
                     self.TileList.append(Tile)
-                    if TwoTanks:
+                    if self.TankData != None and "Percentage2" in self.TankData:
                         ExternalTankTitle = "External Tank 2"
                         Tile = MyTile(self.log, title = ExternalTankTitle, units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True, 2))
                         self.TileList.append(Tile)
@@ -2685,8 +2683,8 @@ class Evolution(GeneratorController):
          0x1a : "Missing Cam Pulse",    #  Validate on Nexus Liquid Cooled
          0x1c : "Throttle Failure",     #  Validate on Nexus LC,
          0x1e : "Under Voltage",        #  Validate on EvoAC
-         0x1f : "Service Due",          #  Validate on Evolution, occurred when forced service due
-         0x20 : "Service Complete",     #  Validate on Evolution, occurred when service reset
+         0x1f : "Service A Due",        #  Validate on Evolution, occurred when forced service due
+         0x20 : "Service B Due",        #  WARNING, Validate on Evolution, occurred when service reset
          0x22 : "Canbus Error",         #  Validate on Nexus LC
          0x24 : "Overload",             #  Validate on Evolution Air Cooled
          0x28 : "Fuse Problem",         #  Validate on Evolution Air Cooled
@@ -3584,11 +3582,15 @@ class Evolution(GeneratorController):
 
         HexValue = int(Value,16)
 
-        # service due alarm?
+        # service A due alarm?
         if self.BitIsEqual(HexValue,   0xFFF0FFFF, 0x0000001F):
-            # is the Service Due Alarm Active?
+            # is the Service Due A Alarm Active?
             return True
 
+        # service B due alarm?
+        if self.BitIsEqual(HexValue,   0xFFF0FFFF, 0x00000020):
+            # is the Service Due B Alarm Active?
+            return True
         if AlarmOnly:
             return False
 

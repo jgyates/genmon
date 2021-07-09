@@ -70,6 +70,7 @@ class GaugeDIY1(GaugeDIY):
 
         self.mv_per_step = self.config.ReadValue('mv_per_step', return_type = int, default = 125)
         self.Multiplier = self.config.ReadValue('volts_to_percent_multiplier', return_type = float, default = 20.0)
+        self.debug = self.config.ReadValue('debug', return_type = bool, default = False)
 
     # ---------- GaugeDIY::InitADC----------------------------------------------
     def InitADC(self):
@@ -87,6 +88,8 @@ class GaugeDIY1(GaugeDIY):
 
         except Exception as e1:
             self.LogErrorLine("Error calling InitADC: " + str(e1))
+            if self.debug:
+                return True
             return False
 
         return True
@@ -105,12 +108,12 @@ class GaugeDIY1(GaugeDIY):
             # Bit 8 Operational mode of the ADS1115.
             # 0 : Continuous conversion mode
             # 1 : Power-down single-shot mode (default)
-            
+
             if not tanktwo:
-                CONFIG_VALUE_1 = 0xC3 # 1 100 001 1 --> Begin a single conversion, AIN(pos) = AIN0 and AIN(neg) = GND, Gain ±4.096V, Power-down single-shot mode (default)
+                CONFIG_VALUE_1 = 0xC3 # 1 100 001 1 --> Begin a single conversion, AIN(pos) = AIN0 and AIN(neg) = GND, Gain +/-4.096V, Power-down single-shot mode (default)
             else:
-                CONFIG_VALUE_1 = 0xD3 # 1 101 001 1 --> Begin a single conversion, AIN(pos) = AIN1 and AIN(neg) = GND, Gain ±4.096V, Power-down single-shot mode (default)
- 
+                CONFIG_VALUE_1 = 0xD3 # 1 101 001 1 --> Begin a single conversion, AIN(pos) = AIN1 and AIN(neg) = GND, Gain +/-4.096V, Power-down single-shot mode (default)
+
             # bits 7-0  0b10000101 = 0x85
             # Bits 7-5 data rate default to 100 for 128SPS
             # Bits 4-0  comparator functions see spec sheet.
