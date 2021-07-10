@@ -2680,6 +2680,7 @@ class Evolution(GeneratorController):
          0x12 : "Check for Service",    #  Validate on Nexus AC (Spark Plugs service due?)
          0x14 : "Check Battery",        #  Validate on Nexus, occurred when Check Battery Alarm
          0x15 : "Underspeed",           #  Validate on Evo AC 2
+         0x18 : "Wiring Error",         #  Validate on Nexus AC
          0x1a : "Missing Cam Pulse",    #  Validate on Nexus Liquid Cooled
          0x1c : "Throttle Failure",     #  Validate on Nexus LC,
          0x1e : "Under Voltage",        #  Validate on EvoAC
