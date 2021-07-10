@@ -1,6 +1,11 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.16.13  -2021-07-10
+- Added the ability to print the service log
+- Updated alarm code for Service A and Service B due for Evolution
+- Updates for two DIY gauges on DIY gague add on (thanks @speters0)
+
 ## V1.16.12  -2021-07-01
 - Added option to change the GPIO pins used with the add on gengpioin. Change the settings in the gengpioin.conf file.
 - Changed the frequency of the firmware update check for Evolution 2.0 to every hours instead of many times per hour. This reduces the chance of ivalid notices when communication errors are occuring.

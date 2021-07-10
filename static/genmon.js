@@ -1391,6 +1391,7 @@ function DisplayJournal(){
         outstr += '</tbody></table><br>';
         outstr += '<button value="+Add" id="addJournalRow">+Add</button>';
         outstr += '<br><br><button value="Clear" id="clearJournal">Clear Journal</button>';
+        outstr += '<br><br><button value="Print" id="printJournal">Print Journal</button>';
 
         $("#mydisplay").html(outstr);
 
@@ -1422,6 +1423,10 @@ function DisplayJournal(){
 
            $("#clearJournal").click(function () {
               ClearJournal();
+           });
+
+           $("#printJournal").click(function () {
+              printJournal(result);
            });
 
         });
@@ -1657,6 +1662,43 @@ function DeleteJournalRow(id){
     });
 }
 
+//*****************************************************************************
+function printJournal (data) {
+    var pageHeight = 20;
+    var rowHeight = 15;
+    var dataDivider;
+
+    dataDivider = 12;
+
+    $('<div id="printJournalFrame" style="width:1000px"></div>').appendTo("#mydisplay");
+
+    var now = new moment();
+    var outstr = '<br><center><h1>Generator Journal for '+myGenerator["sitename"]+'</h1><br>';
+    outstr += '<h2>As of: '+now.format("D MMMM YYYY H:mm:ss")+'</h2><br>';
+    outstr += '<table width="1000px" border="0"><tr><td class="printRegisterTDtitle" nowrap>Type / Date / Service Hours</td><td class="printRegisterTDtitle">Comment</td></tr>';
+
+    $.each(Object.keys(data), function(i, key) {
+
+        pageHeight += rowHeight;
+        if (pageHeight < 100) {
+             outstr += '';
+        } else {
+             outstr += '</table><div class="pagebreak"> </div><table width="1000px" border="0"><tr><td class="printRegisterTDtitle" nowrap>Type / Date / Service Hours</td><td class="printRegisterTDtitle">Comment</td></tr>';
+             pageHeight = 0;
+        }
+        rowHeight = Math.round(data[i]["comment"].length / 160)*15;
+
+        var reg_val = data[key][0];
+
+        outstr += '<tr><td width="40%" class="printRegisterTD" nowrap>' +  data[i]["type"] + '<br>on:' + data[i]["date"] + '<br>at: ' + data[i]["hours"] + ' hrs</td>';
+        outstr += '<td width="60%" class="printRegisterTD"><br>' +  data[i]["comment"] + '</td></tr>';
+    });
+    outstr += '</table></center>';
+    $("#printJournalFrame").html(outstr);
+
+    $("#printJournalFrame").printThis({canvas: true, importCSS: false, loadCSS: "css/print.css", pageTitle:"Genmon Journal", removeScripts: true});
+    setTimeout(function(){ $("#printJournalFrame").remove(); }, 1000);
+}
 
 //*****************************************************************************
 // test email
