@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 - Added the ability to print the service log
 - Updated alarm code for Service A and Service B due for Evolution
 - Updates for two DIY gauges on DIY gague add on (thanks @speters0)
+- Added new alarm code for wiring error
 
 ## V1.16.12  -2021-07-01
 - Added option to change the GPIO pins used with the add on gengpioin. Change the settings in the gengpioin.conf file.
