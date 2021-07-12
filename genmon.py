@@ -402,6 +402,7 @@ class Monitor(MySupport):
             SupportData["StartInfo"] = self.GetStartInfo(NoTile = True)
             if not self.bDisablePlatformStats:
                 SupportData["PlatformStats"] = self.GetPlatformStats()
+            SupportData["Comm Stats"] = self.Controller.GetCommStatus()
             SupportData["Data"] = self.Controller.DisplayRegisters(AllRegs = True, DictOut = True)
             # Raw Modbus data
             SupportData["Registers"] = self.Controller.Registers
