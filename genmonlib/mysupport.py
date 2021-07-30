@@ -190,7 +190,8 @@ class MySupport(MyCommon):
 
         return Thread.Wait(timeout)
 
-    #------------ MySupport::SplitUnits ----------------------------------------
+    #------------ MySupport::UnitsOut ------------------------------------------
+    # output data based on the NoString flag, in put is a string value with units
     def UnitsOut(self, input, type = None, NoString = False):
 
         try:
@@ -217,6 +218,8 @@ class MySupport(MyCommon):
             self.LogErrorLine("Error in SplitUnits: " + str(e1))
             return input
     #------------ MySupport::ValueOut ------------------------------------------
+    # output data based on NoString flag, either return a string with a unit or a
+    # numeric value
     def ValueOut(self, value, unit, NoString = False):
         try:
 

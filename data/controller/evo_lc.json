@@ -1,0 +1,399 @@
+{
+    "controller_name": "Evolution Liquid Cooled",
+    "rated_max_output_power_kw": "48",
+    "rated_nominal_voltage": 240,
+    "rated_nominal_rpm" : 1800,
+    "rated_nominal_freq" : 60,
+    "nominal_battery_voltage" : 12,
+    "generator_phase": 1,
+    "base_registers": {
+        "0001": 4,
+        "0007": 2,
+        "0008": 2,
+        "0009": 2,
+        "000a": 2,
+        "000b": 4,
+        "0012": 2,
+        "005d": 2,
+        "0208": 2,
+        "020a": 2,
+        "020b": 2,
+        "0054": 2,
+        "020e": 2,
+        "0235": 2,
+        "005a": 2,
+        "0059": 2
+    },
+    "switch_state": [
+        {
+            "reg": "0001",
+            "mask": "0000ffff",
+            "value": "7",
+            "type": "bits",
+            "title": "Switch State",
+            "text": "Off"
+        },
+        {
+            "reg": "0001",
+            "mask": "ffff",
+            "value": "0",
+            "type": "bits",
+            "title": "Switch State",
+            "text": "Auto"
+        },
+        {
+            "reg": "0001",
+            "mask": "ffff",
+            "value": "6",
+            "type": "bits",
+            "title": "Switch State",
+            "text": "Manual"
+        },
+        {
+            "reg": "0001",
+            "mask": "ffff",
+            "value": "17",
+            "type": "bits",
+            "title": "Switch State",
+            "text": "Two Wire Stop"
+        },
+        {
+            "reg": "0001",
+            "type": "default",
+            "title": "Switch State",
+            "text": "System In Alarm"
+        }
+    ],
+    "alarm_active" : [
+      {
+        "reg": "0001",
+        "mask": "0000ffff",
+        "value": "1",
+        "type": "regex",
+        "regex": "^(1[0-9a-f]|[1-9a-f])$",
+        "title": "Alarm Active",
+        "text": "System In Alarm"
+      }
+    ],
+    "alarm_conditions": [
+        {
+            "reg": "0001",
+            "mask": "0000ffff",
+            "value": "00000001",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Low Battery"
+        },
+        {
+            "reg": "0001",
+            "mask": "0000ffff",
+            "value": "00000002",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "High Temperature"
+        },
+        {
+            "reg": "0001",
+            "type": "default",
+            "title": "Alarm",
+            "text": "Unknown Alarm"
+        }
+    ],
+    "generator_status" : [
+      {
+          "reg": "0001",
+          "mask": "000f0000",
+          "value": "00040000",
+          "type": "bits",
+          "title": "Engine State",
+          "text": "Exercising"
+      }
+    ],
+    "engine_state": [
+        {
+            "reg": "0001",
+            "mask": "000f0000",
+            "value": "00040000",
+            "type": "bits",
+            "title": "Engine State",
+            "text": "Exercising"
+        },
+        {
+            "reg": "0001",
+            "mask": "000f0000",
+            "value": "00090000",
+            "type": "bits",
+            "title": "Engine State",
+            "text": "Stopped"
+        },
+        {
+            "reg": "0001",
+            "mask": "000f0000",
+            "value": "00010000",
+            "type": "bits",
+            "title": "Engine State",
+            "text": "Startup Delay Timer Activated"
+        },
+        {
+            "reg": "0001",
+            "mask": "000f0000",
+            "value": "00020000",
+            "type": "bits",
+            "title": "Engine State",
+            "text": "Cranking"
+        },
+        {
+            "reg": "0001",
+            "mask": "000f0000",
+            "value": "00050000",
+            "type": "bits",
+            "title": "Engine State",
+            "text": "Cooling Down"
+        },
+        {
+            "reg": "0001",
+            "mask": "000f0000",
+            "value": "00030000",
+            "type": "bits",
+            "title": "Engine State",
+            "text": "Running"
+        },
+        {
+            "reg": "0001",
+            "mask": "000f0000",
+            "value": "00080000",
+            "type": "bits",
+            "title": "Engine State",
+            "text": "Stopped In Alarm"
+        },
+        {
+            "reg": "0001",
+            "mask": "000f0000",
+            "value": "00060000",
+            "type": "bits",
+            "title": "Engine State",
+            "text": "Running in Warning"
+        },
+        {
+            "reg": "0001",
+            "mask": "000f0000",
+            "value": "0000000",
+            "type": "bits",
+            "title": "Engine State",
+            "text": "Off - Ready"
+        }
+    ],
+    "status" : [
+      {
+          "reg": "0012",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Output Voltage",
+          "units": "V"
+      },
+      {
+          "reg": "0008",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Frequency",
+          "units": "Hz"
+      },
+      {
+          "reg": "000a",
+          "mask": "ffff",
+          "multiplier": 0.1,
+          "type": "float",
+          "title": "Battery Voltage",
+          "units": "V"
+      },
+      {
+          "reg": "0009",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Utility Voltage",
+          "units": "V"
+      }
+    ],
+    "maintenance": [
+          {
+              "reg": "000b",
+              "mask": "ffffffff",
+              "multiplier": 1,
+              "type": "int",
+              "title": "Run Hours",
+              "units": "h"
+            },
+            {
+                "reg": "0208",
+                "mask": "ffff",
+                "multiplier": 1,
+                "type": "int",
+                "title": "Calibrate Volts",
+                "units": null
+            },
+            {
+                "reg": "020a",
+                "mask": "ffff",
+                "multiplier": 1,
+                "type": "int",
+                "title": "Param Code",
+                "units": null
+            },
+            {
+                "reg": "020b",
+                "mask": "ffff",
+                "multiplier": 1,
+                "type": "int",
+                "title": "Voltage Code",
+                "units": null
+            },
+            {
+                "reg": "0054",
+                "mask": "ffff",
+                "multiplier": 1,
+                "type": "int",
+                "title": "Hours of Protection",
+                "units": "h"
+            },
+            {
+                "reg": "020e",
+                "mask": "ffff",
+                "multiplier": 1,
+                "type": "int",
+                "title": "Volts Per Hertz",
+                "units": null
+            },
+            {
+                "reg": "0235",
+                "mask": "ffff",
+                "multiplier": 1,
+                "type": "int",
+                "title": "Gain",
+                "units": null
+            },
+            {
+                "reg": "005a",
+                "mask": "ffff",
+                "multiplier": 1,
+                "type": "int",
+                "title": "Target Frequency",
+                "units": "Hz"
+            },
+            {
+                "reg": "0059",
+                "mask": "ffff",
+                "multiplier": 1,
+                "type": "int",
+                "title": "Target Volts",
+                "units": "V"
+            }
+
+        ],
+    "gauges": [
+      {
+          "reg": "000a",
+          "mask": "ffff",
+          "multiplier": 0.1,
+          "type": "float",
+          "title": "Battery Voltage",
+          "units": "V",
+          "sensor": "batteryvolts",
+          "nominal": 12
+      },
+      {
+          "reg": "0009",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Utility Voltage",
+          "units": "V",
+          "sensor": "linevolts",
+          "nominal": 240
+      },
+      {
+          "reg": "0012",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Output Voltage",
+          "units": "V",
+          "sensor": "linevolts",
+          "nominal": 240
+      },
+      {
+          "reg": "0008",
+          "mask": "ffff",
+          "multiplier": 0.01,
+          "type": "float",
+          "title": "Frequency",
+          "units": "Hz",
+          "sensor": "frequency",
+          "nominal": 60
+      },
+      {
+          "reg": "0007",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "RPM",
+          "units": null,
+          "sensor": "rpm",
+          "nominal": 1800
+      },
+      {
+          "reg": "005d",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Fuel Sensor",
+          "units": "%",
+          "sensor": "fuel",
+          "nominal": 100
+      },
+      {
+          "reg": "0009",
+          "mask": "ffff",
+          "multiplier": 0.01,
+          "type": "float",
+          "title": "Power",
+          "units": "kW",
+          "sensor": "powergraph",
+          "nominal": 48
+      }
+    ],
+    "power": [
+      {
+          "reg": "000a",
+          "mask": "ffff",
+          "multiplier": 0.1,
+          "type": "float",
+          "title": "Power Output",
+          "units": "kW",
+          "sensor": "power"
+      }
+    ],
+    "fuel": [
+      {
+          "reg": "005d",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Fuel Sensor",
+          "units": "%",
+          "sensor": "fuel"
+      }
+    ],
+    "run_hours": [
+      {
+          "reg": "000b",
+          "mask": "ffffffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Run Hours",
+          "units": "h"
+      }
+    ]
+}

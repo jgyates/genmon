@@ -516,8 +516,12 @@ class PowerZone(GeneratorController):
     def SetupClass(self):
 
         # read config file
-        if not self.GetConfig():
-            self.FatalError("Failure in Controller GetConfig: " + str(e1))
+        try:
+            if not self.GetConfig():
+                self.FatalError("Failure in Controller GetConfig")
+                return None
+        except Exception as e1:
+            self.FatalError("Error reading config file: " + str(e1))
             return None
         try:
             #Starting device connection
@@ -928,6 +932,7 @@ class PowerZone(GeneratorController):
     def CheckForAlarms(self):
 
         try:
+            status_included = False
             if not self.InitComplete:
                 return
             # Check for changes in engine state
@@ -945,18 +950,21 @@ class PowerZone(GeneratorController):
                 else:
                     MessageType = "warn"
                 msgbody += self.DisplayStatus()
+                status_included = True
                 self.MessagePipe.SendMessage(msgsubject , msgbody, msgtype = MessageType)
 
             # Check for Alarms
             if self.SystemInAlarm():
                 if not self.CurrentAlarmState:
                     msgsubject = "Generator Notice: ALARM Active at " + self.SiteName
-                    msgbody += self.DisplayStatus()
+                    if not status_included:
+                        msgbody += self.DisplayStatus()
                     self.MessagePipe.SendMessage(msgsubject , msgbody, msgtype = "warn")
             else:
                 if self.CurrentAlarmState:
                     msgsubject = "Generator Notice: ALARM Clear at " + self.SiteName
-                    msgbody += self.DisplayStatus()
+                    if not status_included:
+                        msgbody += self.DisplayStatus()
                     self.MessagePipe.SendMessage(msgsubject , msgbody, msgtype = "warn")
 
             self.CurrentAlarmState = self.SystemInAlarm()
@@ -1300,6 +1308,7 @@ class PowerZone(GeneratorController):
             StartInfo["RemoteButtons"] = False      # Remote controll of Off/Auto/Manual
             StartInfo["ExerciseControls"] = False  # self.SmartSwitch
             StartInfo["WriteQuietMode"] = True
+            StartInfo["SetGenTime"] = True
 
             if not NoTile:
                 StartInfo["pages"] = {

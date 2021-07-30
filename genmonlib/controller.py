@@ -89,6 +89,8 @@ class GeneratorController(MySupport):
         self.NominalRPM = "Unknown"
         self.NominalKW = "Unknown"
         self.Model = "Unknown"
+        self.Phase = "Unknown"
+        self.NominalOutputVolts = "Unknown"
         self.EngineDisplacement = "Unknown"
         self.TankSize = 0
         self.UseExternalFuelData = False
@@ -637,12 +639,12 @@ class GeneratorController(MySupport):
 
         return "Not Supported"
 
-    #----------  GeneratorController::SetGeneratorRemoteStartStop---------------
+    #----------  GeneratorController::SetGeneratorRemoteCommand---------------
     # CmdString will be in the format: "setremote=start"
     # valid commands are start, stop, starttransfer, startexercise
     # return string "Remote command sent successfully" or some descriptive error
     # string if failure
-    def SetGeneratorRemoteStartStop(self, CmdString):
+    def SetGeneratorRemoteCommand(self, CmdString):
         try:
             pass
         except Exception as e1:
@@ -702,7 +704,8 @@ class GeneratorController(MySupport):
     #------------ GeneratorController:GetOneLineStatus -------------------------
     # returns a one line status for example : switch state and engine state
     def GetOneLineStatus(self):
-        return "Unknown"
+        return self.GetSwitchState() + " : " + self.GetEngineState()
+        
     #------------ GeneratorController:RegRegValue ------------------------------
     def GetRegValue(self, CmdString):
 

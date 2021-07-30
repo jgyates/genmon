@@ -27,7 +27,7 @@ ignore_unknown = Ignore unknown values for modbus register 0001 for Evolution 2.
 displayunknown = Display the contents of additional registers that appear to be associated with sensors of some type.
 uselegacysetexercise = Enable using and alternate method for writing the exercise time. Not used in normal operation. The software will auto-detect when this needs to be enabled but this setting overrides the auto-detect.
 disableoutagecheck = Disable the monitoring of the utility line voltage for detecting power outages. If you have a 'smart' transfer switch, this may need to be enabled. For Evo/Nexus this is typically disabled.
-industrialoutagecheck = For H-100, this can be enabled if your aux connections are setup properly. For H-100, if enabled, this will notify of an outage when the aux inputs show that the transfer switch is set to 'generator' instead of 'utility'. 
+industrialoutagecheck = For H-100, this can be enabled if your aux connections are setup properly. For H-100, if enabled, this will notify of an outage when the aux inputs show that the transfer switch is set to 'generator' instead of 'utility'.
 liquidcooled = The software will auto-detect the cooling type. The auto-detect can be overridden with this setting. Enable for liquid cooled, disable or air cooled.
 evolutioncontroller = The software will auto-detect the controller type. The auto-detect can be overridden with this setting. Enable for Evolution controller, disable for Nexus Controller.
 petroleumfuel = Only valid for liquid cooled Evolution generators. Enable if your generator uses diesel or gasoline, disable if you use propane or natural gas. This value is used to change how status relays are displayed.
@@ -73,7 +73,8 @@ usesensorforfuelgauge = Use fuel sensor instead of estimated fuel usage for fuel
 model = The model of your generator as detected by the software
 voltageconfiguration = The voltage configuration of the industrial generator.
 nominalbattery = 12 for one battery, 24 for two batteries
-controllertype = Set to h_100 for H-100 mode, otherwise the software will default to Nexus/Evolution Mode
+controllertype = Set to h_100 for H-100 mode or powerzone for PowerZone or custom to use an imported controller configuration, otherwise the software will default to Nexus/Evolution Mode
+import_config_file = Only used for custom controller type. Select the controller configuration to use for the custom controller type. 
 autofeedback = If enabled, an email will be sent to the software maintainer if critical data is missing in the software for your generator. The email will contain the contents of the generator registers. Enabling this option helps support the widest possible set of features and supported generators.
 update_check = If enabled the software will send an email notice when a software update is available.
 use_serial_tcp = If enabled, the software will use TCP over serial instead of direct serial communications
@@ -486,3 +487,5 @@ usecalculatedpower=Calculate power output from power factor, average current and
 025c=External Switch Backup Battery Voltage
 025f=External Switch SW Version
 0260=External Switch Selected
+
+[custom]

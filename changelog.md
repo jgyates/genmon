@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.17.0  -2021-07-30
+- Added extensible method to support new types of generator controllers.
+
 ## V1.16.13  -2021-07-10
 - Added the ability to print the service log
 - Updated alarm code for Service A and Service B due for Evolution

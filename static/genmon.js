@@ -739,9 +739,10 @@ function DisplayMaintenance(){
                outstr += '&nbsp;&nbsp;<button id="setexercisebutton" onClick="saveMaintenance();">Set Exercise Time</button>';
             }
 
-            outstr += '<br><br>Generator Time:<br><br>';
-            outstr += '&nbsp;&nbsp;<button id="settimebutton" onClick="SetTimeClick();">Set Generator Time</button>';
-
+            if (myGenerator['SetGenTime'] == true) {  
+              outstr += '<br><br>Generator Time:<br><br>';
+              outstr += '&nbsp;&nbsp;<button id="settimebutton" onClick="SetTimeClick();">Set Generator Time</button>';
+            }
             if (myGenerator['RemoteCommands'] == true) {
                outstr += '<br><br>Remote Commands:<br><br>';
                outstr += '&nbsp;&nbsp;&nbsp;&nbsp;<button class="tripleButtonLeft" id="remotestop" onClick="SetClick(\'stop\');">Stop Generator</button>';

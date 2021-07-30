@@ -145,7 +145,7 @@ class Evolution(GeneratorController):
                     "0058" : [2, 0],     # Hall Effect Sensor (EvoLC)
                     "0059" : [2, 0],     # Rated Volts (EvoLC)
                     "005a" : [2, 0],     # Rated Hz (EvoLC)
-                    "005d" : [2, 0],     # Fuel Pressure Sensor, Moves between 0x55 - 0x58 continuously even when engine off
+                    "005d" : [2, 0],     # Fuel Pressure Sensor, Moves between 0x55 - 0x58 continuously even when engine off, fuel level sensor on EvoLC
                     "005e" : [4, 0],     # Total engine time in minutes  (EvoLC) 005e= high, 005f=low
                     "000d" : [2, 0],     # Bit changes when the controller is updating registers.
                     "003c" : [2, 0],     # Raw RPM Sensor Data (Hall Sensor)
@@ -220,8 +220,12 @@ class Evolution(GeneratorController):
     def SetupClass(self):
 
         # read config file
-        if not self.GetConfig():
-            self.LogError("Failure in Controller GetConfig: " + str(e1))
+        try:
+            if not self.GetConfig():
+                self.FatalError("Failure in Controller GetConfig")
+                sys.exit(1)
+        except Exception as e1:
+            self.FatalError("Error reading config file: " + str(e1))
             sys.exit(1)
         try:
             self.AlarmFile = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "data", "ALARMS.txt")
@@ -2889,8 +2893,6 @@ class Evolution(GeneratorController):
             return "Stopped in Alarm"
         elif self.BitIsEqual(RegVal, 0x000F0000, 0x00060000):
             return "Running in Warning"
-        elif self.BitIsEqual(RegVal, 0x000F0000, 0x00080000):
-            return "Stopped in Alarm"
         elif self.BitIsEqual(RegVal, 0x000F0000, 0x00000000):
             return "Off - Ready"
         else:
@@ -4012,6 +4014,7 @@ class Evolution(GeneratorController):
             StartInfo["WriteQuietMode"] = EvoLC
             StartInfo["Firmware"] = self.GetFirmwareVersion()
             StartInfo["Hardware"] = self.GetHardwareVersion()
+            StartInfo["SetGenTime"] = True
 
             if not NoTile:
                 StartInfo["pages"] = {
