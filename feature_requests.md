@@ -1,4 +1,5 @@
 # Feature Request List
+- [Connecting Genmon to Homebridge (and ultimately Homekit)](https://github.com/jgyates/genmon/issues/552) @muddycharles68 
 - [add support for a Cummins Quiet Connect generator](https://github.com/jgyates/genmon/issues/553) @derekatkins
 - [Ability to control update alerts through Pushover](https://github.com/jgyates/genmon/issues/523) @danodemano
 - [TX Industrial Switch support](https://github.com/jgyates/genmon/issues/463) @unsword01
