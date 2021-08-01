@@ -36,7 +36,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.17.0"
+GENMON_VERSION = "V1.17.01"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(MySupport):
@@ -373,6 +373,7 @@ class Monitor(MySupport):
                 msgbody += self.printToString(self.ProcessDispatch(self.GetStartInfo(NoTile = True),""))
                 if not self.bDisablePlatformStats:
                     msgbody += self.printToString(self.ProcessDispatch({"Platform Stats" : self.GetPlatformStats()},""))
+                msgbody += self.printToString(self.ProcessDispatch({"Comm Stats" : self.Controller.GetCommStatus()},""))
                 msgbody += self.Controller.DisplayRegisters(AllRegs = FullLogs)
 
                 msgbody += "\n" + self.GetSupportData() + "\n"
