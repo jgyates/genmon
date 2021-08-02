@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 
 ## V1.17.01  -2021-08-01
-- Added values for 18kw Evo 2.0 generator
+- Added values for 18kw Evo 2.0 generator, new alarm entry for Evo 2.0 Wiring Error
 
 ## V1.17.0  -2021-07-30
 - Added extensible method to support new types of generator controllers.
