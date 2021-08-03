@@ -2381,7 +2381,7 @@ class Evolution(GeneratorController):
         # Evolution Air Cooled Decoder
         # NOTE: Warnings on Evolution Air Cooled have an error code of zero
         AlarmLogDecoder_EvoAC = {
-        0x08 : "WIRING ERROR",
+        0x08 : "WIRING ERROR",          # Alarm code 2098
         0x13 : "FIRMWARE ERROR-25",
         0x14 : "Low Battery",
         0x15 : "Exercise Set Error",
@@ -2408,7 +2408,7 @@ class Evolution(GeneratorController):
         0x2d : "Underspeed",
         0x2e : "Controller Fault",
         0x2f : "FIRMWARE ERROR-7",
-        0x30 : "WIRING ERROR",
+        0x30 : "WIRING ERROR",          # Alarm code 2099
         0x31 : "Over Voltage",
         0x32 : "Under Voltage",
         0x33 : "Overload Remove Load",
