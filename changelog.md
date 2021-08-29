@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.17.02  -2021-08-28
+- Corrected bug in MFA web security login
+
 ## V1.17.01  -2021-08-01
 - Added values for 18kw Evo 2.0 generator, new alarm entry for Evo 2.0 Wiring Error
 

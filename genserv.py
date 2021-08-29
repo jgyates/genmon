@@ -13,7 +13,7 @@ from __future__ import print_function
 import sys, signal, os, socket, atexit, time, subprocess, json, threading, signal, errno, collections, getopt
 
 try:
-    from flask import Flask, render_template, request, jsonify, session, send_file, redirect, url_for
+    from flask import Flask, make_response, render_template, request, jsonify, session, send_file, redirect, url_for
 except Exception as e1:
     print("\n\nThis program requires the Flask library. Please see the project documentation at https://github.com/jgyates/genmon.\n")
     print("Error: " + str(e1))
@@ -119,6 +119,12 @@ def add_header(r):
 @app.route('/', methods=['GET'])
 def root():
 
+    if bUseMFA:
+        if not 'mfa_ok' in session or not session['mfa_ok'] == True:
+            session['logged_in'] = False
+            session['write_access'] = False
+            session['mfa_ok'] = False
+            redirect(url_for('root'))
     return ServePage('index.html')
 
 #-------------------------------------------------------------------------------
@@ -160,6 +166,8 @@ def mfa_auth():
                 session['mfa_ok'] = True
                 return redirect(url_for('root'))
             else:
+                session['logged_in'] = False
+                session['write_access'] = False
                 session['mfa_ok'] = False
                 return redirect(url_for('logout'))
         else:
@@ -171,11 +179,16 @@ def mfa_auth():
 #-------------------------------------------------------------------------------
 def admin_login_helper():
 
-    if bUseMFA:
-        #GetOTP()
-        return render_template('mfa.html')
-    else:
-        return redirect(url_for('root'))
+    try:
+        if bUseMFA:
+            #GetOTP()
+            response = make_response(render_template('mfa.html'))
+            return response
+        else:
+            return redirect(url_for('root'))
+    except Exception as e1:
+        LogErrorLine("Error in admin_login_helper: " + str(e1))
+        return False
 #-------------------------------------------------------------------------------
 @app.route('/', methods=['POST'])
 def do_admin_login():
