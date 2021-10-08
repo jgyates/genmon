@@ -775,7 +775,7 @@ class Evolution(GeneratorController):
             myregex = re.compile('<.*?>')
 
             try:
-                conn = HTTPSConnection("www.generac.com", 443, timeout=10)
+                conn = HTTPSConnection("www.generac.com", 443, timeout=25)
                 conn.request("GET", "/GeneracCorporate/WebServices/GeneracSelfHelpWebService.asmx/GetSearchResults?query=" + SerialNumber, "",
                         headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36 Edge/17.17134"})
                 r1 = conn.getresponse()
