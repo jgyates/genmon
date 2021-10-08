@@ -794,7 +794,10 @@ class Evolution(GeneratorController):
                 myresponse1 = json.loads(data2)
                 ModelNumber = myresponse1["SerialNumber"]["ModelNumber"]
 
-                if not len(ModelNumber):
+                if ModelNumber == None:
+                    ModelNumber = myresponse1["ManualModelNumber"]
+
+                if ModelNumber == None or not len(ModelNumber):
                     self.LogError("Error in LookUpSNInfo: Model (response1)")
                     conn.close()
                     return False, ReturnModel, ReturnKW
@@ -804,6 +807,7 @@ class Evolution(GeneratorController):
 
             except Exception as e1:
                 self.LogErrorLine("Error in LookUpSNInfo (parse request 1): " + str(e1))
+                self.LogError(str(myresponse1))
                 conn.close()
                 return False, ReturnModel, ReturnKW
 
@@ -1843,6 +1847,8 @@ class Evolution(GeneratorController):
                 return              # we don't have a value for this register yet
             RegVal = int(Value, 16)
 
+            RegVal = self.FilterReg0001(RegVal)
+
             if RegVal == self.LastAlarmValue:
                 return      # nothing new to report, return
 
@@ -2670,6 +2676,7 @@ class Evolution(GeneratorController):
             return ""
         RegVal = int(Value, 16)
 
+        RegVal = self.FilterReg0001(RegVal)
 
         # These codes indicate an alarm needs to be reset before the generator will run again
         AlarmValues = {
@@ -2703,6 +2710,7 @@ class Evolution(GeneratorController):
          0x32 : "Low Fuel Pressure",    #  Validate on EvoLC
          0x34 : "Emergency Stop",       #  Validate on Evolution, occurred when E-Stop
          0x38 : "Very Low Battery"      #  Validate on Evolutio Air Cooled
+         #0x74 : "Controller Lost Connection to Server",    # Evolution 2.0 no validated
         }
 
         outString += AlarmValues.get(RegVal & 0x0FFFF,"UNKNOWN ALARM: %08x" % RegVal)
@@ -2725,6 +2733,28 @@ class Evolution(GeneratorController):
         if regvalue & 0xFFF0FFC0:
             return False
         return True
+
+    #------------ Evolution:FilterReg0001 --------------------------------------
+    def FilterReg0001(self, regvalue):
+
+        try:
+
+            if not self.Evolution2:
+                return regvalue
+
+            if not self.IgnoreUnknown:
+                return regvalue
+
+            IgnoreList = [0x2020, 0x20200000, 0x3f3d0000,  0x3f3d, 0x3430]
+
+            if regvalue in IgnoreList:
+                return self.LastAlarmValue
+            return regvalue
+
+        except Exception as e1:
+            self.LogErrorLine("Error in  FilterReg0001 " + str(e1))
+            return regvalue
+
     #------------ Evolution:GetDigitalValues -----------------------------------
     def GetDigitalValues(self, RegVal, LookUp):
 
@@ -2857,6 +2887,7 @@ class Evolution(GeneratorController):
             if len(Value) != 8:
                 return ""
             RegVal = int(Value, 16)
+            RegVal = self.FilterReg0001(RegVal)
         else:
             RegVal = Reg0001Value
 
@@ -2909,6 +2940,7 @@ class Evolution(GeneratorController):
             if len(Value) != 8:
                 return ""
             RegVal = int(Value, 16)
+            RegVal = self.FilterReg0001(RegVal)
         else:
             RegVal = Reg0001Value
 
@@ -3585,15 +3617,17 @@ class Evolution(GeneratorController):
         if len(Value) != 8:
             return False
 
-        HexValue = int(Value,16)
+        RegVal = int(Value,16)
+
+        RegVal = self.FilterReg0001(RegVal)
 
         # service A due alarm?
-        if self.BitIsEqual(HexValue,   0xFFF0FFFF, 0x0000001F):
+        if self.BitIsEqual(RegVal,   0xFFF0FFFF, 0x0000001F):
             # is the Service Due A Alarm Active?
             return True
 
         # service B due alarm?
-        if self.BitIsEqual(HexValue,   0xFFF0FFFF, 0x00000020):
+        if self.BitIsEqual(RegVal,   0xFFF0FFFF, 0x00000020):
             # is the Service Due B Alarm Active?
             return True
         if AlarmOnly:
