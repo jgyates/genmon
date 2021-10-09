@@ -1318,7 +1318,7 @@ function saveNotifications(){
         }
     });
     if (blankEmails > 0) {
-       GenmonAlert("Recepients cannot be blank.<br>You have "+blankEmails+" blank lines.");
+       GenmonAlert("Recipients cannot be blank.<br>You have "+blankEmails+" blank lines.");
        return
     }
 
