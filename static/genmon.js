@@ -1209,7 +1209,7 @@ function DisplayNotifications(){
     $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
         processAjaxSuccess();
 
-        var  outstr = 'Notification Recepients:<br><br>';
+        var  outstr = 'Notification Recipients:<br><br>';
         outstr += '<form id="formNotifications">';
         outstr += '<table id="allnotifications" border="0"><tbody>';
 
