@@ -248,7 +248,7 @@ class MyMail(MySupport):
 
             self.SenderName = self.config.ReadValue('sender_name', default = None)
 
-            # SMTP Recepients
+            # SMTP Recipients
             self.EmailRecipient = self.config.ReadValue('email_recipient')
             self.EmailRecipientByType = {}
             for type in ["outage", "error", "warn", "info"]:
