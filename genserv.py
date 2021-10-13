@@ -694,7 +694,7 @@ def GetAddOns():
         AddOnCfg['gensyslog'] = collections.OrderedDict()
         AddOnCfg['gensyslog']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "gensyslog", default = False)
         AddOnCfg['gensyslog']['title'] = "Linux System Logging"
-        AddOnCfg['gensyslog']['description'] = "Write generator and utility state changes to system log (/var/log/system)"
+        AddOnCfg['gensyslog']['description'] = "Write generator and utility state changes to system log (/var/log/syslog)"
         AddOnCfg['gensyslog']['icon'] = "linux"
         AddOnCfg['gensyslog']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gensyslogpy-optional"
         AddOnCfg['gensyslog']['parameters'] = None
