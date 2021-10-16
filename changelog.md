@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.17.04  -2021-10-15
+- Added support for Evolution 2.0 14kW
+
 ## V1.17.03  -2021-10-08
 - Added code in serial number lookup to handled invalid serial numbers in web response
 - Updated code to ignore specific status codes in Evo 2.0 (Advanced Settings -> Ignore Unknown Values)
