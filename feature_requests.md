@@ -1,6 +1,7 @@
 # Feature Request List
+- [Discovery for Home Assistant](https://github.com/jgyates/genmon/issues/590) @dave-parsons 
 - [Make Service Journal entries sortable and filterable](https://github.com/jgyates/genmon/issues/584) @nickdot
-- [Option to remember 2FA for 30 days](https://github.com/jgyates/genmon/issues/565) @danodemano 
+- [Option to remember 2FA for 30 days](https://github.com/jgyates/genmon/issues/565) @danodemano
 - [Connecting Genmon to Homebridge (and ultimately Homekit)](https://github.com/jgyates/genmon/issues/552) @muddycharles68
 - [add support for a Cummins Quiet Connect generator](https://github.com/jgyates/genmon/issues/553) @derekatkins
 - [Ability to control update alerts through Pushover](https://github.com/jgyates/genmon/issues/523) @danodemano
