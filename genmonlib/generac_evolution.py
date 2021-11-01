@@ -698,7 +698,7 @@ class Evolution(GeneratorController):
                                 }
 
         if self.Evolution2:
-            ModelLookUp_EvoAC[8] = ["22KW", "60", "120/240", "1", "999 cc", "240"] # Evo G0072100 Evo2 24kw
+            ModelLookUp_EvoAC[8] = ["24KW", "60", "120/240", "1", "999 cc", "240"] # Evo G0072100 Evo2 24kw
             ModelLookUp_EvoAC[17] = ["20KW", "60", "120/240", "1", "999 cc", "240"] # Evo2 20kW
             ModelLookUp_EvoAC[18] = ["18KW", "60", "120/240", "1", "816 cc", "240"] # Evo2 Generac Guardian 18kW G007226-0,
             ModelLookUp_EvoAC[21] = ["24KW", "60", "120/240", "1", "999 cc", "240"] # Evo G0072100 Evo2 24kw
