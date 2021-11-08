@@ -1,5 +1,6 @@
 # Feature Request List
-- [Discovery for Home Assistant](https://github.com/jgyates/genmon/issues/590) @dave-parsons 
+- [Add ATS test using power reading](https://github.com/jgyates/genmon/issues/593) @skipfire
+- [Discovery for Home Assistant](https://github.com/jgyates/genmon/issues/590) @dave-parsons
 - [Make Service Journal entries sortable and filterable](https://github.com/jgyates/genmon/issues/584) @nickdot
 - [Option to remember 2FA for 30 days](https://github.com/jgyates/genmon/issues/565) @danodemano
 - [Connecting Genmon to Homebridge (and ultimately Homekit)](https://github.com/jgyates/genmon/issues/552) @muddycharles68

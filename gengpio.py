@@ -26,6 +26,23 @@ except Exception as e1:
 
 import RPi.GPIO as GPIO
 
+#----------  InitGPIO ----------------------------------------------------------
+def InitGPIO(pin, direction = GPIO.OUT, initial= GPIO.LOW):
+
+    try:
+        if pin != 0:
+            GPIO.setup(pin, direction, initial = initial)
+    except Exception as e1:
+        log.error("Error in InitGPIO on pin %d : %s" %(int(pin), str(e1))
+
+#----------  SetGPIO -----------------------------------------------------------
+def SetGPIO(pin, state):
+
+    try:
+        if pin != 0:
+            GPIO.output(STATUS_READY,GPIO.HIGH)
+    except Exception as e1:
+        log.error("Error in InitGPIO on SetGPIO %d : %s" %(int(pin), str(e1))
 
 #----------  Signal Handler ----------------------------------------------------
 def signal_handler(signal, frame):
@@ -75,25 +92,25 @@ if __name__=='__main__': # usage program.py [server_address]
         ER_GOVERNOR = config.ReadValue('ER_GOVERNOR', return_type = int, default = 36)
         ER_WARNING = config.ReadValue('ER_WARNING', return_type = int, default = 32)
 
-        GPIO.setup(STATUS_READY, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(STATUS_ALARM, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(STATUS_SERVICE, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(STATUS_RUNNING, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(STATUS_EXERCISING, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(STATUS_OFF, GPIO.OUT, initial=GPIO.LOW)
+        InitGPIO(STATUS_READY, GPIO.OUT, initial=GPIO.LOW)
+        InitGPIO(STATUS_ALARM, GPIO.OUT, initial=GPIO.LOW)
+        InitGPIO(STATUS_SERVICE, GPIO.OUT, initial=GPIO.LOW)
+        InitGPIO(STATUS_RUNNING, GPIO.OUT, initial=GPIO.LOW)
+        InitGPIO(STATUS_EXERCISING, GPIO.OUT, initial=GPIO.LOW)
+        InitGPIO(STATUS_OFF, GPIO.OUT, initial=GPIO.LOW)
 
-        GPIO.setup(ER_GENMON, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(ER_INTERNET, GPIO.OUT, initial=GPIO.LOW)
+        InitGPIO(ER_GENMON, GPIO.OUT, initial=GPIO.LOW)
+        InitGPIO(ER_INTERNET, GPIO.OUT, initial=GPIO.LOW)
 
-        GPIO.setup(ER_SPEED, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(ER_LOW_OIL, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(ER_HIGH_TEMP, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(ER_RPM_SENSE, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(ER_VOLTAGE, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(ER_OVERCRANK, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(ER_OVERLOAD, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(ER_GOVERNOR, GPIO.OUT, initial=GPIO.LOW)
-        GPIO.setup(ER_WARNING, GPIO.OUT, initial=GPIO.LOW)
+        InitGPIO(ER_SPEED, GPIO.OUT, initial=GPIO.LOW)
+        InitGPIO(ER_LOW_OIL, GPIO.OUT, initial=GPIO.LOW)
+        InitGPIO(ER_HIGH_TEMP, GPIO.OUT, initial=GPIO.LOW)
+        InitGPIO(ER_RPM_SENSE, GPIO.OUT, initial=GPIO.LOW)
+        InitGPIO(ER_VOLTAGE, GPIO.OUT, initial=GPIO.LOW)
+        InitGPIO(ER_OVERCRANK, GPIO.OUT, initial=GPIO.LOW)
+        InitGPIO(ER_OVERLOAD, GPIO.OUT, initial=GPIO.LOW)
+        InitGPIO(ER_GOVERNOR, GPIO.OUT, initial=GPIO.LOW)
+        InitGPIO(ER_WARNING, GPIO.OUT, initial=GPIO.LOW)
 
         LastEvent = ""
 
@@ -116,34 +133,34 @@ if __name__=='__main__': # usage program.py [server_address]
                 console.info ("State: " + data)
 
                 if data == "READY":
-                    GPIO.output(STATUS_READY,GPIO.HIGH)
+                    SetGPIO(STATUS_READY,GPIO.HIGH)
                 else:
-                    GPIO.output(STATUS_READY,GPIO.LOW)
+                    SetGPIO(STATUS_READY,GPIO.LOW)
 
                 if data == "EXERCISING":
-                    GPIO.output(STATUS_EXERCISING,GPIO.HIGH)
+                    SetGPIO(STATUS_EXERCISING,GPIO.HIGH)
                 else:
-                    GPIO.output(STATUS_EXERCISING,GPIO.LOW)
+                    SetGPIO(STATUS_EXERCISING,GPIO.LOW)
 
                 if data == "RUNNING" or data == "RUNNING-MANUAL":
-                    GPIO.output(STATUS_RUNNING,GPIO.HIGH)
+                    SetGPIO(STATUS_RUNNING,GPIO.HIGH)
                 else:
-                    GPIO.output(STATUS_RUNNING,GPIO.LOW)
+                    SetGPIO(STATUS_RUNNING,GPIO.LOW)
 
                 if data == "ALARM":
-                    GPIO.output(STATUS_ALARM,GPIO.HIGH)
+                    SetGPIO(STATUS_ALARM,GPIO.HIGH)
                 else:
-                    GPIO.output(STATUS_ALARM,GPIO.LOW)
+                    SetGPIO(STATUS_ALARM,GPIO.LOW)
 
                 if data == "SERVICEDUE":
-                    GPIO.output(STATUS_SERVICE,GPIO.HIGH)
+                    SetGPIO(STATUS_SERVICE,GPIO.HIGH)
                 else:
-                    GPIO.output(STATUS_SERVICE, GPIO.LOW)
+                    SetGPIO(STATUS_SERVICE, GPIO.LOW)
 
                 if data == "OFF" or data == "MANUAL":
-                    GPIO.output(STATUS_OFF,GPIO.HIGH)
+                    SetGPIO(STATUS_OFF,GPIO.HIGH)
                 else:
-                    GPIO.output(STATUS_OFF, GPIO.LOW)
+                    SetGPIO(STATUS_OFF, GPIO.LOW)
 
 
                 if data == "ALARM" and Evolution:     # Last Error Code not supported by Nexus
@@ -154,50 +171,50 @@ if __name__=='__main__': # usage program.py [server_address]
 
                     # Overspeed/Underspeed (alarms 1200-1206, 1600-1603)
                     if 1200 <= LastErrorCode <= 1206 or 1600 <= LastErrorCode <= 1603:
-                        GPIO.output(ER_SPEED,GPIO.HIGH)
+                        SetGPIO(ER_SPEED,GPIO.HIGH)
 
                     # Low Oil (alarm 1300)
                     if LastErrorCode == 1300:
-                        GPIO.output(ER_LOW_OIL,GPIO.HIGH)
+                        SetGPIO(ER_LOW_OIL,GPIO.HIGH)
 
                     # High Temp (alarm 1400)
                     if LastErrorCode == 1400:
-                        GPIO.output(ER_HIGH_TEMP,GPIO.HIGH)
+                        SetGPIO(ER_HIGH_TEMP,GPIO.HIGH)
 
                     # RPM Sensor (alarm 1500-1521)
                     if 1500 <= LastErrorCode <= 1521:
-                        GPIO.output(ER_RPM_SENSE,GPIO.HIGH)
+                        SetGPIO(ER_RPM_SENSE,GPIO.HIGH)
 
                     # Overvoltage/Undervoltage (alarm 1800-1803, 1900-1906)
                     if 1800 <= LastErrorCode <= 1803 or 1900 <= LastErrorCode <= 1906:
-                        GPIO.output(ER_VOLTAGE,GPIO.HIGH)
+                        SetGPIO(ER_VOLTAGE,GPIO.HIGH)
 
                     # Overcrank (alarm 1100-1101)
                     if 1100 <= LastErrorCode <= 1101:
-                        GPIO.output(ER_OVERCRANK,GPIO.HIGH)
+                        SetGPIO(ER_OVERCRANK,GPIO.HIGH)
 
                     # Overload (alarm 2100-2103)
                     if 2100 <= LastErrorCode <= 2103:
-                        GPIO.output(ER_OVERLOAD,GPIO.HIGH)
+                        SetGPIO(ER_OVERLOAD,GPIO.HIGH)
 
                     # Governor (alarm 2500-2502)
                     if 2500 <= LastErrorCode <= 2502:
-                        GPIO.output(ER_GOVERNOR,GPIO.HIGH)
+                        SetGPIO(ER_GOVERNOR,GPIO.HIGH)
 
                     # Warning (alarm 0000)
                     if 0000 == LastErrorCode:
-                        GPIO.output(ER_WARNING,GPIO.HIGH)
+                        SetGPIO(ER_WARNING,GPIO.HIGH)
 
                 else:
-                    GPIO.output(ER_SPEED,GPIO.LOW)
-                    GPIO.output(ER_LOW_OIL,GPIO.LOW)
-                    GPIO.output(ER_HIGH_TEMP,GPIO.LOW)
-                    GPIO.output(ER_RPM_SENSE,GPIO.LOW)
-                    GPIO.output(ER_VOLTAGE,GPIO.LOW)
-                    GPIO.output(ER_OVERCRANK,GPIO.LOW)
-                    GPIO.output(ER_OVERLOAD,GPIO.LOW)
-                    GPIO.output(ER_GOVERNOR,GPIO.LOW)
-                    GPIO.output(ER_WARNING,GPIO.LOW)
+                    SetGPIO(ER_SPEED,GPIO.LOW)
+                    SetGPIO(ER_LOW_OIL,GPIO.LOW)
+                    SetGPIO(ER_HIGH_TEMP,GPIO.LOW)
+                    SetGPIO(ER_RPM_SENSE,GPIO.LOW)
+                    SetGPIO(ER_VOLTAGE,GPIO.LOW)
+                    SetGPIO(ER_OVERCRANK,GPIO.LOW)
+                    SetGPIO(ER_OVERLOAD,GPIO.LOW)
+                    SetGPIO(ER_GOVERNOR,GPIO.LOW)
+                    SetGPIO(ER_WARNING,GPIO.LOW)
 
             # Get Genmon status
             try:
@@ -206,18 +223,18 @@ if __name__=='__main__': # usage program.py [server_address]
                 TempDict = json.loads(data)
                 HealthStr = TempDict["Monitor"][0]["Generator Monitor Stats"][0]["Monitor Health"]
                 if HealthStr.lower() == "ok":
-                    GPIO.output(ER_GENMON,GPIO.LOW)
+                    SetGPIO(ER_GENMON,GPIO.LOW)
                 else:
-                    GPIO.output(ER_GENMON,GPIO.HIGH)
+                    SetGPIO(ER_GENMON,GPIO.HIGH)
             except Exception as e1:
                 log.error("Error getting monitor health: " +str(e1))
             # get Internet Status
             try:
                 data = MyClientInterface.ProcessMonitorCommand("generator: network_status")
                 if data.lower() == "ok":
-                    GPIO.output(ER_INTERNET,GPIO.LOW)
+                    SetGPIO(ER_INTERNET,GPIO.LOW)
                 else:
-                    GPIO.output(ER_INTERNET,GPIO.HIGH)
+                    SetGPIO(ER_INTERNET,GPIO.HIGH)
                 time.sleep(3)
             except Exception as e1:
                 log.error("Error getting internet status: " +str(e1))
