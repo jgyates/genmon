@@ -1,7 +1,7 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
-## V1.17.05  -2021-10-15
+## V1.17.05  -2021-11-08
 - Update to gengpio.py to allow for disabling to GPIO
 
 ## V1.17.04  -2021-10-15
