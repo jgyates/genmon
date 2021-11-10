@@ -76,7 +76,7 @@ function updatelibraries() {
   sudo $pipcommand install pyserial -U
   sudo $pipcommand install Flask -U
   if [ "$usepython3" = true ] ; then
-    sudo $pipcommand install pyowm -U
+    sudo $pipcommand install pyowm==2.10.0 -U
   else
     sudo $pipcommand install pyowm==2.9.0 -U
   fi
@@ -138,7 +138,7 @@ function installgenmon() {
     sudo $pipcommand install pyserial
     sudo $pipcommand install Flask
     if [ "$usepython3" = true ] ; then
-      sudo $pipcommand install pyowm
+      sudo $pipcommand install pyowm==2.10.0
     else
       sudo $pipcommand install pyowm==2.9.0
     fi

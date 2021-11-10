@@ -131,14 +131,14 @@ class Loader(MySupport):
         # this function checks the system to see if the required libraries are
         # installed. If they are not then an attempt is made to install them.
         ModuleList = [
-            # [import name , install name, Python2.7 version]
+            # [import name , install name, required version]
             ['flask','flask', None],                # Web server
             # we will not use the check for configparser as this look like it is in backports on 2.7
             # and our myconfig modules uses the default so this generates an error that is not warranted
             #['configparser','configparser',None],   # reading config files
             ['serial','pyserial',None],             # Serial
             ['crcmod','crcmod',None],               # Modbus CRC
-            ['pyowm','pyowm','2.9.0'],              # Open Weather API
+            ['pyowm','pyowm','2.10.0'],             # Open Weather API
             ['pytz','pytz',None],                   # Time zone support
             ['pysnmp','pysnmp',None],               # SNMP
             ['ldap3','ldap3',None],                 # LDAP
@@ -300,11 +300,12 @@ class Loader(MySupport):
         try:
             if sys.version_info[0] < 3:
                 pipProgram = "pip2"
-                if version != None:
-                    libraryname = libraryname + "=="+ version
             else:
                 pipProgram = "pip3"
 
+            if version != None:
+                libraryname = libraryname + "=="+ version
+                
             # This will check if pip is installed
             if "linux" in sys.platform:
                 self.CheckBaseSoftware()
