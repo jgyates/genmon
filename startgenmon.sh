@@ -5,10 +5,10 @@
 #-------------------------------------------------------------------------------
 PARAMS=""
 genmondir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-pythoncommand="python"
-pipcommand="pip"
+pythoncommand="python3"
+pipcommand="pip3"
 config_path=""
-usepython3=false
+usepython3=true
 found_action=false
 
 #-------------------------------------------------------------------------------
@@ -29,9 +29,9 @@ function setuppython3() {
     pipcommand="pip3"
     pythoncommand="python3"
   else
-    #echo 'Setting up for Python 2.7...'
-    pipcommand="pip"
-    pythoncommand="python"
+    echo 'Using Python 2.x...'
+    pipcommand="pip2"
+    pythoncommand="python2"
 fi
 }
 

@@ -14,9 +14,9 @@ files in the genmon directory, they will be overwritten. Configuration files \
 in the configuration directory will not be overritten.   \
 Continue? (y/n)  "
 
-usepython3=false
-pipcommand="pip"
-pythoncommand="python"
+usepython3=true
+pipcommand="pip3"
+pythoncommand="python3"
 OPTIND=1         # Reset in case getopts has been used previously in the shell.
 config_path="/etc/genmon/"
 log_path="/var/log/"
@@ -143,7 +143,11 @@ function installgenmon() {
       sudo $pipcommand install pyowm==2.9.0
     fi
     sudo $pipcommand install pytz
-    sudo apt-get -yqq install build-essential libssl-dev libffi-dev python-dev
+    if [ "$usepython3" = true ] ; then
+      sudo apt-get -yqq install build-essential libssl-dev libffi-dev python3-dev
+    else
+      sudo apt-get -yqq install build-essential libssl-dev libffi-dev python-dev
+    fi
     sudo $pipcommand install pyopenssl
     sudo $pipcommand install twilio
     sudo $pipcommand install chump

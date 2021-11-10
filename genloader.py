@@ -40,6 +40,7 @@ class Loader(MySupport):
         self.Start = start
         self.Stop = stop
         self.HardStop = hardstop
+        self.PipChecked = False
 
 
         self.ConfigFilePath = ConfigFilePath
@@ -143,14 +144,15 @@ class Loader(MySupport):
             ['ldap3','ldap3',None],                 # LDAP
             ['smbus','smbus',None],                 # SMBus reading of temp sensors
             ['pyotp','pyotp','2.3.0'],              # 2FA support
-            ['psutil','psutil',None]                # process utilities
+            ['psutil','psutil',None],               # process utilities
+            ['chump','chump',None],                 # for genpushover
+            ['twilio','twilio',None],               # for gensms
+            ['paho.mqtt.client','paho-mqtt',None],  # for genmqtt
+            ['OpenSSL', 'pyopenssl',None]           # SSL
         ]
         try:
             ErrorOccured = False
 
-            # This will check if pip is installed
-            #if "linux" in sys.platform:
-            #    self.CheckBaseSoftware()
             for Module in ModuleList:
                 if not self.LibraryIsInstalled(Module[0]):
                     self.LogInfo("Warning: required library " + Module[1] + " not installed. Attempting to install....")
@@ -170,8 +172,11 @@ class Loader(MySupport):
     def CheckBaseSoftware(self):
 
         try:
+            if self.PipChecked:
+                return True
+
             if sys.version_info[0] < 3:
-                pipProgram = "pip"
+                pipProgram = "pip2"
             else:
                 pipProgram = "pip3"
 
@@ -183,6 +188,7 @@ class Loader(MySupport):
                 self.LogInfo("Error in CheckBaseSoftware  : " + libraryname + " : " + str(_error))
             rc = process.returncode
 
+            self.PipChecked = True
             return True
         except Exception as e1:
             self.LogInfo("Error in CheckBaseSoftware: " + str(e1), LogLine = True)
@@ -198,6 +204,8 @@ class Loader(MySupport):
             else:
                 pipProgram = "python3-pip"
 
+            self.LogInfo("Installing " + pipProgram)
+
             install_list = ["sudo","apt-get","-yqq","update"]
             process = Popen(install_list, stdout=PIPE, stderr=PIPE)
             output, _error = process.communicate()
@@ -211,7 +219,7 @@ class Loader(MySupport):
             output, _error = process.communicate()
             return True
         except Exception as e1:
-            self.LogInfo("Error in CheckBaseSoftware: " + str(e1), LogLine = True)
+            self.LogInfo("Error in InstallBaseSoftware: " + str(e1), LogLine = True)
             return False
 
     #---------------------------------------------------------------------------
@@ -291,12 +299,15 @@ class Loader(MySupport):
 
         try:
             if sys.version_info[0] < 3:
-                pipProgram = "pip"
+                pipProgram = "pip2"
                 if version != None:
                     libraryname = libraryname + "=="+ version
             else:
                 pipProgram = "pip3"
 
+            # This will check if pip is installed
+            if "linux" in sys.platform:
+                self.CheckBaseSoftware()
 
             if update:
                 install_list = [pipProgram, 'install', libraryname, '-U']
