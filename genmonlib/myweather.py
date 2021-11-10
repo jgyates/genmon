@@ -20,6 +20,8 @@ try:
 except:
     pyowm_installed = False
 
+# https://pyowm.readthedocs.io/en/latest/pyowm.html
+#https://pyowm.readthedocs.io/en/latest/v3/code-recipes.html
 class MyWeather(MySupport):
     #---------------------__init__----------------------------------------------
     def __init__(self, apikey, location, log = None, unit = 'imperial'):

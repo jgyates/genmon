@@ -33,7 +33,7 @@ def InitGPIO(pin, direction = GPIO.OUT, initial= GPIO.LOW):
         if pin != 0:
             GPIO.setup(pin, direction, initial = initial)
     except Exception as e1:
-        log.error("Error in InitGPIO on pin %d : %s" %(int(pin), str(e1))
+        log.error("Error in InitGPIO on pin %d : %s" %(int(pin), str(e1)))
 
 #----------  SetGPIO -----------------------------------------------------------
 def SetGPIO(pin, state):
@@ -42,7 +42,7 @@ def SetGPIO(pin, state):
         if pin != 0:
             GPIO.output(STATUS_READY,GPIO.HIGH)
     except Exception as e1:
-        log.error("Error in InitGPIO on SetGPIO %d : %s" %(int(pin), str(e1))
+        log.error("Error in InitGPIO on SetGPIO %d : %s" %(int(pin), str(e1)))
 
 #----------  Signal Handler ----------------------------------------------------
 def signal_handler(signal, frame):
