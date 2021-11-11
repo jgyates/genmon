@@ -1,4 +1,5 @@
 # Feature Request List
+- [Dark Mode for web interface](https://github.com/jgyates/genmon/issues/602) @danodemano 
 - [Add ATS test using power reading](https://github.com/jgyates/genmon/issues/593) @skipfire
 - [Discovery for Home Assistant](https://github.com/jgyates/genmon/issues/590) @dave-parsons
 - [Make Service Journal entries sortable and filterable](https://github.com/jgyates/genmon/issues/584) @nickdot
