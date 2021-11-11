@@ -211,7 +211,7 @@ class Loader(MySupport):
             output, _error = process.communicate()
 
             if _error:
-                self.LogInfo("Error in InstallBaseSoftware  : " + libraryname + " : " + str(_error))
+                self.LogInfo("Error in InstallBaseSoftware  : " +  + str(_error))
             rc = process.returncode
 
             install_list = ["sudo","apt-get","-yqq","install", pipProgram]
@@ -305,7 +305,7 @@ class Loader(MySupport):
 
             if version != None:
                 libraryname = libraryname + "=="+ version
-                
+
             # This will check if pip is installed
             if "linux" in sys.platform:
                 self.CheckBaseSoftware()
