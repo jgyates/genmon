@@ -10,7 +10,7 @@
 
 from __future__ import print_function
 
-import sys, signal, os, socket, atexit, time, subprocess, json, threading, signal, errno, collections, getopt
+import sys, signal, os, os.path, socket, atexit, time, subprocess, json, threading, signal, errno, collections, getopt
 
 try:
     from flask import Flask, make_response, render_template, request, jsonify, session, send_file, redirect, url_for
@@ -1024,7 +1024,10 @@ def GetAddOns():
         AddOnCfg['gentemp'] = collections.OrderedDict()
         AddOnCfg['gentemp']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "gentemp", default = False)
         AddOnCfg['gentemp']['title'] = "External Temperature Sensors"
-        AddOnCfg['gentemp']['description'] = "Allow the display of external temperature sensor data"
+        Description = "Allow the display of external temperature sensor data"
+        if os.path.isdir("/sys/bus/w1/") == False:
+             Description = Description + "<br/><font color='red'>1-wire is not enabled but is required</font>"
+        AddOnCfg['gentemp']['description'] = Description
         AddOnCfg['gentemp']['icon'] = "rpi"
         AddOnCfg['gentemp']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gentemppy-optional"
         AddOnCfg['gentemp']['parameters'] = collections.OrderedDict()
