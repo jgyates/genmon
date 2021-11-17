@@ -37,8 +37,9 @@ class GaugeDIY(MySupport):
 
         self.i2c_channel = self.config.ReadValue('i2c_channel', return_type = int, default = 1)
         available_i2c_channels = [int(n[len(self.I2C_DEV_PREFIX):]) for n in glob.glob(self.I2C_DEV_PREFIX + '[0-9]*')]
-        assert self.i2c_channel is not None, "No available i2c_channel found."
-        assert self.i2c_channel in available_i2c_channels, "'i2c_channel' must be one of {}".format(available_i2c_channels)
+        assert available_i2c_channels, "Is i2c enabled? No available i2c channels found."
+        assert self.i2c_channel is not None, "Invalid i2c channel."
+        assert self.i2c_channel in available_i2c_channels, "i2c channel error: 'i2c_channel' must be one of {}".format(available_i2c_channels)
 
         self.i2c_address = self.config.ReadValue('i2c_address', return_type = int, default = 72)  # 0x48
 
@@ -47,7 +48,7 @@ class GaugeDIY(MySupport):
 
         return True
     # ---------- GaugeDIY::GetGaugeData----------------------------------------
-    def GetGaugeData(self):
+    def GetGaugeData(self, tanktwo = False):
         return 0.0
     # ---------- GaugeDIY::Close------------------------------------------------
     def Close(self):
@@ -69,6 +70,7 @@ class GaugeDIY1(GaugeDIY):
 
         self.mv_per_step = self.config.ReadValue('mv_per_step', return_type = int, default = 125)
         self.Multiplier = self.config.ReadValue('volts_to_percent_multiplier', return_type = float, default = 20.0)
+        self.debug = self.config.ReadValue('debug', return_type = bool, default = False)
 
     # ---------- GaugeDIY::InitADC----------------------------------------------
     def InitADC(self):
@@ -80,6 +82,21 @@ class GaugeDIY1(GaugeDIY):
             # Reset ADC
             self.I2Cbus.write_byte(self.RESET_ADDRESS, self.RESET_COMMAND)
 
+            self.PreReadCommand()
+
+            self.LogDebug("I2C Init complete: success")
+
+        except Exception as e1:
+            self.LogErrorLine("Error calling InitADC: " + str(e1))
+            if self.debug:
+                return True
+            return False
+
+        return True
+    # ---------- GaugeDIY::PreReadCommand--------------------------------------
+    def PreReadCommand(self, tanktwo = False):
+
+        try:
             # set config register  and start conversion
             # ANC1 and GND, 4.096v, 128s/s
             # Customized - Port A0 and 4.096 V input
@@ -91,23 +108,28 @@ class GaugeDIY1(GaugeDIY):
             # Bit 8 Operational mode of the ADS1115.
             # 0 : Continuous conversion mode
             # 1 : Power-down single-shot mode (default)
-            CONFIG_VALUE_1 = 0xC3
+
+            if not tanktwo:
+                CONFIG_VALUE_1 = 0xC3 # 1 100 001 1 --> Begin a single conversion, AIN(pos) = AIN0 and AIN(neg) = GND, Gain +/-4.096V, Power-down single-shot mode (default)
+            else:
+                CONFIG_VALUE_1 = 0xD3 # 1 101 001 1 --> Begin a single conversion, AIN(pos) = AIN1 and AIN(neg) = GND, Gain +/-4.096V, Power-down single-shot mode (default)
+
             # bits 7-0  0b10000101 = 0x85
             # Bits 7-5 data rate default to 100 for 128SPS
             # Bits 4-0  comparator functions see spec sheet.
             CONFIG_VALUE_2 = 0x85
             self.I2Cbus.write_i2c_block_data(self.i2c_address, self.POINTER_CONFIGURATION, [CONFIG_VALUE_1,CONFIG_VALUE_2] )
 
-            self.LogDebug("I2C Init complete: success")
-
         except Exception as e1:
-            self.LogErrorLine("Error calling InitADC: " + str(e1))
+            self.LogErrorLine("Error calling PreReadCommand: " + str(e1))
             return False
-
-        return True
     # ---------- GaugeDIY::GetGaugeData----------------------------------------
-    def GetGaugeData(self):
+    def GetGaugeData(self, tanktwo = False):
         try:
+
+            self.PreReadCommand(tanktwo = tanktwo)
+
+            time.sleep(1) # Wait a second so the Analog-to-Digital Converter has time to process the command.
 
             val = self.I2Cbus.read_i2c_block_data(self.i2c_address, self.POINTER_CONVERSION, 2)
 
@@ -266,7 +288,7 @@ class GaugeDIY2(GaugeDIY):
             return 0.0
 
     # ---------- GaugeDIY2::GetGaugeData----------------------------------------
-    def GetGaugeData(self):
+    def GetGaugeData(self, tanktwo = False):
         try:
             return self.convert_angle_to_percent(self.read_gauge_angle())
         except:

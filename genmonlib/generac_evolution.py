@@ -82,6 +82,7 @@ class Evolution(GeneratorController):
         self.SerialNumberReplacement = None
         self.AdditionalRunHours = None
         self.NominalLineVolts = 240
+        self.CheckFirmwareVerionsTime = datetime.datetime.now()     # used for com metrics
 
         self.DaysOfWeek = { 0: "Sunday",    # decode for register values with day of week
                             1: "Monday",
@@ -144,7 +145,7 @@ class Evolution(GeneratorController):
                     "0058" : [2, 0],     # Hall Effect Sensor (EvoLC)
                     "0059" : [2, 0],     # Rated Volts (EvoLC)
                     "005a" : [2, 0],     # Rated Hz (EvoLC)
-                    "005d" : [2, 0],     # Fuel Pressure Sensor, Moves between 0x55 - 0x58 continuously even when engine off
+                    "005d" : [2, 0],     # Fuel Pressure Sensor, Moves between 0x55 - 0x58 continuously even when engine off, fuel level sensor on EvoLC
                     "005e" : [4, 0],     # Total engine time in minutes  (EvoLC) 005e= high, 005f=low
                     "000d" : [2, 0],     # Bit changes when the controller is updating registers.
                     "003c" : [2, 0],     # Raw RPM Sensor Data (Hall Sensor)
@@ -219,8 +220,12 @@ class Evolution(GeneratorController):
     def SetupClass(self):
 
         # read config file
-        if not self.GetConfig():
-            self.LogError("Failure in Controller GetConfig: " + str(e1))
+        try:
+            if not self.GetConfig():
+                self.FatalError("Failure in Controller GetConfig")
+                sys.exit(1)
+        except Exception as e1:
+            self.FatalError("Error reading config file: " + str(e1))
             sys.exit(1)
         try:
             self.AlarmFile = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "data", "ALARMS.txt")
@@ -324,8 +329,16 @@ class Evolution(GeneratorController):
                     Tile = MyTile(self.log, title = "Fuel", units = "%", type = "fuel", nominal = 100, callback = self.GetFuelSensor, callbackparameters = (True,))
                     self.TileList.append(Tile)
                 elif self.ExternalFuelDataSupported():
-                    Tile = MyTile(self.log, title = "External Tank", units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True,))
+                    if self.TankData != None and "Percentage2" in self.TankData:
+                        ExternalTankTitle = "External Tank 1"
+                    else:
+                        ExternalTankTitle = "External Tank"
+                    Tile = MyTile(self.log, title = ExternalTankTitle, units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True, 1))
                     self.TileList.append(Tile)
+                    if self.TankData != None and "Percentage2" in self.TankData:
+                        ExternalTankTitle = "External Tank 2"
+                        Tile = MyTile(self.log, title = ExternalTankTitle, units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True, 2))
+                        self.TileList.append(Tile)
                 elif self.FuelConsumptionGaugeSupported():    # no gauge for NG
                     if self.UseMetric:
                         Units = "L"         # no gauge for NG
@@ -685,11 +698,14 @@ class Evolution(GeneratorController):
                                 }
 
         if self.Evolution2:
-            ModelLookUp_EvoAC[8] = ["22KW", "60", "120/240", "1", "999 cc", "240"] # Evo G0072100 Evo2 24kw
+            ModelLookUp_EvoAC[8] = ["24KW", "60", "120/240", "1", "999 cc", "240"] # Evo G0072100 Evo2 24kw
             ModelLookUp_EvoAC[17] = ["20KW", "60", "120/240", "1", "999 cc", "240"] # Evo2 20kW
+            ModelLookUp_EvoAC[18] = ["18KW", "60", "120/240", "1", "816 cc", "240"] # Evo2 Generac Guardian 18kW G007226-0,
             ModelLookUp_EvoAC[21] = ["24KW", "60", "120/240", "1", "999 cc", "240"] # Evo G0072100 Evo2 24kw
             ModelLookUp_EvoAC[22] = ["16KW", "60", "120/240", "1", "816 cc", "240"] # Evo G0071760
-            ModelLookUp_EvoAC[11] = ["20KW", "50", "208 3 Phase", "3", "999 cc", "208"],       # 3 phase export
+            ModelLookUp_EvoAC[23] = ["14KW", "60", "120/240", "1", "816 cc", "240"] # Evo2 G0072230
+            ModelLookUp_EvoAC[11] = ["20KW", "50", "208 3 Phase", "3", "999 cc", "208"]      # 3 phase export
+
 
         LookUp = None
         if self.EvolutionController:
@@ -761,7 +777,7 @@ class Evolution(GeneratorController):
             myregex = re.compile('<.*?>')
 
             try:
-                conn = HTTPSConnection("www.generac.com", 443, timeout=10)
+                conn = HTTPSConnection("www.generac.com", 443, timeout=25)
                 conn.request("GET", "/GeneracCorporate/WebServices/GeneracSelfHelpWebService.asmx/GetSearchResults?query=" + SerialNumber, "",
                         headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36 Edge/17.17134"})
                 r1 = conn.getresponse()
@@ -780,7 +796,10 @@ class Evolution(GeneratorController):
                 myresponse1 = json.loads(data2)
                 ModelNumber = myresponse1["SerialNumber"]["ModelNumber"]
 
-                if not len(ModelNumber):
+                if ModelNumber == None:
+                    ModelNumber = myresponse1["ManualModelNumber"]
+
+                if ModelNumber == None or not len(ModelNumber):
                     self.LogError("Error in LookUpSNInfo: Model (response1)")
                     conn.close()
                     return False, ReturnModel, ReturnKW
@@ -790,6 +809,7 @@ class Evolution(GeneratorController):
 
             except Exception as e1:
                 self.LogErrorLine("Error in LookUpSNInfo (parse request 1): " + str(e1))
+                self.LogError(str(myresponse1))
                 conn.close()
                 return False, ReturnModel, ReturnKW
 
@@ -1829,6 +1849,8 @@ class Evolution(GeneratorController):
                 return              # we don't have a value for this register yet
             RegVal = int(Value, 16)
 
+            RegVal = self.FilterReg0001(RegVal)
+
             if RegVal == self.LastAlarmValue:
                 return      # nothing new to report, return
 
@@ -2367,6 +2389,7 @@ class Evolution(GeneratorController):
         # Evolution Air Cooled Decoder
         # NOTE: Warnings on Evolution Air Cooled have an error code of zero
         AlarmLogDecoder_EvoAC = {
+        0x08 : "WIRING ERROR",          # Alarm code 2098
         0x13 : "FIRMWARE ERROR-25",
         0x14 : "Low Battery",
         0x15 : "Exercise Set Error",
@@ -2393,7 +2416,7 @@ class Evolution(GeneratorController):
         0x2d : "Underspeed",
         0x2e : "Controller Fault",
         0x2f : "FIRMWARE ERROR-7",
-        0x30 : "WIRING ERROR",
+        0x30 : "WIRING ERROR",          # Alarm code 2099
         0x31 : "Over Voltage",
         0x32 : "Under Voltage",
         0x33 : "Overload Remove Load",
@@ -2655,6 +2678,7 @@ class Evolution(GeneratorController):
             return ""
         RegVal = int(Value, 16)
 
+        RegVal = self.FilterReg0001(RegVal)
 
         # These codes indicate an alarm needs to be reset before the generator will run again
         AlarmValues = {
@@ -2671,11 +2695,13 @@ class Evolution(GeneratorController):
          0x12 : "Check for Service",    #  Validate on Nexus AC (Spark Plugs service due?)
          0x14 : "Check Battery",        #  Validate on Nexus, occurred when Check Battery Alarm
          0x15 : "Underspeed",           #  Validate on Evo AC 2
+         0x18 : "Wiring Error",         #  Validate on Nexus AC
          0x1a : "Missing Cam Pulse",    #  Validate on Nexus Liquid Cooled
          0x1c : "Throttle Failure",     #  Validate on Nexus LC,
          0x1e : "Under Voltage",        #  Validate on EvoAC
-         0x1f : "Service Due",          #  Validate on Evolution, occurred when forced service due
-         0x20 : "Service Complete",     #  Validate on Evolution, occurred when service reset
+         0x1f : "Service A Due",        #  Validate on Evolution, occurred when forced service due
+         0x20 : "Service B Due",        #  WARNING, Validate on Evolution, occurred when service reset
+         0x22 : "Canbus Error",         #  Validate on Nexus LC
          0x24 : "Overload",             #  Validate on Evolution Air Cooled
          0x28 : "Fuse Problem",         #  Validate on Evolution Air Cooled
          0x29 : "Battery Problem",      #  Validate on EvoLC
@@ -2686,6 +2712,7 @@ class Evolution(GeneratorController):
          0x32 : "Low Fuel Pressure",    #  Validate on EvoLC
          0x34 : "Emergency Stop",       #  Validate on Evolution, occurred when E-Stop
          0x38 : "Very Low Battery"      #  Validate on Evolutio Air Cooled
+         #0x74 : "Controller Lost Connection to Server",    # Evolution 2.0 no validated
         }
 
         outString += AlarmValues.get(RegVal & 0x0FFFF,"UNKNOWN ALARM: %08x" % RegVal)
@@ -2708,6 +2735,28 @@ class Evolution(GeneratorController):
         if regvalue & 0xFFF0FFC0:
             return False
         return True
+
+    #------------ Evolution:FilterReg0001 --------------------------------------
+    def FilterReg0001(self, regvalue):
+
+        try:
+
+            if not self.Evolution2:
+                return regvalue
+
+            if not self.IgnoreUnknown:
+                return regvalue
+
+            IgnoreList = [0x2020, 0x20200000, 0x3f3d0000,  0x3f3d, 0x3430]
+
+            if regvalue in IgnoreList:
+                return self.LastAlarmValue
+            return regvalue
+
+        except Exception as e1:
+            self.LogErrorLine("Error in  FilterReg0001 " + str(e1))
+            return regvalue
+
     #------------ Evolution:GetDigitalValues -----------------------------------
     def GetDigitalValues(self, RegVal, LookUp):
 
@@ -2840,6 +2889,7 @@ class Evolution(GeneratorController):
             if len(Value) != 8:
                 return ""
             RegVal = int(Value, 16)
+            RegVal = self.FilterReg0001(RegVal)
         else:
             RegVal = Reg0001Value
 
@@ -2878,8 +2928,6 @@ class Evolution(GeneratorController):
             return "Stopped in Alarm"
         elif self.BitIsEqual(RegVal, 0x000F0000, 0x00060000):
             return "Running in Warning"
-        elif self.BitIsEqual(RegVal, 0x000F0000, 0x00080000):
-            return "Stopped in Alarm"
         elif self.BitIsEqual(RegVal, 0x000F0000, 0x00000000):
             return "Off - Ready"
         else:
@@ -2894,6 +2942,7 @@ class Evolution(GeneratorController):
             if len(Value) != 8:
                 return ""
             RegVal = int(Value, 16)
+            RegVal = self.FilterReg0001(RegVal)
         else:
             RegVal = Reg0001Value
 
@@ -3570,13 +3619,19 @@ class Evolution(GeneratorController):
         if len(Value) != 8:
             return False
 
-        HexValue = int(Value,16)
+        RegVal = int(Value,16)
 
-        # service due alarm?
-        if self.BitIsEqual(HexValue,   0xFFF0FFFF, 0x0000001F):
-            # is the Service Due Alarm Active?
+        RegVal = self.FilterReg0001(RegVal)
+
+        # service A due alarm?
+        if self.BitIsEqual(RegVal,   0xFFF0FFFF, 0x0000001F):
+            # is the Service Due A Alarm Active?
             return True
 
+        # service B due alarm?
+        if self.BitIsEqual(RegVal,   0xFFF0FFFF, 0x00000020):
+            # is the Service Due B Alarm Active?
+            return True
         if AlarmOnly:
             return False
 
@@ -3771,6 +3826,10 @@ class Evolution(GeneratorController):
             if not self.Evolution2:
                 return
 
+            if self.GetDeltaTimeMinutes(datetime.datetime.now() - self.CheckFirmwareVerionsTime) < 60 :     # check every hour
+                return
+
+            self.CheckFirmwareVerionsTime = datetime.datetime.now()
             FWVersionString = self.GetFirmwareVersion()
             if not len(FWVersionString):
                 return
@@ -3993,6 +4052,7 @@ class Evolution(GeneratorController):
             StartInfo["WriteQuietMode"] = EvoLC
             StartInfo["Firmware"] = self.GetFirmwareVersion()
             StartInfo["Hardware"] = self.GetHardwareVersion()
+            StartInfo["SetGenTime"] = True
 
             if not NoTile:
                 StartInfo["pages"] = {

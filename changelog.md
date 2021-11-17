@@ -1,6 +1,45 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.18.00  -2021-11-09
+- python3 is now the default instead of python2. This upgrade may take longer to install since python3 libraries will need to be installed so please be patient if genmon does not respond immediately after the upgrade. See https://github.com/jgyates/genmon/issues/598 for more details
+
+## V1.17.05  -2021-11-08
+- Update to gengpio.py to allow for disabling to GPIO
+
+## V1.17.04  -2021-10-15
+- Added support for Evolution 2.0 14kW
+
+## V1.17.03  -2021-10-08
+- Added code in serial number lookup to handled invalid serial numbers in web response
+- Updated code to ignore specific status codes in Evo 2.0 (Advanced Settings -> Ignore Unknown Values)
+
+## V1.17.02  -2021-08-28
+- Corrected bug in MFA web security login
+
+## V1.17.01  -2021-08-01
+- Added values for 18kw Evo 2.0 generator, new alarm entry for Evo 2.0 Wiring Error
+
+## V1.17.0  -2021-07-30
+- Added extensible method to support new types of generator controllers.
+
+## V1.16.13  -2021-07-10
+- Added the ability to print the service log
+- Updated alarm code for Service A and Service B due for Evolution
+- Updates for two DIY gauges on DIY gague add on (thanks @speters0)
+- Added new alarm code for wiring error
+
+## V1.16.12  -2021-07-01
+- Added option to change the GPIO pins used with the add on gengpioin. Change the settings in the gengpioin.conf file.
+- Changed the frequency of the firmware update check for Evolution 2.0 to every hours instead of many times per hour. This reduces the chance of ivalid notices when communication errors are occuring.
+- Update to gentankdiy to optionally support two tanks (see /conf/gentankdiy.conf for details). This applies to the DIY gauge type 1 only. Type 2 still only supports only one gauge.
+
+## V1.16.11  -2021-06-16
+- Added option to notify of transfer state changes on H and G Panel controllers. Note: the proper connections from your switch to the controller must be setup for this to work properly.
+
+## V1.16.10  -2021-06-11
+- Added gengpio.conf file to set GPIO pins to values other than the default.
+
 ## V1.16.09  -2021-05-25
 - Corrected bug in web app that displays weather on the lower right. Error occured if weather reporting was disabled (thanks @speters0)
 

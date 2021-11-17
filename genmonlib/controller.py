@@ -89,6 +89,8 @@ class GeneratorController(MySupport):
         self.NominalRPM = "Unknown"
         self.NominalKW = "Unknown"
         self.Model = "Unknown"
+        self.Phase = "Unknown"
+        self.NominalOutputVolts = "Unknown"
         self.EngineDisplacement = "Unknown"
         self.TankSize = 0
         self.UseExternalFuelData = False
@@ -637,12 +639,12 @@ class GeneratorController(MySupport):
 
         return "Not Supported"
 
-    #----------  GeneratorController::SetGeneratorRemoteStartStop---------------
+    #----------  GeneratorController::SetGeneratorRemoteCommand---------------
     # CmdString will be in the format: "setremote=start"
     # valid commands are start, stop, starttransfer, startexercise
     # return string "Remote command sent successfully" or some descriptive error
     # string if failure
-    def SetGeneratorRemoteStartStop(self, CmdString):
+    def SetGeneratorRemoteCommand(self, CmdString):
         try:
             pass
         except Exception as e1:
@@ -702,7 +704,8 @@ class GeneratorController(MySupport):
     #------------ GeneratorController:GetOneLineStatus -------------------------
     # returns a one line status for example : switch state and engine state
     def GetOneLineStatus(self):
-        return "Unknown"
+        return self.GetSwitchState() + " : " + self.GetEngineState()
+        
     #------------ GeneratorController:RegRegValue ------------------------------
     def GetRegValue(self, CmdString):
 
@@ -1570,7 +1573,7 @@ class GeneratorController(MySupport):
     def ExternalFuelDataSupported(self):
         return self.UseExternalFuelData
     #----------  GeneratorController::GetExternalFuelPercentage-----------------
-    def GetExternalFuelPercentage(self, ReturnFloat = False):
+    def GetExternalFuelPercentage(self, ReturnFloat = False, TankNumber = 0):
 
         try:
             if ReturnFloat:
@@ -1582,7 +1585,15 @@ class GeneratorController(MySupport):
                 return DefaultReturn
 
             if self.TankData != None:
-                percentage =  self.TankData["Percentage"]
+                if TankNumber == 1:
+                    percentage =  self.TankData["Percentage"]
+                if TankNumber == 2:
+                    percentage =  self.TankData["Percentage2"]
+                if TankNumber == 0:
+                    if "Percentage2" in self.TankData:
+                        percentage = (float(self.TankData["Percentage"]) + float(self.TankData["Percentage2"])) / 2
+                    else:
+                        percentage = self.TankData["Percentage"]
                 if ReturnFloat:
                     return float(percentage)
                 else:
@@ -1596,11 +1607,14 @@ class GeneratorController(MySupport):
     def SetExternalTankData(self, command):
 
         try:
+            bInitTiles = False
             CmdList = command.split("=")
             if len(CmdList) == 2:
                 with self.ExternalDataLock:
+                    if self.TankData == None:
+                        bInitTiles = True
                     self.TankData = json.loads(CmdList[1])
-                if not self.UseExternalFuelData:
+                if bInitTiles:
                     self.UseExternalFuelData = True
                     self.SetupTiles()
             else:
@@ -1614,11 +1628,14 @@ class GeneratorController(MySupport):
     #----------  GeneratorController::SetExternalCTData-------------------------
     def SetExternalCTData(self, command):
         try:
+            bInitTiles = False
             CmdList = command.split("=")
             if len(CmdList) == 2:
                 with self.ExternalDataLock:
+                    if self.TankData == None:
+                        bInitTiles = True
                     self.ExternalCTData = json.loads(CmdList[1])
-                if not self.UseExternalCTData:
+                if bInitTiles:
                     self.UseExternalCTData = True
                     self.SetupTiles()
             else:

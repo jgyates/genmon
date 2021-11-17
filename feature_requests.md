@@ -1,4 +1,12 @@
 # Feature Request List
+- [Add guages for Raspberry Pi Temp and Wifi](https://github.com/jgyates/genmon/issues/604) @lampe208 
+- [Dark Mode for web interface](https://github.com/jgyates/genmon/issues/602) @danodemano
+- [Add ATS test using power reading](https://github.com/jgyates/genmon/issues/593) @skipfire
+- [Discovery for Home Assistant](https://github.com/jgyates/genmon/issues/590) @dave-parsons
+- [Make Service Journal entries sortable and filterable](https://github.com/jgyates/genmon/issues/584) @nickdot
+- [Option to remember 2FA for 30 days](https://github.com/jgyates/genmon/issues/565) @danodemano
+- [Connecting Genmon to Homebridge (and ultimately Homekit)](https://github.com/jgyates/genmon/issues/552) @muddycharles68
+- [add support for a Cummins Quiet Connect generator](https://github.com/jgyates/genmon/issues/553) @derekatkins
 - [Ability to control update alerts through Pushover](https://github.com/jgyates/genmon/issues/523) @danodemano
 - [TX Industrial Switch support](https://github.com/jgyates/genmon/issues/463) @unsword01
 - [Unified web interface for running multiple instances of generator monitor](https://github.com/jgyates/genmon/issues/260) - @KUBAllen

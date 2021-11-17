@@ -268,7 +268,7 @@ class MyTile (MyCommon):
                 Value = self.Minimum
 
             if isinstance(Value, float):
-                ValueStr = "%.2f" % Value
+                ValueStr = "%g" % Value
             else:
                 ValueStr = str(Value)
 

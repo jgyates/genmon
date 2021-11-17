@@ -27,6 +27,7 @@ try:
     from genmonlib.generac_evolution import Evolution
     from genmonlib.generac_HPanel import HPanel
     from genmonlib.generac_powerzone import PowerZone
+    from genmonlib.custom_controller import CustomController
     from genmonlib.myweather import MyWeather
     from genmonlib.program_defaults import ProgramDefaults
 except Exception as e1:
@@ -35,7 +36,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.16.09"
+GENMON_VERSION = "V1.18.00"
 
 #------------ Monitor class ----------------------------------------------------
 class Monitor(MySupport):
@@ -172,6 +173,8 @@ class Monitor(MySupport):
                 self.Controller = HPanel(self.log, newinstall = self.NewInstall, simulation = self.Simulation, simulationfile = self.SimulationFile, message = self.MessagePipe, feedback = self.FeedbackPipe, config = self.config)
             elif self.ControllerSelected.lower() == "powerzone" :
                 self.Controller = PowerZone(self.log, newinstall = self.NewInstall, simulation = self.Simulation, simulationfile = self.SimulationFile, message = self.MessagePipe, feedback = self.FeedbackPipe, config = self.config)
+            elif self.ControllerSelected.lower() == "custom" :
+                self.Controller = CustomController(self.log, newinstall = self.NewInstall, simulation = self.Simulation, simulationfile = self.SimulationFile, message = self.MessagePipe, feedback = self.FeedbackPipe, config = self.config)
             else:
                 self.Controller = Evolution(self.log, self.NewInstall, simulation = self.Simulation, simulationfile = self.SimulationFile, message = self.MessagePipe, feedback = self.FeedbackPipe, config = self.config)
             self.Threads = self.MergeDicts(self.Threads, self.Controller.Threads)
@@ -370,6 +373,7 @@ class Monitor(MySupport):
                 msgbody += self.printToString(self.ProcessDispatch(self.GetStartInfo(NoTile = True),""))
                 if not self.bDisablePlatformStats:
                     msgbody += self.printToString(self.ProcessDispatch({"Platform Stats" : self.GetPlatformStats()},""))
+                msgbody += self.printToString(self.ProcessDispatch({"Comm Stats" : self.Controller.GetCommStatus()},""))
                 msgbody += self.Controller.DisplayRegisters(AllRegs = FullLogs)
 
                 msgbody += "\n" + self.GetSupportData() + "\n"
@@ -448,6 +452,7 @@ class Monitor(MySupport):
             msgbody += self.printToString(self.ProcessDispatch(self.GetStartInfo(NoTile = True),""))
             if not self.bDisablePlatformStats:
                 msgbody += self.printToString(self.ProcessDispatch({"Platform Stats" : self.GetPlatformStats()},""))
+            msgbody += self.printToString(self.ProcessDispatch({"Comm Stats" : self.Controller.GetCommStatus()},""))
 
             msgbody += self.Controller.DisplayRegisters(AllRegs = True)
 

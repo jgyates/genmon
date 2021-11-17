@@ -13,7 +13,7 @@ from __future__ import print_function
 import sys, signal, os, socket, atexit, time, subprocess, json, threading, signal, errno, collections, getopt
 
 try:
-    from flask import Flask, render_template, request, jsonify, session, send_file, redirect, url_for
+    from flask import Flask, make_response, render_template, request, jsonify, session, send_file, redirect, url_for
 except Exception as e1:
     print("\n\nThis program requires the Flask library. Please see the project documentation at https://github.com/jgyates/genmon.\n")
     print("Error: " + str(e1))
@@ -119,6 +119,12 @@ def add_header(r):
 @app.route('/', methods=['GET'])
 def root():
 
+    if bUseMFA:
+        if not 'mfa_ok' in session or not session['mfa_ok'] == True:
+            session['logged_in'] = False
+            session['write_access'] = False
+            session['mfa_ok'] = False
+            redirect(url_for('root'))
     return ServePage('index.html')
 
 #-------------------------------------------------------------------------------
@@ -160,6 +166,8 @@ def mfa_auth():
                 session['mfa_ok'] = True
                 return redirect(url_for('root'))
             else:
+                session['logged_in'] = False
+                session['write_access'] = False
                 session['mfa_ok'] = False
                 return redirect(url_for('logout'))
         else:
@@ -171,11 +179,16 @@ def mfa_auth():
 #-------------------------------------------------------------------------------
 def admin_login_helper():
 
-    if bUseMFA:
-        #GetOTP()
-        return render_template('mfa.html')
-    else:
-        return redirect(url_for('root'))
+    try:
+        if bUseMFA:
+            #GetOTP()
+            response = make_response(render_template('mfa.html'))
+            return response
+        else:
+            return redirect(url_for('root'))
+    except Exception as e1:
+        LogErrorLine("Error in admin_login_helper: " + str(e1))
+        return False
 #-------------------------------------------------------------------------------
 @app.route('/', methods=['POST'])
 def do_admin_login():
@@ -681,7 +694,7 @@ def GetAddOns():
         AddOnCfg['gensyslog'] = collections.OrderedDict()
         AddOnCfg['gensyslog']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "gensyslog", default = False)
         AddOnCfg['gensyslog']['title'] = "Linux System Logging"
-        AddOnCfg['gensyslog']['description'] = "Write generator and utility state changes to system log (/var/log/system)"
+        AddOnCfg['gensyslog']['description'] = "Write generator and utility state changes to system log (/var/log/syslog)"
         AddOnCfg['gensyslog']['icon'] = "linux"
         AddOnCfg['gensyslog']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gensyslogpy-optional"
         AddOnCfg['gensyslog']['parameters'] = None
@@ -1285,6 +1298,16 @@ def ReadSingleConfigValue(entry, filename = None, section = None, type = "string
         return default
 
 #-------------------------------------------------------------------------------
+def GetImportConfigFileNames():
+
+    try:
+        path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data",  "controller")
+        listing = os.listdir(path)
+        return ",".join(listing)
+    except Exception as e1:
+        LogErrorLine("Error Reading Config File (ReadSingleConfigValue): " + str(e1))
+        return ""
+#-------------------------------------------------------------------------------
 def ReadAdvancedSettingsFromFile():
 
     ConfigSettings =  collections.OrderedDict()
@@ -1296,21 +1319,24 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["response_address"] = ['string', 'Modbus slave transmit address', 6, "", "", 0 , GENMON_CONFIG, GENMON_SECTION, "response_address"]
         ConfigSettings["additional_modbus_timeout"] = ['float', 'Additional Modbus Timeout (sec)', 7, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "additional_modbus_timeout"]
         ConfigSettings["watchdog_addition"] = ['float', 'Additional Watchdog Timeout (sec)', 8, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "watchdog_addition"]
-        ConfigSettings["controllertype"] = ['list', 'Controller Type', 9, "generac_evo_nexus", "", "generac_evo_nexus,h_100,powerzone", GENMON_CONFIG, GENMON_SECTION, "controllertype"]
-        ConfigSettings["loglocation"] = ['string', 'Log Directory',10, ProgramDefaults.LogPath, "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "loglocation"]
-        ConfigSettings["userdatalocation"] = ['string', 'User Defined Data Directory',11, os.path.dirname(os.path.realpath(__file__)), "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "userdatalocation"]
-        ConfigSettings["enabledebug"] = ['boolean', 'Enable Debug', 12, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "enabledebug"]
-        ConfigSettings["ignore_unknown"] = ['boolean', 'Ignore Unknown Values', 13, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "ignore_unknown"]
+        ConfigSettings["controllertype"] = ['list', 'Controller Type', 9, "generac_evo_nexus", "", "generac_evo_nexus,h_100,powerzone,custom", GENMON_CONFIG, GENMON_SECTION, "controllertype"]
+
+        import_config_files = GetImportConfigFileNames()
+        ConfigSettings["import_config_file"] = ['list', 'Custom Controller Config File', 10, "evo_lc.json", "", import_config_files, GENMON_CONFIG, GENMON_SECTION, "import_config_file"]
+        ConfigSettings["loglocation"] = ['string', 'Log Directory',11, ProgramDefaults.LogPath, "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "loglocation"]
+        ConfigSettings["userdatalocation"] = ['string', 'User Defined Data Directory',12, os.path.dirname(os.path.realpath(__file__)), "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "userdatalocation"]
+        ConfigSettings["enabledebug"] = ['boolean', 'Enable Debug', 13, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "enabledebug"]
+        ConfigSettings["ignore_unknown"] = ['boolean', 'Ignore Unknown Values', 14, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "ignore_unknown"]
         # These settings are not displayed as the auto-detect controller will set these
         # these are only to be used to override the auto-detect
         #ConfigSettings["liquidcooled"] = ['boolean', 'Force Controller Type (cooling)', 10, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "liquidcooled"]
         #ConfigSettings["evolutioncontroller"] = ['boolean', 'Force Controller Type (Evo/Nexus)', 11, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "evolutioncontroller"]
         # remove outage log, this will always be in the same location
         #ConfigSettings["outagelog"] = ['string', 'Outage Log', 12, "/home/pi/genmon/outage.txt", "", "required UnixFile", GENMON_CONFIG, GENMON_SECTION, "outagelog"]
-        ConfigSettings["serialnumberifmissing"] = ['string', 'Serial Number if Missing', 14, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "serialnumberifmissing"]
-        ConfigSettings["additionalrunhours"] = ['string', 'Additional Run Hours', 15, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "additionalrunhours"]
-        ConfigSettings["estimated_load"] = ['float', 'Estimated Load', 16, "0.0", "", "required range:0:1", GENMON_CONFIG, GENMON_SECTION, "estimated_load"]
-        ConfigSettings["subtractfuel"] = ['float', 'Subtract Fuel', 17, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "subtractfuel"]
+        ConfigSettings["serialnumberifmissing"] = ['string', 'Serial Number if Missing', 15, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "serialnumberifmissing"]
+        ConfigSettings["additionalrunhours"] = ['string', 'Additional Run Hours', 16, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "additionalrunhours"]
+        ConfigSettings["estimated_load"] = ['float', 'Estimated Load', 76, "0.0", "", "required range:0:1", GENMON_CONFIG, GENMON_SECTION, "estimated_load"]
+        ConfigSettings["subtractfuel"] = ['float', 'Subtract Fuel', 18, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "subtractfuel"]
         #ConfigSettings["kwlog"] = ['string', 'Power Log Name / Disable', 16, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlog"]
         if ControllerType != 'h_100':
             ConfigSettings["usenominallinevolts"] = ['boolean', 'Use Nominal Volts Override', 25, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "usenominallinevolts"]
@@ -1435,7 +1461,7 @@ def ReadSettingsFromFile():
     ConfigSettings["serial_tcp_port"] = ['int', 'Serial Server TCP/IP Port', 5, "8899", "", "digits", GENMON_CONFIG, GENMON_SECTION, "serial_tcp_port"]
     ConfigSettings["modbus_tcp"] = ['boolean', 'Use Modbus TCP protocol', 6, False, "", "", GENMON_CONFIG, GENMON_SECTION, "modbus_tcp"]
 
-    if ControllerType != 'h_100':
+    if ControllerType == 'generac_evo_nexus':
         ConfigSettings["disableoutagecheck"] = ['boolean', 'Do Not Check for Outages', 17, False, "", "", GENMON_CONFIG, GENMON_SECTION, "disableoutagecheck"]
 
     ConfigSettings["syncdst"] = ['boolean', 'Sync Daylight Savings Time', 22, False, "", "", GENMON_CONFIG, GENMON_SECTION, "syncdst"]
@@ -1467,6 +1493,9 @@ def ReadSettingsFromFile():
 
     ConfigSettings["smart_transfer_switch"] = ['boolean', 'Smart Transfer Switch', 110, False, "", "", GENMON_CONFIG, GENMON_SECTION, "smart_transfer_switch"]
     ConfigSettings["displayunknown"] = ['boolean', 'Display Unknown Sensors', 111, False, "", "", GENMON_CONFIG, GENMON_SECTION, "displayunknown"]
+
+    if ControllerType == 'h_100':
+        ConfigSettings["industrialoutagecheck"] = ['boolean', 'Outage Notice on Transfer State Change', 112, False, "", "", GENMON_CONFIG, GENMON_SECTION, "industrialoutagecheck"]
 
     # These do not appear to work on reload, some issue with Flask
     ConfigSettings["usehttps"] = ['boolean', 'Use Secure Web Settings', 200, False, "", "", GENMON_CONFIG, GENMON_SECTION, "usehttps"]
@@ -1536,6 +1565,8 @@ def GetAllConfigValues(FileName, section):
     try:
         config = MyConfig(filename = FileName, section = section, log = log)
 
+        if config == None:
+            return ReturnDict
         for (key, value) in config.GetList():
             ReturnDict[key.lower()] = value
     except Exception as e1:
@@ -1597,9 +1628,9 @@ def CacheToolTips():
 
             except Exception as e1:
                 LogError("Error reading Controller Type for H-100: " + str(e1))
-        CachedRegisterDescriptions = GetAllConfigValues(os.path.join(pathtofile, "data/tooltips.txt"), config_section)
+        CachedRegisterDescriptions = GetAllConfigValues(os.path.join(pathtofile, "data", "tooltips.txt"), config_section)
 
-        CachedToolTips = GetAllConfigValues(os.path.join(pathtofile, "data/tooltips.txt"), "ToolTips")
+        CachedToolTips = GetAllConfigValues(os.path.join(pathtofile, "data", "tooltips.txt"), "ToolTips")
 
     except Exception as e1:
         LogErrorLine("Error reading tooltips.txt " + str(e1) )

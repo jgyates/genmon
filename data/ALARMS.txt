@@ -41,6 +41,7 @@
 1905!ALARM!Undervoltage (Low Speed)!Generator running underspeed for > 30 seconds when undervoltage alarm set!Possible cause: fuel injectors, air intake blocked, fuel supply, other engine failures
 1906!ALARM!Undervoltage (Single Zero Cross missing)!Undervoltage due to faulty excitation winding, zero cross circuit, or circuit in general. One zero cross missing for greater than 1.5 seconds!Possible cause: field boost hardware failure
 2099!ALARM!Wiring Error!Connection low voltage and high voltage wires are crossed. Incorrect DC AC wiring hook up. !Check connection in generator
+2098!ALARM!Wiring Error!Check Connections in generator. !Check connection in generator
 2100!ALARM!Overload Remove Load (Default, Output Current Method)!Unit is overloaded, one of the two CTs is detecting an overload condition.!Check transfer switch loadshed functionality. (Change load dynamics or utilize loadshed). Remove Load
 2101!ALARM!Overload (Remove Load)!Overload (DPE Style Field Current Method) Field Current measured value is above threshold! Possible cause: Overload
 2102!ALARM!Overload (Remove Load)!Unit recranks 5 times when load is applied, engine dies (0 RPM) and has low voltage (< 180V)!Check for Overloaded condition on unit. Inspect stepper motor operation.

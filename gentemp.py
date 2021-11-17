@@ -274,7 +274,7 @@ class GenTemp(MySupport):
 
     # ----------GenTemp::Close----------------------------------------------
     def Close(self):
-        self.LogError("GenTemp Exit")
+        
         self.KillThread("GenTempThread")
         self.Generator.Close()
 #-------------------------------------------------------------------------------

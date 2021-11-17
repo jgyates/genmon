@@ -123,8 +123,9 @@ class MyCommon(object):
     def removeAlpha(self, inputStr):
         answer = ""
         for char in inputStr:
-            if not char.isalpha() and char != ' ':
+            if not char.isalpha() and char != ' ' and char != '%':
                 answer += char
+
         return answer.strip()
     #------------ MyCommon::MergeDicts -----------------------------------------
     def MergeDicts(self, x, y):

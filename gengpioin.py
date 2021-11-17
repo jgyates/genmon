@@ -35,7 +35,6 @@ INPUT_START = 13            # START GPIO 27
 INPUT_START_TRANSFER = 15   # START/TRANSFER GPIO 22
 
 
-
 #-----------------MyGPIO class -------------------------------------------------
 class MyGPIOInput(MySupport):
     #-----------------init------------------------------------------------------
@@ -192,6 +191,14 @@ if __name__=='__main__':
 
             DefaultBounce = config.ReadValue('bounce', return_type = int, default = 0)
             UseGPIOLibraryCallbacks = config.ReadValue('uselibcallbacks', return_type = bool, default = True)
+
+            # STOP GPIO 17
+            INPUT_STOP = config.ReadValue('INPUT_STOP', return_type = int, default = 11)
+            # START GPIO 27
+            INPUT_START = config.ReadValue('INPUT_START', return_type = int, default = 13)
+            # START/TRANSFER GPIO 22
+            INPUT_START_TRANSFER = config.ReadValue('INPUT_START_TRANSFER', return_type = int, default = 15)
+
 
         Settings = ""
         if DefaultPullup == GPIO.PUD_OFF:

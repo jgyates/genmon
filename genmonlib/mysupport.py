@@ -190,7 +190,8 @@ class MySupport(MyCommon):
 
         return Thread.Wait(timeout)
 
-    #------------ MySupport::SplitUnits ----------------------------------------
+    #------------ MySupport::UnitsOut ------------------------------------------
+    # output data based on the NoString flag, in put is a string value with units
     def UnitsOut(self, input, type = None, NoString = False):
 
         try:
@@ -217,6 +218,8 @@ class MySupport(MyCommon):
             self.LogErrorLine("Error in SplitUnits: " + str(e1))
             return input
     #------------ MySupport::ValueOut ------------------------------------------
+    # output data based on NoString flag, either return a string with a unit or a
+    # numeric value
     def ValueOut(self, value, unit, NoString = False):
         try:
 
@@ -429,6 +432,17 @@ class MySupport(MyCommon):
         except Exception as e1:
             self.LogErrorLine("Error in ReadCSVFile: " + FileName + " : " + str(e1))
             return []
+
+    #------------ MySupport::GetWANIp-------------------------------------------
+    def GetWANIp(self):
+
+        try:
+            import requests
+            ip = requests.get('http://ipinfo.io/json').json()['ip']
+            return ip.strip()
+        except Exception as e1:
+            self.LogErrorLine("Error getting WAN IP: " + str(e1))
+            return "Unknown"
 
     #------------ MySupport::GetNetworkIp---------------------------------------
     def GetNetworkIp(self):

@@ -40,6 +40,7 @@ class Loader(MySupport):
         self.Start = start
         self.Stop = stop
         self.HardStop = hardstop
+        self.PipChecked = False
 
 
         self.ConfigFilePath = ConfigFilePath
@@ -130,27 +131,28 @@ class Loader(MySupport):
         # this function checks the system to see if the required libraries are
         # installed. If they are not then an attempt is made to install them.
         ModuleList = [
-            # [import name , install name, Python2.7 version]
+            # [import name , install name, required version]
             ['flask','flask', None],                # Web server
             # we will not use the check for configparser as this look like it is in backports on 2.7
             # and our myconfig modules uses the default so this generates an error that is not warranted
             #['configparser','configparser',None],   # reading config files
             ['serial','pyserial',None],             # Serial
             ['crcmod','crcmod',None],               # Modbus CRC
-            ['pyowm','pyowm','2.9.0'],              # Open Weather API
+            ['pyowm','pyowm','2.10.0'],             # Open Weather API
             ['pytz','pytz',None],                   # Time zone support
             ['pysnmp','pysnmp',None],               # SNMP
             ['ldap3','ldap3',None],                 # LDAP
             ['smbus','smbus',None],                 # SMBus reading of temp sensors
             ['pyotp','pyotp','2.3.0'],              # 2FA support
-            ['psutil','psutil',None]                # process utilities
+            ['psutil','psutil',None],               # process utilities
+            ['chump','chump',None],                 # for genpushover
+            ['twilio','twilio',None],               # for gensms
+            ['paho.mqtt.client','paho-mqtt',None],  # for genmqtt
+            ['OpenSSL', 'pyopenssl',None]           # SSL
         ]
         try:
             ErrorOccured = False
 
-            # This will check if pip is installed
-            #if "linux" in sys.platform:
-            #    self.CheckBaseSoftware()
             for Module in ModuleList:
                 if not self.LibraryIsInstalled(Module[0]):
                     self.LogInfo("Warning: required library " + Module[1] + " not installed. Attempting to install....")
@@ -170,8 +172,11 @@ class Loader(MySupport):
     def CheckBaseSoftware(self):
 
         try:
+            if self.PipChecked:
+                return True
+
             if sys.version_info[0] < 3:
-                pipProgram = "pip"
+                pipProgram = "pip2"
             else:
                 pipProgram = "pip3"
 
@@ -183,6 +188,7 @@ class Loader(MySupport):
                 self.LogInfo("Error in CheckBaseSoftware  : " + libraryname + " : " + str(_error))
             rc = process.returncode
 
+            self.PipChecked = True
             return True
         except Exception as e1:
             self.LogInfo("Error in CheckBaseSoftware: " + str(e1), LogLine = True)
@@ -198,12 +204,14 @@ class Loader(MySupport):
             else:
                 pipProgram = "python3-pip"
 
+            self.LogInfo("Installing " + pipProgram)
+
             install_list = ["sudo","apt-get","-yqq","update"]
             process = Popen(install_list, stdout=PIPE, stderr=PIPE)
             output, _error = process.communicate()
 
             if _error:
-                self.LogInfo("Error in InstallBaseSoftware  : " + libraryname + " : " + str(_error))
+                self.LogInfo("Error in InstallBaseSoftware  : " +  + str(_error))
             rc = process.returncode
 
             install_list = ["sudo","apt-get","-yqq","install", pipProgram]
@@ -211,7 +219,7 @@ class Loader(MySupport):
             output, _error = process.communicate()
             return True
         except Exception as e1:
-            self.LogInfo("Error in CheckBaseSoftware: " + str(e1), LogLine = True)
+            self.LogInfo("Error in InstallBaseSoftware: " + str(e1), LogLine = True)
             return False
 
     #---------------------------------------------------------------------------
@@ -291,12 +299,16 @@ class Loader(MySupport):
 
         try:
             if sys.version_info[0] < 3:
-                pipProgram = "pip"
-                if version != None:
-                    libraryname = libraryname + "=="+ version
+                pipProgram = "pip2"
             else:
                 pipProgram = "pip3"
 
+            if version != None:
+                libraryname = libraryname + "=="+ version
+
+            # This will check if pip is installed
+            if "linux" in sys.platform:
+                self.CheckBaseSoftware()
 
             if update:
                 install_list = [pipProgram, 'install', libraryname, '-U']
@@ -387,6 +399,16 @@ class Loader(MySupport):
                 if not len(defValue):
                     self.config.WriteValue('conffile', "gengpioin.conf", section = "gengpioin")
                     self.LogError("Updated entry gengpioin.conf")
+
+            self.config.SetSection("gengpio")
+            if not self.config.HasOption('conffile'):
+                self.config.WriteValue('conffile', "gengpio.conf", section = "gengpio")
+                self.LogError("Updated entry gengpio.conf")
+            else:
+                defValue = self.config.ReadValue('conffile', default = "")
+                if not len(defValue):
+                    self.config.WriteValue('conffile', "gengpio.conf", section = "gengpio")
+                    self.LogError("Updated entry gengpio.conf")
 
         except Exception as e1:
             self.LogInfo("Error in UpdateIfNeeded: " + str(e1), LogLine = True)

@@ -14,9 +14,9 @@ files in the genmon directory, they will be overwritten. Configuration files \
 in the configuration directory will not be overritten.   \
 Continue? (y/n)  "
 
-usepython3=false
-pipcommand="pip"
-pythoncommand="python"
+usepython3=true
+pipcommand="pip3"
+pythoncommand="python3"
 OPTIND=1         # Reset in case getopts has been used previously in the shell.
 config_path="/etc/genmon/"
 log_path="/var/log/"
@@ -76,7 +76,7 @@ function updatelibraries() {
   sudo $pipcommand install pyserial -U
   sudo $pipcommand install Flask -U
   if [ "$usepython3" = true ] ; then
-    sudo $pipcommand install pyowm -U
+    sudo $pipcommand install pyowm==2.10.0 -U
   else
     sudo $pipcommand install pyowm==2.9.0 -U
   fi
@@ -138,12 +138,16 @@ function installgenmon() {
     sudo $pipcommand install pyserial
     sudo $pipcommand install Flask
     if [ "$usepython3" = true ] ; then
-      sudo $pipcommand install pyowm
+      sudo $pipcommand install pyowm==2.10.0
     else
       sudo $pipcommand install pyowm==2.9.0
     fi
     sudo $pipcommand install pytz
-    sudo apt-get -yqq install build-essential libssl-dev libffi-dev python-dev
+    if [ "$usepython3" = true ] ; then
+      sudo apt-get -yqq install build-essential libssl-dev libffi-dev python3-dev
+    else
+      sudo apt-get -yqq install build-essential libssl-dev libffi-dev python-dev
+    fi
     sudo $pipcommand install pyopenssl
     sudo $pipcommand install twilio
     sudo $pipcommand install chump
@@ -283,6 +287,7 @@ function backupgenmon() {
     sudo cp "$config_path"mymodem.conf ./genmon_backup
     sudo cp "$config_path"genemail2sms.conf ./genmon_backup
     sudo cp "$config_path"genexercise.conf ./genmon_backup
+    sudo cp "$config_path"gengpio.conf ./genmon_backup
     sudo cp "$config_path"gengpioin.conf ./genmon_backup
     sudo cp "$config_path"genalexa.conf ./genmon_backup
     sudo cp "$config_path"genemail2sms.conf ./genmon_backup
