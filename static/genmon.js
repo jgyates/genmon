@@ -1,4 +1,4 @@
- 
+
 // global base state
 var baseState = "READY";        // updated on a time
 var currentbaseState = "READY"; // menus change on this var
