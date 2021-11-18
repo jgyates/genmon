@@ -28,12 +28,12 @@ Please describe the tests that you ran to verify your changes. Provide instructi
 
 ## Checklist:
 
-- [ ] Are any new libaries required and have they been added to the install scripts
+- [ ] Are any new libraries required and have they been added to the install scripts
 - [ ] My code follows the existing code style and formatting of this project
 - [ ] I have performed a self-review of my own code
 - [ ] I have reasonably commented my code, particularly in hard-to-understand areas
 - [ ] I have made corresponding changes to the documentation
 - [ ] My changes generate no new warnings or errors
 - [ ] I have checked my code and corrected any misspellings
-- [ ] I have tested any python code on 2.7 and 3.x
-- [ ] I have tested any javascript on most popular browsers for compatiblity
+- [ ] I have tested any python code on 3.x
+- [ ] I have tested any javascript on most popular browsers for compatibility
