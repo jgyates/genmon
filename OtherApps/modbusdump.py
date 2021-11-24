@@ -26,6 +26,7 @@ except Exception as e1:
 def RegisterResults(Register, Value):
 
     print(Register + ":" + Value)
+    return True
 
 #------------ TestAllAddresses -------------------------------------------------
 def TestAllAddresses():
