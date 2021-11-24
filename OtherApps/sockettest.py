@@ -79,7 +79,7 @@ if __name__=='__main__':
 
         ReceivedString = ReceivedString.decode("UTF-8")
 
-        if TestString != ReceivedString.decode("UTF-8"):
+        if TestString != ReceivedString:
             print("FAILED: Sent data does not match receive. Received %d bytes" % len(ReceivedString))
         else:
             print("PASSED! Loopback successful")
