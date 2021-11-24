@@ -1,6 +1,11 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.18.01  -2021-11-24
+- Added notification filter options for gensms, gensms_modem, genslack, genpushover, genemail2sms addons. See Add On page to set filter options
+- Fixed bug in gensms_modem and custom controller code for python3
+- Added optional gauges for WiFi signal strength and Raspberry Pi CPU temperature. Both can be disabled on the advanced settings page.
+
 ## V1.18.00  -2021-11-09
 - python3 is now the default instead of python2. This upgrade may take longer to install since python3 libraries will need to be installed so please be patient if genmon does not respond immediately after the upgrade. See https://github.com/jgyates/genmon/issues/598 for more details
 

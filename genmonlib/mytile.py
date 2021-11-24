@@ -73,7 +73,7 @@ class MyTile (MyCommon):
                 colors = [self.RED, self.YELLOW, self.GREEN, self.YELLOW, self.RED]
                 self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
                 self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
-                self.TyleType = "gauge"
+                self.TileType = "gauge"
 
             elif self.Type.lower() == "linevolts":
                 ToleranceTen =  round(self.Nominal * 0.1)
@@ -89,7 +89,7 @@ class MyTile (MyCommon):
                 colors = [self.RED, self.YELLOW, self.GREEN, self.YELLOW, self.RED]
                 self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
                 self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
-                self.TyleType = "gauge"
+                self.TileType = "gauge"
 
             elif self.Type.lower() == "current":
                 self.Nominal = self.SetDefault(self.Nominal, 100)
@@ -103,7 +103,7 @@ class MyTile (MyCommon):
                 values = [self.Minimum, int(self.Nominal * 0.8), int(self.Nominal * 0.95), int(self.Nominal * 1.2)]
                 colors = [self.GREEN, self.YELLOW, self.RED]
                 self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
-                self.TyleType = "gauge"
+                self.TileType = "gauge"
 
             elif self.Type.lower() == "power":
                 self.Nominal = self.SetDefault(self.Nominal, 60)
@@ -116,7 +116,7 @@ class MyTile (MyCommon):
                 colors = [self.GREEN, self.YELLOW, self.RED]
                 self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
                 self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
-                self.TyleType = "gauge"
+                self.TileType = "gauge"
 
             elif self.Type.lower() == "frequency":
                 self.Nominal = self.SetDefault(self.Nominal, 60)
@@ -129,7 +129,7 @@ class MyTile (MyCommon):
                 colors = [self.RED, self.YELLOW, self.GREEN, self.YELLOW, self.RED]
                 self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
                 self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
-                self.TyleType = "gauge"
+                self.TileType = "gauge"
 
             elif self.Type.lower() == "rpm":
                 self.Nominal = self.SetDefault(self.Nominal, 3600)
@@ -143,7 +143,7 @@ class MyTile (MyCommon):
                 colors = [self.RED, self.YELLOW, self.GREEN, self.YELLOW, self.RED]
                 self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
                 self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
-                self.TyleType = "gauge"
+                self.TileType = "gauge"
 
             elif self.Type.lower() == "fuel" or self.Type.lower() == "level" or self.Type.lower() == "position":
                 self.Nominal = self.SetDefault(self.Nominal, 100)
@@ -156,7 +156,7 @@ class MyTile (MyCommon):
                 colors = [self.RED, self.YELLOW, self.GREEN]
                 self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
                 self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
-                self.TyleType = "gauge"
+                self.TileType = "gauge"
 
             elif self.Type.lower() == "temperature":
                 self.Nominal = self.SetDefault(self.Nominal, 100)
@@ -172,7 +172,7 @@ class MyTile (MyCommon):
                     values = [self.Minimum, self.Nominal, self.Nominal + int((self.Maximum - self.Nominal) / 2), self.Maximum]
                 colors = [self.GREEN, self.YELLOW, self.RED]
                 self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
-                self.TyleType = "gauge"
+                self.TileType = "gauge"
 
             elif self.Type.lower() == "pressure":
                 self.Nominal = self.SetDefault(self.Nominal, 100)
@@ -186,7 +186,7 @@ class MyTile (MyCommon):
                 colors = [self.RED, self.YELLOW, self.GREEN, self.YELLOW, self.RED]
                 self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
                 self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
-                self.TyleType = "gauge"
+                self.TileType = "gauge"
 
             elif self.Type.lower() == "powergraph":
                 self.Nominal = self.SetDefault(self.Nominal, 100)
@@ -195,6 +195,26 @@ class MyTile (MyCommon):
                 self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
                 self.TileType = "graph"
 
+            elif self.Type.lower() == "wifi":
+                # https://www.screenbeam.com/wifihelp/wifibooster/wi-fi-signal-strength-what-is-a-good-signal/
+                # -30 dBm: This is the maximum signal strength. If you have this measurement, you are likely standing right next to the access point.
+                # -50 dBm: This is considered an excellent signal strength.
+                # -60 dBm: This is a good signal strength.
+                # -67 dBm: This is a reliable signal strength. This is the minimum for any online services that require a reliable connection and Wi-Fi signal strength.
+                # -70 dBm: This is not a strong signal strength. You may be able to check your email.
+                # -80 dBm: This is an unreliable signal strength. You may be able to connect to your network, but you will not support most online activity.
+                # -90 dBm: This is a bad signal strength. You are not likely to connect to internet at this level.
+                self.Nominal = self.SetDefault(self.Nominal, -60)
+                self.Minimum = self.SetDefault(self.Minimum, -100)
+                self.Maximum = self.SetDefault(self.Maximum, -30)
+                self.Divisions = self.SetDefault(self.Divisions, 10)
+                self.SubDivisions = self.SetDefault(self.SubDivisions, 10)
+                self.Labels = self.SetDefault( self.Labels, list(range(int(self.Minimum), int(self.Maximum), int(self.Divisions))))
+                values = [self.Minimum, int(self.Nominal - 10), self.Nominal - 5, self.Maximum]
+                colors = [self.RED, self.YELLOW, self.GREEN]
+                self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
+                self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
+                self.TileType = "gauge"
             else:
                 self.LogError("Error in MyGauge:init: invalid type: " + str(type))
                 return
@@ -287,7 +307,7 @@ class MyTile (MyCommon):
             GUIInfo["type"] = self.TileType
             GUIInfo["subtype"] = self.Type
         except Exception as e1:
-            self.LogErrorLine("Error in GetGUIInfo: " + str(e1))
+            self.LogErrorLine("Error in GetGUIInfo: (" + self.Title + ") : " + str(e1))
         return GUIInfo
     #-------------MyTile:GetStartInfo-------------------------------------------
     def GetStartInfo(self):

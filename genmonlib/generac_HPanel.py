@@ -1022,20 +1022,6 @@ class HPanel(GeneratorController):
                     callbackparameters = (self.Reg.EXT_SW_UTILITY_KW[REGISTER], None, None, False, True, False))
                     self.TileList.append(Tile)
 
-                if self.FuelSensorSupported():
-                    Tile = MyTile(self.log, title = "Fuel", units = "%", type = "fuel", nominal = 100, callback = self.GetFuelSensor, callbackparameters = (True,))
-                    self.TileList.append(Tile)
-                elif self.ExternalFuelDataSupported():
-                    Tile = MyTile(self.log, title = "External Tank", units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True,))
-                    self.TileList.append(Tile)
-                elif self.FuelConsumptionGaugeSupported():    # no gauge for NG
-                    if self.UseMetric:
-                        Units = "L"         # no gauge for NG
-                    else:
-                        Units = "gal"       # no gauge for NG
-                    Tile = MyTile(self.log, title = "Estimated Fuel", units = Units, type = "fuel", nominal = int(self.TankSize), callback = self.GetEstimatedFuelInTank, callbackparameters = (True,))
-                    self.TileList.append(Tile)
-
                 if self.PowerMeterIsSupported():
                     Tile = MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = float(self.NominalKW),
                     callback = self.GetParameter,
@@ -1046,6 +1032,8 @@ class HPanel(GeneratorController):
                     callback = self.GetParameter,
                     callbackparameters = (self.Reg.TOTAL_POWER_KW[REGISTER], None, None, False, True, False))
                     self.TileList.append(Tile)
+
+                self.SetupCommonTiles()
 
         except Exception as e1:
             self.LogErrorLine("Error in SetupTiles: " + str(e1))
@@ -1603,6 +1591,8 @@ class HPanel(GeneratorController):
             StartInfo["ExerciseControls"] = False  # self.SmartSwitch
             StartInfo["WriteQuietMode"] = False
             StartInfo["SetGenTime"] = True
+            StartInfo["Linux"] = self.Platform.IsOSLinux()
+            StartInfo["RaspbeerryPi"] = self.Platform.IsPlatformRaspberryPi()
 
             if not NoTile:
                 StartInfo["pages"] = {

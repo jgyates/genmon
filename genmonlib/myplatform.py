@@ -109,6 +109,46 @@ class MyPlatform(MyCommon):
 
         return True
 
+    #------------ Evolution:GetRaspberryPiTemp ---------------------------------
+    def GetRaspberryPiTemp(self, ReturnFloat = False):
+
+        # get CPU temp
+        try:
+            if ReturnFloat:
+                DefaultReturn = 0.0
+            else:
+                DefaultReturn = "0"
+            if not self.IsPlatformRaspberryPi():
+                return DefaultReturn
+            try:
+                process = Popen(['/opt/vc/bin/vcgencmd', 'measure_temp'], stdout=PIPE)
+                output, _error = process.communicate()
+                if sys.version_info[0] >= 3:
+                    output = str(output)    # convert byte array to string for python3
+
+                TempCelciusFloat = float(output[output.index('=') + 1:output.rindex("'")])
+
+            except Exception as e1:
+                #self.LogErrorLine(str(e1))
+                # for non rasbpian based systems
+                process = Popen(['cat', '/sys/class/thermal/thermal_zone0/temp'], stdout=PIPE)
+                output, _error = process.communicate()
+
+                TempCelciusFloat = float(float(output) / 1000)
+
+            if self.UseMetric:
+                if not ReturnFloat:
+                    return "%.2f C" % TempCelciusFloat
+                else:
+                    return TempCelciusFloat
+            else:
+                if not ReturnFloat:
+                    return "%.2f F" % float(self.ConvertCelsiusToFahrenheit(TempCelciusFloat))
+                else:
+                    return float(self.ConvertCelsiusToFahrenheit(TempCelciusFloat))
+        except Exception as e1:
+            self.LogErrorLine("Error in GetRaspberryPiTemp: " + str(e1))
+        return DefaultReturn
     #------------ MyPlatform::GetRaspberryPiInfo -------------------------------
     def GetRaspberryPiInfo(self):
 
@@ -117,28 +157,7 @@ class MyPlatform(MyCommon):
         PiInfo = []
 
         try:
-            try:
-                process = Popen(['/opt/vc/bin/vcgencmd', 'measure_temp'], stdout=PIPE)
-                output, _error = process.communicate()
-                if sys.version_info[0] >= 3:
-                    output = str(output)    # convert byte array to string for python3
-                if self.UseMetric:
-                    PiInfo.append({"CPU Temperature" : "%.2f C" % float(output[output.index('=') + 1:output.rindex("'")])})
-                else:
-                    PiInfo.append({"CPU Temperature" : "%.2f F" % self.ConvertCelsiusToFahrenheit(float(output[output.index('=') + 1:output.rindex("'")]))})
-            except Exception as e1:
-                #self.LogErrorLine(str(e1))
-                # for non rasbpian based systems
-                process = Popen(['cat', '/sys/class/thermal/thermal_zone0/temp'], stdout=PIPE)
-                output, _error = process.communicate()
-                if self.UseMetric:
-                    TempFloat = float(float(output) / 1000)
-                    TempStr =  "%.2f C" % TempFloat
-                else:
-                    TempFloat = float(self.ConvertCelsiusToFahrenheit(float(output) / 1000))
-                    TempStr =  "%.2f F" % TempFloat
-                PiInfo.append({"CPU Temperature" : TempStr})
-
+            PiInfo.append({"CPU Temperature" : self.GetRaspberryPiTemp(ReturnFloat = False)})
             try:
                 process = Popen(['cat', '/proc/device-tree/model'], stdout=PIPE)
                 output, _error = process.communicate()
@@ -260,6 +279,7 @@ class MyPlatform(MyCommon):
                         LinuxInfo.extend(self.GetWiFiInfo(adapter))
                 except Exception as e1:
                     pass
+
             except:
                 pass
         except Exception as e1:
@@ -268,7 +288,30 @@ class MyPlatform(MyCommon):
         return LinuxInfo
 
     #------------ MyPlatform::GetWiFiSignalStrength ----------------------------
-    def GetWiFiSignalStrength(self, adapter):
+    def GetWiFiSignalStrength(self, ReturnInt = True):
+
+        try:
+            if ReturnInt == True:
+                DefaultReturn = 0
+            else:
+                DefaultReturn = 0
+
+            if not self.IsOSLinux():  # call staticfuntion
+                return DefaultReturn
+
+            adapter = os.popen("ip link | grep BROADCAST | grep -v NO-CARRIER | grep -m 1 LOWER_UP  | awk -F'[:. ]' '{print $3}'").readline().rstrip("\n")
+
+            if not adapter.startswith('wl'):
+                return DefaultReturn
+
+            signal = self.GetWiFiSignalStrengthFromAdapter(adapter)
+            signal = int(signal) * -1
+            return signal
+        except Exception as e1:
+            self.LogErrorLine("Error in GetWiFiSignalStrength: " + str(e1))
+            return DefaultReturn
+    #------------ MyPlatform::GetWiFiSignalStrengthFromAdapter -----------------
+    def GetWiFiSignalStrengthFromAdapter(self, adapter):
         try:
             result = subprocess.check_output(['iw', adapter, 'link'])
             if sys.version_info[0] >= 3:

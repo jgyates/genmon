@@ -325,33 +325,13 @@ class Evolution(GeneratorController):
                 Tile = MyTile(self.log, title = "RPM", type = "rpm", nominal = int(self.NominalRPM), callback = self.GetRPM, callbackparameters = (True,))
                 self.TileList.append(Tile)
 
-                if self.FuelSensorSupported():
-                    Tile = MyTile(self.log, title = "Fuel", units = "%", type = "fuel", nominal = 100, callback = self.GetFuelSensor, callbackparameters = (True,))
-                    self.TileList.append(Tile)
-                elif self.ExternalFuelDataSupported():
-                    if self.TankData != None and "Percentage2" in self.TankData:
-                        ExternalTankTitle = "External Tank 1"
-                    else:
-                        ExternalTankTitle = "External Tank"
-                    Tile = MyTile(self.log, title = ExternalTankTitle, units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True, 1))
-                    self.TileList.append(Tile)
-                    if self.TankData != None and "Percentage2" in self.TankData:
-                        ExternalTankTitle = "External Tank 2"
-                        Tile = MyTile(self.log, title = ExternalTankTitle, units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True, 2))
-                        self.TileList.append(Tile)
-                elif self.FuelConsumptionGaugeSupported():    # no gauge for NG
-                    if self.UseMetric:
-                        Units = "L"         # no gauge for NG
-                    else:
-                        Units = "gal"       # no gauge for NG
-                    Tile = MyTile(self.log, title = "Estimated Fuel", units = Units, type = "fuel", nominal = int(self.TankSize), callback = self.GetEstimatedFuelInTank, callbackparameters = (True,))
-                    self.TileList.append(Tile)
-
                 if self.PowerMeterIsSupported():
                     Tile = MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = float(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
                     self.TileList.append(Tile)
                     Tile = MyTile(self.log, title = "kW Output", type = "powergraph", nominal = float(self.NominalKW), callback = self.GetPowerOutput, callbackparameters = (True,))
                     self.TileList.append(Tile)
+
+                self.SetupCommonTiles()
 
         except Exception as e1:
             self.LogErrorLine("Error in SetupTiles: " + str(e1))
@@ -4052,6 +4032,8 @@ class Evolution(GeneratorController):
             StartInfo["WriteQuietMode"] = EvoLC
             StartInfo["Firmware"] = self.GetFirmwareVersion()
             StartInfo["Hardware"] = self.GetHardwareVersion()
+            StartInfo["Linux"] = self.Platform.IsOSLinux()
+            StartInfo["RaspbeerryPi"] = self.Platform.IsPlatformRaspberryPi()
             StartInfo["SetGenTime"] = True
 
             if not NoTile:

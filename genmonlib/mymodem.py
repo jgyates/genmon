@@ -106,6 +106,10 @@ class MyModem(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error opening serial device in MyModem: " + str(e1))
 
+    #------------MyModem::GetConfig---------------------------------------------
+    def GetConfig(self):
+        return self.config
+
     #------------MyModem::SendMessageThread-------------------------------------
     def SendMessageThread(self):
 
@@ -172,9 +176,9 @@ class MyModem(MySupport):
                 return False
 
             if not NoAddCRLF:
-                command = str(command) + b"\r\n"
+                command = str(command) + str("\r\n")
                 if response != None:
-                    response = str(response) + b"\r\n"
+                    response = str(response) + str("\r\n")
             else:
                 command = str(command)
                 if response != None:
@@ -185,7 +189,7 @@ class MyModem(MySupport):
 
                 attempts = retries
                 while  self.Sending and attempts >= 0:
-                    self.SerialDevice.Write(command)
+                    self.SerialDevice.Write(command.encode())
                     if self.LogAtCommands:
                         self.LogError("->" + command)
                     time.sleep(0.75)

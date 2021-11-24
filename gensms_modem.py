@@ -192,7 +192,8 @@ if __name__=='__main__':
                                         onfuelstate = OnFuelState,
                                         log = log,
                                         loglocation = loglocation,
-                                        console = console)
+                                        console = console,
+                                        config = SMS.GetConfig())
 
         SMSInfo = SMS.GetInfo(ReturnString = True)
         log.error(SMSInfo)

@@ -20,6 +20,8 @@ import threading, datetime, collections, os, time, json
 from genmonlib.mysupport import MySupport
 from genmonlib.mythread import MyThread
 from genmonlib.mylog import SetupLogger
+from genmonlib.mytile import MyTile
+from genmonlib.myplatform import MyPlatform
 from genmonlib.program_defaults import ProgramDefaults
 
 class GeneratorController(MySupport):
@@ -104,6 +106,7 @@ class GeneratorController(MySupport):
         self.OutageNoticeDelay = 0
 
         try:
+
             self.console = SetupLogger("controller_console", log_file = "", stream = True)
             if self.config != None:
                 self.SiteName = self.config.ReadValue('sitename', default = 'Home')
@@ -170,8 +173,21 @@ class GeneratorController(MySupport):
 
                 self.OutageNoticeDelay = self.config.ReadValue('outage_notice_delay', return_type = int, default = 0)
 
+                self.bDisablePlatformStats = self.config.ReadValue('disableplatformstats', return_type = bool, default = False)
+
+                self.bUseRaspberryPiCpuTempGauge = self.config.ReadValue('useraspberrypicputempgauge', return_type = bool, default = True)
+                self.bUseLinuxWifiSignalGauge = self.config.ReadValue('uselinuxwifisignalgauge', return_type = bool, default = True)
+
         except Exception as e1:
                 self.FatalError("Missing config file or config file entries: " + str(e1))
+
+        try:
+            if not self.bDisablePlatformStats:
+                self.Platform = MyPlatform(self.log, self.UseMetric)
+            else:
+                self.Platform = None
+        except Exception as e1:
+                self.FatalError("Failure loading platform module: " + str(e1))
 
 
     #----------  GeneratorController:StartCommonThreads-------------------------
@@ -528,6 +544,8 @@ class GeneratorController(MySupport):
             StartInfo["UtilityVoltageDisplayed"] = True
             StartInfo["RemoteCommands"] = True
             StartInfo["RemoteButtons"] = False
+            StartInfo["Linux"] = self.Platform.IsOSLinux()
+            StartInfo["RaspbeerryPi"] = self.Platform.IsPlatformRaspberryPi()
 
             if not NoTile:
                 StartInfo["tiles"] = []
@@ -705,7 +723,7 @@ class GeneratorController(MySupport):
     # returns a one line status for example : switch state and engine state
     def GetOneLineStatus(self):
         return self.GetSwitchState() + " : " + self.GetEngineState()
-        
+
     #------------ GeneratorController:RegRegValue ------------------------------
     def GetRegValue(self, CmdString):
 
@@ -1308,7 +1326,61 @@ class GeneratorController(MySupport):
             except Exception as e1:
                 self.LogErrorLine("Error in PowerMeter: " + str(e1))
 
-    #----------  GeneratorController::GetFuelInTank------------------------------
+    #----------  GeneratorController::SetupCommonTiles--------------------------
+    def SetupCommonTiles(self):
+
+        try:
+
+            if self.FuelSensorSupported():
+                Tile = MyTile(self.log, title = "Fuel", units = "%", type = "fuel", nominal = 100, callback = self.GetFuelSensor, callbackparameters = (True,))
+                self.TileList.append(Tile)
+            elif self.ExternalFuelDataSupported():
+                if self.TankData != None and "Percentage2" in self.TankData:
+                    ExternalTankTitle = "External Tank 1"
+                else:
+                    ExternalTankTitle = "External Tank"
+                Tile = MyTile(self.log, title = ExternalTankTitle, units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True, 1))
+                self.TileList.append(Tile)
+                if self.TankData != None and "Percentage2" in self.TankData:
+                    ExternalTankTitle = "External Tank 2"
+                    Tile = MyTile(self.log, title = ExternalTankTitle, units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True, 2))
+                    self.TileList.append(Tile)
+            elif self.FuelConsumptionGaugeSupported():    # no gauge for NG
+                if self.UseMetric:
+                    Units = "L"         # no gauge for NG
+                else:
+                    Units = "gal"       # no gauge for NG
+                Tile = MyTile(self.log, title = "Estimated Fuel", units = Units, type = "fuel", nominal = int(self.TankSize), callback = self.GetEstimatedFuelInTank, callbackparameters = (True,))
+                self.TileList.append(Tile)
+
+            # Raspberry pi CPU temp 
+            if self.bUseRaspberryPiCpuTempGauge and self.Platform != None:
+                nominal = 80
+                maximum = 90
+                if self.UseMetric:
+                    units = "C"
+                else:
+                    units = "F"
+                    nominal = self.ConvertCelsiusToFahrenheit(nominal)
+                    maximum = self.ConvertCelsiusToFahrenheit(maximum)
+                Tile = MyTile(self.log, title = "CPU Temp", units = units, type = "temperature", subtype = "cpu", nominal = nominal, maximum = maximum,
+                callback = self.Platform.GetRaspberryPiTemp,
+                callbackparameters = (True,))
+                self.TileList.append(Tile)
+
+            # wifi signal strength
+            if self.bUseLinuxWifiSignalGauge and self.Platform != None:
+                signal = self.Platform.GetWiFiSignalStrength()
+                if signal != 0:
+                    Tile = MyTile(self.log, title = "WiFi Signal", units = "dBm", type = "wifi",
+                    callback = self.Platform.GetWiFiSignalStrength,
+                    callbackparameters = (True,))
+                    self.TileList.append(Tile)
+
+        except Exception as e1:
+            self.LogErrorLine("Error in SetupCommonTiles: " + str(e1))
+
+    #----------  GeneratorController::GetFuelInTank-----------------------------
     def GetFuelInTank(self, ReturnFloat = False):
 
         try:

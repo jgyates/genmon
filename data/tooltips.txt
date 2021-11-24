@@ -74,7 +74,7 @@ model = The model of your generator as detected by the software
 voltageconfiguration = The voltage configuration of the industrial generator.
 nominalbattery = 12 for one battery, 24 for two batteries
 controllertype = Set to h_100 for H-100 mode or powerzone for PowerZone or custom to use an imported controller configuration, otherwise the software will default to Nexus/Evolution Mode
-import_config_file = Only used for custom controller type. Select the controller configuration to use for the custom controller type. 
+import_config_file = Only used for custom controller type. Select the controller configuration to use for the custom controller type.
 autofeedback = If enabled, an email will be sent to the software maintainer if critical data is missing in the software for your generator. The email will contain the contents of the generator registers. Enabling this option helps support the widest possible set of features and supported generators.
 update_check = If enabled the software will send an email notice when a software update is available.
 use_serial_tcp = If enabled, the software will use TCP over serial instead of direct serial communications
@@ -101,6 +101,8 @@ extend_wait = Number of additional seconds to wait to retry sending failed email
 min_outage_duration = Outages less than this time in seconds will not be logged. Notifications will still be sent if enabled.
 multi_instance = If Enabled this setting will allow multiple instances of genmon to be used on one system. Note that other settings will also need to be changed. See the wiki for additional details.
 usecalculatedpower=Calculate power output from power factor, average current and average voltage
+uselinuxwifisignalgauge=if enabled and running linux the WiFi signal will be displayed on a gauge in the web interface. Note, the gauge will not show if you are using Ethernet for your network.
+useraspberrypicputempgauge=If enabled and running on a Raspberry Pi, the CPU temperature will be displaed on a gauge in the web interface.
 [generac_evo_nexus]
 0000=Product line
 0001=Switch, Engine and Alarm Status

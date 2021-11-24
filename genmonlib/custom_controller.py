@@ -241,6 +241,8 @@ class CustomController(GeneratorController):
                     callback = self.GetGaugeValue, callbackparameters = (sensor["title"],))
                 self.TileList.append(Tile)
 
+            self.SetupCommonTiles()
+
         except Exception as e1:
             self.LogErrorLine("Error in SetupTiles: " + str(e1))
 
@@ -441,6 +443,8 @@ class CustomController(GeneratorController):
             StartInfo["ExerciseControls"] = False  # self.SmartSwitch
             StartInfo["WriteQuietMode"] = False
             StartInfo["SetGenTime"] = False
+            StartInfo["Linux"] = self.Platform.IsOSLinux()
+            StartInfo["RaspbeerryPi"] = self.Platform.IsPlatformRaspberryPi()
 
             if not NoTile:
                 StartInfo["pages"] = {
@@ -700,8 +704,8 @@ class CustomController(GeneratorController):
             sensor_list = self.GetDisplayList(self.controllerimport, "gauges")
 
             for sensor in sensor_list:
-                if sensor_title in sensor.keys():
-                    items = sensor.values()
+                if sensor_title in list(sensor.keys()):
+                    items = list(sensor.values())
                     if len(items) == 1:
                         return items[0]
             return "Unknown"

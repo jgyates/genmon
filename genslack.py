@@ -220,7 +220,8 @@ if __name__=='__main__':
                                         onfuelstate = OnFuelState,
                                         log = log,
                                         loglocation = loglocation,
-                                        console = console)
+                                        console = console,
+                                        config = config)
 
         while True:
             time.sleep(1)

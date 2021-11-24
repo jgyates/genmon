@@ -34,7 +34,13 @@ class GenNotify(MyCommon):
                 onsystemhealth = None,
                 onfuelstate = None,
                 start = True,
-                console = None):
+                console = None,
+                notify_outage = True,
+                notify_error = True,
+                notify_warning = True,
+                notify_info = True,
+                notify_sw_update = True,
+                config = None):
 
         super(GenNotify, self).__init__()
 
@@ -46,36 +52,51 @@ class GenNotify(MyCommon):
         self.LastSystemHealth = None
         self.LastFuelWarningStatus = True
         self.Events = {}            # Dict for handling events
+        self.notify_outage = notify_outage
+        self.notify_error = notify_error
+        self.notify_warning = notify_warning
+        self.notify_info = notify_info
+        self.notify_sw_update = notify_sw_update
+        self.config = config
 
 
         self.log = log
         self.console = console
 
         try:
+
+            # get settings from config file if supplied
+            if  self.config != None:
+                self.notify_outage = self.config.ReadValue('notify_outage', return_type = bool, default = True)
+                self.notify_error = self.config.ReadValue('notify_error', return_type = bool, default = True)
+                self.notify_warning = self.config.ReadValue('notify_warning', return_type = bool, default = True)
+                self.notify_info = self.config.ReadValue('notify_info', return_type = bool, default = True)
+                self.notify_sw_update = self.config.ReadValue('notify_sw_update', return_type = bool, default = True)
+
             # init event callbacks
-            if onready != None:
+            if onready != None and self.notify_info:
                 self.Events["READY"] = onready
-            if onexercise != None:
+            if onexercise != None and self.notify_info:
                 self.Events["EXERCISING"] = onexercise
-            if onrun != None:
+            if onrun != None and self.notify_info:
                 self.Events["RUNNING"] = onrun
-            if onrunmanual != None:
+            if onrunmanual != None and self.notify_info:
                 self.Events["RUNNING-MANUAL"] = onrunmanual
-            if onalarm != None:
+            if onalarm != None and self.notify_error:
                 self.Events["ALARM"] = onalarm
-            if onservice != None:
+            if onservice != None and self.notify_warning:
                 self.Events["SERVICEDUE"] = onservice
-            if onoff != None:
+            if onoff != None and self.notify_info:
                 self.Events["OFF"] = onoff
-            if onmanual != None:
+            if onmanual != None and self.notify_info:
                 self.Events["MANUAL"] = onmanual
-            if onutilitychange != None:
+            if onutilitychange != None and self.notify_outage:
                 self.Events["OUTAGE"] = onutilitychange
-            if onsoftwareupdate != None:
+            if onsoftwareupdate != None and self.notify_sw_update:
                 self.Events["SOFTWAREUPDATE"] = onsoftwareupdate
             if onsystemhealth != None:
                 self.Events["SYSTEMHEALTH"] = onsystemhealth
-            if onfuelstate != None:
+            if onfuelstate != None and self.notify_warning:
                 self.Events["FUELWARNING"] = onfuelstate
 
 
@@ -143,8 +164,9 @@ class GenNotify(MyCommon):
             OutageState = None
 
         if OutageState != None:
-            self.ProcessEventData("OUTAGE", OutageState, self.LastOutageStatus)
-            self.LastOutageStatus = OutageState
+            if self.notify_outage:
+                self.ProcessEventData("OUTAGE", OutageState, self.LastOutageStatus)
+                self.LastOutageStatus = OutageState
 
         return OutageState
     #----------  GenNotify::GetMonitorState ------------------------------------
@@ -163,11 +185,13 @@ class GenNotify(MyCommon):
                             UpdateAvailable = True
                         else:
                             UpdateAvailable = False
-                        self.ProcessEventData("SOFTWAREUPDATE", UpdateAvailable, self.LastSoftwareUpdateStatus)
-                        self.LastSoftwareUpdateStatus = UpdateAvailable
+                        if self.notify_sw_update:
+                            self.ProcessEventData("SOFTWAREUPDATE", UpdateAvailable, self.LastSoftwareUpdateStatus)
+                            self.LastSoftwareUpdateStatus = UpdateAvailable
                     if key == "Monitor Health":
-                        self.ProcessEventData("SYSTEMHEALTH", value, self.LastSystemHealth)
-                        self.LastSystemHealth = value
+                        if self.notify_info:
+                            self.ProcessEventData("SYSTEMHEALTH", value, self.LastSystemHealth)
+                            self.LastSystemHealth = value
         except Exception as e1:
             # The system does no support outage tracking (i.e. H-100)
             self.LogErrorLine("Unable to get moniotr state: " + str(e1))
@@ -190,8 +214,9 @@ class GenNotify(MyCommon):
                             FuelOK = True
                         else:
                             FuelOK = False
-                        self.ProcessEventData("FUELWARNING", FuelOK, self.LastFuelWarningStatus)
-                        self.LastFuelWarningStatus = FuelOK
+                        if self.notify_warning:
+                            self.ProcessEventData("FUELWARNING", FuelOK, self.LastFuelWarningStatus)
+                            self.LastFuelWarningStatus = FuelOK
 
         except Exception as e1:
             # The system does no support outage tracking (i.e. H-100)
@@ -234,7 +259,9 @@ class GenNotify(MyCommon):
                 else:
                     self.LogError("Invalid Callback in CallEventHandler : " + str(EventCallback))
             else:
-                self.LogError("Invalid Callback in CallEventHandler : None")
+                # This must be disabled
+                pass
+                #self.LogError("Invalid Callback in CallEventHandler : None")
         except Exception as e1:
             self.LogErrorLine("Error in CallEventHandler: " + str(e1))
 
