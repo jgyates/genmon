@@ -319,7 +319,7 @@ class MyPlatform(MyCommon):
             match = re.search('signal: -(\d+) dBm', result)
             return match.group(1)
         except Exception as e1:
-            return ""
+            return "0"
 
     #------------ MyPlatform::GetWiFiSignalQuality -----------------------------
     def GetWiFiSignalQuality(self, adapter):
