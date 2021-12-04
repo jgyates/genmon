@@ -56,7 +56,7 @@ class SerialDevice(MySupport):
         self.console = SetupLogger("myserial_console", log_file = "", stream = True)
 
         #Starting serial connection
-        self.SerialDevice = serial.Serial()
+        self.SerialDevice = serial.Serial(exclusive = True)
         self.SerialDevice.port = self.DeviceName
         self.SerialDevice.baudrate = rate
         #number of bits per bytes

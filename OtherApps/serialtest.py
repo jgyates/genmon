@@ -17,8 +17,11 @@ import sys, time, serial, os
 def OpenSerialPort(name, rate):
 
     #Starting serial connection
-    NewSerialPort = serial.Serial()
+    NewSerialPort = serial.Serial(exclusive = True)
     NewSerialPort.port = name
+
+    if NewSerialPort.is_open == True:
+        print( "The serial port is already opened. The serial port is in use, please stop genmon and retry.")
     NewSerialPort.baudrate = rate
     NewSerialPort.bytesize = serial.EIGHTBITS     #number of bits per bytes
     NewSerialPort.parity = serial.PARITY_NONE     #set parity check: no parity
@@ -29,16 +32,17 @@ def OpenSerialPort(name, rate):
     NewSerialPort.dsrdtr = False                  #disable hardware (DSR/DTR) flow control
     NewSerialPort.writeTimeout = 2                #timeout for write
 
-    #Check if port failed to open
-    if (NewSerialPort.isOpen() == False):
+    #Check if port is open
+    if (NewSerialPort.is_open == False):
         try:
             NewSerialPort.open()
             print( "Serial port opened")
         except Exception as e:
-            print( "error open serial port: " + str(e))
+            print( "error opening serial port: " + str(e))
+            print("\nTry stopping genmon.\n")
             return 0
     else:
-        print( "Serial port already open???")
+        print( "Serial port already opened. The serial port is in use. Please stop genmon and retry.")
         return 0
 
     NewSerialPort.flushInput() #flush input buffer, discarding all its contents
@@ -59,6 +63,7 @@ if __name__=='__main__': # usage SerialTest.py [port]
 
     baudrate=9600
 
+    print("\nNote: Genmon must NOT be running for this test to work properly. If Genmon is running this test will not function properly,")
     print ("\nLoopback testing for serial port " + device + "...\n")
 
     try:
