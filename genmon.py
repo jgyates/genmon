@@ -403,6 +403,7 @@ class Monitor(MySupport):
         try:
             SupportData["Program Run Time"] = self.GetProgramRunTime()
             SupportData["Monitor Health"] = self.GetSystemHealth()
+            SupportData=["Controller Selected"] = self.ControllerSelected.lower()
             SupportData["StartInfo"] = self.GetStartInfo(NoTile = True)
             if not self.bDisablePlatformStats:
                 SupportData["PlatformStats"] = self.GetPlatformStats()
