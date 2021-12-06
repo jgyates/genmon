@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+
+## V1.18.02  -2021-12-05
+- Fixed bug in set exercise functions for Evo / Nexus related to Python 3
+
 ## V1.18.01  -2021-11-24
 - Added notification filter options for gensms, gensms_modem, genslack, genpushover, genemail2sms addons. See Add On page to set filter options
 - Fixed bug in gensms_modem and custom controller code for python3

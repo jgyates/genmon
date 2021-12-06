@@ -1397,13 +1397,13 @@ class Evolution(GeneratorController):
                 self.LogError("Validation Error: Error parsing command string in ParseExerciseStringEx (setexercise): " + CmdString)
                 return Day, Hour, Minute, ModeStr
 
-            Items = CmdString.split(b"=")
+            Items = CmdString.split("=")
 
             if len(Items) != 2:
                 self.LogError("Validation Error: Error parsing command string in ParseExerciseStringEx (command): " + CmdString)
                 return Day, Hour, Minute, ModeStr
 
-            ParsedItems = Items[1].split(b",")
+            ParsedItems = Items[1].split(",")
 
             if len(ParsedItems) < 2 or len(ParsedItems) > 3:
                 self.LogError("Validation Error: Error parsing command string in ParseExerciseStringEx (items): " + CmdString)
@@ -1420,7 +1420,7 @@ class Evolution(GeneratorController):
                 self.LogError("Validation Error: Error parsing command string in ParseExerciseStringEx (Mode): " + CmdString)
                 return Day, Hour, Minute, ModeStr
 
-            TimeItems = ParsedItems[1].split(b":")
+            TimeItems = ParsedItems[1].split(":")
 
             if len(TimeItems) != 2:
                 return Day, Hour, Minute, ModeStr
