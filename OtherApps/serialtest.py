@@ -7,17 +7,27 @@
 #    DATE: 12-Apr-2017
 # Free software. Use at your own risk.
 # MODIFICATIONS:
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 
 import sys, time, serial, os
 
 
+#------------ VersionTuple -----------------------------------------------------
+def VersionTuple(value):
+
+    return tuple(map(int, (value.split("."))))
 #------------------- Open Serial Port -----------------#
 def OpenSerialPort(name, rate):
 
     #Starting serial connection
-    NewSerialPort = serial.Serial(exclusive = True)
+
+    if VersionTuple(serial.__version__) < VersionTuple("3.3"):
+        NewSerialPort = serial.Serial()
+    else:
+        NewSerialPort = serial.Serial(exclusive = True)
+
+    print("Using python serial library V" + serial.__version__)
     NewSerialPort.port = name
 
     if NewSerialPort.is_open == True:

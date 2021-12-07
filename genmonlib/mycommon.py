@@ -23,6 +23,11 @@ class MyCommon(object):
         self.debug = False
         self.MaintainerAddress = "generatormonitor.software@gmail.com"
 
+    #------------ MyCommon::VersionTuple ---------------------------------------
+    def VersionTuple(self, value):
+
+        return tuple(map(int, (value.split("."))))
+
     #------------ MyCommon::StringIsInt ----------------------------------------
     def StringIsInt(self, value):
 

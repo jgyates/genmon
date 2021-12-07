@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 
 
+## V1.18.03  -2021-12-06
+- Fixed issue with exclusinve serial port check with older verisons of pyserial (pre pyserial v3.3)
+
 ## V1.18.02  -2021-12-05
 - Fixed bug in set exercise functions for Evo / Nexus related to Python 3
 
