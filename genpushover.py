@@ -33,6 +33,16 @@ except Exception as e1:
     sys.exit(2)
 
 
+#---------------------GetErrorLine----------------------------------------------
+def GetErrorLine():
+
+    try:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        lineno = exc_tb.tb_lineno
+        return fname + ":" + str(lineno)
+    except Exception as e1:
+        return "Unknown Line " + str(e1)
 
 
 #----------  Signal Handler ----------------------------------------------------
@@ -163,7 +173,7 @@ def SendNotice(Message):
        console.info(message.id)
 
     except Exception as e1:
-       log.error("Send Notice Error: " + str(e1))
+       log.error("Send Notice Error: " + GetErrorLine() + ": " + str(e1))
        console.error("Send Notice Error: " + str(e1))
 
 #------------------- Command-line interface for gengpio ------------------------
@@ -221,5 +231,5 @@ if __name__=='__main__':
             time.sleep(1)
 
     except Exception as e1:
-        log.error("Error: " + str(e1))
+        log.error("Error: " + GetErrorLine() + ": " + str(e1))
         console.error ("Error: " + str(e1))
