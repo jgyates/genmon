@@ -26,6 +26,7 @@ class MyCommon(object):
     #------------ MyCommon::VersionTuple ---------------------------------------
     def VersionTuple(self, value):
 
+        value = self.removeAlpha(value)
         return tuple(map(int, (value.split("."))))
 
     #------------ MyCommon::StringIsInt ----------------------------------------
