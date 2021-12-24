@@ -55,54 +55,58 @@ class SerialDevice(MySupport):
             self.log = log
         self.console = SetupLogger("myserial_console", log_file = "", stream = True)
 
-        #Starting serial connection
-        if self.VersionTuple(serial.__version__) < self.VersionTuple("3.3"):
-            self.SerialDevice = serial.Serial()
-        else:
-            self.SerialDevice = serial.Serial(exclusive = True)
+        try:
+            #Starting serial connection
+            if self.VersionTuple(serial.__version__) < self.VersionTuple("3.3"):
+                self.SerialDevice = serial.Serial()
+            else:
+                self.SerialDevice = serial.Serial(exclusive = True)
 
-            self.SerialDevice = serial.Serial()
-        self.SerialDevice.port = self.DeviceName
-        self.SerialDevice.baudrate = rate
-        #number of bits per bytes
-        if sevendatabits == True:
-            self.SerialDevice.bytesize = serial.SEVENBITS
-        else:
-            self.SerialDevice.bytesize = serial.EIGHTBITS
+                self.SerialDevice = serial.Serial()
+            self.SerialDevice.port = self.DeviceName
+            self.SerialDevice.baudrate = rate
+            #number of bits per bytes
+            if sevendatabits == True:
+                self.SerialDevice.bytesize = serial.SEVENBITS
+            else:
+                self.SerialDevice.bytesize = serial.EIGHTBITS
 
-        if Parity == None:
-            self.SerialDevice.parity = serial.PARITY_NONE    #set parity check: no parity
-        elif Parity == 1:
-            self.SerialDevice.parity = serial.PARITY_ODD     #set parity check: use odd parity
-        else:
-            self.SerialDevice.parity = serial.PARITY_EVEN    #set parity check: use even parity
+            if Parity == None:
+                self.SerialDevice.parity = serial.PARITY_NONE    #set parity check: no parity
+            elif Parity == 1:
+                self.SerialDevice.parity = serial.PARITY_ODD     #set parity check: use odd parity
+            else:
+                self.SerialDevice.parity = serial.PARITY_EVEN    #set parity check: use even parity
 
-        if OnePointFiveStopBits == None:
-            self.SerialDevice.stopbits = serial.STOPBITS_ONE  #number of stop bits
-        elif OnePointFiveStopBits:
-            self.SerialDevice.stopbits = serial.STOPBITS_ONE_POINT_FIVE  #number of stop bits
-        else:
-            self.SerialDevice.stopbits = serial.STOPBITS_ONE  #number of stop bits
+            if OnePointFiveStopBits == None:
+                self.SerialDevice.stopbits = serial.STOPBITS_ONE  #number of stop bits
+            elif OnePointFiveStopBits:
+                self.SerialDevice.stopbits = serial.STOPBITS_ONE_POINT_FIVE  #number of stop bits
+            else:
+                self.SerialDevice.stopbits = serial.STOPBITS_ONE  #number of stop bits
 
-        self.SerialDevice.timeout =  0.05                 # small timeout so we can check if the thread should exit
-        self.SerialDevice.xonxoff = False                 #disable software flow control
-        self.SerialDevice.rtscts = RtsCts                 #disable hardware (RTS/CTS) flow control
-        self.SerialDevice.dsrdtr = False                  #disable hardware (DSR/DTR) flow control
-        self.SerialDevice.writeTimeout = None             #timeout for write, return when packet sent
-        self.IsOpen = False
-        #Check if port failed to open
-        if (self.SerialDevice.isOpen() == False):
-            try:
-                self.SerialDevice.open()
-            except Exception as e:
-                self.FatalError( "Error on open serial port %s: " % self.DeviceName + str(e))
+            self.SerialDevice.timeout =  0.05                 # small timeout so we can check if the thread should exit
+            self.SerialDevice.xonxoff = False                 #disable software flow control
+            self.SerialDevice.rtscts = RtsCts                 #disable hardware (RTS/CTS) flow control
+            self.SerialDevice.dsrdtr = False                  #disable hardware (DSR/DTR) flow control
+            self.SerialDevice.writeTimeout = None             #timeout for write, return when packet sent
+            self.IsOpen = False
+            #Check if port failed to open
+            if (self.SerialDevice.isOpen() == False):
+                try:
+                    self.SerialDevice.open()
+                except Exception as e:
+                    self.FatalError( "Error on open serial port %s: " % self.DeviceName + str(e))
+                    return None
+            else:
+                self.FatalError( "Serial port already open: %s" % self.DeviceName)
                 return None
-        else:
-            self.FatalError( "Serial port already open: %s" % self.DeviceName)
-            return None
-        self.IsOpen = True
-        self.Flush()
-        self.StartReadThread()
+            self.IsOpen = True
+            self.Flush()
+            self.StartReadThread()
+        except Exception as e1:
+            self.LogErrorLine("Error in init: " + str(e1))
+            self.FatalError("Error on serial port init!")
 
     # ---------- SerialDevice::ResetSerialStats---------------------------------
     def ResetSerialStats(self):
