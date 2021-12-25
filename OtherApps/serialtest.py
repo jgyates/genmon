@@ -16,8 +16,20 @@ import sys, time, serial, os
 #------------ VersionTuple -----------------------------------------------------
 def VersionTuple(value):
 
+    value = removeAlpha(value)
     return tuple(map(int, (value.split("."))))
-#------------------- Open Serial Port -----------------#
+
+#----------  removeAlpha--------------------------------------------------------
+# used to remove alpha characters from string so the string contains a
+# float value (leaves all special characters)
+def removeAlpha(inputStr):
+    answer = ""
+    for char in inputStr:
+        if not char.isalpha() and char != ' ' and char != '%':
+            answer += char
+
+    return answer.strip()
+#------------------- Open Serial Port ------------------------------------------
 def OpenSerialPort(name, rate):
 
     #Starting serial connection
@@ -66,7 +78,7 @@ def GetErrorInfo():
     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
     lineno = exc_tb.tb_lineno
     return fname + ":" + str(lineno)
-#------------------- Command-line interface for monitor -----------------#
+#------------------- Command-line interface for monitor ------------------------
 if __name__=='__main__': # usage SerialTest.py [port]
 
     device='/dev/serial0' if len(sys.argv)<2 else sys.argv[1]
