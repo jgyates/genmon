@@ -2,7 +2,7 @@ Flask
 configparser
 pyserial
 crcmod
-pyowm
+pyowm==2.10.0
 pytz
 pyopenssl
 twilio
@@ -12,4 +12,6 @@ smbus
 pysnmp
 ldap3
 pyasn1
-pyotp==2.3.0
+pyotp
+smbus
+psutil
