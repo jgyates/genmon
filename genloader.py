@@ -185,7 +185,7 @@ class Loader(MySupport):
             output, _error = process.communicate()
 
             if _error:
-                self.LogInfo("Error in CheckBaseSoftware  : " + libraryname + " : " + str(_error))
+                self.LogInfo("Error in CheckBaseSoftware  : " + str(_error))
             rc = process.returncode
 
             self.PipChecked = True
