@@ -53,6 +53,7 @@ class GenTankData(MySupport):
         self.MonitorAddress = host
         self.PollTime =  2
         self.TankID = ""
+        self.TankID_2 = ""
         self.debug = False
         configfile = os.path.join(ConfigFilePath, 'gentankutil.conf')
         try:
@@ -68,6 +69,7 @@ class GenTankData(MySupport):
             self.username = self.config.ReadValue('username', default = "")
             self.password = self.config.ReadValue('password', default = "")
             self.tank_name = self.config.ReadValue('tank_name', default = "")
+            self.tank_name_2 = self.config.ReadValue('tank_name_2', default = "")
 
             if self.MonitorAddress == None or not len(self.MonitorAddress):
                 self.MonitorAddress = ProgramDefaults.LocalHost
@@ -136,12 +138,20 @@ class GenTankData(MySupport):
 
         if force:
             self.TankID = ""
+            self.TankID_2 = ""
+
         if len(self.TankID):
             # already logged in
             return True
         if not self.tank.Login():
             return False
         self.TankID = self.tank.GetIDFromName(self.tank_name)
+
+        if len(self.tank_name_2) > 0:
+            self.LogDebug("Getting 2nd Tank ID for tank " + self.tank_name_2)
+            self.TankID_2 = self.tank.GetIDFromName(self.tank_name_2)
+            self.LogDebug("Tank 2 ID = " + self.TankID_2)
+
         if not len(self.TankID):
             return False
         return True
@@ -167,6 +177,10 @@ class GenTankData(MySupport):
                     dataforgenmon["Tank Name"] = tankdata["name"]
                     dataforgenmon["Capacity"] = self.tank.GetCapacity()
                     dataforgenmon["Percentage"] = self.tank.GetPercentage()
+
+                    if len(self.TankID_2) != 0:
+                        tankdata = self.tank.GetData(self.TankID_2)
+                        dataforgenmon["Percentage2"] = self.tank.GetPercentage()
 
                     retVal = self.SendCommand("generator: set_tank_data=" + json.dumps(dataforgenmon))
                     self.LogDebug(retVal)
