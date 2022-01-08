@@ -2335,6 +2335,7 @@ class Evolution(GeneratorController):
         0x06: "Low Coolant Level",          # 2720  Alarm
         0x47: "Low Fuel Level",             # 2700A Alarm
         0x1B: "Low Fuel Level",             # 2680W Alarm
+        0x41: "Ignition Fault",             # 2602 Alarm
         0x46: "Ruptured Tank",              # 2710 Alarm
         0x49: "Hall Calibration Error"      # 2810  Alarm
         # Low Oil Pressure
