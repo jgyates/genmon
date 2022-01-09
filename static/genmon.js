@@ -1110,15 +1110,15 @@ function DisplayLogs(){
                var matches = loglines[i].match(/^\s*(\d+)\/(\d+)\/(\d+) (\d+:\d+:\d+) (.*)$/i)
                if ((matches != undefined) && (matches.length == 6)) {
                   if ((12*matches[3]+1*matches[1]+12) <= (12*(date.getYear()-100) + date.getMonth() + 1)) {
-                  } else if (data_helper[matches.slice(1,3).join("/")] == undefined) {
-                      data_helper[matches.slice(1,3).join("/")] = {count: severity, date: '20'+matches[3]+'-'+matches[1]+'-'+matches[2], dateFormatted: matches[2]+' '+MonthsOfYearArray[(matches[1] -1)]+' 20'+matches[3], title: matches[5].trim()};
+                  } else if (data_helper[matches[3]+'/'+matches[1]+'/'+matches[2]] == undefined) {
+                      data_helper[matches[3]+'/'+matches[1]+'/'+matches[2]] = {count: severity, date: '20'+matches[3]+'-'+matches[1]+'-'+matches[2], dateFormatted: matches[2]+' '+MonthsOfYearArray[(matches[1] -1)]+' 20'+matches[3], title: matches[5].trim()};
                       if (((12*(date.getYear()-100) + date.getMonth() + 1)-(12*matches[3]+1*matches[1])+1) > months) {
                           months = (12*(date.getYear()-100) + date.getMonth() + 1)-(12*matches[3]+1*matches[1])+1
                       }
                   } else {
-                      data_helper[matches.slice(1,3).join("/")]["title"] = data_helper[matches.slice(1,3).join("/")]["title"] + "<br>" + matches[5].trim();
-                      if (data_helper[matches.slice(1,3).join("/")]["count"] < severity)
-                         data_helper[matches.slice(1,3).join("/")]["count"] = severity;
+                      data_helper[matches[3]+'/'+matches[1]+'/'+matches[2]]["title"] = data_helper[matches[3]+'/'+matches[1]+'/'+matches[2]]["title"] + "<br>" + matches[5].trim();
+                      if (data_helper[matches[3]+'/'+matches[1]+'/'+matches[2]]["count"] < severity)
+                         data_helper[matches[3]+'/'+matches[1]+'/'+matches[2]]["count"] = severity;
                   }
                }
             }
@@ -1128,7 +1128,11 @@ function DisplayLogs(){
           // var data = Object.keys(data_helper).map(itm => data_helper[itm]);
           // var data = Object.values(data_helper);
           // console.log(data);
-          var options = {coloring: 'genmon', start: new Date((date.getMonth()-12 < 0) ? date.getYear() - 1 + 1900 : date.getYear() + 1900, (date.getMonth()-12 < 0) ? date.getMonth()+1 : date.getMonth()-12, 1), end: new Date(date.getYear() + 1900, date.getMonth(), date.getDate()), months: months, labels: { days: true, months: true, custom: {monthLabels: "MMM 'YY"}}, tooltips: { show: true, options: {}}, legend: { show: false}};
+          var options = {coloring: 'genmon', 
+                         start: new Date((date.getMonth()-12 < 0) ? date.getYear() - 1 + 1900 : date.getYear() + 1900, (date.getMonth()-12 < 0) ? date.getMonth()+1 : date.getMonth()-12, 1), 
+                         end: new Date(date.getYear() + 1900, date.getMonth(), date.getDate()) , 
+                         months: months, lastMonth: date.getMonth()+1, lastYear: date.getYear() + 1900, 
+                         labels: { days: true, months: true, custom: {monthLabels: "MMM 'YY"}}, tooltips: { show: true, options: {}}, legend: { show: false}};
           $("#annualCalendar").CalendarHeatmap(data, options);
         }
    }});
