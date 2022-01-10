@@ -386,6 +386,28 @@
           "sensor": "fuel"
       }
     ],
+    "outputvoltage": [
+      {
+        "reg": "0012",
+        "mask": "ffff",
+        "multiplier": 1,
+        "type": "int",
+        "title": "Output Voltage",
+        "units": "V",
+        "sensor": "linevolts",
+      }
+    ],
+    "linevoltage": [
+      {
+        "reg": "0009",
+        "mask": "ffff",
+        "multiplier": 1,
+        "type": "int",
+        "title": "Utility Voltage",
+        "units": "V",
+        "sensor": "linevolts",
+      }
+    ],
     "run_hours": [
       {
           "reg": "000b",
