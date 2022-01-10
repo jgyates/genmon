@@ -394,7 +394,7 @@
         "type": "int",
         "title": "Output Voltage",
         "units": "V",
-        "sensor": "linevolts",
+        "sensor": "linevolts"
       }
     ],
     "linevoltage": [
@@ -405,7 +405,7 @@
         "type": "int",
         "title": "Utility Voltage",
         "units": "V",
-        "sensor": "linevolts",
+        "sensor": "linevolts"
       }
     ],
     "run_hours": [
