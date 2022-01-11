@@ -1056,6 +1056,12 @@ def GetAddOns():
             "Tank name as defined in tankutility.com",
             bounds = 'minmax:1:50',
             display_name = "Tank Name")
+        AddOnCfg['gentankutil']['parameters']['tank_name_2'] = CreateAddOnParam(
+            ConfigFiles[GENTANKUTIL_CONFIG].ReadValue("tank_name_2", return_type=str, default=""),
+            'string',
+            "Second tank name, if applicable",
+            bounds='minmax:1:50',
+            display_name="Tank Name 2 (Optional)")
         AddOnCfg['gentankutil']['parameters']['username'] = CreateAddOnParam(
             ConfigFiles[GENTANKUTIL_CONFIG].ReadValue("username", return_type = str, default = ""),
             'string',
