@@ -1,9 +1,17 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.18.04  -2022-01-11
+- Upgrade may take a little longer, depending on your raspbian versions due to a new library for SPI devices needs to be installed.
+- New Add On for Pintsize.me Raspberry pi HAT for adding external Current Transformers. This allows models without adequate power or current reporting to support a power graph and fuel estimations.
+- More Info Here: https://github.com/jgyates/genmon/wiki/1----Software-Overview#gencthatpy-optional
+- Fixed minor issue with serialtest.py
+- Added support for multiple tanks in gentankutil.py
+- Updated Evolution Liquid Cooled Alarm Log code for ignition fault
+- Corrected issue with log calendar heat map not showing the current month (thanks @buschauer)
 
 ## V1.18.03  -2021-12-06
-- Fixed issue with exclusinve serial port check with older verisons of pyserial (pre pyserial v3.3)
+- Fixed issue with exclusive serial port check with older verisons of pyserial (pre pyserial v3.3)
 
 ## V1.18.02  -2021-12-05
 - Fixed bug in set exercise functions for Evo / Nexus related to Python 3

@@ -148,7 +148,8 @@ class Loader(MySupport):
             ['chump','chump',None],                 # for genpushover
             ['twilio','twilio',None],               # for gensms
             ['paho.mqtt.client','paho-mqtt',None],  # for genmqtt
-            ['OpenSSL', 'pyopenssl',None]           # SSL
+            ['OpenSSL', 'pyopenssl',None],          # SSL
+            ['spidev', 'spidev',None]               # spidev
         ]
         try:
             ErrorOccured = False
@@ -421,7 +422,7 @@ class Loader(MySupport):
             Sections = self.config.GetSections()
             ValidSections = ['genmon', 'genserv', 'gengpio', 'gengpioin', 'genlog', 'gensms', 'gensms_modem',
             'genpushover', 'gensyslog', 'genmqtt', 'genslack', 'genexercise', 'genemail2sms', 'gentankutil',
-            'gentankdiy','genalexa', 'gensnmp', 'gentemp', 'gengpioledblink']
+            'gentankdiy','genalexa', 'gensnmp', 'gentemp', 'gengpioledblink', 'gencthat']
             for entry in ValidSections:
                 if not entry in Sections:
                     if entry == 'genmon' or entry == 'genserv':
@@ -454,6 +455,9 @@ class Loader(MySupport):
                     if entry == 'gengpioledblink':
                         self.LogError("Warning: Missing entry: " + entry + " , adding entry")
                         self.AddEntry(section = entry, module = 'gengpioledblink.py', conffile = 'gengpioledblink.conf')
+                    if entry == 'gencthat':
+                        self.LogError("Warning: Missing entry: " + entry + " , adding entry")
+                        self.AddEntry(section = entry, module = 'gencthat.py', conffile = 'gencthat.conf')
                     else:
                         self.LogError("Warning: Missing entry: " + entry)
 

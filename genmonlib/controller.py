@@ -92,7 +92,7 @@ class GeneratorController(MySupport):
         self.NominalKW = "Unknown"
         self.Model = "Unknown"
         self.Phase = "Unknown"
-        self.NominalOutputVolts = "Unknown"
+        self.NominalLineVolts = 240
         self.EngineDisplacement = "Unknown"
         self.TankSize = 0
         self.UseExternalFuelData = False
@@ -117,6 +117,9 @@ class GeneratorController(MySupport):
                 self.bDisablePowerLog = self.config.ReadValue('disablepowerlog', return_type = bool, default = False)
                 self.SubtractFuel = self.config.ReadValue('subtractfuel', return_type = float, default = 0.0)
                 self.UserURL = self.config.ReadValue('user_url',  default = "").strip()
+                self.FuelUnits = self.config.ReadValue('fuel_units', default = "gal")
+                self.FuelHalfRate = self.config.ReadValue('half_rate', return_type = float, default = 0.0)
+                self.FuelFullRate = self.config.ReadValue('full_rate', return_type = float, default = 0.0)
                 self.UseExternalCTData = self.config.ReadValue('use_external_power_data', return_type = bool, default = False)
                 # for gentankutil
                 self.UseExternalFuelData = self.config.ReadValue('use_external_fuel_data', return_type = bool, default = False)
@@ -1353,7 +1356,16 @@ class GeneratorController(MySupport):
                 Tile = MyTile(self.log, title = "Estimated Fuel", units = Units, type = "fuel", nominal = int(self.TankSize), callback = self.GetEstimatedFuelInTank, callbackparameters = (True,))
                 self.TileList.append(Tile)
 
-            # Raspberry pi CPU temp 
+            if self.UseExternalCTData:
+                NominalCurrent = float(self.NominalKW) * 1000 / self.NominalLineVolts
+                Tile = MyTile(self.log, title = "External Current", units = "A", type = "current", nominal = int(NominalCurrent), callback = self.CheckExternalCTData, callbackparameters = ("current", True, True))
+                self.TileList.append(Tile)
+
+                NominalPower = float(self.NominalKW)
+                Tile = MyTile(self.log, title = "External Power", units = "kW", type = "power", nominal = int(NominalPower), callback = self.CheckExternalCTData, callbackparameters = ("power", True, True))
+                self.TileList.append(Tile)
+
+            # Raspberry pi CPU temp
             if self.bUseRaspberryPiCpuTempGauge and self.Platform != None:
                 nominal = 80
                 maximum = 90
@@ -1631,6 +1643,7 @@ class GeneratorController(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in GetFuelConsumption: " + str(e1))
             return None, ""
+
     #----------  GeneratorController::GetFuelConsumptionDataPoints--------------
     def GetFuelConsumptionDataPoints(self):
 
@@ -1640,6 +1653,14 @@ class GeneratorController(MySupport):
         # rated generator output (Example: 200 kW x 7% = 1.4 gallon per hour at full load).
         # For Larger diesel generators KW * 7% = Fuel per hour
         # for 60 kw and below diesle generators KW * 8.5%  = Fuel per hour
+        try:
+            if self.FuelHalfRate == 0 or self.FuelFullRate == 0:
+                return None
+
+            return [.5, float(self.FuelHalfRate), 1.0, float(self.FuelFullRate), self.FuelUnits]
+
+        except Exception as e1:
+            self.LogErrorLine("Error in GetFuelConsumptionDataPoints: " + str(e1))
         return None
     #----------  GeneratorController::ExternalFuelDataSupported-----------------
     def ExternalFuelDataSupported(self):
@@ -1704,7 +1725,7 @@ class GeneratorController(MySupport):
             CmdList = command.split("=")
             if len(CmdList) == 2:
                 with self.ExternalDataLock:
-                    if self.TankData == None:
+                    if self.ExternalCTData == None:
                         bInitTiles = True
                     self.ExternalCTData = json.loads(CmdList[1])
                 if bInitTiles:
@@ -1732,6 +1753,57 @@ class GeneratorController(MySupport):
             self.LogErrorLine("Error in GetExternalCTData: " + str(e1))
             return None
         return None
+    #------------ Evolution:ConvertExternalData --------------------------------
+    def ConvertExternalData(self, request = 'current', voltage = None, ReturnFloat = False):
+
+        try:
+            if not self.UseExternalCTData:
+                return None
+            ExternalData = self.GetExternalCTData()
+
+            if ExternalData == None:
+                return None
+
+            if request.lower() == 'current' and 'current' in ExternalData:
+                return self.ReturnFormat(ExternalData['current'],"A", ReturnFloat)
+
+            if request.lower() == 'power' and 'power' in ExternalData:
+                return self.ReturnFormat(ExternalData['power'],"kW", ReturnFloat)
+
+            if 'powerfactor' in ExternalData:
+                powerfactor = float(ExternalData['powerfactor'])
+            else:
+                powerfactor = 1.0
+
+            if voltage == None:
+                return None
+
+            if request.lower() == 'current' and 'power' in ExternalData:
+                if voltage == 0:
+                    return self.ReturnFormat(0.0,"A", ReturnFloat)
+                PowerFloat = float(ExternalData['power']) * 1000.0
+                # I(A) = P(W) / (PF x V(V))
+                CurrentFloat = round(PowerFloat / (powerfactor * voltage), 2)
+                return self.ReturnFormat(CurrentFloat,"A", ReturnFloat)
+            if request.lower() == 'power' and 'current' in ExternalData:
+                CurrentFloat = float(ExternalData['current'])
+                # P(W) = PF x I(A) x V(V)
+                PowerFloat = (powerfactor * CurrentFloat * voltage) / 1000
+                return self.ReturnFormat(PowerFloat,"kW", ReturnFloat)
+            return None
+
+        except Exception as e1:
+            self.LogErrorLine("Error in ConvertExternalData: " + str(e1))
+            return None
+
+    #------------ Evolution:ReturnFormat ---------------------------------------
+    def ReturnFormat(sefl, value, units, ReturnFloat):
+
+        if ReturnFloat:
+            return round(float(value), 2)
+        else:
+            return ("%.2f " + units) % float(value)
+
     #----------  GeneratorController::AddEntryToMaintLog------------------------
     def AddEntryToMaintLog(self, InputString):
 

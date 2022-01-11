@@ -650,20 +650,6 @@ class PowerZone(GeneratorController):
                 callbackparameters = (self.Reg.COOLANT_TEMP[REGISTER], None, None, False, True, False))
                 self.TileList.append(Tile)
 
-                if self.FuelSensorSupported():
-                    Tile = MyTile(self.log, title = "Fuel", units = "%", type = "fuel", nominal = 100, callback = self.GetFuelSensor, callbackparameters = (True,))
-                    self.TileList.append(Tile)
-                elif self.ExternalFuelDataSupported():
-                    Tile = MyTile(self.log, title = "External Tank", units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True,))
-                    self.TileList.append(Tile)
-                elif self.FuelConsumptionGaugeSupported():    # no gauge for NG
-                    if self.UseMetric:
-                        Units = "L"         # no gauge for NG
-                    else:
-                        Units = "gal"       # no gauge for NG
-                    Tile = MyTile(self.log, title = "Estimated Fuel", units = Units, type = "fuel", nominal = int(self.TankSize), callback = self.GetEstimatedFuelInTank, callbackparameters = (True,))
-                    self.TileList.append(Tile)
-
                 if self.PowerMeterIsSupported():
                     Tile = MyTile(self.log, title = "Power Output", units = "kW", type = "power", nominal = float(self.NominalKW),
                     callback = self.GetParameter,
@@ -675,6 +661,7 @@ class PowerZone(GeneratorController):
                     callbackparameters = (self.Reg.TOTAL_POWER_KW[REGISTER], None, None, False, True, False))
                     self.TileList.append(Tile)
 
+                self.SetupCommonTiles()
         except Exception as e1:
             self.LogErrorLine("Error in SetupTiles: " + str(e1))
 
@@ -1408,7 +1395,7 @@ class PowerZone(GeneratorController):
             LocalAlarm = []
 
             LogRawData = ""
-            for RegValue in range(ALARM_LOG_START, ALARMLOG_LOG_START + ALARM_LOG_ENTRIES -1 , +1):
+            for RegValue in range(ALARM_LOG_START, ALARM_LOG_START + ALARM_LOG_ENTRIES -1 , +1):
                 Register = "%04x" % RegValue
                 LogRawData += self.GetParameterFileValue(Register, ReturnString = False)
 
@@ -1636,6 +1623,17 @@ class PowerZone(GeneratorController):
                         Status["Status"].append(self.ExternalTempData)
                 except Exception as e1:
                     self.LogErrorLine("Error in DisplayStatus: " + str(e1))
+
+            ReturnCurrent = self.CheckExternalCTData(request = 'current', ReturnFloat = True, gauge = True)
+            ReturnPower = self.CheckExternalCTData(request = 'power', ReturnFloat = True, gauge = True)
+            if ReturnCurrent != None and ReturnPower != None:
+                ExternalSensors = []
+                Status["Status"].append({"External Line Sensors":ExternalSensors})
+
+            if ReturnCurrent !=  None:
+                ExternalSensors.append({"Current" : self.ValueOut(ReturnCurrent, "A", JSONNum)})
+            if ReturnPower !=  None:
+                ExternalSensors.append({"Power" : self.ValueOut(ReturnPower, "kW", JSONNum)})
 
             Status["Status"].append({"Time":Time})
 
@@ -2173,6 +2171,46 @@ class PowerZone(GeneratorController):
         if ReturnFloat:
             return round((PowerOut / 1000.0), 3)
         return "%.2f kW" % (PowerOut / 1000.0)
+
+    #------------ PowerZone:CheckExternalCTData ----------------------------
+    def CheckExternalCTData(self, request = 'current', ReturnFloat = False, gauge = False):
+        try:
+
+            if ReturnFloat:
+                DefaultReturn = 0.0
+            else:
+                DefaultReturn = 0
+
+            if not self.UseExternalCTData:
+                return None
+            ExternalData = self.GetExternalCTData()
+
+            if ExternalData == None:
+                return None
+
+            # This assumes the following format:
+            # NOTE: all fields are optional
+            # { "strict" : True or False (true requires and outage to use the data)
+            #   "current" : float value in amps
+            #   "power"   : float value in kW
+            #   "powerfactor" : float value (default is 1.0) used if converting from current to power or power to current
+            # }
+            strict = False
+            if 'strict' in ExternalData:
+                strict = ExternalData['strict']
+
+            if strict:
+                # TODO? Need to know utility voltage or outage state
+                pass
+
+            # if we get here we must convert the data.
+            Voltage =  self.GetParameter(self.Reg.GEN_AVERAGE_VOLTAGE_LL[REGISTER],ReturnInt = True)
+
+            return self.ConvertExternalData(request = request, voltage = Voltage, ReturnFloat = ReturnFloat)
+
+        except Exception as e1:
+            self.LogErrorLine("Error in CheckExternalCTData: " + str(e1))
+            return DefaultReturn
 
     #----------  PowerZone:GetCommStatus  --------------------------------------
     # return Dict with communication stats

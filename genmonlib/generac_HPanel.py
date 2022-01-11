@@ -900,9 +900,6 @@ class HPanel(GeneratorController):
             self.VoltageConfig = self.config.ReadValue('voltageconfiguration', default = "277/480")
             self.NominalBatteryVolts = int(self.config.ReadValue('nominalbattery', return_type = int, default = 24))
             self.HTSTransferSwitch = self.config.ReadValue('hts_transfer_switch', return_type = bool, default = False)
-            self.FuelUnits = self.config.ReadValue('fuel_units', default = "gal")
-            self.FuelHalfRate = self.config.ReadValue('half_rate', return_type = float, default = 0.0)
-            self.FuelFullRate = self.config.ReadValue('full_rate', return_type = float, default = 0.0)
             self.UseFuelSensor = self.config.ReadValue('usesensorforfuelgauge', return_type = bool, default = True)
             self.UseCalculatedPower = self.config.ReadValue('usecalculatedpower', return_type = bool, default = False)
 
@@ -1849,6 +1846,17 @@ class HPanel(GeneratorController):
                 except Exception as e1:
                     self.LogErrorLine("Error in DisplayStatus: " + str(e1))
 
+            ReturnCurrent = self.CheckExternalCTData(request = 'current', ReturnFloat = True, gauge = True)
+            ReturnPower = self.CheckExternalCTData(request = 'power', ReturnFloat = True, gauge = True)
+            if ReturnCurrent != None and ReturnPower != None:
+                ExternalSensors = []
+                Status["Status"].append({"External Line Sensors":ExternalSensors})
+
+            if ReturnCurrent !=  None:
+                ExternalSensors.append({"Current" : self.ValueOut(ReturnCurrent, "A", JSONNum)})
+            if ReturnPower !=  None:
+                ExternalSensors.append({"Power" : self.ValueOut(ReturnPower, "kW", JSONNum)})
+
             Status["Status"].append({"Time":Time})
 
             Battery.append({"Battery Voltage" : self.ValueOut(self.GetParameter(self.Reg.BATTERY_VOLTS[REGISTER], ReturnFloat = True, Divider = 100.0), "V", JSONNum)})
@@ -2350,6 +2358,46 @@ class HPanel(GeneratorController):
             return round((PowerOut / 1000.0), 3)
         return "%.2f kW" % (PowerOut / 1000.0)
 
+    #------------ HPanel:CheckExternalCTData -------------------------------
+    def CheckExternalCTData(self, request = 'current', ReturnFloat = False, gauge = False):
+        try:
+
+            if ReturnFloat:
+                DefaultReturn = 0.0
+            else:
+                DefaultReturn = 0
+
+            if not self.UseExternalCTData:
+                return None
+            ExternalData = self.GetExternalCTData()
+
+            if ExternalData == None:
+                return None
+
+            # This assumes the following format:
+            # NOTE: all fields are optional
+            # { "strict" : True or False (true requires and outage to use the data)
+            #   "current" : float value in amps
+            #   "power"   : float value in kW
+            #   "powerfactor" : float value (default is 1.0) used if converting from current to power or power to current
+            # }
+            strict = False
+            if 'strict' in ExternalData:
+                strict = ExternalData['strict']
+
+            if strict:
+                # TODO? Need to know utility voltage or outage state
+                pass
+
+            # if we get here we must convert the data.
+            Voltage =  self.GetParameter(self.Reg.AVG_VOLTAGE[REGISTER],ReturnInt = True)
+
+            return self.ConvertExternalData(request = request, voltage = Voltage, ReturnFloat = ReturnFloat)
+
+        except Exception as e1:
+            self.LogErrorLine("Error in CheckExternalCTData: " + str(e1))
+            return DefaultReturn
+
     #----------  HPanel:GetCommStatus  -----------------------------------------
     # return Dict with communication stats
     def GetCommStatus(self):
@@ -2423,16 +2471,3 @@ class HPanel(GeneratorController):
             return None
 
         return self.GetParameter(self.Reg.FUEL_LEVEL[REGISTER], ReturnInt = ReturnInt)
-
-    #----------  GeneratorController::GetFuelConsumptionDataPoints--------------
-    def GetFuelConsumptionDataPoints(self):
-
-        try:
-            if self.FuelHalfRate == 0 or self.FuelFullRate == 0:
-                return None
-
-            return [.5, float(self.FuelHalfRate), 1.0, float(self.FuelFullRate), self.FuelUnits]
-
-        except Exception as e1:
-            self.LogErrorLine("Error in GetFuelConsumptionDataPoints: " + str(e1))
-        return None

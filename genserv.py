@@ -1170,7 +1170,7 @@ def GetAddOns():
             ConfigFiles[GENTEMP_CONFIG].ReadValue("use_metric", return_type = bool, default = False),
             'boolean',
             "enable to use Celsius, disable for Fahrenheit",
-            bounds = 's',
+            bounds = '',
             display_name = "Use Metric")
         AddOnCfg['gentemp']['parameters']['blacklist'] = CreateAddOnParam(
             ConfigFiles[GENTEMP_CONFIG].ReadValue("blacklist", return_type = str, default = ""),
@@ -1184,6 +1184,30 @@ def GetAddOns():
             "Comma seperated list of sensor names. These names will be displayed for each sensor. DS18B20 sensors are first, then type K thermocouples. Blacklisted devices are skipped.",
             bounds = '',
             display_name = "Sensor Names")
+
+        #GENSENSORHAT
+        AddOnCfg['gencthat'] = collections.OrderedDict()
+        AddOnCfg['gencthat']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "gencthat", default = False)
+        AddOnCfg['gencthat']['title'] = "External Current Transformer (CT) Sensors"
+        Description = "Support for Raspberry pi HAT with CTs from PintSize.me."
+        # TODO linux specific check
+        AddOnCfg['gencthat']['description'] = Description
+        AddOnCfg['gencthat']['icon'] = "rpi"
+        AddOnCfg['gencthat']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gencthatpy-optional"
+        AddOnCfg['gencthat']['parameters'] = collections.OrderedDict()
+
+        AddOnCfg['gencthat']['parameters']['poll_frequency'] = CreateAddOnParam(
+            ConfigFiles[GENCTHAT_CONFIG].ReadValue("poll_frequency", return_type = float, default = 2.0),
+            'float',
+            "The time in seconds that the sensors are polled. The default value is 15 seconds.",
+            bounds = 'number',
+            display_name = "Poll Interval")
+        AddOnCfg['gencthat']['parameters']['strict'] = CreateAddOnParam(
+            ConfigFiles[GENCTHAT_CONFIG].ReadValue("strict", return_type = bool, default = True),
+            'boolean',
+            "Set to true to only use the CT data if the generator utility line is in an outage.",
+            bounds = '',
+            display_name = "Strict Usage of CT data")
     except Exception as e1:
         LogErrorLine("Error in GetAddOns: " + str(e1))
 
@@ -1254,7 +1278,8 @@ def SaveAddOnSettings(query_string):
             "gentankdiy" : ConfigFiles[GENTANKDIY_CONFIG],
             "genalexa" : ConfigFiles[GENALEXA_CONFIG],
             "gensnmp" : ConfigFiles[GENSNMP_CONFIG],
-            "gentemp" : ConfigFiles[GENTEMP_CONFIG]
+            "gentemp" : ConfigFiles[GENTEMP_CONFIG],
+            "gencthat" : ConfigFiles[GENCTHAT_CONFIG]
         }
 
         for module, entries in settings.items():   # module
@@ -1479,13 +1504,14 @@ def ReadAdvancedSettingsFromFile():
                 # this is setup automatically for Nexus controllers
                 #ConfigSettings["uselegacysetexercise"] = ['boolean', 'Use Legacy Exercise Time', 29, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "uselegacysetexercise"]
         else:
-            ConfigSettings["fuel_units"] = ['list', 'Fuel Units', 25, "gal", "", "gal,cubic feet", GENMON_CONFIG, GENMON_SECTION, "fuel_units"]
-            ConfigSettings["half_rate"] = ['float', 'Fuel Rate Half Load', 26, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "half_rate"]
-            ConfigSettings["full_rate"] = ['float', 'Fuel Rate Full Load', 27, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "full_rate"]
-            ConfigSettings["usecalculatedpower"] = ['boolean', 'Use Calculated Power', 28, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "usecalculatedpower"]
+            ConfigSettings["usecalculatedpower"] = ['boolean', 'Use Calculated Power', 25, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "usecalculatedpower"]
 
-        ConfigSettings["enable_fuel_log"] = ['boolean', 'Log Fuel Level to File', 30, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "enable_fuel_log"]
-        ConfigSettings["fuel_log_freq"] = ['float', 'Fuel Log Frequency', 31, "15.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "fuel_log_freq"]
+        ConfigSettings["fuel_units"] = ['list', 'Fuel Units', 35, "gal", "", "gal,cubic feet", GENMON_CONFIG, GENMON_SECTION, "fuel_units"]
+        ConfigSettings["half_rate"] = ['float', 'Fuel Rate Half Load', 36, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "half_rate"]
+        ConfigSettings["full_rate"] = ['float', 'Fuel Rate Full Load', 37, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "full_rate"]
+
+        ConfigSettings["enable_fuel_log"] = ['boolean', 'Log Fuel Level to File', 40, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "enable_fuel_log"]
+        ConfigSettings["fuel_log_freq"] = ['float', 'Fuel Log Frequency', 41, "15.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "fuel_log_freq"]
         #ConfigSettings["fuel_log"] = ['string', 'Fuel Log Path and File Name', 32, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "/etc/genmon/fuellog.txt"]
 
         ConfigSettings["kwlogmax"] = ['string', 'Maximum size Power Log (MB)', 50, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlogmax"]
@@ -1503,7 +1529,7 @@ def ReadAdvancedSettingsFromFile():
         if GStartInfo["Linux"]:
             ConfigSettings["uselinuxwifisignalgauge"] = ['boolean', 'Show Wifi Signal Strength Gauge', 60, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "uselinuxwifisignalgauge"]
         if GStartInfo["RaspbeerryPi"]:
-            ConfigSettings["useraspberrypicputempgauge"] = ['boolean', 'Show CPU Temperature Gauge', 60, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "useraspberrypicputempgauge"] 
+            ConfigSettings["useraspberrypicputempgauge"] = ['boolean', 'Show CPU Temperature Gauge', 60, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "useraspberrypicputempgauge"]
 
         for entry, List in ConfigSettings.items():
             if List[6] == GENMON_CONFIG:
@@ -2203,12 +2229,13 @@ if __name__ == "__main__":
     GENALEXA_CONFIG = os.path.join(ConfigFilePath, "genalexa.conf")
     GENSNMP_CONFIG = os.path.join(ConfigFilePath, "gensnmp.conf")
     GENTEMP_CONFIG = os.path.join(ConfigFilePath, "gentemp.conf")
+    GENCTHAT_CONFIG = os.path.join(ConfigFilePath, "gencthat.conf")
 
     ConfigFileList = [GENMON_CONFIG, MAIL_CONFIG, GENLOADER_CONFIG, GENSMS_CONFIG,
         MYMODEM_CONFIG, GENPUSHOVER_CONFIG, GENMQTT_CONFIG, GENSLACK_CONFIG,
         GENGPIOIN_CONFIG, GENGPIOLEDBLINK_CONFIG, GENEXERCISE_CONFIG,
         GENEMAIL2SMS_CONFIG, GENTANKUTIL_CONFIG, GENTANKDIY_CONFIG,
-        GENALEXA_CONFIG, GENSNMP_CONFIG, GENTEMP_CONFIG]
+        GENALEXA_CONFIG, GENSNMP_CONFIG, GENTEMP_CONFIG, GENCTHAT_CONFIG]
 
     for ConfigFile in ConfigFileList:
         if not os.path.isfile(ConfigFile):

@@ -474,10 +474,19 @@ class Evolution(GeneratorController):
     def GetFuelConsumptionDataPoints(self):
 
         try:
-            if self.FuelType == "Gasoline":
-                return None
-            if self.EvolutionController:
-                return self.GetFuelParamsFromFile()
+            try:
+                if self.FuelHalfRate == 0 or self.FuelFullRate == 0:
+                    if self.FuelType == "Gasoline":
+                        return None
+                    if self.EvolutionController:
+                        return self.GetFuelParamsFromFile()
+                    return None
+
+                return [.5, float(self.FuelHalfRate), 1.0, float(self.FuelFullRate), self.FuelUnits]
+
+            except Exception as e1:
+                self.LogErrorLine("Error in GetFuelConsumptionDataPoints: " + str(e1))
+            return None
 
         except Exception as e1:
             self.LogErrorLine("Error in GetFuelConsumptionDataPoints: " + str(e1))
@@ -1965,12 +1974,6 @@ class Evolution(GeneratorController):
                 if self.RunHoursMonth != None:
                     Maintenance["Maintenance"].append({"Run Hours in last 30 days" : self.UnitsOut(str(self.RunHoursMonth) + " h", type = float, NoString = JSONNum)})
 
-            ReturnValue = self.CheckExternalCTData(request = 'current', ReturnFloat = True)
-            if ReturnValue !=  None:
-                Maintenance["Maintenance"].append({"External Current" : self.ValueOut(ReturnValue, "A", JSONNum)})
-            ReturnValue = self.CheckExternalCTData(request = 'power', ReturnFloat = True)
-            if ReturnValue !=  None:
-                Maintenance["Maintenance"].append({"External Power" : self.ValueOut(ReturnValue, "kW", JSONNum)})
 
             if self.FuelLevelOK != None:
                 if self.FuelLevelOK:
@@ -3122,17 +3125,15 @@ class Evolution(GeneratorController):
         # get RPM
         return self.GetParameter("0007", ReturnInt = ReturnInt)
 
-    #------------ Evolution:ReturnFormat ---------------------------------------
-    def ReturnFormat(sefl, value, units, ReturnFloat):
-
-        if ReturnFloat:
-            return round(float(value), 2)
-        else:
-            return ("%.2f " + units) % float(value)
-
     #------------ Evolution:CheckExternalCTData --------------------------------
-    def CheckExternalCTData(self, request = 'current', ReturnFloat = False):
+    def CheckExternalCTData(self, request = 'current', ReturnFloat = False, gauge = False):
         try:
+
+            if ReturnFloat:
+                DefaultReturn = 0.0
+            else:
+                DefaultReturn = 0
+
             if not self.UseExternalCTData:
                 return None
             ExternalData = self.GetExternalCTData()
@@ -3147,47 +3148,33 @@ class Evolution(GeneratorController):
             #   "power"   : float value in kW
             #   "powerfactor" : float value (default is 1.0) used if converting from current to power or power to current
             # }
+            strict = False
             if 'strict' in ExternalData:
                 strict = ExternalData['strict']
-            else:
-                strict = False
 
-            if strict:
+            if strict and not gauge:
                 if self.EvolutionController and self.LiquidCooled:
                     if(self.GetTransferStatus().lower() != 'generator'):
-                        return None
+                        if gauge:
+                            return DefaultReturn
+                        else:
+                            return None
                 if not self.SystemInOutage:
-                    return None
-
-            if request.lower() == 'current' and 'current' in ExternalData:
-                return self.ReturnFormat(ExternalData['current'],"A", ReturnFloat)
-
-            if request.lower() == 'power' and 'power' in ExternalData:
-                return self.ReturnFormat(ExternalData['power'],"kW", ReturnFloat)
+                    if gauge:
+                        return DefaultReturn
+                    else:
+                        return None
 
             # if we get here we must convert the data.
             VoltageFloat = float(self.GetVoltageOutput(ReturnInt = True))
-            if 'powerfactor' in ExternalData:
-                powerfactor = float(ExternalData['powerfactor'])
-            else:
-                powerfactor = 1.0
 
-            if request.lower() == 'current' and 'power' in ExternalData:
-                if VoltageFloat == 0:
-                    return self.ReturnFormat(0.0,"A", ReturnFloat)
-                PowerFloat = float(ExternalData['power']) * 1000.0
-                # I(A) = P(W) / (PF x V(V))
-                CurrentFloat = round(PowerFloat / (powerfactor * VoltageFloat), 2)
-                return self.ReturnFormat(CurrentFloat,"A", ReturnFloat)
-            if request.lower() == 'power' and 'current' in ExternalData:
-                CurrentFloat = float(ExternalData['current'])
-                # P(W) = PF x I(A) x V(V)
-                PowerFloat = (powerfactor * CurrentFloat * VoltageFloat) / 1000
-                return self.ReturnFormat(PowerFloat,"kW", ReturnFloat)
-            return None
+            return self.ConvertExternalData(request = request, voltage = VoltageFloat, ReturnFloat = ReturnFloat)
+
         except Exception as e1:
             self.LogErrorLine("Error in CheckExternalCTData: " + str(e1))
-            return None
+            return DefaultReturn
+
+
     #------------ Evolution:GetCurrentOutput -----------------------------------
     def GetCurrentOutput(self, ReturnFloat = False):
 
@@ -3378,12 +3365,17 @@ class Evolution(GeneratorController):
         if  not len(EngineState) or "stopped" in EngineState.lower() or "off" in EngineState.lower():
             return DefaultReturn
 
+        ReturnValue = self.CheckExternalCTData(request = 'power', ReturnFloat = ReturnFloat)
+        if ReturnValue !=  None:
+            return ReturnValue
+
         Current = self.GetCurrentOutput(ReturnFloat = True)
         Voltage = self.GetVoltageOutput(ReturnInt = True)
 
         PowerOut = 0.0
 
         if not Current == 0:
+            # assume powerfactor of 1.0
             PowerOut = Voltage * Current
 
         if ReturnFloat:
@@ -3921,6 +3913,17 @@ class Evolution(GeneratorController):
                         Status["Status"].append(self.ExternalTempData)
                 except Exception as e1:
                     self.LogErrorLine("Error in DisplayStatus: " + str(e1))
+
+            ReturnCurrent = self.CheckExternalCTData(request = 'current', ReturnFloat = True, gauge = True)
+            ReturnPower = self.CheckExternalCTData(request = 'power', ReturnFloat = True, gauge = True)
+            if ReturnCurrent != None and ReturnPower != None:
+                ExternalSensors = []
+                Status["Status"].append({"External Line Sensors":ExternalSensors})
+
+            if ReturnCurrent !=  None:
+                ExternalSensors.append({"Current" : self.ValueOut(ReturnCurrent, "A", JSONNum)})
+            if ReturnPower !=  None:
+                ExternalSensors.append({"Power" : self.ValueOut(ReturnPower, "kW", JSONNum)})
 
             Status["Status"].append({"Last Log Entries":self.DisplayLogs(AllLogs = False, DictOut = True)})
             Status["Status"].append({"Time":Time})

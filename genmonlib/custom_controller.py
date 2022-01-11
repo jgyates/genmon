@@ -194,13 +194,13 @@ class CustomController(GeneratorController):
                 self.LogError("Error: Controller Import does not contain nominal_battery_voltage")
                 return False
 
-            self.NominalOutputVolts =  str(self.controllerimport["rated_nominal_voltage"])
-            self.NominalBatteryVolts =  str(self.controllerimport["nominal_battery_voltage"])
+            self.NominalLineVolts =  int(self.controllerimport["rated_nominal_voltage"])
+            self.NominalBatteryVolts =  int(self.controllerimport["nominal_battery_voltage"])
             self.Model = str(self.controllerimport["controller_name"])
-            self.NominalFreq = str(self.controllerimport["rated_nominal_freq"])
-            self.NominalRPM = str(self.controllerimport["rated_nominal_rpm"])
-            self.NominalKW = str(self.controllerimport["rated_max_output_power_kw"]) + " kW"
-            self.Phase = str(self.controllerimport["generator_phase"])
+            self.NominalFreq = int(self.controllerimport["rated_nominal_freq"])
+            self.NominalRPM = int(self.controllerimport["rated_nominal_rpm"])
+            self.NominalKW = int(self.controllerimport["rated_max_output_power_kw"])
+            self.Phase = int(self.controllerimport["generator_phase"])
 
             for Register, Length in self.controllerimport["base_registers"].items():
                 if Length % 2 != 0:
@@ -237,7 +237,7 @@ class CustomController(GeneratorController):
 
                 title = sensor["title"]
                 Tile = MyTile(self.log, title = sensor["title"],
-                    type = sensor["sensor"], nominal = sensor["nominal"],
+                    type = sensor["sensor"], units = sensor["units"], nominal = sensor["nominal"],
                     callback = self.GetGaugeValue, callbackparameters = (sensor["title"],))
                 self.TileList.append(Tile)
 
@@ -627,6 +627,17 @@ class CustomController(GeneratorController):
                 except Exception as e1:
                     self.LogErrorLine("Error in DisplayStatus: " + str(e1))
 
+            ReturnCurrent = self.CheckExternalCTData(request = 'current', ReturnFloat = True, gauge = True)
+            ReturnPower = self.CheckExternalCTData(request = 'power', ReturnFloat = True, gauge = True)
+            if ReturnCurrent != None and ReturnPower != None:
+                ExternalSensors = []
+                Status["Status"].append({"External Line Sensors":ExternalSensors})
+
+            if ReturnCurrent !=  None:
+                ExternalSensors.append({"Current" : self.ValueOut(ReturnCurrent, "A", JSONNum)})
+            if ReturnPower !=  None:
+                ExternalSensors.append({"Power" : self.ValueOut(ReturnPower, "kW", JSONNum)})
+
             if self.SystemInAlarm():
                 Status["Status"].append({"Alarm State" : "System In Alarm"})
                 Status["Status"].append({"Active Alarms" : self.GetExtendedDisplayString(self.controllerimport, "alarm_conditions")})
@@ -660,6 +671,10 @@ class CustomController(GeneratorController):
             if dict_results == None:
                 return ReturnValue
 
+            if ReturnInt or ReturnFloat:
+                no_units = True
+            else:
+                no_units = False
             out_string = self.GetExtendedDisplayString(self.controllerimport, dict_name)
 
             if not len(out_string):
@@ -682,10 +697,10 @@ class CustomController(GeneratorController):
             return "Unknown"
     #------------ GeneratorController:GetExtendedDisplayString -----------------
     # returns one or multiple status strings
-    def GetExtendedDisplayString(self, inputdict, key_name):
+    def GetExtendedDisplayString(self, inputdict, key_name, no_units = False):
 
         try:
-            StateList =  self.GetDisplayList(inputdict, key_name)
+            StateList =  self.GetDisplayList(inputdict, key_name, no_units = no_units)
             ListValues = []
             for entry in StateList:
                 ListValues.extend(entry.values())
@@ -701,7 +716,7 @@ class CustomController(GeneratorController):
     def GetGaugeValue(self, sensor_title):
 
         try:
-            sensor_list = self.GetDisplayList(self.controllerimport, "gauges")
+            sensor_list = self.GetDisplayList(self.controllerimport, "gauges", no_units = True)
 
             for sensor in sensor_list:
                 if sensor_title in list(sensor.keys()):
@@ -715,7 +730,7 @@ class CustomController(GeneratorController):
     #------------ GeneratorController:GetDisplayList ---------------------------
     # parse a list of modbus values (expressed as dicts) and any sub lists of
     # values (also expressed as dicts, return a displayable dict with parsed values
-    def GetDisplayList(self, inputdict, key_name, JSONNum = False):
+    def GetDisplayList(self, inputdict, key_name, JSONNum = False, no_units = False):
 
         ReturnValue = []
         try:
@@ -730,7 +745,7 @@ class CustomController(GeneratorController):
                     self.LogError("Error in GetDisplayList: invalid list entry: " + str(Entry))
                     return ReturnValue
 
-                title, value = self.GetDisplayEntry(Entry, JSONNum)
+                title, value = self.GetDisplayEntry(Entry, JSONNum, no_units = no_units)
 
                 if title == "default":
                     default = value
@@ -749,7 +764,7 @@ class CustomController(GeneratorController):
     #------------ GeneratorController:GetDisplayEntry --------------------------
     # return a title and value of an input dict describing the modbus register
     # and type of value it is
-    def GetDisplayEntry(self, entry, JSONNum = False):
+    def GetDisplayEntry(self, entry, JSONNum = False, no_units = False):
 
         ReturnTitle = ReturnValue = None
         try:
@@ -830,7 +845,8 @@ class CustomController(GeneratorController):
             else:
                 self.LogError("Unknown type found in GetDisplayEntry: " + str(entry))
 
-            if "units" in entry and ReturnValue != None:
+
+            if not no_units and "units" in entry and ReturnValue != None:
                 units = entry["units"]
                 if units == None:
                     units = ""
@@ -935,10 +951,76 @@ class CustomController(GeneratorController):
     def GetPowerOutput(self, ReturnFloat = False):
 
         try:
+            if ReturnFloat:
+                DefaultReturn = 0.0
+            else:
+                DefaultReturn = "0 kW"
+
+            if not self.PowerMeterIsSupported():
+                return DefaultReturn
+
+            ReturnValue = self.CheckExternalCTData(request = 'power', ReturnFloat = ReturnFloat)
+            if ReturnValue !=  None:
+                return ReturnValue
+
             return self.GetSingleSensor("power", ReturnFloat = ReturnFloat)
         except Exception as e1:
             self.LogErrorLine("Error in GetPowerOutput: " + str(e1))
             return "Unknown"
+
+    #------------ CustomController:CheckExternalCTData -------------------------
+    def CheckExternalCTData(self, request = 'current', ReturnFloat = False, gauge = False):
+        try:
+
+            if ReturnFloat:
+                DefaultReturn = 0.0
+            else:
+                DefaultReturn = 0
+
+            if not self.UseExternalCTData:
+                return None
+            ExternalData = self.GetExternalCTData()
+
+            if ExternalData == None:
+                return None
+
+            # This assumes the following format:
+            # NOTE: all fields are optional
+            # { "strict" : True or False (true requires and outage to use the data)
+            #   "current" : float value in amps
+            #   "power"   : float value in kW
+            #   "powerfactor" : float value (default is 1.0) used if converting from current to power or power to current
+            # }
+            strict = False
+            if 'strict' in ExternalData:
+                strict = ExternalData['strict']
+
+            if strict:
+                if not "linevoltage" in self.controllerimport.keys():
+                    self.LogError("WARNING: no linevoltage in custom controller defintion")
+                    return DefaultReturn
+                linevoltage = self.GetSingleSensor("linevoltage", ReturnFloat = ReturnFloat)
+                if linevoltage != 0:    # outage
+                    if gauge:
+                        return DefaultReturn
+                    else:
+                        return None
+
+            # if we get here we must convert the data.
+            if not "outputvoltage" in self.controllerimport.keys():
+                self.LogError("WARNING: no outputvoltage in custom controller defintion")
+                return DefaultReturn
+            Voltage =  self.GetSingleSensor("outputvoltage", ReturnFloat = ReturnFloat)
+
+            if isinstance(Voltage, str):
+                # TODO why is this needed?
+                Voltage = int(self.removeAlpha(Voltage))
+
+            return self.ConvertExternalData(request = request, voltage = Voltage, ReturnFloat = ReturnFloat)
+
+        except Exception as e1:
+            self.LogErrorLine("Error in CheckExternalCTData: " + str(e1))
+            return DefaultReturn
 
     #------------ CustomController:GetBaseStatus -------------------------------
     # return one of the following: "ALARM", "SERVICEDUE", "EXERCISING", "RUNNING",
