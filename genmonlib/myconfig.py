@@ -31,7 +31,10 @@ class MyConfig (MyCommon):
         self.CriticalLock = threading.Lock()        # Critical Lock (writing conf file)
         self.InitComplete = False
         try:
-            self.config = ConfigParser()
+            if sys.version_info[0] < 3:
+                self.config = ConfigParser()
+            else:
+                self.config = ConfigParser(interpolation=None)
             self.config.read(self.FileName)
 
             if self.Section == None:
@@ -191,7 +194,7 @@ class MyConfig (MyCommon):
 
         if not self.InitComplete:
             return False
-            
+
         if section != None:
             self.SetSection(section)
 
