@@ -1770,6 +1770,15 @@ class GeneratorController(MySupport):
             if request.lower() == 'power' and 'power' in ExternalData:
                 return self.ReturnFormat(ExternalData['power'],"kW", ReturnFloat)
 
+            if request.lower() == 'ct1' and 'ctdata' in ExternalData and len(ExternalData['ctdata']) >= 2:
+                return self.ReturnFormat(ExternalData['ctdata'][0],"A", ReturnFloat)
+            if request.lower() == 'ct2' and 'ctdata' in ExternalData and len(ExternalData['ctdata']) >= 2:
+                return self.ReturnFormat(ExternalData['ctdata'][1],"A", ReturnFloat)
+            if request.lower() == 'ctpower1' and 'ctpower' in ExternalData and len(ExternalData['ctpower']) >= 2:
+                return self.ReturnFormat(ExternalData['ctpower'][0],"kW", ReturnFloat)
+            if request.lower() == 'ctpower2' and 'ctpower' in ExternalData and len(ExternalData['ctpower']) >= 2:
+                return self.ReturnFormat(ExternalData['ctpower'][1],"kW", ReturnFloat)
+
             if 'powerfactor' in ExternalData:
                 powerfactor = float(ExternalData['powerfactor'])
             else:
@@ -1781,15 +1790,28 @@ class GeneratorController(MySupport):
             if request.lower() == 'current' and 'power' in ExternalData:
                 if voltage == 0:
                     return self.ReturnFormat(0.0,"A", ReturnFloat)
-                PowerFloat = float(ExternalData['power']) * 1000.0
-                # I(A) = P(W) / (PF x V(V))
-                CurrentFloat = round(PowerFloat / (powerfactor * voltage), 2)
+
+                if "ctpower" in ExternalData and len(ExternalData['ctpower']) >= 2:
+                    power1 = float(ExternalData['ctpower'][0]) * 1000
+                    power2 = float(ExternalData['ctpower'][1]) * 1000
+                    CurrentFloat = round((power1 / (powerfactor * (voltage/2))) + (power2 / (powerfactor * (voltage/2))), 2)
+                else:
+                    PowerFloat = float(ExternalData['power']) * 1000.0
+                    # I(A) = P(W) / (PF x V(V))
+                    CurrentFloat = round(PowerFloat / (powerfactor * voltage), 2)
                 return self.ReturnFormat(CurrentFloat,"A", ReturnFloat)
-            if request.lower() == 'power' and 'current' in ExternalData:
+            if request.lower() == 'power' and 'current' in ExternalData and 'ctdata' in ExternalData:
                 CurrentFloat = float(ExternalData['current'])
-                # P(W) = PF x I(A) x V(V)
-                PowerFloat = (powerfactor * CurrentFloat * voltage) / 1000
+                if len(ExternalData['ctdata']) < 2:
+                    # P(W) = PF x I(A) x V(V)
+                    PowerFloat = (powerfactor * CurrentFloat * voltage) / 1000
+                else:
+                    # P(W) = (PF x I(A) x V(V)) + (PF x I(A) x V(V))
+                    current1 = float(ExternalData['ctdata'][0])
+                    current2 = float(ExternalData['ctdata'][1])
+                    PowerFloat = ((powerfactor * current1 * (voltage/2)) +  (powerfactor * current2 * (voltage/2)))/ 1000
                 return self.ReturnFormat(PowerFloat,"kW", ReturnFloat)
+
             return None
 
         except Exception as e1:

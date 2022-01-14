@@ -209,6 +209,7 @@ class GenCTHat(MySupport):
                 data = {}
                 data['strict'] = self.strict
                 data['current'] = CT1 + CT2
+                data['ctdata'] = [CT1, CT2]
                 data['powerfactor'] = self.powerfactor
                 return_string = json.dumps(data)
                 self.Generator.ProcessMonitorCommand("generator: set_power_data=" + return_string )

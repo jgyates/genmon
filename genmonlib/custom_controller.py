@@ -628,15 +628,27 @@ class CustomController(GeneratorController):
                     self.LogErrorLine("Error in DisplayStatus: " + str(e1))
 
             ReturnCurrent = self.CheckExternalCTData(request = 'current', ReturnFloat = True, gauge = True)
+            ReturnCurrent1 = self.CheckExternalCTData(request = 'ct1', ReturnFloat = True, gauge = True)
+            ReturnCurrent2 = self.CheckExternalCTData(request = 'ct2', ReturnFloat = True, gauge = True)
             ReturnPower = self.CheckExternalCTData(request = 'power', ReturnFloat = True, gauge = True)
+            ReturnPower1 = self.CheckExternalCTData(request = 'ctpower1', ReturnFloat = True, gauge = True)
+            ReturnPower2 = self.CheckExternalCTData(request = 'ctpower2', ReturnFloat = True, gauge = True)
             if ReturnCurrent != None and ReturnPower != None:
                 ExternalSensors = []
                 Status["Status"].append({"External Line Sensors":ExternalSensors})
 
-            if ReturnCurrent !=  None:
-                ExternalSensors.append({"Current" : self.ValueOut(ReturnCurrent, "A", JSONNum)})
-            if ReturnPower !=  None:
-                ExternalSensors.append({"Power" : self.ValueOut(ReturnPower, "kW", JSONNum)})
+                if ReturnCurrent !=  None:
+                    ExternalSensors.append({"Total Current" : self.ValueOut(ReturnCurrent, "A", JSONNum)})
+                if ReturnCurrent1 !=  None:
+                    ExternalSensors.append({"Current Tranformer Leg 1" : self.ValueOut(ReturnCurrent1, "A", JSONNum)})
+                if ReturnCurrent2 !=  None:
+                    ExternalSensors.append({"Current Tranformer Leg 2" : self.ValueOut(ReturnCurrent2, "A", JSONNum)})
+                if ReturnPower !=  None:
+                    ExternalSensors.append({"Power" : self.ValueOut(ReturnPower, "kW", JSONNum)})
+                if ReturnPower1 !=  None:
+                    ExternalSensors.append({"Current Tranformer Power Leg 1" : self.ValueOut(ReturnPower1, "kW", JSONNum)})
+                if ReturnPower2 !=  None:
+                    ExternalSensors.append({"Current Tranformer Power Leg 2" : self.ValueOut(ReturnPower2, "kW", JSONNum)})
 
             if self.SystemInAlarm():
                 Status["Status"].append({"Alarm State" : "System In Alarm"})
