@@ -114,6 +114,7 @@ class tankutility(MyCommon):
                 return ""
             name = name.strip()
             if name == "" or name == None:      # assume only one device
+                self.LogDebug("GetIDFromName return default ID: " + str(self.DeviceIDs[0]))
                 return self.DeviceIDs[0]
             for device in self.DeviceIDs:
                 tankdata = self.GetData(device)
@@ -122,6 +123,7 @@ class tankutility(MyCommon):
                 if tankdata["name"].lower() == name.lower():
                     self.Data = tankdata
                     return device
+            self.LogDebug("GetIDFromName return no ID (1): " + str(self.DeviceIDs))
             return ""
         except Exception as e1:
             self.LogErrorLine("Error in tankutility:GetIDFromName: " + str(e1))
