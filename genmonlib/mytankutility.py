@@ -123,6 +123,7 @@ class tankutility(MyCommon):
                 if tankdata["name"].lower() == name.lower():
                     self.Data = tankdata
                     return device
+            self.LogDebug("Tank Name input : " + str(name))
             self.LogDebug("GetIDFromName return no ID (1): " + str(self.DeviceIDs))
             return ""
         except Exception as e1:
