@@ -84,6 +84,7 @@ class GenTankData(MySupport):
             sys.exit(1)
 
         try:
+            self.LogDebug("Tank Name = " + str(self.tank_name))
             self.Generator = ClientInterface(host = self.MonitorAddress, port = port, log = self.log)
 
             #if not self.CheckGeneratorRequirement():
