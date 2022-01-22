@@ -13,6 +13,7 @@
 import datetime, time, sys, signal, os, threading, collections, json, ssl
 import atexit, getopt, requests
 import math
+from shutil import copyfile
 
 try:
     from spidev import SpiDev
@@ -103,7 +104,8 @@ class GenCTHat(MySupport):
         self.PollTime =  2
         self.SampleTimeMS = 80
         self.debug = False
-        configfile = os.path.join(ConfigFilePath, 'gencthat.conf')
+        self.ConfigFileName = 'gencthat.conf'
+        configfile = os.path.join(ConfigFilePath, self.ConfigFileName)
         try:
             if not os.path.isfile(configfile):
                 self.LogConsole("Missing config file : " + configfile)
@@ -112,8 +114,19 @@ class GenCTHat(MySupport):
 
             self.config = MyConfig(filename = configfile, section = 'gencthat', log = self.log)
 
+            self.Multiplier = self.config.ReadValue('multiplier', return_type = float, default = 0.488)
+            # this checks to see if an old version of the conf file is in use and replaces it
+            if self.Multiplier == 0.218:
+                self.ConfPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "conf")
+                if os.path.isfile(os.path.join(self.ConfPath, self.ConfigFileName)):
+                    copyfile(os.path.join(self.ConfPath, self.ConfigFileName) , configfile)
+                    self.LogError("Copied " + os.path.join(self.ConfPath, self.ConfigFileName) + " to " + configfile)
+                    self.config = MyConfig(filename = configfile, section = 'gencthat', log = self.log)
+                else:
+                    self.LogError("Error: unable to find config file: " + os.path.join(self.ConfPath, self.ConfigFileName))
+
+            self.Multiplier = self.config.ReadValue('multiplier', return_type = float, default = 0.488)
             self.PollTime = self.config.ReadValue('poll_frequency', return_type = float, default = 60)
-            self.Multiplier = self.config.ReadValue('multiplier', return_type = float, default = 0.218)
             self.powerfactor = self.config.ReadValue('powerfactor', return_type = float, default = 1.0)
             self.bus = self.config.ReadValue('bus', return_type = int, default = 1)
             self.device = self.config.ReadValue('device', return_type = int, default = 0)
@@ -121,6 +134,7 @@ class GenCTHat(MySupport):
             self.singlelegthreshold = self.config.ReadValue('singlelegthreshold', return_type = float, default = 0.6)
             self.debug = self.config.ReadValue('debug', return_type = bool, default = False)
 
+            self.LogDebug("Multiplier: " + str(self.Multiplier))
             if self.MonitorAddress == None or not len(self.MonitorAddress):
                 self.MonitorAddress = ProgramDefaults.LocalHost
 
@@ -128,7 +142,6 @@ class GenCTHat(MySupport):
             self.LogErrorLine("Error reading " + configfile + ": " + str(e1))
             self.LogConsole("Error reading " + configfile + ": " + str(e1))
             sys.exit(1)
-
 
         try:
 
