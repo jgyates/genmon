@@ -1135,9 +1135,9 @@ def GetAddOns():
             bounds = 'number',
             display_name = "Poll Interval")
         AddOnCfg['gensnmp']['parameters']['enterpriseid'] = CreateAddOnParam(
-            ConfigFiles[GENSNMP_CONFIG].ReadValue("enterpriseid", return_type = int, default = 9999),
+            ConfigFiles[GENSNMP_CONFIG].ReadValue("enterpriseid", return_type = int, default = 58399),
             'int',
-            "The enterprise ID used in the SNMP Object Identifier (OID).",
+            "The enterprise ID used in the SNMP Object Identifier (OID). The genmon SNMP enterpise ID is 58399.",
             bounds = 'required digits',
             display_name = "Enterprise ID")
         AddOnCfg['gensnmp']['parameters']['community'] = CreateAddOnParam(
