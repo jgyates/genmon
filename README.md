@@ -12,7 +12,7 @@ This project will monitor a backup generator that utilizes the Generac Controlle
 * [2008 Era Generac Pre-Nexus](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/2008-PreNexusController.jpg) controllers. See [this](https://github.com/jgyates/genmon/wiki/Appendix-D-Known-Issues) page for more info.
 * Generac PowerZone controllers
 
-The project is written mostly in python and has been tested with a Raspberry Pi 3 (Pi Zero, Pi Zero W, Pi 2 and Pi 3b+ have also been validated). To use this project you would need to create a physical enclosure for your raspberry pi and possibly [make a cable](https://github.com/jgyates/genmon/wiki/3.1--Making-a-Cable) to connect the raspberry pi to the generator controller or purchase [pre-assembled hardware](https://github.com/jgyates/genmon/wiki#pre-assembled-hardware). If you are comfortable doing these things and you have a backup generator that has a supported controller then this project may be of interest to you.
+The project is written mostly in python and has been tested with a Raspberry Pi 3 (Pi Zero, Pi Zero W, Pi Zero 2W, Pi 2, Pi 3b+ and Pi 4 have also been validated). To use this project you would need to create a physical enclosure for your raspberry pi and possibly [make a cable](https://github.com/jgyates/genmon/wiki/3.1--Making-a-Cable) to connect the raspberry pi to the generator controller or purchase [pre-assembled hardware](https://github.com/jgyates/genmon/wiki#pre-assembled-hardware). If you are comfortable doing these things and you have a backup generator that has a supported controller then this project may be of interest to you.
 
 ## Functionality
 The software supports the following features:
@@ -96,6 +96,11 @@ Since there are several version of the raspberry Pi out and also several options
 [An updated serial port setup instructions based on the Raspberry Pi 3](http://spellfoundry.com/2016/05/29/configuring-gpio-serial-port-raspbian-jessie-including-pi-3/)
 
 One important step is to validate your serial port is working properly. You can validate the serial port is working properly by using the program serialtest.py in this repository. To validate your serial port connect the RS-232 transmit to RS-232 receive and follow the instructions in the software section on [serialtest.py](https://github.com/jgyates/genmon/wiki/1:-Software-Overview#otherappsserialtestpy-optional). Also, you can validate your cable by connecting your cable to your serial port and connecting transmit to receive at the far end of the cable so you will be looping back through your cable, then repeat the serialtest.py test.
+
+## Demo videos
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=cn91Hplkl0w
+" target="_blank"><img src="http://img.youtube.com/vi/cn91Hplkl0w/0.jpg"
+alt="Genmon Demo" width="240" height="180" border="10" /></a>
 
 # Documentation
 * [Genmon Project Wiki](https://github.com/jgyates/genmon/wiki)
