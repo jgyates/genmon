@@ -1,5 +1,9 @@
-# Change Log
+provided# Change Log
 All notable changes to this project will be documented in this file.
+
+## V1.18.05  -2022-01-28
+- Updated gensnmp.py SNMP add on. Improvements for SMIv2 and snmpcheck compliance. **NOTE** SNMP values have changed see the wiki for details on the new values. https://github.com/jgyates/genmon/wiki/1----Software-Overview#gensnmppy-optional
+- Normally I would not change the SNMP OIDs as this will impact people who have deployed this plugin, however this update does provide more compatibility with the SNMP standard and now a MIB file is provided.
 
 ## V1.18.04  -2022-01-11
 - Upgrade may take a little longer, depending on your raspbian versions due to a new library for SPI devices needs to be installed.
