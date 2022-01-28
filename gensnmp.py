@@ -114,7 +114,7 @@ class GenSNMP(MySupport):
 
         self.UseNumeric = False
         self.MonitorAddress = host
-        self.debug = True
+        self.debug = False
         self.PollTime = 1
         self.BlackList = ["Outage"] #["Monitor"]
         configfile = os.path.join(ConfigFilePath , 'gensnmp.conf')
@@ -432,7 +432,7 @@ class GenSNMP(MySupport):
                 self.AddOID((CtlID,0,4,1),return_type = str, description = "TransferSwitchState", default = " ", keywords = ["Status/Line State","Transfer Switch State"])
                 # TODO add HTS switch info
                 # TODO selected H-100 Maint items?
-                
+
             elif self.ControllerIsGeneracPowerZone() or self.ControllerSelected == "powerzone":
                 self.LogDebug("PowerZone")
                 #root            enterprises.58399.2
