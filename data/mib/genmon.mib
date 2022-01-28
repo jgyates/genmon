@@ -1,0 +1,1524 @@
+-- GenMon-MIB { iso(1) org(3) dod(6) internet(1) private(4) enterprises(1) genmon(9999) }
+
+GenMon-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+   enterprises, OBJECT-TYPE, MODULE-IDENTITY                       FROM SNMPv2-SMI
+   DisplayString                                                   FROM SNMPv2-TC
+   MODULE-COMPLIANCE, OBJECT-GROUP                                 FROM SNMPv2-CONF;
+-- IMPORTS End
+
+genmon MODULE-IDENTITY
+    LAST-UPDATED "202201270000Z"
+    ORGANIZATION "GenMon - SNMP MIB"
+    CONTACT-INFO
+        "Please direct any requests for improvements, 
+         bugs, or other suggestions to the Github link below.
+         
+         Project Home - https://github.com/jgyates/genmon
+        "
+    DESCRIPTION
+       "This is the SNMP MIB definitions file for the Open Source GenMon project."
+
+    REVISION "202201270000Z"
+    DESCRIPTION
+       "Initial release."
+
+    ::= { enterprises 58399 }
+
+
+-- OID Subtree definitions
+
+-- 58399.x
+ monitor                       OBJECT IDENTIFIER ::= { genmon 0 }
+ evolution		       OBJECT IDENTIFIER ::= { genmon 1 }
+ h100                          OBJECT IDENTIFIER ::= { genmon 2 }
+ powerzone                     OBJECT IDENTIFIER ::= { genmon 3 }
+
+-- 58399.0.x
+ monitorHealth                 OBJECT IDENTIFIER ::= { monitor 0 }
+ commsStats                    OBJECT IDENTIFIER ::= { monitor 1 }
+ hwPlatformStatus              OBJECT IDENTIFIER ::= { monitor 2 }
+
+--58399.1.x
+ evStatus                      OBJECT IDENTIFIER ::= { evolution 0 }
+ evMaintenance                 OBJECT IDENTIFIER ::= { evolution 1 }
+ 
+--58399.1.0.x
+ evengine                      OBJECT IDENTIFIER ::= { evStatus 0 }
+ evline                        OBJECT IDENTIFIER ::= { evStatus 1 }
+ evlastAlarm                   OBJECT IDENTIFIER ::= { evStatus 2 }
+ evtime                        OBJECT IDENTIFIER ::= { evStatus 3 }
+ 
+--58399.1.1.x
+ evmaintenanceSettings        OBJECT IDENTIFIER ::= { evMaintenance 0 }
+ evcontrollerSettings         OBJECT IDENTIFIER ::= { evMaintenance 1 }
+ evexercise                   OBJECT IDENTIFIER ::= { evMaintenance 2 }
+ evservice                    OBJECT IDENTIFIER ::= { evMaintenance 3 }
+
+--58399.2.x
+ h100status                   OBJECT IDENTIFIER ::= { h100 0 }
+ 
+--58399.2.0.x
+ h1engine                     OBJECT IDENTIFIER ::= { h100status 0 }
+ h1alarms                     OBJECT IDENTIFIER ::= { h100status 1 }
+ h1battery                    OBJECT IDENTIFIER ::= { h100status 2 }
+ h1time                       OBJECT IDENTIFIER ::= { h100status 3 }
+ h1transferSwitch             OBJECT IDENTIFIER ::= { h100status 4 }
+
+--58399.3.x
+ pzstatus                     OBJECT IDENTIFIER ::= { powerzone 0 }
+ 
+--58399.3.0.x
+ pzengine                     OBJECT IDENTIFIER ::= { pzstatus 0 }
+ pzalarms                     OBJECT IDENTIFIER ::= { pzstatus 1 }
+ pzbattery                    OBJECT IDENTIFIER ::= { pzstatus 2 }
+ pztime                       OBJECT IDENTIFIER ::= { pzstatus 3 }
+
+
+-- SMIv2 Module Compliance statement
+gmCompliances MODULE-COMPLIANCE
+ STATUS current
+ DESCRIPTION
+  "Compliance statement for the entities in this GenMon MIB."
+ MODULE
+ MANDATORY-GROUPS {
+  gmMonitorMIBs,
+  evMonitorMIBs,
+  h1MonitorMIBs,
+  pzMonitorMIBs
+ }
+ ::= { monitor 3 }
+
+-- SMIv2 Module Compliance Groups
+
+gmMonitorMIBs OBJECT-GROUP
+  OBJECTS { gmMonHealth,
+            gmUptime,
+            gmPwrLogFileSize,
+            gmSWVersion,
+            serialPacketCount,
+            serialCRCErrors,
+            serialCRCPercentErrors,
+            serialTimeoutErrors,
+            serialTimeoutPercentErrors,
+            serialModbusExceptions,
+            serialValidationErrors,
+            serialInvalidData,
+            serialDiscardedBytes,
+            serialCommRestarts,
+            serialPktsPerSecond,
+            serialAvgTransactionTime,
+            piCPUTemp,
+            piHardwareModel,
+            piCPUFreqThrottle,
+            piARMFreqCap,
+            piUndervolt,
+            piCPUUtil,
+            piOSName,
+            piOSVersion,
+            piSysUptime,
+            piNICUsed }
+  STATUS current
+  DESCRIPTION
+    "A collection of objects that provide monitoring over the GenMon application and underlying Pi hardware."
+  ::= { monitor 4 }
+
+
+evMonitorMIBs OBJECT-GROUP
+  OBJECTS { switchState,
+            engineState,
+            activeRelays,
+            batteryVolts,
+            batteryStatus,
+            rpm,
+            frequency,
+            outputVoltage,
+            outputCurrent,
+            outputPower,
+            rotorPoles,
+            utilityVoltage,
+            utilityVoltageMin,
+            utilityVoltageMax,
+            utilityThresholdVoltage,
+            utilityPickupVoltage,
+            setOutputVoltage,
+            evLastAlarmLog,
+            evLastServiceLog,
+            evLastRunLog,
+            evMonitorTime,
+            evGeneratorTime,
+            generatorModel,
+            generatorSerial,
+            controller,
+            nominalRPM,
+            ratedKW,
+            ratedFreq,
+            fuelType,
+            fuelLevelSensor,
+            estFuelInTank,
+            displacement,
+            ambientTemp,
+            kwh30,
+            fuel30,
+            totalFuelUsed,
+            runHours30,
+            estHoursInTank,
+            loadHoursInTank,
+            fuelInTank,
+            fuelLevelState,
+            calCurrent1,
+            calCurrent2,
+            calVolts,
+            nominalLineVolts,
+            ratedMaxPower,
+            paramGroup,
+            voltageCode,
+            phase,
+            hoursProtection,
+            voltsPerHz,
+            gain,
+            targetFreq,
+            targetVolts,
+            exerciseTime,
+            exerciseDuration,
+            afDue,
+            oilDue,
+            spDue,
+            battServiceDue,
+            serviceADue,
+            serviceBDue,
+            batteryCheckDue,
+            totalRunHours,
+            hardwareVersion,
+            firmwareVersion }
+  STATUS current
+  DESCRIPTION
+    "A collection of all the OIDs for Evolution/Nexus controllers."
+  ::= { monitor 5 }
+
+
+h1MonitorMIBs OBJECT-GROUP
+  OBJECTS { h1switchState,
+            h1engineState,
+            h1generatorStatus,
+            h1outputPower,
+            h1outputPowerFactor,
+            h1rpm,
+            h1freq,
+            h1throttlePosition,
+            h1coolantTemp,
+            h1coolantLevel,
+            h1oilPressure,
+            h1oilTemp,
+            h1fuelLevel,
+            h1oxygenSensor,
+            h1currentPhaseA,
+            h1currentPhaseB,
+            h1currentPhaseC,
+            h1avgCurrent,
+            h1voltageAB,
+            h1voltageBC,
+            h1voltageCA,
+            h1avgVoltage,
+            h1airFuelDutyCycle,
+            h1activeAlarms,
+            h1ackedAlarms,
+            h1alarmList,
+            h1batteryVoltage,
+            h1batteryCurrent,
+            h1monitorTime,
+            h1generatorTime,
+            h1transferSwitchStatus }
+  STATUS current
+  DESCRIPTION
+    "A collection of all the OIDs for H-100 based controllers."
+  ::= { monitor 6 }
+
+
+pzMonitorMIBs OBJECT-GROUP
+  OBJECTS { pzSwitchState,
+            pzengineStatus,
+            pzgeneratorStatus,
+            pzoutputPower,
+            pzoutputPowerFactor,
+            pzrpm,
+            pzfrequency,
+            pzthrottlePosition,
+            pzcoolantTemp,
+            pzcoolantLevel,
+            pzoilPressure,
+            pzoilTemp,
+            pzfuelLevel,
+            pzoxygenSensor,
+            pzcurrentPhaseA,
+            pzcurrentPhaseB,
+            pzcurrentPhaseC,
+            pzavgCurrent,
+            pzvoltageAB,
+            pzvoltageBC,
+            pzvoltageCA,
+            pzavgVoltage,
+            pzairFuelDutyCycle,
+            pzalarmList,
+            pzbatteryVoltage,
+            pzbatteryCurrent,
+            pzmonitorTime,
+            pzgeneratorTime }
+  STATUS current
+  DESCRIPTION
+    "A collection of all the OIDs for PowerZone based controllers."
+  ::= { monitor 7 }
+
+
+--Objects
+
+--0.0.x (monitorHealth)
+
+gmMonHealth OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(All controllers) GenMon internal health status."
+ ::= { monitorHealth 1 }
+
+gmUptime OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(All controllers) GenMon Application uptime (not to be confused with systemUpTime in the system MIB).  Essentially how long has GenMon been running."
+ ::= { monitorHealth 2 }
+
+gmPwrLogFileSize OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(All controllers) GenMon Power Log File size (on disk)."
+ ::= { monitorHealth 3 }
+
+gmSWVersion OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(All controllers) The currently installed software version of GenMon."
+ ::= { monitorHealth 4 }
+
+--0.1.x (commsStats)
+
+serialPacketCount OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(All controllers) How many serial packets have been sent or received in total."
+ ::= { commsStats 1 }
+
+serialCRCErrors OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(All controllers) How many serial packets had CRC errors. Too many CRC errors could inhibit effective communication with the controller. "
+ ::= { commsStats 2 }
+
+serialCRCPercentErrors OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(All controllers) How many serial packets had CRC errors, expressed as a percent of total packets sent/received."
+ ::= { commsStats 3 }
+
+serialTimeoutErrors OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(All controllers) How many serial packets timed out (didn't receive a response from the controller)."
+ ::= { commsStats 4 }
+
+serialTimeoutPercentErrors OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(All controllers) How many serial packets timed out, expressed as a percent of total packets sent/received."
+ ::= { commsStats 5 }
+
+serialModbusExceptions OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(All controllers) How many serial packets resulted in a Modbus exception (a communication fault)."
+ ::= { commsStats 6 }
+
+serialValidationErrors OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(All controllers) How many serial packets failed validation.  Too many failed validation could cause communication problems."
+ ::= { commsStats 7 }
+
+serialInvalidData OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(All controllers) How many serial packets contained invalid data.  This could be a sign of possible EMI/RF interference."
+ ::= { commsStats 8 }
+
+serialDiscardedBytes OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(All controllers) How many bytes were discarded.  A high number might be a sign of possible EMI/RF interference. "
+ ::= { commsStats 9 }
+
+serialCommRestarts OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(All controllers) How many times was the serial link restarted.  A high number might be a sign of possible EMI/RF interference."
+ ::= { commsStats 10 }
+
+serialPktsPerSecond OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(All controllers) How many packets per second is traversing the serial link to the generator controller."
+ ::= { commsStats 11 }
+
+serialAvgTransactionTime OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(All controllers) How much time does it take for the controller to respond to a transaction from Genmon.  Lower is better."
+ ::= { commsStats 12 }
+
+--0.2.x (hwPlatformStatus)
+
+piCPUTemp OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(All controllers) The temperature reported by the CPU/SOC of the Raspberry Pi."
+ ::= { hwPlatformStatus 1 }
+
+piHardwareModel OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(All controllers) Which Raspberry Pi is GenMon running on, including board version."
+ ::= { hwPlatformStatus 2 }
+
+piCPUFreqThrottle OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(All controllers) This reports OK if the CPU is not throttling.  If it is throttling, it could be due to power delivery or high temperatures."
+ ::= { hwPlatformStatus 3 }
+
+piARMFreqCap OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(All controllers) Is Raspberry Pi ARM Frequency Capping in effect. OK = no frequency capping."
+ ::= { hwPlatformStatus 4 }
+
+piUndervolt OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(All controllers) Is the Raspberry Pi reporting a low voltage condition. OK = voltage good."
+ ::= { hwPlatformStatus 5 }
+
+piCPUUtil OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(All controllers) The Raspberry Pi's CPU utilization represented as a percentage. Lower is better."
+ ::= { hwPlatformStatus 6 }
+
+piOSName OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(All controllers) The Raspberry Pi's Operating System Name, e.g. 'Raspbian GNU/Linux'"
+ ::= { hwPlatformStatus 7 }
+
+piOSVersion OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(All controllers) The Raspberry Pi's OS Version, e.g. '10 (Buster)'"
+ ::= { hwPlatformStatus 8 }
+
+piSysUptime OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(All controllers) The Raspberry Pi's OS Uptime."
+ ::= { hwPlatformStatus 9 }
+
+piNICUsed OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(All controllers) Which NIC is the Raspberry Pi using for network connectivity, e.g. eth0 (wired) or wlan0 (wifi)"
+ ::= { hwPlatformStatus 10 }
+
+--1.0.0.x (evolution.evstatus.evengine)
+
+switchState OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The current ready state of the generator based on control panel status. (Auto/Off/Manual)"
+ ::= { evengine 1 }
+
+engineState OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The current state of the generator's engine (Running/Exercising/Off) (Ready)"
+ ::= { evengine 2 }
+
+activeRelays OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION 
+  "(Evolution/Nexus) The current state of the optional relay kit's relays."
+ ::= { evengine 3 }
+
+batteryVolts OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The current voltage of the generator's battery."
+ ::= { evengine 4 } 
+
+batteryStatus OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The current state of the battery from the controller's perspective."
+ ::= { evengine 5 }
+
+rpm OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The current RPM of the generator. Displays non-zero result when running, 0 if the engine is not running."
+ ::= { evengine 6 }
+
+frequency OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The current output frequency of the generator. Displays non-zero result when running, 0 if the engine is not running."
+ ::= { evengine 7 }
+
+outputVoltage OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The current output voltage of the generator.  Displays non-zero result when running, 0V if the engine is not running."
+ ::= { evengine 8 }
+
+outputCurrent OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The measured output current from the generator.  Displays non-zero result when running, 0A if the engine is not running."
+ ::= { evengine 9 }
+
+outputPower OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "{Evolution/Nexus) The calculated apparent power from the generator.  Displays non-zero result when running, 0 if the engine is not running."
+ ::= { evengine 10 } 
+
+rotorPoles OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "{Evolution/Nexus) The number of rotor poles the generator's coil has.  Displays non-zero when running, 0 if the engine is not running. Depends on generator hardware."
+ ::= { evengine 11 }
+
+-- 1.0.1.x (evline)
+
+utilityVoltage OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The measured incoming utility voltage."
+ ::= { evline 1 }
+
+utilityVoltageMin OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The current lowest voltage read by the ATS."
+ ::= { evline 2 }
+
+utilityVoltageMax OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The current highest voltage read by the ATS."
+ ::= { evline 3 }
+
+utilityThresholdVoltage OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The maximum voltage (per leg) before the ATS will trip and start the generator."
+ ::= { evline 4 }
+
+utilityPickupVoltage OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The minimum voltage (per leg) before the ATS will trip and start the generator."
+ ::= { evline 5 }
+
+setOutputVoltage OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The current output voltage of the generator in a failover condition."
+ ::= { evline 6 }
+
+-- 1.0.2.x (evLastAlarm)
+
+evLastAlarmLog OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The last alarm entry in the controller's logs."
+ ::= { evlastAlarm 1 }
+
+evLastServiceLog OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The last service entry in the controller's logs."
+ ::= { evlastAlarm 2 }
+
+evLastRunLog OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The last run-log entry in the controller's logs."
+ ::= { evlastAlarm 3 }
+
+--1.0.3.x (evtime)
+
+evMonitorTime OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The current system time of GenMon."
+ ::= { evtime 1 }
+
+evGeneratorTime OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The current system time reported by the generator controller."
+ ::= { evtime 2 }
+
+-- 1.1.0.x (evmaintenanceSettings)
+
+generatorModel OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The generator model number as reported by the controller."
+ ::= { evmaintenanceSettings 1 }
+
+generatorSerial OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The generator's serial number as reported by the controller."
+ ::= { evmaintenanceSettings 2 }
+
+controller OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The controller detected by GenMon."
+ ::= { evmaintenanceSettings 3 }
+
+nominalRPM OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The currently configured normal RPM. (Usually 3600)."
+ ::= { evmaintenanceSettings 4 }
+
+ratedKW OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The designed maximum kW output (varies by generator)."
+ ::= { evmaintenanceSettings 5 }
+
+ratedFreq OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The designed output frequency of the generator (60Hz)."
+ ::= { evmaintenanceSettings 6 }
+
+fuelType OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The generator's input fuel type (CNG/LPG/Gasoline/Diesel)."
+ ::= { evmaintenanceSettings 7 }
+
+fuelLevelSensor OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The currently installed fuel sensor (Optional)."
+ ::= { evmaintenanceSettings 8 }
+
+estFuelInTank OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The controller's estimated fuel remaining in tank."
+ ::= { evmaintenanceSettings 9 }
+
+displacement OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The generator's engine displacement."
+ ::= { evmaintenanceSettings 10 }
+
+ambientTemp OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The current ambient temperature as reported by the controller."
+ ::= { evmaintenanceSettings 11 }
+
+kwh30 OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The total amount of output kWh in the last 30 days."
+ ::= { evmaintenanceSettings 12 }
+
+fuel30 OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The total amount of fuel consumed in the last 30 days."
+ ::= { evmaintenanceSettings 13 }
+
+totalFuelUsed OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The total fuel used in the controller's lifetime."
+ ::= { evmaintenanceSettings 14 }
+
+runHours30 OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The total engine runtime in the last 30 days."
+ ::= { evmaintenanceSettings 15 }
+
+estHoursInTank OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The estimated runtime hours in the tank as calculated by the controller."
+ ::= { evmaintenanceSettings 16 }
+
+loadHoursInTank OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The estimated runtime hours remaining based on current load and estimated fuel in the generator's tank."
+ ::= { evmaintenanceSettings 17 }
+
+fuelInTank OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The remaining fuel in the tank based on the controller information.."
+ ::= { evmaintenanceSettings 18 }
+
+fuelLevelState OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The current state of the fuel level as reported by the tank sensor."
+ ::= { evmaintenanceSettings 19 }
+
+--1.1.1.x (evcontrollerSettings)
+
+calCurrent1 OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) Calibration Current #1."
+ ::= { evcontrollerSettings 1 }
+
+calCurrent2 OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) Calibration Current #2."
+ ::= { evcontrollerSettings 2 }
+
+calVolts OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) Calibration Voltage."
+ ::= { evcontrollerSettings 3 }
+
+nominalLineVolts OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The controller-specified normal line voltage."
+ ::= { evcontrollerSettings 4 }
+
+ratedMaxPower OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The controller's configured rated maximum power."
+ ::= { evcontrollerSettings 5 }
+
+paramGroup OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The controller's configured parameter group."
+ ::= { evcontrollerSettings 6 }
+
+voltageCode OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The controller's configured voltage code."
+ ::= { evcontrollerSettings 7 }
+
+phase OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The controller's configured phase count."
+ ::= { evcontrollerSettings 8 }
+
+hoursProtection OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The expected available hours of protection calculated on a variety of different factors."
+ ::= { evcontrollerSettings 9 }
+
+voltsPerHz OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The measured voltage per Hz calculated from the controller's measurements."
+ ::= { evcontrollerSettings 10 }
+
+gain OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The current setting of the exciter gain circuit in the generator's windings."
+ ::= { evcontrollerSettings 11 }
+
+targetFreq OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The target frequency that the generator is configured to run at.  Sudden load loss or add will affect the frequency, but this is the setting that the controller will try to stay at."
+ ::= { evcontrollerSettings 12 }
+
+targetVolts OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The target output voltage that the generator is configured to run at.  Changes in RPM will affect actual output voltage, but this is the setting that the controller will try to stay at."
+ ::= { evcontrollerSettings 13 }
+
+--1.1.2.x (evexercise)
+
+exerciseTime OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The scheduled exercise date and time, e.g. every Wednesday at 1:00 PM."
+ ::= { evexercise 1 }
+
+exerciseDuration OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) When the controller executes the exercise cycle, this is how long the controller will run the engine."
+ ::= { evexercise 2 }
+
+--1.1.3.x (evservice)
+
+afDue OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The scheduled time of the next Air Filter replacement service."
+ ::= { evservice 1 }
+
+oilDue OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The scheduled time of the next oil change service."
+ ::= { evservice 2 }
+
+spDue OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The scheduled time of the next spark plug service."
+ ::= { evservice 3 }
+
+battServiceDue OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The scheduled time of the next Battery service."
+ ::= { evservice 4 }
+
+serviceADue OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The scheduled time of the next 'Service A' service."
+ ::= { evservice 5 }
+
+serviceBDue OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The scheduled time of the next 'Service B' service."
+ ::= { evservice 6 }
+
+batteryCheckDue OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The scheduled time of the next battery check."
+ ::= { evservice 7 }
+
+totalRunHours OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The total accrued controller runtime over the controller's lifespan."
+ ::= { evservice 8 }
+
+hardwareVersion OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The current hardware version of the generator."
+ ::= { evservice 9 }
+
+firmwareVersion OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The current firmware version of the generator controller."
+ ::= { evservice 10 }
+
+--2.0.0.x (h1engine)
+
+h1switchState OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The current ready state of the generator controller (Ready/Manual/Off)."
+ ::= { h1engine 1 }
+
+h1engineState OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The current state of the engine (Running/Off) (Ready)."
+ ::= { h1engine 2 }
+
+h1generatorStatus OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The current state of the generator circuitry."
+ ::= { h1engine 3 }
+
+h1outputPower OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The current output power as reported by the controller."
+ ::= { h1engine 4 }
+
+h1outputPowerFactor OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The current output power factor as reported by the controller."
+ ::= { h1engine 5 }
+
+h1rpm OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The current RPM of the engine as reported by the controller."
+ ::= { h1engine 6 }
+
+h1freq OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The current output frequency of the generator as reported by the controller."
+ ::= { h1engine 7 }
+
+h1throttlePosition OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The engine's current throttle position as reported by the controller."
+ ::= { h1engine 8 }
+
+h1coolantTemp OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The engine's current coolant temperature as reported by the controller."
+ ::= { h1engine 9 }
+
+h1coolantLevel OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The engine's current coolant level as reported by the controller."
+ ::= { h1engine 10 }
+
+h1oilPressure OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The engine's current oil pressure level as reported by the controller.  This will read non-zero only when the engine is running."
+ ::= { h1engine 11 }
+
+h1oilTemp OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The engine's current oil temperature as reported by the controller."
+ ::= { h1engine 12 }
+
+h1fuelLevel OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The engine's current fuel level as reported by the controller."
+ ::= { h1engine 13 }
+
+h1oxygenSensor OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The engine's current O2 sensor reading."
+ ::= { h1engine 14 }
+
+h1currentPhaseA OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The generator's phase A amperage."
+ ::= { h1engine 15 }
+
+h1currentPhaseB OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The generator's phase B amperage."
+ ::= { h1engine 16 }
+
+h1currentPhaseC OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The generator's phase C amperage."
+ ::= { h1engine 17 }
+
+h1avgCurrent OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The generator's average current across all output phases."
+ ::= { h1engine 18 }
+
+h1voltageAB OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The generator's voltage between A and B outputs."
+ ::= { h1engine 19 }
+
+h1voltageBC OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The generator's voltage between B and C outputs."
+ ::= { h1engine 20 }
+
+h1voltageCA OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The generator's voltage between C and A outputs."
+ ::= { h1engine 21 }
+
+h1avgVoltage OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The generator's average voltage across all three phases."
+ ::= { h1engine 22 }
+
+h1airFuelDutyCycle OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The generator's current measured Air/Fuel duty cycle."
+ ::= { h1engine 23 }
+
+--2.0.1 Alarms
+
+h1activeAlarms OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The controller's currently active alarms."
+ ::= { h1alarms 1 }
+
+h1ackedAlarms OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The controller's currently acknowledged alarms."
+ ::= { h1alarms 2 }
+
+h1alarmList OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The controller's current alarm list (any state)."
+ ::= { h1alarms 3 }
+
+--2.0.2 (h1battery)
+
+h1batteryVoltage OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The current battery voltage."
+ ::= { h1battery 1 }
+
+h1batteryCurrent OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The current battery amperage (charge/discharge)."
+ ::= { h1battery 2 }
+
+--2.0.3 (h1time)
+
+h1monitorTime OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The current time reported by GenMon."
+ ::= { h1time 1 }
+
+h1generatorTime OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(H100) The current time reported by the genrator's controller."
+ ::= { h1time 2 }
+
+--2.0.4 (h1transferSwitch)
+
+h1transferSwitchStatus OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only 
+ STATUS current
+ DESCRIPTION
+  "(H100) The current status of the Automatic Transfer Switch (ATS)."
+ ::= { h1transferSwitch 1 }
+
+--3.0.0 (pzengine)
+
+pzSwitchState OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(PowerZone) The current status of the generator's controller."
+ ::= { pzengine 1 }
+
+pzengineStatus OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(PowerZone) The current state of the engine (Running/Off)."
+ ::= { pzengine 2 }
+
+pzgeneratorStatus OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(PowerZone) The current state of the generator."
+ ::= { pzengine 3 }
+
+pzoutputPower OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(PowerZone) The power output of the generator."
+ ::= { pzengine 4 }
+
+pzoutputPowerFactor OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(PowerZone) The current power factor of the generator load."
+ ::= { pzengine 5 }
+
+pzrpm OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(PowerZone) The current engine RPM. Returns 0 if the genrator is not running."
+ ::= { pzengine 6 }
+
+pzfrequency OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(PowerZone) The current output frequency of the generator. Returns 0 if the generator is not running."
+ ::= { pzengine 7 }
+
+pzthrottlePosition OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only 
+ STATUS current
+ DESCRIPTION
+  "(PowerZone) The current throttle position of the generator."
+ ::= { pzengine 8 }
+
+pzcoolantTemp OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(PowerZone) The current temperature of the coolant in the generator."
+ ::= { pzengine 9 }
+
+pzcoolantLevel OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(PowerZone) The current state of the coolant level in the generator."
+ ::= { pzengine 10 }
+
+pzoilPressure OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(PowerZone) The current oil pressure of the generator.  Returns a non-zero value when the engine is running."
+ ::= { pzengine 11 }
+
+pzoilTemp OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(PowerZone) The current oil temperature of the generator."
+ ::= { pzengine 12 }
+
+pzfuelLevel OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(PowerZone) The current fuel level of the fuel tank."
+ ::= { pzengine 13 }
+
+pzoxygenSensor OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(PowerZone) The current O2 sensor reading."
+ ::= { pzengine 14 }
+
+pzcurrentPhaseA OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(PowerZone) The amount of current draw on Phase A output."
+ ::= { pzengine 15 }
+
+pzcurrentPhaseB OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(PowerZone) The amount of current draw on Phase B output."
+ ::= { pzengine 16 }
+
+pzcurrentPhaseC OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(PowerZone) The amount of current draw on Phase C output."
+ ::= { pzengine 17 }
+
+pzavgCurrent OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(PowerZone) The average current draw on all three phases."
+ ::= { pzengine 18 }
+
+pzvoltageAB OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(PowerZone) The voltage output between output A and B."
+ ::= { pzengine 19 }
+
+pzvoltageBC OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(PowerZone) The voltage output between output B and C."
+ ::= { pzengine 20 }
+
+pzvoltageCA OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(PowerZone) The voltage output between output C and A."
+ ::= { pzengine 21 }
+
+pzavgVoltage OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(PowerZone) The average voltage of all three outputs."
+ ::= { pzengine 22 }
+
+pzairFuelDutyCycle OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(PowerZone) The current air/fuel duty cycle of the generator."
+ ::= { pzengine 23 }
+
+--3.0.1 (pzalarms)
+
+pzalarmList OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(PowerZone) The current list of alarms as reported by the controller."
+ ::= { pzalarms 1 }
+
+--3.0.2 (pzbattery)
+
+pzbatteryVoltage OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(PowerZone) The current voltage of the battery."
+ ::= { pzbattery 1 }
+
+pzbatteryCurrent OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(PowerZone) The current amperage draw of the battery."
+ ::= { pzbattery 2 }
+
+--3.0.3 (pztime)
+
+pzmonitorTime OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(PowerZone) The current time as reported by GenMon."
+ ::= { pztime 1 }
+
+pzgeneratorTime OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(PowerZone) The current time as reported by the generator controller."
+ ::= { pztime 2 }
+
+END
