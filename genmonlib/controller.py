@@ -112,6 +112,7 @@ class GeneratorController(MySupport):
                 self.SiteName = self.config.ReadValue('sitename', default = 'Home')
                 self.LogLocation = self.config.ReadValue('loglocation', default = '/var/log/')
                 self.UseMetric = self.config.ReadValue('metricweather', return_type = bool, default = False)
+                self.debug = self.config.ReadValue('debug', return_type = bool, default = False)
                 self.EnableDebug = self.config.ReadValue('enabledebug', return_type = bool, default = False)
                 self.bDisplayUnknownSensors = self.config.ReadValue('displayunknown', return_type = bool, default = False)
                 self.bDisablePowerLog = self.config.ReadValue('disablepowerlog', return_type = bool, default = False)

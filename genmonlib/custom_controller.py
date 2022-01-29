@@ -749,7 +749,7 @@ class CustomController(GeneratorController):
             default = None
             ParseList = inputdict.get(key_name, None)
             if not isinstance(ParseList, list) or ParseList == None:
-                self.LogError("Error in GetDisplayList: invalid input or data: " + str(key_name))
+                self.LogDebug("Error in GetDisplayList: invalid input or data: " + str(key_name))
                 return ReturnValue
 
             for Entry in ParseList:
@@ -1051,7 +1051,9 @@ class CustomController(GeneratorController):
                 IsStopped = True
             else:
                 IsStopped = False
-            if "exercising" in EngineStatus or "exercise" in EngineStatus or "quiettest" in EngineStatus:
+
+            ExerciseList = ["exercising", "exercise", "quiettest", "test"]
+            if any(x in EngineStatus for x in ExerciseList) or any(x in GeneratorStatus for x in ExerciseList) or any(x in SwitchState for x in ExerciseList):
                 IsExercising = True
             else:
                 IsExercising = False

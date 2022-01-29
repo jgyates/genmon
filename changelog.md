@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 - Updated gensnmp.py SNMP add on. Improvements for SMIv2 and snmpcheck compliance. **NOTE** SNMP values have changed see the wiki for details on the new values. https://github.com/jgyates/genmon/wiki/1----Software-Overview#gensnmppy-optional
 - Normally I would not change the SNMP OIDs as this will impact people who have deployed this plugin, however this update does provide more compatibility with the SNMP standard and now a MIB file is provided.
 - The default enterprise ID is now 58399. If you are using the old enterprise ID of 9999 it is recommended (but not required) that you change it to 58399.
+- Minor update for custom_controller types.
+- Added custom controller for Deep Sea Generator, thanks @Ntampata
 
 ## V1.18.04  -2022-01-11
 - Upgrade may take a little longer, depending on your raspbian versions due to a new library for SPI devices needs to be installed.
