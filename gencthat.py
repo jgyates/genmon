@@ -212,6 +212,11 @@ class GenCTHat(MySupport):
                 CT1 = self.GetCTReading(channel = 0)
                 CT2 = self.GetCTReading(channel = 1)
 
+                if CT1 == None or CT2 == None:
+                    if self.WaitForExit("SensorCheckThread", float(self.PollTime)):
+                        return
+                    continue
+
                 if CT1 <= self.singlelegthreshold:
                     CT1 = 0
                 if CT2 <= self.singlelegthreshold:
@@ -270,6 +275,9 @@ class GenCTHat(MySupport):
             self.LogDebug("sample: %d, max: %d, min: %d" % (sample, max, min))
             self.LogDebug("ms elapsed: %d, num samples %d" % (msElapsed, num_samples))
 
+            if max == min == 0:
+                self.LogDebug("NULL readings, device not responding")
+                return None
             return_data = offset * self.Multiplier
             return return_data
 
