@@ -102,7 +102,7 @@ class GenCTHat(MySupport):
 
         self.MonitorAddress = host
         self.PollTime =  2
-        self.SampleTimeMS = 80
+        self.SampleTimeMS = 34
         self.debug = False
         self.ConfigFileName = 'gencthat.conf'
         configfile = os.path.join(ConfigFilePath, self.ConfigFileName)
@@ -125,6 +125,7 @@ class GenCTHat(MySupport):
                 else:
                     self.LogError("Error: unable to find config file: " + os.path.join(self.ConfPath, self.ConfigFileName))
 
+            self.SampleTimeMS = self.config.ReadValue('sample_time_ms', return_type = int, default = 34)
             self.Multiplier = self.config.ReadValue('multiplier', return_type = float, default = 0.488)
             self.PollTime = self.config.ReadValue('poll_frequency', return_type = float, default = 60)
             self.powerfactor = self.config.ReadValue('powerfactor', return_type = float, default = 1.0)
@@ -208,9 +209,27 @@ class GenCTHat(MySupport):
         time.sleep(1)
         while True:
             try:
+                CT1 = None
+                CT2 = None
+                CTReading1 = []
+                CTReading2 = []
 
-                CT1 = self.GetCTReading(channel = 0)
-                CT2 = self.GetCTReading(channel = 1)
+                for i in range(5):
+                    CT1 = self.GetCTReading(channel = 0)
+                    if CT1 != None:
+                        CTReading1.append(CT1)
+                    CT2 = self.GetCTReading(channel = 1)
+                    if CT2 != None:
+                        CTReading2.append(CT2)
+
+                if len(CTReading1):
+                    CT1 = min(CTReading1)
+                else:
+                    CT1 = None
+                if len(CTReading2):
+                    CT2 = min(CTReading2)
+                else:
+                    CT2 = None
 
                 if CT1 == None or CT2 == None:
                     if self.WaitForExit("SensorCheckThread", float(self.PollTime)):
@@ -272,8 +291,7 @@ class GenCTHat(MySupport):
                 if offset <= 2:
                     offset = 0 #1 or 2 is most likely just noise on the clamps or in the traces on the board
 
-            self.LogDebug("sample: %d, max: %d, min: %d" % (sample, max, min))
-            self.LogDebug("ms elapsed: %d, num samples %d" % (msElapsed, num_samples))
+            self.LogDebug("channel: %d, sample: %d, max: %d, min: %d, ms elapsed: %d, num samples %d" % (channel, sample, max, min, msElapsed, num_samples))
 
             if max == min == 0:
                 self.LogDebug("NULL readings, device not responding")
