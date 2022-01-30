@@ -1197,6 +1197,8 @@ def GetAddOns():
         AddOnCfg['gencthat']['title'] = "External Current Transformer (CT) Sensors"
         Description = "Support for Raspberry pi HAT with CTs from PintSize.me."
         # TODO linux specific check
+        if os.path.exists("/dev/spidev1.0") == False:
+             Description = Description + "<br/><font color='red'>The SPI bus number one is not enabled but required for this add-on to function.</font>"
         AddOnCfg['gencthat']['description'] = Description
         AddOnCfg['gencthat']['icon'] = "rpi"
         AddOnCfg['gencthat']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gencthatpy-optional"
