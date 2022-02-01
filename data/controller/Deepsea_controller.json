@@ -195,7 +195,9 @@
           "title": "Battery Voltage",
           "units": "V",
           "sensor": "batteryvolts",
-          "nominal": 12
+          "nominal": 24,
+          "values": [0, 8, 10, 34, 36, 44],
+          "maximum": 44
       },
       {
           "reg": "0424",

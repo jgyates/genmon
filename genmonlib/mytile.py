@@ -22,7 +22,7 @@ class MyTile (MyCommon):
     def __init__(self, log, title = None, units = None, type = None, subtype = None,
         nominal = None, minimum = None, maximum = None, divisions = None, subdivisions = None,
         callback = None, callbackparameters = None, labels = None, colors = None,
-        defaultsize = None):
+        defaultsize = None, values = None):
 
         self.log = log
         self.Title = title
@@ -69,7 +69,8 @@ class MyTile (MyCommon):
                 self.Divisions = self.SetDefault(self.Divisions, 6)
                 self.SubDivisions = self.SetDefault(self.SubDivisions, 10)
                 self.Labels = self.SetDefault( self.Labels, list(range(int(self.Minimum), int(self.Maximum + 1), int(self.Maximum / 4))))
-                values = [self.Minimum, self.Nominal/12*11.5, self.Nominal/12*12.5, self.Nominal/12*15, self.Nominal/12*15.5, self.Maximum]
+                if values == None:
+                    values = [self.Minimum, self.Nominal/12*11.5, self.Nominal/12*12.5, self.Nominal/12*15, self.Nominal/12*15.5, self.Maximum]
                 colors = [self.RED, self.YELLOW, self.GREEN, self.YELLOW, self.RED]
                 self.ColorZones = self.SetDefault(self.ColorZones, self.CreateColorZoneList(values, colors))
                 self.DefaultSize = self.SetDefault(self.DefaultSize, 2)

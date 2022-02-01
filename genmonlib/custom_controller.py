@@ -236,9 +236,19 @@ class CustomController(GeneratorController):
             for sensor in sensor_list:
 
                 title = sensor["title"]
+
+                if "maximum" in sensor:
+                    maximum = sensor["maximum"]
+                else:
+                    maximum = None
+                if "values" in sensor:
+                    values = sensor["values"]
+                else:
+                    values = None
                 Tile = MyTile(self.log, title = sensor["title"],
                     type = sensor["sensor"], units = sensor["units"], nominal = sensor["nominal"],
-                    callback = self.GetGaugeValue, callbackparameters = (sensor["title"],))
+                    maximum = maximum, values = values, callback = self.GetGaugeValue,
+                    callbackparameters = (sensor["title"],))
                 self.TileList.append(Tile)
 
             self.SetupCommonTiles()
