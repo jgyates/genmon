@@ -1097,7 +1097,7 @@ class CustomController(GeneratorController):
 
             # This assumes the following format:
             # NOTE: all fields are optional
-            # { "strict" : True or False (true requires and outage to use the data)
+            # { "strict" : True or False (true requires an outage to use the data)
             #   "current" : float value in amps
             #   "power"   : float value in kW
             #   "powerfactor" : float value (default is 1.0) used if converting from current to power or power to current
