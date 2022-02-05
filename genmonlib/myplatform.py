@@ -128,6 +128,7 @@ class MyPlatform(MyCommon):
 
                 process = Popen([binarypath, 'measure_temp'], stdout=PIPE)
                 output, _error = process.communicate()
+                output = output.decode("utf-8")
                 if sys.version_info[0] >= 3:
                     output = str(output)    # convert byte array to string for python3
 
@@ -136,12 +137,13 @@ class MyPlatform(MyCommon):
             except Exception as e1:
                 #self.LogErrorLine(str(e1))
                 # for non rasbpian based systems
-                if os.path.exists('/sys/class/thermal/thermal_zone0/temp'):
+                tempfilepath = self.GetHwMonParamPath("temp1_input")
+                if tempfilepath == None:
                     tempfilepath = '/sys/class/thermal/thermal_zone0/temp'
-                else:
-                    tempfilepath = '/sys/class/hwmon/hwmon0/temp1_input'
+
                 process = Popen(['cat', tempfilepath], stdout=PIPE)
                 output, _error = process.communicate()
+                output = output.decode("utf-8")
 
                 TempCelciusFloat = float(float(output) / 1000)
 
@@ -238,6 +240,7 @@ class MyPlatform(MyCommon):
 
             process = Popen([binarypath, 'get_throttled'], stdout=PIPE)
             output, _error = process.communicate()
+            output = output.decode("utf-8")
             hex_val = output.split("=")[1].strip()
             get_throttled = int(hex_val, 16)
             return self.ParseThrottleStatus(get_throttled)
@@ -245,8 +248,11 @@ class MyPlatform(MyCommon):
         except Exception as e1:
             try:
                 # if we get here then vcgencmd is not found, try an alternate approach
-                if os.path.exists("/sys/class/hwmon/hwmon1/in0_lcrit_alarm"):
-                    file = open("/sys/class/hwmon/hwmon1/in0_lcrit_alarm")
+                # /sys/class/hwmon/hwmonX/in0_lcrit_alarm
+                throttle_file = self.GetHwMonParamPath("in0_lcrit_alarm")
+
+                if throttle_file != None:
+                    file = open(throttle_file)
                 else:
                     # this method is depricated
                     file = open("/sys/devices/platform/soc/soc:firmware/get_throttled")
@@ -255,6 +261,17 @@ class MyPlatform(MyCommon):
             except Exception as e1:
                 return []
 
+    #------------ MyPlatform::GetHwMonParamPath --------------------------------
+    def GetHwMonParamPath(self, param):
+
+        try:
+            for i in range(5):
+                hwmon_path = "/sys/class/hwmon/hwmon%d" % (i) + "/" + str(param)
+                if os.path.exists(hwmon_path):
+                    return hwmon_path
+        except Exception as e1:
+            self.LogError("Error in GetHwMonParamPath: " + str(e1))
+        return None
     #------------ MyPlatform::GetLinuxInfo -------------------------------------
     def GetLinuxInfo(self):
 
