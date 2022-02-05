@@ -4053,6 +4053,9 @@ class Evolution(GeneratorController):
             StartInfo["SetGenTime"] = True
 
             if not NoTile:
+
+                StartInfo["buttons"] = {}
+                
                 StartInfo["pages"] = {
                                 "status":True,
                                 "maint":True,

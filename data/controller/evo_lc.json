@@ -364,6 +364,120 @@
           "nominal": 48
       }
     ],
+    "buttons" : [
+      {
+          "onewordcommand" : "start",
+          "title" : "Remote Start",
+          "command_sequence" : [
+                                 {
+                                   "reg": "0004",
+                                   "value": "0000"
+                                 },
+                                 {
+                                   "reg": "0003",
+                                   "value": "0001"
+                                 }
+                               ]
+      },
+      {
+          "onewordcommand" : "stop",
+          "title" : "Remote Stop",
+          "command_sequence" : [
+                                 {
+                                   "reg": "0004",
+                                   "value": "0000"
+                                 },
+                                 {
+                                   "reg": "0003",
+                                   "value": "0000"
+                                 }
+                               ]
+      },
+      {
+          "onewordcommand" : "starttransfer",
+          "title" : "Remote Star and Transfer",
+          "command_sequence" : [
+                                 {
+                                   "reg": "0004",
+                                   "value": "0000"
+                                 },
+                                 {
+                                   "reg": "0003",
+                                   "value": "0002"
+                                 }
+                               ]
+      },
+      {
+          "onewordcommand" : "startexercise",
+          "title" : "Remote Start Exercise",
+          "command_sequence" : [
+                                 {
+                                   "reg": "0004",
+                                   "value": "0000"
+                                 },
+                                 {
+                                   "reg": "0003",
+                                   "value": "0003"
+                                 }
+                               ]
+      },
+      {
+          "onewordcommand" : "resetalarm",
+          "title" : "Reset Alarm",
+          "command_sequence" : [
+                                 {
+                                   "reg": "0004",
+                                   "value": "0000"
+                                 },
+                                 {
+                                   "reg": "0003",
+                                   "value": "000d"
+                                 }
+                               ]
+      },
+      {
+          "onewordcommand" : "auto",
+          "title" : "Select Auto Mode",
+          "command_sequence" : [
+                                 {
+                                   "reg": "0004",
+                                   "value": "0000"
+                                 },
+                                 {
+                                   "reg": "0003",
+                                   "value": "000f"
+                                 }
+                               ]
+      },
+      {
+          "onewordcommand" : "off",
+          "title" : "Select Off Mode",
+          "command_sequence" : [
+                                 {
+                                   "reg": "0004",
+                                   "value": "0000"
+                                 },
+                                 {
+                                   "reg": "0003",
+                                   "value": "0010"
+                                 }
+                               ]
+      },
+      {
+          "onewordcommand" : "manual",
+          "title" : "Select Manual Mode",
+          "command_sequence" : [
+                                 {
+                                   "reg": "0004",
+                                   "value": "0000"
+                                 },
+                                 {
+                                   "reg": "0003",
+                                   "value": "000e"
+                                 }
+                               ]
+      }
+    ],
     "power": [
       {
           "reg": "000a",

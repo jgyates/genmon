@@ -1298,6 +1298,9 @@ class PowerZone(GeneratorController):
             StartInfo["SetGenTime"] = True
 
             if not NoTile:
+
+                StartInfo["buttons"] = {}
+
                 StartInfo["pages"] = {
                                 "status":True,
                                 "maint":True,
@@ -1646,7 +1649,7 @@ class PowerZone(GeneratorController):
                     ExternalSensors.append({"Current Tranformer Power Leg 1" : self.ValueOut(ReturnPower1, "kW", JSONNum)})
                 if ReturnPower2 !=  None:
                     ExternalSensors.append({"Current Tranformer Power Leg 2" : self.ValueOut(ReturnPower2, "kW", JSONNum)})
-                    
+
             Status["Status"].append({"Time":Time})
 
             Battery.append({"Battery Voltage" : self.ValueOut(self.GetParameter(self.Reg.BATTERY_VOLTAGE[REGISTER], ReturnFloat = True, Divider = 100.0), "V", JSONNum)})

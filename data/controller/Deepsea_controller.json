@@ -260,6 +260,92 @@
           "nominal": 48
       }
     ],
+    "buttons" : [
+      {
+          "onewordcommand" : "stop",
+          "title" : "Stop Mode",
+          "command_sequence" : [
+                                 {
+                                   "reg": "1008",
+                                   "value": "8B74"
+                                 },
+                                 {
+                                   "reg": "1009",
+                                   "value": "748B"
+                                 }
+                               ]
+      },
+      {
+          "onewordcommand" : "auto",
+          "title" : "Auto Mode",
+          "command_sequence" : [
+                                 {
+                                   "reg": "1008",
+                                   "value": "8B75"
+                                 },
+                                 {
+                                   "reg": "1009",
+                                   "value": "748A"
+                                 }
+                               ]
+      },
+      {
+          "onewordcommand" : "manual",
+          "title" : "Manual Mode",
+          "command_sequence" : [
+                                 {
+                                   "reg": "1008",
+                                   "value": "8B76"
+                                 },
+                                 {
+                                   "reg": "1009",
+                                   "value": "7489"
+                                 }
+                               ]
+      },
+      {
+          "onewordcommand" : "mutealarm",
+          "title" : "Mute Alarm",
+          "command_sequence" : [
+                                 {
+                                   "reg": "1008",
+                                   "value": "8B7A"
+                                 },
+                                 {
+                                   "reg": "1009",
+                                   "value": "7485"
+                                 }
+                               ]
+      },
+      {
+          "onewordcommand" : "test",
+          "title" : "Test On Load Mode",
+          "command_sequence" : [
+                                 {
+                                   "reg": "1008",
+                                   "value": "8B77"
+                                 },
+                                 {
+                                   "reg": "1009",
+                                   "value": "7488"
+                                 }
+                               ]
+      },
+      {
+          "onewordcommand" : "startest",
+          "title" : "Start Engine(For Test or Manual Mode)",
+          "command_sequence" : [
+                                 {
+                                   "reg": "1008",
+                                   "value": "8B79"
+                                 },
+                                 {
+                                   "reg": "1009",
+                                   "value": "7486"
+                                 }
+                               ]
+      }
+    ],
     "power": [
       {
           "reg": "0600",

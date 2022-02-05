@@ -1592,6 +1592,9 @@ class HPanel(GeneratorController):
             StartInfo["RaspbeerryPi"] = self.Platform.IsPlatformRaspberryPi()
 
             if not NoTile:
+
+                StartInfo["buttons"] = {}
+
                 StartInfo["pages"] = {
                                 "status":True,
                                 "maint":True,

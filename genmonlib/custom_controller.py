@@ -144,6 +144,7 @@ class CustomController(GeneratorController):
             return False
 
         return True
+
     #-------------CustomController:IdentifyController---------------------------
     def IdentifyController(self):
 
@@ -457,6 +458,9 @@ class CustomController(GeneratorController):
             StartInfo["RaspbeerryPi"] = self.Platform.IsPlatformRaspberryPi()
 
             if not NoTile:
+
+                StartInfo["buttons"] = self.GetButtons()
+
                 StartInfo["pages"] = {
                                 "status":True,
                                 "maint":True,
@@ -782,6 +786,91 @@ class CustomController(GeneratorController):
             self.LogErrorLine("Error in GetDisplayList: (" + key_name + ") : " + str(e1))
             return ReturnValue
         return ReturnValue
+
+    #-------------CustomController:GetButtons-----------------------------------
+    def GetButtons(self):
+        try:
+            button_list = self.controllerimport.get("buttons", None)
+
+            if button_list == None:
+                return {}
+            if not isinstance(button_list, list):
+                self.LogDebug("Error in GetButtons: invalid input or data: " + str(key_name))
+                return {}
+
+            return_buttons = {}
+            for button in button_list:
+                return_buttons[button["title"]] = button["onewordcommand"]
+            return return_buttons
+
+        except Exception as e1:
+            self.LogErrorLine("Error in GetButtons: " + str(e1))
+            return {}
+
+    #----------  CustomController::SetGeneratorRemoteCommand--------------------
+    # CmdString will be in the format: "setremote=start"
+    # valid commands are defined in the JSON file
+    # return string "Remote command sent successfully" or some descriptive error
+    # string if failure
+    def SetGeneratorRemoteCommand(self, CmdString):
+        try:
+
+            try:
+                #Format we are looking for is "setremote=start"
+                CmdList = CmdString.split("=")
+                if len(CmdList) != 2:
+                    self.LogError("Validation Error: Error parsing command string in SetGeneratorRemoteCommand (parse): " + CmdString)
+                    return msgbody
+
+                CmdList[0] = CmdList[0].strip()
+
+                if not CmdList[0].lower() == "setremote":
+                    self.LogError("Validation Error: Error parsing command string in SetGeneratorRemoteCommand (parse2): " + CmdString)
+                    return msgbody
+
+                Command = CmdList[1].strip()
+                Command = Command.lower()
+
+            except Exception as e1:
+                self.LogErrorLine("Validation Error: Error parsing command string in SetGeneratorRemoteCommand: " + CmdString)
+                self.LogError( str(e1))
+                return msgbody
+
+            button_list = self.controllerimport.get("buttons", None)
+
+            if button_list == None:
+                return "No buttons defined"
+            if not isinstance(button_list, list):
+                self.LogDebug("Error in SetGeneratorRemoteCommand: invalid input or data: " + str(key_name))
+                return "Malformed button in JSON file."
+
+            for button in button_list:
+                if button["onewordcommand"].lower() == Command.lower():
+                    command_sequence = button["command_sequence"]
+                    if not len(command_sequence):
+                        self.LogDebug("Error in SetGeneratorRemoteCommand: invalid command sequence")
+                        continue
+
+                    with self.ModBus.CommAccessLock:
+                        for command in command_sequence:
+                            if not len(command["value"]):
+                                self.LogDebug("Error in SetGeneratorRemoteCommand: invalid value array")
+                                continue
+                            value = int(command["value"], 16)
+                            LowByte = value & 0x00FF
+                            HighByte = value >> 8
+                            Data= []
+                            Data.append(HighByte)           # Value for indexed register (High byte)
+                            Data.append(LowByte)            # Value for indexed register (Low byte)
+                            self.LogError("Write: " + command["reg"] + ": " + ("%x %x" % (HighByte, LowByte)))
+                            self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data)
+
+                    return "Remote command sent successfully"
+
+        except Exception as e1:
+            self.LogErrorLine("Error in SetGeneratorRemoteStartStop: " + str(e1))
+            return "Error"
+        return "Command not found."
 
     #------------ GeneratorController:GetDisplayEntry --------------------------
     # return a title and value of an input dict describing the modbus register
