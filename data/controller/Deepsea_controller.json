@@ -240,16 +240,6 @@
           "nominal": 1800
       },
       {
-          "reg": "0403",
-          "mask": "ffff",
-          "multiplier": 1,
-          "type": "int",
-          "title": "Fuel Sensor",
-          "units": "%",
-          "sensor": "fuel",
-          "nominal": 100
-      },
-      {
           "reg": "0009",
           "mask": "ffff",
           "multiplier": 0.01,

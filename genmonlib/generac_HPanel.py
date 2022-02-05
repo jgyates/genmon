@@ -1724,64 +1724,7 @@ class HPanel(GeneratorController):
             Maintenance["Maintenance"].append({"Nominal Frequency" : self.NominalFreq})
             Maintenance["Maintenance"].append({"Fuel Type" : self.FuelType})
 
-            if self.UseMetric:
-                Units = "L"
-            else:
-                Units = "gal"
-
-            if self.FuelSensorSupported():
-                FuelValue = self.GetFuelSensor(ReturnInt = True)
-                Maintenance["Maintenance"].append({"Fuel Level Sensor" : self.ValueOut(FuelValue, "%", JSONNum)})
-                FuelValue = self.GetFuelInTank(ReturnFloat = True)
-                if FuelValue != None:
-                    Maintenance["Maintenance"].append({"Fuel In Tank (Sensor)" : self.ValueOut(FuelValue, Units, JSONNum)})
-            elif self.ExternalFuelDataSupported():
-                FuelValue = self.GetExternalFuelPercentage(ReturnFloat = True)
-                Maintenance["Maintenance"].append({"Fuel Level Sensor" : self.ValueOut(FuelValue, "%", JSONNum)})
-                FuelValue = self.GetFuelInTank(ReturnFloat = True)
-                if FuelValue != None:
-                    Maintenance["Maintenance"].append({"Fuel In Tank (Sensor)" : self.ValueOut(FuelValue, Units, JSONNum)})
-
-            if self.FuelTankCalculationSupported():
-                Maintenance["Maintenance"].append({"Estimated Fuel In Tank " : self.ValueOut(self.GetEstimatedFuelInTank(ReturnFloat = True), Units, JSONNum)})
-
-                DisplayText = "Hours of Fuel Remaining (Estimated %.02f Load )" % self.EstimateLoad
-                RemainingFuelTimeFloat = self.GetRemainingFuelTime(ReturnFloat = True)
-                if RemainingFuelTimeFloat != None:
-                    Maintenance["Maintenance"].append({DisplayText : self.ValueOut(RemainingFuelTimeFloat, "h", JSONNum)})
-
-                RemainingFuelTimeFloat = self.GetRemainingFuelTime(ReturnFloat = True, Actual = True)
-                if RemainingFuelTimeFloat != None:
-                    Maintenance["Maintenance"].append({"Hours of Fuel Remaining (Current Load)" : self.ValueOut(RemainingFuelTimeFloat, "h", JSONNum)})
-
-            # Only update power log related info once a min for performance reasons
-            if self.LastHouseKeepingTime == None or self.GetDeltaTimeMinutes(datetime.datetime.now() - self.LastHouseKeepingTime) >= 1 :
-                UpdateNow = True
-                self.LastHouseKeepingTime = datetime.datetime.now()
-            else:
-                UpdateNow = False
-            if self.PowerMeterIsSupported() and self.FuelConsumptionSupported():
-                if UpdateNow:
-                    self.KWHoursMonth = self.GetPowerHistory("power_log_json=43200,kw")
-                    self.FuelMonth = self.GetPowerHistory("power_log_json=43200,fuel")
-                    self.FuelTotal = self.GetPowerHistory("power_log_json=0,fuel")
-                    self.RunHoursMonth = self.GetPowerHistory("power_log_json=43200,time")
-
-                if self.KWHoursMonth != None:
-                    Maintenance["Maintenance"].append({"kW Hours in last 30 days" : self.UnitsOut(str(self.KWHoursMonth) + " kWh", type = float, NoString = JSONNum)})
-                if self.FuelMonth != None:
-                    Maintenance["Maintenance"].append({"Fuel Consumption in last 30 days" : self.UnitsOut(self.FuelMonth, type = float, NoString = JSONNum)})
-                if self.FuelTotal != None:
-                    Maintenance["Maintenance"].append({"Total Power Log Fuel Consumption" : self.UnitsOut(self.FuelTotal, type = float, NoString = JSONNum)})
-                if self.RunHoursMonth != None:
-                    Maintenance["Maintenance"].append({"Run Hours in last 30 days" : self.UnitsOut(str(self.RunHoursMonth) + " h", type = float, NoString = JSONNum)})
-
-            if self.FuelLevelOK != None:
-                if self.FuelLevelOK:
-                    level = "OK"
-                else:
-                    level = "Low"
-                Maintenance["Maintenance"].append({"Fuel Level State" : level})
+            Maintenance = self.DisplayMaintenanceCommon(Maintenance, JSONNum = JSONNum)
 
             if not self.SmartSwitch:
                 pass
@@ -1842,35 +1785,7 @@ class HPanel(GeneratorController):
             if not self.SmartSwitch or self.HTSTransferSwitch:
                 Status["Status"].append({"Line State":Line})
 
-            with self.ExternalDataLock:
-                try:
-                    if self.ExternalTempData != None:
-                        Status["Status"].append(self.ExternalTempData)
-                except Exception as e1:
-                    self.LogErrorLine("Error in DisplayStatus: " + str(e1))
-
-            ReturnCurrent = self.CheckExternalCTData(request = 'current', ReturnFloat = True, gauge = True)
-            ReturnCurrent1 = self.CheckExternalCTData(request = 'ct1', ReturnFloat = True, gauge = True)
-            ReturnCurrent2 = self.CheckExternalCTData(request = 'ct2', ReturnFloat = True, gauge = True)
-            ReturnPower = self.CheckExternalCTData(request = 'power', ReturnFloat = True, gauge = True)
-            ReturnPower1 = self.CheckExternalCTData(request = 'ctpower1', ReturnFloat = True, gauge = True)
-            ReturnPower2 = self.CheckExternalCTData(request = 'ctpower2', ReturnFloat = True, gauge = True)
-            if ReturnCurrent != None and ReturnPower != None:
-                ExternalSensors = []
-                Status["Status"].append({"External Line Sensors":ExternalSensors})
-
-                if ReturnCurrent !=  None:
-                    ExternalSensors.append({"Total Current" : self.ValueOut(ReturnCurrent, "A", JSONNum)})
-                if ReturnCurrent1 !=  None:
-                    ExternalSensors.append({"Current Tranformer Leg 1" : self.ValueOut(ReturnCurrent1, "A", JSONNum)})
-                if ReturnCurrent2 !=  None:
-                    ExternalSensors.append({"Current Tranformer Leg 2" : self.ValueOut(ReturnCurrent2, "A", JSONNum)})
-                if ReturnPower !=  None:
-                    ExternalSensors.append({"Power" : self.ValueOut(ReturnPower, "kW", JSONNum)})
-                if ReturnPower1 !=  None:
-                    ExternalSensors.append({"Current Tranformer Power Leg 1" : self.ValueOut(ReturnPower1, "kW", JSONNum)})
-                if ReturnPower2 !=  None:
-                    ExternalSensors.append({"Current Tranformer Power Leg 2" : self.ValueOut(ReturnPower2, "kW", JSONNum)})
+            Status = self.DisplayStatusCommon(Status, JSONNum = JSONNum)
 
             Status["Status"].append({"Time":Time})
 
