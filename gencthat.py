@@ -48,7 +48,7 @@ class MCP3008(MyCommon):
         try:
             self.spi = SpiDev()
             self.open()
-            self.spi.max_speed_hz = 1000000 # 1MHz
+            self.spi.max_speed_hz = 250000 # 250kHz
         except Exception as e1:
             self.LogErrorLine("Error in MPC308 init: " + str(e1))
             self.FatalError( "Error on opening SPI device: enable SPI or install CT HAT")
@@ -58,7 +58,7 @@ class MCP3008(MyCommon):
 
         try:
             self.spi.open(self.bus, self.device)
-            self.spi.max_speed_hz = 1000000 # 1MHz
+            self.spi.max_speed_hz = 250000 # 250kHz
         except Exception as e1:
             self.LogErrorLine("Error in MPC308 open: " + str(e1))
 
