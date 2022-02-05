@@ -140,12 +140,12 @@ class MyPlatform(MyCommon):
                 if not ReturnFloat:
                     return "%.2f C" % TempCelciusFloat
                 else:
-                    return TempCelciusFloat
+                    return round(TempCelciusFloat, 2)
             else:
                 if not ReturnFloat:
                     return "%.2f F" % float(self.ConvertCelsiusToFahrenheit(TempCelciusFloat))
                 else:
-                    return float(self.ConvertCelsiusToFahrenheit(TempCelciusFloat))
+                    return round(float(self.ConvertCelsiusToFahrenheit(TempCelciusFloat)),2)
         except Exception as e1:
             self.LogErrorLine("Error in GetRaspberryPiTemp: " + str(e1))
         return DefaultReturn
