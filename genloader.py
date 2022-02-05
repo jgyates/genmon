@@ -41,6 +41,9 @@ class Loader(MySupport):
         self.Stop = stop
         self.HardStop = hardstop
         self.PipChecked = False
+        self.NewInstall = False
+        self.Upgrade = False
+        self.version = None
 
 
         self.ConfigFilePath = ConfigFilePath
@@ -85,6 +88,7 @@ class Loader(MySupport):
                     sys.exit(2)
 
             self.config = MyConfig(filename = self.configfile, section = "genmon", log = self.log)
+
             if not self.GetConfig():
                 self.CopyConfFile()
                 self.LogInfo("Error validating config. Retrying..")
@@ -286,6 +290,92 @@ class Loader(MySupport):
         return True
 
     #---------------------------------------------------------------------------
+    def FixPyOWMMaintIssues(self):
+        try:
+            # check version of pyowm
+            import pyowm
+            if sys.version_info[0] < 3:
+                required_version = "2.9.0"
+            else:
+                required_version = "2.10.0"
+
+            if not self.LibraryIsInstalled("pyowm"):
+                self.LogError("Error in FixPyOWMMaintIssues: pyowm not installed")
+                return False
+
+            installed_version = self.GetLibararyVersion("pyowm")
+
+            if installed_version == None:
+                self.LogError("Error in FixPyOWMMaintIssues: pyowm version not found")
+                return None
+
+            if self.VersionTuple(installed_version) <= self.VersionTuple(required_version):
+                return True
+
+            self.LogInfo("Found wrong version of pyowm, uninstalling and installing the correct version.")
+
+            self.InstallLibrary("pyowm", uninstall = True)
+
+            self.InstallLibrary("pyowm", version = required_version)
+
+            return True
+        except Exception as e1:
+            self.LogErrorLine("Error in FixPyOWMMaintIssues: " + str(e1))
+            return False
+
+    #---------------------------------------------------------------------------
+    def GetLibararyVersion(self, libraryname, importonly = False):
+
+        try:
+
+            try:
+                import importlib
+                my_module = importlib.import_module(libraryname)
+                return my_module.__version__
+            except:
+
+                if importonly:
+                    return None
+                # if we get here then the libarary does not support a __version__ attribute
+                # lets use pip to get the version
+                try:
+                    if sys.version_info[0] < 3:
+                        pipProgram = "pip2"
+                    else:
+                        pipProgram = "pip3"
+
+                    # This will check if pip is installed
+                    if "linux" in sys.platform:
+                        self.CheckBaseSoftware()
+
+                    install_list = [pipProgram, 'freeze', libraryname]
+
+                    process = Popen(install_list, stdout=PIPE, stderr=PIPE)
+                    output, _error = process.communicate()
+
+                    if _error:
+                        self.LogInfo("Error in GetLibararyVersion using pip : " + libraryname + ": " + str(_error))
+                    rc = process.returncode
+
+                    # process output of pip freeze
+                    lines = output.splitlines()
+
+                    for line in lines:
+                        line = line.decode("utf-8")
+                        line = line.strip()
+                        if line.startswith(libraryname):
+                            items = line.split('==')
+                            if len(items) <= 2:
+                                return items[1]
+                    return None
+
+                except Exception as e1:
+                    self.LogInfo("Error getting version of module: " + libraryname + ": "+ str(e1), LogLine = True)
+                    return None
+        except Exception as e1:
+            self.LogErrorLine("Error in GetLibararyVersion: " + str(e1))
+            return None
+    #---------------------------------------------------------------------------
     def LibraryIsInstalled(self, libraryname):
 
         try:
@@ -296,7 +386,7 @@ class Loader(MySupport):
             return False
 
     #---------------------------------------------------------------------------
-    def InstallLibrary(self, libraryname, update = False, version = None):
+    def InstallLibrary(self, libraryname, update = False, version = None, uninstall = False):
 
         try:
             if sys.version_info[0] < 3:
@@ -304,7 +394,7 @@ class Loader(MySupport):
             else:
                 pipProgram = "pip3"
 
-            if version != None:
+            if version != None and uninstall == False:
                 libraryname = libraryname + "=="+ version
 
             # This will check if pip is installed
@@ -313,6 +403,8 @@ class Loader(MySupport):
 
             if update:
                 install_list = [pipProgram, 'install', libraryname, '-U']
+            elif uninstall:
+                install_list = [pipProgram, 'uninstall', '-y', libraryname]
             else:
                 install_list = [pipProgram, 'install', libraryname]
 
@@ -320,12 +412,12 @@ class Loader(MySupport):
             output, _error = process.communicate()
 
             if _error:
-                self.LogInfo("Error in InstallLibrary using pip : " + libraryname + " : " + str(_error))
+                self.LogInfo("Error in InstallLibrary using pip : " + libraryname + " : UnInstall: " + str(uninstall) + ": " + str(_error))
             rc = process.returncode
             return True
 
         except Exception as e1:
-            self.LogInfo("Error installing module: " + libraryname + ": "+ str(e1), LogLine = True)
+            self.LogInfo("Error installing module: " + libraryname + " : UnInstall: " + str(uninstall) + ": "+ str(e1), LogLine = True)
             return False
     #---------------------------------------------------------------------------
     def ValidateConfig(self):
@@ -411,6 +503,26 @@ class Loader(MySupport):
                     self.config.WriteValue('conffile', "gengpio.conf", section = "gengpio")
                     self.LogError("Updated entry gengpio.conf")
 
+            # check version info
+            self.config.SetSection("genloader")
+            self.version = self.config.ReadValue("version", default = "0.0.0")
+            if self.version == "0.0.0" or not len(self.version):
+                self.version = "0.0.0"
+                self.NewInstall = True
+
+            if self.VersionTuple(self.version) < self.VersionTuple(ProgramDefaults.GENMON_VERSION):
+                self.Upgrade = True
+
+            if self.NewInstall or self.Upgrade:
+                self.config.WriteValue("version", ProgramDefaults.GENMON_VERSION, section = 'genloader')
+            if self.NewInstall:
+                self.LogInfo("Running one time maintenance check")
+                self.FixPyOWMMaintIssues()
+
+            # TODO other version checks can be added here
+
+            self.version = ProgramDefaults.GENMON_VERSION
+
         except Exception as e1:
             self.LogInfo("Error in UpdateIfNeeded: " + str(e1), LogLine = True)
 
@@ -422,7 +534,7 @@ class Loader(MySupport):
             Sections = self.config.GetSections()
             ValidSections = ['genmon', 'genserv', 'gengpio', 'gengpioin', 'genlog', 'gensms', 'gensms_modem',
             'genpushover', 'gensyslog', 'genmqtt', 'genslack', 'genexercise', 'genemail2sms', 'gentankutil',
-            'gentankdiy','genalexa', 'gensnmp', 'gentemp', 'gengpioledblink', 'gencthat']
+            'gentankdiy','genalexa', 'gensnmp', 'gentemp', 'gengpioledblink', 'gencthat', 'genloader']
             for entry in ValidSections:
                 if not entry in Sections:
                     if entry == 'genmon' or entry == 'genserv':
@@ -458,6 +570,9 @@ class Loader(MySupport):
                     if entry == 'gencthat':
                         self.LogError("Warning: Missing entry: " + entry + " , adding entry")
                         self.AddEntry(section = entry, module = 'gencthat.py', conffile = 'gencthat.conf')
+                    if entry == 'genloader':
+                        self.LogError("Adding entry: " + entry )
+                        self.config.WriteSection(entry)
                     else:
                         self.LogError("Warning: Missing entry: " + entry)
 
@@ -465,6 +580,8 @@ class Loader(MySupport):
 
             Sections = self.config.GetSections()
             for SectionName in Sections:
+                if SectionName == 'genloader':
+                    continue
                 TempDict = {}
                 self.config.SetSection(SectionName)
                 if self.config.HasOption('module'):
