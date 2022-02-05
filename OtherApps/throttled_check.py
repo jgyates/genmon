@@ -1,6 +1,7 @@
 import select
 import datetime
 import sys
+import os
 
 #------------------------------------------------------
 def ParseThrottleStatus(status):
@@ -28,7 +29,11 @@ if __name__=='__main__':
     epoll = select.epoll()
 
     try:
-        file = open("/sys/devices/platform/soc/soc:firmware/get_throttled")
+        if os.path.exists("/sys/class/hwmon/hwmon1/in0_lcrit_alarm"):
+            file = open("/sys/class/hwmon/hwmon1/in0_lcrit_alarm")
+        else:
+            # this method is depricated
+            file = open("/sys/devices/platform/soc/soc:firmware/get_throttled")
     except:
         print("This program requires a Rasperry Pi. The latest firmware version is recommened.\n")
         sys.exit(1)

@@ -121,7 +121,12 @@ class MyPlatform(MyCommon):
             if not self.IsPlatformRaspberryPi():
                 return DefaultReturn
             try:
-                process = Popen(['/opt/vc/bin/vcgencmd', 'measure_temp'], stdout=PIPE)
+                if os.path.exists('/usr/bin/vcgencmd'):
+                    binarypath = '/usr/bin/vcgencmd'
+                else:
+                    binarypath = '/opt/vc/bin/vcgencmd'
+
+                process = Popen([binarypath, 'measure_temp'], stdout=PIPE)
                 output, _error = process.communicate()
                 if sys.version_info[0] >= 3:
                     output = str(output)    # convert byte array to string for python3
@@ -131,7 +136,11 @@ class MyPlatform(MyCommon):
             except Exception as e1:
                 #self.LogErrorLine(str(e1))
                 # for non rasbpian based systems
-                process = Popen(['cat', '/sys/class/thermal/thermal_zone0/temp'], stdout=PIPE)
+                if os.path.exists('/sys/class/thermal/thermal_zone0/temp'):
+                    tempfilepath = '/sys/class/thermal/thermal_zone0/temp'
+                else:
+                    tempfilepath = '/sys/class/hwmon/hwmon0/temp1_input'
+                process = Popen(['cat', tempfilepath], stdout=PIPE)
                 output, _error = process.communicate()
 
                 TempCelciusFloat = float(float(output) / 1000)
@@ -222,7 +231,12 @@ class MyPlatform(MyCommon):
     def GetThrottledStatus(self):
 
         try:
-            process = Popen(['/opt/vc/bin/vcgencmd', 'get_throttled'], stdout=PIPE)
+            if os.path.exists('/usr/bin/vcgencmd'):
+                binarypath = '/usr/bin/vcgencmd'
+            else:
+                binarypath = '/opt/vc/bin/vcgencmd'
+
+            process = Popen([binarypath, 'get_throttled'], stdout=PIPE)
             output, _error = process.communicate()
             hex_val = output.split("=")[1].strip()
             get_throttled = int(hex_val, 16)
@@ -230,8 +244,12 @@ class MyPlatform(MyCommon):
 
         except Exception as e1:
             try:
-                # this method is depricated
-                file = open("/sys/devices/platform/soc/soc:firmware/get_throttled")
+                # if we get here then vcgencmd is not found, try an alternate approach
+                if os.path.exists("/sys/class/hwmon/hwmon1/in0_lcrit_alarm"):
+                    file = open("/sys/class/hwmon/hwmon1/in0_lcrit_alarm")
+                else:
+                    # this method is depricated
+                    file = open("/sys/devices/platform/soc/soc:firmware/get_throttled")
                 status = file.read()
                 return self.ParseThrottleStatus(int(status))
             except Exception as e1:
