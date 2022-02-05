@@ -1929,9 +1929,12 @@ class Evolution(GeneratorController):
                 if FuelValue != None:
                     Maintenance["Maintenance"].append({"Fuel In Tank (Sensor)" : self.ValueOut(FuelValue, Units, JSONNum)})
 
-            if self.FuelTankCalculationSupported():
+            # Don't Show estimated fuel for propane tanks with a sensor on Evo controllers
+            if self.FuelTankCalculationSupported() and not (self.FuelType == "Propane" and (self.ExternalFuelDataSupported() or self.FuelSensorSupported())):
                 Maintenance["Maintenance"].append({"Estimated Fuel In Tank " : self.ValueOut(self.GetEstimatedFuelInTank(ReturnFloat = True), Units, JSONNum)})
 
+            # Show hours of fuel remaining if any calculation is supported 
+            if self.FuelTankCalculationSupported() or self.ExternalFuelDataSupported() or self.FuelSensorSupported():
                 DisplayText = "Hours of Fuel Remaining (Estimated %.02f Load )" % self.EstimateLoad
                 RemainingFuelTimeFloat = self.GetRemainingFuelTime(ReturnFloat = True)
                 if RemainingFuelTimeFloat != None:
