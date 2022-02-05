@@ -35,10 +35,11 @@
 10,20,Propane,60,0.5,1.79,1,3.46,gal
 10,20,Natural Gas,60,0.5,150,1,282,cubic feet
 
-# TODO
-17,20,Propane,60,0.5,2.37,1,3.56,gal
-17,20,Natural Gas,60,0.5,204,1,301,cubic feet
+# Evo2 - Home Guardian - 22kW - Source: Manual #0L6630
+17,22,Propane,60,0.5,2.53,1,3.90,gal
+17,22,Natural Gas,60,0.5,228,1,327,cubic feet
 
+# TODO
 32,20,Propane,60,0.5,2.39,1,3.56,gal
 32,20,Natural Gas,60,0.5,219,1,307,cubic feet
 12,8VA,Propane,50,0.5,0.9,1,1.52,gal
