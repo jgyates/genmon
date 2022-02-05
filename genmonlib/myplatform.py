@@ -131,7 +131,7 @@ class MyPlatform(MyCommon):
             except Exception as e1:
                 #self.LogErrorLine(str(e1))
                 # for non rasbpian based systems
-                process = Popen(['cat', '/sys/class/thermal/thermal_zone0/temp'], stdout=PIPE)
+                process = Popen(['cat', '/sys/class/hwmon/hwmon0/temp1_input'], stdout=PIPE)
                 output, _error = process.communicate()
 
                 TempCelciusFloat = float(float(output) / 1000)
