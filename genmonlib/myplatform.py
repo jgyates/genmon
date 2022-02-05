@@ -231,7 +231,7 @@ class MyPlatform(MyCommon):
         except Exception as e1:
             try:
                 # this method is depricated
-                file = open("/sys/devices/platform/soc/soc:firmware/get_throttled")
+                file = open("/sys/class/hwmon/hwmon1/in0_lcrit_alarm")
                 status = file.read()
                 return self.ParseThrottleStatus(int(status))
             except Exception as e1:
