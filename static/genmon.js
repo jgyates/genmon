@@ -739,7 +739,7 @@ function DisplayMaintenance(){
                outstr += '&nbsp;&nbsp;<button id="setexercisebutton" onClick="saveMaintenance();">Set Exercise Time</button>';
             }
 
-            if (myGenerator['SetGenTime'] == true) {  
+            if (myGenerator['SetGenTime'] == true) {
               outstr += '<br><br>Generator Time:<br><br>';
               outstr += '&nbsp;&nbsp;<button id="settimebutton" onClick="SetTimeClick();">Set Generator Time</button>';
             }
@@ -773,6 +773,16 @@ function DisplayMaintenance(){
             if (myGenerator['PowerGraph'] == true) {
                outstr += '<br><br>Reset:<br><br>';
                outstr += '&nbsp;&nbsp;<button id="settimebutton" onClick="SetPowerLogReset();">Reset Power Log & Fuel Estimate</button>';
+            }
+
+            console.log('lenght :' + Object.keys(myGenerator['buttons']).length)
+            if (("buttons" in myGenerator) && !(Object.keys(myGenerator['buttons']).length === 0) ){
+              outstr += '<br><br>Generator Functions:<br><br>';
+              for (let key in myGenerator['buttons']) {
+                button_command = key
+                button_title = myGenerator['buttons'][key];
+                outstr += '&nbsp;&nbsp;<button id=' + button_command + ' onClick="SetClick(\'' + button_command + '\');">' + button_title + '</button><br><br>';
+              }
             }
 
         }
@@ -862,6 +872,9 @@ function SetClick(cmd){
        case "ackalarm":
           msg = 'Acknowledge generator alarm?<br><span class="confirmSmall">Are you sure you want to acknowledge the alarm condition on your generator?</span>';
           break;
+       default:
+          button_title = myGenerator['buttons'][cmd]
+          msg = 'Issue generator command: ' + button_title + '?<br><span class="confirmSmall">Are you sure you want to isssue this command?</span>';
     }
 
     vex.dialog.confirm({
@@ -1128,10 +1141,10 @@ function DisplayLogs(){
           // var data = Object.keys(data_helper).map(itm => data_helper[itm]);
           // var data = Object.values(data_helper);
           // console.log(data);
-          var options = {coloring: 'genmon', 
-                         start: new Date((date.getMonth()-12 < 0) ? date.getYear() - 1 + 1900 : date.getYear() + 1900, (date.getMonth()-12 < 0) ? date.getMonth()+1 : date.getMonth()-12, 1), 
-                         end: new Date(date.getYear() + 1900, date.getMonth(), date.getDate()) , 
-                         months: months, lastMonth: date.getMonth()+1, lastYear: date.getYear() + 1900, 
+          var options = {coloring: 'genmon',
+                         start: new Date((date.getMonth()-12 < 0) ? date.getYear() - 1 + 1900 : date.getYear() + 1900, (date.getMonth()-12 < 0) ? date.getMonth()+1 : date.getMonth()-12, 1),
+                         end: new Date(date.getYear() + 1900, date.getMonth(), date.getDate()) ,
+                         months: months, lastMonth: date.getMonth()+1, lastYear: date.getYear() + 1900,
                          labels: { days: true, months: true, custom: {monthLabels: "MMM 'YY"}}, tooltips: { show: true, options: {}}, legend: { show: false}};
           $("#annualCalendar").CalendarHeatmap(data, options);
         }

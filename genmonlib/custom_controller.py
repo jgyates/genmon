@@ -715,7 +715,7 @@ class CustomController(GeneratorController):
 
             return_buttons = {}
             for button in button_list:
-                return_buttons[button["title"]] = button["onewordcommand"]
+                return_buttons[button["onewordcommand"]] = button["title"]
             return return_buttons
 
         except Exception as e1:
@@ -777,7 +777,7 @@ class CustomController(GeneratorController):
                             Data= []
                             Data.append(HighByte)           # Value for indexed register (High byte)
                             Data.append(LowByte)            # Value for indexed register (Low byte)
-                            self.LogError("Write: " + command["reg"] + ": " + ("%x %x" % (HighByte, LowByte)))
+                            self.LogDebug("Write: " + command["reg"] + ": " + ("%x %x" % (HighByte, LowByte)))
                             self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data)
 
                     return "Remote command sent successfully"

@@ -1,5 +1,15 @@
-provided# Change Log
+# Change Log
 All notable changes to this project will be documented in this file.
+
+## V1.18.06  -2022-02-07
+- Update for custom controller support to add buttons to the maintenance page
+- Update to loader to check for an fix issue with improper version of openweathermap library. This may cause a delay for a few seconds one time while applying this update.
+- Corrected rounding inconsistency in temp display (thanks @lps-rocks)
+- Update to work around change to kernel handing of raspberry pi throttling status display to compensate for kernel changes (thanks @lps-rocks)
+- Update to External CT add on to reduce noise (thanks @skipfire)
+- Added option to disable the display of estimated fuel remaining if an external gauge is used and propane fuel is used (thanks @lps-rocks)
+- removed throttled_check.py utility for maintenance reasons. This functionality is included in genmon.
+- Consolidate common code for displaying status and maintenance information (general housekeeping)
 
 ## V1.18.05  -2022-01-28
 - Updated gensnmp.py SNMP add on. Improvements for SMIv2 and snmpcheck compliance. **NOTE** SNMP values have changed see the wiki for details on the new values. https://github.com/jgyates/genmon/wiki/1----Software-Overview#gensnmppy-optional
@@ -18,7 +28,7 @@ All notable changes to this project will be documented in this file.
 - Corrected issue with log calendar heat map not showing the current month (thanks @buschauer)
 
 ## V1.18.03  -2021-12-06
-- Fixed issue with exclusive serial port check with older verisons of pyserial (pre pyserial v3.3)
+- Fixed issue with exclusive serial port check with older versions of pyserial (pre pyserial v3.3)
 
 ## V1.18.02  -2021-12-05
 - Fixed bug in set exercise functions for Evo / Nexus related to Python 3
@@ -53,7 +63,7 @@ All notable changes to this project will be documented in this file.
 ## V1.16.13  -2021-07-10
 - Added the ability to print the service log
 - Updated alarm code for Service A and Service B due for Evolution
-- Updates for two DIY gauges on DIY gague add on (thanks @speters0)
+- Updates for two DIY gauges on DIY gauge add on (thanks @speters0)
 - Added new alarm code for wiring error
 
 ## V1.16.12  -2021-07-01
@@ -68,7 +78,7 @@ All notable changes to this project will be documented in this file.
 - Added gengpio.conf file to set GPIO pins to values other than the default.
 
 ## V1.16.09  -2021-05-25
-- Corrected bug in web app that displays weather on the lower right. Error occured if weather reporting was disabled (thanks @speters0)
+- Corrected bug in web app that displays weather on the lower right. Error occurred if weather reporting was disabled (thanks @speters0)
 
 ## V1.16.08  -2021-05-22
 - Added restart, reboot and shutdown feature on the advanced page.
@@ -92,7 +102,7 @@ All notable changes to this project will be documented in this file.
 - Added new alarm code for Evolution
 
 ## V1.16.03  -2021-03-03
-- Updated fix for modbus file handling (only specific to industurial controllers). Powerzone controllers handle modbus file register access a little differently and this update handles that differece.
+- Updated fix for modbus file handling (only specific to industrial controllers). Powerzone controllers handle modbus file register access a little differently and this update handles that difference.
 
 ## V1.16.02  -2021-03-02
 - Corrected bug in H-100, G-Panel and PowerZone modbus file handling
@@ -142,16 +152,16 @@ All notable changes to this project will be documented in this file.
 - correct minor bug in in mymail.py
 
 ## V1.15.12 - 2020-12-14
-- Minor updates to recieving mail for python 3 compatiblity
+- Minor updates to receiving mail for python 3 compatibility
 - Minor updates to help with debugging
 
 ## V1.15.11 - 2020-11-15
 - A new library was added so the restart after the upgrade may take a few seconds longer than ususal
 - Improvements for start/stop of programs.
 - Added new check to disallow loading multiple instances of any genmon program unless multi_instance option is set to True. see https://github.com/jgyates/genmon/wiki/Appendix-J-Multiple-Instances-of-Genmon for additional details.
-- Update in javascript to handle userdefined JSON data with null entries
+- Update in javascript to handle user defined JSON data with null entries
 - shutdown cleanup improved for genmqtt.py and gensnmp.py
-- removed restart code / while loop in genserv.py that is likley the cause of intermittant corruption of conf file
+- removed restart code / while loop in genserv.py that is likley the cause of intermittent corruption of conf file
 - Added option to use alternate reading for frequency for Nexus Liquid Cooled units
 
 ## V1.15.10 - 2020-11-09
@@ -166,7 +176,7 @@ All notable changes to this project will be documented in this file.
 - Rounded value written to power log to 3 decimal places (Evolution)
 - Corrected issue with email errors relating to RFC2821 (see https://tools.ietf.org/html/rfc2821#section-3.3)
 - More improvements to better detect and recover modbus sync issues when using serial over TCP with weak wifi signals
-- Improvemnt in gensnmp.py to clean up on restarts (thanks @liltux)
+- Improvement in gensnmp.py to clean up on restarts (thanks @liltux)
 - Minor cleanup on genmqtt.py
 - Cleanup saving of settings web app redirect when using secure login (thanks @curtis1757)
 - Additional checks added for weather API city lookup
@@ -178,20 +188,20 @@ All notable changes to this project will be documented in this file.
 
 ## V1.15.07 - 2020-10-25
 - Added new alarm code for Evolution
-- Improvement on error recovery on time out errors (mostly occuring on bad wifi connections with serial over TCP)
+- Improvement on error recovery on time out errors (mostly occurring on bad wifi connections with serial over TCP)
 
 ## V1.15.06 - 2020-10-20
 - added python functions to aid in portablity (os.path.join)
 - Corrected typo in web interface (thanks @danielforster)
 - More minor corrections for python 3.x
-- Moved location of version info in source tree for maintenance reasons. This required a small change in the sotware update check code
+- Moved location of version info in source tree for maintenance reasons. This required a small change in the software update check code
 
 ## V1.15.05 - 2020-10-18
-- Added alarm code for Fuse Problem with Evoltuion Air Cooled
+- Added alarm code for Fuse Problem with Evolution Air Cooled
 - Reverted to older config file write functions as the new ones did not provide the benefit expected
 - Corrected one typo
 - Fix for checking for software update bug
-- Additional minor fix for pyton 3.x
+- Additional minor fix for python 3.x
 
 ## V1.15.04 - 2020-10-16
 - Minor update to correct issue with software update check when using python 3.x
@@ -205,7 +215,7 @@ All notable changes to this project will be documented in this file.
 - Allow external tank data to be used in calculating time remaining until tank empty
 - Correct typos
 - Update to gensnmp.py to fix issue with H100 alarm list
-- Update to include fuel remainging based on estimated and current load assumptions
+- Update to include fuel remaining based on estimated and current load assumptions
 - Added Fuel In Tank output on Maintenance page
 
 ## V1.15.02 - 2020-10-07
@@ -220,7 +230,7 @@ All notable changes to this project will be documented in this file.
 
 ## V1.14.33 - 2020-09-28
 - Updated myplatform.py to reflects some raspbian updates
-- moves some constants around in the modbus code in preperation for future modifications
+- moves some constants around in the modbus code in preparation for future modifications
 - Updated gensnmp.py to include OID for H and G Panel alarm list
 
 ## V1.14.32 - 2020-09-20
@@ -243,13 +253,13 @@ All notable changes to this project will be documented in this file.
 - Made the service journal editable. Thanks @buschauer
 
 ## V1.14.27 - 2020-08-29
-- Design update in preperation for future updates
+- Design update in preparation for future updates
 
 ## V1.14.26 - 2020-08-19
 - Minor modification to gentankutil add on to compensate for changed web login at tankutility.com
 
 ## V1.14.25 - 2020-08-19
-- Added new alarm code for Nexus Liquid Cooled and Evoltion Air Cooled
+- Added new alarm code for Nexus Liquid Cooled and Evolution Air Cooled
 
 ## V1.14.24 - 2020-08-17
 - Corrected bug introduced in V1.14.23 that prevented logging of outages
@@ -266,7 +276,7 @@ All notable changes to this project will be documented in this file.
 ## V1.14.21 - 2020-08-02
 - Updated backup function to include all add on program settings
 - Corrected problems with fuel consumption calculation for Evolution
-- Added estimated hours remaing in tank for fuel consumption
+- Added estimated hours remaining in tank for fuel consumption
 - Added fuel consumption method for industrial controllers, see https://github.com/jgyates/genmon/wiki/Appendix-H-Monitoring-Fuel-and-Power-Usage
 - Added option to display fuel sensor gauge for industrial controllers
 - Fixed LDAP bug, thanks @magomez96
@@ -282,7 +292,7 @@ All notable changes to this project will be documented in this file.
 - Added reading of two new registers for possible display of new settings (Two Wire Start for Evo)
 
 ## V1.14.17 - 2020-07-10
-- Added new alarm code for Evo (instantanious alarm for High Temp)
+- Added new alarm code for Evo (instantaneous alarm for High Temp)
 - Added software update to Monitor->Generator Monitor Stats->Update Available
 
 ## V1.14.16 - 2020-07-05
@@ -294,7 +304,7 @@ All notable changes to this project will be documented in this file.
 - Added firmware version to Evo log file submissions
 
 ## V1.14.14 - 2020-06-18
-- Updated Evo AC power calculation based on new data from @sefs85, you can revert to the old method in advanced settings "Use Legacy Power Calculation". Unless you have a 22kw Evolution (which has no CTs install form the factory so it can not read the current) it is recomended that you use this new method. You will likley need to remove any Current Divider or Current Offset settings on the advance page.
+- Updated Evo AC power calculation based on new data from @sefs85, you can revert to the old method in advanced settings "Use Legacy Power Calculation". Unless you have a 22kw Evolution (which has no CTs install form the factory so it can not read the current) it is recommended that you use this new method. You will likley need to remove any Current Divider or Current Offset settings on the advance page.
 
 ## V1.14.13 - 2020-06-16
 - Corrected on python3 issue with genloader when attempting to load uninstalled libraries.
