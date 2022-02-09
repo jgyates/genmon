@@ -1093,7 +1093,8 @@ class CustomController(GeneratorController):
             elif SwitchState == "off":
                 return "OFF"
             else:
-                self.FeedbackPipe.SendFeedback("Base State", FullLogs = True, Always = True, Message="Unknown Base State")
+                message = "Unknown Base State: " + str(EngineStatus) + ": " + str(GeneratorStatus) + ": " + str(SwitchState)
+                self.FeedbackPipe.SendFeedback("Base State", FullLogs = True, Always = True, Message = message)
                 return "UNKNOWN"
         except Exception as e1:
             self.LogErrorLine("Error in GetBaseStatus: " + str(e1))
