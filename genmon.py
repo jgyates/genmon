@@ -757,6 +757,20 @@ class Monitor(MySupport):
         StartInfo["version"] = ProgramDefaults.GENMON_VERSION
         StartInfo["sitename"] = self.SiteName
         StartInfo["python"] = str(sys.version_info.major) + "." + str(sys.version_info.minor)
+        StartInfo["platform"] = str(sys.platform)
+        try:
+            import platform
+
+            StartInfo["python"] = str(platform.python_version())
+            if platform.architecture()[0] == "32bit":
+                StartInfo["os_bits"] =  "32"
+            elif platform.architecture()[0] == "64bit":
+                StartInfo["os_bits"] =  "64"
+            else:
+                StartInfo["os_bits"] =  "Unknown"
+        except Exception as e1:
+            self.LogErrorLine("Error in GetStartInfo: " + str(e1))
+            pass
         try:
             import time
             if self.is_dst:
