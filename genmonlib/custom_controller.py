@@ -380,6 +380,8 @@ class CustomController(GeneratorController):
     def SystemInAlarm(self):
 
         try:
+            if not "alarm_active" in self.controllerimport:
+                return False
             alarm_state = self.GetExtendedDisplayString(self.controllerimport, "alarm_active")
             if len(alarm_state) and not alarm_state == "Unknown" :
                 return True
@@ -771,19 +773,48 @@ class CustomController(GeneratorController):
                             if not len(command["value"]):
                                 self.LogDebug("Error in SetGeneratorRemoteCommand: invalid value array")
                                 continue
-                            value = int(command["value"], 16)
-                            LowByte = value & 0x00FF
-                            HighByte = value >> 8
-                            Data= []
-                            Data.append(HighByte)           # Value for indexed register (High byte)
-                            Data.append(LowByte)            # Value for indexed register (Low byte)
-                            self.LogDebug("Write: " + command["reg"] + ": " + ("%x %x" % (HighByte, LowByte)))
-                            self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data)
+                            if isinstance(command["value"], list):
+                                if not (len(command["value"]) % 2) == 0:
+                                    self.LogDebug("Error in SetGeneratorRemoteCommand: invalid value length")
+                                    return "Command not found."
+                                Data = []
+                                for item in command["value"]:
+                                    if isinstance(item, str):
+                                        Data.append(int(item, 16))
+                                    elif isinstance(item, int):
+                                        Data.append(item)
+                                    else:
+                                        self.LogDebug("Error in SetGeneratorRemoteCommand: invalid type if value list")
+                                        return "Command not found."
+                                self.LogDebug("Write: " + command["reg"] + ": " + str(Data))
+                                self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data)
+
+                            elif isinstance(command["value"], str):
+                                value = int(command["value"], 16)
+                                LowByte = value & 0x00FF
+                                HighByte = value >> 8
+                                Data= []
+                                Data.append(HighByte)           # Value for indexed register (High byte)
+                                Data.append(LowByte)            # Value for indexed register (Low byte)
+                                self.LogDebug("Write: " + command["reg"] + ": " + ("%x %x" % (HighByte, LowByte)))
+                                self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data)
+                            elif isinstance(command["value"], int):
+                                value = command["value"]
+                                LowByte = value & 0x00FF
+                                HighByte = value >> 8
+                                Data= []
+                                Data.append(HighByte)           # Value for indexed register (High byte)
+                                Data.append(LowByte)            # Value for indexed register (Low byte)
+                                self.LogDebug("Write: " + command["reg"] + ": " + ("%x %x" % (HighByte, LowByte)))
+                                self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data)
+                            else:
+                                self.LogDebug("Error in SetGeneratorRemoteCommand: invalid value type")
+                                return "Command not found."
 
                     return "Remote command sent successfully"
 
         except Exception as e1:
-            self.LogErrorLine("Error in SetGeneratorRemoteStartStop: " + str(e1))
+            self.LogErrorLine("Error in SetGeneratorRemoteCommand: " + str(e1))
             return "Error"
         return "Command not found."
 
