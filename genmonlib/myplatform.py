@@ -64,7 +64,19 @@ class MyPlatform(MyCommon):
             return self.GetLinuxInfo()
         return None
 
-
+    #------------ MyPlatform::PlatformBitDepth----------------------------------
+    def PlatformBitDepth(self):
+        try:
+            import platform
+            if platform.architecture()[0] == "32bit":
+                return  "32"
+            elif platform.architecture()[0] == "64bit":
+                return "64"
+            else:
+                return "Unknown"
+        except Exception as e1:
+            self.LogErrorLine("Error in PlatformBitDepth: " + str(e1))
+            "Unknown"
     #------------ MyPlatform::IsOSLinux-----------------------------------------
     @staticmethod
     def IsOSLinux():

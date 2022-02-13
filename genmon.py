@@ -29,6 +29,7 @@ try:
     from genmonlib.generac_powerzone import PowerZone
     from genmonlib.custom_controller import CustomController
     from genmonlib.myweather import MyWeather
+    from genmonlib.myplatform import MyPlatform
     from genmonlib.program_defaults import ProgramDefaults
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
@@ -762,12 +763,10 @@ class Monitor(MySupport):
             import platform
 
             StartInfo["python"] = str(platform.python_version())
-            if platform.architecture()[0] == "32bit":
-                StartInfo["os_bits"] =  "32"
-            elif platform.architecture()[0] == "64bit":
-                StartInfo["os_bits"] =  "64"
-            else:
-                StartInfo["os_bits"] =  "Unknown"
+
+            Platform = MyPlatform(log = self.log, usemetric = True)
+            StartInfo["os_bits"] = Platform.PlatformBitDepth()
+
         except Exception as e1:
             self.LogErrorLine("Error in GetStartInfo: " + str(e1))
             pass
