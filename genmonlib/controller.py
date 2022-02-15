@@ -1489,15 +1489,15 @@ class GeneratorController(MySupport):
                 if ReturnCurrent !=  None:
                     ExternalSensors.append({"Total Current" : self.ValueOut(ReturnCurrent, "A", JSONNum)})
                 if ReturnCurrent1 !=  None:
-                    ExternalSensors.append({"Current Tranformer Leg 1" : self.ValueOut(ReturnCurrent1, "A", JSONNum)})
+                    ExternalSensors.append({"Current Leg 1" : self.ValueOut(ReturnCurrent1, "A", JSONNum)})
                 if ReturnCurrent2 !=  None:
-                    ExternalSensors.append({"Current Tranformer Leg 2" : self.ValueOut(ReturnCurrent2, "A", JSONNum)})
+                    ExternalSensors.append({"Current Leg 2" : self.ValueOut(ReturnCurrent2, "A", JSONNum)})
                 if ReturnPower !=  None:
                     ExternalSensors.append({"Power" : self.ValueOut(ReturnPower, "kW", JSONNum)})
                 if ReturnPower1 !=  None:
-                    ExternalSensors.append({"Current Tranformer Power Leg 1" : self.ValueOut(ReturnPower1, "kW", JSONNum)})
+                    ExternalSensors.append({"Power Leg 1" : self.ValueOut(ReturnPower1, "kW", JSONNum)})
                 if ReturnPower2 !=  None:
-                    ExternalSensors.append({"Current Tranformer Power Leg 2" : self.ValueOut(ReturnPower2, "kW", JSONNum)})
+                    ExternalSensors.append({"Power Leg 2" : self.ValueOut(ReturnPower2, "kW", JSONNum)})
             return Status
         except Exception as e1:
             self.LogErrorLine("Error in DisplayStatusCommon: " + str(e1))
@@ -1867,6 +1867,8 @@ class GeneratorController(MySupport):
     def ConvertExternalData(self, request = 'current', voltage = None, ReturnFloat = False):
 
         try:
+            # ExternalData can contain any of the following: current, power, ctdata[], ctpower[], voltage
+            # ctpower[] and ctdata[] is a list of 2 ints, voltage is both legs combined
             if not self.UseExternalCTData:
                 return None
             ExternalData = self.GetExternalCTData()
@@ -1895,7 +1897,20 @@ class GeneratorController(MySupport):
                 powerfactor = 1.0
 
             if voltage == None:
-                return None
+                if 'voltage' in ExternalData:
+                    voltage = int(ExternalData['voltage'])
+                else:
+                    return None
+
+            if 'phase' in ExternalData:
+                phase = ExternalData['phase']
+            else:
+                phase = 1
+            if phase == 1:
+                singlelegvoltage = voltage / 2
+            else:
+                # TODO check this
+                singlelegvoltage = voltage / 3
 
             if request.lower() == 'current' and 'power' in ExternalData:
                 if voltage == 0:
@@ -1904,7 +1919,7 @@ class GeneratorController(MySupport):
                 if "ctpower" in ExternalData and len(ExternalData['ctpower']) >= 2:
                     power1 = float(ExternalData['ctpower'][0]) * 1000
                     power2 = float(ExternalData['ctpower'][1]) * 1000
-                    CurrentFloat = round((power1 / (powerfactor * (voltage/2))) + (power2 / (powerfactor * (voltage/2))), 2)
+                    CurrentFloat = round((power1 / (powerfactor * (singlelegvoltage))) + (power2 / (powerfactor * (singlelegvoltage))), 2)
                 else:
                     PowerFloat = float(ExternalData['power']) * 1000.0
                     # I(A) = P(W) / (PF x V(V))
@@ -1919,7 +1934,7 @@ class GeneratorController(MySupport):
                     # P(W) = (PF x I(A) x V(V)) + (PF x I(A) x V(V))
                     current1 = float(ExternalData['ctdata'][0])
                     current2 = float(ExternalData['ctdata'][1])
-                    PowerFloat = ((powerfactor * current1 * (voltage/2)) +  (powerfactor * current2 * (voltage/2)))/ 1000
+                    PowerFloat = ((powerfactor * current1 * (singlelegvoltage)) +  (powerfactor * current2 * (singlelegvoltage)))/ 1000
                 return self.ReturnFormat(PowerFloat,"kW", ReturnFloat)
 
             return None

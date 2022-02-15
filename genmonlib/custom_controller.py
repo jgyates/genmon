@@ -119,6 +119,7 @@ class CustomController(GeneratorController):
 
             self.ConfigFileName = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "data",  "controller", self.ConfigImportFile)
 
+            self.LogError("Using config import: " + self.ConfigFileName)
             if not self.ReadImportConfig():
                 self.FatalError("Unable to read import config: " + self.ConfigFileName)
                 return False
@@ -1042,11 +1043,15 @@ class CustomController(GeneratorController):
                 return None
 
             # This assumes the following format:
-            # NOTE: all fields are optional
+            # NOTE: all fields are *optional*
             # { "strict" : True or False (true requires an outage to use the data)
-            #   "current" : float value in amps
-            #   "power"   : float value in kW
+            #   "current" : optional, float value in amps
+            #   "power"   : optional, float value in kW
             #   "powerfactor" : float value (default is 1.0) used if converting from current to power or power to current
+            #   ctdata[] : list of amps for each leg
+            #   ctpower[] :  list of power in kW for each leg
+            #   voltage : optional, float value of total RMS voltage (all legs combined)
+            #   phase : optional, int (1 or 3)
             # }
             strict = False
             if 'strict' in ExternalData:
@@ -1065,9 +1070,10 @@ class CustomController(GeneratorController):
 
             # if we get here we must convert the data.
             if not "outputvoltage" in self.controllerimport.keys():
-                self.LogError("WARNING: no outputvoltage in custom controller defintion")
-                return DefaultReturn
-            Voltage =  self.GetSingleSensor("outputvoltage", ReturnFloat = ReturnFloat)
+                self.LogDebug("WARNING: no outputvoltage in custom controller defintion")
+                Voltage = None
+            else:
+                Voltage =  self.GetSingleSensor("outputvoltage", ReturnFloat = ReturnFloat)
 
             if isinstance(Voltage, str):
                 # TODO why is this needed?

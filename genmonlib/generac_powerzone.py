@@ -1503,7 +1503,7 @@ class PowerZone(GeneratorController):
             Maintenance["Maintenance"].append({"Fuel Type" : self.FuelType})
 
             Maintenance = self.DisplayMaintenanceCommon(Maintenance, JSONNum = JSONNum)
-            
+
             if not self.SmartSwitch:
                 pass
                 Exercise = []
@@ -2119,11 +2119,15 @@ class PowerZone(GeneratorController):
                 return None
 
             # This assumes the following format:
-            # NOTE: all fields are optional
-            # { "strict" : True or False (true requires and outage to use the data)
-            #   "current" : float value in amps
-            #   "power"   : float value in kW
+            # NOTE: all fields are *optional*
+            # { "strict" : True or False (true requires an outage to use the data)
+            #   "current" : optional, float value in amps
+            #   "power"   : optional, float value in kW
             #   "powerfactor" : float value (default is 1.0) used if converting from current to power or power to current
+            #   ctdata[] : list of amps for each leg
+            #   ctpower[] :  list of power in kW for each leg
+            #   voltage : optional, float value of total RMS voltage (all legs combined)
+            #   phase : optional, int (1 or 3)
             # }
             strict = False
             if 'strict' in ExternalData:
@@ -2137,7 +2141,7 @@ class PowerZone(GeneratorController):
             Voltage =  self.GetParameter(self.Reg.GEN_AVERAGE_VOLTAGE_LL[REGISTER],ReturnInt = True)
 
             return self.ConvertExternalData(request = request, voltage = Voltage, ReturnFloat = ReturnFloat)
-
+            
         except Exception as e1:
             self.LogErrorLine("Error in CheckExternalCTData: " + str(e1))
             return DefaultReturn
