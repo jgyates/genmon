@@ -78,7 +78,7 @@ class MyMail(MySupport):
         # if mymail.conf is present attempt to copy it from the
         # main source directory
         if not os.path.isfile(self.configfile):
-            if os.path.join(os.path.isfile(self.ModulePath, "mymail.conf")):
+            if os.path.isfile(os.path.join(self.ModulePath, "mymail.conf")):
                 copyfile(os.path.join(self.ModulePath, "mymail.conf") , self.configfile)
             else:
                 self.LogError("Missing config file : " + self.configfile)
