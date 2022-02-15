@@ -706,6 +706,9 @@ class Evolution(GeneratorController):
         if not len(Value):
             return "Unknown"
 
+        if self.FilterReg(int(Value,16)) == None:
+            return "Unknown"
+
         ModelInfo = LookUp.get(int(Value,16), UnknownList)
 
         if ModelInfo == UnknownList:
@@ -2660,6 +2663,26 @@ class Evolution(GeneratorController):
         if regvalue & 0xFFF0FFC0:
             return False
         return True
+
+    #------------ Evolution:FilterReg ------------------------------------------
+    def FilterReg(self, regvalue):
+        try:
+
+            if not self.Evolution2:
+                return regvalue
+
+            if not self.IgnoreUnknown:
+                return regvalue
+
+            IgnoreList = [0x2020, 0x20200000, 0x3f3d0000,  0x3f3d, 0x3430]
+
+            if regvalue in IgnoreList:
+                return None
+            return regvalue
+
+        except Exception as e1:
+            self.LogErrorLine("Error in  FilterReg " + str(e1))
+            return regvalue
 
     #------------ Evolution:FilterReg0001 --------------------------------------
     def FilterReg0001(self, regvalue):
