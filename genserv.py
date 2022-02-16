@@ -625,31 +625,20 @@ def GetAddOns():
             "Number to send SMS message from. This should be a twilio phone number.",
             bounds = 'required InternationalPhone',
             display_name = "Twilio Phone Number")
-        AddOnCfg['gensms']['parameters']['notify_error'] = CreateAddOnParam(
-            ConfigFiles[GENSMS_CONFIG].ReadValue("notify_error", return_type = bool, default = True),
-            'boolean',
-            "Send mssages for errors (Generator Alarms).",
-            display_name = "Notify for Errors")
-        AddOnCfg['gensms']['parameters']['notify_warn'] = CreateAddOnParam(
-            ConfigFiles[GENSMS_CONFIG].ReadValue("notify_warn", return_type = bool, default = True),
-            'boolean',
-            "Send mssages for warnings (service due, fuel low).",
-            display_name = "Notify for Warnings")
-        AddOnCfg['gensms']['parameters']['notify_info'] = CreateAddOnParam(
-            ConfigFiles[GENSMS_CONFIG].ReadValue("notify_info", return_type = bool, default = True),
-            'boolean',
-            "Send mssages for information (switch state change, engine state change, exercising).",
-            display_name = "Notify for Information")
-        AddOnCfg['gensms']['parameters']['notify_outage'] = CreateAddOnParam(
-            ConfigFiles[GENSMS_CONFIG].ReadValue("notify_outage", return_type = bool, default = True),
-            'boolean',
-            "Send mssages for outages.",
-            display_name = "Notify for Outages")
-        AddOnCfg['gensms']['parameters']['notify_sw_update'] = CreateAddOnParam(
-            ConfigFiles[GENSMS_CONFIG].ReadValue("notify_sw_update", return_type = bool, default = True),
-            'boolean',
-            "Send mssages for software updates.",
-            display_name = "Notify for Software Updates")
+
+        AddOnCfg = AddNotificationAddOnParam(AddOnCfg, 'gensms',GENSMS_CONFIG)
+        AddOnCfg = AddRetryAddOnParam(AddOnCfg, 'gensms',GENSMS_CONFIG)
+
+        AddOnCfg['gensms']['parameters']['max_retry_time'] = CreateAddOnParam(
+            ConfigFiles[GENSMS_CONFIG].ReadValue("max_retry_time", return_type = int, default = 600),
+            'int',
+            "Maximum number of seconds to retry a failed message before dropping the message.",
+            display_name = "Max Retry Duration")
+        AddOnCfg['gensms']['parameters']['default_wait'] = CreateAddOnParam(
+            ConfigFiles[GENSMS_CONFIG].ReadValue("default_wait", return_type = int, default = 120),
+            'int',
+            "The number of seconds to wait before retrying afailed message.",
+            display_name = "Retry Interval")
 
         #GENSMS_MODEM
         AddOnCfg['gensms_modem'] = collections.OrderedDict()
@@ -685,31 +674,7 @@ def GetAddOns():
             "Enable to log at commands to the log file.",
             display_name = "Log AT Commands")
 
-        AddOnCfg['gensms_modem']['parameters']['notify_error'] = CreateAddOnParam(
-            ConfigFiles[MYMODEM_CONFIG].ReadValue("notify_error", return_type = bool, default = True),
-            'boolean',
-            "Send mssages for errors (Generator Alarms).",
-            display_name = "Notify for Errors")
-        AddOnCfg['gensms_modem']['parameters']['notify_warn'] = CreateAddOnParam(
-            ConfigFiles[MYMODEM_CONFIG].ReadValue("notify_warn", return_type = bool, default = True),
-            'boolean',
-            "Send mssages for warnings (service due, fuel low).",
-            display_name = "Notify for Warnings")
-        AddOnCfg['gensms_modem']['parameters']['notify_info'] = CreateAddOnParam(
-            ConfigFiles[MYMODEM_CONFIG].ReadValue("notify_info", return_type = bool, default = True),
-            'boolean',
-            "Send mssages for information (switch state change, engine state change, exercising).",
-            display_name = "Notify for Information")
-        AddOnCfg['gensms_modem']['parameters']['notify_outage'] = CreateAddOnParam(
-            ConfigFiles[MYMODEM_CONFIG].ReadValue("notify_outage", return_type = bool, default = True),
-            'boolean',
-            "Send mssages for outages.",
-            display_name = "Notify for Outages")
-        AddOnCfg['gensms_modem']['parameters']['notify_sw_update'] = CreateAddOnParam(
-            ConfigFiles[MYMODEM_CONFIG].ReadValue("notify_sw_update", return_type = bool, default = True),
-            'boolean',
-            "Send mssages for software updates.",
-            display_name = "Notify for Software Updates")
+        AddOnCfg = AddNotificationAddOnParam(AddOnCfg, 'gensms_modem',MYMODEM_CONFIG)
 
         # modem type - select the type of modem used. For future use. Presently "LTEPiHat" is the only option
         #modem_type = LTEPiHat
@@ -741,31 +706,20 @@ def GetAddOns():
             "Notification sound identifier. See https://pushover.net/api#sounds for a full list of sound IDs",
             bounds = 'minmax:3:20',
             display_name = "Push Sound")
-        AddOnCfg['genpushover']['parameters']['notify_error'] = CreateAddOnParam(
-            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue("notify_error", return_type = bool, default = True),
-            'boolean',
-            "Send mssages for errors (Generator Alarms).",
-            display_name = "Notify for Errors")
-        AddOnCfg['genpushover']['parameters']['notify_warn'] = CreateAddOnParam(
-            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue("notify_warn", return_type = bool, default = True),
-            'boolean',
-            "Send mssages for warnings (service due, fuel low).",
-            display_name = "Notify for Warnings")
-        AddOnCfg['genpushover']['parameters']['notify_info'] = CreateAddOnParam(
-            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue("notify_info", return_type = bool, default = True),
-            'boolean',
-            "Send mssages for information (switch state change, engine state change, exercising).",
-            display_name = "Notify for Information")
-        AddOnCfg['genpushover']['parameters']['notify_outage'] = CreateAddOnParam(
-            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue("notify_outage", return_type = bool, default = True),
-            'boolean',
-            "Send mssages for outages.",
-            display_name = "Notify for Outages")
-        AddOnCfg['genpushover']['parameters']['notify_sw_update'] = CreateAddOnParam(
-            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue("notify_sw_update", return_type = bool, default = True),
-            'boolean',
-            "Send mssages for software updates.",
-            display_name = "Notify for Software Updates")
+
+        AddOnCfg = AddNotificationAddOnParam(AddOnCfg, 'genpushover',GENPUSHOVER_CONFIG)
+        AddOnCfg = AddRetryAddOnParam(AddOnCfg, 'genpushover',GENPUSHOVER_CONFIG)
+
+        AddOnCfg['genpushover']['parameters']['max_retry_time'] = CreateAddOnParam(
+            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue("max_retry_time", return_type = int, default = 600),
+            'int',
+            "Maximum number of seconds to retry a failed message before dropping the message.",
+            display_name = "Max Retry Duration")
+        AddOnCfg['genpushover']['parameters']['default_wait'] = CreateAddOnParam(
+            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue("default_wait", return_type = int, default = 120),
+            'int',
+            "The number of seconds to wait before retrying afailed message.",
+            display_name = "Retry Interval")
 
         # GENSYSLOG
         AddOnCfg['gensyslog'] = collections.OrderedDict()
@@ -909,31 +863,20 @@ def GetAddOns():
             "Use this to make the title of the message a link i.e. link to the genmon web interface.",
             bounds = 'HTTPAddress',
             display_name = "Title Link")
-        AddOnCfg['genslack']['parameters']['notify_error'] = CreateAddOnParam(
-            ConfigFiles[GENSLACK_CONFIG].ReadValue("notify_error", return_type = bool, default = True),
-            'boolean',
-            "Send mssages for errors (Generator Alarms).",
-            display_name = "Notify for Errors")
-        AddOnCfg['genslack']['parameters']['notify_warn'] = CreateAddOnParam(
-            ConfigFiles[GENSLACK_CONFIG].ReadValue("notify_warn", return_type = bool, default = True),
-            'boolean',
-            "Send mssages for warnings (service due, fuel low).",
-            display_name = "Notify for Warnings")
-        AddOnCfg['genslack']['parameters']['notify_info'] = CreateAddOnParam(
-            ConfigFiles[GENSLACK_CONFIG].ReadValue("notify_info", return_type = bool, default = True),
-            'boolean',
-            "Send mssages for information (switch state change, engine state change, exercising).",
-            display_name = "Notify for Information")
-        AddOnCfg['genslack']['parameters']['notify_outage'] = CreateAddOnParam(
-            ConfigFiles[GENSLACK_CONFIG].ReadValue("notify_outage", return_type = bool, default = True),
-            'boolean',
-            "Send mssages for outages.",
-            display_name = "Notify for Outages")
-        AddOnCfg['genslack']['parameters']['notify_sw_update'] = CreateAddOnParam(
-            ConfigFiles[GENSLACK_CONFIG].ReadValue("notify_sw_update", return_type = bool, default = True),
-            'boolean',
-            "Send mssages for software updates.",
-            display_name = "Notify for Software Updates")
+
+        AddOnCfg = AddNotificationAddOnParam(AddOnCfg, 'genslack',GENSLACK_CONFIG)
+        AddOnCfg = AddRetryAddOnParam(AddOnCfg, 'genslack',GENSLACK_CONFIG)
+
+        AddOnCfg['genslack']['parameters']['max_retry_time'] = CreateAddOnParam(
+            ConfigFiles[GENSLACK_CONFIG].ReadValue("max_retry_time", return_type = int, default = 600),
+            'int',
+            "Maximum number of seconds to retry a failed message before dropping the message.",
+            display_name = "Max Retry Duration")
+        AddOnCfg['genslack']['parameters']['default_wait'] = CreateAddOnParam(
+            ConfigFiles[GENSLACK_CONFIG].ReadValue("default_wait", return_type = int, default = 120),
+            'int',
+            "The number of seconds to wait before retrying afailed message.",
+            display_name = "Retry Interval")
 
         # GENEXERCISE
         ControllerInfo = GetControllerInfo("controller").lower()
@@ -1015,31 +958,8 @@ def GetAddOns():
             "Email to SMS email recipient. Must be a valid email address",
             bounds = 'required email',
             display_name = "Email to SMS address")
-        AddOnCfg['genemail2sms']['parameters']['notify_error'] = CreateAddOnParam(
-            ConfigFiles[GENEMAIL2SMS_CONFIG].ReadValue("notify_error", return_type = bool, default = True),
-            'boolean',
-            "Send mssages for errors (Generator Alarms).",
-            display_name = "Notify for Errors")
-        AddOnCfg['genemail2sms']['parameters']['notify_warn'] = CreateAddOnParam(
-            ConfigFiles[GENEMAIL2SMS_CONFIG].ReadValue("notify_warn", return_type = bool, default = True),
-            'boolean',
-            "Send mssages for warnings (service due, fuel low).",
-            display_name = "Notify for Warnings")
-        AddOnCfg['genemail2sms']['parameters']['notify_info'] = CreateAddOnParam(
-            ConfigFiles[GENEMAIL2SMS_CONFIG].ReadValue("notify_info", return_type = bool, default = True),
-            'boolean',
-            "Send mssages for information (switch state change, engine state change, exercising).",
-            display_name = "Notify for Information")
-        AddOnCfg['genemail2sms']['parameters']['notify_outage'] = CreateAddOnParam(
-            ConfigFiles[GENEMAIL2SMS_CONFIG].ReadValue("notify_outage", return_type = bool, default = True),
-            'boolean',
-            "Send mssages for outages.",
-            display_name = "Notify for Outages")
-        AddOnCfg['genemail2sms']['parameters']['notify_sw_update'] = CreateAddOnParam(
-            ConfigFiles[GENEMAIL2SMS_CONFIG].ReadValue("notify_sw_update", return_type = bool, default = True),
-            'boolean',
-            "Send mssages for software updates.",
-            display_name = "Notify for Software Updates")
+
+        AddOnCfg = AddNotificationAddOnParam(AddOnCfg, 'genemail2sms',GENEMAIL2SMS_CONFIG)
 
         #GENTANKUTIL
         AddOnCfg['gentankutil'] = collections.OrderedDict()
@@ -1220,13 +1140,66 @@ def GetAddOns():
         LogErrorLine("Error in GetAddOns: " + str(e1))
 
     return AddOnCfg
-#------------ MyCommon::StripJson ------------------------------------------
+
+#------------ AddNotificationAddOnParam ----------------------------------------
+def AddNotificationAddOnParam(AddOnCfg, addon_name, config_file):
+
+    try:
+        AddOnCfg[addon_name]['parameters']['notify_error'] = CreateAddOnParam(
+            ConfigFiles[config_file].ReadValue("notify_error", return_type = bool, default = True),
+            'boolean',
+            "Send mssages for errors (Generator Alarms).",
+            display_name = "Notify for Errors")
+        AddOnCfg[addon_name]['parameters']['notify_warn'] = CreateAddOnParam(
+            ConfigFiles[config_file].ReadValue("notify_warn", return_type = bool, default = True),
+            'boolean',
+            "Send mssages for warnings (service due, fuel low).",
+            display_name = "Notify for Warnings")
+        AddOnCfg[addon_name]['parameters']['notify_info'] = CreateAddOnParam(
+            ConfigFiles[config_file].ReadValue("notify_info", return_type = bool, default = True),
+            'boolean',
+            "Send mssages for information (switch state change, engine state change, exercising).",
+            display_name = "Notify for Information")
+        AddOnCfg[addon_name]['parameters']['notify_outage'] = CreateAddOnParam(
+            ConfigFiles[config_file].ReadValue("notify_outage", return_type = bool, default = True),
+            'boolean',
+            "Send mssages for outages.",
+            display_name = "Notify for Outages")
+        AddOnCfg[addon_name]['parameters']['notify_sw_update'] = CreateAddOnParam(
+            ConfigFiles[config_file].ReadValue("notify_sw_update", return_type = bool, default = True),
+            'boolean',
+            "Send mssages for software updates.",
+            display_name = "Notify for Software Updates")
+    except Exception as e1:
+        LogErrorLine("Error in AddNotificationAddOnParam: " + str(e1))
+
+    return AddOnCfg
+
+#------------ AddRetryAddOnParam -----------------------------------------------
+def AddRetryAddOnParam(AddOnCfg, addon_name, config_file):
+
+    try:
+        AddOnCfg[addon_name]['parameters']['max_retry_time'] = CreateAddOnParam(
+            ConfigFiles[config_file].ReadValue("max_retry_time", return_type = int, default = 600),
+            'int',
+            "Maximum number of seconds to retry a failed message before dropping the message.",
+            display_name = "Max Retry Duration")
+        AddOnCfg[addon_name]['parameters']['default_wait'] = CreateAddOnParam(
+            ConfigFiles[config_file].ReadValue("default_wait", return_type = int, default = 120),
+            'int',
+            "The number of seconds to wait before retrying a failed message.",
+            display_name = "Retry Interval")
+    except Exception as e1:
+        LogErrorLine("Error in AddRetryAddOnParam: " + str(e1))
+    return AddOnCfg
+
+#------------ MyCommon::StripJson ----------------------------------------------
 def StripJson(InputString):
     for char in '{}[]"':
         InputString = InputString.replace(char,'')
     return InputString
 
-#------------ MyCommon::DictToString ---------------------------------------
+#------------ MyCommon::DictToString -------------------------------------------
 def DictToString(InputDict, ExtraStrip = False):
 
     if InputDict == None:

@@ -17,6 +17,7 @@ try:
     from genmonlib.mynotify import GenNotify
     from genmonlib.myconfig import MyConfig
     from genmonlib.mysupport import MySupport
+    from genmonlib.mymsgqueue import MyMsgQueue
     from genmonlib.program_defaults import ProgramDefaults
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
@@ -48,7 +49,11 @@ def GetErrorLine():
 #----------  Signal Handler ----------------------------------------------------
 def signal_handler(signal, frame):
 
-    GenNotify.Close()
+    try:
+        GenNotify.Close()
+        Queue.Close()
+    except Exception as e1:
+        log.error("signal_handler: " + str(e1))
     sys.exit(0)
 
 #----------  OnRun -------------------------------------------------------------
@@ -56,7 +61,7 @@ def OnRun(Active):
 
     if Active:
         console.info("Generator Running")
-        SendNotice("Generator Running")
+        Queue.SendMessage("Generator Running")
     else:
         console.info("Generator Running End")
 
@@ -65,7 +70,7 @@ def OnRunManual(Active):
 
     if Active:
         console.info("Generator Running in Manual Mode")
-        SendNotice("Generator Running in Manual Mode")
+        Queue.SendMessage("Generator Running in Manual Mode")
     else:
         console.info("Generator Running in Manual Mode End")
 
@@ -74,7 +79,7 @@ def OnExercise(Active):
 
     if Active:
         console.info("Generator Exercising")
-        SendNotice("Generator Exercising")
+        Queue.SendMessage("Generator Exercising")
     else:
         console.info("Generator Exercising End")
 
@@ -83,7 +88,7 @@ def OnReady(Active):
 
     if Active:
         console.info("Generator Ready")
-        SendNotice("Generator Ready")
+        Queue.SendMessage("Generator Ready")
     else:
         console.info("Generator Ready End")
 
@@ -92,7 +97,7 @@ def OnOff(Active):
 
     if Active:
         console.info("Generator Off")
-        SendNotice("Generator Off")
+        Queue.SendMessage("Generator Off")
     else:
         console.info("Generator Off End")
 
@@ -101,7 +106,7 @@ def OnManual(Active):
 
     if Active:
         console.info("Generator Manual")
-        SendNotice("Generator Manual")
+        Queue.SendMessage("Generator Manual")
     else:
         console.info("Generator Manual End")
 
@@ -110,7 +115,7 @@ def OnAlarm(Active):
 
     if Active:
         console.info("Generator Alarm")
-        SendNotice("Generator Alarm")
+        Queue.SendMessage("Generator Alarm")
     else:
         console.info("Generator Alarm End")
 
@@ -119,7 +124,7 @@ def OnService(Active):
 
     if Active:
         console.info("Generator Service Due")
-        SendNotice("Generator Service Due")
+        Queue.SendMessage("Generator Service Due")
     else:
         console.info("Generator Servcie Due End")
 
@@ -128,9 +133,9 @@ def OnUtilityChange(Active):
 
     if Active:
         console.info("Utility Service is Down")
-        SendNotice("Utility Service is Down")
+        Queue.SendMessage("Utility Service is Down")
     else:
-        SendNotice("Utility Service is Up")
+        Queue.SendMessage("Utility Service is Up")
         console.info("Utility Service is Up")
 
 #----------  OnSoftwareUpdate --------------------------------------------------
@@ -138,23 +143,23 @@ def OnSoftwareUpdate(Active):
 
     if Active:
         console.info("Software Update Available")
-        SendNotice("Software Update Available")
+        Queue.SendMessage("Software Update Available")
     else:
-        SendNotice("Software Is Up To Date")
+        Queue.SendMessage("Software Is Up To Date")
         console.info("Software Is Up To Date")
 
 #----------  OnSystemHealth ----------------------------------------------------
 def OnSystemHealth(Notice):
-    SendNotice("System Health : " + Notice)
+    Queue.SendMessage("System Health : " + Notice)
     console.info("System Health : " + Notice)
 
 #----------  OnFuelState -------------------------------------------------------
 def OnFuelState(Active):
     if Active: # True is OK
         console.info("Fuel Level is OK")
-        SendNotice("Fuel Level is OK")
+        Queue.SendMessage("Fuel Level is OK")
     else:  # False = Low
-        SendNotice("Fuel Level is Low")
+        Queue.SendMessage("Fuel Level is Low")
         console.info("Fuel Level is Low")
 
 #----------  SendNotice --------------------------------------------------------
@@ -171,10 +176,11 @@ def SendNotice(Message):
        message.send()
 
        console.info(message.id)
-
+       return True
     except Exception as e1:
        log.error("Send Notice Error: " + GetErrorLine() + ": " + str(e1))
        console.error("Send Notice Error: " + str(e1))
+       return False
 
 #------------------- Command-line interface for gengpio ------------------------
 if __name__=='__main__':
@@ -207,6 +213,9 @@ if __name__=='__main__':
         console.error("Error reading " +  os.path.join(ConfigFilePath, 'genpushover.conf') +": " + str(e1))
         sys.exit(1)
     try:
+
+        Queue = MyMsgQueue(config = config, log = log, callback = SendNotice)
+
         GenNotify = GenNotify(
                                         host = address,
                                         port = port,

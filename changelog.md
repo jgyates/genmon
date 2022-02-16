@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.18.07  -2022-02-16
+- Added retry capability for short message add ons (gensms, genslack and genpushover). Messages are retried every 2 min for 10 minutes.
+
 ## V1.18.06  -2022-02-07
 - Update for custom controller support to add buttons to the maintenance page
 - Update to loader to check for an fix issue with improper version of openweathermap library. This may cause a delay for a few seconds one time while applying this update.
