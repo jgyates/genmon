@@ -60,6 +60,7 @@ if __name__=='__main__': # usage program.py [server_address]
         console, ConfigFilePath, address, port, loglocation, log = MySupport.SetupAddOnProgram("gengpioledblink")
         # Set the signal handler
         signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
 
         conf_file = os.path.join(ConfigFilePath, 'gengpioledblink.conf')
         if os.path.isfile(conf_file):

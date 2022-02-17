@@ -24,6 +24,8 @@ except Exception as e1:
 #----------  Signal Handler ------------------------------------------
 def signal_handler(signal, frame):
 
+    if MyClientInterface != None:
+        MyClientInterface.Close()
     sys.exit(0)
 
 #------------------- Command-line interface for monitor -----------------#
@@ -40,6 +42,7 @@ if __name__=='__main__': # usage program.py [server_address] [port]
         console.error("Invalid command line argument.")
         sys.exit(2)
 
+    MyClientInterface = None
     try:
         for opt, arg in opts:
             if opt == '-h':
@@ -57,6 +60,7 @@ if __name__=='__main__': # usage program.py [server_address] [port]
 
     # Set the signal handler
     signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
 
     MyClientInterface = ClientInterface(host = address, port = port, log = log)
 

@@ -59,6 +59,7 @@ if __name__=='__main__': # usage program.py [server_address]
 
         # Set the signal handler
         signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
 
         MyClientInterface = ClientInterface(host = address, port = port, log = log)
 

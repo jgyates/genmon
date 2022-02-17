@@ -50,6 +50,8 @@ def GetErrorLine():
 def signal_handler(signal, frame):
 
     try:
+        log.error("Closing")
+        console.info("Closing")
         GenNotify.Close()
         Queue.Close()
     except Exception as e1:
@@ -188,6 +190,7 @@ if __name__=='__main__':
     console, ConfigFilePath, address, port, loglocation, log = MySupport.SetupAddOnProgram("genpushover")
 
     # Set the signal handler
+    signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
 
     try:
