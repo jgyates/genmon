@@ -297,6 +297,7 @@ function backupgenmon() {
     sudo cp "$config_path"gentemp.conf ./genmon_backup
     sudo cp "$config_path"gentankdiy.conf ./genmon_backup
     sudo cp "$config_path"gengpioledblink.conf ./genmon_backup
+    sudo cp "$config_path"gencthat.conf ./genmon_backup
     sudo cp "$config_path"outage.txt ./genmon_backup
     sudo cp "$config_path"kwlog.txt ./genmon_backup
     sudo cp "$config_path"fuellog.txt ./genmon_backup
