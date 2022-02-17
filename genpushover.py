@@ -50,8 +50,6 @@ def GetErrorLine():
 def signal_handler(signal, frame):
 
     try:
-        log.error("Closing")
-        console.info("Closing")
         GenNotify.Close()
         Queue.Close()
     except Exception as e1:
