@@ -2674,7 +2674,7 @@ class Evolution(GeneratorController):
             if not self.IgnoreUnknown:
                 return regvalue
 
-            IgnoreList = [0x2020, 0x20200000, 0x3f3d0000,  0x3f3d, 0x3430]
+            IgnoreList = [0x2020, 0x20200000, 0x3f3d0000,  0x3f3d, 0x3430, 0x6f670000, 0x6f67]
 
             if regvalue in IgnoreList:
                 return None
@@ -2695,7 +2695,7 @@ class Evolution(GeneratorController):
             if not self.IgnoreUnknown:
                 return regvalue
 
-            IgnoreList = [0x2020, 0x20200000, 0x3f3d0000,  0x3f3d, 0x3430]
+            IgnoreList = [0x2020, 0x20200000, 0x3f3d0000,  0x3f3d, 0x3430, 0x6f670000, 0x6f67]
 
             if regvalue in IgnoreList:
                 return self.LastAlarmValue
