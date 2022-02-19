@@ -382,7 +382,10 @@ class CustomController(GeneratorController):
 
         try:
             if not "alarm_active" in self.controllerimport:
-                return False
+                alarms = self.GetExtendedDisplayString(self.controllerimport, "alarm_conditions")
+                if alarms == "Unknown":
+                    return False
+                return True
             alarm_state = self.GetExtendedDisplayString(self.controllerimport, "alarm_active")
             if len(alarm_state) and not alarm_state == "Unknown" :
                 return True

@@ -68,24 +68,155 @@
     ],
     "alarm_conditions": [
         {
-            "reg": "9a03",
-            "mask": "0000ffff",
-            "value": "00000005",
-            "type": "bits",
-            "title": "Alarm",
-            "text": "Low Battery"
+          "reg": "9a01",
+          "mask": "0000000f",
+          "value": "1",
+          "type": "regex",
+          "regex": "^[1-9a-f]$",
+          "title": "Alarm",
+          "text": "Low Coolant Temperature"
         },
         {
-            "reg": "9a01",
-            "mask": "0000ffff",
-            "value": "00000005",
-            "type": "bits",
+          "reg": "9a01",
+          "mask": "000000f0",
+          "value": "1",
+          "type": "regex",
+          "regex": "^[1-9a-f]0$",
+          "title": "Alarm",
+          "text": "High Coolant Temperature"
+        },
+        {
+          "reg": "9a01",
+          "mask": "00000f00",
+          "value": "1",
+          "type": "regex",
+          "regex": "^[1-9a-f]00$",
+          "title": "Alarm",
+          "text": "Low Oil Pressure"
+        },
+        {
+          "reg": "9a01",
+          "mask": "0000f000",
+          "value": "1",
+          "type": "regex",
+          "regex": "^[1-9a-f]000$",
+          "title": "Alarm",
+          "text": "Emergency Stop"
+        },
+        {
+          "reg": "9a01",
+          "mask": "000f0000",
+          "value": "1",
+          "type": "regex",
+          "regex": "^[1-9a-f]0000$",
+          "title": "Alarm",
+          "text": "Generator Over Frequency"
+        },
+        {
+          "reg": "9a01",
+          "mask": "00f00000",
+          "value": "1",
+          "type": "regex",
+          "regex": "^[1-9a-f]00000$",
+          "title": "Alarm",
+          "text": "Generator Under Frequency"
+        },
+        {
+          "reg": "9a01",
+          "mask": "0f000000",
+          "value": "1",
+          "type": "regex",
+          "regex": "^[1-9a-f]000000$",
+          "title": "Alarm",
+          "text": "Generator Over Speed"
+        },
+        {
+          "reg": "9a01",
+          "mask": "f0000000",
+          "value": "1",
+          "type": "regex",
+          "regex": "^[1-9a-f]0000000$",
+          "title": "Alarm",
+          "text": "Generator Under Speed"
+        },
+        {
+            "reg": "9a03",
+            "mask": "0000000f",
+            "value": "1",
+            "type": "regex",
+            "regex": "^[1-9a-f]$",
             "title": "Alarm",
-            "text": "High Temperature"
+            "text": "High Battery Voltage"
+        },
+        {
+            "reg": "9a03",
+            "mask": "000000f0",
+            "value": "1",
+            "type": "regex",
+            "regex": "^[1-9a-f]0$",
+            "title": "Alarm",
+            "text": "Low Battery Voltage"
+        },
+        {
+            "reg": "9a03",
+            "mask": "00000f00",
+            "value": "1",
+            "type": "regex",
+            "regex": "^[1-9a-f]00$",
+            "title": "Alarm",
+            "text": "Generator High Voltage"
+        },
+        {
+            "reg": "9a03",
+            "mask": "0000f000",
+            "value": "1",
+            "type": "regex",
+            "regex": "^[1-9a-f]000$",
+            "title": "Alarm",
+            "text": "Generator Low Voltage"
+        },
+        {
+            "reg": "9a03",
+            "mask": "000f0000",
+            "value": "1",
+            "type": "regex",
+            "regex": "^[1-9a-f]0000$",
+            "title": "Alarm",
+            "text": "Generator Fail to Close"
+        },
+        {
+            "reg": "9a03",
+            "mask": "00f00000",
+            "value": "1",
+            "type": "regex",
+            "regex": "^[1-9a-f]00000$",
+            "title": "Alarm",
+            "text": "Fail to Stop"
+        },
+        {
+            "reg": "9a03",
+            "mask": "0f000000",
+            "value": "1",
+            "type": "regex",
+            "regex": "^[1-9a-f]000000$",
+            "title": "Alarm",
+            "text": "Fail to Start"
+        },
+        {
+            "reg": "9a03",
+            "mask": "f0000000",
+            "value": "1",
+            "type": "regex",
+            "regex": "^[1-9a-f]0000000$",
+            "title": "Alarm",
+            "text": "Charge Alternator Failure"
         },
         {
             "reg": "9a00",
-            "type": "default",
+            "mask": "01ff",
+            "value": "1",
+            "type": "regex",
+            "regex": "^1[e-f]|[2-9a-f][0-9a-f]|100$",
             "title": "Alarm",
             "text": "Unknown Alarm"
         }
