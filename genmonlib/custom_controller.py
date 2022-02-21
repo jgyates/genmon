@@ -583,11 +583,11 @@ class CustomController(GeneratorController):
 
             Status["Status"].extend(self.GetDisplayList(self.controllerimport, "status"))
 
-            Status = self.DisplayStatusCommon(Status, JSONNum = JSONNum)
-
             if self.SystemInAlarm():
                 Status["Status"].append({"Alarm State" : "System In Alarm"})
                 Status["Status"].append({"Active Alarms" : self.GetExtendedDisplayString(self.controllerimport, "alarm_conditions")})
+                
+            Status = self.DisplayStatusCommon(Status, JSONNum = JSONNum)
 
             # Generator time
             Time = []

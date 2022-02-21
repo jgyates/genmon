@@ -448,6 +448,17 @@
                                    "value": ["8b", "79", "74", "86"]
                                  }
                                ]
+      },
+      {
+          "onewordcommand" : "resetmaint",
+          "title" : "Reset the Maintenance Alarm 1",
+          "comment" : "This does nothing",
+          "command_sequence" : [
+                                 {
+                                   "reg": "1008",
+                                   "value": ["8b", "9a", "74", "65"]
+                                 }
+                               ]
       }
     ],
     "power": [
