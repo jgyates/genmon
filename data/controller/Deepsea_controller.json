@@ -452,7 +452,6 @@
       {
           "onewordcommand" : "resetmaint",
           "title" : "Reset the Maintenance Alarm 1",
-          "comment" : "This does nothing",
           "command_sequence" : [
                                  {
                                    "reg": "1008",
