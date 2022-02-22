@@ -2477,9 +2477,12 @@ function DisplayAbout(){
       outstr += '<br><br>Submit Information to Developers:<br><br>';
       outstr += '&nbsp;&nbsp;<button id="submitRegisters" onClick="submitRegisters();">Submit Registers</button>';
       outstr += '&nbsp;&nbsp;<button id="submitLogs" onClick="submitLogs();">Submit Logs</button>';
-      //Backup
+      //Get Backup
       outstr += '<br><br>Download Backup Files:<br><br>';
-      outstr += '&nbsp;&nbsp;<button id="backupFiles" onClick="backupFiles();">Backup</button></center>';
+      outstr += '&nbsp;&nbsp;<button id="backupFiles" onClick="backupFiles();">Backup</button>';
+      //Get Log Files
+      outstr += '<br><br>Download Log Files:<br><br>';
+      outstr += '&nbsp;&nbsp;<button id="logFiles" onClick="logFiles();">Log Files</button></center>';
     }
 
     $("#mydisplay").html(outstr);
@@ -2633,6 +2636,24 @@ function backupFiles(){
     var link=document.createElement("a");
     link.id = 'backupLink'; //give it an ID
     link.href=baseurl.concat("backup");
+
+    //use the following instead of link.click() so it will work on more browsers
+    var clickEvent = new MouseEvent("click", {
+      "view": window,
+      "bubbles": true,
+      "cancelable": false
+    });
+    link.dispatchEvent(clickEvent);
+
+
+}
+
+//*****************************************************************************
+function logFiles(){
+
+    var link=document.createElement("a");
+    link.id = 'logLink'; //give it an ID
+    link.href=baseurl.concat("get_logs");
 
     //use the following instead of link.click() so it will work on more browsers
     var clickEvent = new MouseEvent("click", {
