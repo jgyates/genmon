@@ -1862,7 +1862,7 @@ def Restart():
             if not RunBashScript("startgenmon.sh restart -p 3 -c " + ConfigFilePath):
                 LogError("Error in Restart")
         else:
-            if not RunBashScript("startgenmon.sh restart -p 2 -c " + ConfigFilePath):
+            if not RunBashScript("startgenmon.sh restart -c " + ConfigFilePath):
                 LogError("Error in Restart")
     except Exception as e1:
         LogErrorLine("Error in Restart: " + str(e1))
