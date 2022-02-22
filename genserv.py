@@ -1862,6 +1862,7 @@ def Restart():
             if not RunBashScript("startgenmon.sh restart -p 3 -c " + ConfigFilePath):
                 LogError("Error in Restart")
         else:
+            # begining with V1.18.0 the following command will default restart with python 3
             if not RunBashScript("startgenmon.sh restart -c " + ConfigFilePath):
                 LogError("Error in Restart")
     except Exception as e1:
