@@ -1862,7 +1862,7 @@ def Restart():
             if not RunBashScript("startgenmon.sh restart -p 3 -c " + ConfigFilePath):
                 LogError("Error in Restart")
         else:
-            if not RunBashScript("startgenmon.sh restart -c " + ConfigFilePath):
+            if not RunBashScript("startgenmon.sh restart -c -p 2" + ConfigFilePath):
                 LogError("Error in Restart")
     except Exception as e1:
         LogErrorLine("Error in Restart: " + str(e1))
@@ -1874,7 +1874,7 @@ def Update():
             if not RunBashScript("genmonmaint.sh -u -n -p 3"):
                 LogError("Error in Update")
         else:
-            if not RunBashScript("genmonmaint.sh -u -n"):   # update no prompt
+            if not RunBashScript("genmonmaint.sh -u -n -p 2"):   # update no prompt
                 LogError("Error in Update")
         # now restart
         Restart()

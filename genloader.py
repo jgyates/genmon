@@ -216,7 +216,7 @@ class Loader(MySupport):
             output, _error = process.communicate()
 
             if _error:
-                self.LogInfo("Error in InstallBaseSoftware  : " +  + str(_error))
+                self.LogInfo("Error in InstallBaseSoftware  : " + str(_error))
             rc = process.returncode
 
             install_list = ["sudo","apt-get","-yqq","install", pipProgram]
