@@ -131,7 +131,7 @@ class GenCTHat(MySupport):
             self.powerfactor = self.config.ReadValue('powerfactor', return_type = float, default = 1.0)
             self.bus = self.config.ReadValue('bus', return_type = int, default = 1)
             self.device = self.config.ReadValue('device', return_type = int, default = 0)
-            self.strict = self.config.ReadValue('strict', return_type = bool, default = True)
+            self.strict = self.config.ReadValue('strict', return_type = bool, default = False)
             self.singlelegthreshold = self.config.ReadValue('singlelegthreshold', return_type = float, default = 0.6)
             self.debug = self.config.ReadValue('debug', return_type = bool, default = False)
 

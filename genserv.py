@@ -1131,7 +1131,7 @@ def GetAddOns():
             bounds = 'number',
             display_name = "Poll Interval")
         AddOnCfg['gencthat']['parameters']['strict'] = CreateAddOnParam(
-            ConfigFiles[GENCTHAT_CONFIG].ReadValue("strict", return_type = bool, default = True),
+            ConfigFiles[GENCTHAT_CONFIG].ReadValue("strict", return_type = bool, default = False),
             'boolean',
             "Set to true to only use the CT data if the generator utility line is in an outage.",
             bounds = '',
