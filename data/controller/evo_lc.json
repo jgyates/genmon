@@ -352,16 +352,6 @@
           "units": "%",
           "sensor": "fuel",
           "nominal": 100
-      },
-      {
-          "reg": "0009",
-          "mask": "ffff",
-          "multiplier": 0.01,
-          "type": "float",
-          "title": "Power",
-          "units": "kW",
-          "sensor": "powergraph",
-          "nominal": 48
       }
     ],
     "buttons" : [
@@ -476,17 +466,6 @@
                                    "value": "000e"
                                  }
                                ]
-      }
-    ],
-    "power": [
-      {
-          "reg": "000a",
-          "mask": "ffff",
-          "multiplier": 0.1,
-          "type": "float",
-          "title": "Power Output",
-          "units": "kW",
-          "sensor": "power"
       }
     ],
     "fuel": [

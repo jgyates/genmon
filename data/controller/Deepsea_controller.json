@@ -21,9 +21,8 @@
         "0304": 2,
         "0406": 2,
         "0407": 2,
-        "0009": 2,
         "0424": 2,
-        "0600": 2,
+        "0600": 4,
         "0405": 2,
         "0706": 4,
         "0408": 2,
@@ -378,14 +377,14 @@
           "nominal": 1800
       },
       {
-          "reg": "0009",
+          "reg": "0600",
           "mask": "ffff",
-          "multiplier": 0.01,
+          "multiplier": 0.001,
           "type": "float",
           "title": "Power",
           "units": "kW",
           "sensor": "powergraph",
-          "nominal": 48
+          "nominal": 22
       }
     ],
     "buttons" : [
@@ -464,7 +463,7 @@
       {
           "reg": "0600",
           "mask": "ffff",
-          "multiplier": 0.1,
+          "multiplier": 0.001,
           "type": "float",
           "title": "Power Output",
           "units": "kW",
