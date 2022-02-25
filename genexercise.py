@@ -291,7 +291,7 @@ class GenExercise(MySupport):
             TimeDict = self.FindDictValueInListByKey("Time", Status["Status"])
             if TimeDict != None:
                 TimeDictStr = self.FindDictValueInListByKey("Generator Time", TimeDict)
-                if TimeDictStr != None or not len(TimeDictStr):
+                if TimeDictStr != None and len(TimeDictStr):
                     GenTimeStr = TimeDictStr
                     # Format is "Wednesday March 6, 2019 13:10" or " "Friday May 3, 2019 11:11"
                     GenTime = datetime.datetime.strptime(GenTimeStr, "%A %B %d, %Y %H:%M")
