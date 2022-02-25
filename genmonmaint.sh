@@ -11,7 +11,7 @@ internet access to download the needed libraries. Press any key to continue.  "
 updatenotice="This script will update genmon to the latest version from the github \
 repository. This script requires internet access. If you have modified any \
 files in the genmon directory, they will be overwritten. Configuration files \
-in the configuration directory will not be overritten.   \
+in the configuration directory will not be overritten.  \
 Continue? (y/n)  "
 
 usepython3=true

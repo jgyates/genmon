@@ -1,6 +1,6 @@
 #-------------------------------------------------------------------------------
 #    FILE: genloader.py
-# PURPOSE: app for loading specific moduels for genmon
+# PURPOSE: app for loading specific moduels for genmon 
 #
 #  AUTHOR: Jason G Yates
 #    DATE: 12-Sept-2018
