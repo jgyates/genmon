@@ -470,6 +470,7 @@
     ],
     "fuel": [
       {
+          "comment":"NOTE: this element will add a fuel gauge in addtion to any defined in the gauges array",
           "reg": "005d",
           "mask": "ffff",
           "multiplier": 1,

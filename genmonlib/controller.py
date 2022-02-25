@@ -1390,6 +1390,18 @@ class GeneratorController(MySupport):
                     callbackparameters = (True,))
                     self.TileList.append(Tile)
 
+            powergraphdefined = False
+            for tile in self.TileList:
+                if tile.Type == "powergraph":
+                    powergraphdefined = True
+
+            if not powergraphdefined and self.UseExternalCTData:
+                # setup power graph
+                self.LogDebug("Setting up power graph for external CT data")
+                NominalPower = float(self.NominalKW)
+                Tile = MyTile(self.log, title = "kW Output", type = "powergraph", nominal = int(NominalPower), callback = self.CheckExternalCTData, callbackparameters = ("power", True, True))
+                self.TileList.append(Tile)
+
         except Exception as e1:
             self.LogErrorLine("Error in SetupCommonTiles: " + str(e1))
 
