@@ -775,7 +775,6 @@ function DisplayMaintenance(){
                outstr += '&nbsp;&nbsp;<button id="settimebutton" onClick="SetPowerLogReset();">Reset Power Log & Fuel Estimate</button>';
             }
 
-            console.log('lenght :' + Object.keys(myGenerator['buttons']).length)
             if (("buttons" in myGenerator) && !(Object.keys(myGenerator['buttons']).length === 0) ){
               outstr += '<br><br>Generator Functions:<br><br>';
               for (let key in myGenerator['buttons']) {
@@ -2034,36 +2033,36 @@ function locationSuccess(position) {
 }
 
 //*****************************************************************************
-function printSettingsField(type, key, value, tooltip, validation, callback) {
+function printSettingsField(type, key, value, tooltip, validation, callback, parent = "", name = "") {
    var outstr = "";
    switch (type) {
      case "string":
      case "password":
        outstr += '<div class="field idealforms-field">' +
-                 '<input id="' + key + '" style="width: 300px;" name="' + key + '" type="' + ((type == "password") ? "password" : "text") + '" ' +
+                 '<input id="' + key + parent + '" style="width: 300px;" name="' + key + '" type="' + ((type == "password") ? "password" : "text") + '" ' +
                   (((typeof callback !== 'undefined' ) && (callback != "")) ? ' onChange="' + callback + ';" ' : "") +
                   (typeof value === 'undefined' ? '' : 'value="' + replaceAll(value, '"', '&quot;') + '" ') +
                   (typeof value === 'undefined' ? '' : 'oldValue="' + replaceAll(value, '"', '&quot;') + '" ') +
-                  (((typeof validation === 'undefined') || (validation==0)) ? 'onFocus="$(\'#'+key+'_tooltip\').show();" onBlur="$(\'#'+key+'_tooltip\').hide();" ' : 'data-idealforms-rules="' + validation + '" ') + '>' +
+                  (((typeof validation === 'undefined') || (validation==0)) ? 'onFocus="$(\'#'+key+parent+'_tooltip\').show();" onBlur="$(\'#'+key+parent+'_tooltip\').hide();" ' : 'data-idealforms-rules="' + validation + '" ') + '>' +
                  '<span class="error" style="display: none;"></span>' +
-                  (((typeof tooltip !== 'undefined' ) && (tooltip.trim() != "")) ? '<span id="' + key + '_tooltip" class="tooltip" style="display: none;">' + replaceAll(tooltip, '"', '&quot;') + '</span>' : "") +
+                  (((typeof tooltip !== 'undefined' ) && (tooltip.trim() != "")) ? '<span id="' + key + parent + '_tooltip" class="tooltip" style="display: none;">' + replaceAll(tooltip, '"', '&quot;') + '</span>' : "") +
                  '</div>';
        break;
      case "float":
      case "int":
        outstr += '<div class="field idealforms-field">' +
-                 '<input id="' + key + '" style="width: 150px;" name="' + key + '" type="text" ' +
+                 '<input id="' + key + parent +  '" style="width: 150px;" name="' + key + '" type="text" ' +
                   (((typeof callback !== 'undefined' ) && (callback != "")) ? ' onChange="' + callback + ';" ' : "") +
                   (typeof value === 'undefined' ? '' : 'value="' + value.toString() + '" ') +
                   (typeof value === 'undefined' ? '' : 'oldValue="' + value.toString() + '" ') +
-                  (((typeof validation === 'undefined') || (validation==0)) ? 'onFocus="$(\'#'+key+'_tooltip\').show();" onBlur="$(\'#'+key+'_tooltip\').hide();" ' : 'data-idealforms-rules="' + validation + '" ') + '>' +
+                  (((typeof validation === 'undefined') || (validation==0)) ? 'onFocus="$(\'#'+key+parent+'_tooltip\').show();" onBlur="$(\'#'+key+parent+'_tooltip\').hide();" ' : 'data-idealforms-rules="' + validation + '" ') + '>' +
                  '<span class="error" style="display: none;"></span>' +
-                  (((typeof tooltip !== 'undefined' ) && (tooltip.trim() != "")) ? '<span id="' + key + '_tooltip" class="tooltip" style="display: none;">' + replaceAll(tooltip, '"', '&quot;') + '</span>' : "") +
+                  (((typeof tooltip !== 'undefined' ) && (tooltip.trim() != "")) ? '<span id="' + key + parent + '_tooltip" class="tooltip" style="display: none;">' + replaceAll(tooltip, '"', '&quot;') + '</span>' : "") +
                  '</div>';
        break;
      case "boolean":
        outstr += '<div class="field idealforms-field" onmouseover="showIdealformTooltip($(this))" onmouseout="hideIdealformTooltip($(this))">' +
-                 '<input id="' + key + '" name="' + key + '" type="checkbox" ' +
+                 '<input id="' + key + parent +  '" name="' + key + '" type="checkbox" ' +
                   (((typeof callback !== 'undefined' ) && (callback != "")) ? ' data-callback="' + callback + ';" ' : "") +
                   (((typeof value !== 'undefined' ) && (value.toString() == "true")) ? ' checked ' : '') +
                   (((typeof value !== 'undefined' ) && (value.toString() == "true")) ? ' oldValue="true" ' : ' oldValue="false" ') + '>' +
@@ -2072,7 +2071,7 @@ function printSettingsField(type, key, value, tooltip, validation, callback) {
        break;
      case "list":
        outstr += '<div class="field idealforms-field" onmouseover="showIdealformTooltip($(this))" onmouseout="hideIdealformTooltip($(this))">' +
-                 '<select id="' + key + '" style="width: 300px;" name="' + key + '" ' +
+                 '<select id="' + key + parent +  '" style="width: 300px;" name="' + key + '" ' +
                   (((typeof callback !== 'undefined' ) && (callback != "")) ? ' onChange="' + callback + ';" ' : "") +
                   (typeof value === 'undefined' ? '' : 'value="' + replaceAll(value, '"', '&quot;') + '" ') +
                   (typeof value === 'undefined' ? '' : 'oldValue="' + replaceAll(value, '"', '&quot;') + '" ') + '>' +
@@ -2238,7 +2237,7 @@ function DisplayAddons(){
                $.each(Object.keys(result[addon]["parameters"]), function(j, param) {
                    var par = result[addon]["parameters"][param];
                    outstr += par["display_name"] + '<br>';
-                   outstr += printSettingsField(par["type"], param, par["value"], par["description"], par["bounds"], "changedCard(true, '"+addon+"')") + '<div style="clear: both;"></div>';
+                   outstr += printSettingsField(par["type"], param, par["value"], par["description"], par["bounds"], "changedCard(true, '"+addon+"')", parent = addon, name = par["display_name"]) + '<div style="clear: both;"></div>';
                });
             }
             outstr += '      </div>';

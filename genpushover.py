@@ -166,21 +166,30 @@ def OnFuelState(Active):
 def SendNotice(Message):
 
     try:
-       app = Application(appid)
-       user = app.get_user(userid)
+        app = Application(appid)
 
-       message = user.create_message(
+        if not app.is_authenticated:
+            self.LogError("Unable to authenticate app ID")
+            return False
+
+        user = app.get_user(userid)
+
+        if not user.is_authenticated:
+            self.LogError("Unable to authenticate user ID")
+            return False
+
+        message = user.create_message(
             message = Message,
             sound = pushsound)
 
-       message.send()
+        message.send()
 
-       console.info(message.id)
-       return True
+        console.info(message.id)
+        return True
     except Exception as e1:
-       log.error("Send Notice Error: " + GetErrorLine() + ": " + str(e1))
-       console.error("Send Notice Error: " + str(e1))
-       return False
+        log.error("Send Notice Error: " + GetErrorLine() + ": " + str(e1))
+        console.error("Send Notice Error: " + str(e1))
+        return False
 
 #------------------- Command-line interface for gengpio ------------------------
 if __name__=='__main__':
@@ -195,8 +204,8 @@ if __name__=='__main__':
 
         config = MyConfig(filename = os.path.join(ConfigFilePath, 'genpushover.conf'), section = 'genpushover', log = log)
 
-        appid = config.ReadValue('appid')
-        userid = config.ReadValue('userid')
+        appid = config.ReadValue('appid', default = None)
+        userid = config.ReadValue('userid', default = None)
         pushsound = config.ReadValue('pushsound', default = 'updown')
 
         if appid == None or not len(appid):

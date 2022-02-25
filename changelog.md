@@ -1,13 +1,24 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.18.08  -2022-02-25
+- Added more validation checking in genpushover.py
+- Changed the default value for Strict setting usage for the CT Hat Add on (Default is now off)
+- More minor updates for custom controller support and DeepSea Controllers
+- Fixed on minor issue for python 2.x transitioning to python 3.x
+- Added gencthat.log to the download log command
+- Added a button on the maintenance page to download and archive of the log files
+- Minor error checking update in genexercise.py
+- Corrected numerous spelling errors in displayed strings
+- Fixed issue with javascript not displaying all tool tips correctly
+
 ## V1.18.07  -2022-02-16
 - Added retry capability for short message add ons (gensms, genslack and genpushover). Messages are retried every 2 min for 10 minutes.
 - Minor update to add on cleanup code
 
 ## V1.18.06  -2022-02-07
 - Update for custom controller support to add buttons to the maintenance page
-- Update to loader to check for an fix issue with improper version of openweathermap library. This may cause a delay for a few seconds one time while applying this update.
+- Genloader update that checks / corrects an issue with the improper version of openweathermap library. This may cause a delay for a few seconds one time while applying this update.
 - Corrected rounding inconsistency in temp display (thanks @lps-rocks)
 - Update to work around change to kernel handing of raspberry pi throttling status display to compensate for kernel changes (thanks @lps-rocks)
 - Update to External CT add on to reduce noise (thanks @skipfire)
