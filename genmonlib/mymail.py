@@ -517,6 +517,11 @@ class MyMail(MySupport):
                     MailError = True
 
                 if MailError:
+                    # NOTE: emails are retried if they fail. This allows emails to eventually
+                    # be sent if there is an internet outage however the downside is that
+                    # if the recipient is bad then it will keep trying and the mail queue will
+                    # be stuck
+
                     self.EmailSendQueue.insert(len(self.EmailSendQueue),EmailItems)
                     # sleep for 2 min and try again
                     if self.WaitForExit("SendMailThread", 120 + self.ExtendWait):
