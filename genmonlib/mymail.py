@@ -111,10 +111,9 @@ class MyMail(MySupport):
             if not self.DisableIMAP and self.Monitor and self.IMAPServer != "":     # if True then we will have an IMAP monitor thread
                 if incoming_callback and incoming_folder and processed_folder:
                     self.Threads["EmailCommandThread"] = MyThread(self.EmailCommandThread, Name = "EmailCommandThread", start = start)
+                    self.LogError("IMAP enabled")
                 else:
                     self.FatalError("ERROR: incoming_callback, incoming_folder and processed_folder are required if receive IMAP is used")
-            else:
-                self.LogError("IMAP disabled")
 
     #---------- MyMail.TestSendSettings ----------------------------------------
     @staticmethod
@@ -385,12 +384,29 @@ class MyMail(MySupport):
 
             ## end of outer loop
 
+    #------------ MyMail.GetRecipientByType ------------------------------------
+    def GetRecipientByType(self, msgtype, recipient):
+        try:
+            if recipient == None:
+                recipient = self.EmailRecipientByType[msgtype]
+                if '@' in recipient:
+                    return recipient
+                else:
+                    return None
+            else:
+                return recipient
+        except Exception as e1:
+            self.LogErrorLine("Error in GetRecipientByType : " + str(e1))
+            return None
     #------------ MyMail.sendEmailDirectMIME -----------------------------------
     # send email, bypass queue
     def sendEmailDirectMIME(self, msgtype, subjectstr, msgstr, recipient = None, files=None, deletefile = False):
 
+        recipient = self.GetRecipientByType(msgtype, recipient)
         if recipient == None:
-            recipient = self.EmailRecipientByType[msgtype]
+            # returning true here means that there is not category for this message
+            self.LogDebug("Message abandoned, no recipient")
+            return True
 
         # update date
         dtstamp=datetime.datetime.now().strftime('%a %d-%b-%Y')
@@ -402,7 +418,7 @@ class MyMail(MySupport):
             msg['From'] = "<" + self.SenderAccount + ">"
         else:
             msg['From'] = self.SenderName + " <" + self.SenderAccount + ">"
-            self.LogError(msg['From'])
+            self.LogDebug(msg['From'])
 
         try:
             recipientList = recipient.strip().split(",")
