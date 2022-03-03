@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Corrected numerous spelling errors in displayed strings
 - Fixed issue with javascript not displaying all tool tips correctly
 - Update to mymail.py to prevent mail from a category with no recipient from being put in the send queue.
+- Update to gengpio.py to address bug that broke gpio functionality 
 
 ## V1.18.07  -2022-02-16
 - Added retry capability for short message add ons (gensms, genslack and genpushover). Messages are retried every 2 min for 10 minutes.
