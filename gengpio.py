@@ -27,11 +27,13 @@ except Exception as e1:
 import RPi.GPIO as GPIO
 
 #----------  InitGPIO ----------------------------------------------------------
-def InitGPIO(pin, direction = GPIO.OUT, initial= GPIO.LOW):
+def InitGPIO(pin, direction = GPIO.OUT, initial = GPIO.LOW):
 
     try:
         if pin != 0:
             GPIO.setup(pin, direction, initial = initial)
+        else:
+            log.error("Error: pin = 0 in InitGPIO")
     except Exception as e1:
         log.error("Error in InitGPIO on pin %d : %s" %(int(pin), str(e1)))
 
@@ -40,7 +42,9 @@ def SetGPIO(pin, state):
 
     try:
         if pin != 0:
-            GPIO.output(STATUS_READY,GPIO.HIGH)
+            GPIO.output(pin,state)
+        else:
+            log.error("Error: pin = 0 in SetGPIO")
     except Exception as e1:
         log.error("Error in InitGPIO on SetGPIO %d : %s" %(int(pin), str(e1)))
 
@@ -114,6 +118,8 @@ if __name__=='__main__': # usage program.py [server_address]
         InitGPIO(ER_WARNING, GPIO.OUT, initial=GPIO.LOW)
 
         LastEvent = ""
+        LastNetStatus = ""
+        LastMonitorHealth = ""
 
         data = MyClientInterface.ProcessMonitorCommand("generator: monitor")
 
@@ -223,19 +229,23 @@ if __name__=='__main__': # usage program.py [server_address]
                 TempDict = {}
                 TempDict = json.loads(data)
                 HealthStr = TempDict["Monitor"][0]["Generator Monitor Stats"][0]["Monitor Health"]
-                if HealthStr.lower() == "ok":
-                    SetGPIO(ER_GENMON,GPIO.LOW)
-                else:
-                    SetGPIO(ER_GENMON,GPIO.HIGH)
+                if HealthStr != LastMonitorHealth:
+                    LastMonitorHealth = HealthStr
+                    if HealthStr.lower() == "ok":
+                        SetGPIO(ER_GENMON,GPIO.LOW)
+                    else:
+                        SetGPIO(ER_GENMON,GPIO.HIGH)
             except Exception as e1:
                 log.error("Error getting monitor health: " +str(e1))
             # get Internet Status
             try:
                 data = MyClientInterface.ProcessMonitorCommand("generator: network_status")
-                if data.lower() == "ok":
-                    SetGPIO(ER_INTERNET,GPIO.LOW)
-                else:
-                    SetGPIO(ER_INTERNET,GPIO.HIGH)
+                if data != LastNetStatus:
+                    LastNetStatus = HealthStr
+                    if data.lower() == "ok":
+                        SetGPIO(ER_INTERNET,GPIO.LOW)
+                    else:
+                        SetGPIO(ER_INTERNET,GPIO.HIGH)
                 time.sleep(3)
             except Exception as e1:
                 log.error("Error getting internet status: " +str(e1))
