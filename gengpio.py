@@ -75,6 +75,8 @@ if __name__=='__main__': # usage program.py [server_address]
 
         GPIO.setwarnings(False)
 
+        TimeUpdated = datetime.datetime(2000, 1, 1, 1, 00)
+
         # These are the GPIP pins numbers on the Raspberry PI GPIO header
         # https://www.element14.com/community/servlet/JiveServlet/previewBody/73950-102-10-339300/pi3_gpio.png
         STATUS_READY = config.ReadValue('STATUS_READY', return_type = int, default = 16)
@@ -239,16 +241,22 @@ if __name__=='__main__': # usage program.py [server_address]
                 log.error("Error getting monitor health: " +str(e1))
             # get Internet Status
             try:
-                data = MyClientInterface.ProcessMonitorCommand("generator: network_status")
-                if data != LastNetStatus:
-                    LastNetStatus = data
-                    if data.lower() == "ok":
-                        SetGPIO(ER_INTERNET,GPIO.LOW)
-                    else:
-                        SetGPIO(ER_INTERNET,GPIO.HIGH)
-                time.sleep(3)
+                TimeNow = datetime.datetime.now()
+                if ((TimeNow - TimeUpdated).total_seconds() > 20):
+                    TimeUpdated = TimeNow
+                    console.info("Updating internet status: " + str((TimeUpdated)))
+                    data = MyClientInterface.ProcessMonitorCommand("generator: network_status")
+                    if data != LastNetStatus:
+                        LastNetStatus = data
+                        if data.lower() == "ok":
+                            SetGPIO(ER_INTERNET,GPIO.LOW)
+                        else:
+                            SetGPIO(ER_INTERNET,GPIO.HIGH)
+
             except Exception as e1:
                 log.error("Error getting internet status: " +str(e1))
+
+            time.sleep(3)
 
     except Exception as e1:
         log.error("Error: " + str(e1))
