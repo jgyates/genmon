@@ -241,7 +241,7 @@ if __name__=='__main__': # usage program.py [server_address]
             try:
                 data = MyClientInterface.ProcessMonitorCommand("generator: network_status")
                 if data != LastNetStatus:
-                    LastNetStatus = HealthStr
+                    LastNetStatus = data
                     if data.lower() == "ok":
                         SetGPIO(ER_INTERNET,GPIO.LOW)
                     else:

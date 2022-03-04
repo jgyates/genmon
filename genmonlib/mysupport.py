@@ -115,7 +115,7 @@ class MySupport(MyCommon):
     # take some time to complete due to the network timeout
     def InternetConnected(self):
         try:
-            if MyPlatform.InterntConnected():
+            if MyPlatform.InternetConnected():
                 Status = "OK"
             else:
                 Status = "Disconnected"

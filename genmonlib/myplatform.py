@@ -417,11 +417,11 @@ class MyPlatform(MyCommon):
             pass
         return WiFiInfo
 
-    #------------ MyPlatform::InterntConnected ---------------------------------
+    #------------ MyPlatform::InternetConnected --------------------------------
     # Note: this function, if the network connection is not present could
     # take some time to complete due to the network timeout
     @staticmethod
-    def InterntConnected():
+    def InternetConnected():
 
         try:
             import httplib
