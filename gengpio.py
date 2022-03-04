@@ -241,6 +241,7 @@ if __name__=='__main__': # usage program.py [server_address]
                 log.error("Error getting monitor health: " +str(e1))
             # get Internet Status
             try:
+                # only check this every 20 seconds
                 TimeNow = datetime.datetime.now()
                 if ((TimeNow - TimeUpdated).total_seconds() > 20):
                     TimeUpdated = TimeNow
