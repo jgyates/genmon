@@ -916,15 +916,25 @@ class HPanel(GeneratorController):
             if self.ControllerDetected:
                 return True
 
-            ControllerString = self.HexStringToString(self.ModBus.ProcessTransaction(RegisterStringEnum.CONTROLLER_NAME[REGISTER],
-                RegisterStringEnum.CONTROLLER_NAME[LENGTH] / 2))
+            ControllerString = self.ModBus.ProcessTransaction(RegisterStringEnum.CONTROLLER_NAME[REGISTER],
+                RegisterStringEnum.CONTROLLER_NAME[LENGTH] / 2)
 
-            ControllerString = str(ControllerString)
             if not len(ControllerString):
                 self.LogError("Unable to ID controller, possiby not receiving data.")
                 self.ControllerDetected = False
                 return False
+
+            ControllerString = self.HexStringToString(ControllerString)
+
+            ControllerString = str(ControllerString)
+
+            if not len(ControllerString):
+                self.LogError("Unable to ID controller, possiby not receiving data (2).")
+                self.ControllerDetected = False
+                return False
+
             self.ControllerDetected = True
+            
             if "h-100" in ControllerString.lower():
                 self.LogError("Detected H-100 Controller")
                 self.HPanelDetected = True
@@ -2022,7 +2032,8 @@ class HPanel(GeneratorController):
 
             Regs["Base Registers"] = RegList
             # display all the registers
-            for Register, Value in self.Registers.items():
+            temp_regsiters = self.Registers
+            for Register, Value in temp_regsiters.items():
                 RegList.append({Register:Value})
 
 
@@ -2030,10 +2041,12 @@ class HPanel(GeneratorController):
                 Regs["Log Registers"]= self.DisplayLogs(AllLogs = True, RawOutput = True, DictOut = True)
                 StringList = []
                 Regs["Strings"] = StringList
-                for Register, Value in self.Strings.items():
+                temp_regsiters = self.Strings
+                for Register, Value in temp_regsiters.items():
                      StringList.append({Register:Value})
                 FileDataList = []
                 Regs["FileData"] = FileDataList
+                temp_regsiters = self.FileData
                 for Register, Value in self.FileData.items():
                      FileDataList.append({Register:Value})
 
@@ -2327,7 +2340,7 @@ class HPanel(GeneratorController):
             Voltage =  self.GetParameter(self.Reg.AVG_VOLTAGE[REGISTER],ReturnInt = True)
 
             return self.ConvertExternalData(request = request, voltage = Voltage, ReturnFloat = ReturnFloat)
-            
+
         except Exception as e1:
             self.LogErrorLine("Error in CheckExternalCTData: " + str(e1))
             return DefaultReturn

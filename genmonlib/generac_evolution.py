@@ -1687,7 +1687,9 @@ class Evolution(GeneratorController):
 
             Regs["Base Registers"] = RegList
             # print all the registers
-            for Register, Value in self.Registers.items():
+            # make a temp copy in case the registers change whil iterating
+            temp_regsiters = self.Registers
+            for Register, Value in temp_regsiters.items():
 
                 # do not display log registers or model register
                 if self.RegisterIsLog(Register):

@@ -1821,7 +1821,8 @@ class PowerZone(GeneratorController):
 
             Regs["Base Registers"] = RegList
             # display all the registers
-            for Register, Value in self.Registers.items():
+            temp_regsiters = self.Registers
+            for Register, Value in temp_regsiters.items():
                 RegList.append({Register:Value})
 
 
@@ -1829,11 +1830,13 @@ class PowerZone(GeneratorController):
                 Regs["Log Registers"]= self.DisplayLogs(AllLogs = True, RawOutput = True, DictOut = True)
                 StringList = []
                 Regs["Strings"] = StringList
-                for Register, Value in self.Strings.items():
+                temp_regsiters = self.Strings
+                for Register, Value in temp_regsiters.items():
                      StringList.append({Register:Value})
                 FileDataList = []
                 Regs["FileData"] = FileDataList
-                for Register, Value in self.FileData.items():
+                temp_regsiters = self.FileData
+                for Register, Value in temp_regsiters.items():
                      FileDataList.append({Register:Value})
 
         except Exception as e1:
@@ -2141,7 +2144,7 @@ class PowerZone(GeneratorController):
             Voltage =  self.GetParameter(self.Reg.GEN_AVERAGE_VOLTAGE_LL[REGISTER],ReturnInt = True)
 
             return self.ConvertExternalData(request = request, voltage = Voltage, ReturnFloat = ReturnFloat)
-            
+
         except Exception as e1:
             self.LogErrorLine("Error in CheckExternalCTData: " + str(e1))
             return DefaultReturn

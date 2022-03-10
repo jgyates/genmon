@@ -586,7 +586,7 @@ class CustomController(GeneratorController):
             if self.SystemInAlarm():
                 Status["Status"].append({"Alarm State" : "System In Alarm"})
                 Status["Status"].append({"Active Alarms" : self.GetExtendedDisplayString(self.controllerimport, "alarm_conditions")})
-                
+
             Status = self.DisplayStatusCommon(Status, JSONNum = JSONNum)
 
             # Generator time
@@ -958,7 +958,8 @@ class CustomController(GeneratorController):
 
             Regs["Base Registers"] = RegList
             # display all the registers
-            for Register, Value in self.Registers.items():
+            temp_regsiters = self.Registers
+            for Register, Value in temp_regsiters.items():
                 RegList.append({Register:Value})
 
 
