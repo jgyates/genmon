@@ -204,7 +204,10 @@ class ModbusProtocol(ModbusBase):
                 if self.CheckCRC(Packet):
                     self.RxPacketCount += 1
                     self.ModbusException += 1
-                    self.LogError("Modbus Exception: " + self.GetExceptionString(Packet[self.MBUS_OFF_EXCEPTION]) + " , Modbus Command: " + ("%02x" % Packet[self.MBUS_OFF_COMMAND]))
+                    self.LogError("Modbus Exception: " + self.GetExceptionString(Packet[self.MBUS_OFF_EXCEPTION]) +
+                        " , Modbus Command: " + ("%02x" % Packet[self.MBUS_OFF_COMMAND]) +
+                        " , Sequence: " + str(self.TxPacketCount))
+
                 else:
                     self.CrcError += 1
                 return False, Packet
@@ -438,7 +441,7 @@ class ModbusProtocol(ModbusBase):
                     # in between should give us about 25ms
                     if msElapsed > self.ModBusPacketTimoutMS:
                         self.ComTimoutError += 1
-                        self.LogError("Error: timeout receiving slave packet for register %04x Buffer: %d" % (self.GetRegisterFromPacket(MasterPacket, offset = PacketOffset), len(self.Slave.Buffer)) )
+                        self.LogError("Error: timeout receiving slave packet for register %04x Buffer: %d, sequence %d" % (self.GetRegisterFromPacket(MasterPacket, offset = PacketOffset), len(self.Slave.Buffer), self.TxPacketCount) )
                         if len(self.Slave.Buffer):
                             self.LogHexList(self.Slave.Buffer, prefix = "Buffer")
                         self.Flush()
