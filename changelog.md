@@ -1,6 +1,12 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.18.09  -2022-03-10
+- Update to mymail.py to prevent mail from a category with no recipient from being put in the send queue.
+- Update to gengpio.py to address bug that broke gpio functionality
+- improved error checking in generator specific modules
+- Update to serial logging to include sequence info in error logs
+
 ## V1.18.08  -2022-02-25
 - Added more validation checking in genpushover.py
 - Changed the default value for Strict setting usage for the CT Hat Add on (Default is now off)
@@ -11,9 +17,7 @@ All notable changes to this project will be documented in this file.
 - Minor error checking update in genexercise.py
 - Corrected numerous spelling errors in displayed strings
 - Fixed issue with javascript not displaying all tool tips correctly
-- Update to mymail.py to prevent mail from a category with no recipient from being put in the send queue.
-- Update to gengpio.py to address bug that broke gpio functionality
-- improved error checking in generator specific modules 
+
 
 ## V1.18.07  -2022-02-16
 - Added retry capability for short message add ons (gensms, genslack and genpushover). Messages are retried every 2 min for 10 minutes.
