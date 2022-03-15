@@ -367,8 +367,11 @@ class GeneratorController(MySupport):
                         RegistersUnderTest[Register] = Value        # update the value
 
                 msgbody = "\n"
-                for Register, Value in RegistersUnderTest.items():
-                    msgbody += self.printToString("%s:%s" % (Register, Value))
+                try:
+                    msgbody += json.dumps(RegistersUnderTest, indent=4, sort_keys=False)
+                except:
+                    for Register, Value in RegistersUnderTest.items():
+                        msgbody += self.printToString("%s:%s" % (Register, Value))
 
                 self.FeedbackPipe.SendFeedback("Debug Thread (Registers)", FullLogs = True, Always = True, Message=msgbody, NoCheck = True)
                 if len(RegistersUnderTestData):
