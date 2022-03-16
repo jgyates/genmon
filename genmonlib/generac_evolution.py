@@ -1916,6 +1916,7 @@ class Evolution(GeneratorController):
             Maintenance["Maintenance"].append({"Rated kW" : str(self.NominalKW) + " kW"})
             Maintenance["Maintenance"].append({"Nominal Frequency" : str(self.NominalFreq) + " Hz"})
             Maintenance["Maintenance"].append({"Fuel Type" : self.FuelType})
+            Maintenance["Maintenance"].append({"Generator Phase" : self.GetModelInfo("phase")})
 
             if self.EngineDisplacement != "Unknown":
                 Maintenance["Maintenance"].append({"Engine Displacement" : self.UnitsOut( self.EngineDisplacement, type = float, NoString = JSONNum)})
@@ -1945,7 +1946,7 @@ class Evolution(GeneratorController):
 
                 ControllerSettings.append({"Param Group" : self.ValueOut(self.GetParameter("020a", ReturnInt = True), "", JSONNum)})
                 ControllerSettings.append({"Voltage Code" : self.ValueOut(self.GetParameter("020b", ReturnInt = True), "", JSONNum)})
-                ControllerSettings.append({"Phase" : self.GetLiquidCooledModelInfo( "phase")})
+                ControllerSettings.append({"Phase" : self.ValueOut(self.GetLiquidCooledModelInfo( "phase"), "", JSONNum) })
 
                 if self.EvolutionController and self.LiquidCooled:
                     # get total hours since activation
@@ -3446,6 +3447,8 @@ class Evolution(GeneratorController):
     #------------ Evolution:GetUtilityVoltage ----------------------------------
     def GetUtilityVoltage(self, ReturnInt = False):
 
+        if self.GetModelInfo("phase") == "3":
+            return self.GetParameter("0009", ReturnInt = ReturnInt, Label = "V", Divider = 2)
         return self.GetParameter("0009", ReturnInt = ReturnInt, Label = "V")
 
     #------------ Evolution:GetBatteryVoltage -------------------------

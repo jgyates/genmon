@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 - Update to gengpio.py to address bug that broke gpio functionality
 - improved error checking in generator specific modules
 - Update to serial logging to include sequence info in error logs
+- Update to support correct voltage output for Evolution 3 Phase model
 
 ## V1.18.08  -2022-02-25
 - Added more validation checking in genpushover.py

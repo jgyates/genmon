@@ -494,26 +494,29 @@ class GeneratorController(MySupport):
             if not len(Value):
                 return DefaultReturn
 
-            if ReturnInt:
-                return int(Value,16)
-
             if Divider == None and Label == None:
                 if Hex:
                     return Value
                 elif ReturnFloat:
                     return float(int(Value,16))
+                elif ReturnInt:
+                    return int(Value,16)
                 else:
                     return str(int(Value,16))
 
             IntValue = int(Value,16)
             if not Divider == None:
                 FloatValue = IntValue / Divider
+                if ReturnInt:
+                    return int(FloatValue)
                 if ReturnFloat:
                     return round(FloatValue,3)
                 if not Label == None:
                     return "%.2f %s" % (FloatValue, Label)
                 else:
                     return "%.2f" % (FloatValue)
+            elif ReturnInt:
+                return IntValue
             elif not Label == None:
                 return "%d %s" % (IntValue, Label)
             else:
