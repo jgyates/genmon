@@ -3447,7 +3447,7 @@ class Evolution(GeneratorController):
     #------------ Evolution:GetUtilityVoltage ----------------------------------
     def GetUtilityVoltage(self, ReturnInt = False):
 
-        if self.GetModelInfo("phase") == "3":
+        if self.GetModelInfo("phase") == "3" and not self.LiquidCooled:
             return self.GetParameter("0009", ReturnInt = ReturnInt, Label = "V", Divider = 2)
         return self.GetParameter("0009", ReturnInt = ReturnInt, Label = "V")
 
