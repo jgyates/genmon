@@ -1276,11 +1276,13 @@ class PowerZone(GeneratorController):
         try:
             StartInfo = {}
 
+            self.GetGeneratorSettings()
             StartInfo["fueltype"] = self.FuelType
             StartInfo["model"] = self.Model
             StartInfo["nominalKW"] = self.NominalKW
             StartInfo["nominalRPM"] = self.NominalRPM
             StartInfo["nominalfrequency"] = self.NominalFreq
+            StartInfo["phase"] = self.Phase
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
             StartInfo["NominalBatteryVolts"] = self.NominalBatteryVolts
             StartInfo["FuelCalculation"] = self.FuelTankCalculationSupported()
@@ -1778,6 +1780,7 @@ class PowerZone(GeneratorController):
                 GeneratorSettings.append({"Target RPM (Low Speed)" : str(TargetRPMNormal)})
                 GeneratorSettings.append({"Number of Flywheel Teeth" : str(FlyWheelTeeth[0]) + ", " +  str(FlyWheelTeeth[1])})
                 GeneratorSettings.append({"Phase" : str(Phase)})
+                self.Phase = str(Phase) if Phase != None else "Unknown"
                 GeneratorSettings.append({"Utility CT Ratio" : str(GenCTRatio)})
                 GeneratorSettings.append({"Gen CT Ratio" : str(UtilityCTRatio)})
 

@@ -934,7 +934,7 @@ class HPanel(GeneratorController):
                 return False
 
             self.ControllerDetected = True
-            
+
             if "h-100" in ControllerString.lower():
                 self.LogError("Detected H-100 Controller")
                 self.HPanelDetected = True
@@ -1578,11 +1578,13 @@ class HPanel(GeneratorController):
         try:
             StartInfo = {}
 
+            self.GetGeneratorSettings()
             StartInfo["fueltype"] = self.FuelType
             StartInfo["model"] = self.Model
             StartInfo["nominalKW"] = self.NominalKW
             StartInfo["nominalRPM"] = self.NominalRPM
             StartInfo["nominalfrequency"] = self.NominalFreq
+            StartInfo["phase"] = self.Phase
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
             StartInfo["NominalBatteryVolts"] = self.NominalBatteryVolts
             StartInfo["FuelCalculation"] = self.FuelTankCalculationSupported()
@@ -1982,12 +1984,14 @@ class HPanel(GeneratorController):
                 CTRatio.append(self.GetIntFromString(GenData, 8, 2))        # Byte 8 and 9
                 # Skip byte 10 and 11
                 Phase = self.GetIntFromString(GenData, 12, 1)               # Byte 12
+
                 TargetRPM.append(self.GetIntFromString(GenData, 13, 2))     # Byte 13 and 14
                 TargetRPM.append(self.GetIntFromString(GenData, 15, 2))     # Byte 15 and 16
 
                 GeneratorSettings.append({"Target RPM" : str(TargetRPM[0]) if len(TargetRPM) else "Unknown"})
                 GeneratorSettings.append({"Number of Flywheel Teeth" : str(FlyWheelTeeth[0]) if len(FlyWheelTeeth) else "Unknown"})
                 GeneratorSettings.append({"Phase" : str(Phase) if Phase != None else "Unknown"})
+                self.Phase = str(Phase) if Phase != None else "Unknown"
                 GeneratorSettings.append({"CT Ratio" : str(CTRatio[0]) if len(CTRatio) else "Unknown"})
 
             except Exception as e1:

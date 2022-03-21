@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - improved error checking in generator specific modules
 - Update to serial logging to include sequence info in error logs
 - Update to support correct voltage output for Evolution Air Cooled 3 Phase models
+- Added phase info to support data when registers are submitted
 
 ## V1.18.08  -2022-02-25
 - Added more validation checking in genpushover.py

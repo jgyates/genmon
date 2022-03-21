@@ -445,6 +445,7 @@ class CustomController(GeneratorController):
             StartInfo["nominalKW"] = self.NominalKW
             StartInfo["nominalRPM"] = self.NominalRPM
             StartInfo["nominalfrequency"] = self.NominalFreq
+            StartInfo["phase"] = self.Phase
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
             StartInfo["NominalBatteryVolts"] = self.NominalBatteryVolts
             StartInfo["FuelCalculation"] = self.FuelTankCalculationSupported()

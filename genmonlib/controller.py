@@ -548,6 +548,7 @@ class GeneratorController(MySupport):
             StartInfo["nominalKW"] = self.NominalKW
             StartInfo["nominalRPM"] = self.NominalRPM
             StartInfo["nominalfrequency"] = self.NominalFreq
+            StartInfo["phase"] = self.Phase
             StartInfo["Controller"] = "Generic Controller Name"
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
             StartInfo["NominalBatteryVolts"] = "12"

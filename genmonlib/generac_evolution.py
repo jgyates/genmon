@@ -294,6 +294,7 @@ class Evolution(GeneratorController):
             # check for unknown events (i.e. events we are not decoded) and send an email if they occur
             self.CheckForAlarmEvent.set()
             self.SetupTiles()
+            self.Phase = self.GetModelInfo("phase")
             if not self.EvolutionController == None and not self.LiquidCooled == None:
                 self.InitComplete = True
                 self.InitCompleteEvent.set()
@@ -3977,6 +3978,7 @@ class Evolution(GeneratorController):
             StartInfo["nominalKW"] = self.NominalKW
             StartInfo["nominalRPM"] = self.NominalRPM
             StartInfo["nominalfrequency"] = self.NominalFreq
+            StartInfo["phase"] = self.Phase
             StartInfo["Controller"] = self.GetController(Actual = False)
             StartInfo["Actual"] = self.GetController(Actual = True)
             StartInfo["NominalBatteryVolts"] = "12"
