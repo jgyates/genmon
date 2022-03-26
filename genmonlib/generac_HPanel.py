@@ -605,7 +605,7 @@ class RegisterStringEnum(object):
     GENERATOR_DATA_TIME         =   ["0173", 0x40, False]
     MIN_GENLINK_VERSION         =   ["0060", 0x40, True]
     MAINT_LIFE                  =   ["0193", 0x12, False]
-    ENGINE_KW_HOURS             =   ["0236", 0x08, False]
+    ENGINE_KW_HOURS             =   ["0240", 0x08, False]
 
     #---------------------RegisterStringEnum::hexsort---------------------------
     @staticmethod
@@ -1593,8 +1593,8 @@ class HPanel(GeneratorController):
             StartInfo["Controller"] = self.GetController()
             StartInfo["UtilityVoltage"] = False
             StartInfo["RemoteCommands"] = True      # Remote Start/ Stop/ StartTransfer
-            StartInfo["ResetAlarms"] = False
             StartInfo["AckAlarms"] = True
+            StartInfo["ResetAlarms"] = False
             StartInfo["RemoteTransfer"] = self.HTSTransferSwitch    # Remote start and transfer command
             StartInfo["RemoteButtons"] = False      # Remote controll of Off/Auto/Manual
             StartInfo["ExerciseControls"] = False  # self.SmartSwitch
@@ -2216,6 +2216,12 @@ class HPanel(GeneratorController):
             Data.append(Value3 >> 8)            # value to be written (High byte)
             Data.append(Value3 & 0x00FF)        # value written (Low byte)
 
+            # NOTE the industrial models can operate in standalong and parallel mode. If in parallel mode
+            # the main System Controller (SC) is addressed by the modbus registers 0 - 4095, each
+            # parallel generator controller can be bypassed directly via pass through by adding generator
+            # number (1, 2, 3, etc) to the high eight bits of the modbus address (i.e. add 4096 for 1,
+            # 8192 for 2, etc)
+            
             ## Write 3 regs at once
             self.ModBus.ProcessWriteTransaction(self.Reg.START_BITS[REGISTER], len(Data) / 2, Data)
 
