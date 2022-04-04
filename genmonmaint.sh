@@ -114,7 +114,7 @@ function installrpirtscts() {
     echo "Installing rpirtscts..."
     pushd $genmondir
     cd ~
-    git clone git://github.com/mholling/rpirtscts.git
+    git clone https://github.com/mholling/rpirtscts.git
     cd rpirtscts
     make
     sudo cp ./rpirtscts /usr/local/bin/rpirtscts
