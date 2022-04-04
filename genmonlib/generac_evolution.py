@@ -3378,7 +3378,7 @@ class Evolution(GeneratorController):
                     return "%2.1f Hz" % FloatTemp
                 else:
                     # Nexus and Evolution Air Cooled
-                    if self.NexusLegacyFreq:
+                    if self.NexusLegacyFreq and not self.EvolutionController and not self.LiquidCooled:
                         Divisor = 2.0
                     else:
                         Divisor = 1.0

@@ -1,13 +1,17 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.18.10  -2022-03-23
+- Update to correct minor issue with H-Panel and G-Panel systems reading of Engine kW Hours causing a modbus exception.
+- Added phase info to support data when registers are submitted
+- Update to support correct voltage output for Evolution Air Cooled 3 Phase models
+- Corrected problem with Frequency for air cooled models introduced in 1.18.09
+
 ## V1.18.09  -2022-03-10
 - Update to mymail.py to prevent mail from a category with no recipient from being put in the send queue.
 - Update to gengpio.py to address bug that broke gpio functionality
 - improved error checking in generator specific modules
 - Update to serial logging to include sequence info in error logs
-- Update to support correct voltage output for Evolution Air Cooled 3 Phase models
-- Added phase info to support data when registers are submitted
 
 ## V1.18.08  -2022-02-25
 - Added more validation checking in genpushover.py
