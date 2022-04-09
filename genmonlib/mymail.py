@@ -17,6 +17,7 @@ from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import COMMASPACE, formatdate
+import idna
 
 import atexit
 from shutil import copyfile
@@ -168,7 +169,7 @@ class MyMail(MySupport):
 
         msgstr = '\n' + 'Test email from genmon\n'
         body = '\n' + 'Time: ' + tmstamp + '\n' + 'Date: ' + dtstamp + '\n' + msgstr
-        msg.attach(MIMEText(body, 'plain', 'us-ascii'))
+        msg.attach(MIMEText(body, 'plain'))
 
         try:
             if use_ssl:
@@ -186,13 +187,13 @@ class MyMail(MySupport):
 
         try:
             if password != "" and not smtpauth_disable:
-                session.login(str(email_account), str(password))
+                session.login(MyMail.FilterAddress(email_account), str(password))
 
             if "," in recipient:
                 multiple_recipients = recipient.split(",")
-                session.sendmail(sender_account, multiple_recipients, msg.as_string())
+                session.sendmail(MyMail.FilterAddress(ender_account), multiple_recipients, msg.as_string())
             else:
-                session.sendmail(sender_account, recipient, msg.as_string())
+                session.sendmail(MyMail.FilterAddress(sender_account), recipient, msg.as_string())
         except Exception as e1:
             #self.LogErrorLine("Error SMTP sendmail: " + str(e1))
             session.quit()
@@ -200,6 +201,27 @@ class MyMail(MySupport):
 
         session.quit()
         return "Success"
+
+    #------------ MyMail.FilterAddress -----------------------------------------
+    @staticmethod
+    def FilterAddress(address):
+
+        if isinstance(address, list):
+            returnList = []
+            for oneAddress in address:
+                oneAddress = oneAddress.strip()
+                addressSplit = oneAddress.split("@")
+                if len(addressSplit) > 1:
+                    returnList.append(addressSplit[0] + "@" + idna.encode(addressSplit[1]).decode('ascii'))
+                else:
+                    returnList.append(oneAddress)
+            return returnList
+        else:
+            address = address.strip()
+            addressSplit = address.split("@")
+            if len(addressSplit) > 1:
+                address = str(addressSplit[0]) + "@" + str(idna.encode(addressSplit[1]).decode('ascii'))
+            return address
 
     #---------- MyMail.GetConfig -----------------------------------------------
     def GetConfig(self, reload = False):
@@ -436,7 +458,7 @@ class MyMail(MySupport):
         msg['Subject'] = subjectstr
 
         body = '\n' + 'Time: ' + tmstamp + '\n' + 'Date: ' + dtstamp + '\n' + msgstr
-        msg.attach(MIMEText(body, 'plain', 'us-ascii'))
+        msg.attach(MIMEText(body, 'plain'))
 
         # if the files are not found then we skip them but still send the email
         try:
@@ -480,13 +502,13 @@ class MyMail(MySupport):
 
         try:
             if self.EmailPassword != "" and not self.DisableSmtpAuth:
-                session.login(str(self.EmailAccount), str(self.EmailPassword))
+                session.login(MyMail.FilterAddress(self.EmailAccount), str(self.EmailPassword))
 
             if "," in recipient:
                 multiple_recipients = recipient.split(",")
-                session.sendmail(self.SenderAccount, multiple_recipients, msg.as_string())
+                session.sendmail(MyMail.FilterAddress(self.SenderAccount), multiple_recipients, msg.as_string())
             else:
-                session.sendmail(self.SenderAccount, recipient, msg.as_string())
+                session.sendmail(MyMail.FilterAddress(self.SenderAccount), recipient, msg.as_string())
         except Exception as e1:
             self.LogErrorLine("Error SMTP sendmail: " + str(e1))
             session.quit()
