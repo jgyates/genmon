@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - Update to support correct voltage output for Evolution Air Cooled 3 Phase models
 - Corrected problem with Frequency for air cooled models introduced in 1.18.09
 - Update to parse international domains correctly in mymail.py
+- Update to allow unicode characters in site name emails on 64 bit systems
 
 ## V1.18.09  -2022-03-10
 - Update to mymail.py to prevent mail from a category with no recipient from being put in the send queue.
