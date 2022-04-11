@@ -1356,6 +1356,14 @@ class GeneratorController(MySupport):
                     ExternalTankTitle = "External Tank 2"
                     Tile = MyTile(self.log, title = ExternalTankTitle, units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True, 2))
                     self.TileList.append(Tile)
+                if self.TankData != None and "Percentage3" in self.TankData:
+                    ExternalTankTitle = "External Tank 3"
+                    Tile = MyTile(self.log, title = ExternalTankTitle, units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True, 3))
+                    self.TileList.append(Tile)
+                if self.TankData != None and "Percentage4" in self.TankData:
+                    ExternalTankTitle = "External Tank 4"
+                    Tile = MyTile(self.log, title = ExternalTankTitle, units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True, 4))
+                    self.TileList.append(Tile)
             elif self.FuelConsumptionGaugeSupported():    # no gauge for NG
                 if self.UseMetric:
                     Units = "L"         # no gauge for NG
@@ -1811,8 +1819,16 @@ class GeneratorController(MySupport):
                     percentage =  self.TankData["Percentage"]
                 if TankNumber == 2:
                     percentage =  self.TankData["Percentage2"]
+                if TankNumber == 3:
+                    percentage =  self.TankData["Percentage3"]
+                if TankNumber == 4:
+                    percentage =  self.TankData["Percentage4"]
                 if TankNumber == 0:
-                    if "Percentage2" in self.TankData:
+                    if "Percentage4" in self.TankData:
+                        percentage = (float(self.TankData["Percentage"]) + float(self.TankData["Percentage2"]) + float(self.TankData["Percentage3"]) + float(self.TankData["Percentage4"])) / 4
+                    elif "Percentage3" in self.TankData:
+                        percentage = (float(self.TankData["Percentage"]) + float(self.TankData["Percentage2"]) + float(self.TankData["Percentage3"])) / 3
+                    elif "Percentage2" in self.TankData:
                         percentage = (float(self.TankData["Percentage"]) + float(self.TankData["Percentage2"])) / 2
                     else:
                         percentage = self.TankData["Percentage"]

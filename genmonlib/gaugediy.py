@@ -48,7 +48,7 @@ class GaugeDIY(MySupport):
 
         return True
     # ---------- GaugeDIY::GetGaugeData----------------------------------------
-    def GetGaugeData(self, tanktwo = False):
+    def GetGaugeData(self, tanknum = 0):
         return 0.0
     # ---------- GaugeDIY::Close------------------------------------------------
     def Close(self):
@@ -94,7 +94,7 @@ class GaugeDIY1(GaugeDIY):
 
         return True
     # ---------- GaugeDIY::PreReadCommand--------------------------------------
-    def PreReadCommand(self, tanktwo = False):
+    def PreReadCommand(self, tanknum = 0):
 
         try:
             # set config register  and start conversion
@@ -108,12 +108,20 @@ class GaugeDIY1(GaugeDIY):
             # Bit 8 Operational mode of the ADS1115.
             # 0 : Continuous conversion mode
             # 1 : Power-down single-shot mode (default)
+            if tanknum > 3:
+                tanknum = 0
 
-            if not tanktwo:
+            if tanknum == 0:
                 CONFIG_VALUE_1 = 0xC3 # 1 100 001 1 --> Begin a single conversion, AIN(pos) = AIN0 and AIN(neg) = GND, Gain +/-4.096V, Power-down single-shot mode (default)
-            else:
+            elif tanknum == 1:
                 CONFIG_VALUE_1 = 0xD3 # 1 101 001 1 --> Begin a single conversion, AIN(pos) = AIN1 and AIN(neg) = GND, Gain +/-4.096V, Power-down single-shot mode (default)
-
+            elif tanknum == 2:
+                CONFIG_VALUE_1 = 0xE3 # 1 110 001 1 --> Begin a single conversion, AIN(pos) = AIN2 and AIN(neg) = GND, Gain +/-4.096V, Power-down single-shot mode (default)
+            elif tanknum == 3:
+                CONFIG_VALUE_1 = 0xF3 # 1 111 001 1 --> Begin a single conversion, AIN(pos) = AIN3 and AIN(neg) = GND, Gain +/-4.096V, Power-down single-shot mode (default)
+            else:
+                self.LogError("Invalid tank number in PreReadCommand: " + str(tanknum))
+                return False
             # bits 7-0  0b10000101 = 0x85
             # Bits 7-5 data rate default to 100 for 128SPS
             # Bits 4-0  comparator functions see spec sheet.
@@ -124,10 +132,10 @@ class GaugeDIY1(GaugeDIY):
             self.LogErrorLine("Error calling PreReadCommand: " + str(e1))
             return False
     # ---------- GaugeDIY::GetGaugeData----------------------------------------
-    def GetGaugeData(self, tanktwo = False):
+    def GetGaugeData(self, tanknum = 0):
         try:
 
-            self.PreReadCommand(tanktwo = tanktwo)
+            self.PreReadCommand(tanknum = tanknum)
 
             time.sleep(1) # Wait a second so the Analog-to-Digital Converter has time to process the command.
 
@@ -288,7 +296,7 @@ class GaugeDIY2(GaugeDIY):
             return 0.0
 
     # ---------- GaugeDIY2::GetGaugeData----------------------------------------
-    def GetGaugeData(self, tanktwo = False):
+    def GetGaugeData(self, tanknum = 0):
         try:
             return self.convert_angle_to_percent(self.read_gauge_angle())
         except:

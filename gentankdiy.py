@@ -82,8 +82,8 @@ class GenTankData(MySupport):
                 self.LogError("Invalid gauge type: " + str(self.gauge_type))
                 sys.exit(1)
 
-            if not self.nb_tanks in [1,2]:
-                self.LogError("Invalid Number of tanks (nb_tanks), 1 or 2 accepted: " + str(self.nb_tanks))
+            if not self.nb_tanks in [1,2,3, 4]:
+                self.LogError("Invalid Number of tanks (nb_tanks), 1, 2, 3 or 4 accepted: " + str(self.nb_tanks))
                 sys.exit(1)
 
             self.debug = self.gauge.debug
@@ -136,10 +136,18 @@ class GenTankData(MySupport):
                     dataforgenmon["Tank Name"] = "External Tank"
                     dataforgenmon["Capacity"] = 0
                     dataforgenmon["Percentage"] = tankdata
-                    if self.nb_tanks == 2:
-                       tankdata2 = self.gauge.GetGaugeData(tanktwo = True)
+                    if self.nb_tanks >= 2:
+                       tankdata2 = self.gauge.GetGaugeData(tanknum = 1)
                        if tankdata2 != None:
                            dataforgenmon["Percentage2"] = tankdata2
+                    if self.nb_tanks >= 3:
+                       tankdata2 = self.gauge.GetGaugeData(tanknum = 2)
+                       if tankdata2 != None:
+                           dataforgenmon["Percentage3"] = tankdata2
+                    if self.nb_tanks >= 4:
+                       tankdata2 = self.gauge.GetGaugeData(tanknum = 3)
+                       if tankdata2 != None:
+                           dataforgenmon["Percentage4"] = tankdata2
 
                     retVal = self.SendCommand("generator: set_tank_data=" + json.dumps(dataforgenmon))
                     self.LogDebug(json.dumps(dataforgenmon))

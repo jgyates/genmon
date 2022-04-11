@@ -973,7 +973,10 @@ def GetAddOns():
         AddOnCfg['gentankdiy'] = collections.OrderedDict()
         AddOnCfg['gentankdiy']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "gentankdiy", default = False)
         AddOnCfg['gentankdiy']['title'] = "DIY Fuel Tank Gauge Sensor"
-        AddOnCfg['gentankdiy']['description'] = "Integrates DIY tank gauge sensor for Genmon"
+        Description = "Integrates DIY tank gauge sensor for Genmon"
+        if os.path.exists("/dev/i2c-1") == False and os.path.exists("/dev/i2c-2") == False :
+             Description = Description + "<br/><font color='red'>The I2C bus not enabled but required for this add-on to function.</font>"
+        AddOnCfg['gentankdiy']['description'] = Description
         AddOnCfg['gentankdiy']['icon'] = "rpi"
         AddOnCfg['gentankdiy']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gentankdiypy-optional"
         AddOnCfg['gentankdiy']['parameters'] = collections.OrderedDict()
