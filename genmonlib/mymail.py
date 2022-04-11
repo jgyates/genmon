@@ -189,11 +189,16 @@ class MyMail(MySupport):
             if password != "" and not smtpauth_disable:
                 session.login(MyMail.FilterAddress(email_account), str(password))
 
+            if sys.version_info[0] < 3: #PYTHON 2
+                message = msg.as_string()
+            else:                       #PYTHON 3
+                message = msg.as_bytes()
+
             if "," in recipient:
                 multiple_recipients = recipient.split(",")
-                session.sendmail(MyMail.FilterAddress(ender_account), multiple_recipients, msg.as_string())
+                session.sendmail(MyMail.FilterAddress(ender_account), multiple_recipients, message)
             else:
-                session.sendmail(MyMail.FilterAddress(sender_account), recipient, msg.as_string())
+                session.sendmail(MyMail.FilterAddress(sender_account), recipient, message)
         except Exception as e1:
             #self.LogErrorLine("Error SMTP sendmail: " + str(e1))
             session.quit()
@@ -504,11 +509,16 @@ class MyMail(MySupport):
             if self.EmailPassword != "" and not self.DisableSmtpAuth:
                 session.login(MyMail.FilterAddress(self.EmailAccount), str(self.EmailPassword))
 
+            if sys.version_info[0] < 3: #PYTHON 2
+                message = msg.as_string()
+            else:                       #PYTHON 3
+                message = msg.as_bytes()
+
             if "," in recipient:
                 multiple_recipients = recipient.split(",")
-                session.sendmail(MyMail.FilterAddress(self.SenderAccount), multiple_recipients, msg.as_string())
+                session.sendmail(MyMail.FilterAddress(self.SenderAccount), multiple_recipients, message)
             else:
-                session.sendmail(MyMail.FilterAddress(self.SenderAccount), recipient, msg.as_string())
+                session.sendmail(MyMail.FilterAddress(self.SenderAccount), recipient, message)
         except Exception as e1:
             self.LogErrorLine("Error SMTP sendmail: " + str(e1))
             session.quit()
