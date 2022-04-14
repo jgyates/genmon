@@ -406,6 +406,7 @@ class Monitor(MySupport):
             SupportData["Monitor Health"] = self.GetSystemHealth()
             SupportData["Controller Selected"] = self.ControllerSelected.lower()
             SupportData["StartInfo"] = self.GetStartInfo(NoTile = True)
+            SupportData["Comm Stats"] = self.Controller.GetCommStatus()
             if not self.bDisablePlatformStats:
                 SupportData["PlatformStats"] = self.GetPlatformStats()
             SupportData["Data"] = self.Controller.DisplayRegisters(AllRegs = True, DictOut = True)
