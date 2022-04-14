@@ -2221,7 +2221,7 @@ class HPanel(GeneratorController):
             # parallel generator controller can be bypassed directly via pass through by adding generator
             # number (1, 2, 3, etc) to the high eight bits of the modbus address (i.e. add 4096 for 1,
             # 8192 for 2, etc)
-            
+
             ## Write 3 regs at once
             self.ModBus.ProcessWriteTransaction(self.Reg.START_BITS[REGISTER], len(Data) / 2, Data)
 
@@ -2369,7 +2369,7 @@ class HPanel(GeneratorController):
             GeneratorStatus = self.GetParameterStringValue(RegisterStringEnum.GENERATOR_STATUS[REGISTER],RegisterStringEnum.GENERATOR_STATUS[RET_STRING]).lower()
             SwitchState = self.GetSwitchState().lower()
 
-            if "running" in EngineStatus:
+            if "running" in EngineStatus or "run" in EngineStatus:
                 IsRunning = True
             else:
                 IsRunning = False
