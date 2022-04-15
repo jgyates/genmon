@@ -566,7 +566,7 @@ outputPower OBJECT-TYPE
  MAX-ACCESS read-only
  STATUS current
  DESCRIPTION
-  "{Evolution/Nexus) The calculated apparent power from the generator.  Displays non-zero result when running, 0 if the engine is not running."
+  "(Evolution/Nexus) The calculated apparent power from the generator.  Displays non-zero result when running, 0 if the engine is not running."
  ::= { evengine 10 } 
 
 rotorPoles OBJECT-TYPE
@@ -574,7 +574,7 @@ rotorPoles OBJECT-TYPE
  MAX-ACCESS read-only
  STATUS current
  DESCRIPTION
-  "{Evolution/Nexus) The number of rotor poles the generator's coil has.  Displays non-zero when running, 0 if the engine is not running. Depends on generator hardware."
+  "(Evolution/Nexus) The number of rotor poles the generator's coil has.  Displays non-zero when running, 0 if the engine is not running. Depends on generator hardware."
  ::= { evengine 11 }
 
 -- 1.0.1.x (evline)
