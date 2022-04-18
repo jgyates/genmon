@@ -1436,11 +1436,23 @@ class GeneratorController(MySupport):
                 if FuelValue != None:
                     Maintenance["Maintenance"].append({"Fuel In Tank (Sensor)" : self.ValueOut(FuelValue, Units, JSONNum)})
             elif self.ExternalFuelDataSupported():
-                FuelValue = self.GetExternalFuelPercentage(ReturnFloat = True)
-                Maintenance["Maintenance"].append({"Fuel Level Sensor" : self.ValueOut(FuelValue, "%", JSONNum)})
+                NumTanks = self.GetNumberExternalTanks()
+                if NumTanks >= 1:
+                    FuelValue = self.GetExternalFuelPercentage(ReturnFloat = True)
+                    Maintenance["Maintenance"].append({"Fuel Level Sensor" : self.ValueOut(FuelValue, "%", JSONNum)})
+                if NumTanks >= 2:
+                    FuelValue = self.GetExternalFuelPercentage(ReturnFloat = True, TankNumber = 2)
+                    Maintenance["Maintenance"].append({"Fuel Level Sensor Tank 2" : self.ValueOut(FuelValue, "%", JSONNum)})
+                if NumTanks >= 3:
+                    FuelValue = self.GetExternalFuelPercentage(ReturnFloat = True, TankNumber = 3)
+                    Maintenance["Maintenance"].append({"Fuel Level Sensor Tank 3" : self.ValueOut(FuelValue, "%", JSONNum)})
+                if NumTanks >= 4:
+                    FuelValue = self.GetExternalFuelPercentage(ReturnFloat = True, TankNumber = 4)
+                    Maintenance["Maintenance"].append({"Fuel Level Sensor Tank 4" : self.ValueOut(FuelValue, "%", JSONNum)})
                 FuelValue = self.GetFuelInTank(ReturnFloat = True)
                 if FuelValue != None:
                     Maintenance["Maintenance"].append({"Fuel In Tank (Sensor)" : self.ValueOut(FuelValue, Units, JSONNum)})
+
 
             # Don't Show estimated fuel for propane tanks with a sensor on Evo controllers
             if self.FuelTankCalculationSupported() and not (self.FuelType == "Propane" and (self.ExternalFuelDataSupported() or self.FuelSensorSupported())):
@@ -1802,6 +1814,28 @@ class GeneratorController(MySupport):
     #----------  GeneratorController::ExternalFuelDataSupported-----------------
     def ExternalFuelDataSupported(self):
         return self.UseExternalFuelData
+
+    #----------  GeneratorController::GetNumberExternalTanks--------------------
+    def GetNumberExternalTanks(self):
+
+        try:
+            if not self.ExternalFuelDataSupported():
+                return 0
+            if self.TankData == None:
+                return 0
+            if "Percentage4" in self.TankData:
+                return 4
+            elif "Percentage3" in self.TankData:
+                return 3
+            elif "Percentage2" in self.TankData:
+                return 2
+            elif "Percentage" in self.TankData:
+                return 1
+            else:
+                return 0
+        except Exception as e1:
+            self.LogErrorLine("Error in GetNumberExternalTanks: " + str(e1))
+            return 0
     #----------  GeneratorController::GetExternalFuelPercentage-----------------
     def GetExternalFuelPercentage(self, ReturnFloat = False, TankNumber = 0):
 
