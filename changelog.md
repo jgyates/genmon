@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Update to parse international domains correctly in mymail.py
 - Update to allow unicode characters in site name emails on 64 bit systems
 - Added support for up to four tanks for DIY gauge type 1
+- Added the ability to extend genserv.py
 
 ## V1.18.09  -2022-03-10
 - Update to mymail.py to prevent mail from a category with no recipient from being put in the send queue.

@@ -54,6 +54,12 @@ import re, datetime
 
 #-------------------------------------------------------------------------------
 app = Flask(__name__,static_url_path='')
+
+# this allows the flask support to be extended on a per site basis but sill allow for
+# updates via the main github repository. If genservex.py exists, load it
+if os.path.isfile(os.path.join(os.path.dirname(os.path.realpath(__file__)), "genservext.py")):
+    import genservext
+
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 300
 
 HTTPAuthUser = None
