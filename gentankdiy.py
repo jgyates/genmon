@@ -90,9 +90,9 @@ class GenTankData(MySupport):
             self.simulate = self.gauge.simulate
 
             if self.debug:
-                self.LogError("Num Tanks: " + str(str.nb_tanks))
-                self.LogError("Gauge Type: " + str(str.gauge_type))
-                
+                self.LogError("Num Tanks: " + str(self.nb_tanks))
+                self.LogError("Gauge Type: " + str(self.gauge_type))
+
             self.Generator = ClientInterface(host = self.MonitorAddress, port = port, log = self.log)
 
             # start thread monitor time for exercise
