@@ -103,7 +103,7 @@ multi_instance = If Enabled this setting will allow multiple instances of genmon
 usecalculatedpower=Calculate power output from power factor, average current and average voltage
 uselinuxwifisignalgauge=if enabled and running linux the WiFi signal will be displayed on a gauge in the web interface. Note, the gauge will not show if you are using Ethernet for your network.
 useraspberrypicputempgauge=If enabled and running on a Raspberry Pi, the CPU temperature will be displayed on a gauge in the web interface.
-max_login_attempts=The maximum number of failed login attempts to the web interface before a temporary lockout is started. A lockout will prevent any login attempts. If the login failures occur within the time frame of lockout duration then then logins will be blocked for the number of seconds of lockout duration.
+max_login_attempts=The maximum number of failed login attempts to the web interface before a temporary lockout is started. A lockout will prevent any login attempts. If the login failures occur within the time frame of lockout duration then then logins will be blocked for the number of seconds of lockout duration. Set to zero to disable.
 login_lockout_seconds=The number of seconds to perform a lockout if failed logins exceed Maximum Login Attempts. For example if this value is 300 seconds (5 min) and max attempt is 5, then if 5 logins failures occur in a row within 5 minutes, the a lockout will occur for 5 minutes.
 [generac_evo_nexus]
 0000=Product line
