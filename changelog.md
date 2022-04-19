@@ -1,18 +1,20 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
-## V1.18.10  -2022-03-23
-- Update to correct minor issue with H-Panel and G-Panel systems reading of Engine kW Hours causing a modbus exception.
-- Added phase info to support data when registers are submitted
-- Update to support correct voltage output for Evolution Air Cooled 3 Phase models
-- Corrected problem with Frequency for air cooled models introduced in 1.18.09
+## V1.18.11  -2022-04-19
 - Update to parse international domains correctly in mymail.py
 - Update to allow unicode characters in site name emails on 64 bit systems
 - Added support for up to four tanks for DIY gauge type 1
 - Added the ability to extend genserv.py (https://github.com/jgyates/genmon/wiki/Appendix-C--Interfacing-Generator-Monitor-to-External-Applications#extend-genservpy)
 - Fix one bug related to MQTT support option "JSON for Numerics"
 - Corrected on bug in Maintenance display for Evo Liquid Cooled units
-- Added temporary login lockout of maximum failed web login attempts are exceeded. See Advanced settings for parameters. 
+- Added temporary login lockout of maximum failed web login attempts are exceeded. See Advanced settings for parameters.
+
+## V1.18.10  -2022-03-23
+- Update to correct minor issue with H-Panel and G-Panel systems reading of Engine kW Hours causing a modbus exception.
+- Added phase info to support data when registers are submitted
+- Update to support correct voltage output for Evolution Air Cooled 3 Phase models
+- Corrected problem with Frequency for air cooled models introduced in 1.18.09
 
 ## V1.18.09  -2022-03-10
 - Update to mymail.py to prevent mail from a category with no recipient from being put in the send queue.
