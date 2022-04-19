@@ -1438,7 +1438,7 @@ class GeneratorController(MySupport):
             elif self.ExternalFuelDataSupported():
                 NumTanks = self.GetNumberExternalTanks()
                 if NumTanks >= 1:
-                    FuelValue = self.GetExternalFuelPercentage(ReturnFloat = True, TanksNumber = 1)
+                    FuelValue = self.GetExternalFuelPercentage(ReturnFloat = True, TankNumber = 1)
                     Maintenance["Maintenance"].append({"Fuel Level Sensor" : self.ValueOut(FuelValue, "%", JSONNum)})
                 if NumTanks >= 2:
                     FuelValue = self.GetExternalFuelPercentage(ReturnFloat = True, TankNumber = 2)
