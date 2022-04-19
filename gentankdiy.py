@@ -87,6 +87,7 @@ class GenTankData(MySupport):
                 sys.exit(1)
 
             self.debug = self.gauge.debug
+            self.simulate = self.gauge.simulate 
             self.Generator = ClientInterface(host = self.MonitorAddress, port = port, log = self.log)
 
             # start thread monitor time for exercise

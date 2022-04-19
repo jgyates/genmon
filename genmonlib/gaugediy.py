@@ -71,12 +71,16 @@ class GaugeDIY1(GaugeDIY):
         self.mv_per_step = self.config.ReadValue('mv_per_step', return_type = int, default = 125)
         self.Multiplier = self.config.ReadValue('volts_to_percent_multiplier', return_type = float, default = 20.0)
         self.debug = self.config.ReadValue('debug', return_type = bool, default = False)
+        self.simulate = self.config.ReadValue('simulate', return_type = bool, default = False)
 
     # ---------- GaugeDIY::InitADC----------------------------------------------
     def InitADC(self):
         try:
 
             # I2C channel 1 is connected to the GPIO pins
+            if self.simulate:
+                self.LogDebug("InitADC complete")
+                return True
             self.I2Cbus = smbus.SMBus(self.i2c_channel)
 
             # Reset ADC
@@ -97,6 +101,9 @@ class GaugeDIY1(GaugeDIY):
     def PreReadCommand(self, tanknum = 0):
 
         try:
+            if self.simulate:
+                self.LogDebug("PreReadCommand complete")
+                return True
             # set config register  and start conversion
             # ANC1 and GND, 4.096v, 128s/s
             # Customized - Port A0 and 4.096 V input
@@ -127,7 +134,7 @@ class GaugeDIY1(GaugeDIY):
             # Bits 4-0  comparator functions see spec sheet.
             CONFIG_VALUE_2 = 0x85
             self.I2Cbus.write_i2c_block_data(self.i2c_address, self.POINTER_CONFIGURATION, [CONFIG_VALUE_1,CONFIG_VALUE_2] )
-
+            return True
         except Exception as e1:
             self.LogErrorLine("Error calling PreReadCommand: " + str(e1))
             return False
@@ -135,6 +142,9 @@ class GaugeDIY1(GaugeDIY):
     def GetGaugeData(self, tanknum = 0):
         try:
 
+            if self.simulate:
+                self.LogDebug("GetGaugeData complete")
+                return 0.0
             self.PreReadCommand(tanknum = tanknum)
 
             time.sleep(1) # Wait a second so the Analog-to-Digital Converter has time to process the command.
@@ -160,6 +170,8 @@ class GaugeDIY1(GaugeDIY):
     # ---------- GaugeDIY::Close------------------------------------------------
     def Close(self):
         try:
+            if self.simulate:
+                return
             self.I2Cbus.close()
         except Exception as e1:
             self.LogErrorLine("Error in GagueDIY1:Close: " + str(e1))
