@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Added the ability to extend genserv.py (https://github.com/jgyates/genmon/wiki/Appendix-C--Interfacing-Generator-Monitor-to-External-Applications#extend-genservpy)
 - Fix one bug related to MQTT support option "JSON for Numerics"
 - Corrected on bug in Maintenance display for Evo Liquid Cooled units
+- Added temporary login lockout of maximum failed web login attempts are exceeded. See Advanced settings for parameters. 
 
 ## V1.18.09  -2022-03-10
 - Update to mymail.py to prevent mail from a category with no recipient from being put in the send queue.
