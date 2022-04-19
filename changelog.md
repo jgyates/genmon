@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Added support for up to four tanks for DIY gauge type 1
 - Added the ability to extend genserv.py
 - Fix one bug related to MQTT support option "JSON for Numerics"
+- Corrected on bug in Maintenance display for Evo Liquid Cooled units
 
 ## V1.18.09  -2022-03-10
 - Update to mymail.py to prevent mail from a category with no recipient from being put in the send queue.

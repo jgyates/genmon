@@ -1947,7 +1947,13 @@ class Evolution(GeneratorController):
 
                 ControllerSettings.append({"Param Group" : self.ValueOut(self.GetParameter("020a", ReturnInt = True), "", JSONNum)})
                 ControllerSettings.append({"Voltage Code" : self.ValueOut(self.GetParameter("020b", ReturnInt = True), "", JSONNum)})
-                ControllerSettings.append({"Phase" : self.ValueOut(self.GetLiquidCooledModelInfo( "phase"), "", JSONNum) })
+
+                try:
+                    phase = self.GetLiquidCooledModelInfo( "phase")
+                    ControllerSettings.append({"Phase" : self.ValueOut(int(phase), "", JSONNum) })
+                except:
+                    pass
+
 
                 if self.EvolutionController and self.LiquidCooled:
                     # get total hours since activation
