@@ -9,7 +9,7 @@ All notable changes to this project will be documented in this file.
 - Update to parse international domains correctly in mymail.py
 - Update to allow unicode characters in site name emails on 64 bit systems
 - Added support for up to four tanks for DIY gauge type 1
-- Added the ability to extend genserv.py
+- Added the ability to extend genserv.py (https://github.com/jgyates/genmon/wiki/Appendix-C--Interfacing-Generator-Monitor-to-External-Applications#extend-genservpy)
 - Fix one bug related to MQTT support option "JSON for Numerics"
 - Corrected on bug in Maintenance display for Evo Liquid Cooled units
 
