@@ -89,9 +89,8 @@ class GenTankData(MySupport):
             self.debug = self.gauge.debug
             self.simulate = self.gauge.simulate
 
-            if self.debug:
-                self.LogError("Num Tanks: " + str(self.nb_tanks))
-                self.LogError("Gauge Type: " + str(self.gauge_type))
+            self.LogDebug("Num Tanks: " + str(self.nb_tanks))
+            self.LogDebug("Gauge Type: " + str(self.gauge_type))
 
             self.Generator = ClientInterface(host = self.MonitorAddress, port = port, log = self.log)
 
