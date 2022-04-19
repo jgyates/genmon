@@ -251,7 +251,7 @@ class MySupport(MyCommon):
                     ReturnDict["value"] = value
                     return ReturnDict
             else:
-                self.LogError("Unsupported type in ValueOut: " + str(type(value)))
+                self.LogError("Unsupported type in ValueOut: " + str(type(value)) + " : " + str(unit))
                 return DefaultReturn
         except Exception as e1:
             self.LogErrorLine("Error in ValueOut: " + str(e1))
