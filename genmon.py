@@ -472,7 +472,24 @@ class Monitor(MySupport):
             return "Log files submitted"
         except Exception as e1:
             self.LogErrorLine("Error in SendSupportInfo: " + str(e1))
+    #---------- Send message ---------------------------------------------------
+    def SendMessage(self, CmdString):
+        try:
+            if CmdString == None or CmdString == "":
+                return "Error: invalid command in SendMessage"
 
+            CmdList = CmdString.split("=")
+            if len(CmdList) != 2:
+                self.LogError("Validation Error: Error parsing command string in SendMessage (parse): " + CmdString)
+                return "Error in SendMessage"
+
+            data = json.loads(CmdList[1])
+            msgtitle = self.SiteName + ": " + data['title']
+            self.MessagePipe.SendMessage(msgtitle, data['body'] , msgtype = data['type'])
+            return "OK"
+        except Exception as e1:
+            self.LogErrorLine("Error in SendMessage: " + str(e1))
+        return "OK"
     #---------- process command from email and socket --------------------------
     def ProcessCommand(self, command, fromsocket = False):
 
@@ -558,7 +575,8 @@ class Monitor(MySupport):
             "support_data_json" : [self.GetSupportData, (), True],
             "set_tank_data"     : [self.Controller.SetExternalTankData, (command,), True],
             "set_temp_data"     : [self.Controller.SetExternalTemperatureData, (command,), True],
-            "set_power_data"    : [self.Controller.SetExternalCTData, (command,), True]
+            "set_power_data"    : [self.Controller.SetExternalCTData, (command,), True],
+            "notify_message"    : [self.SendMessage, (command,), True]
         }
 
         CommandList = command.split(' ')

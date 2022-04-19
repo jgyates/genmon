@@ -91,6 +91,14 @@ ConfigFilePath = ProgramDefaults.ConfPath
 MAIL_SECTION = "MyMail"
 GENMON_SECTION = "GenMon"
 
+WebUILocked = False
+LoginAttempts = 0
+MaxLoginAttempts = 5
+LockOutDuration = (5 * 60)
+LastLoginTime = datetime.datetime.now()
+LastFailedLoginTime = datetime.datetime.now()
+securityMessageSent = None
+
 Closing = False
 Restarting = False
 ControllerType = "generac_evo_nexus"
@@ -152,6 +160,13 @@ def display_internal():
     return ServePage('internal.html')
 
 #-------------------------------------------------------------------------------
+@app.route('/locked', methods=['GET'])
+def locked():
+
+    LogError("Locked Page")
+    return render_template('locked.html')
+
+#-------------------------------------------------------------------------------
 def ServePage(page_file):
 
     if LoginActive():
@@ -185,6 +200,9 @@ def mfa_auth():
 #-------------------------------------------------------------------------------
 def admin_login_helper():
 
+    global LoginAttempts
+
+    LoginAttempts = 0
     try:
         if bUseMFA:
             #GetOTP()
@@ -198,6 +216,15 @@ def admin_login_helper():
 #-------------------------------------------------------------------------------
 @app.route('/', methods=['POST'])
 def do_admin_login():
+
+    CheckLockOutDuration()
+    if WebUILocked:
+        next_time = (datetime.datetime.now() - LastFailedLoginTime).total_seconds()
+        str_seconds = str(int(LockOutDuration - next_time))
+        response = make_response(render_template('locked.html', time=str_seconds))
+        response.headers['Content-type'] = 'text/html; charset=utf-8'
+        response.mimetype = "text/html; charset=utf-8"
+        return response
 
     if request.form['password'] == HTTPAuthPass and request.form['username'].lower() == HTTPAuthUser.lower():
         session['logged_in'] = True
@@ -213,9 +240,51 @@ def do_admin_login():
         return admin_login_helper()
     elif request.form['username'] != "":
         LogError("Invalid login: " + request.form['username'])
+        CheckFailedLogin()
         return render_template('login.html')
     else:
         return render_template('login.html')
+
+#-------------------------------------------------------------------------------
+def CheckLockOutDuration():
+
+    global WebUILocked
+    global LoginAttempts
+    global securityMessageSent
+
+    if MaxLoginAttempts == 0:
+        return
+
+    if LoginAttempts >= MaxLoginAttempts:
+        if ((datetime.datetime.now() - LastFailedLoginTime).total_seconds() > LockOutDuration):
+            WebUILocked = False
+            LoginAttempts = 0
+        else:
+            WebUILocked = True
+            # send message to user only once every 4 hours
+            if securityMessageSent == None or ((datetime.datetime.now() - securityMessageSent).total_seconds() > (4*60)):
+
+                message = {
+                    "title": "Security Warning",
+                    "body": "Genmon login is locked due to exceeding the maximum login attempts.",
+                    "type": "error"
+                    }
+                command = "generator: notify_message=" + json.dumps(message)
+
+                data = MyClientInterface.ProcessMonitorCommand(command)
+                securityMessageSent = datetime.datetime.now()
+
+#-------------------------------------------------------------------------------
+def CheckFailedLogin():
+
+    global LoginAttempts
+    global WebUILocked
+    global LastFailedLoginTime
+
+    LoginAttempts += 1
+    LastFailedLoginTime = datetime.datetime.now()
+
+    CheckLockOutDuration()
 
 #-------------------------------------------------------------------------------
 def doLdapLogin(username, password):
@@ -291,7 +360,7 @@ def ProcessCommand(command):
             "settime", "sendregisters", "sendlogfiles", "getdebug", "status_num_json",
             "maint_num_json", "monitor_num_json", "outage_num_json", "get_maint_log_json",
             "add_maint_log", "clear_maint_log", "delete_row_maint_log",
-            "edit_row_maint_log", "support_data_json", 'fuel_log_clear' ]:
+            "edit_row_maint_log", "support_data_json", 'fuel_log_clear', 'notify_message' ]:
             finalcommand = "generator: " + command
 
             try:
@@ -1486,6 +1555,9 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["min_outage_duration"] = ['int', 'Minimum Outage Duration', 64, "0", "", 0, GENMON_CONFIG, GENMON_SECTION,"min_outage_duration"]
         ConfigSettings["multi_instance"] = ['boolean', 'Allow Multiple Genmon Instances', 65, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "multi_instance"]
 
+        ConfigSettings["max_login_attempts"] = ['int', 'Maxmum login attempts before temporary lockout', 66, 5, "", "digits", GENMON_CONFIG, GENMON_SECTION, "max_login_attempts"]
+        ConfigSettings["login_lockout_seconds"] = ['int', 'Login lockout duration in seconds', 67, (5*60), "", "digits", GENMON_CONFIG, GENMON_SECTION, "login_lockout_seconds"]
+
         if GStartInfo["Linux"]:
             ConfigSettings["uselinuxwifisignalgauge"] = ['boolean', 'Show Wifi Signal Strength Gauge', 60, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "uselinuxwifisignalgauge"]
         if GStartInfo["RaspbeerryPi"]:
@@ -1631,7 +1703,8 @@ def ReadSettingsFromFile():
     ConfigSettings["favicon"] = ['string', 'FavIcon', 220, "", "", "minmax:8:255", GENMON_CONFIG, GENMON_SECTION, "favicon"]
     ConfigSettings["usemfa"] = ['boolean', 'Use Multi-Factor Authentication', 210, False, "", "", GENMON_CONFIG, GENMON_SECTION, "usemfa"]
     # this value is for display only, it can not be changed by the web app
-    ConfigSettings["mfa_url"] = ['qrcode', 'MFA QRCode', 211, MFA_URL, "", "", None, None, "mfa_url"]
+    ConfigSettings["mfa_url"] = ['qrcode', 'MFA QRCode', 212, MFA_URL, "", "", None, None, "mfa_url"]
+
 
     #
     #ConfigSettings["disableemail"] = ['boolean', 'Disable Email Usage', 300, True, "", "", MAIL_CONFIG, MAIL_SECTION, "disableemail"]
@@ -1970,6 +2043,8 @@ def LoadConfig():
     global HTTPAuthPass_RO
     global SSLContext
     global favicon
+    global MaxLoginAttempts
+    global LockOutDuration
 
     HTTPAuthPass = None
     HTTPAuthUser = None
@@ -2003,6 +2078,9 @@ def LoadConfig():
 
         if ConfigFiles[GENMON_CONFIG].HasOption('favicon'):
             favicon = ConfigFiles[GENMON_CONFIG].ReadValue('favicon')
+
+        MaxLoginAttempts = ConfigFiles[GENMON_CONFIG].ReadValue('max_login_attempts', return_type = int, default = 5)
+        LockOutDuration = ConfigFiles[GENMON_CONFIG].ReadValue('login_lockout_seconds', return_type = int, default = (5 * 60))
 
         # user name and password require usehttps = True
         if bUseSecureHTTP:
