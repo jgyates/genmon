@@ -1346,21 +1346,22 @@ class GeneratorController(MySupport):
                 Tile = MyTile(self.log, title = "Fuel", units = "%", type = "fuel", nominal = 100, callback = self.GetFuelSensor, callbackparameters = (True,))
                 self.TileList.append(Tile)
             elif self.ExternalFuelDataSupported():
-                if self.TankData != None and "Percentage2" in self.TankData:
+                NumTanks = self.GetNumberExternalTanks()
+                if NumTanks >= 2:
                     ExternalTankTitle = "External Tank 1"
-                else:
+                else:   # only one tank
                     ExternalTankTitle = "External Tank"
                 Tile = MyTile(self.log, title = ExternalTankTitle, units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True, 1))
                 self.TileList.append(Tile)
-                if self.TankData != None and "Percentage2" in self.TankData:
+                if NumTanks >= 2:
                     ExternalTankTitle = "External Tank 2"
                     Tile = MyTile(self.log, title = ExternalTankTitle, units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True, 2))
                     self.TileList.append(Tile)
-                if self.TankData != None and "Percentage3" in self.TankData:
+                if NumTanks >= 3:
                     ExternalTankTitle = "External Tank 3"
                     Tile = MyTile(self.log, title = ExternalTankTitle, units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True, 3))
                     self.TileList.append(Tile)
-                if self.TankData != None and "Percentage4" in self.TankData:
+                if NumTanks >= 4:
                     ExternalTankTitle = "External Tank 4"
                     Tile = MyTile(self.log, title = ExternalTankTitle, units = "%", type = "fuel", nominal = 100, callback = self.GetExternalFuelPercentage, callbackparameters = (True, 4))
                     self.TileList.append(Tile)
@@ -1848,30 +1849,35 @@ class GeneratorController(MySupport):
             if not self.ExternalFuelDataSupported():
                 return DefaultReturn
 
-            if self.TankData != None:
-                if TankNumber == 1:
-                    percentage =  self.TankData["Percentage"]
-                if TankNumber == 2:
-                    percentage =  self.TankData["Percentage2"]
-                if TankNumber == 3:
-                    percentage =  self.TankData["Percentage3"]
-                if TankNumber == 4:
-                    percentage =  self.TankData["Percentage4"]
-                if TankNumber == 0:
-                    if "Percentage4" in self.TankData:
-                        percentage = (float(self.TankData["Percentage"]) + float(self.TankData["Percentage2"]) + float(self.TankData["Percentage3"]) + float(self.TankData["Percentage4"])) / 4
-                    elif "Percentage3" in self.TankData:
-                        percentage = (float(self.TankData["Percentage"]) + float(self.TankData["Percentage2"]) + float(self.TankData["Percentage3"])) / 3
-                    elif "Percentage2" in self.TankData:
-                        percentage = (float(self.TankData["Percentage"]) + float(self.TankData["Percentage2"])) / 2
-                    else:
-                        percentage = self.TankData["Percentage"]
-                if ReturnFloat:
-                    return float(percentage)
-                else:
-                    return str(percentage)
-            else:
+            if self.TankData == None:
                 return DefaultReturn
+
+            NumTanks = self.GetNumberExternalTanks()
+            if TankNumber > NumTanks:
+                return DefaultReturn
+
+            if TankNumber == 1:
+                percentage =  self.TankData["Percentage"]
+            if TankNumber == 2:
+                percentage =  self.TankData["Percentage2"]
+            if TankNumber == 3:
+                percentage =  self.TankData["Percentage3"]
+            if TankNumber == 4:
+                percentage =  self.TankData["Percentage4"]
+            # TankNumber == 0 denotes an average of all tanks
+            if TankNumber == 0:
+                if "Percentage4" in self.TankData:
+                    percentage = (float(self.TankData["Percentage"]) + float(self.TankData["Percentage2"]) + float(self.TankData["Percentage3"]) + float(self.TankData["Percentage4"])) / 4
+                elif "Percentage3" in self.TankData:
+                    percentage = (float(self.TankData["Percentage"]) + float(self.TankData["Percentage2"]) + float(self.TankData["Percentage3"])) / 3
+                elif "Percentage2" in self.TankData:
+                    percentage = (float(self.TankData["Percentage"]) + float(self.TankData["Percentage2"])) / 2
+                else:
+                    percentage = self.TankData["Percentage"]
+            if ReturnFloat:
+                return float(percentage)
+            else:
+                return str(percentage)
         except Exception as e1:
             self.LogErrorLine("Error in GetExternalFuelPercentage: " + str(e1))
             return DefaultReturn
