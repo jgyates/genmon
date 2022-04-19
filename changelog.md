@@ -30,7 +30,6 @@ All notable changes to this project will be documented in this file.
 - Corrected numerous spelling errors in displayed strings
 - Fixed issue with javascript not displaying all tool tips correctly
 
-
 ## V1.18.07  -2022-02-16
 - Added retry capability for short message add ons (gensms, genslack and genpushover). Messages are retried every 2 min for 10 minutes.
 - Minor update to add on cleanup code
