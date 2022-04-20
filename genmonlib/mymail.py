@@ -167,8 +167,8 @@ class MyMail(MySupport):
         msg['Date'] = formatdate(localtime=True)
         msg['Subject'] = "Genmon Test Email"
 
-        msgstr = '\n' + 'Test email from genmon\n'
-        body = '\n' + 'Time: ' + tmstamp + '\n' + 'Date: ' + dtstamp + '\n' + msgstr
+        msgstr = '\r\n' + 'Test email from genmon\n'
+        body = '\r\n' + 'Time: ' + tmstamp + '\r\n' + 'Date: ' + dtstamp + '\r\n' + msgstr
         msg.attach(MIMEText(body, 'plain'))
 
         try:
@@ -462,7 +462,7 @@ class MyMail(MySupport):
         msg['Date'] = formatdate(localtime=True)
         msg['Subject'] = subjectstr
 
-        body = '\n' + 'Time: ' + tmstamp + '\n' + 'Date: ' + dtstamp + '\n' + msgstr
+        body = '\r\n' + 'Time: ' + tmstamp + '\r\n' + 'Date: ' + dtstamp + '\r\n' + msgstr
         msg.attach(MIMEText(body, 'plain'))
 
         # if the files are not found then we skip them but still send the email
