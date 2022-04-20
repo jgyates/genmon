@@ -169,7 +169,10 @@ class MyMail(MySupport):
 
         msgstr = '\r\n' + 'Test email from genmon\r\n'
         body = '\r\n' + 'Time: ' + tmstamp + '\r\n' + 'Date: ' + dtstamp + '\r\n' + msgstr
-        msg.attach(MIMEText(body, 'plain'))
+        if sys.version_info[0] < 3: #PYTHON 2
+            msg.attach(MIMEText(body, 'plain'))
+        else:                       #PYTHON 3
+            msg.attach(MIMEText(body, 'plain', _charset='utf-8'))
 
         try:
             if use_ssl:
@@ -463,7 +466,12 @@ class MyMail(MySupport):
         msg['Subject'] = subjectstr
 
         body = '\r\n' + 'Time: ' + tmstamp + '\r\n' + 'Date: ' + dtstamp + '\r\n' + msgstr
-        msg.attach(MIMEText(body, 'plain'))
+
+        if sys.version_info[0] < 3: #PYTHON 2
+            msg.attach(MIMEText(body, 'plain'))
+        else:                       #PYTHON 3
+            msg.attach(MIMEText(body, 'plain', _charset='utf-8'))
+
 
         # if the files are not found then we skip them but still send the email
         try:
