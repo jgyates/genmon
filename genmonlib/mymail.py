@@ -167,7 +167,7 @@ class MyMail(MySupport):
         msg['Date'] = formatdate(localtime=True)
         msg['Subject'] = "Genmon Test Email"
 
-        msgstr = '\r\n' + 'Test email from genmon\n'
+        msgstr = '\r\n' + 'Test email from genmon\r\n'
         body = '\r\n' + 'Time: ' + tmstamp + '\r\n' + 'Date: ' + dtstamp + '\r\n' + msgstr
         msg.attach(MIMEText(body, 'plain'))
 
