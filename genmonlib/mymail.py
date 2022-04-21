@@ -160,7 +160,7 @@ class MyMail(MySupport):
             recipienttemp = ">,<"
             recipienttemp = recipienttemp.join(recipientList)
             recipient = "<" + recipienttemp + ">"
-        except Exceptin as e1:
+        except Exception as e1:
             pass
 
         msg['To'] = recipient
@@ -199,7 +199,7 @@ class MyMail(MySupport):
 
             if "," in recipient:
                 multiple_recipients = recipient.split(",")
-                session.sendmail(MyMail.FilterAddress(ender_account), multiple_recipients, message)
+                session.sendmail(MyMail.FilterAddress(sender_account), multiple_recipients, message)
             else:
                 session.sendmail(MyMail.FilterAddress(sender_account), recipient, message)
         except Exception as e1:
@@ -399,7 +399,7 @@ class MyMail(MySupport):
                         self.IncomingCallback(subject)
 
                         # move the message to processed folder
-                        result = self.Mailbox.store(num, '+X-GM-LABELS', self.ProcessedFolder)  #add the label
+                        self.Mailbox.store(num, '+X-GM-LABELS', self.ProcessedFolder)  #add the label
                         self.Mailbox.store(num, '+FLAGS', '\\Deleted')     # this is needed to remove the original label
                     if self.WaitForExit("EmailCommandThread", 15 ):
                         return
