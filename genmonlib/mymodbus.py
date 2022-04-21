@@ -200,7 +200,7 @@ class ModbusProtocol(ModbusBase):
 
             if self.Slave.Buffer[self.MBUS_OFF_COMMAND] & self.MBUS_ERROR_BIT:
                 for i in range(0, self.MIN_PACKET_ERR_LENGTH):
-                    Packet.append(self.Slave.Buffer.pop(0))  # pop Address, Function, Excetion code, and CRC
+                    Packet.append(self.Slave.Buffer.pop(0))  # pop Address, Function, Exception code, and CRC
                 if self.CheckCRC(Packet):
                     self.RxPacketCount += 1
                     self.ModbusException += 1
