@@ -532,7 +532,7 @@ def SendTestEmail(query_string):
         if not len(parameters):
             return "No parameters"    # nothing to change
 
-    except:
+    except Exception as e1:
         LogErrorLine("Error getting parameters in SendTestEmail: " + str(e1))
         return "Error getting parameters in email test: " + str(e1)
     try:
