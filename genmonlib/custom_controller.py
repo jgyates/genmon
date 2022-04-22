@@ -141,7 +141,7 @@ class CustomController(GeneratorController):
                 self.LogErrorLine("Error in GetConfig reading config import file: " + str(e1))
                 return False
         else:
-            self.LogError("Error reading config import file: " + str(FullFileName))
+            self.LogError("Error reading config import file: " + str(self.ConfigFileName))
             return False
 
         return True
@@ -717,7 +717,7 @@ class CustomController(GeneratorController):
             if button_list == None:
                 return {}
             if not isinstance(button_list, list):
-                self.LogDebug("Error in GetButtons: invalid input or data: " + str(key_name))
+                self.LogDebug("Error in GetButtons: invalid input or data: " + str(type(button_list)))
                 return {}
 
             return_buttons = {}
@@ -742,13 +742,13 @@ class CustomController(GeneratorController):
                 CmdList = CmdString.split("=")
                 if len(CmdList) != 2:
                     self.LogError("Validation Error: Error parsing command string in SetGeneratorRemoteCommand (parse): " + CmdString)
-                    return msgbody
+                    return "Error"
 
                 CmdList[0] = CmdList[0].strip()
 
                 if not CmdList[0].lower() == "setremote":
                     self.LogError("Validation Error: Error parsing command string in SetGeneratorRemoteCommand (parse2): " + CmdString)
-                    return msgbody
+                    return "Error"
 
                 Command = CmdList[1].strip()
                 Command = Command.lower()
@@ -756,14 +756,14 @@ class CustomController(GeneratorController):
             except Exception as e1:
                 self.LogErrorLine("Validation Error: Error parsing command string in SetGeneratorRemoteCommand: " + CmdString)
                 self.LogError( str(e1))
-                return msgbody
+                return "Error"
 
             button_list = self.controllerimport.get("buttons", None)
 
             if button_list == None:
                 return "No buttons defined"
             if not isinstance(button_list, list):
-                self.LogDebug("Error in SetGeneratorRemoteCommand: invalid input or data: " + str(key_name))
+                self.LogDebug("Error in SetGeneratorRemoteCommand: invalid input or data: " + str(type(button_list)))
                 return "Malformed button in JSON file."
 
             for button in button_list:

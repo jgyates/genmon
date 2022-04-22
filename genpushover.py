@@ -169,13 +169,13 @@ def SendNotice(Message):
         app = Application(appid)
 
         if not app.is_authenticated:
-            self.LogError("Unable to authenticate app ID")
+            log.error("Unable to authenticate app ID")
             return False
 
         user = app.get_user(userid)
 
         if not user.is_authenticated:
-            self.LogError("Unable to authenticate user ID")
+            log.error("Unable to authenticate user ID")
             return False
 
         message = user.create_message(

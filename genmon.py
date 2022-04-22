@@ -920,7 +920,7 @@ class Monitor(MySupport):
 
         try:
             WatchDogPollTime += float(self.Controller.ModBus.ModBusPacketTimoutMS / 1000)
-        except:
+        except Exception as e1:
             self.LogErrorLine("Error in ComWatchDog: " + str(e1))
 
 

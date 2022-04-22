@@ -183,7 +183,7 @@ class ModbusEvo2(ModbusProtocol):
             return [Packet[self.MBUS_OFF_WRITE_REG_REQ_DATA], Packet[self.MBUS_OFF_WRITE_REG_REQ_DATA + 1]]
         else:
             self.LogError("Invalid command type in GetControlBytes")
-            self.LogHexList(MasterPacket, prefix = "Error Packet")
+            self.LogHexList(Packet, prefix = "Error Packet")
             return [0, 0]
     # ---------- ModbusProtocol::UpdateRegistersFromPacket----------------------
     #    Update our internal register list based on the request/response packet

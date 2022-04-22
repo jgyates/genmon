@@ -291,7 +291,7 @@ class ModbusProtocol(ModbusBase):
                     return True, Packet
                 else:
                     self.CrcError += 1
-                    return False, Packe
+                    return False, Packet
             else:
                 # received a  response to a command we do not support
                 self.DiscardByte(reason = "Invalid Modbus command")
