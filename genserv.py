@@ -530,7 +530,7 @@ def SendTestEmail(query_string):
             return "No parameters given for email test."
         parameters = json.loads(query_string)
         if not len(parameters):
-            return "No parameters"    # nothing to change
+            return "No parameters"    # nothing to change return
 
     except Exception as e1:
         LogErrorLine("Error getting parameters in SendTestEmail: " + str(e1))
