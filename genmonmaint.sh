@@ -28,6 +28,7 @@ update_opt=false
 noprompt_opt=false
 cleanpython_opt=false
 copyfiles_opt=false
+update_os=false
 
 #-------------------------------------------------------------------------------
 function cleanpython() {
@@ -343,6 +344,7 @@ function printhelp() {
   echo "  -p           Specifiy 2 or 3 for python version. 2 is default"
   echo "  -s           Just copy conf files"
   echo "  -l           Specifiy the full path of the log directory to archive"
+  echo "  -f           Update OS software and apt repository flags if needed"
   echo "  -h           Display help"
   echo ""
 }
@@ -351,11 +353,14 @@ function printhelp() {
 # main entry
 
 
-while getopts ":hp:birunc:Csl:" opt; do
+while getopts ":hfp:birunc:Csl:" opt; do
   case ${opt} in
     h )
       printhelp
       exit 0
+      ;;
+    f )
+      update_os=true
       ;;
     p )
       setuppython3 $OPTARG
@@ -398,6 +403,9 @@ while getopts ":hp:birunc:Csl:" opt; do
 done
 shift $((OPTIND -1))
 
+if [ "$update_os" = true ] ; then
+   sudo apt-get --allow-releaseinfo-change update && sudo apt-get upgrade
+fi
 
 if [ "$install_opt" = true ] ; then
   if [ "$noprompt_opt" = true ] ; then
