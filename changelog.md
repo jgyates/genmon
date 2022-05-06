@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Corrected on bug in Maintenance display for Evo Liquid Cooled units
 - Added temporary login lockout of maximum failed web login attempts are exceeded. See Advanced settings for parameters.
 - Correcting typos (thanks @curtis1757 )
+- Commented optional enhancments to gengpio.py
 
 ## V1.18.10  -2022-03-23
 - Update to correct minor issue with H-Panel and G-Panel systems reading of Engine kW Hours causing a modbus exception.
