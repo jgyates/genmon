@@ -172,10 +172,7 @@ class MyMail(MySupport):
         if sys.version_info[0] < 3: #PYTHON 2
             msg.attach(MIMEText(body, 'plain'))
         else:                       #PYTHON 3
-            if not use_ssl and tls_disable:
-                msg.attach(MIMEText(body, 'plain'))
-            else:
-                msg.attach(MIMEText(body, 'plain', _charset='utf-8'))
+            msg.attach(MIMEText(body, 'plain', _charset='utf-8'))
 
         try:
             if use_ssl:
@@ -198,11 +195,7 @@ class MyMail(MySupport):
             if sys.version_info[0] < 3: #PYTHON 2
                 message = msg.as_string()
             else:                       #PYTHON 3
-                if not use_ssl and tls_disable:
-                    # NO SSL, NO TLS
-                    message = msg.as_string()
-                else:
-                    message = msg.as_bytes()
+                message = msg.as_bytes()
 
             if "," in recipient:
                 multiple_recipients = recipient.split(",")
@@ -477,10 +470,7 @@ class MyMail(MySupport):
         if sys.version_info[0] < 3: #PYTHON 2
             msg.attach(MIMEText(body, 'plain'))
         else:                       #PYTHON 3
-            if not self.SSLEnabled and self.TLSDisable:
-                msg.attach(MIMEText(body, 'plain'))
-            else:
-                msg.attach(MIMEText(body, 'plain', _charset='utf-8'))
+            msg.attach(MIMEText(body, 'plain', _charset='utf-8'))
 
 
         # if the files are not found then we skip them but still send the email
@@ -530,11 +520,7 @@ class MyMail(MySupport):
             if sys.version_info[0] < 3: #PYTHON 2
                 message = msg.as_string()
             else:                       #PYTHON 3
-                if not self.SSLEnabled and self.TLSDisable:
-                    # NO SSL, NO TLS
-                    message = msg.as_string()
-                else:
-                    message = msg.as_bytes()
+                message = msg.as_bytes()
 
             if "," in recipient:
                 multiple_recipients = recipient.split(",")
