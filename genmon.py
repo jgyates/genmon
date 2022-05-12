@@ -143,6 +143,14 @@ class Monitor(MySupport):
         signal.signal(signal.SIGTERM, self.SignalClose)
         signal.signal(signal.SIGINT, self.SignalClose)
 
+        # this allows the genmon socket interface to be intercepted and
+        # triggered for actions like GPIO, etc with interfearing with
+        # updates via the main github repository. If genmonext.py exists, load it
+        self.genmonext = None
+        if os.path.isfile(os.path.join(os.path.dirname(os.path.realpath(__file__)), "genmonext.py")):
+            import genmonext
+            self.genmonext = genmonext.GenmonExt(log = self.log)
+
         # start thread to accept incoming sockets for nagios heartbeat and command / status clients
         self.Threads["InterfaceServerThread"] = MyThread(self.InterfaceServerThread, Name = "InterfaceServerThread")
 
@@ -521,6 +529,12 @@ class Monitor(MySupport):
             else:
                 msgbody += "EndOfMessage"
                 return msgbody
+
+        if self.genmonext != None:
+            try:
+                self.genmonext.PreProcessCommand(command)
+            except Exception as e1:
+                self.LogErrorLine("Error Calling GenmonExt:PreProcessCommand: " + str(e1))
 
         if command.lower().startswith('generator:'):
             command = command[len('generator:'):]
