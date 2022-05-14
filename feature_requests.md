@@ -1,4 +1,5 @@
 # Feature Request List
+- [Service Journal Improvements](https://github.com/jgyates/genmon/issues/709) @lwbeam
 - [SNMP v2 and v3 for gensnmp add-on](https://github.com/jgyates/genmon/issues/705) @w-u-2-o 
 - [Add options for custom alarm descriptions for H-100 and PowerZone](https://github.com/jgyates/genmon/issues/660) @j45p3r2
 - [Dark Mode for web interface](https://github.com/jgyates/genmon/issues/602) @danodemano
