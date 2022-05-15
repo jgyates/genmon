@@ -1465,7 +1465,7 @@ function renderJournalLine(rowcount, date, type, hours, comment) {
 
    return outstr;
 }
-
+//*****************************************************************************
 function emptyJournalLine(rowtype, rowcount, date, type, hours, comment) {
    if (comment == undefined) {
      comment = ""
@@ -1656,7 +1656,7 @@ function ClearJournal(){
         }
     });
 }
-
+//*****************************************************************************
 function DeleteJournalRow(id){
 
     vex.dialog.confirm({
@@ -1723,7 +1723,7 @@ function printJournal (data) {
 function TestEmailSettingsWrapper(){
     GenmonPrompt("Sending Test Email", "recepient:", $("#email_account").val());
 }
-
+//*****************************************************************************
 function TestEmailSettingsWrapperSubmit(email){
     $('.vex-dialog-message').html("<h4>Sending...</h4>");
     $('.vex-dialog-buttons').hide();
@@ -1733,7 +1733,7 @@ function TestEmailSettingsWrapperSubmit(email){
       ($("#tls_disable").prop('checked') === true ? "true" : "false"),
        ($("#smtpauth_disable").prop('checked') === true ? "true" : "false"));
 }
-
+//*****************************************************************************
 function TestEmailSettings(smtp_server, smtp_port,email_account,sender_account,sender_name,recipient, password, use_ssl, tls_disable, smtpauth_disable){
 
     var parameters = {};
