@@ -135,6 +135,7 @@ class GenSNMP(MySupport):
             self.community = self.config.ReadValue('community', default = "public")
             self.enterpriseID = self.config.ReadValue('enterpriseid', return_type = int, default = 58399)
             self.baseOID = (1, 3, 6, 1, 4, 1, self.enterpriseID)
+            self.snmpport = self.config.ReadValue('snmpport', return_type = int, default = 161)
 
             if self.MonitorAddress == None or not len(self.MonitorAddress):
                 self.MonitorAddress = ProgramDefaults.LocalHost
@@ -480,12 +481,12 @@ class GenSNMP(MySupport):
 
             # UDP/IPv4
             self.transportDispatcher.registerTransport(
-                udp.domainName, udp.UdpSocketTransport().openServerMode(('0.0.0.0', 161))
+                udp.domainName, udp.UdpSocketTransport().openServerMode(('0.0.0.0', self.snmpport))
             )
 
             # UDP/IPv6
             self.transportDispatcher.registerTransport(
-                udp6.domainName, udp6.Udp6SocketTransport().openServerMode(('::', 161))
+                udp6.domainName, udp6.Udp6SocketTransport().openServerMode(('::', self.snmpport))
             )
 
             ## Local domain socket
