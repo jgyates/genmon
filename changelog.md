@@ -13,7 +13,8 @@ All notable changes to this project will be documented in this file.
 - Commented optional enhancments to gengpio.py
 - Added the ability to monitor and trigger on genmon socket commands (https://github.com/jgyates/genmon/wiki/Appendix-C--Interfacing-Generator-Monitor-to-External-Applications#extend-genmonpy)
 - Added option to change port used for gensnmp
-- Servie Log improvements (https://github.com/jgyates/genmon/issues/709) thansk @lwbeam
+- Service Log improvements (https://github.com/jgyates/genmon/issues/709) thansk @lwbeam
+- Update alarm codes for Nexus AC
 
 ## V1.18.10  -2022-03-23
 - Update to correct minor issue with H-Panel and G-Panel systems reading of Engine kW Hours causing a modbus exception.

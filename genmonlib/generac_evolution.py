@@ -2378,9 +2378,9 @@ class Evolution(GeneratorController):
         0x03 : "Overspeed",                  # Validated on Nexus Air Cooled
         0x04 : "RPM Sense Loss",             # Validated on Nexus Liquid Cooled and Air Cooled
         0x05 : "Underspeed",
-        0x08 : "WIRING ERROR",               # Validasted on Nexus Air Cooled
-        #0x09 : "UNKNOWN",
-        0x0a : "Under Voltage",              #  Validated on Nexus AC
+        0x08 : "WIRING ERROR",               # Validated on Nexus Air Cooled
+        0x09 : "Over Voltage",               # Validated on Nexus Air Cooled
+        0x0a : "Under Voltage",              # Validated on Nexus Air Cooled
         0x0B : "Low Cooling Fluid",          # Validated on Nexus Liquid Cooled
         0x0C : "Canbus Error",               # Validated on Nexus Liquid Cooled
         0x0D : "Missing Cam Pulse",          # Validate on Nexus Liquid Cooled
@@ -2636,6 +2636,7 @@ class Evolution(GeneratorController):
          0x18 : "Wiring Error",         #  Validate on Nexus AC
          0x1a : "Missing Cam Pulse",    #  Validate on Nexus Liquid Cooled
          0x1c : "Throttle Failure",     #  Validate on Nexus LC,
+         0x1d : "Over Voltage",         #  Validate on Nexus Air Cooled
          0x1e : "Under Voltage",        #  Validate on EvoAC
          0x1f : "Service A Due",        #  Validate on Evolution, occurred when forced service due
          0x20 : "Service B Due",        #  WARNING, Validate on Evolution, occurred when service reset
