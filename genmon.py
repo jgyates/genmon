@@ -1063,7 +1063,7 @@ class Monitor(MySupport):
 
             while True:
                 try:
-                    data = conn.recv(1024)
+                    data = conn.recv(2098152) # max json string size plus 1000
                     if len(data):
                         if self.Controller == None:
                             outstr = "Retry, System Initializing"

@@ -1417,7 +1417,8 @@ function DisplayJournal(){
            var outstr = emptyJournalLine("amend", id, allJournalEntries[id]["date"], allJournalEntries[id]["type"], allJournalEntries[id]["hours"], allJournalEntries[id]["comment"])
            $("#row_"+id).replaceWith(outstr);
            $("input[name^='time_"+id+"']").timepicker({ 'timeFormat': 'H:i' });
-           $("input[name^='date_"+id+"']").datepicker({ dateFormat: 'mm/dd/yy' })
+           $("input[name^='date_"+id+"']").datepicker({ dateFormat: 'mm/dd/yy' });
+           $("#comment_"+id).val(allJournalEntries[id]["comment"].replace( /\<br\>/g, '\n' ));
         });
 
         $(".remove_bin#deleteJournalRow").on('click', function() {
@@ -1427,7 +1428,7 @@ function DisplayJournal(){
 
         $(document).ready(function() {
            $("#addJournalRow").click(function () {
-                  id = $("#alljournal").length
+                  id = $("#alljournal").length+1
                   var outstr = emptyJournalLine("add", id, myGenerator['MonitorTime'], "", isNaN(parseFloat(myGenerator['RunHours'])) ? "" : parseFloat(myGenerator['RunHours']), "")
                   if ($("#alljournal").length > 0) {
                       $("#alljournal").append(outstr);
@@ -1458,14 +1459,14 @@ function renderJournalLine(rowcount, date, type, hours, comment) {
    outstr += '         <table width="90%"><tr><td width="30%">Date: '+date+'</td><td width="30%">Type: '+type+'</td><td width="30%">Service Hours: '+hours+'</td><td width="10%" align="right"><img id="editJournalRow" row="'+ rowcount +'" class="edit" src="images/transparent.png" width="24px" height="24px">&nbsp<img id="deleteJournalRow" row="'+ rowcount +'" class="remove_bin" src="images/transparent.png" width="24px" height="24px"></td></table>';
    outstr += '     </div>';
    outstr += '     <div style="clear: both;"></div>';
-   outstr += '     <div style="margin:10px;font-size: 15px;">'+comment+'</center></div>';
+   outstr += '     <div style="margin:10px;font-size:15px;text-align:left;">'+comment+'</div>';
    outstr += '     <div style="clear: both;"></div><br>';
    outstr += '  </div>';
    outstr += '</td>';
 
    return outstr;
 }
-//*****************************************************************************
+
 function emptyJournalLine(rowtype, rowcount, date, type, hours, comment) {
    if (comment == undefined) {
      comment = ""
@@ -1476,12 +1477,16 @@ function emptyJournalLine(rowtype, rowcount, date, type, hours, comment) {
    outstr += '     <div style="width:100%; background-color:#e1e1e1; border-radius: 6px 6px 0px 0px; float:left; padding-top:10px; padding-bottom:10px;">';
    outstr += '         <center><table width="80%">';
    outstr += '           <tr><td align="right" style="padding:3px">Date: &nbsp;&nbsp;&nbsp;</td><td style="padding:3px"><input id="date_' + rowcount + '" name="date_' + rowcount + '" type="text" value="'+date.split(" ")[0]+'">&nbsp;<input id="time_' + rowcount + '" name="time_' + rowcount + '" type="text" value="'+date.split(" ")[1]+'"></td></tr>';
-   outstr += '           <tr><td align="right" style="padding:3px">Type: &nbsp;&nbsp;&nbsp;</td><td style="padding:3px"><select id="type_' + rowcount + '" name="type_' + rowcount + '" ><option value="Repair">Repair</option><option value="Check">Check</option><option value="Observation">Observation</option><option value="Maintenance">Maintenance</option></select></td></tr>';
+   outstr += '           <tr><td align="right" style="padding:3px">Type: &nbsp;&nbsp;&nbsp;</td><td style="padding:3px"><select id="type_' + rowcount + '" name="type_' + rowcount + '" >';
+   outstr += '               <option value="Repair" ' + (type.toLowerCase() == "repair"  ? ' selected="selected" ' : '') + '>Repair</option>';
+   outstr += '               <option value="Check" ' + (type.toLowerCase() == "check"  ? ' selected="selected" ' : '') + '>Check</option>';
+   outstr += '               <option value="Observation" ' + (type.toLowerCase() == "observation"  ? ' selected="selected" ' : '') + '>Observation</option>';
+   outstr += '               <option value="Maintenance" ' + (type.toLowerCase() == "maintenance"  ? ' selected="selected" ' : '') + '>Maintenance</option></select></td></tr>';
    outstr += '           <tr><td align="right" style="padding:3px">Service Hours: &nbsp;&nbsp;&nbsp;</td><td style="padding:3px"><input id="hours_' + rowcount + '" name="hours_' + rowcount + '" type="text" value="'+hours+'"></td></tr>';
    outstr += '         </table></center>';
    outstr += '     </div>';
    outstr += '     <div style="clear: both;"></div>';
-   outstr += '     <div style="margin:15px;font-size: 15px;"><textarea id="comment_' + rowcount + '" name="comment_' + rowcount + '" rows="4" style="width:100%;">'+comment+'</textarea></center></div>';
+   outstr += '     <div style="margin:15px;font-size: 15px;"><textarea id="comment_' + rowcount + '" name="comment_' + rowcount + '" rows="4" style="width:100%;">'+comment.replace( /\<br\>/g, '\n' )+'</textarea></center></div>';
    outstr += '     <div style="clear: both;"></div>';
    outstr += '     <button id="setjournalbutton" onClick="saveJournals(\'' + rowtype + '\', ' + rowcount + '); return false;">Save</button>';
    outstr += '     <div style="clear: both;"></div><br>';
@@ -1526,7 +1531,7 @@ function saveJournals(rowtype, rowcount){
        GenmonAlert("Data value not correct.<br>"+validationResult);
        return false;
     }
-
+    
     vex.dialog.open({
         unsafeMessage: DisplayStr,
         overlayClosesOnClick: false,
@@ -1560,8 +1565,8 @@ function saveJournalsJSON(rowtype, rowcount){
         var entry = {
             date: $("input[name^='date_"+rowcount+"']").val()+" "+$("input[name^='time_"+rowcount+"']").val(),   // Format is text string:  MM/DD/YYYY
             type: $("select[name^='type_"+rowcount+"']").val(),                                                  // Values are string: "Repair", "Maintenance", "Check" or "Observation"
-            hours: parseFloat($("input[name^='hours_"+rowcount+"']").val()),                                       // Must be a number (integer or floating point)
-            comment: $("textarea[name^='comment_"+rowcount+"']").val()                                           // Text string
+            hours: parseFloat($("input[name^='hours_"+rowcount+"']").val()),                                     // Must be a number (integer or floating point)
+            comment: $("textarea[name^='comment_"+rowcount+"']").val().replace( /\n/g, '<br>' )               // Text string
             };
 
         // send command
@@ -1656,7 +1661,7 @@ function ClearJournal(){
         }
     });
 }
-//*****************************************************************************
+
 function DeleteJournalRow(id){
 
     vex.dialog.confirm({
@@ -1723,7 +1728,7 @@ function printJournal (data) {
 function TestEmailSettingsWrapper(){
     GenmonPrompt("Sending Test Email", "recepient:", $("#email_account").val());
 }
-//*****************************************************************************
+
 function TestEmailSettingsWrapperSubmit(email){
     $('.vex-dialog-message').html("<h4>Sending...</h4>");
     $('.vex-dialog-buttons').hide();
@@ -1733,7 +1738,7 @@ function TestEmailSettingsWrapperSubmit(email){
       ($("#tls_disable").prop('checked') === true ? "true" : "false"),
        ($("#smtpauth_disable").prop('checked') === true ? "true" : "false"));
 }
-//*****************************************************************************
+
 function TestEmailSettings(smtp_server, smtp_port,email_account,sender_account,sender_name,recipient, password, use_ssl, tls_disable, smtpauth_disable){
 
     var parameters = {};

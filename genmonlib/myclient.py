@@ -27,7 +27,7 @@ class ClientInterface(MyCommon):
 
         self.AccessLock = threading.RLock()
         self.EndOfMessage = "EndOfMessage"
-        self.rxdatasize = 2000
+        self.rxdatasize = 2098152 # max json string size plus 1000
         self.host = host
         self.port = port
         self.max_reties = 10
