@@ -68,7 +68,7 @@ class GaugeDIY1(GaugeDIY):
 
         super(GaugeDIY1, self).__init__(config, log = log, console = console)
 
-        self.mv_per_step = self.config.ReadValue('mv_per_step', return_type = int, default = 125)
+        self.mv_per_step = self.config.ReadValue('mv_per_step', return_type = float, default = 187.5)
         self.Multiplier = self.config.ReadValue('volts_to_percent_multiplier', return_type = float, default = 20.0)
         self.debug = self.config.ReadValue('debug', return_type = bool, default = False)
         self.simulate = self.config.ReadValue('simulate', return_type = bool, default = False)
@@ -119,13 +119,13 @@ class GaugeDIY1(GaugeDIY):
                 tanknum = 0
 
             if tanknum == 0:
-                CONFIG_VALUE_1 = 0xC3 # 1 100 001 1 --> Begin a single conversion, AIN(pos) = AIN0 and AIN(neg) = GND, Gain +/-4.096V, Power-down single-shot mode (default)
+                CONFIG_VALUE_1 = 0xC1 # 1 100 000 1 --> Begin a single conversion, AIN(pos) = AIN0 and AIN(neg) = GND, Gain +/-6.144V, Power-down single-shot mode (default)
             elif tanknum == 1:
-                CONFIG_VALUE_1 = 0xD3 # 1 101 001 1 --> Begin a single conversion, AIN(pos) = AIN1 and AIN(neg) = GND, Gain +/-4.096V, Power-down single-shot mode (default)
+                CONFIG_VALUE_1 = 0xD1 # 1 101 000 1 --> Begin a single conversion, AIN(pos) = AIN1 and AIN(neg) = GND, Gain +/-6.144V, Power-down single-shot mode (default)
             elif tanknum == 2:
-                CONFIG_VALUE_1 = 0xE3 # 1 110 001 1 --> Begin a single conversion, AIN(pos) = AIN2 and AIN(neg) = GND, Gain +/-4.096V, Power-down single-shot mode (default)
+                CONFIG_VALUE_1 = 0xE1 # 1 110 000 1 --> Begin a single conversion, AIN(pos) = AIN2 and AIN(neg) = GND, Gain +/-6.144V, Power-down single-shot mode (default)
             elif tanknum == 3:
-                CONFIG_VALUE_1 = 0xF3 # 1 111 001 1 --> Begin a single conversion, AIN(pos) = AIN3 and AIN(neg) = GND, Gain +/-4.096V, Power-down single-shot mode (default)
+                CONFIG_VALUE_1 = 0xF1 # 1 111 000 1 --> Begin a single conversion, AIN(pos) = AIN3 and AIN(neg) = GND, Gain +/-6.144V, Power-down single-shot mode (default)
             else:
                 self.LogError("Invalid tank number in PreReadCommand: " + str(tanknum))
                 return False
