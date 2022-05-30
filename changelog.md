@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - Added option to change port used for gensnmp
 - Service Log improvements (https://github.com/jgyates/genmon/issues/709) thansk @lwbeam
 - Update alarm codes for Nexus AC
+- Updated gentankdiy with accuracy improvements. Thanks @davisgoodman and @zekyl314, see new wiring diagram https://github.com/jgyates/genmon/wiki/Appendix-L-Adding-a-Propane-Fuel-Gauge-to-Genmon
 
 ## V1.18.10  -2022-03-23
 - Update to correct minor issue with H-Panel and G-Panel systems reading of Engine kW Hours causing a modbus exception.
