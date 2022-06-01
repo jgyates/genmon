@@ -58,6 +58,7 @@
 
 ######## Gas Only##############################
 2600!ALARM!Ignition!Default Ignition Error! No further description
+2602!ALARM!Ignition Fault!Ignition Fault! No further description
 2601!ALARM!Ignition (Missing Cam)!Missing Cam - Cam pulses missing for 5 seconds! No further description
 2601!ALARM!Ignition (Crank Circuit)!Crank Circuit (External Module)! No further description
 
