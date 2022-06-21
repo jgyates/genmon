@@ -1558,10 +1558,13 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["max_login_attempts"] = ['int', 'Maxmum login attempts before temporary lockout', 66, 5, "", "digits", GENMON_CONFIG, GENMON_SECTION, "max_login_attempts"]
         ConfigSettings["login_lockout_seconds"] = ['int', 'Login lockout duration in seconds', 67, (5*60), "", "digits", GENMON_CONFIG, GENMON_SECTION, "login_lockout_seconds"]
 
-        if GStartInfo["Linux"]:
-            ConfigSettings["uselinuxwifisignalgauge"] = ['boolean', 'Show Wifi Signal Strength Gauge', 60, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "uselinuxwifisignalgauge"]
-        if GStartInfo["RaspbeerryPi"]:
-            ConfigSettings["useraspberrypicputempgauge"] = ['boolean', 'Show CPU Temperature Gauge', 60, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "useraspberrypicputempgauge"]
+        try:
+            if GStartInfo["Linux"]:
+                ConfigSettings["uselinuxwifisignalgauge"] = ['boolean', 'Show Wifi Signal Strength Gauge', 68, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "uselinuxwifisignalgauge"]
+            if GStartInfo["RaspbeerryPi"]:
+                ConfigSettings["useraspberrypicputempgauge"] = ['boolean', 'Show CPU Temperature Gauge', 69, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "useraspberrypicputempgauge"]
+        except:
+            pass
 
         for entry, List in ConfigSettings.items():
             if List[6] == GENMON_CONFIG:

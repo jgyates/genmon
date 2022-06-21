@@ -179,8 +179,12 @@ class GeneratorController(MySupport):
 
                 self.bDisablePlatformStats = self.config.ReadValue('disableplatformstats', return_type = bool, default = False)
 
-                self.bUseRaspberryPiCpuTempGauge = self.config.ReadValue('useraspberrypicputempgauge', return_type = bool, default = True)
-                self.bUseLinuxWifiSignalGauge = self.config.ReadValue('uselinuxwifisignalgauge', return_type = bool, default = True)
+                if self.bDisablePlatformStats:
+                    self.bUseRaspberryPiCpuTempGauge = False
+                    self.bUseLinuxWifiSignalGauge = False
+                else:
+                    self.bUseRaspberryPiCpuTempGauge = self.config.ReadValue('useraspberrypicputempgauge', return_type = bool, default = True)
+                    self.bUseLinuxWifiSignalGauge = self.config.ReadValue('uselinuxwifisignalgauge', return_type = bool, default = True)
 
         except Exception as e1:
                 self.FatalError("Missing config file or config file entries: " + str(e1))
