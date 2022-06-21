@@ -1,6 +1,16 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.18.12 -2022-06-21
+- Commented optional enhancments to gengpio.py
+- Added the ability to monitor and trigger on genmon socket commands (https://github.com/jgyates/genmon/wiki/Appendix-C--Interfacing-Generator-Monitor-to-External-Applications#extend-genmonpy)
+- Added option to change port used for gensnmp
+- Service Log improvements (https://github.com/jgyates/genmon/issues/709) thansk @lwbeam
+- Update alarm codes for Nexus AC
+- Updated gentankdiy with accuracy improvements. Thanks @davisgoodman and @zekyl314, see new wiring diagram https://github.com/jgyates/genmon/wiki/Appendix-L-Adding-a-Propane-Fuel-Gauge-to-Genmon
+- Updated alarm codes for Ignition Fault
+- Corrected problem when disabling platform stats
+
 ## V1.18.11  -2022-04-19
 - Update to parse international domains correctly in mymail.py
 - Update to allow unicode characters in site name emails on 64 bit systems
@@ -10,13 +20,6 @@ All notable changes to this project will be documented in this file.
 - Corrected on bug in Maintenance display for Evo Liquid Cooled units
 - Added temporary login lockout of maximum failed web login attempts are exceeded. See Advanced settings for parameters.
 - Correcting typos (thanks @curtis1757 )
-- Commented optional enhancments to gengpio.py
-- Added the ability to monitor and trigger on genmon socket commands (https://github.com/jgyates/genmon/wiki/Appendix-C--Interfacing-Generator-Monitor-to-External-Applications#extend-genmonpy)
-- Added option to change port used for gensnmp
-- Service Log improvements (https://github.com/jgyates/genmon/issues/709) thansk @lwbeam
-- Update alarm codes for Nexus AC
-- Updated gentankdiy with accuracy improvements. Thanks @davisgoodman and @zekyl314, see new wiring diagram https://github.com/jgyates/genmon/wiki/Appendix-L-Adding-a-Propane-Fuel-Gauge-to-Genmon
-- Updated alarm codes for Ignition Fault
 
 ## V1.18.10  -2022-03-23
 - Update to correct minor issue with H-Panel and G-Panel systems reading of Engine kW Hours causing a modbus exception.
