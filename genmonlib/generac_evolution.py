@@ -4001,8 +4001,9 @@ class Evolution(GeneratorController):
             StartInfo["WriteQuietMode"] = EvoLC
             StartInfo["Firmware"] = self.GetFirmwareVersion()
             StartInfo["Hardware"] = self.GetHardwareVersion()
-            StartInfo["Linux"] = self.Platform.IsOSLinux()
-            StartInfo["RaspbeerryPi"] = self.Platform.IsPlatformRaspberryPi()
+            if self.Platform != None:
+                StartInfo["Linux"] = self.Platform.IsOSLinux()
+                StartInfo["RaspbeerryPi"] = self.Platform.IsPlatformRaspberryPi()
             StartInfo["SetGenTime"] = True
 
             if not NoTile:

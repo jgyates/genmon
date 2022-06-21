@@ -461,9 +461,10 @@ class CustomController(GeneratorController):
             StartInfo["ExerciseControls"] = False  # self.SmartSwitch
             StartInfo["WriteQuietMode"] = False
             StartInfo["SetGenTime"] = False
-            StartInfo["Linux"] = self.Platform.IsOSLinux()
-            StartInfo["RaspbeerryPi"] = self.Platform.IsPlatformRaspberryPi()
-
+            if self.Platform != None:
+                StartInfo["Linux"] = self.Platform.IsOSLinux()
+                StartInfo["RaspbeerryPi"] = self.Platform.IsPlatformRaspberryPi()
+            
             if not NoTile:
 
                 StartInfo["buttons"] = self.GetButtons()

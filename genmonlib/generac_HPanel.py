@@ -1600,8 +1600,9 @@ class HPanel(GeneratorController):
             StartInfo["ExerciseControls"] = False  # self.SmartSwitch
             StartInfo["WriteQuietMode"] = False
             StartInfo["SetGenTime"] = True
-            StartInfo["Linux"] = self.Platform.IsOSLinux()
-            StartInfo["RaspbeerryPi"] = self.Platform.IsPlatformRaspberryPi()
+            if self.Platform != None:
+                StartInfo["Linux"] = self.Platform.IsOSLinux()
+                StartInfo["RaspbeerryPi"] = self.Platform.IsPlatformRaspberryPi()
 
             if not NoTile:
 

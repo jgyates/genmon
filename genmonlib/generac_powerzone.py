@@ -1298,6 +1298,9 @@ class PowerZone(GeneratorController):
             StartInfo["ExerciseControls"] = False  # self.SmartSwitch
             StartInfo["WriteQuietMode"] = True
             StartInfo["SetGenTime"] = True
+            if self.Platform != None:
+                StartInfo["Linux"] = self.Platform.IsOSLinux()
+                StartInfo["RaspbeerryPi"] = self.Platform.IsPlatformRaspberryPi()
 
             if not NoTile:
 
