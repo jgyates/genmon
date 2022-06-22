@@ -302,7 +302,7 @@ class MyMail(MySupport):
                 self.IMAPServer = self.IMAPServer.strip()
             else:
                 self.IMAPServer = ""
-            self.SMTPPort = self.config.ReadValue('smtp_port', return_type = int)
+            self.SMTPPort = self.config.ReadValue('smtp_port', return_type = int, default = 587)
 
             if self.config.HasOption('ssl_enabled'):
                 self.SSLEnabled = self.config.ReadValue('ssl_enabled', return_type = bool)
