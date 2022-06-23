@@ -260,7 +260,7 @@ class MyMail(MySupport):
                 self.UseBCC = self.config.ReadValue('usebcc', return_type = bool)
 
             if self.config.HasOption('extend_wait'):
-                self.ExtendWait = self.config.ReadValue('extend_wait', return_type = int, default = 0)
+                self.ExtendWait = self.config.ReadValue('extend_wait', return_type = int, default = 0, NoLog = True)
 
             self.debug = self.config.ReadValue('debug', return_type = bool, default = False)
 
