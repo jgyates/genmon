@@ -148,7 +148,12 @@ class MyMail(MySupport):
         # update time
         tmstamp=datetime.datetime.now().strftime('%I:%M:%S %p')
 
-        msg = MIMEMultipart()
+        if sys.version_info[0] < 3: #PYTHON 2
+            msg = MIMEMultipart()
+        else: # PYTHON 3
+            import email.policy
+            msg = MIMEMultipart(policy=email.policy.SMTP)
+            
         if sender_name == None or not len(sender_name):
             msg['From'] = "<" + sender_account + ">"
         else:
@@ -172,7 +177,7 @@ class MyMail(MySupport):
         if sys.version_info[0] < 3: #PYTHON 2
             msg.attach(MIMEText(body, 'plain'))
         else:                       #PYTHON 3
-            msg.attach(MIMEText(body, 'plain', _charset='utf-8'))
+            msg.attach(MIMEText(body, 'plain', _charset='utf-8'), policy=email.policy.SMTP)
 
         try:
             if use_ssl:
@@ -443,7 +448,11 @@ class MyMail(MySupport):
         # update time
         tmstamp=datetime.datetime.now().strftime('%I:%M:%S %p')
 
-        msg = MIMEMultipart()
+        if sys.version_info[0] < 3: #PYTHON 2
+            msg = MIMEMultipart()
+        else:
+            import email.policy
+            msg = MIMEMultipart(policy=email.policy.SMTP)
         if self.SenderName == None or not len(self.SenderName):
             msg['From'] = "<" + self.SenderAccount + ">"
         else:
@@ -470,7 +479,7 @@ class MyMail(MySupport):
         if sys.version_info[0] < 3: #PYTHON 2
             msg.attach(MIMEText(body, 'plain'))
         else:                       #PYTHON 3
-            msg.attach(MIMEText(body, 'plain', _charset='utf-8'))
+            msg.attach(MIMEText(body, 'plain', _charset='utf-8', policy=email.policy.SMTP))
 
 
         # if the files are not found then we skip them but still send the email
