@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Updated gentankdiy with accuracy improvements. Thanks @davisgoodman and @zekyl314, see new wiring diagram https://github.com/jgyates/genmon/wiki/Appendix-L-Adding-a-Propane-Fuel-Gauge-to-Genmon
 - Updated alarm codes for Ignition Fault
 - Corrected problem when disabling platform stats
+- Minor update for SMTP compatibility (thanks @lps-rocks)
 
 ## V1.18.11  -2022-04-19
 - Update to parse international domains correctly in mymail.py
