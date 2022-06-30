@@ -177,7 +177,7 @@ class MyMail(MySupport):
         if sys.version_info[0] < 3: #PYTHON 2
             msg.attach(MIMEText(body, 'plain'))
         else:                       #PYTHON 3
-            msg.attach(MIMEText(body, 'plain', _charset='utf-8'), policy=email.policy.SMTP)
+            msg.attach(MIMEText(body, 'plain', _charset='utf-8', policy=email.policy.SMTP))
 
         try:
             if use_ssl:
