@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Updated alarm codes for Ignition Fault
 - Corrected problem when disabling platform stats
 - Minor update for SMTP compatibility (thanks @lps-rocks)
+- Minor update to IMAP incoming email handling (thanks @rwskinner)
 
 ## V1.18.11  -2022-04-19
 - Update to parse international domains correctly in mymail.py
