@@ -17,6 +17,9 @@ from genmonlib.mylog import SetupLogger
 from genmonlib.myconfig import MyConfig
 from genmonlib.program_defaults import ProgramDefaults
 
+# Fix Python 2.x. unicode type
+if sys.version_info[0] >= 3: #PYTHON 3
+    unicode = str
 #------------ MySupport class --------------------------------------------------
 class MySupport(MyCommon):
     def __init__(self, simulation = False):

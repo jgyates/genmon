@@ -13,7 +13,7 @@
 #
 #-------------------------------------------------------------------------------
 
-import threading, datetime, collections, os, time, json
+import threading, datetime, collections, os, time, json, sys
 # NOTE: collections OrderedDict is used for dicts that are displayed to the UI
 
 
@@ -23,6 +23,10 @@ from genmonlib.mylog import SetupLogger
 from genmonlib.mytile import MyTile
 from genmonlib.myplatform import MyPlatform
 from genmonlib.program_defaults import ProgramDefaults
+
+# Fix Python 2.x. unicode type
+if sys.version_info[0] >= 3: #PYTHON 3
+    unicode = str
 
 class GeneratorController(MySupport):
     #---------------------GeneratorController::__init__-------------------------
