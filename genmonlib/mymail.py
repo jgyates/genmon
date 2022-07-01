@@ -404,8 +404,10 @@ class MyMail(MySupport):
                         self.IncomingCallback(subject)
 
                         # move the message to processed folder
+                        self.Mailbox.copy(num, self.ProcessedFolder)
                         self.Mailbox.store(num, '+X-GM-LABELS', self.ProcessedFolder)  #add the label
                         self.Mailbox.store(num, '+FLAGS', '\\Deleted')     # this is needed to remove the original label
+                        self.Mailbox.expunge()
                     if self.WaitForExit("EmailCommandThread", 15 ):
                         return
                 except Exception as e1:
