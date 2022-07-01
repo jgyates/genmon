@@ -1237,7 +1237,7 @@ if __name__=='__main__': #
         ConfigFilePath = ProgramDefaults.ConfPath
         opts, args = getopt.getopt(sys.argv[1:],"c:",["configpath="])
     except getopt.GetoptError:
-        console.error("Invalid command line argument.")
+        print("Invalid command line argument.")
         sys.exit(2)
 
     for opt, arg in opts:

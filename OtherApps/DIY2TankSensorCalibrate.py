@@ -54,7 +54,7 @@ def check_ap_table():
                       " is {2} than {3:.2f}\n" +
                       "value not added to calibration table.").format(i, gauge.ap_table[i-1][0], 'greater' if increasing else 'less', gauge.ap_table[i][0]))
 
-                guage.ap_table.pop(i)
+                gauge.ap_table.pop(i)
 
 #---------------------show_ap_table---------------------------------------------
 def show_ap_table():

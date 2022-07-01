@@ -53,7 +53,7 @@ class MyCrypto(MyCommon):
     def Encrypt(self, cleartext, finalize = True):
         try:
             if len(cleartext) != self.keysize:
-                self.LogError("MyCrypto:Encrypt: Blocksize mismatch: %d, %d" % (len(cyptertext), self.keysize))
+                self.LogError("MyCrypto:Encrypt: Blocksize mismatch: %d, %d" % (len(cleartext), self.keysize))
                 return None
             if finalize:
                 retval =  self.encryptor.update(cleartext) + self.encryptor.finalize()
