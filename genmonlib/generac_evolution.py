@@ -2652,6 +2652,7 @@ class Evolution(GeneratorController):
          0x32 : "Low Fuel Pressure",    #  Validate on EvoLC
          0x34 : "Emergency Stop",       #  Validate on Evolution, occurred when E-Stop
          0x38 : "Very Low Battery"      #  Validate on Evolutio Air Cooled
+         #0x72 : "Overload Remove Load"  #  Evolution 2.0 not validated
          #0x74 : "Controller Lost Connection to Server",    # Evolution 2.0 no validated
         }
 

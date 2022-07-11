@@ -75,7 +75,8 @@ class ModbusBase(MySupport ):
     MAX_FILE_NUMBER                         = 0xFFFF
     MIN_FILE_NUMBER                         = 0x01
     # commands
-    MBUS_CMD_READ_REGS      = 0x03
+    MBUS_CMD_READ_REGS      = 0x03          # Read Holding Registers
+    MBUS_CMD_READ_INPUT_REGS= 0x04          # Read Input Registers
     MBUS_CMD_WRITE_REGS     = 0x10
     MBUS_CMD_READ_FILE      = 0x14
     MBUS_CMD_WRITE_FILE     = 0x15
@@ -144,6 +145,8 @@ class ModbusBase(MySupport ):
             self.SlowCPUOptimization = self.config.ReadValue('optimizeforslowercpu', return_type = bool, default = False)
             self.UseTCP = self.config.ReadValue('use_serial_tcp', return_type = bool, default = False)
             self.ModbusTCP = self.config.ReadValue('modbus_tcp', return_type = bool, default = False)
+            self.UseModbusFunction4 = self.config.ReadValue('use_modbus_fc4', return_type = bool, default = False)
+
             try:
                 self.Address = int(self.config.ReadValue('address', default = '9d'),16)         # modbus address
             except:
@@ -165,6 +168,11 @@ class ModbusBase(MySupport ):
         # log errors in this module to a file
         self.log = SetupLogger("mymodbus", os.path.join(self.loglocation, "mymodbus.log"))
         self.console = SetupLogger("mymodbus_console", log_file = "", stream = True)
+
+        if self.UseModbusFunction4:
+            # use modbus function code 4 instead of 3 for reading modbus values
+            self.MBUS_CMD_READ_REGS = self.MBUS_CMD_READ_INPUT_REGS
+            self.LogError("Using Modbus function 4 instead of 3")
 
     #-------------ModbusBase::ProcessWriteTransaction---------------------------
     def ProcessWriteTransaction(self, Register, Length, Data):

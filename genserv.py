@@ -1503,25 +1503,26 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["address"] = ['string', 'Modbus slave address', 6, "9d", "", 0 , GENMON_CONFIG, GENMON_SECTION, "address"]
         ConfigSettings["response_address"] = ['string', 'Modbus slave transmit address', 6, "", "", 0 , GENMON_CONFIG, GENMON_SECTION, "response_address"]
         ConfigSettings["additional_modbus_timeout"] = ['float', 'Additional Modbus Timeout (sec)', 7, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "additional_modbus_timeout"]
-        ConfigSettings["watchdog_addition"] = ['float', 'Additional Watchdog Timeout (sec)', 8, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "watchdog_addition"]
-        ConfigSettings["controllertype"] = ['list', 'Controller Type', 9, "generac_evo_nexus", "", "generac_evo_nexus,h_100,powerzone,custom", GENMON_CONFIG, GENMON_SECTION, "controllertype"]
+        ConfigSettings["use_modbus_fc4"] = ['boolean', 'Use Modbus FC4 instead of FC3', 8, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "use_modbus_fc4"]
+        ConfigSettings["watchdog_addition"] = ['float', 'Additional Watchdog Timeout (sec)', 9, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "watchdog_addition"]
+        ConfigSettings["controllertype"] = ['list', 'Controller Type', 10, "generac_evo_nexus", "", "generac_evo_nexus,h_100,powerzone,custom", GENMON_CONFIG, GENMON_SECTION, "controllertype"]
 
         import_config_files = GetImportConfigFileNames()
-        ConfigSettings["import_config_file"] = ['list', 'Custom Controller Config File', 10, "evo_lc.json", "", import_config_files, GENMON_CONFIG, GENMON_SECTION, "import_config_file"]
-        ConfigSettings["loglocation"] = ['string', 'Log Directory',11, ProgramDefaults.LogPath, "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "loglocation"]
-        ConfigSettings["userdatalocation"] = ['string', 'User Defined Data Directory',12, os.path.dirname(os.path.realpath(__file__)), "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "userdatalocation"]
-        ConfigSettings["enabledebug"] = ['boolean', 'Enable Debug', 13, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "enabledebug"]
-        ConfigSettings["ignore_unknown"] = ['boolean', 'Ignore Unknown Values', 14, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "ignore_unknown"]
+        ConfigSettings["import_config_file"] = ['list', 'Custom Controller Config File', 11, "evo_lc.json", "", import_config_files, GENMON_CONFIG, GENMON_SECTION, "import_config_file"]
+        ConfigSettings["loglocation"] = ['string', 'Log Directory',12, ProgramDefaults.LogPath, "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "loglocation"]
+        ConfigSettings["userdatalocation"] = ['string', 'User Defined Data Directory',13, os.path.dirname(os.path.realpath(__file__)), "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "userdatalocation"]
+        ConfigSettings["enabledebug"] = ['boolean', 'Enable Debug', 14, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "enabledebug"]
+        ConfigSettings["ignore_unknown"] = ['boolean', 'Ignore Unknown Values', 15, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "ignore_unknown"]
         # These settings are not displayed as the auto-detect controller will set these
         # these are only to be used to override the auto-detect
         #ConfigSettings["liquidcooled"] = ['boolean', 'Force Controller Type (cooling)', 10, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "liquidcooled"]
         #ConfigSettings["evolutioncontroller"] = ['boolean', 'Force Controller Type (Evo/Nexus)', 11, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "evolutioncontroller"]
         # remove outage log, this will always be in the same location
         #ConfigSettings["outagelog"] = ['string', 'Outage Log', 12, "/home/pi/genmon/outage.txt", "", "required UnixFile", GENMON_CONFIG, GENMON_SECTION, "outagelog"]
-        ConfigSettings["serialnumberifmissing"] = ['string', 'Serial Number if Missing', 15, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "serialnumberifmissing"]
-        ConfigSettings["additionalrunhours"] = ['string', 'Additional Run Hours', 16, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "additionalrunhours"]
-        ConfigSettings["estimated_load"] = ['float', 'Estimated Load', 76, "0.0", "", "required range:0:1", GENMON_CONFIG, GENMON_SECTION, "estimated_load"]
-        ConfigSettings["subtractfuel"] = ['float', 'Subtract Fuel', 18, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "subtractfuel"]
+        ConfigSettings["serialnumberifmissing"] = ['string', 'Serial Number if Missing', 16, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "serialnumberifmissing"]
+        ConfigSettings["additionalrunhours"] = ['string', 'Additional Run Hours', 17, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "additionalrunhours"]
+        ConfigSettings["estimated_load"] = ['float', 'Estimated Load', 18, "0.0", "", "required range:0:1", GENMON_CONFIG, GENMON_SECTION, "estimated_load"]
+        ConfigSettings["subtractfuel"] = ['float', 'Subtract Fuel', 19, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "subtractfuel"]
         #ConfigSettings["kwlog"] = ['string', 'Power Log Name / Disable', 16, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlog"]
         if ControllerType != 'h_100':
             ConfigSettings["usenominallinevolts"] = ['boolean', 'Use Nominal Volts Override', 25, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "usenominallinevolts"]

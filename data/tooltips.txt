@@ -81,6 +81,7 @@ use_serial_tcp = If enabled, the software will use TCP over serial instead of di
 serial_tcp_address = If Serial over TCP/IP is enabled, this parameter sets the IP address used for the serial server.
 serial_tcp_port = If Serial over TCP/IP is enabled, this parameter sets the IP port used for the serial server.
 modbus_tcp = If enabled, the modbus TCP protocol will be used. If disabled modbus RTU (serial) over TCP is used.
+use_modbus_fc4 = Use modbus function code 4 instead of 3 for reading modbus registers. This is only needed for controllers that do not support function code 3.
 hts_transfer_switch=Enable if you have a HTS, MTS or STS transfer switch to enable reading additional data from the transfer switch
 smart_transfer_switch = If enabled a smart transfer switch is utilized and the generator controller will not be responsible for starting and stopping or or weekly exercise functions and these items will be disabled in the web interface.
 serialnumberifmissing= If the serial number is not present due to the controller being replaced you can override the missing serial number and still have the software lookup model information. This is a numeric value that must be ten digits. Pad leading zeros if you serial number is less than 10 digits.

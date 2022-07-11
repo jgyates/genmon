@@ -340,7 +340,7 @@ class ModbusProtocol(ModbusBase):
 
         try:
             with self.CommAccessLock:
-                MasterPacket = self.CreateMasterPacket(Register, length = int(Length))
+                MasterPacket = self.CreateMasterPacket(Register, command = self.MBUS_CMD_READ_REGS, length = int(Length))
 
                 if len(MasterPacket) == 0:
                     return ""
@@ -487,10 +487,13 @@ class ModbusProtocol(ModbusBase):
     # ---------- ModbusProtocol::CreateMasterPacket-----------------------------
     # the length is the register length in words, as required by modbus
     # build Packet
-    def CreateMasterPacket(self, register, length = 1, command = 0x03, data=[], file_num = 1):
+    def CreateMasterPacket(self, register, length = 1, command = None, data=[], file_num = 1):
 
         Packet = []
         try:
+            if command == None:
+                command = self.MBUS_CMD_READ_REGS
+
             RegisterInt = int(register,16)
 
             if RegisterInt < self.MIN_REGISTER or RegisterInt > self.MAX_REGISTER:
