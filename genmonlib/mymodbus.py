@@ -32,9 +32,10 @@ class ModbusProtocol(ModbusBase):
         config = None,
         host = None,
         port = None,
-        modbustcp = False):     # True of Modbus TCP, else if TCP then assume serial over TCP (Modbus RTU over serial)
+        modbustcp = False,     # True of Modbus TCP, else if TCP then assume serial over TCP (Modbus RTU over serial)
+        use_fc4 = False):
 
-        super(ModbusProtocol, self).__init__(updatecallback = updatecallback, address = address, name = name, rate = rate, config = config)
+        super(ModbusProtocol, self).__init__(updatecallback = updatecallback, address = address, name = name, rate = rate, config = config, use_fc4 = use_fc4)
 
         try:
             if config == None:

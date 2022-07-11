@@ -134,6 +134,7 @@ if __name__=='__main__': #
     hostIP = None
     TCPport = None
     ModbusTCP = False
+    UseFC4 = False
 
     HelpStr = '\npython mobusdump.py -r <Baud Rate> -p <serial port> -a <modbus address to query> -s <start modbus register>  -e <end modbus register>\n'
     HelpStr += "\n   Example: python modbusdump.py -r 9600 -p /dev/serial0 -a 9d -s 5 -e 100 \n"
@@ -150,10 +151,11 @@ if __name__=='__main__': #
     HelpStr += "\n      -i  IP address if modbus over TCP is used"
     HelpStr += "\n      -t  TCP port if modbus over TCP is used"
     HelpStr += "\n      -m  Use Modbus TCP, if omitted and IP and port provided then use Modbus RTU over TCP"
+    HelpStr += "\n      -f  use modbus function 4 instead of function 3"
     HelpStr += "\n \n"
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:],"mbhr:p:s:e:a:x:w:i:t:",["rate=","port=","start=","end=","address=", "parity=","write=","ip=","tcpport="])
+        opts, args = getopt.getopt(sys.argv[1:],"fmbhr:p:s:e:a:x:w:i:t:",["rate=","port=","start=","end=","address=", "parity=","write=","ip=","tcpport="])
     except getopt.GetoptError:
         print(HelpStr)
         sys.exit(2)
@@ -205,6 +207,9 @@ if __name__=='__main__': #
             elif opt in ("-m", "--modbustcp"):
                 ModbusTCP = True
                 print ('Use Modbus TCP protocol')
+            elif opt in ("-f", "--function4"):
+                UseFC4 = True
+                print ('Use Modbus Function 4 instead of 3')
 
     except Exception as e1:
         print (HelpStr)
@@ -254,10 +259,10 @@ if __name__=='__main__': #
             try:
                 if not useTCP:
                     modbus = ModbusProtocol(updatecallback = RegisterResults, address = modbusaddress, name = device,
-                        rate = baudrate, Parity = parity, OnePointFiveStopBits = OnePointFiveStopBits)
+                        rate = baudrate, Parity = parity, OnePointFiveStopBits = OnePointFiveStopBits, use_fc4 = UseFC4) 
                 else:
                     modbus = ModbusProtocol(updatecallback = RegisterResults, address = modbusaddress, host = hostIP,
-                        port = TCPport, modbustcp = ModbusTCP)
+                        port = TCPport, modbustcp = ModbusTCP, use_fc4 = UseFC4)
             except Exception as e1:
                 print( "Error opening serial device...: " + str(e1))
                 sys.exit(2)

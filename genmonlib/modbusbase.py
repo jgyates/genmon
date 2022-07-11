@@ -103,7 +103,8 @@ class ModbusBase(MySupport ):
         address = 0x9d,
         name = "/dev/serial",
         rate = 9600,
-        config = None):
+        config = None,
+        use_fc4 = False):
 
         super(ModbusBase, self).__init__()
         self.Address = address
@@ -138,6 +139,7 @@ class ModbusBase(MySupport ):
         self.ModBusPacketTimoutMS = 0
         self.ResponseAddress = None         # Used if recieve packes have a different address than sent packets
         self.debug = False
+        self.UseModbusFunction4 = use_fc4
 
         if self.config != None:
             self.debug = self.config.ReadValue('debug', return_type = bool, default = False)
