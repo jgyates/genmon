@@ -136,9 +136,9 @@ if __name__=='__main__': #
     ModbusTCP = False
     UseFC4 = False
 
-    HelpStr = '\npython mobusdump.py -r <Baud Rate> -p <serial port> -a <modbus address to query> -s <start modbus register>  -e <end modbus register>\n'
-    HelpStr += "\n   Example: python modbusdump.py -r 9600 -p /dev/serial0 -a 9d -s 5 -e 100 \n"
-    HelpStr += "\n   Example: python modbusdump.py -i 192.168.1.10 -t 9988 -a 9d -s 5 -e 100 \n"
+    HelpStr = '\npython3 mobusdump.py -r <Baud Rate> -p <serial port> -a <modbus address to query> -s <start modbus register>  -e <end modbus register>\n'
+    HelpStr += "\n   Example: python3 modbusdump.py -r 9600 -p /dev/serial0 -a 9d -s 5 -e 100 \n"
+    HelpStr += "\n   Example: python3 modbusdump.py -i 192.168.1.10 -t 9988 -a 9d -s 5 -e 100 \n"
     HelpStr += "\n"
     HelpStr += "\n      -r  Baud rate of serial port (9600, 115300, etc)"
     HelpStr += "\n      -p  Operating System device name of the serail port (/dev/serial0)"

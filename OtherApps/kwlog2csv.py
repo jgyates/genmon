@@ -46,7 +46,7 @@ if __name__=='__main__':
     fileName = ""
 
 
-    HelpStr = '\npython kwlog2csv.py -a <IP Address or localhost> -f <outputfile>\n'
+    HelpStr = '\npython3 kwlog2csv.py -a <IP Address or localhost> -f <outputfile>\n'
     HelpStr += "\n   Example: python kwlog2csv.py -a 192.168.1.100 -f Output.csv \n"
     HelpStr += "\n"
     HelpStr += "\n      -a  Address of system with genmon (omit for localhost)"

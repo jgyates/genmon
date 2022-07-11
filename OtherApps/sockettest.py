@@ -30,7 +30,7 @@ def OpenPort(host, port):
 #-------------------------------------------------------------------------------
 if __name__=='__main__':
 
-    HelpStr = '\npython sockettest.py  -a <ip address>  -p <port>\n'
+    HelpStr = '\npython3 sockettest.py  -a <ip address>  -p <port>\n'
     HelpStr += '\n       -a <ip address>\n'
     HelpStr +=   '       -p <port>\n'
 

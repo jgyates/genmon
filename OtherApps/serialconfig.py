@@ -183,8 +183,8 @@ if __name__ == '__main__':
 
 
     HelpStr =  "\npython serialconfig.py [-r -e -c]\n"
-    HelpStr += "   Example: python serialconfig.py -e\n"
-    HelpStr += "            python serialconfig.py -c\n"
+    HelpStr += "   Example: python3 serialconfig.py -e\n"
+    HelpStr += "            python3 serialconfig.py -c\n"
     HelpStr += "\n      -e  Enable serial port"
     HelpStr += "\n      -r  Restore modified files"
     HelpStr += "\n      -c  Check status of serial port"
