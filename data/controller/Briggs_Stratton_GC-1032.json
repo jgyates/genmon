@@ -123,22 +123,6 @@
       ]
   },
     {
-      "reg": "003c",
-      "mask": "00ff",
-      "multiplier": 1,
-      "type": "int",
-      "title": "Run Hours",
-      "units": "hours"
-    },
-    {
-      "reg": "003d",
-      "mask": "ffff",
-      "multiplier": 1,
-      "type": "int",
-      "title": "Run Minutes",
-      "units": "minutes"
-    },
-    {
       "reg": "003a",
       "mask": "ffff",
       "multiplier": 1,
