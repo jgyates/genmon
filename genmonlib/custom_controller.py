@@ -1135,13 +1135,13 @@ class CustomController(GeneratorController):
                 return "SERVICEDUE"
             elif IsExercising:
                 return "EXERCISING"
-            elif IsRunning and SwitchState == "auto":
+            elif IsRunning and SwitchState.startswith("auto"):
                 return "RUNNING"
-            elif IsRunning and SwitchState == "manual":
+            elif IsRunning and SwitchState.startswith("manual"):
                 return "RUNNING-MANUAL"
-            elif SwitchState == "manual":
+            elif SwitchState.startswith("manual"):
                 return "MANUAL"
-            elif SwitchState == "auto":
+            elif SwitchState.startswith("auto"):
                 return "READY"
             elif SwitchState == "off":
                 return "OFF"
