@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Minor update for SMTP compatibility (thanks @lps-rocks)
 - Minor update to IMAP incoming email handling (thanks @rwskinner)
 - Update to allow modbus function code 4 instead of 3 for some customer controller support (thanks @marklitwin)
+- Updated alarm code for Evo 2.0
 
 ## V1.18.11  -2022-04-19
 - Update to parse international domains correctly in mymail.py
