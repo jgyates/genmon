@@ -1,0 +1,305 @@
+{
+  "controller_name": "Briggs & Stratton GC-1032 Controller",
+  "rated_max_output_power_kw": "20",
+  "rated_nominal_voltage": 240,
+  "rated_nominal_rpm": 3600,
+  "rated_nominal_freq": 60,
+  "nominal_battery_voltage": 12,
+  "generator_phase": 2,
+  "base_registers": {
+    "0004": 2,
+    "0007": 2,
+    "0008": 2,
+    "000a": 2,
+    "000b": 2,
+    "000d": 2,
+    "0011": 2,
+    "0014": 2,
+    "0015": 2,
+    "0017": 2,
+    "0018": 2,
+    "001a": 2,
+    "001b": 2,
+    "001d": 2,
+    "001e": 2,
+    "001f": 2,
+    "0020": 2,
+    "0022": 2,
+    "0028": 2,
+    "002a": 2,
+    "0034": 2,
+    "0038": 2,
+    "0039": 2,
+    "003a": 2,
+    "003c": 2,
+    "003d": 2,
+    "0040": 2,
+    "0041": 2,
+    "004e": 2,
+    "004f": 2
+  },
+  "switch_state": [
+    {
+      "reg": "004e",
+      "mask": "000f",
+      "type": "bits",
+      "value": "1",
+      "text": "Manual",
+      "title": "Operating Mode"
+    },
+    {
+      "reg": "004e",
+      "mask": "000f",
+      "type": "bits",
+      "value": "7",
+      "text": "Automatic",
+      "title": "Operating Mode"
+    }
+  ],
+  "alarm_conditions": [],
+  "engine_state": [
+    {
+      "reg": "004e",
+      "mask": "00f0",
+      "value": "00",
+      "type": "bits",
+      "title": "Engine State",
+      "text": "Stopped"
+    },
+    {
+      "reg": "004e",
+      "mask": "00f0",
+      "value": "10",
+      "type": "bits",
+      "title": "Engine State",
+      "text": "Running - Low Idle Speed Mode"
+    },
+    {
+      "reg": "004e",
+      "mask": "00f0",
+      "value": "50",
+      "type": "bits",
+      "title": "Engine State",
+      "text": "Running - Generating"
+    }
+  ],
+  "status": [
+    {
+      "reg": "004f",
+      "mask": "f000",
+      "type": "bits",
+      "title": "Power Status",
+      "text": "On Utility Power",
+      "value": "6000"
+    },
+    {
+      "reg": "004f",
+      "mask": "f000",
+      "type": "bits",
+      "title": "Power Status",
+      "text": "On Generator Power",
+      "value": "3000"
+    }
+  ],
+  "maintenance": [
+    {
+      "reg": "003c",
+      "mask": "ffff",
+      "multiplier": 1,
+      "type": "int",
+      "title": "Run Hours",
+      "units": "hours"
+    },
+    {
+      "reg": "003d",
+      "mask": "ffff",
+      "multiplier": 1,
+      "type": "int",
+      "title": "Run Minutes",
+      "units": "minutes"
+    },
+    {
+      "reg": "003a",
+      "mask": "ffff",
+      "multiplier": 1,
+      "type": "int",
+      "title": "Number of Starts"
+    }
+  ],
+  "gauges": [
+    {
+      "reg": "0038",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Battery Voltage",
+      "units": "V",
+      "sensor": "batteryvolts",
+      "nominal": 12,
+      "maximum": 24
+    },
+    {
+      "reg": "0011",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Line Voltage",
+      "units": "V",
+      "sensor": "linevolts",
+      "nominal": 240
+    },
+    {
+      "reg": "0014",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Line L1 Frequency",
+      "units": "Hz",
+      "sensor": "frequency",
+      "nominal": 60
+    },
+    {
+      "reg": "0015",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Line L2 Frequency",
+      "units": "Hz",
+      "sensor": "frequency",
+      "nominal": 60
+    },
+    {
+      "reg": "0004",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Generator Voltage",
+      "units": "V",
+      "sensor": "linevolts",
+      "nominal": 240
+    },
+    {
+      "reg": "0007",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Gen L1 Frequency",
+      "units": "Hz",
+      "sensor": "frequency",
+      "nominal": 60
+    },
+    {
+      "reg": "0008",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Gen L2 Frequency",
+      "units": "Hz",
+      "sensor": "frequency",
+      "nominal": 60
+    },
+    {
+      "reg": "0039",
+      "mask": "ffff",
+      "multiplier": 1,
+      "type": "int",
+      "title": "RPM",
+      "units": null,
+      "sensor": "rpm",
+      "nominal": 3600
+    },
+    {
+      "reg": "0017",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "L1 Current",
+      "sensor": "current",
+      "units": "A",
+      "nominal": 100
+    },
+    {
+      "reg": "0018",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "L2 Current",
+      "sensor": "current",
+      "units": "A",
+      "nominal": 100
+    },
+    {
+      "reg": "001d",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Load Power",
+      "sensor": "current",
+      "units": "kW",
+      "nominal": 20
+    },
+    {
+      "reg": "0022",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Load App Power",
+      "sensor": "current",
+      "units": "kVA",
+      "nominal": 41
+    },
+    {
+      "reg": "0022",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Power",
+      "units": "kW",
+      "sensor": "powergraph",
+      "nominal": 20
+    }
+  ],
+  "power": [
+    {
+      "reg": "0022",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Power Output",
+      "units": "kW",
+      "sensor": "power"
+    }
+  ],
+  "outputvoltage": [
+    {
+      "reg": "0004",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "int",
+      "title": "Output Voltage",
+      "units": "V",
+      "sensor": "linevolts"
+    }
+  ],
+  "linevoltage": [
+    {
+      "reg": "0018",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "int",
+      "title": "Utility Voltage",
+      "units": "V",
+      "sensor": "linevolts"
+    }
+  ],
+  "run_hours": [
+    {
+      "reg": "003c",
+      "mask": "ffffffff",
+      "multiplier": 1,
+      "type": "int",
+      "title": "Run Hours",
+      "units": "h"
+    }
+  ]
+}
