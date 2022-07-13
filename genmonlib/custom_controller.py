@@ -835,10 +835,10 @@ class CustomController(GeneratorController):
                 self.LogError("Error: non dict passed to GetDisplayEntry: " + str(type(entry)))
                 return ReturnTitle, ReturnValue
 
-            if 'reg' not in entry.keys():  # required
+            if 'reg' not in entry.keys() and entry["type"] != "list":  # required
                 self.LogError("Error: reg not found in input to GetDisplayEntry: " + str(entry))
                 return ReturnTitle, ReturnValue
-            elif not self.StringIsHex(entry['reg']):
+            elif entry["type"] != "list" and not self.StringIsHex(entry['reg']):
                 self.LogError("Error: reg does not contain valid hex value in input to GetDisplayEntry: " + str(entry))
                 return ReturnTitle, ReturnValue
             if not "type" in entry:  # required
@@ -902,6 +902,16 @@ class CustomController(GeneratorController):
                     ReturnValue = entry["text"]
                 else:
                     ReturnValue = None
+            elif entry["type"] == "list":
+                list_entry = entry["value"]
+                seperator = ""
+                if "seperator" in entry:
+                    seperator = entry["seperator"]
+                value_list = []
+                for item in list_entry:
+                    title, value = self.GetDisplayEntry(item)
+                    value_list.append(str(value))
+                ReturnValue = seperator.join(value_list)
             elif entry["type"] == "default":
                 ReturnValue = entry["text"]
                 ReturnTitle = "default"

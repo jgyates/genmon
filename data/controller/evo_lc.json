@@ -13,6 +13,9 @@
         "0009": 2,
         "000a": 2,
         "000b": 4,
+        "000e": 2,
+        "000f": 2,
+        "0010": 2,
         "0012": 2,
         "005d": 2,
         "0208": 2,
@@ -215,6 +218,48 @@
           "type": "int",
           "title": "Utility Voltage",
           "units": "V"
+      },
+      {
+          "type" : "list",
+          "seperator" : ":",
+          "title" : "Generator Time",
+          "value" : [
+            {
+              "reg": "000e",
+              "type": "int",
+              "mask" : "ff00",
+              "multiplier" : 0.00390625,
+              "comment" : "NOTE: 0.00390625 = 1/256 or dividing by 0x100 hex or shifting right by 8 bits",
+              "title": "Hours"
+            },
+            {
+              "reg": "000e",
+              "type": "int",
+              "mask" : "00ff",
+              "title": "Minutes"
+            }
+          ]
+      },
+      {
+        "type" : "list",
+          "seperator" : "/",
+          "title" : "Generator Date",
+          "value" : [
+            {
+              "reg": "000f",
+              "type": "int",
+              "mask" : "ff00",
+              "multiplier" : 0.00390625,
+              "comment" : "NOTE: 0.00390625 = 1/256 or dividing by 0x100 hex or shifting right by 8 bits",
+              "title": "Month"
+            },
+            {
+              "reg": "000f",
+              "type": "int",
+              "mask" : "00ff",
+              "title": "Day"
+            }
+          ]
       }
     ],
     "maintenance": [

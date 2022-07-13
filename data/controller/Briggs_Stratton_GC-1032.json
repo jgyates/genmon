@@ -56,6 +56,7 @@
       "title": "Operating Mode"
     }
   ],
+  "generator_status" : [],
   "alarm_conditions": [],
   "engine_state": [
     {
@@ -103,8 +104,27 @@
   ],
   "maintenance": [
     {
+      "type" : "list",
+      "seperator" : ":",
+      "title" : "Engine Run Time",
+      "value" : [
+        {
+          "reg": "003c",
+          "type": "int",
+          "mask" : "00ff",
+          "title": "Hours"
+        },
+        {
+          "reg": "003d",
+          "type": "int",
+          "mask" : "00ff",
+          "title": "Minutes"
+        }
+      ]
+  },
+    {
       "reg": "003c",
-      "mask": "ffff",
+      "mask": "00ff",
       "multiplier": 1,
       "type": "int",
       "title": "Run Hours",
