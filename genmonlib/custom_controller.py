@@ -573,7 +573,7 @@ class CustomController(GeneratorController):
 
             gen_status = self.GetSwitchState()
             if gen_status != "Unknown":
-                Status["Status"].append({"Engine State" : gen_status})
+                Status["Status"].append({"Switch State" : gen_status})
 
             gen_status = self.GetEngineState()
             if gen_status != "Unknown":
