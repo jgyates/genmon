@@ -2372,9 +2372,9 @@ class Evolution(GeneratorController):
         }
 
         if self.Evolution2:
-            # Evo 2.0 and FIRMWARE 1.15 or higher
+            # Evo 2.0 and FIRMWARE 1.14 or higher
             FWVersion = self.GetFirmwareVersion()
-            if len(FWVersion) and (self.VersionTuple(FWVersion) >= (1,15)):
+            if len(FWVersion) and (self.VersionTuple(FWVersion) >= (1,14)):
                 AlarmLogDecoder_EvoAC[0x33] = "No Rotation Warning"
 
 
