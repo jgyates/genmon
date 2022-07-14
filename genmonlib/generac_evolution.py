@@ -2371,6 +2371,13 @@ class Evolution(GeneratorController):
         0x78 : "No Wi-Fi Module"             # Validated on Evolution 2 Air Cooled
         }
 
+        if self.Evolution2:
+            # Evo 2.0 and FIRMWARE 1.15 or higher
+            FWVersion = self.GetFirmwareVersion()
+            if len(FWVersion) and (self.VersionTuple(FWVersion) >= (1,15)):
+                AlarmLogDecoder_EvoAC[0x33] = "No Rotation Warning"
+
+
         NexusAlarmLogDecoder = {
         0x00 : "High Engine Temperature",    # Validated on Nexus Air Cooled
         0x01 : "Low Oil Pressure",           # Validated on Nexus Liquid Cooled
