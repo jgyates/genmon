@@ -189,6 +189,13 @@
       "multiplier": 1,
       "type": "int",
       "title": "Controller Model"
+    },
+    {
+      "reg": "0034",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "int",
+      "title": "Ambient Temperature (C)"
     }
   ],
   "gauges": [
@@ -333,6 +340,52 @@
       "title": "Power Output",
       "units": "kW",
       "sensor": "power"
+    }
+  ],
+  "buttons": [
+    {
+      "onewordcommand": "off",
+      "title": "Select Manual Mode",
+      "command_sequence": [
+        {
+          "reg": "0000",
+          "value": "0001"
+        }
+      ]
+    },
+    {
+      "onewordcommand": "auto",
+      "title": "Select Automatic Mode",
+      "command_sequence": [
+        {
+          "reg": "0000",
+          "value": "0004"
+        }
+      ]
+    },
+    {
+      "onewordcommand": "start",
+      "title": "Start Engine",
+      "command_sequence": [
+        {
+          "reg": "0000",
+          "value": "0001"
+        },
+        {
+          "reg": "0000",
+          "value": "0002"
+        }
+      ]
+    },
+    {
+      "onewordcommand": "stop",
+      "title": "Stop Engine",
+      "command_sequence": [
+        {
+          "reg": "0000",
+          "value": "0001"
+        }
+      ]
     }
   ],
   "outputvoltage": [
