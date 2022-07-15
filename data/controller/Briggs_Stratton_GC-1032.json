@@ -5,7 +5,7 @@
   "rated_nominal_rpm": 3600,
   "rated_nominal_freq": 60,
   "nominal_battery_voltage": 12,
-  "generator_phase": 2,
+  "generator_phase": 1,
   "base_registers": {
     "0004": 2,
     "0007": 2,
@@ -36,7 +36,10 @@
     "0040": 2,
     "0041": 2,
     "004e": 2,
-    "004f": 2
+    "004f": 2,
+    "00b5": 2,
+    "00b6": 2,
+    "00b7": 2
   },
   "switch_state": [
     {
@@ -56,7 +59,7 @@
       "title": "Operating Mode"
     }
   ],
-  "generator_status" : [],
+  "generator_status": [],
   "alarm_conditions": [],
   "engine_state": [
     {
@@ -81,53 +84,111 @@
       "value": "50",
       "type": "bits",
       "title": "Engine State",
-      "text": "Running - Generating"
+      "text": "Running"
     }
   ],
   "status": [
     {
       "reg": "004f",
-      "mask": "f000",
+      "mask": "ff00",
       "type": "bits",
       "title": "Power Status",
-      "text": "On Utility Power",
-      "value": "6000"
+      "text": "Utility Power Restored - Generator Cool Down at Idle",
+      "value": "6900"
+    },
+    {
+      "reg": "004f",
+      "mask": "ff00",
+      "type": "bits",
+      "title": "Power Status",
+      "text": "Running on Generator Power",
+      "value": "3b00"
+    },
+    {
+      "reg": "004f",
+      "mask": "ff00",
+      "type": "bits",
+      "title": "Power Status",
+      "text": "Power Failure Detected - Generator Start Pending",
+      "value": "2800"
+    },
+    {
+      "reg": "004f",
+      "mask": "ff00",
+      "type": "bits",
+      "title": "Power Status",
+      "text": "Power Failure Detected - Generator Warm Up Initiated",
+      "value": "3900"
+    },
+    {
+      "reg": "004f",
+      "mask": "ff00",
+      "type": "bits",
+      "title": "Power Status",
+      "text": "Power Restored - Generator Shutdown Pending",
+      "value": "6b00"
     },
     {
       "reg": "004f",
       "mask": "f000",
       "type": "bits",
       "title": "Power Status",
-      "text": "On Generator Power",
-      "value": "3000"
+      "text": "Utility Power Healthy",
+      "value": "6000"
     }
   ],
   "maintenance": [
     {
-      "type" : "list",
-      "seperator" : ":",
-      "title" : "Engine Run Time",
-      "value" : [
+      "type": "list",
+      "seperator": ":",
+      "title": "Engine Run Time",
+      "value": [
         {
           "reg": "003c",
           "type": "int",
-          "mask" : "00ff",
+          "mask": "00ff",
           "title": "Hours"
         },
         {
           "reg": "003d",
           "type": "int",
-          "mask" : "00ff",
+          "mask": "00ff",
           "title": "Minutes"
         }
       ]
-  },
+    },
     {
       "reg": "003a",
       "mask": "ffff",
       "multiplier": 1,
       "type": "int",
       "title": "Number of Starts"
+    },
+    {
+      "type": "list",
+      "seperator": ".0",
+      "title": "Controller Version",
+      "value": [
+        {
+          "reg": "00b6",
+          "type": "int",
+          "mask": "ffff",
+          "title": "Major"
+        },
+        {
+          "reg": "00b7",
+          "type": "int",
+          "mask": "ffff",
+          "title": "Minor"
+        }
+      ]
+    },
+    {
+      "reg": "00b5",
+      "mask": "ffff",
+      "multiplier": 1,
+      "type": "int",
+      "title": "Controller Model"
     }
   ],
   "gauges": [
@@ -265,7 +326,7 @@
   ],
   "power": [
     {
-      "reg": "0022",
+      "reg": "001d",
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
