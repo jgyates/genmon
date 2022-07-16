@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - Update to allow modbus function code 4 instead of 3 for some customer controller support (thanks @marklitwin)
 - Updated alarm code for Evo 2.0
 - Updated alarm code for Synergy
+- Added support Briggs & Stratton GC-1032 Controller via custom controller method (thanks @marklitwin)
 
 ## V1.18.11  -2022-04-19
 - Update to parse international domains correctly in mymail.py
