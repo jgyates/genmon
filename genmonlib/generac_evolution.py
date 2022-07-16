@@ -2650,6 +2650,7 @@ class Evolution(GeneratorController):
          0x22 : "Canbus Error",         #  Validate on Nexus LC
          0x23 : "Ignition Fault",       #  Validate on Evo LC
          0x24 : "Overload",             #  Validate on Evolution Air Cooled
+         0x27 : "Firmware Error-25",    #  Validate on Synergy
          0x28 : "Fuse Problem",         #  Validate on Evolution Air Cooled
          0x29 : "Battery Problem",      #  Validate on EvoLC
          0x2a : "Charger Warning",      #  Validate on EvoAC 2
