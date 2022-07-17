@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - Updated alarm code for Evo 2.0
 - Updated alarm code for Synergy
 - Added support Briggs & Stratton GC-1032 Controller via custom controller method (thanks @marklitwin)
+- Minor javascript update to correct security warning (thanks @buschauer)
 
 ## V1.18.11  -2022-04-19
 - Update to parse international domains correctly in mymail.py
