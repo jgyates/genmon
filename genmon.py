@@ -921,7 +921,7 @@ class Monitor(MySupport):
             if self.WaitForExit("ComWatchDog", 1):
                 return
             if counter > 30:
-                self.LogError("WARNING: Initilization not complete after 30 seconds, possible communication failure. Check cabling.")
+                self.LogError("WARNING: Initialization not complete after 30 seconds, possible communication failure. Check cabling.")
                 break
             counter += 1
             if self.Controller.InitComplete:
