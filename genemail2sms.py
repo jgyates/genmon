@@ -100,7 +100,7 @@ def OnService(Active):
         console.info("Generator Service Due")
         SendNotice("Generator Service Due")
     else:
-        console.info("Generator Servcie Due End")
+        console.info("Generator Service Due End")
 
 #----------  OnUtilityChange ---------------------------------------------------
 def OnUtilityChange(Active):
