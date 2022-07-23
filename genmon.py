@@ -136,13 +136,13 @@ class Monitor(MySupport):
         self.ProgramStartTime = datetime.datetime.now()     # used for com metrics
         # this will wait one day for an update, change to
         #  datetime.datetime(1, 1, 1, 0, 0) to check immediately on load
-        self.LastSofwareUpdateCheck = datetime.datetime.now()
+        self.LastSoftwareUpdateCheck = datetime.datetime.now()
 
         signal.signal(signal.SIGTERM, self.SignalClose)
         signal.signal(signal.SIGINT, self.SignalClose)
 
         # this allows the genmon socket interface to be intercepted and
-        # triggered for actions like GPIO, etc with interfearing with
+        # triggered for actions like GPIO, etc with interfering with
         # updates via the main github repository. If genmonext.py exists, load it
         self.genmonext = None
         if os.path.isfile(os.path.join(os.path.dirname(os.path.realpath(__file__)), "genmonext.py")):
@@ -970,8 +970,8 @@ class Monitor(MySupport):
         if not self.UpdateCheck:
             return
         try:
-            if self.GetDeltaTimeMinutes(datetime.datetime.now() - self.LastSofwareUpdateCheck) > 1440 :     # check every day
-                self.LastSofwareUpdateCheck = datetime.datetime.now()
+            if self.GetDeltaTimeMinutes(datetime.datetime.now() - self.LastSoftwareUpdateCheck) > 1440 :     # check every day
+                self.LastSoftwareUpdateCheck = datetime.datetime.now()
                 # Do the check
                 try:
                     url = "https://raw.githubusercontent.com/jgyates/genmon/master/genmonlib/program_defaults.py"
