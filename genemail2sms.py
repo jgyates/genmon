@@ -10,8 +10,7 @@
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
 
-import datetime, time, sys, signal, os, threading, socket
-import atexit, getopt
+import time, sys, signal, os
 
 try:
     from genmonlib.myconfig import MyConfig
@@ -19,7 +18,6 @@ try:
     from genmonlib.mynotify import GenNotify
     from genmonlib.mymail import MyMail
     from genmonlib.mysupport import MySupport
-    from genmonlib.program_defaults import ProgramDefaults
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")

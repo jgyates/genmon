@@ -11,14 +11,17 @@
 #-------------------------------------------------------------------------------
 
 import threading, sys
-if sys.version_info.major < 3:
+if sys.version_info[0] < 3:
     from ConfigParser import ConfigParser
 else:
     from configparser import ConfigParser
 
 from genmonlib.mycommon import MyCommon
-from genmonlib.program_defaults import ProgramDefaults
 
+# Fix Python 2.x. unicode type
+if sys.version_info[0] >= 3: #PYTHON 3
+    unicode = str
+    
 class MyConfig (MyCommon):
     #---------------------MyConfig::__init__------------------------------------
     def __init__(self, filename = None, section = None, simulation = False, log = None):

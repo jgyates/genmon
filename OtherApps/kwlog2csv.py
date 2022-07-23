@@ -11,13 +11,14 @@
 #-------------------------------------------------------------------------------
 
 
-import getopt, os, sys, json
+import getopt, sys, json
 
 sys.path.append("..") # Adds higher directory to python modules path.
 
 try:
     from genmonlib.program_defaults import ProgramDefaults
     from genmonlib.mylog import SetupLogger
+    from genmonlib.myclient import ClientInterface
 except:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
@@ -88,7 +89,7 @@ if __name__=='__main__':
     try:
         log = SetupLogger("client", "kwlog2csv.log")
 
-        MyClientInterface = myclient.ClientInterface(host = address, port = port, log = log)
+        MyClientInterface = ClientInterface(host = address, port = port, log = log)
 
         data = MyClientInterface.ProcessMonitorCommand("generator: power_log_json")
 

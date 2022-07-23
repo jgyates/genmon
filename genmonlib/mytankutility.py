@@ -15,7 +15,6 @@ import requests, sys
 
 try:
     from genmonlib.mycommon import MyCommon
-    from genmonlib.mysupport import MySupport
 
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")

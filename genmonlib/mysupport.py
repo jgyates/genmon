@@ -9,7 +9,7 @@
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
 
-import os, sys, time, collections, threading, socket, json, getopt
+import os, sys, time, collections, threading, socket, getopt
 
 from genmonlib.myplatform import MyPlatform
 from genmonlib.mycommon import MyCommon

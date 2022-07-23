@@ -9,7 +9,7 @@
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
 
-import os, sys, time, json
+import os, sys, json
 
 from genmonlib.program_defaults import ProgramDefaults
 

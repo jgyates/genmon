@@ -30,16 +30,15 @@
 #### OFF), you can set up a Routine with Alexa.
 
 
-import email.utils, requests, select, socket, struct, sys, datetime, time, urllib, uuid, signal, os, threading
-import atexit, getopt, json
-import fcntl, re, time, locale, socket, subprocess, traceback
+import email.utils, select, socket, struct, sys, time, uuid, signal, os
+import json
+import time, socket
 try:
     from genmonlib.mylog import SetupLogger
     from genmonlib.myconfig import MyConfig
     from genmonlib.myclient import ClientInterface
     from genmonlib.mysupport import MySupport
     from genmonlib.mycommon import MyCommon
-    from genmonlib.program_defaults import ProgramDefaults
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
@@ -471,7 +470,7 @@ class FauxmoCallback(MyCommon):
                   self.LogError("Command Failed")
                   return False
         except Exception as e1:
-              LogErrorLine("Error FauxmoCallback.on: " + str(e1))
+              self.LogErrorLine("Error FauxmoCallback.on: " + str(e1))
               return False
         return True
     # ---------------- FauxmoCallback.off --------------------------------------
@@ -506,7 +505,7 @@ class FauxmoCallback(MyCommon):
               else:
                   currentStatus = 0
         except Exception as e1:
-              LogErrorLine("Error StopCallback: " + str(e1))
+              self.LogErrorLine("Error StopCallback: " + str(e1))
               return currentStatus
         return currentStatus
 

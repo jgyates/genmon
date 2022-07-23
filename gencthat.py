@@ -10,9 +10,7 @@
 #-------------------------------------------------------------------------------
 
 
-import datetime, time, sys, signal, os, threading, collections, json, ssl
-import atexit, getopt, requests
-import math
+import datetime, time, sys, signal, os, threading, json
 from shutil import copyfile
 
 try:

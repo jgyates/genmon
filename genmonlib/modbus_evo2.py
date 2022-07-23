@@ -11,13 +11,10 @@
 
 from __future__ import print_function       # For python 3.x compatibility with print function
 
-import datetime, threading, crcmod, sys, time, collections
+import datetime, sys
 
-from genmonlib.modbusbase import ModbusBase
+
 from genmonlib.mymodbus import ModbusProtocol
-from genmonlib.myserial import SerialDevice
-from genmonlib.myserialtcp import SerialTCPDevice
-from genmonlib.program_defaults import ProgramDefaults
 from genmonlib.mycrypto import MyCrypto
 
 #------------ ModbusEvo2 class -------------------------------------------------

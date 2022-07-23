@@ -7,7 +7,7 @@
 #    DATE: 25-Apr-2017
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
-import datetime, time, sys, signal, os, threading, json, collections
+import time, threading, json, collections
 
 from genmonlib.mycommon import MyCommon
 from genmonlib.mylog import SetupLogger

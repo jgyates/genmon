@@ -12,13 +12,12 @@
 #
 #-------------------------------------------------------------------------------
 
-import os, sys
+import sys
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 
 
 from genmonlib.mycommon import MyCommon
-from genmonlib.program_defaults import ProgramDefaults
 
 #------------ MyCrypto class -------------------------------------------------
 class MyCrypto(MyCommon):

@@ -10,9 +10,9 @@
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
 
-import datetime, time, sys, signal, os, threading, socket
+import datetime, time, sys, signal, os
 from datetime import datetime
-import atexit, getopt
+import getopt
 
 try:
     from genmonlib.mylog import SetupLogger

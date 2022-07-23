@@ -7,7 +7,7 @@
 #    DATE: 17-Dec-2016
 # MODIFICATIONS:
 #------------------------------------------------------------
-import datetime, time, sys, smtplib, signal, os, threading, socket, getopt
+import sys, signal, getopt
 
 try:
     from genmonlib.mylog import SetupLogger
@@ -18,8 +18,6 @@ except Exception as e1:
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
     print("Error: " + str(e1))
     sys.exit(2)
-
-
 
 #----------  Signal Handler ------------------------------------------
 def signal_handler(signal, frame):
@@ -67,12 +65,10 @@ if __name__=='__main__': # usage program.py [server_address] [port]
     try:
 
         while True:
-            try:
+            if sys.version_info[0] < 3:         # Python 2.x
                 line = raw_input(">")
-            except NameError:
-                pass
+            else:                               # python 3.x
                 line = input(">")
-
 
             if line.lower() == "exit":
                 break

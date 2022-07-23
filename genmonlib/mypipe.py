@@ -9,7 +9,7 @@
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
 
-import os, sys, time, json, threading
+import os, time, json, threading
 
 from genmonlib.mysupport import MySupport
 from genmonlib.mythread import MyThread

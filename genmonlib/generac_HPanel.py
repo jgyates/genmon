@@ -9,14 +9,13 @@
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
 
-import datetime, time, sys, os, threading, socket, re
-import atexit, json, collections, random
+import datetime, threading, re
+import collections
 
 from genmonlib.controller import GeneratorController
 from genmonlib.mytile import MyTile
 from genmonlib.modbus_file import ModbusFile
 from genmonlib.mymodbus import ModbusProtocol
-from genmonlib.program_defaults import ProgramDefaults
 
 # Module defines ---------------------------------------------------------------
 REGISTER    = 0

@@ -10,8 +10,8 @@
 #-------------------------------------------------------------------------------
 
 
-import datetime, time, sys, signal, os, threading, collections, json, ssl
-import atexit, getopt
+import time, sys, signal, os, threading, json, ssl
+
 
 #The following is need to install the mqtt module: pip install paho-mqtt
 

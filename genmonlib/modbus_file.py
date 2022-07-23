@@ -11,11 +11,10 @@
 
 from __future__ import print_function       # For python 3.x compatibility with print function
 
-import datetime, threading, crcmod, sys, time, os, collections, json
+import datetime, threading, time, os, collections, json
 
 from genmonlib.modbusbase import ModbusBase
 from genmonlib.mythread import MyThread
-from genmonlib.program_defaults import ProgramDefaults
 
 #------------ ModbusBase class -------------------------------------------------
 class ModbusFile(ModbusBase):

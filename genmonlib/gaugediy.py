@@ -16,7 +16,6 @@ from __future__ import print_function
 import glob, time, sys, os, math
 import smbus
 
-from genmonlib.myconfig import MyConfig
 from genmonlib.mysupport import MySupport
 
 class GaugeDIY(MySupport):

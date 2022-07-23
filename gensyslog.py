@@ -10,10 +10,9 @@
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
 
-import datetime, time, sys, signal, os, threading, socket
-import atexit, getopt
+import time, sys, signal
+
 try:
-    from genmonlib.program_defaults import ProgramDefaults
     from genmonlib.mylog import SetupLogger
     from genmonlib.mynotify import GenNotify
     from genmonlib.mysupport import MySupport

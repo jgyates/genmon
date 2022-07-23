@@ -9,7 +9,7 @@
 #-------------------------------------------------------------------------------
 
 import time, sys, os, getopt, subprocess
-from subprocess import PIPE, Popen, call
+from subprocess import PIPE, Popen
 from shutil import copyfile
 from shutil import move
 

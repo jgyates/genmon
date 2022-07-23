@@ -11,7 +11,7 @@
 
 from __future__ import print_function       # For python 3.x compatibility with print function
 
-import datetime, threading, sys, socket, time, os
+import datetime, threading, sys, socket, os
 
 from genmonlib.mysupport import MySupport
 from genmonlib.mylog import SetupLogger

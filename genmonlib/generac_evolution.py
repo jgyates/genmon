@@ -9,21 +9,19 @@
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
 
-import datetime, time, sys, os, threading, socket
-import json, collections, math
+import datetime, time, sys, os
+import json, collections
 import re
 
-try:
+if sys.version_info[0] < 3:
     from httplib import HTTPSConnection
-except ImportError:
+else:
      from http.client import HTTPSConnection
 
 from genmonlib.controller import GeneratorController
 from genmonlib.mytile import MyTile
 from genmonlib.modbus_file import ModbusFile
-from genmonlib.mymodbus import ModbusProtocol
 from genmonlib.modbus_evo2 import ModbusEvo2
-from genmonlib.program_defaults import ProgramDefaults
 
 #-------------------Generator specific const defines for Generator class--------
 LOG_DEPTH               = 50

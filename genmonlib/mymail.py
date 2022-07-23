@@ -9,7 +9,7 @@
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
 
-import datetime, time, smtplib, threading, sys
+import datetime, time, smtplib, sys
 import imaplib, email, email.header
 import os
 from os.path import basename

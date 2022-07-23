@@ -10,7 +10,7 @@
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
 
-import datetime, time, sys, signal, os, threading, socket, json, requests, getopt
+import time, sys, signal, os, json, requests
 
 try:
     from genmonlib.mylog import SetupLogger
@@ -18,7 +18,6 @@ try:
     from genmonlib.myconfig import MyConfig
     from genmonlib.mysupport import MySupport
     from genmonlib.mymsgqueue import MyMsgQueue
-    from genmonlib.program_defaults import ProgramDefaults
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")

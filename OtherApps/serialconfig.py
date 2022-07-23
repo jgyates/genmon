@@ -8,7 +8,7 @@
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
 
-import time, sys, os, getopt, subprocess
+import sys, os, getopt
 from subprocess import PIPE, Popen
 from shutil import copyfile
 

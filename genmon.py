@@ -13,9 +13,7 @@
 from __future__ import print_function       # For python 3.x compatibility with print function
 
 import datetime, time, sys, signal, os, threading, socket
-import atexit, json, collections, random, getopt
-import re
-from subprocess import PIPE, Popen
+import json, collections, getopt
 
 try:
     from genmonlib.mylog import SetupLogger
@@ -977,12 +975,12 @@ class Monitor(MySupport):
                 # Do the check
                 try:
                     url = "https://raw.githubusercontent.com/jgyates/genmon/master/genmonlib/program_defaults.py"
-                    try:
-                        # For Python 3.0 and later
-                        from urllib.request import urlopen
-                    except ImportError:
+                    if sys.version_info[0] < 3:
                         # Fall back to Python 2's urllib2
                         from urllib2 import urlopen
+                    else:
+                        # For Python 3.0 and later
+                        from urllib.request import urlopen
 
                     data = urlopen(url).read(4000) # read only first 4000 chars
                     data = data.decode('ascii')

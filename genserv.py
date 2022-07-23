@@ -10,7 +10,7 @@
 
 from __future__ import print_function
 
-import sys, signal, os, os.path, socket, atexit, time, subprocess, json, threading, signal, errno, collections, getopt
+import sys, signal, os, os.path, time, subprocess, json, threading, signal, errno, collections
 
 try:
     from flask import Flask, make_response, render_template, request, jsonify, session, send_file, redirect, url_for
@@ -40,14 +40,14 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-try:
-    from urllib.parse import urlparse
-    from urllib.parse import parse_qs
-    from urllib.parse import parse_qsl
-except ImportError:
+if sys.version_info[0] < 3:
     from urlparse import urlparse
     from urlparse import parse_qs
     from urlparse import parse_qsl
+else:
+    from urllib.parse import urlparse
+    from urllib.parse import parse_qs
+    from urllib.parse import parse_qsl
 
 import re, datetime
 

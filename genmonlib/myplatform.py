@@ -13,10 +13,9 @@
 #-------------------------------------------------------------------------------
 from subprocess import PIPE, Popen
 import os, sys, subprocess, re, datetime
-import collections, datetime
+import datetime
 
 from genmonlib.mycommon import MyCommon
-from genmonlib.program_defaults import ProgramDefaults
 
 #------------ MyPlatform class -------------------------------------------------
 class MyPlatform(MyCommon):
@@ -423,9 +422,9 @@ class MyPlatform(MyCommon):
     @staticmethod
     def InternetConnected():
 
-        try:
+        if sys.version_info[0] < 3:
             import httplib
-        except:
+        else:
             import http.client as httplib
 
         conn = httplib.HTTPConnection("www.google.com", timeout=2)

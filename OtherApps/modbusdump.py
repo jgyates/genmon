@@ -10,7 +10,7 @@
 #------------------------------------------------------------
 
 
-import sys, time, getopt, os
+import sys, getopt, os
 
 sys.path.append(os.path.dirname(sys.path[0]))   # Adds higher directory to python modules path.
 

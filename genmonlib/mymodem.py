@@ -11,7 +11,7 @@
 
 from __future__ import print_function       # For python 3.x compatibility with print function
 
-import datetime, sys, collections, time, threading, re, os
+import sys, collections, time, threading, re, os
 
 from genmonlib.myserial import SerialDevice
 from genmonlib.myconfig import MyConfig
