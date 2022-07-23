@@ -2,10 +2,10 @@
 All notable changes to this project will be documented in this file.
 
 ## V1.18.12 -2022-06-21
-- Commented optional enhancments to gengpio.py
+- Commented optional enhancements to gengpio.py
 - Added the ability to monitor and trigger on genmon socket commands (https://github.com/jgyates/genmon/wiki/Appendix-C--Interfacing-Generator-Monitor-to-External-Applications#extend-genmonpy)
 - Added option to change port used for gensnmp
-- Service Log improvements (https://github.com/jgyates/genmon/issues/709) thansk @lwbeam
+- Service Log improvements (https://github.com/jgyates/genmon/issues/709) thanks @lwbeam
 - Update alarm codes for Nexus AC
 - Updated gentankdiy with accuracy improvements. Thanks @davisgoodman and @zekyl314, see new wiring diagram https://github.com/jgyates/genmon/wiki/Appendix-L-Adding-a-Propane-Fuel-Gauge-to-Genmon
 - Updated alarm codes for Ignition Fault
@@ -123,7 +123,7 @@ All notable changes to this project will be documented in this file.
 
 ## V1.16.12  -2021-07-01
 - Added option to change the GPIO pins used with the add on gengpioin. Change the settings in the gengpioin.conf file.
-- Changed the frequency of the firmware update check for Evolution 2.0 to every hours instead of many times per hour. This reduces the chance of ivalid notices when communication errors are occuring.
+- Changed the frequency of the firmware update check for Evolution 2.0 to every hours instead of many times per hour. This reduces the chance of invalid notices when communication errors are occurring.
 - Update to gentankdiy to optionally support two tanks (see /conf/gentankdiy.conf for details). This applies to the DIY gauge type 1 only. Type 2 still only supports only one gauge.
 
 ## V1.16.11  -2021-06-16
@@ -177,7 +177,7 @@ All notable changes to this project will be documented in this file.
 - added support for Modbus TCP (existing support for Modbus serial over TCP is still supported also)
 
 ## V1.15.19 - 2021-02-10
-- Updated mynotify.py to add notifications for software update, low fuel notice, and internal errors (e.g. communication errros etc.). This allows genslack, genpushover, gensms, gensms_modem, gensyslog and genemail2sms to support these additional notices.
+- Updated mynotify.py to add notifications for software update, low fuel notice, and internal errors (e.g. communication errors etc.). This allows genslack, genpushover, gensms, gensms_modem, gensyslog and genemail2sms to support these additional notices.
 
 ## V1.15.18 - 2021-02-05
 - Corrected bug in on_disconnect in genmqtt.py (thanks @notjj)
@@ -216,7 +216,7 @@ All notable changes to this project will be documented in this file.
 - Added new check to disallow loading multiple instances of any genmon program unless multi_instance option is set to True. see https://github.com/jgyates/genmon/wiki/Appendix-J-Multiple-Instances-of-Genmon for additional details.
 - Update in javascript to handle user defined JSON data with null entries
 - shutdown cleanup improved for genmqtt.py and gensnmp.py
-- removed restart code / while loop in genserv.py that is likley the cause of intermittent corruption of conf file
+- removed restart code / while loop in genserv.py that is likely the cause of intermittent corruption of conf file
 - Added option to use alternate reading for frequency for Nexus Liquid Cooled units
 
 ## V1.15.10 - 2020-11-09
@@ -246,7 +246,7 @@ All notable changes to this project will be documented in this file.
 - Improvement on error recovery on time out errors (mostly occurring on bad wifi connections with serial over TCP)
 
 ## V1.15.06 - 2020-10-20
-- added python functions to aid in portablity (os.path.join)
+- added python functions to aid in portability (os.path.join)
 - Corrected typo in web interface (thanks @danielforster)
 - More minor corrections for python 3.x
 - Moved location of version info in source tree for maintenance reasons. This required a small change in the software update check code
@@ -280,7 +280,7 @@ All notable changes to this project will be documented in this file.
 - Minor update that changes the format of register and log submissions to comply with RFC 2821 #4.5.3.1.
 
 ## V1.15.00 - 2020-10-02
-- Implimented fix for Evolution 2 firmware 1.1x
+- Implemented fix for Evolution 2 firmware 1.1x
 - Added client id parameter for genmqtt add on
 
 ## V1.14.33 - 2020-09-28
