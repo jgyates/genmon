@@ -57,7 +57,7 @@ if __name__=='__main__':
     try:
         opts, args = getopt.getopt(sys.argv[1:],"ha:f:p:",["address=","filename=","port="])
     except getopt.GetoptError:
-        print("Help")
+        print(HelpStr)
         sys.exit(2)
 
     try:
