@@ -57,7 +57,14 @@
       "value": "7",
       "text": "Automatic",
       "title": "Operating Mode"
-    }
+    },
+    {
+      "reg": "004e",
+      "type": "default",
+      "text": "Off",
+      "title": "Operating Mode"
+      
+  }
   ],
   "generator_status": [],
   "alarm_conditions": [],
