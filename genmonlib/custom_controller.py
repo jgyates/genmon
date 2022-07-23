@@ -903,14 +903,14 @@ class CustomController(GeneratorController):
                     ReturnValue = None
             elif entry["type"] == "list":
                 list_entry = entry["value"]
-                seperator = ""
-                if "seperator" in entry:
-                    seperator = entry["seperator"]
+                separator = ""
+                if "separator" in entry:
+                    separator = entry["separator"]
                 value_list = []
                 for item in list_entry:
                     title, value = self.GetDisplayEntry(item)
                     value_list.append(str(value))
-                ReturnValue = seperator.join(value_list)
+                ReturnValue = separator.join(value_list)
             elif entry["type"] == "default":
                 ReturnValue = entry["text"]
                 ReturnTitle = "default"

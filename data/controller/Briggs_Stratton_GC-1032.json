@@ -146,7 +146,7 @@
   "maintenance": [
     {
       "type": "list",
-      "seperator": ":",
+      "separator": ":",
       "title": "Engine Run Time",
       "value": [
         {
@@ -172,7 +172,7 @@
     },
     {
       "type": "list",
-      "seperator": ".0",
+      "separator": ".0",
       "title": "Controller Version",
       "value": [
         {
