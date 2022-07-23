@@ -63,8 +63,7 @@
       "type": "default",
       "text": "Off",
       "title": "Operating Mode"
-      
-  }
+    }
   ],
   "generator_status": [],
   "alarm_conditions": [],
