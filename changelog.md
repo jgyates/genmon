@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - Added support Briggs & Stratton GC-1032 Controller via custom controller method (thanks @marklitwin)
 - Minor javascript update to correct security warning (thanks @buschauer)
 - Code cleanup
+- Improved error handing in mymail.py to better support older versions of SSL libraries 
 
 ## V1.18.11  -2022-04-19
 - Update to parse international domains correctly in mymail.py
