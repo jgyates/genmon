@@ -361,6 +361,7 @@ class GenSNMP(MySupport):
                 self.AddOID((CtlID,1,0,17),return_type = str, description = "loadHoursInTank", default = " ", keywords = ["Maintenance","Hours of Fuel Remaining","Current"])
                 self.AddOID((CtlID,1,0,18),return_type = str, description = "fuelInTank", default = " ", keywords = ["Maintenance","Fuel In Tank (Sensor)"])
                 self.AddOID((CtlID,1,0,19),return_type = str, description = "fuelLevelState", default = " ", keywords = ["Maintenance","Fuel Level State"])
+                self.AddOID((CtlID,1,0,20),return_type = str, description = "runHoursYear", default = " ", keywords = ["Maintenance","Run Hours in the last year"])
                 #Maintenance->Controller Settings - enterprises.58399.1.1.1.x
                 self.AddOID((CtlID,1,1,1),return_type = str, description = "calCurrent1", default = " ", keywords = ["Maintenance/Controller Settings","Calibrate Current 1"])
                 self.AddOID((CtlID,1,1,2),return_type = str, description = "calCurrent2", default = " ", keywords = ["Maintenance/Controller Settings","Calibrate Current 2"])

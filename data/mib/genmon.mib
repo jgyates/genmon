@@ -167,6 +167,7 @@ evMonitorMIBs OBJECT-GROUP
             loadHoursInTank,
             fuelInTank,
             fuelLevelState,
+            runHoursYear,
             calCurrent1,
             calCurrent2,
             calVolts,
@@ -824,6 +825,14 @@ fuelLevelState OBJECT-TYPE
  DESCRIPTION
   "(Evolution/Nexus) The current state of the fuel level as reported by the tank sensor."
  ::= { evmaintenanceSettings 19 }
+
+runHoursYear OBJECT-TYPE
+ SYNTAX DisplayString
+ MAX-ACCESS read-only
+ STATUS current
+ DESCRIPTION
+  "(Evolution/Nexus) The total engine runtime in the last year."
+ ::= { evmaintenanceSettings 20 }
 
 --1.1.1.x (evcontrollerSettings)
 

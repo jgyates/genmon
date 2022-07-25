@@ -74,6 +74,7 @@ class GeneratorController(MySupport):
         self.KWHoursMonth = None
         self.FuelMonth = None
         self.RunHoursMonth = None
+        self.RunHoursYear = None
         self.FuelTotal  = None
         self.LastHouseKeepingTime = None
         self.TileList = []        # Tile list for GUI
@@ -1486,10 +1487,12 @@ class GeneratorController(MySupport):
                 UpdateNow = False
             if self.PowerMeterIsSupported() and self.FuelConsumptionSupported():
                 if UpdateNow:
-                    self.KWHoursMonth = self.GetPowerHistory("power_log_json=43200,kw")
+                    self.KWHoursMonth = self.GetPowerHistory("power_log_json=43200,kw")  # 43200 minutes in a month
                     self.FuelMonth = self.GetPowerHistory("power_log_json=43200,fuel")
                     self.FuelTotal = self.GetPowerHistory("power_log_json=0,fuel")
-                    self.RunHoursMonth = self.GetPowerHistory("power_log_json=43200,time")
+                    self.RunHoursMonth = self.GetPowerHistory("power_log_json=43200,time")  
+                    self.RunHoursYear = self.GetPowerHistory("power_log_json=525600,time")  
+                    # 525600 minutes in a year
 
                 if self.KWHoursMonth != None:
                     Maintenance["Maintenance"].append({"kW Hours in last 30 days" : self.UnitsOut(str(self.KWHoursMonth) + " kWh", type = float, NoString = JSONNum)})
@@ -1499,6 +1502,8 @@ class GeneratorController(MySupport):
                     Maintenance["Maintenance"].append({"Total Power Log Fuel Consumption" : self.UnitsOut(self.FuelTotal, type = float, NoString = JSONNum)})
                 if self.RunHoursMonth != None:
                     Maintenance["Maintenance"].append({"Run Hours in last 30 days" : self.UnitsOut(str(self.RunHoursMonth) + " h", type = float, NoString = JSONNum)})
+                if self.RunHoursYear != None:
+                    Maintenance["Maintenance"].append({"Run Hours in the last year" : self.UnitsOut(str(self.RunHoursYear) + " h", type = float, NoString = JSONNum)})
 
             if self.FuelLevelOK != None:
                 if self.FuelLevelOK:

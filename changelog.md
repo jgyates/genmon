@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - Minor javascript update to correct security warning (thanks @buschauer)
 - Code cleanup
 - Improved error handing in mymail.py to better support older versions of SSL libraries 
+- Added run hours in the last year to the maint page. Note that this the last 365 days, not the last calendar year.
 
 ## V1.18.11  -2022-04-19
 - Update to parse international domains correctly in mymail.py
