@@ -1,15 +1,7 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
-## V1.18.12 -2022-06-21
-- Commented optional enhancements to gengpio.py
-- Added the ability to monitor and trigger on genmon socket commands (https://github.com/jgyates/genmon/wiki/Appendix-C--Interfacing-Generator-Monitor-to-External-Applications#extend-genmonpy)
-- Added option to change port used for gensnmp
-- Service Log improvements (https://github.com/jgyates/genmon/issues/709) thanks @lwbeam
-- Update alarm codes for Nexus AC
-- Updated gentankdiy with accuracy improvements. Thanks @davisgoodman and @zekyl314, see new wiring diagram https://github.com/jgyates/genmon/wiki/Appendix-L-Adding-a-Propane-Fuel-Gauge-to-Genmon
-- Updated alarm codes for Ignition Fault
-- Corrected problem when disabling platform stats
+## V1.18.13 -2022-06-25
 - Minor update for SMTP compatibility (thanks @lps-rocks)
 - Minor update to IMAP incoming email handling (thanks @rwskinner)
 - Update to allow modbus function code 4 instead of 3 for some customer controller support (thanks @marklitwin)
@@ -20,6 +12,16 @@ All notable changes to this project will be documented in this file.
 - Code cleanup
 - Improved error handing in mymail.py to better support older versions of SSL libraries 
 - Added run hours in the last year to the maint page. Note that this the last 365 days, not the last calendar year.
+
+## V1.18.12 -2022-06-21
+- Commented optional enhancements to gengpio.py
+- Added the ability to monitor and trigger on genmon socket commands (https://github.com/jgyates/genmon/wiki/Appendix-C--Interfacing-Generator-Monitor-to-External-Applications#extend-genmonpy)
+- Added option to change port used for gensnmp
+- Service Log improvements (https://github.com/jgyates/genmon/issues/709) thanks @lwbeam
+- Update alarm codes for Nexus AC
+- Updated gentankdiy with accuracy improvements. Thanks @davisgoodman and @zekyl314, see new wiring diagram https://github.com/jgyates/genmon/wiki/Appendix-L-Adding-a-Propane-Fuel-Gauge-to-Genmon
+- Updated alarm codes for Ignition Fault
+- Corrected problem when disabling platform stats
 
 ## V1.18.11  -2022-04-19
 - Update to parse international domains correctly in mymail.py
