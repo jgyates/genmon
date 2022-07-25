@@ -153,8 +153,11 @@ class MyMail(MySupport):
             if sys.version_info[0] < 3: #PYTHON 2
                 msg = MIMEMultipart()
             else: # PYTHON 3
-                import email.policy
-                msg = MIMEMultipart(policy=email.policy.SMTP)
+                try:
+                    import email.policy
+                    msg = MIMEMultipart(policy=email.policy.SMTP)
+                except:
+                    msg = MIMEMultipart()
                 
             if sender_name == None or not len(sender_name):
                 msg['From'] = "<" + sender_account + ">"
@@ -461,8 +464,11 @@ class MyMail(MySupport):
             if sys.version_info[0] < 3: #PYTHON 2
                 msg = MIMEMultipart()
             else:
-                import email.policy
-                msg = MIMEMultipart(policy=email.policy.SMTP)
+                try:
+                    import email.policy
+                    msg = MIMEMultipart(policy=email.policy.SMTP)
+                except:
+                    msg = MIMEMultipart()
             if self.SenderName == None or not len(self.SenderName):
                 msg['From'] = "<" + self.SenderAccount + ">"
             else:
