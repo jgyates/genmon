@@ -120,45 +120,48 @@ class MyMail(MySupport):
     @staticmethod
     def TestSendSettings( smtp_server =  None, smtp_port =  587, email_account = None, sender_account = None, sender_name = None, recipient = None, password = None, use_ssl = False, tls_disable = False, smtpauth_disable = False):
 
-        if smtp_server == None or not len(smtp_server):
-            return "Error: Invalid SMTP server"
+        try:
+            if smtp_server == None or not len(smtp_server):
+                return "Error: Invalid SMTP server"
 
-        if not isinstance(smtpauth_disable , bool) and (email_account  == None or not len(email_account)):
-            return "Error: Invalid email account"
+            if not isinstance(smtpauth_disable , bool) and (email_account  == None or not len(email_account)):
+                return "Error: Invalid email account"
 
-        if sender_account  == None or not len(sender_account):
-            sender_account = email_account
+            if sender_account  == None or not len(sender_account):
+                sender_account = email_account
 
-        if recipient  == None or not len(recipient):
-            return "Error: Invalid email recipient"
+            if recipient  == None or not len(recipient):
+                return "Error: Invalid email recipient"
 
-        if password  == None or not len(password):
-            password = ""
+            if password  == None or not len(password):
+                password = ""
 
-        if smtp_port == None or not isinstance(smtp_port , int):
-            return "Error: Invalid SMTP port"
+            if smtp_port == None or not isinstance(smtp_port , int):
+                return "Error: Invalid SMTP port"
 
-        if use_ssl == None or not isinstance(use_ssl , bool):
-            return "Error: Invalid Use SSL value"
+            if use_ssl == None or not isinstance(use_ssl , bool):
+                return "Error: Invalid Use SSL value"
 
-        if tls_disable == None or not isinstance(tls_disable , bool):
-            return "Error: Invalid TLS Disable value"
-        # update date
-        dtstamp=datetime.datetime.now().strftime('%a %d-%b-%Y')
-        # update time
-        tmstamp=datetime.datetime.now().strftime('%I:%M:%S %p')
+            if tls_disable == None or not isinstance(tls_disable , bool):
+                return "Error: Invalid TLS Disable value"
 
-        if sys.version_info[0] < 3: #PYTHON 2
-            msg = MIMEMultipart()
-        else: # PYTHON 3
-            import email.policy
-            msg = MIMEMultipart(policy=email.policy.SMTP)
-            
-        if sender_name == None or not len(sender_name):
-            msg['From'] = "<" + sender_account + ">"
-        else:
-            msg['From'] = sender_name + " <" + sender_account + ">"
+            # update date
+            dtstamp=datetime.datetime.now().strftime('%a %d-%b-%Y')
+            # update time
+            tmstamp=datetime.datetime.now().strftime('%I:%M:%S %p')
 
+            if sys.version_info[0] < 3: #PYTHON 2
+                msg = MIMEMultipart()
+            else: # PYTHON 3
+                import email.policy
+                msg = MIMEMultipart(policy=email.policy.SMTP)
+                
+            if sender_name == None or not len(sender_name):
+                msg['From'] = "<" + sender_account + ">"
+            else:
+                msg['From'] = sender_name + " <" + sender_account + ">"
+        except Exception as e1:
+            return "Error Initializing email: " + str(e1)
         try:
             recipientList = recipient.strip().split(",")
             recipientList = map(lambda x:x.strip(),recipientList)
@@ -167,17 +170,22 @@ class MyMail(MySupport):
             recipient = "<" + recipienttemp + ">"
         except Exception as e1:
             pass
+        try:
+            msg['To'] = recipient
+            msg['Date'] = formatdate(localtime=True)
+            msg['Subject'] = "Genmon Test Email"
 
-        msg['To'] = recipient
-        msg['Date'] = formatdate(localtime=True)
-        msg['Subject'] = "Genmon Test Email"
-
-        msgstr = '\r\n' + 'Test email from genmon\r\n'
-        body = '\r\n' + 'Time: ' + tmstamp + '\r\n' + 'Date: ' + dtstamp + '\r\n' + msgstr
-        if sys.version_info[0] < 3: #PYTHON 2
-            msg.attach(MIMEText(body, 'plain'))
-        else:                       #PYTHON 3
-            msg.attach(MIMEText(body, 'plain', _charset='utf-8', policy=email.policy.SMTP))
+            msgstr = '\r\n' + 'Test email from genmon\r\n'
+            body = '\r\n' + 'Time: ' + tmstamp + '\r\n' + 'Date: ' + dtstamp + '\r\n' + msgstr
+            if sys.version_info[0] < 3: #PYTHON 2
+                msg.attach(MIMEText(body, 'plain'))
+            else:                       #PYTHON 3
+                try:
+                    msg.attach(MIMEText(body, 'plain', _charset='utf-8', policy=email.policy.SMTP))
+                except:
+                    msg.attach(MIMEText(body, 'plain'))
+        except Exception as e1:
+            return "Error formatting email: " + str(e1)
 
         try:
             if use_ssl:
@@ -438,27 +446,31 @@ class MyMail(MySupport):
     # send email, bypass queue
     def sendEmailDirectMIME(self, msgtype, subjectstr, msgstr, recipient = None, files=None, deletefile = False):
 
-        recipient = self.GetRecipientByType(msgtype, recipient)
-        if recipient == None:
-            # returning true here means that there is not category for this message
-            self.LogDebug("Message abandoned, no recipient")
-            return True
+        try:
+            recipient = self.GetRecipientByType(msgtype, recipient)
+            if recipient == None:
+                # returning true here means that there is not category for this message
+                self.LogDebug("Message abandoned, no recipient")
+                return True
 
-        # update date
-        dtstamp=datetime.datetime.now().strftime('%a %d-%b-%Y')
-        # update time
-        tmstamp=datetime.datetime.now().strftime('%I:%M:%S %p')
+            # update date
+            dtstamp=datetime.datetime.now().strftime('%a %d-%b-%Y')
+            # update time
+            tmstamp=datetime.datetime.now().strftime('%I:%M:%S %p')
 
-        if sys.version_info[0] < 3: #PYTHON 2
-            msg = MIMEMultipart()
-        else:
-            import email.policy
-            msg = MIMEMultipart(policy=email.policy.SMTP)
-        if self.SenderName == None or not len(self.SenderName):
-            msg['From'] = "<" + self.SenderAccount + ">"
-        else:
-            msg['From'] = self.SenderName + " <" + self.SenderAccount + ">"
-            self.LogDebug(msg['From'])
+            if sys.version_info[0] < 3: #PYTHON 2
+                msg = MIMEMultipart()
+            else:
+                import email.policy
+                msg = MIMEMultipart(policy=email.policy.SMTP)
+            if self.SenderName == None or not len(self.SenderName):
+                msg['From'] = "<" + self.SenderAccount + ">"
+            else:
+                msg['From'] = self.SenderName + " <" + self.SenderAccount + ">"
+                self.LogDebug(msg['From'])
+        except Exception as e1:
+            self.LogErrorLine("Error in email init: " + str(e1))
+            return False
 
         try:
             recipientList = recipient.strip().split(",")
@@ -468,20 +480,28 @@ class MyMail(MySupport):
             recipient = "<" + recipienttemp + ">"
         except Exception as e1:
             self.LogErrorLine("Error parsing recipient format: " + str(e1))
-        if self.UseBCC:
-            msg['Bcc'] = recipient
-        else:
-            msg['To'] = recipient
-        msg['Date'] = formatdate(localtime=True)
-        msg['Subject'] = subjectstr
 
-        body = '\r\n' + 'Time: ' + tmstamp + '\r\n' + 'Date: ' + dtstamp + '\r\n' + msgstr
+        try: 
+            if self.UseBCC:
+                msg['Bcc'] = recipient
+            else:
+                msg['To'] = recipient
 
-        if sys.version_info[0] < 3: #PYTHON 2
-            msg.attach(MIMEText(body, 'plain'))
-        else:                       #PYTHON 3
-            msg.attach(MIMEText(body, 'plain', _charset='utf-8', policy=email.policy.SMTP))
+            msg['Date'] = formatdate(localtime=True)
+            msg['Subject'] = subjectstr
 
+            body = '\r\n' + 'Time: ' + tmstamp + '\r\n' + 'Date: ' + dtstamp + '\r\n' + msgstr
+
+            if sys.version_info[0] < 3: #PYTHON 2
+                msg.attach(MIMEText(body, 'plain'))
+            else:                       #PYTHON 3
+                try:
+                    msg.attach(MIMEText(body, 'plain', _charset='utf-8', policy=email.policy.SMTP))
+                except:
+                    msg.attach(MIMEText(body, 'plain'))
+        except Exception as e1:
+            self.LogErrorLine("Error in email init 2: " + str(e1))
+            return False
 
         # if the files are not found then we skip them but still send the email
         try:
