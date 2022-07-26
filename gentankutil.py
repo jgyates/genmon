@@ -177,9 +177,10 @@ class GenTankData(MySupport):
                     dataforgenmon["Tank Name"] = tankdata["name"]
                     dataforgenmon["Capacity"] = self.tank.GetCapacity()
                     dataforgenmon["Percentage"] = self.tank.GetPercentage()
-
+                    self.LogDebug("Tank1 = " + json.dumps(tankdata))
                     if len(self.TankID_2) != 0:
                         tankdata = self.tank.GetData(self.TankID_2)
+                        self.LogDebug("Tank2 = " + json.dumps(tankdata))
                         dataforgenmon["Percentage2"] = self.tank.GetPercentage()
 
                     retVal = self.SendCommand("generator: set_tank_data=" + json.dumps(dataforgenmon))
