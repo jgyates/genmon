@@ -236,6 +236,7 @@
               "reg": "000e",
               "type": "int",
               "mask" : "00ff",
+              "format": "%02d",
               "title": "Minutes"
             }
           ]

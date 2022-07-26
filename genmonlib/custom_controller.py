@@ -882,14 +882,14 @@ class CustomController(GeneratorController):
                     return ReturnTitle, ReturnValue
             elif entry["type"] == "float":
                 Divider = 1 / float(entry["multiplier"])
-                value = self.GetParameter(entry["reg"], Divider = Divider, ReturnFloat = True)
+                value = self.ConvertValue(entry, self.GetParameter(entry["reg"], Divider = Divider, ReturnFloat = True))
                 ReturnValue = float(value)
             elif entry["type"] == "int":
                 value = self.GetParameter(entry["reg"], ReturnInt = True)
                 value = value & int(entry["mask"], 16)
                 if "multiplier" in entry:
                     value = value * float(entry["multiplier"])
-                ReturnValue = int(value)
+                ReturnValue = int(self.ConvertValue(entry, value))
             elif entry["type"] == "regex":
                 regex_pattern = entry["regex"]
                 value = self.GetParameter(entry["reg"], ReturnInt = True)
@@ -909,7 +909,7 @@ class CustomController(GeneratorController):
                 value_list = []
                 for item in list_entry:
                     title, value = self.GetDisplayEntry(item)
-                    value_list.append(str(value))
+                    value_list.append(str(self.FormatEntry(item, value)))
                 ReturnValue = separator.join(value_list)
             elif entry["type"] == "default":
                 ReturnValue = entry["text"]
@@ -928,6 +928,37 @@ class CustomController(GeneratorController):
             self.LogErrorLine("Error in GetDisplayEntry : " + str(e1))
 
         return ReturnTitle, ReturnValue
+
+    #------------ GeneratorController:ConvertValue ----------------------------- 
+    def ConvertValue(self, entry, value):
+        try:
+            if "temperature" in entry:
+                if not self.UseMetric and entry["temperature"].lower() == "celsius": 
+                    return self.ConvertCelsiusToFahrenheit(value)
+                elif self.UseMetric and entry["temperature"].lower() == "fahrenheit":
+                    return self.ConvertFahrenheitToCelsius(value)
+                else:
+                    return value
+            else:
+                return value
+        except Exception as e1:
+            self.LogErrorLine("Error in FormatEntry : " + str(e1))
+            return value
+    #------------ GeneratorController:FormatEntry ------------------------------ 
+    def FormatEntry(self, entry, value):
+        try:
+            if "format" in entry:
+                if entry["type"] == "float":
+                    return str(entry["format"] % float(value))
+                elif entry["type"] == "int":
+                    return str(entry["format"] % int(value))                    
+                else:
+                    return value
+            else:
+                return value
+        except Exception as e1:
+            self.LogErrorLine("Error in FormatEntry : " + str(e1))
+            return value
 
     #------------ GeneratorController:GetRunHours ------------------------------
     # return a string with no units of run hours

@@ -277,6 +277,7 @@
           "reg": "003d",
           "type": "int",
           "mask": "ffff",
+          "format": "%02d",
           "title": "Minutes"
         }
       ]
@@ -296,6 +297,7 @@
           "reg": "0050",
           "mask": "ff00",
           "title": "minutes",
+          "format": "%02d",
           "type": "int",
           "multiplier": 0.00390625
         }
@@ -365,7 +367,8 @@
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
-      "title": "Ambient Temperature (C)"
+      "temperature" : "celsius",
+      "title": "Ambient Temperature"
     }
   ],
   "gauges": [
