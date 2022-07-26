@@ -7,39 +7,124 @@
   "nominal_battery_voltage": 12,
   "generator_phase": 1,
   "base_registers": {
+    "0000": 2,
+    "0001": 2,
+    "0002": 2,
+    "0003": 2,
     "0004": 2,
+    "0005": 2,
+    "0006": 2,
     "0007": 2,
     "0008": 2,
+    "0009": 2,
     "000a": 2,
     "000b": 2,
+    "000c": 2,
     "000d": 2,
+    "000e": 2,
+    "000f": 2,
+    "0010": 2,
     "0011": 2,
+    "0012": 2,
+    "0013": 2,
     "0014": 2,
     "0015": 2,
+    "0016": 2,
     "0017": 2,
     "0018": 2,
+    "0019": 2,
     "001a": 2,
     "001b": 2,
+    "001c": 2,
     "001d": 2,
     "001e": 2,
     "001f": 2,
     "0020": 2,
+    "0021": 2,
     "0022": 2,
+    "0023": 2,
+    "0024": 2,
+    "0025": 2,
+    "0026": 2,
+    "0027": 2,
     "0028": 2,
+    "0029": 2,
     "002a": 2,
+    "002b": 2,
+    "002c": 2,
+    "002d": 2,
+    "002e": 2,
+    "002f": 2,
+    "0030": 2,
+    "0031": 2,
+    "0032": 2,
+    "0033": 2,
     "0034": 2,
+    "0035": 2,
+    "0036": 2,
+    "0037": 2,
     "0038": 2,
     "0039": 2,
     "003a": 2,
+    "003b": 2,
     "003c": 2,
     "003d": 2,
+    "003e": 2,
+    "003f": 2,
     "0040": 2,
     "0041": 2,
+    "0042": 2,
+    "0043": 2,
+    "0044": 2,
+    "0045": 2,
+    "0046": 2,
+    "0047": 2,
+    "0048": 2,
+    "0049": 2,
+    "004a": 2,
+    "004b": 2,
+    "004c": 2,
+    "004d": 2,
     "004e": 2,
     "004f": 2,
+    "0050": 2,
+    "0051": 2,
+    "0052": 2,
+    "0053": 2,
+    "0054": 2,
+    "0055": 2,
+    "0056": 2,
+    "00b4": 2,
     "00b5": 2,
     "00b6": 2,
-    "00b7": 2
+    "00b7": 2,
+    "00b8": 2,
+    "00b9": 2,
+    "00ba": 2,
+    "00bb": 2,
+    "00bc": 2,
+    "00bd": 2,
+    "00be": 2,
+    "00bf": 2,
+    "00c0": 2,
+    "00c1": 2,
+    "00c2": 2,
+    "00c3": 2,
+    "00c4": 2,
+    "00c5": 2,
+    "00c6": 2,
+    "00c7": 2,
+    "00c8": 2,
+    "00c9": 2,
+    "00ca": 2,
+    "00cb": 2,
+    "00cc": 2,
+    "00cd": 2,
+    "00ce": 2,
+    "00cf": 2,
+    "00d0": 2,
+    "00d1": 2,
+    "00d2": 2
   },
   "switch_state": [
     {
@@ -98,7 +183,7 @@
       "reg": "004f",
       "mask": "ff00",
       "type": "bits",
-      "title": "Power Status",
+      "title": "Status",
       "text": "Utility Power Restored - Generator Cool Down at Idle",
       "value": "6900"
     },
@@ -106,7 +191,7 @@
       "reg": "004f",
       "mask": "ff00",
       "type": "bits",
-      "title": "Power Status",
+      "title": "Status",
       "text": "Running on Generator Power",
       "value": "3b00"
     },
@@ -114,7 +199,7 @@
       "reg": "004f",
       "mask": "ff00",
       "type": "bits",
-      "title": "Power Status",
+      "title": "Status",
       "text": "Power Failure Detected - Generator Start Pending",
       "value": "2800"
     },
@@ -122,7 +207,7 @@
       "reg": "004f",
       "mask": "ff00",
       "type": "bits",
-      "title": "Power Status",
+      "title": "Status",
       "text": "Power Failure Detected - Generator Warm Up Initiated",
       "value": "3900"
     },
@@ -130,17 +215,50 @@
       "reg": "004f",
       "mask": "ff00",
       "type": "bits",
-      "title": "Power Status",
+      "title": "Status",
       "text": "Power Restored - Generator Shutdown Pending",
       "value": "6b00"
     },
     {
       "reg": "004f",
+      "mask": "ffff",
+      "type": "bits",
+      "title": "Status",
+      "text": "On Utility Power",
+      "value": "6880"
+    },
+    {
+      "reg": "004f",
+      "mask": "ffff",
+      "type": "bits",
+      "title": "status",
+      "text": "On Utility Power",
+      "value": "6080"
+    },
+    {
+      "reg": "004f",
       "mask": "f000",
       "type": "bits",
-      "title": "Power Status",
-      "text": "Utility Power Healthy",
-      "value": "6000"
+      "title": "Status",
+      "text": "Exercise In Progress",
+      "value": "7000"
+    },
+    {
+      "reg": "004f",
+      "mask": "ff00",
+      "type": "bits",
+      "title": "Status",
+      "text": "Exercise In Progress",
+      "value": "6100"
+    },
+
+    {
+      "reg": "004f",
+      "mask": "f000",
+      "type": "bits",
+      "title": "Status",
+      "text": "Controller in Configuration Mode",
+      "value": "e000"
     }
   ],
   "maintenance": [
@@ -152,14 +270,60 @@
         {
           "reg": "003c",
           "type": "int",
-          "mask": "00ff",
+          "mask": "ffff",
           "title": "Hours"
         },
         {
           "reg": "003d",
           "type": "int",
-          "mask": "00ff",
+          "mask": "ffff",
           "title": "Minutes"
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "separator": ":",
+      "title": "Controller Time",
+      "value": [
+        {
+          "reg": "0051",
+          "mask": "00ff",
+          "title": "hours",
+          "type": "int"
+        },
+        {
+          "reg": "0050",
+          "mask": "ff00",
+          "title": "minutes",
+          "type": "int",
+          "multiplier": 0.00390625
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "separator": "/",
+      "title": "Controller Date",
+      "value": [
+        {
+          "reg": "0052",
+          "mask": "ff00",
+          "type": "int",
+          "title": "month",
+          "multiplier": 0.00390625
+        },
+        {
+          "reg": "0052",
+          "mask": "00ff",
+          "type": "int",
+          "title": "day"
+        },
+        {
+          "reg": "0053",
+          "mask": "ffff",
+          "type": "int",
+          "title": "year"
         }
       ]
     },
@@ -200,7 +364,7 @@
       "reg": "0034",
       "mask": "ffff",
       "multiplier": 0.1,
-      "type": "int",
+      "type": "float",
       "title": "Ambient Temperature (C)"
     }
   ],
