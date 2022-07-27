@@ -7,70 +7,46 @@
   "nominal_battery_voltage": 12,
   "generator_phase": 1,
   "base_registers": {
-    "0000": 2,
     "0001": 2,
     "0002": 2,
-    "0003": 2,
     "0004": 2,
-    "0005": 2,
-    "0006": 2,
     "0007": 2,
     "0008": 2,
-    "0009": 2,
     "000a": 2,
     "000b": 2,
-    "000c": 2,
     "000d": 2,
     "000e": 2,
     "000f": 2,
-    "0010": 2,
     "0011": 2,
-    "0012": 2,
-    "0013": 2,
     "0014": 2,
     "0015": 2,
-    "0016": 2,
     "0017": 2,
     "0018": 2,
-    "0019": 2,
     "001a": 2,
     "001b": 2,
-    "001c": 2,
     "001d": 2,
     "001e": 2,
     "001f": 2,
     "0020": 2,
-    "0021": 2,
     "0022": 2,
     "0023": 2,
     "0024": 2,
-    "0025": 2,
     "0026": 2,
     "0027": 2,
     "0028": 2,
     "0029": 2,
     "002a": 2,
     "002b": 2,
-    "002c": 2,
-    "002d": 2,
-    "002e": 2,
-    "002f": 2,
-    "0030": 2,
-    "0031": 2,
-    "0032": 2,
     "0033": 2,
     "0034": 2,
     "0035": 2,
     "0036": 2,
-    "0037": 2,
     "0038": 2,
     "0039": 2,
     "003a": 2,
     "003b": 2,
     "003c": 2,
     "003d": 2,
-    "003e": 2,
-    "003f": 2,
     "0040": 2,
     "0041": 2,
     "0042": 2,
@@ -108,23 +84,9 @@
     "00bf": 2,
     "00c0": 2,
     "00c1": 2,
-    "00c2": 2,
-    "00c3": 2,
     "00c4": 2,
-    "00c5": 2,
-    "00c6": 2,
     "00c7": 2,
-    "00c8": 2,
-    "00c9": 2,
-    "00ca": 2,
-    "00cb": 2,
-    "00cc": 2,
-    "00cd": 2,
-    "00ce": 2,
-    "00cf": 2,
-    "00d0": 2,
-    "00d1": 2,
-    "00d2": 2
+    "00ce": 2
   },
   "switch_state": [
     {
@@ -151,7 +113,256 @@
     }
   ],
   "generator_status": [],
-  "alarm_conditions": [],
+  "alarm_conditions": [
+        {
+            "reg": "0040",
+            "mask": "f000",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Low Oil Pressure"
+        },
+        {
+            "reg": "0040",
+            "mask": "0f00",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Coolant Temperature"
+        },
+        {
+            "reg": "0041",
+            "mask": "f000",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Engine Under Speed"
+        },
+        {
+            "reg": "0041",
+            "mask": "0f00",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Engine Over Speed"
+        },
+        {
+            "reg": "0041",
+            "mask": "00f0",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Engine Failed to Start"
+        },
+        {
+            "reg": "0041",
+            "mask": "000f",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Engine Failed to Stop"
+        },
+        {
+            "reg": "0042",
+            "mask": "00f0",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Generator Low Frequency"
+        },
+        {
+            "reg": "0042",
+            "mask": "000f",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Generator High Frequency"
+        },
+        {
+            "reg": "0043",
+            "mask": "f000",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Generator High Current"
+        },
+        {
+            "reg": "0043",
+            "mask": "0f00",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Generator Overload"
+        },
+        {
+            "reg": "0043",
+            "mask": "00f0",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Unbalanced Load"
+        },
+        {
+            "reg": "0043",
+            "mask": "000f",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Emergency Stop"
+        },
+        {
+            "reg": "0044",
+            "mask": "000f",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Maintenance Required"
+        },
+        {
+            "reg": "0045",
+            "mask": "f000",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Battery Low Voltage"
+        },
+        {
+            "reg": "0045",
+            "mask": "0f00",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Battery High Voltage"
+        },
+        {
+            "reg": "0045",
+            "mask": "00f0",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Temperature Circuit Open"
+        },
+        {
+            "reg": "0046",
+            "mask": "0f00",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Magentic Pick Up Fault"
+        },
+        {
+            "reg": "0047",
+            "mask": "00f0",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Auxiliary Input C"
+        },
+        {
+            "reg": "0047",
+            "mask": "000f",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Auxiliary Input D"
+        },
+        {
+            "reg": "0048",
+            "mask": "f000",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Auxiliary Input E"
+        },
+        {
+            "reg": "0048",
+            "mask": "000f",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Auxiliary Input H"
+        },
+        {
+            "reg": "0049",
+            "mask": "f000",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Gen L1 Phase Low Voltage"
+        },
+        {
+            "reg": "0049",
+            "mask": "0f00",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Gen L1 Phase High Voltage"
+        },
+        {
+            "reg": "0049",
+            "mask": "00f0",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Gen L2 Phase Low Voltage"
+        },
+        {
+            "reg": "0049",
+            "mask": "000f",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Gen L2 Phase High Voltage"
+        },
+        {
+            "reg": "004b",
+            "mask": "000f",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "High Oil Pressure Detected"
+        },
+        {
+            "reg": "004c",
+            "mask": "f000",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Alternator Input Lost"
+        },
+        {
+            "reg": "004c",
+            "mask": "00f0",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "High Voltage Warning 1 (Ph-Ph)"
+        },
+        {
+            "reg": "004c",
+            "mask": "000f",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "High Voltage Warning 2 (Ph-Ph)"
+        },
+        {
+            "reg": "004d",
+            "mask": "f000",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Low Voltage Failure 1 (Ph-Ph)"
+        },
+        {
+            "reg": "004d",
+            "mask": "0f00",
+            "value": "0000",
+            "type": "bits",
+            "title": "Alarm",
+            "text": "Low Voltage Failure 2 (Ph-Ph)"
+        }
+	],
   "engine_state": [
     {
       "reg": "004e",
@@ -304,6 +515,21 @@
       ]
     },
     {
+      "reg": "003a",
+      "mask": "ffff",
+      "multiplier": 1,
+      "type": "int",
+      "title": "Number of Starts"
+    },
+    {
+      "reg": "003b",
+      "mask": "ffff",
+      "multiplier": 1,
+      "type": "int",
+      "title": "Number of Trips"
+    },
+
+    {
       "type": "list",
       "separator": "/",
       "title": "Controller Date",
@@ -330,16 +556,9 @@
       ]
     },
     {
-      "reg": "003a",
-      "mask": "ffff",
-      "multiplier": 1,
-      "type": "int",
-      "title": "Number of Starts"
-    },
-    {
       "type": "list",
       "separator": ".0",
-      "title": "Controller Version",
+      "title": "Controller Firmware",
       "value": [
         {
           "reg": "00b6",
@@ -377,7 +596,7 @@
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
-      "title": "Battery Voltage",
+      "title": "Battery",
       "units": "V",
       "sensor": "batteryvolts",
       "nominal": 12,
@@ -388,7 +607,7 @@
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
-      "title": "Line Voltage",
+      "title": "Mains L1-L2",
       "units": "V",
       "sensor": "linevolts",
       "nominal": 240
@@ -398,7 +617,7 @@
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
-      "title": "Line L1 Frequency",
+      "title": "Mains L1",
       "units": "Hz",
       "sensor": "frequency",
       "nominal": 60
@@ -408,7 +627,7 @@
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
-      "title": "Line L2 Frequency",
+      "title": "Mains L2",
       "units": "Hz",
       "sensor": "frequency",
       "nominal": 60
@@ -418,7 +637,7 @@
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
-      "title": "Generator Voltage",
+      "title": "Generator L1-L2",
       "units": "V",
       "sensor": "linevolts",
       "nominal": 240
@@ -428,7 +647,7 @@
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
-      "title": "Gen L1 Frequency",
+      "title": "Generator L1",
       "units": "Hz",
       "sensor": "frequency",
       "nominal": 60
@@ -438,7 +657,7 @@
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
-      "title": "Gen L2 Frequency",
+      "title": "Generator L2",
       "units": "Hz",
       "sensor": "frequency",
       "nominal": 60
@@ -448,7 +667,7 @@
       "mask": "ffff",
       "multiplier": 1,
       "type": "int",
-      "title": "RPM",
+      "title": "Engine Speed",
       "units": null,
       "sensor": "rpm",
       "nominal": 3600
@@ -478,7 +697,7 @@
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
-      "title": "Load Power",
+      "title": "Load Total",
       "sensor": "current",
       "units": "kW",
       "nominal": 20
@@ -488,13 +707,13 @@
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
-      "title": "Load App Power",
+      "title": "Load Total",
       "sensor": "current",
       "units": "kVA",
       "nominal": 41
     },
     {
-      "reg": "0022",
+      "reg": "001d",
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
