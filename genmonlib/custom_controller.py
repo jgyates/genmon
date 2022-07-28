@@ -145,30 +145,57 @@ class CustomController(GeneratorController):
             return False
 
         return True
+    #-------------CustomController:GetConfigEntry-------------------------------
+    def GetConfigEntry(self, entry_name):
+        try:
+            ImportedEntry = self.controllerimport[entry_name]
+            if isinstance(ImportedEntry, dict): 
+                ImportedTitle, ImportedValue = self.GetDisplayEntry(ImportedEntry, JSONNum = False, no_units = True)
+            else:
+                ImportedValue = int(ImportedEntry)
+            return True, ImportedValue
+        except Exception as e1:
+            self.LogErrorLine("Error in GetConfigEntry: " + entry_name + ": " + str(e1))
+            return False, None  
 
-     #-------------CustomController:IdentifyController---------------------------
+    #-------------CustomController:IdentifyController---------------------------
     def IdentifyController(self):
 
         try:
-            self.NominalLineVolts =  int(self.controllerimport["rated_nominal_voltage"])
-            self.NominalBatteryVolts =  int(self.controllerimport["nominal_battery_voltage"])
             self.Model = str(self.controllerimport["controller_name"])
-            self.NominalFreq = int(self.controllerimport["rated_nominal_freq"])
-            self.NominalRPM = int(self.controllerimport["rated_nominal_rpm"])
-            ImportedNominalKW = self.controllerimport["rated_max_output_power_kw"]
-            if isinstance(ImportedNominalKW, dict): 
-                self.LogError("Reading Nominal kW from dict")
-                KWTitle, self.NominalKW = self.GetDisplayEntry(ImportedNominalKW, JSONNum = False, no_units = True)
-            else:
-                self.NominalKW = int(self.controllerimport["rated_max_output_power_kw"])
-        
-            self.Phase = int(self.controllerimport["generator_phase"])
+
+            ReturnValue = False 
+
+            ReturnValue, self.NominalLineVolts = self.GetConfigEntry("rated_nominal_voltage")
+            if not ReturnValue:
+                return False
+            
+            ReturnValue, self.NominalBatteryVolts = self.GetConfigEntry("nominal_battery_voltage")
+            if not ReturnValue:
+                return False
+            
+            ReturnValue, self.NominalFreq = self.GetConfigEntry("rated_nominal_freq")
+            if not ReturnValue:
+                return False
+            
+            ReturnValue, self.NominalRPM = self.GetConfigEntry("rated_nominal_rpm")
+            if not ReturnValue:
+                return False
+
+            ReturnValue, self.NominalKW = self.GetConfigEntry("rated_max_output_power_kw")
+            if not ReturnValue:
+                return False
+
+            ReturnValue, self.Phase = self.GetConfigEntry("generator_phase")
+            if not ReturnValue:
+                return False
             
             self.ControllerDetected = True
 
         except Exception as e1:
             self.LogErrorLine("Error in IdentifyController: " + str(e1))
             return False
+
     #-------------CustomController:ValidateConfig---------------------------
     def ValidateConfig(self):
 
