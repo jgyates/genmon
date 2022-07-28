@@ -38,6 +38,7 @@ class CustomController(GeneratorController):
         self.VoltageConfig = None
         self.AlarmAccessLock = threading.RLock()     # lock to synchronize access to the logs
         self.EventAccessLock = threading.RLock()     # lock to synchronize access to the logs
+        self.ConfigValidated = False
         self.ControllerDetected = False
 
         self.DaysOfWeek = { 0: "Sunday",    # decode for register values with day of week
@@ -145,15 +146,37 @@ class CustomController(GeneratorController):
 
         return True
 
-    #-------------CustomController:IdentifyController---------------------------
+     #-------------CustomController:IdentifyController---------------------------
     def IdentifyController(self):
+
+        try:
+            self.NominalLineVolts =  int(self.controllerimport["rated_nominal_voltage"])
+            self.NominalBatteryVolts =  int(self.controllerimport["nominal_battery_voltage"])
+            self.Model = str(self.controllerimport["controller_name"])
+            self.NominalFreq = int(self.controllerimport["rated_nominal_freq"])
+            self.NominalRPM = int(self.controllerimport["rated_nominal_rpm"])
+            ImportedNominalKW = self.controllerimport["rated_max_output_power_kw"]
+            if isinstance(ImportedNominalKW, dict): 
+                self.LogError("Reading Nominal kW from dict")
+                KWTitle, self.NominalKW = self.GetDisplayEntry(ImportedNominalKW, JSONNum = False, no_units = True)
+            else:
+                self.NominalKW = int(self.controllerimport["rated_max_output_power_kw"])
+        
+            self.Phase = int(self.controllerimport["generator_phase"])
+            
+            self.ControllerDetected = True
+
+        except Exception as e1:
+            self.LogErrorLine("Error in IdentifyController: " + str(e1))
+            return False
+    #-------------CustomController:ValidateConfig---------------------------
+    def ValidateConfig(self):
 
         try:
             if self.ControllerDetected:
                 return True
 
             #at this point we will parse the imported config from the JSON file
-            # TODO
             if not "switch_state" in self.controllerimport:
                 self.LogError("Error: Controller Import does not contain switch_state")
                 return False
@@ -195,31 +218,25 @@ class CustomController(GeneratorController):
                 self.LogError("Error: Controller Import does not contain nominal_battery_voltage")
                 return False
 
-            self.NominalLineVolts =  int(self.controllerimport["rated_nominal_voltage"])
-            self.NominalBatteryVolts =  int(self.controllerimport["nominal_battery_voltage"])
-            self.Model = str(self.controllerimport["controller_name"])
-            self.NominalFreq = int(self.controllerimport["rated_nominal_freq"])
-            self.NominalRPM = int(self.controllerimport["rated_nominal_rpm"])
-            self.NominalKW = int(self.controllerimport["rated_max_output_power_kw"])
-            self.Phase = int(self.controllerimport["generator_phase"])
-
             for Register, Length in self.controllerimport["base_registers"].items():
                 if Length % 2 != 0:
                     self.LogError("Error: Controller Import: modbus register lenghts must be divisible by 2: " + str(Register) + ":" + str(Length))
                     return False
 
-            self.ControllerDetected = True
+            self.ConfigValidated = True
+
             return True
         except Exception as e1:
-            self.LogErrorLine("Error in IdentifyController: " + str(e1))
+            self.LogErrorLine("Error in ValidateConfig: " + str(e1))
             return False
     #-------------CustomController:InitDevice-----------------------------------
     # One time reads, and read all registers once
     def InitDevice(self):
 
         try:
-            self.IdentifyController()
+            self.ValidateConfig()
             self.MasterEmulation()
+            self.IdentifyController()
             self.SetupTiles()
             self.InitComplete = True
             self.InitCompleteEvent.set()
@@ -273,6 +290,10 @@ class CustomController(GeneratorController):
     def MasterEmulation(self):
 
         try:
+            if not self.ConfigValidated:
+                self.ValidateConfig()
+                if not self.ConfigValidated:
+                    return
             if not self.ControllerDetected:
                 self.IdentifyController()
                 if not self.ControllerDetected:
