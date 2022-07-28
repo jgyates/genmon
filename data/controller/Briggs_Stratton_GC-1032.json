@@ -1,6 +1,12 @@
 {
   "controller_name": "Briggs & Stratton GC-1032 Controller",
-  "rated_max_output_power_kw": "20",
+  "rated_max_output_power_kw":  {
+        "reg": "0054",
+        "mask": "7f00",
+        "multiplier": 0.00390625,
+        "type": "int",
+        "title": "Nominal kW"
+      },
   "rated_nominal_voltage": 240,
   "rated_nominal_rpm": 3600,
   "rated_nominal_freq": 60,
