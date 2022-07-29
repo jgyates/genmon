@@ -148,6 +148,7 @@ class ModbusBase(MySupport ):
             self.UseTCP = self.config.ReadValue('use_serial_tcp', return_type = bool, default = False)
             self.ModbusTCP = self.config.ReadValue('modbus_tcp', return_type = bool, default = False)
             self.UseModbusFunction4 = self.config.ReadValue('use_modbus_fc4', return_type = bool, default = False)
+            
 
             try:
                 self.Address = int(self.config.ReadValue('address', default = '9d'),16)         # modbus address
