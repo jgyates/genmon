@@ -491,7 +491,11 @@ class Monitor(MySupport):
 
             data = json.loads(CmdList[1])
             msgtitle = self.SiteName + ": " + data['title']
-            self.MessagePipe.SendMessage(msgtitle, data['body'] , msgtype = data['type'])
+            if not "onlyonce" in data:
+                onlyonce = False
+            else:
+                onlyonce = data["onlyonce"]
+            self.MessagePipe.SendMessage(msgtitle, data['body'] , msgtype = data['type'], onlyonce = onlyonce)
             return "OK"
         except Exception as e1:
             self.LogErrorLine("Error in SendMessage: " + str(e1))
