@@ -1501,69 +1501,70 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["server_port"] = ['int', 'Server Port', 5, ProgramDefaults.ServerPort, "", 0, GENMON_CONFIG, GENMON_SECTION,"server_port"]
         # this option is not displayed as this will break the modbus comms, only for debugging
         ConfigSettings["address"] = ['string', 'Modbus slave address', 6, "9d", "", 0 , GENMON_CONFIG, GENMON_SECTION, "address"]
-        ConfigSettings["response_address"] = ['string', 'Modbus slave transmit address', 6, "", "", 0 , GENMON_CONFIG, GENMON_SECTION, "response_address"]
-        ConfigSettings["additional_modbus_timeout"] = ['float', 'Additional Modbus Timeout (sec)', 7, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "additional_modbus_timeout"]
-        ConfigSettings["use_modbus_fc4"] = ['boolean', 'Use Modbus FC4 instead of FC3', 8, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "use_modbus_fc4"]
-        ConfigSettings["watchdog_addition"] = ['float', 'Additional Watchdog Timeout (sec)', 9, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "watchdog_addition"]
-        ConfigSettings["controllertype"] = ['list', 'Controller Type', 10, "generac_evo_nexus", "", "generac_evo_nexus,h_100,powerzone,custom", GENMON_CONFIG, GENMON_SECTION, "controllertype"]
+        ConfigSettings["response_address"] = ['string', 'Modbus slave transmit address', 7, "", "", 0 , GENMON_CONFIG, GENMON_SECTION, "response_address"]
+        ConfigSettings["additional_modbus_timeout"] = ['float', 'Additional Modbus Timeout (sec)', 8, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "additional_modbus_timeout"]
+        ConfigSettings["use_modbus_fc4"] = ['boolean', 'Use Modbus FC4 instead of FC3', 9, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "use_modbus_fc4"]
+        ConfigSettings["serial_parity"] = ['list', 'Serial Parity', 10, "None", "", "None,Even,Odd", GENMON_CONFIG, GENMON_SECTION, "serial_parity"]
+        ConfigSettings["watchdog_addition"] = ['float', 'Additional Watchdog Timeout (sec)', 11, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "watchdog_addition"]
+        ConfigSettings["controllertype"] = ['list', 'Controller Type', 12, "generac_evo_nexus", "", "generac_evo_nexus,h_100,powerzone,custom", GENMON_CONFIG, GENMON_SECTION, "controllertype"]
 
         import_config_files = GetImportConfigFileNames()
-        ConfigSettings["import_config_file"] = ['list', 'Custom Controller Config File', 11, "evo_lc.json", "", import_config_files, GENMON_CONFIG, GENMON_SECTION, "import_config_file"]
-        ConfigSettings["loglocation"] = ['string', 'Log Directory',12, ProgramDefaults.LogPath, "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "loglocation"]
-        ConfigSettings["userdatalocation"] = ['string', 'User Defined Data Directory',13, os.path.dirname(os.path.realpath(__file__)), "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "userdatalocation"]
-        ConfigSettings["enabledebug"] = ['boolean', 'Enable Debug', 14, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "enabledebug"]
-        ConfigSettings["ignore_unknown"] = ['boolean', 'Ignore Unknown Values', 15, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "ignore_unknown"]
+        ConfigSettings["import_config_file"] = ['list', 'Custom Controller Config File', 21, "evo_lc.json", "", import_config_files, GENMON_CONFIG, GENMON_SECTION, "import_config_file"]
+        ConfigSettings["loglocation"] = ['string', 'Log Directory',22, ProgramDefaults.LogPath, "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "loglocation"]
+        ConfigSettings["userdatalocation"] = ['string', 'User Defined Data Directory',23, os.path.dirname(os.path.realpath(__file__)), "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "userdatalocation"]
+        ConfigSettings["enabledebug"] = ['boolean', 'Enable Debug', 24, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "enabledebug"]
+        ConfigSettings["ignore_unknown"] = ['boolean', 'Ignore Unknown Values', 25, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "ignore_unknown"]
         # These settings are not displayed as the auto-detect controller will set these
         # these are only to be used to override the auto-detect
-        #ConfigSettings["liquidcooled"] = ['boolean', 'Force Controller Type (cooling)', 10, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "liquidcooled"]
-        #ConfigSettings["evolutioncontroller"] = ['boolean', 'Force Controller Type (Evo/Nexus)', 11, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "evolutioncontroller"]
+        #ConfigSettings["liquidcooled"] = ['boolean', 'Force Controller Type (cooling)', 30, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "liquidcooled"]
+        #ConfigSettings["evolutioncontroller"] = ['boolean', 'Force Controller Type (Evo/Nexus)', 31, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "evolutioncontroller"]
         # remove outage log, this will always be in the same location
-        #ConfigSettings["outagelog"] = ['string', 'Outage Log', 12, "/home/pi/genmon/outage.txt", "", "required UnixFile", GENMON_CONFIG, GENMON_SECTION, "outagelog"]
-        ConfigSettings["serialnumberifmissing"] = ['string', 'Serial Number if Missing', 16, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "serialnumberifmissing"]
-        ConfigSettings["additionalrunhours"] = ['string', 'Additional Run Hours', 17, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "additionalrunhours"]
-        ConfigSettings["estimated_load"] = ['float', 'Estimated Load', 18, "0.0", "", "required range:0:1", GENMON_CONFIG, GENMON_SECTION, "estimated_load"]
-        ConfigSettings["subtractfuel"] = ['float', 'Subtract Fuel', 19, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "subtractfuel"]
-        #ConfigSettings["kwlog"] = ['string', 'Power Log Name / Disable', 16, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlog"]
+        #ConfigSettings["outagelog"] = ['string', 'Outage Log', 32, "/home/pi/genmon/outage.txt", "", "required UnixFile", GENMON_CONFIG, GENMON_SECTION, "outagelog"]
+        ConfigSettings["serialnumberifmissing"] = ['string', 'Serial Number if Missing', 36, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "serialnumberifmissing"]
+        ConfigSettings["additionalrunhours"] = ['string', 'Additional Run Hours', 37, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "additionalrunhours"]
+        ConfigSettings["estimated_load"] = ['float', 'Estimated Load', 38, "0.0", "", "required range:0:1", GENMON_CONFIG, GENMON_SECTION, "estimated_load"]
+        ConfigSettings["subtractfuel"] = ['float', 'Subtract Fuel', 39, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "subtractfuel"]
+        #ConfigSettings["kwlog"] = ['string', 'Power Log Name / Disable', 36, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlog"]
         if ControllerType != 'h_100':
-            ConfigSettings["usenominallinevolts"] = ['boolean', 'Use Nominal Volts Override', 25, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "usenominallinevolts"]
-            ConfigSettings["nominallinevolts"] = ['int', 'Override nominal line voltage in UI', 26, "240", "", 0, GENMON_CONFIG, GENMON_SECTION,"nominallinevolts"]
-            ConfigSettings["outage_notice_delay"] = ['int', 'Outage Notice Delay', 27, "0", "", 0, GENMON_CONFIG, GENMON_SECTION, "outage_notice_delay"]
+            ConfigSettings["usenominallinevolts"] = ['boolean', 'Use Nominal Volts Override', 45, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "usenominallinevolts"]
+            ConfigSettings["nominallinevolts"] = ['int', 'Override nominal line voltage in UI', 46, "240", "", 0, GENMON_CONFIG, GENMON_SECTION,"nominallinevolts"]
+            ConfigSettings["outage_notice_delay"] = ['int', 'Outage Notice Delay', 47, "0", "", 0, GENMON_CONFIG, GENMON_SECTION, "outage_notice_delay"]
             ControllerInfo = GetControllerInfo("controller").lower()
             if "nexus" in ControllerInfo:
-                ConfigSettings["nexus_legacy_freq"] = ['boolean', 'Use Nexus Legacy Frequency', 28, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "nexus_legacy_freq"]
+                ConfigSettings["nexus_legacy_freq"] = ['boolean', 'Use Nexus Legacy Frequency', 48, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "nexus_legacy_freq"]
                 # this is setup automatically for Nexus controllers
-                #ConfigSettings["uselegacysetexercise"] = ['boolean', 'Use Legacy Exercise Time', 29, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "uselegacysetexercise"]
+                #ConfigSettings["uselegacysetexercise"] = ['boolean', 'Use Legacy Exercise Time', 49, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "uselegacysetexercise"]
         else:
-            ConfigSettings["usecalculatedpower"] = ['boolean', 'Use Calculated Power', 25, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "usecalculatedpower"]
+            ConfigSettings["usecalculatedpower"] = ['boolean', 'Use Calculated Power', 45, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "usecalculatedpower"]
 
-        ConfigSettings["fuel_units"] = ['list', 'Fuel Units', 35, "gal", "", "gal,cubic feet", GENMON_CONFIG, GENMON_SECTION, "fuel_units"]
-        ConfigSettings["half_rate"] = ['float', 'Fuel Rate Half Load', 36, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "half_rate"]
-        ConfigSettings["full_rate"] = ['float', 'Fuel Rate Full Load', 37, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "full_rate"]
+        ConfigSettings["fuel_units"] = ['list', 'Fuel Units', 55, "gal", "", "gal,cubic feet", GENMON_CONFIG, GENMON_SECTION, "fuel_units"]
+        ConfigSettings["half_rate"] = ['float', 'Fuel Rate Half Load', 56, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "half_rate"]
+        ConfigSettings["full_rate"] = ['float', 'Fuel Rate Full Load', 57, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "full_rate"]
 
-        ConfigSettings["enable_fuel_log"] = ['boolean', 'Log Fuel Level to File', 40, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "enable_fuel_log"]
-        ConfigSettings["fuel_log_freq"] = ['float', 'Fuel Log Frequency', 41, "15.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "fuel_log_freq"]
-        #ConfigSettings["fuel_log"] = ['string', 'Fuel Log Path and File Name', 32, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "/etc/genmon/fuellog.txt"]
+        ConfigSettings["enable_fuel_log"] = ['boolean', 'Log Fuel Level to File', 60, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "enable_fuel_log"]
+        ConfigSettings["fuel_log_freq"] = ['float', 'Fuel Log Frequency', 61, "15.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "fuel_log_freq"]
+        #ConfigSettings["fuel_log"] = ['string', 'Fuel Log Path and File Name', 62, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "/etc/genmon/fuellog.txt"]
 
-        ConfigSettings["kwlogmax"] = ['string', 'Maximum size Power Log (MB)', 50, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlogmax"]
-        ConfigSettings["currentdivider"] = ['float', 'Current Divider', 51, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentdivider"]
-        ConfigSettings["currentoffset"] = ['string', 'Current Offset', 52, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentoffset"]
-        ConfigSettings["legacy_power"] = ['boolean', 'Use Legacy Power Calculation', 53, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "legacy_power"]
+        ConfigSettings["kwlogmax"] = ['string', 'Maximum size Power Log (MB)', 70, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlogmax"]
+        ConfigSettings["currentdivider"] = ['float', 'Current Divider', 71, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentdivider"]
+        ConfigSettings["currentoffset"] = ['string', 'Current Offset', 72, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "currentoffset"]
+        ConfigSettings["legacy_power"] = ['boolean', 'Use Legacy Power Calculation', 73, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "legacy_power"]
 
-        ConfigSettings["disableplatformstats"] = ['boolean', 'Disable Platform Stats', 60, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "disableplatformstats"]
-        ConfigSettings["https_port"] = ['int', 'Override HTTPS port', 61, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "https_port"]
-        ConfigSettings["user_url"] = ['string', 'User URL', 62, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "user_url"]
-        ConfigSettings["extend_wait"] = ['int', 'Extend email retry', 63, "0", "", 0, MAIL_CONFIG, MAIL_SECTION,"extend_wait"]
-        ConfigSettings["min_outage_duration"] = ['int', 'Minimum Outage Duration', 64, "0", "", 0, GENMON_CONFIG, GENMON_SECTION,"min_outage_duration"]
-        ConfigSettings["multi_instance"] = ['boolean', 'Allow Multiple Genmon Instances', 65, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "multi_instance"]
+        ConfigSettings["disableplatformstats"] = ['boolean', 'Disable Platform Stats', 80, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "disableplatformstats"]
+        ConfigSettings["https_port"] = ['int', 'Override HTTPS port', 81, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "https_port"]
+        ConfigSettings["user_url"] = ['string', 'User URL', 82, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "user_url"]
+        ConfigSettings["extend_wait"] = ['int', 'Extend email retry', 83, "0", "", 0, MAIL_CONFIG, MAIL_SECTION,"extend_wait"]
+        ConfigSettings["min_outage_duration"] = ['int', 'Minimum Outage Duration', 84, "0", "", 0, GENMON_CONFIG, GENMON_SECTION,"min_outage_duration"]
+        ConfigSettings["multi_instance"] = ['boolean', 'Allow Multiple Genmon Instances', 85, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "multi_instance"]
 
-        ConfigSettings["max_login_attempts"] = ['int', 'Maxmum login attempts before temporary lockout', 66, 5, "", "digits", GENMON_CONFIG, GENMON_SECTION, "max_login_attempts"]
-        ConfigSettings["login_lockout_seconds"] = ['int', 'Login lockout duration in seconds', 67, (5*60), "", "digits", GENMON_CONFIG, GENMON_SECTION, "login_lockout_seconds"]
+        ConfigSettings["max_login_attempts"] = ['int', 'Maxmum login attempts before temporary lockout', 96, 5, "", "digits", GENMON_CONFIG, GENMON_SECTION, "max_login_attempts"]
+        ConfigSettings["login_lockout_seconds"] = ['int', 'Login lockout duration in seconds', 97, (5*60), "", "digits", GENMON_CONFIG, GENMON_SECTION, "login_lockout_seconds"]
 
         try:
             if GStartInfo["Linux"]:
-                ConfigSettings["uselinuxwifisignalgauge"] = ['boolean', 'Show Wifi Signal Strength Gauge', 68, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "uselinuxwifisignalgauge"]
+                ConfigSettings["uselinuxwifisignalgauge"] = ['boolean', 'Show Wifi Signal Strength Gauge', 108, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "uselinuxwifisignalgauge"]
             if GStartInfo["RaspbeerryPi"]:
-                ConfigSettings["useraspberrypicputempgauge"] = ['boolean', 'Show CPU Temperature Gauge', 69, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "useraspberrypicputempgauge"]
+                ConfigSettings["useraspberrypicputempgauge"] = ['boolean', 'Show CPU Temperature Gauge', 109, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "useraspberrypicputempgauge"]
         except:
             pass
 

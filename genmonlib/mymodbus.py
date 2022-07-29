@@ -40,6 +40,7 @@ class ModbusProtocol(ModbusBase):
                 self.ModbusTCP = modbustcp
                 self.Host = host
                 self.Port = port
+                self.Parity = Parity
             self.TransactionID = 0
             self.AlternateFileProtocol = False
 
@@ -65,7 +66,7 @@ class ModbusProtocol(ModbusBase):
             if self.UseTCP:
                 self.Slave = SerialTCPDevice(config = self.config, host = host, port = port)
             else:
-                self.Slave = SerialDevice(name = name, rate = rate, Parity = Parity, OnePointFiveStopBits = OnePointFiveStopBits, config = self.config)
+                self.Slave = SerialDevice(name = name, rate = rate, Parity = self.Parity, OnePointFiveStopBits = OnePointFiveStopBits, config = self.config)
             self.Threads = self.MergeDicts(self.Threads, self.Slave.Threads)
 
 
