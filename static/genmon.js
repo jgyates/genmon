@@ -2478,7 +2478,7 @@ function DisplayAbout(){
       outstr += '&nbsp;&nbsp;<button id="checkNewVersion" onClick="checkNewVersion();">Upgrade to latest version</button><br>';
       outstr += '&nbsp;&nbsp;<a href="javascript:showChangeLog();" style="font-style:normal; font-size:14px; text-decoration:underline;">Change Log</a>';
       // Submit registers and logs
-      outstr += '<br><br>Submit Information to Developers:<br><br>';
+      outstr += '<br><br>Submit Information to Developers (note: outbound email must be setup and working to submit logs or registers):<br><br>';
       outstr += '&nbsp;&nbsp;<button id="submitRegisters" onClick="submitRegisters();">Submit Registers</button>';
       outstr += '&nbsp;&nbsp;<button id="submitLogs" onClick="submitLogs();">Submit Logs</button>';
       //Get Backup
