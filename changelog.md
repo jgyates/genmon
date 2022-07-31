@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Improved error handing in mymail.py to better support older versions of SSL libraries 
 - Added run hours in the last year to the maint page. Note that this the last 365 days, not the last calendar year.
 - Added option for serial parity on Advanced Settings page for Briggs and Stratton controllers
+- Minor update to improve fuel calculations for outages
 
 ## V1.18.12 -2022-06-21
 - Commented optional enhancements to gengpio.py
