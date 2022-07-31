@@ -1217,7 +1217,10 @@ class GeneratorController(MySupport):
 
         try:
 
-            PowerList = self.ReadPowerLogFromFile( Minutes = Minutes)
+            if Minutes == 0:
+                PowerList = []
+            else:
+                PowerList = self.ReadPowerLogFromFile( Minutes = Minutes)
 
             #Shorten list to 500 if specific duration requested
             #if not KWHours and len(PowerList) > 500 and Minutes and not NoReduce:
@@ -1783,6 +1786,14 @@ class GeneratorController(MySupport):
             Y2 = ConsumptionData[3]
             Units = ConsumptionData[4]
 
+            if seconds == 0:
+                # for zero duration return zero fuel used
+                if self.UseMetric and self.FuelType == "Natural Gas":
+                    return 0.0, "cubic meters" 
+                elif self.UseMetric:
+                    return 0.0, "L"
+                else: 
+                    0.0, Units
             Slope = (Y2 - Y1) / (X2 - X1)   # Slope of fuel consumption plot (it is very close to if not linear in most cases)
             # now use point slope equation to find consumption for one hour
             # percent load is X2, Consumption is Y2, 100% (1.0) is X1 and Rate 100% is Y1

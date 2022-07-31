@@ -1529,9 +1529,10 @@ def ReadAdvancedSettingsFromFile():
             ConfigSettings["usenominallinevolts"] = ['boolean', 'Use Nominal Volts Override', 45, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "usenominallinevolts"]
             ConfigSettings["nominallinevolts"] = ['int', 'Override nominal line voltage in UI', 46, "240", "", 0, GENMON_CONFIG, GENMON_SECTION,"nominallinevolts"]
             ConfigSettings["outage_notice_delay"] = ['int', 'Outage Notice Delay', 47, "0", "", 0, GENMON_CONFIG, GENMON_SECTION, "outage_notice_delay"]
+            ConfigSettings["min_outage_duration"] = ['int', 'Minimum Outage Duration', 48, "0", "", 0, GENMON_CONFIG, GENMON_SECTION,"min_outage_duration"]
             ControllerInfo = GetControllerInfo("controller").lower()
             if "nexus" in ControllerInfo:
-                ConfigSettings["nexus_legacy_freq"] = ['boolean', 'Use Nexus Legacy Frequency', 48, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "nexus_legacy_freq"]
+                ConfigSettings["nexus_legacy_freq"] = ['boolean', 'Use Nexus Legacy Frequency', 49, True, "", 0, GENMON_CONFIG, GENMON_SECTION, "nexus_legacy_freq"]
                 # this is setup automatically for Nexus controllers
                 #ConfigSettings["uselegacysetexercise"] = ['boolean', 'Use Legacy Exercise Time', 49, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "uselegacysetexercise"]
         else:
@@ -1554,7 +1555,6 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["https_port"] = ['int', 'Override HTTPS port', 81, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "https_port"]
         ConfigSettings["user_url"] = ['string', 'User URL', 82, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "user_url"]
         ConfigSettings["extend_wait"] = ['int', 'Extend email retry', 83, "0", "", 0, MAIL_CONFIG, MAIL_SECTION,"extend_wait"]
-        ConfigSettings["min_outage_duration"] = ['int', 'Minimum Outage Duration', 84, "0", "", 0, GENMON_CONFIG, GENMON_SECTION,"min_outage_duration"]
         ConfigSettings["multi_instance"] = ['boolean', 'Allow Multiple Genmon Instances', 85, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "multi_instance"]
 
         ConfigSettings["max_login_attempts"] = ['int', 'Maxmum login attempts before temporary lockout', 96, 5, "", "digits", GENMON_CONFIG, GENMON_SECTION, "max_login_attempts"]
