@@ -55,8 +55,8 @@ def AddItemToConfFile(FileName, Entry, Value, Check = False):
         ConfigFile = open(FileName,'r')
         FileString = ConfigFile.read()
         ConfigFile.close()
-
-        ConfigFile = open(FileName,'w')
+        if not Check:
+            ConfigFile = open(FileName,'w')
         for line in FileString.splitlines():
             if not line.isspace():                  # blank lines
                 newLine = line.strip()              # strip leading spaces
@@ -66,17 +66,15 @@ def AddItemToConfFile(FileName, Entry, Value, Check = False):
                         for strings in items:           # loop thru items
                             strings = strings.strip()   # strip any whitespace
                             if Entry == strings or strings.lower().startswith(Entry+"="):        # is this our value?
-                                if not Check:
-                                    line = Entry + "=" + Value    # replace it
+                                myitems = strings.split("=")
+                                if len(myitems) >=2 and myitems[1].strip().lower() == Value:
                                     Found = True
-                                else:
-                                    myitems = strings.split("=")
-                                    if len(myitems) >=2 and myitems[1].strip().lower() == Value:
-                                        Found = True
                                 break
 
-            ConfigFile.write(line+"\n")
+            if not Check:
+                ConfigFile.write(line+"\n")
         if not Found and not Check:
+            # write entry at end
             ConfigFile.write(Entry + "=" + Value + "\n")
         ConfigFile.close()
         if Check:
@@ -87,6 +85,44 @@ def AddItemToConfFile(FileName, Entry, Value, Check = False):
         print("\nError writing config file: " + FileName + ": " + str(e1) + " " + GetErrorInfo())
         sys.exit(2)
 
+#---------------------MySupport::RemoveItemFromConfFile------------------------
+# Remoce config item or validate it is not there
+def RemoveItemFromConfFile(FileName, Entry, Value, Check = False):
+
+    try:
+        Found = False
+        ConfigFile = open(FileName,'r')
+        FileString = ConfigFile.read()
+        ConfigFile.close()
+        if not Check:
+            ConfigFile = open(FileName,'w')
+        for line in FileString.splitlines():
+            Found = False
+            if not line.isspace():                  # blank lines
+                newLine = line.strip()              # strip leading spaces
+                if len(newLine):
+                    if not newLine[0] == "#":           # not a comment
+                        items = newLine.split(' ')      # split items in line by spaces
+                        for strings in items:           # loop thru items
+                            strings = strings.strip()   # strip any whitespace
+                            if Entry == strings or strings.lower().startswith(Entry+"="):        # is this our value?
+                                myitems = strings.split("=")
+                                if len(myitems) >=2 and myitems[1].strip().lower() == Value:
+                                    Found = True
+                                break
+            if not Check:
+                if not Found:
+                    ConfigFile.write(line+"\n")
+        if not Check:
+            ConfigFile.close()
+        if Check:
+            return not Found
+        
+        return True
+
+    except Exception as e1:
+        print("\nError in removing item from config file: " + FileName + ": " + str(e1) + " " + GetErrorInfo())
+        sys.exit(2)
 #-------------------------------------------------------------------------------
 def ProcessCmdLineFile(FileName, Entry, Check = True):
 
@@ -134,6 +170,18 @@ def CheckServiceOutput(Output):
         sys.exit(2)
 
 #-------------------------------------------------------------------------------
+def ServiceIsEnabled(servicename):
+    try:
+        process = Popen(['systemctl', "status" , servicename], stdout=PIPE)
+        output, _error = process.communicate()
+        rc = process.returncode
+        return not CheckServiceOutput(output)
+
+    except Exception as e1:
+        print("Program Error (ServiceIsEnabled): " + str(e1) + " " + GetErrorInfo())
+        sys.exit(2)
+
+#-------------------------------------------------------------------------------
 def ServiceIsDisabled(servicename):
     try:
         process = Popen(['systemctl', "status" , servicename], stdout=PIPE)
@@ -146,18 +194,23 @@ def ServiceIsDisabled(servicename):
         sys.exit(2)
 
 #-------------------------------------------------------------------------------
-def DisableService(servicename):
+def DisableService(servicename, enable = False):
     try:
-        process = Popen(['systemctl', "stop" , servicename], stdout=PIPE)
-        output, _error = process.communicate()
-        rc = process.returncode
-        process = Popen(['systemctl', "disable" , servicename], stdout=PIPE)
-        output, _error = process.communicate()
-        rc = process.returncode
-        return True
-
+        if not enable:
+            process = Popen(['systemctl', "stop" , servicename], stdout=PIPE)
+            output, _error = process.communicate()
+            rc = process.returncode
+            process = Popen(['systemctl', "disable" , servicename], stdout=PIPE)
+            output, _error = process.communicate()
+            rc = process.returncode
+            return True
+        else:
+            process = Popen(['systemctl', "enable" , servicename], stdout=PIPE)
+            output, _error = process.communicate()
+            rc = process.returncode
+            return True
     except Exception as e1:
-        print("Program Error (ServiceIsDisabled): " + str(e1) + " " + GetErrorInfo())
+        print("Program Error (DisableService): " + str(enable) + ": " + str(e1) + " " + GetErrorInfo())
         sys.exit(2)
 
 #------------------RestoreFiles------------------------------------------------------
@@ -182,16 +235,17 @@ def GetErrorInfo():
 if __name__ == '__main__':
 
 
-    HelpStr =  "\npython serialconfig.py [-r -e -c]\n"
+    HelpStr =  "\npython3 serialconfig.py [-r -e -c -b]\n"
     HelpStr += "   Example: python3 serialconfig.py -e\n"
     HelpStr += "            python3 serialconfig.py -c\n"
     HelpStr += "\n      -e  Enable serial port"
     HelpStr += "\n      -r  Restore modified files"
     HelpStr += "\n      -c  Check status of serial port"
+    HelpStr += "\n      -b  Leave Bluetooth enabled (Pi 3 and 4 only)"
     HelpStr += "\n \n"
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:],"herc",[])
+        opts, args = getopt.getopt(sys.argv[1:],"hercb",[])
     except getopt.GetoptError:
         print(HelpStr)
         sys.exit(2)
@@ -199,6 +253,7 @@ if __name__ == '__main__':
     Check = False
     Enable = False
     Restore = False
+    Bluetooth = False
 
     for opt, arg in opts:
         if opt == '-h':
@@ -210,6 +265,9 @@ if __name__ == '__main__':
             Restore = True
         elif opt in ("-c", "--check"):
             Check = True
+        elif opt in ("-b", "--bluetooth"):
+            Bluetooth = True
+
 
     if Check and Enable or Check and Restore or Enable and Restore:
         print("\nOnly one option can be selected.")
@@ -243,21 +301,42 @@ if __name__ == '__main__':
     print("")
 
     try:
-        EnableDict = {
-            "Enable UART" : [AddItemToConfFile, (BOOT_CONFIG, "enable_uart", "1", False)],
-            "Disable BT" :  [AddItemToConfFile, (BOOT_CONFIG, "dtoverlay", "pi3-disable-bt", False)],
-            "Disable serial console" : [ProcessCmdLineFile, (CMD_LINE, CMD_LINE_SERIAL_CONSOLE, False)],
-            "Disable serial console service" : [DisableService, (GETTY_SERVICE_NAME,)],
-            "Disable BT service service" : [DisableService, (HCIUART_SERVIE_NAME,)]
-        }
+        if Bluetooth:
+            EnableDict = {
+                "Enable UART" : [AddItemToConfFile, (BOOT_CONFIG, "enable_uart", "1", False)],
+                "Change BT serial port" :  [AddItemToConfFile, (BOOT_CONFIG, "dtoverlay", "miniuart-bt", False)],
+                "Enable Turbo clocking" :  [AddItemToConfFile, (BOOT_CONFIG, "force_turbo", "1", False)],
+                "Disable BT Disable Overlay" :  [RemoveItemFromConfFile, (BOOT_CONFIG, "dtoverlay", "pi3-disable-bt", False)],
+                "Disable serial console" : [ProcessCmdLineFile, (CMD_LINE, CMD_LINE_SERIAL_CONSOLE, False)],
+                "Disable serial console service" : [DisableService, (GETTY_SERVICE_NAME,)],
+                "Enable BT service service" : [DisableService, (HCIUART_SERVIE_NAME, True)]
+            }
 
-        CheckDict = {
-            "Checking : Is enable UART in boot config" : [AddItemToConfFile, (BOOT_CONFIG, "enable_uart", "1", True)],
-            "Checking : Is BT overlay disabled" :  [AddItemToConfFile, (BOOT_CONFIG, "dtoverlay", "pi3-disable-bt", True)],
-            "Checking : Serial console command line removed" : [ProcessCmdLineFile, (CMD_LINE, CMD_LINE_SERIAL_CONSOLE, True)],
-            "Checking : Serial console service disabled" : [ServiceIsDisabled, (GETTY_SERVICE_NAME,)],
-            "Checking : BT service disabled" : [ServiceIsDisabled, (HCIUART_SERVIE_NAME,)]
-        }
+            CheckDict = {
+                "Checking : Is enable UART in boot config" : [AddItemToConfFile, (BOOT_CONFIG, "enable_uart", "1", True)],
+                "Checking : BT alternate serial port" :  [AddItemToConfFile, (BOOT_CONFIG, "dtoverlay", "miniuart-bt", True)],
+                "Checking : Turbo Clocking" : [AddItemToConfFile, (BOOT_CONFIG, "force_turbo", "1", True)],
+                "Checking : Disable BT Disable Overlay" :  [RemoveItemFromConfFile, (BOOT_CONFIG, "dtoverlay", "pi3-disable-bt", True)],
+                "Checking : Serial console command line removed" : [ProcessCmdLineFile, (CMD_LINE, CMD_LINE_SERIAL_CONSOLE, True)],
+                "Checking : Serial console service disabled" : [ServiceIsDisabled, (GETTY_SERVICE_NAME,)],
+                "Checking : BT service enabled" : [ServiceIsEnabled, (HCIUART_SERVIE_NAME,)]
+            }
+        else:
+            EnableDict = {
+                "Enable UART" : [AddItemToConfFile, (BOOT_CONFIG, "enable_uart", "1", False)],
+                "Disable BT" :  [AddItemToConfFile, (BOOT_CONFIG, "dtoverlay", "pi3-disable-bt", False)],
+                "Disable serial console" : [ProcessCmdLineFile, (CMD_LINE, CMD_LINE_SERIAL_CONSOLE, False)],
+                "Disable serial console service" : [DisableService, (GETTY_SERVICE_NAME,)],
+                "Disable BT service service" : [DisableService, (HCIUART_SERVIE_NAME,)]
+            }
+
+            CheckDict = {
+                "Checking : Is enable UART in boot config" : [AddItemToConfFile, (BOOT_CONFIG, "enable_uart", "1", True)],
+                "Checking : Is BT overlay disabled" :  [AddItemToConfFile, (BOOT_CONFIG, "dtoverlay", "pi3-disable-bt", True)],
+                "Checking : Serial console command line removed" : [ProcessCmdLineFile, (CMD_LINE, CMD_LINE_SERIAL_CONSOLE, True)],
+                "Checking : Serial console service disabled" : [ServiceIsDisabled, (GETTY_SERVICE_NAME,)],
+                "Checking : BT service disabled" : [ServiceIsDisabled, (HCIUART_SERVIE_NAME,)]
+            }
 
         if Check:
             Lookup = CheckDict
