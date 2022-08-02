@@ -14,6 +14,8 @@ All notable changes to this project will be documented in this file.
 - Added run hours in the last year to the maint page. Note that this the last 365 days, not the last calendar year.
 - Added option for serial parity on Advanced Settings page for Briggs and Stratton controllers
 - Minor update to improve fuel calculations for outages
+- Updated serialconfig.py to optionally allow bluetooth to be used with the normal serial port operations. 
+- Corrected one bug in serialconfig.py
 
 ## V1.18.12 -2022-06-21
 - Commented optional enhancements to gengpio.py
