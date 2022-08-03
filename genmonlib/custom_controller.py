@@ -590,6 +590,12 @@ class CustomController(GeneratorController):
             Maintenance = collections.OrderedDict()
             Maintenance["Maintenance"] = []
 
+            if not self.ControllerDetected or not self.InitComplete:
+                Maintenance["Maintenance"].append({"Genmon State" : "Waiting for comms"})
+                if not DictOut:
+                    return self.printToString(self.ProcessDispatch(Maintenance,""))
+                return Maintenance
+
             Maintenance["Maintenance"].append({"Model" : self.Model})
             Maintenance["Maintenance"].append({"Controller Detected" : self.GetController()})
             Maintenance["Maintenance"].append({"Nominal RPM" : self.NominalRPM})
@@ -617,6 +623,12 @@ class CustomController(GeneratorController):
 
             Status = collections.OrderedDict()
             Status["Status"] = []
+
+            if not self.ControllerDetected or not self.InitComplete:
+                Status["Status"].append({"Genmon State" : "Waiting for comms"})
+                if not DictOut:
+                    return self.printToString(self.ProcessDispatch(Status,""))
+                return Status
 
             gen_status = self.GetSwitchState()
             if gen_status != "Unknown":
