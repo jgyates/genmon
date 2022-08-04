@@ -1184,6 +1184,38 @@ def GetAddOns():
             "Set to true to only use the CT data if the generator utility line is in an outage.",
             bounds = '',
             display_name = "Strict Usage of CT data")
+
+        #GENMOPEKA
+        AddOnCfg['genmopeka'] = collections.OrderedDict()
+        AddOnCfg['genmopeka']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "genmopeka", default = False)
+        AddOnCfg['genmopeka']['title'] = "Mopeka Pro Propane Tank Sensor"
+        Description = "Support Mopeka Pro Propane Tanks Sensor"
+        
+        AddOnCfg['genmopeka']['description'] = Description
+        AddOnCfg['genmopeka']['icon'] = "Genmon"
+        AddOnCfg['genmopeka']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genmopekapy-optional"
+        AddOnCfg['genmopeka']['parameters'] = collections.OrderedDict()
+
+        AddOnCfg['genmopeka']['parameters']['poll_frequency'] = CreateAddOnParam(
+            ConfigFiles[GENMOPEKA_CONFIG].ReadValue("poll_frequency", return_type = float, default = 60),
+            'float',
+            "The time in minutes that the sensors are polled. The default value is 60 seconds.",
+            bounds = 'number',
+            display_name = "Poll Interval")
+        AddOnCfg['genmopeka']['parameters']['tank_address'] = CreateAddOnParam(
+            ConfigFiles[GENMOPEKA_CONFIG].ReadValue("tank_address", return_type = str, default = ""),
+            'string',
+            "This value is MAC address of the sensor. It must be in a format using hex numbers separated by colons (i.e. 9a:03:2b:67:25:12). Multiple tank sensors (up to 4) may be used with commas between each address",
+            bounds = '',
+            display_name = "Sensor Address")
+        AddOnCfg['genmopeka']['parameters']['tank_type'] = CreateAddOnParam(
+            ConfigFiles[GENMOPEKA_CONFIG].ReadValue("tank_type", return_type = str, default = '1'),
+            'list',
+            "Type of tank used. If Custom is used then Max and Min values must be setup in /etc/genmon/genmopeka.conf",
+            bounds = '20_LB,30_LB,40_LB,100_LB,Custom',
+            display_name = "Tank Size")
+        
+        
     except Exception as e1:
         LogErrorLine("Error in GetAddOns: " + str(e1))
 
@@ -1308,7 +1340,8 @@ def SaveAddOnSettings(query_string):
             "genalexa" : ConfigFiles[GENALEXA_CONFIG],
             "gensnmp" : ConfigFiles[GENSNMP_CONFIG],
             "gentemp" : ConfigFiles[GENTEMP_CONFIG],
-            "gencthat" : ConfigFiles[GENCTHAT_CONFIG]
+            "gencthat" : ConfigFiles[GENCTHAT_CONFIG],
+            "genmopeka" : ConfigFiles[GENMOPEKA_CONFIG]
         }
 
         for module, entries in settings.items():   # module
@@ -2274,12 +2307,14 @@ if __name__ == "__main__":
     GENSNMP_CONFIG = os.path.join(ConfigFilePath, "gensnmp.conf")
     GENTEMP_CONFIG = os.path.join(ConfigFilePath, "gentemp.conf")
     GENCTHAT_CONFIG = os.path.join(ConfigFilePath, "gencthat.conf")
+    GENMOPEKA_CONFIG = os.path.join(ConfigFilePath, "genmopeka.conf")
 
     ConfigFileList = [GENMON_CONFIG, MAIL_CONFIG, GENLOADER_CONFIG, GENSMS_CONFIG,
         MYMODEM_CONFIG, GENPUSHOVER_CONFIG, GENMQTT_CONFIG, GENSLACK_CONFIG,
         GENGPIOIN_CONFIG, GENGPIOLEDBLINK_CONFIG, GENEXERCISE_CONFIG,
         GENEMAIL2SMS_CONFIG, GENTANKUTIL_CONFIG, GENTANKDIY_CONFIG,
-        GENALEXA_CONFIG, GENSNMP_CONFIG, GENTEMP_CONFIG, GENCTHAT_CONFIG]
+        GENALEXA_CONFIG, GENSNMP_CONFIG, GENTEMP_CONFIG, GENCTHAT_CONFIG,
+        GENMOPEKA_CONFIG]
 
     for ConfigFile in ConfigFileList:
         if not os.path.isfile(ConfigFile):

@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Updated serialconfig.py to optionally allow bluetooth to be used with the normal serial port operations. 
 - Corrected one bug in serialconfig.py
 - Minor update to custom controller support to handle failed comms display notice 
+- Added Mopeka Pro Propane Sensor Add On
 
 ## V1.18.12 -2022-06-21
 - Commented optional enhancements to gengpio.py

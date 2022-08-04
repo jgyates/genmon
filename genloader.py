@@ -153,7 +153,8 @@ class Loader(MySupport):
             ['twilio','twilio',None],               # for gensms
             ['paho.mqtt.client','paho-mqtt',None],  # for genmqtt
             ['OpenSSL', 'pyopenssl',None],          # SSL
-            ['spidev', 'spidev',None]               # spidev
+            ['spidev', 'spidev',None],              # spidev
+            ['mopeka_pro_check', 'mopeka_pro_check',None]              # mopeka_pro_check 
         ]
         try:
             ErrorOccured = False
@@ -534,7 +535,7 @@ class Loader(MySupport):
             Sections = self.config.GetSections()
             ValidSections = ['genmon', 'genserv', 'gengpio', 'gengpioin', 'genlog', 'gensms', 'gensms_modem',
             'genpushover', 'gensyslog', 'genmqtt', 'genslack', 'genexercise', 'genemail2sms', 'gentankutil',
-            'gentankdiy','genalexa', 'gensnmp', 'gentemp', 'gengpioledblink', 'gencthat', 'genloader']
+            'gentankdiy','genalexa', 'gensnmp', 'gentemp', 'gengpioledblink', 'gencthat', 'genmopeka', 'genloader']
             for entry in ValidSections:
                 if not entry in Sections:
                     if entry == 'genmon' or entry == 'genserv':
@@ -570,6 +571,9 @@ class Loader(MySupport):
                     if entry == 'gencthat':
                         self.LogError("Warning: Missing entry: " + entry + " , adding entry")
                         self.AddEntry(section = entry, module = 'gencthat.py', conffile = 'gencthat.conf')
+                    if entry == 'genmopeka':
+                        self.LogError("Warning: Missing entry: " + entry + " , adding entry")
+                        self.AddEntry(section = entry, module = 'genmopeka.py', conffile = 'genmopeka.conf')
                     if entry == 'genloader':
                         self.LogError("Adding entry: " + entry )
                         self.config.WriteSection(entry)
