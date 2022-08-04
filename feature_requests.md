@@ -15,4 +15,3 @@
 - [Status Screen enhancements Utility Voltage Trend and weather](https://github.com/jgyates/genmon/issues/439) - @gzebrick
 - [View past power output in 1 hour chunks](https://github.com/jgyates/genmon/issues) - @skipfire
 - [A HTTP and SNMP watchdog would be really a nice addition](https://github.com/jgyates/genmon/issues/735) - @acato
-- [Mopeka Tank Level Sensor](https://github.com/jgyates/genmon/issues/741) @rwskinner 
