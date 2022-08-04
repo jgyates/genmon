@@ -20,16 +20,16 @@ def SetupLogger(logger_name, log_file, level=logging.INFO, stream = False):
 
     logger.setLevel(level)
 
-    formatter = logging.Formatter('%(asctime)s : %(message)s')
-
     if log_file != "":
-
+        formatter = logging.Formatter('%(asctime)s : %(message)s')
         rotate = logging.handlers.RotatingFileHandler(log_file, mode='a',maxBytes=50000,backupCount=5)
         rotate.setFormatter(formatter)
         logger.addHandler(rotate)
 
     if stream:      # print to screen also?
         streamHandler = logging.StreamHandler()
+        formatter = logging.Formatter('%(message)s')
+        streamHandler.setFormatter(formatter)
         # Dont format stream log messages
         logger.addHandler(streamHandler)
 
