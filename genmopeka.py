@@ -14,7 +14,7 @@
 # https://github.com/spbrogan/mopeka_pro_check
 
 
-import time, sys, signal, os, threading, json
+import time, sys, signal, os, threading, json, math
 
 try:
     from genmonlib.myclient import ClientInterface
@@ -86,6 +86,7 @@ class GenMopekaData(MySupport):
             self.min_mm = self.config.ReadValue('min_mm', return_type = int, default = None, NoLog = True)
             self.max_mm = self.config.ReadValue('max_mm', return_type = int, default = None, NoLog = True)
             self.scan_time = self.config.ReadValue('scan_time', return_type = int, default = 15)    # num of seconds to scan
+            self.send_notices = self.config.ReadValue('send_notices', return_type = bool, default = False)
 
             if self.MonitorAddress == None or not len(self.MonitorAddress):
                 self.MonitorAddress = ProgramDefaults.LocalHost
@@ -146,22 +147,13 @@ class GenMopekaData(MySupport):
                 # default tank mim
                 self.min_mm = 38.1
 
-            if self.tank_type.lower() == "20_lb":
+            if self.tank_type.lower() == "20_lb":       # vertical
                 self.max_mm = 254
-            elif self.tank_type.lower() == "30_lb":
+            elif self.tank_type.lower() == "30_lb":     # vertical
                 self.max_mm = 381
-            elif self.tank_type.lower() == "40_lb":
+            elif self.tank_type.lower() == "40_lb":     # vertical
                 self.max_mm = 508
-            elif self.tank_type.lower() == "100_lb":
-                self.max_mm = 915
-            elif self.tank_type.lower() == "100_gal":
-                # TODO
-                self.max_mm = 915
-            elif self.tank_type.lower() == "250_gal":
-                # TODO
-                self.max_mm = 915
-            elif self.tank_type.lower() == "500_gal":
-                # TODO
+            elif self.tank_type.lower() == "100_lb":    # vertical, 24 Gal
                 self.max_mm = 915
             elif self.tank_type.lower() == "custom":
                 # TODO
@@ -170,6 +162,18 @@ class GenMopekaData(MySupport):
                     self.LogConsole("Invalid min/max for custom tank type: min:" + str(self.min_mm) + ", max: " + str(self.max_mm))
                     sys.exit(1)
 
+            self.TankDimensions = {
+                # units are inches and gallons
+                "20_lb" : { "length" : 18, "diameter" : 12, "volume" : 4.6, "orientation" : "vertical"},
+                "30_lb" : { "length" : 24, "diameter" : 12.5, "volume" : 7.1,  "orientation" : "vertical"},
+                "40_lb" : { "length" : 27, "diameter" : 14.5, "volume" : 9.4,  "orientation" : "vertical"},
+                "100_lb" : { "length" : 48, "diameter" : 14.5, "volume" : 24,  "orientation" : "vertical"},
+                "200_lb" : { "length" : 48, "diameter" : 19.5, "volume" : 46,  "orientation" : "vertical"},
+                "120_gal" : { "length" : 52, "diameter" : 30, "volume" : 120,  "orientation" : "vertical"},
+                "250_gal" : { "length" : 92, "diameter" : 30, "volume" : 250,  "orientation" : "horizontal"},
+                "500_gal" : { "length" : 120, "diameter" : 37, "volume" : 500,  "orientation" : "horizontal"},
+                "1000_gal" : { "length" : 190, "diameter" : 41,  "volume" : 1000, "orientation" : "horizontal"},
+            }
             self.LogDebug("min: " + str(self.min_mm) + " , max: " + str(self.max_mm))
             self.LogDebug("Tank Type: " + str(self.tank_type))
 
@@ -209,6 +213,8 @@ class GenMopekaData(MySupport):
     def SendMessage(self, title, body, type, onlyonce = False):
 
         try:
+            if not self.send_notices:
+                return "disabled"
             message = {
                     "title": title,
                     "body": body,
@@ -226,27 +232,134 @@ class GenMopekaData(MySupport):
     def GetTankReading(self, bd_address):
         try:
            
-            if self.min_mm == None or self.max_mm == None:
-                self.LogError("min or max not set: max: " + str(self.max_mm) + "; min: " + (str(self.min_mm)))
-                return None
             if len(self.mopeka.SensorMonitoredList) == 0:
                 self.LogDebug("No sensors monitoried.")
                 return None
             if self.mopeka.SensorMonitoredList[bd_address]._last_packet == None:
+                self.SendMessage("Genmon Warning for Mopeka Sensor Add On","Unable to communicate with Mopeka Pro sensor.", "error", True)
                 self.LogDebug("No sensor comms detected.")
                 return None 
             reading_depth = self.mopeka.SensorMonitoredList[bd_address]._last_packet.TankLevelInMM
             self.LogDebug("Tank Level in mm: " + str(reading_depth))
-            if reading_depth:
-                if reading_depth > self.max_mm:
-                    reading_depth = self.max_mm
-                tanksize = self.max_mm - self.min_mm
-                return round(((reading_depth - self.min_mm) / tanksize ) * 100, 2)
-            else:
-                return 0
+            battery = self.mopeka.SensorMonitoredList[bd_address]._last_packet.BatteryPercent
+            if battery < 15:
+                message = "Warning, battery is low. Battery percentage is " + str(battery)
+                self.SendMessage("Genmon Warning for Mopeka Sensor Add On",message, "error", True)
+            return self.ConvertTankReading(reading_depth)
+            
         except Exception as e1:
             self.LogErrorLine("Error in GetTankReading: " + str(e1))
             return None
+
+    # ---------- GenMopekaData::MmToInches--------------------------------------------
+    def MmToInches(self, mm):
+
+        try:
+            if mm <= 0:
+                return 0
+            else:
+                return round(mm / 25.4, 2)
+        
+        except Exception as e1:
+            self.LogErrorLine("Error in MmToInches: " + str(e1))
+            return 0
+    # ---------- GenMopekaData::ConvertTankReading-----------------------------------
+    def ConvertTankReading(self, reading_mm):
+
+        try:
+            if reading_mm == None:
+                return 0
+
+            reading_inches = self.MmToInches(reading_mm)
+            dimensions = self.TankDimensions.get(self.tank_type.lower(), None)
+            self.LogDebug("Tank Level in inches: " + str(reading_inches))
+
+            if dimensions == None:
+                self.LogDebug("No tank dimensions found for tank type " + str(self.tank_type))
+                if self.max_mm != None or self.min_mm != None:
+                    self.LogDebug("Error: min: " + str(self.min_mm) + " , max: " + str(self.max_mm))
+                    return None
+                
+                if reading_mm > self.max_mm:
+                    reading_mm = self.max_mm
+                tanksize = self.max_mm - self.min_mm
+                return round(((reading_mm - self.min_mm) / tanksize ) * 100, 2)
+
+            if dimensions["orientation"].lower() == "horizontal":
+                volume = self.CalculateHorizontal(dimensions["diameter"], dimensions["length"],reading_inches)
+            elif dimensions["orientation"].lower() == "vertical":
+                volume = self.CalculateVertical(dimensions["diameter"], dimensions["length"],reading_inches)
+            else:
+                self.LogError("Error in ConvertTankReading: invalid value in dimenstions: " + str(dimensions["orientation"]))
+                return 0
+            self.LogDebug("Volume: " + str(volume))
+            if volume >= dimensions["volume"]:
+                return 100
+            return round((volume / dimensions["volume"]) * 100, 2)
+
+        except Exception as e1:
+            self.LogErrorLine("Error in ConvertTankReading: " + str(e1))
+            return None
+
+    # ---------- GenMopekaData::SegmentArea-----------------------------------
+    def SegmentArea(self, depth, diameter):
+
+        try:
+            if depth > 0 and diameter > 0:
+                radius = diameter / 2
+                temp = radius - depth
+                chordl = 2 * math.sqrt(2* depth * radius - depth * depth)
+                ang = math.acos(temp/radius) * 2
+                arcl = ang * radius
+                seg = ((arcl * radius - chordl * temp )/2)
+                return seg 
+            else:
+                return 0
+        except Exception as e1:
+            self.LogErrorLine("Error in SegmentArea: " + str(e1))
+            return 0
+        
+    # ---------- GenMopekaData::CalculateHorizontal------------------------
+    def CalculateHorizontal(self, diameter, length, depth):
+
+        try:
+            if depth > diameter:
+                depth = diameter 
+            if diameter > 1 and length > 1 and depth > 0:
+                area = self.SegmentArea(depth, diameter)
+                volume = ((area * length) / 1728) * 7.48
+                return round(volume , 2)
+            else:
+                return 0
+        except Exception as e1:
+            self.LogErrorLine("Error in CalcRoundHorizontal: " + str(e1))
+            return 0
+
+    # ---------- GenMopekaData::CalculateVertical------------------------
+    def CalculateVertical(self, diameter, length, depth):
+
+        # Everything is passed in inches and returned in gallons.
+        # Remember that a Propane tank is considered full at 80% but the Tank Sensor mainly shows a percentage anyways.
+        # When so when I fill my 250 gal tank, they only put 200 gal in it. 
+        # The Tank App shows 80% full, BUT you can easily scale that to 
+        # 0-100% by using tank size io gallons x .8
+
+        self.LogDebug("diameter: " + str(diameter) + " length: " + str(length) + " depth: " + str(depth) )
+        try:
+            if depth > length:
+                # If tank is over full then it equals full 
+                depth = length 
+            if diameter > 1 and length > 1 and depth > 0:
+                radius = diameter / 2 
+                area = ((radius * radius) *math.pi) * depth # cubic inches 
+                volume = (area / 1728) * 7.48   # cubic inches to cubic feet, then to gallons
+                return round(volume , 2)
+            else:
+                return 0
+        except Exception as e1:
+            self.LogErrorLine("Error in CalcRoundVertical: " + str(e1))
+            return 0
+
     # ---------- GenMopekaData::TankCheckThread-----------------------------------
     def TankCheckThread(self):
 
