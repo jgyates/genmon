@@ -1733,6 +1733,12 @@ class Evolution(GeneratorController):
             # get pickup voltage
             PickupVoltage = self.GetPickUpVoltage(ReturnInt = True)
 
+            if self.Evolution2 and self.IgnoreUnknown:
+                if ThresholdVoltage >= self.NominalLineVolts or PickupVoltage >= self.NominalLineVolts:
+                    return
+                if UtilityVolts >= (self.NominalLineVolts * 2.5):
+                    return
+
             # if something is wrong then we use some sensible values here
             if PickupVoltage == 0:
                 PickupVoltage = DEFAULT_PICKUP_VOLTAGE
