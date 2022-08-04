@@ -117,7 +117,7 @@
       "value": "2800",
       "type": "bits",
       "title": "Switch Status",
-      "text": "Automatic - Generator Ready"
+      "text": "Automatic"
     },
     {
       "reg": "004f",
@@ -125,33 +125,57 @@
       "value": "2000",
       "type": "bits",
       "title": "Switch Status",
-      "text": "Manual - Generator is Off"
+      "text": "Manual"
     }
   ],
   "generator_status": [
     {
-      "reg": "004e",
-      "mask": "0040",
+      "reg": "004f",
+      "mask": "7F00",
       "type": "bits",
-      "value": "0040",
-      "title": "Generator Status",
-      "text": "Generating"
+      "value": "3900",
+      "title": "Power Status",
+      "text": "Initialized"
     },
     {
       "reg": "004f",
-      "mask": "0200",
+      "mask": "7F00",
       "type": "bits",
       "title": "Power Status",
-      "text": "Load on Generator",
-      "value": "0200"
+      "text": "Generating",
+      "value": "3B00"
     },
     {
       "reg": "004f",
-      "mask": "0400",
+      "mask": "7F00",
       "type": "bits",
       "title": "Power Status",
-      "text": "Load on Utility",
-      "value": "0400"
+      "text": "Shutdown Pending",
+      "value": "6B00"
+    },
+    {
+      "reg": "004f",
+      "mask": "7F00",
+      "type": "bits",
+      "title": "Power Status",
+      "text": "Cool Down at Idle",
+      "value": "6900"
+    },
+    {
+      "reg": "004f",
+      "mask": "7F00",
+      "type": "bits",
+      "title": "Power Status",
+      "text": "Off - Ready",
+      "value": "6800"
+    },
+    {
+      "reg": "004f",
+      "mask": "7F00",
+      "type": "bits",
+      "title": "Power Status",
+      "text": "Exercising",
+      "value": "7100"
     }
   ],
   "alarm_conditions": [
@@ -405,14 +429,6 @@
     },
     {
       "reg": "004f",
-      "mask": "0040",
-      "type": "bits",
-      "title": "Status",
-      "text": "Generator Stopped with Fault",
-      "value": "0040"
-    },
-    {
-      "reg": "004f",
       "mask": "0020",
       "type": "bits",
       "title": "Status",
@@ -446,15 +462,24 @@
   ],
   "engine_state": [
     {
-      "reg": "004e",
-      "mask": "0100",
-      "value": "0",
+      "reg": "004f",
+      "mask": "80",
+      "value": "80",
       "type": "bits",
       "title": "Engine State",
       "text": "Stopped"
     },
     {
-      "reg": "004e",
+      "reg": "004f",
+      "mask": "40",
+      "value": "40",
+      "type": "bits",
+      "title": "Engine State",
+      "text": "Stopped with Fault"
+    },
+
+    {
+      "reg": "004f",
       "mask": "0100",
       "value": "0100",
       "type": "bits",
@@ -486,14 +511,6 @@
       "type": "bits",
       "title": "GCU Mode",
       "text": "Config"
-    },
-    {
-      "reg": "004f",
-      "mask": "0010",
-      "type": "bits",
-      "title": "Status",
-      "text": "Generator Available",
-      "value": "0010"
     },
     {
       "reg": "004f",
@@ -639,22 +656,11 @@
   ],
   "gauges": [
     {
-      "reg": "0038",
-      "mask": "ffff",
-      "multiplier": 0.1,
-      "type": "float",
-      "title": "Battery",
-      "units": "V",
-      "sensor": "batteryvolts",
-      "nominal": 12,
-      "maximum": 24
-    },
-    {
       "reg": "0011",
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
-      "title": "Mains L1-L2",
+      "title": "Utility L1-L2",
       "units": "V",
       "sensor": "linevolts",
       "nominal": 240
@@ -664,7 +670,7 @@
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
-      "title": "Mains L1",
+      "title": "Utility L1",
       "units": "Hz",
       "sensor": "frequency",
       "nominal": 60
@@ -674,10 +680,21 @@
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
-      "title": "Mains L2",
+      "title": "Utility L2",
       "units": "Hz",
       "sensor": "frequency",
       "nominal": 60
+    },
+    {
+      "reg": "0038",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Battery",
+      "units": "V",
+      "sensor": "batteryvolts",
+      "nominal": 12,
+      "maximum": 24
     },
     {
       "reg": "0004",
@@ -724,7 +741,7 @@
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
-      "title": "L1 Current",
+      "title": "Generator L1",
       "sensor": "current",
       "units": "A",
       "nominal": 100
@@ -734,7 +751,7 @@
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
-      "title": "L2 Current",
+      "title": "Generator L2",
       "sensor": "current",
       "units": "A",
       "nominal": 100
