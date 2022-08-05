@@ -441,7 +441,7 @@ class Monitor(MySupport):
                 "genloader.log", "myserialtcp.log", "genlog.log", "genslack.log",
                 "genexercise.log","genemail2sms.log", "gentankutil.log", "genalexa.log",
                 "gensnmp.log","gentemp.log", "gentankdiy.log", "gengpioledblink.log",
-                "gencthat.log"]
+                "gencthat.log", "genmopeka.log"]
             for File in FilesToSend:
                 LogFile = self.LogLocation + File
                 if os.path.isfile(LogFile):
