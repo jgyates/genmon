@@ -1760,7 +1760,7 @@ class Evolution(GeneratorController):
                         msgbody = "\nPower is being supplied by the generator. "
                         self.MessagePipe.SendMessage("Transfer Switch Changed State Notice at " + self.SiteName, msgbody, msgtype = "outage")
 
-            self.CheckForOutageCommon(self, UtilityVolts, ThresholdVoltage, PickupVoltage)
+            self.CheckForOutageCommon(UtilityVolts, ThresholdVoltage, PickupVoltage)
             
         except Exception as e1:
             self.LogErrorLine("Error in CheckForOutage: " + str(e1))
