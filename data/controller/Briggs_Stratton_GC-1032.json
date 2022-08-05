@@ -787,17 +787,6 @@
       "nominal": 20
     }
   ],
-  "power": [
-    {
-      "reg": "001d",
-      "mask": "ffff",
-      "multiplier": 0.1,
-      "type": "float",
-      "title": "Power Output",
-      "units": "kW",
-      "sensor": "power"
-    }
-  ],
   "buttons": [
     {
       "onewordcommand": "off",
@@ -844,30 +833,34 @@
       ]
     }
   ],
-  "outputvoltage": [
-    {
+  "power": {
+    "reg": "001d",
+    "mask": "ffff",
+    "multiplier": 0.1,
+    "type": "float",
+    "title": "Power Output",
+    "units": "kW",
+    "sensor": "power"
+  },
+  "outputvoltage": {
       "reg": "0004",
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "int",
       "title": "Output Voltage",
-      "units": "V",
-      "sensor": "linevolts"
-    }
-  ],
-  "linevoltage": [
-    {
-      "reg": "0018",
+      "units": "V"
+    },
+  "linevoltage": {
+      "reg": "0011",
       "mask": "ffff",
       "multiplier": 0.1,
-      "type": "int",
+      "type": "float",
       "title": "Utility Voltage",
-      "units": "V",
-      "sensor": "linevolts"
-    }
-  ],
-  "run_hours": [
-    {
+      "units": "V"
+    },
+  "thresholdvoltage": 143,
+  "pickupvoltage": 190,
+  "run_hours": {
       "reg": "003c",
       "mask": "ffffffff",
       "multiplier": 1,
@@ -875,5 +868,4 @@
       "title": "Run Hours",
       "units": "h"
     }
-  ]
 }

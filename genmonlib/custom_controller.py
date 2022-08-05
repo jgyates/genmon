@@ -40,6 +40,7 @@ class CustomController(GeneratorController):
         self.EventAccessLock = threading.RLock()     # lock to synchronize access to the logs
         self.ConfigValidated = False
         self.ControllerDetected = False
+        self.DisableOutageCheck = False
 
         self.DaysOfWeek = { 0: "Sunday",    # decode for register values with day of week
                             1: "Monday",
@@ -112,6 +113,7 @@ class CustomController(GeneratorController):
             self.FuelFullRate = self.config.ReadValue('full_rate', return_type = float, default = 0.0)
             self.UseFuelSensor = self.config.ReadValue('usesensorforfuelgauge', return_type = bool, default = True)
             self.UseCalculatedPower = self.config.ReadValue('usecalculatedpower', return_type = bool, default = False)
+            self.DisableOutageCheck = self.config.ReadValue('disableoutagecheck', return_type = bool, default = False)
 
             self.ConfigImportFile = self.config.ReadValue('import_config_file', default = None)
             if self.ConfigImportFile == None:
@@ -145,8 +147,10 @@ class CustomController(GeneratorController):
             return False
 
         return True
-    #-------------CustomController:GetConfigEntry-------------------------------
-    def GetConfigEntry(self, entry_name):
+    #-------------CustomController:GetSingleEntry-------------------------------
+    # get a single value from JSON config or a dynamic value from modbus
+    # Return either a modbus value or a single numeric value from JSON
+    def GetSingleEntry(self, entry_name):
         try:
             ImportedEntry = self.controllerimport[entry_name]
             if isinstance(ImportedEntry, dict): 
@@ -155,7 +159,7 @@ class CustomController(GeneratorController):
                 ImportedValue = int(ImportedEntry)
             return True, ImportedValue
         except Exception as e1:
-            self.LogErrorLine("Error in GetConfigEntry: " + entry_name + ": " + str(e1))
+            self.LogErrorLine("Error in GetSingleEntry: " + entry_name + ": " + str(e1))
             return False, None  
 
     #-------------CustomController:IdentifyController---------------------------
@@ -166,27 +170,27 @@ class CustomController(GeneratorController):
 
             ReturnValue = False 
 
-            ReturnValue, self.NominalLineVolts = self.GetConfigEntry("rated_nominal_voltage")
+            ReturnValue, self.NominalLineVolts = self.GetSingleEntry("rated_nominal_voltage")
             if not ReturnValue:
                 return False
             
-            ReturnValue, self.NominalBatteryVolts = self.GetConfigEntry("nominal_battery_voltage")
+            ReturnValue, self.NominalBatteryVolts = self.GetSingleEntry("nominal_battery_voltage")
             if not ReturnValue:
                 return False
             
-            ReturnValue, self.NominalFreq = self.GetConfigEntry("rated_nominal_freq")
+            ReturnValue, self.NominalFreq = self.GetSingleEntry("rated_nominal_freq")
             if not ReturnValue:
                 return False
             
-            ReturnValue, self.NominalRPM = self.GetConfigEntry("rated_nominal_rpm")
+            ReturnValue, self.NominalRPM = self.GetSingleEntry("rated_nominal_rpm")
             if not ReturnValue:
                 return False
 
-            ReturnValue, self.NominalKW = self.GetConfigEntry("rated_max_output_power_kw")
+            ReturnValue, self.NominalKW = self.GetSingleEntry("rated_max_output_power_kw")
             if not ReturnValue:
                 return False
 
-            ReturnValue, self.Phase = self.GetConfigEntry("generator_phase")
+            ReturnValue, self.Phase = self.GetSingleEntry("generator_phase")
             if not ReturnValue:
                 return False
             
@@ -350,6 +354,37 @@ class CustomController(GeneratorController):
 
         return LineState
 
+    #------------ Evolution:CheckForOutage -------------------------------------
+    # also update min and max utility voltage
+    def CheckForOutage(self):
+
+        try:
+            if not self.InitComplete:
+                return
+
+            if not self.OutageSupported():
+                return 
+
+            # get utility voltage, threshold voltage and pickup voltage 
+            ReturnValue, UtilityVolts = self.GetSingleEntry("linevoltage")
+            if not ReturnValue:
+                return
+            ReturnValue, ThresholdVoltage = self.GetSingleEntry("thresholdvoltage")
+            if not ReturnValue or ThresholdVoltage == 0:
+                ThresholdVoltage = int(self.NominalLineVolts * .60)
+
+            ReturnValue, PickupVoltage = self.GetSingleEntry("pickupvoltage")
+            if not ReturnValue or PickupVoltage == 0:
+                PickupVoltage = int(self.NominalLineVolts * .80)
+
+            ThresholdVoltage = int(ThresholdVoltage)
+            PickupVoltage = int(PickupVoltage)
+
+            self.CheckForOutageCommon( UtilityVolts, ThresholdVoltage, PickupVoltage)
+
+        except Exception as e1:
+            self.LogErrorLine("Error in CheckForOutage: " + str(e1))
+
     #------------ CustomController:CheckForAlarms ------------------------------
     def CheckForAlarms(self):
 
@@ -357,6 +392,10 @@ class CustomController(GeneratorController):
             status_included = False
             if not self.InitComplete:
                 return
+
+            if self.OutageSupported():
+                self.CheckForOutage()
+
             # Check for changes in engine state
             EngineState = self.GetEngineState()
             EngineState += self.GetSwitchState()
@@ -480,6 +519,20 @@ class CustomController(GeneratorController):
             self.LogErrorLine("Error in GetDateTime: " + str(e1))
             return ErrorReturn
 
+    #------------ CustomController::OutageSupported -----------------------------------
+    def OutageSupported(self):
+
+        if self.DisableOutageCheck:
+            # do not check for outage
+            return False 
+
+        if "linevoltage" in self.controllerimport.keys():
+            if "thresholdvoltage" in self.controllerimport.keys():
+                if "pickupvoltage" in self.controllerimport.keys():
+                    return True
+
+        return False 
+
     #------------ CustomController::GetStartInfo --------------------------------------
     # return a dictionary with startup info for the gui
     def GetStartInfo(self, NoTile = False):
@@ -519,7 +572,7 @@ class CustomController(GeneratorController):
                 StartInfo["pages"] = {
                                 "status":True,
                                 "maint":True,
-                                "outage":False,
+                                "outage":self.OutageSupported(),
                                 "logs":False,
                                 "monitor": True,
                                 "maintlog" : True,
@@ -537,6 +590,7 @@ class CustomController(GeneratorController):
             self.LogErrorLine("Error in GetStartInfo: " + str(e1))
 
         return StartInfo
+    
     #------------ CustomController::GetStatusForGUI -----------------------------------
     # return dict for GUI
     def GetStatusForGUI(self):
@@ -1023,20 +1077,59 @@ class CustomController(GeneratorController):
     #------------ GeneratorController:GetRunHours ------------------------------
     # return a string with no units of run hours
     def GetRunHours(self):
-
-        run_hours = self.GetSingleSensor("run_hours")
-        run_hours = self.removeAlpha(run_hours)
-        return run_hours
+        try:
+            ReturnValue, run_hours = self.GetSingleEntry("run_hours")
+            if not ReturnValue:
+                return "0"
+            run_hours = self.removeAlpha(str(run_hours))
+            return run_hours
+        except Exception as e1:
+            self.LogErrorLine("Error in GetRunHours : " + str(e1))
+            return "0"
 
     #------------------- CustomController::DisplayOutage -----------------------
     def DisplayOutage(self, DictOut = False, JSONNum = False):
 
         try:
+
             Outage = collections.OrderedDict()
             Outage["Outage"] = []
 
-            Outage["Outage"].append({"Status" : "Not Supported"})
+            if not self.OutageSupported:
+                Outage["Outage"].append({"Status" : "No Supported"})
+                if not DictOut:
+                    return self.printToString(self.ProcessDispatch(Outage,""))
+                return Outage
+
+            if self.SystemInOutage:
+                outstr = "System in outage since %s" % self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                if self.ProgramStartTime != self.OutageStartTime:
+                    OutageStr = str(self.LastOutageDuration).split(".")[0]  # remove microseconds from string
+                    outstr = "Last outage occurred at %s and lasted %s." % (self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"), OutageStr)
+                else:
+                    outstr = "No outage has occurred since program launched."
+
+            Outage["Outage"].append({"Status" : outstr})
             Outage["Outage"].append({"System In Outage" : "Yes" if self.SystemInOutage else "No"})
+
+             # get utility voltage
+            
+            bSuccess, UtilityVoltage = self.GetSingleEntry("linevoltage")
+            if bSuccess:
+                Outage["Outage"].append({"Utility Voltage" : self.ValueOut(UtilityVoltage, "V", JSONNum)})
+            Outage["Outage"].append({"Utility Voltage Minimum" : self.ValueOut(self.UtilityVoltsMin, "V", JSONNum)})
+            Outage["Outage"].append({"Utility Voltage Maximum" : self.ValueOut(self.UtilityVoltsMax, "V", JSONNum)})
+
+            bSuccess, ThresholdVoltage = self.GetSingleEntry("thresholdvoltage")
+            if bSuccess:
+                Outage["Outage"].append({"Utility Threshold Voltage" : self.ValueOut(int(ThresholdVoltage), "V", JSONNum)})
+
+            bSuccess, PickupVoltage = self.GetSingleEntry("pickupvoltage")
+            if bSuccess:
+                Outage["Outage"].append({"Utility Pickup Voltage" : self.ValueOut(int(PickupVoltage), "V", JSONNum)})
+
+            Outage["Outage"].append({"Outage Log" : self.DisplayOutageHistory()})
 
         except Exception as e1:
             self.LogErrorLine("Error in DisplayOutage: " + str(e1))
@@ -1127,7 +1220,13 @@ class CustomController(GeneratorController):
             if ReturnValue !=  None:
                 return ReturnValue
 
-            return self.GetSingleSensor("power", ReturnFloat = ReturnFloat)
+            bSuccess, PowerValue = self.GetSingleEntry("power")
+            if not bSuccess:
+                return DefaultReturn
+            if ReturnFloat:
+                return float(PowerValue)
+            return PowerValue
+            
         except Exception as e1:
             self.LogErrorLine("Error in GetPowerOutput: " + str(e1))
             return "Unknown"
@@ -1164,11 +1263,7 @@ class CustomController(GeneratorController):
                 strict = ExternalData['strict']
 
             if strict:
-                if not "linevoltage" in self.controllerimport.keys():
-                    self.LogError("WARNING: no linevoltage in custom controller defintion")
-                    return DefaultReturn
-                linevoltage = self.GetSingleSensor("linevoltage", ReturnFloat = ReturnFloat)
-                if linevoltage != 0:    # outage
+                if not self.SystemInOutage:
                     if gauge:
                         return DefaultReturn
                     else:
@@ -1179,7 +1274,9 @@ class CustomController(GeneratorController):
                 self.LogDebug("WARNING: no outputvoltage in custom controller defintion")
                 Voltage = None
             else:
-                Voltage =  self.GetSingleSensor("outputvoltage", ReturnFloat = ReturnFloat)
+                bSuccess, Voltage =  self.GetSingleEntry("outputvoltage")
+                if not bSuccess:
+                    return DefaultReturn
 
             if isinstance(Voltage, str):
                 # TODO why is this needed?
@@ -1259,7 +1356,12 @@ class CustomController(GeneratorController):
             return None
 
         try:
-            return self.GetSingleSensor("fuel", ReturnInt = ReturnInt)
+            ReturnVal, FuelValue = self.GetSingleEntry("fuel")
+            if not ReturnVal:
+                return None
+            if ReturnInt:
+                return int(FuelValue)
+            return FuelValue
         except Exception as e1:
             self.LogErrorLine("Error in GetFuelSensor: " + str(e1))
             return "Unknown"

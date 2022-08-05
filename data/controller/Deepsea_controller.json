@@ -459,41 +459,31 @@
                                ]
       }
     ],
-    "power": [
-      {
+    "power": {
           "reg": "0600",
           "mask": "ffff",
           "multiplier": 0.001,
           "type": "float",
           "title": "Power Output",
-          "units": "kW",
-          "sensor": "power"
-      }
-    ],
-    "fuel": [
-      {
+          "units": "kW"
+      },
+    "fuel": {
           "reg": "0403",
           "mask": "ffff",
           "multiplier": 1,
           "type": "int",
           "title": "Fuel Sensor",
-          "units": "%",
-          "sensor": "fuel"
-      }
-    ],
-    "outputvoltage": [
-      {
+          "units": "%"
+      },
+    "outputvoltage": {
         "reg": "0408",
         "mask": "ffff",
         "multiplier": 1,
         "type": "int",
         "title": "Output Voltage",
-        "units": "V",
-        "sensor": "linevolts"
-      }
-    ],
-    "linevoltage": [
-      {
+        "units": "V"
+      },
+    "linevoltage": {
         "reg": "0424",
         "mask": "ffff",
         "multiplier": 1,
@@ -501,16 +491,15 @@
         "title": "Utility Voltage",
         "units": "V",
         "sensor": "linevolts"
-      }
-    ],
-    "run_hours": [
-      {
+      },
+    "run_hours": {
           "reg": "0706",
           "mask": "ffffffff",
           "multiplier": 1,
           "type": "int",
           "title": "Run Hours",
           "units": "h"
-      }
-    ]
+      },
+    "thresholdvoltage": 143,
+    "pickupvoltage": 190
 }

@@ -1548,7 +1548,7 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["controllertype"] = ['list', 'Controller Type', 12, "generac_evo_nexus", "", "generac_evo_nexus,h_100,powerzone,custom", GENMON_CONFIG, GENMON_SECTION, "controllertype"]
 
         import_config_files = GetImportConfigFileNames()
-        ConfigSettings["import_config_file"] = ['list', 'Custom Controller Config File', 21, "evo_lc.json", "", import_config_files, GENMON_CONFIG, GENMON_SECTION, "import_config_file"]
+        ConfigSettings["import_config_file"] = ['list', 'Custom Controller Config File', 21, "Evolution_Liquid_Cooled.json", "", import_config_files, GENMON_CONFIG, GENMON_SECTION, "import_config_file"]
         ConfigSettings["loglocation"] = ['string', 'Log Directory',22, ProgramDefaults.LogPath, "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "loglocation"]
         ConfigSettings["userdatalocation"] = ['string', 'User Defined Data Directory',23, os.path.dirname(os.path.realpath(__file__)), "", "required UnixDir", GENMON_CONFIG, GENMON_SECTION, "userdatalocation"]
         ConfigSettings["enabledebug"] = ['boolean', 'Enable Debug', 24, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "enabledebug"]

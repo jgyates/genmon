@@ -1723,6 +1723,7 @@ class Evolution(GeneratorController):
                 return
 
             UtilityVoltsStr = self.GetUtilityVoltage()
+            # make sure we have a valid register reading
             if not len(UtilityVoltsStr):
                 return
 
@@ -1745,19 +1746,6 @@ class Evolution(GeneratorController):
             if ThresholdVoltage == 0:
                 ThresholdVoltage = DEFAULT_THRESHOLD_VOLTAGE
 
-            # first time thru set the values to the same voltage level
-            if self.UtilityVoltsMin == 0 and self.UtilityVoltsMax == 0:
-                self.UtilityVoltsMin = UtilityVolts
-                self.UtilityVoltsMax = UtilityVolts
-
-            if UtilityVolts > self.UtilityVoltsMax:
-                if UtilityVolts > PickupVoltage:
-                    self.UtilityVoltsMax = UtilityVolts
-
-            if UtilityVolts < self.UtilityVoltsMin:
-                if UtilityVolts > ThresholdVoltage:
-                    self.UtilityVoltsMin = UtilityVolts
-
             TransferStatus = self.GetTransferStatus()
 
             if len(TransferStatus):
@@ -1772,66 +1760,11 @@ class Evolution(GeneratorController):
                         msgbody = "\nPower is being supplied by the generator. "
                         self.MessagePipe.SendMessage("Transfer Switch Changed State Notice at " + self.SiteName, msgbody, msgtype = "outage")
 
-            # Check for outage
-            # are we in an outage now
-            # NOTE: for now we are just comparing these numbers, the generator has a programmable delay
-            # that must be met once the voltage passes the threshold. This may cause some "switch bounce"
-            # testing needed
-            if self.SystemInOutage:
-                if UtilityVolts > PickupVoltage:
-                    self.SystemInOutage = False
-                    self.LastOutageDuration = datetime.datetime.now() - self.OutageStartTime
-                    OutageStr = str(self.LastOutageDuration).split(".")[0]  # remove microseconds from string
-                    msgbody = "\nUtility Power Restored. Duration of outage " + OutageStr
-                    self.MessagePipe.SendMessage("Outage Recovery Notice at " + self.SiteName, msgbody, msgtype = "outage")
-                    try:
-                        if self.FuelConsumptionSupported():
-                            if self.LastOutageDuration.total_seconds():
-                                FuelUsed = self.GetPowerHistory("power_log_json=%d,fuel" % self.LastOutageDuration.total_seconds())
-                            else:
-                                # Outage of zero seconds...
-                                if self.UseMetric:
-                                    FuelUsed = "0 L"
-                                else:
-                                    FuelUsed = "0 gal"
-                            if len(FuelUsed) and not "unknown" in FuelUsed.lower():
-                                OutageStr += "," + FuelUsed
-                    except Exception as e1:
-                        self.LogErrorLine("Error recording fuel usage for outage: " + str(e1))
-                    # log outage to file
-                    if self.LastOutageDuration.total_seconds() > self.MinimumOutageDuration:
-                        self.LogToFile(self.OutageLog, self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"), OutageStr)
-            else:
-                if UtilityVolts < ThresholdVoltage:
-                    if self.CheckOutageNoticeDelay():
-                        self.SystemInOutage = True
-                        self.OutageStartTime = datetime.datetime.now()
-                        msgbody = "\nUtility Power Out at " + self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S")
-                        self.MessagePipe.SendMessage("Outage Notice at " + self.SiteName, msgbody, msgtype = "outage")
-                else:
-                    self.OutageNoticeDelayTime = None
+            self.CheckForOutageCommon(self, UtilityVolts, ThresholdVoltage, PickupVoltage)
+            
         except Exception as e1:
             self.LogErrorLine("Error in CheckForOutage: " + str(e1))
 
-    #------------ Evolution:CheckOutageNoticeDelay -----------------------------
-    def CheckOutageNoticeDelay(self):
-
-        try:
-            if self.OutageNoticeDelay == 0:
-                return True
-
-            if self.OutageNoticeDelayTime == None:
-                self.OutageNoticeDelayTime = datetime.datetime.now()
-                return False
-
-            OutageNoticeDelta = datetime.datetime.now() - self.OutageNoticeDelayTime
-            if self.OutageNoticeDelay > OutageNoticeDelta.total_seconds():
-                return False
-
-            self.OutageNoticeDelayTime = None
-        except Exception as e1:
-            self.LogErrorLine("Error in CheckOutageNoticeDelay: " + str(e1))
-        return True
     #------------ Evolution:CheckForAlarms -------------------------------------
     # Note this must be called from the Process thread since it queries the log registers
     # when in master emulation mode

@@ -16,6 +16,7 @@
         "000e": 2,
         "000f": 2,
         "0010": 2,
+        "0011": 2,
         "0012": 2,
         "005d": 2,
         "0208": 2,
@@ -24,6 +25,7 @@
         "0054": 2,
         "020e": 2,
         "0235": 2,
+        "023b": 2,
         "005a": 2,
         "0059": 2
     },
@@ -514,9 +516,8 @@
                                ]
       }
     ],
-    "fuel": [
-      {
-          "comment":"NOTE: this element will add a fuel gauge in addtion to any defined in the gauges array",
+    "fuel": {
+          "comment":"NOTE: this element will add a fuel gauge in addition to any defined in the gauges array",
           "reg": "005d",
           "mask": "ffff",
           "multiplier": 1,
@@ -524,10 +525,8 @@
           "title": "Fuel Sensor",
           "units": "%",
           "sensor": "fuel"
-      }
-    ],
-    "outputvoltage": [
-      {
+      },
+    "outputvoltage": {
         "reg": "0012",
         "mask": "ffff",
         "multiplier": 1,
@@ -535,10 +534,8 @@
         "title": "Output Voltage",
         "units": "V",
         "sensor": "linevolts"
-      }
-    ],
-    "linevoltage": [
-      {
+      },
+    "linevoltage": {
         "reg": "0009",
         "mask": "ffff",
         "multiplier": 1,
@@ -546,10 +543,26 @@
         "title": "Utility Voltage",
         "units": "V",
         "sensor": "linevolts"
-      }
-    ],
-    "run_hours": [
-      {
+      },
+    "thresholdvoltage": {
+        "reg": "0011",
+        "mask": "ffff",
+        "multiplier": 1,
+        "type": "int",
+        "title": "Threshold Voltage",
+        "units": "V",
+        "sensor": "linevolts"
+      },
+    "pickupvoltage": {
+        "reg": "023b",
+        "mask": "ffff",
+        "multiplier": 1,
+        "type": "int",
+        "title": "Pickup Voltage",
+        "units": "V",
+        "sensor": "linevolts"
+      },
+    "run_hours": {
           "reg": "000b",
           "mask": "ffffffff",
           "multiplier": 1,
@@ -557,5 +570,4 @@
           "title": "Run Hours",
           "units": "h"
       }
-    ]
 }
