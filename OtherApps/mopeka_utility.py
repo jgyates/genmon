@@ -84,7 +84,12 @@ if __name__ == '__main__':
         print("\nNOTE: This program will look for Mopeka Pro Sensors. The SYNC button must be pressed and held for the discovery process to work.\n")
         print("Starting Discovery....")
         service.DoSensorDiscovery()
-        service.Start()
+        try:
+            service.Start()
+        except Exception as e1:
+            print("Error starting discovery. Validate that Blootooth is enabled: " + str(e1))
+            sys.exit(2)
+            
         time.sleep(5)
         service.Stop()
 
