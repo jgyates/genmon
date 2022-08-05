@@ -67,12 +67,14 @@ if __name__ == '__main__':
         try: 
             import bleson       # used by mopeka lib
         except Exception as e1:
-            print("The requires library bleson is not installed.")
+            print("The requires library bleson is not installed." + str(e1)  + " " + GetErrorInfo())
+            print("Install the library with this command: sudo pip3 install mopeka_pro_check")
             sys.exit(2)
         try:
             from mopeka_pro_check.service import MopekaService, MopekaSensor, GetServiceInstance
         except Exception as e1:
-            print("The requires library mopeka_pro_check is not installed.")
+            print("The required library mopeka_pro_check is not installed." + str(e1)  + " " + GetErrorInfo())
+            print("Install the library with this command: sudo pip3 install mopeka_pro_check")
             sys.exit(2)
         
         signal.signal(signal.SIGTERM, SignalClose)
@@ -87,9 +89,9 @@ if __name__ == '__main__':
         try:
             service.Start()
         except Exception as e1:
-            print("Error starting discovery. Validate that Blootooth is enabled: " + str(e1))
+            print("Error starting discovery. Validate that Blootooth is enabled: " + str(e1)  + " " + GetErrorInfo())
             sys.exit(2)
-            
+
         time.sleep(5)
         service.Stop()
 
