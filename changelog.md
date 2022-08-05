@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - Corrected one bug in serialconfig.py
 - Minor update to custom controller support to handle failed comms display notice 
 - Added Mopeka Pro Propane Sensor Add On
+- Minor update to better enforce the "Ignore Unknowns" advanced option for Evolution 2.0
 - Added outage reporting for custom controllers. See wiki for more details.
 
 ## V1.18.12 -2022-06-21
