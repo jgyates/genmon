@@ -141,6 +141,7 @@ class GeneratorController(MySupport):
 
                 if self.config.HasOption('outagelog'):
                     self.OutageLog = self.config.ReadValue('outagelog')
+                    self.LogError("Using alternate outage logfile: " + str(self.OutageLog))
 
                 if self.config.HasOption('kwlog'):
                     self.PowerLog = self.config.ReadValue('kwlog')
