@@ -152,6 +152,8 @@ class CustomController(GeneratorController):
     # Return either a modbus value or a single numeric value from JSON
     def GetSingleEntry(self, entry_name):
         try:
+            if not entry_name in self.controllerimport:
+                return False, None
             ImportedEntry = self.controllerimport[entry_name]
             if isinstance(ImportedEntry, dict): 
                 ImportedTitle, ImportedValue = self.GetDisplayEntry(ImportedEntry, JSONNum = False, no_units = True)
