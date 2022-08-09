@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 #    FILE: ClientInterface.py
 # PURPOSE:
 #
 #  AUTHOR: Jason G Yates
 #    DATE: 17-Dec-2016
 # MODIFICATIONS:
-#------------------------------------------------------------
+#-------------------------------------------------------------------------------
 import sys, signal, getopt
 
 try:
@@ -19,14 +19,14 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-#----------  Signal Handler ------------------------------------------
+#----------  Signal Handler ----------------------------------------------------
 def signal_handler(signal, frame):
 
     if MyClientInterface != None:
         MyClientInterface.Close()
     sys.exit(0)
 
-#------------------- Command-line interface for monitor -----------------#
+#------------------- Command-line interface for monitor ------------------------
 if __name__=='__main__': # usage program.py [server_address] [port]
     address=ProgramDefaults.LocalHost
     port = ProgramDefaults.ServerPort
