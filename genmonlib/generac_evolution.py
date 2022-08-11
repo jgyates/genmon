@@ -711,7 +711,7 @@ class Evolution(GeneratorController):
         ModelInfo = LookUp.get(int(Value,16), UnknownList)
 
         if ModelInfo == UnknownList:
-            self.FeedbackPipe.SendFeedback("ModelID", Message="Model ID register is unknown", FullLogs = True )
+            self.FeedbackPipe.SendFeedback("ModelID", Message="Model ID register is unknown: %s" % str(Value), FullLogs = True )
 
         if Request.lower() == "frequency":
             if ModelInfo[1] == "60" or ModelInfo[1] == "50":
@@ -2632,7 +2632,7 @@ class Evolution(GeneratorController):
             if not self.IgnoreUnknown:
                 return regvalue
 
-            IgnoreList = [0x2020, 0x20200000, 0x3f3d0000,  0x3f3d, 0x3430, 0x6f670000, 0x6f67, 0x6538, 0x6538]
+            IgnoreList = [0x2020, 0x20200000, 0x3f3d0000,  0x3f3d, 0x3430, 0x6f670000, 0x6f67, 0x6538]
 
             if regvalue in IgnoreList:
                 return None
