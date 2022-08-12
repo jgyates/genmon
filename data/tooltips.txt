@@ -55,7 +55,7 @@ fuel_log_freq = The frequency in minutes to log the fuel level to a file.
 fuel_log = The full path and file name of the fuel log
 currentdivider = This is a value to override the divisor used to calculate the current for Evolution units. This value is expressed in floating point. Leave blank to use the default value.
 currentoffset = This value provides an offset to compensate for mis-calibrated current transformers in Evolution generators. This may need to be used if you you see a negative current value displayed for Evolution Air Cooled Generators. The default value is zero. Leave blank to use the default value.
-legacy_power = If enabled this will allow the use of the older method to calculate current / power for Evoltuion Air Cooled controllers
+legacy_power = If enabled this will allow the use of the older method to calculate current / power for Evolution Air Cooled controllers
 disableplatformstats = If enabled, platform statistics will not be displayed in the user interface
 optimizeforslowercpu = If enabled, minor optimizations for slower CPUs will be used. Note that this is a design trade off for responsiveness vs CPU utilization.
 disableweather= Disable weather feature
@@ -87,9 +87,9 @@ smart_transfer_switch = If enabled a smart transfer switch is utilized and the g
 serialnumberifmissing= If the serial number is not present due to the controller being replaced you can override the missing serial number and still have the software lookup model information. This is a numeric value that must be ten digits. Pad leading zeros if you serial number is less than 10 digits.
 additionalrunhours= Nexus controllers (not Evolution) do not have the ability to set the run hours. If your controller has been replaced you can use this entry to add hours to the Run Hours reported by the in the UI. Note: If this option is used it will only modify the run hours displayed in the web interface. It will not affect the controllers internal maintenance counters. This value must be a numeric value.
 additional_modbus_timeout=Add this value (in seconds) to the modbus timeout value. Floating point value.
-watchdog_addition=Additionl delay before a communication timeout notification
+watchdog_addition=Additional delay before a communication timeout notification
 disablepowerlog=Enable to disable the power log and current reading. Not supported on Nexus.
-estimated_load=The percent load (expesses a a decimal value i.e. .5 = 50 percent) used when estimating the run hours left until the tank is empty.
+estimated_load=The percent load (expresses a a decimal value i.e. .5 = 50 percent) used when estimating the run hours left until the tank is empty.
 subtractfuel=The amount of fuel (gal or L, depending on 'Use Metric' setting) to subtract from the fuel in tank estimate
 half_rate=The unit of fuel for Half and Full Rate parameters. Use this fuel consumption stats for non Evolution units or to override the fuel consumption defaults for Evolution controllers.
 full_rate=The number of units of fuel consumed by your generator at a full load. Use this fuel consumption stats for non Evolution units or to override the fuel consumption defaults for Evolution controllers.
@@ -107,6 +107,7 @@ useraspberrypicputempgauge=If enabled and running on a Raspberry Pi, the CPU tem
 max_login_attempts=The maximum number of failed login attempts to the web interface before a temporary lockout is started. A lockout will prevent any login attempts. If the login failures occur within the time frame of lockout duration then then logins will be blocked for the number of seconds of lockout duration. Set to zero to disable.
 login_lockout_seconds=The number of seconds to perform a lockout if failed logins exceed Maximum Login Attempts. For example if this value is 300 seconds (5 min) and max attempt is 5, then if 5 logins failures occur in a row within 5 minutes, the a lockout will occur for 5 minutes.
 serial_parity=The default for Generac is None. Some (Briggs and Stratton uses Odd) custom controllers may use Odd or Even parity. Note: this is only for direct serial, not for serial over TCP.
+forceserialuse=If enabled, the software will try continue attempt use the serial port even if it is not found when the software is initially loaded. This may be needed for some serial USB devices.
 [generac_evo_nexus]
 0000=Product line
 0001=Switch, Engine and Alarm Status

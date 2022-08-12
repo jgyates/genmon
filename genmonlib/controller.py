@@ -225,7 +225,8 @@ class GeneratorController(MySupport):
     def CheckForOutageCommon(self, UtilityVolts, ThresholdVoltage, PickupVoltage):
 
         try:
-
+            if UtilityVolts == None or ThresholdVoltage == None or PickupVoltage == None:
+                return 
             # first time thru set the values to the same voltage level
             if self.UtilityVoltsMin == 0 and self.UtilityVoltsMax == 0:
                 self.UtilityVoltsMin = UtilityVolts

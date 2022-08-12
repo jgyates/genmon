@@ -286,8 +286,20 @@ class CustomController(GeneratorController):
 
             for sensor in sensor_list:
 
-                title = sensor["title"]
+                if "title" not in sensor:
+                    self.LogError("Error in SetupTiles: no ""title"" in sensor entry")
+                    continue
 
+                if "sensor" not in sensor:
+                    self.LogError("Error in SetupTiles: sensor (" + sensor["title"] + ") has no ""sensor"" entry")
+                    continue 
+                if "units" not in sensor:
+                    self.LogError("Error in SetupTiles: sensor (" + sensor["title"] + ") has no ""units"" entry")
+                    continue 
+                if "nominal" not in sensor:
+                    self.LogError("Error in SetupTiles: sensor (" + sensor["title"] + ") has no ""nominal"" entry")
+                    continue 
+            
                 if "maximum" in sensor:
                     maximum = sensor["maximum"]
                 else:
@@ -369,14 +381,14 @@ class CustomController(GeneratorController):
 
             # get utility voltage, threshold voltage and pickup voltage 
             ReturnValue, UtilityVolts = self.GetSingleEntry("linevoltage")
-            if not ReturnValue:
+            if not ReturnValue or UtilityVolts == None:
                 return
             ReturnValue, ThresholdVoltage = self.GetSingleEntry("thresholdvoltage")
-            if not ReturnValue or ThresholdVoltage == 0:
+            if not ReturnValue or ThresholdVoltage == 0 or ThresholdVoltage == None:
                 ThresholdVoltage = int(self.NominalLineVolts * .60)
 
             ReturnValue, PickupVoltage = self.GetSingleEntry("pickupvoltage")
-            if not ReturnValue or PickupVoltage == 0:
+            if not ReturnValue or PickupVoltage == 0 or PickupVoltage == None:
                 PickupVoltage = int(self.NominalLineVolts * .80)
 
             ThresholdVoltage = int(ThresholdVoltage)
@@ -787,10 +799,10 @@ class CustomController(GeneratorController):
                     items = list(sensor.values())
                     if len(items) == 1:
                         return items[0]
-            return "Unknown"
+            return None
         except Exception as e1:
             self.LogErrorLine("Error in GetGaugeValue: " + str(e1))
-            return "Unknown"
+            return None
     #------------ GeneratorController:GetDisplayList ---------------------------
     # parse a list of modbus values (expressed as dicts) and any sub lists of
     # values (also expressed as dicts, return a displayable dict with parsed values
@@ -987,6 +999,9 @@ class CustomController(GeneratorController):
                 self.LogError("Error: text (default) not found in input to GetDisplayEntry: " + str(entry))
                 return ReturnTitle, ReturnValue
 
+            if entry["type"] != "list" and entry["reg"] not in self.Registers:
+                # have not read the needed register yet
+                return ReturnTitle, ReturnValue
             ReturnTitle = entry["title"]
             if entry["type"] == "bits":
                 value = self.GetParameter(entry["reg"], ReturnInt = True)
@@ -1025,7 +1040,8 @@ class CustomController(GeneratorController):
                 value_list = []
                 for item in list_entry:
                     title, value = self.GetDisplayEntry(item)
-                    value_list.append(str(self.FormatEntry(item, value)))
+                    if value != None:
+                        value_list.append(str(self.FormatEntry(item, value)))
                 ReturnValue = separator.join(value_list)
             elif entry["type"] == "default":
                 ReturnValue = entry["text"]
@@ -1223,7 +1239,7 @@ class CustomController(GeneratorController):
                 return ReturnValue
 
             bSuccess, PowerValue = self.GetSingleEntry("power")
-            if not bSuccess:
+            if not bSuccess or PowerValue == None:
                 return DefaultReturn
             if ReturnFloat:
                 return float(PowerValue)
@@ -1359,14 +1375,14 @@ class CustomController(GeneratorController):
 
         try:
             ReturnVal, FuelValue = self.GetSingleEntry("fuel")
-            if not ReturnVal:
+            if not ReturnVal or FuelValue == None:
                 return None
             if ReturnInt:
                 return int(FuelValue)
             return FuelValue
         except Exception as e1:
             self.LogErrorLine("Error in GetFuelSensor: " + str(e1))
-            return "Unknown"
+            return None
 
     #----------  CustomController::GetFuelConsumptionDataPoints-----------------
     def GetFuelConsumptionDataPoints(self):

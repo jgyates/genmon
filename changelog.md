@@ -1,7 +1,7 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
-## V1.18.13 -2022-06-25
+## V1.18.13 -2022-07-25
 - Minor update for SMTP compatibility (thanks @lps-rocks)
 - Minor update to IMAP incoming email handling (thanks @rwskinner)
 - Update to allow modbus function code 4 instead of 3 for some customer controller support (thanks @marklitwin)
@@ -20,6 +20,8 @@ All notable changes to this project will be documented in this file.
 - Added Mopeka Pro Propane Sensor Add On
 - Minor update to better enforce the "Ignore Unknowns" advanced option for Evolution 2.0
 - Added outage reporting for custom controllers. See wiki for more details.
+- Improved serial error handling for USB devices
+- Improved error handling for custom controller comm errors
 
 ## V1.18.12 -2022-06-21
 - Commented optional enhancements to gengpio.py

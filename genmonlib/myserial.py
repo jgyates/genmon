@@ -47,6 +47,7 @@ class SerialDevice(MySupport):
         if self.config != None:
             self.loglocation = self.config.ReadValue('loglocation', default = '/var/log/')
             self.DeviceName = self.config.ReadValue('port', default = '/dev/serial0')
+            self.ForceSerialUse = self.config.ReadValue('forceserialuse', default = False)
 
         # log errors in this module to a file
         if log == None:
@@ -96,17 +97,22 @@ class SerialDevice(MySupport):
                 try:
                     self.SerialDevice.open()
                 except Exception as e:
-                    self.FatalError( "Error on open serial port %s: " % self.DeviceName + str(e))
-                    return None
+                    if not self.ForceSerialUse:
+                        self.FatalError( "Error on open serial port %s: " % self.DeviceName + str(e))
+                        return None
+                    else:
+                        self.LogErrorLine( "Error on open serial port %s: " % self.DeviceName + str(e))
             else:
-                self.FatalError( "Serial port already open: %s" % self.DeviceName)
+                if not self.ForceSerialUse:
+                    self.FatalError( "Serial port already open: %s" % self.DeviceName)
                 return None
             self.IsOpen = True
             self.Flush()
             self.StartReadThread()
         except Exception as e1:
             self.LogErrorLine("Error in init: " + str(e1))
-            self.FatalError("Error on serial port init!")
+            if not self.ForceSerialUse:
+                self.FatalError("Error on serial port init!")
 
     # ---------- SerialDevice::ResetSerialStats---------------------------------
     def ResetSerialStats(self):
@@ -145,9 +151,16 @@ class SerialDevice(MySupport):
                 #  "device reports readiness to read but returned no data (device disconnected?)"
                 #  This is believed to be a kernel issue so let's just reset the device and hope
                 #  for the best (actually this works)
-                self.Restarts += 1
-                self.SerialDevice.close()
-                self.SerialDevice.open()
+                self.RestartSerial()
+
+    #------------SerialDevice::RestartSerial------------------------------------
+    def RestartSerial(self):
+        try:
+            self.Restarts += 1
+            self.SerialDevice.close()
+            self.SerialDevice.open()
+        except Exception as e1:
+            self.LogErrorLine("Error in RestartSerial: " + str(e1))
 
     #------------SerialDevice::DiscardByte--------------------------------------
     def DiscardByte(self):
@@ -178,6 +191,7 @@ class SerialDevice(MySupport):
 
         except Exception as e1:
             self.LogErrorLine( "Error in SerialDevice:Flush : " + self.DeviceName + ":" + str(e1))
+            self.RestartSerial()
 
     # ---------- SerialDevice::Read---------------------------------------------
     def Read(self):
@@ -185,7 +199,13 @@ class SerialDevice(MySupport):
 
     # ---------- SerialDevice::Write--------------------------------------------
     def Write(self, data):
-        return  self.SerialDevice.write(data)
+
+        try:
+            return  self.SerialDevice.write(data)
+        except Exception as e1:
+            self.LogErrorLine( "Error in SerialDevice:Write : " + self.DeviceName + ":" + str(e1))
+            self.RestartSerial()
+            return False
 
     # ---------- SerialDevice::GetRxBufferAsString------------------------------
     def GetRxBufferAsString(self):

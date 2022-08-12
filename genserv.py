@@ -1544,8 +1544,9 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["additional_modbus_timeout"] = ['float', 'Additional Modbus Timeout (sec)', 8, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "additional_modbus_timeout"]
         ConfigSettings["use_modbus_fc4"] = ['boolean', 'Use Modbus FC4 instead of FC3', 9, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "use_modbus_fc4"]
         ConfigSettings["serial_parity"] = ['list', 'Serial Parity', 10, "None", "", "None,Even,Odd", GENMON_CONFIG, GENMON_SECTION, "serial_parity"]
-        ConfigSettings["watchdog_addition"] = ['float', 'Additional Watchdog Timeout (sec)', 11, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "watchdog_addition"]
-        ConfigSettings["controllertype"] = ['list', 'Controller Type', 12, "generac_evo_nexus", "", "generac_evo_nexus,h_100,powerzone,custom", GENMON_CONFIG, GENMON_SECTION, "controllertype"]
+        ConfigSettings["forceserialuse"] = ['boolean', 'Force Use of Serial Port on Errors', 11, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "forceserialuse"]
+        ConfigSettings["watchdog_addition"] = ['float', 'Additional Watchdog Timeout (sec)', 12, "0.0", "", 0, GENMON_CONFIG, GENMON_SECTION, "watchdog_addition"]
+        ConfigSettings["controllertype"] = ['list', 'Controller Type', 13, "generac_evo_nexus", "", "generac_evo_nexus,h_100,powerzone,custom", GENMON_CONFIG, GENMON_SECTION, "controllertype"]
 
         import_config_files = GetImportConfigFileNames()
         ConfigSettings["import_config_file"] = ['list', 'Custom Controller Config File', 21, "Evolution_Liquid_Cooled.json", "", import_config_files, GENMON_CONFIG, GENMON_SECTION, "import_config_file"]

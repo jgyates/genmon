@@ -652,8 +652,8 @@ class ModbusProtocol(ModbusBase):
 
         try:
             ByteArray = bytearray(Packet)
-            self.Slave.Write(ByteArray)
             self.TxPacketCount += 1
+            self.Slave.Write(ByteArray)
         except Exception as e1:
             self.LogErrorLine("Error in SendPacketAsMaster: " + str(e1))
             self.LogHexList(Packet, prefix = "Packet")

@@ -285,7 +285,7 @@ class MyTile (MyCommon):
             if not self.Callback == None:
                 Value = self.Callback( *self.CallbackParameters)
                 if Value == None:
-                    Value == self.Minimum
+                    Value = self.Minimum
             else:
                 Value = self.Minimum
 
