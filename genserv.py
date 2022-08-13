@@ -1186,40 +1186,41 @@ def GetAddOns():
             display_name = "Strict Usage of CT data")
 
         #GENMOPEKA
-        AddOnCfg['genmopeka'] = collections.OrderedDict()
-        AddOnCfg['genmopeka']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "genmopeka", default = False)
-        AddOnCfg['genmopeka']['title'] = "Mopeka Pro Propane Tank Sensor"
-        Description = "Support Mopeka Pro Propane Tanks Sensor"
-        
-        AddOnCfg['genmopeka']['description'] = Description
-        AddOnCfg['genmopeka']['icon'] = "Genmon"
-        AddOnCfg['genmopeka']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genmopekapy-optional"
-        AddOnCfg['genmopeka']['parameters'] = collections.OrderedDict()
+        if sys.version_info >= (3, 7):
+            AddOnCfg['genmopeka'] = collections.OrderedDict()
+            AddOnCfg['genmopeka']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "genmopeka", default = False)
+            AddOnCfg['genmopeka']['title'] = "Mopeka Pro Propane Tank Sensor"
+            Description = "Support Mopeka Pro Propane Tanks Sensor"
+            
+            AddOnCfg['genmopeka']['description'] = Description
+            AddOnCfg['genmopeka']['icon'] = "Genmon"
+            AddOnCfg['genmopeka']['url'] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genmopekapy-optional"
+            AddOnCfg['genmopeka']['parameters'] = collections.OrderedDict()
 
-        AddOnCfg['genmopeka']['parameters']['poll_frequency'] = CreateAddOnParam(
-            ConfigFiles[GENMOPEKA_CONFIG].ReadValue("poll_frequency", return_type = float, default = 60),
-            'float',
-            "The time in minutes that the sensors are polled. The default value is 60 seconds.",
-            bounds = 'number',
-            display_name = "Poll Interval")
-        AddOnCfg['genmopeka']['parameters']['tank_address'] = CreateAddOnParam(
-            ConfigFiles[GENMOPEKA_CONFIG].ReadValue("tank_address", return_type = str, default = ""),
-            'string',
-            "This value is MAC address of the sensor. It must be in a format using hex numbers separated by colons (i.e. 9a:03:2b:67:25:12). Multiple tank sensors (up to 4) may be used with commas between each address",
-            bounds = '',
-            display_name = "Sensor Address")
-        AddOnCfg['genmopeka']['parameters']['tank_type'] = CreateAddOnParam(
-            ConfigFiles[GENMOPEKA_CONFIG].ReadValue("tank_type", return_type = str, default = '1'),
-            'list',
-            "Type of tank used. If Custom is used then Max and Min values must be setup in /etc/genmon/genmopeka.conf",
-            bounds = '20_LB,30_LB,40_LB,100_LB,200_LB,120_GAL,250_GAL,500_GAL,1000_GAL,Custom',
-            display_name = "Tank Size")
-        AddOnCfg['genmopeka']['parameters']['send_notices'] = CreateAddOnParam(
-            ConfigFiles[GENMOPEKA_CONFIG].ReadValue("send_notices", return_type = bool, default = False),
-            'boolean',
-            "Send email notices if unable to communicate with the senor or the sensor battery is low. Note: outbound email must be setup for this to work.",
-            bounds = '',
-            display_name = "Send Notices")
+            AddOnCfg['genmopeka']['parameters']['poll_frequency'] = CreateAddOnParam(
+                ConfigFiles[GENMOPEKA_CONFIG].ReadValue("poll_frequency", return_type = float, default = 60),
+                'float',
+                "The time in minutes that the sensors are polled. The default value is 60 seconds.",
+                bounds = 'number',
+                display_name = "Poll Interval")
+            AddOnCfg['genmopeka']['parameters']['tank_address'] = CreateAddOnParam(
+                ConfigFiles[GENMOPEKA_CONFIG].ReadValue("tank_address", return_type = str, default = ""),
+                'string',
+                "This value is MAC address of the sensor. It must be in a format using hex numbers separated by colons (i.e. 9a:03:2b:67:25:12). Multiple tank sensors (up to 4) may be used with commas between each address",
+                bounds = '',
+                display_name = "Sensor Address")
+            AddOnCfg['genmopeka']['parameters']['tank_type'] = CreateAddOnParam(
+                ConfigFiles[GENMOPEKA_CONFIG].ReadValue("tank_type", return_type = str, default = '1'),
+                'list',
+                "Type of tank used. If Custom is used then Max and Min values must be setup in /etc/genmon/genmopeka.conf",
+                bounds = '20_LB,30_LB,40_LB,100_LB,200_LB,120_GAL,250_GAL,500_GAL,1000_GAL,Custom',
+                display_name = "Tank Size")
+            AddOnCfg['genmopeka']['parameters']['send_notices'] = CreateAddOnParam(
+                ConfigFiles[GENMOPEKA_CONFIG].ReadValue("send_notices", return_type = bool, default = False),
+                'boolean',
+                "Send email notices if unable to communicate with the senor or the sensor battery is low. Note: outbound email must be setup for this to work.",
+                bounds = '',
+                display_name = "Send Notices")
         
         
     except Exception as e1:

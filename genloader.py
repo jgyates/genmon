@@ -161,6 +161,7 @@ class Loader(MySupport):
             ErrorOccured = False
 
             for Module in ModuleList:
+                # mopeka_pro_check is only for Python 3.7 and higher
                 if (Module[0] == 'mopeka_pro_check' or Module[0] == 'fluids') and sys.version_info < (3, 7):
                     continue
                 if not self.LibraryIsInstalled(Module[0]):
