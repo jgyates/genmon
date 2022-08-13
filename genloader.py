@@ -161,7 +161,7 @@ class Loader(MySupport):
             ErrorOccured = False
 
             for Module in ModuleList:
-                if (Module[0] == 'mopeka_pro_check' or Module[0] == 'fluids') and sys.version_info < (3, 7):
+                if (Module[0] == 'mopeka_pro_check' or Module[0] == 'fluids') and sys.version_info[0] <= 3 and sys.version_info[1] <  7:
                     continue
                 if not self.LibraryIsInstalled(Module[0]):
                     self.LogInfo("Warning: required library " + Module[1] + " not installed. Attempting to install....")
