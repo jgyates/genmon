@@ -154,14 +154,14 @@ class Loader(MySupport):
             ['paho.mqtt.client','paho-mqtt',None],  # for genmqtt
             ['OpenSSL', 'pyopenssl',None],          # SSL
             ['spidev', 'spidev',None],              # spidev
-            ['mopeka_pro_check', 'mopeka_pro_check',None]              # mopeka_pro_check for genmopeka
+            ['mopeka_pro_check', 'mopeka_pro_check',None],              # mopeka_pro_check for genmopeka
             ['fluids', 'fluids', None]              # fluids for genmopeka
         ]
         try:
             ErrorOccured = False
 
             for Module in ModuleList:
-                if (Module[0] == 'mopeka_pro_check' or Module[0] == 'fluids') and sys.version_info[0] <= 3 and sys.version_info[1] <  7:
+                if (Module[0] == 'mopeka_pro_check' or Module[0] == 'fluids') and sys.version_info < (3, 7):
                     continue
                 if not self.LibraryIsInstalled(Module[0]):
                     self.LogInfo("Warning: required library " + Module[1] + " not installed. Attempting to install....")
