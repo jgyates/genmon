@@ -154,8 +154,8 @@ class Loader(MySupport):
             ['paho.mqtt.client','paho-mqtt',None],  # for genmqtt
             ['OpenSSL', 'pyopenssl',None],          # SSL
             ['spidev', 'spidev',None],              # spidev
-            ['mopeka_pro_check', 'mopeka_pro_check',None],              # mopeka_pro_check for genmopeka
-            ['fluids', 'fluids', None]              # fluids for genmopeka
+            ['mopeka_pro_check', 'mopeka_pro_check',None]              # mopeka_pro_check for genmopeka
+            #['fluids', 'fluids', None]              # fluids for genmopeka
         ]
         try:
             ErrorOccured = False
