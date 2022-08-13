@@ -9,9 +9,10 @@
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
 
-# Tank size info: https://learnmetrics.com/propane-tank-sizes/
+
 # https://github.com/spbrogan/sensor.mopeka_pro_check/blob/main/custom_components/mopeka_pro_check/const.py
 # https://github.com/spbrogan/mopeka_pro_check
+# https://www.engineersedge.com/calculators/fluids/propane-tank-dimensional-calculator.htm
 
 
 import time, sys, signal, os, threading, json, math
@@ -60,18 +61,28 @@ class GenMopekaData(MySupport):
         try: 
             from bleson import BDAddress
         except Exception as e1:
-            self.LogConsole("The requires library bleson is not installed.")
-            self.LogErrorLine("The requires library bleson is not installed." + str(e1))
+            self.LogConsole("The required library bleson is not installed.")
+            self.LogErrorLine("The required library bleson is not installed." + str(e1))
             sys.exit(2)
         try:
             from mopeka_pro_check.service import MopekaService, MopekaSensor, GetServiceInstance
         except Exception as e1:
-            self.LogConsole("The requires library mopeka_pro_check is not installed.")
-            self.LogErrorLine("The requires library mopeka_pro_check is not installed: " + str(e1))
+            self.LogConsole("The required library mopeka_pro_check is not installed.")
+            self.LogErrorLine("The required library mopeka_pro_check is not installed: " + str(e1))
             sys.exit(2)
 
-        configfile = os.path.join(ConfigFilePath, 'genmopeka.conf')
         try:
+            from fluids.geometry import TANK
+        except Exception as e1:
+            self.LogConsole("The required library fluids is not installed.")
+            self.LogErrorLine("The required library fluids is not installed: " + str(e1))
+            sys.exit(2)
+
+        
+        try:
+
+            configfile = os.path.join(ConfigFilePath, 'genmopeka.conf')
+
             if not os.path.isfile(configfile):
                 self.LogConsole("Missing config file : " + configfile)
                 self.LogError("Missing config file : " + configfile)
@@ -163,16 +174,20 @@ class GenMopekaData(MySupport):
                     sys.exit(1)
 
             self.TankDimensions = {
+                # Tank size info: https://learnmetrics.com/propane-tank-sizes/
                 # units are inches and gallons
-                "20_lb" : { "length" : 18, "diameter" : 12, "volume" : 4.6, "orientation" : "vertical"},
-                "30_lb" : { "length" : 24, "diameter" : 12.5, "volume" : 7.1,  "orientation" : "vertical"},
-                "40_lb" : { "length" : 27, "diameter" : 14.5, "volume" : 9.4,  "orientation" : "vertical"},
-                "100_lb" : { "length" : 48, "diameter" : 14.5, "volume" : 24,  "orientation" : "vertical"},
-                "200_lb" : { "length" : 48, "diameter" : 19.5, "volume" : 46,  "orientation" : "vertical"},
-                "120_gal" : { "length" : 52, "diameter" : 30, "volume" : 120,  "orientation" : "vertical"},
-                "250_gal" : { "length" : 92, "diameter" : 30, "volume" : 250,  "orientation" : "horizontal"},
-                "500_gal" : { "length" : 120, "diameter" : 37, "volume" : 500,  "orientation" : "horizontal"},
-                "1000_gal" : { "length" : 190, "diameter" : 41,  "volume" : 1000, "orientation" : "horizontal"},
+                # note: for all of these measurements, diameter is the same value for width and height e.g. diameter=width=height
+                # total length of tank is length + (cap_lenth * 2)
+                "20_lb" : { "length" : (17.8-10), "diameter" : 12.5, "orientation" : "vertical", "cap" : "torispherical", "cap_length" : 3},
+                "30_lb" : { "length" : (24-10), "diameter" : 12.5, "orientation" : "vertical", "cap" : "torispherical", "cap_length" : 3},
+                "40_lb" : { "length" : (27-10), "diameter" : 13, "orientation" : "vertical", "cap" : "torispherical", "cap_length" : 3},
+                "100_lb" : { "length" : (48-10), "diameter" : 14.5, "orientation" : "vertical", "cap" : "torispherical", "cap_length" : 3},
+                "200_lb" : { "length" : (48-10), "diameter" : 19.5, "orientation" : "vertical", "cap" : "torispherical", "cap_length" : 3},
+                "120_gal" : { "length" : (52-10), "diameter" : 30, "orientation" : "vertical", "cap" : "torispherical", "cap_length" : 3},
+                # for horizontal tanks the cap length is estimated to be half the diameter
+                "250_gal" : { "length" : (92-30), "diameter" : 30, "orientation" : "horizontal", "cap" : "spherical", "cap_length" : 15},
+                "500_gal" : { "length" : (120-37), "diameter" : 37, "orientation" : "horizontal", "cap" : "spherical", "cap_length" : 18.5},
+                "1000_gal" : { "length" : (190-41), "diameter" : 41, "orientation" : "horizontal", "cap" : "spherical", "cap_length" : 20.5},
             }
             self.LogDebug("min: " + str(self.min_mm) + " , max: " + str(self.max_mm))
             self.LogDebug("Tank Type: " + str(self.tank_type))
@@ -181,6 +196,34 @@ class GenMopekaData(MySupport):
             self.mopeka.SetHostControllerIndex(0)
             for tank in self.tank_address:
                 self.mopeka.AddSensorToMonitor(MopekaSensor(tank))
+            
+            # https://fluids.readthedocs.io/tutorial.html#tank-geometry
+            if self.tank_type.lower() != "custom":
+                dimensions = self.TankDimensions.get(self.tank_type.lower(), None)
+                if dimensions == None:
+                    self.LogError("Invalid Tank Type: " + str(self.tank_type))
+                    sys.exit(1)
+
+                if dimensions["cap"] == "torispherical":
+                    # the fluids lib assumes the cap lenght is 25% of the diameter for vertical tanks                  
+                    self.Tank = TANK(D = dimensions["diameter"], 
+                        L = dimensions["length"], 
+                        horizontal = dimensions["orientation"] == "horizontal",
+                        sideA = dimensions["cap"], 
+                        sideB = dimensions["cap"])
+                else:
+                    # we use a cap of 1/2 the diameter for horizontal tanks
+                    self.Tank = TANK(D = dimensions["diameter"], 
+                        L = dimensions["length"], 
+                        horizontal = dimensions["orientation"] == "horizontal",
+                        sideA = dimensions["cap"], 
+                        sideB = dimensions["cap"],
+                        sideA_a = dimensions["cap_length"], 
+                        sideB_a = dimensions["cap_length"])
+                
+                self.TankVolume = self.CubicInToGallons(self.Tank.V_total)
+                self.LogDebug("Tank Volume Calculated: " + str(self.TankVolume))
+                self.LogDebug(self.Tank)
             
 
             # start thread monitor time for exercise
@@ -195,6 +238,10 @@ class GenMopekaData(MySupport):
             self.console.error("Error in GenMopekaData init: " + str(e1))
             sys.exit(1)
 
+    #----------  GenMopekaData::CubicInToGallons -------------------------------
+    def CubicInToGallons(self, cubic_inches):
+        return round(cubic_inches / 231, 2)
+        
     #----------  GenMopekaData::SendCommand --------------------------------------
     def SendCommand(self, Command):
 
@@ -240,6 +287,7 @@ class GenMopekaData(MySupport):
                 self.LogDebug("No sensor comms detected.")
                 return None 
             reading_depth = self.mopeka.SensorMonitoredList[bd_address]._last_packet.TankLevelInMM
+            sensor_temperature = self.mopeka.SensorMonitoredList[bd_address]._last_packet.TemperatureInCelsius
             self.LogDebug("Tank Level in mm: " + str(reading_depth))
             battery = self.mopeka.SensorMonitoredList[bd_address]._last_packet.BatteryPercent
             if battery < 15:
@@ -275,6 +323,7 @@ class GenMopekaData(MySupport):
             self.LogDebug("Tank Level in inches: " + str(reading_inches))
 
             if dimensions == None:
+                # Custom tank type
                 self.LogDebug("No tank dimensions found for tank type " + str(self.tank_type))
                 if self.max_mm != None or self.min_mm != None:
                     self.LogDebug("Error: min: " + str(self.min_mm) + " , max: " + str(self.max_mm))
@@ -285,80 +334,19 @@ class GenMopekaData(MySupport):
                 tanksize = self.max_mm - self.min_mm
                 return round(((reading_mm - self.min_mm) / tanksize ) * 100, 2)
 
-            if dimensions["orientation"].lower() == "horizontal":
-                volume = self.CalculateHorizontal(dimensions["diameter"], dimensions["length"],reading_inches)
-            elif dimensions["orientation"].lower() == "vertical":
-                volume = self.CalculateVertical(dimensions["diameter"], dimensions["length"],reading_inches)
-            else:
-                self.LogError("Error in ConvertTankReading: invalid value in dimenstions: " + str(dimensions["orientation"]))
-                return 0
-            self.LogDebug("Volume: " + str(volume))
-            if volume >= dimensions["volume"]:
+            gallons_left = self.CubicInToGallons(self.Tank.V_from_h(reading_inches))
+            self.LogDebug("Gallons Left: " + str(gallons_left))
+            if gallons_left >= self.TankVolume:
+                percent = 100
                 return 100
-            return round((volume / dimensions["volume"]) * 100, 2)
+            else:
+                percent = round((gallons_left / self.TankVolume) * 100, 2)
+            self.LogDebug("Tank Percentage: " + str(percent))
+            return percent
 
         except Exception as e1:
             self.LogErrorLine("Error in ConvertTankReading: " + str(e1))
             return None
-
-    # ---------- GenMopekaData::SegmentArea-----------------------------------
-    def SegmentArea(self, depth, diameter):
-
-        try:
-            if depth > 0 and diameter > 0:
-                radius = diameter / 2
-                temp = radius - depth
-                chordl = 2 * math.sqrt(2* depth * radius - depth * depth)
-                ang = math.acos(temp/radius) * 2
-                arcl = ang * radius
-                seg = ((arcl * radius - chordl * temp )/2)
-                return seg 
-            else:
-                return 0
-        except Exception as e1:
-            self.LogErrorLine("Error in SegmentArea: " + str(e1))
-            return 0
-        
-    # ---------- GenMopekaData::CalculateHorizontal------------------------
-    def CalculateHorizontal(self, diameter, length, depth):
-
-        try:
-            if depth > diameter:
-                depth = diameter 
-            if diameter > 1 and length > 1 and depth > 0:
-                area = self.SegmentArea(depth, diameter)
-                volume = ((area * length) / 1728) * 7.48
-                return round(volume , 2)
-            else:
-                return 0
-        except Exception as e1:
-            self.LogErrorLine("Error in CalcRoundHorizontal: " + str(e1))
-            return 0
-
-    # ---------- GenMopekaData::CalculateVertical------------------------
-    def CalculateVertical(self, diameter, length, depth):
-
-        # Everything is passed in inches and returned in gallons.
-        # Remember that a Propane tank is considered full at 80% but the Tank Sensor mainly shows a percentage anyways.
-        # When so when I fill my 250 gal tank, they only put 200 gal in it. 
-        # The Tank App shows 80% full, BUT you can easily scale that to 
-        # 0-100% by using tank size io gallons x .8
-
-        self.LogDebug("diameter: " + str(diameter) + " length: " + str(length) + " depth: " + str(depth) )
-        try:
-            if depth > length:
-                # If tank is over full then it equals full 
-                depth = length 
-            if diameter > 1 and length > 1 and depth > 0:
-                radius = diameter / 2 
-                area = ((radius * radius) *math.pi) * depth # cubic inches 
-                volume = (area / 1728) * 7.48   # cubic inches to cubic feet, then to gallons
-                return round(volume , 2)
-            else:
-                return 0
-        except Exception as e1:
-            self.LogErrorLine("Error in CalcRoundVertical: " + str(e1))
-            return 0
 
     # ---------- GenMopekaData::TankCheckThread-----------------------------------
     def TankCheckThread(self):

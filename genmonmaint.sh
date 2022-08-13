@@ -97,6 +97,7 @@ function updatelibraries() {
     sudo $pipcommand install pyotp==2.3.0 -U
   fi
   sudo $pipcommand install mopeka_pro_check -U
+  sudo $pipcommand install fluids -U
   echo "Done."
 }
 
@@ -166,6 +167,7 @@ function installgenmon() {
     # correct problem with LDAP3 module install
     sudo $pipcommand install pyasn1 -U
     sudo $pipcommand install mopeka_pro_check 
+    sudo $pipcommand install fluids
 
     sudo chmod 775 "$genmondir/startgenmon.sh"
     sudo chmod 775 "$genmondir/genmonmaint.sh"
