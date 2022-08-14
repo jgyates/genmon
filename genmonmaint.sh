@@ -151,6 +151,7 @@ function installgenmon() {
     else
       sudo apt-get -yqq install build-essential libssl-dev libffi-dev python-dev
     fi
+    sudo apt-get -yqq install cmake
     sudo $pipcommand install pyopenssl
     sudo $pipcommand install twilio
     sudo $pipcommand install chump

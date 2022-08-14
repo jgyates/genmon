@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - Added outage reporting for custom controllers. See wiki for more details.
 - Improved serial error handling for USB devices
 - Improved error handling for custom controller comm errors
+- NOTE: This upgrade make take longer to install, please be patient as it is a larger-ish download and install process 
 
 ## V1.18.12 -2022-06-21
 - Commented optional enhancements to gengpio.py
