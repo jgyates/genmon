@@ -210,6 +210,7 @@ class Loader(MySupport):
                     if not self.ExecuteCommandList(command_list):
                         self.LogInfo("Error: Unable to run apt-get update.")
                     self.AptUpdated = True
+                self.LogInfo("Installing cmake...")
                 command_list = ["sudo","apt-get","-yqq","install", "cmake"]
                 if not self.ExecuteCommandList(command_list):
                     self.LogInfo("Error: Unable to install cmake.")

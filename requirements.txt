@@ -15,3 +15,7 @@ pyasn1
 pyotp
 smbus
 psutil
+spidev
+mopeka_pro_check
+fluids
+
