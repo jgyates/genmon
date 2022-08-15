@@ -41,10 +41,15 @@ class Loader(MySupport):
         self.Stop = stop
         self.HardStop = hardstop
         self.PipChecked = False
+        self.AptUpdated = False
         self.NewInstall = False
         self.Upgrade = False
         self.version = None
-
+        
+        if sys.version_info[0] < 3:
+            self.pipProgram = "pip2"
+        else:
+            self.pipProgram = "pip3"
 
         self.ConfigFilePath = ConfigFilePath
 
@@ -160,6 +165,8 @@ class Loader(MySupport):
         try:
             ErrorOccured = False
 
+            self.CheckToolsNeeded()
+
             for Module in ModuleList:
                 # mopeka_pro_check is only for Python 3.7 and higher
                 if (Module[0] == 'mopeka_pro_check' or Module[0] == 'fluids') and sys.version_info < (3, 7):
@@ -177,6 +184,40 @@ class Loader(MySupport):
         except Exception as e1:
             self.LogInfo("Error in CheckSystem: " + str(e1), LogLine = True)
             return False
+    
+    #---------------------------------------------------------------------------
+    def ExecuteCommandList(self, execute_list):
+
+        try:
+            process = Popen(execute_list, stdout=PIPE, stderr=PIPE)
+            output, _error = process.communicate()
+
+            if _error:
+                self.LogInfo("Error in ExecuteCommandList  : " + str(_error))
+            rc = process.returncode
+            return True
+        except:
+            return False 
+    #---------------------------------------------------------------------------
+    # check for other tools that are needed by pip libaries
+    def CheckToolsNeeded(self):
+        try:
+
+            command_list = ["cmake", "--version"]
+            if not self.ExecuteCommandList(command_list):
+                if not self.AptUpdated:
+                    command_list = ["sudo","apt-get","-yqq","update"]
+                    if not self.ExecuteCommandList(command_list):
+                        self.LogInfo("Error: Unable to run apt-get update.")
+                    self.AptUpdated = True
+                command_list = ["sudo","apt-get","-yqq","install", "cmake"]
+                if not self.ExecuteCommandList(command_list):
+                    self.LogInfo("Error: Unable to install cmake.")
+
+            return True
+        except Exception as e1:
+            self.LogInfo("Error in CheckToolsNeeded: " + str(e1), LogLine = True)
+            return False
 
     #---------------------------------------------------------------------------
     def CheckBaseSoftware(self):
@@ -185,19 +226,10 @@ class Loader(MySupport):
             if self.PipChecked:
                 return True
 
-            if sys.version_info[0] < 3:
-                pipProgram = "pip2"
-            else:
-                pipProgram = "pip3"
-
-            install_list = [pipProgram, '-V']
-            process = Popen(install_list, stdout=PIPE, stderr=PIPE)
-            output, _error = process.communicate()
-
-            if _error:
-                self.LogInfo("Error in CheckBaseSoftware  : " + str(_error))
-            rc = process.returncode
-
+            command_list = [self.pipProgram, '-V']
+            if not self.ExecuteCommandList(command_list):
+                self.InstallBaseSoftware()
+            
             self.PipChecked = True
             return True
         except Exception as e1:
@@ -210,23 +242,21 @@ class Loader(MySupport):
 
         try:
             if sys.version_info[0] < 3:
-                pipProgram = "python-pip"
+                pipInstallProgram = "python-pip"
             else:
-                pipProgram = "python3-pip"
+                pipInstallProgram = "python3-pip"
 
-            self.LogInfo("Installing " + pipProgram)
+            self.LogInfo("Installing " + pipInstallProgram)
 
-            install_list = ["sudo","apt-get","-yqq","update"]
-            process = Popen(install_list, stdout=PIPE, stderr=PIPE)
-            output, _error = process.communicate()
-
-            if _error:
-                self.LogInfo("Error in InstallBaseSoftware  : " + str(_error))
-            rc = process.returncode
-
-            install_list = ["sudo","apt-get","-yqq","install", pipProgram]
-            process = Popen(install_list, stdout=PIPE, stderr=PIPE)
-            output, _error = process.communicate()
+            if not self.AptUpdated:
+                command_list = ["sudo","apt-get","-yqq","update"]
+                if not self.ExecuteCommandList(command_list):
+                    self.LogInfo("Error: Unable to run apt-get update.")
+                self.AptUpdated = True
+            command_list = ["sudo","apt-get","-yqq","install", pipInstallProgram]
+            if not self.ExecuteCommandList(command_list):
+                self.LogInfo("Error: Unable to install " + pipInstallProgram)
+            
             return True
         except Exception as e1:
             self.LogInfo("Error in InstallBaseSoftware: " + str(e1), LogLine = True)
@@ -344,16 +374,11 @@ class Loader(MySupport):
                 # if we get here then the libarary does not support a __version__ attribute
                 # lets use pip to get the version
                 try:
-                    if sys.version_info[0] < 3:
-                        pipProgram = "pip2"
-                    else:
-                        pipProgram = "pip3"
-
                     # This will check if pip is installed
                     if "linux" in sys.platform:
                         self.CheckBaseSoftware()
 
-                    install_list = [pipProgram, 'freeze', libraryname]
+                    install_list = [self.pipProgram, 'freeze', libraryname]
 
                     process = Popen(install_list, stdout=PIPE, stderr=PIPE)
                     output, _error = process.communicate()
@@ -394,11 +419,6 @@ class Loader(MySupport):
     def InstallLibrary(self, libraryname, update = False, version = None, uninstall = False):
 
         try:
-            if sys.version_info[0] < 3:
-                pipProgram = "pip2"
-            else:
-                pipProgram = "pip3"
-
             if version != None and uninstall == False:
                 libraryname = libraryname + "=="+ version
 
@@ -407,11 +427,11 @@ class Loader(MySupport):
                 self.CheckBaseSoftware()
 
             if update:
-                install_list = [pipProgram, 'install', libraryname, '-U']
+                install_list = [self.pipProgram, 'install', libraryname, '-U']
             elif uninstall:
-                install_list = [pipProgram, 'uninstall', '-y', libraryname]
+                install_list = [self.pipProgram, 'uninstall', '-y', libraryname]
             else:
-                install_list = [pipProgram, 'install', libraryname]
+                install_list = [self.pipProgram, 'install', libraryname]
 
             process = Popen(install_list, stdout=PIPE, stderr=PIPE)
             output, _error = process.communicate()
