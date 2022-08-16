@@ -63,7 +63,6 @@ class Loader(MySupport):
         self.ModulePath = os.path.dirname(os.path.realpath(__file__))
         self.ConfPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "conf")
 
-
         # log errors in this module to a file
         if log == None:
             self.log = SetupLogger("genloader", os.path.join(loglocation, "genloader.log"))
@@ -456,8 +455,9 @@ class Loader(MySupport):
         for Module, Settiings in self.CachedConfig.items():
             try:
                 if self.CachedConfig[Module]["enable"]:
-                    if not os.path.isfile(os.path.join(self.ModulePath, self.CachedConfig[Module]["module"])):
-                        self.LogInfo("Enable to find file " + os.path.join(self.ModulePath, self.CachedConfig[Module]["module"]))
+                    modulepath = self.GetModulePath(self.ModulePath, self.CachedConfig[Module]["module"])
+                    if modulepath == None:
+                        self.LogInfo("Enable to find file " + self.CachedConfig[Module]["module"])
                         ErrorOccured = True
 
                 # validate config file and if it is not there then copy it.
@@ -712,13 +712,31 @@ class Loader(MySupport):
         ErrorOccured = False
         for Module in self.LoadOrder:
             try:
-                if not self.UnloadModule(self.ModulePath, self.CachedConfig[Module]["module"], pid = self.CachedConfig[Module]["pid"],HardStop = self.CachedConfig[Module]["hardstop"], UsePID = True):
+                if not self.UnloadModule(self.CachedConfig[Module]["module"], pid = self.CachedConfig[Module]["pid"],HardStop = self.CachedConfig[Module]["hardstop"], UsePID = True):
                     self.LogInfo("Error stopping " + Module)
                     ErrorOccured = True
             except Exception as e1:
                 self.LogInfo("Error stopping module " + Module + " : " + str(e1), LogLine = True)
                 return False
         return not ErrorOccured
+    
+    #---------------------------------------------------------------------------
+    def GetModulePath(self, modulepath, modulename):
+        try:
+            fullpath = os.path.join(modulepath, modulename)
+
+            if os.path.isfile(fullpath):
+                return modulepath
+
+            fullpath = os.path.join(modulepath, "addon", modulename)
+
+            if os.path.isfile(fullpath):
+                return os.path.join(modulepath, "addon")
+            
+            return None
+        except Exception as e1:
+            self.LogInfo("Error in GetModulePath :" + modulename + " : " + str(e1), LogLine = True)
+            return None
     #---------------------------------------------------------------------------
     def StartModules(self):
 
@@ -731,6 +749,10 @@ class Loader(MySupport):
         for Module in reversed(self.LoadOrder):
             try:
                 if self.CachedConfig[Module]["enable"]:
+                    modulepath = self.GetModulePath(self.ModulePath, self.CachedConfig[Module]["module"])
+                    if modulepath == None:
+                        continue
+                
                     if not multi_instance:
                         # check that module is not loaded already, if it is then force it (hard) to unload
                         attempts = 0
@@ -739,7 +761,7 @@ class Loader(MySupport):
                                 # if loaded then kill it
                                 if attempts >= 4:
                                     # kill it
-                                    if not self.UnloadModule(self.ModulePath, self.CachedConfig[Module]["module"], pid = None, HardStop = True, UsePID = False):
+                                    if not self.UnloadModule(self.CachedConfig[Module]["module"], pid = None, HardStop = True, UsePID = False):
                                         self.LogInfo("Error killing " +  self.CachedConfig[Module]["module"])
                                 else:
                                     attempts += 1
@@ -747,7 +769,7 @@ class Loader(MySupport):
                             else:
                                 break
 
-                    if not self.LoadModule(self.ModulePath, self.CachedConfig[Module]["module"], args = self.CachedConfig[Module]["args"]):
+                    if not self.LoadModule(modulepath, self.CachedConfig[Module]["module"], args = self.CachedConfig[Module]["args"]):
                         self.LogInfo("Error starting " + Module)
                         ErrorOccured = True
                     if not self.CachedConfig[Module]["postloaddelay"] == None and self.CachedConfig[Module]["postloaddelay"] > 0:
@@ -813,7 +835,7 @@ class Loader(MySupport):
             self.LogInfo("Error loading module " + path + ": "+ modulename + ": " + str(e1), LogLine = True)
             return False
     #---------------------------------------------------------------------------
-    def UnloadModule(self, path, modulename, pid = None, HardStop = False, UsePID = False):
+    def UnloadModule(self, modulename, pid = None, HardStop = False, UsePID = False):
         try:
             LoadInfo = []
             if UsePID:

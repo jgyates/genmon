@@ -15,9 +15,16 @@
 # https://www.engineersedge.com/calculators/fluids/propane-tank-dimensional-calculator.htm
 
 
-import time, sys, signal, os, threading, json, math
+import time, sys, signal, os, threading, json
 
 try:
+    # this will add the parent of the genmonlib folder to the path
+    # if we are one level below the genmonlib parent (e.g. in the addon folder)
+    file_root = os.path.dirname(os.path.realpath(__file__))
+    parent_root=os.path.abspath(os.path.join(file_root, os.pardir))
+    if os.path.isdir(os.path.join(parent_root, "genmonlib")):
+        sys.path.insert(1, parent_root)
+
     from genmonlib.myclient import ClientInterface
     from genmonlib.mylog import SetupLogger
     from genmonlib.myconfig import MyConfig
@@ -58,27 +65,6 @@ class GenMopekaData(MySupport):
         self.tank_address = None
         self.debug = False
 
-        try: 
-            from bleson import BDAddress
-        except Exception as e1:
-            self.LogConsole("The required library bleson is not installed.")
-            self.LogErrorLine("The required library bleson is not installed." + str(e1))
-            sys.exit(2)
-        try:
-            from mopeka_pro_check.service import MopekaService, MopekaSensor, GetServiceInstance
-        except Exception as e1:
-            self.LogConsole("The required library mopeka_pro_check is not installed.")
-            self.LogErrorLine("The required library mopeka_pro_check is not installed: " + str(e1))
-            sys.exit(2)
-
-        try:
-            from fluids.geometry import TANK
-        except Exception as e1:
-            self.LogConsole("The required library fluids is not installed.")
-            self.LogErrorLine("The required library fluids is not installed: " + str(e1))
-            sys.exit(2)
-
-        
         try:
 
             configfile = os.path.join(ConfigFilePath, 'genmopeka.conf')
@@ -108,11 +94,33 @@ class GenMopekaData(MySupport):
             sys.exit(1)
 
         try:
+
+            try: 
+                from bleson import BDAddress
+            except Exception as e1:
+                self.LogConsole("The required library bleson is not installed.")
+                self.LogErrorLine("The required library bleson is not installed." + str(e1))
+                sys.exit(2)
+            try:
+                from mopeka_pro_check.service import MopekaService, MopekaSensor, GetServiceInstance
+            except Exception as e1:
+                self.LogConsole("The required library mopeka_pro_check is not installed.")
+                self.LogErrorLine("The required library mopeka_pro_check is not installed: " + str(e1))
+                sys.exit(2)
+            try:
+                from fluids.geometry import TANK
+            except Exception as e1:
+                self.LogConsole("The required library fluids is not installed.")
+                self.LogErrorLine("The required library fluids is not installed: " + str(e1))
+                sys.exit(2)
+            
+            # we do this again to override the console output that is set in bleson module
+            self.console = SetupLogger("genmopeka" + "_console", log_file = "", stream = True)
+
             self.LogDebug("Tank Address = " + str(self.tank_address))
 
             self.Generator = ClientInterface(host = self.MonitorAddress, port = port, log = self.log)
 
-            
             if self.tank_address == None or self.tank_address == "":
                 self.LogError("No valid tank address found: " + str(self.tank_address))
                 self.LogConsole("No valid tank address found: " + str(self.tank_address))

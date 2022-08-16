@@ -13,6 +13,13 @@
 import datetime, time, sys, signal, os, threading, json
 
 try:
+    # this will add the parent of the genmonlib folder to the path
+    # if we are one level below the genmonlib parent (e.g. in the addon folder)
+    file_root = os.path.dirname(os.path.realpath(__file__))
+    parent_root=os.path.abspath(os.path.join(file_root, os.pardir))
+    if os.path.isdir(os.path.join(parent_root, "genmonlib")):
+        sys.path.insert(1, parent_root)
+
     from genmonlib.myclient import ClientInterface
     from genmonlib.mylog import SetupLogger
     from genmonlib.myconfig import MyConfig

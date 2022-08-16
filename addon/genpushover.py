@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 #-------------------------------------------------------------------------------
-#    FILE: gensms.py
-# PURPOSE: genmon.py support program to allow SMS (txt messages)
-# to be sent when the generator status changes
+#    FILE: genpushover.py
+# PURPOSE: genpushover.py sends Push notifications to Android, iOS and Desktop
 #
-#  AUTHOR: Jason G Yates
-#    DATE: 05-Apr-2016
+#  AUTHOR: Stephen Bader - Stole a lot of code from gensms.py
+#    DATE: 09-09-2017
 #
 # MODIFICATIONS:
 #-------------------------------------------------------------------------------
@@ -13,9 +12,16 @@
 import time, sys, signal, os
 
 try:
-    from genmonlib.myconfig import MyConfig
+    # this will add the parent of the genmonlib folder to the path
+    # if we are one level below the genmonlib parent (e.g. in the addon folder)
+    file_root = os.path.dirname(os.path.realpath(__file__))
+    parent_root=os.path.abspath(os.path.join(file_root, os.pardir))
+    if os.path.isdir(os.path.join(parent_root, "genmonlib")):
+        sys.path.insert(1, parent_root)
+
     from genmonlib.mylog import SetupLogger
     from genmonlib.mynotify import GenNotify
+    from genmonlib.myconfig import MyConfig
     from genmonlib.mysupport import MySupport
     from genmonlib.mymsgqueue import MyMsgQueue
 except Exception as e1:
@@ -25,12 +31,25 @@ except Exception as e1:
     sys.exit(2)
 
 try:
-    from twilio.rest import Client
+    from chump import Application
 except Exception as e1:
-    print("\n\nThis program requires the twilio module to be installed.\n")
+    print("\n\nThis program requires the chump module to be installed.\n")
     print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
     print("Error: " + str(e1))
     sys.exit(2)
+
+
+#---------------------GetErrorLine----------------------------------------------
+def GetErrorLine():
+
+    try:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        lineno = exc_tb.tb_lineno
+        return fname + ":" + str(lineno)
+    except Exception as e1:
+        return "Unknown Line " + str(e1)
+
 
 #----------  Signal Handler ----------------------------------------------------
 def signal_handler(signal, frame):
@@ -40,7 +59,6 @@ def signal_handler(signal, frame):
         Queue.Close()
     except Exception as e1:
         log.error("signal_handler: " + str(e1))
-
     sys.exit(0)
 
 #----------  OnRun -------------------------------------------------------------
@@ -153,51 +171,61 @@ def OnFuelState(Active):
 def SendNotice(Message):
 
     try:
+        app = Application(appid)
 
-        client = Client(account_sid, auth_token)
+        if not app.is_authenticated:
+            log.error("Unable to authenticate app ID")
+            return False
 
-        # send to multiple recipient(s)
-        for recipient in to_number_list:
-            recipient = recipient.strip()
-            message = client.messages.create(
-                to = recipient,
-                from_ = from_number,
-                body = Message)
-            console.info(message.sid)
+        user = app.get_user(userid)
+
+        if not user.is_authenticated:
+            log.error("Unable to authenticate user ID")
+            return False
+
+        message = user.create_message(
+            message = Message,
+            sound = pushsound)
+
+        message.send()
+
+        console.info(message.id)
         return True
     except Exception as e1:
-        log.error("Error: " + str(e1))
-        console.error("Error: " + str(e1))
+        log.error("Send Notice Error: " + GetErrorLine() + ": " + str(e1))
+        console.error("Send Notice Error: " + str(e1))
         return False
 
 #------------------- Command-line interface for gengpio ------------------------
 if __name__=='__main__':
 
-    console, ConfigFilePath, address, port, loglocation, log = MySupport.SetupAddOnProgram("gensms")
+    console, ConfigFilePath, address, port, loglocation, log = MySupport.SetupAddOnProgram("genpushover")
 
     # Set the signal handler
-    signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
 
     try:
 
-        config = MyConfig(filename = os.path.join(ConfigFilePath, 'gensms.conf'), section = 'gensms', log = log)
+        config = MyConfig(filename = os.path.join(ConfigFilePath, 'genpushover.conf'), section = 'genpushover', log = log)
 
-        account_sid = config.ReadValue('accountsid', default = "")
-        auth_token = config.ReadValue('authtoken', default = "")
-        to_number = config.ReadValue('to_number', default = "")
-        from_number = config.ReadValue('from_number', default = "")
+        appid = config.ReadValue('appid', default = None)
+        userid = config.ReadValue('userid', default = None)
+        pushsound = config.ReadValue('pushsound', default = 'updown')
 
-        to_number_list = to_number.split(",")
+        if appid == None or not len(appid):
+            log.error("Error:  invalid app ID")
+            console.error("Error:  invalid app ID")
+            sys.exit(2)
 
-        if account_sid == "" or auth_token == "" or to_number == "" or from_number == "":
-            log.error("Missing parameter in " +  os.path.join(ConfigFilePath, 'gensms.conf'))
-            console.error("Missing parameter in " +  os.path.join(ConfigFilePath, 'gensms.conf'))
-            sys.exit(1)
+        if userid == None or not len(userid):
+            log.error("Error:  invalid user ID")
+            console.error("Error:  invalid user ID")
+            sys.exit(2)
 
     except Exception as e1:
-        log.error("Error reading " + os.path.join(ConfigFilePath, 'gensms.conf') + ": " + str(e1))
-        console.error("Error reading " + os.path.join(ConfigFilePath, 'gensms.conf') + ": " + str(e1))
+        log.error("Error reading " +  os.path.join(ConfigFilePath, 'genpushover.conf') +": " + str(e1))
+        console.error("Error reading " +  os.path.join(ConfigFilePath, 'genpushover.conf') +": " + str(e1))
         sys.exit(1)
     try:
 
@@ -227,5 +255,5 @@ if __name__=='__main__':
             time.sleep(1)
 
     except Exception as e1:
-        log.error("Error: " + str(e1))
-        console.error("Error: " + str(e1))
+        log.error("Error: " + GetErrorLine() + ": " + str(e1))
+        console.error ("Error: " + str(e1))
