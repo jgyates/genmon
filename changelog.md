@@ -1,6 +1,19 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.18.14 -2022-08-21
+- Minor update to improve fuel calculations for outages
+- Updated serialconfig.py to optionally allow bluetooth to be used with the normal serial port operations. 
+- Corrected one bug in serialconfig.py
+- Minor update to custom controller support to handle failed comms display notice 
+- Added Mopeka Pro Propane Sensor Add On
+- Minor update to better enforce the "Ignore Unknowns" advanced option for Evolution 2.0
+- Added outage reporting for custom controllers. See wiki for more details.
+- Improved serial error handling for USB devices
+- Improved error handling for custom controller comm errors
+- Moved add on program files to the addon folder, updated genloader to support this move
+- NOTE: This upgrade make take longer to install, please be patient as it is a larger-ish download and install process 
+
 ## V1.18.13 -2022-07-25
 - Minor update for SMTP compatibility (thanks @lps-rocks)
 - Minor update to IMAP incoming email handling (thanks @rwskinner)
@@ -13,17 +26,6 @@ All notable changes to this project will be documented in this file.
 - Improved error handing in mymail.py to better support older versions of SSL libraries 
 - Added run hours in the last year to the maint page. Note that this the last 365 days, not the last calendar year.
 - Added option for serial parity on Advanced Settings page for Briggs and Stratton controllers
-- Minor update to improve fuel calculations for outages
-- Updated serialconfig.py to optionally allow bluetooth to be used with the normal serial port operations. 
-- Corrected one bug in serialconfig.py
-- Minor update to custom controller support to handle failed comms display notice 
-- Added Mopeka Pro Propane Sensor Add On
-- Minor update to better enforce the "Ignore Unknowns" advanced option for Evolution 2.0
-- Added outage reporting for custom controllers. See wiki for more details.
-- Improved serial error handling for USB devices
-- Improved error handling for custom controller comm errors
-- Moved add on program files to the addon folder, updated genloader to support this move
-- NOTE: This upgrade make take longer to install, please be patient as it is a larger-ish download and install process 
 
 ## V1.18.12 -2022-06-21
 - Commented optional enhancements to gengpio.py
