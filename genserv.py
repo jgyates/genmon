@@ -1187,10 +1187,17 @@ def GetAddOns():
 
         #GENMOPEKA
         if sys.version_info >= (3, 7):
+            Description = "Support Mopeka Pro Propane Tanks Sensor"
+            try:
+                import fluids, mopeka_pro_check
+                LogError("FOUND")
+            except Exception as e1:
+                LogError("Not found ")
+                Description = Description + "<br/><font color='red'>The required libraries for this add on are not installed, please run the installation script.</font>"
+
             AddOnCfg['genmopeka'] = collections.OrderedDict()
             AddOnCfg['genmopeka']['enable'] = ConfigFiles[GENLOADER_CONFIG].ReadValue("enable", return_type = bool, section = "genmopeka", default = False)
             AddOnCfg['genmopeka']['title'] = "Mopeka Pro Propane Tank Sensor"
-            Description = "Support Mopeka Pro Propane Tanks Sensor"
             
             AddOnCfg['genmopeka']['description'] = Description
             AddOnCfg['genmopeka']['icon'] = "Genmon"
