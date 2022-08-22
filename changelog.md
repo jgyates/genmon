@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Improved error handling for custom controller comm errors
 - Moved add on program files to the addon folder, updated genloader to support this move
 - NOTE: This upgrade make take longer to install, please be patient as it is a larger-ish download and install process 
+- Removed fluids from installing with genloader. To use the genmopeka addon you must manually install fluids via the install script
 
 ## V1.18.13 -2022-07-25
 - Minor update for SMTP compatibility (thanks @lps-rocks)
