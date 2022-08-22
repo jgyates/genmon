@@ -1190,9 +1190,7 @@ def GetAddOns():
             Description = "Support Mopeka Pro Propane Tanks Sensor"
             try:
                 import fluids, mopeka_pro_check
-                LogError("FOUND")
             except Exception as e1:
-                LogError("Not found ")
                 Description = Description + "<br/><font color='red'>The required libraries for this add on are not installed, please run the installation script.</font>"
 
             AddOnCfg['genmopeka'] = collections.OrderedDict()
