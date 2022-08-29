@@ -185,10 +185,10 @@ class Loader(MySupport):
             return False
     
     #---------------------------------------------------------------------------
-    def ExecuteCommandList(self, execute_list):
+    def ExecuteCommandList(self, execute_list, env = None):
 
         try:
-            process = Popen(execute_list, stdout=PIPE, stderr=PIPE)
+            process = Popen(execute_list, stdout=PIPE, stderr=PIPE, env = env)
             output, _error = process.communicate()
 
             if _error:
@@ -210,7 +210,7 @@ class Loader(MySupport):
                         self.LogInfo("Error: Unable to run apt-get update.")
                     self.AptUpdated = True
                 self.LogInfo("Installing cmake...")
-                command_list = ["sudo","apt-get","-yqq","install", "cmake"]
+                command_list = ["sudo", "DEBIAN_FRONTEND=noninteractive","apt-get","-yqq","install", "cmake"]
                 if not self.ExecuteCommandList(command_list):
                     self.LogInfo("Error: Unable to install cmake.")
 
