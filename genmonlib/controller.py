@@ -1211,7 +1211,6 @@ class GeneratorController(MySupport):
         if not os.path.isfile(self.PowerLog):
             return []
         PowerList = []
-        CurrentTime = datetime.datetime.now()
 
         # return cached list if we have read the file before
         if len(self.PowerLogList) and not Minutes:
@@ -1299,10 +1298,7 @@ class GeneratorController(MySupport):
 
         try:
 
-            if Minutes == 0:
-                PowerList = []
-            else:
-                PowerList = self.ReadPowerLogFromFile( Minutes = Minutes)
+            PowerList = self.ReadPowerLogFromFile( Minutes = Minutes)
 
             #Shorten list to 500 if specific duration requested
             #if not KWHours and len(PowerList) > 500 and Minutes and not NoReduce:
@@ -1859,6 +1855,9 @@ class GeneratorController(MySupport):
             ConsumptionData = self.GetFuelConsumptionDataPoints()
 
             if ConsumptionData == None or len(ConsumptionData) != 5:
+                return None, ""
+
+            if self.NominalKW == None or float(self.NominalKW) == 0.0:
                 return None, ""
 
             Load = kw / float(self.NominalKW)
