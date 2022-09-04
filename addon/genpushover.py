@@ -173,6 +173,10 @@ def SendNotice(Message):
     try:
         app = Application(appid)
 
+        if app == None:
+            log.error("Unable to get app context")
+            return False
+
         if not app.is_authenticated:
             log.error("Unable to authenticate app ID")
             return False
