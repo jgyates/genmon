@@ -54,7 +54,11 @@ class MyMsgQueue(MySupport):
                 try:
                     with self.QueueLock:
                         MessageItems = self.MessageQueue.pop()
-                    if not (self.callback(MessageItems[0])):
+                    if len(MessageItems[1]):
+                        ret_val = self.callback(MessageItems[0], **MessageItems[1])
+                    else:
+                        ret_val = self.callback(MessageItems[0])
+                    if not (ret_val):
                         self.LogError("Error sending message in QueueWorker, callback failed, retrying")
                         messageError = True
                 except Exception as e1:
@@ -64,7 +68,7 @@ class MyMsgQueue(MySupport):
                 try:
                     if messageError:
                         # check max retry timeout
-                        retry_duration = datetime.datetime.now() - MessageItems[1]
+                        retry_duration = datetime.datetime.now() - MessageItems[2]
                         if retry_duration.total_seconds() <= self.max_retry_time:
                             with self.QueueLock:
                                 # put the message back at the end of the queue
@@ -81,12 +85,13 @@ class MyMsgQueue(MySupport):
                 return
 
     #------------ MyMsgQueue::SendMessage---------------------------------------
-    def SendMessage(self, message):
+    def SendMessage(self, message, **kwargs):
         try:
             if self.callback != None:
                 with self.QueueLock:
                     MessageItems = []
                     MessageItems.append(message)
+                    MessageItems.append(kwargs)
                     MessageItems.append(datetime.datetime.now())
                     self.MessageQueue.insert(0, MessageItems)
         except Exception as e1:

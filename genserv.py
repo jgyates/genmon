@@ -772,6 +772,54 @@ def GetAddOns():
             "Notification sound identifier. See https://pushover.net/api#sounds for a full list of sound IDs",
             bounds = 'minmax:3:20',
             display_name = "Push Sound")
+        AddOnCfg['genpushover']['parameters']['alarm_priority'] = CreateAddOnParam(
+            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue("alarm_priority", return_type = str, default = "NORMAL"),
+            'list',
+            "Alarm Notification priority identifier. See https://pushover.net/api#priority",
+            bounds = 'LOWEST,LOW,NORMAL,HIGH,EMERGENCY',
+            display_name = "Alarm Priority")
+        AddOnCfg['genpushover']['parameters']['sw_update_priority'] = CreateAddOnParam(
+            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue("sw_update_priority", return_type = str, default = "NORMAL"),
+            'list',
+            "Software Update Notification priority identifier. See https://pushover.net/api#priority",
+            bounds = 'LOWEST,LOW,NORMAL,HIGH,EMERGENCY',
+            display_name = "Software Update Priority")
+        AddOnCfg['genpushover']['parameters']['system_health_priority'] = CreateAddOnParam(
+            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue("system_health_priority", return_type = str, default = "NORMAL"),
+            'list',
+            "System Health Notification priority identifier. See https://pushover.net/api#priority",
+            bounds = 'LOWEST,LOW,NORMAL,HIGH,EMERGENCY',
+            display_name = "System Health Priority")
+        AddOnCfg['genpushover']['parameters']['fuel_priority'] = CreateAddOnParam(
+            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue("fuel_priority", return_type = str, default = "NORMAL"),
+            'list',
+            "Fuel Level Notification priority identifier. See https://pushover.net/api#priority",
+            bounds = 'LOWEST,LOW,NORMAL,HIGH,EMERGENCY',
+            display_name = "Fuel Level Priority")
+        AddOnCfg['genpushover']['parameters']['outage_priority'] = CreateAddOnParam(
+            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue("outage_priority", return_type = str, default = "NORMAL"),
+            'list',
+            "Fuel Level Notification priority identifier. See https://pushover.net/api#priority",
+            bounds = 'LOWEST,LOW,NORMAL,HIGH,EMERGENCY',
+            display_name = "Outage Priority")
+        AddOnCfg['genpushover']['parameters']['switch_state_priority'] = CreateAddOnParam(
+            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue("switch_state_priority", return_type = str, default = "NORMAL"),
+            'list',
+            "Switch State Notification priority identifier. See https://pushover.net/api#priority",
+            bounds = 'LOWEST,LOW,NORMAL,HIGH,EMERGENCY',
+            display_name = "Switch State Priority")
+        AddOnCfg['genpushover']['parameters']['run_state_priority'] = CreateAddOnParam(
+            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue("run_state_priority", return_type = str, default = "NORMAL"),
+            'list',
+            "Run State Notification priority identifier. See https://pushover.net/api#priority",
+            bounds = 'LOWEST,LOW,NORMAL,HIGH,EMERGENCY',
+            display_name = "Run State Priority")
+        AddOnCfg['genpushover']['parameters']['service_state_priority'] = CreateAddOnParam(
+            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue("service_state_priority", return_type = str, default = "NORMAL"),
+            'list',
+            "Service State Notification priority identifier. See https://pushover.net/api#priority",
+            bounds = 'LOWEST,LOW,NORMAL,HIGH,EMERGENCY',
+            display_name = "Service State Priority")
 
         AddOnCfg = AddNotificationAddOnParam(AddOnCfg, 'genpushover',GENPUSHOVER_CONFIG)
         AddOnCfg = AddRetryAddOnParam(AddOnCfg, 'genpushover',GENPUSHOVER_CONFIG)
