@@ -376,8 +376,8 @@ class MyMail(MySupport):
             try:
                 if not self.DisableSmtpAuth:
                     data = self.Mailbox.login(self.EmailAccount, self.EmailPassword)
-            except Exception:
-                self.LogError( "LOGIN FAILED!!! ")
+            except Exception as e1:
+                self.LogError( "LOGIN FAILED!!! " + str(e1))
                 if self.WaitForExit("EmailCommandThread", 60 ):
                     return # exit thread
                 continue
