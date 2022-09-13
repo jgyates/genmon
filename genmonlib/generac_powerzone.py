@@ -2020,8 +2020,7 @@ class PowerZone(GeneratorController):
             Data.append(Value >> 8)             # value to be written (High byte)
             Data.append(Value & 0x00FF)         # value written (Low byte)
 
-            ## Write 3 regs at once
-            self.ModBus.ProcessWriteTransaction(self.Reg.START_BITS[REGISTER], len(Data) / 2, Data)
+            self.ModBus.ProcessWriteTransaction(self.Reg.REMOTE_START[REGISTER], len(Data) / 2, Data)
 
             return "Remote command sent successfully"
         except Exception as e1:

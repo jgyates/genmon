@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - Removed fluids from installing with genloader. To use the genmopeka addon you must manually install fluids via the install script
 - Correct issue with power graph
 - Added priorities parameter to Pushover add on (see add on page for settings)
+- Minor update for PowerZone remote start
 
 ## V1.18.13 -2022-07-25
 - Minor update for SMTP compatibility (thanks @lps-rocks)
