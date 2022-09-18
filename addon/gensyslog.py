@@ -144,6 +144,11 @@ def OnFuelState(Active):
         SendNotice("Fuel Level is Low")
         console.info("Fuel Level is Low")
 
+#----------  OnPiState ---------------------------------------------------------
+def OnPiState(Notice):
+    SendNotice("Pi Health : " + Notice)
+    console.info("Pi Health : " + Notice)
+
 #----------  SendNotice --------------------------------------------------------
 def SendNotice(Message):
 
@@ -184,6 +189,7 @@ if __name__=='__main__': #
                                         onsoftwareupdate = OnSoftwareUpdate,
                                         onsystemhealth = OnSystemHealth,
                                         onfuelstate = OnFuelState,
+                                        onpistate = OnPiState,
                                         log = log,
                                         loglocation = loglocation,
                                         console = console)

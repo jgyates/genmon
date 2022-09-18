@@ -168,6 +168,12 @@ def OnFuelState(Active):
         Queue.SendMessage("Fuel Level is Low", priority = fuel_priority)
         console.info("Fuel Level is Low")
 
+#----------  OnPiState ---------------------------------------------------------
+def OnPiState(Notice):
+    Queue.SendMessage("Pi Health : " + Notice, priority = pi_state_priority)
+    console.info("Pi Health : " + Notice)
+
+
 #----------  SendNotice --------------------------------------------------------
 def SendNotice(Message, **kwargs):
 
@@ -260,6 +266,7 @@ if __name__=='__main__':
         switch_state_priority = GetPriorityFromConf("switch_state_priority")
         run_state_priority = GetPriorityFromConf("run_state_priority")
         service_state_priority = GetPriorityFromConf("service_state_priority")
+        pi_state_priority = GetPriorityFromConf("pi_state_priority")
 
 
         if appid == None or not len(appid):
@@ -295,6 +302,7 @@ if __name__=='__main__':
                                         onsoftwareupdate = OnSoftwareUpdate,
                                         onsystemhealth = OnSystemHealth,
                                         onfuelstate = OnFuelState,
+                                        onpistate = OnPiState,
                                         log = log,
                                         loglocation = loglocation,
                                         console = console,

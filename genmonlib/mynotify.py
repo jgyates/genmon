@@ -33,6 +33,7 @@ class GenNotify(MyCommon):
                 onsoftwareupdate = None,
                 onsystemhealth = None,
                 onfuelstate = None,
+                onpistate = None,
                 start = True,
                 console = None,
                 notify_outage = True,
@@ -40,6 +41,7 @@ class GenNotify(MyCommon):
                 notify_warning = True,
                 notify_info = True,
                 notify_sw_update = True,
+                notify_pi_state = True,
                 config = None):
 
         super(GenNotify, self).__init__()
@@ -50,6 +52,7 @@ class GenNotify(MyCommon):
         self.LastOutageStatus = None
         self.LastSoftwareUpdateStatus = None
         self.LastSystemHealth = None
+        self.LastPiState = None
         self.LastFuelWarningStatus = True
         self.Events = {}            # Dict for handling events
         self.notify_outage = notify_outage
@@ -57,6 +60,7 @@ class GenNotify(MyCommon):
         self.notify_warning = notify_warning
         self.notify_info = notify_info
         self.notify_sw_update = notify_sw_update
+        self.notify_pi_state = notify_pi_state
         self.config = config
 
 
@@ -98,6 +102,8 @@ class GenNotify(MyCommon):
                 self.Events["SYSTEMHEALTH"] = onsystemhealth
             if onfuelstate != None and self.notify_warning:
                 self.Events["FUELWARNING"] = onfuelstate
+            if onpistate != None and self.notify_pi_state:
+                self.Events["PISTATE"] = onpistate
 
 
             self.Generator = ClientInterface(host = host, port = port, log = log, loglocation = loglocation)
@@ -192,6 +198,30 @@ class GenNotify(MyCommon):
                         if self.notify_info:
                             self.ProcessEventData("SYSTEMHEALTH", value, self.LastSystemHealth)
                             self.LastSystemHealth = value
+            GenList = GenDict["Monitor"][2]["Platform Stats"]
+            PiStats = ""
+            PiPresent = False
+            for Items in GenList:
+                for key, value in Items.items():
+                    if key == "Pi CPU Frequency Throttling":
+                        PiPresent = True
+                        if value.lower() != "ok":
+                            if len(PiStats):
+                                PiStats += ", "
+                            PiStats += "Pi CPU Frequency Throttling: " + value
+                    if key == "Pi ARM Frequency Cap" and value.lower() != "ok":
+                        if len(PiStats):
+                            PiStats += ", "
+                        PiStats += " Pi ARM Frequency Cap: " + value
+                    if key == "Pi Undervoltage" and value.lower() != "ok":
+                        if len(PiStats):
+                            PiStats += ", "
+                        PiStats += " Pi Undervoltage:" + value
+            if PiStats == "":
+                PiStats = "OK"
+            if PiPresent:
+                self.ProcessEventData("PISTATE", PiStats, self.LastPiState)
+                self.LastPiState = PiStats
         except Exception as e1:
             # The system does no support outage tracking (i.e. H-100)
             self.LogErrorLine("Unable to get moniotr state: " + str(e1))

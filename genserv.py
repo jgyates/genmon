@@ -820,6 +820,12 @@ def GetAddOns():
             "Service State Notification priority identifier. See https://pushover.net/api#priority",
             bounds = 'LOWEST,LOW,NORMAL,HIGH,EMERGENCY',
             display_name = "Service State Priority")
+        AddOnCfg['genpushover']['parameters']['pi_state_priority'] = CreateAddOnParam(
+            ConfigFiles[GENPUSHOVER_CONFIG].ReadValue("pi_state_priority", return_type = str, default = "NORMAL"),
+            'list',
+            "Pi Hardware Sensor State Notification priority identifier. See https://pushover.net/api#priority",
+            bounds = 'LOWEST,LOW,NORMAL,HIGH,EMERGENCY',
+            display_name = "Pi Hardware Sensor State Priority")
 
         AddOnCfg = AddNotificationAddOnParam(AddOnCfg, 'genpushover',GENPUSHOVER_CONFIG)
         AddOnCfg = AddRetryAddOnParam(AddOnCfg, 'genpushover',GENPUSHOVER_CONFIG)
@@ -1310,6 +1316,11 @@ def AddNotificationAddOnParam(AddOnCfg, addon_name, config_file):
             'boolean',
             "Send messages for software updates.",
             display_name = "Notify for Software Updates")
+        AddOnCfg[addon_name]['parameters']['notify_pi_state'] = CreateAddOnParam(
+            ConfigFiles[config_file].ReadValue("notify_pi_state", return_type = bool, default = True),
+            'boolean',
+            "Send messages for Pi hardware sensor status (CPU throttling, undervoltage, etc).",
+            display_name = "Notify for Pi Hardware Issues")
     except Exception as e1:
         LogErrorLine("Error in AddNotificationAddOnParam: " + str(e1))
 

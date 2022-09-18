@@ -1,6 +1,12 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.18.15 -2022-09-18
+- Correct issue with power graph
+- Added priorities parameter to Pushover add on (see add on page for settings)
+- Minor update for PowerZone remote start
+- Added short notifications for CPU Throttling, CPU cap and CPU undervoltage on pi platforms
+
 ## V1.18.14 -2022-08-21
 - Minor update to improve fuel calculations for outages
 - Updated serialconfig.py to optionally allow bluetooth to be used with the normal serial port operations. 
