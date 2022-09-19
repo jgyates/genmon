@@ -535,6 +535,37 @@
       "type": "bits",
       "title": "Utility Power",
       "text": "Healthy"
+    },
+    {
+      "reg": "001d",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Load Total",
+      "sensor": "current",
+      "units": "kW",
+      "nominal": 20
+    },
+    {
+      "reg": "0039",
+      "mask": "ffff",
+      "multiplier": 1,
+      "type": "int",
+      "title": "Engine Speed",
+      "units": null,
+      "sensor": "rpm",
+      "nominal": 3600
+    },
+    {
+      "reg": "0038",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Battery",
+      "units": "V",
+      "sensor": "batteryvolts",
+      "nominal": 12,
+      "maximum": 24
     }
   ],
   "maintenance": [
