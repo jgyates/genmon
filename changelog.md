@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 - Added priorities parameter to Pushover add on (see add on page for settings)
 - Minor update for PowerZone remote start
 - Added short notifications for CPU Throttling, CPU cap and CPU undervoltage on pi platforms
+- Minor update to JSON for Briggs and Stratton Controller
 
 ## V1.18.14 -2022-08-21
 - Minor update to improve fuel calculations for outages
