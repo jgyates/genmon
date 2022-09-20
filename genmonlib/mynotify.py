@@ -76,6 +76,7 @@ class GenNotify(MyCommon):
                 self.notify_warning = self.config.ReadValue('notify_warning', return_type = bool, default = True)
                 self.notify_info = self.config.ReadValue('notify_info', return_type = bool, default = True)
                 self.notify_sw_update = self.config.ReadValue('notify_sw_update', return_type = bool, default = True)
+                self.notify_pi_state = self.config.ReadValue('notify_pi_state', return_type = bool, default = True)
 
             # init event callbacks
             if onready != None and self.notify_info:
