@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - Minor update for PowerZone remote start
 - Added short notifications for CPU Throttling, CPU cap and CPU undervoltage on pi platforms
 - Minor update to JSON for Briggs and Stratton Controller
+- Added the ability to set baud rate, stop bits and parity for custom controllers
 
 ## V1.18.14 -2022-08-21
 - Minor update to improve fuel calculations for outages

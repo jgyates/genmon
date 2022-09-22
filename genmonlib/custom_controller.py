@@ -41,6 +41,10 @@ class CustomController(GeneratorController):
         self.ConfigValidated = False
         self.ControllerDetected = False
         self.DisableOutageCheck = False
+        # for custom controllers
+        self.SerialBaudRate = 9600 
+        self.SerialParity = None 
+        self.SerialOnePointFiveStopBits = False
 
         self.DaysOfWeek = { 0: "Sunday",    # decode for register values with day of week
                             1: "Monday",
@@ -84,7 +88,8 @@ class CustomController(GeneratorController):
                     inputfile = self.SimulationFile,
                     config = self.config)
             else:
-                self.ModBus = ModbusProtocol(self.UpdateRegisterList,
+                self.ModBus = ModbusProtocol(self.UpdateRegisterList, rate = self.SerialBaudRate, 
+                    Parity = self.SerialParity, OnePointFiveStopBits = self.SerialOnePointFiveStopBits,
                     config = self.config)
 
 
@@ -114,6 +119,16 @@ class CustomController(GeneratorController):
             self.UseFuelSensor = self.config.ReadValue('usesensorforfuelgauge', return_type = bool, default = True)
             self.UseCalculatedPower = self.config.ReadValue('usecalculatedpower', return_type = bool, default = False)
             self.DisableOutageCheck = self.config.ReadValue('disableoutagecheck', return_type = bool, default = False)
+            # used for controllers that use serial comms other than 9600, N, 8, 1
+            # NOTE: This is only for custom controllers
+            if self.config.HasOption('serial_baud_rate'):
+                self.SerialBaudRate = self.config.ReadValue('serial_baud_rate', return_type = int, default = 9600)
+            if self.config.HasOption('serial_parity'):
+                self.SerialParity = self.config.ReadValue('serial_parity', return_type = int, default = 0)
+                if self.SerialParity == 0 or self.SerialParity > 2:
+                    self.SerialParity = None
+            if self.config.HasOption('serial_one_point_five_stop_bits'):
+                self.SerialOnePointFiveStopBits = self.config.ReadValue('serial_one_point_five_stop_bits', return_type = bool, default = False)
 
             self.ConfigImportFile = self.config.ReadValue('import_config_file', default = None)
             if self.ConfigImportFile == None:
