@@ -120,14 +120,14 @@ class MyWeather(MySupport):
         while True:
             if self.OWM == None:
                 if not self.InitOWM():
-                    if self.WaitForExit("WeatherThread", 60 ):  # 60 sec
+                    if self.WaitForExit("WeatherThread", 60 * 3 ):  # 3 min
                         return
                     continue
             try:
                 self.GetObservation()
                 if self.Observation == None:
                     self.OWM = None
-                    if self.WaitForExit("WeatherThread", 60 ):  # 60 sec
+                    if self.WaitForExit("WeatherThread", 60 * 3):  # 3 min
                         return
                     continue
                 weatherdata = self.Observation.get_weather()
@@ -136,7 +136,7 @@ class MyWeather(MySupport):
             except Exception as e1:
                 self.LogErrorLine("Error calling Observation.get_weather: " + str(e1))
                 self.WeatherData = None
-                if self.WaitForExit("WeatherThread", 60 ):  # 60 sec
+                if self.WaitForExit("WeatherThread", 60 * 3):  # 3 min
                     return
                 continue
 
