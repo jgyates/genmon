@@ -618,7 +618,7 @@ class Monitor(MySupport):
                     continue
                 if not fromsocket and ExecList[2]:
                     continue
-                # Execut Command
+                # Execute Command
                 ReturnMessage = ExecList[0](*ExecList[1])
 
                 ValidCommand = True
