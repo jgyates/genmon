@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 #    FILE: genslack.py
 # PURPOSE: genmon.py support program to allow Slack messages
 # to be sent when the generator status changes
@@ -8,30 +8,40 @@
 #    DATE: 20-Sep-2018
 #
 # MODIFICATIONS:
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 
-import time, sys, signal, os, json, requests
+import json
+import os
+import signal
+import sys
+import time
+
+import requests
 
 try:
     # this will add the parent of the genmonlib folder to the path
     # if we are one level below the genmonlib parent (e.g. in the addon folder)
     file_root = os.path.dirname(os.path.realpath(__file__))
-    parent_root=os.path.abspath(os.path.join(file_root, os.pardir))
+    parent_root = os.path.abspath(os.path.join(file_root, os.pardir))
     if os.path.isdir(os.path.join(parent_root, "genmonlib")):
         sys.path.insert(1, parent_root)
 
-    from genmonlib.mylog import SetupLogger
-    from genmonlib.mynotify import GenNotify
     from genmonlib.myconfig import MyConfig
-    from genmonlib.mysupport import MySupport
+    from genmonlib.mylog import SetupLogger
     from genmonlib.mymsgqueue import MyMsgQueue
+    from genmonlib.mynotify import GenNotify
+    from genmonlib.mysupport import MySupport
 except Exception as e1:
-    print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
-    print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
+    print(
+        "\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n"
+    )
+    print(
+        "Please see the project documentation at https://github.com/jgyates/genmon.\n"
+    )
     print("Error: " + str(e1))
     sys.exit(2)
 
-#----------  Signal Handler ----------------------------------------------------
+# ----------  Signal Handler ----------------------------------------------------
 def signal_handler(signal, frame):
 
     try:
@@ -41,7 +51,8 @@ def signal_handler(signal, frame):
         log.error("signal_handler: " + str(e1))
     sys.exit(0)
 
-#----------  OnRun -------------------------------------------------------------
+
+# ----------  OnRun -------------------------------------------------------------
 def OnRun(Active):
 
     if Active:
@@ -50,7 +61,8 @@ def OnRun(Active):
     else:
         console.info("Generator Running End")
 
-#----------  OnRunManual -------------------------------------------------------
+
+# ----------  OnRunManual -------------------------------------------------------
 def OnRunManual(Active):
 
     if Active:
@@ -59,7 +71,8 @@ def OnRunManual(Active):
     else:
         console.info("Generator Running in Manual Mode End")
 
-#----------  OnExercise --------------------------------------------------------
+
+# ----------  OnExercise --------------------------------------------------------
 def OnExercise(Active):
 
     if Active:
@@ -68,7 +81,8 @@ def OnExercise(Active):
     else:
         console.info("Generator Exercising End")
 
-#----------  OnReady -----------------------------------------------------------
+
+# ----------  OnReady -----------------------------------------------------------
 def OnReady(Active):
 
     if Active:
@@ -77,7 +91,8 @@ def OnReady(Active):
     else:
         console.info("Generator Ready End")
 
-#----------  OnOff -------------------------------------------------------------
+
+# ----------  OnOff -------------------------------------------------------------
 def OnOff(Active):
 
     if Active:
@@ -86,7 +101,8 @@ def OnOff(Active):
     else:
         console.info("Generator Off End")
 
-#----------  OnManual ----------------------------------------------------------
+
+# ----------  OnManual ----------------------------------------------------------
 def OnManual(Active):
 
     if Active:
@@ -95,7 +111,8 @@ def OnManual(Active):
     else:
         console.info("Generator Manual End")
 
-#----------  OnAlarm -----------------------------------------------------------
+
+# ----------  OnAlarm -----------------------------------------------------------
 def OnAlarm(Active):
 
     if Active:
@@ -104,7 +121,8 @@ def OnAlarm(Active):
     else:
         console.info("Generator Alarm End")
 
-#----------  OnService ---------------------------------------------------------
+
+# ----------  OnService ---------------------------------------------------------
 def OnService(Active):
 
     if Active:
@@ -113,7 +131,8 @@ def OnService(Active):
     else:
         console.info("Generator Servcie Due End")
 
-#----------  OnUtilityChange ---------------------------------------------------
+
+# ----------  OnUtilityChange ---------------------------------------------------
 def OnUtilityChange(Active):
 
     if Active:
@@ -123,7 +142,8 @@ def OnUtilityChange(Active):
         Queue.SendMessage("Utility Service is Up")
         console.info("Utility Service is Up")
 
-#----------  OnSoftwareUpdate --------------------------------------------------
+
+# ----------  OnSoftwareUpdate --------------------------------------------------
 def OnSoftwareUpdate(Active):
 
     if Active:
@@ -133,38 +153,54 @@ def OnSoftwareUpdate(Active):
         Queue.SendMessage("Software Is Up To Date")
         console.info("Software Is Up To Date")
 
-#----------  OnSystemHealth ----------------------------------------------------
+
+# ----------  OnSystemHealth ----------------------------------------------------
 def OnSystemHealth(Notice):
     Queue.SendMessage("System Health : " + Notice)
     console.info("System Health : " + Notice)
 
-#----------  OnFuelState -------------------------------------------------------
+
+# ----------  OnFuelState -------------------------------------------------------
 def OnFuelState(Active):
-    if Active: # True is OK
+    if Active:  # True is OK
         console.info("Fuel Level is OK")
         Queue.SendMessage("Fuel Level is OK")
     else:  # False = Low
         Queue.SendMessage("Fuel Level is Low")
         console.info("Fuel Level is Low")
 
-#----------  OnPiState ---------------------------------------------------------
+
+# ----------  OnPiState ---------------------------------------------------------
 def OnPiState(Notice):
     Queue.SendMessage("Pi Health : " + Notice)
     console.info("Pi Health : " + Notice)
 
-#----------  SendNotice --------------------------------------------------------
+
+# ----------  SendNotice --------------------------------------------------------
 def SendNotice(Message):
 
     try:
-        slack_data = {'channel':channel, 'username':username, 'icon_emoji':icon_emoji, 'attachments': [{'title':'GenMon Alert', 'title_link':title_link, 'fields': [{ 'title':'Status', 'value':Message, 'short':'false' }]}]}
+        slack_data = {
+            "channel": channel,
+            "username": username,
+            "icon_emoji": icon_emoji,
+            "attachments": [
+                {
+                    "title": "GenMon Alert",
+                    "title_link": title_link,
+                    "fields": [{"title": "Status", "value": Message, "short": "false"}],
+                }
+            ],
+        }
 
         response = requests.post(
-                webhook_url, data=json.dumps(slack_data),
-                headers={'Content-Type': 'application/json'}
-            )
+            webhook_url,
+            data=json.dumps(slack_data),
+            headers={"Content-Type": "application/json"},
+        )
         if response.status_code != 200:
             raise ValueError(
-                'Request to slack returned an error %s, the response is:\n%s'
+                "Request to slack returned an error %s, the response is:\n%s"
                 % (response.status_code, response.text)
             )
             return False
@@ -175,22 +211,34 @@ def SendNotice(Message):
         console.error("Error in SendNotice: " + str(e1))
         return False
 
-#------------------- Command-line interface for gengpio ------------------------
-if __name__=='__main__':
 
-    console, ConfigFilePath, address, port, loglocation, log = MySupport.SetupAddOnProgram("genslack")
+# ------------------- Command-line interface for gengpio ------------------------
+if __name__ == "__main__":
+
+    (
+        console,
+        ConfigFilePath,
+        address,
+        port,
+        loglocation,
+        log,
+    ) = MySupport.SetupAddOnProgram("genslack")
 
     # Set the signal handler
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
     try:
-        config = MyConfig(filename = os.path.join(ConfigFilePath, 'genslack.conf'), section = 'genslack', log = log)
+        config = MyConfig(
+            filename=os.path.join(ConfigFilePath, "genslack.conf"),
+            section="genslack",
+            log=log,
+        )
 
-        webhook_url = config.ReadValue('webhook_url', default = None)
-        channel = config.ReadValue('channel', default = None)
-        username = config.ReadValue('username', default = None)
-        icon_emoji = config.ReadValue('icon_emoji', default = ":red_circle:")
-        title_link = config.ReadValue('title_link', default = None)
+        webhook_url = config.ReadValue("webhook_url", default=None)
+        channel = config.ReadValue("channel", default=None)
+        username = config.ReadValue("username", default=None)
+        icon_emoji = config.ReadValue("icon_emoji", default=":red_circle:")
+        title_link = config.ReadValue("title_link", default=None)
 
         if webhook_url == None or not len(webhook_url):
             log.error("Error: invalid webhoot_url setting")
@@ -224,28 +272,29 @@ if __name__=='__main__':
 
     try:
 
-        Queue = MyMsgQueue(config = config, log = log, callback = SendNotice)
+        Queue = MyMsgQueue(config=config, log=log, callback=SendNotice)
 
         GenNotify = GenNotify(
-                                        host = address,
-                                        port = port,
-                                        onready = OnReady,
-                                        onexercise = OnExercise,
-                                        onrun = OnRun,
-                                        onrunmanual = OnRunManual,
-                                        onalarm = OnAlarm,
-                                        onservice = OnService,
-                                        onoff = OnOff,
-                                        onmanual = OnManual,
-                                        onutilitychange = OnUtilityChange,
-                                        onsoftwareupdate = OnSoftwareUpdate,
-                                        onsystemhealth = OnSystemHealth,
-                                        onfuelstate = OnFuelState,
-                                        onpistate = OnPiState,
-                                        log = log,
-                                        loglocation = loglocation,
-                                        console = console,
-                                        config = config)
+            host=address,
+            port=port,
+            onready=OnReady,
+            onexercise=OnExercise,
+            onrun=OnRun,
+            onrunmanual=OnRunManual,
+            onalarm=OnAlarm,
+            onservice=OnService,
+            onoff=OnOff,
+            onmanual=OnManual,
+            onutilitychange=OnUtilityChange,
+            onsoftwareupdate=OnSoftwareUpdate,
+            onsystemhealth=OnSystemHealth,
+            onfuelstate=OnFuelState,
+            onpistate=OnPiState,
+            log=log,
+            loglocation=loglocation,
+            console=console,
+            config=config,
+        )
 
         while True:
             time.sleep(1)

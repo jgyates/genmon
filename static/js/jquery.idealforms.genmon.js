@@ -1021,7 +1021,7 @@ module.exports = {
 
     $icon = $(this.opts.iconHtml, {
       class: this.opts.iconClass,
-      click: function(){ $(input).focus() }, 
+      click: function(){ $(input).focus() },
       mouseover: function(){ $(input).parent('div').find(".tooltip").show() },
       mouseout: function(){ $(input).parent('div').find(".tooltip").hide() }
     });

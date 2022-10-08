@@ -1,48 +1,55 @@
 #!/usr/bin/env python
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 #    FILE: mynotify.py
 # PURPOSE:
 #
 #  AUTHOR: Jason G Yates
 #    DATE: 25-Apr-2017
 # MODIFICATIONS:
-#-------------------------------------------------------------------------------
-import time, threading, json, collections
+# -------------------------------------------------------------------------------
+import collections
+import json
+import threading
+import time
 
+from genmonlib.myclient import ClientInterface
 from genmonlib.mycommon import MyCommon
 from genmonlib.mylog import SetupLogger
 from genmonlib.mythread import MyThread
-from genmonlib.myclient import ClientInterface
 from genmonlib.program_defaults import ProgramDefaults
-#----------  GenNotify::init--- ------------------------------------------------
+
+
+# ----------  GenNotify::init--- ------------------------------------------------
 class GenNotify(MyCommon):
-    def __init__(self,
-                host=ProgramDefaults.LocalHost,
-                port=ProgramDefaults.ServerPort,
-                log = None,
-                loglocation = ProgramDefaults.LogPath,
-                onready = None,
-                onexercise = None,
-                onrun = None,
-                onrunmanual = None,
-                onalarm = None,
-                onservice = None,
-                onoff = None,
-                onmanual = None,
-                onutilitychange = None,
-                onsoftwareupdate = None,
-                onsystemhealth = None,
-                onfuelstate = None,
-                onpistate = None,
-                start = True,
-                console = None,
-                notify_outage = True,
-                notify_error = True,
-                notify_warning = True,
-                notify_info = True,
-                notify_sw_update = True,
-                notify_pi_state = True,
-                config = None):
+    def __init__(
+        self,
+        host=ProgramDefaults.LocalHost,
+        port=ProgramDefaults.ServerPort,
+        log=None,
+        loglocation=ProgramDefaults.LogPath,
+        onready=None,
+        onexercise=None,
+        onrun=None,
+        onrunmanual=None,
+        onalarm=None,
+        onservice=None,
+        onoff=None,
+        onmanual=None,
+        onutilitychange=None,
+        onsoftwareupdate=None,
+        onsystemhealth=None,
+        onfuelstate=None,
+        onpistate=None,
+        start=True,
+        console=None,
+        notify_outage=True,
+        notify_error=True,
+        notify_warning=True,
+        notify_info=True,
+        notify_sw_update=True,
+        notify_pi_state=True,
+        config=None,
+    ):
 
         super(GenNotify, self).__init__()
 
@@ -54,7 +61,7 @@ class GenNotify(MyCommon):
         self.LastSystemHealth = None
         self.LastPiState = None
         self.LastFuelWarningStatus = True
-        self.Events = {}            # Dict for handling events
+        self.Events = {}  # Dict for handling events
         self.notify_outage = notify_outage
         self.notify_error = notify_error
         self.notify_warning = notify_warning
@@ -63,20 +70,31 @@ class GenNotify(MyCommon):
         self.notify_pi_state = notify_pi_state
         self.config = config
 
-
         self.log = log
         self.console = console
 
         try:
 
             # get settings from config file if supplied
-            if  self.config != None:
-                self.notify_outage = self.config.ReadValue('notify_outage', return_type = bool, default = True)
-                self.notify_error = self.config.ReadValue('notify_error', return_type = bool, default = True)
-                self.notify_warning = self.config.ReadValue('notify_warning', return_type = bool, default = True)
-                self.notify_info = self.config.ReadValue('notify_info', return_type = bool, default = True)
-                self.notify_sw_update = self.config.ReadValue('notify_sw_update', return_type = bool, default = True)
-                self.notify_pi_state = self.config.ReadValue('notify_pi_state', return_type = bool, default = True)
+            if self.config != None:
+                self.notify_outage = self.config.ReadValue(
+                    "notify_outage", return_type=bool, default=True
+                )
+                self.notify_error = self.config.ReadValue(
+                    "notify_error", return_type=bool, default=True
+                )
+                self.notify_warning = self.config.ReadValue(
+                    "notify_warning", return_type=bool, default=True
+                )
+                self.notify_info = self.config.ReadValue(
+                    "notify_info", return_type=bool, default=True
+                )
+                self.notify_sw_update = self.config.ReadValue(
+                    "notify_sw_update", return_type=bool, default=True
+                )
+                self.notify_pi_state = self.config.ReadValue(
+                    "notify_pi_state", return_type=bool, default=True
+                )
 
             # init event callbacks
             if onready != None and self.notify_info:
@@ -106,13 +124,16 @@ class GenNotify(MyCommon):
             if onpistate != None and self.notify_pi_state:
                 self.Events["PISTATE"] = onpistate
 
+            self.Generator = ClientInterface(
+                host=host, port=port, log=log, loglocation=loglocation
+            )
 
-            self.Generator = ClientInterface(host = host, port = port, log = log, loglocation = loglocation)
-
-            self.Threads["PollingThread"] = MyThread(self.MainPollingThread, Name = "PollingThread", start = start)
+            self.Threads["PollingThread"] = MyThread(
+                self.MainPollingThread, Name="PollingThread", start=start
+            )
             self.Started = start
         except Exception as e1:
-            self.LogErrorLine("Error in mynotify init: "  + str(e1))
+            self.LogErrorLine("Error in mynotify init: " + str(e1))
 
     # ---------- GenNotify::MainPollingThread-----------------------------------
     def StartPollThread(self):
@@ -136,19 +157,21 @@ class GenNotify(MyCommon):
                     time.sleep(3)
                     continue
                 if self.LastEvent != None:
-                    self.console.info( "Last : <" + self.LastEvent + ">, New : <" + data + ">")
-                self.CallEventHandler(False)     # end last event
+                    self.console.info(
+                        "Last : <" + self.LastEvent + ">, New : <" + data + ">"
+                    )
+                self.CallEventHandler(False)  # end last event
 
                 self.LastEvent = data
 
-                self.CallEventHandler(True)      # begin new event
+                self.CallEventHandler(True)  # begin new event
 
                 time.sleep(3)
             except Exception as e1:
                 self.LogErrorLine("Error in mynotify:MainPollingThread: " + str(e1))
                 time.sleep(3)
 
-    #----------  GenNotify::GetOutageState -------------------------------------
+    # ----------  GenNotify::GetOutageState -------------------------------------
     def GetOutageState(self):
         OutageState = None
         outagedata = self.SendCommand("generator: outage_json")
@@ -176,7 +199,8 @@ class GenNotify(MyCommon):
                 self.LastOutageStatus = OutageState
 
         return OutageState
-    #----------  GenNotify::GetMonitorState ------------------------------------
+
+    # ----------  GenNotify::GetMonitorState ------------------------------------
     def GetMonitorState(self):
         UpdateAvailable = None
 
@@ -193,11 +217,17 @@ class GenNotify(MyCommon):
                         else:
                             UpdateAvailable = False
                         if self.notify_sw_update:
-                            self.ProcessEventData("SOFTWAREUPDATE", UpdateAvailable, self.LastSoftwareUpdateStatus)
+                            self.ProcessEventData(
+                                "SOFTWAREUPDATE",
+                                UpdateAvailable,
+                                self.LastSoftwareUpdateStatus,
+                            )
                             self.LastSoftwareUpdateStatus = UpdateAvailable
                     if key == "Monitor Health":
                         if self.notify_info:
-                            self.ProcessEventData("SYSTEMHEALTH", value, self.LastSystemHealth)
+                            self.ProcessEventData(
+                                "SYSTEMHEALTH", value, self.LastSystemHealth
+                            )
                             self.LastSystemHealth = value
             GenList = GenDict["Monitor"][2]["Platform Stats"]
             PiStats = ""
@@ -229,7 +259,7 @@ class GenNotify(MyCommon):
             UpdateAvailable = None
         return UpdateAvailable
 
-    #----------  GenNotify::GetMaintState --------------------------------------
+    # ----------  GenNotify::GetMaintState --------------------------------------
     def GetMaintState(self):
         FuelOK = None
 
@@ -246,7 +276,9 @@ class GenNotify(MyCommon):
                         else:
                             FuelOK = False
                         if self.notify_warning:
-                            self.ProcessEventData("FUELWARNING", FuelOK, self.LastFuelWarningStatus)
+                            self.ProcessEventData(
+                                "FUELWARNING", FuelOK, self.LastFuelWarningStatus
+                            )
                             self.LastFuelWarningStatus = FuelOK
 
         except Exception as e1:
@@ -254,7 +286,8 @@ class GenNotify(MyCommon):
             self.LogErrorLine("Unable to get maint state: " + str(e1))
             FuelOK = None
         return FuelOK
-    #----------  GenNotify::ProcessEventData --------------------------------
+
+    # ----------  GenNotify::ProcessEventData --------------------------------
     def ProcessEventData(self, name, eventdata, lastvalue):
 
         try:
@@ -270,13 +303,18 @@ class GenNotify(MyCommon):
                 if callable(EventCallback):
                     EventCallback(lastvalue)
                 else:
-                    self.LogError("Invalid Callback in ProcessEventData : " + name + ": " + str(EventCallback))
+                    self.LogError(
+                        "Invalid Callback in ProcessEventData : "
+                        + name
+                        + ": "
+                        + str(EventCallback)
+                    )
             else:
-                self.LogError("Invalid Callback in ProcessEventData : None : "  + name)
+                self.LogError("Invalid Callback in ProcessEventData : None : " + name)
         except Exception as e1:
-            self.LogErrorLine("Error in ProcessEventData: "  + name + ": " + str(e1))
+            self.LogErrorLine("Error in ProcessEventData: " + name + ": " + str(e1))
 
-    #----------  GenNotify::CallEventHandler -----------------------------------
+    # ----------  GenNotify::CallEventHandler -----------------------------------
     def CallEventHandler(self, Status):
 
         try:
@@ -288,15 +326,17 @@ class GenNotify(MyCommon):
                 if callable(EventCallback):
                     EventCallback(Status)
                 else:
-                    self.LogError("Invalid Callback in CallEventHandler : " + str(EventCallback))
+                    self.LogError(
+                        "Invalid Callback in CallEventHandler : " + str(EventCallback)
+                    )
             else:
                 # This must be disabled
                 pass
-                #self.LogError("Invalid Callback in CallEventHandler : None")
+                # self.LogError("Invalid Callback in CallEventHandler : None")
         except Exception as e1:
             self.LogErrorLine("Error in CallEventHandler: " + str(e1))
 
-    #----------  GenNotify::SendCommand ----------------------------------------
+    # ----------  GenNotify::SendCommand ----------------------------------------
     def SendCommand(self, Command):
 
         if len(Command) == 0:
@@ -311,7 +351,7 @@ class GenNotify(MyCommon):
 
         return data
 
-    #----------  GenNotify::Close ----------------------------------------------
+    # ----------  GenNotify::Close ----------------------------------------------
     def Close(self):
         try:
             self.KillThread("PollingThread")

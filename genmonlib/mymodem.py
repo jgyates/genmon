@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 #    FILE: mymodem.py
 # PURPOSE: module for using direct cellular comms for SMS via cellular modem
 #
@@ -7,29 +7,39 @@
 #    DATE: 29-Aug-2018
 #
 # MODIFICATIONS:
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 
-from __future__ import print_function       # For python 3.x compatibility with print function
+from __future__ import (  # For python 3.x compatibility with print function
+    print_function,
+)
 
-import sys, collections, time, threading, re, os
+import collections
+import os
+import re
+import sys
+import threading
+import time
 
-from genmonlib.myserial import SerialDevice
 from genmonlib.myconfig import MyConfig
-from genmonlib.mysupport import MySupport
 from genmonlib.mylog import SetupLogger
+from genmonlib.myserial import SerialDevice
+from genmonlib.mysupport import MySupport
 from genmonlib.mythread import MyThread
 from genmonlib.program_defaults import ProgramDefaults
 
-#------------ MyModem class ----------------------------------------------------
+
+# ------------ MyModem class ----------------------------------------------------
 class MyModem(MySupport):
-    def __init__(self,
-            port = "/dev/ttyAMA0" ,
-            rate = 115200,
-            loglocation = ProgramDefaults.LogPath,
-            log = None,
-            localinit = False,
-            ConfigFilePath = ProgramDefaults.ConfPath,
-            recipient = None):
+    def __init__(
+        self,
+        port="/dev/ttyAMA0",
+        rate=115200,
+        loglocation=ProgramDefaults.LogPath,
+        log=None,
+        localinit=False,
+        ConfigFilePath=ProgramDefaults.ConfPath,
+        recipient=None,
+    ):
         super(MyModem, self).__init__()
 
         self.MessagesSent = 0
@@ -56,22 +66,26 @@ class MyModem(MySupport):
         else:
             self.log = log
 
-        self.console = SetupLogger("mymodem_console", log_file = "", stream = True)
+        self.console = SetupLogger("mymodem_console", log_file="", stream=True)
 
         try:
-            self.config = MyConfig(filename = self.configfile, section = "MyModem", log = self.log)
+            self.config = MyConfig(
+                filename=self.configfile, section="MyModem", log=self.log
+            )
 
-            self.LogAtCommands = self.config.ReadValue('log_at_commands', return_type = bool, default = False)
+            self.LogAtCommands = self.config.ReadValue(
+                "log_at_commands", return_type=bool, default=False
+            )
 
-            self.MessageLevel = self.config.ReadValue('message_level', default = 'error')
+            self.MessageLevel = self.config.ReadValue("message_level", default="error")
 
-            self.Rate = self.config.ReadValue('rate', return_type = int, default = 115200)
+            self.Rate = self.config.ReadValue("rate", return_type=int, default=115200)
 
-            self.Port = self.config.ReadValue('port', default = "/dev/ttyAMA0")
+            self.Port = self.config.ReadValue("port", default="/dev/ttyAMA0")
 
-            self.Recipient = self.config.ReadValue('recipient', default = recipient)
+            self.Recipient = self.config.ReadValue("recipient", default=recipient)
 
-            self.ModemType = self.config.ReadValue('modem_type', default = "LTEPiHat")
+            self.ModemType = self.config.ReadValue("modem_type", default="LTEPiHat")
 
         except Exception as e1:
             self.LogErrorLine("Error reading config file: " + str(e1))
@@ -93,24 +107,28 @@ class MyModem(MySupport):
             return
 
         # rate * 10 bits then convert to MS
-        self.CharacterTimeMS = (((1/ self.Rate) * 10)  *1000)
+        self.CharacterTimeMS = ((1 / self.Rate) * 10) * 1000
 
         self.InitComplete = False
 
         try:
-            self.SerialDevice = SerialDevice(port, rate = rate, log = self.log, loglocation = loglocation)
+            self.SerialDevice = SerialDevice(
+                port, rate=rate, log=self.log, loglocation=loglocation
+            )
             self.Threads = self.MergeDicts(self.Threads, self.SerialDevice.Threads)
 
-            self.Threads["SendMessageThread"] = MyThread(self.SendMessageThread, Name = "SendMessageThread")
+            self.Threads["SendMessageThread"] = MyThread(
+                self.SendMessageThread, Name="SendMessageThread"
+            )
 
         except Exception as e1:
             self.LogErrorLine("Error opening serial device in MyModem: " + str(e1))
 
-    #------------MyModem::GetConfig---------------------------------------------
+    # ------------MyModem::GetConfig---------------------------------------------
     def GetConfig(self):
         return self.config
 
-    #------------MyModem::SendMessageThread-------------------------------------
+    # ------------MyModem::SendMessageThread-------------------------------------
     def SendMessageThread(self):
 
         # once SendMessage is called messages are queued and then sent from this thread
@@ -118,14 +136,14 @@ class MyModem(MySupport):
         while True:
             try:
                 self.SendActive = False
-                if self.WaitForExit("SendMessageThread", 2 ):
+                if self.WaitForExit("SendMessageThread", 2):
                     return
 
                 while self.SendQueue != []:
                     SendError = False
 
                     if not self.InitComplete:
-                        if self.WaitForExit("SendMessageThread", 5 ):
+                        if self.WaitForExit("SendMessageThread", 5):
                             return
                         else:
                             continue
@@ -133,41 +151,51 @@ class MyModem(MySupport):
                     self.SendActive = True
                     MessageItems = self.SendQueue.pop()
                     try:
-                        if not (self.SendSMS(message = MessageItems[0], recipient = MessageItems[1] , msgtype = MessageItems[2])):
-                            self.LogError("Error in SendMessageThread, SendSMS failed, retrying")
+                        if not (
+                            self.SendSMS(
+                                message=MessageItems[0],
+                                recipient=MessageItems[1],
+                                msgtype=MessageItems[2],
+                            )
+                        ):
+                            self.LogError(
+                                "Error in SendMessageThread, SendSMS failed, retrying"
+                            )
                             SendError = True
                     except Exception as e1:
                         # put the time back at the end of the queue
-                        self.LogErrorLine("Error in SendMessageThread, retrying (2): " + str(e1))
+                        self.LogErrorLine(
+                            "Error in SendMessageThread, retrying (2): " + str(e1)
+                        )
                         SendError = True
 
                     if SendError:
-                        self.SendQueue.insert(len(self.SendQueue),MessageItems)
+                        self.SendQueue.insert(len(self.SendQueue), MessageItems)
                         self.SendActive = False
                         # sleep for 10 sec and try again
-                        if self.WaitForExit("SendMessageThread", 10 ):
+                        if self.WaitForExit("SendMessageThread", 10):
                             return
             except Exception as e1:
                 self.LogErrorLine("Error in SendMessageThread: " + str(e1))
 
-    #------------MyModem::SendMessage-------------------------------------------
+    # ------------MyModem::SendMessage-------------------------------------------
     # msgtype must be one of "outage", "error", "warn", "info"
-    def SendMessage(self, message = None, recipient = None, msgtype = "error"):
+    def SendMessage(self, message=None, recipient=None, msgtype="error"):
 
         try:
-            self.SendQueue.insert(0,[message, recipient, msgtype])
+            self.SendQueue.insert(0, [message, recipient, msgtype])
             return True
         except Exception as e1:
             self.LogErrorLine("Error in SendMessage: " + str(e1))
             return False
 
-    #------------------MyModem::MessagesPending---------------------------------
+    # ------------------MyModem::MessagesPending---------------------------------
     def MessagesPending(self):
 
         return self.SendQueue != [] or self.SendActive
 
-    #------------------MyModem::SendCommand-------------------------------------
-    def SendATCommand(self, command, response = None, retries = 1, NoAddCRLF = False):
+    # ------------------MyModem::SendCommand-------------------------------------
+    def SendATCommand(self, command, response=None, retries=1, NoAddCRLF=False):
 
         try:
 
@@ -188,7 +216,7 @@ class MyModem(MySupport):
                 self.SerialDevice.Flush()
 
                 attempts = retries
-                while  self.Sending and attempts >= 0:
+                while self.Sending and attempts >= 0:
                     self.SerialDevice.Write(command.encode())
                     if self.LogAtCommands:
                         self.LogError("->" + command)
@@ -201,7 +229,9 @@ class MyModem(MySupport):
 
                         if SerialBuffer.find("ERROR") >= 0:
                             self.Sending = False
-                            self.LogError("Error returned SendATCommand: CMD: " + str(command))
+                            self.LogError(
+                                "Error returned SendATCommand: CMD: " + str(command)
+                            )
                             return False
 
                         if SerialBuffer.find(response) >= 0:
@@ -217,14 +247,16 @@ class MyModem(MySupport):
                     else:
                         break
 
-                return (attempts >= 0)
+                return attempts >= 0
 
         except Exception as e1:
-            self.LogErrorLine("Error in SendATCommand: " + "CMD: " + str(command) + " : "+ str(e1))
+            self.LogErrorLine(
+                "Error in SendATCommand: " + "CMD: " + str(command) + " : " + str(e1)
+            )
             return False
 
-    #------------------MyModem::Send--------------------------------------------
-    def SendSMS(self, message = None, recipient = None, msgtype = "error"):
+    # ------------------MyModem::Send--------------------------------------------
+    def SendSMS(self, message=None, recipient=None, msgtype="error"):
 
         try:
 
@@ -248,54 +280,62 @@ class MyModem(MySupport):
                     return False
 
                 StartMessage = str("AT+CMGS=" + '"' + str(recipient) + '"' + "\r")
-                if not self.SendATCommand(StartMessage, ">", retries = 0,  NoAddCRLF = True):
-                    self.SendATCommand("\x1b" , "OK", retries = 1,  NoAddCRLF = True)
+                if not self.SendATCommand(StartMessage, ">", retries=0, NoAddCRLF=True):
+                    self.SendATCommand("\x1b", "OK", retries=1, NoAddCRLF=True)
                     self.LogError("Failed sending CMGS in MySMS:Send")
                     self.Errors += 1
                     return False
 
-                if not self.SendATCommand(str(message) + "\r" , ">", retries = 0,  NoAddCRLF = True):
-                    self.SendATCommand("\x1b" , "OK", retries = 1,  NoAddCRLF = True)
+                if not self.SendATCommand(
+                    str(message) + "\r", ">", retries=0, NoAddCRLF=True
+                ):
+                    self.SendATCommand("\x1b", "OK", retries=1, NoAddCRLF=True)
                     self.LogError("Failed sending Message Body in MySMS:Send")
                     self.Errors += 1
                     return False
 
-                if not self.SendATCommand("\x1a" , "OK", retries = 1,  NoAddCRLF = True):
-                    self.SendATCommand("\x1b" , "OK", retries = 1,  NoAddCRLF = True)
+                if not self.SendATCommand("\x1a", "OK", retries=1, NoAddCRLF=True):
+                    self.SendATCommand("\x1b", "OK", retries=1, NoAddCRLF=True)
                     self.LogError("Failed sending EOM in MySMS:Send")
                     self.Errors += 1
                     return False
 
-                self.SendATCommand("AT", 'OK')
+                self.SendATCommand("AT", "OK")
                 self.MessagesSent += 1
             return True
         except Exception as e1:
             self.Errors += 1
             self.LogErrorLine("Error in MySMS:Send: " + str(e1))
             return False
-    #------------------MyModem::GetQuotedString---------------------------------
+
+    # ------------------MyModem::GetQuotedString---------------------------------
     def GetQuotedString(self, InputString):
 
         try:
             quoted = re.compile('"[^"]*"')
             for value in quoted.findall(InputString):
-                newline = "".join( c for c in value if  c not in '"' )
+                newline = "".join(c for c in value if c not in '"')
                 return newline
 
             return None
         except Exception as e1:
-            self.LogErrorLine("Error in GetQuotedString: " + str(InputString) + ": " + str(e1))
+            self.LogErrorLine(
+                "Error in GetQuotedString: " + str(InputString) + ": " + str(e1)
+            )
             return ""
-    #------------------MyModem::GetNumbersFromString----------------------------
+
+    # ------------------MyModem::GetNumbersFromString----------------------------
     def GetNumbersFromString(self, InputString):
         # return list of numbers
         try:
-            return re.findall(r'\d+', InputString)
+            return re.findall(r"\d+", InputString)
         except Exception as e1:
-            self.LogErrorLine("Error in GetNumbersFromString: " + str(InputString) + ": " + str(e1))
+            self.LogErrorLine(
+                "Error in GetNumbersFromString: " + str(InputString) + ": " + str(e1)
+            )
             return []
 
-    #------------------MyModem::GetItemsFromCommand-----------------------------
+    # ------------------MyModem::GetItemsFromCommand-----------------------------
     def GetItemsFromCommand(self, InputString):
 
         try:
@@ -306,14 +346,16 @@ class MyModem(MySupport):
                 ListItems = map(str.strip, ListItems)
                 return ListItems
             else:
-                return [InputString.split('\r\n')[1].strip()]
+                return [InputString.split("\r\n")[1].strip()]
         except Exception as e1:
-            self.LogErrorLine("Error in GetItemsFromCommand: " + str(InputString) + ": " + str(e1))
+            self.LogErrorLine(
+                "Error in GetItemsFromCommand: " + str(InputString) + ": " + str(e1)
+            )
             self.LogErrorLine("Input: " + str(InputString))
             return []
 
-    #------------------MyModem::GetInfo-----------------------------------------
-    def GetInfo(self, ReturnString = False):
+    # ------------------MyModem::GetInfo-----------------------------------------
+    def GetInfo(self, ReturnString=False):
         ModemInfo = collections.OrderedDict()
         try:
             with self.ModemLock:
@@ -323,12 +365,12 @@ class MyModem(MySupport):
                 ModemInfo["Errors"] = str(self.Errors)
 
                 # get operator name
-                if self.SendATCommand("AT+COPS?","OK" ):
+                if self.SendATCommand("AT+COPS?", "OK"):
                     Buffer = self.SerialDevice.GetRxBufferAsString()
-                    ModemInfo["Carrier"] = self.GetQuotedString(Buffer.split('\r\n')[1])
+                    ModemInfo["Carrier"] = self.GetQuotedString(Buffer.split("\r\n")[1])
 
                 # AT+CIMI IMSI (International mobile subscriber identification)
-                if self.SendATCommand("AT+CIMI","OK" ):
+                if self.SendATCommand("AT+CIMI", "OK"):
                     Buffer = self.SerialDevice.GetRxBufferAsString()
                     ReturnValue = self.GetItemsFromCommand(Buffer)
                     if len(ReturnValue):
@@ -344,7 +386,6 @@ class MyModem(MySupport):
                             ModemInfo["SIM Type"] = "2G"
                         elif SIMType == "1":
                             ModemInfo["SIM Type"] = "3G or 4G"
-
 
                 # name of manufacturer (AT+CGMI)
                 if self.SendATCommand("AT+CGMI", "OK"):
@@ -443,34 +484,38 @@ class MyModem(MySupport):
                             ModemInfo["Registration Status"] = "Enabled"
                     if len(NumberList) >= 2:
                         NetworkRegistrationLookup = {
-                            "0" : "Not Registered, Not searching",
-                            "1" : "Registered, Home network",
-                            "2" : "Not Registered, Searching",
-                            "3" : "Registration Denied",
-                            "4" : "Unknown, Out of Coverage",
-                            "5" : "Registered, Roaming",
-                            "6" : "Registered, Home network, SMS Only",
-                            "7" : "Registered, Roaming, SMS Only",
-                            "8" : "Attached for Emergency Bearer Services Only",
-                            "9" : "Registered, Home network, CSFB Not Preferred",
-                            "10" : "Registered, Roaming, CSFB Not Preferred",
+                            "0": "Not Registered, Not searching",
+                            "1": "Registered, Home network",
+                            "2": "Not Registered, Searching",
+                            "3": "Registration Denied",
+                            "4": "Unknown, Out of Coverage",
+                            "5": "Registered, Roaming",
+                            "6": "Registered, Home network, SMS Only",
+                            "7": "Registered, Roaming, SMS Only",
+                            "8": "Attached for Emergency Bearer Services Only",
+                            "9": "Registered, Home network, CSFB Not Preferred",
+                            "10": "Registered, Roaming, CSFB Not Preferred",
                         }
 
-                        ModemInfo["Network Registration"] = NetworkRegistrationLookup.get(NumberList[1], "Unknown")
+                        ModemInfo[
+                            "Network Registration"
+                        ] = NetworkRegistrationLookup.get(NumberList[1], "Unknown")
 
                     if len(NumberList) > 5:
-                        NetworkTech ={
-                            "0" : "GSM",                        # 2G
-                            "1" : "GSM Compact",                # 2G
-                            "2" : "UTRAN",                      # 3G
-                            "3" : "GSM w/EGPRS",                # 2.5G
-                            "4" : "UTRAN w/HSDPA",              # 3G
-                            "5" : "UTRAN w/HSUPA",              # 3G
-                            "6" : "UTRAN w/HSDPA and HSUPA",    # 3G
-                            "7" : "E-UTRAN",                    # 4G
-                            "255" : "Unknown"
+                        NetworkTech = {
+                            "0": "GSM",  # 2G
+                            "1": "GSM Compact",  # 2G
+                            "2": "UTRAN",  # 3G
+                            "3": "GSM w/EGPRS",  # 2.5G
+                            "4": "UTRAN w/HSDPA",  # 3G
+                            "5": "UTRAN w/HSUPA",  # 3G
+                            "6": "UTRAN w/HSDPA and HSUPA",  # 3G
+                            "7": "E-UTRAN",  # 4G
+                            "255": "Unknown",
                         }
-                        ModemInfo["Cell Network Technology"] = NetworkTech.get(self.GetNumbersFromString(NumberList[4])[0], "Unknown")
+                        ModemInfo["Cell Network Technology"] = NetworkTech.get(
+                            self.GetNumbersFromString(NumberList[4])[0], "Unknown"
+                        )
 
                 # radio signal strength (AT+CSQ), returns "+CSQ: 2,5"
                 # first number is RSSI:
@@ -499,13 +544,14 @@ class MyModem(MySupport):
                     if len(NumberList) >= 2:
                         RSSIList = self.ParseRSSI(NumberList[0])
                         ModemInfo["RSSI"] = RSSIList[0] + " dBm" + ", " + RSSIList[1]
-                        ModemInfo["Signal Quality"] = self.GetNumbersFromString(NumberList[1])[0]
+                        ModemInfo["Signal Quality"] = self.GetNumbersFromString(
+                            NumberList[1]
+                        )[0]
 
                 if self.SendATCommand("AT+CCLK?", "OK"):
                     Buffer = self.SerialDevice.GetRxBufferAsString()
                     if len(Buffer):
                         ModemInfo["Network Time"] = self.GetQuotedString(Buffer)
-
 
         except Exception as e1:
             self.LogErrorLine("Error in MyModem:GetInfo: " + str(e1))
@@ -513,47 +559,48 @@ class MyModem(MySupport):
         if ReturnString:
             return self.DictToString(ModemInfo)
         return ModemInfo
-    #------------------MyModem::ParseRSSI-------------------------------------------
+
+    # ------------------MyModem::ParseRSSI-------------------------------------------
     def ParseRSSI(self, Value):
 
         RSSILookup = {
-            "0" : ["-113", "Poor"],
-            "1" : ["-111", "Poor"],
-            "2" : ["-109", "Marginal"],
-            "3" : ["-107", "Marginal"],
-            "4" : ["-105", "Marginal"],
-            "5" : ["-103", "Marginal"],
-            "6" : ["-101", "Marginal"],
-            "7" : ["-99", "Marginal"],
-            "8" : ["-97", "Marginal"],
-            "9" : ["-95", "Marginal"],
-            "10" : ["-93", "OK"],
-            "11" : ["-91", "OK"],
-            "12" : ["-89", "OK"],
-            "13" : ["-87", "OK"],
-            "14" : ["-85", "OK"],
-            "15" : ["-83", "Good"],
-            "16" : ["-81", "Good"],
-            "17" : ["-79", "Good"],
-            "18" : ["-77", "Good"],
-            "19" : ["-75", "Good"],
-            "20" : ["-73", "Excellent"],
-            "21" : ["-71", "Excellent"],
-            "22" : ["-69", "Excellent"],
-            "23" : ["-67", "Excellent"],
-            "24" : ["-65", "Excellent"],
-            "25" : ["-63", "Excellent"],
-            "26" : ["-61", "Excellent"],
-            "27" : ["-59", "Excellent"],
-            "28" : ["-57", "Excellent"],
-            "29" : ["-55", "Excellent"],
-            "30" : ["-53", "Excellent"],
-            "99" : ["Unknown", "Unknown"]
-            }
+            "0": ["-113", "Poor"],
+            "1": ["-111", "Poor"],
+            "2": ["-109", "Marginal"],
+            "3": ["-107", "Marginal"],
+            "4": ["-105", "Marginal"],
+            "5": ["-103", "Marginal"],
+            "6": ["-101", "Marginal"],
+            "7": ["-99", "Marginal"],
+            "8": ["-97", "Marginal"],
+            "9": ["-95", "Marginal"],
+            "10": ["-93", "OK"],
+            "11": ["-91", "OK"],
+            "12": ["-89", "OK"],
+            "13": ["-87", "OK"],
+            "14": ["-85", "OK"],
+            "15": ["-83", "Good"],
+            "16": ["-81", "Good"],
+            "17": ["-79", "Good"],
+            "18": ["-77", "Good"],
+            "19": ["-75", "Good"],
+            "20": ["-73", "Excellent"],
+            "21": ["-71", "Excellent"],
+            "22": ["-69", "Excellent"],
+            "23": ["-67", "Excellent"],
+            "24": ["-65", "Excellent"],
+            "25": ["-63", "Excellent"],
+            "26": ["-61", "Excellent"],
+            "27": ["-59", "Excellent"],
+            "28": ["-57", "Excellent"],
+            "29": ["-55", "Excellent"],
+            "30": ["-53", "Excellent"],
+            "99": ["Unknown", "Unknown"],
+        }
 
         return RSSILookup.get(Value, ["Unknown", "Unknown"])
 
-    #------------------MyModem::Close-------------------------------------------
+    # ------------------MyModem::Close-------------------------------------------
     def Close(self):
         try:
             try:
@@ -568,29 +615,40 @@ class MyModem(MySupport):
             self.LogErrorLine("Error Closing Modem: " + str(e1))
 
 
-#---------------------------LTEPiHat class -------------------------------------
+# ---------------------------LTEPiHat class -------------------------------------
 from subprocess import PIPE, Popen
+
 try:
     import RPi.GPIO as GPIO
 except Exception as e1:
     print("Unable to Import Library RPi.GPIO")
     sys.exit(1)
 
+
 class LTEPiHat(MyModem):
     # https://github.com/mholling/rpirtscts is required
-    #---------------------LTEPiHat::__init__------------------------------------
-    def __init__(self,
-        port = "/dev/ttyAMA0" ,
+    # ---------------------LTEPiHat::__init__------------------------------------
+    def __init__(
+        self,
+        port="/dev/ttyAMA0",
         rate=115200,
-        loglocation = ProgramDefaults.LogPath,
-        log = None,
-        localinit = False,
-        ConfigFilePath = ProgramDefaults.ConfPath,
-        recipient = None):
+        loglocation=ProgramDefaults.LogPath,
+        log=None,
+        localinit=False,
+        ConfigFilePath=ProgramDefaults.ConfPath,
+        recipient=None,
+    ):
 
         # call parent constructor
-        super(LTEPiHat, self).__init__(port = port, rate = rate, loglocation = loglocation,
-            log = log, localinit = localinit, ConfigFilePath = ConfigFilePath, recipient = recipient)
+        super(LTEPiHat, self).__init__(
+            port=port,
+            rate=rate,
+            loglocation=loglocation,
+            log=log,
+            localinit=localinit,
+            ConfigFilePath=ConfigFilePath,
+            recipient=recipient,
+        )
 
         if not self.InitHardware():
             self.LogError("Error starting device.")
@@ -598,7 +656,7 @@ class LTEPiHat(MyModem):
             return
         self.InitComplete = True
 
-    #------------------LTEPiHat:InitHardware-------------------------------------
+    # ------------------LTEPiHat:InitHardware-------------------------------------
     def InitHardware(self):
 
         # NOTE: This function assumes the underlying hardware is the LTE Cat 1 Pi Hat
@@ -609,8 +667,8 @@ class LTEPiHat(MyModem):
             self.reset_pin = 31
             GPIO.setmode(GPIO.BOARD)
             GPIO.setwarnings(False)
-            GPIO.setup(self.power_pin, GPIO.OUT) # Setup module power pin
-            GPIO.setup(self.reset_pin, GPIO.OUT) # Setup module reset pin
+            GPIO.setup(self.power_pin, GPIO.OUT)  # Setup module power pin
+            GPIO.setup(self.reset_pin, GPIO.OUT)  # Setup module reset pin
             GPIO.output(self.power_pin, False)
             GPIO.output(self.reset_pin, False)
 
@@ -618,30 +676,32 @@ class LTEPiHat(MyModem):
         except Exception as e1:
             self.LogErrorLine("Error in LTEPiHat:InitHardware: " + str(e1))
             return False
-    #------------------LTEPiHat::PowerDown-------------------------------------
+
+    # ------------------LTEPiHat::PowerDown-------------------------------------
     def PowerDown(self):
 
         self.LogConsole("Powering Down Modem...")
         GPIO.output(self.power_pin, True)
         self.DisableRTSCTS()
-    #------------------LTEPiHat::TogglePower------------------------------------
+
+    # ------------------LTEPiHat::TogglePower------------------------------------
     def TogglePower(self):
 
         GPIO.output(self.power_pin, True)
         time.sleep(1.5)
         GPIO.output(self.power_pin, False)
 
-    #------------------LTEPiHat::PowerUp----------------------------------------
+    # ------------------LTEPiHat::PowerUp----------------------------------------
     def PowerUp(self):
         self.debug = False
-        self.LogConsole( "Waking up...")
+        self.LogConsole("Waking up...")
         self.TogglePower()
         if not self.EnableRTSCTS():
             self.LogConsole("Unable to Enable RTS/CTS")
             self.LogError("Unable to Enable RTS/CTS")
             return False
         count = 0
-        while not self.SendATCommand("AT", 'OK'):
+        while not self.SendATCommand("AT", "OK"):
             count += 1
             if count > 7:
                 self.LogConsole("Unable to power up Modem.")
@@ -651,16 +711,16 @@ class LTEPiHat(MyModem):
                 time.sleep(1)
         return True
 
-    #------------------LTEPiHat::EnableRTSCTS-----------------------------------
+    # ------------------LTEPiHat::EnableRTSCTS-----------------------------------
     def EnableRTSCTS(self):
 
         try:
-            process = Popen(['rpirtscts', 'on'], stdout=PIPE)
+            process = Popen(["rpirtscts", "on"], stdout=PIPE)
             output, _error = process.communicate()
             if _error == None:
                 return True
             else:
-                self.LogError("Error running rpirtscts in EnableRTSCTS: " + str(_error) )
+                self.LogError("Error running rpirtscts in EnableRTSCTS: " + str(_error))
                 return False
         except Exception as e1:
             self.LogErrorLine("Error in EnableRTSCTS: " + str(e1))
@@ -668,16 +728,18 @@ class LTEPiHat(MyModem):
             self.LogError("Error: " + str(_error))
             return False
 
-    #------------------LTEPiHat::DisableRTSCTS----------------------------------
+    # ------------------LTEPiHat::DisableRTSCTS----------------------------------
     def DisableRTSCTS(self):
 
         try:
-            process = Popen(['rpirtscts', 'off'], stdout=PIPE)
+            process = Popen(["rpirtscts", "off"], stdout=PIPE)
             output, _error = process.communicate()
             if _error == None:
                 return True
             else:
-                self.LogError("Error running rpirtscts in DisableRTSCTS: " + str(_error) )
+                self.LogError(
+                    "Error running rpirtscts in DisableRTSCTS: " + str(_error)
+                )
                 return False
         except Exception as e1:
             self.LogErrorLine("Error in DisableRTSCTS: " + str(e1))
@@ -685,13 +747,13 @@ class LTEPiHat(MyModem):
             self.LogError("Error: " + str(_error))
             return False
 
-    #------------------LTEPiHat::Close------------------------------------------
+    # ------------------LTEPiHat::Close------------------------------------------
     def Close(self):
         try:
             try:
                 super(LTEPiHat, self).Close()
             except:
-                 pass
+                pass
             try:
                 self.PowerDown()
             except:

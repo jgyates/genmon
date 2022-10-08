@@ -1531,7 +1531,7 @@ function saveJournals(rowtype, rowcount){
        GenmonAlert("Data value not correct.<br>"+validationResult);
        return false;
     }
-    
+
     vex.dialog.open({
         unsafeMessage: DisplayStr,
         overlayClosesOnClick: false,

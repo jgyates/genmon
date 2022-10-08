@@ -22,10 +22,10 @@ h2 {
     font-weight: bold;
     font-family: Arial;
 }
- 
+
 .printRegisterTD {
-    border:5px solid white; 
-    background-color: #AAAAAA; 
+    border:5px solid white;
+    background-color: #AAAAAA;
     vertical-align:top;
     padding:5px;
     background-clip: padding-box; /* this has been added in CSS3 */
@@ -35,14 +35,14 @@ h2 {
 }
 
 .printRegisterTD table {
-    border:2px solid #AAAAAA; 
+    border:2px solid #AAAAAA;
     height:100%;
 }
 
 .printRegisterTDtitle {
     font-weight: bold;
     font-family: Arial;
-    border-bottom: 1px solid #444444; 
+    border-bottom: 1px solid #444444;
     font-size:20px;
     height:50px;
 }
@@ -66,7 +66,6 @@ h2 {
     font-size:16px;
 }
 
-.pagebreak { 
-    page-break-before: always; 
+.pagebreak {
+    page-break-before: always;
 }
-

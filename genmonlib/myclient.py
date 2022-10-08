@@ -1,21 +1,32 @@
 #!/usr/bin/env python
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 #    FILE: myclient.py
 # PURPOSE:
 #
 #  AUTHOR: Jason G Yates
 #    DATE: 5-Apr-2017
 # MODIFICATIONS:
-#-------------------------------------------------------------------------------
-import time, sys, os, threading, socket
+# -------------------------------------------------------------------------------
+import os
+import socket
+import sys
+import threading
+import time
 
 from genmonlib.mycommon import MyCommon
 from genmonlib.mylog import SetupLogger
 from genmonlib.program_defaults import ProgramDefaults
 
-#----------  ClientInterface::init--- ------------------------------------------
+
+# ----------  ClientInterface::init--- ------------------------------------------
 class ClientInterface(MyCommon):
-    def __init__(self, host=ProgramDefaults.LocalHost, port=ProgramDefaults.ServerPort, log = None, loglocation = ProgramDefaults.LogPath):
+    def __init__(
+        self,
+        host=ProgramDefaults.LocalHost,
+        port=ProgramDefaults.ServerPort,
+        log=None,
+        loglocation=ProgramDefaults.LogPath,
+    ):
         super(ClientInterface, self).__init__()
         if log != None:
             self.log = log
@@ -23,29 +34,31 @@ class ClientInterface(MyCommon):
             # log errors in this module to a file
             self.log = SetupLogger("client", os.path.join(loglocation, "myclient.log"))
 
-        self.console = SetupLogger("client_console", log_file = "", stream = True)
+        self.console = SetupLogger("client_console", log_file="", stream=True)
 
         self.AccessLock = threading.RLock()
         self.EndOfMessage = "EndOfMessage"
-        self.rxdatasize = 2098152 # max json string size plus 1000
+        self.rxdatasize = 2098152  # max json string size plus 1000
         self.host = host
         self.port = port
         self.max_reties = 10
         self.Connect()
 
-    #----------  ClientInterface::Connect --------------------------------------
+    # ----------  ClientInterface::Connect --------------------------------------
     def Connect(self):
 
         retries = 0
         while True:
 
             try:
-                #create an INET, STREAMing socket
+                # create an INET, STREAMing socket
                 self.Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-                #now connect to the server on our port
+                # now connect to the server on our port
                 self.Socket.connect((self.host, self.port))
-                sRetData, data = self.Receive(noeom = True)       # Get initial status before commands are sent
+                sRetData, data = self.Receive(
+                    noeom=True
+                )  # Get initial status before commands are sent
                 self.console.info(data)
                 return
             except Exception as e1:
@@ -58,19 +71,18 @@ class ClientInterface(MyCommon):
                     time.sleep(1)
                     continue
 
-
-    #----------  ClientInterface::SendCommand ----------------------------------
+    # ----------  ClientInterface::SendCommand ----------------------------------
     def SendCommand(self, cmd):
 
         try:
             self.Socket.sendall(cmd.encode("utf-8"))
         except Exception as e1:
-            self.LogErrorLine( "Error: TX: " + str(e1))
+            self.LogErrorLine("Error: TX: " + str(e1))
             self.Close()
             self.Connect()
 
-    #----------  ClientInterface::Receive --------------------------------------
-    def Receive(self, noeom = False):
+    # ----------  ClientInterface::Receive --------------------------------------
+    def Receive(self, noeom=False):
 
         with self.AccessLock:
             RetStatus = True
@@ -90,13 +102,13 @@ class ClientInterface(MyCommon):
                                 data += more
 
                         if data.endswith(self.EndOfMessage):
-                            data = data[:-len(self.EndOfMessage)]
+                            data = data[: -len(self.EndOfMessage)]
                             RetStatus = True
                 else:
                     self.Connect()
                     return False, data
             except Exception as e1:
-                self.LogErrorLine( "Error: RX:" + str(e1))
+                self.LogErrorLine("Error: RX:" + str(e1))
                 self.Close()
                 self.Connect()
                 RetStatus = False
@@ -104,20 +116,24 @@ class ClientInterface(MyCommon):
 
             return RetStatus, data
 
-    #----------  ClientInterface::CheckForStarupMessage ------------------------
+    # ----------  ClientInterface::CheckForStarupMessage ------------------------
     def CheckForStarupMessage(self, data):
 
         # check for initial status response from monitor
-        if data.startswith("OK") or data.startswith("CRITICAL:") or data.startswith("WARNING:"):
+        if (
+            data.startswith("OK")
+            or data.startswith("CRITICAL:")
+            or data.startswith("WARNING:")
+        ):
             return True
         else:
             return False
 
-    #----------  ClientInterface::Close ----------------------------------------
+    # ----------  ClientInterface::Close ----------------------------------------
     def Close(self):
         self.Socket.close()
 
-    #----------  ClientInterface::ProcessMonitorCommand ------------------------
+    # ----------  ClientInterface::ProcessMonitorCommand ------------------------
     def ProcessMonitorCommand(self, cmd):
 
         data = ""

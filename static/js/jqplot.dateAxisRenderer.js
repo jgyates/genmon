@@ -6,13 +6,13 @@
  * Revision: d96a669
  *
  * Copyright (c) 2009-2016 Chris Leonello
- * jqPlot is currently available for use in all personal or commercial projects 
- * under both the MIT (http://www.opensource.org/licenses/mit-license.php) and GPL 
- * version 2.0 (http://www.gnu.org/licenses/gpl-2.0.html) licenses. This means that you can 
- * choose the license that best suits your project and use it accordingly. 
+ * jqPlot is currently available for use in all personal or commercial projects
+ * under both the MIT (http://www.opensource.org/licenses/mit-license.php) and GPL
+ * version 2.0 (http://www.gnu.org/licenses/gpl-2.0.html) licenses. This means that you can
+ * choose the license that best suits your project and use it accordingly.
  *
- * Although not required, the author would appreciate an email letting him 
- * know of any substantial use of jqPlot.  You can reach the author at: 
+ * Although not required, the author would appreciate an email letting him
+ * know of any substantial use of jqPlot.  You can reach the author at:
  * chris at jqplot dot com or see http://www.jqplot.com/info.php .
  *
  * If you are feeling kind and generous, consider supporting the project by
@@ -26,33 +26,33 @@
  *     http://hexmen.com/js/sprintf.js
  *     The author (Ash Searle) has placed this code in the public domain:
  *     "This code is unrestricted: you are free to use it however you like."
- * 
+ *
  */
-(function($) {  
+(function($) {
     /**
      * Class: $.jqplot.DateAxisRenderer
      * A plugin for a jqPlot to render an axis as a series of date values.
      * This renderer has no options beyond those supplied by the <Axis> class.
      * It supplies its own tick formatter, so the tickOptions.formatter option
      * should not be overridden.
-     * 
+     *
      * Thanks to Ken Synder for his enhanced Date instance methods which are
      * included with this code <http://kendsnyder.com/sandbox/date/>.
-     * 
+     *
      * To use this renderer, include the plugin in your source
      * > <script type="text/javascript" language="javascript" src="plugins/jqplot.dateAxisRenderer.js"></script>
-     * 
+     *
      * and supply the appropriate options to your plot
-     * 
+     *
      * > {axes:{xaxis:{renderer:$.jqplot.DateAxisRenderer}}}
-     * 
-     * Dates can be passed into the axis in almost any recognizable value and 
+     *
+     * Dates can be passed into the axis in almost any recognizable value and
      * will be parsed.  They will be rendered on the axis in the format
      * specified by tickOptions.formatString.  e.g. tickOptions.formatString = '%Y-%m-%d'.
-     * 
-     * Accecptable format codes 
+     *
+     * Accecptable format codes
      * are:
-     * 
+     *
      * > Code    Result                  Description
      * >             == Years ==
      * > %Y      2008                Four-digit year
@@ -103,7 +103,7 @@
      * >             == Characters ==
      * > %n      \n                  Newline
      * > %t      \t                  Tab
-     * > %%      %                   Percent Symbol 
+     * > %%      %                   Percent Symbol
      */
     $.jqplot.DateAxisRenderer = function() {
         $.jqplot.LinearAxisRenderer.call(this);
@@ -143,26 +143,26 @@
 
         return [bestTi, bestfmt];
     }
-    
+
     $.jqplot.DateAxisRenderer.prototype = new $.jqplot.LinearAxisRenderer();
     $.jqplot.DateAxisRenderer.prototype.constructor = $.jqplot.DateAxisRenderer;
-    
+
     $.jqplot.DateTickFormatter = function(format, val) {
         if (!format) {
             format = '%Y/%m/%d';
         }
         return $.jsDate.strftime(val, format);
     };
-    
+
     $.jqplot.DateAxisRenderer.prototype.init = function(options){
         // prop: tickRenderer
-        // A class of a rendering engine for creating the ticks labels displayed on the plot, 
+        // A class of a rendering engine for creating the ticks labels displayed on the plot,
         // See <$.jqplot.AxisTickRenderer>.
         // this.tickRenderer = $.jqplot.AxisTickRenderer;
         // this.labelRenderer = $.jqplot.AxisLabelRenderer;
         this.tickOptions.formatter = $.jqplot.DateTickFormatter;
         // prop: tickInset
-        // Controls the amount to inset the first and last ticks from 
+        // Controls the amount to inset the first and last ticks from
         // the edges of the grid, in multiples of the tick interval.
         // 0 is no inset, 0.5 is one half a tick interval, 1 is a full
         // tick interval, etc.
@@ -178,18 +178,18 @@
         this.baselineColor = null;
         this.daTickInterval = null;
         this._daTickInterval = null;
-        
+
         $.extend(true, this, options);
-        
+
         var db = this._dataBounds,
-            stats, 
+            stats,
             sum,
             s,
             d,
             pd,
             sd,
             intv;
-        
+
         // Go through all the series attached to this axis and find
         // the min/max bounds for this axis.
         for (var i=0; i<this._series.length; i++) {
@@ -200,8 +200,8 @@
             pd = s._plotData;
             sd = s._stackData;
             intv = 0;
-            
-            for (var j=0; j<d.length; j++) { 
+
+            for (var j=0; j<d.length; j++) {
                 if (this.name == 'xaxis' || this.name == 'x2axis') {
                     d[j][0] = new $.jsDate(d[j][0]).getTime();
                     pd[j][0] = new $.jsDate(d[j][0]).getTime();
@@ -223,8 +223,8 @@
                         }
                     }
                     sum += intv;
-                    
-                }              
+
+                }
                 else {
                     d[j][1] = new $.jsDate(d[j][1]).getTime();
                     pd[j][1] = new $.jsDate(d[j][1]).getTime();
@@ -246,7 +246,7 @@
                         }
                     }
                 }
-                sum += intv;              
+                sum += intv;
             }
 
             if (s.renderer.bands) {
@@ -257,8 +257,8 @@
                             bd[j][0] = new $.jsDate(bd[j][0]).getTime();
                             if ((bd[j][0] != null && bd[j][0] > db.max) || db.max == null) {
                                 db.max = bd[j][0];
-                            }                        
-                        }              
+                            }
+                        }
                         else {
                             bd[j][1] = new $.jsDate(bd[j][1]).getTime();
                             if ((bd[j][1] != null && bd[j][1] > db.max) || db.max == null) {
@@ -274,8 +274,8 @@
                             bd[j][0] = new $.jsDate(bd[j][0]).getTime();
                             if ((bd[j][0] != null && bd[j][0] < db.min) || db.min == null) {
                                 db.min = bd[j][0];
-                            }                       
-                        }              
+                            }
+                        }
                         else {
                             bd[j][1] = new $.jsDate(bd[j][1]).getTime();
                             if ((bd[j][1] != null && bd[j][1] < db.min) || db.min == null) {
@@ -285,7 +285,7 @@
                     }
                 }
             }
-            
+
             var tempf = 0,
                 tempn=0;
             for (var n in stats.frequencies) {
@@ -294,7 +294,7 @@
             stats.sortedIntervals.sort(function(a, b){
                 return b.frequency - a.frequency;
             });
-            
+
             stats.min = $.jqplot.arrayMin(stats.intervals);
             stats.max = $.jqplot.arrayMax(stats.intervals);
             stats.mean = sum/d.length;
@@ -302,9 +302,9 @@
             stats = sum = s = d = pd = sd = null;
         }
         db = null;
-        
+
     };
-    
+
     // called with scope of an axis
     $.jqplot.DateAxisRenderer.prototype.reset = function() {
         this.min = this._options.min;
@@ -318,7 +318,7 @@
         this.daTickInterval = this._daTickInterval;
         // this._ticks = this.__ticks;
     };
-    
+
     $.jqplot.DateAxisRenderer.prototype.createTicks = function(plot) {
         // we're are operating on an axis here
         var ticks = this._ticks;
@@ -335,7 +335,7 @@
         var threshold = 30;
         var insetMult = 1;
         var daTickInterval = null;
-        
+
         // if user specified a tick interval, convert to usable.
         if (this.tickInterval != null)
         {
@@ -357,10 +357,10 @@
         }
 
         var tickInterval = this.tickInterval;
-        
+
         // if we already have ticks, use them.
         // ticks must be in order of increasing value.
-        
+
         min = new $.jsDate((this.min != null) ? this.min : db.min).getTime();
         max = new $.jsDate((this.max != null) ? this.max : db.max).getTime();
 
@@ -379,7 +379,7 @@
         if (this.tickOptions == null || !this.tickOptions.formatString) {
             this._overrideFormatString = true;
         }
-        
+
         if (userTicks.length) {
             // ticks could be 1D or 2D array of [val, val, ,,,] or [[val, label], [val, label], ...] or mixed
             for (i=0; i<userTicks.length; i++){
@@ -398,7 +398,7 @@
                     t.setTick(t.value, this.name);
                     this._ticks.push(t);
                 }
-                
+
                 else {
                     t.value = new $.jsDate(ut).getTime();
                     if (!this.showTicks) {
@@ -452,14 +452,14 @@
              }
              if(this.showTickMarks) {
                  this._ticks[1].showTickMarks = true;
-             }                   
+             }
         }
         // if user specified min and max are null, we set those to make best ticks.
         else if (this.min == null && this.max == null) {
 
             var opts = $.extend(true, {}, this.tickOptions, {name: this.name, value: null});
 
-            // want to find a nice interval 
+            // want to find a nice interval
             var nttarget,
                 titarget;
 
@@ -519,7 +519,7 @@
                 for (var i=0; i<nttarget; i++) {
                     opts.value = this.min + i * tempti;
                     t = new this.tickRenderer(opts);
-                    
+
                     if (this._overrideFormatString && this._autoFormatString != '') {
                         t.formatString = this._autoFormatString;
                     }
@@ -577,7 +577,7 @@
                         opts.value = mstart.add(intv, 'month').getTime();
                     }
                     t = new this.tickRenderer(opts);
-                    
+
                     if (this._overrideFormatString && this._autoFormatString != '') {
                         t.formatString = this._autoFormatString;
                     }
@@ -625,7 +625,7 @@
                         opts.value = mstart.add(intv, 'year').getTime();
                     }
                     t = new this.tickRenderer(opts);
-                    
+
                     if (this._overrideFormatString && this._autoFormatString != '') {
                         t.formatString = this._autoFormatString;
                     }
@@ -646,24 +646,24 @@
         ////////
         // Some option(s) specified, work around that.
         ////////
-        
-        else {      
+
+        else {
             if (name == 'xaxis' || name == 'x2axis') {
                 dim = this._plotDimensions.width;
             }
             else {
                 dim = this._plotDimensions.height;
             }
-            
+
             // if min, max and number of ticks specified, user can't specify interval.
             if (this.min != null && this.max != null && this.numberTicks != null) {
                 this.tickInterval = null;
             }
-            
+
             if (this.tickInterval != null && daTickInterval != null) {
                 this.daTickInterval = daTickInterval;
             }
-            
+
             // if min and max are same, space them out a bit
             if (min == max) {
                 var adj = 24*60*60*500;  // 1/2 day
@@ -672,18 +672,18 @@
             }
 
             range = max - min;
-            
+
             var optNumTicks = 2 + parseInt(Math.max(0, dim-100)/100, 10);
-            
-            
+
+
             var rmin, rmax;
-            
+
             rmin = (this.min != null) ? new $.jsDate(this.min).getTime() : min - range/2*(this.padMin - 1);
             rmax = (this.max != null) ? new $.jsDate(this.max).getTime() : max + range/2*(this.padMax - 1);
             this.min = rmin;
             this.max = rmax;
             range = this.max - this.min;
-            
+
             if (this.numberTicks == null){
                 // if tickInterval is specified by user, we will ignore computed maximum.
                 // max will be equal or greater to fit even # of ticks.
@@ -700,7 +700,7 @@
                     this.numberTicks = 2;
                 }
             }
-            
+
             insetMult = range / (this.numberTicks-1)/1000;
 
             if (this.daTickInterval == null) {
@@ -731,11 +731,10 @@
         }
 
         if (this._daTickInterval == null) {
-            this._daTickInterval = this.daTickInterval;    
+            this._daTickInterval = this.daTickInterval;
         }
 
         ticks = null;
     };
-   
-})(jQuery);
 
+})(jQuery);

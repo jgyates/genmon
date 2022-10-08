@@ -9,17 +9,17 @@ ABOUT:
 This MIB is provided to allow users and NMS applications to be able to query an
 SNMP-enabled GenMon installation using symbolic names rather than OIDs.
 
-The MIB in this directory assumes that the user is running GenMon with a 
+The MIB in this directory assumes that the user is running GenMon with a
 default Enterprise ID of '58399'.
 
-If the user wishes to change the enterprise ID, the change has to be made in 
+If the user wishes to change the enterprise ID, the change has to be made in
 two locations:
 
 - The GenMon UI        (under "Add-ons", under the SNMP Support window.)
 - The MIB file itself. (change line 10 after the 'enterprises' keyword )
 
 Changing either location may cause the OIDs to not get mapped correctly and may
-cause unexpected errors in an SNMP-aware NMS. 
+cause unexpected errors in an SNMP-aware NMS.
 
 
 FILES:
@@ -53,10 +53,10 @@ as that OID only populates for 3-phase generators.
 
 INSTALLATION:
 
-Installing these MIBs depends on which distribution or NMS application will be 
+Installing these MIBs depends on which distribution or NMS application will be
 monitoring GenMon.  For most cases, copying all .mib files in this directory
 to '/usr/share/snmp/mibs' is adequate,  Other distributions may require the
-MIBs be copied to another directory. 
+MIBs be copied to another directory.
 
 In some distributions, editing /etc/snmp/snmp.conf is necessary.  Locate the
 "mibs" line (it may or may not be commented out)
@@ -87,7 +87,7 @@ which should return the following:
 > ::= { iso(1) org(3) dod(6) internet(1) private(4) enterprises(1) genmon(58399) controllerID(0) status(0) engineData(0) 1 }
 
 
-If the above produces a result as above, you're all set.  If it produces an 
+If the above produces a result as above, you're all set.  If it produces an
 error like the one below, check the MIB search path and ensure the MIBs in this
 directory are in one of the directories in the MIB search path.
 
@@ -108,7 +108,7 @@ It should answer with the below (assuming your generator is in Auto mode):
 
 From there, snmpwalk can be used to retrieve the OID data.
 
-> $ snmpwalk -v1 -c public (hostname_or_IP_of_genmon) . 
+> $ snmpwalk -v1 -c public (hostname_or_IP_of_genmon) .
 
 
 
@@ -116,13 +116,12 @@ From there, snmpwalk can be used to retrieve the OID data.
 NAGIOS CONFIGURATION:
 
 Nagios contains a basic SNMP plugin called "check_snmp".  While the full
-capabilities of check_snmp are beyond the scope of this document, a basic 
+capabilities of check_snmp are beyond the scope of this document, a basic
 example is included below:
 
 > $ ./check_snmp -C public -H IP.ADDR.OF.GENMON -o GenMon-MIB::switchState \
     -s \"Auto\"
 
-This command will return a CRITICAL status if the generator is not in "Auto" 
+This command will return a CRITICAL status if the generator is not in "Auto"
 state.  Using the -s parameter, you can set up Nagios to alert if the expected
 result string is not the result returned when polled.
-

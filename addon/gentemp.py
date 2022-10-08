@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 #    FILE: gentemp.py
 # PURPOSE: gentemp.py add support for type K thermocouples and DS18B20 temp sesnsors
 #
@@ -7,54 +7,67 @@
 #    DATE: 09-12-2019
 #
 # MODIFICATIONS:
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 
 
-import time, sys, signal, os, threading, json
+import json
+import os
+import signal
+import sys
+import threading
+import time
 
 try:
     # this will add the parent of the genmonlib folder to the path
     # if we are one level below the genmonlib parent (e.g. in the addon folder)
     file_root = os.path.dirname(os.path.realpath(__file__))
-    parent_root=os.path.abspath(os.path.join(file_root, os.pardir))
+    parent_root = os.path.abspath(os.path.join(file_root, os.pardir))
     if os.path.isdir(os.path.join(parent_root, "genmonlib")):
         sys.path.insert(1, parent_root)
 
     from genmonlib.myclient import ClientInterface
-    from genmonlib.mylog import SetupLogger
-    from genmonlib.myconfig import MyConfig
-    from genmonlib.mysupport import MySupport
     from genmonlib.mycommon import MyCommon
+    from genmonlib.myconfig import MyConfig
+    from genmonlib.mylog import SetupLogger
+    from genmonlib.mysupport import MySupport
     from genmonlib.mythread import MyThread
     from genmonlib.program_defaults import ProgramDefaults
 
 except Exception as e1:
-    print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
-    print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
+    print(
+        "\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n"
+    )
+    print(
+        "Please see the project documentation at https://github.com/jgyates/genmon.\n"
+    )
     print("Error: " + str(e1))
     sys.exit(2)
 
 try:
-    import os, time, glob
+    import glob
+    import os
+    import time
 except Exception as e1:
-    print("Error importing modules! :"  + str(e1))
+    print("Error importing modules! :" + str(e1))
     sys.exit(2)
 
 # Typical reading
 # 73 01 4b 46 7f ff 0d 10 41 : crc=41 YES
 # 73 01 4b 46 7f ff 0d 10 41 t=23187
 
-#------------ GenTemp class ----------------------------------------------------
+# ------------ GenTemp class ----------------------------------------------------
 class GenTemp(MySupport):
 
-    #------------ GenTemp::init-------------------------------------------------
-    def __init__(self,
-        log = None,
-        loglocation = ProgramDefaults.LogPath,
-        ConfigFilePath = MyCommon.DefaultConfPath,
-        host = ProgramDefaults.LocalHost,
-        port = ProgramDefaults.ServerPort,
-        console = None):
+    # ------------ GenTemp::init-------------------------------------------------
+    def __init__(
+        self,
+        log=None,
+        loglocation=ProgramDefaults.LogPath,
+        ConfigFilePath=MyCommon.DefaultConfPath,
+        host=ProgramDefaults.LocalHost,
+        port=ProgramDefaults.ServerPort,
+        console=None,
+    ):
 
         super(GenTemp, self).__init__()
 
@@ -72,22 +85,28 @@ class GenTemp(MySupport):
         self.PollTime = 1
         self.BlackList = None
 
-        configfile = os.path.join(ConfigFilePath, 'gentemp.conf')
+        configfile = os.path.join(ConfigFilePath, "gentemp.conf")
         try:
             if not os.path.isfile(configfile):
                 self.LogConsole("Missing config file : " + configfile)
                 self.LogError("Missing config file : " + configfile)
                 sys.exit(1)
 
-            self.config = MyConfig(filename = configfile, section = 'gentemp', log = self.log)
+            self.config = MyConfig(filename=configfile, section="gentemp", log=self.log)
 
-
-            self.UseMetric = self.config.ReadValue('use_metric', return_type = bool, default = False)
-            self.PollTime = self.config.ReadValue('poll_frequency', return_type = float, default = 1)
-            self.debug = self.config.ReadValue('debug', return_type = bool, default = False)
-            self.DeviceLabels = self.GetParamList(self.config.ReadValue('device_labels', default = None))
-            self.BlackList = self.GetParamList(self.config.ReadValue('blacklist', default = None))
-
+            self.UseMetric = self.config.ReadValue(
+                "use_metric", return_type=bool, default=False
+            )
+            self.PollTime = self.config.ReadValue(
+                "poll_frequency", return_type=float, default=1
+            )
+            self.debug = self.config.ReadValue("debug", return_type=bool, default=False)
+            self.DeviceLabels = self.GetParamList(
+                self.config.ReadValue("device_labels", default=None)
+            )
+            self.BlackList = self.GetParamList(
+                self.config.ReadValue("blacklist", default=None)
+            )
 
             if self.MonitorAddress == None or not len(self.MonitorAddress):
                 self.MonitorAddress = ProgramDefaults.LocalHost
@@ -99,7 +118,9 @@ class GenTemp(MySupport):
 
         try:
 
-            self.Generator = ClientInterface(host = self.MonitorAddress, port = port, log = self.log)
+            self.Generator = ClientInterface(
+                host=self.MonitorAddress, port=port, log=self.log
+            )
             self.DeviceList = self.EnumDevices()
 
             if not len(self.DeviceList):
@@ -108,7 +129,9 @@ class GenTemp(MySupport):
                 sys.exit(1)
 
             # start thread monitor time for exercise
-            self.Threads["GenTempThread"] = MyThread(self.GenTempThread, Name = "GenTempThread", start = False)
+            self.Threads["GenTempThread"] = MyThread(
+                self.GenTempThread, Name="GenTempThread", start=False
+            )
             self.Threads["GenTempThread"].Start()
 
             signal.signal(signal.SIGTERM, self.SignalClose)
@@ -119,7 +142,7 @@ class GenTemp(MySupport):
             self.LogConsole("Error in GenTemp init: " + str(e1))
             sys.exit(1)
 
-    #----------  GenTemp::GetParamList -----------------------------------------
+    # ----------  GenTemp::GetParamList -----------------------------------------
     def GetParamList(self, input_string):
 
         ReturnValue = []
@@ -138,7 +161,8 @@ class GenTemp(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in GetParamList: " + str(e1))
             return None
-    #----------  GenTemp::EnumDevices ------------------------------------------
+
+    # ----------  GenTemp::EnumDevices ------------------------------------------
     def EnumDevices(self):
 
         DeviceList = []
@@ -150,7 +174,7 @@ class GenTemp(MySupport):
                     DeviceList.append(sensor)
 
             # enum type K thermocouples
-            #for sensor in glob.glob("/sys/bus/w1/devices/w1_bus_master*/3b-*/w1_slave"):
+            # for sensor in glob.glob("/sys/bus/w1/devices/w1_bus_master*/3b-*/w1_slave"):
             for sensor in glob.glob("/sys/bus/w1/devices/3b-*/w1_slave"):
                 if not self.CheckBlackList(sensor) and self.DeviceValid(sensor):
                     self.LogDebug("Found type K thermocouple : " + sensor)
@@ -160,7 +184,7 @@ class GenTemp(MySupport):
             self.LogErrorLine("Error in EnumDevices: " + str(e1))
             return DeviceList
 
-    #------------ GenTemp::ReadData --------------------------------------------
+    # ------------ GenTemp::ReadData --------------------------------------------
     def ReadData(self, device):
         try:
             f = open(device, "r")
@@ -171,19 +195,25 @@ class GenTemp(MySupport):
             self.LogErrorLine("Error in ReadData for " + device + " : " + str(e1))
             return None
 
-    #------------ GenTemp::DeviceValid -----------------------------------------
+    # ------------ GenTemp::DeviceValid -----------------------------------------
     def DeviceValid(self, device):
 
         try:
             data = self.ReadData(device)
 
-            if isinstance(data, str) and "YES" in data and " crc=" in data and " t=" in data:
+            if (
+                isinstance(data, str)
+                and "YES" in data
+                and " crc=" in data
+                and " t=" in data
+            ):
                 return True
             return False
         except Exception as e1:
             self.LogErrorLine("Error in DeviceValid for " + device + " : " + str(e1))
             return False
-    #------------ GenTemp::ParseData -------------------------------------------
+
+    # ------------ GenTemp::ParseData -------------------------------------------
     def ParseData(self, data):
 
         try:
@@ -195,7 +225,7 @@ class GenTemp(MySupport):
                 return None, units
             if not len(data):
                 return None, units
-            (discard, sep, reading) = data.partition(' t=')
+            (discard, sep, reading) = data.partition(" t=")
             t = float(reading) / 1000.0
             if not self.UseMetric:
                 return self.ConvertCelsiusToFahrenheit(t), units
@@ -205,7 +235,7 @@ class GenTemp(MySupport):
             self.LogErrorLine("Error in ParseData: " + str(e1))
             return None, units
 
-    #------------ GenTemp::GetIDFromDeviceName ---------------------------------
+    # ------------ GenTemp::GetIDFromDeviceName ---------------------------------
     def GetIDFromDeviceName(self, device):
 
         try:
@@ -213,11 +243,12 @@ class GenTemp(MySupport):
                 id = device.split("/")[5]
                 return id
         except Exception as e1:
-            self.LogErrorLine("Error in GetIDFromDeviceName for " + device + " : " + str(e1))
+            self.LogErrorLine(
+                "Error in GetIDFromDeviceName for " + device + " : " + str(e1)
+            )
         return "UNKNOWN_ID"
 
-
-    #----------  GenTemp::SendCommand ------------------------------------------
+    # ----------  GenTemp::SendCommand ------------------------------------------
     def SendCommand(self, Command):
 
         if len(Command) == 0:
@@ -244,7 +275,6 @@ class GenTemp(MySupport):
 
         time.sleep(1)
 
-
         while True:
             try:
                 labelIndex = 0
@@ -252,15 +282,26 @@ class GenTemp(MySupport):
                 for sensor in self.DeviceList:
                     temp, units = self.ParseData(self.ReadData(sensor))
                     if temp != None:
-                        self.LogDebug("Device: %s Reading: %.2f %s" % (self.GetIDFromDeviceName(sensor), temp, units))
-                        if isinstance(self.DeviceLabels, list) and len(self.DeviceLabels) and (labelIndex < len(self.DeviceLabels)):
+                        self.LogDebug(
+                            "Device: %s Reading: %.2f %s"
+                            % (self.GetIDFromDeviceName(sensor), temp, units)
+                        )
+                        if (
+                            isinstance(self.DeviceLabels, list)
+                            and len(self.DeviceLabels)
+                            and (labelIndex < len(self.DeviceLabels))
+                        ):
                             device_label = self.DeviceLabels[labelIndex]
                         else:
                             device_label = self.GetIDFromDeviceName(sensor)
-                        ReturnDeviceData.append({device_label : "%.2f %s" % (temp, units)})
+                        ReturnDeviceData.append(
+                            {device_label: "%.2f %s" % (temp, units)}
+                        )
                     labelIndex += 1
-                return_string = json.dumps({"External Temperature Sensors": ReturnDeviceData})
-                self.SendCommand("generator: set_temp_data=" + return_string )
+                return_string = json.dumps(
+                    {"External Temperature Sensors": ReturnDeviceData}
+                )
+                self.SendCommand("generator: set_temp_data=" + return_string)
 
                 self.LogDebug(return_string)
                 if self.WaitForExit("GenTempThread", float(self.PollTime)):
@@ -271,7 +312,6 @@ class GenTemp(MySupport):
                 if self.WaitForExit("GenTempThread", float(self.PollTime * 60)):
                     return
 
-
     # ----------GenTemp::SignalClose--------------------------------------------
     def SignalClose(self, signum, frame):
 
@@ -280,14 +320,30 @@ class GenTemp(MySupport):
 
     # ----------GenTemp::Close----------------------------------------------
     def Close(self):
-        
+
         self.KillThread("GenTempThread")
         self.Generator.Close()
-#-------------------------------------------------------------------------------
+
+
+# -------------------------------------------------------------------------------
 if __name__ == "__main__":
 
-    console, ConfigFilePath, address, port, loglocation, log = MySupport.SetupAddOnProgram("gentemp")
-    GenTempInstance = GenTemp(log = log, loglocation = loglocation, ConfigFilePath = ConfigFilePath, host = address, port = port, console = console)
+    (
+        console,
+        ConfigFilePath,
+        address,
+        port,
+        loglocation,
+        log,
+    ) = MySupport.SetupAddOnProgram("gentemp")
+    GenTempInstance = GenTemp(
+        log=log,
+        loglocation=loglocation,
+        ConfigFilePath=ConfigFilePath,
+        host=address,
+        port=port,
+        console=console,
+    )
 
     while True:
         time.sleep(0.5)
