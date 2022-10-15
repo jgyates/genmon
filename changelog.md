@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Minor update to JSON for Briggs and Stratton Controller
 - Added the ability to set baud rate, stop bits and parity for custom controllers
 - Increased wait time on errors for Openweathermap from one to three minutes to reduce log data from filling up during an internet outage
+- Formatting changes and pre-commit integration (thanks @rcmurphy/)
 
 ## V1.18.14 -2022-08-21
 - Minor update to improve fuel calculations for outages
