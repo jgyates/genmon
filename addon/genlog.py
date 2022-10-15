@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 #    FILE: genlog.py
 # PURPOSE: genmon.py support program to allow logging of generator
 # run time
@@ -8,84 +8,103 @@
 #    DATE: 19-Apr-2016
 #
 # MODIFICATIONS:
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 
-import datetime, time, sys, signal, os
-from datetime import datetime
+import datetime
 import getopt
+import os
+import signal
+import sys
+import time
+from datetime import datetime
 
 try:
     # this will add the parent of the genmonlib folder to the path
     # if we are one level below the genmonlib parent (e.g. in the addon folder)
     file_root = os.path.dirname(os.path.realpath(__file__))
-    parent_root=os.path.abspath(os.path.join(file_root, os.pardir))
+    parent_root = os.path.abspath(os.path.join(file_root, os.pardir))
     if os.path.isdir(os.path.join(parent_root, "genmonlib")):
         sys.path.insert(1, parent_root)
 
-    from genmonlib.mylog import SetupLogger
     from genmonlib.myclient import ClientInterface
+    from genmonlib.mylog import SetupLogger
     from genmonlib.mysupport import MySupport
     from genmonlib.program_defaults import ProgramDefaults
 except Exception as e1:
-    print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
-    print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
+    print(
+        "\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n"
+    )
+    print(
+        "Please see the project documentation at https://github.com/jgyates/genmon.\n"
+    )
     print("Error: " + str(e1))
     sys.exit(2)
 
 
-#----------  Signal Handler ----------------------------------------------------
+# ----------  Signal Handler ----------------------------------------------------
 def signal_handler(signal, frame):
 
     MyClientInterface.Close()
     sys.exit(0)
 
-#------------------- excel_date ------------------------------------------------
+
+# ------------------- excel_date ------------------------------------------------
 def excel_date(date1):
-    temp = datetime(1899, 12, 30)    # Note, not 31st Dec but 30th!
+    temp = datetime(1899, 12, 30)  # Note, not 31st Dec but 30th!
     delta = date1 - temp
     return str(float(delta.days) + (float(delta.seconds) / 86400))
 
-#------------------- Command-line interface for genlog -------------------------
+
+# ------------------- Command-line interface for genlog -------------------------
 def LogDataToFile(fileName, time, Event):
 
-
-    with open(fileName,"a") as LogFile:     #opens file
+    with open(fileName, "a") as LogFile:  # opens file
         if os.stat(fileName).st_size == 0:
             LogFile.write("Time,Event\n")
 
-        LogFile.write(excel_date(time) + ","+ Event +"\n")
+        LogFile.write(excel_date(time) + "," + Event + "\n")
         LogFile.flush()
 
-#------------------- Command-line interface for genlog -------------------------
-if __name__=='__main__':
 
+# ------------------- Command-line interface for genlog -------------------------
+if __name__ == "__main__":
 
     address = ProgramDefaults.LocalHost
     fileName = ""
 
-    HelpStr = '\npython genlog.py -a <IP Address or localhost> -f <outputfile> -c <config file path>\n'
+    HelpStr = "\npython genlog.py -a <IP Address or localhost> -f <outputfile> -c <config file path>\n"
 
     try:
         ConfigFilePath = ProgramDefaults.ConfPath
-        console = SetupLogger("genlog_console", log_file = "", stream = True)
+        console = SetupLogger("genlog_console", log_file="", stream=True)
 
-        port, loglocation, multi_instance = MySupport.GetGenmonInitInfo(ConfigFilePath, log = console)
+        port, loglocation, multi_instance = MySupport.GetGenmonInitInfo(
+            ConfigFilePath, log=console
+        )
 
         if not MySupport.PermissionsOK():
-            console.error("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
+            console.error(
+                "You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting."
+            )
             sys.exit(2)
 
-        if MySupport.IsRunning(os.path.basename(__file__), multi_instance = multi_instance):
-            console.error("The program %s is already loaded" % os.path.basename(__file__))
+        if MySupport.IsRunning(
+            os.path.basename(__file__), multi_instance=multi_instance
+        ):
+            console.error(
+                "The program %s is already loaded" % os.path.basename(__file__)
+            )
             sys.exit(2)
 
-        opts, args = getopt.getopt(sys.argv[1:],"ha:f:c:",["help","address=","filename=", "configpath="])
+        opts, args = getopt.getopt(
+            sys.argv[1:], "ha:f:c:", ["help", "address=", "filename=", "configpath="]
+        )
     except getopt.GetoptError:
         console.error(HelpStr)
         sys.exit(2)
 
     for opt, arg in opts:
-        if opt == '-h':
+        if opt == "-h":
             console.error(HelpStr)
             sys.exit()
         elif opt in ("-a", "--address"):
@@ -97,15 +116,13 @@ if __name__=='__main__':
             ConfigFilePath = arg
             ConfigFilePath = ConfigFilePath.strip()
 
-    console.error('Address is ' + address)
-    console.error('Output file is ' + fileName)
+    console.error("Address is " + address)
+    console.error("Output file is " + fileName)
     console.error("Config File Path is " + ConfigFilePath)
-
 
     if not len(fileName):
         console.error(HelpStr)
         sys.exit(2)
-
 
     log = SetupLogger("client", os.path.join(loglocation, "genlog.log"))
 
@@ -114,7 +131,7 @@ if __name__=='__main__':
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
 
-        MyClientInterface = ClientInterface(host = address, port = port, log = log)
+        MyClientInterface = ClientInterface(host=address, port=port, log=log)
 
         LastEvent = ""
 

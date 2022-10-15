@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 #    FILE: genpushover.py
 # PURPOSE: genpushover.py sends Push notifications to Android, iOS and Desktop
 #
@@ -7,26 +7,33 @@
 #    DATE: 09-09-2017
 #
 # MODIFICATIONS:
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 
-import time, sys, signal, os
+import os
+import signal
+import sys
+import time
 
 try:
     # this will add the parent of the genmonlib folder to the path
     # if we are one level below the genmonlib parent (e.g. in the addon folder)
     file_root = os.path.dirname(os.path.realpath(__file__))
-    parent_root=os.path.abspath(os.path.join(file_root, os.pardir))
+    parent_root = os.path.abspath(os.path.join(file_root, os.pardir))
     if os.path.isdir(os.path.join(parent_root, "genmonlib")):
         sys.path.insert(1, parent_root)
 
-    from genmonlib.mylog import SetupLogger
-    from genmonlib.mynotify import GenNotify
     from genmonlib.myconfig import MyConfig
-    from genmonlib.mysupport import MySupport
+    from genmonlib.mylog import SetupLogger
     from genmonlib.mymsgqueue import MyMsgQueue
+    from genmonlib.mynotify import GenNotify
+    from genmonlib.mysupport import MySupport
 except Exception as e1:
-    print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
-    print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
+    print(
+        "\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n"
+    )
+    print(
+        "Please see the project documentation at https://github.com/jgyates/genmon.\n"
+    )
     print("Error: " + str(e1))
     sys.exit(2)
 
@@ -35,12 +42,14 @@ try:
     from chump import Application
 except Exception as e1:
     print("\n\nThis program requires the chump module to be installed.\n")
-    print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
+    print(
+        "Please see the project documentation at https://github.com/jgyates/genmon.\n"
+    )
     print("Error: " + str(e1))
     sys.exit(2)
 
 
-#---------------------GetErrorLine----------------------------------------------
+# ---------------------GetErrorLine----------------------------------------------
 def GetErrorLine():
 
     try:
@@ -52,7 +61,7 @@ def GetErrorLine():
         return "Unknown Line " + str(e1)
 
 
-#----------  Signal Handler ----------------------------------------------------
+# ----------  Signal Handler ----------------------------------------------------
 def signal_handler(signal, frame):
 
     try:
@@ -62,79 +71,90 @@ def signal_handler(signal, frame):
         log.error("signal_handler: " + str(e1))
     sys.exit(0)
 
-#----------  OnRun -------------------------------------------------------------
+
+# ----------  OnRun -------------------------------------------------------------
 def OnRun(Active):
 
     if Active:
         console.info("Generator Running")
-        Queue.SendMessage("Generator Running", priority = run_state_priority)
+        Queue.SendMessage("Generator Running", priority=run_state_priority)
     else:
         console.info("Generator Running End")
 
-#----------  OnRunManual -------------------------------------------------------
+
+# ----------  OnRunManual -------------------------------------------------------
 def OnRunManual(Active):
 
     if Active:
         console.info("Generator Running in Manual Mode")
-        Queue.SendMessage("Generator Running in Manual Mode", priority = run_state_priority)
+        Queue.SendMessage(
+            "Generator Running in Manual Mode", priority=run_state_priority
+        )
     else:
         console.info("Generator Running in Manual Mode End")
 
-#----------  OnExercise --------------------------------------------------------
+
+# ----------  OnExercise --------------------------------------------------------
 def OnExercise(Active):
 
     if Active:
         console.info("Generator Exercising")
-        Queue.SendMessage("Generator Exercising", priority = run_state_priority)
+        Queue.SendMessage("Generator Exercising", priority=run_state_priority)
     else:
         console.info("Generator Exercising End")
 
-#----------  OnReady -----------------------------------------------------------
+
+# ----------  OnReady -----------------------------------------------------------
 def OnReady(Active):
 
     if Active:
         console.info("Generator Ready")
-        Queue.SendMessage("Generator Ready", priority = run_state_priority)
+        Queue.SendMessage("Generator Ready", priority=run_state_priority)
     else:
         console.info("Generator Ready End")
 
-#----------  OnOff -------------------------------------------------------------
+
+# ----------  OnOff -------------------------------------------------------------
 def OnOff(Active):
 
     if Active:
         console.info("Generator Off")
-        Queue.SendMessage("Generator Off", priority = switch_state_priority)
+        Queue.SendMessage("Generator Off", priority=switch_state_priority)
     else:
         console.info("Generator Off End")
 
-#----------  OnManual ----------------------------------------------------------
+
+# ----------  OnManual ----------------------------------------------------------
 def OnManual(Active):
 
     if Active:
         console.info("Generator Manual")
-        Queue.SendMessage("Generator Manual", priority = switch_state_priority)
+        Queue.SendMessage("Generator Manual", priority=switch_state_priority)
     else:
         console.info("Generator Manual End")
 
-#----------  OnAlarm -----------------------------------------------------------
+
+# ----------  OnAlarm -----------------------------------------------------------
 def OnAlarm(Active):
 
     if Active:
         console.info("Generator Alarm")
-        Queue.SendMessage("Generator Alarm", priority = alarm_priority)
+        Queue.SendMessage("Generator Alarm", priority=alarm_priority)
     else:
         console.info("Generator Alarm End")
 
-#----------  OnService ---------------------------------------------------------
+
+# ----------  OnService ---------------------------------------------------------
 def OnService(Active):
 
     if Active:
         console.info("Generator Service Due")
-        Queue.SendMessage("Generator Service Due", priority = service_state_priority)
+        Queue.SendMessage("Generator Service Due", priority=service_state_priority)
     else:
         console.info("Generator Servcie Due End")
 
-#----------  OnUtilityChange ---------------------------------------------------
+
+# ----------  OnUtilityChange ---------------------------------------------------
 def OnUtilityChange(Active):
 
     if Active:
@@ -144,37 +164,41 @@ def OnUtilityChange(Active):
         Queue.SendMessage("Utility Service is Up")
         console.info("Utility Service is Up")
 
-#----------  OnSoftwareUpdate --------------------------------------------------
+
+# ----------  OnSoftwareUpdate --------------------------------------------------
 def OnSoftwareUpdate(Active):
 
     if Active:
         console.info("Software Update Available")
-        Queue.SendMessage("Software Update Available", priority = sw_update_priority)
+        Queue.SendMessage("Software Update Available", priority=sw_update_priority)
     else:
         Queue.SendMessage("Software Is Up To Date")
         console.info("Software Is Up To Date")
 
-#----------  OnSystemHealth ----------------------------------------------------
+
+# ----------  OnSystemHealth ----------------------------------------------------
 def OnSystemHealth(Notice):
-    Queue.SendMessage("System Health : " + Notice, priority = system_health_priority)
+    Queue.SendMessage("System Health : " + Notice, priority=system_health_priority)
     console.info("System Health : " + Notice)
 
-#----------  OnFuelState -------------------------------------------------------
+
+# ----------  OnFuelState -------------------------------------------------------
 def OnFuelState(Active):
-    if Active: # True is OK
+    if Active:  # True is OK
         console.info("Fuel Level is OK")
-        Queue.SendMessage("Fuel Level is OK", priority = fuel_priority)
+        Queue.SendMessage("Fuel Level is OK", priority=fuel_priority)
     else:  # False = Low
-        Queue.SendMessage("Fuel Level is Low", priority = fuel_priority)
+        Queue.SendMessage("Fuel Level is Low", priority=fuel_priority)
         console.info("Fuel Level is Low")
 
-#----------  OnPiState ---------------------------------------------------------
+
+# ----------  OnPiState ---------------------------------------------------------
 def OnPiState(Notice):
-    Queue.SendMessage("Pi Health : " + Notice, priority = pi_state_priority)
+    Queue.SendMessage("Pi Health : " + Notice, priority=pi_state_priority)
     console.info("Pi Health : " + Notice)
 
 
-#----------  SendNotice --------------------------------------------------------
+# ----------  SendNotice --------------------------------------------------------
 def SendNotice(Message, **kwargs):
 
     # Priority
@@ -188,7 +212,7 @@ def SendNotice(Message, **kwargs):
         priority = chump.NORMAL
         if len(kwargs) and isinstance(kwargs, dict):
             try:
-                priority = kwargs['priority'] 
+                priority = kwargs["priority"]
             except:
                 priority = chump.NORMAL
 
@@ -209,9 +233,8 @@ def SendNotice(Message, **kwargs):
             return False
 
         message = user.create_message(
-            message = Message,
-            priority = priority,
-            sound = pushsound)
+            message=Message, priority=priority, sound=pushsound
+        )
 
         message.send()
 
@@ -222,10 +245,11 @@ def SendNotice(Message, **kwargs):
         console.error("Send Notice Error: " + str(e1))
         return False
 
-#----------  GetPriorityFromConf -----------------------------------------------
+
+# ----------  GetPriorityFromConf -----------------------------------------------
 def GetPriorityFromConf(conf_entry):
     try:
-        priority = config.ReadValue(conf_entry, default = 'NORMAL')
+        priority = config.ReadValue(conf_entry, default="NORMAL")
 
         if priority.lower() == "lowest":
             return chump.LOWEST
@@ -241,10 +265,18 @@ def GetPriorityFromConf(conf_entry):
         log.error("Error in GetPriorityFromConf: " + GetErrorLine() + ": " + str(e1))
         return chump.NORMAL
 
-#------------------- Command-line interface for gengpio ------------------------
-if __name__=='__main__':
 
-    console, ConfigFilePath, address, port, loglocation, log = MySupport.SetupAddOnProgram("genpushover")
+# ------------------- Command-line interface for gengpio ------------------------
+if __name__ == "__main__":
+
+    (
+        console,
+        ConfigFilePath,
+        address,
+        port,
+        loglocation,
+        log,
+    ) = MySupport.SetupAddOnProgram("genpushover")
 
     # Set the signal handler
     signal.signal(signal.SIGTERM, signal_handler)
@@ -252,11 +284,15 @@ if __name__=='__main__':
 
     try:
 
-        config = MyConfig(filename = os.path.join(ConfigFilePath, 'genpushover.conf'), section = 'genpushover', log = log)
+        config = MyConfig(
+            filename=os.path.join(ConfigFilePath, "genpushover.conf"),
+            section="genpushover",
+            log=log,
+        )
 
-        appid = config.ReadValue('appid', default = None)
-        userid = config.ReadValue('userid', default = None)
-        pushsound = config.ReadValue('pushsound', default = 'updown')
+        appid = config.ReadValue("appid", default=None)
+        userid = config.ReadValue("userid", default=None)
+        pushsound = config.ReadValue("pushsound", default="updown")
 
         alarm_priority = GetPriorityFromConf("alarm_priority")
         sw_update_priority = GetPriorityFromConf("sw_update_priority")
@@ -267,7 +303,6 @@ if __name__=='__main__':
         run_state_priority = GetPriorityFromConf("run_state_priority")
         service_state_priority = GetPriorityFromConf("service_state_priority")
         pi_state_priority = GetPriorityFromConf("pi_state_priority")
-
 
         if appid == None or not len(appid):
             log.error("Error:  invalid app ID")
@@ -280,37 +315,48 @@ if __name__=='__main__':
             sys.exit(2)
 
     except Exception as e1:
-        log.error("Error reading " +  os.path.join(ConfigFilePath, 'genpushover.conf') +": " + str(e1))
-        console.error("Error reading " +  os.path.join(ConfigFilePath, 'genpushover.conf') +": " + str(e1))
+        log.error(
+            "Error reading "
+            + os.path.join(ConfigFilePath, "genpushover.conf")
+            + ": "
+            + str(e1)
+        )
+        console.error(
+            "Error reading "
+            + os.path.join(ConfigFilePath, "genpushover.conf")
+            + ": "
+            + str(e1)
+        )
         sys.exit(1)
     try:
 
-        Queue = MyMsgQueue(config = config, log = log, callback = SendNotice)
+        Queue = MyMsgQueue(config=config, log=log, callback=SendNotice)
 
         GenNotify = GenNotify(
-                                        host = address,
-                                        port = port,
-                                        onready = OnReady,
-                                        onexercise = OnExercise,
-                                        onrun = OnRun,
-                                        onrunmanual = OnRunManual,
-                                        onalarm = OnAlarm,
-                                        onservice = OnService,
-                                        onoff = OnOff,
-                                        onmanual = OnManual,
-                                        onutilitychange = OnUtilityChange,
-                                        onsoftwareupdate = OnSoftwareUpdate,
-                                        onsystemhealth = OnSystemHealth,
-                                        onfuelstate = OnFuelState,
-                                        onpistate = OnPiState,
-                                        log = log,
-                                        loglocation = loglocation,
-                                        console = console,
-                                        config = config)
+            host=address,
+            port=port,
+            onready=OnReady,
+            onexercise=OnExercise,
+            onrun=OnRun,
+            onrunmanual=OnRunManual,
+            onalarm=OnAlarm,
+            onservice=OnService,
+            onoff=OnOff,
+            onmanual=OnManual,
+            onutilitychange=OnUtilityChange,
+            onsoftwareupdate=OnSoftwareUpdate,
+            onsystemhealth=OnSystemHealth,
+            onfuelstate=OnFuelState,
+            onpistate=OnPiState,
+            log=log,
+            loglocation=loglocation,
+            console=console,
+            config=config,
+        )
 
         while True:
             time.sleep(1)
 
     except Exception as e1:
         log.error("Error: " + GetErrorLine() + ": " + str(e1))
-        console.error ("Error: " + str(e1))
+        console.error("Error: " + str(e1))

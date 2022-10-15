@@ -1,15 +1,15 @@
 .lcs_wrap {
-	display: inline-block;	
+	display: inline-block;
 	direction: ltr;
 	height: 28px;
     vertical-align: middle;
 }
 .lcs_wrap input {
-	display: none;	
+	display: none;
 }
 
 .lcs_switch {
-	display: inline-block;	
+	display: inline-block;
 	position: relative;
 	width: 73px;
 	height: 28px;
@@ -17,25 +17,25 @@
 	background: #ddd;
 	overflow: hidden;
 	cursor: pointer;
-	
-	-webkit-transition: all .2s ease-in-out;  
-	-ms-transition: 	all .2s ease-in-out; 
-	transition: 		all .2s ease-in-out; 
+
+	-webkit-transition: all .2s ease-in-out;
+	-ms-transition: 	all .2s ease-in-out;
+	transition: 		all .2s ease-in-out;
 }
 .lcs_cursor {
 	display: inline-block;
 	position: absolute;
-	top: 3px;	
+	top: 3px;
 	width: 22px;
 	height: 22px;
 	border-radius: 100%;
 	background: #fff;
 	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2), 0 3px 4px 0 rgba(0, 0, 0, 0.1);
 	z-index: 10;
-	
-	-webkit-transition: all .2s linear;  
-	-ms-transition: 	all .2s linear; 
-	transition: 		all .2s linear; 
+
+	-webkit-transition: all .2s linear;
+	-ms-transition: 	all .2s linear;
+	transition: 		all .2s linear;
 }
 .lcs_label {
 	font-family: "Trebuchet MS", Helvetica, sans-serif;
@@ -50,18 +50,18 @@
 	overflow: hidden;
 	text-align: center;
 	opacity: 0;
-	
-	-webkit-transition: all .2s ease-in-out .1s;  
-	-ms-transition: 	all .2s ease-in-out .1s;   
-	transition: 		all .2s ease-in-out .1s;   
+
+	-webkit-transition: all .2s ease-in-out .1s;
+	-ms-transition: 	all .2s ease-in-out .1s;
+	transition: 		all .2s ease-in-out .1s;
 }
 .lcs_label.lcs_label_on {
 	left: -70px;
-	z-index: 6;	
+	z-index: 6;
 }
 .lcs_label.lcs_label_off {
 	right: -70px;
-	z-index: 5;	
+	z-index: 5;
 }
 
 
@@ -72,13 +72,13 @@
         /* @alternate */ background: linear-gradient(#439547, #4CAF50);
         text-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
         border-radius: 50px;
-        box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.4);  
+        box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.4);
 }
 .lcs_switch.lcs_on .lcs_cursor {
 	left: 48px;
 }
 .lcs_switch.lcs_on .lcs_label_on {
-	left: 10px;	
+	left: 10px;
 	opacity: 1;
 }
 
@@ -86,7 +86,7 @@
 /* off */
 .lcs_switch.lcs_off {
 	background: #b2b2b2;
-	box-shadow: 0px 0px 2px #a4a4a4 inset; 	
+	box-shadow: 0px 0px 2px #a4a4a4 inset;
         border-radius: 50px;
 }
 .lcs_switch.lcs_off .lcs_cursor {
@@ -94,13 +94,13 @@
 }
 .lcs_switch.lcs_off .lcs_label_off {
 	right: 10px;
-	opacity: 1;	
+	opacity: 1;
 }
 
 
 /* disabled */
 .lcs_switch.lcs_disabled {
 	opacity: 0.65;
-	filter: alpha(opacity=65);	
+	filter: alpha(opacity=65);
 	cursor: default;
 }

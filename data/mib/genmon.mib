@@ -12,9 +12,9 @@ genmon MODULE-IDENTITY
     LAST-UPDATED "202201270000Z"
     ORGANIZATION "GenMon - SNMP MIB"
     CONTACT-INFO
-        "Please direct any requests for improvements, 
+        "Please direct any requests for improvements,
          bugs, or other suggestions to the Github link below.
-         
+
          Project Home - https://github.com/jgyates/genmon
         "
     DESCRIPTION
@@ -43,13 +43,13 @@ genmon MODULE-IDENTITY
 --58399.1.x
  evStatus                      OBJECT IDENTIFIER ::= { evolution 0 }
  evMaintenance                 OBJECT IDENTIFIER ::= { evolution 1 }
- 
+
 --58399.1.0.x
  evengine                      OBJECT IDENTIFIER ::= { evStatus 0 }
  evline                        OBJECT IDENTIFIER ::= { evStatus 1 }
  evlastAlarm                   OBJECT IDENTIFIER ::= { evStatus 2 }
  evtime                        OBJECT IDENTIFIER ::= { evStatus 3 }
- 
+
 --58399.1.1.x
  evmaintenanceSettings        OBJECT IDENTIFIER ::= { evMaintenance 0 }
  evcontrollerSettings         OBJECT IDENTIFIER ::= { evMaintenance 1 }
@@ -58,7 +58,7 @@ genmon MODULE-IDENTITY
 
 --58399.2.x
  h100status                   OBJECT IDENTIFIER ::= { h100 0 }
- 
+
 --58399.2.0.x
  h1engine                     OBJECT IDENTIFIER ::= { h100status 0 }
  h1alarms                     OBJECT IDENTIFIER ::= { h100status 1 }
@@ -68,7 +68,7 @@ genmon MODULE-IDENTITY
 
 --58399.3.x
  pzstatus                     OBJECT IDENTIFIER ::= { powerzone 0 }
- 
+
 --58399.3.0.x
  pzengine                     OBJECT IDENTIFIER ::= { pzstatus 0 }
  pzalarms                     OBJECT IDENTIFIER ::= { pzstatus 1 }
@@ -510,7 +510,7 @@ activeRelays OBJECT-TYPE
  SYNTAX DisplayString
  MAX-ACCESS read-only
  STATUS current
- DESCRIPTION 
+ DESCRIPTION
   "(Evolution/Nexus) The current state of the optional relay kit's relays."
  ::= { evengine 3 }
 
@@ -520,7 +520,7 @@ batteryVolts OBJECT-TYPE
  STATUS current
  DESCRIPTION
   "(Evolution/Nexus) The current voltage of the generator's battery."
- ::= { evengine 4 } 
+ ::= { evengine 4 }
 
 batteryStatus OBJECT-TYPE
  SYNTAX DisplayString
@@ -568,7 +568,7 @@ outputPower OBJECT-TYPE
  STATUS current
  DESCRIPTION
   "(Evolution/Nexus) The calculated apparent power from the generator.  Displays non-zero result when running, 0 if the engine is not running."
- ::= { evengine 10 } 
+ ::= { evengine 10 }
 
 rotorPoles OBJECT-TYPE
  SYNTAX DisplayString
@@ -1292,7 +1292,7 @@ h1generatorTime OBJECT-TYPE
 
 h1transferSwitchStatus OBJECT-TYPE
  SYNTAX DisplayString
- MAX-ACCESS read-only 
+ MAX-ACCESS read-only
  STATUS current
  DESCRIPTION
   "(H100) The current status of the Automatic Transfer Switch (ATS)."
@@ -1358,7 +1358,7 @@ pzfrequency OBJECT-TYPE
 
 pzthrottlePosition OBJECT-TYPE
  SYNTAX DisplayString
- MAX-ACCESS read-only 
+ MAX-ACCESS read-only
  STATUS current
  DESCRIPTION
   "(PowerZone) The current throttle position of the generator."

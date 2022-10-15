@@ -1,4 +1,4 @@
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 #    FILE: myweather.py
 # PURPOSE: app to interface to open weather map api
 #
@@ -6,24 +6,28 @@
 #    DATE: 26-May-2018
 #
 # MODIFICATIONS:
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 
-import datetime, time, threading, collections
+import collections
+import datetime
+import threading
+import time
 
 from genmonlib.mysupport import MySupport
 from genmonlib.mythread import MyThread
 
 try:
     import pyowm
+
     pyowm_installed = True
 except:
     pyowm_installed = False
 
 # https://pyowm.readthedocs.io/en/latest/pyowm.html
-#https://pyowm.readthedocs.io/en/latest/v3/code-recipes.html
+# https://pyowm.readthedocs.io/en/latest/v3/code-recipes.html
 class MyWeather(MySupport):
-    #---------------------__init__----------------------------------------------
-    def __init__(self, apikey, location, log = None, unit = 'imperial'):
+    # ---------------------__init__----------------------------------------------
+    def __init__(self, apikey, location, log=None, unit="imperial"):
         super(MyWeather, self).__init__()
         self.APIKey = apikey
         self.log = log
@@ -33,10 +37,12 @@ class MyWeather(MySupport):
         self.WeatherUnit = unit
         self.WeatherData = None
         self.ObservationLocation = None
-        self.DataAccessLock = threading.Lock()     # lock to synchronize access to WeatherData
+        self.DataAccessLock = (
+            threading.Lock()
+        )  # lock to synchronize access to WeatherData
 
         if not pyowm_installed:
-            self.LogError("Library pyowm not installed, disabling weather support." )
+            self.LogError("Library pyowm not installed, disabling weather support.")
             return
         try:
             if self.APIKey != None:
@@ -44,32 +50,40 @@ class MyWeather(MySupport):
             if self.Location != None:
                 self.Location = self.Location.strip()
 
-            if self.APIKey == None or not len(self.APIKey) or self.Location == None or not len(self.Location):
+            if (
+                self.APIKey == None
+                or not len(self.APIKey)
+                or self.Location == None
+                or not len(self.Location)
+            ):
                 self.LogError("Weather API key invalid or Weather Location invalid")
                 return
 
             self.InitOWM()
-            self.Threads["WeatherThread"] = MyThread(self.WeatherThread, Name = "WeatherThread")
+            self.Threads["WeatherThread"] = MyThread(
+                self.WeatherThread, Name="WeatherThread"
+            )
         except Exception as e1:
             self.LogErrorLine("Error on MyWeather:init: " + str(e1))
 
-
-    #---------------------GetUnits----------------------------------------------
-    def GetUnits(self, measured, Label = False):
+    # ---------------------GetUnits----------------------------------------------
+    def GetUnits(self, measured, Label=False):
 
         try:
             LookUp = {
-                    "temp" : [["fahrenheit","F"],["celsius", "C"]],
-                    "speed": [["miles_hour", "mph"], ["meters_sec", "m/s"]]
+                "temp": [["fahrenheit", "F"], ["celsius", "C"]],
+                "speed": [["miles_hour", "mph"], ["meters_sec", "m/s"]],
             }
 
             ReturnList = LookUp.get(measured, None)
 
             if ReturnList == None:
-                self.LogError("Error in GetUnits: Unknown measured value: " + str(measured))
+                self.LogError(
+                    "Error in GetUnits: Unknown measured value: " + str(measured)
+                )
                 return ""
 
-            if self.WeatherUnit.lower() == 'metric':
+            if self.WeatherUnit.lower() == "metric":
                 Index = 1
             else:
                 Index = 0
@@ -81,18 +95,17 @@ class MyWeather(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in GetUnits: " + str(e1))
 
-    #---------------------InitOWM-----------------------------------------------
+    # ---------------------InitOWM-----------------------------------------------
     def InitOWM(self):
         try:
-            self.OWM = pyowm.OWM(self.APIKey) # You MUST provide a valid API key
+            self.OWM = pyowm.OWM(self.APIKey)  # You MUST provide a valid API key
             return True
         except Exception as e1:
             self.OWM = None
             self.LogErrorLine("Error in InitOWM: " + str(e1))
             return False
 
-
-    #---------------------WeatherThread-----------------------------------------
+    # ---------------------WeatherThread-----------------------------------------
     def GetObservation(self):
 
         if self.OWM == None:
@@ -101,8 +114,8 @@ class MyWeather(MySupport):
             return
         try:
             if self.Location.isdigit():
-                if len(self.Location.strip()) == 5:     # Assume this is a zip code
-                    self.Observation = self.OWM.weather_at_zip_code(self.Location,"us")
+                if len(self.Location.strip()) == 5:  # Assume this is a zip code
+                    self.Observation = self.OWM.weather_at_zip_code(self.Location, "us")
                 else:
                     self.Observation = self.OWM.weather_at_id(int(self.Location))
             else:
@@ -111,16 +124,22 @@ class MyWeather(MySupport):
         except Exception as e1:
             self.Observation = None
             self.ObservationLocation = None
-            self.LogErrorLine("Error in GetObservation: " + "(" + str(self.Location) +  ") : " + str(e1))
+            self.LogErrorLine(
+                "Error in GetObservation: "
+                + "("
+                + str(self.Location)
+                + ") : "
+                + str(e1)
+            )
 
-    #---------------------WeatherThread-----------------------------------------
+    # ---------------------WeatherThread-----------------------------------------
     def WeatherThread(self):
 
         time.sleep(1)
         while True:
             if self.OWM == None:
                 if not self.InitOWM():
-                    if self.WaitForExit("WeatherThread", 60 * 3 ):  # 3 min
+                    if self.WaitForExit("WeatherThread", 60 * 3):  # 3 min
                         return
                     continue
             try:
@@ -143,7 +162,7 @@ class MyWeather(MySupport):
             if self.WaitForExit("WeatherThread", 60 * 10):  # ten min
                 return
 
-    #---------------------GetLocation-------------------------------------------
+    # ---------------------GetLocation-------------------------------------------
     def GetLocation(self):
 
         Data = []
@@ -151,16 +170,17 @@ class MyWeather(MySupport):
             if self.ObservationLocation == None:
                 return None
 
-            Data.append({"City Name" : self.ObservationLocation.get_name()})
-            Data.append({"Latitude" : self.ObservationLocation.get_lat()})
-            Data.append({"Longitude" : self.ObservationLocation.get_lon()})
-            Data.append({"City ID" : self.ObservationLocation.get_ID()})
+            Data.append({"City Name": self.ObservationLocation.get_name()})
+            Data.append({"Latitude": self.ObservationLocation.get_lat()})
+            Data.append({"Longitude": self.ObservationLocation.get_lon()})
+            Data.append({"City ID": self.ObservationLocation.get_ID()})
         except Exception as e1:
             self.LogErrorLine("Error in GetLocation: " + str(e1))
 
         return Data
-    #---------------------GetWeather--------------------------------------------
-    def GetWeather(self, minimum = True, ForUI = False):
+
+    # ---------------------GetWeather--------------------------------------------
+    def GetWeather(self, minimum=True, ForUI=False):
 
         Data = []
 
@@ -173,77 +193,162 @@ class MyWeather(MySupport):
                 return Data
 
             with self.DataAccessLock:
-                TempDict = self.WeatherData.get_temperature(unit = self.GetUnits("temp"))
-                Data.append({"Current Temperature" : str(TempDict.get('temp', 0)) + " " + self.GetUnits("temp", Label = True)})
-                Data.append({"Conditions" : self.WeatherData.get_detailed_status().title()})
+                TempDict = self.WeatherData.get_temperature(unit=self.GetUnits("temp"))
+                Data.append(
+                    {
+                        "Current Temperature": str(TempDict.get("temp", 0))
+                        + " "
+                        + self.GetUnits("temp", Label=True)
+                    }
+                )
+                Data.append(
+                    {"Conditions": self.WeatherData.get_detailed_status().title()}
+                )
 
                 if not minimum:
-                    Data.append({"Maximum Current Temperature" : str(TempDict.get('temp_max', 0)) + " " + self.GetUnits("temp", Label = True)})
-                    Data.append({"Minimum Current Temperature" : str(TempDict.get('temp_min', 0)) + " " + self.GetUnits("temp", Label = True)})
-                    Data.append({"Humidity" : str(self.WeatherData.get_humidity() ) + " %"})
-                    Data.append({"Cloud Coverage" : str(self.WeatherData.get_clouds()) + " %"})
-                    TempDict = self.WeatherData.get_wind(unit = self.GetUnits("speed")) # unit is meters_sec or miles_hour
+                    Data.append(
+                        {
+                            "Maximum Current Temperature": str(
+                                TempDict.get("temp_max", 0)
+                            )
+                            + " "
+                            + self.GetUnits("temp", Label=True)
+                        }
+                    )
+                    Data.append(
+                        {
+                            "Minimum Current Temperature": str(
+                                TempDict.get("temp_min", 0)
+                            )
+                            + " "
+                            + self.GetUnits("temp", Label=True)
+                        }
+                    )
+                    Data.append(
+                        {"Humidity": str(self.WeatherData.get_humidity()) + " %"}
+                    )
+                    Data.append(
+                        {"Cloud Coverage": str(self.WeatherData.get_clouds()) + " %"}
+                    )
+                    TempDict = self.WeatherData.get_wind(
+                        unit=self.GetUnits("speed")
+                    )  # unit is meters_sec or miles_hour
                     Degrees = round(TempDict.get("deg", 0), 2)
                     Cardinal = self.DegreesToCardinal(Degrees)
                     if len(Cardinal):
                         WindString = Cardinal + " (" + str(Degrees) + " Degrees), "
                     else:
                         WindString = str(Degrees) + " Degrees, "
-                    Data.append({"Wind" : WindString + str(round(TempDict.get("speed", 0),2)) + " " +self.GetUnits("speed", Label = True)})
+                    Data.append(
+                        {
+                            "Wind": WindString
+                            + str(round(TempDict.get("speed", 0), 2))
+                            + " "
+                            + self.GetUnits("speed", Label=True)
+                        }
+                    )
                     TempDict = self.WeatherData.get_rain()
                     if len(TempDict):
                         amount = TempDict.get("3h", None)
                         if amount is not None:
-                            Data.append({"Rain in last 3 hours" : str(amount) + " mm"})
+                            Data.append({"Rain in last 3 hours": str(amount) + " mm"})
                         amount = TempDict.get("1h", None)
                         if amount is not None:
-                            Data.append({"Rain in last hour" : str(amount) + " mm"})
+                            Data.append({"Rain in last hour": str(amount) + " mm"})
 
                     TempDict = self.WeatherData.get_snow()
                     if len(TempDict):
                         amount = TempDict.get("3h", None)
                         if amount is not None:
-                            Data.append({"Snow in last 3 hours" : str(amount) + " mm"})
+                            Data.append({"Snow in last 3 hours": str(amount) + " mm"})
                         amount = TempDict.get("1h", None)
                         if amount is not None:
-                            Data.append({"Snow in last hour" : str(amount) + " mm"})
+                            Data.append({"Snow in last hour": str(amount) + " mm"})
 
                     TempDict = self.WeatherData.get_pressure()
                     if len(TempDict):
-                        Data.append({"Pressure" : str(TempDict.get("press", 0)) + " " + "hPa"})
+                        Data.append(
+                            {"Pressure": str(TempDict.get("press", 0)) + " " + "hPa"}
+                        )
 
-                    Data.append({"Sunrise Time" : datetime.datetime.fromtimestamp(int(self.WeatherData.get_sunrise_time())).strftime("%A %B %-d, %Y %H:%M:%S")})
-                    Data.append({"Sunset Time" : datetime.datetime.fromtimestamp(int(self.WeatherData.get_sunset_time())).strftime("%A %B %-d, %Y %H:%M:%S")})
+                    Data.append(
+                        {
+                            "Sunrise Time": datetime.datetime.fromtimestamp(
+                                int(self.WeatherData.get_sunrise_time())
+                            ).strftime("%A %B %-d, %Y %H:%M:%S")
+                        }
+                    )
+                    Data.append(
+                        {
+                            "Sunset Time": datetime.datetime.fromtimestamp(
+                                int(self.WeatherData.get_sunset_time())
+                            ).strftime("%A %B %-d, %Y %H:%M:%S")
+                        }
+                    )
 
-                    ReferenceTime = datetime.datetime.fromtimestamp(int(self.WeatherData.get_reference_time()))
-                    Data.append({"Reference Time" : ReferenceTime.strftime("%A %B %-d, %Y %H:%M:%S")})
+                    ReferenceTime = datetime.datetime.fromtimestamp(
+                        int(self.WeatherData.get_reference_time())
+                    )
+                    Data.append(
+                        {
+                            "Reference Time": ReferenceTime.strftime(
+                                "%A %B %-d, %Y %H:%M:%S"
+                            )
+                        }
+                    )
                     LocationData = self.GetLocation()
                     if LocationData != None and len(LocationData):
-                        Data.append({"Location" : LocationData})
+                        Data.append({"Location": LocationData})
                 if ForUI:
-                    Data.append({"code" : self.WeatherData.get_weather_code()})          # Get OWM weather condition code
+                    Data.append(
+                        {"code": self.WeatherData.get_weather_code()}
+                    )  # Get OWM weather condition code
                     # "http://openweathermap.org/img/w/" + iconCode + ".png";
-                    Data.append({"icon" : self.WeatherData.get_weather_icon_name()})     # Get OWM weather icon code
+                    Data.append(
+                        {"icon": self.WeatherData.get_weather_icon_name()}
+                    )  # Get OWM weather icon code
 
             return Data
         except Exception as e1:
             self.LogErrorLine("Error in GetWeather: " + str(e1))
             return Data
 
-    #---------------------DegreesToCardinal-------------------------------------
+    # ---------------------DegreesToCardinal-------------------------------------
     def DegreesToCardinal(self, Degrees):
 
         try:
-            Value = int((Degrees / 22.5) + .5)
-            CardinalDirections = ["N","NNE","NE","ENE","E","ESE", "SE", "SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"]
+            Value = int((Degrees / 22.5) + 0.5)
+            CardinalDirections = [
+                "N",
+                "NNE",
+                "NE",
+                "ENE",
+                "E",
+                "ESE",
+                "SE",
+                "SSE",
+                "S",
+                "SSW",
+                "SW",
+                "WSW",
+                "W",
+                "WNW",
+                "NW",
+                "NNW",
+            ]
             return CardinalDirections[(Value % 16)]
         except:
             return ""
 
-    #---------------------Close-------------------------------------------------
+    # ---------------------Close-------------------------------------------------
     def Close(self):
 
-        if self.APIKey != None and len(self.APIKey) and self.Location != None and len(self.Location):
+        if (
+            self.APIKey != None
+            and len(self.APIKey)
+            and self.Location != None
+            and len(self.Location)
+        ):
             try:
                 self.KillThread("WeatherThread")
             except:

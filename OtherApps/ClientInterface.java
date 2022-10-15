@@ -205,5 +205,3 @@ public class ClientInterface {
         System.out.println("Hello World!"); // Display the string.
     }
 }   // End ClientInterface class
-
-

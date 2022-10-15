@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 #    FILE: mymsgqueue.py
 # PURPOSE: message queue with retry support
 #
@@ -7,17 +7,20 @@
 #    DATE: 16-Feb-2022
 #
 # MODIFICATIONS:
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 
-import time, datetime, threading
+import datetime
+import threading
+import time
 
 from genmonlib.mysupport import MySupport
 from genmonlib.mythread import MyThread
 
-#------------ MyMsgQueue class -------------------------------------------------
+
+# ------------ MyMsgQueue class -------------------------------------------------
 class MyMsgQueue(MySupport):
-    #------------ MyMsgQueue::init----------------------------------------------
-    def __init__(self, config = None, log = None, callback = None):
+    # ------------ MyMsgQueue::init----------------------------------------------
+    def __init__(self, config=None, log=None, callback=None):
         super(MyMsgQueue, self).__init__()
         self.log = log
         self.config = config
@@ -26,23 +29,33 @@ class MyMsgQueue(MySupport):
 
         self.QueueLock = threading.RLock()
 
-        self.max_retry_time = 600       # 10 min
-        self.default_wait = 120         # 2 min
+        self.max_retry_time = 600  # 10 min
+        self.default_wait = 120  # 2 min
         self.debug = False
 
         if self.config != None:
             try:
-                self.max_retry_time = self.config.ReadValue('max_retry_time', return_type = int, default = 600)
-                self.default_wait = self.config.ReadValue('default_wait', return_type = int, default = 120)
-                self.debug = self.config.ReadValue('debug', return_type = bool, default = False)
+                self.max_retry_time = self.config.ReadValue(
+                    "max_retry_time", return_type=int, default=600
+                )
+                self.default_wait = self.config.ReadValue(
+                    "default_wait", return_type=int, default=120
+                )
+                self.debug = self.config.ReadValue(
+                    "debug", return_type=bool, default=False
+                )
 
             except Exception as e1:
-                self.LogErrorLine("Error in MyMsgQueue:init, error reading config: " + str(e1))
+                self.LogErrorLine(
+                    "Error in MyMsgQueue:init, error reading config: " + str(e1)
+                )
         if not self.callback == None:
-            self.Threads["QueueWorker"] = MyThread(self.QueueWorker, Name = "QueueWorker", start = False)
+            self.Threads["QueueWorker"] = MyThread(
+                self.QueueWorker, Name="QueueWorker", start=False
+            )
             self.Threads["QueueWorker"].Start()
 
-    #------------ MyMsgQueue::QueueWorker---------------------------------------
+    # ------------ MyMsgQueue::QueueWorker---------------------------------------
     def QueueWorker(self):
 
         # once SendMessage is called messages are queued and then sent from this thread
@@ -59,7 +72,9 @@ class MyMsgQueue(MySupport):
                     else:
                         ret_val = self.callback(MessageItems[0])
                     if not (ret_val):
-                        self.LogError("Error sending message in QueueWorker, callback failed, retrying")
+                        self.LogError(
+                            "Error sending message in QueueWorker, callback failed, retrying"
+                        )
                         messageError = True
                 except Exception as e1:
                     self.LogErrorLine("Error in QueueWorker, retrying (2): " + str(e1))
@@ -72,19 +87,23 @@ class MyMsgQueue(MySupport):
                         if retry_duration.total_seconds() <= self.max_retry_time:
                             with self.QueueLock:
                                 # put the message back at the end of the queue
-                                self.MessageQueue.insert(len(self.MessageQueue),MessageItems)
+                                self.MessageQueue.insert(
+                                    len(self.MessageQueue), MessageItems
+                                )
                             # sleep for 2 min and try again
                             if self.WaitForExit("QueueWorker", self.default_wait):
                                 return
                         else:
                             self.LogDebug("Message retry expired: " + MessageItems[0])
                 except Exception as e1:
-                    self.LogErrorLine("Error in QueueWorker requeue, retrying (3): " + str(e1))
+                    self.LogErrorLine(
+                        "Error in QueueWorker requeue, retrying (3): " + str(e1)
+                    )
 
-            if self.WaitForExit("QueueWorker", 2 ):
+            if self.WaitForExit("QueueWorker", 2):
                 return
 
-    #------------ MyMsgQueue::SendMessage---------------------------------------
+    # ------------ MyMsgQueue::SendMessage---------------------------------------
     def SendMessage(self, message, **kwargs):
         try:
             if self.callback != None:
@@ -97,7 +116,7 @@ class MyMsgQueue(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in MyMsgQueue:SendMessage: " + str(e1))
 
-    #------------ MyMsgQueue::Close---------------------------------------------
+    # ------------ MyMsgQueue::Close---------------------------------------------
     def Close(self):
 
         try:

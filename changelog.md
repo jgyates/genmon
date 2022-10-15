@@ -12,16 +12,16 @@ All notable changes to this project will be documented in this file.
 
 ## V1.18.14 -2022-08-21
 - Minor update to improve fuel calculations for outages
-- Updated serialconfig.py to optionally allow bluetooth to be used with the normal serial port operations. 
+- Updated serialconfig.py to optionally allow bluetooth to be used with the normal serial port operations.
 - Corrected one bug in serialconfig.py
-- Minor update to custom controller support to handle failed comms display notice 
+- Minor update to custom controller support to handle failed comms display notice
 - Added Mopeka Pro Propane Sensor Add On
 - Minor update to better enforce the "Ignore Unknowns" advanced option for Evolution 2.0
 - Added outage reporting for custom controllers. See wiki for more details.
 - Improved serial error handling for USB devices
 - Improved error handling for custom controller comm errors
 - Moved add on program files to the addon folder, updated genloader to support this move
-- NOTE: This upgrade make take longer to install, please be patient as it is a larger-ish download and install process 
+- NOTE: This upgrade make take longer to install, please be patient as it is a larger-ish download and install process
 - Removed fluids from installing with genloader. To use the genmopeka addon you must manually install fluids via the install script
 - Correct issue with power graph
 - Added priorities parameter to Pushover add on (see add on page for settings)
@@ -36,7 +36,7 @@ All notable changes to this project will be documented in this file.
 - Added support Briggs & Stratton GC-1032 Controller via custom controller method (thanks @marklitwin)
 - Minor javascript update to correct security warning (thanks @buschauer)
 - Code cleanup
-- Improved error handing in mymail.py to better support older versions of SSL libraries 
+- Improved error handing in mymail.py to better support older versions of SSL libraries
 - Added run hours in the last year to the maint page. Note that this the last 365 days, not the last calendar year.
 - Added option for serial parity on Advanced Settings page for Briggs and Stratton controllers
 
@@ -416,7 +416,7 @@ All notable changes to this project will be documented in this file.
 - Corrected minor issue with startgenmon.sh and python3
 
 ## V1.14.07 - 2020-05-18
-- Added advanced setting for userdefined.json path other than the default.  
+- Added advanced setting for userdefined.json path other than the default.
 
 ## V1.14.06 - 2020-04-29
 - Added error log code for Nexus

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 #    FILE: genexercise.py
 # PURPOSE: genexercise.py add enhanced exercise functionality for Evolution and Nexus cotrollers
 #
@@ -7,44 +7,56 @@
 #    DATE: 02-23-2019
 #
 # MODIFICATIONS:
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 
 
-import datetime, time, sys, signal, os, threading, json
+import datetime
+import json
+import os
+import signal
+import sys
+import threading
+import time
 
 try:
     # this will add the parent of the genmonlib folder to the path
     # if we are one level below the genmonlib parent (e.g. in the addon folder)
     file_root = os.path.dirname(os.path.realpath(__file__))
-    parent_root=os.path.abspath(os.path.join(file_root, os.pardir))
+    parent_root = os.path.abspath(os.path.join(file_root, os.pardir))
     if os.path.isdir(os.path.join(parent_root, "genmonlib")):
         sys.path.insert(1, parent_root)
 
     from genmonlib.myclient import ClientInterface
-    from genmonlib.mylog import SetupLogger
-    from genmonlib.myconfig import MyConfig
-    from genmonlib.mysupport import MySupport
     from genmonlib.mycommon import MyCommon
+    from genmonlib.myconfig import MyConfig
+    from genmonlib.mylog import SetupLogger
+    from genmonlib.mysupport import MySupport
     from genmonlib.mythread import MyThread
     from genmonlib.program_defaults import ProgramDefaults
 
 except Exception as e1:
-    print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
-    print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
+    print(
+        "\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n"
+    )
+    print(
+        "Please see the project documentation at https://github.com/jgyates/genmon.\n"
+    )
     print("Error: " + str(e1))
     sys.exit(2)
 
-#------------ GenExercise class ------------------------------------------------
+# ------------ GenExercise class ------------------------------------------------
 class GenExercise(MySupport):
 
-    #------------ GenExercise::init---------------------------------------------
-    def __init__(self,
-        log = None,
-        loglocation = ProgramDefaults.LogPath,
-        ConfigFilePath = MyCommon.DefaultConfPath,
-        host = ProgramDefaults.LocalHost,
-        port = ProgramDefaults.ServerPort,
-        console = None):
+    # ------------ GenExercise::init---------------------------------------------
+    def __init__(
+        self,
+        log=None,
+        loglocation=ProgramDefaults.LogPath,
+        ConfigFilePath=MyCommon.DefaultConfPath,
+        host=ProgramDefaults.LocalHost,
+        port=ProgramDefaults.ServerPort,
+        console=None,
+    ):
 
         super(GenExercise, self).__init__()
 
@@ -54,66 +66,110 @@ class GenExercise(MySupport):
         self.console = console
 
         self.MonitorAddress = host
-        self.PollTime =  2
+        self.PollTime = 2
         self.ExerciseActive = False
         self.Debug = False
 
         try:
-            self.config = MyConfig(filename = os.path.join(ConfigFilePath, 'genexercise.conf'), section = 'genexercise', log = self.log)
+            self.config = MyConfig(
+                filename=os.path.join(ConfigFilePath, "genexercise.conf"),
+                section="genexercise",
+                log=self.log,
+            )
 
-            self.ExerciseType = self.config.ReadValue('exercise_type', default = "Normal")
-            self.ExerciseHour = self.config.ReadValue('exercise_hour', return_type = int, default = 12)
-            self.ExerciseMinute = self.config.ReadValue('exercise_minute', return_type = int, default = 0)
-            self.ExerciseDayOfMonth = self.config.ReadValue('exercise_day_of_month', return_type = int, default = 1)
-            self.ExerciseDayOfWeek = self.config.ReadValue('exercise_day_of_week',  default = "Monday")
-            self.ExerciseDuration = self.config.ReadValue('exercise_duration', return_type = float, default = 12)
-            self.ExerciseWarmup = self.config.ReadValue('exercise_warmup', return_type = float, default = 0)
-            self.ExerciseFrequency = self.config.ReadValue('exercise_frequency',  default = "Monthly")
-            self.MonitorAddress = self.config.ReadValue('monitor_address', default = ProgramDefaults.LocalHost)
-            self.LastExerciseTime = self.config.ReadValue('last_exercise',  default = None)
-            self.UseGeneratorTime = self.config.ReadValue('use_gen_time',  return_type = bool, default = False)
-            self.Debug = self.config.ReadValue('debug', return_type = bool, default = False)
+            self.ExerciseType = self.config.ReadValue("exercise_type", default="Normal")
+            self.ExerciseHour = self.config.ReadValue(
+                "exercise_hour", return_type=int, default=12
+            )
+            self.ExerciseMinute = self.config.ReadValue(
+                "exercise_minute", return_type=int, default=0
+            )
+            self.ExerciseDayOfMonth = self.config.ReadValue(
+                "exercise_day_of_month", return_type=int, default=1
+            )
+            self.ExerciseDayOfWeek = self.config.ReadValue(
+                "exercise_day_of_week", default="Monday"
+            )
+            self.ExerciseDuration = self.config.ReadValue(
+                "exercise_duration", return_type=float, default=12
+            )
+            self.ExerciseWarmup = self.config.ReadValue(
+                "exercise_warmup", return_type=float, default=0
+            )
+            self.ExerciseFrequency = self.config.ReadValue(
+                "exercise_frequency", default="Monthly"
+            )
+            self.MonitorAddress = self.config.ReadValue(
+                "monitor_address", default=ProgramDefaults.LocalHost
+            )
+            self.LastExerciseTime = self.config.ReadValue("last_exercise", default=None)
+            self.UseGeneratorTime = self.config.ReadValue(
+                "use_gen_time", return_type=bool, default=False
+            )
+            self.Debug = self.config.ReadValue("debug", return_type=bool, default=False)
 
             # Validate settings
-            if not self.ExerciseType.lower() in ["normal","quiet", "transfer"]:
+            if not self.ExerciseType.lower() in ["normal", "quiet", "transfer"]:
                 self.ExerciseType = "normal"
-            if self.ExerciseHour  > 23 or self.ExerciseHour < 0:
+            if self.ExerciseHour > 23 or self.ExerciseHour < 0:
                 self.ExerciseHour = 12
-            if self.ExerciseMinute  > 59 or self.ExerciseMinute < 0:
+            if self.ExerciseMinute > 59 or self.ExerciseMinute < 0:
                 self.ExerciseMinute = 0
-            if not self.ExerciseDayOfWeek.lower() in ["monday", "tuesday", "wednesday","thursday","friday","saturday","sunday"]:
+            if not self.ExerciseDayOfWeek.lower() in [
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday",
+                "saturday",
+                "sunday",
+            ]:
                 self.ExerciseDayOfWeek = "Monday"
-            if self.ExerciseDayOfMonth  > 28 or self.ExerciseDayOfMonth < 1:
+            if self.ExerciseDayOfMonth > 28 or self.ExerciseDayOfMonth < 1:
                 self.ExerciseDayOfMonth = 1
-            if self.ExerciseDuration  > 60:
+            if self.ExerciseDuration > 60:
                 self.ExerciseDuration = 60
-            if self.ExerciseDuration  < 5:
+            if self.ExerciseDuration < 5:
                 self.ExerciseDuration = 5
-            if self.ExerciseWarmup  > 30:
+            if self.ExerciseWarmup > 30:
                 self.ExerciseWarmup = 30
-            if self.ExerciseWarmup  < 0:
+            if self.ExerciseWarmup < 0:
                 self.ExerciseWarmup = 0
-            if not self.ExerciseFrequency.lower() in ["weekly","biweekly", "monthly"]:
+            if not self.ExerciseFrequency.lower() in ["weekly", "biweekly", "monthly"]:
                 self.ExerciseFrequency = "Monthly"
 
             if self.MonitorAddress == None or not len(self.MonitorAddress):
                 self.MonitorAddress = ProgramDefaults.LocalHost
 
         except Exception as e1:
-            self.LogErrorLine("Error reading " + os.path.join(ConfigFilePath, "genexercise.conf") + ": " + str(e1))
-            self.console.error("Error reading " + os.path.join(ConfigFilePath, "genexercise.conf") + ": " + str(e1))
+            self.LogErrorLine(
+                "Error reading "
+                + os.path.join(ConfigFilePath, "genexercise.conf")
+                + ": "
+                + str(e1)
+            )
+            self.console.error(
+                "Error reading "
+                + os.path.join(ConfigFilePath, "genexercise.conf")
+                + ": "
+                + str(e1)
+            )
             sys.exit(1)
 
         try:
 
-            self.Generator = ClientInterface(host = self.MonitorAddress, port = port, log = self.log)
+            self.Generator = ClientInterface(
+                host=self.MonitorAddress, port=port, log=self.log
+            )
 
             if not self.CheckGeneratorRequirement():
                 self.LogError("Requirements not met. Exiting.")
                 sys.exit(1)
 
             # start thread monitor time for exercise
-            self.Threads["ExerciseThread"] = MyThread(self.ExerciseThread, Name = "ExerciseThread", start = False)
+            self.Threads["ExerciseThread"] = MyThread(
+                self.ExerciseThread, Name="ExerciseThread", start=False
+            )
             self.Threads["ExerciseThread"].Start()
 
             try:
@@ -122,9 +178,22 @@ class GenExercise(MySupport):
                 else:
                     DayStr = str(self.ExerciseDayOfWeek)
 
-                self.LogError("Execise: " + self.ExerciseType + ", " + self.ExerciseFrequency + " at "
-                    + str(self.ExerciseHour) + ":" + str(self.ExerciseMinute) + " on " + DayStr + " for "
-                    + str(self.ExerciseDuration) + " min. Warmup: " + str(self.ExerciseWarmup))
+                self.LogError(
+                    "Execise: "
+                    + self.ExerciseType
+                    + ", "
+                    + self.ExerciseFrequency
+                    + " at "
+                    + str(self.ExerciseHour)
+                    + ":"
+                    + str(self.ExerciseMinute)
+                    + " on "
+                    + DayStr
+                    + " for "
+                    + str(self.ExerciseDuration)
+                    + " min. Warmup: "
+                    + str(self.ExerciseWarmup)
+                )
                 self.DebugOutput("Debug Enabled")
             except Exception as e1:
                 self.LogErrorLine(str(e1))
@@ -137,7 +206,7 @@ class GenExercise(MySupport):
             self.console.error("Error in GenExercise init: " + str(e1))
             sys.exit(1)
 
-    #----------  GenExercise::SendCommand --------------------------------------
+    # ----------  GenExercise::SendCommand --------------------------------------
     def SendCommand(self, Command):
 
         if len(Command) == 0:
@@ -151,15 +220,22 @@ class GenExercise(MySupport):
             data = ""
 
         return data
-    #----------  GenExercise::CheckGeneratorRequirement ------------------------
+
+    # ----------  GenExercise::CheckGeneratorRequirement ------------------------
     def CheckGeneratorRequirement(self):
 
         try:
             data = self.SendCommand("generator: start_info_json")
             StartInfo = {}
             StartInfo = json.loads(data)
-            if not "evolution" in StartInfo["Controller"].lower() and not "nexus" in StartInfo["Controller"].lower():
-                self.LogError("Error: Only Evolution or Nexus controllers are supported for this feature: " + StartInfo["Controller"])
+            if (
+                not "evolution" in StartInfo["Controller"].lower()
+                and not "nexus" in StartInfo["Controller"].lower()
+            ):
+                self.LogError(
+                    "Error: Only Evolution or Nexus controllers are supported for this feature: "
+                    + StartInfo["Controller"]
+                )
                 return False
             return True
         except Exception as e1:
@@ -172,24 +248,32 @@ class GenExercise(MySupport):
         # check to see if the generator is running
         status = self.SendCommand("generator: getbase")
         if not status.lower() in ["running", "exercising"]:
-            self.LogError("WARNING: generator not running post warmup. Transfer switch not activated.")
+            self.LogError(
+                "WARNING: generator not running post warmup. Transfer switch not activated."
+            )
             self.SendCommand("generator: setremote=stop")
             return
 
         self.SendCommand("generator: setremote=starttransfer")
         self.DebugOutput("Starting transfer exercise cycle (post warmup).")
         # set timer to stop
-        self.StopTimer = threading.Timer(float(self.ExerciseDuration  * 60.0), self.StopExercise)
+        self.StopTimer = threading.Timer(
+            float(self.ExerciseDuration * 60.0), self.StopExercise
+        )
         self.StopTimer.start()
 
     # ---------- GenExercise::ReadyToExercise-----------------------------------
     def ReadyToExercise(self):
 
         status = self.SendCommand("generator: getbase")
-        if not status.lower() in ["ready","servicedue"]:
-            self.LogError("Generator not in Ready state, exercise cycle not started: " + str(status))
+        if not status.lower() in ["ready", "servicedue"]:
+            self.LogError(
+                "Generator not in Ready state, exercise cycle not started: "
+                + str(status)
+            )
             return False
         return True
+
     # ---------- GenExercise::StartExercise-------------------------------------
     def StartExercise(self):
 
@@ -201,24 +285,32 @@ class GenExercise(MySupport):
         if self.ExerciseType.lower() == "normal" and self.ReadyToExercise():
             self.SendCommand("generator: setremote=start")
             self.DebugOutput("Starting normal exercise cycle.")
-            self.StopTimer = threading.Timer(float(self.ExerciseDuration  * 60.0), self.StopExercise)
+            self.StopTimer = threading.Timer(
+                float(self.ExerciseDuration * 60.0), self.StopExercise
+            )
             self.StopTimer.start()
         elif self.ExerciseType.lower() == "quiet" and self.ReadyToExercise():
             self.SendCommand("generator: setremote=startexercise")
             self.DebugOutput("Starting quiet exercise cycle.")
-            self.StopTimer = threading.Timer(float(self.ExerciseDuration  * 60.0), self.StopExercise)
+            self.StopTimer = threading.Timer(
+                float(self.ExerciseDuration * 60.0), self.StopExercise
+            )
             self.StopTimer.start()
         elif self.ExerciseType.lower() == "transfer" and self.ReadyToExercise():
             if self.ExerciseWarmup == 0:
                 self.SendCommand("generator: setremote=starttransfer")
                 self.DebugOutput("Starting transfer exercise cycle.")
-                self.StopTimer = threading.Timer(float(self.ExerciseDuration  * 60.0), self.StopExercise)
+                self.StopTimer = threading.Timer(
+                    float(self.ExerciseDuration * 60.0), self.StopExercise
+                )
                 self.StopTimer.start()
             else:
                 self.SendCommand("generator: setremote=start")
                 self.DebugOutput("Starting warmup for transfer exercise cycle.")
                 # start timer for post warmup transition to starttransfer command
-                self.WarmupTimer = threading.Timer(float(self.ExerciseWarmup  * 60.0), self.PostWarmup)
+                self.WarmupTimer = threading.Timer(
+                    float(self.ExerciseWarmup * 60.0), self.PostWarmup
+                )
                 self.WarmupTimer.start()
         else:
             self.LogError("Invalid mode in StartExercise: " + str(self.ExerciseType))
@@ -261,32 +353,58 @@ class GenExercise(MySupport):
                 TimeNow = self.GetGeneratorTime()
             else:
                 TimeNow = datetime.datetime.now()
-            if TimeNow.hour != self.ExerciseHour or TimeNow.minute != self.ExerciseMinute:
+            if (
+                TimeNow.hour != self.ExerciseHour
+                or TimeNow.minute != self.ExerciseMinute
+            ):
                 return False
 
-            weekDays = ("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday")
+            weekDays = (
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+                "Sunday",
+            )
 
             WeekDayString = weekDays[TimeNow.weekday()]
 
             if not self.ExerciseFrequency.lower() in ["weekly", "biweekly", "monthly"]:
-                self.LogError("Invalid Exercise Frequency in TimeForExercise: " + str(self.ExerciseFrequency))
+                self.LogError(
+                    "Invalid Exercise Frequency in TimeForExercise: "
+                    + str(self.ExerciseFrequency)
+                )
                 return False
-            if self.ExerciseFrequency.lower() == "weekly" and self.ExerciseDayOfWeek.lower() == WeekDayString.lower():
+            if (
+                self.ExerciseFrequency.lower() == "weekly"
+                and self.ExerciseDayOfWeek.lower() == WeekDayString.lower()
+            ):
                 return True
-            elif self.ExerciseFrequency.lower() == "biweekly"  and self.ExerciseDayOfWeek.lower() == WeekDayString.lower():
+            elif (
+                self.ExerciseFrequency.lower() == "biweekly"
+                and self.ExerciseDayOfWeek.lower() == WeekDayString.lower()
+            ):
                 if self.LastExerciseTime == None:
                     return True
-                LastExerciseTime = datetime.datetime.strptime(self.LastExerciseTime, "%A %B %d, %Y %H:%M:%S")
-                if (TimeNow -  LastExerciseTime).days >= 14:
+                LastExerciseTime = datetime.datetime.strptime(
+                    self.LastExerciseTime, "%A %B %d, %Y %H:%M:%S"
+                )
+                if (TimeNow - LastExerciseTime).days >= 14:
                     return True
                 return False
-            elif self.ExerciseFrequency.lower() == "monthly" and TimeNow.day == self.ExerciseDayOfMonth:
+            elif (
+                self.ExerciseFrequency.lower() == "monthly"
+                and TimeNow.day == self.ExerciseDayOfMonth
+            ):
                 return True
             else:
                 return False
         except Exception as e1:
             self.LogErrorLine("Error in TimeForExercise: " + str(e1))
         return False
+
     # ---------- GenExercise::GetGeneratorTime----------------------------------
     def GetGeneratorTime(self):
         try:
@@ -300,17 +418,24 @@ class GenExercise(MySupport):
                 if TimeDictStr != None and len(TimeDictStr):
                     GenTimeStr = TimeDictStr
                     # Format is "Wednesday March 6, 2019 13:10" or " "Friday May 3, 2019 11:11"
-                    GenTime = datetime.datetime.strptime(GenTimeStr, "%A %B %d, %Y %H:%M")
+                    GenTime = datetime.datetime.strptime(
+                        GenTimeStr, "%A %B %d, %Y %H:%M"
+                    )
                 else:
-                    self.LogError("Error getting generator time! Genmon may be starting up.")
+                    self.LogError(
+                        "Error getting generator time! Genmon may be starting up."
+                    )
                     GenTime = datetime.datetime.now()
             else:
                 self.LogError("Error getting generator time (2)!")
                 GenTime = datetime.datetime.now()
             return GenTime
         except Exception as e1:
-            self.LogErrorLine("Error in GetGeneratorTime: " + str(e1) + ": " + GenTimeStr)
+            self.LogErrorLine(
+                "Error in GetGeneratorTime: " + str(e1) + ": " + GenTimeStr
+            )
             return datetime.datetime.now()
+
     # ---------- GenExercise::ExerciseThread------------------------------------
     def ExerciseThread(self):
 
@@ -348,12 +473,28 @@ class GenExercise(MySupport):
                 pass
             self.StopExercise()
         self.Generator.Close()
-#-------------------------------------------------------------------------------
+
+
+# -------------------------------------------------------------------------------
 if __name__ == "__main__":
 
-    console, ConfigFilePath, address, port, loglocation, log = MySupport.SetupAddOnProgram("genexercise")
+    (
+        console,
+        ConfigFilePath,
+        address,
+        port,
+        loglocation,
+        log,
+    ) = MySupport.SetupAddOnProgram("genexercise")
 
-    GenExerciseInstance = GenExercise(log = log, loglocation = loglocation, ConfigFilePath = ConfigFilePath, host = address, port = port, console = console)
+    GenExerciseInstance = GenExercise(
+        log=log,
+        loglocation=loglocation,
+        ConfigFilePath=ConfigFilePath,
+        host=address,
+        port=port,
+        console=console,
+    )
 
     while True:
         time.sleep(0.5)

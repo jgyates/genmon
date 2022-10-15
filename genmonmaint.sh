@@ -167,7 +167,7 @@ function installgenmon() {
     fi
     # correct problem with LDAP3 module install
     sudo $pipcommand install pyasn1 -U
-    sudo $pipcommand install mopeka_pro_check 
+    sudo $pipcommand install mopeka_pro_check
     sudo $pipcommand install fluids
 
     sudo chmod 775 "$genmondir/startgenmon.sh"

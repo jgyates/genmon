@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 #    FILE: gensnmp.py
 # PURPOSE: gensnmp.py add SNMP support to genmon
 #
@@ -7,51 +7,70 @@
 #    DATE: 09-12-2019
 #
 # MODIFICATIONS:
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 
 
-import time, sys, signal, os, threading, json
+import json
+import os
+import signal
+import sys
+import threading
+import time
 
 try:
     # this will add the parent of the genmonlib folder to the path
     # if we are one level below the genmonlib parent (e.g. in the addon folder)
     file_root = os.path.dirname(os.path.realpath(__file__))
-    parent_root=os.path.abspath(os.path.join(file_root, os.pardir))
+    parent_root = os.path.abspath(os.path.join(file_root, os.pardir))
     if os.path.isdir(os.path.join(parent_root, "genmonlib")):
         sys.path.insert(1, parent_root)
 
     from genmonlib.myclient import ClientInterface
-    from genmonlib.mylog import SetupLogger
-    from genmonlib.myconfig import MyConfig
-    from genmonlib.mysupport import MySupport
     from genmonlib.mycommon import MyCommon
+    from genmonlib.myconfig import MyConfig
+    from genmonlib.mylog import SetupLogger
+    from genmonlib.mysupport import MySupport
     from genmonlib.mythread import MyThread
     from genmonlib.program_defaults import ProgramDefaults
 
 except Exception as e1:
-    print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
-    print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
+    print(
+        "\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n"
+    )
+    print(
+        "Please see the project documentation at https://github.com/jgyates/genmon.\n"
+    )
     print("Error: " + str(e1))
     sys.exit(2)
 
 try:
 
-    from pysnmp.carrier.asyncore.dispatch import AsyncoreDispatcher
+    import bisect
+    import time
+
+    from pyasn1.codec.ber import decoder, encoder
     from pysnmp.carrier.asyncore.dgram import udp, udp6, unix
-    from pyasn1.codec.ber import encoder, decoder
+    from pysnmp.carrier.asyncore.dispatch import AsyncoreDispatcher
     from pysnmp.proto import api
     from pysnmp.proto.rfc1902 import *
-    import time, bisect
 except Exception as e1:
-    print("Error loading pysnmp! :"  + str(e1))
+    print("Error loading pysnmp! :" + str(e1))
     sys.exit(2)
 
 # requires:
 #    sudo pip install pysnmp
 #
-#------------ MyOID class ------------------------------------------------------
+# ------------ MyOID class ------------------------------------------------------
 class MyOID(MySupport):
-    def __init__(self, name, return_type  = None, description = None, default  = None, keywords = [], log = None):
+    def __init__(
+        self,
+        name,
+        return_type=None,
+        description=None,
+        default=None,
+        keywords=[],
+        log=None,
+    ):
         self.log = log
         self.name = name
         self.description = description
@@ -65,17 +84,24 @@ class MyOID(MySupport):
             pass
         else:
             pass
-    def __eq__(self, other): return self.name == other
 
-    def __ne__(self, other): return self.name != other
+    def __eq__(self, other):
+        return self.name == other
 
-    def __lt__(self, other): return self.name < other
+    def __ne__(self, other):
+        return self.name != other
 
-    def __le__(self, other): return self.name <= other
+    def __lt__(self, other):
+        return self.name < other
 
-    def __gt__(self, other): return self.name > other
+    def __le__(self, other):
+        return self.name <= other
 
-    def __ge__(self, other): return self.name >= other
+    def __gt__(self, other):
+        return self.name > other
+
+    def __ge__(self, other):
+        return self.name >= other
 
     def __call__(self, protoVer):
 
@@ -87,25 +113,30 @@ class MyOID(MySupport):
             elif self.return_type == ObjectIdentifier:
                 return api.protoModules[protoVer].ObjectIdentifier(self.value)
             elif self.return_type == TimeTicks:
-                return api.protoModules[protoVer].TimeTicks((time.time() - self.birthday) * 100)
+                return api.protoModules[protoVer].TimeTicks(
+                    (time.time() - self.birthday) * 100
+                )
             else:
                 self.LogError("Invalid type in MyOID: " + str(self.return_type))
-                return  api.protoModules[protoVer].Integer(self.value)
+                return api.protoModules[protoVer].Integer(self.value)
         except Exception as e1:
             self.LogErrorLine("Error in MyOid __call__: " + str(e1))
             return None
 
-#------------ GenSNMP class ----------------------------------------------------
+
+# ------------ GenSNMP class ----------------------------------------------------
 class GenSNMP(MySupport):
 
-    #------------ GenSNMP::init-------------------------------------------------
-    def __init__(self,
-        log = None,
-        loglocation = ProgramDefaults.LogPath,
-        ConfigFilePath = MyCommon.DefaultConfPath,
-        host = ProgramDefaults.LocalHost,
-        port = ProgramDefaults.ServerPort,
-        console = None):
+    # ------------ GenSNMP::init-------------------------------------------------
+    def __init__(
+        self,
+        log=None,
+        loglocation=ProgramDefaults.LogPath,
+        ConfigFilePath=MyCommon.DefaultConfPath,
+        host=ProgramDefaults.LocalHost,
+        port=ProgramDefaults.ServerPort,
+        console=None,
+    ):
 
         super(GenSNMP, self).__init__()
 
@@ -122,26 +153,40 @@ class GenSNMP(MySupport):
         self.MonitorAddress = host
         self.debug = False
         self.PollTime = 1
-        self.BlackList = ["Outage"] #["Monitor"]
-        configfile = os.path.join(ConfigFilePath , 'gensnmp.conf')
+        self.BlackList = ["Outage"]  # ["Monitor"]
+        configfile = os.path.join(ConfigFilePath, "gensnmp.conf")
         try:
             if not os.path.isfile(configfile):
                 self.LogConsole("Missing config file : " + configfile)
                 self.LogError("Missing config file : " + configfile)
                 sys.exit(1)
 
-            self.genmon_config = MyConfig(filename = os.path.join(ConfigFilePath, 'genmon.conf'), section = 'GenMon', log = self.log)
-            self.ControllerSelected = self.genmon_config.ReadValue('controllertype', default = "generac_evo_nexus")
+            self.genmon_config = MyConfig(
+                filename=os.path.join(ConfigFilePath, "genmon.conf"),
+                section="GenMon",
+                log=self.log,
+            )
+            self.ControllerSelected = self.genmon_config.ReadValue(
+                "controllertype", default="generac_evo_nexus"
+            )
 
-            self.config = MyConfig(filename = configfile, section = 'gensnmp', log = self.log)
+            self.config = MyConfig(filename=configfile, section="gensnmp", log=self.log)
 
-            self.UseNumeric = self.config.ReadValue('use_numeric', return_type = bool, default = False)
-            self.PollTime = self.config.ReadValue('poll_frequency', return_type = float, default = 1)
-            self.debug = self.config.ReadValue('debug', return_type = bool, default = False)
-            self.community = self.config.ReadValue('community', default = "public")
-            self.enterpriseID = self.config.ReadValue('enterpriseid', return_type = int, default = 58399)
+            self.UseNumeric = self.config.ReadValue(
+                "use_numeric", return_type=bool, default=False
+            )
+            self.PollTime = self.config.ReadValue(
+                "poll_frequency", return_type=float, default=1
+            )
+            self.debug = self.config.ReadValue("debug", return_type=bool, default=False)
+            self.community = self.config.ReadValue("community", default="public")
+            self.enterpriseID = self.config.ReadValue(
+                "enterpriseid", return_type=int, default=58399
+            )
             self.baseOID = (1, 3, 6, 1, 4, 1, self.enterpriseID)
-            self.snmpport = self.config.ReadValue('snmpport', return_type = int, default = 161)
+            self.snmpport = self.config.ReadValue(
+                "snmpport", return_type=int, default=161
+            )
 
             if self.MonitorAddress == None or not len(self.MonitorAddress):
                 self.MonitorAddress = ProgramDefaults.LocalHost
@@ -153,43 +198,55 @@ class GenSNMP(MySupport):
 
         try:
 
-            self.Generator = ClientInterface(host = self.MonitorAddress, port = port, log = self.log)
+            self.Generator = ClientInterface(
+                host=self.MonitorAddress, port=port, log=self.log
+            )
 
             self.GetGeneratorStartInfo()
 
             # start thread monitor time for exercise
-            self.Threads["SNMPThread"] = MyThread(self.SNMPThread, Name = "SNMPThread", start = False)
+            self.Threads["SNMPThread"] = MyThread(
+                self.SNMPThread, Name="SNMPThread", start=False
+            )
             self.Threads["SNMPThread"].Start()
 
             signal.signal(signal.SIGTERM, self.SignalClose)
             signal.signal(signal.SIGINT, self.SignalClose)
 
-            self.SetupSNMP() # Must be last since we do not return from this call
+            self.SetupSNMP()  # Must be last since we do not return from this call
 
         except Exception as e1:
             self.LogErrorLine("Error in GenSNMP init: " + str(e1))
             self.LogConsole("Error in GenSNMP init: " + str(e1))
             sys.exit(1)
-    #----------  GenSNMP::ControllerIsEvolutionNexus --------------------------------
+
+    # ----------  GenSNMP::ControllerIsEvolutionNexus --------------------------------
     def ControllerIsEvolutionNexus(self):
         try:
-            if "evolution" in self.StartInfo["Controller"].lower() or "nexus" in self.StartInfo["Controller"].lower():
+            if (
+                "evolution" in self.StartInfo["Controller"].lower()
+                or "nexus" in self.StartInfo["Controller"].lower()
+            ):
                 return True
             return False
         except Exception as e1:
             self.LogErrorLine("Error in ControllerIsEvolutionNexus: " + str(e1))
             return False
 
-    #----------  GenSNMP::ControllerIsGeneracH100 ------------------------------
+    # ----------  GenSNMP::ControllerIsGeneracH100 ------------------------------
     def ControllerIsGeneracH100(self):
         try:
-            if "h-100" in self.StartInfo["Controller"].lower() or "g-panel" in self.StartInfo["Controller"].lower():
+            if (
+                "h-100" in self.StartInfo["Controller"].lower()
+                or "g-panel" in self.StartInfo["Controller"].lower()
+            ):
                 return True
             return False
         except Exception as e1:
             self.LogErrorLine("Error in ControllerIsGeneracH100: " + str(e1))
             return False
-    #----------  GenSNMP::ControllerIsGeneracPowerZone -------------------------
+
+    # ----------  GenSNMP::ControllerIsGeneracPowerZone -------------------------
     def ControllerIsGeneracPowerZone(self):
         try:
             if "powerzone" in self.StartInfo["Controller"].lower():
@@ -198,7 +255,8 @@ class GenSNMP(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in ControllerIsPowerZone: " + str(e1))
             return False
-    #----------  GenSNMP::GetGeneratorStartInfo --------------------------------
+
+    # ----------  GenSNMP::GetGeneratorStartInfo --------------------------------
     def GetGeneratorStartInfo(self):
 
         try:
@@ -211,7 +269,7 @@ class GenSNMP(MySupport):
             self.LogErrorLine("Error in GetGeneratorStartInfo: " + str(e1))
             return False
 
-    #----------  GenSNMP::UpdateSNMPData ----------------------------------------
+    # ----------  GenSNMP::UpdateSNMPData ----------------------------------------
     def UpdateSNMPData(self, Path, Value):
 
         try:
@@ -226,12 +284,15 @@ class GenSNMP(MySupport):
             elif self.mibDataIdx[oid].return_type == int:
                 self.mibDataIdx[oid].value = int(self.removeAlpha(Value))
             else:
-                self.LogError("Invalid type in UpdateSNMPData: " + str(self.mibDataIdx[oid].return_type))
+                self.LogError(
+                    "Invalid type in UpdateSNMPData: "
+                    + str(self.mibDataIdx[oid].return_type)
+                )
                 self.mibDataIdx[oid].value = Value
         except Exception as e1:
             self.LogErrorLine("Error in UpdateSNMPData: " + str(e1))
 
-    #----------  GenSNMP::GetOID -----------------------------------------------
+    # ----------  GenSNMP::GetOID -----------------------------------------------
     def GetOID(self, path):
         try:
             if not len(path):
@@ -247,7 +308,7 @@ class GenSNMP(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in GetOID: " + str(e1))
 
-    #----------  GenSNMP::GetData ----------------------------------------------
+    # ----------  GenSNMP::GetData ----------------------------------------------
     def GetData(self, namelist):
 
         try:
@@ -261,223 +322,1188 @@ class GenSNMP(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in GetData: " + str(e1))
 
-    #----------  GenSNMP::AddOID -----------------------------------------------
+    # ----------  GenSNMP::AddOID -----------------------------------------------
     def AddOID(self, id, return_type, description, default, keywords):
 
-        self.mibData.append(MyOID(self.baseOID+id, return_type, description, default,keywords, log = self.log))
+        self.mibData.append(
+            MyOID(
+                self.baseOID + id,
+                return_type,
+                description,
+                default,
+                keywords,
+                log=self.log,
+            )
+        )
 
-    #----------  GenSNMP::SetupSNMP --------------------------------------------
+    # ----------  GenSNMP::SetupSNMP --------------------------------------------
     def SetupSNMP(self):
 
         try:
-            if self.ControllerIsEvolutionNexus() or self.ControllerSelected == "generac_evo_nexus":
+            if (
+                self.ControllerIsEvolutionNexus()
+                or self.ControllerSelected == "generac_evo_nexus"
+            ):
                 CtlID = 1
             elif self.ControllerIsGeneracH100() or self.ControllerSelected == "h_100":
                 CtlID = 2
-            elif self.ControllerIsGeneracPowerZone() or self.ControllerSelected == "powerzone":
+            elif (
+                self.ControllerIsGeneracPowerZone()
+                or self.ControllerSelected == "powerzone"
+            ):
                 CtlID = 3
             else:
                 self.LogError("Error: Invalid controller type")
                 self.LogError(str(self.ControllerSelected))
                 return
 
-            #Base OIDs required for core functionality
-            self.mibData.append(MyOID((1,3,6,1,2,1,1,1,0),return_type = str, description = "SysDescr", default = "Genmon Generator Monitor",log = self.log))
-            self.mibData.append(MyOID((1,3,6,1,2,1,1,2,0),return_type = ObjectIdentifier, description = "OID", default = ".1.3.6.1.4.1." + str(self.enterpriseID), log = self.log))
-            self.mibData.append(MyOID((1,3,6,1,2,1,1,3,0),return_type = TimeTicks, description = "Uptime", log = self.log))
+            # Base OIDs required for core functionality
+            self.mibData.append(
+                MyOID(
+                    (1, 3, 6, 1, 2, 1, 1, 1, 0),
+                    return_type=str,
+                    description="SysDescr",
+                    default="Genmon Generator Monitor",
+                    log=self.log,
+                )
+            )
+            self.mibData.append(
+                MyOID(
+                    (1, 3, 6, 1, 2, 1, 1, 2, 0),
+                    return_type=ObjectIdentifier,
+                    description="OID",
+                    default=".1.3.6.1.4.1." + str(self.enterpriseID),
+                    log=self.log,
+                )
+            )
+            self.mibData.append(
+                MyOID(
+                    (1, 3, 6, 1, 2, 1, 1, 3, 0),
+                    return_type=TimeTicks,
+                    description="Uptime",
+                    log=self.log,
+                )
+            )
 
-            #This info doesn't change regardless of what generator's attached.  So we'll use branch .0 from enterprises.58399. to avoid potential OID collisions.
+            # This info doesn't change regardless of what generator's attached.  So we'll use branch .0 from enterprises.58399. to avoid potential OID collisions.
             # Monitor->Generator Monitor Stats - Included for all controllers enterprises.58399.0.x
-            self.AddOID((0,0,1),return_type = str, description = "MonitorHealth", default = "Unknown", keywords = ["Monitor","Monitor Health"])
-            self.AddOID((0,0,2),return_type = str, description = "RunTime", default = "Unknown", keywords = ["Monitor","Run time"])
-            self.AddOID((0,0,3),return_type = str, description = "PowerLogSize", default = "", keywords = ["Monitor","Power log file size"])
-            self.AddOID((0,0,4),return_type = str, description = "Version", default = "", keywords = ["Monitor","Generator Monitor Version"])
+            self.AddOID(
+                (0, 0, 1),
+                return_type=str,
+                description="MonitorHealth",
+                default="Unknown",
+                keywords=["Monitor", "Monitor Health"],
+            )
+            self.AddOID(
+                (0, 0, 2),
+                return_type=str,
+                description="RunTime",
+                default="Unknown",
+                keywords=["Monitor", "Run time"],
+            )
+            self.AddOID(
+                (0, 0, 3),
+                return_type=str,
+                description="PowerLogSize",
+                default="",
+                keywords=["Monitor", "Power log file size"],
+            )
+            self.AddOID(
+                (0, 0, 4),
+                return_type=str,
+                description="Version",
+                default="",
+                keywords=["Monitor", "Generator Monitor Version"],
+            )
             # Communication Stats - All controllers - enterprises.58399.1.x
-            self.AddOID((0,1,1),return_type = str, description = "PacketCount", default = "Unknown", keywords = ["Monitor/Communication Stats","Packet Count"])
-            self.AddOID((0,1,2),return_type = str, description = "CRCErrors", default = "Unknown", keywords = ["Monitor/Communication Stats","CRC Errors"])
-            self.AddOID((0,1,3),return_type = str, description = "CRCPercent", default = "Unknown", keywords = ["Monitor/Communication Stats","CRC Percent Errors"])
-            self.AddOID((0,1,4),return_type = str, description = "PacketTimeouts", default = "Unknown", keywords = ["Monitor/Communication Stats","Timeout Errors"])
-            self.AddOID((0,1,5),return_type = str, description = "TimeoutPercent", default = "Unknown", keywords = ["Monitor/Communication Stats","Timeout Percent Errors"])
-            self.AddOID((0,1,6),return_type = str, description = "ModbusErrors", default = "Unknown", keywords = ["Monitor/Communication Stats","Modbus Exceptions"])
-            self.AddOID((0,1,7),return_type = str, description = "ValidationErrors", default = "Unknown", keywords = ["Monitor/Communication Stats","Validation Errors"])
-            self.AddOID((0,1,8),return_type = str, description = "InvalidData", default = "Unknown", keywords = ["Monitor/Communication Stats","Invalid Data"])
-            self.AddOID((0,1,9),return_type = str, description = "DiscardedBytes", default = "Unknown", keywords = ["Monitor/Communication Stats","Discarded Bytes"])
-            self.AddOID((0,1,10),return_type = str, description = "CommRestarts", default = "Unknown", keywords = ["Monitor/Communication Stats","Comm Restarts"])
-            self.AddOID((0,1,11),return_type = str, description = "PPS", default = "Unknown", keywords = ["Monitor/Communication Stats","Packets Per Second"])
-            self.AddOID((0,1,12),return_type = str, description = "AvgTransTime", default = "Unknown", keywords = ["Monitor/Communication Stats","Average Transaction Time"])
+            self.AddOID(
+                (0, 1, 1),
+                return_type=str,
+                description="PacketCount",
+                default="Unknown",
+                keywords=["Monitor/Communication Stats", "Packet Count"],
+            )
+            self.AddOID(
+                (0, 1, 2),
+                return_type=str,
+                description="CRCErrors",
+                default="Unknown",
+                keywords=["Monitor/Communication Stats", "CRC Errors"],
+            )
+            self.AddOID(
+                (0, 1, 3),
+                return_type=str,
+                description="CRCPercent",
+                default="Unknown",
+                keywords=["Monitor/Communication Stats", "CRC Percent Errors"],
+            )
+            self.AddOID(
+                (0, 1, 4),
+                return_type=str,
+                description="PacketTimeouts",
+                default="Unknown",
+                keywords=["Monitor/Communication Stats", "Timeout Errors"],
+            )
+            self.AddOID(
+                (0, 1, 5),
+                return_type=str,
+                description="TimeoutPercent",
+                default="Unknown",
+                keywords=["Monitor/Communication Stats", "Timeout Percent Errors"],
+            )
+            self.AddOID(
+                (0, 1, 6),
+                return_type=str,
+                description="ModbusErrors",
+                default="Unknown",
+                keywords=["Monitor/Communication Stats", "Modbus Exceptions"],
+            )
+            self.AddOID(
+                (0, 1, 7),
+                return_type=str,
+                description="ValidationErrors",
+                default="Unknown",
+                keywords=["Monitor/Communication Stats", "Validation Errors"],
+            )
+            self.AddOID(
+                (0, 1, 8),
+                return_type=str,
+                description="InvalidData",
+                default="Unknown",
+                keywords=["Monitor/Communication Stats", "Invalid Data"],
+            )
+            self.AddOID(
+                (0, 1, 9),
+                return_type=str,
+                description="DiscardedBytes",
+                default="Unknown",
+                keywords=["Monitor/Communication Stats", "Discarded Bytes"],
+            )
+            self.AddOID(
+                (0, 1, 10),
+                return_type=str,
+                description="CommRestarts",
+                default="Unknown",
+                keywords=["Monitor/Communication Stats", "Comm Restarts"],
+            )
+            self.AddOID(
+                (0, 1, 11),
+                return_type=str,
+                description="PPS",
+                default="Unknown",
+                keywords=["Monitor/Communication Stats", "Packets Per Second"],
+            )
+            self.AddOID(
+                (0, 1, 12),
+                return_type=str,
+                description="AvgTransTime",
+                default="Unknown",
+                keywords=["Monitor/Communication Stats", "Average Transaction Time"],
+            )
             # Monitor -> Platform Stats - All controllers - enterprises.58399.2.x
-            self.AddOID((0,2,1),return_type = str, description = "CPUTemp", default = "Unknown", keywords = ["Monitor","CPU Temperature"])
-            self.AddOID((0,2,2),return_type = str, description = "PiModel", default = "Unknown", keywords = ["Monitor","Pi Model"])
-            self.AddOID((0,2,3),return_type = str, description = "CPUFreqThrottling", default = "Unknown", keywords = ["Monitor","Pi CPU Frequency Throttling"])
-            self.AddOID((0,2,4),return_type = str, description = "ARMFreqCap", default = "Unknown", keywords = ["Monitor","Pi ARM Frequency Cap"])
-            self.AddOID((0,2,5),return_type = str, description = "ARMUnderVoltage", default = "Unknown", keywords = ["Monitor","Pi Undervoltage"])
-            self.AddOID((0,2,6),return_type = str, description = "CPUUtil", default = "Unknown", keywords = ["Monitor","CPU Utilization"])
-            self.AddOID((0,2,7),return_type = str, description = "OSName", default = "Unknown", keywords = ["Monitor","OS Name"])
-            self.AddOID((0,2,8),return_type = str, description = "OSVersion", default = "Unknown", keywords = ["Monitor","OS Version"])
-            self.AddOID((0,2,9),return_type = str, description = "SysUptime", default = "Unknown", keywords = ["Monitor","System Uptime"])
-            self.AddOID((0,2,10),return_type = str, description = "NetInferface", default = "Unknown", keywords = ["Monitor","Network Interface Used"])
+            self.AddOID(
+                (0, 2, 1),
+                return_type=str,
+                description="CPUTemp",
+                default="Unknown",
+                keywords=["Monitor", "CPU Temperature"],
+            )
+            self.AddOID(
+                (0, 2, 2),
+                return_type=str,
+                description="PiModel",
+                default="Unknown",
+                keywords=["Monitor", "Pi Model"],
+            )
+            self.AddOID(
+                (0, 2, 3),
+                return_type=str,
+                description="CPUFreqThrottling",
+                default="Unknown",
+                keywords=["Monitor", "Pi CPU Frequency Throttling"],
+            )
+            self.AddOID(
+                (0, 2, 4),
+                return_type=str,
+                description="ARMFreqCap",
+                default="Unknown",
+                keywords=["Monitor", "Pi ARM Frequency Cap"],
+            )
+            self.AddOID(
+                (0, 2, 5),
+                return_type=str,
+                description="ARMUnderVoltage",
+                default="Unknown",
+                keywords=["Monitor", "Pi Undervoltage"],
+            )
+            self.AddOID(
+                (0, 2, 6),
+                return_type=str,
+                description="CPUUtil",
+                default="Unknown",
+                keywords=["Monitor", "CPU Utilization"],
+            )
+            self.AddOID(
+                (0, 2, 7),
+                return_type=str,
+                description="OSName",
+                default="Unknown",
+                keywords=["Monitor", "OS Name"],
+            )
+            self.AddOID(
+                (0, 2, 8),
+                return_type=str,
+                description="OSVersion",
+                default="Unknown",
+                keywords=["Monitor", "OS Version"],
+            )
+            self.AddOID(
+                (0, 2, 9),
+                return_type=str,
+                description="SysUptime",
+                default="Unknown",
+                keywords=["Monitor", "System Uptime"],
+            )
+            self.AddOID(
+                (0, 2, 10),
+                return_type=str,
+                description="NetInferface",
+                default="Unknown",
+                keywords=["Monitor", "Network Interface Used"],
+            )
 
-            if self.ControllerIsEvolutionNexus() or self.ControllerSelected == "generac_evo_nexus":
+            if (
+                self.ControllerIsEvolutionNexus()
+                or self.ControllerSelected == "generac_evo_nexus"
+            ):
                 self.LogDebug("Evo/Nexus")
                 # (root branch) - enterprises.58399.1.x
                 # Status        - enterprises.58399.1.0
                 # Status Engine - enterprises.58399.1.0.x
-                self.AddOID((CtlID,0,0,1),return_type = str, description = "switchState", default = "Unknown", keywords = ["Status/Engine","Switch State"])
-                self.AddOID((CtlID,0,0,2),return_type = str, description = "EngineState", default = "Unknown", keywords = ["Status/Engine","Engine State"])
-                self.AddOID((CtlID,0,0,3),return_type = str, description = "activeRelays", default = "", keywords = ["Status/Engine","Active Relays"])
-                self.AddOID((CtlID,0,0,3),return_type = str, description = "activeSensors", default = "", keywords = ["Status/Engine","Active Sensors"])
-                self.AddOID((CtlID,0,0,4),return_type = str, description = "batteryVolts", default = "", keywords = ["Status/Engine","Battery Voltage"])
-                self.AddOID((CtlID,0,0,5),return_type = str, description = "batteryStatus", default = "", keywords = ["Status/Engine","Battery Status"])
-                self.AddOID((CtlID,0,0,6),return_type = str, description = "rpm", default = "", keywords = ["Status/Engine","RPM"])
-                self.AddOID((CtlID,0,0,7),return_type = str, description = "frequency", default = "", keywords = ["Status/Engine","Frequency"])
-                self.AddOID((CtlID,0,0,8),return_type = str, description = "outputVoltage", default = "", keywords = ["Status/Engine","Output Voltage"])
-                self.AddOID((CtlID,0,0,9),return_type = str, description = "outputCurrent", default = "", keywords = ["Status/Engine","Output Current"])
-                self.AddOID((CtlID,0,0,10),return_type = str, description = "outputPower", default = "", keywords = ["Status/Engine","Output Power"])
-                self.AddOID((CtlID,0,0,11),return_type = str, description = "rotorPoles", default = "", keywords = ["Status/Engine","Rotor Poles"])
+                self.AddOID(
+                    (CtlID, 0, 0, 1),
+                    return_type=str,
+                    description="switchState",
+                    default="Unknown",
+                    keywords=["Status/Engine", "Switch State"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 2),
+                    return_type=str,
+                    description="EngineState",
+                    default="Unknown",
+                    keywords=["Status/Engine", "Engine State"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 3),
+                    return_type=str,
+                    description="activeRelays",
+                    default="",
+                    keywords=["Status/Engine", "Active Relays"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 3),
+                    return_type=str,
+                    description="activeSensors",
+                    default="",
+                    keywords=["Status/Engine", "Active Sensors"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 4),
+                    return_type=str,
+                    description="batteryVolts",
+                    default="",
+                    keywords=["Status/Engine", "Battery Voltage"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 5),
+                    return_type=str,
+                    description="batteryStatus",
+                    default="",
+                    keywords=["Status/Engine", "Battery Status"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 6),
+                    return_type=str,
+                    description="rpm",
+                    default="",
+                    keywords=["Status/Engine", "RPM"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 7),
+                    return_type=str,
+                    description="frequency",
+                    default="",
+                    keywords=["Status/Engine", "Frequency"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 8),
+                    return_type=str,
+                    description="outputVoltage",
+                    default="",
+                    keywords=["Status/Engine", "Output Voltage"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 9),
+                    return_type=str,
+                    description="outputCurrent",
+                    default="",
+                    keywords=["Status/Engine", "Output Current"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 10),
+                    return_type=str,
+                    description="outputPower",
+                    default="",
+                    keywords=["Status/Engine", "Output Power"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 11),
+                    return_type=str,
+                    description="rotorPoles",
+                    default="",
+                    keywords=["Status/Engine", "Rotor Poles"],
+                )
                 # Status Line - enterprises.58399.1.0.1.x
-                self.AddOID((CtlID,0,1,1),return_type = str, description = "utilityVoltage", default = "", keywords = ["Status/Line","Utility Voltage"])
-                self.AddOID((CtlID,0,1,2),return_type = str, description = "utilityVoltageMax", default = "", keywords = ["Status/Line","Utility Max Voltage"])
-                self.AddOID((CtlID,0,1,3),return_type = str, description = "utilityVoltageMin", default = "", keywords = ["Status/Line","Utility Min Voltage"])
-                self.AddOID((CtlID,0,1,4),return_type = str, description = "utilityThresholdVoltage", default = "", keywords = ["Status/Line","Utility Threshold Voltage"])
-                self.AddOID((CtlID,0,1,5),return_type = str, description = "utilityPickupVoltage", default = "", keywords = ["Status/Line","Utility Pickup Voltage"])
-                self.AddOID((CtlID,0,1,6),return_type = str, description = "setOutputVoltage", default = "", keywords = ["Status/Line","Set Output Voltage"])
+                self.AddOID(
+                    (CtlID, 0, 1, 1),
+                    return_type=str,
+                    description="utilityVoltage",
+                    default="",
+                    keywords=["Status/Line", "Utility Voltage"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 1, 2),
+                    return_type=str,
+                    description="utilityVoltageMax",
+                    default="",
+                    keywords=["Status/Line", "Utility Max Voltage"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 1, 3),
+                    return_type=str,
+                    description="utilityVoltageMin",
+                    default="",
+                    keywords=["Status/Line", "Utility Min Voltage"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 1, 4),
+                    return_type=str,
+                    description="utilityThresholdVoltage",
+                    default="",
+                    keywords=["Status/Line", "Utility Threshold Voltage"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 1, 5),
+                    return_type=str,
+                    description="utilityPickupVoltage",
+                    default="",
+                    keywords=["Status/Line", "Utility Pickup Voltage"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 1, 6),
+                    return_type=str,
+                    description="setOutputVoltage",
+                    default="",
+                    keywords=["Status/Line", "Set Output Voltage"],
+                )
                 # Status Last Alarms - enterprises.58399.1.0.2.x
-                self.AddOID((CtlID,0,2,1),return_type = str, description = "lastAlarmLog", default = " ", keywords = ["Status","Last Log","Alarm Log"])
-                self.AddOID((CtlID,0,2,2),return_type = str, description = "lastServiceLog", default = " ", keywords = ["Status","Last Log","Service Log"])
-                self.AddOID((CtlID,0,2,3),return_type = str, description = "lastRunLog", default = " ", keywords = ["Status","Last Log","Run Log"])
+                self.AddOID(
+                    (CtlID, 0, 2, 1),
+                    return_type=str,
+                    description="lastAlarmLog",
+                    default=" ",
+                    keywords=["Status", "Last Log", "Alarm Log"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 2, 2),
+                    return_type=str,
+                    description="lastServiceLog",
+                    default=" ",
+                    keywords=["Status", "Last Log", "Service Log"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 2, 3),
+                    return_type=str,
+                    description="lastRunLog",
+                    default=" ",
+                    keywords=["Status", "Last Log", "Run Log"],
+                )
                 # Status Time - enterprises.58399.1.0.3.x
-                self.AddOID((CtlID,0,3,1),return_type = str, description = "monitorTime", default = " ", keywords = ["Status/Time","Monitor Time"])
-                self.AddOID((CtlID,0,3,2),return_type = str, description = "generatorTime", default = " ", keywords = ["Status/Time","Generator Time"])
-                #Maintenance - enterprises.58399.1.1.0.x
-                self.AddOID((CtlID,1,0,1),return_type = str, description = "generatorModel", default = " ", keywords = ["Maintenance","Model"])
-                self.AddOID((CtlID,1,0,2),return_type = str, description = "serialNumber", default = " ", keywords = ["Maintenance","Generator Serial Number"])
-                self.AddOID((CtlID,1,0,3),return_type = str, description = "controller", default = " ", keywords = ["Maintenance","Controller Detected"])
-                self.AddOID((CtlID,1,0,4),return_type = str, description = "nominalRPM", default = " ", keywords = ["Maintenance","Nominal RPM"])
-                self.AddOID((CtlID,1,0,5),return_type = str, description = "ratedkW", default = " ", keywords = ["Maintenance","Rated kW"])
-                self.AddOID((CtlID,1,0,6),return_type = str, description = "ratedFreq", default = " ", keywords = ["Maintenance","Nominal Frequency"])
-                self.AddOID((CtlID,1,0,7),return_type = str, description = "fuelType", default = " ", keywords = ["Maintenance","Fuel Type"])
-                self.AddOID((CtlID,1,0,8),return_type = str, description = "fuelLevelSensor", default = " ", keywords = ["Maintenance","Fuel Level Sensor"])
-                self.AddOID((CtlID,1,0,9),return_type = str, description = "estFuelInTank", default = " ", keywords = ["Maintenance","Estimated Fuel In Tank"])
-                self.AddOID((CtlID,1,0,10),return_type = str, description = "displacement", default = " ", keywords = ["Maintenance","Engine Displacement"])
-                self.AddOID((CtlID,1,0,11),return_type = str, description = "ambientTemp", default = " ", keywords = ["Maintenance","Ambient Temperature Sensor"])
-                self.AddOID((CtlID,1,0,12),return_type = str, description = "kwH30", default = " ", keywords = ["Maintenance","kW Hours in last 30 days"])
-                self.AddOID((CtlID,1,0,13),return_type = str, description = "fuel30", default = " ", keywords = ["Maintenance","Fuel Consumption in last 30 days"])
-                self.AddOID((CtlID,1,0,14),return_type = str, description = "totalFuelUsed", default = " ", keywords = ["Maintenance","Total Power Log Fuel Consumption"])
-                self.AddOID((CtlID,1,0,15),return_type = str, description = "runHours30", default = " ", keywords = ["Maintenance","Run Hours in last 30 days"])
-                self.AddOID((CtlID,1,0,16),return_type = str, description = "estHoursInTank", default = " ", keywords = ["Maintenance","Hours of Fuel Remaining","Estimated"])
-                self.AddOID((CtlID,1,0,17),return_type = str, description = "loadHoursInTank", default = " ", keywords = ["Maintenance","Hours of Fuel Remaining","Current"])
-                self.AddOID((CtlID,1,0,18),return_type = str, description = "fuelInTank", default = " ", keywords = ["Maintenance","Fuel In Tank (Sensor)"])
-                self.AddOID((CtlID,1,0,19),return_type = str, description = "fuelLevelState", default = " ", keywords = ["Maintenance","Fuel Level State"])
-                self.AddOID((CtlID,1,0,20),return_type = str, description = "runHoursYear", default = " ", keywords = ["Maintenance","Run Hours in the last year"])
-                #Maintenance->Controller Settings - enterprises.58399.1.1.1.x
-                self.AddOID((CtlID,1,1,1),return_type = str, description = "calCurrent1", default = " ", keywords = ["Maintenance/Controller Settings","Calibrate Current 1"])
-                self.AddOID((CtlID,1,1,2),return_type = str, description = "calCurrent2", default = " ", keywords = ["Maintenance/Controller Settings","Calibrate Current 2"])
-                self.AddOID((CtlID,1,1,3),return_type = str, description = "calVolts", default = " ", keywords = ["Maintenance/Controller Settings","Calibrate Volts"])
-                self.AddOID((CtlID,1,1,4),return_type = str, description = "nominalLineVolts", default = " ", keywords = ["Maintenance/Controller Settings","Nominal Line Voltage"])
-                self.AddOID((CtlID,1,1,5),return_type = str, description = "ratedMaxPower", default = " ", keywords = ["Maintenance/Controller Settings","Rated Max Power"])
-                self.AddOID((CtlID,1,1,6),return_type = str, description = "paramGroup", default = " ", keywords = ["Maintenance/Controller Settings","Param Group"])
-                self.AddOID((CtlID,1,1,7),return_type = str, description = "voltageCode", default = " ", keywords = ["Maintenance/Controller Settings","Voltage Code"])
-                self.AddOID((CtlID,1,1,8),return_type = str, description = "phase", default = " ", keywords = ["Maintenance/Controller Settings","Phase"])
-                self.AddOID((CtlID,1,1,9),return_type = str, description = "hoursProtection", default = " ", keywords = ["Maintenance/Controller Settings","Hours of Protection"])
-                self.AddOID((CtlID,1,1,10),return_type = str, description = "voltsPerHz", default = " ", keywords = ["Maintenance/Controller Settings","Volts Per Hertz"])
-                self.AddOID((CtlID,1,1,11),return_type = str, description = "gain", default = " ", keywords = ["Maintenance/Controller Settings","Gain"])
-                self.AddOID((CtlID,1,1,12),return_type = str, description = "targetFreq", default = " ", keywords = ["Maintenance/Controller Settings","Target Frequency"])
-                self.AddOID((CtlID,1,1,13),return_type = str, description = "targetVolts", default = " ", keywords = ["Maintenance/Controller Settings","Target Voltage"])
+                self.AddOID(
+                    (CtlID, 0, 3, 1),
+                    return_type=str,
+                    description="monitorTime",
+                    default=" ",
+                    keywords=["Status/Time", "Monitor Time"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 3, 2),
+                    return_type=str,
+                    description="generatorTime",
+                    default=" ",
+                    keywords=["Status/Time", "Generator Time"],
+                )
+                # Maintenance - enterprises.58399.1.1.0.x
+                self.AddOID(
+                    (CtlID, 1, 0, 1),
+                    return_type=str,
+                    description="generatorModel",
+                    default=" ",
+                    keywords=["Maintenance", "Model"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 0, 2),
+                    return_type=str,
+                    description="serialNumber",
+                    default=" ",
+                    keywords=["Maintenance", "Generator Serial Number"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 0, 3),
+                    return_type=str,
+                    description="controller",
+                    default=" ",
+                    keywords=["Maintenance", "Controller Detected"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 0, 4),
+                    return_type=str,
+                    description="nominalRPM",
+                    default=" ",
+                    keywords=["Maintenance", "Nominal RPM"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 0, 5),
+                    return_type=str,
+                    description="ratedkW",
+                    default=" ",
+                    keywords=["Maintenance", "Rated kW"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 0, 6),
+                    return_type=str,
+                    description="ratedFreq",
+                    default=" ",
+                    keywords=["Maintenance", "Nominal Frequency"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 0, 7),
+                    return_type=str,
+                    description="fuelType",
+                    default=" ",
+                    keywords=["Maintenance", "Fuel Type"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 0, 8),
+                    return_type=str,
+                    description="fuelLevelSensor",
+                    default=" ",
+                    keywords=["Maintenance", "Fuel Level Sensor"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 0, 9),
+                    return_type=str,
+                    description="estFuelInTank",
+                    default=" ",
+                    keywords=["Maintenance", "Estimated Fuel In Tank"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 0, 10),
+                    return_type=str,
+                    description="displacement",
+                    default=" ",
+                    keywords=["Maintenance", "Engine Displacement"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 0, 11),
+                    return_type=str,
+                    description="ambientTemp",
+                    default=" ",
+                    keywords=["Maintenance", "Ambient Temperature Sensor"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 0, 12),
+                    return_type=str,
+                    description="kwH30",
+                    default=" ",
+                    keywords=["Maintenance", "kW Hours in last 30 days"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 0, 13),
+                    return_type=str,
+                    description="fuel30",
+                    default=" ",
+                    keywords=["Maintenance", "Fuel Consumption in last 30 days"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 0, 14),
+                    return_type=str,
+                    description="totalFuelUsed",
+                    default=" ",
+                    keywords=["Maintenance", "Total Power Log Fuel Consumption"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 0, 15),
+                    return_type=str,
+                    description="runHours30",
+                    default=" ",
+                    keywords=["Maintenance", "Run Hours in last 30 days"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 0, 16),
+                    return_type=str,
+                    description="estHoursInTank",
+                    default=" ",
+                    keywords=["Maintenance", "Hours of Fuel Remaining", "Estimated"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 0, 17),
+                    return_type=str,
+                    description="loadHoursInTank",
+                    default=" ",
+                    keywords=["Maintenance", "Hours of Fuel Remaining", "Current"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 0, 18),
+                    return_type=str,
+                    description="fuelInTank",
+                    default=" ",
+                    keywords=["Maintenance", "Fuel In Tank (Sensor)"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 0, 19),
+                    return_type=str,
+                    description="fuelLevelState",
+                    default=" ",
+                    keywords=["Maintenance", "Fuel Level State"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 0, 20),
+                    return_type=str,
+                    description="runHoursYear",
+                    default=" ",
+                    keywords=["Maintenance", "Run Hours in the last year"],
+                )
+                # Maintenance->Controller Settings - enterprises.58399.1.1.1.x
+                self.AddOID(
+                    (CtlID, 1, 1, 1),
+                    return_type=str,
+                    description="calCurrent1",
+                    default=" ",
+                    keywords=["Maintenance/Controller Settings", "Calibrate Current 1"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 1, 2),
+                    return_type=str,
+                    description="calCurrent2",
+                    default=" ",
+                    keywords=["Maintenance/Controller Settings", "Calibrate Current 2"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 1, 3),
+                    return_type=str,
+                    description="calVolts",
+                    default=" ",
+                    keywords=["Maintenance/Controller Settings", "Calibrate Volts"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 1, 4),
+                    return_type=str,
+                    description="nominalLineVolts",
+                    default=" ",
+                    keywords=[
+                        "Maintenance/Controller Settings",
+                        "Nominal Line Voltage",
+                    ],
+                )
+                self.AddOID(
+                    (CtlID, 1, 1, 5),
+                    return_type=str,
+                    description="ratedMaxPower",
+                    default=" ",
+                    keywords=["Maintenance/Controller Settings", "Rated Max Power"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 1, 6),
+                    return_type=str,
+                    description="paramGroup",
+                    default=" ",
+                    keywords=["Maintenance/Controller Settings", "Param Group"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 1, 7),
+                    return_type=str,
+                    description="voltageCode",
+                    default=" ",
+                    keywords=["Maintenance/Controller Settings", "Voltage Code"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 1, 8),
+                    return_type=str,
+                    description="phase",
+                    default=" ",
+                    keywords=["Maintenance/Controller Settings", "Phase"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 1, 9),
+                    return_type=str,
+                    description="hoursProtection",
+                    default=" ",
+                    keywords=["Maintenance/Controller Settings", "Hours of Protection"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 1, 10),
+                    return_type=str,
+                    description="voltsPerHz",
+                    default=" ",
+                    keywords=["Maintenance/Controller Settings", "Volts Per Hertz"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 1, 11),
+                    return_type=str,
+                    description="gain",
+                    default=" ",
+                    keywords=["Maintenance/Controller Settings", "Gain"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 1, 12),
+                    return_type=str,
+                    description="targetFreq",
+                    default=" ",
+                    keywords=["Maintenance/Controller Settings", "Target Frequency"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 1, 13),
+                    return_type=str,
+                    description="targetVolts",
+                    default=" ",
+                    keywords=["Maintenance/Controller Settings", "Target Voltage"],
+                )
                 # Maintenance->Exercise - enterprises.58399.1.1.2.x
-                self.AddOID((CtlID,1,2,1),return_type = str, description = "ExerciseTime", default = " ", keywords = ["Maintenance/Exercise","Exercise Time"])
-                self.AddOID((CtlID,1,2,2),return_type = str, description = "ExerciseDuration", default = " ", keywords = ["Maintenance/Exercise","Exercise Duration"])
-                #Maintenance->Service - enterprises.58399.1.1.3.x
-                self.AddOID((CtlID,1,3,1),return_type = str, description = "AFDue", default = " ", keywords = ["Maintenance/Service","Air Filter Service Due"])
-                self.AddOID((CtlID,1,3,2),return_type = str, description = "OilDue", default = " ", keywords = ["Maintenance/Service","Oil and Oil Filter Service Due"])
-                self.AddOID((CtlID,1,3,3),return_type = str, description = "SPDue", default = " ", keywords = ["Maintenance/Service","Spark Plug Service Due"])
-                self.AddOID((CtlID,1,3,4),return_type = str, description = "BattServiceDue", default = " ", keywords = ["Maintenance/Service","Battery Service Due"])
-                self.AddOID((CtlID,1,3,5),return_type = str, description = "ServiceADue", default = " ", keywords = ["Maintenance/Service","Service A Due"])
-                self.AddOID((CtlID,1,3,6),return_type = str, description = "ServiceBDue", default = " ", keywords = ["Maintenance/Service","Service B Due"])
-                self.AddOID((CtlID,1,3,7),return_type = str, description = "BatteryCheckDue", default = " ", keywords = ["Maintenance/Service","Battery Check Due"])
-                self.AddOID((CtlID,1,3,8),return_type = str, description = "TotalRunHours", default = " ", keywords = ["Maintenance/Service","Total Run Hours"])
-                self.AddOID((CtlID,1,3,9),return_type = str, description = "HardwareVersion", default = " ", keywords = ["Maintenance/Service","Hardware Version"])
-                self.AddOID((CtlID,1,3,10),return_type = str, description = "FirmwareVersion", default = " ", keywords = ["Maintenance/Service","Firmware Version"])
+                self.AddOID(
+                    (CtlID, 1, 2, 1),
+                    return_type=str,
+                    description="ExerciseTime",
+                    default=" ",
+                    keywords=["Maintenance/Exercise", "Exercise Time"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 2, 2),
+                    return_type=str,
+                    description="ExerciseDuration",
+                    default=" ",
+                    keywords=["Maintenance/Exercise", "Exercise Duration"],
+                )
+                # Maintenance->Service - enterprises.58399.1.1.3.x
+                self.AddOID(
+                    (CtlID, 1, 3, 1),
+                    return_type=str,
+                    description="AFDue",
+                    default=" ",
+                    keywords=["Maintenance/Service", "Air Filter Service Due"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 3, 2),
+                    return_type=str,
+                    description="OilDue",
+                    default=" ",
+                    keywords=["Maintenance/Service", "Oil and Oil Filter Service Due"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 3, 3),
+                    return_type=str,
+                    description="SPDue",
+                    default=" ",
+                    keywords=["Maintenance/Service", "Spark Plug Service Due"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 3, 4),
+                    return_type=str,
+                    description="BattServiceDue",
+                    default=" ",
+                    keywords=["Maintenance/Service", "Battery Service Due"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 3, 5),
+                    return_type=str,
+                    description="ServiceADue",
+                    default=" ",
+                    keywords=["Maintenance/Service", "Service A Due"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 3, 6),
+                    return_type=str,
+                    description="ServiceBDue",
+                    default=" ",
+                    keywords=["Maintenance/Service", "Service B Due"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 3, 7),
+                    return_type=str,
+                    description="BatteryCheckDue",
+                    default=" ",
+                    keywords=["Maintenance/Service", "Battery Check Due"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 3, 8),
+                    return_type=str,
+                    description="TotalRunHours",
+                    default=" ",
+                    keywords=["Maintenance/Service", "Total Run Hours"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 3, 9),
+                    return_type=str,
+                    description="HardwareVersion",
+                    default=" ",
+                    keywords=["Maintenance/Service", "Hardware Version"],
+                )
+                self.AddOID(
+                    (CtlID, 1, 3, 10),
+                    return_type=str,
+                    description="FirmwareVersion",
+                    default=" ",
+                    keywords=["Maintenance/Service", "Firmware Version"],
+                )
 
             elif self.ControllerIsGeneracH100() or self.ControllerSelected == "h_100":
                 self.LogDebug("H-100/GPanel")
-                #root OID: enterprises.58399.2
+                # root OID: enterprises.58399.2
                 # Status - enterprises.58399.2.0
                 # Engine - enterprises.58399.2.0.0.x
-                self.AddOID((CtlID,0,0,1),return_type = str, description = "SwitchState", default = " ", keywords = ["Status/Engine","Switch State"])
-                self.AddOID((CtlID,0,0,2),return_type = str, description = "EngineStatus", default = " ", keywords = ["Status/Engine","Engine State"])
-                self.AddOID((CtlID,0,0,3),return_type = str, description = "GeneratorStatus", default = " ", keywords = ["Status/Engine","Generator Status"])
-                self.AddOID((CtlID,0,0,4),return_type = str, description = "OutputPower", default = " ", keywords = ["Status/Engine","Output Power"])
-                self.AddOID((CtlID,0,0,5),return_type = str, description = "OutputPowerFactor", default = " ", keywords = ["Status/Engine","Power Factor"])
-                self.AddOID((CtlID,0,0,6),return_type = str, description = "RPM", default = 0, keywords = ["Status/Engine/RPM"])
-                self.AddOID((CtlID,0,0,7),return_type = str, description = "Frequency", default = " ", keywords = ["Status/Engine/Frequency"])
-                self.AddOID((CtlID,0,0,8),return_type = str, description = "ThrottlePosition", default = " ", keywords = ["Status/Engine","Throttle Position"])
-                self.AddOID((CtlID,0,0,9),return_type = str, description = "CoolantTemp", default = " ", keywords = ["Status/Engine","Coolant Temp"])
-                self.AddOID((CtlID,0,0,10),return_type = str, description = "CoolantLevel", default = " ", keywords = ["Status/Engine","Coolant Level"])
-                self.AddOID((CtlID,0,0,11),return_type = str, description = "OilPressure", default = " ", keywords = ["Status/Engine","Oil Pressure"])
-                self.AddOID((CtlID,0,0,12),return_type = str, description = "OilTemp", default = " ", keywords = ["Status/Engine","Oil Temp"])
-                self.AddOID((CtlID,0,0,13),return_type = str, description = "FuelLevel", default = " ", keywords = ["Status/Engine","Fuel Level"])
-                self.AddOID((CtlID,0,0,14),return_type = str, description = "OxygeSensor", default = " ", keywords = ["Status/Engine","Oxygen Sensor"])
-                self.AddOID((CtlID,0,0,15),return_type = str, description = "CurrentPhaseA", default = " ", keywords = ["Status/Engine","Current Phase A"])
-                self.AddOID((CtlID,0,0,16),return_type = str, description = "CurrentPhaseB", default = " ", keywords = ["Status/Engine","Current Phase B"])
-                self.AddOID((CtlID,0,0,17),return_type = str, description = "CurrentPhaseC", default = " ", keywords = ["Status/Engine","Current Phase C"])
-                self.AddOID((CtlID,0,0,18),return_type = str, description = "AvgCurrent", default = " ", keywords = ["Status/Engine","Average Current"])
-                self.AddOID((CtlID,0,0,19),return_type = str, description = "VoltageAB", default = " ", keywords = ["Status/Engine","Voltage A-B"])
-                self.AddOID((CtlID,0,0,20),return_type = str, description = "VoltageBC", default = " ", keywords = ["Status/Engine","Voltage B-C"])
-                self.AddOID((CtlID,0,0,21),return_type = str, description = "VoltageCA", default = " ", keywords = ["Status/Engine","Voltage C-A"])
-                self.AddOID((CtlID,0,0,22),return_type = str, description = "AvgVoltage", default = " ", keywords = ["Status/Engine","Average Voltage"])
-                self.AddOID((CtlID,0,0,23),return_type = str, description = "AirFuelDutyCycle", default = " ", keywords = ["Status/Engine","Air Fuel Duty Cycle" ])
+                self.AddOID(
+                    (CtlID, 0, 0, 1),
+                    return_type=str,
+                    description="SwitchState",
+                    default=" ",
+                    keywords=["Status/Engine", "Switch State"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 2),
+                    return_type=str,
+                    description="EngineStatus",
+                    default=" ",
+                    keywords=["Status/Engine", "Engine State"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 3),
+                    return_type=str,
+                    description="GeneratorStatus",
+                    default=" ",
+                    keywords=["Status/Engine", "Generator Status"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 4),
+                    return_type=str,
+                    description="OutputPower",
+                    default=" ",
+                    keywords=["Status/Engine", "Output Power"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 5),
+                    return_type=str,
+                    description="OutputPowerFactor",
+                    default=" ",
+                    keywords=["Status/Engine", "Power Factor"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 6),
+                    return_type=str,
+                    description="RPM",
+                    default=0,
+                    keywords=["Status/Engine/RPM"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 7),
+                    return_type=str,
+                    description="Frequency",
+                    default=" ",
+                    keywords=["Status/Engine/Frequency"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 8),
+                    return_type=str,
+                    description="ThrottlePosition",
+                    default=" ",
+                    keywords=["Status/Engine", "Throttle Position"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 9),
+                    return_type=str,
+                    description="CoolantTemp",
+                    default=" ",
+                    keywords=["Status/Engine", "Coolant Temp"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 10),
+                    return_type=str,
+                    description="CoolantLevel",
+                    default=" ",
+                    keywords=["Status/Engine", "Coolant Level"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 11),
+                    return_type=str,
+                    description="OilPressure",
+                    default=" ",
+                    keywords=["Status/Engine", "Oil Pressure"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 12),
+                    return_type=str,
+                    description="OilTemp",
+                    default=" ",
+                    keywords=["Status/Engine", "Oil Temp"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 13),
+                    return_type=str,
+                    description="FuelLevel",
+                    default=" ",
+                    keywords=["Status/Engine", "Fuel Level"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 14),
+                    return_type=str,
+                    description="OxygeSensor",
+                    default=" ",
+                    keywords=["Status/Engine", "Oxygen Sensor"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 15),
+                    return_type=str,
+                    description="CurrentPhaseA",
+                    default=" ",
+                    keywords=["Status/Engine", "Current Phase A"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 16),
+                    return_type=str,
+                    description="CurrentPhaseB",
+                    default=" ",
+                    keywords=["Status/Engine", "Current Phase B"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 17),
+                    return_type=str,
+                    description="CurrentPhaseC",
+                    default=" ",
+                    keywords=["Status/Engine", "Current Phase C"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 18),
+                    return_type=str,
+                    description="AvgCurrent",
+                    default=" ",
+                    keywords=["Status/Engine", "Average Current"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 19),
+                    return_type=str,
+                    description="VoltageAB",
+                    default=" ",
+                    keywords=["Status/Engine", "Voltage A-B"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 20),
+                    return_type=str,
+                    description="VoltageBC",
+                    default=" ",
+                    keywords=["Status/Engine", "Voltage B-C"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 21),
+                    return_type=str,
+                    description="VoltageCA",
+                    default=" ",
+                    keywords=["Status/Engine", "Voltage C-A"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 22),
+                    return_type=str,
+                    description="AvgVoltage",
+                    default=" ",
+                    keywords=["Status/Engine", "Average Voltage"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 23),
+                    return_type=str,
+                    description="AirFuelDutyCycle",
+                    default=" ",
+                    keywords=["Status/Engine", "Air Fuel Duty Cycle"],
+                )
                 # Alarms - enterprises.58399.2.0.1.x
-                self.AddOID((CtlID,0,1,1),return_type = str, description = "ActiveAlarms", default = " ", keywords = ["Status/Alarms","Number of Active Alarms"])
-                self.AddOID((CtlID,0,1,2),return_type = str, description = "AckAlarms", default = " ", keywords = ["Status/Alarms","Number of Acknowledged Alarms"])
-                self.AddOID((CtlID,0,1,3),return_type = str, description = "AlarmList", default = " ", keywords = ["Status/Alarms","Alarm List"])
+                self.AddOID(
+                    (CtlID, 0, 1, 1),
+                    return_type=str,
+                    description="ActiveAlarms",
+                    default=" ",
+                    keywords=["Status/Alarms", "Number of Active Alarms"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 1, 2),
+                    return_type=str,
+                    description="AckAlarms",
+                    default=" ",
+                    keywords=["Status/Alarms", "Number of Acknowledged Alarms"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 1, 3),
+                    return_type=str,
+                    description="AlarmList",
+                    default=" ",
+                    keywords=["Status/Alarms", "Alarm List"],
+                )
                 # Battery - enterprises.58399.2.0.2.x
-                self.AddOID((CtlID,0,2,1),return_type = str, description = "BatteryVoltage", default = " ", keywords = ["Status/Battery","Battery Voltage"])
-                self.AddOID((CtlID,0,2,2),return_type = str, description = "BatteryCurrent", default = " ", keywords = ["Status/Battery","Battery Charger Current"])
+                self.AddOID(
+                    (CtlID, 0, 2, 1),
+                    return_type=str,
+                    description="BatteryVoltage",
+                    default=" ",
+                    keywords=["Status/Battery", "Battery Voltage"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 2, 2),
+                    return_type=str,
+                    description="BatteryCurrent",
+                    default=" ",
+                    keywords=["Status/Battery", "Battery Charger Current"],
+                )
                 # Status Time - enterprises.58399.2.0.3.x
-                self.AddOID((CtlID,0,3,1),return_type = str, description = "MonitorTime", default = " ", keywords = ["Status/Time","Monitor Time"])
-                self.AddOID((CtlID,0,3,2),return_type = str, description = "GeneratorTime", default = " ", keywords = ["Status/Time","Generator Time"])
+                self.AddOID(
+                    (CtlID, 0, 3, 1),
+                    return_type=str,
+                    description="MonitorTime",
+                    default=" ",
+                    keywords=["Status/Time", "Monitor Time"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 3, 2),
+                    return_type=str,
+                    description="GeneratorTime",
+                    default=" ",
+                    keywords=["Status/Time", "Generator Time"],
+                )
                 # Line State - enterprises.58399.2.0.4.x
-                self.AddOID((CtlID,0,4,1),return_type = str, description = "TransferSwitchState", default = " ", keywords = ["Status/Line State","Transfer Switch State"])
+                self.AddOID(
+                    (CtlID, 0, 4, 1),
+                    return_type=str,
+                    description="TransferSwitchState",
+                    default=" ",
+                    keywords=["Status/Line State", "Transfer Switch State"],
+                )
                 # TODO add HTS switch info
                 # TODO selected H-100 Maint items?
 
-            elif self.ControllerIsGeneracPowerZone() or self.ControllerSelected == "powerzone":
+            elif (
+                self.ControllerIsGeneracPowerZone()
+                or self.ControllerSelected == "powerzone"
+            ):
                 self.LogDebug("PowerZone")
-                #root            enterprises.58399.2
-                #Status          enterprises.58399.2.0
-                #Status Engine - enterprises.58399.2.0.0.x
-                self.AddOID((CtlID,0,0,1),return_type = str, description = "SwitchState", default = " ", keywords = ["Status/Engine","Switch State"])
-                self.AddOID((CtlID,0,0,2),return_type = str, description = "EngineStatus", default = " ", keywords = ["Status/Engine","Engine State"])
-                self.AddOID((CtlID,0,0,3),return_type = str, description = "GeneratorStatus", default = " ", keywords = ["Status/Engine","Generator Status"])
-                self.AddOID((CtlID,0,0,4),return_type = str, description = "OutputPower", default = " ", keywords = ["Status/Engine","Output Power"])
-                self.AddOID((CtlID,0,0,5),return_type = str, description = "OutputPowerFactor", default = " ", keywords = ["Status/Engine","Power Factor"])
-                self.AddOID((CtlID,0,0,6),return_type = str, description = "RPM", default = 0, keywords = ["Status/Engine/RPM"])
-                self.AddOID((CtlID,0,0,7),return_type = str, description = "Frequency", default = " ", keywords = ["Status/Engine/Frequency"])
-                self.AddOID((CtlID,0,0,8),return_type = str, description = "ThrottlePosition", default = " ", keywords = ["Status/Engine","Throttle Position"])
-                self.AddOID((CtlID,0,0,9),return_type = str, description = "CoolantTemp", default = " ", keywords = ["Status/Engine","Coolant Temp"])
-                self.AddOID((CtlID,0,0,10),return_type = str, description = "CoolantLevel", default = " ", keywords = ["Status/Engine","Coolant Level"])
-                self.AddOID((CtlID,0,0,11),return_type = str, description = "OilPressure", default = " ", keywords = ["Status/Engine","Oil Pressure"])
-                self.AddOID((CtlID,0,0,12),return_type = str, description = "OilTemp", default = " ", keywords = ["Status/Engine","Oil Temp"])
-                self.AddOID((CtlID,0,0,13),return_type = str, description = "FuelLevel", default = " ", keywords = ["Status/Engine","Fuel Level"])
-                self.AddOID((CtlID,0,0,14),return_type = str, description = "OxygeSensor", default = " ", keywords = ["Status/Engine","Oxygen Sensor"])
-                self.AddOID((CtlID,0,0,15),return_type = str, description = "CurrentPhaseA", default = " ", keywords = ["Status/Engine","Current Phase A"])
-                self.AddOID((CtlID,0,0,16),return_type = str, description = "CurrentPhaseB", default = " ", keywords = ["Status/Engine","Current Phase B"])
-                self.AddOID((CtlID,0,0,17),return_type = str, description = "CurrentPhaseC", default = " ", keywords = ["Status/Engine","Current Phase C"])
-                self.AddOID((CtlID,0,0,18),return_type = str, description = "AvgCurrent", default = " ", keywords = ["Status/Engine","Average Current"])
-                self.AddOID((CtlID,0,0,19),return_type = str, description = "VoltageAB", default = " ", keywords = ["Status/Engine","Voltage A-B"])
-                self.AddOID((CtlID,0,0,20),return_type = str, description = "VoltageBC", default = " ", keywords = ["Status/Engine","Voltage B-C"])
-                self.AddOID((CtlID,0,0,21),return_type = str, description = "VoltageCA", default = " ", keywords = ["Status/Engine","Voltage C-A"])
-                self.AddOID((CtlID,0,0,22),return_type = str, description = "AvgVoltage", default = " ", keywords = ["Status/Engine","Average Voltage"])
-                self.AddOID((CtlID,0,0,23),return_type = str, description = "AirFuelDutyCycle", default = " ", keywords = ["Status/Engine","Air Fuel Duty Cycle" ])
+                # root            enterprises.58399.2
+                # Status          enterprises.58399.2.0
+                # Status Engine - enterprises.58399.2.0.0.x
+                self.AddOID(
+                    (CtlID, 0, 0, 1),
+                    return_type=str,
+                    description="SwitchState",
+                    default=" ",
+                    keywords=["Status/Engine", "Switch State"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 2),
+                    return_type=str,
+                    description="EngineStatus",
+                    default=" ",
+                    keywords=["Status/Engine", "Engine State"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 3),
+                    return_type=str,
+                    description="GeneratorStatus",
+                    default=" ",
+                    keywords=["Status/Engine", "Generator Status"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 4),
+                    return_type=str,
+                    description="OutputPower",
+                    default=" ",
+                    keywords=["Status/Engine", "Output Power"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 5),
+                    return_type=str,
+                    description="OutputPowerFactor",
+                    default=" ",
+                    keywords=["Status/Engine", "Power Factor"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 6),
+                    return_type=str,
+                    description="RPM",
+                    default=0,
+                    keywords=["Status/Engine/RPM"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 7),
+                    return_type=str,
+                    description="Frequency",
+                    default=" ",
+                    keywords=["Status/Engine/Frequency"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 8),
+                    return_type=str,
+                    description="ThrottlePosition",
+                    default=" ",
+                    keywords=["Status/Engine", "Throttle Position"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 9),
+                    return_type=str,
+                    description="CoolantTemp",
+                    default=" ",
+                    keywords=["Status/Engine", "Coolant Temp"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 10),
+                    return_type=str,
+                    description="CoolantLevel",
+                    default=" ",
+                    keywords=["Status/Engine", "Coolant Level"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 11),
+                    return_type=str,
+                    description="OilPressure",
+                    default=" ",
+                    keywords=["Status/Engine", "Oil Pressure"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 12),
+                    return_type=str,
+                    description="OilTemp",
+                    default=" ",
+                    keywords=["Status/Engine", "Oil Temp"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 13),
+                    return_type=str,
+                    description="FuelLevel",
+                    default=" ",
+                    keywords=["Status/Engine", "Fuel Level"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 14),
+                    return_type=str,
+                    description="OxygeSensor",
+                    default=" ",
+                    keywords=["Status/Engine", "Oxygen Sensor"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 15),
+                    return_type=str,
+                    description="CurrentPhaseA",
+                    default=" ",
+                    keywords=["Status/Engine", "Current Phase A"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 16),
+                    return_type=str,
+                    description="CurrentPhaseB",
+                    default=" ",
+                    keywords=["Status/Engine", "Current Phase B"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 17),
+                    return_type=str,
+                    description="CurrentPhaseC",
+                    default=" ",
+                    keywords=["Status/Engine", "Current Phase C"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 18),
+                    return_type=str,
+                    description="AvgCurrent",
+                    default=" ",
+                    keywords=["Status/Engine", "Average Current"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 19),
+                    return_type=str,
+                    description="VoltageAB",
+                    default=" ",
+                    keywords=["Status/Engine", "Voltage A-B"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 20),
+                    return_type=str,
+                    description="VoltageBC",
+                    default=" ",
+                    keywords=["Status/Engine", "Voltage B-C"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 21),
+                    return_type=str,
+                    description="VoltageCA",
+                    default=" ",
+                    keywords=["Status/Engine", "Voltage C-A"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 22),
+                    return_type=str,
+                    description="AvgVoltage",
+                    default=" ",
+                    keywords=["Status/Engine", "Average Voltage"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 0, 23),
+                    return_type=str,
+                    description="AirFuelDutyCycle",
+                    default=" ",
+                    keywords=["Status/Engine", "Air Fuel Duty Cycle"],
+                )
                 # Alarms - enterprises.58399.2.0.1.x
-                self.AddOID((CtlID,0,1,1),return_type = str, description = "AlarmList", default = " ", keywords = ["Status/Alarms","Alarm List"])
+                self.AddOID(
+                    (CtlID, 0, 1, 1),
+                    return_type=str,
+                    description="AlarmList",
+                    default=" ",
+                    keywords=["Status/Alarms", "Alarm List"],
+                )
                 # Battery - enterprises.58399.2.0.2.x
-                self.AddOID((CtlID,0,2,1),return_type = str, description = "BatteryVoltage", default = " ", keywords = ["Status/Battery","Battery Voltage"])
-                self.AddOID((CtlID,0,2,2),return_type = str, description = "BatteryCurrent", default = " ", keywords = ["Status/Battery","Battery Charger Current"])
+                self.AddOID(
+                    (CtlID, 0, 2, 1),
+                    return_type=str,
+                    description="BatteryVoltage",
+                    default=" ",
+                    keywords=["Status/Battery", "Battery Voltage"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 2, 2),
+                    return_type=str,
+                    description="BatteryCurrent",
+                    default=" ",
+                    keywords=["Status/Battery", "Battery Charger Current"],
+                )
                 # Status Time - enterprises.58399.2.0.3.x
-                self.AddOID((CtlID,0,3,1),return_type = str, description = "MonitorTime", default = " ", keywords = ["Status/Time","Monitor Time"])
-                self.AddOID((CtlID,0,3,2),return_type = str, description = "GeneratorTime", default = " ", keywords = ["Status/Time","Generator Time"])
-                #TODO Add HTS switch info
+                self.AddOID(
+                    (CtlID, 0, 3, 1),
+                    return_type=str,
+                    description="MonitorTime",
+                    default=" ",
+                    keywords=["Status/Time", "Monitor Time"],
+                )
+                self.AddOID(
+                    (CtlID, 0, 3, 2),
+                    return_type=str,
+                    description="GeneratorTime",
+                    default=" ",
+                    keywords=["Status/Time", "Generator Time"],
+                )
+                # TODO Add HTS switch info
 
             self.mibDataIdx = {}
             for mibVar in self.mibData:
@@ -488,12 +1514,14 @@ class GenSNMP(MySupport):
 
             # UDP/IPv4
             self.transportDispatcher.registerTransport(
-                udp.domainName, udp.UdpSocketTransport().openServerMode(('0.0.0.0', self.snmpport))
+                udp.domainName,
+                udp.UdpSocketTransport().openServerMode(("0.0.0.0", self.snmpport)),
             )
 
             # UDP/IPv6
             self.transportDispatcher.registerTransport(
-                udp6.domainName, udp6.Udp6SocketTransport().openServerMode(('::', self.snmpport))
+                udp6.domainName,
+                udp6.Udp6SocketTransport().openServerMode(("::", self.snmpport)),
             )
 
             ## Local domain socket
@@ -519,7 +1547,7 @@ class GenSNMP(MySupport):
             self.LogErrorLine("Error in SetupSNMP: " + str(e1))
             self.SnmpClose()
 
-    #----------  GenSNMP::SnmpClose --------------------------------------------
+    # ----------  GenSNMP::SnmpClose --------------------------------------------
     def SnmpClose(self):
 
         try:
@@ -534,27 +1562,36 @@ class GenSNMP(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in SnmpClose: " + str(e1))
 
-    #----------  GenSNMP::SnmpCallbackFunction ---------------------------------
-    def SnmpCallbackFunction(self, transportDispatcher, transportDomain, transportAddress, wholeMsg):
+    # ----------  GenSNMP::SnmpCallbackFunction ---------------------------------
+    def SnmpCallbackFunction(
+        self, transportDispatcher, transportDomain, transportAddress, wholeMsg
+    ):
         while wholeMsg:
             try:
                 msgVer = api.decodeMessageVersion(wholeMsg)
                 if msgVer in api.protoModules:
                     pMod = api.protoModules[msgVer]
                 else:
-                    self.LogError('Unsupported SNMP version %s' % msgVer)
+                    self.LogError("Unsupported SNMP version %s" % msgVer)
                     return
                 reqMsg, wholeMsg = decoder.decode(
-                    wholeMsg, asn1Spec=pMod.Message(),
+                    wholeMsg,
+                    asn1Spec=pMod.Message(),
                 )
                 rspMsg = pMod.apiMessage.getResponse(reqMsg)
                 rspPDU = pMod.apiMessage.getPDU(rspMsg)
                 reqPDU = pMod.apiMessage.getPDU(reqMsg)
                 Community = pMod.apiMessage.getCommunity(reqMsg)
                 if Community != OctetString(self.community.strip()):
-                    self.LogError("Invalid community string: <" + Community + ">, expected: <" + self.community+">")
+                    self.LogError(
+                        "Invalid community string: <"
+                        + Community
+                        + ">, expected: <"
+                        + self.community
+                        + ">"
+                    )
                     return wholeMsg
-                self.LogDebug("Community: " +  Community)
+                self.LogDebug("Community: " + Community)
                 varBinds = []
                 pendingErrors = []
                 errorIndex = 0
@@ -574,13 +1611,18 @@ class GenSNMP(MySupport):
                         else:
                             # Report value if OID is found
                             varBinds.append(
-                                (self.mibData[nextIdx].name, self.mibData[nextIdx](msgVer))
+                                (
+                                    self.mibData[nextIdx].name,
+                                    self.mibData[nextIdx](msgVer),
+                                )
                             )
                 elif reqPDU.isSameTypeWith(pMod.GetRequestPDU()):
                     for oid, val in pMod.apiPDU.getVarBinds(reqPDU):
-                        #print("Oid: " + str(oid))
+                        # print("Oid: " + str(oid))
                         if oid in self.mibDataIdx:
-                            varBinds.append((oid, self.mibDataIdx[oid](msgVer)))    # call the __call__  function
+                            varBinds.append(
+                                (oid, self.mibDataIdx[oid](msgVer))
+                            )  # call the __call__  function
                         else:
                             # No such instance
                             varBinds.append((oid, val))
@@ -590,7 +1632,7 @@ class GenSNMP(MySupport):
                             break
                 else:
                     # Report unsupported request type
-                    pMod.apiPDU.setErrorStatus(rspPDU, 'genErr')
+                    pMod.apiPDU.setErrorStatus(rspPDU, "genErr")
                 pMod.apiPDU.setVarBinds(rspPDU, varBinds)
                 # Commit possible error indices to response PDU
                 for f, i in pendingErrors:
@@ -601,7 +1643,8 @@ class GenSNMP(MySupport):
             except Exception as e1:
                 self.LogErrorLine("Error in SnmpCallbackFunction: " + str(e1))
         return wholeMsg
-    #----------  GenSNMP::SendCommand ------------------------------------------
+
+    # ----------  GenSNMP::SendCommand ------------------------------------------
     def SendCommand(self, Command):
 
         if len(Command) == 0:
@@ -615,7 +1658,6 @@ class GenSNMP(MySupport):
             data = ""
 
         return data
-
 
     # ---------- GenSNMP::SNMPThread--------------------------------------------
     def SNMPThread(self):
@@ -658,19 +1700,25 @@ class GenSNMP(MySupport):
                     self.SnmpClose()
                     return
 
-    #------------ GenSNMP::DictIsNumeric ---------------------------------------
+    # ------------ GenSNMP::DictIsNumeric ---------------------------------------
     def DictIsNumeric(self, node):
 
         try:
             if not self.UseNumeric:
                 return False
-            if isinstance(node, dict) and "type" in node and "value" in node and "unit" in node:
+            if (
+                isinstance(node, dict)
+                and "type" in node
+                and "value" in node
+                and "unit" in node
+            ):
                 return True
             return False
         except Exception as e1:
             self.LogErrorLine("Error in DictIsNumeric: " + str(e1))
             return False
-    #------------ GenSNMP::CheckDictForChanges ---------------------------------
+
+    # ------------ GenSNMP::CheckDictForChanges ---------------------------------
     # This function is recursive, it will turn a nested dict into a flat dict keys
     # that have a directory structure with corrposonding values and determine if
     # anyting changed. If it has then call our callback function
@@ -678,37 +1726,42 @@ class GenSNMP(MySupport):
 
         CurrentPath = PathPrefix
         if not isinstance(PathPrefix, str):
-           return ""
+            return ""
 
         if isinstance(node, dict):
-           for key, item in node.items():
-               if isinstance(item, dict):
-                   if not self.DictIsNumeric(item):
-                       CurrentPath = PathPrefix + "/" + str(key)
-                       self.CheckDictForChanges(item, CurrentPath)
-                   else:
-                       CurrentPath = PathPrefix + "/" + str(key)
-                       self.CheckForChanges(CurrentPath, str(item["value"]))
-               elif isinstance(item, list):
-                   CurrentPath = PathPrefix + "/" + str(key)
-                   if self.ListIsStrings(item):
-                       # if this is a list of strings, the join the list to one comma separated string
-                       self.CheckForChanges(CurrentPath, ', '.join(item))
-                   else:
-                       for listitem in item:
-                           if isinstance(listitem, dict):
-                               if not self.DictIsNumeric(item):
-                                   self.CheckDictForChanges(listitem, CurrentPath)
-                               else:
-                                   CurrentPath = PathPrefix + "/" + str(key)
-                                   self.CheckForChanges(CurrentPath, str(item["value"]))
-                           else:
-                               self.LogError("Invalid type in CheckDictForChanges: %s %s (2)" % (key, str(type(listitem))))
-               else:
-                   CurrentPath = PathPrefix + "/" + str(key)
-                   self.CheckForChanges(CurrentPath, item)
+            for key, item in node.items():
+                if isinstance(item, dict):
+                    if not self.DictIsNumeric(item):
+                        CurrentPath = PathPrefix + "/" + str(key)
+                        self.CheckDictForChanges(item, CurrentPath)
+                    else:
+                        CurrentPath = PathPrefix + "/" + str(key)
+                        self.CheckForChanges(CurrentPath, str(item["value"]))
+                elif isinstance(item, list):
+                    CurrentPath = PathPrefix + "/" + str(key)
+                    if self.ListIsStrings(item):
+                        # if this is a list of strings, the join the list to one comma separated string
+                        self.CheckForChanges(CurrentPath, ", ".join(item))
+                    else:
+                        for listitem in item:
+                            if isinstance(listitem, dict):
+                                if not self.DictIsNumeric(item):
+                                    self.CheckDictForChanges(listitem, CurrentPath)
+                                else:
+                                    CurrentPath = PathPrefix + "/" + str(key)
+                                    self.CheckForChanges(
+                                        CurrentPath, str(item["value"])
+                                    )
+                            else:
+                                self.LogError(
+                                    "Invalid type in CheckDictForChanges: %s %s (2)"
+                                    % (key, str(type(listitem)))
+                                )
+                else:
+                    CurrentPath = PathPrefix + "/" + str(key)
+                    self.CheckForChanges(CurrentPath, item)
         else:
-           self.LogError("Invalid type in CheckDictForChanges %s " % str(type(node)))
+            self.LogError("Invalid type in CheckDictForChanges %s " % str(type(node)))
 
     # ---------- GenSNMP::ListIsStrings-----------------------------------------
     # return true if every element of list is a string
@@ -745,7 +1798,7 @@ class GenSNMP(MySupport):
                 self.UpdateSNMPData(Path, Value)
 
         except Exception as e1:
-             self.LogErrorLine("Error in mygenpush:CheckForChanges: " + str(e1))
+            self.LogErrorLine("Error in mygenpush:CheckForChanges: " + str(e1))
 
     # ----------GenSNMP::SignalClose--------------------------------------------
     def SignalClose(self, signum, frame):
@@ -766,11 +1819,27 @@ class GenSNMP(MySupport):
             self.Generator.Close()
         except Exception as e1:
             self.LogErrorLine("Error in Close: " + str(e1))
-#-------------------------------------------------------------------------------
+
+
+# -------------------------------------------------------------------------------
 if __name__ == "__main__":
 
-    console, ConfigFilePath, address, port, loglocation, log = MySupport.SetupAddOnProgram("gensnmp")
+    (
+        console,
+        ConfigFilePath,
+        address,
+        port,
+        loglocation,
+        log,
+    ) = MySupport.SetupAddOnProgram("gensnmp")
 
-    GenSNMPInstance = GenSNMP(log = log, loglocation = loglocation, ConfigFilePath = ConfigFilePath, host = address, port = port, console = console)
+    GenSNMPInstance = GenSNMP(
+        log=log,
+        loglocation=loglocation,
+        ConfigFilePath=ConfigFilePath,
+        host=address,
+        port=port,
+        console=console,
+    )
 
     sys.exit(1)

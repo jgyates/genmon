@@ -1,41 +1,48 @@
 #!/usr/bin/env python
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 #    FILE: ClientInterface.py
 # PURPOSE:
 #
 #  AUTHOR: Jason G Yates
 #    DATE: 17-Dec-2016
 # MODIFICATIONS:
-#-------------------------------------------------------------------------------
-import sys, signal, getopt
+# -------------------------------------------------------------------------------
+import getopt
+import signal
+import sys
 
 try:
-    from genmonlib.mylog import SetupLogger
     from genmonlib.myclient import ClientInterface
+    from genmonlib.mylog import SetupLogger
     from genmonlib.program_defaults import ProgramDefaults
 except Exception as e1:
-    print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
-    print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
+    print(
+        "\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n"
+    )
+    print(
+        "Please see the project documentation at https://github.com/jgyates/genmon.\n"
+    )
     print("Error: " + str(e1))
     sys.exit(2)
 
-#----------  Signal Handler ----------------------------------------------------
+# ----------  Signal Handler ----------------------------------------------------
 def signal_handler(signal, frame):
 
     if MyClientInterface != None:
         MyClientInterface.Close()
     sys.exit(0)
 
-#------------------- Command-line interface for monitor ------------------------
-if __name__=='__main__': # usage program.py [server_address] [port]
-    address=ProgramDefaults.LocalHost
+
+# ------------------- Command-line interface for monitor ------------------------
+if __name__ == "__main__":  # usage program.py [server_address] [port]
+    address = ProgramDefaults.LocalHost
     port = ProgramDefaults.ServerPort
 
     # log errors in this module to a file
-    console = SetupLogger("client_console", log_file = "", stream = True)
-    HelpStr = '\npython ClientInterface.py -a <IP Address or none for localhost> -p <port or none for default port>\n'
+    console = SetupLogger("client_console", log_file="", stream=True)
+    HelpStr = "\npython ClientInterface.py -a <IP Address or none for localhost> -p <port or none for default port>\n"
     try:
-        opts, args = getopt.getopt(sys.argv[1:],"hp:a:",["help","port=","address="])
+        opts, args = getopt.getopt(sys.argv[1:], "hp:a:", ["help", "port=", "address="])
     except getopt.GetoptError:
         console.error("Invalid command line argument.")
         sys.exit(2)
@@ -43,7 +50,7 @@ if __name__=='__main__': # usage program.py [server_address] [port]
     MyClientInterface = None
     try:
         for opt, arg in opts:
-            if opt == '-h':
+            if opt == "-h":
                 console.error(HelpStr)
                 sys.exit()
             elif opt in ("-a", "--address"):
@@ -51,7 +58,7 @@ if __name__=='__main__': # usage program.py [server_address] [port]
             elif opt in ("-p", "--port"):
                 port = int(arg)
     except Exception as e1:
-        console.error ("Error parsing: " + str(e1))
+        console.error("Error parsing: " + str(e1))
         sys.exit(2)
 
     log = SetupLogger("client", "client.log")
@@ -60,14 +67,14 @@ if __name__=='__main__': # usage program.py [server_address] [port]
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    MyClientInterface = ClientInterface(host = address, port = port, log = log)
+    MyClientInterface = ClientInterface(host=address, port=port, log=log)
 
     try:
 
         while True:
-            if sys.version_info[0] < 3:         # Python 2.x
+            if sys.version_info[0] < 3:  # Python 2.x
                 line = raw_input(">")
-            else:                               # python 3.x
+            else:  # python 3.x
                 line = input(">")
 
             if line.lower() == "exit":
@@ -77,5 +84,5 @@ if __name__=='__main__': # usage program.py [server_address] [port]
                 print(data)
 
     except Exception as e1:
-        console.error ("Error: " + str(e1))
+        console.error("Error: " + str(e1))
     MyClientInterface.Close()

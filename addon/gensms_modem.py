@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 #    FILE: gensms_modem.py
 # PURPOSE: genmon.py support program to allow SMS (txt messages)
 # to be sent when the generator status changes. This program uses
@@ -8,31 +8,37 @@
 #    DATE: 05-Apr-2016
 #
 # MODIFICATIONS:
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 
-import time, sys, signal, os
+import os
+import signal
+import sys
+import time
 
 try:
     # this will add the parent of the genmonlib folder to the path
     # if we are one level below the genmonlib parent (e.g. in the addon folder)
     file_root = os.path.dirname(os.path.realpath(__file__))
-    parent_root=os.path.abspath(os.path.join(file_root, os.pardir))
+    parent_root = os.path.abspath(os.path.join(file_root, os.pardir))
     if os.path.isdir(os.path.join(parent_root, "genmonlib")):
         sys.path.insert(1, parent_root)
 
-    from genmonlib.mymodem import LTEPiHat
     from genmonlib.mylog import SetupLogger
+    from genmonlib.mymodem import LTEPiHat
     from genmonlib.mynotify import GenNotify
     from genmonlib.mysupport import MySupport
 except Exception as e1:
-    print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
-    print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
+    print(
+        "\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n"
+    )
+    print(
+        "Please see the project documentation at https://github.com/jgyates/genmon.\n"
+    )
     print("Error: " + str(e1))
     sys.exit(2)
 
 
-
-#----------  Signal Handler ----------------------------------------------------
+# ----------  Signal Handler ----------------------------------------------------
 def signal_handler(signal, frame):
 
     try:
@@ -42,7 +48,8 @@ def signal_handler(signal, frame):
         pass
     sys.exit(0)
 
-#----------  OnRun -------------------------------------------------------------
+
+# ----------  OnRun -------------------------------------------------------------
 def OnRun(Active):
 
     if Active:
@@ -51,7 +58,8 @@ def OnRun(Active):
     else:
         console.info("Generator Running End")
 
-#----------  OnRunManual -------------------------------------------------------
+
+# ----------  OnRunManual -------------------------------------------------------
 def OnRunManual(Active):
 
     if Active:
@@ -60,7 +68,8 @@ def OnRunManual(Active):
     else:
         console.info("Generator Running in Manual Mode End")
 
-#----------  OnExercise --------------------------------------------------------
+
+# ----------  OnExercise --------------------------------------------------------
 def OnExercise(Active):
 
     if Active:
@@ -69,7 +78,8 @@ def OnExercise(Active):
     else:
         console.info("Generator Exercising End")
 
-#----------  OnReady -----------------------------------------------------------
+
+# ----------  OnReady -----------------------------------------------------------
 def OnReady(Active):
 
     if Active:
@@ -78,7 +88,8 @@ def OnReady(Active):
     else:
         console.info("Generator Ready End")
 
-#----------  OnOff -------------------------------------------------------------
+
+# ----------  OnOff -------------------------------------------------------------
 def OnOff(Active):
 
     if Active:
@@ -87,7 +98,8 @@ def OnOff(Active):
     else:
         console.info("Generator Off End")
 
-#----------  OnManual ----------------------------------------------------------
+
+# ----------  OnManual ----------------------------------------------------------
 def OnManual(Active):
 
     if Active:
@@ -96,7 +108,8 @@ def OnManual(Active):
     else:
         console.info("Generator Manual End")
 
-#----------  OnAlarm -----------------------------------------------------------
+
+# ----------  OnAlarm -----------------------------------------------------------
 def OnAlarm(Active):
 
     if Active:
@@ -105,7 +118,8 @@ def OnAlarm(Active):
     else:
         console.info("Generator Alarm End")
 
-#----------  OnService ---------------------------------------------------------
+
+# ----------  OnService ---------------------------------------------------------
 def OnService(Active):
 
     if Active:
@@ -114,7 +128,8 @@ def OnService(Active):
     else:
         console.info("Generator Servcie Due End")
 
-#----------  OnUtilityChange ---------------------------------------------------
+
+# ----------  OnUtilityChange ---------------------------------------------------
 def OnUtilityChange(Active):
 
     if Active:
@@ -124,7 +139,8 @@ def OnUtilityChange(Active):
         SendNotice("Utility Service is Up")
         console.info("Utility Service is Up")
 
-#----------  OnSoftwareUpdate --------------------------------------------------
+
+# ----------  OnSoftwareUpdate --------------------------------------------------
 def OnSoftwareUpdate(Active):
 
     if Active:
@@ -134,26 +150,30 @@ def OnSoftwareUpdate(Active):
         SendNotice("Software Is Up To Date")
         console.info("Software Is Up To Date")
 
-#----------  OnSystemHealth ----------------------------------------------------
+
+# ----------  OnSystemHealth ----------------------------------------------------
 def OnSystemHealth(Notice):
     SendNotice("System Health : " + Notice)
     console.info("System Health : " + Notice)
 
-#----------  OnFuelState -------------------------------------------------------
+
+# ----------  OnFuelState -------------------------------------------------------
 def OnFuelState(Active):
-    if Active: # True is OK
+    if Active:  # True is OK
         console.info("Fuel Level is OK")
         SendNotice("Fuel Level is OK")
     else:  # False = Low
         SendNotice("Fuel Level is Low")
         console.info("Fuel Level is Low")
 
-#----------  OnPiState ---------------------------------------------------------
+
+# ----------  OnPiState ---------------------------------------------------------
 def OnPiState(Notice):
     SendNotice("Pi Health : " + Notice)
     console.info("Pi Health : " + Notice)
 
-#----------  SendNotice --------------------------------------------------------
+
+# ----------  SendNotice --------------------------------------------------------
 def SendNotice(Message):
 
     try:
@@ -163,10 +183,18 @@ def SendNotice(Message):
         log.error("Error: " + str(e1))
         console.error("Error: " + str(e1))
 
-#------------------- Command-line interface for gengpio -----------------------#
-if __name__=='__main__':
 
-    console, ConfigFilePath, address, port, loglocation, log = MySupport.SetupAddOnProgram("gensms_modem")
+# ------------------- Command-line interface for gengpio -----------------------#
+if __name__ == "__main__":
+
+    (
+        console,
+        ConfigFilePath,
+        address,
+        port,
+        loglocation,
+        log,
+    ) = MySupport.SetupAddOnProgram("gensms_modem")
 
     # Set the signal handler
     signal.signal(signal.SIGINT, signal_handler)
@@ -174,7 +202,7 @@ if __name__=='__main__':
 
     try:
 
-        SMS = LTEPiHat(log = log, loglocation = loglocation, ConfigFilePath = ConfigFilePath)
+        SMS = LTEPiHat(log=log, loglocation=loglocation, ConfigFilePath=ConfigFilePath)
         if not SMS.InitComplete:
             SMS.Close()
             log.error("Modem Init FAILED!")
@@ -187,27 +215,28 @@ if __name__=='__main__':
         sys.exit(1)
     try:
         GenNotify = GenNotify(
-                                        host = address,
-                                        port = port,
-                                        onready = OnReady,
-                                        onexercise = OnExercise,
-                                        onrun = OnRun,
-                                        onrunmanual = OnRunManual,
-                                        onalarm = OnAlarm,
-                                        onservice = OnService,
-                                        onoff = OnOff,
-                                        onmanual = OnManual,
-                                        onutilitychange = OnUtilityChange,
-                                        onsoftwareupdate = OnSoftwareUpdate,
-                                        onsystemhealth = OnSystemHealth,
-                                        onfuelstate = OnFuelState,
-                                        onpistate = OnPiState,
-                                        log = log,
-                                        loglocation = loglocation,
-                                        console = console,
-                                        config = SMS.GetConfig())
+            host=address,
+            port=port,
+            onready=OnReady,
+            onexercise=OnExercise,
+            onrun=OnRun,
+            onrunmanual=OnRunManual,
+            onalarm=OnAlarm,
+            onservice=OnService,
+            onoff=OnOff,
+            onmanual=OnManual,
+            onutilitychange=OnUtilityChange,
+            onsoftwareupdate=OnSoftwareUpdate,
+            onsystemhealth=OnSystemHealth,
+            onfuelstate=OnFuelState,
+            onpistate=OnPiState,
+            log=log,
+            loglocation=loglocation,
+            console=console,
+            config=SMS.GetConfig(),
+        )
 
-        SMSInfo = SMS.GetInfo(ReturnString = True)
+        SMSInfo = SMS.GetInfo(ReturnString=True)
         log.error(SMSInfo)
 
         while True:
