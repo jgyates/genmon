@@ -2271,13 +2271,17 @@ class Evolution(GeneratorController):
             # get pickup voltage
             PickupVoltage = self.GetPickUpVoltage(ReturnInt=True)
 
+            if UtilityVolts < 0 or ThresholdVoltage < 0 or PickupVoltage < 0:
+                # invalid value
+                return
+            if UtilityVolts >= (self.NominalLineVolts * 2.5):
+                return
+                
             if self.Evolution2 and self.IgnoreUnknown:
                 if (
                     ThresholdVoltage >= self.NominalLineVolts
                     or PickupVoltage >= self.NominalLineVolts
                 ):
-                    return
-                if UtilityVolts >= (self.NominalLineVolts * 2.5):
                     return
 
             # if something is wrong then we use some sensible values here
