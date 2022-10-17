@@ -293,6 +293,7 @@ if __name__ == "__main__":
         appid = config.ReadValue("appid", default=None)
         userid = config.ReadValue("userid", default=None)
         pushsound = config.ReadValue("pushsound", default="updown")
+        pushsound = pushsound.lower()
 
         alarm_priority = GetPriorityFromConf("alarm_priority")
         sw_update_priority = GetPriorityFromConf("sw_update_priority")
