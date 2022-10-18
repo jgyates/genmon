@@ -2652,7 +2652,7 @@ def ReadAdvancedSettingsFromFile():
                     GENMON_SECTION,
                     "uselinuxwifisignalgauge",
                 ]
-            if GStartInfo["RaspbeerryPi"]:
+            if GStartInfo["Linux"]:
                 ConfigSettings["useraspberrypicputempgauge"] = [
                     "boolean",
                     "Show CPU Temperature Gauge",

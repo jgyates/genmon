@@ -2169,7 +2169,7 @@ class HPanel(GeneratorController):
             StartInfo["SetGenTime"] = True
             if self.Platform != None:
                 StartInfo["Linux"] = self.Platform.IsOSLinux()
-                StartInfo["RaspbeerryPi"] = self.Platform.IsPlatformRaspberryPi()
+                StartInfo["RaspberryPi"] = self.Platform.IsPlatformRaspberryPi()
 
             if not NoTile:
 

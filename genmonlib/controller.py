@@ -826,7 +826,7 @@ class GeneratorController(MySupport):
             StartInfo["RemoteCommands"] = True
             StartInfo["RemoteButtons"] = False
             StartInfo["Linux"] = self.Platform.IsOSLinux()
-            StartInfo["RaspbeerryPi"] = self.Platform.IsPlatformRaspberryPi()
+            StartInfo["RaspberryPi"] = self.Platform.IsPlatformRaspberryPi()
 
             if not NoTile:
                 StartInfo["tiles"] = []
