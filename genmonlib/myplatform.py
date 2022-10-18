@@ -146,7 +146,8 @@ class MyPlatform(MyCommon):
                 DefaultReturn = 0.0
             else:
                 DefaultReturn = "0"
-            if not self.IsPlatformRaspberryPi():
+            
+            if not self.IsOSLinux():
                 return DefaultReturn
             try:
                 if os.path.exists("/usr/bin/vcgencmd"):
@@ -165,7 +166,6 @@ class MyPlatform(MyCommon):
                 )
 
             except Exception as e1:
-                # self.LogErrorLine(str(e1))
                 # for non rasbpian based systems
                 tempfilepath = self.GetHwMonParamPath("temp1_input")
                 if tempfilepath == None:
