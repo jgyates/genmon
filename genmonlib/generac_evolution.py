@@ -145,40 +145,38 @@ class Evolution(GeneratorController):
         #   dict format  Register: [ Length in bytes: monitor change 0 - no, 1 = yes]
         self.BaseRegisters = {  # base registers read by master
             "0000": [2, 0],  # possibly product line code (Nexus, EvoAC, EvoLC)
-            "0005": [
-                2,
-                0,
-            ],  # Exercise Time Hi Byte = Hour, Lo Byte = Min (Read Only) (Nexus, EvoAC, EvoLC)
-            "0006": [
-                2,
-                0,
-            ],  # Exercise Time Hi Byte = Day of Week 00=Sunday 01=Monday, Low Byte = 00=quiet=no, 01=yes (Nexus, EvoAC, EvoLC)
+            # Exercise Time 
+            # Hi Byte = Hour, 
+            # Lo Byte = Min (Read Only) (Nexus, EvoAC, EvoLC)
+            "0005": [2, 0],  # 
+            # Exercise Time 
+            # Hi Byte = Day of Week 00=Sunday 01=Monday, 
+            # Low Byte = 00=quiet=no, 01=yes (Nexus, EvoAC, EvoLC)
+            "0006": [2, 0],  #
             "0007": [2, 0],  # Engine RPM  (Nexus, EvoAC, EvoLC)
-            "0008": [
-                2,
-                0,
-            ],  # Freq - value includes Hz to the tenths place i.e. 59.9 Hz (Nexus, EvoAC, EvoLC)
-            "000a": [
-                2,
-                0,
-            ],  # battery voltage Volts to  tenths place i.e. 13.9V (Nexus, EvoAC, EvoLC)
+            # Freq - value includes Hz to the tenths place i.e. 59.9 Hz 
+            # (Nexus, EvoAC, EvoLC)
+            "0008": [2, 0],  #
+            # battery voltage Volts to  tenths place i.e. 13.9V 
+            # (Nexus, EvoAC, EvoLC)
+            "000a": [2, 0],  #
             "000b": [4, 0],  # engine run time hours (000b=high,000c=low)
-            "000e": [
-                2,
-                0,
-            ],  # Read / Write: Generator Time Hi byte = hours, Lo byte = min (Nexus, EvoAC, EvoLC)
-            "000f": [
-                2,
-                0,
-            ],  # Read / Write: Generator Time Hi byte = month, Lo byte = day of the month (Nexus, EvoAC, EvoLC)
-            "0010": [
-                2,
-                0,
-            ],  # Read / Write: Generator Time = Hi byte Day of Week 00=Sunday 01=Monday, Lo byte = last 2 digits of year (Nexus, EvoAC, EvoLC)
-            "0011": [
-                2,
-                0,
-            ],  # Utility Threshold, ML Does not read this  (Nexus, EvoAC, EvoLC) (possibly read / write)
+            # Read / Write: Generator Time Hi byte = hours, Lo byte = min 
+            # (Nexus, EvoAC, EvoLC)
+            "000e": [2, 0],  #
+            # Read / Write: Generator Time 
+            # Hi byte = month, 
+            # Lo byte = day of the month 
+            # (Nexus, EvoAC, EvoLC)
+            "000f": [2, 0],  #
+            # Read / Write: Generator Time = 
+            # Hi byte Day of Week 00=Sunday 01=Monday, 
+            # Lo byte = last 2 digits of year 
+            # (Nexus, EvoAC, EvoLC)
+            "0010": [2, 0],  #
+            # Utility Threshold, ML Does not read this  
+            # (Nexus, EvoAC, EvoLC) (possibly read / write)
+            "0011": [2, 0],  #
             "0012": [2, 0],  # Gen output voltage (Nexus, EvoAC, EvoLC)
             "0019": [2, 0],  # Model ID register, (EvoAC, NexusAC)
             "001a": [2, 0],  # Hours Until Service A
@@ -190,56 +188,43 @@ class Evolution(GeneratorController):
             "0020": [2, 0],  # Service Info Date (NexusAC)
             "0021": [2, 0],  # Service Info Hours (NexusAC)
             "0022": [2, 0],  # Service Info Date (NexusAC, EvoAC)
-            "002a": [
-                2,
-                0,
-            ],  # hardware (high byte) (Hardware V1.04 = 0x68) and firmware version (low byte) (Firmware V1.33 = 0x85) (Nexus, EvoAC, EvoLC)
+            # hardware (high byte) (Hardware V1.04 = 0x68) 
+            # and firmware version (low byte) (Firmware V1.33 = 0x85) 
+            # (Nexus, EvoAC, EvoLC)
+            "002a": [2, 0],  #
             "002b": [2, 0],  # Startup Delay (Evo AC)
             "002c": [2, 0],  # Evo      (Exercise Time) Exercise Time HH:MM
             "002d": [2, 0],  # Evo AC   (Weekly, Biweekly, Monthly)
             "002e": [2, 0],  # Evo      (Exercise Time) Exercise Day Sunday =0, Monday=1
             "002f": [2, 0],  # Evo      (Quiet Mode)
             "0051": [2, 0],  # Bootcode Version
-            "0054": [
-                2,
-                0,
-            ],  # Hours since generator activation (hours of protection) (Evo LC only)
+            # Hours since generator activation (hours of protection) (Evo LC only)
+            "0054": [2, 0],  #
             "0055": [2, 0],  # Unknown
-            "0056": [
-                2,
-                0,
-            ],  # Unknown Looks like some status bits (0000 to 0003, back to 0000 on stop)
-            "0057": [
-                2,
-                0,
-            ],  # Unknown Looks like some status bits (0002 to 0005 when engine starts, back to 0002 on stop)
+            # Unknown Looks like some status bits (0000 to 0003, back to 0000 on stop)
+            "0056": [2, 0],  #
+            # Unknown Looks like some status bits 
+            # (0002 to 0005 when engine starts, back to 0002 on stop)
+            "0057": [2, 0],  #
             "0058": [2, 0],  # Hall Effect Sensor (EvoLC)
             "0059": [2, 0],  # Rated Volts (EvoLC)
             "005a": [2, 0],  # Rated Hz (EvoLC)
-            "005d": [
-                2,
-                0,
-            ],  # Fuel Pressure Sensor, Moves between 0x55 - 0x58 continuously even when engine off, fuel level sensor on EvoLC
-            "005e": [
-                4,
-                0,
-            ],  # Total engine time in minutes  (EvoLC) 005e= high, 005f=low
+            # Fuel Pressure Sensor, Moves between 0x55 - 0x58 continuously 
+            # even when engine off, fuel level sensor on EvoLC
+            "005d": [2, 0],  #
+            # Total engine time in minutes  (EvoLC) 005e= high, 005f=low
+            "005e": [4, 0],  #
             "000d": [2, 0],  # Bit changes when the controller is updating registers.
             "003c": [2, 0],  # Raw RPM Sensor Data (Hall Sensor)
             "05fa": [2, 0],  # Evo AC   (Status?)
             "0033": [2, 0],  # Evo AC   (Status?)
-            "0034": [
-                2,
-                0,
-            ],  # Evo AC   (Status?) Goes from FFFF 0000 00001 (Nexus and Evo AC)
+            "0034": [2, 0],  # Evo AC   (Status?) 
+                             # Goes from FFFF 0000 00001 (Nexus and Evo AC)
             "0032": [2, 0],  # Evo AC   (Sensor?) starts  0x4000 ramps up to ~0x02f0
             "0035": [2, 0],  # Evo AC    Unknown
             "0036": [2, 0],  # Evo AC   (Sensor?) Unknown
             "0037": [2, 0],  # CT Sensor (EvoAC)
-            "0038": [
-                2,
-                0,
-            ],  # Evo AC   (Sensor?)       FFFE, FFFF, 0001, 0002 random - not linear
+            "0038": [2,0,],  # Evo AC   (Sensor?)
             "0039": [2, 0],  # Evo AC   (Sensor?)
             "003a": [4, 0],  # CT Sensor (EvoAC)
             "0208": [2, 0],  # Calibrate Volts (Evo all)
@@ -288,14 +273,12 @@ class Evolution(GeneratorController):
         # registers that need updating more frequently than others to make things more responsive
         self.PrimeRegisters = {
             "0001": [4, 0],  # Alarm and status register
-            "0053": [
-                2,
-                0,
-            ],  # Evo LC Output relay status register (battery charging, transfer switch, Change at startup and stop
-            "0052": [
-                2,
-                0,
-            ],  # Evo LC Input status register (sensors) only tested on liquid cooled Evo
+            # Evo LC Output relay status register (battery charging, 
+            # transfer switch, Change at startup and stop
+            "0053": [2, 0],  #
+            # Evo LC Input status register (sensors) 
+            # only tested on liquid cooled Evo
+            "0052": [2, 0],  #
             "0009": [2, 0],  # Utility voltage
             "05f1": [2, 0],
         }  # Last Alarm Code
@@ -885,46 +868,16 @@ class Evolution(GeneratorController):
             7: ["13KW", "60", "120/240", "1", "992 cc", "240"],
             8: ["15KW", "60", "120/240", "1", "999 cc", "240"],
             9: ["16KW", "60", "120/240", "1", "999 cc", "240"],
-            10: [
-                "20KW",
-                "VSCF",
-                "120/240",
-                "1",
-                "999 cc",
-                "240",
-            ],  # Variable Speed Constant Frequency
-            11: [
-                "15KW",
-                "ECOVSCF",
-                "120/240",
-                "1",
-                "999 cc",
-                "240",
-            ],  # Eco Variable Speed Constant Frequency
-            12: [
-                "8KVA",
-                "50",
-                "220,230,240",
-                "1",
-                "530 cc",
-                "240",
-            ],  # 3 distinct models 220, 230, 240
-            13: [
-                "10KVA",
-                "50",
-                "220,230,240",
-                "1",
-                "992 cc",
-                "240",
-            ],  # 3 distinct models 220, 230, 240
-            14: [
-                "13KVA",
-                "50",
-                "220,230,240",
-                "1",
-                "992 cc",
-                "240",
-            ],  # 3 distinct models 220, 230, 240
+            # Variable Speed Constant Frequency
+            10: ["20KW","VSCF","120/240","1","999 cc","240",],
+             # Eco Variable Speed Constant Frequency
+            11: ["15KW","ECOVSCF","120/240","1","999 cc","240",],
+            # 3 distinct models 220, 230, 240
+            12: ["8KVA","50","220,230,240","1","530 cc","240",], 
+            # 3 distinct models 220, 230, 240
+            13: ["10KVA","50","220,230,240","1","992 cc","240",],  
+            # 3 distinct models 220, 230, 240
+            14: ["13KVA","50","220,230,240","1","992 cc","240",],
             15: ["11KW", "60", "240", "1", "530 cc", "240"],
             17: ["22KW", "60", "120/240", "1", "999 cc", "240"],
             21: ["11KW", "60", "240 LS", "1", "530 cc", "240"],
@@ -934,62 +887,20 @@ class Evolution(GeneratorController):
         }
 
         if self.Evolution2:
-            ModelLookUp_EvoAC[8] = [
-                "24KW",
-                "60",
-                "120/240",
-                "1",
-                "999 cc",
-                "240",
-            ]  # Evo G0072100 Evo2 24kw
-            ModelLookUp_EvoAC[17] = [
-                "22KW",
-                "60",
-                "120/240",
-                "1",
-                "999 cc",
-                "240",
-            ]  # Evo2 22kW Home Guardian
-            ModelLookUp_EvoAC[18] = [
-                "18KW",
-                "60",
-                "120/240",
-                "1",
-                "816 cc",
-                "240",
-            ]  # Evo2 Generac Guardian 18kW G007226-0,
-            ModelLookUp_EvoAC[21] = [
-                "24KW",
-                "60",
-                "120/240",
-                "1",
-                "999 cc",
-                "240",
-            ]  # Evo G0072100 Evo2 24kw
-            ModelLookUp_EvoAC[22] = [
-                "16KW",
-                "60",
-                "120/240",
-                "1",
-                "816 cc",
-                "240",
-            ]  # Evo G0071760
-            ModelLookUp_EvoAC[23] = [
-                "14KW",
-                "60",
-                "120/240",
-                "1",
-                "816 cc",
-                "240",
-            ]  # Evo2 G0072230
-            ModelLookUp_EvoAC[11] = [
-                "20KW",
-                "50",
-                "208 3 Phase",
-                "3",
-                "999 cc",
-                "208",
-            ]  # 3 phase export
+            # Evo G0072100 Evo2 24kw
+            ModelLookUp_EvoAC[8] = ["24KW","60","120/240","1","999 cc","240",] 
+            # Evo2 22kW Home Guardian
+            ModelLookUp_EvoAC[17] = ["22KW","60","120/240","1","999 cc","240",]  
+            # Evo2 Generac Guardian 18kW G007226-0,
+            ModelLookUp_EvoAC[18] = ["18KW","60","120/240","1","816 cc","240",]
+            # Evo G0072100 Evo2 24kw
+            ModelLookUp_EvoAC[21] = ["24KW","60","120/240","1","999 cc","240",]
+            # Evo G0071760
+            ModelLookUp_EvoAC[22] = ["16KW","60","120/240","1","816 cc","240",]
+            # Evo2 G0072230
+            ModelLookUp_EvoAC[23] = ["14KW","60","120/240","1","816 cc","240",]
+            # 3 phase export
+            ModelLookUp_EvoAC[11] = ["20KW","50","208 3 Phase","3","999 cc","208",]
 
         LookUp = None
         if self.EvolutionController:
