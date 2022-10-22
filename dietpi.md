@@ -19,7 +19,6 @@ Add user to sudo and dialout (for serial access) groups, these are automatic wit
 `usermod -a -G sudo,dialout dietpi`
 Next we need to enable the appropriate UART, this will depend on the board you have. The UART you need are the ones on physical pins 7 and 9. \
 For NanoPi Neo's `sed -Ei 's/^(overlays=.*)/\1 uart1/' /boot/armbianEnv.txt` \
-For Rock 4C Plus `sed -Ei 's/^(overlays=.*)/\1 uart2/' /boot/armbianEnv.txt` \
 The following can immediately verify the required UART is enabled (the appropriate line should not be "unknown" or irq:0). You need to reboot before trying a loopback test, but you can do that after the root section. \
 `cat /proc/tty/driver/serial` \
 Next we need to get around some problems with the normal Cryptography install. We'll get rust, C++, fortran, and more all installed.  Also grabbing SSH/SCP and GIT while here. \
@@ -33,10 +32,8 @@ Last action as root, install pyopenssl which will compile cryptography. For some
 Log out of root and log in as your regular user (DietPi or whatever you renamed the account). \
 Follow the genmon instructions until you get to the serial loopback test. The test accepts an optional parameter for the serial port you need to test and the number will most likely line up with the UART number you used. \
 For NanoPi Neo's `~/genmon/OtherApps/serialtest.py /dev/ttyS1` \
-For Rock 4C Plus `~/genmon/OtherApps/serialtest.py /dev/ttyS2` \
 Now before starting GenMon the serial port needs to be manually changed in the config file. Open the file with: \
 `sudo nano /etc/genmon/genmon.conf` \
 Near the top you will see `port = /dev/serial0`, the serial0 needs to change to ttyS and the UART number. \
 For NanoPi Neo's `port = /dev/ttyS1` \
-For Rock 4C Plus `port = /dev/ttyS2` \
 Now you should be able to run `~/genmon/startgenmon.sh start` and have GenMon's UI load as normal.
