@@ -342,8 +342,10 @@ class MyPlatform(MyCommon):
                     # .strip('"') will remove if there or else do nothing
                     OSReleaseInfo[k] = v.strip('"')
                 LinuxInfo.append({"OS Name": OSReleaseInfo["NAME"]})
-                LinuxInfo.append({"OS Version": OSReleaseInfo["VERSION"]})
-
+                if "VERSION" in OSReleaseInfo:
+                  LinuxInfo.append({"OS Version" : OSReleaseInfo["VERSION"]})
+                elif "VERSION_ID" in OSReleaseInfo:
+                  LinuxInfo.append({"OS Version" : OSReleaseInfo["VERSION_ID"]})
             try:
                 with open("/proc/uptime", "r") as f:
                     uptime_seconds = float(f.readline().split()[0])
