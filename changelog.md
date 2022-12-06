@@ -1,6 +1,11 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.18.15 -2022-12-06
+- Change to allow CPU temp gauge for any linux system
+- Update to support version info in Alpine Linux (thanks @gregmac)
+- Added new add on program gencustomgpio.py (see https://github.com/jgyates/genmon/wiki/1----Software-Overview#gencustomgpiopy-optional)
+
 ## V1.18.15 -2022-09-18
 - Correct issue with power graph
 - Added priorities parameter to Pushover add on (see add on page for settings)

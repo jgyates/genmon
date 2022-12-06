@@ -710,6 +710,7 @@ class Loader(MySupport):
                 "gengpioledblink",
                 "gencthat",
                 "genmopeka",
+                "gencustomgpio",
                 "genloader",
             ]
             for entry in ValidSections:
@@ -813,6 +814,15 @@ class Loader(MySupport):
                             section=entry,
                             module="genmopeka.py",
                             conffile="genmopeka.conf",
+                        )
+                    if entry == "gencustomgpio":
+                        self.LogError(
+                            "Warning: Missing entry: " + entry + " , adding entry"
+                        )
+                        self.AddEntry(
+                            section=entry,
+                            module="gencustomgpio.py",
+                            conffile="gencustomgpio.conf",
                         )
                     if entry == "genloader":
                         self.LogError("Adding entry: " + entry)
