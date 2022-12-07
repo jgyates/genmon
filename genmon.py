@@ -651,6 +651,7 @@ class Monitor(MySupport):
                 "gengpioledblink.log",
                 "gencthat.log",
                 "genmopeka.log",
+                "gencustomgpio.log",
             ]
             for File in FilesToSend:
                 LogFile = self.LogLocation + File
