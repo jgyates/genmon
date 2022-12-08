@@ -24,6 +24,7 @@ try:
 
     from genmonlib.myconfig import MyConfig
     from genmonlib.mylog import SetupLogger
+    from genmonlib.myclient import ClientInterface
     from genmonlib.mymsgqueue import MyMsgQueue
     from genmonlib.mynotify import GenNotify
     from genmonlib.mysupport import MySupport
@@ -209,6 +210,10 @@ def SendNotice(Message, **kwargs):
     # EMERGENCY = 2 #: Message priority: Sound, vibration, and banner regardless of user's quiet hours, and re-alerts until acknowledged.
 
     try:
+
+        if sitename != None and len(sitename):
+            Message = sitename + ": " + Message
+
         priority = chump.NORMAL
         if len(kwargs) and isinstance(kwargs, dict):
             try:
@@ -330,7 +335,8 @@ if __name__ == "__main__":
         )
         sys.exit(1)
     try:
-
+        Generator = ClientInterface(host=address, port=port, log=log)
+        sitename = Generator.ProcessMonitorCommand("generator: getsitename")
         Queue = MyMsgQueue(config=config, log=log, callback=SendNotice)
 
         GenNotify = GenNotify(

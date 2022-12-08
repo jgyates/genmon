@@ -28,6 +28,7 @@ try:
 
     from genmonlib.myconfig import MyConfig
     from genmonlib.mylog import SetupLogger
+    from genmonlib.myclient import ClientInterface
     from genmonlib.mymsgqueue import MyMsgQueue
     from genmonlib.mynotify import GenNotify
     from genmonlib.mysupport import MySupport
@@ -180,6 +181,9 @@ def OnPiState(Notice):
 def SendNotice(Message):
 
     try:
+        if sitename != None and len(sitename):
+            Message = sitename + ": " + Message
+
         slack_data = {
             "channel": channel,
             "username": username,
@@ -272,6 +276,8 @@ if __name__ == "__main__":
 
     try:
 
+        Generator = ClientInterface(host=address, port=port, log=log)
+        sitename = Generator.ProcessMonitorCommand("generator: getsitename")
         Queue = MyMsgQueue(config=config, log=log, callback=SendNotice)
 
         GenNotify = GenNotify(

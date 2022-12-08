@@ -1450,7 +1450,7 @@ class CustomController(GeneratorController):
                     }
                 )
 
-            Outage["Outage"].append({"Outage Log": self.DisplayOutageHistory()})
+            Outage["Outage"].append({"Outage Log": self.DisplayOutageHistory(JSONNum=JSONNum)})
 
         except Exception as e1:
             self.LogErrorLine("Error in DisplayOutage: " + str(e1))

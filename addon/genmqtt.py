@@ -68,6 +68,7 @@ class MyGenPush(MySupport):
         blacklist=None,
         flush_interval=float("inf"),
         use_numeric=False,
+        strlist_json = False,
         debug=False,
         loglocation=ProgramDefaults.LogPath,
         console=None,
@@ -77,6 +78,7 @@ class MyGenPush(MySupport):
         self.Callback = callback
 
         self.UseNumeric = use_numeric
+        self.StrListJson = strlist_json
         self.debug = debug
         self.Exiting = False
 
@@ -261,8 +263,11 @@ class MyGenPush(MySupport):
                 elif isinstance(item, list):
                     CurrentPath = PathPrefix + "/" + str(key)
                     if self.ListIsStrings(item):
-                        # if this is a list of strings, the join the list to one comma separated string
-                        self.CheckForChanges(CurrentPath, ", ".join(item))
+                        if self.StrListJson:
+                            self.CheckForChanges(CurrentPath, json.dumps(item, sort_keys=False))
+                        else:
+                            # if this is a list of strings, the join the list to one comma separated string
+                            self.CheckForChanges(CurrentPath, ", ".join(item))
                     else:
                         for listitem in item:
                             if isinstance(listitem, dict):
@@ -358,6 +363,7 @@ class MyMQTT(MyCommon):
         self.TopicRoot = None
         self.BlackList = None
         self.UseNumeric = False
+        self.StringListJson = False
         self.RemoveSpaces = False
         self.PollTime = 2
         self.FlushInterval = float(
@@ -397,6 +403,9 @@ class MyMQTT(MyCommon):
             )
             self.UseNumeric = config.ReadValue(
                 "numeric_json", return_type=bool, default=False
+            )
+            self.StringListJson = config.ReadValue(
+                "strlist_json", return_type=bool, default=False
             )
             self.RemoveSpaces = config.ReadValue(
                 "remove_spaces", return_type=bool, default=False
@@ -523,6 +532,7 @@ class MyMQTT(MyCommon):
                 blacklist=self.BlackList,
                 flush_interval=self.FlushInterval,
                 use_numeric=self.UseNumeric,
+                strlist_json = self.StringListJson,
                 debug=self.debug,
                 port=port,
                 loglocation=loglocation,

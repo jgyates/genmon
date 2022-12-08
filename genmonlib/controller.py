@@ -1157,7 +1157,7 @@ class GeneratorController(MySupport):
         return msgbody
 
     # ------------ GeneratorController:DisplayOutageHistory----------------------
-    def DisplayOutageHistory(self):
+    def DisplayOutageHistory(self, JSONNum=False):
 
         LogHistory = []
 
@@ -1204,21 +1204,29 @@ class GeneratorController(MySupport):
                         continue
 
                     if len(strDuration) and len(strFuel):
-                        OutageLog.insert(0, [Items[0], strDuration, strFuel])
+                         OutageLog.insert(0, [Items[0], strDuration, strFuel])
                     elif len(strDuration):
                         OutageLog.insert(0, [Items[0], strDuration])
 
                     if len(OutageLog) > 100:  # limit log to 100 entries
                         OutageLog.pop()
 
+            index = 0
             for Items in OutageLog:
                 if len(Items) == 2:
-                    LogHistory.append("%s, Duration: %s" % (Items[0], Items[1]))
+                    if JSONNum:
+                        LogHistory.append({index: [{"Date": Items[0]}, {"Duration": Items[1]}]})
+                    else:   
+                        LogHistory.append("%s, Duration: %s" % (Items[0], Items[1]))
                 elif len(Items) == 3:
-                    LogHistory.append(
-                        "%s, Duration: %s, Estimated Fuel: %s"
-                        % (Items[0], Items[1], Items[2])
-                    )
+                    if JSONNum:
+                        LogHistory.append({index:[{"Date": Items[0]}, {"Duration": Items[1]},{"Estimated Fuel": Items[2]}]})
+                    else:
+                        LogHistory.append(
+                            "%s, Duration: %s, Estimated Fuel: %s"
+                            % (Items[0], Items[1], Items[2])
+                        )
+                index += 1
 
             return LogHistory
 

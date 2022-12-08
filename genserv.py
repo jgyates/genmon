@@ -1203,6 +1203,15 @@ def GetAddOns():
             bounds="",
             display_name="JSON for Numerics",
         )
+        AddOnCfg["genmqtt"]["parameters"]["strlist_json"] = CreateAddOnParam(
+            ConfigFiles[GENMQTT_CONFIG].ReadValue(
+                "strlist_json", return_type=bool, default=False
+            ),
+            "boolean",
+            "If enabled will return a JSON list for any list of strings like the Outage log. Does not apply if JSON for Numerics is enabled.",
+            bounds="",
+            display_name="JSON for String Lists",
+        )
         AddOnCfg["genmqtt"]["parameters"]["remove_spaces"] = CreateAddOnParam(
             ConfigFiles[GENMQTT_CONFIG].ReadValue(
                 "remove_spaces", return_type=bool, default=False

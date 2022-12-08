@@ -1,10 +1,12 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
-## V1.18.15 -2022-12-06
+## V1.18.16 -2022-12-06
 - Change to allow CPU temp gauge for any linux system
 - Update to support version info in Alpine Linux (thanks @gregmac)
 - Added new add on program gencustomgpio.py (see https://github.com/jgyates/genmon/wiki/1----Software-Overview#gencustomgpiopy-optional)
+- Updated genmqtt to better handle the outage log
+- Added site name to short messages for gensms, genpushover and genslack
 
 ## V1.18.15 -2022-09-18
 - Correct issue with power graph
