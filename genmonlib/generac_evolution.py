@@ -1485,9 +1485,7 @@ class Evolution(GeneratorController):
         elif Command == "off":
             Register = 0x0010
         else:
-            "Invalid command syntax for command setremote (3)"
-        else:
-            return "Invalid command syntax for command setremote (2)"
+            return "Invalid command syntax for command setremote (3)"
 
         self.WriteIndexedRegister(Register, Value)
 
