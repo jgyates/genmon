@@ -186,11 +186,8 @@ class Loader(MySupport):
             ["paho.mqtt.client", "paho-mqtt", None],  # for genmqtt
             ["OpenSSL", "pyopenssl", None],  # SSL
             ["spidev", "spidev", None],  # spidev
-            [
-                "mopeka_pro_check",
-                "mopeka_pro_check",
-                None,
-            ]  # mopeka_pro_check for genmopeka
+            ["mopeka_pro_check","mopeka_pro_check", None],  # mopeka_pro_check for genmopeka
+            ["voipms", "voipms", None]      # voipms for gensms_voip
             # ['fluids', 'fluids', None]              # fluids for genmopeka
         ]
         try:
@@ -711,6 +708,7 @@ class Loader(MySupport):
                 "gencthat",
                 "genmopeka",
                 "gencustomgpio",
+                "gensms_voip",
                 "genloader",
             ]
             for entry in ValidSections:
@@ -814,6 +812,15 @@ class Loader(MySupport):
                             section=entry,
                             module="genmopeka.py",
                             conffile="genmopeka.conf",
+                        )
+                    if entry == "gensms_voip":
+                        self.LogError(
+                            "Warning: Missing entry: " + entry + " , adding entry"
+                        )
+                        self.AddEntry(
+                            section=entry,
+                            module="gensms_voip.py",
+                            conffile="gensms_voip.conf",
                         )
                     if entry == "gencustomgpio":
                         self.LogError(

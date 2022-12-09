@@ -169,6 +169,7 @@ function installgenmon() {
     sudo $pipcommand install pyasn1 -U
     sudo $pipcommand install mopeka_pro_check
     sudo $pipcommand install fluids
+    sudo $pipcommand install voipms
 
     sudo chmod 775 "$genmondir/startgenmon.sh"
     sudo chmod 775 "$genmondir/genmonmaint.sh"
@@ -271,6 +272,8 @@ function archivelogs() {
     sudo cp "$log_path"gengpioledblink.log ./genmon_logs
     sudo cp "$log_path"gencthat.log ./genmon_logs
     sudo cp "$log_path"genmopeka.log ./genmon_logs
+    sudo cp "$log_path"gencustomgpio.log ./genmon_logs
+    sudo cp "$log_path"gensms_voip.log ./genmon_logs
     tar -zcvf genmon_logs.tar.gz genmon_logs/
     sudo rm -r genmon_logs
     echo "Done."
@@ -307,6 +310,8 @@ function backupgenmon() {
     sudo cp "$config_path"gengpioledblink.conf ./genmon_backup
     sudo cp "$config_path"gencthat.conf ./genmon_backup
     sudo cp "$config_path"genmopeka.conf ./genmon_backup
+    sudo cp "$config_path"gencustomgpio.conf ./genmon_backup
+    sudo cp "$config_path"gensms_voip.conf ./genmon_backup
     sudo cp "$config_path"outage.txt ./genmon_backup
     sudo cp "$config_path"kwlog.txt ./genmon_backup
     sudo cp "$config_path"fuellog.txt ./genmon_backup

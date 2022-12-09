@@ -902,6 +902,65 @@ def GetAddOns():
         AddOnCfg = AddNotificationAddOnParam(AddOnCfg, "gensms", GENSMS_CONFIG)
         AddOnCfg = AddRetryAddOnParam(AddOnCfg, "gensms", GENSMS_CONFIG)
 
+        # GENSMS_VOIP
+        Description = "SMS Support vis VoIP using voip.ms"
+        try:
+            import voipms
+        except Exception as e1:
+            Description = (
+                Description
+                + "<br/><font color='red'>The required libraries for this add on are not installed, please run the installation script.</font>"
+            )
+
+        AddOnCfg["gensms_voip"] = collections.OrderedDict()
+        AddOnCfg["gensms_voip"]["enable"] = ConfigFiles[GENLOADER_CONFIG].ReadValue(
+            "enable", return_type=bool, section="gensms_voip", default=False
+        )
+        AddOnCfg["gensms_voip"]["title"] = "SMS via VOIP using voip.ms"
+
+        AddOnCfg["gensms_voip"]["description"] = Description
+        AddOnCfg["gensms_voip"]["icon"] = "Genmon"
+        AddOnCfg["gensms_voip"][
+            "url"
+        ] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gensms_voippy-optional"
+        AddOnCfg["gensms_voip"]["parameters"] = collections.OrderedDict()
+
+        AddOnCfg["gensms_voip"]["parameters"]["username"] = CreateAddOnParam(
+            ConfigFiles[GENSMS_VOIP_CONFIG].ReadValue(
+                "username", return_type=str, default=""
+            ),
+            "string",
+            "Voip.ms account username",
+            bounds="required minmax:5:50",
+            display_name="VoIP.ms User Name",
+        )
+        AddOnCfg["gensms_voip"]["parameters"]["password"] = CreateAddOnParam(
+            ConfigFiles[GENSMS_VOIP_CONFIG].ReadValue(
+                "password", return_type=str, default=""
+            ),
+            "password",
+            "VoIP.ms API password. This is NOT the account login, but rather then API password",
+            bounds="required minmax:8:50",
+            display_name="VoIP.ms API password",
+        )
+        AddOnCfg["gensms_voip"]["parameters"]["did"] = CreateAddOnParam(
+            ConfigFiles[GENSMS_VOIP_CONFIG].ReadValue(
+                "did", return_type=str, default=""
+            ),
+            "string",
+            "DID number for your voip.ms account to send the SMS.",
+            bounds="required InternationalPhone",
+            display_name="Sender DID Number",
+        )
+        AddOnCfg["gensms_voip"]["parameters"]["destination"] = CreateAddOnParam(
+            ConfigFiles[GENSMS_VOIP_CONFIG].ReadValue(
+                "destination", return_type=str, default=""
+            ),
+            "string",
+            "Mobile number to send SMS message to. This can be any mobile number. Separate multilpe recipients with commas.",
+            bounds="required InternationalPhone",
+            display_name="Recipient Phone Number",
+        )
         # GENSMS_MODEM
         AddOnCfg["gensms_modem"] = collections.OrderedDict()
         AddOnCfg["gensms_modem"]["enable"] = ConfigFiles[GENLOADER_CONFIG].ReadValue(
@@ -1788,7 +1847,7 @@ def GetAddOns():
                 bounds="",
                 display_name="Send Notices",
             )
-
+        
     except Exception as e1:
         LogErrorLine("Error in GetAddOns: " + str(e1))
 
@@ -1957,6 +2016,7 @@ def SaveAddOnSettings(query_string):
             "gentemp": ConfigFiles[GENTEMP_CONFIG],
             "gencthat": ConfigFiles[GENCTHAT_CONFIG],
             "genmopeka": ConfigFiles[GENMOPEKA_CONFIG],
+            "gensms_voip": ConfigFiles[GENSMS_VOIP_CONFIG],
         }
 
         for module, entries in settings.items():  # module
@@ -4113,6 +4173,7 @@ if __name__ == "__main__":
     GENTEMP_CONFIG = os.path.join(ConfigFilePath, "gentemp.conf")
     GENCTHAT_CONFIG = os.path.join(ConfigFilePath, "gencthat.conf")
     GENMOPEKA_CONFIG = os.path.join(ConfigFilePath, "genmopeka.conf")
+    GENSMS_VOIP_CONFIG = os.path.join(ConfigFilePath, "gensms_voip.conf")
 
     ConfigFileList = [
         GENMON_CONFIG,
@@ -4134,6 +4195,7 @@ if __name__ == "__main__":
         GENTEMP_CONFIG,
         GENCTHAT_CONFIG,
         GENMOPEKA_CONFIG,
+        GENSMS_VOIP_CONFIG,
     ]
 
     for ConfigFile in ConfigFileList:

@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - Added new add on program gencustomgpio.py (see https://github.com/jgyates/genmon/wiki/1----Software-Overview#gencustomgpiopy-optional)
 - Updated genmqtt to better handle the outage log
 - Added site name to short messages for gensms, genpushover and genslack
+- Added the ability to send SMS via https://voip.ms (see https://github.com/jgyates/genmon/wiki/1----Software-Overview#gensms_voippy-optional)
 
 ## V1.18.15 -2022-09-18
 - Correct issue with power graph

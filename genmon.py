@@ -652,6 +652,7 @@ class Monitor(MySupport):
                 "gencthat.log",
                 "genmopeka.log",
                 "gencustomgpio.log",
+                "gensms_voip.log",
             ]
             for File in FilesToSend:
                 LogFile = self.LogLocation + File
