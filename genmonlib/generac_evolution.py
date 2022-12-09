@@ -4868,7 +4868,7 @@ class Evolution(GeneratorController):
             EvoLC = self.EvolutionController and self.LiquidCooled
             if EvoLC is None:
                 EvoLC = False
-            Evo2 = self.EvolutionController and self.Evolution2:
+            Evo2 = self.EvolutionController and self.Evolution2
             if Evo2 is None:
                 Evo2 = False
             StartInfo["fueltype"] = self.FuelType
