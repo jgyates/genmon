@@ -1475,19 +1475,19 @@ class Evolution(GeneratorController):
         elif Command == "startexercise":
             Register = 0x0003  # remote run in quiet mode (exercise)
         elif Command == "resetalarm":
+            # appears to work on Evo LC and Evo2.0
             Register = 0x000D
+        # the next 3 commands are for setting the front panel buttons
+        elif Command == "auto":
+            Register = 0x000F  # set button to auto
+        elif Command == "manual":
+            Register = 0x000E
+        elif Command == "off":
+            Register = 0x0010
         else:
-            if self.RemoteButtonsSupported():
-                if Command == "auto":
-                    Register = 0x000F  # set button to auto
-                elif Command == "manual":
-                    Register = 0x000E
-                elif Command == "off":
-                    Register = 0x0010
-                else:
-                    "Invalid command syntax for command setremote (3)"
-            else:
-                return "Invalid command syntax for command setremote (2)"
+            "Invalid command syntax for command setremote (3)"
+        else:
+            return "Invalid command syntax for command setremote (2)"
 
         self.WriteIndexedRegister(Register, Value)
 
@@ -4868,6 +4868,9 @@ class Evolution(GeneratorController):
             EvoLC = self.EvolutionController and self.LiquidCooled
             if EvoLC is None:
                 EvoLC = False
+            Evo2 = self.EvolutionController and self.Evolution2:
+            if Evo2 is None:
+                Evo2 = False
             StartInfo["fueltype"] = self.FuelType
             StartInfo["model"] = self.Model
             StartInfo["nominalKW"] = self.NominalKW
@@ -4883,7 +4886,7 @@ class Evolution(GeneratorController):
             StartInfo["FuelConsumption"] = self.FuelConsumptionSupported()
             StartInfo["UtilityVoltage"] = True
             StartInfo["RemoteCommands"] = not self.SmartSwitch  # Start and Stop
-            StartInfo["ResetAlarms"] = EvoLC
+            StartInfo["ResetAlarms"] = EvoLC or Evo2
             StartInfo["AckAlarms"] = False
             StartInfo["RemoteTransfer"] = not self.SmartSwitch  # Start / Transfer
             StartInfo["RemoteButtons"] = self.RemoteButtonsSupported()  # On, Off , Auto
