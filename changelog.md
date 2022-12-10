@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Updated genmqtt to better handle the outage log
 - Added site name to short messages for gensms, genpushover and genslack
 - Added the ability to send SMS via https://voip.ms (see https://github.com/jgyates/genmon/wiki/1----Software-Overview#gensms_voippy-optional)
+- Added additional remote command to reset active alarms for Evolution 2.0 air cooled controllers
 
 ## V1.18.15 -2022-09-18
 - Correct issue with power graph
