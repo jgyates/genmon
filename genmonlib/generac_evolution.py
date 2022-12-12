@@ -1475,7 +1475,7 @@ class Evolution(GeneratorController):
         elif Command == "startexercise":
             Register = 0x0003  # remote run in quiet mode (exercise)
         elif Command == "resetalarm":
-            # appears to work on Evo LC and Evo2.0
+            # appears to work on Evo LC and Evo2.0 (tested with Firmware V1.15)
             Register = 0x000D
         # the next 3 commands are for setting the front panel buttons
         elif Command == "auto":
@@ -1854,7 +1854,9 @@ class Evolution(GeneratorController):
     # ----------  Evolution:SetGeneratorQuietMode--------------------------------
     def SetGeneratorQuietMode(self, CmdString):
 
-        if not self.EvolutionController or not self.LiquidCooled:
+        if not self.EvolutionController:
+            return "Not supported on this controller."
+        if not self.LiquidCooled and not self.Evolution2:   # only on evo2 and liquid cooled
             return "Not supported on this controller."
 
         # extract quiet mode setting from Command String
