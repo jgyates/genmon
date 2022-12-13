@@ -147,9 +147,9 @@ function installgenmon() {
     fi
     sudo $pipcommand install pytz
     if [ "$usepython3" = true ] ; then
-      sudo apt-get -yqq install build-essential libssl-dev libffi-dev python3-dev
+      sudo apt-get -yqq install build-essential libssl-dev libffi-dev python3-dev cargo
     else
-      sudo apt-get -yqq install build-essential libssl-dev libffi-dev python-dev
+      sudo apt-get -yqq install build-essential libssl-dev libffi-dev python-dev cargo
     fi
     sudo apt-get -yqq install cmake
     sudo $pipcommand install pyopenssl
