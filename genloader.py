@@ -241,7 +241,7 @@ class Loader(MySupport):
             command_list = ["cmake", "--version"]
             if not self.ExecuteCommandList(command_list):
                 if not self.AptUpdated:
-                    command_list = ["sudo", "apt-get", "-yqq", "update"]
+                    command_list = ["sudo", "apt-get", "-yqq", "--allow-releaseinfo-change","update"]
                     if not self.ExecuteCommandList(command_list):
                         self.LogInfo("Error: Unable to run apt-get update.")
                     self.AptUpdated = True
@@ -292,7 +292,7 @@ class Loader(MySupport):
             self.LogInfo("Installing " + pipInstallProgram)
 
             if not self.AptUpdated:
-                command_list = ["sudo", "apt-get", "-yqq", "update"]
+                command_list = ["sudo", "apt-get", "-yqq", "--allow-releaseinfo-change", "update"]
                 if not self.ExecuteCommandList(command_list):
                     self.LogInfo("Error: Unable to run apt-get update.")
                 self.AptUpdated = True
