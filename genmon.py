@@ -779,36 +779,16 @@ class Monitor(MySupport):
             command = command[len("generator:") :]
 
         CommandDict = {
-            "registers": [
-                self.Controller.DisplayRegisters,
-                (False,),
-                False,
-            ],  # display registers
-            "allregs": [
-                self.Controller.DisplayRegisters,
-                (True,),
-                False,
-            ],  # display registers
+            "registers": [self.Controller.DisplayRegisters,(False,),False,],  # display registers
+            "allregs": [self.Controller.DisplayRegisters,(True,),False,],  # display registers
             "logs": [self.Controller.DisplayLogs, (True, False), False],
-            "status": [
-                self.Controller.DisplayStatus,
-                (),
-                False,
-            ],  # display decoded generator info
+            "status": [self.Controller.DisplayStatus,(),False,],  # display decoded generator info
             "maint": [self.Controller.DisplayMaintenance, (), False],
             "monitor": [self.DisplayMonitor, (), False],
             "outage": [self.Controller.DisplayOutage, (), False],
             "settime": [self.StartTimeThread, (), False],  # set time and date
-            "setexercise": [
-                self.Controller.SetGeneratorExerciseTime,
-                (command.lower(),),
-                False,
-            ],
-            "setquiet": [
-                self.Controller.SetGeneratorQuietMode,
-                (command.lower(),),
-                False,
-            ],
+            "setexercise": [self.Controller.SetGeneratorExerciseTime,(command.lower(),),False,],
+            "setquiet": [self.Controller.SetGeneratorQuietMode,(command.lower(),),False,],
             "setremote": [
                 self.Controller.SetGeneratorRemoteCommand,
                 (command.lower(),),
