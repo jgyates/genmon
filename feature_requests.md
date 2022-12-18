@@ -17,3 +17,4 @@
 - [A HTTP and SNMP watchdog would be really a nice addition](https://github.com/jgyates/genmon/issues/735) - @acato
 - [Notices on CPU temp out of bounds](https://github.com/jgyates/genmon/issues/772) @tcflint
 - [Add user defined levels to low fuel notifications](https://github.com/jgyates/genmon/issues/818) @rwskinner
+- [Add opiton to restore backup settings](https://github.com/jgyates/genmon/issues/829) @dmperl 
