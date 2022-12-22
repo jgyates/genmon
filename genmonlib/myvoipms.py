@@ -21,12 +21,13 @@ from genmonlib.mysupport import MySupport
 class MyVoipMs(MySupport):
 
     #------------ MyVoipMs::init------------------------------------------------
-    def __init__(self, log = None, console = None, username = None, password = None, did = None):
+    def __init__(self, log = None, console = None, username = None, password = None, did = None, debug = False):
         self.log = log
         self.console = console
         self.username = username
         self.password = password
         self.did = did
+        self.debug = debug
 
         self.debug = False
         try:
@@ -38,6 +39,8 @@ class MyVoipMs(MySupport):
             ipaddresses = self.client.general.get.ip()
             # WAN IP address of this computer
             wanipaddress = self.GetWANIp()
+
+            self.LogDebug("WanIP: " + str(wanipaddress) + " Client IP: " + str(ipaddresses))
             # Allowed ip must match our WAN IP
             if wanipaddress != ipaddresses['ip']:
                 self.LogError("Warning WanIP and VoipMS IP addresses do not match: " + str(wanipaddress) + ": " +  ipaddresses['ip'])

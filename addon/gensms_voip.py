@@ -223,6 +223,7 @@ if __name__ == "__main__":
         password = config.ReadValue("password", default="")
         destination = config.ReadValue("destination", default="")
         did = config.ReadValue("did", default="")
+        debug = config.ReadValue("debug", return_type=bool, default=False)
 
         destination_str_list = destination.split(",")
 
@@ -269,7 +270,7 @@ if __name__ == "__main__":
         sys.exit(1)
     try:
 
-        Voip = myvoipms.MyVoipMs(log = log, console = console, username = username, password = password, did = did)
+        Voip = myvoipms.MyVoipMs(log = log, console = console, username = username, password = password, did = did, debug = debug)
 
         Generator = ClientInterface(host=address, port=port, log=log)
         sitename = Generator.ProcessMonitorCommand("generator: getsitename")
