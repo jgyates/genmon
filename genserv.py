@@ -202,6 +202,12 @@ def locked():
     LogError("Locked Page")
     return render_template("locked.html")
 
+# -------------------------------------------------------------------------------
+@app.route("/upload", methods=["PUT"])
+def upload():
+    # TODO
+    LogError("genserv: Upload")
+    return redirect(url_for("root"))
 
 # -------------------------------------------------------------------------------
 def ServePage(page_file):
@@ -916,10 +922,10 @@ def GetAddOns():
         AddOnCfg["gensms_voip"]["enable"] = ConfigFiles[GENLOADER_CONFIG].ReadValue(
             "enable", return_type=bool, section="gensms_voip", default=False
         )
-        AddOnCfg["gensms_voip"]["title"] = "SMS via VOIP using voip.ms"
+        AddOnCfg["gensms_voip"]["title"] = "SMS via VoIP using voip.ms"
 
         AddOnCfg["gensms_voip"]["description"] = Description
-        AddOnCfg["gensms_voip"]["icon"] = "Genmon"
+        AddOnCfg["gensms_voip"]["icon"] = "voipms"
         AddOnCfg["gensms_voip"][
             "url"
         ] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gensms_voippy-optional"
@@ -1805,7 +1811,7 @@ def GetAddOns():
             AddOnCfg["genmopeka"]["title"] = "Mopeka Pro Propane Tank Sensor"
 
             AddOnCfg["genmopeka"]["description"] = Description
-            AddOnCfg["genmopeka"]["icon"] = "Genmon"
+            AddOnCfg["genmopeka"]["icon"] = "mopeka"
             AddOnCfg["genmopeka"][
                 "url"
             ] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genmopekapy-optional"

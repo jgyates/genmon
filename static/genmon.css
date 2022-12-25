@@ -335,7 +335,7 @@ li a:hover:not(.active) {
 
 /* Addons */
 
-.linux_small, .mqtt_small, .rpi_small, .slack_small, .twilio_small, .pushover_small, .linux, .mqtt, .pushover, .rpi, .slack, .twilio, .sms, .sms_small, .csv_small, .csv, .selftest, .selftest_small, .Genmon, .Genmon_small, .text_small, .serveo, .alexa, .serveo_small, .tankutility_small, .alexa_small, .text, .tankutility, .snmp, .snmp_small{
+.linux_small, .mqtt_small, .rpi_small, .slack_small, .twilio_small, .pushover_small, .linux, .mqtt, .pushover, .rpi, .slack, .twilio, .sms, .sms_small, .csv_small, .csv, .selftest, .selftest_small, .Genmon, .Genmon_small, .text_small, .serveo, .alexa, .serveo_small, .tankutility_small, .alexa_small, .text, .tankutility, .snmp, .snmp_small, .voipms, .voipms_small, .mopeka, .mopeka_small{
 	background: url(images/addons.png) no-repeat;
 }
 
@@ -373,6 +373,18 @@ li a:hover:not(.active) {
 	background-position: -334px -362px ;
 	width: 50px;
 	height: 13px;
+}
+
+.voipms_small{
+	background-position: -262px -391px ;
+	width: 50px;
+	height: 9px;
+}
+
+.mopeka_small{
+	background-position: -335px -384px ;
+	width: 50px;
+	height: 19px;
 }
 
 .linux{
@@ -499,6 +511,18 @@ li a:hover:not(.active) {
 	background-position: -261px -479px ;
 	width: 252px;
 	height: 120px;
+}
+
+.voipms{
+	background-position: -260px -792px ;
+	width: 252px;
+	height: 47px;
+}
+
+.mopeka{
+	background-position: -4px -756px ;
+	width: 252px;
+	height: 97px;
 }
 
 .tankutility{

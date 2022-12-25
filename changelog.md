@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Added the ability to send SMS via https://voip.ms (see https://github.com/jgyates/genmon/wiki/1----Software-Overview#gensms_voippy-optional)
 - Added additional remote command to reset active alarms for Evolution 2.0 air cooled controllers
 - Updated install script to changing cryptography requirements
+- Updated icons for new add ons (thanks @buschauer)
 
 ## V1.18.15 -2022-09-18
 - Correct issue with power graph

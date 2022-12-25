@@ -2484,7 +2484,12 @@ function DisplayAbout(){
       outstr += '&nbsp;&nbsp;<button id="submitLogs" onClick="submitLogs();">Submit Logs</button>';
       //Get Backup
       outstr += '<br><br>Download Backup Files:<br><br>';
+      // TODO
+      //outstr += '<br><br>Download Backup Files or Restore Backup:<br><br>';
+      
       outstr += '&nbsp;&nbsp;<button id="backupFiles" onClick="backupFiles();">Backup</button>';
+      // TODO
+      //outstr += '&nbsp;&nbsp;<button id="restoreFiles" onClick="restoreFiles();">Restore</button>';
       //Get Log Files
       outstr += '<br><br>Download Log Files:<br><br>';
       outstr += '&nbsp;&nbsp;<button id="logFiles" onClick="logFiles();">Log Files</button></center>';
@@ -2634,6 +2639,19 @@ function updateSoftware(){
 
 
     });
+}
+
+//*****************************************************************************
+function restoreFiles(){
+    // TODO
+    let input = document.createElement('input');
+    input.type = 'file';
+    input.onchange = _ => {
+      // you can use this method to get file and perform respective operations
+      let files =   Array.from(input.files);
+      console.log(files);
+    };
+    input.click();
 }
 //*****************************************************************************
 function backupFiles(){
