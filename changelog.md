@@ -11,6 +11,9 @@ All notable changes to this project will be documented in this file.
 - Added additional remote command to reset active alarms for Evolution 2.0 air cooled controllers
 - Updated install script to changing cryptography requirements
 - Updated icons for new add ons (thanks @buschauer)
+- Update to attempt to display WiFi signal strength consistent across various network drivers
+- Minor update in genloader to better support older distros of Raspbian
+- Updated response to remote email commands to avoid email loop problem
 
 ## V1.18.15 -2022-09-18
 - Correct issue with power graph

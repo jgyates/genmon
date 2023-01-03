@@ -228,6 +228,7 @@ class Loader(MySupport):
 
             if _error:
                 self.LogInfo("Error in ExecuteCommandList  : " + str(_error))
+                return False
             rc = process.returncode
             return True
         except:
@@ -243,7 +244,10 @@ class Loader(MySupport):
                 if not self.AptUpdated:
                     command_list = ["sudo", "apt-get", "-yqq", "--allow-releaseinfo-change","update"]
                     if not self.ExecuteCommandList(command_list):
-                        self.LogInfo("Error: Unable to run apt-get update.")
+                        self.LogInfo("Error: Unable to run apt-get update. Retrying...")
+                        command_list = ["sudo", "apt-get", "-yqq", "update"]
+                        if not self.ExecuteCommandList(command_list):
+                            self.LogInfo("Error: Unable to run apt-get update. ")
                     self.AptUpdated = True
                 self.LogInfo("Installing cmake...")
                 command_list = [
@@ -294,7 +298,10 @@ class Loader(MySupport):
             if not self.AptUpdated:
                 command_list = ["sudo", "apt-get", "-yqq", "--allow-releaseinfo-change", "update"]
                 if not self.ExecuteCommandList(command_list):
-                    self.LogInfo("Error: Unable to run apt-get update.")
+                    self.LogInfo("Error: Unable to run apt-get update. Retrying..")
+                    command_list = ["sudo", "apt-get", "-yqq", "update"]
+                    if not self.ExecuteCommandList(command_list):
+                        self.LogInfo("Error: Unable to run apt-get update. Retrying..")
                 self.AptUpdated = True
             command_list = ["sudo", "apt-get", "-yqq", "install", pipInstallProgram]
             if not self.ExecuteCommandList(command_list):

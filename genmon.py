@@ -742,20 +742,20 @@ class Monitor(MySupport):
         if isinstance(command, bytes):
             command = command.decode("utf-8")
 
-        msgsubject = "Generator Command Response at " + self.SiteName
+        msgsubject = "Genmon Command Response at " + self.SiteName
         if not fromsocket:
             msgbody = "\n"
         else:
             msgbody = ""
 
         if (len(command)) == 0:
-            msgsubject = "Error in Generator Command (Lenght is zero)"
+            msgsubject = "Error in Genmon Command (Lenght is zero)"
             msgbody += "Invalid GENERATOR command: zero length command."
             LocalError = True
 
         if not LocalError:
             if not command.lower().startswith("generator:"):
-                msgsubject = "Error in Generator Command (command prefix)"
+                msgsubject = "Error in Genmon Command (command prefix)"
                 msgbody += 'Invalid GENERATOR command: all commands must be prefixed by "generator: "'
                 LocalError = True
 

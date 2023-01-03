@@ -454,12 +454,12 @@ class MyPlatform(MyCommon):
                         continue
                     ListItems = line.split()
                     if len(ListItems) > 4:
-                        WiFiInfo.append(
-                            {
-                                "WLAN Signal Level": ListItems[3].replace(".", "")
-                                + " dBm"
-                            }
-                        )
+
+                        signal = self.GetWiFiSignalStrength()
+                        if signal != 0:
+                            WiFiInfo.append({"WLAN Signal Level": str(signal) + " dBm"})
+                        else:
+                            WiFiInfo.append({"WLAN Signal Level": ListItems[3].replace(".", "") + " dBm"})
                         # Note that some WLAN drivers make this value based from 0 - 70, others are 0-100
                         # There is no standard on the range
                         try:
