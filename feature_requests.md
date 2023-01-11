@@ -15,8 +15,7 @@
 - [Status Screen enhancements Utility Voltage Trend and weather](https://github.com/jgyates/genmon/issues/439) - @gzebrick
 - [View past power output in 1 hour chunks](https://github.com/jgyates/genmon/issues) - @skipfire
 - [A HTTP and SNMP watchdog would be really a nice addition](https://github.com/jgyates/genmon/issues/735) - @acato
-- [Notices on CPU temp out of bounds](https://github.com/jgyates/genmon/issues/772) @tcflint
 - [Add user defined levels to low fuel notifications](https://github.com/jgyates/genmon/issues/818) @rwskinner
-- [Add opiton to restore backup settings](https://github.com/jgyates/genmon/issues/829) @dmperl 
+- [Add option to restore backup settings](https://github.com/jgyates/genmon/issues/829) @dmperl 
 - [Hardware keys (FIDO2) for 2fa](https://github.com/jgyates/genmon/issues/841) @danodemano 
 - [Add gauges for external Temp sensors](https://github.com/jgyates/genmon/issues/639) @T-C123 

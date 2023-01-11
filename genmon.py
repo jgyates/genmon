@@ -875,11 +875,7 @@ class Monitor(MySupport):
             "sendlogfiles": [self.SendSupportInfo, (True,), True],
             "support_data_json": [self.GetSupportData, (), True],
             "set_tank_data": [self.Controller.SetExternalTankData, (command,), True],
-            "set_temp_data": [
-                self.Controller.SetExternalTemperatureData,
-                (command,),
-                True,
-            ],
+            "set_temp_data": [self.Controller.SetExternalTemperatureData,(command,),True,],
             "set_power_data": [self.Controller.SetExternalCTData, (command,), True],
             "notify_message": [self.SendMessage, (command,), True],
         }
