@@ -18,4 +18,3 @@
 - [Add user defined levels to low fuel notifications](https://github.com/jgyates/genmon/issues/818) @rwskinner
 - [Add option to restore backup settings](https://github.com/jgyates/genmon/issues/829) @dmperl 
 - [Hardware keys (FIDO2) for 2fa](https://github.com/jgyates/genmon/issues/841) @danodemano 
-- [Add gauges for external Temp sensors](https://github.com/jgyates/genmon/issues/639) @T-C123 
