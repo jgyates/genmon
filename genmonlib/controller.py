@@ -1852,7 +1852,6 @@ class GeneratorController(MySupport):
                             Tile = MyTile(self.log,title=temp_name, units=temp_units,type="temperature", subtype = "external",
                                 nominal=temp_nominal, maximum=temp_max, callback=self.GetExternalTemp, callbackparameters=(index,),)
                             self.TileList.append(Tile)
-                            self.LogDebug("Added temp gauge")
                         index += 1
 
                 except Exception as e1:
