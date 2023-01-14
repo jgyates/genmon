@@ -16,6 +16,7 @@ import signal
 import sys
 import threading
 import time
+import itertools
 
 try:
     # this will add the parent of the genmonlib folder to the path
@@ -94,19 +95,13 @@ class GenTemp(MySupport):
 
             self.config = MyConfig(filename=configfile, section="gentemp", log=self.log)
 
-            self.UseMetric = self.config.ReadValue(
-                "use_metric", return_type=bool, default=False
-            )
-            self.PollTime = self.config.ReadValue(
-                "poll_frequency", return_type=float, default=1
-            )
+            self.UseMetric = self.config.ReadValue("use_metric", return_type=bool, default=False)
+            self.PollTime = self.config.ReadValue("poll_frequency", return_type=float, default=1)
             self.debug = self.config.ReadValue("debug", return_type=bool, default=False)
-            self.DeviceLabels = self.GetParamList(
-                self.config.ReadValue("device_labels", default=None)
-            )
-            self.BlackList = self.GetParamList(
-                self.config.ReadValue("blacklist", default=None)
-            )
+            self.DeviceLabels = self.GetParamList(self.config.ReadValue("device_labels", default=None))
+            self.DeviceNominalValues = self.GetParamList(self.config.ReadValue("device_nominal_values", default=None), bInteger=True)
+            self.DeviceMaxValues = self.GetParamList(self.config.ReadValue("device_max_values", default=None), bInteger=True)
+            self.BlackList = self.GetParamList(self.config.ReadValue("blacklist", default=None))
 
             if self.MonitorAddress == None or not len(self.MonitorAddress):
                 self.MonitorAddress = ProgramDefaults.LocalHost
@@ -117,10 +112,17 @@ class GenTemp(MySupport):
             sys.exit(1)
 
         try:
+                    
+            self.Generator = ClientInterface(host=self.MonitorAddress, port=port, log=self.log)
 
-            self.Generator = ClientInterface(
-                host=self.MonitorAddress, port=port, log=self.log
-            )
+            self.BoundsData = [] 
+            if self.DeviceNominalValues != None and self.DeviceMaxValues != None:
+                for (NominalValue,MaxValue) in itertools.zip_longest(self.DeviceNominalValues, self.DeviceMaxValues):
+                    self.BoundsData.append({"max": MaxValue, "nominal": NominalValue})
+                return_string = json.dumps(self.BoundsData)
+                self.LogDebug("Bounds Data: " + str(self.BoundsData))
+                self.SendCommand("generator: set_temp_bounds=" + return_string)
+
             self.DeviceList = self.EnumDevices()
 
             if not len(self.DeviceList):
@@ -129,9 +131,7 @@ class GenTemp(MySupport):
                 sys.exit(1)
 
             # start thread monitor time for exercise
-            self.Threads["GenTempThread"] = MyThread(
-                self.GenTempThread, Name="GenTempThread", start=False
-            )
+            self.Threads["GenTempThread"] = MyThread(self.GenTempThread, Name="GenTempThread", start=False)
             self.Threads["GenTempThread"].Start()
 
             signal.signal(signal.SIGTERM, self.SignalClose)
@@ -143,7 +143,7 @@ class GenTemp(MySupport):
             sys.exit(1)
 
     # ----------  GenTemp::GetParamList -----------------------------------------
-    def GetParamList(self, input_string):
+    def GetParamList(self, input_string, bInteger = False):
 
         ReturnValue = []
         try:
@@ -154,7 +154,10 @@ class GenTemp(MySupport):
                         for Items in ReturnList:
                             Items = Items.strip()
                             if len(Items):
-                                ReturnValue.append(Items)
+                                if bInteger:
+                                    ReturnValue.append(int(Items))
+                                else:
+                                    ReturnValue.append(Items)
                         if len(ReturnValue):
                             return ReturnValue
             return None
@@ -286,11 +289,7 @@ class GenTemp(MySupport):
                             "Device: %s Reading: %.2f %s"
                             % (self.GetIDFromDeviceName(sensor), temp, units)
                         )
-                        if (
-                            isinstance(self.DeviceLabels, list)
-                            and len(self.DeviceLabels)
-                            and (labelIndex < len(self.DeviceLabels))
-                        ):
+                        if (isinstance(self.DeviceLabels, list) and len(self.DeviceLabels) and (labelIndex < len(self.DeviceLabels))):
                             device_label = self.DeviceLabels[labelIndex]
                         else:
                             device_label = self.GetIDFromDeviceName(sensor)
@@ -298,9 +297,7 @@ class GenTemp(MySupport):
                             {device_label: "%.2f %s" % (temp, units)}
                         )
                     labelIndex += 1
-                return_string = json.dumps(
-                    {"External Temperature Sensors": ReturnDeviceData}
-                )
+                return_string = json.dumps({"External Temperature Sensors": ReturnDeviceData})
                 self.SendCommand("generator: set_temp_data=" + return_string)
 
                 self.LogDebug(return_string)

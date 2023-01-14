@@ -285,7 +285,7 @@ class MyTile(MyCommon):
                 self.Maximum = self.SetDefault(self.Maximum, self.Nominal)
                 self.Divisions = self.SetDefault(self.Divisions, int(self.Maximum / 10))
                 self.SubDivisions = self.SetDefault(self.SubDivisions, 10)
-                if self.SubType.lower() == "coolant":
+                if self.SubType != None and (self.SubType.lower() == "coolant" or self.SubType.lower() == "external"):
                     self.Labels = self.SetDefault(
                         self.Labels,
                         list(

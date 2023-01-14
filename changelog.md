@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Update to attempt to display WiFi signal strength consistent across various network drivers
 - Minor update in genloader to better support older distros of Raspbian
 - Updated response to remote email commands to avoid email loop problem
+- Added feature request to allow external temperature sensors to be displayed as gauges
 
 ## V1.18.15 -2022-09-18
 - Correct issue with power graph

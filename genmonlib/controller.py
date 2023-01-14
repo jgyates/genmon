@@ -20,6 +20,7 @@ import os
 import sys
 import threading
 import time
+import itertools
 
 from genmonlib.mylog import SetupLogger
 from genmonlib.myplatform import MyPlatform
@@ -93,9 +94,6 @@ class GeneratorController(MySupport):
         self.LastHouseKeepingTime = None
         self.TileList = []  # Tile list for GUI
         self.TankData = None
-        self.ExternalDataLock = threading.RLock()
-        self.ExternalTempData = None
-        self.ExternalTempDataTime = None
         self.FuelLevelOK = None  # used in mynotify.py
         self.debug = False
 
@@ -119,6 +117,11 @@ class GeneratorController(MySupport):
         self.UseExternalFuelData = False
         self.UseExternalCTData = False
         self.ExternalCTData = None
+        self.UseExternalTempData = False
+        self.ExternalDataLock = threading.RLock()
+        self.ExternalTempData = None
+        self.ExternalTempDataTime = None
+        self.ExternalTempBounds = None
 
         self.ProgramStartTime = datetime.datetime.now()  # used for com metrics
         self.OutageStartTime = (
@@ -1831,6 +1834,30 @@ class GeneratorController(MySupport):
                 )
                 self.TileList.append(Tile)
 
+            # external Temp data from gentemp add on
+            if self.UseExternalTempData and self.ExternalTempData != None and self.ExternalTempBounds != None:
+                # setup each temp gauge
+                try:
+                    self.LogDebug("Setting up gauges for external temp sensors")
+                    index = 0
+                    TempList = self.ExternalTempData["External Temperature Sensors"]
+                    for (TempDict,TempBounds) in itertools.zip_longest(TempList, self.ExternalTempBounds):
+                        temp_name = list(TempDict.keys())[0]
+                        temp_max = TempBounds['max']
+                        temp_nominal = TempBounds['nominal']
+                        temp_value = TempDict[temp_name]
+                        temp_list = temp_value.strip().split(" ")
+                        temp_units = temp_list[1]
+                        if temp_name != None and temp_max != None and temp_nominal != None:
+                            Tile = MyTile(self.log,title=temp_name, units=temp_units,type="temperature", subtype = "external",
+                                nominal=temp_nominal, maximum=temp_max, callback=self.GetExternalTemp, callbackparameters=(index,),)
+                            self.TileList.append(Tile)
+                            self.LogDebug("Added temp gauge")
+                        index += 1
+
+                except Exception as e1:
+                    self.LogErrorLine("Error in SetupCommonTiles: TempData: " + str(e1))
+                
             # wifi signal strength
             if self.bUseLinuxWifiSignalGauge and self.Platform != None:
                 signal = self.Platform.GetWiFiSignalStrength()
@@ -2087,24 +2114,13 @@ class GeneratorController(MySupport):
                 except Exception as e1:
                     self.LogErrorLine("Error in DisplayStatus: " + str(e1))
 
-            ReturnCurrent = self.CheckExternalCTData(
-                request="current", ReturnFloat=True, gauge=True
-            )
-            ReturnCurrent1 = self.CheckExternalCTData(
-                request="ct1", ReturnFloat=True, gauge=True
-            )
-            ReturnCurrent2 = self.CheckExternalCTData(
-                request="ct2", ReturnFloat=True, gauge=True
-            )
-            ReturnPower = self.CheckExternalCTData(
-                request="power", ReturnFloat=True, gauge=True
-            )
-            ReturnPower1 = self.CheckExternalCTData(
-                request="ctpower1", ReturnFloat=True, gauge=True
-            )
-            ReturnPower2 = self.CheckExternalCTData(
-                request="ctpower2", ReturnFloat=True, gauge=True
-            )
+            ReturnCurrent = self.CheckExternalCTData(request="current", ReturnFloat=True, gauge=True)
+            ReturnCurrent1 = self.CheckExternalCTData(request="ct1", ReturnFloat=True, gauge=True)
+            ReturnCurrent2 = self.CheckExternalCTData(request="ct2", ReturnFloat=True, gauge=True)
+            ReturnPower = self.CheckExternalCTData(request="power", ReturnFloat=True, gauge=True)
+            ReturnPower1 = self.CheckExternalCTData(request="ctpower1", ReturnFloat=True, gauge=True)
+            ReturnPower2 = self.CheckExternalCTData(request="ctpower2", ReturnFloat=True, gauge=True)
+            
             if ReturnCurrent != None and ReturnPower != None:
                 ExternalSensors = []
                 Status["Status"].append({"External Line Sensors": ExternalSensors})
@@ -2565,6 +2581,80 @@ class GeneratorController(MySupport):
             return "Error"
         return "OK"
 
+    # ----------  GeneratorController::SetExternalTemperatureData----------------
+    def SetExternalTemperatureData(self, command):
+
+        try:
+            if not isinstance(command, str) and not isinstance(command, unicode):
+                self.LogErrorLine("Error in SetExternalTemperatureData, invalid data: " + str(type(command)))
+                return "Error"
+
+            bInitTempTiles = False
+            with self.ExternalDataLock:
+                CmdList = command.split("=")
+                if len(CmdList) == 2:
+                    if self.ExternalTempData == None:
+                        bInitTempTiles = True
+                    self.ExternalTempData = json.loads(CmdList[1])
+                    self.ExternalTempDataTime = datetime.datetime.now()
+                else:
+                    self.LogError("Error in  SetExternalTemperatureData: invalid input: " + str(len(CmdList)))
+                    return "Error"
+            if bInitTempTiles:
+                self.UseExternalTempData = True
+                self.SetupTiles()
+
+        except Exception as e1:
+            self.LogErrorLine("Error in SetExternalTemperatureData: " + str(e1))
+            return "Error"
+
+        return "OK"
+
+    # ----------  GeneratorController::GetExternalTemp--------------------------
+    # used to get external temp data for gauge / tile
+    def GetExternalTemp(self, sensor_index):
+        try:
+            if not self.UseExternalTempData or self.ExternalTempData == None or self.ExternalTempBounds == None:
+                return 0.0
+            index = 0
+            TempList = self.ExternalTempData["External Temperature Sensors"]
+            for TempDict in TempList:
+                if index == sensor_index:
+                    temp_name = list(TempDict.keys())[0]
+                    temp_value = TempDict[temp_name]
+                    temp_list = temp_value.strip().split(" ")
+                    temp_value = temp_list[0]
+                    return float(temp_value)
+                    
+                index += 1
+        except Exception as e1:
+            self.LogErrorLine("Error in GetExternalTemp: " + str(e1))
+            return 0.0
+
+    # ----------  GeneratorController::SetExternalTemperatureBounds-------------
+    # NOTE: This command must be called first before SetExternalTemperatureData
+    # otherwise the bounds data will be ignored
+    def SetExternalTemperatureBounds(self, command):
+
+        try:
+            if not isinstance(command, str) and not isinstance(command, unicode):
+                self.LogErrorLine("Error in SetExternalTemperatureBounds, invalid data: " + str(type(command)))
+                return "Error"
+
+            with self.ExternalDataLock:
+                CmdList = command.split("=")
+                if len(CmdList) == 2:
+                    self.ExternalTempBounds = json.loads(CmdList[1])
+
+                else:
+                    self.LogError("Error in  SetExternalTemperatureBounds: invalid input: " + str(len(CmdList)))
+                    return "Error"
+
+        except Exception as e1:
+            self.LogErrorLine("Error in SetExternalTemperatureBounds: " + str(e1))
+            return "Error"
+
+        return "OK"
     # ----------  GeneratorController::SetExternalCTData-------------------------
     def SetExternalCTData(self, command):
         try:
@@ -2964,34 +3054,6 @@ class GeneratorController(MySupport):
             return "Error in DeleteMaintLogRow: " + str(e1)
         return "OK"
 
-    # ----------  GeneratorController::SetExternalTemperatureData----------------
-    def SetExternalTemperatureData(self, command):
-
-        try:
-            if not isinstance(command, str) and not isinstance(command, unicode):
-                self.LogErrorLine(
-                    "Error in SetExternalTemperatureData, invalid data: "
-                    + str(type(command))
-                )
-                return "Error"
-
-            with self.ExternalDataLock:
-                CmdList = command.split("=")
-                if len(CmdList) == 2:
-                    self.ExternalTempData = json.loads(CmdList[1])
-                    self.ExternalTempDataTime = datetime.datetime.now()
-                else:
-                    self.LogError(
-                        "Error in  SetExternalTemperatureData: invalid input: "
-                        + str(len(CmdList))
-                    )
-                    return "Error"
-
-        except Exception as e1:
-            self.LogErrorLine("Error in SetExternalTemperatureData: " + str(e1))
-            return "Error"
-
-        return "OK"
 
     # ----------  GeneratorController::Close-------------------------------------
     def Close(self):

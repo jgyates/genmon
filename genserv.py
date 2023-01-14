@@ -1752,7 +1752,24 @@ def GetAddOns():
             bounds="",
             display_name="Sensor Names",
         )
-
+        AddOnCfg["gentemp"]["parameters"]["device_nominal_values"] = CreateAddOnParam(
+            ConfigFiles[GENTEMP_CONFIG].ReadValue(
+                "device_nominal_values", return_type=str, default=""
+            ),
+            "string",
+            "Comma separated list of nominal temperature values for the sensos. The order of these values must match the order of the Sensor Names. Leave blank to disable External Temp Sensor gauges.",
+            bounds="",
+            display_name="Sensor Nominal Values",
+        )
+        AddOnCfg["gentemp"]["parameters"]["device_max_values"] = CreateAddOnParam(
+            ConfigFiles[GENTEMP_CONFIG].ReadValue(
+                "device_max_values", return_type=str, default=""
+            ),
+            "string",
+            "Comma separated list of maximum temperature values for the sensos. The order of these values must match the order of the Sensor Names. Leave blank to disable External Temp Sensor gauges.",
+            bounds="",
+            display_name="Sensor Maximum Values",
+        )
         # GENSENSORHAT
         AddOnCfg["gencthat"] = collections.OrderedDict()
         AddOnCfg["gencthat"]["enable"] = ConfigFiles[GENLOADER_CONFIG].ReadValue(

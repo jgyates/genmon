@@ -861,21 +861,16 @@ class Monitor(MySupport):
                 (command.lower(),),
                 True,
             ],  # only used for debug purposes, Read Register Non Cached
-            "writeregvalue": [
-                self.Controller.WriteRegValue,
-                (command.lower(),),
-                True,
-            ],  # only used for debug purposes, Read Register Non Cached
-            "getdebug": [
-                self.GetDeadThreadName,
-                (),
-                True,
-            ],  # only used for debug purposes. If a thread crashes it tells you the thread name
+            # only used for debug purposes, Read Register Non Cached
+            "writeregvalue": [self.Controller.WriteRegValue,(command.lower(),),True,],  
+            # only used for debug purposes. If a thread crashes it tells you the thread name
+            "getdebug": [self.GetDeadThreadName,(),True,],  
             "sendregisters": [self.SendSupportInfo, (False,), True],
             "sendlogfiles": [self.SendSupportInfo, (True,), True],
             "support_data_json": [self.GetSupportData, (), True],
             "set_tank_data": [self.Controller.SetExternalTankData, (command,), True],
             "set_temp_data": [self.Controller.SetExternalTemperatureData,(command,),True,],
+            "set_temp_bounds": [self.Controller.SetExternalTemperatureBounds,(command,),True,],
             "set_power_data": [self.Controller.SetExternalCTData, (command,), True],
             "notify_message": [self.SendMessage, (command,), True],
         }
