@@ -2403,17 +2403,6 @@ def ReadAdvancedSettingsFromFile():
             GENMON_SECTION,
             "userdatalocation",
         ]
-        ConfigSettings["enabledebug"] = [
-            "boolean",
-            "Enable Debug",
-            24,
-            False,
-            "",
-            0,
-            GENMON_CONFIG,
-            GENMON_SECTION,
-            "enabledebug",
-        ]
         ConfigSettings["ignore_unknown"] = [
             "boolean",
             "Ignore Unknown Values",
