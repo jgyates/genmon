@@ -771,9 +771,7 @@ class Monitor(MySupport):
             try:
                 self.genmonext.PreProcessCommand(command)
             except Exception as e1:
-                self.LogErrorLine(
-                    "Error Calling GenmonExt:PreProcessCommand: " + str(e1)
-                )
+                self.LogErrorLine("Error Calling GenmonExt:PreProcessCommand: " + str(e1))
 
         if command.lower().startswith("generator:"):
             command = command[len("generator:") :]
