@@ -103,5 +103,7 @@ One important step is to validate your serial port is working properly. You can 
 " target="_blank"><img src="http://img.youtube.com/vi/cn91Hplkl0w/0.jpg"
 alt="Genmon Demo" width="240" height="180" border="10" /></a>
 
+[Video Series on using Genmon with the Briggs and Stratton GD-1030](https://www.youtube.com/@genmonbriggs9033/videos)
+
 # Documentation
 * [Genmon Project Wiki](https://github.com/jgyates/genmon/wiki)
