@@ -317,6 +317,13 @@ class GenMopekaData(MySupport):
                     "cap_length": 3,
                 },
                 # for horizontal tanks the cap length is estimated to be half the diameter
+                "120_gal_horiz": {
+                    "length": (66 - 12),
+                    "diameter": 24,
+                    "orientation": "horizontal",
+                    "cap": "spherical",
+                    "cap_length": 12,
+                },
                 "250_gal": {
                     "length": (92 - 30),
                     "diameter": 30,

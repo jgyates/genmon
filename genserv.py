@@ -1858,7 +1858,7 @@ def GetAddOns():
                 ),
                 "list",
                 "Type of tank used. If Custom is used then Max and Min values must be setup in /etc/genmon/genmopeka.conf",
-                bounds="20_LB,30_LB,40_LB,100_LB,200_LB,120_GAL,250_GAL,500_GAL,1000_GAL,Custom",
+                bounds="20_LB,30_LB,40_LB,100_LB,200_LB,120_GAL,120_GAL_HORIZ,250_GAL,500_GAL,1000_GAL,Custom",
                 display_name="Tank Size",
             )
             AddOnCfg["genmopeka"]["parameters"]["send_notices"] = CreateAddOnParam(
