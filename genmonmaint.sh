@@ -175,7 +175,7 @@ function installgenmon() {
     sudo chmod 775 "$genmondir/genmonmaint.sh"
     installrpirtscts
 
-    if [ -z "$2" ] || [ $1 == "prompt" ]; then    # Is parameter #1 zero length?
+    if [ -z "$2" ] && [ $1 != "noprompt" ]; then    # Is parameter #1 zero length?
         read -p "Copy configuration files to $config_path? (y/n)?" choice
         case "$choice" in
           y|Y ) echo "Copying *.conf files to "$config_path""
@@ -190,7 +190,7 @@ function installgenmon() {
     else
         copyconffiles
     fi
-    if [ -z "$2" ] || [ $1 == "prompt" ]; then    # Is parameter #1 zero length?
+    if [ -z "$2" ] && [ $1 != "noprompt" ]; then    # Is parameter #1 zero length?
       read -p "Setup the raspberry pi onboard serial port? (y/n)?" choice
       case "$choice" in
         y|Y ) echo "Setting up serial port..."
