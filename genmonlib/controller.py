@@ -303,7 +303,7 @@ class GeneratorController(MySupport):
                 or PickupVoltage == None
             ):
                 return
-            
+
             if UtilityVolts < 0 or ThresholdVoltage < 0 or PickupVoltage < 0:
                 # invalid value
                 return
