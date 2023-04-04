@@ -339,8 +339,9 @@ class GeneratorController(MySupport):
                         0
                     ]  # remove microseconds from string
                     msgbody = (
-                        "\nUtility Power Restored. Duration of outage " + OutageStr
+                        "\nUtility Power Restored at " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ". Duration of outage " + OutageStr
                     )
+                    
                     self.MessagePipe.SendMessage(
                         "Outage Recovery Notice at " + self.SiteName,
                         msgbody,
