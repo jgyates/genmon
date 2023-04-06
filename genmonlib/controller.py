@@ -332,28 +332,15 @@ class GeneratorController(MySupport):
             if self.SystemInOutage:
                 if UtilityVolts > PickupVoltage:
                     self.SystemInOutage = False
-                    self.LastOutageDuration = (
-                        datetime.datetime.now() - self.OutageStartTime
-                    )
-                    OutageStr = str(self.LastOutageDuration).split(".")[
-                        0
-                    ]  # remove microseconds from string
-                    msgbody = (
-                        "\nUtility Power Restored at " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ". Duration of outage " + OutageStr
-                    )
+                    self.LastOutageDuration = (datetime.datetime.now() - self.OutageStartTime)
+                    OutageStr = str(self.LastOutageDuration).split(".")[0]      # remove microseconds from string
+                    msgbody = ("\nUtility Power Restored at " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ". Duration of outage " + OutageStr)
+                    self.MessagePipe.SendMessage("Outage Recovery Notice at " + self.SiteName,msgbody,msgtype="outage")
 
-                    self.MessagePipe.SendMessage(
-                        "Outage Recovery Notice at " + self.SiteName,
-                        msgbody,
-                        msgtype="outage",
-                    )
                     try:
                         if self.FuelConsumptionSupported():
                             if self.LastOutageDuration.total_seconds():
-                                FuelUsed = self.GetPowerHistory(
-                                    "power_log_json=%d,fuel"
-                                    % self.LastOutageDuration.total_seconds()
-                                )
+                                FuelUsed = self.GetPowerHistory("power_log_json=%d,fuel" % self.LastOutageDuration.total_seconds())
                             else:
                                 # Outage of zero seconds...
                                 if self.UseMetric:
@@ -363,33 +350,17 @@ class GeneratorController(MySupport):
                             if len(FuelUsed) and not "unknown" in FuelUsed.lower():
                                 OutageStr += "," + FuelUsed
                     except Exception as e1:
-                        self.LogErrorLine(
-                            "Error recording fuel usage for outage: " + str(e1)
-                        )
+                        self.LogErrorLine("Error recording fuel usage for outage: " + str(e1))
                     # log outage to file
-                    if (
-                        self.LastOutageDuration.total_seconds()
-                        > self.MinimumOutageDuration
-                    ):
-                        self.LogToFile(
-                            self.OutageLog,
-                            self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"),
-                            OutageStr,
-                        )
+                    if (self.LastOutageDuration.total_seconds()> self.MinimumOutageDuration):
+                        self.LogToFile(self.OutageLog, self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"),OutageStr,)
             else:
                 if UtilityVolts < ThresholdVoltage:
                     if self.CheckOutageNoticeDelay():
                         self.SystemInOutage = True
                         self.OutageStartTime = datetime.datetime.now()
-                        msgbody = (
-                            "\nUtility Power Out at "
-                            + self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S")
-                        )
-                        self.MessagePipe.SendMessage(
-                            "Outage Notice at " + self.SiteName,
-                            msgbody,
-                            msgtype="outage",
-                        )
+                        msgbody = ("\nUtility Power Out at "+ self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"))
+                        self.MessagePipe.SendMessage("Outage Notice at " + self.SiteName,msgbody,msgtype="outage",)
                 else:
                     self.OutageNoticeDelayTime = None
         except Exception as e1:
