@@ -1,6 +1,12 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.18.17 -2022-04-06
+- Added feature request to allow external temperature sensors to be displayed as gauges
+- Update for horizontal 120 gal tanks in mopeka sensor add on
+- update to genmonmaint.sh for noprompt copyfiles (thanks @skipfire)
+- Updated tooltip comment
+
 ## V1.18.16 -2022-12-06
 - Change to allow CPU temp gauge for any linux system
 - Update to support version info in Alpine Linux (thanks @gregmac)
@@ -14,10 +20,6 @@ All notable changes to this project will be documented in this file.
 - Update to attempt to display WiFi signal strength consistent across various network drivers
 - Minor update in genloader to better support older distros of Raspbian
 - Updated response to remote email commands to avoid email loop problem
-- Added feature request to allow external temperature sensors to be displayed as gauges
-- Update for horizontal 120 gal tanks in mopeka sensor add on
-- update to genmonmaint.sh for noprompt copyfiles (thanks @skipfire)
-- Updated tooltip comment
 
 ## V1.18.15 -2022-09-18
 - Correct issue with power graph
