@@ -1,7 +1,7 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
-## V1.18.17 -2022-04-06
+## V1.18.17 -2023-04-06
 - Added feature request to allow external temperature sensors to be displayed as gauges
 - Update for horizontal 120 gal tanks in mopeka sensor add on
 - update to genmonmaint.sh for noprompt copyfiles (thanks @skipfire)
