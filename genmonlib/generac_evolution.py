@@ -677,7 +677,10 @@ class Evolution(GeneratorController):
             if not self.EvolutionController:
                 return []
             if self.LiquidCooled:
-                FileName = "EvoLC_Fuel.txt"
+                if self.Evo45L:
+                    FileName = "EvoLC45_Fuel.txt"
+                else:
+                    FileName = "EvoLC_Fuel.txt"
             else:
                 if self.Evolution2:
                     FileName = "EvoAC2_Fuel.txt"
@@ -775,7 +778,7 @@ class Evolution(GeneratorController):
             for Item in ReturnList:
                 if len(Item) < 9:
                     continue
-                self.LogError("PC = " + str(int(Item[4])) + " VC = " + str(int(Item[5])))
+
                 # Lookup Param Group and # Voltage Code to find kw, phase, etc
                 if ParamGroup == int(Item[4]) and VoltageCode == int(Item[5]):
                     return Item
@@ -3810,7 +3813,17 @@ class Evolution(GeneratorController):
     def GetRPM(self, ReturnInt=True):
 
         # get RPM
-        return self.GetParameter("0007", ReturnInt=ReturnInt)
+        RPM = self.GetParameter("0007", ReturnInt=ReturnInt)
+        if self.Evo45L:
+            if ReturnInt:
+                DefaultReturn = 0
+            else:
+                DefaultReturn = "0"
+            EngineState = self.GetEngineState()
+            # report null if engine is not running
+            if "Stopped" in EngineState or "Off" in EngineState or not len(EngineState):
+                return DefaultReturn
+        return RPM
 
     # ------------ Evolution:CheckExternalCTData --------------------------------
     def CheckExternalCTData(self, request="current", ReturnFloat=False, gauge=False):
