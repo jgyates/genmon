@@ -183,6 +183,8 @@ class ModbusBase(MySupport):
             elif parity.lower() == "odd":
                 self.Parity = 1
 
+            self.Rate = self.config.ReadValue("serial_rate", return_type = int, default = 9600)
+
             try:
                 self.Address = int(
                     self.config.ReadValue("address", default="9d"), 16

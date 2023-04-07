@@ -56,6 +56,7 @@ class ModbusProtocol(ModbusBase):
                 self.Host = host
                 self.Port = port
                 self.Parity = Parity
+                self.Rate = rate
             self.TransactionID = 0
             self.AlternateFileProtocol = False
 
@@ -85,7 +86,7 @@ class ModbusProtocol(ModbusBase):
             else:
                 self.Slave = SerialDevice(
                     name=name,
-                    rate=rate,
+                    rate=self.Rate,
                     Parity=self.Parity,
                     OnePointFiveStopBits=OnePointFiveStopBits,
                     config=self.config,
@@ -1120,6 +1121,11 @@ class ModbusProtocol(ModbusBase):
                 SerialStats.append(
                     {"Average Transaction Time": "%.4f sec" % (AvgTransactionTime)}
                 )
+            if not self.UseTCP:
+                SerialStats.append({"Modbus Transport": "Serial"})
+                SerialStats.append({"Serial Data Rate": "%d" % (self.Slave.BaudRate)})
+            else:
+                SerialStats.append({"Modbus Transport": "TCP"})
         except Exception as e1:
             self.LogErrorLine("Error in GetCommStats: " + str(e1))
         return SerialStats
