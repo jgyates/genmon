@@ -2324,10 +2324,21 @@ def ReadAdvancedSettingsFromFile():
             GENMON_SECTION,
             "use_modbus_fc4",
         ]
+        ConfigSettings["serial_rate"] = [
+            "int",
+            "Serial Data Rate",
+            10,
+            9600,
+            "",
+            0,
+            GENMON_CONFIG,
+            GENMON_SECTION,
+            "serial_rate",
+        ]
         ConfigSettings["serial_parity"] = [
             "list",
             "Serial Parity",
-            10,
+            11,
             "None",
             "",
             "None,Even,Odd",
@@ -2338,7 +2349,7 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["forceserialuse"] = [
             "boolean",
             "Force Use of Serial Port on Errors",
-            11,
+            12,
             False,
             "",
             0,
@@ -2349,7 +2360,7 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["watchdog_addition"] = [
             "float",
             "Additional Watchdog Timeout (sec)",
-            12,
+            13,
             "0.0",
             "",
             0,
@@ -2360,7 +2371,7 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["controllertype"] = [
             "list",
             "Controller Type",
-            13,
+            14,
             "generac_evo_nexus",
             "",
             "generac_evo_nexus,h_100,powerzone,custom",
