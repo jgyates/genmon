@@ -63,3 +63,8 @@
 60,208,60,3,16,2064,N,G,2.4 L,NG/LPV,-0.075,2.465,0.325,gal
 60,240,60,3,16,4112,N,J,2.4 L,NG/LPV,-0.075,2.465,0.325,gal
 60,480,60,3,16,6156,N,K,2.4 L,NG/LPV,-0.075,2.465,0.325,gal
+#kW,Volts,Frequency,Phase,Parameter Group,Voltage Code,Emission,Unit Voltage Code,Engine,Fuel,Fuel Consumption(3), units
+#4.5L
+48,240,60,1,1,27,N,A,4.5 L,NG/LPV,0.045,1.681,0.475,gal
+60,240,60,1,13,26,N,A,4.5 L,NG/LPV,0.045,1.681,0.475,gal
+80,240,60,1,13,26,N,A,4.5 L,NG/LPV,0.045,1.681,0.475,gal
