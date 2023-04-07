@@ -107,6 +107,7 @@ useraspberrypicputempgauge=If enabled and running on a Linux system, the CPU tem
 max_login_attempts=The maximum number of failed login attempts to the web interface before a temporary lockout is started. A lockout will prevent any login attempts. If the login failures occur within the time frame of lockout duration then then logins will be blocked for the number of seconds of lockout duration. Set to zero to disable.
 login_lockout_seconds=The number of seconds to perform a lockout if failed logins exceed Maximum Login Attempts. For example if this value is 300 seconds (5 min) and max attempt is 5, then if 5 logins failures occur in a row within 5 minutes, the a lockout will occur for 5 minutes.
 serial_parity=The default for Generac is None. Some (Briggs and Stratton uses Odd) custom controllers may use Odd or Even parity. Note: this is only for direct serial, not for serial over TCP.
+serial_rate=The rate of the serial link used to communicate with the controller. In almost all cases this is 9600. Evolution 4.5L models may use 115200 for this value.
 forceserialuse=If enabled, the software will try continue attempt use the serial port even if it is not found when the software is initially loaded. This may be needed for some serial USB devices.
 [generac_evo_nexus]
 0000=Product line
