@@ -95,6 +95,7 @@ class Evolution(GeneratorController):
         self.Evolution2 = False
         self.PowerPact = False
         self.PreNexus = False
+        self.Evo45L = False
         self.LiquidCooled = None
         self.LiquidCooledParams = None
         self.SavedFirmwareVersion = None
@@ -774,6 +775,7 @@ class Evolution(GeneratorController):
             for Item in ReturnList:
                 if len(Item) < 9:
                     continue
+                self.LogError("PC = " + str(int(Item[4])) + " VC = " + str(int(Item[5])))
                 # Lookup Param Group and # Voltage Code to find kw, phase, etc
                 if ParamGroup == int(Item[4]) and VoltageCode == int(Item[5]):
                     return Item
@@ -1136,7 +1138,11 @@ class Evolution(GeneratorController):
         # 0x03  Nexus, Air Cooled
         # 0x06  Nexus, Liquid Cooled
         # 0x09  Evolution, Air Cooled
+        # 0x0a  Evolution Synergy, Air Cooled
         # 0x0c  Evolution, Liquid Cooled
+        # 0x12  Evolution Power Pact, Air Cooled
+        # 0x15  Evolution 2.0, Air Cooled
+        # 0x16  Evolution 4.5L, Liquid Cooled
 
         msgbody = "\nThis email is a notification informing you that the software has detected a generator "
         msgbody += "model variant that has not been validated by the authors of this sofrware. "
@@ -1159,16 +1165,14 @@ class Evolution(GeneratorController):
 
             if ProductModel == 0x02:
                 self.PreNexus = True
+            
+            if ProductModel == 0x16:
+                self.Evo45L = True
+
             # if reg 000 is 3 or less then assume we have a Nexus Controller
             if ProductModel == 0x03 or ProductModel == 0x06 or ProductModel == 0x02:
                 self.EvolutionController = False  # "Nexus"
-            elif (
-                ProductModel == 0x09
-                or ProductModel == 0x0C
-                or ProductModel == 0x0A
-                or ProductModel == 0x15
-                or ProductModel == 0x12
-            ):
+            elif (ProductModel in [0x09, 0x0C, 0x0A,0x12, 0x15, 0x16]):
                 self.EvolutionController = True  # "Evolution"
             else:
                 # set a reasonable default
@@ -1203,7 +1207,7 @@ class Evolution(GeneratorController):
                 or ProductModel == 0x02
             ):
                 self.LiquidCooled = False  # Air Cooled
-            elif ProductModel == 0x06 or ProductModel == 0x0C:
+            elif ProductModel == 0x06 or ProductModel == 0x0C or ProductModel == 0x16:
                 self.LiquidCooled = True  # Liquid Cooled
             else:
                 # set a reasonable default
@@ -1252,6 +1256,7 @@ class Evolution(GeneratorController):
                 0x0C: "Evolution, Liquid Cooled",
                 0x12: "Power Pact Evolution, Air Cooled",
                 0x15: "Evolution 2.0, Air Cooled",
+                0x16: "Evolution 4.5L, Liquid Cooled",
             }
 
             Value = self.GetRegisterValueFromList("0000")
@@ -1269,6 +1274,8 @@ class Evolution(GeneratorController):
                     outstr = "Power Pact Evolution, "
                 elif self.Evolution2:
                     outstr = "Evolution 2.0, "
+                elif self.Evo45L:
+                    outstr = "Evolution 4.5L, "
                 else:
                     outstr = "Evolution, "
             else:
