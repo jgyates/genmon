@@ -1,4 +1,6 @@
 #kW,Volts,Frequency,Phase,Parameter Group,Voltage Code,Emission,Unit Voltage Code,Engine,Fuel,Fuel Consumption(3), units
+# Unit Voltage Code: A = 120/240 1 Phase, G = 120 /208 3 Phase, J = 120/240 3 Phase
+#                    K = 277/480 3 Phase, M= 110/220 1 Phase 50Hz, R = 231/400 3 Phase
 12,220,50,1,10,12312,N,M,2.3 L,Diesel,0.105,0.547,1.64,gal
 15,240,60,1,5,24,N,A,2.3 L,Diesel,0.015,0.251,0.24,gal
 15,208,60,3,5,2072,N,G,2.3 L,Diesel,0.015,0.251,0.24,gal
@@ -66,5 +68,16 @@
 #kW,Volts,Frequency,Phase,Parameter Group,Voltage Code,Emission,Unit Voltage Code,Engine,Fuel,Fuel Consumption(3), units
 #4.5L
 48,240,60,1,1,27,N,A,4.5 L,NG/LPV,0.045,1.681,0.475,gal
-60,240,60,1,13,26,N,A,4.5 L,NG/LPV,0.045,1.681,0.475,gal
-80,240,60,1,13,26,N,A,4.5 L,NG/LPV,0.045,1.681,0.475,gal
+48,208,60,3,1,2047,N,G,4.5 L,NG/LPV,0.045,1.681,0.475,gal
+48,240,60,3,1,4124,N,J,4.5 L,NG/LPV,0.045,1.681,0.475,gal
+48,480,60,3,1,6172,N,K,4.5 L,NG/LPV,0.045,1.681,0.475,gal
+
+60,240,60,1,11,3,N,A,4.5 L,NG/LPV,0.045,1.681,0.475,gal
+60,208,60,3,11,2051,N,G,4.5 L,NG/LPV,0.045,1.681,0.475,gal
+60,240,60,3,11,4098,N,J,4.5 L,NG/LPV,0.045,1.681,0.475,gal
+60,480,60,3,11,6176,N,K,4.5 L,NG/LPV,0.045,1.681,0.475,gal
+
+80,240,60,1,7,27,N,A,4.5 L,NG/LPV,0.045,1.681,0.475,gal
+80,208,60,3,7,2051,N,G,4.5 L,NG/LPV,0.045,1.681,0.475,gal
+80,240,60,3,7,4099,N,J,4.5 L,NG/LPV,0.045,1.681,0.475,gal
+80,480,60,3,7,6146,N,K,4.5 L,NG/LPV,0.045,1.681,0.475,gal
