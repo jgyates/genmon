@@ -2634,7 +2634,7 @@ function updateSoftware(){
                   $(this).css('width', '100%')
              });
              // location.reload();
-             setTimeout(function(){ vex.closeAll(); window.location.href = window.location.pathname+"?page=about"; }, 10000);
+             setTimeout(function(){ vex.closeAll(); window.location.href = window.location.pathname+"?page=about"; }, 15000);
        }
 
 
