@@ -14,6 +14,9 @@
 # https://github.com/spbrogan/mopeka_pro_check
 # https://www.engineersedge.com/calculators/fluids/propane-tank-dimensional-calculator.htm
 
+# Possible alternative
+# https://github.com/Bluetooth-Devices/mopeka-iot-ble
+
 
 import json
 import os

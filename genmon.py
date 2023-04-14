@@ -1186,6 +1186,7 @@ class Monitor(MySupport):
         Status["MonitorTime"] = datetime.datetime.now().strftime("%m/%d/%Y %H:%M")
         # Engine run hours
         Status["RunHours"] = self.Controller.GetRunHours()
+        Status["version"] = ProgramDefaults.GENMON_VERSION
         ReturnDict = self.MergeDicts(Status, self.Controller.GetStatusForGUI())
 
         return ReturnDict

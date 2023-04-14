@@ -3429,7 +3429,9 @@ function GenmonAlert(msg)
        vex.closeAll();
        vex.dialog.alert({ unsafeMessage: '<table><tr><td valign="middle" width="200px" align="center"><img class="alert_large" src="images/transparent.png" width="64px" height="64px"></td><td valign="middle" width="70%">'+msg+'</td></tr></table>'});
 }
-
+//*****************************************************************************
+// 
+//*****************************************************************************
 function GenmonPrompt(title, msg, placeholder)
 {
        vex.closeAll();
@@ -3503,6 +3505,7 @@ function GetBaseStatus()
 
           myGenerator['MonitorTime'] = result['MonitorTime'];
           myGenerator['RunHours'] = result['RunHours'];
+          myGenerator['version'] = result['version'];
 
 
           if ((menuElement == "status") && (gauge.length > 0)) {
