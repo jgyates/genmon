@@ -35,7 +35,7 @@ def compress(compiler, in_files, out_file, in_type="js"):
 
 
 MINIFY_SCRIPTS = [
-    "js/jquery-3.3.1.min.js",
+    "js/jquery-3.6.4.min.js",
     "js/jquery-ui.min.js",
     "js/jquery.ui.touch-punch.min.js",
     "js/tooltipster.bundle.js",

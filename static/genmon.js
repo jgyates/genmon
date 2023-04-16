@@ -2634,7 +2634,7 @@ function updateSoftware(){
                   $(this).css('width', '100%')
              });
              // location.reload();
-             setTimeout(function(){ vex.closeAll(); window.location.href = window.location.pathname+"?page=about"; }, 15000);
+             setTimeout(function(){ vex.closeAll(); window.location.href = window.location.pathname+"?page=about&reload=true"; }, 10000);
        }
 
 
@@ -3429,8 +3429,9 @@ function GenmonAlert(msg)
        vex.closeAll();
        vex.dialog.alert({ unsafeMessage: '<table><tr><td valign="middle" width="200px" align="center"><img class="alert_large" src="images/transparent.png" width="64px" height="64px"></td><td valign="middle" width="70%">'+msg+'</td></tr></table>'});
 }
+
 //*****************************************************************************
-// 
+//
 //*****************************************************************************
 function GenmonPrompt(title, msg, placeholder)
 {
@@ -3479,6 +3480,12 @@ function UpdateDisplay()
         DisplayMonitor();
     } else if ((menuElement != "settings") && (menuElement != "notifications") && (menuElement != "journal") && (menuElement != "addons") && (menuElement != "about") && (menuElement != "adv_settings")) {
         GetDisplayValues(menuElement);
+    } else if (menuElement == "about") {
+       var reload = GetQueryStringParams('reload');
+
+       if (reload != undefined) {
+          DisplayAbout();
+       }
     }
 
     if (menuElement != "registers") {  // refresh the registers every time to keep history
