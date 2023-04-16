@@ -2469,33 +2469,40 @@ function saveAddonJSON(addon) {
 //*****************************************************************************
 
 function DisplayAbout(){
-    var outstr = '<br><br><br><center><img src="images/GenmonLogo.png" width="60%"><br>';
-    outstr += '<div class="aboutInfo"><br>Genmon<br>Version '+myGenerator["version"]+'<br><br><br>Developed by <a target="_blank" href="https://github.com/jgyates/">@jgyates</a>.<br><br>Published under the <a target="_blank" href="https://raw.githubusercontent.com/jgyates/genmon/master/LICENSE">GNU General Public License v2.0</a>.<br><br>Source: <a target="_blank" href="https://github.com/jgyates/genmon">Github</a><br><br>Built using Python & Javascript.<br>&nbsp;<br></center></div>';
-
-    if (myGenerator["write_access"] == true) {
-      // Update software
-      outstr += '<center>Update Generator Monitor Software:<br><div id="updateNeeded" style="font-size:16px; margin:2px;"><br></div>';
-      outstr += '&nbsp;&nbsp;<button id="checkNewVersion" onClick="checkNewVersion();">Upgrade to latest version</button><br>';
-      outstr += '&nbsp;&nbsp;<a href="javascript:showChangeLog();" style="font-style:normal; font-size:14px; text-decoration:underline;">Change Log</a>';
-      // Submit registers and logs
-      outstr += '<br>Submit Information to Developers:<br>';
-      outstr += 'NOTE: outbound email must be setup and working to submit logs or registers<br><br>';
-      outstr += '&nbsp;&nbsp;<button id="submitRegisters" onClick="submitRegisters();">Submit Registers</button>';
-      outstr += '&nbsp;&nbsp;<button id="submitLogs" onClick="submitLogs();">Submit Logs</button>';
-      //Get Backup
-      outstr += '<br><br>Download Backup Files:<br><br>';
-      // TODO
-      //outstr += '<br><br>Download Backup Files or Restore Backup:<br><br>';
+    if($('#about_version').length){
+	$('#about_version').html(myGenerator["version"])
       
-      outstr += '&nbsp;&nbsp;<button id="backupFiles" onClick="backupFiles();">Backup</button>';
-      // TODO
-      //outstr += '&nbsp;&nbsp;<button id="restoreFiles" onClick="restoreFiles();">Restore</button>';
-      //Get Log Files
-      outstr += '<br><br>Download Log Files:<br><br>';
-      outstr += '&nbsp;&nbsp;<button id="logFiles" onClick="logFiles();">Log Files</button></center>';
+    } else {
+       vpw = $(window).width();
+    
+       var outstr = '<br><br><br><center><img src="images/GenmonLogo.png" width="'+Math.round((vpw-200)*0.6)+'px" height="'+Math.round(((vpw-200)*0.6)*(242/1066))+'px"><br>';
+       outstr += '<div class="aboutInfo"><br>Genmon<br>Version <span id="about_version">'+myGenerator["version"]+'</span><br><br><br>Developed by <a target="_blank" href="https://github.com/jgyates/">@jgyates</a>.<br><br>Published under the <a target="_blank" href="https://raw.githubusercontent.com/jgyates/genmon/master/LICENSE">GNU General Public License v2.0</a>.<br><br>Source: <a target="_blank" href="https://github.com/jgyates/genmon">Github</a><br><br>Built using Python & Javascript.<br>&nbsp;<br></center></div>';
+   
+       if (myGenerator["write_access"] == true) {
+         // Update software
+         outstr += '<center>Update Generator Monitor Software:<br><div id="updateNeeded" style="font-size:16px; margin:2px;"><br></div>';
+         outstr += '&nbsp;&nbsp;<button id="checkNewVersion" onClick="checkNewVersion();">Upgrade to latest version</button><br>';
+         outstr += '&nbsp;&nbsp;<a href="javascript:showChangeLog();" style="font-style:normal; font-size:14px; text-decoration:underline;">Change Log</a>';
+         // Submit registers and logs
+         outstr += '<br>Submit Information to Developers:<br>';
+         outstr += 'NOTE: outbound email must be setup and working to submit logs or registers<br><br>';
+         outstr += '&nbsp;&nbsp;<button id="submitRegisters" onClick="submitRegisters();">Submit Registers</button>';
+         outstr += '&nbsp;&nbsp;<button id="submitLogs" onClick="submitLogs();">Submit Logs</button>';
+         //Get Backup
+         outstr += '<br><br>Download Backup Files:<br><br>';
+         // TODO
+         //outstr += '<br><br>Download Backup Files or Restore Backup:<br><br>';
+         
+         outstr += '&nbsp;&nbsp;<button id="backupFiles" onClick="backupFiles();">Backup</button>';
+         // TODO
+         //outstr += '&nbsp;&nbsp;<button id="restoreFiles" onClick="restoreFiles();">Restore</button>';
+         //Get Log Files
+         outstr += '<br><br>Download Log Files:<br><br>';
+         outstr += '&nbsp;&nbsp;<button id="logFiles" onClick="logFiles();">Log Files</button></center>';
+       }
+   
+       $("#mydisplay").html(outstr);
     }
-
-    $("#mydisplay").html(outstr);
 
     if (myGenerator["write_access"] == true) {
        if (latestVersion == "") {
@@ -2509,6 +2516,8 @@ function DisplayAbout(){
                latestVersion = latestVersion.trim()
                if (latestVersion != myGenerator["version"]) {
                      $('#updateNeeded').hide().html("<br>&nbsp;&nbsp;&nbsp;&nbsp;You are not running the latest version.<br>&nbsp;&nbsp;&nbsp;&nbsp;Current Version: " + myGenerator["version"] +"<br>&nbsp;&nbsp;&nbsp;&nbsp;New Version: " + latestVersion+"<br><br>").fadeIn(1000);
+               } else {
+                     $('#updateNeeded').html("").fadeIn(1000);
                }
          }});
        } else if ((latestVersion != "unknown") && (latestVersion != myGenerator["version"])) {
