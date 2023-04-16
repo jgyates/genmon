@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Added ability to set data rate other than 9600 (for Liquid Cooled Evolution Controllers with 4.5L engine and possibly new custom controllers)
 - Updates for Evolution 4.5L models 48k, 60k and 80k (thanks @basshook)
 - Updates for unknown alarms for 4.5L controller
+- Updates to About page to better handle slower upgrades
 
 ## V1.18.16 -2022-12-06
 - Change to allow CPU temp gauge for any linux system
