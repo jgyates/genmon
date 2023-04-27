@@ -2138,6 +2138,8 @@ class GeneratorController(MySupport):
                 Units = "gal"
 
             FuelLevel = self.GetFuelLevel(ReturnFloat=True)
+            if FuelLevel == None:
+                return None
             FuelLevel = (FuelLevel * 0.01) * float(self.TankSize)
 
             if ReturnFloat:
