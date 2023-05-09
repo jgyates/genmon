@@ -3814,9 +3814,11 @@ def CheckCertFiles(CertFile, KeyFile):
     try:
         if not os.path.isfile(CertFile):
             LogConsole("Missing cert file : " + CertFile)
+            LogError("Missing cert file : " + CertFile)
             return False
         if not os.path.isfile(KeyFile):
             LogConsole("Missing key file : " + KeyFile)
+            LogError("Missing key file : " + KeyFile)
             return False
     except Exception as e1:
         LogErrorLine(
