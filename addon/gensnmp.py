@@ -145,6 +145,7 @@ class GenSNMP(MySupport):
         self.log = log
         self.console = console
 
+        self.IPv6 = True
         self.mibData = []
         self.LastValues = {}
         self.transportDispatcher = None
@@ -1519,10 +1520,14 @@ class GenSNMP(MySupport):
             )
 
             # UDP/IPv6
-            self.transportDispatcher.registerTransport(
-                udp6.domainName,
-                udp6.Udp6SocketTransport().openServerMode(("::", self.snmpport)),
-            )
+            try:
+                self.transportDispatcher.registerTransport(
+                    udp6.domainName,
+                    udp6.Udp6SocketTransport().openServerMode(("::", self.snmpport)),
+                )
+            except:
+                self.LogError("Warning IPv6 is disabled")
+                self.IPv6 = False
 
             ## Local domain socket
             # self.transportDispatcher.registerTransport(
@@ -1555,7 +1560,8 @@ class GenSNMP(MySupport):
                 self.transportDispatcher.jobFinished(1)
                 self.transportDispatcher.unregisterRecvCbFun(recvId=None)
                 self.transportDispatcher.unregisterTransport(udp.domainName)
-                self.transportDispatcher.unregisterTransport(udp6.domainName)
+                if self.IPv6:
+                    self.transportDispatcher.unregisterTransport(udp6.domainName)
                 self.transportDispatcher.closeDispatcher()
                 self.LogDebug("Dispatcher Closed")
                 self.transportDispatcher = None
