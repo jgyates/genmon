@@ -14,17 +14,14 @@ import getopt
 import os
 import sys
 
-sys.path.append(
-    os.path.dirname(sys.path[0])
-)  # Adds higher directory to python modules path.
+# Adds higher directory to python modules path.
+sys.path.append(os.path.dirname(sys.path[0]))  
 
 try:
     from genmonlib.mymodbus import ModbusProtocol
 except Exception as e1:
     print("\n\nThis program is used for the testing of modbus registers.")
-    print(
-        "\n\nThis program requires the modules mymodbus.py and myserial.py to reside in the genmonlib directory.\n"
-    )
+    print("\n\nThis program requires the modules mymodbus.py and myserial.py to reside in the genmonlib directory.\n")
     print("\n\nError: " + str(e1))
     sys.exit(2)
 
