@@ -313,7 +313,7 @@
       "value": "0000",
       "type": "bits",
       "title": "Alarm",
-      "text": "Magentic Pick Up Fault"
+      "text": "Magnetic Pick Up Fault"
     },
     {
       "reg": "0047",
