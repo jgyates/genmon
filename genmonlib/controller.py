@@ -227,6 +227,8 @@ class GeneratorController(MySupport):
                         self.NominalKW = "Unknown"
                 if self.config.HasOption("model"):
                     self.Model = self.config.ReadValue("model")
+                
+                self.NominalLineVolts = self.config.ReadValue("nominallinevolts", return_type=int, default=240)
 
                 if self.config.HasOption("controllertype"):
                     self.ControllerSelected = self.config.ReadValue("controllertype")

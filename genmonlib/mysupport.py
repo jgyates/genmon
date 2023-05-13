@@ -361,7 +361,15 @@ class MySupport(MyCommon):
             )
             self.LogError("Item: " + str(key) + ":" + str(item))
             return ""
+        
+    # ------------ MySupport::IsString -----------------------------------------
+    def IsString(self, inputvalue):
 
+        try:
+            temp = inputvalue.lower()
+            return True
+        except:
+            return False
     # ------------ MySupport::ProcessDispatch -----------------------------------
     # This function is recursive, it will turn a dict with callable functions into
     # all of the callable functions resolved to stings (by calling the functions).
