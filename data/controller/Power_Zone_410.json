@@ -1,0 +1,470 @@
+{
+  "controller_name": "Power Zone 410 Controller",
+  "rated_max_output_power_kw": "Unknown",
+  "rated_nominal_voltage": 240,
+  "rated_nominal_rpm": 1800,
+  "rated_nominal_freq": "Unknown",
+  "nominal_battery_voltage": "Unknown",
+  "generator_phase": 3,
+  "base_registers": {
+    "0007": 2,
+    "0008": 2,
+    "000a": 2,
+    "000c": 2,
+    "0012": 2,
+    "005d": 2,
+    "05ea": 2,
+    "05eb": 2,
+    "0606": 2,
+    "0607": 2,
+    "060a": 2,
+    "0611": 2,
+    "0637": 2,
+    "0638": 2,
+    "1f72": 2,
+    "1f73": 2,
+    "1f74": 2,
+    "1f75": 2,
+    "1f76": 2,
+    "1f77": 2,
+    "1f7b": 2,
+    "1fa4": 2,
+    "1fa5": 2,
+    "1fa6": 2,
+    "226a": 2,
+    "226b": 2
+  },
+  "switch_state": [
+    {
+      "reg": "226b",
+      "mask": "0001",
+      "value": "0001",
+      "type": "bits",
+      "title": "Switch State",
+      "text": "Not in Auto"
+    },
+    {
+      "reg": "226b",
+      "mask": "0001",
+      "value": "0000",
+      "type": "bits",
+      "title": "Switch State",
+      "text": "Auto"
+    }
+  ],
+  "alarm_active" : [
+    {
+      "reg": "0637",
+      "mask": "0001",
+      "value": "0001",
+      "type": "bits",
+      "title": "Alarm Active",
+      "text": "System In Alarm"
+    },
+    {
+      "reg": "0638",
+      "mask": "0001",
+      "value": "0001",
+      "type": "bits",
+      "title": "Alarm Active",
+      "text": "System In Warning"
+    },
+    {
+      "reg": "226a",
+      "mask": "0001",
+      "value": "0001",
+      "type": "bits",
+      "title": "Alarm",
+      "text": "E-Stop Shutdown Alarm"
+    }
+  ],
+  "alarm_conditions": [
+    {
+      "reg": "0637",
+      "mask": "0001",
+      "value": "0001",
+      "type": "bits",
+      "title": "Alarm",
+      "text": "System In Alarm"
+    },
+    {
+      "reg": "0638",
+      "mask": "0001",
+      "value": "0001",
+      "type": "bits",
+      "title": "Alarm",
+      "text": "System In Warning"
+    },
+    {
+      "reg": "226a",
+      "mask": "0001",
+      "value": "0001",
+      "type": "bits",
+      "title": "Alarm",
+      "text": "E-Stop Shutdown Alarm"
+    }
+  ],
+  "engine_state": [
+    {
+      "reg": "0611",
+      "mask": "ffff",
+      "type": "bits",
+      "value": "0000",
+      "title": "Engine Status",
+      "text": "Stopped"
+    },
+    {
+      "reg": "0611",
+      "mask": "ffff",
+      "type": "bits",
+      "value": "0001",
+      "title": "Engine Status",
+      "text": "Pre Start"
+    },
+    {
+      "reg": "0611",
+      "mask": "ffff",
+      "type": "bits",
+      "value": "0002",
+      "title": "Engine Status",
+      "text": "Starting"
+    },
+    {
+      "reg": "0611",
+      "mask": "ffff",
+      "type": "bits",
+      "value": "0003",
+      "title": "Engine Status",
+      "text": "Warming Up"
+    },
+    {
+      "reg": "0611",
+      "mask": "ffff",
+      "type": "bits",
+      "value": "0004",
+      "title": "Engine Status",
+      "text": "Running"
+    },
+    {
+      "reg": "0611",
+      "mask": "ffff",
+      "type": "bits",
+      "value": "0005",
+      "title": "Engine Status",
+      "text": "Cool Down"
+    },
+    {
+      "reg": "0611",
+      "mask": "ffff",
+      "type": "bits",
+      "value": "0006",
+      "title": "Engine Status",
+      "text": "Stopping"
+    },
+    {
+      "reg": "0611",
+      "mask": "ffff",
+      "type": "bits",
+      "value": "0007",
+      "title": "Engine Status",
+      "text": "Post Run"
+    },
+    {
+      "reg": "0611",
+      "type": "default",
+      "title": "Engine Status",
+      "text": "Unknown"
+    }
+  ],
+  "status": [
+    {
+      "reg": "000a",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Battery Voltage",
+      "units": "V"
+    },
+    {
+      "reg": "0007",
+      "mask": "ffff",
+      "multiplier": 1,
+      "type": "int",
+      "title": "Engine Speed",
+      "units": "RPM"
+    },
+    {
+      "reg": "0008",
+      "mask": "ffff",
+      "multiplier": 1,
+      "type": "int",
+      "title": "Frequency",
+      "units": "Hz"
+    },
+    {
+      "reg": "0012",
+      "mask": "ffff",
+      "multiplier": 1,
+      "type": "int",
+      "title": "Output Voltage",
+      "units": "V"
+    },
+    {
+      "reg": "05ea",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Output Current",
+      "units": "A"
+    },
+    {
+      "reg": "05eb",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Output Power",
+      "units": "kW"
+    },
+    {
+      "reg": "1f72",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Output Voltage Phase A LN",
+      "units": "V RMS"
+    },
+    {
+      "reg": "1f73",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Output Voltage Phase B LN",
+      "units": "V RMS"
+    },
+    {
+      "reg": "1f74",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Output Voltage Phase C LN",
+      "units": "V RMS"
+    },
+    {
+      "reg": "1f75",
+      "mask": "ffff",
+      "multiplier": 0.01,
+      "type": "float",
+      "title": "Output Current Phase A",
+      "units": "A"
+    },
+    {
+      "reg": "1f76",
+      "mask": "ffff",
+      "multiplier": 0.01,
+      "type": "float",
+      "title": "Output Current Phase B",
+      "units": "A"
+    },
+    {
+      "reg": "1f77",
+      "mask": "ffff",
+      "multiplier": 0.01,
+      "type": "float",
+      "title": "Output Current Phase C",
+      "units": "A"
+    },
+    {
+      "reg": "1f7b",
+      "mask": "ffff",
+      "multiplier": 0.01,
+      "type": "float",
+      "title": "Output Power Factor"
+    },
+    {
+      "reg": "1fa4",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Utility Voltage Phase A",
+      "units": "V RMS"
+    },
+    {
+      "reg": "1fa5",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Utility Voltage Phase B",
+      "units": "V RMS"
+    },
+    {
+      "reg": "1fa6",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Utility Voltage Phase C",
+      "units": "V RMS"
+    }
+  ],
+  "maintenance": [
+    {
+      "reg": "000c",
+      "mask": "ffff",
+      "multiplier": 1,
+      "type": "int",
+      "title": "Run Hours",
+      "units": "h"
+    },
+    {
+      "reg": "005d",
+      "mask": "ffff",
+      "multiplier": 1,
+      "type": "int",
+      "title": "Fuel Level",
+      "units": "%"
+    },
+    {
+      "reg": "0606",
+      "mask": "ffff",
+      "multiplier": 1,
+      "type": "int",
+      "title": "Engine Oil Pressure",
+      "units": "kPa"
+    },
+    {
+      "reg": "0607",
+      "mask": "ffff",
+      "multiplier": 1,
+      "type": "int",
+      "title": "Engine Oil Temperature",
+      "units": "F"
+    },
+    {
+      "reg": "060a",
+      "mask": "ffff",
+      "multiplier": 1,
+      "type": "int",
+      "title": "Engine Coolant Temperature",
+      "units": "F"
+    }
+  ],
+  "gauges": [
+    {
+      "reg": "000a",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Battery Voltage",
+      "units": "V",
+      "sensor": "batteryvolts",
+      "nominal": "Unknown"
+    },
+    {
+      "reg": "0007",
+      "mask": "ffff",
+      "multiplier": 1,
+      "type": "int",
+      "title": "Engine Speed",
+      "units": "RPM",
+      "sensor": "rpm",
+      "nominal": 1800
+    },
+    {
+      "reg": "0008",
+      "mask": "ffff",
+      "multiplier": 1,
+      "type": "int",
+      "title": "Frequency",
+      "units": "Hz",
+      "sensor": "frequency",
+      "nominal": "Unknown"
+    },
+    {
+      "reg": "0012",
+      "mask": "ffff",
+      "multiplier": 1,
+      "type": "int",
+      "title": "Output Voltage",
+      "units": "V",
+      "sensor": "linevolts",
+      "nominal": "Unknown"
+    },
+    {
+      "reg": "05ea",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Output Current",
+      "units": "A",
+      "sensor": "current",
+      "nominal": "Unknown"
+    },
+    {
+      "reg": "05eb",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Output Power",
+      "units": "kW",
+      "sensor": "power",
+      "nominal": "Unknown"
+    },
+    {
+      "comment": "TODO do I need a gauge for oil temp, oil pressure and coolant temmp, if so what is nominal",
+      "reg": "05eb",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Power",
+      "units": "kW",
+      "sensor": "powergraph",
+      "nominal": "Unknown"
+    }
+  ],
+  "fuel": {
+    "comment":"NOTE: this element will add a fuel gauge in addition to any defined in the gauges array",
+    "reg": "005d",
+    "mask": "ffff",
+    "multiplier": 1,
+    "type": "int",
+    "title": "Fuel Sensor",
+    "units": "%",
+    "sensor": "fuel"
+},
+  "power": {
+    "reg": "05eb",
+    "mask": "ffff",
+    "multiplier": 0.1,
+    "type": "float",
+    "title": "Power Output",
+    "units": "kW",
+    "sensor": "power"
+  },
+  "outputvoltage": {
+      "reg": "0012",
+      "mask": "ffff",
+      "multiplier": 1,
+      "type": "int",
+      "title": "Output Voltage",
+      "units": "V"
+    },
+  "linevoltage": {
+      "comment":"TODO FIX THIS FOR 3 PHASE? make list entry with addition/separator ?",
+      "reg": "0012",
+      "mask": "ffff",
+      "multiplier": 1,
+      "type": "int",
+      "title": "Utility Voltage",
+      "units": "V"
+    },
+  "coment2": "TODO: Fix Threshold and Pickup?",
+  "thresholdvoltage": 143,
+  "pickupvoltage": 190,
+  "run_hours": {
+      "reg": "000c",
+      "mask": "ffffffff",
+      "multiplier": 1,
+      "type": "int",
+      "title": "Run Hours",
+      "units": "h"
+    }
+}

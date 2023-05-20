@@ -239,6 +239,8 @@ class CustomController(GeneratorController):
                 ImportedTitle, ImportedValue = self.GetDisplayEntry(
                     ImportedEntry, JSONNum=False, no_units=True
                 )
+            elif self.IsString(ImportedEntry):
+                return True, ImportedEntry
             else:
                 ImportedValue = int(ImportedEntry)
             return True, ImportedValue
@@ -254,31 +256,36 @@ class CustomController(GeneratorController):
 
             ReturnValue = False
 
-            ReturnValue, self.NominalLineVolts = self.GetSingleEntry(
-                "rated_nominal_voltage"
-            )
+            TempValue = None
+            ReturnValue, TempValue = self.GetSingleEntry("rated_nominal_voltage")
             if not ReturnValue:
                 return False
+            if isinstance(TempValue, int):
+                self.NominalLineVolts = TempValue 
 
-            ReturnValue, self.NominalBatteryVolts = self.GetSingleEntry(
-                "nominal_battery_voltage"
-            )
+            ReturnValue, TempValue = self.GetSingleEntry("nominal_battery_voltage")
             if not ReturnValue:
                 return False
+            if isinstance(TempValue, int):
+                self.NominalBatteryVolts = TempValue 
 
-            ReturnValue, self.NominalFreq = self.GetSingleEntry("rated_nominal_freq")
+            ReturnValue, TempValue = self.GetSingleEntry("rated_nominal_freq")
             if not ReturnValue:
                 return False
+            if isinstance(TempValue, int):
+                self.NominalFreq = TempValue 
 
-            ReturnValue, self.NominalRPM = self.GetSingleEntry("rated_nominal_rpm")
+            ReturnValue, TempValue = self.GetSingleEntry("rated_nominal_rpm")
             if not ReturnValue:
                 return False
+            if isinstance(TempValue, int):
+                self.NominalRPM = TempValue 
 
-            ReturnValue, self.NominalKW = self.GetSingleEntry(
-                "rated_max_output_power_kw"
-            )
+            ReturnValue, TempValue = self.GetSingleEntry("rated_max_output_power_kw")
             if not ReturnValue:
                 return False
+            if isinstance(TempValue, int):
+                self.NominalKW = TempValue 
 
             ReturnValue, self.Phase = self.GetSingleEntry("generator_phase")
             if not ReturnValue:
@@ -302,17 +309,13 @@ class CustomController(GeneratorController):
                 self.LogError("Error: Controller Import does not contain switch_state")
                 return False
             if not "alarm_conditions" in self.controllerimport:
-                self.LogError(
-                    "Error: Controller Import does not contain alarm_conditions"
-                )
+                self.LogError("Error: Controller Import does not contain alarm_conditions")
                 return False
             if not "engine_state" in self.controllerimport:
                 self.LogError("Error: Controller Import does not contain engine_state")
                 return False
             if not "base_registers" in self.controllerimport:
-                self.LogError(
-                    "Error: Controller Import does not contain base_registers"
-                )
+                self.LogError("Error: Controller Import does not contain base_registers")
                 return False
             if not "status" in self.controllerimport:
                 self.LogError("Error: Controller Import does not contain status")
@@ -321,40 +324,26 @@ class CustomController(GeneratorController):
                 self.LogError("Error: Controller Import does not contain maintenance")
                 return False
             if not "controller_name" in self.controllerimport:
-                self.LogError(
-                    "Error: Controller Import does not contain controller_name"
-                )
+                self.LogError("Error: Controller Import does not contain controller_name")
                 return False
 
             if not "rated_max_output_power_kw" in self.controllerimport:
-                self.LogError(
-                    "Error: Controller Import does not contain rated_max_output_power_kw"
-                )
+                self.LogError("Error: Controller Import does not contain rated_max_output_power_kw")
                 return False
             if not "rated_nominal_voltage" in self.controllerimport:
-                self.LogError(
-                    "Error: Controller Import does not contain rated_nominal_voltage"
-                )
+                self.LogError("Error: Controller Import does not contain rated_nominal_voltage")
                 return False
             if not "rated_nominal_freq" in self.controllerimport:
-                self.LogError(
-                    "Error: Controller Import does not contain rated_nominal_freq"
-                )
+                self.LogError("Error: Controller Import does not contain rated_nominal_freq")
                 return False
             if not "rated_nominal_rpm" in self.controllerimport:
-                self.LogError(
-                    "Error: Controller Import does not contain rated_nominal_rpm"
-                )
+                self.LogError("Error: Controller Import does not contain rated_nominal_rpm")
                 return False
             if not "generator_phase" in self.controllerimport:
-                self.LogError(
-                    "Error: Controller Import does not contain generator_phase"
-                )
+                self.LogError("Error: Controller Import does not contain generator_phase")
                 return False
             if not "nominal_battery_voltage" in self.controllerimport:
-                self.LogError(
-                    "Error: Controller Import does not contain nominal_battery_voltage"
-                )
+                self.LogError("Error: Controller Import does not contain nominal_battery_voltage")
                 return False
 
             for Register, Length in self.controllerimport["base_registers"].items():
@@ -432,12 +421,29 @@ class CustomController(GeneratorController):
                     values = sensor["values"]
                 else:
                     values = None
+
+                if not isinstance(sensor["nominal"], int) and sensor["nominal"].lower() == "unknown":
+                    if sensor["sensor"].lower() == "power" or sensor["sensor"].lower() == "powergraph":
+                        nominal = float(self.NominalKW)
+                    elif sensor["sensor"].lower() == "linevolts":
+                        nominal = self.NominalLineVolts
+                    elif sensor["sensor"].lower() == "frequency":
+                        nominal = int(self.NominalFreq)
+                    elif sensor["sensor"].lower() == "batteryvolts":
+                        nominal = self.NominalBatteryVolts
+                    elif sensor["sensor"].lower() == "current":
+                        nominal = (float(self.NominalKW) * 1000) / self.NominalLineVolts
+                    else:
+                        nominal = None
+                        self.LogError("Nominal is unknown for type " + sensor["sensor"])
+                else:
+                    nominal = sensor["nominal"]
                 Tile = MyTile(
                     self.log,
                     title=sensor["title"],
                     type=sensor["sensor"],
                     units=sensor["units"],
-                    nominal=sensor["nominal"],
+                    nominal=nominal,
                     maximum=maximum,
                     values=values,
                     callback=self.GetGaugeValue,
@@ -626,15 +632,11 @@ class CustomController(GeneratorController):
 
         try:
             if not "alarm_active" in self.controllerimport:
-                alarms = self.GetExtendedDisplayString(
-                    self.controllerimport, "alarm_conditions"
-                )
+                alarms = self.GetExtendedDisplayString(self.controllerimport, "alarm_conditions")
                 if alarms == "Unknown":
                     return False
                 return True
-            alarm_state = self.GetExtendedDisplayString(
-                self.controllerimport, "alarm_active"
-            )
+            alarm_state = self.GetExtendedDisplayString(self.controllerimport, "alarm_active")
             if len(alarm_state) and not alarm_state == "Unknown":
                 return True
             return False
@@ -655,9 +657,9 @@ class CustomController(GeneratorController):
     def GetGeneratorStatus(self):
 
         try:
-            generator_status = self.GetExtendedDisplayString(
-                self.controllerimport, "generator_status"
-            )
+            if not "generator_status" in self.controllerimport:
+                return "Unknown"
+            generator_status = self.GetExtendedDisplayString(self.controllerimport, "generator_status")
             return generator_status
         except Exception as e1:
             self.LogErrorLine("Error in GetGeneratorStatus: " + str(e1))
