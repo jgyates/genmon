@@ -51,7 +51,8 @@ The software supports the following features:
 - Web based application for viewing status of the generator
 - Limited and Full Rights login for web interface
 - SMS notifications of Generator state and power outages (via Twilio SMS API or Expansion Cellular Modem)
-- Push notifications (via pushover.net)
+- Push notifications (via pushover.net, slack)
+- CallMeBot notifications for whatsapp, signal, telegram and facebook message 
 - syslog logging of generator events
 - Command Line application (all the functionality of email).
 - Ability to set exercise time

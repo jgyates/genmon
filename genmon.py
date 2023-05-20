@@ -641,6 +641,7 @@ class Monitor(MySupport):
                 "myserialtcp.log",
                 "genlog.log",
                 "genslack.log",
+                "gencallmebot.log",
                 "genexercise.log",
                 "genemail2sms.log",
                 "gentankutil.log",

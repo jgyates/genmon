@@ -334,6 +334,7 @@ class Loader(MySupport):
             "gensyslog.conf": "/etc/",
             "genmqtt.conf": "/etc/",
             "genslack.conf": "/etc/",
+            "gencallmebot.conf": "/etc/",
             "genexercise.conf": "/etc/",
             "genemail2sms.conf": "/etc/",
             "genloader.conf": "/etc/",
@@ -704,6 +705,7 @@ class Loader(MySupport):
                 "gensyslog",
                 "genmqtt",
                 "genslack",
+                "gencallmebot",
                 "genexercise",
                 "genemail2sms",
                 "gentankutil",
@@ -733,6 +735,15 @@ class Loader(MySupport):
                             section=entry,
                             module="genslack.py",
                             conffile="genslack.conf",
+                        )
+                    if entry == "gencallmebot":
+                        self.LogError(
+                            "Warning: Missing entry: " + entry + " , adding entry"
+                        )
+                        self.AddEntry(
+                            section=entry,
+                            module="gencallmebot.py",
+                            conffile="gencallmebot.conf",
                         )
                     if entry == "genexercise":
                         self.LogError(

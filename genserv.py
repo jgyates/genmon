@@ -1386,6 +1386,60 @@ def GetAddOns():
         AddOnCfg = AddNotificationAddOnParam(AddOnCfg, "genslack", GENSLACK_CONFIG)
         AddOnCfg = AddRetryAddOnParam(AddOnCfg, "genslack", GENSLACK_CONFIG)
 
+        # GENCALLMEBOT
+        AddOnCfg["gencallmebot"] = collections.OrderedDict()
+        AddOnCfg["gencallmebot"]["enable"] = ConfigFiles[GENLOADER_CONFIG].ReadValue(
+            "enable", return_type=bool, section="gencallmebot", default=False
+        )
+        AddOnCfg["gencallmebot"]["title"] = "Notifications via CallMeBot"
+        AddOnCfg["gencallmebot"][
+            "description"
+        ] = "Send Genmon and utility state changes via CallMeBot service"
+        AddOnCfg["gencallmebot"]["icon"] = "callmebot"
+        AddOnCfg["gencallmebot"][
+            "url"
+        ] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gencallmebotpy-optional"
+        AddOnCfg["gencallmebot"]["parameters"] = collections.OrderedDict()
+
+        AddOnCfg["gencallmebot"]["parameters"]["notification_type"] = CreateAddOnParam(
+            ConfigFiles[GENCALLMEBOT_CONFIG].ReadValue(
+                "notification_type", return_type=str, default=""
+            ),
+            "list",
+            "Type of CallMeBot Notifications. For more information, see http://www.callmebot.com.",
+            bounds="WhatsApp,Telegram",  # Facebook, Signal
+            display_name="Notification Type",
+        )
+        AddOnCfg["gencallmebot"]["parameters"]["api_key"] = CreateAddOnParam(
+            ConfigFiles[GENCALLMEBOT_CONFIG].ReadValue(
+                "api_key", return_type=str, default=""
+            ),
+            "string",
+            "API Key required for WhatsApp Notifications.", # and Facebook Messanger, Signal 
+            display_name="API Key",
+        )
+        AddOnCfg["gencallmebot"]["parameters"]["username"] = CreateAddOnParam(
+            ConfigFiles[GENCALLMEBOT_CONFIG].ReadValue(
+                "username", return_type=str, default=""
+            ),
+            "string",
+            "CallMeBot username required for Telegram Notifications.",
+            bounds="required username",
+            display_name="Username",
+        )
+        AddOnCfg["gencallmebot"]["parameters"]["recipient_number"] = CreateAddOnParam(
+            ConfigFiles[GENCALLMEBOT_CONFIG].ReadValue(
+                "recipient_number", return_type=str, default="+1XXXXXXXXXX"
+            ),
+            "string",
+            "Recipient Number requried for WhatsApp Notification. Must be without spaces and start with a plus",
+            bounds="",
+            display_name="Recipient Number",
+        )
+
+        AddOnCfg = AddNotificationAddOnParam(AddOnCfg, "gencallmebot", GENCALLMEBOT_CONFIG)
+        AddOnCfg = AddRetryAddOnParam(AddOnCfg, "gencallmebot", GENCALLMEBOT_CONFIG)
+
         # GENEXERCISE
         ControllerInfo = GetControllerInfo("controller").lower()
         if "evolution" in ControllerInfo or "nexus" in ControllerInfo:
@@ -2025,6 +2079,7 @@ def SaveAddOnSettings(query_string):
             "genpushover": ConfigFiles[GENPUSHOVER_CONFIG],
             "genmqtt": ConfigFiles[GENMQTT_CONFIG],
             "genslack": ConfigFiles[GENSLACK_CONFIG],
+            "gencallmebot": ConfigFiles[GENCALLMEBOT_CONFIG],
             "genlog": ConfigFiles[GENLOADER_CONFIG],
             "gensyslog": ConfigFiles[GENLOADER_CONFIG],
             "gengpio": ConfigFiles[GENLOADER_CONFIG],
@@ -3814,11 +3869,9 @@ def CheckCertFiles(CertFile, KeyFile):
     try:
         if not os.path.isfile(CertFile):
             LogConsole("Missing cert file : " + CertFile)
-            LogError("Missing cert file : " + CertFile)
             return False
         if not os.path.isfile(KeyFile):
             LogConsole("Missing key file : " + KeyFile)
-            LogError("Missing key file : " + KeyFile)
             return False
     except Exception as e1:
         LogErrorLine(
@@ -4187,6 +4240,7 @@ if __name__ == "__main__":
     GENPUSHOVER_CONFIG = os.path.join(ConfigFilePath, "genpushover.conf")
     GENMQTT_CONFIG = os.path.join(ConfigFilePath, "genmqtt.conf")
     GENSLACK_CONFIG = os.path.join(ConfigFilePath, "genslack.conf")
+    GENCALLMEBOT_CONFIG = os.path.join(ConfigFilePath, "gencallmebot.conf")
     GENGPIOIN_CONFIG = os.path.join(ConfigFilePath, "gengpioin.conf")
     GENGPIOLEDBLINK_CONFIG = os.path.join(ConfigFilePath, "gengpioledblink.conf")
     GENEXERCISE_CONFIG = os.path.join(ConfigFilePath, "genexercise.conf")
@@ -4209,6 +4263,7 @@ if __name__ == "__main__":
         GENPUSHOVER_CONFIG,
         GENMQTT_CONFIG,
         GENSLACK_CONFIG,
+        GENCALLMEBOT_CONFIG,
         GENGPIOIN_CONFIG,
         GENGPIOLEDBLINK_CONFIG,
         GENEXERCISE_CONFIG,

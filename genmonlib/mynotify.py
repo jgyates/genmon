@@ -229,30 +229,31 @@ class GenNotify(MyCommon):
                                 "SYSTEMHEALTH", value, self.LastSystemHealth
                             )
                             self.LastSystemHealth = value
-            GenList = GenDict["Monitor"][2]["Platform Stats"]
-            PiStats = ""
-            PiPresent = False
-            for Items in GenList:
-                for key, value in Items.items():
-                    if key == "Pi CPU Frequency Throttling":
-                        PiPresent = True
-                        if value.lower() != "ok":
+            if self.notify_pi_state
+                GenList = GenDict["Monitor"][2]["Platform Stats"]
+                PiStats = ""
+                PiPresent = False
+                for Items in GenList:
+                    for key, value in Items.items():
+                        if key == "Pi CPU Frequency Throttling":
+                            PiPresent = True
+                            if value.lower() != "ok":
+                                if len(PiStats):
+                                    PiStats += ", "
+                                PiStats += "Pi CPU Frequency Throttling: " + value
+                        if key == "Pi ARM Frequency Cap" and value.lower() != "ok":
                             if len(PiStats):
                                 PiStats += ", "
-                            PiStats += "Pi CPU Frequency Throttling: " + value
-                    if key == "Pi ARM Frequency Cap" and value.lower() != "ok":
-                        if len(PiStats):
-                            PiStats += ", "
-                        PiStats += " Pi ARM Frequency Cap: " + value
-                    if key == "Pi Undervoltage" and value.lower() != "ok":
-                        if len(PiStats):
-                            PiStats += ", "
-                        PiStats += " Pi Undervoltage:" + value
-            if PiStats == "":
-                PiStats = "OK"
-            if PiPresent:
-                self.ProcessEventData("PISTATE", PiStats, self.LastPiState)
-                self.LastPiState = PiStats
+                            PiStats += " Pi ARM Frequency Cap: " + value
+                        if key == "Pi Undervoltage" and value.lower() != "ok":
+                            if len(PiStats):
+                                PiStats += ", "
+                            PiStats += " Pi Undervoltage:" + value
+                if PiStats == "":
+                    PiStats = "OK"
+                if PiPresent:
+                    self.ProcessEventData("PISTATE", PiStats, self.LastPiState)
+                    self.LastPiState = PiStats
         except Exception as e1:
             # The system does no support outage tracking (i.e. H-100)
             self.LogErrorLine("Unable to get moniotr state: " + str(e1))
