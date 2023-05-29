@@ -229,7 +229,7 @@ class GenNotify(MyCommon):
                                 "SYSTEMHEALTH", value, self.LastSystemHealth
                             )
                             self.LastSystemHealth = value
-            if self.notify_pi_state
+            if self.notify_pi_state:
                 GenList = GenDict["Monitor"][2]["Platform Stats"]
                 PiStats = ""
                 PiPresent = False
