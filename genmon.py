@@ -430,6 +430,17 @@ class Monitor(MySupport):
                 self.config.WriteValue("version", ProgramDefaults.GENMON_VERSION)
                 self.NewInstall = True
                 self.Version = ProgramDefaults.GENMON_VERSION
+                self.config.WriteValue("install", str(datetime.datetime.now()))
+
+            if not self.config.HasOption("install"):
+                try:
+                    stat = os.stat(self.config.FileName)
+                    self.config.WriteValue("install", str(datetime.datetime.fromtimestamp(stat.st_atime)))
+                except:
+                    self.config.WriteValue("install", "Unknown")
+        
+            self.InstallTime = self.config.ReadValue("install", default = "Unknown")
+
             if self.config.HasOption("autofeedback"):
                 self.FeedbackEnabled = self.config.ReadValue(
                     "autofeedback", return_type=bool
@@ -596,6 +607,7 @@ class Monitor(MySupport):
         SupportData = collections.OrderedDict()
         try:
             SupportData["Program Run Time"] = self.GetProgramRunTime()
+            SupportData["Install"] = self.InstallTime
             SupportData["Monitor Health"] = self.GetSystemHealth()
             SupportData["Controller Selected"] = self.ControllerSelected.lower()
             SupportData["StartInfo"] = self.GetStartInfo(NoTile=True)
@@ -1140,6 +1152,7 @@ class Monitor(MySupport):
         StartInfo = collections.OrderedDict()
         StartInfo["version"] = ProgramDefaults.GENMON_VERSION
         StartInfo["sitename"] = self.SiteName
+        StartInfo["install"] = self.InstallTime
         StartInfo["python"] = (
             str(sys.version_info.major) + "." + str(sys.version_info.minor)
         )
