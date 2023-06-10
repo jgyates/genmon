@@ -8,7 +8,7 @@ This project will monitor a backup generator that utilizes the Generac Controlle
 * Generac [H-100](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/H-100_Controller.png) Industrial Controllers
 * The H-100 controller is used in industrial generators from Generac and Eaton.
 * Generac G-Panel based Industrial Controllers
-* Generac PowerPact
+* Generac [PowerPact](https://github.com/jgyates/genmon/wiki/Appendix-R---Replacing-Generac-MobileLink-with-Genmon-on-a-PowerPact-7.5-KW)
 * [2008 Era Generac Pre-Nexus](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/2008-PreNexusController.jpg) controllers. See [this](https://github.com/jgyates/genmon/wiki/Appendix-D-Known-Issues) page for more info.
 * Generac [PowerZone Pro/Sync and PowerZone 410](https://github.com/jgyates/genmon/wiki/Appendix-G-Generac-H-100,-G-Panel-and-PowerZone-Controllers) controllers
 * Custom Controller Interface for supporting other generators that use modbus over serial or modbus over TCP. More info on this is located [here](https://github.com/jgyates/genmon/wiki/Appendix-N-Genmon-Supporting-Other-Controller-Types). Deep See Electronics, Briggs & Stratton, etc.
