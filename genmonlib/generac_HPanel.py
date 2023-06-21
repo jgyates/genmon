@@ -1222,7 +1222,7 @@ class HPanel(GeneratorController):
             )
 
             if not len(ControllerString):
-                self.LogError("Unable to ID controller, possiby not receiving data.")
+                self.LogError("Unable to ID controller, possibly not receiving data.")
                 self.ControllerDetected = False
                 return False
 
@@ -1232,7 +1232,7 @@ class HPanel(GeneratorController):
 
             if not len(ControllerString):
                 self.LogError(
-                    "Unable to ID controller, possiby not receiving data (2)."
+                    "Unable to ID controller, possibly not receiving data (2)."
                 )
                 self.ControllerDetected = False
                 return False
