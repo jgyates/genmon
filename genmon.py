@@ -1332,7 +1332,7 @@ class Monitor(MySupport):
                             "Generator Monitor Communication Restored at "
                             + self.SiteName,
                             msgbody,
-                            msgtype="info",
+                            msgtype="error",
                         )
                 else:
                     if self.GetDeltaTimeMinutes(
