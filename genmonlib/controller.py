@@ -2083,9 +2083,24 @@ class GeneratorController(MySupport):
             with self.ExternalDataLock:
                 try:
                     if self.ExternalTempData != None:
-                        Status["Status"].append(self.ExternalTempData)
+                        if not JSONNum:
+                            Status["Status"].append(self.ExternalTempData)
+                        else:
+                            # This will unpack the list of dicts and put them in the JSONNum format 
+                            TempList = []
+                            ExternalTempList = self.ExternalTempData["External Temperature Sensors"]
+                            if len(ExternalTempList):
+                                Status["Status"].append({"External Temperature Sensors" : TempList})
+                                for TempDict in ExternalTempList:
+                                    try:
+                                        if len(TempDict):
+                                            TempKey, TempData = TempDict.popitem()
+                                            TempDataList = TempData.strip().split( " ")
+                                            TempList.append({TempKey: self.ValueOut(float(TempDataList[0]), TempDataList[1], JSONNum)}) 
+                                    except Exception as e1:
+                                        self.LogErrorLine("Error in DisplayStatus (3): " + str(e1))
                 except Exception as e1:
-                    self.LogErrorLine("Error in DisplayStatus: " + str(e1))
+                    self.LogErrorLine("Error in DisplayStatusCommon(2): " + str(e1))
 
             ReturnCurrent = self.CheckExternalCTData(request="current", ReturnFloat=True, gauge=True)
             ReturnCurrent1 = self.CheckExternalCTData(request="ct1", ReturnFloat=True, gauge=True)
