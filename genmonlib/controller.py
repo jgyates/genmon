@@ -340,7 +340,7 @@ class GeneratorController(MySupport):
                     self.MessagePipe.SendMessage("Outage Recovery Notice at " + self.SiteName,msgbody,msgtype="outage")
 
                     try:
-                        if self.FuelConsumptionSupported():
+                        if self.PowerMeterIsSupported() and self.FuelConsumptionSupported():
                             if self.LastOutageDuration.total_seconds():
                                 FuelUsed = self.GetPowerHistory("power_log_json=%d,fuel" % self.LastOutageDuration.total_seconds())
                             else:
