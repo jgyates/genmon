@@ -1571,7 +1571,12 @@ class GeneratorController(MySupport):
             LastPower = 0.0
             LastTime = None
             for Items in PowerList:
-                Power = float(Items[1])
+                try:
+                    # is the power value a float?
+                    Power = float(Items[1])
+                except Exception as e1:
+                    Power = 0.0
+                    continue
                 try:
                     # This should be date time
                     struct_time = time.strptime(Items[0], "%x %X")
@@ -1579,7 +1584,7 @@ class GeneratorController(MySupport):
                         time.mktime(struct_time)
                     )
                 except Exception as e1:
-                    self.LogError("Invalid time entry in power log: " + str(e1))
+                    self.LogErrorLine("Invalid time entry in power log: " + str(e1))
                     continue
 
                 # Changes in Daylight savings time will effect this

@@ -405,7 +405,7 @@ class MyTile(MyCommon):
                 )
                 return
         except Exception as e1:
-            self.LogErrorLine("Error in MyTile init: " + str(e1))
+            self.LogErrorLine("Error in MyTile init: " + str(e1) + " :" + str(title))
 
     # -------------MyTile:myround--------------------------------------
     def myround(self, x, base=5):
