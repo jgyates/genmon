@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Added new add on program gencallmebot (thanks @buschauer)
 - Added preliminary support for PowerZone 410 controller
 - Modification to allow JSON for Numerics for external temp sensors when using MQTT add on
+- Corrected issue with some systems not updating from the About page properly
 
 ## V1.18.16 -2022-12-06
 - Change to allow CPU temp gauge for any linux system

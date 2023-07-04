@@ -335,6 +335,7 @@ function updategenmon() {
       sudo touch $UPDATE_HISTORY
     fi
 
+    git config --global --add safe.directory '*'
     git fetch origin
     git reset --hard origin/master
     sudo chmod 775 "$genmondir/startgenmon.sh"

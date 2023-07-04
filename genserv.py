@@ -3822,7 +3822,7 @@ def Update():
     # update
     try:
         if sys.version_info >= (3, 0):
-            if not RunBashScript("genmonmaint.sh -u -n -p 3"):
+            if not RunBashScript("genmonmaint.sh -u -n -p 3", log = True):
                 LogError("Error in Update")
         else:
             if not RunBashScript("genmonmaint.sh -u -n -p 2"):  # update no prompt
@@ -3848,13 +3848,23 @@ def Backup():
 
 
 # -------------------------------------------------------------------------------
-def RunBashScript(ScriptName):
+def RunBashScript(ScriptName, log = False):
     try:
         pathtoscript = os.path.dirname(os.path.realpath(__file__))
         script = os.path.join(pathtoscript, ScriptName)
         command = "/bin/bash "
         LogError("Script: " + command + script)
-        subprocess.call(command + script, shell=True)
+        if log == False:
+            subprocess.call(command + script, shell=True)
+        else:
+            try:
+                output = subprocess.check_output(command + script, shell=True, stderr=subprocess.STDOUT)
+            except subprocess.CalledProcessError as e:
+                output = e.output.decode()
+
+            if sys.version_info >= (3, 0):
+                output = output.decode()
+            LogError(command + script + ": \n" +  output)
         return True
 
     except Exception as e1:
