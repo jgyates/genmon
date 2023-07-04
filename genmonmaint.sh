@@ -334,7 +334,6 @@ function updategenmon() {
       echo "$UPDATE_HISTORY does not exist. Creating.."
       sudo touch $UPDATE_HISTORY
     fi
-    sudo sh -c "printf '%s\n' $current_time >> $UPDATE_HISTORY"
 
     git fetch origin
     git reset --hard origin/master
@@ -342,6 +341,8 @@ function updategenmon() {
     sudo chmod 775 "$genmondir/genmonmaint.sh"
     sudo chown -R `stat -c "%U" $genmondir` $genmondir
     sudo chgrp -R `stat -c "%G" $genmondir` $genmondir
+
+    sudo sh -c "printf '%s\n' $current_time >> $UPDATE_HISTORY"
     echo "Done."
 }
 
