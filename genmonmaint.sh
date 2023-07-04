@@ -327,6 +327,15 @@ function updategenmon() {
 
     echo "Updating genmon..."
     cd $genmondir
+    now=$(date)
+    echo "$now"
+    UPDATE_HISTORY="$config_path"update.txt
+    if [ ! -f "$UPDATE_HISTORY" ]; then
+      echo "$UPDATE_HISTORY does not exist. Creating.."
+      sudo touch $UPDATE_HISTORY
+    fi
+    sudo printf "%s\n" "$now" >> $UPDATE_HISTORY
+
     git fetch origin
     git reset --hard origin/master
     sudo chmod 775 "$genmondir/startgenmon.sh"
