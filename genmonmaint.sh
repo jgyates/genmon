@@ -327,14 +327,14 @@ function updategenmon() {
 
     echo "Updating genmon..."
     cd $genmondir
-    now=$(date)
-    echo "$now"
+    current_time=$(date '+%Y-%m-%d:%H:%M:%S')
+    
     UPDATE_HISTORY="$config_path"update.txt
     if [ ! -f "$UPDATE_HISTORY" ]; then
       echo "$UPDATE_HISTORY does not exist. Creating.."
       sudo touch $UPDATE_HISTORY
     fi
-    sudo printf "%s\n" "$now" >> $UPDATE_HISTORY
+    sudo sh -c "printf '%s\n' $current_time >> $UPDATE_HISTORY"
 
     git fetch origin
     git reset --hard origin/master
