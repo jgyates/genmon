@@ -1,6 +1,6 @@
 
 
-
+#ALARM DATA
 # Format: items are delimited by !, each line must have 5 items
 #AlarmCode! Type (ALARM, WARNING)! AlarmName! Condition! Additional Info
 
