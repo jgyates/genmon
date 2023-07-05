@@ -49,7 +49,7 @@ except Exception as e1:
     print("Error: " + str(e1))
     sys.exit(2)
 
-GENMON_VERSION = "V1.18.17"
+GENMON_VERSION = "V1.18.18"
 
 # ------------ Monitor class ----------------------------------------------------
 class Monitor(MySupport):
@@ -667,8 +667,17 @@ class Monitor(MySupport):
                 "gencustomgpio.log",
                 "gensms_voip.log",
             ]
+            DataFilesToSend = [
+                "update.txt"        # time stamp of software update
+            ]
+            # Files in /var/log
             for File in FilesToSend:
                 LogFile = self.LogLocation + File
+                if os.path.isfile(LogFile):
+                    LogList.append(LogFile)
+            # Non settings realated files in conf folder (typically /etc/genmon)
+            for File in DataFilesToSend:
+                LogFile = self.ConfigFilePath + File
                 if os.path.isfile(LogFile):
                     LogList.append(LogFile)
             return LogList

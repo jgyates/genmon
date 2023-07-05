@@ -1,6 +1,12 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.18.18 -2023-07-05
+- Added new add on program gencallmebot (thanks @buschauer)
+- Added preliminary support for PowerZone 410 controller
+- Modification to allow JSON for Numerics for external temp sensors when using MQTT add on
+- Corrected issue with some systems not updating from the About page properly (if you have this issue you may need to update once via ssh to get the fix)
+
 ## V1.18.17 -2023-04-06
 - Added feature request to allow external temperature sensors to be displayed as gauges
 - Update for horizontal 120 gal tanks in mopeka sensor add on
@@ -11,10 +17,6 @@ All notable changes to this project will be documented in this file.
 - Updates for unknown alarms for 4.5L controller
 - Updates to About page to better handle slower upgrades
 - Minor update to gensnmp to allow the disabling of IPv6
-- Added new add on program gencallmebot (thanks @buschauer)
-- Added preliminary support for PowerZone 410 controller
-- Modification to allow JSON for Numerics for external temp sensors when using MQTT add on
-- Corrected issue with some systems not updating from the About page properly
 
 ## V1.18.16 -2022-12-06
 - Change to allow CPU temp gauge for any linux system
