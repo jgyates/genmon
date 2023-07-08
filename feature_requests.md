@@ -21,3 +21,4 @@
 - Add daily options to enhanced exercise add on 
 - [Add the ability to save pictures in the service journal](https://github.com/jgyates/genmon/issues/896) @northportio
 - [Add returning non string (int) and string values for SNMP add on](https://github.com/jgyates/genmon/issues/716)
+- [Ecobee thermostat messaging](https://github.com/jgyates/genmon/issues/921) @wtnh 
