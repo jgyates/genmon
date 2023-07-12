@@ -24,6 +24,7 @@ loglocation = Location of log files. Full path must be specified.
 userdatalocation = Location of user defined JSON data (userdefined.json) to be displayed on Monitor page. Full path must be specified.
 enabledebug = Enable code to support reverse engineering of registers. This option, when enabled creates a thread that will monitor registers in the controller and send notifications to the developer of changed registers. Not used in normal operation.
 ignore_unknown = Ignore unknown values for modbus register 0001 for Evolution 2.0
+alternate_date_format = Use dd/mm/yyyy for date format instead of mm/dd/yyyy where applicable
 displayunknown = Display the contents of additional registers that appear to be associated with sensors of some type.
 uselegacysetexercise = Enable using and alternate method for writing the exercise time. Not used in normal operation. The software will auto-detect when this needs to be enabled but this setting overrides the auto-detect.
 disableoutagecheck = Disable the monitoring of the utility line voltage for detecting power outages. If you have a 'smart' transfer switch, this may need to be enabled. For Evo/Nexus this is typically disabled.

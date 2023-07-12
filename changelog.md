@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Corrected issue with some systems not updating from the About page properly (if you have this issue you may need to update once via ssh to get the fix)
 - Update to gensnmp.py to allow integer values to be returned when applicable
 - Update to gensnmp,py to support custom controller definitions
+- Added advanced setting for alternate date format
 
 ## V1.18.17 -2023-04-06
 - Added feature request to allow external temperature sensors to be displayed as gauges

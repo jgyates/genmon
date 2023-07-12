@@ -1752,7 +1752,18 @@ class HPanel(GeneratorController):
                 self.LogError("ParseLogEntry: No date found in log entry")
                 return Entry
             EntryDate = RetList[0]
-
+            
+            try:
+                #format expected is mm/dd/yy
+                DateInfo = datetime.datetime.strptime(EntryDate, "%m/%d/%y")
+                if self.bAlternateDateFormat:
+                    FormattedDate = DateInfo.strftime("%d-%m-%Y")
+                else:
+                    FormattedDate = DateInfo.strftime("%m-%d-%Y")
+            except Exception as e1:
+                FormattedDate = EntryDate
+                return ""
+            # remove from the end
             Entry = Entry.replace(EntryDate, "")
             Entry = Entry.replace(EntryTime, "")
 
@@ -1765,7 +1776,7 @@ class HPanel(GeneratorController):
             elif Type.lower() == "event":
                 Entry = Entry.replace("()", "")
 
-            Entry = EntryDate + " " + EntryTime + " " + Entry
+            Entry = FormattedDate + " " + EntryTime + " " + Entry
 
             return Entry
         except Exception as e1:
@@ -2116,7 +2127,16 @@ class HPanel(GeneratorController):
                 self.GetIntFromString(input_string, 5, 1, decimal=True),
                 self.GetIntFromString(input_string, 7, 1, decimal=True),
             )
-
+            try:
+                FormattedDate = None
+                EntryDate = datetime.datetime.strptime(Date, "%m/%d/%y")
+                if self.bAlternateDateFormat:
+                    FormattedDate = EntryDate.strftime("%d-%m-%Y")
+                else:
+                    FormattedDate = EntryDate.strftime("%m-%d-%Y")
+            except Exception as e1:
+                self.LogErrorLine("Error parsing date in GetTimeFromString: " + str(e1) + ": " + Date)
+                return "Unknown"
             AMorPM = self.GetIntFromString(input_string, 3, 1)
 
             if AMorPM == 0xD1:
@@ -2131,7 +2151,7 @@ class HPanel(GeneratorController):
                 self.GetIntFromString(input_string, 1, 1, decimal=True),
             )
 
-            return Date + " " + Time
+            return FormattedDate + " " + Time
         except Exception as e1:
             self.LogErrorLine("Error in GetTimeFromString: " + str(e1))
             return "Unknown"

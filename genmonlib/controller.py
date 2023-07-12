@@ -251,6 +251,9 @@ class GeneratorController(MySupport):
                 self.bDisablePlatformStats = self.config.ReadValue(
                     "disableplatformstats", return_type=bool, default=False
                 )
+                self.bAlternateDateFormat = self.config.ReadValue(
+                    "alternate_date_format", return_type=bool, default=False
+                )
 
                 if self.bDisablePlatformStats:
                     self.bUseRaspberryPiCpuTempGauge = False
@@ -1190,19 +1193,27 @@ class GeneratorController(MySupport):
 
             index = 0
             for Items in OutageLog:
+                if len(Items) > 1:
+                    try:
+                        # should be format yyyy-mm-dd hh:mm:ss
+                        EntryDate = datetime.datetime.strptime(Items[0], "%Y-%m-%d %H:%M:%S")
+                        if self.bAlternateDateFormat:
+                            FormattedDate = EntryDate.strftime("%d-%m-%Y %H:%M:%S")
+                        else:
+                            FormattedDate = EntryDate.strftime("%m-%d-%Y %H:%M:%S")
+                    except Exception as e1:
+                        self.LogErrorLine("Error parsing date/time in outage log: " + str(e1))
+                        continue
                 if len(Items) == 2:
                     if JSONNum:
-                        LogHistory.append({index: [{"Date": Items[0]}, {"Duration": Items[1]}]})
+                        LogHistory.append({index: [{"Date": FormattedDate}, {"Duration": Items[1]}]})
                     else:   
-                        LogHistory.append("%s, Duration: %s" % (Items[0], Items[1]))
+                        LogHistory.append("%s, Duration: %s" % (FormattedDate, Items[1]))
                 elif len(Items) == 3:
                     if JSONNum:
-                        LogHistory.append({index:[{"Date": Items[0]}, {"Duration": Items[1]},{"Estimated Fuel": Items[2]}]})
+                        LogHistory.append({index:[{"Date": FormattedDate}, {"Duration": Items[1]},{"Estimated Fuel": Items[2]}]})
                     else:
-                        LogHistory.append(
-                            "%s, Duration: %s, Estimated Fuel: %s"
-                            % (Items[0], Items[1], Items[2])
-                        )
+                        LogHistory.append("%s, Duration: %s, Estimated Fuel: %s"% (FormattedDate, Items[1], Items[2]))
                 index += 1
 
             return LogHistory

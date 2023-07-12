@@ -3112,15 +3112,26 @@ class Evolution(GeneratorController):
             if not "unknown" in AlarmStr.lower():
                 LogStr = AlarmStr
 
-        RetStr = "%02d/%02d/%02d %02d:%02d:%02d %s " % (
-            Month,
-            Day,
-            Year,
-            Hour,
-            Min,
-            Seconds,
-            LogStr,
-        )
+        if self.bAlternateDateFormat:
+                RetStr = "%02d/%02d/%02d %02d:%02d:%02d %s " % (
+                Day,
+                Month,
+                Year,
+                Hour,
+                Min,
+                Seconds,
+                LogStr,
+            )
+        else:
+            RetStr = "%02d/%02d/%02d %02d:%02d:%02d %s " % (
+                Month,
+                Day,
+                Year,
+                Hour,
+                Min,
+                Seconds,
+                LogStr,
+            )
         if len(Value) > 16:
             TempVal = Value[16:20]
             AlarmCode = int(TempVal, 16)
@@ -4494,7 +4505,10 @@ class Evolution(GeneratorController):
             if not self.Evolution2:  # add one day
                 time += 86400
             Date = datetime.datetime.fromtimestamp(time)
-            return Date.strftime("%m/%d/%Y ")
+            if self.bAlternateDateFormat:
+                return Date.strftime("%d/%m/%Y ")
+            else:
+                return Date.strftime("%m/%d/%Y ")
         except Exception as e1:
             self.LogErrorLine("Error in GetServiceDueDate: " + str(e1))
             return ""

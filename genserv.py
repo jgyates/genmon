@@ -2489,6 +2489,18 @@ def ReadAdvancedSettingsFromFile():
             GENMON_SECTION,
             "ignore_unknown",
         ]
+        ConfigSettings["alternate_date_format"] = [
+            "boolean",
+            "Alternate Date Format",
+            26,
+            False,
+            "",
+            0,
+            GENMON_CONFIG,
+            GENMON_SECTION,
+            "alternate_date_format",
+        ]
+
         # These settings are not displayed as the auto-detect controller will set these
         # these are only to be used to override the auto-detect
         # ConfigSettings["liquidcooled"] = ['boolean', 'Force Controller Type (cooling)', 30, False, "", 0, GENMON_CONFIG, GENMON_SECTION, "liquidcooled"]
