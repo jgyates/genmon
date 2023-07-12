@@ -1,0 +1,508 @@
+{
+    "controller_type": "generac_evo_nexus",
+    "snmp": [
+        {
+            "oid": "0, 0, 1",
+            "return_type": "str",
+            "description": "switchState",
+            "default" : "Unknown",
+            "keywords" : ["Status/Engine", "Switch State"]
+        },
+        {
+            "oid": "0, 0, 2",
+            "return_type": "str",
+            "description": "EngineState",
+            "default" : "Unknown",
+            "keywords" : ["Status/Engine", "Engine State"]
+        },
+        {
+            "oid": "0, 0, 3",
+            "return_type": "str",
+            "description": "activeRelays",
+            "default" : "",
+            "keywords" : ["Status/Engine", "Active Relays"]
+        },
+        {
+            "oid": "0, 0, 4",
+            "return_type": "str",
+            "description": "activeSensors",
+            "default" : "",
+            "keywords" : ["Status/Engine", "Active Sensors"]
+        },
+        {
+            "oid": "0, 0, 5",
+            "return_type": "str",
+            "description": "batteryVolts",
+            "default" : "",
+            "keywords" : ["Status/Engine", "Battery Voltage"]
+        },
+        {
+            "oid": "0, 0, 6",
+            "return_type": "str",
+            "description": "batteryStatus",
+            "default" : "",
+            "keywords" : ["Status/Engine", "Battery Status"]
+        },
+        {
+            "oid": "0, 0, 7",
+            "return_type": "str",
+            "integer": true,
+            "description": "rpm",
+            "default" : "",
+            "keywords" : ["Status/Engine", "RPM"]
+        },
+        {
+            "oid": "0, 0, 8",
+            "return_type": "str",
+            "description": "frequency",
+            "default" : "",
+            "keywords" : ["Status/Engine", "Frequency"]
+        },
+        {
+            "oid": "0, 0, 9",
+            "return_type": "str",
+            "integer": true,
+            "description": "outputVoltage",
+            "default" : "",
+            "keywords" : ["Status/Engine", "Output Voltage"]
+        },
+        {
+            "oid": "0, 0, 10",
+            "return_type": "str",
+            "description": "outputCurrent",
+            "default" : "",
+            "keywords" : ["Status/Engine", "Output Current"]
+        },
+        {
+            "oid": "0, 0, 11",
+            "return_type": "str",
+            "description": "outputPower",
+            "default" : "",
+            "keywords" : ["Status/Engine", "Output Power"]
+        },
+        {
+            "oid": "0, 0, 12",
+            "return_type": "str",
+            "integer": true,
+            "description": "rotorPoles",
+            "default" : "",
+            "keywords" : ["Status/Engine", "Rotor Poles"]
+        },
+        {
+            "oid": "0, 1, 1",
+            "return_type": "str",
+            "integer": true,
+            "description": "utilityVoltage",
+            "default" : "",
+            "keywords" : ["Status/Line", "Utility Voltage"]
+        },
+        {
+            "oid": "0, 1, 2",
+            "return_type": "str",
+            "integer": true,
+            "description": "utilityVoltageMax",
+            "default" : "",
+            "keywords" : ["Status/Line", "Utility Max Voltage"]
+        },
+        {
+            "oid": "0, 1, 3",
+            "return_type": "str",
+            "integer": true,
+            "description": "utilityVoltageMin",
+            "default" : "",
+            "keywords" : ["Status/Line", "Utility Min Voltage"]
+        },
+        {
+            "oid": "0, 1, 4",
+            "return_type": "str",
+            "integer": true,
+            "description": "utilityThresholdVoltage",
+            "default" : "",
+            "keywords" : ["Status/Line", "Utility Threshold Voltage"]
+        },
+        {
+            "oid": "0, 1, 5",
+            "return_type": "str",
+            "integer": true,
+            "description": "utilityPickupVoltage",
+            "default" : "",
+            "keywords" : ["Status/Line", "Utility Pickup Voltage"]
+        },
+        {
+            "oid": "0, 1, 6",
+            "return_type": "str",
+            "integer": true,
+            "description": "setOutputVoltage",
+            "default" : "",
+            "keywords" : ["Status/Line", "Set Output Voltage"]
+        },
+        {
+            "oid": "0, 2, 1",
+            "return_type": "str",
+            "description": "lastAlarmLog",
+            "default" : " ",
+            "keywords" : ["Status", "Last Log", "Alarm Log"]
+        },
+        {
+            "oid": "0, 2, 2",
+            "return_type": "str",
+            "description": "lastServiceLog",
+            "default" : " ",
+            "keywords" : ["Status", "Last Log", "Service Log"]
+        },
+        {
+            "oid": "0, 2, 3",
+            "return_type": "str",
+            "description": "lastRunLog",
+            "default" : " ",
+            "keywords" : ["Status", "Last Log", "Run Log"]
+        },
+        {
+            "oid": "0, 3, 1",
+            "return_type": "str",
+            "description": "monitorTime",
+            "default" : " ",
+            "keywords" : ["Status/Time", "Monitor Time"]
+        },
+        {
+            "oid": "0, 3, 2",
+            "return_type": "str",
+            "description": "generatorTime",
+            "default" : " ",
+            "keywords" : ["Status/Time", "Generator Time"]
+        },
+        {
+            "oid": "1, 0, 1",
+            "return_type": "str",
+            "description": "generatorModel",
+            "default" : " ",
+            "keywords" : ["Maintenance", "Model"]
+        },
+        {
+            "oid": "1, 0, 2",
+            "return_type": "str",
+            "description": "serialNumber",
+            "default" : " ",
+            "keywords" : ["Maintenance", "Generator Serial Number"]
+        },
+        {
+            "oid": "1, 0, 3",
+            "return_type": "str",
+            "description": "controller",
+            "default" : " ",
+            "keywords" : ["Maintenance", "Controller Detected"]
+        },
+        {
+            "oid": "1, 0, 4",
+            "return_type": "str",
+            "integer": true,
+            "description": "nominalRPM",
+            "default" : " ",
+            "keywords" : ["Maintenance", "Nominal RPM"]
+        },
+        {
+            "oid": "1, 0, 5",
+            "return_type": "str",
+            "integer": true,
+            "description": "ratedkW",
+            "default" : " ",
+            "keywords" : ["Maintenance", "Rated kW"]
+        },
+        {
+            "oid": "1, 0, 6",
+            "return_type": "str",
+            "integer": true,
+            "description": "ratedFreq",
+            "default" : " ",
+            "keywords" : ["Maintenance", "Nominal Frequency"]
+        },
+        {
+            "oid": "1, 0, 7",
+            "return_type": "str",
+            "description": "fuelType",
+            "default" : " ",
+            "keywords" : ["Maintenance", "Fuel Type"]
+        },
+        {
+            "oid": "1, 0, 8",
+            "return_type": "str",
+            "integer": true,
+            "description": "fuelLevelSensor",
+            "default" : " ",
+            "keywords" : ["Maintenance", "Fuel Level Sensor"]
+        },
+        {
+            "oid": "1, 0, 9",
+            "return_type": "str",
+            "description": "estFuelInTank",
+            "default" : " ",
+            "keywords" : ["Maintenance", "Estimated Fuel In Tank"]
+        },
+        {
+            "oid": "1, 0, 10",
+            "return_type": "str",
+            "description": "displacement",
+            "default" : " ",
+            "keywords" : ["Maintenance", "Engine Displacement"]
+        },
+        {
+            "oid": "1, 0, 11",
+            "return_type": "str",
+            "description": "ambientTemp",
+            "default" : " ",
+            "keywords" : ["Maintenance", "Ambient Temperature Sensor"]
+        },
+        {
+            "oid": "1, 0, 12",
+            "return_type": "str",
+            "description": "kwH30",
+            "default" : " ",
+            "keywords" : ["Maintenance", "kW Hours in last 30 days"]
+        },
+        {
+            "oid": "1, 0, 13",
+            "return_type": "str",
+            "description": "fuel30",
+            "default" : " ",
+            "keywords" : ["Maintenance", "Fuel Consumption in last 30 days"]
+        },
+        {
+            "oid": "1, 0, 14",
+            "return_type": "str",
+            "description": "totalFuelUsed",
+            "default" : " ",
+            "keywords" : ["Maintenance", "Total Power Log Fuel Consumption"]
+        },
+        {
+            "oid": "1, 0, 15",
+            "return_type": "str",
+            "description": "runHours30",
+            "default" : " ",
+            "keywords" : ["Maintenance", "Run Hours in last 30 days"]
+        },
+        {
+            "oid": "1, 0, 16",
+            "return_type": "str",
+            "description": "estHoursInTank",
+            "default" : " ",
+            "keywords" : ["Maintenance", "Hours of Fuel Remaining", "Estimated"]
+        },
+        {
+            "oid": "1, 0, 17",
+            "return_type": "str",
+            "description": "loadHoursInTank",
+            "default" : " ",
+            "keywords" : ["Maintenance", "Hours of Fuel Remaining", "Current"]
+        },
+        {
+            "oid": "1, 0, 18",
+            "return_type": "str",
+            "description": "fuelInTank",
+            "default" : " ",
+            "keywords" : ["Maintenance", "Fuel In Tank (Sensor)"]
+        },
+        {
+            "oid": "1, 0, 19",
+            "return_type": "str",
+            "description": "fuelLevelState",
+            "default" : " ",
+            "keywords" : ["Maintenance", "Fuel Level State"]
+        },
+        {
+            "oid": "1, 0, 20",
+            "return_type": "str",
+            "description": "runHoursYear",
+            "default" : " ",
+            "keywords" : ["Maintenance", "Run Hours in the last year"]
+        },
+        {
+            "oid": "1, 1, 1",
+            "return_type": "str",
+            "integer": true,
+            "description": "calCurrent1",
+            "default" : " ",
+            "keywords" : ["Maintenance/Controller Settings", "Calibrate Current 1"]
+        },
+        {
+            "oid": "1, 1, 2",
+            "return_type": "str",
+            "integer": true,
+            "description": "calCurrent2",
+            "default" : " ",
+            "keywords" : ["Maintenance/Controller Settings", "Calibrate Current 2"]
+        },
+        {
+            "oid": "1, 1, 3",
+            "return_type": "str",
+            "integer": true,
+            "description": "calVolts",
+            "default" : " ",
+            "keywords" : ["Maintenance/Controller Settings", "Calibrate Volts"]
+        },
+        {
+            "oid": "1, 1, 4",
+            "return_type": "str",
+            "integer": true,
+            "description": "nominalLineVolts",
+            "default" : " ",
+            "keywords" : ["Maintenance/Controller Settings","Nominal Line Voltage"]
+        },
+        {
+            "oid": "1, 1, 5",
+            "return_type": "str",
+            "integer": true,
+            "description": "ratedMaxPower",
+            "default" : " ",
+            "keywords" : ["Maintenance/Controller Settings", "Rated Max Power"]
+        },
+        {
+            "oid": "1, 1, 6",
+            "return_type": "str",
+            "integer": true,
+            "description": "paramGroup",
+            "default" : " ",
+            "keywords" : ["Maintenance/Controller Settings", "Param Group"]
+        },
+        {
+            "oid": "1, 1, 7",
+            "return_type": "str",
+            "integer": true,
+            "description": "voltageCode",
+            "default" : " ",
+            "keywords" : ["Maintenance/Controller Settings", "Voltage Code"]
+        },
+        {
+            "oid": "1, 1, 8",
+            "return_type": "str",
+            "integer": true,
+            "description": "phase",
+            "default" : " ",
+            "keywords" : ["Maintenance/Controller Settings", "Phase"]
+        },
+        {
+            "oid": "1, 1, 9",
+            "return_type": "str",
+            "integer": true,
+            "description": "hoursProtection",
+            "default" : " ",
+            "keywords" : ["Maintenance/Controller Settings", "Hours of Protection"]
+        },
+        {
+            "oid": "1, 1, 10",
+            "return_type": "str",
+            "integer": true,
+            "description": "voltsPerHz",
+            "default" : " ",
+            "keywords" : ["Maintenance/Controller Settings", "Volts Per Hertz"]
+        },
+        {
+            "oid": "1, 1, 11",
+            "return_type": "str",
+            "integer": true,
+            "description": "gain",
+            "default" : " ",
+            "keywords" : ["Maintenance/Controller Settings", "Gain"]
+        },
+        {
+            "oid": "1, 1, 12",
+            "return_type": "str",
+            "integer": true,
+            "description": "targetFreq",
+            "default" : " ",
+            "keywords" : ["Maintenance/Controller Settings", "Target Frequency"]
+        },
+        {
+            "oid": "1, 1, 13",
+            "return_type": "str",
+            "integer": true,
+            "description": "targetVolts",
+            "default" : " ",
+            "keywords" : ["Maintenance/Controller Settings", "Target Voltage"]
+        },
+        {
+            "oid": "1, 2, 1",
+            "return_type": "str",
+            "description": "ExerciseTime",
+            "default" : " ",
+            "keywords" : ["Maintenance/Exercise", "Exercise Time"]
+        },
+        {
+            "oid": "1, 2, 2",
+            "return_type": "str",
+            "integer": true,
+            "description": "ExerciseDuration",
+            "default" : " ",
+            "keywords" : ["Maintenance/Exercise", "Exercise Duration"]
+        },
+        {
+            "oid": "1, 3, 1",
+            "return_type": "str",
+            "description": "AFDue",
+            "default" : " ",
+            "keywords" : ["Maintenance/Service", "Air Filter Service Due"]
+        },
+        {
+            "oid": "1, 3, 2",
+            "return_type": "str",
+            "description": "OilDue",
+            "default" : " ",
+            "keywords" : ["Maintenance/Service", "Oil and Oil Filter Service Due"]
+        },
+        {
+            "oid": "1, 3, 3",
+            "return_type": "str",
+            "description": "SPDue",
+            "default" : " ",
+            "keywords" : ["Maintenance/Service", "Spark Plug Service Due"]
+        },
+        {
+            "oid": "1, 3, 4",
+            "return_type": "str",
+            "description": "BattServiceDue",
+            "default" : " ",
+            "keywords" : ["Maintenance/Service", "Battery Service Due"]
+        },
+        {
+            "oid": "1, 3, 5",
+            "return_type": "str",
+            "description": "ServiceADue",
+            "default" : " ",
+            "keywords" : ["Maintenance/Service", "Service A Due"]
+        },
+        {
+            "oid": "1, 3, 6",
+            "return_type": "str",
+            "description": "ServiceBDue",
+            "default" : " ",
+            "keywords" : ["Maintenance/Service", "Service B Due"]
+        },
+        {
+            "oid": "1, 3, 7",
+            "return_type": "str",
+            "description": "BatteryCheckDue",
+            "default" : " ",
+            "keywords" : ["Maintenance/Service", "Battery Check Due"]
+        },
+        {
+            "oid": "1, 3, 8",
+            "return_type": "str",
+            "description": "TotalRunHours",
+            "default" : " ",
+            "keywords" : ["Maintenance/Service", "Total Run Hours"]
+        },
+        {
+            "oid": "1, 3, 9",
+            "return_type": "str",
+            "description": "HardwareVersion",
+            "default" : " ",
+            "keywords" : ["Maintenance/Service", "Hardware Version"]
+        },
+        {
+            "oid": "1, 3, 10",
+            "return_type": "str",
+            "description": "FirmwareVersion",
+            "default" : " ",
+            "keywords" : ["Maintenance/Service", "Firmware Version"]
+        }
+    ]
+}

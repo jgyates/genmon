@@ -1749,6 +1749,15 @@ def GetAddOns():
             bounds="",
             display_name="Numerics only",
         )
+        AddOnCfg["gensnmp"]["parameters"]["use_integer"] = CreateAddOnParam(
+            ConfigFiles[GENSNMP_CONFIG].ReadValue(
+                "use_integer", return_type=bool, default=False
+            ),
+            "boolean",
+            "If enabled, integer values (no units) will be returned when applicable in the Status, Maintenance (Evo/Nexus only) and Outage data. Enabling this value also enables 'Use Numerics'. Floating point numberic values are returned as strings",
+            bounds="",
+            display_name="Force Integers",
+        )
 
         # GENTEMP
         AddOnCfg["gentemp"] = collections.OrderedDict()

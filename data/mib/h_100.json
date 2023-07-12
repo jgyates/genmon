@@ -1,0 +1,240 @@
+{
+    "controller_type": "h_100",
+    "snmp": [
+        {
+            "oid": "0, 0, 1",
+            "return_type": "str",
+            "description": "SwitchState",
+            "default": " ",
+            "keywords": ["Status/Engine", "Switch State"]
+        },
+        {
+            "oid": "0, 0, 2",
+            "return_type": "str",
+            "description": "EngineStatus",
+            "default": " ",
+            "keywords": ["Status/Engine", "Engine State"]
+        },
+        {
+            "oid": "0, 0, 3",
+            "return_type": "str",
+            "description": "GeneratorStatus",
+            "default": " ",
+            "keywords": ["Status/Engine", "Generator Status"]
+        },
+        {
+            "oid": "0, 0, 4",
+            "return_type": "str",
+            "description": "OutputPower",
+            "default": " ",
+            "keywords": ["Status/Engine", "Output Power"]
+        },
+        {
+            "oid": "0, 0, 5",
+            "return_type": "str",
+            "description": "OutputPowerFactor",
+            "default": " ",
+            "keywords": ["Status/Engine", "Power Factor"]
+        },
+        {
+            "oid": "0, 0, 6",
+            "return_type": "str",
+            "integer": true,
+            "description": "RPM",
+            "default": 0,
+            "keywords": ["Status/Engine/RPM"]
+        },
+        {
+            "oid": "0, 0, 7",
+            "return_type": "str",
+            "description": "Frequency",
+            "default": " ",
+            "keywords": ["Status/Engine/Frequency"]
+        },
+        {
+            "oid": "0, 0, 8",
+            "return_type": "str",
+            "integer": true,
+            "description": "ThrottlePosition",
+            "default": " ",
+            "keywords": ["Status/Engine", "Throttle Position"]
+        },
+        {
+            "oid": "0, 0, 9",
+            "return_type": "str",
+            "integer": true,
+            "description": "CoolantTemp",
+            "default": " ",
+            "keywords": ["Status/Engine", "Coolant Temp"]
+        },
+        {
+            "oid": "0, 0, 10",
+            "return_type": "str",
+            "integer": true,
+            "description": "CoolantLevel",
+            "default": " ",
+            "keywords": ["Status/Engine", "Coolant Level"]
+        },
+        {
+            "oid": "0, 0, 11",
+            "return_type": "str",
+            "integer": true,
+            "description": "OilPressure",
+            "default": " ",
+            "keywords": ["Status/Engine", "Oil Pressure"]
+        },
+        {
+            "oid": "0, 0, 12",
+            "return_type": "str",
+            "integer": true,
+            "description": "OilTemp",
+            "default": " ",
+            "keywords": ["Status/Engine", "Oil Temp"]
+        },
+        {
+            "oid": "0, 0, 13",
+            "return_type": "str",
+            "integer": true,
+            "description": "FuelLevel",
+            "default": " ",
+            "keywords": ["Status/Engine", "Fuel Level"]
+        },
+        {
+            "oid": "0, 0, 14",
+            "return_type": "str",
+            "integer": true,
+            "description": "OxygenSensor",
+            "default": " ",
+            "keywords": ["Status/Engine", "Oxygen Sensor"]
+        },
+        {
+            "oid": "0, 0, 15",
+            "return_type": "str",
+            "integer": true,
+            "description": "CurrentPhaseA",
+            "default": " ",
+            "keywords": ["Status/Engine", "Current Phase A"]
+        },
+        {
+            "oid": "0, 0, 16",
+            "return_type": "str",
+            "integer": true,
+            "description": "CurrentPhaseB",
+            "default": " ",
+            "keywords": ["Status/Engine", "Current Phase B"]
+        },
+        {
+            "oid": "0, 0, 17",
+            "return_type": "str",
+            "integer": true,
+            "description": "CurrentPhaseC",
+            "default": " ",
+            "keywords": ["Status/Engine", "Current Phase C"]
+        },
+        {
+            "oid": "0, 0, 18",
+            "return_type": "str",
+            "integer": true,
+            "description": "AvgCurrent",
+            "default": " ",
+            "keywords": ["Status/Engine", "Average Current"]
+        },
+        {
+            "oid": "0, 0, 19",
+            "return_type": "str",
+            "integer": true,
+            "description": "VoltageAB",
+            "default": " ",
+            "keywords": ["Status/Engine", "Voltage A-B"]
+        },
+        {
+            "oid": "0, 0, 20",
+            "return_type": "str",
+            "integer": true,
+            "description": "VoltageBC",
+            "default": " ",
+            "keywords": ["Status/Engine", "Voltage B-C"]
+        },
+        {
+            "oid": "0, 0, 21",
+            "return_type": "str",
+            "integer": true,
+            "description": "VoltageCA",
+            "default": " ",
+            "keywords": ["Status/Engine", "Voltage C-A"]
+        },
+        {
+            "oid": "0, 0, 22",
+            "return_type": "str",
+            "integer": true,
+            "description": "AvgVoltage",
+            "default": " ",
+            "keywords": ["Status/Engine", "Average Voltage"]
+        },
+        {
+            "oid": "0, 0, 23",
+            "return_type": "str",
+            "description": "AirFuelDutyCycle",
+            "default": " ",
+            "keywords": ["Status/Engine", "Air Fuel Duty Cycle"]
+        },
+        {
+            "oid": "0, 1, 1",
+            "return_type": "str",
+            "integer": true,
+            "description": "ActiveAlarms",
+            "default": " ",
+            "keywords": ["Status/Alarms", "Number of Active Alarms"]
+        },
+        {
+            "oid": "0, 1, 2",
+            "return_type": "str",
+            "integer": true,
+            "description": "AckAlarms",
+            "default": " ",
+            "keywords": ["Status/Alarms", "Number of Acknowledged Alarms"]
+        },
+        {
+            "oid": "0, 1, 3",
+            "return_type": "str",
+            "description": "AlarmList",
+            "default": " ",
+            "keywords": ["Status/Alarms", "Alarm List"]
+        },
+        {
+            "oid": "0, 2, 1",
+            "return_type": "str",
+            "description": "BatteryVoltage",
+            "default": " ",
+            "keywords": ["Status/Battery", "Battery Voltage"]
+        },
+        {
+            "oid": "0, 2, 2",
+            "return_type": "str",
+            "description": "BatteryCurrent",
+            "default": " ",
+            "keywords": ["Status/Battery", "Battery Charger Current"]
+        },
+        {
+            "oid": "0, 3, 1",
+            "return_type": "str",
+            "description": "MonitorTime",
+            "default": " ",
+            "keywords": ["Status/Time", "Monitor Time"]
+        },
+        {
+            "oid": "0, 3, 2",
+            "return_type": "str",
+            "description": "GeneratorTime",
+            "default": " ",
+            "keywords": ["Status/Time", "Generator Time"]
+        },
+        {
+            "oid": "0, 4, 1",
+            "return_type": "str",
+            "description": "TransferSwitchState",
+            "default": " ",
+            "keywords": ["Status/Line State", "Transfer Switch State"]
+        }
+    ]
+}

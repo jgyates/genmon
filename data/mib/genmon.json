@@ -1,0 +1,195 @@
+{
+    "controller_type": "genmon",
+    "comment": "This info is specific to genmon, not the controller.  Monitor->Generator Monitor Stats",
+    "snmp": [
+        {
+            "oid":"0, 0, 1",
+            "return_type": "str",
+            "description":"MonitorHealth",
+            "default":"Unknown",
+            "keywords":["Monitor", "Monitor Health"]
+        },
+        {
+            "oid":"0, 0, 2",
+            "return_type": "str",
+            "description":"RunTime",
+            "default":"Unknown",
+            "keywords":["Monitor", "Run time"]
+        },
+        {
+            "oid":"0, 0, 3",
+            "return_type": "str",
+            "description":"PowerLogSize",
+            "default":"",
+            "keywords":["Monitor", "Power log file size"]
+        },
+        {
+            "oid":"0, 0, 4",
+            "return_type": "str",
+            "description":"Version",
+            "default":"",
+            "keywords":["Monitor", "Generator Monitor Version"]
+        },
+        {
+            "oid":"0, 1, 1",
+            "return_type": "str",
+            "description":"PacketCount",
+            "default":"Unknown",
+            "keywords":["Monitor/Communication Stats", "Packet Count"]
+        },
+        {
+            "oid":"0, 1, 2",
+            "return_type": "str",
+            "description":"CRCErrors",
+            "default":"Unknown",
+            "integer": true,
+            "keywords":["Monitor/Communication Stats", "CRC Errors"]
+        },
+        {
+            "oid":"0, 1, 3",
+            "return_type": "str",
+            "description":"CRCPercent",
+            "default":"Unknown",
+            "keywords":["Monitor/Communication Stats", "CRC Percent Errors"]
+        },
+        {
+            "oid":"0, 1, 4",
+            "return_type": "str",
+            "description":"PacketTimeouts",
+            "integer": true,
+            "default":"Unknown",
+            "keywords":["Monitor/Communication Stats", "Timeout Errors"]
+        },
+        {
+            "oid":"0, 1, 5",
+            "return_type": "str",
+            "description":"TimeoutPercent",
+            "default":"Unknown",
+            "keywords":["Monitor/Communication Stats", "Timeout Percent Errors"]
+        },
+        {
+            "oid":"0, 1, 6",
+            "return_type": "str",
+            "description":"ModbusErrors",
+            "integer": true,
+            "default":"Unknown",
+            "keywords":["Monitor/Communication Stats", "Modbus Exceptions"]
+        },
+        {
+            "oid":"0, 1, 7",
+            "return_type": "str",
+            "description":"ValidationErrors",
+            "integer": true,
+            "default":"Unknown",
+            "keywords":["Monitor/Communication Stats", "Validation Errors"]
+        },
+        {
+            "oid":"0, 1, 8",
+            "return_type": "str",
+            "description":"InvalidData",
+            "integer": true,
+            "default":"Unknown",
+            "keywords":["Monitor/Communication Stats", "Invalid Data"]
+        },
+        {
+            "oid":"0, 1, 9",
+            "return_type": "str",
+            "description":"DiscardedBytes",
+            "integer": true,
+            "default":"Unknown",
+            "keywords":["Monitor/Communication Stats", "Discarded Bytes"]
+        },
+        {
+            "oid":"0, 1, 10",
+            "return_type": "str",
+            "description":"CommRestarts",
+            "integer": true,
+            "default":"Unknown",
+            "keywords":["Monitor/Communication Stats", "Comm Restarts"]
+        },
+        {
+            "oid":"0, 1, 11",
+            "return_type": "str",
+            "description":"PPS",
+            "default":"Unknown",
+            "keywords":["Monitor/Communication Stats", "Packets Per Second"]
+        },
+        {
+            "oid":"0, 1, 12",
+            "return_type": "str",
+            "description":"AvgTransTime",
+            "default":"Unknown",
+            "keywords":["Monitor/Communication Stats", "Average Transaction Time"]
+        },
+        {
+            "oid":"0, 2, 1",
+            "return_type": "str",
+            "description":"CPUTemp",
+            "default":"Unknown",
+            "keywords":["Monitor", "CPU Temperature"]
+        },
+        {
+            "oid":"0, 2, 2",
+            "return_type": "str",
+            "description":"PiModel",
+            "default":"Unknown",
+            "keywords":["Monitor", "Pi Model"]
+        },
+        {
+            "oid":"0, 2, 3",
+            "return_type": "str",
+            "description":"CPUFreqThrottling",
+            "default":"Unknown",
+            "keywords":["Monitor", "Pi CPU Frequency Throttling"]
+        },
+        {
+            "oid":"0, 2, 4",
+            "return_type": "str",
+            "description":"ARMFreqCap",
+            "default":"Unknown",
+            "keywords":["Monitor", "Pi ARM Frequency Cap"]
+        },
+        {
+            "oid":"0, 2, 5",
+            "return_type": "str",
+            "description":"ARMUnderVoltage",
+            "default":"Unknown",
+            "keywords":["Monitor", "Pi Undervoltage"]
+        },
+        {
+            "oid":"0, 2, 6",
+            "return_type": "str",
+            "description":"CPUUtil",
+            "default":"Unknown",
+            "keywords":["Monitor", "CPU Utilization"]
+        },
+        {
+            "oid":"0, 2, 7",
+            "return_type": "str",
+            "description":"OSName",
+            "default":"Unknown",
+            "keywords":["Monitor", "OS Name"]
+        },
+        {
+            "oid":"0, 2, 8",
+            "return_type": "str",
+            "description":"OSVersion",
+            "default":"Unknown",
+            "keywords":["Monitor", "OS Version"]
+        },
+        {
+            "oid":"0, 2, 9",
+            "return_type": "str",
+            "description":"SysUptime",
+            "default":"Unknown",
+            "keywords":["Monitor", "System Uptime"]
+        },
+        {
+            "oid":"0, 2, 10",
+            "return_type": "str",
+            "description":"NetInterface",
+            "default":"Unknown",
+            "keywords":["Monitor", "Network Interface Used"]
+        }
+    ]
+}

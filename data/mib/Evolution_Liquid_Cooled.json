@@ -1,5 +1,11 @@
 {
     "controller_type": "custom",
+    "comment": "NOTE: the 'controller_type' filed must be 'custom' and the file name of this file should match the custom controller file name in /data/controller",
+    "comment2": "The 'oid' field defines the last 3 digits of the SNMP OID",
+    "comment3": "'return_type' must be either 'str' or 'int'. Floating point values should be 'str'.",
+    "comment4": "'default' is the default value assigned to the OID",
+    "comment5": "'keywords' is a list of words or phrases that match the path of the data in the JSON exported by genmon. This should match how it is displayed on the web interface also",
+    "comment6": "'integer' is an optional value that allows a 'str' to be converted to an integer if the 'Force Integers' option is enabled in gensnmp.py",
     "snmp": [
         {
             "oid": "0, 0, 1",
