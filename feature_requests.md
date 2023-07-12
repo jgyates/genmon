@@ -21,4 +21,3 @@
 - Add daily options to enhanced exercise add on 
 - [Add the ability to save pictures in the service journal](https://github.com/jgyates/genmon/issues/896) @northportio
 - [Ecobee thermostat messaging](https://github.com/jgyates/genmon/issues/921) @wtnh 
-- [Add option for date format dd/mm/yyyy](https://github.com/jgyates/genmon/issues/922) @jmone1 
