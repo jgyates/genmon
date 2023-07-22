@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Update to gensnmp.py to allow integer values to be returned when applicable
 - Update to gensnmp,py to support custom controller definitions
 - Added advanced setting for alternate date format
+- Updated jquery to 3.7 (thanks @buschauer)
 
 ## V1.18.17 -2023-04-06
 - Added feature request to allow external temperature sensors to be displayed as gauges
