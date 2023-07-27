@@ -482,20 +482,30 @@ class MyTile(MyCommon):
             else:
                 Value = self.Minimum
 
+            # integer or float value converted to string
             if isinstance(Value, float):
                 ValueStr = "%g" % Value
             else:
                 ValueStr = str(Value)
 
+            # Displayed value in text
             if self.Units == None:
                 GUIInfo["text"] = "%s" % str(ValueStr)
             else:
                 GUIInfo["text"] = "%s %s" % (str(ValueStr), self.Units)
 
-            if Value < self.Minimum:
-                Value = self.Minimum
-            elif Value > self.Maximum:
-                Value = self.Maximum
+            # this check makes the gauge not display distored if the value is out of range,
+            # but the above "text" will show the value that is out of range as text
+            if Value < self.Minimum or  Value > self.Maximum:
+                if Value < self.Minimum:
+                    Value = self.Minimum
+                elif Value > self.Maximum:
+                    Value = self.Maximum
+                # integer or float value converted to string
+                if isinstance(Value, float):
+                    ValueStr = "%g" % Value
+                else:
+                    ValueStr = str(Value)
 
             GUIInfo["value"] = ValueStr
             GUIInfo["title"] = self.Title
