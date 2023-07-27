@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 - Update to gensnmp,py to support custom controller definitions
 - Added advanced setting for alternate date format
 - Updated jquery to 3.7 (thanks @buschauer)
-- Minor update to mytile.py to better handle out of range values with gauges
+- Minor update to mytile.py to improve handling of gauges with values out of range
 
 ## V1.18.17 -2023-04-06
 - Added feature request to allow external temperature sensors to be displayed as gauges
