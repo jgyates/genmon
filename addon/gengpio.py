@@ -49,7 +49,8 @@ def InitGPIO(pin, direction=GPIO.OUT, initial=GPIO.LOW):
         if pin != 0:
             GPIO.setup(pin, direction, initial=initial)
         else:
-            log.error("Error: pin = 0 in InitGPIO")
+            if debug:
+                log.error("Error: pin = 0 in InitGPIO")
     except Exception as e1:
         log.error("Error in InitGPIO on pin %d : %s" % (int(pin), str(e1)))
 
@@ -61,20 +62,27 @@ def SetGPIO(pin, state):
         if pin != 0:
             GPIO.output(pin, state)
         else:
-            log.error("Error: pin = 0 in SetGPIO")
+            if debug:
+                log.error("Error: pin = 0 in SetGPIO")
     except Exception as e1:
         log.error("Error in InitGPIO on SetGPIO %d : %s" % (int(pin), str(e1)))
 
 
-# ----------  Signal Handler ----------------------------------------------------
+# ----------  Signal Handler ---------------------------------------------------
 def signal_handler(signal, frame):
 
     GPIO.cleanup()
     MyClientInterface.Close()
     sys.exit(0)
+# ---------------- removeAlpha--------------------------------------------------
+def removeAlpha(inputStr):
+        answer = ""
+        for char in inputStr:
+            if not char.isalpha() and char != " " and char != "%":
+                answer += char
 
-
-# ------------------- Command-line interface for gengpio ------------------------
+        return answer.strip()
+# ------------------- Command-line interface for gengpio -----------------------
 if __name__ == "__main__":  # usage program.py [server_address]
 
     try:
@@ -108,15 +116,13 @@ if __name__ == "__main__":  # usage program.py [server_address]
         TimeUpdated = datetime.datetime(2000, 1, 1, 1, 00)
 
         # These are the GPIP pins numbers on the Raspberry PI GPIO header
-        # https://www.element14.com/community/servlet/JiveServlet/previewBody/73950-102-10-339300/pi3_gpio.png
+        # https://pinout.xyz/
         # Commnet out or Uncomment the GPIO and Generator status and alarms you wish to monitor.  Limited on GPIO.
         STATUS_READY = config.ReadValue("STATUS_READY", return_type=int, default=16)
         STATUS_ALARM = config.ReadValue("STATUS_ALARM", return_type=int, default=18)
         STATUS_SERVICE = config.ReadValue("STATUS_SERVICE", return_type=int, default=22)
         STATUS_RUNNING = config.ReadValue("STATUS_RUNNING", return_type=int, default=26)
-        STATUS_EXERCISING = config.ReadValue(
-            "STATUS_EXERCISING", return_type=int, default=24
-        )
+        STATUS_EXERCISING = config.ReadValue("STATUS_EXERCISING", return_type=int, default=24)
         STATUS_OFF = config.ReadValue("STATUS_OFF", return_type=int, default=21)
 
         # Set additional GPIO based on these error codes
@@ -131,6 +137,14 @@ if __name__ == "__main__":  # usage program.py [server_address]
         ER_OVERLOAD = config.ReadValue("ER_OVERLOAD", return_type=int, default=38)
         ER_GOVERNOR = config.ReadValue("ER_GOVERNOR", return_type=int, default=36)
         ER_WARNING = config.ReadValue("ER_WARNING", return_type=int, default=32)
+
+        debug = config.ReadValue("debug", return_type=bool, default=False)
+
+        # Raspberry pi CPU temp
+        ER_PITEMP = config.ReadValue("ER_PITEMP", return_type=int, default=0)
+        CPU_THRESHOLD_TEMP = config.ReadValue("CPU_THRESHOLD_TEMP", return_type=float, default=70.0)
+        if ER_PITEMP != 0 and CPU_THRESHOLD_TEMP != 0:
+            log.error("Monitoring PI CPU Temp")
 
         # Other Faults
         # ER_Controller = config.ReadValue('ER_Controller', return_type = int, default = 3) # Must chose from available GPIO
@@ -159,6 +173,7 @@ if __name__ == "__main__":  # usage program.py [server_address]
         InitGPIO(ER_OVERLOAD, GPIO.OUT, initial=GPIO.LOW)
         InitGPIO(ER_GOVERNOR, GPIO.OUT, initial=GPIO.LOW)
         InitGPIO(ER_WARNING, GPIO.OUT, initial=GPIO.LOW)
+        InitGPIO(ER_PITEMP, GPIO.OUT, initial=GPIO.LOW)
 
         # Other Faults
         # InitGPIO(ER_Controller, GPIO.OUT, initial=GPIO.LOW)
@@ -171,6 +186,7 @@ if __name__ == "__main__":  # usage program.py [server_address]
         LastEvent = ""
         LastNetStatus = ""
         LastMonitorHealth = ""
+        LastCPUTemp = ""
 
         data = MyClientInterface.ProcessMonitorCommand("generator: monitor")
 
@@ -308,14 +324,10 @@ if __name__ == "__main__":  # usage program.py [server_address]
 
             # Get Genmon status
             try:
-                data = MyClientInterface.ProcessMonitorCommand(
-                    "generator: monitor_json"
-                )
+                data = MyClientInterface.ProcessMonitorCommand("generator: monitor_json")
                 TempDict = {}
                 TempDict = json.loads(data)
-                HealthStr = TempDict["Monitor"][0]["Generator Monitor Stats"][0][
-                    "Monitor Health"
-                ]
+                HealthStr = TempDict["Monitor"][0]["Generator Monitor Stats"][0]["Monitor Health"]
                 if HealthStr != LastMonitorHealth:
                     LastMonitorHealth = HealthStr
                     if HealthStr.lower() == "ok":
@@ -331,9 +343,7 @@ if __name__ == "__main__":  # usage program.py [server_address]
                 if (TimeNow - TimeUpdated).total_seconds() > 20:
                     TimeUpdated = TimeNow
                     console.info("Updating internet status: " + str((TimeUpdated)))
-                    data = MyClientInterface.ProcessMonitorCommand(
-                        "generator: network_status"
-                    )
+                    data = MyClientInterface.ProcessMonitorCommand("generator: network_status")
                     if data != LastNetStatus:
                         LastNetStatus = data
                         if data.lower() == "ok":
@@ -344,6 +354,25 @@ if __name__ == "__main__":  # usage program.py [server_address]
             except Exception as e1:
                 log.error("Error getting internet status: " + str(e1))
 
+            try:
+                 if ER_PITEMP != 0 and CPU_THRESHOLD_TEMP != 0:
+                    data = MyClientInterface.ProcessMonitorCommand("generator: monitor_json")
+                    TempDict = {}
+                    TempDict = json.loads(data)
+                    CPUTempStr = TempDict["Monitor"][2]["Platform Stats"][0]["CPU Temperature"]
+                    CPUTempStr = removeAlpha(CPUTempStr)
+                    if CPUTempStr != LastCPUTemp:
+                        LastCPUTemp = CPUTempStr
+                        if float(CPUTempStr) < CPU_THRESHOLD_TEMP:
+                            if debug:
+                                log.error("CPU Temp in Range: " + CPUTempStr)
+                            SetGPIO(ER_GENMON, GPIO.LOW)
+                        else:
+                            if debug:
+                                log.error("CPU Temp is HIGH: "  + CPUTempStr)
+                            SetGPIO(ER_GENMON, GPIO.HIGH)
+            except Exception as e1:
+                log.error("Error checking pi CPU temp status: " + str(e1))
             time.sleep(3)
 
     except Exception as e1:
