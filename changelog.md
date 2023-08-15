@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 - Added advanced setting for alternate date format
 - Updated jquery to 3.7 (thanks @buschauer)
 - Minor update to mytile.py to improve handling of gauges with values out of range
-- modified gengpio.py add on to optionally support GPIO signaling for out of range CPU temp
+- modified gengpio.py add on to optionally support GPIO signaling for out of range CPU temperature 
 
 ## V1.18.17 -2023-04-06
 - Added feature request to allow external temperature sensors to be displayed as gauges
