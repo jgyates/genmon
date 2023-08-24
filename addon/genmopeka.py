@@ -451,7 +451,7 @@ class GenMopekaData(MySupport):
                     "error",
                     True,
                 )
-                self.LogDebug("No sensor comms detected.")
+                self.LogDebug("No sensor comms detected for " + str(bd_address))
                 return None
             reading_depth = self.mopeka.SensorMonitoredList[
                 bd_address
@@ -558,24 +558,32 @@ class GenMopekaData(MySupport):
                 if reading != None:
                     self.LogDebug("Tank1 = " + str(reading))
                     dataforgenmon["Percentage"] = reading
+                else:
+                    dataforgenmon["Percentage"] = 0
 
                 if len(self.bd_tank_address) >= 2:
                     reading = self.GetTankReading(self.bd_tank_address[1])
                     if reading != None:
                         self.LogDebug("Tank2 = " + str(reading))
                         dataforgenmon["Percentage2"] = reading
+                    else:
+                        dataforgenmon["Percentage2"] = 0
 
                 if len(self.bd_tank_address) >= 3:
                     reading = self.GetTankReading(self.bd_tank_address[2])
                     if reading != None:
                         self.LogDebug("Tank3 = " + str(reading))
                         dataforgenmon["Percentage3"] = reading
+                    else:
+                        dataforgenmon["Percentage3"] = 0
 
                 if len(self.bd_tank_address) >= 4:
                     reading = self.GetTankReading(self.bd_tank_address[3])
                     if reading != None:
                         self.LogDebug("Tank4 = " + str(reading))
                         dataforgenmon["Percentage4"] = reading
+                    else:
+                        dataforgenmon["Percentage4"] = 0
 
                 if len(dataforgenmon) != 0:
                     dataforgenmon["Tank Name"] = "Mopeka Sensor Tank"
