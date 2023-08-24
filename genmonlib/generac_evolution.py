@@ -215,7 +215,6 @@ class Evolution(GeneratorController):
             "005d": [2, 0],  #
             # Total engine time in minutes  (EvoLC) 005e= high, 005f=low
             "005e": [4, 0],  #
-            "000d": [2, 0],  # Bit changes when the controller is updating registers.
             "003c": [2, 0],  # Raw RPM Sensor Data (Hall Sensor)
             "05fa": [2, 0],  # Evo AC   (Status?)
             "0033": [2, 0],  # Evo AC   (Status?)
@@ -276,13 +275,12 @@ class Evolution(GeneratorController):
             "0001": [4, 0],  # Alarm and status register
             # Evo LC Output relay status register (battery charging, 
             # transfer switch, Change at startup and stop
-            "0053": [2, 0],  #
-            # Evo LC Input status register (sensors) 
-            # only tested on liquid cooled Evo
-            "0052": [2, 0],  #
+            "000d": [2, 0],  # Bit changes when the controller is updating registers.
+            "0053": [2, 0],  # Evo LC outputs status register (sensors)
+            "0052": [2, 0],  # Evo LC Inputs
             "0009": [2, 0],  # Utility voltage
-            "05f1": [2, 0],
-        }  # Last Alarm Code
+            "05f1": [2, 0],  # Last Alarm Code
+        }  
 
         self.REGLEN = 0
         self.REGMONITOR = 1
@@ -1472,18 +1470,22 @@ class Evolution(GeneratorController):
         # Index register 0001 controls remote start (data written 0001 to start,I believe ).
         # Index register 0002 controls remote transfer switch (Not sure of the data here )
         Register = 0
-        Value = 0x000  # writing any value to index register is valid for remote start / stop commands
+        Value = None # 0x000  # writing any value to index register is valid for remote start / stop commands
 
         if Command == "start":
             Register = 0x0001  # remote start (radio start)
         elif Command == "stop":
             Register = 0x0000  # remote stop (radio stop)
         elif Command == "starttransfer":
-            Register = (
-                0x0002  # start the generator, then engage the transfer transfer switch
-            )
+            Register = 0x0002  # start the generator, then engage the transfer transfer switch
         elif Command == "startexercise":
             Register = 0x0003  # remote run in quiet mode (exercise)
+        # This command resets all maintenance timers
+        elif Command == "resetmainttimer":
+            Register == 0x0009
+        # Reset maintenance alarm
+        elif Command == "resetmaintalarm":
+            Register == 0x0008
         elif Command == "resetalarm":
             # appears to work on Evo LC and Evo2.0 (tested with Firmware V1.15)
             Register = 0x000D
@@ -1494,6 +1496,7 @@ class Evolution(GeneratorController):
             Register = 0x000E
         elif Command == "off":
             Register = 0x0010
+        
         else:
             return "Invalid command syntax for command setremote (3)"
 
@@ -1502,18 +1505,19 @@ class Evolution(GeneratorController):
         return "Remote command sent successfully"
 
     # -------------WriteIndexedRegister------------------------------------------
-    def WriteIndexedRegister(self, register, value):
+    def WriteIndexedRegister(self, register, value = None):
 
         try:
             with self.ModBus.CommAccessLock:
                 #
-                LowByte = value & 0x00FF
-                HighByte = value >> 8
-                Data = []
-                Data.append(HighByte)  # Value for indexed register (High byte)
-                Data.append(LowByte)  # Value for indexed register (Low byte)
+                if value != None:
+                    LowByte = value & 0x00FF
+                    HighByte = value >> 8
+                    Data = []
+                    Data.append(HighByte)  # Value for indexed register (High byte)
+                    Data.append(LowByte)  # Value for indexed register (Low byte)
 
-                self.ModBus.ProcessWriteTransaction("0004", len(Data) / 2, Data)
+                    self.ModBus.ProcessWriteTransaction("0004", len(Data) / 2, Data)
 
                 LowByte = register & 0x00FF
                 HighByte = register >> 8

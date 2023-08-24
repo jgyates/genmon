@@ -3413,7 +3413,7 @@ function GetkWHistory()
 }
 
 //*****************************************************************************
-// GetRegisterNames - Get the current Generator Model and kW Rating
+// GetRegisterNames - Get names of the registers
 //*****************************************************************************
 function GetRegisterNames()
 {

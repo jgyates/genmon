@@ -2918,8 +2918,16 @@ class GeneratorController(MySupport):
             return False
 
         return True
+    # ----------  GeneratorController::GetRegisterLabels------------------------
+    def GetRegisterLabels(self):
+        # return JSON of dict with registers and text descriptions
+        try:
+            return "{}"     # this is the default, no labels
+        except Exception as e1:
+            self.LogErrorLine("Error in GetRegisterLabels: " + str(e1))
+        return "{}"
 
-    # ----------  GeneratorController::GetMaintLogJSON---------------------------
+    # ----------  GeneratorController::GetMaintLogJSON--------------------------
     def GetMaintLogJSON(self):
 
         try:
@@ -2937,7 +2945,7 @@ class GeneratorController(MySupport):
 
         return "[]"
 
-    # ----------  GeneratorController::GetMaintLogDict---------------------------
+    # ----------  GeneratorController::GetMaintLogDict--------------------------
     def GetMaintLogDict(self):
         try:
             if len(self.MaintLogList):
