@@ -1355,23 +1355,18 @@ class CustomController(GeneratorController):
                 self.LogDebug("Not found register: " + Register)
                 return ReturnTitle, ReturnValue
             ReturnTitle = entry["title"]
+            if "default" in entry.keys():
+                ReturnValue = entry["default"]
+
             if entry["type"] == "bits":
                 value = self.GetParameter(Register, ReturnInt=True)
                 value = value & int(entry["mask"], 16)
                 if value == int(entry["value"], 16):
                     ReturnValue = entry["text"]
-                else:
-                    if "default" in entry.keys():
-                        ReturnValue = entry["default"]
-                    else:
-                        ReturnValue = None
-                    return ReturnTitle, ReturnValue
+
             elif entry["type"] == "float":
                 Divider = 1 / float(entry["multiplier"])
-                value = self.ConvertValue(
-                    entry,
-                    self.GetParameter(Register, Divider=Divider, ReturnFloat=True),
-                )
+                value = self.ConvertValue( entry, self.GetParameter(Register, Divider=Divider, ReturnFloat=True))
                 if "bounds_regex" in entry:
                     if re.match(entry["bounds_regex"], str(float(value))):
                         ReturnValue = float(value)
@@ -1400,8 +1395,7 @@ class CustomController(GeneratorController):
 
                 if result:
                     ReturnValue = entry["text"]
-                else:
-                    ReturnValue = None
+
             elif entry["type"] == "list":
                 list_entry = entry["value"]
                 separator = ""
@@ -1437,8 +1431,6 @@ class CustomController(GeneratorController):
                 ReturnValue = entry["object"].get(str(value), obj_default)
             elif entry["type"] == "ascii":
                 ReturnValue = self.GetParameter(Register, ReturnString = True)
-                if ReturnValue = None and "default" in entry.keys():
-                    ReturnValue = entry["default"]
             elif entry["type"] == "default":
                 ReturnValue = entry["text"]
                 ReturnTitle = "default"
@@ -1469,7 +1461,7 @@ class CustomController(GeneratorController):
             else:
                 return value
         except Exception as e1:
-            self.LogErrorLine("Error in FormatEntry : " + str(e1))
+            self.LogErrorLine("Error in ConvertValue : " + str(e1))
             return value
 
     # ------------ GeneratorController:FormatEntry ------------------------------
