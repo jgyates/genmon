@@ -7,27 +7,35 @@
     "nominal_battery_voltage" : 12,
     "generator_phase": 1,
     "base_registers": {
-        "0001": 4,
-        "0007": 2,
-        "0008": 2,
-        "0009": 2,
-        "000a": 2,
-        "000b": 4,
-        "000e": 2,
-        "000f": 2,
-        "0010": 2,
-        "0011": 2,
-        "0012": 2,
-        "005d": 2,
-        "0208": 2,
-        "020a": 2,
-        "020b": 2,
-        "0054": 2,
-        "020e": 2,
-        "0235": 2,
-        "023b": 2,
-        "005a": 2,
-        "0059": 2
+        "0001": {"length": 2, "text": "Status / Alarm"},
+        "0007": {"length": 2, "text": "RPM"},
+        "0008": {"length": 2, "text": "Frequency"},
+        "0009": {"length": 2, "text": "Utility Voltage"},
+        "000a": {"length": 2, "text": "Battery Voltage"},
+        "000b": {"length": 4, "text": "Run Hours"},
+        "000e": {"length": 2, "text": "Generator Time"},
+        "000f": {"length": 2, "text": "Generator Date"},
+        "0010": {"length": 2, "text": "Generator Day / Year"},
+        "0011": {"length": 2, "text": "Threshold Voltage"},
+        "0012": {"length": 2, "text": "Output Voltage"},
+        "005d": {"length": 2, "text": "Tank Fuel Level"},
+        "0208": {"length": 2, "text": "Calibrate Volts"},
+        "020a": {"length": 2, "text": "Param Code"},
+        "020b": {"length": 2, "text": "Voltage Code"},
+        "020c": {"length": 2, "text": "Fuel Type"},
+        "0054": {"length": 2, "text": "Hours of Protection"},
+        "020e": {"length": 2, "text": "Volts per Hertz"},
+        "0235": {"length": 2, "text": "Gain"},
+        "023a": {"length": 2, "text": "Activation Status"},
+        "023b": {"length": 2, "text": "Pickup Voltage"},
+        "005a": {"length": 2, "text": "Target Frequency"},
+        "0059": {"length": 2, "text": "Target Voltage"},
+        "01f4": {"length": 10, "text": "Serial Number"}
+    },
+    "log_registers": {
+      "012c": {"length": 8, "text": "Run Log", "iteration": 50, "step": 4},
+      "03e8": {"length": 10, "text": "Alarm Log", "iteration": 50, "step": 5},
+      "04e2": {"length": 8, "text": "Service Log", "iteration": 50, "step": 4}
     },
     "switch_state": [
         {
@@ -266,80 +274,381 @@
       }
     ],
     "maintenance": [
-          {
-              "reg": "000b",
-              "mask": "ffffffff",
-              "multiplier": 1,
+      {
+        "reg": "01f4",
+        "type": "ascii",
+        "title": "Serial Number"
+      },
+      {
+        "reg":"023a",
+        "mask": "0001",
+        "type": "bits",
+        "value": "0001",
+        "title": "Activation Status",
+        "text": "Activated",
+        "default": "Not Activated"
+      },
+      {
+        "reg": "000b",
+        "mask": "ffffffff",
+        "multiplier": 1,
+        "type": "int",
+        "title": "Run Hours",
+        "units": "h"
+      },
+      {
+          "reg": "0208",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Calibrate Volts",
+          "units": null
+      },
+      {
+          "reg": "020a",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Param Code",
+          "units": null
+      },
+      {
+          "reg": "020b",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Voltage Code",
+          "units": null
+      },
+      {
+          "reg": "0054",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Hours of Protection",
+          "units": "h"
+      },
+      {
+          "reg": "020e",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Volts Per Hertz",
+          "units": null
+      },
+      {
+          "reg": "0235",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Gain",
+          "units": null
+      },
+      {
+          "reg": "005a",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Target Frequency",
+          "units": "Hz"
+      },
+      {
+          "reg": "0059",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Target Volts",
+          "units": "V"
+      }
+    ],
+    "logs":[
+      {"length": 8, "title": "Run Log", "iteration": 50, "step": 4, "reg": "012c",
+        "object":{
+          "inherit" : true,
+          "type": "list",
+          "format": "%s/%s/%s %s:%s:%s %s",
+          "title" : "Run Log Entry",
+          "value": [ 
+            { 
+              "inherit":true,
+              "mask": "00000000ff000000",
+              "format": "%02d",
               "type": "int",
-              "title": "Run Hours",
-              "units": "h"
+              "shiftright" : 24,
+              "bounds_regex": "^([0-1][1-2]|[1-9])$",
+              "title": "Month"
+            },
+            { 
+              "inherit":true,
+              "mask": "00000000000000ff",
+              "format": "%02d",
+              "type": "int",
+              "bounds_regex": "^([3][0-1]|[2][0-9]|[1][0-9]|[1-9])$",
+              "title": "Day"
+            },
+            { 
+              "inherit":true,
+              "mask": "000000000000ff00",
+              "format": "%02d",
+              "type": "int",
+              "shiftright" : 8,
+              "title": "Year"
+            },
+            { 
+              "inherit":true,
+              "mask": "000000ff00000000",
+              "format": "%02d",
+              "type": "int",
+              "shiftright" : 32,
+              "bounds_regex": "^(2[0-3]|[0-1]?[0-9])$",
+              "title": "Hours"
+            },
+            { 
+              "inherit":true,
+              "mask": "0000ff0000000000",
+              "format": "%02d",
+              "type": "int",
+              "shiftright" : 40,
+              "bounds_regex": "^([0-9]|[1-5][0-9])$",
+              "title": "Minutes"
+            },
+            { 
+              "inherit":true,
+              "mask": "0000000000ff0000",
+              "format": "%02d",
+              "type": "int",
+              "shiftright" : 16,
+              "bounds_regex": "^([0-9]|[1-5][0-9])$",
+              "title": "Seconds"
             },
             {
-                "reg": "0208",
-                "mask": "ffff",
-                "multiplier": 1,
-                "type": "int",
-                "title": "Calibrate Volts",
-                "units": null
-            },
-            {
-                "reg": "020a",
-                "mask": "ffff",
-                "multiplier": 1,
-                "type": "int",
-                "title": "Param Code",
-                "units": null
-            },
-            {
-                "reg": "020b",
-                "mask": "ffff",
-                "multiplier": 1,
-                "type": "int",
-                "title": "Voltage Code",
-                "units": null
-            },
-            {
-                "reg": "0054",
-                "mask": "ffff",
-                "multiplier": 1,
-                "type": "int",
-                "title": "Hours of Protection",
-                "units": "h"
-            },
-            {
-                "reg": "020e",
-                "mask": "ffff",
-                "multiplier": 1,
-                "type": "int",
-                "title": "Volts Per Hertz",
-                "units": null
-            },
-            {
-                "reg": "0235",
-                "mask": "ffff",
-                "multiplier": 1,
-                "type": "int",
-                "title": "Gain",
-                "units": null
-            },
-            {
-                "reg": "005a",
-                "mask": "ffff",
-                "multiplier": 1,
-                "type": "int",
-                "title": "Target Frequency",
-                "units": "Hz"
-            },
-            {
-                "reg": "0059",
-                "mask": "ffff",
-                "multiplier": 1,
-                "type": "int",
-                "title": "Target Volts",
-                "units": "V"
+              "inherit":true,
+              "type": "object_int_index",
+              "mask": "ff00000000000000",
+              "shiftright" :56,
+              "object": {
+                "40": "Switched Off",
+                "41": "Running Manual",
+                "42": "Stopped Auto",
+                "43": "Running Utility Lost",
+                "44": "Running 2 Wire Start",
+                "45": "Running Radio Start",
+                "46": "Running Exercise",
+                "47": "Stopped Alarm"
+              },
+              "default": "Unknown Event",
+              "title": "Run Event Name"
             }
-
-        ],
+          ]
+        }
+      },
+      {"length": 10, "title": "Alarm Log", "iteration": 50, "step": 5, "reg": "03e8",
+        "object":{
+          "inherit" : true,
+          "type": "list",
+          "format": "%s/%s/%s %s:%s:%s %s: Alarm Code %s",
+          "title" : "Alarm Log Entry",
+          "value": [ 
+            { 
+            "inherit":true,
+            "mask": "00000000ff0000000000",
+            "format": "%02d",
+            "type": "int",
+            "shiftright" : 40,
+            "bounds_regex": "^([0-1][1-2]|[1-9])$",
+            "title": "Month"
+            },
+            { 
+              "inherit":true,
+              "mask": "00000000000000ff0000",
+              "format": "%02d",
+              "type": "int",
+              "shiftright" : 16,
+              "bounds_regex": "^([3][0-1]|[2][0-9]|[1][0-9]|[1-9])$",
+              "title": "Day"
+            },
+            { 
+              "inherit":true,
+              "mask": "000000000000ff000000",
+              "format": "%02d",
+              "type": "int",
+              "shiftright" : 24,
+              "title": "Year"
+            },
+            { 
+              "inherit":true,
+              "mask": "000000ff000000000000",
+              "format": "%02d",
+              "type": "int",
+              "shiftright" : 48,
+              "bounds_regex": "^(2[0-3]|[0-1]?[0-9])$",
+              "title": "Hours"
+            },
+            { 
+              "inherit":true,
+              "mask": "0000ff00000000000000",
+              "format": "%02d",
+              "type": "int",
+              "shiftright" : 56,
+              "bounds_regex": "^([0-9]|[1-5][0-9])$",
+              "title": "Minutes"
+            },
+            { 
+              "inherit":true,
+              "mask": "0000000000ff00000000",
+              "format": "%02d",
+              "type": "int",
+              "shiftright" : 32,
+              "bounds_regex": "^([0-9]|[1-5][0-9])$",
+              "title": "Seconds"
+            },
+            {
+              "inherit":true,
+              "type": "object_int_index",
+              "mask": "ff000000000000000000",
+              "shiftright" : 72,
+              "object": {
+                "0": "High Temperature",
+                "1": "Low Oil Pressure",
+                "2": "Overcrank",
+                "3": "Overspeed",
+                "4": "RPM Sense Loss",
+                "5": "Underspeed",
+                "6": "Low Coolant Level",
+                "8": "Wiring Error",
+                "9": "Over Voltage",
+                "10": "Under Voltage",
+                "11": "Overload",
+                "12": "Undervoltage Overload",
+                "13": "Stepper Overcurrent",
+                "14": "Fuse Problem",
+                "15": "VSCF Comm Gone",
+                "16": "VSCF Enable Mismatch",
+                "17": "VSCF PWM Speed Gone",
+                "18": "Very Low Battery",
+                "19": "VSCF Special No Translation",
+                "20": "Low Battery",
+                "21": "Exercise Set Error",
+                "28": "Stopping…",
+                "29": "Software Error 9",
+                "30": "Fuel Pressure",
+                "31": "Battery Problem",
+                "32": "Charger Warning",
+                "33": "Charger Missing AC",
+                "34": "Overload Warning",
+                "35": "Check Engine",
+                "36": "DTC Warning",
+                "37": "VSCF Warning",
+                "38": "USB Warning",
+                "39": "Modbus Comms Failure Warning",
+                "64": "Internal Fault",
+                "65": "Ignition Fault",
+                "66": "CANbus Error",
+                "67": "Missing Cam Pulse",
+                "68": "Missing Crank Pulse",
+                "69": "Governor Fault",
+                "70": "Ruptured Basin",
+                "71": "Low Fuel",
+                "72": "E-Stop",
+                "73": "Hall Calibration Error",
+                "74": "SEEProm ABuse",
+                "75": "Download Failure"
+              },
+              "default": "Unknown Alarm",
+              "title": "Alarm Name"
+            },
+            { 
+              "inherit":true,
+              "mask": "ffff",
+              "format": "%04d",
+              "type": "int",
+              "title": "E-Code"
+            }
+          ]
+        }
+      },
+      {"length": 8, "title": "Service Log", "iteration": 50, "step": 4, "reg": "04e2",
+        "object":{
+          "inherit" : true,
+          "type": "list",
+          "format": "%s/%s/%s %s:%s:%s %s",
+          "title" : "Service Log Entry",
+          "value": [ 
+            { 
+              "inherit":true,
+              "mask": "00000000ff000000",
+              "format": "%02d",
+              "type": "int",
+              "shiftright" : 24,
+              "bounds_regex": "^([0-1][1-2]|[1-9])$",
+              "title": "Month"
+            },
+            { 
+              "inherit":true,
+              "mask": "00000000000000ff",
+              "format": "%02d",
+              "type": "int",
+              "bounds_regex": "^([3][0-1]|[2][0-9]|[1][0-9]|[1-9])$",
+              "title": "Day"
+            },
+            { 
+              "inherit":true,
+              "mask": "000000000000ff00",
+              "format": "%02d",
+              "type": "int",
+              "shiftright" : 8,
+              "title": "Year"
+            },
+            { 
+              "inherit":true,
+              "mask": "000000ff00000000",
+              "format": "%02d",
+              "type": "int",
+              "shiftright" : 32,
+              "bounds_regex": "^(2[0-3]|[0-1]?[0-9])$",
+              "title": "Hours"
+            },
+            { 
+              "inherit":true,
+              "mask": "0000ff0000000000",
+              "format": "%02d",
+              "type": "int",
+              "shiftright" : 40,
+              "bounds_regex": "^([0-9]|[1-5][0-9])$",
+              "title": "Minutes"
+            },
+            { 
+              "inherit":true,
+              "mask": "0000000000ff0000",
+              "format": "%02d",
+              "type": "int",
+              "shiftright" : 16,
+              "bounds_regex": "^([0-9]|[1-5][0-9])$",
+              "title": "Seconds"
+            },
+            {
+              "inherit":true,
+              "type": "object_int_index",
+              "mask": "ff00000000000000",
+              "shiftright" :56,
+              "object": {
+                "22": "Service Schedule B",
+                "23": "Service Schedule A",
+                "24": "Inspect Battery",
+                "25": "Service Schedule C",
+                "60": "Service B Performed",
+                "61": "Service A Performed",
+                "62": "Battery Inspected",
+                "63": "Reset Maintenance",
+                "76": "Service C Performed"
+              },
+              "default": "Unknown Event",
+              "title": "Service Event Name"
+            }
+          ]
+        }
+      }
+    ],
     "gauges": [
       {
           "reg": "000a",
@@ -408,10 +717,6 @@
           "title" : "Remote Start",
           "command_sequence" : [
                                  {
-                                   "reg": "0004",
-                                   "value": "0000"
-                                 },
-                                 {
                                    "reg": "0003",
                                    "value": "0001"
                                  }
@@ -421,10 +726,6 @@
           "onewordcommand" : "stop",
           "title" : "Remote Stop",
           "command_sequence" : [
-                                 {
-                                   "reg": "0004",
-                                   "value": "0000"
-                                 },
                                  {
                                    "reg": "0003",
                                    "value": "0000"
@@ -436,10 +737,6 @@
           "title" : "Remote Star and Transfer",
           "command_sequence" : [
                                  {
-                                   "reg": "0004",
-                                   "value": "0000"
-                                 },
-                                 {
                                    "reg": "0003",
                                    "value": "0002"
                                  }
@@ -449,10 +746,6 @@
           "onewordcommand" : "startexercise",
           "title" : "Remote Start Exercise",
           "command_sequence" : [
-                                 {
-                                   "reg": "0004",
-                                   "value": "0000"
-                                 },
                                  {
                                    "reg": "0003",
                                    "value": "0003"
@@ -464,10 +757,6 @@
           "title" : "Reset Alarm",
           "command_sequence" : [
                                  {
-                                   "reg": "0004",
-                                   "value": "0000"
-                                 },
-                                 {
                                    "reg": "0003",
                                    "value": "000d"
                                  }
@@ -477,10 +766,6 @@
           "onewordcommand" : "auto",
           "title" : "Select Auto Mode",
           "command_sequence" : [
-                                 {
-                                   "reg": "0004",
-                                   "value": "0000"
-                                 },
                                  {
                                    "reg": "0003",
                                    "value": "000f"
@@ -492,10 +777,6 @@
           "title" : "Select Off Mode",
           "command_sequence" : [
                                  {
-                                   "reg": "0004",
-                                   "value": "0000"
-                                 },
-                                 {
                                    "reg": "0003",
                                    "value": "0010"
                                  }
@@ -505,10 +786,6 @@
           "onewordcommand" : "manual",
           "title" : "Select Manual Mode",
           "command_sequence" : [
-                                 {
-                                   "reg": "0004",
-                                   "value": "0000"
-                                 },
                                  {
                                    "reg": "0003",
                                    "value": "000e"
@@ -569,5 +846,77 @@
           "type": "int",
           "title": "Run Hours",
           "units": "h"
-      }
+      },
+      "datetime": {
+        "type" : "list",
+        "format": "%s %s %s, 20%s %s:%s",
+        "title" : "Generator Time",
+        "value" : [
+          { 
+            "reg": "0010",
+            "mask": "ff00",
+            "type": "object_int_index",
+            "multiplier" : 0.00390625,
+            "object" :  {
+                "0": "Sunday",
+                "1": "Monday",
+                "2": "Tuesday",
+                "3": "Wednesday",
+                "4": "Thursday",
+                "5": "Friday",
+                "6": "Saturday"
+            },
+            "default": "Unknown",
+            "title": "Day of Week"
+            },
+            {
+              "reg": "000f",
+              "type": "object_int_index",
+              "mask" : "ff00",
+              "multiplier" : 0.00390625,
+              "object": {
+                "1": "January",
+                "2": "February",
+                "3": "March",
+                "4": "April",
+                "5": "May",
+                "6": "June",
+                "7": "July",
+                "8": "August",
+                "9": "September",
+                "10": "October",
+                "11": "November",
+                "12": "December"
+              },
+              "title": "Month"
+            },
+            {
+              "reg": "000f",
+              "type": "int",
+              "mask" : "00ff",
+              "title": "Day"
+            },
+            {
+              "reg": "0010",
+              "type": "int",
+              "mask" : "00ff",
+              "title": "Year"
+            },
+            {
+              "reg": "000e",
+              "type": "int",
+              "mask" : "ff00",
+              "multiplier" : 0.00390625,
+              "comment" : "NOTE: 0.00390625 = 1/256 or dividing by 0x100 hex or shifting right by 8 bits",
+              "title": "Hours"
+            },
+            {
+              "reg": "000e",
+              "type": "int",
+              "mask" : "00ff",
+              "format": "%02d",
+              "title": "Minutes"
+            }
+          ]
+        }
 }

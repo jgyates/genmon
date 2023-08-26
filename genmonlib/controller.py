@@ -728,6 +728,7 @@ class GeneratorController(MySupport):
         Hex=False,
         ReturnInt=False,
         ReturnFloat=False,
+        ReturnString=False
     ):
 
         try:
@@ -741,6 +742,9 @@ class GeneratorController(MySupport):
             Value = self.GetRegisterValueFromList(Register)
             if not len(Value):
                 return DefaultReturn
+
+            if ReturnString == True:
+                return self.HexStringToString(Value)
 
             if Divider == None and Label == None:
                 if Hex:

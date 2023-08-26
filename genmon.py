@@ -763,139 +763,144 @@ class Monitor(MySupport):
         LocalError = False
         if isinstance(command, bytes):
             command = command.decode("utf-8")
+        try:
+            msgsubject = "Genmon Command Response at " + self.SiteName
+            if not fromsocket:
+                msgbody = "\n"
+            else:
+                msgbody = ""
 
-        msgsubject = "Genmon Command Response at " + self.SiteName
-        if not fromsocket:
-            msgbody = "\n"
-        else:
-            msgbody = ""
-
-        if (len(command)) == 0:
-            msgsubject = "Error in Genmon Command (Lenght is zero)"
-            msgbody += "Invalid GENERATOR command: zero length command."
-            LocalError = True
-
-        if not LocalError:
-            if not command.lower().startswith("generator:"):
-                msgsubject = "Error in Genmon Command (command prefix)"
-                msgbody += 'Invalid GENERATOR command: all commands must be prefixed by "generator: "'
+            if (len(command)) == 0:
+                msgsubject = "Error in Genmon Command (Lenght is zero)"
+                msgbody += "Invalid GENERATOR command: zero length command."
                 LocalError = True
 
-        if LocalError:
-            if not fromsocket:
-                self.MessagePipe.SendMessage(msgsubject, msgbody, msgtype="error")
-                return ""  # ignored by email module
-            else:
-                msgbody += "EndOfMessage"
-                return msgbody
+            if not LocalError:
+                if not command.lower().startswith("generator:"):
+                    msgsubject = "Error in Genmon Command (command prefix)"
+                    msgbody += 'Invalid GENERATOR command: all commands must be prefixed by "generator: "'
+                    LocalError = True
 
-        if self.genmonext != None:
-            try:
-                self.genmonext.PreProcessCommand(command)
-            except Exception as e1:
-                self.LogErrorLine("Error Calling GenmonExt:PreProcessCommand: " + str(e1))
+            if LocalError:
+                if not fromsocket:
+                    self.MessagePipe.SendMessage(msgsubject, msgbody, msgtype="error")
+                    return ""  # ignored by email module
+                else:
+                    msgbody += "EndOfMessage"
+                    return msgbody
 
-        if command.lower().startswith("generator:"):
-            command = command[len("generator:") :]
+            if self.genmonext != None:
+                try:
+                    self.genmonext.PreProcessCommand(command)
+                except Exception as e1:
+                    self.LogErrorLine("Error Calling GenmonExt:PreProcessCommand: " + str(e1))
 
-        CommandDict = {
-            "registers": [self.Controller.DisplayRegisters,(False,),False,],  # display registers
-            "allregs": [self.Controller.DisplayRegisters,(True,),False,],  # display registers
-            "logs": [self.Controller.DisplayLogs, (True, False), False],
-            "status": [self.Controller.DisplayStatus,(),False,],  # display decoded generator info
-            "maint": [self.Controller.DisplayMaintenance, (), False],
-            "monitor": [self.DisplayMonitor, (), False],
-            "outage": [self.Controller.DisplayOutage, (), False],
-            "settime": [self.StartTimeThread, (), False],  # set time and date
-            "setexercise": [self.Controller.SetGeneratorExerciseTime,(command.lower(),),False,],
-            "setquiet": [self.Controller.SetGeneratorQuietMode,(command.lower(),),False,],
-            "setremote": [
-                self.Controller.SetGeneratorRemoteCommand,
-                (command.lower(),),
-                False,
-            ],
-            "testcommand": [self.Controller.TestCommand, (command.lower(),), False],
-            "network_status": [self.InternetConnected, (), False],
-            "help": [self.DisplayHelp, (), False],  # display help screen
-            ## These commands are used by the web / socket interface only
-            "power_log_json": [
-                self.Controller.GetPowerHistory,
-                (command.lower(),),
-                True,
-            ],
-            "power_log_clear": [self.Controller.ClearPowerLog, (), True],
-            "fuel_log_clear": [self.Controller.ClearFuelLog, (), True],
-            "start_info_json": [self.GetStartInfo, (), True],
-            "registers_json": [
-                self.Controller.DisplayRegisters,
-                (False, True),
-                True,
-            ],  # display registers
-            "allregs_json": [
-                self.Controller.DisplayRegisters,
-                (True, True),
-                True,
-            ],  # display registers
-            "logs_json": [self.Controller.DisplayLogs, (True, True), True],
-            "status_json": [self.Controller.DisplayStatus, (True,), True],
-            "status_num_json": [self.Controller.DisplayStatus, (True, True), True],
-            "maint_json": [self.Controller.DisplayMaintenance, (True,), True],
-            "maint_num_json": [self.Controller.DisplayMaintenance, (True, True), True],
-            "monitor_json": [self.DisplayMonitor, (True,), True],
-            "monitor_num_json": [self.DisplayMonitor, (True, True), True],
-            "weather_json": [self.DisplayWeather, (True,), True],
-            "outage_json": [self.Controller.DisplayOutage, (True,), True],
-            "outage_num_json": [self.Controller.DisplayOutage, (True, True), True],
-            "gui_status_json": [self.GetStatusForGUI, (), True],
-            "get_maint_log_json": [self.Controller.GetMaintLogJSON, (), True],
-            "add_maint_log": [
-                self.Controller.AddEntryToMaintLog,
-                (command,),
-                True,
-            ],  # Do not do command.lower() since this input is JSON
-            "delete_row_maint_log": [
-                self.Controller.DeleteMaintLogRow,
-                (command.lower(),),
-                True,
-            ],
-            "edit_row_maint_log": [
-                self.Controller.EditMaintLogRow,
-                (command,),
-                True,
-            ],  # Do not do command.lower() since this input is JSON
-            "clear_maint_log": [self.Controller.ClearMaintLog, (), True],
-            "getsitename": [self.GetSiteName, (), True],
-            "getbase": [
-                self.Controller.GetBaseStatus,
-                (),
-                True,
-            ],  #  (UI changes color based on exercise, running , ready status)
-            "gethealth": [self.GetSystemHealth, (), True],
-            "getregvalue": [
-                self.Controller.GetRegValue,
-                (command.lower(),),
-                True,
-            ],  # only used for debug purposes, read a cached register value
-            "readregvalue": [
-                self.Controller.ReadRegValue,
-                (command.lower(),),
-                True,
-            ],  # only used for debug purposes, Read Register Non Cached
-            # only used for debug purposes, Read Register Non Cached
-            "writeregvalue": [self.Controller.WriteRegValue,(command.lower(),),True,],  
-            # only used for debug purposes. If a thread crashes it tells you the thread name
-            "getdebug": [self.GetDeadThreadName,(),True,],  
-            "sendregisters": [self.SendSupportInfo, (False,), True],
-            "sendlogfiles": [self.SendSupportInfo, (True,), True],
-            "support_data_json": [self.GetSupportData, (), True],
-            "set_tank_data": [self.Controller.SetExternalTankData, (command,), True],
-            "set_temp_data": [self.Controller.SetExternalTemperatureData,(command,),True,],
-            "set_temp_bounds": [self.Controller.SetExternalTemperatureBounds,(command,),True,],
-            "set_power_data": [self.Controller.SetExternalCTData, (command,), True],
-            "notify_message": [self.SendMessage, (command,), True],
-        }
+            if command.lower().startswith("generator:"):
+                command = command[len("generator:") :]
 
-        CommandList = command.split(" ")
+            CommandDict = {
+                "registers": [self.Controller.DisplayRegisters,(False,),False,],  # display registers
+                "allregs": [self.Controller.DisplayRegisters,(True,),False,],  # display registers
+                "logs": [self.Controller.DisplayLogs, (True, False), False],
+                "status": [self.Controller.DisplayStatus,(),False,],  # display decoded generator info
+                "maint": [self.Controller.DisplayMaintenance, (), False],
+                "monitor": [self.DisplayMonitor, (), False],
+                "outage": [self.Controller.DisplayOutage, (), False],
+                "settime": [self.StartTimeThread, (), False],  # set time and date
+                "setexercise": [self.Controller.SetGeneratorExerciseTime,(command.lower(),),False,],
+                "setquiet": [self.Controller.SetGeneratorQuietMode,(command.lower(),),False,],
+                "setremote": [
+                    self.Controller.SetGeneratorRemoteCommand,
+                    (command.lower(),),
+                    False,
+                ],
+                "testcommand": [self.Controller.TestCommand, (command.lower(),), False],
+                "network_status": [self.InternetConnected, (), False],
+                "help": [self.DisplayHelp, (), False],  # display help screen
+                ## These commands are used by the web / socket interface only
+                "power_log_json": [
+                    self.Controller.GetPowerHistory,
+                    (command.lower(),),
+                    True,
+                ],
+                "power_log_clear": [self.Controller.ClearPowerLog, (), True],
+                "fuel_log_clear": [self.Controller.ClearFuelLog, (), True],
+                "start_info_json": [self.GetStartInfo, (), True],
+                "registers_json": [
+                    self.Controller.DisplayRegisters,
+                    (False, True),
+                    True,
+                ],  # display registers
+                "allregs_json": [
+                    self.Controller.DisplayRegisters,
+                    (True, True),
+                    True,
+                ],  # display registers
+                "logs_json": [self.Controller.DisplayLogs, (True, True), True],
+                "status_json": [self.Controller.DisplayStatus, (True,), True],
+                "status_num_json": [self.Controller.DisplayStatus, (True, True), True],
+                "maint_json": [self.Controller.DisplayMaintenance, (True,), True],
+                "maint_num_json": [self.Controller.DisplayMaintenance, (True, True), True],
+                "monitor_json": [self.DisplayMonitor, (True,), True],
+                "monitor_num_json": [self.DisplayMonitor, (True, True), True],
+                "weather_json": [self.DisplayWeather, (True,), True],
+                "outage_json": [self.Controller.DisplayOutage, (True,), True],
+                "outage_num_json": [self.Controller.DisplayOutage, (True, True), True],
+                "gui_status_json": [self.GetStatusForGUI, (), True],
+                "get_maint_log_json": [self.Controller.GetMaintLogJSON, (), True],
+                "add_maint_log": [
+                    self.Controller.AddEntryToMaintLog,
+                    (command,),
+                    True,
+                ],  # Do not do command.lower() since this input is JSON
+                "delete_row_maint_log": [
+                    self.Controller.DeleteMaintLogRow,
+                    (command.lower(),),
+                    True,
+                ],
+                "edit_row_maint_log": [
+                    self.Controller.EditMaintLogRow,
+                    (command,),
+                    True,
+                ],  # Do not do command.lower() since this input is JSON
+                "clear_maint_log": [self.Controller.ClearMaintLog, (), True],
+                "getsitename": [self.GetSiteName, (), True],
+                "getbase": [
+                    self.Controller.GetBaseStatus,
+                    (),
+                    True,
+                ],  #  (UI changes color based on exercise, running , ready status)
+                "gethealth": [self.GetSystemHealth, (), True],
+                "getregvalue": [
+                    self.Controller.GetRegValue,
+                    (command.lower(),),
+                    True,
+                ],  # only used for debug purposes, read a cached register value
+                "readregvalue": [
+                    self.Controller.ReadRegValue,
+                    (command.lower(),),
+                    True,
+                ],  # only used for debug purposes, Read Register Non Cached
+                # only used for debug purposes, Read Register Non Cached
+                "writeregvalue": [self.Controller.WriteRegValue,(command.lower(),),True,],  
+                # only used for debug purposes. If a thread crashes it tells you the thread name
+                "getdebug": [self.GetDeadThreadName,(),True,],  
+                "sendregisters": [self.SendSupportInfo, (False,), True],
+                "sendlogfiles": [self.SendSupportInfo, (True,), True],
+                "support_data_json": [self.GetSupportData, (), True],
+                "set_tank_data": [self.Controller.SetExternalTankData, (command,), True],
+                "set_temp_data": [self.Controller.SetExternalTemperatureData,(command,),True,],
+                "set_temp_bounds": [self.Controller.SetExternalTemperatureBounds,(command,),True,],
+                "set_power_data": [self.Controller.SetExternalCTData, (command,), True],
+                "notify_message": [self.SendMessage, (command,), True],
+                "getreglabels_json": [self.Controller.GetRegisterLabels, (), True]
+            }
+
+            CommandList = command.split(" ")
+        except Exception as e1:
+            msgbody = "Error in ProcessCommand: " + str(e1)
+            msgbody += "EndOfMessage"
+            return msgbody
 
         ValidCommand = False
         try:

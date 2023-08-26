@@ -3229,18 +3229,7 @@ class Evolution(GeneratorController):
             # this occurs if the controller has been replaced
             return "None - Controller has been replaced"
 
-        SerialNumberHex = 0x00
-        BitPosition = 0
-        for Index in range(len(Value) - 1, 0, -1):
-            TempVal = Value[Index]
-            if Index & 0x01 == 0:  # only odd positions
-                continue
-
-            HexVal = int(TempVal, 16)
-            SerialNumberHex = SerialNumberHex | ((HexVal) << (BitPosition))
-            BitPosition += 4
-
-        return "%010x" % SerialNumberHex
+        return self.HexStringToString(Value)
 
     # ------------ Evolution:GetTransferStatus ----------------------------------
     def GetTransferStatus(self):

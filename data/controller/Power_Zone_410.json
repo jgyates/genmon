@@ -7,49 +7,83 @@
   "nominal_battery_voltage": "Unknown",
   "generator_phase": 3,
   "base_registers": {
-    "0007": 2,
-    "0008": 2,
-    "000a": 2,
-    "000c": 2,
-    "0012": 2,
-    "005d": 2,
-    "05ea": 2,
-    "05eb": 2,
-    "0606": 2,
-    "0607": 2,
-    "060a": 2,
-    "0611": 2,
-    "0637": 2,
-    "0638": 2,
-    "1f72": 2,
-    "1f73": 2,
-    "1f74": 2,
-    "1f75": 2,
-    "1f76": 2,
-    "1f77": 2,
-    "1f7b": 2,
-    "1fa4": 2,
-    "1fa5": 2,
-    "1fa6": 2,
-    "226a": 2,
-    "226b": 2
+    "0000": {"length": 2, "text": "Controller ID"},
+    "0001": {"length": 2, "text": "Generator Status"},
+    "0002": {"length": 2, "text": "Current Alarm"},
+    "0007": {"length": 2, "text": "RPM"},
+    "0008": {"length": 2, "text": "Frequency"},
+    "0009": {"length": 2, "text": "Utility Voltage"},
+    "000a": {"length": 2, "text": "Battery Voltage"},
+    "000b": {"length": 4, "text": "Run Hours"},
+    "000e": {"length": 2, "text": "Generator Time"},
+    "000f": {"length": 2, "text": "Generator Date"},
+    "0010": {"length": 2, "text": "Generator Day / Year"},
+    "0011": {"length": 2, "text": "Threshold Voltage"},
+    "0012": {"length": 2, "text": "Output Voltage"},
+    "0019": {"length": 2, "text": "Model ID"},
+    "005d": {"length": 2, "text": "Tank Fuel Level"},
+    "005a": {"length": 2, "text": "Target Frequency"},
+    "0059": {"length": 2, "text": "Target Voltage"},
+    "023a": {"length": 2, "text": "Activation Status"},
+    "023b": {"length": 2, "text": "Pickup Voltage"},
+    "05ea": {"length": 2, "text": "Output Current"},
+    "05eb": {"length": 2, "text": "Output Power"},
+    "0604": {"length": 2, "text": "Key State"},
+    "0606": {"length": 2, "text": "Engine Oil Pressure"},
+    "0607": {"length": 2, "text": "Engine Oil Temp"},
+    "060a": {"length": 2, "text": "Engine Coolant Temp"},
+    "0611": {"length": 2, "text": "Engine Status"},
+    "0637": {"length": 2, "text": "Alarm Active"},
+    "0638": {"length": 2, "text": "Warning Active"},
+    "1f72": {"length": 2, "text": "Output Voltage Phase 1"},
+    "1f73": {"length": 2, "text": "Output Voltage Phase 2"},
+    "1f74": {"length": 2, "text": "Output Voltage Phase 3"},
+    "1f75": {"length": 2, "text": "Output Current Phase 1"},
+    "1f76": {"length": 2, "text": "Output Current Phase 2"},
+    "1f77": {"length": 2, "text": "Output Current Phase 3"},
+    "1f7b": {"length": 2, "text": "Output Power Factor"},
+    "1fa4": {"length": 2, "text": "Utility Voltage Phase 1"},
+    "1fa5": {"length": 2, "text": "Utility Voltage Phase 2"},
+    "1fa6": {"length": 2, "text": "Utility Voltage Phase 3"},
+    "226a": {"length": 2, "text": "E-Stop Shutdown Alarm"},
+    "226b": {"length": 2, "text": "Not in Auto Alarm"},
+    "01f4": {"length": 10, "text": "Serial Number"}
+  },
+  "log_registers": {
+    "012c": {"length": 8, "text": "Run Log", "iteration": 50, "step": 4},
+    "03e8": {"length": 10, "text": "Alarm Log", "iteration": 50, "step": 5},
+    "04e2": {"length": 8, "text": "Service Log", "iteration": 50, "step": 4}
   },
   "switch_state": [
     {
-      "reg": "226b",
-      "mask": "0001",
-      "value": "0001",
-      "type": "bits",
-      "title": "Switch State",
-      "text": "Not in Auto"
+        "reg": "0604",
+        "mask": "ffff",
+        "value": "1",
+        "type": "bits",
+        "title": "Switch State",
+        "text": "Off"
     },
     {
-      "reg": "226b",
-      "mask": "0001",
-      "value": "0000",
-      "type": "bits",
-      "title": "Switch State",
-      "text": "Auto"
+        "reg": "0604",
+        "mask": "ffff",
+        "value": "2",
+        "type": "bits",
+        "title": "Switch State",
+        "text": "Manual"
+    },
+    {
+        "reg": "0604",
+        "mask": "ffff",
+        "value": "3",
+        "type": "bits",
+        "title": "Switch State",
+        "text": "Auto"
+    },
+    {
+        "reg": "0604",
+        "type": "default",
+        "title": "Switch State",
+        "text": "Unknown"
     }
   ],
   "alarm_active" : [
@@ -281,6 +315,14 @@
       "title": "Output Power Factor"
     },
     {
+      "reg": "0009",
+      "mask": "ffff",
+      "multiplier": 1,
+      "type": "int",
+      "title": "Utility Voltage",
+      "units": "V"
+    },
+    {
       "reg": "1fa4",
       "mask": "ffff",
       "multiplier": 0.1,
@@ -307,7 +349,21 @@
   ],
   "maintenance": [
     {
-      "reg": "000c",
+      "reg": "01f4",
+      "type": "ascii",
+      "title": "Serial Number"
+    },
+    {
+      "reg":"023a",
+      "mask": "0001",
+      "type": "bits",
+      "value": "0001",
+      "title": "Activation Status",
+      "text": "Activated",
+      "default": "Not Activated"
+    },
+    {
+      "reg": "000b",
       "mask": "ffff",
       "multiplier": 1,
       "type": "int",
@@ -345,6 +401,352 @@
       "type": "int",
       "title": "Engine Coolant Temperature",
       "units": "F"
+    },
+    {
+      "reg": "005a",
+      "mask": "ffff",
+      "multiplier": 1,
+      "type": "int",
+      "title": "Target Frequency",
+      "units": "Hz"
+    },
+    {
+      "reg": "0059",
+      "mask": "ffff",
+      "multiplier": 1,
+      "type": "int",
+      "title": "Target Volts",
+      "units": "V"
+    }
+  ],
+  "logs":[
+    {"length": 8, "title": "Run Log", "iteration": 50, "step": 4, "reg": "012c",
+      "object":{
+        "inherit" : true,
+        "type": "list",
+        "format": "%s/%s/%s %s:%s:%s %s",
+        "title" : "Run Log Entry",
+        "value": [ 
+          { 
+            "inherit":true,
+            "mask": "00000000ff000000",
+            "format": "%02d",
+            "type": "int",
+            "shiftright" : 24,
+            "bounds_regex": "^([0-1][1-2]|[1-9])$",
+            "title": "Month"
+          },
+          { 
+            "inherit":true,
+            "mask": "00000000000000ff",
+            "format": "%02d",
+            "type": "int",
+            "bounds_regex": "^([3][0-1]|[2][0-9]|[1][0-9]|[1-9])$",
+            "title": "Day"
+          },
+          { 
+            "inherit":true,
+            "mask": "000000000000ff00",
+            "format": "%02d",
+            "type": "int",
+            "shiftright" : 8,
+            "title": "Year"
+          },
+          { 
+            "inherit":true,
+            "mask": "000000ff00000000",
+            "format": "%02d",
+            "type": "int",
+            "shiftright" : 32,
+            "bounds_regex": "^(2[0-3]|[0-1]?[0-9])$",
+            "title": "Hours"
+          },
+          { 
+            "inherit":true,
+            "mask": "0000ff0000000000",
+            "format": "%02d",
+            "type": "int",
+            "shiftright" : 40,
+            "bounds_regex": "^([0-9]|[1-5][0-9])$",
+            "title": "Minutes"
+          },
+          { 
+            "inherit":true,
+            "mask": "0000000000ff0000",
+            "format": "%02d",
+            "type": "int",
+            "shiftright" : 16,
+            "bounds_regex": "^([0-9]|[1-5][0-9])$",
+            "title": "Seconds"
+          },
+          {
+            "inherit":true,
+            "type": "object_int_index",
+            "mask": "ff00000000000000",
+            "shiftright" :56,
+            "object": {
+              "40": "Switched Off",
+              "41": "Running Manual",
+              "42": "Stopped Auto",
+              "43": "Running Utility Lost",
+              "44": "Running 2 Wire Start",
+              "45": "Running Radio Start",
+              "46": "Running Exercise",
+              "47": "Stopped Alarm"
+            },
+            "default": "Unknown Event",
+            "title": "Run Event Name"
+          }
+        ]
+      }
+    },
+    {"length": 10, "title": "Alarm Log", "iteration": 50, "step": 5, "reg": "03e8",
+      "object":{
+        "inherit" : true,
+        "type": "list",
+        "format": "%s/%s/%s %s:%s:%s %s: Alarm Code %s",
+        "title" : "Alarm Log Entry",
+        "value": [ 
+          { 
+          "inherit":true,
+          "mask": "00000000ff0000000000",
+          "format": "%02d",
+          "type": "int",
+          "shiftright" : 40,
+          "bounds_regex": "^([0-1][1-2]|[1-9])$",
+          "title": "Month"
+          },
+          { 
+            "inherit":true,
+            "mask": "00000000000000ff0000",
+            "format": "%02d",
+            "type": "int",
+            "shiftright" : 16,
+            "bounds_regex": "^([3][0-1]|[2][0-9]|[1][0-9]|[1-9])$",
+            "title": "Day"
+          },
+          { 
+            "inherit":true,
+            "mask": "000000000000ff000000",
+            "format": "%02d",
+            "type": "int",
+            "shiftright" : 24,
+            "title": "Year"
+          },
+          { 
+            "inherit":true,
+            "mask": "000000ff000000000000",
+            "format": "%02d",
+            "type": "int",
+            "shiftright" : 48,
+            "bounds_regex": "^(2[0-3]|[0-1]?[0-9])$",
+            "title": "Hours"
+          },
+          { 
+            "inherit":true,
+            "mask": "0000ff00000000000000",
+            "format": "%02d",
+            "type": "int",
+            "shiftright" : 56,
+            "bounds_regex": "^([0-9]|[1-5][0-9])$",
+            "title": "Minutes"
+          },
+          { 
+            "inherit":true,
+            "mask": "0000000000ff00000000",
+            "format": "%02d",
+            "type": "int",
+            "shiftright" : 32,
+            "bounds_regex": "^([0-9]|[1-5][0-9])$",
+            "title": "Seconds"
+          },
+          {
+            "inherit":true,
+            "type": "object_int_index",
+            "mask": "ff000000000000000000",
+            "shiftright" : 72,
+            "object": {
+              "0": "High Coolant Temperature",
+              "2": "Overcrank",
+              "3": "Overspeed",
+              "4": "RPM Sense Loss",
+              "5": "Underspeed",
+              "6": "Low Coolant Level",
+              "8": "Wiring Error",
+              "9": "Over Voltage",
+              "10": "Under Voltage",
+              "11": "Overload",
+              "12": "Undervoltage Overload",
+              "14": "Fuse Problem",
+              "18": "Very Low Battery",
+              "20": "Low Battery",
+              "21": "Exercise Set Error",
+              "30": "Low Fuel Pressure",
+              "31": "Battery Problem",
+              "32": "Charger Warning",
+              "33": "Charger Missing AC",
+              "34": "Overload Warning",
+              "35": "Overload Cooldown",
+              "38": "USB Warning",
+              "64": "Internal Fault",
+              "66": "CANbus Error",
+              "70": "Ruptured Basin",
+              "71": "Low Fuel Level",
+              "72": "E-Stop",
+              "73": "Hall Calibration Error",
+              "74": "SEEProm Abuse",
+              "77": "High Oil Temp",
+              "78": "Low Oil Level",
+              "79": "Transfer Switch Error",
+              "80": "Lid Open / Theft Alarm",
+              "81": "SPI Flash Abuse",
+              "83": "3 Wire Switch Position Error",
+              "84": "Keypad Missing",
+              "85": "Low Fuel Level",
+              "86": "CRC EEPROM Mismatch Config",
+              "87": "High Fuel Level Warning",
+              "88": "Low Oil Pressure Warning",
+              "89": "High Coolant Temperature",
+              "90": "Low Coolant Temperature",
+              "91": "DUIO 1 Loss Of Communication",
+              "92": "DUIO 2 Loss Of Communication",
+              "93": "DUIO 3 Loss Of Communication",
+              "94": "DUIO 4 Loss Of Communication",
+              "95": "Invalid Vcode Setting",
+              "96": "Configuration Not Set - VCODE",
+              "97": "Configuration Not Set - Parameter Group",
+              "98": "Configuration Not Set - Exercise",
+              "99": "Configuration Not Set - Fuel Type",
+              "100": "External Charger Failure",
+              "101": "External Common Alarm (DUIO) - 1",
+              "102": "External Common Alarm (DUIO) - 2",
+              "103": "External Common Alarm (DUIO) - 3",
+              "104": "12/24V Battery Config Error",
+              "105": "External Common Warning (DUIO) - 1",
+              "106": "External Common Warning (DUIO) - 2",
+              "107": "Fluid Basin Overfill",
+              "108": "Fluid Basin Missing",
+              "109": "General Alarm",
+              "110": "General Warning",
+              "111": "Ground Fault",
+              "112": "Auxiliary Shutdown",
+              "120": "WIFI 485 Comms Loss",
+              "170": "ECU Fault",
+              "171": "Engine Throttle Valve 1 Position 1",
+              "172": "Engine Fuel Delivery Pressure",
+              "173": "Engine Oil Pressure",
+              "174": "Engine Intake Manifold #1 Pressure",
+              "175": "Engine Intake Manifold 1 Temperature",
+              "176": "Engine Air Filter 1 Differential Pressure",
+              "177": "Engine Coolant Temperature",
+              "178": "Battery Potential / Power Input 1",
+              "179": "Engine Oil Temperature 1",
+              "180": "Engine Fuel Shutoff 1 Control",
+              "181": "Engine Position Sensor",
+              "182": "Engine Timing Sensor",
+              "183": "O2 Sensor",
+              "184": "Engine Knock 1",
+              "185": "Engine Ignition Coil #1",
+              "186": "Engine Ignition Coil #2",
+              "187": "Engine Ignition Coil #3",
+              "188": "Engine Ignition Coil #4",
+              "189": "Engine Fuel Valve 1 Position",
+              "190": "Engine Charge Air Cooler 1 Bypass",
+              "191": "Engine Speed"
+            },
+            "default": "Unknown Alarm",
+            "title": "Alarm Name"
+          },
+          { 
+            "inherit":true,
+            "mask": "ffff",
+            "format": "%04d",
+            "type": "int",
+            "title": "E-Code"
+          }
+        ]
+      }
+    },
+    {"length": 8, "title": "Service Log", "iteration": 50, "step": 4, "reg": "04e2",
+      "object":{
+        "inherit" : true,
+        "type": "list",
+        "format": "%s/%s/%s %s:%s:%s %s",
+        "title" : "Service Log Entry",
+        "value": [ 
+          { 
+            "inherit":true,
+            "mask": "00000000ff000000",
+            "format": "%02d",
+            "type": "int",
+            "shiftright" : 24,
+            "bounds_regex": "^([0-1][1-2]|[1-9])$",
+            "title": "Month"
+          },
+          { 
+            "inherit":true,
+            "mask": "00000000000000ff",
+            "format": "%02d",
+            "type": "int",
+            "bounds_regex": "^([3][0-1]|[2][0-9]|[1][0-9]|[1-9])$",
+            "title": "Day"
+          },
+          { 
+            "inherit":true,
+            "mask": "000000000000ff00",
+            "format": "%02d",
+            "type": "int",
+            "shiftright" : 8,
+            "title": "Year"
+          },
+          { 
+            "inherit":true,
+            "mask": "000000ff00000000",
+            "format": "%02d",
+            "type": "int",
+            "shiftright" : 32,
+            "bounds_regex": "^(2[0-3]|[0-1]?[0-9])$",
+            "title": "Hours"
+          },
+          { 
+            "inherit":true,
+            "mask": "0000ff0000000000",
+            "format": "%02d",
+            "type": "int",
+            "shiftright" : 40,
+            "bounds_regex": "^([0-9]|[1-5][0-9])$",
+            "title": "Minutes"
+          },
+          { 
+            "inherit":true,
+            "mask": "0000000000ff0000",
+            "format": "%02d",
+            "type": "int",
+            "shiftright" : 16,
+            "bounds_regex": "^([0-9]|[1-5][0-9])$",
+            "title": "Seconds"
+          },
+          {
+            "inherit":true,
+            "type": "object_int_index",
+            "mask": "ff00000000000000",
+            "shiftright" :56,
+            "object": {
+              "22": "Service Schedule B",
+                "23": "Service Schedule A",
+                "24": "Inspect Battery",
+                "25": "Service Schedule C",
+                "60": "Service B Performed",
+                "61": "Service A Performed",
+                "62": "Battery Inspected",
+                "63": "Reset Maintenance",
+                "76": "Service C Performed"
+            },
+            "default": "Unknown Event",
+            "title": "Service Event Name"
+          }
+        ]
+      }
     }
   ],
   "gauges": [
@@ -409,6 +811,16 @@
       "nominal": "Unknown"
     },
     {
+      "reg": "0009",
+      "mask": "ffff",
+      "multiplier": 1,
+      "type": "int",
+      "title": "Utility Voltage",
+      "units": "V",
+      "sensor": "linevolts",
+      "nominal": "Unknown"
+    },
+    {
       "comment": "TODO do I need a gauge for oil temp, oil pressure and coolant temmp, if so what is nominal",
       "reg": "05eb",
       "mask": "ffff",
@@ -429,7 +841,7 @@
     "title": "Fuel Sensor",
     "units": "%",
     "sensor": "fuel"
-},
+  },
   "power": {
     "reg": "05eb",
     "mask": "ffff",
@@ -448,23 +860,179 @@
       "units": "V"
     },
   "linevoltage": {
-      "comment":"TODO FIX THIS FOR 3 PHASE? make list entry with addition/separator ?",
-      "reg": "0012",
+    "reg": "0009",
+    "mask": "ffff",
+    "multiplier": 1,
+    "type": "int",
+    "title": "Utility Voltage",
+    "units": "V",
+    "sensor": "linevolts"
+  },
+  "thresholdvoltage": {
+    "reg": "0011",
+    "mask": "ffff",
+    "multiplier": 1,
+    "type": "int",
+    "title": "Threshold Voltage",
+    "units": "V",
+    "sensor": "linevolts"
+  },
+  "pickupvoltage": {
+      "reg": "023b",
       "mask": "ffff",
       "multiplier": 1,
       "type": "int",
-      "title": "Utility Voltage",
-      "units": "V"
+      "title": "Pickup Voltage",
+      "units": "V",
+      "sensor": "linevolts"
     },
-  "coment2": "TODO: Fix Threshold and Pickup?",
-  "thresholdvoltage": 143,
-  "pickupvoltage": 190,
   "run_hours": {
-      "reg": "000c",
+      "reg": "000b",
       "mask": "ffffffff",
       "multiplier": 1,
       "type": "int",
       "title": "Run Hours",
       "units": "h"
+    },
+  "datetime": {
+    "type" : "list",
+    "format": "%s %s %s, 20%s %s:%s",
+    "title" : "Generator Time",
+    "value" : [
+      { 
+        "reg": "0010",
+        "mask": "ff00",
+        "type": "object_int_index",
+        "multiplier" : 0.00390625,
+        "object" :  {
+            "0": "Sunday",
+            "1": "Monday",
+            "2": "Tuesday",
+            "3": "Wednesday",
+            "4": "Thursday",
+            "5": "Friday",
+            "6": "Saturday"
+        },
+        "default": "Unknown",
+        "title": "Day of Week"
+        },
+        {
+          "reg": "000f",
+          "type": "object_int_index",
+          "mask" : "ff00",
+          "multiplier" : 0.00390625,
+          "object": {
+            "1": "January",
+            "2": "February",
+            "3": "March",
+            "4": "April",
+            "5": "May",
+            "6": "June",
+            "7": "July",
+            "8": "August",
+            "9": "September",
+            "10": "October",
+            "11": "November",
+            "12": "December"
+          },
+          "default": "Unknown",
+          "title": "Month"
+        },
+        {
+          "reg": "000f",
+          "type": "int",
+          "mask" : "00ff",
+          "title": "Day"
+        },
+        {
+          "reg": "0010",
+          "type": "int",
+          "mask" : "00ff",
+          "title": "Year"
+        },
+        {
+          "reg": "000e",
+          "type": "int",
+          "mask" : "ff00",
+          "multiplier" : 0.00390625,
+          "comment" : "NOTE: 0.00390625 = 1/256 or dividing by 0x100 hex or shifting right by 8 bits",
+          "title": "Hours"
+        },
+        {
+          "reg": "000e",
+          "type": "int",
+          "mask" : "00ff",
+          "format": "%02d",
+          "title": "Minutes"
+        }
+      ]
+    },
+    "buttons" : [
+      {
+          "onewordcommand" : "startexercisecycle",
+          "title" : "Remote Start Exercise Cycle",
+          "command_sequence" : [
+                                 {
+                                   "reg": "0003",
+                                   "value": "001b"
+                                 }
+                               ]
+      },
+      {
+          "onewordcommand" : "clearmaintalarm",
+          "title" : "Clear Maintenance Alarm",
+          "command_sequence" : [
+                                 {
+                                   "reg": "0003",
+                                   "value": "001e"
+                                 }
+                               ]
+      },
+      {
+          "onewordcommand" : "auto",
+          "title" : "Select Auto Mode",
+          "command_sequence" : [
+                                 {
+                                   "reg": "0003",
+                                   "value": "000f"
+                                 }
+                               ]
+      },
+      {
+          "onewordcommand" : "off",
+          "title" : "Select Off Mode",
+          "command_sequence" : [
+                                 {
+                                   "reg": "0003",
+                                   "value": "0010"
+                                 }
+                               ]
+      },
+      {
+          "onewordcommand" : "manual",
+          "title" : "Select Manual Mode",
+          "command_sequence" : [
+                                 {
+                                   "reg": "0003",
+                                   "value": "000e"
+                                 }
+                               ]
+      }
+    ],
+  "identity": [
+    {
+      "reg": "0000",
+      "mask": "ffff",
+      "type": "bits",
+      "value": "0017",
+      "title": "Power Zone 410 Controller",
+      "text": "Power Zone 410 Controller"
+    },
+    {
+      "reg": "0000",
+      "type": "default",
+      "title": "Unknown Controller",
+      "text": "Unknown Controller"
     }
+    ]
 }

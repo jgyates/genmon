@@ -252,6 +252,8 @@ class CustomController(GeneratorController):
     def IdentifyController(self):
 
         try:
+            if self.ControllerDetected:
+                return
             self.Model = str(self.controllerimport["controller_name"])
 
             ReturnValue = False
@@ -291,7 +293,16 @@ class CustomController(GeneratorController):
             if not ReturnValue:
                 return False
 
-            self.ControllerDetected = True
+            if "identity" in self.controllerimport:
+                Controller_Identity = self.GetExtendedDisplayString(self.controllerimport, "identity")
+                self.LogDebug("Controller ID: " + str(Controller_Identity))
+                if "unknown" in Controller_Identity.lower():
+                    self.ControllerDetected = True
+                else:
+                    self.ControllerDetected = True
+            else:
+                self.ControllerDetected = True
+            return self.ControllerDetected
 
         except Exception as e1:
             self.LogErrorLine("Error in IdentifyController: " + str(e1))
@@ -346,7 +357,11 @@ class CustomController(GeneratorController):
                 self.LogError("Error: Controller Import does not contain nominal_battery_voltage")
                 return False
 
-            for Register, Length in self.controllerimport["base_registers"].items():
+            for Register, RegisterData in self.controllerimport["base_registers"].items():
+                if isinstance(RegisterData, dict):
+                    Length = RegisterData["length"]
+                else:
+                    Length = RegisterData
                 if Length % 2 != 0:
                     self.LogError(
                         "Error: Controller Import: modbus register lenghts must be divisible by 2: "
@@ -469,6 +484,62 @@ class CustomController(GeneratorController):
         ):  #
             return
         self.ModBus.Flush()
+    # -------------CustomController:RegisterIsLog-------------------------------- 
+    def RegisterIsLog(self, Register):
+        try:
+            # return True for sucess, Register Length (in bytes), and text name
+            if not "log_registers" in self.controllerimport:
+                return False, 0, ""
+            RegInt = int(Register,16)
+            for LogRegister, LogRegisterData in self.controllerimport["log_registers"].items():
+                LogRegInt = int(LogRegister,16)
+                LogRegEndOffset = int(LogRegisterData["step"]) * int(LogRegisterData["iteration"])
+                if RegInt >= LogRegInt and RegInt <= (LogRegInt + LogRegEndOffset):
+                    return True, LogRegisterData["length"], LogRegisterData["text"]
+            return False, 0, ""
+        except Exception as e1:
+            self.LogErrorLine("Error in RegisterIsLog: " + str(e1))
+            return False, 0, ""
+
+    # -------------CustomController:MasterEmulation------------------------------ 
+    def UpdateLogRegistersAsMaster(self):
+        try:
+            if not "log_registers" in self.controllerimport:
+                return
+            
+            if not self.ConfigValidated:
+                self.ValidateConfig()
+                if not self.ConfigValidated:
+                    return
+            for Register, RegisterData in self.controllerimport["log_registers"].items():
+                if not isinstance(RegisterData, dict):
+                    self.LogDebug("Invalid register data in log register description")
+                    return
+                try:
+                    Length = RegisterData["length"]
+                    Step = RegisterData["step"]
+                    Iteration = RegisterData["iteration"]
+                    RegisterInt = int(Register, 16)
+                    while(Iteration > 0):
+                        Register = "%04x" % RegisterInt
+                        if self.IsStopping:
+                            return
+                        localTimeoutCount = self.ModBus.ComTimoutError
+                        localSyncError = self.ModBus.ComSyncError
+                        self.ModBus.ProcessTransaction(Register, Length / 2)
+                        if (
+                            localSyncError != self.ModBus.ComSyncError
+                            or localTimeoutCount != self.ModBus.ComTimoutError
+                        ) and self.ModBus.RxPacketCount:
+                            self.WaitAndPergeforTimeout()
+                        RegisterInt += Step
+                        Iteration -= 1
+
+                except Exception as e1:
+                    self.LogErrorLine("Error in MasterEmulation: " + str(e1))
+
+        except Exception as e1:
+            self.LogErrorLing("Error in UpdateLogRegistersAsMaster: " + str(e1))
 
     # -------------CustomController:MasterEmulation------------------------------
     def MasterEmulation(self):
@@ -478,11 +549,12 @@ class CustomController(GeneratorController):
                 self.ValidateConfig()
                 if not self.ConfigValidated:
                     return
-            if not self.ControllerDetected:
-                self.IdentifyController()
-                if not self.ControllerDetected:
-                    return
-            for Register, Length in self.controllerimport["base_registers"].items():
+            
+            for Register, RegisterData in self.controllerimport["base_registers"].items():
+                if isinstance(RegisterData, dict):
+                    Length = RegisterData["length"]
+                else:
+                    Length = RegisterData
                 try:
                     if self.IsStopping:
                         return
@@ -497,6 +569,8 @@ class CustomController(GeneratorController):
                 except Exception as e1:
                     self.LogErrorLine("Error in MasterEmulation: " + str(e1))
 
+            if self.ControllerDetected == False:
+                self.IdentifyController()
             self.CheckForAlarmEvent.set()
         except Exception as e1:
             self.LogErrorLine("Error in MasterEmulation: " + str(e1))
@@ -560,6 +634,9 @@ class CustomController(GeneratorController):
                 msgbody += "For additional information : " + self.UserURL + "\n"
             if not EngineState == self.LastEngineState:
                 self.LastEngineState = EngineState
+                
+                self.UpdateLogRegistersAsMaster()
+
                 msgsubject = "Generator Notice: " + self.SiteName
                 if not self.SystemInAlarm():
                     msgbody += "NOTE: This message is a notice that the state of the generator has changed. The system is not in alarm.\n"
@@ -604,20 +681,36 @@ class CustomController(GeneratorController):
 
             if not IsFile:
                 #  validate data length
-                length = len(Value) / 2
-                reg_dict = self.controllerimport["base_registers"]
-                if reg_dict[Register] != length:
-                    self.LogError(
-                        "Invalid length detected in received modbus regisger "
-                        + str(Register)
-                        + " : "
-                        + str(length)
-                        + ": "
-                        + str(self.controllerimport["base_registers"])
-                    )
-                    return False
+                datalength = int(len(Value) / 2)
+                if Register in self.controllerimport["base_registers"]:
+                    RegisterData = self.controllerimport["base_registers"][Register]
+                
+                    if isinstance(RegisterData, dict):
+                        Length = RegisterData["length"]
+                    else:
+                        Length = RegisterData
+                    if Length != datalength:
+                        self.LogError(
+                            "Invalid length detected in received modbus regisger "
+                            + str(Register)
+                            + " : "
+                            + str(datalength)
+                            + ": "
+                            + str(Length)
+                            + ": ["
+                            + self.HexStringToString(Value) +"]"
+                        )
+                        return False
+                    else:
+                        self.Registers[Register] = Value
                 else:
-                    self.Registers[Register] = Value
+                    # TODO Validate log registers
+                    ReturnStatus, LogRegLength, Name = self.RegisterIsLog(Register)
+                    if ReturnStatus:
+                        self.Registers[Register] = Value
+                    else:
+                        self.LogError("Failure validating log register: " + Register)
+                        return False
             else:
                 # todo validate file data length
                 self.FileData[Register] = Value
@@ -625,6 +718,26 @@ class CustomController(GeneratorController):
         except Exception as e1:
             self.LogErrorLine("Error in UpdateRegisterList: " + str(e1))
             return False
+
+    # ----------  CustomController::GetRegisterLabels---------------------------
+    def GetRegisterLabels(self):
+        # return JSON of dict with registers and text descriptions
+        try:
+            ReturnDict = {}
+            for Register in self.Registers.keys():
+                if Register in self.controllerimport["base_registers"].keys():
+                    RegData = self.controllerimport["base_registers"][Register]
+                    if isinstance(RegData, dict):
+                        ReturnDict[Register] = RegData["text"]
+                else:
+                    Success, Length, Name = self.RegisterIsLog(Register)
+                    if Success:
+                        ReturnDict[Register] = Name
+
+            return json.dumps(ReturnDict)
+        except Exception as e1:
+            self.LogErrorLine("Error in GetRegisterLabels: " + str(e1))
+        return "{}"
 
     # ---------------------CustomController::SystemInAlarm-----------------------
     # return True if generator is in alarm, else False
@@ -736,11 +849,15 @@ class CustomController(GeneratorController):
 
                 StartInfo["buttons"] = self.GetButtons()
 
+                ShowStatus = "status" in self.controllerimport
+                ShowMaintenance = "maintenance" in self.controllerimport
+                ShowLogs = "logs" in self.controllerimport
+
                 StartInfo["pages"] = {
-                    "status": True,
-                    "maint": True,
+                    "status": ShowStatus,
+                    "maint": ShowMaintenance,
                     "outage": self.OutageSupported(),
-                    "logs": False,
+                    "logs": ShowLogs,
                     "monitor": True,
                     "maintlog": True,
                     "notifications": True,
@@ -793,14 +910,49 @@ class CustomController(GeneratorController):
     # ---------------------CustomController::DisplayLogs-------------------------
     def DisplayLogs(self, AllLogs=False, DictOut=False, RawOutput=False):
 
-        RetValue = collections.OrderedDict()
-        LogList = []
-        RetValue["Logs"] = LogList
-        UnknownFound = False
+        # if DictOut is True, return a dictionary containing a Dictionaries (dict entry for each log)
+        # Each dict item a log (alarm, start/stop). For Example:
+        #
+        #       Dict[Logs] =  {"Alarm Log" : [Log Entry1, LogEntry2, ...]},
+        #                     {"Start Stop Log" : [Log Entry3, Log Entry 4, ...]}...
 
-        # Not supported
-
-        return RetValue
+        Logs = collections.OrderedDict()
+        LogDict = collections.OrderedDict()
+        Logs["Logs"] = LogDict
+        try:
+            if not "logs" in self.controllerimport:
+                if not DictOut:
+                    return self.printToString(self.ProcessDispatch(Logs, ""))
+            
+            for logitems in self.controllerimport["logs"]:
+                if "reg" in logitems.keys():
+                    Register = logitems["reg"]
+                    RegisterInt = int(Register,16)
+                    if not "iteration" in logitems.keys():
+                        self.LogError("Error in DisplayLogs: reg present but not iteration")
+                        break
+                    if not "step" in logitems.keys():
+                        self.LogError("Error in DisplayLogs: reg present but not step")
+                        break
+                    iteration = logitems["iteration"]
+                    LogList = []
+                    while iteration > 0:
+                        Register = "%04x" % RegisterInt
+                        title, LogResults = self.GetDisplayEntry(logitems["object"], inheritreg=Register)
+                        if LogResults != None and len(LogResults):
+                            LogList.append(LogResults)
+                        RegisterInt += logitems["step"]
+                        iteration -= 1
+                    LogDict[logitems["title"]] = LogList
+                    
+                else:
+                    self.LogDebug("Error in DisplayLogs: non inherit register methods not support at this time")
+                
+        except Exception as e1:
+            self.LogErrorLine("Error in DisplayLogs: " + str(e1))
+        if not DictOut:
+            return self.printToString(self.ProcessDispatch(Logs, ""))
+        return Logs
 
     # ------------ CustomController::DisplayMaintenance -------------------------
     def DisplayMaintenance(self, DictOut=False, JSONNum=False):
@@ -857,6 +1009,8 @@ class CustomController(GeneratorController):
             gen_status = self.GetSwitchState()
             if gen_status != "Unknown":
                 Status["Status"].append({"Switch State": gen_status})
+            else:
+                self.LogDebug("Switch State: " + gen_status)
 
             gen_status = self.GetEngineState()
             if gen_status != "Unknown":
@@ -885,14 +1039,11 @@ class CustomController(GeneratorController):
             # Generator time
             Time = []
             Status["Status"].append({"Time": Time})
-            Time.append(
-                {
-                    "Monitor Time": datetime.datetime.now().strftime(
-                        "%A %B %-d, %Y %H:%M:%S"
-                    )
-                }
-            )
-            # TODO Time.append({"Generator Time" : self.GetDateTime()})
+            Time.append({"Monitor Time": datetime.datetime.now().strftime("%A %B %-d, %Y %H:%M:%S")})
+            if "datetime" in self.controllerimport:
+                retval, gentime =  self.GetSingleEntry("datetime")
+                if retval:
+                    Time.append({"Generator Time": gentime})
 
         except Exception as e1:
             self.LogErrorLine("Error in DisplayStatus: " + str(e1))
@@ -1027,10 +1178,7 @@ class CustomController(GeneratorController):
             if button_list == None:
                 return {}
             if not isinstance(button_list, list):
-                self.LogDebug(
-                    "Error in GetButtons: invalid input or data: "
-                    + str(type(button_list))
-                )
+                self.LogDebug("Error in GetButtons: invalid input or data: "+ str(type(button_list)))
                 return {}
 
             return_buttons = {}
@@ -1054,29 +1202,20 @@ class CustomController(GeneratorController):
                 # Format we are looking for is "setremote=start"
                 CmdList = CmdString.split("=")
                 if len(CmdList) != 2:
-                    self.LogError(
-                        "Validation Error: Error parsing command string in SetGeneratorRemoteCommand (parse): "
-                        + CmdString
-                    )
+                    self.LogError("Validation Error: Error parsing command string in SetGeneratorRemoteCommand (parse): "+ CmdString)
                     return "Error"
 
                 CmdList[0] = CmdList[0].strip()
 
                 if not CmdList[0].lower() == "setremote":
-                    self.LogError(
-                        "Validation Error: Error parsing command string in SetGeneratorRemoteCommand (parse2): "
-                        + CmdString
-                    )
+                    self.LogError("Validation Error: Error parsing command string in SetGeneratorRemoteCommand (parse2): "+ CmdString)
                     return "Error"
 
                 Command = CmdList[1].strip()
                 Command = Command.lower()
 
             except Exception as e1:
-                self.LogErrorLine(
-                    "Validation Error: Error parsing command string in SetGeneratorRemoteCommand: "
-                    + CmdString
-                )
+                self.LogErrorLine("Validation Error: Error parsing command string in SetGeneratorRemoteCommand: " + CmdString)
                 self.LogError(str(e1))
                 return "Error"
 
@@ -1085,33 +1224,24 @@ class CustomController(GeneratorController):
             if button_list == None:
                 return "No buttons defined"
             if not isinstance(button_list, list):
-                self.LogDebug(
-                    "Error in SetGeneratorRemoteCommand: invalid input or data: "
-                    + str(type(button_list))
-                )
+                self.LogDebug("Error in SetGeneratorRemoteCommand: invalid input or data: "+ str(type(button_list)))
                 return "Malformed button in JSON file."
 
             for button in button_list:
                 if button["onewordcommand"].lower() == Command.lower():
                     command_sequence = button["command_sequence"]
                     if not len(command_sequence):
-                        self.LogDebug(
-                            "Error in SetGeneratorRemoteCommand: invalid command sequence"
-                        )
+                        self.LogDebug("Error in SetGeneratorRemoteCommand: invalid command sequence")
                         continue
 
                     with self.ModBus.CommAccessLock:
                         for command in command_sequence:
                             if not len(command["value"]):
-                                self.LogDebug(
-                                    "Error in SetGeneratorRemoteCommand: invalid value array"
-                                )
+                                self.LogDebug("Error in SetGeneratorRemoteCommand: invalid value array")
                                 continue
                             if isinstance(command["value"], list):
                                 if not (len(command["value"]) % 2) == 0:
-                                    self.LogDebug(
-                                        "Error in SetGeneratorRemoteCommand: invalid value length"
-                                    )
+                                    self.LogDebug("Error in SetGeneratorRemoteCommand: invalid value length")
                                     return "Command not found."
                                 Data = []
                                 for item in command["value"]:
@@ -1120,9 +1250,7 @@ class CustomController(GeneratorController):
                                     elif isinstance(item, int):
                                         Data.append(item)
                                     else:
-                                        self.LogDebug(
-                                            "Error in SetGeneratorRemoteCommand: invalid type if value list"
-                                        )
+                                        self.LogDebug("Error in SetGeneratorRemoteCommand: invalid type if value list")
                                         return "Command not found."
                                 self.LogDebug(
                                     "Write: " + command["reg"] + ": " + str(Data)
@@ -1136,45 +1264,21 @@ class CustomController(GeneratorController):
                                 LowByte = value & 0x00FF
                                 HighByte = value >> 8
                                 Data = []
-                                Data.append(
-                                    HighByte
-                                )  # Value for indexed register (High byte)
-                                Data.append(
-                                    LowByte
-                                )  # Value for indexed register (Low byte)
-                                self.LogDebug(
-                                    "Write: "
-                                    + command["reg"]
-                                    + ": "
-                                    + ("%x %x" % (HighByte, LowByte))
-                                )
-                                self.ModBus.ProcessWriteTransaction(
-                                    command["reg"], len(Data) / 2, Data
-                                )
+                                Data.append(HighByte)  # Value for indexed register (High byte)
+                                Data.append(LowByte)  # Value for indexed register (Low byte)
+                                self.LogDebug("Write: " + command["reg"] + ": "+ ("%x %x" % (HighByte, LowByte)))
+                                self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data)
                             elif isinstance(command["value"], int):
                                 value = command["value"]
                                 LowByte = value & 0x00FF
                                 HighByte = value >> 8
                                 Data = []
-                                Data.append(
-                                    HighByte
-                                )  # Value for indexed register (High byte)
-                                Data.append(
-                                    LowByte
-                                )  # Value for indexed register (Low byte)
-                                self.LogDebug(
-                                    "Write: "
-                                    + command["reg"]
-                                    + ": "
-                                    + ("%x %x" % (HighByte, LowByte))
-                                )
-                                self.ModBus.ProcessWriteTransaction(
-                                    command["reg"], len(Data) / 2, Data
-                                )
+                                Data.append(HighByte)  # Value for indexed register (High byte)
+                                Data.append(LowByte)  # Value for indexed register (Low byte)
+                                self.LogDebug("Write: "+ command["reg"]+ ": "+ ("%x %x" % (HighByte, LowByte)))
+                                self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data)
                             else:
-                                self.LogDebug(
-                                    "Error in SetGeneratorRemoteCommand: invalid value type"
-                                )
+                                self.LogDebug("Error in SetGeneratorRemoteCommand: invalid value type")
                                 return "Command not found."
 
                     return "Remote command sent successfully"
@@ -1187,113 +1291,109 @@ class CustomController(GeneratorController):
     # ------------ GeneratorController:GetDisplayEntry --------------------------
     # return a title and value of an input dict describing the modbus register
     # and type of value it is
-    def GetDisplayEntry(self, entry, JSONNum=False, no_units=False):
+    def GetDisplayEntry(self, entry, JSONNum=False, no_units=False, inheritreg = None):
 
         ReturnTitle = ReturnValue = None
         try:
+            Register = None
             if not isinstance(entry, dict):
-                self.LogError(
-                    "Error: non dict passed to GetDisplayEntry: " + str(type(entry))
-                )
+                self.LogError("Error: non dict passed to GetDisplayEntry: " + str(type(entry)))
                 return ReturnTitle, ReturnValue
 
-            if "reg" not in entry.keys() and entry["type"] != "list":  # required
-                self.LogError(
-                    "Error: reg not found in input to GetDisplayEntry: " + str(entry)
-                )
+            if "inherit" in entry.keys() and inheritreg == None:
+                self.LogError("Error: inherit specified but no inherit value passed")
                 return ReturnTitle, ReturnValue
-            elif entry["type"] != "list" and not self.StringIsHex(entry["reg"]):
-                self.LogError(
-                    "Error: reg does not contain valid hex value in input to GetDisplayEntry: "
-                    + str(entry)
-                )
+
+            if "reg" not in entry.keys():  # required with exceptions
+                if "inherit" in entry.keys():
+                    Register = inheritreg   # add inherit register 
+                elif entry["type"] != "list":
+                    self.LogError("Error: reg not found in input to GetDisplayEntry: " + str(entry))
+                    return ReturnTitle, ReturnValue
+            else:
+                Register = entry["reg"]
+
+            if Register != None and not self.StringIsHex(Register):
+                self.LogError("Error: reg does not contain valid hex value in input to GetDisplayEntry: "+ str(entry))
                 return ReturnTitle, ReturnValue
+            
             if not "type" in entry:  # required
-                self.LogError(
-                    "Error: type not found in input to GetDisplayEntry: " + str(entry)
-                )
+                self.LogError("Error: type not found in input to GetDisplayEntry: " + str(entry))
                 return ReturnTitle, ReturnValue
+            
             if not "title" in entry:  # required
-                self.LogError(
-                    "Error: title not found in input to GetDisplayEntry: " + str(entry)
-                )
+                self.LogError("Error: title not found in input to GetDisplayEntry: " + str(entry))
                 return ReturnTitle, ReturnValue
+            
             if entry["type"] == "bits" and not "value" in entry:
-                self.LogError(
-                    "Error: value (requried for bits) not found in input to GetDisplayEntry: "
-                    + str(entry)
-                )
+                self.LogError("Error: value (requried for bits) not found in input to GetDisplayEntry: " + str(entry))
                 return ReturnTitle, ReturnValue
             if entry["type"] == "bits" and not "text" in entry:
-                self.LogError(
-                    "Error: text not found in input to GetDisplayEntry: " + str(entry)
-                )
+                self.LogError("Error: text not found in input to GetDisplayEntry: " + str(entry))
                 return ReturnTitle, ReturnValue
             if entry["type"] == "float" and not "multiplier" in entry:
-                self.LogError(
-                    "Error: multiplier (requried for float) not found in input to GetDisplayEntry: "
-                    + str(entry)
-                )
+                self.LogError("Error: multiplier (requried for float) not found in input to GetDisplayEntry: "+ str(entry))
                 return ReturnTitle, ReturnValue
             if entry["type"] == "regex" and not "regex" in entry:
-                self.LogError(
-                    "Error: regex not found in input to GetDisplayEntry: " + str(entry)
-                )
+                self.LogError("Error: regex not found in input to GetDisplayEntry: " + str(entry))
                 return ReturnTitle, ReturnValue
             if "multiplier" in entry and entry["multiplier"] == 0:
-                self.LogError(
-                    "Error: multiplier (requried for float) must not be zero in input to GetDisplayEntry: "
-                    + str(entry)
-                )
+                self.LogError("Error: multiplier (requried for float) must not be zero in input to GetDisplayEntry: " + str(entry))
                 return ReturnTitle, ReturnValue
-            if (
-                entry["type"] in ["int", "bits", "regex"] and not "mask" in entry
-            ):  # required
-                self.LogError(
-                    "Error: mask not found in input to GetDisplayEntry: " + str(entry)
-                )
+            if (entry["type"] in ["int", "bits", "regex"] and not "mask" in entry):  # required
+                self.LogError("Error: mask not found in input to GetDisplayEntry: " + str(entry))
                 return ReturnTitle, ReturnValue
             elif "mask" in entry and not self.StringIsHex(entry["mask"]):
-                self.LogError(
-                    "Error: mask does not contain valid hex value in input to GetDisplayEntry: "
-                    + str(entry)
-                )
+                self.LogError("Error: mask does not contain valid hex value in input to GetDisplayEntry: "+ str(entry))
                 return ReturnTitle, ReturnValue
             if entry["type"] == "default" and not "text" in entry:
-                self.LogError(
-                    "Error: text (default) not found in input to GetDisplayEntry: "
-                    + str(entry)
-                )
+                self.LogError("Error: text (default) not found in input to GetDisplayEntry: "+ str(entry))
                 return ReturnTitle, ReturnValue
 
-            if entry["type"] != "list" and entry["reg"] not in self.Registers:
+            if entry["type"] != "list" and Register not in self.Registers:
                 # have not read the needed register yet
+                self.LogDebug("Not found register: " + Register)
                 return ReturnTitle, ReturnValue
             ReturnTitle = entry["title"]
             if entry["type"] == "bits":
-                value = self.GetParameter(entry["reg"], ReturnInt=True)
+                value = self.GetParameter(Register, ReturnInt=True)
                 value = value & int(entry["mask"], 16)
                 if value == int(entry["value"], 16):
                     ReturnValue = entry["text"]
                 else:
-                    ReturnValue = None
+                    if "default" in entry.keys():
+                        ReturnValue = entry["default"]
+                    else:
+                        ReturnValue = None
                     return ReturnTitle, ReturnValue
             elif entry["type"] == "float":
                 Divider = 1 / float(entry["multiplier"])
                 value = self.ConvertValue(
                     entry,
-                    self.GetParameter(entry["reg"], Divider=Divider, ReturnFloat=True),
+                    self.GetParameter(Register, Divider=Divider, ReturnFloat=True),
                 )
-                ReturnValue = float(value)
+                if "bounds_regex" in entry:
+                    if re.match(entry["bounds_regex"], str(float(value))):
+                        ReturnValue = float(value)
+                else:   
+                    ReturnValue = float(value)
             elif entry["type"] == "int":
-                value = self.GetParameter(entry["reg"], ReturnInt=True)
+                value = self.GetParameter(Register, ReturnInt=True)
                 value = value & int(entry["mask"], 16)
                 if "multiplier" in entry:
                     value = value * float(entry["multiplier"])
-                ReturnValue = int(self.ConvertValue(entry, value))
+                if "shiftright" in entry:
+                    value = value >> int(entry["shiftright"])
+                if "shiftleft" in entry:
+                    value = value << int(entry["shiftleft"])
+                if "bounds_regex" in entry:
+                    if re.match(entry["bounds_regex"], str(value)):
+                        ReturnValue = int(self.ConvertValue(entry, value))
+                else:   
+                    ReturnValue = int(self.ConvertValue(entry, value))
             elif entry["type"] == "regex":
                 regex_pattern = entry["regex"]
-                value = self.GetParameter(entry["reg"], ReturnInt=True)
+                value = self.GetParameter(Register, ReturnInt=True)
                 value = value & int(entry["mask"], 16)
                 value = "%x" % value
                 result = re.match(regex_pattern, value)
@@ -1309,10 +1409,36 @@ class CustomController(GeneratorController):
                     separator = entry["separator"]
                 value_list = []
                 for item in list_entry:
-                    title, value = self.GetDisplayEntry(item)
+                    title, value = self.GetDisplayEntry(item, inheritreg=inheritreg)
                     if value != None:
                         value_list.append(str(self.FormatEntry(item, value)))
-                ReturnValue = separator.join(value_list)
+                    elif ReturnValue == None and Register == "0130":
+                        self.LogDebug("Error on 0130: " + str(item))
+                # all list items must be present
+                if len(value_list) and len(value_list) == len(list_entry):
+                    if "format" in entry:
+                        ReturnValue = entry["format"] % tuple(value_list)
+                    else:
+                        ReturnValue = separator.join(value_list)
+            elif entry["type"] == "object_int_index":
+                value = self.GetParameter(Register, ReturnInt=True)
+                if "mask" in entry:
+                    value = value & int(entry["mask"], 16)
+                if "multiplier" in entry:
+                    value = int(value * float(entry["multiplier"]))
+                if "shiftright" in entry:
+                    value = value >> int(entry["shiftright"])
+                if "shiftleft" in entry:
+                    value = value << int(entry["shiftleft"])
+                if "default" in entry:
+                    obj_default = entry["default"]
+                else:
+                    obj_default = None
+                ReturnValue = entry["object"].get(str(value), obj_default)
+            elif entry["type"] == "ascii":
+                ReturnValue = self.GetParameter(Register, ReturnString = True)
+                if ReturnValue = None and "default" in entry.keys():
+                    ReturnValue = entry["default"]
             elif entry["type"] == "default":
                 ReturnValue = entry["text"]
                 ReturnTitle = "default"

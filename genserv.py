@@ -3700,8 +3700,18 @@ def CacheToolTips():
     global CachedRegisterDescriptions
 
     try:
+
+        foundRegText = False
         config_section = "generac_evo_nexus"
         pathtofile = os.path.dirname(os.path.realpath(__file__))
+        try:
+            data = MyClientInterface.ProcessMonitorCommand("generator: getreglabels_json")
+            regdata = json.loads(data)
+            if len(regdata):
+                CachedRegisterDescriptions = regdata
+                foundRegText = True
+        except Exception as e1:
+            LogErrorLine("Error in CacheToolTips reading reg data")
 
         # get controller used
         if ConfigFiles[GENMON_CONFIG].HasOption("controllertype"):
@@ -3726,9 +3736,10 @@ def CacheToolTips():
 
             except Exception as e1:
                 LogError("Error reading Controller Type for H-100: " + str(e1))
-        CachedRegisterDescriptions = GetAllConfigValues(
-            os.path.join(pathtofile, "data", "tooltips.txt"), config_section
-        )
+        if not foundRegText:
+            CachedRegisterDescriptions = GetAllConfigValues(
+                os.path.join(pathtofile, "data", "tooltips.txt"), config_section
+            )
 
         CachedToolTips = GetAllConfigValues(
             os.path.join(pathtofile, "data", "tooltips.txt"), "ToolTips"
