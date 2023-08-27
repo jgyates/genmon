@@ -58,34 +58,59 @@
         "mask": "ffff",
         "value": "1",
         "type": "regex",
-        "regex": "^([1-3][0-9a-f]|[1-9a-f])$",
+        "comment": "all numbers except 0,6 and 7,",
+        "regex": "^(?!^0$|^6$|^7$)(^\\d+$)$",
         "title": "Alarm Active",
         "text": "System In Alarm"
       }
     ],
     "alarm_conditions": [
-        {
-            "reg": "0002",
-            "mask": "ffff",
-            "value": "0001",
-            "type": "bits",
-            "title": "Alarm",
-            "text": "Low Battery"
+      {
+        "comment": "alarm_conditions are not used unless alarm_active (if present) reports anything",
+        "reg": "0002",
+        "type": "object_int_index",
+        "mask": "ffff",
+        "object": {
+          "0": "Auto",
+          "6": "Manual",
+          "7": "Off",
+          "1": "Low Battery",
+          "2": "High Temperature",
+          "5": "Low Fuel Pressure",
+          "8": "Low Coolant",
+          "10": "Low Oil Pressure",
+          "11": "Overcrank",
+          "12": "Overspeed",
+          "13": "RPM Sense Loss",
+          "15": "Change Oil & Filter",
+          "16": "Inspect Air Filter",
+          "18": "Check for Service",
+          "20": "Check Battery",
+          "21": "Underspeed",
+          "24": "Wiring Error",
+          "26": "Missing Cam Pulse",
+          "28": "Throttle Failure",
+          "29": "Over Voltage",
+          "30": "Under Voltage",
+          "31": "Service A Due",
+          "32": "Service B Due",
+          "34": "Canbus Error",
+          "35": "Ignition Fault",
+          "38": "Overload",
+          "39": "Firmware Error-25",
+          "40": "Fuse Problem",
+          "41": "Battery Problem",
+          "42": "Charger Warning",
+          "43": "Charger Missing AC",
+          "48": "Ruptured Tank",
+          "49": "Low Fuel Level",
+          "50": "Low Fuel Pressure",
+          "52": "Emergency Stop",
+          "56": "Very Low Battery"
         },
-        {
-            "reg": "0002",
-            "mask": "ffff",
-            "value": "0002",
-            "type": "bits",
-            "title": "Alarm",
-            "text": "High Temperature"
-        },
-        {
-            "reg": "0002",
-            "type": "default",
-            "title": "Alarm",
-            "text": "Unknown Alarm"
-        }
+        "default": "Alarm Active",
+        "title": "Switch State"
+      }
     ],
     "generator_status" : [
       {
