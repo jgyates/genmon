@@ -109,7 +109,7 @@
           "56": "Very Low Battery"
         },
         "default": "Alarm Active",
-        "title": "Switch State"
+        "title": "Alarm Conditions"
       }
     ],
     "generator_status" : [
