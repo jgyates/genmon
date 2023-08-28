@@ -19,12 +19,17 @@
         "0010": {"length": 2, "text": "Generator Day / Year"},
         "0011": {"length": 2, "text": "Threshold Voltage"},
         "0012": {"length": 2, "text": "Output Voltage"},
+        "001a": {"length": 2, "text": "Hours Until Service A Due"},
+        "001b": {"length": 2, "text": "Service A Due Date"},
+        "001e": {"length": 2, "text": "Hours Until Service B Due"},
+        "001f": {"length": 2, "text": "Service B Due Date"},
         "005d": {"length": 2, "text": "Tank Fuel Level"},
         "0208": {"length": 2, "text": "Calibrate Volts"},
         "020a": {"length": 2, "text": "Param Code"},
         "020b": {"length": 2, "text": "Voltage Code"},
         "020c": {"length": 2, "text": "Fuel Type"},
         "0054": {"length": 2, "text": "Hours of Protection"},
+        "005e": {"length": 4, "text": "Total Run Hours"},
         "020e": {"length": 2, "text": "Volts per Hertz"},
         "0235": {"length": 2, "text": "Gain"},
         "023a": {"length": 2, "text": "Activation Status"},
@@ -75,7 +80,7 @@
           "6": "Manual",
           "7": "Off",
           "1": "Low Battery",
-          "2": "High Temperature",
+          "2": "High Coolant Temperature",
           "5": "Low Fuel Pressure",
           "8": "Low Coolant",
           "10": "Low Oil Pressure",
@@ -84,18 +89,23 @@
           "13": "RPM Sense Loss",
           "15": "Change Oil & Filter",
           "16": "Inspect Air Filter",
-          "18": "Check for Service",
+          "18": "Very Low Battery",
           "20": "Check Battery",
           "21": "Underspeed",
           "24": "Wiring Error",
+          "23": "Stopping...",
+          "25": "Check Engine",
           "26": "Missing Cam Pulse",
+          "27": "Missing Crank Pulse",
           "28": "Throttle Failure",
           "29": "Over Voltage",
           "30": "Under Voltage",
           "31": "Service A Due",
           "32": "Service B Due",
-          "34": "Canbus Error",
+          "34": "CANbus Error",
           "35": "Ignition Fault",
+          "36": "Overload Remove Load",
+          "37": "Undervoltage Overload",
           "38": "Overload",
           "39": "Firmware Error-25",
           "40": "Fuse Problem",
@@ -103,12 +113,18 @@
           "42": "Charger Warning",
           "43": "Charger Missing AC",
           "48": "Ruptured Tank",
-          "49": "Low Fuel Level",
-          "50": "Low Fuel Pressure",
+          "49": "Very Low Fuel Level",
+          "50": "Low Fuel Level",
+          "51": "SEEProm Abuse",
           "52": "Emergency Stop",
-          "56": "Very Low Battery"
+          "54": "Bad Hall Calibration",
+          "55": "Service C Due",
+          "56": "Very Low Battery",
+          "120": "WIFI 485 Comms Loss",
+          "121": "WIFI to Router Comms Loss",
+          "122": "WIFI Router to Server Comms Loss"
         },
-        "default": "Alarm Active",
+        "default": "Unknown Alarm Active",
         "title": "Alarm Conditions"
       }
     ],
@@ -150,80 +166,120 @@
       }
     ],
     "status" : [
-      {
-          "reg": "0012",
-          "mask": "ffff",
-          "multiplier": 1,
-          "type": "int",
-          "title": "Output Voltage",
-          "units": "V"
-      },
-      {
-          "reg": "0008",
-          "mask": "ffff",
-          "multiplier": 1,
-          "type": "int",
-          "title": "Frequency",
-          "units": "Hz"
-      },
-      {
-          "reg": "000a",
-          "mask": "ffff",
-          "multiplier": 0.1,
-          "type": "float",
-          "title": "Battery Voltage",
-          "units": "V"
-      },
-      {
-          "reg": "0009",
-          "mask": "ffff",
-          "multiplier": 1,
-          "type": "int",
-          "title": "Utility Voltage",
-          "units": "V"
-      },
-      {
-          "type" : "list",
-          "separator" : ":",
-          "title" : "Generator Time",
-          "value" : [
-            {
-              "reg": "000e",
+      {"title": "Engine",
+        "comment": "The 'container' modifier will allow the values to be displayed with some hierarchy", 
+        "container": true,
+        "value" : [
+          {
+              "reg": "0012",
+              "mask": "ffff",
+              "multiplier": 1,
               "type": "int",
-              "mask" : "ff00",
-              "multiplier" : 0.00390625,
-              "comment" : "NOTE: 0.00390625 = 1/256 or dividing by 0x100 hex or shifting right by 8 bits",
-              "title": "Hours"
-            },
-            {
-              "reg": "000e",
+              "title": "Output Voltage",
+              "units": "V"
+          },
+          {
+              "reg": "0008",
+              "mask": "ffff",
+              "multiplier": 1,
               "type": "int",
-              "mask" : "00ff",
-              "format": "%02d",
-              "title": "Minutes"
-            }
-          ]
+              "title": "Frequency",
+              "units": "Hz"
+          },
+          {
+              "reg": "000a",
+              "mask": "ffff",
+              "multiplier": 0.1,
+              "type": "float",
+              "title": "Battery Voltage",
+              "units": "V"
+          },
+          {
+            "reg": "0007",
+            "mask": "ffff",
+            "multiplier": 1,
+            "type": "int",
+            "title": "RPM",
+            "units": null
+          }
+        ]
       },
-      {
-        "type" : "list",
-          "separator" : "/",
-          "title" : "Generator Date",
-          "value" : [
-            {
-              "reg": "000f",
+      {"title": "Line",
+        "container": true,
+        "value" : [
+          {
+              "reg": "0009",
+              "mask": "ffff",
+              "multiplier": 1,
               "type": "int",
-              "mask" : "ff00",
-              "multiplier" : 0.00390625,
-              "comment" : "NOTE: 0.00390625 = 1/256 or dividing by 0x100 hex or shifting right by 8 bits",
-              "title": "Month"
-            },
-            {
-              "reg": "000f",
+              "title": "Utility Voltage",
+              "units": "V"
+          },
+          {
+            "reg": "0011",
+              "mask": "ffff",
+              "multiplier": 1,
               "type": "int",
-              "mask" : "00ff",
-              "title": "Day"
-            }
-          ]
+              "title": "Utility Threshold Voltage",
+              "units": "V"
+          },
+          {
+            "reg": "023b",
+              "mask": "ffff",
+              "multiplier": 1,
+              "type": "int",
+              "title": "Utility Pickup Voltage",
+              "units": "V"
+          }
+        ]
+      },
+      {"title": "Misc",
+        "container": true,
+        "value" : [
+          {
+            "type" : "list",
+              "separator" : "/",
+              "title" : "Generator Date",
+              "value" : [
+                {
+                  "reg": "000f",
+                  "type": "int",
+                  "mask" : "ff00",
+                  "multiplier" : 0.00390625,
+                  "comment" : "NOTE: 0.00390625 = 1/256 or dividing by 0x100 hex or shifting right by 8 bits",
+                  "title": "Month"
+                },
+                {
+                  "reg": "000f",
+                  "type": "int",
+                  "mask" : "00ff",
+                  "title": "Day"
+                }
+              ]
+          },
+          {
+            "type" : "list",
+            "separator" : ":",
+            "title" : "Generator Time",
+            "value" : [
+              {
+                "reg": "000e",
+                "type": "int",
+                "mask" : "ff00",
+                "multiplier" : 0.00390625,
+                "comment" : "NOTE: 0.00390625 = 1/256 or dividing by 0x100 hex or shifting right by 8 bits",
+                "title": "Hours"
+              },
+              {
+                "reg": "000e",
+                "type": "int",
+                "mask" : "00ff",
+                "format": "%02d",
+                "title": "Minutes"
+              }
+            ]
+          }
+        ]
       }
     ],
     "maintenance": [
@@ -241,77 +297,121 @@
         "text": "Activated",
         "default": "Not Activated"
       },
-      {
-        "reg": "000b",
-        "mask": "ffffffff",
-        "multiplier": 1,
-        "type": "int",
-        "title": "Run Hours",
-        "units": "h"
+      {"title": "Controller Settings",
+        "container": true,
+        "value" : [
+          {
+              "reg": "0208",
+              "mask": "ffff",
+              "multiplier": 1,
+              "type": "int",
+              "title": "Calibrate Volts",
+              "units": null
+          },
+          {
+              "reg": "020a",
+              "mask": "ffff",
+              "multiplier": 1,
+              "type": "int",
+              "title": "Param Code",
+              "units": null
+          },
+          {
+              "reg": "020b",
+              "mask": "ffff",
+              "multiplier": 1,
+              "type": "int",
+              "title": "Voltage Code",
+              "units": null
+          },
+          {
+              "reg": "0054",
+              "mask": "ffff",
+              "multiplier": 1,
+              "type": "int",
+              "title": "Hours of Protection",
+              "units": "h"
+          },
+          {
+              "reg": "020e",
+              "mask": "ffff",
+              "multiplier": 1,
+              "type": "int",
+              "title": "Volts Per Hertz",
+              "units": null
+          },
+          {
+              "reg": "0235",
+              "mask": "ffff",
+              "multiplier": 1,
+              "type": "int",
+              "title": "Gain",
+              "units": null
+          },
+          {
+              "reg": "005a",
+              "mask": "ffff",
+              "multiplier": 1,
+              "type": "int",
+              "title": "Target Frequency",
+              "units": "Hz"
+          },
+          {
+              "reg": "0059",
+              "mask": "ffff",
+              "multiplier": 1,
+              "type": "int",
+              "title": "Target Volts",
+              "units": "V"
+          }
+        ]
       },
-      {
-          "reg": "0208",
-          "mask": "ffff",
-          "multiplier": 1,
-          "type": "int",
-          "title": "Calibrate Volts",
-          "units": null
-      },
-      {
-          "reg": "020a",
-          "mask": "ffff",
-          "multiplier": 1,
-          "type": "int",
-          "title": "Param Code",
-          "units": null
-      },
-      {
-          "reg": "020b",
-          "mask": "ffff",
-          "multiplier": 1,
-          "type": "int",
-          "title": "Voltage Code",
-          "units": null
-      },
-      {
-          "reg": "0054",
-          "mask": "ffff",
-          "multiplier": 1,
-          "type": "int",
-          "title": "Hours of Protection",
-          "units": "h"
-      },
-      {
-          "reg": "020e",
-          "mask": "ffff",
-          "multiplier": 1,
-          "type": "int",
-          "title": "Volts Per Hertz",
-          "units": null
-      },
-      {
-          "reg": "0235",
-          "mask": "ffff",
-          "multiplier": 1,
-          "type": "int",
-          "title": "Gain",
-          "units": null
-      },
-      {
-          "reg": "005a",
-          "mask": "ffff",
-          "multiplier": 1,
-          "type": "int",
-          "title": "Target Frequency",
-          "units": "Hz"
-      },
-      {
-          "reg": "0059",
-          "mask": "ffff",
-          "multiplier": 1,
-          "type": "int",
-          "title": "Target Volts",
-          "units": "V"
+      {"title": "Service",
+        "container": true,
+        "value" : [
+          {
+            "reg": "005e",
+            "comment": "divide by 60, 1/60 = 0.166667",
+            "multiplier": 0.166667,
+            "type": "float",
+            "title": "Run Hours",
+            "units": "h"
+          },
+          {
+            "reg": "001a",
+            "mask": "ffff",
+            "comment": "",
+            "title": "Hours Until Service A Due",
+            "type":"int",
+            "units": "hrs"
+          },
+          {
+            "reg": "001b",
+            "mask": "ffff",
+            "comment": "register value is number of days since Jan 1,1970. exec must output to the variable 'exec_out'",
+            "title": "Service A Due Date",
+            "type":"int",
+            "exec": "exec_out = datetime.datetime.fromtimestamp((({} + 1) * 86400)).strftime('%m/%d/%Y ')",
+            "default": "Unknown Service Date"
+          },
+          {
+            "reg": "001e",
+            "mask": "ffff",
+            "comment": "",
+            "title": "Hours Until Service B Due",
+            "type":"int",
+            "units": "hrs"
+          },
+          {
+            "reg": "001f",
+            "mask": "ffff",
+            "comment": "register value is number of days since Jan 1,1970. exec must output to the variable 'exec_out'",
+            "title": "Service B Due Date",
+            "type":"int",
+            "exec": "exec_out = datetime.datetime.fromtimestamp((({} + 1) * 86400)).strftime('%m/%d/%Y ')",
+            "default": "Unknown Service Date"
+          }
+        ]
       }
     ],
     "logs":[
@@ -793,10 +893,10 @@
         "sensor": "linevolts"
       },
     "run_hours": {
-          "reg": "000b",
-          "mask": "ffffffff",
-          "multiplier": 1,
-          "type": "int",
+          "reg": "005e",
+          "comment": "divide by 60, 1/60 = 0.166667",
+          "multiplier": 0.166667,
+          "type": "float",
           "title": "Run Hours",
           "units": "h"
       },

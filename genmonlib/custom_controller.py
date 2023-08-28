@@ -978,11 +978,11 @@ class CustomController(GeneratorController):
             Maintenance["Maintenance"].append({"Nominal Frequency": self.NominalFreq})
             Maintenance["Maintenance"].append({"Fuel Type": self.FuelType})
 
+            Maintenance = self.DisplayMaintenanceCommon(Maintenance, JSONNum=JSONNum)
+
             Maintenance["Maintenance"].extend(
                 self.GetDisplayList(self.controllerimport, "maintenance")
             )
-
-            Maintenance = self.DisplayMaintenanceCommon(Maintenance, JSONNum=JSONNum)
 
         except Exception as e1:
             self.LogErrorLine("Error in DisplayMaintenance: " + str(e1))
@@ -1140,18 +1140,14 @@ class CustomController(GeneratorController):
             default = None
             ParseList = inputdict.get(key_name, None)
             if not isinstance(ParseList, list) or ParseList == None:
-                self.LogDebug(
-                    "Error in GetDisplayList: invalid input or data: " + str(key_name)
-                )
+                self.LogDebug("Error in GetDisplayList: invalid input or data: " + str(key_name))
                 return ReturnValue
 
             for Entry in ParseList:
                 if not isinstance(Entry, dict):
-                    self.LogError(
-                        "Error in GetDisplayList: invalid list entry: " + str(Entry)
-                    )
+                    self.LogError( "Error in GetDisplayList: invalid list entry: " + str(Entry))
                     return ReturnValue
-
+                
                 title, value = self.GetDisplayEntry(Entry, JSONNum, no_units=no_units)
 
                 if title == "default":
@@ -1164,9 +1160,7 @@ class CustomController(GeneratorController):
             if not len(ReturnValue) and not default == None:
                 ReturnValue.append({"default": default})
         except Exception as e1:
-            self.LogErrorLine(
-                "Error in GetDisplayList: (" + key_name + ") : " + str(e1)
-            )
+            self.LogErrorLine("Error in GetDisplayList: (" + key_name + ") : " + str(e1))
             return ReturnValue
         return ReturnValue
 
@@ -1300,6 +1294,9 @@ class CustomController(GeneratorController):
                 self.LogError("Error: non dict passed to GetDisplayEntry: " + str(type(entry)))
                 return ReturnTitle, ReturnValue
 
+            if "container" in entry.keys() and entry["container"] and "value" in entry.keys() and "title" in entry.keys():
+                ReturnValue = self.GetDisplayList(entry, "value")
+                return entry["title"], ReturnValue
             if "inherit" in entry.keys() and inheritreg == None:
                 self.LogError("Error: inherit specified but no inherit value passed")
                 return ReturnTitle, ReturnValue
@@ -1360,7 +1357,7 @@ class CustomController(GeneratorController):
 
             if entry["type"] == "bits":
                 value = self.GetParameter(Register, ReturnInt=True)
-                value = value & int(entry["mask"], 16)
+                value = self.ProcessMaskModifier(entry, value)
                 if value == int(entry["value"], 16):
                     ReturnValue = entry["text"]
 
@@ -1369,30 +1366,29 @@ class CustomController(GeneratorController):
                 value = self.ConvertValue( entry, self.GetParameter(Register, Divider=Divider, ReturnFloat=True))
                 if "bounds_regex" in entry:
                     if re.match(entry["bounds_regex"], str(float(value))):
-                        ReturnValue = float(value)
+                        ReturnValue = self.ProcessExecModifier(entry, float(value))
                 else:   
-                    ReturnValue = float(value)
+                    ReturnValue = self.ProcessExecModifier(entry, float(value))
             elif entry["type"] == "int":
                 value = self.GetParameter(Register, ReturnInt=True)
-                value = value & int(entry["mask"], 16)
+                value = self.ProcessMaskModifier(entry, value)
                 if "multiplier" in entry:
-                    value = value * float(entry["multiplier"])
+                    value = int(value * float(entry["multiplier"]))
                 if "shiftright" in entry:
                     value = value >> int(entry["shiftright"])
                 if "shiftleft" in entry:
                     value = value << int(entry["shiftleft"])
                 if "bounds_regex" in entry:
                     if re.match(entry["bounds_regex"], str(value)):
-                        ReturnValue = int(self.ConvertValue(entry, value))
+                        ReturnValue = self.ProcessExecModifier(entry, int(self.ConvertValue(entry, value)))
                 else:   
-                    ReturnValue = int(self.ConvertValue(entry, value))
+                    ReturnValue = self.ProcessExecModifier(entry, int(self.ConvertValue(entry, value)))
             elif entry["type"] == "regex":
                 regex_pattern = entry["regex"]
                 value = self.GetParameter(Register, ReturnInt=True)
-                value = value & int(entry["mask"], 16)
+                value = self.ProcessMaskModifier(entry, value)
                 value = "%x" % value
                 result = re.match(regex_pattern, value)
-
                 if result:
                     ReturnValue = entry["text"]
 
@@ -1416,8 +1412,7 @@ class CustomController(GeneratorController):
                         ReturnValue = separator.join(value_list)
             elif entry["type"] == "object_int_index":
                 value = self.GetParameter(Register, ReturnInt=True)
-                if "mask" in entry:
-                    value = value & int(entry["mask"], 16)
+                value = self.ProcessMaskModifier(entry, value)
                 if "multiplier" in entry:
                     value = int(value * float(entry["multiplier"]))
                 if "shiftright" in entry:
@@ -1447,7 +1442,41 @@ class CustomController(GeneratorController):
             self.LogErrorLine("Error in GetDisplayEntry : " + str(e1))
 
         return ReturnTitle, ReturnValue
+    # ------------ GeneratorController:ProcessMaskModifier ----------------------
+    def ProcessMaskModifier(self, entry, value):
+        try:
+            if "default" in entry.keys():
+                ReturnValue = entry["default"]
+            else:
+                ReturnValue = value
+            if not "mask" in entry.keys():
+                return value
+            value = value & int(entry["mask"], 16)
+            return value
+        except Exception as e1:
+            self.LogErrorLine("Error in ProcessExecModifier: " + str(e1) + ": " + str(entry["title"]))
+            return ReturnValue
+    # ------------ GeneratorController:ProcessExecModifier ----------------------
+    def ProcessExecModifier(self, entry, value):
+        try:
+            if "default" in entry.keys():
+                ReturnValue = entry["default"]
+            else:
+                ReturnValue = value
 
+            if not "exec" in entry.keys():
+                return value
+            
+            exec_string = entry["exec"].format(value)
+            exec_out = value
+            localsparam = {'exec_out': exec_out}
+            exec(exec_string, globals(), localsparam)
+            return localsparam["exec_out"]
+
+        except Exception as e1:
+            self.LogErrorLine("Error in ProcessExecModifier: " + str(e1) + ": " + str(entry["title"]))
+            return ReturnValue
+    
     # ------------ GeneratorController:ConvertValue -----------------------------
     def ConvertValue(self, entry, value):
         try:

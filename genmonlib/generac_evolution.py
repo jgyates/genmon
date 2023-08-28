@@ -3295,7 +3295,7 @@ class Evolution(GeneratorController):
             0x1E: "Under Voltage",  #  Validate on EvoAC
             0x1F: "Service A Due",  #  Validate on Evolution, occurred when forced service due
             0x20: "Service B Due",  #  WARNING, Validate on Evolution, occurred when service reset
-            0x22: "Canbus Error",  #  Validate on Nexus LC
+            0x22: "CANbus Error",  #  Validate on Nexus LC
             0x23: "Ignition Fault",  #  Validate on Evo LC
             0x24: "Overload",  #  Validate on Evolution Air Cooled
             0x27: "Firmware Error-25",  #  Validate on Synergy
