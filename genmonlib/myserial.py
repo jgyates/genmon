@@ -177,12 +177,7 @@ class SerialDevice(MySupport):
                         return
 
             except Exception as e1:
-                self.LogErrorLine(
-                    "Resetting SerialDevice:ReadThread Error: "
-                    + self.DeviceName
-                    + ":"
-                    + str(e1)
-                )
+                self.LogErrorLine("Resetting SerialDevice:ReadThread Error: " + self.DeviceName+ ":"+ str(e1))
                 # if we get here then this is likely due to the following exception:
                 #  "device reports readiness to read but returned no data (device disconnected?)"
                 #  This is believed to be a kernel issue so let's just reset the device and hope
@@ -193,8 +188,14 @@ class SerialDevice(MySupport):
     def RestartSerial(self):
         try:
             self.Restarts += 1
-            self.SerialDevice.close()
-            self.SerialDevice.open()
+            try:
+                self.SerialDevice.close()
+            except Exception as e1:
+                self.LogErrorLine("Error closing in RestartSerial:" + str(e1))
+            try:
+                self.SerialDevice.open()
+            except Exception as e1:
+                self.LogErrorLine("Error opening in RestartSerial:" + str(e1))
         except Exception as e1:
             self.LogErrorLine("Error in RestartSerial: " + str(e1))
 
@@ -226,16 +227,13 @@ class SerialDevice(MySupport):
                 del self.Buffer[:]
 
         except Exception as e1:
-            self.LogErrorLine(
-                "Error in SerialDevice:Flush : " + self.DeviceName + ":" + str(e1)
-            )
+            self.LogErrorLine("Error in SerialDevice:Flush : " + self.DeviceName + ":" + str(e1))
             self.RestartSerial()
 
     # ---------- SerialDevice::Read---------------------------------------------
     def Read(self):
-        return (
-            self.SerialDevice.read()
-        )  # self.SerialDevice.inWaiting returns number of bytes ready
+        # self.SerialDevice.inWaiting returns number of bytes ready
+        return (self.SerialDevice.read())  
 
     # ---------- SerialDevice::Write--------------------------------------------
     def Write(self, data):
@@ -243,9 +241,7 @@ class SerialDevice(MySupport):
         try:
             return self.SerialDevice.write(data)
         except Exception as e1:
-            self.LogErrorLine(
-                "Error in SerialDevice:Write : " + self.DeviceName + ":" + str(e1)
-            )
+            self.LogErrorLine("Error in SerialDevice:Write : " + self.DeviceName + ":" + str(e1))
             self.RestartSerial()
             return False
 
