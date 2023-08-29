@@ -2180,9 +2180,7 @@ class HPanel(GeneratorController):
             StartInfo["RemoteCommands"] = True  # Remote Start/ Stop/ StartTransfer
             StartInfo["AckAlarms"] = True
             StartInfo["ResetAlarms"] = False
-            StartInfo[
-                "RemoteTransfer"
-            ] = self.HTSTransferSwitch  # Remote start and transfer command
+            StartInfo["RemoteTransfer"] = self.HTSTransferSwitch  # Remote start and transfer command
             StartInfo["RemoteButtons"] = False  # Remote controll of Off/Auto/Manual
             StartInfo["ExerciseControls"] = False  # self.SmartSwitch
             StartInfo["WriteQuietMode"] = False
