@@ -14,6 +14,8 @@ All notable changes to this project will be documented in this file.
 - modified gengpio.py add on to optionally support GPIO signaling for out of range CPU temperature 
 - Update for Power Zone 410. 
 - Update for custom controller functionality (logs, identity, register labels)
+- Minor update to myserial.py to improve error handling and recovery
+- Added functionality for custom defined controllers via JSON
 
 ## V1.18.17 -2023-04-06
 - Added feature request to allow external temperature sensors to be displayed as gauges
