@@ -445,6 +445,10 @@ function json2html(json, indent, parentkey) {
                   outstr += indent + "&nbsp;&nbsp;&nbsp;&nbsp;" +  getItem(json[key][i], key);
                 }
               }
+              // Added for better formmating 
+              if (json[key].length > 1){
+                outstr+= "<br>"
+              }
             }
         } else if (typeof json[key] === 'object') {
            outstr += "<br>" + indent + key + ' :<br>' + json2html(json[key], indent + "&nbsp;&nbsp;&nbsp;&nbsp;", key);

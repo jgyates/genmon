@@ -32,6 +32,7 @@
     "0606": {"length": 2, "text": "Engine Oil Pressure"},
     "0607": {"length": 2, "text": "Engine Oil Temp"},
     "060a": {"length": 2, "text": "Engine Coolant Temp"},
+    "0610": {"length": 2, "text": "Fuel Type"},
     "0611": {"length": 2, "text": "Engine Status"},
     "0637": {"length": 2, "text": "Alarm Active"},
     "0638": {"length": 2, "text": "Warning Active"},
@@ -110,6 +111,16 @@
       "type": "bits",
       "title": "Alarm",
       "text": "E-Stop Shutdown Alarm"
+    },
+    {
+      "reg": "0002",
+      "mask": "ffff",
+      "value": "1",
+      "type": "regex",
+      "comment": "all numbers except 0,6 and 7,",
+      "regex": "^(?!^0$|^6$|^7$)(^\\d+$)$",
+      "title": "Alarm Active",
+      "text": "System In Alarm"
     }
   ],
   "alarm_conditions": [
@@ -211,140 +222,176 @@
     }
   ],
   "status": [
-    {
-      "reg": "000a",
-      "mask": "ffff",
-      "multiplier": 0.1,
-      "type": "float",
-      "title": "Battery Voltage",
-      "units": "V"
+    {"title": "Engine",
+        "comment": "The 'container' modifier will allow the values to be displayed with some hierarchy", 
+        "container": true,
+        "value" : [
+        {
+          "reg": "000a",
+          "mask": "ffff",
+          "multiplier": 0.1,
+          "type": "float",
+          "title": "Battery Voltage",
+          "units": "V"
+        },
+        {
+          "reg": "0007",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Engine Speed",
+          "units": "RPM"
+        },
+        {
+          "reg": "0008",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Frequency",
+          "units": "Hz"
+        },
+        {
+          "reg": "0012",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Output Voltage",
+          "units": "V"
+        },
+        {
+          "reg": "05ea",
+          "mask": "ffff",
+          "multiplier": 0.1,
+          "type": "float",
+          "title": "Output Current",
+          "units": "A"
+        },
+        {
+          "reg": "05eb",
+          "mask": "ffff",
+          "multiplier": 0.1,
+          "type": "float",
+          "title": "Output Power",
+          "units": "kW"
+        },
+        {
+          "reg": "1f72",
+          "mask": "ffff",
+          "multiplier": 0.1,
+          "type": "float",
+          "title": "Output Voltage Phase A LN",
+          "units": "V RMS"
+        },
+        {
+          "reg": "1f73",
+          "mask": "ffff",
+          "multiplier": 0.1,
+          "type": "float",
+          "title": "Output Voltage Phase B LN",
+          "units": "V RMS"
+        },
+        {
+          "reg": "1f74",
+          "mask": "ffff",
+          "multiplier": 0.1,
+          "type": "float",
+          "title": "Output Voltage Phase C LN",
+          "units": "V RMS"
+        },
+        {
+          "reg": "1f75",
+          "mask": "ffff",
+          "multiplier": 0.01,
+          "type": "float",
+          "title": "Output Current Phase A",
+          "units": "A"
+        },
+        {
+          "reg": "1f76",
+          "mask": "ffff",
+          "multiplier": 0.01,
+          "type": "float",
+          "title": "Output Current Phase B",
+          "units": "A"
+        },
+        {
+          "reg": "1f77",
+          "mask": "ffff",
+          "multiplier": 0.01,
+          "type": "float",
+          "title": "Output Current Phase C",
+          "units": "A"
+        },
+        {
+          "reg": "1f7b",
+          "mask": "ffff",
+          "multiplier": 0.01,
+          "type": "float",
+          "title": "Output Power Factor"
+        },
+        {
+          "reg": "0606",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Engine Oil Pressure",
+          "units": "kPa"
+        },
+        {
+          "reg": "0607",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Engine Oil Temperature",
+          "units": "F"
+        },
+        {
+          "reg": "060a",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Engine Coolant Temperature",
+          "units": "F"
+        }    
+      ]
     },
-    {
-      "reg": "0007",
-      "mask": "ffff",
-      "multiplier": 1,
-      "type": "int",
-      "title": "Engine Speed",
-      "units": "RPM"
-    },
-    {
-      "reg": "0008",
-      "mask": "ffff",
-      "multiplier": 1,
-      "type": "int",
-      "title": "Frequency",
-      "units": "Hz"
-    },
-    {
-      "reg": "0012",
-      "mask": "ffff",
-      "multiplier": 1,
-      "type": "int",
-      "title": "Output Voltage",
-      "units": "V"
-    },
-    {
-      "reg": "05ea",
-      "mask": "ffff",
-      "multiplier": 0.1,
-      "type": "float",
-      "title": "Output Current",
-      "units": "A"
-    },
-    {
-      "reg": "05eb",
-      "mask": "ffff",
-      "multiplier": 0.1,
-      "type": "float",
-      "title": "Output Power",
-      "units": "kW"
-    },
-    {
-      "reg": "1f72",
-      "mask": "ffff",
-      "multiplier": 0.1,
-      "type": "float",
-      "title": "Output Voltage Phase A LN",
-      "units": "V RMS"
-    },
-    {
-      "reg": "1f73",
-      "mask": "ffff",
-      "multiplier": 0.1,
-      "type": "float",
-      "title": "Output Voltage Phase B LN",
-      "units": "V RMS"
-    },
-    {
-      "reg": "1f74",
-      "mask": "ffff",
-      "multiplier": 0.1,
-      "type": "float",
-      "title": "Output Voltage Phase C LN",
-      "units": "V RMS"
-    },
-    {
-      "reg": "1f75",
-      "mask": "ffff",
-      "multiplier": 0.01,
-      "type": "float",
-      "title": "Output Current Phase A",
-      "units": "A"
-    },
-    {
-      "reg": "1f76",
-      "mask": "ffff",
-      "multiplier": 0.01,
-      "type": "float",
-      "title": "Output Current Phase B",
-      "units": "A"
-    },
-    {
-      "reg": "1f77",
-      "mask": "ffff",
-      "multiplier": 0.01,
-      "type": "float",
-      "title": "Output Current Phase C",
-      "units": "A"
-    },
-    {
-      "reg": "1f7b",
-      "mask": "ffff",
-      "multiplier": 0.01,
-      "type": "float",
-      "title": "Output Power Factor"
-    },
-    {
-      "reg": "0009",
-      "mask": "ffff",
-      "multiplier": 1,
-      "type": "int",
-      "title": "Utility Voltage",
-      "units": "V"
-    },
-    {
-      "reg": "1fa4",
-      "mask": "ffff",
-      "multiplier": 0.1,
-      "type": "float",
-      "title": "Utility Voltage Phase A",
-      "units": "V RMS"
-    },
-    {
-      "reg": "1fa5",
-      "mask": "ffff",
-      "multiplier": 0.1,
-      "type": "float",
-      "title": "Utility Voltage Phase B",
-      "units": "V RMS"
-    },
-    {
-      "reg": "1fa6",
-      "mask": "ffff",
-      "multiplier": 0.1,
-      "type": "float",
-      "title": "Utility Voltage Phase C",
-      "units": "V RMS"
+    {"title": "Line",
+        "comment": "The 'container' modifier will allow the values to be displayed with some hierarchy", 
+        "container": true,
+        "value" : [
+        {
+          "reg": "0009",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Utility Voltage",
+          "units": "V"
+        },
+        {
+          "reg": "1fa4",
+          "mask": "ffff",
+          "multiplier": 0.1,
+          "type": "float",
+          "title": "Utility Voltage Phase A",
+          "units": "V RMS"
+        },
+        {
+          "reg": "1fa5",
+          "mask": "ffff",
+          "multiplier": 0.1,
+          "type": "float",
+          "title": "Utility Voltage Phase B",
+          "units": "V RMS"
+        },
+        {
+          "reg": "1fa6",
+          "mask": "ffff",
+          "multiplier": 0.1,
+          "type": "float",
+          "title": "Utility Voltage Phase C",
+          "units": "V RMS"
+        }
+      ]
     }
   ],
   "maintenance": [
@@ -363,12 +410,16 @@
       "default": "Not Activated"
     },
     {
-      "reg": "000b",
+      "reg": "0610",
       "mask": "ffff",
-      "multiplier": 1,
-      "type": "int",
-      "title": "Run Hours",
-      "units": "h"
+      "type": "object_int_index",
+      "object":{
+        "0": "Liquid Propane Vaporous",
+        "1": "Natural Gas",
+        "2": "Diesel"
+      },
+      "default": "Unknown Fuel Type",
+      "title": "Fuel Type"
     },
     {
       "reg": "005d",
@@ -378,45 +429,39 @@
       "title": "Fuel Level",
       "units": "%"
     },
-    {
-      "reg": "0606",
-      "mask": "ffff",
-      "multiplier": 1,
-      "type": "int",
-      "title": "Engine Oil Pressure",
-      "units": "kPa"
+    {"title": "Controller Settings",
+        "container": true,
+        "value" : [
+        {
+          "reg": "005a",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Target Frequency",
+          "units": "Hz"
+        },
+        {
+          "reg": "0059",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Target Volts",
+          "units": "V"
+        }
+      ]
     },
-    {
-      "reg": "0607",
-      "mask": "ffff",
-      "multiplier": 1,
-      "type": "int",
-      "title": "Engine Oil Temperature",
-      "units": "F"
-    },
-    {
-      "reg": "060a",
-      "mask": "ffff",
-      "multiplier": 1,
-      "type": "int",
-      "title": "Engine Coolant Temperature",
-      "units": "F"
-    },
-    {
-      "reg": "005a",
-      "mask": "ffff",
-      "multiplier": 1,
-      "type": "int",
-      "title": "Target Frequency",
-      "units": "Hz"
-    },
-    {
-      "reg": "0059",
-      "mask": "ffff",
-      "multiplier": 1,
-      "type": "int",
-      "title": "Target Volts",
-      "units": "V"
+    {"title": "Service",
+        "container": true,
+        "value" : [
+        {
+          "reg": "000b",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Run Hours",
+          "units": "h"
+        }
+      ]
     }
   ],
   "logs":[

@@ -1362,8 +1362,10 @@ class CustomController(GeneratorController):
                     ReturnValue = entry["text"]
 
             elif entry["type"] == "float":
-                Divider = 1 / float(entry["multiplier"])
-                value = self.ConvertValue( entry, self.GetParameter(Register, Divider=Divider, ReturnFloat=True))
+                value = self.GetParameter(Register, ReturnInt=True)
+                value = self.ProcessMaskModifier(entry, value)
+                value = self.ProcessBitModifiers(entry, value, ReturnFloat=True)
+                value = self.ProcessTemperatureModifier( entry, value)
                 if "bounds_regex" in entry:
                     if re.match(entry["bounds_regex"], str(float(value))):
                         ReturnValue = self.ProcessExecModifier(entry, float(value))
@@ -1372,21 +1374,17 @@ class CustomController(GeneratorController):
             elif entry["type"] == "int":
                 value = self.GetParameter(Register, ReturnInt=True)
                 value = self.ProcessMaskModifier(entry, value)
-                if "multiplier" in entry:
-                    value = int(value * float(entry["multiplier"]))
-                if "shiftright" in entry:
-                    value = value >> int(entry["shiftright"])
-                if "shiftleft" in entry:
-                    value = value << int(entry["shiftleft"])
+                value = self.ProcessBitModifiers(entry, value)
                 if "bounds_regex" in entry:
                     if re.match(entry["bounds_regex"], str(value)):
-                        ReturnValue = self.ProcessExecModifier(entry, int(self.ConvertValue(entry, value)))
+                        ReturnValue = self.ProcessExecModifier(entry, int(self.ProcessTemperatureModifier(entry, value)))
                 else:   
-                    ReturnValue = self.ProcessExecModifier(entry, int(self.ConvertValue(entry, value)))
+                    ReturnValue = self.ProcessExecModifier(entry, int(self.ProcessTemperatureModifier(entry, value)))
             elif entry["type"] == "regex":
                 regex_pattern = entry["regex"]
                 value = self.GetParameter(Register, ReturnInt=True)
                 value = self.ProcessMaskModifier(entry, value)
+                value = self.ProcessBitModifiers(entry, value)
                 value = "%x" % value
                 result = re.match(regex_pattern, value)
                 if result:
@@ -1402,23 +1400,19 @@ class CustomController(GeneratorController):
                     title, value = self.GetDisplayEntry(item, inheritreg=inheritreg)
                     if value != None:
                         value_list.append(str(self.FormatEntry(item, value)))
-                    elif ReturnValue == None and Register == "0130":
-                        self.LogDebug("Error on 0130: " + str(item))
-                # all list items must be present
-                if len(value_list) and len(value_list) == len(list_entry):
-                    if "format" in entry:
+                # all list items must be present if format is used
+                if "format" in entry:
+                    if len(value_list) and len(value_list) == len(list_entry):
                         ReturnValue = entry["format"] % tuple(value_list)
+                else:
+                    if separator == None:
+                        ReturnValue = self.ProcessExecModifier(entry, tuple(value_list ))
                     else:
                         ReturnValue = separator.join(value_list)
             elif entry["type"] == "object_int_index":
                 value = self.GetParameter(Register, ReturnInt=True)
                 value = self.ProcessMaskModifier(entry, value)
-                if "multiplier" in entry:
-                    value = int(value * float(entry["multiplier"]))
-                if "shiftright" in entry:
-                    value = value >> int(entry["shiftright"])
-                if "shiftleft" in entry:
-                    value = value << int(entry["shiftleft"])
+                value = self.ProcessBitModifiers(entry, value)
                 if "default" in entry:
                     obj_default = entry["default"]
                 else:
@@ -1442,6 +1436,22 @@ class CustomController(GeneratorController):
             self.LogErrorLine("Error in GetDisplayEntry : " + str(e1))
 
         return ReturnTitle, ReturnValue
+    # ------------ GeneratorController:ProcessBitModifiers ----------------------
+    def ProcessBitModifiers(self, entry, value, ReturnFloat = False):
+        try:
+            if "shiftright" in entry:
+                value = value >> int(entry["shiftright"])
+            if "shiftleft" in entry:
+                value = value << int(entry["shiftleft"])
+            if "multiplier" in entry:
+                if ReturnFloat:
+                    value = float(value * float(entry["multiplier"]))
+                else:
+                    value = int(value * float(entry["multiplier"]))
+            return value
+        except Exception as e1:
+            self.LogErrorLine("Error in ProcessBitModifiers: " + str(e1) + ": " + str(entry["title"]))
+            return value
     # ------------ GeneratorController:ProcessMaskModifier ----------------------
     def ProcessMaskModifier(self, entry, value):
         try:
@@ -1459,6 +1469,7 @@ class CustomController(GeneratorController):
     # ------------ GeneratorController:ProcessExecModifier ----------------------
     def ProcessExecModifier(self, entry, value):
         try:
+            exec_string = ""
             if "default" in entry.keys():
                 ReturnValue = entry["default"]
             else:
@@ -1467,7 +1478,10 @@ class CustomController(GeneratorController):
             if not "exec" in entry.keys():
                 return value
             
-            exec_string = entry["exec"].format(value)
+            if isinstance(value, tuple):
+                exec_string = entry["exec"].format(*value)
+            else:
+                exec_string = entry["exec"].format(value)
             exec_out = value
             localsparam = {'exec_out': exec_out}
             exec(exec_string, globals(), localsparam)
@@ -1475,10 +1489,11 @@ class CustomController(GeneratorController):
 
         except Exception as e1:
             self.LogErrorLine("Error in ProcessExecModifier: " + str(e1) + ": " + str(entry["title"]))
+            self.LogDebug(exec_string)
             return ReturnValue
     
-    # ------------ GeneratorController:ConvertValue -----------------------------
-    def ConvertValue(self, entry, value):
+    # ------------ GeneratorController:ProcessTemperatureModifier --------------
+    def ProcessTemperatureModifier(self, entry, value):
         try:
             if "temperature" in entry:
                 if not self.UseMetric and entry["temperature"].lower() == "celsius":
@@ -1490,7 +1505,7 @@ class CustomController(GeneratorController):
             else:
                 return value
         except Exception as e1:
-            self.LogErrorLine("Error in ConvertValue : " + str(e1))
+            self.LogErrorLine("Error in ProcessTemperatureModifier : " + str(e1))
             return value
 
     # ------------ GeneratorController:FormatEntry ------------------------------

@@ -74,13 +74,6 @@
             "keywords" : ["Status", "Generator Time"]
         },
         {
-            "oid": "0, 0, 10",
-            "return_type": "str",
-            "description": "generatorDate",
-            "default" : " ",
-            "keywords" : ["Status", "Generator Date"]
-        },
-        {
             "oid": "0, 1, 1",
             "return_type": "str",
             "description": "generatorModel",

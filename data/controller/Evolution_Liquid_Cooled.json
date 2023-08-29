@@ -23,17 +23,35 @@
         "001b": {"length": 2, "text": "Service A Due Date"},
         "001e": {"length": 2, "text": "Hours Until Service B Due"},
         "001f": {"length": 2, "text": "Service B Due Date"},
+        "002a": {"length": 2, "text": "Firmware / Hardware Version"},
+        "002c": {"length": 2, "text": "Exercise Time"},
+        "002d": {"length": 2, "text": "Exercise Interval"},
+        "002e": {"length": 2, "text": "Exercise Date"},
+        "002f": {"length": 2, "text": "Low Speed Exercise Enable"},        
+        "0052": {"length": 2, "text": "Digital Inputs"},
+        "0053": {"length": 2, "text": "Digital Outputs"},
         "005d": {"length": 2, "text": "Tank Fuel Level"},
-        "0208": {"length": 2, "text": "Calibrate Volts"},
+        "0208": {"length": 2, "text": "Generator Calibrate Volts"},
+        "0209": {"length": 2, "text": "Utility Calibrate Volts"},
         "020a": {"length": 2, "text": "Param Code"},
         "020b": {"length": 2, "text": "Voltage Code"},
         "020c": {"length": 2, "text": "Fuel Type"},
+        "020e": {"length": 2, "text": "Volts per Hertz"},
         "0054": {"length": 2, "text": "Hours of Protection"},
         "005e": {"length": 4, "text": "Total Run Hours"},
-        "020e": {"length": 2, "text": "Volts per Hertz"},
         "0235": {"length": 2, "text": "Gain"},
+        "0236": {"length": 2, "text": "Two Wire Start"},
+        "0237": {"length": 2, "text": "Set Target Voltage"},
+        "0238": {"length": 2, "text": "Warm Up Time"},
+        "0239": {"length": 2, "text": "Start Up Delay"},
         "023a": {"length": 2, "text": "Activation Status"},
         "023b": {"length": 2, "text": "Pickup Voltage"},
+        "023d": {"length": 2, "text": "EEProm Version"},
+        "023e": {"length": 2, "text": "Exercise Duration"},
+        "023f": {"length": 2, "text": "Preheat Time"},
+        "0255": {"length": 2, "text": "Transfer to utility Delay"},
+        "0256": {"length": 2, "text": "Cooldown Time"},
+        "0257": {"length": 2, "text": "AC To Charger Status"},
         "005a": {"length": 2, "text": "Target Frequency"},
         "0059": {"length": 2, "text": "Target Voltage"},
         "01f4": {"length": 10, "text": "Serial Number"}
@@ -201,6 +219,144 @@
             "type": "int",
             "title": "RPM",
             "units": null
+          },
+          {
+            "reg": "0052",
+            "type": "list",
+            "separator": ",",
+            "default": "",
+            "title": "Active Sensors",
+            "value": [
+              {
+                "reg":"0052",
+                "mask": "0008",
+                "type": "bits",
+                "value": "0008",
+                "title": "2 Wire Sensor",
+                "text": "2 Wire Start"
+              },
+              {
+                "reg":"0052",
+                "mask": "0010",
+                "type": "bits",
+                "value": "0010",
+                "title": "Wiring Error Sensor",
+                "text": "Wiring Error"
+              },
+              {
+                "reg":"0052",
+                "mask": "0020",
+                "type": "bits",
+                "value": "0020",
+                "title": "Ruptured Basin Sensor",
+                "text": "Ruptured Basin"
+              },
+              {
+                "reg":"0052",
+                "mask": "0040",
+                "type": "bits",
+                "value": "0000",
+                "title": "E-Stop Sensor",
+                "text": "E-Stop Activated"
+              },
+              {
+                "reg":"0052",
+                "mask": "0080",
+                "type": "bits",
+                "value": "0080",
+                "title": "Oil psi Sensor",
+                "text": "Oil below 8 psi"
+              },
+              {
+                "reg":"0052",
+                "mask": "0100",
+                "type": "bits",
+                "value": "0100",
+                "title": "Coolant Level Sensor",
+                "text": "Low Coolant"
+              }
+            ]
+          },
+          {
+            "reg": "0053",
+            "type": "list",
+            "separator": ",",
+            "title": "Active Relays",
+            "default": "",
+            "value": [
+              {
+                "reg":"0053",
+                "mask": "0001",
+                "type": "bits",
+                "value": "0001",
+                "title": "Transfer Switch Status",
+                "text": "Transfer Switch Activated"
+              },
+              {
+                "reg":"0053",
+                "mask": "0002",
+                "type": "bits",
+                "value": "0002",
+                "title": "Fuel Enrichment Status",
+                "text": "Fuel Enrichment On"
+              },
+              {
+                "reg":"0053",
+                "mask": "0004",
+                "type": "bits",
+                "value": "0004",
+                "title": "Starter Status",
+                "text": "Starter On"
+              },
+              {
+                "reg":"0053",
+                "mask": "0008",
+                "type": "bits",
+                "value": "0008",
+                "title": "Fuel Relay Status",
+                "text": "Fuel Relay On"
+              },
+              {
+                "reg":"0053",
+                "mask": "0010",
+                "type": "bits",
+                "value": "0010",
+                "title": "Battery Charger Status",
+                "text": "Battery Charger On"
+              },
+              {
+                "reg":"0053",
+                "mask": "0020",
+                "type": "bits",
+                "value": "0020",
+                "title": "Alarm Status",
+                "text": "Alarm On"
+              },
+              {
+                "reg":"0053",
+                "mask": "0040",
+                "type": "bits",
+                "value": "0040",
+                "title": "Bosch Governor Status",
+                "text": "Bosch Governor On"
+              },
+              {
+                "reg":"0053",
+                "mask": "0080",
+                "type": "bits",
+                "value": "0080",
+                "title": "Bosch Governor Status",
+                "text": "Bosch Governor On"
+              },
+              {
+                "reg":"0053",
+                "mask": "0080",
+                "type": "bits",
+                "value": "0080",
+                "title": "Air/Fuel Relay Status",
+                "text": "Air/Fuel Relay On"
+              }
+            ]
           }
         ]
       },
@@ -305,8 +461,16 @@
               "mask": "ffff",
               "multiplier": 1,
               "type": "int",
-              "title": "Calibrate Volts",
+              "title": "Generator Calibrate Volts",
               "units": null
+          },
+          {
+            "reg": "0209",
+            "mask": "ffff",
+            "multiplier": 1,
+            "type": "int",
+            "title": "Utility Calibrate Volts",
+            "units": null
           },
           {
               "reg": "020a",
@@ -341,12 +505,82 @@
               "units": null
           },
           {
-              "reg": "0235",
-              "mask": "ffff",
-              "multiplier": 1,
-              "type": "int",
-              "title": "Gain",
-              "units": null
+            "reg": "0235",
+            "mask": "ffff",
+            "multiplier": 1,
+            "type": "int",
+            "title": "Gain",
+            "units": null
+          },
+          {
+            "reg": "0236",
+            "mask": "ffff",
+            "title": "Two Wire Start",
+            "type": "object_int_index",
+            "object": {
+              "0" : "Disable",
+              "1" : "Enable"
+            },
+            "default": "Unknown"
+          },
+          {
+            "reg": "0237",
+            "mask": "ffff",
+            "multiplier": 1,
+            "type": "int",
+            "title": "Set Target Voltage",
+            "units": "V"
+          },
+          {
+            "reg": "0238",
+            "mask": "ffff",
+            "multiplier": 1,
+            "type": "int",
+            "title": "Warm Up Time",
+            "units": "seconds"
+          },
+          {
+            "reg": "0239",
+            "mask": "ffff",
+            "multiplier": 1,
+            "type": "int",
+            "title": "Start Up Delay",
+            "units": "seconds"
+          },
+          {
+            "reg": "023f",
+            "mask": "ffff",
+            "multiplier": 1,
+            "type": "int",
+            "title": "Preheat Time",
+            "units": "seconds"
+          },
+          {
+            "reg": "0255",
+            "mask": "ffff",
+            "multiplier": 1,
+            "type": "int",
+            "title": "Transfer to utility Delay",
+            "units": "seconds"
+          },
+          {
+            "reg": "0256",
+            "mask": "ffff",
+            "multiplier": 1,
+            "type": "int",
+            "title": "Cooldown Time",
+            "units": "seconds"
+          },
+          {
+            "reg": "0257",
+            "mask": "ffff",
+            "title": "AC To Charger Status",
+            "type": "object_int_index",
+            "object": {
+              "0" : "AC Missing",
+              "1" : "AC Present"
+            },
+            "default": "Unknown"
           },
           {
               "reg": "005a",
@@ -363,12 +597,155 @@
               "type": "int",
               "title": "Target Volts",
               "units": "V"
+          },
+          {
+              "reg": "020c",
+              "mask": "ffff",
+              "type": "object_int_index",
+              "object":{
+                "0": "Liquid Propane",
+                "1": "Natural Gas",
+                "2": "Diesel"
+              },
+              "default": "Unknown Fuel Type",
+              "title": "Fuel Type"
+          }
+        ]
+      },
+      {"title": "Exercise",
+        "container": true,
+        "value" : [
+          {
+            "type" : "list",
+            "separator" : ":",
+            "title" : "Exercise Time",
+            "value" : [
+              {
+                "reg": "002c",
+                "type": "int",
+                "mask" : "ff00",
+                "multiplier" : 0.00390625,
+                "comment" : "NOTE: 0.00390625 = 1/256 or dividing by 0x100 hex or shifting right by 8 bits",
+                "title": "Hours"
+              },
+              {
+                "reg": "002c",
+                "type": "int",
+                "mask" : "00ff",
+                "format": "%02d",
+                "title": "Minutes"
+              }
+            ]
+          },
+          {
+            "type": "list",
+            "title": "Exercise Day",
+            "comment": "NOTE: this object is a list, but does not have a 'separator' or a 'format' modifier.",
+            "comment2": "This will return a list normally, but when paired with the 'exec' you can pass the ",
+            "comment3": "list items in to the exec string via python formatting, e.g. {}",
+            "exec": "exec_out = '{}' if '{}' == 'Monthly' else '{}'",
+            "separator" : null,
+            "value": [
+              {
+                "reg": "002e",
+                "mask": "ffff",
+                "multiplier": 1,
+                "type": "int",
+                "title": "Exercise Day"
+              },
+              {
+                "reg": "002d",
+                "mask": "ffff",
+                "type": "object_int_index",
+                "object":{
+                  "0": "Weekly",
+                  "1": "Biweekly",
+                  "2": "Monthly"
+                },
+                "default": "Unknown Mode",
+                "title": "Exercise Interval"
+              },
+              {
+                "reg": "002e",
+                "mask": "ffff",
+                "multiplier": 1,
+                "type": "object_int_index",
+                "title": "Exercise Day",
+                  "object" :  {
+                    "0": "Sunday",
+                    "1": "Monday",
+                    "2": "Tuesday",
+                    "3": "Wednesday",
+                    "4": "Thursday",
+                    "5": "Friday",
+                    "6": "Saturday"
+                }
+              }
+            ]
+            
+          },
+          {
+            "reg": "002d",
+            "mask": "ffff",
+            "type": "object_int_index",
+            "object":{
+              "0": "Weekly",
+              "1": "Biweekly",
+              "2": "Monthly"
+            },
+            "default": "Unknown Mode",
+            "title": "Exercise Interval"
+          },
+
+          {
+            "reg": "002f",
+            "mask": "ffff",
+            "type": "object_int_index",
+            "object":{
+              "0": "Disabled",
+              "1": "Enabled"
+            },
+            "default": "Unknown Mode",
+            "title": "Low Speed Exercise"
+          },
+          {
+            "reg": "023e",
+            "mask": "ffff",
+            "multiplier": 1,
+            "type": "int",
+            "title": "Exercise Duration",
+            "units": "minutes"
           }
         ]
       },
       {"title": "Service",
         "container": true,
         "value" : [
+          {
+            "reg": "002a",
+            "mask": "00ff",
+            "multiplier": 0.01,
+            "type": "float",
+            "title": "Firmware Version",
+            "units": null
+          },
+          {
+            "reg": "002a",
+            "mask": "ff00",
+            "shiftright": 8,
+            "multiplier": 0.01,
+            "type": "float",
+            "title": "Hardware Version",
+            "units": null
+          },
+          {
+            "reg": "023d",
+            "mask": "ffff",
+            "multiplier": 0.01,
+            "type": "float",
+            "title": "EEProm Version",
+            "units": null
+          },
           {
             "reg": "005e",
             "comment": "divide by 60, 1/60 = 0.166667",

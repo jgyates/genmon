@@ -438,6 +438,8 @@ class MySupport(MyCommon):
                                 "Invalid type in ProcessDispatchToString %s %s (2)"
                                 % (key, str(type(listitem)))
                             )
+                    if len(item) > 1:
+                        InputBuffer += "\n"
                 else:
                     InputBuffer += (
                         ("    " * indent)
