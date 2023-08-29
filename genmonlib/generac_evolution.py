@@ -3442,11 +3442,10 @@ class Evolution(GeneratorController):
         }
 
         DealerInputs_Evo_LC = {
-            0x0001: [
-                True,
-                "Manual Button",
-            ],  # Bits 0, 1 and 2 are momentary and only set in the controller
-            0x0002: [True, "Auto Button"],  #  Dealer Test Menu, not in this register
+            # Bits 0, 1 and 2 are momentary and only set in the controller
+            # Dealer Test Menu, not in this register
+            0x0001: [True,"Manual Button",],  
+            0x0002: [True, "Auto Button"],    
             0x0004: [True, "Off Button"],
             0x0008: [True, "2 Wire Start"],
             0x0010: [True, "Wiring Error"],
