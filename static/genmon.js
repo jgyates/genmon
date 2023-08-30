@@ -445,7 +445,7 @@ function json2html(json, indent, parentkey) {
                   outstr += indent + "&nbsp;&nbsp;&nbsp;&nbsp;" +  getItem(json[key][i], key);
                 }
               }
-              // Added for better formmating 
+              // Added for better formatting 
               if (json[key].length > 1){
                 outstr+= "<br>"
               }

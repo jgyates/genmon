@@ -21,21 +21,53 @@
     "0011": {"length": 2, "text": "Threshold Voltage"},
     "0012": {"length": 2, "text": "Output Voltage"},
     "0019": {"length": 2, "text": "Model ID"},
+    "001a": {"length": 2, "text": "Hours Until Service A Due"},
+    "001b": {"length": 2, "text": "Service A Due Date"},
+    "001e": {"length": 2, "text": "Hours Until Service B Due"},
+    "001f": {"length": 2, "text": "Service B Due Date"},
+    "0022": {"length": 2, "text": "Inspect Battery Date"},
+    "002a": {"length": 2, "text": "Firmware / Hardware Version"},
+    "002c": {"length": 2, "text": "Exercise Time"},
+    "002d": {"length": 2, "text": "Exercise Interval"},
+    "002e": {"length": 2, "text": "Exercise Date"},
+    "002f": {"length": 2, "text": "Low Speed Exercise Enable"},
+    "0052": {"length": 2, "text": "Digital Inputs"},
+    "0053": {"length": 2, "text": "Digital Outputs"},
+    "0054": {"length": 2, "text": "Hours of Protection"},
     "005d": {"length": 2, "text": "Tank Fuel Level"},
     "005a": {"length": 2, "text": "Target Frequency"},
     "0059": {"length": 2, "text": "Target Voltage"},
+    "005e": {"length": 4, "text": "Total Run Hours"},
+    "0236": {"length": 2, "text": "Two Wire Start"},
+    "0237": {"length": 2, "text": "Set Target Voltage"},
+    "0238": {"length": 2, "text": "Warm Up Time"},
+    "0239": {"length": 2, "text": "Start Up Delay"},
     "023a": {"length": 2, "text": "Activation Status"},
     "023b": {"length": 2, "text": "Pickup Voltage"},
+    "023d": {"length": 2, "text": "EEProm Version"},
+    "023e": {"length": 2, "text": "Exercise Duration"},
+    "023f": {"length": 2, "text": "Preheat Time"},
+    "0255": {"length": 2, "text": "Transfer to Utility Delay"},
+    "0256": {"length": 2, "text": "Cooldown Time"},
+    "0257": {"length": 2, "text": "AC To Charger Status"},
     "05ea": {"length": 2, "text": "Output Current"},
     "05eb": {"length": 2, "text": "Output Power"},
+    "05ed": {"length": 2, "text": "Ambient Temperature"},
+    "05ee": {"length": 2, "text": "Battery Charger Current"},
     "0604": {"length": 2, "text": "Key State"},
     "0606": {"length": 2, "text": "Engine Oil Pressure"},
     "0607": {"length": 2, "text": "Engine Oil Temp"},
+    "0608": {"length": 2, "text": "Engine Intake Manifold Temperature"},
     "060a": {"length": 2, "text": "Engine Coolant Temp"},
+    "060c": {"length": 2, "text": "Engine Percent Torque"},
     "0610": {"length": 2, "text": "Fuel Type"},
     "0611": {"length": 2, "text": "Engine Status"},
+    "0617": {"length": 2, "text": "Engine Type"},
+    "061f": {"length": 2, "text": "Transfer Active"},
+    "062f": {"length": 2, "text": "Battery Condition"},
     "0637": {"length": 2, "text": "Alarm Active"},
     "0638": {"length": 2, "text": "Warning Active"},
+    "0639": {"length": 2, "text": "Maintenance Due"},
     "1f72": {"length": 2, "text": "Output Voltage Phase 1"},
     "1f73": {"length": 2, "text": "Output Voltage Phase 2"},
     "1f74": {"length": 2, "text": "Output Voltage Phase 3"},
@@ -125,28 +157,97 @@
   ],
   "alarm_conditions": [
     {
-      "reg": "0637",
-      "mask": "0001",
-      "value": "0001",
-      "type": "bits",
-      "title": "Alarm",
-      "text": "System In Alarm"
-    },
-    {
-      "reg": "0638",
-      "mask": "0001",
-      "value": "0001",
-      "type": "bits",
-      "title": "Alarm",
-      "text": "System In Warning"
-    },
-    {
-      "reg": "226a",
-      "mask": "0001",
-      "value": "0001",
-      "type": "bits",
-      "title": "Alarm",
-      "text": "E-Stop Shutdown Alarm"
+      "comment": "alarm_conditions are not used unless alarm_active (if present) reports anything",
+      "reg": "0002",
+      "type": "object_int_index",
+      "mask": "ffff",
+      "object": {
+        "0": "Auto",
+        "6": "Manual",
+        "7": "Off",
+        "1": "Low Battery",
+        "2": "High Coolant Temperature",
+        "3": "Controller Fault",
+        "4": "Exercise Set Error",
+        "5": "Low Fuel Pressure",
+        "8": "Low Coolant",
+        "10": "Low Oil Pressure",
+        "11": "Overcrank",
+        "12": "Overspeed",
+        "13": "RPM Sense Loss",
+        "18": "Very Low Battery",
+        "21": "Underspeed",
+        "24": "Wiring Error",
+        "29": "Over Voltage",
+        "30": "Under Voltage",
+        "34": "CANbus Error",
+        "36": "Overload Remove Load",
+        "37": "Undervoltage Overload",
+        "38": "Overload",
+        "40": "Fuse Problem",
+        "41": "Battery Problem",
+        "42": "Charger Warning",
+        "43": "Charger Missing AC",
+        "48": "Ruptured Tank",
+        "49": "Very Low Fuel Level",
+        "50": "Low Fuel Level",
+        "51": "SEEProm Abuse",
+        "52": "Emergency Stop",
+        "61": "Config EEPROM CRC Mismatch",
+        "62": "Diesel High Fuel Level",
+        "63": "Transfer Switch Position Error",
+        "65": "3 Wire Switch Position Error",
+        "66": "Keypad Missing",
+        "67": "High Oil Temperature",
+        "68": "Low Oil Level",
+        "69": "Engine Coolant Temperature Out of Range",
+        "70": "ECU Faulted",
+        "71": "Engine Throttle Valve 1 Position 1",
+        "72": "Engine Fuel Delivery Pressure",
+        "73": "Engine Oil Pressure",
+        "74": "Engine Intake Manifold 1 Pressure",
+        "75": "Engine Intake Manifold 1 Temperature",
+        "76": "Engine Air Filter 1 Differential Pressure",
+        "77": "Engine Coolant Temperature",
+        "78": "Battery Potential / Power Input 1",
+        "79": "Engine Oil Temperature 1",
+        "80": "Engine Fuel Shutoff 1 Control",
+        "81": "Engine Position Sensor",
+        "82": "Engine Timing Sensor",
+        "83": "O2 Sensor",
+        "84": "Engine Knock 1",
+        "85": "Engine Ignition Coil #1",
+        "86": "Engine Ignition Coil #2",
+        "87": "Engine Ignition Coil #3",
+        "88": "Engine Ignition Coil #4",
+        "89": "Engine Fuel Valve 1 Position",
+        "90": "Engine Charge Air Cooler 1 Bypass",
+        "91": "Engine Speed",
+        "100": "Lid Open / Theft Alarm",
+        "101": "SPI Flash Abuse",
+        "102": "DUIO 1 Loss Of Comm",
+        "103": "DUIO 2 Loss Of Comm",
+        "104": "DUIO 3 Loss Of Comm",
+        "105": "DUIO 4 Loss Of Comm",
+        "106": "Low Oil Pressure",
+        "107": "External Charger Failure",
+        "108": "12/24V Battery Config Error",
+        "109": "External Warning - 1",
+        "110": "External Warning - 2",
+        "111": "Fluid Basin Overfill",
+        "112": "Fluid Basin Missing",
+        "131": "Invalid VCODE configuration",
+        "132": "Missing Config - VCODE",
+        "133": "Missing Config - Parameter Group",
+        "134": "Missing Config - Exercise",
+        "135": "Missing Config - Fuel Type",
+        "136": "External Common Alarm - 1",
+        "137": "External Common Alarm - 2",
+        "138": "External Common Alarm - 3",
+        "139": "Ground Fault"
+      },
+      "default": "Unknown Alarm Active",
+      "title": "Alarm Conditions"
     }
   ],
   "engine_state": [
@@ -233,6 +334,14 @@
           "type": "float",
           "title": "Battery Voltage",
           "units": "V"
+        },
+        {
+          "reg": "05ee",
+          "mask": "ffff",
+          "multiplier": 0.001,
+          "type": "float",
+          "title": "Battery Charger Current",
+          "units": "A"
         },
         {
           "reg": "0007",
@@ -343,6 +452,16 @@
           "multiplier": 1,
           "type": "int",
           "title": "Engine Oil Temperature",
+          "temperature": "fahrenheit",
+          "units": "F"
+        },
+        {
+          "reg": "0608",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Engine Intake Manifold Temperature",
+          "temperature": "fahrenheit",
           "units": "F"
         },
         {
@@ -351,6 +470,7 @@
           "multiplier": 1,
           "type": "int",
           "title": "Engine Coolant Temperature",
+          "temperature": "fahrenheit",
           "units": "F"
         }    
       ]
@@ -359,6 +479,16 @@
         "comment": "The 'container' modifier will allow the values to be displayed with some hierarchy", 
         "container": true,
         "value" : [
+          {
+            "reg": "061f",
+            "mask": "ffff",
+            "multiplier": 1,
+            "type": "bits",
+            "value": "0000",
+            "title": "Transfer Switch",
+            "text": "Not Active",
+            "default": "Active"
+          },
         {
           "reg": "0009",
           "mask": "ffff",
@@ -429,6 +559,15 @@
       "title": "Fuel Level",
       "units": "%"
     },
+    {
+      "reg": "05ed",
+      "mask": "ffff",
+      "multiplier": 1,
+      "type": "int",
+      "title": "Ambient Temperature",
+      "temperature": "fahrenheit",
+      "units": "F"
+    },
     {"title": "Controller Settings",
         "container": true,
         "value" : [
@@ -447,20 +586,292 @@
           "type": "int",
           "title": "Target Volts",
           "units": "V"
+        },
+        {
+          "reg": "0236",
+          "mask": "ffff",
+          "title": "Two Wire Start",
+          "type": "object_int_index",
+          "object": {
+            "0" : "Disable",
+            "1" : "Enable"
+          },
+          "default": "Unknown"
+        },
+        {
+          "reg": "0237",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Set Target Voltage",
+          "units": "V"
+        },
+        {
+          "reg": "0238",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Warm Up Time",
+          "units": "seconds"
+        },
+        {
+          "reg": "0239",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Start Up Delay",
+          "units": "seconds"
+        },
+        {
+          "reg": "023f",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Preheat Time",
+          "units": "seconds"
+        },
+        {
+          "reg": "0255",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Transfer to utility Delay",
+          "units": "seconds"
+        },
+        {
+          "reg": "0256",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Cooldown Time",
+          "units": "seconds"
+        },
+        {
+          "reg": "0257",
+          "mask": "ffff",
+          "title": "AC To Charger Status",
+          "type": "object_int_index",
+          "object": {
+            "0" : "AC Missing",
+            "1" : "AC Present"
+          },
+          "default": "Unknown"
+        },
+        {
+          "reg": "005a",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Target Frequency",
+          "units": "Hz"
+        },
+        {
+            "reg": "0059",
+            "mask": "ffff",
+            "multiplier": 1,
+            "type": "int",
+            "title": "Target Volts",
+            "units": "V"
+        }
+      ]
+    },
+    {"title": "Exercise",
+      "container": true,
+      "value" : [
+        {
+          "type" : "list",
+          "separator" : ":",
+          "title" : "Exercise Time",
+          "value" : [
+            {
+              "reg": "002c",
+              "type": "int",
+              "mask" : "ff00",
+              "multiplier" : 0.00390625,
+              "comment" : "NOTE: 0.00390625 = 1/256 or dividing by 0x100 hex or shifting right by 8 bits",
+              "title": "Hours"
+            },
+            {
+              "reg": "002c",
+              "type": "int",
+              "mask" : "00ff",
+              "format": "%02d",
+              "title": "Minutes"
+            }
+          ]
+        },
+        {
+          "type": "list",
+          "title": "Exercise Day",
+          "comment": "NOTE: this object is a list, but does not have a 'separator' or a 'format' modifier.",
+          "comment2": "This will return a list normally, but when paired with the 'exec' you can pass the ",
+          "comment3": "list items in to the exec string via python formatting, e.g. {}",
+          "exec": "exec_out = '{}' if '{}' == 'Monthly' else '{}'",
+          "separator" : null,
+          "value": [
+            {
+              "reg": "002e",
+              "mask": "ffff",
+              "multiplier": 1,
+              "type": "int",
+              "title": "Exercise Day"
+            },
+            {
+              "reg": "002d",
+              "mask": "ffff",
+              "type": "object_int_index",
+              "object":{
+                "0": "Weekly",
+                "1": "Biweekly",
+                "2": "Monthly"
+              },
+              "default": "Unknown Mode",
+              "title": "Exercise Interval"
+            },
+            {
+              "reg": "002e",
+              "mask": "ffff",
+              "multiplier": 1,
+              "type": "object_int_index",
+              "title": "Exercise Day",
+                "object" :  {
+                  "0": "Sunday",
+                  "1": "Monday",
+                  "2": "Tuesday",
+                  "3": "Wednesday",
+                  "4": "Thursday",
+                  "5": "Friday",
+                  "6": "Saturday"
+              }
+            }
+          ]
+          
+        },
+        {
+          "reg": "002d",
+          "mask": "ffff",
+          "type": "object_int_index",
+          "object":{
+            "0": "Weekly",
+            "1": "Biweekly",
+            "2": "Monthly"
+          },
+          "default": "Unknown Mode",
+          "title": "Exercise Interval"
+        },
+
+        {
+          "reg": "002f",
+          "mask": "ffff",
+          "type": "object_int_index",
+          "object":{
+            "0": "Disabled",
+            "1": "Enabled"
+          },
+          "default": "Unknown Mode",
+          "title": "Low Speed Exercise"
+        },
+        {
+          "reg": "023e",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Exercise Duration",
+          "units": "minutes"
         }
       ]
     },
     {"title": "Service",
         "container": true,
         "value" : [
-        {
-          "reg": "000b",
-          "mask": "ffff",
-          "multiplier": 1,
-          "type": "int",
-          "title": "Run Hours",
-          "units": "h"
-        }
+          {
+            "reg": "002a",
+            "mask": "00ff",
+            "multiplier": 0.01,
+            "type": "float",
+            "title": "Firmware Version",
+            "units": null
+          },
+          {
+            "reg": "002a",
+            "mask": "ff00",
+            "shiftright": 8,
+            "multiplier": 0.01,
+            "type": "float",
+            "title": "Hardware Version",
+            "units": null
+          },
+          {
+            "reg": "023d",
+            "mask": "ffff",
+            "multiplier": 0.01,
+            "type": "float",
+            "title": "EEProm Version",
+            "units": null
+          },
+          {
+            "reg": "005e",
+            "comment": "divide by 60, 1/60 = 0.166667",
+            "multiplier": 0.166667,
+            "type": "float",
+            "title": "Run Hours",
+            "units": "h"
+          },
+          {
+            "reg": "001a",
+            "mask": "ffff",
+            "comment": "",
+            "title": "Hours Until Service A Due",
+            "type":"int",
+            "units": "hrs"
+          },
+          {
+            "reg": "001b",
+            "mask": "ffff",
+            "comment": "register value is number of days since Jan 1,1970. exec must output to the variable 'exec_out'",
+            "comment2":  "The exec string will be formatted (e.g. {}) with the modbus register value.",
+            "title": "Service A Due Date",
+            "type":"int",
+            "exec": "exec_out = datetime.datetime.fromtimestamp((({} + 1) * 86400)).strftime('%m/%d/%Y ')",
+            "default": "Unknown Service Date"
+          },
+          {
+            "reg": "001e",
+            "mask": "ffff",
+            "comment": "",
+            "title": "Hours Until Service B Due",
+            "type":"int",
+            "units": "hrs"
+          },
+          {
+            "reg": "001f",
+            "mask": "ffff",
+            "comment": "register value is number of days since Jan 1,1970. exec must output to the variable 'exec_out'",
+            "comment2":  "The exec string will be formatted (e.g. {}) with the modbus register value.",
+            "title": "Service B Due Date",
+            "type":"int",
+            "exec": "exec_out = datetime.datetime.fromtimestamp((({} + 1) * 86400)).strftime('%m/%d/%Y ')",
+            "default": "Unknown Service Date"
+          },
+          {
+            "reg": "0022",
+            "mask": "ffff",
+            "comment": "register value is number of days since Jan 1,1970. exec must output to the variable 'exec_out'",
+            "comment2":  "The exec string will be formatted (e.g. {}) with the modbus register value.",
+            "title": "Inspect Battery Due Date",
+            "type":"int",
+            "exec": "exec_out = datetime.datetime.fromtimestamp((({} + 1) * 86400)).strftime('%m/%d/%Y ')",
+            "default": "Unknown Service Date"
+          },
+          {
+            "reg": "062f",
+            "mask": "ffff",
+            "title": "Battery Condition",
+            "type":"bits",
+            "value": "0000",
+            "text": "Good",
+            "default": "Check Battery"
+          }
       ]
     }
   ],
@@ -1079,5 +1490,16 @@
       "title": "Unknown Controller",
       "text": "Unknown Controller"
     }
-    ]
+    ],
+  "maintenance_due": [
+    {
+      "comment": "This should only return a value if maintenance is due, otherwise evaluate to nothing.",
+      "reg": "0639",
+      "mask": "ffff",
+      "type": "bits",
+      "value": "0001",
+      "text": "Yes",
+      "title": "Maintenance Due"
+    }
+  ]
 }

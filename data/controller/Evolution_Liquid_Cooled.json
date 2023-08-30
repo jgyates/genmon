@@ -23,22 +23,23 @@
         "001b": {"length": 2, "text": "Service A Due Date"},
         "001e": {"length": 2, "text": "Hours Until Service B Due"},
         "001f": {"length": 2, "text": "Service B Due Date"},
+        "0022": {"length": 2, "text": "Inspect Battery Date"},
         "002a": {"length": 2, "text": "Firmware / Hardware Version"},
         "002c": {"length": 2, "text": "Exercise Time"},
         "002d": {"length": 2, "text": "Exercise Interval"},
         "002e": {"length": 2, "text": "Exercise Date"},
-        "002f": {"length": 2, "text": "Low Speed Exercise Enable"},        
+        "002f": {"length": 2, "text": "Low Speed Exercise Enable"},
         "0052": {"length": 2, "text": "Digital Inputs"},
         "0053": {"length": 2, "text": "Digital Outputs"},
         "005d": {"length": 2, "text": "Tank Fuel Level"},
+        "0054": {"length": 2, "text": "Hours of Protection"},
+        "005e": {"length": 4, "text": "Total Run Hours"},
         "0208": {"length": 2, "text": "Generator Calibrate Volts"},
         "0209": {"length": 2, "text": "Utility Calibrate Volts"},
         "020a": {"length": 2, "text": "Param Code"},
         "020b": {"length": 2, "text": "Voltage Code"},
         "020c": {"length": 2, "text": "Fuel Type"},
         "020e": {"length": 2, "text": "Volts per Hertz"},
-        "0054": {"length": 2, "text": "Hours of Protection"},
-        "005e": {"length": 4, "text": "Total Run Hours"},
         "0235": {"length": 2, "text": "Gain"},
         "0236": {"length": 2, "text": "Two Wire Start"},
         "0237": {"length": 2, "text": "Set Target Voltage"},
@@ -49,7 +50,7 @@
         "023d": {"length": 2, "text": "EEProm Version"},
         "023e": {"length": 2, "text": "Exercise Duration"},
         "023f": {"length": 2, "text": "Preheat Time"},
-        "0255": {"length": 2, "text": "Transfer to utility Delay"},
+        "0255": {"length": 2, "text": "Transfer to Utility Delay"},
         "0256": {"length": 2, "text": "Cooldown Time"},
         "0257": {"length": 2, "text": "AC To Charger Status"},
         "005a": {"length": 2, "text": "Target Frequency"},
@@ -99,6 +100,7 @@
           "7": "Off",
           "1": "Low Battery",
           "2": "High Coolant Temperature",
+          "3": "Controller Fault",
           "5": "Low Fuel Pressure",
           "8": "Low Coolant",
           "10": "Low Oil Pressure",
@@ -789,6 +791,16 @@
             "type":"int",
             "exec": "exec_out = datetime.datetime.fromtimestamp((({} + 1) * 86400)).strftime('%m/%d/%Y ')",
             "default": "Unknown Service Date"
+          },
+          {
+            "reg": "0022",
+            "mask": "ffff",
+            "comment": "register value is number of days since Jan 1,1970. exec must output to the variable 'exec_out'",
+            "comment2":  "The exec string will be formatted (e.g. {}) with the modbus register value.",
+            "title": "Inspect Battery Due Date",
+            "type":"int",
+            "exec": "exec_out = datetime.datetime.fromtimestamp((({} + 1) * 86400)).strftime('%m/%d/%Y ')",
+            "default": "Unknown Service Date"
           }
         ]
       }
@@ -1350,5 +1362,44 @@
               "title": "Minutes"
             }
           ]
+        },
+      "maintenance_due": [
+        {
+          "comment": "This should only return a value if maintenance is due, otherwise evaluate to nothing.",
+          "comment2": "Service A due alarm",
+          "reg": "0002",
+          "mask": "ffff",
+          "type": "bits",
+          "value": "001f",
+          "text": "Yes",
+          "title": "Maintenance A Due"
+        },
+        {
+          "comment": "Service B due alarm",
+          "reg": "0002",
+          "mask": "ffff",
+          "type": "bits",
+          "value": "0020",
+          "text": "Yes",
+          "title": "Maintenance B Due"
+        },
+        {
+          "comment": "Service A Hours remaining",
+          "reg": "001a",
+          "mask": "ffff",
+          "type": "bits",
+          "value": "0000",
+          "text": "Yes",
+          "title": "Maintenance A Due"
+        },
+        {
+          "comment": "Service B Hours remaining",
+          "reg": "001e",
+          "mask": "ffff",
+          "type": "bits",
+          "value": "0000",
+          "text": "Yes",
+          "title": "Maintenance B Due"
         }
+      ]
 }

@@ -970,6 +970,13 @@ class CustomController(GeneratorController):
                 return Maintenance
 
             Maintenance["Maintenance"].append({"Model": self.Model})
+            if "maintenance_due" in self.controllerimport:
+                ServiceStr = self.GetExtendedDisplayString(self.controllerimport, "maintenance_due")
+                if ServiceStr == "Unknown" or ServiceStr == "" or ServiceStr == None:
+                    Maintenance["Maintenance"].append({"Maintenance Due": "No"})
+                else:
+                    Maintenance["Maintenance"].append({"Maintenance Due": "Yes"})
+            
             Maintenance["Maintenance"].append(
                 {"Controller Detected": self.GetController()}
             )
@@ -1430,10 +1437,13 @@ class CustomController(GeneratorController):
                 units = entry["units"]
                 if units == None:
                     units = ""
+                else:
+                    units = self.ProcessTemperatureModifier(entry, units, units = True)
                 ReturnValue = self.ValueOut(ReturnValue, str(units), JSONNum)
 
         except Exception as e1:
             self.LogErrorLine("Error in GetDisplayEntry : " + str(e1))
+            self.LogDebug(str(entry))
 
         return ReturnTitle, ReturnValue
     # ------------ GeneratorController:ProcessBitModifiers ----------------------
@@ -1493,15 +1503,23 @@ class CustomController(GeneratorController):
             return ReturnValue
     
     # ------------ GeneratorController:ProcessTemperatureModifier --------------
-    def ProcessTemperatureModifier(self, entry, value):
+    def ProcessTemperatureModifier(self, entry, value, units = False):
         try:
             if "temperature" in entry:
-                if not self.UseMetric and entry["temperature"].lower() == "celsius":
-                    return self.ConvertCelsiusToFahrenheit(value)
-                elif self.UseMetric and entry["temperature"].lower() == "fahrenheit":
-                    return self.ConvertFahrenheitToCelsius(value)
+                if not units:
+                    if not self.UseMetric and entry["temperature"].lower() == "celsius":
+                        return self.ConvertCelsiusToFahrenheit(value)
+                    elif self.UseMetric and entry["temperature"].lower() == "fahrenheit":
+                        return self.ConvertFahrenheitToCelsius(value)
+                    else:
+                        return value
                 else:
-                    return value
+                    if not self.UseMetric and entry["temperature"].lower() == "celsius":
+                        return "F"
+                    elif self.UseMetric and entry["temperature"].lower() == "fahrenheit":
+                        return "C"
+                    else:
+                        return value
             else:
                 return value
         except Exception as e1:
@@ -1807,6 +1825,11 @@ class CustomController(GeneratorController):
             else:
                 IsExercising = False
             if "service" in EngineStatus or "service" in GeneratorStatus:
+                ServiceDue = True
+            elif "maintenance_due" in self.controllerimport:
+                ServiceStr = self.GetExtendedDisplayString(self.controllerimport, "maintenance_due")
+                if ServiceStr == "Unknown" or ServiceStr == "" or ServiceStr == None:
+                    ServiceDue = False
                 ServiceDue = True
             else:
                 ServiceDue = False
