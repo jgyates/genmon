@@ -243,3 +243,18 @@ class MyCommon(object):
             return str(Error)
         except:
             return Error
+    # ---------------------MyCommon::getSignedNumber-----------------------------
+    def getSignedNumber(self, number, bitLength):
+
+        try:
+            if isinstance(number, int) and isinstance(bitLength, int):
+                mask = (2 ** bitLength) - 1
+                if number & (1 << (bitLength - 1)):
+                    return number | ~mask
+                else:
+                    return number & mask
+            else:
+                return number
+        except Exception as e1:
+            self.LogErrorLine("Error in getSignedNumber: " + str(e1))
+            return number

@@ -1382,6 +1382,7 @@ class CustomController(GeneratorController):
                 value = self.GetParameter(Register, ReturnInt=True)
                 value = self.ProcessMaskModifier(entry, value)
                 value = self.ProcessBitModifiers(entry, value)
+                value = self.ProcessSignedModifier(entry, value)
                 if "bounds_regex" in entry:
                     if re.match(entry["bounds_regex"], str(value)):
                         ReturnValue = self.ProcessExecModifier(entry, int(self.ProcessTemperatureModifier(entry, value)))
@@ -1462,6 +1463,22 @@ class CustomController(GeneratorController):
         except Exception as e1:
             self.LogErrorLine("Error in ProcessBitModifiers: " + str(e1) + ": " + str(entry["title"]))
             return value
+
+    # ------------ GeneratorController:ProcessSignedModifier---------------------
+    def ProcessSignedModifier(self, entry, value):
+
+        try:
+            bitdepth = None
+            if "signed16" in entry.keys() and entry["signed16"] == True:
+                bitdepth = 16
+            elif "signed32" in entry.keys() and entry["signed32"] == True:
+                bitdepth = 32 
+            value = self.getSignedNumber( value, bitdepth)
+            return value
+        except Exception as e1:
+            self.LogErrorLine("Error in ProcessSignedModifier: " + str(e1) + ": " + str(entry["title"]))
+        return value
+    
     # ------------ GeneratorController:ProcessMaskModifier ----------------------
     def ProcessMaskModifier(self, entry, value):
         try:

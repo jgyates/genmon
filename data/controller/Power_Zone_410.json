@@ -460,6 +460,7 @@
           "mask": "ffff",
           "multiplier": 1,
           "type": "int",
+          "signed16": true,
           "title": "Engine Intake Manifold Temperature",
           "temperature": "fahrenheit",
           "units": "F"
@@ -469,6 +470,7 @@
           "mask": "ffff",
           "multiplier": 1,
           "type": "int",
+          "signed16": true,
           "title": "Engine Coolant Temperature",
           "temperature": "fahrenheit",
           "units": "F"
@@ -564,6 +566,7 @@
       "mask": "ffff",
       "multiplier": 1,
       "type": "int",
+      "signed16": true,
       "title": "Ambient Temperature",
       "temperature": "fahrenheit",
       "units": "F"
