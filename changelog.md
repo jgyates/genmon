@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Minor update to myserial.py to improve error handling and recovery
 - Added functionality for custom defined controllers via JSON
 - Minor formatting update to web UI spacing to better accommodate custom controllers
+- Updated alarm code for Evolution 2.0
 
 ## V1.18.17 -2023-04-06
 - Added feature request to allow external temperature sensors to be displayed as gauges
