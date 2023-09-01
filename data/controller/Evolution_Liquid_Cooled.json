@@ -791,16 +791,6 @@
             "type":"int",
             "exec": "exec_out = datetime.datetime.fromtimestamp((({} + 1) * 86400)).strftime('%m/%d/%Y ')",
             "default": "Unknown Service Date"
-          },
-          {
-            "reg": "0022",
-            "mask": "ffff",
-            "comment": "register value is number of days since Jan 1,1970. exec must output to the variable 'exec_out'",
-            "comment2":  "The exec string will be formatted (e.g. {}) with the modbus register value.",
-            "title": "Inspect Battery Due Date",
-            "type":"int",
-            "exec": "exec_out = datetime.datetime.fromtimestamp((({} + 1) * 86400)).strftime('%m/%d/%Y ')",
-            "default": "Unknown Service Date"
           }
         ]
       }
@@ -1235,7 +1225,25 @@
                                    "value": "000e"
                                  }
                                ]
-      }
+      },
+      {
+        "onewordcommand" : "exerciseduration",
+        "title" : "Exercise Duration",
+        "comment": "The 'command_sequence can be one or more commands",
+        "command_sequence" : [
+                               {
+                                  "comment": "the value written to 'reg' is supplied by the user. 'input_title' is required. 'length' (number of mobus bytes to write) is 2 by default,but must be a multiple of 2",
+                                  "comment2": "'bounds_reg' is optional but allows the user interface to bounds check the data before sending it to genmon",
+                                  "comment3": "'tooltip' is optional but allows the user interface to display more information regarding the input.",
+                                  "reg": "023e",
+                                  "input_title": "Minutes",
+                                  "type": "int",
+                                  "length": 2,
+                                  "bounds_regex":"^([1][2-9])|([2-5][0-9])|([6][0])$",
+                                  "toottip": "The duration of the exercise cycle. This must be a whole number between 12 and 60 minutes."
+                               }
+                             ]
+    }
     ],
     "fuel": {
           "comment":"NOTE: this element will add a fuel gauge in addition to any defined in the gauges array",

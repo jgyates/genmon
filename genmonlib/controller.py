@@ -21,6 +21,8 @@ import sys
 import threading
 import time
 import itertools
+import copy
+import re
 
 from genmonlib.mylog import SetupLogger
 from genmonlib.myplatform import MyPlatform
@@ -791,6 +793,174 @@ class GeneratorController(MySupport):
     def SystemInAlarm(self):
         return False
 
+    # -------------CustomController:SetCommandButton-----------------------------
+    def SetCommandButton(self, CommandString):
+        try:
+            ValidInput = False
+            EntryString = CommandString
+            if EntryString == None or not len(EntryString):
+                return "Invalid input for SetCommandButton entry."
+
+            EntryString = EntryString.strip()
+            if EntryString.startswith("set_button_command"):
+                EntryString = EntryString[len("set_button_command") :]
+                EntryString = EntryString.strip()
+                if EntryString.strip().startswith("="):
+                    EntryString = EntryString[len("=") :]
+                    EntryString = EntryString.strip()
+                    ValidInput = True
+
+            if ValidInput:
+                try:
+                    CommandSetList = json.loads(EntryString)
+                    # validate object
+                    if not isinstance(CommandSetList, list) and not (len(CommandSetList) == 0):
+                        return "Invalid set button object"
+                    # Execute Command
+                    return self.ExecuteRemoteCommand(CommandSetList)
+                except Exception as e1:
+                    self.LogErrorLine("Error in SetCommandButton: " + str(e1))
+                    return "Invalid input for SetCommandButton (2)"
+            else:
+                self.LogError("Error in SetCommandButton: invalid input: " + str(CommandString))
+                return "Invalid input for SetButton (3)."
+            return "OK"
+        except Exception as e1:
+            self.LogErrorLine("Error in SetCommandButton: " + str(e1))
+            return "Error in SetCommandButton"
+        return "OK"
+    # -------------CustomController:ExecuteRemoteCommand-------------------------
+    def ExecuteRemoteCommand(self, CommandSetList):
+        # CommandSetList is a list of dicts, each dict is a command to execute 
+        # Each dict in the list is in the format of the objects in the 'buttons' 
+        # list in the custom controller JSON format
+        try:
+            if sys.version_info[0] < 3:  #
+                self.LogError("Error in ExecuteRemoteCommand, requires python3: " + str(sys.version_info.major) + "." + str(sys.version_info.minor))
+                return "Error in ExecuteRemoteCommand, requires python3"
+            if not isinstance(CommandSetList, list):
+                return "Error: invalid input in ExecuteRemoteCommand"
+            
+            with self.ModBus.CommAccessLock:
+                # put the lock here so if there are multiple commands they will be executed back to back
+                for button_command in CommandSetList:
+                    if not isinstance(button_command, dict) and not len(button_command) == 1:
+                        self.LogError("Error on ExecuteRemoteCommand, expecting single dict: " + str(button_command))
+                        return "Error: invalid input in ExecuteRemoteCommand"
+                    if not "onewordcommand" in button_command.keys():
+                        self.LogError("Error on ExecuteRemoteCommand, invalid dict: " + str(button_command))
+                        return "Error: invalid input in ExecuteRemoteCommand (2)"
+                    # make a copy of the dict so we can add the input without modifying the origianl
+                    returndict = self.GetButtons(singlebuttonname = button_command["onewordcommand"])
+                    if returndict == None:
+                        self.LogError("Error on ExecuteRemoteCommand, command not found: " + str(button_command))
+                        return "Error: invalid input in ExecuteRemoteCommand command not found"
+                    selected_command = copy.deepcopy(returndict)
+                    if not len(selected_command):
+                        self.LogError("Error on ExecuteRemoteCommand, invalid command: " + str(button_command))
+                        return "Error: invalid command in ExecuteRemoteCommand (2)"
+                    
+                    # selected_command from genmon, button_command from UI
+                    if not "command_sequence" in selected_command or not "command_sequence" in button_command:
+                        self.LogError("Error on ExecuteRemoteCommand, command sequence mismatch: " + str(button_command))
+                        return "Error on ExecuteRemoteCommand, command sequence mismatch"
+                    if not (len(selected_command["command_sequence"]) == len(button_command["command_sequence"])):
+                        self.LogError("Error on ExecuteRemoteCommand, command sequence mismatch (2): " + str(button_command))
+                        return "Error on ExecuteRemoteCommand, command sequence mismatch (2)"
+                    # iterate thru both lists of commands
+                    for gm_cmd, ui_cmd in zip(selected_command["command_sequence"], button_command["command_sequence"]):
+                        if "input_title" in gm_cmd and "value" in ui_cmd:
+                            if "bounds_regex" in gm_cmd:
+                                if not re.match(gm_cmd["bounds_regex"], str(ui_cmd["value"])):
+                                    self.LogError("Error in ExecuteRemoteCommand: Failed bounds check: " + str(ui_cmd))
+                                    return "Error in ExecuteRemoteCommand: Failed bounds check"
+                            if "type" in gm_cmd and gm_cmd["type"] == "int":
+                                if not "length" in gm_cmd or ("length" in gm_cmd and gm_cmd["length"] == 2):
+                                    gm_cmd["value"] = "%04x" % int(ui_cmd["value"])
+                                elif "length" in gm_cmd and gm_cmd["length"] == 4:
+                                    gm_cmd["value"] = "%08x" % int(ui_cmd["value"])
+                                else:
+                                    self.LogError("Error in ExecuteRemoteCommand: only 2 or 4 supported for int lenght: " + str(gm_cmd))
+                                    return "Error in ExecuteRemoteCommand, invalid length of input"
+                            else:
+                                self.LogError("Error in ExecuteRemoteCommand, unsupported type: " + str(ui_cmd))
+                                return "Error in ExecuteRemoteCommand, unsupported type"
+                        elif not "reg" in gm_cmd or not "value" in gm_cmd:
+                            self.LogError("Error in ExecuteRemoteCommand, invalid command in sequence: " + str(selected_command))
+                            return "Error in ExecuteRemoteCommand, invalid command in sequence"
+                    # execute the command selected_command
+                    return self.ExecuteCommandSequence(selected_command["command_sequence"])
+
+            # TODO parse button
+        except Exception as e1:
+            self.LogErrorLine("Error in ExecuteRemoteCommand: " + str(e1))
+            self.LogDebug(str(CommandSetList))
+            return "Error in ExecuteRemoteCommand"
+        return "OK"
+    # -------------CustomController:ExecuteCommandSequence-----------------------
+    def ExecuteCommandSequence(self, command_sequence):
+        try:
+            with self.ModBus.CommAccessLock:
+                for command in command_sequence:
+                    if not len(command["value"]):
+                        self.LogDebug("Error in SetGeneratorRemoteCommand: invalid value array")
+                        continue
+                    if isinstance(command["value"], list):
+                        if not (len(command["value"]) % 2) == 0:
+                            self.LogDebug("Error in SetGeneratorRemoteCommand: invalid value length")
+                            return "Command not found."
+                        Data = []
+                        for item in command["value"]:
+                            if isinstance(item, str):
+                                Data.append(int(item, 16))
+                            elif isinstance(item, int):
+                                Data.append(item)
+                            else:
+                                self.LogDebug("Error in SetGeneratorRemoteCommand: invalid type if value list")
+                                return "Command not found."
+                        self.LogDebug("Write: " + command["reg"] + ": " + str(Data))
+                        self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data)
+
+                    elif isinstance(command["value"], str):
+                        value = int(command["value"], 16)
+                        LowByte = value & 0x00FF
+                        HighByte = value >> 8
+                        Data = []
+                        Data.append(HighByte)  # Value for indexed register (High byte)
+                        Data.append(LowByte)  # Value for indexed register (Low byte)
+                        self.LogDebug("Write: " + command["reg"] + ": "+ ("%x %x" % (HighByte, LowByte)))
+                        self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data)
+                    elif isinstance(command["value"], int):
+                        value = command["value"]
+                        LowByte = value & 0x00FF
+                        HighByte = value >> 8
+                        Data = []
+                        Data.append(HighByte)  # Value for indexed register (High byte)
+                        Data.append(LowByte)  # Value for indexed register (Low byte)
+                        self.LogDebug("Write: "+ command["reg"]+ ": "+ ("%x %x" % (HighByte, LowByte)))
+                        self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data)
+                    else:
+                        self.LogDebug("Error in SetGeneratorRemoteCommand: invalid value type")
+                        return "Command not found."
+
+                return "Remote command sent successfully"
+        except Exception as e1:
+            self.LogErrorLine("Error in ExecuteCommandSequence: " + str(e1))
+            self.LogDebug(str(command_sequence))
+            return "Error in ExecuteCommandSequence"
+        return "OK"
+    # -------------CustomController:GetButtons-----------------------------------
+    def GetButtons(self, singlebuttonname = None):
+        try:
+            if not singlebuttonname == None:
+                # get full single command
+                return {}
+            else:
+                # get full simplified list for GUI
+                return {}
+        except Exception as e1:
+            self.LogErrorLine("Error in SetButton: " + str(e1))
+            return {}
     # ------------ GeneratorController::GetStartInfo ----------------------------
     # return a dictionary with startup info for the gui
     def GetStartInfo(self, NoTile=False):
@@ -813,6 +983,9 @@ class GeneratorController(MySupport):
             StartInfo["RaspberryPi"] = self.Platform.IsPlatformRaspberryPi()
 
             if not NoTile:
+
+                StartInfo["buttons"] = self.GetButtons()
+
                 StartInfo["tiles"] = []
                 for Tile in self.TileList:
                     StartInfo["tiles"].append(Tile.GetStartInfo())
@@ -1095,46 +1268,35 @@ class GeneratorController(MySupport):
 
             CmdList = CmdString.split("=")
             if len(CmdList) != 2:
-                self.LogError(
-                    "Validation Error: Error parsing command string in WriteRegValue (parse): "
-                    + CmdString
-                )
+                self.LogError("Validation Error: Error parsing command string in WriteRegValue (parse): " + CmdString)
                 return msgbody
 
             CmdList[0] = CmdList[0].strip()
 
             if not CmdList[0].lower() == "writeregvalue":
-                self.LogError(
-                    "Validation Error: Error parsing command string in WriteRegValue (parse2): "
-                    + CmdString
-                )
+                self.LogError("Validation Error: Error parsing command string in WriteRegValue (parse2): " + CmdString)
                 return msgbody
 
             ParsedList = CmdList[1].split(",")
 
             if len(ParsedList) != 2:
-                self.LogError(
-                    "Validation Error: Error parsing command string in WriteRegValue (parse3): "
-                    + CmdString
-                )
+                self.LogError("Validation Error: Error parsing command string in WriteRegValue (parse3): " + CmdString)
                 return msgbody
             Register = ParsedList[0].strip()
             Value = ParsedList[1].strip()
+            Value = int(Value,16)
+            LowByte = Value & 0x00FF
+            HighByte = Value >> 8
             Data = []
-            Data.append(0)
-            Data.append(int(Value, 16))
-            RegValue = self.ModBus.ProcessWriteTransaction(
-                Register, len(Data) / 2, Data
-            )
+            Data.append(HighByte)
+            Data.append(LowByte)
+            RegValue = self.ModBus.ProcessWriteTransaction(Register, len(Data) / 2, Data)
 
             if RegValue == "":
                 msgbody = "OK"
 
         except Exception as e1:
-            self.LogErrorLine(
-                "Validation Error: Error parsing command string in WriteRegValue: "
-                + CmdString
-            )
+            self.LogErrorLine("Validation Error: Error parsing command string in WriteRegValue: " + CmdString)
             self.LogError(str(e1))
             return msgbody
 
@@ -2841,17 +3003,13 @@ class GeneratorController(MySupport):
                     return "Invalid maintenance log entry"
                 self.MaintLogList.append(Entry)
                 with open(self.MaintLog, "w") as outfile:
-                    json.dump(
-                        self.MaintLogList, outfile, sort_keys=True, indent=4
-                    )  # , ensure_ascii = False)
+                    json.dump(self.MaintLogList, outfile, sort_keys=True, indent=4)  
                     outfile.flush()
             except Exception as e1:
                 self.LogErrorLine("Error in AddEntryToMaintLog: " + str(e1))
                 return "Invalid input for Maintenance Log entry (2)."
         else:
-            self.LogError(
-                "Error in AddEntryToMaintLog: invalid input: " + str(InputString)
-            )
+            self.LogError("Error in AddEntryToMaintLog: invalid input: " + str(InputString))
             return "Invalid input for Maintenance Log entry (3)."
         return "OK"
 

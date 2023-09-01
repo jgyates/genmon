@@ -893,7 +893,8 @@ class Monitor(MySupport):
                 "set_temp_bounds": [self.Controller.SetExternalTemperatureBounds,(command,),True,],
                 "set_power_data": [self.Controller.SetExternalCTData, (command,), True],
                 "notify_message": [self.SendMessage, (command,), True],
-                "getreglabels_json": [self.Controller.GetRegisterLabels, (), True]
+                "getreglabels_json": [self.Controller.GetRegisterLabels, (), True],
+                "set_button_command": [self.Controller.SetCommandButton, (command,), True]
             }
 
             CommandList = command.split(" ")

@@ -181,7 +181,7 @@ class CustomController(GeneratorController):
                 )
 
             self.ConfigImportFile = self.config.ReadValue(
-                "import_config_file", default=None
+                "import_config_file", default="Evolution_Liquid_Cooled.json"
             )
             if self.ConfigImportFile == None:
                 self.FatalError("Missing entry import_config_file. Unable to continue.")
@@ -1171,21 +1171,38 @@ class CustomController(GeneratorController):
             return ReturnValue
         return ReturnValue
 
+    # -------------CustomController:SetButton------------------------------------
+    def SetButton(self):
+        try:
+            pass
+        except Exception as e1:
+            self.LogErrorLine("Error in SetButton: " + str(e1))
+            return {}
     # -------------CustomController:GetButtons-----------------------------------
-    def GetButtons(self):
+    def GetButtons(self, singlebuttonname = None):
         try:
             button_list = self.controllerimport.get("buttons", None)
 
+            if not singlebuttonname == None:
+                for button in button_list:
+                    if button["onewordcommand"] == singlebuttonname:
+                        return button
+                return None
+            
             if button_list == None:
                 return {}
             if not isinstance(button_list, list):
                 self.LogDebug("Error in GetButtons: invalid input or data: "+ str(type(button_list)))
                 return {}
 
-            return_buttons = {}
-            for button in button_list:
-                return_buttons[button["onewordcommand"]] = button["title"]
-            return return_buttons
+            if True:
+                # TODO fix this
+                return_buttons = {}
+                for button in button_list:
+                    return_buttons[button["onewordcommand"]] = button["title"]
+                return return_buttons
+            else:
+                return button_list
 
         except Exception as e1:
             self.LogErrorLine("Error in GetButtons: " + str(e1))
@@ -1236,54 +1253,7 @@ class CustomController(GeneratorController):
                         continue
 
                     with self.ModBus.CommAccessLock:
-                        for command in command_sequence:
-                            if not len(command["value"]):
-                                self.LogDebug("Error in SetGeneratorRemoteCommand: invalid value array")
-                                continue
-                            if isinstance(command["value"], list):
-                                if not (len(command["value"]) % 2) == 0:
-                                    self.LogDebug("Error in SetGeneratorRemoteCommand: invalid value length")
-                                    return "Command not found."
-                                Data = []
-                                for item in command["value"]:
-                                    if isinstance(item, str):
-                                        Data.append(int(item, 16))
-                                    elif isinstance(item, int):
-                                        Data.append(item)
-                                    else:
-                                        self.LogDebug("Error in SetGeneratorRemoteCommand: invalid type if value list")
-                                        return "Command not found."
-                                self.LogDebug(
-                                    "Write: " + command["reg"] + ": " + str(Data)
-                                )
-                                self.ModBus.ProcessWriteTransaction(
-                                    command["reg"], len(Data) / 2, Data
-                                )
-
-                            elif isinstance(command["value"], str):
-                                value = int(command["value"], 16)
-                                LowByte = value & 0x00FF
-                                HighByte = value >> 8
-                                Data = []
-                                Data.append(HighByte)  # Value for indexed register (High byte)
-                                Data.append(LowByte)  # Value for indexed register (Low byte)
-                                self.LogDebug("Write: " + command["reg"] + ": "+ ("%x %x" % (HighByte, LowByte)))
-                                self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data)
-                            elif isinstance(command["value"], int):
-                                value = command["value"]
-                                LowByte = value & 0x00FF
-                                HighByte = value >> 8
-                                Data = []
-                                Data.append(HighByte)  # Value for indexed register (High byte)
-                                Data.append(LowByte)  # Value for indexed register (Low byte)
-                                self.LogDebug("Write: "+ command["reg"]+ ": "+ ("%x %x" % (HighByte, LowByte)))
-                                self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data)
-                            else:
-                                self.LogDebug("Error in SetGeneratorRemoteCommand: invalid value type")
-                                return "Command not found."
-
-                    return "Remote command sent successfully"
-
+                        return self.ExecuteCommandSequence(command_sequence)
         except Exception as e1:
             self.LogErrorLine("Error in SetGeneratorRemoteCommand: " + str(e1))
             return "Error"
@@ -1847,7 +1817,8 @@ class CustomController(GeneratorController):
                 ServiceStr = self.GetExtendedDisplayString(self.controllerimport, "maintenance_due")
                 if ServiceStr == "Unknown" or ServiceStr == "" or ServiceStr == None:
                     ServiceDue = False
-                ServiceDue = True
+                else:
+                    ServiceDue = True
             else:
                 ServiceDue = False
 

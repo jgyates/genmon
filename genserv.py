@@ -467,6 +467,7 @@ def ProcessCommand(command):
             "support_data_json",
             "fuel_log_clear",
             "notify_message",
+            "set_button_command",
         ]:
             finalcommand = "generator: " + command
 
@@ -514,6 +515,9 @@ def ProcessCommand(command):
                     # use direct method instead of request.args.get due to unicoode
                     # input for add_maint_log for international users
                     input = request.args["edit_row_maint_log"]
+                    finalcommand += "=" + input
+                if command == "set_button_command":
+                    input = request.args["set_button_command"]
                     finalcommand += "=" + input
                 data = MyClientInterface.ProcessMonitorCommand(finalcommand)
 
