@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - Added functionality for custom defined controllers via JSON
 - Minor formatting update to web UI spacing to better accommodate custom controllers
 - Updated alarm code for Evolution 2.0
+- Added genmon.conf entries for using loopback IP address for listen address in server
 
 ## V1.18.17 -2023-04-06
 - Added feature request to allow external temperature sensors to be displayed as gauges
