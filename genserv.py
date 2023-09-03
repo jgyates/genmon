@@ -3996,6 +3996,7 @@ def LoadConfig():
     global LdapAdminGroup
     global LdapReadOnlyGroup
 
+    global ListenIPAddress
     global HTTPPort
     global HTTPAuthUser
     global HTTPAuthPass
@@ -4039,6 +4040,8 @@ def LoadConfig():
                 "usehttps", return_type=bool
             )
 
+        ListenIPAddress = ConfigFiles[GENMON_CONFIG].ReadValue("flask_listen_ip_address", default="0.0.0.0")
+        
         if ConfigFiles[GENMON_CONFIG].HasOption("http_port"):
             HTTPPort = ConfigFiles[GENMON_CONFIG].ReadValue(
                 "http_port", return_type=int, default=8000
@@ -4391,7 +4394,7 @@ if __name__ == "__main__":
     CacheToolTips()
     try:
         app.run(
-            host="0.0.0.0",
+            host=ListenIPAddress,
             port=HTTPPort,
             threaded=True,
             ssl_context=SSLContext,
@@ -4409,7 +4412,7 @@ if __name__ == "__main__":
             LogError("Retrying app.run()")
             time.sleep(2)
             app.run(
-                host="0.0.0.0",
+                host=ListenIPAddress,
                 port=HTTPPort,
                 threaded=True,
                 ssl_context=SSLContext,

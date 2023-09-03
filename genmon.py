@@ -70,6 +70,7 @@ class Monitor(MySupport):
         # defautl values
         self.SiteName = "Home"
         self.ServerSocket = None
+        self.ServerIPAddress = ""
         self.ServerSocketPort = (
             ProgramDefaults.ServerPort
         )  # server socket for nagios heartbeat and command/status
@@ -356,6 +357,8 @@ class Monitor(MySupport):
                 self.ServerSocketPort = self.config.ReadValue(
                     "server_port", return_type=int
                 )
+
+            self.ServerIPAddress = self.config.ReadValue("genmon_server_address", default = "")
 
             self.LogLocation = self.config.ReadValue(
                 "loglocation", default=ProgramDefaults.LogPath
@@ -1536,7 +1539,7 @@ class Monitor(MySupport):
         self.ServerSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.ServerSocket.settimeout(0.5)
         # bind the socket to a host, and a port
-        self.ServerSocket.bind(("", self.ServerSocketPort))
+        self.ServerSocket.bind((self.ServerIPAddress, self.ServerSocketPort))
         # become a server socket
         self.ServerSocket.listen(5)
 
