@@ -3875,9 +3875,7 @@ class Evolution(GeneratorController):
             # if we get here we must convert the data.
             Voltage = float(self.GetVoltageOutput(ReturnInt=True))
 
-            return self.ConvertExternalData(
-                request=request, voltage=Voltage, ReturnFloat=ReturnFloat
-            )
+            return self.ConvertExternalData(request=request, voltage=Voltage, ReturnFloat=ReturnFloat)
 
         except Exception as e1:
             self.LogErrorLine("Error in CheckExternalCTData: " + str(e1))
@@ -3905,9 +3903,7 @@ class Evolution(GeneratorController):
             if "Stopped" in EngineState or "Off" in EngineState or not len(EngineState):
                 return DefaultReturn
 
-            ReturnValue = self.CheckExternalCTData(
-                request="current", ReturnFloat=ReturnFloat
-            )
+            ReturnValue = self.CheckExternalCTData(request="current", ReturnFloat=ReturnFloat)
             if ReturnValue != None:
                 return ReturnValue
 
@@ -3920,12 +3916,12 @@ class Evolution(GeneratorController):
                     CurrentFloat = 0.0
 
                 if self.CurrentDivider == None or self.CurrentDivider <= 0:
-                    Divisor = 0.72  # 0.425    #30.0/67.0  #http://www.webmath.com/equline1.html
+                    Divisor = 1000     # This should be Hall Field Current in mA so divide by 1000 for amps
                 else:
                     Divisor = self.CurrentDivider
 
                 if self.CurrentOffset == None:
-                    CurrentOffset = -211.42  # -323.31     #-1939.0/6.0
+                    CurrentOffset = 0
                 else:
                     CurrentOffset = self.CurrentOffset
 
