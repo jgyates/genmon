@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - Minor formatting update to web UI spacing to better accommodate custom controllers
 - Updated alarm code for Evolution 2.0
 - Added genmon.conf entries for using loopback IP address for listen address in server
+- Update to current calculation for liquid cooled Evolution
 
 ## V1.18.17 -2023-04-06
 - Added feature request to allow external temperature sensors to be displayed as gauges
