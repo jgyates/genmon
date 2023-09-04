@@ -1135,7 +1135,7 @@ class Evolution(GeneratorController):
         if len(Value) != 4:
             return ""
         ProductModel = int(Value, 16)
-
+        # 0x02  Pre-Nexus
         # 0x03  Nexus, Air Cooled
         # 0x06  Nexus, Liquid Cooled
         # 0x09  Evolution, Air Cooled
