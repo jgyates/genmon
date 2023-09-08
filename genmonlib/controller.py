@@ -88,6 +88,7 @@ class GeneratorController(MySupport):
         self.FuelLock = threading.RLock()
         self.PowerLogList = []
         self.PowerLock = threading.RLock()
+        self.bAlternateDateFormat = False
         self.KWHoursMonth = None
         self.FuelMonth = None
         self.RunHoursMonth = None
