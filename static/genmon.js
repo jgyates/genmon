@@ -1555,7 +1555,7 @@ function saveJournals(rowtype, rowcount){
              $('.progress-bar-fill').queue(function () {
                   $(this).css('width', '100%')
              });
-             setTimeout(function(){ vex.closeAll();}, 2000);
+             setTimeout(function(){ vex.closeAll();gotoLogin();}, 2000); 
            }
         }
     })
