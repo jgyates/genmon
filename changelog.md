@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - Added genmon.conf entries for using loopback IP address for listen address in server
 - Update to current calculation for liquid cooled Evolution
 - Update to gensnmp.py to allow user defined SNMP entries
+- Fixed issue with page reload after saving service journal 
 
 ## V1.18.17 -2023-04-06
 - Added feature request to allow external temperature sensors to be displayed as gauges
