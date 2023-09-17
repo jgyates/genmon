@@ -182,6 +182,12 @@ class GenSNMP(MySupport):
             self.enterpriseID = self.config.ReadValue("enterpriseid", return_type=int, default=58399)
             self.baseOID = (1, 3, 6, 1, 4, 1, self.enterpriseID)
             self.snmpport = self.config.ReadValue("snmpport", return_type=int, default=161)
+            # this is the snmp id used to populate user defined data in the snmp schema 
+            # the value after the enterprise ID is the externaldata ID
+            # if the file userdefined.json is in the ./genmon/data/mib folder, user defined 
+            # data on the Monitor page of the UI will be assigned SNMP data per the json file 
+            # in the mib folder
+            self.externaldataID = self.config.ReadValue("externaldataid", return_type=int, default=99)
 
             if self.UseIntegerValues:
                 self.UseNumeric = True
@@ -417,7 +423,7 @@ class GenSNMP(MySupport):
                 return 
             
             if "genmon" != self.GenmonSNMP["controller_type"]:
-                self.LogError("Fatal Error: Invalid data in " + self.GenmonSNMPConfigFileName)
+                self.LogError("Fatal Error: Invalid data (genmon) in " + self.GenmonSNMPConfigFileName)
                 return 
         
             ## custom controller check and file name here
@@ -440,53 +446,36 @@ class GenSNMP(MySupport):
 
             ## TODO add custom controller check and file name here
             if self.ControllerSelected != self.ControllerSNMP["controller_type"]:
-                self.LogError("Fatal Error: Invalid data in " + self.ControllerSNMPConfigFileName)
+                self.LogError("Fatal Error: Invalid data (controller) in " + self.ControllerSNMPConfigFileName)
                 return 
 
             # setup OIDs for genmon specific entries (not controller specific entries)
-            try:
-                for entry in self.GenmonSNMP["snmp"]:
-                    return_type = str
-                    if entry["return_type"].lower() == "str":
-                        return_type = str
-                    elif entry["return_type"].lower() == "int":
-                        return_type = int
-                    else:
-                        self.LogError("Error: invalid return type in genmon SNMP config")
-                        return_type = str
-                    if self.UseIntegerValues and "integer" in entry and entry["integer"] == True:
-                        self.LogDebug("Int set for " + str(entry["keywords"]))
-                        return_type = int
-                        default = 0
-                    else:
-                        default = entry["default"]
-                    self.AddOID(eval(entry["oid"]), return_type, entry["description"], default,entry["keywords"])
-            except Exception as e1:
-                self.LogErrorLine("Error parsing genmon SNMP data: " + str(e1))
+            if not self.SetSNMPData(self.GenmonSNMP, "genmon"):
+                self.LogError("Error parsing genmon SNMP data, exiting ")
+                return 
+            
+            if not self.SetSNMPData(self.ControllerSNMP, "controller", ControllerID = CtlID):
+                self.LogError("Error parsing controller SNMP data, exiting")
                 return 
         
-            try:
-                for entry in self.ControllerSNMP["snmp"]:
-                    return_type = str
-                    if entry["return_type"].lower() == "str":
-                        return_type = str
-                    elif entry["return_type"].lower() == "int":
-                        return_type = int
-                    else:
-                        self.LogError("Error: invalid return type in controller SNMP config")
-                        return_type = str
-                    if self.UseIntegerValues and "integer" in entry and entry["integer"] == True:
-                        self.LogDebug("Int set for " + str(entry["keywords"]))
-                        return_type = int
-                        default = 0
-                    else:
-                        default = entry["default"]
-                    OID = list(eval(entry["oid"]))
-                    OID.insert(0,CtlID)
-                    self.AddOID(tuple(OID), return_type, entry["description"], default,entry["keywords"])
-            except Exception as e1:
-                self.LogErrorLine("Error parsing controller SNMP data: " + str(e1))
-                return
+            
+                        # assumed to be ~/genmon/data/mib
+            self.UserDefinedSNMPConfigFileName = os.path.join(
+                os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
+                "data",
+                "mib",
+                "userdefined.json",
+            )
+            # is there a userdefined.json file in ./genmon/data/mib ?
+            if os.path.isfile(self.UserDefinedSNMPConfigFileName):
+                self.LogDebug(self.UserDefinedSNMPConfigFileName)
+                self.UserDefinedSNMP = self.ReadJSONConfig(self.UserDefinedSNMPConfigFileName)
+                if self.UserDefinedSNMP == None:
+                    self.LogError("Fatal Error: Unable to get base controller SNMP config data from " + self.ControllerSNMPConfigFileName)
+                    return 
+                if not self.SetSNMPData(self.UserDefinedSNMP, "user defined", ControllerID = self.externaldataID):
+                    self.LogError("Error parsing user defined SNMP data, exiting")
+                    return
 
             self.mibDataIdx = {}
             for mibVar in self.mibData:
@@ -534,7 +523,36 @@ class GenSNMP(MySupport):
             self.LogErrorLine("Error in SetupSNMP: " + str(e1))
             self.SnmpClose()
 
-    # ----------  GenSNMP::SnmpClose --------------------------------------------
+    # ----------  GenSNMP::SetSNMPData -----------------------------------------
+    def SetSNMPData(self, config_dict, name, ControllerID = None):
+
+        try:
+            self.LogDebug(name + ": " + str(len(config_dict["snmp"])))
+            for entry in config_dict["snmp"]:
+                return_type = str
+                if entry["return_type"].lower() == "str":
+                    return_type = str
+                elif entry["return_type"].lower() == "int":
+                    return_type = int
+                else:
+                    self.LogError(f"Error: invalid return type in {name} config")
+                    return_type = str
+                if self.UseIntegerValues and "integer" in entry and entry["integer"] == True:
+                    self.LogDebug("Int set for " + str(entry["keywords"]))
+                    return_type = int
+                    default = 0
+                else:
+                    default = entry["default"]
+                OID = list(eval(entry["oid"]))
+                if ControllerID != None:
+                    OID.insert(0,ControllerID)
+                self.AddOID(tuple(OID), return_type, entry["description"], default,entry["keywords"])
+            return True
+        except Exception as e1:
+            self.LogErrorLine(f"Error parsing {name} SNMP data: " + str(e1))
+            return False
+        
+    # ----------  GenSNMP::SnmpClose -------------------------------------------
     def SnmpClose(self):
 
         try:
