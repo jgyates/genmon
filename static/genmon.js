@@ -1354,7 +1354,9 @@ function saveNotifications(){
              DisplayStrAnswer = false; // Prevent recursive calls.
              e.preventDefault();
              saveNotificationsJSON();
+             var DisplayStr1 = 'Saving...';
              var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
+             $('.vex-dialog-message').html(DisplayStr1);
              $('.vex-dialog-buttons').html(DisplayStr2);
              $('.progress-bar-fill').queue(function () {
                   $(this).css('width', '100%')
