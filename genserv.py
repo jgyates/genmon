@@ -1064,7 +1064,7 @@ def GetAddOns():
                 "pushsound", return_type=str, default="updown"
             ),
             "string",
-            "Notification sound identifier. See https://pushover.net/api#sounds for a full list of sound IDs",
+            "Notification sound identifier. See https://pushover.net/api#sounds for a full list of sound IDs. All sounds must be lower case.",
             bounds="minmax:3:20",
             display_name="Push Sound",
         )
