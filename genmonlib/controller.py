@@ -1945,17 +1945,42 @@ class GeneratorController(MySupport):
 
             if self.UseExternalCTData:
                 NominalCurrent = float(self.NominalKW) * 1000 / self.NominalLineVolts
-                Tile = MyTile(
-                    self.log,
-                    title="External Current",
-                    units="A",
-                    type="current",
-                    nominal=int(NominalCurrent),
-                    callback=self.CheckExternalCTData,
-                    callbackparameters=("current", True, True),
-                )
-                self.TileList.append(Tile)
 
+                ReturnCurrent1 = self.CheckExternalCTData(request="ct1", ReturnFloat=True, gauge=True)
+                ReturnCurrent2 = self.CheckExternalCTData(request="ct2", ReturnFloat=True, gauge=True)
+                if ReturnCurrent1 != None and ReturnCurrent2 != None:
+                    Tile = MyTile(
+                        self.log,
+                        title="Current L1",
+                        units="A",
+                        type="current",
+                        nominal=int(NominalCurrent),
+                        callback=self.CheckExternalCTData,
+                        callbackparameters=("ct1", True, True),
+                    )
+                    self.TileList.append(Tile)
+
+                    Tile = MyTile(
+                        self.log,
+                        title="Current L2",
+                        units="A",
+                        type="current",
+                        nominal=int(NominalCurrent),
+                        callback=self.CheckExternalCTData,
+                        callbackparameters=("ct2", True, True),
+                    )
+                    self.TileList.append(Tile)
+                else:
+                    Tile = MyTile(
+                        self.log,
+                        title="External Current",
+                        units="A",
+                        type="current",
+                        nominal=int(NominalCurrent),
+                        callback=self.CheckExternalCTData,
+                        callbackparameters=("current", True, True),
+                    )
+                    self.TileList.append(Tile)
                 NominalPower = float(self.NominalKW)
                 Tile = MyTile(
                     self.log,
@@ -2963,6 +2988,7 @@ class GeneratorController(MySupport):
                         (powerfactor * current1 * (singlelegvoltage))
                         + (powerfactor * current2 * (singlelegvoltage))
                     ) / 1000
+                    #
                 return self.ReturnFormat(PowerFloat, "kW", ReturnFloat)
 
             return None
