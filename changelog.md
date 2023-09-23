@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - Update to current calculation for liquid cooled Evolution
 - Update to gensnmp.py to allow user defined SNMP entries
 - Fixed issue with page reload after saving service journal 
+- Change for external CT gauge display when using gencthat.py add on
 
 ## V1.18.17 -2023-04-06
 - Added feature request to allow external temperature sensors to be displayed as gauges
