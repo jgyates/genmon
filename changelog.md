@@ -23,6 +23,8 @@ All notable changes to this project will be documented in this file.
 - Update to gensnmp.py to allow user defined SNMP entries
 - Fixed issue with page reload after saving service journal 
 - Change for external CT gauge display when using gencthat.py add on
+- Fixed bug that may prohibit some add on programs from working at the same time
+- Added more bounds checking to gentemp.py
 
 ## V1.18.17 -2023-04-06
 - Added feature request to allow external temperature sensors to be displayed as gauges

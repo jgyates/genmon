@@ -116,12 +116,20 @@ class GenTemp(MySupport):
             self.Generator = ClientInterface(host=self.MonitorAddress, port=port, log=self.log)
 
             self.BoundsData = [] 
-            if self.DeviceNominalValues != None and self.DeviceMaxValues != None:
-                for (NominalValue,MaxValue) in itertools.zip_longest(self.DeviceNominalValues, self.DeviceMaxValues):
-                    self.BoundsData.append({"max": MaxValue, "nominal": NominalValue})
-                return_string = json.dumps(self.BoundsData)
-                self.LogDebug("Bounds Data: " + str(self.BoundsData))
-                self.SendCommand("generator: set_temp_bounds=" + return_string)
+            
+            if self.UseMetric:
+                self.Units = "C"
+            else:
+                self.Units = "F"
+            if self.DeviceNominalValues != None and self.DeviceMaxValues != None and self.DeviceLabels != None:
+                if len(self.DeviceNominalValues) == len(self.DeviceMaxValues) == len(self.DeviceLabels):
+                    for (NominalValue,MaxValue, DeviceName) in itertools.zip_longest(self.DeviceNominalValues, self.DeviceMaxValues, self.DeviceLabels):
+                        self.BoundsData.append({"max": MaxValue, "nominal": NominalValue, "name": DeviceName, "units": self.Units})
+                    return_string = json.dumps(self.BoundsData)
+                    self.LogDebug("Bounds Data: " + str(self.BoundsData))
+                    self.SendCommand("generator: set_temp_bounds=" + return_string)
+                else:
+                    self.LogError("Error in configuration: sensor name, nominal and max values do not have he same number of entries")
 
             self.DeviceList = self.EnumDevices()
 

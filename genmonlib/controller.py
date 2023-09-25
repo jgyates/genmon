@@ -121,15 +121,13 @@ class GeneratorController(MySupport):
         self.UseExternalCTData = False
         self.ExternalCTData = None
         self.UseExternalTempData = False
-        self.ExternalDataLock = threading.RLock()
         self.ExternalTempData = None
         self.ExternalTempDataTime = None
         self.ExternalTempBounds = None
+        self.ExternalDataLock = threading.RLock()
 
-        self.ProgramStartTime = datetime.datetime.now()  # used for com metrics
-        self.OutageStartTime = (
-            self.ProgramStartTime
-        )  # if these two are the same, no outage has occured
+        self.ProgramStartTime = datetime.datetime.now() # used for com metrics
+        self.OutageStartTime = (self.ProgramStartTime)  # if these two are the same, no outage has occured
         self.OutageNoticeDelayTime = None
         self.LastOutageDuration = self.OutageStartTime - self.OutageStartTime
         self.OutageNoticeDelay = 0
@@ -2022,19 +2020,17 @@ class GeneratorController(MySupport):
                 try:
                     self.LogDebug("Setting up gauges for external temp sensors")
                     index = 0
-                    TempList = self.ExternalTempData["External Temperature Sensors"]
-                    for (TempDict,TempBounds) in itertools.zip_longest(TempList, self.ExternalTempBounds):
-                        temp_name = list(TempDict.keys())[0]
-                        temp_max = TempBounds['max']
-                        temp_nominal = TempBounds['nominal']
-                        temp_value = TempDict[temp_name]
-                        temp_list = temp_value.strip().split(" ")
-                        temp_units = temp_list[1]
-                        if temp_name != None and temp_max != None and temp_nominal != None:
-                            Tile = MyTile(self.log,title=temp_name, units=temp_units,type="temperature", subtype = "external",
-                                nominal=temp_nominal, maximum=temp_max, callback=self.GetExternalTemp, callbackparameters=(index,),)
-                            self.TileList.append(Tile)
-                        index += 1
+                    if "External Temperature Sensors" in  self.ExternalTempData.keys():
+                        for TempBounds in self.ExternalTempBounds:
+                            temp_max = TempBounds['max']
+                            temp_nominal = TempBounds['nominal']
+                            temp_name = TempBounds['name'].strip()
+                            temp_units = TempBounds['units']
+                            if temp_name != None and temp_max != None and temp_nominal != None:
+                                Tile = MyTile(self.log,title=temp_name, units=temp_units,type="temperature", subtype = "external",
+                                    nominal=temp_nominal, maximum=temp_max, callback=self.GetExternalTemp, callbackparameters=(index,),)
+                                self.TileList.append(Tile)
+                            index += 1
 
                 except Exception as e1:
                     self.LogErrorLine("Error in SetupCommonTiles: TempData: " + str(e1))
@@ -2288,6 +2284,7 @@ class GeneratorController(MySupport):
     def DisplayStatusCommon(self, Status, JSONNum=False):
 
         try:
+            
             with self.ExternalDataLock:
                 try:
                     if self.ExternalTempData != None:
@@ -2299,8 +2296,9 @@ class GeneratorController(MySupport):
                             ExternalTempList = self.ExternalTempData["External Temperature Sensors"]
                             if len(ExternalTempList):
                                 Status["Status"].append({"External Temperature Sensors" : TempList})
-                                for TempDict in ExternalTempList:
+                                for ExTempDict in ExternalTempList:
                                     try:
+                                        TempDict = ExTempDict.copy()    # make a copy since we use popitmes below
                                         if len(TempDict):
                                             TempKey, TempData = TempDict.popitem()
                                             TempDataList = TempData.strip().split( " ")
@@ -2309,7 +2307,7 @@ class GeneratorController(MySupport):
                                         self.LogErrorLine("Error in DisplayStatus (3): " + str(e1))
                 except Exception as e1:
                     self.LogErrorLine("Error in DisplayStatusCommon(2): " + str(e1))
-
+            
             ReturnCurrent = self.CheckExternalCTData(request="current", ReturnFloat=True, gauge=True)
             ReturnCurrent1 = self.CheckExternalCTData(request="ct1", ReturnFloat=True, gauge=True)
             ReturnCurrent2 = self.CheckExternalCTData(request="ct2", ReturnFloat=True, gauge=True)
@@ -2815,18 +2813,24 @@ class GeneratorController(MySupport):
             if not self.UseExternalTempData or self.ExternalTempData == None or self.ExternalTempBounds == None:
                 return 0.0
             index = 0
-            TempList = self.ExternalTempData["External Temperature Sensors"]
-            for TempDict in TempList:
-                if index == sensor_index:
-                    temp_name = list(TempDict.keys())[0]
-                    temp_value = TempDict[temp_name]
-                    temp_list = temp_value.strip().split(" ")
-                    temp_value = temp_list[0]
-                    return float(temp_value)
-                    
-                index += 1
+            with self.ExternalDataLock:
+                TempList = self.ExternalTempData["External Temperature Sensors"]
+                if len(TempList) > 0:
+                    for TempDict in TempList:
+                        if index == sensor_index:
+                            temp_name = list(TempDict.keys())[0]
+                            temp_value = TempDict[temp_name]
+                            temp_list = temp_value.strip().split(" ")
+                            temp_value = temp_list[0]
+                            return float(temp_value)
+                        index += 1
+                else:
+                    self.LogDebug("Error in GetExternalTemp: " + str(self.ExternalTempData))
+                        
+            self.LogDebug("Temp data not found in GetExternalTemp: " + str(sensor_index))
+            return 0.0
         except Exception as e1:
-            self.LogErrorLine("Error in GetExternalTemp: " + str(e1))
+            self.LogErrorLine("Error in GetExternalTemp: " + str(e1) + ": " + str(sensor_index) + ": " + str(self.ExternalTempData))
             return 0.0
 
     # ----------  GeneratorController::SetExternalTemperatureBounds-------------
