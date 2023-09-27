@@ -88,7 +88,7 @@ function updatelibraries() {
   sudo $pipcommand install paho-mqtt -U
   sudo $pipcommand install pysnmp -U
   sudo $pipcommand install ldap3 -U
-  sudo $pipcommand install pyasn1 -U
+  sudo $pipcommand install pyasn1==0.4.8 -U
   sudo $pipcommand install smbus -U
   sudo $pipcommand install psutil -U
   if [ "$usepython3" = true ] ; then
@@ -166,7 +166,7 @@ function installgenmon() {
       sudo $pipcommand install pyotp==2.3.0
     fi
     # correct problem with LDAP3 module install
-    sudo $pipcommand install pyasn1 -U
+    sudo $pipcommand install pyasn1==0.4.8 -U
     sudo $pipcommand install mopeka_pro_check
     sudo $pipcommand install fluids
     sudo $pipcommand install voipms
