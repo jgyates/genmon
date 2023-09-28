@@ -25,6 +25,7 @@ All notable changes to this project will be documented in this file.
 - Change for external CT gauge display when using gencthat.py add on
 - Fixed bug that may prohibit some add on programs from working at the same time
 - Added more bounds checking to gentemp.py
+- Corrected issue with Settings page not allows Even parity to be set on custom controllers
 
 ## V1.18.17 -2023-04-06
 - Added feature request to allow external temperature sensors to be displayed as gauges
