@@ -354,6 +354,8 @@ def doLdapLogin(username, password):
         return False
     try:
         from ldap3 import ALL, NTLM, Connection, Server
+        from ldap3.utils.dn import escape_rdn
+        from ldap3.utils.conv import escape_filter_chars
     except ImportError as importException:
         LogError(
             "LDAP3 import not found, run 'sudo pip install ldap3 && sudo pip3 install ldap3'"
@@ -382,9 +384,10 @@ def doLdapLogin(username, password):
             authentication=NTLM,
             auto_bind=True,
         )
+        loginbasestr = escape_filter_chars("(&(objectclass=user)(sAMAccountName=" + AccountName + "))")
         conn.search(
             LdapBase,
-            "(&(objectclass=user)(sAMAccountName=" + AccountName + "))",
+            loginbasestr,
             attributes=["memberOf"],
         )
         for user in sorted(conn.entries):
