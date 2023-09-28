@@ -8,10 +8,8 @@
 #
 # MODIFICATIONS:
 # -------------------------------------------------------------------------------
-
-from __future__ import (  # For python 3.x compatibility with print function
-    print_function,
-)
+# For python 3.x compatibility with print function
+from __future__ import print_function
 
 import datetime
 import os
@@ -85,36 +83,31 @@ class SerialDevice(MySupport):
                 self.SerialDevice.bytesize = serial.EIGHTBITS
 
             if Parity == None:
-                self.SerialDevice.parity = (
-                    serial.PARITY_NONE
-                )  # set parity check: no parity
+                # set parity check: no parity
+                self.SerialDevice.parity = (serial.PARITY_NONE)  
             elif Parity == 1:
-                self.SerialDevice.parity = (
-                    serial.PARITY_ODD
-                )  # set parity check: use odd parity
+                # set parity check: use odd parity
+                self.SerialDevice.parity = (serial.PARITY_ODD)  
+                self.LogError("Serial: Setting ODD parity")
             else:
-                self.SerialDevice.parity = (
-                    serial.PARITY_EVEN
-                )  # set parity check: use even parity
+                # set parity check: use even parity
+                self.SerialDevice.parity = (serial.PARITY_EVEN)  
+                self.LogError("Serial: Setting EVEN parity")
 
             if OnePointFiveStopBits == None:
                 self.SerialDevice.stopbits = serial.STOPBITS_ONE  # number of stop bits
             elif OnePointFiveStopBits:
-                self.SerialDevice.stopbits = (
-                    serial.STOPBITS_ONE_POINT_FIVE
-                )  # number of stop bits
+                # number of stop bits
+                self.SerialDevice.stopbits = (serial.STOPBITS_ONE_POINT_FIVE)  
             else:
                 self.SerialDevice.stopbits = serial.STOPBITS_ONE  # number of stop bits
-
-            self.SerialDevice.timeout = (
-                0.05  # small timeout so we can check if the thread should exit
-            )
+            # small timeout so we can check if the thread should exit
+            self.SerialDevice.timeout = 0.05
             self.SerialDevice.xonxoff = False  # disable software flow control
             self.SerialDevice.rtscts = RtsCts  # disable hardware (RTS/CTS) flow control
             self.SerialDevice.dsrdtr = False  # disable hardware (DSR/DTR) flow control
-            self.SerialDevice.writeTimeout = (
-                None  # timeout for write, return when packet sent
-            )
+            # timeout for write, return when packet sent
+            self.SerialDevice.writeTimeout = None
             self.IsOpen = False
             # Check if port failed to open
             if self.SerialDevice.isOpen() == False:
@@ -122,14 +115,10 @@ class SerialDevice(MySupport):
                     self.SerialDevice.open()
                 except Exception as e:
                     if not self.ForceSerialUse:
-                        self.FatalError(
-                            "Error on open serial port %s: " % self.DeviceName + str(e)
-                        )
+                        self.FatalError("Error on open serial port %s: " % self.DeviceName + str(e))
                         return None
                     else:
-                        self.LogErrorLine(
-                            "Error on open serial port %s: " % self.DeviceName + str(e)
-                        )
+                        self.LogErrorLine("Error on open serial port %s: " % self.DeviceName + str(e))
             else:
                 if not self.ForceSerialUse:
                     self.FatalError("Serial port already open: %s" % self.DeviceName)
@@ -151,9 +140,7 @@ class SerialDevice(MySupport):
     def StartReadThread(self):
 
         # start read thread to monitor incoming data commands
-        self.Threads["SerialReadThread"] = MyThread(
-            self.ReadThread, Name="SerialReadThread"
-        )
+        self.Threads["SerialReadThread"] = MyThread(self.ReadThread, Name="SerialReadThread")
 
         return self.Threads["SerialReadThread"]
 
