@@ -169,12 +169,14 @@ class CustomController(GeneratorController):
                 self.SerialBaudRate = self.config.ReadValue(
                     "serial_baud_rate", return_type=int, default=9600
                 )
-            if self.config.HasOption("serial_parity"):
-                self.SerialParity = self.config.ReadValue(
-                    "serial_parity", return_type=int, default=0
-                )
-                if self.SerialParity == 0 or self.SerialParity > 2:
-                    self.SerialParity = None
+            # None, Even or Odd
+            self.SerialParity = self.config.ReadValue("serial_parity",  default=None)
+            if self.SerialParity.lower() == "none" or self.SerialParity == "0" or self.SerialParity == None:
+                self.SerialParity = None
+            elif self.SerialParity.lower() == "odd" or self.SerialParity == "1":
+                self.SerialParity = 1
+            else:
+                self.SerialParity = 2
             if self.config.HasOption("serial_one_point_five_stop_bits"):
                 self.SerialOnePointFiveStopBits = self.config.ReadValue(
                     "serial_one_point_five_stop_bits", return_type=bool, default=False

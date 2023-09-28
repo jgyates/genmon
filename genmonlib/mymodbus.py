@@ -859,7 +859,7 @@ class ModbusProtocol(ModbusBase):
                 or len(SlavePacket) < self.MIN_PACKET_RESPONSE_LENGTH
             ):
                 self.LogError(
-                    "Validation Error, length: Master"
+                    "Validation Error, length: Master "
                     + str(len(MasterPacket))
                     + " Slave: "
                     + str(len(SlavePacket))
