@@ -1884,19 +1884,19 @@ function DisplaySettings(){
         $.extend($.idealforms.rules, {
            // The rule is added as "ruleFunction:arg1:arg2"
            HTTPAddress: function(input, value, arg1, arg2) {
-             var regex = RegExp("^http[s]?:\\/\\/(([a-z0-9]+([\-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))$", 'g');
+             var regex = RegExp("^http[s]?:\\/\\/(([a-z0-9]+([-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))$", 'g');
              return regex.test(value);
            },
            InternetAddress: function(input, value, arg1, arg2) {
-             var regex = RegExp("^((([a-z0-9]+([\-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))|((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\/.*)?))$", 'g');
+             var regex = RegExp("^((([a-z0-9]+([-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))|((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\/.*)?))$", 'g');
              return regex.test(value);
            },
            IPAddress: function(input, value, arg1, arg2) {
-             var regex = RegExp("^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\/.*)?)|(localhost(\/.*)?))$", 'g');
+             var regex = RegExp("^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\/.*)?)|(localhost(\/.*)?))$", 'g');
              return regex.test(value);
            },
            InternationalPhone: function(input, value, arg1, arg2) {
-             var regex = RegExp('^(\\+(\\d{1,3}))?((\\(\\d{1,4}\\))|(\\d{1,3}))?(\\s|\-)?(\\d+(\\s?|\-?))+$', 'g');
+             var regex = RegExp('^(\\+(\\d{1,3}))?((\\(\\d{1,4}\\))|(\\d{1,3}))?(\\s|-)?(\\d+(\\s?|-?))+$', 'g');
              return regex.test(value);
            },
            UnixFile: function(input, value, arg1, arg2) {
@@ -2267,19 +2267,19 @@ function DisplayAddons(){
         $.extend($.idealforms.rules, {
            // The rule is added as "ruleFunction:arg1:arg2"
            HTTPAddress: function(input, value, arg1, arg2) {
-             var regex = RegExp("^http[s]?:\\/\\/(([a-z0-9]+([\-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))$", 'g');
+             var regex = RegExp("^http[s]?:\\/\\/(([a-z0-9]+([-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))$", 'g');
              return regex.test(value);
            },
            InternetAddress: function(input, value, arg1, arg2) {
-             var regex = RegExp("^(([a-z0-9]+([\-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))$", 'g');
+             var regex = RegExp("^(([a-z0-9]+([-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))$", 'g');
              return regex.test(value);
            },
            IPAddress: function(input, value, arg1, arg2) {
-             var regex = RegExp("^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\/.*)?)|(localhost(\/.*)?))$", 'g');
+             var regex = RegExp("^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\/.*)?)|(localhost(\/.*)?))$", 'g');
              return regex.test(value);
            },
            InternationalPhone: function(input, value, arg1, arg2) {
-             var regex = RegExp('^(\\+(\\d{1,3}))?((\\(\\d{1,4}\\))|(\\d{1,3}))?(\\s|\-)?(\\d+(\\s?|\-?))+$', 'g');
+             var regex = RegExp('^(\\+(\\d{1,3}))?((\\(\\d{1,4}\\))|(\\d{1,3}))?(\\s|-)?(\\d+(\\s?|-?))+$', 'g');
              return regex.test(value);
            },
            UnixFile: function(input, value, arg1, arg2) {
@@ -3098,19 +3098,19 @@ function DisplayAdvancedSettings(){
         $.extend($.idealforms.rules, {
            // The rule is added as "ruleFunction:arg1:arg2"
            HTTPAddress: function(input, value, arg1, arg2) {
-             var regex = RegExp("^http[s]?:\\/\\/(([a-z0-9]+([\-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))$", 'g');
+             var regex = RegExp("^http[s]?:\\/\\/(([a-z0-9]+([-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))$", 'g');
              return regex.test(value);
            },
            InternetAddress: function(input, value, arg1, arg2) {
-             var regex = RegExp("^(([a-z0-9]+([\-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))$", 'g');
+             var regex = RegExp("^(([a-z0-9]+([-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))$", 'g');
              return regex.test(value);
            },
            IPAddress: function(input, value, arg1, arg2) {
-             var regex = RegExp("^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\/.*)?)|(localhost(\/.*)?))$", 'g');
+             var regex = RegExp("^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\/.*)?)|(localhost(\/.*)?))$", 'g');
              return regex.test(value);
            },
            InternationalPhone: function(input, value, arg1, arg2) {
-             var regex = RegExp('^(\\+(\\d{1,3}))?((\\(\\d{1,4}\\))|(\\d{1,3}))?(\\s|\-)?(\\d+(\\s?|\-?))+$', 'g');
+             var regex = RegExp('^(\\+(\\d{1,3}))?((\\(\\d{1,4}\\))|(\\d{1,3}))?(\\s|-)?(\\d+(\\s?|-?))+$', 'g');
              return regex.test(value);
            },
            UnixFile: function(input, value, arg1, arg2) {
