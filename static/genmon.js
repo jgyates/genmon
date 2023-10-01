@@ -1896,7 +1896,7 @@ function DisplaySettings(){
              return regex.test(value);
            },
            InternationalPhone: function(input, value, arg1, arg2) {
-             var regex = RegExp('^(\\+(\\d{1,3}))?((\\(\\d{1,4}\\))|(\\d{1,3}))?(\\s|-)?(\\d+(\\s?|-?))+$', 'g');
+             var regex = RegExp('^[0-9\-().+\s]{10,20}$', 'g');
              return regex.test(value);
            },
            UnixFile: function(input, value, arg1, arg2) {
@@ -2279,7 +2279,7 @@ function DisplayAddons(){
              return regex.test(value);
            },
            InternationalPhone: function(input, value, arg1, arg2) {
-             var regex = RegExp('^(\\+(\\d{1,3}))?((\\(\\d{1,4}\\))|(\\d{1,3}))?(\\s|-)?(\\d+(\\s?|-?))+$', 'g');
+             var regex = RegExp('^[0-9\-().+\s]{10,20}$', 'g');
              return regex.test(value);
            },
            UnixFile: function(input, value, arg1, arg2) {
@@ -3110,7 +3110,7 @@ function DisplayAdvancedSettings(){
              return regex.test(value);
            },
            InternationalPhone: function(input, value, arg1, arg2) {
-             var regex = RegExp('^(\\+(\\d{1,3}))?((\\(\\d{1,4}\\))|(\\d{1,3}))?(\\s|-)?(\\d+(\\s?|-?))+$', 'g');
+             var regex = RegExp('^[0-9\-().+\s]{10,20}$', 'g');
              return regex.test(value);
            },
            UnixFile: function(input, value, arg1, arg2) {
