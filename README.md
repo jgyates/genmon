@@ -106,11 +106,11 @@ One important step is to validate your serial port is working properly. You can 
 " target="_blank"><img src="http://img.youtube.com/vi/cn91Hplkl0w/0.jpg"
 alt="Genmon Demo" width="240" height="180" border="10" /></a>
 
-[Video Series on using Genmon with the Briggs and Stratton GD-1030](https://www.youtube.com/@genmonbriggs9033/videos)
-[Video Series on using Genmon with the Briggs and Stratton GD-1030](https://www.youtube.com/@genmonbriggs9033/videos)
-[Genmon Setup Walkthrough](https://www.youtube.com/watch?v=w0DvUAiXSmU&ab_channel=HandyDadTV)
-[Genmon with Evolution 2.0](https://www.youtube.com/watch?v=Bi7b8oKWaXA&ab_channel=RITech)
-[Genmon and Pintsize.me board setup](https://www.youtube.com/watch?v=EQ5DyJKFBa8&ab_channel=98grand5point9)
+* [Video Series on using Genmon with the Briggs and Stratton GD-1030](https://www.youtube.com/@genmonbriggs9033/videos)
+* [Video Series on using Genmon with the Briggs and Stratton GD-1030](https://www.youtube.com/@genmonbriggs9033/videos)
+* [Genmon Setup Walkthrough](https://www.youtube.com/watch?v=w0DvUAiXSmU&ab_channel=HandyDadTV)
+* [Genmon with Evolution 2.0](https://www.youtube.com/watch?v=Bi7b8oKWaXA&ab_channel=RITech)
+* [Genmon and Pintsize.me board setup](https://www.youtube.com/watch?v=EQ5DyJKFBa8&ab_channel=98grand5point9)
 
 # Documentation
 * [Genmon Project Wiki](https://github.com/jgyates/genmon/wiki)
