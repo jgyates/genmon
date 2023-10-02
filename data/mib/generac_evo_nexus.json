@@ -89,6 +89,14 @@
             "keywords" : ["Status/Engine", "Rotor Poles"]
         },
         {
+            "oid": "0, 0, 13",
+            "return_type": "str",
+            "integer": true,
+            "description": "rotorPoles",
+            "default" : "",
+            "keywords" : ["Status/Engine", "Hall Effect Sensor"]
+        },
+        {
             "oid": "0, 1, 1",
             "return_type": "str",
             "integer": true,
