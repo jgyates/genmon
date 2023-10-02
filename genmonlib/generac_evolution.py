@@ -3882,7 +3882,7 @@ class Evolution(GeneratorController):
             return DefaultReturn
 
     # ------------ Evolution:GetCurrentOutput -----------------------------------
-    def GetCurrentOutput(self, ReturnFloat=False):
+    def GetCurrentOutput(self, ReturnFloat=False, force_sensor = False):
 
         CurrentOutput = 0.0
         Divisor = 1.0
@@ -3903,9 +3903,10 @@ class Evolution(GeneratorController):
             if "Stopped" in EngineState or "Off" in EngineState or not len(EngineState):
                 return DefaultReturn
 
-            ReturnValue = self.CheckExternalCTData(request="current", ReturnFloat=ReturnFloat)
-            if ReturnValue != None:
-                return ReturnValue
+            if not force_sensor:
+                ReturnValue = self.CheckExternalCTData(request="current", ReturnFloat=ReturnFloat)
+                if ReturnValue != None:
+                    return ReturnValue
 
             if self.EvolutionController and self.LiquidCooled:
                 Value = self.GetRegisterValueFromList("0058")  # Hall Effect Sensor
@@ -4767,20 +4768,13 @@ class Evolution(GeneratorController):
                 )
 
             if self.PowerMeterIsSupported():
-                Engine.append(
-                    {
-                        "Output Current": self.ValueOut(
-                            self.GetCurrentOutput(ReturnFloat=True), "A", JSONNum
-                        )
-                    }
-                )
-                Engine.append(
-                    {
-                        "Output Power (Single Phase)": self.ValueOut(
-                            self.GetPowerOutput(ReturnFloat=True), "kW", JSONNum
-                        )
-                    }
-                )
+                Engine.append({"Output Current": self.ValueOut(self.GetCurrentOutput(ReturnFloat=True), "A", JSONNum)})
+
+                if self.UseExternalCTData and self.LiquidCooled and self.EvolutionController:
+                    # show the internal Hall sensor if external CTs are used. If no external CTs are present, then this is shown with "Output Current"
+                    Engine.append({"Hall Effect Sensor": self.ValueOut(self.GetCurrentOutput(ReturnFloat=True, force_sensor=True), "A", JSONNum)})
+
+                Engine.append({"Output Power (Single Phase)": self.ValueOut(self.GetPowerOutput(ReturnFloat=True), "kW", JSONNum)})
 
             Engine.append(
                 {
