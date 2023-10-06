@@ -1103,6 +1103,7 @@ class HPanel(GeneratorController):
             config=config,
         )
 
+        self.AltTimeSet = True
         self.LastEngineState = ""
         self.CurrentAlarmState = False
         self.VoltageConfig = None
@@ -3323,41 +3324,71 @@ class HPanel(GeneratorController):
             # get system time
             d = datetime.datetime.now()
 
+            # GEN_TIME_HR_MIN = ["00e0", 2]  # Time HR:MIN
+            # GEN_TIME_SEC_DYWK = ["00e1", 2]  # Time SEC:DayOfWeek
+            # GEN_TIME_MONTH_DAY = ["00e2", 2]  # Time Month:DayofMonth
+            # GEN_TIME_YR = ["00e3", 2]  # Time YR:UNK
             # We will write four registers at once: GEN_TIME_HR_MIN - GEN_TIME_YR.
-            Data = []
-            Data.append(d.hour)  # GEN_TIME_HR_MIN
-            Data.append(d.minute)
-            self.ModBus.ProcessWriteTransaction(
-                self.Reg.GEN_TIME_HR_MIN[REGISTER], len(Data) / 2, Data
-            )
+            
+            if self.AltTimeSet:
+                Data = []
+                Data.append(d.hour)  # GEN_TIME_HR_MIN
+                Data.append(d.minute)
+                
+                DayOfWeek = d.weekday()  # returns Monday is 0 and Sunday is 6
+                # expects Sunday = 1, Saturday = 7
+                if DayOfWeek == 6:
+                    DayOfWeek = 1
+                else:
+                    DayOfWeek += 2
+                Data.append(d.second)  # GEN_TIME_SEC_DYWK
+                Data.append(DayOfWeek)  # Day of Week is always zero
+                
+                Data.append(d.month)  # GEN_TIME_MONTH_DAY
+                Data.append(d.day)  # low byte is day of month
 
-            DayOfWeek = d.weekday()  # returns Monday is 0 and Sunday is 6
-            # expects Sunday = 1, Saturday = 7
-            if DayOfWeek == 6:
-                DayOfWeek = 1
+                # Note: Day of week should always be zero when setting time
+                Data.append(d.year - 2000)  # GEN_TIME_YR
+                Data.append(0)  #
+                self.ModBus.ProcessWriteTransaction(
+                    self.Reg.GEN_TIME_HR_MIN[REGISTER], len(Data) / 2, Data
+                )
+
             else:
-                DayOfWeek += 2
-            Data = []
-            Data.append(d.second)  # GEN_TIME_SEC_DYWK
-            Data.append(DayOfWeek)  # Day of Week is always zero
-            self.ModBus.ProcessWriteTransaction(
-                self.Reg.GEN_TIME_SEC_DYWK[REGISTER], len(Data) / 2, Data
-            )
+                Data = []
+                Data.append(d.hour)  # GEN_TIME_HR_MIN
+                Data.append(d.minute)
+                self.ModBus.ProcessWriteTransaction(
+                    self.Reg.GEN_TIME_HR_MIN[REGISTER], len(Data) / 2, Data
+                )
 
-            Data = []
-            Data.append(d.month)  # GEN_TIME_MONTH_DAY
-            Data.append(d.day)  # low byte is day of month
-            self.ModBus.ProcessWriteTransaction(
-                self.Reg.GEN_TIME_MONTH_DAY[REGISTER], len(Data) / 2, Data
-            )
+                DayOfWeek = d.weekday()  # returns Monday is 0 and Sunday is 6
+                # expects Sunday = 1, Saturday = 7
+                if DayOfWeek == 6:
+                    DayOfWeek = 1
+                else:
+                    DayOfWeek += 2
+                Data = []
+                Data.append(d.second)  # GEN_TIME_SEC_DYWK
+                Data.append(DayOfWeek)  # Day of Week is always zero
+                self.ModBus.ProcessWriteTransaction(
+                    self.Reg.GEN_TIME_SEC_DYWK[REGISTER], len(Data) / 2, Data
+                )
 
-            Data = []
-            # Note: Day of week should always be zero when setting time
-            Data.append(d.year - 2000)  # GEN_TIME_YR
-            Data.append(0)  #
-            self.ModBus.ProcessWriteTransaction(
-                self.Reg.GEN_TIME_YR[REGISTER], len(Data) / 2, Data
-            )
+                Data = []
+                Data.append(d.month)  # GEN_TIME_MONTH_DAY
+                Data.append(d.day)  # low byte is day of month
+                self.ModBus.ProcessWriteTransaction(
+                    self.Reg.GEN_TIME_MONTH_DAY[REGISTER], len(Data) / 2, Data
+                )
+
+                Data = []
+                # Note: Day of week should always be zero when setting time
+                Data.append(d.year - 2000)  # GEN_TIME_YR
+                Data.append(0)  #
+                self.ModBus.ProcessWriteTransaction(
+                    self.Reg.GEN_TIME_YR[REGISTER], len(Data) / 2, Data
+                )
 
         except Exception as e1:
             self.LogErrorLine("Error in SetGeneratorTimeDate: " + str(e1))
