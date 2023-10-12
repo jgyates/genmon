@@ -8,6 +8,8 @@
 # MODIFICATIONS:
 # -------------------------------------------------------------------------------
 
+# https://www.raspberrypi.com/documentation/computers/configuration.html#configuring-uarts
+
 import getopt
 import os
 import sys
