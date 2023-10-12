@@ -277,6 +277,13 @@ class Loader(MySupport):
             if not self.ExecuteCommandList(command_list):
                 self.InstallBaseSoftware()
 
+            "--break-system-packages"
+            #  /usr/lib/python3.11/EXTERNALLY-MANAGED
+            managedfile = f"/usr/lib/python{sys.version_info.major:d}.{sys.version_info.minor:d}/EXTERNALLY-MANAGED"
+            if os.path.isfile(managedfile):
+                self.OverrideManagedPackages = True
+            else:
+                self.OverrideManagedPackages = False
             self.PipChecked = True
             return True
         except Exception as e1:
@@ -517,6 +524,12 @@ class Loader(MySupport):
                 install_list = [self.pipProgram, "uninstall", "-y", libraryname]
             else:
                 install_list = [self.pipProgram, "install", libraryname]
+
+            if self.OverrideManagedPackages:
+                # starting with bookworm the raspberry pi os has managed system 
+                # packages enabled so we will override that to install genmon 
+                # requirements
+                install_list.append("--break-system-packages")
 
             process = Popen(install_list, stdout=PIPE, stderr=PIPE)
             output, _error = process.communicate()

@@ -296,6 +296,7 @@ if __name__ == "__main__":
     HelpStr += "\n      -r  Restore modified files"
     HelpStr += "\n      -c  Check status of serial port"
     HelpStr += "\n      -b  Leave Bluetooth enabled (Pi 3 and 4 only)"
+    HelpStr += "\n      -d  Disable Bluetooth (may be needed on some pi models), default"
     HelpStr += "\n \n"
 
     try:
@@ -321,6 +322,8 @@ if __name__ == "__main__":
             Check = True
         elif opt in ("-b", "--bluetooth"):
             Bluetooth = True
+        elif opt in ("-d", "--disablebluetooth"):
+            Bluetooth = False
 
     if Check and Enable or Check and Restore or Enable and Restore:
         print("\nOnly one option can be selected.")

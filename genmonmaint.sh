@@ -16,6 +16,7 @@ Continue? (y/n)  "
 
 usepython3=true
 pipcommand="pip3"
+pipoptions=""
 pythoncommand="python3"
 OPTIND=1         # Reset in case getopts has been used previously in the shell.
 config_path="/etc/genmon/"
@@ -29,6 +30,20 @@ noprompt_opt=false
 cleanpython_opt=false
 copyfiles_opt=false
 update_os=false
+
+#-------------------------------------------------------------------------------
+function removemanagedpip() {
+
+  #  /usr/lib/python3.11/EXTERNALLY-MANAGED
+  pythonmajor=$($pythoncommand -c 'import sys; print(sys.version_info.major)')
+  pythonminor=$($pythoncommand -c 'import sys; print(sys.version_info.minor)')
+  managedfile="/usr/lib/python$pythonmajor.$pythonminor/EXTERNALLY-MANAGED"
+
+  if [ -f $managedfile ]; then
+      pipoptions="--break-system-packages"
+      echo "Overriding system managed package system.."
+  fi
+}
 
 #-------------------------------------------------------------------------------
 function cleanpython() {
@@ -72,32 +87,32 @@ function copyconffiles() {
 function updatelibraries() {
 
   echo "Updating libraries...."
-  sudo $pipcommand install crcmod -U
-  sudo $pipcommand install configparser -U
-  sudo $pipcommand install pyserial -U
-  sudo $pipcommand install Flask -U
+  sudo $pipcommand install crcmod -U $pipoptions
+  sudo $pipcommand install configparser -U $pipoptions
+  sudo $pipcommand install pyserial -U $pipoptions
+  sudo $pipcommand install Flask -U $pipoptions
   if [ "$usepython3" = true ] ; then
-    sudo $pipcommand install pyowm==2.10.0 -U
+    sudo $pipcommand install pyowm==2.10.0 -U $pipoptions
   else
-    sudo $pipcommand install pyowm==2.9.0 -U
+    sudo $pipcommand install pyowm==2.9.0 -U $pipoptions
   fi
-  sudo $pipcommand install pytz -U
-  sudo $pipcommand install pyopenssl  -U
-  sudo $pipcommand install twilio -U
-  sudo $pipcommand install chump -U
-  sudo $pipcommand install paho-mqtt -U
-  sudo $pipcommand install pysnmp -U
-  sudo $pipcommand install ldap3 -U
-  sudo $pipcommand install pyasn1==0.4.8 -U
-  sudo $pipcommand install smbus -U
-  sudo $pipcommand install psutil -U
+  sudo $pipcommand install pytz -U $pipoptions
+  sudo $pipcommand install pyopenssl  -U $pipoptions
+  sudo $pipcommand install twilio -U $pipoptions
+  sudo $pipcommand install chump -U $pipoptions
+  sudo $pipcommand install paho-mqtt -U $pipoptions
+  sudo $pipcommand install pysnmp -U $pipoptions
+  sudo $pipcommand install ldap3 -U $pipoptions
+  sudo $pipcommand install pyasn1==0.4.8 -U $pipoptions
+  sudo $pipcommand install smbus -U $pipoptions
+  sudo $pipcommand install psutil -U $pipoptions
   if [ "$usepython3" = true ] ; then
-    sudo $pipcommand install pyotp -U
+    sudo $pipcommand install pyotp -U $pipoptions
   else
-    sudo $pipcommand install pyotp==2.3.0 -U
+    sudo $pipcommand install pyotp==2.3.0 -U $pipoptions
   fi
-  sudo $pipcommand install mopeka_pro_check -U
-  sudo $pipcommand install fluids -U
+  sudo $pipcommand install mopeka_pro_check -U $pipoptions
+  sudo $pipcommand install fluids -U $pipoptions
   echo "Done."
 }
 
@@ -136,40 +151,40 @@ function installgenmon() {
     else
       sudo apt-get -yqq install python-pip
     fi
-    sudo $pipcommand install crcmod
-    sudo $pipcommand install configparser
-    sudo $pipcommand install pyserial
-    sudo $pipcommand install Flask
+    sudo $pipcommand install crcmod $pipoptions
+    sudo $pipcommand install configparser $pipoptions
+    sudo $pipcommand install pyserial $pipoptions
+    sudo $pipcommand install Flask $pipoptions
     if [ "$usepython3" = true ] ; then
-      sudo $pipcommand install pyowm==2.10.0
+      sudo $pipcommand install pyowm==2.10.0 $pipoptions
     else
-      sudo $pipcommand install pyowm==2.9.0
+      sudo $pipcommand install pyowm==2.9.0 $pipoptions
     fi
-    sudo $pipcommand install pytz
+    sudo $pipcommand install pytz $pipoptions
     if [ "$usepython3" = true ] ; then
       sudo apt-get -yqq install build-essential libssl-dev libffi-dev python3-dev cargo
     else
       sudo apt-get -yqq install build-essential libssl-dev libffi-dev python-dev cargo
     fi
     sudo apt-get -yqq install cmake
-    sudo $pipcommand install pyopenssl
-    sudo $pipcommand install twilio
-    sudo $pipcommand install chump
-    sudo $pipcommand install paho-mqtt
-    sudo $pipcommand install pysnmp
-    sudo $pipcommand install ldap3
-    sudo $pipcommand install smbus
-    sudo $pipcommand install psutil
+    sudo $pipcommand install pyopenssl $pipoptions
+    sudo $pipcommand install twilio $pipoptions
+    sudo $pipcommand install chump $pipoptions
+    sudo $pipcommand install paho-mqtt $pipoptions
+    sudo $pipcommand install pysnmp $pipoptions
+    sudo $pipcommand install ldap3 $pipoptions
+    sudo $pipcommand install smbus $pipoptions
+    sudo $pipcommand install psutil $pipoptions
     if [ "$usepython3" = true ] ; then
-      sudo $pipcommand install pyotp
+      sudo $pipcommand install pyotp $pipoptions
     else
-      sudo $pipcommand install pyotp==2.3.0
+      sudo $pipcommand install pyotp==2.3.0 $pipoptions
     fi
     # correct problem with LDAP3 module install
-    sudo $pipcommand install pyasn1==0.4.8 -U
-    sudo $pipcommand install mopeka_pro_check
-    sudo $pipcommand install fluids
-    sudo $pipcommand install voipms
+    sudo $pipcommand install pyasn1==0.4.8 -U $pipoptions
+    sudo $pipcommand install mopeka_pro_check $pipoptions
+    sudo $pipcommand install fluids $pipoptions
+    sudo $pipcommand install voipms $pipoptions
 
     sudo chmod 775 "$genmondir/startgenmon.sh"
     sudo chmod 775 "$genmondir/genmonmaint.sh"
@@ -430,7 +445,7 @@ shift $((OPTIND -1))
 if [ "$update_os" = true ] ; then
    sudo apt-get --allow-releaseinfo-change update && sudo apt-get upgrade
 fi
-
+removemanagedpip
 if [ "$install_opt" = true ] ; then
   if [ "$noprompt_opt" = true ] ; then
     installgenmon "noprompt"

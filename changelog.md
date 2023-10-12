@@ -27,6 +27,7 @@ All notable changes to this project will be documented in this file.
 - Added more bounds checking to gentemp.py
 - Corrected issue with Settings page not allows Even parity to be set on custom controllers
 - Corrected security issue related to ldap login with genserv.py
+- Updates to install script and genloader for Debian bookworm. Install overrides managed system package flag.
 
 ## V1.18.17 -2023-04-06
 - Added feature request to allow external temperature sensors to be displayed as gauges
