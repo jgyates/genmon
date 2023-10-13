@@ -11,7 +11,7 @@ paho-mqtt
 smbus
 pysnmp
 ldap3
-pyasn1
+pyasn1==0.4.8
 pyotp
 smbus
 psutil
@@ -19,3 +19,4 @@ spidev
 mopeka_pro_check
 fluids
 voipms
+RPi.GPIO

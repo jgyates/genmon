@@ -300,6 +300,8 @@ class Monitor(MySupport):
             + str(sys.version_info.major)
             + "."
             + str(sys.version_info.minor)
+            + ": VEnv: "
+            + str(self.InVirtualEnvironment())
         )
 
     # ------------------------ Monitor::StartThreads----------------------------

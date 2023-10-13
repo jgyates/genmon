@@ -27,6 +27,13 @@ class MyCommon(object):
         self.debug = False
         self.MaintainerAddress = "generatormonitor.software@gmail.com"
 
+    # ------------ MyCommon::InVirtualEnvironment -------------------------------
+    def InVirtualEnvironment(self):
+        try:
+            return (hasattr(sys, 'real_prefix') or
+                (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix))
+        except:
+            return False
     # ------------ MyCommon::VersionTuple ---------------------------------------
     def VersionTuple(self, value):
 
