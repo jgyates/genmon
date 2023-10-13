@@ -273,11 +273,11 @@ class Loader(MySupport):
             if self.PipChecked:
                 return True
 
-            command_list = [self.pipProgram, "-V"]
+            command_list = [sys.executable, "-m", "pip", "-V"]
+            #command_list = [self.pipProgram, "-V"]
             if not self.ExecuteCommandList(command_list):
                 self.InstallBaseSoftware()
 
-            "--break-system-packages"
             #  /usr/lib/python3.11/EXTERNALLY-MANAGED
             managedfile = f"/usr/lib/python{sys.version_info.major:d}.{sys.version_info.minor:d}/EXTERNALLY-MANAGED"
             if os.path.isfile(managedfile):
@@ -457,7 +457,7 @@ class Loader(MySupport):
                     if "linux" in sys.platform:
                         self.CheckBaseSoftware()
 
-                    install_list = [self.pipProgram, "freeze", libraryname]
+                    install_list = [sys.executable, "-m", "pip", "freeze", libraryname]
 
                     process = Popen(install_list, stdout=PIPE, stderr=PIPE)
                     output, _error = process.communicate()
@@ -519,17 +519,11 @@ class Loader(MySupport):
                 self.CheckBaseSoftware()
 
             if update:
-                install_list = [self.pipProgram, "install", libraryname, "-U"]
+                install_list = [sys.executable, "-m", "pip", "install", libraryname, "-U"]
             elif uninstall:
-                install_list = [self.pipProgram, "uninstall", "-y", libraryname]
+                install_list = [sys.executable, "-m", "pip", "uninstall", "-y", libraryname]
             else:
-                install_list = [self.pipProgram, "install", libraryname]
-
-            if self.OverrideManagedPackages:
-                # starting with bookworm the raspberry pi os has managed system 
-                # packages enabled so we will override that to install genmon 
-                # requirements
-                install_list.append("--break-system-packages")
+                install_list = [sys.executable, "-m", "pip", "install", libraryname]
 
             process = Popen(install_list, stdout=PIPE, stderr=PIPE)
             output, _error = process.communicate()
@@ -537,9 +531,7 @@ class Loader(MySupport):
             if _error:
                 self.LogInfo(
                     "Error in InstallLibrary using pip : "
-                    + libraryname
-                    + " : UnInstall: "
-                    + str(uninstall)
+                    + str(install_list)
                     + ": "
                     + str(_error)
                 )
@@ -549,9 +541,7 @@ class Loader(MySupport):
         except Exception as e1:
             self.LogInfo(
                 "Error installing module: "
-                + libraryname
-                + " : UnInstall: "
-                + str(uninstall)
+                + str(install_list)
                 + ": "
                 + str(e1),
                 LogLine=True,

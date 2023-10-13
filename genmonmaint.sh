@@ -30,9 +30,10 @@ noprompt_opt=false
 cleanpython_opt=false
 copyfiles_opt=false
 update_os=false
+managedpackages=false
 
 #-------------------------------------------------------------------------------
-function removemanagedpip() {
+function checkmanagedpackages() {
 
   #  /usr/lib/python3.11/EXTERNALLY-MANAGED
   pythonmajor=$($pythoncommand -c 'import sys; print(sys.version_info.major)')
@@ -40,8 +41,13 @@ function removemanagedpip() {
   managedfile="/usr/lib/python$pythonmajor.$pythonminor/EXTERNALLY-MANAGED"
 
   if [ -f $managedfile ]; then
-      pipoptions="--break-system-packages"
-      echo "Overriding system managed package system.."
+      managedpackages=true
+      echo "Managed system packages found, installing python virtual environment"
+      sudo apt-get -yqq install python3-venv
+      # create the virtual environment 
+      echo "Creating virtual python environmnet for genmon"
+      $pythoncommand -m venv genenv
+      pythoncommand="./genenv/bin/python"
   fi
 }
 
@@ -87,32 +93,7 @@ function copyconffiles() {
 function updatelibraries() {
 
   echo "Updating libraries...."
-  sudo $pipcommand install crcmod -U $pipoptions
-  sudo $pipcommand install configparser -U $pipoptions
-  sudo $pipcommand install pyserial -U $pipoptions
-  sudo $pipcommand install Flask -U $pipoptions
-  if [ "$usepython3" = true ] ; then
-    sudo $pipcommand install pyowm==2.10.0 -U $pipoptions
-  else
-    sudo $pipcommand install pyowm==2.9.0 -U $pipoptions
-  fi
-  sudo $pipcommand install pytz -U $pipoptions
-  sudo $pipcommand install pyopenssl  -U $pipoptions
-  sudo $pipcommand install twilio -U $pipoptions
-  sudo $pipcommand install chump -U $pipoptions
-  sudo $pipcommand install paho-mqtt -U $pipoptions
-  sudo $pipcommand install pysnmp -U $pipoptions
-  sudo $pipcommand install ldap3 -U $pipoptions
-  sudo $pipcommand install pyasn1==0.4.8 -U $pipoptions
-  sudo $pipcommand install smbus -U $pipoptions
-  sudo $pipcommand install psutil -U $pipoptions
-  if [ "$usepython3" = true ] ; then
-    sudo $pipcommand install pyotp -U $pipoptions
-  else
-    sudo $pipcommand install pyotp==2.3.0 -U $pipoptions
-  fi
-  sudo $pipcommand install mopeka_pro_check -U $pipoptions
-  sudo $pipcommand install fluids -U $pipoptions
+  sudo $pythoncommand -m pip install -r requirements.txt -U $pipoptions
   echo "Done."
 }
 
@@ -143,7 +124,8 @@ function installrpirtscts() {
 # This function will install the required libraries for genmon
 function installgenmon() {
 
-    echo "Installing...."
+    checkmanagedpackages
+    echo "Installing genmon package requirements...."
     # possibly use "sudo easy_install3 -U pip"
     sudo apt-get -yqq update
     if [ "$usepython3" = true ] ; then
@@ -151,40 +133,13 @@ function installgenmon() {
     else
       sudo apt-get -yqq install python-pip
     fi
-    sudo $pipcommand install crcmod $pipoptions
-    sudo $pipcommand install configparser $pipoptions
-    sudo $pipcommand install pyserial $pipoptions
-    sudo $pipcommand install Flask $pipoptions
-    if [ "$usepython3" = true ] ; then
-      sudo $pipcommand install pyowm==2.10.0 $pipoptions
-    else
-      sudo $pipcommand install pyowm==2.9.0 $pipoptions
-    fi
-    sudo $pipcommand install pytz $pipoptions
     if [ "$usepython3" = true ] ; then
       sudo apt-get -yqq install build-essential libssl-dev libffi-dev python3-dev cargo
     else
       sudo apt-get -yqq install build-essential libssl-dev libffi-dev python-dev cargo
     fi
     sudo apt-get -yqq install cmake
-    sudo $pipcommand install pyopenssl $pipoptions
-    sudo $pipcommand install twilio $pipoptions
-    sudo $pipcommand install chump $pipoptions
-    sudo $pipcommand install paho-mqtt $pipoptions
-    sudo $pipcommand install pysnmp $pipoptions
-    sudo $pipcommand install ldap3 $pipoptions
-    sudo $pipcommand install smbus $pipoptions
-    sudo $pipcommand install psutil $pipoptions
-    if [ "$usepython3" = true ] ; then
-      sudo $pipcommand install pyotp $pipoptions
-    else
-      sudo $pipcommand install pyotp==2.3.0 $pipoptions
-    fi
-    # correct problem with LDAP3 module install
-    sudo $pipcommand install pyasn1==0.4.8 -U $pipoptions
-    sudo $pipcommand install mopeka_pro_check $pipoptions
-    sudo $pipcommand install fluids $pipoptions
-    sudo $pipcommand install voipms $pipoptions
+    sudo $pythoncommand -m pip install -r requirements.txt $pipoptions
 
     sudo chmod 775 "$genmondir/startgenmon.sh"
     sudo chmod 775 "$genmondir/genmonmaint.sh"
@@ -445,7 +400,7 @@ shift $((OPTIND -1))
 if [ "$update_os" = true ] ; then
    sudo apt-get --allow-releaseinfo-change update && sudo apt-get upgrade
 fi
-removemanagedpip
+
 if [ "$install_opt" = true ] ; then
   if [ "$noprompt_opt" = true ] ; then
     installgenmon "noprompt"

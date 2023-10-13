@@ -10,7 +10,36 @@ pipcommand="pip3"
 config_path=""
 usepython3=true
 found_action=false
+managedpackages=false
 
+
+#-------------------------------------------------------------------------------
+function env_activate() {
+
+  if [ "$managedpackages" = true ] ; then
+    source genenv/bin/activate
+  fi
+}
+#-------------------------------------------------------------------------------
+function env_deactivate() {
+  if [ "$managedpackages" = true ] ; then
+    deactivate
+  fi
+}
+#-------------------------------------------------------------------------------
+function checkmanagedpackages() {
+
+  #  /usr/lib/python3.11/EXTERNALLY-MANAGED
+  pythonmajor=$($pythoncommand -c 'import sys; print(sys.version_info.major)')
+  pythonminor=$($pythoncommand -c 'import sys; print(sys.version_info.minor)')
+  managedfile="/usr/lib/python$pythonmajor.$pythonminor/EXTERNALLY-MANAGED"
+
+  if [ -f $managedfile ]; then
+      pythoncommand="./genenv/bin/python"
+      managedpackages=true
+      echo "using binary: $pythoncommand"
+  fi
+}
 #-------------------------------------------------------------------------------
 function setuppython3() {
 
@@ -79,28 +108,36 @@ while (( "$#" )); do
       ;;
   esac
 done
-
+checkmanagedpackages
 for val in $PARAMS; do
   case "$val" in
     start)
       echo "Starting genmon python scripts"
+      env_activate
       found_action=true
       sudo $pythoncommand "$genmondir/genloader.py" -s $config_path
+      env_deactivate
       ;;
     stop)
       found_action=true
+      env_activate
       echo "Stopping genmon python scripts"
       sudo $pythoncommand "$genmondir/genloader.py" -x $config_path
+      env_deactivate
       ;;
     hardstop)
       found_action=true
+      env_activate
       echo "Hard Stopping genmon python scripts"
       sudo $pythoncommand "$genmondir/genloader.py" -z $config_path
+      env_deactivate
       ;;
     restart)
       found_action=true
+      env_activate
       echo "Restarting genmon python scripts"
       sudo $pythoncommand "$genmondir/genloader.py" -r $config_path
+      env_deactivate
       ;;
     *)
       #
