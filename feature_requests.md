@@ -21,4 +21,4 @@
 - Add daily options to enhanced exercise add on 
 - [Add the ability to save pictures in the service journal](https://github.com/jgyates/genmon/issues/896) @northportio
 - [Ecobee thermostat messaging](https://github.com/jgyates/genmon/issues/921) @wtnh 
-- [https://github.com/jgyates/genmon/issues/958](Enhanced Exercise time option) #T-C123 
+- [Enhanced Exercise time option](https://github.com/jgyates/genmon/issues/958) #T-C123 
