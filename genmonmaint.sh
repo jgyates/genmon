@@ -47,7 +47,7 @@ function checkmanagedpackages() {
       # create the virtual environment 
       echo "Creating virtual python environmnet for genmon"
       $pythoncommand -m venv genenv
-      pythoncommand="./genenv/bin/python"
+      pythoncommand="$genmondir/genenv/bin/python"
   fi
 }
 

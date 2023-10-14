@@ -17,7 +17,7 @@ managedpackages=false
 function env_activate() {
 
   if [ "$managedpackages" = true ] ; then
-    source genenv/bin/activate
+    source $genmondir/genenv/bin/activate
   fi
 }
 #-------------------------------------------------------------------------------
@@ -35,7 +35,7 @@ function checkmanagedpackages() {
   managedfile="/usr/lib/python$pythonmajor.$pythonminor/EXTERNALLY-MANAGED"
 
   if [ -f $managedfile ]; then
-      pythoncommand="./genenv/bin/python"
+      pythoncommand="$genmondir/genenv/bin/python"
       managedpackages=true
       echo "using binary: $pythoncommand"
   fi
