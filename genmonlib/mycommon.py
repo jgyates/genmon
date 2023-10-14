@@ -34,6 +34,17 @@ class MyCommon(object):
                 (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix))
         except:
             return False
+    # ------------ MyCommon::InManagedLibaries ----------------------------------
+    def ManagedLibariesEnabled(self):
+        try:
+            #  /usr/lib/python3.11/EXTERNALLY-MANAGED
+            managedfile = f"/usr/lib/python{sys.version_info.major:d}.{sys.version_info.minor:d}/EXTERNALLY-MANAGED"
+            if os.path.isfile(managedfile):
+                return True
+            else:
+                return False
+        except:
+            return False
     # ------------ MyCommon::VersionTuple ---------------------------------------
     def VersionTuple(self, value):
 

@@ -21,7 +21,14 @@ try:
     from genmonlib.mymodbus import ModbusProtocol
 except Exception as e1:
     print("\n\nThis program is used for the testing of modbus registers.")
-    print("\n\nThis program requires the modules mymodbus.py and myserial.py to reside in the genmonlib directory.\n")
+    managedfile = f"/usr/lib/python{sys.version_info.major:d}.{sys.version_info.minor:d}/EXTERNALLY-MANAGED"
+    if os.path.isfile(managedfile):
+        print("\n\nYou appear to be running in a managed python environemnt. To run this program see this page: ")
+        print("\n\n  https://github.com/jgyates/genmon/wiki/Appendix-S---Working-in-a-Managed-Python-Environment\n")
+    else:
+        print("\nThe required python libraries are not installed. You must run the setup script first.\n")
+        print("\n\n   https://github.com/jgyates/genmon/wiki/3.3--Setup-genmon-software")
+    
     print("\n\nError: " + str(e1))
     sys.exit(2)
 
