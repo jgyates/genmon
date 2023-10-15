@@ -427,6 +427,10 @@ if __name__ == "__main__":
                     AddItemToConfFile,
                     (BOOT_CONFIG, "enable_uart", "1", False),
                 ],
+                "Change BT serial port": [
+                    AddItemToConfFile,
+                    (BOOT_CONFIG, "dtoverlay", "miniuart-bt", False),
+                ],
                 "Disable BT": [
                     AddItemToConfFile,
                     (BOOT_CONFIG, "dtoverlay", "disable-bt", False),
