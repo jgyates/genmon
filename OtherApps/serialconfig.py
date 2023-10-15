@@ -375,7 +375,7 @@ if __name__ == "__main__":
                 ],
                 "Disable BT Disable Overlay": [
                     RemoveItemFromConfFile,
-                    (BOOT_CONFIG, "dtoverlay", "pi3-disable-bt", False),
+                    (BOOT_CONFIG, "dtoverlay", "disable-bt", False),
                 ],
                 "Disable serial console": [
                     ProcessCmdLineFile,
@@ -406,7 +406,7 @@ if __name__ == "__main__":
                 ],
                 "Checking : Disable BT Disable Overlay": [
                     RemoveItemFromConfFile,
-                    (BOOT_CONFIG, "dtoverlay", "pi3-disable-bt", True),
+                    (BOOT_CONFIG, "dtoverlay", "disable-bt", True),
                 ],
                 "Checking : Serial console command line removed": [
                     ProcessCmdLineFile,
@@ -429,7 +429,7 @@ if __name__ == "__main__":
                 ],
                 "Disable BT": [
                     AddItemToConfFile,
-                    (BOOT_CONFIG, "dtoverlay", "pi3-disable-bt", False),
+                    (BOOT_CONFIG, "dtoverlay", "disable-bt", False),
                 ],
                 "Disable serial console": [
                     ProcessCmdLineFile,
@@ -449,7 +449,7 @@ if __name__ == "__main__":
                 ],
                 "Checking : Is BT overlay disabled": [
                     AddItemToConfFile,
-                    (BOOT_CONFIG, "dtoverlay", "pi3-disable-bt", True),
+                    (BOOT_CONFIG, "dtoverlay", "disable-bt", True),
                 ],
                 "Checking : Serial console command line removed": [
                     ProcessCmdLineFile,
