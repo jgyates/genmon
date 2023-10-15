@@ -68,7 +68,7 @@ class GenExercise(MySupport):
         self.MonitorAddress = host
         self.PollTime = 2
         self.ExerciseActive = False
-        self.Debug = False
+        self.debug = False
 
         try:
             self.config = MyConfig(
@@ -106,7 +106,7 @@ class GenExercise(MySupport):
             self.UseGeneratorTime = self.config.ReadValue(
                 "use_gen_time", return_type=bool, default=False
             )
-            self.Debug = self.config.ReadValue("debug", return_type=bool, default=False)
+            self.debug = self.config.ReadValue("debug", return_type=bool, default=False)
 
             # Validate settings
             if not self.ExerciseType.lower() in ["normal", "quiet", "transfer"]:
@@ -194,7 +194,7 @@ class GenExercise(MySupport):
                     + " min. Warmup: "
                     + str(self.ExerciseWarmup)
                 )
-                self.DebugOutput("Debug Enabled")
+                self.LogDebug("Debug Enabled")
             except Exception as e1:
                 self.LogErrorLine(str(e1))
 
@@ -255,7 +255,7 @@ class GenExercise(MySupport):
             return
 
         self.SendCommand("generator: setremote=starttransfer")
-        self.DebugOutput("Starting transfer exercise cycle (post warmup).")
+        self.LogDebug("Starting transfer exercise cycle (post warmup).")
         # set timer to stop
         self.StopTimer = threading.Timer(
             float(self.ExerciseDuration * 60.0), self.StopExercise
@@ -284,14 +284,14 @@ class GenExercise(MySupport):
         # Start generator
         if self.ExerciseType.lower() == "normal" and self.ReadyToExercise():
             self.SendCommand("generator: setremote=start")
-            self.DebugOutput("Starting normal exercise cycle.")
+            self.LogDebug("Starting normal exercise cycle.")
             self.StopTimer = threading.Timer(
                 float(self.ExerciseDuration * 60.0), self.StopExercise
             )
             self.StopTimer.start()
         elif self.ExerciseType.lower() == "quiet" and self.ReadyToExercise():
             self.SendCommand("generator: setremote=startexercise")
-            self.DebugOutput("Starting quiet exercise cycle.")
+            self.LogDebug("Starting quiet exercise cycle.")
             self.StopTimer = threading.Timer(
                 float(self.ExerciseDuration * 60.0), self.StopExercise
             )
@@ -299,14 +299,14 @@ class GenExercise(MySupport):
         elif self.ExerciseType.lower() == "transfer" and self.ReadyToExercise():
             if self.ExerciseWarmup == 0:
                 self.SendCommand("generator: setremote=starttransfer")
-                self.DebugOutput("Starting transfer exercise cycle.")
+                self.LogDebug("Starting transfer exercise cycle.")
                 self.StopTimer = threading.Timer(
                     float(self.ExerciseDuration * 60.0), self.StopExercise
                 )
                 self.StopTimer.start()
             else:
                 self.SendCommand("generator: setremote=start")
-                self.DebugOutput("Starting warmup for transfer exercise cycle.")
+                self.LogDebug("Starting warmup for transfer exercise cycle.")
                 # start timer for post warmup transition to starttransfer command
                 self.WarmupTimer = threading.Timer(
                     float(self.ExerciseWarmup * 60.0), self.PostWarmup
@@ -323,16 +323,10 @@ class GenExercise(MySupport):
 
         if self.ExerciseActive:
             self.SendCommand("generator: setremote=stop")
-            self.DebugOutput("Stopping exercise cycle.")
+            self.LogDebug("Stopping exercise cycle.")
             self.ExerciseActive = False
         else:
-            self.DebugOutput("Calling Stop Exercise (not needed)")
-
-    # ---------- GenExercise::DebugOutput-----------------------------
-    def DebugOutput(self, Message):
-
-        if self.Debug:
-            self.LogError(Message)
+            self.LogDebug("Calling Stop Exercise (not needed)")
 
     # ---------- GenExercise::WriteLastExerciseTime-----------------------------
     def WriteLastExerciseTime(self):
@@ -342,7 +336,7 @@ class GenExercise(MySupport):
             if self.ExerciseFrequency.lower() == "biweekly":
                 self.config.WriteValue("last_exercise", NowString)
                 self.config.LastExerciseTime = NowString
-            self.DebugOutput("Last Exercise Cycle: " + NowString)
+            self.LogDebug("Last Exercise Cycle: " + NowString)
         except Exception as e1:
             self.LogErrorLine("Error in WriteLastExerciseTime: " + str(e1))
 
