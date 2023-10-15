@@ -28,6 +28,7 @@ All notable changes to this project will be documented in this file.
 - Corrected issue with Settings page not allows Even parity to be set on custom controllers
 - Corrected security issue related to ldap login with genserv.py
 - Updates to genmonmain.sh, startgenmon.sh and genloader.sh for Debian bookworm. 
+- Minor update to serialconfig.py to make serial0 instead of serial1 work on bookworm
 
 ## V1.18.17 -2023-04-06
 - Added feature request to allow external temperature sensors to be displayed as gauges
