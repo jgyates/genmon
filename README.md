@@ -5,13 +5,15 @@ This project will monitor a backup generator that utilizes the Generac Controlle
 
 * Generac [Nexus](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/Nexus_Controller.jpg) and [Evolution](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/Evolution_Controller.jpg) (1.0 and 2.0) Controller (Used in Generac's residential product line)
 * Honeywell and Eaton use the Generac Controllers, they call them Sync 1.0 (Nexus), Sync 2.0 (Evolution 1.0) and Sync 3.0 (Evolution 2.0)
-* Generac [H-100](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/H-100_Controller.png) Industrial Controllers
+* Generac [H-100](https://github.com/jgyates/genmon/wiki/Appendix-G-Generac-H-100,-G-Panel-and-PowerZone-Controllers) Industrial Controllers
 * The H-100 controller is used in industrial generators from Generac and Eaton.
 * Generac G-Panel based Industrial Controllers
 * Generac [PowerPact](https://github.com/jgyates/genmon/wiki/Appendix-R---Replacing-Generac-MobileLink-with-Genmon-on-a-PowerPact-7.5-KW)
 * [2008 Era Generac Pre-Nexus](https://raw.githubusercontent.com/jgyates/genmon/master/Diagrams/2008-PreNexusController.jpg) controllers. See [this](https://github.com/jgyates/genmon/wiki/Appendix-D-Known-Issues) page for more info.
 * Generac [PowerZone Pro/Sync and PowerZone 410](https://github.com/jgyates/genmon/wiki/Appendix-G-Generac-H-100,-G-Panel-and-PowerZone-Controllers) controllers
 * Custom Controller Interface for supporting other generators that use modbus over serial or modbus over TCP. More info on this is located [here](https://github.com/jgyates/genmon/wiki/Appendix-N-Genmon-Supporting-Other-Controller-Types). Deep See Electronics, Briggs & Stratton, etc.
+* Deep See Electronics 7320MKII Controller
+* [Briggs & Stratton GC-1031/GC-1032](https://github.com/jgyates/genmon/wiki/Appendix-P-Briggs-and-Stratton-Controller-Information)
 
 The project is written mostly in python and has been tested with a Raspberry Pi 3 (Pi Zero, Pi Zero W, Pi Zero 2W, Pi 2, Pi 3b+ and Pi 4 have also been validated). 32 and 64 bit version of raspbian have been used with the project. To use this project you would need to create a physical enclosure for your raspberry pi and possibly [make a cable](https://github.com/jgyates/genmon/wiki/3.1--Making-a-Cable) to connect the raspberry pi to the generator controller or purchase [pre-assembled hardware](https://github.com/jgyates/genmon/wiki#pre-assembled-hardware). If you are comfortable doing these things and you have a backup generator that has a supported controller, then this project may be of interest to you.
 
