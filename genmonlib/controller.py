@@ -69,11 +69,11 @@ class GeneratorController(MySupport):
         self.CheckForAlarmEvent = (
             threading.Event()
         )  # Event to signal checking for alarm
-        self.Registers = collections.OrderedDict()  # dict for registers and values
-        self.Strings = (
-            collections.OrderedDict()
-        )  # dict for registers read a string data
-        self.FileData = collections.OrderedDict()  # dict for modbus file reads
+        self.Registers = collections.OrderedDict()  # dict for registers and values (modbus fuction 03)
+        self.Strings = collections.OrderedDict()    # dict for registers read a string data
+        self.FileData = collections.OrderedDict()   # dict for modbus file reads (modbus function 0x14)
+        self.Coils = collections.OrderedDict()      # dict for modbus coil reads (modbus fuction 01)
+        self.Inputs = collections.OrderedDict()     # dict for modbus input registers (modbus function 4)
         self.NotChanged = 0  # stats for registers
         self.Changed = 0  # stats for registers
         self.TotalChanged = 0.0  # ratio of changed ragisters
@@ -646,15 +646,41 @@ class GeneratorController(MySupport):
         return StringValue
 
     # ------------ GeneratorController:GetRegisterValueFromList -----------------
-    def GetRegisterValueFromList(self, Register):
-
-        return self.Registers.get(Register, "")
-
-    # -------------GeneratorController:GetParameterBit---------------------------
-    def GetParameterBit(self, Register, Mask, OnLabel=None, OffLabel=None):
+    def GetRegisterValueFromList(self, Register, IsCoil = False, IsInput = False):
 
         try:
-            Value = self.GetRegisterValueFromList(Register)
+            if IsCoil:
+                return self.Coils.get(Register, "")
+            if IsInput:
+                return self.Inputs.get(Register, "")
+            return self.Registers.get(Register, "")
+        except Exception as e1:
+            self.LogErrorLine("Error in GetRegisterValueFromList: " + str(e1))
+            return ""
+
+    # -------------GeneratorController:GetCoil-----------------------------------
+    def GetCoil(self, Register,OnLabel=None, OffLabel=None):
+
+        try:
+            if OnLabel != None and OffLabel != None:
+                DefaultReturn = False
+            else:
+                DefaultReturn =  OffLabel
+            value = self.GetParameterBit(Register, 0x01, OnLabel = OnLabel, OffLabel = OffLabel, IsCoil = True)
+            if OnLabel != None and OffLabel != None:
+                return value 
+            if value == 1:
+                return True 
+            return False
+        except Exception as e1:
+            self.LogErrorLine("Error in GetCoil: " + str(e1))
+            return DefaultReturn
+
+    # -------------GeneratorController:GetParameterBit---------------------------
+    def GetParameterBit(self, Register, Mask, OnLabel=None, OffLabel=None, IsCoil = False, IsInput = False):
+
+        try:
+            Value = self.GetRegisterValueFromList(Register, IsCoil = IsCoil, IsInput = IsInput)
             if not len(Value):
                 return ""
 
@@ -679,6 +705,8 @@ class GeneratorController(MySupport):
         Divider=None,
         ReturnInt=False,
         ReturnFloat=False,
+        IsCoil = False, 
+        IsInput = False
     ):
 
         try:
@@ -694,8 +722,8 @@ class GeneratorController(MySupport):
             else:
                 LabelStr = ""
 
-            ValueLo = self.GetParameter(RegisterLo)
-            ValueHi = self.GetParameter(RegisterHi)
+            ValueLo = self.GetParameter(RegisterLo, IsCoil = IsCoil, IsInput = IsInput)
+            ValueHi = self.GetParameter(RegisterHi, IsCoil = IsCoil, IsInput = IsInput)
 
             if not len(ValueLo) or not len(ValueHi):
                 return DefaultReturn
@@ -715,7 +743,7 @@ class GeneratorController(MySupport):
                 return "%2.1f %s" % (FloatValue, LabelStr)
             return "%d %s" % (IntValue, LabelStr)
         except Exception as e1:
-            self.LogErrorLine("Error in GetParameterBit: " + str(e1))
+            self.LogErrorLine("Error in GetParameterLong: " + str(e1))
             return DefaultReturn
 
     # -------------GeneratorController:GetParameter------------------------------
@@ -729,7 +757,9 @@ class GeneratorController(MySupport):
         Hex=False,
         ReturnInt=False,
         ReturnFloat=False,
-        ReturnString=False
+        ReturnString=False,
+        IsCoil = False,
+        IsInput = False
     ):
 
         try:
@@ -740,7 +770,7 @@ class GeneratorController(MySupport):
             else:
                 DefaultReturn = ""
 
-            Value = self.GetRegisterValueFromList(Register)
+            Value = self.GetRegisterValueFromList(Register, IsCoil = IsCoil, IsInput = IsInput)
             if not len(Value):
                 return DefaultReturn
 

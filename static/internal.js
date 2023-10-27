@@ -5,14 +5,18 @@ document.getElementById("myheader").innerHTML =
 
 window.onload = init;
 var baseurl = ""
-var GlobalBaseRegisters;
-var InitOK = false;
+var GlobalBaseRegisters = null;
+var InitColorComplete = false;
 
 var BLACK = '<font color="black">';
 var RED = '<font color="red">';
 var ORANGE = '<font color="orange">';
 var BROWN = '<font color="brown">';
-var ColorInfo = [];
+//var ColorInfo = [];
+ColorInfo = {"Holding Registers": [], 
+             "Input Registers": [],
+              "Coil Registers": []};
+
 
 
 
@@ -58,83 +62,142 @@ function GetDisplayValues()
     $.getJSON(url,function(result){
 
         var RegData = result;
+        var textOut = ""
 
-        var textOut = "<ul>";
-        for (var i = 0; i < RegData.Registers["Base Registers"].length; i++) {
-
-            if ((i % 4) == 0){
-                textOut += "<li>";
-            }
-
-            var Str1 = JSON.stringify(RegData.Registers["Base Registers"][i]);
-            if (InitOK == true) {
-                var Str2 = JSON.stringify(GlobalBaseRegisters.Registers["Base Registers"][i]);
-                //console.log("Checking  %s and %s", Str1, Str2);
-                if (Str1 != Str2) {
-                    Str1 = RED + Str1 +  '</font>';
-                    ColorInfo[i].Time = new Date();
-                    ColorInfo[i].Color = RED
-                }
-                else {
-
-                    Str1 = ColorInfo[i].Color + Str1 +  '</font>';
-                }
-            }
-            textOut += Str1 + '&nbsp' + '&nbsp' + '&nbsp' + '&nbsp';
-
-            if ((i % 4) == 3){
-                textOut += "<li>";
-            }
-            else if (i == (RegData.Registers["Base Registers"].length - 1)) {
-                textOut += "<li>";
-            }
+        if (InitColorComplete == false) {
+            InitColor("Holding Register", RegData)
+            InitColor("Input Registers", RegData)
+            InitColor("Coil Register", RegData)
+            InitColorComplete = true;
         }
-        textOut += "</ul>";
 
-        var jsonStr = JSON.stringify(RegData.Registers["Base Registers"], null, 4);
-        //var jsonStr = JSON.stringify(RegData, null, 4);
-        //var RegData = JSON.parse(result);
+        textOut += "<br><h3>Holding Registers:</h3><br>"
+        textOut += DisplayRegisterData("Holding Registers", RegData)
+        textOut += "<br><h3>Input Registers:</h3><br>"
+        textOut += DisplayRegisterData("Input Registers", RegData)
+        textOut += "<br><h3>Coil Registers:</h3><br>"
+        textOut += DisplayRegisterData("Coil Registers", RegData)
+        GlobalBaseRegisters = RegData;
         document.getElementById("mydisplay").innerHTML = textOut;
 
-        GlobalBaseRegisters = RegData;
-        if (InitOK == false) {
-            InitOK = true;
-            for (var i = 0; i < GlobalBaseRegisters.Registers["Base Registers"].length; i++) {
-                ColorInfo[i] = new Object;
-                ColorInfo[i].Time = new Date();
-                ColorInfo[i].Color = BLACK;
+    });
+}
+
+//*****************************************************************************
+// DisplayRegisterData - updates display based on command sent to server (helper)
+//*****************************************************************************
+function DisplayRegisterData(register_type, RegData)
+{
+    if (!(RegData.Registers.hasOwnProperty(register_type))){
+        return ""
+    }
+    var textOut = "<ul>";
+    for (var i = 0; i < RegData.Registers[register_type].length; i++) {
+
+        if ((i % 4) == 0){
+            textOut += "<li>";
+        }
+
+        if (GlobalBaseRegisters == null){
+            Str1 = JSON.stringify(RegData.Registers[register_type][i]);
+        }
+        else{
+            var Str1 = JSON.stringify(GlobalBaseRegisters.Registers[register_type][i]);
+        }
+        
+        if (InitColorComplete == true) {
+            var Str2 = JSON.stringify(RegData.Registers[register_type][i]);
+            //console.log("Checking  %s and %s", Str1, Str2);
+            if (Str1 != Str2) {
+                Str1 = RED + Str1 +  '</font>';
+                ColorInfo[register_type][i].Time = new Date();
+                ColorInfo[register_type][i].Color = RED
+            }
+            else {
+
+                Str1 = ColorInfo[register_type][i].Color + Str1 +  '</font>';
             }
         }
-    });
+        textOut += Str1 + '&nbsp' + '&nbsp' + '&nbsp' + '&nbsp';
+
+        if ((i % 4) == 3){
+            textOut += "<li>";
+        }
+        else if (i == (RegData.Registers[register_type].length - 1)) {
+            textOut += "<li>";
+        }
+    }
+    textOut += "</ul>";
+
+    var jsonStr = JSON.stringify(RegData.Registers[register_type], null, 4);
+    //var jsonStr = JSON.stringify(RegData, null, 4);
+    //var RegData = JSON.parse(result);
+
+    
+    return textOut
+
+}
+//*****************************************************************************
+// Init Color entries
+//*****************************************************************************
+function InitColor(register_type, RegData){
+
+    if (!(RegData.Registers.hasOwnProperty(register_type))){
+        return
+    }
+    for (var i = 0; i < RegData.Registers[register_type].length; i++) {
+        ColorInfo[register_type][i] = new Object;
+        ColorInfo[register_type][i].Time = new Date();
+        ColorInfo[register_type][i].Color = BLACK;
+    }
+
 }
 //*****************************************************************************
 // AgeEntries - updates colors of output based on time elapsed
 //*****************************************************************************
 function AgeEntries()
 {
-    if (InitOK == false) {
+    if (InitColorComplete == false) {
         return
     }
 
+    AgeOneEntry("Holding Registers")
+    AgeOneEntry("Input Registers")
+    AgeOneEntry("Coil Registers")
+
+
+
+}
+//*****************************************************************************
+// AgeOneEntry - updates colors of output based on time elapsed (helper)
+//*****************************************************************************
+function AgeOneEntry(register_type) {
+
     var CurrentTime = new Date();
+    if (GlobalBaseRegisters == null){
+        return
+    }
+    if (InitColorComplete == false) {
+        return
+    }
+    if (!(GlobalBaseRegisters.Registers.hasOwnProperty(register_type))){
+        return 
+    }
+    for (var i = 0; i < GlobalBaseRegisters.Registers[register_type].length; i++) {
 
-    for (var i = 0; i < GlobalBaseRegisters.Registers["Base Registers"].length; i++) {
-
-        var difference = CurrentTime.getTime() - ColorInfo[i].Time.getTime();
+        var difference = CurrentTime.getTime() - ColorInfo[register_type][i].Time.getTime();
         var secondsDifference = Math.floor(difference/1000);
 
-        if (ColorInfo[i].Color == ORANGE) {
+        if (ColorInfo[register_type][i].Color == ORANGE) {
             if (secondsDifference > 10) {
-                ColorInfo[i].Color = BROWN;
+                ColorInfo[register_type][i].Color = BROWN;
             }
         }
-        if (ColorInfo[i].Color == RED) {
+        if (ColorInfo[register_type][i].Color == RED) {
             if (secondsDifference > 5) {
-                ColorInfo[i].Color = ORANGE;
+                ColorInfo[register_type][i].Color = ORANGE;
             }
         }
-
-
     }
 
 }

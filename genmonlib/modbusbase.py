@@ -73,7 +73,7 @@ class ModbusBase(MySupport):
         + MBUS_RECORD_LENGTH_SIZE
     )
     MIN_PACKET_ERR_LENGTH = 0x05
-    MIN_PACKET_RESPONSE_LENGTH = 0x07
+    MIN_PACKET_RESPONSE_LENGTH = 0x06           # change from 7 to 6 to accomiadate coil reads
     MIN_PACKET_MIN_WRITE_RESPONSE_LENGTH = 0x08
     MBUS_READ_FILE_REQUEST_PAYLOAD_LENGTH = 0x07
     MIN_REQ_PACKET_LENGTH = 0x08
@@ -88,8 +88,9 @@ class ModbusBase(MySupport):
     MAX_FILE_NUMBER = 0xFFFF
     MIN_FILE_NUMBER = 0x01
     # commands
-    MBUS_CMD_READ_REGS = 0x03  # Read Holding Registers
-    MBUS_CMD_READ_INPUT_REGS = 0x04  # Read Input Registers
+    MBUS_CMD_READ_COILS = 0x01          # Read Coils
+    MBUS_CMD_READ_REGS = 0x03           # Read Holding Registers
+    MBUS_CMD_READ_INPUT_REGS = 0x04     # Read Input Registers
     MBUS_CMD_WRITE_REGS = 0x10
     MBUS_CMD_READ_FILE = 0x14
     MBUS_CMD_WRITE_FILE = 0x15
@@ -227,7 +228,7 @@ class ModbusBase(MySupport):
 
     # -------------ModbusBase::ProcessTransaction--------------------------------
     def ProcessTransaction(
-        self, Register, Length, skipupdate=False, ReturnString=False
+        self, Register, Length, skipupdate=False, ReturnString=False, IsCoil = False, IsInput = False
     ):
         return
 

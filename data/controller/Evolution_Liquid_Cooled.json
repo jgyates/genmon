@@ -6,7 +6,7 @@
     "rated_nominal_freq" : 60,
     "nominal_battery_voltage" : 12,
     "generator_phase": 1,
-    "base_registers": {
+    "holding_registers": {
         "0001": {"length": 2, "text": "Status"},
         "0002": {"length": 2, "text": "Alarm"},
         "0007": {"length": 2, "text": "RPM"},

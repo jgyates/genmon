@@ -6,7 +6,7 @@
   "rated_nominal_freq": "Unknown",
   "nominal_battery_voltage": "Unknown",
   "generator_phase": 3,
-  "base_registers": {
+  "holding_registers": {
     "0000": {"length": 2, "text": "Controller ID"},
     "0001": {"length": 2, "text": "Generator Status"},
     "0002": {"length": 2, "text": "Current Alarm"},

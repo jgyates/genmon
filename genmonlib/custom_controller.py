@@ -327,8 +327,9 @@ class CustomController(GeneratorController):
             if not "engine_state" in self.controllerimport:
                 self.LogError("Error: Controller Import does not contain engine_state")
                 return False
-            if not "base_registers" in self.controllerimport:
-                self.LogError("Error: Controller Import does not contain base_registers")
+            # base registers are holding registers (Modbus Function 3), input registers  are Modbus Function 4
+            if not "holding_registers" in self.controllerimport and not "input_registers" in self.controllerimport:
+                self.LogError("Error: Controller Import does not contain holding_registers and input_registers")
                 return False
             if not "status" in self.controllerimport:
                 self.LogError("Error: Controller Import does not contain status")
@@ -359,19 +360,49 @@ class CustomController(GeneratorController):
                 self.LogError("Error: Controller Import does not contain nominal_battery_voltage")
                 return False
 
-            for Register, RegisterData in self.controllerimport["base_registers"].items():
-                if isinstance(RegisterData, dict):
-                    Length = RegisterData["length"]
-                else:
-                    Length = RegisterData
-                if Length % 2 != 0:
-                    self.LogError(
-                        "Error: Controller Import: modbus register lenghts must be divisible by 2: "
-                        + str(Register)
-                        + ":"
-                        + str(Length)
-                    )
-                    return False
+            if "holding_registers" in self.controllerimport:
+                for Register, RegisterData in self.controllerimport["holding_registers"].items():
+                    if isinstance(RegisterData, dict):
+                        Length = RegisterData["length"]
+                    else:
+                        Length = RegisterData
+                    if Length % 2 != 0:
+                        self.LogError(
+                            "Error: Controller Import: modbus register lenghts must be divisible by 2 (holding_registers): "
+                            + str(Register)
+                            + ":"
+                            + str(Length)
+                        )
+                        return False
+            if "input_registers" in self.controllerimport:
+                for Register, RegisterData in self.controllerimport["input_registers"].items():
+                    if isinstance(RegisterData, dict):
+                        Length = RegisterData["length"]
+                    else:
+                        Length = RegisterData
+                    if Length % 2 != 0:
+                        self.LogError(
+                            "Error: Controller Import: modbus register lenghts must be divisible by 2 (input_registers): "
+                            + str(Register)
+                            + ":"
+                            + str(Length)
+                        )
+                        return False
+
+            if "coil_registers" in self.controllerimport:
+                for Register, RegisterData in self.controllerimport["coil_registers"].items():
+                    if isinstance(RegisterData, dict):
+                        Length = RegisterData["length"]
+                    else:
+                        Length = RegisterData
+                    if Length != 1:
+                        self.LogError(
+                            "Error: Controller Import: modbus register lenghts must be 1 for coil registers"
+                            + str(Register)
+                            + ":"
+                            + str(Length)
+                        )
+                        return False
 
             self.ConfigValidated = True
 
@@ -551,25 +582,66 @@ class CustomController(GeneratorController):
                 self.ValidateConfig()
                 if not self.ConfigValidated:
                     return
-            
-            for Register, RegisterData in self.controllerimport["base_registers"].items():
-                if isinstance(RegisterData, dict):
-                    Length = RegisterData["length"]
-                else:
-                    Length = RegisterData
-                try:
-                    if self.IsStopping:
-                        return
-                    localTimeoutCount = self.ModBus.ComTimoutError
-                    localSyncError = self.ModBus.ComSyncError
-                    self.ModBus.ProcessTransaction(Register, Length / 2)
-                    if (
-                        localSyncError != self.ModBus.ComSyncError
-                        or localTimeoutCount != self.ModBus.ComTimoutError
-                    ) and self.ModBus.RxPacketCount:
-                        self.WaitAndPergeforTimeout()
-                except Exception as e1:
-                    self.LogErrorLine("Error in MasterEmulation: " + str(e1))
+            if "holding_registers" in self.controllerimport.keys():
+                for Register, RegisterData in self.controllerimport["holding_registers"].items():
+                    if isinstance(RegisterData, dict):
+                        Length = RegisterData["length"]
+                    else:
+                        Length = RegisterData
+                    try:
+                        if self.IsStopping:
+                            return
+                        localTimeoutCount = self.ModBus.ComTimoutError
+                        localSyncError = self.ModBus.ComSyncError
+                        self.ModBus.ProcessTransaction(Register, Length / 2)
+                        if (
+                            localSyncError != self.ModBus.ComSyncError
+                            or localTimeoutCount != self.ModBus.ComTimoutError
+                        ) and self.ModBus.RxPacketCount:
+                            self.WaitAndPergeforTimeout()
+                    except Exception as e1:
+                        self.LogErrorLine("Error in MasterEmulation (holding): " + str(e1))
+
+            if "input_registers" in self.controllerimport.keys():
+                for Register, RegisterData in self.controllerimport["input_registers"].items():
+                    if isinstance(RegisterData, dict):
+                        Length = RegisterData["length"]
+                    else:
+                        Length = RegisterData
+                    try:
+                        if self.IsStopping:
+                            return
+                        localTimeoutCount = self.ModBus.ComTimoutError
+                        localSyncError = self.ModBus.ComSyncError
+                        self.ModBus.ProcessTransaction(Register, Length / 2, IsInput = True)
+                        if (
+                            localSyncError != self.ModBus.ComSyncError
+                            or localTimeoutCount != self.ModBus.ComTimoutError
+                        ) and self.ModBus.RxPacketCount:
+                            self.WaitAndPergeforTimeout()
+                    except Exception as e1:
+                        self.LogErrorLine("Error in MasterEmulation (input): " + str(e1))
+
+            if "coil_registers" in self.controllerimport.keys():
+                for Register, RegisterData in self.controllerimport["coil_registers"].items():
+                    if isinstance(RegisterData, dict):
+                        Length = RegisterData["length"]
+                    else:
+                        Length = RegisterData
+                    try:
+                        if self.IsStopping:
+                            return
+                        localTimeoutCount = self.ModBus.ComTimoutError
+                        localSyncError = self.ModBus.ComSyncError
+                        # force coil to have a length of 1
+                        self.ModBus.ProcessTransaction(Register, 1, IsCoil = True)
+                        if (
+                            localSyncError != self.ModBus.ComSyncError
+                            or localTimeoutCount != self.ModBus.ComTimoutError
+                        ) and self.ModBus.RxPacketCount:
+                            self.WaitAndPergeforTimeout()
+                    except Exception as e1:
+                        self.LogErrorLine("Error in MasterEmulation (coil): " + str(e1))
 
             if self.ControllerDetected == False:
                 self.IdentifyController()
@@ -671,7 +743,7 @@ class CustomController(GeneratorController):
         return
 
     # ------------ CustomController:UpdateRegisterList --------------------------
-    def UpdateRegisterList(self, Register, Value, IsString=False, IsFile=False):
+    def UpdateRegisterList(self, Register, Value, IsString=False, IsFile=False, IsCoil = False, IsInput = False):
 
         try:
             if len(Register) != 4:
@@ -681,30 +753,18 @@ class CustomController(GeneratorController):
                 )
                 return False
 
-            if not IsFile:
+            if IsFile:
+                # todo validate file data length
+                self.FileData[Register] = Value
+            elif IsCoil:
+                self.Coils[Register] = Value
+            elif IsInput:
+                if self.ValidateRegister("input_registers", Register, Value):
+                    self.Inputs[Register] = Value
+            else:   # base register (holding register)
                 #  validate data length
-                datalength = int(len(Value) / 2)
-                if Register in self.controllerimport["base_registers"]:
-                    RegisterData = self.controllerimport["base_registers"][Register]
-                
-                    if isinstance(RegisterData, dict):
-                        Length = RegisterData["length"]
-                    else:
-                        Length = RegisterData
-                    if Length != datalength:
-                        self.LogError(
-                            "Invalid length detected in received modbus regisger "
-                            + str(Register)
-                            + " : "
-                            + str(datalength)
-                            + ": "
-                            + str(Length)
-                            + ": ["
-                            + self.HexStringToString(Value) +"]"
-                        )
-                        return False
-                    else:
-                        self.Registers[Register] = Value
+                if self.ValidateRegister("holding_registers", Register, Value):
+                    self.Registers[Register] = Value
                 else:
                     # TODO Validate log registers
                     ReturnStatus, LogRegLength, Name = self.RegisterIsLog(Register)
@@ -713,29 +773,74 @@ class CustomController(GeneratorController):
                     else:
                         self.LogError("Failure validating log register: " + Register)
                         return False
-            else:
-                # todo validate file data length
-                self.FileData[Register] = Value
+            
             return True
         except Exception as e1:
             self.LogErrorLine("Error in UpdateRegisterList: " + str(e1))
             return False
+        
+    # ----------  CustomController::ValidateRegister----------------------------
+    def ValidateRegister(self, type, Register, Value):
+
+        try:
+            datalength = int(len(Value) / 2)
+            if not type in self.controllerimport.keys():
+                self.LogError("Error in ValidateRegister: register " + str(Register) + ", type " + str(type) + " not in import data.")
+                return False 
+            
+            if Register in self.controllerimport[type]:
+                RegisterData = self.controllerimport[type][Register]
+            
+                if isinstance(RegisterData, dict):
+                    Length = RegisterData["length"]
+                else:
+                    Length = RegisterData
+                if Length != datalength:
+                    self.LogError("Invalid length detected in received modbus register " + str(Register) + 
+                                " : " + str(datalength) + ": " + str(Length) + ": [" + self.HexStringToString(Value) +"]")
+                    return False
+                return True
+            else:
+                self.LogError("Error in ValidateRegister: register " + str(Register) + " not in " + str(type))
+        except Exception as e1:
+            self.LogErrorLine("Error in ValidateRegister: " + str(e1))
+        return False
 
     # ----------  CustomController::GetRegisterLabels---------------------------
     def GetRegisterLabels(self):
         # return JSON of dict with registers and text descriptions
         try:
             ReturnDict = {}
-            for Register in self.Registers.keys():
-                if Register in self.controllerimport["base_registers"].keys():
-                    RegData = self.controllerimport["base_registers"][Register]
-                    if isinstance(RegData, dict):
-                        ReturnDict[Register] = RegData["text"]
-                else:
-                    Success, Length, Name = self.RegisterIsLog(Register)
-                    if Success:
-                        ReturnDict[Register] = Name
-
+            if "holding_registers" in self.controllerimport.keys():
+                for Register in self.Registers.keys():
+                    if Register in self.controllerimport["holding_registers"].keys():
+                        RegData = self.controllerimport["holding_registers"][Register]
+                        if isinstance(RegData, dict):
+                            ReturnDict[Register] = RegData["text"]
+                    else:
+                        Success, Length, Name = self.RegisterIsLog(Register)
+                        if Success:
+                            ReturnDict[Register] = Name
+            if "input_registers" in self.controllerimport.keys():
+                for Register in self.Inputs.keys():
+                    if Register in self.controllerimport["input_registers"].keys():
+                        RegData = self.controllerimport["input_registers"][Register]
+                        if isinstance(RegData, dict):
+                            ReturnDict[Register] = RegData["text"]
+                    else:
+                        Success, Length, Name = self.RegisterIsLog(Register)
+                        if Success:
+                            ReturnDict[Register] = Name
+            if "coil_registers" in self.controllerimport.keys():
+                for Register in self.Coils.keys():
+                    if Register in self.controllerimport["coil_registers"].keys():
+                        RegData = self.controllerimport["coil_registers"][Register]
+                        if isinstance(RegData, dict):
+                            ReturnDict[Register] = RegData["text"]
+                    else:
+                        Success, Length, Name = self.RegisterIsLog(Register)
+                        if Success:
+                            ReturnDict[Register] = Name
             return json.dumps(ReturnDict)
         except Exception as e1:
             self.LogErrorLine("Error in GetRegisterLabels: " + str(e1))
@@ -929,6 +1034,10 @@ class CustomController(GeneratorController):
             for logitems in self.controllerimport["logs"]:
                 if "reg" in logitems.keys():
                     Register = logitems["reg"]
+                    if "reg_type" in logitems.keys():
+                        reg_type = logitems["reg_type"]
+                    else:
+                        reg_type = None     # holding register
                     RegisterInt = int(Register,16)
                     if not "iteration" in logitems.keys():
                         self.LogError("Error in DisplayLogs: reg present but not iteration")
@@ -940,7 +1049,7 @@ class CustomController(GeneratorController):
                     LogList = []
                     while iteration > 0:
                         Register = "%04x" % RegisterInt
-                        title, LogResults = self.GetDisplayEntry(logitems["object"], inheritreg=Register)
+                        title, LogResults = self.GetDisplayEntry(logitems["object"], inheritreg=Register, inheritregtype = reg_type)
                         if LogResults != None and len(LogResults):
                             LogList.append(LogResults)
                         RegisterInt += logitems["step"]
@@ -1264,11 +1373,12 @@ class CustomController(GeneratorController):
     # ------------ GeneratorController:GetDisplayEntry --------------------------
     # return a title and value of an input dict describing the modbus register
     # and type of value it is
-    def GetDisplayEntry(self, entry, JSONNum=False, no_units=False, inheritreg = None):
+    def GetDisplayEntry(self, entry, JSONNum=False, no_units=False, inheritreg = None, inheritregtype = None):
 
         ReturnTitle = ReturnValue = None
         try:
             Register = None
+            reg_type = None
             if not isinstance(entry, dict):
                 self.LogError("Error: non dict passed to GetDisplayEntry: " + str(type(entry)))
                 return ReturnTitle, ReturnValue
@@ -1283,10 +1393,16 @@ class CustomController(GeneratorController):
             if "reg" not in entry.keys():  # required with exceptions
                 if "inherit" in entry.keys():
                     Register = inheritreg   # add inherit register 
+                    reg_type = inheritregtype
                 elif entry["type"] != "list":
                     self.LogError("Error: reg not found in input to GetDisplayEntry: " + str(entry))
                     return ReturnTitle, ReturnValue
             else:
+                if "reg_type" in entry.keys():
+                    reg_type = entry["reg_type"]
+                    if not reg_type in ["coil", "holding", "input", "file"]:
+                        self.LogError("Error : invalid reg_type in GetDisplayEntry:" + str(entry))
+                        return ReturnTitle, ReturnValue
                 Register = entry["reg"]
 
             if Register != None and not self.StringIsHex(Register):
@@ -1326,22 +1442,40 @@ class CustomController(GeneratorController):
                 self.LogError("Error: text (default) not found in input to GetDisplayEntry: "+ str(entry))
                 return ReturnTitle, ReturnValue
 
-            if entry["type"] != "list" and Register not in self.Registers:
-                # have not read the needed register yet
-                self.LogDebug("Not found register: " + Register)
-                return ReturnTitle, ReturnValue
+            if entry["type"] != "list":
+                # check if we have read the register yet
+                if ((reg_type == None or reg_type == "holding") and 
+                    "holding_registers" in self.controllerimport.keys() and 
+                    Register not in self.Registers.keys()):
+                    self.LogDebug("Holding Register not found: " + Register + " entry:" + str(entry))
+                    return ReturnTitle, ReturnValue
+                if (reg_type == "input" and 
+                    "input_registers" in self.controllerimport.keys() and 
+                    Register not in self.Inputs.keys()):
+                    self.LogDebug("Input Register not found: " + Register + " entry:" + str(entry))
+                    return ReturnTitle, ReturnValue
+                if (reg_type == "coil" and 
+                    "coil_registers" in self.controllerimport.keys() and 
+                    Register not in self.Coils.keys()):
+                    self.LogDebug("Coil Register not found: " + Register + " entry:" + str(entry))
+                    return ReturnTitle, ReturnValue
             ReturnTitle = entry["title"]
             if "default" in entry.keys():
                 ReturnValue = entry["default"]
+            IsCoil = IsInput = False
+            if reg_type == "coil":
+                IsCoil = True
+            elif reg_type == "input":
+                IsInput = True
 
             if entry["type"] == "bits":
-                value = self.GetParameter(Register, ReturnInt=True)
+                value = self.GetParameter(Register, ReturnInt=True, IsCoil=IsCoil, IsInput=IsInput)
                 value = self.ProcessMaskModifier(entry, value)
                 if value == int(entry["value"], 16):
                     ReturnValue = entry["text"]
 
             elif entry["type"] == "float":
-                value = self.GetParameter(Register, ReturnInt=True)
+                value = self.GetParameter(Register, ReturnInt=True, IsCoil=IsCoil, IsInput=IsInput)
                 value = self.ProcessMaskModifier(entry, value)
                 value = self.ProcessBitModifiers(entry, value, ReturnFloat=True)
                 value = self.ProcessTemperatureModifier( entry, value)
@@ -1351,7 +1485,7 @@ class CustomController(GeneratorController):
                 else:   
                     ReturnValue = self.ProcessExecModifier(entry, float(value))
             elif entry["type"] == "int":
-                value = self.GetParameter(Register, ReturnInt=True)
+                value = self.GetParameter(Register, ReturnInt=True, IsCoil=IsCoil, IsInput=IsInput)
                 value = self.ProcessMaskModifier(entry, value)
                 value = self.ProcessBitModifiers(entry, value)
                 value = self.ProcessSignedModifier(entry, value)
@@ -1362,7 +1496,7 @@ class CustomController(GeneratorController):
                     ReturnValue = self.ProcessExecModifier(entry, int(self.ProcessTemperatureModifier(entry, value)))
             elif entry["type"] == "regex":
                 regex_pattern = entry["regex"]
-                value = self.GetParameter(Register, ReturnInt=True)
+                value = self.GetParameter(Register, ReturnInt=True, IsCoil=IsCoil, IsInput=IsInput)
                 value = self.ProcessMaskModifier(entry, value)
                 value = self.ProcessBitModifiers(entry, value)
                 value = "%x" % value
@@ -1377,7 +1511,7 @@ class CustomController(GeneratorController):
                     separator = entry["separator"]
                 value_list = []
                 for item in list_entry:
-                    title, value = self.GetDisplayEntry(item, inheritreg=inheritreg)
+                    title, value = self.GetDisplayEntry(item, inheritreg=inheritreg, inheritregtype=reg_type)
                     if value != None:
                         value_list.append(str(self.FormatEntry(item, value)))
                 # all list items must be present if format is used
@@ -1390,7 +1524,7 @@ class CustomController(GeneratorController):
                     else:
                         ReturnValue = separator.join(value_list)
             elif entry["type"] == "object_int_index":
-                value = self.GetParameter(Register, ReturnInt=True)
+                value = self.GetParameter(Register, ReturnInt=True, IsCoil=IsCoil, IsInput=IsInput)
                 value = self.ProcessMaskModifier(entry, value)
                 value = self.ProcessBitModifiers(entry, value)
                 if "default" in entry:
@@ -1399,7 +1533,7 @@ class CustomController(GeneratorController):
                     obj_default = None
                 ReturnValue = entry["object"].get(str(value), obj_default)
             elif entry["type"] == "ascii":
-                ReturnValue = self.GetParameter(Register, ReturnString = True)
+                ReturnValue = self.GetParameter(Register, ReturnString = True, IsCoil=IsCoil, IsInput=IsInput)
             elif entry["type"] == "default":
                 ReturnValue = entry["text"]
                 ReturnTitle = "default"
@@ -1640,15 +1774,28 @@ class CustomController(GeneratorController):
             Registers["Registers"] = Regs
 
             RegList = []
+            InputList = []
+            CoilList = []
 
-            Regs["Num Regs"] = "%d" % len(self.Registers)
+            Regs["Num Regs"] = "%d" % (len(self.Registers) + len(self.Inputs) + len(self.Coils))
 
-            Regs["Base Registers"] = RegList
+            Regs["Holding Registers"] = RegList
             # display all the registers
             temp_regsiters = self.Registers
             for Register, Value in temp_regsiters.items():
                 RegList.append({Register: Value})
 
+            Regs["Input Registers"] = InputList
+            # display all the registers
+            temp_regsiters = self.Inputs
+            for Register, Value in temp_regsiters.items():
+                InputList.append({Register: Value})
+
+            Regs["Coil Registers"] = CoilList
+            # display all the registers
+            temp_regsiters = self.Coils
+            for Register, Value in temp_regsiters.items():
+                CoilList.append({Register: Value})
         except Exception as e1:
             self.LogErrorLine("Error in DisplayRegisters: " + str(e1))
 

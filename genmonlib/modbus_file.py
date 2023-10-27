@@ -62,6 +62,8 @@ class ModbusFile(ModbusBase):
         self.Registers = {}
         self.Strings = {}
         self.FileData = {}
+        self.Coils = {}
+        self.Inputs = {}
 
         if self.InputFile == None:
             self.InputFile = os.path.join(
@@ -106,7 +108,7 @@ class ModbusFile(ModbusBase):
 
     # -------------ModbusBase::ProcessTransaction--------------------------------
     def ProcessTransaction(
-        self, Register, Length, skipupdate=False, ReturnString=False
+        self, Register, Length, skipupdate=False, ReturnString=False, IsCoil = False, IsInput = False
     ):
 
         # TODO need more validation
@@ -117,7 +119,13 @@ class ModbusFile(ModbusBase):
             RegValue = self.Strings.get(Register, None)
 
             if RegValue == None:
-                RegValue = self.Registers.get(Register, "")
+                if IsCoil:
+                    RegValue = self.Coils.get(Register, "")
+                elif IsInput:
+                    RegValue = self.Inputs.get(Register, "")
+                else:
+                    RegValue = self.Registers.get(Register, "")
+                    
 
                 if len(RegValue):
                     while len(RegValue) != Length * 4:
@@ -202,6 +210,14 @@ class ModbusFile(ModbusBase):
                 self.Registers = data["Registers"]
                 self.Strings = data["Strings"]
                 self.FileData = data["FileData"]
+                if "Coils" in data:
+                    self.Coils = data["Coils"]
+                else:
+                    self.Coils = {}
+                if "Inputs" in data:
+                    self.Inputs = data["Inputs"]
+                else:
+                    self.Inputs = {}
             return True
         except Exception as e1:
             # self.LogErrorLine("Error in ReadJSONFile: " + str(e1))

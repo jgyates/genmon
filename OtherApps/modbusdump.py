@@ -33,7 +33,7 @@ except Exception as e1:
     sys.exit(2)
 
 # ------------ RegisterResults --------------------------------------------------
-def RegisterResults(Register, Value):
+def RegisterResults(Register, Value, IsCoil = False, IsInput = False):
 
     print(Register + ":" + Value)
     return True
@@ -84,15 +84,23 @@ def TestAllAddresses():
 def ModbusWrite():
     try:
         try:
-            modbus = ModbusProtocol(
-                updatecallback=RegisterResults,
-                address=modbusaddress,
-                name=device,
-                rate=baudrate,
-                Parity=parity,
-                OnePointFiveStopBits=OnePointFiveStopBits,
-            )
-
+            if not useTCP:
+                modbus = ModbusProtocol(
+                    updatecallback=RegisterResults,
+                    address=modbusaddress,
+                    name=device,
+                    rate=baudrate,
+                    Parity=parity,
+                    OnePointFiveStopBits=OnePointFiveStopBits,
+                )
+            else:
+                modbus = ModbusProtocol(
+                    updatecallback=RegisterResults,
+                    address=modbusaddress,
+                    host=hostIP,
+                    port=TCPport,
+                    modbustcp=ModbusTCP,
+                )
         except Exception as e1:
             print("Test all: Error opening serial device...: " + str(e1))
             return False
@@ -169,35 +177,31 @@ if __name__ == "__main__":  #
     TCPport = None
     ModbusTCP = False
     UseFC4 = False
+    UseCoils = False
 
     HelpStr = "\npython3 mobusdump.py -r <Baud Rate> -p <serial port> -a <modbus address to query> -s <start modbus register>  -e <end modbus register>\n"
     HelpStr += "\n   Example: python3 modbusdump.py -r 9600 -p /dev/serial0 -a 9d -s 5 -e 100 \n"
     HelpStr += "\n   Example: python3 modbusdump.py -i 192.168.1.10 -t 9988 -a 9d -s 5 -e 100 \n"
     HelpStr += "\n"
     HelpStr += "\n      -r  Baud rate of serial port (9600, 115300, etc)"
-    HelpStr += (
-        "\n      -p  Operating System device name of the serail port (/dev/serial0)"
-    )
+    HelpStr += "\n      -p  Operating System device name of the serail port (/dev/serial0)"
     HelpStr += "\n      -a  Modbus address to query in hexidecimal, 0 - ff (e.g. 9d, 10, ff) or 'all' to probe all addresses"
     HelpStr += "\n      -s  Starting modbus register to read (decimal number)"
     HelpStr += "\n      -e  Ending modbus register to read (decimal number, must be greater than start register)"
-    HelpStr += (
-        "\n      -b  Stop bits. If omitted 1 stop bit, if present use 1.5 stop bits"
-    )
-    HelpStr += (
-        "\n      -x  Omit for no parity. -x 1 for odd parity, -x 2 for even parity"
-    )
+    HelpStr += "\n      -b  Stop bits. If omitted 1 stop bit, if present use 1.5 stop bits"
+    HelpStr += "\n      -x  Omit for no parity. -x 1 for odd parity, -x 2 for even parity"
     HelpStr += "\n      -w  write this value to register instead of read. Start register is used as register"
+    HelpStr += "\n      -c  read coils (bits) instead of holding register"
     HelpStr += "\n      -i  IP address if modbus over TCP is used"
     HelpStr += "\n      -t  TCP port if modbus over TCP is used"
     HelpStr += "\n      -m  Use Modbus TCP, if omitted and IP and port provided then use Modbus RTU over TCP"
-    HelpStr += "\n      -f  use modbus function 4 instead of function 3"
+    HelpStr += "\n      -f  use modbus function 4 instead of function 3 to read input registers insteae of holding registers"
     HelpStr += "\n \n"
 
     try:
         opts, args = getopt.getopt(
             sys.argv[1:],
-            "fmbhr:p:s:e:a:x:w:i:t:",
+            "cfmbhr:p:s:e:a:x:w:i:t:",
             [
                 "rate=",
                 "port=",
@@ -264,8 +268,12 @@ if __name__ == "__main__":  #
             elif opt in ("-f", "--function4"):
                 UseFC4 = True
                 print("Use Modbus Function 4 instead of 3")
+            elif opt in ("-c", "--coil"):
+                UseCoils = True
+                print("Reading Coil Values")
 
     except Exception as e1:
+        print("\nError parsing command line: " + str(e1) + "\n")
         print(HelpStr)
         sys.exit(2)
 
@@ -284,6 +292,10 @@ if __name__ == "__main__":  #
         if endregister == None or startregister > endregister:
             print(HelpStr)
             sys.exit(2)
+    elif UseCoils:
+        print("\nCoil reading and writing flags are not compatible.\n")
+        print(HelpStr)
+        sys.exit(2)
 
     if isinstance(modbusaddress, str) and modbusaddress.lower() != "all":
         print("Invalid modbus address parameter: %s" % modbusaddress)
@@ -294,6 +306,7 @@ if __name__ == "__main__":  #
         print("Invalid modbus address: %02x" % modbusaddress)
         print(HelpStr)
         sys.exit(2)
+    
 
     if not stopbits == None:
         OnePointFiveStopBits = True
@@ -322,8 +335,7 @@ if __name__ == "__main__":  #
                         name=device,
                         rate=baudrate,
                         Parity=parity,
-                        OnePointFiveStopBits=OnePointFiveStopBits,
-                        use_fc4=UseFC4,
+                        OnePointFiveStopBits=OnePointFiveStopBits
                     )
                 else:
                     modbus = ModbusProtocol(
@@ -331,8 +343,7 @@ if __name__ == "__main__":  #
                         address=modbusaddress,
                         host=hostIP,
                         port=TCPport,
-                        modbustcp=ModbusTCP,
-                        use_fc4=UseFC4,
+                        modbustcp=ModbusTCP
                     )
             except Exception as e1:
                 print("Error opening serial device...: " + str(e1))
@@ -340,7 +351,7 @@ if __name__ == "__main__":  #
             try:
                 for Reg in range(startregister, endregister):
                     RegStr = "%04x" % Reg
-                    modbus.ProcessTransaction(RegStr, 1)
+                    modbus.ProcessTransaction(RegStr, 1, IsCoil = UseCoils, IsInput = UseFC4)
             except Exception as e1:
                 print("Error reading device: " + str(e1))
                 sys.exit(2)

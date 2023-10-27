@@ -784,10 +784,12 @@ function DisplayMaintenance(){
               for (let key in myGenerator['buttons']) {
                 button_command = key
                 button_title = myGenerator['buttons'][key];
+                // todo use printSettingsField to setup "int" input with a button, 
+                //    add a function to check the input via regex, 
+                ///   modify SetClick to support sending new command
                 outstr += '&nbsp;&nbsp;<button id=' + button_command + ' onClick="SetClick(\'' + button_command + '\');">' + button_title + '</button><br><br>';
               }
             }
-
         }
 
             $("#mydisplay").html(outstr);
@@ -1096,64 +1098,105 @@ function saveMaintenance(){
 }
 
 //*****************************************************************************
-// Display the Logs Tab
+// Display Logs
 //*****************************************************************************
 function DisplayLogs(){
 
-    var url = baseurl.concat("logs");
+    var url = baseurl.concat("logs_json");
     $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result) {
         processAjaxSuccess();
-
-        var outstr = '<center><div id="annualCalendar"></div></center>';
-        outstr += replaceAll(replaceAll(result,'\n','<br/>'),' ','&nbsp');  // replace space with html friendly &nbsp
-
-        $("#mydisplay").html(outstr);
-
-        if (lowbandwidth == false) {
+        try{
+            var LogData = result;
+            var outstr = '<center><div id="annualCalendar"></div></center>';
+            outstr += json2html(result, "", "root");
+            $("#mydisplay").html(outstr);
+            if (!(lowbandwidth == false)){
+              // don't display heat map
+              return
+            }
+        }
+        catch(err){
+          console.log("Error in DisplayLogs (log display):" + err)
+          return 
+        }
+        // check myGenerator[“AltDateformat”] == true to change date format from mm/dd/yyyy to dd/mm/yyyy
+        // so heat map can parse the data correctly
+        try{
+          var severity = 0;
+          var months = 1;
           var date = new Date();
           var data_helper = {};
-          var months = 1;
-          var loglines = result.split('\n');
-          var severity = 0;
-          for(var i = 0;i < loglines.length;i++){
-            if (loglines[i].indexOf("Alarm Log :") >= 0) {
-               severity = 3;
-            } else if (loglines[i].indexOf("Service Log :") >= 0) {
-               severity = 2;
-            } else if (loglines[i].indexOf("Run Log :") >= 0) {
-               severity = 1;
-            } else {
-               var matches = loglines[i].match(/^\s*(\d+)\/(\d+)\/(\d+) (\d+:\d+:\d+) (.*)$/i)
-               if ((matches != undefined) && (matches.length == 6)) {
-                  if ((12*matches[3]+1*matches[1]+12) <= (12*(date.getYear()-100) + date.getMonth() + 1)) {
-                  } else if (data_helper[matches[3]+'/'+matches[1]+'/'+matches[2]] == undefined) {
-                      data_helper[matches[3]+'/'+matches[1]+'/'+matches[2]] = {count: severity, date: '20'+matches[3]+'-'+matches[1]+'-'+matches[2], dateFormatted: matches[2]+' '+MonthsOfYearArray[(matches[1] -1)]+' 20'+matches[3], title: matches[5].trim()};
-                      if (((12*(date.getYear()-100) + date.getMonth() + 1)-(12*matches[3]+1*matches[1])+1) > months) {
-                          months = (12*(date.getYear()-100) + date.getMonth() + 1)-(12*matches[3]+1*matches[1])+1
-                      }
-                  } else {
-                      data_helper[matches[3]+'/'+matches[1]+'/'+matches[2]]["title"] = data_helper[matches[3]+'/'+matches[1]+'/'+matches[2]]["title"] + "<br>" + matches[5].trim();
-                      if (data_helper[matches[3]+'/'+matches[1]+'/'+matches[2]]["count"] < severity)
-                         data_helper[matches[3]+'/'+matches[1]+'/'+matches[2]]["count"] = severity;
-                  }
-               }
-            }
+          for (const [logname, logarray] of Object.entries(LogData["Logs"])) {
+            //console.log(`${logname}: `);
+            if (logname.toLowerCase().includes("alarm")){  // ALARM log
+              severity = 3;
+            } else if(logname.toLocaleLowerCase().includes("service")){ // service log
+              severity = 2;
+            } else if(logname.toLocaleLowerCase().includes("run")){   // run log
+              severity = 1;
+            };
+              
+            for (entry of logarray) {
+              //console.log(entry);
+              var matches = entry.match(/^\s*(\d+)\/(\d+)\/(\d+) (\d+:\d+:\d+) (.*)$/i);
+              if ((matches == undefined) || (matches.length != 6)) {
+                continue;
+              }
+              // e.g. matches =  ["07/17/23 08:58:25 Switched Off", "07", "17", "23", "08:58:25", "Switched Off"]
 
-          }
+              var MM;
+              var DD; 
+              var YY;
+              if (myGenerator["AltDateformat"] == true){
+                // DD/MM/YYYY
+                MM = matches[2]
+                DD = matches[1]
+                YY = matches[3]
+              }
+              else{
+                // MM/DD/YYYY
+                MM = matches[1]
+                DD = matches[2]
+                YY = matches[3]
+              };
+              var logtext = matches[5].trim()
+              var entrydate = YY + '/' + MM + '/' + DD;
+              if ((12 * YY + 1 * MM + 12) <= (12*(date.getYear()-100) + date.getMonth() + 1)) {
+                // date before our cutoff
+                continue;
+              } 
+              if(data_helper[entrydate] == undefined){
+                // no entry for this date yet so add one
+                MonthIndex = parseInt(MM) - 1
+                formatteddate = DD+' ' + MonthsOfYearArray[MonthIndex] + ' 20'+YY
+                data_helper[entrydate] = {count: severity, date: '20'+YY+'-'+MM+'-'+DD, dateFormatted: formatteddate, title: logtext};
+                if (((12*(date.getYear()-100) + date.getMonth() + 1)-(12 * YY + 1 * MM) + 1) > months) {
+                  months = (12 * (date.getYear()-100) + date.getMonth() + 1) - (12 * YY + 1 * MM) + 1;
+                }
+              }
+              else{
+                // already an entry for this date
+                data_helper[entrydate]["title"] = data_helper[entrydate]["title"] + "<br>" + logtext;
+                if (data_helper[entrydate]["count"] < severity)
+                   data_helper[entrydate]["count"] = severity;
+              }
+            };
+          };
+
           var data = Object.keys(data_helper).sort().map(function(itm) { return data_helper[itm]; });
-          // var data = Object.keys(data_helper).map(itm => data_helper[itm]);
-          // var data = Object.values(data_helper);
-          // console.log(data);
           var options = {coloring: 'genmon',
                          start: new Date((date.getMonth()-12 < 0) ? date.getYear() - 1 + 1900 : date.getYear() + 1900, (date.getMonth()-12 < 0) ? date.getMonth()+1 : date.getMonth()-12, 1),
                          end: new Date(date.getYear() + 1900, date.getMonth(), date.getDate()) ,
                          months: months, lastMonth: date.getMonth()+1, lastYear: date.getYear() + 1900,
                          labels: { days: true, months: true, custom: {monthLabels: "MMM 'YY"}}, tooltips: { show: true, options: {}}, legend: { show: false}};
           $("#annualCalendar").CalendarHeatmap(data, options);
+        }  // end try
+        catch(err){
+          console.log("Error in DisplayLogs (heatmap display):" + err)
+          return
         }
-   }});
+      }});
 }
-
 //*****************************************************************************
 // Display the Monitor Tab
 //*****************************************************************************
@@ -2878,7 +2921,29 @@ function UpdateRegisters(init, printToScreen)
         processAjaxSuccess();
 
         try{
-            $.each(RegData.Registers["Base Registers"], function(i, item) {
+            var localRegData = null;
+            // select either "Holding Registers", "Coil Registers" or "Input Registers"
+            // TODO some customer controllers (e.g. Kholer) will need to support 
+            // multiple types of registes instead of just one.
+            if (RegData.Registers.hasOwnProperty("Holding Registers")){
+              if (Object.keys(RegData.Registers['Holding Registers']).length > 1){
+                localRegData = RegData.Registers["Holding Registers"]
+              }
+            } 
+            if (RegData.Registers.hasOwnProperty("Coil Registers")){
+              if (Object.keys(RegData.Registers['Coil Registers']).length > 1){
+                localRegData = RegData.Registers["Coil Registers"]
+              }
+            }
+            if (RegData.Registers.hasOwnProperty("Input Registers")){
+              if (Object.keys(RegData.Registers['Input Registers']).length > 1){
+                localRegData = RegData.Registers["Input Registers"]
+              }
+            }
+            if (localRegData == null){
+              return
+            }
+            $.each(localRegData, function(i, item) {
                 var reg_key = Object.keys(item)[0]
                 var reg_val = item[Object.keys(item)[0]];
 
@@ -3516,6 +3581,7 @@ function GetBaseStatus()
 
           myGenerator['MonitorTime'] = result['MonitorTime'];
           myGenerator['RunHours'] = result['RunHours'];
+          myGenerator['AltDateformat'] = result['AltDateformat']
           if (myGenerator['version'].length > 0) {
              if (myGenerator['version'] != result['version']) {
                 myGenerator['version'] = result['version'];

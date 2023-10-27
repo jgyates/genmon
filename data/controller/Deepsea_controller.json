@@ -6,7 +6,7 @@
     "rated_nominal_freq" : 50,
     "nominal_battery_voltage" : 24,
     "generator_phase": 1,
-    "base_registers": {
+    "holding_registers": {
         "008b": 4,
         "0080": {"length": 4, "text": "Generator Status"},
         "9900": 2,

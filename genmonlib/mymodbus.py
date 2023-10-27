@@ -16,7 +16,6 @@ from __future__ import (  # For python 3.x compatibility with print function
 import datetime
 import sys
 import time
-
 import crcmod
 
 from genmonlib.modbusbase import ModbusBase
@@ -259,7 +258,7 @@ class ModbusProtocol(ModbusBase):
                 if len(self.Slave.Buffer) < self.MIN_PACKET_RESPONSE_LENGTH:
                     return True, EmptyPacket  # No full packet ready
 
-            if self.Slave.Buffer[self.MBUS_OFF_COMMAND] in [self.MBUS_CMD_READ_REGS]:
+            if self.Slave.Buffer[self.MBUS_OFF_COMMAND] in [self.MBUS_CMD_READ_REGS, self.MBUS_CMD_READ_INPUT_REGS, self.MBUS_CMD_READ_COILS]:
                 # it must be a read command response
                 length = self.Slave.Buffer[
                     self.MBUS_OFF_RESPONSE_LEN
@@ -410,21 +409,28 @@ class ModbusProtocol(ModbusBase):
 
     # -------------ModbusProtocol::PT--------------------------------------------
     # called from derived calls to get to overridded function ProcessTransaction
-    def _PT(self, Register, Length, skipupdate=False, ReturnString=False):
+    def _PT(self, Register, Length, skipupdate=False, ReturnString=False, IsCoil = False, IsInput = False):
 
         MasterPacket = []
 
         try:
+            min_response_override = None # use the default minimum response packet size
             with self.CommAccessLock:
+                if IsCoil:
+                    packet_type = self.MBUS_CMD_READ_COILS
+                elif IsInput:
+                    packet_type = self.MBUS_CMD_READ_INPUT_REGS
+                else:
+                    packet_type = self.MBUS_CMD_READ_REGS
                 MasterPacket = self.CreateMasterPacket(
-                    Register, command=self.MBUS_CMD_READ_REGS, length=int(Length)
+                    Register, command=packet_type, length=int(Length)
                 )
 
                 if len(MasterPacket) == 0:
                     return ""
 
                 return self.ProcessOneTransaction(
-                    MasterPacket, skipupdate=skipupdate, ReturnString=ReturnString
+                    MasterPacket, skipupdate=skipupdate, ReturnString=ReturnString, min_response_override = min_response_override
                 )  # don't log
 
         except Exception as e1:
@@ -433,9 +439,9 @@ class ModbusProtocol(ModbusBase):
 
     # -------------ModbusProtocol::ProcessTransaction----------------------------
     def ProcessTransaction(
-        self, Register, Length, skipupdate=False, ReturnString=False
+        self, Register, Length, skipupdate=False, ReturnString=False, IsCoil = False, IsInput = False
     ):
-        return self._PT(Register, Length, skipupdate, ReturnString)
+        return self._PT(Register, Length, skipupdate = skipupdate, ReturnString = ReturnString, IsCoil = IsCoil, IsInput = IsInput)
 
     # -------------ModbusProtocol::ProcessFileReadTransaction--------------------
     def ProcessFileReadTransaction(
@@ -653,13 +659,13 @@ class ModbusProtocol(ModbusBase):
                 )
                 return []
 
-            if command == self.MBUS_CMD_READ_REGS:
+            if command == self.MBUS_CMD_READ_REGS or command == self.MBUS_CMD_READ_COILS or command == self.MBUS_CMD_READ_INPUT_REGS:
                 Packet.append(self.Address)  # address
                 Packet.append(command)  # command
                 Packet.append(RegisterInt >> 8)  # reg high
                 Packet.append(RegisterInt & 0x00FF)  # reg low
-                Packet.append(length >> 8)  # length high
-                Packet.append(length & 0x00FF)  # length low
+                Packet.append(length >> 8)  # length / num coils high 
+                Packet.append(length & 0x00FF)  # length / num coils low
                 CRCValue = self.GetCRC(Packet)
                 if CRCValue != None:
                     Packet.append(CRCValue & 0x00FF)  # CRC low
@@ -881,6 +887,8 @@ class ModbusProtocol(ModbusBase):
                 )
                 return "Error"
             if not SlavePacket[self.MBUS_OFF_COMMAND] in [
+                self.MBUS_CMD_READ_COILS,
+                self.MBUS_CMD_READ_INPUT_REGS,
                 self.MBUS_CMD_READ_REGS,
                 self.MBUS_CMD_WRITE_REGS,
                 self.MBUS_CMD_READ_FILE,
@@ -895,6 +903,8 @@ class ModbusProtocol(ModbusBase):
                 )
                 return "Error"
             if not MasterPacket[self.MBUS_OFF_COMMAND + PacketOffset] in [
+                self.MBUS_CMD_READ_COILS,
+                self.MBUS_CMD_READ_INPUT_REGS,
                 self.MBUS_CMD_READ_REGS,
                 self.MBUS_CMD_WRITE_REGS,
                 self.MBUS_CMD_READ_FILE,
@@ -943,12 +953,18 @@ class ModbusProtocol(ModbusBase):
 
             RegisterValue = ""
             RegisterStringValue = ""
-            if (
-                MasterPacket[self.MBUS_OFF_COMMAND + PacketOffset]
-                == self.MBUS_CMD_READ_REGS
+            if (MasterPacket[self.MBUS_OFF_COMMAND + PacketOffset] == self.MBUS_CMD_READ_REGS or
+                MasterPacket[self.MBUS_OFF_COMMAND + PacketOffset] == self.MBUS_CMD_READ_INPUT_REGS or
+                MasterPacket[self.MBUS_OFF_COMMAND + PacketOffset] == self.MBUS_CMD_READ_COILS
             ):
+                IsCoil = False      # Mobus funciton 01
+                IsInput = False     # Modubs function 04
                 # get value from slave packet
                 length = SlavePacket[self.MBUS_OFF_RESPONSE_LEN]
+                if MasterPacket[self.MBUS_OFF_COMMAND + PacketOffset] == self.MBUS_CMD_READ_COILS:
+                    IsCoil = True
+                elif MasterPacket[self.MBUS_OFF_COMMAND + PacketOffset] == self.MBUS_CMD_READ_INPUT_REGS:
+                    IsInput = True
                 if (length + self.MBUS_RES_PAYLOAD_SIZE_MINUS_LENGTH) > len(
                     SlavePacket
                 ):
@@ -969,13 +985,11 @@ class ModbusProtocol(ModbusBase):
                 if not SkipUpdate:
                     if not self.UpdateRegisterList == None:
                         if not ReturnString:
-                            if not self.UpdateRegisterList(Register, RegisterValue):
+                            if not self.UpdateRegisterList(Register, RegisterValue, IsCoil = IsCoil, IsInput = IsInput):
                                 self.ComSyncError += 1
                                 return "Error"
                         else:
-                            if not self.UpdateRegisterList(
-                                Register, RegisterStringValue, IsString=True
-                            ):
+                            if not self.UpdateRegisterList(Register, RegisterStringValue, IsString=True, IsCoil = IsCoil, IsInput = IsInput):
                                 self.ComSyncError += 1
                                 return "Error"
 

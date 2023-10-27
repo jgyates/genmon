@@ -626,6 +626,8 @@ class Monitor(MySupport):
             SupportData["Registers"] = self.Controller.Registers
             SupportData["Strings"] = self.Controller.Strings
             SupportData["FileData"] = self.Controller.FileData
+            SupportData["Coils"] = self.Controller.Coils
+            SupportData["Inputs"] = self.Controller.Inputs
         except Exception as e1:
             self.LogErrorLine("Error in GetSupportData: " + str(e1))
 

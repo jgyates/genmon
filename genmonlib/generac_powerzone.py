@@ -1213,7 +1213,7 @@ class PowerZone(GeneratorController):
         return False
 
     # ------------ PowerZone:UpdateRegisterList ---------------------------------
-    def UpdateRegisterList(self, Register, Value, IsString=False, IsFile=False):
+    def UpdateRegisterList(self, Register, Value, IsString=False, IsFile=False, IsCoil = False, IsInput = False):
 
         try:
             if len(Register) != 4:
@@ -2797,7 +2797,7 @@ class PowerZone(GeneratorController):
 
             Regs["Num Regs"] = "%d" % len(self.Registers)
 
-            Regs["Base Registers"] = RegList
+            Regs["Holding Registers"] = RegList
             # display all the registers
             temp_regsiters = self.Registers
             for Register, Value in temp_regsiters.items():

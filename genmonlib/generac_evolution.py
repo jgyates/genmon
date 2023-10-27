@@ -2081,7 +2081,7 @@ class Evolution(GeneratorController):
         return False
 
     # ------------ Evolution:UpdateRegisterList ---------------------------------
-    def UpdateRegisterList(self, Register, Value, IsString=False, IsFile=False):
+    def UpdateRegisterList(self, Register, Value, IsString=False, IsFile=False, IsCoil = False, IsInput = False):
 
         if IsString:
             self.LogError("Validation Error: IsString is True")
@@ -2143,7 +2143,7 @@ class Evolution(GeneratorController):
             Regs["Changed"] = "%d" % self.Changed
             Regs["Total Changed"] = "%.2f" % self.TotalChanged
 
-            Regs["Base Registers"] = RegList
+            Regs["Holding Registers"] = RegList
             # print all the registers
             # make a temp copy in case the registers change whil iterating
             temp_regsiters = self.Registers
