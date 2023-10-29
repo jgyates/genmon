@@ -58,9 +58,17 @@
         "01f4": {"length": 10, "text": "Serial Number"}
     },
     "log_registers": {
-      "03e8": {"length": 10, "text": "Alarm Log", "iteration": 50, "step": 5},
-      "04e2": {"length": 8, "text": "Service Log", "iteration": 50, "step": 4},
-      "012c": {"length": 8, "text": "Run Log", "iteration": 50, "step": 4}
+      "03e8": { 
+                "comment": "The registers in this instance is 03e8. By default, this is read from holding registers.",
+                "comment2:": " To read from input registers add the field 'reg_type': 'input'",
+                "reg_type": "holding",
+                "length": 10, 
+                "text": "Alarm Log", 
+                "iteration": 50, 
+                "step": 5
+              },
+      "04e2": {"reg_type": "holding", "length": 8, "text": "Service Log", "iteration": 50, "step": 4},
+      "012c": {"reg_type": "holding", "length": 8, "text": "Run Log", "iteration": 50, "step": 4}
     },
     "switch_state": [
       {
