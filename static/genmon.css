@@ -655,7 +655,7 @@ li a:hover:not(.active) {
 .grid-item {
      float: left;
      height: 200px;
-     background: #FFFFF;
+     background: #FFFFFF;
      border: 0px;
 }
 /* Draggabilly adds is-dragging */
