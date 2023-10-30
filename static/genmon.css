@@ -74,16 +74,16 @@ p {
     font-size: 18px;
 }
 button {
-    font-weight: bold;
-    font-size: 16px;
-    border-radius: 3.01px;
-    border: 0;
-    margin: 0 0 0 .5em;
-    font-family: inherit;
-    line-height: 1em;
-    padding: .75em .75em;
-    background: #bbbbbb;
-    cursor:pointer;
+    font-weight: bold !important;
+    font-size: 16px !important;
+    border-radius: 3.01px !important;
+    border: 0 !important;
+    margin: 0 0 0 .5em !important;
+    font-family: inherit !important;
+    line-height: 1em !important;
+    padding: .75em .75em !important;
+    background: #bbbbbb !important;
+    cursor:pointer !important;
 }
 ul {
     list-style-type: none;

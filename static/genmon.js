@@ -778,18 +778,47 @@ function DisplayMaintenance(){
                outstr += '<br><br>Reset:<br><br>';
                outstr += '&nbsp;&nbsp;<button id="settimebutton" onClick="SetPowerLogReset();">Reset Power Log & Fuel Estimate</button>';
             }
-
-            if (("buttons" in myGenerator) && !(Object.keys(myGenerator['buttons']).length === 0) ){
-              outstr += '<br><br>Generator Functions:<br><br>';
-              for (let key in myGenerator['buttons']) {
-                button_command = key
-                button_title = myGenerator['buttons'][key];
-                // todo use printSettingsField to setup "int" input with a button, 
-                //    add a function to check the input via regex, 
-                ///   modify SetClick to support sending new command
-                outstr += '&nbsp;&nbsp;<button id=' + button_command + ' onClick="SetClick(\'' + button_command + '\');">' + button_title + '</button><br><br>';
+            try{
+              if (("buttons" in myGenerator) && !(myGenerator['buttons'].length === 0)) {
+                outstr += '<br><br>Generator Functions:<br><br>';
+                for (let index in myGenerator['buttons']) {
+                  button = myGenerator['buttons'][index];
+                  button_command = button["onewordcommand"];
+                  button_title = button["title"];
+                  command_sequence = button["command_sequence"];
+                  
+                  if ((command_sequence.length >= 1) && (command_sequence[0].hasOwnProperty("input_title"))){
+                    // TODO WORK IN PROGRESS below this point
+                    continue;
+                    // this button has an input
+                    for (let cmdidx in command_sequence){
+                      // cycle through each command in command_sequence
+                      command = command_sequence[cmdidx]
+                      if ((command.hasOwnProperty("input_title")) && (command.hasOwnProperty("type"))) {
+                        title = command["input_title"];
+                        type = command["type"];
+                        tooltip = ""
+                        bounds = ""
+                        if (command.hasOwnProperty("bounds_regex")){
+                          bounds = command["bounds_regex"];
+                        }
+                        if (command.hasOwnProperty("tooltip")){
+                          tooltip = command["tooltip"];
+                        }
+                        var default_value = 0
+                        outstr += setupInputButton(cmdidx, button_command, type, title, default_value, tooltip, bounds )
+                      }
+                    }
+                  } else {
+                    outstr += '&nbsp;&nbsp;<button id=' + button_command + ' onClick="SetClick(\'' + button_command + '\');">' + button_title + '</button><br><br>';
+                  }
+                  
+                }
               }
+            } catch(err){
+              console.log("Error parsing buttons: " + err)
             }
+            
         }
 
             $("#mydisplay").html(outstr);
@@ -810,6 +839,86 @@ function DisplayMaintenance(){
    }});
 }
 
+//*****************************************************************************
+// called when validating input button
+//*****************************************************************************
+function validateInputButton(action, identifier, parent, bounds_regex){
+  console.log("Button Validation called: " + action + "," + identifier + ", " + parent)
+
+  switch (action) {
+    case "validate":
+       msg = "";
+       break;
+    case "click":
+      msg = "";
+      break;
+    case "change":
+      msg = "";
+      break;
+    default:
+      console.log("Error: Invalid action in validateInputButton!")
+  }
+
+}
+
+function submitButton(ctlid, identifier, parent){
+  try{
+    console.log("ID:" + ctlid + ", Index: " + identifier+ ", Parent: " + parent )
+    //console.log("value: " + document.getElementById(ctlid).value)
+  }
+  catch(err){
+    console.log("Error in submitButton: " + err)
+  }
+}
+//*****************************************************************************
+// called to setup input button
+//*****************************************************************************
+function setupInputButton(identifier, parent, type, title, default_value, tooltip, bounds_regex ) {
+
+  var outstr = ""
+  try {
+
+    if (!(type === "int")){
+      // at the moment only "int" is supported
+      return outstr;
+    }
+    
+    // this form is for the tool top support
+    var validationCallback = "validateInputButton(\'validate\', \'" + identifier + "\', \'" + parent + "\', \'" + bounds_regex + "\');";
+    var clickCallback = "validateInputButton(\'click\', \'" + identifier + "\', \'" + parent + "\', \'" + bounds_regex + "\')";
+    var changeCallback = "validateInputButton(\'change\', \'" + identifier + "\', \'" + parent + "\', \'" + bounds_regex + "\')";
+    var button_id = "button_" + identifier + "_" + parent;
+    var id = parent + "_" + identifier
+    var button_id = "button_" + id;
+    var input_id = "input_"+ id;
+    validation = 0
+    
+    // TODO WORK IN PROGRESS
+    outstr += '<form class="idealforms" novalidate  autocomplete="off" id="formButtons">';
+    //outstr += '<button onclick="submitButton(\'' + input_id + '\',\'' + identifier + '\', \'' + parent + '\');" id="' + button_id + '" >' + title + '</button>';
+    outstr += '<div class="field idealforms-field"">' +
+                  '&nbsp;&nbsp;' +
+                  //'onclick="' + clickCallback + ';" ' +
+                  //'<button class="button" onclick="submitButton(\'' + input_id + '\',\'' + identifier + '\', \'' + parent + '\');" id="' + button_id + '" >' + title + '</button>' +
+                  '<button class="button" onclick="' + clickCallback + ';"  id="' + button_id + '" >' + title + '</button>' +
+                  '&nbsp;&nbsp;' +
+                  '<input id="' + input_id +  '" style="width: 150px;" name="' + id + '" type="text" ' +
+                  ' onChange="' + changeCallback + ';" '+
+                  (((typeof validation === 'undefined') || (validation==0)) ? 'onFocus="$(\'#'+input_id+'_tooltip\').show();" onBlur="$(\'#'+input_id+'_tooltip\').hide();" ' : 'data-idealforms-rules="' + validation + '" ') + '>' +
+                 '<span class="error" style="display: none;"></span>' +
+                  (((typeof tooltip !== 'undefined' ) && (tooltip.trim() != "")) ? '<span id="' + input_id + '_tooltip" class="tooltip" style="display: none;">' + replaceAll(tooltip, '"', '&quot;') + '</span>' : "") +
+                 '</div>';
+    outstr += '</form>';
+    return outstr;
+    
+
+  }
+  catch(err) {
+    console.log("Error in setupInputButton: " + err);
+  }
+  
+  return outstr
+}
 //*****************************************************************************
 // called when Monthly is clicked
 //*****************************************************************************

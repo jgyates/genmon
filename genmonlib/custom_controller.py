@@ -1309,7 +1309,7 @@ class CustomController(GeneratorController):
                 return {}
 
             # Validate buttons before sending to the web app
-            return_buttons = {}
+            return_buttons = []
             for button in button_list:
                 
                 if not "onewordcommand" in button.keys():
@@ -1358,9 +1358,8 @@ class CustomController(GeneratorController):
                 if CommandError:
                     continue
 
-                # TODO fix this
-                #return_buttons.append(button)
-                return_buttons[button["onewordcommand"]] = button["title"]
+                return_buttons.append(button)
+
             return return_buttons
 
         except Exception as e1:

@@ -2192,7 +2192,7 @@ class HPanel(GeneratorController):
 
             if not NoTile:
 
-                StartInfo["buttons"] = {}
+                StartInfo["buttons"] = []
 
                 StartInfo["pages"] = {
                     "status": True,

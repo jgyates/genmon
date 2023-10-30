@@ -1244,7 +1244,7 @@
                                   "comment2": "'bounds_reg' is optional but allows the user interface to bounds check the data before sending it to genmon",
                                   "comment3": "'tooltip' is optional but allows the user interface to display more information regarding the input.",
                                   "reg": "023e",
-                                  "input_title": "Minutes",
+                                  "input_title": "Exercise Duration",
                                   "type": "int",
                                   "length": 2,
                                   "bounds_regex":"^([1][2-9])|([2-5][0-9])|([6][0])$",
