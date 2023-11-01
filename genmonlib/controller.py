@@ -932,11 +932,11 @@ class GeneratorController(MySupport):
             with self.ModBus.CommAccessLock:
                 for command in command_sequence:
                     if not len(command["value"]):
-                        self.LogDebug("Error in SetGeneratorRemoteCommand: invalid value array")
+                        self.LogDebug("Error in ExecuteCommandSequence: invalid value array")
                         continue
                     if isinstance(command["value"], list):
                         if not (len(command["value"]) % 2) == 0:
-                            self.LogDebug("Error in SetGeneratorRemoteCommand: invalid value length")
+                            self.LogDebug("Error in ExecuteCommandSequence: invalid value length")
                             return "Command not found."
                         Data = []
                         for item in command["value"]:
@@ -945,7 +945,7 @@ class GeneratorController(MySupport):
                             elif isinstance(item, int):
                                 Data.append(item)
                             else:
-                                self.LogDebug("Error in SetGeneratorRemoteCommand: invalid type if value list")
+                                self.LogDebug("Error in ExecuteCommandSequence: invalid type if value list")
                                 return "Command not found."
                         self.LogDebug("Write: " + command["reg"] + ": " + str(Data))
                         self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data)
@@ -969,7 +969,7 @@ class GeneratorController(MySupport):
                         self.LogDebug("Write: "+ command["reg"]+ ": "+ ("%x %x" % (HighByte, LowByte)))
                         self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data)
                     else:
-                        self.LogDebug("Error in SetGeneratorRemoteCommand: invalid value type")
+                        self.LogDebug("Error in ExecuteCommandSequence: invalid value type")
                         return "Command not found."
 
                 return "Remote command sent successfully"
