@@ -790,7 +790,7 @@ function DisplayMaintenance(){
                   if ((command_sequence.length >= 1) && (command_sequence[0].hasOwnProperty("input_title"))){
                     // TODO WORK IN PROGRESS below this point
                     continue;
-                    // this button has an input
+                    // this button has an input, loop thru the list of commands in command_sequence
                     for (let cmdidx in command_sequence){
                       // cycle through each command in command_sequence
                       command = command_sequence[cmdidx]
@@ -843,7 +843,7 @@ function DisplayMaintenance(){
 // called when validating input button
 //*****************************************************************************
 function validateInputButton(action, identifier, parent, bounds_regex){
-  console.log("Button Validation called: " + action + "," + identifier + ", " + parent)
+  console.log("Input Validation called: " + action + "," + identifier + ", " + parent)
 
   switch (action) {
     case "validate":
@@ -860,7 +860,9 @@ function validateInputButton(action, identifier, parent, bounds_regex){
   }
 
 }
-
+//*****************************************************************************
+// submit for button commands
+//*****************************************************************************
 function submitButton(ctlid, identifier, parent){
   try{
     console.log("ID:" + ctlid + ", Index: " + identifier+ ", Parent: " + parent )
