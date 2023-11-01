@@ -840,25 +840,103 @@ function DisplayMaintenance(){
 }
 
 //*****************************************************************************
+// given a button one word command, retrieve the containing button object
+//*****************************************************************************
+function getButtonFromCommand(onewordcommand){
+
+    if (("buttons" in myGenerator) && !(myGenerator['buttons'].length === 0)) {
+      // cycle thru the buttons in our list
+      for (let index in myGenerator['buttons']) {
+        button = myGenerator['buttons'][index];
+        button_command = button["onewordcommand"];
+        if (onewordcommand == button_command){
+          return button;
+        }
+      }
+    }
+    // did not find the button requested
+    console.log("Error in getButtonCommand: button not found: " + onewordcommand)
+    return null;
+}
+//*****************************************************************************
+// called when sending button input to genmon
+//*****************************************************************************
+function setButtonCommand(button_object)
+{
+  try{
+      if ((!(button_object.hasOwnProperty("onewordcommand"))) || 
+          (!(button_object.hasOwnProperty("title"))) ||
+          (!(button_object.hasOwnProperty("command_sequence"))))
+      {
+        console.log("Error: invalid formate of button object.");
+        return;
+      }
+
+      // set button command
+      // the button_object is one of the button elemnts in the list
+      // myGenerator['buttons'] list with the 'value' property added 
+      // to the command_sequence, 
+      // e.g. myGenerator['buttons'][0]['command_sequence][0]['value'] = user defined input
+      var input =  JSON.stringify(button_object);
+      var url = baseurl.concat("set_button_command");
+      $.getJSON(  url,
+                  {setremote: input},
+                  function(result){
+          // result should be either "OK" or error string.
+          if (result !== "OK"){
+
+          }
+      });
+
+  }
+  catch (err){
+    console.log("Error in setButonCommand: " + err)
+  }
+}
+//*****************************************************************************
 // called when validating input button
+// action is "validate", "click" or "change"
+// identifier is the index of the command_sequence in a given button object
+// parent is the 'onewordcommand' of the parent
+// bounds_regex is the regular expession string to bounds check the input 
 //*****************************************************************************
 function validateInputButton(action, identifier, parent, bounds_regex){
-  console.log("Input Validation called: " + action + "," + identifier + ", " + parent)
 
-  switch (action) {
-    case "validate":
-       msg = "";
-       break;
-    case "click":
-      msg = "";
-      break;
-    case "change":
-      msg = "";
-      break;
-    default:
-      console.log("Error: Invalid action in validateInputButton!")
-  }
+    console.log("Input Validation called: " + action + "," + identifier + ", " + parent)
 
+    try{
+      var button_object = getButtonFromCommand(parent);
+      var button_title = button_object['title'];
+      // get the input value for the corrosponding button
+      var id = parent + "_" + identifier
+      var input_id = "input_"+ id;
+      var value = document.getElementById(input_id).value
+
+      var bounds = new RegExp(bounds_regex);
+      if (!(bounds.test(value))){
+        console.log("Error: input out of bounds.")
+        // TODO error message to user?
+        return;
+      }
+      
+      switch (action) {
+        case "validate":
+          msg = "";
+          break;
+        case "click":
+          msg = "";
+          break;
+        case "change":
+          msg = "";
+          break;
+        default:
+          console.log("Error: Invalid action in validateInputButton!");
+      }
+    }
+    catch(err){
+      console.log("Error in validateInputButton: " + err);
+      return
+    }
 }
 //*****************************************************************************
 // submit for button commands
@@ -889,28 +967,36 @@ function setupInputButton(identifier, parent, type, title, default_value, toolti
     var validationCallback = "validateInputButton(\'validate\', \'" + identifier + "\', \'" + parent + "\', \'" + bounds_regex + "\');";
     var clickCallback = "validateInputButton(\'click\', \'" + identifier + "\', \'" + parent + "\', \'" + bounds_regex + "\')";
     var changeCallback = "validateInputButton(\'change\', \'" + identifier + "\', \'" + parent + "\', \'" + bounds_regex + "\')";
-    var button_id = "button_" + identifier + "_" + parent;
     var id = parent + "_" + identifier
     var button_id = "button_" + id;
     var input_id = "input_"+ id;
     validation = 0
     
     // TODO WORK IN PROGRESS
-    outstr += '<form class="idealforms" novalidate  autocomplete="off" id="formButtons">';
-    //outstr += '<button onclick="submitButton(\'' + input_id + '\',\'' + identifier + '\', \'' + parent + '\');" id="' + button_id + '" >' + title + '</button>';
-    outstr += '<div class="field idealforms-field"">' +
-                  '&nbsp;&nbsp;' +
-                  //'onclick="' + clickCallback + ';" ' +
-                  //'<button class="button" onclick="submitButton(\'' + input_id + '\',\'' + identifier + '\', \'' + parent + '\');" id="' + button_id + '" >' + title + '</button>' +
-                  '<button class="button" onclick="' + clickCallback + ';"  id="' + button_id + '" >' + title + '</button>' +
-                  '&nbsp;&nbsp;' +
-                  '<input id="' + input_id +  '" style="width: 150px;" name="' + id + '" type="text" ' +
-                  ' onChange="' + changeCallback + ';" '+
-                  (((typeof validation === 'undefined') || (validation==0)) ? 'onFocus="$(\'#'+input_id+'_tooltip\').show();" onBlur="$(\'#'+input_id+'_tooltip\').hide();" ' : 'data-idealforms-rules="' + validation + '" ') + '>' +
-                 '<span class="error" style="display: none;"></span>' +
-                  (((typeof tooltip !== 'undefined' ) && (tooltip.trim() != "")) ? '<span id="' + input_id + '_tooltip" class="tooltip" style="display: none;">' + replaceAll(tooltip, '"', '&quot;') + '</span>' : "") +
-                 '</div>';
-    outstr += '</form>';
+    if (false)
+    {
+        outstr += '<form class="idealforms" novalidate  autocomplete="off" id="formButtons">';
+        //outstr += '<button onclick="submitButton(\'' + input_id + '\',\'' + identifier + '\', \'' + parent + '\');" id="' + button_id + '" >' + title + '</button>';
+        outstr += '<div class="field idealforms-field"">' +
+                      '&nbsp;&nbsp;' +
+                      //'onclick="' + clickCallback + ';" ' +
+                      //'<button class="button" onclick="submitButton(\'' + input_id + '\',\'' + identifier + '\', \'' + parent + '\');" id="' + button_id + '" >' + title + '</button>' +
+                      '<button class="button" onclick="' + clickCallback + ';"  id="' + button_id + '" >' + title + '</button>' +
+                      '&nbsp;&nbsp;' +
+                      '<input id="' + input_id +  '" style="width: 150px;" name="' + id + '" type="text" ' +
+                      ' onChange="' + changeCallback + ';" '+
+                      (((typeof validation === 'undefined') || (validation==0)) ? 'onFocus="$(\'#'+input_id+'_tooltip\').show();" onBlur="$(\'#'+input_id+'_tooltip\').hide();" ' : 'data-idealforms-rules="' + validation + '" ') + '>' +
+                    '<span class="error" style="display: none;"></span>' +
+                      (((typeof tooltip !== 'undefined' ) && (tooltip.trim() != "")) ? '<span id="' + input_id + '_tooltip" class="tooltip" style="display: none;">' + replaceAll(tooltip, '"', '&quot;') + '</span>' : "") +
+                    '</div>';
+        outstr += '</form>';
+    }
+    else{
+        outstr += '&nbsp;&nbsp;';
+        outstr += '<button class="button" onclick="' + clickCallback + ';"  id="' + button_id + '" >' + title + '</button>';
+        outstr += '&nbsp;&nbsp;';
+        outstr += '<input id="' + input_id +  '" style="width: 150px;" name="' + id + '" type="text" >'; 
+    }
     return outstr;
     
 
@@ -989,7 +1075,8 @@ function SetClick(cmd){
           msg = 'Acknowledge generator alarm?<br><span class="confirmSmall">Are you sure you want to acknowledge the alarm condition on your generator?</span>';
           break;
        default:
-          button_title = myGenerator['buttons'][cmd]
+          button = getButtonFromCommand(cmd);
+          button_title = button['title']
           msg = 'Issue generator command: ' + button_title + '?<br><span class="confirmSmall">Are you sure you want to isssue this command?</span>';
     }
 

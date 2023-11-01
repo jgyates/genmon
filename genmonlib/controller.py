@@ -828,7 +828,7 @@ class GeneratorController(MySupport):
             ValidInput = False
             EntryString = CommandString
             if EntryString == None or not len(EntryString):
-                return "Invalid input for SetCommandButton entry."
+                return "Error: Invalid input for Set Button Command entry."
 
             EntryString = EntryString.strip()
             if EntryString.startswith("set_button_command"):
@@ -844,19 +844,19 @@ class GeneratorController(MySupport):
                     CommandSetList = json.loads(EntryString)
                     # validate object
                     if not isinstance(CommandSetList, list) and not (len(CommandSetList) == 0):
-                        return "Invalid set button object"
+                        return "Error: Invalid button object"
                     # Execute Command
                     return self.ExecuteRemoteCommand(CommandSetList)
                 except Exception as e1:
                     self.LogErrorLine("Error in SetCommandButton: " + str(e1))
-                    return "Invalid input for SetCommandButton (2)"
+                    return "Error: Invalid input for SetCommandButton (2), see error log."
             else:
                 self.LogError("Error in SetCommandButton: invalid input: " + str(CommandString))
-                return "Invalid input for SetButton (3)."
+                return "Error: Invalid input for SetButton (3)."
             return "OK"
         except Exception as e1:
             self.LogErrorLine("Error in SetCommandButton: " + str(e1))
-            return "Error in SetCommandButton"
+            return "Error in SetCommandButton, see error log."
         return "OK"
     # -------------CustomController:ExecuteRemoteCommand-------------------------
     def ExecuteRemoteCommand(self, CommandSetList):
