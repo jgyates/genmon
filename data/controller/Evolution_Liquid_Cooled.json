@@ -1225,14 +1225,14 @@
                                ]
       },
       {
-          "onewordcommand" : "manual",
-          "title" : "Select Manual Mode",
-          "command_sequence" : [
-                                 {
-                                   "reg": "0003",
-                                   "value": "000e"
-                                 }
-                               ]
+        "onewordcommand" : "manual",
+        "title" : "Select Manual Mode",
+        "command_sequence" : [
+                               {
+                                 "reg": "0003",
+                                 "value": "000e"
+                               }
+                             ]
       },
       {
         "onewordcommand" : "exerciseduration",
@@ -1240,9 +1240,10 @@
         "comment": "The 'command_sequence can be one or more commands",
         "command_sequence" : [
                                {
-                                  "comment": "the value written to 'reg' is supplied by the user. 'input_title' is required. 'length' (number of modbus bytes to write) is 2 by default,but must be a multiple of 2",
-                                  "comment2": "'bounds_reg' is optional but allows the user interface to bounds check the data before sending it to genmon",
-                                  "comment3": "'tooltip' is optional but allows the user interface to display more information regarding the input.",
+                                  "comment": "'reg' is the modbus register and is required. The value written to the register is supplied by the user." ,
+                                  "comment2": "'input_title' is required. 'length' (number of modbus bytes to write) is 2 by default,but must be 2 or 4 if supplied.",
+                                  "comment3": "'bounds_reg' is optional but allows the user interface to bounds check the data before sending it to genmon (highly recommended)",
+                                  "comment4": "'tooltip' is optional but allows the user interface to display more information regarding the input.",
                                   "reg": "023e",
                                   "input_title": "Minutes",
                                   "type": "int",

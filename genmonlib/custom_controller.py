@@ -1327,7 +1327,7 @@ class CustomController(GeneratorController):
                 # valiate command sequeuence
                 CommandError = False
                 for command in button["command_sequence"]:
-                    if not "reg" in command.keys() and not isinstance(command["reg"], str):
+                    if not "reg" in command.keys() or not isinstance(command["reg"], str):
                         self.LogError("Error in GetButtons: invalid command string defined validateing reg: "+ str(button))
                         CommandError = True
                         break
