@@ -844,6 +844,7 @@ class GeneratorController(MySupport):
                     CommandSetList = json.loads(EntryString)
                     # validate object
                     if not isinstance(CommandSetList, list) and not (len(CommandSetList) == 0):
+                        self.LogError("Invalid button object in SetCommandButton")
                         return "Error: Invalid button object"
                     # Execute Command
                     return self.ExecuteRemoteCommand(CommandSetList)
@@ -852,7 +853,7 @@ class GeneratorController(MySupport):
                     return "Error: Invalid input for SetCommandButton (2), see error log."
             else:
                 self.LogError("Error in SetCommandButton: invalid input: " + str(CommandString))
-                return "Error: Invalid input for SetButton (3)."
+                return "Error: Invalid input for SetCommandButton (3)."
             return "OK"
         except Exception as e1:
             self.LogErrorLine("Error in SetCommandButton: " + str(e1))
@@ -879,7 +880,7 @@ class GeneratorController(MySupport):
                     if not "onewordcommand" in button_command.keys():
                         self.LogError("Error on ExecuteRemoteCommand, invalid dict: " + str(button_command))
                         return "Error: invalid input in ExecuteRemoteCommand (2)"
-                    # make a copy of the dict so we can add the input without modifying the origianl
+                    # make a copy of the dict so we can add the input without modifying the original
                     returndict = self.GetButtons(singlebuttonname = button_command["onewordcommand"])
                     if returndict == None:
                         self.LogError("Error on ExecuteRemoteCommand, command not found: " + str(button_command))
@@ -890,7 +891,7 @@ class GeneratorController(MySupport):
                         return "Error: invalid command in ExecuteRemoteCommand (2)"
                     
                     # selected_command from genmon, button_command from UI
-                    if not "command_sequence" in selected_command or not "command_sequence" in button_command:
+                    if not "command_sequence" in selected_command.keys() or not "command_sequence" in button_command.keys():
                         self.LogError("Error on ExecuteRemoteCommand, command sequence mismatch: " + str(button_command))
                         return "Error on ExecuteRemoteCommand, command sequence mismatch"
                     if not (len(selected_command["command_sequence"]) == len(button_command["command_sequence"])):
@@ -898,13 +899,13 @@ class GeneratorController(MySupport):
                         return "Error on ExecuteRemoteCommand, command sequence mismatch (2)"
                     # iterate thru both lists of commands
                     for gm_cmd, ui_cmd in zip(selected_command["command_sequence"], button_command["command_sequence"]):
-                        if "input_title" in gm_cmd and "value" in ui_cmd:
-                            if "bounds_regex" in gm_cmd:
+                        if "input_title" in gm_cmd.keys() and "value" in ui_cmd.keys():
+                            if "bounds_regex" in gm_cmd.keys():
                                 if not re.match(gm_cmd["bounds_regex"], str(ui_cmd["value"])):
                                     self.LogError("Error in ExecuteRemoteCommand: Failed bounds check: " + str(ui_cmd))
                                     return "Error in ExecuteRemoteCommand: Failed bounds check"
-                            if "type" in gm_cmd and gm_cmd["type"] == "int":
-                                if not "length" in gm_cmd or ("length" in gm_cmd and gm_cmd["length"] == 2):
+                            if "type" in gm_cmd.keys() and gm_cmd["type"] == "int":
+                                if not "length" in gm_cmd.keys() or ("length" in gm_cmd.keys() and gm_cmd["length"] == 2):
                                     gm_cmd["value"] = "%04x" % int(ui_cmd["value"])
                                 elif "length" in gm_cmd and gm_cmd["length"] == 4:
                                     gm_cmd["value"] = "%08x" % int(ui_cmd["value"])
@@ -914,8 +915,9 @@ class GeneratorController(MySupport):
                             else:
                                 self.LogError("Error in ExecuteRemoteCommand, unsupported type: " + str(ui_cmd))
                                 return "Error in ExecuteRemoteCommand, unsupported type"
-                        elif not "reg" in gm_cmd or not "value" in gm_cmd:
+                        elif not "reg" in gm_cmd.keys() or not "value" in gm_cmd.keys():
                             self.LogError("Error in ExecuteRemoteCommand, invalid command in sequence: " + str(selected_command))
+                            self.LogDebug(str(button_command))
                             return "Error in ExecuteRemoteCommand, invalid command in sequence"
                     # execute the command selected_command
                     return self.ExecuteCommandSequence(selected_command["command_sequence"])
@@ -972,7 +974,7 @@ class GeneratorController(MySupport):
                         self.LogDebug("Error in ExecuteCommandSequence: invalid value type")
                         return "Command not found."
 
-                return "Remote command sent successfully"
+                return "OK"
         except Exception as e1:
             self.LogErrorLine("Error in ExecuteCommandSequence: " + str(e1))
             self.LogDebug(str(command_sequence))
@@ -988,7 +990,7 @@ class GeneratorController(MySupport):
                 # get full simplified list for GUI
                 return {}
         except Exception as e1:
-            self.LogErrorLine("Error in SetButton: " + str(e1))
+            self.LogErrorLine("Error in GetButtons: " + str(e1))
             return {}
     # ------------ GeneratorController::GetStartInfo ----------------------------
     # return a dictionary with startup info for the gui

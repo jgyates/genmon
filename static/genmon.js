@@ -790,29 +790,12 @@ function DisplayMaintenance(){
                   if ((command_sequence.length >= 1) && (command_sequence[0].hasOwnProperty("input_title"))){
                     // TODO WORK IN PROGRESS below this point
                     continue;
-                    // this button has an input, loop thru the list of commands in command_sequence
-                    for (let cmdidx in command_sequence){
-                      // cycle through each command in command_sequence
-                      command = command_sequence[cmdidx]
-                      if ((command.hasOwnProperty("input_title")) && (command.hasOwnProperty("type"))) {
-                        title = command["input_title"];
-                        type = command["type"];
-                        tooltip = ""
-                        bounds = ""
-                        if (command.hasOwnProperty("bounds_regex")){
-                          bounds = command["bounds_regex"];
-                        }
-                        if (command.hasOwnProperty("tooltip")){
-                          tooltip = command["tooltip"];
-                        }
-                        var default_value = 0
-                        outstr += setupInputButton(cmdidx, button_command, type, title, default_value, tooltip, bounds )
-                      }
-                    }
+                    // this button has an input
+                    outstr += setupCommandButton(button);
                   } else {
+                    // This is just a button, no input from the user.
                     outstr += '&nbsp;&nbsp;<button id=' + button_command + ' onClick="SetClick(\'' + button_command + '\');">' + button_title + '</button><br><br>';
                   }
-                  
                 }
               }
             } catch(err){
@@ -838,6 +821,100 @@ function DisplayMaintenance(){
 
    }});
 }
+//*****************************************************************************
+// called to setup button for a command_sequence
+//*****************************************************************************
+function setupCommandButton(button){
+  try{
+    var outstr = "";
+    var button_command = button["onewordcommand"];
+    var button_title = button["title"];
+    var command_sequence = button["command_sequence"];
+    var button_id = 'button_' + button_command;
+    var clickCallback = "onCommandButtonClick(\'" + button_command + "\')";
+
+    outstr += '&nbsp;&nbsp;';
+    outstr += '<button class="button" onclick="' + clickCallback + ';"  id="' + button_id + '" >' + button_title + '</button>';
+    // loop thru the list of commands in command_sequence
+    for (let cmdidx in command_sequence){
+      // cycle through each command in command_sequence
+      command = command_sequence[cmdidx]
+      if ((command.hasOwnProperty("input_title")) && (command.hasOwnProperty("type"))) {
+        title = command["input_title"];
+        type = command["type"];
+        tooltip = ""
+        bounds = ""
+        if (command.hasOwnProperty("bounds_regex")){
+          bounds = command["bounds_regex"];
+        }
+        if (command.hasOwnProperty("tooltip")){
+          tooltip = command["tooltip"];
+        }
+        var default_value = 0;
+        outstr += setupInputBoxForButton(cmdidx, button_command, type, title, default_value, tooltip, bounds );
+      }
+      else{
+        console.log("Error: button command_sequence does not have both 'input'title' and 'type'.");
+        return "";
+      }
+    }
+    return outstr;
+  }
+  catch(err){
+    console.log("Error in setupCommandButton: " + err);
+    return "";
+  }
+}
+//*****************************************************************************
+// called to setup input button
+//*****************************************************************************
+function setupInputBoxForButton(identifier, parent, type, title, default_value, tooltip, bounds_regex ) {
+
+  var outstr = ""
+  try {
+
+    if (!(type === "int")){
+      // at the moment only "int" is supported
+      return outstr;
+    }
+    var id = parent + "_" + identifier
+    var input_id = "input_"+ id;
+    
+    // TODO WORK IN PROGRESS
+    if (false)
+    {
+        var clickCallback = "validateInputButton(\'click\', \'" + identifier + "\', \'" + parent + "\', \'" + bounds_regex + "\')";
+        var changeCallback = "validateInputButton(\'change\', \'" + identifier + "\', \'" + parent + "\', \'" + bounds_regex + "\')";
+        var button_id = "button_" + id;
+        validation = 0;
+        outstr += '<form class="idealforms" novalidate  autocomplete="off" id="formButtons">';
+        outstr += '<div class="field idealforms-field"">' +
+                      '&nbsp;&nbsp;' +
+                      //'onclick="' + clickCallback + ';" ' +
+                      //'<button class="button" onclick="submitButton(\'' + input_id + '\',\'' + identifier + '\', \'' + parent + '\');" id="' + button_id + '" >' + title + '</button>' +
+                      '<button class="button" onclick="' + clickCallback + ';"  id="' + button_id + '" >' + title + '</button>' +
+                      '&nbsp;&nbsp;' +
+                      '<input id="' + input_id +  '" style="width: 150px;" name="' + id + '" type="text" ' +
+                      ' onChange="' + changeCallback + ';" '+
+                      (((typeof validation === 'undefined') || (validation==0)) ? 'onFocus="$(\'#'+input_id+'_tooltip\').show();" onBlur="$(\'#'+input_id+'_tooltip\').hide();" ' : 'data-idealforms-rules="' + validation + '" ') + '>' +
+                    '<span class="error" style="display: none;"></span>' +
+                      (((typeof tooltip !== 'undefined' ) && (tooltip.trim() != "")) ? '<span id="' + input_id + '_tooltip" class="tooltip" style="display: none;">' + replaceAll(tooltip, '"', '&quot;') + '</span>' : "") +
+                    '</div>';
+        outstr += '</form>';
+    }
+    else{
+        
+        outstr += '&nbsp;&nbsp;';
+        outstr += '<input id="' + input_id +  '" style="width: 150px;" autocomplete="off" name="' + id + '" type="text" >'; 
+    }
+    return outstr;
+  }
+  catch(err) {
+    console.log("Error in setupInputBoxForButton: " + err);
+  }
+  
+  return outstr;
+}
 
 //*****************************************************************************
 // given a button one word command, retrieve the containing button object
@@ -861,15 +938,15 @@ function getButtonFromCommand(onewordcommand){
 //*****************************************************************************
 // called when sending button input to genmon
 //*****************************************************************************
-function setButtonCommand(button_object)
+function sendButtonCommand(button_object)
 {
   try{
       if ((!(button_object.hasOwnProperty("onewordcommand"))) || 
           (!(button_object.hasOwnProperty("title"))) ||
           (!(button_object.hasOwnProperty("command_sequence"))))
       {
-        console.log("Error: invalid formate of button object.");
-        return;
+        console.log("Error: invalid  of button object.");
+        return false;
       }
 
       // set button command
@@ -877,66 +954,152 @@ function setButtonCommand(button_object)
       // myGenerator['buttons'] list with the 'value' property added 
       // to the command_sequence, 
       // e.g. myGenerator['buttons'][0]['command_sequence][0]['value'] = user defined input
-      var input =  JSON.stringify(button_object);
+      var error_occured = false;
+      var input =  JSON.stringify([button_object]);
       var url = baseurl.concat("set_button_command");
       $.getJSON(  url,
-                  {setremote: input},
+                  {set_button_command: input},
                   function(result){
           // result should be either "OK" or error string.
           if (result !== "OK"){
-
+            // 
+            console.log("Error: failure sending set_button_command: " + result);
+            error_occured = true;
+            return false;
           }
       });
-
+      return (error_occured == false);
   }
   catch (err){
-    console.log("Error in setButonCommand: " + err)
+    console.log("Error in setButonCommand: " + err);
+    return false;
   }
+}
+//*****************************************************************************
+//
+//*****************************************************************************
+function onCommandButtonClick(onewordcommand){
+
+    try{
+      // here we want to loop thru the command_sequence arrary, getting the 
+      // data for each input box it corrosponds to, validate the data with the
+      // bounds_regex parameter, if it exists. Write the value to the entry in 
+      // the command_sequence and send the entire command_button object to genmon.
+
+      var original_button = getButtonFromCommand(onewordcommand);
+      let button = { ...original_button };    // clone the button object
+      var button_title = button["title"];
+      var command_sequence = button["command_sequence"];
+
+      // loop thru the list of commands in command_sequence
+      for (let cmdidx in command_sequence){
+        // cycle through each command in command_sequence
+        command = command_sequence[cmdidx];
+        if ((command.hasOwnProperty("input_title")) && (command.hasOwnProperty("type"))) {
+          title = command["input_title"];
+          type = command["type"];
+          
+          bounds = ""
+          if (command.hasOwnProperty("bounds_regex")){
+            bounds = command["bounds_regex"];
+          }
+          if (command.hasOwnProperty("tooltip")){
+            tooltip = command["tooltip"];
+          }
+          var input_id = "input_"+ onewordcommand + "_" + cmdidx;
+          var value = document.getElementById(input_id).value;
+          if (!(validateRegEx(value, bounds, dialog_on_error = true))){
+            console.log("Error: input failed validation in onCommandButtonClick: " + value + ", " + bounds)
+            return false;
+          }
+          if (type == "int"){
+            command['value'] = parseInt(value);
+          }
+          else {
+            console.log("Error: unsupported type in onCommandButtonClick: " + type)
+            return false
+          }
+          
+        }
+        else{
+          console.log("Error: button command_sequence does not have both 'input'title' and 'type'.");
+          return false;
+        }
+      }
+      // now send the button to genmon for writing 
+      // for now we only send one button at a time. 
+      sendButtonCommand(button);
+    }
+    catch(err){
+      console.log("Error in onCommandButton: " + err);
+      return false;
+    }
 }
 //*****************************************************************************
 // called when validating input button
 // action is "validate", "click" or "change"
+//  click - validate and send data
+//  validate - check data and send mesage to user on invalid data
+//  change - check the data, return true if data OK, otherwise false
 // identifier is the index of the command_sequence in a given button object
 // parent is the 'onewordcommand' of the parent
 // bounds_regex is the regular expession string to bounds check the input 
 //*****************************************************************************
 function validateInputButton(action, identifier, parent, bounds_regex){
 
-    console.log("Input Validation called: " + action + "," + identifier + ", " + parent)
+    console.log("Input Validation called: " + action + ", " + identifier + ", " + parent)
 
     try{
+      // TODO this only does one input now. need to read (and validate) all inputs 
+      // and fill them into the command_sequence then send them to genmon
+      // the function parameter bounds_regex should be changed as this will come from the 
+      // button_object.command_sequence array entries 
       var button_object = getButtonFromCommand(parent);
       var button_title = button_object['title'];
       // get the input value for the corrosponding button
       var id = parent + "_" + identifier
       var input_id = "input_"+ id;
       var value = document.getElementById(input_id).value
-
-      var bounds = new RegExp(bounds_regex);
-      if (!(bounds.test(value))){
-        console.log("Error: input out of bounds.")
-        // TODO error message to user?
-        return;
-      }
       
       switch (action) {
         case "validate":
-          msg = "";
-          break;
-        case "click":
-          msg = "";
-          break;
         case "change":
-          msg = "";
-          break;
+          return validateRegEx(value, bounds_regex, dialog_on_error = (action === "validate"));
+        case "click":
+          if (!(validateInputButton("validate", identifier, parent, bounds_regex))){
+            return false;
+          }
+          // send data to genmon
+          return true;
         default:
           console.log("Error: Invalid action in validateInputButton!");
+          return false;
       }
     }
     catch(err){
       console.log("Error in validateInputButton: " + err);
-      return
+      return false;
     }
+    return false;
+}
+//*****************************************************************************
+// validate a value with a regex string, return true or false
+//*****************************************************************************
+function validateRegEx(value, bounds_regex, dialog_on_error = true){
+  try{
+    var bounds = new RegExp(bounds_regex);
+    if (!(bounds.test(value))){
+      if (dialog_on_error){
+        GenmonAlert("The input is invalid for this parameter.");
+      }
+      return false;
+    }
+    return true;
+  }
+  catch(err){
+    console.log("Error in validateRegEx: " + bounds_regex + ": " + err);
+    return false;
+  }
 }
 //*****************************************************************************
 // submit for button commands
@@ -950,63 +1113,7 @@ function submitButton(ctlid, identifier, parent){
     console.log("Error in submitButton: " + err)
   }
 }
-//*****************************************************************************
-// called to setup input button
-//*****************************************************************************
-function setupInputButton(identifier, parent, type, title, default_value, tooltip, bounds_regex ) {
 
-  var outstr = ""
-  try {
-
-    if (!(type === "int")){
-      // at the moment only "int" is supported
-      return outstr;
-    }
-    
-    // this form is for the tool top support
-    var validationCallback = "validateInputButton(\'validate\', \'" + identifier + "\', \'" + parent + "\', \'" + bounds_regex + "\');";
-    var clickCallback = "validateInputButton(\'click\', \'" + identifier + "\', \'" + parent + "\', \'" + bounds_regex + "\')";
-    var changeCallback = "validateInputButton(\'change\', \'" + identifier + "\', \'" + parent + "\', \'" + bounds_regex + "\')";
-    var id = parent + "_" + identifier
-    var button_id = "button_" + id;
-    var input_id = "input_"+ id;
-    validation = 0
-    
-    // TODO WORK IN PROGRESS
-    if (false)
-    {
-        outstr += '<form class="idealforms" novalidate  autocomplete="off" id="formButtons">';
-        //outstr += '<button onclick="submitButton(\'' + input_id + '\',\'' + identifier + '\', \'' + parent + '\');" id="' + button_id + '" >' + title + '</button>';
-        outstr += '<div class="field idealforms-field"">' +
-                      '&nbsp;&nbsp;' +
-                      //'onclick="' + clickCallback + ';" ' +
-                      //'<button class="button" onclick="submitButton(\'' + input_id + '\',\'' + identifier + '\', \'' + parent + '\');" id="' + button_id + '" >' + title + '</button>' +
-                      '<button class="button" onclick="' + clickCallback + ';"  id="' + button_id + '" >' + title + '</button>' +
-                      '&nbsp;&nbsp;' +
-                      '<input id="' + input_id +  '" style="width: 150px;" name="' + id + '" type="text" ' +
-                      ' onChange="' + changeCallback + ';" '+
-                      (((typeof validation === 'undefined') || (validation==0)) ? 'onFocus="$(\'#'+input_id+'_tooltip\').show();" onBlur="$(\'#'+input_id+'_tooltip\').hide();" ' : 'data-idealforms-rules="' + validation + '" ') + '>' +
-                    '<span class="error" style="display: none;"></span>' +
-                      (((typeof tooltip !== 'undefined' ) && (tooltip.trim() != "")) ? '<span id="' + input_id + '_tooltip" class="tooltip" style="display: none;">' + replaceAll(tooltip, '"', '&quot;') + '</span>' : "") +
-                    '</div>';
-        outstr += '</form>';
-    }
-    else{
-        outstr += '&nbsp;&nbsp;';
-        outstr += '<button class="button" onclick="' + clickCallback + ';"  id="' + button_id + '" >' + title + '</button>';
-        outstr += '&nbsp;&nbsp;';
-        outstr += '<input id="' + input_id +  '" style="width: 150px;" name="' + id + '" type="text" >'; 
-    }
-    return outstr;
-    
-
-  }
-  catch(err) {
-    console.log("Error in setupInputButton: " + err);
-  }
-  
-  return outstr
-}
 //*****************************************************************************
 // called when Monthly is clicked
 //*****************************************************************************

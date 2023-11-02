@@ -526,7 +526,7 @@ def ProcessCommand(command):
 
             except Exception as e1:
                 data = "Retry"
-                LogError("Error on command function: " + str(e1))
+                LogErrorLine("Error on command function: " + str(e1))
 
             if command in [
                 "status_json",

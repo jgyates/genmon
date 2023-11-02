@@ -1290,15 +1290,8 @@ class CustomController(GeneratorController):
             return ReturnValue
         return ReturnValue
 
-    # -------------CustomController:SetButton------------------------------------
-    def SetButton(self):
-        try:
-            pass
-        except Exception as e1:
-            self.LogErrorLine("Error in SetButton: " + str(e1))
-            return {}
-    # -------------CustomController:GetButtons-----------------------------------
-    def GetButtons(self):
+    # -------------CustomController:GetButtons--------------------------------
+    def GetButtons(self, singlebuttonname = None):
         try:
             button_list = self.controllerimport.get("buttons", None)
 
@@ -1357,6 +1350,9 @@ class CustomController(GeneratorController):
                                 break
                 if CommandError:
                     continue
+
+                if singlebuttonname != None and singlebuttonname == button["onewordcommand"]:
+                    return button
 
                 return_buttons.append(button)
 
