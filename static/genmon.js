@@ -789,7 +789,7 @@ function DisplayMaintenance(){
                   
                   if ((command_sequence.length >= 1) && (command_sequence[0].hasOwnProperty("input_title"))){
                     // TODO WORK IN PROGRESS below this point
-                    if (useTooltipForm == false){
+                    if (enable_input_param == false){
                       continue;
                     }
                     
@@ -824,7 +824,8 @@ function DisplayMaintenance(){
 
    }});
 }
-const useTooltipForm = false;  // set this to true to enable ideal forms (tooltips) on button input
+const enable_input_param = true;// set this to true to enable button input code on maint page
+const useTooltipForm = false;    // set this to true to enable ideal forms (tooltips) on button input
 //*****************************************************************************
 // called to setup button for a command_sequence
 //*****************************************************************************
@@ -926,7 +927,7 @@ function setupInputBoxForButton(identifier, parent, type, title, default_value, 
     if (useTooltipForm){
         //
         $.extend($.idealforms.rules, {
-          [rulename]: bounds_regex
+          [rulename]:  bounds_regex
         });
 
         $.extend($.idealforms.errors, {
