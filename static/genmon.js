@@ -789,7 +789,10 @@ function DisplayMaintenance(){
                   
                   if ((command_sequence.length >= 1) && (command_sequence[0].hasOwnProperty("input_title"))){
                     // TODO WORK IN PROGRESS below this point
-                    continue;
+                    if (useTooltipForm == false){
+                      continue;
+                    }
+                    
                     // this button has an input
                     outstr += setupCommandButton(button);
                   } else {
@@ -865,7 +868,11 @@ function setupCommandButton(button){
 
     // if we added a control then go to the next line
     if (useTooltipForm){
-      outstr += '<form class="idealforms" novalidate  autocomplete="off" id="formButtons">';
+        outstr += '</form>'
+        $('form.idealforms').idealforms({
+          tooltip: '.tooltip',
+          silentLoad: true,
+      });
     }
     outstr += '<br><br>';
     
@@ -893,11 +900,12 @@ function setupInputBoxForButton(identifier, parent, type, title, default_value, 
     var input_id = "input_"+ id;
     // used for forms
     var changeCallback = "validateInputButton(\'change\', \'" + identifier + "\', \'" + parent + "\', \'" + bounds_regex + "\')";
-    validation = input_id;
+    var rulename = input_id + '_rule'
+    var validation = rulename;
 
     if (useTooltipForm){
       // ideal forms
-      outstr += '<div class="field idealforms-field"">';
+      outstr += '<div class="field idealforms-field idesforms-text-field" style="clear:both">';
     }
     outstr += '&nbsp;&nbsp;';
     outstr += '<input id="' + input_id +  '" style="width: 150px;" autocomplete="off" name="' + id + '" type="text" ';
@@ -915,21 +923,17 @@ function setupInputBoxForButton(identifier, parent, type, title, default_value, 
       // ideal forms
       outstr += '</div>';
     }
-    //
-    $.extend($.idealforms.rules, {
-      // The rule is added as "ruleFunction:arg1:arg2"
-      input_id: function(input, value, arg1, arg2) {
-        var regex = RegExp(bounds_regex, 'g');
-        return regex.test(value);
-      }
-   });
-   $.extend($.idealforms.errors, {
-      input_id: 'The input must match the range specified range'
-   });
-   $('form.idealforms').idealforms({
-      tooltip: '.tooltip',
-      silentLoad: true,
-   });
+    if (useTooltipForm){
+        //
+        $.extend($.idealforms.rules, {
+          [rulename]: bounds_regex
+        });
+
+        $.extend($.idealforms.errors, {
+          [rulename]: 'Must be a valid match the expected range.'
+        });
+    }
+    
     //
     return outstr;
   }
@@ -1012,6 +1016,7 @@ function onCommandButtonClick(onewordcommand){
       if (!validateButtonCommand(onewordcommand)){
         return false;
       }
+
       msg = 'Issue generator command: ' + button_title + '?<br><span class="confirmSmall">Are you sure you want to isssue this command?</span>';
       vex.dialog.confirm({
         unsafeMessage: msg,
