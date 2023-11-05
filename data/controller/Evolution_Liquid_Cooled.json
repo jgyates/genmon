@@ -1248,7 +1248,7 @@
                                   "input_title": "Minutes",
                                   "type": "int",
                                   "length": 2,
-                                  "bounds_regex":"^([1][2-9])|([2-5][0-9])|([6][0])$",
+                                  "bounds_regex":"^(?:([1][2-9])|([2-5][0-9])|([6][0]))$",
                                   "tooltip": "The duration of the exercise cycle. This must be a whole number between 12 and 60 minutes."
                                }
                              ]

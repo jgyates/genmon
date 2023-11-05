@@ -698,7 +698,7 @@ function DisplayMaintenance(){
     var url = baseurl.concat("maint_json");
     $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
         processAjaxSuccess();
-
+        useIdealFormsOnMaintPage = false;
         outstr = '<div style="clear:both" id="maintText">' + json2html(result, "", "root") + '</div>';
 
         if (myGenerator["write_access"] == true) {
@@ -795,6 +795,7 @@ function DisplayMaintenance(){
                     
                     // this button has an input
                     outstr += setupCommandButton(button);
+                    useIdealFormsOnMaintPage = true;
                   } else {
                     // This is just a button, no input from the user.
                     outstr += '&nbsp;&nbsp;<button id=' + button_command + ' onClick="SetClick(\'' + button_command + '\');">' + button_title + '</button><br><br>';
@@ -806,8 +807,17 @@ function DisplayMaintenance(){
             }
             
         }
-
             $("#mydisplay").html(outstr);
+            if (useIdealFormsOnMaintPage){
+              // if we had any buttons using tooltips then do this
+              
+              if (useTooltipForm){
+                $('form.idealforms').idealforms({
+                  tooltip: '.tooltip',
+                  silentLoad: true,
+                });
+              }
+            }
 
         if (myGenerator["write_access"] == true) {
 
@@ -840,9 +850,11 @@ function setupCommandButton(button){
 
     if (useTooltipForm){
       outstr += '<form class="idealforms" novalidate  autocomplete="off" id="formButtons">';
+      outstr += '<div class="field idealforms-field idesforms-text-field style="clear:both">';
+      outstr += '<p>';
     }
     outstr += '&nbsp;&nbsp;';
-    outstr += '<button class="button" onclick="' + clickCallback + ';"  id="' + button_id + '" >' + button_title + '</button>';
+    outstr += '<button class="button" id="' + button_id + '" style="color:#000000;float:none" onclick="' + clickCallback + ';" > ' + button_title + '</button>';
     // loop thru the list of commands in command_sequence
     for (let cmdidx in command_sequence){
       // cycle through each command in command_sequence
@@ -869,11 +881,9 @@ function setupCommandButton(button){
 
     // if we added a control then go to the next line
     if (useTooltipForm){
+        outstr += '</p>';
+        outstr += '</div>';
         outstr += '</form>'
-        $('form.idealforms').idealforms({
-          tooltip: '.tooltip',
-          silentLoad: true,
-      });
     }
     outstr += '<br><br>';
     
@@ -904,10 +914,6 @@ function setupInputBoxForButton(identifier, parent, type, title, default_value, 
     var rulename = input_id + '_rule'
     var validation = rulename;
 
-    if (useTooltipForm){
-      // ideal forms
-      outstr += '<div class="field idealforms-field idesforms-text-field" style="clear:both">';
-    }
     outstr += '&nbsp;&nbsp;';
     outstr += '<input id="' + input_id +  '" style="width: 150px;" autocomplete="off" name="' + id + '" type="text" ';
     if (useTooltipForm){
@@ -915,33 +921,30 @@ function setupInputBoxForButton(identifier, parent, type, title, default_value, 
       outstr += (((typeof validation === 'undefined') || (validation==0)) ? 'onFocus="$(\'#'+input_id+'_tooltip\').show();" onBlur="$(\'#'+input_id+'_tooltip\').hide();" ' : 'data-idealforms-rules="' + validation + '" ') ;
     }
     outstr += '>';  // end input box
+    outstr += '&nbsp; ' + title;
     if (useTooltipForm){
       outstr += '<span class="error" style="display: none;"></span>';
       outstr += (((typeof tooltip !== 'undefined' ) && (tooltip.trim() != "")) ? '<span id="' + input_id + '_tooltip" class="tooltip" style="display: none;">' + replaceAll(tooltip, '"', '&quot;') + '</span>' : "");
     }
-    outstr += '&nbsp; ' + title;
-    if (useTooltipForm){
-      // ideal forms
-      outstr += '</div>';
-    }
-    if (useTooltipForm){
-        //
-        $.extend($.idealforms.rules, {
-          [rulename]:  bounds_regex
-        });
-
-        $.extend($.idealforms.errors, {
-          [rulename]: 'Must be a valid match the expected range.'
-        });
-    }
     
-    //
+    
+    if (useTooltipForm){
+      //
+      $.extend($.idealforms.rules, {
+        [rulename]:  function(input, value, arg1, arg2) {
+          var regex = RegExp(bounds_regex, 'g');
+          return regex.test(value);
+        }
+      });
+      $.extend($.idealforms.errors, {
+        [rulename]: tooltip
+      });
+    }
     return outstr;
   }
   catch(err) {
     console.log("Error in setupInputBoxForButton: " + err);
   }
-  
   return outstr;
 }
 
@@ -1005,6 +1008,7 @@ function sendButtonCommand(button_object)
     return false;
   }
 }
+
 //*****************************************************************************
 //
 //*****************************************************************************
@@ -1014,23 +1018,51 @@ function onCommandButtonClick(onewordcommand){
       var button = getButtonFromCommand(onewordcommand);
       var button_title = button["title"];
 
+      
       if (!validateButtonCommand(onewordcommand)){
         return false;
       }
 
+      OKToSendCommand = false;
+
+      var DisplayStrButtons = {
+        NO: {
+          text: 'Cancel',
+          type: 'button',
+          className: 'vex-dialog-button-secondary',
+          click: function noClick () {
+            DisplayStrAnswer = false
+            this.close()
+          }
+        },
+        YES: {
+          text: 'OK',
+          type: 'submit',
+          className: 'vex-dialog-button-primary',
+          click: function yesClick () {
+            DisplayStrAnswer = true
+          }
+        }
+    }
       msg = 'Issue generator command: ' + button_title + '?<br><span class="confirmSmall">Are you sure you want to isssue this command?</span>';
-      vex.dialog.confirm({
+      vex.dialog.open({
         unsafeMessage: msg,
         overlayClosesOnClick: false,
-        callback: function (value) {
-             if (value == false) {
-                return;
-             } else {
-                issueButtonCommand(onewordcommand);
-             }
-        }
+        buttons: [
+           DisplayStrButtons.NO,
+           DisplayStrButtons.YES
+        ],
+        onSubmit: function(e) {
+          if (DisplayStrAnswer) {
+            OKToSendCommand = false; // Prevent recursive calls.
+            e.preventDefault();
+            issueButtonCommand(onewordcommand);
+            this.close()
+          }
+       }
       });
     }
+
     catch(err){
       console.log("Error in onCommandButton: " + err);
       return false;
@@ -3599,7 +3631,7 @@ function DisplayAdvancedSettings(){
 }
 
 //*****************************************************************************
-// called when Save Settings is clicked
+// called when Save Advanced Settings is clicked
 //*****************************************************************************
 function saveAdvancedSettings(){
 
