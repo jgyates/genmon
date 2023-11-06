@@ -879,7 +879,7 @@ function setupCommandButton(button){
         outstr += '</div>';
         outstr += '</form>'
     }
-    outstr += '<br><br>';
+    outstr += '<br>';
     
     return outstr;
   }
@@ -909,7 +909,7 @@ function setupInputBoxForButton(identifier, parent, type, title, default_value, 
     var validation = rulename;
 
     outstr += '&nbsp;&nbsp;';
-    outstr += '<input id="' + input_id +  '" style="width: 150px;" autocomplete="off" name="' + id + '" type="text" ';
+    outstr += '<input id="' + input_id +  '" style="width: 150px;" autocomplete="off" name="' + input_id + '" type="text" ';
     if (useTooltipForm){
       outstr += ' onChange="' + changeCallback + ';" ';
       outstr += (((typeof validation === 'undefined') || (validation==0)) ? 'onFocus="$(\'#'+input_id+'_tooltip\').show();" onBlur="$(\'#'+input_id+'_tooltip\').hide();" ' : 'data-idealforms-rules="' + validation + '" ') ;
@@ -933,6 +933,7 @@ function setupInputBoxForButton(identifier, parent, type, title, default_value, 
         [rulename]: tooltip
       });
     }
+    outstr += '<br>';
     return outstr;
   }
   catch(err) {
