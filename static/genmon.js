@@ -788,11 +788,6 @@ function DisplayMaintenance(){
                   command_sequence = button["command_sequence"];
                   
                   if ((command_sequence.length >= 1) && (command_sequence[0].hasOwnProperty("input_title"))){
-                    // TODO WORK IN PROGRESS below this point
-                    if (enable_input_param == false){
-                      continue;
-                    }
-                    
                     // this button has an input
                     outstr += setupCommandButton(button);
                     useIdealFormsOnMaintPage = true;
@@ -810,7 +805,6 @@ function DisplayMaintenance(){
             $("#mydisplay").html(outstr);
             if (useIdealFormsOnMaintPage){
               // if we had any buttons using tooltips then do this
-              
               if (useTooltipForm){
                 $('form.idealforms').idealforms({
                   tooltip: '.tooltip',
@@ -834,8 +828,8 @@ function DisplayMaintenance(){
 
    }});
 }
-const enable_input_param = true;// set this to true to enable button input code on maint page
-const useTooltipForm = false;    // set this to true to enable ideal forms (tooltips) on button input
+
+const useTooltipForm = true     // set this to true to enable ideal forms (tooltips) on button input
 //*****************************************************************************
 // called to setup button for a command_sequence
 //*****************************************************************************
@@ -854,7 +848,7 @@ function setupCommandButton(button){
       outstr += '<p>';
     }
     outstr += '&nbsp;&nbsp;';
-    outstr += '<button class="button" id="' + button_id + '" style="color:#000000;float:none" onclick="' + clickCallback + ';" > ' + button_title + '</button>';
+    outstr += '<button class="button" type="button" id="' + button_id + '" style="color:#000000;float:none" onclick="' + clickCallback + ';" > ' + button_title + '</button>';
     // loop thru the list of commands in command_sequence
     for (let cmdidx in command_sequence){
       // cycle through each command in command_sequence
@@ -926,10 +920,9 @@ function setupInputBoxForButton(identifier, parent, type, title, default_value, 
       outstr += '<span class="error" style="display: none;"></span>';
       outstr += (((typeof tooltip !== 'undefined' ) && (tooltip.trim() != "")) ? '<span id="' + input_id + '_tooltip" class="tooltip" style="display: none;">' + replaceAll(tooltip, '"', '&quot;') + '</span>' : "");
     }
-    
-    
+
     if (useTooltipForm){
-      //
+      //add the regex as a rule for idealforms
       $.extend($.idealforms.rules, {
         [rulename]:  function(input, value, arg1, arg2) {
           var regex = RegExp(bounds_regex, 'g');
@@ -1015,15 +1008,21 @@ function sendButtonCommand(button_object)
 function onCommandButtonClick(onewordcommand){
 
     try{
+      
       var button = getButtonFromCommand(onewordcommand);
+      if (button == null){
+        console.log("Error in onCommandButtonClick: button object not found.");
+        return false;
+      }
       var button_title = button["title"];
 
-      
       if (!validateButtonCommand(onewordcommand)){
         return false;
       }
 
-      OKToSendCommand = false;
+      
+      DisplayStrAnswer = false;
+      msg = 'Issue generator command: ' + button_title + '?<br><span class="confirmSmall">Are you sure you want to isssue this command?</span>';
 
       var DisplayStrButtons = {
         NO: {
@@ -1044,23 +1043,34 @@ function onCommandButtonClick(onewordcommand){
           }
         }
     }
-      msg = 'Issue generator command: ' + button_title + '?<br><span class="confirmSmall">Are you sure you want to isssue this command?</span>';
-      vex.dialog.open({
-        unsafeMessage: msg,
-        overlayClosesOnClick: false,
-        buttons: [
-           DisplayStrButtons.NO,
-           DisplayStrButtons.YES
-        ],
-        onSubmit: function(e) {
-          if (DisplayStrAnswer) {
-            OKToSendCommand = false; // Prevent recursive calls.
-            e.preventDefault();
-            issueButtonCommand(onewordcommand);
-            this.close()
+      
+    vex.dialog.open({
+      unsafeMessage: msg,
+      overlayClosesOnClick: false,
+      buttons: [
+        DisplayStrButtons.NO,
+        DisplayStrButtons.YES
+      ],
+      onSubmit: function(e) {
+        if (DisplayStrAnswer) {
+          DisplayStrAnswer = false; // Prevent recursive calls.
+          e.preventDefault();
+          issueButtonCommand(onewordcommand);
+          var DisplayStr1 = 'Sending Command '+button_title +'...';
+          var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
+          $('.vex-dialog-message').html(DisplayStr1);
+          $('.vex-dialog-buttons').html(DisplayStr2);
+          $('.progress-bar-fill').queue(function () {
+                $(this).css('width', '100%')
+          });
+          setTimeout(function(){
+              vex.closeAll();
+              //gotoLogin();
+          }, 5000);
           }
-       }
+        }
       });
+      return true;
     }
 
     catch(err){
@@ -1077,6 +1087,10 @@ function validateButtonCommand(onewordcommand){
     // data for each input box it corrosponds to, validate the data with the
     // bounds_regex parameter, if it exists. 
     var button = getButtonFromCommand(onewordcommand);
+    if (button == null){
+      console.log("Error in validateButtonCommand: button object not found.");
+      return false;
+    }
     var button_title = button["title"];
     var command_sequence = button["command_sequence"];
     // loop thru the list of commands in command_sequence
@@ -1116,6 +1130,10 @@ function issueButtonCommand(onewordcommand){
       // data for each input box it corrosponds to, then write the value to the entry in 
       // the command_sequence and send the entire command_button object to genmon.
       var original_button = getButtonFromCommand(onewordcommand);
+      if (original_button == null){
+        console.log("Error in issueButtonCommand: button object not found.");
+        return false;
+      }
       let button = { ...original_button };    // clone the button object
       var button_title = button["title"];
       var command_sequence = button["command_sequence"];
@@ -1164,7 +1182,7 @@ function issueButtonCommand(onewordcommand){
 //*****************************************************************************
 function validateInputButton(action, identifier, parent, bounds_regex){
 
-    console.log("Input Validation called: " + action + ", " + identifier + ", " + parent)
+    //console.log("Input Validation called: " + action + ", " + identifier + ", " + parent)
 
     try{
       // TODO this only does one input now. need to read (and validate) all inputs 
@@ -1172,6 +1190,10 @@ function validateInputButton(action, identifier, parent, bounds_regex){
       // the function parameter bounds_regex should be changed as this will come from the 
       // button_object.command_sequence array entries 
       var button_object = getButtonFromCommand(parent);
+      if (button_object == null){
+        console.log("Error in validateInputButton: button object not found.");
+        return false;
+      }
       var button_title = button_object['title'];
       // get the input value for the corrosponding button
       var id = parent + "_" + identifier
@@ -1300,6 +1322,10 @@ function SetClick(cmd){
           break;
        default:
           button = getButtonFromCommand(cmd);
+          if (button == null){
+            console.log("Error in SetClick: button object not found.");
+            return;
+          }
           button_title = button['title']
           msg = 'Issue generator command: ' + button_title + '?<br><span class="confirmSmall">Are you sure you want to isssue this command?</span>';
     }
