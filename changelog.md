@@ -35,6 +35,7 @@ All notable changes to this project will be documented in this file.
 - Fixed issue with Alternate Date format option and log page heatmap
 - Enhancements to genexercise https://github.com/jgyates/genmon/issues/968 and https://github.com/jgyates/genmon/issues/958
 - custom controller updates to support writing values to the controllers via buttons with parameters
+- Added daily option to genexercise
 
 ## V1.18.17 -2023-04-06
 - Added feature request to allow external temperature sensors to be displayed as gauges

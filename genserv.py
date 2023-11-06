@@ -1480,8 +1480,8 @@ def GetAddOns():
                     "exercise_frequency", return_type=str, default="Monthly"
                 ),
                 "list",
-                "Exercise Frequency options are Weekly, Biweekly,Monthly  or Post-Controller (immediately after the controller exercise cycle). Hour, Minute, Month, Day of Week are ignored if Post-Controller exercise frequency is enabled.",
-                bounds="Weekly,Biweekly,Monthly,Post-Controller",
+                "Exercise Frequency options are Daily, Weekly, Biweekly,Monthly  or Post-Controller (immediately after the controller exercise cycle). Hour, Minute, Month, Day of Week are ignored if Post-Controller exercise frequency is enabled.",
+                bounds="Daily,Weekly,Biweekly,Monthly,Post-Controller",
                 display_name="Exercise Frequency",
             )
             AddOnCfg["genexercise"]["parameters"]["use_gen_time"] = CreateAddOnParam(

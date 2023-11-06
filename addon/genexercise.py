@@ -135,7 +135,7 @@ class GenExercise(MySupport):
                 self.ExerciseWarmup = 30
             if self.ExerciseWarmup < 0:
                 self.ExerciseWarmup = 0
-            if not self.ExerciseFrequency.lower() in ["weekly", "biweekly", "monthly", "post-controller"]:
+            if not self.ExerciseFrequency.lower() in ["daily","weekly", "biweekly", "monthly", "post-controller"]:
                 self.ExerciseFrequency = "Monthly"
 
             if self.MonitorAddress == None or not len(self.MonitorAddress):
@@ -170,7 +170,7 @@ class GenExercise(MySupport):
             if status.lower() in ["exercising"]:
                 self.SendCommand("generator: setremote=stop")
             # start thread monitor time for exercise
-            if self.ExerciseFrequency.lower() in ["weekly","biweekly","monthly"]:
+            if self.ExerciseFrequency.lower() in ["daily","weekly","biweekly","monthly"]:
                 self.Threads["ExerciseThread"] = MyThread(
                     self.ExerciseThread, Name="ExerciseThread", start=False)
                 self.Threads["ExerciseThread"].Start()
@@ -187,7 +187,7 @@ class GenExercise(MySupport):
                     DayStr = "Day " + str(self.ExerciseDayOfMonth)
                 else:
                     DayStr = str(self.ExerciseDayOfWeek)
-                if self.ExerciseType.lower() in ["normal", "quiet", "transfer"]:
+                if self.ExerciseFrequency.lower() in ["weekly","biweekly","monthly"]:
                     self.LogError(
                         "Execise: "
                         + self.ExerciseType
@@ -199,6 +199,21 @@ class GenExercise(MySupport):
                         + str(self.ExerciseMinute)
                         + " on "
                         + DayStr
+                        + " for "
+                        + str(self.ExerciseDuration)
+                        + " min. Warmup: "
+                        + str(self.ExerciseWarmup)
+                    )
+                elif self.ExerciseFrequency.lower() in ["daily"]:
+                    self.LogError(
+                        "Execise: "
+                        + self.ExerciseType
+                        + ", "
+                        + self.ExerciseFrequency
+                        + " at "
+                        + str(self.ExerciseHour)
+                        + ":"
+                        + str(self.ExerciseMinute)
                         + " for "
                         + str(self.ExerciseDuration)
                         + " min. Warmup: "
@@ -364,7 +379,7 @@ class GenExercise(MySupport):
                 or TimeNow.minute != self.ExerciseMinute
             ):
                 return False
-
+            ## if we get past this line then the time is correct
             weekDays = (
                 "Monday",
                 "Tuesday",
@@ -377,12 +392,14 @@ class GenExercise(MySupport):
 
             WeekDayString = weekDays[TimeNow.weekday()]
 
-            if not self.ExerciseFrequency.lower() in ["weekly", "biweekly", "monthly", "post-controller"]:
+            if not self.ExerciseFrequency.lower() in ["daily","weekly", "biweekly", "monthly", "post-controller"]:
                 self.LogError(
                     "Invalid Exercise Frequency in TimeForExercise: "
                     + str(self.ExerciseFrequency)
                 )
                 return False
+            if (self.ExerciseFrequency.lower() == "daily"):
+                return True 
             if (
                 self.ExerciseFrequency.lower() == "weekly"
                 and self.ExerciseDayOfWeek.lower() == WeekDayString.lower()
