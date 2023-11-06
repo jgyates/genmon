@@ -1469,7 +1469,7 @@ def GetAddOns():
                     "exercise_type", return_type=str, default="Normal"
                 ),
                 "list",
-                "Quiet Exercise (reduced RPM, Hz and Voltage), Normal Exercise or Exercise with Transfer Switch Activated.",
+                "Quiet Exercise (reduced RPM, Hz and Voltage), Normal Exercise, Exercise with Transfer Switch Activated.",
                 bounds="Quiet,Normal,Transfer",
                 display_name="Exercise Type",
             )
@@ -1480,8 +1480,8 @@ def GetAddOns():
                     "exercise_frequency", return_type=str, default="Monthly"
                 ),
                 "list",
-                "Exercise Frequency options are Weekly, Biweekly, or Monthly",
-                bounds="Weekly,Biweekly,Monthly",
+                "Exercise Frequency options are Weekly, Biweekly,Monthly  or Post-Controller (immediately after the controller exercise cycle). Hour, Minute, Month, Day of Week are ignored if Post-Controller exercise frequency is enabled.",
+                bounds="Weekly,Biweekly,Monthly,Post-Controller",
                 display_name="Exercise Frequency",
             )
             AddOnCfg["genexercise"]["parameters"]["use_gen_time"] = CreateAddOnParam(

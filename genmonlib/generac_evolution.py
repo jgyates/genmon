@@ -2448,43 +2448,44 @@ class Evolution(GeneratorController):
                 except:
                     pass
 
-                if self.EvolutionController and self.LiquidCooled:
-                    # get total hours since activation
-                    ControllerSettings.append(
-                        {
-                            "Hours of Protection": self.ValueOut(
-                                self.GetParameter("0054", ReturnInt=True), "h", JSONNum
-                            )
-                        }
-                    )
-                    ControllerSettings.append(
-                        {
-                            "Volts Per Hertz": self.ValueOut(
-                                self.GetParameter("020e", ReturnInt=True), "", JSONNum
-                            )
-                        }
-                    )
-                    ControllerSettings.append(
-                        {
-                            "Gain": self.ValueOut(
-                                self.GetParameter("0235", ReturnInt=True), "", JSONNum
-                            )
-                        }
-                    )
-                    ControllerSettings.append(
-                        {
-                            "Target Frequency": self.ValueOut(
-                                self.GetParameter("005a", ReturnInt=True), "Hz", JSONNum
-                            )
-                        }
-                    )
-                    ControllerSettings.append(
-                        {
-                            "Target Voltage": self.ValueOut(
-                                self.GetParameter("0059", ReturnInt=True), "V", JSONNum
-                            )
-                        }
-                    )
+            if self.EvolutionController and (self.LiquidCooled or self.Evolution2):
+                # get total hours since activation
+                ControllerSettings.append(
+                    {
+                        "Hours of Protection": self.ValueOut(
+                            self.GetParameter("0054", ReturnInt=True), "h", JSONNum
+                        )
+                    }
+                )
+            if self.EvolutionController and self.LiquidCooled:
+                ControllerSettings.append(
+                    {
+                        "Volts Per Hertz": self.ValueOut(
+                            self.GetParameter("020e", ReturnInt=True), "", JSONNum
+                        )
+                    }
+                )
+                ControllerSettings.append(
+                    {
+                        "Gain": self.ValueOut(
+                            self.GetParameter("0235", ReturnInt=True), "", JSONNum
+                        )
+                    }
+                )
+                ControllerSettings.append(
+                    {
+                        "Target Frequency": self.ValueOut(
+                            self.GetParameter("005a", ReturnInt=True), "Hz", JSONNum
+                        )
+                    }
+                )
+                ControllerSettings.append(
+                    {
+                        "Target Voltage": self.ValueOut(
+                            self.GetParameter("0059", ReturnInt=True), "V", JSONNum
+                        )
+                    }
+                )
 
             if not self.SmartSwitch:
                 Exercise = []

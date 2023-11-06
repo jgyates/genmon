@@ -33,6 +33,8 @@ All notable changes to this project will be documented in this file.
 - Updated modbusdump to support new modbus functions
 - Updated Briggs custom controller support to use modbus function 4 in a more compatible way
 - Fixed issue with Alternate Date format option and log page heatmap
+- Enhancements to genexercise https://github.com/jgyates/genmon/issues/968 and https://github.com/jgyates/genmon/issues/958
+- custom controller updates to support writing values to the controllers via buttons with parameters
 
 ## V1.18.17 -2023-04-06
 - Added feature request to allow external temperature sensors to be displayed as gauges
