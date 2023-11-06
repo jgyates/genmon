@@ -36,6 +36,7 @@ All notable changes to this project will be documented in this file.
 - Enhancements to genexercise https://github.com/jgyates/genmon/issues/968 and https://github.com/jgyates/genmon/issues/958
 - custom controller updates to support writing values to the controllers via buttons with parameters
 - Added daily option to genexercise
+- Minor change to how modbus is handled when closing / restarting
 
 ## V1.18.17 -2023-04-06
 - Added feature request to allow external temperature sensors to be displayed as gauges
