@@ -1159,9 +1159,11 @@ class ModbusProtocol(ModbusBase):
     # ------------ModbusProtocol::Flush------------------------------------------
     def Flush(self):
 
-        self.Slave.Flush()
+        with self.CommAccessLock:
+            self.Slave.Flush()
 
     # ------------ModbusProtocol::Close------------------------------------------
     def Close(self):
         self.IsStopping = True
-        self.Slave.Close()
+        with self.CommAccessLock:
+            self.Slave.Close()

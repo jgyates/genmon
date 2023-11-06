@@ -266,7 +266,6 @@ class GeneratorController(MySupport):
                     self.bUseLinuxWifiSignalGauge = self.config.ReadValue(
                         "uselinuxwifisignalgauge", return_type=bool, default=True
                     )
-
         except Exception as e1:
             self.FatalError("Missing config file or config file entries: " + str(e1))
 

@@ -1550,31 +1550,44 @@ class HPanel(GeneratorController):
     def GetGeneratorFileData(self):
 
         try:
+            if self.IsStopping:
+                return
             # Read the nameplate dataGet Serial Number
             self.ModBus.ProcessFileReadTransaction(
                 NAMEPLATE_DATA_FILE_RECORD, NAMEPLATE_DATA_LENGTH / 2
             )
+            if self.IsStopping:
+                return
             # Read Misc Engine data
             self.ModBus.ProcessFileReadTransaction(
                 MISC_GEN_FILE_RECORD, MISC_GEN_FILE_RECORD_LENGTH / 2
             )
+            if self.IsStopping:
+                return
             # Read Engine Data
             self.ModBus.ProcessFileReadTransaction(
                 ENGINE_DATA_FILE_RECORD, ENGINE_DATA_FILE_RECORD_LENGTH / 2
             )
+            if self.IsStopping:
+                return
             # Read Govonor Data
             self.ModBus.ProcessFileReadTransaction(
                 GOV_DATA_FILE_RECORD, GOV_DATA_FILE_RECORD_LENGTH / 2
             )
+            if self.IsStopping:
+                return
             # Read Secondary Govonor Data
             self.ModBus.ProcessFileReadTransaction(
                 GOV_DATA_SEC_FILE_RECORD, GOV_DATA_SEC_FILE_RECORD_LENGTH / 2
             )
+            if self.IsStopping:
+                return
             # Read Regulator Data
             self.ModBus.ProcessFileReadTransaction(
                 REGULATOR_FILE_RECORD, REGULATOR_FILE_RECORD_LENGTH / 2
             )
-
+            if self.IsStopping:
+                return
             self.GetGeneratorLogFileData()
         except Exception as e1:
             self.LogErrorLine("Error in GetGeneratorFileData: " + str(e1))
@@ -1600,6 +1613,8 @@ class HPanel(GeneratorController):
             for RegValue in range(
                 EVENT_LOG_START + EVENT_LOG_ENTRIES - 1, EVENT_LOG_START - 1, -1
             ):
+                if self.IsStopping:
+                    return
                 Register = "%04x" % RegValue
                 localTimeoutCount = self.ModBus.ComTimoutError
                 localSyncError = self.ModBus.ComSyncError
@@ -1612,6 +1627,8 @@ class HPanel(GeneratorController):
             for RegValue in range(
                 ALARM_LOG_START + ALARM_LOG_ENTRIES - 1, ALARM_LOG_START - 1, -1
             ):
+                if self.IsStopping:
+                    return
                 Register = "%04x" % RegValue
                 localTimeoutCount = self.ModBus.ComTimoutError
                 localSyncError = self.ModBus.ComSyncError
@@ -1674,8 +1691,14 @@ class HPanel(GeneratorController):
                 except Exception as e1:
                     self.LogErrorLine("Error in MasterEmulation: " + str(e1))
 
+            if self.IsStopping:
+                return
             self.GetGeneratorStrings()
+            if self.IsStopping:
+                return
             self.GetGeneratorFileData()
+            if self.IsStopping:
+                return
             self.CheckForAlarmEvent.set()
         except Exception as e1:
             self.LogErrorLine("Error in MasterEmulation: " + str(e1))

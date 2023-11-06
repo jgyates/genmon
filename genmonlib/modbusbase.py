@@ -153,9 +153,7 @@ class ModbusBase(MySupport):
         self.UseTCP = False
         self.AdditionalModbusTimeout = 0
         self.ModBusPacketTimoutMS = 0
-        self.ResponseAddress = (
-            None  # Used if recieve packes have a different address than sent packets
-        )
+        self.ResponseAddress = None  # Used if recieve packes have a different address than sent packets
         self.debug = False
         self.UseModbusFunction4 = use_fc4
 
