@@ -20,3 +20,4 @@
 - [Hardware keys (FIDO2) for 2fa](https://github.com/jgyates/genmon/issues/841) @danodemano 
 - [Add the ability to save pictures in the service journal](https://github.com/jgyates/genmon/issues/896) @northportio
 - [Ecobee thermostat messaging](https://github.com/jgyates/genmon/issues/921) @wtnh 
+- [Kiosk mode](https://github.com/jgyates/genmon/issues/970) @mstackler 
