@@ -805,12 +805,11 @@ function DisplayMaintenance(){
             $("#mydisplay").html(outstr);
             if (useIdealFormsOnMaintPage){
               // if we had any buttons using tooltips then do this
-              if (useTooltipForm){
-                $('form.idealforms').idealforms({
-                  tooltip: '.tooltip',
-                  silentLoad: true,
-                });
-              }
+              $('form.idealforms').idealforms({
+                tooltip: '.tooltip',
+                silentLoad: true,
+              });
+
             }
 
         if (myGenerator["write_access"] == true) {
@@ -829,7 +828,6 @@ function DisplayMaintenance(){
    }});
 }
 
-const useTooltipForm = true     // set this to true to enable ideal forms (tooltips) on button input
 //*****************************************************************************
 // called to setup button for a command_sequence
 //*****************************************************************************
@@ -842,16 +840,27 @@ function setupCommandButton(button){
     var button_id = 'button_' + button_command;
     var clickCallback = "onCommandButtonClick(\'" + button_command + "\')";
 
-    if (useTooltipForm){
-      outstr += '<form class="idealforms" novalidate  autocomplete="off" id="formButtons">';
-      outstr += '<div class="field idealforms-field idesforms-text-field style="clear:both">';
-      outstr += '<p>';
-    }
-    outstr += '&nbsp;&nbsp;';
-    outstr += '<button class="button" type="button" id="' + button_id + '" style="color:#000000;float:none" onclick="' + clickCallback + ';" > ' + button_title + '</button>';
+    
+    outstr += '<form class="idealforms" novalidate  autocomplete="off" id="formButtons">';
+    outstr += '<table>';
+    
     // loop thru the list of commands in command_sequence
     for (let cmdidx in command_sequence){
       // cycle through each command in command_sequence
+      outstr += '<tr>'
+      
+      if (cmdidx == 0){
+        outstr += '<td>';
+        outstr += '&nbsp;&nbsp;';
+        // NOTE: type="button" is required or the ideal forms code will crash
+        outstr += '<button class="button" type="button" id="' + button_id + '" style="color:#000000;float:none" onclick="' + clickCallback + ';" > ' + button_title + '</button>';
+        outstr += '</td>';
+      }
+      else{
+        outstr += '<td></td>';  // empty table cell
+      }
+      outstr += '<td>';
+      outstr += '<div class="field idealforms-field idesforms-text-field style="clear:both">';
       command = command_sequence[cmdidx]
       if ((command.hasOwnProperty("input_title")) && (command.hasOwnProperty("type"))) {
         title = command["input_title"];
@@ -869,16 +878,15 @@ function setupCommandButton(button){
       }
       else{
         console.log("Error: button command_sequence does not have both 'input_title' and 'type'.");
-        return "";
       }
+      outstr += '</div>';
+      outstr += '</td>';
+      outstr += '</tr>'
     }
 
     // if we added a control then go to the next line
-    if (useTooltipForm){
-        outstr += '</p>';
-        outstr += '</div>';
-        outstr += '</form>'
-    }
+    outstr += '</table>';
+    outstr += '</form>'
     outstr += '<br>';
     
     return outstr;
@@ -909,30 +917,27 @@ function setupInputBoxForButton(identifier, parent, type, title, default_value, 
     var validation = rulename;
 
     outstr += '&nbsp;&nbsp;';
-    outstr += '<input id="' + input_id +  '" style="width: 150px;" autocomplete="off" name="' + input_id + '" type="text" ';
-    if (useTooltipForm){
-      outstr += ' onChange="' + changeCallback + ';" ';
-      outstr += (((typeof validation === 'undefined') || (validation==0)) ? 'onFocus="$(\'#'+input_id+'_tooltip\').show();" onBlur="$(\'#'+input_id+'_tooltip\').hide();" ' : 'data-idealforms-rules="' + validation + '" ') ;
-    }
+    outstr += '<input id="' + input_id +  '" style="width: 150px;clear:both;float:none" autocomplete="off" name="' + input_id + '" type="text" ';
+    outstr += ' onChange="' + changeCallback + ';" ';
+    outstr += (((typeof validation === 'undefined') || (validation==0)) ? 'onFocus="$(\'#'+input_id+'_tooltip\').show();" onBlur="$(\'#'+input_id+'_tooltip\').hide();" ' : 'data-idealforms-rules="' + validation + '" ') ;
+
     outstr += '>';  // end input box
     outstr += '&nbsp; ' + title;
-    if (useTooltipForm){
-      outstr += '<span class="error" style="display: none;"></span>';
-      outstr += (((typeof tooltip !== 'undefined' ) && (tooltip.trim() != "")) ? '<span id="' + input_id + '_tooltip" class="tooltip" style="display: none;">' + replaceAll(tooltip, '"', '&quot;') + '</span>' : "");
-    }
 
-    if (useTooltipForm){
-      //add the regex as a rule for idealforms
-      $.extend($.idealforms.rules, {
-        [rulename]:  function(input, value, arg1, arg2) {
-          var regex = RegExp(bounds_regex, 'g');
-          return regex.test(value);
-        }
-      });
-      $.extend($.idealforms.errors, {
-        [rulename]: tooltip
-      });
-    }
+    outstr += '<span class="error" style="display: none;"></span>';
+    outstr += (((typeof tooltip !== 'undefined' ) && (tooltip.trim() != "")) ? '<span id="' + input_id + '_tooltip" class="tooltip" style="display: none;">' + replaceAll(tooltip, '"', '&quot;') + '</span>' : "");
+
+    //add the regex as a rule for idealforms
+    $.extend($.idealforms.rules, {
+      [rulename]:  function(input, value, arg1, arg2) {
+        var regex = RegExp(bounds_regex, 'g');
+        return regex.test(value);
+      }
+    });
+    $.extend($.idealforms.errors, {
+      [rulename]: tooltip
+    });
+
     outstr += '<br>';
     return outstr;
   }
