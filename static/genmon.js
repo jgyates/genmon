@@ -860,6 +860,7 @@ function setupCommandButton(button){
         outstr += '<td></td>';  // empty table cell
       }
       outstr += '<td>';
+      // div for ideamfrom must go in table data element
       outstr += '<div class="field idealforms-field idesforms-text-field style="clear:both">';
       command = command_sequence[cmdidx]
       if ((command.hasOwnProperty("input_title")) && (command.hasOwnProperty("type"))) {
