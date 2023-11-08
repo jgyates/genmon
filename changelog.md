@@ -1,6 +1,18 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.19.00 -2023-11-09
+- Updates to genmonmain.sh, startgenmon.sh and genloader.sh for Debian bookworm. 
+- Minor update to serialconfig.py to make serial0 instead of serial1 work on bookworm
+- Updates to custom controller code to support additional modbus functions (coils and input registers)
+- Updated modbusdump to support new modbus functions
+- Updated Briggs custom controller support to use modbus function 4 in a more compatible way
+- Fixed issue with Alternate Date format option and log page heatmap
+- Enhancements to genexercise https://github.com/jgyates/genmon/issues/968 and https://github.com/jgyates/genmon/issues/958
+- custom controller updates to support writing values to the controllers via buttons with parameters
+- Added daily option to genexercise
+- Minor change to how modbus is handled when closing / restarting to prevent lockup on H-100 controller receiving a partial modbus packet
+
 ## V1.18.18 -2023-07-05
 - Added new add on program gencallmebot (thanks @buschauer)
 - Added preliminary support for PowerZone 410 controller
@@ -27,16 +39,7 @@ All notable changes to this project will be documented in this file.
 - Added more bounds checking to gentemp.py
 - Corrected issue with Settings page not allows Even parity to be set on custom controllers
 - Corrected security issue related to ldap login with genserv.py
-- Updates to genmonmain.sh, startgenmon.sh and genloader.sh for Debian bookworm. 
-- Minor update to serialconfig.py to make serial0 instead of serial1 work on bookworm
-- Updates to custom controller code to support additional modbus functions (coils and input registers)
-- Updated modbusdump to support new modbus functions
-- Updated Briggs custom controller support to use modbus function 4 in a more compatible way
-- Fixed issue with Alternate Date format option and log page heatmap
-- Enhancements to genexercise https://github.com/jgyates/genmon/issues/968 and https://github.com/jgyates/genmon/issues/958
-- custom controller updates to support writing values to the controllers via buttons with parameters
-- Added daily option to genexercise
-- Minor change to how modbus is handled when closing / restarting
+
 
 ## V1.18.17 -2023-04-06
 - Added feature request to allow external temperature sensors to be displayed as gauges

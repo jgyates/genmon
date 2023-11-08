@@ -921,7 +921,6 @@ class GeneratorController(MySupport):
                     # execute the command selected_command
                     return self.ExecuteCommandSequence(selected_command["command_sequence"])
 
-            # TODO parse button
         except Exception as e1:
             self.LogErrorLine("Error in ExecuteRemoteCommand: " + str(e1))
             self.LogDebug(str(CommandSetList))
