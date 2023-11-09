@@ -12,7 +12,7 @@ All notable changes to this project will be documented in this file.
 - custom controller updates to support writing values to the controllers via buttons with parameters
 - Added daily option to genexercise
 - Minor change to how modbus is handled when closing / restarting to prevent lockup on H-100 controller receiving a partial modbus packet
-- Update to bookwork mods to support python 3.5
+- Update to bookworm mods to support python 3.5
 
 ## V1.18.18 -2023-07-05
 - Added new add on program gencallmebot (thanks @buschauer)
