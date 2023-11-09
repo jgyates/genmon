@@ -171,7 +171,7 @@ class CustomController(GeneratorController):
                 )
             # None, Even or Odd
             self.SerialParity = self.config.ReadValue("serial_parity",  default=None)
-            if self.SerialParity.lower() == "none" or self.SerialParity == "0" or self.SerialParity == None:
+            if self.SerialParity == None or self.SerialParity.lower() == "none" or self.SerialParity == "0":
                 self.SerialParity = None
             elif self.SerialParity.lower() == "odd" or self.SerialParity == "1":
                 self.SerialParity = 1
@@ -201,6 +201,7 @@ class CustomController(GeneratorController):
                 return False
 
         except Exception as e1:
+            self.LogErrorLine("Error in GetConfig: " + str(e1))
             self.FatalError(
                 "Missing config file or config file entries (CustomController): "
                 + str(e1)
