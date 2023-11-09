@@ -46,7 +46,7 @@ function checkmanagedpackages() {
       sudo apt-get -yqq install python3-venv
       # create the virtual environment 
       echo "Creating virtual python environmnet for genmon"
-      $pythoncommand -m venv genenv
+      $pythoncommand -m venv $genmondir/genenv
       pythoncommand="$genmondir/genenv/bin/python"
   fi
 }
@@ -93,7 +93,7 @@ function copyconffiles() {
 function updatelibraries() {
 
   echo "Updating libraries...."
-  sudo $pythoncommand -m pip install -r requirements.txt -U $pipoptions
+  sudo $pythoncommand -m pip install -r $genmondir/requirements.txt -U $pipoptions
   echo "Done."
 }
 
@@ -139,7 +139,7 @@ function installgenmon() {
       sudo apt-get -yqq install build-essential libssl-dev libffi-dev python-dev cargo
     fi
     sudo apt-get -yqq install cmake
-    sudo $pythoncommand -m pip install -r requirements.txt $pipoptions
+    sudo $pythoncommand -m pip install -r $genmondir/requirements.txt $pipoptions
 
     sudo chmod 775 "$genmondir/startgenmon.sh"
     sudo chmod 775 "$genmondir/genmonmaint.sh"

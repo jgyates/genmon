@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Added daily option to genexercise
 - Minor change to how modbus is handled when closing / restarting to prevent lockup on H-100 controller receiving a partial modbus packet
 - Update to bookworm mods to support python 3.5
+- Minor update to genmonmaint.sh to allow calling from outside the genmon folder
 
 ## V1.18.18 -2023-07-05
 - Added new add on program gencallmebot (thanks @buschauer)
