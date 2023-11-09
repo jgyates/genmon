@@ -38,7 +38,9 @@ class MyCommon(object):
     def ManagedLibariesEnabled(self):
         try:
             #  /usr/lib/python3.11/EXTERNALLY-MANAGED
-            managedfile = f"/usr/lib/python{sys.version_info.major:d}.{sys.version_info.minor:d}/EXTERNALLY-MANAGED"
+            # to support python 3.5 not use formatted strings
+            managedfile = "/usr/lib/python" + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "/EXTERNALLY-MANAGED"
+            #managedfile = f"/usr/lib/python{sys.version_info.major:d}.{sys.version_info.minor:d}/EXTERNALLY-MANAGED"
             if os.path.isfile(managedfile):
                 return True
             else:
