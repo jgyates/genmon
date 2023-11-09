@@ -21,7 +21,8 @@ try:
     from genmonlib.mymodbus import ModbusProtocol
 except Exception as e1:
     print("\n\nThis program is used for the testing of modbus registers.")
-    managedfile = f"/usr/lib/python{sys.version_info.major:d}.{sys.version_info.minor:d}/EXTERNALLY-MANAGED"
+
+    managedfile = "/usr/lib/python" + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "/EXTERNALLY-MANAGED"
     if os.path.isfile(managedfile):
         print("\n\nYou appear to be running in a managed python environemnt. To run this program see this page: ")
         print("\n\n  https://github.com/jgyates/genmon/wiki/Appendix-S---Working-in-a-Managed-Python-Environment\n")
