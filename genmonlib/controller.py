@@ -3303,11 +3303,6 @@ class GeneratorController(MySupport):
             except:
                 pass
 
-            if self.ModBus != None:
-                try:
-                    self.ModBus.Close()
-                except:
-                    pass
             try:
                 if self.EnableDebug:
                     self.KillThread("DebugThread")
@@ -3329,6 +3324,13 @@ class GeneratorController(MySupport):
             except:
                 pass
 
+            if self.ModBus != None:
+                try:
+                    if self.ControllerSelected.lower() == "h_100":
+                        time.sleep(0.5)
+                    self.ModBus.Close()
+                except:
+                    pass
         except Exception as e1:
             self.LogErrorLine("Error Closing Controller: " + str(e1))
 
