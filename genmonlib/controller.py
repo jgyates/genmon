@@ -3325,8 +3325,10 @@ class GeneratorController(MySupport):
                 pass
 
             if self.ModBus != None:
+                # close modbus last 
                 try:
                     if self.ControllerSelected.lower() == "h_100":
+                        # H100 has problems with locking up if partial modbus packets are sent so delay here
                         time.sleep(0.5)
                     self.ModBus.Close()
                 except:
