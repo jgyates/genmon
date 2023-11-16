@@ -1648,7 +1648,7 @@ class CustomController(GeneratorController):
             value = value & int(entry["mask"], 16)
             return value
         except Exception as e1:
-            self.LogErrorLine("Error in ProcessExecModifier: " + str(e1) + ": " + str(entry["title"]))
+            self.LogErrorLine("Error in ProcessMaskModifier: " + str(e1) + ": " + str(entry["title"]))
             return ReturnValue
     # ------------ GeneratorController:ProcessExecModifier ----------------------
     def ProcessExecModifier(self, entry, value):
