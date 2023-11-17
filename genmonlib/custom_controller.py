@@ -17,6 +17,7 @@ import re
 import sys
 import threading
 import time
+import copy
 
 from genmonlib.controller import GeneratorController
 from genmonlib.modbus_file import ModbusFile
@@ -956,7 +957,8 @@ class CustomController(GeneratorController):
             StartInfo["RemoteButtons"] = False  # Remote controll of Off/Auto/Manual
             StartInfo["ExerciseControls"] = False  # self.SmartSwitch
             StartInfo["WriteQuietMode"] = False
-            StartInfo["SetGenTime"] = False
+            StartInfo["SetGenTime"] = ("settime" in self.controllerimport.keys())
+        
             if self.Platform != None:
                 StartInfo["Linux"] = self.Platform.IsOSLinux()
                 StartInfo["RaspberryPi"] = self.Platform.IsPlatformRaspberryPi()
@@ -1180,6 +1182,76 @@ class CustomController(GeneratorController):
 
         return Status
 
+    # ----------  GeneratorController::SetGeneratorTimeDate----------------------
+    # set generator time to system time
+    def SetGeneratorTimeDate(self):
+
+        try:
+            if not "settime" in self.controllerimport.keys():
+                return "Not Supported"
+            
+            settime = self.controllerimport["settime"]
+            if not "command_sequence" in settime:
+                self.LogError("Erroir in SetGeneratorTimeDate: settime does not have a command_sequence element: " + str(settime))
+                return "Not Supported"
+            
+            if not isinstance(settime["command_sequence"], list):
+                self.LogError("Error in SetGeneratorTimeDate: command_sequende is not a list: "+ str(settime))
+                return "Not Supported"
+
+            # get system time
+            d = datetime.datetime.now()
+
+            # attempt to make the seconds zero when we set the generator time so it will
+            # be very close to the system time
+            # Testing has show that this is not really achieving the seconds synced up, but
+            # it does make the time offset consistant
+            while d.second != 0:
+                time.sleep(60 - d.second)  # sleep until seconds are zero
+                d = datetime.datetime.now()
+
+            CommandError = False
+            # make a copy of the command sequence so we can add "value" members to it
+            settime_copy = copy.deepcopy(settime)
+            for command in settime_copy["command_sequence"]:
+                hour = minute = day = month = year = 0
+                length = 2
+                if "length" in command.keys():
+                    if(int(command["length"]) % 2 != 0):
+                        self.LogDebug("Error in SetGeneratorTimeDate: Length is not a multiple of 2: " + str(settime))
+                        length = 2
+                    else:
+                        length = int(command["length"])
+                if not "reg" in command.keys() or not isinstance(command["reg"], str):
+                    self.LogError("Error in SetGeneratorTimeDate: invalid command string defined validateing reg: "+ str(settime))
+                    CommandError = True
+                    break
+                if "year" in command.keys() and isinstance(command["year"], str):
+                    year = self.ProcessExecModifier(command, d.year, altname = "year")
+                if "month" in command.keys() and isinstance(command["month"], str):
+                    month = self.ProcessExecModifier(command, d.month, altname = "month")
+                if "day" in command.keys() and isinstance(command["day"], str):
+                    day = self.ProcessExecModifier(command, d.day, altname = "day")
+                if "hour" in command.keys() and isinstance(command["hour"], str):
+                    hour = self.ProcessExecModifier(command, d.hour, altname = "hour")
+                if "minute" in command.keys() and isinstance(command["minute"], str):
+                    minute = self.ProcessExecModifier(command, d.minute, altname = "minute")
+
+                value = hour | minute | day | month | year 
+                # add the value to be written to the command in the command sequence list
+                command["value"] = value
+        
+            if CommandError:
+                return "Error setting time"
+            # not that all the commands have been created we can execute the comand sequenc
+            with self.ModBus.CommAccessLock:
+                return self.ExecuteCommandSequence(settime_copy["command_sequence"])
+
+        except Exception as e1:
+            self.LogErrorLine("Error in SetGeneratorTimeDate: " + str(e1))
+
+        return "Invalid Return"
+    
     # ------------ CustomController:GetSingleSensor -----------------------------
     def GetSingleSensor(self, dict_name, ReturnFloat=False, ReturnInt=False):
 
@@ -1651,7 +1723,7 @@ class CustomController(GeneratorController):
             self.LogErrorLine("Error in ProcessMaskModifier: " + str(e1) + ": " + str(entry["title"]))
             return ReturnValue
     # ------------ GeneratorController:ProcessExecModifier ----------------------
-    def ProcessExecModifier(self, entry, value):
+    def ProcessExecModifier(self, entry, value, altname = None):
         try:
             exec_string = ""
             if "default" in entry.keys():
@@ -1659,13 +1731,18 @@ class CustomController(GeneratorController):
             else:
                 ReturnValue = value
 
-            if not "exec" in entry.keys():
+            execname = "exec"
+            if not altname == None:
+                execname = altname 
+            if not execname in entry.keys():
+                if altname != None:
+                    self.LogDebug("Error in ProcessExecModifier: execname not found in object:" + str(execname) + ": " + str(entry))
                 return value
             
             if isinstance(value, tuple):
-                exec_string = entry["exec"].format(*value)
+                exec_string = entry[execname].format(*value)
             else:
-                exec_string = entry["exec"].format(value)
+                exec_string = entry[execname].format(value)
             exec_out = value
             localsparam = {'exec_out': exec_out}
             exec(exec_string, globals(), localsparam)

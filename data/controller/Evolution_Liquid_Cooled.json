@@ -1,5 +1,5 @@
 {
-    "controller_name": "Evolution Liquid Cooled",
+    "controller_name": "Evolution Liquid Cooled (Custom Controller)",
     "rated_max_output_power_kw": "48",
     "rated_nominal_voltage": 240,
     "rated_nominal_rpm" : 1800,
@@ -1309,6 +1309,7 @@
           "units": "h"
       },
       "datetime": {
+        "comment": "This entry is for displaying the time in a format similar to how genmon displays the system time of the system running genmon.",
         "type" : "list",
         "format": "%s %s %s, 20%s %s:%s",
         "title" : "Generator Time",
@@ -1380,6 +1381,33 @@
             }
           ]
         },
+      "settime":{
+        "comment": "the settime object, if present can enable writing of the date and time to the controller",
+        "comment2": "the 'command_sequence' list is required. It defines the registers and what to write to each register",
+        "comment3": "The hour,minute,month,date,year entries are like the 'exec' entries in that they are python code that",
+        "comment4": "format the date and time input into the formate expected in the modbus register.",
+        "command_sequence": [
+          {
+            "reg": "0010",
+            "comment": "This will take a four digit year and only use the lower two digits as low byte",
+            "year":"exec_out = abs({} - 2000)"
+          },
+          {
+            "reg": "000f",
+            "comment": "This will write the day of the month to the lower byte and the month to the upper byte",
+            "comment2": "months s 1-12, day is 1 - 31",
+            "day": "exec_out = {} & 0x00ff",
+            "month":"exec_out = ({} << 8) & 0xff00"
+          },
+          {
+            "reg":"000e",
+            "comment": "This will write the hours to the upper byte and minutes to the lower byte.",
+            "comment2": "hours is 0 - 23, minutes is 0 - 59",
+            "minute": "exec_out = {} & 0x00ff",
+            "hour": "exec_out = ({} << 8) & 0xff00"
+          }
+        ]
+      },
       "maintenance_due": [
         {
           "comment": "This should only return a value if maintenance is due, otherwise evaluate to nothing.",

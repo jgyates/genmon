@@ -931,7 +931,7 @@ class GeneratorController(MySupport):
         try:
             with self.ModBus.CommAccessLock:
                 for command in command_sequence:
-                    if not len(command["value"]):
+                    if not isinstance(command["value"],int) and not len(command["value"]):
                         self.LogDebug("Error in ExecuteCommandSequence: invalid value array")
                         continue
                     if isinstance(command["value"], list):

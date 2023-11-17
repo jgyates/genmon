@@ -3025,28 +3025,29 @@ def ReadSettingsFromFile():
             "disableoutagecheck",
         ]
 
-    ConfigSettings["syncdst"] = [
-        "boolean",
-        "Sync Daylight Savings Time",
-        22,
-        False,
-        "",
-        "",
-        GENMON_CONFIG,
-        GENMON_SECTION,
-        "syncdst",
-    ]
-    ConfigSettings["synctime"] = [
-        "boolean",
-        "Sync Time",
-        23,
-        False,
-        "",
-        "",
-        GENMON_CONFIG,
-        GENMON_SECTION,
-        "synctime",
-    ]
+    if GStartInfo["SetGenTime"]:
+        ConfigSettings["syncdst"] = [
+            "boolean",
+            "Sync Daylight Savings Time",
+            22,
+            False,
+            "",
+            "",
+            GENMON_CONFIG,
+            GENMON_SECTION,
+            "syncdst",
+        ]
+        ConfigSettings["synctime"] = [
+            "boolean",
+            "Sync Time",
+            23,
+            False,
+            "",
+            "",
+            GENMON_CONFIG,
+            GENMON_SECTION,
+            "synctime",
+        ]
     ConfigSettings["metricweather"] = [
         "boolean",
         "Use Metric Units",

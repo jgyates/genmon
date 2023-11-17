@@ -1853,8 +1853,8 @@ class HPanel(GeneratorController):
             status_included = False
             if not self.InitComplete:
                 return
-            # Check for changes in engine state
-            EngineState = self.GetEngineState()
+            # Check for changes in engine state, switch state or Generator Status
+            EngineState = self.GetOneLineStatus() + " : " + self.GetGeneratorStatus()
             msgbody = ""
 
             self.CheckForOutage()
@@ -2067,6 +2067,19 @@ class HPanel(GeneratorController):
             self.LogErrorLine("Error in GetEngineState (1): " + str(e1))
             return "Unknown"
 
+    # ------------ HPanel:GetGeneratorStatus -----------------------------------
+    def GetGeneratorStatus(self):
+
+        try:
+            GenStatus = self.GetParameterStringValue(
+                        RegisterStringEnum.GENERATOR_STATUS[REGISTER],
+                        RegisterStringEnum.GENERATOR_STATUS[RET_STRING],
+                    )
+            return GenStatus
+        except Exception as e1:
+            self.LogErrorLine("Error in GetGeneratorStatus: " + str(e1))
+            return "Unknown"
+        
     # ------------ HPanel:GetDateTime -------------------------------------------
     def GetDateTime(self):
 
@@ -3777,6 +3790,7 @@ class HPanel(GeneratorController):
     # ------------ HPanel:GetOneLineStatus --------------------------------------
     # returns a one line status for example : switch state and engine state
     def GetOneLineStatus(self):
+
         return self.GetSwitchState() + " : " + self.GetEngineState()
 
     # ----------  GeneratorController::FuelSensorSupported------------------------
