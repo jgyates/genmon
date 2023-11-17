@@ -170,6 +170,10 @@ class GenSNMP(MySupport):
                 log=self.log,
             )
             self.ControllerSelected = self.genmon_config.ReadValue("controllertype", default="generac_evo_nexus")
+
+            if self.ControllerSelected.strip() == "":
+                self.ControllerSelected = "generac_evo_nexus"
+
             self.CustomControllerConfigFile = self.genmon_config.ReadValue("import_config_file", default=None)
 
             self.config = MyConfig(filename=configfile, section="gensnmp", log=self.log)
@@ -367,12 +371,16 @@ class GenSNMP(MySupport):
 
         try:
             if (self.ControllerIsEvolutionNexus() or self.ControllerSelected == "generac_evo_nexus"):
+                self.ControllerSelected = "generac_evo_nexus"
                 CtlID = 1
             elif self.ControllerIsGeneracH100() or self.ControllerSelected == "h_100":
+                self.ControllerSelected = "h_100"
                 CtlID = 2
             elif (self.ControllerIsGeneracPowerZone() or self.ControllerSelected == "powerzone"):
+                self.ControllerSelected = "powerzone"
                 CtlID = 3
             elif (self.ControllerIsCustom() or self.ControllerSelected == "custom"):
+                self.ControllerSelected = "custom"
                 CtlID = 4
             else:
                 ## TODO add custom controller check and file name here
