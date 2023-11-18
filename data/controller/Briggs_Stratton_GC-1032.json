@@ -994,8 +994,7 @@
     "datetime":{
       "comment":"Used to print the date and time of the controller",
       "type" : "list",
-      "xormat": "%s/%s/%s %s:%s",
-      "exec": "mybsdt = datetime.datetime.strptime('{}/{}/{} {}:{}','%d/%m/%Y %H:%M');exec_out = mybsdt.strftime('%A %B %-d, %Y %H:%M')",
+      "exec": "mybsdt = datetime.datetime.strptime('{}/{}/{} {}:{}','%m/%d/%Y %H:%M');exec_out = mybsdt.strftime('%A %B %-d, %Y %H:%M')",
       "title" : "Generator Time",
       "value": [
           {
