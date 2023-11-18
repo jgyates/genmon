@@ -1028,11 +1028,13 @@
             "reg_type": "input"
           },
           {
-            "title": "Minutes",
-            "type": "int",
-            "mask" : "00ff",
             "reg": "0050",
-            "reg_type": "input"
+            "reg_type": "input",
+            "mask": "ff00",
+            "title": "Minutes",
+            "format": "%02d",
+            "type": "int",
+            "multiplier": 0.00390625
           }
       ]
     }
