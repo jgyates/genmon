@@ -1532,24 +1532,24 @@ class CustomController(GeneratorController):
                 self.LogError("Error: reg does not contain valid hex value in input to GetDisplayEntry: "+ str(entry))
                 return ReturnTitle, ReturnValue
             
-            if not "type" in entry:  # required
+            if not "type" in entry.keys():  # required
                 self.LogError("Error: type not found in input to GetDisplayEntry: " + str(entry))
                 return ReturnTitle, ReturnValue
             
-            if not "title" in entry:  # required
+            if not "title" in entry.keys():  # required
                 self.LogError("Error: title not found in input to GetDisplayEntry: " + str(entry))
                 return ReturnTitle, ReturnValue
             
-            if entry["type"] == "bits" and not "value" in entry:
+            if entry["type"] == "bits" and not "value" in entry.keys():
                 self.LogError("Error: value (requried for bits) not found in input to GetDisplayEntry: " + str(entry))
                 return ReturnTitle, ReturnValue
-            if entry["type"] == "bits" and not "text" in entry:
+            if entry["type"] == "bits" and not "text" in entry.keys():
                 self.LogError("Error: text not found in input to GetDisplayEntry: " + str(entry))
                 return ReturnTitle, ReturnValue
-            if entry["type"] == "float" and not "multiplier" in entry:
+            if entry["type"] == "float" and not "multiplier" in entry.keys():
                 self.LogError("Error: multiplier (requried for float) not found in input to GetDisplayEntry: "+ str(entry))
                 return ReturnTitle, ReturnValue
-            if entry["type"] == "regex" and not "regex" in entry:
+            if entry["type"] == "regex" and not "regex" in entry.keys():
                 self.LogError("Error: regex not found in input to GetDisplayEntry: " + str(entry))
                 return ReturnTitle, ReturnValue
             if "multiplier" in entry and entry["multiplier"] == 0:
@@ -1561,7 +1561,7 @@ class CustomController(GeneratorController):
             elif "mask" in entry and not self.StringIsHex(entry["mask"]):
                 self.LogError("Error: mask does not contain valid hex value in input to GetDisplayEntry: "+ str(entry))
                 return ReturnTitle, ReturnValue
-            if entry["type"] == "default" and not "text" in entry:
+            if entry["type"] == "default" and not "text" in entry.keys():
                 self.LogError("Error: text (default) not found in input to GetDisplayEntry: "+ str(entry))
                 return ReturnTitle, ReturnValue
 
@@ -1602,7 +1602,7 @@ class CustomController(GeneratorController):
                 value = self.ProcessMaskModifier(entry, value)
                 value = self.ProcessBitModifiers(entry, value, ReturnFloat=True)
                 value = self.ProcessTemperatureModifier( entry, value)
-                if "bounds_regex" in entry:
+                if "bounds_regex" in entry.keys():
                     if re.match(entry["bounds_regex"], str(float(value))):
                         ReturnValue = self.ProcessExecModifier(entry, float(value))
                 else:   
@@ -1612,7 +1612,7 @@ class CustomController(GeneratorController):
                 value = self.ProcessMaskModifier(entry, value)
                 value = self.ProcessBitModifiers(entry, value)
                 value = self.ProcessSignedModifier(entry, value)
-                if "bounds_regex" in entry:
+                if "bounds_regex" in entry.keys():
                     if re.match(entry["bounds_regex"], str(value)):
                         ReturnValue = self.ProcessExecModifier(entry, int(self.ProcessTemperatureModifier(entry, value)))
                 else:   
@@ -1630,7 +1630,7 @@ class CustomController(GeneratorController):
             elif entry["type"] == "list":
                 list_entry = entry["value"]
                 separator = ""
-                if "separator" in entry:
+                if "separator" in entry.keys():
                     separator = entry["separator"]
                 value_list = []
                 for item in list_entry:
@@ -1638,11 +1638,11 @@ class CustomController(GeneratorController):
                     if value != None:
                         value_list.append(str(self.FormatEntry(item, value)))
                 # all list items must be present if format is used
-                if "format" in entry:
+                if "format" in entry.keys():
                     if len(value_list) and len(value_list) == len(list_entry):
                         ReturnValue = entry["format"] % tuple(value_list)
                 else:
-                    if separator == None:
+                    if separator == None or separator == "":
                         ReturnValue = self.ProcessExecModifier(entry, tuple(value_list ))
                     else:
                         ReturnValue = separator.join(value_list)
@@ -1650,7 +1650,7 @@ class CustomController(GeneratorController):
                 value = self.GetParameter(Register, ReturnInt=True, IsCoil=IsCoil, IsInput=IsInput)
                 value = self.ProcessMaskModifier(entry, value)
                 value = self.ProcessBitModifiers(entry, value)
-                if "default" in entry:
+                if "default" in entry.keys():
                     obj_default = entry["default"]
                 else:
                     obj_default = None
@@ -1679,11 +1679,11 @@ class CustomController(GeneratorController):
     # ------------ GeneratorController:ProcessBitModifiers ----------------------
     def ProcessBitModifiers(self, entry, value, ReturnFloat = False):
         try:
-            if "shiftright" in entry:
+            if "shiftright" in entry.keys():
                 value = value >> int(entry["shiftright"])
-            if "shiftleft" in entry:
+            if "shiftleft" in entry.keys():
                 value = value << int(entry["shiftleft"])
-            if "multiplier" in entry:
+            if "multiplier" in entry.keys():
                 if ReturnFloat:
                     value = float(value * float(entry["multiplier"]))
                 else:
@@ -1756,7 +1756,7 @@ class CustomController(GeneratorController):
     # ------------ GeneratorController:ProcessTemperatureModifier --------------
     def ProcessTemperatureModifier(self, entry, value, units = False):
         try:
-            if "temperature" in entry:
+            if "temperature" in entry.keys():
                 if not units:
                     if not self.UseMetric and entry["temperature"].lower() == "celsius":
                         return self.ConvertCelsiusToFahrenheit(value)
@@ -1780,7 +1780,7 @@ class CustomController(GeneratorController):
     # ------------ GeneratorController:FormatEntry ------------------------------
     def FormatEntry(self, entry, value):
         try:
-            if "format" in entry:
+            if "format" in entry.keys():
                 if entry["type"] == "float":
                     return str(entry["format"] % float(value))
                 elif entry["type"] == "int":

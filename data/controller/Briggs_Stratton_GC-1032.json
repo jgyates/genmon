@@ -695,10 +695,10 @@
         {
           "reg": "0052",
           "reg_type": "input",
-          "mask": "ff00",
           "type": "int",
           "title": "month",
-          "multiplier": 0.00390625
+          "mask" : "ff00",
+          "shiftright": 8
         },
         {
           "reg": "0052",
@@ -711,6 +711,7 @@
           "reg": "0053",
           "mask": "ffff",
           "type": "int",
+          "reg_type":"input",
           "title": "year"
         }
       ]
@@ -989,5 +990,51 @@
       "type": "int",
       "title": "Run Hours",
       "units": "h"
+    },
+    "datetime":{
+      "comment":"Used to print the date and time of the controller",
+      "type" : "list",
+      "xormat": "%s/%s/%s %s:%s",
+      "exec": "mybsdt = datetime.datetime.strptime('{}/{}/{} {}:{}','%d/%m/%Y %H:%M');exec_out = mybsdt.strftime('%A %B %-d, %Y %H:%M')",
+      "title" : "Generator Time",
+      "value": [
+          {
+            "title": "Month",
+            "reg": "0052",
+            "reg_type": "input",
+            "type": "int",
+            "mask" : "ff00",
+            "shiftright": 8,
+            "comment" : "Month is upper half of word"
+          },
+          {
+            "title": "Day",
+            "reg": "0052",
+            "reg_type": "input",
+            "type": "int",
+            "mask" : "00ff"
+          },
+          {
+            "title": "Year",
+            "type": "int",
+            "mask" : "ffff",
+            "reg": "0053",
+            "reg_type": "input"
+          },
+          {
+            "title": "Hours",
+            "type": "int",
+            "mask" : "00ff",
+            "reg": "0051",
+            "reg_type": "input"
+          },
+          {
+            "title": "Minutes",
+            "type": "int",
+            "mask" : "00ff",
+            "reg": "0050",
+            "reg_type": "input"
+          }
+      ]
     }
 }

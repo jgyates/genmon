@@ -33,6 +33,7 @@
         "0053": {"length": 2, "text": "Digital Outputs"},
         "005d": {"length": 2, "text": "Tank Fuel Level"},
         "0054": {"length": 2, "text": "Hours of Protection"},
+        "0058": {"length": 2, "text": "Hall Effect Sensor"},
         "005e": {"length": 4, "text": "Total Run Hours"},
         "0208": {"length": 2, "text": "Generator Calibrate Volts"},
         "0209": {"length": 2, "text": "Utility Calibrate Volts"},
@@ -1386,6 +1387,7 @@
         "comment2": "the 'command_sequence' list is required. It defines the registers and what to write to each register",
         "comment3": "The hour,minute,month,date,year entries are like the 'exec' entries in that they are python code that",
         "comment4": "format the date and time input into the formate expected in the modbus register.",
+        "comment5": "If multiple entries are in one register command object, the values will be logical OR'ed to create a single value",
         "command_sequence": [
           {
             "reg": "0010",
@@ -1395,13 +1397,15 @@
           {
             "reg": "000f",
             "comment": "This will write the day of the month to the lower byte and the month to the upper byte",
-            "comment2": "months s 1-12, day is 1 - 31",
+            "comment2": "The 'day' and 'month' will be OR'ed together to create one value to write to the register",
+            "comment3": "months s 1-12, day is 1 - 31",
             "day": "exec_out = {} & 0x00ff",
             "month":"exec_out = ({} << 8) & 0xff00"
           },
           {
             "reg":"000e",
             "comment": "This will write the hours to the upper byte and minutes to the lower byte.",
+            "comment1": "The 'hour' and 'minute' will be OR'ed together to create one value to write to the register",
             "comment2": "hours is 0 - 23, minutes is 0 - 59",
             "minute": "exec_out = {} & 0x00ff",
             "hour": "exec_out = ({} << 8) & 0xff00"
