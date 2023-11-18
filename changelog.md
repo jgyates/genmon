@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Update for more fine grained status changes (more email notifications) for H100
 - Added the ability to set the time for custom controllers 
 - Minor update to gensnmp to compensate for invalid setting in genmon.conf
+- Added reading time to Briggs and Stratton custom controller config
 
 ## V1.18.18 -2023-07-05
 - Added new add on program gencallmebot (thanks @buschauer)
