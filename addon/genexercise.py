@@ -220,7 +220,7 @@ class GenExercise(MySupport):
                         + str(self.ExerciseWarmup)
                     )
                 elif self.ExerciseFrequency.lower() in ["post-controller"]:
-                    self.LogError("Exercise: post controller exercise, " + self.ExerciseType)
+                    self.LogError("Exercise: post controller exercise, " + self.ExerciseType + ", " + "for " + str(self.ExerciseDuration))
                 self.LogDebug("Debug Enabled")
             except Exception as e1:
                 self.LogErrorLine(str(e1))
