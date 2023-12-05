@@ -16,7 +16,7 @@ pyotp
 smbus
 psutil
 spidev
-mopeka_pro_check
+bleson
 fluids
 voipms
 RPi.GPIO
