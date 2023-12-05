@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - Added the ability to set the time for custom controllers 
 - Minor update to gensnmp to compensate for invalid setting in genmon.conf
 - Added reading time to Briggs and Stratton custom controller config
+- Updated genmopeka.py add on to support more mopeka sensors and stop using old mopeka python library
 
 ## V1.18.18 -2023-07-05
 - Added new add on program gencallmebot (thanks @buschauer)

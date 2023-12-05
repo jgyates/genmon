@@ -40,19 +40,26 @@ try:
     from genmonlib.mysupport import MySupport
     from genmonlib.mythread import MyThread
     from genmonlib.program_defaults import ProgramDefaults
+    from genmonlib.mymopeka import MopekaBT
 
 except Exception as e1:
-    print(
-        "\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n"
-    )
-    print(
-        "Please see the project documentation at https://github.com/jgyates/genmon.\n"
-    )
+    print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
+    print("Please see the project documentation at https://github.com/jgyates/genmon.\n")
     print("Error: " + str(e1))
     sys.exit(2)
 
+try:
+    from enum import Enum
+    from typing import Optional
+    from bleson import get_provider, BDAddress
+    from bleson.core.hci.type_converters import rssi_from_byte
+    from bleson.core.hci.constants import GAP_MFG_DATA, GAP_NAME_COMPLETE
 
-# ------------ GenMopekaData class ------------------------------------------------
+except Exception as e1:
+    print("The required library bleson is not installed.")
+    sys.exit(2)
+
+
 class GenMopekaData(MySupport):
 
     # ------------ GenMopekaData::init---------------------------------------------
@@ -78,6 +85,7 @@ class GenMopekaData(MySupport):
         self.PollTime = 2
         self.tank_address = None
         self.debug = False
+        self.UseMopekaLib = False
 
         try:
 
@@ -88,28 +96,17 @@ class GenMopekaData(MySupport):
                 self.LogError("Missing config file : " + configfile)
                 sys.exit(1)
 
-            self.config = MyConfig(
-                filename=configfile, section="genmopeka", log=self.log
-            )
+            self.config = MyConfig(filename=configfile, section="genmopeka", log=self.log)
 
-            self.PollTime = self.config.ReadValue(
-                "poll_frequency", return_type=float, default=60
-            )
+            self.PollTime = self.config.ReadValue("poll_frequency", return_type=float, default=60)
             self.debug = self.config.ReadValue("debug", return_type=bool, default=False)
             self.tank_address = self.config.ReadValue("tank_address", default=None)
             self.tank_type = self.config.ReadValue("tank_type", default=None)
-            self.min_mm = self.config.ReadValue(
-                "min_mm", return_type=int, default=None, NoLog=True
-            )
-            self.max_mm = self.config.ReadValue(
-                "max_mm", return_type=int, default=None, NoLog=True
-            )
-            self.scan_time = self.config.ReadValue(
-                "scan_time", return_type=int, default=15
-            )  # num of seconds to scan
-            self.send_notices = self.config.ReadValue(
-                "send_notices", return_type=bool, default=False
-            )
+            self.min_mm = self.config.ReadValue("min_mm", return_type=int, default=None, NoLog=True)
+            self.max_mm = self.config.ReadValue("max_mm", return_type=int, default=None, NoLog=True)
+            self.scan_time = self.config.ReadValue("scan_time", return_type=int, default=15)  # num of seconds to scan
+            self.send_notices = self.config.ReadValue("send_notices", return_type=bool, default=False)
+            self.UseMopekaLib = self.config.ReadValue("use_old_lib", return_type=bool, default=False)
 
             if self.MonitorAddress == None or not len(self.MonitorAddress):
                 self.MonitorAddress = ProgramDefaults.LocalHost
@@ -129,20 +126,21 @@ class GenMopekaData(MySupport):
                     "The required library bleson is not installed." + str(e1)
                 )
                 sys.exit(2)
-            try:
-                from mopeka_pro_check.service import (
-                    GetServiceInstance,
-                    MopekaSensor,
-                    MopekaService,
-                )
-            except Exception as e1:
-                self.LogConsole(
-                    "The required library mopeka_pro_check is not installed."
-                )
-                self.LogErrorLine(
-                    "The required library mopeka_pro_check is not installed: " + str(e1)
-                )
-                sys.exit(2)
+            if self.UseMopekaLib:
+                try:
+                    from mopeka_pro_check.service import (
+                        GetServiceInstance,
+                        MopekaSensor,
+                        MopekaService,
+                    )
+                except Exception as e1:
+                    self.LogConsole(
+                        "The required library mopeka_pro_check is not installed."
+                    )
+                    self.LogErrorLine(
+                        "The required library mopeka_pro_check is not installed: " + str(e1)
+                    )
+                    sys.exit(2)
             try:
                 from fluids.geometry import TANK
             except Exception as e1:
@@ -188,7 +186,6 @@ class GenMopekaData(MySupport):
                 )
                 sys.exit(1)
 
-            index = 0
             self.tank_address = list(map(str.strip, self.tank_address))
             for tank in self.tank_address:
                 # must be in format xx:xx:xx:xx:xx:xx
@@ -352,10 +349,17 @@ class GenMopekaData(MySupport):
             self.LogDebug("min: " + str(self.min_mm) + " , max: " + str(self.max_mm))
             self.LogDebug("Tank Type: " + str(self.tank_type))
 
-            self.mopeka = GetServiceInstance()
-            self.mopeka.SetHostControllerIndex(0)
+            if self.UseMopekaLib:
+                self.mopeka = GetServiceInstance()
+                self.mopeka.SetHostControllerIndex(0)
+            else:
+                self.mopeka = MopekaBT(log = self.log, console = self.console, debug = self.debug)
+
             for tank in self.tank_address:
-                self.mopeka.AddSensorToMonitor(MopekaSensor(tank))
+                if self.UseMopekaLib:
+                    self.mopeka.AddSensorToMonitor(MopekaSensor(tank))
+                else:
+                    self.mopeka.AddSensor(MopekaBTSensor(tank, log = self.log, debug = self.debug, console = self.console))
 
             # https://fluids.readthedocs.io/tutorial.html#tank-geometry
             if self.tank_type.lower() != "custom":
@@ -441,28 +445,56 @@ class GenMopekaData(MySupport):
     def GetTankReading(self, bd_address):
         try:
 
-            if len(self.mopeka.SensorMonitoredList) == 0:
-                self.LogDebug("No sensors monitoried.")
-                return None
-            if self.mopeka.SensorMonitoredList[bd_address]._last_packet == None:
-                self.SendMessage(
-                    "Genmon Warning for Mopeka Sensor Add On",
-                    "Unable to communicate with Mopeka Pro sensor.",
-                    "error",
-                    True,
-                )
-                self.LogDebug("No sensor comms detected for " + str(bd_address))
-                return None
-            reading_depth = self.mopeka.SensorMonitoredList[
-                bd_address
-            ]._last_packet.TankLevelInMM
-            sensor_temperature = self.mopeka.SensorMonitoredList[
-                bd_address
-            ]._last_packet.TemperatureInCelsius
-            self.LogDebug("Tank Level in mm: " + str(reading_depth))
-            battery = self.mopeka.SensorMonitoredList[
-                bd_address
-            ]._last_packet.BatteryPercent
+            if self.UseMopekaLib:
+                if len(self.mopeka.SensorMonitoredList) == 0:
+                    self.LogDebug("No sensors monitoried.")
+                    return None
+            else:
+                if len(self.mopeka.sensors) == 0:
+                    self.LogDebug("No sensors monitoried.")
+                    return None
+                
+                if not bd_address in self.mopeka.sensors.keys():
+                    self.LogError("Error in GetTankReading: " + str(bd_address) + ": " + str(self.mopeka.sensors.keys()))
+                    return None
+        
+            if self.UseMopekaLib:
+                if self.mopeka.SensorMonitoredList[bd_address]._last_packet == None:
+                    self.SendMessage(
+                        "Genmon Warning for Mopeka Sensor Add On",
+                        "Unable to communicate with Mopeka Pro sensor.",
+                        "error",
+                        True,
+                    )
+                    self.LogDebug("No sensor comms detected for " + str(bd_address))
+                    return None
+            else:
+                if self.mopeka.sensors[bd_address].last_reading == None:
+                    self.SendMessage(
+                        "Genmon Warning for Mopeka Sensor Add On",
+                        "Unable to communicate with Mopeka Pro sensor.",
+                        "error",
+                        True,
+                    )
+                    self.LogDebug("No sensor comms detected for " + str(bd_address))
+                    return None
+            
+            if self.UseMopekaLib:
+                sensor_list =  self.mopeka.SensorMonitoredList
+            else:
+                sensor_list =  self.mopeka.sensors 
+
+            if self.UseMopekaLib:
+                reading_depth = sensor_list[bd_address]._last_packet.TankLevelInMM
+                sensor_temperature = sensor_list[bd_address]._last_packet.TemperatureInCelsius
+                self.LogDebug("Tank Level in mm: " + str(reading_depth))
+                battery = sensor_list[bd_address]._last_packet.BatteryPercent
+            else:
+                reading_depth = sensor_list[bd_address].last_reading.TankLevelInMM
+                sensor_temperature = sensor_list[bd_address].last_reading.TemperatureInCelsius
+                self.LogDebug("Tank Level in mm: " + str(reading_depth))
+                battery = sensor_list[bd_address].last_reading.BatteryPercent
+
             if battery < 15:
                 message = "Warning, battery is low. Battery percentage is " + str(
                     battery
@@ -612,7 +644,14 @@ class GenMopekaData(MySupport):
     # ----------GenMopekaData::Close----------------------------------------------
     def Close(self):
         self.KillThread("TankCheckThread")
-        self.Generator.Close()
+        try:
+            self.mopeka.Close()
+        except:
+            pass
+        try:
+            self.Generator.Close()
+        except:
+            pass
 
 
 # -------------------------------------------------------------------------------

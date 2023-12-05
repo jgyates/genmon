@@ -14,6 +14,25 @@ import sys
 import time
 from subprocess import PIPE, Popen
 
+# Adds higher directory to python modules path.
+sys.path.append(os.path.dirname(sys.path[0]))  
+
+try:
+    from genmonlib.mymopeka import MopekaBT, ScanningMode
+except Exception as e1:
+    print("\n\nThis program is used to support using the Mopeka BT sensor with genmon.")
+
+    managedfile = "/usr/lib/python" + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "/EXTERNALLY-MANAGED"
+    if os.path.isfile(managedfile):
+        print("\n\nYou appear to be running in a managed python environemnt. To run this program see this page: ")
+        print("\n\n  https://github.com/jgyates/genmon/wiki/Appendix-S---Working-in-a-Managed-Python-Environment\n")
+    else:
+        print("\nThe required python libraries are not installed. You must run the setup script first.\n")
+        print("\n\n   https://github.com/jgyates/genmon/wiki/3.3--Setup-genmon-software")
+    
+    print("\n\nError: " + str(e1))
+    sys.exit(2)
+
 
 # ----------SignalClose--------------------------------------------------------
 def SignalClose(signum, frame):
@@ -75,86 +94,43 @@ if __name__ == "__main__":
         try:
             import bleson  # used by mopeka lib
         except Exception as e1:
-            print(
-                "The requires library bleson is not installed."
-                + str(e1)
-                + " "
-                + GetErrorInfo()
-            )
-            print(
-                "Install the library with this command: sudo pip3 install mopeka_pro_check"
-            )
-            print("\n")
-            sys.exit(2)
-        try:
-            from mopeka_pro_check.service import (
-                GetServiceInstance,
-                MopekaSensor,
-                MopekaService,
-            )
-        except Exception as e1:
-            print(
-                "The required library mopeka_pro_check is not installed."
-                + str(e1)
-                + " "
-                + GetErrorInfo()
-            )
-            print(
-                "Install the library with this command: sudo pip3 install mopeka_pro_check"
-            )
+            print("The requires library bleson is not installed." + str(e1) + " " + GetErrorInfo())
             print("\n")
             sys.exit(2)
 
         signal.signal(signal.SIGTERM, SignalClose)
         signal.signal(signal.SIGINT, SignalClose)
 
-        service = GetServiceInstance()
-        service.SetHostControllerIndex(0)
+        service = MopekaBT(mode = ScanningMode.DISCOVERY)
 
-        print(
-            "\nNOTE: This program will look for Mopeka Pro Sensors. The SYNC button must be pressed and held for the discovery process to work.\n"
-        )
+        print("\nNOTE: This program will look for Mopeka Pro Sensors. The SYNC button must be pressed and held for the discovery process to work.\n")
         print("Starting Discovery....")
-        service.DoSensorDiscovery()
+
         try:
             service.Start()
         except Exception as e1:
-            print(
-                "Error starting discovery. Validate that Blootooth is enabled: "
-                + str(e1)
-                + " "
-                + GetErrorInfo()
-            )
+            print("Error starting discovery. Validate that Blootooth is enabled: " + str(e1) + " " + GetErrorInfo())
             print("\n")
             sys.exit(2)
 
         time.sleep(5)
         service.Stop()
 
-        print("Discovery Stats %s\n" % str(service.ServiceStats))
-        print(
-            f"\n\nFinished Discovery.  Found {len(service.SensorDiscoveredList)} new sensor(s):\n\n"
-        )
+        print("Discovery Stats: \n")
+        print("\tProcessed Advertisments: " + str(service.processed_advertisments))
+        print("\tIgnored Advertisments: " + str(service.ignored_advertisments))
+        print("\tZero Length Advertisments: " + str(service.zero_lenght_advertisments))
+        print(f"\nFinished Discovery.  Found {len(service.discovered_sensors)} new sensor(s):\n")
 
-        for sensor in service.SensorDiscoveredList.values():
-            print("Sensor Address:  " + str(sensor._mac))
-            print(
-                "Battery Percentage:  " + str(sensor._last_packet.BatteryPercent) + "%%"
-            )
-            print(
-                "Sensor Temperature:  "
-                + str(sensor._last_packet.TemperatureInCelsius)
-                + " C"
-            )
-            print(
-                "Tank Level Reading:  " + str(sensor._last_packet.TankLevelInMM) + "mm"
-            )
+        for sensor in service.discovered_sensors.values():
+            print("Sensor Address:  " + str(sensor.address))
+            print("Battery Percentage:  " + str(sensor.last_reading.BatteryPercent) + "%%")
+            print("Sensor Temperature:  " + str(sensor.last_reading.TemperatureInCelsius) + " C")
+            print("Tank Level Reading:  " + str(sensor.last_reading.TankLevelInMM) + "mm")
             print("\n")
 
-        if len(service.SensorDiscoveredList):
-            print(
-                "Use the sensor address above as the tank address parameter in the genmon add on settings.\n"
-            )
+        if len(service.discovered_sensors):
+            print("Use the sensor address above as the tank address parameter in the genmon add on settings.\n")
 
     except Exception as e1:
         print("Program Error (main): " + str(e1) + " " + GetErrorInfo())
