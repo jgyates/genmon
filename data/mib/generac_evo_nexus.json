@@ -232,6 +232,30 @@
             "keywords" : ["Maintenance", "Fuel Type"]
         },
         {
+            "oid": "1, 0, 8, 1",
+            "return_type": "str",
+            "integer": true,
+            "description": "fuelLevelSensor2",
+            "default" : " ",
+            "keywords" : ["Maintenance", "Fuel Level Sensor Tank 2"]
+        },
+        {
+            "oid": "1, 0, 8, 2",
+            "return_type": "str",
+            "integer": true,
+            "description": "fuelLevelSensor3",
+            "default" : " ",
+            "keywords" : ["Maintenance", "Fuel Level Sensor Tank 3"]
+        },
+        {
+            "oid": "1, 0, 8, 3",
+            "return_type": "str",
+            "integer": true,
+            "description": "fuelLevelSensor4",
+            "default" : " ",
+            "keywords" : ["Maintenance", "Fuel Level Sensor Tank 4"]
+        },
+        {
             "oid": "1, 0, 8",
             "return_type": "str",
             "integer": true,
