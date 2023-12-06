@@ -40,7 +40,7 @@ try:
     from genmonlib.mysupport import MySupport
     from genmonlib.mythread import MyThread
     from genmonlib.program_defaults import ProgramDefaults
-    from genmonlib.mymopeka import MopekaBT
+    from genmonlib.mymopeka import MopekaBT, MopekaBTSensor
 
 except Exception as e1:
     print("\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n")
