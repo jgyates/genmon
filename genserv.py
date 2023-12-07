@@ -4043,6 +4043,9 @@ def LoadConfig():
             bUseSecureHTTP = ConfigFiles[GENMON_CONFIG].ReadValue(
                 "usehttps", return_type=bool
             )
+        if not bUseSecureHTTP:
+            # dont use MFA unless HTTPS is enabled
+            bUseMFA = False
 
         ListenIPAddress = ConfigFiles[GENMON_CONFIG].ReadValue("flask_listen_ip_address", default="0.0.0.0")
         
@@ -4136,8 +4139,8 @@ def LoadConfig():
                 "https_port", return_type=int, default=443
             )
 
+        app.secret_key = os.urandom(12)
         if bUseSecureHTTP:
-            app.secret_key = os.urandom(12)
             OldHTTPPort = HTTPPort
             HTTPPort = HTTPSPort
             if ConfigFiles[GENMON_CONFIG].HasOption("useselfsignedcert"):
