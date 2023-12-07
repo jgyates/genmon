@@ -4364,6 +4364,8 @@ if __name__ == "__main__":
         + str(bUseSecureHTTP)
         + ", SelfSignedCert: "
         + str(bUseSelfSignedCert)
+        + ", UseMFA:"
+        + str(bUseMFA)
     )
     # validate needed files are present
     filename = os.path.join(
