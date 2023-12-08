@@ -50,7 +50,7 @@ def InitGPIO(pin, direction=GPIO.OUT, initial=GPIO.LOW):
             GPIO.setup(pin, direction, initial=initial)
         else:
             if debug:
-                log.error("Error: pin = 0 in InitGPIO")
+                log.error("Note: pin = 0 in InitGPIO")
     except Exception as e1:
         log.error("Error in InitGPIO on pin %d : %s" % (int(pin), str(e1)))
 
@@ -366,11 +366,11 @@ if __name__ == "__main__":  # usage program.py [server_address]
                         if float(CPUTempStr) < CPU_THRESHOLD_TEMP:
                             if debug:
                                 log.error("CPU Temp in Range: " + CPUTempStr)
-                            SetGPIO(ER_GENMON, GPIO.LOW)
+                            SetGPIO(ER_PITEMP, GPIO.LOW)
                         else:
                             if debug:
                                 log.error("CPU Temp is HIGH: "  + CPUTempStr)
-                            SetGPIO(ER_GENMON, GPIO.HIGH)
+                            SetGPIO(ER_PITEMP, GPIO.HIGH)
             except Exception as e1:
                 log.error("Error checking pi CPU temp status: " + str(e1))
             time.sleep(3)
