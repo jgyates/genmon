@@ -10,8 +10,6 @@
 # -------------------------------------------------------------------------------
 
 
-# https://github.com/spbrogan/sensor.mopeka_pro_check/blob/main/custom_components/mopeka_pro_check/const.py
-# https://github.com/spbrogan/mopeka_pro_check
 # https://www.engineersedge.com/calculators/fluids/propane-tank-dimensional-calculator.htm
 
 # Possible alternative
@@ -128,18 +126,10 @@ class GenMopekaData(MySupport):
                 sys.exit(2)
             if self.UseMopekaLib:
                 try:
-                    from mopeka_pro_check.service import (
-                        GetServiceInstance,
-                        MopekaSensor,
-                        MopekaService,
-                    )
+                    from mopeka_pro_check.service import (GetServiceInstance,MopekaSensor,MopekaService,)
                 except Exception as e1:
-                    self.LogConsole(
-                        "The required library mopeka_pro_check is not installed."
-                    )
-                    self.LogErrorLine(
-                        "The required library mopeka_pro_check is not installed: " + str(e1)
-                    )
+                    self.LogConsole("The required library mopeka_pro_check is not installed.")
+                    self.LogErrorLine("The required library mopeka_pro_check is not installed: " + str(e1))
                     sys.exit(2)
             try:
                 from fluids.geometry import TANK
