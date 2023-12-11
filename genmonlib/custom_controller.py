@@ -234,14 +234,14 @@ class CustomController(GeneratorController):
     # -------------CustomController:GetSingleEntry-------------------------------
     # get a single value from JSON config or a dynamic value from modbus
     # Return either a modbus value or a single numeric value from JSON
-    def GetSingleEntry(self, entry_name):
+    def GetSingleEntry(self, entry_name, JSONNum=False):
         try:
             if not entry_name in self.controllerimport:
                 return False, None
             ImportedEntry = self.controllerimport[entry_name]
             if isinstance(ImportedEntry, dict):
                 ImportedTitle, ImportedValue = self.GetDisplayEntry(
-                    ImportedEntry, JSONNum=False, no_units=True
+                    ImportedEntry, JSONNum=JSONNum, no_units=True
                 )
             elif self.IsString(ImportedEntry):
                 return True, ImportedEntry
@@ -1110,7 +1110,7 @@ class CustomController(GeneratorController):
             Maintenance = self.DisplayMaintenanceCommon(Maintenance, JSONNum=JSONNum)
 
             Maintenance["Maintenance"].extend(
-                self.GetDisplayList(self.controllerimport, "maintenance")
+                self.GetDisplayList(self.controllerimport, "maintenance", JSONNum=JSONNum)
             )
 
         except Exception as e1:
@@ -1150,7 +1150,7 @@ class CustomController(GeneratorController):
                 Status["Status"].append({"Generator Status": gen_status})
 
             Status["Status"].extend(
-                self.GetDisplayList(self.controllerimport, "status")
+                self.GetDisplayList(self.controllerimport, "status", JSONNum=JSONNum)
             )
 
             if self.SystemInAlarm():
@@ -1308,7 +1308,7 @@ class CustomController(GeneratorController):
                 return "Unknown"
             return ReturnString
         except Exception as e1:
-            self.LogErrorLine("Error in DisplayStatus: " + str(e1))
+            self.LogErrorLine("Error in GetExtendedDisplayString: " + str(e1))
             return "Unknown"
 
     # ------------ GeneratorController:GetGaugeValue ----------------------------
@@ -1346,8 +1346,8 @@ class CustomController(GeneratorController):
                 if not isinstance(Entry, dict):
                     self.LogError( "Error in GetDisplayList: invalid list entry: " + str(Entry))
                     return ReturnValue
-                
-                title, value = self.GetDisplayEntry(Entry, JSONNum, no_units=no_units)
+
+                title, value = self.GetDisplayEntry(Entry, JSONNum = JSONNum, no_units=no_units)
 
                 if title == "default":
                     default = value
@@ -1507,7 +1507,7 @@ class CustomController(GeneratorController):
                 return ReturnTitle, ReturnValue
 
             if "container" in entry.keys() and entry["container"] and "value" in entry.keys() and "title" in entry.keys():
-                ReturnValue = self.GetDisplayList(entry, "value")
+                ReturnValue = self.GetDisplayList(entry, "value", JSONNum=JSONNum)
                 return entry["title"], ReturnValue
             if "inherit" in entry.keys() and inheritreg == None:
                 self.LogError("Error: inherit specified but no inherit value passed")
@@ -1634,7 +1634,7 @@ class CustomController(GeneratorController):
                     separator = entry["separator"]
                 value_list = []
                 for item in list_entry:
-                    title, value = self.GetDisplayEntry(item, inheritreg=inheritreg, inheritregtype=reg_type)
+                    title, value = self.GetDisplayEntry(item, JSONNum=False, inheritreg=inheritreg, inheritregtype=reg_type)
                     if value != None:
                         value_list.append(str(self.FormatEntry(item, value)))
                 # all list items must be present if format is used
