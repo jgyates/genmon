@@ -18,6 +18,7 @@ from subprocess import PIPE, Popen
 sys.path.append(os.path.dirname(sys.path[0]))  
 
 try:
+    import bleson
     from genmonlib.mymopeka import MopekaBT, ScanningMode
 except Exception as e1:
     print("\n\nThis program is used to support using the Mopeka BT sensor with genmon.")
@@ -91,12 +92,6 @@ if __name__ == "__main__":
         sys.exit(2)
 
     try:
-        try:
-            import bleson  # used by mopeka lib
-        except Exception as e1:
-            print("The requires library bleson is not installed." + str(e1) + " " + GetErrorInfo())
-            print("\n")
-            sys.exit(2)
 
         signal.signal(signal.SIGTERM, SignalClose)
         signal.signal(signal.SIGINT, SignalClose)
