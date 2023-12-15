@@ -294,10 +294,7 @@ class GenExercise(MySupport):
 
         status = self.SendCommand("generator: getbase")
         if not status.lower() in ["ready", "servicedue"]:
-            self.LogError(
-                "Generator not in Ready state, exercise cycle not started: "
-                + str(status)
-            )
+            self.LogError("Generator not in Ready state, exercise cycle not started: " + str(status))
             return False
         return True
 
@@ -309,6 +306,9 @@ class GenExercise(MySupport):
             return
 
         # Start generator
+        if not self.ReadyToExercise():
+            return
+        
         if self.ExerciseType.lower() == "normal" and self.ReadyToExercise():
             self.SendCommand("generator: setremote=start")
             self.LogDebug("Starting normal exercise cycle.")
@@ -485,7 +485,7 @@ class GenExercise(MySupport):
             return
         while True:
             try:
-                # get base status, is it exercise, ignore if we starte the cycle
+                # get base status, is it exercise, ignore if we started the cycle
                 if not self.ExerciseActive:
                     status = self.SendCommand("generator: getbase")
                     if status.lower() in ["exercising"]:
