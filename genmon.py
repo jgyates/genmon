@@ -103,6 +103,7 @@ class Monitor(MySupport):
         self.DisableWeather = False
         self.MyWeather = None
         self.UpdateAvailable = False
+        self.UpdateVersion = None
 
         # Time Sync Related Data
         self.bSyncTime = False  # Sync gen to system time
@@ -1440,6 +1441,7 @@ class Monitor(MySupport):
                                         title, msgbody, msgtype="info", onlyonce=True
                                     )
                                     self.UpdateAvailable = True
+                                    self.UpdateVersion = value
 
                 except Exception as e1:
                     self.LogErrorLine("Error checking for software update: " + str(e1))
