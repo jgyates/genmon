@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - Updated genmopeka.py add on to support more mopeka sensors and stop using old mopeka python library
 - Minor update to disable MFA if HTTPS is not enabled
 - Corrected with with MQTT Numerics for custom controllers
+- Update to genmonmaint.sh to ask about serial connection type on install (thanks @skipfire)
 
 ## V1.18.18 -2023-07-05
 - Added new add on program gencallmebot (thanks @buschauer)
