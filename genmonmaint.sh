@@ -171,11 +171,11 @@ function installgenmon() {
         s|S ) echo "Setting up serial port..."
           ;; # serial, nothing to do
         t|T ) echo "Not setting up serial port"
-          sudo sed -i 's/use_serial_tcp = False/use_serial_tcp = True/g' /etc/genmon/genmon.conf
+          sudo sed -i 's/use_serial_tcp = False/use_serial_tcp = True/gI' /etc/genmon/genmon.conf
           useserial=false
           ;; # TCP/IP bridge
         u|U ) echo "Not setting up serial port"
-          sudo sudo sed -i 's/\/dev\/serial0/\/dev\/ttyUSB0/g' /etc/genmon/genmon.conf
+          sudo sudo sed -i 's/\/dev\/serial0/\/dev\/ttyUSB0/gI' /etc/genmon/genmon.conf
           useserial=false
           ;; # USB Connection
         *)
