@@ -184,20 +184,22 @@ function installgenmon() {
       esac
     fi
 
-    if [ "$useserial" = true ] && [ -z "$2" ] && [ $1 != "noprompt" ]; then    # Is parameter #1 zero length?
-      read -p "Setup the raspberry pi onboard serial port? (y/n)?" choice
-      case "$choice" in
-        y|Y ) echo "Setting up serial port..."
+    if [ "$useserial" = true ]; then
+      if [ -z "$2" ] && [ $1 != "noprompt" ]; then    # Is parameter #1 zero length?
+        read -p "Setup the raspberry pi onboard serial port? (y/n)?" choice
+        case "$choice" in
+          y|Y ) echo "Setting up serial port..."
+            setupserial
+            ;; # yes choice
+          n|N ) echo "Not setting up serial port"
+            ;; # no choice
+          *)
+            echo "Invalid choice, not setting up serial port"
+            ;;  # default choice
+        esac
+      else
           setupserial
-          ;; # yes choice
-        n|N ) echo "Not setting up serial port"
-          ;; # no choice
-        *)
-          echo "Invalid choice, not setting up serial port"
-          ;;  # default choice
-      esac
-    else
-        setupserial
+      fi
     fi
     echo "Done."
 }
