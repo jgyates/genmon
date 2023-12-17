@@ -31,6 +31,8 @@ cleanpython_opt=false
 copyfiles_opt=false
 update_os=false
 managedpackages=false
+configfilescopied=false
+useserial=true
 
 #-------------------------------------------------------------------------------
 function checkmanagedpackages() {
@@ -150,6 +152,7 @@ function installgenmon() {
         case "$choice" in
           y|Y ) echo "Copying *.conf files to "$config_path""
             copyconffiles
+            configfilescopied=true
             ;; # yes choice
           n|N ) echo "Not copying *.conf to "$config_path""
             ;; # no choice
@@ -159,21 +162,44 @@ function installgenmon() {
         esac
     else
         copyconffiles
+        configfilescopied=true
     fi
-    if [ -z "$2" ] && [ $1 != "noprompt" ]; then    # Is parameter #1 zero length?
-      read -p "Setup the raspberry pi onboard serial port? (y/n)?" choice
+
+    if [ "$configfilescopied" = true ] && [ -z "$2" ] && [ $1 != "noprompt" ]; then    # Is parameter #1 zero length?
+      read -p "What type of serial connection? S=Serial, T=TCP/IP Bridge, U=USB (s/t/u)?" choice
       case "$choice" in
-        y|Y ) echo "Setting up serial port..."
-          setupserial
-          ;; # yes choice
-        n|N ) echo "Not setting up serial port"
-          ;; # no choice
+        s|S ) echo "Setting up serial port..."
+          ;; # serial, nothing to do
+        t|T ) echo "Not setting up serial port"
+          sudo sed -i 's/use_serial_tcp = False/use_serial_tcp = True/gI' /etc/genmon/genmon.conf
+          useserial=false
+          ;; # TCP/IP bridge
+        u|U ) echo "Not setting up serial port"
+          sudo sudo sed -i 's/\/dev\/serial0/\/dev\/ttyUSB0/gI' /etc/genmon/genmon.conf
+          useserial=false
+          ;; # USB Connection
         *)
-          echo "Invalid choice, not setting up serial port"
+          echo "Invalid choice, defaulting to serial"
           ;;  # default choice
       esac
-    else
-        setupserial
+    fi
+
+    if [ "$useserial" = true ]; then
+      if [ -z "$2" ] && [ $1 != "noprompt" ]; then    # Is parameter #1 zero length?
+        read -p "Setup the raspberry pi onboard serial port? (y/n)?" choice
+        case "$choice" in
+          y|Y ) echo "Setting up serial port..."
+            setupserial
+            ;; # yes choice
+          n|N ) echo "Not setting up serial port"
+            ;; # no choice
+          *)
+            echo "Invalid choice, not setting up serial port"
+            ;;  # default choice
+        esac
+      else
+          setupserial
+      fi
     fi
     echo "Done."
 }
