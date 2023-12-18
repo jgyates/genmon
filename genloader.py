@@ -186,7 +186,6 @@ class Loader(MySupport):
             ["paho.mqtt.client", "paho-mqtt", None],  # for genmqtt
             ["OpenSSL", "pyopenssl", None],  # SSL
             ["spidev", "spidev", None],  # spidev
-            ["mopeka_pro_check","mopeka_pro_check", None],  # mopeka_pro_check for genmopeka
             ["voipms", "voipms", None]      # voipms for gensms_voip
             # ['fluids', 'fluids', None]              # fluids for genmopeka
         ]
@@ -197,9 +196,7 @@ class Loader(MySupport):
 
             for Module in ModuleList:
                 # mopeka_pro_check is only for Python 3.7 and higher
-                if (
-                    Module[0] == "mopeka_pro_check" or Module[0] == "fluids"
-                ) and sys.version_info < (3, 7):
+                if (Module[0] == "fluids") and sys.version_info < (3, 7):
                     continue
                 if not self.LibraryIsInstalled(Module[0]):
                     self.LogInfo(
