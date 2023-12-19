@@ -21,3 +21,6 @@
 - [Add the ability to save pictures in the service journal](https://github.com/jgyates/genmon/issues/896) @northportio
 - [Ecobee thermostat messaging](https://github.com/jgyates/genmon/issues/921) @wtnh 
 - [Kiosk mode](https://github.com/jgyates/genmon/issues/970) @mstackler 
+- Add the ability to report the temperature of mopeka tank sensors in the UI and SNMP/MQTT
+- Add the ability to set the name of external tank
+- [Add the ability to setup and external gauge / sensor](https://github.com/jgyates/genmon/issues/961)
