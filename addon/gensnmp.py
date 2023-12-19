@@ -297,7 +297,12 @@ class GenSNMP(MySupport):
                 if isinstance(Value, int):
                     self.mibDataIdx[oid].value = Value
                 else:
-                    self.mibDataIdx[oid].value = int(self.removeAlpha(Value))
+                    try:
+                        # this will convert a float string to an int
+                        Value = float(self.removeAlpha(Value))
+                        self.mibDataIdx[oid].value = int(Value)
+                    except:
+                        self.mibDataIdx[oid].value = int(self.removeAlpha(Value))
             else:
                 self.LogError(
                     "Invalid type in UpdateSNMPData: "
