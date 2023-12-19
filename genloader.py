@@ -195,8 +195,8 @@ class Loader(MySupport):
             self.CheckToolsNeeded()
 
             for Module in ModuleList:
-                # mopeka_pro_check is only for Python 3.7 and higher
-                if (Module[0] == "fluids") and sys.version_info < (3, 7):
+                # fluids is only for Python 3.6 and higher
+                if (Module[0] == "fluids") and sys.version_info < (3, 6):
                     continue
                 if not self.LibraryIsInstalled(Module[0]):
                     self.LogInfo(
