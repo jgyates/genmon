@@ -3438,7 +3438,7 @@ def ReadSettingsFromFile():
         302,
         "password",
         "",
-        "max:50",
+        "max:70",
         MAIL_CONFIG,
         MAIL_SECTION,
         "email_pw",
