@@ -102,6 +102,10 @@ class MyPlatform(MyCommon):
     def IsPlatformRaspberryPi(self, raise_on_errors=False):
 
         try:
+            model = self.GetRaspberryPiModel(bForce = True)
+            if model != None and "raspberry" in model.lower():
+                return True 
+            
             with open("/proc/cpuinfo", "r") as cpuinfo:
                 found = False
                 for line in cpuinfo:
@@ -195,6 +199,19 @@ class MyPlatform(MyCommon):
             self.LogErrorLine("Error in GetRaspberryPiTemp: " + str(e1))
         return DefaultReturn
 
+    # ------------ MyPlatform::GetRaspberryPiModel -----------------------------
+    def GetRaspberryPiModel(self, bForce = False):
+        try:
+            if bForce == False and not self.IsPlatformRaspberryPi():
+                return None
+        
+            process = Popen(["cat", "/proc/device-tree/model"], stdout=PIPE)
+            output, _error = process.communicate()
+            if sys.version_info[0] >= 3:
+                output = output.decode("utf-8")
+            return str(output.rstrip("\x00"))
+        except Exception as e1:
+            return None
     # ------------ MyPlatform::GetRaspberryPiInfo -------------------------------
     def GetRaspberryPiInfo(self):
 
@@ -207,11 +224,8 @@ class MyPlatform(MyCommon):
                 {"CPU Temperature": self.GetRaspberryPiTemp(ReturnFloat=False)}
             )
             try:
-                process = Popen(["cat", "/proc/device-tree/model"], stdout=PIPE)
-                output, _error = process.communicate()
-                if sys.version_info[0] >= 3:
-                    output = output.decode("utf-8")
-                PiInfo.append({"Pi Model": str(output).rstrip("\x00")})
+                model = self.GetRaspberryPiModel()
+                PiInfo.append({"Pi Model": model})
             except:
                 pass
             try:
