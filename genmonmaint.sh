@@ -34,6 +34,22 @@ managedpackages=false
 configfilescopied=false
 useserial=true
 
+
+#-------------------------------------------------------------------------------
+is_pi () {
+  ARCH=$(dpkg --print-architecture)
+  if [ "$ARCH" = "armhf" ] || [ "$ARCH" = "arm64" ] ; then
+    return 0
+  else
+    return 1
+  fi
+}
+#-------------------------------------------------------------------------------
+is_pifive() {
+  grep -q "^Revision\s*:\s*[ 123][0-9a-fA-F][0-9a-fA-F]4[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]$" /proc/cpuinfo
+  return $?
+}
+
 #-------------------------------------------------------------------------------
 function checkmanagedpackages() {
 
@@ -104,7 +120,9 @@ function updatelibraries() {
 function setupserial() {
   pushd $genmondir
   cd OtherApps
-  sudo $pythoncommand serialconfig.py -e
+  # we will leave bluetooth on. Pi4 and earlier devices the serial port 
+  # has a conflict unless you use the -b option
+  sudo $pythoncommand serialconfig.py -e -b
   echo "Finished setting up the serial port."
   popd
 }
@@ -166,20 +184,25 @@ function installgenmon() {
     fi
 
     if [ "$configfilescopied" = true ] && [ -z "$2" ] && [ $1 != "noprompt" ]; then    # Is parameter #1 zero length?
-      read -p "What type of serial connection? S=Serial, T=TCP/IP Bridge, U=USB (s/t/u)?" choice
+      read -p "What type of connection from genmon to the controller? S=Onboard Serial, T=Network, Serial over TCP/IP Bridge, U=USB Serial (s/t/u)?" choice
       case "$choice" in
-        s|S ) echo "Setting up serial port..."
-          ;; # serial, nothing to do
-        t|T ) echo "Not setting up serial port"
+        s|S ) echo "Setting up serial onboard port..."
+          if is_pifive; then
+            # on a raspberry pi 5 use /dev/ttyAMA0 instead of /dev/serial0
+            echo "Using port /dev/ttyAMA0"
+            sudo sudo sed -i 's/\/dev\/serial0/\/dev\/ttyAMA0/gI' /etc/genmon/genmon.conf
+          fi
+          ;; # serial, nothing to do if pi 4 or lower
+        t|T ) echo "Network connection used for serial over TCP/IP. Not setting up onboard serial port"
           sudo sed -i 's/use_serial_tcp = False/use_serial_tcp = True/gI' /etc/genmon/genmon.conf
           useserial=false
           ;; # TCP/IP bridge
-        u|U ) echo "Not setting up serial port"
+        u|U ) echo "USB serial. Not setting up onboard serial port, using USB serial /dev/ttyUSB0"
           sudo sudo sed -i 's/\/dev\/serial0/\/dev\/ttyUSB0/gI' /etc/genmon/genmon.conf
           useserial=false
           ;; # USB Connection
         *)
-          echo "Invalid choice, defaulting to serial"
+          echo "Invalid choice, defaulting to onboard serial"
           ;;  # default choice
       esac
     fi

@@ -1,6 +1,12 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.19.01 -2023-12-06
+- Update to genmonmaint.sh to ask about serial connection type on install (thanks @skipfire)
+- Corrected issue with genloader to remove check for mopeka library that was replaced
+- Fixed issue with 'Force Integer' setting on SNMP add on to convert external tank sensors to integer properly
+- Modifications to support Raspberry Pi 5: detect pi model, enabled serial port, for pi5 default port is /dev/ttyAMA0, not /dev/serial0
+
 ## V1.19.00 -2023-11-09
 - Updates to genmonmain.sh, startgenmon.sh and genloader.sh for Debian bookworm. 
 - Minor update to serialconfig.py to make serial0 instead of serial1 work on bookworm
@@ -21,9 +27,6 @@ All notable changes to this project will be documented in this file.
 - Updated genmopeka.py add on to support more mopeka sensors and stop using old mopeka python library
 - Minor update to disable MFA if HTTPS is not enabled
 - Corrected with with MQTT Numerics for custom controllers
-- Update to genmonmaint.sh to ask about serial connection type on install (thanks @skipfire)
-- Corrected issue with genloader to remove check for mopeka library that was replaced
-- Fixed issue with 'Force Integer' setting on SNMP add on to convert external tank sensors to integer properly
 
 ## V1.18.18 -2023-07-05
 - Added new add on program gencallmebot (thanks @buschauer)
