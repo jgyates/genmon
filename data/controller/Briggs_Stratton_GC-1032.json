@@ -301,7 +301,7 @@
     {
       "reg": "0044",
       "reg_type": "input",
-      "mask": "000f",
+      "mask": "0f00",
       "value": "0000",
       "type": "bits",
       "title": "Alarm",

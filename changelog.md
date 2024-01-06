@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 - Corrected issue with genloader to remove check for mopeka library that was replaced
 - Fixed issue with 'Force Integer' setting on SNMP add on to convert external tank sensors to integer properly
 - Modifications to support Raspberry Pi 5: detect pi model, enabled serial port, for pi5 default port is /dev/ttyAMA0, not /dev/serial0
+- Minor update to Briggs and Stratton maintenance alarm definition 
 
 ## V1.19.00 -2023-11-09
 - Updates to genmonmain.sh, startgenmon.sh and genloader.sh for Debian bookworm. 
