@@ -302,8 +302,10 @@
       "reg": "0044",
       "reg_type": "input",
       "mask": "0f00",
-      "value": "0000",
-      "type": "bits",
+      "value": "1",
+      "type": "regex",
+      "comment": "This will report an alarm on if any bits 9 - 12 are 1",
+      "regex": "^[1-9a-f]00$",
       "title": "Alarm",
       "text": "Maintenance Required"
     },
