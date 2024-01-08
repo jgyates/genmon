@@ -75,6 +75,7 @@ class GenCallMeBot(MySupport):
             self.api_key = self.config.ReadValue("api_key", default=None)
             self.recipient_number = self.config.ReadValue("recipient_number", default=None)
             self.username = self.config.ReadValue("username", default=None)
+            self.debug = self.config.ReadValue("debug", return_type=bool, default=False)
 
             try:
                 self.notification_type = self.notification_type.lower()
@@ -104,7 +105,7 @@ class GenCallMeBot(MySupport):
             elif (self.notification_type.lower() == "signal"):
                 # https://signal.callmebot.com/signal/send.php?phone=[phone_number]&apikey=[your_apikey]&text=[message]
                 self.webhook_url = "https://signal.callmebot.com/signal/send.php?phone=" + self.recipient_number + "&apikey=" + self.api_key + "&text="
-                self.LogError(self.webhook_url)
+                self.LogDebug(self.webhook_url)
             else:  
                 self.LogError("Error: invalid self.notification_type setting")
                 sys.exit(2)
@@ -115,6 +116,8 @@ class GenCallMeBot(MySupport):
 
         try:
 
+            self.LogDebug("Type:" +  self.notification_type)
+            self.LogDegug("URL: " + self.webhook_url)
             self.Generator = ClientInterface(host=address, port=port, log=log)
             self.sitename = self.Generator.ProcessMonitorCommand("generator: getsitename")
             self.Queue = MyMsgQueue(config=self.config, log=log, callback=self.SendNotice)
