@@ -147,6 +147,7 @@ class GenMopekaData(MySupport):
             )
 
             self.LogDebug("Tank Address = " + str(self.tank_address))
+            self.LogDebug("Min Reading Quality: " + str(self.min_reading_quality))
 
             self.Generator = ClientInterface(
                 host=self.MonitorAddress, port=port, log=self.log
