@@ -1414,7 +1414,7 @@ def GetAddOns():
             ),
             "list",
             "Type of CallMeBot Notifications. For more information, see http://www.callmebot.com.",
-            bounds="WhatsApp,Telegram",  # Facebook, Signal
+            bounds="WhatsApp,Telegram,Signal",  # Facebook, 
             display_name="Notification Type",
         )
         AddOnCfg["gencallmebot"]["parameters"]["api_key"] = CreateAddOnParam(
@@ -1439,7 +1439,7 @@ def GetAddOns():
                 "recipient_number", return_type=str, default="+1XXXXXXXXXX"
             ),
             "string",
-            "Recipient Number requried for WhatsApp Notification. Must be without spaces and start with a plus",
+            "Recipient Number requried for WhatsApp Notification. Must be without spaces and start with a plus. For Signal this must be the numeric key sent to your signal account when registering with CallMeBot (in the form xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)",
             bounds="",
             display_name="Recipient Number",
         )
