@@ -1302,6 +1302,24 @@ def GetAddOns():
             bounds="",
             display_name="SSL/TLS CA certificate file",
         )
+        AddOnCfg["genmqtt"]["parameters"]["client_cert_path"] = CreateAddOnParam(
+            ConfigFiles[GENMQTT_CONFIG].ReadValue(
+                "client_cert_path", return_type=str, default=""
+            ),
+            "string",
+            "Optional. Full path the client certificate file. Leave empty to not use MTLS.",
+            bounds="",
+            display_name="Client Certificate File",
+        )
+        AddOnCfg["genmqtt"]["parameters"]["client_key_path"] = CreateAddOnParam(
+            ConfigFiles[GENMQTT_CONFIG].ReadValue(
+                "client_key_path", return_type=str, default=""
+            ),
+            "string",
+            "Optional. Full path the client key file. Leave empty to not use MTLS.",
+            bounds="",
+            display_name="Client Key File",
+        )
         AddOnCfg["genmqtt"]["parameters"]["tls_version"] = CreateAddOnParam(
             ConfigFiles[GENMQTT_CONFIG].ReadValue(
                 "tls_version", return_type=str, default="1.0"

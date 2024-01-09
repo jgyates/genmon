@@ -429,7 +429,12 @@ class MyMQTT(MyCommon):
             self.CertReqs = config.ReadValue(
                 "cert_reqs", return_type=str, default="Required"
             )
-
+            self.ClientCertificatePath = config.ReadValue(
+                "client_cert_path", default=""
+            )
+            self.ClientKeyPath = config.ReadValue(
+                "client_key_path", default=""
+            )
             BlackList = config.ReadValue("blacklist")
 
             if BlackList != None:
@@ -501,8 +506,21 @@ class MyMQTT(MyCommon):
                             "Error: invalid TLS version specified, defaulting to 1.0: "
                             + self.TLSVersion
                         )
+                    certfile = None
+                    keyfile = None
+                    # strip off any whitespace
+                    self.ClientCertificatePath = self.ClientCertificatePath.strip()
+                    self.ClientKeyPath = self.ClientKeyPath.strip()
+                    # if nothing is there then use None
+                    if len(self.ClientCertificatePath):
+                        certfile = self.ClientCertificatePath
+                    if len(self.ClientKeyPath):
+                        keyfile = self.ClientKeyPath
+
                     self.MQTTclient.tls_set(
                         ca_certs=self.CertificateAuthorityPath,
+                        certfile=certfile,
+                        keyfile=keyfile,
                         cert_reqs=cert_reqs,
                         tls_version=use_tls,
                     )
