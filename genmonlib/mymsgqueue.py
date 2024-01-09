@@ -20,7 +20,7 @@ from genmonlib.mythread import MyThread
 # ------------ MyMsgQueue class -------------------------------------------------
 class MyMsgQueue(MySupport):
     # ------------ MyMsgQueue::init----------------------------------------------
-    def __init__(self, config=None, log=None, callback=None):
+    def __init__(self, config=None, log=None, debug=False,callback=None):
         super(MyMsgQueue, self).__init__()
         self.log = log
         self.config = config
@@ -31,7 +31,7 @@ class MyMsgQueue(MySupport):
 
         self.max_retry_time = 600  # 10 min
         self.default_wait = 120  # 2 min
-        self.debug = False
+        self.debug = debug
 
         if self.config != None:
             try:
