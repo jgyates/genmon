@@ -122,6 +122,7 @@ class MopekaAdvertisement(MySupport):
         self.LogDebug("Temp: " + str(self.TemperatureInFahrenheit) + " F")
         self.LogDebug("Reading MM: " + str(self.TankLevelInMM) + " mm")
         self.LogDebug("Reading inches: " + str(self.TankLevelInInches) + " inches")
+        self.LogDebug("Reading Quality: " + str(self.ReadingQualityStars))
 
     def _process_gap(self, data: bytes) -> None:
         """ Process supported BLE GAP reports.
@@ -287,7 +288,8 @@ class MopekaBT(MySupport):
                  console = None,
                  debug = None,
                  mode = ScanningMode.FILTERED,
-                 hci_index = 0):
+                 hci_index = 0,
+                 min_reading_quality = 0):
 
         self.log = log 
         self.console = console
@@ -300,8 +302,14 @@ class MopekaBT(MySupport):
         self.controller = None
         self.ignored_advertisments = 0
         self.processed_advertisments = 0
+        self.rejected_advertisments = 0
+        self.skipped_advertisments = 0
         self.zero_lenght_advertisments = 0
-
+        self.min_reading_quality = min_reading_quality
+        if self.min_reading_quality > 3:
+            self.min_reading_quality = 3
+        if self.min_reading_quality < 0:
+            self.min_reading_quality = 0
     # ------------ MopekaBT:ModeType -------------------------------------------
     @property
     def ModeType(self):
@@ -312,6 +320,15 @@ class MopekaBT(MySupport):
         else:
             return "Unknown"
     
+    # ------------ MopekaBT:LogStats -------------------------------------------
+    def LogStats(self):
+
+        self.LogDebug("Processed Ads:" + str(self.processed_advertisments))
+        self.LogDebug("Rejected Ads:" + str(self.rejected_advertisments))
+        self.LogDebug("Skipped Ads:" + str(self.skipped_advertisments))
+        self.LogDebug("Zero Length Ads:" + str(self.zero_lenght_advertisments))
+        self.LogDebug("Ignored Ads:" + str(self.ignored_advertisments))
+
     # ------------ MopekaBT:IncommingPacketCallback ----------------------------
     def IncommingPacketCallback(self, hci_packet):
         try:
@@ -321,8 +338,16 @@ class MopekaBT(MySupport):
                 sensor = self.sensors.get(bd_address, None)
                 if not sensor == None:
                     try:
-                        sensor.AddReading(MopekaAdvertisement(hci_packet.data, log = self.log, debug = self.debug, console = self.console))
-                        self.processed_advertisments += 1
+                        ma = MopekaAdvertisement(hci_packet.data, log = self.log, debug = self.debug, console = self.console)
+                        if ma._raw_mfg_data != None:
+                            if ma.ReadingQualityStars  >= self.min_reading_quality:    # reject zero quality
+                                sensor.AddReading(ma)
+                                self.processed_advertisments += 1
+                            else:
+                                self.rejected_advertisments +=1
+                            
+                        else:
+                            self.skipped_advertisments += 1
 
                     except NoGapDataException:
                         # This is not an error.  The sensor sends ads with zero data, ignore

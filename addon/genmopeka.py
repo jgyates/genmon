@@ -104,6 +104,7 @@ class GenMopekaData(MySupport):
             self.max_mm = self.config.ReadValue("max_mm", return_type=int, default=None, NoLog=True)
             self.scan_time = self.config.ReadValue("scan_time", return_type=int, default=15)  # num of seconds to scan
             self.send_notices = self.config.ReadValue("send_notices", return_type=bool, default=False)
+            self.min_reading_quality = self.config.ReadValue("min_reading_quality", return_type=int, default=0, NoLog=True)
             self.UseMopekaLib = self.config.ReadValue("use_old_lib", return_type=bool, default=False)
 
             if self.MonitorAddress == None or not len(self.MonitorAddress):
@@ -343,7 +344,7 @@ class GenMopekaData(MySupport):
                 self.mopeka = GetServiceInstance()
                 self.mopeka.SetHostControllerIndex(0)
             else:
-                self.mopeka = MopekaBT(log = self.log, console = self.console, debug = self.debug)
+                self.mopeka = MopekaBT(log = self.log, console = self.console, debug = self.debug, min_reading_quality=self.min_reading_quality)
 
             for tank in self.tank_address:
                 if self.UseMopekaLib:
@@ -575,6 +576,7 @@ class GenMopekaData(MySupport):
                     return
                 self.mopeka.Stop()
                 self.LogDebug("stopped scan")
+                self.mopeka.LogStats()
 
                 reading = self.GetTankReading(self.bd_tank_address[0])
                 if reading != None:
@@ -615,7 +617,7 @@ class GenMopekaData(MySupport):
                     retVal = self.SendCommand(
                         "generator: set_tank_data=" + json.dumps(dataforgenmon)
                     )
-                    self.LogDebug(retVal)
+                    self.LogDebug("SendCommand Result: " +  retVal)
                 else:
                     self.LogDebug("No reading from tank sensor!")
                 if self.WaitForExit("TankCheckThread", float(self.PollTime * 60)):
