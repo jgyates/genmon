@@ -117,7 +117,7 @@ class GenCallMeBot(MySupport):
         try:
 
             self.LogDebug("Type:" +  self.notification_type)
-            self.LogDegug("URL: " + self.webhook_url)
+            self.LogDebug("URL: " + self.webhook_url)
             self.Generator = ClientInterface(host=address, port=port, log=log)
             self.sitename = self.Generator.ProcessMonitorCommand("generator: getsitename")
             self.Queue = MyMsgQueue(config=self.config, log=log, callback=self.SendNotice)
