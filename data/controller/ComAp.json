@@ -1,0 +1,4310 @@
+{
+  "controller_name": "ComAp Controller",
+  "rated_max_output_power_kw": {
+    "reg": "0bc0",
+    "mask": "ffff",
+    "type": "int",
+    "title": "Nominal Power (kW)"
+  },
+  "rated_nominal_voltage": {
+    "reg": "0bca",
+    "mask": "ffff",
+    "type": "int",
+    "title": "Nominal Voltage"
+  },
+  "rated_nominal_rpm": {
+    "reg": "0bd1",
+    "mask": "ffff",
+    "type": "int",
+    "title": "Nominal RPM"
+  },
+  "rated_nominal_freq": {
+    "reg": "0bcf",
+    "mask": "ffff",
+    "type": "int",
+    "title": "Nominal Frequency"
+  },
+  "nominal_battery_voltage": 24,
+  "generator_phase": 3,
+  "holding_registers": {
+    "0002": {"length":2, "text":"Binary Inputs CU", "comment": "Binary#1"},
+    "000b": {"length":2, "text": "Binary Outputs CU", "comment":"Binary#2"},
+    "000c": {"length":2, "text": "Battery Voltage", "comment":"tenths decimal place"},
+    "000d": {"length":2, "text": "CPU Temp", "comment": "tenths decimal place"},
+    "000e": {"length":2, "text": "D+", "comment": "Volts, tenths decimal place"},
+    "000f": {"length":2, "text": "Oil Pressure", "comment": "psi"},
+    "0010": {"length":2, "text": "Water Temperature", "comment": "psi"},
+    "0011": {"length":2, "text": "Fuel Level", "comment": "percent"},
+    "0081": {"length":2, "text": "Log Binary Out 1", "comment": "Binary#3"},
+    "0082": {"length":2, "text": "Log Binary Out 2", "comment": "Binary#4"},
+    "0083": {"length":2, "text": "Log Binary Out 3", "comment": "Binary#5"},
+    "0084": {"length":2, "text": "Log Binary Out 4", "comment": "Binary#6"},
+    "0085": {"length":2, "text": "Log Binary Out 5", "comment": "Binary#7"},
+    "0086": {"length":2, "text": "Log Binary Out 6", "comment": "Binary#8"},
+    "0087": {"length":2, "text": "Log Binary Out 7", "comment": "Binary#9"},
+    "0088": {"length":2, "text": "VPIO Binary Out 1", "comment": "Binary#10"},
+    "009d": {"length":2, "text": "SW Version", "comment": "tenths decimal place"},
+    "009e": {"length":2, "text": "SW Branch", "comment": "SW Branch"},
+    "009f": {"length":2, "text": "Application Version", "comment": "Application"},
+    "00a2": {"length":2, "text": "Engine State", "comment": "List#1"},
+    "00a3": {"length":2, "text": "Breaker State", "comment": "List#2"},
+    "00a7": {"length":2, "text": "Controller Mode", "comment": "i.e. Switch State (off, manual, auto), List#3"},
+    "00ac": {"length":2, "text": "Generator Status", "comment": "Binary#12"},
+    "00ad": {"length":2, "text": "Timer Text", "comment": "List#4"},
+    "00ae": {"length":2, "text": "Timer Value", "comment": "Unsigned Timer Value"},
+
+    "00f8": {"length":2, "text": "Generator Voltage L1-N", "comment": "Volts"},
+    "00f9": {"length":2, "text": "Generator Voltage L2-N", "comment": "Volts"},
+    "00fa": {"length":2, "text": "Generator Voltage L3-N", "comment": "Volts"},
+    "00fb": {"length":2, "text": "Generator Voltage", "comment": "Volts"},
+    "0f9c": {"length":2, "text": "Generator Voltage L1-L2", "comment": "Volts"},
+    "00fd": {"length":2, "text": "Generator Voltage L2-L3", "comment": "Volts"},
+    "00fe": {"length":2, "text": "Generator Voltage L3-L1", "comment": "Volts"},
+    "00ff": {"length":2, "text": "Generator Frequency", "comment": "Hz, tenths decimal place"},
+    "0101": {"length":2, "text": "Generator Current L1", "comment": "Amps"},
+    "0102": {"length":2, "text": "Generator Current L2", "comment": "Amps"},
+    "0103": {"length":2, "text": "Generator Current L3", "comment": "Amps"},
+    "0105": {"length":2, "text": "Power Factor", "comment": "Hundredths decimal place"},
+
+    "0107": {"length":2, "text": "Actual Power", "comment": "kW"},
+    "0109": {"length":2, "text": "Actual Power L1", "comment": "kW"},
+    "010a": {"length":2, "text": "Actual Power L2", "comment": "kW"},
+    "010b": {"length":2, "text": "Actual Power L3", "comment": "kW"},
+
+    "010c": {"length":2, "text": "Reactive Power", "comment": "kVAr"},
+    "010e": {"length":2, "text": "Reactive Power L1", "comment": "kVAr"},
+    "010f": {"length":2, "text": "Reactive Power L2", "comment": "kVAr"},
+    "0110": {"length":2, "text": "Reactive Power L3", "comment": "kVAr"},
+
+    "0111": {"length":2, "text": "Apparent Power", "comment": "kVA"},
+    "0112": {"length":2, "text": "Apparent Power L1", "comment": "kVA"},
+    "0113": {"length":2, "text": "Apparent Power L2", "comment": "kVA"},
+    "0114": {"length":2, "text": "Apparent Power L3", "comment": "kVA"},
+
+    "0115": {"length":2, "text": "Power Factor L1", "comment": "Hundredths decimal place"},
+    "0116": {"length":2, "text": "Power Factor L2", "comment": "Hundredths decimal place"},
+    "0117": {"length":2, "text": "Power Factor L3", "comment": "Hundredths decimal place"},
+    
+    "0118": {"length":2, "text": "Generator Voltage unbal", "comment": "percent"},
+    "0119": {"length":2, "text": "Generator Current unbal", "comment": "percent"},
+
+    "013a": {"length":2, "text": "RPM", "comment": "RPM"},
+    "0166": {"length":2, "text": "Binary Output 1", "comment": "Binary#14"},
+    "0167": {"length":2, "text": "Binary Output 2", "comment": "Binary#15"},
+    "0182": {"length":2, "text": "Log Binary Output 8", "comment": "Binary#16"},
+
+    "0bb8": {"length":16, "text":"Genset Name", "comment":"Zero terminated string"},
+
+    "0bc0": {"length":2, "text": "Nominal Power", "comment": "kW"},
+    "0bc1": {"length":2, "text": "Nominal Current", "comment": "A"},
+    
+    "0bca": {"length":2, "text": "Gen Nominal Voltage", "comment": "V"},
+    "0bcb": {"length":2, "text": "Gen Nominal Ph - Ph Voltage", "comment": "V"},
+    "0bcc": {"length":2, "text": "Bus Nominal Voltage", "comment": "V"},
+    "0bcd": {"length":2, "text": "Bus Nominal Ph - Ph Voltage", "comment": "V"},
+
+    "0bcf": {"length":2, "text": "Nominal Frequency", "comment": "Hz"},
+    "0bd1": {"length":2, "text": "Nominal RPM", "comment": "RPM"},
+
+    "0e02": {"length":4, "text": "Run Hours", "comment": "Run Hours"},
+    "0e04": {"length":2, "text": "Number of Starts", "comment": "Num Starts"},
+    "0e05": {"length":2, "text": "Number of Unscheduled Starts", "comment": "Num Unscheduled Starts"},
+    "0e0a": {"length":4, "text": "Total kW Hours", "comment": "Total kW Hours"},
+
+    "0196": {"length":4, "text": "StatusDW", "comment": "Binary#17"},
+
+    "1677": {"length":2, "text": "Alarm: Remote Start", "comment": "Protection 2"},
+    "1678": {"length":2, "text": "Alarm: Em Stop, Low Coolant Alarm", "comment": "Protection 2, 1"},
+    "1679": {"length":2, "text": "Alarm: Battery Charger, Fuel Leak Alarm", "comment": "Protection 2, 1"},
+
+    "16ae": {"length":2, "text": "Alarm: GCB close, VPIO-1 2", "comment": "GCB = Generator Circuit Breaker,Protection 2, 1"},
+    "16af": {"length":2, "text": "Alarm: VPIO-1 3, VPIO-1 4", "comment": "Protection 2, 1"},
+    "16b0": {"length":2, "text": "Alarm: VPIO-1 5, VPIO-1 6", "comment": "Protection 2, 1"},
+    "16b1": {"length":2, "text": "Alarm: VPIO-1 7,VPIO-1 8", "comment": "Protection 2, 1"},
+    "16e6": {"length":2, "text": "Alarm: Oil press, Water temp", "comment": "Protection 2, 1"},
+    "16e7": {"length":2, "text": "Alarm: Fuel level", "comment": "Protection 2"},
+
+    "1724": {"length":2, "text": "Alarm: BIN 1, BIN 2", "comment": "Protection 2, 1"},
+    "1725": {"length":2, "text": "Alarm: BIN 3, BIN 4", "comment": "Protection 2, 1"},
+    "1726": {"length":2, "text": "Alarm: BIN 5, BIN 6", "comment": "Protection 2, 1"},
+    "1727": {"length":2, "text": "Alarm: BIN 7, BIN 8", "comment": "Protection 2, 1"},
+    "1728": {"length":2, "text": "Alarm: BIN 9, BIN 10", "comment": "Protection 2, 1"},
+    "1729": {"length":2, "text": "Alarm: BIN 11, BIN 12", "comment": "Protection 2, 1"},
+    "172a": {"length":2, "text": "Alarm: ANA 1, ANA 2", "comment": "Protection 2, 1"},
+    "172b": {"length":2, "text": "Alarm: ANA 3, ANA 4", "comment": "Protection 2, 1"},
+    "172c": {"length":2, "text": "Alarm: ANA 5, ANA 6", "comment": "Protection 2, 1"},
+    "172d": {"length":2, "text": "Alarm: ANA 7, ANA 8", "comment": "Protection 2, 1"},
+    "172e": {"length":2, "text": "Alarm: ANA 9, ANA 10", "comment": "Protection 2, 1"},
+    "172f": {"length":2, "text": "Alarm: BOUT 1, BOUT 2", "comment": "Protection 2, 1"},
+    "1730": {"length":2, "text": "Alarm: BOUT 3, BOUT 4", "comment": "Protection 2, 1"},
+    "1731": {"length":2, "text": "Alarm: BOUT 5, BOUT 6", "comment": "Protection 2, 1"},
+    "1732": {"length":2, "text": "Alarm: BOUT 7, BOUT 8", "comment": "Protection 2, 1"},
+    "1733": {"length":2, "text": "Alarm: BOUT 9, BOUT 10", "comment": "Protection 2, 1"},
+    "1734": {"length":2, "text": "Alarm: BOUT 11, BOUT 12", "comment": "Protection 2, 1"},
+    "1735": {"length":2, "text": "Alarm: AOUT 1, AOUT 2", "comment": "Protection 2, 1"},
+    "1736": {"length":2, "text": "Alarm: AOUT 3, AOUT 4", "comment": "Protection 2, 1"},
+    "1737": {"length":2, "text": "Alarm: ECU,   SHBIN 1", "comment": "Protection 2, 1"},
+    "1738": {"length":2, "text": "Alarm: SHBIN 2, SHBIN 3", "comment": "Protection 2, 1"},
+    "1739": {"length":2, "text": "Alarm: SHBIN 4, SHBIN 5", "comment": "Protection 2, 1"},
+    "173a": {"length":2, "text": "Alarm: SHBIN 6, SHAIN 1", "comment": "Protection 2, 1"},
+
+    "173b": {"length":2, "text": "Alarm: SHAIN 2, SHBinCfgErr", "comment": "Protection 2, 1"},
+    "173c": {"length":2, "text": "Alarm: SHAinCfgErr, PLC State 1", "comment": "Protection 2, 1"},
+    "173d": {"length":2, "text": "Alarm: PLC State 2, PLC State 3", "comment": "Protection 2, 1"},
+    "173e": {"length":2, "text": "Alarm: PLC State 4, ActCall Fail", "comment": "Protection 2, 1"},
+    "173f": {"length":2, "text": "Alarm: ECUDiagBlocked, Wrong config", "comment": "Protection 2, 1"},
+    "1740": {"length":2, "text": "Alarm: RTCbatteryFlat, System error", "comment": "Protection 2, 1"},
+    "1741": {"length":2, "text": "Alarm: UnauthorizCopy, Low Temp", "comment": "Protection 2, 1"},
+    "1742": {"length":2, "text": "Alarm: Batt volt, EarthFaultCurr", "comment": "Protection 2, 1"},
+    "1743": {"length":2, "text": "Alarm: Gen V unbal, Gen I unbal", "comment": "Protection 2, 1"},
+    "1744": {"length":2, "text": "Alarm: Bus V unbal, Al/Hist.msg 7", "comment": "Protection 2, 1"},
+    "1745": {"length":2, "text": "Alarm: Al/Hist.msg 8, Al/Hist.msg 9", "comment": "Protection 2, 1"},
+    "1746": {"length":2, "text": "Alarm: Al/Hist.msg 10, Al/Hist.msg 11", "comment": "Protection 2, 1"},
+    "1747": {"length":2, "text": "Alarm: Al/Hist.msg 12, Al/Hist.msg 13", "comment": "Protection 2, 1"},
+    "1748": {"length":2, "text": "Alarm: Al/Hist.msg 14, Al/Hist.msg 15", "comment": "Protection 2, 1"},
+    "1749": {"length":2, "text": "Alarm: Al/Hist.msg 16, Dongle incomp", "comment": "Protection 2, 1"},
+    "174a": {"length":2, "text": "Alarm: Emergency stop, RPM", "comment": "Protection 2, 1"},  
+    "174b": {"length":2, "text": "Alarm: CAN2 bus empty, ChrgAlternFail", "comment": "Protection 2, 1"},
+    "174c": {"length":2, "text": "Alarm: Sd Stop fail, Overspeed", "comment": "Protection 2, 1"},
+    "174d": {"length":2, "text": "Alarm: Underspeed, Pickup fail", "comment": "Protection 2, 1"},
+    "174e": {"length":2, "text": "Alarm: Sd ExtBattFlat, WrnServiceT1+2", "comment": "Protection 2, 1"},
+    "174f": {"length":2, "text": "Alarm: WrnServiceT3+4, Not lubricated", "comment": "Protection 2, 1"},
+    "1750": {"length":2, "text": "Alarm: Start fail, Start blocking", "comment": "Protection 2, 1"},
+    "1751": {"length":2, "text": "Alarm: Wrn CylTemp1, Wrn CylTemp2", "comment": "Protection 2, 1"},
+    "1752": {"length":2, "text": "Alarm: Wrn CylTemp3, Wrn CylTemp4", "comment": "Protection 2, 1"},
+    "1753": {"length":2, "text": "Alarm: Wrn CylTemp5, Wrn CylTemp6", "comment": "Protection 2, 1"},
+    "1754": {"length":2, "text": "Alarm: Wrn CylTemp7, Wrn CylTemp8", "comment": "Protection 2, 1"},
+    "1755": {"length":2, "text": "Alarm: Wrn CylTemp9, Wrn CylTemp10", "comment": "Protection 2, 1"},
+    "1756": {"length":2, "text": "Alarm: Wrn CylTemp11, Wrn CylTemp12", "comment": "Protection 2, 1"},
+    "1757": {"length":2, "text": "Alarm: Wrn CylTemp13, Wrn CylTemp14", "comment": "Protection 2, 1"},
+    "1758": {"length":2, "text": "Alarm: Wrn CylTemp15, Wrn CylTemp16", "comment": "Protection 2, 1"},
+    "1759": {"length":2, "text": "Alarm: Wrn CylTemp17, Wrn CylTemp18", "comment": "Protection 2, 1"},
+    "175a": {"length":2, "text": "Alarm: Wrn CylTemp19, Wrn CylTemp20", "comment": "Protection 2, 1"},
+    "175b": {"length":2, "text": "Alarm: Wrn CylTemp21, Wrn CylTemp22", "comment": "Protection 2, 1"},
+    "175c": {"length":2, "text": "Alarm: Wrn CylTemp23, Wrn CylTemp24", "comment": "Protection 2, 1"},
+    "175d": {"length":2, "text": "Alarm: Wrn CylTemp25, Wrn CylTemp26", "comment": "Protection 2, 1"},
+    "175e": {"length":2, "text": "Alarm: Wrn CylTemp27, Wrn CylTemp28", "comment": "Protection 2, 1"},
+    "175f": {"length":2, "text": "Alarm: Wrn CylTemp29, Wrn CylTemp30", "comment": "Protection 2, 1"},
+    "1760": {"length":2, "text": "Alarm: Wrn CylTemp31, Wrn CylTemp32", "comment": "Protection 2, 1"},
+    "1761": {"length":2, "text": "Alarm: Wrn MCB fail, Stp GCB fail", "comment": "MCB = Mains Circuit Breaker Protection 2, 1"},
+    "1762": {"length":2, "text": "Alarm: Sd Oil press B, Wrn RSync fail", "comment": "Protection 2, 1"},
+    "1763": {"length":2, "text": "Alarm: Stp Sync fail, BOC L1 under", "comment": "Protection 2, 1"},
+    "1764": {"length":2, "text": "Alarm: BOC L2 under, BOC L3 under", "comment": "Protection 2, 1"},
+    "1765": {"length":2, "text": "Alarm: BOC L1 over, BOC L2 over", "comment": "Protection 2, 1"},
+    "1766": {"length":2, "text": "Alarm: BOC L3 over, Sd L1 over", "comment": "Protection 2, 1"},
+    "1767": {"length":2, "text": "Alarm: Sd L2 over, Sd L3 over", "comment": "Protection 2, 1"},
+    "1768": {"length":2, "text": "Alarm: BOC L12 under, BOC L23 under", "comment": "Protection 2, 1"},
+    "1769": {"length":2, "text": "Alarm: BOC L31 under, BOC L12 over", "comment": "Protection 2, 1"},
+    "176a": {"length":2, "text": "Alarm: BOC L23 over, BOC L31 over", "comment": "Protection 2, 1"},
+    "176b": {"length":2, "text": "Alarm: Sd L12 over, Sd L23 over", "comment": "Protection 2, 1"},
+    "176c": {"length":2, "text": "Alarm: Sd L31 over, Gen V L1-N", "comment": "Protection 2, 1"},
+    "176d": {"length":2, "text": "Alarm: Gen V L2-N, Gen V L3-N", "comment": "Protection 2, 1"},
+    "176e": {"length":2, "text": "Alarm: Gen V L1-L2, Gen V L2-L3", "comment": "Protection 2, 1"},
+    "176f": {"length":2, "text": "Alarm: Gen V L3-L1, Gen freq", "comment": "Protection 2, 1"},
+    "1838": {"length":2, "text": "Alarm: BOC fgen under, BOC fgen over", "comment": "Protection 2, 1"},
+    "1839": {"length":2, "text": "Alarm: BOC ReversePwr, MP L1 under", "comment": "Protection 2, 1"},
+    "183a": {"length":2, "text": "Alarm: MP L2 under, MP L3 under", "comment": "Protection 2, 1"},
+    "183b": {"length":2, "text": "Alarm: MP L1 over, MP L2 over", "comment": "Protection 2, 1"},
+    "183c": {"length":2, "text": "Alarm: MP L3 over, MP L12 under", "comment": "Protection 2, 1"},
+    "183d": {"length":2, "text": "Alarm: MP L23 under, MP L31 under", "comment": "Protection 2, 1"},
+    "183e": {"length":2, "text": "Alarm: MP L12 over, MP L23 over ", "comment": "Protection 2, 1"},
+    "183f": {"length":2, "text": "Alarm: MP L31 over, MP fmns under", "comment": "Protection 2, 1"},
+    "1840": {"length":2, "text": "Alarm: MP fmns over, MainsAvg>V", "comment": "Protection 2, 1"},
+    "1841": {"length":2, "text": "Alarm: Bus V L1-N, Bus V L2-N", "comment": "Protection 2, 1"},
+    "1842": {"length":2, "text": "Alarm: Bus V L3-N, Bus V L1-L2", "comment": "Protection 2, 1"},
+    "1843": {"length":2, "text": "Alarm: Bus V L2-L3, Bus V L3-L1", "comment": "Protection 2, 1"},
+    "1844": {"length":2, "text": "Alarm: Bus freq, Bus meas error", "comment": "Protection 2, 1"},
+    "1845": {"length":2, "text": "Alarm: OfL StartBlck, BOC IDMT", "comment": "Protection 2, 1"},
+    "1846": {"length":2, "text": "Alarm: BOC ShortCurr, BOC Overload", "comment": "Protection 2, 1"},
+    "1847": {"length":2, "text": "Alarm: BOC NCB fail, Wrn BadPwrCfg", "comment": "Protection 2, 1"},
+    "1848": {"length":2, "text": "Alarm: Wrn Addr error, Manual Restore", "comment": "Protection 2, 1"},
+    "1849": {"length":2, "text": "Alarm: WrnTstOnLdFail, Wrn SpdRegLim", "comment": "Protection 2, 1"},
+    "184a": {"length":2, "text": "Alarm: Wrn VoltRegLim, G L neg", "comment": "Protection 2, 1"},
+    "184b": {"length":2, "text": "Alarm: G ph+L neg, G ph opposed", "comment": "Protection 2, 1"},
+    "184c": {"length":2, "text": "Alarm: M L neg, M ph+L neg", "comment": "Protection 2, 1"},
+    "184d": {"length":2, "text": "Alarm: M ph opposed, Wrn FuelTheft", "comment": "Protection 2, 1"},
+    "184e": {"length":2, "text": "Alarm: PassInsertBlck, N/A", "comment": "Protection 2, 1"}
+  },
+  "switch_state": [
+    {
+      "reg": "00a7",
+      "mask": "0002",
+      "value": "0000",
+      "type": "bits",
+      "title": "Switch Status",
+      "text": "Off"
+    },
+    {
+      "reg": "00a7",
+      "mask": "0002",
+      "value": "0001",
+      "type": "bits",
+      "title": "Switch Status",
+      "text": "Manual"
+    },
+    {
+      "reg": "00a7",
+      "mask": "0002",
+      "value": "0001",
+      "type": "bits",
+      "title": "Switch Status",
+      "text": "Auto"
+    }
+  ],
+  "engine_state": [
+    {
+      "reg": "00a2",
+      "type": "object_int_index",
+      "mask": "ffff",
+      "object": {
+        "0": "Initializing",
+        "1":  "Ready",
+        "2":  "Not Ready",
+        "3":  "Pre Start",
+        "4":  "Cranking",
+        "5":  "Pause",
+        "6":  "Starting",
+        "7":  "Running",
+        "8":  "Loaded",
+        "9":  "Soft Unload",
+        "10":  "Cooling",
+        "11":  "Stop",
+        "12":  "Shutdown",
+        "13":  "Ventilating",
+        "14":  "Emergency Manual Shutdown",
+        "15":  "Cooldown",
+        "16":  "Offload",
+        "17":  "Soft Load",
+        "18":  "Wait - Stop",
+        "19":  "Warming",
+        "20":  "SD Ventilating"
+      },
+      "default": "Unknown State",
+      "title": "Engine Status"
+    }
+  ],
+  "generator_status":[
+    {
+      "comment": "Binary#12, Status",
+      "reg":"00ac",
+      "mask": "ffff",
+      "xdefault": "Status Unknown",
+      "title": "Generator Status",
+      "type": "object_bit_index",
+      "object":{
+        "0": "Ready",
+        "1": "Running",
+        "2": "Loaded",
+        "4": "Soft Load",
+        "6": "Soft Unload",
+        "8": "Waiting to Stop",
+        "9":  "GenParams OK",
+        "10": "Warming"
+      }
+    }
+  ],
+
+  "alarm_active" : [
+    {
+      "reg": "0081",
+      "comment": "Bit D3 of LogBout1 register",
+      "mask": "0008",
+      "value": "008",
+      "type": "bits",
+      "title": "Alarm Active",
+      "text": "System In Alarm"
+    },
+    {
+      "reg": "0196",
+      "mask": "ffff",
+      "title": "Alarm Types Active",
+      "type": "object_bit_index",
+      "object":{
+        "0": "Active Alarm Level 1",
+        "1": "Active Alarm Level 2",
+        "2": "Not Confirmed Level 1",
+        "3": "Not Confirmed Level 2"
+      }
+    }
+  ],
+  "alarm_conditions": [
+    {
+      "reg": "1678",
+      "prepend_text": "Low Coolant Level 1: ",
+      "include": "protection1Level1"
+    },
+    {
+      "reg": "1678",
+      "prepend_text": "Low Coolant Level 2: ",
+      "include": "protection1Level2"
+    },
+    {
+      "reg": "1678",
+      "prepend_text": "Low Coolant Sensor Failure: ",
+      "include": "protection1Sensor"
+    },
+    {
+      "reg": "1678",
+      "prepend_text": "Emergency Stop Level 1: ",
+      "include": "protection2Level1"
+    },
+    {
+      "reg": "1678",
+      "prepend_text": "Emergency Stop Level 2: ",
+      "include": "protection2Level2"
+    },
+    {
+      "reg": "1678",
+      "prepend_text": "Emergency Stop Sensor Failure: ",
+      "include": "protection2Sensor"
+    },
+    {
+      "reg": "1679",
+      "prepend_text": "Fuel Level Level 1: ",
+      "include": "protection1Level1"
+    },
+    {
+      "reg": "1679",
+      "prepend_text": "Fuel Level Level 2: ",
+      "include": "protection1Level2"
+    },
+    {
+      "reg": "1679",
+      "prepend_text": "Fuel Level Sensor Failure: ",
+      "include": "protection1Sensor"
+    },
+    {
+      "reg": "1679",
+      "prepend_text": "Battery Charger Failure Level 1: ",
+      "include": "protection2Level1"
+    },
+    {
+      "reg": "1679",
+      "prepend_text": "Battery Charger Failure Level 2: ",
+      "include": "protection2Level2"
+    },
+    {
+      "reg": "1679",
+      "prepend_text": "Battery Charger Sensor Failure: ",
+      "include": "protection2Sensor"
+    },
+    {
+      "reg": "16ae",
+      "prepend_text": "VPIO-1 2 Level 1: ",
+      "include": "protection1Level1"
+    },
+    {
+      "reg": "16ae",
+      "prepend_text": "VPIO-1 2 Level 2: ",
+      "include": "protection1Level2"
+    },
+    {
+      "reg": "16ae",
+      "prepend_text": "VPIO-1 2 Sensor Failure: ",
+      "include": "protection1Sensor"
+    },
+    {
+      "reg": "16ae",
+      "prepend_text": "GCB Close Failure Level 1: ",
+      "include": "protection2Level1"
+    },
+    {
+      "reg": "16ae",
+      "prepend_text": "GCB Close Failure Level 2: ",
+      "include": "protection2Level2"
+    },
+    {
+      "reg": "16ae",
+      "prepend_text": "GCB Close Sensor Failure: ",
+      "include": "protection2Sensor"
+    },
+    {
+      "reg": "16af",
+      "prepend_text": "VPIO-1 4 Level 1: ",
+      "include": "protection1Level1"
+    },
+    {
+      "reg": "16af",
+      "prepend_text": "VPIO-1 4 Level 2: ",
+      "include": "protection1Level2"
+    },
+    {
+      "reg": "16af",
+      "prepend_text": "VPIO-1 4 Sensor Failure: ",
+      "include": "protection1Sensor"
+    },
+    {
+      "reg": "16af",
+      "prepend_text": "VPIO-1 3 Failure Level 1: ",
+      "include": "protection2Level1"
+    },
+    {
+      "reg": "16af",
+      "prepend_text": "VPIO-1 3 Failure Level 2: ",
+      "include": "protection2Level2"
+    },
+    {
+      "reg": "16af",
+      "prepend_text": "VPIO-1 3 Sensor Failure: ",
+      "include": "protection2Sensor"
+    },
+    {
+      "reg": "16b0",
+      "prepend_text": "VPIO-1 6 Level 1: ",
+      "include": "protection1Level1"
+    },
+    {
+      "reg": "16b0",
+      "prepend_text": "VPIO-1 6 Level 2: ",
+      "include": "protection1Level2"
+    },
+    {
+      "reg": "16b0",
+      "prepend_text": "VPIO-1 6 Sensor Failure: ",
+      "include": "protection1Sensor"
+    },
+    {
+      "reg": "16b0",
+      "prepend_text": "VPIO-1 5 Failure Level 1: ",
+      "include": "protection2Level1"
+    },
+    {
+      "reg": "16b0",
+      "prepend_text": "VPIO-1 5 Failure Level 2: ",
+      "include": "protection2Level2"
+    },
+    {
+      "reg": "16b0",
+      "prepend_text": "VPIO-1 5 Sensor Failure: ",
+      "include": "protection2Sensor"
+    },
+    {
+      "reg": "16b1",
+      "prepend_text": "VPIO-1 8 Level 1: ",
+      "include": "protection1Level1"
+    },
+    {
+      "reg": "16b1",
+      "prepend_text": "VPIO-1 8 Level 2: ",
+      "include": "protection1Level2"
+    },
+    {
+      "reg": "16b1",
+      "prepend_text": "VPIO-1 8 Sensor Failure: ",
+      "include": "protection1Sensor"
+    },
+    {
+      "reg": "16b1",
+      "prepend_text": "VPIO-1 7 Failure Level 1: ",
+      "include": "protection2Level1"
+    },
+    {
+      "reg": "16b1",
+      "prepend_text": "VPIO-1 7 Failure Level 2: ",
+      "include": "protection2Level2"
+    },
+    {
+      "reg": "16b1",
+      "prepend_text": "VPIO-1 7 Sensor Failure: ",
+      "include": "protection2Sensor"
+    },
+    {
+      "reg": "16e6",
+      "prepend_text": "Oil Pressure Level 1: ",
+      "include": "protection1Level1"
+    },
+    {
+      "reg": "16e6",
+      "prepend_text": "Oil Pressure Level 2: ",
+      "include": "protection1Level2"
+    },
+    {
+      "reg": "16e6",
+      "prepend_text": "Oil Pressure Sensor Failure: ",
+      "include": "protection1Sensor"
+    },
+    {
+      "reg": "16e6",
+      "prepend_text": "Water Temperature Level 1: ",
+      "include": "protection2Level1"
+    },
+    {
+      "reg": "16e6",
+      "prepend_text": "Water Temperature Level 2: ",
+      "include": "protection2Level2"
+    },
+    {
+      "reg": "16e6",
+      "prepend_text": "Water Temperature Sensor Failure: ",
+      "include": "protection2Sensor"
+    },
+    {
+      "reg": "16e7",
+      "prepend_text": "Fuel Level 1: ",
+      "include": "protection2Level1"
+    },
+    {
+      "reg": "16e7",
+      "prepend_text": "Fuel Level 2: ",
+      "include": "protection2Level2"
+    },
+    {
+      "reg": "16e7",
+      "prepend_text": "Fuel Level Sensor Failure: ",
+      "include": "protection2Sensor"
+    },
+    {
+      "reg": "1724",
+      "prepend_text": "BIN 2 Level 1: ",
+      "include": "protection1Level1"
+    },
+    {
+        "reg": "1724",
+        "prepend_text": "BIN 2 Level 2: ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg": "1724",
+        "prepend_text": "BIN 2 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg": "1724",
+        "prepend_text": "BIN 1 Level 1: ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg": "1724",
+        "prepend_text": "BIN 1 Level 2: ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg": "1724",
+        "prepend_text": "BIN 1 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg": "1725",
+        "prepend_text": "BIN 4 Level 1: ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg": "1725",
+        "prepend_text": "BIN 4 Level 2: ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg": "1725",
+        "prepend_text": "BIN 4 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg": "1725",
+        "prepend_text": "BIN 3 Level 1: ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg": "1725",
+        "prepend_text": "BIN 3 Level 2: ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg": "1725",
+        "prepend_text": "BIN 3 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg": "1726",
+        "prepend_text": "BIN 5 Level 1: ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg": "1726",
+        "prepend_text": "BIN 5 Level 2: ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg": "1726",
+        "prepend_text": "BIN 6 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg": "1726",
+        "prepend_text": "BIN 5 Level 1: ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg": "1726",
+        "prepend_text": "BIN 5 Level 2: ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg": "1726",
+        "prepend_text": "BIN 5 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+      "reg": "1727",
+      "prepend_text": "BIN 7 Level 1: ",
+      "include": "protection1Level1"
+    },
+    {
+        "reg": "1727",
+        "prepend_text": "BIN 7 Level 2: ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg": "1727",
+        "prepend_text": "BIN 7 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg": "1727",
+        "prepend_text": "BIN 8 Level 1: ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg": "1727",
+        "prepend_text": "BIN 8 Level 2: ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg": "1727",
+        "prepend_text": "BIN 8 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg": "1728",
+        "prepend_text": "BIN 8 Level 1: ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg": "1728",
+        "prepend_text": "BIN 8 Level 2: ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg": "1728",
+        "prepend_text": "BIN 8 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg": "1728",
+        "prepend_text": "BIN 9 Level 1: ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg": "1728",
+        "prepend_text": "BIN 9 Level 2: ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg": "1728",
+        "prepend_text": "BIN 9 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg": "1729",
+        "prepend_text": "BIN 12 Level 1: ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg": "1729",
+        "prepend_text": "BIN 12 Level 2: ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg": "1729",
+        "prepend_text": "BIN 12 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg": "1729",
+        "prepend_text": "BIN 11 Level 1: ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg": "1729",
+        "prepend_text": "BIN 11 Level 2: ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg": "1729",
+        "prepend_text": "BIN 11 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg": "172a",
+        "prepend_text": "ANA 2 Level 1: ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg": "172a",
+        "prepend_text": "ANA 2 Level 2: ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg": "172a",
+        "prepend_text": "ANA 2 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg": "172a",
+        "prepend_text": "ANA 1 Level 1: ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg": "172a",
+        "prepend_text": "ANA 1 Level 2: ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg": "172a",
+        "prepend_text": "ANA 1 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+      "reg": "172b",
+      "prepend_text": "ANA 4 Level 1: ",
+      "include": "protection1Level1"
+      },
+      {
+          "reg": "172b",
+          "prepend_text": "ANA 4 Level 2: ",
+          "include": "protection1Level2"
+      },
+      {
+          "reg": "172b",
+          "prepend_text": "ANA 4 Sensor Failure: ",
+          "include": "protection1Sensor"
+      },
+      {
+          "reg": "172b",
+          "prepend_text": "ANA 3 Level 1: ",
+          "include": "protection2Level1"
+      },
+      {
+          "reg": "172b",
+          "prepend_text": "ANA 3 Level 2: ",
+          "include": "protection2Level2"
+      },
+      {
+          "reg": "172b",
+          "prepend_text": "ANA 3 Sensor Failure: ",
+          "include": "protection2Sensor"
+      },
+      {
+          "reg": "172c",
+          "prepend_text": "ANA 6 Level 1: ",
+          "include": "protection1Level1"
+      },
+      {
+          "reg": "172c",
+          "prepend_text": "ANA 6 Level 2: ",
+          "include": "protection1Level2"
+      },
+      {
+          "reg": "172c",
+          "prepend_text": "ANA 6 Sensor Failure: ",
+          "include": "protection1Sensor"
+      },
+      {
+          "reg": "172c",
+          "prepend_text": "ANA 5 Level 1: ",
+          "include": "protection2Level1"
+      },
+      {
+          "reg": "172c",
+          "prepend_text": "ANA 5 Level 2: ",
+          "include": "protection2Level2"
+      },
+      {
+          "reg": "172c",
+          "prepend_text": "ANA 5 Sensor Failure: ",
+          "include": "protection2Sensor"
+      },
+      {
+          "reg": "172d",
+          "prepend_text": "ANA 8 Level 1: ",
+          "include": "protection1Level1"
+      },
+      {
+          "reg": "172d",
+          "prepend_text": "ANA 8 Level 2: ",
+          "include": "protection1Level2"
+      },
+      {
+          "reg": "172d",
+          "prepend_text": "ANA 8 Sensor Failure: ",
+          "include": "protection1Sensor"
+      },
+      {
+          "reg": "172d",
+          "prepend_text": "ANA 7 Level 1: ",
+          "include": "protection2Level1"
+      },
+      {
+          "reg": "172d",
+          "prepend_text": "ANA 7 Level 2: ",
+          "include": "protection2Level2"
+      },
+      {
+          "reg": "172d",
+          "prepend_text": "ANA 7 Sensor Failure: ",
+          "include": "protection2Sensor"
+      },
+      {
+          "reg": "172e",
+          "prepend_text": "ANA 10 Level 1: ",
+          "include": "protection1Level1"
+      },
+      {
+          "reg": "172e",
+          "prepend_text": "ANA 10 Level 2: ",
+          "include": "protection1Level2"
+      },
+      {
+          "reg": "172e",
+          "prepend_text": "ANA 10 Sensor Failure: ",
+          "include": "protection1Sensor"
+      },
+      {
+          "reg": "172e",
+          "prepend_text": "ANA 9 Level 1: ",
+          "include": "protection2Level1"
+      },
+      {
+          "reg": "172e",
+          "prepend_text": "ANA 9 Level 2: ",
+          "include": "protection2Level2"
+      },
+      {
+          "reg": "172e",
+          "prepend_text": "ANA 9 Sensor Failure: ",
+          "include": "protection2Sensor"
+      },
+      {
+          "reg": "172f",
+          "prepend_text": "BOUT 2 Level 1: ",
+          "include": "protection1Level1"
+      },
+      {
+          "reg": "172f",
+          "prepend_text": "BOUT 2 Level 2: ",
+          "include": "protection1Level2"
+      },
+      {
+          "reg": "172f",
+          "prepend_text": "BOUT 2 Sensor Failure: ",
+          "include": "protection1Sensor"
+      },
+      {
+          "reg": "172f",
+          "prepend_text": "BOUT 1 Level 1: ",
+          "include": "protection2Level1"
+      },
+      {
+          "reg": "172f",
+          "prepend_text": "BOUT 1 Level 2: ",
+          "include": "protection2Level2"
+      },
+      {
+          "reg": "172f",
+          "prepend_text": "BOUT 1 Sensor Failure: ",
+          "include": "protection2Sensor"
+      },
+      {
+        "reg": "1730",
+        "prepend_text": "BOUT 4 Level 1: ",
+        "include": "protection1Level1"
+      },
+      {
+          "reg": "1730",
+          "prepend_text": "BOUT 4 Level 2: ",
+          "include": "protection1Level2"
+      },
+      {
+          "reg": "1730",
+          "prepend_text": "BOUT 4 Sensor Failure: ",
+          "include": "protection1Sensor"
+      },
+      {
+          "reg": "1730",
+          "prepend_text": "BOUT 3 Level 1: ",
+          "include": "protection2Level1"
+      },
+      {
+          "reg": "1730",
+          "prepend_text": "BOUT 3 Level 2: ",
+          "include": "protection2Level2"
+      },
+      {
+          "reg": "1730",
+          "prepend_text": "BOUT 3 Sensor Failure: ",
+          "include": "protection2Sensor"
+      },
+      {
+          "reg": "1731",
+          "prepend_text": "BOUT 6 Level 1: ",
+          "include": "protection1Level1"
+      },
+      {
+          "reg": "1731",
+          "prepend_text": "BOUT 6 Level 2: ",
+          "include": "protection1Level2"
+      },
+      {
+          "reg": "1731",
+          "prepend_text": "BOUT 6 Sensor Failure: ",
+          "include": "protection1Sensor"
+      },
+      {
+          "reg": "1731",
+          "prepend_text": "BOUT 5 Level 1: ",
+          "include": "protection2Level1"
+      },
+      {
+          "reg": "1731",
+          "prepend_text": "BOUT 5 Level 2: ",
+          "include": "protection2Level2"
+      },
+      {
+          "reg": "1731",
+          "prepend_text": "BOUT 5 Sensor Failure: ",
+          "include": "protection2Sensor"
+      },
+      {
+        "reg": "1732",
+        "prepend_text": "BOUT 8 Level 1: ",
+        "include": "protection1Level1"
+      },
+      {
+          "reg": "1732",
+          "prepend_text": "BOUT 8 Level 2: ",
+          "include": "protection1Level2"
+      },
+      {
+          "reg": "1732",
+          "prepend_text": "BOUT 8 Sensor Failure: ",
+          "include": "protection1Sensor"
+      },
+      {
+          "reg": "1732",
+          "prepend_text": "BOUT 7 Level 1: ",
+          "include": "protection2Level1"
+      },
+      {
+          "reg": "1732",
+          "prepend_text": "BOUT 7 Level 2: ",
+          "include": "protection2Level2"
+      },
+      {
+          "reg": "1732",
+          "prepend_text": "BOUT 7 Sensor Failure: ",
+          "include": "protection2Sensor"
+      },
+      {
+        "reg": "1733",
+        "prepend_text": "BOUT 10 Level 1: ",
+        "include": "protection1Level1"
+      },
+      {
+        "reg": "1733",
+        "prepend_text": "BOUT 10 Level 2: ",
+        "include": "protection1Level2"
+      },
+      {
+          "reg": "1733",
+          "prepend_text": "BOUT 10 Sensor Failure: ",
+          "include": "protection1Sensor"
+      },
+      {
+          "reg": "1733",
+          "prepend_text": "BOUT 9 Level 1: ",
+          "include": "protection2Level1"
+      },
+      {
+          "reg": "1733",
+          "prepend_text": "BOUT 9 Level 2: ",
+          "include": "protection2Level2"
+      },
+      {
+          "reg": "1733",
+          "prepend_text": "BOUT 9 Sensor Failure: ",
+          "include": "protection2Sensor"
+      },
+      {
+        "reg": "1734",
+        "prepend_text": "BOUT 12 Level 1: ",
+        "include": "protection1Level1"
+      },
+      {
+          "reg": "1734",
+          "prepend_text": "BOUT 12 Level 2: ",
+          "include": "protection1Level2"
+      },
+      {
+          "reg": "1734",
+          "prepend_text": "BOUT 12 Sensor Failure: ",
+          "include": "protection1Sensor"
+      },
+      {
+          "reg": "1734",
+          "prepend_text": "BOUT 11 Level 1: ",
+          "include": "protection2Level1"
+      },
+      {
+          "reg": "1734",
+          "prepend_text": "BOUT 11 Level 2: ",
+          "include": "protection2Level2"
+      },
+      {
+          "reg": "1734",
+          "prepend_text": "BOUT 11 Sensor Failure: ",
+          "include": "protection2Sensor"
+      },
+      {
+          "reg": "1735",
+          "prepend_text": "AOUT 2 Level 1: ",
+          "include": "protection1Level1"
+      },
+      {
+          "reg": "1735",
+          "prepend_text": "AOUT 2 Level 2: ",
+          "include": "protection1Level2"
+      },
+      {
+          "reg": "1735",
+          "prepend_text": "AOUT 2 Sensor Failure: ",
+          "include": "protection1Sensor"
+      },
+      {
+          "reg": "1735",
+          "prepend_text": "AOUT Alarm 1 Level 1: ",
+          "include": "protection2Level1"
+      },
+      {
+          "reg": "1735",
+          "prepend_text": "AOUT Alarm 1 Level 2: ",
+          "include": "protection2Level2"
+      },
+      {
+          "reg": "1735",
+          "prepend_text": "AOUT 1 Sensor Failure: ",
+          "include": "protection2Sensor"
+      },
+      {
+          "reg": "1736",
+          "prepend_text": "AOUT 4 Level 1: ",
+          "include": "protection1Level1"
+      },
+      {
+          "reg": "1736",
+          "prepend_text": "AOUT 4 Level 2: ",
+          "include": "protection1Level2"
+      },
+      {
+          "reg": "1736",
+          "prepend_text": "AOUT 4 Sensor Failure: ",
+          "include": "protection1Sensor"
+      },
+      {
+          "reg": "1736",
+          "prepend_text": "AOUT 3 Level 1: ",
+          "include": "protection2Level1"
+      },
+      {
+          "reg": "1736",
+          "prepend_text": "AOUT 3 AlarmLevel 2: ",
+          "include": "protection2Level2"
+      },
+      {
+          "reg": "1736",
+          "prepend_text": "AOUT 3 Sensor Failure: ",
+          "include": "protection2Sensor"
+      },
+      {
+          "reg": "1737",
+          "prepend_text": "SHBIN 1 Level 1: ",
+          "include": "protection1Level1"
+      },
+      {
+          "reg": "1737",
+          "prepend_text": "SHBIN 1 Level 2: ",
+          "include": "protection1Level2"
+      },
+      {
+          "reg": "1737",
+          "prepend_text": "SHBIN 1 Sensor Failure: ",
+          "include": "protection1Sensor"
+      },
+      {
+          "reg": "1737",
+          "prepend_text": "ECU Level 1: ",
+          "include": "protection2Level1"
+      },
+      {
+          "reg": "1737",
+          "prepend_text": "ECU Level 2: ",
+          "include": "protection2Level2"
+      },
+      {
+          "reg": "1737",
+          "prepend_text": "ECU Sensor Failure: ",
+          "include": "protection2Sensor"
+      },
+      {
+        "reg": "1738",
+        "prepend_text": "SHBIN 3 Level 1: ",
+        "include": "protection1Level1"
+      },
+      {
+          "reg": "1738",
+          "prepend_text": "SHBIN 3 Level 2: ",
+          "include": "protection1Level2"
+      },
+      {
+          "reg": "1738",
+          "prepend_text": "SHBIN 3 Sensor Failure: ",
+          "include": "protection1Sensor"
+      },
+      {
+          "reg": "1738",
+          "prepend_text": "SHBIN 2 Level 1: ",
+          "include": "protection2Level1"
+      },
+      {
+          "reg": "1738",
+          "prepend_text": "SHBIN 2 Level 2: ",
+          "include": "protection2Level2"
+      },
+      {
+          "reg": "1738",
+          "prepend_text": "SHBIN 2 Sensor Failure: ",
+          "include": "protection2Sensor"
+      },
+      {
+          "reg": "1739",
+          "prepend_text": "SHBIN 5 Level 1: ",
+          "include": "protection1Level1"
+      },
+      {
+          "reg": "1739",
+          "prepend_text": "SHBIN 5 Level 2: ",
+          "include": "protection1Level2"
+      },
+      {
+          "reg": "1739",
+          "prepend_text": "SHBIN 5 Sensor Failure: ",
+          "include": "protection1Sensor"
+      },
+      {
+          "reg": "1739",
+          "prepend_text": "SHBIN 4 Level 1: ",
+          "include": "protection2Level1"
+      },
+      {
+          "reg": "1739",
+          "prepend_text": "SHBIN 4 Level 2: ",
+          "include": "protection2Level2"
+      },
+      {
+          "reg": "1739",
+          "prepend_text": "SHBIN 4 Sensor Failure: ",
+          "include": "protection2Sensor"
+      },
+      {
+          "reg": "173a",
+          "prepend_text": "SHAIN 1 Level 1: ",
+          "include": "protection1Level1"
+      },
+      {
+          "reg": "173a",
+          "prepend_text": "SHAIN 1 Level 2: ",
+          "include": "protection1Level2"
+      },
+      {
+          "reg": "173a",
+          "prepend_text": "SHAIN 1 Sensor Failure: ",
+          "include": "protection1Sensor"
+      },
+      {
+          "reg": "173a",
+          "prepend_text": "SHBIN 6 Level 1: ",
+          "include": "protection2Level1"
+      },
+      {
+          "reg": "173a",
+          "prepend_text": "SHBIN 6 Level 2: ",
+          "include": "protection2Level2"
+      },
+      {
+          "reg": "173a",
+          "prepend_text": "SHBIN 6 Sensor Failure: ",
+          "include": "protection2Sensor"
+      },
+      {
+        "reg":"173b",
+        "prepend_text": "SHBinCfgErr Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"173b",
+        "prepend_text": "SHBinCfgErr Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"173b",
+        "prepend_text": "SHBinCfgErr Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"173b",
+        "prepend_text": "SHAIN 2 Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"173b",
+        "prepend_text": "SHAIN 2 Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"173b",
+        "prepend_text": "SHAIN 2 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"173c",
+        "prepend_text": "PLC State 1 Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"173c",
+        "prepend_text": "PLC State 1 Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"173c",
+        "prepend_text": "PLC State 1 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"173c",
+        "prepend_text": "SHAinCfgErr Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"173c",
+        "prepend_text": "SHAinCfgErr Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"173c",
+        "prepend_text": "SHAinCfgErr Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"173d",
+        "prepend_text": "PLC State 3 Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"173d",
+        "prepend_text": "PLC State 3 Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"173d",
+        "prepend_text": "PLC State 3 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"173d",
+        "prepend_text": "PLC State 2 Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"173d",
+        "prepend_text": "PLC State 2 Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"173d",
+        "prepend_text": "PLC State 2 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"173e",
+        "prepend_text": "ActCall Fail Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"173e",
+        "prepend_text": "ActCall Fail Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"173e",
+        "prepend_text": "ActCall Fail Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"173e",
+        "prepend_text": "PLC State 4 Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"173e",
+        "prepend_text": "PLC State 4 Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"173e",
+        "prepend_text": "PLC State 4 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"173f",
+        "prepend_text": "Wrong config Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"173f",
+        "prepend_text": "Wrong config Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"173f",
+        "prepend_text": "Wrong config Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"173f",
+        "prepend_text": "ECUDiagBlocked Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"173f",
+        "prepend_text": "ECUDiagBlocked Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"173f",
+        "prepend_text": "ECUDiagBlocked Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1740",
+        "prepend_text": "System error Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1740",
+        "prepend_text": "System error Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1740",
+        "prepend_text": "System error Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1740",
+        "prepend_text": "RTCbatteryFlat Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1740",
+        "prepend_text": "RTCbatteryFlat Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1740",
+        "prepend_text": "RTCbatteryFlat Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1741",
+        "prepend_text": "Low Temp Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1741",
+        "prepend_text": "Low Temp Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1741",
+        "prepend_text": "Low Temp Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1741",
+        "prepend_text": "UnauthorizCopy Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1741",
+        "prepend_text": "UnauthorizCopy Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1741",
+        "prepend_text": "UnauthorizCopy Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1742",
+        "prepend_text": "EarthFaultCurr Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1742",
+        "prepend_text": "EarthFaultCurr Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1742",
+        "prepend_text": "EarthFaultCurr Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1742",
+        "prepend_text": "Batt volt Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1742",
+        "prepend_text": "Batt volt Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1742",
+        "prepend_text": "Batt volt Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1743",
+        "prepend_text": "Gen I unbal Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1743",
+        "prepend_text": "Gen I unbal Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1743",
+        "prepend_text": "Gen I unbal Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1743",
+        "prepend_text": "Gen V unbal Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1743",
+        "prepend_text": "Gen V unbal Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1743",
+        "prepend_text": "Gen V unbal Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1744",
+        "prepend_text": "Al/Hist.msg 7 Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1744",
+        "prepend_text": "Al/Hist.msg 7 Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1744",
+        "prepend_text": "Al/Hist.msg 7 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1744",
+        "prepend_text": "Bus V unbal Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1744",
+        "prepend_text": "Bus V unbal Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1744",
+        "prepend_text": "Bus V unbal Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1745",
+        "prepend_text": "Al/Hist.msg 9 Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1745",
+        "prepend_text": "Al/Hist.msg 9 Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1745",
+        "prepend_text": "Al/Hist.msg 9 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1745",
+        "prepend_text": "Al/Hist.msg 8 Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1745",
+        "prepend_text": "Al/Hist.msg 8 Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1745",
+        "prepend_text": "Al/Hist.msg 8 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1746",
+        "prepend_text": "Al/Hist.msg 11 Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1746",
+        "prepend_text": "Al/Hist.msg 11 Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1746",
+        "prepend_text": "Al/Hist.msg 11 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1746",
+        "prepend_text": "Al/Hist.msg 10 Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1746",
+        "prepend_text": "Al/Hist.msg 10 Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1746",
+        "prepend_text": "Al/Hist.msg 10 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1747",
+        "prepend_text": "Al/Hist.msg 13 Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1747",
+        "prepend_text": "Al/Hist.msg 13 Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1747",
+        "prepend_text": "Al/Hist.msg 13 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1747",
+        "prepend_text": "Al/Hist.msg 12 Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1747",
+        "prepend_text": "Al/Hist.msg 12 Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1747",
+        "prepend_text": "Al/Hist.msg 12 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1748",
+        "prepend_text": "Al/Hist.msg 15 Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1748",
+        "prepend_text": "Al/Hist.msg 15 Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1748",
+        "prepend_text": "Al/Hist.msg 15 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1748",
+        "prepend_text": "Al/Hist.msg 14 Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1748",
+        "prepend_text": "Al/Hist.msg 14 Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1748",
+        "prepend_text": "Al/Hist.msg 14 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1749",
+        "prepend_text": "Dongle incomp Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1749",
+        "prepend_text": "Dongle incomp Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1749",
+        "prepend_text": "Dongle incomp Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1749",
+        "prepend_text": "Al/Hist.msg 16 Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1749",
+        "prepend_text": "Al/Hist.msg 16 Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1749",
+        "prepend_text": "Al/Hist.msg 16 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"174a",
+        "prepend_text": "RPM Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"174a",
+        "prepend_text": "RPM Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"174a",
+        "prepend_text": "RPM Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"174a",
+        "prepend_text": "Emergency stop Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"174a",
+        "prepend_text": "Emergency stop Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"174a",
+        "prepend_text": "Emergency stop Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"174b",
+        "prepend_text": "ChrgAlternFail Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"174b",
+        "prepend_text": "ChrgAlternFail Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"174b",
+        "prepend_text": "ChrgAlternFail Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"174b",
+        "prepend_text": "CAN2 bus empty Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"174b",
+        "prepend_text": "CAN2 bus empty Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"174b",
+        "prepend_text": "CAN2 bus empty Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"174c",
+        "prepend_text": "Overspeed Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"174c",
+        "prepend_text": "Overspeed Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"174c",
+        "prepend_text": "Overspeed Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"174c",
+        "prepend_text": "Sd Stop fail Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"174c",
+        "prepend_text": "Sd Stop fail Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"174c",
+        "prepend_text": "Sd Stop fail Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"174d",
+        "prepend_text": "Pickup fail Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"174d",
+        "prepend_text": "Pickup fail Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"174d",
+        "prepend_text": "Pickup fail Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"174d",
+        "prepend_text": "Underspeed Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"174d",
+        "prepend_text": "Underspeed Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"174d",
+        "prepend_text": "Underspeed Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"174e",
+        "prepend_text": "WrnServiceT1+2 Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"174e",
+        "prepend_text": "WrnServiceT1+2 Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"174e",
+        "prepend_text": "WrnServiceT1+2 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"174e",
+        "prepend_text": "Sd ExtBattFlat Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"174e",
+        "prepend_text": "Sd ExtBattFlat Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"174e",
+        "prepend_text": "Sd ExtBattFlat Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"174f",
+        "prepend_text": "Not lubricated Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"174f",
+        "prepend_text": "Not lubricated Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"174f",
+        "prepend_text": "Not lubricated Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"174f",
+        "prepend_text": "WrnServiceT3+4 Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"174f",
+        "prepend_text": "WrnServiceT3+4 Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"174f",
+        "prepend_text": "WrnServiceT3+4 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1750",
+        "prepend_text": "Start blocking Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1750",
+        "prepend_text": "Start blocking Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1750",
+        "prepend_text": "Start blocking Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1750",
+        "prepend_text": "Start fail Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1750",
+        "prepend_text": "Start fail Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1750",
+        "prepend_text": "Start fail Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1751",
+        "prepend_text": "Wrn CylTemp2 Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1751",
+        "prepend_text": "Wrn CylTemp2 Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1751",
+        "prepend_text": "Wrn CylTemp2 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1751",
+        "prepend_text": "Wrn CylTemp1 Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1751",
+        "prepend_text": "Wrn CylTemp1 Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1751",
+        "prepend_text": "Wrn CylTemp1 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1752",
+        "prepend_text": "Wrn CylTemp4 Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1752",
+        "prepend_text": "Wrn CylTemp4 Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1752",
+        "prepend_text": "Wrn CylTemp4 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1752",
+        "prepend_text": "Wrn CylTemp3 Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1752",
+        "prepend_text": "Wrn CylTemp3 Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1752",
+        "prepend_text": "Wrn CylTemp3 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1753",
+        "prepend_text": "Wrn CylTemp6 Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1753",
+        "prepend_text": "Wrn CylTemp6 Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1753",
+        "prepend_text": "Wrn CylTemp6 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1753",
+        "prepend_text": "Wrn CylTemp5 Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1753",
+        "prepend_text": "Wrn CylTemp5 Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1753",
+        "prepend_text": "Wrn CylTemp5 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1754",
+        "prepend_text": "Wrn CylTemp8 Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1754",
+        "prepend_text": "Wrn CylTemp8 Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1754",
+        "prepend_text": "Wrn CylTemp8 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1754",
+        "prepend_text": "Wrn CylTemp7 Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1754",
+        "prepend_text": "Wrn CylTemp7 Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1754",
+        "prepend_text": "Wrn CylTemp7 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1755",
+        "prepend_text": "Wrn CylTemp10 Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1755",
+        "prepend_text": "Wrn CylTemp10 Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1755",
+        "prepend_text": "Wrn CylTemp10 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1755",
+        "prepend_text": "Wrn CylTemp9 Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1755",
+        "prepend_text": "Wrn CylTemp9 Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1755",
+        "prepend_text": "Wrn CylTemp9 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1756",
+        "prepend_text": "Wrn CylTemp12 Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1756",
+        "prepend_text": "Wrn CylTemp12 Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1756",
+        "prepend_text": "Wrn CylTemp12 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1756",
+        "prepend_text": "Wrn CylTemp11 Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1756",
+        "prepend_text": "Wrn CylTemp11 Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1756",
+        "prepend_text": "Wrn CylTemp11 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1757",
+        "prepend_text": "Wrn CylTemp14 Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1757",
+        "prepend_text": "Wrn CylTemp14 Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1757",
+        "prepend_text": "Wrn CylTemp14 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1757",
+        "prepend_text": "Wrn CylTemp13 Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1757",
+        "prepend_text": "Wrn CylTemp13 Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1757",
+        "prepend_text": "Wrn CylTemp13 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1758",
+        "prepend_text": "Wrn CylTemp16 Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1758",
+        "prepend_text": "Wrn CylTemp16 Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1758",
+        "prepend_text": "Wrn CylTemp16 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1758",
+        "prepend_text": "Wrn CylTemp15 Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1758",
+        "prepend_text": "Wrn CylTemp15 Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1758",
+        "prepend_text": "Wrn CylTemp15 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1759",
+        "prepend_text": "Wrn CylTemp18 Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1759",
+        "prepend_text": "Wrn CylTemp18 Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1759",
+        "prepend_text": "Wrn CylTemp18 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1759",
+        "prepend_text": "Wrn CylTemp17 Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1759",
+        "prepend_text": "Wrn CylTemp17 Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1759",
+        "prepend_text": "Wrn CylTemp17 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"175a",
+        "prepend_text": "Wrn CylTemp20 Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"175a",
+        "prepend_text": "Wrn CylTemp20 Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"175a",
+        "prepend_text": "Wrn CylTemp20 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"175a",
+        "prepend_text": "Wrn CylTemp19 Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"175a",
+        "prepend_text": "Wrn CylTemp19 Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"175a",
+        "prepend_text": "Wrn CylTemp19 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"175b",
+        "prepend_text": "Wrn CylTemp22 Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"175b",
+        "prepend_text": "Wrn CylTemp22 Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"175b",
+        "prepend_text": "Wrn CylTemp22 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"175b",
+        "prepend_text": "Wrn CylTemp21 Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"175b",
+        "prepend_text": "Wrn CylTemp21 Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"175b",
+        "prepend_text": "Wrn CylTemp21 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"175c",
+        "prepend_text": "Wrn CylTemp24 Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"175c",
+        "prepend_text": "Wrn CylTemp24 Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"175c",
+        "prepend_text": "Wrn CylTemp24 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"175c",
+        "prepend_text": "Wrn CylTemp23 Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"175c",
+        "prepend_text": "Wrn CylTemp23 Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"175c",
+        "prepend_text": "Wrn CylTemp23 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"175d",
+        "prepend_text": "Wrn CylTemp26 Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"175d",
+        "prepend_text": "Wrn CylTemp26 Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"175d",
+        "prepend_text": "Wrn CylTemp26 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"175d",
+        "prepend_text": "Wrn CylTemp25 Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"175d",
+        "prepend_text": "Wrn CylTemp25 Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"175d",
+        "prepend_text": "Wrn CylTemp25 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"175e",
+        "prepend_text": "Wrn CylTemp28 Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"175e",
+        "prepend_text": "Wrn CylTemp28 Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"175e",
+        "prepend_text": "Wrn CylTemp28 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"175e",
+        "prepend_text": "Wrn CylTemp27 Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"175e",
+        "prepend_text": "Wrn CylTemp27 Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"175e",
+        "prepend_text": "Wrn CylTemp27 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"175f",
+        "prepend_text": "Wrn CylTemp30 Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"175f",
+        "prepend_text": "Wrn CylTemp30 Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"175f",
+        "prepend_text": "Wrn CylTemp30 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"175f",
+        "prepend_text": "Wrn CylTemp29 Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"175f",
+        "prepend_text": "Wrn CylTemp29 Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"175f",
+        "prepend_text": "Wrn CylTemp29 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1760",
+        "prepend_text": "Wrn CylTemp32 Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1760",
+        "prepend_text": "Wrn CylTemp32 Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1760",
+        "prepend_text": "Wrn CylTemp32 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1760",
+        "prepend_text": "Wrn CylTemp31 Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1760",
+        "prepend_text": "Wrn CylTemp31 Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1760",
+        "prepend_text": "Wrn CylTemp31 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1761",
+        "prepend_text": "Stp GCB fail Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1761",
+        "prepend_text": "Stp GCB fail Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1761",
+        "prepend_text": "Stp GCB fail Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1761",
+        "prepend_text": "Wrn MCB fail Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1761",
+        "prepend_text": "Wrn MCB fail Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1761",
+        "prepend_text": "Wrn MCB fail Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1762",
+        "prepend_text": "Wrn RSync fail Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1762",
+        "prepend_text": "Wrn RSync fail Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1762",
+        "prepend_text": "Wrn RSync fail Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1762",
+        "prepend_text": "Sd Oil press B Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1762",
+        "prepend_text": "Sd Oil press B Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1762",
+        "prepend_text": "Sd Oil press B Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1763",
+        "prepend_text": "BOC L1 under Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1763",
+        "prepend_text": "BOC L1 under Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1763",
+        "prepend_text": "BOC L1 under Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1763",
+        "prepend_text": "Stp Sync fail Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1763",
+        "prepend_text": "Stp Sync fail Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1763",
+        "prepend_text": "Stp Sync fail Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1764",
+        "prepend_text": "BOC L3 under Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1764",
+        "prepend_text": "BOC L3 under Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1764",
+        "prepend_text": "BOC L3 under Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1764",
+        "prepend_text": "BOC L2 under Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1764",
+        "prepend_text": "BOC L2 under Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1764",
+        "prepend_text": "BOC L2 under Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1765",
+        "prepend_text": "BOC L2 over Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1765",
+        "prepend_text": "BOC L2 over Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1765",
+        "prepend_text": "BOC L2 over Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1765",
+        "prepend_text": "BOC L1 over Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1765",
+        "prepend_text": "BOC L1 over Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1765",
+        "prepend_text": "BOC L1 over Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1766",
+        "prepend_text": "Sd L1 over Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1766",
+        "prepend_text": "Sd L1 over Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1766",
+        "prepend_text": "Sd L1 over Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1766",
+        "prepend_text": "BOC L3 over Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1766",
+        "prepend_text": "BOC L3 over Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1766",
+        "prepend_text": "BOC L3 over Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1767",
+        "prepend_text": "Sd L3 over Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1767",
+        "prepend_text": "Sd L3 over Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1767",
+        "prepend_text": "Sd L3 over Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1767",
+        "prepend_text": "Sd L2 over Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1767",
+        "prepend_text": "Sd L2 over Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1767",
+        "prepend_text": "Sd L2 over Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1768",
+        "prepend_text": "BOC L23 under Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1768",
+        "prepend_text": "BOC L23 under Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1768",
+        "prepend_text": "BOC L23 under Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1768",
+        "prepend_text": "BOC L12 under Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1768",
+        "prepend_text": "BOC L12 under Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1768",
+        "prepend_text": "BOC L12 under Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1769",
+        "prepend_text": "BOC L12 over Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1769",
+        "prepend_text": "BOC L12 over Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1769",
+        "prepend_text": "BOC L12 over Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1769",
+        "prepend_text": "BOC L31 under Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1769",
+        "prepend_text": "BOC L31 under Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1769",
+        "prepend_text": "BOC L31 under Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"176a",
+        "prepend_text": "BOC L31 over Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"176a",
+        "prepend_text": "BOC L31 over Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"176a",
+        "prepend_text": "BOC L31 over Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"176a",
+        "prepend_text": "BOC L23 over Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"176a",
+        "prepend_text": "BOC L23 over Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"176a",
+        "prepend_text": "BOC L23 over Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"176b",
+        "prepend_text": "Sd L23 over Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"176b",
+        "prepend_text": "Sd L23 over Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"176b",
+        "prepend_text": "Sd L23 over Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"176b",
+        "prepend_text": "Sd L12 over Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"176b",
+        "prepend_text": "Sd L12 over Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"176b",
+        "prepend_text": "Sd L12 over Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"176c",
+        "prepend_text": "Gen V L1-N Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"176c",
+        "prepend_text": "Gen V L1-N Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"176c",
+        "prepend_text": "Gen V L1-N Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"176c",
+        "prepend_text": "Sd L31 over Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"176c",
+        "prepend_text": "Sd L31 over Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"176c",
+        "prepend_text": "Sd L31 over Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"176d",
+        "prepend_text": "Gen V L3-N Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"176d",
+        "prepend_text": "Gen V L3-N Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"176d",
+        "prepend_text": "Gen V L3-N Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"176d",
+        "prepend_text": "Gen V L2-N Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"176d",
+        "prepend_text": "Gen V L2-N Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"176d",
+        "prepend_text": "Gen V L2-N Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"176e",
+        "prepend_text": "Gen V L2-L3 Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"176e",
+        "prepend_text": "Gen V L2-L3 Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"176e",
+        "prepend_text": "Gen V L2-L3 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"176e",
+        "prepend_text": "Gen V L1-L2 Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"176e",
+        "prepend_text": "Gen V L1-L2 Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"176e",
+        "prepend_text": "Gen V L1-L2 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"176f",
+        "prepend_text": "Gen freq Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"176f",
+        "prepend_text": "Gen freq Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"176f",
+        "prepend_text": "Gen freq Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"176f",
+        "prepend_text": "Gen V L3-L1 Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"176f",
+        "prepend_text": "Gen V L3-L1 Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"176f",
+        "prepend_text": "Gen V L3-L1 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1838",
+        "prepend_text": "BOC fgen over Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1838",
+        "prepend_text": "BOC fgen over Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1838",
+        "prepend_text": "BOC fgen over Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1838",
+        "prepend_text": "BOC fgen under Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1838",
+        "prepend_text": "BOC fgen under Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1838",
+        "prepend_text": "BOC fgen under Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1839",
+        "prepend_text": "MP L1 under Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1839",
+        "prepend_text": "MP L1 under Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1839",
+        "prepend_text": "MP L1 under Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1839",
+        "prepend_text": "BOC ReversePwr Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1839",
+        "prepend_text": "BOC ReversePwr Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1839",
+        "prepend_text": "BOC ReversePwr Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"183a",
+        "prepend_text": "MP L3 under Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"183a",
+        "prepend_text": "MP L3 under Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"183a",
+        "prepend_text": "MP L3 under Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"183a",
+        "prepend_text": "MP L2 under Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"183a",
+        "prepend_text": "MP L2 under Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"183a",
+        "prepend_text": "MP L2 under Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"183b",
+        "prepend_text": "MP L2 over Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"183b",
+        "prepend_text": "MP L2 over Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"183b",
+        "prepend_text": "MP L2 over Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"183b",
+        "prepend_text": "MP L1 over Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"183b",
+        "prepend_text": "MP L1 over Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"183b",
+        "prepend_text": "MP L1 over Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"183c",
+        "prepend_text": "MP L12 under Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"183c",
+        "prepend_text": "MP L12 under Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"183c",
+        "prepend_text": "MP L12 under Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"183c",
+        "prepend_text": "MP L3 over Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"183c",
+        "prepend_text": "MP L3 over Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"183c",
+        "prepend_text": "MP L3 over Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"183d",
+        "prepend_text": "MP L31 under Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"183d",
+        "prepend_text": "MP L31 under Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"183d",
+        "prepend_text": "MP L31 under Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"183d",
+        "prepend_text": "MP L23 under Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"183d",
+        "prepend_text": "MP L23 under Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"183d",
+        "prepend_text": "MP L23 under Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"183e",
+        "prepend_text": "MP L23 over  Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"183e",
+        "prepend_text": "MP L23 over  Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"183e",
+        "prepend_text": "MP L23 over  Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"183e",
+        "prepend_text": "MP L12 over Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"183e",
+        "prepend_text": "MP L12 over Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"183e",
+        "prepend_text": "MP L12 over Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"183f",
+        "prepend_text": "MP fmns under Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"183f",
+        "prepend_text": "MP fmns under Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"183f",
+        "prepend_text": "MP fmns under Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"183f",
+        "prepend_text": "MP L31 over Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"183f",
+        "prepend_text": "MP L31 over Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"183f",
+        "prepend_text": "MP L31 over Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1840",
+        "prepend_text": "MainsAvg>V Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1840",
+        "prepend_text": "MainsAvg>V Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1840",
+        "prepend_text": "MainsAvg>V Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1840",
+        "prepend_text": "MP fmns over Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1840",
+        "prepend_text": "MP fmns over Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1840",
+        "prepend_text": "MP fmns over Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1841",
+        "prepend_text": "Bus V L2-N Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1841",
+        "prepend_text": "Bus V L2-N Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1841",
+        "prepend_text": "Bus V L2-N Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1841",
+        "prepend_text": "Bus V L1-N Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1841",
+        "prepend_text": "Bus V L1-N Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1841",
+        "prepend_text": "Bus V L1-N Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1842",
+        "prepend_text": "Bus V L1-L2 Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1842",
+        "prepend_text": "Bus V L1-L2 Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1842",
+        "prepend_text": "Bus V L1-L2 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1842",
+        "prepend_text": "Bus V L3-N Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1842",
+        "prepend_text": "Bus V L3-N Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1842",
+        "prepend_text": "Bus V L3-N Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1843",
+        "prepend_text": "Bus V L3-L1 Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1843",
+        "prepend_text": "Bus V L3-L1 Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1843",
+        "prepend_text": "Bus V L3-L1 Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1843",
+        "prepend_text": "Bus V L2-L3 Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1843",
+        "prepend_text": "Bus V L2-L3 Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1843",
+        "prepend_text": "Bus V L2-L3 Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1844",
+        "prepend_text": "Bus meas error Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1844",
+        "prepend_text": "Bus meas error Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1844",
+        "prepend_text": "Bus meas error Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1844",
+        "prepend_text": "Bus freq Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1844",
+        "prepend_text": "Bus freq Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1844",
+        "prepend_text": "Bus freq Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1845",
+        "prepend_text": "BOC IDMT Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1845",
+        "prepend_text": "BOC IDMT Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1845",
+        "prepend_text": "BOC IDMT Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1845",
+        "prepend_text": "OfL StartBlck Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1845",
+        "prepend_text": "OfL StartBlck Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1845",
+        "prepend_text": "OfL StartBlck Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1846",
+        "prepend_text": "BOC Overload Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1846",
+        "prepend_text": "BOC Overload Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1846",
+        "prepend_text": "BOC Overload Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1846",
+        "prepend_text": "BOC ShortCurr Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1846",
+        "prepend_text": "BOC ShortCurr Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1846",
+        "prepend_text": "BOC ShortCurr Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1847",
+        "prepend_text": "Wrn BadPwrCfg Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1847",
+        "prepend_text": "Wrn BadPwrCfg Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1847",
+        "prepend_text": "Wrn BadPwrCfg Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1847",
+        "prepend_text": "BOC NCB fail Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1847",
+        "prepend_text": "BOC NCB fail Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1847",
+        "prepend_text": "BOC NCB fail Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1848",
+        "prepend_text": "Manual Restore Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1848",
+        "prepend_text": "Manual Restore Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1848",
+        "prepend_text": "Manual Restore Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1848",
+        "prepend_text": "Wrn Addr error Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1848",
+        "prepend_text": "Wrn Addr error Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1848",
+        "prepend_text": "Wrn Addr error Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"1849",
+        "prepend_text": "Wrn SpdRegLim Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"1849",
+        "prepend_text": "Wrn SpdRegLim Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"1849",
+        "prepend_text": "Wrn SpdRegLim Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"1849",
+        "prepend_text": "WrnTstOnLdFail Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"1849",
+        "prepend_text": "WrnTstOnLdFail Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"1849",
+        "prepend_text": "WrnTstOnLdFail Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"184a",
+        "prepend_text": "G L neg Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"184a",
+        "prepend_text": "G L neg Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"184a",
+        "prepend_text": "G L neg Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"184a",
+        "prepend_text": "Wrn VoltRegLim Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"184a",
+        "prepend_text": "Wrn VoltRegLim Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"184a",
+        "prepend_text": "Wrn VoltRegLim Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"184b",
+        "prepend_text": "G ph opposed Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"184b",
+        "prepend_text": "G ph opposed Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"184b",
+        "prepend_text": "G ph opposed Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"184b",
+        "prepend_text": "G ph+L neg Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"184b",
+        "prepend_text": "G ph+L neg Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"184b",
+        "prepend_text": "G ph+L neg Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"184c",
+        "prepend_text": "M ph+L neg Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"184c",
+        "prepend_text": "M ph+L neg Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"184c",
+        "prepend_text": "M ph+L neg Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"184c",
+        "prepend_text": "M L neg Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"184c",
+        "prepend_text": "M L neg Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"184c",
+        "prepend_text": "M L neg Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"184d",
+        "prepend_text": "Wrn FuelTheft Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"184d",
+        "prepend_text": "Wrn FuelTheft Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"184d",
+        "prepend_text": "Wrn FuelTheft Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"184d",
+        "prepend_text": "M ph opposed Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"184d",
+        "prepend_text": "M ph opposed Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"184d",
+        "prepend_text": "M ph opposed Sensor Failure: ",
+        "include": "protection2Sensor"
+    },
+    {
+        "reg":"184e",
+        "prepend_text": "N/A Level 1 : ",
+        "include": "protection1Level1"
+    },
+    {
+        "reg":"184e",
+        "prepend_text": "N/A Level 2 : ",
+        "include": "protection1Level2"
+    },
+    {
+        "reg":"184e",
+        "prepend_text": "N/A Sensor Failure: ",
+        "include": "protection1Sensor"
+    },
+    {
+        "reg":"184e",
+        "prepend_text": "PassInsertBlck Level 2 : ",
+        "include": "protection2Level1"
+    },
+    {
+        "reg":"184e",
+        "prepend_text": "PassInsertBlck Level 1 : ",
+        "include": "protection2Level2"
+    },
+    {
+        "reg":"184e",
+        "prepend_text": "PassInsertBlck Sensor Failure: ",
+        "include": "protection2Sensor"
+    }
+    
+  ],
+  "status": [
+    {
+      "reg": "00a3",
+      "title": "Breaker State",
+      "mask": "ffff",
+      "type": "object_int_index",
+      "object": {
+        "0": "Initializing",
+        "1": "Breaker Off",
+        "2": "Island Operation",
+        "3": "Mains Operation",
+        "4": "Parallel Operation",
+        "5": "RevSync",
+        "6": "Synchronizing",
+        "7": "Mains Fault",
+        "8": "Valid Fault",
+        "9": "Mains Recover",
+        "10": "Multiple Island Operation (MCB is opened, GCB's are closed)",
+        "11": "Multiple Parallel Operation (MCB is closed, GCB's are closed)",
+        "12": "Emergency Manual Operation"
+      },
+      "default": "Unknown State"
+    },
+    {
+      "reg": "0196",
+      "mask": "ffff",
+      "title": "Breaker Position",
+      "type": "object_bit_index",
+      "object":{
+        "9": "MCB used",
+        "10": "MCB closed",
+        "11": "MCB synchro",
+        "12": "GCB Used",
+        "13": "GCB closed",
+        "14": "GCB synchro"
+      }
+    },
+    {"title": "Engine",
+        "comment": "The 'container' modifier will allow the values to be displayed with some hierarchy", 
+        "container": true,
+        "value":[
+        {
+          "reg": "013a",
+          "mask": "ffff",
+          "type": "int",
+          "title": "RPM"
+        },
+        {
+          "reg": "00fb",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Output Voltage",
+          "units": "V"
+        },
+        {
+          "reg":"00f8",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Voltage L1-N",
+          "units": "V"
+        },
+        {
+          "reg":"00f9",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Voltage L2-N",
+          "units": "V"
+        },
+        {
+          "reg":"00fa",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Voltage L3-N",
+          "units": "V"
+        },
+        {
+          "reg":"0f9c",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Voltage L1-L2",
+          "units": "V"
+        },
+        {
+          "reg":"00fd",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Voltage L2-L3",
+          "units": "V"
+        },
+        {
+          "reg":"00fe",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Voltage L3-L1",
+          "units": "V"
+        },
+        {
+          "reg":"0101",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Current L1",
+          "units": "A"
+        },
+        {
+          "reg":"0102",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Current L2",
+          "units": "A"
+        },
+        {
+          "reg":"0103",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Current L3",
+          "units": "A"
+        },
+        {
+          "reg": "00ff",
+          "mask": "ffff",
+          "multiplier": 0.1,
+          "type": "float",
+          "title": "Frequency",
+          "units": "Hz"
+        },
+        {
+          "reg": "0105",
+          "mask": "ffff",
+          "multiplier": 0.01,
+          "title": "Power Factor",
+          "comment": "Hundredths decimal place",
+          "type": "float"
+        },
+        {
+          "reg":"0107",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Actual Power",
+          "units": "kW"
+        },
+        {
+          "reg":"0109",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Actual Power L1",
+          "units": "kW"
+        },
+        {
+          "reg":"010a",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Actual Power L2",
+          "units": "kW"
+        },
+        {
+          "reg":"010b",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Actual Power L3",
+          "units": "kW"
+        },
+        {
+          "reg":"000f",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Oil Pressure",
+          "units": "psi"
+        },
+        {
+          "reg":"0010",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Water Temp",
+          "temperature":"celsius",
+          "units": "C"
+        }
+        ]
+    },
+    {"title": "Input and Output",
+        "container": true,
+        "value" : [
+          {
+            "reg": "0002",
+            "comment": "Binary#1",
+            "type": "object_bit_index",
+            "default": "",
+            "title": "Binary Inputs CU",
+            "object":{
+              "0": "Remote Start",
+              "2": "Emergency Stop",
+              "3": "Low Coolant Level",
+              "4": "Battery Charger Fail",
+              "5": "Fuel Leak"
+            }
+          },
+          {
+            "reg": "000b",
+            "comment": "Binary#2",
+            "default": "",
+            "type": "object_bit_index",
+            "title": "Binary Outputs CU",
+            "object":{
+              "0": "Starter",
+              "1": "Fuel Solenoid",
+              "2": "NT-BOUT 3",
+              "3": "Shunt Trip",
+              "4": "NT-BOUT 5",
+              "5": "NT-BOUT 6",
+              "6": "Horn", 
+              "7": "NT-BOUT 8",
+              "8": "NT-BOUT 9",
+              "9": "NT-BOUT 10",
+              "10": "NT-BOUT 11",
+              "11": "NT-BOUT 12"
+            }
+          },
+          {
+            "reg": "0081",
+            "comment": "Binary#3",
+            "default": "",
+            "type": "object_bit_index",
+            "title": "Log Binary Output 1",
+            "object":{
+                "0": "Starter",
+                "1": "Fuel Solenoid",
+                "2": "Prestart",
+                "3": "Alarm",
+                "4": "Horn",
+                "5": "Common Alarm Level 1",
+                "6": "Common Alarm Level 2",
+                "7": "Cooling pump",
+                "8": "GCB close/open",
+                "9": "GCB ON Coil",
+                "10": "GCB OFF Coil",
+                "11": "GCB UV Coil"
+            }
+          },
+          {
+            "reg": "0082",
+            "comment": "Binary#4",
+            "default": "",
+            "type": "object_bit_index",
+            "title": "Log Binary Output 2",
+            "object":{
+                "0": "Stop Solenoid",
+                "1": "Stop Pulse",
+                "2": "System Resource OK",  
+                "3": "System Resource 1 OK", 
+                "4": "System Resource 2 OK",
+                "5": "System Resource3 OK",
+                "6": "System Resource 4 OK",
+                "7": "All Avail GS run",
+                "8": "Speed Up",
+                "9": "Speed Down",
+                "10": "AVR Up",
+                "11": "AVR Down",
+                "15": "Vgen <>"
+            }
+          },
+          {
+            "reg": "0083",
+            "comment": "Binary#5",
+            "default": "",
+            "type": "object_bit_index",
+            "title": "Log Binary Output 3",
+            "object":{
+                "0": "Vbus <>",
+                "1": "Overcurrent",
+                "4": "Common Warning",
+                "5": "Common Shutdown",
+                "6": "Common SdOvr",
+                "7": "Common Slow Stop Protection",
+                "8": "Common Sensor Fail",
+                "10": "Common OfL",
+                "11": "Common Breaker Open and Cooling",
+                "13": "Common Al",
+                "14": "Common Hst",
+                "15": "Common Active Level 1 Alarms"
+            }
+          },
+          {
+            "reg": "0084",
+            "comment": "Binary#6",
+            "default": "",
+            "type": "object_bit_index",
+            "title": "Log Binary Output 4",
+            "object":{
+              "0": "Common Active Level 2 Alarms",
+              "1": "Alarm flashing",
+              "2": "Horn flashing",
+              "4": "Ignition",
+              "5": "Ventilation",
+              "6": "Idle/Nominal",
+              "7": "Prelubrication Pump",
+              "8": "Fault Reset Button Echo",
+              "9": "Horn Button Echo",
+              "10": "StartButton Echo",
+              "11": "Stop Button Echo",
+              "12": "GCB Button Echo", 
+              "14": "GCB status",
+              "15": "MCB status"
+            }
+          },
+          {
+            "reg": "0085",
+            "comment": "Binary#7",
+            "default": "",
+            "type": "object_bit_index",
+            "title": "Log Binary Output 5",
+            "object":{
+                "0": "Generator Params OK",
+                "2": "Bus Params OK",
+                "3": "kWh Pulse",
+                "4": "In Synchronism",
+                "5": "In Mains Parallel",
+                "8": "Engines Swapped",
+                "9": "Neutral CB C/O",
+                "10": "ECU Power Relay",
+                "11": "ECU Comm Error",
+                "12": "Peripheral Comm Error",
+                "13": "Controller Heart Beat",
+                "14": "Controller Heart Beat FD",
+                "15": "Load Shed Stage 1"
+            }
+          },
+          {
+            "reg": "0086",
+            "comment": "Binary#8",
+            "default": "",
+            "type": "object_bit_index",
+            "title": "Log Binary Output 6",
+            "object":{
+              "0": "Load Shed Stage 2",
+              "1": "Load Shed stage 3",
+              "2": "Timer Act 1-4",
+              "3": "Timer Act 5-8",
+              "4": "Timer Act 9-12",
+              "5": "Timer Act 13-16",
+              "6":  "Timer Active Com",
+              "7": "Off Mode",
+              "8": "Manual Mode",
+              "9": "Auto Mode",
+              "12": "System Ready",
+              "13": "Ready for Load",
+              "15": "Gen-set Active"
+            }
+          },
+          {
+            "reg": "0087",
+            "comment": "Binary#9",
+            "title": "Log Binary Output 7",
+            "default": "",
+            "type": "object_bit_index",
+            "object":{
+              "0": "Operational",
+              "1": "Ready",
+              "2": "Not Ready",
+              "3": "Crank Procedure",
+              "4": "Starting",
+              "5": "Idle run",
+              "6": "Running",
+              "7": "Forward Synchro",
+              "9": "Warming",
+              "10": "Soft Load",
+              "11": "Loaded",
+              "12": "Soft unload",
+              "13": "Cooling",
+              "14": "Stopping",
+              "15": "Cranking"
+            }
+          },
+          {
+            "reg": "0182",
+            "comment": "Binary#16",
+            "default": "",
+            "type": "object_bit_index",
+            "title": "Log Binary Out 8",
+            "object":{
+              "0": "Logical 0",
+              "1": "Logical 1",
+              "2": "Bin selector 1",
+              "3": "Bin selector 2",
+              "4": "Bin selector 3",
+              "5": "Bin selector 4",
+              "6": "WrongPhSeq",
+              "8": "User Button 1", 
+              "9": "User Button 2",
+              "10": "User Button 3",
+              "11": "User Button 4",
+              "12": "User Button 5"
+            }
+          },
+          {
+            "reg": "0166",
+            "comment": "Binary#14",
+            "default": "",
+            "type": "object_bit_index",
+            "title": "Binary Output 1",
+            "object":{
+              "0": "Start Fail",
+              "1": "Overspeed",
+              "2": "Oil Pressure",
+              "3": "Water Temp",
+              "4": "Low Coolant Level",
+              "5": "Common Shutdown Alarm",
+              "6": "Auto Mode",
+              "7": "Low Temp"
+            }
+          },
+          {
+            "reg": "0167",
+            "comment": "Binary#15",
+            "default": "",
+            "type": "object_bit_index",
+            "title": "Binary Output 2",
+            "object":{
+              "0":  "Battery Voltage",
+              "1": "Oil Pressure",
+              "2": "Water Temp",
+              "3": "Batt Charger Fail",
+              "4": "Fuel level",
+              "5": "Fuel Leak",
+              "6": "Loaded", 
+              "7": "BOUT-2 8"
+            }
+          },
+          {
+            "reg": "0088",
+            "comment": "Binary#10",
+            "default": "",
+            "type": "object_bit_index",
+            "title": "VPIO Binary Out 1",
+            "object":{
+              "0": "GCB close/open",
+              "1":  "VPIO-1 2",
+              "2": "VPIO-1 3",
+              "3": "VPIO-1 4",
+              "4": "VPIO-1 5",
+              "5": "VPIO-1 6",
+              "6": "VPIO-1 7",
+              "7": "VPIO-1 8" 
+            }
+          }
+        ]
+    },
+    {
+      "reg": "000d",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Controller CPU Temp",
+      "temperature": "celsius",
+      "units": "C"
+    },
+    {
+      "reg": "000c",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Battery Voltage",
+      "units": "V"
+    },
+    {
+      "reg": "0196",
+      "mask": "ffff",
+      "title": "Alarm Types Active",
+      "type": "object_bit_index",
+      "object":{
+        "0": "Active Alarm Level 1",
+        "1": "Active Alarm Level 2",
+        "2": "Not Confirmed Level 1",
+        "3": "Not Confirmed Level 2"
+      },
+      "default": "None"
+    }
+  ],
+  "maintenance": [
+    {"title": "Service",
+        "container": true,
+        "value" : [
+          {
+            "reg": "0bb8",
+            "type": "ascii",
+            "title": "Genset Name"
+          },
+          {
+            "reg": "0e02",
+            "mask": "ffffffff",
+            "type": "int",
+            "title": "Run Hours",
+            "units": "h"
+          },
+          {
+            "reg": "0e0a",
+            "mask": "ffffffff",
+            "type": "int",
+            "title": "Total kW Hours",
+            "units": "h"
+          },
+          {
+            "reg": "0e04",
+            "mask": "ffffffff",
+            "type": "int",
+            "title": "Number of Starts"
+          },
+          {
+            "reg": "0e05",
+            "mask": "ffffffff",
+            "type": "int",
+            "title": "Number of Unscheduled Starts"
+          },
+          {
+              "reg": "009d",
+              "mask": "ffff",
+              "type": "float",
+              "multiplier": 0.1,
+              "title": "Software Version"
+          },
+          {
+            "reg": "009e",
+            "mask": "ffff",
+            "type": "int",
+            "title": "Software Branch"
+          },
+          {
+            "reg": "009f",
+            "mask": "ffff",
+            "type": "int",
+            "title": "Application Version"
+          }
+        ]
+      },
+      {"title": "Controller Settings",
+      "container": true,
+      "value" : [
+        {
+          "reg": "0bca",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Nominal Voltage",
+          "units": "V"
+        },
+        {
+          "reg": "0bcb",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Nominal Phase to Phase Voltage",
+          "units": "V"
+        },
+        {
+          "reg": "0bc1",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Nominal Current",
+          "units": "A"
+        },
+        {
+          "reg": "0bcf",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Nominal Frequency",
+          "units": "Hz"
+        },
+        {
+          "reg": "0bd1",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Nominal RPM"
+        }
+      ]
+    }
+  ],
+  "gauges": [
+    {
+      "reg": "000c",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Battery",
+      "units": "V",
+      "sensor": "batteryvolts",
+      "nominal": 24,
+      "maximum": 32
+    },
+    {
+      "reg": "013a",
+      "mask": "ffff",
+      "type": "int",
+      "title": "RPM",
+      "units": null,
+      "sensor": "rpm",
+      "nominal": "Unknown"
+    },
+    {
+      "reg": "00ff",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Frequency",
+      "units": "Hz",
+      "sensor": "frequency",
+      "nominal": 60
+    },
+    {
+      "reg": "00fb",
+      "mask": "ffff",
+      "type": "int",
+      "title": "Output Voltage",
+      "units": "V",
+      "sensor": "linevolts",
+      "nominal": "Unknown"
+    },
+    {
+      "reg":"00f8",
+      "mask": "ffff",
+      "type": "int",
+      "title": "Voltage L1-N",
+      "units": "V",
+      "sensor": "linevolts",
+      "nominal": "Unknown"
+    },
+    {
+      "reg":"00f9",
+      "mask": "ffff",
+      "type": "int",
+      "title": "Voltage L2-N",
+      "units": "V",
+      "sensor": "linevolts",
+      "nominal": "Unknown"
+    },
+    {
+      "reg":"00fa",
+      "mask": "ffff",
+      "type": "int",
+      "title": "Voltage L3-N",
+      "units": "V",
+      "sensor": "linevolts",
+      "nominal": "Unknown"
+    },
+    {
+      "reg":"0f9c",
+      "mask": "ffff",
+      "type": "int",
+      "title": "Voltage L1-L2",
+      "units": "V",
+      "sensor": "linevolts",
+      "nominal": 480
+    },
+    {
+      "reg":"00fd",
+      "mask": "ffff",
+      "type": "int",
+      "title": "Voltage L2-L3",
+      "units": "V",
+      "sensor": "linevolts",
+      "nominal": 480
+    },
+    {
+      "reg":"00fe",
+      "mask": "ffff",
+      "type": "int",
+      "title": "Voltage L3-L1",
+      "units": "V",
+      "sensor": "linevolts",
+      "nominal": 480
+    },
+    {
+      "reg": "0107",
+      "mask": "ffff",
+      "type": "int",
+      "title": "Power",
+      "units": "kW",
+      "sensor": "powergraph",
+      "nominal": 20
+    }
+  ],
+  "power": {
+    "reg": "0107",
+    "mask": "ffff",
+    "type": "int",
+    "title": "Power Output",
+    "units": "kW",
+    "sensor": "power"
+  },
+  "outputvoltage": {
+      "reg": "00fb",
+      "mask": "ffff",
+      "type": "int",
+      "title": "Output Voltage",
+      "units": "V"
+    },
+  "run_hours": {
+      "reg": "0e02",
+      "mask": "ffffffff",
+      "type": "int",
+      "title": "Run Hours",
+      "units": "h"
+    },
+    "fuel": {
+      "comment":"NOTE: this element will add a fuel gauge in addition to any defined in the gauges array",
+      "reg": "0011",
+      "mask": "ffff",
+      "type": "int",
+      "title": "Fuel Sensor",
+      "units": "%",
+      "sensor": "fuel"
+  },
+  "include": {
+    "protection1Level1":{
+      "title":"Alarm Protection 1 Level 1",
+      "mask": "0007",
+      "type": "object_int_index",
+      "object": {
+        "2": "confirmed",
+        "3": "blocked or delay still running",
+        "4": "previously active and not confirmed",
+        "6": "not confirmed",
+        "7": "not confirmed and blocked"
+      }
+    },
+    "protection1Level2": {
+      "title":"Alarm Protection 1 Level 2",
+      "mask": "0038",
+      "shiftright": 3,
+      "type": "object_int_index",
+      "object": {
+        "2": "confirmed",
+        "3": "blocked or delay still running",
+        "4": "previously active and not confirmed",
+        "6": "not confirmed",
+        "7": "not confirmed and blocked"
+      }
+    },
+    "protection1Sensor": {
+      "title":"Alarm Protection 1 Sensor",
+      "mask": "00c0",
+      "shiftright": 6,
+      "type": "object_int_index",
+      "object": {
+        "1": "confirmed",
+        "2": "previously active and not confirmed",
+        "3": "not confirmed"
+      }
+    },
+    "protection2Level1":{
+      "title":"Alarm Protection 2 Level 1",
+      "mask": "0700",
+      "shiftright": 8,
+      "type": "object_int_index",
+      "object": {
+        "2": "confirmed",
+        "3": "blocked or delay still running",
+        "4": "previously active and not confirmed",
+        "6": "not confirmed",
+        "7": "not confirmed and blocked"
+      }
+    },
+    "protection2Level2":{
+      "title":"Alarm Protection 2 Level 2",
+      "mask": "3800",
+      "shiftright": 11,
+      "type": "object_int_index",
+      "object": {
+        "2": "confirmed",
+        "3": "blocked or delay still running",
+        "4": "previously active and not confirmed",
+        "6": "not confirmed",
+        "7": "not confirmed and blocked"
+      }
+    },
+    "protection2Sensor":{
+      "title":"Alarm Protection 2 Sensor",
+      "mask": "c000",
+      "shiftright": 14,
+      "type": "object_int_index",
+      "object": {
+        "1": "confirmed",
+        "2": "previously active and not confirmed",
+        "3": "not confirmed"
+      }
+    }
+  }
+}

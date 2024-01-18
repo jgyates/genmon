@@ -481,6 +481,8 @@ class CustomController(GeneratorController):
                         nominal = int(self.NominalFreq)
                     elif sensor["sensor"].lower() == "batteryvolts":
                         nominal = self.NominalBatteryVolts
+                    elif sensor["sensor"].lower() == "rpm":
+                        nominal = self.NominalRPM
                     elif sensor["sensor"].lower() == "current":
                         nominal = (float(self.NominalKW) * 1000) / self.NominalLineVolts
                     else:
@@ -1157,9 +1159,7 @@ class CustomController(GeneratorController):
                 Status["Status"].append({"Alarm State": "System In Alarm"})
                 Status["Status"].append(
                     {
-                        "Active Alarms": self.GetExtendedDisplayString(
-                            self.controllerimport, "alarm_conditions"
-                        )
+                        "Active Alarms": self.GetExtendedDisplayString(self.controllerimport, "alarm_conditions", ReturnList=True)
                     }
                 )
 
@@ -1296,14 +1296,16 @@ class CustomController(GeneratorController):
 
     # ------------ GeneratorController:GetExtendedDisplayString -----------------
     # returns one or multiple status strings
-    def GetExtendedDisplayString(self, inputdict, key_name, no_units=False):
+    def GetExtendedDisplayString(self, inputdict, key_name, no_units=False, ReturnList = False):
 
         try:
             StateList = self.GetDisplayList(inputdict, key_name, no_units=no_units)
             ListValues = []
             for entry in StateList:
                 ListValues.extend(entry.values())
-            ReturnString = ",".join(ListValues)
+            if ReturnList:
+                return ListValues
+            ReturnString = ", ".join(ListValues)
             if not len(ReturnString):
                 return "Unknown"
             return ReturnString
@@ -1513,6 +1515,20 @@ class CustomController(GeneratorController):
                 self.LogError("Error: inherit specified but no inherit value passed")
                 return ReturnTitle, ReturnValue
 
+            
+            if "include" in entry.keys() and "include" in self.controllerimport.keys():
+                includeName = entry["include"]
+                if includeName in self.controllerimport["include"].keys():
+                    includeValue = self.controllerimport["include"][includeName]
+                    if isinstance(includeValue, dict):
+                        entry = self.MergeDicts(entry, includeValue)
+                    else:
+                        self.LogError("Error: include value is not an object: " + str(includeValue))
+                        return ReturnTitle, ReturnValue
+                else:
+                    self.LogError("Error: entry has include but object name is not in scope of base include object: " + str(entry))
+                    return ReturnTitle, ReturnValue
+
             if "reg" not in entry.keys():  # required with exceptions
                 if "inherit" in entry.keys():
                     Register = inheritreg   # add inherit register 
@@ -1655,6 +1671,29 @@ class CustomController(GeneratorController):
                 else:
                     obj_default = None
                 ReturnValue = entry["object"].get(str(value), obj_default)
+
+            elif entry["type"] == "object_bit_index":
+                value = self.GetParameter(Register, ReturnInt=True, IsCoil=IsCoil, IsInput=IsInput)
+                value = self.ProcessMaskModifier(entry, value)
+                value = self.ProcessBitModifiers(entry, value)
+                if "default" in entry.keys():
+                    obj_default = entry["default"]
+                else:
+                    obj_default = None
+                index = 0
+                valueList = []
+                while(value):
+                    if value & 0x01:
+                        objval = entry["object"].get(str(index), None)
+                        if objval != None:
+                            valueList.append(objval)
+                    value = value >> 1
+                    index += 1
+                if len(valueList):
+                    ReturnValue = ", ".join(valueList)
+                else:
+                    ReturnValue = obj_default
+
             elif entry["type"] == "ascii":
                 ReturnValue = self.GetParameter(Register, ReturnString = True, IsCoil=IsCoil, IsInput=IsInput)
             elif entry["type"] == "default":
@@ -1671,6 +1710,8 @@ class CustomController(GeneratorController):
                     units = self.ProcessTemperatureModifier(entry, units, units = True)
                 ReturnValue = self.ValueOut(ReturnValue, str(units), JSONNum)
 
+            if "prepend_text" in entry.keys() and isinstance(ReturnValue, str):
+                    ReturnValue = entry["prepend_text"] + ReturnValue
         except Exception as e1:
             self.LogErrorLine("Error in GetDisplayEntry : " + str(e1))
             self.LogDebug(str(entry))

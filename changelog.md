@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
 - Modifications to support Raspberry Pi 5: detect pi model, enabled serial port, for pi5 default port is /dev/ttyAMA0, not /dev/serial0
 - Minor update to Briggs and Stratton maintenance alarm definition 
 - Update to genmqtt add on to support MTLS
+- Update for ComAp controller
+- Minor change to the way alarms are displayed for custom controllers
 
 ## V1.19.00 -2023-11-09
 - Updates to genmonmain.sh, startgenmon.sh and genloader.sh for Debian bookworm. 
