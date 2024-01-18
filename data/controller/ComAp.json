@@ -4152,8 +4152,8 @@
       "sensor": "linevolts",
       "nominal": "Unknown"
     },
-    {
-      "reg":"0f9c",
+    { 
+      "reg":"00fc",
       "mask": "ffff",
       "type": "int",
       "title": "Voltage L1-L2",
