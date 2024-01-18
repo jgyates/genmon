@@ -57,7 +57,7 @@
     "00f9": {"length":2, "text": "Generator Voltage L2-N", "comment": "Volts"},
     "00fa": {"length":2, "text": "Generator Voltage L3-N", "comment": "Volts"},
     "00fb": {"length":2, "text": "Generator Voltage", "comment": "Volts"},
-    "0f9c": {"length":2, "text": "Generator Voltage L1-L2", "comment": "Volts"},
+    "00fc": {"length":2, "text": "Generator Voltage L1-L2", "comment": "Volts"},
     "00fd": {"length":2, "text": "Generator Voltage L2-L3", "comment": "Volts"},
     "00fe": {"length":2, "text": "Generator Voltage L3-L1", "comment": "Volts"},
     "00ff": {"length":2, "text": "Generator Frequency", "comment": "Hz, tenths decimal place"},
@@ -3589,7 +3589,7 @@
           "units": "V"
         },
         {
-          "reg":"0f9c",
+          "reg":"00fc",
           "mask": "ffff",
           "type": "int",
           "title": "Voltage L1-L2",
