@@ -947,26 +947,28 @@ class GeneratorController(MySupport):
                             else:
                                 self.LogDebug("Error in ExecuteCommandSequence: invalid type if value list")
                                 return "Command not found."
-                        self.LogDebug("Write: " + command["reg"] + ": " + str(Data))
+                        self.LogDebug("Write List: len: " + str(int(len(Data)  / 2)) + " : "  + self.LogHexList(Data, prefix=command["reg"], nolog = True))
                         self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data)
 
                     elif isinstance(command["value"], str):
+                        # only supports single word writes
                         value = int(command["value"], 16)
                         LowByte = value & 0x00FF
-                        HighByte = value >> 8
+                        HighByte = (value >> 8) & 0x00ff
                         Data = []
-                        Data.append(HighByte)  # Value for indexed register (High byte)
-                        Data.append(LowByte)  # Value for indexed register (Low byte)
-                        self.LogDebug("Write: " + command["reg"] + ": "+ ("%x %x" % (HighByte, LowByte)))
+                        Data.append(HighByte)  
+                        Data.append(LowByte)  
+                        self.LogDebug("Write Str: len: "+ str(int(len(Data)  / 2)) + " : " + command["reg"] + ": "+ ("%04x %04x" % (HighByte, LowByte)))
                         self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data)
                     elif isinstance(command["value"], int):
+                        # only supports single word writes
                         value = command["value"]
                         LowByte = value & 0x00FF
-                        HighByte = value >> 8
+                        HighByte = (value >> 8) & 0x00ff
                         Data = []
-                        Data.append(HighByte)  # Value for indexed register (High byte)
-                        Data.append(LowByte)  # Value for indexed register (Low byte)
-                        self.LogDebug("Write: "+ command["reg"]+ ": "+ ("%x %x" % (HighByte, LowByte)))
+                        Data.append(HighByte)  
+                        Data.append(LowByte)  
+                        self.LogDebug("Write Int: len: "+ str(int(len(Data)  / 2)) + " : " + command["reg"]+ ": "+ ("%04x %04x" % (HighByte, LowByte)))
                         self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data)
                     else:
                         self.LogDebug("Error in ExecuteCommandSequence: invalid value type")

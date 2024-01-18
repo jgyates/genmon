@@ -3686,8 +3686,8 @@
           "mask": "ffff",
           "type": "int",
           "title": "Water Temp",
-          "temperature":"celsius",
-          "units": "C"
+          "temperature":"fahrenheit",
+          "units": "F"
         }
         ]
     },
@@ -4187,6 +4187,118 @@
       "units": "kW",
       "sensor": "powergraph",
       "nominal": 20
+    }
+  ],
+  "buttons" : [
+    {
+        "onewordcommand" : "faultreset",
+        "title" : "Fault Reset",
+        "command_sequence" : [
+                               {
+                                 "reg": "18d6",
+                                 "value": ["08", "f7", "00", "00","00","01"]
+                               }
+                             ]
+    }, 
+    {
+        "onewordcommand" : "startcmd",
+        "title" : "Start Command",
+        "command_sequence" : [
+                               {
+                                 "reg": "18d6",
+                                 "value": ["01", "fe", "00", "00","00","01"]
+                               }
+                             ]
+    },
+    {
+        "onewordcommand" : "stopcmd",
+        "title" : "Stop Command",
+        "command_sequence" : [
+                               {
+                                 "reg": "18d6",
+                                 "value": ["02", "fd", "00", "00","00","01"]
+                               }
+                             ]
+    },
+    {
+        "onewordcommand" : "hornreset",
+        "title" : "Horn Reset",
+        "command_sequence" : [
+                               {
+                                 "reg": "18d6",
+                                 "value": ["04", "fb", "00", "00","00","01"]
+                               }
+                             ]
+    },
+    {
+        "onewordcommand" : "ecufaultreset",
+        "title" : "ECU Fault Reset (ECU models only)",
+        "command_sequence" : [
+                               {
+                                 "reg": "18d6",
+                                 "value": ["01", "ef", "00", "00","00","01"]
+                               }
+                             ]
+    },
+    {
+        "onewordcommand" : "openclosemgcb",
+        "title" : "Close/Open MGCB",
+        "command_sequence" : [
+                               {
+                                 "reg": "18d6",
+                                 "value": ["11", "ee", "00", "00","00","02"]
+                               }
+                             ]
+    },
+    {
+        "onewordcommand" : "closemgcb",
+        "title" : "Close MGCB",
+        "command_sequence" : [
+                               {
+                                 "reg": "18d6",
+                                 "value": ["11", "ef", "00", "00","00","02"]
+                               }
+                             ]
+    },
+    {
+        "onewordcommand" : "openmgcb",
+        "title" : "Open MGCB",
+        "command_sequence" : [
+                               {
+                                 "reg": "18d6",
+                                 "value": ["11", "f0", "00", "00","00","02"]
+                               }
+                             ]
+    },
+    {
+        "onewordcommand" : "closeopenmcb",
+        "title" : "Close/Open MCB / BTB",
+        "command_sequence" : [
+                               {
+                                 "reg": "18d6",
+                                 "value": ["12", "ed", "00", "00","00","02"]
+                               }
+                             ]
+    },
+    {
+        "onewordcommand" : "closenmcb",
+        "title" : "Close MCB / BTB",
+        "command_sequence" : [
+                               {
+                                 "reg": "18d6",
+                                 "value": ["12", "ee", "00", "00","00","02"]
+                               }
+                             ]
+    },
+    {
+        "onewordcommand" : "openmcb",
+        "title" : "Open MCB / BTB",
+        "command_sequence" : [
+                               {
+                                 "reg": "18d6",
+                                 "value": ["12", "ef", "00", "00","00","02"]
+                               }
+                            ]
     }
   ],
   "power": {

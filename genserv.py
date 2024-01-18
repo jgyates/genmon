@@ -3172,7 +3172,7 @@ def ReadSettingsFromFile():
         105,
         "0",
         "",
-        "required digits range:0:2000",
+        "required digits range:0:10000",
         GENMON_CONFIG,
         GENMON_SECTION,
         "tanksize",

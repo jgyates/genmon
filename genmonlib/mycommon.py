@@ -185,22 +185,20 @@ class MyCommon(object):
         return url
 
     # -------------MyCommon::LogHexList------------------------------------------
-    def LogHexList(self, listname, prefix=None):
+    def LogHexList(self, listname, prefix=None, nolog = False):
 
         try:
+            outstr = ""
+            outstr = "[" + ",".join("0x{:02x}".format(num) for num in listname) + "]"
             if prefix != None:
-                self.LogError(
-                    prefix
-                    + " = ["
-                    + ",".join("0x{:02x}".format(num) for num in listname)
-                    + "]"
-                )
-            else:
-                self.LogError(
-                    "[" + ",".join("0x{:02x}".format(num) for num in listname) + "]"
-                )
+                outstr = prefix + " = " + outstr
+
+            if nolog == False:
+                self.LogError(outstr)
+            return outstr
         except Exception as e1:
             self.LogErrorLine("Error in LogHexList: " + str(e1))
+            return outstr
 
     # ---------------------------------------------------------------------------
     def LogInfo(self, message, LogLine=False):
