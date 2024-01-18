@@ -2043,6 +2043,15 @@ def AddRetryAddOnParam(AddOnCfg, addon_name, config_file):
             description="The number of seconds to wait before retrying a failed message.",
             display_name="Retry Interval (seconds)",
         )
+        # This paramerter is not exposed but a valid conf file setting
+        #AddOnCfg[addon_name]["parameters"]["minimum_wait_between_messages"] = CreateAddOnParam(
+        #    value=ConfigFiles[config_file].ReadValue(
+        #        "minimum_wait_between_messages", return_type=int, default=0
+        #    ),
+        #    type="int",
+        #    description="The minimum of seconds to wait between sending a message. This is typically zero, except for Callmebot Signal Messaging (should be at least 2 seconds) or other messaging apps that have minimum delays.",
+        #    display_name="Min Time Between Messages (seconds)",
+        #)
     except Exception as e1:
         LogErrorLine("Error in AddRetryAddOnParam: " + str(e1))
     return AddOnCfg

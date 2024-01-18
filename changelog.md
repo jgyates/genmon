@@ -10,6 +10,8 @@ All notable changes to this project will be documented in this file.
 - Update to genmqtt add on to support MTLS
 - Update for ComAp controller
 - Minor change to the way alarms are displayed for custom controllers
+- Updates for better error handling for custom controller
+- Add the ability to have minimum delay between short messages (e.g. callmebot signal)
 
 ## V1.19.00 -2023-11-09
 - Updates to genmonmain.sh, startgenmon.sh and genloader.sh for Debian bookworm. 

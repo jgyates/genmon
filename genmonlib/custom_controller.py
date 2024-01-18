@@ -267,33 +267,46 @@ class CustomController(GeneratorController):
             if not ReturnValue:
                 return False
             if isinstance(TempValue, int):
+                if TempValue == 0:
+                    TempValue = 480
                 self.NominalLineVolts = TempValue 
 
             ReturnValue, TempValue = self.GetSingleEntry("nominal_battery_voltage")
             if not ReturnValue:
                 return False
             if isinstance(TempValue, int):
+                if TempValue == 0:
+                    TempValue = 24
                 self.NominalBatteryVolts = TempValue 
 
             ReturnValue, TempValue = self.GetSingleEntry("rated_nominal_freq")
             if not ReturnValue:
                 return False
             if isinstance(TempValue, int):
+                if TempValue == 0:
+                    TempValue = 60
                 self.NominalFreq = TempValue 
 
             ReturnValue, TempValue = self.GetSingleEntry("rated_nominal_rpm")
             if not ReturnValue:
                 return False
+
             if isinstance(TempValue, int):
+                if TempValue == 0:
+                    TempValue = 1800
                 self.NominalRPM = TempValue 
 
             ReturnValue, TempValue = self.GetSingleEntry("rated_max_output_power_kw")
             if not ReturnValue:
                 return False
             if isinstance(TempValue, int):
+                if TempValue == 0:
+                    TempValue = 100
                 self.NominalKW = TempValue 
 
             ReturnValue, self.Phase = self.GetSingleEntry("generator_phase")
+            if self.Phase == 0:
+                    self.Phase = 3
             if not ReturnValue:
                 return False
 
@@ -463,7 +476,7 @@ class CustomController(GeneratorController):
                     )
                     continue
 
-                if "maximum" in sensor:
+                if "maximum" in sensor.keys():
                     maximum = sensor["maximum"]
                 else:
                     maximum = None

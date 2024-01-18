@@ -400,9 +400,10 @@ class MyTile(MyCommon):
 
             if self.Minimum >= self.Maximum:
                 self.LogError(
-                    "Error in MyGauge:init: invalid value, min: %d max:%d"
-                    % (self.Minimum, str.Maximum)
+                    "Error in MyGauge:init: invalid value, %s: min: %d max:%d"
+                    % (self.Title, int(self.Minimum), int(self.Maximum))
                 )
+                self.Maximum = self.Minimum
                 return
         except Exception as e1:
             self.LogErrorLine("Error in MyTile init: " + str(e1) + " :" + str(title))
