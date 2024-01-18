@@ -313,18 +313,6 @@
       "type": "bits",
       "title": "Alarm Active",
       "text": "System In Alarm"
-    },
-    {
-      "reg": "0196",
-      "mask": "ffff",
-      "title": "Alarm Types Active",
-      "type": "object_bit_index",
-      "object":{
-        "0": "Active Alarm Level 1",
-        "1": "Active Alarm Level 2",
-        "2": "Not Confirmed Level 1",
-        "3": "Not Confirmed Level 2"
-      }
     }
   ],
   "alarm_conditions": [
