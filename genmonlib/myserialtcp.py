@@ -196,6 +196,7 @@ class SerialTCPDevice(MySupport):
             if self.Socket != None:
                 self.Socket.close()
                 self.Socket = None
+            return ""
         except Exception as e1:
             self.LogErrorLine("Error in SerialTCPDevice:Read : " + str(e1))
             if self.Socket != None:
