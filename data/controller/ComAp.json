@@ -114,7 +114,7 @@
     "0196": {"length":4, "text": "StatusDW", "comment": "Binary#17"},
 
     "1677": {"length":2, "text": "Alarm: Remote Start", "comment": "Protection 2"},
-    "1678": {"length":2, "text": "Alarm: Em Stop, Low Coolant Alarm", "comment": "Protection 2, 1"},
+    "1678": {"length":2, "text": "Alarm: Em Stop, Low Water Alarm", "comment": "Protection 2, 1"},
     "1679": {"length":2, "text": "Alarm: Battery Charger, Fuel Leak Alarm", "comment": "Protection 2, 1"},
 
     "16ae": {"length":2, "text": "Alarm: GCB close, VPIO-1 2", "comment": "GCB = Generator Circuit Breaker,Protection 2, 1"},
@@ -318,17 +318,17 @@
   "alarm_conditions": [
     {
       "reg": "1678",
-      "prepend_text": "Low Coolant Level 1: ",
+      "prepend_text": "Low Water Level 1: ",
       "include": "protection1Level1"
     },
     {
       "reg": "1678",
-      "prepend_text": "Low Coolant Level 2: ",
+      "prepend_text": "Low Water Level 2: ",
       "include": "protection1Level2"
     },
     {
       "reg": "1678",
-      "prepend_text": "Low Coolant Sensor Failure: ",
+      "prepend_text": "Low Water Sensor Failure: ",
       "include": "protection1Sensor"
     },
     {
@@ -4126,58 +4126,24 @@
       "nominal": "Unknown"
     },
     {
-      "reg":"00f8",
-      "mask": "ffff",
-      "type": "int",
-      "title": "Voltage L1-N",
-      "units": "V",
-      "sensor": "linevolts",
-      "nominal": "Unknown"
+        "reg": "0107",
+        "mask": "ffff",
+        "type": "int",
+        "title": "Power",
+        "units": "kW",
+        "sensor": "power",
+        "nominal": "Unknown"
     },
     {
-      "reg":"00f9",
-      "mask": "ffff",
-      "type": "int",
-      "title": "Voltage L2-N",
-      "units": "V",
-      "sensor": "linevolts",
-      "nominal": "Unknown"
-    },
-    {
-      "reg":"00fa",
-      "mask": "ffff",
-      "type": "int",
-      "title": "Voltage L3-N",
-      "units": "V",
-      "sensor": "linevolts",
-      "nominal": "Unknown"
-    },
-    { 
-      "reg":"00fc",
-      "mask": "ffff",
-      "type": "int",
-      "title": "Voltage L1-L2",
-      "units": "V",
-      "sensor": "linevolts",
-      "nominal": 480
-    },
-    {
-      "reg":"00fd",
-      "mask": "ffff",
-      "type": "int",
-      "title": "Voltage L2-L3",
-      "units": "V",
-      "sensor": "linevolts",
-      "nominal": 480
-    },
-    {
-      "reg":"00fe",
-      "mask": "ffff",
-      "type": "int",
-      "title": "Voltage L3-L1",
-      "units": "V",
-      "sensor": "linevolts",
-      "nominal": 480
+        "reg":"0010",
+        "mask": "ffff",
+        "type": "int",
+        "title": "Water Temp",
+        "temperature":"fahrenheit",
+        "sensor": "temperature",
+        "nominal": 180,
+        "maximum": 300,
+        "units": "F"
     },
     {
       "reg": "0107",
@@ -4186,7 +4152,7 @@
       "title": "Power",
       "units": "kW",
       "sensor": "powergraph",
-      "nominal": 20
+      "nominal": "Unknown"
     }
   ],
   "buttons" : [
