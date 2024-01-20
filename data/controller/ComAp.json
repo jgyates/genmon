@@ -231,7 +231,7 @@
 
     "18ca": {"length":4, "text": "Time", "comment": "Time"},
     "18cc": {"length":4, "text": "Date", "comment": "Date"},
-    "181d": {"length":2, "text": "Alarm Log Entries", "comment": "Alarm Log Entires"}
+    "18d1": {"length":2, "text": "Alarm Log Entries", "comment": "Alarm Log Entires"}
   },
   "log_registers": {
     "1a0c": { 
@@ -3704,6 +3704,12 @@
           "title": "Water Temp",
           "temperature":"fahrenheit",
           "units": "F"
+        },
+        {
+            "reg":"18d1",
+            "mask": "ffffffff",
+            "type": "int",
+            "title": "Alarm Log Entries"
         }
         ]
     },
@@ -4314,6 +4320,106 @@
       "units": "%",
       "sensor": "fuel"
   },
+  "datetime": {
+    "comment": "This entry is for displaying the time in a format similar to how genmon displays the system time of the system running genmon.",
+    "title": "Generator Time",
+    "exec": "exec_out = (datetime.datetime.strptime('{}', '%m/%d/%Y %H:%M:%S')).strftime('%A %B %-d, %Y %H:%M:%S')",
+    "default": "Unknown",
+    "type": "list",
+    "value": [
+        {
+            "type" : "list",
+            "format": "%s%s/%s%s/20%s%s %s%s:%s%s:%s%s",
+            "title" : "Generator Time Format",
+            "value" : [
+                {
+                    "reg":"18cc",
+                    "mask": "00f00000",
+                    "type": "int",
+                    "shiftright": 20,
+                    "title": "Month Upper"
+                },
+                {
+                    "reg":"18cc",
+                    "mask": "000f0000",
+                    "type": "int",
+                    "shiftright": 16,
+                    "title": "Month Lower"
+                },
+                {
+                    "reg":"18cc",
+                    "mask": "f0000000",
+                    "type": "int",
+                    "shiftright": 28,
+                    "title": "Day Upper"
+                },
+                {
+                    "reg":"18cc",
+                    "mask": "0f000000",
+                    "type": "int",
+                    "shiftright": 24,
+                    "title": "Day Lower"
+                },
+                {
+                    "reg":"18cc",
+                    "mask": "0000f000",
+                    "type": "int",
+                    "shiftright": 12,
+                    "title": "Year Upper"
+                },
+                {
+                    "reg":"18cc",
+                    "mask": "00000f00",
+                    "type": "int",
+                    "shiftright": 8,
+                    "title": "Year Lower"
+                },
+                {
+                    "reg":"18ca",
+                    "mask": "f0000000",
+                    "type": "int",
+                    "shiftright": 28,
+                    "title": "Hours Upper"
+                },
+                {
+                    "reg":"18ca",
+                    "mask": "0f000000",
+                    "type": "int",
+                    "shiftright": 24,
+                    "title": "Hours Lower"
+                },
+                {
+                    "reg":"18ca",
+                    "mask": "00f00000",
+                    "type": "int",
+                    "shiftright": 20,
+                    "title": "Minutes Upper"
+                },
+                {
+                    "reg":"18ca",
+                    "mask": "000f0000",
+                    "type": "int",
+                    "shiftright": 16,
+                    "title": "Minutes Lower"
+                },
+                {
+                    "reg":"18ca",
+                    "mask": "0000f000",
+                    "type": "int",
+                    "shiftright": 12,
+                    "title": "Seconds Upper"
+                },
+                {
+                    "reg":"18ca",
+                    "mask": "00000f00",
+                    "type": "int",
+                    "shiftright": 8,
+                    "title": "Seconds Lower"
+                }
+            ]
+        }
+    ]
+    },
   "include": {
     "protection1Level1":{
       "title":"Alarm Protection 1 Level 1",
