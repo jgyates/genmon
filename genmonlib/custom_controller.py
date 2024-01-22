@@ -1058,33 +1058,12 @@ class CustomController(GeneratorController):
                     return self.printToString(self.ProcessDispatch(Logs, ""))
             
             for logitems in self.controllerimport["logs"]:
-                if "reg" in logitems.keys():
-                    Register = logitems["reg"]
-                    if "reg_type" in logitems.keys():
-                        reg_type = logitems["reg_type"]
-                    else:
-                        reg_type = None     # holding register
-                    RegisterInt = int(Register,16)
-                    if not "iteration" in logitems.keys():
-                        self.LogError("Error in DisplayLogs: reg present but not iteration")
-                        break
-                    if not "step" in logitems.keys():
-                        self.LogError("Error in DisplayLogs: reg present but not step")
-                        break
-                    iteration = logitems["iteration"]
-                    LogList = []
-                    while iteration > 0:
-                        Register = "%04x" % RegisterInt
-                        title, LogResults = self.GetDisplayEntry(logitems["object"], inheritreg=Register, inheritregtype = reg_type)
-                        if LogResults != None and len(LogResults):
-                            LogList.append(LogResults)
-                        RegisterInt += logitems["step"]
-                        iteration -= 1
-                    LogDict[logitems["title"]] = LogList
-                    
+                title, value = self.GetDisplayEntry(logitems)
+                if value != None:
+                    LogDict[title] = value
                 else:
-                    self.LogDebug("Error in DisplayLogs: non inherit register methods not support at this time")
-                
+                    break
+
         except Exception as e1:
             self.LogErrorLine("Error in DisplayLogs: " + str(e1))
         if not DictOut:
@@ -1170,6 +1149,8 @@ class CustomController(GeneratorController):
 
             if self.SystemInAlarm():
                 Status["Status"].append({"Alarm State": "System In Alarm"})
+                #activealarms = self.GetDisplayList(self.controllerimport, "alarm_conditions")
+                #Status["Status"].append(activealarms[0]
                 Status["Status"].append(
                     {
                         "Active Alarms": self.GetExtendedDisplayString(self.controllerimport, "alarm_conditions", ReturnList=True)
@@ -1312,10 +1293,17 @@ class CustomController(GeneratorController):
     def GetExtendedDisplayString(self, inputdict, key_name, no_units=False, ReturnList = False):
 
         try:
+            # this returns a list of dicts
             StateList = self.GetDisplayList(inputdict, key_name, no_units=no_units)
             ListValues = []
+            # convert the list of dicts to just a list of values
             for entry in StateList:
-                ListValues.extend(entry.values())
+                # entry.values() is a list of list if it was created from iterable objects
+                for key, values in entry.items():
+                    if isinstance(values, list):
+                        ListValues.extend(values)
+                    else:
+                        ListValues.append(values)
             if ReturnList:
                 return ListValues
             ReturnString = ", ".join(ListValues)
@@ -1528,7 +1516,10 @@ class CustomController(GeneratorController):
                 self.LogError("Error: inherit specified but no inherit value passed")
                 return ReturnTitle, ReturnValue
 
-            
+            if "iteration" in entry.keys():
+                ReturnValue = self.ProcessIterationObject(entry)
+                return entry["title"], ReturnValue
+
             if "include" in entry.keys() and "include" in self.controllerimport.keys():
                 includeName = entry["include"]
                 if includeName in self.controllerimport["include"].keys():
@@ -1776,6 +1767,40 @@ class CustomController(GeneratorController):
         except Exception as e1:
             self.LogErrorLine("Error in ProcessMaskModifier: " + str(e1) + ": " + str(entry["title"]))
             return ReturnValue
+    
+    # ------------ GeneratorController:ProcessIterationObject ------------------
+    def ProcessIterationObject(self, entry):
+        try:
+            if "reg" in entry.keys():
+                Register = entry["reg"]
+                if "reg_type" in entry.keys():
+                    reg_type = entry["reg_type"]
+                else:
+                    reg_type = None     # holding register
+                RegisterInt = int(Register,16)
+                if not "iteration" in entry.keys():
+                    self.LogError("Error in ProcessIterationObject: reg present but not iteration: " + str(entry))
+                    return None
+                if not "step" in entry.keys():
+                    self.LogError("Error in ProcessIterationObject: reg present but not step: "  + str(entry))
+                    return None
+                iteration = entry["iteration"]
+                LogList = []
+                while iteration > 0:
+                    Register = "%04x" % RegisterInt
+                    title, LogResults = self.GetDisplayEntry(entry["object"], inheritreg=Register, inheritregtype = reg_type)
+                    if LogResults != None and len(LogResults):
+                        LogList.append(LogResults)
+                    RegisterInt += entry["step"]
+                    iteration -= 1
+                return LogList
+            else:
+                # Non inherit
+                return None
+        except Exception as e1:
+            self.LogErrorLine("Error in ProcessIterationObject: " + str(e1) + ": " + str(entry["title"]))
+            return None
+    
     # ------------ GeneratorController:ProcessExecModifier ----------------------
     def ProcessExecModifier(self, entry, value, altname = None):
         try:
@@ -1965,7 +1990,9 @@ class CustomController(GeneratorController):
             # display all the registers
             temp_regsiters = self.Registers
             for Register, Value in temp_regsiters.items():
-                RegList.append({Register: Value})
+                isLog, LogRegLength, Name = self.RegisterIsLog(Register)
+                if AllRegs or not isLog:
+                    RegList.append({Register: Value})
 
             Regs["Input Registers"] = InputList
             # display all the registers

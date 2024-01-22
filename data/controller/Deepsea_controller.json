@@ -30,46 +30,23 @@
         "0006": 2
     },
     "switch_state": [
-        {
-            "reg": "0304",
-            "mask": "0000ffff",
-            "value": "7",
-            "type": "bits",
-            "title": "Switch State",
-            "text": "Off"
-        },
-        {
-            "reg": "0304",
-            "mask": "ffff",
-            "value": "1",
-            "type": "bits",
-            "title": "Switch State",
-            "text": "Auto"
-        },
-        {
-            "reg": "0304",
-            "mask": "ffff",
-            "value": "2",
-            "type": "bits",
-            "title": "Switch State",
-            "text": "Manual"
-        },
-        {
-            "reg": "0304",
-            "mask": "ffff",
-            "value": "3",
-            "type": "bits",
-            "title": "Switch State",
-            "text": "Test On load Mode"
-        },
-        {
-            "reg": "0304",
-            "mask": "ffff",
-            "value": "0",
-            "type": "bits",
-            "title": "Switch State",
-            "text": "Stopped"
+      {
+        "reg": "0304",
+        "type": "object_int_index",
+        "title": "Switch State",
+        "default": "Unknown",
+        "mask": "ffff",
+        "object": {
+          "0": "Stopped",
+          "1": "Auto",
+          "2": "Manual",
+          "3": "Test with Load",
+          "4": "Auto with manual restore mode/Prohibit Return",
+          "5": "User Configuration Mode",
+          "6": "Test Off Load Mode",
+          "7": "Off"
         }
+      }
     ],
     "alarm_conditions": [
         {

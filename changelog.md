@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file.
 - Minor change to the way alarms are displayed for custom controllers
 - Updates for better error handling for custom controller
 - Add the ability to have minimum delay between short messages (e.g. callmebot signal)
+- Minor update for Deepsea controller switch state
+- More updates for ComAp controller
 
 ## V1.19.00 -2023-11-09
 - Updates to genmonmain.sh, startgenmon.sh and genloader.sh for Debian bookworm. 

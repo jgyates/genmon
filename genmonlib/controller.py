@@ -931,6 +931,9 @@ class GeneratorController(MySupport):
         try:
             with self.ModBus.CommAccessLock:
                 for command in command_sequence:
+                    if not "reg" in command.keys():
+                        self.LogDebug("Error in ExecuteCommandSequence: invalid value array, no 'reg' in command_sequence command: " + str(command))
+                        continue
                     if not isinstance(command["value"],int) and not len(command["value"]):
                         self.LogDebug("Error in ExecuteCommandSequence: invalid value array")
                         continue
