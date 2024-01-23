@@ -33,7 +33,7 @@
     "000d": {"length":2, "text": "CPU Temp", "comment": "tenths decimal place"},
     "000e": {"length":2, "text": "D+", "comment": "Volts, tenths decimal place"},
     "000f": {"length":2, "text": "Oil Pressure", "comment": "psi"},
-    "0010": {"length":2, "text": "Water Temperature", "comment": "psi"},
+    "0010": {"length":2, "text": "Coolant Temperature", "comment": "psi"},
     "0011": {"length":2, "text": "Fuel Level", "comment": "percent"},
     "0081": {"length":2, "text": "Log Binary Out 1", "comment": "Binary#3"},
     "0082": {"length":2, "text": "Log Binary Out 2", "comment": "Binary#4"},
@@ -127,7 +127,7 @@
     "16af": {"length":2, "text": "Alarm: VPIO-1 3, VPIO-1 4", "comment": "Protection 2, 1"},
     "16b0": {"length":2, "text": "Alarm: VPIO-1 5, VPIO-1 6", "comment": "Protection 2, 1"},
     "16b1": {"length":2, "text": "Alarm: VPIO-1 7,VPIO-1 8", "comment": "Protection 2, 1"},
-    "16e6": {"length":2, "text": "Alarm: Oil press, Water temp", "comment": "Protection 2, 1"},
+    "16e6": {"length":2, "text": "Alarm: Oil press, Coolant Temp", "comment": "Protection 2, 1"},
     "16e7": {"length":2, "text": "Alarm: Fuel level", "comment": "Protection 2"},
 
     "1724": {"length":2, "text": "Alarm: BIN 1, BIN 2", "comment": "Protection 2, 1"},
@@ -454,17 +454,17 @@
               },
               {
                 "reg": "16e6",
-                "prepend_text": "Water Temperature Level 1: ",
+                "prepend_text": "Coolant Temperature Level 1: ",
                 "include": "protection2Level1"
               },
               {
                 "reg": "16e6",
-                "prepend_text": "Water Temperature Level 2: ",
+                "prepend_text": "Coolant Temperature Level 2: ",
                 "include": "protection2Level2"
               },
               {
                 "reg": "16e6",
-                "prepend_text": "Water Temperature Sensor Failure: ",
+                "prepend_text": "Coolant Temperature Sensor Failure: ",
                 "include": "protection2Sensor"
               },
               {
@@ -3715,7 +3715,7 @@
           "reg":"0010",
           "mask": "ffff",
           "type": "int",
-          "title": "Water Temp",
+          "title": "Coolant Temp",
           "temperature":"fahrenheit",
           "units": "F"
         },
@@ -3951,7 +3951,7 @@
               "0": "Start Fail",
               "1": "Overspeed",
               "2": "Oil Pressure",
-              "3": "Water Temp",
+              "3": "Coolant Temp",
               "4": "Low Coolant Level",
               "5": "Common Shutdown Alarm",
               "6": "Auto Mode",
@@ -3967,7 +3967,7 @@
             "object":{
               "0":  "Battery Voltage",
               "1": "Oil Pressure",
-              "2": "Water Temp",
+              "2": "Coolant Temp",
               "3": "Batt Charger Fail",
               "4": "Fuel level",
               "5": "Fuel Leak",
@@ -4127,7 +4127,7 @@
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
-      "title": "Battery",
+      "title": "Battery Voltage",
       "units": "V",
       "sensor": "batteryvolts",
       "nominal": 24,
@@ -4165,7 +4165,7 @@
         "reg": "0107",
         "mask": "ffff",
         "type": "int",
-        "title": "Power",
+        "title": "Power Output",
         "units": "kW",
         "sensor": "power",
         "nominal": "Unknown"
@@ -4174,7 +4174,7 @@
         "reg":"0010",
         "mask": "ffff",
         "type": "int",
-        "title": "Water Temp",
+        "title": "Coolant Temp",
         "temperature":"fahrenheit",
         "sensor": "temperature",
         "nominal": 180,
