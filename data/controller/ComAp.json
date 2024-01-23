@@ -234,7 +234,7 @@
     "18ca": {"length":4, "text": "Time", "comment": "Time"},
     "18cc": {"length":4, "text": "Date", "comment": "Date"},
     "18d1": {"length":2, "text": "Alarm List Entries", "comment": "Alarm List Entires"},
-    "18d3": {"length":2, "text": "Number of History Records", "comment": "History Log Entires"}
+    "18d2": {"length":2, "text": "Number of History Records", "comment": "History Log Entires"}
   },
   "log_registers": {
     "1a0c": { 
