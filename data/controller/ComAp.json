@@ -241,12 +241,12 @@
               "length": 50, 
               "text": "Active Alarm List", 
               "iteration": 16, 
-              "step": 10
+              "step": 25
             }
   },
   "logs":[
     {
-        "length": 50, "title": "Active Alarm List", "iteration": 16, "step": 10, "reg": "1a0c",
+        "length": 50, "title": "Active Alarm List", "iteration": 16, "step": 25, "reg": "1a0c",
         "object":{
             "inherit" : true,
             "title" : "Active Alarm List",
