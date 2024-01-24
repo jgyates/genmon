@@ -3673,7 +3673,9 @@
           "mask": "ffff",
           "multiplier": 0.01,
           "title": "Power Factor",
-          "comment": "Hundredths decimal place",
+          "comment": "round to 2 decimal places",
+          "round": 2,
+          "comment2": "Hundredths decimal place",
           "type": "float"
         },
         {

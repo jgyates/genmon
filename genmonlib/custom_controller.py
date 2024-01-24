@@ -1622,6 +1622,8 @@ class CustomController(GeneratorController):
                 value = self.ProcessMaskModifier(entry, value)
                 value = self.ProcessBitModifiers(entry, value, ReturnFloat=True)
                 value = self.ProcessTemperatureModifier( entry, value)
+                if "round" in entry.keys():
+                    value = round(float(value), int(entry["round"]))
                 if "bounds_regex" in entry.keys():
                     if re.match(entry["bounds_regex"], str(float(value))):
                         ReturnValue = self.ProcessExecModifier(entry, float(value))
@@ -2186,7 +2188,7 @@ class CustomController(GeneratorController):
                 return "SERVICEDUE"
             elif IsExercising:
                 return "EXERCISING"
-            elif IsRunning and SwitchState.startswith("auto"):
+            elif IsRunning and SwitchState.startswith("auto") or "run" in GeneratorStatus.lower() or "run" in EngineStatus.lower():
                 return "RUNNING"
             elif IsRunning and SwitchState.startswith("manual"):
                 return "RUNNING-MANUAL"
