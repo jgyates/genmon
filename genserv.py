@@ -1678,7 +1678,7 @@ def GetAddOns():
             "boolean",
             "If enabled, and email will be sent if the sensor has not performed a reading within 50 hours. Outbound email must be enabled for this to function.",
             bounds="",
-            display_name="Check Sensor Battery",
+            display_name="Check for Missed Readings",
         )
 
         # GENTANKDIY
