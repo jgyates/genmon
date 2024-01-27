@@ -24,3 +24,4 @@
 - Add the ability to report the temperature of mopeka tank sensors in the UI and SNMP/MQTT
 - Add the ability to set the name of external tank
 - [Add the ability to setup and external gauge / sensor](https://github.com/jgyates/genmon/issues/961)
+- [Add reading watchdog in gentankutil](https://github.com/jgyates/genmon/issues/1018)
