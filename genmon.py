@@ -69,9 +69,8 @@ class Monitor(MySupport):
         self.SiteName = "Home"
         self.ServerSocket = None
         self.ServerIPAddress = ""
-        self.ServerSocketPort = (
-            ProgramDefaults.ServerPort
-        )  # server socket for nagios heartbeat and command/status
+        # server socket for nagios heartbeat and command/status
+        self.ServerSocketPort = ProgramDefaults.ServerPort
         self.IncomingEmailFolder = "Generator"
         self.ProcessedEmailFolder = "Generator/Processed"
 
@@ -81,15 +80,14 @@ class Monitor(MySupport):
         self.NumberOfLogSizeErrors = 0
         # set defaults for optional parameters
         self.NewInstall = False  # True if newly installed or newly upgraded version
-        self.FeedbackEnabled = (
-            False  # True if sending autoated feedback on missing information
-        )
+        # True if sending autoated feedback on missing information
+        self.FeedbackEnabled = False  
         self.FeedbackMessages = {}
-        self.OneTimeMessages = {}
+
         self.MailInit = False  # set to true once mail is init
-        self.CommunicationsActive = (
-            False  # Flag to let the heartbeat thread know we are communicating
-        )
+        # Flag to let the heartbeat thread know we are communicating
+        self.CommunicationsActive = False
+
         self.Controller = None
         self.ControllerSelected = None
         self.bDisablePlatformStats = False
@@ -210,6 +208,7 @@ class Monitor(MySupport):
             "Feedback",
             self.FeedbackReceiver,
             log=self.log,
+            debug = self.debug,
             ConfigFilePath=self.ConfigFilePath,
         )
         self.Threads = self.MergeDicts(self.Threads, self.FeedbackPipe.Threads)
@@ -217,6 +216,7 @@ class Monitor(MySupport):
             "Message",
             self.MessageReceiver,
             log=self.log,
+            debug = self.debug,
             nullpipe=self.mail.DisableSNMP,
             ConfigFilePath=self.ConfigFilePath,
         )
@@ -339,6 +339,8 @@ class Monitor(MySupport):
         try:
             if self.config.HasOption("sitename"):
                 self.SiteName = self.config.ReadValue("sitename")
+
+            self.debug = self.config.ReadValue("debug", return_type=bool, default=False)
 
             self.multi_instance = self.config.ReadValue(
                 "multi_instance", return_type=bool, default=False
@@ -517,15 +519,6 @@ class Monitor(MySupport):
         try:
             MessageDict = {}
             MessageDict = json.loads(Message)
-
-            if MessageDict["onlyonce"]:
-                Subject = self.OneTimeMessages.get(MessageDict["subjectstr"], None)
-                if Subject == None:
-                    self.OneTimeMessages[MessageDict["subjectstr"]] = MessageDict[
-                        "msgstr"
-                    ]
-                else:
-                    return
 
             self.mail.sendEmail(
                 MessageDict["subjectstr"],
@@ -738,6 +731,7 @@ class Monitor(MySupport):
     # ---------- Send message ---------------------------------------------------
     def SendMessage(self, CmdString):
         try:
+            self.LogDebug("ENTER SendMessage")
             if CmdString == None or CmdString == "":
                 return "Error: invalid command in SendMessage"
 
@@ -755,8 +749,13 @@ class Monitor(MySupport):
                 onlyonce = False
             else:
                 onlyonce = data["onlyonce"]
+            if not "oncedaily" in data:
+                oncedaily = False
+            else:
+                oncedaily = data["oncedaily"]
+            self.LogDebug("SENDMSG:" + str(data))
             self.MessagePipe.SendMessage(
-                msgtitle, data["body"], msgtype=data["type"], onlyonce=onlyonce
+                msgtitle, data["body"], msgtype=data["type"], onlyonce=onlyonce, oncedaily=oncedaily
             )
             return "OK"
         except Exception as e1:

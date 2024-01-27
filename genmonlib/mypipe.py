@@ -13,6 +13,7 @@ import json
 import os
 import threading
 import time
+import datetime
 
 from genmonlib.mysupport import MySupport
 from genmonlib.mythread import MyThread
@@ -28,18 +29,26 @@ class MyPipe(MySupport):
         callback=None,
         Reuse=False,
         log=None,
+        debug=False,
         simulation=False,
         nullpipe=False,
         ConfigFilePath=ProgramDefaults.ConfPath,
     ):
         super(MyPipe, self).__init__(simulation=simulation)
         self.log = log
+        self.debug = debug
         self.BasePipeName = name
         self.NullPipe = nullpipe
 
         if self.Simulation:
             return
 
+        # refernce time for resetting daily messages
+        self.DailyTime = datetime.datetime.now()
+        # dict for holding one time messages
+        self.OneTimeMessages = {}
+        # list for subject of daily
+        self.DailyMessages = []
         self.ThreadName = "ReadPipeThread" + self.BasePipeName
         self.Callback = callback
 
@@ -139,6 +148,7 @@ class MyPipe(MySupport):
         deletefile=False,
         msgtype="error",
         onlyonce=False,
+        oncedaily=False
     ):
 
         if self.Simulation:
@@ -152,6 +162,24 @@ class MyPipe(MySupport):
             MessageDict["deletefile"] = deletefile
             MessageDict["msgtype"] = msgtype
             MessageDict["onlyonce"] = onlyonce
+            MessageDict["oncedaily"] = oncedaily
+
+            if MessageDict["onlyonce"]:
+                Subject = self.OneTimeMessages.get(MessageDict["subjectstr"], None)
+                if Subject == None:
+                    # have not sent it so add it to the list
+                    self.OneTimeMessages[MessageDict["subjectstr"]] = MessageDict["msgstr"]
+                else:
+                    return      # already sent this once
+
+            #NUMBER_OF_SECONDS = 86400
+            NUMBER_OF_SECONDS = 60 * 60 * 24    # every 24 hours
+            if (datetime.datetime.now() - self.DailyTime).total_seconds() > NUMBER_OF_SECONDS:
+                self.ResetDailyFilter()
+            if oncedaily and subjectstr in self.DailyMessages:
+                return
+            if oncedaily:
+                self.DailyMessages.append(subjectstr)
 
             data = json.dumps(MessageDict, sort_keys=False)
             self.WriteFile(data)
@@ -160,6 +188,11 @@ class MyPipe(MySupport):
                 "Error in SendMessage: <" + (str(subjectstr)) + "> : " + str(e1)
             )
 
+    #---------------------ResetEmailFilter--------------------------------------
+    def  ResetDailyFilter(self):
+        self.DailyTime = datetime.datetime.now()
+        self.DailyMessages = []
+        return 
     # ------------ MyPipe::Close-------------------------------------------------
     def Close(self):
 

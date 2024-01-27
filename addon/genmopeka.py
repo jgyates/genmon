@@ -419,12 +419,12 @@ class GenMopekaData(MySupport):
         return data
 
     # ----------GenMopekaData::SendMessage----------------------------------------
-    def SendMessage(self, title, body, type, onlyonce=False):
+    def SendMessage(self, title, body, type, onlyonce=False, oncedaily=False):
 
         try:
             if not self.send_notices:
                 return "disabled"
-            message = {"title": title, "body": body, "type": type, "onlyonce": onlyonce}
+            message = {"title": title, "body": body, "type": type, "onlyonce": onlyonce, "oncedaily": oncedaily}
             command = "generator: notify_message=" + json.dumps(message)
 
             data = self.SendCommand(command)

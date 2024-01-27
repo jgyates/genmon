@@ -328,6 +328,8 @@ def CheckLockOutDuration():
                     "title": "Security Warning",
                     "body": "Genmon login is locked due to exceeding the maximum login attempts.",
                     "type": "error",
+                    "oncedaily": False,
+                    "onlyonce": False,
                 }
                 command = "generator: notify_message=" + json.dumps(message)
 
@@ -1659,6 +1661,24 @@ def GetAddOns():
             "The duration in minutes between poll of tank data.",
             bounds="number",
             display_name="Poll Frequency",
+        )
+        AddOnCfg["gentankutil"]["parameters"]["check_battery"] = CreateAddOnParam(
+            ConfigFiles[GENTANKUTIL_CONFIG].ReadValue(
+                "check_battery", return_type=bool, default=False
+            ),
+            "boolean",
+            "If enabled, and email will be sent if the battery level on the sensor is critical. Outbound email must be enabled for this to function.",
+            bounds="",
+            display_name="Check Sensor Battery",
+        )
+        AddOnCfg["gentankutil"]["parameters"]["check_reading"] = CreateAddOnParam(
+            ConfigFiles[GENTANKUTIL_CONFIG].ReadValue(
+                "check_reading", return_type=bool, default=False
+            ),
+            "boolean",
+            "If enabled, and email will be sent if the sensor has not performed a reading within 50 hours. Outbound email must be enabled for this to function.",
+            bounds="",
+            display_name="Check Sensor Battery",
         )
 
         # GENTANKDIY

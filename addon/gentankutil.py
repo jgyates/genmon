@@ -92,6 +92,9 @@ class GenTankData(MySupport):
             self.password = self.config.ReadValue("password", default="")
             self.tank_name = self.config.ReadValue("tank_name", default="")
             self.tank_name_2 = self.config.ReadValue("tank_name_2", default="")
+            self.check_battery = self.config.ReadValue("check_battery", return_type=bool, default=False)
+            self.check_reading = self.config.ReadValue("check_reading", return_type=bool, default=False)
+            self.reading_timeout = self.config.ReadValue("reading_timeout", return_type=int, default=50)
 
             if self.MonitorAddress == None or not len(self.MonitorAddress):
                 self.MonitorAddress = ProgramDefaults.LocalHost
@@ -137,6 +140,21 @@ class GenTankData(MySupport):
             self.console.error("Error in GenTankData init: " + str(e1))
             sys.exit(1)
 
+    # ----------GenMopekaData::SendMessage----------------------------------------
+    def SendMessage(self, title, body, type, onlyonce=False, oncedaily=False):
+
+        try:
+            if not self.check_battery and not self.check_reading:
+                return "disabled"
+            message = {"title": title, "body": body, "type": type, "onlyonce": onlyonce, "oncedaily": oncedaily}
+            command = "generator: notify_message=" + json.dumps(message)
+
+            data = self.SendCommand(command)
+            return data
+        except Exception as e1:
+            self.LogErrorLine("Error in SendMessage: " + str(e1))
+            return ""
+        
     # ----------  GenTankData::SendCommand --------------------------------------
     def SendCommand(self, Command):
 
@@ -220,22 +238,72 @@ class GenTankData(MySupport):
                     dataforgenmon["Tank Name"] = tankdata["name"]
                     dataforgenmon["Capacity"] = self.tank.GetCapacity()
                     dataforgenmon["Percentage"] = self.tank.GetPercentage()
-                    self.LogDebug("Tank1 = " + json.dumps(tankdata))
+                    dataforgenmon["Battery"] = self.tank.GetBattery()
+                    dataforgenmon["Temperature"] = self.tank.GetReadingTemperature()
+                    try:
+                        epoch_time = self.tank.GetReadingEpochTime()
+                        datetime_time = datetime.datetime.fromtimestamp(epoch_time / 1000)
+                        dataforgenmon["Reading Time"] =  str(datetime_time)
+                        self.CheckTankResponse(tankdata["name"], datetime_time, self.tank.GetBattery())
+                    except Exception as e1:
+                        self.LogErrorLine("Error reading tank 1 reading time: " + str(e1))
+
+                    #self.LogDebug("Tank1 = " + json.dumps(tankdata))
                     if len(self.TankID_2) != 0:
                         tankdata = self.tank.GetData(self.TankID_2)
                         self.LogDebug("Tank2 = " + json.dumps(tankdata))
                         dataforgenmon["Percentage2"] = self.tank.GetPercentage()
-
-                    retVal = self.SendCommand(
-                        "generator: set_tank_data=" + json.dumps(dataforgenmon)
-                    )
-                    self.LogDebug(retVal)
+                        try:
+                            epoch_time = self.tank.GetReadingEpochTime()
+                            datetime_time = datetime.datetime.fromtimestamp(epoch_time / 1000)
+                            dataforgenmon["Battery2"] = self.tank.GetBattery()
+                            dataforgenmon["Reading Time2"] =  str(datetime_time)
+                            self.CheckTankResponse(tankdata["name"], datetime_time, self.tank.GetBattery())
+                        except Exception as e1:
+                            self.LogErrorLine("Error reading tank 2 reading time: " + str(e1))
+                    
+                    retVal = self.SendCommand("generator: set_tank_data=" + json.dumps(dataforgenmon))
+                    #self.LogDebug(retVal)
                 if self.WaitForExit("TankCheckThread", float(self.PollTime * 60)):
                     return
             except Exception as e1:
                 self.LogErrorLine("Error in TankCheckThread: " + str(e1))
                 if self.WaitForExit("TankCheckThread", float(self.PollTime * 60)):
                     return
+
+    # ----------GenTankData::CheckTankResponse----------------------------------
+    def CheckTankResponse(self, tank_name, datetime_time, battery_string):
+        try:
+            if self.check_reading and self.CheckTimeDiffExpired(datetime_time, (60 * int(self.reading_timeout))): # default is 50 hours
+                msgbody = "Genmon Tankutil Warning: Tank Monitor Missed Update. Last update was " + str(datetime_time) + " for tank '" + tank_name + "'"
+                msgsubject = "Genmon Tankutil Tank Monitor Message: Reporting: " + tank_name
+                self.SendMessage(msgsubject, msgbody, "error", onlyonce=False, oncedaily=True)
+                self.LogDebug(msgsubject)
+                self.LogDebug(msgbody)
+
+            if self.check_battery and battery_string.lower() == "critical":
+                msgbody = "Warning: Tank Monitor Battery is : " + str(battery_string)
+                msgsubject = "Genmon Tankutil Tank Monitor Message: Battery: " + tank_name
+                self.SendMessage(msgsubject, msgbody, "error", onlyonce=False, oncedaily=True)
+                self.LogDebug(msgsubject)
+                self.LogDebug(msgbody)
+
+        except Exception as e1:
+            self.LogErrorLine("Error in CheckTanksReponse: " + str(e1))
+
+    #---------------------CheckTimeDiffExpired----------------------------------
+    # check that numner of minutes has expired since a given time
+    def CheckTimeDiffExpired(self, time, min):
+
+        try:
+            time_reference_seconds = min * 60.0
+            if (datetime.datetime.now() - time).total_seconds() > time_reference_seconds:
+                return True
+            else:
+                return False
+        except Exception as e1:
+            self.LogErrorLine("Error in CheckTimeDiffExpired: " + str(e1))
+            return True
 
     # ----------GenTankData::SignalClose----------------------------------------
     def SignalClose(self, signum, frame):
