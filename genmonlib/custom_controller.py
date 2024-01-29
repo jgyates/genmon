@@ -18,6 +18,7 @@ import sys
 import threading
 import time
 import copy
+import struct
 
 from genmonlib.controller import GeneratorController
 from genmonlib.modbus_file import ModbusFile
@@ -1616,14 +1617,28 @@ class CustomController(GeneratorController):
                 value = self.ProcessMaskModifier(entry, value)
                 if value == int(entry["value"], 16):
                     ReturnValue = entry["text"]
-
+            elif entry["type"] == "bool":
+                value = self.GetParameter(Register, ReturnInt=True, IsCoil=IsCoil, IsInput=IsInput)
+                if "value" in entry.keys():
+                    if isinstance(entry["value"], str):
+                        logical_value = (entry["value"].lower() == "true")
+                    elif isinstance(entry["value"], bool):
+                        logical_value = entry["value"]
+                    else:
+                        self.LogError("Error: for type bool 'value' must be a string or bool: " + str(entry))
+                        logical_value = True
+                else:
+                    logical_value = True
+                value = self.ProcessMaskModifier(entry, value)
+                value = self.ProcessBitModifiers(entry, value)
+                if (not (value == 0)) == logical_value:
+                    ReturnValue = entry["text"]
             elif entry["type"] == "float":
                 value = self.GetParameter(Register, ReturnInt=True, IsCoil=IsCoil, IsInput=IsInput)
                 value = self.ProcessMaskModifier(entry, value)
                 value = self.ProcessBitModifiers(entry, value, ReturnFloat=True)
                 value = self.ProcessTemperatureModifier( entry, value)
-                if "round" in entry.keys():
-                    value = round(float(value), int(entry["round"]))
+                value = self.ProcessRoundModifiers(entry, value)
                 if "bounds_regex" in entry.keys():
                     if re.match(entry["bounds_regex"], str(float(value))):
                         ReturnValue = self.ProcessExecModifier(entry, float(value))
@@ -1723,6 +1738,17 @@ class CustomController(GeneratorController):
             self.LogDebug(str(entry))
 
         return ReturnTitle, ReturnValue
+    
+    # ------------ GeneratorController:ProcessRoundModifiers ----------------------
+    def ProcessRoundModifiers(self, entry, value):
+        try:
+            if "round" in entry.keys():
+                return round(float(value), int(entry["round"]))
+            else:
+                return value
+        except Exception as e1:
+            self.LogErrorLine("Error in ProcessRoundModifiers: " + str(e1) + ": " + str(entry["title"]))
+            return value
     # ------------ GeneratorController:ProcessBitModifiers ----------------------
     def ProcessBitModifiers(self, entry, value, ReturnFloat = False):
         try:
@@ -1730,6 +1756,15 @@ class CustomController(GeneratorController):
                 value = value >> int(entry["shiftright"])
             if "shiftleft" in entry.keys():
                 value = value << int(entry["shiftleft"])
+            if "ieee754" in entry.keys() and ReturnFloat:
+                if entry["ieee754"].lower() == "half":
+                    value = float(struct.unpack('f', struct.pack('H', int(value)))[0])
+                elif entry["ieee754"].lower() == "single":
+                    value = float(struct.unpack('f', struct.pack('I', int(value)))[0])
+                elif entry["ieee754"].lower() == "double":
+                    value = float(struct.unpack('f', struct.pack('Q', int(value)))[0])
+                else:
+                    self.LogError("Error converting ieee754 floating point: invalid ieee754 type: " + str(entry))
             if "multiplier" in entry.keys():
                 if ReturnFloat:
                     value = float(value * float(entry["multiplier"]))
