@@ -196,7 +196,7 @@ if __name__ == "__main__":  #
     HelpStr += "\n      -i  IP address if modbus over TCP is used"
     HelpStr += "\n      -t  TCP port if modbus over TCP is used"
     HelpStr += "\n      -m  Use Modbus TCP, if omitted and IP and port provided then use Modbus RTU over TCP"
-    HelpStr += "\n      -f  use modbus function 4 instead of function 3 to read input registers insteae of holding registers"
+    HelpStr += "\n      -f  use modbus function 4 instead of function 3 to read input registers instead of holding registers"
     HelpStr += "\n \n"
 
     try:
