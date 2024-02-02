@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - Minor update for Deepsea controller switch state
 - More updates for ComAp controller
 - Update to gentankutil to add option to check battery and missed readings. See Add On page to enable this functionality.
+- Minor update to error handling of fuel gauge 
 
 ## V1.19.00 -2023-11-09
 - Updates to genmonmain.sh, startgenmon.sh and genloader.sh for Debian bookworm. 
