@@ -1767,11 +1767,12 @@ class CustomController(GeneratorController):
             if "shiftleft" in entry.keys():
                 value = value << int(entry["shiftleft"])
             if "ieee754" in entry.keys() and ReturnFloat:
-                if entry["ieee754"].lower() == "half":
+                # Use this for testing: https://www.h-schmidt.net/FloatConverter/IEEE754.html
+                if entry["ieee754"].lower() == "half":  # 16 bits
                     value = float(struct.unpack('f', struct.pack('H', int(value)))[0])
-                elif entry["ieee754"].lower() == "single":
+                elif entry["ieee754"].lower() == "single":  # 32 bits
                     value = float(struct.unpack('f', struct.pack('I', int(value)))[0])
-                elif entry["ieee754"].lower() == "double":
+                elif entry["ieee754"].lower() == "double":  # 64 bits
                     value = float(struct.unpack('f', struct.pack('Q', int(value)))[0])
                 else:
                     self.LogError("Error converting ieee754 floating point: invalid ieee754 type: " + str(entry))
