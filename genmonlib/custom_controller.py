@@ -469,6 +469,8 @@ class CustomController(GeneratorController):
                         " entry"
                     )
                     continue
+                units = sensor["units"]
+
                 if "nominal" not in sensor:
                     self.LogError(
                         "Error in SetupTiles: sensor (" + sensor["title"] + ") has no "
@@ -503,12 +505,20 @@ class CustomController(GeneratorController):
                         nominal = None
                         self.LogError("Nominal is unknown for type " + sensor["sensor"])
                 else:
-                    nominal = sensor["nominal"]
+                    if sensor["sensor"].lower() == "temperature":
+                        if "nominal" in sensor.keys():
+                            nominal = self.ProcessTemperatureModifier(sensor, sensor["nominal"], units = False)
+                        if "maximum" in sensor.keys():
+                            maximum = self.ProcessTemperatureModifier(sensor, sensor["maximum"], units = False)
+                        if "units" in sensor.keys():
+                            units = self.ProcessTemperatureModifier(sensor, sensor["units"], units = True)
+                    else:
+                        nominal = sensor["nominal"]
                 Tile = MyTile(
                     self.log,
                     title=sensor["title"],
                     type=sensor["sensor"],
-                    units=sensor["units"],
+                    units=units,
                     nominal=nominal,
                     maximum=maximum,
                     values=values,
@@ -1567,8 +1577,8 @@ class CustomController(GeneratorController):
             if entry["type"] == "bits" and not "text" in entry.keys():
                 self.LogError("Error: text not found in input to GetDisplayEntry: " + str(entry))
                 return ReturnTitle, ReturnValue
-            if entry["type"] == "float" and not "multiplier" in entry.keys():
-                self.LogError("Error: multiplier (requried for float) not found in input to GetDisplayEntry: "+ str(entry))
+            if entry["type"] == "float" and (not "multiplier" in entry.keys() and not "ieee754" in entry.keys()):
+                self.LogError("Error: multiplier or ieee754 (requried for float) not found in input to GetDisplayEntry: "+ str(entry))
                 return ReturnTitle, ReturnValue
             if entry["type"] == "regex" and not "regex" in entry.keys():
                 self.LogError("Error: regex not found in input to GetDisplayEntry: " + str(entry))

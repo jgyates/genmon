@@ -1,0 +1,1817 @@
+{
+    "controller_name": "Kohler APM603",
+    "generator_phase": 3,
+    "rated_nominal_rpm": 1800,
+    "rated_max_output_power_kw": "Unknown",
+    "rated_nominal_voltage": "Unknown",
+    "rated_nominal_freq": "Unknown",
+    "nominal_battery_voltage": "Unknown",
+    "coil_registers": {
+        "0000": {"length": 1, "text": "Excitation Over Voltage Input"},
+        "0001": {"length": 1, "text": "Fuel Leak Switch Input"},
+        "0002": {"length": 1, "text": "Remote Start Input"},
+        "0003": {"length": 1, "text": "Breaker Closed Input"},
+        "0004": {"length": 1, "text": "Breaker Tripped Input"},
+        "0005": {"length": 1, "text": "Ground Fault Relay Input"},
+        "0006": {"length": 1, "text": "Key Switch Auto Input"},
+        "0007": {"length": 1, "text": "Key Switch Run Input"},
+        "000c": {"length": 1, "text": "Local Emergency Stop Input"},
+        "000d": {"length": 1, "text": "Remote Emergency Stop Input"},
+        "0014": {"length": 1, "text": "Run / Fuel Output"},
+        "0015": {"length": 1, "text": "Crank Output"},
+        "0016": {"length": 1, "text": "Horn Output"},
+        "0017": {"length": 1, "text": "Common Failure Output"},
+        "0018": {"length": 1, "text": "Common Warning Output"},
+        "0019": {"length": 1, "text": "High Coolant Temp Warning Output"},
+        "001a": {"length": 1, "text": "Close Breaker Output"},
+        "001b": {"length": 1, "text": "Trip Breaker Output"},
+        "00c8": {"length": 1, "text": "Over Crank Shutdown"},
+        "00c9": {"length": 1, "text": "Under Frequency Warning"},
+        "00ca": {"length": 1, "text": "Under Frequency Shutdown"},
+        "00cb": {"length": 1, "text": "Over Frequency Warning"},
+        "00cc": {"length": 1, "text": "Over Frequency Shutdown"},
+        "00cd": {"length": 1, "text": "Over Power Warning"},
+        "00ce": {"length": 1, "text": "Over Power Shutdown"},
+        "00cf": {"length": 1, "text": "Low Oil Pressure Warning"},
+        "00d0": {"length": 1, "text": "Low Oil Pressure Shutdown"},
+        "00d1": {"length": 1, "text": "Low Coolant Temperature Warning"},
+        "00d2": {"length": 1, "text": "High Coolant Temperature Warning"},
+        "00d3": {"length": 1, "text": "High Coolant Temperature Shutdown"},
+        "00d4": {"length": 1, "text": "Local Emergency Stop Shutdown"},
+        "00d5": {"length": 1, "text": "Remote Emergency Stop Shutdown"},
+        "00d6": {"length": 1, "text": "Over Speed Shutdown"},
+        "00d7": {"length": 1, "text": "Loss ECM Comms Shutdown"},
+        "00d8": {"length": 1, "text": "ECM Mismatch Shutdown"},
+        "00d9": {"length": 1, "text": "ECM Diagnostic Event"},
+        "00da": {"length": 1, "text": "Generator Running"},
+        "00db": {"length": 1, "text": "Generator Stopped"},
+        "00dc": {"length": 1, "text": "Low Battery Voltage Warning"},
+        "00dd": {"length": 1, "text": "High Battery Voltage Warning"},
+        "00de": {"length": 1, "text": "Battery Charger Fault Warning"},
+        "00df": {"length": 1, "text": "Low Oil Pressure Warning ECM DTC"},
+        "00e0": {"length": 1, "text": "Low Oil Pressure Shutdown ECM DTC"},
+        "00e1": {"length": 1, "text": "High Coolant Temperature Warning ECM DTC"},
+        "00e2": {"length": 1, "text": "High Coolant Temperature Shutdown ECM DTC"},
+        "00e3": {"length": 1, "text": "High Oil Temperature Warning"},
+        "00e4": {"length": 1, "text": "High Oil Temperature Shutdown"},
+        "00e5": {"length": 1, "text": "Alternator Protection Shutdown L1"},
+        "00e6": {"length": 1, "text": "Alternator Protection Shutdown L2"},
+        "00e7": {"length": 1, "text": "Alternator Protection Shutdown L3"},
+        "00e8": {"length": 1, "text": "Emergency Power Source Supplying Power"},
+        "00e9": {"length": 1, "text": "Not In Auto Alarm"},
+        "00ea": {"length": 1, "text": "Load Shed Overload"},
+        "00eb": {"length": 1, "text": "Fuel Leak Alarm"},
+        "00ec": {"length": 1, "text": "Load Shed Under Frequency"},
+        "00ed": {"length": 1, "text": "Maintenance Reminder1"},
+        "00ee": {"length": 1, "text": "Maintenance Reminder2"},
+        "00ef": {"length": 1, "text": "Maintenance Reminder3"},
+        "00f0": {"length": 1, "text": "Weak Cranking Battery"},
+        "00f1": {"length": 1, "text": "Auto Button Pressed"},
+        "00f2": {"length": 1, "text": "Off Button Pressed"},
+        "00f3": {"length": 1, "text": "Run Button Pressed"},
+        "00f4": {"length": 1, "text": "Protective Relay Trip Over Voltage"},
+        "00f5": {"length": 1, "text": "Protective Relay Trip Under Voltage"},
+        "00f6": {"length": 1, "text": "Protective Relay Trip Over Current"},
+        "00f7": {"length": 1, "text": "Protective Relay Trip Over Frequency"},
+        "00f8": {"length": 1, "text": "Protective Relay Trip Under Frequency"},
+        "00f9": {"length": 1, "text": "Protective Relay Trip Reverse Power"},
+        "00fa": {"length": 1, "text": "Protective Relay Trip Reverse VAR"},
+        "00fb": {"length": 1, "text": "Protective Relay Trip Over Power"},
+        "00fc": {"length": 1, "text": "Protective Relay Shutdown Over Power"},
+        "00fd": {"length": 1, "text": "Protective Relay Shutdown Over Current"},
+        "00fe": {"length": 1, "text": "Protective Relay Shutdown Reverse VAR"},
+        "00ff": {"length": 1, "text": "Protective Relay Shutdown Reverse Power"},
+        "0100": {"length": 1, "text": "Ground Fault Relay Warning"},
+        "0101": {"length": 1, "text": "Under Voltage Warning L1 L2"},
+        "0102": {"length": 1, "text": "Under Voltage Warning L2 L3"},
+        "0103": {"length": 1, "text": "Under Voltage Warning L3 L1"},
+        "0104": {"length": 1, "text": "Under Voltage Warning L1 N"},
+        "0105": {"length": 1, "text": "Under Voltage Warning L2 N"},
+        "0106": {"length": 1, "text": "Under Voltage Warning L3 N"},
+        "0107": {"length": 1, "text": "Under Voltage Shutdown L1 L2"},
+        "0108": {"length": 1, "text": "Under Voltage Shutdown L2 L3"},
+        "0109": {"length": 1, "text": "Under Voltage Shutdown L3 L1"},
+        "010a": {"length": 1, "text": "Under Voltage Shutdown L1 N"},
+        "010b": {"length": 1, "text": "Under Voltage Shutdown L2 N"},
+        "010c": {"length": 1, "text": "Under Voltage Shutdown L3 N"},
+        "010d": {"length": 1, "text": "Over Voltage Warning L1 L2"},
+        "010e": {"length": 1, "text": "Over Voltage Warning L2 L3"},
+        "010f": {"length": 1, "text": "Over Voltage Warning L3 L1"},
+        "0110": {"length": 1, "text": "Over Voltage Warning L1 N"},
+        "0111": {"length": 1, "text": "Over Voltage Warning L2 N"},
+        "0112": {"length": 1, "text": "Over Voltage Warning L3 N"},
+        "0113": {"length": 1, "text": "Over Voltage Shutdown L1 L2"},
+        "0114": {"length": 1, "text": "Over Voltage Shutdown L2 L3"},
+        "0115": {"length": 1, "text": "Over Voltage Shutdown L3 L1"},
+        "0116": {"length": 1, "text": "Over Voltage Shutdown L1 N"},
+        "0117": {"length": 1, "text": "Over Voltage Shutdown L2 N"},
+        "0118": {"length": 1, "text": "Over Voltage Shutdown L3 N"},
+        "0119": {"length": 1, "text": "Over Current L1Warning Warning"},
+        "011a": {"length": 1, "text": "Over Current L2Warning Warning"},
+        "011b": {"length": 1, "text": "Over Current L3Warning Warning"},
+        "011c": {"length": 1, "text": "Over Current L1Shutdown Shutdown"},
+        "011d": {"length": 1, "text": "Over Current L2Shutdown Shutdown"},
+        "011e": {"length": 1, "text": "Over Current L3Shutdown Shutdown"},
+        "011f": {"length": 1, "text": "Loss Of Signal Low Coolant Level"},
+        "0120": {"length": 1, "text": "Excitation Over Voltage Shutdown"},
+        "0121": {"length": 1, "text": "RSA Programmable Input 1"},
+        "0122": {"length": 1, "text": "RSA Programmable Input 2"},
+        "0123": {"length": 1, "text": "RSA Programmable Input 3"},
+        "0124": {"length": 1, "text": "RSA Programmable Input 4"},
+        "0125": {"length": 1, "text": "RSA Programmable Input 5"},
+        "0126": {"length": 1, "text": "RSA Programmable Input 6"},
+        "0127": {"length": 1, "text": "RSA Programmable Input 7"},
+        "0128": {"length": 1, "text": "RSA Programmable Input 8"},
+        "0129": {"length": 1, "text": "High Fuel Level Warning"},
+        "012a": {"length": 1, "text": "Low Fuel Level Warning"},
+        "012b": {"length": 1, "text": "Critically Low Fuel Level Warning"},
+        "012c": {"length": 1, "text": "Low Fuel Level Shutdown"},
+        "012d": {"length": 1, "text": "Low Coolant Level Shutdown"},
+        "012e": {"length": 1, "text": "Option Board Comm Loss Warning"},
+        "0135": {"length": 1, "text": "Low RTC Battery Voltage"},
+        "0136": {"length": 1, "text": "Over Power Shutdown"},
+        "0137": {"length": 1, "text": "Over Power Warning"},
+        "0138": {"length": 1, "text": "Battery Charger 1 Fault"},
+        "0139": {"length": 1, "text": "Battery Charger 2 Fault"}
+    },
+    "holding_registers": {
+        "0000": {"length": 4, "text": "Generator Voltage L1 L2, Volts"},
+        "0002": {"length": 4, "text": "Generator Voltage L2 L3, Volts"},
+        "0004": {"length": 4, "text": "Generator Voltage L3 L1, Volts"},
+        "0006": {"length": 4, "text": "Generator Voltage L1 L0, Volts"},
+        "0008": {"length": 4, "text": "Generator Voltage L2 L0, Volts"},
+        "000a": {"length": 4, "text": "Generator Voltage L3 L0, Volts"},
+        "000c": {"length": 4, "text": "Generator Current L1, Amps"},
+        "000e": {"length": 4, "text": "Generator Current L2, Amps"},
+        "0010": {"length": 4, "text": "Generator Current L3, Amps"},
+        "0014": {"length": 4, "text": "Generator Frequency, Hertz"},
+        "0022": {"length": 4, "text": "Bus Voltage L1 L2"},
+        "0024": {"length": 4, "text": "Bus Voltage L2 L3"},
+        "0026": {"length": 4, "text": "Bus Voltage L3 L1"},
+        "0028": {"length": 4, "text": "Bus Voltage L1 L0"},
+        "002a": {"length": 4, "text": "Bus Voltage L2 L0"},
+        "002c": {"length": 4, "text": "Bus Voltage L3 L0"},
+        "0036": {"length": 4, "text": "Bus Frequency"},
+        "00f2": {"length": 4, "text": "Cooldown Time Limit, Seconds"},
+        "00f4": {"length": 4, "text": "Cooldown Temp Limit, Degrees C"},
+        "00f6": {"length": 4, "text": "Warmup Time Limit, Seconds"},
+        "00f8": {"length": 4, "text": "Warmup Temp Limit, Degrees C"},
+        "00fa": {"length": 4, "text": "Fault Cooldown Time Limit, Seconds"},
+        "00fc": {"length": 4, "text": "ECU Fuel Pressure, kPA"},
+        "00fe": {"length": 4, "text": "ECU Fuel Rate, Liters per hour"},
+        "0100": {"length": 4, "text": "ECU Engine Speed, RPM"},
+        "0102": {"length": 4, "text": "ECU Oil Temperature, Degrees C"},
+        "0104": {"length": 4, "text": "ECU Coolant Temperature, Degrees C"},
+        "0106": {"length": 4, "text": "ECU Intake Manifold Temperature, Degrees C"},
+        "0108": {"length": 4, "text": "ECU Intake Manifold Pressure, kPA"},
+        "010a": {"length": 4, "text": "ECU Runtime Hours, Hours"},
+        "010c": {"length": 4, "text": "ECU Battery Voltage, Volts"},
+        "0282": {"length": 4, "text": "Real Power L1, Watts"},
+        "0284": {"length": 4, "text": "Real Power L2, Watts"},
+        "0286": {"length": 4, "text": "Real Power L3, Watts"},
+        "0288": {"length": 4, "text": "Reactive Power L1, VAR"},
+        "028a": {"length": 4, "text": "Reactive Power L2, VAR"},
+        "028c": {"length": 4, "text": "Reactive Power L3, VAR"},
+        "028e": {"length": 4, "text": "Total Real Power, Watts"},
+        "0290": {"length": 4, "text": "Total Reactive Power, Watts"},
+        "0292": {"length": 4, "text": "Total Power Factor, Watts"},
+        "0294": {"length": 4, "text": "Crank Cycle Count"},
+        "0296": {"length": 4, "text": "Voltage Average L To L"},
+        "0298": {"length": 4, "text": "Voltage Average L To N"},
+        "029a": {"length": 4, "text": "Current Average Single Phase"},
+        "029c": {"length": 4, "text": "Current Average Three phase"},
+        "029e": {"length": 4, "text": "Controller Hours"},
+        "02a0": {"length": 4, "text": "Battery Voltage"},
+        "270e": {"length": 2, "text": "Controller ID, APM603 = 74"}
+    },
+    "switch_state": [
+        {
+            "reg": "0006",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Switch State",
+            "text": "Key Switch Auto"
+        },
+        {
+            "reg": "0007",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Switch State",
+            "text": "Key Switch Run"
+        },
+        {
+            "reg": "00f1",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Auto Button Pressed"
+        },
+        {
+            "reg": "00f2",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Off Button Pressed"
+        },
+        {
+            "reg": "00f3",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Run Button Pressed"
+        }
+    ],
+    "engine_state": [
+        {
+            "reg": "00da",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Engine State",
+            "text": "Running"
+        },
+        {
+            "reg": "00db",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Engine State",
+            "text": "Stopped"
+        },
+        {
+            "reg": "0015",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Engine State",
+            "text": "Cranking"
+        }
+    ],
+    "generator_status":[
+        {
+            "reg": "0002",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Generator Status",
+            "text": "Remote Start Input"
+        },
+        {
+            "reg": "0014",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Generator Status",
+            "text": "Run / Fuel Output"
+        },
+        
+        {
+            "reg": "0016",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Generator Status",
+            "text": "Horn Output"
+        },
+        {
+            "reg": "0003",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Breaker Closed"
+        },
+        {
+            "reg": "0004",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Breaker Tripped"
+        },
+        {
+            "reg": "001a",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Close Breaker Output"
+        },
+        {
+            "reg": "001b",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Trip Breaker Output"
+        }
+    ],
+    "alarm_active" : [
+        {
+            "reg": "0017",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Active Alarm",
+            "text": "System In Alarm"
+        },
+        {
+            "reg": "0018",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Active Alarm",
+            "text": "System in Warning"
+        }
+    ],
+    "alarm_conditions": [
+        {
+            "reg": "0000",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Excitation Over Voltage Input"
+        },
+        {
+            "reg": "0001",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Fuel Leak Switch Input"
+        },
+        {
+            "reg": "0005",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Ground Fault Relay Input"
+        },
+        {
+            "reg": "000c",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Local Emergency Stop Input"
+        },
+        {
+            "reg": "000d",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Remote Emergency Stop Input"
+        },
+        {
+            "reg": "0019",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "High Coolant Temp Warning Output"
+        },
+        {
+            "reg": "00c8",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Over Crank Shutdown"
+        },
+        {
+            "reg": "00c9",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Under Frequency Warning"
+        },
+        {
+            "reg": "00ca",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Under Frequency Shutdown"
+        },
+        {
+            "reg": "00cb",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Over Frequency Warning"
+        },
+        {
+            "reg": "00cc",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Over Frequency Shutdown"
+        },
+        {
+            "reg": "00cd",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Over Power Warning"
+        },
+        {
+            "reg": "00ce",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Over Power Shutdown"
+        },
+        {
+            "reg": "00cf",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Low Oil Pressure Warning"
+        },
+        {
+            "reg": "00d0",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Low Oil Pressure Shutdown"
+        },
+        {
+            "reg": "00d1",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Low Coolant Temperature Warning"
+        },
+        {
+            "reg": "00d2",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "High Coolant Temperature Warning"
+        },
+        {
+            "reg": "00d3",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "High Coolant Temperature Shutdown"
+        },
+        {
+            "reg": "00d4",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Local Emergency Stop Shutdown"
+        },
+        {
+            "reg": "00d5",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Remote Emergency Stop Shutdown"
+        },
+        {
+            "reg": "00d6",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Over Speed Shutdown"
+        },
+        {
+            "reg": "00d7",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Loss ECM Comms Shutdown"
+        },
+        {
+            "reg": "00d8",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "ECM Mismatch Shutdown"
+        },
+        {
+            "reg": "00d9",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "ECM Diagnostic Event"
+        },
+        {
+            "reg": "00dc",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Low Battery Voltage Warning"
+        },
+        {
+            "reg": "00dd",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "High Battery Voltage Warning"
+        },
+        {
+            "reg": "00de",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Battery Charger Fault Warning"
+        },
+        {
+            "reg": "00df",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Low Oil Pressure Warning ECM DTC"
+        },
+        {
+            "reg": "00e0",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Low Oil Pressure Shutdown ECM DTC"
+        },
+        {
+            "reg": "00e1",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "High Coolant Temperature Warning ECM DTC"
+        },
+        {
+            "reg": "00e2",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "High Coolant Temperature Shutdown ECM DTC"
+        },
+        {
+            "reg": "00e3",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "High Oil Temperature Warning"
+        },
+        {
+            "reg": "00e4",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "High Oil Temperature Shutdown"
+        },
+        {
+            "reg": "00e5",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Alternator Protection Shutdown L1"
+        },
+        {
+            "reg": "00e6",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Alternator Protection Shutdown L2"
+        },
+        {
+            "reg": "00e7",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Alternator Protection Shutdown L3"
+        },
+        {
+            "reg": "00e8",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Emergency Power Source Supplying Power"
+        },
+        {
+            "reg": "00e9",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Not In Auto Alarm"
+        },
+        {
+            "reg": "00ea",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Load Shed Overload"
+        },
+        {
+            "reg": "00eb",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Fuel Leak Alarm"
+        },
+        {
+            "reg": "00ec",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Load Shed Under Frequency"
+        },
+        {
+            "reg": "00ed",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Maintenance Reminder1"
+        },
+        {
+            "reg": "00ee",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Maintenance Reminder2"
+        },
+        {
+            "reg": "00ef",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Maintenance Reminder3"
+        },
+        {
+            "reg": "00f0",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Weak Cranking Battery"
+        },
+        {
+            "reg": "00f4",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Protective Relay Trip Over Voltage"
+        },
+        {
+            "reg": "00f5",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Protective Relay Trip Under Voltage"
+        },
+        {
+            "reg": "00f6",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Protective Relay Trip Over Current"
+        },
+        {
+            "reg": "00f7",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Protective Relay Trip Over Frequency"
+        },
+        {
+            "reg": "00f8",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Protective Relay Trip Under Frequency"
+        },
+        {
+            "reg": "00f9",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Protective Relay Trip Reverse Power"
+        },
+        {
+            "reg": "00fa",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Protective Relay Trip Reverse VAR"
+        },
+        {
+            "reg": "00fb",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Protective Relay Trip Over Power"
+        },
+        {
+            "reg": "00fc",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Protective Relay Shutdown Over Power"
+        },
+        {
+            "reg": "00fd",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Protective Relay Shutdown Over Current"
+        },
+        {
+            "reg": "00fe",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Protective Relay Shutdown Reverse VAR"
+        },
+        {
+            "reg": "00ff",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Protective Relay Shutdown Reverse Power"
+        },
+        {
+            "reg": "0100",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Ground Fault Relay Warning"
+        },
+        {
+            "reg": "0101",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Under Voltage Warning L1 L2"
+        },
+        {
+            "reg": "0102",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Under Voltage Warning L2 L3"
+        },
+        {
+            "reg": "0103",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Under Voltage Warning L3 L1"
+        },
+        {
+            "reg": "0104",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Under Voltage Warning L1 N"
+        },
+        {
+            "reg": "0105",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Under Voltage Warning L2 N"
+        },
+        {
+            "reg": "0106",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Under Voltage Warning L3 N"
+        },
+        {
+            "reg": "0107",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Under Voltage Shutdown L1 L2"
+        },
+        {
+            "reg": "0108",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Under Voltage Shutdown L2 L3"
+        },
+        {
+            "reg": "0109",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Under Voltage Shutdown L3 L1"
+        },
+        {
+            "reg": "010a",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Under Voltage Shutdown L1 N"
+        },
+        {
+            "reg": "010b",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Under Voltage Shutdown L2 N"
+        },
+        {
+            "reg": "010c",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Under Voltage Shutdown L3 N"
+        },
+        {
+            "reg": "010d",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Over Voltage Warning L1 L2"
+        },
+        {
+            "reg": "010e",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Over Voltage Warning L2 L3"
+        },
+        {
+            "reg": "010f",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Over Voltage Warning L3 L1"
+        },
+        {
+            "reg": "0110",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Over Voltage Warning L1 N"
+        },
+        {
+            "reg": "0111",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Over Voltage Warning L2 N"
+        },
+        {
+            "reg": "0112",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Over Voltage Warning L3 N"
+        },
+        {
+            "reg": "0113",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Over Voltage Shutdown L1 L2"
+        },
+        {
+            "reg": "0114",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Over Voltage Shutdown L2 L3"
+        },
+        {
+            "reg": "0115",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Over Voltage Shutdown L3 L1"
+        },
+        {
+            "reg": "0116",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Over Voltage Shutdown L1 N"
+        },
+        {
+            "reg": "0117",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Over Voltage Shutdown L2 N"
+        },
+        {
+            "reg": "0118",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Over Voltage Shutdown L3 N"
+        },
+        {
+            "reg": "0119",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Over Current L1Warning Warning"
+        },
+        {
+            "reg": "011a",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Over Current L2Warning Warning"
+        },
+        {
+            "reg": "011b",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Over Current L3Warning Warning"
+        },
+        {
+            "reg": "011c",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Over Current L1Shutdown Shutdown"
+        },
+        {
+            "reg": "011d",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Over Current L2Shutdown Shutdown"
+        },
+        {
+            "reg": "011e",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Over Current L3Shutdown Shutdown"
+        },
+        {
+            "reg": "011f",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Loss Of Signal Low Coolant Level"
+        },
+        {
+            "reg": "0120",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Excitation Over Voltage Shutdown"
+        },
+        {
+            "reg": "0121",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "RSA Programmable Input 1"
+        },
+        {
+            "reg": "0122",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "RSA Programmable Input 2"
+        },
+        {
+            "reg": "0123",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "RSA Programmable Input 3"
+        },
+        {
+            "reg": "0124",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "RSA Programmable Input 4"
+        },
+        {
+            "reg": "0125",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "RSA Programmable Input 5"
+        },
+        {
+            "reg": "0126",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "RSA Programmable Input 6"
+        },
+        {
+            "reg": "0127",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "RSA Programmable Input 7"
+        },
+        {
+            "reg": "0128",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "RSA Programmable Input 8"
+        },
+        {
+            "reg": "0129",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "High Fuel Level Warning"
+        },
+        {
+            "reg": "012a",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Low Fuel Level Warning"
+        },
+        {
+            "reg": "012b",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Critically Low Fuel Level Warning"
+        },
+        {
+            "reg": "012c",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Low Fuel Level Shutdown"
+        },
+        {
+            "reg": "012d",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Low Coolant Level Shutdown"
+        },
+        {
+            "reg": "012e",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Option Board Comm Loss Warning"
+        },
+        {
+            "reg": "0135",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Low RTC Battery Voltage"
+        },
+        {
+            "reg": "0136",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Over Power Shutdown"
+        },
+        {
+            "reg": "0137",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Over Power Warning"
+        },
+        {
+            "reg": "0138",
+            "type": "bool",
+            "reg_type": "coil",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Battery Charger 1 Fault"
+        },
+        {
+            "reg": "0139",
+            "type": "bool",
+            "reg_type": "coil",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Battery Charger 2 Fault"
+        }
+    ],
+    
+    "status": [
+        {
+            "reg": "02a0",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "V",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Battery Voltage"
+        },
+        {
+            "title": "Engine",
+            "comment": "The 'container' modifier will allow the values to be displayed with some hierarchy", 
+            "container": true,
+            "value":[
+                {
+                    "reg": "0000",
+                    "mask": "ffffffff",
+                    "type": "float",
+                    "units": "V",
+                    "ieee754": "single",
+                    "round": 2,
+                    "title": "Generator Voltage L1 L2"
+                },
+                {
+                    "reg": "0002",
+                    "mask": "ffffffff",
+                    "type": "float",
+                    "units": "V",
+                    "ieee754": "single",
+                    "round": 2,
+                    "title": "Generator Voltage L2 L3"
+                },
+                {
+                    "reg": "0004",
+                    "mask": "ffffffff",
+                    "type": "float",
+                    "units": "V",
+                    "ieee754": "single",
+                    "round": 2,
+                    "title": "Generator Voltage L3 L1"
+                },
+                {
+                    "reg": "0006",
+                    "mask": "ffffffff",
+                    "type": "float",
+                    "units": "V",
+                    "ieee754": "single",
+                    "round": 2,
+                    "title": "Generator Voltage L1 L0"
+                },
+                {
+                    "reg": "0008",
+                    "mask": "ffffffff",
+                    "type": "float",
+                    "units": "V",
+                    "ieee754": "single",
+                    "round": 2,
+                    "title": "Generator Voltage L2 L0"
+                },
+                {
+                    "reg": "000a",
+                    "mask": "ffffffff",
+                    "type": "float",
+                    "units": "V",
+                    "ieee754": "single",
+                    "round": 2,
+                    "title": "Generator Voltage L3 L0"
+                },
+                {
+                    "reg": "000c",
+                    "mask": "ffffffff",
+                    "type": "float",
+                    "units": "A",
+                    "ieee754": "single",
+                    "round": 2,
+                    "title": "Generator Current L1"
+                },
+                {
+                    "reg": "000e",
+                    "mask": "ffffffff",
+                    "type": "float",
+                    "units": "A",
+                    "ieee754": "single",
+                    "round": 2,
+                    "title": "Generator Current L2"
+                },
+                {
+                    "reg": "0010",
+                    "mask": "ffffffff",
+                    "type": "float",
+                    "units": "A",
+                    "ieee754": "single",
+                    "round": 2,
+                    "title": "Generator Current L3"
+                },
+                {
+                    "reg": "0014",
+                    "mask": "ffffffff",
+                    "type": "float",
+                    "units": "Hz",
+                    "ieee754": "single",
+                    "round": 2,
+                    "title": "Generator Frequency"
+                },
+                {
+                    "reg": "00fc",
+                    "mask": "ffffffff",
+                    "type": "float",
+                    "units": "kPA",
+                    "ieee754": "single",
+                    "round": 2,
+                    "title": "ECU Fuel Pressure"
+                },
+                {
+                    "reg": "00fe",
+                    "mask": "ffffffff",
+                    "type": "float",
+                    "units": "Liters per hour",
+                    "ieee754": "single",
+                    "round": 2,
+                    "title": "ECU Fuel Rate"
+                },
+                {
+                    "reg": "0100",
+                    "mask": "ffffffff",
+                    "type": "float",
+                    "units": "RPM",
+                    "ieee754": "single",
+                    "round": 2,
+                    "title": "ECU Engine Speed"
+                },
+                {
+                    "reg": "0102",
+                    "mask": "ffffffff",
+                    "type": "float",
+                    "temperature": "celsius",
+                    "units": "C",
+                    "ieee754": "single",
+                    "round": 2,
+                    "title": "ECU Oil Temperature"
+                },
+                {
+                    "reg": "0104",
+                    "mask": "ffffffff",
+                    "type": "float",
+                    "temperature": "celsius",
+                    "units": "C",
+                    "ieee754": "single",
+                    "round": 2,
+                    "title": "ECU Coolant Temperature"
+                },
+                {
+                    "reg": "0106",
+                    "mask": "ffffffff",
+                    "type": "float",
+                    "temperature": "celsius",
+                    "units": "C",
+                    "ieee754": "single",
+                    "round": 2,
+                    "title": "ECU Intake Manifold Temperature"
+                },
+                {
+                    "reg": "0108",
+                    "mask": "ffffffff",
+                    "type": "float",
+                    "units": "kPA",
+                    "ieee754": "single",
+                    "round": 2,
+                    "title": "ECU Intake Manifold Pressure"
+                },
+                {
+                    "reg": "010c",
+                    "mask": "ffffffff",
+                    "type": "float",
+                    "units": "V",
+                    "ieee754": "single",
+                    "round": 2,
+                    "title": "ECU Battery Voltage"
+                }
+            ]
+        },
+        {
+            "reg": "0022",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "V",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Bus Voltage L1 L2"
+        },
+        {
+            "reg": "0024",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "V",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Bus Voltage L2 L3"
+        },
+        {
+            "reg": "0026",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "V",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Bus Voltage L3 L1"
+        },
+        {
+            "reg": "0028",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "V",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Bus Voltage L1 L0"
+        },
+        {
+            "reg": "002a",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "V",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Bus Voltage L2 L0"
+        },
+        {
+            "reg": "002c",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "V",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Bus Voltage L3 L0"
+        },
+        {
+            "reg": "0036",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "Hz",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Bus Frequency"
+        },
+        {
+            "reg": "0282",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "W",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Real Power L1"
+        },
+        {
+            "reg": "0284",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "W",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Real Power L2"
+        },
+        {
+            "reg": "0286",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "W",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Real Power L3"
+        },
+        {
+            "reg": "0288",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "VAR",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Reactive Power L1"
+        },
+        {
+            "reg": "028a",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "VAR",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Reactive Power L2"
+        },
+        {
+            "reg": "028c",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "VAR",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Reactive Power L3"
+        },
+        {
+            "reg": "028e",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "W",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Total Real Power"
+        },
+        {
+            "reg": "0290",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "W",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Total Reactive Power"
+        },
+        {
+            "reg": "0292",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "W",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Total Power Factor"
+        },
+        {
+            "reg": "0296",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "V",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Voltage Average L To L"
+        },
+        {
+            "reg": "0298",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "V",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Voltage Average L To N"
+        },
+        {
+            "reg": "029a",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "A",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Current Average Single Phase"
+        },
+        {
+            "reg": "029c",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "A",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Current Average Three phase"
+        }
+    ],
+    "maintenance": [
+        {
+            "reg": "00f2",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "sec",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Cooldown Time Limit"
+        },
+        {
+            "reg": "00f4",
+            "mask": "ffffffff",
+            "type": "float",
+            "temperature": "celsius",
+            "units": "C",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Cooldown Temp Limit"
+        },
+        {
+            "reg": "00f6",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "sec",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Warmup Time Limit"
+        },
+        {
+            "reg": "00f8",
+            "mask": "ffffffff",
+            "type": "float",
+            "temperature": "celsius",
+            "units": "C",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Warmup Temp Limit"
+        },
+        {
+            "reg": "00fa",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "sec",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Fault Cooldown Time Limit"
+        },
+        {
+            "reg": "0294",
+            "mask": "ffffffff",
+            "type": "float",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Crank Cycle Count"
+        },
+        {
+            "reg": "010a",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "h",
+            "ieee754": "single",
+            "round": 2,
+            "title": "ECU Runtime Hours"
+        },
+        {
+            "reg": "029e",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "h",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Controller Hours"
+        }
+    ],
+    "maintenance_due": [
+        {
+            "reg": "00ed",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Maintenance Due",
+            "text": "Maintenance Reminder 1"
+        },
+        {
+            "reg": "00ee",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Maintenance Due",
+            "text": "Maintenance Reminder2"
+        },
+        {
+            "reg": "00ef",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Maintenance Due",
+            "text": "Maintenance Reminder3"
+        }
+    ],
+    "gauges": [
+        {
+            "reg": "02a0",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "V",
+            "ieee754": "single",
+            "round": 2,
+            "sensor": "batteryvolts",
+            "nominal": "Unknown",
+            "title": "Battery Voltage"
+        },
+        {
+            "reg": "0296",
+            "comment": "Line to Line Average",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "V",
+            "ieee754": "single",
+            "round": 2,
+            "sensor": "linevolts",
+            "nominal": "Unknown",
+            "title": "Output Voltage"
+        },
+        {
+            "reg": "0014",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "Hz",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Frequency",
+            "sensor": "frequency",
+            "nominal": "Unknown"
+        },
+        {
+            "reg": "0100",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "RPM",
+            "ieee754": "single",
+            "round": 2,
+            "sensor": "rpm",
+            "nominal": "Unknown",
+            "title": "RPM"
+        },
+        {
+            "reg": "0102",
+            "mask": "ffffffff",
+            "type": "float",
+            "temperature": "celsius",
+            "units": "C",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Oil Temp",
+            "sensor": "temperature",
+            "nominal": 82,
+            "maximum": 148
+        },
+        {
+            "reg": "0104",
+            "mask": "ffffffff",
+            "type": "float",
+            "temperature": "celsius",
+            "units": "C",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Coolant Temp",
+            "sensor": "temperature",
+            "nominal": 82,
+            "maximum": 148
+        },
+        {
+            "reg": "028e",
+            "comment": "Total Real Power",
+            "mask": "ffffffff",
+            "type": "float",
+            "multiplier": "0.001",
+            "units": "kW",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Power",
+            "sensor": "power",
+            "nominal": "Unknown"
+        },
+        {
+            "reg": "028e",
+            "comment": "Total Real Power",
+            "mask": "ffffffff",
+            "type": "float",
+            "multiplier": "0.001",
+            "units": "kW",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Power",
+            "sensor": "powergraph",
+            "nominal": "Unknown"
+        }
+    ],
+    "power": {
+        "reg": "028e",
+        "comment": "Total Real Power",
+        "mask": "ffffffff",
+        "type": "float",
+        "multiplier": "0.001",
+        "units": "kW",
+        "ieee754": "single",
+        "round": 2,
+        "title": "Power Output"
+    },
+    "outputvoltage": {
+        "reg": "0296",
+        "comment": "Line to Line Average",
+        "mask": "ffffffff",
+        "type": "float",
+        "units": "V",
+        "ieee754": "single",
+        "round": 2,
+        "title": "Output Voltage"
+    },
+    "run_hours": 
+    {
+        "reg": "010a",
+        "mask": "ffffffff",
+        "type": "float",
+        "units": "h",
+        "ieee754": "single",
+        "round": 2,
+        "title": "Run Hours"
+    },
+    "identity": [
+        {
+            "reg": "270e",
+            "mask": "ffff",
+            "type": "bits",
+            "value": "004a",
+            "title": "Kohler APM603",
+            "text": "Kohler APM603"
+        },
+        {
+          "reg": "0000",
+          "type": "default",
+          "title": "Unknown Controller",
+          "text": "Unknown Controller"
+        }
+    ]
+}

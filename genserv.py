@@ -1273,7 +1273,16 @@ def GetAddOns():
                 "numeric_json", return_type=bool, default=False
             ),
             "boolean",
-            "If enabled will return numeric values in the Status, Maintenance (Evo/Nexus only) and Outage topics as an object with unit, type and value members.",
+            "If enabled will return numeric values in the Status, Maintenance and Outage topics as separate topics for unit, type and value.",
+            bounds="",
+            display_name="Numeric Topics",
+        )
+        AddOnCfg["genmqtt"]["parameters"]["numeric_json_object"] = CreateAddOnParam(
+            ConfigFiles[GENMQTT_CONFIG].ReadValue(
+                "numeric_json_object", return_type=bool, default=False
+            ),
+            "boolean",
+            "If enabled will return a JSON object for numeric values in the Status, Maintenance and Outage topics as an object with unit, type and value members.",
             bounds="",
             display_name="JSON for Numerics",
         )
