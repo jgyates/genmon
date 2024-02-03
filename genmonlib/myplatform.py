@@ -30,7 +30,7 @@ class MyPlatform(MyCommon):
         self.UseMetric = usemetric
 
     # ------------ MyPlatform::GetInfo-------------------------------------------
-    def GetInfo(self):
+    def GetInfo(self, JSONNum=False):
 
         Info = []
 
@@ -53,7 +53,7 @@ class MyPlatform(MyCommon):
         return datetime.datetime.now().strftime("%A %B %-d, %Y %H:%M:%S")
 
     # ------------ MyPlatform::GetPlatformInfo-----------------------------------
-    def GetPlatformInfo(self):
+    def GetPlatformInfo(self, JSONNum=False):
 
         if self.IsPlatformRaspberryPi():
             return self.GetRaspberryPiInfo()
@@ -61,7 +61,7 @@ class MyPlatform(MyCommon):
             return None
 
     # ------------ MyPlatform::GetOSInfo-----------------------------------------
-    def GetOSInfo(self):
+    def GetOSInfo(self, JSONNum=False):
 
         if self.IsOSLinux():
             return self.GetLinuxInfo()
@@ -142,7 +142,7 @@ class MyPlatform(MyCommon):
         return True
 
     # ------------ Evolution:GetRaspberryPiTemp ---------------------------------
-    def GetRaspberryPiTemp(self, ReturnFloat=False):
+    def GetRaspberryPiTemp(self, ReturnFloat=False, JSONNum=False):
 
         # get CPU temp
         try:
@@ -213,7 +213,7 @@ class MyPlatform(MyCommon):
         except Exception as e1:
             return None
     # ------------ MyPlatform::GetRaspberryPiInfo -------------------------------
-    def GetRaspberryPiInfo(self):
+    def GetRaspberryPiInfo(self, JSONNum=False):
 
         if not self.IsPlatformRaspberryPi():
             return None
@@ -325,7 +325,7 @@ class MyPlatform(MyCommon):
         return None
 
     # ------------ MyPlatform::GetLinuxInfo -------------------------------------
-    def GetLinuxInfo(self):
+    def GetLinuxInfo(self, JSONNum=False):
 
         if not self.IsOSLinux():  # call staticfuntion
             return None
@@ -394,7 +394,7 @@ class MyPlatform(MyCommon):
         return LinuxInfo
 
     # ------------ MyPlatform::GetWiFiSignalStrength ----------------------------
-    def GetWiFiSignalStrength(self, ReturnInt=True):
+    def GetWiFiSignalStrength(self, ReturnInt=True, JSONNum=False):
 
         try:
             if ReturnInt == True:
@@ -424,7 +424,7 @@ class MyPlatform(MyCommon):
             return DefaultReturn
 
     # ------------ MyPlatform::GetWiFiSignalStrengthFromAdapter -----------------
-    def GetWiFiSignalStrengthFromAdapter(self, adapter):
+    def GetWiFiSignalStrengthFromAdapter(self, adapter, JSONNum=False):
         try:
             result = subprocess.check_output(["iw", adapter, "link"])
             if sys.version_info[0] >= 3:
@@ -435,7 +435,7 @@ class MyPlatform(MyCommon):
             return "0"
 
     # ------------ MyPlatform::GetWiFiSignalQuality -----------------------------
-    def GetWiFiSignalQuality(self, adapter):
+    def GetWiFiSignalQuality(self, adapter, JSONNum=False):
         try:
             result = subprocess.check_output(["iwconfig", adapter])
             if sys.version_info[0] >= 3:
@@ -457,7 +457,7 @@ class MyPlatform(MyCommon):
             return ""
 
     # ------------ MyPlatform::GetWiFiInfo --------------------------------------
-    def GetWiFiInfo(self, adapter):
+    def GetWiFiInfo(self, adapter, JSONNum=False):
 
         WiFiInfo = []
 
@@ -469,7 +469,7 @@ class MyPlatform(MyCommon):
                     ListItems = line.split()
                     if len(ListItems) > 4:
 
-                        signal = self.GetWiFiSignalStrength()
+                        signal = self.GetWiFiSignalStrength(JSONNum=JSONNum)
                         if signal != 0:
                             WiFiInfo.append({"WLAN Signal Level": str(signal) + " dBm"})
                         else:
@@ -479,9 +479,7 @@ class MyPlatform(MyCommon):
                         try:
                             WiFiInfo.append(
                                 {
-                                    "WLAN Signal Quality": self.GetWiFiSignalQuality(
-                                        adapter
-                                    )
+                                    "WLAN Signal Quality": self.GetWiFiSignalQuality(adapter, JSONNum=JSONNum)
                                 }
                             )
                         except:

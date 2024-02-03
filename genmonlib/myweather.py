@@ -180,7 +180,7 @@ class MyWeather(MySupport):
         return Data
 
     # ---------------------GetWeather--------------------------------------------
-    def GetWeather(self, minimum=True, ForUI=False):
+    def GetWeather(self, minimum=True, ForUI=False, JSONNum=False):
 
         Data = []
 

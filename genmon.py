@@ -1067,12 +1067,12 @@ class Monitor(MySupport):
             return "Unknown"
 
     # ------------ Monitor::GetWeatherData --------------------------------------
-    def GetWeatherData(self, ForUI=False):
+    def GetWeatherData(self, ForUI=False, JSONNum=False):
 
         if self.MyWeather == None:
             return None
 
-        ReturnData = self.MyWeather.GetWeather(minimum=self.WeatherMinimum, ForUI=ForUI)
+        ReturnData = self.MyWeather.GetWeather(minimum=self.WeatherMinimum, ForUI=ForUI, JSONNum=JSONNum)
 
         if not len(ReturnData):
             return None
@@ -1081,7 +1081,7 @@ class Monitor(MySupport):
     # ------------ Monitor::GetUserDefinedData ----------------------------------
     # this assumes one json object, the file can be formatted (i.e. on multiple
     # lines) or can be on a single line
-    def GetUserDefinedData(self):
+    def GetUserDefinedData(self, JSONNum=False):
 
         try:
             FileName = os.path.join(self.UserDefinedDataPath, "userdefined.json")
@@ -1146,7 +1146,7 @@ class Monitor(MySupport):
             )
 
             if not self.bDisablePlatformStats:
-                PlatformStats = self.GetPlatformStats()
+                PlatformStats = self.GetPlatformStats(JSONNum=False)
                 if not PlatformStats == None:
                     MonitorData.append({"Platform Stats": PlatformStats})
 

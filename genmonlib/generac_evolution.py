@@ -2904,42 +2904,69 @@ class Evolution(GeneratorController):
         }
 
         AlarmLogDecoder_EvoLC = {
-            0x04: "RPM Sense Loss",  # 1500 Alarm
-            0x06: "Low Coolant Level",  # 2720  Alarm
-            0x47: "Low Fuel Level",  # 2700A Alarm
-            0x1B: "Low Fuel Level",  # 2680W Alarm
-            0x41: "Ignition Fault",  # 2602 Alarm
-            0x46: "Ruptured Tank",  # 2710 Alarm
-            0x49: "Hall Calibration Error"  # 2810  Alarm
-            # Low Oil Pressure
-            # High Engine Temperature
-            # Overcrank
-            # Overspeed
-            # RPM Sensor Loss
-            # Underspeed
-            # Underfrequency
-            # Wiring Error
-            # Undervoltage
-            # Overvoltage
-            # Internal Fault
-            # Firmware Error
-            # Stepper Overcurrent
-            # Fuse Problem
-            # Ruptured Basin
-            # Canbus Error
-            ####Warning Displays
-            # Low Battery
-            # Maintenance Periods
-            # Exercise Error
-            # Battery Problem
-            # Charger Warning
-            # Charger Missing AC
-            # Overload Cooldown
-            # USB Warning
-            # Download Failure
-            # FIRMWARE ERROR-9
+            0x0: "High Temperature",
+            0x1: "Low Oil Pressure",
+            0x2: "Overcrank",
+            0x3: "Overspeed",
+            0x4: "RPM Sense Loss",
+            0x5: "Underspeed",
+            0x6: "Low Coolant Level",
+            0x8: "Wiring Error",
+            0x9: "Over Voltage",
+            0xa: "Under Voltage",
+            0xb: "Overload",
+            0xc: "Undervoltage Overload",
+            0xd: "Stepper Overcurrent",
+            0xe: "Fuse Problem",
+            0xf: "VSCF_COMM_GONE",
+            0x10: "VSCF_ENABLE_MISMATCH",
+            0x11: "VSCF_PWM_SPEED_GONE",
+            0x12: "Very Low Battery",
+            0x13: "VSCF_SPECIAL_NO_TRANSLATION",
+            0x14: "Low Battery",
+            0x15: "Exercise Set Error",
+            0x16: "Service Schedule B",
+            0x17: "Service Schedule A",
+            0x18: "Inspect Battery",
+            0x19: "Service Schedule C",
+            0x1c: "Stopping",
+            0x1d: "Software Error 9",
+            0x1e: "Fuel Pressure",
+            0x1f: "Battery Problem",
+            0x20: "Charger Warning",
+            0x21: "Charger missing AC",
+            0x22: "Overload warning",
+            0x23: "Check Engine",
+            0x24: "DTC Warning",
+            0x25: "VSCF Warning",
+            0x26: "USB Warning",
+            0x27: "Modbus Comms Failure Warning",
+            0x28: "Switched off",
+            0x29: "Running-Manual",
+            0x2a: "Stopped-Auto",
+            0x2b: "Running-Utility Lost",
+            0x2c: "Running-2 Wire Start",
+            0x2d: "Running-Radio Start",
+            0x2e: "Running-Exercise",
+            0x2f: "Stopped-Alarm",
+            0x3c: "Service B performed",
+            0x3d: "Service A performed",
+            0x3e: "Battery Inspected",
+            0x3f: "Reset Maintenance",
+            0x40: "Internal Fault",
+            0x41: "Ignition Fault",
+            0x42: "CANbus Error",
+            0x43: "Missing Cam Pulse",
+            0x44: "Missing Crank Pulse",
+            0x45: "Governor Fault",
+            0x46: "Ruptured Tank",
+            0x47: "Low Fuel",
+            0x48: "E-Stop",
+            0x49: "Hall Calibration Error",
+            0x4a: "SEEProm Abuse",
+            0x4b: "Download Failure",
+            0x4c: "Service C Performed",
         }
-
         # Evolution Air Cooled Decoder
         # NOTE: Warnings on Evolution Air Cooled have an error code of zero
         AlarmLogDecoder_EvoAC = {
@@ -2951,7 +2978,7 @@ class Evolution(GeneratorController):
             0x17: "Service Schedule A ",
             0x18: "Inspect Battery",
             0x19: "SEEPROM ABUSE",
-            0x1C: "Stopping.....",
+            0x1C: "Stopping",
             0x1D: "FIRMWARE ERROR-9",
             0x1E: "Fuel Pressure",
             0x1F: "Battery Problem",
@@ -2993,7 +3020,7 @@ class Evolution(GeneratorController):
             if len(FWVersion) and (self.VersionTuple(FWVersion) >= (1, 14)):
                 AlarmLogDecoder_EvoAC[0x33] = "No Rotation Warning"
 
-        NexusAlarmLogDecoder = {
+        NexusLCAlarmLogDecoder = {
             0x00: "High Engine Temperature",  # Validated on Nexus Air Cooled
             0x01: "Low Oil Pressure",  # Validated on Nexus Liquid Cooled
             0x02: "Overcrank",  # Validated on Nexus Air Cooled
@@ -3018,8 +3045,40 @@ class Evolution(GeneratorController):
             0x1E: "Low Fuel Pressure",  # Validated on Nexus Liquid Cooled
             0x21: "Service Schedule A",  # Validated on Nexus Liquid Cooled
             0x22: "Service Schedule B",  # Validated on Nexus Liquid Cooled
+            0x23: "Check Engine",        # Validated on Nexus Liquid Cooled
         }
 
+        NexusACAlarmLogDecoder = {
+            0x00: "High Temperature",
+            0x01: "Low Oil Pressure",
+            0x02: "Overcrank",
+            0x03: "Overspeed",
+            0x04: "RPM Sense Loss",
+            0x05: "Underspeed",
+            0x06: "Internal Fault",
+            0x07: "Software Error 7",
+            0x08: "Wiring Error",
+            0x09: "Over Voltage",
+            0x0a: "Under Voltage",
+            0x14: "Low Battery",
+            0x15: "Exercise Set Error",
+            0x16: "Change Oil & Filter",
+            0x17: "Inspect Air Filter",
+            0x18: "Change Air Filter",
+            0x19: "Inspect Spark Plugs",
+            0x1a: "Change Spark Plugs",
+            0x1b: "Inspect Battery",
+            0x1c: "Stopping",
+            0x1d: "Software Error 9",
+            0x27: "Modbus Comms Failure Warning",
+            0x28: "Switched Off",
+            0x29: "Running-manual",
+            0x2a: "Stopped-auto",
+            0x2b: "Running-Utility Lost",
+            0x2c: "Running-2 wire start",
+            0x2d: "Running-radio start",
+            0x2e: "Running-exercise"
+        }
         # Service Schedule log and Start/Stop Log are 16 chars long
         # error log is 20 chars log
         if len(Value) < 16:
@@ -3083,8 +3142,12 @@ class Evolution(GeneratorController):
             DecoderLookup[ALARM_LOG_STARTING_REG] = AlarmLogDecoder_EvoLC
             DecoderLookup[SERVICE_LOG_STARTING_REG] = ServiceLogDecoder
 
+        if not self.EvolutionController and not self.LiquidCooled:
+            DecoderLookup[NEXUS_ALARM_LOG_STARTING_REG] = NexusACAlarmLogDecoder
+        else:
+            DecoderLookup[NEXUS_ALARM_LOG_STARTING_REG] = NexusLCAlarmLogDecoder
+
         DecoderLookup[START_LOG_STARTING_REG] = StartLogDecoder
-        DecoderLookup[NEXUS_ALARM_LOG_STARTING_REG] = NexusAlarmLogDecoder
 
         if LogBase == NEXUS_ALARM_LOG_STARTING_REG and self.EvolutionController:
             self.LogError("Error in ParseLog: Invalid Base Register %X", LogBase)
@@ -3290,6 +3353,7 @@ class Evolution(GeneratorController):
             0x14: "Check Battery",  #  Validate on Nexus, occurred when Check Battery Alarm
             0x15: "Underspeed",  #  Validate on Evo AC 2
             0x18: "Wiring Error",  #  Validate on Nexus AC
+            0x19: "Check Engine",       # Validate on Nexus AC
             0x1A: "Missing Cam Pulse",  #  Validate on Nexus Liquid Cooled
             0x1C: "Throttle Failure",  #  Validate on Nexus LC,
             0x1D: "Over Voltage",  #  Validate on Nexus Air Cooled

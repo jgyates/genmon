@@ -112,7 +112,7 @@ class MySupport(MyCommon):
             return False
 
     # ------------ MySupport::GetPlatformStats ----------------------------------
-    def GetPlatformStats(self, usemetric=None):
+    def GetPlatformStats(self, usemetric=None, JSONNum=False):
 
         if not usemetric == None:
             bMetric = usemetric
@@ -120,7 +120,7 @@ class MySupport(MyCommon):
             bMetric = self.UseMetric
         Platform = MyPlatform(self.log, bMetric)
 
-        return Platform.GetInfo()
+        return Platform.GetInfo(JSONNum=JSONNum)
 
     # ---------- MySupport::InternetConnected------------------------------------
     # Note: this function, if the internet connection is not present could
