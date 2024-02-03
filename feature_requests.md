@@ -25,3 +25,4 @@
 - Add the ability to set the name of external tank
 - [Add the ability to setup and external gauge / sensor](https://github.com/jgyates/genmon/issues/961)
 - [Add reading watchdog in gentankutil](https://github.com/jgyates/genmon/issues/1018)
+- [Warmup and Delay times settings for EvoLC](https://github.com/jgyates/genmon/discussions/1033)
