@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Update to gentankutil to add option to check battery and missed readings. See Add On page to enable this functionality.
 - Minor update to error handling of fuel gauge 
 - Added new option to return JSON for numerics on MQTT addon genmqtt.py
+- Alarm code and log code updates for Nexus AC and Evo LC
 
 ## V1.19.00 -2023-11-09
 - Updates to genmonmain.sh, startgenmon.sh and genloader.sh for Debian bookworm. 
