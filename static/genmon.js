@@ -3288,7 +3288,10 @@ function DisplayRegistersFull()
         outstr +=     '<tr><td align="center" class="registerTDsubtitle">(' + reg_key + ')</td></tr>';
         outstr +=     '<tr><td align="center" class="tooltip registerChart" id="content_'+reg_key+'">';
         outstr +=        ((reg_key == "01f4") ? '<span class="registerTDvalMedium">HEX:<br>' + reg_val + '</span>' : 'HEX: '+reg_val) + '<br>';
-        outstr +=        ((reg_key == "01f4") ? '' : '<span class="registerTDvalSmall">DEC: ' + parseInt(reg_val, 16) + ' | HI:LO: '+parseInt(reg_val.substring(0,2), 16)+':'+parseInt(reg_val.substring(2,4), 16)+'</span>');
+        // This handles the case for byte data returning Not a Number (NaN) for coil registers
+        var strHi = ((parseInt(reg_val) & 0xff00) >> 8).toString()
+        var strLo = (parseInt(reg_val) & 0x00ff).toString()
+        outstr +=        ((reg_key == "01f4") ? '' : '<span class="registerTDvalSmall">DEC: ' + parseInt(reg_val, 16) + ' | HI:LO: '+strHi +':'+ strLo +'</span>');
         outstr +=     '</td></tr>';
         outstr +=     '</table>';
         outstr += '</td>';
@@ -3413,7 +3416,10 @@ function UpdateRegisters(init, printToScreen)
 
                       if (printToScreen) {
                         var outstr  = ((reg_key == "01f4") ? '<span class="registerTDvalMedium">HEX:<br>' + reg_val + '</span>' : 'HEX: '+reg_val) + '<br>';
-                            outstr += ((reg_key == "01f4") ? '' : '<span class="registerTDvalSmall">DEC: ' + parseInt(reg_val, 16) + ' | HI:LO: '+parseInt(reg_val.substring(0,2), 16)+':'+parseInt(reg_val.substring(2,4), 16)+'</span>');
+                            // This handles the case for byte data returning Not a Number (NaN) for coil registers
+                            var strHi = ((parseInt(reg_val) & 0xff00) >> 8).toString()
+                            var strLo = (parseInt(reg_val) & 0x00ff).toString()                    
+                            outstr += ((reg_key == "01f4") ? '' : '<span class="registerTDvalSmall">DEC: ' + parseInt(reg_val, 16) + ' | HI:LO: '+ strHi +':'+ strLo +'</span>');
                         $("#content_"+reg_key).html(outstr);
                       }
                    }

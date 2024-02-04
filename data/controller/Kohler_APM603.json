@@ -48,10 +48,6 @@
         "00dc": {"length": 1, "text": "Low Battery Voltage Warning"},
         "00dd": {"length": 1, "text": "High Battery Voltage Warning"},
         "00de": {"length": 1, "text": "Battery Charger Fault Warning"},
-        "00df": {"length": 1, "text": "Low Oil Pressure Warning ECM DTC"},
-        "00e0": {"length": 1, "text": "Low Oil Pressure Shutdown ECM DTC"},
-        "00e1": {"length": 1, "text": "High Coolant Temperature Warning ECM DTC"},
-        "00e2": {"length": 1, "text": "High Coolant Temperature Shutdown ECM DTC"},
         "00e3": {"length": 1, "text": "High Oil Temperature Warning"},
         "00e4": {"length": 1, "text": "High Oil Temperature Shutdown"},
         "00e5": {"length": 1, "text": "Alternator Protection Shutdown L1"},
@@ -77,10 +73,7 @@
         "00f9": {"length": 1, "text": "Protective Relay Trip Reverse Power"},
         "00fa": {"length": 1, "text": "Protective Relay Trip Reverse VAR"},
         "00fb": {"length": 1, "text": "Protective Relay Trip Over Power"},
-        "00fc": {"length": 1, "text": "Protective Relay Shutdown Over Power"},
-        "00fd": {"length": 1, "text": "Protective Relay Shutdown Over Current"},
-        "00fe": {"length": 1, "text": "Protective Relay Shutdown Reverse VAR"},
-        "00ff": {"length": 1, "text": "Protective Relay Shutdown Reverse Power"},
+
         "0100": {"length": 1, "text": "Ground Fault Relay Warning"},
         "0101": {"length": 1, "text": "Under Voltage Warning L1 L2"},
         "0102": {"length": 1, "text": "Under Voltage Warning L2 L3"},
@@ -134,6 +127,84 @@
         "0138": {"length": 1, "text": "Battery Charger 1 Fault"},
         "0139": {"length": 1, "text": "Battery Charger 2 Fault"}
     },
+    "other_coil_registers": {
+        "comment": "These coil registers generate modbus exceptions",
+        "00df": {"length": 1, "text": "Low Oil Pressure Warning ECM DTC"},
+        "00e0": {"length": 1, "text": "Low Oil Pressure Shutdown ECM DTC"},
+        "00e1": {"length": 1, "text": "High Coolant Temperature Warning ECM DTC"},
+        "00e2": {"length": 1, "text": "High Coolant Temperature Shutdown ECM DTC"},
+        "00fc": {"length": 1, "text": "Protective Relay Shutdown Over Power"},
+        "00fd": {"length": 1, "text": "Protective Relay Shutdown Over Current"},
+        "00fe": {"length": 1, "text": "Protective Relay Shutdown Reverse VAR"},
+        "00ff": {"length": 1, "text": "Protective Relay Shutdown Reverse Power"}
+    },
+    "other_coil_status":[
+        {"comment": "These coil registers generate modbus exceptions"},
+        {
+            "reg": "00df",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Low Oil Pressure Warning ECM DTC"
+        },
+        {
+            "reg": "00e0",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Low Oil Pressure Shutdown ECM DTC"
+        },
+        {
+            "reg": "00e1",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "High Coolant Temperature Warning ECM DTC"
+        },
+        {
+            "reg": "00e2",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "High Coolant Temperature Shutdown ECM DTC"
+        },
+        {
+            "reg": "00fc",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Protective Relay Shutdown Over Power"
+        },
+        {
+            "reg": "00fd",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Protective Relay Shutdown Over Current"
+        },
+        {
+            "reg": "00fe",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Protective Relay Shutdown Reverse VAR"
+        },
+        {
+            "reg": "00ff",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Alarm",
+            "text": "Protective Relay Shutdown Reverse Power"
+        }
+    ],
     "holding_registers": {
         "0000": {"length": 4, "text": "Generator Voltage L1 L2, Volts"},
         "0002": {"length": 4, "text": "Generator Voltage L2 L3, Volts"},
@@ -145,13 +216,6 @@
         "000e": {"length": 4, "text": "Generator Current L2, Amps"},
         "0010": {"length": 4, "text": "Generator Current L3, Amps"},
         "0014": {"length": 4, "text": "Generator Frequency, Hertz"},
-        "0022": {"length": 4, "text": "Bus Voltage L1 L2"},
-        "0024": {"length": 4, "text": "Bus Voltage L2 L3"},
-        "0026": {"length": 4, "text": "Bus Voltage L3 L1"},
-        "0028": {"length": 4, "text": "Bus Voltage L1 L0"},
-        "002a": {"length": 4, "text": "Bus Voltage L2 L0"},
-        "002c": {"length": 4, "text": "Bus Voltage L3 L0"},
-        "0036": {"length": 4, "text": "Bus Frequency"},
         "00f2": {"length": 4, "text": "Cooldown Time Limit, Seconds"},
         "00f4": {"length": 4, "text": "Cooldown Temp Limit, Degrees C"},
         "00f6": {"length": 4, "text": "Warmup Time Limit, Seconds"},
@@ -184,6 +248,82 @@
         "02a0": {"length": 4, "text": "Battery Voltage"},
         "270e": {"length": 2, "text": "Controller ID, APM603 = 74"}
     },
+    "other_holding_registers": {
+        "comment": "These do not appear to be used",
+        "0022": {"length": 4, "text": "Bus Voltage L1 L2"},
+        "0024": {"length": 4, "text": "Bus Voltage L2 L3"},
+        "0026": {"length": 4, "text": "Bus Voltage L3 L1"},
+        "0028": {"length": 4, "text": "Bus Voltage L1 L0"},
+        "002a": {"length": 4, "text": "Bus Voltage L2 L0"},
+        "002c": {"length": 4, "text": "Bus Voltage L3 L0"},
+        "0036": {"length": 4, "text": "Bus Frequency"}
+    },
+    "other_holding_status":[
+        {"comment": "These holding registers do not appear to be used"},
+        {
+            "reg": "0022",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "V",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Bus Voltage L1 L2"
+        },
+        {
+            "reg": "0024",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "V",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Bus Voltage L2 L3"
+        },
+        {
+            "reg": "0026",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "V",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Bus Voltage L3 L1"
+        },
+        {
+            "reg": "0028",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "V",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Bus Voltage L1 L0"
+        },
+        {
+            "reg": "002a",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "V",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Bus Voltage L2 L0"
+        },
+        {
+            "reg": "002c",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "V",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Bus Voltage L3 L0"
+        },
+        {
+            "reg": "0036",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "Hz",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Bus Frequency"
+        }
+    ],
     "switch_state": [
         {
             "reg": "0006",
@@ -206,7 +346,7 @@
             "reg_type": "coil",
             "type": "bool",
             "mask": "0001",
-            "title": "Alarm",
+            "title": "Switch State",
             "text": "Auto Button Pressed"
         },
         {
@@ -214,7 +354,7 @@
             "reg_type": "coil",
             "type": "bool",
             "mask": "0001",
-            "title": "Alarm",
+            "title": "Switch State",
             "text": "Off Button Pressed"
         },
         {
@@ -222,9 +362,16 @@
             "reg_type": "coil",
             "type": "bool",
             "mask": "0001",
-            "title": "Alarm",
+            "title": "Switch State",
             "text": "Run Button Pressed"
+        },
+        {
+            "reg": "0002",
+            "type": "default",
+            "title": "Engine State",
+            "text": "Unknown"
         }
+
     ],
     "engine_state": [
         {
@@ -250,6 +397,12 @@
             "mask": "0001",
             "title": "Engine State",
             "text": "Cranking"
+        },
+        {
+            "reg": "0002",
+            "type": "default",
+            "title": "Engine State",
+            "text": "Inactive"
         }
     ],
     "generator_status":[
@@ -283,7 +436,7 @@
             "reg_type": "coil",
             "type": "bool",
             "mask": "0001",
-            "title": "Alarm",
+            "title": "Generator Status",
             "text": "Breaker Closed"
         },
         {
@@ -291,7 +444,7 @@
             "reg_type": "coil",
             "type": "bool",
             "mask": "0001",
-            "title": "Alarm",
+            "title": "Generator Status",
             "text": "Breaker Tripped"
         },
         {
@@ -299,7 +452,7 @@
             "reg_type": "coil",
             "type": "bool",
             "mask": "0001",
-            "title": "Alarm",
+            "title": "Generator Status",
             "text": "Close Breaker Output"
         },
         {
@@ -307,8 +460,22 @@
             "reg_type": "coil",
             "type": "bool",
             "mask": "0001",
-            "title": "Alarm",
+            "title": "Generator Status",
             "text": "Trip Breaker Output"
+        },
+        {
+            "reg": "00e8",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Generator Status",
+            "text": "Emergency Power Source Supplying Power"
+        },
+        {
+            "reg": "0002",
+            "type": "default",
+            "title": "Generator Status",
+            "text": "Inactive"
         }
     ],
     "alarm_active" : [
@@ -546,38 +713,7 @@
             "title": "Alarm",
             "text": "Battery Charger Fault Warning"
         },
-        {
-            "reg": "00df",
-            "reg_type": "coil",
-            "type": "bool",
-            "mask": "0001",
-            "title": "Alarm",
-            "text": "Low Oil Pressure Warning ECM DTC"
-        },
-        {
-            "reg": "00e0",
-            "reg_type": "coil",
-            "type": "bool",
-            "mask": "0001",
-            "title": "Alarm",
-            "text": "Low Oil Pressure Shutdown ECM DTC"
-        },
-        {
-            "reg": "00e1",
-            "reg_type": "coil",
-            "type": "bool",
-            "mask": "0001",
-            "title": "Alarm",
-            "text": "High Coolant Temperature Warning ECM DTC"
-        },
-        {
-            "reg": "00e2",
-            "reg_type": "coil",
-            "type": "bool",
-            "mask": "0001",
-            "title": "Alarm",
-            "text": "High Coolant Temperature Shutdown ECM DTC"
-        },
+
         {
             "reg": "00e3",
             "reg_type": "coil",
@@ -617,14 +753,6 @@
             "mask": "0001",
             "title": "Alarm",
             "text": "Alternator Protection Shutdown L3"
-        },
-        {
-            "reg": "00e8",
-            "reg_type": "coil",
-            "type": "bool",
-            "mask": "0001",
-            "title": "Alarm",
-            "text": "Emergency Power Source Supplying Power"
         },
         {
             "reg": "00e9",
@@ -753,38 +881,6 @@
             "mask": "0001",
             "title": "Alarm",
             "text": "Protective Relay Trip Over Power"
-        },
-        {
-            "reg": "00fc",
-            "reg_type": "coil",
-            "type": "bool",
-            "mask": "0001",
-            "title": "Alarm",
-            "text": "Protective Relay Shutdown Over Power"
-        },
-        {
-            "reg": "00fd",
-            "reg_type": "coil",
-            "type": "bool",
-            "mask": "0001",
-            "title": "Alarm",
-            "text": "Protective Relay Shutdown Over Current"
-        },
-        {
-            "reg": "00fe",
-            "reg_type": "coil",
-            "type": "bool",
-            "mask": "0001",
-            "title": "Alarm",
-            "text": "Protective Relay Shutdown Reverse VAR"
-        },
-        {
-            "reg": "00ff",
-            "reg_type": "coil",
-            "type": "bool",
-            "mask": "0001",
-            "title": "Alarm",
-            "text": "Protective Relay Shutdown Reverse Power"
         },
         {
             "reg": "0100",
@@ -1385,69 +1481,6 @@
                     "title": "ECU Battery Voltage"
                 }
             ]
-        },
-        {
-            "reg": "0022",
-            "mask": "ffffffff",
-            "type": "float",
-            "units": "V",
-            "ieee754": "single",
-            "round": 2,
-            "title": "Bus Voltage L1 L2"
-        },
-        {
-            "reg": "0024",
-            "mask": "ffffffff",
-            "type": "float",
-            "units": "V",
-            "ieee754": "single",
-            "round": 2,
-            "title": "Bus Voltage L2 L3"
-        },
-        {
-            "reg": "0026",
-            "mask": "ffffffff",
-            "type": "float",
-            "units": "V",
-            "ieee754": "single",
-            "round": 2,
-            "title": "Bus Voltage L3 L1"
-        },
-        {
-            "reg": "0028",
-            "mask": "ffffffff",
-            "type": "float",
-            "units": "V",
-            "ieee754": "single",
-            "round": 2,
-            "title": "Bus Voltage L1 L0"
-        },
-        {
-            "reg": "002a",
-            "mask": "ffffffff",
-            "type": "float",
-            "units": "V",
-            "ieee754": "single",
-            "round": 2,
-            "title": "Bus Voltage L2 L0"
-        },
-        {
-            "reg": "002c",
-            "mask": "ffffffff",
-            "type": "float",
-            "units": "V",
-            "ieee754": "single",
-            "round": 2,
-            "title": "Bus Voltage L3 L0"
-        },
-        {
-            "reg": "0036",
-            "mask": "ffffffff",
-            "type": "float",
-            "units": "Hz",
-            "ieee754": "single",
-            "round": 2,
-            "title": "Bus Frequency"
         },
         {
             "reg": "0282",

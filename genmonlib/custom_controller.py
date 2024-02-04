@@ -19,6 +19,7 @@ import threading
 import time
 import copy
 import struct
+import math
 
 from genmonlib.controller import GeneratorController
 from genmonlib.modbus_file import ModbusFile
@@ -851,6 +852,8 @@ class CustomController(GeneratorController):
         # return JSON of dict with registers and text descriptions
         try:
             ReturnDict = {}
+            # todo: this presently does not support displaying multiple types of registers
+            # this should be fixed
             if "holding_registers" in self.controllerimport.keys():
                 for Register in self.Registers.keys():
                     if Register in self.controllerimport["holding_registers"].keys():
@@ -1762,6 +1765,7 @@ class CustomController(GeneratorController):
     # ------------ GeneratorController:ProcessBitModifiers ----------------------
     def ProcessBitModifiers(self, entry, value, ReturnFloat = False):
         try:
+            orignialvalue = value
             if "shiftright" in entry.keys():
                 value = value >> int(entry["shiftright"])
             if "shiftleft" in entry.keys():
@@ -1775,7 +1779,10 @@ class CustomController(GeneratorController):
                 elif entry["ieee754"].lower() == "double":  # 64 bits
                     value = float(struct.unpack('f', struct.pack('Q', int(value)))[0])
                 else:
-                    self.LogError("Error converting ieee754 floating point: invalid ieee754 type: " + str(entry))
+                    self.LogError("Error converting IEEE754 floating point: invalid ieee754 type: " + str(entry))
+                if math.isnan(value):
+                    self.LogDebug("Error: value is not an IEEE floating point number: " + ("%x" % orignialvalue) + " : " + str(entry["title"]) + ": " + str(value))
+                    return 0.0
             if "multiplier" in entry.keys():
                 if ReturnFloat:
                     value = float(value * float(entry["multiplier"]))
@@ -2244,6 +2251,8 @@ class CustomController(GeneratorController):
                 return "READY"
             elif SwitchState == "off":
                 return "OFF"
+            elif SwitchState.lower() == "inactive" or EngineStatus.lower() == "inactive" or GeneratorStatus.lower() == "inactive":
+                return "READY"
             else:
                 if self.InitComplete:
                     message = (
