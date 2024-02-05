@@ -69,7 +69,7 @@ class GeneratorController(MySupport):
         self.CheckForAlarmEvent = (
             threading.Event()
         )  # Event to signal checking for alarm
-        self.Registers = collections.OrderedDict()  # dict for registers and values (modbus fuction 03)
+        self.Holding = collections.OrderedDict()  # dict for registers and values (modbus fuction 03)
         self.Strings = collections.OrderedDict()    # dict for registers read a string data
         self.FileData = collections.OrderedDict()   # dict for modbus file reads (modbus function 0x14)
         self.Coils = collections.OrderedDict()      # dict for modbus coil reads (modbus fuction 01)
@@ -131,6 +131,7 @@ class GeneratorController(MySupport):
         self.OutageNoticeDelayTime = None
         self.LastOutageDuration = self.OutageStartTime - self.OutageStartTime
         self.OutageNoticeDelay = 0
+        self.Buttons = []   # UI command buttons (loaded after controller ID, if any)
 
         try:
 
@@ -652,7 +653,7 @@ class GeneratorController(MySupport):
                 return self.Coils.get(Register, "")
             if IsInput:
                 return self.Inputs.get(Register, "")
-            return self.Registers.get(Register, "")
+            return self.Holding.get(Register, "")
         except Exception as e1:
             self.LogErrorLine("Error in GetRegisterValueFromList: " + str(e1))
             return ""
@@ -858,6 +859,89 @@ class GeneratorController(MySupport):
             self.LogErrorLine("Error in SetCommandButton: " + str(e1))
             return "Error in SetCommandButton, see error log."
         return "OK"
+
+     # -------------Controller:GetButtons---------------------------------------
+    def GetButtons(self, singlebuttonname = None):
+        try:
+
+            if len(self.Buttons) < 1:
+                return []
+            button_list = self.Buttons
+            button_list = self.GetButtonsCommon(button_list, singlebuttonname=singlebuttonname)
+            return button_list
+        except Exception as e1:
+            self.LogErrorLine("Error in GetButtons: " + str(e1))
+            return []
+        
+    # ----------  Controller::GetButtonsCommon----------------------------------
+    def GetButtonsCommon(self, button_list, singlebuttonname = None):
+        try:
+            if button_list == None:
+                return []
+            if not isinstance(button_list, list):
+                self.LogError("Error in GetButtonsCommon: invalid input or data: "+ str(type(button_list)))
+                return []
+
+            # Validate buttons before sending to the web app
+            return_buttons = []
+            for button in button_list:
+                
+                if not "onewordcommand" in button.keys():
+                    self.LogError("Error in GetButtonsCommon: button must have onewordcommand element: "+ str(button))
+                    continue
+                elif not isinstance(button["onewordcommand"], str):
+                    self.LogError("Error in GetButtonsCommon: invalid button defined validateing onewordcommand (non string): "+ str(button))
+                    continue
+                if not "title" in button.keys():
+                    self.LogError("Error in GetButtonsCommon: button must have title element: "+ str(button))
+                    continue
+                elif not isinstance(button["title"], str):
+                    self.LogError("Error in GetButtonsCommon: invalid button defined validateing title (not string): "+ str(button))
+                    continue
+                if not "command_sequence" in button.keys():
+                    self.LogError("Error in GetButtonsCommon: button must have command_sequence element: "+ str(button))
+                    continue
+                elif not isinstance(button["command_sequence"], list):
+                    self.LogError("Error in GetButtonsCommon: invalid button defined validateing command_sequence:(not list) "+ str(button))
+                    continue
+                
+                # valiate command sequeuence
+                CommandError = False
+                for command in button["command_sequence"]:
+                    if not "reg" in command.keys() or not isinstance(command["reg"], str):
+                        self.LogError("Error in GetButtonsCommon: invalid command string defined validateing reg: "+ str(button))
+                        CommandError = True
+                        break
+                    if not "value" in command.keys():
+                        # this command requires input from the web app, let's validate the params
+                        # "input_title", "type" is required. "length" is default 2 but must be a multiple of 2
+                        if not "input_title" in command.keys() or not "type" in command.keys():
+                            self.LogError("Error in GetButtonsCommon: Error validateing input_title and type: "+ str(button))
+                            CommandError = True
+                            break
+                        if "length" in command.keys():
+                            if(int(command["length"]) % 2 != 0):
+                                self.LogError("Error in GetButtonsCommon: length of command_sequence input must be a multiple of 2: " + str(button))
+                                CommandError = True
+                                break
+                        if "bounds_regex" in command.keys():
+                            if not self.RegExIsValid(command["bounds_regex"]):
+                                self.LogError("Error in GetButtonsCommon: invalid regular expression for bounds_regex in command_sequence: " + str(button))
+                                CommandError = True
+                                break
+                if CommandError:
+                    continue
+
+                if singlebuttonname != None and singlebuttonname == button["onewordcommand"]:
+                    return button
+
+                return_buttons.append(button)
+
+            return return_buttons
+        except Exception as e1:
+            self.LogErrorLine("Error in GetButtonsCommon: " + str(e1))
+            return []
+
     # -------------CustomController:ExecuteRemoteCommand-------------------------
     def ExecuteRemoteCommand(self, CommandSetList):
         # CommandSetList is a list of dicts, each dict is a command to execute 
@@ -983,18 +1067,6 @@ class GeneratorController(MySupport):
             self.LogDebug(str(command_sequence))
             return "Error in ExecuteCommandSequence"
         return "OK"
-    # -------------CustomController:GetButtons-----------------------------------
-    def GetButtons(self, singlebuttonname = None):
-        try:
-            if not singlebuttonname == None:
-                # get full single command
-                return {}
-            else:
-                # get full simplified list for GUI
-                return {}
-        except Exception as e1:
-            self.LogErrorLine("Error in GetButtons: " + str(e1))
-            return {}
     # ------------ GeneratorController::GetStartInfo ----------------------------
     # return a dictionary with startup info for the gui
     def GetStartInfo(self, NoTile=False):

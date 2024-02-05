@@ -16,6 +16,7 @@ import socket
 import sys
 import threading
 import time
+import re
 
 from genmonlib.mycommon import MyCommon
 from genmonlib.myconfig import MyConfig
@@ -122,6 +123,13 @@ class MySupport(MyCommon):
 
         return Platform.GetInfo(JSONNum=JSONNum)
 
+    # ----------  MySupport::RegExIsValid---------------------------------
+    def RegExIsValid(self, input_str):
+        try:
+            re.compile(input_str)
+            return True
+        except Exception as e1:
+            return False
     # ---------- MySupport::InternetConnected------------------------------------
     # Note: this function, if the internet connection is not present could
     # take some time to complete due to the network timeout

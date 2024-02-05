@@ -805,11 +805,11 @@ class CustomController(GeneratorController):
             else:   # base register (holding register)
                 #  validate data length
                 if self.ValidateRegister("holding_registers", Register, Value):
-                    self.Registers[Register] = Value
+                    self.Holding[Register] = Value
                 else:
                     ReturnStatus, LogRegLength, Name = self.RegisterIsLog(Register)
                     if ReturnStatus:
-                        self.Registers[Register] = Value
+                        self.Holding[Register] = Value
                     else:
                         self.LogError("Failure validating log holding register: " + Register)
                         return False
@@ -855,31 +855,45 @@ class CustomController(GeneratorController):
             # todo: this presently does not support displaying multiple types of registers
             # this should be fixed
             if "holding_registers" in self.controllerimport.keys():
-                for Register in self.Registers.keys():
+                HoldingRegLabels = {}
+                for Register in self.Holding.keys():
                     if Register in self.controllerimport["holding_registers"].keys():
                         RegData = self.controllerimport["holding_registers"][Register]
                         if isinstance(RegData, dict):
-                            ReturnDict[Register] = RegData["text"]
+                            #ReturnDict[Register] = RegData["text"]
+                            HoldingRegLabels[Register] = RegData["text"]
                     else:
                         Success, Length, Name = self.RegisterIsLog(Register)
                         if Success:
-                            ReturnDict[Register] = Name
+                            #ReturnDict[Register] = Name
+                            HoldingRegLabels[Register] = Name
+                if len(HoldingRegLabels.keys()) > 0:
+                    ReturnDict["Holding"] = HoldingRegLabels
             if "input_registers" in self.controllerimport.keys():
+                InputRegLabels = {}
                 for Register in self.Inputs.keys():
                     if Register in self.controllerimport["input_registers"].keys():
                         RegData = self.controllerimport["input_registers"][Register]
                         if isinstance(RegData, dict):
-                            ReturnDict[Register] = RegData["text"]
+                            #ReturnDict[Register] = RegData["text"]
+                            InputRegLabels[Register] = RegData["text"]
                     else:
                         Success, Length, Name = self.RegisterIsLog(Register)
                         if Success:
-                            ReturnDict[Register] = Name
+                            #ReturnDict[Register] = Name
+                            InputRegLabels[Register] = Name
+                if len(HoldingRegLabels.keys()) > 0:
+                    ReturnDict["Inputs"] = InputRegLabels
             if "coil_registers" in self.controllerimport.keys():
+                CoilRegLabels = {}
                 for Register in self.Coils.keys():
                     if Register in self.controllerimport["coil_registers"].keys():
                         RegData = self.controllerimport["coil_registers"][Register]
                         if isinstance(RegData, dict):
-                            ReturnDict[Register] = RegData["text"]
+                            #ReturnDict[Register] = RegData["text"]
+                            CoilRegLabels[Register] = RegData["text"]
+                if len(HoldingRegLabels.keys()) > 0:
+                    ReturnDict["Coils"] = CoilRegLabels
             return json.dumps(ReturnDict)
         except Exception as e1:
             self.LogErrorLine("Error in GetRegisterLabels: " + str(e1))
@@ -1385,80 +1399,12 @@ class CustomController(GeneratorController):
         try:
             button_list = self.controllerimport.get("buttons", None)
 
-            if button_list == None:
-                return {}
-            if not isinstance(button_list, list):
-                self.LogError("Error in GetButtons: invalid input or data: "+ str(type(button_list)))
-                return {}
-
-            # Validate buttons before sending to the web app
-            return_buttons = []
-            for button in button_list:
-                
-                if not "onewordcommand" in button.keys():
-                    self.LogError("Error in GetButtons: button must have onewordcommand element: "+ str(button))
-                    continue
-                elif not isinstance(button["onewordcommand"], str):
-                    self.LogError("Error in GetButtons: invalid button defined validateing onewordcommand (non string): "+ str(button))
-                    continue
-                if not "title" in button.keys():
-                    self.LogError("Error in GetButtons: button must have title element: "+ str(button))
-                    continue
-                elif not isinstance(button["title"], str):
-                    self.LogError("Error in GetButtons: invalid button defined validateing title (not string): "+ str(button))
-                    continue
-                if not "command_sequence" in button.keys():
-                    self.LogError("Error in GetButtons: button must have command_sequence element: "+ str(button))
-                    continue
-                elif not isinstance(button["command_sequence"], list):
-                    self.LogError("Error in GetButtons: invalid button defined validateing command_sequence:(not list) "+ str(button))
-                    continue
-                
-                # valiate command sequeuence
-                CommandError = False
-                for command in button["command_sequence"]:
-                    if not "reg" in command.keys() or not isinstance(command["reg"], str):
-                        self.LogError("Error in GetButtons: invalid command string defined validateing reg: "+ str(button))
-                        CommandError = True
-                        break
-                    if not "value" in command.keys():
-                        # this command requires input from the web app, let's validate the params
-                        # "input_title", "type" is required. "length" is default 2 but must be a multiple of 2
-                        if not "input_title" in command.keys() or not "type" in command.keys():
-                            self.LogError("Error in GetButtons: Error validateing input_title and type: "+ str(button))
-                            CommandError = True
-                            break
-                        if "length" in command.keys():
-                            if(int(command["length"]) % 2 != 0):
-                                self.LogError("Error in GetButtons: length of command_sequence input must be a multiple of 2: " + str(button))
-                                CommandError = True
-                                break
-                        if "bounds_regex" in command.keys():
-                            if not self.RegExIsValid(command["bounds_regex"]):
-                                self.LogError("Error in GetButtons: invalid regular expression for bounds_regex in command_sequence: " + str(button))
-                                CommandError = True
-                                break
-                if CommandError:
-                    continue
-
-                if singlebuttonname != None and singlebuttonname == button["onewordcommand"]:
-                    return button
-
-                return_buttons.append(button)
-
-            return return_buttons
+            return self.GetButtonsCommon(button_list, singlebuttonname=singlebuttonname)
 
         except Exception as e1:
             self.LogErrorLine("Error in GetButtons: " + str(e1))
-            return {}
+            return []
 
-    # ----------  CustomController::RegExIsValid---------------------------------
-    def RegExIsValid(self, input_str):
-        try:
-            re.compile(input_str)
-            return True
-        except Exception as e1:
-            return False
     # ----------  CustomController::SetGeneratorRemoteCommand--------------------
     # CmdString will be in the format: "setremote=start"
     # valid commands are defined in the JSON file
@@ -1603,7 +1549,7 @@ class CustomController(GeneratorController):
                 # check if we have read the register yet
                 if ((reg_type == None or reg_type == "holding") and 
                     "holding_registers" in self.controllerimport.keys() and 
-                    Register not in self.Registers.keys()):
+                    Register not in self.Holding.keys()):
                     self.LogDebug("Holding Register not found: " + Register + " entry:" + str(entry))
                     return ReturnTitle, ReturnValue
                 if (reg_type == "input" and 
@@ -2039,23 +1985,23 @@ class CustomController(GeneratorController):
             InputList = []
             CoilList = []
 
-            Regs["Num Regs"] = "%d" % (len(self.Registers) + len(self.Inputs) + len(self.Coils))
+            Regs["Num Regs"] = "%d" % (len(self.Holding) + len(self.Inputs) + len(self.Coils))
 
-            Regs["Holding Registers"] = RegList
+            Regs["Holding"] = RegList
             # display all the registers
-            temp_regsiters = self.Registers
+            temp_regsiters = self.Holding
             for Register, Value in temp_regsiters.items():
                 isLog, LogRegLength, Name = self.RegisterIsLog(Register)
                 if AllRegs or not isLog:
                     RegList.append({Register: Value})
 
-            Regs["Input Registers"] = InputList
+            Regs["Inputs"] = InputList
             # display all the registers
             temp_regsiters = self.Inputs
             for Register, Value in temp_regsiters.items():
                 InputList.append({Register: Value})
 
-            Regs["Coil Registers"] = CoilList
+            Regs["Coils"] = CoilList
             # display all the registers
             temp_regsiters = self.Coils
             for Register, Value in temp_regsiters.items():

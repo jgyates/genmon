@@ -564,7 +564,6 @@ class Monitor(MySupport):
                         {"Comm Stats": self.Controller.GetCommStatus()}, ""
                     )
                 )
-                msgbody += self.Controller.DisplayRegisters(AllRegs=FullLogs)
 
                 msgbody += "\n" + self.GetSupportData() + "\n"
                 if self.FeedbackEnabled:
@@ -611,11 +610,9 @@ class Monitor(MySupport):
             SupportData["Comm Stats"] = self.Controller.GetCommStatus()
             if not self.bDisablePlatformStats:
                 SupportData["PlatformStats"] = self.GetPlatformStats()
-            SupportData["Data"] = self.Controller.DisplayRegisters(
-                AllRegs=True, DictOut=True
-            )
+            #SupportData["Data"] = self.Controller.DisplayRegisters(AllRegs=True, DictOut=True)
             # Raw Modbus data
-            SupportData["Registers"] = self.Controller.Registers
+            SupportData["Holding"] = self.Controller.Holding
             SupportData["Strings"] = self.Controller.Strings
             SupportData["FileData"] = self.Controller.FileData
             SupportData["Coils"] = self.Controller.Coils
@@ -707,7 +704,7 @@ class Monitor(MySupport):
                 )
             )
 
-            msgbody += self.Controller.DisplayRegisters(AllRegs=True)
+            #msgbody += self.Controller.DisplayRegisters(AllRegs=True)
 
             # get data in JSON format
             msgbody += "\n" + self.GetSupportData() + "\n"

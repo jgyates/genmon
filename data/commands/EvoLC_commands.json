@@ -1,0 +1,74 @@
+{
+    "buttons":[
+        {
+            "onewordcommand" : "exerciseduration",
+            "title" : "Exercise Duration",
+            "command_sequence" : [
+                                   {
+                                      "reg": "023e",
+                                      "input_title": "Minutes",
+                                      "type": "int",
+                                      "length": 2,
+                                      "bounds_regex":"^(?:([1][2-9])|([2-5][0-9])|([6][0]))$",
+                                      "tooltip": "The duration of the exercise cycle. This must be a whole number between 12 and 60 minutes."
+                                   }
+                                 ]
+        },
+        {
+          "onewordcommand" : "startupdelay",
+          "title" : "Start Up Delay",
+          "command_sequence" : [
+                                 {
+                                    "reg": "0239",
+                                    "input_title": "Seconds",
+                                    "type": "int",
+                                    "length": 2,
+                                    "bounds_regex":"^([5-9]|[1-9][0-9]{1,2}|1[0-4][0-9]{2}|1500)$",
+                                    "tooltip": "The delay between the loss of utility power and the cranking of the generator. This must be a whole number between 5 and 1500 seconds."
+                                 }
+                               ]
+        },
+        {
+          "onewordcommand" : "warmupdelay",
+          "title" : "Warm Up Delay",
+          "command_sequence" : [
+                                 {
+                                    "reg": "0238",
+                                    "input_title": "Seconds",
+                                    "type": "int",
+                                    "length": 2,
+                                    "bounds_regex":"^([2-9]|[1-9][0-9]{1,2}|1[0-4][0-9]{2}|1500)$",
+                                    "tooltip": "The delay between the start of the generator and the activation of the transfer switch when utility power has been lost. This must be a whole number between 2 and 1500 seconds."
+                                 }
+                               ]
+        },
+        {
+         "onewordcommand" : "thresholdvolts",
+         "title" : "Threshold Volts",
+         "command_sequence" : [
+                                {
+                                   "reg": "0011",
+                                   "input_title": "Volts",
+                                   "type": "int",
+                                   "length": 2,
+                                   "bounds_regex":"^([0-9]|[1-9][0-9]|[12][0-9]{2}|3[0-3][0-9]|34[0-2])$",
+                                   "tooltip": "The utility voltage that denotes an outage. Any utility voltage below this value will trigger the generator to start (After the Start Delay has expired). This must be a whole number between 0 and 342."
+                                }
+                              ]
+       },
+       {
+         "onewordcommand" : "pickupvolts",
+         "title" : "Pickup Volts",
+         "command_sequence" : [
+                                {
+                                   "reg": "023b",
+                                   "input_title": "Volts",
+                                   "type": "int",
+                                   "length": 2,
+                                   "bounds_regex":"^(17[5-9]|1[89][0-9]|2[0-9]{2}|3[0-3][0-9]|34[0-2])$",
+                                   "tooltip": "The utility voltage that denotes an outage is over.. This must be a whole number between 175 and 342."
+                                }
+                              ]
+       }
+    ]
+}

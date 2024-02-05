@@ -15,6 +15,7 @@ This project will monitor a backup generator that utilizes the Generac Controlle
 * [Deep See Electronics 7320MKII Controller](https://github.com/jgyates/genmon/wiki/Appendix-N-Genmon-Supporting-Other-Controller-Types)
 * [ComAp Controller](https://github.com/jgyates/genmon/wiki/Appendix-N-Genmon-Supporting-Other-Controller-Types)
 * [Briggs & Stratton GC-1031/GC-1032](https://github.com/jgyates/genmon/wiki/Appendix-P-Briggs-and-Stratton-Controller-Information)
+* [Kohler APM604](https://powersystems.kohlerenergy.com/en/product/apm603)
 
 The project is written mostly in python and has been tested with a Raspberry Pi 3 (Pi Zero, Pi Zero W, Pi Zero 2W, Pi 2, Pi 3b+ and Pi 4 have also been validated). 32 and 64 bit version of raspbian have been used with the project. To use this project you would need to create a physical enclosure for your raspberry pi and possibly [make a cable](https://github.com/jgyates/genmon/wiki/3.1--Making-a-Cable) to connect the raspberry pi to the generator controller or purchase [pre-assembled hardware](https://github.com/jgyates/genmon/wiki/2--Hardware#custom-hat). If you are comfortable doing these things and you have a backup generator that has a supported controller, then this project may be of interest to you.
 

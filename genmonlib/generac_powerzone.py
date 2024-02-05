@@ -1226,7 +1226,7 @@ class PowerZone(GeneratorController):
             if not IsFile and self.RegisterIsBaseRegister(
                 Register, Value, validate_length=True
             ):
-                self.Registers[Register] = Value
+                self.Holding[Register] = Value
             elif not IsFile and self.RegisterIsStringRegister(Register):
                 # TODO validate register string length
                 self.Strings[Register] = Value
@@ -2795,11 +2795,11 @@ class PowerZone(GeneratorController):
 
             RegList = []
 
-            Regs["Num Regs"] = "%d" % len(self.Registers)
+            Regs["Num Regs"] = "%d" % len(self.Holding)
 
-            Regs["Holding Registers"] = RegList
+            Regs["Holding"] = RegList
             # display all the registers
-            temp_regsiters = self.Registers
+            temp_regsiters = self.Holding
             for Register, Value in temp_regsiters.items():
                 RegList.append({Register: Value})
 

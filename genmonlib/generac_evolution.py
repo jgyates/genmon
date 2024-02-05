@@ -238,13 +238,14 @@ class Evolution(GeneratorController):
             "0235": [2, 0],  # Gain (EvoLC)
             "0236": [2, 0],  # Two Wire Start (EvoAC)
             "0237": [2, 0],  # Set Voltage (Evo LC)
+            "0238": [2, 0],  # Warm up delay (EvoLC)
             "0239": [2, 0],  # Startup Delay (Evo LC)
             "023b": [2, 0],  # Pick Up Voltage (Evo LC only)
             "023e": [2, 0],  # Exercise time duration (Evo LC only)
+            "023f": [2, 0],  # Preheat time (5-30 seconds) Evo LC Diesel only (Evo LC only)
             "0209": [2, 0],  #  Unknown (EvoLC)
             "020d": [2, 0],  #  Unknown (EvoLC)
             "020f": [2, 0],  #  Unknown (EvoLC)  Something in EvoLC
-            "0238": [2, 0],  #  Unknown (EvoLC)
             "023a": [2, 0],  #  Unknown (EvoLC)
             "023d": [2, 0],  #  Unknown (EvoLC)
             "0241": [2, 0],  #  Unknown (EvoLC)
@@ -2098,17 +2099,17 @@ class Evolution(GeneratorController):
             return False
         if not self.ValidateRegister(Register, Value):
             return False
-        RegValue = self.Registers.get(Register, "")
+        RegValue = self.Holding.get(Register, "")
 
         if RegValue == "":
-            self.Registers[
+            self.Holding[
                 Register
             ] = Value  # first time seeing this register so add it to the list
         elif RegValue != Value:
             # don't print values of registers we have validated the purpose
             if not self.RegisterIsLog(Register):
                 self.MonitorUnknownRegisters(Register, RegValue, Value)
-            self.Registers[Register] = Value
+            self.Holding[Register] = Value
             self.Changed += 1
         else:
             self.NotChanged += 1
@@ -2134,7 +2135,7 @@ class Evolution(GeneratorController):
 
             RegList = []
 
-            Regs["Num Regs"] = "%d" % len(self.Registers)
+            Regs["Num Regs"] = "%d" % len(self.Holding)
             if self.NotChanged == 0:
                 self.TotalChanged = 0.0
             else:
@@ -2143,10 +2144,10 @@ class Evolution(GeneratorController):
             Regs["Changed"] = "%d" % self.Changed
             Regs["Total Changed"] = "%.2f" % self.TotalChanged
 
-            Regs["Holding Registers"] = RegList
+            Regs["Holding"] = RegList
             # print all the registers
             # make a temp copy in case the registers change whil iterating
-            temp_regsiters = self.Registers
+            temp_regsiters = self.Holding
             for Register, Value in temp_regsiters.items():
 
                 # do not display log registers or model register
@@ -4282,6 +4283,22 @@ class Evolution(GeneratorController):
         else:
             return ""
 
+    # ------------ Evolution:GetPreheatTime ------------------------------------
+    def GetPreheatTime(self):
+
+        # get Startup Delay
+        if self.EvolutionController and self.LiquidCooled:
+            return self.GetParameter("023f", Label="s")
+        else:
+            return ""
+    # ------------ Evolution:GetWarmupDelay ------------------------------------
+    def GetWarmupDelay(self):
+
+        # get Startup Delay
+        if self.EvolutionController and self.LiquidCooled:
+            return self.GetParameter("0238", Label="s")
+        else:
+            return ""
     # ------------ Evolution:GetUtilityVoltage ----------------------------------
     def GetUtilityVoltage(self, ReturnInt=False):
 
@@ -4750,13 +4767,12 @@ class Evolution(GeneratorController):
                 )
 
             if self.EvolutionController:
-                Outage["Outage"].append(
-                    {
-                        "Startup Delay": self.UnitsOut(
-                            self.GetStartupDelay(), type=int, NoString=JSONNum
-                        )
-                    }
-                )
+                Outage["Outage"].append({"Startup Delay": self.UnitsOut(self.GetStartupDelay(), type=int, NoString=JSONNum)})
+                if self.EvolutionController and self.LiquidCooled:
+                    Outage["Outage"].append({"Warm-up Delay": self.UnitsOut(self.GetWarmupDelay(), type=int, NoString=JSONNum)})
+                    if self.EngineDisplacement == "2.3 L" or self.EngineDisplacement == "2.4 L":
+                        Outage["Outage"].append({"Preheat Time": self.UnitsOut(self.GetPreheatTime(), type=int, NoString=JSONNum)})
+
 
             Outage["Outage"].append({"Outage Log": self.DisplayOutageHistory(JSONNum=JSONNum)})
 
@@ -4982,7 +4998,9 @@ class Evolution(GeneratorController):
 
             if not NoTile:
 
-                StartInfo["buttons"] = []
+                if len(self.Buttons) == 0:
+                    self.SetupButtons()
+                StartInfo["buttons"]= self.GetButtons()
 
                 StartInfo["pages"] = {
                     "status": True,
@@ -5005,6 +5023,33 @@ class Evolution(GeneratorController):
 
         return StartInfo
 
+    # -------------Evolution:SetupButtons---------------------------------------
+    def SetupButtons(self):
+        try:
+            if self.EvolutionController and self.LiquidCooled:
+                FileName = "EvoLC_commands.json"
+                ConfigFileName = os.path.join(
+                    os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
+                    "data",
+                    "commands",
+                    FileName
+                )
+                if os.path.isfile(ConfigFileName):
+                    try:
+                        with open(ConfigFileName) as infile:
+                            command_import = json.load(infile)
+                            self.Buttons = command_import["buttons"]
+
+                    except Exception as e1:
+                        self.LogErrorLine("Error in SetupButtons reading config import file: " + str(e1))
+                        return
+                else:
+                    self.LogError("Error in SetupButtongs reading button import file: " + str(ConfigFileName))
+                    return
+
+        except Exception as e1:
+            self.LogErrorLine("Error in SetupButtons: " + str(e1))
+        
     # ---------- Evolution:GetConfig--------------------------------------------
     def GetConfig(self):
 

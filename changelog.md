@@ -18,6 +18,8 @@ All notable changes to this project will be documented in this file.
 - Minor update to error handling of fuel gauge 
 - Added new option to return JSON for numerics on MQTT addon genmqtt.py
 - Alarm code and log code updates for Nexus AC and Evo LC
+- Update for Kohler APM603 support
+- Added new commands for EvoLC
 
 ## V1.19.00 -2023-11-09
 - Updates to genmonmain.sh, startgenmon.sh and genloader.sh for Debian bookworm. 

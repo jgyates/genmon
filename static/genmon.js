@@ -3275,32 +3275,40 @@ function DisplayRegistersFull()
     var outstr = 'Live Register View:<br><br>';
     outstr += '<center><table width="80%" border="0"><tr>';
 
-    $.each(Object.keys(regHistory["updateTime"]).sort(), function(i, reg_key) {
-        if ((i % 4) == 0){
-        outstr += '</tr><tr>';
-        }
-
-        var reg_val = regHistory["_10m"][reg_key][0];
-
-        outstr += '<td width="25%" class="registerTD">';
-        outstr +=     '<table width="100%" heigth="100%" id="val_'+reg_key+'">';
-        outstr +=     '<tr><td align="center" class="registerTDtitle">' + BaseRegistersDescription[reg_key] + '</td></tr>';
-        outstr +=     '<tr><td align="center" class="registerTDsubtitle">(' + reg_key + ')</td></tr>';
-        outstr +=     '<tr><td align="center" class="tooltip registerChart" id="content_'+reg_key+'">';
-        outstr +=        ((reg_key == "01f4") ? '<span class="registerTDvalMedium">HEX:<br>' + reg_val + '</span>' : 'HEX: '+reg_val) + '<br>';
-        // This handles the case for byte data returning Not a Number (NaN) for coil registers
-        var strHi = ((parseInt(reg_val) & 0xff00) >> 8).toString()
-        var strLo = (parseInt(reg_val) & 0x00ff).toString()
-        outstr +=        ((reg_key == "01f4") ? '' : '<span class="registerTDvalSmall">DEC: ' + parseInt(reg_val, 16) + ' | HI:LO: '+strHi +':'+ strLo +'</span>');
-        outstr +=     '</td></tr>';
-        outstr +=     '</table>';
-        outstr += '</td>';
-    });
-    if ((regHistory["_10m"].length % 4) > 0) {
-      for (var i = (regHistory["_10m"].length % 4); i < 4; i++) {
-         outstr += '<td width="25%" class="registerTD"></td>';
+    var RegTypes = ['Holding', 'Inputs', 'Coils'];
+    $.each(RegTypes, function(i, reg_type){
+      if (!(regHistory["_10m"].hasOwnProperty(reg_type))){
+        // no data for this register
+        return;
       }
-    }
+      $.each(Object.keys(regHistory["updateTime"][reg_type]).sort(), function(i, reg_key) {
+          if ((i % 4) == 0){
+          outstr += '</tr><tr>';
+          }
+
+          var reg_val = regHistory["_10m"][reg_type][reg_key][0];
+
+          outstr += '<td width="25%" class="registerTD">';
+          outstr +=     '<table width="100%" heigth="100%" id="val_'+reg_type+'_'+reg_key+'">';
+          outstr +=     '<tr><td align="center" class="registerTDtitle">' + BaseRegistersDescription[reg_type][reg_key] + '</td></tr>';
+          outstr +=     '<tr><td align="center" class="registerTDsubtitle">(' + reg_type+':'+reg_key + ')</td></tr>';
+          outstr +=     '<tr><td align="center" class="tooltip registerChart" id="content_'+reg_type+'_'+reg_key+'">';
+          outstr +=        ((reg_key == "01f4") ? '<span class="registerTDvalMedium">HEX:<br>' + reg_val + '</span>' : 'HEX: '+reg_val) + '<br>';
+          // This handles the case for byte data returning Not a Number (NaN) for coil registers
+          var strHi = ((parseInt(reg_val) & 0xff00) >> 8).toString()
+          var strLo = (parseInt(reg_val) & 0x00ff).toString()
+          outstr +=        ((reg_key == "01f4") ? '' : '<span class="registerTDvalSmall">DEC: ' + parseInt(reg_val, 16) + ' | HI:LO: '+strHi +':'+ strLo +'</span>');
+          outstr +=     '</td></tr>';
+          outstr +=     '</table>';
+          outstr += '</td>';
+      });
+    
+      if ((regHistory["_10m"][reg_type].length % 4) > 0) {
+        for (var i = (regHistory["_10m"][reg_type].length % 4); i < 4; i++) {
+          outstr += '<td width="25%" class="registerTD"></td>';
+        }
+      }
+    });
     outstr += '</tr></table>';
     outstr += '<br><img id="print10" class="print10 printButton" onClick="printRegisters(10)" src="images/transparent.png" width="36px" height="36px">&nbsp;&nbsp;&nbsp;';
     outstr += '<img id="print60" class="print60 printButton" onClick="printRegisters(60)" src="images/transparent.png" width="36px" height="36px">&nbsp;&nbsp;&nbsp;';
@@ -3324,6 +3332,8 @@ function DisplayRegistersFull()
         side: ['top', 'left'],
         functionReady: function(instance, helper) {
             var regId = $(helper.origin).attr('id').replace(/content_/g, '');
+            var reg_type = regId.split('_')[0]
+            var reg_key = regId.split('_')[1]
             instance.content('<div class="regHistoryCanvas"><table><tr><td class="regHistoryCanvasTop">' +
                              '  <div id="'+regId+'_graph1" class="regHistoryPlot"></div>' +
                              '  <div id="'+regId+'_graph2" class="regHistoryPlot"></div>' +
@@ -3337,12 +3347,12 @@ function DisplayRegistersFull()
             var plot_data2 = [];
             var plot_data3 = [];
             for (var i = 120; i >= 0; --i) {
-               if (regHistory["_10m"][regId].length > i)
-                   plot_data1.push([-i/12, parseInt(regHistory["_10m"][regId][i], 16)]);
-               if (regHistory["_60m"][regId].length > i)
-                   plot_data2.push([-i/2, parseInt(regHistory["_60m"][regId][i], 16)]);
-               if (regHistory["_24h"][regId].length > i)
-                   plot_data3.push([-i/5, parseInt(regHistory["_24h"][regId][i], 16)]);
+               if (regHistory["_10m"][reg_type][reg_key].length > i)
+                   plot_data1.push([-i/12, parseInt(regHistory["_10m"][reg_type][reg_key][i], 16)]);
+               if (regHistory["_60m"][reg_type][reg_key].length > i)
+                   plot_data2.push([-i/2, parseInt(regHistory["_60m"][reg_type][reg_key][i], 16)]);
+               if (regHistory["_24h"][reg_type][reg_key].length > i)
+                   plot_data3.push([-i/5, parseInt(regHistory["_24h"][reg_type][reg_key][i], 16)]);
             }
             var plot1 = $.jqplot(regId+'_graph1', [plot_data1], {
                                axesDefaults: { tickOptions: { textColor: '#999999', fontSize: '8pt' }},
@@ -3380,85 +3390,91 @@ function UpdateRegisters(init, printToScreen)
 
         try{
             var localRegData = null;
-            // select either "Holding Registers", "Coil Registers" or "Input Registers"
-            // TODO some customer controllers (e.g. Kholer) will need to support 
-            // multiple types of registes instead of just one.
-            if (RegData.Registers.hasOwnProperty("Holding Registers")){
-              if (Object.keys(RegData.Registers['Holding Registers']).length > 1){
-                localRegData = RegData.Registers["Holding Registers"]
+            var RegTypes = ['Holding', 'Inputs','Coils'];
+            $.each(RegTypes, function(i, reg_type){
+              
+              if (!(RegData.Registers.hasOwnProperty(reg_type))){
+                // no data for this register
+                return;
               }
-            } 
-            if (RegData.Registers.hasOwnProperty("Coil Registers")){
-              if (Object.keys(RegData.Registers['Coil Registers']).length > 1){
-                localRegData = RegData.Registers["Coil Registers"]
+              if (Object.keys(RegData.Registers[reg_type]).length < 1){
+                // no data for this register
+                return
               }
-            }
-            if (RegData.Registers.hasOwnProperty("Input Registers")){
-              if (Object.keys(RegData.Registers['Input Registers']).length > 1){
-                localRegData = RegData.Registers["Input Registers"]
+              localRegData = RegData.Registers[reg_type]
+            
+              if (localRegData == null){
+                return
               }
-            }
-            if (localRegData == null){
-              return
-            }
-            $.each(localRegData, function(i, item) {
-                var reg_key = Object.keys(item)[0]
-                var reg_val = item[Object.keys(item)[0]];
+              $.each(localRegData, function(i, item) {
+                  var reg_key = Object.keys(item)[0]
+                  var reg_val = item[Object.keys(item)[0]];
 
-                if ((init) || (regHistory["_10m"][reg_key] == undefined)) {
-                    regHistory["updateTime"][reg_key] = 0;
-                    regHistory["_10m"][reg_key] = [reg_val];
-                    regHistory["_60m"][reg_key] = [reg_val, reg_val];
-                    regHistory["_24h"][reg_key] = [reg_val, reg_val];
-                } else {
-                   if (reg_val != regHistory["_10m"][reg_key][0]) {
-                      regHistory["updateTime"][reg_key] = new Date().getTime();
-
-                      if (printToScreen) {
-                        var outstr  = ((reg_key == "01f4") ? '<span class="registerTDvalMedium">HEX:<br>' + reg_val + '</span>' : 'HEX: '+reg_val) + '<br>';
-                            // This handles the case for byte data returning Not a Number (NaN) for coil registers
-                            var strHi = ((parseInt(reg_val) & 0xff00) >> 8).toString()
-                            var strLo = (parseInt(reg_val) & 0x00ff).toString()                    
-                            outstr += ((reg_key == "01f4") ? '' : '<span class="registerTDvalSmall">DEC: ' + parseInt(reg_val, 16) + ' | HI:LO: '+ strHi +':'+ strLo +'</span>');
-                        $("#content_"+reg_key).html(outstr);
+                  if ((init) || (regHistory["_10m"][reg_type] == undefined) || (regHistory["_10m"][reg_type][reg_key] == undefined)) {
+                      // reg has not been set before in regHistory so do it now
+                      if (regHistory["_10m"][reg_type] == undefined) {
+                        regHistory["updateTime"][reg_type] = {}
+                        regHistory["_10m"][reg_type] = {}
+                        regHistory["_60m"][reg_type] = {}
+                        regHistory["_24h"][reg_type] = {}
                       }
-                   }
-                }
-                regHistory["_10m"][reg_key].unshift(reg_val);
-                if  (regHistory["_10m"][reg_key].length > 120) {
-                   var removed = regHistory["_10m"][reg_key].pop  // remove the last element
-                }
+                      if (regHistory["_10m"][reg_type][reg_key] == undefined){
+                        regHistory["updateTime"][reg_type][reg_key] = 0;
+                        regHistory["_10m"][reg_type][reg_key] = [reg_val];
+                        regHistory["_60m"][reg_type][reg_key] = [reg_val, reg_val];
+                        regHistory["_24h"][reg_type][reg_key] = [reg_val, reg_val];
+                      }
+                  } else {
+                    if (reg_val != regHistory["_10m"][reg_type][reg_key][0]) {
+                        regHistory["updateTime"][reg_type][reg_key] = new Date().getTime();
 
-                if (regHistory["count_60m"] >= 12) {
-                   var min = 0;
-                   var max = 0;
-                   for (var i = 1; i <12; i++) {
-                       if (regHistory["_10m"][reg_key][i] > regHistory["_10m"][reg_key][max])
-                          max = i;
-                       if (regHistory["_10m"][reg_key][i] < regHistory["_10m"][reg_key][min])
-                          min = i;
-                   }
-                   regHistory["_60m"][reg_key].unshift(regHistory["_10m"][reg_key][((min > max) ? min : max)], regHistory["_10m"][reg_key][((min > max) ? max : min)]);
+                        if (printToScreen) {
+                          var outstr  = ((reg_key == "01f4") ? '<span class="registerTDvalMedium">HEX:<br>' + reg_val + '</span>' : 'HEX: '+reg_val) + '<br>';
+                              // This handles the case for byte data returning Not a Number (NaN) for coil registers that are one byte long
+                              var strHi = ((parseInt(reg_val) & 0xff00) >> 8).toString()
+                              var strLo = (parseInt(reg_val) & 0x00ff).toString()                    
+                              outstr += ((reg_key == "01f4") ? '' : '<span class="registerTDvalSmall">DEC: ' + parseInt(reg_val, 16) + ' | HI:LO: '+ strHi +':'+ strLo +'</span>');
+                          $("#content_"+reg_key).html(outstr);
+                        }
+                    }
+                  }
+                  // add the value to the begining of the array
+                  regHistory["_10m"][reg_type][reg_key].unshift(reg_val);
+                  if  (regHistory["_10m"][reg_type][reg_key].length > 120) {
+                    var removed = regHistory["_10m"][reg_type][reg_key].pop  // remove the last element
+                  }
 
-                   if  (regHistory["_60m"][reg_key].length > 120)
-                     regHistory["_60m"][reg_key].splice(-2, 2);  // remove the last 2 element
-                }
+                  if (regHistory["count_60m"] >= 12) {
+                    var min = 0;
+                    var max = 0;
+                    for (var i = 1; i <12; i++) {
+                        if (regHistory["_10m"][reg_type][reg_key][i] > regHistory["_10m"][reg_type][reg_key][max])
+                            max = i;
+                        if (regHistory["_10m"][reg_type][reg_key][i] < regHistory["_10m"][reg_type][reg_key][min])
+                            min = i;
+                    }
+                    regHistory["_60m"][reg_type][reg_key].unshift(regHistory["_10m"][reg_type][reg_key][((min > max) ? min : max)], regHistory["_10m"][reg_type][reg_key][((min > max) ? max : min)]);
 
-                if (regHistory["count_24h"] >= 288) {
-                   var min = 0;
-                   var max = 0;
-                   for (var i = 1; i <24; i++) {
-                       if (regHistory["_60m"][reg_key][i] > regHistory["_60m"][reg_key][max])
-                          max = i;
-                       if (regHistory["_60m"][reg_key][i] < regHistory["_60m"][reg_key][min])
-                          min = i;
-                   }
-                   regHistory["_24h"][reg_key].unshift(regHistory["_60m"][reg_key][((min > max) ? min : max)], regHistory["_60m"][reg_key][((min > max) ? max : min)]);
+                    if  (regHistory["_60m"][reg_type][reg_key].length > 120)
+                      regHistory["_60m"][reg_type][reg_key].splice(-2, 2);  // remove the last 2 element
+                  }
 
-                   if  (regHistory["_24h"][reg_key].length > 120)
-                     regHistory["_24h"][reg_key].splice(-2, 2);  // remove the last 2 element
-                }
-            });
+                  if (regHistory["count_24h"] >= 288) {
+                    var min = 0;
+                    var max = 0;
+                    for (var i = 1; i <24; i++) {
+                        if (regHistory["_60m"][reg_type][reg_key][i] > regHistory["_60m"][reg_type][reg_key][max])
+                            max = i;
+                        if (regHistory["_60m"][reg_type][reg_key][i] < regHistory["_60m"][reg_type][reg_key][min])
+                            min = i;
+                    }
+                    regHistory["_24h"][reg_type][reg_key].unshift(regHistory["_60m"][reg_type][reg_key][((min > max) ? min : max)], regHistory["_60m"][reg_type][reg_key][((min > max) ? max : min)]);
+
+                    if  (regHistory["_24h"][reg_type][reg_key].length > 120)
+                      regHistory["_24h"][reg_type][reg_key].splice(-2, 2);  // remove the last 2 element
+                  }
+              }); // end register data loop
+            });   // end register type loop
             regHistory["count_60m"] = ((regHistory["count_60m"] >= 12) ? 0 : regHistory["count_60m"]+1);
             regHistory["count_24h"] = ((regHistory["count_24h"] >= 288) ? 0 : regHistory["count_24h"]+1);
 
@@ -3466,27 +3482,36 @@ function UpdateRegisters(init, printToScreen)
                UpdateRegistersColor();
           }
           catch(err){
-              console.log("Error in UpdateRegisters" + err)
+              console.log("Error in UpdateRegisters: " + err)
           }
     }});
 }
 //*****************************************************************************
 function UpdateRegistersColor() {
     var CurrentTime = new Date().getTime();
-    $.each(regHistory["updateTime"], function( reg_key, update_time ){
+
+    var RegTypes = ['Holding', 'Inputs', 'Coils'];
+    $.each(RegTypes, function(i, reg_type){
+      if (!(regHistory["updateTime"].hasOwnProperty(reg_type))){
+        // no data for this register
+        return;
+      }
+      $.each(regHistory["updateTime"][reg_type], function( reg_key, update_time ){
         var difference = CurrentTime - update_time;
         var secondsDifference = Math.floor(difference/1000);
         if ((update_time > 0) && (secondsDifference >= fadeOffTime)) {
-           $("#content_"+reg_key).css("background-color", "#AAAAAA");
-           $("#content_"+reg_key).css("color", "red");
+           $("#content_"+ reg_type + '_'+ reg_key).css("background-color", "#AAAAAA");
+           $("#content_"+reg_type + '_'+ reg_key).css("color", "red");
         } else if ((update_time > 0) && (secondsDifference <= fadeOffTime)) {
            var hexShadeR = toHex(255-Math.floor(secondsDifference*85/fadeOffTime));
            var hexShadeG = toHex(Math.floor(secondsDifference*170/fadeOffTime));
            var hexShadeB = toHex(Math.floor(secondsDifference*170/fadeOffTime));
-           $("#content_"+reg_key).css("background-color", "#"+hexShadeR+hexShadeG+hexShadeB);
-           $("#content_"+reg_key).css("color", "black");
+           $("#content_"+reg_type + '_'+ reg_key).css("background-color", "#"+hexShadeR+hexShadeG+hexShadeB);
+           $("#content_"+reg_type + '_'+ reg_key).css("color", "black");
         }
+      });
     });
+    
 }
 //*****************************************************************************
 function printRegisters (type) {
@@ -3516,7 +3541,6 @@ function printRegisters (type) {
       dataDivider = 5;
     }
 
-
     $('<div id="printRegisterFrame" style="width:1000px"></div>').appendTo("#mydisplay");
 
     var now = new moment();
@@ -3524,47 +3548,56 @@ function printRegisters (type) {
     outstr += '<h2>As of: '+now.format("D MMMM YYYY H:mm:ss")+'<br><small>(data avilable since: '+regHistory["historySince"]+')</small></h2><br>';
     outstr += '<table width="1000px" border="0"><tr>';
 
-    $.each(Object.keys(data).sort(), function(i, reg_key) {
-        var max=data[reg_key][0];
-        var min=data[reg_key][0];
-        for (var j = 120; j >= 0; --j) {
-           if (data[reg_key][j] > max)
-              max = data[reg_key][j];
-           if (data[reg_key][j] < min)
-              min = data[reg_key][j];
-        }
-
-        if ((i % 3) == 0){
-          pageHeight += rowHeight;
-          if (pageHeight < 100) {
-             outstr += '</tr><tr>';
-          } else {
-             outstr += '</tr></table><div class="pagebreak"> </div><table width="1000px" border="0"><tr>';
-             pageHeight = 0;
+    var data_length = 0;
+    var RegTypes = ['Holding', 'Inputs', 'Coils'];
+    $.each(RegTypes, function(i, reg_type){
+      if (!(data.hasOwnProperty(reg_type))){
+        // no data for this register
+        return;
+      }
+      $.each(Object.keys(data[reg_type]).sort(), function(i, reg_key) {
+          data_length += 1;
+          var max=data[reg_type][reg_key][0];
+          var min=data[reg_type][reg_key][0];
+          for (var j = 120; j >= 0; --j) {
+            if (data[reg_type][reg_key][j] > max)
+                max = data[reg_type][reg_key][j];
+            if (data[reg_type][reg_key][j] < min)
+                min = data[reg_type][reg_key][j];
           }
-          rowHeight = 15;
-        }
 
-        var reg_val = data[reg_key][0];
+          if ((i % 3) == 0){
+            pageHeight += rowHeight;
+            if (pageHeight < 100) {
+              outstr += '</tr><tr>';
+            } else {
+              outstr += '</tr></table><div class="pagebreak"> </div><table width="1000px" border="0"><tr>';
+              pageHeight = 0;
+            }
+            rowHeight = 15;
+          }
 
-        outstr += '<td width="33%" class="printRegisterTD">';
-        outstr +=     '<table width="333px" heigth="100%" id="val_'+reg_key+'">';
-        outstr +=     '<tr><td align="center" class="printRegisterTDsubtitle">' + reg_key + '</td></tr>';
-        outstr +=     '<tr><td align="center" class="printRegisterTDtitle">' + BaseRegistersDescription[reg_key] + '</td></tr>';
-        outstr +=     '<tr><td align="center" class="printRegisterTDsubtitle">Current Value: ' + regHistory["_10m"][reg_key][0] + '</td></tr>';
-        if (min != max) {
-          outstr +=     '<tr><td align="center" class="printRegisterTDsubtitle">Minimum Value: '+min+'<br>Maximum Value: '+max+'</td></tr>';
-          outstr +=     '<tr><td align="center" class="regHistoryPlotCell"><div id="printPlot_'+reg_key+'"></div></td></tr>';
-          plots.push(reg_key);
-          rowHeight = 45;
-        } else {
-          outstr +=     '<tr><td align="center" class="printRegisterTDvalMedium">no change</td></tr>';
-        }
-        outstr +=     '</table>';
-        outstr += '</td>';
+          var reg_val = data[reg_type][reg_key][0];
+
+          outstr += '<td width="33%" class="printRegisterTD">';
+          outstr +=     '<table width="333px" heigth="100%" id="val_'+reg_type+'_'+reg_key+'">';
+          outstr +=     '<tr><td align="center" class="printRegisterTDsubtitle">' + reg_type+':'+reg_key + '</td></tr>';
+          outstr +=     '<tr><td align="center" class="printRegisterTDtitle">' + BaseRegistersDescription[reg_type][reg_key] + '</td></tr>';
+          outstr +=     '<tr><td align="center" class="printRegisterTDsubtitle">Current Value: ' + regHistory["_10m"][reg_type][reg_key][0] + '</td></tr>';
+          if (min != max) {
+            outstr +=     '<tr><td align="center" class="printRegisterTDsubtitle">Minimum Value: '+min+'<br>Maximum Value: '+max+'</td></tr>';
+            outstr +=     '<tr><td align="center" class="regHistoryPlotCell"><div id="printPlot_'+reg_type+'_'+reg_key+'"></div></td></tr>';
+            plots.push(reg_key);
+            rowHeight = 45;
+          } else {
+            outstr +=     '<tr><td align="center" class="printRegisterTDvalMedium">no change</td></tr>';
+          }
+          outstr +=     '</table>';
+          outstr += '</td>';
+      });
     });
-    if ((Object.keys(data).length % 3) > 0) {
-      for (var i = (Object.keys(data).length % 3); i < 3; i++) {
+    if ((data_length % 3) > 0) {
+      for (var i = (data_length % 3); i < 3; i++) {
           outstr += '<td width="333px" class="printRegisterTD"></td>';
        }
     }

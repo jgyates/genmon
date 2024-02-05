@@ -3801,9 +3801,9 @@ def CacheToolTips():
             except Exception as e1:
                 LogError("Error reading Controller Type for H-100: " + str(e1))
         if not foundRegText:
-            CachedRegisterDescriptions = GetAllConfigValues(
+            CachedRegisterDescriptions = {"Holding":GetAllConfigValues(
                 os.path.join(pathtofile, "data", "tooltips.txt"), config_section
-            )
+            )}
 
         CachedToolTips = GetAllConfigValues(
             os.path.join(pathtofile, "data", "tooltips.txt"), "ToolTips"
