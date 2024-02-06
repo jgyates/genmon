@@ -1,4 +1,7 @@
-Use the template below if you have an issue or want to report a bug. If you have a question or a feature request you can ignore the questions below. This is a template so feel free to remove any of this text. Try to include the info below when applicable.
+
+**Creating and new issue is for reporting bugs or problems with the software. All other questions, feature requests, informational posts, etc should be posted in the project Discussion section here: https://github.com/jgyates/genmon/discussions.**
+
+Use the template below if you want to report a bug. If you have a question or a feature request you can ignore the questions below. This is a template so feel free to remove any of this text. Try to include the info below when applicable.
 
 ***NOTE:*** If you are having issues with your serial connection, please read this page before posting:
 
