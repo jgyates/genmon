@@ -1,8 +1,10 @@
 body:
 - type: markdown
   attributes:
-    value: "This section is for Question and Answers."
+    value: |
+    "This section is for Question and Answers."
 - type: textarea
   attributes:
-    label: "What's your question?"
+    label: |
+    "What's your question?"
 
