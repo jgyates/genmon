@@ -1,0 +1,41 @@
+name: Bug Report
+description: Report something not working correctly.
+body:
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce? Screen captures can help.
+      placeholder: |-
+        1. foo
+        2. bar
+        3. baz
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Result
+      description: Logs? Screenshots? Yes, please.
+    validations:
+      required: true
+  - type: textarea
+    id: version-info
+    attributes:
+      label: Version Info
+      description: Genmon Version`
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Logs submitted from the About page or attached to this thread from /var/log/.
+    validations:
+      required: false
