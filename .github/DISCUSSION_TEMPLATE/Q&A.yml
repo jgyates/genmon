@@ -1,7 +1,6 @@
 type: markdown
-  attributes:
-    value: "This section is for Question and Answers.
-            ***NOTE:*** If you are having issues with your serial connection, please read this page before posting:
+  attributes: value: "This section is for Question and Answers.
+               ***NOTE:*** If you are having issues with your serial connection, please read this page before posting:
 
                 https://github.com/jgyates/genmon/wiki/3.6---Serial-Troubleshooting
 
