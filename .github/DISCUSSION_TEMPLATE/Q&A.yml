@@ -2,9 +2,8 @@ body:
   - type: markdown
     attributes:
       value: |
-        This section is for Question and Answers.
+        This section is for Question and Answers about genmon.
   - type: textarea
     attributes:
-      label:|
-        "What's your question?"
+      label:"What's your question?"
 
