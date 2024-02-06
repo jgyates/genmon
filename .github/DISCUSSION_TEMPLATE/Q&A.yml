@@ -1,9 +1,16 @@
+name: Question and Answers
+description: Submit an Question
+labels: [question]
 body:
-  - type: markdown
-    attributes:
-      value: |
-        This section is for Question and Answers about genmon.
   - type: textarea
     attributes:
-      label:"What's your question?"
-
+      label: Question to be asked
+      placeholder: Detailed question
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Version
+      placeholder: Genmon Version
+    validations:
+      required: true
