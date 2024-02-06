@@ -1,0 +1,12 @@
+type: markdown
+  attributes:
+    value: "This section is for Question and Answers.
+            ***NOTE:*** If you are having issues with your serial connection, please read this page before posting:
+
+                https://github.com/jgyates/genmon/wiki/3.6---Serial-Troubleshooting
+
+                If you are having other issues, please see the following page:
+
+                https://github.com/jgyates/genmon/wiki/3.5---General-Troubleshooting
+
+                You can search past issues by removing the 'is:open' keywords from the search window and adding any keywords that are relevant to your issue."
