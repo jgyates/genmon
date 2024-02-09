@@ -3932,7 +3932,7 @@ class Evolution(GeneratorController):
                             return DefaultReturn
                         else:
                             return None
-                if not self.SystemInOutage:
+                elif not self.SystemInOutage:
                     if gauge:
                         return DefaultReturn
                     else:
