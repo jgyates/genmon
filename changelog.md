@@ -20,6 +20,9 @@ All notable changes to this project will be documented in this file.
 - Alarm code and log code updates for Nexus AC and Evo LC
 - Update for Kohler APM603 support
 - Added new commands for EvoLC
+- Added Gauges for Current Legs for Evolution Air Cooled
+- Added Advanced Setting to check for Load Imbalanced for Evo AC (built in CTs) and External CTs for Evo and Nexus. See "Unbalanced Load Capacity" on Advanced Settings page
+
 
 ## V1.19.00 -2023-11-09
 - Updates to genmonmain.sh, startgenmon.sh and genloader.sh for Debian bookworm. 
@@ -68,9 +71,6 @@ All notable changes to this project will be documented in this file.
 - Added more bounds checking to gentemp.py
 - Corrected issue with Settings page not allows Even parity to be set on custom controllers
 - Corrected security issue related to ldap login with genserv.py
-- Added Gauges for Current Legs for Evolution Air Cooled
-- Added Advanced Setting to check for Load Imbalanced for Evo AC (built in CTs) and External CTs for Evo and Nexus. See "Unbalanced Load Capacity" on Advanced Settings page
-
 
 ## V1.18.17 -2023-04-06
 - Added feature request to allow external temperature sensors to be displayed as gauges
