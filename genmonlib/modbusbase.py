@@ -191,7 +191,7 @@ class ModbusBase(MySupport):
             except:
                 self.Address = 0x9D
             self.AdditionalModbusTimeout = self.config.ReadValue(
-                "additional_modbus_timeout", return_type=float, default=0.0
+                "additional_modbus_timeout", return_type=float, default=0.0, NoLog=True
             )
             ResponseAddressStr = self.config.ReadValue("response_address", default=None)
             if ResponseAddressStr != None:

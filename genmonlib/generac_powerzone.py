@@ -3152,6 +3152,7 @@ class PowerZone(GeneratorController):
             #   "powerfactor" : float value (default is 1.0) used if converting from current to power or power to current
             #   ctdata[] : list of amps for each leg
             #   ctpower[] :  list of power in kW for each leg
+            #   voltagelegs[] : list of voltage legs
             #   voltage : optional, float value of total RMS voltage (all legs combined)
             #   phase : optional, int (1 or 3)
             # }
