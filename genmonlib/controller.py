@@ -256,7 +256,10 @@ class GeneratorController(MySupport):
                 self.bAlternateDateFormat = self.config.ReadValue(
                     "alternate_date_format", return_type=bool, default=False
                 )
-
+                # the percentage of the total load of the allowable difference in current between legs
+                self.UnbalancedCapacity = self.config.ReadValue(
+                    "unbalanced_capacity", return_type=float, default=0
+                )
                 if self.bDisablePlatformStats:
                     self.bUseRaspberryPiCpuTempGauge = False
                     self.bUseLinuxWifiSignalGauge = False
@@ -2050,6 +2053,11 @@ class GeneratorController(MySupport):
 
             if self.UseExternalCTData:
                 NominalCurrent = float(self.NominalKW) * 1000 / self.NominalLineVolts
+                if int(self.Phase) == 1:
+                    NominalLegCurrent = NominalCurrent / 2
+                else:
+                    # TODO: validate with 3 phase, also show three gauges?
+                    NominalLegCurrent = NominalCurrent
 
                 ReturnCurrent1 = self.CheckExternalCTData(request="ct1", ReturnFloat=True, gauge=True)
                 ReturnCurrent2 = self.CheckExternalCTData(request="ct2", ReturnFloat=True, gauge=True)
@@ -2059,7 +2067,7 @@ class GeneratorController(MySupport):
                         title="Current L1",
                         units="A",
                         type="current",
-                        nominal=int(NominalCurrent),
+                        nominal=int(NominalLegCurrent),
                         callback=self.CheckExternalCTData,
                         callbackparameters=("ct1", True, True),
                     )
@@ -2070,7 +2078,7 @@ class GeneratorController(MySupport):
                         title="Current L2",
                         units="A",
                         type="current",
-                        nominal=int(NominalCurrent),
+                        nominal=int(NominalLegCurrent),
                         callback=self.CheckExternalCTData,
                         callbackparameters=("ct2", True, True),
                     )
@@ -2887,6 +2895,66 @@ class GeneratorController(MySupport):
             return "Error"
         return "OK"
 
+    # ----------  GeneratorController::CheckLegBalance--------------------------
+    def CheckLegBalance(self, current_leg1, current_leg2, current_leg3 = None):
+        try:
+            ReturnValue = True
+
+            if self.bDisablePowerLog:
+                return True
+            if self.UnbalancedCapacity == None or not isinstance(self.UnbalancedCapacity, float) or self.UnbalancedCapacity <= 0:
+                return True
+        
+            if self.UnbalancedCapacity > 0.50:
+                self.UnbalancedCapacity == 0.5
+            elif self.UnbalancedCapacity > 0:
+                self.UnbalancedCapacity == 0
+
+            if current_leg3 != None and current_leg3 == 0 and current_leg1 == 0 and current_leg2 == 0:
+                return True
+            if current_leg1 == 0 and current_leg2 == 0:
+                return True
+
+            try:
+                NominalKw = float(self.NominalKW)
+                NominalLineVolts = float(self.NominalLineVolts)
+            except:
+                return True 
+            
+            leg_notice = ""
+            MaxCurrent = float(((NominalKw) * 1000.0) / NominalLineVolts)
+            diffvalue = abs(current_leg1 - current_leg2) / MaxCurrent
+            if ((abs(current_leg1 - current_leg2) / MaxCurrent) > self.UnbalancedCapacity):
+                msgbody = ("Unbalanced load on L1-L2:  %.2fA,  %.2fA, difference  is %d%% of %dA" % 
+                    (current_leg1, current_leg2,((abs(current_leg1 - current_leg2) / MaxCurrent) * 100), MaxCurrent))
+                leg_notice = "L1 - L2"
+                self.LogDebug(msgbody)
+                ReturnValue = False
+            if current_leg3 != None:
+                # now check leg 3
+                if ((abs(current_leg3 - current_leg2) / MaxCurrent) > self.UnbalancedCapacity):
+                    msgbody = ("Unbalanced load on L2-L3:  %.2fA,  %.2fA, difference  is %d%% of %dA" % 
+                    (current_leg1, current_leg2,((abs(current_leg1 - current_leg2) / MaxCurrent) * 100), MaxCurrent))
+                    leg_notice = "L2 - L3"
+                    self.LogDebug(msgbody)
+                    ReturnValue = False
+                if ((abs(current_leg3 - current_leg1) / MaxCurrent) > self.UnbalancedCapacity):
+                    msgbody = ("Unbalanced load on L1-L3:  %.2fA,  %.2fA, difference  is %d%% of %dA" % 
+                    (current_leg1, current_leg2,((abs(current_leg1 - current_leg2) / MaxCurrent) * 100), MaxCurrent))
+                    leg_notice = "L1 - L3"
+                    self.LogDebug(msgbody)
+                    ReturnValue = False
+            if not ReturnValue:
+                self.MessagePipe.SendMessage(
+                    "Generator Warning at %s: Load Imbalance on %s" % (self.SiteName, leg_notice),
+                    msgbody,
+                    msgtype="warn",
+                    oncedaily=True,
+                )
+            return ReturnValue
+        except Exception as e1:
+            self.LogErrorLine("Error in CheckLegBalance: " + str(e1))
+            return False
     # ----------  GeneratorController::SetExternalTemperatureData----------------
     def SetExternalTemperatureData(self, command):
 
@@ -3085,11 +3153,7 @@ class GeneratorController(MySupport):
                     # I(A) = P(W) / (PF x V(V))
                     CurrentFloat = round(PowerFloat / (powerfactor * voltage), 2)
                 return self.ReturnFormat(CurrentFloat, "A", ReturnFloat)
-            if (
-                request.lower() == "power"
-                and "current" in ExternalData
-                and "ctdata" in ExternalData
-            ):
+            elif request.lower() == "power"and "current" in ExternalData and "ctdata" in ExternalData:
                 CurrentFloat = float(ExternalData["current"])
                 if len(ExternalData["ctdata"]) < 2:
                     # P(W) = PF x I(A) x V(V)
@@ -3104,7 +3168,34 @@ class GeneratorController(MySupport):
                     ) / 1000
                     #
                 return self.ReturnFormat(PowerFloat, "kW", ReturnFloat)
-
+            elif (request.lower() in ["ct1", "ct2"] and "ctpower" in ExternalData 
+                and "voltagelegs" in ExternalData and len(ExternalData["voltagelegs"]) != 0):
+                # convert leg power to leg current
+                if request.lower() == "ct1":
+                    ctpower = ExternalData["ctpower"][0]
+                    extvolts = ExternalData["voltagelegs"][0]
+                elif request.lower() == "ct2":
+                    ctpower = ExternalData["ctpower"][1]
+                    extvolts = ExternalData["voltagelegs"][1]
+                else:
+                    self.LogDebug("Error in ConvertExternalData: invalid CT requested")
+                    return None
+                CurrentFloat = round(((ctpower*1000.0) / extvolts),2)
+                return self.ReturnFormat(CurrentFloat, "A", ReturnFloat)
+            elif (request.lower() in ["ctpower1", "ctpower2"] and "ctdata" in ExternalData 
+                  and "voltagelegs" in ExternalData and len(ExternalData["voltagelegs"]) != 0):
+                # convert leg current to leg power
+                if request.lower() == "ctpower1":
+                    extcurrent = ExternalData["ctdata"][0]
+                    extvolts = ExternalData["voltagelegs"][0]
+                elif request.lower() == "ctpower2":
+                    extcurrent = ExternalData["ctdata"][1]
+                    extvolts = ExternalData["voltagelegs"][1]
+                else:
+                    self.LogDebug("Error in ConvertExternalData: invalid Power requested")
+                    return None
+                PowerFloat = round(((extcurrent * extvolts)/1000.0),2)
+                return self.ReturnFormat(PowerFloat, "kW", ReturnFloat)
             return None
 
         except Exception as e1:

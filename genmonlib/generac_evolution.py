@@ -463,6 +463,32 @@ class Evolution(GeneratorController):
                 )
                 self.TileList.append(Tile)
 
+                if self.EvolutionController and not self.LiquidCooled and not self.bDisablePowerLog:
+                    NominalCurrent = float(self.NominalKW) * 1000 / self.NominalLineVolts
+                    NominalLegCurrent = NominalCurrent / 2
+                    # Setup gauges for EvoAC internal CTs
+                    Tile = MyTile(
+                        self.log,
+                        title="Current L1",
+                        units="A",
+                        type="current",
+                        nominal=int(NominalLegCurrent),
+                        callback=self.GetCurrentOutput,
+                        callbackparameters=(True, False, "ct1"),
+                    )
+                    self.TileList.append(Tile)
+
+                    Tile = MyTile(
+                        self.log,
+                        title="Current L2",
+                        units="A",
+                        type="current",
+                        nominal=int(NominalLegCurrent),
+                        callback=self.GetCurrentOutput,
+                        callbackparameters=(True, False, "ct2"),
+                    )
+                    self.TileList.append(Tile)
+
                 if self.PowerMeterIsSupported():
                     Tile = MyTile(
                         self.log,
@@ -2189,6 +2215,9 @@ class Evolution(GeneratorController):
             # make sure we have a valid register reading
             if not len(UtilityVoltsStr):
                 return
+
+            if (self.EvolutionController and not self.LiquidCooled) or self.UseExternalCTData:
+                self.CheckLegBalance(self.GetCurrentOutput(ReturnFloat=True, leg = "ct1"), self.GetCurrentOutput(ReturnFloat=True, leg = "ct2"))
 
             UtilityVolts = self.GetUtilityVoltage(ReturnInt=True)
 
@@ -3918,6 +3947,7 @@ class Evolution(GeneratorController):
             #   "powerfactor" : float value (default is 1.0) used if converting from current to power or power to current
             #   ctdata[] : list of amps for each leg
             #   ctpower[] :  list of power in kW for each leg
+            #   voltagelegs[] : list of voltage legs
             #   voltage : optional, float value of total RMS voltage (all legs combined)
             #   phase : optional, int (1 or 3)
             # }
@@ -3928,11 +3958,13 @@ class Evolution(GeneratorController):
             if strict and not gauge:
                 if self.EvolutionController and self.LiquidCooled:
                     if self.GetTransferStatus().lower() != "generator":
+                        # use the external CT if the transfer switch is active
                         if gauge:
                             return DefaultReturn
                         else:
                             return None
                 elif not self.SystemInOutage:
+                    # use the external CT if there is an outage
                     if gauge:
                         return DefaultReturn
                     else:
@@ -3946,9 +3978,9 @@ class Evolution(GeneratorController):
         except Exception as e1:
             self.LogErrorLine("Error in CheckExternalCTData: " + str(e1))
             return DefaultReturn
-
     # ------------ Evolution:GetCurrentOutput -----------------------------------
-    def GetCurrentOutput(self, ReturnFloat=False, force_sensor = False):
+    def GetCurrentOutput(self, ReturnFloat=False, force_sensor = False, leg = None):
+        # leg is None, "ct1" or "ct2"
 
         CurrentOutput = 0.0
         Divisor = 1.0
@@ -3969,10 +4001,18 @@ class Evolution(GeneratorController):
             if "Stopped" in EngineState or "Off" in EngineState or not len(EngineState):
                 return DefaultReturn
 
+            
             if not force_sensor:
-                ReturnValue = self.CheckExternalCTData(request="current", ReturnFloat=ReturnFloat)
+                request = "current"
+                if leg != None:
+                    request = leg
+                ReturnValue = self.CheckExternalCTData(request=request, ReturnFloat=ReturnFloat)
                 if ReturnValue != None:
                     return ReturnValue
+
+            if not self.EvolutionController or self.LiquidCooled and leg != None:
+                # only EvoAC will return two legs
+                return DefaultReturn
 
             if self.EvolutionController and self.LiquidCooled:
                 Value = self.GetRegisterValueFromList("0058")  # Hall Effect Sensor
@@ -4001,7 +4041,14 @@ class Evolution(GeneratorController):
                     Value2 = self.GetRegisterValueFromList("05f5")
                     DebugInfo += Value
                     if len(Value) and len(Value2):
-                        CurrentFloat = int(Value, 16) + int(Value2, 16)
+                        CurrentLeg1Int = int(Value, 16)
+                        CurrentLeg2Int = int(Value2, 16)
+                        if leg == "ct1":
+                            CurrentFloat = float(CurrentLeg1Int)
+                        elif leg == "ct2":
+                            CurrentFloat = float(CurrentLeg2Int)
+                        else:
+                            CurrentFloat = CurrentLeg1Int + CurrentLeg2Int
                     else:
                         CurrentFloat = 0.0
                 else:

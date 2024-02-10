@@ -68,6 +68,8 @@ All notable changes to this project will be documented in this file.
 - Added more bounds checking to gentemp.py
 - Corrected issue with Settings page not allows Even parity to be set on custom controllers
 - Corrected security issue related to ldap login with genserv.py
+- Added Gauges for Current Legs for Evolution Air Cooled
+- Added Advanced Setting to check for Load Imbalanced for Evo AC (built in CTs) and External CTs for Evo and Nexus. See "Unbalanced Load Capacity" on Advanced Settings page
 
 
 ## V1.18.17 -2023-04-06

@@ -2614,6 +2614,18 @@ def ReadAdvancedSettingsFromFile():
             GENMON_SECTION,
             "subtractfuel",
         ]
+        if ControllerType == "generac_evo_nexus":
+            ConfigSettings["unbalanced_capacity"] = [
+                "float",
+                "Unbalanced Load Capacity",
+                46,
+                "0",
+                "",
+                "range:0:0.50",
+                GENMON_CONFIG,
+                GENMON_SECTION,
+                "unbalanced_capacity",
+            ]
         # ConfigSettings["kwlog"] = ['string', 'Power Log Name / Disable', 36, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlog"]
         if ControllerType != "h_100":
             ConfigSettings["usenominallinevolts"] = [
