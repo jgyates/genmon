@@ -4077,8 +4077,8 @@ class Evolution(GeneratorController):
                     12: None,  # ["8KVA", "50", "220,230,240", "1"],    # 3 distinct models 220, 230, 240
                     13: None,  # ["10KVA", "50", "220,230,240", "1"],   # 3 distinct models 220, 230, 240
                     14: None,  # ["13KVA", "50", "220,230,240", "1"],   # 3 distinct models 220, 230, 240
-                    15: 56.24,  # ["11KW", "60" ,"240", "1"],
-                    17: 21.48,  # ["22KW", "60", "120/240", "1"],
+                    15: None,  # ["11KW", "60" ,"240", "1"],
+                    17: None,  # ["22KW", "60", "120/240", "1"],
                     21: None,  # ["11KW", "60", "240 LS", "1"],
                     22: None,  # Power Pact
                     32: None,  # ["Trinity", "60", "208 3Phase", "3"],  # G007077
@@ -4095,7 +4095,12 @@ class Evolution(GeneratorController):
                 if self.CurrentDivider == None or self.CurrentDivider <= 0:
                     if LookUpReturn == None:
                         if not self.LegacyPower:
-                            Divisor = 20.0  # Default Divisor This is 20 because CT1 + CT2 / 2 is average / 10 again because the CT is divide by 10
+                            if leg == None:
+                                # calculate the total current on both legs
+                                Divisor = 20.0  # Default Divisor This is 20 because CT1 + CT2 / 2 is average / 10 again because the CT is divide by 10
+                            else:
+                                # calcualate one leg
+                                Divisor = 10.0  # just use 10 as this is a div by 10 CT 
                         else:
                             Divisor = (
                                 22.0 / float(self.NominalKW)
