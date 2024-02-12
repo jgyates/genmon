@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - Added new commands for EvoLC
 - Added Gauges for Current Legs for Evolution Air Cooled
 - Added Advanced Setting to check for Load Imbalanced for Evo AC (built in CTs) and External CTs for Evo and Nexus. See "Unbalanced Load Capacity" on Advanced Settings page
+- Corrected bug that was introduced in last version that prevented some buttons in the web interface from showing the color as disabled
 
 
 ## V1.19.00 -2023-11-09
