@@ -260,6 +260,9 @@ class CustomController(GeneratorController):
         try:
             if self.ControllerDetected:
                 return
+            if (self.Model != None and self.Model.lower() != str(self.controllerimport["controller_name"]).lower()) or self.Model == None:
+                self.config.WriteValue("model", str(self.controllerimport["controller_name"]))
+
             self.Model = str(self.controllerimport["controller_name"])
 
             ReturnValue = False
