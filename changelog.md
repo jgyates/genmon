@@ -24,7 +24,6 @@ All notable changes to this project will be documented in this file.
 - Added Advanced Setting to check for Load Imbalanced for Evo AC (built in CTs) and External CTs for Evo and Nexus. See "Unbalanced Load Capacity" on Advanced Settings page
 - Corrected bug that was introduced in last version that prevented some buttons in the web interface from showing the color as disabled
 
-
 ## V1.19.00 -2023-11-09
 - Updates to genmonmain.sh, startgenmon.sh and genloader.sh for Debian bookworm. 
 - Minor update to serialconfig.py to make serial0 instead of serial1 work on bookworm
