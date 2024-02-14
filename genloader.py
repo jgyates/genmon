@@ -183,7 +183,7 @@ class Loader(MySupport):
             ["psutil", "psutil", None],  # process utilities
             ["chump", "chump", None],  # for genpushover
             ["twilio", "twilio", None],  # for gensms
-            ["paho.mqtt.client", "paho-mqtt", None],  # for genmqtt
+            ["paho.mqtt.client", "paho-mqtt", "1.6.1"],  # for genmqtt
             ["OpenSSL", "pyopenssl", None],  # SSL
             ["spidev", "spidev", None],  # spidev
             ["voipms", "voipms", None]      # voipms for gensms_voip
