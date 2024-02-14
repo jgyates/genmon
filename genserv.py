@@ -1931,7 +1931,6 @@ def GetAddOns():
             Description = "Support Mopeka Pro Propane Tanks Sensor"
             try:
                 import fluids
-                import mopeka_pro_check
             except Exception as e1:
                 Description = (
                     Description
