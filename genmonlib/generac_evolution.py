@@ -925,6 +925,8 @@ class Evolution(GeneratorController):
             ModelLookUp_EvoAC[18] = ["18KW","60","120/240","1","816 cc","240",]
             # Evo G0072100 Evo2 24kw
             ModelLookUp_EvoAC[21] = ["24KW","60","120/240","1","999 cc","240",]
+            # Evo2 G0072900
+            ModelLookUp_EvoAC[24] = ["26KW","60","120/240","1","999 cc","240",]
             # Evo G0071760
             ModelLookUp_EvoAC[22] = ["16KW","60","120/240","1","816 cc","240",]
             # Evo2 G0072230

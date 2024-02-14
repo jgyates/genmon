@@ -13,6 +13,10 @@
 21,24,Propane,60,0.5,2.53,1,3.90,gal
 21,24,Natural Gas,60,0.5,203,1,306,cubic feet
 
+# Evo2
+24,26,Propane,60,0.5,2.06,1,3.63,gal
+24,26,Natural Gas,60,0.5,188,1,333,cubic feet
+
 7,13,Propane,60,0.5,1.55,1,2.18,gal
 7,13,Natural Gas,60,0.5,156,1,220,cubic feet
 2,14,Propane,60,0.5,1.56,1,2.3,gal

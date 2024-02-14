@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Corrected bug that was introduced in last version that prevented some buttons in the web interface from showing the color as disabled
 - Minor error handling update in Fuel Logger thread
 - Minor update to controller detection for custom controller models
+- Update for 26kw Evo2 air cooled model
 
 ## V1.19.01 -2023-12-06
 - Update to genmonmaint.sh to ask about serial connection type on install (thanks @skipfire)
