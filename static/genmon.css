@@ -82,7 +82,7 @@ button {
     font-family: inherit !important;
     line-height: 1em !important;
     padding: .75em .75em !important;
-    background: #bbbbbb !important;
+    background: #bbbbbb;
     cursor:pointer !important;
 }
 ul {

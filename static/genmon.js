@@ -853,7 +853,7 @@ function setupCommandButton(button){
         outstr += '<td>';
         outstr += '&nbsp;&nbsp;';
         // NOTE: type="button" is required or the ideal forms code will crash
-        outstr += '<button class="button" type="button" id="' + button_id + '" style="color:#000000;float:none" onclick="' + clickCallback + ';" > ' + button_title + '</button>';
+        outstr += '<button class="button" type="button" id="' + button_id + '" style="background:#bbbbbb;color:#000000;float:none" onclick="' + clickCallback + ';" > ' + button_title + '</button>';
         outstr += '</td>';
       }
       else{
@@ -1055,8 +1055,8 @@ function onCommandButtonClick(onewordcommand){
       unsafeMessage: msg,
       overlayClosesOnClick: false,
       buttons: [
-        DisplayStrButtons.NO,
-        DisplayStrButtons.YES
+        DisplayStrButtons.YES,
+        DisplayStrButtons.NO
       ],
       onSubmit: function(e) {
         if (DisplayStrAnswer) {
