@@ -481,6 +481,10 @@ class GeneratorController(MySupport):
 
                 FuelValue = self.GetFuelLevel(ReturnFloat=True)
 
+                if FuelValue == None:
+                    if self.WaitForExit("FuelLogger", self.FuelLogFrequency * 60.0):
+                        return
+                    continue
                 if FuelValue == LastFuelValue:
                     continue
 
@@ -2517,6 +2521,8 @@ class GeneratorController(MySupport):
                 FuelLevel = float(FuelInTank) / float(self.TankSize) * 100
         else:
             FuelLevel = 0
+        if FuelLevel == None:
+            return FuelLevel
         if ReturnFloat:
             return float(FuelLevel)
         else:
