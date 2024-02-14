@@ -1433,16 +1433,6 @@
                     "title": "ECU RPM"
                 },
                 {
-                    "reg": "0102",
-                    "mask": "ffffffff",
-                    "type": "float",
-                    "temperature": "celsius",
-                    "units": "C",
-                    "ieee754": "single",
-                    "round": 2,
-                    "title": "ECU Oil Temperature"
-                },
-                {
                     "reg": "0104",
                     "mask": "ffffffff",
                     "type": "float",
@@ -1461,15 +1451,6 @@
                     "ieee754": "single",
                     "round": 2,
                     "title": "ECU Intake Manifold Temperature"
-                },
-                {
-                    "reg": "0108",
-                    "mask": "ffffffff",
-                    "type": "float",
-                    "units": "kPA",
-                    "ieee754": "single",
-                    "round": 2,
-                    "title": "ECU Intake Manifold Pressure"
                 },
                 {
                     "reg": "010c",
@@ -1558,7 +1539,6 @@
             "reg": "0292",
             "mask": "ffffffff",
             "type": "float",
-            "units": "W",
             "ieee754": "single",
             "round": 2,
             "title": "Total Power Factor"
@@ -1748,19 +1728,6 @@
             "title": "RPM"
         },
         {
-            "reg": "0102",
-            "mask": "ffffffff",
-            "type": "float",
-            "temperature": "celsius",
-            "units": "C",
-            "ieee754": "single",
-            "round": 2,
-            "title": "Oil Temp",
-            "sensor": "temperature",
-            "nominal": 82,
-            "maximum": 148
-        },
-        {
             "reg": "0104",
             "mask": "ffffffff",
             "type": "float",
@@ -1798,6 +1765,41 @@
             "title": "Power",
             "sensor": "powergraph",
             "nominal": "Unknown"
+        }
+    ],
+    "not_used":[
+        {
+            "comment": "These values are not used in the generator that was tested",
+            "reg": "0102",
+            "mask": "ffffffff",
+            "type": "float",
+            "temperature": "celsius",
+            "units": "C",
+            "ieee754": "single",
+            "round": 2,
+            "title": "Oil Temp",
+            "sensor": "temperature",
+            "nominal": 82,
+            "maximum": 148
+        },
+        {
+            "reg": "0102",
+            "mask": "ffffffff",
+            "type": "float",
+            "temperature": "celsius",
+            "units": "C",
+            "ieee754": "single",
+            "round": 2,
+            "title": "ECU Oil Temperature"
+        },
+        {
+            "reg": "0108",
+            "mask": "ffffffff",
+            "type": "float",
+            "units": "kPA",
+            "ieee754": "single",
+            "round": 2,
+            "title": "ECU Intake Manifold Pressure"
         }
     ],
     "power": {
