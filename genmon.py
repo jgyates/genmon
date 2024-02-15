@@ -191,18 +191,22 @@ class Monitor(MySupport):
             self.InterfaceServerThread, Name="InterfaceServerThread"
         )
 
-        # init mail, start processing incoming email
-        self.mail = MyMail(
-            monitor=True,
-            incoming_folder=self.IncomingEmailFolder,
-            processed_folder=self.ProcessedEmailFolder,
-            incoming_callback=self.ProcessCommand,
-            loglocation=self.LogLocation,
-            ConfigFilePath=ConfigFilePath,
-        )
+        try:
+            # init mail, start processing incoming email
+            self.mail = MyMail(
+                monitor=True,
+                incoming_folder=self.IncomingEmailFolder,
+                processed_folder=self.ProcessedEmailFolder,
+                incoming_callback=self.ProcessCommand,
+                loglocation=self.LogLocation,
+                ConfigFilePath=ConfigFilePath,
+            )
 
-        self.Threads = self.MergeDicts(self.Threads, self.mail.Threads)
-        self.MailInit = True
+            self.Threads = self.MergeDicts(self.Threads, self.mail.Threads)
+            self.MailInit = True
+        except Exception as e1:
+            self.LogErrorLine("Error loading mail support: " + str(e1))
+            sys.exit(1)
 
         self.FeedbackPipe = MyPipe(
             "Feedback",

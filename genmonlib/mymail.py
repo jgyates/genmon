@@ -84,6 +84,7 @@ class MyMail(MySupport):
             self.log = SetupLogger("mymail", self.logfile)
         else:
             self.log = log
+        self.console = None
 
         # if mymail.conf is present attempt to copy it from the
         # main source directory
@@ -92,7 +93,7 @@ class MyMail(MySupport):
                 copyfile(os.path.join(self.ModulePath, "mymail.conf"), self.configfile)
             else:
                 self.LogError("Missing config file : " + self.configfile)
-                sys.exit(1)
+                self.FatalError("Missing config file : " + self.configfile)
 
         self.config = MyConfig(filename=self.configfile, section="MyMail", log=self.log)
 

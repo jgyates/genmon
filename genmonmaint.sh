@@ -144,7 +144,6 @@ function installrpirtscts() {
 # This function will install the required libraries for genmon
 function installgenmon() {
 
-    checkmanagedpackages
     echo "Installing genmon package requirements...."
     # possibly use "sudo easy_install3 -U pip"
     sudo apt-get -yqq update
@@ -449,6 +448,8 @@ shift $((OPTIND -1))
 if [ "$update_os" = true ] ; then
    sudo apt-get --allow-releaseinfo-change update && sudo apt-get upgrade
 fi
+
+checkmanagedpackages
 
 if [ "$install_opt" = true ] ; then
   if [ "$noprompt_opt" = true ] ; then
