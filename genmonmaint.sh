@@ -51,6 +51,19 @@ is_pifive() {
 }
 
 #-------------------------------------------------------------------------------
+function env_activate() {
+
+  if [ "$managedpackages" = true ] ; then
+    source $genmondir/genenv/bin/activate
+  fi
+}
+#-------------------------------------------------------------------------------
+function env_deactivate() {
+  if [ "$managedpackages" = true ] ; then
+    deactivate
+  fi
+}
+#-------------------------------------------------------------------------------
 function checkmanagedpackages() {
 
   #  /usr/lib/python3.11/EXTERNALLY-MANAGED
@@ -453,13 +466,17 @@ checkmanagedpackages
 
 if [ "$install_opt" = true ] ; then
   if [ "$noprompt_opt" = true ] ; then
+    env_activate
     installgenmon "noprompt"
+    env_deactivate
     updatecrontab
   else
     read -n 1 -s -r -p "$installnotice"
     echo ""
     # install libraries
+    env_activate
     installgenmon  "prompt"
+    env_deactivate
     # update crontab
     read -p "Start genmon on boot? (y/n)?" choice
     case "$choice" in
@@ -476,7 +493,9 @@ if [ "$install_opt" = true ] ; then
 fi
 
 if [ "$cleanpython_opt" = true ] ; then
+  env_activate
   cleanpython
+  env_deactivate
 fi
 
 if [ "$backup_opt" = true ] ; then
@@ -488,7 +507,9 @@ if [ "$log_opt" = true ] ; then
 fi
 
 if [ "$refresh_opt" = true ] ; then
+  env_activate
   updatelibraries
+  env_deactivate
 fi
 
 if [ "$update_opt" = true ] ; then
