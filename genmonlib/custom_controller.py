@@ -863,12 +863,10 @@ class CustomController(GeneratorController):
                     if Register in self.controllerimport["holding_registers"].keys():
                         RegData = self.controllerimport["holding_registers"][Register]
                         if isinstance(RegData, dict):
-                            #ReturnDict[Register] = RegData["text"]
                             HoldingRegLabels[Register] = RegData["text"]
                     else:
                         Success, Length, Name = self.RegisterIsLog(Register)
                         if Success:
-                            #ReturnDict[Register] = Name
                             HoldingRegLabels[Register] = Name
                 if len(HoldingRegLabels.keys()) > 0:
                     ReturnDict["Holding"] = HoldingRegLabels
@@ -878,14 +876,12 @@ class CustomController(GeneratorController):
                     if Register in self.controllerimport["input_registers"].keys():
                         RegData = self.controllerimport["input_registers"][Register]
                         if isinstance(RegData, dict):
-                            #ReturnDict[Register] = RegData["text"]
                             InputRegLabels[Register] = RegData["text"]
                     else:
                         Success, Length, Name = self.RegisterIsLog(Register)
                         if Success:
-                            #ReturnDict[Register] = Name
                             InputRegLabels[Register] = Name
-                if len(HoldingRegLabels.keys()) > 0:
+                if len(InputRegLabels.keys()) > 0:
                     ReturnDict["Inputs"] = InputRegLabels
             if "coil_registers" in self.controllerimport.keys():
                 CoilRegLabels = {}
@@ -893,9 +889,8 @@ class CustomController(GeneratorController):
                     if Register in self.controllerimport["coil_registers"].keys():
                         RegData = self.controllerimport["coil_registers"][Register]
                         if isinstance(RegData, dict):
-                            #ReturnDict[Register] = RegData["text"]
                             CoilRegLabels[Register] = RegData["text"]
-                if len(HoldingRegLabels.keys()) > 0:
+                if len(CoilRegLabels.keys()) > 0:
                     ReturnDict["Coils"] = CoilRegLabels
             return json.dumps(ReturnDict)
         except Exception as e1:
