@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Update for 26kw Evo2 air cooled model
 - Update to genmonmaint.sh for managed python environments
 - update for paho-mqtt version change
+- Optimizations for EvoLC current calculations and Nexus exercise time calculations 
 
 ## V1.19.01 -2023-12-06
 - Update to genmonmaint.sh to ask about serial connection type on install (thanks @skipfire)
