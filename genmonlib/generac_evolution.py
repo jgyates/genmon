@@ -4025,7 +4025,11 @@ class Evolution(GeneratorController):
                     CurrentFloat = 0.0
 
                 if self.CurrentDivider == None or self.CurrentDivider <= 0:
-                    Divisor = 1000     # This should be Hall Field Current in mA so divide by 1000 for amps
+                    FWVersion = self.GetFirmwareVersion()
+                    if len(FWVersion) and (self.VersionTuple(FWVersion) >= (1, 43)):
+                        Divisor = 1000     # This should be Hall Field Current in mA so divide by 1000 for amps
+                    else:
+                        Divisor = 100
                 else:
                     Divisor = self.CurrentDivider
 
