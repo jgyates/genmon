@@ -1576,55 +1576,6 @@ class Evolution(GeneratorController):
                 "Monitor Register Alert: " + Register, msgbody, msgtype="warn"
             )
 
-    # ----------  Evolution:CalculateExerciseTime--------------------------------
-    # helper routine for AltSetGeneratorExerciseTime
-    def CalculateExerciseTime(self, MinutesFromNow):
-
-        ReturnedValue = 0x00
-        Remainder = MinutesFromNow
-        # convert minutes from now to weighted bit value
-        if Remainder >= 8738:
-            ReturnedValue |= 0x1000
-            Remainder -= 8738
-        if Remainder >= 4369:
-            ReturnedValue |= 0x0800
-            Remainder -= 4369
-        if Remainder >= 2184:
-            ReturnedValue |= 0x0400
-            Remainder -= 2185
-        if Remainder >= 1092:
-            ReturnedValue |= 0x0200
-            Remainder -= 1092
-        if Remainder >= 546:
-            ReturnedValue |= 0x0100
-            Remainder -= 546
-        if Remainder >= 273:
-            ReturnedValue |= 0x0080
-            Remainder -= 273
-        if Remainder >= 136:
-            ReturnedValue |= 0x0040
-            Remainder -= 137
-        if Remainder >= 68:
-            ReturnedValue |= 0x0020
-            Remainder -= 68
-        if Remainder >= 34:
-            ReturnedValue |= 0x0010
-            Remainder -= 34
-        if Remainder >= 17:
-            ReturnedValue |= 0x0008
-            Remainder -= 17
-        if Remainder >= 8:
-            ReturnedValue |= 0x0004
-            Remainder -= 8
-        if Remainder >= 4:
-            ReturnedValue |= 0x0002
-            Remainder -= 4
-        if Remainder >= 2:
-            ReturnedValue |= 0x0001
-            Remainder -= 2
-
-        return ReturnedValue
-
     # ----------  Evolution:AltSetGeneratorExerciseTime--------------------------
     # Note: This method is a bit odd but it is how ML does it. It can result in being off by
     # a min or two
@@ -1689,7 +1640,8 @@ class Evolution(GeneratorController):
         total_delta_min = self.GetDeltaTimeMinutes(DeltaTime)
 
         # Hour 0 - 23,  Min 0 - 59
-        WriteValue = self.CalculateExerciseTime(total_delta_min)
+        SecondsFromNow = total_delta_min*60
+        WriteValue = (int(SecondsFromNow / 128))
 
         self.WriteIndexedRegister(0x0006, WriteValue)
 
