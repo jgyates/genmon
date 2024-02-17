@@ -291,7 +291,7 @@ class MyGenPush(MySupport):
         else:
             self.LogError("Invalid type in CheckDictForChanges %s " % str(type(node)))
 
-    # ---------- MyGenPush::ListIsStrings--------------------------------------- 
+    # ---------- MyGenPush::DictIsTopicJSON-------------------------------------
     def DictIsTopicJSON(self, entry):
         try:
             if not isinstance(entry, dict):
