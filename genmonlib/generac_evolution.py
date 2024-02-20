@@ -888,34 +888,74 @@ class Evolution(GeneratorController):
             3: ["15KW", "60", "120/240", "1", "992 cc", "240"],
             4: ["20KW", "60", "120/240", "1", "999 cc", "240"],
         }
-        # This should cover the guardian line
-        ModelLookUp_EvoAC = {  # ID : [KW or KVA Rating, Hz Rating, Voltage Rating, Phase, Engine Displacement Nominal Line Voltage ]
-            1: ["9KW", "60", "120/240", "1", "426 cc", "240"],
-            2: ["14KW", "60", "120/240", "1", "992 cc", "240"],
-            3: ["17KW", "60", "120/240", "1", "992 cc", "240"],
-            4: ["20KW", "60", "120/240", "1", "999 cc", "240"],
-            5: ["8KW", "60", "120/240", "1", "410 cc", "240"],
-            7: ["13KW", "60", "120/240", "1", "992 cc", "240"],
-            8: ["15KW", "60", "120/240", "1", "999 cc", "240"],
-            9: ["16KW", "60", "120/240", "1", "999 cc", "240"],
+        ModelLookup_PowerPact = {
+            22: ["7.5KW", "60", "240", "1", "420 cc", "240"],  # Power Pact
+            23: ["5.6KW", "50", "220", "1", "420 cc", "220"],  # Power Pact 50Hz
+        }
+        ModelLookUp_EvoAC_Synergy = { 
             # Variable Speed Constant Frequency
             10: ["20KW","VSCF","120/240","1","999 cc","240",],
-             # Eco Variable Speed Constant Frequency
+             # EcoGen Variable Speed Constant Frequency
             11: ["15KW","ECOVSCF","120/240","1","999 cc","240",],
+         }
+        # This should cover the guardian line
+        ModelLookUp_EvoAC = {  # ID : [KW or KVA Rating, Hz Rating, Voltage Rating, Phase, Engine Displacement Nominal Line Voltage ]
+            1: ["10KW", "60", "120/240", "1", "426 cc", "240"],     #
+            2: ["14KW", "60", "120/240", "1", "992 cc", "240"],     #
+            3: ["17KW", "60", "120/240", "1", "992 cc", "240"],     #
+            4: ["20KW", "60", "120/240", "1", "999 cc", "240"],     #
+            5: ["8KW", "60", "120/240", "1", "410 cc", "240"],      #   EcoGen
+            6: ["12KW", "60", "120/240", "1", "992 cc", "240"],     #
+            7: ["13KW", "60", "120/240", "1", "992 cc", "240"],     #
+            8: ["15KW", "60", "120/240", "1", "999 cc", "240"],     #
+            9: ["16KW", "60", "120/240", "1", "999 cc", "240"],     #
             # 3 distinct models 220, 230, 240
-            12: ["8KVA","50","220,230,240","1","530 cc","240",], 
+            12: ["8KVA","50","220,230,240","1","530 cc","240",],    #
             # 3 distinct models 220, 230, 240
-            13: ["10KVA","50","220,230,240","1","992 cc","240",],  
+            13: ["10KVA","50","220,230,240","1","992 cc","240",],   #
             # 3 distinct models 220, 230, 240
-            14: ["13KVA","50","220,230,240","1","992 cc","240",],
-            15: ["11KW", "60", "240", "1", "530 cc", "240"],
-            17: ["22KW", "60", "120/240", "1", "999 cc", "240"],
-            21: ["11KW", "60", "240 LS", "1", "530 cc", "240"],
-            22: ["7.5KW", "60", "240", "1", "420 cc", "240"],  # Power Pact
-            32: ["20KW", "60", "208 3 Phase", "3", "999 cc", "208"],  # Trinity G007077
-            33: ["Trinity", "50", "380,400,416", "3", None, "380"],  # Discontinued
+            14: ["13KVA","50","220,230,240","1","992 cc","240",],   #
+            15: ["11KW", "60", "240", "1", "530 cc", "240"],        #
+            17: ["22KW", "60", "120/240", "1", "999 cc", "240"],    #
+            21: ["24KW", "60", "120/240", "1", "999 cc", "240"],    #
+            10: ["20KW", "60", "208 3 Phase", "3", "999 cc", "208"],  # Trinity G007077
+            11: ["Trinity", "50", "380,400,416", "3", None, "380"],  # Discontinued
         }
 
+
+        ModelLookUp_EvoAC2 = {
+            1: ["9KW", "60", "120/240", "1", "426 cc", "240"],      #
+            4: ["20KW", "60", "120/240", "1", "999 cc", "240"],     #
+            2: ["20KW", "60", "120/240", "1", "999 cc", "240"],     # 22kW-315
+            11: ["15KW","60","120/240","1","999 cc","240",],        # EcoGen ECOVSCF not 60
+            5: ["10KW", "60", "120/240", "1", "426 cc", "240"],     #
+            15: ["11KW", "60", "240", "1", "530 cc", "240"],        #
+            7: ["13KW", "60", "120/240", "1", "992 cc", "240"],     #
+            # Evo G00704311 Evo2 22kw
+            8: ["22KW","60","120/240","1","999 cc","240",],         # 22kW-315
+            9: ["16KW", "60", "120/240", "1", "999 cc", "240"],     #
+            # Evo2 22kW Home Guardian
+            17: ["22KW","60","120/240","1","999 cc","240",],        #
+            # Evo2 Generac Guardian 18kW G007226-0,
+            18: ["18KW","60","120/240","1","816 cc","240",],        #
+            # Evo G0072100 Evo2 24kw
+            21: ["24KW","60","120/240","1","999 cc","240",],        #
+            # Evo2 G0072900
+            24: ["26KW","60","120/240","1","999 cc","240",],
+            # Evo G0071760
+            22: ["16KW","60","120/240","1","816 cc","240",],        # 16kW FS
+            # Evo2 G0072230
+            23: ["14KW","60","120/240","1","816 cc","240",],        #
+            10: ["20KW", "60", "208 3 Phase", "3", "999 cc", "208"], # Trinity G007077
+            # 3 phase export
+            11: ["20KW","50","208 3 Phase","3","999 cc","208",],    #
+            # 3 distinct models 220, 230, 240
+            12: ["8KVA","50","220,230,240","1","530 cc","240",],    #
+            # 3 distinct models 220, 230, 240
+            13: ["10KVA","50","220,230,240","1","992 cc","240",],   #
+            # 3 distinct models 220, 230, 240
+            14: ["13KVA","50","220,230,240","1","992 cc","240",],   #
+        }
         if self.Evolution2:
             # Evo G0072100 Evo2 24kw
             ModelLookUp_EvoAC[8] = ["24KW","60","120/240","1","999 cc","240",] 
@@ -935,7 +975,13 @@ class Evolution(GeneratorController):
             ModelLookUp_EvoAC[11] = ["20KW","50","208 3 Phase","3","999 cc","208",]
 
         LookUp = None
-        if self.EvolutionController:
+        if self.Evolution2:
+            LookUp = ModelLookUp_EvoAC2
+        elif self.PowerPact:
+            LookUp = ModelLookup_PowerPact
+        elif self.SynergyController:
+            LookUp = ModelLookUp_EvoAC_Synergy
+        elif self.EvolutionController:
             LookUp = ModelLookUp_EvoAC
         else:
             LookUp = ModelLookUp_NexusAC
@@ -1165,12 +1211,12 @@ class Evolution(GeneratorController):
             return ""
         ProductModel = int(Value, 16)
         # 0x02  Pre-Nexus
-        # 0x03  Nexus, Air Cooled
-        # 0x06  Nexus, Liquid Cooled
-        # 0x09  Evolution, Air Cooled
+        # 0x03, 0x4, 0x5  Nexus, Air Cooled
+        # 0x06, 0x7, 0x8  Nexus, Liquid Cooled
+        # 0x09, 0x0b  Evolution, Air Cooled
         # 0x0a  Evolution Synergy, Air Cooled
         # 0x0c  Evolution, Liquid Cooled
-        # 0x12  Evolution Power Pact, Air Cooled
+        # 0x12,0x13 or 0x14  Evolution Power Pact, Air Cooled
         # 0x15  Evolution 2.0, Air Cooled
         # 0x16  Evolution 4.5L, Liquid Cooled
 
@@ -1190,7 +1236,7 @@ class Evolution(GeneratorController):
             if ProductModel == 0x15:
                 self.Evolution2 = True
 
-            if ProductModel == 0x12:
+            if ProductModel == 0x12 or ProductModel == 0x13 or ProductModel == 0x14:
                 self.PowerPact = True
 
             if ProductModel == 0x02:
@@ -1202,7 +1248,7 @@ class Evolution(GeneratorController):
             # if reg 000 is 3 or less then assume we have a Nexus Controller
             if ProductModel == 0x03 or ProductModel == 0x06 or ProductModel == 0x02:
                 self.EvolutionController = False  # "Nexus"
-            elif (ProductModel in [0x09, 0x0C, 0x0A,0x12, 0x15, 0x16]):
+            elif (ProductModel in [0x09, 0x0b, 0x0C, 0x0A, 0x12, 0x13, 0x14, 0x15, 0x16]):
                 self.EvolutionController = True  # "Evolution"
             else:
                 # set a reasonable default
@@ -1229,15 +1275,10 @@ class Evolution(GeneratorController):
 
         if self.LiquidCooled == None:
             if (
-                ProductModel == 0x03
-                or ProductModel == 0x09
-                or ProductModel == 0x0A
-                or ProductModel == 0x15
-                or ProductModel == 0x12
-                or ProductModel == 0x02
+                ProductModel in [0x02, 0x03, 0x04, 0x05, 0x09, 0x0A, 0x0B, 0x12, 0x13, 0x04, 0x15]
             ):
                 self.LiquidCooled = False  # Air Cooled
-            elif ProductModel == 0x06 or ProductModel == 0x0C or ProductModel == 0x16:
+            elif ProductModel in [0x06, 0x0C, 0x16]:
                 self.LiquidCooled = True  # Liquid Cooled
             else:
                 # set a reasonable default
@@ -1253,21 +1294,14 @@ class Evolution(GeneratorController):
                     msgtype="error",
                 )
         else:
-            self.LogError(
-                "DetectController auto-detect override (Liquid Cooled). Liquid Cooled now is %s"
-                % str(self.LiquidCooled)
-            )
+            self.LogError("DetectController auto-detect override (Liquid Cooled). Liquid Cooled now is %s"% str(self.LiquidCooled))
 
-        if (
-            not self.EvolutionController
-        ):  # if we are using a Nexus Controller, force legacy writes
+        if not self.EvolutionController:  # if we are using a Nexus Controller, force legacy writes
             self.bUseLegacyWrite = True
 
         if UnknownController:
             msg = "Unknown Controller Found: %x" % ProductModel
-            self.FeedbackPipe.SendFeedback(
-                "UnknownController", Message=msg, FullLogs=True
-            )
+            self.FeedbackPipe.SendFeedback("UnknownController", Message=msg, FullLogs=True)
         return "OK"
 
     # ----------  ControllerGetController  --------------------------------------
@@ -1280,15 +1314,21 @@ class Evolution(GeneratorController):
             ControllerDecoder = {
                 0x02: "Pre-Nexus, Air Cooled",
                 0x03: "Nexus, Air Cooled",
+                0x04: "Nexus, Air Cooled (4)",
+                0x05: "Nexus, Air Cooled (5)",
                 0x06: "Nexus, Liquid Cooled",
+                0x07: "Nexus, Liquid Cooled (7)",
+                0x08: "Nexus, Liquid Cooled (8)",
                 0x09: "Evolution, Air Cooled",
                 0x0A: "Synergy Evolution, Air Cooled",
+                0x0B: "Evolution, Air Cooled (11)",
                 0x0C: "Evolution, Liquid Cooled",
                 0x12: "Power Pact Evolution, Air Cooled",
+                0x13: "Power Pact Evolution, Air Cooled (19)",
+                0x14: "Power Pact Evolution, Air Cooled (20)",
                 0x15: "Evolution 2.0, Air Cooled",
                 0x16: "Evolution 4.5L, Liquid Cooled",
             }
-
             Value = self.GetRegisterValueFromList("0000")
             if len(Value) != 4:
                 return ""
