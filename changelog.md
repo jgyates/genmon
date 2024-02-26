@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - update for paho-mqtt version change
 - Optimizations for EvoLC current calculations and Nexus exercise time calculations 
 - Update to better identify Evolution and Nexus air cooled models
+- Update to allow L1 and L2 current to be exported via MQTT and update L1 and L2 gauge nominal values
 
 ## V1.19.01 -2023-12-06
 - Update to genmonmaint.sh to ask about serial connection type on install (thanks @skipfire)

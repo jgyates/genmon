@@ -97,6 +97,20 @@
             "keywords" : ["Status/Engine", "Hall Effect Sensor"]
         },
         {
+            "oid": "0, 0, 15",
+            "return_type": "str",
+            "description": "outputCurrentL1",
+            "default" : "",
+            "keywords" : ["Status/Engine", "Current L1"]
+        },
+        {
+            "oid": "0, 0, 16",
+            "return_type": "str",
+            "description": "outputCurrentL2",
+            "default" : "",
+            "keywords" : ["Status/Engine", "Current L2"]
+        },
+        {
             "oid": "0, 1, 1",
             "return_type": "str",
             "integer": true,

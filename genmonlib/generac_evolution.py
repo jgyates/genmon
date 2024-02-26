@@ -464,8 +464,7 @@ class Evolution(GeneratorController):
                 self.TileList.append(Tile)
 
                 if self.EvolutionController and not self.LiquidCooled and not self.bDisablePowerLog:
-                    NominalCurrent = float(self.NominalKW) * 1000 / self.NominalLineVolts
-                    NominalLegCurrent = NominalCurrent / 2
+                    NominalLegCurrent = ((float(self.NominalKW) * 1000) / 2 ) / (self.NominalLineVolts / 2)
                     # Setup gauges for EvoAC internal CTs
                     Tile = MyTile(
                         self.log,
@@ -4883,6 +4882,9 @@ class Evolution(GeneratorController):
 
             if self.PowerMeterIsSupported():
                 Engine.append({"Output Current": self.ValueOut(self.GetCurrentOutput(ReturnFloat=True), "A", JSONNum)})
+                if self.EvolutionController and not self.LiquidCooled and not self.bDisablePowerLog:
+                    Engine.append({"Current L1": self.ValueOut(self.GetCurrentOutput(ReturnFloat=True, force_sensor=False, leg = "ct1"), "A", JSONNum)})
+                    Engine.append({"Current L2": self.ValueOut(self.GetCurrentOutput(ReturnFloat=True, force_sensor=False, leg = "ct2"), "A", JSONNum)})
 
                 if self.UseExternalCTData and self.LiquidCooled and self.EvolutionController:
                     # show the internal Hall sensor if external CTs are used. If no external CTs are present, then this is shown with "Output Current"
