@@ -2671,12 +2671,23 @@ def ReadAdvancedSettingsFromFile():
                 GENMON_SECTION,
                 "min_outage_duration",
             ]
+            ConfigSettings["outage_notice_interval"] = [
+                "int",
+                "Outage Recurring Notice Interval (minutes)",
+                49,
+                "0",
+                "",
+                0,
+                GENMON_CONFIG,
+                GENMON_SECTION,
+                "outage_notice_interval",
+            ]
             ControllerInfo = GetControllerInfo("controller").lower()
             if "nexus" in ControllerInfo:
                 ConfigSettings["nexus_legacy_freq"] = [
                     "boolean",
                     "Use Nexus Legacy Frequency",
-                    49,
+                    50,
                     True,
                     "",
                     0,

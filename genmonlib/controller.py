@@ -128,6 +128,7 @@ class GeneratorController(MySupport):
 
         self.ProgramStartTime = datetime.datetime.now() # used for com metrics
         self.OutageStartTime = (self.ProgramStartTime)  # if these two are the same, no outage has occured
+        self.OutageReoccuringNoticeTime = (self.ProgramStartTime)
         self.OutageNoticeDelayTime = None
         self.LastOutageDuration = self.OutageStartTime - self.OutageStartTime
         self.OutageNoticeDelay = 0
@@ -256,6 +257,10 @@ class GeneratorController(MySupport):
                 self.bAlternateDateFormat = self.config.ReadValue(
                     "alternate_date_format", return_type=bool, default=False
                 )
+
+                # num minutes to send a warning email about an outage
+                self.OutageNoticeInterval = self.config.ReadValue("outage_notice_interval", return_type=int, default=0)
+
                 # the percentage of the total load of the allowable difference in current between legs
                 self.UnbalancedCapacity = self.config.ReadValue(
                     "unbalanced_capacity", return_type=float, default=0
@@ -363,11 +368,14 @@ class GeneratorController(MySupport):
                     # log outage to file
                     if (self.LastOutageDuration.total_seconds()> self.MinimumOutageDuration):
                         self.LogToFile(self.OutageLog, self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"),OutageStr,)
+                else:
+                    self.SendRecuringOutageNotice()
             else:
                 if UtilityVolts < ThresholdVoltage:
                     if self.CheckOutageNoticeDelay():
                         self.SystemInOutage = True
                         self.OutageStartTime = datetime.datetime.now()
+                        self.OutageReoccuringNoticeTime = datetime.datetime.now()
                         msgbody = ("\nUtility Power Out at "+ self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"))
                         self.MessagePipe.SendMessage("Outage Notice at " + self.SiteName,msgbody,msgtype="outage",)
                 else:
@@ -376,6 +384,27 @@ class GeneratorController(MySupport):
             self.LogErrorLine("Error in CheckForOutageCommon: " + str(e1))
             return
 
+    # ------------ GeneratorController:SendRecuringOutageNotice ----------------
+    def SendRecuringOutageNotice(self):
+        try:
+            if not self.SystemInOutage:
+                return 
+            if self.OutageNoticeInterval < 1:
+                return 
+            
+            LastOutageDuration = (datetime.datetime.now() - self.OutageStartTime)
+            if LastOutageDuration.total_seconds() <= self.MinimumOutageDuration:
+                return
+
+            if (datetime.datetime.now() - self.OutageReoccuringNoticeTime).total_seconds() / 60 < self.OutageNoticeInterval:
+                return
+            self.OutageReoccuringNoticeTime = datetime.datetime.now()
+            OutageStr = str(LastOutageDuration).split(".")[0]      # remove microseconds from string
+            msgbody = ("\nUtility Outage Status: Untility power still out at " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ". Duration of outage " + OutageStr)
+            self.MessagePipe.SendMessage("Recurring Outage Notice at " + self.SiteName,msgbody,msgtype="outage")
+        except Exception as e1:
+            self.LogErrorLine("Error in SendRecuringOutageNotice: " + str(e1))
+            return
     # ------------ GeneratorController:CheckOutageNoticeDelay ------------------
     def CheckOutageNoticeDelay(self):
 

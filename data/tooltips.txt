@@ -34,6 +34,7 @@ evolutioncontroller = The software will auto-detect the controller type. The aut
 petroleumfuel = Only valid for liquid cooled Evolution generators. Enable if your generator uses diesel or gasoline, disable if you use propane or natural gas. This value is used to change how status relays are displayed.
 outagelog = Full path and file name of the power outage log.
 outage_notice_delay = The delay in seconds between a detected loss in utility voltage and a notification of an outage. This value must be an integer.
+outage_notice_interval = To enable recurring outage notices set this to a positive non zero integer value. This represents the number of minutes to send a recurring outage notice.
 syncdst = Enable to sync the generator time to the system time if there is a change in Daylight Savings Time. This does not change the system time, only the generator time.
 synctime = Enables syncing the generator time to the system time once every hour. This does not change the system time, only the generator time.
 enhancedexercise = Enable the functionality to support biweekly and monthly exercise times (weekly is the default). Note, your generator controller must support this before enabling this option. Evolution only and firmware version dependent.
