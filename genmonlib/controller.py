@@ -2058,10 +2058,10 @@ class GeneratorController(MySupport):
             if self.UseExternalCTData:
                 NominalCurrent = float(self.NominalKW) * 1000 / self.NominalLineVolts
                 if int(self.Phase) == 1:
-                    NominalLegCurrent = NominalCurrent / 2
+                    NominalLegCurrent = ((float(self.NominalKW) * 1000) / 2 ) / (self.NominalLineVolts / 2)
                 else:
                     # TODO: validate with 3 phase, also show three gauges?
-                    NominalLegCurrent = NominalCurrent
+                    NominalLegCurrent = float(self.NominalKW) * 1000 / self.NominalLineVolts
 
                 ReturnCurrent1 = self.CheckExternalCTData(request="ct1", ReturnFloat=True, gauge=True)
                 ReturnCurrent2 = self.CheckExternalCTData(request="ct2", ReturnFloat=True, gauge=True)
