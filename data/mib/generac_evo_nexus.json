@@ -549,6 +549,20 @@
             "description": "FirmwareVersion",
             "default" : " ",
             "keywords" : ["Maintenance/Service", "Firmware Version"]
+        },
+        {
+            "oid": "2, 0, 1",
+            "return_type": "str",
+            "description": "OutageStatus",
+            "default" : " ",
+            "keywords" : ["Outage", "Status"]
+        },
+        {
+            "oid": "2, 0, 2",
+            "return_type": "str",
+            "description": "OutageSystemInOutage",
+            "default" : " ",
+            "keywords" : ["Outage", "System In Outage"]
         }
     ]
 }
