@@ -156,7 +156,7 @@ class GenSNMP(MySupport):
         self.MonitorAddress = host
         self.debug = False
         self.PollTime = 1
-        self.BlackList = ["Outage"]  # ["Monitor"]
+        self.BlackList = []  # ["Monitor","Outage"]
         configfile = os.path.join(ConfigFilePath, "gensnmp.conf")
         try:
             if not os.path.isfile(configfile):
