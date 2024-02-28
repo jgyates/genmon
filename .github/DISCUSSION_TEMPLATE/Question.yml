@@ -1,0 +1,50 @@
+name: Question
+description: Ask questions about Genmon
+labels: [question]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this form.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: "Checklist"
+      options:
+        - label: "I made sure that there are *no existing issues or discussions* - [open](https://github.com/jgyates/genmon/issues) or [closed](https://github.com/jgyates/genmon/issues?q=is%3Aissue+is%3Aclosed) - which may answer my question or that I could contribute my information to."
+          required: true
+        - label: "I have read the [Known Issues Wiki Page](https://github.com/jgyates/genmon/wiki/Appendix-D-Known-Issues) and my question / issue is not listed."
+          required: true
+        - label: "I have provided the version of the software and the operating system in my post."
+          required: true
+        - label: "If I have an issue with genmon not communicating with the controller, I have read and followed the [serial troubleshooting guide](https://github.com/jgyates/genmon/wiki/3.6---Serial-Troubleshooting)."
+          required: true
+
+  - type: textarea
+    attributes:
+      label: Version
+      placeholder: Genmon Version
+
+  - type: dropdown
+    id: logssubmitted
+    attributes:
+      label: Have you submitted your log files from the About page? Note that outbound email must be working for logs to be submitted.
+      options:
+        - Yes
+        - No
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-is-the-question
+    attributes:
+      label: What is/are your question(s)?
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-information
+    attributes:
+      label: Additional information
+      description: Any other information you'd like to include, for instance pictures, screen captures, etc.
