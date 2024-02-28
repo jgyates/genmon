@@ -1,5 +1,3 @@
-name: Questions
-description: Ask questions about Genmon
 labels: [question]
 body:
   - type: markdown
