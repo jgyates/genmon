@@ -29,8 +29,8 @@ body:
     attributes:
       label: Have you submitted your log files from the About page? Note that outbound email must be working for logs to be submitted.
       options:
-        - Yes
-        - No
+        - I have submitted logs
+        - I have not submitted logs
     validations:
       required: true
 
