@@ -10,7 +10,7 @@ body:
     attributes:
       label: "Checklist"
       options:
-        - label: "I made sure that there are *no existing issues or discussions* - [open issues](https://github.com/jgyates/genmon/issues),[closed issues](https://github.com/jgyates/genmon/issues?q=is%3Aissue+is%3Aclosed),[open discussion](https://github.com/jgyates/genmon/discussions), [closed discussion](https://github.com/jgyates/genmon/discussions/categories/questions?discussions_q=is%3Aclosed+category%3AQuestions+) - which may answer my question or that I could contribute my information to."
+        - label: "I made sure that there are *no existing issues or discussions* - [open issues](https://github.com/jgyates/genmon/issues),[closed issues](https://github.com/jgyates/genmon/issues?q=is%3Aissue+is%3Aclosed),[open discussion](https://github.com/jgyates/genmon/discussions), [closed discussion](https://github.com/jgyates/genmon/discussions/categories/questions?discussions_q=is%3Aclosed) - which may answer my question or that I could contribute my information to."
           required: true
         - label: "I have read the [Known Issues Wiki Page](https://github.com/jgyates/genmon/wiki/Appendix-D-Known-Issues) and my question / issue is not listed."
           required: true
