@@ -1281,6 +1281,9 @@ class Evolution(GeneratorController):
         if not self.EvolutionController:  # if we are using a Nexus Controller, force legacy writes
             self.bUseLegacyWrite = True
 
+        if not self.bEnhancedExerciseFrequency:
+            if self.Evolution2 or self.PowerPact or self.SynergyController:
+                self.bEnhancedExerciseFrequency = True
         if UnknownController:
             msg = "Unknown Controller Found: %x" % ProductModel
             self.FeedbackPipe.SendFeedback("UnknownController", Message=msg, FullLogs=True)
