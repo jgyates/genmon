@@ -2382,7 +2382,8 @@ function DisplaySettings(){
         $.extend($.idealforms.rules, {
            // The rule is added as "ruleFunction:arg1:arg2"
            HTTPAddress: function(input, value, arg1, arg2) {
-             var regex = RegExp("^http[s]?:\\/\\/(([a-z0-9]+([-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))$", 'g');
+             //var regex = RegExp("^http[s]?:\\/\\/(([a-z0-9]+([-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))$", 'g');
+             var regex = RegExp("^(?:https?:\/\/)(?!$)(?:www\.)?[a-zA-Z]*(?:\.[a-zA-Z]{2,6})?(?:(?:\d{1,3}\.){3}\d{1,3})?", 'g');
              return regex.test(value);
            },
            InternetAddress: function(input, value, arg1, arg2) {
@@ -2765,7 +2766,8 @@ function DisplayAddons(){
         $.extend($.idealforms.rules, {
            // The rule is added as "ruleFunction:arg1:arg2"
            HTTPAddress: function(input, value, arg1, arg2) {
-             var regex = RegExp("^http[s]?:\\/\\/(([a-z0-9]+([-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))$", 'g');
+             //var regex = RegExp("^http[s]?:\\/\\/(([a-z0-9]+([-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))$", 'g');
+             var regex = RegExp("^(?:https?:\/\/)(?!$)(?:www\.)?[a-zA-Z]*(?:\.[a-zA-Z]{2,6})?(?:(?:\d{1,3}\.){3}\d{1,3})?", 'g');
              return regex.test(value);
            },
            InternetAddress: function(input, value, arg1, arg2) {
@@ -3657,7 +3659,8 @@ function DisplayAdvancedSettings(){
         $.extend($.idealforms.rules, {
            // The rule is added as "ruleFunction:arg1:arg2"
            HTTPAddress: function(input, value, arg1, arg2) {
-             var regex = RegExp("^http[s]?:\\/\\/(([a-z0-9]+([-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))$", 'g');
+             //var regex = RegExp("^http[s]?:\\/\\/(([a-z0-9]+([-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(\/.*)?)|(localhost(\/.*)?))$", 'g');
+             var regex = RegExp("^(?:https?:\/\/)(?!$)(?:www\.)?[a-zA-Z]*(?:\.[a-zA-Z]{2,6})?(?:(?:\d{1,3}\.){3}\d{1,3})?", 'g');
              return regex.test(value);
            },
            InternetAddress: function(input, value, arg1, arg2) {
