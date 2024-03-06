@@ -1411,7 +1411,7 @@ def GetAddOns():
         )
         AddOnCfg["genslack"]["parameters"]["title_link"] = CreateAddOnParam(
             ConfigFiles[GENSLACK_CONFIG].ReadValue(
-                "title_link", return_type=str, default=request.url_root
+                "title_link", return_type=str, default=""
             ),
             "string",
             "Use this to make the title of the message a link i.e. link to the genmon web interface.",
