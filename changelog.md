@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Update to allow L1 and L2 current to be exported via MQTT and update L1 and L2 gauge nominal values
 - Added Outage Recurring Notices option, see Advanced Settings page
 - Update to force Enhanced Exercise for known supported controllers
+- Minor update to genslack add on for error handling improvements
 
 ## V1.19.01 -2023-12-06
 - Update to genmonmaint.sh to ask about serial connection type on install (thanks @skipfire)
