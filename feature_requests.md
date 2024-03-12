@@ -26,3 +26,4 @@
 - [Add the ability to setup and external gauge / sensor](https://github.com/jgyates/genmon/issues/961)
 - [Add reading watchdog in gentankutil](https://github.com/jgyates/genmon/issues/1018)
 - [Keep alive for Silk broswers](https://github.com/jgyates/genmon/discussions/1059)
+- [Save Gauge Layout](https://github.com/jgyates/genmon/discussions/1078)
