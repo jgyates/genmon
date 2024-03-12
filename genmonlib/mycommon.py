@@ -12,6 +12,7 @@
 import json
 import os
 import sys
+import re
 
 from genmonlib.program_defaults import ProgramDefaults
 
@@ -161,6 +162,19 @@ class MyCommon(object):
 
         return answer.strip()
 
+    # ------------ MyCommon::ConvertToNumber------------------------------------
+    # convert a string to an int or float, removes non string characters
+    def ConvertToNumber(self, value):
+        try:
+            return_value = re.sub('[^0-9.\-]','',value)
+            try:
+                return_value = int(return_value)
+            except:
+                return_value = float(return_value)
+            return return_value
+        except Exception as e1:
+             self.LogErrorLine("Error in MyMQTT:ConvertToNumber: " + str(e1) + ": " + str(value))
+             return 0
     # ------------ MyCommon::MergeDicts -----------------------------------------
     def MergeDicts(self, x, y):
         # Given two dicts, merge them into a new dict as a shallow copy.

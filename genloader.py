@@ -331,6 +331,7 @@ class Loader(MySupport):
             "genpushover.conf": "/etc/",
             "gensyslog.conf": "/etc/",
             "genmqtt.conf": "/etc/",
+            "genmqttin.conf": "/etc/",
             "genslack.conf": "/etc/",
             "gencallmebot.conf": "/etc/",
             "genexercise.conf": "/etc/",
@@ -698,6 +699,7 @@ class Loader(MySupport):
                 "genpushover",
                 "gensyslog",
                 "genmqtt",
+                "genmqttin",
                 "genslack",
                 "gencallmebot",
                 "genexercise",
@@ -833,6 +835,15 @@ class Loader(MySupport):
                             section=entry,
                             module="gensms_voip.py",
                             conffile="gensms_voip.conf",
+                        )
+                    if entry == "genmqttin":
+                        self.LogError(
+                            "Warning: Missing entry: " + entry + " , adding entry"
+                        )
+                        self.AddEntry(
+                            section=entry,
+                            module="genmqttin.py",
+                            conffile="genmqttin.conf",
                         )
                     if entry == "gencustomgpio":
                         self.LogError(
