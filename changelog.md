@@ -18,6 +18,8 @@ All notable changes to this project will be documented in this file.
 - Added Outage Recurring Notices option, see Advanced Settings page
 - Update to force Enhanced Exercise for known supported controllers
 - Minor update to genslack add on for error handling improvements
+- Update to outage log processing to prevent invalid fuel usage for outages lasting less than one second.
+- New add on program genmqttin.py. See wiki for details: https://github.com/jgyates/genmon/wiki/1----Software-Overview#genmqttinpy-optional
 
 ## V1.19.01 -2023-12-06
 - Update to genmonmaint.sh to ask about serial connection type on install (thanks @skipfire)

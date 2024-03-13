@@ -120,10 +120,10 @@ class GeneratorController(MySupport):
         self.UseExternalFuelData = False
         self.UseExternalCTData = False
         self.ExternalCTData = None
-        self.UseExternalTempData = False
-        self.ExternalTempData = None
-        self.ExternalTempDataTime = None
-        self.ExternalTempBounds = None
+        self.UseExternalSensorData = False
+        self.ExternalSensorData = None
+        self.ExternalSensorDataTime = None
+        self.ExternalSensorGagueData = None
         self.ExternalDataLock = threading.RLock()
 
         self.ProgramStartTime = datetime.datetime.now() # used for com metrics
@@ -353,8 +353,9 @@ class GeneratorController(MySupport):
 
                     try:
                         if self.PowerMeterIsSupported() and self.FuelConsumptionSupported():
-                            if self.LastOutageDuration.total_seconds():
-                                FuelUsed = self.GetPowerHistory("power_log_json=%d,fuel" % self.LastOutageDuration.total_seconds())
+                            if (int(self.LastOutageDuration.total_seconds()) > 0):
+                                # calling getpowerhistory with a duration of zero returns total fuel used so don't do that
+                                FuelUsed = self.GetPowerHistory("power_log_json=%d,fuel" % int(self.LastOutageDuration.total_seconds()))
                             else:
                                 # Outage of zero seconds...
                                 if self.UseMetric:
@@ -366,7 +367,7 @@ class GeneratorController(MySupport):
                     except Exception as e1:
                         self.LogErrorLine("Error recording fuel usage for outage: " + str(e1))
                     # log outage to file
-                    if (self.LastOutageDuration.total_seconds()> self.MinimumOutageDuration):
+                    if (int(self.LastOutageDuration.total_seconds())> self.MinimumOutageDuration):
                         self.LogToFile(self.OutageLog, self.OutageStartTime.strftime("%Y-%m-%d %H:%M:%S"),OutageStr,)
                 else:
                     self.SendRecuringOutageNotice()
@@ -2163,25 +2164,26 @@ class GeneratorController(MySupport):
                 self.TileList.append(Tile)
 
             # external Temp data from gentemp add on
-            if self.UseExternalTempData and self.ExternalTempData != None and self.ExternalTempBounds != None:
+            if self.UseExternalSensorData and self.ExternalSensorGagueData != None:
                 # setup each temp gauge
                 try:
-                    self.LogDebug("Setting up gauges for external temp sensors")
+                    self.LogDebug("Setting up gauges for external sensors")
                     index = 0
-                    if "External Temperature Sensors" in  self.ExternalTempData.keys():
-                        for TempBounds in self.ExternalTempBounds:
-                            temp_max = TempBounds['max']
-                            temp_nominal = TempBounds['nominal']
-                            temp_name = TempBounds['name'].strip()
-                            temp_units = TempBounds['units']
-                            if temp_name != None and temp_max != None and temp_nominal != None:
-                                Tile = MyTile(self.log,title=temp_name, units=temp_units,type="temperature", subtype = "external",
-                                    nominal=temp_nominal, maximum=temp_max, callback=self.GetExternalTemp, callbackparameters=(index,),)
+                    for SensorBounds in self.ExternalSensorGagueData:
+                        sensor_max = SensorBounds['max']
+                        sensor_nominal = SensorBounds['nominal']
+                        sensor_name = SensorBounds['title'].strip()
+                        sensor_units = SensorBounds['units']
+                        sensor_type = SensorBounds['type']
+                        if sensor_name != None and sensor_max != None and sensor_nominal != None:
+                            if not SensorBounds['exclude_gauge']:
+                                Tile = MyTile(self.log,title=sensor_name, units=sensor_units,type=sensor_type, subtype = "external",
+                                    nominal=sensor_nominal, maximum=sensor_max, callback=self.GetExternalSensorData, callbackparameters=(sensor_name,),)
                                 self.TileList.append(Tile)
-                            index += 1
+                        index += 1
 
                 except Exception as e1:
-                    self.LogErrorLine("Error in SetupCommonTiles: TempData: " + str(e1))
+                    self.LogErrorLine("Error in SetupCommonTiles: sensor_bounds: " + str(e1))
                 
             # wifi signal strength
             if self.bUseLinuxWifiSignalGauge and self.Platform != None:
@@ -2435,15 +2437,15 @@ class GeneratorController(MySupport):
             
             with self.ExternalDataLock:
                 try:
-                    if self.ExternalTempData != None:
+                    if self.ExternalSensorData != None:
                         if not JSONNum:
-                            Status["Status"].append(self.ExternalTempData)
+                            Status["Status"].append({"External Sensors":self.ExternalSensorData})
                         else:
                             # This will unpack the list of dicts and put them in the JSONNum format 
                             TempList = []
-                            ExternalTempList = self.ExternalTempData["External Temperature Sensors"]
+                            ExternalTempList = self.ExternalSensorData
                             if len(ExternalTempList):
-                                Status["Status"].append({"External Temperature Sensors" : TempList})
+                                Status["Status"].append({"External Sensors" : TempList})
                                 for ExTempDict in ExternalTempList:
                                     try:
                                         TempDict = ExTempDict.copy()    # make a copy since we use popitmes below
@@ -2990,83 +2992,102 @@ class GeneratorController(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in CheckLegBalance: " + str(e1))
             return False
-    # ----------  GeneratorController::SetExternalTemperatureData----------------
-    def SetExternalTemperatureData(self, command):
+    # ----------  GeneratorController::SetExternalSensorData----------------
+    def SetExternalSensorData(self, command):
 
         try:
             if not isinstance(command, str) and not isinstance(command, unicode):
-                self.LogErrorLine("Error in SetExternalTemperatureData, invalid data: " + str(type(command)))
+                self.LogErrorLine("Error in SetExternalSensorData, invalid data: " + str(type(command)))
                 return "Error"
 
-            bInitTempTiles = False
             with self.ExternalDataLock:
                 CmdList = command.split("=")
                 if len(CmdList) == 2:
-                    if self.ExternalTempData == None:
-                        bInitTempTiles = True
-                    self.ExternalTempData = json.loads(CmdList[1])
-                    self.ExternalTempDataTime = datetime.datetime.now()
+                    if self.ExternalSensorData == None:
+                        self.ExternalSensorData = json.loads(CmdList[1])
+                    else:
+                        new_list = json.loads(CmdList[1])   # list of dicts {'label': 'value with units'}
+                        for new_sensor in new_list:
+                            found = False
+                            for i in range(len(self.ExternalSensorData)):
+                                existing_sensor = self.ExternalSensorData[i]
+                                if list(new_sensor.keys())[0] == list(existing_sensor.keys())[0]:
+                                    self.ExternalSensorData[i] = new_sensor
+                                    found = True
+                            if not found:   # first time seeing this sensor
+                                self.ExternalSensorData.append(new_sensor)
+
+                    self.UseExternalSensorData = True
+                    self.ExternalSensorDataTime = datetime.datetime.now()
+                    
                 else:
-                    self.LogError("Error in  SetExternalTemperatureData: invalid input: " + str(len(CmdList)))
+                    self.LogError("Error in  SetExternalSensorData: invalid input: " + str(len(CmdList)))
                     return "Error"
-            if bInitTempTiles:
-                self.UseExternalTempData = True
-                self.SetupTiles()
 
         except Exception as e1:
-            self.LogErrorLine("Error in SetExternalTemperatureData: " + str(e1))
+            self.LogErrorLine("Error in SetExternalSensorData: " + str(e1))
             return "Error"
 
         return "OK"
 
-    # ----------  GeneratorController::GetExternalTemp--------------------------
+    # ----------  GeneratorController::GetExternalSensorData--------------------------
     # used to get external temp data for gauge / tile
-    def GetExternalTemp(self, sensor_index):
+    def GetExternalSensorData(self, sensor_name):
         try:
-            if not self.UseExternalTempData or self.ExternalTempData == None or self.ExternalTempBounds == None:
+            if not self.UseExternalSensorData or self.ExternalSensorData == None or self.ExternalSensorGagueData == None:
                 return 0.0
-            index = 0
+
             with self.ExternalDataLock:
-                TempList = self.ExternalTempData["External Temperature Sensors"]
-                if len(TempList) > 0:
-                    for TempDict in TempList:
-                        if index == sensor_index:
-                            temp_name = list(TempDict.keys())[0]
-                            temp_value = TempDict[temp_name]
-                            temp_list = temp_value.strip().split(" ")
-                            temp_value = temp_list[0]
-                            return float(temp_value)
-                        index += 1
+                if len(self.ExternalSensorData) > 0:
+                    for SensorDict in self.ExternalSensorData:
+                        if sensor_name == list(SensorDict.keys())[0]:
+                            sensor_value = SensorDict[sensor_name]
+                            return self.ConvertToNumber(sensor_value)
                 else:
-                    self.LogDebug("Error in GetExternalTemp: " + str(self.ExternalTempData))
+                    self.LogDebug("Error in GetExternalSensorData: " + str(self.ExternalSensorData))
                         
-            self.LogDebug("Temp data not found in GetExternalTemp: " + str(sensor_index))
+            self.LogDebug("Sensor data not found in GetExternalSensorData: " + str(sensor_name))
+
             return 0.0
         except Exception as e1:
-            self.LogErrorLine("Error in GetExternalTemp: " + str(e1) + ": " + str(sensor_index) + ": " + str(self.ExternalTempData))
+            self.LogErrorLine("Error in GetExternalSensorData: " + str(e1) + ": " + str(sensor_name) + ": " + str(self.ExternalSensorData))
             return 0.0
 
-    # ----------  GeneratorController::SetExternalTemperatureBounds-------------
-    # NOTE: This command must be called first before SetExternalTemperatureData
+    # ----------  GeneratorController::SetExternalGaugeData-------------
+    # NOTE: This command must be called first before SetExternalSensorData
     # otherwise the bounds data will be ignored
-    def SetExternalTemperatureBounds(self, command):
+    def SetExternalGaugeData(self, command):
 
         try:
             if not isinstance(command, str) and not isinstance(command, unicode):
-                self.LogErrorLine("Error in SetExternalTemperatureBounds, invalid data: " + str(type(command)))
+                self.LogErrorLine("Error in SetExternalGaugeData, invalid data: " + str(type(command)))
                 return "Error"
 
             with self.ExternalDataLock:
                 CmdList = command.split("=")
                 if len(CmdList) == 2:
-                    self.ExternalTempBounds = json.loads(CmdList[1])
-
+                    TempSensorGaugeList = json.loads(CmdList[1])
+                    if self.ExternalSensorGagueData == None:
+                        self.ExternalSensorGagueData = TempSensorGaugeList
+                        self.UseExternalSensorData = True
+                    else:
+                        
+                        for Gauge in TempSensorGaugeList:
+                            found = False
+                            for ExistingGauge in  self.ExternalSensorGagueData:
+                                if ExistingGauge['title'] == Gauge['title']:
+                                    found = True    # already exist
+                                    self.LogDebug("Gauge already exist: " + Gauge['title'])
+                                    break
+                            if not found:
+                                self.ExternalSensorGagueData.append(Gauge)
+                    self.SetupTiles()
                 else:
-                    self.LogError("Error in  SetExternalTemperatureBounds: invalid input: " + str(len(CmdList)))
+                    self.LogError("Error in  SetExternalGaugeData: invalid input: " + str(len(CmdList)))
                     return "Error"
 
         except Exception as e1:
-            self.LogErrorLine("Error in SetExternalTemperatureBounds: " + str(e1))
+            self.LogErrorLine("Error in SetExternalGaugeData: " + str(e1))
             return "Error"
 
         return "OK"
@@ -3119,49 +3140,49 @@ class GeneratorController(MySupport):
             if ExternalData == None:
                 return None
 
-            if request.lower() == "current" and "current" in ExternalData:
+            if request.lower() == "current" and "current" in ExternalData.keys():
                 return self.ReturnFormat(ExternalData["current"], "A", ReturnFloat)
 
-            if request.lower() == "power" and "power" in ExternalData:
+            if request.lower() == "power" and "power" in ExternalData.keys():
                 return self.ReturnFormat(ExternalData["power"], "kW", ReturnFloat)
 
             if (
                 request.lower() == "ct1"
-                and "ctdata" in ExternalData
+                and "ctdata" in ExternalData.keys()
                 and len(ExternalData["ctdata"]) >= 2
             ):
                 return self.ReturnFormat(ExternalData["ctdata"][0], "A", ReturnFloat)
             if (
                 request.lower() == "ct2"
-                and "ctdata" in ExternalData
+                and "ctdata" in ExternalData.keys()
                 and len(ExternalData["ctdata"]) >= 2
             ):
                 return self.ReturnFormat(ExternalData["ctdata"][1], "A", ReturnFloat)
             if (
                 request.lower() == "ctpower1"
-                and "ctpower" in ExternalData
+                and "ctpower" in ExternalData.keys()
                 and len(ExternalData["ctpower"]) >= 2
             ):
                 return self.ReturnFormat(ExternalData["ctpower"][0], "kW", ReturnFloat)
             if (
                 request.lower() == "ctpower2"
-                and "ctpower" in ExternalData
+                and "ctpower" in ExternalData.keys()
                 and len(ExternalData["ctpower"]) >= 2
             ):
                 return self.ReturnFormat(ExternalData["ctpower"][1], "kW", ReturnFloat)
 
-            if "powerfactor" in ExternalData:
+            if "powerfactor" in ExternalData.keys():
                 powerfactor = float(ExternalData["powerfactor"])
             else:
                 powerfactor = 1.0
 
             if voltage == None:
-                if "voltage" in ExternalData:
+                if "voltage" in ExternalData.keys():
                     voltage = int(ExternalData["voltage"])
                 else:
                     return None
 
-            if "phase" in ExternalData:
+            if "phase" in ExternalData.keys():
                 phase = ExternalData["phase"]
             else:
                 phase = 1
@@ -3171,11 +3192,11 @@ class GeneratorController(MySupport):
                 # TODO check this
                 singlelegvoltage = voltage / 3
 
-            if request.lower() == "current" and "power" in ExternalData:
+            if request.lower() == "current" and "power" in ExternalData.keys():
                 if voltage == 0:
                     return self.ReturnFormat(0.0, "A", ReturnFloat)
 
-                if "ctpower" in ExternalData and len(ExternalData["ctpower"]) >= 2:
+                if "ctpower" in ExternalData.keys() and len(ExternalData["ctpower"]) >= 2:
                     power1 = float(ExternalData["ctpower"][0]) * 1000
                     power2 = float(ExternalData["ctpower"][1]) * 1000
                     CurrentFloat = round(
@@ -3188,7 +3209,7 @@ class GeneratorController(MySupport):
                     # I(A) = P(W) / (PF x V(V))
                     CurrentFloat = round(PowerFloat / (powerfactor * voltage), 2)
                 return self.ReturnFormat(CurrentFloat, "A", ReturnFloat)
-            elif request.lower() == "power"and "current" in ExternalData and "ctdata" in ExternalData:
+            elif request.lower() == "power"and "current" in ExternalData.keys() and "ctdata" in ExternalData.keys():
                 CurrentFloat = float(ExternalData["current"])
                 if len(ExternalData["ctdata"]) < 2:
                     # P(W) = PF x I(A) x V(V)
@@ -3203,8 +3224,8 @@ class GeneratorController(MySupport):
                     ) / 1000
                     #
                 return self.ReturnFormat(PowerFloat, "kW", ReturnFloat)
-            elif (request.lower() in ["ct1", "ct2"] and "ctpower" in ExternalData 
-                and "voltagelegs" in ExternalData and len(ExternalData["voltagelegs"]) != 0):
+            elif (request.lower() in ["ct1", "ct2"] and "ctpower" in ExternalData.keys() 
+                and "voltagelegs" in ExternalData.keys() and len(ExternalData["voltagelegs"]) != 0):
                 # convert leg power to leg current
                 if request.lower() == "ct1":
                     ctpower = ExternalData["ctpower"][0]
@@ -3217,8 +3238,8 @@ class GeneratorController(MySupport):
                     return None
                 CurrentFloat = round(((ctpower*1000.0) / extvolts),2)
                 return self.ReturnFormat(CurrentFloat, "A", ReturnFloat)
-            elif (request.lower() in ["ctpower1", "ctpower2"] and "ctdata" in ExternalData 
-                  and "voltagelegs" in ExternalData and len(ExternalData["voltagelegs"]) != 0):
+            elif (request.lower() in ["ctpower1", "ctpower2"] and "ctdata" in ExternalData.keys() 
+                  and "voltagelegs" in ExternalData.keys() and len(ExternalData["voltagelegs"]) != 0):
                 # convert leg current to leg power
                 if request.lower() == "ctpower1":
                     extcurrent = ExternalData["ctdata"][0]

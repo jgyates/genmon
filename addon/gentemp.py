@@ -115,7 +115,7 @@ class GenTemp(MySupport):
                     
             self.Generator = ClientInterface(host=self.MonitorAddress, port=port, log=self.log)
 
-            self.BoundsData = [] 
+            self.GaugeData = [] 
             
             if self.UseMetric:
                 self.Units = "C"
@@ -124,10 +124,16 @@ class GenTemp(MySupport):
             if self.DeviceNominalValues != None and self.DeviceMaxValues != None and self.DeviceLabels != None:
                 if len(self.DeviceNominalValues) == len(self.DeviceMaxValues) == len(self.DeviceLabels):
                     for (NominalValue,MaxValue, DeviceName) in itertools.zip_longest(self.DeviceNominalValues, self.DeviceMaxValues, self.DeviceLabels):
-                        self.BoundsData.append({"max": MaxValue, "nominal": NominalValue, "name": DeviceName, "units": self.Units})
-                    return_string = json.dumps(self.BoundsData)
-                    self.LogDebug("Bounds Data: " + str(self.BoundsData))
-                    self.SendCommand("generator: set_temp_bounds=" + return_string)
+                        self.GaugeData.append({"max": MaxValue, 
+                                               "nominal": NominalValue, 
+                                               "title": DeviceName, 
+                                               "units": self.Units, 
+                                               "type": "temperature",
+                                               "exclude_gauge": False,
+                                               "from": "gentemp"})
+                    return_string = json.dumps(self.GaugeData)
+                    self.LogDebug("Bounds Data: " + str(self.GaugeData))
+                    self.SendCommand("generator: set_external_gauge_data=" + return_string)
                 else:
                     self.LogError("Error in configuration: sensor name, nominal and max values do not have he same number of entries")
 
@@ -301,14 +307,23 @@ class GenTemp(MySupport):
                             device_label = self.DeviceLabels[labelIndex]
                         else:
                             device_label = self.GetIDFromDeviceName(sensor)
-                        ReturnDeviceData.append(
-                            {device_label: "%.2f %s" % (temp, units)}
-                        )
+                        # dict to hold last value, don't update if unchanged
+                        LastValue = self.LastValues.get(device_label, None)
+                        do_not_send = False
+                        if LastValue != None:
+                            if LastValue["temp"] == temp:
+                                do_not_send = True
+                        
+                        self.LastValues[device_label] = {"temp": temp, "units": units}
+                        if not do_not_send:
+                            ReturnDeviceData.append({device_label: "%.2f %s" % (temp, units)})
                     labelIndex += 1
-                return_string = json.dumps({"External Temperature Sensors": ReturnDeviceData})
-                self.SendCommand("generator: set_temp_data=" + return_string)
+                
+                if len(ReturnDeviceData):
+                    return_string = json.dumps(ReturnDeviceData)
+                    self.SendCommand("generator: set_sensor_data=" + return_string)
+                    self.LogDebug(return_string)
 
-                self.LogDebug(return_string)
                 if self.WaitForExit("GenTempThread", float(self.PollTime)):
                     return
 

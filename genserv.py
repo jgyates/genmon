@@ -1354,11 +1354,198 @@ def GetAddOns():
                 "client_id", return_type=str, default="genmon"
             ),
             "string",
-            "Unique identifier. Must be unique for each instance of genmon running on a given system. ",
+            "Unique identifier. Must be unique for each instance of genmon and add on running on a given system. ",
             bounds="",
             display_name="Client ID",
         )
 
+        # GENMQTTIN
+        AddOnCfg["genmqttin"] = collections.OrderedDict()
+        AddOnCfg["genmqttin"]["enable"] = ConfigFiles[GENLOADER_CONFIG].ReadValue(
+            "enable", return_type=bool, section="genmqttin", default=False
+        )
+        AddOnCfg["genmqttin"]["title"] = "MQTT Sensor Input"
+        AddOnCfg["genmqttin"][
+            "description"
+        ] = "Import data from MQTT broker for genmon use"
+        AddOnCfg["genmqttin"]["icon"] = "mqtt"
+        AddOnCfg["genmqttin"][
+            "url"
+        ] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genmqttinpy-optional"
+        AddOnCfg["genmqttin"]["parameters"] = collections.OrderedDict()
+
+        AddOnCfg["genmqttin"]["parameters"]["topics"] = CreateAddOnParam(
+            ConfigFiles[GENMQTTIN_CONFIG].ReadValue(
+                "topics", return_type=str, default=""
+            ),
+            "string",
+            "Comma separated list of MQTT topics to subscribe and import into genmon. All topics must return a numeric value or a string representation of a numeric value.",
+            bounds="",
+            display_name="Topics",
+        )
+        AddOnCfg["genmqttin"]["parameters"]["labels"] = CreateAddOnParam(
+            ConfigFiles[GENMQTTIN_CONFIG].ReadValue(
+                "labels", return_type=str, default=""
+            ),
+            "string",
+            "Comma separated list of display names for each topic listed above. These will be the displayed label for each topic value.",
+            bounds="",
+            display_name="Displayed Name",
+        )
+        AddOnCfg["genmqttin"]["parameters"]["units"] = CreateAddOnParam(
+            ConfigFiles[GENMQTTIN_CONFIG].ReadValue(
+                "units", return_type=str, default=""
+            ),
+            "string",
+            "Comma separated list of units for each topic listed above. If no labled is used for a given topic, use a space. If using the imported MQTT data for genmon calculations, for power use W or kW, for current use A, for voltage use V. ",
+            bounds="",
+            display_name="Units",
+        )
+        AddOnCfg["genmqttin"]["parameters"]["types"] = CreateAddOnParam(
+            ConfigFiles[GENMQTTIN_CONFIG].ReadValue(
+                "types", return_type=str, default=""
+            ),
+            "string",
+            "Comma separated list of value types for each topic listed above. Valid types are: ct1,ct2,ctpower1,ctpower2,fuel,temperature,power,current,voltage or pressure. See the wiki entry for this add on for more details.",
+            bounds="",
+            display_name="Sensor Type",
+        )
+        AddOnCfg["genmqttin"]["parameters"]["exclude_gauge"] = CreateAddOnParam(
+            ConfigFiles[GENMQTTIN_CONFIG].ReadValue(
+                "exclude_gauge", return_type=str, default=""
+            ),
+            "string",
+            "Comma separated list of Displayed Names that will not be displayed as a gauge. If you enable 'Use Data for Calculations' then you can remove duplicate gagues with this setting if they show up in the user interface.",
+            bounds="",
+            display_name="Exclude Gauge",
+        )
+        AddOnCfg["genmqttin"]["parameters"]["nominal_values"] = CreateAddOnParam(
+            ConfigFiles[GENMQTTIN_CONFIG].ReadValue(
+                "nominal_values", return_type=str, default=""
+            ),
+            "string",
+            "Comma separated list of nominal values for each topic listed above.",
+            bounds="",
+            display_name="Nominal Values",
+        )
+        AddOnCfg["genmqttin"]["parameters"]["maximum_values"] = CreateAddOnParam(
+            ConfigFiles[GENMQTTIN_CONFIG].ReadValue(
+                "maximum_values", return_type=str, default=""
+            ),
+            "string",
+            "Comma separated list of maximum values for each topic listed above.",
+            bounds="",
+            display_name="Maximum Values",
+        )
+
+        AddOnCfg["genmqttin"]["parameters"]["use_for_power_fuel"] = CreateAddOnParam(
+            ConfigFiles[GENMQTTIN_CONFIG].ReadValue(
+                "use_for_power_fuel", return_type=bool, default=False
+            ),
+            "boolean",
+            "If enabled, the data from sensor types fuel,power,current,ct1,ct2,voltageleg1, voltageleg2, ctpower1 and ctpower2 will be imported and used for power and fuel calculations (instead of just displaying) within genmon.",
+            bounds="",
+            display_name="Use Data for Calculations",
+        )
+        AddOnCfg["genmqttin"]["parameters"]["strict"] = CreateAddOnParam(
+            ConfigFiles[GENMQTTIN_CONFIG].ReadValue(
+                "strict", return_type=bool, default=False
+            ),
+            "boolean",
+            "If enabled, genmon will only use Data for Calculations if the generator utility line is in an outage. If your sensors are connected after the transfer switch (i.e. utility and generator are monitored) the you will want to enable this setting to keep genmon from using the sensor readings when there is not an outage.",
+            bounds="",
+            display_name="Strict Import Rules",
+        )
+        AddOnCfg["genmqttin"]["parameters"]["mqtt_address"] = CreateAddOnParam(
+            ConfigFiles[GENMQTTIN_CONFIG].ReadValue(
+                "mqtt_address", return_type=str, default=""
+            ),
+            "string",
+            "Address of your MQTT server.",
+            bounds="required IPAddress",
+            display_name="MQTT Server Address",
+        )
+        AddOnCfg["genmqttin"]["parameters"]["mqtt_port"] = CreateAddOnParam(
+            ConfigFiles[GENMQTTIN_CONFIG].ReadValue(
+                "mqtt_port", return_type=int, default=1833
+            ),
+            "int",
+            "The port of the MQTT server in a decimal number.",
+            bounds="required digits",
+            display_name="MQTT Server Port Number",
+        )
+        AddOnCfg["genmqttin"]["parameters"]["username"] = CreateAddOnParam(
+            ConfigFiles[GENMQTTIN_CONFIG].ReadValue(
+                "username", return_type=str, default=""
+            ),
+            "string",
+            "This value is used for the username if your MQTT server requires authentication. Leave blank for no authentication.",
+            bounds="minmax:4:50",
+            display_name="MQTT Authentication Username",
+        )
+        AddOnCfg["genmqttin"]["parameters"]["password"] = CreateAddOnParam(
+            ConfigFiles[GENMQTTIN_CONFIG].ReadValue(
+                "password", return_type=str, default=""
+            ),
+            "password",
+            "This value is used for the password if your MQTT server requires authentication. Leave blank for no authentication or no password.",
+            bounds="minmax:4:50",
+            display_name="MQTT Authentication Password",
+        )
+        AddOnCfg["genmqttin"]["parameters"]["cert_authority_path"] = CreateAddOnParam(
+            ConfigFiles[GENMQTTIN_CONFIG].ReadValue(
+                "cert_authority_path", return_type=str, default=""
+            ),
+            "string",
+            "(Optional) Full path to Certificate Authority file. Leave empty to not use SSL/TLS. If used port will be forced to 8883.",
+            bounds="",
+            display_name="SSL/TLS CA certificate file",
+        )
+        AddOnCfg["genmqttin"]["parameters"]["client_cert_path"] = CreateAddOnParam(
+            ConfigFiles[GENMQTTIN_CONFIG].ReadValue(
+                "client_cert_path", return_type=str, default=""
+            ),
+            "string",
+            "Optional. Full path the client certificate file. Leave empty to not use MTLS.",
+            bounds="",
+            display_name="Client Certificate File",
+        )
+        AddOnCfg["genmqttin"]["parameters"]["client_key_path"] = CreateAddOnParam(
+            ConfigFiles[GENMQTTIN_CONFIG].ReadValue(
+                "client_key_path", return_type=str, default=""
+            ),
+            "string",
+            "Optional. Full path the client key file. Leave empty to not use MTLS.",
+            bounds="",
+            display_name="Client Key File",
+        )
+        AddOnCfg["genmqttin"]["parameters"]["tls_version"] = CreateAddOnParam(
+            ConfigFiles[GENMQTTIN_CONFIG].ReadValue(
+                "tls_version", return_type=str, default="1.0"
+            ),
+            "list",
+            "(Optional) TLS version used (integer). Default is 1.0. Must be 1.0, 1.1, or 1.2. This is ignored if a CA cert file is not used. ",
+            bounds="1.0,1.1,1.2",
+            display_name="TLS Version",
+        )
+        AddOnCfg["genmqttin"]["parameters"]["cert_reqs"] = CreateAddOnParam(
+            ConfigFiles[GENMQTTIN_CONFIG].ReadValue(
+                "cert_reqs", return_type=str, default="Required"
+            ),
+            "list",
+            "(Optional) Defines the certificate requirements that the client imposes on the broker. Used if Certificate Authority file is used.",
+            bounds="None,Optional,Required",
+            display_name="Certificate Requirements",
+        )
+        AddOnCfg["genmqttin"]["parameters"]["client_id"] = CreateAddOnParam(
+            ConfigFiles[GENMQTTIN_CONFIG].ReadValue(
+                "client_id", return_type=str, default="genmon"
+            ),
+            "string",
+            "Unique identifier. Must be unique for each instance of genmon and add on running on a given system. ",
+            bounds="",
+            display_name="Client ID",
+        )
         # GENSLACK
         AddOnCfg["genslack"] = collections.OrderedDict()
         AddOnCfg["genslack"]["enable"] = ConfigFiles[GENLOADER_CONFIG].ReadValue(
@@ -2149,6 +2336,7 @@ def SaveAddOnSettings(query_string):
             "gensms_modem": ConfigFiles[MYMODEM_CONFIG],
             "genpushover": ConfigFiles[GENPUSHOVER_CONFIG],
             "genmqtt": ConfigFiles[GENMQTT_CONFIG],
+            "genmqttin": ConfigFiles[GENMQTTIN_CONFIG],
             "genslack": ConfigFiles[GENSLACK_CONFIG],
             "gencallmebot": ConfigFiles[GENCALLMEBOT_CONFIG],
             "genlog": ConfigFiles[GENLOADER_CONFIG],
@@ -4373,6 +4561,7 @@ if __name__ == "__main__":
     MYMODEM_CONFIG = os.path.join(ConfigFilePath, "mymodem.conf")
     GENPUSHOVER_CONFIG = os.path.join(ConfigFilePath, "genpushover.conf")
     GENMQTT_CONFIG = os.path.join(ConfigFilePath, "genmqtt.conf")
+    GENMQTTIN_CONFIG = os.path.join(ConfigFilePath, "genmqttin.conf")
     GENSLACK_CONFIG = os.path.join(ConfigFilePath, "genslack.conf")
     GENCALLMEBOT_CONFIG = os.path.join(ConfigFilePath, "gencallmebot.conf")
     GENGPIOIN_CONFIG = os.path.join(ConfigFilePath, "gengpioin.conf")
@@ -4396,6 +4585,7 @@ if __name__ == "__main__":
         MYMODEM_CONFIG,
         GENPUSHOVER_CONFIG,
         GENMQTT_CONFIG,
+        GENMQTTIN_CONFIG,
         GENSLACK_CONFIG,
         GENCALLMEBOT_CONFIG,
         GENGPIOIN_CONFIG,
