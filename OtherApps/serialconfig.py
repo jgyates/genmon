@@ -263,9 +263,38 @@ def DisableService(servicename, enable=False):
             + GetErrorInfo()
         )
         sys.exit(2)
+# ------------------FileContains------------------------------------------------
+def FileContains(filename, search_string):
 
+    if os.path.isfile(filename):
+        with open(filename) as f:
+            if search_string in f.read():
+                return True
+    return False
+# ------------------CheckFileLocations------------------------------------------
+def CheckFileLocations():
+    global BOOT_CONFIG
+    global CMD_LINE
+    try:
+        # check if /boot/config.txt or /boot/firmware/config.txt should be used
+        # check if /boot/comdline.txt or /boot/firmware/cmdline.txt should be used
+        if not os.path.isfile(BOOT_CONFIG):
+            BOOT_CONFIG = "/boot/firmware/config.txt"
+        else:
+            if FileContains(BOOT_CONFIG,"DO NOT EDIT"):
+                BOOT_CONFIG = "/boot/firmware/config.txt"
+        if not os.path.isfile(CMD_LINE):
+            CMD_LINE = "/boot/firmware/cmdline.txt"
+        else:
+            # it exist but should not be used.
+            if FileContains(CMD_LINE,"DO NOT EDIT"):
+                CMD_LINE = "/boot/firmware/cmdline.txt"
+        
+        print("\nUsing files: " + BOOT_CONFIG + " and " + CMD_LINE) 
+    except Exception as e1:
+        print("Error checking for file locations: " + str(e1))
 
-# ------------------RestoreFiles------------------------------------------------------
+# ------------------RestoreFiles------------------------------------------------
 def RestoreFiles():
 
     print("Restoring...")
@@ -374,6 +403,8 @@ if __name__ == "__main__":
             "You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting."
         )
         sys.exit(2)
+
+    CheckFileLocations()
 
     for File in FileList:
         if not os.path.isfile(File):
