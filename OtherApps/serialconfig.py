@@ -277,6 +277,7 @@ def CheckFileLocations():
     global CMD_LINE
     global FileList
     try:
+
         # check if /boot/config.txt or /boot/firmware/config.txt should be used
         # check if /boot/comdline.txt or /boot/firmware/cmdline.txt should be used
         if not os.path.isfile(BOOT_CONFIG):
