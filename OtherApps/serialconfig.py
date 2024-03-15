@@ -275,6 +275,7 @@ def FileContains(filename, search_string):
 def CheckFileLocations():
     global BOOT_CONFIG
     global CMD_LINE
+    global FileList
     try:
         # check if /boot/config.txt or /boot/firmware/config.txt should be used
         # check if /boot/comdline.txt or /boot/firmware/cmdline.txt should be used
@@ -290,7 +291,11 @@ def CheckFileLocations():
             if FileContains(CMD_LINE,"DO NOT EDIT"):
                 CMD_LINE = "/boot/firmware/cmdline.txt"
         
+        FileList = []
+        FileList.append(BOOT_CONFIG)
+        FileList.append(CMD_LINE)
         print("\nUsing files: " + BOOT_CONFIG + " and " + CMD_LINE) 
+
     except Exception as e1:
         print("Error checking for file locations: " + str(e1))
 
