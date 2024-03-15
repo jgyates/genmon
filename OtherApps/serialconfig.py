@@ -409,16 +409,16 @@ if __name__ == "__main__":
         )
         sys.exit(2)
 
+    if not IsPlatformRaspberryPi():
+        print("Expecting a Raspberry Pi platform. Pi not detected. Exiting.")
+        sys.exit(2)
+
     CheckFileLocations()
 
     for File in FileList:
         if not os.path.isfile(File):
             print("Error: unable to find file " + File)
             sys.exit(2)
-
-    if not IsPlatformRaspberryPi():
-        print("Expecting a Raspberry Pi platform. Pi not detected. Exiting.")
-        sys.exit(2)
 
     bUseLegacy = UseLegacySerialEnable()
     if not bUseLegacy:
