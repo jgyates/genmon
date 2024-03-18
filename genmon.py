@@ -647,6 +647,7 @@ class Monitor(MySupport):
                 "gensms.log",
                 "gensms_modem.log",
                 "genmqtt.log",
+                "genmqttin.log",
                 "genpushover.log",
                 "gensyslog.log",
                 "genloader.log",
