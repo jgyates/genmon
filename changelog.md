@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - Update to outage log processing to prevent invalid fuel usage for outages lasting less than one second
 - New add on program genmqttin.py. See wiki and add on page for details
 - Update to serialconfig.py to support file location changes with config.txt and cmdline.txt in latest Raspberry Pi firmware versions
+- Minor update to genmonmaint.sh to use Ubunut serial device names if Non Raspberry pi OS detected 
 
 ## V1.19.01 -2023-12-06
 - Update to genmonmaint.sh to ask about serial connection type on install (thanks @skipfire)

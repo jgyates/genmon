@@ -33,7 +33,21 @@ update_os=false
 managedpackages=false
 configfilescopied=false
 useserial=true
+operating_system="Unknown"
+is_raspbian=true
 
+#-------------------------------------------------------------------------------
+check_os(){
+
+  source /etc/os-release
+  operating_system=$NAME
+  echo "The operating system is: $NAME"
+  string='My long string'
+  if [[ $operating_system == *"Ubuntu"* ]]; then
+     is_raspbian=false
+  fi
+
+}
 
 #-------------------------------------------------------------------------------
 is_pi () {
@@ -199,8 +213,8 @@ function installgenmon() {
       read -p "What type of connection from genmon to the controller? S=Onboard Serial, T=Network, Serial over TCP/IP Bridge, U=USB Serial (s/t/u)?" choice
       case "$choice" in
         s|S ) echo "Setting up serial onboard port..."
-          if is_pifive; then
-            # on a raspberry pi 5 use /dev/ttyAMA0 instead of /dev/serial0
+          if is_pifive || [ "$is_raspbian" = false ]; then
+            # on a raspberry pi 5 or Ubuntu use /dev/ttyAMA0 instead of /dev/serial0
             echo "Using port /dev/ttyAMA0"
             sudo sudo sed -i 's/\/dev\/serial0/\/dev\/ttyAMA0/gI' /etc/genmon/genmon.conf
           fi
@@ -462,6 +476,7 @@ if [ "$update_os" = true ] ; then
    sudo apt-get --allow-releaseinfo-change update && sudo apt-get upgrade
 fi
 
+check_os
 checkmanagedpackages
 
 if [ "$install_opt" = true ] ; then
