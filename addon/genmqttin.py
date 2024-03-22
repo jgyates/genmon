@@ -149,7 +149,7 @@ class MyMQTT(MyCommon):
 
         try:
             if self.topics == None or len(self.topics) == 0:
-                self.LogError("Error validating topics: not topics found")
+                self.LogError("Error validating topics: no topics found")
                 sys.exit(1)
             self.NumTopics = len(self.topics)
             self.LogDebug("Found " + str(self.NumTopics) +" topics.")
