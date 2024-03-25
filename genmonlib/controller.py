@@ -280,7 +280,10 @@ class GeneratorController(MySupport):
 
         try:
             if not self.bDisablePlatformStats:
-                self.Platform = MyPlatform(self.log, self.UseMetric)
+                self.Platform = MyPlatform(log=self.log, usemetric=self.UseMetric, debug = self.debug)
+                if self.Platform.GetRaspberryPiTemp(ReturnFloat=True) == 0.0:
+                    self.bUseRaspberryPiCpuTempGauge = False
+                    # CPU temp is not supported on this platform
             else:
                 self.Platform = None
         except Exception as e1:

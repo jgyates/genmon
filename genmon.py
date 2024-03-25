@@ -1184,7 +1184,7 @@ class Monitor(MySupport):
 
             StartInfo["python"] = str(platform.python_version())
 
-            Platform = MyPlatform(log=self.log, usemetric=True)
+            Platform = MyPlatform(log=self.log, usemetric=True, debug = self.debug)
             StartInfo["os_bits"] = Platform.PlatformBitDepth()
 
         except Exception as e1:

@@ -25,9 +25,10 @@ from genmonlib.mycommon import MyCommon
 class MyPlatform(MyCommon):
 
     # ------------ MyPlatform::init----------------------------------------------
-    def __init__(self, log=None, usemetric=True):
+    def __init__(self, log=None, usemetric=True, debug=None):
         self.log = log
         self.UseMetric = usemetric
+        self.debug = debug
 
     # ------------ MyPlatform::GetInfo-------------------------------------------
     def GetInfo(self, JSONNum=False):
@@ -150,7 +151,7 @@ class MyPlatform(MyCommon):
                 DefaultReturn = 0.0
             else:
                 DefaultReturn = "0"
-            
+
             if not self.IsOSLinux():
                 return DefaultReturn
             try:
@@ -175,12 +176,15 @@ class MyPlatform(MyCommon):
                 if tempfilepath == None:
                     tempfilepath = "/sys/class/thermal/thermal_zone0/temp"
 
-                process = Popen(["cat", tempfilepath], stdout=PIPE)
-                output, _error = process.communicate()
-                output = output.decode("utf-8")
+                if os.path.exists(tempfilepath):
+                    process = Popen(["cat", tempfilepath], stdout=PIPE)
+                    output, _error = process.communicate()
+                    output = output.decode("utf-8")
 
-                TempCelciusFloat = float(float(output) / 1000)
-
+                    TempCelciusFloat = float(float(output) / 1000)
+                else:
+                    # not sure what OS this is, possibly docker image
+                    return DefaultReturn
             if self.UseMetric:
                 if not ReturnFloat:
                     return "%.2f C" % TempCelciusFloat
