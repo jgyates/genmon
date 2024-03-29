@@ -269,8 +269,12 @@ class MyMail(MySupport):
                 )
         except Exception as e1:
             # self.LogErrorLine("Error SMTP sendmail: " + str(e1))
-            session.quit()
-            return "Error sending email: " + str(e1)
+            errorstring = str(e1)
+            try:
+                session.quit()
+            except:
+                pass
+            return "Error sending email: " + str(errorstring)
 
         session.quit()
         return "Success"
@@ -668,7 +672,10 @@ class MyMail(MySupport):
                 )
         except Exception as e1:
             self.LogErrorLine("Error SMTP sendmail: " + str(e1))
-            session.quit()
+            try:
+                session.quit()
+            except:
+                pass
             return False
 
         session.quit()
