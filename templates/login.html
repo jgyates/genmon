@@ -1,4 +1,4 @@
-<script type="text/javascript" src="jquery-3.3.1.min.js"></script>
+<script type="text/javascript" src="js/jquery-3.7.0.min.js"></script>
 <script type="text/javascript">
 (function (global, factory) {
     if (typeof define === 'function' && define.amd) {
@@ -84,18 +84,18 @@
     };
 
     $.fn[pluginName] = function (options) {
-        var instance,
-            args = Array.prototype.slice.call(arguments, 1);
+      var instance,
+          args = Array.prototype.slice.call(arguments, 1);
 
-        return this.each(function () {
-            if (!$.data(this, pluginName)) {
-                $.data(this, pluginName, new FloatingFormLabels(this, options));
-            } else if (typeof options === 'string') {
-                // call public methods with its own parameters
-                instance = $.data(this, pluginName);
-                instance[options].apply(instance, args);
-            }
-        });
+      return this.each(function () {
+          if (!$.data(this, pluginName)) {
+              $.data(this, pluginName, new FloatingFormLabels(this, options));
+          } else if (typeof options === 'string') {
+              // call public methods with its own parameters
+              instance = $.data(this, pluginName);
+              instance[options].apply(instance, args);
+          }
+      });
     };
 }));
 </script>
