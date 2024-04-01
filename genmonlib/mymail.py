@@ -183,6 +183,12 @@ class MyMail(MySupport):
             # update time
             tmstamp = datetime.datetime.now().strftime("%I:%M:%S %p")
 
+            try:
+                import email.policy
+                parent = MIMEMultipart('mixed',policy=email.policy.SMTP)
+            except:
+                parent = MIMEMultipart('mixed')
+
             if use_html:
                 subtype = 'alternative'
             else:
@@ -197,10 +203,11 @@ class MyMail(MySupport):
                 except:
                     msg = MIMEMultipart(subtype)
 
+            parent.attach(msg)
             if sender_name == None or not len(sender_name):
-                msg["From"] = "<" + sender_account + ">"
+                parent["From"] = "<" + sender_account + ">"
             else:
-                msg["From"] = sender_name + " <" + sender_account + ">"
+                parent["From"] = sender_name + " <" + sender_account + ">"
         except Exception as e1:
             return "Error Initializing email: " + str(e1)
         try:
@@ -212,9 +219,9 @@ class MyMail(MySupport):
         except Exception as e1:
             pass
         try:
-            msg["To"] = recipient
-            msg["Date"] = formatdate(localtime=True)
-            msg["Subject"] = "Genmon Test Email"
+            parent["To"] = recipient
+            parent["Date"] = formatdate(localtime=True)
+            parent["Subject"] = "Genmon Test Email"
 
             msgstr = "\r\n" + "Test email from genmon\r\n"
             body = ("\r\n" + "Time: " + tmstamp + "\r\n"
@@ -265,9 +272,9 @@ class MyMail(MySupport):
                 session.login(MyMail.FilterAddress(email_account), str(password))
 
             if sys.version_info[0] < 3:  # PYTHON 2
-                message = msg.as_string()
+                message = parent.as_string()
             else:  # PYTHON 3
-                message = msg.as_bytes()
+                message = parent.as_bytes()
 
             if "," in recipient:
                 multiple_recipients = recipient.split(",")
