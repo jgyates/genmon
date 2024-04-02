@@ -233,6 +233,10 @@ def SendNotice(Message, **kwargs):
 
         user = app.get_user(userid)
 
+        if user == None:
+            log.error("Unable to get user context")
+            return False
+        
         if not user.is_authenticated:
             log.error("Unable to authenticate user ID")
             return False
