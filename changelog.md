@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - Minor update for better error reporting with email failures
 - Corrected issue with login page errors in developer console
 - Update to mymail.py to support optional HTML format of outbound email
+- Update to genmopeka.py add on to ignore invalid readings from mopeka sensor.
 
 ## V1.19.01 -2023-12-06
 - Update to genmonmaint.sh to ask about serial connection type on install (thanks @skipfire)

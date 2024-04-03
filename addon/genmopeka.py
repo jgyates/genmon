@@ -540,10 +540,16 @@ class GenMopekaData(MySupport):
 
                 if reading_mm > self.max_mm:
                     reading_mm = self.max_mm
+                    reading_inches = self.MmToInches(reading_mm)
                 tanksize = self.max_mm - self.min_mm
                 return round(((reading_mm - self.min_mm) / tanksize) * 100, 2)
-
-            gallons_left = self.CubicInToGallons(self.Tank.V_from_h(reading_inches))
+            try:
+                cubic_inches = self.Tank.V_from_h(reading_inches)
+            except Exception as e1:
+                self.LogError("Error in fluids geometry: " + str(e1))
+                self.LogDebug("max mm:" + str(self.max_mm) + " reading mm: " + reading_mm)
+                return None
+            gallons_left = self.CubicInToGallons(cubic_inches)
             self.LogDebug("Gallons Left: " + str(gallons_left))
             if gallons_left >= self.TankVolume:
                 percent = 100
@@ -561,6 +567,8 @@ class GenMopekaData(MySupport):
     def TankCheckThread(self):
 
         time.sleep(1)
+        
+        LastTankReading = [None,None,None,None]
 
         while True:
             try:
@@ -583,32 +591,51 @@ class GenMopekaData(MySupport):
                 if reading != None:
                     self.LogDebug("Tank1 = " + str(reading))
                     dataforgenmon["Percentage"] = reading
+                    LastTankReading[0] = reading
                 else:
-                    dataforgenmon["Percentage"] = 0
+                    # if we get an error, but have a last valid reading, use hte last valid reading, 
+                    # otherwise it is zero as there is no sensor because we never got a good reading
+                    if LastTankReading[0] == None:
+                        dataforgenmon["Percentage"] = 0
+                    else:
+                        dataforgenmon["Percentage"] = LastTankReading[0]
 
                 if len(self.bd_tank_address) >= 2:
                     reading = self.GetTankReading(self.bd_tank_address[1])
                     if reading != None:
                         self.LogDebug("Tank2 = " + str(reading))
                         dataforgenmon["Percentage2"] = reading
+                        LastTankReading[1] = reading
                     else:
-                        dataforgenmon["Percentage2"] = 0
+                        if LastTankReading[1] == None:
+                            dataforgenmon["Percentage2"] = 0
+                        else:
+                            dataforgenmon["Percentage2"] = LastTankReading[1]
+                        
 
                 if len(self.bd_tank_address) >= 3:
                     reading = self.GetTankReading(self.bd_tank_address[2])
                     if reading != None:
                         self.LogDebug("Tank3 = " + str(reading))
                         dataforgenmon["Percentage3"] = reading
+                        LastTankReading[2] = reading
                     else:
-                        dataforgenmon["Percentage3"] = 0
+                        if LastTankReading[2] == None:
+                            dataforgenmon["Percentage3"] = 0
+                        else:
+                            dataforgenmon["Percentage3"] = LastTankReading[2]
 
                 if len(self.bd_tank_address) >= 4:
                     reading = self.GetTankReading(self.bd_tank_address[3])
                     if reading != None:
                         self.LogDebug("Tank4 = " + str(reading))
                         dataforgenmon["Percentage4"] = reading
+                        LastTankReading[3] = reading
                     else:
-                        dataforgenmon["Percentage4"] = 0
+                        if LastTankReading[3] == None:
+                            dataforgenmon["Percentage4"] = 0
+                        else:
+                            dataforgenmon["Percentage4"] = LastTankReading[3]
 
                 if len(dataforgenmon) != 0:
                     dataforgenmon["Tank Name"] = "Mopeka Sensor Tank"
