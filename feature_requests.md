@@ -23,7 +23,7 @@
 - [Kiosk mode](https://github.com/jgyates/genmon/issues/970) @mstackler 
 - Add the ability to report the temperature of mopeka tank sensors in the UI and SNMP/MQTT
 - Add the ability to set the name of external tank
-- [Add the ability to setup and external gauge / sensor](https://github.com/jgyates/genmon/issues/961)
 - [Add reading watchdog in gentankutil](https://github.com/jgyates/genmon/issues/1018)
 - [Keep alive for Silk broswers](https://github.com/jgyates/genmon/discussions/1059)
 - [Save Gauge Layout](https://github.com/jgyates/genmon/discussions/1078)
+- [Add on to monitor key values and alert if out of range](https://github.com/jgyates/genmon/discussions/1089)
