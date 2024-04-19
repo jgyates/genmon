@@ -1,6 +1,16 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.19.03 -2024-04-19
+- New add on program genmqttin.py. See wiki and add on page for details
+- Update to serialconfig.py to support file location changes with config.txt and cmdline.txt in latest Raspberry Pi firmware versions
+- Minor update to genmonmaint.sh to use Ubuntu serial device names if Non Raspberry pi OS detected 
+- Minor update for better error handling when getting CPU temp
+- Minor update for better error reporting with email failures
+- Corrected issue with login page errors in developer console
+- Update to mymail.py to support optional HTML format of outbound email
+- Update to genmopeka.py add on to ignore invalid readings from mopeka sensor.
+
 ## V1.19.02 -2024-02-14
 - Update for Kohler APM603 support
 - Added new commands for EvoLC
@@ -19,14 +29,6 @@ All notable changes to this project will be documented in this file.
 - Update to force Enhanced Exercise for known supported controllers
 - Minor update to genslack add on for error handling improvements
 - Update to outage log processing to prevent invalid fuel usage for outages lasting less than one second
-- New add on program genmqttin.py. See wiki and add on page for details
-- Update to serialconfig.py to support file location changes with config.txt and cmdline.txt in latest Raspberry Pi firmware versions
-- Minor update to genmonmaint.sh to use Ubunut serial device names if Non Raspberry pi OS detected 
-- Minor update for better error handling when getting CPU temp
-- Minor update for better error reporting with email failures
-- Corrected issue with login page errors in developer console
-- Update to mymail.py to support optional HTML format of outbound email
-- Update to genmopeka.py add on to ignore invalid readings from mopeka sensor.
 
 ## V1.19.01 -2023-12-06
 - Update to genmonmaint.sh to ask about serial connection type on install (thanks @skipfire)
