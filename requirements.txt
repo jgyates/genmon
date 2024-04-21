@@ -18,5 +18,5 @@ psutil
 spidev
 bleson
 fluids
-voipms
+voipms==0.2.5
 RPi.GPIO

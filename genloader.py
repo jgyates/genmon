@@ -186,7 +186,7 @@ class Loader(MySupport):
             ["paho.mqtt.client", "paho-mqtt", "1.6.1"],  # for genmqtt
             ["OpenSSL", "pyopenssl", None],  # SSL
             ["spidev", "spidev", None],  # spidev
-            ["voipms", "voipms", None]      # voipms for gensms_voip
+            ["voipms", "voipms", "0.2.5"]      # voipms for gensms_voip
             # ['fluids', 'fluids', None]              # fluids for genmopeka
         ]
         try:
