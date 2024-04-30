@@ -96,9 +96,10 @@ class GenTankData(MySupport):
             self.check_reading = self.config.ReadValue("check_reading", return_type=bool, default=False)
             self.reading_timeout = self.config.ReadValue("reading_timeout", return_type=int, default=50)
 
+            if self.MonitorAddress != None:
+                self.MonitorAddress = self.MonitorAddress.strip()
             if self.MonitorAddress == None or not len(self.MonitorAddress):
                 self.MonitorAddress = ProgramDefaults.LocalHost
-            self.MonitorAddress = self.MonitorAddress.strip()
 
         except Exception as e1:
             self.LogErrorLine("Error reading " + configfile + ": " + str(e1))

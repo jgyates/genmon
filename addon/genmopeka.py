@@ -107,9 +107,12 @@ class GenMopekaData(MySupport):
             self.min_reading_quality = self.config.ReadValue("min_reading_quality", return_type=int, default=0, NoLog=True)
             self.UseMopekaLib = self.config.ReadValue("use_old_lib", return_type=bool, default=False)
 
+            if self.MonitorAddress != None:
+                self.MonitorAddress = self.MonitorAddress.strip()
+
             if self.MonitorAddress == None or not len(self.MonitorAddress):
                 self.MonitorAddress = ProgramDefaults.LocalHost
-            self.MonitorAddress = self.MonitorAddress.strip()
+
 
         except Exception as e1:
             self.LogErrorLine("Error reading " + configfile + ": " + str(e1))
