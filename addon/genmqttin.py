@@ -107,6 +107,8 @@ class MyMQTT(MyCommon):
 
             if self.MonitorAddress == None or not len(self.MonitorAddress):
                 self.MonitorAddress = ProgramDefaults.LocalHost
+            
+            self.MonitorAddress = self.MonitorAddress.strip()
 
             self.MQTTPort = config.ReadValue("mqtt_port", return_type=int, default=1883)
             self.TopicRoot = config.ReadValue("root_topic")
