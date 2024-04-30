@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Update to mymail.py to support optional HTML format of outbound email
 - Update to genmopeka.py add on to ignore invalid readings from mopeka sensor.
 - Fixed issue with latest version of voipms. Install now uses version 0.2.5.
+- Added additional parameter checking on add on programs
 
 ## V1.19.02 -2024-02-14
 - Update for Kohler APM603 support
