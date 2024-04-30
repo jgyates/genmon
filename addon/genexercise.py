@@ -189,7 +189,7 @@ class GenExercise(MySupport):
                     DayStr = str(self.ExerciseDayOfWeek)
                 if self.ExerciseFrequency.lower() in ["weekly","biweekly","monthly"]:
                     self.LogError(
-                        "Execise: "
+                        "Exercise: "
                         + self.ExerciseType
                         + ", "
                         + self.ExerciseFrequency
@@ -206,7 +206,7 @@ class GenExercise(MySupport):
                     )
                 elif self.ExerciseFrequency.lower() in ["daily"]:
                     self.LogError(
-                        "Execise: "
+                        "Exercise: "
                         + self.ExerciseType
                         + ", "
                         + self.ExerciseFrequency
