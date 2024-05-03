@@ -41,6 +41,14 @@ except Exception as e1:
 
 import RPi.GPIO as GPIO
 
+dt_on_time = None
+dt_off_time = None
+
+# ----------  LogDebug ---------------------------------------------------------
+def LogDebug(input_str):
+    global debug
+    if debug:
+        log.error(input_str)
 
 # ----------  InitGPIO ----------------------------------------------------------
 def InitGPIO(pin, direction=GPIO.OUT, initial=GPIO.LOW):
@@ -49,8 +57,7 @@ def InitGPIO(pin, direction=GPIO.OUT, initial=GPIO.LOW):
         if pin != 0:
             GPIO.setup(pin, direction, initial=initial)
         else:
-            if debug:
-                log.error("Note: pin = 0 in InitGPIO")
+            LogDebug("Note: pin = 0 in InitGPIO")
     except Exception as e1:
         log.error("Error in InitGPIO on pin %d : %s" % (int(pin), str(e1)))
 
@@ -62,8 +69,7 @@ def SetGPIO(pin, state):
         if pin != 0:
             GPIO.output(pin, state)
         else:
-            if debug:
-                log.error("Error: pin = 0 in SetGPIO")
+            LogDebug("Error: pin = 0 in SetGPIO")
     except Exception as e1:
         log.error("Error in InitGPIO on SetGPIO %d : %s" % (int(pin), str(e1)))
 
@@ -82,8 +88,71 @@ def removeAlpha(inputStr):
                 answer += char
 
         return answer.strip()
+
+# ---------------- todayAt------------------------------------------------------
+def todayAt (hr, min=0, sec=0, micros=0):
+   now = datetime.datetime.now()
+   return now.replace(hour=hr, minute=min, second=sec, microsecond=micros)    
+
+# ---------------- ConvertToTimeObject------------------------------------------
+def ConvertToTimeObject(input_str):
+    try:
+        if input_str == None:
+            return None 
+        if not isTimeFormat(input_str):
+            return None
+        return datetime.datetime.strptime(input_str,'%H:%M')
+    except Exception as e1:
+        log.error("Error converting time to time object: " + str(input_str))
+        return None
+# ---------------- isTimeFormat-------------------------------------------------
+def isTimeFormat(input_str):
+
+        try:
+            time.strptime(input_str, '%H:%M')
+            return True
+        except ValueError:
+            LogDebug("Error in isTimeFormat:" + str(input_str))
+            return False
+
+# ---------------- PastTimeOrEqual----------------------------------------------
+def PastTimeOrEqual(target_time):
+    try:
+        current_time = datetime.datetime.now()
+        if current_time.hour == target_time.hour and current_time.minute >= target_time.minute:
+            return True
+        if current_time.hour > target_time.hour:
+            return True
+        return False
+    except Exception as e1:
+        log.error("Error in PastTimeOrEqual: " + str(e1))
+        return False
+# ---------------- IsTimeTriggered----------------------------------------------
+def IsTimeTriggered(on_state = False, off_state = False):
+
+    global dt_on_time
+    global dt_off_time
+    try:
+        if dt_off_time > dt_on_time:
+            if off_state == True and PastTimeOrEqual(dt_off_time):
+                return True
+            if on_state == True and PastTimeOrEqual(dt_on_time) and not PastTimeOrEqual(dt_off_time):
+                return True
+            if off_state == True and not PastTimeOrEqual(dt_on_time) and not PastTimeOrEqual(dt_off_time):
+                return True
+        elif dt_off_time < dt_on_time:
+            if on_state == True and  PastTimeOrEqual(dt_on_time):
+                return True 
+            if off_state == True and PastTimeOrEqual(dt_off_time) and not PastTimeOrEqual(dt_on_time):
+                return True
+            if on_state == True and not PastTimeOrEqual(dt_on_time) and not PastTimeOrEqual(dt_off_time):
+                return True
+        return False
+    except Exception as e1:
+        log.error("Error in IsTimeTriggered: " + str(e1))
+        return False
 # ------------------- Command-line interface for gengpio -----------------------
-if __name__ == "__main__":  # usage program.py [server_address]
+if __name__ == "__main__":  # usage program.py [server_address
 
     try:
         (
@@ -108,6 +177,8 @@ if __name__ == "__main__":  # usage program.py [server_address]
         )
         # setup GPIO using Board numbering
         GPIO.setmode(GPIO.BOARD)
+
+        external_pin_state = None
 
         console.info(GPIO.RPI_INFO)
 
@@ -146,6 +217,35 @@ if __name__ == "__main__":  # usage program.py [server_address]
         if ER_PITEMP != 0 and CPU_THRESHOLD_TEMP != 0:
             log.error("Monitoring PI CPU Temp")
 
+        PIN_EXTERNAL_SIGNAL = config.ReadValue("PIN_EXTERNAL_SIGNAL", return_type=int, default=0)
+        PIN_EXTERNAL_SIGNAL_ON_TIME = config.ReadValue("PIN_EXTERNAL_SIGNAL_ON_TIME",default=None)
+        PIN_EXTERNAL_SIGNAL_OFF_TIME = config.ReadValue("PIN_EXTERNAL_SIGNAL_OFF_TIME",default=None)
+        if PIN_EXTERNAL_SIGNAL != 0 :
+            log.error("Using External Pin for Signaling")
+            if PIN_EXTERNAL_SIGNAL_ON_TIME == None:
+                log.error("Error: Invalid setting for on time for external signal GPIO")
+                PIN_EXTERNAL_SIGNAL = 0
+            else:
+                PIN_EXTERNAL_SIGNAL_ON_TIME = PIN_EXTERNAL_SIGNAL_ON_TIME.strip()
+                dt_on_time = ConvertToTimeObject(PIN_EXTERNAL_SIGNAL_ON_TIME)
+                if dt_on_time == None:
+                    log.error("Error: invalid time format for signal enable time: " + str(PIN_EXTERNAL_SIGNAL_ON_TIME))
+                    PIN_EXTERNAL_SIGNAL = 0
+            if PIN_EXTERNAL_SIGNAL_OFF_TIME == None:
+                log.error("Error: Invalid setting for off time for external signal GPIO")
+                PIN_EXTERNAL_SIGNAL = 0
+            else:
+                PIN_EXTERNAL_SIGNAL_OFF_TIME = PIN_EXTERNAL_SIGNAL_OFF_TIME.strip()
+                dt_off_time = ConvertToTimeObject(PIN_EXTERNAL_SIGNAL_OFF_TIME)
+                if dt_off_time == None:
+                    log.error("Error: invalid time format for signal disable time: " + str(PIN_EXTERNAL_SIGNAL_OFF_TIME))
+                    PIN_EXTERNAL_SIGNAL = 0
+            if PIN_EXTERNAL_SIGNAL == 0:
+                log.error("Disabling external signal pin.")
+
+            LogDebug("External Pin On Time: " + PIN_EXTERNAL_SIGNAL_ON_TIME)
+            LogDebug("External Pin Off Time: " + PIN_EXTERNAL_SIGNAL_OFF_TIME)
+
         # Other Faults
         # ER_Controller = config.ReadValue('ER_Controller', return_type = int, default = 3) # Must chose from available GPIO
         # ER_Ignition = config.ReadValue('ER_Ignition', return_type = int, default = ) # Must chose from available GPIO
@@ -174,6 +274,8 @@ if __name__ == "__main__":  # usage program.py [server_address]
         InitGPIO(ER_GOVERNOR, GPIO.OUT, initial=GPIO.LOW)
         InitGPIO(ER_WARNING, GPIO.OUT, initial=GPIO.LOW)
         InitGPIO(ER_PITEMP, GPIO.OUT, initial=GPIO.LOW)
+
+        InitGPIO(PIN_EXTERNAL_SIGNAL, GPIO.OUT, initial=GPIO.LOW)
 
         # Other Faults
         # InitGPIO(ER_Controller, GPIO.OUT, initial=GPIO.LOW)
@@ -364,15 +466,28 @@ if __name__ == "__main__":  # usage program.py [server_address]
                     if CPUTempStr != LastCPUTemp:
                         LastCPUTemp = CPUTempStr
                         if float(CPUTempStr) < CPU_THRESHOLD_TEMP:
-                            if debug:
-                                log.error("CPU Temp in Range: " + CPUTempStr)
+                            LogDebug("CPU Temp in Range: " + CPUTempStr)
                             SetGPIO(ER_PITEMP, GPIO.LOW)
                         else:
-                            if debug:
-                                log.error("CPU Temp is HIGH: "  + CPUTempStr)
+                            LogDebug("CPU Temp is HIGH: "  + CPUTempStr)
                             SetGPIO(ER_PITEMP, GPIO.HIGH)
             except Exception as e1:
                 log.error("Error checking pi CPU temp status: " + str(e1))
+
+            try:
+                if PIN_EXTERNAL_SIGNAL != 0:
+                    if IsTimeTriggered(on_state = True):
+                        if external_pin_state == None or external_pin_state == False:
+                            LogDebug("External Pin State set to ON")
+                            external_pin_state = True
+                        SetGPIO(PIN_EXTERNAL_SIGNAL, GPIO.HIGH)
+                    if IsTimeTriggered(off_state = True):
+                        if external_pin_state == None or external_pin_state == True:
+                            LogDebug("External Pin State set to OFF")
+                            external_pin_state = False
+                        SetGPIO(PIN_EXTERNAL_SIGNAL, GPIO.LOW)
+            except Exception as e1:
+                log.error("Error in external pin signal: " + str(e1))
             time.sleep(3)
 
     except Exception as e1:
