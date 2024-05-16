@@ -433,8 +433,7 @@ def command(command):
 def ProcessCommand(command):
 
     try:
-        # LogError(request.url)
-        if command in [
+        command_list = [
             "status",
             "status_json",
             "outage",
@@ -473,7 +472,9 @@ def ProcessCommand(command):
             "fuel_log_clear",
             "notify_message",
             "set_button_command",
-        ]:
+        ]
+        # LogError(request.url)
+        if command in command_list:
             finalcommand = "generator: " + command
 
             try:

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -------------------------------------------------------------------------------
 #    FILE: gengpioledblink.py
-# PURPOSE: genmon.py support program to allow GPIO pints to drive
+# PURPOSE: genmon.py support program to allow GPIO pins to drive
 # status LEDs
 #
 #  AUTHOR: Jason G Yates
