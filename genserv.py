@@ -2143,7 +2143,7 @@ def GetAddOns():
                     "poll_frequency", return_type=float, default=60
                 ),
                 "float",
-                "The time in minutes that the sensors are polled. The default value is 60 seconds.",
+                "The time in minutes that the sensors are polled. The default value is 60 minutes.",
                 bounds="number",
                 display_name="Poll Interval",
             )
