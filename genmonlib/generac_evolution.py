@@ -3658,6 +3658,8 @@ class Evolution(GeneratorController):
             return "Running in Warning"
         elif self.BitIsEqual(RegVal, 0x000F0000, 0x00000000):
             return "Off - Ready"
+        elif self.BitIsEqual(RegVal, 0x000F0000, 0x000F0000):   # added for Evo 4.5L
+            return "Off - Remote Switch Off"
         else:
             self.FeedbackPipe.SendFeedback(
                 "Unknown EngineState",
@@ -3683,6 +3685,8 @@ class Evolution(GeneratorController):
             return "Auto"
         elif self.BitIsEqual(RegVal, 0x0FFFF, 0x07):
             return "Off"
+        elif self.BitIsEqual(RegVal, 0x000F0000, 0x000F0000):   # added for Evo 4.5L
+            return "Off via Remote Command"
         elif self.BitIsEqual(RegVal, 0x0FFFF, 0x06):
             return "Manual"
         elif self.BitIsEqual(RegVal, 0x0FFFF, 0x17):

@@ -60,6 +60,7 @@ class ModbusEvo2(ModbusProtocol):
         self.KeySent = False
         self.UnlockInterval = 3
         self.MaxExceptions = 2
+        self.UnlockBybass = False
         try:
 
             if self.config != None:
@@ -68,6 +69,9 @@ class ModbusEvo2(ModbusProtocol):
                 )
                 self.MaxExceptions = self.config.ReadValue(
                     "evo2_max_except", return_type=int, default=2
+                )
+                self.UnlockBybass = self.config.ReadValue(
+                    "evo2_bypass_encapsulation", return_type=bool, default=False
                 )
             # initilization vector
             self.iv = (
@@ -104,6 +108,9 @@ class ModbusEvo2(ModbusProtocol):
 
     # -------------ModbusEvo2::Encapsulating-------------------------------------
     def Encapsulating(self):
+
+        if self.UnlockBybass:
+            return False
         return self.ExcepAck > self.MaxExceptions
 
     # -------------ModbusEvo2::ProcessTransaction--------------------------------
