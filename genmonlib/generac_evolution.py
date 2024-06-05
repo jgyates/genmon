@@ -5198,6 +5198,9 @@ class Evolution(GeneratorController):
     # return true if Panel buttons are settable via the software
     def RemoteButtonsSupported(self):
 
+        if self.Evo45L:
+            return False
+        
         if self.EvolutionController and self.LiquidCooled:
             return True
         return False
