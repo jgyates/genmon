@@ -318,6 +318,7 @@ function archivelogs() {
     sudo cp "$log_path"gencthat.log ./genmon_logs
     sudo cp "$log_path"genmopeka.log ./genmon_logs
     sudo cp "$log_path"gencustomgpio.log ./genmon_logs
+    sudo cp "$log_path"gencallmebot.log ./genmon_logs
     sudo cp "$log_path"gensms_voip.log ./genmon_logs
     tar -zcvf genmon_logs.tar.gz genmon_logs/
     sudo rm -r genmon_logs
@@ -356,6 +357,7 @@ function backupgenmon() {
     sudo cp "$config_path"gencthat.conf ./genmon_backup
     sudo cp "$config_path"genmopeka.conf ./genmon_backup
     sudo cp "$config_path"gencustomgpio.conf ./genmon_backup
+    sudo cp "$config_path"gencallmebot.conf ./genmon_backup
     sudo cp "$config_path"gensms_voip.conf ./genmon_backup
     sudo cp "$config_path"outage.txt ./genmon_backup
     sudo cp "$config_path"kwlog.txt ./genmon_backup
