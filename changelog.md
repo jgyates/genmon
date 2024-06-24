@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Update to genmopeka.py add on to ignore invalid readings from mopeka sensor.
 - Fixed issue with latest version of voipms. Install now uses version 0.2.5.
 - Added additional parameter checking on add on programs
+- Minor update for PowerPact model (removed display of unsupported sensors: current and power)
 
 ## V1.19.02 -2024-02-14
 - Update for Kohler APM603 support

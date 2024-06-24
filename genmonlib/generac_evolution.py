@@ -463,7 +463,7 @@ class Evolution(GeneratorController):
                 )
                 self.TileList.append(Tile)
 
-                if self.EvolutionController and not self.LiquidCooled and not self.bDisablePowerLog:
+                if self.EvolutionController and not self.LiquidCooled and not self.bDisablePowerLog and not self.PowerPact:
                     NominalLegCurrent = ((float(self.NominalKW) * 1000) / 2 ) / (self.NominalLineVolts / 2)
                     # Setup gauges for EvoAC internal CTs
                     Tile = MyTile(
@@ -5214,7 +5214,9 @@ class Evolution(GeneratorController):
             return True
         if not self.EvolutionController:  # Not supported by Nexus at this time
             return False
-
+        if self.PowerPact:
+            return False
+        
         if (
             not len(self.NominalKW)
             or self.NominalKW.lower() == "unknown"
