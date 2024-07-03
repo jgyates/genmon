@@ -418,7 +418,7 @@ class Evolution(GeneratorController):
                 )
                 self.TileList.append(Tile)
 
-                if not self.PreNexus:
+                if not self.PreNexus and not self.PowerPact:
                     Tile = MyTile(
                         self.log,
                         title="Output Voltage",
@@ -4880,7 +4880,7 @@ class Evolution(GeneratorController):
                     )
                 }
             )
-            if not self.PreNexus:
+            if not self.PreNexus and not self.PowerPact:
                 Engine.append(
                     {
                         "Output Voltage": self.ValueOut(
