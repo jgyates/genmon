@@ -103,6 +103,10 @@ class GenExercise(MySupport):
             self.MonitorAddress = self.config.ReadValue(
                 "monitor_address", default=ProgramDefaults.LocalHost
             )
+            self.ExerciseNthDayOfMonth = self.config.ReadValue(
+                "exercise_nth_day_of_month", return_type=int, default=0
+            )
+
             self.LastExerciseTime = self.config.ReadValue("last_exercise", default=None)
             self.UseGeneratorTime = self.config.ReadValue("use_gen_time", return_type=bool, default=False)
 
@@ -144,6 +148,13 @@ class GenExercise(MySupport):
             if self.MonitorAddress == None or not len(self.MonitorAddress):
                 self.MonitorAddress = ProgramDefaults.LocalHost
 
+            if self.ExerciseNthDayOfMonth > 5 or self.ExerciseNthDayOfMonth < 1:
+                self.ExerciseNthDayOfMonth = 0
+            if self.ExerciseFrequency.lower() == "monthly":
+                if self.ExerciseNthDayOfMonth == 0:
+                    self.LogDebug("Monthly Day of Month option used")
+                else:
+                    self.LogDebug("Exercise monthly on the %d x %s" %(self.ExerciseNthDayOfMonth, self.ExerciseDayOfWeek))
         except Exception as e1:
             self.LogErrorLine(
                 "Error reading "
@@ -187,7 +198,10 @@ class GenExercise(MySupport):
 
             try:
                 if self.ExerciseFrequency.lower() == "monthly":
-                    DayStr = "Day " + str(self.ExerciseDayOfMonth)
+                    if self.ExerciseNthDayOfMonth == 0:
+                        DayStr = "Day " + str(self.ExerciseDayOfMonth)
+                    else:
+                        DayStr = str(self.ExerciseDayOfWeek) + " X " + str(self.ExerciseNthDayOfMonth)
                 else:
                     DayStr = str(self.ExerciseDayOfWeek)
                 if self.ExerciseFrequency.lower() in ["weekly","biweekly","monthly"]:
@@ -423,14 +437,39 @@ class GenExercise(MySupport):
             elif (
                 self.ExerciseFrequency.lower() == "monthly"
                 and TimeNow.day == self.ExerciseDayOfMonth
+                and self.ExerciseNthDayOfMonth == 0
             ):
+                return True
+            elif (self.ExerciseFrequency.lower() == "monthly" 
+                  and self.ExerciseNthDayOfMonth <= 5 and self.ExerciseNthDayOfMonth >= 1
+                  and self.IsNthWeekDay(TimeNow, self.ExerciseNthDayOfMonth, weekDays.index(self.ExerciseDayOfWeek.capitalize()))
+                  ):
                 return True
             else:
                 return False
         except Exception as e1:
             self.LogErrorLine("Error in TimeForExercise: " + str(e1))
         return False
+    # ---------- GenExercise::IsNthWeekDay--------------------------------------
+    def IsNthWeekDay(self, current_time, n, weekday):
+        try:
+            import calendar
+            # Note that weekday = 0 for monday, 6 for sunday
+            daysInMonth = calendar.monthrange(current_time.year, current_time.month)[1]
 
+            count = 0
+            for day in range(daysInMonth):
+                today = datetime.date(current_time.year, current_time.month, day+1)
+                today_weekday = today.weekday()
+                if today_weekday == weekday:
+                    count += 1
+                    if n == count:
+                        if current_time.day == (day+1):
+                            return True 
+        except Exception as e1:
+            self.LogErrorLine("Error in IsNthWeekDay: " + str(e1))
+
+        return False
     # ---------- GenExercise::GetGeneratorTime----------------------------------
     def GetGeneratorTime(self):
         try:
