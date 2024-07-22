@@ -2055,7 +2055,10 @@ function saveJournals(rowtype, rowcount){
              $('.progress-bar-fill').queue(function () {
                   $(this).css('width', '100%')
              });
-             setTimeout(function(){ vex.closeAll();gotoLogin();}, 2000); 
+             setTimeout(function(){ 
+              vex.closeAll();
+              gotoRoot();
+            }, 2000); 
            }
         }
     })
@@ -2924,6 +2927,12 @@ function httpsUsed() {
     return url.includes("https:")
 }
 
+//*****************************************************************************
+function gotoRoot() {
+
+  var url = window.location.href.split("/")[0].split("?")[0];
+  window.location.href = url;
+}
 //*****************************************************************************
 function gotoLogin() {
 

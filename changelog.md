@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Added additional parameter checking on add on programs
 - Minor update for PowerPact model (removed display of unsupported sensors: current and power)
 - Added option in genexercise.conf to start monthly exercise on xth week day of the month (see genexercise.conf in repository for more details)
+- Corrected issue with saving service journal with HTTPS enabled
 
 ## V1.19.02 -2024-02-14
 - Update for Kohler APM603 support
