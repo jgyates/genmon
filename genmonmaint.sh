@@ -90,7 +90,7 @@ function checkmanagedpackages() {
       echo "Managed system packages found, installing python virtual environment"
       sudo apt-get -yqq install python3-venv
       # create the virtual environment 
-      echo "Setting up virtual python environmnet for genmon"
+      echo "Setting up virtual python environment for genmon"
       $pythoncommand -m venv $genmondir/genenv
       pythoncommand="$genmondir/genenv/bin/python"
   fi
