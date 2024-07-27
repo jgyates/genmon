@@ -18,6 +18,8 @@ body:
           required: true
         - label: "If I have an issue with genmon not communicating with the controller, I have read and followed the [serial troubleshooting guide](https://github.com/jgyates/genmon/wiki/3.6---Serial-Troubleshooting)."
           required: true
+        - label: "I have included the generator make and model in my submission."
+          required: true
 
   - type: textarea
     attributes:
