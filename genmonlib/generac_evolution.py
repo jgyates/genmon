@@ -3364,6 +3364,7 @@ class Evolution(GeneratorController):
             0x18: "Wiring Error",  #  Validate on Nexus AC
             0x19: "Check Engine",       # Validate on Nexus AC
             0x1A: "Missing Cam Pulse",  #  Validate on Nexus Liquid Cooled
+            0x1B: "Missing Crank Pulse",  #  Validate on Nexus Liquid Cooled
             0x1C: "Throttle Failure",  #  Validate on Nexus LC,
             0x1D: "Over Voltage",  #  Validate on Nexus Air Cooled
             0x1E: "Under Voltage",  #  Validate on EvoAC
