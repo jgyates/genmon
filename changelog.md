@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - Added option in genexercise.conf to start monthly exercise on xth week day of the month (see genexercise.conf in repository for more details)
 - Corrected issue with saving service journal with HTTPS enabled
 - Added new alarm code for Nexus
+- Change to pysnmp library v6.x changed so locking to version 5.1.0
 
 ## V1.19.02 -2024-02-14
 - Update for Kohler APM603 support
