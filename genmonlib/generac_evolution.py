@@ -1676,10 +1676,18 @@ class Evolution(GeneratorController):
     # ----------  Evolution:SetGeneratorExerciseTime-----------------------------
     def SetGeneratorExerciseTime(self, CmdString):
 
+        if not self.bUseLegacyWrite and self.EvolutionController and not self.Evolution2:
+            # set legacy write for Evo1 with Firmware lower than V1.10
+            FWVersion = self.GetFirmwareVersion()
+            self.LogDebug("Check Legacy Write: %s" % FWVersion)
+            if len(FWVersion) and (self.VersionTuple(FWVersion) < (1, 10)):
+                self.LogDebug("Firmware version %s, setting legacy write" % FWVersion)
+                self.bUseLegacyWrite = True
+
         # use older style write to set exercise time if this flag is set
         if self.bUseLegacyWrite:
             return self.AltSetGeneratorExerciseTime(CmdString)
-
+        
         # extract time of day and day of week from command string
         # format is day:hour:min  Monday:15:00
         msgbody = "Invalid command syntax for command setexercise"
