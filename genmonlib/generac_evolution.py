@@ -1064,6 +1064,7 @@ class Evolution(GeneratorController):
                 return False, ReturnModel, ReturnKW
 
             try:
+                myresponse1 = ""
                 if sys.version_info[0] < 3:
                     data1 = r1.read()  # Python 2.x
                 else:
@@ -1086,7 +1087,7 @@ class Evolution(GeneratorController):
 
             except Exception as e1:
                 self.LogErrorLine("Error in LookUpSNInfo (parse request 1): " + str(e1))
-                self.LogError(str(myresponse1))
+                self.LogError("Response: " + str(myresponse1))
                 conn.close()
                 return False, ReturnModel, ReturnKW
 
