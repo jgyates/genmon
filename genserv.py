@@ -2968,10 +2968,22 @@ def ReadAdvancedSettingsFromFile():
             GENMON_SECTION,
             "kwlogmax",
         ]
+        ConfigSettings["max_powerlog_entries"] = [
+            "int",
+            "Maximum Entries in Power Log",
+            71,
+            "4000",
+            "digits",
+            0,
+            GENMON_CONFIG,
+            GENMON_SECTION,
+            "min_powerlog_entries",
+        ]
+        
         ConfigSettings["currentdivider"] = [
             "float",
             "Current Divider",
-            71,
+            72,
             "",
             "",
             "number",
@@ -2982,7 +2994,7 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["currentoffset"] = [
             "float",
             "Current Offset",
-            72,
+            73,
             "",
             "",
             "number",
@@ -2993,7 +3005,7 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["legacy_power"] = [
             "boolean",
             "Use Legacy Power Calculation",
-            73,
+            74,
             False,
             "",
             0,

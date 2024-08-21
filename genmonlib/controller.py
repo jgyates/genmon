@@ -84,6 +84,7 @@ class GeneratorController(MySupport):
         self.MinimumOutageDuration = 0
         self.PowerLogMaxSize = 15.0  # 15 MB max size
         self.PowerLog = os.path.join(ConfigFilePath, "kwlog.txt")
+        self.MaxPowerLogEntries = 4000
         self.FuelLog = os.path.join(ConfigFilePath, "fuellog.txt")
         self.FuelLock = threading.RLock()
         self.PowerLogList = []
@@ -214,6 +215,9 @@ class GeneratorController(MySupport):
                 )
                 self.PowerLogMaxSize = self.config.ReadValue(
                     "kwlogmax", return_type=float, default=15.0
+                )
+                self.MaxPowerLogEntries = self.config.ReadValue(
+                    "max_powerlog_entries", return_type=int, default=4000
                 )
 
                 if self.config.HasOption("nominalfrequency"):
@@ -1661,6 +1665,7 @@ class GeneratorController(MySupport):
     # ------------ GeneratorController::ReducePowerSamples-----------------------
     def ReducePowerSamples(self, PowerList, MaxSize):
 
+
         if MaxSize == 0:
             self.LogError("RecducePowerSamples: Error: Max size is zero")
             return []
@@ -1670,18 +1675,9 @@ class GeneratorController(MySupport):
             return PowerList
 
         try:
-            Sample = int(len(PowerList) / MaxSize)
-            Remain = int(len(PowerList) % MaxSize)
-
-            NewList = []
-            Count = 0
-            for Count in range(len(PowerList)):
-                TimeStamp, KWValue = PowerList[Count]
-                if float(KWValue) == 0:
-                    NewList.append([TimeStamp, KWValue])
-                elif Count % Sample == 0:
-                    NewList.append([TimeStamp, KWValue])
-
+            # reduce to only the last 31 days
+            NewList = self.GetPowerLogForMinutes(60 * 24 * 31, InputList=PowerList)
+            
             # if we have too many entries due to a remainder or not removing zero samples, then delete some
             if len(NewList) > MaxSize:
                 return self.RemovePowerSamples(NewList, MaxSize)
@@ -1694,25 +1690,11 @@ class GeneratorController(MySupport):
     # ------------ GeneratorController::RemovePowerSamples-----------------------
     def RemovePowerSamples(self, List, MaxSize):
 
-        import random
-
         try:
             NewList = List[:]
             if len(NewList) <= MaxSize:
                 self.LogError("RemovePowerSamples: Error: Can't remove ")
                 return NewList
-
-            Extra = len(NewList) - MaxSize
-            for Count in range(Extra):
-                # assume first and last sampels are zero samples so don't select thoes
-                repeat = True
-                removeAttempt = 0  # only try this so many times
-                while repeat and removeAttempt < MaxSize:
-                    removeAttempt += 1
-                    position = random.randint(1, len(NewList) - 2)
-                    if float(NewList[position][1]) != 0:
-                        Entry = NewList.pop(position)
-                        repeat = False
 
             # This will just remove all samples but the first MaxSize. This will only do anything if the above
             # code failes to find valid samples to remove (i.e. all samples are zero)
@@ -1724,10 +1706,13 @@ class GeneratorController(MySupport):
             return NewList
 
     # ------------ GeneratorController::GetPowerLogForMinutes--------------------
-    def GetPowerLogForMinutes(self, Minutes=0):
+    def GetPowerLogForMinutes(self, Minutes=0, InputList = None):
         try:
             ReturnList = []
-            PowerList = self.ReadPowerLogFromFile()
+            if InputList == None:
+                PowerList = self.ReadPowerLogFromFile()
+            else:
+                PowerList = InputList
             if not Minutes:
                 return PowerList
             CurrentTime = datetime.datetime.now()
@@ -1735,9 +1720,7 @@ class GeneratorController(MySupport):
             for Time, Power in reversed(PowerList):
                 try:
                     struct_time = time.strptime(Time, "%x %X")
-                    LogEntryTime = datetime.datetime.fromtimestamp(
-                        time.mktime(struct_time)
-                    )
+                    LogEntryTime = datetime.datetime.fromtimestamp(time.mktime(struct_time))
                 except Exception as e1:
                     self.LogErrorLine("Error in GetPowerLogForMinutes: " + str(e1))
                     continue
@@ -1786,8 +1769,8 @@ class GeneratorController(MySupport):
                     "Error in  ReadPowerLogFromFile (parse file): " + str(e1)
                 )
 
-            if len(PowerList) > 500 and not NoReduce:
-                PowerList = self.ReducePowerSamples(PowerList, 500)
+            if len(PowerList) > self.MaxPowerLogEntries and not NoReduce:
+                PowerList = self.ReducePowerSamples(PowerList, self.MaxPowerLogEntries)
             if not len(self.PowerLogList):
                 self.PowerLogList = PowerList
         return PowerList
@@ -1859,10 +1842,10 @@ class GeneratorController(MySupport):
 
             PowerList = self.ReadPowerLogFromFile(Minutes=Minutes)
 
-            # Shorten list to 500 if specific duration requested
-            # if not KWHours and len(PowerList) > 500 and Minutes and not NoReduce:
-            if len(PowerList) > 500 and Minutes and not NoReduce:
-                PowerList = self.ReducePowerSamples(PowerList, 500)
+            # Shorten list to self.MaxPowerLogEntries if specific duration requested
+            # if not KWHours and len(PowerList) > self.MaxPowerLogEntries and Minutes and not NoReduce:
+            if len(PowerList) > self.MaxPowerLogEntries and Minutes and not NoReduce:
+                PowerList = self.ReducePowerSamples(PowerList, self.MaxPowerLogEntries)
             if KWHours:
                 AvgPower, TotalSeconds = self.GetAveragePower(PowerList)
                 return "%.2f" % ((TotalSeconds / 3600) * AvgPower)

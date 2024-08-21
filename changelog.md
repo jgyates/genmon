@@ -1,6 +1,12 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.19.04 -2024-08-21
+- Corrected issue with saving service journal with HTTPS enabled
+- Added new alarm code for Nexus
+- Change to pysnmp library v6.x changed so locking to version 5.1.0
+- Updated method to reduce the power log
+
 ## V1.19.03 -2024-04-19
 - New add on program genmqttin.py. See wiki and add on page for details
 - Update to serialconfig.py to support file location changes with config.txt and cmdline.txt in latest Raspberry Pi firmware versions
@@ -14,9 +20,6 @@ All notable changes to this project will be documented in this file.
 - Added additional parameter checking on add on programs
 - Minor update for PowerPact model (removed display of unsupported sensors: current and power)
 - Added option in genexercise.conf to start monthly exercise on xth week day of the month (see genexercise.conf in repository for more details)
-- Corrected issue with saving service journal with HTTPS enabled
-- Added new alarm code for Nexus
-- Change to pysnmp library v6.x changed so locking to version 5.1.0
 
 ## V1.19.02 -2024-02-14
 - Update for Kohler APM603 support

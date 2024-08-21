@@ -51,6 +51,7 @@ https_port = Port to override the secure web server port (https). The default va
 favicon = favicon for website. This is an optional parameter and default is "favicon.ico". This may not work in older browsers
 usemfa = Use Multi-Factor Authentication. You must use a Multi-Factor Authenticator app like Google Authenticator or Authy to use this feature. If enabled, MFA will apply to both normal and limited rights login.
 kwlogmax = Override the maximum size of the kW log. The default is 15MB.
+max_powerlog_entries = The maximum number of entries in the working power log. Note the log file will not be truncated until the maximum file size is reached. In most cases the default is the preferred value.
 kwlog = Full path to override the default kW log. If this option is present but empty the kW log will be disabled.
 enable_fuel_log = If enabled, the fuel level will be logged to a file periodically if the fuel level changes. The default filename is /etc/genmon/fuellog.txt
 fuel_log_freq = The frequency in minutes to log the fuel level to a file.
