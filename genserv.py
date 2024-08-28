@@ -1305,6 +1305,15 @@ def GetAddOns():
             bounds="",
             display_name="Remove Spaces in Topic Path",
         )
+        AddOnCfg["genmqtt"]["parameters"]["retain"] = CreateAddOnParam(
+            ConfigFiles[GENMQTT_CONFIG].ReadValue(
+                "retain", return_type=bool, default=False
+            ),
+            "boolean",
+            "If enabled, published messages will be retained by the MQTT broker server after a the Add On disconnects from the server.",
+            bounds="",
+            display_name="Retain Data",
+        )
         AddOnCfg["genmqtt"]["parameters"]["cert_authority_path"] = CreateAddOnParam(
             ConfigFiles[GENMQTT_CONFIG].ReadValue(
                 "cert_authority_path", return_type=str, default=""

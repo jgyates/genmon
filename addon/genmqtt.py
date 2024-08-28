@@ -384,6 +384,7 @@ class MyMQTT(MyCommon):
         self.UseNumeric = False
         self.StringListJson = False
         self.RemoveSpaces = False
+        self.Retain = False
         self.PollTime = 2
         self.FlushInterval = float(
             "inf"
@@ -435,6 +436,10 @@ class MyMQTT(MyCommon):
                 "remove_spaces", return_type=bool, default=False
             )
             self.TopicRoot = config.ReadValue("root_topic")
+
+            self.Retain = config.ReadValue(
+                "retain", return_type=bool, default=False
+            )
 
             if self.TopicRoot != None:
                 self.TopicRoot = self.TopicRoot.strip()
@@ -619,7 +624,7 @@ class MyMQTT(MyCommon):
                     + str(type(value))
                 )
 
-            self.MQTTclient.publish(FullPath, value)
+            self.MQTTclient.publish(FullPath, value, retain=self.Retain)
         except Exception as e1:
             self.LogErrorLine("Error in MyMQTT:PublishCallback: " + str(e1))
 

@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - Change to pysnmp library v6.x changed so locking to version 5.1.0
 - Updated method to reduce the power log
 - Minor update to force legacy writes for exercise cycles with older firmware on Evolution 1.0
+- Added option to genmqtt add on to optionally retain data at the broker
 
 ## V1.19.03 -2024-04-19
 - New add on program genmqttin.py. See wiki and add on page for details
