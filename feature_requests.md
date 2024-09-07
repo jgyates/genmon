@@ -27,3 +27,4 @@
 - [Keep alive for Silk broswers](https://github.com/jgyates/genmon/discussions/1059)
 - [Save Gauge Layout](https://github.com/jgyates/genmon/discussions/1078)
 - [Add on to monitor key values and alert if out of range](https://github.com/jgyates/genmon/discussions/1089)
+- [Manual Start and Transfer but stop after x minutes](https://github.com/jgyates/genmon/discussions/1174) @jkh62
