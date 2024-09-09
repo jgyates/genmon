@@ -593,38 +593,125 @@
       "text": "Healthy"
     },
     {
-      "reg": "001d",
-      "reg_type": "input",
-      "mask": "ffff",
-      "multiplier": 0.1,
-      "type": "float",
-      "title": "Load Total",
-      "sensor": "current",
-      "units": "kW",
-      "nominal": 20
-    },
-    {
-      "reg": "0039",
-      "reg_type": "input",
-      "mask": "ffff",
-      "multiplier": 1,
-      "type": "int",
-      "title": "Engine Speed",
-      "units": null,
-      "sensor": "rpm",
-      "nominal": 3600
-    },
-    {
       "reg": "0038",
       "reg_type": "input",
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
       "title": "Battery",
-      "units": "V",
-      "sensor": "batteryvolts",
-      "nominal": 12,
-      "maximum": 24
+      "units": "V"
+    },
+    {"title": "Engine",
+        "comment": "The 'container' modifier will allow the values to be displayed with some hierarchy", 
+        "container": true,
+        "value" : [
+          {
+            "reg": "001d",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Load Total (kW)",
+            "units": "kW"
+          },
+          {
+            "reg": "0022",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Load Total (kVA)",
+            "units": "kVA"
+          },
+          {
+            "reg": "0004",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Generator L1-L2 Volts",
+            "units": "V"
+          },
+          {
+            "reg": "0007",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Generator L1 Frequency",
+            "units": "Hz"
+          },
+          {
+            "reg": "0008",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Generator L2 Frequency",
+            "units": "Hz"
+          },
+          {
+            "reg": "0017",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Generator L1 Current",
+            "units": "A"
+          },
+          {
+            "reg": "0018",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Generator L2 Current",
+            "units": "A"
+          },
+          {
+            "reg": "0039",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 1,
+            "type": "int",
+            "title": "Engine Speed",
+            "units": null,
+            "nominal": 3600
+          }
+        ]
+    },
+    {"title": "Line",
+        "comment": "The 'container' modifier will allow the values to be displayed with some hierarchy", 
+        "container": true,
+        "value" : [
+          {
+            "reg": "0011",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Utility L1-L2 Volts",
+            "units": "V"
+          },
+          {
+            "reg": "0014",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Utility L1 Frequency",
+            "units": "Hz"
+          },
+          {
+            "reg": "0015",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Utility L2 Frequency",
+            "units": "Hz"
+          }
+        ]
     }
   ],
   "maintenance": [
@@ -876,7 +963,7 @@
       "multiplier": 0.1,
       "type": "float",
       "title": "Load Total",
-      "sensor": "current",
+      "sensor": "power",
       "units": "kW",
       "nominal": 20
     },
@@ -887,7 +974,7 @@
       "multiplier": 0.1,
       "type": "float",
       "title": "Load Total",
-      "sensor": "current",
+      "sensor": "power",
       "units": "kVA",
       "nominal": 41
     },

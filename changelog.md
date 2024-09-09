@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Updated method to reduce the power log
 - Minor update to force legacy writes for exercise cycles with older firmware on Evolution 1.0
 - Added option to genmqtt add on to optionally retain data at the broker
+- Updated Briggs support to include text output for better MQTT support
 
 ## V1.19.03 -2024-04-19
 - New add on program genmqttin.py. See wiki and add on page for details
