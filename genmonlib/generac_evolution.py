@@ -115,6 +115,7 @@ class Evolution(GeneratorController):
         self.AdditionalRunHours = None
         self.NominalLineVolts = 240
         self.CheckFirmwareVerionsTime = datetime.datetime.now()  # used for com metrics
+        self.FuelDataFromFile = None
 
         self.DaysOfWeek = {
             0: "Sunday",  # decode for register values with day of week
@@ -674,7 +675,9 @@ class Evolution(GeneratorController):
                     if self.FuelType == "Gasoline":
                         return None
                     if self.EvolutionController:
-                        return self.GetFuelParamsFromFile()
+                        if self.FuelDataFromFile == None:
+                            self.FuelDataFromFile = self.GetFuelParamsFromFile()
+                        return self.FuelDataFromFile
                     return None
 
                 return [
@@ -732,6 +735,7 @@ class Evolution(GeneratorController):
                         ReturnPoints.append(float(Item[8]))  # 100%
                         ReturnPoints.append(float(Item[9]))  # 100% Rate
                         ReturnPoints.append(Item[10])  # Units
+                        self.LogDebug("Fuel Data Points: " + str(ReturnPoints))
                         return ReturnPoints
                     except Exception as e1:
                         self.LogErrorLine(
@@ -756,6 +760,7 @@ class Evolution(GeneratorController):
                         ReturnPoints.append(float(Item[6]))  # 100%
                         ReturnPoints.append(float(Item[7]))  # 100% Rate
                         ReturnPoints.append(Item[8])  # Units
+                        self.LogDebug("Fuel Data Points: " + str(ReturnPoints))
                         return ReturnPoints
                     except Exception as e1:
                         self.LogErrorLine(

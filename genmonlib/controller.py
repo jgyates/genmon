@@ -1852,6 +1852,8 @@ class GeneratorController(MySupport):
             if FuelConsumption:
                 AvgPower, TotalSeconds = self.GetAveragePower(PowerList)
                 Consumption, Label = self.GetFuelConsumption(AvgPower, TotalSeconds)
+                if Consumption < 0:
+                    self.LogDebug("WARNING: Fuel Consumption is less than zero in GetPowerHistory: %d" % Consumption)
                 if Consumption == None:
                     return "Unknown"
                 return "%.2f %s" % (Consumption, Label)
@@ -2748,7 +2750,15 @@ class GeneratorController(MySupport):
             if self.NominalKW == None or float(self.NominalKW) == 0.0:
                 return None, ""
 
+            if kw < 0:
+                self.LogDebug("WARNING: Load is %d in GetFuelConsumption" % kw)
+                kw = 0
+            if seconds < 0:
+                self.LogDebug("WARNING: seconds is %d in GetFuelConsumption" % seconds)
+                seconds = 0
+
             Load = kw / float(self.NominalKW)
+            # X axis is percent utilization, y axis is fuel consumption
             X1 = ConsumptionData[0]
             Y1 = ConsumptionData[1]
             X2 = ConsumptionData[2]
@@ -2763,9 +2773,8 @@ class GeneratorController(MySupport):
                     return 0.0, "L"
                 else:
                     0.0, Units
-            Slope = (Y2 - Y1) / (
-                X2 - X1
-            )  # Slope of fuel consumption plot (it is very close to if not linear in most cases)
+            # Slope of fuel consumption plot (it is very close to if not linear in most cases)
+            Slope = (Y2 - Y1) / (X2 - X1)  
             # now use point slope equation to find consumption for one hour
             # percent load is X2, Consumption is Y2, 100% (1.0) is X1 and Rate 100% is Y1
             # Y1-Y2= SLOPE(X1-X2)
@@ -2775,6 +2784,10 @@ class GeneratorController(MySupport):
 
             # now compensate for time
             Consumption = (seconds / 3600) * Consumption
+
+            if Consumption < 0:
+                self.LogDebug("WARNING: Fuel Consumption is " + str(Consumption)  + " " + Units)
+                Consumption = 0
 
             if self.UseMetric:
                 if self.FuelType == "Natural Gas":
