@@ -896,7 +896,7 @@
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
-      "title": "Generator L1-L2",
+      "title": "L1-L2 Volts",
       "units": "V",
       "sensor": "linevolts",
       "nominal": 240
@@ -907,7 +907,7 @@
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
-      "title": "Generator L1",
+      "title": "L1 Frequency",
       "units": "Hz",
       "sensor": "frequency",
       "nominal": 60
@@ -918,7 +918,7 @@
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
-      "title": "Generator L2",
+      "title": "L2 Frequency",
       "units": "Hz",
       "sensor": "frequency",
       "nominal": 60
@@ -940,7 +940,7 @@
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
-      "title": "Generator L1",
+      "title": "L1 Current",
       "sensor": "current",
       "units": "A",
       "nominal": 100
@@ -951,7 +951,7 @@
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
-      "title": "Generator L2",
+      "title": "L2 Current",
       "sensor": "current",
       "units": "A",
       "nominal": 100
