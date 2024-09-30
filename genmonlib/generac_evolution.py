@@ -3372,9 +3372,12 @@ class Evolution(GeneratorController):
             0x0D: "RPM Sense Loss",  #  Validate on Evolution, occurred when forcing RPM sense loss from manual start
             0x0F: "Change Oil & Filter",  #  Validate on Nexus AC
             0x10: "Inspect Air Filter",  #  Validate on Nexus LC
-            0x12: "Check for Service",  #  Validate on Nexus AC (Spark Plugs service due?)
+            0x11: "Change Air Filter",
+            0x12: "Check Spark Plugs",  #  Validate on Nexus AC (Spark Plugs service due?)
+            0x13: "Change Spark Plugs",
             0x14: "Check Battery",  #  Validate on Nexus, occurred when Check Battery Alarm
             0x15: "Underspeed",  #  Validate on Evo AC 2
+            0x16: "Change Coolant",
             0x18: "Wiring Error",  #  Validate on Nexus AC
             0x19: "Check Engine",       # Validate on Nexus AC
             0x1A: "Missing Cam Pulse",  #  Validate on Nexus Liquid Cooled
@@ -3392,6 +3395,7 @@ class Evolution(GeneratorController):
             0x29: "Battery Problem",  #  Validate on EvoLC
             0x2A: "Charger Warning",  #  Validate on EvoAC 2
             0x2B: "Charger Missing AC",  #  Validate on EvoAC, occurred when Charger Missing AC Warning
+            0x2D: "Overload Cooldown",  # Warning
             0x30: "Ruptured Tank",  #  Validate on Evolution, occurred when forced ruptured tank
             0x31: "Low Fuel Level",  #  Validate on Evolution, occurred when Low Fuel Level
             0x32: "Low Fuel Pressure",  #  Validate on EvoLC
