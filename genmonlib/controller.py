@@ -95,7 +95,6 @@ class GeneratorController(MySupport):
         self.RunHoursMonth = None
         self.RunHoursYear = None
         self.FuelTotal = None
-        self.LastHouseKeepingTime = None
         self.TileList = []  # Tile list for GUI
         self.TankData = None
         self.FuelLevelOK = None  # used in mynotify.py
@@ -311,6 +310,9 @@ class GeneratorController(MySupport):
 
         # start thread for kw log
         self.Threads["PowerMeter"] = MyThread(self.PowerMeter, Name="PowerMeter")
+
+        self.Threads["MaintenanceHouseKeepingThread"] = MyThread(
+            self.MaintenanceHouseKeepingThread, Name="MaintenanceHouseKeepingThread")
 
         if self.UseFuelLog:
             self.Threads["FuelLogger"] = MyThread(self.FuelLogger, Name="FuelLogger")
@@ -2210,6 +2212,36 @@ class GeneratorController(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in SetupCommonTiles: " + str(e1))
 
+    # ----------  GeneratorController::MaintenanceHouseKeepingThread------------
+    def MaintenanceHouseKeepingThread(self):
+
+        try:
+            if self.WaitForExit("MaintenanceHouseKeepingThread", 10):  #
+                return
+            
+            while True:
+                try:
+
+                    self.KWHoursMonth = self.GetPowerHistory(
+                        "power_log_json=43200,kw"
+                    )  # 43200 minutes in a month
+                    self.FuelMonth = self.GetPowerHistory("power_log_json=43200,fuel")
+                    self.FuelTotal = self.GetPowerHistory("power_log_json=0,fuel")
+                    self.RunHoursMonth = self.GetPowerHistory(
+                        "power_log_json=43200,time"
+                    )
+                    self.RunHoursYear = self.GetPowerHistory(
+                        "power_log_json=525600,time"
+                    )
+                    # 525600 minutes in a year
+                    if self.WaitForExit("MaintenanceHouseKeepingThread", 60):  #
+                        return
+                except Exception as e1:
+                     self.LogErrorLine("Error in MaintenanceHouseKeepingThread: " + str(e1))
+    
+        except Exception as e1:
+            self.LogErrorLine("Error in MaintenanceHouseKeepingThread (2): " + str(e1))
+
     # ----------  GeneratorController::DisplayMaintenanceCommon------------------
     def DisplayMaintenanceCommon(self, Maintenance, JSONNum=False):
 
@@ -2332,33 +2364,7 @@ class GeneratorController(MySupport):
                         }
                     )
 
-            # Only update power log related info once a min for performance reasons
-            if (
-                self.LastHouseKeepingTime == None
-                or self.GetDeltaTimeMinutes(
-                    datetime.datetime.now() - self.LastHouseKeepingTime
-                )
-                >= 1
-            ):
-                UpdateNow = True
-                self.LastHouseKeepingTime = datetime.datetime.now()
-            else:
-                UpdateNow = False
             if self.PowerMeterIsSupported() and self.FuelConsumptionSupported():
-                if UpdateNow:
-                    self.KWHoursMonth = self.GetPowerHistory(
-                        "power_log_json=43200,kw"
-                    )  # 43200 minutes in a month
-                    self.FuelMonth = self.GetPowerHistory("power_log_json=43200,fuel")
-                    self.FuelTotal = self.GetPowerHistory("power_log_json=0,fuel")
-                    self.RunHoursMonth = self.GetPowerHistory(
-                        "power_log_json=43200,time"
-                    )
-                    self.RunHoursYear = self.GetPowerHistory(
-                        "power_log_json=525600,time"
-                    )
-                    # 525600 minutes in a year
-
                 if self.KWHoursMonth != None:
                     Maintenance["Maintenance"].append(
                         {
@@ -3546,6 +3552,10 @@ class GeneratorController(MySupport):
             except:
                 pass
 
+            try:
+                self.KillThread("MaintenanceHouseKeepingThread")
+            except:
+                pass
             try:
                 self.KillThread("PowerMeter")
             except:

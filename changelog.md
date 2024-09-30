@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Corrected on bug in fuel calculation for 32kW Evolution based Propane Liquid Cooled units
 - Corrected bug in Briggs and Stratton controller definition. Changed name of some gauges to better describe the value.
 - Added new alarm code for Nexus Evolution
+- Minor mod to maintenance page update to allow for faster loading
 
 ## V1.19.03 -2024-04-19
 - New add on program genmqttin.py. See wiki and add on page for details
