@@ -1854,10 +1854,10 @@ class GeneratorController(MySupport):
             if FuelConsumption:
                 AvgPower, TotalSeconds = self.GetAveragePower(PowerList)
                 Consumption, Label = self.GetFuelConsumption(AvgPower, TotalSeconds)
-                if Consumption < 0:
-                    self.LogDebug("WARNING: Fuel Consumption is less than zero in GetPowerHistory: %d" % Consumption)
                 if Consumption == None:
                     return "Unknown"
+                if Consumption < 0:
+                    self.LogDebug("WARNING: Fuel Consumption is less than zero in GetPowerHistory: %d" % Consumption)
                 return "%.2f %s" % (Consumption, Label)
             if RunHours:
                 AvgPower, TotalSeconds = self.GetAveragePower(PowerList)
@@ -2216,6 +2216,7 @@ class GeneratorController(MySupport):
     def MaintenanceHouseKeepingThread(self):
 
         try:
+            time.sleep(0.5)
             if self.WaitForExit("MaintenanceHouseKeepingThread", 10):  #
                 return
             

@@ -4641,7 +4641,7 @@ class Evolution(GeneratorController):
             else:
                 return Date.strftime("%m/%d/%Y ")
         except Exception as e1:
-            self.LogErrorLine("Error in GetServiceDueDate: " + str(e1))
+            self.LogErrorLine("Error in GetServiceDueDate: " + serviceType + " : " + str(e1))
             return ""
 
     # ----------  Controller:GetHardwareVersion  ---------------------------------
