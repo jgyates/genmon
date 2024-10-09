@@ -104,6 +104,16 @@ function cleanpython() {
   echo "Done."
 }
 #-------------------------------------------------------------------------------
+function checkpython() {
+
+  if command -v $pythoncommand >/dev/null 2>&1; then
+    echo "Python is installed."
+  else
+    echo "Pyhton is not present on this system. Genmon requires python." >&2 && exit 1
+  fi
+
+}
+#-------------------------------------------------------------------------------
 function setuppython3() {
 
   if [ $# -eq 0 ]; then
@@ -479,6 +489,7 @@ if [ "$update_os" = true ] ; then
 fi
 
 check_os
+checkpython
 checkmanagedpackages
 
 if [ "$install_opt" = true ] ; then
