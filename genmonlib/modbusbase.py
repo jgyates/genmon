@@ -108,8 +108,8 @@ class ModbusBase(MySupport):
     MBUS_EXCEP_BUSY = 0x06  # Slave Device Busy
     MBUS_EXCEP_NACK = 0x07  # Negative Acknowledge
     MBUS_EXCEP_MEM_PE = 0x08  # Memory Parity Error
-    MBUS_EXCEP_GATEWAY = 0x10  # Gateway Path Unavailable
-    MBUS_EXCEP_GATEWAY_TG = 0x11  # Gateway Target Device Failed to Respond
+    MBUS_EXCEP_GATEWAY = 0x0a  # Gateway Path Unavailable
+    MBUS_EXCEP_GATEWAY_TG = 0x0b  # Gateway Target Device Failed to Respond
 
     # -------------------------__init__------------------------------------------
     def __init__(
