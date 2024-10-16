@@ -4,7 +4,7 @@ pyserial
 crcmod
 pyowm==2.10.0
 pytz
-pyopenssl
+pyopenssl==24.1.0
 twilio
 chump
 paho-mqtt==1.6.1
