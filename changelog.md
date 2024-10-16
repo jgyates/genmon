@@ -15,6 +15,8 @@ All notable changes to this project will be documented in this file.
 - Minor mod to maintenance page update to allow for faster loading
 - Corrected one issue with power log error check
 - added check for python being installed in the install script
+- Corrected one error in definition of modbus exception code
+- Updated install to use version of pyopenssl from earlier in 2024 to avoid and error introduced with the new version
 
 ## V1.19.03 -2024-04-19
 - New add on program genmqttin.py. See wiki and add on page for details
@@ -29,8 +31,6 @@ All notable changes to this project will be documented in this file.
 - Added additional parameter checking on add on programs
 - Minor update for PowerPact model (removed display of unsupported sensors: current and power)
 - Added option in genexercise.conf to start monthly exercise on xth week day of the month (see genexercise.conf in repository for more details)
-- Corrected one error in definition of modbus exception code
-- Updated install to use version of pyopenssl from earlier in 2024 to avoid and error introduced with the new version
 
 ## V1.19.02 -2024-02-14
 - Update for Kohler APM603 support
