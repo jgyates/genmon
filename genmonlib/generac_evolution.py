@@ -3364,6 +3364,7 @@ class Evolution(GeneratorController):
         AlarmValues = {
             0x01: "Low Battery",  #  Validate on Nexus, occurred when Low Battery Alarm
             0x02: "High Temperature",  #  Validaed on EvoAC
+            0x03: "Controller Fault",
             0x05: "Low Fuel Pressure",  #  Validate on Nexus LC
             0x08: "Low Coolant",  #  Validate on Evolution, occurred when forced low coolant
             0x0A: "Low Oil Pressure",  #  Validate on Nexus Air Cooled.
