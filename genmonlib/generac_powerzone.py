@@ -2157,7 +2157,8 @@ class PowerZone(GeneratorController):
                 {
                     "Voltage A-B": self.ValueOut(
                         self.GetParameter(
-                            self.Reg.GEN_VOLT_PHASE_A_B[REGISTER], ReturnInt=True
+                            self.Reg.GEN_VOLT_PHASE_A_B[REGISTER], ReturnFloat=True,
+                                Divider=10.0,
                         ),
                         "V",
                         JSONNum,
@@ -2168,7 +2169,8 @@ class PowerZone(GeneratorController):
                 {
                     "Voltage B-C": self.ValueOut(
                         self.GetParameter(
-                            self.Reg.GEN_VOLT_PHASE_B_C[REGISTER], ReturnInt=True
+                            self.Reg.GEN_VOLT_PHASE_B_C[REGISTER], ReturnFloat=True,
+                                Divider=10.0,
                         ),
                         "V",
                         JSONNum,
@@ -2179,7 +2181,8 @@ class PowerZone(GeneratorController):
                 {
                     "Voltage C-A": self.ValueOut(
                         self.GetParameter(
-                            self.Reg.GEN_VOLT_PHASE_C_A[REGISTER], ReturnInt=True
+                            self.Reg.GEN_VOLT_PHASE_C_A[REGISTER], ReturnFloat=True,
+                                Divider=10.0,
                         ),
                         "V",
                         JSONNum,
@@ -2190,7 +2193,8 @@ class PowerZone(GeneratorController):
                 {
                     "Average Voltage": self.ValueOut(
                         self.GetParameter(
-                            self.Reg.GEN_AVERAGE_VOLTAGE_LL[REGISTER], ReturnInt=True
+                            self.Reg.GEN_AVERAGE_VOLTAGE_LL[REGISTER], ReturnFloat=True,
+                                Divider=10.0,
                         ),
                         "V",
                         JSONNum,
