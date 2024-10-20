@@ -101,6 +101,7 @@ class GenTemp(MySupport):
             self.DeviceLabels = self.GetParamList(self.config.ReadValue("device_labels", default=None))
             self.DeviceNominalValues = self.GetParamList(self.config.ReadValue("device_nominal_values", default=None), bInteger=True)
             self.DeviceMaxValues = self.GetParamList(self.config.ReadValue("device_max_values", default=None), bInteger=True)
+            self.DeviceMinValues = self.GetParamList(self.config.ReadValue("device_min_values", default=None), bInteger=True)
             self.BlackList = self.GetParamList(self.config.ReadValue("blacklist", default=None))
 
             if self.MonitorAddress != None:
@@ -126,9 +127,16 @@ class GenTemp(MySupport):
             else:
                 self.Units = "F"
             if self.DeviceNominalValues != None and self.DeviceMaxValues != None and self.DeviceLabels != None:
-                if len(self.DeviceNominalValues) == len(self.DeviceMaxValues) == len(self.DeviceLabels):
-                    for (NominalValue,MaxValue, DeviceName) in itertools.zip_longest(self.DeviceNominalValues, self.DeviceMaxValues, self.DeviceLabels):
+                # DeviceMinValues is optional
+                if self.DeviceMinValues == None:
+                    self.DeviceMinValues = []
+                    for i in range(len(self.DeviceNominalValues)):
+                        self.DeviceMinValues.append(0)
+
+                if len(self.DeviceNominalValues) == len(self.DeviceMaxValues) == len(self.DeviceLabels) == len(self.DeviceMinValues):
+                    for (NominalValue,MaxValue, DeviceName, MinValue) in itertools.zip_longest(self.DeviceNominalValues, self.DeviceMaxValues, self.DeviceLabels, self.DeviceMinValues):
                         self.GaugeData.append({"max": MaxValue, 
+                                               "min": MinValue,
                                                "nominal": NominalValue, 
                                                "title": DeviceName, 
                                                "units": self.Units, 
@@ -139,7 +147,7 @@ class GenTemp(MySupport):
                     self.LogDebug("Bounds Data: " + str(self.GaugeData))
                     self.SendCommand("generator: set_external_gauge_data=" + return_string)
                 else:
-                    self.LogError("Error in configuration: sensor name, nominal and max values do not have he same number of entries")
+                    self.LogError("Error in configuration: sensor name, nominal and max values do not have he same number of entries (possibly min values also)")
 
             self.DeviceList = self.EnumDevices()
 

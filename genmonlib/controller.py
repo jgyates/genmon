@@ -2162,6 +2162,7 @@ class GeneratorController(MySupport):
                     index = 0
                     for SensorBounds in self.ExternalSensorGagueData:
                         sensor_max = SensorBounds['max']
+                        sensor_min = SensorBounds['min']
                         sensor_nominal = SensorBounds['nominal']
                         sensor_name = SensorBounds['title'].strip()
                         sensor_units = SensorBounds['units']
@@ -2169,7 +2170,7 @@ class GeneratorController(MySupport):
                         if sensor_name != None and sensor_max != None and sensor_nominal != None:
                             if not SensorBounds['exclude_gauge']:
                                 Tile = MyTile(self.log,title=sensor_name, units=sensor_units,type=sensor_type, subtype = "external",
-                                    nominal=sensor_nominal, maximum=sensor_max, callback=self.GetExternalSensorData, callbackparameters=(sensor_name,),)
+                                    nominal=sensor_nominal, minimum = sensor_min, maximum=sensor_max, callback=self.GetExternalSensorData, callbackparameters=(sensor_name,),)
                                 self.TileList.append(Tile)
                         index += 1
 

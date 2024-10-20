@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - Updated install to use version of pyopenssl from earlier in 2024 to avoid and error introduced with the new version
 - Minor update to correct formatting issue with bus voltage on PowerZone Sync
 - Added new alarm ID for internal controller fault for Evolution / Nexus
+- Updated External Temp Sensor add on to support non zero minimum values (edit conf file to enable)
 
 ## V1.19.03 -2024-04-19
 - New add on program genmqttin.py. See wiki and add on page for details
