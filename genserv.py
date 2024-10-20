@@ -2071,7 +2071,7 @@ def GetAddOns():
                 "device_nominal_values", return_type=str, default=""
             ),
             "string",
-            "Comma separated list of nominal temperature values for the sensos. The order of these values must match the order of the Sensor Names. Leave blank to disable External Temp Sensor gauges.",
+            "Comma separated list of nominal temperature values for the sensor. The order of these values must match the order of the Sensor Names. Leave blank to disable External Temp Sensor gauges.",
             bounds="",
             display_name="Sensor Nominal Values",
         )
@@ -2080,9 +2080,18 @@ def GetAddOns():
                 "device_max_values", return_type=str, default=""
             ),
             "string",
-            "Comma separated list of maximum temperature values for the sensos. The order of these values must match the order of the Sensor Names. Leave blank to disable External Temp Sensor gauges.",
+            "Comma separated list of maximum temperature values for the sensor. The order of these values must match the order of the Sensor Names. Leave blank to disable External Temp Sensor gauges.",
             bounds="",
             display_name="Sensor Maximum Values",
+        )
+        AddOnCfg["gentemp"]["parameters"]["device_min_values"] = CreateAddOnParam(
+            ConfigFiles[GENTEMP_CONFIG].ReadValue(
+                "device_min_values", return_type=str, default=""
+            ),
+            "string",
+            "Comma separated list of minimum temperature values for the sensor. The order of these values must match the order of the Sensor Names. Leave blank to set all sensors minimum value to zero.",
+            bounds="",
+            display_name="Sensor Minimum Values",
         )
         # GENSENSORHAT
         AddOnCfg["gencthat"] = collections.OrderedDict()
