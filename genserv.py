@@ -2071,7 +2071,7 @@ def GetAddOns():
                 "device_nominal_values", return_type=str, default=""
             ),
             "string",
-            "Comma separated list of nominal temperature values for the sensor. The order of these values must match the order of the Sensor Names. Leave blank to disable External Temp Sensor gauges.",
+            "Comma separated list of nominal temperature values for the sensor. Nominal values help determine where the gauge green area ends and the yellow begins. The order of these values must match the order of the Sensor Names. Leave blank to disable External Temp Sensor gauges.",
             bounds="",
             display_name="Sensor Nominal Values",
         )
