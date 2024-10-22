@@ -2080,7 +2080,7 @@ def GetAddOns():
                 "device_max_values", return_type=str, default=""
             ),
             "string",
-            "Comma separated list of maximum temperature values for the sensor. The order of these values must match the order of the Sensor Names. Leave blank to disable External Temp Sensor gauges.",
+            "Comma separated list of maximum temperature values for the sensor. This is the maximum gauge value. The order of these values must match the order of the Sensor Names. Leave blank to disable External Temp Sensor gauges.",
             bounds="",
             display_name="Sensor Maximum Values",
         )
@@ -2089,7 +2089,7 @@ def GetAddOns():
                 "device_min_values", return_type=str, default=""
             ),
             "string",
-            "Comma separated list of minimum temperature values for the sensor. The order of these values must match the order of the Sensor Names. Leave blank to set all sensors minimum value to zero.",
+            "Comma separated list of minimum temperature values for the sensor. This is the minimum gauge value. The order of these values must match the order of the Sensor Names. Leave blank to set all sensors minimum value to zero.",
             bounds="",
             display_name="Sensor Minimum Values",
         )
