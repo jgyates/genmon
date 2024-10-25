@@ -803,7 +803,7 @@ class PowerZone(GeneratorController):
                         callbackparameters=(
                             self.Reg.TOTAL_POWER_KW[REGISTER],
                             None,
-                            None,
+                            1000,       # Divider 1000?
                             False,
                             True,
                             False,
@@ -820,7 +820,7 @@ class PowerZone(GeneratorController):
                         callbackparameters=(
                             self.Reg.TOTAL_POWER_KW[REGISTER],
                             None,
-                            None,
+                            1000,       # Divider 1000?
                             False,
                             True,
                             False,
@@ -2113,7 +2113,8 @@ class PowerZone(GeneratorController):
                 {
                     "Current Phase A": self.ValueOut(
                         self.GetParameter(
-                            self.Reg.GEN_PHASE_A_CURRENT[REGISTER], ReturnInt=True
+                            self.Reg.GEN_PHASE_A_CURRENT[REGISTER], ReturnFloat=True,
+                                Divider=10.0,
                         ),
                         "A",
                         JSONNum,
@@ -2124,7 +2125,8 @@ class PowerZone(GeneratorController):
                 {
                     "Current Phase B": self.ValueOut(
                         self.GetParameter(
-                            self.Reg.GEN_PHASE_B_CURRENT[REGISTER], ReturnInt=True
+                            self.Reg.GEN_PHASE_B_CURRENT[REGISTER], ReturnFloat=True,
+                                Divider=10.0,
                         ),
                         "A",
                         JSONNum,
@@ -2135,7 +2137,8 @@ class PowerZone(GeneratorController):
                 {
                     "Current Phase C": self.ValueOut(
                         self.GetParameter(
-                            self.Reg.GEN_PHASE_C_CURRENT[REGISTER], ReturnInt=True
+                            self.Reg.GEN_PHASE_C_CURRENT[REGISTER], ReturnFloat=True,
+                                Divider=10.0,
                         ),
                         "A",
                         JSONNum,
@@ -2146,7 +2149,8 @@ class PowerZone(GeneratorController):
                 {
                     "Average Current": self.ValueOut(
                         self.GetParameter(
-                            self.Reg.GEN_AVERAGE_CURRENT[REGISTER], ReturnInt=True
+                            self.Reg.GEN_AVERAGE_CURRENT[REGISTER], ReturnFloat=True,
+                                Divider=10.0,
                         ),
                         "A",
                         JSONNum,
@@ -3080,11 +3084,11 @@ class PowerZone(GeneratorController):
             return self.GetPowerOutputAlt(ReturnFloat=ReturnFloat)
         if ReturnFloat:
             return self.GetParameter(
-                self.Reg.TOTAL_POWER_KW[REGISTER], ReturnFloat=True
+                self.Reg.TOTAL_POWER_KW[REGISTER], ReturnFloat=True, Divider = 1000
             )
         else:
             return self.GetParameter(
-                self.Reg.TOTAL_POWER_KW[REGISTER], "kW", ReturnFloat=False
+                self.Reg.TOTAL_POWER_KW[REGISTER], "kW", ReturnFloat=False,  Divider = 1000
             )
 
     # ------------ PowerZone:GetPowerOutputAlt ----------------------------------

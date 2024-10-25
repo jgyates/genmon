@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - Minor update to correct formatting issue with bus voltage on PowerZone Sync
 - Added new alarm ID for internal controller fault for Evolution / Nexus
 - Updated External Temp Sensor add on to support non zero minimum values
+- More updates to allow for correct display on PowerZone Sync
 
 ## V1.19.03 -2024-04-19
 - New add on program genmqttin.py. See wiki and add on page for details
