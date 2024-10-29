@@ -1,5 +1,25 @@
 {
     "buttons":[
+         {
+            "onewordcommand" : "resetmaintwarn",
+            "title" : "Reset Maintenance Warnings",
+            "command_sequence" : [
+                                 {
+                                    "reg": "0003",
+                                    "value": "0008"
+                                 }
+                                 ]
+         },
+         {
+            "onewordcommand" : "resetmaintperiods",
+            "title" : "Reset Maintenance Periods",
+            "command_sequence" : [
+                                 {
+                                    "reg": "0003",
+                                    "value": "0009"
+                                 }
+                                 ]
+         },
         {
             "onewordcommand" : "exerciseduration",
             "title" : "Exercise Duration",
