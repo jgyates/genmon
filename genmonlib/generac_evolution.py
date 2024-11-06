@@ -278,6 +278,10 @@ class Evolution(GeneratorController):
             # Evo LC Output relay status register (battery charging, 
             # transfer switch, Change at startup and stop
             "000d": [2, 0],  # Bit changes when the controller is updating registers.
+              # D0 controller powered up
+              # D1  time or date has changed
+              # D2 exercise changed
+            "0018": [2, 0],  # Failed to exercise bit D0, cleared when read
             "0053": [2, 0],  # Evo LC outputs status register (sensors)
             "0052": [2, 0],  # Evo LC Inputs
             "0009": [2, 0],  # Utility voltage
@@ -1198,6 +1202,7 @@ class Evolution(GeneratorController):
         if len(Value) != 4:
             return ""
         ProductModel = int(Value, 16)
+        # 0x01  R200
         # 0x02  Pre-Nexus
         # 0x03, 0x4, 0x5  Nexus, Air Cooled
         # 0x06, 0x7, 0x8  Nexus, Liquid Cooled
@@ -2100,6 +2105,35 @@ class Evolution(GeneratorController):
             return True
         return False
 
+    # ------------ Evolution:CheckResetableBits --------------------------------
+    def CheckResetableBits(self, Register, Value, OldValule = ""):
+
+        try:
+            if Register != "000d" and Register != "0018":
+                return
+            
+            try:
+                IntRegValue = int(Value, 16)
+            except:
+                return
+            if Register == "000d":
+                # D0 controller powered up
+                if IntRegValue & 0x01:
+                    self.LogDebug("Controller Powered Up")
+                # D1  time or date has changed
+                if IntRegValue & 0x02:
+                    self.LogDebug("Time Changed")
+                # D2 exercise changed
+                if IntRegValue & 0x04:
+                    self.LogDebug("Exercise Changed")
+
+            elif Register == "0018":
+                # Failed to exercise bit D0, cleared when read
+                if IntRegValue & 0x01:
+                    self.LogDebug("Failed to Exercise")
+        except Exception as e1:
+            self.LogErrorLine("Error in CheckResetableBits: " + str(e1))
+
     # ------------ Evolution:UpdateRegisterList ---------------------------------
     def UpdateRegisterList(self, Register, Value, IsString=False, IsFile=False, IsCoil = False, IsInput = False):
 
@@ -2132,6 +2166,8 @@ class Evolution(GeneratorController):
             self.Changed += 1
         else:
             self.NotChanged += 1
+
+        self.CheckResetableBits(Register, Value, RegValue)
         return True
 
     # ------------ Evolution:RegisterIsKnown ------------------------------------
