@@ -525,7 +525,7 @@
                   "reg": "1032",
                   "type": "bits",
                   "mask": "0001",
-                  "value": "1",
+                  "value": "0",
                   "text": "Emergency Stop",
                   "title": "Switch Input Status"
                 },
