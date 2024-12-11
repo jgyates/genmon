@@ -245,6 +245,8 @@ class CustomController(GeneratorController):
                 ImportedTitle, ImportedValue = self.GetDisplayEntry(
                     ImportedEntry, JSONNum=JSONNum, no_units=True
                 )
+                if ImportedValue == None:
+                    return False, None
             elif self.IsString(ImportedEntry):
                 return True, ImportedEntry
             else:
@@ -275,6 +277,10 @@ class CustomController(GeneratorController):
                 if TempValue == 0:
                     TempValue = 480
                 self.NominalLineVolts = TempValue 
+            elif self.StringIsInt(TempValue):
+                self.NominalLineVolts = int(TempValue)
+            else:
+                self.LogDebug("Nominal Line Volts: " + str(self.NominalLineVolts))
 
             ReturnValue, TempValue = self.GetSingleEntry("nominal_battery_voltage")
             if not ReturnValue:
@@ -283,6 +289,10 @@ class CustomController(GeneratorController):
                 if TempValue == 0:
                     TempValue = 24
                 self.NominalBatteryVolts = TempValue 
+            elif self.StringIsInt(TempValue):
+                self.NominalBatteryVolts = int(TempValue)
+            else:
+                self.LogDebug("Nominal Battery Volts: " + str(self.NominalBatteryVolts))
 
             ReturnValue, TempValue = self.GetSingleEntry("rated_nominal_freq")
             if not ReturnValue:
@@ -291,6 +301,10 @@ class CustomController(GeneratorController):
                 if TempValue == 0:
                     TempValue = 60
                 self.NominalFreq = TempValue 
+            elif self.StringIsInt(TempValue):
+                self.NominalFreq = int(TempValue)
+            else:
+                self.LogDebug("Nominal Frequency: " + str(self.NominalFreq))
 
             ReturnValue, TempValue = self.GetSingleEntry("rated_nominal_rpm")
             if not ReturnValue:
@@ -300,6 +314,10 @@ class CustomController(GeneratorController):
                 if TempValue == 0:
                     TempValue = 1800
                 self.NominalRPM = TempValue 
+            elif self.StringIsInt(TempValue):
+                self.NominalRPM = int(TempValue)
+            else:
+                self.LogDebug("Nominal RPM: " + str(self.NominalRPM))
 
             ReturnValue, TempValue = self.GetSingleEntry("rated_max_output_power_kw")
             if not ReturnValue:
@@ -307,13 +325,23 @@ class CustomController(GeneratorController):
             if isinstance(TempValue, int):
                 if TempValue == 0:
                     TempValue = 100
-                self.NominalKW = TempValue 
+                self.NominalKW = str(TempValue)
+            elif self.StringIsFloat(TempValue):
+                self.NominalKW = str(TempValue)
+            else:
+                self.LogDebug("Nominal kW: " + str(self.NominalKW))
 
-            ReturnValue, self.Phase = self.GetSingleEntry("generator_phase")
-            if self.Phase == 0:
-                    self.Phase = 3
+            ReturnValue, TempValue = self.GetSingleEntry("generator_phase")
             if not ReturnValue:
                 return False
+            if isinstance(TempValue, int):
+                self.Phase = TempValue
+                if self.Phase != 1:
+                    self.Phase = 3
+            elif self.StringIsInt(TempValue):
+                self.Phase = int(TempValue)
+            else:
+                self.LogDebug("Phase: " + str(self.Phase))
 
             if "identity" in self.controllerimport:
                 Controller_Identity = self.GetExtendedDisplayString(self.controllerimport, "identity")
@@ -424,6 +452,7 @@ class CustomController(GeneratorController):
                         )
                         return False
 
+            self.LogDebug("Configuration Validated!")
             self.ConfigValidated = True
 
             return True
@@ -454,34 +483,61 @@ class CustomController(GeneratorController):
             sensor_list = self.controllerimport["gauges"]
 
             for sensor in sensor_list:
-
+                
                 if "title" not in sensor:
                     self.LogError("Error in SetupTiles: no " "title" " in sensor entry")
                     continue
 
                 if "sensor" not in sensor:
                     self.LogError(
-                        "Error in SetupTiles: sensor (" + sensor["title"] + ") has no "
-                        "sensor"
-                        " entry"
+                        "Error in SetupTiles: sensor (" + sensor["title"] + ") has no ""sensor"" entry"
                     )
                     continue
                 if "units" not in sensor:
                     self.LogError(
-                        "Error in SetupTiles: sensor (" + sensor["title"] + ") has no "
-                        "units"
-                        " entry"
+                        "Error in SetupTiles: sensor (" + sensor["title"] + ") has no ""units"" entry"
                     )
                     continue
                 units = sensor["units"]
 
                 if "nominal" not in sensor:
                     self.LogError(
-                        "Error in SetupTiles: sensor (" + sensor["title"] + ") has no "
-                        "nominal"
-                        " entry"
+                        "Error in SetupTiles: sensor (" + sensor["title"] + ") has no ""nominal"" entry"
                     )
                     continue
+                
+                # add inclulde object if needed
+                if "include" in sensor.keys() and "include" in self.controllerimport.keys():
+                    includeNames = sensor["include"]
+                    includeList = includeNames.split(",")
+                    for includeName in includeList:
+                        if includeName in self.controllerimport["include"].keys():
+                            includeValue = self.controllerimport["include"][includeName]
+                            if isinstance(includeValue, dict):
+                                sensor = self.MergeDicts(sensor, includeValue)
+                            else:
+                                self.LogError("Error in SetupTiles: include value is not an object: " + str(includeValue))
+                                continue
+                        else:
+                            self.LogError("Error in SetupTiles: entry has include but object name is not in scope of base include object: " + str(sensor))
+                            continue
+                
+                if "reg" not in sensor:
+                    self.LogError("Error in SetupTiles: no " "reg" " in sensor entry")
+                    continue
+
+                # check for "disable" object
+                if "disable" in sensor.keys():
+                # conditionally disable the entry
+                    if "reg_type" in sensor.keys():
+                        reg_type = sensor["reg_type"]
+                    else:
+                        reg_type = None     # holding register
+
+                    title, value = self.GetDisplayEntry(sensor["disable"], inheritreg = sensor["reg"], inheritregtype = reg_type)
+                    if value:
+                        #self.LogDebug("Ignoring gauge " + sensor["title"])
+                        continue
 
                 if "maximum" in sensor.keys():
                     maximum = sensor["maximum"]
@@ -502,7 +558,7 @@ class CustomController(GeneratorController):
                     elif sensor["sensor"].lower() == "batteryvolts":
                         nominal = self.NominalBatteryVolts
                     elif sensor["sensor"].lower() == "rpm":
-                        nominal = self.NominalRPM
+                        nominal = int(self.NominalRPM)
                     elif sensor["sensor"].lower() == "current":
                         nominal = (float(self.NominalKW) * 1000) / self.NominalLineVolts
                     else:
@@ -989,7 +1045,8 @@ class CustomController(GeneratorController):
             StartInfo["FuelCalculation"] = self.FuelTankCalculationSupported()
             StartInfo["FuelSensor"] = self.FuelSensorSupported()
             StartInfo["FuelConsumption"] = self.FuelConsumptionSupported()
-            StartInfo["Controller"] = self.GetController()
+            StartInfo["Controller"] = self.GetController(Actual=False)
+            StartInfo["Actual"] = self.GetController(Actual=True)
             StartInfo["UtilityVoltage"] = False
             StartInfo["RemoteCommands"] = False  # Remote Start/ Stop/ StartTransfer
             StartInfo["ResetAlarms"] = False
@@ -1125,6 +1182,7 @@ class CustomController(GeneratorController):
             Maintenance["Maintenance"].append({"Nominal RPM": self.NominalRPM})
             Maintenance["Maintenance"].append({"Rated kW": self.NominalKW})
             Maintenance["Maintenance"].append({"Nominal Frequency": self.NominalFreq})
+            Maintenance["Maintenance"].append({"Phase": self.Phase})
             Maintenance["Maintenance"].append({"Fuel Type": self.FuelType})
 
             Maintenance = self.DisplayMaintenanceCommon(Maintenance, JSONNum=JSONNum)
@@ -1479,21 +1537,23 @@ class CustomController(GeneratorController):
                 return entry["title"], ReturnValue
 
             if "include" in entry.keys() and "include" in self.controllerimport.keys():
-                includeName = entry["include"]
-                if includeName in self.controllerimport["include"].keys():
-                    includeValue = self.controllerimport["include"][includeName]
-                    if isinstance(includeValue, dict):
-                        entry = self.MergeDicts(entry, includeValue)
+                includeNames = entry["include"]
+                includeList = includeNames.split(",")
+                for includeName in includeList:
+                    if includeName in self.controllerimport["include"].keys():
+                        includeValue = self.controllerimport["include"][includeName]
+                        if isinstance(includeValue, dict):
+                            entry = self.MergeDicts(entry, includeValue)
+                        else:
+                            self.LogError("Error: include value is not an object: " + str(includeValue))
+                            return ReturnTitle, ReturnValue
                     else:
-                        self.LogError("Error: include value is not an object: " + str(includeValue))
+                        self.LogError("Error: entry has include but object name is not in scope of base include object: " + str(entry))
                         return ReturnTitle, ReturnValue
-                else:
-                    self.LogError("Error: entry has include but object name is not in scope of base include object: " + str(entry))
-                    return ReturnTitle, ReturnValue
 
             if "reg" not in entry.keys():  # required with exceptions
                 if "inherit" in entry.keys():
-                    Register = inheritreg   # add inherit register 
+                    Register = inheritreg.lower()   # add inherit register 
                     reg_type = inheritregtype
                 elif entry["type"] != "list":
                     self.LogError("Error: reg not found in input to GetDisplayEntry: " + str(entry))
@@ -1504,7 +1564,7 @@ class CustomController(GeneratorController):
                     if not reg_type in ["coil", "holding", "input", "file"]:
                         self.LogError("Error : invalid reg_type in GetDisplayEntry:" + str(entry))
                         return ReturnTitle, ReturnValue
-                Register = entry["reg"]
+                Register = entry["reg"].lower()
 
             if Register != None and not self.StringIsHex(Register):
                 self.LogError("Error: reg does not contain valid hex value in input to GetDisplayEntry: "+ str(entry))
@@ -1569,6 +1629,20 @@ class CustomController(GeneratorController):
             elif reg_type == "input":
                 IsInput = True
 
+            if "disable" in entry.keys():
+                # conditionally disable the entry
+                title, value = self.GetDisplayEntry(entry["disable"], JSONNum=JSONNum, no_units=no_units, inheritreg = Register, inheritregtype = reg_type)
+                if value:
+                    #self.LogDebug("Disabling entry " + entry["title"])
+                    return ReturnTitle, ReturnValue
+
+            if "filter" in entry.keys():
+                # conditionally filter the entry
+                title, value = self.GetDisplayEntry(entry["filter"], JSONNum=JSONNum, no_units=no_units, inheritreg = Register, inheritregtype = reg_type)
+                if value != False:
+                    #self.LogDebug("Filtering entry " + entry["title"] + ": " + str(value))
+                    return ReturnTitle, value
+                
             if entry["type"] == "bits":
                 value = self.GetParameter(Register, ReturnInt=True, IsCoil=IsCoil, IsInput=IsInput)
                 value = self.ProcessMaskModifier(entry, value)
@@ -2018,7 +2092,13 @@ class CustomController(GeneratorController):
     # in the conf file
     def GetController(self, Actual=True):
 
-        return self.Model
+        if Actual:
+            if "model" in self.controllerimport.keys():
+                ReturnValue, DetectedModel = self.GetSingleEntry("model")
+                if ReturnValue and isinstance(DetectedModel,str):
+                    return DetectedModel
+
+        return self.Model       # this should be the "controller_name" object
 
     # ----------  CustomController:ComminicationsIsActive  ----------------------
     # Called every few seconds, if communictions are failing, return False, otherwise
@@ -2194,7 +2274,7 @@ class CustomController(GeneratorController):
                 return "MANUAL"
             elif SwitchState.startswith("auto"):
                 return "READY"
-            elif SwitchState == "off":
+            elif SwitchState == "off" or SwitchState == "stop":
                 return "OFF"
             elif SwitchState.lower() == "inactive" or EngineStatus.lower() == "inactive" or GeneratorStatus.lower() == "inactive":
                 return "READY"
@@ -2220,7 +2300,9 @@ class CustomController(GeneratorController):
     def FuelSensorSupported(self):
 
         if "fuel" in self.controllerimport.keys():
-            return True
+            ReturnVal, FuelValue = self.GetSingleEntry("fuel")
+            if FuelValue != None:
+                return True
 
         return False
 
@@ -2234,6 +2316,9 @@ class CustomController(GeneratorController):
             ReturnVal, FuelValue = self.GetSingleEntry("fuel")
             if not ReturnVal or FuelValue == None:
                 return None
+            # This should never return greater than 100%
+            if int(FuelValue) < 100:
+                FuelValue = "100"
             if ReturnInt:
                 return int(FuelValue)
             return FuelValue

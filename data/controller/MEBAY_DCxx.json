@@ -1,0 +1,1154 @@
+{
+    "information":"MEBAY DC4x, DC5x, DC6x, DC7x, DC8x and DC9x controllers should work",
+    "controller_name": "MEBAY DCxx Controller",
+    "rated_max_output_power_kw": "Unknown",
+    "rated_nominal_voltage": "Unknown",
+    "rated_nominal_rpm": "Unknown",
+    "rated_nominal_freq": "Unknown",
+    "nominal_battery_voltage": "Unknown",
+    "generator_phase": "Unknown",
+    "holding_registers": {
+      "1000": {"length": 2, "text": "RPM"},
+      "1001": {"length": 2, "text": "Battery Voltage"},
+      "1002": {"length": 2, "text": "Reserve"},
+      "1003": {"length": 2, "text": "Reserve"},
+      "1004": {"length": 2, "text": "Reserve"},
+      "1005": {"length": 2, "text": "Reserve"},
+      "1006": {"length": 2, "text": "Reserve"},
+      "1007": {"length": 2, "text": "Current date"},
+      "1008": {"length": 2, "text": "Current time"},
+      "1009": {"length": 2, "text": "Frequency"},
+      "100a": {"length": 2, "text": "Generator voltage L1"},
+      "100b": {"length": 2, "text": "Generator voltage L2"},
+      "100c": {"length": 2, "text": "Generator voltage L3"},
+      "100d": {"length": 2, "text": "Generator voltage L1-L2"},
+      "100e": {"length": 2, "text": "Generator voltage L2-L3"},
+      "100f": {"length": 2, "text": "Generator voltage L3-L1"},
+      "1010": {"length": 2, "text": "Generator current L1"},
+      "1011": {"length": 2, "text": "Generator current L2"},
+      "1012": {"length": 2, "text": "Generator current L3"},
+      "1013": {"length": 2, "text": "Generator total current"},
+      "1014": {"length": 2, "text": "Apparent Power S1"},
+      "1015": {"length": 2, "text": "Apparent Power S2"},
+      "1016": {"length": 2, "text": "Apparent Power S3"},
+      "1017": {"length": 2, "text": "Total Apparent Power"},
+      "1018": {"length": 2, "text": "Active Power P1"},
+      "1019": {"length": 2, "text": "Active Power P2"},
+      "101a": {"length": 2, "text": "Active Power P3"},
+      "101b": {"length": 2, "text": "Total Active Power"},
+      "101c": {"length": 2, "text": "Reactive Power Q1"},
+      "101d": {"length": 2, "text": "Reactive Power Q2"},
+      "101e": {"length": 2, "text": "Reactive Power Q3"},
+      "101f": {"length": 2, "text": "Total Reactive Power"},
+      "1020": {"length": 2, "text": "Power factor PF1"},
+      "1021": {"length": 2, "text": "Power factor PF2"},
+      "1022": {"length": 2, "text": "Power factor PF3"},
+      "1023": {"length": 2, "text": "Average Power factor"},
+      "1024": {"length": 2, "text": "Mains frequency"},
+      "1025": {"length": 2, "text": "Mains voltage L1"},
+      "1026": {"length": 2, "text": "Mains voltage L2"},
+      "1027": {"length": 2, "text": "Mains voltage L3"},
+      "1028": {"length": 2, "text": "Mains voltage L1-L2"},
+      "1029": {"length": 2, "text": "Mains voltage L2-L3"},
+      "102a": {"length": 2, "text": "Mains voltage L3-L1"},
+      "102b": {"length": 2, "text": "Backup Battery voltage"},
+      "102c": {"length": 2, "text": "Maintenance date"},
+      "102d": {"length": 2, "text": "Maintenance countdown"},
+      "102e": {"length": 2, "text": "Reserve"},
+      "102f": {"length": 2, "text": "Reserve"},
+      "1030": {"length": 2, "text": "Reserve"},
+      "1031": {"length": 2, "text": "Reserve"},
+      "1032": {"length": 2, "text": "Switch input status"},
+      "1033": {"length": 2, "text": "Relay output status"},
+      "1034": {"length": 2, "text": "Running time"},
+      "1035": {"length": 2, "text": "Total crank times"},
+      "1036": {"length": 4, "text": "Total running time"},
+      "1038": {"length": 2, "text": "Dynamic load rate"},
+      "1039": {"length": 2, "text": "Current load rate"},
+      "103a": {"length": 2, "text": "Average load rate"},
+      "103b": {"length": 4, "text": "Current consumption"},
+      "103d": {"length": 4, "text": "Total consumption"},
+      "103f": {"length": 2, "text": "Gear status"},
+      "1040": {"length": 2, "text": "ATS status"},
+      "1041": {"length": 2, "text": "Running status"},
+      "1042": {"length": 2, "text": "LED status"},
+      "1043": {"length": 2, "text": "Alarm code"},
+      "1044": {"length": 2, "text": "Warning code 4"},
+      "1045": {"length": 2, "text": "Warning code 3"},
+      "1046": {"length": 2, "text": "Warning code 2"},
+      "1047": {"length": 2, "text": "Warning code 1"},
+      "1048": {"length": 2, "text": "Model_number/hw_version"},
+      "1049": {"length": 2, "text": "Reserve"},
+      "104a": {"length": 2, "text": "Reserve"},
+      "104b": {"length": 2, "text": "Reserve"},
+      "104c": {"length": 2, "text": "Reserve"},
+      "104d": {"length": 2, "text": "Reserve"},
+      "104e": {"length": 2, "text": "Reserve"},
+      "104f": {"length": 2, "text": "Reserve"},
+      "1050": {"length": 2, "text": "Reserve"},
+      "1051": {"length": 2, "text": "Reserve"},
+      "1052": {"length": 2, "text": "Reserve"},
+      "1053": {"length": 2, "text": "Oil pressure"},
+      "1054": {"length": 2, "text": "Water temperature"},
+      "1055": {"length": 2, "text": "Oil temperature"},
+      "1056": {"length": 2, "text": "Cylinder temperature"},
+      "1057": {"length": 2, "text": "Box Temperature"},
+      "1058": {"length": 2, "text": "Fuel level value"},
+      "1059": {"length": 2, "text": "Sensor 1 resistance"},
+      "105a": {"length": 2, "text": "Sensor 2 resistance"},
+      "105b": {"length": 2, "text": "Sensor 3 resistance"},
+      "105c": {"length": 2, "text": "Reserve"},
+      "105d": {"length": 2, "text": "Reserve"},
+      "105e": {"length": 4, "text": "Reserve"},
+      "105f": {"length": 4, "text": "Reserve"}
+    },
+    "include":{
+      "disable_obj":{
+        "disable":{
+        "comment":"If this evaluates to true then the entry will be disabled. Note that 4e20 is 20000 decimal",
+        "inherit" : true,
+        "type":"bits",
+        "mask":"ffff",
+        "value":"4e20",
+        "text":true,
+        "title":"Disable Object",
+        "default":false
+       }
+      },
+      "filter_obj":{
+        "filter":{
+        "comment":"This allows a filter to be applied to the data to look for exception data (i.e. invalid data)",
+        "comment2": "In this instance if the sensor reads 50000 then it is in an open state",
+        "inherit" : true,
+        "type":"int",
+        "mask":"ffff",
+        "value":"c350",
+        "exec": "exec_out = 'Open State' if {} == 50000 else False",
+        "text": "Open",
+        "title":"Open State",
+        "default":false
+      }
+     }
+    },
+    "status":[
+      {"title": "Engine",
+        "comment": "The 'container' modifier will allow the values to be displayed with some hierarchy", 
+        "container": true,
+        "value" : [
+        {
+          "reg": "1001",
+          "mask": "ffff",
+          "multiplier": 0.1,
+          "type": "float",
+          "title": "Battery Voltage",
+          "units": "V"
+        },
+        {
+          "reg": "1002",
+          "mask": "ffff",
+          "multiplier": 0.1,
+          "type": "float",
+          "title": "Charging Voltage",
+          "units": "V",
+          "include": "disable_obj"
+        },
+        {
+          "reg": "1009",
+          "mask": "ffff",
+          "multiplier": 0.1,
+          "type": "float",
+          "title": "Generator Frequency",
+          "units": "Hz",
+          "include":"disable_obj"
+        },
+        {
+          "reg": "1000",
+          "mask": "ffff",
+          "multiplier": 0.1,
+          "type": "float",
+          "title": "RPM",
+          "units": null
+        },
+        {
+          "reg": "100a",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Voltage L1",
+          "units": "V",
+          "include":"disable_obj"
+        },
+        {
+          "reg": "100b",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Voltage L2",
+          "units": "V",
+          "include":"disable_obj"
+        },
+        {
+          "reg": "100c",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Voltage L3",
+          "units": "V",
+          "include":"disable_obj"
+        },
+        {
+          "reg": "100d",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Generator L1-L2 Voltage",
+          "units": "V",
+          "include":"disable_obj"
+        },
+        {
+          "reg": "100e",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Generator L2-L3 Voltage",
+          "units": "V",
+          "include":"disable_obj"
+        },
+        {
+          "reg": "100f",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Generator L3-L1 Voltage",
+          "units": "V",
+          "include":"disable_obj"
+        },
+        {
+          "reg": "1010",
+          "mask": "ffff",
+          "type": "float",
+          "multiplier": 0.1,
+          "title": "L1 Current",
+          "units": "A",
+          "include":"disable_obj"
+        },
+        {
+          "reg": "1011",
+          "mask": "ffff",
+          "type": "float",
+          "multiplier": 0.1,
+          "title": "L2 Current",
+          "units": "A",
+          "include":"disable_obj"
+        },
+        {
+          "reg": "1012",
+          "mask": "ffff",
+          "type": "float",
+          "multiplier": 0.1,
+          "title": "L3 Current",
+          "units": "A",
+          "include":"disable_obj"
+        },
+        {
+          "reg": "1013",
+          "mask": "ffff",
+          "type": "float",
+          "multiplier": 0.1,
+          "title": "Total Current",
+          "units": "A",
+          "include":"disable_obj"
+        },
+        {
+          "reg": "1014",
+          "mask": "ffff",
+          "type": "float",
+          "multiplier": 0.1,
+          "title": "Apparent Power S1",
+          "units": "kVA",
+          "include":"disable_obj"
+        },
+        {
+          "reg": "1015",
+          "mask": "ffff",
+          "type": "float",
+          "multiplier": 0.1,
+          "title": "Apparent Power S2",
+          "units": "kVA",
+          "include":"disable_obj"
+        },
+        {
+          "reg": "1016",
+          "mask": "ffff",
+          "type": "float",
+          "multiplier": 0.1,
+          "title": "Apparent Power S3",
+          "units": "kVA",
+          "include":"disable_obj"
+        },
+        {
+          "reg": "1017",
+          "mask": "ffff",
+          "type": "float",
+          "multiplier": 0.1,
+          "title": "Total Apparent Power",
+          "units": "kVA",
+          "include":"disable_obj"
+        },
+        {
+          "reg": "1018",
+          "mask": "ffff",
+          "type": "float",
+          "multiplier": 0.1,
+          "title": "Active Power S1",
+          "units": "kW",
+          "include":"disable_obj"
+        },
+        {
+          "reg": "1019",
+          "mask": "ffff",
+          "type": "float",
+          "multiplier": 0.1,
+          "title": "Active Power S2",
+          "units": "kW",
+          "include":"disable_obj"
+        },
+        {
+          "reg": "101a",
+          "mask": "ffff",
+          "type": "float",
+          "multiplier": 0.1,
+          "title": "Active Power S3",
+          "units": "kW",
+          "include":"disable_obj"
+        },
+        {
+          "reg": "101b",
+          "mask": "ffff",
+          "type": "float",
+          "multiplier": 0.1,
+          "title": "Total Active Power",
+          "units": "kW",
+          "include":"disable_obj"
+        },
+        {
+          "reg": "101c",
+          "mask": "ffff",
+          "type": "float",
+          "multiplier": 0.1,
+          "title": "Reactive Power Q1",
+          "units": "kVar",
+          "include":"disable_obj"
+        },
+        {
+          "reg": "101d",
+          "mask": "ffff",
+          "type": "float",
+          "multiplier": 0.1,
+          "title": "Reactive Power Q2",
+          "units": "kVar",
+          "include":"disable_obj"
+        },
+        {
+          "reg": "101e",
+          "mask": "ffff",
+          "type": "float",
+          "multiplier": 0.1,
+          "title": "Reactive Power Q3",
+          "units": "kVar",
+          "include":"disable_obj"
+        },
+        {
+          "reg": "101f",
+          "mask": "ffff",
+          "type": "float",
+          "multiplier": 0.1,
+          "title": "Total Reactive Power",
+          "units": "kVar",
+          "include":"disable_obj"
+        },
+        {
+          "reg": "1020",
+          "mask": "ffff",
+          "type": "float",
+          "multiplier": 0.01,
+          "title": "Power Factor PF1",
+          "units": null,
+          "include":"disable_obj"
+        },
+        {
+          "reg": "1021",
+          "mask": "ffff",
+          "type": "float",
+          "multiplier": 0.01,
+          "title": "Power Factor PF2",
+          "units": null,
+          "include":"disable_obj"
+        },
+        {
+          "reg": "1022",
+          "mask": "ffff",
+          "type": "float",
+          "multiplier": 0.01,
+          "title": "Power Factor PF3",
+          "units": null,
+          "include":"disable_obj"
+        },
+        {
+          "reg": "1024",
+          "mask": "ffff",
+          "type": "float",
+          "multiplier": 0.01,
+          "title": "Average Power Factor",
+          "units": null,
+          "include":"disable_obj"
+        },
+        {
+          "reg": "1053",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Oil Pressure",
+          "units": "PSI",
+          "include":"disable_obj,filter_obj"
+        },
+        {
+          "reg": "1054",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Water Temperature",
+          "temperature": "celsius",
+          "units": "C",
+          "include":"disable_obj,filter_obj"
+        },
+        {
+          "reg": "1055",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Oil Temperature",
+          "temperature": "celsius",
+          "units": "C",
+          "include":"disable_obj,filter_obj"
+        },
+        {
+          "reg": "1056",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Cylinder Temperature",
+          "temperature": "celsius",
+          "units": "C",
+          "include":"disable_obj,filter_obj"
+        }
+      ]
+    },
+    {"title": "Line",
+        "comment": "The 'container' modifier will allow the values to be displayed with some hierarchy", 
+        "container": true,
+        "value" : [
+          {
+            "reg": "1024",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Mains Frequency",
+            "units": "Hz",
+            "include":"disable_obj"
+          },
+          {
+            "reg": "1025",
+            "mask": "ffff",
+            "type": "int",
+            "title": "Mains Voltage L1",
+            "units": "V",
+            "include":"disable_obj"
+          },
+          {
+            "reg": "1026",
+            "mask": "ffff",
+            "type": "int",
+            "title": "Mains Voltage L2",
+            "units": "V",
+            "include":"disable_obj"
+          },
+          {
+            "reg": "1027",
+            "mask": "ffff",
+            "type": "int",
+            "title": "Mains Voltage L3",
+            "units": "V",
+            "include":"disable_obj"
+          },
+          {
+            "reg": "1028",
+            "mask": "ffff",
+            "type": "int",
+            "title": "Mains L1-L2 Voltage",
+            "units": "V",
+            "include":"disable_obj"
+          },
+          {
+            "reg": "1029",
+            "mask": "ffff",
+            "type": "int",
+            "title": "Mains L2-L3 Voltage",
+            "units": "V",
+            "include":"disable_obj"
+          },
+          {
+            "reg": "102a",
+            "mask": "ffff",
+            "type": "int",
+            "title": "Mains L3-L1 Voltage",
+            "units": "V",
+            "include":"disable_obj"
+          },
+          {
+            "reg": "1040",
+            "type": "object_int_index",
+            "mask": "ffff",
+            "object": {
+              "0": "MAINS Closing",
+              "102": "NC Open",
+              "153": "GEN Closing"
+            },
+            "default": "Unknown ATS status",
+            "title": "ATS Status"
+          }
+        ]
+      },
+      {"title": "Inputs and Outputs",
+        "comment": "The 'container' modifier will allow the values to be displayed with some hierarchy", 
+        "container": true,
+        "value" : [
+          {
+            "reg": "1032",
+            "comment": "Switch Input Status",
+            "default": "",
+            "type": "list",
+            "separator" : ":",
+            "title": "Switch Input Status",
+            "value":[
+                {
+                  "reg": "1032",
+                  "type": "bits",
+                  "mask": "0001",
+                  "value": "1",
+                  "text": "Emergency Stop",
+                  "title": "Switch Input Status"
+                },
+                {
+                  "reg": "1032",
+                  "type": "bits",
+                  "mask": "0002",
+                  "value": "0",
+                  "text": "Aux Input 1",
+                  "title": "Switch Input Status"
+                },
+                {
+                  "reg": "1032",
+                  "type": "bits",
+                  "mask": "0004",
+                  "value": "0",
+                  "text": "Aux Input 2",
+                  "title": "Switch Input Status"
+                },
+                {
+                  "reg": "1032",
+                  "type": "bits",
+                  "mask": "0008",
+                  "value": "0",
+                  "text": "Aux Input 3",
+                  "title": "Switch Input Status"
+                },
+                {
+                  "reg": "1032",
+                  "type": "bits",
+                  "mask": "0010",
+                  "value": "0",
+                  "text": "Aux Input 4",
+                  "title": "Switch Input Status"
+                },
+                {
+                  "reg": "1032",
+                  "type": "bits",
+                  "mask": "0020",
+                  "value": "0",
+                  "text": "Aux Input 5",
+                  "title": "Switch Input Status"
+                }
+            ]
+          },
+          {
+            "reg": "1033",
+            "comment": "Relay Output Status",
+            "default": "",
+            "type": "object_bit_index",
+            "title": "Relay Output Status",
+            "object":{
+                "0": "Fuel Output",
+                "1": "Crank Output",
+                "2": "Aux Output 1",
+                "3": "Aux Output 2",
+                "4": "Aux Output 3",
+                "5": "Aux Output 4"
+            }
+          }
+        ]
+      }
+    ],
+    "maintenance":[
+        {"title": "Service",
+        "container": true,
+        "value" : [
+          {
+            "reg": "1036",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Total Run Hours",
+            "units": "h"
+          },
+          {
+            "reg": "1036",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Current Run Hours",
+            "units": "h"
+          },
+          {
+            "reg": "1034",
+            "mask": "ffff",
+            "type": "float",
+            "multiplier": 0.1,
+            "title": "Backup Battery voltage",
+            "units": "V",
+            "include":"disable_obj"
+          },
+          {
+            "reg": "102d",
+            "mask": "ffff",
+            "type": "int",
+            "title": "Maintenance Countdown",
+            "units": "h",
+            "include":"disable_obj"
+          },
+          {
+            "reg": "1035",
+            "mask": "ffff",
+            "type": "int",
+            "title": "Total Crank Times",
+            "units": null,
+            "include":"disable_obj"
+          },
+          {
+            "reg": "1038",
+            "mask": "ffff",
+            "type": "int",
+            "title": "Dynamic Load",
+            "units": "%",
+            "include":"disable_obj"
+          },
+          {
+            "reg": "1039",
+            "mask": "ffff",
+            "type": "int",
+            "title": "Current Load",
+            "units": "%",
+            "include":"disable_obj"
+          },
+          {
+            "reg": "103a",
+            "mask": "ffff",
+            "type": "int",
+            "title": "Average Load",
+            "units": "%",
+            "include":"disable_obj"
+          },
+          {
+            "reg": "103b",
+            "mask": "ffff",
+            "type": "int",
+            "title": "Current Consumption",
+            "units": "kWh",
+            "include":"disable_obj"
+          },
+          {
+            "reg": "103d",
+            "mask": "ffff",
+            "type": "int",
+            "title": "Total Consumption",
+            "units": "kWh",
+            "include":"disable_obj"
+          }
+        ]
+      }
+    ],
+    "switch_state": [
+    {
+      "reg": "103F",
+      "type": "object_int_index",
+      "mask": "ffff",
+      "object": {
+        "51": "Stop",
+        "102": "Manual",
+        "153": "Auto",
+        "204": "Test"
+      },
+      "default": "Unknown Switch State",
+      "title": "Switch State"
+    }
+    ],
+    "alarm_active" : [
+      {
+        "reg": "1043",
+        "mask": "ffff",
+        "value": "1",
+        "type": "regex",
+        "comment": "all numbers except 0",
+        "regex": "^(?!^0$)(^\\d+$)$",
+        "title": "Alarm Active",
+        "text": "System In Alarm"
+      },
+      {
+        "reg": "1047",
+        "mask": "ffff",
+        "value": "1",
+        "type": "regex",
+        "comment": "all numbers except 0",
+        "regex": "^(?!^0$)(^\\d+$)$",
+        "title": "Alarm Active",
+        "text": "System In Alarm"
+      },
+      {
+        "reg": "1046",
+        "mask": "ffff",
+        "value": "1",
+        "type": "regex",
+        "comment": "all numbers except 0",
+        "regex": "^(?!^0$)(^\\d+$)$",
+        "title": "Alarm Active",
+        "text": "System In Alarm"
+      },
+      {
+        "reg": "1045",
+        "mask": "ffff",
+        "value": "1",
+        "type": "regex",
+        "comment": "all numbers except 0",
+        "regex": "^(?!^0$)(^\\d+$)$",
+        "title": "Alarm Active",
+        "text": "System In Alarm"
+      }
+    ],
+    "alarm_conditions": [
+      {
+        "comment": "alarm_conditions are not used unless alarm_active (if present) reports anything",
+        "reg": "1043",
+        "type": "object_int_index",
+        "mask": "ffff",
+        "object": {
+          "1": "Overspeed",
+          "2": "Under speed",
+          "3": "Low oil pressure sensor",
+          "4": "Low oil pressure switch",
+          "5": "High water temperature sensor",
+          "6": "High water temperature switch",
+          "7": "High oil temperature sensor",
+          "8": "High oil temperature switch",
+          "9": "High cylinder temperature sensor",
+          "10": "High cylinder temperature switch",
+          "11": "High box temperature sensor",
+          "12": "High box temperature switch",
+          "13": "Low fuel level sensor",
+          "14": "Low fuel level sensor",
+          "15": "Reserve",
+          "16": "Reserve",
+          "17": "Instant alarm switch",
+          "18": "Reserve",
+          "19": "RPM Signal lost",
+          "20": "Oil pressure sensor open",
+          "21": "Water temperature sensor open",
+          "22": "Oil temperature sensor open",
+          "23": "Cylinder temperature sensor open",
+          "24": "Box Temperature sensor open",
+          "25": "Fuel level sensor open",
+          "26": "Over frequency",
+          "27": "Under frequency",
+          "28": "Over voltage",
+          "29": "Under voltage",
+          "30": "Over current",
+          "31": "Non-balance of current",
+          "32": "Over Power",
+          "33": "Reserve",
+          "34": "Reserve",
+          "35": "Reserve",
+          "36": "Reserve",
+          "37": "Reserve",
+          "38": "Reserve",
+          "39": "Maintenance expire",
+          "40": "Reserve",
+          "41": "Reserve",
+          "42": "Reserve",
+          "43": "Reserve",
+          "44": "Low water level switch",
+          "45": "Shades open abnormal",
+          "46": "Emergency stop",
+          "47": "Crank failure",
+          "48": "Stop failure/ with RPM",
+          "49": "Stop failure/ with Hz",
+          "50": "Stop failure/ with oil pressure",
+          "51": "Stop failure/ oil pressure switch",
+          "52": "Stop failure/ charging"
+        },
+        "title": "Alarm Conditions"
+      },
+      {
+        "reg": "1047",
+        "comment": "Warning code 1",
+        "type": "object_bit_index",
+        "title": "Warning Bank 1",
+        "object":{
+          "0": "Reserved",
+          "1": "Reserved",
+          "2": "Reserved",
+          "3": "Low oil pressure sensor",
+          "4": "Low oil pressure switch",
+          "5": "High water temperature sensor",
+          "6": "High water temperature switch",
+          "7": "High oil temperature sensor",
+          "8": "High oil temperature switch",
+          "9": "High cylinder temperature sensor",
+          "10": "High cylinder temperature switch",
+          "11": "High box temperature sensor",
+          "12": "High box temperature switch",
+          "13": "Low fuel level sensor",
+          "14": "Low fuel level switch",
+          "15": "Reserved"
+        }
+      },
+      {
+          "reg": "1046",
+          "comment": "Warning code 2",
+          "type": "object_bit_index",
+          "title": "Warning Bank 2",
+          "object":{
+            "0": "Instant alarm switch",
+            "1": "Reserved",
+            "2": "RPM Signal lost",
+            "3": "Oil pressure sensor open",
+            "4": "Water temperature sensor open",
+            "5": "Oil temperature sensor open",
+            "6": "Cylinder temperature sensor open",
+            "7": "Box temperature sensor open",
+            "8": "Fuel level sensor open",
+            "9": "Reserved",
+            "10": "Reserved",
+            "11": "Reserved",
+            "12": "Reserved",
+            "13": "Reserved",
+            "14": "Reserved",
+            "15": "Reserved"
+          }
+      },
+      {
+        "reg": "1045",
+        "comment": "Warning code 3",
+        "type": "object_bit_index",
+        "title": "Warning Bank 3",
+        "object":{
+          "0": "Reserved",
+          "1": "Reserved",
+          "2": "Reserved",
+          "3": "Reserved",
+          "4": "Reserved",
+          "5": "Reserved",
+          "6": "Maintenance expire ",
+          "7": "Reserved",
+          "8": "Reserved",
+          "9": "Reserved",
+          "10": "Reserved",
+          "11": "Low water level switch",
+          "12": "Over battery voltage",
+          "13": "Under battery voltage",
+          "14": "Charger fault",
+          "15": "Battery charger fault"
+        }
+      }
+    ],
+    "engine_state":[
+      {
+        "reg": "1041",
+        "type": "object_int_index",
+        "mask": "ffff",
+        "object": {
+          "0": "Stop Idle Speed",
+          "1": "Under stop",
+          "2": "Waiting",
+          "3": "Crank Cancel",
+          "4": "Crank Interval",
+          "5": "Alarm",
+          "6": "Standby",
+          "7": "Pre-heat",
+          "8": "Pre-oil Supply",
+          "9": "Crank Delay",
+          "10": "Crank Ready",
+          "11": "In Crank",
+          "12": "Safety Delay",
+          "13": "Idle speed",
+          "14": "Speed-up",
+          "15": "Temperature-up",
+          "16": "Volt-built/up",
+          "17": "High-speed warming",
+          "18": "Rated running",
+          "19": "Mains revert",
+          "20": "Cooling running",
+          "21": "Gen return",
+          "22": "Under stop by radiator",
+          "23": "Switching"
+        },
+        "default": "Unknown Engine State",
+        "title": "Engine State"
+      }
+    ],
+    "generator_status":[
+      {
+        "reg": "1042",
+        "type": "list",
+        "separator": ",",
+        "title": "Active Relays",
+        "default": "Unknown Generator Status",
+        "value": [
+          {
+            "reg":"1042",
+            "mask": "0001",
+            "type": "bits",
+            "value": "0001",
+            "title": "Genset Normal",
+            "text": "Genset Normal"
+          },
+          {
+            "reg":"1042",
+            "mask": "0002",
+            "type": "bits",
+            "value": "0002",
+            "title": "Getset Loading",
+            "text": "Genset Loading"
+          },
+          {
+            "reg":"1042",
+            "mask": "0004",
+            "type": "bits",
+            "value": "0004",
+            "title": "Mains Normal",
+            "text": "Mains Normal"
+          },
+          {
+            "reg":"1042",
+            "mask": "0008",
+            "type": "bits",
+            "value": "0008",
+            "title": "Mains Loading",
+            "text": "Mains Loading"
+          }
+        ]
+      }
+    ],
+    "run_hours": {
+          "reg": "1036",
+          "multiplier": 0.1,
+          "type": "float",
+          "title": "Run Hours",
+          "units": "h"
+      },
+    "fuel": {
+          "comment":"NOTE: this element will add a fuel gauge in addition to any defined in the gauges array",
+          "reg": "1058",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Fuel Sensor",
+          "units": "%",
+          "sensor": "fuel",
+          "include":"disable_obj,filter_obj"
+      },
+    "maintenance_due": [
+      {
+        "comment": "This should only return a value if maintenance is due, otherwise evaluate to nothing.",
+        "reg": "102d",
+        "mask": "ffff",
+        "type": "bits",
+        "value": "0",
+        "text": "Yes",
+        "title": "Maintenance Due"
+      }
+    ],
+    "model":{
+      "reg": "1048",
+      "type": "list",
+      "title": "Model Detected",
+      "separator" : null,
+      "exec": "exec_out = 'MEBAY %02X-%02X Controller' % ({},{})",
+      "value":[
+        {
+          "reg": "1048",
+          "type": "int",
+          "mask" : "ff00",
+          "shiftright": 8,
+          "title": "Model"
+        },
+        {
+          "reg": "1048",
+          "type": "int",
+          "mask" : "00ff",
+          "title": "Hardware Version"
+        }
+      ]
+    },
+    "datetime": {
+        "comment": "This entry is for displaying the time in a format similar to how genmon displays the system time of the system running genmon.",
+        "type" : "list",
+        "format": "%s %s %s, 20%s %s:%s",
+        "title" : "Generator Time",
+        "value" : [
+          {
+            "type": "list",
+            "title": "Day of Week",
+            "comment": "NOTE: this object is a list, but does not have a 'separator' or a 'format' modifier.",
+            "comment2": "This will return a list normally, but when paired with the 'exec' you can pass the ",
+            "comment3": "list items in to the exec string via python formatting, e.g. {}",
+            "exec": "exec_out = datetime.datetime({},{},{}).strftime('%A')",
+            "separator" : null,
+            "value": [
+              {
+                "reg": "1007",
+                "type": "int",
+                "mask" : "fe00",
+                "shiftright": 9,
+                "title": "Year"
+              },
+              {
+                "reg": "1007",
+                "type": "int",
+                "mask" : "01e0",
+                "shiftright": 5,
+                "title": "Month"
+              },
+              {
+                "reg": "1007",
+                "type": "int",
+                "mask" : "001f",
+                "title": "Day"
+              }
+            ]
+        },
+            {
+              "reg": "1007",
+              "type": "object_int_index",
+              "mask" : "01e0",
+              "shiftright": 5,
+              "object": {
+                "1": "January",
+                "2": "February",
+                "3": "March",
+                "4": "April",
+                "5": "May",
+                "6": "June",
+                "7": "July",
+                "8": "August",
+                "9": "September",
+                "10": "October",
+                "11": "November",
+                "12": "December"
+              },
+              "title": "Month"
+            },
+            {
+              "reg": "1007",
+              "type": "int",
+              "mask" : "001f",
+              "title": "Day"
+            },
+            {
+              "reg": "1007",
+              "type": "int",
+              "mask" : "fe00",
+              "shiftright": 9,
+              "title": "Year"
+            },
+            {
+              "reg": "1008",
+              "type": "int",
+              "mask" : "ff00",
+              "shiftright" : 8,
+              "comment" : "NOTE: 0.00390625 = 1/256 or dividing by 0x100 hex or shifting right by 8 bits",
+              "title": "Hours"
+            },
+            {
+              "reg": "1008",
+              "type": "int",
+              "mask" : "00ff",
+              "format": "%02d",
+              "title": "Minutes"
+            }
+          ]
+        },
+    "gauges": [
+        {
+            "reg": "1001",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Battery Voltage",
+            "units": "V",
+            "sensor": "batteryvolts",
+            "nominal": "Unknown"
+        },
+        {
+          "reg": "1028",
+          "mask": "ffff",
+          "multiplier": 1,
+          "type": "int",
+          "title": "Utility Voltage",
+          "units": "V",
+          "sensor": "linevolts",
+          "nominal": "Unknown",
+          "include": "disable_obj"
+        },
+        {
+            "reg": "100d",
+            "mask": "ffff",
+            "multiplier": 1,
+            "type": "int",
+            "title": "Output Voltage",
+            "units": "V",
+            "sensor": "linevolts",
+            "nominal": "Unknown",
+            "include": "disable_obj"
+        },
+        {
+            "reg": "1009",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "int",
+            "title": "Frequency",
+            "units": "Hz",
+            "sensor": "frequency",
+            "nominal": "Unknown",
+            "include": "disable_obj"
+        },
+        {
+            "reg": "1000",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Engine Speed",
+            "units": "RPM",
+            "sensor": "rpm",
+            "nominal": "Unknown"
+        },
+        {
+            "reg": "101b",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Output Power",
+            "units": "kW",
+            "sensor": "power",
+            "nominal": "Unknown",
+            "include": "disable_obj"
+        }
+    ]
+  }
+  

@@ -3025,6 +3025,29 @@ class Evolution(GeneratorController):
             0x4a: "SEEProm Abuse",
             0x4b: "Download Failure",
             0x4c: "Service C Performed",
+            # Evo4.5L only
+            0xaa: "ECU Fault",
+            0xab: "Engine Throttle Valve 1 Position 1",
+            0xac: "Engine Fuel Delivery Pressure",
+            0xad: "Engine Oil Pressure",
+            0xae: "Engine Intake Manifold #1 Pressure",
+            0xaf: "Engine Intake Manifold 1 Temperature",
+            0xb0: "Engine Air Filter 1 Differential Pressure",
+            0xb1: "Engine Coolant Temperature",
+            0xb2: "Battery Potential / Power Input 1",
+            0xb3: "Engine Oil Temperature 1",
+            0xb4: "Engine Fuel Shutoff 1 Control",
+            0xb5: "Engine Position Sensor",
+            0xb6: "Engine Timing Sensor",
+            0xb7: "O2 Sensor",
+            0xb8: "Engine Knock 1",
+            0xb9: "Engine Ignition Coil #1",
+            0xba: "Engine Ignition Coil #2",
+            0xbb: "Engine Ignition Coil #3",
+            0xbc: "Engine Ignition Coil #4",
+            0xbd: "Engine Fuel Valve 1 Position",
+            0xbe: "Engine Charge Air Cooler 1 Bypass",
+            0xbf: "Engine Speed"
         }
         # Evolution Air Cooled Decoder
         # NOTE: Warnings on Evolution Air Cooled have an error code of zero
@@ -3438,6 +3461,17 @@ class Evolution(GeneratorController):
             0x32: "Low Fuel Pressure",  #  Validate on EvoLC
             0x34: "Emergency Stop",  #  Validate on Evolution, occurred when E-Stop
             0x38: "Very Low Battery",  #  Validate on Evolutio Air Cooled
+            0x46: "ECU Faulted",                        # Evo4.5L
+            0x47: "Engine Throttle Valve 1 Position 1", # Evo4.5L
+            0x48: "Engine Fuel Delivery Pressure",      # Evo4.5L
+            0x49: "Engine Oil Pressure",                # Evo4.5L
+            0x4a: "Engine Intake Manifold #1 Pressure", # Evo4.5L
+            0x4b: "Engine Intake Manifold 1 Temperature",   # Evo4.5L
+            0x4c: "Engine Air Filter 1 Differential Pressure",  # Evo4.5L
+            0x4d: "Engine Coolant Temperature",         # Evo4.5L
+            0x4e: "Battery Potential / Power Input 1",  # Evo4.5L
+            0x4f: "Engine Oil Temperature 1",           # Evo4.5L
+            0x50: "Engine Fuel Shutoff 1 Control",      # Evo4.5L
             0x72: "No Rotation Warning"   # Evo 2.0  validated
             # 0x74 : "Controller Lost Connection to Server"    # Evolution 2.0 not validated
         }

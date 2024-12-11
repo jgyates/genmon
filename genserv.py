@@ -2725,10 +2725,21 @@ def ReadAdvancedSettingsFromFile():
             GENMON_SECTION,
             "import_config_file",
         ]
+        ConfigSettings["phase"] = [
+            "int",
+            "Generator Phase",
+            22,
+            "1",
+            "",
+            "number",
+            GENMON_CONFIG,
+            GENMON_SECTION,
+            "phase",
+        ]
         ConfigSettings["loglocation"] = [
             "string",
             "Log Directory",
-            22,
+            23,
             ProgramDefaults.LogPath,
             "",
             "required UnixDir",
@@ -2739,7 +2750,7 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["userdatalocation"] = [
             "string",
             "User Defined Data Directory",
-            23,
+            24,
             os.path.dirname(os.path.realpath(__file__)),
             "",
             "required UnixDir",

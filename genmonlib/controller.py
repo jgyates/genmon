@@ -236,6 +236,8 @@ class GeneratorController(MySupport):
                 
                 self.NominalLineVolts = self.config.ReadValue("nominallinevolts", return_type=int, default=240)
 
+                self.Phase = self.config.ReadValue("phase", return_type=int, default=1)
+
                 if self.config.HasOption("controllertype"):
                     self.ControllerSelected = self.config.ReadValue("controllertype")
 
