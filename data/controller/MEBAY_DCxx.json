@@ -99,8 +99,17 @@
       "105b": {"length": 2, "text": "Sensor 3 resistance"},
       "105c": {"length": 2, "text": "Reserve"},
       "105d": {"length": 2, "text": "Reserve"},
-      "105e": {"length": 4, "text": "Reserve"},
-      "105f": {"length": 4, "text": "Reserve"}
+      "105e": {"length": 2, "text": "Reserve"},
+      "105f": {"length": 2, "text": "Reserve"},
+      "1060": {"length": 2, "text": "Reserve"},
+      "1061": {"length": 2, "text": "Reserve"},
+      "1062": {"length": 2, "text": "Reserve"},
+      "1063": {"length": 2, "text": "Reserve"},
+      "1064": {"length": 2, "text": "Reserve"},
+      "1065": {"length": 2, "text": "Reserve"},
+      "1066": {"length": 2, "text": "Reserve"},
+      "1067": {"length": 2, "text": "Reserve"},
+      "1068": {"length": 2, "text": "Reserve"}
     },
     "include":{
       "disable_obj":{
@@ -923,8 +932,8 @@
             "mask": "0002",
             "type": "bits",
             "value": "0002",
-            "title": "Getset Loading",
-            "text": "Genset Loading"
+            "title": "Getset on Load",
+            "text": "Genset on Load"
           },
           {
             "reg":"1042",
@@ -939,8 +948,8 @@
             "mask": "0008",
             "type": "bits",
             "value": "0008",
-            "title": "Mains Loading",
-            "text": "Mains Loading"
+            "title": "Mains on Load",
+            "text": "Mains on Load"
           }
         ]
       }
