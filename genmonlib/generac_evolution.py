@@ -2677,7 +2677,7 @@ class Evolution(GeneratorController):
         if self.EvolutionController and self.LiquidCooled:
             # get total hours since activation
             Sensors.append(
-                {"Battery Charger Sensor": self.GetParameter("05ee", Divider=100.0)}
+                {"Battery Charger Sensor": self.GetParameter("05ee", Divider=1000.0)}
             )
             Sensors.append(
                 {"Battery Status (Sensor)": self.GetBatteryStatusAlternate()}
@@ -2710,7 +2710,7 @@ class Evolution(GeneratorController):
 
         if self.EvolutionController and self.Evolution2:
             Sensors.append(
-                {"Battery Charger Sensor": self.GetParameter("05ee", Divider=100.0)}
+                {"Battery Charger Sensor": self.GetParameter("05ee", Divider=1000.0)}
             )
             Sensors.append(
                 {"Battery Status (Sensor)": self.GetBatteryStatusAlternate()}
@@ -4457,9 +4457,9 @@ class Evolution(GeneratorController):
         if not "Stopped" in EngineState and not "Off" in EngineState:
             return "Not Charging"
 
-        Value = self.GetParameter("05ee", Divider=100.0, ReturnFloat=True)
+        Value = self.GetParameter("05ee", Divider=1000.0, ReturnFloat=True)
         if self.LiquidCooled:
-            CompValue = 0.9
+            CompValue = 0.09
         else:
             CompValue = 0
         if Value > CompValue:
@@ -4958,6 +4958,14 @@ class Evolution(GeneratorController):
             )
             if self.EvolutionController and self.LiquidCooled:
                 Engine.append({"Battery Status": self.GetBatteryStatus()})
+
+            if self.EvolutionController:
+                Engine.append(
+                    {"Battery Charger Current": self.ValueOut(
+                        self.GetParameter("05ee", Divider=1000.0, ReturnFloat = True), "A", JSONNum
+                        )
+                    }
+                )
 
             Engine.append(
                 {"RPM": self.ValueOut(self.GetRPM(ReturnInt=True), "", JSONNum)}

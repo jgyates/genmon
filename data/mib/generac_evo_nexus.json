@@ -111,6 +111,13 @@
             "keywords" : ["Status/Engine", "Current L2"]
         },
         {
+            "oid": "0, 0, 17",
+            "return_type": "str",
+            "description": "batteryChargeCurrent",
+            "default" : "",
+            "keywords" : ["Status/Engine", "Battery Charger Current"]
+        },
+        {
             "oid": "0, 1, 1",
             "return_type": "str",
             "integer": true,
