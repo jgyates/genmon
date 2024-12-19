@@ -4959,10 +4959,10 @@ class Evolution(GeneratorController):
             if self.EvolutionController and self.LiquidCooled:
                 Engine.append({"Battery Status": self.GetBatteryStatus()})
 
-            if self.EvolutionController:
+            if self.EvolutionController and not self.PowerPact and not self.SynergyController:
                 Engine.append(
                     {"Battery Charger Current": self.ValueOut(
-                        self.GetParameter("05ee", Divider=1000.0, ReturnFloat = True), "A", JSONNum
+                        self.GetParameter("05ee", ReturnInt= = True), "mA", JSONNum
                         )
                     }
                 )
