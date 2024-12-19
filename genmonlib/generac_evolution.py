@@ -4962,7 +4962,7 @@ class Evolution(GeneratorController):
             if self.EvolutionController and not self.PowerPact and not self.SynergyController:
                 Engine.append(
                     {"Battery Charger Current": self.ValueOut(
-                        self.GetParameter("05ee", ReturnInt= = True), "mA", JSONNum
+                        self.GetParameter("05ee", ReturnInt= True), "mA", JSONNum
                         )
                     }
                 )
