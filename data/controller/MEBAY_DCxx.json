@@ -617,7 +617,7 @@
             "units": "h"
           },
           {
-            "reg": "1034",
+            "reg": "102b",
             "mask": "ffff",
             "type": "float",
             "multiplier": 0.1,
