@@ -279,6 +279,8 @@ class CustomController(GeneratorController):
                 self.NominalLineVolts = TempValue 
             elif self.StringIsInt(TempValue):
                 self.NominalLineVolts = int(TempValue)
+            elif type(TempValue) == str and TempValue.lower() == "unknown":
+                self.NominalLineVolts = 240
             else:
                 self.LogDebug("Nominal Line Volts: " + str(self.NominalLineVolts))
 
@@ -291,6 +293,8 @@ class CustomController(GeneratorController):
                 self.NominalBatteryVolts = TempValue 
             elif self.StringIsInt(TempValue):
                 self.NominalBatteryVolts = int(TempValue)
+            elif type(TempValue) == str and TempValue.lower() == "unknown":
+                self.NominalBatteryVolts = 24
             else:
                 self.LogDebug("Nominal Battery Volts: " + str(self.NominalBatteryVolts))
 
@@ -303,6 +307,8 @@ class CustomController(GeneratorController):
                 self.NominalFreq = TempValue 
             elif self.StringIsInt(TempValue):
                 self.NominalFreq = int(TempValue)
+            elif type(TempValue) == str and TempValue.lower() == "unknown":
+                self.NominalFreq = 60
             else:
                 self.LogDebug("Nominal Frequency: " + str(self.NominalFreq))
 
@@ -316,6 +322,8 @@ class CustomController(GeneratorController):
                 self.NominalRPM = TempValue 
             elif self.StringIsInt(TempValue):
                 self.NominalRPM = int(TempValue)
+            elif type(TempValue) == str and TempValue.lower() == "unknown":
+                self.NominalRPM = 3600      # default for genmon
             else:
                 self.LogDebug("Nominal RPM: " + str(self.NominalRPM))
 
