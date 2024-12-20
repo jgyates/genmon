@@ -148,7 +148,7 @@ class CustomController(GeneratorController):
                 "voltageconfiguration", default="277/480"
             )
             self.NominalBatteryVolts = int(
-                self.config.ReadValue("nominalbattery", return_type=int, default=24)
+                self.config.ReadValue("nominalbattery", return_type=int, default=12)
             )
             self.FuelUnits = self.config.ReadValue("fuel_units", default="gal")
             self.FuelHalfRate = self.config.ReadValue(

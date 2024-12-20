@@ -3499,17 +3499,6 @@ def ReadSettingsFromFile():
             GENMON_SECTION,
             "voltageconfiguration",
         ]
-        ConfigSettings["nominalbattery"] = [
-            "list",
-            "Nomonal Battery Voltage",
-            108,
-            "24",
-            "",
-            "12,24",
-            GENMON_CONFIG,
-            GENMON_SECTION,
-            "nominalbattery",
-        ]
         ConfigSettings["hts_transfer_switch"] = [
             "boolean",
             "HTS/MTS/STS Transfer Switch",
@@ -3544,6 +3533,19 @@ def ReadSettingsFromFile():
             GENMON_SECTION,
             "enhancedexercise",
         ]
+    
+    if ControllerType == "custom"
+        ConfigSettings["nominalbattery"] = [
+                "list",
+                "Nomonal Battery Voltage",
+                108,
+                "24",
+                "",
+                "12,24",
+                GENMON_CONFIG,
+                GENMON_SECTION,
+                "nominalbattery",
+            ]
 
     ConfigSettings["smart_transfer_switch"] = [
         "boolean",
