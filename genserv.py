@@ -3534,7 +3534,7 @@ def ReadSettingsFromFile():
             "enhancedexercise",
         ]
     
-    if ControllerType == "custom"
+    if ControllerType == "custom":
         ConfigSettings["nominalbattery"] = [
                 "list",
                 "Nomonal Battery Voltage",
