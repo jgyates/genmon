@@ -1254,6 +1254,9 @@ class Evolution(GeneratorController):
                     "Warning in DetectController (Nexus / Evolution):  Unverified value detected in model register (%04x)"
                     % ProductModel
                 )
+
+                msgbody += "\nIP Address: " + self.GetNetworkIp()
+
                 self.MessagePipe.SendMessage(
                     "Generator Monitor (Nexus / Evolution): Warning at "
                     + self.SiteName,
@@ -1280,6 +1283,8 @@ class Evolution(GeneratorController):
                     "Warning in DetectController (liquid / air cooled):  Unverified value detected in model register (%04x)"
                     % ProductModel
                 )
+                msgbody += "\nIP Address: " + self.GetNetworkIp()
+
                 self.MessagePipe.SendMessage(
                     "Generator Monitor (liquid / air cooled: Warning at "
                     + self.SiteName,
@@ -2281,6 +2286,8 @@ class Evolution(GeneratorController):
                     if TransferStatus == "Utility":
                         self.TransferActive = False
                         msgbody = "\nPower is being supplied by the utility line. "
+                        msgbody += "\nIP Address: " + self.GetNetworkIp()
+
                         self.MessagePipe.SendMessage(
                             "Transfer Switch Changed State Notice at " + self.SiteName,
                             msgbody,
@@ -2290,6 +2297,8 @@ class Evolution(GeneratorController):
                     if TransferStatus == "Generator":
                         self.TransferActive = True
                         msgbody = "\nPower is being supplied by the generator. "
+                        msgbody += "\nIP Address: " + self.GetNetworkIp()
+                        
                         self.MessagePipe.SendMessage(
                             "Transfer Switch Changed State Notice at " + self.SiteName,
                             msgbody,
@@ -2373,6 +2382,8 @@ class Evolution(GeneratorController):
                 )
             else:
                 msgbody += self.printToString("\nNo Alarms: 0001:%08x" % RegVal)
+            
+            msgbody += "\nIP Address: " + self.GetNetworkIp()
 
             # if option enabled and evo 2.0 detected and result invalid, do not end email.
             sendMessage = True
@@ -4782,6 +4793,7 @@ class Evolution(GeneratorController):
                         % (self.SavedFirmwareVersion, FWVersionString)
                     )
                     msgbody += self.DisplayStatus()
+                    msgbody += "\nIP Address: " + self.GetNetworkIp()
                     self.MessagePipe.SendMessage(
                         msgsubject, msgbody, msgtype=MessageType
                     )

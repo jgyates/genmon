@@ -24,6 +24,7 @@ All notable changes to this project will be documented in this file.
 - Added new log and alarm info for Evolution 4.5L
 - Added support for MEBAY DC4x, DC5x, DC6x, DC7x, DC8x and DC9x controllers
 - Added display of battery charger current for Evo
+- Added system IP address to most outbound notification emails
 
 ## V1.19.03 -2024-04-19
 - New add on program genmqttin.py. See wiki and add on page for details

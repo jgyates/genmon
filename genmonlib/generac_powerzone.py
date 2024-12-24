@@ -1134,6 +1134,7 @@ class PowerZone(GeneratorController):
                     MessageType = "warn"
                 msgbody += self.DisplayStatus()
                 status_included = True
+                msgbody += "\nIP Address: " + self.GetNetworkIp()
                 self.MessagePipe.SendMessage(msgsubject, msgbody, msgtype=MessageType)
 
             # Check for Alarms
@@ -1142,12 +1143,14 @@ class PowerZone(GeneratorController):
                     msgsubject = "Generator Notice: ALARM Active at " + self.SiteName
                     if not status_included:
                         msgbody += self.DisplayStatus()
+                    msgbody += "\nIP Address: " + self.GetNetworkIp()
                     self.MessagePipe.SendMessage(msgsubject, msgbody, msgtype="warn")
             else:
                 if self.CurrentAlarmState:
                     msgsubject = "Generator Notice: ALARM Clear at " + self.SiteName
                     if not status_included:
                         msgbody += self.DisplayStatus()
+                    msgbody += "\nIP Address: " + self.GetNetworkIp()
                     self.MessagePipe.SendMessage(msgsubject, msgbody, msgtype="warn")
 
             self.CurrentAlarmState = self.SystemInAlarm()
