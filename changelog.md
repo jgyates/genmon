@@ -1,6 +1,12 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.19.05 -2024-12-27
+- Added new log and alarm info for Evolution 4.5L
+- Added support for MEBAY DC4x, DC5x, DC6x, DC7x, DC8x and DC9x controllers
+- Added display of battery charger current for Evo
+- Added system IP address to most outbound notification emails
+
 ## V1.19.04 -2024-08-21
 - Corrected issue with saving service journal with HTTPS enabled
 - Added new alarm code for Nexus
@@ -21,10 +27,6 @@ All notable changes to this project will be documented in this file.
 - Added new alarm ID for internal controller fault for Evolution / Nexus
 - Updated External Temp Sensor add on to support non zero minimum values
 - More updates to allow for correct display on PowerZone Sync
-- Added new log and alarm info for Evolution 4.5L
-- Added support for MEBAY DC4x, DC5x, DC6x, DC7x, DC8x and DC9x controllers
-- Added display of battery charger current for Evo
-- Added system IP address to most outbound notification emails
 
 ## V1.19.03 -2024-04-19
 - New add on program genmqttin.py. See wiki and add on page for details
