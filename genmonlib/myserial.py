@@ -88,7 +88,7 @@ class SerialDevice(MySupport):
                 elif Parity.lower() == "odd":
                     Parity = 1
                 else:
-                    Parity = 0
+                    Parity = 2
             
             if Parity == None or Parity == 0:
                 # set parity check: no parity
