@@ -82,10 +82,18 @@ class SerialDevice(MySupport):
             else:
                 self.SerialDevice.bytesize = serial.EIGHTBITS
 
-            if Parity == None or Parity == 0 or Parity.lower() == "none":
+            if isinstance(Parity,str):
+                if Parity.lower() == "none":
+                    Parity = 0
+                elif Parity.lower() == "odd":
+                    Parity = 1
+                else:
+                    Parity = 0
+            
+            if Parity == None or Parity == 0:
                 # set parity check: no parity
                 self.SerialDevice.parity = (serial.PARITY_NONE)  
-            elif Parity == 1 or Parity.lower() == "odd":
+            elif Parity == 1:
                 # set parity check: use odd parity
                 self.SerialDevice.parity = (serial.PARITY_ODD)  
                 self.LogError("Serial: Setting ODD parity")
