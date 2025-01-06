@@ -2755,9 +2755,11 @@ class GeneratorController(MySupport):
             ConsumptionData = self.GetFuelConsumptionDataPoints()
 
             if ConsumptionData == None or len(ConsumptionData) != 5:
+                self.LogDebug("ERROR: Invalid fuel consumption data in GetFuelConsumption: " + str(ConsumptionData))
                 return None, ""
 
             if self.NominalKW == None or float(self.NominalKW) == 0.0:
+                self.LogDebug("ERROR: Invalid nominal kW in GetFuelConsumption: " + str(self.NominalKW))
                 return None, ""
 
             if kw < 0:
@@ -2823,6 +2825,7 @@ class GeneratorController(MySupport):
         # for 60 kw and below diesle generators KW * 8.5%  = Fuel per hour
         try:
             if self.FuelHalfRate == 0 or self.FuelFullRate == 0:
+                self.LogDebug("ERROR: Fuel Half Rate or Full Rate is zero: Half: " + str(self.FuelHalfRate) + "Full: " + str(self.FuelFullRate) )
                 return None
 
             return [
