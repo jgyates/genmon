@@ -16,7 +16,7 @@ pyotp
 smbus
 psutil
 spidev
-bleson @ git+https://github.com/TheCellule/python-bleson
+bleson
 fluids
 voipms==0.2.5
 RPi.GPIO

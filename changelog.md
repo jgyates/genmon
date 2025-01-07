@@ -7,7 +7,6 @@ All notable changes to this project will be documented in this file.
 - Added display of battery charger current for Evo
 - Added system IP address to most outbound notification emails
 - Corrected problem with custom controllers using even parity
-- Update to fix problem with bleson python module with newer Linux kernel versions
 
 ## V1.19.04 -2024-08-21
 - Corrected issue with saving service journal with HTTPS enabled
