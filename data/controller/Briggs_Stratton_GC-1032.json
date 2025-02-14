@@ -13,6 +13,18 @@
   "rated_nominal_freq": 60,
   "nominal_battery_voltage": 12,
   "generator_phase": 1,
+  "include":{
+      "offgrid":{
+        "disable":{
+        "comment":"If this evaluates to true then the entry will be disabled. Note that this reads from the config file",
+        "reg": "disableoutagecheck",
+        "reg_type": "config",
+        "type":"bool",
+        "title":"Off Grid",
+        "default":false
+       }
+      }
+  },
   "input_registers": {
     "0001": 2,
     "0002": 2,
@@ -581,7 +593,8 @@
       "value": "0000",
       "type": "bits",
       "title": "Utility Power",
-      "text": "Failure"
+      "text": "Failure",
+      "include": "offgrid"
     },
     {
       "reg": "004f",
@@ -590,7 +603,8 @@
       "value": "4000",
       "type": "bits",
       "title": "Utility Power",
-      "text": "Healthy"
+      "text": "Healthy",
+      "include": "offgrid"
     },
     {
       "reg": "0038",
@@ -691,7 +705,8 @@
             "multiplier": 0.1,
             "type": "float",
             "title": "Utility L1-L2 Volts",
-            "units": "V"
+            "units": "V",
+            "include": "offgrid"
           },
           {
             "reg": "0014",
@@ -700,7 +715,8 @@
             "multiplier": 0.1,
             "type": "float",
             "title": "Utility L1 Frequency",
-            "units": "Hz"
+            "units": "Hz",
+            "include": "offgrid"
           },
           {
             "reg": "0015",
@@ -709,7 +725,8 @@
             "multiplier": 0.1,
             "type": "float",
             "title": "Utility L2 Frequency",
-            "units": "Hz"
+            "units": "Hz",
+            "include": "offgrid"
           }
         ]
     }
@@ -854,7 +871,8 @@
       "title": "Utility L1-L2",
       "units": "V",
       "sensor": "linevolts",
-      "nominal": 240
+      "nominal": 240,
+      "include": "offgrid"
     },
     {
       "reg": "0014",
@@ -865,7 +883,8 @@
       "title": "Utility L1",
       "units": "Hz",
       "sensor": "frequency",
-      "nominal": 60
+      "nominal": 60,
+      "include": "offgrid"
     },
     {
       "reg": "0015",
@@ -876,7 +895,8 @@
       "title": "Utility L2",
       "units": "Hz",
       "sensor": "frequency",
-      "nominal": 60
+      "nominal": 60,
+      "include": "offgrid"
     },
     {
       "reg": "0038",
@@ -1067,7 +1087,8 @@
       "multiplier": 0.1,
       "type": "float",
       "title": "Utility Voltage",
-      "units": "V"
+      "units": "V",
+      "include": "offgrid"
     },
   "thresholdvoltage": 143,
   "pickupvoltage": 190,

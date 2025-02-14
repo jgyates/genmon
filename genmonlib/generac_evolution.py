@@ -110,7 +110,6 @@ class Evolution(GeneratorController):
         )
         self.CurrentDivider = None
         self.CurrentOffset = None
-        self.DisableOutageCheck = False
         self.SerialNumberReplacement = None
         self.AdditionalRunHours = None
         self.NominalLineVolts = 240
@@ -5159,7 +5158,7 @@ class Evolution(GeneratorController):
                 StartInfo["pages"] = {
                     "status": True,
                     "maint": True,
-                    "outage": True,
+                    "outage": not self.DisableOutageCheck,
                     "logs": True,
                     "monitor": True,
                     "maintlog": True,
@@ -5221,9 +5220,6 @@ class Evolution(GeneratorController):
                         "liquidcooled", return_type=bool, default=False
                     )
 
-                self.DisableOutageCheck = self.config.ReadValue(
-                    "disableoutagecheck", return_type=bool, default=False
-                )
                 self.bUseLegacyWrite = self.config.ReadValue(
                     "uselegacysetexercise", return_type=bool, default=False
                 )

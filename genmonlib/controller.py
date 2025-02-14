@@ -125,6 +125,7 @@ class GeneratorController(MySupport):
         self.ExternalSensorDataTime = None
         self.ExternalSensorGagueData = None
         self.ExternalDataLock = threading.RLock()
+        self.DisableOutageCheck = False
 
         self.ProgramStartTime = datetime.datetime.now() # used for com metrics
         self.OutageStartTime = (self.ProgramStartTime)  # if these two are the same, no outage has occured
@@ -189,6 +190,10 @@ class GeneratorController(MySupport):
                 if self.EstimateLoad > 1:
                     self.EstimateLoad = 1
 
+                self.DisableOutageCheck = self.config.ReadValue(
+                    "disableoutagecheck", return_type=bool, default=False
+                )
+                
                 if self.config.HasOption("outagelog"):
                     self.OutageLog = self.config.ReadValue("outagelog")
                     self.LogError(

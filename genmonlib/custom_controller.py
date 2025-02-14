@@ -63,7 +63,6 @@ class CustomController(GeneratorController):
         )  # lock to synchronize access to the logs
         self.ConfigValidated = False
         self.ControllerDetected = False
-        self.DisableOutageCheck = False
         # for custom controllers
         self.SerialBaudRate = 9600
         self.SerialParity = None
@@ -162,9 +161,6 @@ class CustomController(GeneratorController):
             )
             self.UseCalculatedPower = self.config.ReadValue(
                 "usecalculatedpower", return_type=bool, default=False
-            )
-            self.DisableOutageCheck = self.config.ReadValue(
-                "disableoutagecheck", return_type=bool, default=False
             )
             # used for controllers that use serial comms other than 9600, N, 8, 1
             # NOTE: This is only for custom controllers
@@ -1578,12 +1574,12 @@ class CustomController(GeneratorController):
             else:
                 if "reg_type" in entry.keys():
                     reg_type = entry["reg_type"]
-                    if not reg_type in ["coil", "holding", "input", "file"]:
+                    if not reg_type in ["coil", "holding", "input", "file", "config"]:
                         self.LogError("Error : invalid reg_type in GetDisplayEntry:" + str(entry))
                         return ReturnTitle, ReturnValue
                 Register = entry["reg"].lower()
 
-            if Register != None and not self.StringIsHex(Register):
+            if reg_type != "config" and Register != None and not self.StringIsHex(Register):
                 self.LogError("Error: reg does not contain valid hex value in input to GetDisplayEntry: "+ str(entry))
                 return ReturnTitle, ReturnValue
             
@@ -1659,7 +1655,19 @@ class CustomController(GeneratorController):
                 if value != False:
                     #self.LogDebug("Filtering entry " + entry["title"] + ": " + str(value))
                     return ReturnTitle, value
-                
+            
+            # The entry is a config file read
+            if "reg_type" in entry and entry["reg_type"] == "config":
+                if entry["type"] == "bool":
+                    ReturnValue = self.config.ReadValue(Register, return_type=bool, default=False)
+                elif entry["type"] == "int":
+                    ReturnValue = self.config.ReadValue(Register, return_type=int, default=None)
+                elif entry["type"] == "float":
+                    ReturnValue = self.config.ReadValue(Register, return_type=float, default=None)
+                elif entry["type"] == "ascii":
+                    ReturnValue = self.config.ReadValue(Register, default="")
+                return ReturnTitle, ReturnValue
+            
             if entry["type"] == "bits":
                 value = self.GetParameter(Register, ReturnInt=True, IsCoil=IsCoil, IsInput=IsInput)
                 value = self.ProcessMaskModifier(entry, value)

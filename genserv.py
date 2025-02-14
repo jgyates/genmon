@@ -3320,18 +3320,17 @@ def ReadSettingsFromFile():
         "modbus_tcp",
     ]
 
-    if ControllerType == "generac_evo_nexus":
-        ConfigSettings["disableoutagecheck"] = [
-            "boolean",
-            "Do Not Check for Outages",
-            17,
-            False,
-            "",
-            "",
-            GENMON_CONFIG,
-            GENMON_SECTION,
-            "disableoutagecheck",
-        ]
+    ConfigSettings["disableoutagecheck"] = [
+        "boolean",
+        "Do Not Check for Outages",
+        17,
+        False,
+        "",
+        "",
+        GENMON_CONFIG,
+        GENMON_SECTION,
+        "disableoutagecheck",
+    ]
 
     if GStartInfo["SetGenTime"]:
         ConfigSettings["syncdst"] = [
