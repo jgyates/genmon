@@ -2169,7 +2169,10 @@ class GeneratorController(MySupport):
                     index = 0
                     for SensorBounds in self.ExternalSensorGagueData:
                         sensor_max = SensorBounds['max']
-                        sensor_min = SensorBounds['min']
+                        if 'min' in SensorBounds:
+                            sensor_min = SensorBounds['min']
+                        else:
+                            sensor_min = 0
                         sensor_nominal = SensorBounds['nominal']
                         sensor_name = SensorBounds['title'].strip()
                         sensor_units = SensorBounds['units']
