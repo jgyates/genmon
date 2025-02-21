@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Corrected problem with custom controllers using even parity
 - Updated bleson python package to work around error when using genmopeka sensor add on 
 - Added option to disable utility info in Briggs and Stratton support for off grid mode
+- Added and additional check for adding external gauges
 
 ## V1.19.04 -2024-08-21
 - Corrected issue with saving service journal with HTTPS enabled
