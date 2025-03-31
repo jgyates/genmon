@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Updated bleson python package to work around error when using genmopeka sensor add on 
 - Added option to disable utility info in Briggs and Stratton support for off grid mode
 - Added and additional check for adding external gauges
+- Corrected conflict with RPM sensor an Raw RPM sensor that would cause incorrect data in some add ons if "Display Unknown Sensors" was active with SNMP or MQTT add ons.
 
 ## V1.19.04 -2024-08-21
 - Corrected issue with saving service journal with HTTPS enabled
