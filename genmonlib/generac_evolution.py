@@ -2681,7 +2681,7 @@ class Evolution(GeneratorController):
         # Evo Liquid Cooled: ramps up to 300 decimal (1800 RPM)
         # Nexus and Evo Air Cooled: ramps up to 600 decimal on LP/NG   (3600 RPM)
         # this is possibly raw data from RPM sensor
-        Sensors.append({"Raw RPM Sensor": self.GetParameter("003c")})
+        Sensors.append({"Raw Revolution Sensor": self.GetParameter("003c")})
         Sensors.append({"Hz (Calculated)": self.GetFrequency(Calculate=True)})
 
         if self.EvolutionController and self.LiquidCooled:
