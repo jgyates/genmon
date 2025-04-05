@@ -827,7 +827,7 @@ class Monitor(MySupport):
                 ## These commands are used by the web / socket interface only
                 "power_log_json": [
                     self.Controller.GetPowerHistory,
-                    (command.lower(),),
+                    (command.lower(),False, True),
                     True,
                 ],
                 "power_log_clear": [self.Controller.ClearPowerLog, (), True],

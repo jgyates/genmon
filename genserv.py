@@ -3001,7 +3001,7 @@ def ReadAdvancedSettingsFromFile():
             "int",
             "Maximum Entries in Power Log",
             71,
-            "4000",
+            "8000",
             "digits",
             0,
             GENMON_CONFIG,

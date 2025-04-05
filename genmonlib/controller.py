@@ -84,17 +84,18 @@ class GeneratorController(MySupport):
         self.MinimumOutageDuration = 0
         self.PowerLogMaxSize = 15.0  # 15 MB max size
         self.PowerLog = os.path.join(ConfigFilePath, "kwlog.txt")
-        self.MaxPowerLogEntries = 4000
+        self.MaxPowerLogEntries = 8000
         self.FuelLog = os.path.join(ConfigFilePath, "fuellog.txt")
         self.FuelLock = threading.RLock()
         self.PowerLogList = []
         self.PowerLock = threading.RLock()
         self.bAlternateDateFormat = False
+        self.HoursFuelRemainingAtLoad = None
+        self.HoursFuelRemainingCurrentLoad = None
+        self.EstimatedFuleInTank = None
         self.KWHoursMonth = None
         self.FuelMonth = None
         self.RunHoursMonth = None
-        self.RunHoursYear = None
-        self.FuelTotal = None
         self.TileList = []  # Tile list for GUI
         self.TankData = None
         self.FuelLevelOK = None  # used in mynotify.py
@@ -221,7 +222,7 @@ class GeneratorController(MySupport):
                     "kwlogmax", return_type=float, default=15.0
                 )
                 self.MaxPowerLogEntries = self.config.ReadValue(
-                    "max_powerlog_entries", return_type=int, default=4000
+                    "max_powerlog_entries", return_type=int, default=8000
                 )
 
                 if self.config.HasOption("nominalfrequency"):
@@ -1674,7 +1675,6 @@ class GeneratorController(MySupport):
     # ------------ GeneratorController::ReducePowerSamples-----------------------
     def ReducePowerSamples(self, PowerList, MaxSize):
 
-
         if MaxSize == 0:
             self.LogError("RecducePowerSamples: Error: Max size is zero")
             return []
@@ -1684,31 +1684,92 @@ class GeneratorController(MySupport):
             return PowerList
 
         try:
-            # reduce to only the last 31 days
-            NewList = self.GetPowerLogForMinutes(60 * 24 * 31, InputList=PowerList)
-            
-            # if we have too many entries due to a remainder or not removing zero samples, then delete some
-            if len(NewList) > MaxSize:
-                return self.RemovePowerSamples(NewList, MaxSize)
+            # if we have too many entries, then delete some
+            if len(PowerList) > MaxSize:
+                return self.RemovePowerSamples(PowerList, MaxSize)
         except Exception as e1:
             self.LogErrorLine("Error in RecducePowerSamples: %s" % str(e1))
             return PowerList
 
-        return NewList
+        return PowerList
 
+    # ------------ GeneratorController::AverageTwoSamples-----------------------
+    def AverageTwoSamples(self, a, b):
+        try:
+            if float(a[1]) == 0:
+                return a
+            if float(b[1]) == 0:
+                return b
+             
+            average = (float(a[1]) + float(b[1])) / 2.0
+            average = round(average, 2)
+            return [a[0], str(average)]
+        except Exception as e1:
+            self.LogErrorLine("Error in AverageTwoSamples: %s" % str(e1))
+            return a
+    # ------------ GeneratorController::ReduceList------------------------------
+    def ReduceList(self, inputlist):
+        try:
+
+            if len(inputlist) < 2:
+                return inputlist
+            if len(inputlist) % 2 == 0:
+                # even
+                Lenght = len(inputlist)
+                isEven = True
+            else:
+                Lenght = len(inputlist) - 1
+                isEven = False
+            OutList = []
+
+            for k in range(0,Lenght,2):
+                try:
+                    # check to see if there are zero entries for the power
+                    if float(inputlist[k][1]) == 0 or float(inputlist[k+1][1]) == 0:
+                        OutList.append(inputlist[k])
+                        OutList.append(inputlist[k+1])
+                    else:
+                        OutList.append(self.AverageTwoSamples(inputlist[k],inputlist[k+1]))
+                except Exception as e1:
+                    self.LogErrorLine("Error in ReduceList (2): " + str(e1) +", " + str(k) + ", " + str(Lenght))
+                    self.LogErrorLine("isEven = " + str(isEven))
+            if not isEven:
+                OutList.append(inputlist[-1])
+            return OutList
+        except Exception as e1:
+            self.LogErrorLine("Error in ReduceList: %s" % str(e1))
+            return inputlist
     # ------------ GeneratorController::RemovePowerSamples-----------------------
-    def RemovePowerSamples(self, List, MaxSize):
+    def RemovePowerSamples(self, inputList, MaxSize):
 
         try:
-            NewList = List[:]
-            if len(NewList) <= MaxSize:
+            self.LogDebug("Enter RemovePowerSamples:" + str(len(inputList)))
+            
+            if len(inputList) <= MaxSize:
                 self.LogError("RemovePowerSamples: Error: Can't remove ")
-                return NewList
+                return inputList
+            
+            
+            '''
+            This code is removed as it is a work in progress to reduce the working set of power log samples
+            NewList = inputList[:]   # copy
+            try:
+                for i in range(10):
+                    if len(NewList) <= MaxSize:
+                        break
+                    NewList = self.ReduceList(NewList)
 
+            except Exception as e1:
+                self.LogError("RemovePowerSamples: Error: in list reduction: " + str(e1))
+
+            self.LogDebug("Post Reduce RemovePowerSamples:" + str(len(NewList)))'
+            '''
             # This will just remove all samples but the first MaxSize. This will only do anything if the above
             # code failes to find valid samples to remove (i.e. all samples are zero)
-            if len(NewList) > MaxSize:
-                NewList = NewList[:MaxSize]
+            if len(inputList) > MaxSize:
+                NewList = inputList[:MaxSize]
+
+            self.LogDebug("Exit RemovePowerSamples:" + str(len(NewList)))
             return NewList
         except Exception as e1:
             self.LogErrorLine("Error in RemovePowerSamples: %s" % str(e1))
@@ -1749,10 +1810,10 @@ class GeneratorController(MySupport):
             return []
         PowerList = []
 
-        # return cached list if we have read the file before
-        if len(self.PowerLogList) and not Minutes:
-            return self.PowerLogList
         with self.PowerLock:
+            # return cached list if we have read the file before
+            if len(self.PowerLogList) and not Minutes:
+                return self.PowerLogList
             if Minutes:
                 return self.GetPowerLogForMinutes(Minutes)
 
@@ -1779,13 +1840,15 @@ class GeneratorController(MySupport):
                 )
 
             if len(PowerList) > self.MaxPowerLogEntries and not NoReduce:
+                self.LogDebug("Reducing old: " + str(len(PowerList) ))
                 PowerList = self.ReducePowerSamples(PowerList, self.MaxPowerLogEntries)
+                self.LogDebug("Reducing new: " + str(len(PowerList) ))
             if not len(self.PowerLogList):
                 self.PowerLogList = PowerList
         return PowerList
 
     # ------------ GeneratorController::GetPowerHistory--------------------------
-    def GetPowerHistory(self, CmdString, NoReduce=False):
+    def GetPowerHistory(self, CmdString, NoReduce=False, FromUI=False):
 
         KWHours = False
         FuelConsumption = False
@@ -1848,6 +1911,10 @@ class GeneratorController(MySupport):
             return msgbody
 
         try:
+            if FromUI and Minutes == 0 and KWHours == False and FuelConsumption == False and RunHours == False:
+                # if raw log is requested and minutes are zero and from the UI then reduce to 31 days
+                self.LogDebug("Reducing from UI: " + CmdString)
+                Minutes = (60 *24 * 31) # Minutes in month
 
             PowerList = self.ReadPowerLogFromFile(Minutes=Minutes)
 
@@ -2228,7 +2295,7 @@ class GeneratorController(MySupport):
 
         try:
             time.sleep(0.5)
-            if self.WaitForExit("MaintenanceHouseKeepingThread", 10):  #
+            if self.WaitForExit("MaintenanceHouseKeepingThread", 5):  #
                 return
             
             while True:
@@ -2238,15 +2305,29 @@ class GeneratorController(MySupport):
                         "power_log_json=43200,kw"
                     )  # 43200 minutes in a month
                     self.FuelMonth = self.GetPowerHistory("power_log_json=43200,fuel")
-                    self.FuelTotal = self.GetPowerHistory("power_log_json=0,fuel")
+
                     self.RunHoursMonth = self.GetPowerHistory(
                         "power_log_json=43200,time"
                     )
-                    self.RunHoursYear = self.GetPowerHistory(
-                        "power_log_json=525600,time"
-                    )
-                    # 525600 minutes in a year
-                    if self.WaitForExit("MaintenanceHouseKeepingThread", 60):  #
+
+                    if self.FuelTankCalculationSupported() and not (
+                        self.FuelType == "Propane"
+                        and (self.ExternalFuelDataSupported() or self.FuelSensorSupported())
+                    ):
+                        self.EstimatedFuleInTank = self.GetEstimatedFuelInTank(ReturnFloat=True)
+
+                    # Show hours of fuel remaining if any calculation is supported
+                    if (
+                        self.FuelTankCalculationSupported()
+                        or self.ExternalFuelDataSupported()
+                        or self.FuelSensorSupported()
+                    ):
+                        self.HoursFuelRemainingAtLoad = self.GetRemainingFuelTime(ReturnFloat=True)
+
+                        self.HoursFuelRemainingCurrentLoad = self.GetRemainingFuelTime(
+                            ReturnFloat=True, Actual=True
+                        )
+                    if self.WaitForExit("MaintenanceHouseKeepingThread", 60 * 10):  #
                         return
                 except Exception as e1:
                      self.LogErrorLine("Error in MaintenanceHouseKeepingThread: " + str(e1))
@@ -2334,15 +2415,16 @@ class GeneratorController(MySupport):
                 self.FuelType == "Propane"
                 and (self.ExternalFuelDataSupported() or self.FuelSensorSupported())
             ):
-                Maintenance["Maintenance"].append(
-                    {
-                        "Estimated Fuel In Tank ": self.ValueOut(
-                            self.GetEstimatedFuelInTank(ReturnFloat=True),
-                            Units,
-                            JSONNum,
-                        )
-                    }
-                )
+                if self.EstimatedFuleInTank != None:
+                    Maintenance["Maintenance"].append(
+                        {
+                            "Estimated Fuel In Tank ": self.ValueOut(
+                                self.EstimatedFuleInTank,
+                                Units,
+                                JSONNum,
+                            )
+                        }
+                    )
 
             # Show hours of fuel remaining if any calculation is supported
             if (
@@ -2350,28 +2432,25 @@ class GeneratorController(MySupport):
                 or self.ExternalFuelDataSupported()
                 or self.FuelSensorSupported()
             ):
-                DisplayText = (
-                    "Hours of Fuel Remaining (Estimated %.02f Load )"
-                    % self.EstimateLoad
-                )
-                RemainingFuelTimeFloat = self.GetRemainingFuelTime(ReturnFloat=True)
-                if RemainingFuelTimeFloat != None:
+                if self.HoursFuelRemainingAtLoad != None:
+                    DisplayText = (
+                        "Hours of Fuel Remaining (Estimated %.02f Load )"
+                        % self.EstimateLoad
+                    )
+
                     Maintenance["Maintenance"].append(
                         {
                             DisplayText: self.ValueOut(
-                                RemainingFuelTimeFloat, "h", JSONNum
+                                self.HoursFuelRemainingAtLoad, "h", JSONNum
                             )
-                        }
+                            }
                     )
 
-                RemainingFuelTimeFloat = self.GetRemainingFuelTime(
-                    ReturnFloat=True, Actual=True
-                )
-                if RemainingFuelTimeFloat != None:
+                if self.HoursFuelRemainingCurrentLoad != None:
                     Maintenance["Maintenance"].append(
                         {
                             "Hours of Fuel Remaining (Current Load)": self.ValueOut(
-                                RemainingFuelTimeFloat, "h", JSONNum
+                                self.HoursFuelRemainingCurrentLoad, "h", JSONNum
                             )
                         }
                     )
@@ -2395,29 +2474,11 @@ class GeneratorController(MySupport):
                             )
                         }
                     )
-                if self.FuelTotal != None:
-                    Maintenance["Maintenance"].append(
-                        {
-                            "Total Power Log Fuel Consumption": self.UnitsOut(
-                                self.FuelTotal, type=float, NoString=JSONNum
-                            )
-                        }
-                    )
                 if self.RunHoursMonth != None:
                     Maintenance["Maintenance"].append(
                         {
                             "Run Hours in last 30 days": self.UnitsOut(
                                 str(self.RunHoursMonth) + " h",
-                                type=float,
-                                NoString=JSONNum,
-                            )
-                        }
-                    )
-                if self.RunHoursYear != None:
-                    Maintenance["Maintenance"].append(
-                        {
-                            "Run Hours in the last year": self.UnitsOut(
-                                str(self.RunHoursYear) + " h",
                                 type=float,
                                 NoString=JSONNum,
                             )
