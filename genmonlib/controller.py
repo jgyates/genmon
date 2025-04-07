@@ -306,24 +306,29 @@ class GeneratorController(MySupport):
     def StartCommonThreads(self):
 
         self.Threads["CheckAlarmThread"] = MyThread(
-            self.CheckAlarmThread, Name="CheckAlarmThread"
-        )
+            self.CheckAlarmThread, Name="CheckAlarmThread", start = False)
+        self.Threads["CheckAlarmThread"].Start()
+
         # start read thread to process incoming data commands
         self.Threads["ProcessThread"] = MyThread(
-            self.ProcessThread, Name="ProcessThread"
-        )
+            self.ProcessThread, Name="ProcessThread", start = False)
+        self.Threads["ProcessThread"].Start()
 
         if self.EnableDebug:  # for debugging registers
-            self.Threads["DebugThread"] = MyThread(self.DebugThread, Name="DebugThread")
+            self.Threads["DebugThread"] = MyThread(self.DebugThread, Name="DebugThread", start = False)
+            self.Threads["DebugThread"].Start()
 
         # start thread for kw log
-        self.Threads["PowerMeter"] = MyThread(self.PowerMeter, Name="PowerMeter")
+        self.Threads["PowerMeter"] = MyThread(self.PowerMeter, Name="PowerMeter", start = False)
+        self.Threads["PowerMeter"].Start()
 
         self.Threads["MaintenanceHouseKeepingThread"] = MyThread(
-            self.MaintenanceHouseKeepingThread, Name="MaintenanceHouseKeepingThread")
+            self.MaintenanceHouseKeepingThread, Name="MaintenanceHouseKeepingThread", start = False)
+        self.Threads["MaintenanceHouseKeepingThread"].Start()
 
         if self.UseFuelLog:
-            self.Threads["FuelLogger"] = MyThread(self.FuelLogger, Name="FuelLogger")
+            self.Threads["FuelLogger"] = MyThread(self.FuelLogger, Name="FuelLogger", start = False)
+            self.Threads["FuelLogger"].Start()
 
     # ---------- GeneratorController:CheckForOutageCommon--------------------------
     def CheckForOutageCommon(self, UtilityVolts, ThresholdVoltage, PickupVoltage):
