@@ -1,0 +1,15 @@
+{
+    "buttons":[
+         {
+            "information": "This is an example of how to add buttons to genmon",
+            "onewordcommand" : "testexamplebutton",
+            "title" : "Example Button",
+            "command_sequence" : [
+                                 {
+                                    "reg": "example_button.py",
+                                    "reg_type": "script"
+                                 }
+                                 ]
+         }
+    ]
+}

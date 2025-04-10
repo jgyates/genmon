@@ -1,6 +1,7 @@
 {
     "buttons":[
          {
+            "information": "This file is used for the buttons on an Evolution Liquid Cooled controller",
             "onewordcommand" : "resetmaintwarn",
             "title" : "Reset Maintenance Warnings",
             "command_sequence" : [
