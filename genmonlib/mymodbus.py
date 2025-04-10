@@ -280,7 +280,7 @@ class ModbusProtocol(ModbusBase):
                 else:
                     self.CrcError += 1
                     return False, Packet
-            elif self.Slave.Buffer[self.MBUS_OFF_COMMAND] in [self.MBUS_CMD_WRITE_REGS]:
+            elif self.Slave.Buffer[self.MBUS_OFF_COMMAND] in [self.MBUS_CMD_WRITE_REGS, self.MBUS_CMD_WRITE_COILS]:
                 # it must be a write command response
                 if len(self.Slave.Buffer) < self.MIN_PACKET_MIN_WRITE_RESPONSE_LENGTH:
                     return True, EmptyPacket
@@ -377,16 +377,21 @@ class ModbusProtocol(ModbusBase):
 
     # -------------ModbusProtocol::PWT-------------------------------------------
     # called from derived calls to get to overridded function ProcessWriteTransaction
-    def _PWT(self, Register, Length, Data, min_response_override=None):
+    def _PWT(self, Register, Length, Data, min_response_override=None, IsCoil = False):
 
         try:
             with self.CommAccessLock:
                 MasterPacket = []
 
+                if IsCoil:
+                    cmd = self.MBUS_CMD_WRITE_COILS
+                else:
+                    cmd = self.MBUS_CMD_WRITE_REGS
+
                 MasterPacket = self.CreateMasterPacket(
                     Register,
                     length=int(Length),
-                    command=self.MBUS_CMD_WRITE_REGS,
+                    command=cmd,
                     data=Data,
                 )
 
@@ -404,8 +409,8 @@ class ModbusProtocol(ModbusBase):
             return False
 
     # -------------ModbusProtocol::ProcessWriteTransaction-----------------------
-    def ProcessWriteTransaction(self, Register, Length, Data):
-        return self._PWT(Register, Length, Data)
+    def ProcessWriteTransaction(self, Register, Length, Data, IsCoil = False):
+        return self._PWT(Register, Length, Data, IsCoil = IsCoil)
 
     # -------------ModbusProtocol::PT--------------------------------------------
     # called from derived calls to get to overridded function ProcessTransaction
@@ -700,6 +705,49 @@ class ModbusProtocol(ModbusBase):
                     Packet.append(CRCValue & 0x00FF)  # CRC low
                     Packet.append(CRCValue >> 8)  # CRC high
 
+            elif command == self.MBUS_CMD_WRITE_COILS:
+                if len(data) == 0:
+                    self.LogError(
+                        "Validation Error: CreateMasterPacket invalid length (3) %x %x"
+                        % (len(data), length)
+                    )
+                    self.ComValidationError += 1
+                    return []
+                if len(data) / 2 != length:
+                    self.LogError(
+                        "Validation Error: CreateMasterPacket invalid length (4) %x %x"
+                        % (len(data), length)
+                    )
+                    self.ComValidationError += 1
+                    return []
+                Packet.append(self.Address)  # address
+                Packet.append(command)  # command
+                Packet.append(RegisterInt >> 8)  # reg higy
+                Packet.append(RegisterInt & 0x00FF)  # reg low
+                Packet.append(length >> 8)  # Num of Reg higy
+                Packet.append(length & 0x00FF)  # Num of Reg low
+                ByteCount = int(length / 8)
+                if (length % 8 > 0):
+                    ByteCount += 1
+                Packet.append(ByteCount)  # byte count
+                # multiple coil writes are bits in a byte, but the data passed in is in a byte arry with each write being two bytes
+                # as a result we have to skip bytes in data[] as only the low bit contains the coil data
+                # our goal here is to take every other byte in the data[] array and take the last bit of that byte
+                # then line the bits up as the modbus data sent
+                ByteValue = 0
+                bitindex = 0
+                for byteindex in range(0, ByteCount):
+                    odd_data = data[1::2]   # extract every other odd value from list to another list
+                    ByteValue |= ((odd_data[byteindex] & 0x01) << bitindex)
+                    bitindex += 1
+                    if bitindex < 7:
+                        bitindex = 0
+                    Packet.append(ByteValue)  # data
+                CRCValue = self.GetCRC(Packet)
+                if CRCValue != None:
+                    Packet.append(CRCValue & 0x00FF)  # CRC low
+                    Packet.append(CRCValue >> 8)  # CRC high
+
             elif command == self.MBUS_CMD_READ_FILE:
 
                 # Note, we only support one sub request at at time
@@ -891,6 +939,7 @@ class ModbusProtocol(ModbusBase):
                 self.MBUS_CMD_READ_INPUT_REGS,
                 self.MBUS_CMD_READ_REGS,
                 self.MBUS_CMD_WRITE_REGS,
+                self.MBUS_CMD_WRITE_COILS,
                 self.MBUS_CMD_READ_FILE,
                 self.MBUS_CMD_WRITE_FILE,
             ]:
@@ -907,6 +956,7 @@ class ModbusProtocol(ModbusBase):
                 self.MBUS_CMD_READ_INPUT_REGS,
                 self.MBUS_CMD_READ_REGS,
                 self.MBUS_CMD_WRITE_REGS,
+                self.MBUS_CMD_WRITE_COILS,
                 self.MBUS_CMD_READ_FILE,
                 self.MBUS_CMD_WRITE_FILE,
             ]:

@@ -91,6 +91,7 @@ class ModbusBase(MySupport):
     MBUS_CMD_READ_COILS = 0x01          # Read Coils
     MBUS_CMD_READ_REGS = 0x03           # Read Holding Registers
     MBUS_CMD_READ_INPUT_REGS = 0x04     # Read Input Registers
+    MBUS_CMD_WRITE_COILS = 0x0f         # Write multiple coils
     MBUS_CMD_WRITE_REGS = 0x10
     MBUS_CMD_READ_FILE = 0x14
     MBUS_CMD_WRITE_FILE = 0x15
@@ -221,7 +222,7 @@ class ModbusBase(MySupport):
             self.LogError("Using Modbus function 4 instead of 3")
 
     # -------------ModbusBase::ProcessWriteTransaction---------------------------
-    def ProcessWriteTransaction(self, Register, Length, Data):
+    def ProcessWriteTransaction(self, Register, Length, Data, IsCoil = False):
         return
 
     # -------------ModbusBase::ProcessTransaction--------------------------------

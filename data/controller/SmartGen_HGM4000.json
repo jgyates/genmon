@@ -1,0 +1,1844 @@
+{
+  "information":"SmartGen HGM4000N series controllers",
+  "controller_name": "SmartGen HGM40x0 Controller",
+  "rated_max_output_power_kw": "Unknown",
+  "rated_nominal_voltage": "Unknown",
+  "rated_nominal_rpm": "Unknown",
+  "rated_nominal_freq": "Unknown",
+  "nominal_battery_voltage": "Unknown",
+  "generator_phase": "Unknown",
+  "coil_registers": {
+      "0000": {"length": 1, "text": "Common Alarm"},
+      "0001": {"length": 1, "text": "Common Warning Alarm"},
+      "0002": {"length": 1, "text": "Common Shutdown Alarm"},
+      "0003": {"length": 1, "text": "Remote Mode"},
+      "0006": {"length": 1, "text": "Mains On-Load"},
+      "0007": {"length": 1, "text": "Gen On-Load"},
+      "0008": {"length": 1, "text": "Emergency Stop"},
+      "0009": {"length": 1, "text": "Overspeed Alarm Shutdown"},
+      "000a": {"length": 1, "text": "Underspeed Alarm Shutdown"},
+      "000b": {"length": 1, "text": "Speed Signal Loss Shutdown"},
+      "000c": {"length": 1, "text": "Overfrequency Alarm Shutdown"},
+      "000d": {"length": 1, "text": "Underfrequency Alarm Shutdown"},
+      "000e": {"length": 1, "text": "Overvoltage Alarm Shutdown"},
+      "000f": {"length": 1, "text": "Undervoltage Alarm Shutdown"},
+      "0010": {"length": 1, "text": "Gen Overcurrent Shutdown"},
+      "0011": {"length": 1, "text": "Crank Failure"},
+      "0012": {"length": 1, "text": "High Water Temp Alarm Shutdown"},
+      "0013": {"length": 1, "text": "Low Oil Pressure Alarm Shutdown"},
+      "0014": {"length": 1, "text": "Frequency Loss Alarm"},
+      "0015": {"length": 1, "text": "Input Shutdown Alarm"},
+      "0016": {"length": 1, "text": "Low Fuel Level Shutdown Alarm"},
+      "0017": {"length": 1, "text": "Low Coolant Level Shutdown Alarm"},
+      "0018": {"length": 1, "text": "High Water Temp Warning Alarm"},
+      "0019": {"length": 1, "text": "Low Oil Pressure Warning Alarm"},
+      "001a": {"length": 1, "text": "Gen Overcurrent Warning Alarm"},
+      "001b": {"length": 1, "text": "Stop Failure Warning Alarm"},
+      "001c": {"length": 1, "text": "Low Fuel Level Warning"},
+      "001d": {"length": 1, "text": "Charging Failure Warning"},
+      "001e": {"length": 1, "text": "Battery Undervoltage Warning Alarm"},
+      "001f": {"length": 1, "text": "Battery Overvoltage Warning Alarm"},
+      "0020": {"length": 1, "text": "Input Warning Alarm"},
+      "0021": {"length": 1, "text": "Speed Signal Loss Warning"},
+      "0022": {"length": 1, "text": "Low Coolant Level Warning"},
+      "0023": {"length": 1, "text": "Temp Sensor Open Warning"},
+      "0024": {"length": 1, "text": "Oil Pressure Sensor Open Warning"},
+      "0025": {"length": 1, "text": "Fuel Level Sensor Open Warning"},
+      "0026": {"length": 1, "text": "Aux Sensor Open Warning"},
+      "0027": {"length": 1, "text": "Aux Sensor Warning"},
+      "0028": {"length": 1, "text": "Test Mode"},
+      "0029": {"length": 1, "text": "Auto Mode"},
+      "002a": {"length": 1, "text": "Manual Mode"},
+      "002b": {"length": 1, "text": "Stop Mode"},
+      "002c": {"length": 1, "text": "Temp Sensor Open Shutdown"},
+      "002d": {"length": 1, "text": "Oil Pressure Sensor Open Shutdown"},
+      "002e": {"length": 1, "text": "Fuel Level Sensor Open Shutdown"},
+      "002f": {"length": 1, "text": "Aux Sensor Open Shutdown"},
+      "0030": {"length": 1, "text": "Emergensy Stop Input"},
+      "0031": {"length": 1, "text": "Aux Input 1"},
+      "0032": {"length": 1, "text": "Aux Input 2"},
+      "0033": {"length": 1, "text": "Aux Input 3"},
+      "0034": {"length": 1, "text": "Aux Input 4"},
+      "0035": {"length": 1, "text": "Aux Input 5"},
+      "0038": {"length": 1, "text": "Crank Relay Output"},
+      "0039": {"length": 1, "text": "Fuel Relay Output"},
+      "003a": {"length": 1, "text": "Aux Output 1"},
+      "003b": {"length": 1, "text": "Aux Output 2"},
+      "003c": {"length": 1, "text": "Aux Output 3"},
+      "003d": {"length": 1, "text": "Aux Output 4"},
+      "003e": {"length": 1, "text": "Aux Output 5"},
+      "003f": {"length": 1, "text": "Maintenance Time Due Warning"},
+      "0040": {"length": 1, "text": "Mains Fault"},
+      "0041": {"length": 1, "text": "Mains Normal"},
+      "0042": {"length": 1, "text": "Mains Overvoltage"},
+      "0043": {"length": 1, "text": "Mains Undervoltage"},
+      "0044": {"length": 1, "text": "Mains Phase Loss"},
+      "0045": {"length": 1, "text": "Mains Blackout"},
+      "0046": {"length": 1, "text": "Charger Fail to Charge Warning"},
+      "0047": {"length": 1, "text": "Overpower Warning"},
+      "0048": {"length": 1, "text": "Gen Normal"},
+      "0049": {"length": 1, "text": "Gen Overvoltage Warning"},
+      "004a": {"length": 1, "text": "Gen Undervoltage Warning"},
+      "004b": {"length": 1, "text": "Gen Overfrequency Warning"},
+      "004c": {"length": 1, "text": "Gen Underfrequency Warning"},
+      "004d": {"length": 1, "text": "Gen Overcurrent Warning"},
+      "004e": {"length": 1, "text": "Scheduled Not Run"},
+      "004f": {"length": 1, "text": "ECU Warning"},
+      "0050": {"length": 1, "text": "Aux Sensor Shutdown"},
+      "0051": {"length": 1, "text": "Maintenance Time Due Shutdown Alarm"},
+      "0052": {"length": 1, "text": "Overpower Shutdown Alarm"},
+      "0053": {"length": 1, "text": "ECU Alarm Shutdown"},
+      "0054": {"length": 1, "text": "ECU Failure Shutdown"}
+  },
+  "holding_registers": {
+      "0000": {"length": 2, "text": "Mains Voltage L1"},
+      "0001": {"length": 2, "text": "Mains Voltage L2"},
+      "0002": {"length": 2, "text": "Mains Voltage L3"},
+      "0003": {"length": 2, "text": "Mains Voltage L1-L2"},
+      "0004": {"length": 2, "text": "Mains Voltage L2-L3"},
+      "0005": {"length": 2, "text": "Mains Voltage L3-L1"},
+      "0006": {"length": 2, "text": "Mains frequency"},
+      "0007": {"length": 2, "text": "Generator Voltage L1"},
+      "0008": {"length": 2, "text": "Generator Voltage L2"},
+      "0009": {"length": 2, "text": "Generator Voltage L3"},
+      "000a": {"length": 2, "text": "Generator Voltage L1-L2"},
+      "000b": {"length": 2, "text": "Generator Voltage L2-L3"},
+      "000c": {"length": 2, "text": "Generator Voltage L3-L1"},
+      "000d": {"length": 2, "text": "Generator Frequency"},
+      "000e": {"length": 2, "text": "Generator Current L1"},
+      "000f": {"length": 2, "text": "Generator Current L2"},
+      "0010": {"length": 2, "text": "Generator Current L3"},
+      "0011": {"length": 2, "text": "Water Temperature"},
+      
+      "0013": {"length": 2, "text": "Oil Pressure"},
+
+      "0015": {"length": 2, "text": "Fuel Level"},
+
+      "0017": {"length": 2, "text": "Engine RPM"},
+      "0018": {"length": 2, "text": "Battery Voltage"},
+      "0019": {"length": 2, "text": "D+ Voltage"},
+      "001a": {"length": 2, "text": "Active Power"},
+      "001b": {"length": 2, "text": "Reactive Power"},
+      "001c": {"length": 2, "text": "Apparent Power"},
+      "001d": {"length": 2, "text": "Power Factor"},
+      "001e": {"length": 2, "text": "Aux Sensor"},
+
+      "0020": {"length": 2, "text": "Maintenance Countdown Hours"},
+      "0021": {"length": 2, "text": "Maintenance Countdown Mins"},
+      "0022": {"length": 2, "text": "Controller Running Status"},
+      "0023": {"length": 2, "text": "Delay"},
+      "0024": {"length": 2, "text": "Auto Running Status"},
+      "0025": {"length": 2, "text": "Delay"},
+      "0026": {"length": 2, "text": "ATS Running Status"},
+      "0027": {"length": 2, "text": "Delay"},
+      "0028": {"length": 2, "text": "Mains Status"},
+      "0029": {"length": 2, "text": "Delay"},
+      "002a": {"length": 2, "text": "Engine Run Time Hours MSB"},
+      "002b": {"length": 2, "text": "Engine Run Time Hours LSB"},
+      "002c": {"length": 2, "text": "Engine Run Time Mins"},
+      "002d": {"length": 2, "text": "Engine Run Time Secs"},
+      "002e": {"length": 2, "text": "Engine Starts MSB"},
+      "002f": {"length": 2, "text": "Engine Starts LSB"},
+      "0030": {"length": 2, "text": "Total Energy Produced MSB"},
+      "0031": {"length": 2, "text": "Total Energy Produced LSB"},
+      "0032": {"length": 2, "text": "Controller Software Version"},
+      "0033": {"length": 2, "text": "Controller Hardware Version"},
+      "0034": {"length": 2, "text": "L1 Active Power"},
+      "0035": {"length": 2, "text": "L2 Active Power"},
+      "0036": {"length": 2, "text": "L3 Active Power"},
+      "0037": {"length": 2, "text": "Output Load Percentage"},
+      "003a": {"length": 2, "text": "Coolant Level"},
+      "003b": {"length": 2, "text": "Oil Temperature"},
+      "0042": {"length": 2, "text": "Fuel Consumption"},
+      "0044": {"length": 4, "text": "Total Fuel Consumption"},
+      "0046": {"length": 2, "text": "Controller Internal Temperature"},
+      "0047": {"length": 2, "text": "Controller Model"},
+      "0048": {"length": 2, "text": "Controller Time Year"},
+      "0049": {"length": 2, "text": "Controller Time Month"},
+      "004a": {"length": 2, "text": "Controller Time Day"},
+      "004b": {"length": 2, "text": "Controller Time Day of Week"},
+      "004c": {"length": 2, "text": "Controller Time Hour"},
+      "004d": {"length": 2, "text": "Controller Time Min"},
+      "004e": {"length": 2, "text": "Controller Time Sec"},
+      "004f": {"length": 2, "text": "Software Release Year"},
+      "0050": {"length": 2, "text": "Software Release Month"},
+      "0051": {"length": 2, "text": "Software Release Day"}
+  },
+  "include":{
+      "disable_obj":{
+        "disable":{
+        "comment":"This allows a filter to be applied to the data to look for exception data (i.e. invalid data)",
+        "comment2": "If ECU doesn’t receive sensor information, data will be 32767",
+        "inherit" : true,
+        "type":"bits",
+        "mask":"ffff",
+        "value":"7fff",
+        "text":true,
+        "title":"Disable Object",
+        "default":false
+        }
+      },
+      "filter_obj":{
+        "filter":{
+        "comment":"This allows a filter to be applied to the data to look for exception data (i.e. invalid data)",
+        "comment2": "In this instance if the sensor reads 32766 then it is in an open state",
+        "inherit" : true,
+        "type":"int",
+        "mask":"ffff",
+        "value":"7ffe",
+        "exec": "exec_out = 'Open State' if {} == 32766 else False",
+        "text": "Open",
+        "title":"Open State",
+        "default":false
+          }
+      },
+      "offgrid":{
+        "disable":{
+        "comment":"If this evaluates to true then the entry will be disabled. Note that this reads from the config file",
+        "reg": "disableoutagecheck",
+        "reg_type": "config",
+        "type":"bool",
+        "title":"Off Grid",
+        "default":false
+        }
+      },
+      "threephase":{
+        "disable":{
+        "comment":"Used to enable indications related to 3 phase generators. Note that this reads from the config file",
+        "reg": "phase",
+        "reg_type": "config",
+        "type":"bits",
+        "mask": "0003",
+        "value": "0003",
+        "text": false,
+        "title": "Single Phase",
+        "default": true
+        }
+      }
+
+  },
+  "status":[
+    {
+      "reg": "0007",
+      "reg_type": "coil",
+      "type": "bits",
+      "mask": "0001",
+      "value": "0001",
+      "text": "Closed",
+      "title": "Generator Output"
+    },
+    {
+      "reg": "0007",
+      "reg_type": "coil",
+      "type": "bits",
+      "mask": "0001",
+      "value": "0000",
+      "text": "Open",
+      "title": "Generator Output"
+    },
+    {"title": "Line",
+      "comment": "The 'container' modifier will allow the values to be displayed with some hierarchy", 
+      "container": true,
+      "value" : [
+          {
+              "reg": "0000",
+              "mask": "ffff",
+              "multiplier": 1,
+              "type": "int",
+              "title": "Mains Voltage L1",
+              "units": "V",
+              "include":"offgrid"
+            },
+            {
+              "reg": "0001",
+              "mask": "ffff",
+              "multiplier": 1,
+              "type": "int",
+              "title": "Mains Voltage L2",
+              "units": "V",
+              "include":"offgrid"
+            },
+            {
+              "reg": "0002",
+              "mask": "ffff",
+              "multiplier": 1,
+              "type": "int",
+              "title": "Mains Voltage L3",
+              "units": "V",
+              "include":"offgrid,threephase"
+            },
+            {
+              "reg": "0003",
+              "mask": "ffff",
+              "multiplier": 1,
+              "type": "int",
+              "title": "Mains Voltage L1-L2",
+              "units": "V",
+              "include":"offgrid"
+            },
+            {
+              "reg": "0004",
+              "mask": "ffff",
+              "multiplier": 1,
+              "type": "int",
+              "title": "Mains Voltage L2-L3",
+              "units": "V",
+              "include":"offgrid,threephase"
+            },
+            {
+              "reg": "0005",
+              "mask": "ffff",
+              "multiplier": 1,
+              "type": "int",
+              "title": "Mains Voltage L3-L1",
+              "units": "V",
+              "include":"offgrid,threephase"
+            },
+            {
+              "reg": "0006",
+              "mask": "ffff",
+              "multiplier": 0.1,
+              "type": "int",
+              "title": "Mains Frequency",
+              "units": "Hz",
+              "include":"offgrid"
+            }  
+          ]
+      },
+      {"title": "Engine",
+      "comment": "The 'container' modifier will allow the values to be displayed with some hierarchy", 
+      "container": true,
+      "value" : [
+            {
+              "reg": "0011",
+              "mask": "ffff",
+              "type": "int",
+              "title": "Water Temperature",
+              "temperature": "celsius",
+              "units": "C",
+              "include":"disable_obj,filter_obj"
+            },
+            {
+              "reg": "003b",
+              "mask": "ffff",
+              "type": "int",
+              "title": "Oil Temperature",
+              "temperature": "celsius",
+              "units": "C",
+              "include":"disable_obj,filter_obj"
+            },
+            {
+              "reg": "0013",
+              "mask": "ffff",
+              "multiplier": 0.145038,
+              "type": "int",
+              "title": "Oil Pressure",
+              "units": "PSI",
+              "include":"disable_obj,filter_obj"
+            },
+            {
+              "reg": "0018",
+              "mask": "ffff",
+              "multiplier": 0.1,
+              "type": "float",
+              "title": "Battery Voltage",
+              "units": "V"
+            },
+            {
+              "reg": "0017",
+              "mask": "ffff",
+              "type": "int",
+              "title": "RPM",
+              "units": null
+            },
+            {
+              "reg": "003a",
+              "mask": "ffff",
+              "type": "int",
+              "title": "Coolant Level",
+              "units": "%",
+              "include":"disable_obj,filter_obj"
+            }
+          ]
+      },
+      {"title": "Generator",
+      "comment": "The 'container' modifier will allow the values to be displayed with some hierarchy", 
+      "container": true,
+      "value" : [
+            {
+              "reg": "0007",
+              "mask": "ffff",
+              "multiplier": 1,
+              "type": "int",
+              "title": "Generator Voltage L1",
+              "units": "V"
+            },
+            {
+              "reg": "0008",
+              "mask": "ffff",
+              "multiplier": 1,
+              "type": "int",
+              "title": "Generator Voltage L2",
+              "units": "V"
+            },
+            {
+              "reg": "0009",
+              "mask": "ffff",
+              "multiplier": 1,
+              "type": "int",
+              "title": "Generator Voltage L3",
+              "units": "V",
+              "include":"threephase"
+            },
+            {
+              "reg": "000a",
+              "mask": "ffff",
+              "multiplier": 1,
+              "type": "int",
+              "title": "Generator Voltage L1-L2",
+              "units": "V"
+            },
+            {
+              "reg": "000b",
+              "mask": "ffff",
+              "multiplier": 1,
+              "type": "int",
+              "title": "Generator Voltage L2-L3",
+              "units": "V",
+              "include":"threephase"
+            },
+            {
+              "reg": "000c",
+              "mask": "ffff",
+              "multiplier": 1,
+              "type": "int",
+              "title": "Generator Voltage L3-L1",
+              "units": "V",
+              "include":"threephase"
+            },
+            {
+              "reg": "000d",
+              "mask": "ffff",
+              "multiplier": 0.1,
+              "type": "float",
+              "title": "Generator Frequency",
+              "units": "Hz"
+            },    
+            {
+              "reg": "000e",
+              "mask": "ffff",
+              "multiplier": 0.1,
+              "type": "float",
+              "title": "L1 Current",
+              "units": "A"
+            },    
+            {
+              "reg": "000f",
+              "mask": "ffff",
+              "multiplier": 0.1,
+              "type": "float",
+              "title": "L2 Current",
+              "units": "A"
+            },    
+            {
+              "reg": "0010",
+              "mask": "ffff",
+              "multiplier": 0.1,
+              "type": "float",
+              "title": "L3 Current",
+              "units": "A",
+              "include":"threephase"
+            },    
+            {
+              "reg": "0034",
+              "mask": "ffff",
+              "type": "float",
+              "multiplier": 0.1,
+              "title": "L1 Active Power",
+              "units": "kW"
+            },
+            {
+              "reg": "0035",
+              "mask": "ffff",
+              "type": "float",
+              "multiplier": 0.1,
+              "title": "L2 Active Power",
+              "units": "kW"
+            },
+            {
+              "reg": "0036",
+              "mask": "ffff",
+              "type": "float",
+              "multiplier": 0.1,
+              "title": "L3 Active Power",
+              "units": "kW",
+              "include":"threephase"
+            },
+            {
+              "reg": "001a",
+              "mask": "ffff",
+              "type": "float",
+              "multiplier": 0.1,
+              "title": "Total Active Power",
+              "units": "kW"
+            },
+            {
+              "reg": "001b",
+              "mask": "ffff",
+              "type": "float",
+              "multiplier": 0.1,
+              "title": "Reactive Power",
+              "units": "kVAR"
+            },
+            {
+              "reg": "001c",
+              "mask": "ffff",
+              "type": "float",
+              "multiplier": 0.1,
+              "title": "Apparent Power",
+              "units": "kVA"
+            },
+            {
+              "reg": "001d",
+              "mask": "ffff",
+              "type": "float",
+              "multiplier": 0.01,
+              "title": "Power Factor",
+              "units": null
+            },
+            {
+              "reg": "0037",
+              "mask": "ffff",
+              "type": "int",
+              "title": "Output Load",
+              "units": "%"
+            }
+          ]
+      },
+      {"title": "Inputs",
+      "comment": "The 'container' modifier will allow the values to be displayed with some hierarchy",
+      "comment2": "You can change the title to indicate the input's funtion or remove unused inputs",
+      "container": true,
+      "value" : [
+        {
+          "reg": "0031",
+          "reg_type": "coil",
+          "type": "bool",
+          "mask": "0001",
+          "value": true,
+          "text": "Active",
+          "title": "Aux Input 1"
+        },
+        {
+          "reg": "0031",
+          "reg_type": "coil",
+          "type": "bool",
+          "mask": "0001",
+          "value": false,
+          "text": "Inactive",
+          "title": "Aux Input 1"
+        },
+        {
+          "reg": "0032",
+          "reg_type": "coil",
+          "type": "bool",
+          "mask": "0001",
+          "value": true,
+          "text": "Active",
+          "title": "Aux Input 2"
+        },
+        {
+          "reg": "0032",
+          "reg_type": "coil",
+          "type": "bool",
+          "mask": "0001",
+          "value": false,
+          "text": "Inactive",
+          "title": "Aux Input 2"
+        },
+        {
+          "reg": "0033",
+          "reg_type": "coil",
+          "type": "bool",
+          "mask": "0001",
+          "value": true,
+          "text": "Active",
+          "title": "Aux Input 3"
+        },
+        {
+          "reg": "0033",
+          "reg_type": "coil",
+          "type": "bool",
+          "mask": "0001",
+          "value": false,
+          "text": "Inactive",
+          "title": "Aux Input 3"
+        },
+        {
+          "reg": "0034",
+          "reg_type": "coil",
+          "type": "bool",
+          "mask": "0001",
+          "value": true,
+          "text": "Active",
+          "title": "Aux Input 4"
+        },
+        {
+          "reg": "0034",
+          "reg_type": "coil",
+          "type": "bool",
+          "mask": "0001",
+          "value": false,
+          "text": "Inactive",
+          "title": "Aux Input 4"
+        },
+        {
+          "reg": "0035",
+          "reg_type": "coil",
+          "type": "bool",
+          "mask": "0001",
+          "value": true,
+          "text": "Active",
+          "title": "Aux Input 5"
+        },
+        {
+          "reg": "0035",
+          "reg_type": "coil",
+          "type": "bool",
+          "mask": "0001",
+          "value": false,
+          "text": "Inactive",
+          "title": "Aux Input 5"
+          }
+        ]
+      },
+      {"title": "Outputs",
+      "comment": "The 'container' modifier will allow the values to be displayed with some hierarchy",
+      "comment2": "You can change the title to indicate the output's funtion or remove unused outputs",
+      "container": true,
+      "value" : [
+          {
+          "reg": "003a",
+          "reg_type": "coil",
+          "type": "bool",
+          "mask": "0001",
+          "value": true,
+          "text": "Active",
+          "title": "Aux Output 1"
+        },
+        {
+          "reg": "003a",
+          "reg_type": "coil",
+          "type": "bool",
+          "mask": "0001",
+          "value": false,
+          "text": "Inactive",
+          "title": "Aux Output 1"
+        },
+        {
+          "reg": "003b",
+          "reg_type": "coil",
+          "type": "bool",
+          "mask": "0001",
+          "value": true,
+          "text": "Active",
+          "title": "Aux Output 2"
+        },
+        {
+          "reg": "003b",
+          "reg_type": "coil",
+          "type": "bool",
+          "mask": "0001",
+          "value": false,
+          "text": "Inactive",
+          "title": "Aux Output 2"
+        },
+        {
+          "reg": "003c",
+          "reg_type": "coil",
+          "type": "bool",
+          "mask": "0001",
+          "value": true,
+          "text": "Active",
+          "title": "Aux Output 3"
+        },
+        {
+          "reg": "003c",
+          "reg_type": "coil",
+          "type": "bool",
+          "mask": "0001",
+          "value": false,
+          "text": "Inactive",
+          "title": "Aux Output 3"
+        },
+        {
+          "reg": "003d",
+          "reg_type": "coil",
+          "type": "bool",
+          "mask": "0001",
+          "value": true,
+          "text": "Active",
+          "title": "Aux Output 4"
+        },
+        {
+          "reg": "003d",
+          "reg_type": "coil",
+          "type": "bool",
+          "mask": "0001",
+          "value": false,
+          "text": "Inactive",
+          "title": "Aux Output 4"
+        },
+        {
+          "reg": "003e",
+          "reg_type": "coil",
+          "type": "bool",
+          "mask": "0001",
+          "value": true,
+          "text": "Active",
+          "title": "Aux Output 5"
+        },
+        {
+          "reg": "003e",
+          "reg_type": "coil",
+          "type": "bool",
+          "mask": "0001",
+          "value": false,
+          "text": "Inactive",
+          "title": "Aux Output 5"
+        }
+      ]
+    }
+  ],
+  "maintenance": [
+    {
+      "comment": "This entry is for displaying the run hours",
+      "type" : "list",
+      "format": "%s%sh %sm %ss",
+      "title" : "Engine Run Time",
+      "value" : [
+          {
+            "reg": "002a",
+            "type": "int",
+            "mask" : "ffff",
+            "title": "Engine  Run Time MSB"
+          },
+          {
+            "reg": "002b",
+            "type": "int",
+            "mask" : "ffff",
+            "title": "Engine Run Time LSB"
+          },
+          {
+            "reg": "002c",
+            "type": "int",
+            "mask" : "00ff",
+            "title": "Engine Run Time Mins"
+          },
+          {
+            "reg": "002d",
+            "type": "int",
+            "mask" : "00ff",
+            "title": "Engine Run Time Secs"
+          }
+        ]
+    },
+    {
+      "comment": "This entry is for displaying the number of engine starts",
+      "type" : "list",
+      "format": "%s%s",
+      "title" : "Engine Starts",
+      "value" : [
+          {
+            "reg": "002e",
+            "type": "int",
+            "mask" : "ffff",
+            "title": "Engine Starts MSB"
+          },
+          {
+            "reg": "002f",
+            "type": "int",
+            "mask" : "ffff",
+            "title": "Engine Starts LSB"
+          }
+        ]
+    },
+    {
+      "reg": "0015",
+      "mask": "ffff",
+      "type": "int",
+      "title": "Fuel Level",
+      "units": "%",
+      "include":"disable_obj,filter_obj"
+    },
+    {
+      "reg": "001e",
+      "mask": "ffff",
+      "type": "int",
+      "title": "AUX Sensor",
+      "units": null,
+      "include":"disable_obj,filter_obj"
+    },
+    {
+      "comment": "This entry is for displaying the total energy produced",
+      "type" : "list",
+      "format": "%s%skWh",
+      "title" : "Total Energy Produced",
+      "value" : [
+          {
+            "reg": "0030",
+            "type": "int",
+            "mask" : "ffff",
+            "title": "Total Energy Produced MSB"
+          },
+          {
+            "reg": "0031",
+            "type": "int",
+            "mask" : "ffff",
+            "title": "Total Energy Produced LSB"
+          }
+        ]
+    },
+    {
+      "reg": "0042",
+      "mask": "ffff",
+      "type": "float",
+      "title": "Fuel Consumption",
+      "multiplier": 0.1,
+      "units": "L",
+      "include":"disable_obj,filter_obj"
+    },
+    {
+      "reg": "0044",
+      "mask": "ffffffff",
+      "type": "float",
+      "title": "Total Fuel Consumed",
+      "multiplier": 0.1,
+      "units": "L",
+      "include":"disable_obj,filter_obj"
+    },
+    {
+      "reg": "0046",
+      "mask": "ffff",
+      "type": "int",
+      "title": "Controller Temperature",
+      "multiplier": 0.1,
+      "temperature": "celsius",
+      "units": "C",
+      "include":"disable_obj,filter_obj"
+    },
+    {
+      "comment": "This entry is for displaying the software release info",
+      "type" : "list",
+      "format": "%s.%s.%s",
+      "title" : "Controller Software Release Date",
+      "value" : [
+          {
+            "reg": "004f",
+            "type": "int",
+            "mask" : "ffff",
+            "title": "Software Release Year"
+          },
+          {
+            "reg": "0050",
+            "type": "int",
+            "mask" : "ffff",
+            "title": "Software Release Month"
+          },
+          {
+            "reg": "0051",
+            "type": "int",
+            "mask" : "00ff",
+            "title": "Software Release Day"
+          }
+        ]
+    }
+  ],
+  "gauges": [
+    {
+        "reg": "0015",
+        "mask": "ffff",
+        "multiplier": 1,
+        "type": "int",
+        "title": "Fuel Level",
+        "units": "%",
+        "sensor": "fuel",
+        "nominal": 100,
+        "include": "disable_obj,filter_obj"
+    },
+    {
+        "reg": "0018",
+        "mask": "ffff",
+        "multiplier": 0.1,
+        "type": "float",
+        "title": "Battery Voltage",
+        "units": "V",
+        "sensor": "batteryvolts",
+        "nominal": "Unknown"
+    },
+    {
+        "reg": "0003",
+        "mask": "ffff",
+        "multiplier": 1,
+        "type": "int",
+        "title": "Mains Voltage L1-L2",
+        "units": "V",
+        "sensor": "linevolts",
+        "nominal": "Unknown",
+        "include": "offgrid"
+    },
+    {
+        "reg": "0006",
+        "reg_type": "input",
+        "mask": "ffff",
+        "multiplier": 0.1,
+        "type": "float",
+        "title": "Mains Freq",
+        "units": "Hz",
+        "sensor": "frequency",
+        "nominal": "Unknown",
+        "include": "offgrid"
+    },
+    {
+        "reg": "000a",
+        "mask": "ffff",
+        "multiplier": 1,
+        "type": "int",
+        "title": "Generator Voltage L1-L2",
+        "units": "V",
+        "sensor": "linevolts",
+        "nominal": "Unknown"
+    },
+    {
+        "reg": "000d",
+        "mask": "ffff",
+        "multiplier": 0.1,
+        "type": "float",
+        "title": "Generator Freq",
+        "units": "Hz",
+        "sensor": "frequency",
+        "nominal": "Unknown"
+    },
+    {
+        "reg": "0017",
+        "mask": "ffff",
+        "multiplier": 1,
+        "type": "int",
+        "title": "RPM",
+        "units": null,
+        "sensor": "rpm",
+        "nominal": "Unknown"
+    },
+    {
+        "reg": "001c",
+        "mask": "ffff",
+        "multiplier": 0.1,
+        "type": "float",
+        "title": "Total Apparent Power",
+        "units": "kVA",
+        "sensor": "power",
+        "nominal": "Unknown"
+    },
+    {
+        "reg": "000e",
+        "mask": "ffff",
+        "multiplier": 0.1,
+        "type": "float",
+        "title": "L1 Current",
+        "sensor": "current",
+        "units": "A",
+        "nominal": "Unknown"
+    },
+    {
+        "reg": "000f",
+        "mask": "ffff",
+        "multiplier": 0.1,
+        "type": "float",
+        "title": "L2 Current",
+        "sensor": "current",
+        "units": "A",
+        "nominal": "Unknown"
+    },
+    {
+        "reg": "0010",
+        "mask": "ffff",
+        "multiplier": 0.1,
+        "type": "float",
+        "title": "L3 Current",
+        "sensor": "current",
+        "units": "A",
+        "nominal": "Unknown",
+        "include": "threephase"
+    },
+    {
+        "reg": "001a",
+        "mask": "ffff",
+        "multiplier": 0.1,
+        "type": "float",
+        "title": "Total Active Power",
+        "units": "kW",
+        "sensor": "powergraph",
+        "nominal": "Unknown"
+    }
+  ],
+  "buttons" : [
+    {
+        "onewordcommand" : "start",
+        "title" : "Start",
+        "command_sequence" : [
+                                {
+                                  "reg": "0000",
+                                  "reg_type": "coil",
+                                  "value": 1
+                                }
+                              ]
+    },
+    {
+        "onewordcommand" : "stop",
+        "title" : "Stop",
+        "command_sequence" : [
+                                {
+                                  "reg": "0001",
+                                  "reg_type": "coil",
+                                  "value": "01"
+                                }
+                              ]
+    },
+    {
+        "onewordcommand" : "test",
+        "title" : "Test",
+        "command_sequence" : [
+                                {
+                                  "reg": "0002",
+                                  "reg_type": "coil",
+                                  "value": "01"
+                                }
+                              ]
+    },
+    {
+        "onewordcommand" : "auto",
+        "title" : "Auto",
+        "command_sequence" : [
+                                {
+                                  "reg": "0003",
+                                  "reg_type": "coil",
+                                  "value":"01"
+                                }
+                              ]
+    },
+    {
+        "onewordcommand" : "manual",
+        "title" : "Manual",
+        "command_sequence" : [
+                                {
+                                  "reg": "0004",
+                                  "reg_type": "coil",
+                                  "value": "01"
+                                }
+                              ]
+    },
+    {
+        "onewordcommand" : "open",
+        "title" : "Gen Open/Gen Toggle",
+        "comment": "For HGM4010, OPENS Generator output.  For HGM4020, This TOGGLES Generator output.",
+        "command_sequence" : [
+                                {
+                                  "reg": "0005",
+                                  "reg_type": "coil",
+                                  "value": "01"
+                                }
+                              ]
+    },
+    {
+        "onewordcommand" : "close",
+        "title" : "Gen Close/Mains Toggle",
+        "comment": "For HGM4010, CLOSES Generator output.  For HGM4020, This TOGGLES Mains output.",
+        "command_sequence" : [
+                                {
+                                  "reg": "0006",
+                                  "reg_type": "coil",
+                                  "value": "01"
+                                  
+                                }
+                              ]
+    }
+  ],
+  "switch_state": [
+    {
+      "reg": "0028",
+      "reg_type": "coil",
+      "type": "bool",
+      "mask": "0001",
+      "title": "Switch State",
+      "text": "Test"
+    },
+    {
+      "reg": "0029",
+      "reg_type": "coil",
+      "type": "bool",
+      "mask": "0001",
+      "title": "Switch State",
+      "text": "Auto"
+    },
+    {
+      "reg": "002a",
+      "reg_type": "coil",
+      "type": "bool",
+      "mask": "0001",
+      "title": "Switch State",
+      "text": "Manual"
+    },
+    {
+      "reg": "002b",
+      "reg_type": "coil",
+      "type": "bool",
+      "mask": "0001",
+      "title": "Switch State",
+      "text": "Stop"
+    }
+  ],
+  "engine_state":[
+    {
+      "reg": "0022",
+      "type": "object_int_index",
+      "mask": "ffff",
+      "object": {
+        "0": "Standby",
+        "1": "Preheat",
+        "2": "Fuel",
+        "3": "Crank",
+        "4": "Crank Rest",
+        "5": "Safety Run",
+        "6": "Start Idle",
+        "7": "High Speed Warmup",
+        "8": "On-Load",
+        "9": "Normal Running",
+        "10": "High Speed Cooling",
+        "11": "Stop Idle",
+        "12": "ETS",
+        "13": "Wait for Stop",
+        "14": "Stop Failure"
+      },
+      "default": "Unknown Engine State",
+      "title": "Engine State"
+    }
+  ],
+  "datetime": {
+    "comment": "This entry is for displaying the time in a format similar to how genmon displays the system time of the system running genmon.",
+    "type" : "list",
+    "format": "%s %s %s, 20%s %s:%s:%s",
+    "title" : "Generator Time",
+    "value" : [
+        { 
+          "reg": "004b",
+          "mask": "00ff",
+          "type": "object_int_index",
+          "object" :  {
+              "0": "Sunday",
+              "1": "Monday",
+              "2": "Tuesday",
+              "3": "Wednesday",
+              "4": "Thursday",
+              "5": "Friday",
+              "6": "Saturday"
+          },
+          "default": "Unknown",
+          "title": "Day of Week"
+        },
+        {
+          "reg": "0049",
+          "type": "object_int_index",
+          "mask" : "00ff",
+          "object": {
+            "1": "January",
+            "2": "February",
+            "3": "March",
+            "4": "April",
+            "5": "May",
+            "6": "June",
+            "7": "July",
+            "8": "August",
+            "9": "September",
+            "10": "October",
+            "11": "November",
+            "12": "December"
+          },
+          "title": "Month"
+        },
+        {
+          "reg": "004a",
+          "type": "int",
+          "mask" : "00ff",
+          "title": "Day"
+        },
+        {
+          "reg": "0048",
+          "type": "int",
+          "mask" : "00ff",
+          "title": "Year"
+        },
+        {
+          "reg": "004c",
+          "type": "int",
+          "mask" : "00ff",
+          "title": "Hours"
+        },
+        {
+          "reg": "004d",
+          "type": "int",
+          "mask" : "00ff",
+          "format": "%02d",
+          "title": "Minutes"
+        },
+        {
+          "reg": "004e",
+          "type": "int",
+          "mask" : "00ff",
+          "format": "%02d",
+          "title": "Seconds"
+        }
+      ]
+    },
+  "settime":{
+    "comment": "the settime object, if present can enable writing of the date and time to the controller",
+    "comment2": "the 'command_sequence' list is required. It defines the registers and what to write to each register",
+    "comment3": "The hour,minute,month,date,year entries are like the 'exec' entries in that they are python code that",
+    "comment4": "format the date and time input into the formate expected in the modbus register.",
+    "comment5": "If multiple entries are in one register command object, the values will be logical OR'ed to create a single value",
+    "comment6": "Fixme! This isn't working and I'm not sure if it ever will",
+    "command_sequence": [
+      {
+        "reg": "0048",
+        "comment": "This will take a four digit year and only use the lower two digits as low byte",
+        "year":"exec_out = abs({} - 2000)"
+      },
+      {
+        "reg": "0049",
+        "comment": "This will write the month",
+        "comment2": "months is 1-12",
+        "month":"exec_out = {}"
+      },
+      {
+        "reg": "004a",
+        "comment": "This will write the day of the month",
+        "comment2": "day is 1 - 31",
+        "day":"exec_out = {}"
+      },
+      {
+        "reg": "004c",
+        "comment": "This will write the hour",
+        "comment2": "hour is 0 - 23",
+        "hour":"exec_out = {}"
+      },
+      {
+        "reg": "004d",
+        "comment": "This will write the minute",
+        "comment2": "minute is 0 - 59",
+        "minute":"exec_out = {}"
+      },
+      {
+        "reg": "004e",
+        "comment": "This will write the second",
+        "comment2": "second is 0 - 59",
+        "second":"exec_out = {}"
+      }
+    ]
+  },
+  "maintenance_due": [
+    {
+      "comment": "This should only return a value if maintenance is due, otherwise evaluate to nothing.",
+      "comment2": "Service due alarm",
+      "reg": "003f",
+      "reg_type": "coil",
+      "type": "bool",
+      "mask": "0001",
+      "text": "Yes",
+      "title": "Maintenance Due"
+    },
+    {
+      "comment": "Service Hours remaining",
+      "reg": "0020",
+      "mask": "ffff",
+      "type": "bits",
+      "value": "0000",
+      "text": "Yes",
+      "title": "Maintenance Due"
+    }
+  ],
+  "basestatus": [
+      {
+        "information":"The basestatus entry must return one of the following: ",
+        "information2": "ALARM, SERVICEDUE, EXERCISING, RUNNING, RUNNING-MANUAL, OFF, MANUAL or  READY",
+        "information3:": "if multiple conditions exist, only the first that is true will be returned",
+        "reg": "0028",
+        "type": "bool",
+        "mask": "00ff",
+        "value": "9",
+        "title": "Base Status",
+        "text": "RUNNING"
+      },
+      {
+        "reg": "0022",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Base Status",
+        "text": "EXERCISING"
+      },
+      {
+        "reg": "002a",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Base Status",
+        "text": "RUNNING-MANUAL"
+      },
+      {
+        "reg": "002b",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Base Status",
+        "text": "OFF"
+      },
+      {
+        "reg": "0000",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Base Status",
+        "text": "ALARM"
+      },
+      {
+        "reg": "0001",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Base Status",
+        "text": "ALARM"
+      },
+      {
+        "reg": "0028",
+        "type": "bool",
+        "mask": "00ff",
+        "value": "0",
+        "title": "Base Status",
+        "text": "READY"
+      },
+      {
+        "comment":"Returning Unknown default in the UI to READY",
+        "reg": "0022",
+        "type": "default",
+        "title": "Base Status",
+        "text": "UNKNOWN"
+      }
+    ],
+  "run_hours": {
+        "comment": "This entry is for displaying the run hours in the service journal page. It must return an int or float",
+        "type" : "list",
+        "exec": "exec_out = round(float(({}+9999) + {}) + float({})/60.0,2)",
+        "separator" : null,
+        "title" : "Engine Run Time",
+        "value" : [
+            {
+              "reg": "002a",
+              "type": "int",
+              "mask" : "ffff",
+              "title": "Engine  Run Time MSB"
+            },
+            {
+              "reg": "002b",
+              "type": "int",
+              "mask" : "ffff",
+              "title": "Engine Run Time LSB"
+            },
+            {
+              "reg": "002c",
+              "type": "int",
+              "mask" : "00ff",
+              "title": "Engine Run Time Mins"
+            }
+          ]
+    },
+  "model":{
+      "reg": "0047",
+      "type": "list",
+      "title": "Model Detected",
+      "separator" : null,
+      "exec": "exec_out = 'SmartGen HGM40x0 Controller Model %d' % ({})",
+      "value":[
+        {
+          "reg": "0047",
+          "type": "int",
+          "mask" : "ffff",
+          "title": "Model"
+        }
+      ]
+    },
+  "alarm_conditions": [
+      {
+        "reg": "0000",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Common Alarm"
+      },
+      {
+        "reg": "0001",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Common Warning Alarm"
+      },
+      {
+        "reg": "0002",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Common Shutdown Alarm"
+      },
+      {
+        "reg": "0008",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Emergency Stop"
+      },
+      {
+        "reg": "0009",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Overspeed Alarm Shutdown"
+      },
+      {
+        "reg": "000a",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Underspeed Alarm Shutdown"
+      },
+      {
+        "reg": "000b",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Speed Signal Loss Shutdown"
+      },
+      {
+        "reg": "000c",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Overfrequency Alarm Shutdown"
+      },
+      {
+        "reg": "000d",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Underfrequency Alarm Shutdown"
+      },
+      {
+        "reg": "000e",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Overvoltage Alarm Shutdown"
+      },
+      {
+        "reg": "000f",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Undervoltage Alarm Shutdown"
+      },
+      {
+        "reg": "0010",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Gen Overcurrent Shutdown"
+      },
+      {
+        "reg": "0011",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Crank Failure"
+      },
+      {
+        "reg": "0012",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "High Water Temp Alarm Shutdown"
+      },
+      {
+        "reg": "0013",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Low Oil Pressure Alarm Shutdown"
+      },
+      {
+        "reg": "0014",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Frequency Loss Alarm"
+      },
+      {
+        "reg": "0015",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Input Shutdown Alarm"
+      },
+      {
+        "reg": "0016",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Low Fuel Level Shutdown Alarm"
+      },
+      {
+        "reg": "0017",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Low Coolant Level Shutdown Alarm"
+      },
+      {
+        "reg": "0018",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "High Water Temp Warning Alarm"
+      },
+      {
+        "reg": "0019",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Low Oil Pressure Warning Alarm"
+      },
+      {
+        "reg": "001a",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Gen Overcurrent Warning Alarm"
+      },
+      {
+        "reg": "001b",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Stop Failure Warning Alarm"
+      },
+      {
+        "reg": "001c",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Low Fuel Level Warning"
+      },
+      {
+        "reg": "001d",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Charging Failure Warning"
+      },
+      {
+        "reg": "001e",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Battery Undervoltage Warning Alarm"
+      },
+      {
+        "reg": "001f",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Battery Overvoltage Warning Alarm"
+      },
+      {
+        "reg": "0020",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Input Warning Alarm"
+      },
+      {
+        "reg": "0021",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Speed Signal Loss Warning"
+      },
+      {
+        "reg": "0022",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Low Coolant Level Warning"
+      },
+      {
+        "reg": "0023",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Temp Sensor Open Warning"
+      },
+      {
+        "reg": "0024",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Oil Pressure Sensor Open Warning"
+      },
+      {
+        "reg": "0025",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Fuel Level Sensor Open Warning"
+      },
+      {
+        "reg": "0026",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Aux Sensor Open Warning"
+      },
+      {
+        "reg": "0027",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Aux Sensor Warning"
+      },
+      {
+        "reg": "002c",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Temp Sensor Open Shutdown"
+      },
+      {
+        "reg": "002d",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Oil Pressure Sensor Open Shutdown"
+      },
+      {
+        "reg": "002e",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Fuel Level Sensor Open Shutdown"
+      },
+      {
+        "reg": "002f",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Aux Sensor Open Shutdown"
+      },
+      {
+        "reg": "003f",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Maintenance Time Due Warning"
+      },
+      {
+        "reg": "0040",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Mains Fault"
+      },
+      {
+        "reg": "0042",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Mains Overvoltage"
+      },
+      {
+        "reg": "0043",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Mains Undervoltage"
+      },
+      {
+        "reg": "0044",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Mains Phase Loss"
+      },
+      {
+        "reg": "0045",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Mains Blackout"
+      },
+      {
+        "reg": "0046",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Charger Fail to Charge Warning"
+      },
+      {
+        "reg": "0047",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Overpower Warning"
+      },
+      {
+        "reg": "0049",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Gen Overvoltage Warning"
+      },
+      {
+        "reg": "004a",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Gen Undervoltage Warning"
+      },
+      {
+        "reg": "004b",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Gen Overfrequency Warning"
+      },
+      {
+        "reg": "004c",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Gen Underfrequency Warning"
+      },
+      {
+        "reg": "004d",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Gen Overcurrent Warning"
+      },
+      {
+        "reg": "004f",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "ECU Warning"
+      },
+      {
+        "reg": "0050",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Aux Sensor Shutdown"
+      },
+      {
+        "reg": "0051",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Maintenance Time Due Shutdown Alarm"
+      },
+      {
+        "reg": "0052",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "Overpower Shutdown Alarm"
+      },
+      {
+        "reg": "0053",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "ECU Alarm Shutdown"
+      },
+      {
+        "reg": "0054",
+        "reg_type": "coil",
+        "type": "bool",
+        "mask": "0001",
+        "title": "Alarm",
+        "text": "ECU Failure Shutdown"
+      }
+    ]
+}

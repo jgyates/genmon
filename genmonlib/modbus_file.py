@@ -103,7 +103,7 @@ class ModbusFile(ModbusBase):
             time.sleep(5)
 
     # -------------ModbusBase::ProcessWriteTransaction---------------------------
-    def ProcessWriteTransaction(self, Register, Length, Data):
+    def ProcessWriteTransaction(self, Register, Length, Data, IsCoil = False):
         return
 
     # -------------ModbusBase::ProcessTransaction--------------------------------

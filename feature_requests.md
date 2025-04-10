@@ -29,6 +29,6 @@
 - [Add on to monitor key values and alert if out of range](https://github.com/jgyates/genmon/discussions/1089)
 - [Manual Start and Transfer but stop after x minutes](https://github.com/jgyates/genmon/discussions/1174) @jkh62
 - [Add device specific messaging to pushover](https://github.com/jgyates/genmon/issues/1246) @noumenon272
-- [Add button to set GPIO](https://github.com/jgyates/genmon/discussions/1249) @twistedroutes
+
 
 

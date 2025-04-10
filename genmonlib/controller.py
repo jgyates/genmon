@@ -269,6 +269,17 @@ class GeneratorController(MySupport):
                     "alternate_date_format", return_type=bool, default=False
                 )
 
+                self.ImportButtonFileList = []
+                self.ImportedButtons = []
+                ImportButtonsFiles = config.ReadValue("import_buttons",default=None)
+
+                if ImportButtonsFiles != None:
+                    if len(ImportButtonsFiles):
+                        ImportList = ImportButtonsFiles.strip().split(",")
+                        if len(ImportList):
+                            for Items in ImportList:
+                                self.ImportButtonFileList.append(Items.strip())
+
                 # num minutes to send a warning email about an outage
                 self.OutageNoticeInterval = self.config.ReadValue("outage_notice_interval", return_type=int, default=0)
 
@@ -932,12 +943,53 @@ class GeneratorController(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in GetButtons: " + str(e1))
             return []
-        
+    # ----------  Controller::LoadButtonsFromFile-------------------------------
+    def LoadButtonsFromFile(self):
+        try:
+            if self.ImportButtonFileList == None or len(self.ImportButtonFileList) == 0:
+                return []
+            ImportedButtons = []
+
+            for FileName in self.ImportButtonFileList:
+                ConfigFileName = os.path.join(
+                    os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
+                    "data",
+                    "commands",
+                    FileName
+                )
+                if os.path.isfile(ConfigFileName):
+                    try:
+                        with open(ConfigFileName) as infile:
+                            command_import = json.load(infile)
+                            ImportedButtons.extend(command_import["buttons"])
+
+                    except Exception as e1:
+                        self.LogErrorLine("Error in LoadButtonsFromFile reading config import file: " + str(e1))
+                        continue
+                else:
+                    self.LogError("Error in LoadButtonsFromFile reading button import file: " + str(ConfigFileName))
+                    continue
+
+        except Exception as e1:
+            self.LogErrorLine("Error in LoadButtonsFromFile: " + str(e1))
+
+        return ImportedButtons
+
     # ----------  Controller::GetButtonsCommon----------------------------------
     def GetButtonsCommon(self, button_list, singlebuttonname = None):
         try:
-            if button_list == None:
+            if len(self.ImportButtonFileList) == 0 and button_list == None:
                 return []
+
+            if not len(self.ImportedButtons):
+                self.ImportedButtons = self.LoadButtonsFromFile()
+
+                # combine lists only on first (and only) import
+                if button_list == None or len(button_list) == 0:
+                    button_list = self.ImportedButtons
+                else:
+                    button_list.extend(self.ImportedButtons)
+
             if not isinstance(button_list, list):
                 self.LogError("Error in GetButtonsCommon: invalid input or data: "+ str(type(button_list)))
                 return []
@@ -972,7 +1024,15 @@ class GeneratorController(MySupport):
                         self.LogError("Error in GetButtonsCommon: invalid command string defined validateing reg: "+ str(button))
                         CommandError = True
                         break
+                    if "reg_type" in command.keys():
+                        if not command["reg_type"].lower() in ["holding","coil","script"]:
+                            self.LogError("Error in GetButtonsCommon: Error validateing re_type: "+ str(button))
+                            CommandError = True
+                            break
                     if not "value" in command.keys():
+                        if command["reg_type"].lower() == "script":
+                            # other fields are not required
+                            continue
                         # this command requires input from the web app, let's validate the params
                         # "input_title", "type" is required. "length" is default 2 but must be a multiple of 2
                         if not "input_title" in command.keys() or not "type" in command.keys():
@@ -1000,6 +1060,7 @@ class GeneratorController(MySupport):
             return return_buttons
         except Exception as e1:
             self.LogErrorLine("Error in GetButtonsCommon: " + str(e1))
+            self.ImportedButtons = []
             return []
 
     # -------------CustomController:ExecuteRemoteCommand-------------------------
@@ -1075,12 +1136,41 @@ class GeneratorController(MySupport):
         try:
             with self.ModBus.CommAccessLock:
                 for command in command_sequence:
+                    IsCoil = False      # can only be holding or coil
                     if not "reg" in command.keys():
                         self.LogDebug("Error in ExecuteCommandSequence: invalid value array, no 'reg' in command_sequence command: " + str(command))
+                        continue
+                    if "reg_type" in command.keys() and command["reg_type"] == "script":
+                        # if we get here then we execute a script with the filename of the "reg" entry
+                        ScriptFileName = os.path.join(
+                            os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
+                            "data",
+                            "commands",
+                            "script",
+                            command["reg"]
+                        )
+                        
+                        try:
+                            import subprocess
+
+                            OutputStream = subprocess.PIPE
+                            executelist = [sys.executable, ScriptFileName]
+                            pid = subprocess.Popen(
+                                executelist,
+                                stdout=OutputStream,
+                                stderr=OutputStream,
+                                stdin=OutputStream,
+                            )
+                            #subprocess.call(ScriptFileName, shell=True)
+                            self.LogDebug("Script Name: " + ScriptFileName)
+                        except Exception as e1:
+                            self.LogErrorLine("Error calling script for button: " + ScriptFileName + " : " + str(e1))
                         continue
                     if not isinstance(command["value"],int) and not len(command["value"]):
                         self.LogDebug("Error in ExecuteCommandSequence: invalid value array")
                         continue
+                    if "reg_type" in command.keys() and command["reg_type"] == "coil":
+                        IsCoil = True
                     if isinstance(command["value"], list):
                         if not (len(command["value"]) % 2) == 0:
                             self.LogDebug("Error in ExecuteCommandSequence: invalid value length")
@@ -1095,7 +1185,7 @@ class GeneratorController(MySupport):
                                 self.LogDebug("Error in ExecuteCommandSequence: invalid type if value list")
                                 return "Command not found."
                         self.LogDebug("Write List: len: " + str(int(len(Data)  / 2)) + " : "  + self.LogHexList(Data, prefix=command["reg"], nolog = True))
-                        self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data)
+                        self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data, IsCoil = IsCoil)
 
                     elif isinstance(command["value"], str):
                         # only supports single word writes
@@ -1106,7 +1196,7 @@ class GeneratorController(MySupport):
                         Data.append(HighByte)  
                         Data.append(LowByte)  
                         self.LogDebug("Write Str: len: "+ str(int(len(Data)  / 2)) + " : " + command["reg"] + ": "+ ("%04x %04x" % (HighByte, LowByte)))
-                        self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data)
+                        self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data, IsCoil = IsCoil)
                     elif isinstance(command["value"], int):
                         # only supports single word writes
                         value = command["value"]
@@ -1116,7 +1206,7 @@ class GeneratorController(MySupport):
                         Data.append(HighByte)  
                         Data.append(LowByte)  
                         self.LogDebug("Write Int: len: "+ str(int(len(Data)  / 2)) + " : " + command["reg"]+ ": "+ ("%04x %04x" % (HighByte, LowByte)))
-                        self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data)
+                        self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data, IsCoil = IsCoil)
                     else:
                         self.LogDebug("Error in ExecuteCommandSequence: invalid value type")
                         return "Command not found."
@@ -1748,8 +1838,7 @@ class GeneratorController(MySupport):
     def RemovePowerSamples(self, inputList, MaxSize):
 
         try:
-            self.LogDebug("Enter RemovePowerSamples:" + str(len(inputList)))
-            
+
             if len(inputList) <= MaxSize:
                 self.LogError("RemovePowerSamples: Error: Can't remove ")
                 return inputList
@@ -1774,7 +1863,6 @@ class GeneratorController(MySupport):
             if len(inputList) > MaxSize:
                 NewList = inputList[:MaxSize]
 
-            self.LogDebug("Exit RemovePowerSamples:" + str(len(NewList)))
             return NewList
         except Exception as e1:
             self.LogErrorLine("Error in RemovePowerSamples: %s" % str(e1))
@@ -1845,9 +1933,7 @@ class GeneratorController(MySupport):
                 )
 
             if len(PowerList) > self.MaxPowerLogEntries and not NoReduce:
-                self.LogDebug("Reducing old: " + str(len(PowerList) ))
                 PowerList = self.ReducePowerSamples(PowerList, self.MaxPowerLogEntries)
-                self.LogDebug("Reducing new: " + str(len(PowerList) ))
             if not len(self.PowerLogList):
                 self.PowerLogList = PowerList
         return PowerList
