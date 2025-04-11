@@ -427,7 +427,7 @@
             {
               "reg": "000e",
               "mask": "ffff",
-              "multiplier": 0.1,
+              "multiplier": 1.0,
               "type": "float",
               "title": "L1 Current",
               "units": "A"
@@ -435,7 +435,7 @@
             {
               "reg": "000f",
               "mask": "ffff",
-              "multiplier": 0.1,
+              "multiplier": 1.0,
               "type": "float",
               "title": "L2 Current",
               "units": "A"
@@ -443,7 +443,7 @@
             {
               "reg": "0010",
               "mask": "ffff",
-              "multiplier": 0.1,
+              "multiplier": 1.0,
               "type": "float",
               "title": "L3 Current",
               "units": "A",
@@ -453,7 +453,7 @@
               "reg": "0034",
               "mask": "ffff",
               "type": "float",
-              "multiplier": 0.1,
+              "multiplier": 1.0,
               "title": "L1 Active Power",
               "units": "kW"
             },
@@ -461,7 +461,7 @@
               "reg": "0035",
               "mask": "ffff",
               "type": "float",
-              "multiplier": 0.1,
+              "multiplier": 1.0,
               "title": "L2 Active Power",
               "units": "kW"
             },
@@ -469,7 +469,7 @@
               "reg": "0036",
               "mask": "ffff",
               "type": "float",
-              "multiplier": 0.1,
+              "multiplier": 1.0,
               "title": "L3 Active Power",
               "units": "kW",
               "include":"threephase"
@@ -478,7 +478,7 @@
               "reg": "001a",
               "mask": "ffff",
               "type": "float",
-              "multiplier": 0.1,
+              "multiplier": 1.0,
               "title": "Total Active Power",
               "units": "kW"
             },
@@ -486,7 +486,7 @@
               "reg": "001b",
               "mask": "ffff",
               "type": "float",
-              "multiplier": 0.1,
+              "multiplier": 1.0,
               "title": "Reactive Power",
               "units": "kVAR"
             },
@@ -494,7 +494,7 @@
               "reg": "001c",
               "mask": "ffff",
               "type": "float",
-              "multiplier": 0.1,
+              "multiplier": 1.0,
               "title": "Apparent Power",
               "units": "kVA"
             },
@@ -942,7 +942,7 @@
     {
         "reg": "000e",
         "mask": "ffff",
-        "multiplier": 0.1,
+        "multiplier": 1.0,
         "type": "float",
         "title": "L1 Current",
         "sensor": "current",
@@ -952,7 +952,7 @@
     {
         "reg": "000f",
         "mask": "ffff",
-        "multiplier": 0.1,
+        "multiplier": 1.0,
         "type": "float",
         "title": "L2 Current",
         "sensor": "current",
@@ -962,7 +962,7 @@
     {
         "reg": "0010",
         "mask": "ffff",
-        "multiplier": 0.1,
+        "multiplier": 1.0,
         "type": "float",
         "title": "L3 Current",
         "sensor": "current",
@@ -973,7 +973,7 @@
     {
         "reg": "001a",
         "mask": "ffff",
-        "multiplier": 0.1,
+        "multiplier": 1.0,
         "type": "float",
         "title": "Total Active Power",
         "units": "kW",
@@ -984,7 +984,7 @@
   "power": {
     "reg": "001a",
         "mask": "ffff",
-        "multiplier": 0.1,
+        "multiplier": 1.0,
         "type": "float",
         "title": "Power",
         "units": "kW",
