@@ -113,7 +113,7 @@ def ModbusWrite():
         Data.append(LowByte)  # Value for register (Low byte)
 
         RegStr = "%04x" % startregister
-        modbus.ProcessMasterSlaveWriteTransaction(RegStr, len(Data) / 2, Data, IsCoil = UseCoils)
+        modbus.ProcessWriteTransaction(RegStr, len(Data) / 2, Data, IsCoil = UseCoils)
         DisplayComErrors(modbus)
     except Exception as e1:
         print("Error write device: " + str(e1))
