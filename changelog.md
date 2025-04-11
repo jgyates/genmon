@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Selected optimizations for the power log for increased accuracy and performance
 - Updates for SmartGen HGM40x0 controller
 - Added the ability to add a button to the maintenance page that calls a script
+- Update to allow single holding register and single coil modbus reads (modbus function 0x05 and 0x06) for JSON custom controller definitions
 
 ## V1.19.04 -2024-08-21
 - Corrected issue with saving service journal with HTTPS enabled
