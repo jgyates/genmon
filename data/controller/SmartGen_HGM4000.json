@@ -981,6 +981,16 @@
         "nominal": "Unknown"
     }
   ],
+  "power": {
+    "reg": "001a",
+        "mask": "ffff",
+        "multiplier": 0.1,
+        "type": "float",
+        "title": "Power",
+        "units": "kW",
+        "sensor": "powergraph",
+        "nominal": "Unknown"
+  },
   "buttons" : [
     {
         "onewordcommand" : "start",
