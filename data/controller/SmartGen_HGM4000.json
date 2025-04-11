@@ -486,6 +486,7 @@
               "reg": "001b",
               "mask": "ffff",
               "type": "float",
+              "signed16": true,
               "multiplier": 1.0,
               "title": "Reactive Power",
               "units": "kVAR"
@@ -932,7 +933,7 @@
     {
         "reg": "001c",
         "mask": "ffff",
-        "multiplier": 0.1,
+        "multiplier": 1.0,
         "type": "float",
         "title": "Total Apparent Power",
         "units": "kVA",
