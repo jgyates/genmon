@@ -177,7 +177,7 @@ if __name__ == "__main__":  #
     hostIP = None
     TCPport = None
     ModbusTCP = False
-    UseFC4 = False
+    UseInputReg = False
     UseCoils = False
 
     HelpStr = "\npython3 mobusdump.py -r <Baud Rate> -p <serial port> -a <modbus address to query> -s <start modbus register>  -e <end modbus register>\n"
@@ -196,13 +196,13 @@ if __name__ == "__main__":  #
     HelpStr += "\n      -i  IP address if modbus over TCP is used"
     HelpStr += "\n      -t  TCP port if modbus over TCP is used"
     HelpStr += "\n      -m  Use Modbus TCP, if omitted and IP and port provided then use Modbus RTU over TCP"
-    HelpStr += "\n      -f  use modbus function 4 instead of function 3 to read input registers instead of holding registers"
+    HelpStr += "\n      -n  read input registers instead of holding registers"
     HelpStr += "\n \n"
 
     try:
         opts, args = getopt.getopt(
             sys.argv[1:],
-            "cfmbhr:p:s:e:a:x:w:i:t:",
+            "cnmbhr:p:s:e:a:x:w:i:t:",
             [
                 "rate=",
                 "port=",
@@ -266,12 +266,12 @@ if __name__ == "__main__":  #
             elif opt in ("-m", "--modbustcp"):
                 ModbusTCP = True
                 print("Use Modbus TCP protocol")
-            elif opt in ("-f", "--function4"):
-                UseFC4 = True
-                print("Use Modbus Function 4 instead of 3")
+            elif opt in ("-n", "--nput"):
+                UseInputReg = True
+                print("Read Input Registers")
             elif opt in ("-c", "--coil"):
                 UseCoils = True
-                print("Reading Coil Values")
+                print("Reading/Writing Coil Values")
 
     except Exception as e1:
         print("\nError parsing command line: " + str(e1) + "\n")
@@ -348,7 +348,7 @@ if __name__ == "__main__":  #
             try:
                 for Reg in range(startregister, endregister):
                     RegStr = "%04x" % Reg
-                    modbus.ProcessTransaction(RegStr, 1, IsCoil = UseCoils, IsInput = UseFC4)
+                    modbus.ProcessTransaction(RegStr, 1, IsCoil = UseCoils, IsInput = UseInputReg)
             except Exception as e1:
                 print("Error reading device: " + str(e1))
                 sys.exit(2)
