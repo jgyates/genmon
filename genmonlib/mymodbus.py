@@ -258,11 +258,10 @@ class ModbusProtocol(ModbusBase):
                 if len(self.Slave.Buffer) < self.MIN_PACKET_RESPONSE_LENGTH:
                     return True, EmptyPacket  # No full packet ready
 
-            if self.Slave.Buffer[self.MBUS_OFF_COMMAND] in [self.MBUS_CMD_READ_REGS, self.MBUS_CMD_READ_INPUT_REGS, self.MBUS_CMD_READ_COILS]:
+            if self.Slave.Buffer[self.MBUS_OFF_COMMAND] in [self.MBUS_CMD_READ_HOLDING_REGS, self.MBUS_CMD_READ_INPUT_REGS, self.MBUS_CMD_READ_COILS]:
                 # it must be a read command response
-                length = self.Slave.Buffer[
-                    self.MBUS_OFF_RESPONSE_LEN
-                ]  # our packet tells us the length of the payload
+                 # our packet tells us the length of the payload
+                length = self.Slave.Buffer[self.MBUS_OFF_RESPONSE_LEN] 
                 # if the full length of the packet has not arrived, return and try again
                 if (length + self.MBUS_RES_PAYLOAD_SIZE_MINUS_LENGTH) > len(
                     self.Slave.Buffer
@@ -285,9 +284,21 @@ class ModbusProtocol(ModbusBase):
                 if len(self.Slave.Buffer) < self.MIN_PACKET_MIN_WRITE_RESPONSE_LENGTH:
                     return True, EmptyPacket
                 for i in range(0, self.MIN_PACKET_MIN_WRITE_RESPONSE_LENGTH):
-                    Packet.append(
-                        self.Slave.Buffer.pop(0)
-                    )  # address, function, address hi, address low, quantity hi, quantity low, CRC high, crc low
+                    # address, function, address hi, address low, quantity hi, quantity low, CRC high, crc low
+                    Packet.append(self.Slave.Buffer.pop(0))  
+
+                if self.CheckCRC(Packet):
+                    self.RxPacketCount += 1
+                    return True, Packet
+                else:
+                    self.CrcError += 1
+                    return False, Packet
+            elif self.Slave.Buffer[self.MBUS_OFF_COMMAND] in [self.MBUS_CMD_WRITE_COIL, self.MBUS_CMD_WRITE_REG]:
+                if len(self.Slave.Buffer) < self.MBUS_SINGLE_WRITE_RES_LENGTH:
+                    return True, EmptyPacket
+                for i in range(0, self.MIN_PACKET_MIN_WRITE_RESPONSE_LENGTH):
+                    # address, function, address hi, address low, value hi, value low, CRC high, crc low
+                    Packet.append(self.Slave.Buffer.pop(0))  
 
                 if self.CheckCRC(Packet):
                     self.RxPacketCount += 1
@@ -377,17 +388,22 @@ class ModbusProtocol(ModbusBase):
 
     # -------------ModbusProtocol::PWT-------------------------------------------
     # called from derived calls to get to overridded function ProcessWriteTransaction
-    def _PWT(self, Register, Length, Data, min_response_override=None, IsCoil = False):
+    def _PWT(self, Register, Length, Data, min_response_override=None, IsCoil = False, IsSingle = False):
 
         try:
             with self.CommAccessLock:
                 MasterPacket = []
 
                 if IsCoil:
-                    cmd = self.MBUS_CMD_WRITE_COILS
+                    if not IsSingle:
+                        cmd = self.MBUS_CMD_WRITE_COILS
+                    else:
+                        cmd = self.MBUS_CMD_WRITE_COIL
                 else:
-                    cmd = self.MBUS_CMD_WRITE_REGS
-
+                    if not IsSingle:
+                        cmd = self.MBUS_CMD_WRITE_REGS
+                    else:
+                        cmd = self.MBUS_CMD_WRITE_REG
                 MasterPacket = self.CreateMasterPacket(
                     Register,
                     length=int(Length),
@@ -409,8 +425,8 @@ class ModbusProtocol(ModbusBase):
             return False
 
     # -------------ModbusProtocol::ProcessWriteTransaction-----------------------
-    def ProcessWriteTransaction(self, Register, Length, Data, IsCoil = False):
-        return self._PWT(Register, Length, Data, IsCoil = IsCoil)
+    def ProcessWriteTransaction(self, Register, Length, Data, IsCoil = False, IsSingle = False):
+        return self._PWT(Register, Length, Data, IsCoil = IsCoil, IsSingle=IsSingle)
 
     # -------------ModbusProtocol::PT--------------------------------------------
     # called from derived calls to get to overridded function ProcessTransaction
@@ -426,7 +442,7 @@ class ModbusProtocol(ModbusBase):
                 elif IsInput:
                     packet_type = self.MBUS_CMD_READ_INPUT_REGS
                 else:
-                    packet_type = self.MBUS_CMD_READ_REGS
+                    packet_type = self.MBUS_CMD_READ_HOLDING_REGS
                 MasterPacket = self.CreateMasterPacket(
                     Register, command=packet_type, length=int(Length)
                 )
@@ -645,7 +661,7 @@ class ModbusProtocol(ModbusBase):
         Packet = []
         try:
             if command == None:
-                command = self.MBUS_CMD_READ_REGS
+                command = self.MBUS_CMD_READ_HOLDING_REGS
 
             RegisterInt = int(register, 16)
 
@@ -656,15 +672,38 @@ class ModbusProtocol(ModbusBase):
                     + str(register)
                 )
                 return []
+
             if file_num < self.MIN_FILE_NUMBER or file_num > self.MAX_FILE_NUMBER:
                 self.ComValidationError += 1
-                self.LogError(
-                    "Validation Error: CreateMasterPacket maximum file number value exceeded: "
-                    + str(file_num)
-                )
+                self.LogError("Validation Error: CreateMasterPacket maximum file number value exceeded: "+ str(file_num))
                 return []
 
-            if command == self.MBUS_CMD_READ_REGS or command == self.MBUS_CMD_READ_COILS or command == self.MBUS_CMD_READ_INPUT_REGS:
+            if command in [self.MBUS_CMD_READ_FILE,self.MBUS_CMD_WRITE_FILE]:
+                if (RegisterInt < self.MIN_FILE_RECORD_NUM
+                    or RegisterInt > self.MAX_FILE_RECORD_NUM
+                ):
+                    self.ComValidationError += 1
+                    self.LogError("Validation Error: CreateMasterPacket maximum regiseter (record number) value exceeded: " + str(register))
+                    return []
+                
+            if command in [self.MBUS_CMD_WRITE_REGS, self.MBUS_CMD_WRITE_REGS, self.MBUS_CMD_WRITE_COIL, self.MBUS_CMD_WRITE_COILS, self.MBUS_CMD_WRITE_FILE]:
+                if len(data) == 0:
+                    self.LogError("Validation Error: CreateMasterPacket invalid length (1) %x %x"% (len(data), length))
+                    self.ComValidationError += 1
+                    return []
+                if len(data) / 2 != length:
+                    self.LogError("Validation Error: CreateMasterPacket invalid length (2) %x %x" % (len(data), length))
+                    self.ComValidationError += 1
+                    return []
+
+            if command in [self.MBUS_CMD_WRITE_COIL,self.MBUS_CMD_WRITE_REG]:
+                # must be only one word
+                if length != 1 or len(data) != 2:
+                    self.LogError("Validation Error: CreateMasterPacket invalid length (3) %x %x"% (len(data), length))
+                    self.ComValidationError += 1
+                    return []
+
+            if command == self.MBUS_CMD_READ_HOLDING_REGS or command == self.MBUS_CMD_READ_COILS or command == self.MBUS_CMD_READ_INPUT_REGS:
                 Packet.append(self.Address)  # address
                 Packet.append(command)  # command
                 Packet.append(RegisterInt >> 8)  # reg high
@@ -677,20 +716,7 @@ class ModbusProtocol(ModbusBase):
                     Packet.append(CRCValue >> 8)  # CRC high
 
             elif command == self.MBUS_CMD_WRITE_REGS:
-                if len(data) == 0:
-                    self.LogError(
-                        "Validation Error: CreateMasterPacket invalid length (1) %x %x"
-                        % (len(data), length)
-                    )
-                    self.ComValidationError += 1
-                    return []
-                if len(data) / 2 != length:
-                    self.LogError(
-                        "Validation Error: CreateMasterPacket invalid length (2) %x %x"
-                        % (len(data), length)
-                    )
-                    self.ComValidationError += 1
-                    return []
+                
                 Packet.append(self.Address)  # address
                 Packet.append(command)  # command
                 Packet.append(RegisterInt >> 8)  # reg higy
@@ -706,25 +732,12 @@ class ModbusProtocol(ModbusBase):
                     Packet.append(CRCValue >> 8)  # CRC high
 
             elif command == self.MBUS_CMD_WRITE_COILS:
-                if len(data) == 0:
-                    self.LogError(
-                        "Validation Error: CreateMasterPacket invalid length (3) %x %x"
-                        % (len(data), length)
-                    )
-                    self.ComValidationError += 1
-                    return []
-                if len(data) / 2 != length:
-                    self.LogError(
-                        "Validation Error: CreateMasterPacket invalid length (4) %x %x"
-                        % (len(data), length)
-                    )
-                    self.ComValidationError += 1
-                    return []
+                
                 Packet.append(self.Address)  # address
                 Packet.append(command)  # command
                 Packet.append(RegisterInt >> 8)  # reg higy
                 Packet.append(RegisterInt & 0x00FF)  # reg low
-                Packet.append(length >> 8)  # Num of Reg higy
+                Packet.append(length >> 8)  # Num of Reg high
                 Packet.append(length & 0x00FF)  # Num of Reg low
                 ByteCount = int(length / 8)
                 if (length % 8 > 0):
@@ -748,19 +761,30 @@ class ModbusProtocol(ModbusBase):
                     Packet.append(CRCValue & 0x00FF)  # CRC low
                     Packet.append(CRCValue >> 8)  # CRC high
 
-            elif command == self.MBUS_CMD_READ_FILE:
+            elif command in [self.MBUS_CMD_WRITE_COIL, self.MBUS_CMD_WRITE_REG]: # write single coil and write single holding 
+                Packet.append(self.Address)  # address
+                Packet.append(command)  # command
+                Packet.append(RegisterInt >> 8)  # reg higy
+                Packet.append(RegisterInt & 0x00FF)  # reg low
+                if command == self.MBUS_CMD_WRITE_COIL:
+                    if data[0] != 0 or data[1] != 0:
+                        # on
+                        Packet.append(0xFF)
+                        Packet.append(0x00)
+                    else:
+                        # off
+                        Packet.append(0x00)
+                        Packet.append(0x00)
+                else:
+                    Packet.append(data[0])
+                    Packet.append(data[1])
+                CRCValue = self.GetCRC(Packet)
+                if CRCValue != None:
+                    Packet.append(CRCValue & 0x00FF)  # CRC low
+                    Packet.append(CRCValue >> 8)  # CRC high
 
+            elif command == self.MBUS_CMD_READ_FILE:
                 # Note, we only support one sub request at at time
-                if (
-                    RegisterInt < self.MIN_FILE_RECORD_NUM
-                    or RegisterInt > self.MAX_FILE_RECORD_NUM
-                ):
-                    self.ComValidationError += 1
-                    self.LogError(
-                        "Validation Error: CreateMasterPacket maximum regiseter (record number) value exceeded: "
-                        + str(register)
-                    )
-                    return []
                 Packet.append(self.Address)  # address
                 Packet.append(command)  # command
                 Packet.append(self.MBUS_READ_FILE_REQUEST_PAYLOAD_LENGTH)  # Byte count
@@ -777,23 +801,6 @@ class ModbusProtocol(ModbusBase):
                     Packet.append(CRCValue >> 8)  # CRC high
             elif command == self.MBUS_CMD_WRITE_FILE:
                 # Note, we only support one sub request at at time
-                if (
-                    RegisterInt < self.MIN_FILE_RECORD_NUM
-                    or RegisterInt > self.MAX_FILE_RECORD_NUM
-                ):
-                    self.ComValidationError += 1
-                    self.LogError(
-                        "Validation Error: CreateMasterPacket maximum regiseter (write record number) value exceeded: "
-                        + str(register)
-                    )
-                    return []
-                if len(data) / 2 != length:
-                    self.LogError(
-                        "Validation Error: CreateMasterPacket invalid length (3) %x %x"
-                        % (len(data), length)
-                    )
-                    self.ComValidationError += 1
-                    return []
                 Packet.append(self.Address)  # address
                 Packet.append(command)  # command
                 Packet.append(
@@ -814,9 +821,7 @@ class ModbusProtocol(ModbusBase):
                     Packet.append(CRCValue >> 8)  # CRC high
 
             else:
-                self.LogError(
-                    "Validation Error: Invalid command in CreateMasterPacket!"
-                )
+                self.LogError("Validation Error: Invalid command in CreateMasterPacket!")
                 self.ComValidationError += 1
                 return []
         except Exception as e1:
@@ -937,11 +942,13 @@ class ModbusProtocol(ModbusBase):
             if not SlavePacket[self.MBUS_OFF_COMMAND] in [
                 self.MBUS_CMD_READ_COILS,
                 self.MBUS_CMD_READ_INPUT_REGS,
-                self.MBUS_CMD_READ_REGS,
+                self.MBUS_CMD_READ_HOLDING_REGS,
                 self.MBUS_CMD_WRITE_REGS,
                 self.MBUS_CMD_WRITE_COILS,
                 self.MBUS_CMD_READ_FILE,
                 self.MBUS_CMD_WRITE_FILE,
+                self.MBUS_CMD_WRITE_COIL,
+                self.MBUS_CMD_WRITE_REG
             ]:
                 self.LogError(
                     "Validation Error: Unknown Function slave %02x %02x"
@@ -954,11 +961,13 @@ class ModbusProtocol(ModbusBase):
             if not MasterPacket[self.MBUS_OFF_COMMAND + PacketOffset] in [
                 self.MBUS_CMD_READ_COILS,
                 self.MBUS_CMD_READ_INPUT_REGS,
-                self.MBUS_CMD_READ_REGS,
+                self.MBUS_CMD_READ_HOLDING_REGS,
                 self.MBUS_CMD_WRITE_REGS,
                 self.MBUS_CMD_WRITE_COILS,
                 self.MBUS_CMD_READ_FILE,
                 self.MBUS_CMD_WRITE_FILE,
+                self.MBUS_CMD_WRITE_COIL,
+                self.MBUS_CMD_WRITE_REG
             ]:
                 self.LogError(
                     "Validation Error: Unknown Function master %02x %02x"
@@ -1003,7 +1012,7 @@ class ModbusProtocol(ModbusBase):
 
             RegisterValue = ""
             RegisterStringValue = ""
-            if (MasterPacket[self.MBUS_OFF_COMMAND + PacketOffset] == self.MBUS_CMD_READ_REGS or
+            if (MasterPacket[self.MBUS_OFF_COMMAND + PacketOffset] == self.MBUS_CMD_READ_HOLDING_REGS or
                 MasterPacket[self.MBUS_OFF_COMMAND + PacketOffset] == self.MBUS_CMD_READ_INPUT_REGS or
                 MasterPacket[self.MBUS_OFF_COMMAND + PacketOffset] == self.MBUS_CMD_READ_COILS
             ):

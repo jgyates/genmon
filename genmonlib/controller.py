@@ -1025,7 +1025,7 @@ class GeneratorController(MySupport):
                         CommandError = True
                         break
                     if "reg_type" in command.keys():
-                        if not command["reg_type"].lower() in ["holding","coil","script"]:
+                        if not command["reg_type"].lower() in ["holding","coil","script","singlecoil","singleholding"]:
                             self.LogError("Error in GetButtonsCommon: Error validateing re_type: "+ str(button))
                             CommandError = True
                             break
@@ -1137,6 +1137,7 @@ class GeneratorController(MySupport):
             with self.ModBus.CommAccessLock:
                 for command in command_sequence:
                     IsCoil = False      # can only be holding or coil
+                    IsSingle = False
                     if not "reg" in command.keys():
                         self.LogDebug("Error in ExecuteCommandSequence: invalid value array, no 'reg' in command_sequence command: " + str(command))
                         continue
@@ -1171,6 +1172,12 @@ class GeneratorController(MySupport):
                         continue
                     if "reg_type" in command.keys() and command["reg_type"] == "coil":
                         IsCoil = True
+                    if "reg_type" in command.keys() and command["reg_type"] == "singlecoil":
+                        IsCoil = True
+                        IsSingle = True
+                    if "reg_type" in command.keys() and command["reg_type"] == "singleholding":
+                        IsSingle = True
+                    "singlecoil","singleholding"
                     if isinstance(command["value"], list):
                         if not (len(command["value"]) % 2) == 0:
                             self.LogDebug("Error in ExecuteCommandSequence: invalid value length")
@@ -1185,7 +1192,7 @@ class GeneratorController(MySupport):
                                 self.LogDebug("Error in ExecuteCommandSequence: invalid type if value list")
                                 return "Command not found."
                         self.LogDebug("Write List: len: " + str(int(len(Data)  / 2)) + " : "  + self.LogHexList(Data, prefix=command["reg"], nolog = True))
-                        self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data, IsCoil = IsCoil)
+                        self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data, IsCoil = IsCoil, IsSingle = IsSingle)
 
                     elif isinstance(command["value"], str):
                         # only supports single word writes
@@ -1196,7 +1203,7 @@ class GeneratorController(MySupport):
                         Data.append(HighByte)  
                         Data.append(LowByte)  
                         self.LogDebug("Write Str: len: "+ str(int(len(Data)  / 2)) + " : " + command["reg"] + ": "+ ("%04x %04x" % (HighByte, LowByte)))
-                        self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data, IsCoil = IsCoil)
+                        self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data, IsCoil = IsCoil, IsSingle = IsSingle)
                     elif isinstance(command["value"], int):
                         # only supports single word writes
                         value = command["value"]
@@ -1206,7 +1213,7 @@ class GeneratorController(MySupport):
                         Data.append(HighByte)  
                         Data.append(LowByte)  
                         self.LogDebug("Write Int: len: "+ str(int(len(Data)  / 2)) + " : " + command["reg"]+ ": "+ ("%04x %04x" % (HighByte, LowByte)))
-                        self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data, IsCoil = IsCoil)
+                        self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data, IsCoil = IsCoil, IsSingle = IsSingle)
                     else:
                         self.LogDebug("Error in ExecuteCommandSequence: invalid value type")
                         return "Command not found."

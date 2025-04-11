@@ -999,7 +999,7 @@
         "command_sequence" : [
                                 {
                                   "reg": "0000",
-                                  "reg_type": "coil",
+                                  "reg_type": "singlecoil",
                                   "value": 1
                                 }
                               ]
@@ -1010,7 +1010,7 @@
         "command_sequence" : [
                                 {
                                   "reg": "0001",
-                                  "reg_type": "coil",
+                                  "reg_type": "singlecoil",
                                   "value": "01"
                                 }
                               ]
@@ -1021,7 +1021,7 @@
         "command_sequence" : [
                                 {
                                   "reg": "0002",
-                                  "reg_type": "coil",
+                                  "reg_type": "singlecoil",
                                   "value": "01"
                                 }
                               ]
@@ -1032,7 +1032,7 @@
         "command_sequence" : [
                                 {
                                   "reg": "0003",
-                                  "reg_type": "coil",
+                                  "reg_type": "singlecoil",
                                   "value":"01"
                                 }
                               ]
@@ -1043,7 +1043,7 @@
         "command_sequence" : [
                                 {
                                   "reg": "0004",
-                                  "reg_type": "coil",
+                                  "reg_type": "singlecoil",
                                   "value": "01"
                                 }
                               ]
@@ -1055,7 +1055,7 @@
         "command_sequence" : [
                                 {
                                   "reg": "0005",
-                                  "reg_type": "coil",
+                                  "reg_type": "singlecoil",
                                   "value": "01"
                                 }
                               ]
@@ -1067,7 +1067,7 @@
         "command_sequence" : [
                                 {
                                   "reg": "0006",
-                                  "reg_type": "coil",
+                                  "reg_type": "singlecoil",
                                   "value": "01"
                                   
                                 }
@@ -1220,35 +1220,41 @@
     "command_sequence": [
       {
         "reg": "0048",
+        "reg_type": "singleholding",
         "comment": "This will take a four digit year and only use the lower two digits as low byte",
         "year":"exec_out = abs({} - 2000)"
       },
       {
         "reg": "0049",
+        "reg_type": "singleholding",
         "comment": "This will write the month",
         "comment2": "months is 1-12",
         "month":"exec_out = {}"
       },
       {
         "reg": "004a",
+        "reg_type": "singleholding",
         "comment": "This will write the day of the month",
         "comment2": "day is 1 - 31",
         "day":"exec_out = {}"
       },
       {
         "reg": "004c",
+        "reg_type": "singleholding",
         "comment": "This will write the hour",
         "comment2": "hour is 0 - 23",
         "hour":"exec_out = {}"
       },
       {
         "reg": "004d",
+        "reg_type": "singleholding",
         "comment": "This will write the minute",
         "comment2": "minute is 0 - 59",
         "minute":"exec_out = {}"
       },
       {
         "reg": "004e",
+        "reg_type": "singleholding",
         "comment": "This will write the second",
         "comment2": "second is 0 - 59",
         "second":"exec_out = {}"

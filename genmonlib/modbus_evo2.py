@@ -226,7 +226,7 @@ class ModbusEvo2(ModbusProtocol):
     # ---------- ModbusProtocol::GetControlBytes--------------------------------
     def GetControlBytes(self, Packet):
 
-        if Packet[self.MBUS_OFF_COMMAND] == self.MBUS_CMD_READ_REGS:
+        if Packet[self.MBUS_OFF_COMMAND] == self.MBUS_CMD_READ_HOLDING_REGS:
             return [
                 Packet[self.MBUS_OFF_READ_REG_RES_DATA],
                 Packet[self.MBUS_OFF_READ_REG_RES_DATA + 1],

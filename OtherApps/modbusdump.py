@@ -113,7 +113,7 @@ def ModbusWrite():
         Data.append(LowByte)  # Value for register (Low byte)
 
         RegStr = "%04x" % startregister
-        modbus.ProcessWriteTransaction(RegStr, len(Data) / 2, Data, IsCoil = UseCoils)
+        modbus.ProcessWriteTransaction(RegStr, len(Data) / 2, Data, IsCoil = UseCoils, IsSingle=SingleRegWrites)
         DisplayComErrors(modbus)
     except Exception as e1:
         print("Error write device: " + str(e1))
@@ -179,6 +179,7 @@ if __name__ == "__main__":  #
     ModbusTCP = False
     UseInputReg = False
     UseCoils = False
+    SingleRegWrites = False
 
     HelpStr = "\npython3 mobusdump.py -r <Baud Rate> -p <serial port> -a <modbus address to query> -s <start modbus register>  -e <end modbus register>\n"
     HelpStr += "\n   Example: python3 modbusdump.py -r 9600 -p /dev/serial0 -a 9d -s 5 -e 100 \n"
@@ -197,12 +198,13 @@ if __name__ == "__main__":  #
     HelpStr += "\n      -t  TCP port if modbus over TCP is used"
     HelpStr += "\n      -m  Use Modbus TCP, if omitted and IP and port provided then use Modbus RTU over TCP"
     HelpStr += "\n      -n  read input registers instead of holding registers"
+    HelpStr += "\n      -u  use single register writes for holding and coil writes"
     HelpStr += "\n \n"
 
     try:
         opts, args = getopt.getopt(
             sys.argv[1:],
-            "cnmbhr:p:s:e:a:x:w:i:t:",
+            "ucnmbhr:p:s:e:a:x:w:i:t:",
             [
                 "rate=",
                 "port=",
@@ -272,6 +274,9 @@ if __name__ == "__main__":  #
             elif opt in ("-c", "--coil"):
                 UseCoils = True
                 print("Reading/Writing Coil Values")
+            elif opt in ("-u", "--usesingle"):
+                SingleRegWrites = True
+                print("Using Single Register Writes")
 
     except Exception as e1:
         print("\nError parsing command line: " + str(e1) + "\n")

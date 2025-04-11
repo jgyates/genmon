@@ -57,6 +57,8 @@ class ModbusBase(MySupport):
     MBUS_FILE_NUN_SIZE = 0x02
     MBUS_RECORD_NUM_SIZE = 0x02
     MBUS_RECORD_LENGTH_SIZE = 0x02
+    MBUS_REG_SIZE = 0x02
+    MBUS_VALUE_SIZE = 0x02
 
     # Packet lengths
     MODBUS_TCP_HEADER_SIZE = 0x06
@@ -66,6 +68,11 @@ class ModbusBase(MySupport):
     MBUS_FILE_READ_PAYLOAD_SIZE_MINUS_LENGTH = (
         MBUS_ADDRESS_SIZE + MBUS_COMMAND_SIZE + MBUS_RES_LENGTH_SIZE + MBUS_CRC_SIZE
     )  # include bytes not in count
+
+    MBUS_SINGLE_WRITE_RES_LENGTH = (MBUS_ADDRESS_SIZE + MBUS_COMMAND_SIZE + MBUS_REG_SIZE + MBUS_VALUE_SIZE + MBUS_CRC_SIZE)
+
+    MBUS_SINGLE_WRITE_REQ_LENGTH = MBUS_SINGLE_WRITE_RES_LENGTH
+
     MBUS_FILE_WRITE_REQ_SIZE_MINUS_LENGTH = (
         MBUS_FILE_TYPE_SIZE
         + MBUS_FILE_NUN_SIZE
@@ -88,11 +95,14 @@ class ModbusBase(MySupport):
     MAX_FILE_NUMBER = 0xFFFF
     MIN_FILE_NUMBER = 0x01
     # commands
-    MBUS_CMD_READ_COILS = 0x01          # Read Coils
-    MBUS_CMD_READ_REGS = 0x03           # Read Holding Registers
-    MBUS_CMD_READ_INPUT_REGS = 0x04     # Read Input Registers
+    MBUS_CMD_READ_COILS = 0x01          # Read multiple coils
+    MBUS_CMD_READ_DISCRETE_INPUTS = 0x02    # read multiple discrete inputs (bits)
+    MBUS_CMD_READ_HOLDING_REGS = 0x03       # Read Multiple Holding Registers
+    MBUS_CMD_READ_INPUT_REGS = 0x04     # Read multiple Inputs Registers
+    MBUS_CMD_WRITE_COIL = 0x05          # write single coil
+    MBUS_CMD_WRITE_REG = 0x06           # write single register
     MBUS_CMD_WRITE_COILS = 0x0f         # Write multiple coils
-    MBUS_CMD_WRITE_REGS = 0x10
+    MBUS_CMD_WRITE_REGS = 0x10          # Write multiple holding regs
     MBUS_CMD_READ_FILE = 0x14
     MBUS_CMD_WRITE_FILE = 0x15
 
@@ -218,7 +228,7 @@ class ModbusBase(MySupport):
 
         if self.UseModbusFunction4:
             # use modbus function code 4 instead of 3 for reading modbus values
-            self.MBUS_CMD_READ_REGS = self.MBUS_CMD_READ_INPUT_REGS
+            self.MBUS_CMD_READ_HOLDING_REGS = self.MBUS_CMD_READ_INPUT_REGS
             self.LogError("Using Modbus function 4 instead of 3")
 
     # -------------ModbusBase::ProcessWriteTransaction---------------------------
