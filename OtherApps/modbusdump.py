@@ -113,7 +113,7 @@ def ModbusWrite():
         Data.append(LowByte)  # Value for register (Low byte)
 
         RegStr = "%04x" % startregister
-        modbus.ProcessMasterSlaveWriteTransaction(RegStr, len(Data) / 2, Data)
+        modbus.ProcessMasterSlaveWriteTransaction(RegStr, len(Data) / 2, Data, IsCoil = UseCoils)
         DisplayComErrors(modbus)
     except Exception as e1:
         print("Error write device: " + str(e1))
@@ -192,7 +192,7 @@ if __name__ == "__main__":  #
     HelpStr += "\n      -b  Stop bits. If omitted 1 stop bit, if present use 1.5 stop bits"
     HelpStr += "\n      -x  Omit for no parity. -x 1 for odd parity, -x 2 for even parity"
     HelpStr += "\n      -w  write this value to register instead of read. Start register is used as register"
-    HelpStr += "\n      -c  read coils (bits) instead of holding register"
+    HelpStr += "\n      -c  read or write coils (bits) instead of holding register"
     HelpStr += "\n      -i  IP address if modbus over TCP is used"
     HelpStr += "\n      -t  TCP port if modbus over TCP is used"
     HelpStr += "\n      -m  Use Modbus TCP, if omitted and IP and port provided then use Modbus RTU over TCP"
@@ -293,10 +293,6 @@ if __name__ == "__main__":  #
         if endregister == None or startregister > endregister:
             print(HelpStr)
             sys.exit(2)
-    elif UseCoils:
-        print("\nCoil reading and writing flags are not compatible.\n")
-        print(HelpStr)
-        sys.exit(2)
 
     if isinstance(modbusaddress, str) and modbusaddress.lower() != "all":
         print("Invalid modbus address parameter: %s" % modbusaddress)
