@@ -751,7 +751,11 @@ class ModbusProtocol(ModbusBase):
                 bitindex = 0
                 for byteindex in range(0, ByteCount):
                     odd_data = data[1::2]   # extract every other odd value from list to another list
-                    ByteValue |= ((odd_data[byteindex] & 0x01) << bitindex)
+                    even_data = data[::2]   # every other even value from list
+                    BitValue = 1
+                    if even_data[byteindex] == 0 and odd_data[byteindex] == 0:
+                        BitValue = 0
+                    ByteValue |= (BitValue << bitindex)
                     bitindex += 1
                     if bitindex < 7:
                         bitindex = 0
