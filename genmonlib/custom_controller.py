@@ -2280,9 +2280,9 @@ class CustomController(GeneratorController):
             SwitchState = self.GetSwitchState().lower()
 
             validStates = ["ALARM", "SERVICEDUE", "EXERCISING", "RUNNING","RUNNING-MANUAL", "OFF", "MANUAL", "READY"]
-            if "getbase" in self.controllerimport.keys():
-                bSuccess, ReturnStatus = self.GetExtendedDisplayString("basestatus", FirstItemOnly = True)
-                if bSuccess:
+            if "basestatus" in self.controllerimport.keys():
+                ReturnStatus = self.GetExtendedDisplayString(self.controllerimport,"basestatus", FirstItemOnly = True)
+                if ReturnStatus != "Unknown":
                     ReturnStatus = ReturnStatus.upper()
                     if ReturnStatus in validStates:
                         return ReturnStatus

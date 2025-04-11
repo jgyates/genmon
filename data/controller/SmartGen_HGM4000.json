@@ -310,15 +310,6 @@
       "container": true,
       "value" : [
             {
-              "reg": "0011",
-              "mask": "ffff",
-              "type": "int",
-              "title": "Water Temperature",
-              "temperature": "celsius",
-              "units": "C",
-              "include":"disable_obj,filter_obj"
-            },
-            {
               "reg": "003b",
               "mask": "ffff",
               "type": "int",
@@ -350,6 +341,15 @@
               "type": "int",
               "title": "RPM",
               "units": null
+            },
+            {
+              "reg": "0011",
+              "mask": "ffff",
+              "type": "int",
+              "title": "Water Temperature",
+              "temperature": "celsius",
+              "units": "C",
+              "include":"disable_obj,filter_obj"
             },
             {
               "reg": "003a",
@@ -1281,12 +1281,14 @@
         "information":"The basestatus entry must return one of the following: ",
         "information2": "ALARM, SERVICEDUE, EXERCISING, RUNNING, RUNNING-MANUAL, OFF, MANUAL or  READY",
         "information3:": "if multiple conditions exist, only the first that is true will be returned",
-        "reg": "0028",
-        "type": "bool",
-        "mask": "00ff",
-        "value": "9",
+        "reg": "002a",
+        "reg_type": "coil",
+        "type": "bits",
+        "mask": "0001",
+        "value": "0001",
         "title": "Base Status",
-        "text": "RUNNING"
+        "text": "RUNNING-MANUAL"
+
       },
       {
         "reg": "0022",
@@ -1297,12 +1299,13 @@
         "text": "EXERCISING"
       },
       {
-        "reg": "002a",
-        "reg_type": "coil",
-        "type": "bool",
-        "mask": "0001",
+        "reg": "0022",
+        "type": "bits",
+        "mask": "00ff",
+        "value": "9",
         "title": "Base Status",
-        "text": "RUNNING-MANUAL"
+        "text": "RUNNING"
+
       },
       {
         "reg": "002b",
@@ -1329,10 +1332,10 @@
         "text": "ALARM"
       },
       {
-        "reg": "0028",
+        "reg": "0029",
+        "reg_type": "coil",
         "type": "bool",
-        "mask": "00ff",
-        "value": "0",
+        "mask": "0001",
         "title": "Base Status",
         "text": "READY"
       },
