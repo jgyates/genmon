@@ -713,6 +713,26 @@
   ],
   "maintenance": [
     {
+      "comment": "Time remaining until maintenance is due",
+      "type" : "list",
+      "format": "%sh %sm",
+      "title" : "Maintenance Timer",
+      "value" : [
+          {
+            "reg": "0020",
+            "type": "int",
+            "mask" : "ffff",
+            "title": "Maintenance Timer Hours"
+          },
+          {
+            "reg": "0021",
+            "type": "int",
+            "mask" : "ffff",
+            "title": "Maintenance Timer Mins"
+          }
+        ]
+    },  
+    {
       "type": "list",
       "title": "Switch State",
       "separator": ",",
