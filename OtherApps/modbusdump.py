@@ -193,12 +193,13 @@ if __name__ == "__main__":  #
     HelpStr += "\n      -b  Stop bits. If omitted 1 stop bit, if present use 1.5 stop bits"
     HelpStr += "\n      -x  Omit for no parity. -x 1 for odd parity, -x 2 for even parity"
     HelpStr += "\n      -w  write this value to register instead of read. Start register is used as register"
-    HelpStr += "\n      -c  read or write coils (bits) instead of holding register"
+    HelpStr += "\n      -c  read or write coils (bits) instead of holding register (modbu fuction 0x01 and 0x0f)"
     HelpStr += "\n      -i  IP address if modbus over TCP is used"
     HelpStr += "\n      -t  TCP port if modbus over TCP is used"
     HelpStr += "\n      -m  Use Modbus TCP, if omitted and IP and port provided then use Modbus RTU over TCP"
-    HelpStr += "\n      -n  read input registers instead of holding registers"
-    HelpStr += "\n      -u  use single register writes for holding and coil writes"
+    HelpStr += "\n      -n  read input registers instead of holding registers (modbus fuction 0x04)"
+    HelpStr += "\n      -u  use single register writes for holding (modbus function 0x06) and coil writes (modbus fuction 0x05)"
+    HelpStr += "\n\n     Default read and write use holding registers (modbus fuction 0x03 and 0x10)"
     HelpStr += "\n \n"
 
     try:
