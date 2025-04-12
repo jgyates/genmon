@@ -713,146 +713,239 @@
   ],
   "maintenance": [
     {
-      "comment": "This entry is for displaying the run hours",
-      "type" : "list",
-      "format": "%s%sh %sm %ss",
-      "title" : "Engine Run Time",
-      "value" : [
+      "type": "list",
+      "title": "Switch State",
+      "separator": ",",
+      "value": [
+          {
+            "reg": "0028",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Switch State",
+            "text": "Test"
+          },
+          {
+            "reg": "0029",
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Switch State",
+            "text": "Auto"
+          },
           {
             "reg": "002a",
-            "type": "int",
-            "mask" : "ffff",
-            "title": "Engine  Run Time MSB"
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Switch State",
+            "text": "Manual"
           },
           {
             "reg": "002b",
-            "type": "int",
-            "mask" : "ffff",
-            "title": "Engine Run Time LSB"
-          },
-          {
-            "reg": "002c",
-            "type": "int",
-            "mask" : "00ff",
-            "title": "Engine Run Time Mins"
-          },
-          {
-            "reg": "002d",
-            "type": "int",
-            "mask" : "00ff",
-            "title": "Engine Run Time Secs"
+            "reg_type": "coil",
+            "type": "bool",
+            "mask": "0001",
+            "title": "Switch State",
+            "text": "Stop"
           }
         ]
     },
     {
-      "comment": "This entry is for displaying the number of engine starts",
-      "type" : "list",
-      "format": "%s%s",
-      "title" : "Engine Starts",
+      "reg": "0007",
+      "reg_type": "coil",
+      "type": "object_int_index",
+      "title": "Generator Output",
+      "mask": "0001",
+      "object": {
+        "0": "Open",
+        "1": "Closed"
+      },
+      "default": "Unknown Engine State"
+    },
+    {"title": "Engine",
+      "comment": "The 'container' modifier will allow the values to be displayed with some hierarchy", 
+      "container": true,
       "value" : [
-          {
-            "reg": "002e",
-            "type": "int",
-            "mask" : "ffff",
-            "title": "Engine Starts MSB"
+        {
+          "reg": "0022",
+          "type": "object_int_index",
+          "mask": "ffff",
+          "object": {
+            "0": "Standby",
+            "1": "Preheat",
+            "2": "Fuel",
+            "3": "Crank",
+            "4": "Crank Rest",
+            "5": "Safety Run",
+            "6": "Start Idle",
+            "7": "High Speed Warmup",
+            "8": "On-Load",
+            "9": "Normal Running",
+            "10": "High Speed Cooling",
+            "11": "Stop Idle",
+            "12": "ETS",
+            "13": "Wait for Stop",
+            "14": "Stop Failure"
           },
-          {
-            "reg": "002f",
-            "type": "int",
-            "mask" : "ffff",
-            "title": "Engine Starts LSB"
-          }
-        ]
+          "default": "Unknown Engine State",
+          "title": "Engine State"
+        },
+        {
+          "comment": "This entry is for displaying the run hours",
+          "type" : "list",
+          "format": "%s%sh %sm %ss",
+          "title" : "Engine Run Time",
+          "value" : [
+              {
+                "reg": "002a",
+                "type": "int",
+                "mask" : "ffff",
+                "title": "Engine  Run Time MSB"
+              },
+              {
+                "reg": "002b",
+                "type": "int",
+                "mask" : "ffff",
+                "title": "Engine Run Time LSB"
+              },
+              {
+                "reg": "002c",
+                "type": "int",
+                "mask" : "00ff",
+                "title": "Engine Run Time Mins"
+              },
+              {
+                "reg": "002d",
+                "type": "int",
+                "mask" : "00ff",
+                "title": "Engine Run Time Secs"
+              }
+            ]
+        },
+        {
+          "comment": "This entry is for displaying the number of engine starts",
+          "type" : "list",
+          "format": "%s%s",
+          "title" : "Engine Starts",
+          "value" : [
+              {
+                "reg": "002e",
+                "type": "int",
+                "mask" : "ffff",
+                "title": "Engine Starts MSB"
+              },
+              {
+                "reg": "002f",
+                "type": "int",
+                "mask" : "ffff",
+                "title": "Engine Starts LSB"
+              }
+            ]
+        }
+      ]
     },
-    {
-      "reg": "0015",
-      "mask": "ffff",
-      "type": "int",
-      "title": "Fuel Level",
-      "units": "%",
-      "include":"disable_obj,filter_obj"
-    },
-    {
-      "reg": "001e",
-      "mask": "ffff",
-      "type": "int",
-      "title": "AUX Sensor",
-      "units": null,
-      "include":"disable_obj,filter_obj"
-    },
-    {
-      "comment": "This entry is for displaying the total energy produced",
-      "type" : "list",
-      "format": "%s%skWh",
-      "title" : "Total Energy Produced",
+    {"title": "Efficiency",
+      "comment": "The 'container' modifier will allow the values to be displayed with some hierarchy", 
+      "container": true,
       "value" : [
-          {
-            "reg": "0030",
-            "type": "int",
-            "mask" : "ffff",
-            "title": "Total Energy Produced MSB"
-          },
-          {
-            "reg": "0031",
-            "type": "int",
-            "mask" : "ffff",
-            "title": "Total Energy Produced LSB"
-          }
-        ]
+        {
+          "reg": "0042",
+          "mask": "ffff",
+          "type": "float",
+          "title": "Fuel Consumption",
+          "multiplier": 0.1,
+          "units": "L",
+          "include":"disable_obj,filter_obj"
+        },
+        {
+          "reg": "0044",
+          "mask": "ffffffff",
+          "type": "float",
+          "title": "Total Fuel Consumed",
+          "multiplier": 0.1,
+          "units": "L",
+          "include":"disable_obj,filter_obj"
+        },
+        {
+          "reg": "0015",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Fuel Level",
+          "units": "%",
+          "include":"disable_obj,filter_obj"
+        },
+        {
+          "comment": "This entry is for displaying the total energy produced",
+          "type" : "list",
+          "format": "%s%skWh",
+          "title" : "Total Energy Produced",
+          "value" : [
+              {
+                "reg": "0030",
+                "type": "int",
+                "mask" : "ffff",
+                "title": "Total Energy Produced MSB"
+              },
+              {
+                "reg": "0031",
+                "type": "int",
+                "mask" : "ffff",
+                "title": "Total Energy Produced LSB"
+              }
+            ]
+        }
+      ]
     },
-    {
-      "reg": "0042",
-      "mask": "ffff",
-      "type": "float",
-      "title": "Fuel Consumption",
-      "multiplier": 0.1,
-      "units": "L",
-      "include":"disable_obj,filter_obj"
-    },
-    {
-      "reg": "0044",
-      "mask": "ffffffff",
-      "type": "float",
-      "title": "Total Fuel Consumed",
-      "multiplier": 0.1,
-      "units": "L",
-      "include":"disable_obj,filter_obj"
-    },
-    {
-      "reg": "0046",
-      "mask": "ffff",
-      "type": "int",
-      "title": "Controller Temperature",
-      "multiplier": 0.1,
-      "temperature": "celsius",
-      "units": "C",
-      "include":"disable_obj,filter_obj"
-    },
-    {
-      "comment": "This entry is for displaying the software release info",
-      "type" : "list",
-      "format": "%s.%s.%s",
-      "title" : "Controller Software Release Date",
+    {"title": "Controller Info",
+      "comment": "The 'container' modifier will allow the values to be displayed with some hierarchy", 
+      "container": true,
       "value" : [
-          {
-            "reg": "004f",
-            "type": "int",
-            "mask" : "ffff",
-            "title": "Software Release Year"
-          },
-          {
-            "reg": "0050",
-            "type": "int",
-            "mask" : "ffff",
-            "title": "Software Release Month"
-          },
-          {
-            "reg": "0051",
-            "type": "int",
-            "mask" : "00ff",
-            "title": "Software Release Day"
-          }
-        ]
+        {
+          "comment": "This entry is for displaying the software release info",
+          "type" : "list",
+          "format": "%s.%s.%s",
+          "title" : "Controller Software Release Date",
+          "value" : [
+              {
+                "reg": "004f",
+                "type": "int",
+                "mask" : "ffff",
+                "title": "Software Release Year"
+              },
+              {
+                "reg": "0050",
+                "type": "int",
+                "mask" : "ffff",
+                "title": "Software Release Month"
+              },
+              {
+                "reg": "0051",
+                "type": "int",
+                "mask" : "00ff",
+                "title": "Software Release Day"
+              }
+            ]
+        },
+        {
+          "reg": "0046",
+          "mask": "ffff",
+          "type": "int",
+          "title": "Controller Temperature",
+          "multiplier": 0.1,
+          "temperature": "celsius",
+          "units": "C",
+          "include":"disable_obj,filter_obj"
+        },
+        {
+          "reg": "001e",
+          "mask": "ffff",
+          "type": "int",
+          "title": "AUX Sensor",
+          "units": null,
+          "include":"disable_obj,filter_obj"
+        }
+      ]
     }
   ],
   "gauges": [
@@ -1010,17 +1103,6 @@
         "command_sequence" : [
                                 {
                                   "reg": "0001",
-                                  "reg_type": "singlecoil",
-                                  "value": "01"
-                                }
-                              ]
-    },
-    {
-        "onewordcommand" : "test",
-        "title" : "Test",
-        "command_sequence" : [
-                                {
-                                  "reg": "0002",
                                   "reg_type": "singlecoil",
                                   "value": "01"
                                 }
@@ -1358,7 +1440,7 @@
         "type" : "list",
         "exec": "exec_out = round(float(({}+9999) + {}) + float({})/60.0,2)",
         "separator" : null,
-        "title" : "Engine Run Time",
+        "title" : "Engine Run Hours",
         "value" : [
             {
               "reg": "002a",
