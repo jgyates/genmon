@@ -436,7 +436,9 @@ class MyPlatform(MyCommon):
             match = re.search("signal: -(\d+) dBm", result)
             return match.group(1)
         except Exception as e1:
-            return "0"
+            # This allow the wifi gauge to return correctly if the above iw method does not work
+            result = self.GetWiFiSignalStrenthFromProc(adapter)
+            return result
 
     # ------------ MyPlatform::GetWiFiSignalQuality -----------------------------
     def GetWiFiSignalQuality(self, adapter, JSONNum=False):
@@ -460,6 +462,20 @@ class MyPlatform(MyCommon):
         except Exception as e1:
             return ""
 
+    # ------------ MyPlatform::GetWiFiSignalStrenthFromProc --------------------
+    def GetWiFiSignalStrenthFromProc(self, adapter):
+        try:
+             ReturnValue = 0
+             with open("/proc/net/wireless", "r") as f:
+                for line in f:
+                    if not adapter in line:
+                        continue
+                    ListItems = line.split()
+                    if len(ListItems) > 4:
+                        return int(ListItems[3].replace(".", ""))
+                return ReturnValue
+        except Exception as e1:
+            return 0
     # ------------ MyPlatform::GetWiFiInfo --------------------------------------
     def GetWiFiInfo(self, adapter, JSONNum=False):
 
