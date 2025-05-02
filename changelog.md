@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Update to allow single holding register and single coil modbus reads (modbus function 0x05 and 0x06) for JSON custom controller definitions
 - Minor update to allow the wifi gauge to work on some USB wifi drivers
 - Minor update to change the display of gauges for Evo2 three phase models
+- Added Maintenance data to email notification text
 
 ## V1.19.04 -2024-08-21
 - Corrected issue with saving service journal with HTTPS enabled

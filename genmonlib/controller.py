@@ -1322,6 +1322,16 @@ class GeneratorController(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error in DisplayRegisters: " + str(e1))
 
+    # ------------ Evolution:GetMessageText ------------------------------------
+    def GetMessageText(self):
+        try:
+            msgtext = self.DisplayStatus()
+            msgtext += self.DisplayMaintenance()
+            return msgtext
+        except Exception as e1:
+            self.LogErrorLine("Error in GetMessageText: " + str(e1))
+            return ""
+
     # ----------  GeneratorController::SetGeneratorTimeDate----------------------
     # set generator time to system time
     def SetGeneratorTimeDate(self):

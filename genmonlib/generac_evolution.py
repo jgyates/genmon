@@ -1615,7 +1615,7 @@ class Evolution(GeneratorController):
             msgbody += "\n"
             msgbody += self.DisplayRegisters()
             msgbody += "\n"
-            msgbody += self.DisplayStatus()
+            msgbody += self.GetMessageText()
 
             self.MessagePipe.SendMessage(
                 "Monitor Register Alert: " + Register, msgbody, msgtype="warn"
@@ -2314,6 +2314,16 @@ class Evolution(GeneratorController):
         except Exception as e1:
             self.LogErrorLine("Error in CheckForOutage: " + str(e1))
 
+    # ------------ Evolution:GetMessageText ------------------------------------
+    def GetMessageText(self,  Reg0001Value=None):
+        try:
+            msgtext = self.DisplayStatus(Reg0001Value=Reg0001Value)
+            msgtext += self.DisplayMaintenance()
+            return msgtext
+        except Exception as e1:
+            self.LogErrorLine("Error in GetMessageText: " + str(e1))
+            return ""
+
     # ------------ Evolution:CheckForAlarms -------------------------------------
     # Note this must be called from the Process thread since it queries the log registers
     # when in master emulation mode
@@ -2378,7 +2388,7 @@ class Evolution(GeneratorController):
                 msgsubject = "Generator Notice: " + self.SiteName
                 msgbody += "NOTE: This message is a notice that the state of the generator has changed. The system is not in alarm.\n"
 
-            msgbody += self.DisplayStatus(Reg0001Value=RegVal)
+            msgbody += self.GetMessageText(Reg0001Value=RegVal)
 
             if self.SystemInAlarm():
                 msgbody += self.printToString(
@@ -4796,7 +4806,7 @@ class Evolution(GeneratorController):
                         "Frimware Changed from %s to %s"
                         % (self.SavedFirmwareVersion, FWVersionString)
                     )
-                    msgbody += self.DisplayStatus()
+                    msgbody += self.GetMessageText()
                     msgbody += "\nIP Address: " + self.GetNetworkIp()
                     self.MessagePipe.SendMessage(
                         msgsubject, msgbody, msgtype=MessageType
