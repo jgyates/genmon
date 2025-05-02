@@ -297,6 +297,9 @@ class GeneratorController(MySupport):
                     self.bUseLinuxWifiSignalGauge = self.config.ReadValue(
                         "uselinuxwifisignalgauge", return_type=bool, default=True
                     )
+                    self.bWifiIsPercent = self.config.ReadValue(
+                        "wifiispercent", return_type=bool, default=False
+                    )
         except Exception as e1:
             self.FatalError("Missing config file or config file entries: " + str(e1))
 
@@ -2363,14 +2366,21 @@ class GeneratorController(MySupport):
                     self.LogErrorLine("Error in SetupCommonTiles: sensor_bounds: " + str(e1))
                 
             # wifi signal strength
+            units = "dBm"
+            type = "wifi"
+
+            if self.bWifiIsPercent:
+                units = "%"
+                type = "wifipercent"
+
             if self.bUseLinuxWifiSignalGauge and self.Platform != None:
                 signal = self.Platform.GetWiFiSignalStrength()
                 if signal != 0:
                     Tile = MyTile(
                         self.log,
                         title="WiFi Signal",
-                        units="dBm",
-                        type="wifi",
+                        units=units,
+                        type=type,
                         callback=self.Platform.GetWiFiSignalStrength,
                         callbackparameters=(True,),
                     )

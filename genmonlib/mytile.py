@@ -254,6 +254,7 @@ class MyTile(MyCommon):
                 self.Type.lower() == "fuel"
                 or self.Type.lower() == "level"
                 or self.Type.lower() == "position"
+                or self.Type.lower() == "wifipercent"
             ):
                 self.Nominal = self.SetDefault(self.Nominal, 100)
                 self.Minimum = self.SetDefault(self.Minimum, 0)
@@ -266,12 +267,20 @@ class MyTile(MyCommon):
                         range(int(self.Minimum), int(self.Maximum), int(self.Divisions))
                     ),
                 )
-                values = [
-                    self.Minimum,
-                    int(self.Nominal * 0.10),
-                    int(self.Nominal * 0.25),
-                    int(self.Nominal),
-                ]
+                if self.Type.lower() == "wifipercent":
+                    values = [
+                        self.Minimum,
+                        int(self.Nominal * 0.60),
+                        int(self.Nominal * 0.80),
+                        int(self.Nominal),
+                    ]
+                else:
+                    values = [
+                        self.Minimum,
+                        int(self.Nominal * 0.10),
+                        int(self.Nominal * 0.25),
+                        int(self.Nominal),
+                    ]
                 colors = [self.RED, self.YELLOW, self.GREEN]
                 self.ColorZones = self.SetDefault(
                     self.ColorZones, self.CreateColorZoneList(values, colors)

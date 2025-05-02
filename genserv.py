@@ -3136,6 +3136,18 @@ def ReadAdvancedSettingsFromFile():
                     "uselinuxwifisignalgauge",
                 ]
             if GStartInfo["Linux"]:
+                ConfigSettings["wifiispercent"] = [
+                    "boolean",
+                    "Wifi Gauge is percentage",
+                    108,
+                    False,
+                    "",
+                    0,
+                    GENMON_CONFIG,
+                    GENMON_SECTION,
+                    "wifiispercent",
+                ]
+            if GStartInfo["Linux"]:
                 ConfigSettings["useraspberrypicputempgauge"] = [
                     "boolean",
                     "Show CPU Temperature Gauge",
