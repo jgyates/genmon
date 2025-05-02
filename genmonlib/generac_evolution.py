@@ -387,8 +387,13 @@ class Evolution(GeneratorController):
                 self.CheckModelSpecificInfo(NoLookUp=self.Simulation)
             # check for unknown events (i.e. events we are not decoded) and send an email if they occur
             self.CheckForAlarmEvent.set()
-            self.SetupTiles()
             self.Phase = self.GetModelInfo("phase")
+
+            if self.GetModelInfo("phase") == "3" and not self.LiquidCooled:
+                # three phase model does not have CTs that report over modbus that I can tell
+                self.bDisablePowerLog = True
+
+            self.SetupTiles()
             if not self.EvolutionController == None and not self.LiquidCooled == None:
                 self.InitComplete = True
                 self.InitCompleteEvent.set()
