@@ -2382,7 +2382,7 @@ class GeneratorController(MySupport):
                         units=units,
                         type=type,
                         callback=self.Platform.GetWiFiSignalStrength,
-                        callbackparameters=(True,),
+                        callbackparameters=(True,False,self.bWifiIsPercent),
                     )
                     self.TileList.append(Tile)
 

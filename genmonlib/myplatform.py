@@ -398,7 +398,7 @@ class MyPlatform(MyCommon):
         return LinuxInfo
 
     # ------------ MyPlatform::GetWiFiSignalStrength ----------------------------
-    def GetWiFiSignalStrength(self, ReturnInt=True, JSONNum=False):
+    def GetWiFiSignalStrength(self, ReturnInt=True, JSONNum=False, usepercent=False):
 
         try:
             if ReturnInt == True:
@@ -421,7 +421,8 @@ class MyPlatform(MyCommon):
                 return DefaultReturn
 
             signal = self.GetWiFiSignalStrengthFromAdapter(adapter)
-            signal = int(signal) * -1
+            if not usepercent:
+                signal = int(signal) * -1
             return signal
         except Exception as e1:
             self.LogErrorLine("Error in GetWiFiSignalStrength: " + str(e1))
