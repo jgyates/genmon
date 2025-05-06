@@ -5251,7 +5251,7 @@ class Evolution(GeneratorController):
                     "usesensorforfuelgauge", return_type=bool, default=True
                 )
                 self.IgnoreUnknown = self.config.ReadValue(
-                    "ignore_unknown", return_type=bool, default=False
+                    "ignore_unknown", return_type=bool, default=True
                 )
                 self.LegacyPower = self.config.ReadValue(
                     "legacy_power", return_type=bool, default=False
