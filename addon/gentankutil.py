@@ -142,7 +142,7 @@ class GenTankData(MySupport):
             self.console.error("Error in GenTankData init: " + str(e1))
             sys.exit(1)
 
-    # ----------GenMopekaData::SendMessage----------------------------------------
+    # ----------GenTankData::SendMessage----------------------------------------
     def SendMessage(self, title, body, type, onlyonce=False, oncedaily=False):
 
         try:
