@@ -705,6 +705,7 @@ class Loader(MySupport):
                 "genexercise",
                 "genemail2sms",
                 "gentankutil",
+                "gencentriconnect",
                 "gentankdiy",
                 "genalexa",
                 "gensnmp",
@@ -758,6 +759,15 @@ class Loader(MySupport):
                             section=entry,
                             module="genemail2sms.py",
                             conffile="genemail2sms.conf",
+                        )
+                    if entry == "gencentriconnect":
+                        self.LogError(
+                            "Warning: Missing entry: " + entry + " , adding entry"
+                        )
+                        self.AddEntry(
+                            section=entry,
+                            module="gencentriconnect.py",
+                            conffile="gencentriconnect.conf",
                         )
                     if entry == "gentankutil":
                         self.LogError(
