@@ -657,6 +657,7 @@ class Monitor(MySupport):
                 "gencallmebot.log",
                 "genexercise.log",
                 "genemail2sms.log",
+                "gencentriconnect.log",
                 "gentankutil.log",
                 "genalexa.log",
                 "gensnmp.log",
