@@ -335,7 +335,7 @@ li a:hover:not(.active) {
 
 /* Addons */
 
-.linux_small, .mqtt_small, .rpi_small, .slack_small, .callmebot_small, .twilio_small, .pushover_small, .linux, .mqtt, .pushover, .rpi, .slack, .callmebot, .twilio, .sms, .sms_small, .csv_small, .csv, .selftest, .selftest_small, .Genmon, .Genmon_small, .text_small, .serveo, .alexa, .serveo_small, .tankutility_small, .alexa_small, .text, .tankutility, .snmp, .snmp_small, .voipms, .voipms_small, .mopeka, .mopeka_small{
+.linux_small, .mqtt_small, .rpi_small, .slack_small, .callmebot_small, .centri_small, .gear_small, .twilio_small, .pushover_small, .linux, .mqtt, .pushover, .rpi, .slack, .callmebot, .centri, .gear, .twilio, .sms, .sms_small, .csv_small, .csv, .selftest, .selftest_small, .Genmon, .Genmon_small, .text_small, .serveo, .alexa, .serveo_small, .tankutility_small, .alexa_small, .text, .tankutility, .snmp, .snmp_small, .voipms, .voipms_small, .mopeka, .mopeka_small{
 	background: url(images/addons.png) no-repeat;
 }
 
@@ -367,6 +367,18 @@ li a:hover:not(.active) {
 	background-position: -278px -860px ;
 	width: 47px;
 	height: 49px;
+}
+
+.centri_small{
+	background-position: -335px -861px ;
+	width: 42px;
+	height: 49px;
+}
+
+.gear_small{
+	background-position: -384px -862px ;
+	width: 49px;
+	height: 46px;
 }
 
 .twilio_small{
@@ -427,6 +439,18 @@ li a:hover:not(.active) {
 	background-position: -4px -860px ;
 	width: 252px;
 	height: 64px;
+}
+
+.centri{
+	background-position: -3px -935px ;
+	width: 252px;
+	height: 97px;
+}
+
+.gear{
+	background-position: -259px -939px ;
+	width: 252px;
+	height: 97px;
 }
 
 .twilio{

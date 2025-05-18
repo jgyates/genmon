@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - Minor update to change the display of gauges for Evo2 three phase models
 - Added Maintenance data to email notification text
 - Added Advanced Settings option to show the wifi gauge as a percent instead of signal strength to better support some USB wifi adapters
+- New Add On program for CentriConnect.com My Propane tank monitor
 
 ## V1.19.04 -2024-08-21
 - Corrected issue with saving service journal with HTTPS enabled

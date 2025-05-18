@@ -1808,6 +1808,76 @@ def GetAddOns():
             AddOnCfg, "genemail2sms", GENEMAIL2SMS_CONFIG
         )
 
+        # GENCENTRICONNECT
+        AddOnCfg["gencentriconnect"] = collections.OrderedDict()
+        AddOnCfg["gencentriconnect"]["enable"] = ConfigFiles[GENLOADER_CONFIG].ReadValue(
+            "enable", return_type=bool, section="gencentriconnect", default=False
+        )
+        AddOnCfg["gencentriconnect"]["title"] = "Centri My Propane External Tank Fuel Monitor"
+        AddOnCfg["gencentriconnect"][
+            "description"
+        ] = "Integrates Centriconnect.com propane tank sensor data"
+        AddOnCfg["gencentriconnect"]["icon"] = "centri"
+        AddOnCfg["gencentriconnect"][
+            "url"
+        ] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#gencentriconnectpy-optional"
+        AddOnCfg["gencentriconnect"]["parameters"] = collections.OrderedDict()
+
+        AddOnCfg["gencentriconnect"]["parameters"]["user_id"] = CreateAddOnParam(
+            ConfigFiles[GENCENTRICONNECT_CONFIG].ReadValue(
+                "user_id", return_type=str, default=""
+            ),
+            "string",
+            "User ID. Note that this is a long series of numbers and dashes in this format: 36e551aa-c215-4c9b-8c70-ba7729687654",
+            bounds="required min:36",
+            display_name="User ID",
+        )
+        AddOnCfg["gencentriconnect"]["parameters"]["device_id"] = CreateAddOnParam(
+            ConfigFiles[GENCENTRICONNECT_CONFIG].ReadValue(
+                "device_id", return_type=str, default=""
+            ),
+            "string",
+            "Device ID. Note that this is a long series of numbers and dashes in this format: 36e551aa-c215-4c9b-8c70-ba7729687654",
+            bounds="required min:36",
+            display_name="Device ID",
+        )
+        AddOnCfg["gencentriconnect"]["parameters"]["device_auth"] = CreateAddOnParam(
+            ConfigFiles[GENCENTRICONNECT_CONFIG].ReadValue(
+                "device_auth", return_type=str, default=""
+            ),
+            "password",
+            "Device Auth for Centri propane tank sensor. This number is provided in the box with the sensor.",
+            bounds="required min:6",
+            display_name="Device Authentication Code",
+        )
+        AddOnCfg["gencentriconnect"]["parameters"]["poll_frequency"] = CreateAddOnParam(
+            ConfigFiles[GENCENTRICONNECT_CONFIG].ReadValue(
+                "poll_frequency", return_type=float, default=0
+            ),
+            "int",
+            "The duration in minutes between poll of tank data. Note this must be equal or larger than 288 minutes as the maximum number of polls per day is around 5.",
+            bounds="number range:288:20000",
+            display_name="Poll Frequency",
+        )
+        AddOnCfg["gencentriconnect"]["parameters"]["check_battery"] = CreateAddOnParam(
+            ConfigFiles[GENCENTRICONNECT_CONFIG].ReadValue(
+                "check_battery", return_type=bool, default=False
+            ),
+            "boolean",
+            "If enabled, and email will be sent if the battery level on the sensor is critical. Outbound email must be enabled for this to function.",
+            bounds="",
+            display_name="Check Sensor Battery",
+        )
+        AddOnCfg["gencentriconnect"]["parameters"]["check_reading"] = CreateAddOnParam(
+            ConfigFiles[GENCENTRICONNECT_CONFIG].ReadValue(
+                "check_reading", return_type=bool, default=False
+            ),
+            "boolean",
+            "If enabled, and email will be sent if the sensor has not performed a reading within 50 hours. Outbound email must be enabled for this to function.",
+            bounds="",
+            display_name="Check for Missed Readings",
+        )
+
         # GENTANKUTIL
         AddOnCfg["gentankutil"] = collections.OrderedDict()
         AddOnCfg["gentankutil"]["enable"] = ConfigFiles[GENLOADER_CONFIG].ReadValue(
@@ -2366,6 +2436,7 @@ def SaveAddOnSettings(query_string):
             "genexercise": ConfigFiles[GENEXERCISE_CONFIG],
             "genemail2sms": ConfigFiles[GENEMAIL2SMS_CONFIG],
             "gentankutil": ConfigFiles[GENTANKUTIL_CONFIG],
+            "gencentriconnect": ConfigFiles[GENCENTRICONNECT_CONFIG],
             "gentankdiy": ConfigFiles[GENTANKDIY_CONFIG],
             "genalexa": ConfigFiles[GENALEXA_CONFIG],
             "gensnmp": ConfigFiles[GENSNMP_CONFIG],
@@ -4624,6 +4695,7 @@ if __name__ == "__main__":
     GENEXERCISE_CONFIG = os.path.join(ConfigFilePath, "genexercise.conf")
     GENEMAIL2SMS_CONFIG = os.path.join(ConfigFilePath, "genemail2sms.conf")
     GENTANKUTIL_CONFIG = os.path.join(ConfigFilePath, "gentankutil.conf")
+    GENCENTRICONNECT_CONFIG = os.path.join(ConfigFilePath, "gencentriconnect.conf")
     GENTANKDIY_CONFIG = os.path.join(ConfigFilePath, "gentankdiy.conf")
     GENALEXA_CONFIG = os.path.join(ConfigFilePath, "genalexa.conf")
     GENSNMP_CONFIG = os.path.join(ConfigFilePath, "gensnmp.conf")
@@ -4648,6 +4720,7 @@ if __name__ == "__main__":
         GENEXERCISE_CONFIG,
         GENEMAIL2SMS_CONFIG,
         GENTANKUTIL_CONFIG,
+        GENCENTRICONNECT_CONFIG,
         GENTANKDIY_CONFIG,
         GENALEXA_CONFIG,
         GENSNMP_CONFIG,
