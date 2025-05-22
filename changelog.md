@@ -1,6 +1,14 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.19.06 -2025-06-21
+- Minor update to allow the wifi gauge to work on some USB wifi drivers
+- Minor update to change the display of gauges for Evo2 three phase models
+- Added Maintenance data to email notification text
+- Added Advanced Settings option to show the wifi gauge as a percent instead of signal strength to better support some USB wifi adapters
+- New Add On program for CentriConnect.com My Propane tank monitor
+- Update to change the default state of the option to ignore unknown values from Evo2 (now defaults to on)
+
 ## V1.19.05 -2024-12-27
 - Added new log and alarm info for Evolution 4.5L
 - Added support for MEBAY DC4x, DC5x, DC6x, DC7x, DC8x and DC9x controllers
@@ -15,11 +23,6 @@ All notable changes to this project will be documented in this file.
 - Updates for SmartGen HGM40x0 controller
 - Added the ability to add a button to the maintenance page that calls a script
 - Update to allow single holding register and single coil modbus reads (modbus function 0x05 and 0x06) for JSON custom controller definitions
-- Minor update to allow the wifi gauge to work on some USB wifi drivers
-- Minor update to change the display of gauges for Evo2 three phase models
-- Added Maintenance data to email notification text
-- Added Advanced Settings option to show the wifi gauge as a percent instead of signal strength to better support some USB wifi adapters
-- New Add On program for CentriConnect.com My Propane tank monitor
 
 ## V1.19.04 -2024-08-21
 - Corrected issue with saving service journal with HTTPS enabled
