@@ -1,7 +1,7 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
-## V1.19.06 -2025-06-21
+## V1.19.06 -2025-05-21
 - Minor update to allow the wifi gauge to work on some USB wifi drivers
 - Minor update to change the display of gauges for Evo2 three phase models
 - Added Maintenance data to email notification text
