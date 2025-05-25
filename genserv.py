@@ -56,6 +56,7 @@ try:
     from genmonlib.mymail import MyMail
     from genmonlib.mysupport import MySupport
     from genmonlib.program_defaults import ProgramDefaults
+    from genmonlib.presentation import UIPresenter
 
 except Exception as e1:
     print(
@@ -162,6 +163,9 @@ def add_header(r):
 
 
 # -------------------------------------------------------------------------------
+# Global variable for UIPresenter
+ui_presenter = None
+# -------------------------------------------------------------------------------
 @app.route("/", methods=["GET"])
 def root():
 
@@ -177,22 +181,25 @@ def root():
 # -------------------------------------------------------------------------------
 @app.route("/verbose", methods=["GET"])
 def verbose():
-
-    return ServePage("index_verbose.html")
+    page_data = ui_presenter.get_verbose_page_data()
+    return render_template("index_verbose.html", **page_data)
 
 
 # -------------------------------------------------------------------------------
 @app.route("/low", methods=["GET"])
 def lowbandwidth():
-
-    return ServePage("index_lowbandwith.html")
+    page_data = ui_presenter.get_lowbandwidth_page_data()
+    return render_template("index_lowbandwith.html", **page_data)
 
 
 # -------------------------------------------------------------------------------
 @app.route("/internal", methods=["GET"])
 def display_internal():
-
-    return ServePage("internal.html")
+    # Check login status - this logic was in ServePage, ensure it's here or handled by a decorator if common
+    if LoginActive() and not session.get("logged_in"):
+        return render_template("login.html")
+    page_data = ui_presenter.get_internal_page_data()
+    return render_template("internal.html", **page_data)
 
 
 # -------------------------------------------------------------------------------
@@ -216,8 +223,15 @@ def ServePage(page_file):
         if not session.get("logged_in"):
             return render_template("login.html")
         else:
+            if page_file == "index.html":
+                page_data = ui_presenter.get_index_page_data() # Use the global ui_presenter
+                return render_template("index.html", **page_data) # Assuming index.html will be a template
             return app.send_static_file(page_file)
     else:
+        # For non-login case, if index.html is requested, make it use render_template too
+        if page_file == "index.html":
+            page_data = ui_presenter.get_index_page_data() # Use the global ui_presenter
+            return render_template("index.html", **page_data) # Assuming index.html will be a template
         return app.send_static_file(page_file)
 
 
@@ -430,17 +444,29 @@ def command(command):
 
 
 # -------------------------------------------------------------------------------
-def ProcessCommand(command):
+def ProcessCommand(command): # Note: 'command' here is the base command string, e.g., "status", "status_json"
 
     try:
+        # START - Handle specific text commands that now use UIPresenter and command_template.html
+        if command == "status":
+            page_data = ui_presenter.get_status_text_data()
+            return render_template("command_template.html", **page_data, favicon_path=favicon)
+        elif command == "maint":
+            page_data = ui_presenter.get_maint_text_data()
+            return render_template("command_template.html", **page_data, favicon_path=favicon)
+        elif command == "logs":
+            page_data = ui_presenter.get_logs_text_data()
+            return render_template("command_template.html", **page_data, favicon_path=favicon)
+        # END - Refactor for text-based commands
+
         command_list = [
-            "status",
+            # "status", # Now handled above
             "status_json",
             "outage",
             "outage_json",
-            "maint",
+            # "maint", # Now handled above
             "maint_json",
-            "logs",
+            # "logs", # Now handled above
             "logs_json",
             "monitor",
             "monitor_json",
@@ -493,6 +519,944 @@ def ProcessCommand(command):
                     if settimestr:
                         finalcommand += "=" + settimestr
                 elif command == "setquiet":
+                    setquietstr = request.args.get("setquiet", 0, type=str)
+                    if setquietstr:
+                        finalcommand += "=" + setquietstr
+                elif command == "setremote":
+                    setremotestr = request.args.get("setremote", 0, type=str)
+                    if setremotestr:
+                        finalcommand += "=" + setremotestr
+                elif command == "add_maint_log":
+                    input_val = request.args["add_maint_log"]
+                    finalcommand += "=" + input_val
+                elif command == "delete_row_maint_log":
+                    input_val = request.args["delete_row_maint_log"]
+                    finalcommand += "=" + input_val
+                elif command == "edit_row_maint_log":
+                    input_val = request.args["edit_row_maint_log"]
+                    finalcommand += "=" + input_val
+                # Parameter setup for commands NOT YET using UIPresenter for their core logic
+                # but whose parameters are used to build `finalcommand`
+                # For commands now handled by UIPresenter, this parameter setup might be redundant if
+                # the presenter method itself extracts args, or it might still be needed if the
+                # presenter expects the fully formed `finalcommand` or specific param strings.
+                # The goal is to move the MyClientInterface.ProcessMonitorCommand call into the presenter.
+
+                # Refactored commands that take parameters:
+                if command == "add_maint_log":
+                    if not session.get("write_access", True): return jsonify("Read Only Mode")
+                    param_val = request.args.get("add_maint_log", default=None, type=str)
+                    if param_val:
+                        data = ui_presenter.handle_add_maint_log(param_val)
+                    else:
+                        data = "Error: add_maint_log parameter not provided."
+                elif command == "delete_row_maint_log":
+                    if not session.get("write_access", True): return jsonify("Read Only Mode")
+                    param_val = request.args.get("delete_row_maint_log", default=None, type=str)
+                    if param_val:
+                        data = ui_presenter.handle_delete_row_maint_log(param_val)
+                    else:
+                        data = "Error: delete_row_maint_log parameter not provided."
+                elif command == "edit_row_maint_log":
+                    if not session.get("write_access", True): return jsonify("Read Only Mode")
+                    param_val = request.args.get("edit_row_maint_log", default=None, type=str)
+                    if param_val:
+                        data = ui_presenter.handle_edit_row_maint_log(param_val)
+                    else:
+                        data = "Error: edit_row_maint_log parameter not provided."
+                
+                # Refactored commands that do not take parameters from request.args for the presenter method
+                elif command == "settime":
+                    if not session.get("write_access", True): return jsonify("Read Only Mode")
+                    data = ui_presenter.handle_set_time()
+                elif command == "clear_maint_log":
+                    if not session.get("write_access", True): return jsonify("Read Only Mode")
+                    data = ui_presenter.handle_clear_maint_log()
+
+                # Existing UIPresenter calls for JSON commands
+                elif command == "status_json":
+                    data = ui_presenter.get_status_json()
+                elif command == "outage_json":
+                    data = ui_presenter.get_outage_json()
+                elif command == "maint_json":
+                    data = ui_presenter.get_maint_json()
+                elif command == "logs_json":
+                    data = ui_presenter.get_logs_json()
+                elif command == "monitor_json":
+                    data = ui_presenter.get_monitor_json()
+                elif command == "registers_json":
+                    data = ui_presenter.get_registers_json()
+                elif command == "allregs_json":
+                    data = ui_presenter.get_allregs_json()
+                elif command == "start_info_json": 
+                    session_data_for_presenter = {
+                        "write_access": session.get("write_access", True),
+                        "LoginActive": LoginActive()
+                    }
+                    data = ui_presenter.get_start_info_json(session_data_for_presenter)
+                elif command == "gui_status_json":
+                    data = ui_presenter.get_gui_status_json()
+                elif command == "power_log_json": # Parameter handled within presenter
+                    log_period_str = request.args.get("power_log_json", default=None, type=str)
+                    data = ui_presenter.get_power_log_json(log_period=log_period_str)
+                elif command == "status_num_json":
+                    data = ui_presenter.get_status_num_json()
+                elif command == "maint_num_json":
+                    data = ui_presenter.get_maint_num_json()
+                elif command == "monitor_num_json":
+                    data = ui_presenter.get_monitor_num_json()
+                elif command == "outage_num_json":
+                    data = ui_presenter.get_outage_num_json()
+                elif command == "get_maint_log_json": 
+                    data = ui_presenter.get_maint_log_json()
+                elif command == "support_data_json":
+                    data = ui_presenter.get_support_data_json()
+                # START Refactoring for state-modifying and action commands
+                elif command == "notify_message":
+                    param_val = request.args.get("notify_message", default=None, type=str)
+                    if param_val:
+                        data = ui_presenter.handle_notify_message(param_val)
+                    else:
+                        data = "Error: notify_message parameter not provided."
+                elif command == "set_button_command":
+                    # This command had a specific param extraction in the original code: input = request.args["set_button_command"]
+                    # This implies the parameter is mandatory.
+                    param_val = request.args.get("set_button_command", default=None, type=str)
+                    if param_val:
+                         if not session.get("write_access", True): data = "Read Only Mode" # Check write access
+                         else: data = ui_presenter.handle_set_button_command(param_val)
+                    else:
+                        data = "Error: set_button_command parameter not provided."
+                elif command == "power_log_clear":
+                    if not session.get("write_access", True): data = "Read Only Mode"
+                    else: data = ui_presenter.handle_power_log_clear()
+                elif command == "fuel_log_clear":
+                    if not session.get("write_access", True): data = "Read Only Mode"
+                    else: data = ui_presenter.handle_fuel_log_clear()
+                elif command == "sendregisters":
+                    if not session.get("write_access", True): data = "Read Only Mode"
+                    else: data = ui_presenter.handle_send_registers()
+                elif command == "sendlogfiles":
+                    if not session.get("write_access", True): data = "Read Only Mode"
+                    else: data = ui_presenter.handle_send_log_files()
+                elif command == "getdebug":
+                    data = ui_presenter.get_debug_info() # This presenter method returns a dict
+                # END Refactoring
+                else: 
+                    # This 'else' now covers commands in command_list that were not handled by specific presenter calls above.
+                    # e.g., "getbase", "getsitename", "power_log_clear" (if not refactored), etc.
+                    # Also, commands like "setexercise" if their specific parameter handling isn't moved up.
+                    # For commands that had parameter concatenation into finalcommand (like setexercise, etc.)
+                    # that logic still needs to be present if they are to be covered by this generic call.
+                    # The initial refactoring of setexercise, setquiet, setremote already moved them to use presenter.
+                    data = MyClientInterface.ProcessMonitorCommand(finalcommand)
+
+            except Exception as e1:
+                data = "Retry"
+                LogErrorLine("Error on command function: " + str(e1))
+
+            # This block handles responses for commands that were in command_list
+            # (excluding "status", "maint", "logs" which are handled above and return a Response)
+            if command in [ 
+                "status_json", "outage_json", "maint_json", "logs_json", 
+                "monitor_json", "registers_json", "allregs_json", "gui_status_json",
+                "power_log_json", "status_num_json", "maint_num_json", 
+                "monitor_num_json", "outage_num_json", "get_maint_log_json", 
+                "support_data_json" 
+            ]: 
+                if isinstance(data, dict): 
+                    return jsonify(data)
+                return data # Should be pre-formatted JSON string or error string from presenter
+            elif command == "start_info_json": 
+                return jsonify(data) 
+            elif command.endswith("_json"): # Other JSON commands from command_list not using presenter
+                try:
+                    json_data = json.loads(data) if isinstance(data, str) else data
+                    return jsonify(json_data)
+                except json.JSONDecodeError:
+                    LogErrorLine(f"Error in JSON parse / decode for command {command}: {data}")
+                    return jsonify({"error": f"Failed to decode JSON for {command}"})
+                except Exception as e1:
+                    LogErrorLine(f"Error processing command {command}: " + str(e1))
+                    return jsonify({"error": str(e1)})
+            # For commands in command_list that are not JSON and not text commands handled at the very top
+            # (e.g. setexercise, power_log_clear), they return simple strings like "OK", which should be jsonified.
+            return jsonify(data)
+
+        # Commands not in the command_list or other specific handlers
+        elif command in ["updatesoftware"]: 
+            if session.get("write_access", True):
+                Update()
+                return "OK"
+            else:
+                return "Access denied"
+        elif command in ["getfavicon"]:
+            return jsonify(favicon)
+
+        elif command in ["settings"]:
+            if session.get("write_access", True):
+                data_settings = ReadSettingsFromFile() 
+                return json.dumps(data_settings, sort_keys=False)
+            else:
+                return "Access denied"
+
+        elif command in ["notifications"]:
+            data_notifications = ReadNotificationsFromFile() 
+            return jsonify(data_notifications)
+        elif command in ["setnotifications"]:
+            if session.get("write_access", True):
+                SaveNotifications(request.args.get("setnotifications", 0, type=str))
+            return "OK"
+
+        elif command in ["get_add_on_settings", "set_add_on_settings"]:
+            if session.get("write_access", True):
+                if command == "get_add_on_settings":
+                    data_addon = GetAddOnSettings() 
+                    return json.dumps(data_addon, sort_keys=False)
+                elif command == "set_add_on_settings":
+                    SaveAddOnSettings(
+                        request.args.get("set_add_on_settings", default=None, type=str)
+                    )
+                return "OK" 
+            return "OK" 
+
+        elif command in ["get_advanced_settings", "set_advanced_settings"]:
+            if session.get("write_access", True):
+                if command == "get_advanced_settings":
+                    data_adv_settings = ReadAdvancedSettingsFromFile() 
+                    return json.dumps(data_adv_settings, sort_keys=False)
+                elif command == "set_advanced_settings":
+                    SaveAdvancedSettings(
+                        request.args.get(
+                            "set_advanced_settings", default=None, type=str
+                        )
+                    )
+                return "OK" 
+            return "OK" 
+
+        elif command in ["setsettings"]:
+            if session.get("write_access", True):
+                SaveSettings(request.args.get("setsettings", 0, type=str))
+            return "OK"
+
+        elif command in ["getreglabels"]:
+            return jsonify(CachedRegisterDescriptions)
+
+        elif command in ["restart"]:
+            if session.get("write_access", True):
+                Restart()
+            return "OK" 
+        elif command in ["stop"]:
+            if session.get("write_access", True):
+                Close()
+            return "OK" 
+        elif command in ["shutdown"]:
+            if session.get("write_access", True):
+                Shutdown()
+            return "OK" 
+        elif command in ["reboot"]:
+            if session.get("write_access", True):
+                Reboot()
+            return "OK" 
+        elif command in ["backup"]:
+            if session.get("write_access", True):
+                Backup()  
+                pathtofile = os.path.dirname(os.path.realpath(__file__))
+                return send_file(
+                    os.path.join(pathtofile, "genmon_backup.tar.gz"), as_attachment=True
+                )
+            else:
+                return "Access denied"
+        elif command in ["get_logs"]:
+            if session.get("write_access", True):
+                GetLogs()  
+                pathtofile = os.path.dirname(os.path.realpath(__file__))
+                return send_file(
+                    os.path.join(pathtofile, "genmon_logs.tar.gz"), as_attachment=True
+                )
+            else:
+                return "Access denied"
+        elif command in ["test_email"]:
+            return SendTestEmail(request.args.get("test_email", default=None, type=str))
+        else: # Fallback for truly unknown commands (not in command_list and not handled above)
+            return render_template("command_template.html", title=command.capitalize(), command=command, data_content=f"Command '{command}' not recognized or has no specific display.", favicon_path=favicon)
+    except Exception as e1:
+        LogErrorLine("Error in Process Command: " + command + ": " + str(e1))
+        return render_template("command_template.html", title="Error", command=command, data_content=f"Error processing command: {str(e1)}", favicon_path=favicon)
+            return render_template("command_template.html", **page_data, favicon_path=favicon)
+        elif command == "maint":
+            page_data = ui_presenter.get_maint_text_data()
+            return render_template("command_template.html", **page_data, favicon_path=favicon)
+        elif command == "logs":
+            page_data = ui_presenter.get_logs_text_data()
+            return render_template("command_template.html", **page_data, favicon_path=favicon)
+        elif command == "monitor":
+            page_data = ui_presenter.get_monitor_text_data()
+            return render_template("command_template.html", **page_data, favicon_path=favicon, command=command)
+        elif command == "outage":
+            page_data = ui_presenter.get_outage_text_data()
+            return render_template("command_template.html", **page_data, favicon_path=favicon, command=command)
+        elif command == "help": # Adding handler for 'help'
+            page_data = ui_presenter.get_help_text_data()
+            return render_template("command_template.html", **page_data, favicon_path=favicon, command=command)
+        # END - Refactor for text-based commands
+
+        command_list = [
+            # "status", # Now handled above
+            "status_json",
+            # "outage", # Now handled above
+            "outage_json",
+            # "maint", # Now handled above
+            "maint_json",
+            # "logs", # Now handled above
+            "logs_json",
+            # "monitor", # Now handled above
+            "monitor_json",
+            "registers_json",
+            "allregs_json",
+            "start_info_json",
+            "gui_status_json",
+            "power_log_json",
+            "power_log_clear",
+            "getbase",
+            "getsitename",
+            "setexercise",
+            "setquiet",
+            "setremote",
+            "settime",
+            "sendregisters",
+            "sendlogfiles",
+            "getdebug",
+            "status_num_json",
+            "maint_num_json",
+            "monitor_num_json",
+            "outage_num_json",
+            "get_maint_log_json",
+            "add_maint_log",
+            "clear_maint_log",
+            "delete_row_maint_log",
+            "edit_row_maint_log",
+            "support_data_json",
+            "fuel_log_clear",
+            "notify_message",
+            "set_button_command",
+        ]
+        # LogError(request.url)
+        if command in command_list:
+            # Handle specific text commands that now use UIPresenter and command_template.html
+            # These are checked before parameter processing or other specific handlers for these base commands.
+            if command == "status":
+                page_data = ui_presenter.get_status_text_data()
+                return render_template("command_template.html", **page_data, favicon_path=favicon)
+            elif command == "maint":
+                page_data = ui_presenter.get_maint_text_data()
+                return render_template("command_template.html", **page_data, favicon_path=favicon)
+            elif command == "logs":
+                page_data = ui_presenter.get_logs_text_data()
+                return render_template("command_template.html", **page_data, favicon_path=favicon)
+
+            finalcommand = "generator: " + command
+
+            try:
+                if command in [
+                    "setexercise",
+                    "setquiet",
+                    "setremote",
+                    "add_maint_log",
+                    "delete_row_maint_log",
+                    "edit_row_maint_log",
+                ] and not session.get("write_access", True):
+                    return jsonify("Read Only Mode")
+
+                if command == "setexercise":
+                    settimestr = request.args.get("setexercise", 0, type=str)
+                    if settimestr:
+                        finalcommand += "=" + settimestr
+                elif command == "setquiet":
+                    setquietstr = request.args.get("setquiet", 0, type=str)
+                    if setquietstr:
+                        finalcommand += "=" + setquietstr
+                elif command == "setremote":
+                    setremotestr = request.args.get("setremote", 0, type=str)
+                    if setremotestr:
+                        finalcommand += "=" + setremotestr
+
+                # Note: power_log_json is handled by presenter, including param
+                # Other param-based commands are still direct MyClientInterface calls for now
+                elif command == "add_maint_log":
+                    input_val = request.args["add_maint_log"]
+                    finalcommand += "=" + input_val
+                    # data = MyClientInterface.ProcessMonitorCommand(finalcommand) # Will be set below
+                elif command == "delete_row_maint_log":
+                    input_val = request.args["delete_row_maint_log"]
+                    finalcommand += "=" + input_val
+                    # data = MyClientInterface.ProcessMonitorCommand(finalcommand) # Will be set below
+                elif command == "edit_row_maint_log":
+                    input_val = request.args["edit_row_maint_log"]
+                    finalcommand += "=" + input_val
+                    # data = MyClientInterface.ProcessMonitorCommand(finalcommand) # Will be set below
+                elif command == "set_button_command":
+                    input_val = request.args["set_button_command"]
+                    finalcommand += "=" + input_val
+                    # data = MyClientInterface.ProcessMonitorCommand(finalcommand) # Will be set below
+                
+                # JSON commands handled by UIPresenter
+                if command == "status_json":
+                    data = ui_presenter.get_status_json()
+                elif command == "outage_json":
+                    data = ui_presenter.get_outage_json()
+                elif command == "maint_json":
+                    data = ui_presenter.get_maint_json()
+                elif command == "logs_json":
+                    data = ui_presenter.get_logs_json()
+                elif command == "monitor_json":
+                    data = ui_presenter.get_monitor_json()
+                elif command == "registers_json":
+                    data = ui_presenter.get_registers_json()
+                elif command == "allregs_json":
+                    data = ui_presenter.get_allregs_json()
+                elif command == "start_info_json": 
+                    session_data_for_presenter = {
+                        "write_access": session.get("write_access", True),
+                        "LoginActive": LoginActive()
+                    }
+                    data = ui_presenter.get_start_info_json(session_data_for_presenter)
+                elif command == "gui_status_json":
+                    data = ui_presenter.get_gui_status_json()
+                elif command == "power_log_json": # Parameter handled within presenter
+                    log_period_str = request.args.get("power_log_json", default=None, type=str)
+                    data = ui_presenter.get_power_log_json(log_period=log_period_str)
+                elif command == "status_num_json":
+                    data = ui_presenter.get_status_num_json()
+                elif command == "maint_num_json":
+                    data = ui_presenter.get_maint_num_json()
+                elif command == "monitor_num_json":
+                    data = ui_presenter.get_monitor_num_json()
+                elif command == "outage_num_json":
+                    data = ui_presenter.get_outage_num_json()
+                elif command == "get_maint_log_json": 
+                    data = ui_presenter.get_maint_log_json()
+                elif command == "support_data_json":
+                    data = ui_presenter.get_support_data_json()
+                else: 
+                    # This block now handles commands that are still using the finalcommand approach
+                    # and JSON commands that were already refactored.
+                    # Build finalcommand for those not yet fully refactored for parameter extraction.
+                    if command == "set_button_command": # Example of a command still needing finalcommand
+                        input_val = request.args.get("set_button_command")
+                        if input_val:
+                            finalcommand += "=" + input_val
+                        else:
+                            return jsonify("Error: set_button_command parameter not provided.")
+                    # ... (other old parameter handling logic would remain here if not refactored)
+
+                    # Call MyClientInterface for commands not yet moved to presenter methods
+                    # OR for those whose presenter methods still expect finalcommand (though this is not the new pattern)
+                    # For this refactoring, we assume most direct calls to MyClientInterface for commands
+                    # in command_list are being replaced by presenter calls.
+                    # If a command from command_list is not caught by any specific presenter call above,
+                    # it will be processed by MyClientInterface.ProcessMonitorCommand(finalcommand) here.
+                    # This includes "power_log_clear", "getbase", "getsitename", "sendregisters", "sendlogfiles", "getdebug".
+                    if command not in ["add_maint_log", "delete_row_maint_log", "edit_row_maint_log", "settime", "clear_maint_log", # Refactored parameter commands
+                                       "status_json", "outage_json", "maint_json", "logs_json", "monitor_json", 
+                                       "registers_json", "allregs_json", "start_info_json", "gui_status_json", 
+                                       "power_log_json", "status_num_json", "maint_num_json", "monitor_num_json", 
+                                       "outage_num_json", "get_maint_log_json", "support_data_json"]: # Refactored JSON commands
+                        data = MyClientInterface.ProcessMonitorCommand(finalcommand)
+                    # 'data' for refactored commands is already set by their specific presenter calls.
+
+            except Exception as e1:
+                data = "Retry"
+                LogErrorLine("Error on command function: " + str(e1))
+
+            # This block handles responses for commands that were in command_list
+            if command in [ 
+                "status_json", "outage_json", "maint_json", "logs_json", 
+                "monitor_json", "registers_json", "allregs_json", "gui_status_json",
+                "power_log_json", "status_num_json", "maint_num_json", 
+                "monitor_num_json", "outage_num_json", "get_maint_log_json", 
+                "support_data_json" 
+            ]: 
+                if isinstance(data, dict): 
+                    return jsonify(data)
+                return data 
+            elif command == "start_info_json": 
+                return jsonify(data) 
+            elif command.endswith("_json"): 
+                try:
+                    json_data = json.loads(data) if isinstance(data, str) else data
+                    return jsonify(json_data)
+                except json.JSONDecodeError:
+                    LogErrorLine(f"Error in JSON parse / decode for command {command}: {data}")
+                    return jsonify({"error": f"Failed to decode JSON for {command}"})
+                except Exception as e1:
+                    LogErrorLine(f"Error processing command {command}: " + str(e1))
+                    return jsonify({"error": str(e1)})
+            # For commands in command_list that are not JSON and not the text commands ("status", "maint", "logs")
+            # (e.g. setexercise, power_log_clear), they return simple strings like "OK", which should be jsonified.
+            return jsonify(data)
+
+        # Commands not in the command_list or other specific handlers
+        elif command in ["updatesoftware"]: 
+            if session.get("write_access", True):
+                Update()
+                return "OK"
+            else:
+                return "Access denied"
+        elif command in ["getfavicon"]:
+            return jsonify(favicon)
+
+        elif command in ["settings"]:
+            if session.get("write_access", True):
+                data_settings = ReadSettingsFromFile() 
+                return json.dumps(data_settings, sort_keys=False)
+            else:
+                return "Access denied"
+
+        elif command in ["notifications"]:
+            data_notifications = ReadNotificationsFromFile() 
+            return jsonify(data_notifications)
+        elif command in ["setnotifications"]:
+            if session.get("write_access", True):
+                SaveNotifications(request.args.get("setnotifications", 0, type=str))
+            return "OK"
+
+        elif command in ["get_add_on_settings", "set_add_on_settings"]:
+            if session.get("write_access", True):
+                if command == "get_add_on_settings":
+                    data_addon = GetAddOnSettings() 
+                    return json.dumps(data_addon, sort_keys=False)
+                elif command == "set_add_on_settings":
+                    SaveAddOnSettings(
+                        request.args.get("set_add_on_settings", default=None, type=str)
+                    )
+                return "OK" 
+            return "OK" 
+
+        elif command in ["get_advanced_settings", "set_advanced_settings"]:
+            if session.get("write_access", True):
+                if command == "get_advanced_settings":
+                    data_adv_settings = ReadAdvancedSettingsFromFile() 
+                    return json.dumps(data_adv_settings, sort_keys=False)
+                elif command == "set_advanced_settings":
+                    SaveAdvancedSettings(
+                        request.args.get(
+                            "set_advanced_settings", default=None, type=str
+                        )
+                    )
+                return "OK" 
+            return "OK" 
+
+        elif command in ["setsettings"]:
+            if session.get("write_access", True):
+                SaveSettings(request.args.get("setsettings", 0, type=str))
+            return "OK"
+
+        elif command in ["getreglabels"]:
+            return jsonify(CachedRegisterDescriptions)
+
+        elif command in ["restart"]:
+            if session.get("write_access", True):
+                Restart()
+            return "OK" 
+        elif command in ["stop"]:
+            if session.get("write_access", True):
+                Close()
+            return "OK" 
+        elif command in ["shutdown"]:
+            if session.get("write_access", True):
+                Shutdown()
+            return "OK" 
+        elif command in ["reboot"]:
+            if session.get("write_access", True):
+                Reboot()
+            return "OK" 
+        elif command in ["backup"]:
+            if session.get("write_access", True):
+                Backup()  
+                pathtofile = os.path.dirname(os.path.realpath(__file__))
+                return send_file(
+                    os.path.join(pathtofile, "genmon_backup.tar.gz"), as_attachment=True
+                )
+            else:
+                return "Access denied"
+        elif command in ["get_logs"]:
+            if session.get("write_access", True):
+                GetLogs()  
+                pathtofile = os.path.dirname(os.path.realpath(__file__))
+                return send_file(
+                    os.path.join(pathtofile, "genmon_logs.tar.gz"), as_attachment=True
+                )
+            else:
+                return "Access denied"
+        elif command in ["test_email"]:
+            return SendTestEmail(request.args.get("test_email", default=None, type=str))
+        else: # Fallback for truly unknown commands (not in command_list and not handled above)
+            return render_template("command_template.html", title=command.capitalize(), command=command, data_content=f"Command '{command}' not recognized or has no specific display.", favicon_path=favicon)
+    except Exception as e1:
+        LogErrorLine("Error in Process Command: " + command + ": " + str(e1))
+        return render_template("command_template.html", title="Error", command=command, data_content=f"Error processing command: {str(e1)}", favicon_path=favicon)
+            return render_template("command_template.html", **page_data, favicon_path=favicon)
+        elif command == "maint": # This 'command' is the base command string
+            page_data = ui_presenter.get_maint_text_data()
+            return render_template("command_template.html", **page_data, favicon_path=favicon)
+        elif command == "logs": # This 'command' is the base command string
+            page_data = ui_presenter.get_logs_text_data()
+            return render_template("command_template.html", **page_data, favicon_path=favicon)
+        # END - Refactor for text-based commands
+
+        command_list = [
+            # "status", # Now handled above
+            "status_json",
+            "outage",
+            "outage_json",
+            # "maint", # Now handled above
+            "maint_json",
+            # "logs", # Now handled above
+            "logs_json",
+            # The following are the original entries for status, maint, logs in command_list.
+            # They need to be effectively removed or commented out if ProcessCommand relies on this list
+            # for "known" commands vs "unknown". For now, the specific handlers above take precedence.
+            # "status", # Duplicated from original, handled above
+            # "maint",  # Duplicated from original, handled above
+            # "logs",   # Duplicated from original, handled above
+            "monitor",
+            "monitor_json",
+            "registers_json",
+            "allregs_json",
+            "start_info_json",
+            "gui_status_json",
+            "power_log_json",
+            "power_log_clear",
+            "getbase",
+            "getsitename",
+            "setexercise",
+            "setquiet",
+            "setremote",
+            "settime",
+            "sendregisters",
+            "sendlogfiles",
+            "getdebug",
+            "status_num_json",
+            "maint_num_json",
+            "monitor_num_json",
+            "outage_num_json",
+            "get_maint_log_json",
+            "add_maint_log",
+            "clear_maint_log",
+            "delete_row_maint_log",
+            "edit_row_maint_log",
+            "support_data_json",
+            "fuel_log_clear",
+            "notify_message",
+            "set_button_command",
+        ]
+        # LogError(request.url)
+        if command in command_list: # 'command' is the base command string
+            finalcommand = "generator: " + command # Use base command for finalcommand
+
+            try:
+                if command in [
+                    "setexercise",
+                    "setquiet",
+                    "setremote",
+                    "add_maint_log",
+                    "delete_row_maint_log",
+                    "edit_row_maint_log",
+                ] and not session.get("write_access", True):
+                    return jsonify("Read Only Mode")
+
+                if command == "setexercise":
+                    settimestr = request.args.get("setexercise", 0, type=str)
+                    if settimestr:
+                        finalcommand += "=" + settimestr
+                elif command == "setquiet":
+                    setquietstr = request.args.get("setquiet", 0, type=str)
+                    if setquietstr:
+                        finalcommand += "=" + setquietstr
+                elif command == "setremote":
+                    setremotestr = request.args.get("setremote", 0, type=str)
+                    if setremotestr:
+                        finalcommand += "=" + setremotestr
+
+                if command == "power_log_json": # This is a base command
+                    log_period_str = request.args.get("power_log_json", default=None, type=str)
+                    # finalcommand will be "generator: power_log_json" or "generator: power_log_json=value"
+                    # This is handled by the presenter now.
+                    data = ui_presenter.get_power_log_json(log_period=log_period_str)
+                elif command == "add_maint_log":
+                    input_val = request.args["add_maint_log"]
+                    finalcommand += "=" + input_val
+                    data = MyClientInterface.ProcessMonitorCommand(finalcommand) # Keep old way for now
+                elif command == "delete_row_maint_log":
+                    input_val = request.args["delete_row_maint_log"]
+                    finalcommand += "=" + input_val
+                    data = MyClientInterface.ProcessMonitorCommand(finalcommand) # Keep old way for now
+                elif command == "edit_row_maint_log":
+                    input_val = request.args["edit_row_maint_log"]
+                    finalcommand += "=" + input_val
+                    data = MyClientInterface.ProcessMonitorCommand(finalcommand) # Keep old way for now
+                elif command == "set_button_command":
+                    input_val = request.args["set_button_command"]
+                    finalcommand += "=" + input_val
+                    data = MyClientInterface.ProcessMonitorCommand(finalcommand) # Keep old way for now
+                
+                # JSON commands handled by UIPresenter
+                elif command == "status_json":
+                    data = ui_presenter.get_status_json()
+                elif command == "outage_json":
+                    data = ui_presenter.get_outage_json()
+                elif command == "maint_json":
+                    data = ui_presenter.get_maint_json()
+                elif command == "logs_json":
+                    data = ui_presenter.get_logs_json()
+                elif command == "monitor_json":
+                    data = ui_presenter.get_monitor_json()
+                elif command == "registers_json":
+                    data = ui_presenter.get_registers_json()
+                elif command == "allregs_json":
+                    data = ui_presenter.get_allregs_json()
+                elif command == "start_info_json": 
+                    session_data_for_presenter = {
+                        "write_access": session.get("write_access", True),
+                        "LoginActive": LoginActive()
+                    }
+                    data = ui_presenter.get_start_info_json(session_data_for_presenter)
+                elif command == "gui_status_json":
+                    data = ui_presenter.get_gui_status_json()
+                elif command == "status_num_json":
+                    data = ui_presenter.get_status_num_json()
+                elif command == "maint_num_json":
+                    data = ui_presenter.get_maint_num_json()
+                elif command == "monitor_num_json":
+                    data = ui_presenter.get_monitor_num_json()
+                elif command == "outage_num_json":
+                    data = ui_presenter.get_outage_num_json()
+                elif command == "get_maint_log_json": 
+                    data = ui_presenter.get_maint_log_json()
+                elif command == "support_data_json":
+                    data = ui_presenter.get_support_data_json()
+                else: # Default for other commands in command_list not specifically handled above
+                    data = MyClientInterface.ProcessMonitorCommand(finalcommand)
+
+            except Exception as e1:
+                data = "Retry"
+                LogErrorLine("Error on command function: " + str(e1))
+
+            # This block handles responses for commands that were in command_list
+            if command in [ 
+                "status_json", "outage_json", "maint_json", "logs_json", 
+                "monitor_json", "registers_json", "allregs_json", "gui_status_json",
+                "power_log_json", "status_num_json", "maint_num_json", 
+                "monitor_num_json", "outage_num_json", "get_maint_log_json", 
+                "support_data_json" 
+            ]: 
+                if isinstance(data, dict): 
+                    return jsonify(data)
+                return data 
+            elif command == "start_info_json": 
+                return jsonify(data) 
+            elif command.endswith("_json"): 
+                try:
+                    json_data = json.loads(data) if isinstance(data, str) else data
+                    return jsonify(json_data)
+                except json.JSONDecodeError:
+                    LogErrorLine(f"Error in JSON parse / decode for command {command}: {data}")
+                    return jsonify({"error": f"Failed to decode JSON for {command}"})
+                except Exception as e1:
+                    LogErrorLine(f"Error processing command {command}: " + str(e1))
+                    return jsonify({"error": str(e1)})
+            # For commands in command_list that are not JSON and not the text commands ("status", "maint", "logs")
+            # (e.g. setexercise, power_log_clear), they return simple strings like "OK", which should be jsonified.
+            return jsonify(data)
+
+        # Commands not in the command_list or other specific handlers
+        elif command in ["updatesoftware"]: 
+            if session.get("write_access", True):
+                Update()
+                return "OK"
+            else:
+                return "Access denied"
+        elif command in ["getfavicon"]:
+            return jsonify(favicon)
+
+        elif command in ["settings"]:
+            if session.get("write_access", True):
+                data_settings = ReadSettingsFromFile() # renamed to avoid conflict
+                return json.dumps(data_settings, sort_keys=False)
+            else:
+                return "Access denied"
+
+        elif command in ["notifications"]:
+            data_notifications = ReadNotificationsFromFile() # renamed
+            return jsonify(data_notifications)
+        elif command in ["setnotifications"]:
+            if session.get("write_access", True):
+                SaveNotifications(request.args.get("setnotifications", 0, type=str))
+            return "OK"
+
+        elif command in ["get_add_on_settings", "set_add_on_settings"]:
+            if session.get("write_access", True):
+                if command == "get_add_on_settings":
+                    data_addon = GetAddOnSettings() # renamed
+                    return json.dumps(data_addon, sort_keys=False)
+                elif command == "set_add_on_settings":
+                    SaveAddOnSettings(
+                        request.args.get("set_add_on_settings", default=None, type=str)
+                    )
+                return "OK" # Removed else: return "OK" as it was redundant
+            return "OK" # This return might be hit if write_access is false
+
+        elif command in ["get_advanced_settings", "set_advanced_settings"]:
+            if session.get("write_access", True):
+                if command == "get_advanced_settings":
+                    data_adv_settings = ReadAdvancedSettingsFromFile() # renamed
+                    return json.dumps(data_adv_settings, sort_keys=False)
+                elif command == "set_advanced_settings":
+                    SaveAdvancedSettings(
+                        request.args.get(
+                            "set_advanced_settings", default=None, type=str
+                        )
+                    )
+                return "OK" # Removed else: return "OK"
+            return "OK" # This return might be hit if write_access is false
+
+        elif command in ["setsettings"]:
+            if session.get("write_access", True):
+                SaveSettings(request.args.get("setsettings", 0, type=str))
+            return "OK"
+
+        elif command in ["getreglabels"]:
+            return jsonify(CachedRegisterDescriptions)
+
+        elif command in ["restart"]:
+            if session.get("write_access", True):
+                Restart()
+            return "OK" # Restart doesn't return a page, so respond with OK
+        elif command in ["stop"]:
+            if session.get("write_access", True):
+                Close()
+                # sys.exit(0) # This will kill the server, not ideal for a web request
+            return "OK" # Respond OK
+        elif command in ["shutdown"]:
+            if session.get("write_access", True):
+                Shutdown()
+            return "OK" # Respond OK
+        elif command in ["reboot"]:
+            if session.get("write_access", True):
+                Reboot()
+            return "OK" # Respond OK
+        elif command in ["backup"]:
+            if session.get("write_access", True):
+                Backup()  
+                pathtofile = os.path.dirname(os.path.realpath(__file__))
+                return send_file(
+                    os.path.join(pathtofile, "genmon_backup.tar.gz"), as_attachment=True
+                )
+            else:
+                return "Access denied"
+        elif command in ["get_logs"]:
+            if session.get("write_access", True):
+                GetLogs()  
+                pathtofile = os.path.dirname(os.path.realpath(__file__))
+                return send_file(
+                    os.path.join(pathtofile, "genmon_logs.tar.gz"), as_attachment=True
+                )
+            else:
+                return "Access denied"
+        elif command in ["test_email"]:
+            return SendTestEmail(request.args.get("test_email", default=None, type=str))
+        else: # Fallback for truly unknown commands (not in command_list and not handled above)
+            return render_template("command_template.html", title=command.capitalize(), command=command, data_content=f"Command '{command}' not recognized or has no specific display.", favicon_path=favicon)
+    except Exception as e1:
+        LogErrorLine("Error in Process Command: " + command + ": " + str(e1))
+        return render_template("command_template.html", title="Error", command=command, data_content=f"Error processing command: {str(e1)}", favicon_path=favicon)
+            return render_template("command_template.html", **page_data, favicon_path=favicon)
+        elif command == "maint":
+            page_data = ui_presenter.get_maint_text_data()
+            return render_template("command_template.html", **page_data, favicon_path=favicon)
+        elif command == "logs":
+            page_data = ui_presenter.get_logs_text_data()
+            return render_template("command_template.html", **page_data, favicon_path=favicon)
+
+        command_list = [
+            # "status", # Now handled above
+            "status_json",
+            "outage",
+            "outage_json",
+            # "maint", # Now handled above
+            "maint_json",
+            # "logs", # Now handled above
+            "logs_json",
+            "outage",
+            "outage_json",
+            "maint",
+            "maint_json",
+            "logs",
+            "logs_json",
+            "monitor",
+            "monitor_json",
+            "registers_json",
+            "allregs_json",
+            "start_info_json",
+            "gui_status_json",
+            "power_log_json",
+            "power_log_clear",
+            "getbase",
+            "getsitename",
+            "setexercise",
+            "setquiet",
+            "setremote",
+            "settime",
+            "sendregisters",
+            "sendlogfiles",
+            "getdebug",
+            "status_num_json",
+            "maint_num_json",
+            "monitor_num_json",
+            "outage_num_json",
+            "get_maint_log_json",
+            "add_maint_log",
+            "clear_maint_log",
+            "delete_row_maint_log",
+            "edit_row_maint_log",
+            "support_data_json",
+            "fuel_log_clear",
+            "notify_message",
+            "set_button_command",
+        ]
+        # LogError(request.url)
+        if command in command_list:
+            finalcommand = "generator: " + command
+
+            # START - Refactor for text-based commands: status, maint, logs
+            if command == "status":
+                page_data = ui_presenter.get_status_text_data()
+                return render_template("command_template.html", **page_data, favicon_path=favicon)
+            elif command == "maint":
+                page_data = ui_presenter.get_maint_text_data()
+                return render_template("command_template.html", **page_data, favicon_path=favicon)
+            elif command == "logs":
+                page_data = ui_presenter.get_logs_text_data()
+                return render_template("command_template.html", **page_data, favicon_path=favicon)
+            # END - Refactor for text-based commands
+            
+            try:
+                if command in [
+                    "setexercise",
+                    "setquiet",
+                    "setremote",
+                    "add_maint_log",
+                    "delete_row_maint_log",
+                    "edit_row_maint_log",
+                ] and not session.get("write_access", True):
+                    return jsonify("Read Only Mode")
+
+                if command == "setexercise":
+                    settimestr = request.args.get("setexercise", 0, type=str)
+                    if settimestr:
+                        finalcommand += "=" + settimestr
+                elif command == "setquiet":
                     # /cmd/setquiet?setquiet=off
                     setquietstr = request.args.get("setquiet", 0, type=str)
                     if setquietstr:
@@ -525,7 +1489,56 @@ def ProcessCommand(command):
                 if command == "set_button_command":
                     input = request.args["set_button_command"]
                     finalcommand += "=" + input
-                data = MyClientInterface.ProcessMonitorCommand(finalcommand)
+                
+                if command == "status_json":
+                    data = ui_presenter.get_status_json()
+                elif command == "outage_json":
+                    data = ui_presenter.get_outage_json()
+                elif command == "maint_json":
+                    data = ui_presenter.get_maint_json()
+                elif command == "logs_json":
+                    data = ui_presenter.get_logs_json()
+                elif command == "monitor_json":
+                    data = ui_presenter.get_monitor_json()
+                elif command == "registers_json":
+                    data = ui_presenter.get_registers_json()
+                elif command == "allregs_json":
+                    data = ui_presenter.get_allregs_json()
+                elif command == "start_info_json": # Special handling for session data
+                    session_data_for_presenter = {
+                        "write_access": session.get("write_access", True),
+                        "LoginActive": LoginActive()
+                    }
+                    data = ui_presenter.get_start_info_json(session_data_for_presenter)
+                elif command == "gui_status_json":
+                    data = ui_presenter.get_gui_status_json()
+                elif command == "power_log_json":
+                    log_period_str = request.args.get("power_log_json", default=None, type=str)
+                    data = ui_presenter.get_power_log_json(log_period=log_period_str)
+                elif command == "status_num_json":
+                    data = ui_presenter.get_status_num_json()
+                elif command == "maint_num_json":
+                    data = ui_presenter.get_maint_num_json()
+                elif command == "monitor_num_json":
+                    data = ui_presenter.get_monitor_num_json()
+                elif command == "outage_num_json":
+                    data = ui_presenter.get_outage_num_json()
+                elif command == "get_maint_log_json": # Matches presenter method name
+                    data = ui_presenter.get_maint_log_json()
+                elif command == "support_data_json":
+                    data = ui_presenter.get_support_data_json()
+                # Text-based commands using UIPresenter and command_template.html
+                elif command == "status": # command is the base command string here
+                    page_data = ui_presenter.get_status_text_data()
+                    return render_template("command_template.html", **page_data, favicon_path=favicon)
+                elif command == "maint":
+                    page_data = ui_presenter.get_maint_text_data()
+                    return render_template("command_template.html", **page_data, favicon_path=favicon)
+                elif command == "logs":
+                    page_data = ui_presenter.get_logs_text_data()
+                    return render_template("command_template.html", **page_data, favicon_path=favicon)
+                else:
+                    data = MyClientInterface.ProcessMonitorCommand(finalcommand)
 
             except Exception as e1:
                 data = "Retry"
@@ -547,22 +1560,44 @@ def ProcessCommand(command):
                 "monitor_num_json",
                 "outage_num_json",
                 "get_maint_log_json",
-                "support_data_json",
+                "support_data_json", # This is now handled by the presenter
             ]:
-
-                if command in ["start_info_json"]:
+                # Check if command was handled by UIPresenter and returns a dict
+                if command in [
+                    "status_json", "outage_json", "maint_json", "logs_json", 
+                    "monitor_json", "registers_json", "allregs_json", "gui_status_json",
+                    "power_log_json", "status_num_json", "maint_num_json", 
+                    "monitor_num_json", "outage_num_json", "get_maint_log_json", 
+                    "support_data_json"
+                ]:
+                    if isinstance(data, dict):
+                        return jsonify(data)
+                    # If presenter returned a non-dict (e.g. error string), return it directly
+                    # This part might need refinement based on presenter's error handling consistency
+                    return data 
+                elif command == "start_info_json": # Already handled by UIPresenter, returns a dict
+                    return jsonify(data)
+                # Fallback for any other _json commands not yet refactored by presenter
+                # This block maintains previous logic for commands not yet moved to UIPresenter
+                elif command.endswith("_json"):
                     try:
-                        StartInfo = json.loads(data)
-                        StartInfo["write_access"] = session.get("write_access", True)
-                        if not StartInfo["write_access"]:
-                            StartInfo["pages"]["settings"] = False
-                            StartInfo["pages"]["notifications"] = False
-                        StartInfo["LoginActive"] = LoginActive()
-                        data = json.dumps(StartInfo, sort_keys=False)
+                        # Attempt to load if it's a string from MyClientInterface
+                        json_data = json.loads(data) if isinstance(data, str) else data
+                        return jsonify(json_data) #jsonify if it's not already (e.g. direct string from old path)
+                    except json.JSONDecodeError:
+                        LogErrorLine(f"Error in JSON parse / decode for command {command}: {data}")
+                        return jsonify({"error": f"Failed to decode JSON for {command}"})
                     except Exception as e1:
-                        LogErrorLine("Error in JSON parse / decode: " + str(e1))
-                return data
-            return jsonify(data)
+                        LogErrorLine(f"Error processing command {command}: " + str(e1))
+                        return jsonify({"error": str(e1)})
+                # Non-JSON commands or commands that return pre-formatted strings from MyClientInterface
+                return data 
+            # For commands not in the long list of json types, but still might need jsonify
+            # This typically applies to simple string returns from MyClientInterface for non-json commands
+            # This needs to be conditional, only jsonify if it's not already a rendered template
+            if not isinstance(data, str) or not data.startswith("<!DOCTYPE html>"): # Avoid re-jsonifying or jsonifying HTML
+                 return jsonify(data)
+            return data # Return data as is if it's already HTML (from a render_template call)
 
         elif command in ["updatesoftware"]:
             if session.get("write_access", True):
@@ -659,11 +1694,13 @@ def ProcessCommand(command):
                 )
         elif command in ["test_email"]:
             return SendTestEmail(request.args.get("test_email", default=None, type=str))
-        else:
-            return render_template("command_template.html", command=command)
+        else: # Fallback for commands NOT in command_list (unknown commands)
+            # The 'command' variable here is the base command string passed to ProcessCommand
+            return render_template("command_template.html", title=command.capitalize(), command=command, data_content=f"Command '{command}' not recognized or has no specific display.", favicon_path=favicon)
     except Exception as e1:
         LogErrorLine("Error in Process Command: " + command + ": " + str(e1))
-        return render_template("command_template.html", command=command)
+        # Ensure a response is returned even in case of an exception. command variable is the base command.
+        return render_template("command_template.html", title="Error", command=command, data_content=f"Error processing command: {str(e1)}", favicon_path=favicon)
 
 
 # -------------------------------------------------------------------------------
@@ -4779,6 +5816,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     MyClientInterface = ClientInterface(host=address, port=clientport, log=log)
+    ui_presenter = UIPresenter(MyClientInterface) # Instantiate UIPresenter
 
     Start = datetime.datetime.now()
 
