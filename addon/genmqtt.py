@@ -22,12 +22,15 @@ import time
 
 try:
     import paho.mqtt.client as mqtt
-except Exception as e1:
-    print(
-        "\n\nThe program requies the paho-mqtt module to be installed. Please use 'sudo pip install paho-mqtt' to install.\n"
+except ImportError as e_imp:
+    # This is a critical failure if paho-mqtt is missing.
+    # Logger might not be available yet, so print to stderr.
+    sys.stderr.write(
+        "\n\nFATAL ERROR: The paho-mqtt module is required but not installed.\n"
+        "Please install it using a command like 'sudo pip install paho-mqtt' or 'pip install paho-mqtt'.\n"
     )
-    print("Error: " + str(e1))
-    sys.exit(2)
+    sys.stderr.write(f"Specific import error: {e_imp}\n")
+    sys.exit(2) # Exit if critical dependency is missing.
 try:
     # this will add the parent of the genmonlib folder to the path
     # if we are one level below the genmonlib parent (e.g. in the addon folder)
@@ -44,15 +47,16 @@ try:
     from genmonlib.mythread import MyThread
     from genmonlib.program_defaults import ProgramDefaults
 
-except Exception as e1:
-    print(
-        "\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n"
+except ImportError as e_imp_genmon:
+    # Critical failure if genmonlib components are missing.
+    sys.stderr.write(
+        "\n\nFATAL ERROR: This program requires the genmonlib modules.\n"
+        "These modules should be located in the 'genmonlib' directory, typically one level above the 'addon' directory.\n"
+        "Please ensure the genmonlib directory and its contents are correctly placed and accessible.\n"
+        "Consult the project documentation at https://github.com/jgyates/genmon for installation details.\n"
     )
-    print(
-        "Please see the project documentation at https://github.com/jgyates/genmon.\n"
-    )
-    print("Error: " + str(e1))
-    sys.exit(2)
+    sys.stderr.write(f"Specific import error: {e_imp_genmon}\n")
+    sys.exit(2) # Exit if core components are missing.
 
 # ------------ MyGenPush class --------------------------------------------------
 class MyGenPush(MySupport):
@@ -113,99 +117,110 @@ class MyGenPush(MySupport):
             )
             self.Threads["MainPollingThread"].Start()
 
-        except Exception as e1:
-            self.LogErrorLine("Error in mygenpush init: " + str(e1))
+        except (socket.error, ConnectionRefusedError) as e_sock: # More specific for network issues
+            self.LogErrorLine(f"MyGenPush.__init__: Socket error connecting to ClientInterface: {e_sock}")
+            # Depending on design, might re-raise or set a failed state.
+        except Exception as e_init_push: # Catch other unexpected errors
+            self.LogErrorLine(f"MyGenPush.__init__: Unexpected error: {e_init_push}")
 
     # ----------  MyGenPush::ControllerIsEvolution2 -----------------------------
     def ControllerIsEvolution2(self):
         try:
-            if "evolution 2.0" in self.StartInfo["Controller"].lower():
-                return True
+            return "evolution 2.0" in self.StartInfo["Controller"].lower()
+        except KeyError:
+            self.LogErrorLine("ControllerIsEvolution2: 'Controller' key not found in StartInfo.")
             return False
-        except Exception as e1:
-            self.LogErrorLine("Error in ControllerIsEvolution2: " + str(e1))
+        except Exception as e_ctrl:
+            self.LogErrorLine(f"ControllerIsEvolution2: Unexpected error: {e_ctrl}")
             return False
 
     # ----------  MyGenPush::ControllerIsEvolutionNexus -------------------------
     def ControllerIsEvolutionNexus(self):
         try:
-            if self.ControllerIsEvolution() or self.ControllerIsNexus:
-                return True
-            return False
-        except Exception as e1:
-            self.LogErrorLine("Error in ControllerIsEvolutionNexus: " + str(e1))
+            # Assuming ControllerIsEvolution and ControllerIsNexus handle their own exceptions
+            return self.ControllerIsEvolution() or self.ControllerIsNexus()
+        except Exception as e_ctrl_nexus: # Catch if the boolean logic itself fails for some reason
+            self.LogErrorLine(f"ControllerIsEvolutionNexus: Unexpected error: {e_ctrl_nexus}")
             return False
 
     # ----------  MyGenPush::ControllerIsEvolution ------------------------------
     def ControllerIsEvolution(self):
         try:
-            if "evolution" in self.StartInfo["Controller"].lower():
-                return True
+            return "evolution" in self.StartInfo["Controller"].lower()
+        except KeyError:
+            self.LogErrorLine("ControllerIsEvolution: 'Controller' key not found in StartInfo.")
             return False
-        except Exception as e1:
-            self.LogErrorLine("Error in ControllerIsEvolution: " + str(e1))
+        except Exception as e_ctrl_evo:
+            self.LogErrorLine(f"ControllerIsEvolution: Unexpected error: {e_ctrl_evo}")
             return False
 
     # ----------  MyGenPush::ControllerIsNexius ---------------------------------
-    def ControllerIsNexius(self):
+    def ControllerIsNexius(self): # Typo: Should be ControllerIsNexus
         try:
-            if "nexus" in self.StartInfo["Controller"].lower():
-                return True
+            return "nexus" in self.StartInfo["Controller"].lower()
+        except KeyError:
+            self.LogErrorLine("ControllerIsNexus (was ControllerIsNexius): 'Controller' key not found in StartInfo.")
             return False
-        except Exception as e1:
-            self.LogErrorLine("Error in ControllerIsNexius: " + str(e1))
+        except Exception as e_ctrl_nexus_typo: # Typo in original method name
+            self.LogErrorLine(f"ControllerIsNexus (was ControllerIsNexius): Unexpected error: {e_ctrl_nexus_typo}")
             return False
 
     # ----------  MyGenPush::ControllerIsGeneracH100 ----------------------------
     def ControllerIsGeneracH100(self):
         try:
-            if (
-                "h-100" in self.StartInfo["Controller"].lower()
-                or "g-panel" in self.StartInfo["Controller"].lower()
-            ):
-                return True
+            controller_name = self.StartInfo["Controller"].lower()
+            return "h-100" in controller_name or "g-panel" in controller_name
+        except KeyError:
+            self.LogErrorLine("ControllerIsGeneracH100: 'Controller' key not found in StartInfo.")
             return False
-        except Exception as e1:
-            self.LogErrorLine("Error in ControllerIsGeneracH100: " + str(e1))
+        except Exception as e_ctrl_h100:
+            self.LogErrorLine(f"ControllerIsGeneracH100: Unexpected error: {e_ctrl_h100}")
             return False
 
     # ----------  MyGenPush::ControllerIsGeneracPowerZone -----------------------
     def ControllerIsGeneracPowerZone(self):
         try:
-            if "powerzone" in self.StartInfo["Controller"].lower():
-                return True
+            return "powerzone" in self.StartInfo["Controller"].lower()
+        except KeyError:
+            self.LogErrorLine("ControllerIsGeneracPowerZone: 'Controller' key not found in StartInfo.")
             return False
-        except Exception as e1:
-            self.LogErrorLine("Error in ControllerIsGeneracPowerZone: " + str(e1))
+        except Exception as e_ctrl_pz:
+            self.LogErrorLine(f"ControllerIsGeneracPowerZone: Unexpected error: {e_ctrl_pz}")
             return False
 
     # ----------  MyGenPush::GetGeneratorStartInfo ------------------------------
     def GetGeneratorStartInfo(self):
-
         try:
             data = self.SendCommand("generator: start_info_json")
-            self.StartInfo = {}
-            self.StartInfo = json.loads(data)
-
+            if not data: # Check if SendCommand returned empty (indicating an error there)
+                self.LogError("GetGeneratorStartInfo: Received no data from SendCommand.")
+                return False
+            self.StartInfo = json.loads(data) # Removed self.StartInfo = {} before this
             return True
-        except Exception as e1:
-            self.LogErrorLine("Error in GetGeneratorStartInfo: " + str(e1))
+        except json.JSONDecodeError as e_json:
+            self.LogErrorLine(f"GetGeneratorStartInfo: Error decoding JSON from genmon: {e_json}. Data: '{data[:100]}...'") # Log part of the data
+            return False
+        except Exception as e_get_info:
+            self.LogErrorLine(f"GetGeneratorStartInfo: Unexpected error: {e_get_info}")
             return False
 
     # ----------  MyGenPush::SendCommand ----------------------------------------
     def SendCommand(self, Command):
-
-        if len(Command) == 0:
-            return "Invalid Command"
+        if not Command: # Check for empty or None command
+            self.log.error("SendCommand: Received an invalid (empty) command.")
+            return "" # Return empty string for error, consistent with original on exception
 
         try:
             with self.AccessLock:
                 data = self.Generator.ProcessMonitorCommand(Command)
-        except Exception as e1:
-            self.LogErrorLine("Error calling  ProcessMonitorCommand: " + str(Command))
-            data = ""
+            return data
+        except (socket.error, ConnectionRefusedError) as e_sock: # Specific network errors
+            self.LogErrorLine(f"SendCommand: Socket error for command '{Command}': {e_sock}")
+            return ""
+        except Exception as e_send_cmd: # Other errors from ClientInterface
+            self.LogErrorLine(f"SendCommand: Unexpected error for command '{Command}': {e_send_cmd}")
+            return ""
 
-        return data
 
     # ---------- MyGenPush::MainPollingThread-----------------------------------
     def MainPollingThread(self):
@@ -226,25 +241,44 @@ class MyGenPush(MySupport):
 
                 try:
                     GenmonDict = {}
-                    TempDict = {}
-                    TempDict = json.loads(statusdata)
-                    GenmonDict["Status"] = TempDict["Status"]
-                    TempDict = json.loads(maintdata)
-                    GenmonDict["Maintenance"] = TempDict["Maintenance"]
-                    TempDict = json.loads(outagedata)
-                    GenmonDict["Outage"] = TempDict["Outage"]
-                    TempDict = json.loads(monitordata)
-                    GenmonDict["Monitor"] = TempDict["Monitor"]
-                    self.CheckDictForChanges(GenmonDict, "generator")
+                    # Helper to load JSON and update GenmonDict, handling potential errors
+                    def load_and_assign(key, json_data_str, target_dict):
+                        try:
+                            if not json_data_str:
+                                self.log.warning(f"MainPollingThread: Empty JSON data for '{key}'. Skipping.")
+                                return False
+                            temp_dict = json.loads(json_data_str)
+                            target_dict[key] = temp_dict.get(key, {}) # Use .get for safer access to inner key
+                            return True
+                        except json.JSONDecodeError as e_json_poll:
+                            self.LogErrorLine(f"MainPollingThread: Error decoding JSON for '{key}': {e_json_poll}. Data: '{json_data_str[:100]}...'")
+                            return False
+                        except KeyError: # If the 'key' itself is not in temp_dict after load
+                            self.LogErrorLine(f"MainPollingThread: Expected key '{key}' not found in parsed JSON data. Data: '{json_data_str[:100]}...'")
+                            return False
 
-                except Exception as e1:
-                    self.LogErrorLine("Unable to get status: " + str(e1))
+
+                    load_and_assign("Status", statusdata, GenmonDict)
+                    load_and_assign("Maintenance", maintdata, GenmonDict)
+                    load_and_assign("Outage", outagedata, GenmonDict)
+                    load_and_assign("Monitor", monitordata, GenmonDict)
+                    
+                    if GenmonDict: # Only proceed if we have some data
+                        self.CheckDictForChanges(GenmonDict, "generator")
+                    else:
+                        self.log.warning("MainPollingThread: GenmonDict is empty after attempting to load all data points. No changes to check.")
+
+                except Exception as e_poll_processing: # Catch-all for the processing block
+                    self.LogErrorLine(f"MainPollingThread: Error processing data from genmon: {e_poll_processing}")
 
                 if self.WaitForExit("MainPollingThread", float(self.PollTime)):
+                    self.log.info("MainPollingThread: Exit signal received, shutting down.")
                     return
-            except Exception as e1:
-                self.LogErrorLine("Error in mynotify:MainPollingThread: " + str(e1))
-                if self.WaitForExit("MainPollingThread", float(self.PollTime)):
+            except Exception as e_outer_poll: # Catch-all for the entire while loop iteration
+                self.LogErrorLine(f"MainPollingThread: Unhandled error in polling loop: {e_outer_poll}")
+                # Implement a backoff strategy or more robust error handling if this becomes frequent
+                if self.WaitForExit("MainPollingThread", float(self.PollTime) * 2): # Longer wait on error
+                    self.log.info("MainPollingThread: Exit signal received during error handling, shutting down.")
                     return
 
     # ------------ MyGenPush::CheckDictForChanges -------------------------------
@@ -299,52 +333,51 @@ class MyGenPush(MySupport):
             if "type" in entry.keys() and "value" in entry.keys() and "unit" in entry.keys():
                 return True
             return False
-        except Exception as e1:
-            self.LogErrorLine("Error in DictIsTopicJSON: " + str(e1))
+        except Exception as e_dict_topic_json: # More specific exception variable name
+            self.LogErrorLine(f"DictIsTopicJSON: Unexpected error: {e_dict_topic_json}")
             return False
+
     # ---------- MyGenPush::ListIsStrings---------------------------------------
     # return true if every element of list is a string
     def ListIsStrings(self, listinput):
-
         try:
             if not isinstance(listinput, list):
                 return False
             for item in listinput:
-                if sys.version_info[0] < 3:
-                    if not (isinstance(item, str) or isinstance(item, unicode)):
-                        return False
-                else:
-                    if not (isinstance(item, str) or isinstance(item, bytes)):
-                        return False
+                # Simplified check for Python 3, assuming genmon aims for Py3
+                if not isinstance(item, (str, bytes)): # bytes for Py3 if applicable, str for unicode
+                    return False
             return True
-        except Exception as e1:
-            self.LogErrorLine("Error in ListIsStrings: " + str(e1))
+        except Exception as e_list_is_strings: # More specific exception variable name
+            self.LogErrorLine(f"ListIsStrings: Unexpected error: {e_list_is_strings}")
             return False
 
     # ---------- MyGenPush::CheckForChanges-------------------------------------
     def CheckForChanges(self, Path, Value):
-
         try:
-
-            if self.BlackList != None:
+            if self.BlackList is not None: # Use 'is not None' for clarity
                 for BlackItem in self.BlackList:
                     if BlackItem.lower() in Path.lower():
-                        return
-            LastValue = self.LastValues.get(str(Path), None)
-            LastChange = self.LastChange.get(str(Path), 0)
+                        return # Item is in blacklist, do not process further
 
-            if (
-                LastValue == None
-                or LastValue != Value
-                or (time.time() - LastChange) > self.FlushInterval
-            ):
-                self.LastValues[str(Path)] = Value
-                self.LastChange[str(Path)] = time.time()
-                if self.Callback != None:
-                    self.Callback(str(Path), Value)
+            path_str = str(Path) # Ensure Path is a string for dictionary key
+            LastValue = self.LastValues.get(path_str) # Simpler .get, defaults to None
+            LastChange = self.LastChange.get(path_str, 0) # Default to 0 if not found
 
-        except Exception as e1:
-            self.LogErrorLine("Error in mygenpush:CheckForChanges: " + str(e1))
+            current_time = time.time()
+            value_changed = (LastValue is None or LastValue != Value)
+            flush_interval_exceeded = (current_time - LastChange) >= self.FlushInterval # Use >= for flush
+
+            if value_changed or flush_interval_exceeded:
+                self.LastValues[path_str] = Value
+                self.LastChange[path_str] = current_time # Update timestamp
+                if self.Callback is not None:
+                    try:
+                        self.Callback(path_str, Value)
+                    except Exception as e_callback: # Catch errors within the callback itself
+                        self.LogErrorLine(f"CheckForChanges: Error executing callback for path '{path_str}': {e_callback}")
+        except Exception as e_check_changes: # Catch any other unexpected error in this method
+            self.LogErrorLine(f"CheckForChanges: Unexpected error for path '{Path}': {e_check_changes}")
 
     # ---------- MyGenPush::Close-----------------------------------------------
     def Close(self):
@@ -390,209 +423,160 @@ class MyMQTT(MyCommon):
             "inf"
         )  # default to inifite flush interval (e.g., never)
         self.debug = False
+        config_file_path = os.path.join(configfilepath, "genmqtt.conf")
 
         try:
             config = MyConfig(
-                filename=os.path.join(configfilepath, "genmqtt.conf"),
+                filename=config_file_path,
                 section="genmqtt",
-                log=log,
+                log=self.log, # Pass own logger
             )
 
-            self.Username = config.ReadValue("username")
-
-            self.Password = config.ReadValue("password")
-
+            self.Username = config.ReadValue("username", default=None) # Default to None if not present
+            self.Password = config.ReadValue("password", default=None) # Default to None
             self.ClientID = config.ReadValue("client_id", default="genmon")
+            self.MQTTAddress = config.ReadValue("mqtt_address", default=None)
 
-            self.MQTTAddress = config.ReadValue("mqtt_address")
+            if not self.MQTTAddress: # Check if None or empty
+                err_msg = "MyMQTT.__init__: Critical error: MQTT server address (mqtt_address) not configured in genmqtt.conf."
+                self.log.error(err_msg)
+                if self.console: self.console.error(err_msg)
+                sys.exit(1) # Critical: cannot function without MQTT address
 
-            if self.MQTTAddress == None or not len(self.MQTTAddress):
-                log.error("Error: invalid MQTT server address")
-                console.error("Error: invalid MQTT server address")
-                sys.exit(1)
-
-            self.MonitorAddress = config.ReadValue(
-                "monitor_address", default=self.MonitorAddress
-            )
-            if self.MonitorAddress != None:
-                self.MonitorAddress = self.MonitorAddress.strip()
-            if self.MonitorAddress == None or not len(self.MonitorAddress):
-                self.MonitorAddress = ProgramDefaults.LocalHost
+            self.MonitorAddress = config.ReadValue("monitor_address", default=host) # Use passed host as default
+            if self.MonitorAddress: self.MonitorAddress = self.MonitorAddress.strip()
+            if not self.MonitorAddress: self.MonitorAddress = ProgramDefaults.LocalHost # Final fallback
 
             self.MQTTPort = config.ReadValue("mqtt_port", return_type=int, default=1883)
-            self.PollTime = config.ReadValue(
-                "poll_interval", return_type=float, default=2.0
-            )
-            self.UseNumeric = config.ReadValue(
-                "numeric_json", return_type=bool, default=False
-            )
-            self.UseNumericObject = config.ReadValue(
-                "numeric_json_object", return_type=bool, default=False
-            )
-            self.StringListJson = config.ReadValue(
-                "strlist_json", return_type=bool, default=False
-            )
-            self.RemoveSpaces = config.ReadValue(
-                "remove_spaces", return_type=bool, default=False
-            )
-            self.TopicRoot = config.ReadValue("root_topic")
+            self.PollTime = config.ReadValue("poll_interval", return_type=float, default=2.0)
+            self.UseNumeric = config.ReadValue("numeric_json", return_type=bool, default=False)
+            self.UseNumericObject = config.ReadValue("numeric_json_object", return_type=bool, default=False)
+            self.StringListJson = config.ReadValue("strlist_json", return_type=bool, default=False)
+            self.RemoveSpaces = config.ReadValue("remove_spaces", return_type=bool, default=False)
+            self.TopicRoot = config.ReadValue("root_topic", default=None)
+            self.Retain = config.ReadValue("retain", return_type=bool, default=False)
 
-            self.Retain = config.ReadValue(
-                "retain", return_type=bool, default=False
-            )
-
-            if self.TopicRoot != None:
+            if self.TopicRoot:
                 self.TopicRoot = self.TopicRoot.strip()
-                self.LogDebug("Root Topic : " + self.TopicRoot)
-
-            if self.TopicRoot == None or not len(self.TopicRoot):
-                self.TopicRoot = None
-
-            # http://www.steves-internet-guide.com/mosquitto-tls/
-            self.CertificateAuthorityPath = config.ReadValue(
-                "cert_authority_path", default=""
-            )
-            self.TLSVersion = config.ReadValue(
-                "tls_version", return_type=str, default="1.0"
-            )
-            self.CertReqs = config.ReadValue(
-                "cert_reqs", return_type=str, default="Required"
-            )
-            self.ClientCertificatePath = config.ReadValue(
-                "client_cert_path", default=""
-            )
-            self.ClientKeyPath = config.ReadValue(
-                "client_key_path", default=""
-            )
-            BlackList = config.ReadValue("blacklist")
-
-            if BlackList != None:
-                if len(BlackList):
-                    BList = BlackList.strip().split(",")
-                    if len(BList):
-                        self.BlackList = []
-                        for Items in BList:
-                            self.BlackList.append(Items.strip())
+                if not self.TopicRoot: self.TopicRoot = None # Set to None if empty after strip
+                else: self.LogDebug(f"Root Topic set to: {self.TopicRoot}")
+            
+            self.CertificateAuthorityPath = config.ReadValue("cert_authority_path", default="").strip()
+            self.TLSVersion = config.ReadValue("tls_version", return_type=str, default="1.2") # Default to modern TLS
+            self.CertReqs = config.ReadValue("cert_reqs", return_type=str, default="CERT_REQUIRED") # Match ssl const
+            self.ClientCertificatePath = config.ReadValue("client_cert_path", default="").strip()
+            self.ClientKeyPath = config.ReadValue("client_key_path", default="").strip()
+            
+            BlackList_str = config.ReadValue("blacklist", default="")
+            if BlackList_str:
+                self.BlackList = [item.strip() for item in BlackList_str.split(",") if item.strip()]
+            else:
+                self.BlackList = None
 
             self.debug = config.ReadValue("debug", return_type=bool, default=False)
-
-            if config.HasOption("flush_interval"):
-                self.FlushInterval = config.ReadValue(
-                    "flush_interval", return_type=float, default=float("inf")
-                )
-                if self.FlushInterval == 0:
-                    self.FlushInterval = float("inf")
-            else:
+            self.FlushInterval = config.ReadValue("flush_interval", return_type=float, default=0.0)
+            if self.FlushInterval <= 0: # 0 or negative means effectively infinite
                 self.FlushInterval = float("inf")
-        except Exception as e1:
-            self.LogErrorLine(
-                "Error reading "
-                + os.path.join(configfilepath, "genmqtt.conf")
-                + " : "
-                + str(e1)
-            )
-            self.console.error(
-                "Error reading "
-                + os.path.join(configfilepath, "genmqtt.conf")
-                + " : "
-                + str(e1)
-            )
+
+        except FileNotFoundError:
+            err_msg = f"MyMQTT.__init__: Configuration file '{config_file_path}' not found. Cannot proceed."
+            self.log.error(err_msg)
+            if self.console: self.console.error(err_msg)
+            sys.exit(1)
+        except (KeyError, ValueError) as e_conf: # Catch issues from MyConfig reading or type conversion
+            err_msg = f"MyMQTT.__init__: Error reading configuration from '{config_file_path}': {e_conf}"
+            self.LogErrorLine(err_msg) # Use LogErrorLine if available for more detail
+            if self.console: self.console.error(err_msg)
+            sys.exit(1)
+        except Exception as e_conf_generic: # Catch-all for other config errors
+            err_msg = f"MyMQTT.__init__: Unexpected error processing configuration file '{config_file_path}': {e_conf_generic}"
+            self.LogErrorLine(err_msg)
+            if self.console: self.console.error(err_msg)
             sys.exit(1)
 
         try:
             self.MQTTclient = mqtt.Client(client_id=self.ClientID)
-            if self.Username != None and len(self.Username) and self.Password != None:
+            if self.Username and self.Password: # Ensure both are not None or empty
                 self.MQTTclient.username_pw_set(self.Username, password=self.Password)
 
             self.MQTTclient.on_connect = self.on_connect
             self.MQTTclient.on_message = self.on_message
             self.MQTTclient.on_disconnect = self.on_disconnect
 
-            if len(self.CertificateAuthorityPath):
+            if self.CertificateAuthorityPath:
                 if os.path.isfile(self.CertificateAuthorityPath):
-                    cert_reqs = ssl.CERT_REQUIRED
-                    if self.CertReqs.lower() == "required":
-                        cert_reqs = ssl.CERT_REQUIRED
-                    elif self.CertReqs.lower() == "optional":
-                        cert_reqs = ssl.CERT_REQUIRED
-                    elif self.CertReqs.lower() == "none":
-                        cert_reqs = ssl.CERT_NONE
-                    else:
-                        self.LogError(
-                            "Error: invalid cert required specified, defaulting to required: "
-                            + self.CertReq
-                        )
+                    cert_req_map = {
+                        "CERT_REQUIRED": ssl.CERT_REQUIRED,
+                        "CERT_OPTIONAL": ssl.CERT_OPTIONAL,
+                        "CERT_NONE": ssl.CERT_NONE,
+                    }
+                    cert_reqs_val = cert_req_map.get(self.CertReqs.upper(), ssl.CERT_REQUIRED)
+                    if self.CertReqs.upper() not in cert_req_map:
+                        self.log.warning(f"Invalid cert_reqs value '{self.CertReqs}', defaulting to CERT_REQUIRED.")
 
-                    use_tls = ssl.PROTOCOL_TLSv1
-                    if self.TLSVersion == "1.0" or self.TLSVersion == "1":
-                        use_tls = ssl.PROTOCOL_TLSv1
-                    elif self.TLSVersion == "1.1":
-                        use_tls = ssl.PROTOCOL_TLSv1_1
-                    elif self.TLSVersion == "1.2":
-                        use_tls = ssl.PROTOCOL_TLSv1_2
-                    else:
-                        self.LogError(
-                            "Error: invalid TLS version specified, defaulting to 1.0: "
-                            + self.TLSVersion
-                        )
-                    certfile = None
-                    keyfile = None
-                    # strip off any whitespace
-                    self.ClientCertificatePath = self.ClientCertificatePath.strip()
-                    self.ClientKeyPath = self.ClientKeyPath.strip()
-                    # if nothing is there then use None
-                    if len(self.ClientCertificatePath):
-                        certfile = self.ClientCertificatePath
-                    if len(self.ClientKeyPath):
-                        keyfile = self.ClientKeyPath
+                    tls_version_map = {
+                        "1.0": ssl.PROTOCOL_TLSv1, # Note: TLSv1 and v1.1 are deprecated by many brokers
+                        "1.1": ssl.PROTOCOL_TLSv1_1,
+                        "1.2": ssl.PROTOCOL_TLSv1_2,
+                        # "auto": ssl.PROTOCOL_TLS_CLIENT # Python 3.6+ for auto-negotiation
+                    }
+                    # Prefer PROTOCOL_TLS_CLIENT if available (Python 3.6+) for auto-negotiation
+                    use_tls_protocol = tls_version_map.get(self.TLSVersion, ssl.PROTOCOL_TLSv1_2) # Default to 1.2
+                    if self.TLSVersion.lower() == "auto" and hasattr(ssl, "PROTOCOL_TLS_CLIENT"):
+                        use_tls_protocol = ssl.PROTOCOL_TLS_CLIENT
+                    elif self.TLSVersion.lower() not in tls_version_map and self.TLSVersion.lower() != "auto":
+                         self.log.warning(f"Invalid TLS version '{self.TLSVersion}', defaulting to TLSv1.2.")
+                    
+                    effective_certfile = self.ClientCertificatePath if self.ClientCertificatePath else None
+                    effective_keyfile = self.ClientKeyPath if self.ClientKeyPath else None
 
                     self.MQTTclient.tls_set(
                         ca_certs=self.CertificateAuthorityPath,
-                        certfile=certfile,
-                        keyfile=keyfile,
-                        cert_reqs=cert_reqs,
-                        tls_version=use_tls,
+                        certfile=effective_certfile,
+                        keyfile=effective_keyfile,
+                        cert_reqs=cert_reqs_val,
+                        tls_version=use_tls_protocol,
                     )
-                    self.MQTTPort = 8883  # port for SSL
+                    self.MQTTPort = 8883 # Typically SSL uses port 8883
+                    self.log.info(f"TLS configured for MQTT connection using CA: {self.CertificateAuthorityPath}")
                 else:
-                    self.LogError(
-                        "Error: Unable to  find CA cert file: "
-                        + self.CertificateAuthorityPath
-                    )
-
-            # setup last will and testament
+                    self.log.error(f"MyMQTT.__init__: TLS CA certificate file not found: '{self.CertificateAuthorityPath}'. TLS will not be used.")
+            
+            # Last Will and Testament
             self.LastWillTopic = self.AppendRoot("generator/client_status")
-            self.MQTTclient.will_set(
-                self.LastWillTopic, payload="Offline", qos=0, retain=True
-            )
-            # connect
-            self.LogDebug(
-                "Connecting to " + self.MQTTAddress + ":" + str(self.MQTTPort)
-            )
-            self.MQTTclient.connect(self.MQTTAddress, self.MQTTPort, 60)
+            self.MQTTclient.will_set(self.LastWillTopic, payload="Offline", qos=1, retain=True) # QoS 1 for LWT
 
-            self.Push = MyGenPush(
-                host=self.MonitorAddress,
-                log=self.log,
-                callback=self.PublishCallback,
-                polltime=self.PollTime,
-                blacklist=self.BlackList,
-                flush_interval=self.FlushInterval,
-                use_numeric=self.UseNumeric,
-                use_numeric_object=self.UseNumericObject,
-                strlist_json = self.StringListJson,
-                debug=self.debug,
-                port=port,
-                loglocation=loglocation,
+            self.log.info(f"Attempting to connect to MQTT broker at {self.MQTTAddress}:{self.MQTTPort} with client ID '{self.ClientID}'")
+            self.MQTTclient.connect(self.MQTTAddress, self.MQTTPort, keepalive=60)
+
+            self.Push = MyGenPush( # Assuming MyGenPush is already refactored
+                host=self.MonitorAddress, log=self.log, callback=self.PublishCallback,
+                polltime=self.PollTime, blacklist=self.BlackList, flush_interval=self.FlushInterval,
+                use_numeric=self.UseNumeric, use_numeric_object=self.UseNumericObject,
+                strlist_json=self.StringListJson, debug=self.debug, port=port, # port was from __main__
+                loglocation=loglocation, console=self.console
             )
 
             signal.signal(signal.SIGTERM, self.SignalClose)
             signal.signal(signal.SIGINT, self.SignalClose)
 
-            self.MQTTclient.loop_start()
-        except Exception as e1:
-            self.LogErrorLine("Error in MyMQTT init: " + str(e1))
-            self.console.error("Error in MyMQTT init: " + str(e1))
+            self.MQTTclient.loop_start() # Start network loop
+            self.log.info("MyMQTT initialization complete and MQTT loop started.")
+
+        except mqtt.MQTTException as e_mqtt: # paho-mqtt specific exceptions
+            err_msg = f"MyMQTT.__init__: MQTT client error: {e_mqtt}"
+            self.LogErrorLine(err_msg)
+            if self.console: self.console.error(err_msg)
+            sys.exit(1)
+        except (socket.error, ConnectionRefusedError, TimeoutError) as e_sock: # Network related errors
+            err_msg = f"MyMQTT.__init__: Network error during MQTT setup/connect: {e_sock}"
+            self.LogErrorLine(err_msg)
+            if self.console: self.console.error(err_msg)
+            sys.exit(1)
+        except Exception as e_init_main: # Catch-all for other unexpected errors during init
+            err_msg = f"MyMQTT.__init__: Unexpected critical error during initialization: {e_init_main}"
+            self.LogErrorLine(err_msg)
+            if self.console: self.console.error(err_msg)
             sys.exit(1)
 
     # ------------ MyMQTT::AppendRoot---------------------------------------
@@ -616,78 +600,117 @@ class MyMQTT(MyCommon):
 
             if self.debug:
                 self.LogDebug(
-                    "Publish:  "
-                    + FullPath
-                    + ": "
-                    + str(value)
-                    + ": "
-                    + str(type(value))
+                    "Publish: " + FullPath + ": " + str(value) + " (Type: " + str(type(value)) + ")"
                 )
 
+            # publish() can raise ValueError for invalid topic/payload, or MQTTException for disconnections
             self.MQTTclient.publish(FullPath, value, retain=self.Retain)
-        except Exception as e1:
-            self.LogErrorLine("Error in MyMQTT:PublishCallback: " + str(e1))
+        except mqtt.MQTTException as e_mqtt_pub:
+            self.LogErrorLine(f"MyMQTT.PublishCallback: MQTT error publishing to '{FullPath}': {e_mqtt_pub}")
+            # Optionally, attempt to reconnect or queue message if applicable
+        except ValueError as ve_pub:
+            self.LogErrorLine(f"MyMQTT.PublishCallback: ValueError publishing to '{FullPath}' (likely invalid topic/payload): {ve_pub}")
+        except Exception as e_pub_generic:
+            self.LogErrorLine(f"MyMQTT.PublishCallback: Unexpected error publishing to '{FullPath}': {e_pub_generic}")
 
     # ------------ MyMQTT::on_disconnect-----------------------------------------
     def on_disconnect(self, client, userdata, rc=0):
-
-        self.LogInfo(
-            "Disconnected from " + self.MQTTAddress + " result code: " + str(rc)
-        )
-        self.MQTTclient.publish(self.LastWillTopic, payload="Offline", retain=True)
+        # rc is usually 0 for planned disconnect, non-zero for unplanned.
+        if rc == 0:
+            self.log.info(f"MyMQTT.on_disconnect: Gracefully disconnected from {self.MQTTAddress}.")
+        else:
+            self.log.warning(f"MyMQTT.on_disconnect: Unexpectedly disconnected from {self.MQTTAddress}. Result code: {rc}. Will attempt to reconnect.")
+        # The LWT should be handled by the broker. Re-publishing here might not be standard.
+        # However, if explicit state update is desired upon reconnect, it's done in on_connect.
+        # self.MQTTclient.publish(self.LastWillTopic, payload="Offline", retain=True) # Broker handles LWT
 
     # ------------ MyMQTT::on_connect--------------------------------------------
     # The callback for when the client receives a CONNACK response from the server.
     def on_connect(self, client, userdata, flags, rc):
-
         try:
-            if rc != 0:
-                self.LogError(
-                    "Error connecting to MQTT server: return code: " + str(rc)
-                )
-            self.LogInfo(
-                "Connected to " + self.MQTTAddress + " result code: " + str(rc)
-            )
+            # Connection return codes (rc) defined by Paho MQTT:
+            # 0: Connection successful
+            # 1: Connection refused - incorrect protocol version
+            # 2: Connection refused - invalid client identifier
+            # 3: Connection refused - server unavailable
+            # 4: Connection refused - bad username or password
+            # 5: Connection refused - not authorised
+            # 6-255: Currently unused.
+            connack_messages = {
+                0: "Connection successful",
+                1: "Connection refused - incorrect protocol version",
+                2: "Connection refused - invalid client identifier",
+                3: "Connection refused - server unavailable",
+                4: "Connection refused - bad username or password",
+                5: "Connection refused - not authorised",
+            }
+            log_msg = connack_messages.get(rc, f"Connection attempt returned unknown code: {rc}")
 
-            # Subscribing in on_connect() means that if we lose the connection and
-            # reconnect then subscriptions will be renewed.
-            if self.TopicRoot != None and len(self.TopicRoot):
-                FullPath = self.TopicRoot + "/generator"
+            if rc == 0:
+                self.log.info(f"MyMQTT.on_connect: Successfully connected to MQTT broker at {self.MQTTAddress}. {log_msg}")
+                
+                # Subscribe to command topic
+                command_topic_suffix = "generator/command"
+                full_command_topic = self.AppendRoot(command_topic_suffix)
+                try:
+                    # Using QoS 1 for command subscription for some reliability
+                    (result, mid) = self.MQTTclient.subscribe(full_command_topic + "/#", qos=1) 
+                    if result == mqtt.MQTT_ERR_SUCCESS:
+                        self.log.info(f"MyMQTT.on_connect: Successfully subscribed to command topic '{full_command_topic}/#'. MID: {mid}")
+                    else:
+                        self.log.error(f"MyMQTT.on_connect: Failed to subscribe to command topic '{full_command_topic}/#'. Result code: {result}")
+                except mqtt.MQTTException as e_sub:
+                    self.LogErrorLine(f"MyMQTT.on_connect: MQTT error during subscription to '{full_command_topic}/#': {e_sub}")
+                
+                # Publish online status (retained)
+                try:
+                    self.MQTTclient.publish(self.LastWillTopic, payload="Online", qos=1, retain=True)
+                    self.log.info(f"MyMQTT.on_connect: Published 'Online' status to LWT topic '{self.LastWillTopic}'.")
+                except mqtt.MQTTException as e_pub_online:
+                     self.LogErrorLine(f"MyMQTT.on_connect: MQTT error publishing 'Online' status: {e_pub_online}")
             else:
-                FullPath = "generator"
-            self.MQTTclient.subscribe(FullPath + "/#")
+                self.log.error(f"MyMQTT.on_connect: Failed to connect to MQTT broker at {self.MQTTAddress}. {log_msg}")
+                # Consider if a retry mechanism or exit is needed here depending on rc for persistent failures
 
-            # Setup Last Will value
-            self.MQTTclient.publish(self.LastWillTopic, payload="Online", retain=True)
-
-        except Exception as e1:
-            self.LogErrorLine("Error in MyMQTT:on_connect: " + str(e1))
+        except Exception as e_on_connect_generic: # Catch any other unexpected error
+            self.LogErrorLine(f"MyMQTT.on_connect: Unexpected error: {e_on_connect_generic}")
 
     # ------------ MyMQTT::on_message--------------------------------------------
     # The callback for when a PUBLISH message is received from the server.
     def on_message(self, client, userdata, message):
-
         try:
-            if self.debug:
-                self.LogDebug(
-                    "Confirmed: " + message.topic + ": " + str(message.payload)
-                )
-            # parse topic
-            command = str(message.payload.decode("utf-8"))
-            if self.TopicRoot != None and len(self.TopicRoot):
-                FullPath = self.TopicRoot + "/generator/command"
-            else:
-                FullPath = "generator/command"
+            payload_str = ""
+            try:
+                payload_str = message.payload.decode("utf-8")
+            except UnicodeDecodeError as ude:
+                self.LogErrorLine(f"MyMQTT.on_message: Could not decode payload from topic '{message.topic}' as UTF-8: {ude}. Payload (raw): {message.payload[:50]}...")
+                return # Cannot process if payload is not valid UTF-8
 
-            if message.topic.lower() != (FullPath.lower()):
+            if self.debug:
+                self.LogDebug(f"MyMQTT.on_message: Received message on topic '{message.topic}': '{payload_str}'")
+            
+            command_topic_suffix = "generator/command"
+            full_command_topic_base = self.AppendRoot(command_topic_suffix)
+
+            # Check if the message topic matches the expected command topic structure
+            # (e.g., root/generator/command or root/generator/command/specific_command)
+            if not message.topic.lower().startswith(full_command_topic_base.lower()):
+                if self.debug:
+                    self.LogDebug(f"MyMQTT.on_message: Message on topic '{message.topic}' is not a command topic. Ignoring.")
                 return
 
-            # write command
-            if command != None and len(command):
-                self.Push.SendCommand("generator: " + command)
-                self.LogDebug("Command Sent: " + command)
-        except Exception as e1:
-            self.LogErrorLine("Error in MyMQTT:on_message: " + str(e1))
+            # Extract the command part from the payload
+            command = payload_str.strip()
+            if command: # Ensure command is not empty after stripping
+                self.log.info(f"MyMQTT.on_message: Received command '{command}' on topic '{message.topic}'. Forwarding to genmon.")
+                # Assuming self.Push.SendCommand handles its own errors robustly
+                self.Push.SendCommand(f"generator: {command}") 
+                # self.LogDebug(f"Command '{command}' sent to genmon via SendCommand.") # Already logged by SendCommand potentially
+            else:
+                self.log.warning(f"MyMQTT.on_message: Received empty command payload on topic '{message.topic}'. Ignoring.")
+        
+        except Exception as e_on_msg_generic: # Catch any other unexpected error
+            self.LogErrorLine(f"MyMQTT.on_message: Unexpected error processing message from topic '{message.topic if message else 'N/A'}': {e_on_msg_generic}")
 
     # ----------MyMQTT::SignalClose---------------------------------------------
     def SignalClose(self, signum, frame):

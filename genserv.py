@@ -5320,20 +5320,30 @@ def Backup():
 def RunBashScript(ScriptName, log = False):
     try:
         pathtoscript = os.path.dirname(os.path.realpath(__file__))
-        script = os.path.join(pathtoscript, ScriptName)
-        command = "/bin/bash "
-        LogError("Script: " + command + script)
+        
+        # Split ScriptName into the script and its arguments
+        script_parts = ScriptName.split()
+        actual_script_filename = script_parts[0]
+        script_arguments = script_parts[1:]
+        
+        # Construct the full path to the script executable
+        script_executable_path = os.path.join(pathtoscript, actual_script_filename)
+        
+        # Prepare the command list for subprocess
+        cmd_list = ['/bin/bash', script_executable_path] + script_arguments
+        
+        LogError("Script: " + " ".join(cmd_list))
         if log == False:
-            subprocess.call(command + script, shell=True)
+            subprocess.call(cmd_list, shell=False)
         else:
             try:
-                output = subprocess.check_output(command + script, shell=True, stderr=subprocess.STDOUT)
+                output = subprocess.check_output(cmd_list, shell=False, stderr=subprocess.STDOUT)
             except subprocess.CalledProcessError as e:
                 output = e.output.decode()
 
-            if sys.version_info >= (3, 0):
+            if isinstance(output, bytes) and sys.version_info >= (3, 0): # Ensure output is string
                 output = output.decode()
-            LogError(command + script + ": \n" +  output)
+            LogError("Script: " + " ".join(cmd_list) + ": \n" +  output)
         return True
 
     except Exception as e1:
