@@ -1,6 +1,20 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.19.07 - 2024-07-30
+- **Presentation Layer Refactoring:**
+    - Introduced a new presentation layer (`genmonlib/presentation.py` with `UIPresenter` class) to separate UI logic from request handling in `genserv.py`. This aims to improve code organization and maintainability.
+    - Refactored `genserv.py` to delegate data fetching, processing, and command execution to the `UIPresenter`. This includes:
+        - Handling of HTML page rendering for main pages (index, verbose, lowbandwidth, internal).
+        - Processing of all JSON API commands (e.g., `status_json`, `outage_json`, `monitor_json`, `start_info_json`, numeric data commands, etc.).
+        - Processing of text-based display commands (`status`, `maint`, `logs`, `monitor`, `outage`, `help`) which are now rendered via the updated `command_template.html`.
+        - Handling of state-modifying commands (e.g., `setexercise`, `setquiet`, `setremote`, `settime`, maintenance log operations, log clearing, etc.).
+    - Moved HTML files (`index.html`, `index_verbose.html`, `index_lowbandwith.html`, `internal.html`) from `static/` to `templates/` and converted them to Jinja2 templates, enabling dynamic data injection.
+    - Updated `command_template.html` to be more dynamic, accepting `title`, `data_content`, and `favicon_path` for consistent display of command outputs and messages.
+    - Corrected static asset paths (CSS, JavaScript, favicons) in all refactored HTML templates to use Flask's `url_for` function, ensuring proper resource loading.
+    - Added a new suite of unit tests for the `UIPresenter` class in `tests/test_presentation.py`, covering various data fetching and command handling methods.
+    - Improved comments and docstrings in `genmonlib/presentation.py` and `tests/test_presentation.py` to enhance code clarity and maintainability. Conceptual review and update of comments in `genserv.py` was also performed to align with the refactoring.
+
 ## V1.19.06 -2025-05-21
 - Minor update to allow the wifi gauge to work on some USB wifi drivers
 - Minor update to change the display of gauges for Evo2 three phase models
@@ -1031,3 +1045,5 @@ s
 - Added support for Evolution 2.0
 - Added support for serial over TCP/IP (additional hardware required) See [this page for details](https://github.com/jgyates/genmon/wiki/Appendix-F----Serial-over-IP)
 - Added advanced Modbus error handling for H-100 controllers
+
+[end of changelog.md]

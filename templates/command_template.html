@@ -1,8 +1,36 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
-   <body>
-
-      <h1>Unknown Command {{ command }}!</h1>
-
-   </body>
+<head>
+    <meta http-equiv='cache-control' content='no-cache'>
+    <meta http-equiv='expires' content='0'>
+    <meta http-equiv='pragma' content='no-cache'>
+    <title>{{ title }} - Genmon</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='genmon.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename=favicon_path) }}">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        h1 { color: #0056b3; }
+        pre { 
+            background-color: #fff; 
+            border: 1px solid #ddd; 
+            padding: 15px; 
+            white-space: pre-wrap;       /* CSS3 */
+            white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+            white-space: -pre-wrap;      /* Opera 4-6 */
+            white-space: -o-pre-wrap;    /* Opera 7 */
+            word-wrap: break-word;       /* Internet Explorer 5.5+ */
+        }
+        a { color: #0056b3; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .container { max-width: 800px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{{ title }}</h1>
+        <pre>{{ data_content }}</pre>
+        <hr>
+        <a href="{{ url_for('root') }}">Back to Home</a>
+    </div>
+</body>
 </html>

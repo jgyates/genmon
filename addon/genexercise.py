@@ -34,15 +34,16 @@ try:
     from genmonlib.mythread import MyThread
     from genmonlib.program_defaults import ProgramDefaults
 
-except Exception as e1:
-    print(
-        "\n\nThis program requires the modules located in the genmonlib directory in the github repository.\n"
+except ImportError as e_imp_genmon:
+    # Logger not available yet, print to stderr
+    sys.stderr.write(
+        "\n\nFATAL ERROR: This program requires the genmonlib modules.\n"
+        "These modules should be located in the 'genmonlib' directory, typically one level above the 'addon' directory.\n"
+        "Please ensure the genmonlib directory and its contents are correctly placed and accessible.\n"
+        "Consult the project documentation at https://github.com/jgyates/genmon for installation details.\n"
     )
-    print(
-        "Please see the project documentation at https://github.com/jgyates/genmon.\n"
-    )
-    print("Error: " + str(e1))
-    sys.exit(2)
+    sys.stderr.write(f"Specific import error: {e_imp_genmon}\n")
+    sys.exit(2) # Exit if core components are missing.
 
 # ------------ GenExercise class ------------------------------------------------
 class GenExercise(MySupport):
@@ -70,108 +71,96 @@ class GenExercise(MySupport):
         self.ExerciseActive = False
         self.debug = False
         self.ControllerExercise = False
+        config_file_full_path = os.path.join(ConfigFilePath, "genexercise.conf")
 
         try:
+            self.log.info(f"Reading configuration from: {config_file_full_path}")
             self.config = MyConfig(
-                filename=os.path.join(ConfigFilePath, "genexercise.conf"),
+                filename=config_file_full_path,
                 section="genexercise",
                 log=self.log,
             )
 
             self.ExerciseType = self.config.ReadValue("exercise_type", default="Normal")
-            self.ExerciseHour = self.config.ReadValue(
-                "exercise_hour", return_type=int, default=12
-            )
-            self.ExerciseMinute = self.config.ReadValue(
-                "exercise_minute", return_type=int, default=0
-            )
-            self.ExerciseDayOfMonth = self.config.ReadValue(
-                "exercise_day_of_month", return_type=int, default=1
-            )
-            self.ExerciseDayOfWeek = self.config.ReadValue(
-                "exercise_day_of_week", default="Monday"
-            )
-            self.ExerciseDuration = self.config.ReadValue(
-                "exercise_duration", return_type=float, default=12
-            )
-            self.ExerciseWarmup = self.config.ReadValue(
-                "exercise_warmup", return_type=float, default=0
-            )
-            self.ExerciseFrequency = self.config.ReadValue(
-                "exercise_frequency", default="Monthly"
-            )
-            self.MonitorAddress = self.config.ReadValue(
-                "monitor_address", default=ProgramDefaults.LocalHost
-            )
-            self.ExerciseNthDayOfMonth = self.config.ReadValue(
-                "exercise_nth_day_of_month", return_type=int, default=0
-            )
-
+            self.ExerciseHour = self.config.ReadValue("exercise_hour", return_type=int, default=12)
+            self.ExerciseMinute = self.config.ReadValue("exercise_minute", return_type=int, default=0)
+            self.ExerciseDayOfMonth = self.config.ReadValue("exercise_day_of_month", return_type=int, default=1)
+            self.ExerciseDayOfWeek = self.config.ReadValue("exercise_day_of_week", default="Monday")
+            self.ExerciseDuration = self.config.ReadValue("exercise_duration", return_type=float, default=12.0) # Ensure float
+            self.ExerciseWarmup = self.config.ReadValue("exercise_warmup", return_type=float, default=0.0) # Ensure float
+            self.ExerciseFrequency = self.config.ReadValue("exercise_frequency", default="Monthly")
+            self.MonitorAddress = self.config.ReadValue("monitor_address", default=ProgramDefaults.LocalHost)
+            self.ExerciseNthDayOfMonth = self.config.ReadValue("exercise_nth_day_of_month", return_type=int, default=0)
             self.LastExerciseTime = self.config.ReadValue("last_exercise", default=None)
             self.UseGeneratorTime = self.config.ReadValue("use_gen_time", return_type=bool, default=False)
-
             self.debug = self.config.ReadValue("debug", return_type=bool, default=False)
 
             # Validate settings
-            if not self.ExerciseType.lower() in ["normal", "quiet", "transfer"]:
-                self.ExerciseType = "normal"
-            if self.ExerciseHour > 23 or self.ExerciseHour < 0:
+            valid_exercise_types = ["normal", "quiet", "transfer"]
+            if self.ExerciseType.lower() not in valid_exercise_types:
+                self.log.warning(f"Invalid ExerciseType '{self.ExerciseType}', defaulting to 'Normal'. Valid options: {valid_exercise_types}")
+                self.ExerciseType = "Normal"
+            
+            if not (0 <= self.ExerciseHour <= 23):
+                self.log.warning(f"Invalid ExerciseHour '{self.ExerciseHour}', defaulting to 12.")
                 self.ExerciseHour = 12
-            if self.ExerciseMinute > 59 or self.ExerciseMinute < 0:
+            if not (0 <= self.ExerciseMinute <= 59):
+                self.log.warning(f"Invalid ExerciseMinute '{self.ExerciseMinute}', defaulting to 0.")
                 self.ExerciseMinute = 0
-            if not self.ExerciseDayOfWeek.lower() in [
-                "monday",
-                "tuesday",
-                "wednesday",
-                "thursday",
-                "friday",
-                "saturday",
-                "sunday",
-            ]:
+
+            valid_days_of_week = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+            if self.ExerciseDayOfWeek.lower() not in valid_days_of_week:
+                self.log.warning(f"Invalid ExerciseDayOfWeek '{self.ExerciseDayOfWeek}', defaulting to 'Monday'. Valid options: {valid_days_of_week}")
                 self.ExerciseDayOfWeek = "Monday"
-            if self.ExerciseDayOfMonth > 28 or self.ExerciseDayOfMonth < 1:
+
+            if not (1 <= self.ExerciseDayOfMonth <= 28): # Safest upper limit for all months
+                self.log.warning(f"Invalid ExerciseDayOfMonth '{self.ExerciseDayOfMonth}', defaulting to 1.")
                 self.ExerciseDayOfMonth = 1
-            if self.ExerciseDuration > 60:
-                self.ExerciseDuration = 60
-            if self.ExerciseDuration < 5:
-                self.ExerciseDuration = 5
-            if self.ExerciseWarmup > 30:
-                self.ExerciseWarmup = 30
-            if self.ExerciseWarmup < 0:
-                self.ExerciseWarmup = 0
-            if not self.ExerciseFrequency.lower() in ["daily","weekly", "biweekly", "monthly", "post-controller"]:
+            
+            if not (5 <= self.ExerciseDuration <= 60): # Assuming these are practical limits
+                self.log.warning(f"Invalid ExerciseDuration '{self.ExerciseDuration}', defaulting to 12 minutes. Min=5, Max=60.")
+                self.ExerciseDuration = 12.0
+            
+            if not (0 <= self.ExerciseWarmup <= 30): # Assuming practical limits
+                self.log.warning(f"Invalid ExerciseWarmup '{self.ExerciseWarmup}', defaulting to 0 minutes. Min=0, Max=30.")
+                self.ExerciseWarmup = 0.0
+
+            valid_frequencies = ["daily", "weekly", "biweekly", "monthly", "post-controller"]
+            if self.ExerciseFrequency.lower() not in valid_frequencies:
+                self.log.warning(f"Invalid ExerciseFrequency '{self.ExerciseFrequency}', defaulting to 'Monthly'. Valid options: {valid_frequencies}")
                 self.ExerciseFrequency = "Monthly"
 
-            if self.MonitorAddress != None:
-                self.MonitorAddress = self.MonitorAddress.strip()
+            if self.MonitorAddress: self.MonitorAddress = self.MonitorAddress.strip()
+            if not self.MonitorAddress: self.MonitorAddress = ProgramDefaults.LocalHost
 
-            if self.MonitorAddress == None or not len(self.MonitorAddress):
-                self.MonitorAddress = ProgramDefaults.LocalHost
-
-            if self.ExerciseNthDayOfMonth > 5 or self.ExerciseNthDayOfMonth < 1:
+            if not (0 <= self.ExerciseNthDayOfMonth <= 5) : # 0 means not used
+                self.log.warning(f"Invalid ExerciseNthDayOfMonth '{self.ExerciseNthDayOfMonth}', defaulting to 0 (disabled). Valid: 0-5.")
                 self.ExerciseNthDayOfMonth = 0
+
             if self.ExerciseFrequency.lower() == "monthly":
                 if self.ExerciseNthDayOfMonth == 0:
-                    self.LogDebug("Monthly Day of Month option used")
+                    self.LogDebug(f"Monthly exercise scheduled for day {self.ExerciseDayOfMonth} of the month.")
                 else:
-                    self.LogDebug("Exercise monthly on the %d x %s" %(self.ExerciseNthDayOfMonth, self.ExerciseDayOfWeek))
-        except Exception as e1:
-            self.LogErrorLine(
-                "Error reading "
-                + os.path.join(ConfigFilePath, "genexercise.conf")
-                + ": "
-                + str(e1)
-            )
-            self.console.error(
-                "Error reading "
-                + os.path.join(ConfigFilePath, "genexercise.conf")
-                + ": "
-                + str(e1)
-            )
+                    self.LogDebug(f"Monthly exercise scheduled for the {self.ExerciseNthDayOfMonth} x {self.ExerciseDayOfWeek}.")
+
+        except FileNotFoundError:
+            err_msg = f"GenExercise.__init__: Configuration file '{config_file_full_path}' not found."
+            self.LogErrorLine(err_msg) # LogErrorLine should be from MySupport
+            if self.console: self.console.error(err_msg)
+            sys.exit(1)
+        except (KeyError, ValueError) as e_conf_parse:
+            err_msg = f"GenExercise.__init__: Error parsing configuration from '{config_file_full_path}': {e_conf_parse}"
+            self.LogErrorLine(err_msg)
+            if self.console: self.console.error(err_msg)
+            sys.exit(1)
+        except Exception as e_conf_generic: # Catch-all for other config related errors
+            err_msg = f"GenExercise.__init__: Unexpected error reading or validating configuration: {e_conf_generic}"
+            self.LogErrorLine(err_msg)
+            if self.console: self.console.error(err_msg)
             sys.exit(1)
 
         try:
-
+            self.log.info(f"Connecting to genmon server at {self.MonitorAddress}:{port}")
             self.Generator = ClientInterface(
                 host=self.MonitorAddress, port=port, log=self.log
             )
@@ -246,8 +235,12 @@ class GenExercise(MySupport):
             signal.signal(signal.SIGINT, self.SignalClose)
 
         except Exception as e1:
-            self.LogErrorLine("Error in GenExercise init: " + str(e1))
-            self.console.error("Error in GenExercise init: " + str(e1))
+            self.LogErrorLine(f"GenExercise.__init__: Error during ClientInterface setup or initial checks: {e_client_setup}")
+            if self.console: self.console.error(f"Error in GenExercise init: {e_client_setup}")
+            sys.exit(1)
+        except Exception as e_init_main: # Fallback for any other unexpected error in init
+            self.LogErrorLine(f"GenExercise.__init__: Unexpected critical error: {e_init_main}")
+            if self.console: self.console.error(f"Unexpected critical error in GenExercise init: {e_init_main}")
             sys.exit(1)
 
     # ----------  GenExercise::SendCommand --------------------------------------
@@ -259,11 +252,13 @@ class GenExercise(MySupport):
         try:
             with self.AccessLock:
                 data = self.Generator.ProcessMonitorCommand(Command)
-        except Exception as e1:
-            self.LogErrorLine("Error calling  ProcessMonitorCommand: " + str(Command))
-            data = ""
-
-        return data
+            return data
+        except (socket.error, ConnectionRefusedError, TimeoutError, OSError) as e_sock: # More specific network errors
+            self.LogErrorLine(f"SendCommand: Socket/OS error for command '{Command}': {e_sock}")
+            return "" # Return empty string or error indicator
+        except Exception as e_send_cmd: # Other errors from ClientInterface or unexpected
+            self.LogErrorLine(f"SendCommand: Unexpected error for command '{Command}': {e_send_cmd}")
+            return ""
 
     # ----------  GenExercise::CheckGeneratorRequirement ------------------------
     def CheckGeneratorRequirement(self):
@@ -282,8 +277,14 @@ class GenExercise(MySupport):
                 )
                 return False
             return True
-        except Exception as e1:
-            self.LogErrorLine("Error in CheckGeneratorRequirement: " + str(e1))
+        except json.JSONDecodeError as e_json:
+            self.LogErrorLine(f"CheckGeneratorRequirement: Error decoding JSON from start_info_json: {e_json}. Data: '{data[:100]}...'")
+            return False
+        except KeyError as ke:
+            self.LogErrorLine(f"CheckGeneratorRequirement: 'Controller' key missing in start_info_json: {ke}")
+            return False
+        except Exception as e_check_req:
+            self.LogErrorLine(f"CheckGeneratorRequirement: Unexpected error: {e_check_req}")
             return False
 
     # ---------- GenExercise::PostWarmup----------------------------------------
@@ -380,177 +381,190 @@ class GenExercise(MySupport):
             if self.ExerciseFrequency.lower() == "biweekly":
                 self.config.WriteValue("last_exercise", NowString)
                 self.config.LastExerciseTime = NowString
-            self.LogDebug("Last Exercise Cycle: " + NowString)
-        except Exception as e1:
-            self.LogErrorLine("Error in WriteLastExerciseTime: " + str(e1))
+            self.LogDebug(f"Last Exercise Cycle recorded: {NowString}")
+        except IOError as ioe: # If MyConfig.WriteValue can raise IOError
+            self.LogErrorLine(f"WriteLastExerciseTime: IOError writing last exercise time to config: {ioe}")
+        except Exception as e_write_time:
+            self.LogErrorLine(f"WriteLastExerciseTime: Unexpected error: {e_write_time}")
 
     # ---------- GenExercise::TimeForExercise-----------------------------------
     def TimeForExercise(self):
         try:
             if self.UseGeneratorTime:
                 TimeNow = self.GetGeneratorTime()
+                if TimeNow is None: # GetGeneratorTime might return None on error
+                    self.log.error("TimeForExercise: Could not get generator time, defaulting to system time for this check.")
+                    TimeNow = datetime.datetime.now()
             else:
                 TimeNow = datetime.datetime.now()
-            if (
-                TimeNow.hour != self.ExerciseHour
-                or TimeNow.minute != self.ExerciseMinute
-            ):
+            
+            if TimeNow.hour != self.ExerciseHour or TimeNow.minute != self.ExerciseMinute:
                 return False
-            ## if we get past this line then the time is correct
-            weekDays = (
-                "Monday",
-                "Tuesday",
-                "Wednesday",
-                "Thursday",
-                "Friday",
-                "Saturday",
-                "Sunday",
-            )
 
+            weekDays = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
             WeekDayString = weekDays[TimeNow.weekday()]
+            current_frequency = self.ExerciseFrequency.lower()
 
-            if not self.ExerciseFrequency.lower() in ["daily","weekly", "biweekly", "monthly", "post-controller"]:
-                self.LogError(
-                    "Invalid Exercise Frequency in TimeForExercise: "
-                    + str(self.ExerciseFrequency)
-                )
-                return False
-            if (self.ExerciseFrequency.lower() == "daily"):
-                return True 
-            if (
-                self.ExerciseFrequency.lower() == "weekly"
-                and self.ExerciseDayOfWeek.lower() == WeekDayString.lower()
-            ):
+            if current_frequency == "daily":
                 return True
-            elif (
-                self.ExerciseFrequency.lower() == "biweekly"
-                and self.ExerciseDayOfWeek.lower() == WeekDayString.lower()
-            ):
-                if self.LastExerciseTime == None:
+            if current_frequency == "weekly" and self.ExerciseDayOfWeek.lower() == WeekDayString.lower():
+                return True
+            if current_frequency == "biweekly" and self.ExerciseDayOfWeek.lower() == WeekDayString.lower():
+                if self.LastExerciseTime is None:
+                    return True # First time, allow exercise
+                try:
+                    LastExerciseTimeDT = datetime.datetime.strptime(self.LastExerciseTime, "%A %B %d, %Y %H:%M:%S")
+                    if (TimeNow - LastExerciseTimeDT).days >= 14:
+                        return True
+                except ValueError as ve:
+                    self.LogErrorLine(f"TimeForExercise: Error parsing LastExerciseTime '{self.LastExerciseTime}': {ve}. Allowing exercise as a precaution.")
+                    return True # Allow exercise if last time is corrupt
+                return False
+            if current_frequency == "monthly":
+                if self.ExerciseNthDayOfMonth == 0 and TimeNow.day == self.ExerciseDayOfMonth: # Specific day of month
                     return True
-                LastExerciseTime = datetime.datetime.strptime(
-                    self.LastExerciseTime, "%A %B %d, %Y %H:%M:%S"
-                )
-                if (TimeNow - LastExerciseTime).days >= 14:
+                if 1 <= self.ExerciseNthDayOfMonth <= 5 and self.IsNthWeekDay(TimeNow, self.ExerciseNthDayOfMonth, weekDays.index(self.ExerciseDayOfWeek.capitalize())):
                     return True
-                return False
-            elif (
-                self.ExerciseFrequency.lower() == "monthly"
-                and TimeNow.day == self.ExerciseDayOfMonth
-                and self.ExerciseNthDayOfMonth == 0
-            ):
-                return True
-            elif (self.ExerciseFrequency.lower() == "monthly" 
-                  and self.ExerciseNthDayOfMonth <= 5 and self.ExerciseNthDayOfMonth >= 1
-                  and self.IsNthWeekDay(TimeNow, self.ExerciseNthDayOfMonth, weekDays.index(self.ExerciseDayOfWeek.capitalize()))
-                  ):
-                return True
-            else:
-                return False
-        except Exception as e1:
-            self.LogErrorLine("Error in TimeForExercise: " + str(e1))
-        return False
+            # "post-controller" is handled by a different thread/logic, not this time check.
+            return False
+        except ValueError as ve_time: # For strptime issues if date format is unexpectedly different
+             self.LogErrorLine(f"TimeForExercise: ValueError processing time/date: {ve_time}")
+        except Exception as e_time_exercise:
+            self.LogErrorLine(f"TimeForExercise: Unexpected error: {e_time_exercise}")
+        return False # Default to False on any error
+
     # ---------- GenExercise::IsNthWeekDay--------------------------------------
-    def IsNthWeekDay(self, current_time, n, weekday):
+    def IsNthWeekDay(self, current_time, n, target_weekday_index):
         try:
             import calendar
-            # Note that weekday = 0 for monday, 6 for sunday
-            daysInMonth = calendar.monthrange(current_time.year, current_time.month)[1]
+            # target_weekday_index: 0 for Monday, 6 for Sunday (matches datetime.weekday())
+            days_in_month = calendar.monthrange(current_time.year, current_time.month)[1]
+            
+            occurrence_count = 0
+            for day_num in range(1, days_in_month + 1):
+                date_in_month = datetime.date(current_time.year, current_time.month, day_num)
+                if date_in_month.weekday() == target_weekday_index:
+                    occurrence_count += 1
+                    if occurrence_count == n and current_time.day == day_num:
+                        return True
+            return False
+        except Exception as e_nth_day: # Catch any unexpected error
+            self.LogErrorLine(f"IsNthWeekDay: Unexpected error: {e_nth_day}")
+            return False
 
-            count = 0
-            for day in range(daysInMonth):
-                today = datetime.date(current_time.year, current_time.month, day+1)
-                today_weekday = today.weekday()
-                if today_weekday == weekday:
-                    count += 1
-                    if n == count:
-                        if current_time.day == (day+1):
-                            return True 
-        except Exception as e1:
-            self.LogErrorLine("Error in IsNthWeekDay: " + str(e1))
-
-        return False
     # ---------- GenExercise::GetGeneratorTime----------------------------------
     def GetGeneratorTime(self):
         try:
             GenTimeStr = ""
             data = self.SendCommand("generator: status_json")
-            Status = {}
+            Status = {} # Ensure Status is defined for the error case below
+            data = self.SendCommand("generator: status_json")
+            if not data:
+                self.LogError("GetGeneratorTime: No data received from status_json command.")
+                return None # Indicate failure to get time
+
             Status = json.loads(data)
-            TimeDict = self.FindDictValueInListByKey("Time", Status["Status"])
-            if TimeDict != None:
-                TimeDictStr = self.FindDictValueInListByKey("Generator Time", TimeDict)
-                if TimeDictStr != None and len(TimeDictStr):
-                    GenTimeStr = TimeDictStr
-                    # Format is "Wednesday March 6, 2019 13:10" or " "Friday May 3, 2019 11:11"
-                    GenTime = datetime.datetime.strptime(
-                        GenTimeStr, "%A %B %d, %Y %H:%M"
-                    )
+            # Use .get() for safer dictionary access
+            time_list_of_dicts = Status.get("Status", {}).get("Time")
+            if time_list_of_dicts:
+                # Assuming FindDictValueInListByKey is robust or handles its own errors
+                gen_time_str = self.FindDictValueInListByKey("Generator Time", time_list_of_dicts)
+                if gen_time_str and isinstance(gen_time_str, str) and gen_time_str.strip():
+                    try:
+                        return datetime.datetime.strptime(gen_time_str, "%A %B %d, %Y %H:%M")
+                    except ValueError as ve:
+                        self.LogErrorLine(f"GetGeneratorTime: Error parsing generator time string '{gen_time_str}': {ve}")
+                        return None # Parsing failed
                 else:
-                    self.LogError(
-                        "Error getting generator time! Genmon may be starting up."
-                    )
-                    GenTime = datetime.datetime.now()
+                    self.log.warning("GetGeneratorTime: 'Generator Time' not found or empty in status. Genmon might be starting.")
             else:
-                self.LogError("Error getting generator time (2)!")
-                GenTime = datetime.datetime.now()
-            return GenTime
-        except Exception as e1:
-            self.LogErrorLine(
-                "Error in GetGeneratorTime: " + str(e1) + ": " + GenTimeStr
-            )
-            return datetime.datetime.now()
+                self.log.warning("GetGeneratorTime: 'Time' section not found in status. Genmon might be starting.")
+            return None # Return None if time cannot be determined
+        except json.JSONDecodeError as e_json_time:
+            self.LogErrorLine(f"GetGeneratorTime: Error decoding JSON from status_json: {e_json_time}. Data: '{data[:100]}...'")
+            return None
+        except KeyError as ke_time:
+            self.LogErrorLine(f"GetGeneratorTime: KeyError accessing time data in status: {ke_time}")
+            return None
+        except Exception as e_get_time_generic:
+            self.LogErrorLine(f"GetGeneratorTime: Unexpected error: {e_get_time_generic}")
+            return None # Default to None on any error
 
     # ---------- GenExercise::ExerciseThread------------------------------------
     def ExerciseThread(self):
-
-        time.sleep(1)
-        while True:
+        self.log.info("ExerciseThread started.")
+        time.sleep(1) # Initial delay
+        while not self.Exiting: # Assuming self.Exiting is set by Close() or signal handler
             try:
                 if not self.ExerciseActive:
-                    if self.TimeForExercise():
-                        self.StartExercise()
-                if self.WaitForExit("ExerciseThread", float(self.PollTime)):
-                    return
-            except Exception as e1:
-                self.LogErrorLine("Error in ExerciseThread: " + str(e1))
-                if self.WaitForExit("ExerciseThread", float(self.PollTime)):
-                    return
-    # ---------- GenExercise::ExerciseThread------------------------------------
+                    if self.TimeForExercise(): # This method now handles its exceptions
+                        self.log.info("ExerciseThread: Time for scheduled exercise. Starting exercise.")
+                        self.StartExercise() # This method also handles its exceptions
+                
+                # Use the WaitForExit method from MyThread if available, otherwise simple sleep
+                if hasattr(self, 'WaitForExit') and callable(self.WaitForExit):
+                    if self.WaitForExit("ExerciseThread", float(self.PollTime)):
+                        break # Exit signal received
+                else: # Fallback sleep
+                    for _ in range(int(self.PollTime / 0.1)): # Break sleep into smaller chunks
+                        if self.Exiting: break
+                        time.sleep(0.1)
+                    if self.Exiting: break
+
+            except Exception as e_thread_loop: # Catch any unexpected error in the loop
+                self.LogErrorLine(f"ExerciseThread: Unexpected error in main loop: {e_thread_loop}")
+                # Consider a longer sleep or backoff after an unexpected error
+                time.sleep(float(self.PollTime) * 5) # Wait longer after an error
+        self.log.info("ExerciseThread: Exiting.")
+
+    # ---------- GenExercise::PostExerciseThread------------------------------------
     #  Start exercise cycle after an exercise has completed.
     def PostExerciseThread(self):
-
+        self.log.info("PostExerciseThread started.")
         time.sleep(1)
         
-        if not self.ExerciseFrequency.lower() in ["post-controller"]:
-            self.LogDebug("Error: PostExerciseThread entered without proper initilization. Exiting thread.")
+        if self.ExerciseFrequency.lower() != "post-controller":
+            self.log.error("PostExerciseThread: Invalid configuration - thread started without 'post-controller' frequency. Exiting thread.")
             return
-        while True:
+
+        while not self.Exiting:
             try:
-                # get base status, is it exercise, ignore if we started the cycle
                 if not self.ExerciseActive:
                     status = self.SendCommand("generator: getbase")
-                    if status.lower() in ["exercising"]:
-                        # yes, set flag, wait for stop
-                        self.LogDebug("Controller Exercise detected, waiting for stop.")
+                    if status is None: # SendCommand might return None or empty on error
+                        self.log.warning("PostExerciseThread: Failed to get generator status. Retrying.")
+                        time.sleep(self.PollTime) # Wait before retrying
+                        continue
+
+                    if status.lower() == "exercising":
+                        if not self.ControllerExercise: # Log only on first detection
+                            self.log.info("PostExerciseThread: Controller-initiated exercise detected. Waiting for it to complete.")
                         self.ControllerExercise = True
-                    elif self.ReadyToExercise() and self.ControllerExercise == True:
-                        # start our exercise cycle
-                        self.ControllerExercise = False
-                        self.LogDebug("Controller Exercise stopped, start our exercise cycle.")
-                        self.StartExercise()
-                    else:
-                        self.LogDebug("Status: " + str(status))
+                    elif self.ControllerExercise and self.ReadyToExercise(): # Was exercising, now ready
+                        self.log.info("PostExerciseThread: Controller exercise completed. Starting post-controller enhanced exercise.")
+                        self.ControllerExercise = False # Reset flag
+                        self.StartExercise() 
+                    # else: # Not exercising and not previously in controller exercise, or not ready
+                        # if self.debug: self.LogDebug(f"PostExerciseThread: Current status '{status}', ControllerExercise flag: {self.ControllerExercise}")
+                # else: # self.ExerciseActive is True (our exercise is running)
+                #    if self.ControllerExercise: # If our exercise started while controller flag was set
+                #        self.log.info("PostExerciseThread: Enhanced exercise started. Resetting ControllerExercise flag.")
+                #        self.ControllerExercise = False
+                
+                if hasattr(self, 'WaitForExit') and callable(self.WaitForExit):
+                    if self.WaitForExit("PostExerciseThread", float(self.PollTime)):
+                        break
                 else:
-                    if self.ControllerExercise:
-                        self.ControllerExercise = False
-                        self.LogDebug("Reset controller exercise ")
-                if self.WaitForExit("PostExerciseThread", float(self.PollTime)):
-                    return
-            except Exception as e1:
-                self.LogErrorLine("Error in PostExerciseThread: " + str(e1))
-                if self.WaitForExit("PostExerciseThread", float(self.PollTime)):
-                    return
+                    for _ in range(int(self.PollTime / 0.1)):
+                        if self.Exiting: break
+                        time.sleep(0.1)
+                    if self.Exiting: break
+                        
+            except Exception as e_post_thread_loop:
+                self.LogErrorLine(f"PostExerciseThread: Unexpected error in main loop: {e_post_thread_loop}")
+                time.sleep(float(self.PollTime) * 5)
+        self.log.info("PostExerciseThread: Exiting.")
+
 
     # ----------GenExercise::SignalClose----------------------------------------
     def SignalClose(self, signum, frame):
@@ -581,25 +595,58 @@ class GenExercise(MySupport):
 # -------------------------------------------------------------------------------
 if __name__ == "__main__":
 
-    (
-        console,
-        ConfigFilePath,
-        address,
-        port,
-        loglocation,
-        log,
-    ) = MySupport.SetupAddOnProgram("genexercise")
+    log = None # Initialize for use in signal_handler if setup fails
+    console = None
+    GenExerciseInstance = None # Initialize for finally block
 
-    GenExerciseInstance = GenExercise(
-        log=log,
-        loglocation=loglocation,
-        ConfigFilePath=ConfigFilePath,
-        host=address,
-        port=port,
-        console=console,
-    )
+    try:
+        (
+            console,
+            ConfigFilePath,
+            address,
+            port,
+            loglocation,
+            log, # Properly configured logger
+        ) = MySupport.SetupAddOnProgram("genexercise")
 
-    while True:
-        time.sleep(0.5)
+        # Now that log is configured, set signal handlers
+        signal.signal(signal.SIGINT, signal_handler) # For Ctrl+C
+        signal.signal(signal.SIGTERM, signal_handler) # For service stop
 
-    sys.exit(1)
+        GenExerciseInstance = GenExercise(
+            log=log,
+            loglocation=loglocation,
+            ConfigFilePath=ConfigFilePath,
+            host=address,
+            port=port,
+            console=console,
+        )
+        # GenExercise __init__ now handles its critical errors and sys.exit if needed
+
+        log.info("genexercise.py main loop started. Monitoring for exercise times or signals.")
+        while not GenExerciseInstance.Exiting: # Rely on a flag in the instance
+            time.sleep(0.5) # Keep main thread alive, actual work done in threads
+        
+        log.info("genexercise.py main loop exiting gracefully.")
+        sys.exit(0) # Normal exit after loop termination
+
+    except KeyboardInterrupt:
+        if log: log.info("__main__: KeyboardInterrupt received. Initiating shutdown via signal_handler.")
+        else: print("__main__: KeyboardInterrupt received. Shutting down.", file=sys.stderr)
+        signal_handler(signal.SIGINT, None) # Manually invoke if loop was bypassed
+    except SystemExit: # Allow sys.exit to pass through
+        if log: log.info("__main__: SystemExit called.")
+        else: print("__main__: SystemExit called.", file=sys.stderr)
+        raise # Re-raise to ensure exit
+    except Exception as e_main_fatal: # Catch-all for any unexpected error during main setup or minimal loop
+        err_msg = f"__main__: An unhandled critical error occurred: {e_main_fatal}"
+        if log: log.error(err_msg, exc_info=True)
+        else: sys.stderr.write(err_msg + "\n")
+        if console: console.error(err_msg)
+        sys.exit(1)
+    finally:
+        if GenExerciseInstance is not None and hasattr(GenExerciseInstance, 'Close'):
+            if log: log.info("__main__: Ensuring GenExerciseInstance is closed in finally block.")
+            GenExerciseInstance.Close()
+        if log: log.info("__main__: Application terminated.")
+        else: print("__main__: Application terminated.", file=sys.stderr)
