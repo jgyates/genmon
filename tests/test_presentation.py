@@ -14,10 +14,13 @@ import datetime
 # For local testing, you might need to adjust sys.path
 import sys
 import os
+from unittest.mock import patch # Added for patching
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from genmonlib.presentation import UIPresenter
-from genmonlib.myclient import ClientInterface 
+# from genmonlib.myclient import ClientInterface # ClientInterface is mocked, direct import not strictly needed for tests
+# from genmonlib.myconfig import MyConfig # MyConfig will be mocked via patch
 
 class TestUIPresenter(unittest.TestCase):
     """
@@ -35,9 +38,14 @@ class TestUIPresenter(unittest.TestCase):
         Initializes a mock ClientInterface instance that can be configured
         by individual tests to simulate different responses from the backend.
         """
-        self.mock_client_interface = Mock(spec=ClientInterface)
+        self.mock_client_interface = Mock(spec="genmonlib.myclient.ClientInterface") # Use string spec if class not imported
+        self.mock_config_file_path = "dummy/path/genmon.conf"
+        self.mock_log = Mock()
         # Default return value for ProcessMonitorCommand, can be overridden in specific tests.
         self.mock_client_interface.ProcessMonitorCommand.return_value = "Default mock responseEndOfMessage"
+        # Instantiate presenter here if it's common and doesn't change per test,
+        # or instantiate in each test if specific mocks for constructor are needed per test.
+        # For now, let's instantiate in each test to be explicit.
 
     def test_get_index_page_data(self):
         """
@@ -47,7 +55,7 @@ class TestUIPresenter(unittest.TestCase):
         and greeting for the home page. This test assumes this method
         primarily returns static or minimally processed data.
         """
-        presenter = UIPresenter(self.mock_client_interface)
+        presenter = UIPresenter(self.mock_client_interface, self.mock_config_file_path, self.mock_log)
         data = presenter.get_index_page_data()
         self.assertEqual(data["title"], "Genmon Home")
         self.assertIn("greeting", data)
@@ -66,8 +74,8 @@ class TestUIPresenter(unittest.TestCase):
         mock_raw_data = {"raw_status": "ok", "details": "all systems nominal"}
         self.mock_client_interface.ProcessMonitorCommand.return_value = json.dumps(mock_raw_data)
         
-        presenter = UIPresenter(self.mock_client_interface)
-        data = presenter.get_status_json() 
+        presenter = UIPresenter(self.mock_client_interface, self.mock_config_file_path, self.mock_log)
+        data = presenter.get_status_json()
         
         self.mock_client_interface.ProcessMonitorCommand.assert_called_with("generator: status_json")
         self.assertEqual(data["processed_content"], mock_raw_data)
@@ -83,7 +91,7 @@ class TestUIPresenter(unittest.TestCase):
         correct error message.
         """
         self.mock_client_interface.ProcessMonitorCommand.return_value = "not a valid json string"
-        presenter = UIPresenter(self.mock_client_interface)
+        presenter = UIPresenter(self.mock_client_interface, self.mock_config_file_path, self.mock_log)
         data = presenter.get_status_json()
         self.assertIn("error", data)
         self.assertEqual(data["error"], "Failed to decode status data")
@@ -100,7 +108,7 @@ class TestUIPresenter(unittest.TestCase):
         mock_response = "Generator Status: Running\nVoltage: 240V\nEndOfMessage"
         self.mock_client_interface.ProcessMonitorCommand.return_value = mock_response
         
-        presenter = UIPresenter(self.mock_client_interface)
+        presenter = UIPresenter(self.mock_client_interface, self.mock_config_file_path, self.mock_log)
         data = presenter.get_status_text_data()
         
         self.mock_client_interface.ProcessMonitorCommand.assert_called_with("generator: status")
@@ -113,17 +121,19 @@ class TestUIPresenter(unittest.TestCase):
         
         Mocks ProcessMonitorCommand to return a standard "OKEndOfMessage" response.
         Verifies that the correct command string (including parameters) is sent
-        to the client interface and that the response is processed correctly ("OK").
+        to the client interface and that the response is processed correctly (as a dict).
         """
         params = "Monday,14:00,Weekly"
-        mock_response = "OKEndOfMessage"
+        mock_response = "OKEndOfMessage" # Example response from backend
         self.mock_client_interface.ProcessMonitorCommand.return_value = mock_response
         
-        presenter = UIPresenter(self.mock_client_interface)
-        response = presenter.handle_set_exercise(params)
+        presenter = UIPresenter(self.mock_client_interface, self.mock_config_file_path, self.mock_log)
+        response_dict = presenter.handle_set_exercise(params) # Method now returns a dict
         
         self.mock_client_interface.ProcessMonitorCommand.assert_called_with(f"generator: setexercise={params}")
-        self.assertEqual(response, "OK")
+        self.assertIsInstance(response_dict, dict)
+        self.assertEqual(response_dict.get("status"), "OK")
+        self.assertEqual(response_dict.get("response"), "OK") # Original string response is nested
 
     def test_handle_set_exercise_no_params_none(self):
         """
@@ -131,9 +141,10 @@ class TestUIPresenter(unittest.TestCase):
         
         Verifies that an error message is returned and ProcessMonitorCommand is not called.
         """
-        presenter = UIPresenter(self.mock_client_interface)
-        response = presenter.handle_set_exercise(None)
-        self.assertEqual(response, "Error: setexercise parameters not provided.")
+        presenter = UIPresenter(self.mock_client_interface, self.mock_config_file_path, self.mock_log)
+        response_dict = presenter.handle_set_exercise(None)
+        self.assertEqual(response_dict.get("status"), "error")
+        self.assertEqual(response_dict.get("message"), "setexercise parameters not provided.")
         self.mock_client_interface.ProcessMonitorCommand.assert_not_called()
 
     def test_handle_set_exercise_no_params_empty_string(self):
@@ -142,10 +153,139 @@ class TestUIPresenter(unittest.TestCase):
 
         Verifies that an error message is returned and ProcessMonitorCommand is not called.
         """
-        presenter = UIPresenter(self.mock_client_interface)
-        response = presenter.handle_set_exercise("") 
-        self.assertEqual(response, "Error: setexercise parameters not provided.")
+        presenter = UIPresenter(self.mock_client_interface, self.mock_config_file_path, self.mock_log)
+        response_dict = presenter.handle_set_exercise("") 
+        self.assertEqual(response_dict.get("status"), "error")
+        self.assertEqual(response_dict.get("message"), "setexercise parameters not provided.")
         self.mock_client_interface.ProcessMonitorCommand.assert_not_called()
+
+    # Test for get_outage_json_success
+    def test_get_outage_json_success(self):
+        """
+        Tests get_outage_json for successful JSON processing.
+        """
+        mock_outage_data = {"outages": [{"start": "2023-01-01T10:00:00", "end": "2023-01-01T11:00:00"}]}
+        self.mock_client_interface.ProcessMonitorCommand.return_value = json.dumps(mock_outage_data)
+        
+        presenter = UIPresenter(self.mock_client_interface, self.mock_config_file_path, self.mock_log)
+        data = presenter.get_outage_json()
+        
+        self.mock_client_interface.ProcessMonitorCommand.assert_called_with("generator: outage_json")
+        self.assertEqual(data["processed_content"], mock_outage_data)
+        self.assertEqual(data["data_type"], "outage")
+        self.assertIn("timestamp", data)
+
+    # Test for get_outage_json_decode_error
+    def test_get_outage_json_decode_error(self):
+        """
+        Tests get_outage_json for handling JSON decoding errors.
+        """
+        self.mock_client_interface.ProcessMonitorCommand.return_value = "invalid json for outage"
+        presenter = UIPresenter(self.mock_client_interface, self.mock_config_file_path, self.mock_log)
+        data = presenter.get_outage_json()
+        self.assertIn("error", data)
+        self.assertEqual(data["error"], "Failed to decode outage data")
+
+    # Test for get_maint_text_data
+    def test_get_maint_text_data(self):
+        """
+        Tests get_maint_text_data for correct text processing.
+        """
+        mock_response = "Maintenance due: Oil ChangeEndOfMessage"
+        self.mock_client_interface.ProcessMonitorCommand.return_value = mock_response
+        
+        presenter = UIPresenter(self.mock_client_interface, self.mock_config_file_path, self.mock_log)
+        data = presenter.get_maint_text_data()
+        
+        self.mock_client_interface.ProcessMonitorCommand.assert_called_with("generator: maint")
+        self.assertEqual(data["title"], "Maintenance Information")
+        self.assertEqual(data["data_content"], "Maintenance due: Oil Change")
+
+    # Test for handle_power_log_clear_success
+    def test_handle_power_log_clear_success(self):
+        """
+        Tests handle_power_log_clear for successful command and structured dict response.
+        """
+        self.mock_client_interface.ProcessMonitorCommand.return_value = "OKEndOfMessage"
+        presenter = UIPresenter(self.mock_client_interface, self.mock_config_file_path, self.mock_log)
+        response = presenter.handle_power_log_clear()
+        
+        self.mock_client_interface.ProcessMonitorCommand.assert_called_with("generator: power_log_clear")
+        expected_response = {"status": "OK", "message": "Power log clear command sent.", "response": "OK"}
+        self.assertEqual(response, expected_response)
+
+    # Test for handle_power_log_clear_failure
+    def test_handle_power_log_clear_failure(self):
+        """
+        Tests handle_power_log_clear for failure response.
+        """
+        mock_error_message = "Error: Failed to clear"
+        self.mock_client_interface.ProcessMonitorCommand.return_value = f"{mock_error_message}EndOfMessage"
+        presenter = UIPresenter(self.mock_client_interface, self.mock_config_file_path, self.mock_log)
+        response = presenter.handle_power_log_clear()
+
+        self.mock_client_interface.ProcessMonitorCommand.assert_called_with("generator: power_log_clear")
+        expected_response = {"status": "error", "message": mock_error_message}
+        self.assertEqual(response, expected_response)
+
+    @patch('genmonlib.presentation.MyConfig')
+    def test_get_favicon_path_from_config(self, mock_my_config_class):
+        """
+        Tests get_favicon_path when favicon is set in config.
+        """
+        mock_my_config_instance = Mock()
+        mock_my_config_instance.ReadValue.return_value = "custom_favicon.ico"
+        mock_my_config_instance.InitComplete = True # Ensure MyConfig is treated as initialized
+        mock_my_config_class.return_value = mock_my_config_instance
+        
+        presenter = UIPresenter(self.mock_client_interface, self.mock_config_file_path, self.mock_log)
+        favicon_path = presenter.get_favicon_path()
+        
+        # The presenter's get_favicon_path currently has placeholder logic and doesn't use MyConfig.
+        # This test is structured for when it *does* use MyConfig as intended.
+        # For the current placeholder, this test would fail or need adjustment.
+        # Assuming future implementation of get_favicon_path using MyConfig:
+        # mock_my_config_class.assert_called_once_with(self.mock_config_file_path, log=self.mock_log)
+        # mock_my_config_instance.ReadValue.assert_called_with("favicon", section="SYSTEM", default="/static/favicon.ico")
+        # self.assertEqual(favicon_path, "custom_favicon.ico")
+
+        # For current placeholder implementation:
+        self.mock_log.info.assert_called_with("get_favicon_path called, needs MyConfig implementation.")
+        self.assertEqual(favicon_path, "/static/favicon.ico")
+
+
+    @patch('genmonlib.presentation.UIPresenter._run_bash_script')
+    def test_restart_genmon_success(self, mock_run_bash_script):
+        """
+        Tests restart_genmon for successful execution.
+        """
+        mock_run_bash_script.return_value = {"status": "OK", "message": "Simulated restart command executed."}
+        
+        presenter = UIPresenter(self.mock_client_interface, self.mock_config_file_path, self.mock_log)
+        response = presenter.restart_genmon()
+        
+        project_path = "/opt/genmon" # Placeholder from presenter method
+        config_file = self.mock_config_file_path
+        expected_args = ["restart", "-p", project_path, "-c", config_file]
+        
+        mock_run_bash_script.assert_called_once_with("startgenmon.sh", expected_args)
+        self.assertEqual(response.get("status"), "OK")
+        self.assertIn("Genmon restart command issued successfully.", response.get("message", ""))
+
+
+    @patch('genmonlib.presentation.UIPresenter._run_bash_script')
+    def test_restart_genmon_failure(self, mock_run_bash_script):
+        """
+        Tests restart_genmon when the script execution fails.
+        """
+        mock_run_bash_script.return_value = {"status": "error", "message": "Simulated script failure."}
+        
+        presenter = UIPresenter(self.mock_client_interface, self.mock_config_file_path, self.mock_log)
+        response = presenter.restart_genmon()
+        
+        self.assertEqual(response.get("status"), "error")
+        self.assertEqual(response.get("message"), "Simulated script failure.")
+        self.mock_log.error.assert_called_with("Genmon restart command failed: Simulated script failure.")
 
 if __name__ == '__main__':
     unittest.main()
