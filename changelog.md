@@ -13,6 +13,9 @@ All notable changes to this project will be documented in this file.
     - Updated `command_template.html` to be more dynamic, accepting `title`, `data_content`, and `favicon_path` for consistent display of command outputs and messages.
     - Corrected static asset paths (CSS, JavaScript, favicons) in all refactored HTML templates to use Flask's `url_for` function, ensuring proper resource loading.
     - Added a new suite of unit tests for the `UIPresenter` class in `tests/test_presentation.py`, covering various data fetching and command handling methods.
+    - Centralized bash script execution by moving logic from a global function in `genserv.py` to the `UIPresenter._run_bash_script` method. This new method uses `subprocess.run` and includes improved error handling and path resolution for scripts.
+    - Removed the obsolete global `RunBashScript` function and its associated helper functions (`Reboot`, `Shutdown`, `Restart`, `Update`, `GetLogs`, `Backup`) from `genserv.py` as these functionalities are now handled via `UIPresenter`.
+    - Added specific unit tests for the `UIPresenter._run_bash_script` method to `tests/test_presentation.py`, ensuring robust testing of script execution scenarios (success, failure, sudo commands, output handling, and exceptions).
     - Improved comments and docstrings in `genmonlib/presentation.py` and `tests/test_presentation.py` to enhance code clarity and maintainability. Conceptual review and update of comments in `genserv.py` was also performed to align with the refactoring.
 
 ## V1.19.06 -2025-05-21

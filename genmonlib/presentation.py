@@ -9,7 +9,8 @@ request handling and routing.
 """
 import json
 import datetime
-import os # For addon settings, even if placeholder
+import os
+import subprocess # For _run_bash_script
 from .myconfig import MyConfig
 # from .mymail import MyMail # Placeholder for when MyMail is made available
 
@@ -131,32 +132,49 @@ class UIPresenter:
         # except Exception as e:
         #     self.log.error(f"Error executing '{full_command}': {e}")
         #     return {"status": "error", "message": str(e)}
-        # This is a simplified placeholder:
-        if command == "sudo reboot now" or command == "sudo shutdown -h now":
-             # these commands won't return if successful
-            try:
-                # In a real scenario, you might not get a return from these.
-                # For testing, we'll simulate success.
-                self.log.info(f"Simulating execution of {command}")
-                # os.system(full_command + " &") # Example, not recommended for production
-                return {"status": "OK", "message": f"{command.split(' ')[1].capitalize()} initiated."}
-            except Exception as e:
-                self.log.error(f"Error with {command}: {e}")
-                return {"status": "error", "message": f"Failed to initiate {command.split(' ')[1]}."}
+        if args_list is None:
+            args_list = []
 
-        # For other commands, simulate success or a specific output for testing
-        if command == "genmonmaint.sh" and "-b" in args_list:
-            backup_path = "/tmp/backup_genmon_config_placeholder.zip"
-            self.log.info(f"Simulating backup, returning path: {backup_path}")
-            return {"status": "OK", "message": "Configuration backup successful.", "path": backup_path}
-        if command == "genmonmaint.sh" and "-l" in args_list:
-            log_archive_path = "/tmp/genmon_logs_placeholder.zip"
-            self.log.info(f"Simulating log archive, returning path: {log_archive_path}")
-            return {"status": "OK", "message": "Log archive successful.", "path": log_archive_path}
+        script_executable_path = ""
 
-        self.log.info(f"Simulating generic command: {full_command}")
-        return {"status": "OK", "message": f"Command '{full_command}' executed successfully (simulated)."}
+        if command.startswith("sudo"):
+            full_cmd_list = command.split() + args_list
+        else:
+            # Determine project root relative to presentation.py
+            # presentation.py is in genmonlib/, scripts are in project root
+            project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+            script_executable_path = os.path.join(project_root, command)
+            full_cmd_list = ['/bin/bash', script_executable_path] + args_list
+        
+        self.log.info(f"Executing bash command: {' '.join(full_cmd_list)}")
 
+        try:
+            result = subprocess.run(full_cmd_list, capture_output=True, text=True, check=False)
+
+            if result.returncode == 0:
+                message = result.stdout.strip() if result.stdout.strip() else "Command executed successfully."
+                # If backup or archive, the path is expected in stdout
+                # The caller will extract it if needed.
+                # For backup_configuration and get_log_archive, they currently also add a 'path' key
+                # based on this stdout. This can be refined if scripts don't output path directly.
+                return_dict = {"status": "OK", "message": message, "stdout": result.stdout.strip(), "ReturnCode": 0}
+                # Specific handling for backup/archive path for compatibility with existing calling code structure
+                if command == "genmonmaint.sh" and ("-b" in args_list or "-l" in args_list):
+                    # Assuming the script prints only the path to stdout
+                    return_dict["path"] = result.stdout.strip() 
+                return return_dict
+            else:
+                message = result.stderr.strip() if result.stderr.strip() else f"Command failed with return code {result.returncode}."
+                self.log.error(f"Command failed: {' '.join(full_cmd_list)}. Return Code: {result.returncode}. Stderr: {result.stderr.strip()}")
+                return {"status": "error", "message": message, "stderr": result.stderr.strip(), "ReturnCode": result.returncode}
+
+        except FileNotFoundError as e:
+            # This might occur if 'sudo' is not found, or if the script path was wrong despite resolution
+            self.log.error(f"Command not found for: {' '.join(full_cmd_list)}: {e}")
+            return {"status": "error", "message": f"Command not found: {command}. Details: {str(e)}", "ReturnCode": -1}
+        except Exception as e:
+            self.log.error(f"Exception during subprocess execution for {' '.join(full_cmd_list)}: {e}")
+            return {"status": "error", "message": str(e), "ReturnCode": -1}
 
     def update_software(self):
         """
@@ -167,11 +185,24 @@ class UIPresenter:
         self.log.info("Starting software update process.")
         # Path to genmonmaint.sh might need to be configurable or discovered
         update_command = "genmonmaint.sh"
-        # Example: genmonmaint.sh -u -n -p /path/to/project -s /path/to/startgenmon.sh
+        # Example: genmonmaint.sh -u -n -p /opt/genmon -c /etc/genmon/genmon.conf (restart is handled by script)
         # These paths need to be determined, possibly from config or environment
-        project_path = "/opt/genmon" # Placeholder
-        start_script_path = "/opt/genmon/startgenmon.sh" # Placeholder
-        args = ["-u", "-n", "-p", project_path, "-s", start_script_path]
+        # For now, assume genmonmaint.sh and startgenmon.sh are in project root and _run_bash_script handles path.
+        # The script itself uses relative paths or discovers them.
+        # UIPresenter shouldn't need to know exact project path if scripts are self-contained or use relative paths.
+        
+        # If genmonmaint.sh needs absolute paths for -p or -s, those would need to be passed.
+        # For now, let's assume the script can derive these or they are configured elsewhere (e.g. within the script).
+        # The original RunBashScript in genserv.py resolved the script path to be next to genserv.py.
+        # The new _run_bash_script resolves it to project root.
+        
+        # Simplified args if script is smart enough:
+        args = ["-u", "-n"] # -p and -s might be auto-detected by the script or unnecessary if it restarts itself.
+        # If the script *requires* project_path and start_script_path:
+        # project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        # start_script_path_abs = os.path.join(project_root, "startgenmon.sh")
+        # args = ["-u", "-n", "-p", project_root, "-s", start_script_path_abs]
+
 
         update_result = self._run_bash_script(update_command, args)
         if update_result.get("status") == "error":
@@ -195,10 +226,12 @@ class UIPresenter:
         self.log.info("Attempting to restart Genmon application.")
         # Path to startgenmon.sh might need to be configurable
         restart_command = "startgenmon.sh" # This might need full path
-        # Example: /opt/genmon/startgenmon.sh restart -p /opt/genmon -c /etc/genmon/genmon.conf
-        project_path = "/opt/genmon" # Placeholder
-        config_file = self.ConfigFilePath # Use stored config path
-        args = ["restart", "-p", project_path, "-c", config_file]
+        # Similar to update_software, args might be simplified if startgenmon.sh is smart.
+        # config_file is available as self.ConfigFilePath
+        # project_path might be needed if script doesn't auto-detect.
+        # project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        args = ["restart", "-c", self.ConfigFilePath] # Assuming -p (project_path) is auto-detected by script
+        # If not: args = ["restart", "-p", project_root, "-c", self.ConfigFilePath]
 
         result = self._run_bash_script(restart_command, args)
         if result.get("status") == "OK":
@@ -240,17 +273,25 @@ class UIPresenter:
         """
         self.log.info("Attempting to backup Genmon configuration.")
         backup_command = "genmonmaint.sh"
-        # Example: genmonmaint.sh -b -p /opt/genmon -c /etc/genmon/genmon.conf -d /path/to/backups
-        project_path = "/opt/genmon" # Placeholder
-        config_file = self.ConfigFilePath
-        backup_dir = "/opt/genmon/backups" # Placeholder, should be configurable
-        args = ["-b", "-p", project_path, "-c", config_file, "-d", backup_dir]
+        # Args for backup: genmonmaint.sh -b -c /path/to/genmon.conf
+        # The script should ideally place the backup in a known location or output the path.
+        # Assume script places backup in project_root/backups or similar, and outputs path.
+        # project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        # backup_dir_abs = os.path.join(project_root, "backups") # Example, script might use its own default
+        # args = ["-b", "-c", self.ConfigFilePath, "-d", backup_dir_abs]
+        args = ["-b", "-c", self.ConfigFilePath] # Simpler if script handles backup dir
 
         result = self._run_bash_script(backup_command, args)
-        if result.get("status") == "OK":
-            # The actual script genmonmaint.sh needs to output the path of the backup.
-            # For now, _run_bash_script placeholder simulates this.
+        
+        # The new _run_bash_script returns stdout in "message" or "stdout"
+        # and "path" if it's a backup/archive command and stdout contained a path.
+        if result.get("status") == "OK" and result.get("path"):
             self.log.info(f"Configuration backup successful. Path: {result.get('path')}")
+            # The 'path' key is now directly in the result from _run_bash_script
+        elif result.get("status") == "OK": # Script succeeded but no path in stdout (should not happen for -b)
+            self.log.warning(f"Configuration backup script ran, but no path was returned in stdout. Output: {result.get('stdout')}")
+            # Fallback or error if path is crucial and missing
+            return {"status": "error", "message": "Backup script ran but did not return a path."}
         else:
             self.log.error(f"Configuration backup failed: {result.get('message')}")
         return result
@@ -263,16 +304,21 @@ class UIPresenter:
         """
         self.log.info("Attempting to create log archive.")
         archive_command = "genmonmaint.sh"
-        # Example: genmonmaint.sh -l -p /opt/genmon -d /path/to/archives
-        project_path = "/opt/genmon" # Placeholder
-        archive_dir = "/tmp" # Placeholder, should be configurable or use a temp dir
-        args = ["-l", "-p", project_path, "-d", archive_dir]
+        # Args for log archive: genmonmaint.sh -l
+        # Script should output path of the archive.
+        # log_location might be read from config if needed by script, or script has default.
+        # project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        # archive_dir_abs = os.path.join(project_root, "archives") # Example
+        # args = ["-l", "-d", archive_dir_abs] # If script needs output dir
+        args = ["-l"] # Simpler if script handles archive dir and outputs path
 
         result = self._run_bash_script(archive_command, args)
-        if result.get("status") == "OK":
-            # genmonmaint.sh needs to output the path of the archive.
-            # _run_bash_script placeholder simulates this.
+
+        if result.get("status") == "OK" and result.get("path"):
             self.log.info(f"Log archive creation successful. Path: {result.get('path')}")
+        elif result.get("status") == "OK":
+             self.log.warning(f"Log archive script ran, but no path was returned in stdout. Output: {result.get('stdout')}")
+             return {"status": "error", "message": "Log archive script ran but did not return a path."}
         else:
             self.log.error(f"Log archive creation failed: {result.get('message')}")
         return result
