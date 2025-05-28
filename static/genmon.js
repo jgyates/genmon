@@ -3135,17 +3135,29 @@ function updateSoftware(){
        type: "GET",
        url: url,
        dataType: "json",
-       timeout: 0,
+       timeout: 20000, // Increased timeout for potentially long operation
        headers: {
           "Cache-Control": "no-cache"
         },
-       success: function(results){
-             /// THIS IS NOT AN EXPECTED RESPONSE!!! genserv.py is expected to restart on it's own before returning a valid value;
-             vex.closeAll();
-             GenmonAlert("An unexepected outcome occured. Genmon might not have been updated. Please verify manually or try again!");
+       success: function(response_data){ // Changed from results
+             // Assuming response_data is like {"status": "OK", "message": "..."}
+             if (response_data && response_data.status == "OK") {
+                var DisplayStr1 = 'Software update process initiated. Restarting...';
+                var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
+                $('.vex-dialog-message').html(DisplayStr1);
+                $('.vex-dialog-buttons').html(DisplayStr2);
+                $('.progress-bar-fill').queue(function () {
+                     $(this).css('width', '100%')
+                });
+                setTimeout(function(){ vex.closeAll(); window.location.href = window.location.pathname+"?page=about&reload=true"; }, 10000);
+             } else {
+                vex.closeAll();
+                GenmonAlert("Software update command failed: " + (response_data.message || "Unknown error."));
+             }
        },
        error: function(XMLHttpRequest, textStatus, errorThrown){
-             var DisplayStr1 = 'Restarting...';
+             // This error function is for network/jQuery internal errors, not application errors from a successful HTTP response
+             var DisplayStr1 = 'Error initiating update or restarting...';
              var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
              $('.vex-dialog-message').html(DisplayStr1);
              $('.vex-dialog-buttons').html(DisplayStr2);
@@ -3972,7 +3984,13 @@ function SetFavIcon()
     url = baseurl.concat("getfavicon");
     $.ajax({dataType: "json", url: url, timeout: 4000, error: processAjaxError, success: function(result){
         processAjaxSuccess();
-        changeFavicon(result);
+        if (result && result.favicon_path) {
+            changeFavicon(result.favicon_path);
+        } else {
+            console.log("Error: Favicon path not found in response", result);
+            // Optionally set a default favicon here if result is not as expected
+            // changeFavicon("favicon.ico"); 
+        }
     }});
     return
 }
