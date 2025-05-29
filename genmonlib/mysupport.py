@@ -13,6 +13,7 @@ import collections
 import getopt
 import os
 import socket
+import subprocess
 import sys
 import threading
 import time
@@ -694,3 +695,56 @@ class MySupport(MyCommon):
             return True
         else:
             return False
+
+    def run_bash_script(self, command, args_list=None, log=None):
+        """
+        Runs a bash script or system command.
+        Args:
+            command (str): The command or script name to execute.
+                           If not starting with 'sudo', it's assumed to be a script
+                           in the project root.
+            args_list (list, optional): A list of arguments for the command. Defaults to None.
+            log (logging.Logger, optional): Logger instance. If None, uses self.log.
+        Returns:
+            dict: A dictionary containing status, message, stdout/stderr, and ReturnCode.
+        """
+        if args_list is None:
+            args_list = []
+
+        # Use provided logger or instance logger
+        current_log = log if log else self.log
+
+        script_executable_path = ""
+
+        if command.startswith("sudo"):
+            full_cmd_list = command.split() + args_list
+        else:
+            # Determine project root relative to mysupport.py
+            # mysupport.py is in genmonlib/, scripts are in project root
+            project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+            script_executable_path = os.path.join(project_root, command)
+            full_cmd_list = ['/bin/bash', script_executable_path] + args_list
+        
+        current_log.info(f"Executing bash command: {' '.join(full_cmd_list)}")
+
+        try:
+            result = subprocess.run(full_cmd_list, capture_output=True, text=True, check=False)
+
+            if result.returncode == 0:
+                message = result.stdout.strip() if result.stdout.strip() else "Command executed successfully."
+                return_dict = {"status": "OK", "message": message, "stdout": result.stdout.strip(), "ReturnCode": 0}
+                # Specific handling for backup/archive path for compatibility
+                if command == "genmonmaint.sh" and ("-b" in args_list or "-l" in args_list):
+                    return_dict["path"] = result.stdout.strip()
+                return return_dict
+            else:
+                message = result.stderr.strip() if result.stderr.strip() else f"Command failed with return code {result.returncode}."
+                current_log.error(f"Command failed: {' '.join(full_cmd_list)}. Return Code: {result.returncode}. Stderr: {result.stderr.strip()}")
+                return {"status": "error", "message": message, "stderr": result.stderr.strip(), "ReturnCode": result.returncode}
+
+        except FileNotFoundError as e:
+            current_log.error(f"Command not found for: {' '.join(full_cmd_list)}: {e}")
+            return {"status": "error", "message": f"Command not found: {command}. Details: {str(e)}", "ReturnCode": -1}
+        except Exception as e:
+            current_log.error(f"Exception during subprocess execution for {' '.join(full_cmd_list)}: {e}")
+            return {"status": "error", "message": str(e), "ReturnCode": -1}

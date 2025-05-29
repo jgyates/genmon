@@ -10,9 +10,9 @@ request handling and routing.
 import json
 import datetime
 import os
-import subprocess # For _run_bash_script
 from .myconfig import MyConfig
-# from .mymail import MyMail # Placeholder for when MyMail is made available
+from .mysupport import MySupport
+# from .mymail import MyMail # TODO: MyMail integration is pending. The send_test_email method currently simulates email sending.
 
 class UIPresenter:
     """
@@ -37,6 +37,7 @@ class UIPresenter:
         self.client_interface = client_interface
         self.ConfigFilePath = ConfigFilePath
         self.log = log
+        self.support = MySupport() # Initialize MySupport
 
     def get_base_status(self):
         """
@@ -84,97 +85,26 @@ class UIPresenter:
     def get_favicon_path(self):
         """
         Reads the favicon path from the configuration file.
-        Note: This method needs access to MyConfig or similar to read genmon.conf.
-              For now, it's a placeholder.
+        Uses MyConfig to read the "favicon" setting from the "SYSTEM" section.
         Returns:
-            str: The path to the favicon, or a default/error message.
+            str: The path to the favicon, or a default path if not set or on error.
         """
-        # This method will require MyConfig to be integrated.
-        # Placeholder implementation:
-        # try:
-        #     conf = MyConfig(self.ConfigFilePath, self.log)
-        #     favicon_path = conf.ReadSetting("favicon")
-        #     if favicon_path:
-        #         return favicon_path
-        #     return "/static/favicon.ico" # Default if not set
-        # except Exception as e:
-        #     self.log.error(f"Error reading favicon from config: {e}")
-        #     return "/static/favicon.ico" # Default on error
-        self.log.info("get_favicon_path called, needs MyConfig implementation.")
-        return "/static/favicon.ico" # Placeholder
-
-    # System Action Methods
-    # These methods will use a helper like RunBashScript from mysupport.
-    # For now, the call to RunBashScript is a placeholder.
-
-    def _run_bash_script(self, command, args_list=None):
-        """
-        Placeholder for a utility function to run shell commands.
-        This should ideally be in 'mysupport.py' and imported.
-        """
-        if args_list is None:
-            args_list = []
-        full_command = f"{command} {' '.join(args_list)}"
-        self.log.info(f"Executing system command: {full_command}")
-        # In a real implementation, this would use subprocess.run or similar
-        # from mysupport.py and capture output and return codes.
-        # Example:
-        # try:
-        #     # Assuming RunBashScript is in mysupport and imported
-        #     # import mysupport
-        #     # result = mysupport.RunBashScript(command, args_list, self.log)
-        #     # if result['ReturnCode'] == 0:
-        #     #     return {"status": "OK", "message": result.get('Stdout', 'Command executed.')}
-        #     # else:
-        #     #     return {"status": "error", "message": result.get('Stderr', 'Command failed.')}
-        #     self.log.warning(f"RunBashScript for '{full_command}' is not fully implemented here.")
-        #     return {"status": "OK", "message": f"Placeholder: Command '{full_command}' would be executed."}
-        # except Exception as e:
-        #     self.log.error(f"Error executing '{full_command}': {e}")
-        #     return {"status": "error", "message": str(e)}
-        if args_list is None:
-            args_list = []
-
-        script_executable_path = ""
-
-        if command.startswith("sudo"):
-            full_cmd_list = command.split() + args_list
-        else:
-            # Determine project root relative to presentation.py
-            # presentation.py is in genmonlib/, scripts are in project root
-            project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-            script_executable_path = os.path.join(project_root, command)
-            full_cmd_list = ['/bin/bash', script_executable_path] + args_list
-        
-        self.log.info(f"Executing bash command: {' '.join(full_cmd_list)}")
-
+        default_favicon_path = "/static/favicon.ico"
         try:
-            result = subprocess.run(full_cmd_list, capture_output=True, text=True, check=False)
-
-            if result.returncode == 0:
-                message = result.stdout.strip() if result.stdout.strip() else "Command executed successfully."
-                # If backup or archive, the path is expected in stdout
-                # The caller will extract it if needed.
-                # For backup_configuration and get_log_archive, they currently also add a 'path' key
-                # based on this stdout. This can be refined if scripts don't output path directly.
-                return_dict = {"status": "OK", "message": message, "stdout": result.stdout.strip(), "ReturnCode": 0}
-                # Specific handling for backup/archive path for compatibility with existing calling code structure
-                if command == "genmonmaint.sh" and ("-b" in args_list or "-l" in args_list):
-                    # Assuming the script prints only the path to stdout
-                    return_dict["path"] = result.stdout.strip() 
-                return return_dict
-            else:
-                message = result.stderr.strip() if result.stderr.strip() else f"Command failed with return code {result.returncode}."
-                self.log.error(f"Command failed: {' '.join(full_cmd_list)}. Return Code: {result.returncode}. Stderr: {result.stderr.strip()}")
-                return {"status": "error", "message": message, "stderr": result.stderr.strip(), "ReturnCode": result.returncode}
-
-        except FileNotFoundError as e:
-            # This might occur if 'sudo' is not found, or if the script path was wrong despite resolution
-            self.log.error(f"Command not found for: {' '.join(full_cmd_list)}: {e}")
-            return {"status": "error", "message": f"Command not found: {command}. Details: {str(e)}", "ReturnCode": -1}
+            conf = MyConfig(self.ConfigFilePath, log=self.log)
+            if not conf.InitComplete:
+                self.log.error("MyConfig initialization failed in get_favicon_path.")
+                return default_favicon_path
+            
+            favicon_path = conf.ReadValue("favicon", section="SYSTEM", default=default_favicon_path)
+            return favicon_path
         except Exception as e:
-            self.log.error(f"Exception during subprocess execution for {' '.join(full_cmd_list)}: {e}")
-            return {"status": "error", "message": str(e), "ReturnCode": -1}
+            self.log.error(f"Error reading favicon from config: {e}")
+            return default_favicon_path
+
+    # Note: System action methods below (update_software, restart_genmon, etc.) 
+    # utilize self.support.run_bash_script() for executing external commands.
+    # The _run_bash_script method itself was moved to the MySupport class in a previous refactor.
 
     def update_software(self):
         """
@@ -204,7 +134,7 @@ class UIPresenter:
         # args = ["-u", "-n", "-p", project_root, "-s", start_script_path_abs]
 
 
-        update_result = self._run_bash_script(update_command, args)
+        update_result = self.support.run_bash_script(update_command, args, log=self.log)
         if update_result.get("status") == "error":
             self.log.error(f"Software update script failed: {update_result.get('message')}")
             return update_result
@@ -233,7 +163,7 @@ class UIPresenter:
         args = ["restart", "-c", self.ConfigFilePath] # Assuming -p (project_path) is auto-detected by script
         # If not: args = ["restart", "-p", project_root, "-c", self.ConfigFilePath]
 
-        result = self._run_bash_script(restart_command, args)
+        result = self.support.run_bash_script(restart_command, args, log=self.log)
         if result.get("status") == "OK":
             self.log.info("Genmon restart command issued successfully.")
         else:
@@ -248,7 +178,7 @@ class UIPresenter:
         """
         self.log.info("Attempting to reboot the system.")
         # This command requires sudo and will not return if successful.
-        result = self._run_bash_script("sudo reboot now")
+        result = self.support.run_bash_script("sudo reboot now", log=self.log)
         # The response might not be seen if reboot is immediate.
         # Logging before the call is critical.
         return result
@@ -261,7 +191,7 @@ class UIPresenter:
         """
         self.log.info("Attempting to shut down the system.")
         # This command requires sudo and will not return if successful.
-        result = self._run_bash_script("sudo shutdown -h now")
+        result = self.support.run_bash_script("sudo shutdown -h now", log=self.log)
         # Logging before the call is critical.
         return result
 
@@ -281,9 +211,9 @@ class UIPresenter:
         # args = ["-b", "-c", self.ConfigFilePath, "-d", backup_dir_abs]
         args = ["-b", "-c", self.ConfigFilePath] # Simpler if script handles backup dir
 
-        result = self._run_bash_script(backup_command, args)
+        result = self.support.run_bash_script(backup_command, args, log=self.log)
         
-        # The new _run_bash_script returns stdout in "message" or "stdout"
+        # The new run_bash_script in MySupport returns stdout in "message" or "stdout"
         # and "path" if it's a backup/archive command and stdout contained a path.
         if result.get("status") == "OK" and result.get("path"):
             self.log.info(f"Configuration backup successful. Path: {result.get('path')}")
@@ -312,12 +242,12 @@ class UIPresenter:
         # args = ["-l", "-d", archive_dir_abs] # If script needs output dir
         args = ["-l"] # Simpler if script handles archive dir and outputs path
 
-        result = self._run_bash_script(archive_command, args)
+        result = self.support.run_bash_script(archive_command, args, log=self.log)
 
         if result.get("status") == "OK" and result.get("path"):
             self.log.info(f"Log archive creation successful. Path: {result.get('path')}")
         elif result.get("status") == "OK":
-             self.log.warning(f"Log archive script ran, but no path was returned in stdout. Output: {result.get('stdout')}")
+             self.log.warning(f"Log archive script ran, but no path was returned in stdout. Output: {result.get('stdout')}") # run_bash_script stores it in 'stdout'
              return {"status": "error", "message": "Log archive script ran but did not return a path."}
         else:
             self.log.error(f"Log archive creation failed: {result.get('message')}")
@@ -671,7 +601,7 @@ class UIPresenter:
         # This method would need to replicate the logic in GetAddOns() from genserv.py,
         # which involves finding addon.conf files in subdirectories of 'addons'.
         # It would then read each addon.conf.
-        self.log.info("get_addon_settings called. This method requires complex logic to find and parse multiple addon.conf files.")
+        self.log.info("Placeholder: get_addon_settings called. This method requires complex logic to find and parse multiple addon.conf files.")
         # Placeholder structure:
         # addon_settings = {}
         # try:
@@ -701,7 +631,7 @@ class UIPresenter:
         """
         # This method would need to iterate through settings_dict,
         # locate the correct addon.conf for each addon, and write the settings.
-        self.log.info("save_addon_settings called. This method requires complex logic to find and write to multiple addon.conf files.")
+        self.log.info("Placeholder: save_addon_settings called. This method requires complex logic to find and write to multiple addon.conf files.")
         # Placeholder structure:
         # try:
         #     addons_dir = os.path.join(os.path.dirname(self.ConfigFilePath), "addons")
@@ -728,12 +658,12 @@ class UIPresenter:
         Returns:
             dict: Status dictionary (OK or error).
         """
-        # from genmonlib.mymail import MyMail # Import locally to avoid circular deps if MyMail needs UIPresenter
+        # from genmonlib.mymail import MyMail # TODO: MyMail integration is pending.
         self.log.info(f"Attempting to send test email with params: {email_params_dict}")
 
-        # This is a placeholder. A real implementation would instantiate MyMail
-        # and call its TestSendSettings method.
-        # Example:
+        # Placeholder: This method currently simulates sending an email.
+        # MyMail integration is required for actual email functionality.
+        # Example of how it might work with MyMail:
         # try:
         #     # mailer = MyMail(self.log) # MyMail might need config path too
         #     # result, message = mailer.TestSendSettings(
@@ -751,16 +681,14 @@ class UIPresenter:
         #     # else:
         #     #     self.log.error(f"Failed to send test email: {message}")
         #     #     return {"status": "error", "message": f"Failed to send test email: {message}"}
-        #     self.log.warning("send_test_email is a placeholder and did not actually send an email.")
-        #     return {"status": "OK", "message": "Test email function is a placeholder. Email not sent."}
         # except Exception as e:
         #     self.log.error(f"Exception in send_test_email: {e}")
         #     return {"status": "error", "message": f"Exception during test email: {str(e)}"}
 
-        # For now, simulating success as MyMail is not directly usable here without more refactoring
-        # of its dependencies or how it's instantiated.
+        # Current simulation logic:
+        self.log.warning("send_test_email is a placeholder and did not actually send an email. Simulating based on params.")
         if email_params_dict.get("EmailTo") and email_params_dict.get("EmailFrom"):
-            self.log.info("Simulating successful test email dispatch.")
+            self.log.info("Simulating successful test email dispatch based on provided To/From addresses.")
             return {"status": "OK", "message": "Test email would have been sent (simulated)."}
         else:
             self.log.error("Test email simulation failed: Missing To/From address.")
@@ -781,12 +709,11 @@ class UIPresenter:
         Returns:
             A dictionary with data for the status page template.
         """
-        # Placeholder for fetching and preparing status page data
-        # Example:
-        # raw_data = self.client_interface.ProcessMonitorCommand("generator: status_json")
-        # processed_data = self._process_status_data(raw_data)
-        # return processed_data
-        return {"title": "Status Page - Placeholder", "content": "Data will be here soon."}
+        status_data = self.get_status_json()
+        if "error" in status_data:
+            self.log.error(f"Error fetching status_json for status page: {status_data['error']}")
+            return {"title": "Status Page - Error", "error": status_data["error"]}
+        return {"title": "Status Page", "data": status_data}
 
     def _process_status_data(self, raw_data):
         """
@@ -1196,6 +1123,4 @@ class UIPresenter:
         processed_text = raw_text_data.replace("EndOfMessage", "").strip()
         return {"title": "Help Information", "data_content": processed_text}
 
-    # The section with old handle_ methods and get_..._text_data methods below this line
-    # should be removed as they are now superseded or handled by JSON methods.
-    # For brevity, the diff tool will show this as a large deletion.
+    # End of UIPresenter class.
