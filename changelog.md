@@ -1,7 +1,7 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
-## V1.19.07 - 2024-07-30
+## V1.19.07 - 2025-05-29
 - **Presentation Layer Refactoring:**
     - Introduced a new presentation layer (`genmonlib/presentation.py` with `UIPresenter` class) to separate UI logic from request handling in `genserv.py`. This aims to improve code organization and maintainability.
     - Refactored `genserv.py` to delegate data fetching, processing, and command execution to the `UIPresenter`. This includes:
@@ -17,6 +17,16 @@ All notable changes to this project will be documented in this file.
     - Removed the obsolete global `RunBashScript` function and its associated helper functions (`Reboot`, `Shutdown`, `Restart`, `Update`, `GetLogs`, `Backup`) from `genserv.py` as these functionalities are now handled via `UIPresenter`.
     - Added specific unit tests for the `UIPresenter._run_bash_script` method to `tests/test_presentation.py`, ensuring robust testing of script execution scenarios (success, failure, sudo commands, output handling, and exceptions).
     - Improved comments and docstrings in `genmonlib/presentation.py` and `tests/test_presentation.py` to enhance code clarity and maintainability. Conceptual review and update of comments in `genserv.py` was also performed to align with the refactoring.
+- **Further Presentation Layer Enhancements & Cleanup (2024-08-02):**
+    - Refactored `_run_bash_script` method from `UIPresenter` class (`genmonlib/presentation.py`) to the `MySupport` class (`genmonlib/mysupport.py`) as `run_bash_script`. This improves separation of concerns, code structure, and testability.
+    - Updated unit tests to reflect the `run_bash_script` refactoring:
+        - Created `tests/test_mysupport.py` with tests specifically for `MySupport.run_bash_script`.
+        - Modified `tests/test_presentation.py` to mock `MySupport.run_bash_script` for tests of system action methods (e.g., `restart_genmon`, `update_software`).
+    - Reviewed and updated comments and implementations in `genmonlib/presentation.py`:
+        - Implemented `get_favicon_path` to correctly read the favicon path from the configuration using `MyConfig`.
+        - Implemented `get_status_page_data` to fetch and return actual status data by calling `get_status_json`.
+        - Clarified placeholder comments for features pending further integration (e.g., `MyMail` usage, addon settings implementation).
+        - Performed an additional pass to remove non-essential, outdated, or redundant comments to improve code readability and maintainability.
 
 ## V1.19.06 -2025-05-21
 - Minor update to allow the wifi gauge to work on some USB wifi drivers
@@ -421,7 +431,7 @@ All notable changes to this project will be documented in this file.
 - Change that removes / prevents non ascii from power log or outage log
 
 ## V1.15.13 - 2020-12-14
-- Remove output voltage display for pre-nexus controllers
+- Remove output voltage display for pre-Nexus controllers
 - Minor update to genexercise.py to allow exercising when service is due alarm is active
 - correct minor bug in in mymail.py
 
@@ -1048,5 +1058,3 @@ s
 - Added support for Evolution 2.0
 - Added support for serial over TCP/IP (additional hardware required) See [this page for details](https://github.com/jgyates/genmon/wiki/Appendix-F----Serial-over-IP)
 - Added advanced Modbus error handling for H-100 controllers
-
-[end of changelog.md]
