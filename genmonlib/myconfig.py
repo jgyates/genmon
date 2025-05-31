@@ -479,7 +479,7 @@ class MyConfig(MyCommon):
             with self.CriticalLock:
                 # Read all lines from the file first
                 try:
-                    with open(self.FileName, "r") open_read_file:
+                    with open(self.FileName, "r") as open_read_file:
                         original_lines = open_read_file.read().splitlines()
                 except IOError as e:
                     self.LogErrorLine(f"Error reading config file {self.FileName} in WriteValue: {e}")
@@ -553,6 +553,11 @@ class MyConfig(MyCommon):
                 # The original code doesn't explicitly add a new section in WriteValue if it's missing.
                 # It seems to rely on the section already existing or being the current one.
 
+                # If removing, explicitly remove from the in-memory config object before rewriting file
+                # This ensures HasOption will be correct even before the re-read.
+                if remove and self.config.has_option(target_section_name, Entry):
+                    self.config.remove_option(target_section_name, Entry)
+
                 # Rewrite the file with the modified lines
                 with open(self.FileName, "w") as ConfigFile:
                     for line in new_file_lines:
@@ -560,6 +565,8 @@ class MyConfig(MyCommon):
                     ConfigFile.flush()
 
                 # Update the internal ConfigParser cache
+                # This re-read is still good to ensure file and memory are in sync,
+                # especially if new_file_lines logic had subtle issues or for non-remove cases.
                 self.config.read(self.FileName)
 
             if section is not None:
