@@ -123,5 +123,15 @@ alt="Genmon Demo" width="240" height="180" border="10" /></a>
 * [Genmon and Pintsize.me board setup](https://www.youtube.com/watch?v=EQ5DyJKFBa8&ab_channel=98grand5point9)
 * [Run Genmon in a docker image](https://www.youtube.com/watch?v=QVw4uX2XK-Y&ab_channel=BigBearTechWorld)
 
+# Configuration Details
+
+Genmon's behavior is primarily controlled by the `genmon.conf` file, typically located in `/etc/genmon/`. Below are some key options:
+
+- `update_check_user`: Specifies the GitHub username to use when checking for software updates. Defaults to "jgyates".
+- `update_check_repo`: Specifies the GitHub repository name to use when checking for software updates. Defaults to "genmon".
+- `update_check_branch`: Specifies the GitHub branch name to use when checking for software updates. Defaults to "master".
+
+For a comprehensive list of all configuration options, please refer to the sample configuration files provided with the project and the project Wiki.
+
 # Documentation
 * [Genmon Project Wiki](https://github.com/jgyates/genmon/wiki)

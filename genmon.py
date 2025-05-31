@@ -641,6 +641,20 @@ class Monitor(MySupport):
             # Read 'user_url': A user-defined URL for their genmon web interface, included in update notifications.
             self.UserURL = self.config.ReadValue("user_url", default="").strip()
 
+            # Read 'update_check_user': GitHub username for software update checks.
+            self.UpdateCheckUser = self.config.ReadValue(
+                "update_check_user", default="jgyates"
+            ).strip()
+            # Read 'update_check_repo': GitHub repository name for software update checks.
+            self.UpdateCheckRepo = self.config.ReadValue(
+                "update_check_repo", default="genmon"
+            ).strip()
+
+            # Read 'update_check_branch': GitHub branch for software update checks.
+            self.UpdateCheckBranch = self.config.ReadValue(
+                "update_check_branch", default="master"
+            ).strip()
+
         except Exception as e1: # Catch any other unexpected errors during config reading.
             self.Console( # Use Console as self.log might not be fully set up if GetConfig fails early.
                 "CRITICAL ERROR: Missing essential config file entries or error reading genmon.conf: " + str(e1) +
@@ -2114,7 +2128,7 @@ class Monitor(MySupport):
                 self.log.info("Performing daily check for software updates from GitHub...")
                 try:
                     # URL to the raw program_defaults.py file in the master branch of the genmon repository.
-                    url = "https://raw.githubusercontent.com/jgyates/genmon/master/genmonlib/program_defaults.py"
+                    url = f"https://raw.githubusercontent.com/{self.UpdateCheckUser}/{self.UpdateCheckRepo}/{self.UpdateCheckBranch}/genmonlib/program_defaults.py"
 
                     # Use appropriate urllib version based on Python version.
                     if sys.version_info[0] < 3: # Python 2.x
