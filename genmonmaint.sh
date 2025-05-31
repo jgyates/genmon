@@ -180,6 +180,40 @@ function copyconffiles() {
     sudo cp $genmondir/conf/*.conf "$config_path"
 }
 #-------------------------------------------------------------------------------
+# This function reads the configured branch name from genmon.conf
+function get_configured_branch_name() {
+    local default_branch="master"
+    local conf_file="$config_path/genmon.conf"
+
+    if [ ! -f "$conf_file" ]; then
+        echo "$default_branch"
+        return
+    fi
+
+    # Try to find the branch name in the [GenMon] section
+    # This grep chain:
+    # 1. Looks for lines starting with [GenMon] (GNU grep -A option for context)
+    # 2. Within the next 5 lines, finds "update_check_branch"
+    # 3. Filters again for "update_check_branch" to ensure it's the correct line
+    # This is to make it more robust than a simple grep for "update_check_branch" anywhere in the file.
+    local branch_line=$(sudo grep -A5 "^\[GenMon\]" "$conf_file" | grep "update_check_branch")
+
+    if [[ -n "$branch_line" ]]; then
+        # Extract the value after '='
+        local value=$(echo "$branch_line" | cut -d'=' -f2)
+        # Trim leading and trailing whitespace
+        value=$(echo "$value" | sed 's/^[ \t]*//;s/[ \t]*$//')
+
+        if [[ -n "$value" ]]; then
+            echo "$value"
+        else
+            echo "$default_branch"
+        fi
+    else
+        echo "$default_branch"
+    fi
+}
+#-------------------------------------------------------------------------------
 # This function will update the pip libraries used
 function updatelibraries() {
   # This function updates Python packages listed in the 'requirements.txt' file.
@@ -481,6 +515,10 @@ function updategenmon() {
     # the 'origin/master' branch of its Git repository.
     echo "Updating genmon..."
     cd $genmondir # Change to the genmon source directory
+
+    local configured_branch=$(get_configured_branch_name)
+    echo "Updating genmon from branch: $configured_branch"
+
     current_time=$(date '+%Y-%m-%d:%H:%M:%S') # Get current timestamp
     
     # Define path for update history file
@@ -493,10 +531,10 @@ function updategenmon() {
 
     # Ensure the current directory is recognized as a safe Git repository
     git config --global --add safe.directory '*'
-    # Fetch the latest changes from the remote 'origin'
-    git fetch origin
-    # Force reset the local 'master' branch to match 'origin/master', discarding local changes
-    git reset --hard origin/master
+    # Fetch the latest changes from the remote 'origin' for the configured branch
+    git fetch origin $configured_branch
+    # Force reset the local branch to match the fetched branch from origin, discarding local changes
+    git reset --hard origin/$configured_branch
     # Set execute permissions for main scripts
     sudo chmod 775 "$genmondir/startgenmon.sh"
     sudo chmod 775 "$genmondir/genmonmaint.sh"
