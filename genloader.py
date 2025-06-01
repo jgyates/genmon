@@ -163,33 +163,33 @@ class Loader(MySupport):
         # determines paths, especially for `genmon.conf` if it's used by MySupport.
         try:
            super(Loader, self).__init__()
-            # Determine and set ConfigFilePath for the Loader instance.
-            # This is crucial because MySupport.__init__() (called via super)
-            # no longer takes ConfigFilePath as an argument and thus won't set it.
-            if ConfigFilePath is None:
-                # If no ConfigFilePath was provided to Loader's constructor,
-                # use the program's default configuration path.
-                self.ConfigFilePath = ProgramDefaults.ConfPath
-            else:
-                # If a ConfigFilePath was provided, use that.
-                self.ConfigFilePath = ConfigFilePath
-            # If MySupport successfully initialized, check if it has a configured logger.
-            # Loader will only adopt the parent's logger if it's a valid, different logger.
-            # Otherwise, Loader continues with its own (bootstrap or passed-in) logger.
-            if temp_logger_active and hasattr(super(), 'log'):
-                parent_logger = getattr(super(), 'log', None)
-                if parent_logger is not None and self.log != parent_logger:
-                    self.log = parent_logger # Switch to MySupport's logger
-                    self.log.info("Switched from bootstrap logger to MySupport's finalized logger.")
-                elif parent_logger is None:
-                    # MySupport/MyCommon initialize self.log to None. Loader should continue using its own logger.
-                    self.log.info("MySupport's logger is None after super().__init__(). Loader continues with its current logger.")
-                # else:
-                #   - parent_logger is not None but is the same as self.log (no switch needed).
-                #   - Or, temp_logger_active was False (meaning an external logger was passed to Loader),
-                #     so Loader should keep using that external logger.
-                #   In these cases, no specific logging action is strictly necessary here,
-                #
+           # Determine and set ConfigFilePath for the Loader instance.
+           # This is crucial because MySupport.__init__() (called via super)
+           # no longer takes ConfigFilePath as an argument and thus won't set it.
+           if ConfigFilePath is None:
+               # If no ConfigFilePath was provided to Loader's constructor,
+               # use the program's default configuration path.
+               self.ConfigFilePath = ProgramDefaults.ConfPath
+           else:
+               # If a ConfigFilePath was provided, use that.
+               self.ConfigFilePath = ConfigFilePath
+           # If MySupport successfully initialized, check if it has a configured logger.
+           # Loader will only adopt the parent's logger if it's a valid, different logger.
+           # Otherwise, Loader continues with its own (bootstrap or passed-in) logger.
+           if temp_logger_active and hasattr(super(), 'log'):
+               parent_logger = getattr(super(), 'log', None)
+               if parent_logger is not None and self.log != parent_logger:
+                   self.log = parent_logger # Switch to MySupport's logger
+                   self.log.info("Switched from bootstrap logger to MySupport's finalized logger.")
+               elif parent_logger is None:
+                   # MySupport/MyCommon initialize self.log to None. Loader should continue using its own logger.
+                   self.log.info("MySupport's logger is None after super().__init__(). Loader continues with its current logger.")
+               # else:
+               #   - parent_logger is not None but is the same as self.log (no switch needed).
+               #   - Or, temp_logger_active was False (meaning an external logger was passed to Loader),
+               #     so Loader should keep using that external logger.
+               #   In these cases, no specific logging action is strictly necessary here,
+               #
         except Exception as e_super_init:
             # If MySupport initialization fails, log the error. Functionality might be severely limited.
             self.log.error(f"CRITICAL: Error during MySupport initialization: {str(e_super_init)}. Functionality will be severely limited.")
