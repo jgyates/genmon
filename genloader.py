@@ -162,7 +162,7 @@ class Loader(MySupport):
         # and setting up other support functionalities. The `localinit` flag influences how MySupport
         # determines paths, especially for `genmon.conf` if it's used by MySupport.
         try:
-            super(Loader, self).__init__(log=self.log, ConfigFilePath=ConfigFilePath, localinit=localinit)
+            super(Loader, self).__init__(ConfigFilePath=ConfigFilePath, localinit=localinit)
             # If MySupport successfully initialized and replaced our temporary bootstrap logger with its own,
             # update self.log to use the official logger instance from the MySupport parent class.
             if temp_logger_active and hasattr(super(), 'log') and self.log != getattr(super(), 'log', None) :
