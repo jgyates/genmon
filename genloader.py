@@ -131,70 +131,72 @@ class Loader(MySupport):
         self.version = None     # Stores the current program version
 
         # --- Bootstrap logger setup ---
-        # A temporary logger is used before MySupport fully initializes the official logger.
-        # This is crucial for logging early initialization steps, especially if MySupport setup fails.
-        temp_logger_active = False
-        if log is None:
+        loader_specific_logger = None
+        if log is None: # log is the argument to Loader.__init__
             try:
-                # Determine effective log location for bootstrap logger
                 effective_log_location = loglocation if loglocation else ProgramDefaults.LogPath
-                # Create a specific bootstrap logger instance, distinct from the main logger.
-                self.log = SetupLogger("genloader_bootstrap", os.path.join(effective_log_location, "genloader_bootstrap.log"))
-                temp_logger_active = True
-                self.log.info("Bootstrap logger initialized for early Loader setup.")
+                loader_specific_logger = SetupLogger("genloader_bootstrap",
+                                                     os.path.join(effective_log_location, "genloader_bootstrap.log"))
+                loader_specific_logger.info("Bootstrap logger initialized by Loader.")
             except Exception as e_log_setup:
-                # Fallback to basic print if SetupLogger fails catastrophically.
-                # This ensures some diagnostic output is available even if logging is broken.
-                print(f"CRITICAL: Initial bootstrap logger setup failed: {e_log_setup}. Further logging might be impaired.", file=sys.stderr)
-                # Create a dummy self.log that just prints, to prevent AttributeError later if self.log is expected.
-                class PrintLogger: # Basic logger mimic for critical failure.
+                print(f"CRITICAL: Loader's bootstrap logger setup failed: {e_log_setup}. Using fallback PrintLogger.", file=sys.stderr)
+                class PrintLoggerInit: # Renamed to avoid potential scope collision if defined again later
                     def info(self, msg): print(f"INFO: {msg}")
                     def error(self, msg): print(f"ERROR: {msg}", file=sys.stderr)
                     def debug(self, msg): print(f"DEBUG: {msg}")
-                    def LogErrorLine(self, msg): self.error(f"[LINE_UNKNOWN] {msg}") # Compatibility with existing error logging.
-                self.log = PrintLogger()
+                    def LogErrorLine(self, msg): self.error(f"[LINE_UNKNOWN] {msg}")
+                loader_specific_logger = PrintLoggerInit()
         else:
-            self.log = log # Use the logger instance provided externally.
+            loader_specific_logger = log
+
+        self.log = loader_specific_logger
         
         # --- MySupport superclass initialization ---
-        # MySupport's __init__ is responsible for finalizing self.log (potentially replacing the bootstrap one),
-        # determining self.ConfigFilePath (using ProgramDefaults if the ConfigFilePath argument is None),
-        # and setting up other support functionalities. The `localinit` flag influences how MySupport
-        # determines paths, especially for `genmon.conf` if it's used by MySupport.
         try:
-           super(Loader, self).__init__()
-           # Determine and set ConfigFilePath for the Loader instance.
-           # This is crucial because MySupport.__init__() (called via super)
-           # no longer takes ConfigFilePath as an argument and thus won't set it.
-           if ConfigFilePath is None:
-               # If no ConfigFilePath was provided to Loader's constructor,
-               # use the program's default configuration path.
-               self.ConfigFilePath = ProgramDefaults.ConfPath
-           else:
-               # If a ConfigFilePath was provided, use that.
-               self.ConfigFilePath = ConfigFilePath
-           # If MySupport successfully initialized, check if it has a configured logger.
-           # Loader will only adopt the parent's logger if it's a valid, different logger.
-           # Otherwise, Loader continues with its own (bootstrap or passed-in) logger.
-           if temp_logger_active and hasattr(super(), 'log'):
-               parent_logger = getattr(super(), 'log', None)
-               if parent_logger is not None and self.log != parent_logger:
-                   self.log = parent_logger # Switch to MySupport's logger
-                   self.log.info("Switched from bootstrap logger to MySupport's finalized logger.")
-               elif parent_logger is None:
-                   # MySupport/MyCommon initialize self.log to None. Loader should continue using its own logger.
-                   self.log.info("MySupport's logger is None after super().__init__(). Loader continues with its current logger.")
-               # else:
-               #   - parent_logger is not None but is the same as self.log (no switch needed).
-               #   - Or, temp_logger_active was False (meaning an external logger was passed to Loader),
-               #     so Loader should keep using that external logger.
-               #   In these cases, no specific logging action is strictly necessary here,
-               #
+            intended_loader_log = self.log # Save Loader's chosen logger
+
+            super(Loader, self).__init__() # This will set self.log to None via MyCommon
+
+            self.log = intended_loader_log # Restore Loader's logger
+
+            if self.log is None:
+                # Fallback if intended_loader_log itself was None (e.g. external log was None)
+                # or if something else went very wrong.
+                print("CRITICAL ERROR: self.log is unexpectedly None after restoration. Re-creating PrintLogger for core functions.", file=sys.stderr)
+                class PrintLoggerDefensive:
+                    def info(self, msg): print(f"INFO_DEFENSIVE: {msg}")
+                    def error(self, msg): print(f"ERROR_DEFENSIVE: {msg}", file=sys.stderr)
+                    def debug(self, msg): print(f"DEBUG_DEFENSIVE: {msg}")
+                    def LogErrorLine(self, msg): self.error(f"[LINE_UNKNOWN_DEFENSIVE] {msg}")
+                self.log = PrintLoggerDefensive()
+                self.log.error("Defensive PrintLogger activated because self.log was None after restoration from superclass init.")
+            else:
+                # Using "debug" level for this internal mechanism clarification, "info" might be too verbose for users.
+                self.log.debug("Loader's logger restored after superclass initialization (which sets self.log to None via MyCommon).")
+
+            # Determine and set ConfigFilePath for the Loader instance.
+            if ConfigFilePath is None:
+                self.ConfigFilePath = ProgramDefaults.ConfPath
+            else:
+                self.ConfigFilePath = ConfigFilePath
+
         except Exception as e_super_init:
-            # If MySupport initialization fails, log the error. Functionality might be severely limited.
+            # Ensure self.log is usable for this error message
+            if self.log is None:
+                # Attempt to use intended_loader_log if it exists and is valid, otherwise new PrintLogger
+                current_intended_log = locals().get('intended_loader_log')
+                if current_intended_log is not None:
+                    self.log = current_intended_log
+                else:
+                    class PrintLoggerExRecovery:
+                        def info(self, msg): print(f"INFO_EX_RECOVERY: {msg}")
+                        def error(self, msg): print(f"ERROR_EX_RECOVERY: {msg}", file=sys.stderr)
+                        def debug(self, msg): print(f"DEBUG_EX_RECOVERY: {msg}")
+                        def LogErrorLine(self, msg): self.error(f"[LINE_UNKNOWN_EX_RECOVERY] {msg}")
+                    self.log = PrintLoggerExRecovery()
+                self.log.error("CRITICAL: self.log was None during superclass init exception. Restored/Recreated for this error message.")
             self.log.error(f"CRITICAL: Error during MySupport initialization: {str(e_super_init)}. Functionality will be severely limited.")
-            # Depending on the criticality of MySupport, a sys.exit() might be warranted here.
-            # For now, we allow it to continue so other parts of genloader can attempt to function or log errors.
+            # Consider sys.exit(2) here if MySupport init is absolutely vital and failed
 
         # --- Pip program determination ---
         # Selects 'pip2' for Python 2 and 'pip3' for Python 3 to ensure correct package management.
