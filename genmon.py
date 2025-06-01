@@ -641,18 +641,18 @@ class Monitor(MySupport):
             # Read 'user_url': A user-defined URL for their genmon web interface, included in update notifications.
             self.UserURL = self.config.ReadValue("user_url", default="").strip()
 
-            # Read 'update_check_user': GitHub username for software update checks.
+            # Read 'project_username': GitHub username for software update checks.
             self.UpdateCheckUser = self.config.ReadValue(
-                "update_check_user", default="jgyates"
+                "project_username", default="jgyates"
             ).strip()
-            # Read 'update_check_repo': GitHub repository name for software update checks.
+            # Read 'project_repo': GitHub repository name for software update checks.
             self.UpdateCheckRepo = self.config.ReadValue(
-                "update_check_repo", default="genmon"
+                "project_repo", default="genmon"
             ).strip()
 
-            # Read 'update_check_branch': GitHub branch for software update checks.
+            # Read 'project_branch': GitHub branch for software update checks.
             self.UpdateCheckBranch = self.config.ReadValue(
-                "update_check_branch", default="master"
+                "project_branch", default="master"
             ).strip()
 
         except Exception as e1: # Catch any other unexpected errors during config reading.
