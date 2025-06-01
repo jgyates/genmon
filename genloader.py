@@ -162,7 +162,17 @@ class Loader(MySupport):
         # and setting up other support functionalities. The `localinit` flag influences how MySupport
         # determines paths, especially for `genmon.conf` if it's used by MySupport.
         try:
-            super(Loader, self).__init__(ConfigFilePath=ConfigFilePath, localinit=localinit)
+            super(Loader, self).__init__()
+            # Determine and set ConfigFilePath for the Loader instance.
+            # This is crucial because MySupport.__init__() (called via super)
+            # no longer takes ConfigFilePath as an argument and thus won't set it.
+            if ConfigFilePath is None:
+                # If no ConfigFilePath was provided to Loader's constructor,
+                # use the program's default configuration path.
+                self.ConfigFilePath = ProgramDefaults.ConfPath
+            else:
+                # If a ConfigFilePath was provided, use that.
+                self.ConfigFilePath = ConfigFilePath
             # If MySupport successfully initialized and replaced our temporary bootstrap logger with its own,
             # update self.log to use the official logger instance from the MySupport parent class.
             if temp_logger_active and hasattr(super(), 'log') and self.log != getattr(super(), 'log', None) :
