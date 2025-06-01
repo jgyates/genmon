@@ -162,7 +162,7 @@ class Loader(MySupport):
         # and setting up other support functionalities. The `localinit` flag influences how MySupport
         # determines paths, especially for `genmon.conf` if it's used by MySupport.
         try:
-            super(Loader, self).__init__()
+           super(Loader, self).__init__()
             # Determine and set ConfigFilePath for the Loader instance.
             # This is crucial because MySupport.__init__() (called via super)
             # no longer takes ConfigFilePath as an argument and thus won't set it.
@@ -189,7 +189,7 @@ class Loader(MySupport):
                 #   - Or, temp_logger_active was False (meaning an external logger was passed to Loader),
                 #     so Loader should keep using that external logger.
                 #   In these cases, no specific logging action is strictly necessary here,
-                #   but a debug log could be added if detailed tracing is desired.
+                #
         except Exception as e_super_init:
             # If MySupport initialization fails, log the error. Functionality might be severely limited.
             self.log.error(f"CRITICAL: Error during MySupport initialization: {str(e_super_init)}. Functionality will be severely limited.")
