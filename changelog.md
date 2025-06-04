@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Added Advanced Settings option to show the wifi gauge as a percent instead of signal strength to better support some USB wifi adapters
 - New Add On program for CentriConnect.com My Propane tank monitor
 - Update to change the default state of the option to ignore unknown values from Evo2 (now defaults to on)
+- Minor mod to help filter invalid data from Evo2 tied to known issue in wiki
 
 ## V1.19.05 -2024-12-27
 - Added new log and alarm info for Evolution 4.5L

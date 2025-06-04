@@ -3577,6 +3577,8 @@ class Evolution(GeneratorController):
                 0x6538,
             ]
 
+            if not self.Reg0001IsValid(regvalue):
+                return self.LastAlarmValue
             if regvalue in IgnoreList:
                 return self.LastAlarmValue
             return regvalue
