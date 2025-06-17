@@ -857,6 +857,7 @@
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
+      "signed16": true,
       "temperature": "celsius",
       "title": "Ambient Temperature"
     }
