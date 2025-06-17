@@ -9,7 +9,7 @@ All notable changes to this project will be documented in this file.
 - New Add On program for CentriConnect.com My Propane tank monitor
 - Update to change the default state of the option to ignore unknown values from Evo2 (now defaults to on)
 - Minor mod to help filter invalid data from Evo2 tied to known issue in wiki
-- Minor update to Briggs and Strattong to support negative temp values for Ambient Temp sensor
+- Minor update to Briggs and Stratton to support negative temp values for Ambient Temp sensor
 
 ## V1.19.05 -2024-12-27
 - Added new log and alarm info for Evolution 4.5L
