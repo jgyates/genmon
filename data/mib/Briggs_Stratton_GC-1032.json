@@ -1,0 +1,320 @@
+{
+    "controller_type": "custom",
+    "comment2": "NOTE: the 'controller_type' filed must be 'custom' and the file name of this file should match the custom controller file name in /data/controller",
+    "comment3": "The 'oid' field defines the last 3 digits of the SNMP OID",
+    "comment4": "'return_type' must be either 'str' or 'int'. Floating point values should be 'str'.",
+    "comment5": "'default' is the default value assigned to the OID",
+    "comment6": "'keywords' is a list of words or phrases that match the path of the data in the JSON exported by genmon. This should match how it is displayed on the web interface also",
+    "comment7": "'integer' is an optional value that allows a 'str' to be converted to an integer if the 'Force Integers' option is enabled in gensnmp.py",
+    "snmp": [
+        {
+            "oid": "0, 0, 1",
+            "return_type": "str",
+            "description": "switchState",
+            "default" : "Unknown",
+            "keywords" : ["Status", "Switch State"]
+        },
+        {
+            "oid": "0, 0, 2",
+            "return_type": "str",
+            "description": "EngineState",
+            "default" : "Unknown",
+            "keywords" : ["Status", "Engine State"]
+        },
+        {
+            "oid": "0, 0, 3",
+            "return_type": "str",
+            "description": "batteryVolts",
+            "default" : "",
+            "keywords" : ["Status", "Battery"]
+        },
+        {
+            "oid": "0, 0, 4",
+            "return_type": "str",
+            "description": "utilityPower",
+            "default" : "unknown",
+            "keywords" : ["Status", "Utility Power"]
+        },
+        {
+            "oid": "0, 0, 5",
+            "return_type": "str",
+	    "integer": true,
+            "description": "rpm",
+            "default" : "",
+            "keywords" : ["Status", "Engine", "Engine Speed"]
+        },
+        {
+            "oid": "0, 0, 6",
+            "return_type": "str",
+            "description": "loadTotalKW",
+            "default" : "",
+            "keywords" : ["Engine", "Load Total (kW)"]
+        },
+        {
+            "oid": "0, 0, 7",
+            "return_type": "str",
+            "description": "loadTotalKVA",
+            "default" : "",
+            "keywords" : ["Engine", "Load Total (kVA)"]
+        },
+        {
+            "oid": "0, 0, 8",
+            "return_type": "str",
+            "description": "GenL1L2Volts",
+            "default" : "",
+            "keywords" : ["Engine", "Generator L1-L2 Volts"]
+        },
+        {
+            "oid": "0, 0, 9",
+            "return_type": "str",
+            "description": "GenL1Frequency",
+            "default" : "",
+            "keywords" : ["Engine", "Generator L1 Frequency"]
+        },
+        {
+            "oid": "0, 0, 10",
+            "return_type": "str",
+            "description": "GenL2Frequency",
+            "default" : "",
+            "keywords" : ["Engine", "Generator L2 Frequency"]
+        },
+        {
+            "oid": "0, 0, 11",
+            "return_type": "str",
+            "description": "GenL1Current",
+            "default" : "",
+            "keywords" : ["Engine", "Generator L1 Current"]
+        },
+        {
+            "oid": "0, 0, 12",
+            "return_type": "str",
+            "description": "GenL2Current",
+            "default" : "",
+            "keywords" : ["Engine", "Generator L2 Current"]
+        },
+        {
+            "oid": "0, 0, 13",
+            "return_type": "str",
+            "description": "LineL1L2Volts",
+            "default" : "",
+            "keywords" : ["Line", "Utility L1-L2 Volts"]
+        },
+        {
+            "oid": "0, 0, 14",
+            "return_type": "str",
+            "description": "LineL1Frequency",
+            "default" : "",
+            "keywords" : ["Line", "Utility L1 Frequency"]
+        },
+        {
+            "oid": "0, 0, 15",
+            "return_type": "str",
+            "description": "LineL2Frequency",
+            "default" : "",
+            "keywords" : ["Line", "Utility L2 Frequency"]
+        },
+        {
+            "oid": "0, 0, 16",
+            "return_type": "str",
+            "description": "MonitorTime",
+            "default" : "",
+            "keywords" : ["Time", "Monitor Time"]
+        },
+        {
+            "oid": "0, 0, 17",
+            "return_type": "str",
+            "description": "GeneratorTime",
+            "default" : "",
+            "keywords" : ["Time", "Generator Time"]
+        },
+	{
+            "oid": "0, 1, 1",
+            "return_type": "str",
+            "description": "generatorModel",
+            "default" : "",
+            "keywords" : ["Maintenance", "Model"]
+        },
+	{
+            "oid": "0, 1, 2",
+            "return_type": "str",
+            "description": "controller",
+            "default" : "",
+            "keywords" : ["Maintenance", "Controller Detected"]
+        },
+	{
+            "oid": "0, 1, 3",
+            "return_type": "str",
+            "description": "nominalRPM",
+            "default" : "",
+            "keywords" : ["Maintenance", "Nominal RPM"]
+        },
+	{
+            "oid": "0, 1, 4",
+            "return_type": "str",
+            "description": "ratedKW",
+            "default" : "",
+            "keywords" : ["Maintenance", "Rated kW"]
+        },
+	{
+            "oid": "0, 1, 5",
+            "return_type": "str",
+            "description": "ratedFreq",
+            "default" : "",
+            "keywords" : ["Maintenance", "Nominal Frequency"]
+        },
+	{
+            "oid": "0, 1, 6",
+            "return_type": "str",
+            "description": "phase",
+            "default" : "",
+            "keywords" : ["Maintenance", "Phase"]
+        },
+	{
+            "oid": "0, 1, 7",
+            "return_type": "str",
+            "description": "fuelType",
+            "default" : "",
+            "keywords" : ["Maintenance", "Fuel Type"]
+        },
+	{
+            "oid": "0, 1, 8",
+            "return_type": "str",
+            "description": "fuelLevelSensor",
+            "default" : "",
+            "keywords" : ["Maintenance", "Fuel Level Sensor"]
+        },
+	{
+            "oid": "0, 1, 9",
+            "return_type": "str",
+            "description": "fuelInTank",
+            "default" : "",
+            "keywords" : ["Maintenance", "Fuel In Tank (Sensor)"]
+        },
+	{
+            "oid": "0, 1, 10",
+            "return_type": "str",
+            "description": "fuelLevelState",
+            "default" : "",
+            "keywords" : ["Maintenance", "Fuel Level State"]
+        },
+	{
+            "oid": "0, 1, 12",
+            "return_type": "str",
+            "description": "engineRunTime",
+            "default" : "",
+            "keywords" : ["Maintenance", "Engine Run Time"]
+        },
+	{
+            "oid": "0, 1, 13",
+            "return_type": "str",
+            "description": "controllerTime",
+            "default" : "",
+            "keywords" : ["Maintenance", "Controller Time"]
+        },
+	{
+            "oid": "0, 1, 14",
+            "return_type": "str",
+            "description": "numberStarts",
+            "default" : "",
+            "keywords" : ["Maintenance", "Number of Starts"]
+        },
+	{
+            "oid": "0, 1, 15",
+            "return_type": "str",
+            "description": "numberTrips",
+            "default" : "",
+            "keywords" : ["Maintenance", "Number of Trips"]
+        },
+	{
+            "oid": "0, 1, 16",
+            "return_type": "str",
+            "description": "controllerDate",
+            "default" : "",
+            "keywords" : ["Maintenance", "Controller Date"]
+        },
+	{
+            "oid": "0, 1, 17",
+            "return_type": "str",
+            "description": "controllerFirmware",
+            "default" : "",
+            "keywords" : ["Maintenance", "Controller Firmware"]
+        },
+	{
+            "oid": "0, 1, 18",
+            "return_type": "str",
+            "description": "ambientTemperature",
+            "default" : "",
+            "keywords" : ["Maintenance", "Ambient Temperature"]
+        },
+	{
+            "oid": "0, 2, 0",
+            "return_type": "str",
+            "description": "outageStatus",
+            "default" : "",
+            "keywords" : ["Outage", "Status"]
+        },
+	{
+            "oid": "0, 2, 1",
+            "return_type": "str",
+            "description": "systemInOutage",
+            "default" : "",
+            "keywords" : ["Outage", "System In Outage"]
+        },
+	{
+            "oid": "0, 2, 2",
+            "return_type": "str",
+            "description": "utilityVoltage",
+            "default" : "",
+            "keywords" : ["Outage", "Utility Voltage"]
+        },
+	{
+            "oid": "0, 2, 3",
+            "return_type": "str",
+            "description": "utilityVoltageMin",
+            "default" : "",
+            "keywords" : ["Outage", "Utility Voltage Minimum"]
+        },
+	{
+            "oid": "0, 2, 4",
+            "return_type": "str",
+            "description": "utilityVoltageMax",
+            "default" : "",
+            "keywords" : ["Outage", "Utility Voltage Maximum"]
+        },
+	{
+            "oid": "0, 2, 5",
+            "return_type": "str",
+            "description": "utilityThresholdVoltage",
+            "default" : "",
+            "keywords" : ["Outage", "Utility Threshold Voltage"]
+        },
+	{
+            "oid": "0, 2, 6",
+            "return_type": "str",
+            "description": "utilityPickupVoltage",
+            "default" : "",
+            "keywords" : ["Outage", "Utility Pickup Voltage"]
+        },
+	{
+            "oid": "0, 3, 0",
+            "return_type": "str",
+            "description": "weatherTemperature",
+            "default" : "",
+            "keywords" : ["Monitor", "Weather", "Temperature"]
+        },
+	{
+            "oid": "0, 3, 1",
+            "return_type": "str",
+            "description": "weatherConditions",
+            "default" : "",
+            "keywords" : ["Monitor", "Weather", "Conditions"]
+        },
+	{
+            "oid": "0, 4, 0",
+            "return_type": "str",
+            "description": "updateAvailable",
+            "default" : "",
+            "keywords" : ["Monitor", "Update Available"]
+        }
+    ]
+}
