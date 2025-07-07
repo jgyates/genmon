@@ -1032,9 +1032,10 @@ class GeneratorController(MySupport):
                             self.LogError("Error in GetButtonsCommon: Error validateing re_type: "+ str(button))
                             CommandError = True
                             break
+
                     if not "value" in command.keys():
-                        if command["reg_type"].lower() == "script":
-                            # other fields are not required
+                        if "reg_type" in command.keys() and command["reg_type"].lower() == "script":
+                            # other fields are not required, "reg" has script name
                             continue
                         # this command requires input from the web app, let's validate the params
                         # "input_title", "type" is required. "length" is default 2 but must be a multiple of 2
