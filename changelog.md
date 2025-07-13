@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 - Minor mod to help filter invalid data from Evo2 tied to known issue in wiki
 - Minor update to Briggs and Stratton to support negative temp values for Ambient Temp sensor
 - Added SNMP JSON support for Briggs and Stratton (thanks @zinglo)
-- minor update to correct validation issue with imported buttons in UI
+- minor update to correct validation issue with imported buttons in web UI
 
 ## V1.19.05 -2024-12-27
 - Added new log and alarm info for Evolution 4.5L
