@@ -546,7 +546,9 @@ class GenMopekaData(MySupport):
                     reading_mm = self.max_mm
                     reading_inches = self.MmToInches(reading_mm)
                 tanksize = self.max_mm - self.min_mm
-                return round(((reading_mm - self.min_mm) / tanksize) * 100, 2)
+                custom_reading = round(((reading_mm - self.min_mm) / tanksize) * 100, 2)
+                self.LogDebug("Custom Reading: " + str(custom_reading))
+                return custom_reading
             try:
                 cubic_inches = self.Tank.V_from_h(reading_inches)
             except Exception as e1:
