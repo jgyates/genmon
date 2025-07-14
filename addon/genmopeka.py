@@ -545,6 +545,8 @@ class GenMopekaData(MySupport):
                 if reading_mm > self.max_mm:
                     reading_mm = self.max_mm
                     reading_inches = self.MmToInches(reading_mm)
+                elif reading_mm < self.min_mm:
+                    reading_mm = self.min_mm
                 tanksize = self.max_mm - self.min_mm
                 custom_reading = round(((reading_mm - self.min_mm) / tanksize) * 100, 2)
                 self.LogDebug("Custom Reading: " + str(custom_reading))
