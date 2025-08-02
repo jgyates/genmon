@@ -215,6 +215,7 @@ class Evolution(GeneratorController):
             "005d": [2, 0],  #
             # Total engine time in minutes  (EvoLC) 005e= high, 005f=low
             "005e": [4, 0],  #
+            "0062": [2, 0],  # generator status
             "003c": [2, 0],  # Raw RPM Sensor Data (RPM * 10 on AC units)
             "05fa": [2, 0],  # Evo AC   (Status?)
             "0033": [2, 0],  # Evo AC   (Status?)
