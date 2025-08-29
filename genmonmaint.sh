@@ -16,7 +16,7 @@ Continue? (y/n)  "
 
 usepython3=true
 pipcommand="pip3"
-pipoptions=""
+pipoptions="--prefer-binary"
 pythoncommand="python3"
 OPTIND=1         # Reset in case getopts has been used previously in the shell.
 config_path="/etc/genmon/"
