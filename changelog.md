@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Minor update to Briggs and Stratton to support negative temp values for Ambient Temp sensor
 - Added SNMP JSON support for Briggs and Stratton (thanks @zinglo)
 - minor update to correct validation issue with imported buttons in web UI
+- minor update to install script to reduce install time on some platforms (thanks @nkm8)
 
 ## V1.19.05 -2024-12-27
 - Added new log and alarm info for Evolution 4.5L
