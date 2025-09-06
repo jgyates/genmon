@@ -3758,11 +3758,17 @@ class Evolution(GeneratorController):
         # the initiation of the start delay timer, This only appears in Nexus and Air Cooled Evo
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x00010000):
             return "Startup Delay Timer Activated"
+        elif self.BitIsEqual(RegVal, 0x001F0000, 0x000E0000):
+            return "Cranking in Alarm"
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x00020000):
             if self.SystemInAlarm():
                 return "Cranking in Alarm"
             else:
                 return "Cranking"
+        elif self.BitIsEqual(RegVal, 0x001F0000, 0x000D0000):
+            return "Cranking in Warning"
+        elif self.BitIsEqual(RegVal, 0x001F0000, 0x000B0000):
+            return "Cranking Paused"
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x00050000):
             return "Cooling Down"
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x00030000):
@@ -3770,8 +3776,12 @@ class Evolution(GeneratorController):
                 return "Running in Alarm"
             else:
                 return "Running"
+        elif self.BitIsEqual(RegVal, 0x001F0000, 0x00090000):
+            return "Stopped with Inhibit Active"
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x00080000):
             return "Stopped in Alarm"
+        elif self.BitIsEqual(RegVal, 0x001F0000, 0x000A0000):
+            return "Stopped in Warning"
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x00060000):
             return "Running in Warning"
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x00000000):
