@@ -786,7 +786,7 @@ class Monitor(MySupport):
             if not LocalError:
                 if not command.lower().startswith("generator:"):
                     msgsubject = "Error in Genmon Command (command prefix)"
-                    msgbody += 'Invalid GENERATOR command: all commands must be prefixed by "generator: "'
+                    msgbody += 'Invalid GENERATOR command: all commands must be prefixed by "generator: ". The command received was ' + str(command)
                     LocalError = True
 
             if LocalError:
