@@ -1,14 +1,14 @@
 [ToolTips]
 disableemail = Disable all email use by the program.
-disablesmtp = Disable outgoing email
-disableimap = Disable incoming email
+disablesmtp = Disable outgoing email. See the project wiki Tips and Trick page for info on setting up outbound email.
+disableimap = Disable incoming email. See the project wiki Tips and Trick page for info on setting up inbound email.
 email_pw = Password for the email account used for sending and receiving email
 email_account = Email account username
 email_recipient = Address that email are sent
 sender_account = Email address from which the emails are sent, can be blank if Email Account is a valid address.
 sender_name = Name of the sender (i.e. Genmon or John Doe)
-smtp_server = Mail server used for sending email, leave empty to disable SMTP
-imap_server = Server address used for receiving email, leave empty to disable IMAP
+smtp_server = Mail server used for sending email, leave empty to disable SMTP. See the project wiki Tips and Trick page for info on setting up outbound email.
+imap_server = Server address used for receiving email, leave empty to disable IMAP. See the project wiki Tips and Trick page for info on setting up inbound email.
 smtp_port = SMTP port used on the SMTP server for sending email. Typically port 587 is used for TLS and port 465 is used for SSL
 ssl_enabled = Use SSL encryption to send emails
 tls_disable = If SSL is disabled TLS encryption is the default, unless this is enabled. If enabled and SSL is disabled, no encryption will be used to send email.
