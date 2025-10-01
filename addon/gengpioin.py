@@ -53,7 +53,7 @@ class MyGPIOInput(MySupport):
     # -----------------init------------------------------------------------------
     def __init__(
         self,
-        gpio=None,
+        channel=None,
         trigger=GPIO.FALLING,
         resistorpull=GPIO.PUD_UP,
         log=None,
@@ -64,7 +64,7 @@ class MyGPIOInput(MySupport):
         super(MyGPIOInput, self).__init__()
         self.Trigger = trigger
         self.ResistorPull = resistorpull
-        self.GPIO = gpio
+        self.channel = channel
         self.log = log
         self.TimeoutSeconds = 1
         self.BounceTime = bouncetime
@@ -76,17 +76,17 @@ class MyGPIOInput(MySupport):
 
             GPIO.setmode(GPIO.BOARD)
             GPIO.setwarnings(True)
-            GPIO.setup(gpio, GPIO.IN, pull_up_down=resistorpull)
+            GPIO.setup(channel, GPIO.IN, pull_up_down=resistorpull)
 
             if callback != None and callable(callback):
                 if self.BounceTime > 0:
                     GPIO.add_event_detect(
-                        gpio=self.GPIO, edge=self.Trigger, bouncetime=self.BounceTime
+                        self.channel, edge=self.Trigger, bouncetime=self.BounceTime
                     )
                 else:
-                    GPIO.add_event_detect(gpio=self.GPIO, edge=self.Trigger)
+                    GPIO.add_event_detect(self.channel, edge=self.Trigger)
                 if self.UseLibCallbacks:
-                    GPIO.add_event_callback(gpio=self.GPIO, callback=self.Callback)
+                    GPIO.add_event_callback(self.channel, callback=self.Callback)
                 else:
                     # setup callback
                     self.Threads["GPIOInputMonitor"] = MyThread(
@@ -96,7 +96,7 @@ class MyGPIOInput(MySupport):
 
         except Exception as e1:
             self.LogErrorLine(
-                "Error in MyGPIOInput:init: " + str(gpio) + " : " + str(e1)
+                "Error in MyGPIOInput:init: " + str(channel) + " : " + str(e1)
             )
 
     # -----------------GPIOInputMonitor------------------------------------------
@@ -104,16 +104,16 @@ class MyGPIOInput(MySupport):
 
         try:
             while not self.Exiting:
-                if GPIO.event_detected(self.GPIO):
-                    self.LogError("Edge detected on pin " + str(self.GPIO))
+                if GPIO.event_detected(self.channel):
+                    self.LogError("Edge detected on pin " + str(self.channel))
                     if self.Callback != None and callable(self.Callback):
-                        self.Callback(self.GPIO)
+                        self.Callback(self.channel)
                 if self.WaitForExit("GPIOInputMonitor", 1):
                     return
 
         except Exception as e1:
             self.LogErrorLine(
-                "Error GPIOInputMonitor: " + str(self.GPIO) + ": " + str(e1)
+                "Error GPIOInputMonitor: " + str(self.channel) + ": " + str(e1)
             )
 
     # -----------------Close-----------------------------------------------------
@@ -122,7 +122,7 @@ class MyGPIOInput(MySupport):
             self.Exiting = True
             if not self.UseLibCallbacks:
                 self.KillThread("GPIOInputMonitor")
-            GPIO.remove_event_detect(self.GPIO)
+            GPIO.remove_event_detect(self.channel)
 
         except Exception as e1:
             self.LogErrorLine("Error in Close: " + str(e1))
@@ -298,7 +298,7 @@ if __name__ == "__main__":
         for Channel, ChannelCallback in ChannelList.items():
             GPIOObjectList.append(
                 MyGPIOInput(
-                    gpio=Channel,
+                    channel=Channel,
                     trigger=DefaultTrigger,
                     resistorpull=DefaultPullup,
                     log=log,

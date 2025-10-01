@@ -1,6 +1,13 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.19.07 -2025-10-01
+- Added SNMP JSON support for Briggs and Stratton (thanks @zinglo)
+- minor update to correct validation issue with imported buttons in web UI
+- minor update to install script to reduce install time on some platforms (thanks @nkm8)
+- minor updates to engine status codes for Evo 2.0
+- Updated install to use rpi-lgpio instead of RPi.GPIO
+
 ## V1.19.06 -2025-05-21
 - Minor update to allow the wifi gauge to work on some USB wifi drivers
 - Minor update to change the display of gauges for Evo2 three phase models
@@ -10,10 +17,6 @@ All notable changes to this project will be documented in this file.
 - Update to change the default state of the option to ignore unknown values from Evo2 (now defaults to on)
 - Minor mod to help filter invalid data from Evo2 tied to known issue in wiki
 - Minor update to Briggs and Stratton to support negative temp values for Ambient Temp sensor
-- Added SNMP JSON support for Briggs and Stratton (thanks @zinglo)
-- minor update to correct validation issue with imported buttons in web UI
-- minor update to install script to reduce install time on some platforms (thanks @nkm8)
-- minior updates to engine status codes for Evo 2.0
 
 ## V1.19.05 -2024-12-27
 - Added new log and alarm info for Evolution 4.5L
