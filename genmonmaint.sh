@@ -34,6 +34,7 @@ managedpackages=false
 configfilescopied=false
 useserial=true
 operating_system="Unknown"
+version_id="Unknown"
 is_raspbian=true
 
 #-------------------------------------------------------------------------------
@@ -41,7 +42,9 @@ check_os(){
 
   source /etc/os-release
   operating_system=$NAME
+  version_id=$VERSION_ID
   echo "The operating system is: $NAME"
+  echo "OS version is: $VERSION_ID"
   string='My long string'
   if [[ $operating_system == *"Ubuntu"* ]]; then
      is_raspbian=false
