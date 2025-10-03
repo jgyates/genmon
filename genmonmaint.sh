@@ -189,6 +189,7 @@ function installgenmon() {
     sudo apt-get -yqq update
     if [ "$usepython3" = true ] ; then
       sudo apt-get -yqq install python3-pip
+      sudo apt-get install swig
     else
       sudo apt-get -yqq install python-pip
     fi
