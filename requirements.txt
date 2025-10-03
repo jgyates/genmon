@@ -19,4 +19,4 @@ spidev
 bleson @ git+https://github.com/TheCellule/python-bleson
 fluids
 voipms==0.2.5
-rpi-lgpio
+RPi.GPIO
