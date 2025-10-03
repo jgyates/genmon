@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - minor update to install script to reduce install time on some platforms (thanks @nkm8)
 - minor updates to engine status codes for Evo 2.0
 - Updated install to use rpi-lgpio instead of RPi.GPIO
+- Updates for Raspberry Pi OS trixie
 
 ## V1.19.06 -2025-05-21
 - Minor update to allow the wifi gauge to work on some USB wifi drivers
