@@ -434,7 +434,7 @@ class MyPlatform(MyCommon):
             result = subprocess.check_output(["iw", adapter, "link"])
             if sys.version_info[0] >= 3:
                 result = result.decode("utf-8")
-            match = re.search("signal: -(\d+) dBm", result)
+            match = re.search("signal: -(\\d+) dBm", result)
             return match.group(1)
         except Exception as e1:
             # This allow the wifi gauge to return correctly if the above iw method does not work
@@ -447,7 +447,7 @@ class MyPlatform(MyCommon):
             result = subprocess.check_output(["iwconfig", adapter])
             if sys.version_info[0] >= 3:
                 result = result.decode("utf-8")
-            match = re.search("Link Quality=([\s\S]*?) ", result)
+            match = re.search("Link Quality=([\\s\\S]*?) ", result)
             return match.group(1)
         except Exception as e1:
             return ""
@@ -458,7 +458,7 @@ class MyPlatform(MyCommon):
             result = subprocess.check_output(["iwconfig", adapter])
             if sys.version_info[0] >= 3:
                 result = result.decode("utf-8")
-            match = re.search('ESSID:"([\s\S]*?)"', result)
+            match = re.search('ESSID:"([\\s\\S]*?)"', result)
             return match.group(1)
         except Exception as e1:
             return ""

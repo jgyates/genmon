@@ -166,7 +166,7 @@ class MyCommon(object):
     # convert a string to an int or float, removes non string characters
     def ConvertToNumber(self, value):
         try:
-            return_value = re.sub('[^0-9.\-]','',value)
+            return_value = re.sub('[^0-9.\\-]','',value)
             try:
                 return_value = int(return_value)
             except:
