@@ -193,9 +193,9 @@ function installgenmon() {
       sudo apt-get -yqq install python-pip
     fi
     if [ "$usepython3" = true ] ; then
-      sudo apt-get -yqq install build-essential libssl-dev libffi-dev python3-dev cargo swig
+      sudo apt-get -yqq install build-essential libssl-dev libffi-dev python3-dev cargo swig liblgpio-dev
     else
-      sudo apt-get -yqq install build-essential libssl-dev libffi-dev python-dev cargo swig
+      sudo apt-get -yqq install build-essential libssl-dev libffi-dev python-dev cargo swig liblgpio-dev
     fi
     sudo apt-get -yqq install cmake
     sudo $pythoncommand -m pip install -r $genmondir/requirements.txt $pipoptions
