@@ -153,7 +153,7 @@ class GeneratorController(MySupport):
                 self.EnableDebug = self.config.ReadValue(
                     "enabledebug", return_type=bool, default=False
                 )
-                self.bDisplayUnknownSensors = self.config.ReadValue(
+                self.bDisplayExperimentalData = self.config.ReadValue(
                     "displayunknown", return_type=bool, default=False
                 )
                 self.bDisablePowerLog = self.config.ReadValue(
@@ -3133,66 +3133,6 @@ class GeneratorController(MySupport):
             return "Error"
         return "OK"
 
-    # ----------  GeneratorController::CheckLegBalance--------------------------
-    def CheckLegBalance(self, current_leg1, current_leg2, current_leg3 = None):
-        try:
-            ReturnValue = True
-
-            if self.bDisablePowerLog:
-                return True
-            if self.UnbalancedCapacity == None or not isinstance(self.UnbalancedCapacity, float) or self.UnbalancedCapacity <= 0:
-                return True
-        
-            if self.UnbalancedCapacity > 0.50:
-                self.UnbalancedCapacity == 0.5
-            elif self.UnbalancedCapacity > 0:
-                self.UnbalancedCapacity == 0
-
-            if current_leg3 != None and current_leg3 == 0 and current_leg1 == 0 and current_leg2 == 0:
-                return True
-            if current_leg1 == 0 and current_leg2 == 0:
-                return True
-
-            try:
-                NominalKw = float(self.NominalKW)
-                NominalLineVolts = float(self.NominalLineVolts)
-            except:
-                return True 
-            
-            leg_notice = ""
-            MaxCurrent = float(((NominalKw) * 1000.0) / NominalLineVolts)
-            diffvalue = abs(current_leg1 - current_leg2) / MaxCurrent
-            if ((abs(current_leg1 - current_leg2) / MaxCurrent) > self.UnbalancedCapacity):
-                msgbody = ("Unbalanced load on L1-L2:  %.2fA,  %.2fA, difference  is %d%% of %dA" % 
-                    (current_leg1, current_leg2,((abs(current_leg1 - current_leg2) / MaxCurrent) * 100), MaxCurrent))
-                leg_notice = "L1 - L2"
-                self.LogDebug(msgbody)
-                ReturnValue = False
-            if current_leg3 != None:
-                # now check leg 3
-                if ((abs(current_leg3 - current_leg2) / MaxCurrent) > self.UnbalancedCapacity):
-                    msgbody = ("Unbalanced load on L2-L3:  %.2fA,  %.2fA, difference  is %d%% of %dA" % 
-                    (current_leg1, current_leg2,((abs(current_leg1 - current_leg2) / MaxCurrent) * 100), MaxCurrent))
-                    leg_notice = "L2 - L3"
-                    self.LogDebug(msgbody)
-                    ReturnValue = False
-                if ((abs(current_leg3 - current_leg1) / MaxCurrent) > self.UnbalancedCapacity):
-                    msgbody = ("Unbalanced load on L1-L3:  %.2fA,  %.2fA, difference  is %d%% of %dA" % 
-                    (current_leg1, current_leg2,((abs(current_leg1 - current_leg2) / MaxCurrent) * 100), MaxCurrent))
-                    leg_notice = "L1 - L3"
-                    self.LogDebug(msgbody)
-                    ReturnValue = False
-            if not ReturnValue:
-                self.MessagePipe.SendMessage(
-                    "Generator Warning at %s: Load Imbalance on %s" % (self.SiteName, leg_notice),
-                    msgbody,
-                    msgtype="warn",
-                    oncedaily=True,
-                )
-            return ReturnValue
-        except Exception as e1:
-            self.LogErrorLine("Error in CheckLegBalance: " + str(e1))
-            return False
     # ----------  GeneratorController::SetExternalSensorData----------------
     def SetExternalSensorData(self, command):
 

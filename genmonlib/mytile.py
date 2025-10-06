@@ -281,13 +281,38 @@ class MyTile(MyCommon):
                         int(self.Nominal * 0.25),
                         int(self.Nominal),
                     ]
+                
                 colors = [self.RED, self.YELLOW, self.GREEN]
                 self.ColorZones = self.SetDefault(
                     self.ColorZones, self.CreateColorZoneList(values, colors)
                 )
                 self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
                 self.TileType = "gauge"
-
+            elif self.Type.lower() == "loadbalance":
+                self.Nominal = self.SetDefault(self.Nominal, 100)
+                self.Minimum = self.SetDefault(self.Minimum, 0)
+                self.Maximum = self.SetDefault(self.Maximum, 100)
+                self.Divisions = self.SetDefault(self.Divisions, int(self.Maximum / 10))
+                self.SubDivisions = self.SetDefault(self.SubDivisions, 10)
+                self.Labels = self.SetDefault(
+                    self.Labels,
+                    list(
+                        range(int(self.Minimum), int(self.Maximum), int(self.Divisions))
+                    ),
+                )
+                values = [
+                        self.Minimum,
+                        self.Nominal - int(self.Nominal * 0.10),
+                        self.Nominal,
+                        int(self.Maximum),
+                    ]
+                colors = [self.GREEN,self.YELLOW,self.RED]
+                
+                self.ColorZones = self.SetDefault(
+                    self.ColorZones, self.CreateColorZoneList(values, colors)
+                )
+                self.DefaultSize = self.SetDefault(self.DefaultSize, 2)
+                self.TileType = "gauge"
             elif self.Type.lower() == "temperature":
                 self.Nominal = self.SetDefault(self.Nominal, 100)
                 self.Minimum = self.SetDefault(self.Minimum, 0)

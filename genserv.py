@@ -3642,7 +3642,7 @@ def ReadSettingsFromFile():
     ]
     ConfigSettings["displayunknown"] = [
         "boolean",
-        "Display Unknown Sensors",
+        "Display Experimental Data",
         111,
         False,
         "",

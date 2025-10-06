@@ -99,6 +99,7 @@ class Evolution(GeneratorController):
         self.LiquidCooled = None
         self.LiquidCooledParams = None
         self.SavedFirmwareVersion = None
+        self.StartupDelayActiveTime = None
         # State Info
         self.GeneratorInAlarm = (
             False  # Flag to let the heartbeat thread know there is a problem
@@ -509,6 +510,23 @@ class Evolution(GeneratorController):
                         callbackparameters=(True,),
                     )
                     self.TileList.append(Tile)
+
+                    if (self.EvolutionController and not self.LiquidCooled) or self.UseExternalCTData:
+                        if self.UnbalancedCapacity > 0 and self.UnbalancedCapacity <= 0.5:
+                            # setup load balance gauge
+                            Tile = MyTile(
+                            self.log,
+                            title="Load Inbalance",
+                            type="loadbalance",
+                            nominal=int(self.UnbalancedCapacity * 100),
+                            minimum = 0,
+                            maximum = 100,
+                            units="%",
+                            callback=self.GetLegBalance,
+                            callbackparameters=(None, None, True),
+                            )
+                            self.TileList.append(Tile)
+
                     Tile = MyTile(
                         self.log,
                         title="kW Output",
@@ -2238,6 +2256,92 @@ class Evolution(GeneratorController):
 
         return Registers
 
+    # ----------  GeneratorController::GetLegBalance----------------------------
+    def GetLegBalance(self,current_leg1, current_leg2, percentage = False):
+        # zero return is perfect balance or disabled
+        try:
+            if current_leg1 == None:
+                current_leg1 = self.GetCurrentOutput(ReturnFloat=True, leg = "ct1")
+            if current_leg2 == None:
+                current_leg2 = self.GetCurrentOutput(ReturnFloat=True, leg = "ct2")
+            try:
+                NominalKw = float(self.NominalKW)
+                NominalLineVolts = float(self.NominalLineVolts)
+            except:
+                return 0
+            MaxCurrent = float(((NominalKw) * 1000.0) / NominalLineVolts)
+            diffvalue = abs(current_leg1 - current_leg2) / MaxCurrent
+            if percentage:
+                return int(diffvalue*100)
+            return diffvalue
+        except Exception as e1:
+            self.LogErrorLine("Error in GetLegBalance: " + str(e1))
+            return 0
+
+    # ----------  GeneratorController::CheckLegBalance--------------------------
+    def CheckLegBalance(self, current_leg1, current_leg2, current_leg3 = None):
+        try:
+            ReturnValue = True
+
+            if self.bDisablePowerLog:
+                return True
+            if self.UnbalancedCapacity == None or not isinstance(self.UnbalancedCapacity, float) or self.UnbalancedCapacity <= 0:
+                return True
+        
+            if self.UnbalancedCapacity > 0.50:
+                self.UnbalancedCapacity = 0.5
+            elif self.UnbalancedCapacity < 0:
+                self.UnbalancedCapacity = 0
+
+            if current_leg3 != None and current_leg3 == 0 and current_leg1 == 0 and current_leg2 == 0:
+                return True
+            if current_leg1 == 0 and current_leg2 == 0:
+                return True
+
+            try:
+                NominalKw = float(self.NominalKW)
+                NominalLineVolts = float(self.NominalLineVolts)
+            except:
+                return True 
+            
+            leg_notice = ""
+            MaxCurrent = float(((NominalKw) * 1000.0) / NominalLineVolts)
+
+            Balance = self.GetLegBalance(current_leg1, current_leg2)
+            if (Balance > self.UnbalancedCapacity):
+                msgbody = ("Unbalanced load on L1-L2:  %.2fA,  %.2fA, difference  is %d%% of %dA" % 
+                    (current_leg1, current_leg2,(Balance * 100), MaxCurrent))
+                leg_notice = "L1 - L2"
+                self.LogDebug(msgbody)
+                ReturnValue = False
+            if current_leg3 != None:
+                # now check leg 3
+                Balance = self.GetLegBalance(current_leg3, current_leg2)
+                if (Balance > self.UnbalancedCapacity):
+                    msgbody = ("Unbalanced load on L2-L3:  %.2fA,  %.2fA, difference  is %d%% of %dA" % 
+                    (current_leg2, current_leg3,(Balance * 100), MaxCurrent))
+                    leg_notice = "L2 - L3"
+                    self.LogDebug(msgbody)
+                    ReturnValue = False
+                Balance = self.GetLegBalance(current_leg3, current_leg1)
+                if (Balance > self.UnbalancedCapacity):
+                    msgbody = ("Unbalanced load on L1-L3:  %.2fA,  %.2fA, difference  is %d%% of %dA" % 
+                    (current_leg1, current_leg3,(Balance * 100), MaxCurrent))
+                    leg_notice = "L1 - L3"
+                    self.LogDebug(msgbody)
+                    ReturnValue = False
+            if not ReturnValue:
+                self.MessagePipe.SendMessage(
+                    "Generator Warning at %s: Load Imbalance on %s" % (self.SiteName, leg_notice),
+                    msgbody,
+                    msgtype="warn",
+                    oncedaily=True,
+                )
+            return ReturnValue
+        except Exception as e1:
+            self.LogErrorLine("Error in CheckLegBalance: " + str(e1))
+            return False
+    
     # ------------ Evolution:CheckForOutage -------------------------------------
     # also update min and max utility voltage
     def CheckForOutage(self):
@@ -2686,12 +2790,12 @@ class Evolution(GeneratorController):
     def signed32(self, value):
         return -(int(value) & 0x80000000) | (int(value) & 0x7FFFFFFF)
 
-    # ------------ Evolution:DisplayUnknownSensors-------------------------------
-    def DisplayUnknownSensors(self):
+    # ------------ Evolution:DisplayExperimentalSensors-------------------------------
+    def DisplayExperimentalSensors(self):
 
         Sensors = []
 
-        if not self.bDisplayUnknownSensors:
+        if not self.bDisplayExperimentalData:
             return ""
 
         # Evo Liquid Cooled: ramps up to 300 decimal (1800 RPM)
@@ -2699,12 +2803,17 @@ class Evolution(GeneratorController):
         # this is possibly raw data from RPM sensor
         Sensors.append({"Raw Revolution Sensor": self.GetParameter("003c")})
         Sensors.append({"Hz (Calculated)": self.GetFrequency(Calculate=True)})
+        if self.StartupDelayActiveTime != None:
+            TimeActive = self.StartupDelayActiveTime.strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            TimeActive = "None"
+        Sensors.append({"Last Startup Delay Timer Active": TimeActive})
 
+        if (self.EvolutionController and not self.LiquidCooled) or self.UseExternalCTData:
+            Sensors.append({"Load Imbalance": str(self.GetLegBalance(None,None, True)) + " %"})
+        
         if self.EvolutionController and self.LiquidCooled:
             # get total hours since activation
-            Sensors.append(
-                {"Battery Charger Sensor": self.GetParameter("05ee", Divider=1000.0)}
-            )
             Sensors.append(
                 {"Battery Status (Sensor)": self.GetBatteryStatusAlternate()}
             )
@@ -2742,24 +2851,6 @@ class Evolution(GeneratorController):
                 {"Battery Status (Sensor)": self.GetBatteryStatusAlternate()}
             )
 
-        if not self.LiquidCooled:  # Nexus AC and Evo AC
-
-            # starts  0x4000 when idle, ramps up to ~0x2e6a while running
-            Value = self.GetUnknownSensor("0032", RequiresRunning=True)
-            if len(Value):
-                FloatTemp = int(Value) / 100.0
-                FloatStr = "%.2f" % FloatTemp
-                Sensors.append({"Unsupported Sensor 1 (0x0032)": FloatStr})
-
-            Value = self.GetUnknownSensor("0033")
-            if len(Value):
-                Sensors.append({"Unsupported Sensor 2 (0x0033)": Value})
-
-            # return -2 thru 2
-            Value = self.GetUnknownSensor("0034")
-            if len(Value):
-                SignedStr = str(self.signed16(int(Value)))
-                Sensors.append({"Unsupported Sensor 3 (0x0034)": SignedStr})
 
         return Sensors
 
@@ -3750,14 +3841,17 @@ class Evolution(GeneratorController):
         # Cranking
         # Cranking Warning
         # Cranking Alarm
+        # Note: this appears to define the state where the generator should start, it defines
+        # the initiation of the start delay timer, This only appears in Nexus and Air Cooled Evo
+        if self.BitIsEqual(RegVal, 0x001F0000, 0x00010000):
+            self.StartupDelayActiveTime = datetime.datetime.now()
+            return "Startup Delay Timer Activated"
+
         if self.BitIsEqual(RegVal, 0x001F0000, 0x00040000):
             return "Exercising"
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x00090000):
             return "Stopped"
-        # Note: this appears to define the state where the generator should start, it defines
-        # the initiation of the start delay timer, This only appears in Nexus and Air Cooled Evo
-        elif self.BitIsEqual(RegVal, 0x001F0000, 0x00010000):
-            return "Startup Delay Timer Activated"
+        
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x000E0000):
             return "Cranking in Alarm"
         elif self.BitIsEqual(RegVal, 0x001F0000, 0x00020000):
@@ -5046,8 +5140,8 @@ class Evolution(GeneratorController):
                 }
             )
 
-            if self.bDisplayUnknownSensors:
-                Engine.append({"Unsupported Sensors": self.DisplayUnknownSensors()})
+            if self.bDisplayExperimentalData:
+                Engine.append({"Experimental Sensors": self.DisplayExperimentalSensors()})
 
             if self.EvolutionController and self.LiquidCooled:
                 Line.append({"Transfer Switch State": self.GetTransferStatus()})

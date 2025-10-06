@@ -8,6 +8,9 @@ All notable changes to this project will be documented in this file.
 - minor updates to engine status codes for Evo 2.0
 - Updated install to use rpi-lgpio instead of RPi.GPIO
 - Updates for Raspberry Pi OS trixie
+- Added new gauge to display load imbalance between leg 1 and 2 for Evo controllers with readable CTs
+- Changed the values displayed in Unsupported Sensors to be more of a catch all for additional data
+- Renamed Usupported Sensors to Experimental Data
 
 ## V1.19.06 -2025-05-21
 - Minor update to allow the wifi gauge to work on some USB wifi drivers
