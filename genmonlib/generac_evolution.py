@@ -516,7 +516,7 @@ class Evolution(GeneratorController):
                             # setup load balance gauge
                             Tile = MyTile(
                             self.log,
-                            title="Load Inbalance",
+                            title="Load Imbalance",
                             type="loadbalance",
                             nominal=int(self.UnbalancedCapacity * 100),
                             minimum = 0,
