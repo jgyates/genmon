@@ -421,12 +421,24 @@ def command(command):
     if Closing or Restarting:
         return jsonify("Closing")
     if HTTPAuthUser == None or HTTPAuthPass == None:
-        return ProcessCommand(command)
 
+        # Not everything sent to this function is a json string
+        # so try to jsonify it and if that fails just return the
+        # original string
+        commandResponse = ProcessCommand(command)
+        try:
+            # Set Content-Type to application/json
+            return jsonify(json.loads(commandResponse))
+        except Exception as e1:
+            return commandResponse
     if not session.get("logged_in"):
         return render_template("login.html")
     else:
-        return ProcessCommand(command)
+        commandResponse = ProcessCommand(command)
+        try:
+            return jsonify(json.loads(commandResponse))
+        except Exception as e1:
+            return commandResponse
 
 
 # -------------------------------------------------------------------------------
