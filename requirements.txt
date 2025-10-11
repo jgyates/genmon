@@ -4,7 +4,7 @@ pyserial
 crcmod
 pyowm==2.10.0
 pytz
-pyopenssl==24.1.0
+pyopenssl
 twilio
 chump
 paho-mqtt==1.6.1
@@ -17,6 +17,8 @@ smbus
 psutil
 spidev
 bleson @ git+https://github.com/TheCellule/python-bleson
-fluids
+# This breaks on 32 bit trixie and takes a long time on slower systems like the pi3 and pi zero 
+# so I am removing it from the base install
+#fluids
 voipms==0.2.5
 RPi.GPIO

@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Changed the values displayed in Unsupported Sensors to be more of a catch all for additional data
 - Renamed Usupported Sensors to Experimental Data
 - update for JSON export in web UI (thanks @raptor-b)
+- removed version requirement for pyopenssl, latest version is now used since this appeared to break the 32 bit trixie install
 
 ## V1.19.06 -2025-05-21
 - Minor update to allow the wifi gauge to work on some USB wifi drivers
