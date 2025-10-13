@@ -202,7 +202,7 @@ class centriconnect(MyCommon):
                 temp_param = "DeviceTempCelsius"
             else:
                 temp_param = "DeviceTempFahrenheit" 
-            return round(float(self.GetValue(temp_param),2))
+            return round(float(self.GetValue(temp_param)),2)
 
         except Exception as e1:
             self.LogErrorLine("centriconnect: Error in GetTemp: " + str(e1))
