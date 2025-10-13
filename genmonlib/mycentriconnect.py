@@ -74,11 +74,13 @@ class centriconnect(MyCommon):
                 '''
                 {
                     "36e551aa-c215-4c9b-8c70-ba77296878cc": {         # Device ID as the root key
-                    "AlertStatus": "Low Level",                       # Alert status indicating the current status of the device (e.g., "Low Level" for tank alerts)
+                    "AlertStatus": "Low Level",                       # Alert status indicating the current status of the device (e.g., "Low Level", "Normal", etc for tank alerts)
                     "Altitude": 281.68231201171875,                   # Most recent altitude reading from the device's GPS in meters
                     "BatteryVolts": 4.047032833099365,                # Battery voltage level (4.0V is 100%, 3.5V is the lowest threshold - units are shipped out at 110%)
                     "DeviceID": "36e551aa-c215-4c9b-8c70-ba77296878cc", # Unique identifier for the device
                     "DeviceName": "White Cloud",                      # User-assigned name for the device
+                    "DeviceTempCelsius"                               # Device Temperature in Celsius
+                    "DeviceTempFahrenheit"                            # Device Temperature in Fahrenheit
                     "LastPostTimeIso": "2024-10-25 18:00:35.378000",  # ISO 8601 timestamp for the last data post
                     "Latitude": 43.526187896728516,                   # Last recorded latitude coordinate for the device's location
                     "Longitude": -85.62322998046875,                  # Last recorded longitude coordinate for the device's location
@@ -188,4 +190,20 @@ class centriconnect(MyCommon):
 
         except Exception as e1:
             self.LogErrorLine("centriconnect: Error in GetPercentage: " + str(e1))
+            return 0.0
+        
+    # ---------- centriconnect::GetTemp-----------------------------------------
+    def GetTemp(self, use_metric = False):
+        try:
+            if not self.InitOK():
+                return None
+            
+            if use_metric:
+                temp_param = "DeviceTempCelsius"
+            else:
+                temp_param = "DeviceTempFahrenheit" 
+            return round(float(self.GetValue(temp_param),2))
+
+        except Exception as e1:
+            self.LogErrorLine("centriconnect: Error in GetTemp: " + str(e1))
             return 0.0
