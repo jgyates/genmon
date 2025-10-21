@@ -13,6 +13,9 @@ All notable changes to this project will be documented in this file.
 - Renamed Usupported Sensors to Experimental Data
 - update for JSON export in web UI (thanks @raptor-b)
 - removed version requirement for pyopenssl, latest version is now used since this appeared to break the 32 bit trixie install
+- Corrected typo on Settings page
+- Corrected issue with IP address being printed twice in alarm emails on some controllers
+- Updated DeepSee config to allow changing the generator parameters from the web interface
 
 ## V1.19.06 -2025-05-21
 - Minor update to allow the wifi gauge to work on some USB wifi drivers
