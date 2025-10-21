@@ -3631,7 +3631,7 @@ def ReadSettingsFromFile():
     if ControllerType == "custom":
         ConfigSettings["nominalbattery"] = [
                 "list",
-                "Nomonal Battery Voltage",
+                "Nominal Battery Voltage",
                 108,
                 "24",
                 "",
