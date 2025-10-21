@@ -831,14 +831,14 @@ class CustomController(GeneratorController):
                     msgsubject = "Generator Notice: ALARM Active at " + self.SiteName
                     if not status_included:
                         msgbody += self.GetMessageText()
-                    msgbody += "\nIP Address: " + self.GetNetworkIp()
+                        msgbody += "\nIP Address: " + self.GetNetworkIp()
                     self.MessagePipe.SendMessage(msgsubject, msgbody, msgtype="warn")
             else:
                 if self.CurrentAlarmState:
                     msgsubject = "Generator Notice: ALARM Clear at " + self.SiteName
                     if not status_included:
                         msgbody += self.GetMessageText()
-                    msgbody += "\nIP Address: " + self.GetNetworkIp()
+                        msgbody += "\nIP Address: " + self.GetNetworkIp()
                     self.MessagePipe.SendMessage(msgsubject, msgbody, msgtype="warn")
 
             self.CurrentAlarmState = self.SystemInAlarm()
