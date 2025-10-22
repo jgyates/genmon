@@ -59,7 +59,10 @@
         "9a09": {"length": 4, "text": "Alarm Bits 5", "comment": "TODO not implemented"},
         "9a0a": {"length": 4, "text": "Alarm Bits 6", "comment": "TODO not implemented"},
         "9a0c": {"length": 4, "text": "Alarm Bits 7", "comment": "TODO not implemented"},
-        "9a0e": {"length": 4, "text": "Alarm Bits 8", "comment": "TODO not implemented"}
+        "9a0e": {"length": 4, "text": "Alarm Bits 8", "comment": "TODO not implemented"},
+        "9a10": {"length": 4, "text": "Alarm Bits 9", "comment": "TODO not implemented"},
+        "9a12": {"length": 4, "text": "Alarm Bits 10", "comment": "TODO not implemented"},
+        "9a14": {"length": 4, "text": "Alarm Bits 11", "comment": "TODO, these and beyond are for the 8xxx family"}
     },
     "include":{
         "alarm_check":{
