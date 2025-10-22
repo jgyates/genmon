@@ -47,6 +47,8 @@
         "04ea": {"length": 4, "text": "Battery Charger Output Voltage", "comment": "Signed, mV"},
         "054d": {"length": 2, "text": "Oil Level", "comment": "% 0 - 100, page 5 = Extended Instrumentation"},
         "054f": {"length": 2, "text": "Coolant Level", "comment": "% 0 - 100"},
+        "0580": {"length": 2, "text": "Engine Operating State", "comment": ""},
+        "058a": {"length": 2, "text": "Engine State (alt)", "comment": ""},
         "0600": {"length": 4, "text": "Output Power", "comment":"page 6 = Derived Instrumentation"},
         "0706": {"length": 4, "text": "Run Hours", "comment":"page 7 = Accumulated Instrumentation "},
         "0800": {"length": 2, "text": "Number of Named Alarms (old)", "comment":"page 8 = Alarm Conditions (old method)"},
