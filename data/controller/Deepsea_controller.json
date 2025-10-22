@@ -54,11 +54,12 @@
         "9a00": {"length": 2, "text": "Named Alarm Conditions", "comment":"0x9a = 154 decimal,Named Alarm Conditions "},
         "9a01": {"length": 4, "text": "Alarm Bits 1"},
         "9a03": {"length": 4, "text": "Alarm Bits 2"},
-        "9a05": 4,
-        "9a07": 4,
-        "9a09": 4,
-        "9a0a": 4,
-        "9a0b": 4
+        "9a05": {"length": 4, "text": "Alarm Bits 3", "comment": "TODO not implemented"},
+        "9a07": {"length": 4, "text": "Alarm Bits 4", "comment": "TODO not implemented"},
+        "9a09": {"length": 4, "text": "Alarm Bits 5", "comment": "TODO not implemented"},
+        "9a0a": {"length": 4, "text": "Alarm Bits 6", "comment": "TODO not implemented"},
+        "9a0c": {"length": 4, "text": "Alarm Bits 7", "comment": "TODO not implemented"},
+        "9a0e": {"length": 4, "text": "Alarm Bits 8", "comment": "TODO not implemented"}
     },
     "include":{
         "alarm_check":{
