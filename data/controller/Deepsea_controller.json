@@ -21,8 +21,8 @@
         "0400": {"length": 2, "text": "Oil Pressure", "comment": "kPa, page 4 = Basic instrumentation "},
         "0401": {"length": 2, "text": "Coolant Temperature", "comment": "signed, -50C to 200C"},
         "0402": {"length": 2, "text": "Oil Temperature", "comment": "signed, -50C to 200C"},
-        "0403": {"length": 2, "text": "Charger Alternator Voltage", "comment": "0V-40V"},
-        "0404": {"length": 2, "text": "Fuel Sensor"},
+        "0403": {"length": 2, "text": "Fuel Level", "comment": "percentage, 0 - 130"},
+        "0404": {"length": 2, "text": "Charger Alternator Voltage", "comment": "0V-40V"},
         "0405": {"length": 2, "text": "Battery Voltage"},
         "0406": {"length": 2, "text": "RPM"},
         "0407": {"length": 2, "text": "Frequency"},
@@ -39,7 +39,8 @@
         "041c": {"length": 4, "text": "Output Power L2", "comment": "L2, Watts, signed"},
         "041e": {"length": 4, "text": "Output Power L3", "comment": "L3, Watts, signed"},
         "0423": {"length": 2, "text": "Utility Frequency"},
-        "0424": {"length": 4, "text": "Utility Voltage", "comment": "L1"},
+        "0424": {"length": 2, "text": "Utility Voltage", "comment": "L1, NOTE: The docs say this should be 32 bits"},
+        "0425": {"length": 2, "text": "Utility Voltage Test", "comment": ", NOTE: The docs say this should be 32 bits"},
         "0426": {"length": 4, "text": "Utility Voltage L2", "comment": "L2"},
         "0428": {"length": 4, "text": "Utility Voltage L3", "comment": "L3"},
         "04e8": {"length": 4, "text": "Battery Charger Output Current", "comment": "Signed, mA"},
@@ -50,7 +51,7 @@
         "0706": {"length": 4, "text": "Run Hours", "comment":"page 7 = Accumulated Instrumentation "},
         "0800": {"length": 2, "text": "Number of Named Alarms (old)", "comment":"page 8 = Alarm Conditions (old method)"},
         "9900": {"length": 2, "text": "Unnamed Alarm Conditions", "comment": "0x99=page 153 - Unnamed Alarm Conditions"},
-        "9a00": {"length": 2, "text": "Alarm Code", "comment":"0x9a = 154 decimal,Named Alarm Conditions "},
+        "9a00": {"length": 2, "text": "Named Alarm Conditions", "comment":"0x9a = 154 decimal,Named Alarm Conditions "},
         "9a01": {"length": 4, "text": "Alarm Bits 1"},
         "9a03": {"length": 4, "text": "Alarm Bits 2"},
         "9a05": 4,
@@ -60,28 +61,15 @@
         "9a0b": 4
     },
     "include":{
-        "alarm_type":{
-        "title":"Alarm Type",
-        "mask": "000f",
-        "type": "object_int_index",
-        "object": {
-          "0": "Disabled Output",
-          "1": "Not Active Alarm",
-          "2": "Warning",
-          "3": "Shutdown Alarm",
-          "4": "Electrical Trip",
-          "5": "Controlled Shutdown Alarm",
-          "6": "Reserved",
-          "7": "Inactive (no display)",
-          "9": "Inactive",
-          "10": "Active",
-          "11": "Reserved",
-          "12": "Reserved",
-          "13": "Reserved",
-          "14": "Reserved",
-          "15": "Unimplemented Alarm"
+        "alarm_check":{
+          "value": "1",
+          "mask": "000f",
+          "type": "regex",
+          "regex": "^[2-59a]$",
+          "title": "Alarm",
+          "comment": "This will return active if the values are 2-5, 9 or a (hex)",
+          "comment2": "These are displayable active alarm conditions"  
         }
-      }
     },
     "switch_state": [
       {
@@ -105,146 +93,98 @@
     "alarm_conditions": [
         {
           "reg": "9a01",
-          "mask": "0000000f",
-          "value": "1",
-          "type": "regex",
-          "regex": "^[2-59a]$",
-          "title": "Alarm",
+          "shiftright": 0,
+          "include": "alarm_check",
           "text": "Low Coolant Temperature"
         },
         {
           "reg": "9a01",
-          "mask": "000000f0",
-          "value": "1",
-          "type": "regex",
-          "regex": "^[2-59a]0$",
-          "title": "Alarm",
+          "shiftright": 4,
+          "include": "alarm_check",
           "text": "High Coolant Temperature"
         },
         {
           "reg": "9a01",
-          "mask": "00000f00",
-          "value": "1",
-          "type": "regex",
-          "regex": "^[2-59a]00$",
-          "title": "Alarm",
+          "shiftright": 8,
+          "include": "alarm_check",
           "text": "Low Oil Pressure"
         },
         {
           "reg": "9a01",
-          "mask": "0000f000",
-          "value": "1",
-          "type": "regex",
-          "regex": "^[2-59a]000$",
-          "title": "Alarm",
+          "shiftright": 12,
+          "include": "alarm_check",
           "text": "Emergency Stop"
         },
         {
           "reg": "9a01",
-          "mask": "000f0000",
-          "value": "1",
-          "type": "regex",
-          "regex": "^[2-59a]0000$",
-          "title": "Alarm",
+          "shiftright": 16,
+          "include": "alarm_check",
           "text": "Generator Over Frequency"
         },
         {
           "reg": "9a01",
-          "mask": "00f00000",
-          "value": "1",
-          "type": "regex",
-          "regex": "^[2-59a]00000$",
-          "title": "Alarm",
+          "shiftright": 20,
+          "include": "alarm_check",
           "text": "Generator Under Frequency"
         },
         {
           "reg": "9a01",
-          "mask": "0f000000",
-          "value": "1",
-          "type": "regex",
-          "regex": "^[2-59a]000000$",
-          "title": "Alarm",
+          "shiftright": 24,
+          "include": "alarm_check",
           "text": "Generator Over Speed"
         },
         {
           "reg": "9a01",
-          "mask": "f0000000",
-          "value": "1",
-          "type": "regex",
-          "regex": "^[2-59a]0000000$",
-          "title": "Alarm",
+          "shiftright": 28,
+          "include": "alarm_check",
           "text": "Generator Under Speed"
         },
         {
             "reg": "9a03",
-            "mask": "0000000f",
-            "value": "1",
-            "type": "regex",
-            "regex": "^[2-59a]$",
-            "title": "Alarm",
+            "shiftright": 0,
+            "include": "alarm_check",
             "text": "High Battery Voltage"
         },
         {
             "reg": "9a03",
-            "mask": "000000f0",
-            "value": "1",
-            "type": "regex",
-            "regex": "^[2-59a]0$",
-            "title": "Alarm",
+            "shiftright": 4,
+            "include": "alarm_check",
             "text": "Low Battery Voltage"
         },
         {
             "reg": "9a03",
-            "mask": "00000f00",
-            "value": "1",
-            "type": "regex",
-            "regex": "^[2-59a]00$",
-            "title": "Alarm",
+            "shiftright": 8,
+            "include": "alarm_check",
             "text": "Generator High Voltage"
         },
         {
             "reg": "9a03",
-            "mask": "0000f000",
-            "value": "1",
-            "type": "regex",
-            "regex": "^[2-59a]000$",
-            "title": "Alarm",
+            "shiftright": 12,
+            "include": "alarm_check",
             "text": "Generator Low Voltage"
         },
         {
             "reg": "9a03",
-            "mask": "000f0000",
-            "value": "1",
-            "type": "regex",
-            "regex": "^[2-59a]0000$",
-            "title": "Alarm",
+            "shiftright": 16,
+            "include": "alarm_check",
             "text": "Generator Fail to Close"
         },
         {
             "reg": "9a03",
-            "mask": "00f00000",
-            "value": "1",
-            "type": "regex",
-            "regex": "^[2-59a]00000$",
-            "title": "Alarm",
+            "shiftright": 20,
+            "include": "alarm_check",
             "text": "Fail to Stop"
         },
         {
             "reg": "9a03",
-            "mask": "0f000000",
-            "value": "1",
-            "type": "regex",
-            "regex": "^[2-59a]000000$",
-            "title": "Alarm",
+            "shiftright": 24,
+            "include": "alarm_check",
             "text": "Fail to Start"
         },
         {
             "reg": "9a03",
-            "mask": "f0000000",
-            "value": "1",
-            "type": "regex",
-            "regex": "^[2-59a]0000000$",
-            "title": "Alarm",
+            "shiftright": 28,
+            "include": "alarm_check",
             "text": "Charge Alternator Failure"
         },
         {
