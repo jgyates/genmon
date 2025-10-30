@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - Updated DeepSee config to allow changing the generator parameters from the web interface
 - On Maint page, Renamed "Hours of Protection" to "Time Since Activation" for Evoltuion 
 - Added advanced settings option to display Hours of Protection as years, days, hours
+- Corrected SNMP issue on some Evo items on the maint page
 
 ## V1.19.06 -2025-05-21
 - Minor update to allow the wifi gauge to work on some USB wifi drivers

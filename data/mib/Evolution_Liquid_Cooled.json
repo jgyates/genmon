@@ -139,7 +139,7 @@
             "integer": true,
             "description": "calVolts",
             "default" : " ",
-            "keywords" : ["Maintenances", "Calibrate Volts"]
+            "keywords" : ["Maintenance", "Calibrate Volts"]
         },
         {
             "oid": "0, 1, 10",
@@ -147,7 +147,7 @@
             "integer": true,
             "description": "ratedMaxPower",
             "default" : " ",
-            "keywords" : ["Maintenances", "Rated Max Power"]
+            "keywords" : ["Maintenance", "Rated Max Power"]
         },
         {
             "oid": "0, 1, 11",
@@ -155,7 +155,7 @@
             "integer": true,
             "description": "paramGroup",
             "default" : " ",
-            "keywords" : ["Maintenances", "Param Group"]
+            "keywords" : ["Maintenance", "Param Group"]
         },
         {
             "oid": "0, 1, 12",
@@ -163,15 +163,15 @@
             "integer": true,
             "description": "voltageCode",
             "default" : " ",
-            "keywords" : ["Maintenances", "Voltage Code"]
+            "keywords" : ["Maintenance", "Voltage Code"]
         },
         {
             "oid": "0, 1, 13",
             "return_type": "str",
             "integer": true,
-            "description": "hoursProtection",
+            "description": "activationTime",
             "default" : " ",
-            "keywords" : ["Maintenances", "Hours of Protection"]
+            "keywords" : ["Maintenance", "Time Since Activation"]
         },
         {
             "oid": "0, 1, 14",
@@ -179,7 +179,7 @@
             "integer": true,
             "description": "voltsPerHz",
             "default" : " ",
-            "keywords" : ["Maintenances", "Volts Per Hertz"]
+            "keywords" : ["Maintenance", "Volts Per Hertz"]
         },
         {
             "oid": "0, 1, 15",
@@ -187,7 +187,7 @@
             "integer": true,
             "description": "gain",
             "default" : " ",
-            "keywords" : ["Maintenances", "Gain"]
+            "keywords" : ["Maintenance", "Gain"]
         },
         {
             "oid": "0, 1, 16",
@@ -195,7 +195,7 @@
             "integer": true,
             "description": "targetFreq",
             "default" : " ",
-            "keywords" : ["Maintenances", "Target Frequency"]
+            "keywords" : ["Maintenance", "Target Frequency"]
         },
         {
             "oid": "0, 1, 17",
@@ -203,7 +203,7 @@
             "integer": true,
             "description": "targetVolts",
             "default" : " ",
-            "keywords" : ["Maintenances", "Target Voltage"]
+            "keywords" : ["Maintenance", "Target Voltage"]
         },
         {
             "oid": "1, 3, 8",

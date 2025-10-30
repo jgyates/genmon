@@ -176,7 +176,7 @@ evMonitorMIBs OBJECT-GROUP
             paramGroup,
             voltageCode,
             phase,
-            hoursProtection,
+            activationTime,
             voltsPerHz,
             gain,
             targetFreq,
@@ -900,12 +900,12 @@ phase OBJECT-TYPE
   "(Evolution/Nexus) The controller's configured phase count."
  ::= { evcontrollerSettings 8 }
 
-hoursProtection OBJECT-TYPE
+activationTime OBJECT-TYPE
  SYNTAX DisplayString
  MAX-ACCESS read-only
  STATUS current
  DESCRIPTION
-  "(Evolution/Nexus) The expected available hours of protection calculated on a variety of different factors."
+  "(Evolution/Nexus) The expected available hours of protection, time since activation."
  ::= { evcontrollerSettings 9 }
 
 voltsPerHz OBJECT-TYPE
