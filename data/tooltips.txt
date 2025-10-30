@@ -115,6 +115,7 @@ serial_parity=The default for Generac is None. Some (Briggs and Stratton uses Od
 serial_rate=The rate of the serial link used to communicate with the controller. In almost all cases this is 9600. Evolution 4.5L models may use 115200 for this value.
 forceserialuse=If enabled, the software will try continue attempt use the serial port even if it is not found when the software is initially loaded. This may be needed for some serial USB devices.
 unbalanced_capacity=Disabled if zero. If non zero this will be the maximum allowable difference in the load on a generator leg, represented as a percent of the maximum load. A value of 0.50 (50%) would be an allowable difference of 100 amps between legs on a 200 amp rated generator. Lower values will be the most strict threshold. Higher values will be less strict. Valid values are 0 - 0.50. Unbalanced capacity notices are set via a warning email, once per day.
+show_hours_activation=Enable to show Time Since Activation as hours, disable to show as Years, Days, Hours
 [generac_evo_nexus]
 0000=Product line
 0001=Switch, Engine and Alarm Status

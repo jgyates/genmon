@@ -2519,6 +2519,34 @@ class Evolution(GeneratorController):
         except Exception as e1:
             self.LogErrorLine("Error in CheckForAlarms: " + str(e1))
 
+    # ------------ Evolution:GetTimeSinceActivation ----------------------------
+    def GetTimeSinceActivation(self, return_hours = True, JSONNum = False):
+        try:
+            hours_since_activation = self.GetParameter("0054", ReturnInt=True)
+            if hours_since_activation < 0:
+                hours_since_activation = 0
+
+            if return_hours:
+                return self.ValueOut( hours_since_activation, "h", JSONNum)
+
+            hours_in_day = 24
+            hours_in_year = 365 * hours_in_day # Assuming 365 days in a year
+
+            years = hours_since_activation // hours_in_year # round down
+            remaining_hours_after_years = hours_since_activation % hours_in_year
+
+            days = remaining_hours_after_years // hours_in_day # round down
+            remaining_hours_after_days = remaining_hours_after_years % hours_in_day
+
+            return_data = ""
+            if years > 0:
+                return_data = f"{years} years, "
+            return_data+= f"{days} days, {remaining_hours_after_days} hours"
+            return return_data
+        except Exception as e1:
+            self.LogErrorLine("Error in GetTimeSinceActivation: " + str(e1))
+            return "0"
+
     # ------------ Evolution:DisplayMaintenance ---------------------------------
     def DisplayMaintenance(self, DictOut=False, JSONNum=False):
 
@@ -2641,9 +2669,7 @@ class Evolution(GeneratorController):
                 # get total hours since activation
                 ControllerSettings.append(
                     {
-                        "Hours of Protection": self.ValueOut(
-                            self.GetParameter("0054", ReturnInt=True), "h", JSONNum
-                        )
+                        "Time Since Activation": self.GetTimeSinceActivation(return_hours=self.show_hours_activation, JSONNum=JSONNum)
                     }
                 )
             if self.EvolutionController and self.LiquidCooled:
@@ -5365,6 +5391,9 @@ class Evolution(GeneratorController):
                 )
                 self.NexusLegacyFreq = self.config.ReadValue(
                     "nexus_legacy_freq", return_type=bool, default=True
+                )
+                self.show_hours_activation = self.config.ReadValue(
+                    "show_hours_activation", return_type=bool, default=True
                 )
 
                 self.SerialNumberReplacement = self.config.ReadValue(

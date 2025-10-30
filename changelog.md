@@ -16,6 +16,8 @@ All notable changes to this project will be documented in this file.
 - Corrected typo on Settings page
 - Corrected issue with IP address being printed twice in alarm emails on some controllers
 - Updated DeepSee config to allow changing the generator parameters from the web interface
+- On Maint page, Renamed "Hours of Protection" to "Time Since Activation" for Evoltuion 
+- Added advanced settings option to display Hours of Protection as years, days, hours
 
 ## V1.19.06 -2025-05-21
 - Minor update to allow the wifi gauge to work on some USB wifi drivers

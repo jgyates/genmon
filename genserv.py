@@ -2926,6 +2926,17 @@ def ReadAdvancedSettingsFromFile():
                 GENMON_SECTION,
                 "unbalanced_capacity",
             ]
+            ConfigSettings["show_hours_activation"] = [
+            "boolean",
+            "Time Since Activation Format",
+            47,
+            True,
+            "",
+            0,
+            GENMON_CONFIG,
+            GENMON_SECTION,
+            "show_hours_activation",
+            ]
         # ConfigSettings["kwlog"] = ['string', 'Power Log Name / Disable', 36, "", "", 0, GENMON_CONFIG, GENMON_SECTION, "kwlog"]
         if ControllerType != "h_100":
             ConfigSettings["usenominallinevolts"] = [
