@@ -96,6 +96,8 @@ function checkmanagedpackages() {
       echo "Setting up virtual python environment for genmon"
       $pythoncommand -m venv $genmondir/genenv
       pythoncommand="$genmondir/genenv/bin/python"
+      # upgrade setuptools for the environment
+      sudo $pythoncommand  -m pip install --upgrade setuptools
   fi
 }
 
