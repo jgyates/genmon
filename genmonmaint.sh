@@ -96,8 +96,6 @@ function checkmanagedpackages() {
       echo "Setting up virtual python environment for genmon"
       $pythoncommand -m venv $genmondir/genenv
       pythoncommand="$genmondir/genenv/bin/python"
-      # upgrade setuptools for the environment
-      sudo $pythoncommand  -m pip install --upgrade setuptools
   fi
 }
 
@@ -200,6 +198,9 @@ function installgenmon() {
       sudo apt-get -yqq install build-essential libssl-dev libffi-dev python-dev cargo swig liblgpio-dev
     fi
     sudo apt-get -yqq install cmake
+    # upgrade setuptools for the environment
+    sudo $pythoncommand  -m pip install --upgrade setuptools
+
     sudo $pythoncommand -m pip install -r $genmondir/requirements.txt $pipoptions
 
     sudo chmod 775 "$genmondir/startgenmon.sh"
