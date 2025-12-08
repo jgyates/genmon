@@ -3919,6 +3919,38 @@ class Evolution(GeneratorController):
             )
             return "UNKNOWN: %08x" % RegVal
 
+    # ------------ Evolution:GetLedState ---------------------------------------
+    def GetLedState(self):
+        try:
+            if not self.EvolutionController:
+                return "Unknown"
+            if self.LiquidCooled:
+                return "Unknown"
+            if not self.Evolution2 and not self.PowerPact:
+                return "Unknown"
+
+            Value = self.GetRegisterValueFromList("0062")
+            if len(Value) != 4:
+                return "Unknown"
+            
+            ValueInt = int(Value, 16)
+            if chr(ValueInt) == 'G':
+                return "Ready to Run"
+            elif chr(ValueInt) == 'Y':
+                return "Not Running with Alarms or Warnings Active"
+            elif chr(ValueInt) == 'R':
+                return "Switch Off or Alarms Active"
+            elif chr(ValueInt) == 'U':
+                return "Running, no Alarms"
+            elif chr(ValueInt) == 'N':
+                return "Running with Warnings"
+            else:
+                self.LogError("Unknown value in GetLedState value = %x" % ValueInt)
+                return "Unknown"
+        except Exception as e1:
+            self.LogErrorLine("Error in GetLedState: " + str(e1))
+            return "Unknown"
+
     # ------------ Evolution:GetSwitchState -------------------------------------
     def GetSwitchState(self, Reg0001Value=None):
 
@@ -5101,6 +5133,9 @@ class Evolution(GeneratorController):
             Engine.append(
                 {"Engine State": self.GetEngineState(Reg0001Value=Reg0001Value)}
             )
+            if self.Evolution2 or self.PowerPact:
+                Engine.append({"Generator State": self.GetLedState()})
+
             if self.EvolutionController and self.LiquidCooled:
                 Engine.append({"Active Relays": self.GetDigitalOutputs()})
                 Engine.append({"Active Sensors": self.GetSensorInputs()})

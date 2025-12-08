@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - On Maint page, Renamed "Hours of Protection" to "Time Since Activation" for Evoltuion 
 - Added advanced settings option to display Hours of Protection as years, days, hours
 - Corrected SNMP issue on some Evo items on the maint page
+- Added "Generator State" value for Evolution 2.0 and power pact models on the Status page
 
 ## V1.19.06 -2025-05-21
 - Minor update to allow the wifi gauge to work on some USB wifi drivers
