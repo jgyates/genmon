@@ -531,6 +531,8 @@ class MyTile(MyCommon):
 
             # this check makes the gauge not display distored if the value is out of range,
             # but the above "text" will show the value that is out of range as text
+            if isinstance(Value, str):
+                Value = int(Value)
             if Value < self.Minimum or  Value > self.Maximum:
                 if Value < self.Minimum:
                     Value = self.Minimum
