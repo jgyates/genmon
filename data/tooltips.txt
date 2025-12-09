@@ -97,7 +97,7 @@ estimated_load=The percent load (expresses a a decimal value i.e. .5 = 50 percen
 subtractfuel=The amount of fuel (gal or L, depending on 'Use Metric' setting) to subtract from the fuel in tank estimate
 half_rate=The unit of fuel for Half and Full Rate parameters. Use this fuel consumption stats for non Evolution units or to override the fuel consumption defaults for Evolution controllers.
 full_rate=The number of units of fuel consumed by your generator at a full load. Use this fuel consumption stats for non Evolution units or to override the fuel consumption defaults for Evolution controllers.
-fuel_units=The number of units of fuel consumed by your generator at a half load. Use this fuel consumption stats for non Evolution units or to override the fuel consumption defaults for Evolution controllers.
+fuel_units=The unit of the Half and Full consumption rate. Use this fuel consumption stats for non Evolution units or to override the fuel consumption defaults for Evolution controllers.
 user_url=A user defined URL link to include in status emails sent from the software when the generator status changes
 usenominallinevolts = Enable overriding of the default of 240V for nominal line voltage in the UI
 nominallinevolts = Override nominal line voltage value for UI (i.e. 220, 230 in stead of 240)

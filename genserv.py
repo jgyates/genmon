@@ -3022,21 +3022,10 @@ def ReadAdvancedSettingsFromFile():
                 "usecalculatedpower",
             ]
 
-        ConfigSettings["fuel_units"] = [
-            "list",
-            "Fuel Units",
-            55,
-            "gal",
-            "",
-            "gal,cubic feet",
-            GENMON_CONFIG,
-            GENMON_SECTION,
-            "fuel_units",
-        ]
         ConfigSettings["half_rate"] = [
             "float",
             "Fuel Rate Half Load",
-            56,
+            55,
             "0.0",
             "",
             "number",
@@ -3047,7 +3036,7 @@ def ReadAdvancedSettingsFromFile():
         ConfigSettings["full_rate"] = [
             "float",
             "Fuel Rate Full Load",
-            57,
+            56,
             "0.0",
             "",
             "number",
@@ -3055,7 +3044,17 @@ def ReadAdvancedSettingsFromFile():
             GENMON_SECTION,
             "full_rate",
         ]
-
+        ConfigSettings["fuel_units"] = [
+            "list",
+            "Fuel Units",
+            57,
+            "gal",
+            "",
+            "gal,cubic feet",
+            GENMON_CONFIG,
+            GENMON_SECTION,
+            "fuel_units",
+        ]
         ConfigSettings["enable_fuel_log"] = [
             "boolean",
             "Log Fuel Level to File",
