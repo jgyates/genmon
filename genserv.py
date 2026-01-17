@@ -1568,6 +1568,228 @@ def GetAddOns():
             bounds="",
             display_name="Client ID",
         )
+        # GENHOMEASSISTANT
+        AddOnCfg["genhomeassistant"] = collections.OrderedDict()
+        AddOnCfg["genhomeassistant"]["enable"] = ConfigFiles[GENLOADER_CONFIG].ReadValue(
+            "enable", return_type=bool, section="genhomeassistant", default=False
+        )
+        AddOnCfg["genhomeassistant"]["title"] = "Home Assistant MQTT Discovery"
+        AddOnCfg["genhomeassistant"][
+            "description"
+        ] = "Publish MQTT auto-discovery messages for Home Assistant integration"
+        AddOnCfg["genhomeassistant"]["icon"] = "home-assistant"
+        AddOnCfg["genhomeassistant"][
+            "url"
+        ] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genhomeassistantpy-optional"
+        AddOnCfg["genhomeassistant"]["parameters"] = collections.OrderedDict()
+
+        AddOnCfg["genhomeassistant"]["parameters"]["mqtt_address"] = CreateAddOnParam(
+            ConfigFiles[GENHOMEASSISTANT_CONFIG].ReadValue(
+                "mqtt_address", return_type=str, default=""
+            ),
+            "string",
+            "Address of your MQTT broker server (IP address or hostname).",
+            bounds="required IPAddress",
+            display_name="MQTT Server Address",
+        )
+        AddOnCfg["genhomeassistant"]["parameters"]["mqtt_port"] = CreateAddOnParam(
+            ConfigFiles[GENHOMEASSISTANT_CONFIG].ReadValue(
+                "mqtt_port", return_type=int, default=1883
+            ),
+            "int",
+            "Port of the MQTT broker. Default is 1883 (or 8883 for TLS).",
+            bounds="required digits",
+            display_name="MQTT Port",
+        )
+        AddOnCfg["genhomeassistant"]["parameters"]["username"] = CreateAddOnParam(
+            ConfigFiles[GENHOMEASSISTANT_CONFIG].ReadValue(
+                "username", return_type=str, default=""
+            ),
+            "string",
+            "Username for MQTT broker authentication (leave empty if not required).",
+            bounds="minmax:4:50",
+            display_name="Username",
+        )
+        AddOnCfg["genhomeassistant"]["parameters"]["password"] = CreateAddOnParam(
+            ConfigFiles[GENHOMEASSISTANT_CONFIG].ReadValue(
+                "password", return_type=str, default=""
+            ),
+            "password",
+            "Password for MQTT broker authentication (leave empty if not required).",
+            bounds="",
+            display_name="Password",
+        )
+        AddOnCfg["genhomeassistant"]["parameters"]["discovery_prefix"] = CreateAddOnParam(
+            ConfigFiles[GENHOMEASSISTANT_CONFIG].ReadValue(
+                "discovery_prefix", return_type=str, default="homeassistant"
+            ),
+            "string",
+            "Home Assistant MQTT discovery prefix. Default is 'homeassistant'. Only change if you configured a different prefix in HA.",
+            bounds="",
+            display_name="Discovery Prefix",
+        )
+        AddOnCfg["genhomeassistant"]["parameters"]["base_topic"] = CreateAddOnParam(
+            ConfigFiles[GENHOMEASSISTANT_CONFIG].ReadValue(
+                "base_topic", return_type=str, default="genmon"
+            ),
+            "string",
+            "Base topic for state and command messages. Default is 'genmon'.",
+            bounds="",
+            display_name="Base Topic",
+        )
+        AddOnCfg["genhomeassistant"]["parameters"]["device_id"] = CreateAddOnParam(
+            ConfigFiles[GENHOMEASSISTANT_CONFIG].ReadValue(
+                "device_id", return_type=str, default="generator"
+            ),
+            "string",
+            "Unique device identifier used in entity IDs. Change if running multiple genmon instances.",
+            bounds="",
+            display_name="Device ID",
+        )
+        AddOnCfg["genhomeassistant"]["parameters"]["device_name"] = CreateAddOnParam(
+            ConfigFiles[GENHOMEASSISTANT_CONFIG].ReadValue(
+                "device_name", return_type=str, default="Generator"
+            ),
+            "string",
+            "Friendly device name shown in Home Assistant.",
+            bounds="",
+            display_name="Device Name",
+        )
+        AddOnCfg["genhomeassistant"]["parameters"]["poll_interval"] = CreateAddOnParam(
+            ConfigFiles[GENHOMEASSISTANT_CONFIG].ReadValue(
+                "poll_interval", return_type=float, default=3.0
+            ),
+            "int",
+            "Interval in seconds between polling genmon for status updates. Default is 3.",
+            bounds="",
+            display_name="Poll Interval",
+        )
+        AddOnCfg["genhomeassistant"]["parameters"]["discovery_interval"] = CreateAddOnParam(
+            ConfigFiles[GENHOMEASSISTANT_CONFIG].ReadValue(
+                "discovery_interval", return_type=int, default=300
+            ),
+            "int",
+            "Interval in seconds to republish discovery messages. Set to 0 to only publish on startup. Default is 300.",
+            bounds="",
+            display_name="Discovery Interval",
+        )
+        AddOnCfg["genhomeassistant"]["parameters"]["blacklist"] = CreateAddOnParam(
+            ConfigFiles[GENHOMEASSISTANT_CONFIG].ReadValue(
+                "blacklist", return_type=str, default=""
+            ),
+            "string",
+            "Comma-separated list of strings. Entities with names containing these strings will not be created.",
+            bounds="",
+            display_name="Entity Blacklist",
+        )
+        AddOnCfg["genhomeassistant"]["parameters"]["include_monitor_stats"] = CreateAddOnParam(
+            ConfigFiles[GENHOMEASSISTANT_CONFIG].ReadValue(
+                "include_monitor_stats", return_type=bool, default=True
+            ),
+            "boolean",
+            "Include platform/monitor statistics (CPU, memory, etc.) as entities.",
+            bounds="",
+            display_name="Include Monitor Stats",
+        )
+        AddOnCfg["genhomeassistant"]["parameters"]["include_weather"] = CreateAddOnParam(
+            ConfigFiles[GENHOMEASSISTANT_CONFIG].ReadValue(
+                "include_weather", return_type=bool, default=True
+            ),
+            "boolean",
+            "Include weather data entities if weather is configured in genmon.",
+            bounds="",
+            display_name="Include Weather",
+        )
+        AddOnCfg["genhomeassistant"]["parameters"]["include_logs"] = CreateAddOnParam(
+            ConfigFiles[GENHOMEASSISTANT_CONFIG].ReadValue(
+                "include_logs", return_type=bool, default=False
+            ),
+            "boolean",
+            "Include log entries as sensor attributes.",
+            bounds="",
+            display_name="Include Logs",
+        )
+        AddOnCfg["genhomeassistant"]["parameters"]["numeric_json"] = CreateAddOnParam(
+            ConfigFiles[GENHOMEASSISTANT_CONFIG].ReadValue(
+                "numeric_json", return_type=bool, default=True
+            ),
+            "boolean",
+            "Use numeric JSON format when querying genmon (cleaner values without embedded units).",
+            bounds="",
+            display_name="Use Numeric JSON",
+        )
+        AddOnCfg["genhomeassistant"]["parameters"]["monitor_address"] = CreateAddOnParam(
+            ConfigFiles[GENHOMEASSISTANT_CONFIG].ReadValue(
+                "monitor_address", return_type=str, default=""
+            ),
+            "string",
+            "IP address of genmon if running on a different system. Leave empty for localhost.",
+            bounds="IPAddress",
+            display_name="Genmon Address",
+        )
+        AddOnCfg["genhomeassistant"]["parameters"]["cert_authority_path"] = CreateAddOnParam(
+            ConfigFiles[GENHOMEASSISTANT_CONFIG].ReadValue(
+                "cert_authority_path", return_type=str, default=""
+            ),
+            "string",
+            "Full path to Certificate Authority file. Leave empty to not use SSL/TLS.",
+            bounds="",
+            display_name="CA Certificate Path",
+        )
+        AddOnCfg["genhomeassistant"]["parameters"]["tls_version"] = CreateAddOnParam(
+            ConfigFiles[GENHOMEASSISTANT_CONFIG].ReadValue(
+                "tls_version", return_type=str, default="1.2"
+            ),
+            "list",
+            "TLS version to use. Default is 1.2. Ignored if CA certificate is not used.",
+            bounds="1.0,1.1,1.2",
+            display_name="TLS Version",
+        )
+        AddOnCfg["genhomeassistant"]["parameters"]["cert_reqs"] = CreateAddOnParam(
+            ConfigFiles[GENHOMEASSISTANT_CONFIG].ReadValue(
+                "cert_reqs", return_type=str, default="Required"
+            ),
+            "list",
+            "Certificate requirements that the client imposes on the broker.",
+            bounds="None,Optional,Required",
+            display_name="Certificate Requirements",
+        )
+        AddOnCfg["genhomeassistant"]["parameters"]["client_cert_path"] = CreateAddOnParam(
+            ConfigFiles[GENHOMEASSISTANT_CONFIG].ReadValue(
+                "client_cert_path", return_type=str, default=""
+            ),
+            "string",
+            "Full path to client certificate file for MTLS.",
+            bounds="",
+            display_name="Client Certificate Path",
+        )
+        AddOnCfg["genhomeassistant"]["parameters"]["client_key_path"] = CreateAddOnParam(
+            ConfigFiles[GENHOMEASSISTANT_CONFIG].ReadValue(
+                "client_key_path", return_type=str, default=""
+            ),
+            "string",
+            "Full path to client key file for MTLS.",
+            bounds="",
+            display_name="Client Key Path",
+        )
+        AddOnCfg["genhomeassistant"]["parameters"]["client_id"] = CreateAddOnParam(
+            ConfigFiles[GENHOMEASSISTANT_CONFIG].ReadValue(
+                "client_id", return_type=str, default="genmon_ha"
+            ),
+            "string",
+            "Unique MQTT client identifier. Must be unique per genmon instance.",
+            bounds="",
+            display_name="Client ID",
+        )
+        AddOnCfg["genhomeassistant"]["parameters"]["debug"] = CreateAddOnParam(
+            ConfigFiles[GENHOMEASSISTANT_CONFIG].ReadValue(
+                "debug", return_type=bool, default=False
+            ),
+            "boolean",
+            "Enable debug logging.",
+            bounds="",
+            display_name="Debug",
+        )
         # GENSLACK
         AddOnCfg["genslack"] = collections.OrderedDict()
         AddOnCfg["genslack"]["enable"] = ConfigFiles[GENLOADER_CONFIG].ReadValue(
@@ -2456,6 +2678,7 @@ def SaveAddOnSettings(query_string):
             "gencthat": ConfigFiles[GENCTHAT_CONFIG],
             "genmopeka": ConfigFiles[GENMOPEKA_CONFIG],
             "gensms_voip": ConfigFiles[GENSMS_VOIP_CONFIG],
+            "genhomeassistant": ConfigFiles[GENHOMEASSISTANT_CONFIG],
         }
 
         for module, entries in settings.items():  # module
@@ -4725,6 +4948,7 @@ if __name__ == "__main__":
     GENCTHAT_CONFIG = os.path.join(ConfigFilePath, "gencthat.conf")
     GENMOPEKA_CONFIG = os.path.join(ConfigFilePath, "genmopeka.conf")
     GENSMS_VOIP_CONFIG = os.path.join(ConfigFilePath, "gensms_voip.conf")
+    GENHOMEASSISTANT_CONFIG = os.path.join(ConfigFilePath, "genhomeassistant.conf")
 
     ConfigFileList = [
         GENMON_CONFIG,
@@ -4750,6 +4974,7 @@ if __name__ == "__main__":
         GENCTHAT_CONFIG,
         GENMOPEKA_CONFIG,
         GENSMS_VOIP_CONFIG,
+        GENHOMEASSISTANT_CONFIG,
     ]
 
     for ConfigFile in ConfigFileList:
