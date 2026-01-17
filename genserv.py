@@ -1577,7 +1577,7 @@ def GetAddOns():
         AddOnCfg["genhomeassistant"][
             "description"
         ] = "Publish MQTT auto-discovery messages for Home Assistant integration"
-        AddOnCfg["genhomeassistant"]["icon"] = "home-assistant"
+        AddOnCfg["genhomeassistant"]["icon"] = "mqtt"
         AddOnCfg["genhomeassistant"][
             "url"
         ] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genhomeassistantpy-optional"
