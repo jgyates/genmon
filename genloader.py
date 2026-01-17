@@ -716,6 +716,7 @@ class Loader(MySupport):
                 "gencustomgpio",
                 "gensms_voip",
                 "genloader",
+                "genhomeassistant",
             ]
             for entry in ValidSections:
                 if not entry in Sections:
@@ -768,6 +769,15 @@ class Loader(MySupport):
                             section=entry,
                             module="gencentriconnect.py",
                             conffile="gencentriconnect.conf",
+                        )
+                    if entry == "genhomeassistant":
+                        self.LogError(
+                            "Warning: Missing entry: " + entry + " , adding entry"
+                        )
+                        self.AddEntry(
+                            section=entry,
+                            module="genhomeassistant.py",
+                            conffile="genhomeassistant.conf",
                         )
                     if entry == "gentankutil":
                         self.LogError(
