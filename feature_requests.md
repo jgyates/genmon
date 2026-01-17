@@ -3,7 +3,6 @@
 - [Add options for custom alarm descriptions for H-100 and PowerZone](https://github.com/jgyates/genmon/issues/660) @j45p3r2
 - [Dark Mode for web interface](https://github.com/jgyates/genmon/issues/602) @danodemano
 - [Add ATS test using power reading](https://github.com/jgyates/genmon/issues/593) @skipfire
-- [Discovery for Home Assistant](https://github.com/jgyates/genmon/issues/590) @dave-parsons
 - [Make Service Journal entries sortable and filterable](https://github.com/jgyates/genmon/issues/584) @nickdot
 - [Option to remember 2FA for 30 days](https://github.com/jgyates/genmon/issues/565) @danodemano
 - [Connecting Genmon to Homebridge (and ultimately Homekit)](https://github.com/jgyates/genmon/issues/552) @muddycharles68
