@@ -1,0 +1,11 @@
+{
+  "controller_type": "h-100",
+  "version": "1.0",
+  "description": "H-100/G-Panel controller-specific entity definitions (extends base)",
+  "sensors": [],
+  "binary_sensors": [],
+  "buttons": [],
+  "switches": [],
+  "selects": [],
+  "numbers": []
+}

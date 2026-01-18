@@ -715,6 +715,14 @@ class MyHomeAssistant(MySupport):
         self.LastDiscoveryTime = 0
         self.DynamicSensors = {}  # Storage for dynamically discovered sensors
 
+        # Entity definitions - will be loaded from JSON or fall back to hardcoded
+        self.SensorDefinitions = {}
+        self.BinarySensorDefinitions = {}
+        self.ButtonDefinitions = {}
+        self.SwitchDefinitions = {}
+        self.SelectDefinitions = {}
+        self.NumberDefinitions = {}
+
         # Exercise time settings (parsed from genmon)
         self.ExerciseSettings = {
             "frequency": "Weekly",
@@ -736,6 +744,13 @@ class MyHomeAssistant(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error connecting to genmon: " + str(e1))
             sys.exit(1)
+
+        # Load entity definitions from JSON files (with hardcoded fallback)
+        try:
+            self._load_entity_definitions()
+        except Exception as e1:
+            self.LogErrorLine("Error loading entity definitions: " + str(e1))
+            self._use_hardcoded_fallback()
 
         try:
             self._setup_mqtt()
@@ -887,6 +902,208 @@ class MyHomeAssistant(MySupport):
             self.LogErrorLine("Error in _get_generator_info: " + str(e1))
 
     # --------------------------------------------------------------------------
+    def ReadJSONConfig(self, FileName):
+        """Read and parse a JSON configuration file.
+
+        Following the pattern from gensnmp.py for consistency.
+        """
+        if os.path.isfile(FileName):
+            try:
+                with open(FileName) as infile:
+                    return json.load(infile)
+            except Exception as e1:
+                self.LogErrorLine(
+                    "Error in ReadJSONConfig reading file: " + str(e1) + ": " + str(FileName)
+                )
+                return None
+        else:
+            self.LogDebug("JSON config file not found: " + str(FileName))
+            return None
+
+    # --------------------------------------------------------------------------
+    def _get_controller_config_filename(self):
+        """Map controller type to JSON filename."""
+        controller_map = {
+            "evolution": "generac_evo_nexus.json",
+            "nexus": "generac_evo_nexus.json",
+            "h-100": "h_100.json",
+            "powerzone": "powerzone.json",
+            "custom": "custom.json",
+        }
+        return controller_map.get(self.ControllerType, "custom.json")
+
+    # --------------------------------------------------------------------------
+    def _convert_json_entities_to_dict(self, entity_list):
+        """Convert a list of entity definitions from JSON format to dict format.
+
+        JSON format uses a list with entity_id as a field.
+        Dict format uses entity_id as the key (for backward compatibility).
+        """
+        result = {}
+        if not entity_list:
+            return result
+        for entity in entity_list:
+            if isinstance(entity, dict) and "entity_id" in entity:
+                entity_id = entity["entity_id"]
+                # Create a copy without entity_id in the value
+                entity_copy = {k: v for k, v in entity.items() if k != "entity_id"}
+                result[entity_id] = entity_copy
+        return result
+
+    # --------------------------------------------------------------------------
+    def _merge_entity_definitions(self, new_definitions, target_dict, override=False):
+        """Merge entity definitions into target dictionary.
+
+        Args:
+            new_definitions: Dict of new entity definitions
+            target_dict: Target dict to merge into
+            override: If True, replace existing entries; if False, only add new ones
+        """
+        for entity_id, entity_def in new_definitions.items():
+            if override or entity_id not in target_dict:
+                target_dict[entity_id] = entity_def.copy()
+
+    # --------------------------------------------------------------------------
+    def _load_entity_definitions(self):
+        """Load entity definitions from JSON files.
+
+        Loads base.json first, then controller-specific file, then optionally
+        userdefined.json. Falls back to hardcoded definitions if base.json
+        is missing.
+        """
+        # Determine the data directory path
+        file_root = os.path.dirname(os.path.realpath(__file__))
+        parent_root = os.path.abspath(os.path.join(file_root, os.pardir))
+        data_dir = os.path.join(parent_root, "data", "homeassistant")
+
+        # Load base.json (required for JSON-based loading)
+        base_file = os.path.join(data_dir, "base.json")
+        base_config = self.ReadJSONConfig(base_file)
+
+        if base_config is None:
+            self.LogDebug("base.json not found, using hardcoded fallback")
+            self._use_hardcoded_fallback()
+            return
+
+        self.LogDebug(f"Loading entity definitions from JSON files in {data_dir}")
+
+        # Convert and load base definitions
+        self.SensorDefinitions = self._convert_json_entities_to_dict(
+            base_config.get("sensors", [])
+        )
+        self.BinarySensorDefinitions = self._convert_json_entities_to_dict(
+            base_config.get("binary_sensors", [])
+        )
+        self.ButtonDefinitions = self._convert_json_entities_to_dict(
+            base_config.get("buttons", [])
+        )
+        self.SwitchDefinitions = self._convert_json_entities_to_dict(
+            base_config.get("switches", [])
+        )
+        self.SelectDefinitions = self._convert_json_entities_to_dict(
+            base_config.get("selects", [])
+        )
+        self.NumberDefinitions = self._convert_json_entities_to_dict(
+            base_config.get("numbers", [])
+        )
+
+        self.LogDebug(
+            f"Loaded base definitions: {len(self.SensorDefinitions)} sensors, "
+            f"{len(self.BinarySensorDefinitions)} binary_sensors, "
+            f"{len(self.ButtonDefinitions)} buttons, "
+            f"{len(self.SwitchDefinitions)} switches, "
+            f"{len(self.SelectDefinitions)} selects, "
+            f"{len(self.NumberDefinitions)} numbers"
+        )
+
+        # Load controller-specific file (extends/overrides base)
+        controller_filename = self._get_controller_config_filename()
+        controller_file = os.path.join(data_dir, controller_filename)
+        controller_config = self.ReadJSONConfig(controller_file)
+
+        if controller_config:
+            self.LogDebug(f"Loading controller-specific definitions from {controller_filename}")
+            # Merge controller-specific definitions (override mode for customization)
+            self._merge_entity_definitions(
+                self._convert_json_entities_to_dict(controller_config.get("sensors", [])),
+                self.SensorDefinitions,
+                override=True,
+            )
+            self._merge_entity_definitions(
+                self._convert_json_entities_to_dict(controller_config.get("binary_sensors", [])),
+                self.BinarySensorDefinitions,
+                override=True,
+            )
+            self._merge_entity_definitions(
+                self._convert_json_entities_to_dict(controller_config.get("buttons", [])),
+                self.ButtonDefinitions,
+                override=True,
+            )
+            self._merge_entity_definitions(
+                self._convert_json_entities_to_dict(controller_config.get("switches", [])),
+                self.SwitchDefinitions,
+                override=True,
+            )
+            self._merge_entity_definitions(
+                self._convert_json_entities_to_dict(controller_config.get("selects", [])),
+                self.SelectDefinitions,
+                override=True,
+            )
+            self._merge_entity_definitions(
+                self._convert_json_entities_to_dict(controller_config.get("numbers", [])),
+                self.NumberDefinitions,
+                override=True,
+            )
+
+        # Optionally load userdefined.json (user customizations, always override)
+        user_file = os.path.join(data_dir, "userdefined.json")
+        user_config = self.ReadJSONConfig(user_file)
+
+        if user_config:
+            self.LogDebug("Loading user-defined entity definitions from userdefined.json")
+            self._merge_entity_definitions(
+                self._convert_json_entities_to_dict(user_config.get("sensors", [])),
+                self.SensorDefinitions,
+                override=True,
+            )
+            self._merge_entity_definitions(
+                self._convert_json_entities_to_dict(user_config.get("binary_sensors", [])),
+                self.BinarySensorDefinitions,
+                override=True,
+            )
+            self._merge_entity_definitions(
+                self._convert_json_entities_to_dict(user_config.get("buttons", [])),
+                self.ButtonDefinitions,
+                override=True,
+            )
+            self._merge_entity_definitions(
+                self._convert_json_entities_to_dict(user_config.get("switches", [])),
+                self.SwitchDefinitions,
+                override=True,
+            )
+            self._merge_entity_definitions(
+                self._convert_json_entities_to_dict(user_config.get("selects", [])),
+                self.SelectDefinitions,
+                override=True,
+            )
+            self._merge_entity_definitions(
+                self._convert_json_entities_to_dict(user_config.get("numbers", [])),
+                self.NumberDefinitions,
+                override=True,
+            )
+
+    # --------------------------------------------------------------------------
+    def _use_hardcoded_fallback(self):
+        """Fall back to hardcoded definitions if JSON files are missing or invalid."""
+        self.LogDebug("Using hardcoded entity definitions as fallback")
+        self.SensorDefinitions = SENSOR_DEFINITIONS.copy()
+        self.BinarySensorDefinitions = BINARY_SENSOR_DEFINITIONS.copy()
+        self.ButtonDefinitions = BUTTON_DEFINITIONS.copy()
+        self.SwitchDefinitions = SWITCH_DEFINITIONS.copy()
+        self.SelectDefinitions = SELECT_DEFINITIONS.copy()
+        self.NumberDefinitions = NUMBER_DEFINITIONS.copy()
+
+    # --------------------------------------------------------------------------
     def _setup_mqtt(self):
         """Initialize MQTT client and connection"""
 
@@ -1020,11 +1237,11 @@ class MyHomeAssistant(MySupport):
         """Handle button press commands"""
 
         try:
-            if entity_id not in BUTTON_DEFINITIONS:
+            if entity_id not in self.ButtonDefinitions:
                 self.LogError(f"Unknown button entity: {entity_id}")
                 return
 
-            button_def = BUTTON_DEFINITIONS[entity_id]
+            button_def = self.ButtonDefinitions[entity_id]
             command = button_def["command"]
 
             self.LogDebug(f"Executing button command: {command}")
@@ -1039,11 +1256,11 @@ class MyHomeAssistant(MySupport):
         """Handle switch on/off commands"""
 
         try:
-            if entity_id not in SWITCH_DEFINITIONS:
+            if entity_id not in self.SwitchDefinitions:
                 self.LogError(f"Unknown switch entity: {entity_id}")
                 return
 
-            switch_def = SWITCH_DEFINITIONS[entity_id]
+            switch_def = self.SwitchDefinitions[entity_id]
 
             if payload.upper() == "ON":
                 command = switch_def["command_on"]
@@ -1066,11 +1283,11 @@ class MyHomeAssistant(MySupport):
         """Handle select dropdown commands"""
 
         try:
-            if entity_id not in SELECT_DEFINITIONS:
+            if entity_id not in self.SelectDefinitions:
                 self.LogError(f"Unknown select entity: {entity_id}")
                 return
 
-            select_def = SELECT_DEFINITIONS[entity_id]
+            select_def = self.SelectDefinitions[entity_id]
 
             # Validate the selection
             if payload not in select_def["options"]:
@@ -1099,11 +1316,11 @@ class MyHomeAssistant(MySupport):
         """Handle number input commands"""
 
         try:
-            if entity_id not in NUMBER_DEFINITIONS:
+            if entity_id not in self.NumberDefinitions:
                 self.LogError(f"Unknown number entity: {entity_id}")
                 return
 
-            number_def = NUMBER_DEFINITIONS[entity_id]
+            number_def = self.NumberDefinitions[entity_id]
 
             # Parse and validate the number
             try:
@@ -1317,7 +1534,7 @@ class MyHomeAssistant(MySupport):
             # Publish sensor discoveries (predefined) - only if data exists
             sensors_published = 0
             sensors_skipped = 0
-            for entity_id, entity_def in SENSOR_DEFINITIONS.items():
+            for entity_id, entity_def in self.SensorDefinitions.items():
                 if self._entity_allowed(entity_def, entity_id):
                     # Check if this sensor has actual data from genmon
                     if "path" in entity_def and genmon_data:
@@ -1336,27 +1553,27 @@ class MyHomeAssistant(MySupport):
                 self._publish_sensor_discovery(entity_id, entity_def)
 
             # Publish binary sensor discoveries
-            for entity_id, entity_def in BINARY_SENSOR_DEFINITIONS.items():
+            for entity_id, entity_def in self.BinarySensorDefinitions.items():
                 if self._entity_allowed(entity_def, entity_id):
                     self._publish_binary_sensor_discovery(entity_id, entity_def)
 
             # Publish button discoveries
-            for entity_id, entity_def in BUTTON_DEFINITIONS.items():
+            for entity_id, entity_def in self.ButtonDefinitions.items():
                 if self._entity_allowed(entity_def, entity_id):
                     self._publish_button_discovery(entity_id, entity_def)
 
             # Publish switch discoveries
-            for entity_id, entity_def in SWITCH_DEFINITIONS.items():
+            for entity_id, entity_def in self.SwitchDefinitions.items():
                 if self._entity_allowed(entity_def, entity_id):
                     self._publish_switch_discovery(entity_id, entity_def)
 
             # Publish select discoveries
-            for entity_id, entity_def in SELECT_DEFINITIONS.items():
+            for entity_id, entity_def in self.SelectDefinitions.items():
                 if self._entity_allowed(entity_def, entity_id):
                     self._publish_select_discovery(entity_id, entity_def)
 
             # Publish number discoveries
-            for entity_id, entity_def in NUMBER_DEFINITIONS.items():
+            for entity_id, entity_def in self.NumberDefinitions.items():
                 if self._entity_allowed(entity_def, entity_id):
                     self._publish_number_discovery(entity_id, entity_def)
 
@@ -1706,7 +1923,7 @@ class MyHomeAssistant(MySupport):
                     self._publish_sensor_discovery(entity_id, entity_def)
 
         # Process predefined sensors
-        for entity_id, entity_def in SENSOR_DEFINITIONS.items():
+        for entity_id, entity_def in self.SensorDefinitions.items():
             if not self._entity_allowed(entity_def, entity_id):
                 continue
             try:
@@ -1736,7 +1953,7 @@ class MyHomeAssistant(MySupport):
                     self.LogDebug(f"Error processing dynamic sensor {entity_id}: {str(e1)}")
 
         # Process binary sensors
-        for entity_id, entity_def in BINARY_SENSOR_DEFINITIONS.items():
+        for entity_id, entity_def in self.BinarySensorDefinitions.items():
             if not self._entity_allowed(entity_def, entity_id):
                 continue
             try:
@@ -1750,7 +1967,7 @@ class MyHomeAssistant(MySupport):
                     self.LogDebug(f"Error processing binary sensor {entity_id}: {str(e1)}")
 
         # Process switches (state only)
-        for entity_id, entity_def in SWITCH_DEFINITIONS.items():
+        for entity_id, entity_def in self.SwitchDefinitions.items():
             if not self._entity_allowed(entity_def, entity_id):
                 continue
             try:
@@ -2103,13 +2320,13 @@ class MyHomeAssistant(MySupport):
 
     # --------------------------------------------------------------------------
     def _discover_dynamic_sensors(self, genmon_data):
-        """Walk through genmon data and discover sensors not in SENSOR_DEFINITIONS"""
+        """Walk through genmon data and discover sensors not in self.SensorDefinitions"""
 
-        # Get all known paths from SENSOR_DEFINITIONS
+        # Get all known paths from entity definitions
         known_paths = set()
-        for entity_def in SENSOR_DEFINITIONS.values():
+        for entity_def in self.SensorDefinitions.values():
             known_paths.add(entity_def["path"].lower())
-        for entity_def in BINARY_SENSOR_DEFINITIONS.values():
+        for entity_def in self.BinarySensorDefinitions.values():
             known_paths.add(entity_def["path"].lower())
 
         # Walk all data and find new sensors
@@ -2145,7 +2362,7 @@ class MyHomeAssistant(MySupport):
 
             # Generate entity_id and config
             entity_id = self._path_to_entity_id(path)
-            if entity_id and entity_id not in SENSOR_DEFINITIONS:
+            if entity_id and entity_id not in self.SensorDefinitions:
                 config = self._generate_dynamic_sensor_config(path, entity_data)
                 new_sensors[entity_id] = config
 
