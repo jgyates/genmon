@@ -1067,9 +1067,7 @@ function onCommandButtonClick(onewordcommand){
           var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
           $('.vex-dialog-message').html(DisplayStr1);
           $('.vex-dialog-buttons').html(DisplayStr2);
-          $('.progress-bar-fill').queue(function () {
-                $(this).css('width', '100%')
-          });
+          startProgressThenIndeterminate('.progress-bar-fill');
           setTimeout(function(){
               vex.closeAll();
               //gotoLogin();
@@ -1856,9 +1854,7 @@ function saveNotifications(){
              var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
              $('.vex-dialog-message').html(DisplayStr1);
              $('.vex-dialog-buttons').html(DisplayStr2);
-             $('.progress-bar-fill').queue(function () {
-                  $(this).css('width', '100%')
-             });
+             startProgressThenIndeterminate('.progress-bar-fill');
              setTimeout(function(){ vex.closeAll();gotoLogin();}, 10000);
            }
         }
@@ -2052,9 +2048,7 @@ function saveJournals(rowtype, rowcount){
              var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
              $('.vex-dialog-message').html(DisplayStr1);
              $('.vex-dialog-buttons').html(DisplayStr2);
-             $('.progress-bar-fill').queue(function () {
-                  $(this).css('width', '100%')
-             });
+             startProgressThenIndeterminate('.progress-bar-fill');
              setTimeout(function(){ 
               vex.closeAll();
               gotoRoot();
@@ -2655,9 +2649,7 @@ function saveSettings(){
              var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
              $('.vex-dialog-message').html(DisplayStr1);
              $('.vex-dialog-buttons').html(DisplayStr2);
-             $('.progress-bar-fill').queue(function () {
-                  $(this).css('width', '100%')
-             });
+             startProgressThenIndeterminate('.progress-bar-fill');
              setTimeout(function(){
                 vex.closeAll();
                 if ($('#sitename').val() != $('#sitename').attr('oldValue')) { myGenerator["sitename"] = $('#sitename').val(); SetHeaderValues(); }
@@ -2907,9 +2899,7 @@ function saveAddon(addon, addonTitle){
              var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
              $('.vex-dialog-message').html(DisplayStr1);
              $('.vex-dialog-buttons').html(DisplayStr2);
-             $('.progress-bar-fill').queue(function () {
-                  $(this).css('width', '100%')
-             });
+             startProgressThenIndeterminate('.progress-bar-fill');
              setTimeout(function(){
                 vex.closeAll();
                 gotoLogin();
@@ -3078,9 +3068,7 @@ function showChangeLog() {
 function checkNewVersion(){
     var DisplayStr = 'Checking for latest version...<br><br><div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
     $('.vex-dialog-buttons').html(DisplayStr);
-    $('.progress-bar-fill').queue(function () {
-        $(this).css('width', '100%')
-    });
+    startProgressThenIndeterminate('.progress-bar-fill');
     var DisplayStrButtons = {
         NO: {
           text: 'Cancel',
@@ -3110,9 +3098,7 @@ function checkNewVersion(){
              var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
              $('.vex-dialog-message').html(DisplayStr1);
              $('.vex-dialog-buttons').html(DisplayStr2);
-             $('.progress-bar-fill').queue(function () {
-                  $(this).css('width', '100%')
-             });
+             startProgressThenIndeterminate('.progress-bar-fill');
         }
     });
 
@@ -3149,9 +3135,7 @@ function updateSoftware(){
              var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
              $('.vex-dialog-message').html(DisplayStr1);
              $('.vex-dialog-buttons').html(DisplayStr2);
-             $('.progress-bar-fill').queue(function () {
-                  $(this).css('width', '100%')
-             });
+             startProgressThenIndeterminate('.progress-bar-fill');
              // location.reload();
              setTimeout(function(){ vex.closeAll(); window.location.href = window.location.pathname+"?page=about&reload=true"; }, 10000);
        }
@@ -3757,9 +3741,7 @@ function saveAdvancedSettings(){
              var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
              $('.vex-dialog-message').html(DisplayStr1);
              $('.vex-dialog-buttons').html(DisplayStr2);
-             $('.progress-bar-fill').queue(function () {
-                  $(this).css('width', '100%')
-             });
+             startProgressThenIndeterminate('.progress-bar-fill');
              setTimeout(function(){
                 vex.closeAll();
              }, 10000);
@@ -4069,6 +4051,36 @@ function UpdateDisplay()
 }
 
 //*****************************************************************************
+// Nice Status Bar
+//*****************************************************************************
+function startProgressThenIndeterminate(selector) {
+  const el = document.querySelector(selector);
+  if (!el) return;
+
+  // Reset state
+  el.classList.remove('indeterminate');
+  el.style.transition = 'none';
+  el.style.width = '0%';
+
+  // Force layout so 0% is painted
+  void el.offsetWidth;
+
+  // Start the 10s transition
+  el.style.transition = 'width 10s ease-in-out';
+  el.style.width = '100%';
+
+  // Switch to indeterminate stripes when done
+  const onEnd = (e) => {
+    if (e.propertyName !== 'width') return;
+    el.removeEventListener('transitionend', onEnd);
+    el.classList.add('indeterminate');
+  };
+
+  el.addEventListener('transitionend', onEnd);
+}
+
+
+//*****************************************************************************
 // GetBaseStatus - updates menu background color based on the state of the generator
 //*****************************************************************************
 function GetBaseStatus()
@@ -4101,9 +4113,7 @@ function GetBaseStatus()
                 var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
                 $('.vex-dialog-message').html(DisplayStr1);
                 $('.vex-dialog-buttons').html(DisplayStr2);
-                $('.progress-bar-fill').queue(function () {
-                     $(this).css('width', '100%')
-                });
+                startProgressThenIndeterminate('.progress-bar-fill');
                 
                 setTimeout(function(){ vex.closeAll(); window.location.href = window.location.pathname+"?page=about&reload=true"; }, 10000);
              }

@@ -753,6 +753,30 @@ li a:hover:not(.active) {
     border-radius: 3px;
     transition: width 10s ease-in-out;
 }
+.progress-bar {
+    overflow: hidden; /* required for stripes */
+}
+
+.progress-bar-fill.indeterminate {
+    width: 100%;
+    transition: none;
+
+    background-color: #4CAF50;
+    background-image: repeating-linear-gradient(
+        -45deg,
+        rgba(255,255,255,0.35) 0px,
+        rgba(255,255,255,0.35) 8px,
+        rgba(255,255,255,0.05) 8px,
+        rgba(255,255,255,0.05) 16px
+    );
+    background-size: 40px 40px;
+    animation: barberpole-right 0.9s linear infinite;
+}
+
+@keyframes barberpole-right {
+    from { background-position: 40px 0; }
+    to   { background-position: 0 0; }
+}
 .removeRow {
     cursor: pointer;
 }
