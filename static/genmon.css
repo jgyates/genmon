@@ -143,440 +143,452 @@ li a:hover:not(.active) {
 /* Icons */
 
 .alert_large, .alert_small, .log, .maintenance, .monitor, .notifications, .outage, .print10, .print24, .print60, .registers, .remove_bin, .settings, .status, .temp1, .temp2, .temp3, .temp4, .title-bg, .validation_ok, .validation_text, .wifi1, .wifi2, .wifi3, .wifi4, .fuel, .about, .addon, .journal, .logout, .edit {
-	background: url(images/sprites.png) no-repeat;
+    background: url(images/sprites.png) no-repeat;
 }
 
 .alert_large{
-	background-position: -317px -22px ;
-	width: 64px;
-	height: 64px;
+    background-position: -317px -22px ;
+    width: 64px;
+    height: 64px;
 }
 
 .alert_small{
-	background-position: -156px -163px ;
-	width: 28px;
-	height: 28px;
+    background-position: -156px -163px ;
+    width: 28px;
+    height: 28px;
 }
 
 .log{
-	background-position: -18px -115px ;
-	width: 20px;
-	height: 20px;
+    background-position: -18px -115px ;
+    width: 20px;
+    height: 20px;
 }
 
 .maintenance{
-	background-position: -263px -118px ;
-	width: 20px;
-	height: 20px;
+    background-position: -263px -118px ;
+    width: 20px;
+    height: 20px;
 }
 
 .monitor{
-	background-position: -165px -116px ;
-	width: 20px;
-	height: 20px;
+    background-position: -165px -116px ;
+    width: 20px;
+    height: 20px;
 }
 
 .notifications{
-	background-position: -214px -116px ;
-	width: 20px;
-	height: 20px;
+    background-position: -214px -116px ;
+    width: 20px;
+    height: 20px;
 }
 
 .outage{
-	background-position: -114px -113px ;
-	width: 20px;
-	height: 20px;
+    background-position: -114px -113px ;
+    width: 20px;
+    height: 20px;
 }
 
 .print10{
-	background-position: -107px -157px ;
-	width: 36px;
-	height: 36px;
+    background-position: -107px -157px ;
+    width: 36px;
+    height: 36px;
 }
 
 .print24{
-	background-position: -56px -156px ;
-	width: 36px;
-	height: 36px;
+    background-position: -56px -156px ;
+    width: 36px;
+    height: 36px;
 }
 
 .print60{
-	background-position: -9px -155px ;
-	width: 36px;
-	height: 36px;
+    background-position: -9px -155px ;
+    width: 36px;
+    height: 36px;
 }
 
 .registers{
-	background-position: -70px -112px ;
-	width: 20px;
-	height: 20px;
+    background-position: -70px -112px ;
+    width: 20px;
+    height: 20px;
 }
 
 .logout{
-	background-position: -355px -118px ;
-	width: 20px;
-	height: 20px;
+    background-position: -355px -118px ;
+    width: 20px;
+    height: 20px;
 }
 
 .remove_bin{
-	background-position: -210px -164px ;
-	width: 24px;
-	height: 24px;
+    background-position: -210px -164px ;
+    width: 24px;
+    height: 24px;
 }
 
 .edit{
-	background-position: -355px -167px ;
-	width: 24px;
-	height: 24px;
+    background-position: -355px -167px ;
+    width: 24px;
+    height: 24px;
 }
 
 .settings{
-	background-position: -266px -63px ;
-	width: 20px;
-	height: 20px;
+    background-position: -266px -63px ;
+    width: 20px;
+    height: 20px;
 }
 
 .status{
-	background-position: -216px -63px ;
-	width: 20px;
-	height: 20px;
+    background-position: -216px -63px ;
+    width: 20px;
+    height: 20px;
 }
 
 .temp1{
-	background-position: -160px -60px ;
-	width: 28px;
-	height: 28px;
+    background-position: -160px -60px ;
+    width: 28px;
+    height: 28px;
 }
 
 .temp2{
-	background-position: -111px -59px ;
-	width: 28px;
-	height: 28px;
+    background-position: -111px -59px ;
+    width: 28px;
+    height: 28px;
 }
 
 .temp3{
-	background-position: -60px -60px ;
-	width: 28px;
-	height: 28px;
+    background-position: -60px -60px ;
+    width: 28px;
+    height: 28px;
 }
 
 .temp4{
-	background-position: -12px -61px ;
-	width: 28px;
-	height: 28px;
+    background-position: -12px -61px ;
+    width: 28px;
+    height: 28px;
 }
 
 .title-bg{
-	background-position: -154px -124px ;
-	width: 1px;
-	height: 28px;
+    background-position: -154px -124px ;
+    width: 1px;
+    height: 28px;
 }
 
 .validation_ok{
-	background-position: -266px -19px ;
-	width: 16px;
-	height: 16px;
+    background-position: -266px -19px ;
+    width: 16px;
+    height: 16px;
 }
 
 .validation_text{
-	background-position: -218px -21px ;
-	width: 16px;
-	height: 16px;
+    background-position: -218px -21px ;
+    width: 16px;
+    height: 16px;
 }
 
 .wifi1{
-	background-position: -159px -12px ;
-	width: 28px;
-	height: 28px;
+    background-position: -159px -12px ;
+    width: 28px;
+    height: 28px;
 }
 
 .wifi2{
-	background-position: -108px -11px ;
-	width: 28px;
-	height: 28px;
+    background-position: -108px -11px ;
+    width: 28px;
+    height: 28px;
 }
 
 .wifi3{
-	background-position: -60px -11px ;
-	width: 28px;
-	height: 28px;
+    background-position: -60px -11px ;
+    width: 28px;
+    height: 28px;
 }
 
 .wifi4{
-	background-position: -12px -11px ;
-	width: 28px;
-	height: 28px;
+    background-position: -12px -11px ;
+    width: 28px;
+    height: 28px;
 }
 
 .fuel{
-	background-position: 0 -206px ;
-	width: 400px;
-	height: 189px;
+    background-position: 0 -206px ;
+    width: 400px;
+    height: 189px;
 }
 
 .about{
-	background-position: -314px -166px ;
-	width: 20px;
-	height: 20px;
+    background-position: -314px -166px ;
+    width: 20px;
+    height: 20px;
 }
 
 .addon{
-	background-position: -264px -166px ;
-	width: 20px;
-	height: 20px;
+    background-position: -264px -166px ;
+    width: 20px;
+    height: 20px;
 }
 
 .journal{
-	background-position: -314px -117px ;
-	width: 20px;
-	height: 20px;
+    background-position: -314px -117px ;
+    width: 20px;
+    height: 20px;
 }
 
 
 /* Addons */
 
-.linux_small, .mqtt_small, .rpi_small, .slack_small, .callmebot_small, .centri_small, .gear_small, .twilio_small, .pushover_small, .linux, .mqtt, .pushover, .rpi, .slack, .callmebot, .centri, .gear, .twilio, .sms, .sms_small, .csv_small, .csv, .selftest, .selftest_small, .Genmon, .Genmon_small, .text_small, .serveo, .alexa, .serveo_small, .tankutility_small, .alexa_small, .text, .tankutility, .snmp, .snmp_small, .voipms, .voipms_small, .mopeka, .mopeka_small{
-	background: url(images/addons.png) no-repeat;
+.homeassistant, .homeassistant_small, .linux_small, .mqtt_small, .rpi_small, .slack_small, .callmebot_small, .centri_small, .gear_small, .twilio_small, .pushover_small, .linux, .mqtt, .pushover, .rpi, .slack, .callmebot, .centri, .gear, .twilio, .sms, .sms_small, .csv_small, .csv, .selftest, .selftest_small, .Genmon, .Genmon_small, .text_small, .serveo, .alexa, .serveo_small, .tankutility_small, .alexa_small, .text, .tankutility, .snmp, .snmp_small, .voipms, .voipms_small, .mopeka, .mopeka_small{
+    background: url(images/addons.png) no-repeat;
 }
 
 .linux_small{
-	background-position: -263px -355px ;
-	width: 50px;
-	height: 25px;
+    background-position: -263px -355px ;
+    width: 50px;
+    height: 25px;
 }
 
 .mqtt_small{
-	background-position: -269px -333px ;
-	width: 50px;
-	height: 12px;
+    background-position: -269px -333px ;
+    width: 50px;
+    height: 12px;
 }
 
 .rpi_small{
-	background-position: -398px -362px ;
-	width: 50px;
-	height: 15px;
+    background-position: -398px -362px ;
+    width: 50px;
+    height: 15px;
 }
 
 .slack_small{
-	background-position: -461px -361px ;
-	width: 50px;
-	height: 15px;
+    background-position: -461px -361px ;
+    width: 50px;
+    height: 15px;
 }
 
 .callmebot_small{
-	background-position: -278px -860px ;
-	width: 47px;
-	height: 49px;
+    background-position: -278px -860px ;
+    width: 47px;
+    height: 49px;
 }
 
 .centri_small{
-	background-position: -335px -861px ;
-	width: 42px;
-	height: 49px;
+    background-position: -335px -861px ;
+    width: 42px;
+    height: 49px;
+}
+
+.homeassistant_small {
+    background-position: -132px -1110px;
+    width: 50px;
+    height: 48px;
 }
 
 .gear_small{
-	background-position: -384px -862px ;
-	width: 49px;
-	height: 46px;
+    background-position: -384px -862px ;
+    width: 49px;
+    height: 46px;
 }
 
 .twilio_small{
-	background-position: -463px -330px ;
-	width: 50px;
-	height: 17px;
+    background-position: -463px -330px ;
+    width: 50px;
+    height: 17px;
 }
 
 .pushover_small{
-	background-position: -334px -362px ;
-	width: 50px;
-	height: 13px;
+    background-position: -334px -362px ;
+    width: 50px;
+    height: 13px;
 }
 
 .voipms_small{
-	background-position: -262px -391px ;
-	width: 50px;
-	height: 9px;
+    background-position: -262px -391px ;
+    width: 50px;
+    height: 9px;
 }
 
 .mopeka_small{
-	background-position: -335px -384px ;
-	width: 50px;
-	height: 19px;
+    background-position: -335px -384px ;
+    width: 50px;
+    height: 19px;
 }
 
 .linux{
-	background-position: -1px -173px ;
-	width: 252px;
-	height: 125px;
+    background-position: -1px -173px ;
+    width: 252px;
+    height: 125px;
 }
 
 .mqtt{
-	background-position: -258px -72px ;
-	width: 252px;
-	height: 62px;
+    background-position: -258px -72px ;
+    width: 252px;
+    height: 62px;
 }
 
 .pushover{
-	background-position: -255px 0;
-	width: 252px;
-	height: 63px;
+    background-position: -255px 0;
+    width: 252px;
+    height: 63px;
 }
 
 .rpi{
-	background-position: 0 -93px ;
-	width: 252px;
-	height: 76px;
+    background-position: 0 -93px ;
+    width: 252px;
+    height: 76px;
 }
 
 .slack{
-	background-position: -257px -146px ;
-	width: 252px;
-	height: 77px;
+    background-position: -257px -146px ;
+    width: 252px;
+    height: 77px;
 }
 
 .callmebot{
-	background-position: -4px -860px ;
-	width: 252px;
-	height: 64px;
+    background-position: -4px -860px ;
+    width: 252px;
+    height: 64px;
 }
 
 .centri{
-	background-position: -3px -935px ;
-	width: 252px;
-	height: 97px;
+    background-position: -3px -935px ;
+    width: 252px;
+    height: 97px;
+}
+
+.homeassistant {
+    background-position: 0px -1110px;
+    width: 122px;
+    height: 120px;
 }
 
 .gear{
-	background-position: -259px -939px ;
-	width: 252px;
-	height: 97px;
+    background-position: -259px -939px ;
+    width: 252px;
+    height: 97px;
 }
 
 .twilio{
-	background-position: -256px -231px ;
-	width: 252px;
-	height: 83px;
+    background-position: -256px -231px ;
+    width: 252px;
+    height: 83px;
 }
 
 .sms{
-	background-position: 0 0;
-	width: 252px;
-	height: 84px;
+    background-position: 0 0;
+    width: 252px;
+    height: 84px;
 }
 
 .sms_small{
-	background-position: -332px -331px ;
-	width: 50px;
-	height: 17px;
+    background-position: -332px -331px ;
+    width: 50px;
+    height: 17px;
 }
 
 .csv_small{
-	background-position: -395px -330px ;
-	width: 50px;
-	height: 18px;
+    background-position: -395px -330px ;
+    width: 50px;
+    height: 18px;
 }
 
 .csv{
-	background-position: 0 -305px ;
-	width: 252px;
-	height: 93px;
+    background-position: 0 -305px ;
+    width: 252px;
+    height: 93px;
 }
 
 .selftest{
-	background-position: 0 -403px ;
-	width: 252px;
-	height: 77px;
+    background-position: 0 -403px ;
+    width: 252px;
+    height: 77px;
 }
 
 .selftest_small{
-	background-position: -461px -384px ;
-	width: 50px;
-	height: 15px;
+    background-position: -461px -384px ;
+    width: 50px;
+    height: 15px;
 }
 
 .Genmon{
-	background-position: -260px -415px ;
-	width: 252px;
-	height: 57px;
+    background-position: -260px -415px ;
+    width: 252px;
+    height: 57px;
 }
 
 .Genmon_small{
-	background-position: -400px -386px ;
-	width: 50px;
-	height: 11px;
+    background-position: -400px -386px ;
+    width: 50px;
+    height: 11px;
 }
 
 .text_small{
-	background-position: -201px -488px ;
-	width: 50px;
-	height: 43px;
+    background-position: -201px -488px ;
+    width: 50px;
+    height: 43px;
 }
 
 .serveo{
-	background-position: -261px -604px ;
-	width: 252px;
-	height: 100px;
+    background-position: -261px -604px ;
+    width: 252px;
+    height: 100px;
 }
 
 .alexa{
-	background-position: -1px -618px ;
-	width: 252px;
-	height: 100px;
+    background-position: -1px -618px ;
+    width: 252px;
+    height: 100px;
 }
 
 .serveo_small{
-	background-position: -140px -501px ;
-	width: 50px;
-	height: 22px;
+    background-position: -140px -501px ;
+    width: 50px;
+    height: 22px;
 }
 
 .tankutility_small{
-	background-position: -73px -505px ;
-	width: 50px;
-	height: 14px;
+    background-position: -73px -505px ;
+    width: 50px;
+    height: 14px;
 }
 
 .alexa_small{
-	background-position: -9px -486px ;
-	width: 50px;
-	height: 50px;
+    background-position: -9px -486px ;
+    width: 50px;
+    height: 50px;
 }
 
 .text{
-	background-position: -261px -479px ;
-	width: 252px;
-	height: 120px;
+    background-position: -261px -479px ;
+    width: 252px;
+    height: 120px;
 }
 
 .voipms{
-	background-position: -260px -792px ;
-	width: 252px;
-	height: 47px;
+    background-position: -260px -792px ;
+    width: 252px;
+    height: 47px;
 }
 
 .mopeka{
-	background-position: -4px -756px ;
-	width: 252px;
-	height: 97px;
+    background-position: -4px -756px ;
+    width: 252px;
+    height: 97px;
 }
 
 .tankutility{
-	background-position: 0 -538px ;
-	width: 252px;
-	height: 70px;
+    background-position: 0 -538px ;
+    width: 252px;
+    height: 70px;
 }
 
 .snmp{
-	background-position: -261px -712px ;
-	width: 252px;
-	height: 75px;
+    background-position: -261px -712px ;
+    width: 252px;
+    height: 75px;
 }
 
 .snmp_small{
-	background-position: -198px -732px ;
-	width: 50px;
-	height: 15px;
+    background-position: -198px -732px ;
+    width: 50px;
+    height: 15px;
 }
 
 
