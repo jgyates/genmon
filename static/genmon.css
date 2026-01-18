@@ -376,11 +376,10 @@ li a:hover:not(.active) {
 }
 
 .homeassistant_small {
-    background-position: -132px -1110px;
+    background-position: -262px -1100px;
     width: 50px;
-    height: 48px;
+    height: 50px;
 }
-
 .gear_small{
     background-position: -384px -862px ;
     width: 49px;
@@ -454,8 +453,8 @@ li a:hover:not(.active) {
 }
 
 .homeassistant {
-    background-position: 0px -1110px;
-    width: 122px;
+    background-position: 0px -1100px;
+    width: 252px;
     height: 120px;
 }
 
