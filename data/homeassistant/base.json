@@ -298,6 +298,18 @@
       "weather": false
     },
     {
+      "entity_id": "total_run_hours",
+      "name": "Total Run Hours",
+      "path": "Maintenance/Service/Total Run Hours",
+      "device_class": "duration",
+      "unit": "h",
+      "icon": "mdi:engine",
+      "state_class": "total_increasing",
+      "enabled_default": true,
+      "monitor_stats": false,
+      "weather": false
+    },
+    {
       "entity_id": "run_hours_30days",
       "name": "Run Hours (30 Days)",
       "path": "Maintenance/Run Hours in last 30 days",
@@ -695,19 +707,19 @@
   "buttons": [
     {
       "entity_id": "start",
-      "name": "Start Generator",
+      "name": "Start",
       "command": "setremote=START",
       "icon": "mdi:play"
     },
     {
       "entity_id": "stop",
-      "name": "Stop Generator",
+      "name": "Stop",
       "command": "setremote=STOP",
       "icon": "mdi:stop"
     },
     {
       "entity_id": "start_transfer",
-      "name": "Start and Transfer",
+      "name": "Start Transfer",
       "command": "setremote=STARTTRANSFER",
       "icon": "mdi:play-circle",
       "controllers": [
