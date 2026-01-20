@@ -1,0 +1,11 @@
+{
+  "controller_type": "evolution",
+  "version": "1.0",
+  "description": "Evolution/Nexus controller-specific entity definitions (extends base)",
+  "sensors": [],
+  "binary_sensors": [],
+  "buttons": [],
+  "switches": [],
+  "selects": [],
+  "numbers": []
+}

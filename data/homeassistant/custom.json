@@ -1,0 +1,11 @@
+{
+  "controller_type": "custom",
+  "version": "1.0",
+  "description": "Custom controller-specific entity definitions (extends base)",
+  "sensors": [],
+  "binary_sensors": [],
+  "buttons": [],
+  "switches": [],
+  "selects": [],
+  "numbers": []
+}

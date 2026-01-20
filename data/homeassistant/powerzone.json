@@ -1,0 +1,11 @@
+{
+  "controller_type": "powerzone",
+  "version": "1.0",
+  "description": "PowerZone controller-specific entity definitions (extends base)",
+  "sensors": [],
+  "binary_sensors": [],
+  "buttons": [],
+  "switches": [],
+  "selects": [],
+  "numbers": []
+}

@@ -253,6 +253,15 @@ SENSOR_DEFINITIONS = {
         "state_class": "measurement",
         "controllers": ["evolution", "h-100"],
     },
+    "cpu_temp": {
+        "name": "CPU Temperature",
+        "path": "Tiles/CPU Temp/value",
+        "device_class": "temperature",
+        "unit": None,  # Will be set based on metric setting
+        "icon": "mdi:cpu-64-bit",
+        "state_class": "measurement",
+        "category": "diagnostic",
+    },
     "kwh_30days": {
         "name": "Energy (30 Days)",
         "path": "Maintenance/kW Hours in last 30 days",
@@ -464,6 +473,34 @@ SENSOR_DEFINITIONS = {
         "state_class": None,
         "category": "diagnostic",
         "monitor_stats": True,
+    },
+    # Log entry sensors
+    "last_alarm_log": {
+        "name": "Last Alarm",
+        "path": "Status/Last Log Entries/Logs/Alarm Log",
+        "device_class": None,
+        "unit": None,
+        "icon": "mdi:alert",
+        "state_class": None,
+        "category": "diagnostic",
+    },
+    "last_run_log": {
+        "name": "Last Run",
+        "path": "Status/Last Log Entries/Logs/Run Log",
+        "device_class": None,
+        "unit": None,
+        "icon": "mdi:engine",
+        "state_class": None,
+        "category": "diagnostic",
+    },
+    "last_outage": {
+        "name": "Last Outage",
+        "path": "Outage/Outage Log/0",
+        "device_class": None,
+        "unit": None,
+        "icon": "mdi:power-plug-off",
+        "state_class": None,
+        "category": "diagnostic",
     },
     # Weather sensors
     "weather_temp": {
@@ -698,6 +735,7 @@ class MyHomeAssistant(MySupport):
         self.IncludeWeather = True
         self.IncludeLogs = False
         self.UseNumeric = True
+        self.UseMetric = False  # Read from genmon.conf metricweather setting
         self.debug = False
 
         # Runtime state
@@ -714,6 +752,14 @@ class MyHomeAssistant(MySupport):
         self.EntitiesPublished = False
         self.LastDiscoveryTime = 0
         self.DynamicSensors = {}  # Storage for dynamically discovered sensors
+
+        # Entity definitions - will be loaded from JSON or fall back to hardcoded
+        self.SensorDefinitions = {}
+        self.BinarySensorDefinitions = {}
+        self.ButtonDefinitions = {}
+        self.SwitchDefinitions = {}
+        self.SelectDefinitions = {}
+        self.NumberDefinitions = {}
 
         # Exercise time settings (parsed from genmon)
         self.ExerciseSettings = {
@@ -736,6 +782,13 @@ class MyHomeAssistant(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error connecting to genmon: " + str(e1))
             sys.exit(1)
+
+        # Load entity definitions from JSON files (with hardcoded fallback)
+        try:
+            self._load_entity_definitions()
+        except Exception as e1:
+            self.LogErrorLine("Error loading entity definitions: " + str(e1))
+            self._use_hardcoded_fallback()
 
         try:
             self._setup_mqtt()
@@ -813,6 +866,18 @@ class MyHomeAssistant(MySupport):
         self.debug = config.ReadValue("debug", return_type=bool, default=False)
         self.ClientID = config.ReadValue("client_id", default="genmon_ha")
 
+        # Read metric setting from genmon.conf for temperature unit selection
+        try:
+            genmon_config = MyConfig(
+                filename=os.path.join(configfilepath, "genmon.conf"),
+                section="GenMon",
+                log=self.log,
+            )
+            self.UseMetric = genmon_config.ReadValue("metricweather", return_type=bool, default=False)
+            self.LogDebug(f"Using metric units: {self.UseMetric}")
+        except Exception as e:
+            self.LogDebug(f"Could not read metricweather from genmon.conf, defaulting to imperial: {e}")
+
     # --------------------------------------------------------------------------
     def _get_generator_info(self):
         """Get generator information from genmon"""
@@ -885,6 +950,208 @@ class MyHomeAssistant(MySupport):
 
         except Exception as e1:
             self.LogErrorLine("Error in _get_generator_info: " + str(e1))
+
+    # --------------------------------------------------------------------------
+    def ReadJSONConfig(self, FileName):
+        """Read and parse a JSON configuration file.
+
+        Following the pattern from gensnmp.py for consistency.
+        """
+        if os.path.isfile(FileName):
+            try:
+                with open(FileName) as infile:
+                    return json.load(infile)
+            except Exception as e1:
+                self.LogErrorLine(
+                    "Error in ReadJSONConfig reading file: " + str(e1) + ": " + str(FileName)
+                )
+                return None
+        else:
+            self.LogDebug("JSON config file not found: " + str(FileName))
+            return None
+
+    # --------------------------------------------------------------------------
+    def _get_controller_config_filename(self):
+        """Map controller type to JSON filename."""
+        controller_map = {
+            "evolution": "generac_evo_nexus.json",
+            "nexus": "generac_evo_nexus.json",
+            "h-100": "h_100.json",
+            "powerzone": "powerzone.json",
+            "custom": "custom.json",
+        }
+        return controller_map.get(self.ControllerType, "custom.json")
+
+    # --------------------------------------------------------------------------
+    def _convert_json_entities_to_dict(self, entity_list):
+        """Convert a list of entity definitions from JSON format to dict format.
+
+        JSON format uses a list with entity_id as a field.
+        Dict format uses entity_id as the key (for backward compatibility).
+        """
+        result = {}
+        if not entity_list:
+            return result
+        for entity in entity_list:
+            if isinstance(entity, dict) and "entity_id" in entity:
+                entity_id = entity["entity_id"]
+                # Create a copy without entity_id in the value
+                entity_copy = {k: v for k, v in entity.items() if k != "entity_id"}
+                result[entity_id] = entity_copy
+        return result
+
+    # --------------------------------------------------------------------------
+    def _merge_entity_definitions(self, new_definitions, target_dict, override=False):
+        """Merge entity definitions into target dictionary.
+
+        Args:
+            new_definitions: Dict of new entity definitions
+            target_dict: Target dict to merge into
+            override: If True, replace existing entries; if False, only add new ones
+        """
+        for entity_id, entity_def in new_definitions.items():
+            if override or entity_id not in target_dict:
+                target_dict[entity_id] = entity_def.copy()
+
+    # --------------------------------------------------------------------------
+    def _load_entity_definitions(self):
+        """Load entity definitions from JSON files.
+
+        Loads base.json first, then controller-specific file, then optionally
+        userdefined.json. Falls back to hardcoded definitions if base.json
+        is missing.
+        """
+        # Determine the data directory path
+        file_root = os.path.dirname(os.path.realpath(__file__))
+        parent_root = os.path.abspath(os.path.join(file_root, os.pardir))
+        data_dir = os.path.join(parent_root, "data", "homeassistant")
+
+        # Load base.json (required for JSON-based loading)
+        base_file = os.path.join(data_dir, "base.json")
+        base_config = self.ReadJSONConfig(base_file)
+
+        if base_config is None:
+            self.LogDebug("base.json not found, using hardcoded fallback")
+            self._use_hardcoded_fallback()
+            return
+
+        self.LogDebug(f"Loading entity definitions from JSON files in {data_dir}")
+
+        # Convert and load base definitions
+        self.SensorDefinitions = self._convert_json_entities_to_dict(
+            base_config.get("sensors", [])
+        )
+        self.BinarySensorDefinitions = self._convert_json_entities_to_dict(
+            base_config.get("binary_sensors", [])
+        )
+        self.ButtonDefinitions = self._convert_json_entities_to_dict(
+            base_config.get("buttons", [])
+        )
+        self.SwitchDefinitions = self._convert_json_entities_to_dict(
+            base_config.get("switches", [])
+        )
+        self.SelectDefinitions = self._convert_json_entities_to_dict(
+            base_config.get("selects", [])
+        )
+        self.NumberDefinitions = self._convert_json_entities_to_dict(
+            base_config.get("numbers", [])
+        )
+
+        self.LogDebug(
+            f"Loaded base definitions: {len(self.SensorDefinitions)} sensors, "
+            f"{len(self.BinarySensorDefinitions)} binary_sensors, "
+            f"{len(self.ButtonDefinitions)} buttons, "
+            f"{len(self.SwitchDefinitions)} switches, "
+            f"{len(self.SelectDefinitions)} selects, "
+            f"{len(self.NumberDefinitions)} numbers"
+        )
+
+        # Load controller-specific file (extends/overrides base)
+        controller_filename = self._get_controller_config_filename()
+        controller_file = os.path.join(data_dir, controller_filename)
+        controller_config = self.ReadJSONConfig(controller_file)
+
+        if controller_config:
+            self.LogDebug(f"Loading controller-specific definitions from {controller_filename}")
+            # Merge controller-specific definitions (override mode for customization)
+            self._merge_entity_definitions(
+                self._convert_json_entities_to_dict(controller_config.get("sensors", [])),
+                self.SensorDefinitions,
+                override=True,
+            )
+            self._merge_entity_definitions(
+                self._convert_json_entities_to_dict(controller_config.get("binary_sensors", [])),
+                self.BinarySensorDefinitions,
+                override=True,
+            )
+            self._merge_entity_definitions(
+                self._convert_json_entities_to_dict(controller_config.get("buttons", [])),
+                self.ButtonDefinitions,
+                override=True,
+            )
+            self._merge_entity_definitions(
+                self._convert_json_entities_to_dict(controller_config.get("switches", [])),
+                self.SwitchDefinitions,
+                override=True,
+            )
+            self._merge_entity_definitions(
+                self._convert_json_entities_to_dict(controller_config.get("selects", [])),
+                self.SelectDefinitions,
+                override=True,
+            )
+            self._merge_entity_definitions(
+                self._convert_json_entities_to_dict(controller_config.get("numbers", [])),
+                self.NumberDefinitions,
+                override=True,
+            )
+
+        # Optionally load userdefined.json (user customizations, always override)
+        user_file = os.path.join(data_dir, "userdefined.json")
+        user_config = self.ReadJSONConfig(user_file)
+
+        if user_config:
+            self.LogDebug("Loading user-defined entity definitions from userdefined.json")
+            self._merge_entity_definitions(
+                self._convert_json_entities_to_dict(user_config.get("sensors", [])),
+                self.SensorDefinitions,
+                override=True,
+            )
+            self._merge_entity_definitions(
+                self._convert_json_entities_to_dict(user_config.get("binary_sensors", [])),
+                self.BinarySensorDefinitions,
+                override=True,
+            )
+            self._merge_entity_definitions(
+                self._convert_json_entities_to_dict(user_config.get("buttons", [])),
+                self.ButtonDefinitions,
+                override=True,
+            )
+            self._merge_entity_definitions(
+                self._convert_json_entities_to_dict(user_config.get("switches", [])),
+                self.SwitchDefinitions,
+                override=True,
+            )
+            self._merge_entity_definitions(
+                self._convert_json_entities_to_dict(user_config.get("selects", [])),
+                self.SelectDefinitions,
+                override=True,
+            )
+            self._merge_entity_definitions(
+                self._convert_json_entities_to_dict(user_config.get("numbers", [])),
+                self.NumberDefinitions,
+                override=True,
+            )
+
+    # --------------------------------------------------------------------------
+    def _use_hardcoded_fallback(self):
+        """Fall back to hardcoded definitions if JSON files are missing or invalid."""
+        self.LogDebug("Using hardcoded entity definitions as fallback")
+        self.SensorDefinitions = SENSOR_DEFINITIONS.copy()
+        self.BinarySensorDefinitions = BINARY_SENSOR_DEFINITIONS.copy()
+        self.ButtonDefinitions = BUTTON_DEFINITIONS.copy()
+        self.SwitchDefinitions = SWITCH_DEFINITIONS.copy()
+        self.SelectDefinitions = SELECT_DEFINITIONS.copy()
+        self.NumberDefinitions = NUMBER_DEFINITIONS.copy()
 
     # --------------------------------------------------------------------------
     def _setup_mqtt(self):
@@ -1020,11 +1287,11 @@ class MyHomeAssistant(MySupport):
         """Handle button press commands"""
 
         try:
-            if entity_id not in BUTTON_DEFINITIONS:
+            if entity_id not in self.ButtonDefinitions:
                 self.LogError(f"Unknown button entity: {entity_id}")
                 return
 
-            button_def = BUTTON_DEFINITIONS[entity_id]
+            button_def = self.ButtonDefinitions[entity_id]
             command = button_def["command"]
 
             self.LogDebug(f"Executing button command: {command}")
@@ -1039,11 +1306,11 @@ class MyHomeAssistant(MySupport):
         """Handle switch on/off commands"""
 
         try:
-            if entity_id not in SWITCH_DEFINITIONS:
+            if entity_id not in self.SwitchDefinitions:
                 self.LogError(f"Unknown switch entity: {entity_id}")
                 return
 
-            switch_def = SWITCH_DEFINITIONS[entity_id]
+            switch_def = self.SwitchDefinitions[entity_id]
 
             if payload.upper() == "ON":
                 command = switch_def["command_on"]
@@ -1066,11 +1333,11 @@ class MyHomeAssistant(MySupport):
         """Handle select dropdown commands"""
 
         try:
-            if entity_id not in SELECT_DEFINITIONS:
+            if entity_id not in self.SelectDefinitions:
                 self.LogError(f"Unknown select entity: {entity_id}")
                 return
 
-            select_def = SELECT_DEFINITIONS[entity_id]
+            select_def = self.SelectDefinitions[entity_id]
 
             # Validate the selection
             if payload not in select_def["options"]:
@@ -1099,11 +1366,11 @@ class MyHomeAssistant(MySupport):
         """Handle number input commands"""
 
         try:
-            if entity_id not in NUMBER_DEFINITIONS:
+            if entity_id not in self.NumberDefinitions:
                 self.LogError(f"Unknown number entity: {entity_id}")
                 return
 
-            number_def = NUMBER_DEFINITIONS[entity_id]
+            number_def = self.NumberDefinitions[entity_id]
 
             # Parse and validate the number
             try:
@@ -1309,7 +1576,16 @@ class MyHomeAssistant(MySupport):
                 maint_data = json.loads(self._send_command("generator: maint_num_json"))
                 outage_data = json.loads(self._send_command("generator: outage_num_json"))
                 monitor_data = json.loads(self._send_command("generator: monitor_num_json"))
+                gui_data = json.loads(self._send_command("generator: gui_status_json"))
                 genmon_data = {**status_data, **maint_data, **outage_data, **monitor_data}
+                # Add tiles from gui_status_json
+                tiles = gui_data.get("tiles", [])
+                tiles_dict = {}
+                for tile in tiles:
+                    title = tile.get("title", "")
+                    if title:
+                        tiles_dict[title] = tile
+                genmon_data["Tiles"] = tiles_dict
             except Exception as e:
                 self.LogError(f"Could not get genmon data for discovery check: {e}")
                 genmon_data = {}
@@ -1317,7 +1593,7 @@ class MyHomeAssistant(MySupport):
             # Publish sensor discoveries (predefined) - only if data exists
             sensors_published = 0
             sensors_skipped = 0
-            for entity_id, entity_def in SENSOR_DEFINITIONS.items():
+            for entity_id, entity_def in self.SensorDefinitions.items():
                 if self._entity_allowed(entity_def, entity_id):
                     # Check if this sensor has actual data from genmon
                     if "path" in entity_def and genmon_data:
@@ -1335,28 +1611,39 @@ class MyHomeAssistant(MySupport):
             for entity_id, entity_def in self.DynamicSensors.items():
                 self._publish_sensor_discovery(entity_id, entity_def)
 
-            # Publish binary sensor discoveries
-            for entity_id, entity_def in BINARY_SENSOR_DEFINITIONS.items():
+            # Publish binary sensor discoveries - only if data exists (except payload_on_not_empty)
+            binary_sensors_skipped = 0
+            for entity_id, entity_def in self.BinarySensorDefinitions.items():
                 if self._entity_allowed(entity_def, entity_id):
+                    # Check if this binary sensor has actual data from genmon
+                    # Skip sensors that reference data that doesn't exist on this controller
+                    # Exception: payload_on_not_empty sensors are valid even with no data (they'll show OFF)
+                    if "path" in entity_def and genmon_data and not entity_def.get("payload_on_not_empty"):
+                        value = self._get_value_from_path(genmon_data, entity_def["path"])
+                        if value is None:
+                            binary_sensors_skipped += 1
+                            continue  # Skip binary sensors with no data
                     self._publish_binary_sensor_discovery(entity_id, entity_def)
+            if binary_sensors_skipped > 0:
+                self.LogDebug(f"Skipped {binary_sensors_skipped} binary sensors with no data")
 
             # Publish button discoveries
-            for entity_id, entity_def in BUTTON_DEFINITIONS.items():
+            for entity_id, entity_def in self.ButtonDefinitions.items():
                 if self._entity_allowed(entity_def, entity_id):
                     self._publish_button_discovery(entity_id, entity_def)
 
             # Publish switch discoveries
-            for entity_id, entity_def in SWITCH_DEFINITIONS.items():
+            for entity_id, entity_def in self.SwitchDefinitions.items():
                 if self._entity_allowed(entity_def, entity_id):
                     self._publish_switch_discovery(entity_id, entity_def)
 
             # Publish select discoveries
-            for entity_id, entity_def in SELECT_DEFINITIONS.items():
+            for entity_id, entity_def in self.SelectDefinitions.items():
                 if self._entity_allowed(entity_def, entity_id):
                     self._publish_select_discovery(entity_id, entity_def)
 
             # Publish number discoveries
-            for entity_id, entity_def in NUMBER_DEFINITIONS.items():
+            for entity_id, entity_def in self.NumberDefinitions.items():
                 if self._entity_allowed(entity_def, entity_id):
                     self._publish_number_discovery(entity_id, entity_def)
 
@@ -1388,8 +1675,14 @@ class MyHomeAssistant(MySupport):
 
             if entity_def.get("device_class"):
                 payload["device_class"] = entity_def["device_class"]
-            if entity_def.get("unit"):
-                payload["unit_of_measurement"] = entity_def["unit"]
+
+            # Handle unit of measurement, with special handling for temperature sensors
+            unit = entity_def.get("unit")
+            if unit:
+                payload["unit_of_measurement"] = unit
+            elif entity_def.get("device_class") == "temperature":
+                # Temperature sensors require a unit - set based on metric setting
+                payload["unit_of_measurement"] = "°C" if self.UseMetric else "°F"
             if entity_def.get("icon"):
                 payload["icon"] = entity_def["icon"]
             if entity_def.get("state_class"):
@@ -1634,11 +1927,13 @@ class MyHomeAssistant(MySupport):
                     maint_data = self._send_command("generator: maint_num_json")
                     outage_data = self._send_command("generator: outage_num_json")
                     monitor_data = self._send_command("generator: monitor_num_json")
+                    gui_data = self._send_command("generator: gui_status_json")
                 else:
                     status_data = self._send_command("generator: status_json")
                     maint_data = self._send_command("generator: maint_json")
                     outage_data = self._send_command("generator: outage_json")
                     monitor_data = self._send_command("generator: monitor_json")
+                    gui_data = self._send_command("generator: gui_status_json")
 
                 # Parse JSON responses
                 try:
@@ -1655,6 +1950,16 @@ class MyHomeAssistant(MySupport):
                     if monitor_data:
                         temp = json.loads(monitor_data)
                         genmon_data["Monitor"] = temp.get("Monitor", {})
+                    if gui_data:
+                        temp = json.loads(gui_data)
+                        # Extract tiles as a dict keyed by title for easy lookup
+                        tiles = temp.get("tiles", [])
+                        tiles_dict = {}
+                        for tile in tiles:
+                            title = tile.get("title", "")
+                            if title:
+                                tiles_dict[title] = tile
+                        genmon_data["Tiles"] = tiles_dict
 
                     # Process and publish states
                     self._process_data(genmon_data)
@@ -1706,7 +2011,7 @@ class MyHomeAssistant(MySupport):
                     self._publish_sensor_discovery(entity_id, entity_def)
 
         # Process predefined sensors
-        for entity_id, entity_def in SENSOR_DEFINITIONS.items():
+        for entity_id, entity_def in self.SensorDefinitions.items():
             if not self._entity_allowed(entity_def, entity_id):
                 continue
             try:
@@ -1736,21 +2041,27 @@ class MyHomeAssistant(MySupport):
                     self.LogDebug(f"Error processing dynamic sensor {entity_id}: {str(e1)}")
 
         # Process binary sensors
-        for entity_id, entity_def in BINARY_SENSOR_DEFINITIONS.items():
+        for entity_id, entity_def in self.BinarySensorDefinitions.items():
             if not self._entity_allowed(entity_def, entity_id):
                 continue
             try:
                 value = self._get_value_from_path(genmon_data, entity_def["path"])
+                # For binary sensors with payload_on_not_empty, treat None/missing as OFF
+                # This prevents "Unknown" state in Home Assistant when no alarm is present
                 if value is not None:
                     binary_value = self._process_binary_value(value, entity_def)
                     if self._publish_state("binary_sensor", entity_id, binary_value):
+                        stats["binary_changed"] += 1
+                elif entity_def.get("payload_on_not_empty"):
+                    # Value is None/missing - for "not empty" sensors, this means OFF
+                    if self._publish_state("binary_sensor", entity_id, "OFF"):
                         stats["binary_changed"] += 1
             except Exception as e1:
                 if self.debug:
                     self.LogDebug(f"Error processing binary sensor {entity_id}: {str(e1)}")
 
         # Process switches (state only)
-        for entity_id, entity_def in SWITCH_DEFINITIONS.items():
+        for entity_id, entity_def in self.SwitchDefinitions.items():
             if not self._entity_allowed(entity_def, entity_id):
                 continue
             try:
@@ -1831,11 +2142,12 @@ class MyHomeAssistant(MySupport):
                             return None
 
                 elif isinstance(current, list):
-                    # Search list of single-key dicts for matching key
+                    # Search list of single-key dicts for matching key first
+                    # This handles structures like [{"0": [...]}, {"1": [...]}]
                     found = False
                     for item in current:
                         if isinstance(item, dict):
-                            # Each item is like {"Engine": [...]} or {"Battery Voltage": value}
+                            # Each item is like {"Engine": [...]} or {"0": [...]}
                             if part in item:
                                 current = item[part]
                                 found = True
@@ -1848,6 +2160,12 @@ class MyHomeAssistant(MySupport):
                                     break
                             if found:
                                 break
+                    # If not found as dict key and part is numeric, try as list index
+                    if not found and part.isdigit():
+                        idx = int(part)
+                        if idx < len(current):
+                            current = current[idx]
+                            found = True
                     if not found:
                         return None
                 else:
@@ -2041,11 +2359,37 @@ class MyHomeAssistant(MySupport):
         """
 
         # Build a descriptive name from the path
-        # Use last 2 components for context without being too verbose
-        # e.g., "Monitor/Last Log Entries/Logs/Alarm Log" -> "Logs Alarm Log"
         name_parts = path.split("/")
-        if len(name_parts) >= 2:
+
+        # Special handling for log entries (Outage Log, Alarm Log, Run Log)
+        # Paths like "Outage/Outage Log/0/Date" should become "Last Outage Date"
+        # Only process entry "0" (the latest, 0-indexed) and skip others
+        if any(log_type in path for log_type in ["Outage Log", "Alarm Log", "Run Log"]):
+            # Check if this is a numbered log entry
+            for i, part in enumerate(name_parts):
+                if part.isdigit():
+                    entry_num = int(part)
+                    if entry_num != 0:
+                        # Skip non-latest entries - return None to signal skip
+                        return None
+                    # Build name as "Last [Log Type] [Field]"
+                    # Find the log type (part before the number)
+                    if i > 0:
+                        log_type = name_parts[i - 1].replace(" Log", "")
+                        field = name_parts[-1] if i < len(name_parts) - 1 else ""
+                        name = f"Last {log_type} {field}".strip()
+                    else:
+                        name = " ".join(name_parts[-2:])
+                    break
+            else:
+                # No number found, use default naming
+                if len(name_parts) >= 2:
+                    name = " ".join(name_parts[-2:])
+                else:
+                    name = name_parts[-1] if name_parts else path
+        elif len(name_parts) >= 2:
             # Use last 2 components for reasonable context
+            # e.g., "Monitor/Last Log Entries/Logs/Alarm Log" -> "Logs Alarm Log"
             name = " ".join(name_parts[-2:])
         else:
             name = name_parts[-1] if name_parts else path
@@ -2087,13 +2431,22 @@ class MyHomeAssistant(MySupport):
         elif 'pressure' in name.lower():
             device_class = 'pressure'
 
+        # Select icon based on content
+        icon = "mdi:information-outline"
+        if "outage" in name.lower():
+            icon = "mdi:power-plug-off" if "date" in name.lower() else "mdi:timer-outline"
+        elif "alarm" in name.lower():
+            icon = "mdi:alert"
+        elif "run" in name.lower():
+            icon = "mdi:engine"
+
         # Build config
         config = {
             "name": name,
             "path": path,
             "device_class": device_class,
             "unit": unit,
-            "icon": "mdi:information-outline",
+            "icon": icon,
             "state_class": "measurement" if is_numeric else None,
             "category": "diagnostic",
             "dynamic": True,  # Mark as dynamically discovered
@@ -2103,13 +2456,13 @@ class MyHomeAssistant(MySupport):
 
     # --------------------------------------------------------------------------
     def _discover_dynamic_sensors(self, genmon_data):
-        """Walk through genmon data and discover sensors not in SENSOR_DEFINITIONS"""
+        """Walk through genmon data and discover sensors not in self.SensorDefinitions"""
 
-        # Get all known paths from SENSOR_DEFINITIONS
+        # Get all known paths from entity definitions
         known_paths = set()
-        for entity_def in SENSOR_DEFINITIONS.values():
+        for entity_def in self.SensorDefinitions.values():
             known_paths.add(entity_def["path"].lower())
-        for entity_def in BINARY_SENSOR_DEFINITIONS.values():
+        for entity_def in self.BinarySensorDefinitions.values():
             known_paths.add(entity_def["path"].lower())
 
         # Walk all data and find new sensors
@@ -2123,15 +2476,18 @@ class MyHomeAssistant(MySupport):
             skip_patterns = [
                 'controller settings',  # Configuration, not sensor data
             ]
+            # Skip Tiles - handled by static sensor definitions (cpu_temp)
+            if path.startswith("Tiles/"):
+                continue
             if any(skip in path.lower() for skip in skip_patterns):
                 continue
 
-            # Only include the most recent outage log entry (entry 1)
-            # Skip entries like "Outage/Outage Log/2/Date", keep "Outage/Outage Log/1/Date"
+            # Only include the most recent outage log entry (entry 0, which is the latest)
+            # Skip entries like "Outage/Outage Log/1/Date", keep "Outage/Outage Log/0/Date"
             if 'outage log' in path.lower():
                 outage_match = re.search(r'outage log/(\d+)/', path, re.IGNORECASE)
-                if outage_match and outage_match.group(1) != '1':
-                    continue  # Skip all but the first outage log entry
+                if outage_match and outage_match.group(1) != '0':
+                    continue  # Skip all but the most recent (0th) outage log entry
 
             # Extract the actual value for empty check
             if isinstance(entity_data, dict) and "value" in entity_data:
@@ -2145,9 +2501,11 @@ class MyHomeAssistant(MySupport):
 
             # Generate entity_id and config
             entity_id = self._path_to_entity_id(path)
-            if entity_id and entity_id not in SENSOR_DEFINITIONS:
+            if entity_id and entity_id not in self.SensorDefinitions:
                 config = self._generate_dynamic_sensor_config(path, entity_data)
-                new_sensors[entity_id] = config
+                # config is None if we should skip this entry (e.g., non-latest log entries)
+                if config is not None:
+                    new_sensors[entity_id] = config
 
         return new_sensors
 
@@ -2162,6 +2520,19 @@ class MyHomeAssistant(MySupport):
             if entity_def.get("payload_on_not_empty"):
                 if value_str and value_str.lower() not in ["", "none", "n/a", "unknown"]:
                     return "ON"
+                return "OFF"
+
+            # Handle numeric comparison: payload_on_gt (greater than threshold)
+            if "payload_on_gt" in entity_def:
+                try:
+                    # Extract numeric value from string (e.g., "60.12 Hz" -> 60.12)
+                    numeric_str = ''.join(c for c in value_str.split()[0] if c.isdigit() or c == '.' or c == '-')
+                    if numeric_str:
+                        numeric_val = float(numeric_str)
+                        threshold = float(entity_def["payload_on_gt"])
+                        return "ON" if numeric_val > threshold else "OFF"
+                except (ValueError, IndexError):
+                    pass
                 return "OFF"
 
             # Handle list of ON values
