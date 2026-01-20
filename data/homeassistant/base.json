@@ -527,6 +527,38 @@
       "weather": false
     },
     {
+      "entity_id": "cpu_temp",
+      "name": "CPU Temperature",
+      "path": "Tiles/CPU Temp/value",
+      "device_class": "temperature",
+      "icon": "mdi:cpu-64-bit",
+      "state_class": "measurement",
+      "category": "diagnostic",
+      "enabled_default": true,
+      "monitor_stats": false,
+      "weather": false
+    },
+    {
+      "entity_id": "last_alarm_log",
+      "name": "Last Alarm",
+      "path": "Status/Last Log Entries/Logs/Alarm Log",
+      "icon": "mdi:alert",
+      "category": "diagnostic",
+      "enabled_default": true,
+      "monitor_stats": false,
+      "weather": false
+    },
+    {
+      "entity_id": "last_run_log",
+      "name": "Last Run",
+      "path": "Status/Last Log Entries/Logs/Run Log",
+      "icon": "mdi:engine",
+      "category": "diagnostic",
+      "enabled_default": true,
+      "monitor_stats": false,
+      "weather": false
+    },
+    {
       "entity_id": "weather_temp",
       "name": "Weather Temperature",
       "path": "Monitor/Weather/Temperature",
@@ -619,13 +651,8 @@
     {
       "entity_id": "transfer_to_generator",
       "name": "Transfer to Generator",
-      "path": "Status/Line/Transfer Switch State",
-      "payload_on": [
-        "Generator"
-      ],
-      "payload_off": [
-        "Utility"
-      ],
+      "path": "Status/Engine/Frequency",
+      "payload_on_gt": 0,
       "icon": "mdi:electric-switch-closed",
       "controllers": [
         "evolution",

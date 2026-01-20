@@ -253,6 +253,15 @@ SENSOR_DEFINITIONS = {
         "state_class": "measurement",
         "controllers": ["evolution", "h-100"],
     },
+    "cpu_temp": {
+        "name": "CPU Temperature",
+        "path": "Tiles/CPU Temp/value",
+        "device_class": "temperature",
+        "unit": None,  # Will be set based on metric setting
+        "icon": "mdi:cpu-64-bit",
+        "state_class": "measurement",
+        "category": "diagnostic",
+    },
     "kwh_30days": {
         "name": "Energy (30 Days)",
         "path": "Maintenance/kW Hours in last 30 days",
@@ -464,6 +473,34 @@ SENSOR_DEFINITIONS = {
         "state_class": None,
         "category": "diagnostic",
         "monitor_stats": True,
+    },
+    # Log entry sensors
+    "last_alarm_log": {
+        "name": "Last Alarm",
+        "path": "Status/Last Log Entries/Logs/Alarm Log",
+        "device_class": None,
+        "unit": None,
+        "icon": "mdi:alert",
+        "state_class": None,
+        "category": "diagnostic",
+    },
+    "last_run_log": {
+        "name": "Last Run",
+        "path": "Status/Last Log Entries/Logs/Run Log",
+        "device_class": None,
+        "unit": None,
+        "icon": "mdi:engine",
+        "state_class": None,
+        "category": "diagnostic",
+    },
+    "last_outage": {
+        "name": "Last Outage",
+        "path": "Outage/Outage Log/0",
+        "device_class": None,
+        "unit": None,
+        "icon": "mdi:power-plug-off",
+        "state_class": None,
+        "category": "diagnostic",
     },
     # Weather sensors
     "weather_temp": {
@@ -698,6 +735,7 @@ class MyHomeAssistant(MySupport):
         self.IncludeWeather = True
         self.IncludeLogs = False
         self.UseNumeric = True
+        self.UseMetric = False  # Read from genmon.conf metricweather setting
         self.debug = False
 
         # Runtime state
@@ -827,6 +865,18 @@ class MyHomeAssistant(MySupport):
         self.UseNumeric = config.ReadValue("numeric_json", return_type=bool, default=True)
         self.debug = config.ReadValue("debug", return_type=bool, default=False)
         self.ClientID = config.ReadValue("client_id", default="genmon_ha")
+
+        # Read metric setting from genmon.conf for temperature unit selection
+        try:
+            genmon_config = MyConfig(
+                filename=os.path.join(configfilepath, "genmon.conf"),
+                section="GenMon",
+                log=self.log,
+            )
+            self.UseMetric = genmon_config.ReadValue("metricweather", return_type=bool, default=False)
+            self.LogDebug(f"Using metric units: {self.UseMetric}")
+        except Exception as e:
+            self.LogDebug(f"Could not read metricweather from genmon.conf, defaulting to imperial: {e}")
 
     # --------------------------------------------------------------------------
     def _get_generator_info(self):
@@ -1526,7 +1576,16 @@ class MyHomeAssistant(MySupport):
                 maint_data = json.loads(self._send_command("generator: maint_num_json"))
                 outage_data = json.loads(self._send_command("generator: outage_num_json"))
                 monitor_data = json.loads(self._send_command("generator: monitor_num_json"))
+                gui_data = json.loads(self._send_command("generator: gui_status_json"))
                 genmon_data = {**status_data, **maint_data, **outage_data, **monitor_data}
+                # Add tiles from gui_status_json
+                tiles = gui_data.get("tiles", [])
+                tiles_dict = {}
+                for tile in tiles:
+                    title = tile.get("title", "")
+                    if title:
+                        tiles_dict[title] = tile
+                genmon_data["Tiles"] = tiles_dict
             except Exception as e:
                 self.LogError(f"Could not get genmon data for discovery check: {e}")
                 genmon_data = {}
@@ -1552,10 +1611,21 @@ class MyHomeAssistant(MySupport):
             for entity_id, entity_def in self.DynamicSensors.items():
                 self._publish_sensor_discovery(entity_id, entity_def)
 
-            # Publish binary sensor discoveries
+            # Publish binary sensor discoveries - only if data exists (except payload_on_not_empty)
+            binary_sensors_skipped = 0
             for entity_id, entity_def in self.BinarySensorDefinitions.items():
                 if self._entity_allowed(entity_def, entity_id):
+                    # Check if this binary sensor has actual data from genmon
+                    # Skip sensors that reference data that doesn't exist on this controller
+                    # Exception: payload_on_not_empty sensors are valid even with no data (they'll show OFF)
+                    if "path" in entity_def and genmon_data and not entity_def.get("payload_on_not_empty"):
+                        value = self._get_value_from_path(genmon_data, entity_def["path"])
+                        if value is None:
+                            binary_sensors_skipped += 1
+                            continue  # Skip binary sensors with no data
                     self._publish_binary_sensor_discovery(entity_id, entity_def)
+            if binary_sensors_skipped > 0:
+                self.LogDebug(f"Skipped {binary_sensors_skipped} binary sensors with no data")
 
             # Publish button discoveries
             for entity_id, entity_def in self.ButtonDefinitions.items():
@@ -1605,8 +1675,14 @@ class MyHomeAssistant(MySupport):
 
             if entity_def.get("device_class"):
                 payload["device_class"] = entity_def["device_class"]
-            if entity_def.get("unit"):
-                payload["unit_of_measurement"] = entity_def["unit"]
+
+            # Handle unit of measurement, with special handling for temperature sensors
+            unit = entity_def.get("unit")
+            if unit:
+                payload["unit_of_measurement"] = unit
+            elif entity_def.get("device_class") == "temperature":
+                # Temperature sensors require a unit - set based on metric setting
+                payload["unit_of_measurement"] = "°C" if self.UseMetric else "°F"
             if entity_def.get("icon"):
                 payload["icon"] = entity_def["icon"]
             if entity_def.get("state_class"):
@@ -1851,11 +1927,13 @@ class MyHomeAssistant(MySupport):
                     maint_data = self._send_command("generator: maint_num_json")
                     outage_data = self._send_command("generator: outage_num_json")
                     monitor_data = self._send_command("generator: monitor_num_json")
+                    gui_data = self._send_command("generator: gui_status_json")
                 else:
                     status_data = self._send_command("generator: status_json")
                     maint_data = self._send_command("generator: maint_json")
                     outage_data = self._send_command("generator: outage_json")
                     monitor_data = self._send_command("generator: monitor_json")
+                    gui_data = self._send_command("generator: gui_status_json")
 
                 # Parse JSON responses
                 try:
@@ -1872,6 +1950,16 @@ class MyHomeAssistant(MySupport):
                     if monitor_data:
                         temp = json.loads(monitor_data)
                         genmon_data["Monitor"] = temp.get("Monitor", {})
+                    if gui_data:
+                        temp = json.loads(gui_data)
+                        # Extract tiles as a dict keyed by title for easy lookup
+                        tiles = temp.get("tiles", [])
+                        tiles_dict = {}
+                        for tile in tiles:
+                            title = tile.get("title", "")
+                            if title:
+                                tiles_dict[title] = tile
+                        genmon_data["Tiles"] = tiles_dict
 
                     # Process and publish states
                     self._process_data(genmon_data)
@@ -1958,9 +2046,15 @@ class MyHomeAssistant(MySupport):
                 continue
             try:
                 value = self._get_value_from_path(genmon_data, entity_def["path"])
+                # For binary sensors with payload_on_not_empty, treat None/missing as OFF
+                # This prevents "Unknown" state in Home Assistant when no alarm is present
                 if value is not None:
                     binary_value = self._process_binary_value(value, entity_def)
                     if self._publish_state("binary_sensor", entity_id, binary_value):
+                        stats["binary_changed"] += 1
+                elif entity_def.get("payload_on_not_empty"):
+                    # Value is None/missing - for "not empty" sensors, this means OFF
+                    if self._publish_state("binary_sensor", entity_id, "OFF"):
                         stats["binary_changed"] += 1
             except Exception as e1:
                 if self.debug:
@@ -2048,11 +2142,12 @@ class MyHomeAssistant(MySupport):
                             return None
 
                 elif isinstance(current, list):
-                    # Search list of single-key dicts for matching key
+                    # Search list of single-key dicts for matching key first
+                    # This handles structures like [{"0": [...]}, {"1": [...]}]
                     found = False
                     for item in current:
                         if isinstance(item, dict):
-                            # Each item is like {"Engine": [...]} or {"Battery Voltage": value}
+                            # Each item is like {"Engine": [...]} or {"0": [...]}
                             if part in item:
                                 current = item[part]
                                 found = True
@@ -2065,6 +2160,12 @@ class MyHomeAssistant(MySupport):
                                     break
                             if found:
                                 break
+                    # If not found as dict key and part is numeric, try as list index
+                    if not found and part.isdigit():
+                        idx = int(part)
+                        if idx < len(current):
+                            current = current[idx]
+                            found = True
                     if not found:
                         return None
                 else:
@@ -2258,11 +2359,37 @@ class MyHomeAssistant(MySupport):
         """
 
         # Build a descriptive name from the path
-        # Use last 2 components for context without being too verbose
-        # e.g., "Monitor/Last Log Entries/Logs/Alarm Log" -> "Logs Alarm Log"
         name_parts = path.split("/")
-        if len(name_parts) >= 2:
+
+        # Special handling for log entries (Outage Log, Alarm Log, Run Log)
+        # Paths like "Outage/Outage Log/0/Date" should become "Last Outage Date"
+        # Only process entry "0" (the latest, 0-indexed) and skip others
+        if any(log_type in path for log_type in ["Outage Log", "Alarm Log", "Run Log"]):
+            # Check if this is a numbered log entry
+            for i, part in enumerate(name_parts):
+                if part.isdigit():
+                    entry_num = int(part)
+                    if entry_num != 0:
+                        # Skip non-latest entries - return None to signal skip
+                        return None
+                    # Build name as "Last [Log Type] [Field]"
+                    # Find the log type (part before the number)
+                    if i > 0:
+                        log_type = name_parts[i - 1].replace(" Log", "")
+                        field = name_parts[-1] if i < len(name_parts) - 1 else ""
+                        name = f"Last {log_type} {field}".strip()
+                    else:
+                        name = " ".join(name_parts[-2:])
+                    break
+            else:
+                # No number found, use default naming
+                if len(name_parts) >= 2:
+                    name = " ".join(name_parts[-2:])
+                else:
+                    name = name_parts[-1] if name_parts else path
+        elif len(name_parts) >= 2:
             # Use last 2 components for reasonable context
+            # e.g., "Monitor/Last Log Entries/Logs/Alarm Log" -> "Logs Alarm Log"
             name = " ".join(name_parts[-2:])
         else:
             name = name_parts[-1] if name_parts else path
@@ -2304,13 +2431,22 @@ class MyHomeAssistant(MySupport):
         elif 'pressure' in name.lower():
             device_class = 'pressure'
 
+        # Select icon based on content
+        icon = "mdi:information-outline"
+        if "outage" in name.lower():
+            icon = "mdi:power-plug-off" if "date" in name.lower() else "mdi:timer-outline"
+        elif "alarm" in name.lower():
+            icon = "mdi:alert"
+        elif "run" in name.lower():
+            icon = "mdi:engine"
+
         # Build config
         config = {
             "name": name,
             "path": path,
             "device_class": device_class,
             "unit": unit,
-            "icon": "mdi:information-outline",
+            "icon": icon,
             "state_class": "measurement" if is_numeric else None,
             "category": "diagnostic",
             "dynamic": True,  # Mark as dynamically discovered
@@ -2340,15 +2476,18 @@ class MyHomeAssistant(MySupport):
             skip_patterns = [
                 'controller settings',  # Configuration, not sensor data
             ]
+            # Skip Tiles - handled by static sensor definitions (cpu_temp)
+            if path.startswith("Tiles/"):
+                continue
             if any(skip in path.lower() for skip in skip_patterns):
                 continue
 
-            # Only include the most recent outage log entry (entry 1)
-            # Skip entries like "Outage/Outage Log/2/Date", keep "Outage/Outage Log/1/Date"
+            # Only include the most recent outage log entry (entry 0, which is the latest)
+            # Skip entries like "Outage/Outage Log/1/Date", keep "Outage/Outage Log/0/Date"
             if 'outage log' in path.lower():
                 outage_match = re.search(r'outage log/(\d+)/', path, re.IGNORECASE)
-                if outage_match and outage_match.group(1) != '1':
-                    continue  # Skip all but the first outage log entry
+                if outage_match and outage_match.group(1) != '0':
+                    continue  # Skip all but the most recent (0th) outage log entry
 
             # Extract the actual value for empty check
             if isinstance(entity_data, dict) and "value" in entity_data:
@@ -2364,7 +2503,9 @@ class MyHomeAssistant(MySupport):
             entity_id = self._path_to_entity_id(path)
             if entity_id and entity_id not in self.SensorDefinitions:
                 config = self._generate_dynamic_sensor_config(path, entity_data)
-                new_sensors[entity_id] = config
+                # config is None if we should skip this entry (e.g., non-latest log entries)
+                if config is not None:
+                    new_sensors[entity_id] = config
 
         return new_sensors
 
@@ -2379,6 +2520,19 @@ class MyHomeAssistant(MySupport):
             if entity_def.get("payload_on_not_empty"):
                 if value_str and value_str.lower() not in ["", "none", "n/a", "unknown"]:
                     return "ON"
+                return "OFF"
+
+            # Handle numeric comparison: payload_on_gt (greater than threshold)
+            if "payload_on_gt" in entity_def:
+                try:
+                    # Extract numeric value from string (e.g., "60.12 Hz" -> 60.12)
+                    numeric_str = ''.join(c for c in value_str.split()[0] if c.isdigit() or c == '.' or c == '-')
+                    if numeric_str:
+                        numeric_val = float(numeric_str)
+                        threshold = float(entity_def["payload_on_gt"])
+                        return "ON" if numeric_val > threshold else "OFF"
+                except (ValueError, IndexError):
+                    pass
                 return "OFF"
 
             # Handle list of ON values
