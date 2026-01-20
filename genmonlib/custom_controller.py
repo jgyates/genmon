@@ -1069,6 +1069,7 @@ class CustomController(GeneratorController):
             StartInfo["ExerciseControls"] = False  # self.SmartSwitch
             StartInfo["WriteQuietMode"] = False
             StartInfo["SetGenTime"] = ("settime" in self.controllerimport.keys())
+            StartInfo["import_config_file"] = self.ConfigImportFile
         
             if self.Platform != None:
                 StartInfo["Linux"] = self.Platform.IsOSLinux()

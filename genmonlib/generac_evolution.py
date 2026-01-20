@@ -5327,6 +5327,7 @@ class Evolution(GeneratorController):
             StartInfo["WriteQuietMode"] = EvoLC
             StartInfo["Firmware"] = self.GetFirmwareVersion()
             StartInfo["Hardware"] = self.GetHardwareVersion()
+            StartInfo["import_config_file"] = None
             if self.Platform != None:
                 StartInfo["Linux"] = self.Platform.IsOSLinux()
                 StartInfo["RaspberryPi"] = self.Platform.IsPlatformRaspberryPi()
