@@ -286,8 +286,37 @@ SENSOR_DEFINITIONS = {
         "icon": "mdi:gas-station",
         "state_class": "total",
     },
-    # Service due sensors
-    # NOTE: service_a and service_b removed - these don't exist in actual genmon data
+    # Service due sensors (Evolution controllers only - Nexus uses different service naming)
+    "service_a_due": {
+        "name": "Service A Due",
+        "path": "Maintenance/Service/Service A Due",
+        "device_class": None,
+        "unit": None,
+        "icon": "mdi:wrench-clock",
+        "state_class": None,
+        "category": "diagnostic",
+        "controllers": ["evolution"],
+    },
+    "service_b_due": {
+        "name": "Service B Due",
+        "path": "Maintenance/Service/Service B Due",
+        "device_class": None,
+        "unit": None,
+        "icon": "mdi:wrench-clock",
+        "state_class": None,
+        "category": "diagnostic",
+        "controllers": ["evolution"],
+    },
+    "battery_check_due": {
+        "name": "Battery Check Due",
+        "path": "Maintenance/Service/Battery Check Due",
+        "device_class": None,
+        "unit": None,
+        "icon": "mdi:battery-clock",
+        "state_class": None,
+        "category": "diagnostic",
+        "controllers": ["evolution"],
+    },
     "oil_service": {
         "name": "Oil and Filter Service Due",
         "path": "Maintenance/Service/Oil and Oil Filter Service Due",
@@ -633,6 +662,11 @@ BUTTON_DEFINITIONS = {
         "command": "setremote=STARTEXERCISE",
         "icon": "mdi:dumbbell",
     },
+    "set_time": {
+        "name": "Set Generator Time",
+        "command": "settime",
+        "icon": "mdi:clock-edit",
+    },
 }
 
 # Switch definitions
@@ -753,6 +787,12 @@ class MyHomeAssistant(MySupport):
         self.LastDiscoveryTime = 0
         self.DynamicSensors = {}  # Storage for dynamically discovered sensors
 
+        # Entity cleanup tracking
+        self.ExistingEntities = set()  # Entities found via MQTT subscription
+        self.PublishedEntities = set()  # Entities we've published this session
+        self.CleanupComplete = False  # True after stale entities removed
+        self.DiscoverySubscribed = False  # True when subscribed to discovery topics
+
         # Entity definitions - will be loaded from JSON or fall back to hardcoded
         self.SensorDefinitions = {}
         self.BinarySensorDefinitions = {}
@@ -855,7 +895,9 @@ class MyHomeAssistant(MySupport):
         self.ClientKeyPath = config.ReadValue("client_key_path", default="")
 
         # Entity filtering
-        blacklist_str = config.ReadValue("blacklist", default="")
+        # Default blacklist excludes web UI tile data which duplicates existing sensors
+        default_blacklist = "Tiles"
+        blacklist_str = config.ReadValue("blacklist", default=default_blacklist)
         if blacklist_str:
             self.BlackList = [x.strip().lower() for x in blacklist_str.split(",") if x.strip()]
 
@@ -972,13 +1014,27 @@ class MyHomeAssistant(MySupport):
 
     # --------------------------------------------------------------------------
     def _get_controller_config_filename(self):
-        """Map controller type to JSON filename."""
+        """Map controller type to JSON filename.
+
+        For custom controllers, uses the import_config_file from start_info_json
+        to allow each custom controller type to have its own JSON definition file.
+        """
+        # For custom controllers, use import_config_file from StartInfo
+        if self.ControllerType == "custom":
+            import_config = self.StartInfo.get("import_config_file", "")
+            if import_config:
+                # Remove .json extension if present (we'll add it)
+                if import_config.lower().endswith(".json"):
+                    import_config = import_config[:-5]
+                return f"{import_config}.json"
+            # Fallback if import_config_file not set
+            return "custom.json"
+
         controller_map = {
             "evolution": "generac_evo_nexus.json",
             "nexus": "generac_evo_nexus.json",
             "h-100": "h_100.json",
             "powerzone": "powerzone.json",
-            "custom": "custom.json",
         }
         return controller_map.get(self.ControllerType, "custom.json")
 
@@ -1070,6 +1126,18 @@ class MyHomeAssistant(MySupport):
         controller_filename = self._get_controller_config_filename()
         controller_file = os.path.join(data_dir, controller_filename)
         controller_config = self.ReadJSONConfig(controller_file)
+
+        # For custom controllers, the JSON file is required
+        if controller_config is None and self.ControllerType == "custom":
+            import_config = self.StartInfo.get("import_config_file", "unknown")
+            self.LogError(
+                f"Custom controller JSON file not found: {controller_file}. "
+                f"Custom controllers require a Home Assistant entity definition file. "
+                f"Please create {controller_filename} in data/homeassistant/ "
+                f"for your '{import_config}' controller and submit it to the repo."
+            )
+            # Exit the addon - custom controllers must have a definition file
+            sys.exit(1)
 
         if controller_config:
             self.LogDebug(f"Loading controller-specific definitions from {controller_filename}")
@@ -1209,6 +1277,18 @@ class MyHomeAssistant(MySupport):
 
         self.LogInfo(f"Connected to MQTT broker: {self.MQTTAddress}")
 
+        # Reset cleanup state on new connection
+        self.ExistingEntities.clear()
+        self.PublishedEntities.clear()
+        self.CleanupComplete = False
+
+        # Subscribe to discovery topics to find existing entities for cleanup
+        # Pattern: {discovery_prefix}/{entity_type}/{device_id}/{entity_id}/config
+        discovery_topic = f"{self.DiscoveryPrefix}/+/{self.DeviceId}/+/config"
+        self.MQTTclient.subscribe(discovery_topic)
+        self.DiscoverySubscribed = True
+        self.LogDebug(f"Subscribed to discovery topic for cleanup: {discovery_topic}")
+
         # Subscribe to HA birth topic to detect HA restarts
         ha_status_topic = f"{self.DiscoveryPrefix}/status"
         self.MQTTclient.subscribe(ha_status_topic)
@@ -1223,7 +1303,11 @@ class MyHomeAssistant(MySupport):
         availability_topic = f"{self.BaseTopic}/status"
         self.MQTTclient.publish(availability_topic, payload="online", qos=1, retain=True)
 
-        # Publish discovery messages
+        # Brief delay to allow retained discovery messages to arrive before publishing
+        # This allows us to collect existing entities for cleanup comparison
+        time.sleep(2)
+
+        # Publish discovery messages (cleanup happens after publishing)
         self._publish_discovery()
 
     # --------------------------------------------------------------------------
@@ -1232,6 +1316,7 @@ class MyHomeAssistant(MySupport):
 
         self.LogInfo(f"Disconnected from MQTT broker, return code: {rc}")
         self.EntitiesPublished = False
+        self.DiscoverySubscribed = False
 
     # --------------------------------------------------------------------------
     def _on_message(self, client, userdata, message):
@@ -1242,6 +1327,20 @@ class MyHomeAssistant(MySupport):
             payload = message.payload.decode("utf-8")
 
             self.LogDebug(f"Received message: {topic} = {payload}")
+
+            # Handle discovery config messages for cleanup tracking
+            # Format: {discovery_prefix}/{entity_type}/{device_id}/{entity_id}/config
+            if topic.endswith("/config") and f"/{self.DeviceId}/" in topic:
+                parts = topic.split("/")
+                if len(parts) >= 5 and parts[-1] == "config":
+                    entity_type = parts[-4]
+                    entity_id = parts[-2]
+                    # Only track if it has a non-empty payload (entity exists)
+                    if payload and payload.strip():
+                        entity_key = f"{entity_type}/{entity_id}"
+                        self.ExistingEntities.add(entity_key)
+                        self.LogDebug(f"Found existing entity: {entity_key}")
+                return
 
             # Parse topic to determine entity type and id
             # Format: {base_topic}/{entity_type}/{entity_id}/set or /command
@@ -1651,8 +1750,72 @@ class MyHomeAssistant(MySupport):
             self.LastDiscoveryTime = time.time()
             self.LogDebug(f"Discovery messages published ({sensors_published} predefined + {len(self.DynamicSensors)} dynamic sensors, {sensors_skipped} skipped)")
 
+            # Clean up stale entities (only on first publish after connect)
+            if not self.CleanupComplete:
+                self._cleanup_stale_entities()
+
         except Exception as e1:
             self.LogErrorLine(f"Error publishing discovery: {str(e1)}")
+
+    # --------------------------------------------------------------------------
+    def _cleanup_stale_entities(self):
+        """Remove entities that exist in MQTT but are no longer defined.
+
+        This handles cleanup when entity IDs change between versions.
+        Compares existing entities (found via MQTT subscription) against
+        entities we just published, and removes any stale ones.
+        """
+        try:
+            if not self.ExistingEntities:
+                self.LogDebug("No existing entities found, skipping cleanup")
+                self.CleanupComplete = True
+                return
+
+            # Build set of entities we just published
+            # Track by "entity_type/entity_id" format
+            for entity_id in self.SensorDefinitions:
+                self.PublishedEntities.add(f"sensor/{entity_id}")
+            for entity_id in self.DynamicSensors:
+                self.PublishedEntities.add(f"sensor/{entity_id}")
+            for entity_id in self.BinarySensorDefinitions:
+                self.PublishedEntities.add(f"binary_sensor/{entity_id}")
+            for entity_id in self.ButtonDefinitions:
+                self.PublishedEntities.add(f"button/{entity_id}")
+            for entity_id in self.SwitchDefinitions:
+                self.PublishedEntities.add(f"switch/{entity_id}")
+            for entity_id in self.SelectDefinitions:
+                self.PublishedEntities.add(f"select/{entity_id}")
+            for entity_id in self.NumberDefinitions:
+                self.PublishedEntities.add(f"number/{entity_id}")
+
+            # Find stale entities (exist in MQTT but not in current definitions)
+            stale_entities = self.ExistingEntities - self.PublishedEntities
+
+            if not stale_entities:
+                self.LogDebug("No stale entities to clean up")
+                self.CleanupComplete = True
+                return
+
+            self.LogInfo(f"Cleaning up {len(stale_entities)} stale entities")
+
+            for entity_key in stale_entities:
+                try:
+                    # entity_key format: "entity_type/entity_id"
+                    entity_type, entity_id = entity_key.split("/", 1)
+                    discovery_topic = f"{self.DiscoveryPrefix}/{entity_type}/{self.DeviceId}/{entity_id}/config"
+
+                    # Publish empty payload to remove entity from Home Assistant
+                    self.MQTTclient.publish(discovery_topic, "", retain=True)
+                    self.LogInfo(f"Removed stale entity: {entity_key}")
+                except Exception as e:
+                    self.LogError(f"Error removing stale entity {entity_key}: {e}")
+
+            self.CleanupComplete = True
+            self.LogDebug("Stale entity cleanup complete")
+
+        except Exception as e1:
+            self.LogErrorLine(f"Error in stale entity cleanup: {str(e1)}")
+            self.CleanupComplete = True  # Mark complete to avoid repeated attempts
 
     # --------------------------------------------------------------------------
     def _publish_sensor_discovery(self, entity_id, entity_def):
