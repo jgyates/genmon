@@ -734,6 +734,12 @@
       "name": "Start Exercise",
       "command": "setremote=STARTEXERCISE",
       "icon": "mdi:dumbbell"
+    },
+    {
+      "entity_id": "set_time",
+      "name": "Set Generator Time",
+      "command": "settime",
+      "icon": "mdi:clock-edit"
     }
   ],
   "switches": [

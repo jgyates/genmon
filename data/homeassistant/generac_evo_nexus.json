@@ -1,8 +1,42 @@
 {
   "controller_type": "evolution",
   "version": "1.0",
-  "description": "Evolution/Nexus controller-specific entity definitions (extends base)",
-  "sensors": [],
+  "description": "Evolution controller-specific entity definitions (extends base). Note: Service A/B/Battery Check are Evolution-only, not available on Nexus.",
+  "sensors": [
+    {
+      "entity_id": "service_a_due",
+      "name": "Service A Due",
+      "path": "Maintenance/Service/Service A Due",
+      "icon": "mdi:wrench-clock",
+      "category": "diagnostic",
+      "enabled_default": true,
+      "monitor_stats": false,
+      "weather": false,
+      "controllers": ["evolution"]
+    },
+    {
+      "entity_id": "service_b_due",
+      "name": "Service B Due",
+      "path": "Maintenance/Service/Service B Due",
+      "icon": "mdi:wrench-clock",
+      "category": "diagnostic",
+      "enabled_default": true,
+      "monitor_stats": false,
+      "weather": false,
+      "controllers": ["evolution"]
+    },
+    {
+      "entity_id": "battery_check_due",
+      "name": "Battery Check Due",
+      "path": "Maintenance/Service/Battery Check Due",
+      "icon": "mdi:battery-clock",
+      "category": "diagnostic",
+      "enabled_default": true,
+      "monitor_stats": false,
+      "weather": false,
+      "controllers": ["evolution"]
+    }
+  ],
   "binary_sensors": [],
   "buttons": [],
   "switches": [],
