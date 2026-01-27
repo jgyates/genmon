@@ -1854,8 +1854,6 @@ class CustomController(GeneratorController):
             if "multiplier" in entry.keys():
                 if ReturnFloat:
                     value = float(value * float(entry["multiplier"]))
-                    if entry["title"] == "Ambient Temperature":
-                        self.LogDebug(entry["title"] + ": " + str(value))
                 else:
                     value = int(value * float(entry["multiplier"]))
             return value
@@ -1870,13 +1868,9 @@ class CustomController(GeneratorController):
             bitdepth = None
             if "signed16" in entry.keys() and entry["signed16"] == True:
                 bitdepth = 16
-                if entry["title"] == "Ambient Temperature":
-                    self.LogDebug(entry["title"] + ": " + str(value))
             elif "signed32" in entry.keys() and entry["signed32"] == True:
                 bitdepth = 32 
             value = self.getSignedNumber( value, bitdepth)
-            if entry["title"] == "Ambient Temperature":
-                self.LogDebug(entry["title"] + ": " + str(value))
             return value
         except Exception as e1:
             self.LogErrorLine("Error in ProcessSignedModifier: " + str(e1) + ": " + str(entry["title"]))
