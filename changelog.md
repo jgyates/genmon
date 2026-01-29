@@ -1,6 +1,12 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.19.08 -2026-01-29
+- Added "Generator State" value for Evolution 2.0 and power pact models on the Status page
+- Added a new add on for Home Assistant auto discovery. Thanks @jtubb
+- Fix for Chrome for Windows status bar issue in web UI. Thanks @buschauer
+- Update to correct negative temp values for Briggs and Stratton
+
 ## V1.19.07 -2025-10-01
 - Added SNMP JSON support for Briggs and Stratton (thanks @zinglo)
 - minor update to correct validation issue with imported buttons in web UI
@@ -19,11 +25,6 @@ All notable changes to this project will be documented in this file.
 - On Maint page, Renamed "Hours of Protection" to "Time Since Activation" for Evoltuion 
 - Added advanced settings option to display Hours of Protection as years, days, hours
 - Corrected SNMP issue on some Evo items on the maint page
-- Added "Generator State" value for Evolution 2.0 and power pact models on the Status page
-- Added a new add on for Home Assistant auto discovery. Thanks @jtubb
-- Fix for Chrome for Windows status bar issue in web UI. Thanks @buschauer
-- More updates for Home Assistant add on
-- Update to correct negative temp values for Briggs and Stratton
 
 ## V1.19.06 -2025-05-21
 - Minor update to allow the wifi gauge to work on some USB wifi drivers
