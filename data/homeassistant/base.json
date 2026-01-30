@@ -340,7 +340,8 @@
       "category": "diagnostic",
       "enabled_default": true,
       "monitor_stats": false,
-      "weather": false
+      "weather": false,
+      "controllers": ["nexus"]
     },
     {
       "entity_id": "air_filter_service",
@@ -350,7 +351,8 @@
       "category": "diagnostic",
       "enabled_default": true,
       "monitor_stats": false,
-      "weather": false
+      "weather": false,
+      "controllers": ["nexus"]
     },
     {
       "entity_id": "spark_plug_service",
@@ -360,7 +362,8 @@
       "category": "diagnostic",
       "enabled_default": true,
       "monitor_stats": false,
-      "weather": false
+      "weather": false,
+      "controllers": ["nexus"]
     },
     {
       "entity_id": "battery_service",
@@ -370,7 +373,8 @@
       "category": "diagnostic",
       "enabled_default": true,
       "monitor_stats": false,
-      "weather": false
+      "weather": false,
+      "controllers": ["nexus"]
     },
     {
       "entity_id": "outage_status",
