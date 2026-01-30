@@ -325,6 +325,7 @@ SENSOR_DEFINITIONS = {
         "icon": "mdi:oil",
         "state_class": None,
         "category": "diagnostic",
+        "controllers": ["nexus"],
     },
     "air_filter_service": {
         "name": "Air Filter Service Due",
@@ -334,6 +335,7 @@ SENSOR_DEFINITIONS = {
         "icon": "mdi:air-filter",
         "state_class": None,
         "category": "diagnostic",
+        "controllers": ["nexus"],
     },
     "spark_plug_service": {
         "name": "Spark Plug Service Due",
@@ -343,6 +345,7 @@ SENSOR_DEFINITIONS = {
         "icon": "mdi:flash",
         "state_class": None,
         "category": "diagnostic",
+        "controllers": ["nexus"],
     },
     "battery_service": {
         "name": "Battery Service Due",
@@ -352,6 +355,7 @@ SENSOR_DEFINITIONS = {
         "icon": "mdi:car-battery",
         "state_class": None,
         "category": "diagnostic",
+        "controllers": ["nexus"],
     },
     # Outage sensors
     "outage_status": {
