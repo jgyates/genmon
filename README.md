@@ -123,6 +123,7 @@ alt="Genmon Demo" width="240" height="180" border="10" /></a>
 * [Genmon and Pintsize.me board setup](https://www.youtube.com/watch?v=EQ5DyJKFBa8&ab_channel=98grand5point9)
 * [Run Genmon in a docker image](https://www.youtube.com/watch?v=QVw4uX2XK-Y&ab_channel=BigBearTechWorld)
 * [Setup using Genmon and Pintsize.me](https://www.yourwarrantyisvoid.com/2022/02/15/generators-and-open-source-part-2-always-a-better-mousetrap/)
+* [Another Pintsize.me setup](https://blog.networkprofile.org/monitoring-generac-generator-with-raspberry-pi-and-om3-fiber/)
 
 # Documentation
 * [Genmon Project Wiki](https://github.com/jgyates/genmon/wiki)
