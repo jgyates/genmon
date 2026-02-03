@@ -4673,7 +4673,7 @@ class Evolution(GeneratorController):
     # controller; the Generator battery is not used to supply power.
     # The battery charger will begin its charge cycle when battery
     # voltage drops below approximately 12.6V. The charger provides
-    # current directly to the battery dependant on temperature, and the
+    # current directly to the battery dependent on temperature, and the
     # battery is charged at the appropriate voltage level for 18 hours.
     # At the end of the 18 hour charge period battery charge current
     # is measured when the Generator is off. If battery charge current
