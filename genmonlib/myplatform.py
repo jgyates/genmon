@@ -35,13 +35,21 @@ class MyPlatform(MyCommon):
 
         Info = []
 
-        PlatformInfo = self.GetPlatformInfo()
+        try:
+            PlatformInfo = self.GetPlatformInfo()
+        except Exception as e1:
+            self.LogErrorLine("Error in PlatformStats:GetInfo (GetPlatformInfo): " + str(e1))
+            PlatformInfo = None
 
         if PlatformInfo != None:
             Info.extend(PlatformInfo)
 
-        OSInfo = self.GetOSInfo()
-
+        try:
+            OSInfo = self.GetOSInfo()
+        except Exception as e1:
+            self.LogErrorLine("Error in PlatformStats:GetInfo (GetOSInfo): " + str(e1))
+            OSInfo = None
+        
         if OSInfo != None:
             Info.extend(OSInfo)
 
@@ -56,9 +64,14 @@ class MyPlatform(MyCommon):
     # ------------ MyPlatform::GetPlatformInfo-----------------------------------
     def GetPlatformInfo(self, JSONNum=False):
 
-        if self.IsPlatformRaspberryPi():
-            return self.GetRaspberryPiInfo()
+        if self.IsOSLinux():
+            if self.IsPlatformRaspberryPi():
+                return self.GetRaspberryPiInfo()
+        elif self.IsOSWindows():
+            # TODO
+            return None
         else:
+            self.LogError("Error in GetPlatformInfo, unknown OS." + str(sys.platform))
             return None
 
     # ------------ MyPlatform::GetOSInfo-----------------------------------------
@@ -66,7 +79,21 @@ class MyPlatform(MyCommon):
 
         if self.IsOSLinux():
             return self.GetLinuxInfo()
-        return None
+        elif self.IsOSWindows():
+            try:
+                WindowsInfo = []
+                WindowsInfo.append({"Platform": sys.platform()})
+                WindowsInfo.append({"OS Release": sys.release()})
+                WindowsInfo.append({"OS Version": sys.version()})
+                WindowsInfo.append({"Processor": sys.processor()})
+                return WindowsInfo
+            except Exception as e1:
+                self.LogErrorLine("Error in GetOSInfo: Error getting windows info.")
+                return None
+        else:
+            self.LogError("Error in GetOSInfo, unknown OS." + str(sys.platform))
+            return None
+
 
     # ------------ MyPlatform::PlatformBitDepth----------------------------------
     def PlatformBitDepth(self):
