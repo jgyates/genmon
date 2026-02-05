@@ -1208,27 +1208,30 @@ class Monitor(MySupport):
     # ------------ Monitor::GetStatusForGUI -------------------------------------
     def GetStatusForGUI(self):
 
-        Status = {}
+        try:
+            Status = {}
 
-        Status["SystemHealth"] = self.GetSystemHealth()
-        Status["UnsentFeedback"] = str(os.path.isfile(self.FeedbackLogFile))
+            Status["SystemHealth"] = self.GetSystemHealth()
+            Status["UnsentFeedback"] = str(os.path.isfile(self.FeedbackLogFile))
 
-        if not self.bDisablePlatformStats:
-            PlatformStats = self.GetPlatformStats(usemetric=True)
-            if not PlatformStats == None and len(PlatformStats):
-                Status["PlatformStats"] = PlatformStats
-        WeatherData = self.GetWeatherData(ForUI=True)
-        if not WeatherData == None and len(WeatherData):
-            Status["Weather"] = WeatherData
-        # Monitor Time
-        Status["MonitorTime"] = datetime.datetime.now().strftime("%m/%d/%Y %H:%M")
-        # Engine run hours
-        Status["RunHours"] = self.Controller.GetRunHours()
-        Status["AltDateformat"] = self.Controller.bAlternateDateFormat
-        Status["version"] = ProgramDefaults.GENMON_VERSION
-        ReturnDict = self.MergeDicts(Status, self.Controller.GetStatusForGUI())
-
-        return ReturnDict
+            if not self.bDisablePlatformStats:
+                PlatformStats = self.GetPlatformStats(usemetric=True)
+                if not PlatformStats == None and len(PlatformStats):
+                    Status["PlatformStats"] = PlatformStats
+            WeatherData = self.GetWeatherData(ForUI=True)
+            if not WeatherData == None and len(WeatherData):
+                Status["Weather"] = WeatherData
+            # Monitor Time
+            Status["MonitorTime"] = datetime.datetime.now().strftime("%m/%d/%Y %H:%M")
+            # Engine run hours
+            Status["RunHours"] = self.Controller.GetRunHours()
+            Status["AltDateformat"] = self.Controller.bAlternateDateFormat
+            Status["version"] = ProgramDefaults.GENMON_VERSION
+            ReturnDict = self.MergeDicts(Status, self.Controller.GetStatusForGUI())
+            return ReturnDict
+        except Exception as e1:
+            self.LogErrorLine("Error in GetStatusForGUI: " + str(e1))
+            return Status
 
     # -------------Monitor::GetSystemHealth--------------------------------------
     #   returns the health of the monitor program
