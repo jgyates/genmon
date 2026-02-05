@@ -181,6 +181,7 @@ All notable changes to this project will be documented in this file.
 - Updates for unknown alarms for 4.5L controller
 - Updates to About page to better handle slower upgrades
 - Minor update to gensnmp to allow the disabling of IPv6
+- Update to remove unused input registers on Briggs and Stratton
 
 ## V1.18.16 -2022-12-06
 - Change to allow CPU temp gauge for any linux system

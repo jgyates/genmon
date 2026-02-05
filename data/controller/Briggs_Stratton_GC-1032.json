@@ -87,12 +87,17 @@
     "0052": {"length": 2, "text": "Date - Month / Day"},
     "0053": {"length": 2, "text": "Date - Year"},
     "0054": {"length": 2, "text": "Nominal kW"},
-    "0055": 2,
+    "0055": {"length": 2, "text": "Controller Firmware"},
     "0056": 2,
+    "00b5": {"length": 2, "text": "Controller Model", "Note:":"Reading this causes a timeout on some controllers, others it returns the controller model"}
+  },
+  "alt_input_registers": {
+    "NOTE1": "The following input registers do show data in some models yet the controller does not respond (timeout error) in others",
+    "NOTE2": "This is object is provided for documentation purposes only",
     "00b4": 2,
-    "00b5": {"length": 2, "text": "Controller Model"},
-    "00b6": {"length": 2, "text": "Controller Firmware - Major"},
-    "00b7": {"length": 2, "text": "Controller Firmware - Minor"},
+    "00b5": {"length": 2, "text": "Controller Model - Left this one in as some controllers return this value"},
+    "00b6": {"length": 2, "text": "Controller Firmware - Major - DUPLICATE of 0055"},
+    "00b7": {"length": 2, "text": "Controller Firmware - Minor - DUPLICATE of 0055"},
     "00b8": 2,
     "00b9": 2,
     "00ba": 2,
@@ -828,18 +833,19 @@
       "title": "Controller Firmware",
       "value": [
         {
-          "reg": "00b6",
+          "reg": "0055",
           "reg_type": "input",
           "type": "int",
-          "mask": "ffff",
+          "mask": "00ff",
           "title": "Major"
         },
         {
-          "reg": "00b7",
+          "reg": "0055",
           "reg_type": "input",
           "type": "int",
-          "mask": "ffff",
-          "title": "Minor"
+          "title": "Minor",
+          "mask": "ff00",
+          "shiftright": 8
         }
       ]
     },
