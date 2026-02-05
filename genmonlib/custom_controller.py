@@ -1074,6 +1074,7 @@ class CustomController(GeneratorController):
             if self.Platform != None:
                 StartInfo["Linux"] = self.Platform.IsOSLinux()
                 StartInfo["RaspberryPi"] = self.Platform.IsPlatformRaspberryPi()
+                StartInfo["Platform"] = self.Platform.PlatformName()
 
             if not NoTile:
 

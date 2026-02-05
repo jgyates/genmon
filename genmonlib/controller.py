@@ -1248,6 +1248,7 @@ class GeneratorController(MySupport):
             StartInfo["RemoteButtons"] = False
             StartInfo["Linux"] = self.Platform.IsOSLinux()
             StartInfo["RaspberryPi"] = self.Platform.IsPlatformRaspberryPi()
+            StartInfo["Platform"] = self.Platform.PlatformName()
             StartInfo["import_config_file"] = None
 
             if not NoTile:

@@ -81,11 +81,13 @@ class MyPlatform(MyCommon):
             return self.GetLinuxInfo()
         elif self.IsOSWindows():
             try:
+                import platform
                 WindowsInfo = []
-                WindowsInfo.append({"Platform": sys.platform()})
-                WindowsInfo.append({"OS Release": sys.release()})
-                WindowsInfo.append({"OS Version": sys.version()})
-                WindowsInfo.append({"Processor": sys.processor()})
+                WindowsInfo.append({"Platform": platform.system()})
+                WindowsInfo.append({"OS Release": platform.release()})
+                WindowsInfo.append({"OS Version": platform.version()})
+                WindowsInfo.append({"Processor": platform.processor()})
+                WindowsInfo.append({"Architecture": self.PlatformBitDepth()})
                 return WindowsInfo
             except Exception as e1:
                 self.LogErrorLine("Error in GetOSInfo: Error getting windows info.")
@@ -94,6 +96,14 @@ class MyPlatform(MyCommon):
             self.LogError("Error in GetOSInfo, unknown OS." + str(sys.platform))
             return None
 
+    # ------------ MyPlatform::PlatformName-------------------------------------
+    def PlatformName(self):
+        try:
+            import platform
+            return platform.system()
+        except Exception as e1:
+                self.LogErrorLine("Error in PlatformName: " + str(e1))
+                return "Unknown"
 
     # ------------ MyPlatform::PlatformBitDepth----------------------------------
     def PlatformBitDepth(self):
