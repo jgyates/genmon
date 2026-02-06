@@ -115,13 +115,17 @@ class MySupport(MyCommon):
     # ------------ MySupport::GetPlatformStats ----------------------------------
     def GetPlatformStats(self, usemetric=None, JSONNum=False):
 
-        if not usemetric == None:
-            bMetric = usemetric
-        else:
-            bMetric = self.UseMetric
-        Platform = MyPlatform(self.log, bMetric)
+        try:
+            if not usemetric == None:
+                bMetric = usemetric
+            else:
+                bMetric = self.UseMetric
+            Platform = MyPlatform(self.log, bMetric)
 
-        return Platform.GetInfo(JSONNum=JSONNum)
+            return Platform.GetInfo(JSONNum=JSONNum)
+        except Exception as e1:
+            self.LogErrorLine("Error in GetPlatformStats: " + str(e1))
+            return []
 
     # ----------  MySupport::RegExIsValid---------------------------------
     def RegExIsValid(self, input_str):
