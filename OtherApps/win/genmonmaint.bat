@@ -41,10 +41,13 @@ if not "%1" == "" goto :GETOPTS
 REM Help
 if %help_opt%==true call :printhelp & goto :eof
 
+call :trim %config_path% config_path
+call :trim %log_path% log_path
+
 if %noprompt_opt%==true echo No prompt option enabled.
 
 echo.
-echo Config path is %config_path%
+echo Config path is (%config_path%)
 
 REM backup config
 if %backup_opt%==true call :backupgenmon & goto :eof
@@ -67,6 +70,10 @@ echo.
 echo Exiting genmonmaint.bat
 goto :eof
 
+REM ----------------------------------------------------------------------------
+:trim
+set %2=%1
+exit /b 0
 
 REM ----------------------------------------------------------------------------
 :printhelp
