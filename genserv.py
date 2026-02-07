@@ -4484,13 +4484,8 @@ def Restart():
 
     try:
         Restarting = True
-        if sys.version_info >= (3, 0):
-            if not RunBashScript("startgenmon.sh restart -p 3 -c " + ConfigFilePath):
-                LogError("Error in Restart")
-        else:
-            # begining with V1.18.0 the following command will default restart with python 3
-            if not RunBashScript("startgenmon.sh restart -c " + ConfigFilePath):
-                LogError("Error in Restart")
+        if not RunBashScript("startgenmon.sh restart -c " + ConfigFilePath):
+            LogError("Error in Restart")
     except Exception as e1:
         LogErrorLine("Error in Restart: " + str(e1))
 
@@ -4499,12 +4494,8 @@ def Restart():
 def Update():
     # update
     try:
-        if sys.version_info >= (3, 0):
-            if not RunBashScript("genmonmaint.sh -u -n -p 3", log = True):
-                LogError("Error in Update")
-        else:
-            if not RunBashScript("genmonmaint.sh -u -n -p 2"):  # update no prompt
-                LogError("Error in Update")
+        if not RunBashScript("genmonmaint.sh -u -n", log = True):
+            LogError("Error in Update")
         # now restart
         Restart()
     except Exception as e1:
@@ -4527,22 +4518,32 @@ def Backup():
 
 # -------------------------------------------------------------------------------
 def RunBashScript(ScriptName, log = False):
+    
+    global OperatingSystem
+
     try:
-        pathtoscript = os.path.dirname(os.path.realpath(__file__))
-        script = os.path.join(pathtoscript, ScriptName)
-        command = "/bin/bash "
-        LogError("Script: " + command + script)
+        
+        if OperatingSystem == "windows":
+            ScriptName = os.path.splitext(ScriptName)[0] + ".bat"
+            pathtoscript = os.path.dirname(os.path.realpath(__file__))
+            command = os.path.join(pathtoscript, "OtherApps", "win",ScriptName)
+        else:
+            pathtoscript = os.path.dirname(os.path.realpath(__file__))
+            script = os.path.join(pathtoscript, ScriptName)
+            command = "/bin/bash "
+            command = command + script
+        LogError("Script: " + command)
         if log == False:
-            subprocess.call(command + script, shell=True)
+            subprocess.call(command, shell=True)
         else:
             try:
-                output = subprocess.check_output(command + script, shell=True, stderr=subprocess.STDOUT)
+                output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)
             except subprocess.CalledProcessError as e:
                 output = e.output.decode()
 
             if sys.version_info >= (3, 0):
                 output = output.decode()
-            LogError(command + script + ": \n" +  output)
+            LogError(command + ": \n" +  output)
         return True
 
     except Exception as e1:
@@ -5007,7 +5008,7 @@ if __name__ == "__main__":
     else:
         OperatingSystem = "unknown"
         import platform
-        LogError("Operating System: " +str(MyPlatform.PlatformName()))
+        LogError("Operating System: " +str(platform.system()))
 
     LogError(
         "Starting "

@@ -97,7 +97,6 @@ class MyPlatform(MyCommon):
             return None
 
     # ------------ MyPlatform::PlatformName-------------------------------------
-    @staticmethod
     def PlatformName(self):
         try:
             import platform
