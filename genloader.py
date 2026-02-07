@@ -1290,9 +1290,10 @@ if __name__ == "__main__":
         print(HelpStr)
         sys.exit(2)
 
-    tmplog = SetupLogger("genloader", "/var/log/" + "genloader.log")
-    if Loader.OneTimeMaint(ConfigFilePath, tmplog):
-        time.sleep(1.5)
+    if not "win" in sys.platform:
+        tmplog = SetupLogger("genloader", "/var/log/" + "genloader.log")
+        if Loader.OneTimeMaint(ConfigFilePath, tmplog):
+            time.sleep(1.5)
     port, loglocation, multi_instance = MySupport.GetGenmonInitInfo(
         ConfigFilePath, log=None
     )
