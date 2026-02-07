@@ -166,8 +166,12 @@ class Loader(MySupport):
 
         # this function checks the system to see if the required libraries are
         # installed. If they are not then an attempt is made to install them.
+        bSystemIsLinux = True
+        if not "linux" in sys.platform:
+            bSystemIsNotLinux = True
+
         ModuleList = [
-            # [import name , install name, required version]
+            # [import name , install name, required version, linux only if true]
             ["flask", "flask", None],  # Web server
             # we will not use the check for configparser as this look like it is in backports on 2.7
             # and our myconfig modules uses the default so this generates an error that is not warranted
@@ -178,14 +182,14 @@ class Loader(MySupport):
             ["pytz", "pytz", None],  # Time zone support
             ["pysnmp", "pysnmp", None],  # SNMP
             ["ldap3", "ldap3", None],  # LDAP
-            ["smbus", "smbus", None],  # SMBus reading of temp sensors
+            ["smbus", "smbus", None, True],  # SMBus reading of temp sensors
             ["pyotp", "pyotp", "2.3.0"],  # 2FA support
             ["psutil", "psutil", None],  # process utilities
             ["chump", "chump", None],  # for genpushover
             ["twilio", "twilio", None],  # for gensms
             ["paho.mqtt.client", "paho-mqtt", "1.6.1"],  # for genmqtt
             ["OpenSSL", "pyopenssl", None],  # SSL
-            ["spidev", "spidev", None],  # spidev
+            ["spidev", "spidev", None, True],  # spidev
             ["voipms", "voipms", "0.2.5"]      # voipms for gensms_voip
             # ['fluids', 'fluids', None]              # fluids for genmopeka
         ]
@@ -195,6 +199,11 @@ class Loader(MySupport):
             self.CheckToolsNeeded()
 
             for Module in ModuleList:
+
+                if len(Module) > 3:
+                    if bSystemIsNotLinux & Module[3]:
+                        # skip the verification as it will not be loaded on this platform
+                        continue 
                 # fluids is only for Python 3.6 and higher
                 if (Module[0] == "fluids") and sys.version_info < (3, 6):
                     continue
