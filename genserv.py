@@ -5022,6 +5022,8 @@ if __name__ == "__main__":
         + str(bUseMFA)
         + ", OS:"
         + str(OperatingSystem)
+        + ", Config:"
+        + str(ConfigFilePath)
     )
     # validate needed files are present
     filename = os.path.join(
