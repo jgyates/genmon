@@ -34,32 +34,34 @@ class MyPlatform(MyCommon):
     def GetInfo(self, JSONNum=False):
 
         Info = []
-
         try:
-            PlatformInfo = self.GetPlatformInfo()
+            try:
+                PlatformInfo = self.GetPlatformInfo()
+            except Exception as e1:
+                self.LogErrorLine("Error in PlatformStats:GetInfo (GetPlatformInfo): " + str(e1))
+                PlatformInfo = None
+
+            if PlatformInfo != None:
+                Info.extend(PlatformInfo)
+
+            try:
+                OSInfo = self.GetOSInfo()
+            except Exception as e1:
+                self.LogErrorLine("Error in PlatformStats:GetInfo (GetOSInfo): " + str(e1))
+                OSInfo = None
+            
+            if OSInfo != None:
+                Info.extend(OSInfo)
+
+            Info.append({"System Time": self.GetSystemTime()})
         except Exception as e1:
-            self.LogErrorLine("Error in PlatformStats:GetInfo (GetPlatformInfo): " + str(e1))
-            PlatformInfo = None
-
-        if PlatformInfo != None:
-            Info.extend(PlatformInfo)
-
-        try:
-            OSInfo = self.GetOSInfo()
-        except Exception as e1:
-            self.LogErrorLine("Error in PlatformStats:GetInfo (GetOSInfo): " + str(e1))
-            OSInfo = None
-        
-        if OSInfo != None:
-            Info.extend(OSInfo)
-
-        Info.append({"System Time": self.GetSystemTime()})
+            self.LogErrorLine("Error in MyPlatformGetInfo:" + str(e1))
         return Info
 
     # ------------ MyPlatform::GetSystemTime-------------------------------------
     def GetSystemTime(self):
 
-        return datetime.datetime.now().strftime("%A %B %-d, %Y %H:%M:%S")
+        return datetime.datetime.now().strftime("%A %B %d, %Y %H:%M:%S")
 
     # ------------ MyPlatform::GetPlatformInfo-----------------------------------
     def GetPlatformInfo(self, JSONNum=False):

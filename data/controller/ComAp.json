@@ -4339,7 +4339,7 @@
   "datetime": {
     "comment": "This entry is for displaying the time in a format similar to how genmon displays the system time of the system running genmon.",
     "title": "Generator Time",
-    "exec": "exec_out = (datetime.datetime.strptime('{}', '%m/%d/%Y %H:%M:%S')).strftime('%A %B %-d, %Y %H:%M:%S')",
+    "exec": "exec_out = (datetime.datetime.strptime('{}', '%m/%d/%Y %H:%M:%S')).strftime('%A %B %d, %Y %H:%M:%S')",
     "default": "Unknown",
     "type": "list",
     "value": [

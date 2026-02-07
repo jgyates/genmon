@@ -1212,7 +1212,7 @@ class Loader(MySupport):
             return self.UpdatePID(modulename, "")
 
         except Exception as e1:
-            self.LogInfo("Error loading module: " + str(e1), LogLine=True)
+            self.LogInfo("Error unoading module: (" + str(modulename) +"): " + str(e1), LogLine=True)
             return False
 
     # ---------------------------------------------------------------------------

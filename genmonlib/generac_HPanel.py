@@ -3027,7 +3027,7 @@ class HPanel(GeneratorController):
             Time.append(
                 {
                     "Monitor Time": datetime.datetime.now().strftime(
-                        "%A %B %-d, %Y %H:%M:%S"
+                        "%A %B %d, %Y %H:%M:%S"
                     )
                 }
             )

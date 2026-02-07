@@ -1111,7 +1111,7 @@
     "datetime":{
       "comment":"Used to print the date and time of the controller",
       "type" : "list",
-      "exec": "exec_out = (datetime.datetime.strptime('{}/{}/{} {}:{}','%m/%d/%Y %H:%M')).strftime('%A %B %-d, %Y %H:%M')",
+      "exec": "exec_out = (datetime.datetime.strptime('{}/{}/{} {}:{}','%m/%d/%Y %H:%M')).strftime('%A %B %d, %Y %H:%M')",
       "title" : "Generator Time",
       "value": [
           {

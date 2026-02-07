@@ -275,14 +275,14 @@ class MyWeather(MySupport):
                         {
                             "Sunrise Time": datetime.datetime.fromtimestamp(
                                 int(self.WeatherData.get_sunrise_time())
-                            ).strftime("%A %B %-d, %Y %H:%M:%S")
+                            ).strftime("%A %B %d, %Y %H:%M:%S")
                         }
                     )
                     Data.append(
                         {
                             "Sunset Time": datetime.datetime.fromtimestamp(
                                 int(self.WeatherData.get_sunset_time())
-                            ).strftime("%A %B %-d, %Y %H:%M:%S")
+                            ).strftime("%A %B %d, %Y %H:%M:%S")
                         }
                     )
 
@@ -292,7 +292,7 @@ class MyWeather(MySupport):
                     Data.append(
                         {
                             "Reference Time": ReferenceTime.strftime(
-                                "%A %B %-d, %Y %H:%M:%S"
+                                "%A %B %d, %Y %H:%M:%S"
                             )
                         }
                     )

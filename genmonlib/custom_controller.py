@@ -1261,7 +1261,7 @@ class CustomController(GeneratorController):
             # Generator time
             Time = []
             Status["Status"].append({"Time": Time})
-            Time.append({"Monitor Time": datetime.datetime.now().strftime("%A %B %-d, %Y %H:%M:%S")})
+            Time.append({"Monitor Time": datetime.datetime.now().strftime("%A %B %d, %Y %H:%M:%S")})
             if "datetime" in self.controllerimport.keys():
                 retval, gentime =  self.GetSingleEntry("datetime")
                 if retval:
