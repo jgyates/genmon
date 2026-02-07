@@ -166,7 +166,7 @@ class Loader(MySupport):
 
         # this function checks the system to see if the required libraries are
         # installed. If they are not then an attempt is made to install them.
-        bSystemIsLinux = True
+        bSystemIsNotLinux = False
         if not "linux" in sys.platform:
             bSystemIsNotLinux = True
 
@@ -195,8 +195,8 @@ class Loader(MySupport):
         ]
         try:
             ErrorOccured = False
-
-            self.CheckToolsNeeded()
+            if not bSystemIsNotLinux
+                self.CheckToolsNeeded()
 
             for Module in ModuleList:
 
