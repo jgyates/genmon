@@ -99,7 +99,7 @@ REM ----------------------------------------------------------------------------
     if not %noprompt_opt%==true (
         PAUSE
     )
-    echo "Updating genmon..."
+    echo Updating genmon...
     cd %genmondir%
     set current_time=%date% %time%
     
@@ -112,7 +112,7 @@ REM ----------------------------------------------------------------------------
     git config --global --add safe.directory '*'
     git fetch origin
     git reset --hard origin/master
-    echo "Update complete."
+    echo Update complete.
 
 exit /b 0
 
@@ -133,7 +133,7 @@ REM ----------------------------------------------------------------------------
     )
     :YES
     
-    echo "Installing genmon..."
+    echo Installing genmon...
     %pythoncommand% -m pip install --upgrade setuptools
     %pythoncommand% -m pip install -r %genmondir%/OtherApps/win/requirements_win.txt %pipoptions%
     echo Library install complete..
@@ -155,7 +155,7 @@ exit /b 0
 REM ----------------------------------------------------------------------------
 :backupgenmon
 
-    echo "Backup genmon..."
+    echo Backup genmon...
     cd %genmondir%
     rmdir /S /Q genmon_backup
     del genmon_backup.tar.gz
@@ -238,12 +238,12 @@ REM ----------------------------------------------------------------------------
     copy %log_path%gensms_voip.log ./genmon_logs
     tar -zcvf genmon_logs.tar.gz genmon_logs
     rmdir /S /Q genmon_logs
-    echo "Done."
+    echo Done.
 exit /b 0
 
 REM ----------------------------------------------------------------------------
 :copyconfigfiles
-    echo "Copying up config files..."
+    echo Copying up config files...
     if NOT EXIST %config_path% (
         mkdir %config_path%
     )
