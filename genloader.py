@@ -73,6 +73,13 @@ class Loader(MySupport):
             os.path.dirname(os.path.realpath(__file__)), "conf"
         )
 
+        self.bSystemIsNotLinux = False
+        if not "linux" in sys.platform:
+            self.bSystemIsNotLinux = True
+        self.bSysetmIsWindows = False
+        if "win" in sys.platform:
+            self.bSysetmIsWindows = True
+
         # log errors in this module to a file
         if log == None:
             self.log = SetupLogger(
@@ -166,9 +173,6 @@ class Loader(MySupport):
 
         # this function checks the system to see if the required libraries are
         # installed. If they are not then an attempt is made to install them.
-        bSystemIsNotLinux = False
-        if not "linux" in sys.platform:
-            bSystemIsNotLinux = True
 
         ModuleList = [
             # [import name , install name, required version, linux only if true]
@@ -195,13 +199,13 @@ class Loader(MySupport):
         ]
         try:
             ErrorOccured = False
-            if not bSystemIsNotLinux:
+            if not self.bSystemIsNotLinux:
                 self.CheckToolsNeeded()
 
             for Module in ModuleList:
 
                 if len(Module) > 3:
-                    if bSystemIsNotLinux & Module[3]:
+                    if self.bSystemIsNotLinux & Module[3]:
                         # skip the verification as it will not be loaded on this platform
                         continue 
                 # fluids is only for Python 3.6 and higher
@@ -1201,18 +1205,31 @@ class Loader(MySupport):
             if UsePID:
                 if pid == None or pid == "" or pid == 0:
                     return True
-                LoadInfo.append("kill")
-                if HardStop or self.HardStop:
-                    LoadInfo.append("-9")
-                LoadInfo.append(str(pid))
+                if self.bSystemIsNotLinux:
+                    if self.bSysetmIsWindows:
+                        LoadInfo.append("taskkill")
+                        LoadInfo.append("//PID")
+                        LoadInfo.append(str(pid))
+                        LoadInfo.append("//T")
+                    else:
+                        self.LogError("ERROR in UnloadModule: This OS is not support at this time")
+                        return False
+                else:
+                    LoadInfo.append("kill")
+                    if HardStop or self.HardStop:
+                        LoadInfo.append("-9")
+                    LoadInfo.append(str(pid))
             else:
-                LoadInfo.append("pkill")
-                if HardStop or self.HardStop:
-                    LoadInfo.append("-9")
-                LoadInfo.append("-u")
-                LoadInfo.append("root")
-                LoadInfo.append("-f")
-                LoadInfo.append(modulename)
+                if self.bSystemIsNotLinux:
+                    self.LogError("HARDKILL is not support under non linux platforms at this time")
+                else:
+                    LoadInfo.append("pkill")
+                    if HardStop or self.HardStop:
+                        LoadInfo.append("-9")
+                    LoadInfo.append("-u")
+                    LoadInfo.append("root")
+                    LoadInfo.append("-f")
+                    LoadInfo.append(modulename)
 
             self.LogConsole("Stopping " + modulename)
             process = Popen(LoadInfo, stdout=PIPE)
@@ -1222,6 +1239,7 @@ class Loader(MySupport):
 
         except Exception as e1:
             self.LogInfo("Error unoading module: (" + str(modulename) +"): " + str(e1), LogLine=True)
+            self.LogInfo(f"Module: {modulename} PID: {pid}, UsePID: {UsePID} Hardstop: {HardStop}")
             return False
 
     # ---------------------------------------------------------------------------
