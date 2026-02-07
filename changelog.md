@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 - Added a new add on for Home Assistant auto discovery. Thanks @jtubb
 - Fix for Chrome for Windows status bar issue in web UI. Thanks @buschauer
 - Update to correct negative temp values for Briggs and Stratton
+- Updates to better support genmon running under Windows
 
 ## V1.19.07 -2025-10-01
 - Added SNMP JSON support for Briggs and Stratton (thanks @zinglo)
