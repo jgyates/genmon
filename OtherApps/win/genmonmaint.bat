@@ -135,7 +135,7 @@ REM ----------------------------------------------------------------------------
     
     echo "Installing genmon..."
     rem %pythoncommand% -m pip install --upgrade setuptools
-    %pythoncommand% -m pip install -r %genmondir%/requirements.txt %pipoptions%
+    %pythoncommand% -m pip install -r %genmondir%/OtherApps/win/requirements_win.txt %pipoptions%
     echo Library install complete..
     echo.
     if not %noprompt_opt%==true (
