@@ -1211,6 +1211,7 @@ class Loader(MySupport):
                         LoadInfo.append("/PID")
                         LoadInfo.append(str(pid))
                         LoadInfo.append("/T")
+                        LoadInfo.append("/F")
                     else:
                         self.LogError("ERROR in UnloadModule: This OS is not support at this time")
                         return False
