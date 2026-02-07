@@ -4524,7 +4524,7 @@ def RunBashScript(ScriptName, log = False):
     try:
         
         if OperatingSystem == "windows":
-            ScriptName = os.path.splitext(ScriptName)[0] + ".bat"
+            ScriptName = ScriptName.replace(".sh", ".bat")
             pathtoscript = os.path.dirname(os.path.realpath(__file__))
             command = os.path.join(pathtoscript, "OtherApps", "win",ScriptName)
         else:
