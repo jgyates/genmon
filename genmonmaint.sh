@@ -11,7 +11,7 @@ internet access to download the needed libraries. Press any key to continue.  "
 updatenotice="This script will update genmon to the latest version from the github \
 repository. This script requires internet access. If you have modified any \
 files in the genmon directory, they will be overwritten. Configuration files \
-in the configuration directory will not be overritten.  \
+in the configuration directory will not be overwritten.  \
 Continue? (y/n)  "
 
 usepython3=true
@@ -303,7 +303,6 @@ function archivelogs() {
     sudo rm -r genmon_logs
     sudo rm genmon_logs.tar.gz
     mkdir genmon_logs
-
     sudo cp "$log_path"genmon.log ./genmon_logs
     sudo cp "$log_path"genserv.log ./genmon_logs
     sudo cp "$log_path"mymail.log ./genmon_logs
@@ -311,30 +310,30 @@ function archivelogs() {
     sudo cp "$log_path"mymodbus.log ./genmon_logs
     sudo cp "$log_path"gengpio.log ./genmon_logs
     sudo cp "$log_path"gengpioin.log ./genmon_logs
-    sudo cp "$log_path"gensyslog.log ./genmon_logs
-    sudo cp "$log_path"myserialtcp.log ./genmon_logs
-    sudo cp "$log_path"genlog.log ./genmon_logs
-    sudo cp "$log_path"genloader.log ./genmon_logs
-    sudo cp "$log_path"genmqtt.log ./genmon_logs
-    sudo cp "$log_path"genpushover.log ./genmon_logs
-    sudo cp "$log_path"genslack.log ./genmon_logs
     sudo cp "$log_path"gensms.log ./genmon_logs
     sudo cp "$log_path"gensms_modem.log ./genmon_logs
-    sudo cp "$log_path"genemail2sms.log ./genmon_logs
+    sudo cp "$log_path"genmqtt.log ./genmon_logs
+    sudo cp "$log_path"genmqttin.log ./genmon_logs
+    sudo cp "$log_path"genpushover.log ./genmon_logs
+    sudo cp "$log_path"gensyslog.log ./genmon_logs
+    sudo cp "$log_path"genloader.log ./genmon_logs
+    sudo cp "$log_path"myserialtcp.log ./genmon_logs
+    sudo cp "$log_path"genlog.log ./genmon_logs
+    sudo cp "$log_path"genslack.log ./genmon_logs
+    sudo cp "$log_path"gencallmebot.log ./genmon_logs
     sudo cp "$log_path"genexercise.log ./genmon_logs
-    sudo cp "$log_path"gengpioin.log ./genmon_logs
-    sudo cp "$log_path"genalexa.log ./genmon_logs
     sudo cp "$log_path"genemail2sms.log ./genmon_logs
-    sudo cp "$log_path"genexercise.log ./genmon_logs
-    sudo cp "$log_path"gensnmp.log ./genmon_logs
+    sudo cp "$log_path"gencentriconnect.log ./genmon_logs
+    sudo cp "$log_path"genhomeassistant.log ./genmon_logs
     sudo cp "$log_path"gentankutil.log ./genmon_logs
-    sudo cp "$log_path"gentankdiy.log ./genmon_logs
+    sudo cp "$log_path"genalexa.log ./genmon_logs
+    sudo cp "$log_path"gensnmp.log ./genmon_logs
     sudo cp "$log_path"gentemp.log ./genmon_logs
+    sudo cp "$log_path"gentankdiy.log ./genmon_logs
     sudo cp "$log_path"gengpioledblink.log ./genmon_logs
     sudo cp "$log_path"gencthat.log ./genmon_logs
     sudo cp "$log_path"genmopeka.log ./genmon_logs
     sudo cp "$log_path"gencustomgpio.log ./genmon_logs
-    sudo cp "$log_path"gencallmebot.log ./genmon_logs
     sudo cp "$log_path"gensms_voip.log ./genmon_logs
     tar -zcvf genmon_logs.tar.gz genmon_logs/
     sudo rm -r genmon_logs
@@ -350,31 +349,33 @@ function backupgenmon() {
     sudo rm -r genmon_backup
     sudo rm genmon_backup.tar.gz
     mkdir genmon_backup
-    sudo cp "$config_path"genmon.conf ./genmon_backup
-    sudo cp "$config_path"mymail.conf ./genmon_backup
-    sudo cp "$config_path"genloader.conf ./genmon_backup
-    sudo cp "$config_path"genmqtt.conf ./genmon_backup
-    sudo cp "$config_path"genpushover.conf ./genmon_backup
-    sudo cp "$config_path"genslack.conf ./genmon_backup
-    sudo cp "$config_path"gensms.conf ./genmon_backup
-    sudo cp "$config_path"mymodem.conf ./genmon_backup
+
+    sudo cp "$config_path"genalexa.conf  ./genmon_backup
+    sudo cp "$config_path"gencallmebot.conf ./genmon_backup
+    sudo cp "$config_path"gencentriconnect.conf ./genmon_backup
+    sudo cp "$config_path"gencthat.conf ./genmon_backup
+    sudo cp "$config_path"gencustomgpio.conf ./genmon_backup
     sudo cp "$config_path"genemail2sms.conf ./genmon_backup
     sudo cp "$config_path"genexercise.conf ./genmon_backup
     sudo cp "$config_path"gengpio.conf ./genmon_backup
     sudo cp "$config_path"gengpioin.conf ./genmon_backup
-    sudo cp "$config_path"genalexa.conf ./genmon_backup
-    sudo cp "$config_path"genemail2sms.conf ./genmon_backup
-    sudo cp "$config_path"genexercise.conf ./genmon_backup
+    sudo cp "$config_path"gengpioledblink.conf ./genmon_backup
+    sudo cp "$config_path"genhomeassistant.conf ./genmon_backup
+    sudo cp "$config_path"genloader.conf ./genmon_backup
+    sudo cp "$config_path"genmon.conf ./genmon_backup
+    sudo cp "$config_path"genmopeka.conf ./genmon_backup
+    sudo cp "$config_path"genmqtt.conf ./genmon_backup
+    sudo cp "$config_path"genmqttin.conf ./genmon_backup
+    sudo cp "$config_path"genpushover.conf ./genmon_backup
+    sudo cp "$config_path"genslack.conf ./genmon_backup
+    sudo cp "$config_path"gensms.conf ./genmon_backup
+    sudo cp "$config_path"gensms_voip.conf ./genmon_backup
     sudo cp "$config_path"gensnmp.conf ./genmon_backup
+    sudo cp "$config_path"gentankdiy.conf ./genmon_backup
     sudo cp "$config_path"gentankutil.conf ./genmon_backup
     sudo cp "$config_path"gentemp.conf ./genmon_backup
-    sudo cp "$config_path"gentankdiy.conf ./genmon_backup
-    sudo cp "$config_path"gengpioledblink.conf ./genmon_backup
-    sudo cp "$config_path"gencthat.conf ./genmon_backup
-    sudo cp "$config_path"genmopeka.conf ./genmon_backup
-    sudo cp "$config_path"gencustomgpio.conf ./genmon_backup
-    sudo cp "$config_path"gencallmebot.conf ./genmon_backup
-    sudo cp "$config_path"gensms_voip.conf ./genmon_backup
+    sudo cp "$config_path"mymail.conf ./genmon_backup
+    sudo cp "$config_path"mymodem.conf ./genmon_backup
     sudo cp "$config_path"outage.txt ./genmon_backup
     sudo cp "$config_path"kwlog.txt ./genmon_backup
     sudo cp "$config_path"fuellog.txt ./genmon_backup
@@ -427,10 +428,10 @@ function printhelp() {
   echo "  -u           Update genmon to the latest version"
   echo "  -C           Remove *.pyc files (clean pre-compiled python files)"
   echo "  -n           Do not prompt for Y/N, assume yes"
-  echo "  -c           Specifiy full path to config file directory"
-  echo "  -p           Specifiy 2 or 3 for python version. 2 is default"
+  echo "  -c           Specify full path to config file directory"
+  echo "  -p           Specify 2 or 3 for python version. 2 is default"
   echo "  -s           Just copy conf files"
-  echo "  -l           Specifiy the full path of the log directory to archive"
+  echo "  -l           Specify the full path of the log directory to archive"
   echo "  -f           Update OS software and apt repository flags if needed"
   echo "  -h           Display help"
   echo ""

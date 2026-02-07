@@ -55,6 +55,7 @@ try:
     from genmonlib.mylog import SetupLogger
     from genmonlib.mymail import MyMail
     from genmonlib.mysupport import MySupport
+    from genmonlib.myplatform import MyPlatform
     from genmonlib.program_defaults import ProgramDefaults
 
 except Exception as e1:
@@ -4998,6 +4999,15 @@ if __name__ == "__main__":
     for ConfigFile in ConfigFileList:
         ConfigFiles[ConfigFile].log = log
 
+    if MyPlatform.IsOSLinux():
+        OperatingSystem = "linux"
+    elif MyPlatform.IsOSWindows():
+        OperatingSystem = "windows"
+    else:
+        OperatingSystem = "unknown"
+        import platform
+        LogError("Operating System: " +str(MyPlatform.PlatformName()))
+
     LogError(
         "Starting "
         + AppPath
@@ -5009,6 +5019,8 @@ if __name__ == "__main__":
         + str(bUseSelfSignedCert)
         + ", UseMFA:"
         + str(bUseMFA)
+        + ", OS:"
+        + str(OperatingSystem)
     )
     # validate needed files are present
     filename = os.path.join(

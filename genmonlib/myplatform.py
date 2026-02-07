@@ -97,12 +97,12 @@ class MyPlatform(MyCommon):
             return None
 
     # ------------ MyPlatform::PlatformName-------------------------------------
+    @staticmethod
     def PlatformName(self):
         try:
             import platform
             return platform.system()
         except Exception as e1:
-                self.LogErrorLine("Error in PlatformName: " + str(e1))
                 return "Unknown"
 
     # ------------ MyPlatform::PlatformBitDepth----------------------------------
