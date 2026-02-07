@@ -195,7 +195,7 @@ class Loader(MySupport):
         ]
         try:
             ErrorOccured = False
-            if not bSystemIsNotLinux
+            if not bSystemIsNotLinux:
                 self.CheckToolsNeeded()
 
             for Module in ModuleList:
