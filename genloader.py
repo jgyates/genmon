@@ -1208,9 +1208,9 @@ class Loader(MySupport):
                 if self.bSystemIsNotLinux:
                     if self.bSysetmIsWindows:
                         LoadInfo.append("taskkill")
-                        LoadInfo.append("//PID")
+                        LoadInfo.append("/PID")
                         LoadInfo.append(str(pid))
-                        LoadInfo.append("//T")
+                        LoadInfo.append("/T")
                     else:
                         self.LogError("ERROR in UnloadModule: This OS is not support at this time")
                         return False
