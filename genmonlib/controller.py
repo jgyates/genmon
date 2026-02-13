@@ -1182,6 +1182,16 @@ class GeneratorController(MySupport):
                     elif "reg_type" in command.keys() and command["reg_type"] == "singleholding":
                         IsSingle = True
 
+                    if "format" in command.keys() and len(command["format"]):
+                        if command["type"] == "int":
+                            ReturnValue = command["format"] % int(command["value"],16)
+                            command["value"] = ReturnValue
+
+                    if "length" in command.keys() and command["length"] == (len(command["value"]) / 2) and isinstance(command["value"], str):
+                        # This assumes a multi word write so convert it to a list of hex values
+                        command["value"] = list(bytes.fromhex(command["value"]))
+
+
                     if isinstance(command["value"], list):
                         if not (len(command["value"]) % 2) == 0:
                             self.LogDebug("Error in ExecuteCommandSequence: invalid value length")
