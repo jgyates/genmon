@@ -1176,12 +1176,12 @@ class GeneratorController(MySupport):
                         continue
                     if "reg_type" in command.keys() and command["reg_type"] == "coil":
                         IsCoil = True
-                    if "reg_type" in command.keys() and command["reg_type"] == "singlecoil":
+                    elif "reg_type" in command.keys() and command["reg_type"] == "singlecoil":
                         IsCoil = True
                         IsSingle = True
-                    if "reg_type" in command.keys() and command["reg_type"] == "singleholding":
+                    elif "reg_type" in command.keys() and command["reg_type"] == "singleholding":
                         IsSingle = True
-                    "singlecoil","singleholding"
+
                     if isinstance(command["value"], list):
                         if not (len(command["value"]) % 2) == 0:
                             self.LogDebug("Error in ExecuteCommandSequence: invalid value length")
