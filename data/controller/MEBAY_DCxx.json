@@ -1158,6 +1158,88 @@
             "nominal": "Unknown",
             "include": "disable_obj"
         }
+    ],
+    "buttons" : [
+      {
+          "onewordcommand" : "start",
+          "title" : "Remote Start",
+          "command_sequence" : [
+                                 {
+                                   "reg": "2000",
+                                   "value": "5555"
+                                 }
+                               ]
+      },
+      {
+          "onewordcommand" : "stop",
+          "title" : "Remote Stop",
+          "command_sequence" : [
+                                 {
+                                   "reg": "2000",
+                                   "value": "1111"
+                                 }
+                               ]
+      },
+      {
+          "onewordcommand" : "startexercise",
+          "title" : "Remote Start Test",
+          "command_sequence" : [
+                                 {
+                                   "reg": "2000",
+                                   "value": "4444"
+                                 }
+                               ]
+      },
+      {
+          "onewordcommand" : "auto",
+          "title" : "Select Auto Mode",
+          "command_sequence" : [
+                                 {
+                                   "reg": "2000",
+                                   "value": "3333"
+                                 }
+                               ]
+      },
+      {
+        "onewordcommand" : "manual",
+        "title" : "Select Manual Mode",
+        "command_sequence" : [
+                               {
+                                 "reg": "2000",
+                                 "value": "2222"
+                               }
+                             ]
+      },
+      {
+          "onewordcommand" : "mute",
+          "title" : "Mute ",
+          "command_sequence" : [
+                                 {
+                                   "reg": "2000",
+                                   "value": "6666"
+                                 }
+                               ]
+      },
+      {
+          "onewordcommand" : "genopenclose",
+          "title" : "Gen Switch Open and Closing ",
+          "command_sequence" : [
+                                 {
+                                   "reg": "2000",
+                                   "value": "7777"
+                                 }
+                               ]
+      },
+      {
+          "onewordcommand" : "mainsopenclose",
+          "title" : "Mains Switch Open and Closing ",
+          "command_sequence" : [
+                                 {
+                                   "reg": "2000",
+                                   "value": "8888"
+                                 }
+                               ]
+      }
     ]
   }
   
