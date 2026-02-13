@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - Fix for Chrome for Windows status bar issue in web UI. Thanks @buschauer
 - Update to correct negative temp values for Briggs and Stratton
 - Updates to better support genmon running under Windows
+- Added remote commands for Mebay controller
 
 ## V1.19.07 -2025-10-01
 - Added SNMP JSON support for Briggs and Stratton (thanks @zinglo)
