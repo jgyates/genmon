@@ -168,7 +168,7 @@
       "disable_obj":{
         "disable":{
         "comment":"This allows a filter to be applied to the data to look for exception data (i.e. invalid data)",
-        "comment2": "If ECU doesn’t receive sensor information, data will be 32767",
+        "comment2": "If ECU doesn't receive sensor information, data will be 32767",
         "inherit" : true,
         "type":"bits",
         "mask":"ffff",
