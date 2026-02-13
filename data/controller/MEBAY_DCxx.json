@@ -1165,7 +1165,7 @@
           "title" : "Remote Start",
           "command_sequence" : [
                                  {
-                                   "reg": "2000",
+                                   "reg": "2001",
                                    "value": "5555"
                                  }
                                ]
@@ -1175,7 +1175,7 @@
           "title" : "Remote Stop",
           "command_sequence" : [
                                  {
-                                   "reg": "2000",
+                                   "reg": "2001",
                                    "value": "1111"
                                  }
                                ]
@@ -1185,7 +1185,7 @@
           "title" : "Remote Start Test",
           "command_sequence" : [
                                  {
-                                   "reg": "2000",
+                                   "reg": "2001",
                                    "value": "4444"
                                  }
                                ]
@@ -1195,7 +1195,7 @@
           "title" : "Select Auto Mode",
           "command_sequence" : [
                                  {
-                                   "reg": "2000",
+                                   "reg": "2001",
                                    "value": "3333"
                                  }
                                ]
@@ -1205,7 +1205,7 @@
         "title" : "Select Manual Mode",
         "command_sequence" : [
                                {
-                                 "reg": "2000",
+                                 "reg": "2001",
                                  "value": "2222"
                                }
                              ]
@@ -1215,7 +1215,7 @@
           "title" : "Mute ",
           "command_sequence" : [
                                  {
-                                   "reg": "2000",
+                                   "reg": "2001",
                                    "value": "6666"
                                  }
                                ]
@@ -1225,7 +1225,7 @@
           "title" : "Gen Switch Open and Closing ",
           "command_sequence" : [
                                  {
-                                   "reg": "2000",
+                                   "reg": "2001",
                                    "value": "7777"
                                  }
                                ]
@@ -1235,7 +1235,7 @@
           "title" : "Mains Switch Open and Closing ",
           "command_sequence" : [
                                  {
-                                   "reg": "2000",
+                                   "reg": "2001",
                                    "value": "8888"
                                  }
                                ]
