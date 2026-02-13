@@ -1164,80 +1164,144 @@
           "onewordcommand" : "start",
           "title" : "Remote Start",
           "command_sequence" : [
-                                 {
-                                   "reg": "2001",
-                                   "value": "5555"
-                                 }
+                                {
+                                  "reg": "2000",
+                                  "input_title": "Passcode",
+                                  "type": "int",
+                                  "length": 2,
+                                  "bounds_regex":"^(0|[1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$",
+                                  "tooltip": "The user password set on the controller. This must be a whole number between 0 and 65535 in decimal format."
+                                },
+                                {
+                                  "reg": "2001",
+                                  "value": "5555"
+                                }
                                ]
       },
       {
           "onewordcommand" : "stop",
           "title" : "Remote Stop",
           "command_sequence" : [
-                                 {
-                                   "reg": "2001",
-                                   "value": "1111"
-                                 }
+                                {
+                                  "reg": "2000",
+                                  "input_title": "Passcode",
+                                  "type": "int",
+                                  "length": 2,
+                                  "bounds_regex":"^(0|[1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$",
+                                  "tooltip": "The user password set on the controller. This must be a whole number between 0 and 65535 in decimal format."
+                                },
+                                {
+                                  "reg": "2001",
+                                  "value": "1111"
+                                }
                                ]
       },
       {
           "onewordcommand" : "startexercise",
           "title" : "Remote Start Test",
           "command_sequence" : [
-                                 {
-                                   "reg": "2001",
-                                   "value": "4444"
-                                 }
+                                {
+                                  "reg": "2000",
+                                  "input_title": "Passcode",
+                                  "type": "int",
+                                  "length": 2,
+                                  "bounds_regex":"^(0|[1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$",
+                                  "tooltip": "The user password set on the controller. This must be a whole number between 0 and 65535 in decimal format."
+                                },
+                                {
+                                  "reg": "2001",
+                                  "value": "4444"
+                                }
                                ]
       },
       {
           "onewordcommand" : "auto",
           "title" : "Select Auto Mode",
           "command_sequence" : [
-                                 {
-                                   "reg": "2001",
-                                   "value": "3333"
-                                 }
+                                {
+                                  "reg": "2000",
+                                  "input_title": "Passcode",
+                                  "type": "int",
+                                  "length": 2,
+                                  "bounds_regex":"^(0|[1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$",
+                                  "tooltip": "The user password set on the controller. This must be a whole number between 0 and 65535 in decimal format."
+                                },
+                                {
+                                  "reg": "2001",
+                                  "value": "3333"
+                                }
                                ]
       },
       {
         "onewordcommand" : "manual",
         "title" : "Select Manual Mode",
         "command_sequence" : [
-                               {
-                                 "reg": "2001",
-                                 "value": "2222"
-                               }
+                              {
+                                "reg": "2000",
+                                "input_title": "Passcode",
+                                "type": "int",
+                                "length": 2,
+                                "bounds_regex":"^(0|[1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$",
+                                "tooltip": "The user password set on the controller. This must be a whole number between 0 and 65535 in decimal format."
+                              },
+                              {
+                                "reg": "2001",
+                                "value": "2222"
+                              }
                              ]
       },
       {
           "onewordcommand" : "mute",
-          "title" : "Mute ",
+          "title" : "Mute",
           "command_sequence" : [
-                                 {
-                                   "reg": "2001",
-                                   "value": "6666"
-                                 }
+                                {
+                                  "reg": "2000",
+                                  "input_title": "Passcode",
+                                  "type": "int",
+                                  "length": 2,
+                                  "bounds_regex":"^(0|[1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$",
+                                  "tooltip": "The user password set on the controller. This must be a whole number between 0 and 65535 in decimal format."
+                                },
+                                {
+                                  "reg": "2001",
+                                  "value": "6666"
+                                }
                                ]
       },
       {
           "onewordcommand" : "genopenclose",
           "title" : "Gen Switch Open and Closing ",
           "command_sequence" : [
-                                 {
-                                   "reg": "2001",
-                                   "value": "7777"
-                                 }
+                                {
+                                  "reg": "2000",
+                                  "input_title": "Passcode",
+                                  "type": "int",
+                                  "length": 2,
+                                  "bounds_regex":"^(0|[1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$",
+                                  "tooltip": "The user password set on the controller. This must be a whole number between 0 and 65535 in decimal format."
+                                },
+                                {
+                                  "reg": "2001",
+                                  "value": "7777"
+                                }
                                ]
       },
       {
           "onewordcommand" : "mainsopenclose",
           "title" : "Mains Switch Open and Closing ",
           "command_sequence" : [
-                                 {
-                                   "reg": "2001",
-                                   "value": "8888"
-                                 }
+                                {
+                                  "reg": "2000",
+                                  "input_title": "Passcode",
+                                  "type": "int",
+                                  "length": 2,
+                                  "bounds_regex":"^(0|[1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$",
+                                  "tooltip": "The user password set on the controller. This must be a whole number between 0 and 65535 in decimal format."
+                                },
+                                {
+                                  "reg": "2001",
+                                  "value": "8888"
+                                }
                                ]
       }
     ]

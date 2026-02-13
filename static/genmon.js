@@ -1115,8 +1115,8 @@ function validateButtonCommand(onewordcommand){
         }
       }
       else{
-        console.log("Error in validateButtonCommand: button command_sequence does not have both 'input'title' and 'type': " + button_title);
-        return false;
+        // This is just data that does not require input form the user
+        console.log("Note: in validateButtonCommand: button command_sequence does not have both 'input'title' and 'type': " + button_title);
       }
     }
     return true;
@@ -1162,8 +1162,8 @@ function issueButtonCommand(onewordcommand){
           }
         }
         else{
-          console.log("Error in issueButtonCommand: button command_sequence does not have both 'input'title' and 'type': " + button_title);
-          return false;
+          // This is just data that does not require input form the user
+          console.log("Note: in issueButtonCommand: button command_sequence does not have both 'input'title' and 'type': " + button_title);
         }
       }
       // now send the button to genmon for writing 
