@@ -1,0 +1,11 @@
+{
+  "controller_type": "custom",
+  "version": "1.0",
+  "description": "MEBAY DCxx controller entity definitions (extends base). Buttons are loaded dynamically from controller StartInfo.",
+  "sensors": [],
+  "binary_sensors": [],
+  "buttons": [],
+  "switches": [],
+  "selects": [],
+  "numbers": []
+}
