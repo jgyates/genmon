@@ -1676,10 +1676,10 @@ def GetAddOns():
         )
         AddOnCfg["genhomeassistant"]["parameters"]["blacklist"] = CreateAddOnParam(
             ConfigFiles[GENHOMEASSISTANT_CONFIG].ReadValue(
-                "blacklist", return_type=str, default=""
+                "blacklist", return_type=str, default="Tiles"
             ),
             "string",
-            "Comma-separated list of strings. Entities with names containing these strings will not be created.",
+            "Comma-separated list of strings. Entities with names containing these strings will not be created. Matches against entity name, ID, and data path.",
             bounds="",
             display_name="Entity Blacklist",
         )
@@ -1781,6 +1781,15 @@ def GetAddOns():
             "Unique MQTT client identifier. Must be unique per genmon instance.",
             bounds="",
             display_name="Client ID",
+        )
+        AddOnCfg["genhomeassistant"]["parameters"]["button_passcode"] = CreateAddOnParam(
+            ConfigFiles[GENHOMEASSISTANT_CONFIG].ReadValue(
+                "button_passcode", return_type=str, default=""
+            ),
+            "password",
+            "Passcode for controllers that require authentication for remote commands (e.g. MEBAY). Leave empty if not required.",
+            bounds="",
+            display_name="Button Passcode",
         )
         AddOnCfg["genhomeassistant"]["parameters"]["debug"] = CreateAddOnParam(
             ConfigFiles[GENHOMEASSISTANT_CONFIG].ReadValue(

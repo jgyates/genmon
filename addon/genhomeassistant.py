@@ -9,6 +9,7 @@
 # MODIFICATIONS:
 # -------------------------------------------------------------------------------
 
+import copy
 import json
 import os
 import re
@@ -790,6 +791,7 @@ class MyHomeAssistant(MySupport):
         self.EntitiesPublished = False
         self.LastDiscoveryTime = 0
         self.DynamicSensors = {}  # Storage for dynamically discovered sensors
+        self.ControllerButtons = []  # Buttons from controller StartInfo (custom controllers)
 
         # Entity cleanup tracking
         self.ExistingEntities = set()  # Entities found via MQTT subscription
@@ -833,6 +835,10 @@ class MyHomeAssistant(MySupport):
         except Exception as e1:
             self.LogErrorLine("Error loading entity definitions: " + str(e1))
             self._use_hardcoded_fallback()
+
+        # For custom controllers, override buttons with those from StartInfo
+        if self.ControllerType == "custom":
+            self._load_controller_buttons()
 
         try:
             self._setup_mqtt()
@@ -911,6 +917,7 @@ class MyHomeAssistant(MySupport):
         self.UseNumeric = config.ReadValue("numeric_json", return_type=bool, default=True)
         self.debug = config.ReadValue("debug", return_type=bool, default=False)
         self.ClientID = config.ReadValue("client_id", default="genmon_ha")
+        self.ButtonPasscode = config.ReadValue("button_passcode", default="")
 
         # Read metric setting from genmon.conf for temperature unit selection
         try:
@@ -980,6 +987,11 @@ class MyHomeAssistant(MySupport):
                          f"RemoteButtons: {self.RemoteButtons}, "
                          f"ExerciseControls: {self.ExerciseControls}, "
                          f"RemoteCommands: {self.RemoteCommands}")
+
+            # Extract controller buttons from StartInfo (custom controllers)
+            self.ControllerButtons = self.StartInfo.get("buttons", [])
+            if self.ControllerButtons:
+                self.LogDebug(f"Found {len(self.ControllerButtons)} controller buttons in StartInfo")
 
             # Build device info
             self.DeviceInfo = {
@@ -1215,6 +1227,70 @@ class MyHomeAssistant(MySupport):
             )
 
     # --------------------------------------------------------------------------
+    def _load_controller_buttons(self):
+        """Create HA button definitions from controller StartInfo buttons.
+
+        For custom controllers, the buttons list in StartInfo defines what
+        remote commands are available. This converts them into HA ButtonDefinitions,
+        replacing the base button definitions since custom controllers define
+        their own command set.
+        """
+        if not self.ControllerButtons:
+            return
+
+        self.LogDebug("Loading button definitions from controller StartInfo")
+
+        # Icon mapping for common onewordcommand values
+        icon_map = {
+            "start": "mdi:play",
+            "stop": "mdi:stop",
+            "auto": "mdi:autorenew",
+            "manual": "mdi:hand-back-right",
+            "mute": "mdi:volume-off",
+            "reset": "mdi:restart",
+            "test": "mdi:test-tube",
+            "transfer": "mdi:transfer",
+            "off": "mdi:power-off",
+            "on": "mdi:power",
+        }
+
+        controller_button_defs = {}
+        for button in self.ControllerButtons:
+            onewordcommand = button.get("onewordcommand", "")
+            title = button.get("title", onewordcommand)
+            if not onewordcommand:
+                continue
+
+            # Determine if this button requires user input (passcode)
+            requires_input = False
+            for cmd in button.get("command_sequence", []):
+                if "input_title" in cmd and "value" not in cmd:
+                    requires_input = True
+                    break
+
+            # Choose icon: check controller-specific JSON overrides first,
+            # then use icon_map, then default
+            icon = icon_map.get(onewordcommand.lower(), "mdi:button-pointer")
+
+            entity_id = onewordcommand.lower().replace(" ", "_")
+            controller_button_defs[entity_id] = {
+                "name": title,
+                "icon": icon,
+                "from_controller": True,  # Flag to identify controller-sourced buttons
+                "requires_input": requires_input,
+                "onewordcommand": onewordcommand,
+                "command_sequence": button.get("command_sequence", []),
+            }
+
+        if controller_button_defs:
+            # Replace base buttons with controller-defined buttons
+            self.ButtonDefinitions = controller_button_defs
+            self.LogDebug(
+                f"Loaded {len(controller_button_defs)} buttons from controller: "
+                + ", ".join(controller_button_defs.keys())
+            )
+
+    # --------------------------------------------------------------------------
     def _use_hardcoded_fallback(self):
         """Fall back to hardcoded definitions if JSON files are missing or invalid."""
         self.LogDebug("Using hardcoded entity definitions as fallback")
@@ -1387,7 +1463,13 @@ class MyHomeAssistant(MySupport):
 
     # --------------------------------------------------------------------------
     def _handle_button_press(self, entity_id, payload):
-        """Handle button press commands"""
+        """Handle button press commands.
+
+        For standard buttons (Generac controllers), sends generator: setremote=XXX.
+        For controller-sourced buttons (custom controllers), sends
+        generator: set_button_command=<JSON> with passcode injected into
+        command_sequence entries that have input_title.
+        """
 
         try:
             if entity_id not in self.ButtonDefinitions:
@@ -1395,11 +1477,33 @@ class MyHomeAssistant(MySupport):
                 return
 
             button_def = self.ButtonDefinitions[entity_id]
-            command = button_def["command"]
 
-            self.LogDebug(f"Executing button command: {command}")
-            response = self._send_command(f"generator: {command}")
-            self.LogDebug(f"Command response: {response}")
+            # Controller-sourced buttons use set_button_command API
+            if button_def.get("from_controller"):
+                # Build the command object that ExecuteRemoteCommand expects
+                button_cmd = {
+                    "onewordcommand": button_def["onewordcommand"],
+                    "command_sequence": [],
+                }
+                for cmd in button_def["command_sequence"]:
+                    cmd_copy = copy.deepcopy(cmd)
+                    # Inject passcode for commands that require user input
+                    if "input_title" in cmd_copy and "value" not in cmd_copy:
+                        cmd_copy["value"] = self.ButtonPasscode
+                    button_cmd["command_sequence"].append(cmd_copy)
+
+                command_json = json.dumps([button_cmd])
+                self.LogDebug(f"Executing controller button: {entity_id}")
+                response = self._send_command(
+                    f"generator: set_button_command={command_json}"
+                )
+                self.LogDebug(f"Controller button response: {response}")
+            else:
+                # Standard buttons use simple command string
+                command = button_def["command"]
+                self.LogDebug(f"Executing button command: {command}")
+                response = self._send_command(f"generator: {command}")
+                self.LogDebug(f"Command response: {response}")
 
         except Exception as e1:
             self.LogErrorLine(f"Error handling button press: {str(e1)}")
@@ -1645,10 +1749,12 @@ class MyHomeAssistant(MySupport):
     def _entity_allowed(self, entity_def, entity_id):
         """Check if entity should be created based on filters"""
 
-        # Check blacklist
+        # Check blacklist - match against name, entity_id, and path
         name = entity_def.get("name", entity_id).lower()
+        entity_id_lower = entity_id.lower()
+        path = entity_def.get("path", "").lower()
         for bl_item in self.BlackList:
-            if bl_item in name or bl_item in entity_id:
+            if bl_item in name or bl_item in entity_id_lower or bl_item in path:
                 return False
 
         # Check controller-specific entities
@@ -1712,7 +1818,8 @@ class MyHomeAssistant(MySupport):
 
             # Publish dynamic sensor discoveries
             for entity_id, entity_def in self.DynamicSensors.items():
-                self._publish_sensor_discovery(entity_id, entity_def)
+                if self._entity_allowed(entity_def, entity_id):
+                    self._publish_sensor_discovery(entity_id, entity_def)
 
             # Publish binary sensor discoveries - only if data exists (except payload_on_not_empty)
             binary_sensors_skipped = 0
@@ -1777,20 +1884,28 @@ class MyHomeAssistant(MySupport):
 
             # Build set of entities we just published
             # Track by "entity_type/entity_id" format
-            for entity_id in self.SensorDefinitions:
-                self.PublishedEntities.add(f"sensor/{entity_id}")
-            for entity_id in self.DynamicSensors:
-                self.PublishedEntities.add(f"sensor/{entity_id}")
-            for entity_id in self.BinarySensorDefinitions:
-                self.PublishedEntities.add(f"binary_sensor/{entity_id}")
-            for entity_id in self.ButtonDefinitions:
-                self.PublishedEntities.add(f"button/{entity_id}")
-            for entity_id in self.SwitchDefinitions:
-                self.PublishedEntities.add(f"switch/{entity_id}")
-            for entity_id in self.SelectDefinitions:
-                self.PublishedEntities.add(f"select/{entity_id}")
-            for entity_id in self.NumberDefinitions:
-                self.PublishedEntities.add(f"number/{entity_id}")
+            # Only include entities that pass the blacklist/filter checks
+            for entity_id, entity_def in self.SensorDefinitions.items():
+                if self._entity_allowed(entity_def, entity_id):
+                    self.PublishedEntities.add(f"sensor/{entity_id}")
+            for entity_id, entity_def in self.DynamicSensors.items():
+                if self._entity_allowed(entity_def, entity_id):
+                    self.PublishedEntities.add(f"sensor/{entity_id}")
+            for entity_id, entity_def in self.BinarySensorDefinitions.items():
+                if self._entity_allowed(entity_def, entity_id):
+                    self.PublishedEntities.add(f"binary_sensor/{entity_id}")
+            for entity_id, entity_def in self.ButtonDefinitions.items():
+                if self._entity_allowed(entity_def, entity_id):
+                    self.PublishedEntities.add(f"button/{entity_id}")
+            for entity_id, entity_def in self.SwitchDefinitions.items():
+                if self._entity_allowed(entity_def, entity_id):
+                    self.PublishedEntities.add(f"switch/{entity_id}")
+            for entity_id, entity_def in self.SelectDefinitions.items():
+                if self._entity_allowed(entity_def, entity_id):
+                    self.PublishedEntities.add(f"select/{entity_id}")
+            for entity_id, entity_def in self.NumberDefinitions.items():
+                if self._entity_allowed(entity_def, entity_id):
+                    self.PublishedEntities.add(f"number/{entity_id}")
 
             # Find stale entities (exist in MQTT but not in current definitions)
             stale_entities = self.ExistingEntities - self.PublishedEntities
@@ -1904,13 +2019,16 @@ class MyHomeAssistant(MySupport):
         """Publish discovery message for a button entity"""
 
         try:
-            # Check if button is supported by this controller
-            if entity_id in ["start", "stop"] and not self.RemoteCommands:
-                # Publish empty payload to remove entity from Home Assistant
-                discovery_topic = f"{self.DiscoveryPrefix}/button/{self.DeviceId}/{entity_id}/config"
-                self.MQTTclient.publish(discovery_topic, "", retain=True)
-                self.LogDebug(f"Removed {entity_id}: RemoteCommands not supported on this controller")
-                return
+            # Controller-sourced buttons (from StartInfo) skip capability checks
+            # since their presence in StartInfo IS the capability declaration
+            if not entity_def.get("from_controller"):
+                # Check if button is supported by this controller
+                if entity_id in ["start", "stop"] and not self.RemoteCommands:
+                    # Publish empty payload to remove entity from Home Assistant
+                    discovery_topic = f"{self.DiscoveryPrefix}/button/{self.DeviceId}/{entity_id}/config"
+                    self.MQTTclient.publish(discovery_topic, "", retain=True)
+                    self.LogDebug(f"Removed {entity_id}: RemoteCommands not supported on this controller")
+                    return
             if entity_id == "start_exercise" and not self.ExerciseControls:
                 # Publish empty payload to remove entity from Home Assistant
                 discovery_topic = f"{self.DiscoveryPrefix}/button/{self.DeviceId}/{entity_id}/config"
@@ -2173,6 +2291,8 @@ class MyHomeAssistant(MySupport):
         if new_dynamic:
             for entity_id, entity_def in new_dynamic.items():
                 if entity_id not in self.DynamicSensors:
+                    if not self._entity_allowed(entity_def, entity_id):
+                        continue
                     self.DynamicSensors[entity_id] = entity_def
                     stats["new_discoveries"] += 1
                     self._publish_sensor_discovery(entity_id, entity_def)

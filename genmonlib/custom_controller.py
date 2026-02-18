@@ -1060,6 +1060,7 @@ class CustomController(GeneratorController):
             StartInfo["FuelConsumption"] = self.FuelConsumptionSupported()
             StartInfo["Controller"] = self.GetController(Actual=False)
             StartInfo["Actual"] = self.GetController(Actual=True)
+            StartInfo["import_config_file"] = self.ConfigImportFile
             StartInfo["UtilityVoltage"] = False
             StartInfo["RemoteCommands"] = False  # Remote Start/ Stop/ StartTransfer
             StartInfo["ResetAlarms"] = False
