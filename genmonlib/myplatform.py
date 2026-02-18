@@ -244,14 +244,19 @@ class MyPlatform(MyCommon):
     # ------------ MyPlatform::GetRaspberryPiModel -----------------------------
     def GetRaspberryPiModel(self, bForce = False):
         try:
+
+            if not self.IsOSLinux():
+                return None
+
             if bForce == False and not self.IsPlatformRaspberryPi():
                 return None
-        
-            process = Popen(["cat", "/proc/device-tree/model"], stdout=PIPE)
-            output, _error = process.communicate()
-            if sys.version_info[0] >= 3:
-                output = output.decode("utf-8")
-            return str(output.rstrip("\x00"))
+            
+            model_path = "/proc/device-tree/model"
+            if os.path.exists(model_path):
+                with open(model_path, "r") as f:
+                    output = f.read()
+                return str(output.rstrip("\x00")).strip()
+            return None
         except Exception as e1:
             return None
     # ------------ MyPlatform::GetRaspberryPiInfo -------------------------------
