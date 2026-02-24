@@ -3934,6 +3934,8 @@ class Evolution(GeneratorController):
                 return "Unknown"
             
             ValueInt = int(Value, 16)
+            bValueIsNew = (ValueInt & 0x0100) != 0  # If high byte is 1 it is a new value
+            ValueInt = ValueInt & 0x00ff            # low byte is status
             if chr(ValueInt) == 'G':
                 return "Ready to Run"
             elif chr(ValueInt) == 'Y':
