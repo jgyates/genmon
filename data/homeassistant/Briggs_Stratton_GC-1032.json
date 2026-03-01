@@ -1,0 +1,11 @@
+{
+  "controller_type": "Briggs_Stratton_GC-1032",
+  "version": "1.0",
+  "description": "Briggs & Stratton GC-1032 Controller",
+  "sensors": [],
+  "binary_sensors": [],
+  "buttons": [],
+  "switches": [],
+  "selects": [],
+  "numbers": []
+}
