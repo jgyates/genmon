@@ -29,6 +29,7 @@
 - [Manual Start and Transfer but stop after x minutes](https://github.com/jgyates/genmon/discussions/1174) @jkh62
 - [Add device specific messaging to pushover](https://github.com/jgyates/genmon/issues/1246) @noumenon272
 - [Add propane tank monitor from OTOData](https://github.com/jgyates/genmon/discussions/1324) @fargoboy1
+- [Add periodic emails with status during an outage](https://github.com/jgyates/genmon/discussions/1390) @jkh62
 
 
 
