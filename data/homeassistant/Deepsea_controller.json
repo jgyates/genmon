@@ -1,0 +1,11 @@
+{
+  "controller_type": "DeepSea Controller",
+  "version": "1.0",
+  "description": "DeepSea Controller",
+  "sensors": [],
+  "binary_sensors": [],
+  "buttons": [],
+  "switches": [],
+  "selects": [],
+  "numbers": []
+}

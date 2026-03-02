@@ -1,0 +1,11 @@
+{
+  "controller_type": "ComAp Controller",
+  "version": "1.0",
+  "description": "ComAp Controller",
+  "sensors": [],
+  "binary_sensors": [],
+  "buttons": [],
+  "switches": [],
+  "selects": [],
+  "numbers": []
+}

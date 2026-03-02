@@ -1,0 +1,11 @@
+{
+  "controller_type": "Power Zone 410 Controller",
+  "version": "1.0",
+  "description": "Power Zone 410 Controller",
+  "sensors": [],
+  "binary_sensors": [],
+  "buttons": [],
+  "switches": [],
+  "selects": [],
+  "numbers": []
+}

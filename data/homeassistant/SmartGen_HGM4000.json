@@ -1,0 +1,11 @@
+{
+  "controller_type": "SmartGen HGM40x0 Controller",
+  "version": "1.0",
+  "description": "SmartGen HGM40x0 Controller",
+  "sensors": [],
+  "binary_sensors": [],
+  "buttons": [],
+  "switches": [],
+  "selects": [],
+  "numbers": []
+}

@@ -1,0 +1,11 @@
+{
+  "controller_type": "Kohler APM603",
+  "version": "1.0",
+  "description": "Kohler APM603 Controller",
+  "sensors": [],
+  "binary_sensors": [],
+  "buttons": [],
+  "switches": [],
+  "selects": [],
+  "numbers": []
+}
