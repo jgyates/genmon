@@ -501,6 +501,9 @@ class MyMQTT(MyCommon):
 
         try:
             self.MQTTclient = mqtt.Client(client_id=self.ClientID)
+
+            self.MQTTclient.reconnect_delay_set(min_delay=1, max_delay=120)
+            
             if self.Username != None and len(self.Username) and self.Password != None:
                 self.MQTTclient.username_pw_set(self.Username, password=self.Password)
 
@@ -624,7 +627,11 @@ class MyMQTT(MyCommon):
                     + str(type(value))
                 )
 
-            self.MQTTclient.publish(FullPath, value, retain=self.Retain)
+            result = self.MQTTclient.publish(FullPath, value, retain=self.Retain)
+
+            if result.rc != mqtt.MQTT_ERR_SUCCESS:
+                self.LogDebug("ERROR: MQTT publish failed in PublishCallback")
+
         except Exception as e1:
             self.LogErrorLine("Error in MyMQTT:PublishCallback: " + str(e1))
 
@@ -634,7 +641,8 @@ class MyMQTT(MyCommon):
         self.LogInfo(
             "Disconnected from " + self.MQTTAddress + " result code: " + str(rc)
         )
-        self.MQTTclient.publish(self.LastWillTopic, payload="Offline", retain=True)
+        # not needed
+        #self.MQTTclient.publish(self.LastWillTopic, payload="Offline", retain=True) 
 
     # ------------ MyMQTT::on_connect--------------------------------------------
     # The callback for when the client receives a CONNACK response from the server.
@@ -658,7 +666,10 @@ class MyMQTT(MyCommon):
             self.MQTTclient.subscribe(FullPath + "/#")
 
             # Setup Last Will value
-            self.MQTTclient.publish(self.LastWillTopic, payload="Online", retain=True)
+            result = self.MQTTclient.publish(self.LastWillTopic, payload="Online", retain=True)
+            if result.rc != mqtt.MQTT_ERR_SUCCESS:
+                self.LogDebug("ERROR: MQTT publish failed in on_connect")
+
 
         except Exception as e1:
             self.LogErrorLine("Error in MyMQTT:on_connect: " + str(e1))
