@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
 - Update to correct negative temp values for Briggs and Stratton
 - Updates to better support genmon running under Windows
 - Added remote commands for Mebay controller
+- Minor updates to genmqtt reconnect intervals
+- Added HA addon JSON files for all current custom controller variants
 
 ## V1.19.07 -2025-10-01
 - Added SNMP JSON support for Briggs and Stratton (thanks @zinglo)
