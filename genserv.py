@@ -636,6 +636,27 @@ def ProcessCommand(command):
                 SaveSettings(request.args.get("setsettings", 0, type=str))
             return "OK"
 
+        # ---- UI preferences (persisted to genmon.conf, no restart) ----
+        elif command in ["get_ui_prefs", "set_ui_prefs"]:
+            if command == "get_ui_prefs":
+                try:
+                    return ConfigFiles[GENMON_CONFIG].ReadValue(
+                        "ui_prefs", return_type=str, section="GenMon", default="{}"
+                    )
+                except Exception:
+                    return "{}"
+            elif command == "set_ui_prefs":
+                if session.get("write_access", True):
+                    raw = request.args.get("set_ui_prefs", "{}", type=str)
+                    try:
+                        json.loads(raw)  # validate JSON, discard result
+                    except Exception:
+                        return "Error: invalid JSON"
+                    ConfigFiles[GENMON_CONFIG].WriteValue(
+                        "ui_prefs", raw, section="GenMon"
+                    )
+                return "OK"
+
         elif command in ["getreglabels"]:
             return jsonify(CachedRegisterDescriptions)
 
