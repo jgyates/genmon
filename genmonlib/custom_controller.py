@@ -2376,8 +2376,10 @@ class CustomController(GeneratorController):
             if not ReturnVal or FuelValue == None:
                 return None
             # This should never return greater than 100%
-            if int(FuelValue) < 100:
+            if int(FuelValue) > 100:
                 FuelValue = "100"
+            elif int(FuelValue) < 0:
+                FuelValue = "0"
             if ReturnInt:
                 return int(FuelValue)
             return FuelValue

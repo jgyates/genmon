@@ -10,6 +10,8 @@ All notable changes to this project will be documented in this file.
 - Added remote commands for Mebay controller
 - Minor updates to genmqtt reconnect intervals
 - Added HA addon JSON files for all current custom controller variants
+- Fixed bug in custom controller fuel sensor gauge
+- Fix minor bug in Kholer support
 
 ## V1.19.07 -2025-10-01
 - Added SNMP JSON support for Briggs and Stratton (thanks @zinglo)

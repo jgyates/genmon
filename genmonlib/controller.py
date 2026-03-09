@@ -2198,7 +2198,7 @@ class GeneratorController(MySupport):
             if self.FuelSensorSupported():
                 Tile = MyTile(
                     self.log,
-                    title="Fuel",
+                    title="Fuel Sensor",
                     units="%",
                     type="fuel",
                     nominal=100,

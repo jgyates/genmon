@@ -366,10 +366,11 @@
             "text": "Run Button Pressed"
         },
         {
+            "comment":"Display Inactive if we do not know the switch state",
             "reg": "0002",
             "type": "default",
-            "title": "Engine State",
-            "text": "Unknown"
+            "title": "Switch State",
+            "text": "Inactive"
         }
 
     ],
@@ -1749,7 +1750,7 @@
             "units": "kW",
             "ieee754": "single",
             "round": 2,
-            "title": "Power",
+            "title": "Power 1",
             "sensor": "power",
             "nominal": "Unknown"
         },
@@ -1762,7 +1763,7 @@
             "units": "kW",
             "ieee754": "single",
             "round": 2,
-            "title": "Power",
+            "title": "Power 2",
             "sensor": "powergraph",
             "nominal": "Unknown"
         }

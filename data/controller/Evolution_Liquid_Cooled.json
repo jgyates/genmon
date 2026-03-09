@@ -1142,16 +1142,6 @@
           "units": null,
           "sensor": "rpm",
           "nominal": 1800
-      },
-      {
-          "reg": "005d",
-          "mask": "ffff",
-          "multiplier": 1,
-          "type": "int",
-          "title": "Fuel Sensor",
-          "units": "%",
-          "sensor": "fuel",
-          "nominal": 100
       }
     ],
     "buttons" : [
