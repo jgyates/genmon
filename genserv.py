@@ -1237,7 +1237,7 @@ def GetAddOns():
             ),
             "string",
             "Address of your MQTT server.",
-            bounds="required IPAddress",
+            bounds="required InternetAddress",
             display_name="MQTT Server Address",
         )
         AddOnCfg["genmqtt"]["parameters"]["mqtt_port"] = CreateAddOnParam(
@@ -1506,7 +1506,7 @@ def GetAddOns():
             ),
             "string",
             "Address of your MQTT server.",
-            bounds="required IPAddress",
+            bounds="required InternetAddress",
             display_name="MQTT Server Address",
         )
         AddOnCfg["genmqttin"]["parameters"]["mqtt_port"] = CreateAddOnParam(
@@ -1611,7 +1611,7 @@ def GetAddOns():
             ),
             "string",
             "Address of your MQTT broker server (IP address or hostname).",
-            bounds="required IPAddress",
+            bounds="required InternetAddress",
             display_name="MQTT Server Address",
         )
         AddOnCfg["genhomeassistant"]["parameters"]["mqtt_port"] = CreateAddOnParam(
@@ -1746,7 +1746,7 @@ def GetAddOns():
             ),
             "string",
             "IP address of genmon if running on a different system. Leave empty for localhost.",
-            bounds="IPAddress",
+            bounds="InternetAddress",
             display_name="Genmon Address",
         )
         AddOnCfg["genhomeassistant"]["parameters"]["cert_authority_path"] = CreateAddOnParam(
