@@ -176,27 +176,6 @@ def root():
 
 
 # -------------------------------------------------------------------------------
-@app.route("/verbose", methods=["GET"])
-def verbose():
-
-    return ServePage("index_verbose.html")
-
-
-# -------------------------------------------------------------------------------
-@app.route("/low", methods=["GET"])
-def lowbandwidth():
-
-    return ServePage("index_lowbandwith.html")
-
-
-# -------------------------------------------------------------------------------
-@app.route("/internal", methods=["GET"])
-def display_internal():
-
-    return ServePage("internal.html")
-
-
-# -------------------------------------------------------------------------------
 @app.route("/locked", methods=["GET"])
 def locked():
 
