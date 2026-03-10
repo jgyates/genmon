@@ -1237,6 +1237,7 @@ class GeneratorController(MySupport):
             self.LogDebug(str(command_sequence))
             return "Error in ExecuteCommandSequence"
         return "The command was sent to the controller."
+
     # ------------ GeneratorController::GetStartInfo ----------------------------
     # return a dictionary with startup info for the gui
     def GetStartInfo(self, NoTile=False):
