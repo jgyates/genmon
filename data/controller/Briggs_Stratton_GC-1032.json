@@ -989,7 +989,7 @@
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
-      "title": "Load Total",
+      "title": "Load Total (kW)",
       "sensor": "power",
       "units": "kW",
       "nominal": 20
@@ -1000,7 +1000,7 @@
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
-      "title": "Load Total",
+      "title": "Load Total (kVA)",
       "sensor": "power",
       "units": "kVA",
       "nominal": 41
