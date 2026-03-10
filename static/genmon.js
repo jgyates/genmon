@@ -3093,6 +3093,12 @@ function checkNewVersion(){
         ],
         onSubmit: function(e) {
              e.preventDefault();
+             // Check if upgrading to a major new version (2.x)
+             if (latestVersion && latestVersion.match(/^\s*2\./)) {
+                 vex.closeAll();
+                 showMajorUpgradeWarning();
+                 return;
+             }
              updateSoftware();
              var DisplayStr1 = 'Downloading latest version...';
              var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
@@ -3103,11 +3109,60 @@ function checkNewVersion(){
     });
 
     if (latestVersion != myGenerator["version"]) {
-          // $('.vex-dialog-message').html("A new version is available.<br>Current Version: " + myGenerator["version"] + "<br>New Version: " + latestVersion);
+          // (.vex-dialog-message').html("A new version is available.<br>Current Version: " + myGenerator["version"] + "<br>New Version: " + latestVersion);
           $('.vex-dialog-message').html("Are you sure you want to update to the latest version?");
     } else {
           $('.vex-dialog-message').html("Are you sure you want to upgrade?");
     }
+}
+
+//*****************************************************************************
+// Major version upgrade warning (1.x -> 2.x)
+//*****************************************************************************
+function showMajorUpgradeWarning(){
+
+    var warning = '<div style="text-align:left; font-size:13px; line-height:1.5;">' +
+        '<h3 style="color:#c0392b; margin-bottom:10px;">&#9888; Major Version Upgrade</h3>' +
+        '<p>You are about to upgrade from <b>version ' + myGenerator["version"] + '</b> to <b>version ' + latestVersion + '</b>.</p>' +
+        '<p>This is a <b>major version change</b> with significant updates to the web interface. Please review the following before proceeding:</p>' +
+        '<ul style="margin:10px 0 10px 20px; list-style:disc;">' +
+        '<li><b>No Internet Explorer support</b> &mdash; Version 2.x requires a modern browser (Chrome, Firefox, Edge, or Safari). Internet Explorer is no longer supported.</li>' +
+        '<li><b>New web interface</b> &mdash; The UI has been redesigned. Bookmarks and saved shortcuts to specific pages may need to be updated.</li>' +
+        '</ul>' +
+        '</div>';
+
+    var DisplayStrButtons = {
+        NO: {
+          text: 'Cancel',
+          type: 'button',
+          className: 'vex-dialog-button-secondary',
+          click: function noClick () { this.close() }
+        },
+        YES: {
+          text: 'I Understand, Proceed with Upgrade',
+          type: 'submit',
+          className: 'vex-dialog-button-primary',
+          click: function yesClick () { }
+        }
+    }
+
+    vex.dialog.open({
+        unsafeMessage: warning,
+        overlayClosesOnClick: false,
+        buttons: [
+           DisplayStrButtons.NO,
+           DisplayStrButtons.YES
+        ],
+        onSubmit: function(e) {
+             e.preventDefault();
+             updateSoftware();
+             var DisplayStr1 = 'Downloading version ' + latestVersion + '...';
+             var DisplayStr2 = '<div class="progress-bar"><span class="progress-bar-fill" style="width: 0%"></span></div>';
+             $('.vex-dialog-message').html(DisplayStr1);
+             $('.vex-dialog-buttons').html(DisplayStr2);
+             startProgressThenIndeterminate('.progress-bar-fill');
+        }
+    });
 }
 
 //*****************************************************************************
