@@ -1232,12 +1232,11 @@ class GeneratorController(MySupport):
                         self.LogDebug("Error in ExecuteCommandSequence: invalid value type")
                         return "Command not found."
 
-                return "OK"
         except Exception as e1:
             self.LogErrorLine("Error in ExecuteCommandSequence: " + str(e1))
             self.LogDebug(str(command_sequence))
             return "Error in ExecuteCommandSequence"
-        return "OK"
+        return "The command was sent to the controller."
     # ------------ GeneratorController::GetStartInfo ----------------------------
     # return a dictionary with startup info for the gui
     def GetStartInfo(self, NoTile=False):
