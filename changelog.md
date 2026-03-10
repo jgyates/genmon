@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Added HA addon JSON files for all current custom controller variants
 - Fixed bug in custom controller fuel sensor gauge
 - Fix minor bug in Kholer support
+- Fix minor issue with Briggs & Stratton gauge 
 
 ## V1.19.07 -2025-10-01
 - Added SNMP JSON support for Briggs and Stratton (thanks @zinglo)
