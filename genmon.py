@@ -1415,7 +1415,7 @@ class Monitor(MySupport):
 
                     for line in data:
 
-                        if 'GENMON_VERSION = "V' in line:
+                        if 'GENMON_VERSION' in line:
                             import re
 
                             quoted = re.compile('"([^"]*)"')
