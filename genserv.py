@@ -1,6 +1,6 @@
 # -------------------------------------------------------------------------------
 #    FILE: genserv.py
-# PURPOSE: Flask app for generator monitor web app
+# PURPOSE: Flask based app for generator monitor web server
 #
 #  AUTHOR: Jason G Yates
 #    DATE: 20-Dec-2016
