@@ -1,6 +1,13 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## V1.20.00 -2026-03-10
+- Added HA addon JSON files for all current custom controller variants
+- Fixed bug in custom controller fuel sensor gauge
+- Fix minor bug in Kholer support
+- Fix minor issue with Briggs & Stratton gauge 
+- Updates to prepare for genmon 2.0 update
+
 ## V1.19.08 -2026-01-29
 - Added "Generator State" value for Evolution 2.0 and power pact models on the Status page
 - Added a new add on for Home Assistant auto discovery. Thanks @jtubb
@@ -9,10 +16,6 @@ All notable changes to this project will be documented in this file.
 - Updates to better support genmon running under Windows
 - Added remote commands for Mebay controller
 - Minor updates to genmqtt reconnect intervals
-- Added HA addon JSON files for all current custom controller variants
-- Fixed bug in custom controller fuel sensor gauge
-- Fix minor bug in Kholer support
-- Fix minor issue with Briggs & Stratton gauge 
 
 ## V1.19.07 -2025-10-01
 - Added SNMP JSON support for Briggs and Stratton (thanks @zinglo)
