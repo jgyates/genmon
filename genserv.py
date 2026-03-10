@@ -788,10 +788,10 @@ def GetAddOns():
         AddOnCfg["gengpio"]["enable"] = ConfigFiles[GENLOADER_CONFIG].ReadValue(
             "enable", return_type=bool, section="gengpio", default=False
         )
-        AddOnCfg["gengpio"]["title"] = "Genmon GPIO Outputs"
+        AddOnCfg["gengpio"]["title"] = "RPi GPIO Outputs"
         AddOnCfg["gengpio"][
             "description"
-        ] = "Genmon will set Raspberry Pi GPIO outputs (see documentation for details)"
+        ] = "Genmon will set Raspberry Pi GPIO outputs based on generator states (see documentation for details)"
         AddOnCfg["gengpio"]["icon"] = "rpi"
         AddOnCfg["gengpio"][
             "url"
@@ -803,10 +803,10 @@ def GetAddOns():
         AddOnCfg["gengpioin"]["enable"] = ConfigFiles[GENLOADER_CONFIG].ReadValue(
             "enable", return_type=bool, section="gengpioin", default=False
         )
-        AddOnCfg["gengpioin"]["title"] = "Genmon GPIO Inputs"
+        AddOnCfg["gengpioin"]["title"] = "RPi GPIO Inputs"
         AddOnCfg["gengpioin"][
             "description"
-        ] = "Genmon will set Raspberry Pi GPIO inputs (see documentation for details)"
+        ] = "Genmon will use Raspberry Pi GPIO inputs for selected remote commands (see documentation for details)"
         AddOnCfg["gengpioin"]["icon"] = "rpi"
         AddOnCfg["gengpioin"][
             "url"
@@ -845,7 +845,7 @@ def GetAddOns():
         AddOnCfg["gengpioledblink"]["enable"] = ConfigFiles[GENLOADER_CONFIG].ReadValue(
             "enable", return_type=bool, section="gengpioledblink", default=False
         )
-        AddOnCfg["gengpioledblink"]["title"] = "Genmon GPIO Output to blink LED"
+        AddOnCfg["gengpioledblink"]["title"] = "RPi GPIO Output to blink LED"
         AddOnCfg["gengpioledblink"][
             "description"
         ] = "Genmon will blink LED connected to GPIO pin to indicate genmon status"
