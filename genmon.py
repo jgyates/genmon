@@ -1227,6 +1227,7 @@ class Monitor(MySupport):
             Status["RunHours"] = self.Controller.GetRunHours()
             Status["AltDateformat"] = self.Controller.bAlternateDateFormat
             Status["version"] = ProgramDefaults.GENMON_VERSION
+            Status["UpdateAvailable"] = self.UpdateAvailable
             ReturnDict = self.MergeDicts(Status, self.Controller.GetStatusForGUI())
             return ReturnDict
         except Exception as e1:

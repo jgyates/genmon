@@ -82,7 +82,7 @@ This project is free to use under the posted license agreement. It was written a
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=8Z4TSR22RLMWQ&lc=US&item_name=jgyates&item_number=jgyates&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_LG%2egif%3aNonHosted)
 
 ## System Requirements
-- Python 3.x
+- Python 3.7 or higher
 - A linux based operating system (mostly for file system storage location)
 - A TCP/IP network connection (either wired or wireless) for communicating generator status
 
