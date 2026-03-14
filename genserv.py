@@ -4686,8 +4686,6 @@ def LoadConfig():
             SecretMFAKey = str(pyotp.random_base32())
             ConfigFiles[GENMON_CONFIG].WriteValue("secretmfa", str(SecretMFAKey))
 
-        SetupMFA()
-
         if ConfigFiles[GENMON_CONFIG].HasOption("usehttps"):
             bUseSecureHTTP = ConfigFiles[GENMON_CONFIG].ReadValue(
                 "usehttps", return_type=bool
@@ -4695,6 +4693,8 @@ def LoadConfig():
         if not bUseSecureHTTP:
             # dont use MFA unless HTTPS is enabled
             bUseMFA = False
+        else:
+            SetupMFA()
 
         ListenIPAddress = ConfigFiles[GENMON_CONFIG].ReadValue("flask_listen_ip_address", default="0.0.0.0")
 
@@ -4858,6 +4858,7 @@ def SetupMFA():
     global mail
 
     try:
+
         mail = MyMail(ConfigFilePath=ConfigFilePath)
         MFA_URL = pyotp.totp.TOTP(SecretMFAKey).provisioning_uri(
             mail.SenderAccount, issuer_name="Genmon"
