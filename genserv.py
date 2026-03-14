@@ -4679,14 +4679,14 @@ def LoadConfig():
         bUseMFA = ConfigFiles[GENMON_CONFIG].ReadValue(
             "usemfa", return_type=bool, default=False
         )
-        if bUseMFA:
-            SecretMFAKey = ConfigFiles[GENMON_CONFIG].ReadValue("secretmfa", default=None)
 
-            if SecretMFAKey == None or SecretMFAKey == "":
-                SecretMFAKey = str(pyotp.random_base32())
-                ConfigFiles[GENMON_CONFIG].WriteValue("secretmfa", str(SecretMFAKey))
+        SecretMFAKey = ConfigFiles[GENMON_CONFIG].ReadValue("secretmfa", default=None)
 
-            SetupMFA()
+        if SecretMFAKey == None or SecretMFAKey == "":
+            SecretMFAKey = str(pyotp.random_base32())
+            ConfigFiles[GENMON_CONFIG].WriteValue("secretmfa", str(SecretMFAKey))
+
+        SetupMFA()
 
         if ConfigFiles[GENMON_CONFIG].HasOption("usehttps"):
             bUseSecureHTTP = ConfigFiles[GENMON_CONFIG].ReadValue(
