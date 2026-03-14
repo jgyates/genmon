@@ -4697,7 +4697,7 @@ def LoadConfig():
             bUseMFA = False
 
         ListenIPAddress = ConfigFiles[GENMON_CONFIG].ReadValue("flask_listen_ip_address", default="0.0.0.0")
-        
+
         if ConfigFiles[GENMON_CONFIG].HasOption("http_port"):
             HTTPPort = ConfigFiles[GENMON_CONFIG].ReadValue(
                 "http_port", return_type=int, default=8000
