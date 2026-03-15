@@ -5,7 +5,7 @@
 #    FILE: gengpioin.py
 # PURPOSE: genmon.py support program to allow amazon alexa voice commands
 #
-#  AUTHOR: Jason G Yates
+#  AUTHOR: @MichaelB2018
 #    DATE: 27-Jul-2019
 #
 # MODIFICATIONS:
@@ -68,7 +68,7 @@ except Exception as e1:
 # This XML is the minimum needed to define one of our virtual switches
 # to the Amazon Echo
 
-SETUP_XML = """<?xml version=1.0?>
+SETUP_XML = """<?xml version="1.0"?>
             <root>
              <device>
                 <deviceType>urn:Belkin:device:controllee:1</deviceType>
@@ -76,7 +76,7 @@ SETUP_XML = """<?xml version=1.0?>
                 <manufacturer>Belkin International Inc.</manufacturer>
                 <modelName>Socket</modelName>
                 <modelNumber>3.1415</modelNumber>
-                <modelDescription>Belkin Plugin Socket 1.0</modelDescription>\r\n
+                <modelDescription>Belkin Plugin Socket 1.0</modelDescription>
                 <UDN>uuid:Socket-1_0-%(device_serial)s</UDN>
                 <serialNumber>221517K0101767</serialNumber>
                 <binaryState>0</binaryState>
@@ -229,6 +229,20 @@ class upnp_device(MyCommon):
                     self.client_sockets[fileno][0],
                     self.client_sockets[fileno][1],
                 )
+                self._close_client(fileno)
+
+    # ---------------- upnp_device._close_client -------------------------------
+    def _close_client(self, fileno):
+        try:
+            self.poller.remove(self, fileno)
+        except Exception:
+            pass
+        entry = self.client_sockets.pop(fileno, None)
+        if entry:
+            try:
+                entry[0].close()
+            except Exception:
+                pass
 
     # ---------------- upnp_device.handle_request ------------------------------
     def handle_request(self, data, sender, socket, client_address):
@@ -273,7 +287,10 @@ class upnp_device(MyCommon):
         message += "\r\n"
         self.LogDebug(message)
         temp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        temp_socket.sendto(message.encode("UTF-8"), destination)
+        try:
+            temp_socket.sendto(message.encode("UTF-8"), destination)
+        finally:
+            temp_socket.close()
 
 
 # This subclass does the bulk of the work to mimic a WeMo switch on the network.
@@ -406,7 +423,7 @@ class fauxmo(upnp_device):
                     "%s" % (len(soap), date_str, soap)
                 )
                 socket.send(message.encode("UTF-8"))
-        elif data.find("GetBinaryState"):
+        elif "GetBinaryState" in data:
             self.generatorStatus = self.action_handler.status(self.generatorStatus)
             self.LogDebug(
                 "Responding to provide current state: " + str(self.generatorStatus)
@@ -494,7 +511,7 @@ class upnp_broadcast_responder(MyCommon):
                 self.ssock.bind(("", self.port))
             except Exception as e:
                 self.LogError(
-                    "WARNING: Failed to bind %s:%d: %s", (self.ip, self.port, e)
+                    "WARNING: Failed to bind %s:%d: %s" % (self.ip, self.port, e)
                 )
                 ok = False
 
@@ -511,6 +528,7 @@ class upnp_broadcast_responder(MyCommon):
             return False
         if ok:
             self.LogDebug("Listening for UPnP broadcasts")
+        return ok
 
     # ---------------- upnp_broadcast_responder.fileno -------------------------
     def fileno(self):
@@ -521,15 +539,20 @@ class upnp_broadcast_responder(MyCommon):
         data, sender = self.recvfrom(1024)
         data = data.decode("utf-8")
         if data:
-            if (
-                data.find("M-SEARCH") >= 0
-                and data.find("urn:Belkin:device:**") > 0
-                or data.find("n:Belkin:device:**") > 0
-                or data.find("upnp:rootdevice") > 0
+            if data.find("M-SEARCH") >= 0 and (
+                "urn:Belkin:device:**" in data
+                or "n:Belkin:device:**" in data
+                or "upnp:rootdevice" in data
+                or "ssdp:all" in data
             ):
+                # Echo back the ST that was requested; for ssdp:all or
+                # upnp:rootdevice, use urn:Belkin:device:** so Alexa
+                # recognises us as a WeMo device.
                 for device in self.devices:
-                    time.sleep(0.5)
                     device.respond_to_search(sender, "urn:Belkin:device:**")
+                    # Some Echo models also need the upnp:rootdevice response
+                    if "upnp:rootdevice" in data or "ssdp:all" in data:
+                        device.respond_to_search(sender, "upnp:rootdevice")
             else:
                 pass
 
@@ -721,7 +744,17 @@ if __name__ == "__main__":
 
         # Set up our singleton listener for UPnP broadcasts
         u = upnp_broadcast_responder(log=log, debug=Debug)
-        u.init_socket()
+
+        # Retry init_socket with backoff — network may not be ready at boot
+        for attempt in range(6):
+            if u.init_socket():
+                break
+            wait = min(5 * (attempt + 1), 30)
+            log.error("UPnP socket init failed (attempt %d/6), retrying in %ds..." % (attempt + 1, wait))
+            time.sleep(wait)
+        else:
+            log.error("Failed to initialize UPnP socket after 6 attempts. Exiting.")
+            sys.exit(1)
 
         # Add the UPnP broadcast listener to the poller so we can respond
         # when a broadcast is received.
