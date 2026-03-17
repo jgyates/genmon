@@ -11,7 +11,7 @@ paho-mqtt==1.6.1
 smbus
 pysnmp==5.1.0
 ldap3
-pyasn1==0.4.8
+pyasn1==0.6.3
 pyotp
 smbus
 psutil
