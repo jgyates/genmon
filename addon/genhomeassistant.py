@@ -1305,7 +1305,12 @@ class MyHomeAssistant(MySupport):
     def _setup_mqtt(self):
         """Initialize MQTT client and connection"""
 
-        self.MQTTclient = mqtt.Client(client_id=self.ClientID)
+        try:
+            self.MQTTclient = mqtt.Client(callback_api_version = mqtt.CallbackAPIVersion.VERSION1,client_id=self.ClientID)
+            self.LogDebug("Using API Version 1")
+        except:
+            self.MQTTclient = mqtt.Client(client_id=self.ClientID)
+            self.LogDebug("Using legacy API")
 
         if self.Username and self.Password:
             self.MQTTclient.username_pw_set(self.Username, password=self.Password)

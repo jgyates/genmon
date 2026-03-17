@@ -241,7 +241,13 @@ class MyMQTT(MyCommon):
             self.LogErrorLine("Error: Can't setup gauges with genmon: " + str(e1))
             sys.exit(1)
         try:
-            self.MQTTclient = mqtt.Client(client_id=self.ClientID)
+            try:
+                self.MQTTclient = mqtt.Client(callback_api_version = mqtt.CallbackAPIVersion.VERSION1,client_id=self.ClientID)
+                self.LogDebug("Using API Version 1")
+            except:
+                self.MQTTclient = mqtt.Client(client_id=self.ClientID)
+                self.LogDebug("Using legacy API")
+
             if self.Username != None and len(self.Username) and self.Password != None:
                 self.MQTTclient.username_pw_set(self.Username, password=self.Password)
 

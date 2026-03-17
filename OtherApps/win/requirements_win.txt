@@ -2,12 +2,12 @@ Flask
 configparser
 pyserial
 crcmod
-pyowm==2.10.0
+pyowm
 pytz
 pyopenssl
 twilio
 chump
-paho-mqtt==1.6.1
+paho-mqtt
 pysnmp==5.1.0
 ldap3
 pyasn1==0.4.8

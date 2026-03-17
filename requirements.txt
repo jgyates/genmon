@@ -2,15 +2,17 @@ Flask
 configparser
 pyserial
 crcmod
-pyowm==2.10.0
+pyowm
 pytz
 pyopenssl
 twilio
 chump
-paho-mqtt==1.6.1
+paho-mqtt
 smbus
+# pysnmp is fixed at this version to support python 3.7. pysnmp 7.1.22 dropped support for python 3.9
 pysnmp==5.1.0
 ldap3
+# pysan1 is fixed at 0.4.8 due to pysnmp 5.1.0 requiring pyasn1 < 0.5.0
 pyasn1==0.4.8
 pyotp
 smbus

@@ -500,7 +500,12 @@ class MyMQTT(MyCommon):
             sys.exit(1)
 
         try:
-            self.MQTTclient = mqtt.Client(client_id=self.ClientID)
+            try:
+                self.MQTTclient = mqtt.Client(callback_api_version = mqtt.CallbackAPIVersion.VERSION1,client_id=self.ClientID)
+                self.LogDebug("Using API Version 1")
+            except:
+                self.MQTTclient = mqtt.Client(client_id=self.ClientID)
+                self.LogDebug("Using legacy API")
 
             self.MQTTclient.reconnect_delay_set(min_delay=1, max_delay=120)
             
