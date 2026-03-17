@@ -10,7 +10,7 @@ chump
 paho-mqtt==1.6.1
 pysnmp==5.1.0
 ldap3
-pyasn1==0.4.8
+pyasn1==0.6.3
 pyotp
 psutil
 # This breaks on 32 bit trixie and takes a long time on slower systems like the pi3 and pi zero 
