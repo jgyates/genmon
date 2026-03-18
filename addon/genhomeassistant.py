@@ -15,6 +15,7 @@ import os
 import re
 import signal
 import ssl
+import subprocess
 import sys
 import threading
 import time
@@ -633,15 +634,6 @@ BINARY_SENSOR_DEFINITIONS = {
         "payload_off_invert": True,
         "icon": "mdi:auto-mode",
     },
-    "update_available": {
-        "name": "Update Available",
-        "path": "Monitor/Generator Monitor Stats/Update Available",
-        "device_class": "update",
-        "payload_on": "Yes",
-        "payload_off": "No",
-        "icon": "mdi:update",
-        "category": "diagnostic",
-    },
 }
 
 # Button definitions for remote commands
@@ -798,6 +790,9 @@ class MyHomeAssistant(MySupport):
         self.PublishedEntities = set()  # Entities we've published this session
         self.CleanupComplete = False  # True after stale entities removed
         self.DiscoverySubscribed = False  # True when subscribed to discovery topics
+
+        # Update entity state
+        self.UpdateInProgress = False
 
         # Entity definitions - will be loaded from JSON or fall back to hardcoded
         self.SensorDefinitions = {}
@@ -1379,6 +1374,10 @@ class MyHomeAssistant(MySupport):
         button_topic = f"{self.BaseTopic}/+/+/command"
         self.MQTTclient.subscribe(button_topic)
 
+        # Subscribe to update entity command topic
+        update_command_topic = f"{self.BaseTopic}/update/+/command"
+        self.MQTTclient.subscribe(update_command_topic)
+
         # Publish availability online
         availability_topic = f"{self.BaseTopic}/status"
         self.MQTTclient.publish(availability_topic, payload="online", qos=1, retain=True)
@@ -1436,6 +1435,11 @@ class MyHomeAssistant(MySupport):
             if topic == f"{self.DiscoveryPrefix}/status" and payload == "online":
                 self.LogDebug("Home Assistant restarted, republishing discovery")
                 self._publish_discovery()
+                return
+
+            # Handle update entity install command
+            if action == "command" and entity_type == "update":
+                self._handle_update_install(entity_id, payload)
                 return
 
             # Handle button press
@@ -1642,6 +1646,67 @@ class MyHomeAssistant(MySupport):
 
         except Exception as e1:
             self.LogErrorLine(f"Error sending exercise command: {str(e1)}")
+
+    # --------------------------------------------------------------------------
+    def _handle_update_install(self, entity_id, payload):
+        """Handle update entity install command from Home Assistant.
+
+        Runs genmonmaint.sh -u -n to update genmon, then restarts via
+        startgenmon.sh. This mirrors what genserv.py does for the web UI
+        update button.
+        """
+
+        try:
+            if entity_id != "genmon_software":
+                self.LogError(f"Unknown update entity: {entity_id}")
+                return
+
+            self.LogInfo("Software update triggered from Home Assistant")
+
+            # Publish in-progress state
+            self.UpdateInProgress = True
+            self._publish_update_state_json(in_progress=True)
+
+            # Run update in a background thread so MQTT stays responsive
+            update_thread = threading.Thread(target=self._run_update)
+            update_thread.daemon = True
+            update_thread.start()
+
+        except Exception as e1:
+            self.LogErrorLine(f"Error handling update install: {str(e1)}")
+            self.UpdateInProgress = False
+
+    # --------------------------------------------------------------------------
+    def _run_update(self):
+        """Execute the genmon update and restart in a background thread."""
+
+        try:
+            script_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+            update_script = os.path.join(script_dir, "genmonmaint.sh")
+            restart_script = os.path.join(script_dir, "startgenmon.sh")
+
+            self.LogInfo(f"Running update script: {update_script}")
+            result = subprocess.run(
+                ["/bin/bash", update_script, "-u", "-n"],
+                capture_output=True, text=True, timeout=300
+            )
+            if result.returncode != 0:
+                self.LogError(f"Update script failed: {result.stderr}")
+                self.UpdateInProgress = False
+                self._publish_update_state_json(in_progress=False)
+                return
+
+            self.LogInfo("Update complete, restarting genmon")
+            # Restart genmon (this will also restart this addon via genloader)
+            subprocess.Popen(
+                ["/bin/bash", restart_script, "restart"],
+                start_new_session=True
+            )
+
+        except Exception as e1:
+            self.LogErrorLine(f"Error running update: {str(e1)}")
+            self.UpdateInProgress = False
+            self._publish_update_state_json(in_progress=False)
 
     # --------------------------------------------------------------------------
     def _parse_exercise_time(self, exercise_str):
@@ -1856,6 +1921,12 @@ class MyHomeAssistant(MySupport):
             for entity_id, entity_def in self.NumberDefinitions.items():
                 if self._entity_allowed(entity_def, entity_id):
                     self._publish_number_discovery(entity_id, entity_def)
+
+            # Publish update entity discovery
+            self._publish_update_discovery()
+
+            # Publish initial update state
+            self._publish_update_state_json(genmon_data=genmon_data)
 
             self.EntitiesPublished = True
             self.LastDiscoveryTime = time.time()
@@ -2195,6 +2266,80 @@ class MyHomeAssistant(MySupport):
             self.LogErrorLine(f"Error publishing number discovery {entity_id}: {str(e1)}")
 
     # --------------------------------------------------------------------------
+    def _publish_update_discovery(self):
+        """Publish discovery message for the genmon software update entity.
+
+        Creates a native Home Assistant update entity that shows installed/latest
+        version and supports triggering updates from the HA UI.
+        """
+
+        try:
+            entity_id = "genmon_software"
+            unique_id = f"genmon_{self.DeviceId}_{entity_id}"
+            discovery_topic = f"{self.DiscoveryPrefix}/update/{self.DeviceId}/{entity_id}/config"
+            state_topic = f"{self.BaseTopic}/update/{entity_id}/state"
+            command_topic = f"{self.BaseTopic}/update/{entity_id}/command"
+
+            payload = {
+                "name": "Software Update",
+                "unique_id": unique_id,
+                "state_topic": state_topic,
+                "command_topic": command_topic,
+                "payload_install": "INSTALL",
+                "availability_topic": f"{self.BaseTopic}/status",
+                "payload_available": "online",
+                "payload_not_available": "offline",
+                "device": self.DeviceInfo,
+                "device_class": "firmware",
+                "entity_category": "config",
+                "entity_picture": "https://raw.githubusercontent.com/jgyates/genmon/master/static/favicon.ico",
+                "release_url": "https://raw.githubusercontent.com/jgyates/genmon/master/changelog.md",
+            }
+
+            self.MQTTclient.publish(discovery_topic, json.dumps(payload), retain=True)
+            self.PublishedEntities.add(f"update/{entity_id}")
+            self.LogDebug("Published update entity discovery: genmon_software")
+
+        except Exception as e1:
+            self.LogErrorLine(f"Error publishing update discovery: {str(e1)}")
+
+    # --------------------------------------------------------------------------
+    def _publish_update_state_json(self, genmon_data=None, in_progress=False):
+        """Publish the update entity state as JSON.
+
+        Reads installed version from ProgramDefaults and latest version from
+        genmon monitor data. When installed == latest, HA shows 'Up-to-date'.
+        """
+
+        try:
+            installed_version = ProgramDefaults.GENMON_VERSION
+
+            # Determine latest version from genmon data
+            latest_version = installed_version  # default: up to date
+            if genmon_data:
+                update_available = self._get_value_from_path(
+                    genmon_data, "Monitor/Generator Monitor Stats/Update Available"
+                )
+                update_ver = self._get_value_from_path(
+                    genmon_data, "Monitor/Generator Monitor Stats/Update Version"
+                )
+                if update_available == "Yes" and update_ver:
+                    latest_version = str(update_ver).strip()
+
+            state_payload = json.dumps({
+                "installed_version": installed_version,
+                "latest_version": latest_version,
+                "title": "Genmon",
+                "in_progress": in_progress,
+            })
+
+            state_topic = f"{self.BaseTopic}/update/genmon_software/state"
+            self.MQTTclient.publish(state_topic, state_payload, retain=True)
+
+        except Exception as e1:
+            self.LogErrorLine(f"Error publishing update state: {str(e1)}")
+
+    # --------------------------------------------------------------------------
     def _polling_thread(self):
         """Main polling thread to get data from genmon and publish states"""
 
@@ -2346,6 +2491,11 @@ class MyHomeAssistant(MySupport):
             except Exception as e1:
                 if self.debug:
                     self.LogDebug(f"Error processing binary sensor {entity_id}: {str(e1)}")
+
+        # Process update entity state
+        self._publish_update_state_json(
+            genmon_data=genmon_data, in_progress=self.UpdateInProgress
+        )
 
         # Process switches (state only)
         for entity_id, entity_def in self.SwitchDefinitions.items():
