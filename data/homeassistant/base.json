@@ -696,16 +696,6 @@
       ],
       "payload_off_invert": true,
       "icon": "mdi:auto-mode"
-    },
-    {
-      "entity_id": "update_available",
-      "name": "Update Available",
-      "path": "Monitor/Generator Monitor Stats/Update Available",
-      "device_class": "update",
-      "payload_on": "Yes",
-      "payload_off": "No",
-      "icon": "mdi:update",
-      "category": "diagnostic"
     }
   ],
   "buttons": [

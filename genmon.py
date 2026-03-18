@@ -1148,6 +1148,9 @@ class Monitor(MySupport):
             GenMonStats.append(
                 {"Update Available": "Yes" if self.UpdateAvailable else "No"}
             )
+            GenMonStats.append(
+                {"Update Version": self.UpdateVersion if self.UpdateVersion else ""}
+            )
 
             if not self.bDisablePlatformStats:
                 PlatformStats = self.GetPlatformStats(JSONNum=False)
