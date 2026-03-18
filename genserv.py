@@ -716,20 +716,10 @@ def SendTestEmail(query_string):
         recipient = str(parameters["recipient"])
         recipient = recipient.strip()
         password = str(parameters["password"])
-        if parameters["use_ssl"].lower() == "true":
-            use_ssl = True
-        else:
-            use_ssl = False
 
-        if parameters["tls_disable"].lower() == "true":
-            tls_disable = True
-        else:
-            tls_disable = False
-
-        if parameters["smtpauth_disable"].lower() == "true":
-            smtpauth_disable = True
-        else:
-            smtpauth_disable = False
+        use_ssl = parameters["use_ssl"] in (True, "true", "True", "1", 1)
+        tls_disable = parameters["tls_disable"] in (True, "true", "True", "1", 1)
+        smtpauth_disable = parameters["smtpauth_disable"] in (True, "true", "True", "1", 1)
 
     except Exception as e1:
         LogErrorLine("Error parsing parameters in SendTestEmail: " + str(e1))
@@ -4115,7 +4105,7 @@ def ReadSettingsFromFile():
     # email_recipient setting will be handled on the notification screen
     ConfigSettings["smtp_server"] = [
         "string",
-        "SMTP Server <br><small>(leave emtpy to disable)</small>",
+        "SMTP Server",
         305,
         "smtp.gmail.com",
         "",
@@ -4182,7 +4172,7 @@ def ReadSettingsFromFile():
     ]
     ConfigSettings["imap_server"] = [
         "string",
-        "IMAP Server <br><small>(leave emtpy to disable)</small>",
+        "IMAP Server",
         401,
         "imap.gmail.com",
         "",
@@ -4204,7 +4194,7 @@ def ReadSettingsFromFile():
     ]
     ConfigSettings["incoming_mail_folder"] = [
         "string",
-        "Incoming Mail Folder<br><small>(if IMAP enabled)</small>",
+        "Incoming Mail Folder",
         403,
         "Generator",
         "",
@@ -4215,7 +4205,7 @@ def ReadSettingsFromFile():
     ]
     ConfigSettings["processed_mail_folder"] = [
         "string",
-        "Mail Processed Folder<br><small>(if IMAP enabled)</small>",
+        "Mail Processed Folder",
         404,
         "Generator/Processed",
         "",
@@ -4493,10 +4483,16 @@ def Restart():
 
     try:
         Restarting = True
-        if not RunBashScript("startgenmon.sh restart -c " + ConfigFilePath):
-            LogError("Error in Restart")
+        threading.Thread(target=_do_restart, daemon=True).start()
     except Exception as e1:
         LogErrorLine("Error in Restart: " + str(e1))
+
+# -------------------------------------------------------------------------------
+# Separate thread to restart so the flask request will return
+def _do_restart():
+    time.sleep(2)
+    if not RunBashScript("startgenmon.sh restart -c " + ConfigFilePath):
+        LogError("Error in Restart")
 
 
 # -------------------------------------------------------------------------------
@@ -4623,10 +4619,12 @@ def generate_adhoc_ssl_context():
         os.write(pkey_handle, crypto.dump_privatekey(crypto.FILETYPE_PEM, pkey))
         os.close(cert_handle)
         os.close(pkey_handle)
-        # ctx = ssl.SSLContext(ssl.PROTOCOL_TLS)
-        ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-        ctx.load_cert_chain(cert_file, pkey_file)
+
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE
+        ctx.load_cert_chain(cert_file, pkey_file)
+
         return ctx
     except Exception as e1:
         LogError("Error in generate_adhoc_ssl_context: " + str(e1))
@@ -4858,12 +4856,15 @@ def SetupMFA():
     global mail
 
     try:
-
         mail = MyMail(ConfigFilePath=ConfigFilePath)
+        account = mail.SenderAccount
+    except Exception as e1:
+        LogErrorLine("Error setting up mail for 2FA: " + str(e1))
+        account = "genmon"
+    try:
         MFA_URL = pyotp.totp.TOTP(SecretMFAKey).provisioning_uri(
-            mail.SenderAccount, issuer_name="Genmon"
+            account, issuer_name="Genmon"
         )
-        # MFA_URL += "&image=https://raw.githubusercontent.com/jgyates/genmon/master/static/images/Genmon.png"
     except Exception as e1:
         LogErrorLine("Error setting up 2FA: " + str(e1))
 
