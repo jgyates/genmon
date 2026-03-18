@@ -151,7 +151,7 @@ function copyconffiles() {
 function updatelibraries() {
 
   echo "Updating libraries...."
-  sudo $pythoncommand -m pip install -r $genmondir/requirements.txt -U $pipoptions
+  sudo $pythoncommand -m pip install --upgrade -r $genmondir/requirements.txt -U $pipoptions
   echo "Done."
 }
 
