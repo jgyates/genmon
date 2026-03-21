@@ -2203,6 +2203,10 @@ class CustomController(GeneratorController):
             bSuccess, PowerValue = self.GetSingleEntry("power")
             if not bSuccess or PowerValue == None:
                 return DefaultReturn
+            
+            if isinstance(PowerValue, float):
+                PowerValue = round(PowerValue, 2)
+
             if ReturnFloat:
                 return float(PowerValue)
             return PowerValue
