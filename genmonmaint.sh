@@ -20,9 +20,11 @@ pipoptions="--prefer-binary"
 pythoncommand="python3"
 OPTIND=1         # Reset in case getopts has been used previously in the shell.
 config_path="/etc/genmon/"
+restore_file="genmon_backup.tar.gz"
 log_path="/var/log/"
 install_opt=false
 backup_opt=false
+restore_opt=false
 log_opt=false
 refresh_opt=false
 update_opt=false
@@ -339,7 +341,32 @@ function archivelogs() {
     sudo rm -r genmon_logs
     echo "Done."
 }
+#-------------------------------------------------------------------------------
+# restore genmon
+function restoregenmon() {
 
+    echo "Restore genmon..."
+    echo "Restore source: $restore_file"
+    echo "Restore destination: $config_path"
+    cd $genmondir
+
+    current_time=$(date '+%Y-%m-%d:%H:%M:%S')
+    
+    RESTORE_HISTORY="$config_path"restore.txt
+    if [ ! -f "$RESTORE_HISTORY" ]; then
+      echo "$RESTORE_HISTORY does not exist. Creating.."
+      sudo touch $RESTORE_HISTORY
+    fi
+    sudo sh -c "printf '%s\n' $config_path >> $RESTORE_HISTORY"
+    sudo sh -c "printf '%s\n' $restore_file >> $RESTORE_HISTORY"
+    sudo sh -c "printf '%s\n' $current_time >> $RESTORE_HISTORY"
+
+    tar -xzf $restore_file
+    sudo cp ./genmon_backup/* $config_path
+    sudo rm -r genmon_backup
+    sudo rm $restore_file
+
+}
 #-------------------------------------------------------------------------------
 # backup genmon
 function backupgenmon() {
@@ -424,6 +451,7 @@ function printhelp() {
   echo ""
   echo "  -i           Install genmon and required libraries"
   echo "  -b           Backup genmon configuration"
+  echo "  -t           Specify full path of the backup to restore"
   echo "  -r           Refresh (update) required libraries"
   echo "  -u           Update genmon to the latest version"
   echo "  -C           Remove *.pyc files (clean pre-compiled python files)"
@@ -441,7 +469,8 @@ function printhelp() {
 # main entry
 
 
-while getopts ":hfp:birunc:Csl:" opt; do
+while getopts ":hfp:bt:irunc:Csl:" opt; do
+  echo $OPTARG
   case ${opt} in
     h )
       printhelp
@@ -469,6 +498,10 @@ while getopts ":hfp:birunc:Csl:" opt; do
       ;;
     b )
       backup_opt=true
+      ;;
+    t )
+      restore_opt=true
+      restore_file=$OPTARG
       ;;
     i )
       install_opt=true
@@ -537,6 +570,9 @@ if [ "$backup_opt" = true ] ; then
   backupgenmon
 fi
 
+if [ "$restore_opt" = true ] ; then
+  restoregenmon
+fi
 if [ "$log_opt" = true ] ; then
   archivelogs
 fi
