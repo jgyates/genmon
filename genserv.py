@@ -1781,15 +1781,6 @@ def GetAddOns():
             bounds="",
             display_name="Button Passcode",
         )
-        AddOnCfg["genhomeassistant"]["parameters"]["debug"] = CreateAddOnParam(
-            ConfigFiles[GENHOMEASSISTANT_CONFIG].ReadValue(
-                "debug", return_type=bool, default=False
-            ),
-            "boolean",
-            "Enable debug logging.",
-            bounds="",
-            display_name="Debug",
-        )
         # GENSLACK
         AddOnCfg["genslack"] = collections.OrderedDict()
         AddOnCfg["genslack"]["enable"] = ConfigFiles[GENLOADER_CONFIG].ReadValue(

@@ -20,6 +20,8 @@ set noprompt_opt=false
 set help_opt=false
 set copyfiles_opt=false
 set log_opt=false
+set restore_opt=false
+set restore_archive=
 set pythoncommand=python
 set pipoptions=--prefer-binary
 
@@ -29,6 +31,7 @@ if /I "%1" == "-h" set help_opt=true & shift & goto :GETOPTS
 if /I "%1" == "-u" set update_opt=true & shift & goto :GETOPTS
 if /I "%1" == "-i" set install_opt=true & shift & goto :GETOPTS
 if /I "%1" == "-b" set backup_opt=true & shift & goto :GETOPTS
+if /I "%1" == "-t" set restore_opt=true & set restore_archive=%2 & shift & shift & goto :GETOPTS
 if /I "%1" == "-s" set copyfiles_opt=true & shift & goto :GETOPTS
 if /I "%1" == "-n" set noprompt_opt=true & shift & goto :GETOPTS
 if /I "%1" == "-l" set log_opt=true & log_path=%2 & shift &shift & goto :GETOPTS
@@ -51,6 +54,9 @@ echo Config path is (%config_path%)
 
 REM backup config
 if %backup_opt%==true call :backupgenmon & goto :eof
+
+REM restore config from archive
+if %restore_opt%==true call :restoregenmon & goto :eof
 
 REM backup logs
 if %log_opt%==true call :archivelogs & goto :eof
@@ -201,6 +207,28 @@ REM ----------------------------------------------------------------------------
     tar -zcvf genmon_backup.tar.gz genmon_backup
     rmdir /S /Q genmon_backup
     echo Backup complete
+exit /b 0
+
+REM ----------------------------------------------------------------------------
+:restoregenmon
+
+    echo Restore genmon configuration from %restore_archive% ...
+    cd %genmondir%
+    rmdir /S /Q genmon_backup 2>nul
+    tar -zxvf %restore_archive%
+    if errorlevel 1 (
+        echo Error: Failed to extract archive.
+        exit /b 1
+    )
+    if not exist genmon_backup (
+        echo Error: Archive does not contain genmon_backup directory.
+        exit /b 1
+    )
+    copy .\genmon_backup\*.conf %config_path%
+    copy .\genmon_backup\*.txt %config_path%
+    copy .\genmon_backup\*.json %config_path%
+    rmdir /S /Q genmon_backup
+    echo Restore complete.
 exit /b 0
 
 REM ----------------------------------------------------------------------------
