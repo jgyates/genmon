@@ -2,7 +2,7 @@ Flask
 configparser
 pyserial
 crcmod
-pyowm==2.10
+pyowm==2.10.0
 pytz
 pyopenssl
 twilio
