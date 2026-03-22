@@ -12,9 +12,12 @@ pysnmp==5.1.0
 ldap3
 pyasn1==0.4.8
 pyotp
+webauthn>=2.0
 psutil
 # This breaks on 32 bit trixie and takes a long time on slower systems like the pi3 and pi zero 
 # so I am removing it from the base install
 #fluids
 voipms==0.2.5
+aiohttp
+zeroconf
 
