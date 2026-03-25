@@ -3,6 +3,332 @@
   "version": "1.0",
   "description": "Evolution controller-specific entity definitions (extends base). Note: Service A/B/Battery Check are Evolution-only, not available on Nexus.",
   "sensors": [
+        {
+      "entity_id": "battery_voltage",
+      "name": "Battery Voltage",
+      "path": "Status/Engine/Battery Voltage",
+      "device_class": "voltage",
+      "unit": "V",
+      "icon": "mdi:car-battery",
+      "state_class": "measurement",
+      "enabled_default": true,
+      "monitor_stats": false,
+      "weather": false
+    },
+    {
+      "entity_id": "rpm",
+      "name": "RPM",
+      "path": "Status/Engine/RPM",
+      "unit": "RPM",
+      "icon": "mdi:engine",
+      "state_class": "measurement",
+      "enabled_default": true,
+      "monitor_stats": false,
+      "weather": false
+    },
+    {
+      "entity_id": "frequency",
+      "name": "Output Frequency",
+      "path": "Status/Engine/Frequency",
+      "device_class": "frequency",
+      "unit": "Hz",
+      "icon": "mdi:sine-wave",
+      "state_class": "measurement",
+      "enabled_default": true,
+      "monitor_stats": false,
+      "weather": false
+    },
+    {
+      "entity_id": "output_voltage",
+      "name": "Output Voltage",
+      "path": "Status/Engine/Output Voltage",
+      "device_class": "voltage",
+      "unit": "V",
+      "icon": "mdi:flash",
+      "state_class": "measurement",
+      "enabled_default": true,
+      "monitor_stats": false,
+      "weather": false
+    },
+    {
+      "entity_id": "output_current",
+      "name": "Output Current",
+      "path": "Status/Engine/Output Current",
+      "device_class": "current",
+      "unit": "A",
+      "icon": "mdi:current-ac",
+      "state_class": "measurement",
+      "enabled_default": true,
+      "monitor_stats": false,
+      "weather": false
+    },
+    {
+      "entity_id": "output_power",
+      "name": "Output Power",
+      "path": "Status/Engine/Output Power (Single Phase)",
+      "device_class": "power",
+      "unit": "kW",
+      "icon": "mdi:lightning-bolt",
+      "state_class": "measurement",
+      "enabled_default": true,
+      "monitor_stats": false,
+      "weather": false
+    },
+    {
+      "entity_id": "power_leg1",
+      "name": "Power Leg 1",
+      "path": "Status/Engine/Power Leg 1",
+      "device_class": "power",
+      "unit": "kW",
+      "icon": "mdi:lightning-bolt",
+      "state_class": "measurement",
+      "enabled_default": true,
+      "controllers": [
+        "evolution",
+        "nexus"
+      ],
+      "monitor_stats": false,
+      "weather": false
+    },
+    {
+      "entity_id": "power_leg2",
+      "name": "Power Leg 2",
+      "path": "Status/Engine/Power Leg 2",
+      "device_class": "power",
+      "unit": "kW",
+      "icon": "mdi:lightning-bolt",
+      "state_class": "measurement",
+      "enabled_default": true,
+      "controllers": [
+        "evolution",
+        "nexus"
+      ],
+      "monitor_stats": false,
+      "weather": false
+    },
+    {
+      "entity_id": "current_leg1",
+      "name": "Current Leg 1",
+      "path": "Status/Engine/Current Leg 1",
+      "device_class": "current",
+      "unit": "A",
+      "icon": "mdi:current-ac",
+      "state_class": "measurement",
+      "enabled_default": true,
+      "controllers": [
+        "evolution",
+        "nexus"
+      ],
+      "monitor_stats": false,
+      "weather": false
+    },
+    {
+      "entity_id": "current_leg2",
+      "name": "Current Leg 2",
+      "path": "Status/Engine/Current Leg 2",
+      "device_class": "current",
+      "unit": "A",
+      "icon": "mdi:current-ac",
+      "state_class": "measurement",
+      "enabled_default": true,
+      "controllers": [
+        "evolution",
+        "nexus"
+      ],
+      "monitor_stats": false,
+      "weather": false
+    },
+        {
+      "entity_id": "active_alarms",
+      "name": "Active Alarms",
+      "path": "Status/Engine/System In Alarm",
+      "icon": "mdi:alert",
+      "enabled_default": true,
+      "monitor_stats": false,
+      "weather": false
+    },
+    {
+      "entity_id": "utility_voltage",
+      "name": "Utility Voltage",
+      "path": "Status/Line/Utility Voltage",
+      "device_class": "voltage",
+      "unit": "V",
+      "icon": "mdi:transmission-tower",
+      "state_class": "measurement",
+      "enabled_default": true,
+      "monitor_stats": false,
+      "weather": false
+    },
+    {
+      "entity_id": "utility_voltage_max",
+      "name": "Utility Voltage Max",
+      "path": "Status/Line/Utility Max Voltage",
+      "device_class": "voltage",
+      "unit": "V",
+      "icon": "mdi:arrow-up-bold",
+      "state_class": "measurement",
+      "enabled_default": false,
+      "monitor_stats": false,
+      "weather": false
+    },
+    {
+      "entity_id": "utility_voltage_min",
+      "name": "Utility Voltage Min",
+      "path": "Status/Line/Utility Min Voltage",
+      "device_class": "voltage",
+      "unit": "V",
+      "icon": "mdi:arrow-down-bold",
+      "state_class": "measurement",
+      "enabled_default": false,
+      "monitor_stats": false,
+      "weather": false
+    },
+    {
+      "entity_id": "utility_threshold",
+      "name": "Utility Threshold Voltage",
+      "path": "Status/Line/Utility Threshold Voltage",
+      "device_class": "voltage",
+      "unit": "V",
+      "icon": "mdi:tune-vertical",
+      "category": "diagnostic",
+      "enabled_default": true,
+      "monitor_stats": false,
+      "weather": false
+    },
+    {
+      "entity_id": "transfer_switch_state",
+      "name": "Transfer Switch State",
+      "path": "Status/Line/Transfer Switch State",
+      "icon": "mdi:electric-switch",
+      "enabled_default": true,
+      "controllers": [
+        "evolution",
+        "nexus"
+      ],
+      "monitor_stats": false,
+      "weather": false
+    },
+    {
+      "entity_id": "fuel_level",
+      "name": "Fuel Level",
+      "path": "Maintenance/Fuel Level Sensor",
+      "unit": "%",
+      "icon": "mdi:fuel",
+      "state_class": "measurement",
+      "enabled_default": true,
+      "monitor_stats": false,
+      "weather": false
+    },
+        {
+      "entity_id": "ambient_temp",
+      "name": "Ambient Temperature",
+      "path": "Maintenance/Ambient Temperature Sensor",
+      "device_class": "temperature",
+      "icon": "mdi:thermometer",
+      "state_class": "measurement",
+      "enabled_default": true,
+      "controllers": [
+        "evolution",
+        "h-100"
+      ],
+      "monitor_stats": false,
+      "weather": false
+    },
+        {
+      "entity_id": "total_run_hours",
+      "name": "Total Run Hours",
+      "path": "Maintenance/Service/Total Run Hours",
+      "device_class": "duration",
+      "unit": "h",
+      "icon": "mdi:engine",
+      "state_class": "total_increasing",
+      "enabled_default": true,
+      "monitor_stats": false,
+      "weather": false
+    },
+        {
+      "entity_id": "oil_service",
+      "name": "Oil and Filter Service Due",
+      "path": "Maintenance/Service/Oil and Oil Filter Service Due",
+      "icon": "mdi:oil",
+      "category": "diagnostic",
+      "enabled_default": true,
+      "monitor_stats": false,
+      "weather": false,
+      "controllers": ["nexus"]
+    },
+    {
+      "entity_id": "air_filter_service",
+      "name": "Air Filter Service Due",
+      "path": "Maintenance/Service/Air Filter Service Due",
+      "icon": "mdi:air-filter",
+      "category": "diagnostic",
+      "enabled_default": true,
+      "monitor_stats": false,
+      "weather": false,
+      "controllers": ["nexus"]
+    },
+    {
+      "entity_id": "spark_plug_service",
+      "name": "Spark Plug Service Due",
+      "path": "Maintenance/Service/Spark Plug Service Due",
+      "icon": "mdi:flash",
+      "category": "diagnostic",
+      "enabled_default": true,
+      "monitor_stats": false,
+      "weather": false,
+      "controllers": ["nexus"]
+    },
+    {
+      "entity_id": "battery_service",
+      "name": "Battery Service Due",
+      "path": "Maintenance/Service/Battery Service Due",
+      "icon": "mdi:car-battery",
+      "category": "diagnostic",
+      "enabled_default": true,
+      "monitor_stats": false,
+      "weather": false,
+      "controllers": ["nexus"]
+    },
+        {
+      "entity_id": "serial_number",
+      "name": "Serial Number",
+      "path": "Maintenance/Generator Serial Number",
+      "icon": "mdi:identifier",
+      "category": "diagnostic",
+      "enabled_default": true,
+      "monitor_stats": false,
+      "weather": false
+    },
+        {
+      "entity_id": "exercise_time",
+      "name": "Exercise Time",
+      "path": "Maintenance/Exercise/Exercise Time",
+      "icon": "mdi:calendar-clock",
+      "enabled_default": true,
+      "monitor_stats": false,
+      "weather": false
+    },
+        {
+      "entity_id": "last_alarm_log",
+      "name": "Last Alarm",
+      "path": "Status/Last Log Entries/Logs/Alarm Log",
+      "icon": "mdi:alert",
+      "category": "diagnostic",
+      "enabled_default": true,
+      "monitor_stats": false,
+      "weather": false
+    },
+    {
+      "entity_id": "last_run_log",
+      "name": "Last Run",
+      "path": "Status/Last Log Entries/Logs/Run Log",
+      "icon": "mdi:engine",
+      "category": "diagnostic",
+      "enabled_default": true,
+      "monitor_stats": false,
+      "weather": false
+    },
     {
       "entity_id": "service_a_due",
       "name": "Service A Due",
@@ -39,7 +365,83 @@
   ],
   "binary_sensors": [],
   "buttons": [],
-  "switches": [],
-  "selects": [],
-  "numbers": []
+  "switches": [
+    {
+      "entity_id": "quiet_mode",
+      "name": "Quiet Mode",
+      "command_on": "setquiet=on",
+      "command_off": "setquiet=off",
+      "icon": "mdi:volume-off",
+      "state_path": "Maintenance/Exercise/Quiet Mode",
+      "payload_on": "On",
+      "payload_off": "Off",
+      "controllers": [
+        "evolution",
+        "nexus"
+      ]
+    },
+    {
+      "entity_id": "set_time",
+      "name": "Set Generator Time",
+      "command": "settime",
+      "icon": "mdi:clock-edit"
+    }
+  ],
+  "selects": [
+    {
+      "entity_id": "exercise_frequency",
+      "name": "Exercise Frequency",
+      "icon": "mdi:calendar-refresh",
+      "options": [
+        "Weekly",
+        "BiWeekly",
+        "Monthly"
+      ],
+      "command_template": "exercise"
+    },
+    {
+      "entity_id": "exercise_day_of_week",
+      "name": "Exercise Day of Week",
+      "icon": "mdi:calendar-week",
+      "options": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+      ],
+      "command_template": "exercise"
+    }
+  ],
+  "numbers": [
+    {
+      "entity_id": "exercise_day_of_month",
+      "name": "Exercise Day of Month",
+      "icon": "mdi:calendar-month",
+      "min": 1,
+      "max": 28,
+      "step": 1,
+      "command_template": "exercise"
+    },
+    {
+      "entity_id": "exercise_hour",
+      "name": "Exercise Hour",
+      "icon": "mdi:clock-outline",
+      "min": 0,
+      "max": 23,
+      "step": 1,
+      "command_template": "exercise"
+    },
+    {
+      "entity_id": "exercise_minute",
+      "name": "Exercise Minute",
+      "icon": "mdi:clock-outline",
+      "min": 0,
+      "max": 59,
+      "step": 1,
+      "command_template": "exercise"
+    }
+  ]
 }
