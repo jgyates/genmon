@@ -182,7 +182,7 @@ class Loader(MySupport):
             # ['configparser','configparser',None],   # reading config files
             ["serial", "pyserial", None],  # Serial
             ["crcmod", "crcmod", None],  # Modbus CRC
-            ["pyowm", "pyowm", "2.10.0"],  # Open Weather API
+            ["pyowm", "pyowm", None],  # Open Weather API
             ["pytz", "pytz", None],  # Time zone support
             ["pysnmp", "pysnmp", None],  # SNMP
             ["ldap3", "ldap3", None],  # LDAP
@@ -685,8 +685,9 @@ class Loader(MySupport):
                     "version", ProgramDefaults.GENMON_VERSION, section="genloader"
                 )
             if self.NewInstall:
-                self.LogInfo("Running one time maintenance check")
-                self.FixPyOWMMaintIssues()
+                pass
+                #self.LogInfo("Running one time maintenance check")
+                #self.FixPyOWMMaintIssues()
 
             # TODO other version checks can be added here
 

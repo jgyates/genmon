@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Fix minor issue with Briggs & Stratton gauge 
 - Updates to prepare for genmon 2.0 update
 - Minor update to json definitions for HA add on
+- Update for pyowm to support API version 3.5 or 2.10 for weather
 
 ## V1.19.08 -2026-01-29
 - Added "Generator State" value for Evolution 2.0 and power pact models on the Status page

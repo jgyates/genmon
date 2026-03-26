@@ -332,6 +332,7 @@ class Monitor(MySupport):
                     location=self.WeatherLocation,
                     unit=Unit,
                     log=self.log,
+                    debug = self.debug
                 )
                 self.Threads = self.MergeDicts(self.Threads, self.MyWeather.Threads)
         except Exception as e1:
