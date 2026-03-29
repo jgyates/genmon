@@ -4611,7 +4611,8 @@ def generate_adhoc_ssl_context():
         os.close(cert_handle)
         os.close(pkey_handle)
 
-        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+        #ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE
         ctx.load_cert_chain(cert_file, pkey_file)
