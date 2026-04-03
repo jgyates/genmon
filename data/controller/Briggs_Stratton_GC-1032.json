@@ -1653,6 +1653,7 @@
       "units": "V"
     },
   "linevoltage": {
+      "comment": "Note: this may need to be adjusted for three phase",
       "reg": "0011",
       "reg_type": "input",
       "mask": "ffff",
