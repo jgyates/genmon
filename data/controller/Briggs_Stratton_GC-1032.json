@@ -24,6 +24,19 @@
         "title":"Off Grid",
         "default":false
        }
+      },
+      "threephase":{
+        "disable":{
+        "comment":"Used to enable indications related to 3 phase generators. Note that this reads from the config file",
+        "reg": "phase",
+        "reg_type": "config",
+        "type":"bits",
+        "mask": "0003",
+        "value": "0003",
+        "text": false,
+        "title": "Single Phase",
+        "default": false
+        }
       }
   },
   "input_registers": {
@@ -32,6 +45,8 @@
     "0002": {"length": 2, "text": "Generator L2 Voltage", "multiplier": 0.1},
     "0003": {"length": 2, "text": "Generator L3 Voltage", "multiplier": 0.1},
     "0004": {"length": 2, "text": "Generator L1-L2 Voltage", "multiplier": 0.1},
+    "0005": {"length": 2, "text": "Generator L2-L3 Voltage", "multiplier": 0.1},
+    "0006": {"length": 2, "text": "Generator L3-L1 Voltage", "multiplier": 0.1},
     "0007": {"length": 2, "text": "Generator L1 Frequency", "multiplier": 0.1},
     "0008": {"length": 2, "text": "Generator L2 Frequency", "multiplier": 0.1},
     "0009": {"length": 2, "text": "Generator L3 Frequency", "multiplier": 0.1},
@@ -51,8 +66,8 @@
     "0017": {"length": 2, "text": "Generator L1 Current", "multiplier": 0.1},
     "0018": {"length": 2, "text": "Generator L2 Current", "multiplier": 0.1},
     "0019": {"length": 2, "text": "Generator L3 Current", "multiplier": 0.1},
-    "001a": {"length": 2, "text": "L3 Power kW", "multiplier": 0.1},
-    "001b": {"length": 2, "text": "L3 Power kW", "multiplier": 0.1},
+    "001a": {"length": 2, "text": "L1 Power kW", "multiplier": 0.1},
+    "001b": {"length": 2, "text": "L2 Power kW", "multiplier": 0.1},
     "001c": {"length": 2, "text": "L3 Power kW", "multiplier": 0.1},
     "001d": {"length": 2, "text": "Total Power kW", "multiplier": 0.1},
     "001e": {"length": 2, "text": "Percentage Load", "multiplier": 1},
@@ -105,23 +120,31 @@
   "alt_input_registers": {
     "NOTE1": "The following input registers do show data in some models yet the controller does not respond (timeout error) in others",
     "NOTE2": "This is object is provided for documentation purposes only",
-    "00b4": 2,
+    "002d": {"length": 2, "text": "Unknown 2d"},
+    "002e": {"length": 2, "text": "Unknown 2e"},
+    "002f": {"length": 2, "text": "Unknown 2f"},
+    "0030": {"length": 2, "text": "Unknown 30"},
+    "0031": {"length": 2, "text": "Unknown 31"},
+    "0032": {"length": 2, "text": "Unknown 32"},
+    "003e": {"length": 2, "text": "Unknown 3e"},
+    "003f": {"length": 2, "text": "Unknown 3f"},
+    "00b4": {"length": 2, "text": "Unknown b4"},
     "00b5": {"length": 2, "text": "Controller Model - Left this one in as some controllers return this value"},
     "00b6": {"length": 2, "text": "Controller Firmware - Major - DUPLICATE of 0055"},
     "00b7": {"length": 2, "text": "Controller Firmware - Minor - DUPLICATE of 0055"},
-    "00b8": 2,
-    "00b9": 2,
-    "00ba": 2,
-    "00bb": 2,
-    "00bc": 2,
-    "00bd": 2,
-    "00be": 2,
-    "00bf": 2,
-    "00c0": 2,
-    "00c1": 2,
-    "00c4": 2,
-    "00c7": 2,
-    "00ce": 2
+    "00b8": {"length": 2, "text": "Unknown b8"},
+    "00b9": {"length": 2, "text": "Unknown b9"},
+    "00ba": {"length": 2, "text": "Unknown ba"},
+    "00bb": {"length": 2, "text": "Unknown bb"},
+    "00bc": {"length": 2, "text": "Unknown bc"},
+    "00bd": {"length": 2, "text": "Unknown bd"},
+    "00be": {"length": 2, "text": "Unknown be"},
+    "00bf": {"length": 2, "text": "Unknown bf"},
+    "00c0": {"length": 2, "text": "Unknown c0"},
+    "00c1": {"length": 2, "text": "Unknown c1"},
+    "00c4": {"length": 2, "text": "Unknown c4"},
+    "00c7": {"length": 2, "text": "Unknown c7"},
+    "00ce": {"length": 2, "text": "Unknown ce"}
   },
   "switch_state": [
     {
@@ -647,7 +670,7 @@
       "reg": "004f",
       "mask": "0020",
       "type": "bits",
-      "title": "Status",
+      "title": "Alarm",
       "text": "Generator Failed to Start",
       "value": "0020"
     },
@@ -656,7 +679,7 @@
       "reg_type": "input",
       "mask": "0001",
       "type": "bits",
-      "title": "Status",
+      "title": "Alarm",
       "text": "General Notification",
       "value": "0001"
     },
@@ -665,7 +688,7 @@
       "reg_type": "input",
       "mask": "0002",
       "type": "bits",
-      "title": "Status",
+      "title": "Alarm",
       "text": "General Warning",
       "value": "0002"
     },
@@ -674,7 +697,7 @@
       "reg_type": "input",
       "mask": "0004",
       "type": "bits",
-      "title": "Status",
+      "title": "Alarm",
       "text": "Electrical Trip",
       "value": "0004"
     }
@@ -780,6 +803,15 @@
         "container": true,
         "value" : [
           {
+            "reg": "001e",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Load Total",
+            "units": "%"
+          },
+          {
             "reg": "001d",
             "reg_type": "input",
             "mask": "ffff",
@@ -798,6 +830,43 @@
             "units": "kVA"
           },
           {
+            "reg": "0026",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Load Total (kVR)",
+            "units": "kVR"
+          },
+          {
+            "reg": "0001",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Generator L1 Volts",
+            "units": "V"
+          },
+          {
+            "reg": "0002",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Generator L2 Volts",
+            "units": "V"
+          },
+          {
+            "reg": "0003",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Generator L3 Volts",
+            "units": "V",
+            "include": "threephase"
+          },
+          {
             "reg": "0004",
             "reg_type": "input",
             "mask": "ffff",
@@ -805,6 +874,26 @@
             "type": "float",
             "title": "Generator L1-L2 Volts",
             "units": "V"
+          },
+          {
+            "reg": "0005",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Generator L2-L3 Volts",
+            "units": "V",
+            "include": "threephase"
+          },
+          {
+            "reg": "0006",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Generator L3-L1 Volts",
+            "units": "V",
+            "include": "threephase"
           },
           {
             "reg": "0007",
@@ -825,6 +914,16 @@
             "units": "Hz"
           },
           {
+            "reg": "0009",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Generator L3 Frequency",
+            "units": "Hz",
+            "include": "threephase"
+          },
+          {
             "reg": "0017",
             "reg_type": "input",
             "mask": "ffff",
@@ -843,6 +942,56 @@
             "units": "A"
           },
           {
+            "reg": "0019",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Generator L3 Current",
+            "units": "A",
+            "include": "threephase"
+          },
+          {
+            "reg": "000a",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.01,
+            "type": "float",
+            "title": "L1 Power Factor",
+            "units": null,
+            "include": "threephase"
+          },
+          {
+            "reg": "000b",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.01,
+            "type": "float",
+            "title": "L2 Power Factor",
+            "units": null,
+            "include": "threephase"
+          },
+          {
+            "reg": "000c",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.01,
+            "type": "float",
+            "title": "L3 Power Factor",
+            "units": null,
+            "include": "threephase"
+          },
+          {
+            "reg": "000d",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.01,
+            "type": "float",
+            "title": "Average Power Factor",
+            "units": null,
+            "include": "threephase"
+          },
+          {
             "reg": "0039",
             "reg_type": "input",
             "mask": "ffff",
@@ -859,6 +1008,36 @@
         "container": true,
         "value" : [
           {
+            "reg": "000e",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Utility L1 Volts",
+            "units": "V",
+            "include": "offgrid"
+          },
+          {
+            "reg": "000f",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Utility L2 Volts",
+            "units": "V",
+            "include": "offgrid"
+          },
+          {
+            "reg": "0010",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Utility L3 Volts",
+            "units": "V",
+            "include": "offgrid,threephase"
+          },
+          {
             "reg": "0011",
             "reg_type": "input",
             "mask": "ffff",
@@ -867,6 +1046,26 @@
             "title": "Utility L1-L2 Volts",
             "units": "V",
             "include": "offgrid"
+          },
+          {
+            "reg": "0012",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Utility L2-L3 Volts",
+            "units": "V",
+            "include": "offgrid,threephase"
+          },
+          {
+            "reg": "0013",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Utility L2-L3 Volts",
+            "units": "V",
+            "include": "offgrid,threephase"
           },
           {
             "reg": "0014",
@@ -887,6 +1086,16 @@
             "title": "Utility L2 Frequency",
             "units": "Hz",
             "include": "offgrid"
+          },
+          {
+            "reg": "0016",
+            "reg_type": "input",
+            "mask": "ffff",
+            "multiplier": 0.1,
+            "type": "float",
+            "title": "Utility L3 Frequency",
+            "units": "Hz",
+            "include": "offgrid,threephase"
           }
         ]
     }
@@ -913,6 +1122,30 @@
           "title": "Minutes"
         }
       ]
+    },
+    {
+      "reg": "0027",
+      "reg_type": "input",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Cumulative Energy kWh"
+    },
+    {
+      "reg": "0029",
+      "reg_type": "input",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Cumulative Energy kVAh"
+    },
+    {
+      "reg": "002b",
+      "reg_type": "input",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Cumulative Energy kVRh"
     },
     {
       "type": "list",
@@ -1022,10 +1255,56 @@
       "signed16": true,
       "temperature": "celsius",
       "comment": "Is this Coolant Temp or Ambient Temp?",
-      "title": "Ambient Temperature"
+      "title": "Coolant Temperature"
+    },
+    {
+      "reg": "0033",
+      "reg_type": "input",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "round": 2,
+      "units": "Bar",
+      "title": "Oil Pressure"
     }
   ],
   "gauges": [
+    {
+      "reg": "000e",
+      "reg_type": "input",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Utility L1 Volts",
+      "units": "V",
+      "sensor": "linevolts",
+      "nominal": 120,
+      "include": "offgrid"
+    },
+    {
+      "reg": "000f",
+      "reg_type": "input",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Utility L2 Volts",
+      "units": "V",
+      "sensor": "linevolts",
+      "nominal": 120,
+      "include": "offgrid"
+    },
+    {
+      "reg": "0010",
+      "reg_type": "input",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Utility L3 Volts",
+      "units": "V",
+      "sensor": "linevolts",
+      "nominal": 120,
+      "include": "offgrid,threephase"
+    },
     {
       "reg": "0011",
       "reg_type": "input",
@@ -1039,12 +1318,36 @@
       "include": "offgrid"
     },
     {
+      "reg": "0012",
+      "reg_type": "input",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Utility L2-L3",
+      "units": "V",
+      "sensor": "linevolts",
+      "nominal": 240,
+      "include": "offgrid,threephase"
+    },
+    {
+      "reg": "0013",
+      "reg_type": "input",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Utility L3-L1",
+      "units": "V",
+      "sensor": "linevolts",
+      "nominal": 240,
+      "include": "offgrid,threephase"
+    },
+    {
       "reg": "0014",
       "reg_type": "input",
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
-      "title": "Utility L1",
+      "title": "Utility L1 Hz",
       "units": "Hz",
       "sensor": "frequency",
       "nominal": 60,
@@ -1056,11 +1359,23 @@
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
-      "title": "Utility L2",
+      "title": "Utility L2 Hz",
       "units": "Hz",
       "sensor": "frequency",
       "nominal": 60,
       "include": "offgrid"
+    },
+    {
+      "reg": "0016",
+      "reg_type": "input",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Utility L3 Hz",
+      "units": "Hz",
+      "sensor": "frequency",
+      "nominal": 60,
+      "include": "offgrid,threephase"
     },
     {
       "reg": "0038",
@@ -1075,6 +1390,40 @@
       "maximum": 24
     },
     {
+      "reg": "0001",
+      "reg_type": "input",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Gen L1 Volts",
+      "units": "V",
+      "sensor": "linevolts",
+      "nominal": 120
+    },
+    {
+      "reg": "0002",
+      "reg_type": "input",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Gen L2 Volts",
+      "units": "V",
+      "sensor": "linevolts",
+      "nominal": 120
+    },
+    {
+      "reg": "0003",
+      "reg_type": "input",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Gen L3 Volts",
+      "units": "V",
+      "sensor": "linevolts",
+      "nominal": 120,
+      "include": "threephase"
+    },
+    {
       "reg": "0004",
       "reg_type": "input",
       "mask": "ffff",
@@ -1084,6 +1433,30 @@
       "units": "V",
       "sensor": "linevolts",
       "nominal": 240
+    },
+    {
+      "reg": "0005",
+      "reg_type": "input",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "L2-L3 Volts",
+      "units": "V",
+      "sensor": "linevolts",
+      "nominal": 240,
+      "include": "threephase"
+    },
+    {
+      "reg": "0006",
+      "reg_type": "input",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "L3-L2 Volts",
+      "units": "V",
+      "sensor": "linevolts",
+      "nominal": 240,
+      "include": "threephase"
     },
     {
       "reg": "0007",
@@ -1106,6 +1479,18 @@
       "units": "Hz",
       "sensor": "frequency",
       "nominal": 60
+    },
+    {
+      "reg": "0008",
+      "reg_type": "input",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "L3 Frequency",
+      "units": "Hz",
+      "sensor": "frequency",
+      "nominal": 60,
+      "include": "threephase"
     },
     {
       "reg": "0039",
@@ -1141,6 +1526,18 @@
       "nominal": 100
     },
     {
+      "reg": "0019",
+      "reg_type": "input",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "L3 Current",
+      "sensor": "current",
+      "units": "A",
+      "nominal": 100,
+      "include": "threephase"
+    },
+    {
       "reg": "001d",
       "reg_type": "input",
       "mask": "ffff",
@@ -1160,6 +1557,17 @@
       "title": "Load Total (kVA)",
       "sensor": "power",
       "units": "kVA",
+      "nominal": 41
+    },
+    {
+      "reg": "0026",
+      "reg_type": "input",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Load Total (kVR)",
+      "sensor": "power",
+      "units": "kVR",
       "nominal": 41
     },
     {
