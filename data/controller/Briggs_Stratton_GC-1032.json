@@ -35,7 +35,7 @@
         "value": "0003",
         "text": false,
         "title": "Single Phase",
-        "default": false
+        "default": true
         }
       }
   },
@@ -556,7 +556,8 @@
       "value": "0000",
       "type": "bits",
       "title": "Alarm",
-      "text": "Gen L3 Phase Low Voltage"
+      "text": "Gen L3 Phase Low Voltage",
+      "include": "threephase"
     },
     {
       "reg": "004a",
@@ -565,7 +566,8 @@
       "value": "0000",
       "type": "bits",
       "title": "Alarm",
-      "text": "Gen L3 Phase High Voltage"
+      "text": "Gen L3 Phase High Voltage",
+      "include": "threephase"
     },
     {
       "reg": "004a",

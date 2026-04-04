@@ -181,6 +181,19 @@ class CustomController(GeneratorController):
                     "serial_one_point_five_stop_bits", return_type=bool, default=False
                 )
 
+            self.ignore_alarms =[]
+            ignore_alarms = self.config.ReadValue("ignore_alarms", default = None)
+
+            if ignore_alarms != None:
+                if len(ignore_alarms):
+                    AList = ignore_alarms.strip().split(",")
+                    if len(AList):
+                        self.ignore_alarms = []
+                        for Items in AList:
+                            self.ignore_alarms.append(Items.strip())
+                        self.LogDebug("Ignored Alarms: " + str(self.ignore_alarms))
+
+
             self.ConfigImportFile = self.config.ReadValue(
                 "import_config_file", default="Evolution_Liquid_Cooled.json"
             )
@@ -972,8 +985,10 @@ class CustomController(GeneratorController):
 
         try:
             if not "alarm_active" in self.controllerimport.keys():
-                alarms = self.GetExtendedDisplayString(self.controllerimport, "alarm_conditions")
-                if alarms == "Unknown" or alarms == "" or alarms == None:
+                alarm_list = self.GetExtendedDisplayString(self.controllerimport, "alarm_conditions", ReturnList=True)
+                if len(self.ignore_alarms):
+                    alarm_list = list(filter(lambda x: x not in self.ignore_alarms, alarm_list))
+                if len(alarm_list) == 0:
                     return False
                 return True
             alarm_state = self.GetExtendedDisplayString(self.controllerimport, "alarm_active")
@@ -1250,9 +1265,13 @@ class CustomController(GeneratorController):
                 Status["Status"].append({"Alarm State": "System In Alarm"})
                 #activealarms = self.GetDisplayList(self.controllerimport, "alarm_conditions")
                 #Status["Status"].append(activealarms[0]
+                alarm_list = self.GetExtendedDisplayString(self.controllerimport, "alarm_conditions", ReturnList=True)
+                if len(self.ignore_alarms):
+                    alarm_list = list(filter(lambda x: x not in self.ignore_alarms, alarm_list))
                 Status["Status"].append(
                     {
-                        "Active Alarms": self.GetExtendedDisplayString(self.controllerimport, "alarm_conditions", ReturnList=True)
+                        
+                        "Active Alarms": alarm_list
                     }
                 )
 
