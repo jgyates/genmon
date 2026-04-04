@@ -13,7 +13,7 @@
   "rated_nominal_rpm": 3600,
   "rated_nominal_freq": 60,
   "nominal_battery_voltage": 12,
-  "generator_phase": 1,
+  "generator_phase": "Unknown",
   "include":{
       "offgrid":{
         "disable":{
