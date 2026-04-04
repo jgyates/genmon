@@ -3022,6 +3022,18 @@ def ReadAdvancedSettingsFromFile():
             GENMON_SECTION,
             "import_config_file",
         ]
+        if ControllerType == "custom":
+            ConfigSettings["ignore_alarms"] = [
+            "string",
+            "Ignore Alarms",
+            22,
+            "",
+            "",
+            "",
+            GENMON_CONFIG,
+            GENMON_SECTION,
+            "ignore_alarms",
+        ]
         ConfigSettings["phase"] = [
             "int",
             "Generator Phase",
