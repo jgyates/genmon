@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Minor update to json definitions for HA add on
 - Update for pyowm to support API version 3.5 or 2.10 for weather
 - Updates for Briggs and Stratton to support more info and three phase
+- Added "ignore_alarms" config parameter for custom controllers
 
 ## V1.19.08 -2026-01-29
 - Added "Generator State" value for Evolution 2.0 and power pact models on the Status page
