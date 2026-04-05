@@ -1,6 +1,6 @@
 # -------------------------------------------------------------------------------
 #    FILE: genserv.py
-# PURPOSE: Flask based app for generator monitor web server
+# PURPOSE: Flask app for generator monitor web app
 #
 #  AUTHOR: Jason G Yates
 #    DATE: 20-Dec-2016
@@ -12,24 +12,29 @@ from __future__ import print_function
 
 import collections
 import errno
+import hashlib
 import json
 import os
 import os.path
+import secrets
 import signal
 import subprocess
 import sys
 import threading
 import time
+import uuid
 
 try:
     from flask import (
         Flask,
+        Response,
         jsonify,
         make_response,
         redirect,
         render_template,
         request,
         send_file,
+        send_from_directory,
         session,
         url_for,
     )
@@ -102,12 +107,18 @@ LdapReadOnlyGroup = None
 
 mail = None
 bUseMFA = False
+bMfaEnrolled = False
 SecretMFAKey = None
 MFA_URL = None
+RememberMeDays = 0
+MfaTrustDays = 90
+bMfaTrustExtend = False
+LastOTPSendTime = None
 bUseSecureHTTP = False
-bUseSelfSignedCert = True
+CertMode = "selfsigned"  # selfsigned | localca | custom
 SSLContext = None
 HTTPPort = 8000
+OldHTTPPort = None
 loglocation = ProgramDefaults.LogPath
 clientport = ProgramDefaults.ServerPort
 log = None
@@ -119,6 +130,7 @@ ConfigFilePath = ProgramDefaults.ConfPath
 MAIL_SECTION = "MyMail"
 GENMON_SECTION = "GenMon"
 
+RedirectServer = None
 WebUILocked = False
 LoginAttempts = 0
 MaxLoginAttempts = 5
@@ -133,6 +145,93 @@ ControllerType = "generac_evo_nexus"
 CriticalLock = threading.Lock()
 CachedToolTips = {}
 CachedRegisterDescriptions = {}
+
+
+# -------------------------------------------------------------------------------
+def StartHTTPRedirectServer():
+    """Start a lightweight HTTP server on OldHTTPPort that 301-redirects
+    every request to the HTTPS port.  Runs in a daemon thread so it dies
+    with the main process."""
+    import http.server
+    import socketserver
+
+    redirect_port = OldHTTPPort
+    target_port = HTTPPort  # already set to HTTPSPort at this point
+
+    class RedirectHandler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            host = self.headers.get("Host", "localhost").split(":")[0]
+            if target_port == 443:
+                location = "https://" + host + self.path
+            else:
+                location = "https://" + host + ":" + str(target_port) + self.path
+            self.send_response(301)
+            self.send_header("Location", location)
+            self.end_headers()
+
+        do_POST = do_GET
+        do_PUT = do_GET
+        do_DELETE = do_GET
+        do_HEAD = do_GET
+
+        def log_message(self, format, *args):
+            pass  # suppress request logs
+
+    global RedirectServer
+    try:
+        socketserver.TCPServer.allow_reuse_address = True
+        RedirectServer = socketserver.TCPServer(
+            (ListenIPAddress, redirect_port), RedirectHandler
+        )
+        LogError(
+            "HTTP->HTTPS redirect active on port "
+            + str(redirect_port)
+            + " -> "
+            + str(target_port)
+        )
+        RedirectServer.serve_forever()
+    except Exception as e1:
+        LogErrorLine(
+            "Unable to start HTTP redirect server on port "
+            + str(redirect_port)
+            + ": "
+            + str(e1)
+        )
+
+
+# -------------------------------------------------------------------------------
+def HasWriteAccess():
+    """Return True if the current request has write access.
+    When authentication is disabled everyone gets full access.
+    When authentication is enabled the session must carry an explicit True."""
+    if not LoginActive():
+        return True
+    return session.get("write_access", False)
+
+
+# -------------------------------------------------------------------------------
+@app.before_request
+def csrf_check():
+    """Block cross-origin state-changing requests (CSRF protection)."""
+    if request.method in ("GET", "HEAD", "OPTIONS"):
+        return  # safe methods — SameSite cookie handles GET-based CSRF
+    origin = request.headers.get("Origin")
+    referer = request.headers.get("Referer")
+    if not origin and not referer:
+        LogError("CSRF blocked: missing Origin and Referer")
+        return jsonify({"error": "CSRF validation failed"}), 403
+    if origin:
+        parsed = urlparse(origin)
+        if parsed.netloc != request.host:
+            LogError("CSRF blocked: Origin mismatch: " + origin)
+            return jsonify({"error": "Cross-origin request blocked"}), 403
+    elif referer:
+        parsed = urlparse(referer)
+        if parsed.netloc != request.host:
+            LogError("CSRF blocked: Referer mismatch: " + referer)
+            return jsonify({"error": "Cross-origin request blocked"}), 403
+
+
 # -------------------------------------------------------------------------------
 @app.route("/logout")
 def logout():
@@ -151,13 +250,27 @@ def logout():
 @app.after_request
 def add_header(r):
     """
-    Force cache header
+    Force cache header and add security headers
     """
     r.headers[
         "Cache-Control"
     ] = "no-cache, no-store, must-revalidate, public, max-age=0"
     r.headers["Pragma"] = "no-cache"
     r.headers["Expires"] = "0"
+
+    # --- security headers ---
+    r.headers["X-Content-Type-Options"] = "nosniff"
+    r.headers["X-Frame-Options"] = "DENY"
+    r.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    r.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    r.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data:; "
+        "connect-src 'self' https://raw.githubusercontent.com; "
+        "frame-ancestors 'none'"
+    )
 
     return r
 
@@ -171,7 +284,6 @@ def root():
             session["logged_in"] = False
             session["write_access"] = False
             session["mfa_ok"] = False
-            redirect(url_for("root"))
     return ServePage("index.html")
 
 
@@ -180,21 +292,191 @@ def root():
 def locked():
 
     LogError("Locked Page")
-    return render_template("locked.html")
+    return render_template("locked.html", theme=get_theme_pref())
 
 # -------------------------------------------------------------------------------
-@app.route("/upload", methods=["PUT"])
+@app.route("/upload", methods=["POST"])
 def upload():
-    # TODO
-    LogError("genserv: Upload")
-    return redirect(url_for("root"))
+
+    try:
+        if not HasWriteAccess():
+            return jsonify({"status": "error", "message": "Write access required."}), 403
+
+        if "file" not in request.files:
+            return jsonify({"status": "error", "message": "No file provided."}), 400
+
+        f = request.files["file"]
+        if f.filename == "":
+            return jsonify({"status": "error", "message": "No file selected."}), 400
+
+        if not f.filename.lower().endswith(".tar.gz"):
+            return jsonify({"status": "error", "message": "Invalid file type. Expected a .tar.gz archive."}), 400
+
+        # Read into memory and enforce size limit (10 MB)
+        data = f.read()
+        MAX_UPLOAD = 10 * 1024 * 1024
+        if len(data) > MAX_UPLOAD:
+            return jsonify({"status": "error", "message": "File too large. Maximum size is 10 MB."}), 400
+
+        import tarfile, io, tempfile
+
+        # Validate it's a real tar.gz archive
+        try:
+            buf = io.BytesIO(data)
+            with tarfile.open(fileobj=buf, mode="r:gz") as tf:
+                names = tf.getnames()
+                # Security: reject path traversal
+                for name in names:
+                    if name.startswith("/") or ".." in name:
+                        return jsonify({"status": "error", "message": "Archive contains unsafe paths."}), 400
+                # Sanity check: must contain genmon_backup/ with at least one .conf
+                has_conf = any(
+                    n.startswith("genmon_backup/") and n.endswith(".conf") for n in names
+                )
+                if not has_conf:
+                    return jsonify({"status": "error", "message": "Archive does not appear to be a valid genmon backup (no genmon_backup/*.conf found)."}), 400
+        except tarfile.TarError:
+            return jsonify({"status": "error", "message": "File is not a valid tar.gz archive."}), 400
+
+        # Save to temp file and run restore script
+        pathtofile = os.path.dirname(os.path.realpath(__file__))
+        upload_path = os.path.join(pathtofile, "genmon_restore_upload.tar.gz")
+        try:
+            with open(upload_path, "wb") as out:
+                out.write(data)
+            if not RestoreBackup(upload_path):
+                return jsonify({"status": "error", "message": "Restore script failed. Check server logs."}), 500
+        finally:
+            if os.path.exists(upload_path):
+                os.remove(upload_path)
+
+        threading.Thread(target=Restart, daemon=True).start()
+        return jsonify({"status": "ok", "message": "Configuration restored. Service is restarting\u2026"})
+
+    except Exception as e1:
+        LogErrorLine("Error in upload: " + str(e1))
+        return jsonify({"status": "error", "message": "Server error during upload."}), 500
+
+# -------------------------------------------------------------------------------
+@app.route("/download/ca.crt")
+def download_ca_der():
+    """Serve the Local CA certificate in DER format for browser import."""
+    try:
+        ca_path = os.path.join(ConfigFilePath, "ca.crt")
+        if not os.path.isfile(ca_path):
+            return "CA certificate not found", 404
+        from OpenSSL import crypto
+
+        with open(ca_path, "rb") as f:
+            ca_cert = crypto.load_certificate(crypto.FILETYPE_PEM, f.read())
+        der = crypto.dump_certificate(crypto.FILETYPE_ASN1, ca_cert)
+        return Response(
+            der,
+            mimetype="application/x-x509-ca-cert",
+            headers={"Content-Disposition": "attachment; filename=genmon-ca.crt"},
+        )
+    except Exception as e1:
+        LogErrorLine("Error in download_ca_der: " + str(e1))
+        return "Error serving certificate", 500
+
+
+# -------------------------------------------------------------------------------
+@app.route("/import/ca.crt")
+def import_ca_inline():
+    """Serve the CA cert inline (no attachment header) so Firefox opens its
+    native import dialog and Chrome/Edge download it automatically."""
+    try:
+        ca_path = os.path.join(ConfigFilePath, "ca.crt")
+        if not os.path.isfile(ca_path):
+            return "CA certificate not found", 404
+        from OpenSSL import crypto
+
+        with open(ca_path, "rb") as f:
+            ca_cert = crypto.load_certificate(crypto.FILETYPE_PEM, f.read())
+        der = crypto.dump_certificate(crypto.FILETYPE_ASN1, ca_cert)
+        return Response(der, mimetype="application/x-x509-ca-cert")
+    except Exception as e1:
+        LogErrorLine("Error in import_ca_inline: " + str(e1))
+        return "Error serving certificate", 500
+
+
+# -------------------------------------------------------------------------------
+@app.route("/download/ca.pem")
+def download_ca_pem():
+    """Serve the Local CA certificate in PEM format."""
+    try:
+        ca_path = os.path.join(ConfigFilePath, "ca.crt")
+        if not os.path.isfile(ca_path):
+            return "CA certificate not found", 404
+        with open(ca_path, "rb") as f:
+            pem_data = f.read()
+        return Response(
+            pem_data,
+            mimetype="application/x-pem-file",
+            headers={"Content-Disposition": "attachment; filename=genmon-ca.pem"},
+        )
+    except Exception as e1:
+        LogErrorLine("Error in download_ca_pem: " + str(e1))
+        return "Error serving certificate", 500
+
+
+# -------------------------------------------------------------------------------
+def get_theme_pref():
+    try:
+        raw = ConfigFiles[GENMON_CONFIG].ReadValue(
+            "ui_prefs", return_type=str, section="GenMon", default="{}"
+        )
+        return json.loads(raw).get("theme", "dark")
+    except Exception:
+        return "dark"
+
+
+# -------------------------------------------------------------------------------
+def _render_login():
+    """Render login page with theme and passkey availability."""
+    has_pk = bUseMFA and bUseSecureHTTP and bool(_load_passkeys())
+    return render_template("login.html", theme=get_theme_pref(), has_passkeys=has_pk, remember_me_enabled=RememberMeDays > 0)
+
+
+# -------------------------------------------------------------------------------
+def _get_mfa_trust_serializer():
+    from itsdangerous import URLSafeTimedSerializer
+    return URLSafeTimedSerializer(app.secret_key, salt="mfa-trust")
+
+
+# -------------------------------------------------------------------------------
+def _set_mfa_trust_cookie(response, username):
+    s = _get_mfa_trust_serializer()
+    token = s.dumps({"u": username})
+    response.set_cookie(
+        "mfa_trust", token,
+        max_age=MfaTrustDays * 86400,
+        httponly=True, secure=True, samesite="Lax",
+    )
+    return response
+
+
+# -------------------------------------------------------------------------------
+def _check_mfa_trust_cookie():
+    if not bMfaTrustExtend:
+        return None
+    token = request.cookies.get("mfa_trust")
+    if not token:
+        return None
+    try:
+        s = _get_mfa_trust_serializer()
+        data = s.loads(token, max_age=MfaTrustDays * 86400)
+        return data.get("u")
+    except Exception:
+        return None
+
 
 # -------------------------------------------------------------------------------
 def ServePage(page_file):
 
     if LoginActive():
         if not session.get("logged_in"):
-            return render_template("login.html")
+            return _render_login()
         else:
             return app.send_static_file(page_file)
     else:
@@ -207,20 +489,34 @@ def mfa_auth():
 
     try:
         if bUseMFA:
-            if ValidateOTP(request.form["code"]):
+            code = request.form.get("code", "")
+            verified = False
+            # Check if this is a backup code (8 hex chars) or TOTP (6 digits)
+            if len(code) == 8 and all(c in "0123456789abcdef" for c in code.lower()):
+                verified = _validate_backup_code(session.get("username", ""), code)
+            else:
+                verified = ValidateOTP(code)
+
+            if verified:
                 session["mfa_ok"] = True
-                return redirect(url_for("root"))
+                resp = redirect(url_for("root"))
+                # Set MFA trust cookie if checkbox was checked and trust is enabled
+                if bMfaTrustExtend and request.form.get("trust_browser"):
+                    username = session.get("username", "")
+                    resp = _set_mfa_trust_cookie(resp, username)
+                return resp
             else:
                 session["logged_in"] = False
                 session["write_access"] = False
                 session["mfa_ok"] = False
+                CheckFailedLogin()  # count toward brute-force lockout
                 return redirect(url_for("logout"))
         else:
             return redirect(url_for("root"))
     except Exception as e1:
         LogErrorLine("Error in mfa_auth: " + str(e1))
 
-    return render_template("login.html")
+    return _render_login()
 
 
 # -------------------------------------------------------------------------------
@@ -230,9 +526,24 @@ def admin_login_helper():
 
     LoginAttempts = 0
     try:
+        # remember-me: make session persistent if checkbox was checked and days > 0
+        if request.form.get("remember_me") and RememberMeDays > 0:
+            session.permanent = True
+
         if bUseMFA:
+            # Check MFA trust cookie before showing MFA screen
+            trust_user = _check_mfa_trust_cookie()
+            if trust_user and trust_user == session.get("username", ""):
+                session["mfa_ok"] = True
+                resp = redirect(url_for("root"))
+                resp = _set_mfa_trust_cookie(resp, trust_user)
+                return resp
             # GetOTP()
-            response = make_response(render_template("mfa.html"))
+            email_ok = mail is not None and not getattr(mail, 'DisableEmail', True) and not getattr(mail, 'DisableSMTP', True)
+            uname = session.get("username", "").lower()
+            bc_data = _load_backup_codes()
+            has_bc = len(bc_data.get(uname, [])) > 0
+            response = make_response(render_template("mfa.html", theme=get_theme_pref(), trust_enabled=bMfaTrustExtend, trust_days=MfaTrustDays, email_available=email_ok, has_backup_codes=has_bc))
             return response
         else:
             return redirect(url_for("root"))
@@ -249,35 +560,41 @@ def do_admin_login():
     if WebUILocked:
         next_time = (datetime.datetime.now() - LastFailedLoginTime).total_seconds()
         str_seconds = str(int(LockOutDuration - next_time))
-        response = make_response(render_template("locked.html", time=str_seconds))
+        response = make_response(render_template("locked.html", time=str_seconds, theme=get_theme_pref()))
         response.headers["Content-type"] = "text/html; charset=utf-8"
         response.mimetype = "text/html; charset=utf-8"
         return response
 
-    if (
-        request.form["password"] == HTTPAuthPass
-        and request.form["username"].lower() == HTTPAuthUser.lower()
-    ):
+    submitted_user = request.form["username"].lower()
+    submitted_pass = request.form["password"]
+
+    # Timing-safe comparisons to prevent user/password enumeration
+    admin_user_ok = secrets.compare_digest(submitted_user, (HTTPAuthUser or "").lower())
+    admin_pass_ok = secrets.compare_digest(submitted_pass, HTTPAuthPass or "")
+    ro_user_ok = secrets.compare_digest(submitted_user, (HTTPAuthUser_RO or "").lower())
+    ro_pass_ok = secrets.compare_digest(submitted_pass, HTTPAuthPass_RO or "")
+
+    if admin_user_ok and admin_pass_ok:
         session["logged_in"] = True
         session["write_access"] = True
+        session["username"] = submitted_user
         LogError("Admin Login")
         return admin_login_helper()
-    elif (
-        request.form["password"] == HTTPAuthPass_RO
-        and request.form["username"].lower() == HTTPAuthUser_RO.lower()
-    ):
+    elif ro_user_ok and ro_pass_ok:
         session["logged_in"] = True
         session["write_access"] = False
+        session["username"] = submitted_user
         LogError("Limited Rights Login")
         return admin_login_helper()
     elif doLdapLogin(request.form["username"], request.form["password"]):
+        session["username"] = request.form["username"].lower()
         return admin_login_helper()
     elif request.form["username"] != "":
         LogError("Invalid login: " + request.form["username"])
         CheckFailedLogin()
-        return render_template("login.html")
+        return _render_login()
     else:
-        return render_template("login.html")
+        return _render_login()
 
 
 # -------------------------------------------------------------------------------
@@ -412,7 +729,7 @@ def command(command):
         except Exception as e1:
             return commandResponse
     if not session.get("logged_in"):
-        return render_template("login.html")
+        return _render_login()
     else:
         commandResponse = ProcessCommand(command)
         try:
@@ -477,7 +794,7 @@ def ProcessCommand(command):
                     "add_maint_log",
                     "delete_row_maint_log",
                     "edit_row_maint_log",
-                ] and not session.get("write_access", True):
+                ] and not HasWriteAccess():
                     return jsonify("Read Only Mode")
 
                 if command == "setexercise":
@@ -499,23 +816,25 @@ def ProcessCommand(command):
                     setlogstr = request.args.get("power_log_json", 0, type=str)
                     if setlogstr:
                         finalcommand += "=" + setlogstr
+                # Sanitize command parameters: strip null bytes and newlines
+                # to prevent header/log injection, cap length to limit abuse.
                 if command == "add_maint_log":
-                    # use direct method instead of request.args.get due to unicoode
+                    # use direct method instead of request.args.get due to unicode
                     # input for add_maint_log for international users
                     input = request.args["add_maint_log"]
+                    input = input.replace("\x00", "").replace("\n", " ").replace("\r", " ")[:2048]
                     finalcommand += "=" + input
                 if command == "delete_row_maint_log":
-                    # use direct method instead of request.args.get due to unicoode
-                    # input for add_maint_log for international users
                     input = request.args["delete_row_maint_log"]
+                    input = input.replace("\x00", "").replace("\n", " ").replace("\r", " ")[:512]
                     finalcommand += "=" + input
                 if command == "edit_row_maint_log":
-                    # use direct method instead of request.args.get due to unicoode
-                    # input for add_maint_log for international users
                     input = request.args["edit_row_maint_log"]
+                    input = input.replace("\x00", "").replace("\n", " ").replace("\r", " ")[:2048]
                     finalcommand += "=" + input
                 if command == "set_button_command":
                     input = request.args["set_button_command"]
+                    input = input.replace("\x00", "").replace("\n", " ").replace("\r", " ")[:512]
                     finalcommand += "=" + input
                 data = MyClientInterface.ProcessMonitorCommand(finalcommand)
 
@@ -545,7 +864,7 @@ def ProcessCommand(command):
                 if command in ["start_info_json"]:
                     try:
                         StartInfo = json.loads(data)
-                        StartInfo["write_access"] = session.get("write_access", True)
+                        StartInfo["write_access"] = HasWriteAccess()
                         if not StartInfo["write_access"]:
                             StartInfo["pages"]["settings"] = False
                             StartInfo["pages"]["notifications"] = False
@@ -557,7 +876,7 @@ def ProcessCommand(command):
             return jsonify(data)
 
         elif command in ["updatesoftware"]:
-            if session.get("write_access", True):
+            if HasWriteAccess():
                 Update()
                 return "OK"
             else:
@@ -567,7 +886,7 @@ def ProcessCommand(command):
             return jsonify(favicon)
 
         elif command in ["settings"]:
-            if session.get("write_access", True):
+            if HasWriteAccess():
                 data = ReadSettingsFromFile()
                 return json.dumps(data, sort_keys=False)
             else:
@@ -577,13 +896,13 @@ def ProcessCommand(command):
             data = ReadNotificationsFromFile()
             return jsonify(data)
         elif command in ["setnotifications"]:
-            if session.get("write_access", True):
+            if HasWriteAccess():
                 SaveNotifications(request.args.get("setnotifications", 0, type=str))
             return "OK"
 
         # Add on items
         elif command in ["get_add_on_settings", "set_add_on_settings"]:
-            if session.get("write_access", True):
+            if HasWriteAccess():
                 if command == "get_add_on_settings":
                     data = GetAddOnSettings()
                     return json.dumps(data, sort_keys=False)
@@ -596,7 +915,7 @@ def ProcessCommand(command):
             return "OK"
 
         elif command in ["get_advanced_settings", "set_advanced_settings"]:
-            if session.get("write_access", True):
+            if HasWriteAccess():
                 if command == "get_advanced_settings":
                     data = ReadAdvancedSettingsFromFile()
                     return json.dumps(data, sort_keys=False)
@@ -611,7 +930,7 @@ def ProcessCommand(command):
             return "OK"
 
         elif command in ["setsettings"]:
-            if session.get("write_access", True):
+            if HasWriteAccess():
                 SaveSettings(request.args.get("setsettings", 0, type=str))
             return "OK"
 
@@ -625,10 +944,12 @@ def ProcessCommand(command):
                 except Exception:
                     return "{}"
             elif command == "set_ui_prefs":
-                if session.get("write_access", True):
+                if HasWriteAccess():
                     raw = request.args.get("set_ui_prefs", "{}", type=str)
+                    if len(raw) > 16384:  # 16 KB cap to prevent memory/storage abuse
+                        return "Error: payload too large"
                     try:
-                        json.loads(raw)  # validate JSON, discard result
+                        json.loads(raw)  # validate JSON
                     except Exception:
                         return "Error: invalid JSON"
                     ConfigFiles[GENMON_CONFIG].WriteValue(
@@ -640,22 +961,22 @@ def ProcessCommand(command):
             return jsonify(CachedRegisterDescriptions)
 
         elif command in ["restart"]:
-            if session.get("write_access", True):
+            if HasWriteAccess():
                 Restart()
         elif command in ["stop"]:
-            if session.get("write_access", True):
+            if HasWriteAccess():
                 Close()
                 sys.exit(0)
         elif command in ["shutdown"]:
-            if session.get("write_access", True):
+            if HasWriteAccess():
                 Shutdown()
                 sys.exit(0)
         elif command in ["reboot"]:
-            if session.get("write_access", True):
+            if HasWriteAccess():
                 Reboot()
                 sys.exit(0)
         elif command in ["backup"]:
-            if session.get("write_access", True):
+            if HasWriteAccess():
                 Backup()  # Create backup file
                 # Now send the file
                 pathtofile = os.path.dirname(os.path.realpath(__file__))
@@ -663,7 +984,7 @@ def ProcessCommand(command):
                     os.path.join(pathtofile, "genmon_backup.tar.gz"), as_attachment=True
                 )
         elif command in ["get_logs"]:
-            if session.get("write_access", True):
+            if HasWriteAccess():
                 GetLogs()  # Create log archive file
                 # Now send the file
                 pathtofile = os.path.dirname(os.path.realpath(__file__))
@@ -671,7 +992,8 @@ def ProcessCommand(command):
                     os.path.join(pathtofile, "genmon_logs.tar.gz"), as_attachment=True
                 )
         elif command in ["test_email"]:
-            return SendTestEmail(request.args.get("test_email", default=None, type=str))
+            if HasWriteAccess():
+                return SendTestEmail(request.args.get("test_email", default=None, type=str))
         else:
             return render_template("command_template.html", command=command)
     except Exception as e1:
@@ -716,7 +1038,6 @@ def SendTestEmail(query_string):
         recipient = str(parameters["recipient"])
         recipient = recipient.strip()
         password = str(parameters["password"])
-
         use_ssl = parameters["use_ssl"] in (True, "true", "True", "1", 1)
         tls_disable = parameters["tls_disable"] in (True, "true", "True", "1", 1)
         smtpauth_disable = parameters["smtpauth_disable"] in (True, "true", "True", "1", 1)
@@ -757,10 +1078,10 @@ def GetAddOns():
         AddOnCfg["gengpio"]["enable"] = ConfigFiles[GENLOADER_CONFIG].ReadValue(
             "enable", return_type=bool, section="gengpio", default=False
         )
-        AddOnCfg["gengpio"]["title"] = "RPi GPIO Outputs"
+        AddOnCfg["gengpio"]["title"] = "Genmon GPIO Outputs"
         AddOnCfg["gengpio"][
             "description"
-        ] = "Genmon will set Raspberry Pi GPIO outputs based on generator states (see documentation for details)"
+        ] = "Genmon will set Raspberry Pi GPIO outputs (see documentation for details)"
         AddOnCfg["gengpio"]["icon"] = "rpi"
         AddOnCfg["gengpio"][
             "url"
@@ -772,10 +1093,10 @@ def GetAddOns():
         AddOnCfg["gengpioin"]["enable"] = ConfigFiles[GENLOADER_CONFIG].ReadValue(
             "enable", return_type=bool, section="gengpioin", default=False
         )
-        AddOnCfg["gengpioin"]["title"] = "RPi GPIO Inputs"
+        AddOnCfg["gengpioin"]["title"] = "Genmon GPIO Inputs"
         AddOnCfg["gengpioin"][
             "description"
-        ] = "Genmon will use Raspberry Pi GPIO inputs for selected remote commands (see documentation for details)"
+        ] = "Genmon will set Raspberry Pi GPIO inputs (see documentation for details)"
         AddOnCfg["gengpioin"]["icon"] = "rpi"
         AddOnCfg["gengpioin"][
             "url"
@@ -814,7 +1135,7 @@ def GetAddOns():
         AddOnCfg["gengpioledblink"]["enable"] = ConfigFiles[GENLOADER_CONFIG].ReadValue(
             "enable", return_type=bool, section="gengpioledblink", default=False
         )
-        AddOnCfg["gengpioledblink"]["title"] = "RPi GPIO Output to blink LED"
+        AddOnCfg["gengpioledblink"]["title"] = "Genmon GPIO Output to blink LED"
         AddOnCfg["gengpioledblink"][
             "description"
         ] = "Genmon will blink LED connected to GPIO pin to indicate genmon status"
@@ -2487,7 +2808,91 @@ def GetAddOns():
                 bounds="",
                 display_name="Send Notices",
             )
-        
+
+        # GENHALINK - Native Home Assistant Integration
+        AddOnCfg["genhalink"] = collections.OrderedDict()
+        AddOnCfg["genhalink"]["enable"] = ConfigFiles[GENLOADER_CONFIG].ReadValue(
+            "enable", return_type=bool, section="genhalink", default=False
+        )
+        AddOnCfg["genhalink"]["title"] = "Home Assistant Integration (Native)"
+        AddOnCfg["genhalink"][
+            "description"
+        ] = "Native Home Assistant integration via REST/WebSocket API. No MQTT broker required."
+        AddOnCfg["genhalink"]["icon"] = "homeassistant"
+        AddOnCfg["genhalink"][
+            "url"
+        ] = "https://github.com/jgyates/genmon/HomeAssistant"
+        AddOnCfg["genhalink"]["parameters"] = collections.OrderedDict()
+
+        AddOnCfg["genhalink"]["parameters"]["port"] = CreateAddOnParam(
+            ConfigFiles[GENHALINK_CONFIG].ReadValue(
+                "port", return_type=int, default=9083
+            ),
+            "int",
+            "Port for the REST/WebSocket API server.",
+            bounds="required digits range:1024:65535",
+            display_name="API Server Port",
+        )
+        genhalink_api_key = ConfigFiles[GENHALINK_CONFIG].ReadValue(
+            "api_key", return_type=str, default=""
+        )
+        if not genhalink_api_key:
+            genhalink_api_key = str(uuid.uuid4())
+            ConfigFiles[GENHALINK_CONFIG].WriteValue("api_key", genhalink_api_key)
+            LogError("Auto-generated API key for genhalink")
+        AddOnCfg["genhalink"]["parameters"]["api_key"] = CreateAddOnParam(
+            genhalink_api_key,
+            "readonly",
+            "API key for authentication (auto-generated). Copy this value into Home Assistant when adding the integration.",
+            bounds="",
+            display_name="API Key (read-only)",
+        )
+        AddOnCfg["genhalink"]["parameters"]["poll_interval"] = CreateAddOnParam(
+            ConfigFiles[GENHALINK_CONFIG].ReadValue(
+                "poll_interval", return_type=float, default=3.0
+            ),
+            "int",
+            "Interval in seconds between polling genmon for status updates. Default is 3.",
+            bounds="number",
+            display_name="Poll Interval",
+        )
+        AddOnCfg["genhalink"]["parameters"]["blacklist"] = CreateAddOnParam(
+            ConfigFiles[GENHALINK_CONFIG].ReadValue(
+                "blacklist", return_type=str, default="Tiles"
+            ),
+            "string",
+            "Comma-separated keywords to exclude from the API. Matches any data path containing the keyword (case-insensitive). Top-level sections: Status, Maintenance, Outage, Monitor, Tiles. Examples: 'Tiles' (UI tiles), 'Weather' (weather data), 'Platform Stats' (CPU/memory), 'Last Log Entries' (log snippets). You can also target specific values like 'Serial Number' or 'CRC Errors'.",
+            bounds="",
+            display_name="Excluded Data Paths",
+        )
+        AddOnCfg["genhalink"]["parameters"]["include_monitor_stats"] = CreateAddOnParam(
+            ConfigFiles[GENHALINK_CONFIG].ReadValue(
+                "include_monitor_stats", return_type=bool, default=True
+            ),
+            "boolean",
+            "Include monitor/platform statistics (CPU temp, WiFi, memory).",
+            bounds="",
+            display_name="Include Monitor Stats",
+        )
+        AddOnCfg["genhalink"]["parameters"]["include_weather"] = CreateAddOnParam(
+            ConfigFiles[GENHALINK_CONFIG].ReadValue(
+                "include_weather", return_type=bool, default=True
+            ),
+            "boolean",
+            "Include weather data if available.",
+            bounds="",
+            display_name="Include Weather",
+        )
+        AddOnCfg["genhalink"]["parameters"]["zeroconf_enabled"] = CreateAddOnParam(
+            ConfigFiles[GENHALINK_CONFIG].ReadValue(
+                "zeroconf_enabled", return_type=bool, default=True
+            ),
+            "boolean",
+            "Enable Zeroconf/mDNS broadcasting so Home Assistant can auto-discover this generator. Disable for manual/fixed IP setup only.",
+            bounds="",
+            display_name="Zeroconf Discovery",
+        )
+
     except Exception as e1:
         LogErrorLine("Error in GetAddOns: " + str(e1))
 
@@ -2670,6 +3075,7 @@ def SaveAddOnSettings(query_string):
             "genmopeka": ConfigFiles[GENMOPEKA_CONFIG],
             "gensms_voip": ConfigFiles[GENSMS_VOIP_CONFIG],
             "genhomeassistant": ConfigFiles[GENHOMEASSISTANT_CONFIG],
+            "genhalink": ConfigFiles[GENHALINK_CONFIG],
         }
 
         for module, entries in settings.items():  # module
@@ -2694,6 +3100,15 @@ def SaveAddOnSettings(query_string):
                         ConfigFiles[GENMON_CONFIG].WriteValue(
                             "use_external_fuel_data_diy", basevalues, section="genmon"
                         )
+                    if module == "genhalink" and basevalues.lower() == "true":
+                        # Auto-generate API key if empty when addon is enabled
+                        current_key = ConfigFiles[GENHALINK_CONFIG].ReadValue(
+                            "api_key", return_type=str, default=""
+                        )
+                        if not current_key:
+                            new_key = str(uuid.uuid4())
+                            ConfigFiles[GENHALINK_CONFIG].WriteValue("api_key", new_key)
+                            LogError("Auto-generated API key for genhalink")
 
                 if basesettings == "parameters":
                     for params, paramvalue in basevalues.items():
@@ -3916,7 +4331,7 @@ def ReadSettingsFromFile():
     # These do not appear to work on reload, some issue with Flask
     ConfigSettings["usehttps"] = [
         "boolean",
-        "Use Secure Web Settings",
+        "Use Secure Web Server",
         200,
         False,
         "",
@@ -3925,16 +4340,16 @@ def ReadSettingsFromFile():
         GENMON_SECTION,
         "usehttps",
     ]
-    ConfigSettings["useselfsignedcert"] = [
-        "boolean",
-        "Use Self-signed Certificate",
+    ConfigSettings["cert_mode"] = [
+        "list",
+        "Certificate Mode",
         203,
-        True,
+        "selfsigned",
         "",
-        "",
+        "selfsigned,localca,custom",
         GENMON_CONFIG,
         GENMON_SECTION,
-        "useselfsignedcert",
+        "cert_mode",
     ]
     ConfigSettings["keyfile"] = [
         "string",
@@ -4036,17 +4451,102 @@ def ReadSettingsFromFile():
         "usemfa",
     ]
     # this value is for display only, it can not be changed by the web app
+    # Only expose the provisioning URL when running over HTTPS so the
+    # base32 secret is never transmitted in cleartext.
+    # When MFA is already enrolled, suppress the provisioning URL so the
+    # secret key is never re-exposed after initial setup.
+    mfa_url_value = None
+    if bUseSecureHTTP and not bMfaEnrolled:
+        mfa_url_value = MFA_URL
+        if not mfa_url_value and SecretMFAKey:
+            try:
+                mfa_url_value = pyotp.totp.TOTP(SecretMFAKey).provisioning_uri(
+                    "genmon", issuer_name="Genmon"
+                )
+            except Exception:
+                pass
     ConfigSettings["mfa_url"] = [
         "qrcode",
         "MFA QRCode",
         212,
-        MFA_URL,
+        mfa_url_value,
         "",
         "",
         None,
         None,
         "mfa_url",
     ]
+    ConfigSettings["mfa_enrolled"] = [
+        "boolean",
+        "MFA Enrolled",
+        212.5,
+        bMfaEnrolled,
+        "",
+        "",
+        None,
+        None,
+        "mfa_enrolled",
+    ]
+    # Info-only flag so the JS settings UI can show whether email OTP is available
+    email_ok = (mail is not None and not getattr(mail, 'DisableEmail', True)
+                and not getattr(mail, 'DisableSMTP', True))
+    ConfigSettings["email_configured"] = [
+        "boolean",
+        "Email Configured",
+        212.6,
+        email_ok,
+        "",
+        "",
+        None,
+        None,
+        "email_configured",
+    ]
+    # Info-only cert status for the UI cert wizard
+    ConfigSettings["cert_info"] = [
+        "string",
+        "Certificate Info",
+        203.5,
+        _get_cert_info(),
+        "",
+        "",
+        None,
+        None,
+        "cert_info",
+    ]
+    ConfigSettings["remember_me_days"] = [
+        "int",
+        "Remember Me (days, 0 = browser session only)",
+        215,
+        0,
+        "",
+        "minmax:0:365",
+        GENMON_CONFIG,
+        GENMON_SECTION,
+        "remember_me_days",
+    ]
+    ConfigSettings["mfa_trust_extend"] = [
+        "boolean",
+        "Remember this browser & don't ask for MFA again",
+        216,
+        False,
+        "",
+        "",
+        GENMON_CONFIG,
+        GENMON_SECTION,
+        "mfa_trust_extend",
+    ]
+    ConfigSettings["mfa_trust_days"] = [
+        "int",
+        "Days to remember (never use on shared computers)",
+        217,
+        90,
+        "",
+        "minmax:1:365",
+        GENMON_CONFIG,
+        GENMON_SECTION,
+        "mfa_trust_days",
+    ]
+
 
     #
     # ConfigSettings["disableemail"] = ['boolean', 'Disable Email Usage', 300, True, "", "", MAIL_CONFIG, MAIL_SECTION, "disableemail"]
@@ -4285,8 +4785,9 @@ def ReadSettingsFromFile():
                     default=List[3],
                 )
             elif List[6] == None:
-                # intentionally do not write or read from config file
-                pass
+                # info-only fields: refresh runtime-computed values
+                if entry == "cert_info":
+                    (ConfigSettings[entry])[3] = _get_cert_info()
             else:
                 LogError("Invaild Config File in ReadSettingsFromFile: " + str(List[6]))
 
@@ -4424,6 +4925,25 @@ def SaveSettings(query_string):
             # nothing to change
             return
         CurrentConfigSettings = ReadSettingsFromFile()
+
+        # --- Auth cascading rules ---
+        # If username is removed, also clear password and disable MFA
+        http_user = settings.get("http_user", [None])[0]
+        if http_user is not None and http_user.strip() == "":
+            settings["http_pass"] = [""]
+            settings["usemfa"] = ["false"]
+        # If password is missing but username is set, don't allow
+        http_pass = settings.get("http_pass", [None])[0]
+        if http_user is not None and http_user.strip() != "" and http_pass is not None and http_pass.strip() == "":
+            LogError("SaveSettings: username set without password, clearing both")
+            settings["http_user"] = [""]
+            settings["http_pass"] = [""]
+            settings["usemfa"] = ["false"]
+        # Same for read-only account
+        http_user_ro = settings.get("http_user_ro", [None])[0]
+        if http_user_ro is not None and http_user_ro.strip() == "":
+            settings["http_pass_ro"] = [""]
+
         with CriticalLock:
             for Entry in settings.keys():
                 ConfigEntry = CurrentConfigSettings.get(Entry, None)
@@ -4497,7 +5017,6 @@ def _do_restart():
     if not RunBashScript("startgenmon.sh restart -c " + ConfigFilePath):
         LogError("Error in Restart")
 
-
 # -------------------------------------------------------------------------------
 def Update():
     # update
@@ -4522,6 +5041,11 @@ def Backup():
     # update
     if not RunBashScript("genmonmaint.sh -b -c " + ConfigFilePath):  # backup
         LogError("Error in Backup")
+
+
+# -------------------------------------------------------------------------------
+def RestoreBackup(ArchivePath):
+    return RunBashScript("genmonmaint.sh -t " + ArchivePath + " -c " + ConfigFilePath)
 
 
 # -------------------------------------------------------------------------------
@@ -4585,11 +5109,317 @@ def CheckCertFiles(CertFile, KeyFile):
 
 
 # -------------------------------------------------------------------------------
-def generate_adhoc_ssl_context():
-    # Generates an adhoc SSL context web server.
+def generate_local_ca(config_path):
+    """Generate (or load existing) a local CA key + self-signed CA certificate.
+
+    Files: {config_path}/ca.key, {config_path}/ca.crt
+    Returns (ca_cert, ca_key) as OpenSSL objects.
+    """
+    from OpenSSL import crypto
+
+    ca_key_path = os.path.join(config_path, "ca.key")
+    ca_crt_path = os.path.join(config_path, "ca.crt")
+
+    if os.path.isfile(ca_key_path) and os.path.isfile(ca_crt_path):
+        with open(ca_key_path, "rb") as f:
+            ca_key = crypto.load_privatekey(crypto.FILETYPE_PEM, f.read())
+        with open(ca_crt_path, "rb") as f:
+            ca_cert = crypto.load_certificate(crypto.FILETYPE_PEM, f.read())
+        LogConsole("Local CA loaded from " + ca_crt_path)
+        return ca_cert, ca_key
+
+    # Generate new CA
+    ca_key = crypto.PKey()
+    ca_key.generate_key(crypto.TYPE_RSA, 2048)
+
+    ca_cert = crypto.X509()
+    ca_cert.set_version(2)  # X509v3
+    ca_cert.set_serial_number(int.from_bytes(os.urandom(16), "big"))
+    ca_cert.gmtime_adj_notBefore(0)
+    ca_cert.gmtime_adj_notAfter(10 * 365 * 24 * 60 * 60)  # 10 years
+
+    subj = ca_cert.get_subject()
+    subj.CN = "Genmon Local CA"
+    subj.O = "Genmon"
+    ca_cert.set_issuer(subj)
+    ca_cert.set_pubkey(ca_key)
+
+    ca_cert.add_extensions(
+        [
+            crypto.X509Extension(b"basicConstraints", True, b"CA:TRUE, pathlen:0"),
+            crypto.X509Extension(b"keyUsage", True, b"keyCertSign, cRLSign"),
+            crypto.X509Extension(
+                b"subjectKeyIdentifier", False, b"hash", subject=ca_cert
+            ),
+        ]
+    )
+
+    ca_cert.sign(ca_key, "sha256")
+
+    with open(ca_key_path, "wb") as f:
+        f.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, ca_key))
+    os.chmod(ca_key_path, 0o600)
+    with open(ca_crt_path, "wb") as f:
+        f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, ca_cert))
+
+    LogConsole("Local CA created: " + ca_crt_path)
+    return ca_cert, ca_key
+
+
+# -------------------------------------------------------------------------------
+def _get_all_local_ips():
+    """Return a set of all non-loopback IPv4 addresses on this machine.
+
+    Tries multiple discovery methods so the server certificate SAN covers
+    every address a browser might use to connect, even when the Pi has no
+    internet access at startup.
+    """
+    import socket
+    import subprocess
+
+    ips = set()
+
+    # Method 1: hostname -I  (Linux, most reliable on Raspberry Pi)
     try:
-        import atexit
+        out = subprocess.check_output(["hostname", "-I"], timeout=5,
+                                      stderr=subprocess.DEVNULL).decode()
+        for token in out.split():
+            if ":" not in token:          # skip IPv6
+                ips.add(token.strip())
+    except Exception:
+        pass
+
+    # Method 2: getaddrinfo on the local hostname
+    try:
+        hn = socket.gethostname()
+        for info in socket.getaddrinfo(hn, None):
+            addr = info[4][0]
+            if addr and not addr.startswith("127.") and ":" not in addr:
+                ips.add(addr)
+    except Exception:
+        pass
+
+    # Method 3: UDP connect trick (finds default-route LAN IP)
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ips.add(s.getsockname()[0])
+        s.close()
+    except Exception:
+        pass
+
+    ips.discard("127.0.0.1")
+    return ips
+
+
+# -------------------------------------------------------------------------------
+def generate_server_cert(ca_cert, ca_key, config_path):
+    """Generate (or reuse) a server certificate signed by the local CA.
+
+    Files: {config_path}/server.key, {config_path}/server.crt
+    Auto-regenerates if missing or expiring within 30 days.
+    Returns (server_crt_path, server_key_path) file paths.
+    """
+    import datetime
+    import socket
+
+    from OpenSSL import crypto
+
+    srv_key_path = os.path.join(config_path, "server.key")
+    srv_crt_path = os.path.join(config_path, "server.crt")
+
+    regen = False
+    if not os.path.isfile(srv_key_path) or not os.path.isfile(srv_crt_path):
+        regen = True
+    else:
+        # Check expiry and required extensions
+        try:
+            with open(srv_crt_path, "rb") as f:
+                existing = crypto.load_certificate(crypto.FILETYPE_PEM, f.read())
+            expiry_str = existing.get_notAfter()
+            if expiry_str is not None:
+                expiry = datetime.datetime.strptime(
+                    expiry_str.decode("ascii"), "%Y%m%d%H%M%SZ"
+                )
+                if expiry - datetime.datetime.utcnow() < datetime.timedelta(days=30):
+                    LogConsole("Server cert expiring soon, regenerating.")
+                    regen = True
+            # Check for required extensions (added in v2)
+            has_eku = False
+            has_san = False
+            existing_san = ""
+            for i in range(existing.get_extension_count()):
+                ext = existing.get_extension(i)
+                sn = ext.get_short_name()
+                if sn == b"extendedKeyUsage":
+                    has_eku = True
+                if sn == b"subjectAltName":
+                    has_san = True
+                    existing_san = str(ext)
+            if not has_eku:
+                LogConsole("Server cert missing extendedKeyUsage, regenerating.")
+                regen = True
+            elif not has_san:
+                LogConsole("Server cert missing subjectAltName, regenerating.")
+                regen = True
+            else:
+                # Verify current IPs are in the SAN
+                local_ips = _get_all_local_ips()
+                for addr in local_ips:
+                    if addr not in existing_san:
+                        LogConsole("Server cert SAN missing IP " + addr + ", regenerating.")
+                        regen = True
+                        break
+        except Exception:
+            regen = True
+
+    if not regen:
+        LogConsole("Server cert reused: " + srv_crt_path)
+        return srv_crt_path, srv_key_path
+
+    # Build SAN list
+    san_entries = set()
+    san_entries.add("DNS:localhost")
+    try:
+        hn = socket.gethostname()
+        if hn:
+            san_entries.add("DNS:" + hn)
+            san_entries.add("DNS:" + hn + ".local")   # mDNS / Avahi
+        try:
+            fqdn = socket.getfqdn()
+            if fqdn and fqdn != hn:
+                san_entries.add("DNS:" + fqdn)
+        except Exception:
+            pass
+    except Exception:
+        pass
+    for addr in _get_all_local_ips():
+        san_entries.add("IP:" + addr)
+    san_entries.add("IP:127.0.0.1")
+    san_string = ", ".join(sorted(san_entries))
+
+    srv_key = crypto.PKey()
+    srv_key.generate_key(crypto.TYPE_RSA, 2048)
+
+    srv_cert = crypto.X509()
+    srv_cert.set_version(2)
+    srv_cert.set_serial_number(int.from_bytes(os.urandom(16), "big"))
+    srv_cert.gmtime_adj_notBefore(0)
+    srv_cert.gmtime_adj_notAfter(365 * 24 * 60 * 60)  # 1 year
+
+    subj = srv_cert.get_subject()
+    subj.CN = socket.gethostname() if socket.gethostname() else "genmon"
+    subj.O = "Genmon"
+    srv_cert.set_issuer(ca_cert.get_subject())
+    srv_cert.set_pubkey(srv_key)
+
+    srv_cert.add_extensions(
+        [
+            crypto.X509Extension(b"basicConstraints", False, b"CA:FALSE"),
+            crypto.X509Extension(
+                b"keyUsage", True, b"digitalSignature, keyEncipherment"
+            ),
+            crypto.X509Extension(
+                b"extendedKeyUsage", False, b"serverAuth"
+            ),
+            crypto.X509Extension(
+                b"subjectAltName", False, san_string.encode("ascii")
+            ),
+            crypto.X509Extension(
+                b"authorityKeyIdentifier", False, b"keyid:always",
+                issuer=ca_cert,
+            ),
+        ]
+    )
+
+    srv_cert.sign(ca_key, "sha256")
+
+    with open(srv_key_path, "wb") as f:
+        f.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, srv_key))
+    os.chmod(srv_key_path, 0o600)
+    with open(srv_crt_path, "wb") as f:
+        f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, srv_cert))
+
+    LogConsole("Server cert generated: " + srv_crt_path + " SAN=" + san_string)
+    return srv_crt_path, srv_key_path
+
+
+# -------------------------------------------------------------------------------
+def _get_cert_info():
+    """Return a JSON string with certificate status info for the UI."""
+    import json as _json
+
+    info = {"mode": CertMode}
+    try:
+        if CertMode == "selfsigned":
+            info["detail"] = "Ephemeral \u2014 regenerated on each restart"
+        elif CertMode == "localca":
+            ca_path = os.path.join(ConfigFilePath, "ca.crt")
+            srv_path = os.path.join(ConfigFilePath, "server.crt")
+            if os.path.isfile(ca_path):
+                from OpenSSL import crypto
+                import datetime
+
+                with open(ca_path, "rb") as f:
+                    ca = crypto.load_certificate(crypto.FILETYPE_PEM, f.read())
+                info["ca_cn"] = ca.get_subject().CN or ""
+                nb = ca.get_notBefore()
+                if nb:
+                    info["ca_created"] = datetime.datetime.strptime(
+                        nb.decode("ascii"), "%Y%m%d%H%M%SZ"
+                    ).strftime("%Y-%m-%d")
+            if os.path.isfile(srv_path):
+                from OpenSSL import crypto
+                import datetime
+
+                with open(srv_path, "rb") as f:
+                    srv = crypto.load_certificate(crypto.FILETYPE_PEM, f.read())
+                na = srv.get_notAfter()
+                if na:
+                    info["srv_expiry"] = datetime.datetime.strptime(
+                        na.decode("ascii"), "%Y%m%d%H%M%SZ"
+                    ).strftime("%Y-%m-%d")
+                # Extract SAN
+                for i in range(srv.get_extension_count()):
+                    ext = srv.get_extension(i)
+                    if ext.get_short_name() == b"subjectAltName":
+                        info["san"] = str(ext)
+                        break
+        elif CertMode == "custom":
+            cert_file = ConfigFiles[GENMON_CONFIG].ReadValue("certfile") if GENMON_CONFIG in ConfigFiles else ""
+            key_file = ConfigFiles[GENMON_CONFIG].ReadValue("keyfile") if GENMON_CONFIG in ConfigFiles else ""
+            info["certfile"] = cert_file or ""
+            info["keyfile"] = key_file or ""
+            if cert_file and os.path.isfile(cert_file):
+                from OpenSSL import crypto
+                import datetime
+
+                with open(cert_file, "rb") as f:
+                    c = crypto.load_certificate(crypto.FILETYPE_PEM, f.read())
+                na = c.get_notAfter()
+                if na:
+                    info["expiry"] = datetime.datetime.strptime(
+                        na.decode("ascii"), "%Y%m%d%H%M%SZ"
+                    ).strftime("%Y-%m-%d")
+    except Exception as e1:
+        info["error"] = str(e1)
+    return _json.dumps(info)
+
+
+# -------------------------------------------------------------------------------
+def generate_adhoc_ssl_context():
+    # Generates an adhoc SSL context for the web server.
+    try:
         import ssl
+
+        try:
+            from werkzeug.serving import generate_adhoc_ssl_context as _wz_ctx
+            return _wz_ctx()
+        except Exception as e1:
+            LogErrorLine("generate_adhoc_ssl_context: " + str(e1))
+
+        # Fallback: try pyOpenSSL-based generation
+        import atexit
         import tempfile
         from random import random
 
@@ -4622,13 +5452,10 @@ def generate_adhoc_ssl_context():
         os.write(pkey_handle, crypto.dump_privatekey(crypto.FILETYPE_PEM, pkey))
         os.close(cert_handle)
         os.close(pkey_handle)
-
-        ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-        #ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS)
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE
         ctx.load_cert_chain(cert_file, pkey_file)
-
         return ctx
     except Exception as e1:
         LogError("Error in generate_adhoc_ssl_context: " + str(e1))
@@ -4642,6 +5469,7 @@ def LoadConfig():
     global clientport
     global loglocation
     global bUseMFA
+    global bMfaEnrolled
     global SecretMFAKey
     global bUseSecureHTTP
     global LdapServer
@@ -4652,6 +5480,7 @@ def LoadConfig():
 
     global ListenIPAddress
     global HTTPPort
+    global OldHTTPPort
     global HTTPAuthUser
     global HTTPAuthPass
     global HTTPAuthUser_RO
@@ -4660,6 +5489,9 @@ def LoadConfig():
     global favicon
     global MaxLoginAttempts
     global LockOutDuration
+    global RememberMeDays
+    global MfaTrustDays
+    global bMfaTrustExtend
 
     HTTPAuthPass = None
     HTTPAuthUser = None
@@ -4681,12 +5513,32 @@ def LoadConfig():
         bUseMFA = ConfigFiles[GENMON_CONFIG].ReadValue(
             "usemfa", return_type=bool, default=False
         )
-
-        SecretMFAKey = ConfigFiles[GENMON_CONFIG].ReadValue("secretmfa", default=None)
+        bMfaEnrolled = ConfigFiles[GENMON_CONFIG].ReadValue(
+            "mfa_enrolled", return_type=bool, default=False
+        )
+        # Migration: if MFA was already enabled before the enrolled flag
+        # existed, mark it as enrolled so the QR code stays hidden.
+        if bUseMFA and not bMfaEnrolled:
+            bMfaEnrolled = True
+            ConfigFiles[GENMON_CONFIG].WriteValue("mfa_enrolled", "True")
+        # If MFA was disabled, clear enrollment and rotate the secret so
+        # re-enabling MFA forces a fresh QR scan.
+        if not bUseMFA and bMfaEnrolled:
+            bMfaEnrolled = False
+            ConfigFiles[GENMON_CONFIG].WriteValue("mfa_enrolled", "False")
+            SecretMFAKey = str(pyotp.random_base32())
+            ConfigFiles[GENMON_CONFIG].WriteValue("secretmfa", str(SecretMFAKey))
+        # Always read/generate the secret key and build the provisioning
+        # URL so the QR code is ready to display in settings even before
+        # the user enables MFA.
+        if SecretMFAKey is None:
+            SecretMFAKey = ConfigFiles[GENMON_CONFIG].ReadValue("secretmfa", default=None)
 
         if SecretMFAKey == None or SecretMFAKey == "":
             SecretMFAKey = str(pyotp.random_base32())
             ConfigFiles[GENMON_CONFIG].WriteValue("secretmfa", str(SecretMFAKey))
+
+        SetupMFA()
 
         if ConfigFiles[GENMON_CONFIG].HasOption("usehttps"):
             bUseSecureHTTP = ConfigFiles[GENMON_CONFIG].ReadValue(
@@ -4695,11 +5547,9 @@ def LoadConfig():
         if not bUseSecureHTTP:
             # dont use MFA unless HTTPS is enabled
             bUseMFA = False
-        else:
-            SetupMFA()
 
         ListenIPAddress = ConfigFiles[GENMON_CONFIG].ReadValue("flask_listen_ip_address", default="0.0.0.0")
-
+        
         if ConfigFiles[GENMON_CONFIG].HasOption("http_port"):
             HTTPPort = ConfigFiles[GENMON_CONFIG].ReadValue(
                 "http_port", return_type=int, default=8000
@@ -4790,37 +5640,105 @@ def LoadConfig():
                 "https_port", return_type=int, default=443
             )
 
-        app.secret_key = os.urandom(12)
+        # --- persistent secret key (survives restarts) ---
+        # Rotate the key when the auth mode changes (e.g. HTTP→HTTPS)
+        # so stale session cookies from a previous mode are invalidated.
+        stored_key = ConfigFiles[GENMON_CONFIG].ReadValue("secret_key", default="")
+        current_auth_mode = "auth" if (bUseSecureHTTP and LoginActive()) else "open"
+        stored_auth_mode = ConfigFiles[GENMON_CONFIG].ReadValue("secret_key_auth_mode", default="")
+        if not stored_key or stored_auth_mode != current_auth_mode:
+            stored_key = secrets.token_hex(24)
+            ConfigFiles[GENMON_CONFIG].WriteValue("secret_key", stored_key)
+            ConfigFiles[GENMON_CONFIG].WriteValue("secret_key_auth_mode", current_auth_mode)
+        app.secret_key = bytes.fromhex(stored_key)
+
+        # --- session cookie hardening ---
+        app.config["SESSION_COOKIE_SECURE"] = True  # always set; harmless if not HTTPS
+        app.config["SESSION_COOKIE_HTTPONLY"] = True
+        app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
+        # --- remember-me / session lifetime ---
+        # Seed defaults for new settings so existing installs get them in the config
+        if not ConfigFiles[GENMON_CONFIG].HasOption("remember_me_days"):
+            ConfigFiles[GENMON_CONFIG].WriteValue("remember_me_days", "0")
+        if not ConfigFiles[GENMON_CONFIG].HasOption("mfa_trust_extend"):
+            ConfigFiles[GENMON_CONFIG].WriteValue("mfa_trust_extend", "False")
+        if not ConfigFiles[GENMON_CONFIG].HasOption("mfa_trust_days"):
+            ConfigFiles[GENMON_CONFIG].WriteValue("mfa_trust_days", "90")
+
+        RememberMeDays = ConfigFiles[GENMON_CONFIG].ReadValue(
+            "remember_me_days", return_type=int, default=0
+        )
+        if RememberMeDays > 0:
+            app.permanent_session_lifetime = datetime.timedelta(days=RememberMeDays)
+
+        # --- MFA trust browser ---
+        MfaTrustDays = ConfigFiles[GENMON_CONFIG].ReadValue(
+            "mfa_trust_days", return_type=int, default=90
+        )
+        bMfaTrustExtend = ConfigFiles[GENMON_CONFIG].ReadValue(
+            "mfa_trust_extend", return_type=bool, default=False
+        )
+
         if bUseSecureHTTP:
             OldHTTPPort = HTTPPort
             HTTPPort = HTTPSPort
-            if ConfigFiles[GENMON_CONFIG].HasOption("useselfsignedcert"):
-                bUseSelfSignedCert = ConfigFiles[GENMON_CONFIG].ReadValue(
-                    "useselfsignedcert", return_type=bool
-                )
+            LogError("HTTPS enabled: will redirect HTTP port " + str(OldHTTPPort) + " -> HTTPS port " + str(HTTPPort))
 
-                if bUseSelfSignedCert:
-                    SSLContext = (
-                        generate_adhoc_ssl_context()
-                    )  #  create our own self signed cert
-                    if SSLContext == None:
-                        SSLContext = "adhoc"  # Use Flask supplied self signed cert
+            # --- cert_mode migration (backward compat) ---
+            # DEPRECATED: "useselfsignedcert" (bool) was replaced by "cert_mode"
+            # (selfsigned | localca | custom) in March 2026.  This block converts
+            # the old setting on first run so existing installs upgrade seamlessly.
+            # After the first start cert_mode is written to the config and this
+            # migration path is never taken again.  The UI now exposes cert_mode
+            # only — do NOT remove this block while any user might still have
+            # useselfsignedcert in their genmon.conf.
+            if not ConfigFiles[GENMON_CONFIG].HasOption("cert_mode"):
+                if ConfigFiles[GENMON_CONFIG].HasOption("useselfsignedcert"):
+                    old = ConfigFiles[GENMON_CONFIG].ReadValue(
+                        "useselfsignedcert", return_type=bool
+                    )
+                    CertMode = "selfsigned" if old else "custom"
                 else:
-                    if ConfigFiles[GENMON_CONFIG].HasOption("certfile") and ConfigFiles[
-                        GENMON_CONFIG
-                    ].HasOption("keyfile"):
-                        CertFile = ConfigFiles[GENMON_CONFIG].ReadValue("certfile")
-                        KeyFile = ConfigFiles[GENMON_CONFIG].ReadValue("keyfile")
-                        if CheckCertFiles(CertFile, KeyFile):
-                            SSLContext = (CertFile, KeyFile)  # tuple
-                        else:
-                            # if we get here then we have a username/login, but do not use SSL
-                            HTTPPort = OldHTTPPort
-                            SSLContext = None
+                    CertMode = "selfsigned"
+                ConfigFiles[GENMON_CONFIG].WriteValue("cert_mode", CertMode)
             else:
-                # if we get here then usehttps is enabled but not option for useselfsignedcert
-                # so revert to HTTP
-                HTTPPort = OldHTTPPort
+                CertMode = ConfigFiles[GENMON_CONFIG].ReadValue(
+                    "cert_mode", default="selfsigned"
+                )
+                if CertMode not in ("selfsigned", "localca", "custom"):
+                    CertMode = "selfsigned"
+
+            if CertMode == "selfsigned":
+                SSLContext = generate_adhoc_ssl_context()
+                if SSLContext is None:
+                    SSLContext = "adhoc"
+            elif CertMode == "localca":
+                try:
+                    ca_cert, ca_key = generate_local_ca(ConfigFilePath)
+                    srv_crt, srv_key = generate_server_cert(
+                        ca_cert, ca_key, ConfigFilePath
+                    )
+                    SSLContext = (srv_crt, srv_key)
+                except Exception as e1:
+                    LogErrorLine("Error setting up Local CA cert: " + str(e1))
+                    SSLContext = generate_adhoc_ssl_context()
+                    if SSLContext is None:
+                        SSLContext = "adhoc"
+            elif CertMode == "custom":
+                if ConfigFiles[GENMON_CONFIG].HasOption("certfile") and ConfigFiles[
+                    GENMON_CONFIG
+                ].HasOption("keyfile"):
+                    CertFile = ConfigFiles[GENMON_CONFIG].ReadValue("certfile")
+                    KeyFile = ConfigFiles[GENMON_CONFIG].ReadValue("keyfile")
+                    if CheckCertFiles(CertFile, KeyFile):
+                        SSLContext = (CertFile, KeyFile)
+                    else:
+                        HTTPPort = OldHTTPPort
+                        SSLContext = None
+                else:
+                    HTTPPort = OldHTTPPort
+                    SSLContext = None
 
         return True
     except Exception as e1:
@@ -4834,7 +5752,9 @@ def ValidateOTP(password):
     if bUseMFA:
         try:
             TimeOTP = pyotp.TOTP(SecretMFAKey, interval=30)
-            return TimeOTP.verify(password)
+            # valid_window=2 accepts codes from ±2 time steps (covers ~2 min)
+            # so email-delivered codes remain valid while the user reads & types.
+            return TimeOTP.verify(password, valid_window=2)
         except Exception as e1:
             LogErrorLine("Error in ValidateOTP: " + str(e1))
     return False
@@ -4853,6 +5773,456 @@ def GetOTP():
         LogErrorLine("Error in GetOTP: " + str(e1))
 
 
+# ---------------------MFA setup verify & reset----------------------------------
+@app.route("/mfa/verify_setup", methods=["POST"])
+def mfa_verify_setup():
+    """Verify a TOTP code during initial enrollment and mark MFA as enrolled."""
+    global bMfaEnrolled
+    try:
+        if not session.get("logged_in") or not session.get("write_access"):
+            return jsonify(status="error", msg="Unauthorized"), 403
+        code = (request.json or {}).get("code", "").strip()
+        if not code or len(code) != 6 or not code.isdigit():
+            return jsonify(status="error", msg="Enter a 6-digit code"), 400
+        totp = pyotp.TOTP(SecretMFAKey, interval=30)
+        if totp.verify(code, valid_window=1):
+            bMfaEnrolled = True
+            ConfigFiles[GENMON_CONFIG].WriteValue("mfa_enrolled", "True")
+            return jsonify(status="ok")
+        return jsonify(status="error", msg="Code incorrect. Check your authenticator and try again.")
+    except Exception as e1:
+        LogErrorLine("Error in mfa_verify_setup: " + str(e1))
+        return jsonify(status="error", msg="Verification failed"), 500
+
+
+# ---------------------send_otp route--------------------------------------------
+@app.route("/send_otp", methods=["POST"])
+def send_otp():
+    global LastOTPSendTime
+    try:
+        if not session.get("logged_in"):
+            return jsonify(status="error", msg="Not authorized"), 403
+        if mail is None:
+            return jsonify(status="error", msg="Email is not configured"), 500
+        if mail.DisableEmail or mail.DisableSMTP:
+            return jsonify(status="error", msg="Email sending is disabled in config"), 500
+        with CriticalLock:  # thread-safe rate limiting to prevent concurrent bypass
+            now = time.time()
+            if LastOTPSendTime and (now - LastOTPSendTime) < 60:
+                return jsonify(status="error", msg="Please wait before requesting another code")
+            LastOTPSendTime = now
+        if not bUseMFA:
+            return jsonify(status="error", msg="MFA is not enabled"), 400
+        TimeOTP = pyotp.TOTP(SecretMFAKey, interval=30)
+        OTP = TimeOTP.now()
+        msgbody = "\nThis password will expire in 30 seconds: " + str(OTP)
+        # Send synchronously so SMTP errors are reported to the user
+        sent = mail.sendEmailDirectMIME(
+            "error",
+            "Generator Monitor login one time password",
+            msgbody,
+        )
+        if not sent:
+            return jsonify(status="error", msg="SMTP send failed — check email settings and server logs")
+        return jsonify(status="ok")
+    except Exception as e1:
+        LogErrorLine("Error in send_otp: " + str(e1))
+        return jsonify(status="error", msg="Failed to send code"), 500  # generic; details logged server-side only
+
+
+# ---------------------Backup Codes----------------------------------------------
+def _backup_codes_path():
+    return os.path.join(ConfigFilePath, "backup_codes.json")
+
+
+def _load_backup_codes():
+    path = _backup_codes_path()
+    if os.path.isfile(path):
+        try:
+            with open(path, "r") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+
+
+def _save_backup_codes(data):
+    path = _backup_codes_path()
+    with open(path, "w") as f:
+        json.dump(data, f, indent=2)
+    try:
+        os.chmod(path, 0o600)  # owner-only; contains hashed backup codes
+    except OSError:
+        pass  # Windows doesn't support POSIX permissions
+
+
+def _hash_code(code):
+    return hashlib.sha256(code.encode("utf-8")).hexdigest()
+
+
+def GenerateBackupCodes(username):
+    codes = [secrets.token_hex(4) for _ in range(10)]
+    hashed = [_hash_code(c) for c in codes]
+    data = _load_backup_codes()
+    data[username.lower()] = hashed
+    _save_backup_codes(data)
+    return codes
+
+
+def _validate_backup_code(username, code):
+    data = _load_backup_codes()
+    user = username.lower()
+    user_codes = data.get(user, [])
+    h = _hash_code(code.lower())
+    if h in user_codes:
+        user_codes.remove(h)
+        data[user] = user_codes
+        _save_backup_codes(data)
+        return True
+    return False
+
+
+@app.route("/backup_codes/generate", methods=["POST"])
+def generate_backup_codes():
+    try:
+        if not session.get("logged_in") or not session.get("write_access"):
+            return jsonify(status="error", msg="Unauthorized"), 403
+        username = session.get("username", "")
+        codes = GenerateBackupCodes(username)
+        return jsonify(status="ok", codes=codes)
+    except Exception as e1:
+        LogErrorLine("Error in generate_backup_codes: " + str(e1))
+        return jsonify(status="error", msg="Failed to generate codes"), 500
+
+
+@app.route("/backup_codes/count", methods=["GET"])
+def backup_codes_count():
+    try:
+        if not session.get("logged_in"):
+            return jsonify(status="error", msg="Unauthorized"), 403
+        username = session.get("username", "")
+        data = _load_backup_codes()
+        remaining = len(data.get(username.lower(), []))
+        return jsonify(status="ok", count=remaining)
+    except Exception as e1:
+        LogErrorLine("Error in backup_codes_count: " + str(e1))
+        return jsonify(status="error", msg="Error"), 500
+
+
+# ---------------------Passkey WebAuthn------------------------------------------
+PASSKEYS_PATH = None
+
+def _passkeys_path():
+    global PASSKEYS_PATH
+    if PASSKEYS_PATH is None:
+        PASSKEYS_PATH = os.path.join(ConfigFilePath, "passkeys.json")
+    return PASSKEYS_PATH
+
+
+def _load_passkeys():
+    path = _passkeys_path()
+    if os.path.isfile(path):
+        try:
+            with open(path, "r") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+
+
+def _save_passkeys(data):
+    path = _passkeys_path()
+    with open(path, "w") as f:
+        json.dump(data, f, indent=2)
+    try:
+        os.chmod(path, 0o600)  # owner-only; contains passkey public keys
+    except OSError:
+        pass  # Windows doesn't support POSIX permissions
+
+
+@app.route("/passkey/register/begin", methods=["POST"])
+def passkey_register_begin():
+    try:
+        if not (bUseMFA and bUseSecureHTTP):
+            return jsonify(error="Passkeys require MFA and HTTPS"), 400
+        if not session.get("logged_in") or not session.get("write_access"):
+            return jsonify(error="Unauthorized"), 403
+        from webauthn import generate_registration_options, options_to_json
+        from webauthn.helpers.structs import (
+            AuthenticatorSelectionCriteria,
+            ResidentKeyRequirement,
+            UserVerificationRequirement,
+        )
+        import base64
+        username = session.get("username", "admin")
+        user_id = hashlib.sha256(username.encode()).digest()
+        rp_id = request.host.split(":")[0]
+        existing = _load_passkeys().get(username.lower(), [])
+        exclude_creds = []
+        for pk in existing:
+            from webauthn.helpers.structs import PublicKeyCredentialDescriptor
+            exclude_creds.append(PublicKeyCredentialDescriptor(id=base64.urlsafe_b64decode(pk["credential_id"] + "==")))
+        options = generate_registration_options(
+            rp_id=rp_id,
+            rp_name="Genmon",
+            user_id=user_id,
+            user_name=username,
+            user_display_name=username,
+            authenticator_selection=AuthenticatorSelectionCriteria(
+                resident_key=ResidentKeyRequirement.PREFERRED,
+                user_verification=UserVerificationRequirement.PREFERRED,
+            ),
+            exclude_credentials=exclude_creds,
+        )
+        session["webauthn_reg_challenge"] = base64.urlsafe_b64encode(options.challenge).decode().rstrip("=")
+        return app.response_class(options_to_json(options), mimetype="application/json")
+    except Exception as e1:
+        LogErrorLine("Error in passkey_register_begin: " + str(e1))
+        return jsonify(error="Registration failed"), 500
+
+
+@app.route("/passkey/register/complete", methods=["POST"])
+def passkey_register_complete():
+    try:
+        if not (bUseMFA and bUseSecureHTTP):
+            return jsonify(error="Passkeys require MFA and HTTPS"), 400
+        if not session.get("logged_in") or not session.get("write_access"):
+            return jsonify(error="Unauthorized"), 403
+        from webauthn import verify_registration_response
+        import base64
+        username = session.get("username", "admin")
+        rp_id = request.host.split(":")[0]
+        challenge_b64 = session.pop("webauthn_reg_challenge", None)
+        if not challenge_b64:
+            return jsonify(error="No pending registration"), 400
+        # Restore padding
+        challenge_b64 += "=" * (4 - len(challenge_b64) % 4)
+        expected_challenge = base64.urlsafe_b64decode(challenge_b64)
+        body = request.get_json()
+        verification = verify_registration_response(
+            credential=body,
+            expected_challenge=expected_challenge,
+            expected_rp_id=rp_id,
+            expected_origin=request.host_url.rstrip("/"),
+        )
+        cred_id_b64 = base64.urlsafe_b64encode(verification.credential_id).decode().rstrip("=")
+        public_key_b64 = base64.urlsafe_b64encode(verification.credential_public_key).decode().rstrip("=")
+        data = _load_passkeys()
+        user_keys = data.get(username.lower(), [])
+        passkey_name = body.get("name", "Passkey " + str(len(user_keys) + 1))
+        user_keys.append({
+            "credential_id": cred_id_b64,
+            "public_key": public_key_b64,
+            "sign_count": verification.sign_count,
+            "name": passkey_name,
+        })
+        data[username.lower()] = user_keys
+        _save_passkeys(data)
+        return jsonify(status="ok", name=passkey_name)
+    except Exception as e1:
+        LogErrorLine("Error in passkey_register_complete: " + str(e1))
+        return jsonify(error="Registration verification failed"), 500
+
+
+@app.route("/passkey/auth/begin", methods=["POST"])
+def passkey_auth_begin():
+    try:
+        if not (bUseMFA and bUseSecureHTTP):
+            return jsonify(error="Passkeys require MFA and HTTPS"), 400
+        from webauthn import generate_authentication_options, options_to_json
+        from webauthn.helpers.structs import PublicKeyCredentialDescriptor
+        import base64
+        username = session.get("username", "")
+        data = _load_passkeys()
+        user_keys = data.get(username.lower(), [])
+        if not user_keys:
+            return jsonify(error="No passkeys registered"), 400
+        allow_creds = []
+        for pk in user_keys:
+            allow_creds.append(PublicKeyCredentialDescriptor(
+                id=base64.urlsafe_b64decode(pk["credential_id"] + "==")
+            ))
+        rp_id = request.host.split(":")[0]
+        options = generate_authentication_options(
+            rp_id=rp_id,
+            allow_credentials=allow_creds,
+        )
+        session["webauthn_auth_challenge"] = base64.urlsafe_b64encode(options.challenge).decode().rstrip("=")
+        return app.response_class(options_to_json(options), mimetype="application/json")
+    except Exception as e1:
+        LogErrorLine("Error in passkey_auth_begin: " + str(e1))
+        return jsonify(error="Authentication failed"), 500
+
+
+@app.route("/passkey/auth/complete", methods=["POST"])
+def passkey_auth_complete():
+    try:
+        if not (bUseMFA and bUseSecureHTTP):
+            return jsonify(error="Passkeys require MFA and HTTPS"), 400
+        from webauthn import verify_authentication_response
+        import base64
+        username = session.get("username", "")
+        rp_id = request.host.split(":")[0]
+        challenge_b64 = session.pop("webauthn_auth_challenge", None)
+        if not challenge_b64:
+            return jsonify(error="No pending authentication"), 400
+        challenge_b64 += "=" * (4 - len(challenge_b64) % 4)
+        expected_challenge = base64.urlsafe_b64decode(challenge_b64)
+        body = request.get_json()
+        cred_id_raw = base64.urlsafe_b64decode(body.get("rawId", "") + "==")
+        data = _load_passkeys()
+        user_keys = data.get(username.lower(), [])
+        matched_key = None
+        for pk in user_keys:
+            pk_id = base64.urlsafe_b64decode(pk["credential_id"] + "==")
+            if pk_id == cred_id_raw:
+                matched_key = pk
+                break
+        if not matched_key:
+            return jsonify(error="Verification failed"), 400  # generic error to prevent credential enumeration
+        public_key = base64.urlsafe_b64decode(matched_key["public_key"] + "==")
+        verification = verify_authentication_response(
+            credential=body,
+            expected_challenge=expected_challenge,
+            expected_rp_id=rp_id,
+            expected_origin=request.host_url.rstrip("/"),
+            credential_public_key=public_key,
+            credential_current_sign_count=matched_key.get("sign_count", 0),
+        )
+        matched_key["sign_count"] = verification.new_sign_count
+        _save_passkeys(data)
+        session["mfa_ok"] = True
+        return jsonify(status="ok")
+    except Exception as e1:
+        LogErrorLine("Error in passkey_auth_complete: " + str(e1))
+        return jsonify(error="Passkey verification failed"), 500
+
+
+@app.route("/passkey/list", methods=["GET"])
+def passkey_list():
+    try:
+        if not session.get("logged_in"):
+            return jsonify(error="Unauthorized"), 403
+        username = session.get("username", "")
+        data = _load_passkeys()
+        user_keys = data.get(username.lower(), [])
+        result = [{"name": pk.get("name", "Passkey"), "credential_id": pk["credential_id"]} for pk in user_keys]
+        return jsonify(status="ok", passkeys=result)
+    except Exception as e1:
+        LogErrorLine("Error in passkey_list: " + str(e1))
+        return jsonify(error="Error"), 500
+
+
+@app.route("/passkey/delete", methods=["POST"])
+def passkey_delete():
+    try:
+        if not session.get("logged_in") or not session.get("write_access"):
+            return jsonify(error="Unauthorized"), 403
+        username = session.get("username", "")
+        cred_id = request.get_json().get("credential_id", "")
+        data = _load_passkeys()
+        user_keys = data.get(username.lower(), [])
+        data[username.lower()] = [pk for pk in user_keys if pk["credential_id"] != cred_id]
+        _save_passkeys(data)
+        return jsonify(status="ok")
+    except Exception as e1:
+        LogErrorLine("Error in passkey_delete: " + str(e1))
+        return jsonify(error="Error"), 500
+
+
+# ---------------------Passkey Login (passwordless from login page)--------------
+def _find_user_by_credential(cred_id_raw):
+    """Reverse-lookup: find username and passkey entry by raw credential ID."""
+    import base64
+    data = _load_passkeys()
+    for username, keys in data.items():
+        for pk in keys:
+            pk_id = base64.urlsafe_b64decode(pk["credential_id"] + "==")
+            if pk_id == cred_id_raw:
+                return username, pk, data
+    return None, None, data
+
+
+@app.route("/passkey/login/begin", methods=["POST"])
+def passkey_login_begin():
+    try:
+        if WebUILocked:  # shared lockout with password login
+            return jsonify(error="Too many failed attempts, try again later"), 429
+        if not (bUseMFA and bUseSecureHTTP):
+            return jsonify(error="Passkeys require MFA and HTTPS"), 400
+        from webauthn import generate_authentication_options, options_to_json
+        from webauthn.helpers.structs import PublicKeyCredentialDescriptor
+        import base64
+        # Gather ALL passkeys across all users for discoverable credential flow
+        data = _load_passkeys()
+        allow_creds = []
+        for username, keys in data.items():
+            for pk in keys:
+                allow_creds.append(PublicKeyCredentialDescriptor(
+                    id=base64.urlsafe_b64decode(pk["credential_id"] + "==")
+                ))
+        if not allow_creds:
+            return jsonify(error="No passkeys registered"), 400
+        rp_id = request.host.split(":")[0]
+        options = generate_authentication_options(
+            rp_id=rp_id,
+            allow_credentials=allow_creds,
+        )
+        session["webauthn_login_challenge"] = base64.urlsafe_b64encode(options.challenge).decode().rstrip("=")
+        return app.response_class(options_to_json(options), mimetype="application/json")
+    except Exception as e1:
+        LogErrorLine("Error in passkey_login_begin: " + str(e1))
+        return jsonify(error="Authentication failed"), 500
+
+
+@app.route("/passkey/login/complete", methods=["POST"])
+def passkey_login_complete():
+    try:
+        if WebUILocked:  # shared lockout with password login
+            return jsonify(error="Too many failed attempts, try again later"), 429
+        CheckLockOutDuration()
+        if not (bUseMFA and bUseSecureHTTP):
+            return jsonify(error="Passkeys require MFA and HTTPS"), 400
+        from webauthn import verify_authentication_response
+        import base64
+        rp_id = request.host.split(":")[0]
+        challenge_b64 = session.pop("webauthn_login_challenge", None)
+        if not challenge_b64:
+            return jsonify(error="No pending authentication"), 400
+        challenge_b64 += "=" * (4 - len(challenge_b64) % 4)
+        expected_challenge = base64.urlsafe_b64decode(challenge_b64)
+        body = request.get_json()
+        cred_id_raw = base64.urlsafe_b64decode(body.get("rawId", "") + "==")
+        username, matched_key, data = _find_user_by_credential(cred_id_raw)
+        if not matched_key:
+            return jsonify(error="Verification failed"), 400  # generic error to prevent credential enumeration
+        public_key = base64.urlsafe_b64decode(matched_key["public_key"] + "==")
+        verification = verify_authentication_response(
+            credential=body,
+            expected_challenge=expected_challenge,
+            expected_rp_id=rp_id,
+            expected_origin=request.host_url.rstrip("/"),
+            credential_public_key=public_key,
+            credential_current_sign_count=matched_key.get("sign_count", 0),
+        )
+        matched_key["sign_count"] = verification.new_sign_count
+        _save_passkeys(data)
+        # Determine access level from username
+        write = username.lower() == HTTPAuthUser.lower() if HTTPAuthUser else False
+        # Regenerate session to prevent session fixation
+        session.clear()
+        session["logged_in"] = True
+        session["write_access"] = write
+        session["mfa_ok"] = True
+        session["username"] = username
+        LogError("Passkey Login: " + username)
+        return jsonify(status="ok")
+    except Exception as e1:
+        LogErrorLine("Error in passkey_login_complete: " + str(e1))
+        CheckFailedLogin()
+        return jsonify(error="Passkey verification failed"), 500
+
+
 # ---------------------SetupMFA--------------------------------------------------
 def SetupMFA():
 
@@ -4860,10 +6230,10 @@ def SetupMFA():
     global mail
 
     try:
-        mail = MyMail(ConfigFilePath=ConfigFilePath)
+        mail = MyMail(ConfigFilePath=ConfigFilePath, loglocation=loglocation)
         account = mail.SenderAccount
     except Exception as e1:
-        LogErrorLine("Error setting up mail for 2FA: " + str(e1))
+        LogErrorLine("Error setting up mail for 2FA (ConfigFilePath=" + str(ConfigFilePath) + "): " + str(e1))
         account = "genmon"
     try:
         MFA_URL = pyotp.totp.TOTP(SecretMFAKey).provisioning_uri(
@@ -4921,6 +6291,11 @@ def Close():
         return
     Closing = True
     try:
+        if RedirectServer is not None:
+            RedirectServer.shutdown()
+    except Exception:
+        pass
+    try:
         MyClientInterface.Close()
     except Exception as e1:
         LogErrorLine("Error in close: " + str(e1))
@@ -4967,6 +6342,7 @@ if __name__ == "__main__":
     GENMOPEKA_CONFIG = os.path.join(ConfigFilePath, "genmopeka.conf")
     GENSMS_VOIP_CONFIG = os.path.join(ConfigFilePath, "gensms_voip.conf")
     GENHOMEASSISTANT_CONFIG = os.path.join(ConfigFilePath, "genhomeassistant.conf")
+    GENHALINK_CONFIG = os.path.join(ConfigFilePath, "genhalink.conf")
 
     ConfigFileList = [
         GENMON_CONFIG,
@@ -4993,6 +6369,7 @@ if __name__ == "__main__":
         GENMOPEKA_CONFIG,
         GENSMS_VOIP_CONFIG,
         GENHOMEASSISTANT_CONFIG,
+        GENHALINK_CONFIG,
     ]
 
     for ConfigFile in ConfigFileList:
@@ -5033,7 +6410,7 @@ if __name__ == "__main__":
         + ", Secure HTTP: "
         + str(bUseSecureHTTP)
         + ", SelfSignedCert: "
-        + str(bUseSelfSignedCert)
+        + str(CertMode)
         + ", UseMFA:"
         + str(bUseMFA)
         + ", OS:"
@@ -5075,6 +6452,11 @@ if __name__ == "__main__":
         sys.exit(1)
 
     CacheToolTips()
+
+    if bUseSecureHTTP and OldHTTPPort is not None and OldHTTPPort != HTTPPort:
+        t = threading.Thread(target=StartHTTPRedirectServer, daemon=True)
+        t.start()
+
     try:
         app.run(
             host=ListenIPAddress,

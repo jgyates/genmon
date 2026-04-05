@@ -1,32 +1,142 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
-
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
 <head>
-    <meta http-equiv='cache-control' content='no-cache'>
-    <meta http-equiv='expires' content='0'>
-    <meta http-equiv='pragma' content='no-cache'>
-    <title>Generator Monitor</title>
-    <style>
-      .loader{color:#888;position:fixed;box-sizing:border-box;left:-9999px;top:-9999px;width:0;height:0;overflow:hidden;z-index:999999}.loader:after,.loader:before{box-sizing:border-box;display:none}.loader.is-active{background-color:rgba(241,241,241,.85);width:100%;height:100%;left:0;top:0}.loader.is-active:after,.loader.is-active:before{display:block}@keyframes rotation{0%{transform:rotate(0)}to{transform:rotate(359deg)}}@keyframes blink{0%{opacity:.5}to{opacity:1}}.loader[data-text]:before{position:fixed;left:0;top:50%;color:currentColor;font-family:Helvetica,Arial,sans-serif;text-align:center;width:100%;font-size:14px}.loader[data-text=""]:before{content:"Loading"}.loader[data-text]:not([data-text=""]):before{content:attr(data-text)}.loader[data-text][data-blink]:before{animation:blink 1s linear infinite alternate}.loader-default[data-text]:before{top:calc(50% - 63px)}.loader-default:after{content:"";position:fixed;width:48px;height:48px;border:8px solid #888;border-left-color:transparent;border-radius:50%;top:calc(50% - 24px);left:calc(50% - 24px);animation:rotation 1s linear infinite}.loader-default[data-half]:after{border-right-color:transparent}.loader-default[data-inverse]:after{animation-direction:reverse}
-    </style>
-    <script type="text/javascript" src="libraries.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="libraries.min.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta http-equiv="cache-control" content="no-cache">
+    <meta http-equiv="expires" content="0">
+    <meta http-equiv="pragma" content="no-cache">
+    <title>Genmon</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#090e1a">
     <link rel="icon" href="favicon.ico">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="stylesheet" href="css/genmon.css">
 </head>
-
 <body>
-    <div class="loader loader-default is-active" data-text="Loading Generator Monitor"></div>
-    <table id="mytable">
-      <tr><td height="30px" colspan="2"><div id="myheader"></div></td></tr>
-      <tr><td width="200px"><div id="navMenu"></div></td>
-         <td width="85%">
-           <div id="myDiv">
-               <p id="mydisplay"></p>
-           </div>
-         </td>
-      </tr>
-      <tr><td height="30px" colspan="2"><div id="footer"></div></td></tr>
-    </table>
-</body>
+    <!-- Loading overlay -->
+    <div id="loader" class="loader active">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">Loading Genmon…</div>
+    </div>
 
+    <!-- App shell -->
+    <div id="app" class="app hidden">
+        <!-- Mobile sidebar backdrop -->
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <a href="https://github.com/jgyates/genmon" target="_blank" rel="noopener noreferrer" class="sidebar-logo-link">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2919 660" class="sidebar-logo" role="img" aria-label="Genmon">
+                    <path fill="#4CAF50" fill-rule="nonzero" d="M508 267l0 271c-37,19 -74,33 -109,43 -36,9 -70,14 -104,14 -84,0 -155,-28 -211,-84 -56,-56 -84,-127 -84,-212 0,-87 28,-158 85,-214 57,-57 129,-85 216,-85 33,0 64,4 94,14 30,8 58,22 86,40l-15 140c-26,-26 -51,-45 -77,-58 -26,-12 -53,-18 -81,-18 -50,0 -91,17 -124,50 -33,34 -49,76 -49,126 0,53 16,96 47,129 32,34 73,51 123,51 11,0 23,-2 35,-3 12,-3 24,-5 37,-9l0 -81 -106 0 0 -114 237 0z"/>
+                    <path fill="currentColor" fill-rule="nonzero" d="M695 371l151 -4 0 -6c0,-18 -7,-33 -20,-45 -12,-11 -29,-17 -48,-17 -22,0 -40,6 -55,19 -14,12 -23,30 -28,53zm230 82l-13 107c-24,11 -47,19 -70,25 -23,5 -46,8 -69,8 -58,0 -104,-17 -140,-50 -35,-33 -53,-77 -53,-130 0,-56 19,-103 58,-141 39,-39 86,-58 141,-58 48,0 87,14 117,42 30,29 46,65 46,110 0,6 -1,17 -2,33l0 2 -11 16 -236 6c2,23 11,43 29,57 18,15 40,22 67,22 19,0 40,-4 63,-12 23,-9 48,-21 73,-37z"/>
+                    <path fill="currentColor" fill-rule="nonzero" d="M1132 577l-121 0 0 -347 111 0 0 58c19,-23 38,-40 59,-51 21,-11 44,-16 68,-16 37,0 64,10 83,31 19,21 29,52 29,92l0 233 -120 0 0 -199c0,-18 -4,-32 -11,-41 -7,-9 -18,-14 -33,-14 -21,0 -37,7 -48,21 -12,14 -17,35 -17,62l0 171z"/>
+                    <path fill="currentColor" fill-rule="nonzero" d="M1798 577l-121 0 0 -199c0,-18 -4,-31 -11,-41 -8,-9 -19,-14 -32,-14 -20,0 -36,7 -47,22 -11,14 -16,34 -16,61l0 171 -121 0 0 -347 112 0 0 58c20,-23 40,-41 60,-51 19,-11 41,-16 64,-16 25,0 46,5 63,15 16,11 30,28 42,51 17,-22 35,-39 55,-50 20,-11 42,-16 66,-16 38,0 67,10 85,32 18,22 27,55 27,101l0 223 -120 0 0 -199c0,-18 -4,-31 -11,-41 -8,-9 -19,-14 -32,-14 -21,0 -36,7 -47,22 -11,14 -16,34 -16,61l0 171z"/>
+                    <path fill="currentColor" fill-rule="nonzero" d="M2689 577l-120 0 0 -347 111 0 0 58c19,-23 38,-40 59,-51 21,-11 43,-16 68,-16 36,0 64,10 83,31 19,21 29,52 29,92l0 233 -120 0 0 -199c0,-18 -4,-32 -11,-41 -8,-9 -19,-14 -33,-14 -21,0 -37,7 -49,21 -11,14 -17,35 -17,62l0 171z"/>
+                    <path fill="currentColor" stroke="currentColor" stroke-width="57.1" d="M2144 322c12,-21 28,-37 46,-50 41,-30 94,-39 143,-25 54,17 96,61 110,114 8,30 8,60 -1,90 -7,24 -20,46 -37,64 -7,8 -15,15 -24,21 -17,13 -33,20 -53,25 -88,24 -176,-28 -200,-115 -11,-41 -6,-86 16,-124zm224 -72c-56,-33 -127,-26 -181,9 -61,40 -89,119 -70,190 5,20 13,36 24,54 11,16 31,37 53,49l-37 64 10 5 36 -63c57,32 128,25 182,-10 60,-40 89,-119 70,-190 -6,-19 -13,-35 -25,-53 -11,-17 -30,-37 -52,-50l37 -63 -10 -6 -37 64z"/>
+                    <path fill="currentColor" stroke="currentColor" stroke-width="34.26" d="M2179 403c4,0 8,1 11,3 4,-16 23,-53 44,-53 30,0 65,113 101,113 18,0 29,-10 39,-23 7,-9 16,-25 19,-38 -4,-1 -8,-2 -11,-4 -2,9 -11,27 -16,33 -33,45 -52,5 -78,-37 -9,-17 -31,-55 -52,-55 -31,0 -52,38 -57,61z"/>
+                </svg>
+                </a>
+            </div>
+            <nav id="nav-menu" class="nav-menu"></nav>
+        </aside>
+
+        <!-- Main area -->
+        <main class="main">
+            <!-- Header -->
+            <header class="header">
+                <button id="menu-toggle" class="header-btn menu-toggle" aria-label="Toggle menu">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="3" y1="6" x2="21" y2="6"/>
+                        <line x1="3" y1="12" x2="21" y2="12"/>
+                        <line x1="3" y1="18" x2="21" y2="18"/>
+                    </svg>
+                </button>
+                <div class="header-info">
+                    <span id="site-name" class="site-name">Genmon</span>
+                    <span id="monitor-time" class="monitor-time"></span>
+                </div>
+                <div class="header-actions">
+                    <button id="customize-btn" class="header-btn" aria-label="Edit dashboard"
+                            title="Edit Dashboard" style="display:none">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                    </button>
+                    <button id="theme-toggle" class="header-btn" aria-label="Toggle theme" title="Toggle theme">
+                        <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="5"/>
+                            <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                            <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                        </svg>
+                        <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                        </svg>
+                    </button>
+                    <button id="logout-btn" class="header-btn" aria-label="Log out" title="Log out"
+                            style="display:none">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                            <polyline points="16 17 21 12 16 7"/>
+                            <line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                    </button>
+                    <div id="indicators" class="hdr-indicators"></div>
+                    <div id="status-badge" class="status-badge" data-status="ready">
+                        <span class="status-dot"></span>
+                        <span id="status-text" class="status-label">--</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Alert bar (non-blocking system warnings) -->
+            <div id="alert-bar" class="alert-bar"></div>
+
+            <!-- Page content -->
+            <div id="content" class="content"></div>
+
+            <!-- Footer -->
+            <footer class="footer">
+                <span id="footer-version"></span>
+                <span id="footer-connection" class="footer-conn"></span>
+            </footer>
+        </main>
+    </div>
+
+    <!-- Modal container -->
+    <div id="modal-overlay" class="modal-overlay hidden"></div>
+
+    <!-- Scripts -->
+    <script src="js/jquery-4.0.0.min.js"></script>
+    <script src="js/jquery.qrcode.min.js"></script>
+    <script src="js/chart.min.js"></script>
+    <script src="js/gauges.js"></script>
+    <script src="js/genmon.js"></script>
+    <script defer src="js/addon-icons.js"></script>
+    <!-- Register SW only in installed PWA mode to avoid stale-cache issues in browsers.
+         In normal browser sessions, unregister any prior SW so users get fresh files. -->
+    <script>
+    if('serviceWorker' in navigator){
+      if(window.matchMedia('(display-mode: standalone)').matches || navigator.standalone){
+        navigator.serviceWorker.register('/sw.js');
+      } else {
+        navigator.serviceWorker.getRegistrations().then(function(r){r.forEach(function(s){s.unregister();});});
+      }
+    }
+    </script>
+</body>
 </html>

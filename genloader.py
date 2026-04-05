@@ -194,7 +194,10 @@ class Loader(MySupport):
             ["paho.mqtt.client", "paho-mqtt", "1.6.1"],  # for genmqtt
             ["OpenSSL", "pyopenssl", None],  # SSL
             ["spidev", "spidev", None, True],  # spidev
-            ["voipms", "voipms", "0.2.5"]      # voipms for gensms_voip
+            ["zeroconf", "zeroconf", None],     # used in genhomassistant  
+            ["aiohttp", "aiohttp", None],       # used in genhomassistant  
+            ["webauthn", "webauthn", None],     # used in MFA in genserv.py
+            ["voipms", "voipms", "0.2.5"]       # voipms for gensms_voip
             # ['fluids', 'fluids', None]              # fluids for genmopeka
         ]
         try:
@@ -731,6 +734,7 @@ class Loader(MySupport):
                 "gensms_voip",
                 "genloader",
                 "genhomeassistant",
+                "genhalink",
             ]
             for entry in ValidSections:
                 if not entry in Sections:
@@ -792,6 +796,15 @@ class Loader(MySupport):
                             section=entry,
                             module="genhomeassistant.py",
                             conffile="genhomeassistant.conf",
+                        )
+                    if entry == "genhalink":
+                        self.LogError(
+                            "Warning: Missing entry: " + entry + " , adding entry"
+                        )
+                        self.AddEntry(
+                            section=entry,
+                            module="genhalink.py",
+                            conffile="genhalink.conf",
                         )
                     if entry == "gentankutil":
                         self.LogError(

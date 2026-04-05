@@ -1,8 +1,48 @@
-<!doctype html>
-<html>
-   <body>
-
-      <h1>Genmon login is locked due to exceeding the maximum login attempts. Please try again in {{ time }} seconds.</h1>
-
-   </body>
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ theme|default('dark') }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Genmon &mdash; Locked</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --bg: #090e1a; --card: #111a2e; --border: rgba(55,75,110,.45);
+      --text: #e4eaf4; --text-muted: #7e8fa8; --danger: #f05252;
+      --radius: 12px; --shadow: 0 8px 28px rgba(0,0,0,.55);
+    }
+    [data-theme="light"] {
+      --bg: #f0f2f5; --card: #ffffff; --border: #d1d5db;
+      --text: #1a1a2e; --text-muted: #6b7280; --danger: #dc2626;
+      --shadow: 0 4px 16px rgba(0,0,0,.1);
+    }
+    html, body { height: 100%; }
+    body {
+      font-family: var(--font); background: var(--bg); color: var(--text);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+      box-shadow: var(--shadow); padding: 2rem; width: 100%; max-width: 420px; margin: 1rem;
+      text-align: center;
+    }
+    .lock-icon { color: var(--danger); margin-bottom: 1rem; }
+    h2 { font-size: 1.15rem; font-weight: 700; margin-bottom: .75rem; }
+    p { color: var(--text-muted); font-size: .9rem; line-height: 1.5; }
+    .countdown { font-size: 1.6rem; font-weight: 700; color: var(--danger); margin-top: .75rem; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <svg class="lock-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+    </svg>
+    <h2>Account Locked</h2>
+    <p>Too many failed login attempts. Please try again in:</p>
+    <div class="countdown">{{ time }}s</div>
+  </div>
+</body>
 </html>

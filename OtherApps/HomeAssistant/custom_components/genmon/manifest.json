@@ -1,0 +1,13 @@
+{
+    "domain": "genmon",
+    "name": "Genmon Generator Monitor",
+    "codeowners": ["@jgyates"],
+    "config_flow": true,
+    "dependencies": [],
+    "documentation": "https://github.com/jgyates/genmon/OtherApps/HomeAssistant",
+    "iot_class": "local_push",
+    "issue_tracker": "https://github.com/jgyates/genmon/issues",
+    "requirements": ["aiohttp>=3.8.0"],
+    "version": "1.0.0",
+    "zeroconf": ["_genmon._tcp.local."]
+}

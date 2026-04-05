@@ -1,246 +1,147 @@
-<script type="text/javascript" src="js/jquery-3.7.0.min.js"></script>
-<script type="text/javascript">
-(function (global, factory) {
-    if (typeof define === 'function' && define.amd) {
-        // AMD
-        define(['jquery'], factory);
-    } else if (typeof exports === 'object') {
-        // CommonJS
-        factory(require('jquery'));
-    } else {
-        // Browser globals
-        factory(global.jQuery);
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ theme|default('dark') }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Genmon &mdash; Login</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --bg: #090e1a; --card: #111a2e; --border: rgba(55,75,110,.45);
+      --text: #e4eaf4; --text-muted: #7e8fa8; --accent: #4f8ffa; --accent-hover: #3574e8;
+      --input-bg: #080c18; --radius: 12px; --shadow: 0 8px 28px rgba(0,0,0,.55);
+      --green: #4CAF50;
     }
-}(this, function ($) {
-    var pluginName = 'floatingFormLabels',
-        defaults = {
-            label: '.ffl-label',
-            formElements: 'input, textarea',
-            floatedClass: 'ffl-floated'
-        };
-
-    function FloatingFormLabels (element, options) {
-        this._name = pluginName;
-        this.el = $(element);
-        this.options = $.extend({}, defaults, options);
-        this.label = this.el.find(this.options.label);
-        this.input = this.el.find(this.options.formElements);
-        this.floated = false;
-        this._init();
+    [data-theme="light"] {
+      --bg: #f0f2f5; --card: #ffffff; --border: #d1d5db;
+      --text: #1a1a2e; --text-muted: #6b7280; --accent: #3b82f6; --accent-hover: #2563eb;
+      --input-bg: #f9fafb; --shadow: 0 4px 16px rgba(0,0,0,.1);
     }
-
-    FloatingFormLabels.prototype = {
-        _init: function () {
-            var scope = this;
-
-            this._toggleClass(this._isFloated());
-
-            if (this._hasPlaceholder()) {
-                this._toggleClass(true);
-                return;
-            }
-
-            this.input.on({
-                'focus.ffl': function () {
-                    scope._toggleClass(true);
-                },
-                'blur.ffl': function () {
-                    scope._toggleClass(scope._isFloated());
-                },
-                'change.ffl': function () {
-                    scope._toggleClass(true);
-                }
-            });
-
-            this.el.trigger('init.ffl', this);
-        },
-        _hasPlaceholder: function () {
-            if (typeof this.input.attr('placeholder') !== 'undefined') {
-                return true;
-            }
-            return false;
-        },
-        _isFloated: function () {
-            if (this.input.val() === '' || this.input.val() === null || this.input.val().length === 0) {
-                return false;
-            }
-
-            return true;
-        },
-        _toggleClass: function (floated) {
-            if (floated) {
-                this.el.addClass(this.options.floatedClass);
-                this.floated = true;
-            } else {
-                this.el.removeClass(this.options.floatedClass);
-                this.floated = false;
-            }
-            this.label.trigger('toggle.ffl', this);
-        },
-        destroy: function () {
-            this.input.off('.ffl');
-            this.el.removeClass(this.options.floatedClass).removeData(pluginName);
-        }
-    };
-
-    $.fn[pluginName] = function (options) {
-      var instance,
-          args = Array.prototype.slice.call(arguments, 1);
-
-      return this.each(function () {
-          if (!$.data(this, pluginName)) {
-              $.data(this, pluginName, new FloatingFormLabels(this, options));
-          } else if (typeof options === 'string') {
-              // call public methods with its own parameters
-              instance = $.data(this, pluginName);
-              instance[options].apply(instance, args);
-          }
-      });
-    };
-}));
-</script>
-<style>
-body {
-    background: radial-gradient(#d1d1d1, #f1f1f1);
-    height: 100%;
-    margin: 0;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-}
-h2 {
-  text-align: center;
-  line-height: 120%;
-}
-.ffl-wrapper {
-  position: relative;
-  display: block;
-  padding-top: 1rem;
-}
-.ffl-wrapper .ffl-label {
-  transition-property: all;
-  transition-duration: 200ms;
-  transition-timing-function: ease;
-  transition-delay: 0s;
-  position: absolute;
-  white-space: nowrap;
-  max-width: 100%;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  pointer-events: none;
-  top: 1.25rem;
-}
-.ffl-wrapper.ffl-floated .ffl-label {
-  top: 0;
-}
-
-.ffl-label {
-  color: #909090;
-  line-height: 1.2;
-}
-.ffl-floated .ffl-label {
-  color: #4CAF50;
-  font-size: 0.75rem;
-}
-
-form {
-  border-radius: 10px;
-  max-width: 30rem;
-  margin: 2rem auto 0;
-  background-color: #ffffff;
-  padding: 1rem;
-  font-family: Arial;
-  font-weight: bold;
-  position:absolute;
-  top:50%;
-  left:50%;
-  height:240px;
-  width:300px;
-  margin-top:-140px; /* this is half the height of your div*/
-  margin-left:-150px; /*this is half of width of your div*/
-}
-form:after {
-  content: "";
-  display: block;
-  clear: both;
-}
-
-input,
-textarea,
-select {
-  transition: border-bottom 100ms ease;
-  display: block;
-  width: 100%;
-  padding: 0;
-  margin-bottom: 1rem;
-  box-shadow: none;
-  appearance: none;
-  outline: none;
-  background-color: transparent;
-  border-style: none;
-  border-bottom-width: 1px;
-  border-bottom-style: solid;
-  border-bottom-color: rgba(0, 0, 0, 0.2);
-  height: 1.875rem;
-}
-input:hover,
-textarea:hover,
-select:hover {
-  border-bottom-width: 1px;
-  border-bottom-color: #909090;
-}
-input:focus,
-textarea:focus,
-select:focus {
-  border-bottom-width: 1px;
-  border-bottom-color: #4CAF50;
-}
-
-textarea {
-  resize: none;
-  min-height: 1.875rem;
-}
-
-label > span {
-  color: #cccccc;
-}
-
-[type="submit"] {
-  transition: background-color 0.3s ease;
-  border: none;
-  background-color: #4CAF50;
-  color: #ffffff;
-  padding: 0.5rem 1rem;
-  text-transform: uppercase;
-  cursor: pointer;
-  margin-top: 1rem;
-  float: right;
-}
-[type="submit"]:hover, [type="submit"]:focus {
-  background-color: #027bda;
-}
-</style>
+    html, body { height: 100%; }
+    body {
+      font-family: var(--font); background: var(--bg); color: var(--text);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+      box-shadow: var(--shadow); padding: 2rem; width: 100%; max-width: 380px; margin: 1rem;
+    }
+    .logo { display: block; margin: 0 auto 1.25rem; width: 160px; height: auto; }
+    .logo .g-letter { fill: var(--green); }
+    .logo .g-text { fill: var(--text); }
+    h2 { text-align: center; font-size: 1.1rem; font-weight: 600; margin-bottom: 1.5rem; color: var(--text-muted); }
+    .field { margin-bottom: 1rem; }
+    .field label { display: block; font-size: .78rem; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .04em; }
+    .field input {
+      width: 100%; padding: 10px 12px; font-size: .95rem; font-family: var(--font);
+      background: var(--input-bg); color: var(--text); border: 1px solid var(--border);
+      border-radius: 8px; outline: none; transition: border-color .2s;
+    }
+    .field input:focus { border-color: var(--accent); }
+    .btn {
+      display: block; width: 100%; padding: 11px; margin-top: 1.25rem;
+      font-size: .95rem; font-weight: 600; font-family: var(--font);
+      border: none; border-radius: 8px; cursor: pointer;
+      background: var(--accent); color: #fff; transition: background .2s;
+    }
+    .btn:hover, .btn:focus { background: var(--accent-hover); }
+    .msg { text-align: center; color: var(--text-muted); font-size: .9rem; }
+    .remember { display: flex; align-items: center; gap: 8px; margin-top: .75rem; }
+    .remember input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+    .remember label { font-size: .82rem; color: var(--text-muted); cursor: pointer; user-select: none; }
+    .divider { display:flex; align-items:center; gap:12px; margin:1.25rem 0 .5rem; color:var(--text-muted); font-size:.8rem; }
+    .divider::before,.divider::after { content:''; flex:1; height:1px; background:var(--border); }
+    .btn-passkey {
+      display:flex; align-items:center; justify-content:center; gap:8px;
+      width:100%; padding:11px; font-size:.95rem; font-weight:600; font-family:var(--font);
+      border:1px solid var(--border); border-radius:8px; cursor:pointer;
+      background:transparent; color:var(--text); transition:background .2s, border-color .2s;
+    }
+    .btn-passkey:hover { background:var(--input-bg); border-color:var(--accent); }
+    .btn-passkey svg { width:20px; height:20px; fill:currentColor; }
+    .passkey-error { text-align:center; color:#f05252; font-size:.85rem; margin-top:.5rem; }
+  </style>
+</head>
+<body>
 {% block body %}
 {% if session['logged_in'] %}
-<p>You're logged in already!</p>
+  <div class="card"><p class="msg">You're logged in already!</p></div>
 {% else %}
-
-
-<form action="/" method="POST">
-  <h2>Generator Monitoring</h2>
-  <div class="ffl-wrapper">
-    <label for="username" class="ffl-label"></label>
-    <input type="text" id="username" name="username" placeholder="Username">
+  <div class="card">
+    <svg class="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2919 660" role="img" aria-label="Genmon">
+      <path class="g-letter" d="M508 267l0 271c-37,19 -74,33 -109,43 -36,9 -70,14 -104,14 -84,0 -155,-28 -211,-84 -56,-56 -84,-127 -84,-212 0,-87 28,-158 85,-214 57,-57 129,-85 216,-85 33,0 64,4 94,14 30,8 58,22 86,40l-15 140c-26,-26 -51,-45 -77,-58 -26,-12 -53,-18 -81,-18 -50,0 -91,17 -124,50 -33,34 -49,76 -49,126 0,53 16,96 47,129 32,34 73,51 123,51 11,0 23,-2 35,-3 12,-3 24,-5 37,-9l0 -81 -106 0 0 -114 237 0z"/>
+      <path class="g-text" d="M695 371l151 -4 0 -6c0,-18 -7,-33 -20,-45 -12,-11 -29,-17 -48,-17 -22,0 -40,6 -55,19 -14,12 -23,30 -28,53zm230 82l-13 107c-24,11 -47,19 -70,25 -23,5 -46,8 -69,8 -58,0 -104,-17 -140,-50 -35,-33 -53,-77 -53,-130 0,-56 19,-103 58,-141 39,-39 86,-58 141,-58 48,0 87,14 117,42 30,29 46,65 46,110 0,6 -1,17 -2,33l0 2 -11 16 -236 6c2,23 11,43 29,57 18,15 40,22 67,22 19,0 40,-4 63,-12 23,-9 48,-21 73,-37z"/>
+      <path class="g-text" d="M1132 577l-121 0 0 -347 111 0 0 58c19,-23 38,-40 59,-51 21,-11 44,-16 68,-16 37,0 64,10 83,31 19,21 29,52 29,92l0 233 -120 0 0 -199c0,-18 -4,-32 -11,-41 -7,-9 -18,-14 -33,-14 -21,0 -37,7 -48,21 -12,14 -17,35 -17,62l0 171z"/>
+      <path class="g-text" d="M1798 577l-121 0 0 -199c0,-18 -4,-31 -11,-41 -8,-9 -19,-14 -32,-14 -20,0 -36,7 -47,22 -11,14 -16,34 -16,61l0 171 -121 0 0 -347 112 0 0 58c20,-23 40,-41 60,-51 19,-11 41,-16 64,-16 25,0 46,5 63,15 16,11 30,28 42,51 17,-22 35,-39 55,-50 20,-11 42,-16 66,-16 38,0 67,10 85,32 18,22 27,55 27,101l0 223 -120 0 0 -199c0,-18 -4,-31 -11,-41 -8,-9 -19,-14 -32,-14 -21,0 -36,7 -47,22 -11,14 -16,34 -16,61l0 171z"/>
+      <path class="g-text" d="M2689 577l-120 0 0 -347 111 0 0 58c19,-23 38,-40 59,-51 21,-11 43,-16 68,-16 36,0 64,10 83,31 19,21 29,52 29,92l0 233 -120 0 0 -199c0,-18 -4,-32 -11,-41 -8,-9 -19,-14 -33,-14 -21,0 -37,7 -49,21 -11,14 -17,35 -17,62l0 171z"/>
+      <path class="g-text" stroke="currentColor" stroke-width="57.1" d="M2144 322c12,-21 28,-37 46,-50 41,-30 94,-39 143,-25 54,17 96,61 110,114 8,30 8,60 -1,90 -7,24 -20,46 -37,64 -7,8 -15,15 -24,21 -17,13 -33,20 -53,25 -88,24 -176,-28 -200,-115 -11,-41 -6,-86 16,-124zm224 -72c-56,-33 -127,-26 -181,9 -61,40 -89,119 -70,190 5,20 13,36 24,54 11,16 31,37 53,49l-37 64 10 5 36 -63c57,32 128,25 182,-10 60,-40 89,-119 70,-190 -6,-19 -13,-35 -25,-53 -11,-17 -30,-37 -52,-50l37 -63 -10 -6 -37 64z"/>
+      <path class="g-text" stroke="currentColor" stroke-width="34.26" d="M2179 403c4,0 8,1 11,3 4,-16 23,-53 44,-53 30,0 65,113 101,113 18,0 29,-10 39,-23 7,-9 16,-25 19,-38 -4,-1 -8,-2 -11,-4 -2,9 -11,27 -16,33 -33,45 -52,5 -78,-37 -9,-17 -31,-55 -52,-55 -31,0 -52,38 -57,61z"/>
+    </svg>
+    <h2>Sign In</h2>
+    <form action="/" method="POST">
+      <div class="field">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" autocomplete="username" required autofocus>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" required>
+      </div>
+      {% if remember_me_enabled %}
+      <div class="remember">
+        <input type="checkbox" id="remember_me" name="remember_me" value="1">
+        <label for="remember_me">Remember me</label>
+      </div>
+      {% endif %}
+      <button class="btn" type="submit">Log In</button>
+    </form>
+    {% if has_passkeys %}
+    <div class="divider">or</div>
+    <button type="button" class="btn-passkey" id="passkey-login-btn" onclick="passkeyLogin(this)">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a5 5 0 015 5 5 5 0 01-5 5 5 5 0 01-5-5 5 5 0 015-5zm-1 12.5c-3.04.08-9 1.54-9 4.5v2h12.02a6.477 6.477 0 01-1.02-3.5c0-1.12.28-2.17.78-3.08-.25-.01-.51-.01-.78 0zm7 .5a4.5 4.5 0 100 9 4.5 4.5 0 000-9zm0 2c.55 0 1 .45 1 1v1h1c.55 0 1 .45 1 1s-.45 1-1 1h-1v1c0 .55-.45 1-1 1s-1-.45-1-1v-1h-1c-.55 0-1-.45-1-1s.45-1 1-1h1v-1c0-.55.45-1 1-1z"/></svg>
+      Sign in with Passkey
+    </button>
+    <div class="passkey-error" id="pk-error"></div>
+    <script>
+    function _b64toAB(b64){var s=atob(b64.replace(/-/g,'+').replace(/_/g,'/'));var a=new Uint8Array(s.length);for(var i=0;i<s.length;i++)a[i]=s.charCodeAt(i);return a.buffer;}
+    function _ABtob64(buf){var s='';var a=new Uint8Array(buf);for(var i=0;i<a.length;i++)s+=String.fromCharCode(a[i]);return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+    function passkeyLogin(btn){
+      btn.disabled=true;
+      var err=document.getElementById('pk-error');
+      err.textContent='';
+      fetch('/passkey/login/begin',{method:'POST'}).then(function(r){return r.json()}).then(function(opts){
+        if(opts.error){err.textContent=opts.error;btn.disabled=false;return Promise.reject();}
+        opts.challenge=_b64toAB(opts.challenge);
+        if(opts.allowCredentials)opts.allowCredentials.forEach(function(c){c.id=_b64toAB(c.id);});
+        return navigator.credentials.get({publicKey:opts});
+      }).then(function(cred){
+        if(!cred)return;
+        var body=JSON.stringify({
+          id:cred.id,
+          rawId:_ABtob64(cred.rawId),
+          response:{
+            authenticatorData:_ABtob64(cred.response.authenticatorData),
+            clientDataJSON:_ABtob64(cred.response.clientDataJSON),
+            signature:_ABtob64(cred.response.signature),
+            userHandle:cred.response.userHandle?_ABtob64(cred.response.userHandle):null
+          },
+          type:cred.type
+        });
+        return fetch('/passkey/login/complete',{method:'POST',headers:{'Content-Type':'application/json'},body:body});
+      }).then(function(r){if(r)return r.json()}).then(function(d){
+        if(!d)return;
+        if(d.status==='ok'){window.location.href='/';}
+        else{err.textContent=d.error||'Verification failed';btn.disabled=false;}
+      })['catch'](function(e){
+        if(e)err.textContent=e.message||'Passkey authentication cancelled';
+        btn.disabled=false;
+      });
+    }
+    </script>
+    {% endif %}
   </div>
-  <div class="ffl-wrapper">
-    <label for="password" class="ffl-label"></label>
-    <input type="password" id="password" name="password" placeholder="Password">
-  </div>
-  <button type="submit">Log In</button>
-</form>
-
-<script type="text/javascript">
-  $('.ffl-wrapper').floatingFormLabels();
-</script>
-
 {% endif %}
 {% endblock %}
+</body>
+</html>

@@ -16,4 +16,4 @@ class ProgramDefaults(object):
     LogPath = "/var/log/"
     ServerPort = 9082
     LocalHost = "127.0.0.1"
-    GENMON_VERSION = "V1.20.00"
+    GENMON_VERSION = "2.0.0"
