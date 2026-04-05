@@ -1,6 +1,19 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 2.0.00 -2026-04-05
+- Major update to UI Thanks @buschauer
+- Dark / Light Mode
+- New ability to resize and select gauge types
+- Movement to gauge position and size is remembered
+- Updates to HTTPs and many security improvements
+- New HA addon (genhalink) @buschauer
+- New HA custom component @buschauer
+- Restore previous back from Web Interface
+- Updates for Briggs and Stratton to support more info and three phase
+- Added "ignore_alarms" config parameter for custom controllers
+- Update for pyowm to support API version 3.5 or 2.10 for weather
+
 ## V1.20.00 -2026-03-10
 - Added HA addon JSON files for all current custom controller variants
 - Fixed bug in custom controller fuel sensor gauge
@@ -8,9 +21,6 @@ All notable changes to this project will be documented in this file.
 - Fix minor issue with Briggs & Stratton gauge 
 - Updates to prepare for genmon 2.0 update
 - Minor update to json definitions for HA add on
-- Update for pyowm to support API version 3.5 or 2.10 for weather
-- Updates for Briggs and Stratton to support more info and three phase
-- Added "ignore_alarms" config parameter for custom controllers
 
 ## V1.19.08 -2026-01-29
 - Added "Generator State" value for Evolution 2.0 and power pact models on the Status page
