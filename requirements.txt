@@ -15,7 +15,7 @@ ldap3
 # pysan1 is fixed at 0.4.8 due to pysnmp 5.1.0 requiring pyasn1 < 0.5.0
 pyasn1==0.4.8
 pyotp
-webauthn>=2.0
+webauthn==2.7.0
 smbus
 psutil
 spidev
