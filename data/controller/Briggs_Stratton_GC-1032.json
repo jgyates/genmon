@@ -1131,6 +1131,7 @@
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
+      "round": 2,
       "title": "Cumulative Energy kWh"
     },
     {
@@ -1139,6 +1140,7 @@
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
+      "round": 2,
       "title": "Cumulative Energy kVAh"
     },
     {
@@ -1147,6 +1149,7 @@
       "mask": "ffff",
       "multiplier": 0.1,
       "type": "float",
+      "round": 2,
       "title": "Cumulative Energy kVRh"
     },
     {
