@@ -184,7 +184,7 @@ class Loader(MySupport):
             ["crcmod", "crcmod", None],  # Modbus CRC
             ["pyowm", "pyowm", None],  # Open Weather API
             ["pytz", "pytz", None],  # Time zone support
-            ["pysnmp", "pysnmp", None],  # SNMP
+            ["pysnmp", "pysnmp", "5.1.0"],  # SNMP
             ["ldap3", "ldap3", None],  # LDAP
             ["smbus", "smbus", None, True],  # SMBus reading of temp sensors
             ["pyotp", "pyotp", "2.3.0"],  # 2FA support
