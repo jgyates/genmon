@@ -196,7 +196,7 @@ class Loader(MySupport):
             ["spidev", "spidev", None, True],  # spidev
             ["zeroconf", "zeroconf", None],     # used in genhomassistant  
             ["aiohttp", "aiohttp", None],       # used in genhomassistant  
-            ["webauthn", "webauthn", None],     # used in MFA in genserv.py
+            ["webauthn", "webauthn", "2.7.0"],  # used in MFA in genserv.py
             ["voipms", "voipms", "0.2.5"]       # voipms for gensms_voip
             # ['fluids', 'fluids', None]              # fluids for genmopeka
         ]
