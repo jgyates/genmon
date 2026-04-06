@@ -5090,9 +5090,11 @@ def CheckCertFiles(CertFile, KeyFile):
     try:
         if not os.path.isfile(CertFile):
             LogConsole("Missing cert file : " + CertFile)
+            LogError("Missing cert file : " + CertFile)
             return False
         if not os.path.isfile(KeyFile):
             LogConsole("Missing key file : " + KeyFile)
+            LogError("Missing key file : " + KeyFile)
             return False
     except Exception as e1:
         LogErrorLine(
@@ -5734,8 +5736,10 @@ def LoadConfig():
                     if CheckCertFiles(CertFile, KeyFile):
                         SSLContext = (CertFile, KeyFile)
                     else:
-                        HTTPPort = OldHTTPPort
-                        SSLContext = None
+                        LogError("Missing key / cert files: reverting to self signed cert.")
+                        SSLContext = generate_adhoc_ssl_context()
+                        if SSLContext is None:
+                            SSLContext = "adhoc"
                 else:
                     HTTPPort = OldHTTPPort
                     SSLContext = None
