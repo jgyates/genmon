@@ -2821,7 +2821,7 @@ def GetAddOns():
         AddOnCfg["genhalink"]["icon"] = "homeassistant"
         AddOnCfg["genhalink"][
             "url"
-        ] = "https://github.com/jgyates/genmon/HomeAssistant"
+        ] = "https://github.com/jgyates/genmon/wiki/1----Software-Overview#genhalinkpy-optional"
         AddOnCfg["genhalink"]["parameters"] = collections.OrderedDict()
 
         AddOnCfg["genhalink"]["parameters"]["port"] = CreateAddOnParam(
