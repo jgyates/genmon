@@ -29,7 +29,7 @@ This integration communicates with the **genhalink** addon running on your genmo
 
 1. Open HACS in Home Assistant
 2. Click the three dots menu → **Custom repositories**
-3. Add `https://github.com/jgyates/genmon/OtherApps/HomeAssistant` with category **Integration**
+3. Add `https://github.com/jgyates/genmon/tree/master/OtherApps/HomeAssistant` with category **Integration**
 4. Search for "Genmon Generator Monitor" and click **Download**
 5. Restart Home Assistant
 
