@@ -5741,8 +5741,10 @@ def LoadConfig():
                         if SSLContext is None:
                             SSLContext = "adhoc"
                 else:
-                    HTTPPort = OldHTTPPort
-                    SSLContext = None
+                    LogError("Custom cert files not configured, falling back to self-signed")
+                    SSLContext = generate_adhoc_ssl_context()
+                    if SSLContext is None:
+                        SSLContext = "adhoc"
 
         return True
     except Exception as e1:
