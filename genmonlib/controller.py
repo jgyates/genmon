@@ -142,7 +142,7 @@ class GeneratorController(MySupport):
             if self.config != None:
                 self.SiteName = self.config.ReadValue("sitename", default="Home")
                 self.LogLocation = self.config.ReadValue(
-                    "loglocation", default="/var/log/"
+                    "loglocation", default=ProgramDefaults.LogPath
                 )
                 self.UseMetric = self.config.ReadValue(
                     "metricweather", return_type=bool, default=False

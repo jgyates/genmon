@@ -53,7 +53,7 @@ class SerialDevice(MySupport):
 
         # This supports getting this info from genmon.conf
         if self.config != None:
-            self.loglocation = self.config.ReadValue("loglocation", default="/var/log/")
+            self.loglocation = self.config.ReadValue("loglocation", default=ProgramDefaults.LogPath)
             self.DeviceName = self.config.ReadValue("port", default="/dev/serial0")
             self.ForceSerialUse = self.config.ReadValue("forceserialuse", default=False)
 

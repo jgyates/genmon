@@ -46,7 +46,7 @@ class SerialTCPDevice(MySupport):
         self.port = port
 
         if self.config != None:
-            self.loglocation = self.config.ReadValue("loglocation", default="/var/log/")
+            self.loglocation = self.config.ReadValue("loglocation", default=ProgramDefaults.LogPath)
             self.host = self.config.ReadValue(
                 "serial_tcp_address", return_type=str, default=None
             )
