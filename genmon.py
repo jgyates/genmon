@@ -673,7 +673,8 @@ class Monitor(MySupport):
                 "gensms_voip.log",
             ]
             DataFilesToSend = [
-                "update.txt"        # time stamp of software update
+                "update.txt",        # time stamp of software update
+                "restore.txt"
             ]
             # Files in /var/log
             for File in FilesToSend:
