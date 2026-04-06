@@ -403,11 +403,16 @@ function backupgenmon() {
     sudo cp "$config_path"gentemp.conf ./genmon_backup
     sudo cp "$config_path"mymail.conf ./genmon_backup
     sudo cp "$config_path"mymodem.conf ./genmon_backup
+    sudo cp "$config_path"genhalink.conf ./genmon_backup
+    sudo cp "$config_path"*.cert ./genmon_backup
+    sudo cp "$config_path"*.key ./genmon_backup
+    sudo cp "$config_path"passkeys.json ./genmon_backup
     sudo cp "$config_path"outage.txt ./genmon_backup
     sudo cp "$config_path"kwlog.txt ./genmon_backup
     sudo cp "$config_path"fuellog.txt ./genmon_backup
     sudo cp "$config_path"maintlog.json ./genmon_backup
     sudo cp "$config_path"update.txt ./genmon_backup
+    sudo cp "$config_path"restore.txt ./genmon_backup
     tar -zcvf genmon_backup.tar.gz genmon_backup/
     sudo rm -r genmon_backup
     echo "Done."
