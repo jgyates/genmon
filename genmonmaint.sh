@@ -377,42 +377,7 @@ function backupgenmon() {
     sudo rm genmon_backup.tar.gz
     mkdir genmon_backup
 
-    sudo cp "$config_path"genalexa.conf  ./genmon_backup
-    sudo cp "$config_path"gencallmebot.conf ./genmon_backup
-    sudo cp "$config_path"gencentriconnect.conf ./genmon_backup
-    sudo cp "$config_path"gencthat.conf ./genmon_backup
-    sudo cp "$config_path"gencustomgpio.conf ./genmon_backup
-    sudo cp "$config_path"genemail2sms.conf ./genmon_backup
-    sudo cp "$config_path"genexercise.conf ./genmon_backup
-    sudo cp "$config_path"gengpio.conf ./genmon_backup
-    sudo cp "$config_path"gengpioin.conf ./genmon_backup
-    sudo cp "$config_path"gengpioledblink.conf ./genmon_backup
-    sudo cp "$config_path"genhomeassistant.conf ./genmon_backup
-    sudo cp "$config_path"genloader.conf ./genmon_backup
-    sudo cp "$config_path"genmon.conf ./genmon_backup
-    sudo cp "$config_path"genmopeka.conf ./genmon_backup
-    sudo cp "$config_path"genmqtt.conf ./genmon_backup
-    sudo cp "$config_path"genmqttin.conf ./genmon_backup
-    sudo cp "$config_path"genpushover.conf ./genmon_backup
-    sudo cp "$config_path"genslack.conf ./genmon_backup
-    sudo cp "$config_path"gensms.conf ./genmon_backup
-    sudo cp "$config_path"gensms_voip.conf ./genmon_backup
-    sudo cp "$config_path"gensnmp.conf ./genmon_backup
-    sudo cp "$config_path"gentankdiy.conf ./genmon_backup
-    sudo cp "$config_path"gentankutil.conf ./genmon_backup
-    sudo cp "$config_path"gentemp.conf ./genmon_backup
-    sudo cp "$config_path"mymail.conf ./genmon_backup
-    sudo cp "$config_path"mymodem.conf ./genmon_backup
-    sudo cp "$config_path"genhalink.conf ./genmon_backup
-    sudo cp "$config_path"*.cert ./genmon_backup
-    sudo cp "$config_path"*.key ./genmon_backup
-    sudo cp "$config_path"passkeys.json ./genmon_backup
-    sudo cp "$config_path"outage.txt ./genmon_backup
-    sudo cp "$config_path"kwlog.txt ./genmon_backup
-    sudo cp "$config_path"fuellog.txt ./genmon_backup
-    sudo cp "$config_path"maintlog.json ./genmon_backup
-    sudo cp "$config_path"update.txt ./genmon_backup
-    sudo cp "$config_path"restore.txt ./genmon_backup
+    sudo cp "$config_path"*  ./genmon_backup
     tar -zcvf genmon_backup.tar.gz genmon_backup/
     sudo rm -r genmon_backup
     echo "Done."
