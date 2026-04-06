@@ -2782,7 +2782,7 @@ var Pages = {
           '<option>Weekly</option><option>Biweekly</option><option>Monthly</option></select></div></div>';
         if (info.WriteQuietMode)
           h += '<div class="mb-2"><label class="checkbox-label"><input type="checkbox" id="ex-quiet"> Quiet Mode</label>' +
-            '<div class="form-hint">Exercise without engaging the transfer switch</div></div>';
+            '<div class="form-hint">Exercise at a lower RPM</div></div>';
         h += '<div class="form-actions" style="border:none;padding:0;margin:0">' +
           '<button class="btn btn-primary btn-sm" id="ex-save">'+btnIcon('save')+' Save Schedule</button></div></div></div>';
       }
@@ -3580,7 +3580,9 @@ var Pages = {
         '<input class="form-input input-with-icon" type="datetime-local" id="j-date"></div></div>' +
         '<div class="form-group"><label class="form-label">Type</label>' +
         '<select class="form-select" id="j-type"><option>Maintenance</option><option>Repair</option>' +
-        '<option>Check</option><option>Observation</option></select></div></div>' +
+        '<option>Check</option><option>Observation</option></select></div>' +
+        '<div class="form-group"><label class="form-label">Engine Hours</label>' +
+        '<input class="form-input" type="number" id="j-hours" min="0" step="0.1" placeholder="0"></div></div>' +
         '<div class="form-group"><label class="form-label">Comment</label>' +
         '<textarea class="form-textarea" id="j-cmt" rows="2" placeholder="Describe the work performed…"></textarea></div>' +
         '<div class="form-actions" style="border:none;padding:0;margin:0">' +
@@ -3614,12 +3616,32 @@ var Pages = {
 
       $('#j-date').val(new Date().toISOString().slice(0,16));
 
+      /* Auto-fill engine hours from current status */
+      API.get('status_json').done(function(sd) {
+        if (!sd) return;
+        var tiles = sd.tiles || sd;
+        if (Array.isArray(tiles)) {
+          for (var ti = 0; ti < tiles.length; ti++) {
+            if ((tiles[ti].subtype||'').toLowerCase() === 'runhours' ||
+                (tiles[ti].field||'') === 'RunHours') {
+              var v = parseFloat(tiles[ti].value);
+              if (!isNaN(v)) $('#j-hours').val(v);
+              break;
+            }
+          }
+        }
+        if (!$('#j-hours').val() && sd.RunHours != null) {
+          var v = parseFloat(sd.RunHours);
+          if (!isNaN(v)) $('#j-hours').val(v);
+        }
+      });
+
       $('#j-add').on('click', function() {
         var d = new Date($('#j-date').val());
         var entry = {
           date: String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0')+'/'+
                 d.getFullYear()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'),
-          type: $('#j-type').val(), hours: 0, comment: $('#j-cmt').val()
+          type: $('#j-type').val(), hours: parseFloat($('#j-hours').val()) || 0, comment: $('#j-cmt').val()
         };
         API.set('add_maint_log', JSON.stringify(entry)).done(function() {
           $('#j-cmt').val('');
@@ -3682,9 +3704,10 @@ var Pages = {
       indices.forEach(function(i) {
         var e = all[i];
         var cmt = (e.comment||'').replace(/<br>/g, ' ');
+        var hrs = e.hours ? ' &middot; ' + esc(String(e.hours)) + ' hrs' : '';
         h += '<div class="journal-entry">' +
           '<div class="journal-date">'+esc(e.date)+'</div>' +
-          '<div class="journal-text"><strong>'+esc(e.type)+'</strong><br>'+esc(cmt)+'</div>' +
+          '<div class="journal-text"><strong>'+esc(e.type)+'</strong>' + hrs + '<br>'+esc(cmt)+'</div>' +
           '<div class="journal-actions">' +
           '<button class="btn btn-sm btn-outline j-edit" data-idx="'+i+'" title="Edit">' +
           '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
@@ -3729,6 +3752,8 @@ var Pages = {
         ['Maintenance','Repair','Check','Observation'].map(function(t){
           return '<option'+(t===e.type?' selected':'')+'>'+t+'</option>';
         }).join('') + '</select></div>' +
+        '<div class="form-group"><label class="form-label">Engine Hours</label>' +
+        '<input class="form-input" type="number" id="je-hours" min="0" step="0.1" value="'+esc(String(e.hours||0))+'"></div>' +
         '<div class="form-group"><label class="form-label">Comment</label>' +
         '<textarea class="form-textarea" id="je-cmt" rows="3">'+esc(cmt)+'</textarea></div>';
       Modal.show('Edit Journal Entry', Modal.html(body), [
@@ -3742,7 +3767,7 @@ var Pages = {
           date: String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0')+'/'+
                 d.getFullYear()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'),
           type: $('#je-type').val(),
-          hours: e.hours || 0,
+          hours: parseFloat($('#je-hours').val()) || 0,
           comment: $('#je-cmt').val().replace(/\n/g, '<br>')
         };
         var obj = {}; obj[String(idx)] = entry;
