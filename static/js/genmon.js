@@ -646,6 +646,14 @@ var Poll = {
       S.switchState  = d.switchstate || 'Auto';
       S.engineState  = d.enginestate || '';
       S.kwOutput     = d.kwOutput    || '0 kW';
+      if (d.RunHours != null) {
+        S.runHours = parseFloat(d.RunHours) || 0;
+        /* Live-fill journal hours field if it's still at default 0 */
+        var $jh = $('#j-hours');
+        if ($jh.length && S.runHours && (!$jh.val() || $jh.val() === '0')) {
+          $jh.val(S.runHours);
+        }
+      }
       S.altDateFmt   = !!d.AltDateformat;
       S.updateAvailable = !!d.UpdateAvailable;
       if (d.Weather) S.weather = d.Weather;
@@ -2782,7 +2790,7 @@ var Pages = {
           '<option>Weekly</option><option>Biweekly</option><option>Monthly</option></select></div></div>';
         if (info.WriteQuietMode)
           h += '<div class="mb-2"><label class="checkbox-label"><input type="checkbox" id="ex-quiet"> Quiet Mode</label>' +
-            '<div class="form-hint">Exercise at a lower RPM</div></div>';
+            '<div class="form-hint">Exercise without engaging the transfer switch</div></div>';
         h += '<div class="form-actions" style="border:none;padding:0;margin:0">' +
           '<button class="btn btn-primary btn-sm" id="ex-save">'+btnIcon('save')+' Save Schedule</button></div></div></div>';
       }
@@ -3616,25 +3624,10 @@ var Pages = {
 
       $('#j-date').val(new Date().toISOString().slice(0,16));
 
-      /* Auto-fill engine hours from current status */
-      API.get('status_json').done(function(sd) {
-        if (!sd) return;
-        var tiles = sd.tiles || sd;
-        if (Array.isArray(tiles)) {
-          for (var ti = 0; ti < tiles.length; ti++) {
-            if ((tiles[ti].subtype||'').toLowerCase() === 'runhours' ||
-                (tiles[ti].field||'') === 'RunHours') {
-              var v = parseFloat(tiles[ti].value);
-              if (!isNaN(v)) $('#j-hours').val(v);
-              break;
-            }
-          }
-        }
-        if (!$('#j-hours').val() && sd.RunHours != null) {
-          var v = parseFloat(sd.RunHours);
-          if (!isNaN(v)) $('#j-hours').val(v);
-        }
-      });
+      /* Auto-fill engine hours from the global polling data */
+      if (S.runHours) {
+        $('#j-hours').val(S.runHours);
+      }
 
       $('#j-add').on('click', function() {
         var d = new Date($('#j-date').val());
@@ -3692,8 +3685,16 @@ var Pages = {
         });
       }
 
-      /* Sort */
-      if (Pages.journal._newestFirst) indices.reverse();
+      /* Sort by date (parse "MM/DD/YYYY HH:MM" into comparable timestamps) */
+      function _parseJDate(s) {
+        var p = (s||'').split(' '), dp = (p[0]||'').split('/'), tp = (p[1]||'00:00').split(':');
+        if (dp.length === 3) return new Date(dp[2], dp[0]-1, dp[1], tp[0]||0, tp[1]||0).getTime();
+        return 0;
+      }
+      indices.sort(function(a, b) {
+        var da = _parseJDate(all[a].date), db = _parseJDate(all[b].date);
+        return Pages.journal._newestFirst ? db - da : da - db;
+      });
 
       if (!indices.length) {
         $('#j-list').html('<div class="text-muted text-center">No matching entries.</div>');
