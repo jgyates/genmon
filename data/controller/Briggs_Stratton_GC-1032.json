@@ -810,7 +810,7 @@
             "mask": "ffff",
             "multiplier": 0.1,
             "type": "float",
-            "title": "Load Total",
+            "title": "Load Total Percent",
             "units": "%"
           },
           {
