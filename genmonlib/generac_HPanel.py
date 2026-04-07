@@ -138,7 +138,7 @@ class HPanelReg(object):
     def hexsort(self, e):
         try:
             return int(e[REGISTER], 16)
-        except:
+        except (ValueError, IndexError, TypeError):
             return 0
 
     # @staticmethod
@@ -189,11 +189,11 @@ class HPanelIO(object):
     }
     Outputs = {
         # Output1
-        ("0082", 0x8000): "Genertor in Alarm",
-        ("0082", 0x4000): "Genertor in Warning",
+        ("0082", 0x8000): "Generator in Alarm",
+        ("0082", 0x4000): "Generator in Warning",
         ("0082", 0x2000): "Running",
         ("0082", 0x1000): "Alarms Enabled",
-        ("0082", 0x0800): "Read for Load",
+        ("0082", 0x0800): "Ready for Load",
         ("0082", 0x0400): "Ready to Run",
         ("0082", 0x0200): "Stopped in Alarm",
         ("0082", 0x0100): "Stopped",
@@ -204,15 +204,15 @@ class HPanelIO(object):
         # Output6
         ("0087", 0x0400): "Digital Input Key in Auto Active",
         ("0087", 0x0200): "Digital Input Key in Manual Active",
-        ("0087", 0x0100): "Emergency Stop Digitial Input Active",
+        ("0087", 0x0100): "Emergency Stop Digital Input Active",
         ("0087", 0x0080): "Remote Start Digital Input Active",
-        ("0087", 0x0040): "DI-1, Digitial Input #5 Active / Battery Charger Fail",
+        ("0087", 0x0040): "DI-1, Digital Input #5 Active / Battery Charger Fail",
         (
             "0087",
             0x0020,
-        ): "DI-2, Digitial Input #6 Active / Ruptured Basin, Gas Leak, Low Fuel Pressure",
-        ("0087", 0x0010): "DI-3, Digitial Input #7 Active / Line Power",
-        ("0087", 0x0008): "DI-4, Digitial Input #8 Active / Generator Power",
+        ): "DI-2, Digital Input #6 Active / Ruptured Basin, Gas Leak, Low Fuel Pressure",
+        ("0087", 0x0010): "DI-3, Digital Input #7 Active / Line Power",
+        ("0087", 0x0008): "DI-4, Digital Input #8 Active / Generator Power",
         ("0087", 0x0004): "Line Power",
         ("0087", 0x0002): "Generator Power",
         # Output 7
@@ -236,9 +236,8 @@ class HPanelIO(object):
         ("0089", 0x1000): "User Config 116",
         ("0089", 0x0800): "User Config 117",
         ("0089", 0x0400): "User Config 118",
-        ("0089", 0x0400): "User Config 118",
         ("0089", 0x0200): "RPM Missing",
-        ("0089", 0x0200): "Reset Alarms",
+        ("0089", 0x0100): "Reset Alarms",
     }
     Alarms = {
         # Output 1
@@ -252,7 +251,7 @@ class HPanelIO(object):
         ): "Oil Inhibit Alarm - Oil pressure too high for a stopped engine.",
         (
             "0082",
-            0x0002,
+            0x0004,
         ): "Oil Temp High Alarm - Oil Temperature has gone above maximum alarm limit.",
         (
             "0082",
@@ -643,7 +642,7 @@ class GPanelReg(object):
     def hexsort(self, e):
         try:
             return int(e[REGISTER], 16)
-        except:
+        except (ValueError, IndexError, TypeError):
             return 0
 
     # @staticmethod
@@ -861,7 +860,7 @@ class RegisterStringEnum(object):
     def hexsort(e):
         try:
             return int(e[REGISTER], 16)
-        except:
+        except (ValueError, IndexError, TypeError):
             return 0
 
     # ---------------------RegisterStringEnum::GetRegList------------------------
@@ -1219,7 +1218,7 @@ class HPanel(GeneratorController):
 
             ControllerString = self.ModBus.ProcessTransaction(
                 RegisterStringEnum.CONTROLLER_NAME[REGISTER],
-                RegisterStringEnum.CONTROLLER_NAME[LENGTH] / 2,
+                RegisterStringEnum.CONTROLLER_NAME[LENGTH] // 2,
             )
 
             if not len(ControllerString):
@@ -1554,37 +1553,37 @@ class HPanel(GeneratorController):
                 return
             # Read the nameplate dataGet Serial Number
             self.ModBus.ProcessFileReadTransaction(
-                NAMEPLATE_DATA_FILE_RECORD, NAMEPLATE_DATA_LENGTH / 2
+                NAMEPLATE_DATA_FILE_RECORD, NAMEPLATE_DATA_LENGTH // 2
             )
             if self.IsStopping:
                 return
             # Read Misc Engine data
             self.ModBus.ProcessFileReadTransaction(
-                MISC_GEN_FILE_RECORD, MISC_GEN_FILE_RECORD_LENGTH / 2
+                MISC_GEN_FILE_RECORD, MISC_GEN_FILE_RECORD_LENGTH // 2
             )
             if self.IsStopping:
                 return
             # Read Engine Data
             self.ModBus.ProcessFileReadTransaction(
-                ENGINE_DATA_FILE_RECORD, ENGINE_DATA_FILE_RECORD_LENGTH / 2
+                ENGINE_DATA_FILE_RECORD, ENGINE_DATA_FILE_RECORD_LENGTH // 2
             )
             if self.IsStopping:
                 return
             # Read Govonor Data
             self.ModBus.ProcessFileReadTransaction(
-                GOV_DATA_FILE_RECORD, GOV_DATA_FILE_RECORD_LENGTH / 2
+                GOV_DATA_FILE_RECORD, GOV_DATA_FILE_RECORD_LENGTH // 2
             )
             if self.IsStopping:
                 return
             # Read Secondary Govonor Data
             self.ModBus.ProcessFileReadTransaction(
-                GOV_DATA_SEC_FILE_RECORD, GOV_DATA_SEC_FILE_RECORD_LENGTH / 2
+                GOV_DATA_SEC_FILE_RECORD, GOV_DATA_SEC_FILE_RECORD_LENGTH // 2
             )
             if self.IsStopping:
                 return
             # Read Regulator Data
             self.ModBus.ProcessFileReadTransaction(
-                REGULATOR_FILE_RECORD, REGULATOR_FILE_RECORD_LENGTH / 2
+                REGULATOR_FILE_RECORD, REGULATOR_FILE_RECORD_LENGTH // 2
             )
             if self.IsStopping:
                 return
@@ -1618,7 +1617,7 @@ class HPanel(GeneratorController):
                 Register = "%04x" % RegValue
                 localTimeoutCount = self.ModBus.ComTimoutError
                 localSyncError = self.ModBus.ComSyncError
-                self.ModBus.ProcessFileReadTransaction(Register, EVENT_LOG_LENGTH / 2)
+                self.ModBus.ProcessFileReadTransaction(Register, EVENT_LOG_LENGTH // 2)
                 if (
                     localSyncError != self.ModBus.ComSyncError
                     or localTimeoutCount != self.ModBus.ComTimoutError
@@ -1632,7 +1631,7 @@ class HPanel(GeneratorController):
                 Register = "%04x" % RegValue
                 localTimeoutCount = self.ModBus.ComTimoutError
                 localSyncError = self.ModBus.ComSyncError
-                self.ModBus.ProcessFileReadTransaction(Register, ALARM_LOG_LENGTH / 2)
+                self.ModBus.ProcessFileReadTransaction(Register, ALARM_LOG_LENGTH // 2)
                 if (
                     localSyncError != self.ModBus.ComSyncError
                     or localTimeoutCount != self.ModBus.ComTimoutError
@@ -1652,7 +1651,7 @@ class HPanel(GeneratorController):
                     localTimeoutCount = self.ModBus.ComTimoutError
                     localSyncError = self.ModBus.ComSyncError
                     self.ModBus.ProcessTransaction(
-                        RegisterList[REGISTER], RegisterList[LENGTH] / 2
+                        RegisterList[REGISTER], RegisterList[LENGTH] // 2
                     )
                     if (
                         localSyncError != self.ModBus.ComSyncError
@@ -1681,7 +1680,7 @@ class HPanel(GeneratorController):
                     localTimeoutCount = self.ModBus.ComTimoutError
                     localSyncError = self.ModBus.ComSyncError
                     self.ModBus.ProcessTransaction(
-                        RegisterList[REGISTER], RegisterList[LENGTH] / 2
+                        RegisterList[REGISTER], RegisterList[LENGTH] // 2
                     )
                     if (
                         localSyncError != self.ModBus.ComSyncError
@@ -3392,7 +3391,7 @@ class HPanel(GeneratorController):
                 Data.append(d.year - 2000)  # GEN_TIME_YR
                 Data.append(0)  #
                 self.ModBus.ProcessWriteTransaction(
-                    self.Reg.GEN_TIME_HR_MIN[REGISTER], len(Data) / 2, Data
+                    self.Reg.GEN_TIME_HR_MIN[REGISTER], len(Data) // 2, Data
                 )
 
             else:
@@ -3400,7 +3399,7 @@ class HPanel(GeneratorController):
                 Data.append(d.hour)  # GEN_TIME_HR_MIN
                 Data.append(d.minute)
                 self.ModBus.ProcessWriteTransaction(
-                    self.Reg.GEN_TIME_HR_MIN[REGISTER], len(Data) / 2, Data
+                    self.Reg.GEN_TIME_HR_MIN[REGISTER], len(Data) // 2, Data
                 )
 
                 DayOfWeek = d.weekday()  # returns Monday is 0 and Sunday is 6
@@ -3413,14 +3412,14 @@ class HPanel(GeneratorController):
                 Data.append(d.second)  # GEN_TIME_SEC_DYWK
                 Data.append(DayOfWeek)  # Day of Week is always zero
                 self.ModBus.ProcessWriteTransaction(
-                    self.Reg.GEN_TIME_SEC_DYWK[REGISTER], len(Data) / 2, Data
+                    self.Reg.GEN_TIME_SEC_DYWK[REGISTER], len(Data) // 2, Data
                 )
 
                 Data = []
                 Data.append(d.month)  # GEN_TIME_MONTH_DAY
                 Data.append(d.day)  # low byte is day of month
                 self.ModBus.ProcessWriteTransaction(
-                    self.Reg.GEN_TIME_MONTH_DAY[REGISTER], len(Data) / 2, Data
+                    self.Reg.GEN_TIME_MONTH_DAY[REGISTER], len(Data) // 2, Data
                 )
 
                 Data = []
@@ -3428,7 +3427,7 @@ class HPanel(GeneratorController):
                 Data.append(d.year - 2000)  # GEN_TIME_YR
                 Data.append(0)  #
                 self.ModBus.ProcessWriteTransaction(
-                    self.Reg.GEN_TIME_YR[REGISTER], len(Data) / 2, Data
+                    self.Reg.GEN_TIME_YR[REGISTER], len(Data) // 2, Data
                 )
 
         except Exception as e1:
@@ -3513,7 +3512,7 @@ class HPanel(GeneratorController):
                 Data.append(0)
                 Data.append(1)
                 self.ModBus.ProcessWriteTransaction(
-                    self.Reg.QUIETTEST_STATUS[REGISTER], len(Data) / 2, Data
+                    self.Reg.QUIETTEST_STATUS[REGISTER], len(Data) // 2, Data
                 )
                 return "Remote command sent successfully (quiettest)"
             elif Command == "quietteststop":
@@ -3521,7 +3520,7 @@ class HPanel(GeneratorController):
                 Data.append(0)
                 Data.append(0)
                 self.ModBus.ProcessWriteTransaction(
-                    self.Reg.QUIETTEST_STATUS[REGISTER], len(Data) / 2, Data
+                    self.Reg.QUIETTEST_STATUS[REGISTER], len(Data) // 2, Data
                 )
                 return "Remote command sent successfully (quietteststop)"
             elif Command == "ackalarm":
@@ -3529,7 +3528,7 @@ class HPanel(GeneratorController):
                 Data.append(0)
                 Data.append(1)
                 self.ModBus.ProcessWriteTransaction(
-                    self.Reg.ALARM_ACK[REGISTER], len(Data) / 2, Data
+                    self.Reg.ALARM_ACK[REGISTER], len(Data) // 2, Data
                 )
                 return "Remote command sent successfully (ackalarm)"
 
@@ -3539,19 +3538,19 @@ class HPanel(GeneratorController):
                     Data = []
                     Data.append(0)
                     Data.append(0)
-                    self.ModBus.ProcessWriteTransaction(self.Reg.SWITCH_STATE[REGISTER], len(Data) / 2, Data)
+                    self.ModBus.ProcessWriteTransaction(self.Reg.SWITCH_STATE[REGISTER], len(Data) // 2, Data)
                     return "Remote command sent successfully (off)"
                 elif Command == "auto":
                     Data = []
                     Data.append(1)
                     Data.append(0)
-                    self.ModBus.ProcessWriteTransaction(self.Reg.SWITCH_STATE[REGISTER], len(Data) / 2, Data)
+                    self.ModBus.ProcessWriteTransaction(self.Reg.SWITCH_STATE[REGISTER], len(Data) // 2, Data)
                     return "Remote command sent successfully (auto)"
                 elif Command == "manual":
                     Data = []
                     Data.append(0)
                     Data.append(1)
-                    self.ModBus.ProcessWriteTransaction(self.Reg.SWITCH_STATE[REGISTER], len(Data) / 2, Data)
+                    self.ModBus.ProcessWriteTransaction(self.Reg.SWITCH_STATE[REGISTER], len(Data) // 2, Data)
                     return "Remote command sent successfully (manual)"
                 """
             else:
@@ -3572,7 +3571,7 @@ class HPanel(GeneratorController):
 
             ## Write 3 regs at once
             self.ModBus.ProcessWriteTransaction(
-                self.Reg.START_BITS[REGISTER], len(Data) / 2, Data
+                self.Reg.START_BITS[REGISTER], len(Data) // 2, Data
             )
 
             return "Remote command sent successfully"
@@ -3665,12 +3664,13 @@ class HPanel(GeneratorController):
 
         PowerOut = 0.0
         try:
-            if not Current == 0:
+            if Current != 0 and Voltage != 0:
                 # P(W) = PF x I(A) x V(V)
                 # this calculation is for single phase but we are using average voltage and current
                 # watts is the unit
                 PowerOut = powerfactor * Voltage * Current
-        except:
+        except (TypeError, ValueError, ZeroDivisionError) as e1:
+            self.LogErrorLine("Error in GetPowerOutputAlt: " + str(e1))
             PowerOut = 0.0
 
         # return kW
