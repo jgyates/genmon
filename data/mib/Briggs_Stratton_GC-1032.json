@@ -127,6 +127,125 @@
             "default" : "",
             "keywords" : ["Time", "Generator Time"]
         },
+        {
+            "oid": "0, 0, 18",
+            "return_type": "str",
+            "description": "generatorStatus",
+            "default" : "Unknown",
+            "keywords" : ["Status", "Generator Status"]
+        },
+        {
+            "oid": "0, 0, 19",
+            "return_type": "str",
+            "description": "loadTotalPercent",
+            "default" : "Unknown",
+            "keywords" : ["Engine", "Load Total Percent"]
+        },
+        {
+            "oid": "0, 0, 20",
+            "return_type": "str",
+            "description": "loadTotalKVR",
+            "default" : "Unknown",
+            "keywords" : ["Engine", "Load Total (kVR)"]
+        },
+        {
+            "oid": "0, 0, 21",
+            "return_type": "str",
+            "description": "generatorL3Volts",
+            "default" : "Unknown",
+            "keywords" : ["Status", "Generator L3 Volts"]
+        },
+        {
+            "oid": "0, 0, 22",
+            "return_type": "str",
+            "description": "generatorL2L3Volts",
+            "default" : "Unknown",
+            "keywords" : ["Status", "Generator L2-L3 Volts"]
+        },
+        {
+            "oid": "0, 0, 23",
+            "return_type": "str",
+            "description": "generatorL3L1Volts",
+            "default" : "Unknown",
+            "keywords" : ["Status", "Generator L3-L1 Volts"]
+        },
+        {
+            "oid": "0, 0, 24",
+            "return_type": "str",
+            "description": "GenL3Frequency",
+            "default" : "Unknown",
+            "keywords" : ["Status", "Generator L3 Frequency"]
+        },
+        {
+            "oid": "0, 0, 25",
+            "return_type": "str",
+            "description": "GenL3Current",
+            "default" : "Unknown",
+            "keywords" : ["Status", "Generator L3 Current"]
+        },
+        {
+            "oid": "0, 0, 26",
+            "return_type": "str",
+            "description": "L1PowerFactor",
+            "default" : "Unknown",
+            "keywords" : ["Status", "L1 Power Factor"]
+        },
+        {
+            "oid": "0, 0, 27",
+            "return_type": "str",
+            "description": "L2PowerFactor",
+            "default" : "Unknown",
+            "keywords" : ["Status", "L2 Power Factor"]
+        },
+        {
+            "oid": "0, 0, 28",
+            "return_type": "str",
+            "description": "L3PowerFactor",
+            "default" : "Unknown",
+            "keywords" : ["Status", "L3 Power Factor"]
+        },
+        {
+            "oid": "0, 0, 29",
+            "return_type": "str",
+            "description": "avgPowerFactor",
+            "default" : "Unknown",
+            "keywords" : ["Status", "Average Power Factor"]
+        },
+        {
+            "oid": "0, 0, 30",
+            "return_type": "str",
+            "description": "generatorL1Volts",
+            "default" : "Unknown",
+            "keywords" : ["Status", "Generator L1 Volts"]
+        },
+        {
+            "oid": "0, 0, 31",
+            "return_type": "str",
+            "description": "generatorL2Volts",
+            "default" : "Unknown",
+            "keywords" : ["Status", "Generator L2 Volts"]
+        },
+        {
+            "oid": "0, 0, 32",
+            "return_type": "str",
+            "description": "utilityL1Volts",
+            "default" : "Unknown",
+            "keywords" : ["Status", "Utility L1 Volts"]
+        },
+        {
+            "oid": "0, 0, 33",
+            "return_type": "str",
+            "description": "utilityL2Volts",
+            "default" : "Unknown",
+            "keywords" : ["Status", "Utility L2 Volts"]
+        },
+        {
+            "oid": "0, 0, 34",
+            "return_type": "str",
+            "description": "utilityL3Volts",
+            "default" : "Unknown",
+            "keywords" : ["Status", "Utility L3 Volts"]
+        },
 	{
             "oid": "0, 1, 1",
             "return_type": "str",
@@ -244,7 +363,63 @@
             "return_type": "str",
             "description": "ambientTemperature",
             "default" : "",
-            "keywords" : ["Maintenance", "Ambient Temperature"]
+            "keywords" : ["Maintenance", "Coolant Temperature"]
+        },
+	{
+            "oid": "0, 1, 19",
+            "return_type": "str",
+            "description": "hoursOfFuelEstimate",
+            "default" : "",
+            "keywords" : ["Maintenance", "Hours of Fuel Remaining"]
+        },
+	{
+            "oid": "0, 1, 20",
+            "return_type": "str",
+            "description": "kwHoursLast30days",
+            "default" : "",
+            "keywords" : ["Maintenance", "kW Hours in last 30"]
+        },
+	{
+            "oid": "0, 1, 21",
+            "return_type": "str",
+            "description": "fuelConsumptionLast30days",
+            "default" : "",
+            "keywords" : ["Maintenance", "Fuel Consumption in last 30"]
+        },
+	{
+            "oid": "0, 1, 22",
+            "return_type": "str",
+            "description": "runHoursLast30days",
+            "default" : "",
+            "keywords" : ["Maintenance", "Run Hours in last 30"]
+        },
+	{
+            "oid": "0, 1, 23",
+            "return_type": "str",
+            "description": "cumulativeEnergyKWH",
+            "default" : "",
+            "keywords" : ["Maintenance", "Cumulative Energy kWh"]
+        },
+	{
+            "oid": "0, 1, 24",
+            "return_type": "str",
+            "description": "cumulativeEnergyKVAH",
+            "default" : "",
+            "keywords" : ["Maintenance", "Cumulative Energy kVAh"]
+        },
+	{
+            "oid": "0, 1, 25",
+            "return_type": "str",
+            "description": "cumulativeEnergyKVRH",
+            "default" : "",
+            "keywords" : ["Maintenance", "Cumulative Energy kVRh"]
+        },
+	{
+            "oid": "0, 1, 26",
+            "return_type": "str",
+            "description": "oilPressure",
+            "default" : "",
+            "keywords" : ["Maintenance", "Oil Pressure"]
         },
 	{
             "oid": "0, 2, 0",
