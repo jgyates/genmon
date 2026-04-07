@@ -960,8 +960,7 @@
             "multiplier": 0.01,
             "type": "float",
             "title": "L1 Power Factor",
-            "units": null,
-            "include": "threephase"
+            "units": null
           },
           {
             "reg": "000b",
@@ -970,8 +969,7 @@
             "multiplier": 0.01,
             "type": "float",
             "title": "L2 Power Factor",
-            "units": null,
-            "include": "threephase"
+            "units": null
           },
           {
             "reg": "000c",
@@ -990,8 +988,7 @@
             "multiplier": 0.01,
             "type": "float",
             "title": "Average Power Factor",
-            "units": null,
-            "include": "threephase"
+            "units": null
           },
           {
             "reg": "0039",
