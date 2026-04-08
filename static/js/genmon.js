@@ -660,6 +660,10 @@ var Poll = {
       UI.statusBadge(S.baseStatus);
       $('#monitor-time').text(d.MonitorTime || '');
       UI.updatePill();
+      /* Fetch canonical base status for consistent color mapping */
+      API.get('getbase').done(function(gb) {
+        if (gb) S.getBase = String(gb).replace(/"/g, '').trim().toUpperCase();
+      });
       /* --- Alert bar: system health + unsent feedback --- */
       if (d.SystemHealth && d.SystemHealth !== 'OK') {
         var hl = /thread|dead|log file/i.test(d.SystemHealth) ? 'error' : 'warn';
@@ -1940,19 +1944,22 @@ var Pages = {
       if (!$hl.length) return;
       var sw = d.switchstate || S.switchState || 'Auto';
       var eng = d.enginestate || S.engineState || 'Off';
-      var base = d.basestatus || S.baseStatus || 'READY';
+      /* Use canonical getbase for color (consistent across all controllers) */
+      var base = S.getBase || d.basestatus || S.baseStatus || 'READY';
 
-      /* Determine headline and level */
+      /* Map the 8 canonical getbase states to color levels */
       var level = 'ok';
-      var bl = base.toLowerCase().replace(/\s+/g, '-');
-      if (bl === 'alarm') level = 'alarm';
-      else if (bl === 'servicedue' || bl === 'off') level = 'warn';
-      else if (bl === 'running' || bl === 'running-manual') level = 'warn';
-      if (sw.toLowerCase() !== 'auto') level = level === 'alarm' ? 'alarm' : 'warn';
+      var bl = base.toUpperCase();
+      if (bl === 'ALARM')                            level = 'alarm';
+      else if (bl === 'SERVICEDUE')                  level = 'warn';
+      else if (bl === 'OFF' || bl === 'MANUAL')      level = 'warn';
+      else if (bl === 'RUNNING' || bl === 'RUNNING-MANUAL') level = 'warn';
+      else if (bl === 'EXERCISING')                  level = 'ok';
+      else /* READY */                               level = 'ok';
 
-      /* Build headline — omit basestatus when it just says READY (already implied by green) */
+      /* Build headline — omit base state when READY (already implied by green) */
       var headline = 'Switch ' + sw + ' \u2013 Engine ' + eng;
-      if (bl !== 'ready') headline += ' \u2013 ' + base;
+      if (bl !== 'READY') headline += ' \u2013 ' + base;
       $hl.text(headline).attr('data-level', level);
       /* Mirror level onto tile for reversed-mode background */
       $hl.closest('.tile-overview').attr('data-ov-level', level);
