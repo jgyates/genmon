@@ -878,6 +878,53 @@ input, select, textarea { font: inherit; color: inherit; }
 .tile-font-lg .log-label { font-size: .82rem; }
 .tile-font-lg .log-text { font-size: .92rem; }
 
+/* --- Overview status tile --- */
+.tile-overview {
+  grid-column: span 5;
+  min-height: 80px;
+  justify-content: center;
+  text-align: center;
+  padding: 14px 20px;
+  transition: background .3s ease, border-color .3s ease;
+}
+.tile-overview.ov-span-2 { grid-column: span 2; }
+.tile-overview.ov-span-3 { grid-column: span 3; }
+.tile-overview.ov-span-4 { grid-column: span 4; }
+.tile-overview.ov-span-5 { grid-column: span 5; }
+.overview-headline {
+  font-size: 2rem;
+  font-weight: 800;
+  font-style: italic;
+  line-height: 1.2;
+  letter-spacing: .5px;
+  transition: color .3s ease;
+}
+.overview-sub {
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--text-1);
+  margin-top: 4px;
+  transition: color .3s ease;
+}
+/* Font size modifiers */
+.tile-overview.ov-font-sm .overview-headline { font-size: 1.4rem; }
+.tile-overview.ov-font-sm .overview-sub { font-size: .85rem; }
+.tile-overview.ov-font-md .overview-headline { font-size: 2rem; }
+.tile-overview.ov-font-md .overview-sub { font-size: 1rem; }
+.tile-overview.ov-font-lg .overview-headline { font-size: 2.6rem; }
+.tile-overview.ov-font-lg .overview-sub { font-size: 1.15rem; }
+/* Status colours — normal mode */
+.overview-headline[data-level="ok"]    { color: #22c55e; }
+.overview-headline[data-level="warn"]  { color: #f59e0b; }
+.overview-headline[data-level="alarm"] { color: #ef4444; }
+/* Reversed mode — coloured background, white text */
+.tile-overview.ov-reversed { border-color: transparent; }
+.tile-overview.ov-reversed .overview-headline,
+.tile-overview.ov-reversed .overview-sub { color: #fff; }
+.tile-overview.ov-reversed[data-ov-level="ok"]    { background: #22c55e; }
+.tile-overview.ov-reversed[data-ov-level="warn"]  { background: #f59e0b; }
+.tile-overview.ov-reversed[data-ov-level="alarm"] { background: #ef4444; }
+
 /* --- Temperature thermometer gauge --- */
 :root {
   --thermo-body: #eceff1;
@@ -2299,6 +2346,8 @@ input, select, textarea { font: inherit; color: inherit; }
   html { font-size: 14px; }
   .tile-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
   .tile-lg, .tile-xl { grid-column: span 1; }
+  .tile-overview { grid-column: 1 / -1 !important; }
+  .overview-headline { font-size: 1.3rem !important; }
   .header { padding: 0 10px; }
   .content { padding: 10px; }
   .tile { padding: 10px; min-height: 140px; }

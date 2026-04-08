@@ -1342,11 +1342,14 @@ var Pages = {
       }
 
       /* Special (non-gauge) tiles that participate in ordering */
-      var specialKeys = [];
+      var specialKeys = ['overview'];
       if (info.PowerGraph && window.Chart) specialKeys.push('chart');
       specialKeys.push('clock');
       specialKeys.push('weather');
       S.specialKeys = specialKeys;
+
+      /* Overview tile is hidden by default until user explicitly shows it */
+      if (!Store.get('overviewShown')) Store.setTileHidden('overview', true);
 
       /* Build string-key map for all tiles */
       var km = Store.buildKeyMap(infoTiles, tiles, specialKeys);
@@ -1366,7 +1369,9 @@ var Pages = {
       for (var oi = 0; oi < order.length; oi++) {
         var key = order[oi];
         if (Store.isTileHidden(key)) continue;
-        if (key === 'chart') {
+        if (key === 'overview') {
+          h += self._overviewTileHtml();
+        } else if (key === 'chart') {
           h += self._chartTileHtml();
         } else if (key === 'clock') {
           h += self._clockTileHtml();
@@ -1537,6 +1542,7 @@ var Pages = {
       $c.on('click', '.tile-size-btn', function(e) {
         e.stopPropagation();
         var $tile = $(this).closest('.tile');
+        if ($tile.hasClass('tile-overview')) return; /* handled by ov-span-btn */
         var key = $tile.data('tile');
         var dir = $(this).data('dir');
         var gtype = $tile.attr('data-gtype');
@@ -1566,6 +1572,7 @@ var Pages = {
       $c.on('click', '.tile-font-btn', function(e) {
         e.stopPropagation();
         var $tile = $(this).closest('.tile');
+        if ($tile.hasClass('tile-overview')) return; /* handled by ov-font-btn / ov-reverse-btn */
         var key = $tile.data('tile');
         var dir = $(this).data('dir');
         var sizes = Pages.status.FONT_SIZES;
@@ -1577,6 +1584,50 @@ var Pages = {
           .removeClass('tile-font-sm tile-font-md tile-font-lg')
           .addClass('tile-font-' + ns);
         Store.setTileFontSize(key, ns === 'md' ? null : ns);
+      });
+
+      /* Overview tile: width (span) control */
+      $c.on('click', '.ov-span-btn', function(e) {
+        e.stopPropagation();
+        var $tile = $(this).closest('.tile-overview');
+        var dir = $(this).data('dir');
+        var spans = Pages.status.OV_SPANS;
+        var cur = parseInt($tile.attr('data-ov-span'), 10) || 5;
+        var ci = spans.indexOf(cur);
+        if (ci < 0) ci = spans.length - 1;
+        var ni = dir === 'up' ? Math.min(ci+1, spans.length-1) : Math.max(ci-1, 0);
+        var ns = spans[ni];
+        $tile.attr('data-ov-span', ns)
+          .removeClass('ov-span-2 ov-span-3 ov-span-4 ov-span-5')
+          .addClass('ov-span-' + ns);
+        Store.set('ovSpan', ns);
+      });
+
+      /* Overview tile: font size control */
+      $c.on('click', '.ov-font-btn', function(e) {
+        e.stopPropagation();
+        var $tile = $(this).closest('.tile-overview');
+        var dir = $(this).data('dir');
+        var fonts = Pages.status.OV_FONTS;
+        var cur = 'md';
+        for (var fi = 0; fi < fonts.length; fi++) {
+          if ($tile.hasClass('ov-font-' + fonts[fi])) { cur = fonts[fi]; break; }
+        }
+        var ci = fonts.indexOf(cur);
+        var ni = dir === 'up' ? Math.min(ci+1, fonts.length-1) : Math.max(ci-1, 0);
+        var ns = fonts[ni];
+        $tile.removeClass('ov-font-sm ov-font-md ov-font-lg').addClass('ov-font-' + ns);
+        Store.set('ovFont', ns);
+      });
+
+      /* Overview tile: reverse (coloured background) toggle */
+      $c.on('click', '.ov-reverse-btn', function(e) {
+        e.stopPropagation();
+        var $tile = $(this).closest('.tile-overview');
+        var rev = !$tile.hasClass('ov-reversed');
+        $tile.toggleClass('ov-reversed', rev);
+        $(this).text(rev ? '\u25cb' : '\u25cf');
+        Store.set('ovReversed', rev);
       });
 
       /* Change gauge type */
@@ -1614,8 +1665,11 @@ var Pages = {
         Store.setTileHidden(key, false);
         /* Mark weather as seen so it persists after re-add */
         if (key === 'weather') Store.set('weatherSeen', true);
+        /* Mark overview as explicitly shown */
+        if (key === 'overview') Store.set('overviewShown', true);
         var $new;
-        if (key === 'chart') $new = $(self._chartTileHtml());
+        if (key === 'overview') $new = $(self._overviewTileHtml());
+        else if (key === 'chart') $new = $(self._chartTileHtml());
         else if (key === 'clock') $new = $(self._clockTileHtml());
         else if (key === 'weather') $new = $(self._weatherTileHtml());
         else if (km.keyToGauge[key] !== undefined) {
@@ -1630,7 +1684,9 @@ var Pages = {
         if (!$new || !$new.length) return;
         $new.attr('draggable', 'true').hide();
         $new.find('.tile-edit-controls').show();
-        $new.appendTo($('#tile-grid'));
+        /* Overview tile always goes to the top */
+        if (key === 'overview') $new.prependTo($('#tile-grid'));
+        else $new.appendTo($('#tile-grid'));
         $new.fadeIn(200);
         var rgi2 = km.keyToGauge[key];
         if (rgi2 !== undefined) {
@@ -1850,6 +1906,62 @@ var Pages = {
         '</div></div>';
     },
 
+    OV_SPANS: [2, 3, 4, 5],
+    OV_FONTS: ['sm', 'md', 'lg'],
+    _overviewTileHtml: function() {
+      var span = Store.get('ovSpan') || 5;
+      var font = Store.get('ovFont') || 'md';
+      var rev  = !!Store.get('ovReversed');
+      return '<div class="tile tile-overview ov-span-' + span + ' ov-font-' + esc(font) + (rev ? ' ov-reversed' : '') + '" ' +
+        'data-tile="overview" data-ov-span="' + span + '" draggable="false">' +
+        '<button class="tile-hide-btn" title="Hide tile">&times;</button>' +
+        '<div class="tile-drag-handle" title="Drag to reorder">' + icon('status') + '</div>' +
+        '<div class="tile-edit-controls" style="display:none">' +
+        '<div class="tile-ctrl-row">' +
+        '<span class="tile-ctrl-label">Size</span>' +
+        '<button class="tile-size-btn ov-span-btn" data-dir="down" title="Narrower">&minus;</button>' +
+        '<button class="tile-size-btn ov-span-btn" data-dir="up" title="Wider">+</button>' +
+        '</div>' +
+        '<div class="tile-ctrl-row">' +
+        '<span class="tile-ctrl-label">Font</span>' +
+        '<button class="tile-font-btn ov-font-btn" data-dir="down" title="Smaller font">A&minus;</button>' +
+        '<button class="tile-font-btn ov-font-btn" data-dir="up" title="Larger font">A+</button>' +
+        '</div>' +
+        '<div class="tile-ctrl-row">' +
+        '<button class="tile-font-btn ov-reverse-btn" title="Toggle coloured background">' + (rev ? '\u25cb' : '\u25cf') + '</button>' +
+        '</div>' +
+        '</div>' +
+        '<div class="overview-headline" id="overview-headline" data-level="ok">--</div>' +
+        '<div class="overview-sub" id="overview-sub"></div></div>';
+    },
+
+    _updateOverview: function(d) {
+      var $hl = $('#overview-headline');
+      if (!$hl.length) return;
+      var sw = d.switchstate || S.switchState || 'Auto';
+      var eng = d.enginestate || S.engineState || 'Off';
+      var base = d.basestatus || S.baseStatus || 'READY';
+
+      /* Determine headline and level */
+      var level = 'ok';
+      var bl = base.toLowerCase().replace(/\s+/g, '-');
+      if (bl === 'alarm') level = 'alarm';
+      else if (bl === 'servicedue' || bl === 'off') level = 'warn';
+      else if (bl === 'running' || bl === 'running-manual') level = 'warn';
+      if (sw.toLowerCase() !== 'auto') level = level === 'alarm' ? 'alarm' : 'warn';
+
+      /* Build headline — omit basestatus when it just says READY (already implied by green) */
+      var headline = 'Switch ' + sw + ' \u2013 Engine ' + eng;
+      if (bl !== 'ready') headline += ' \u2013 ' + base;
+      $hl.text(headline).attr('data-level', level);
+      /* Mirror level onto tile for reversed-mode background */
+      $hl.closest('.tile-overview').attr('data-ov-level', level);
+
+      /* Sub-text: last outage info */
+      var sub = S._overviewOutageText || 'No outage information available.';
+      $('#overview-sub').text(sub);
+    },
+
     _infoTileHtml: function(idx, info) {
       var savedSize = Store.getTileSize(idx) || 'md';
       var savedFont = Store.getTileFontSize(idx) || 'md';
@@ -2063,7 +2175,7 @@ var Pages = {
       var tiles = S.tileConfig || [], infoTiles = Pages.status.INFO_TILES, h = '';
       var km = S.keyMap;
       if (!km) return;
-      var specialTitles = {chart: S.chartTitle || 'Power Output', clock: 'Clock', weather: 'Weather'};
+      var specialTitles = {overview: 'Status Overview', chart: S.chartTitle || 'Power Output', clock: 'Clock', weather: 'Weather'};
       for (var i = 0; i < km.allKeys.length; i++) {
         var key = km.allKeys[i];
         /* Show weather in drawer if auto-hidden (no data) or explicitly hidden */
@@ -2088,6 +2200,9 @@ var Pages = {
     },
 
     _updateInfoTiles: function(d) {
+      /* Update overview card */
+      Pages.status._updateOverview(d);
+
       var infoTiles = Pages.status.INFO_TILES;
       for (var i = 0; i < infoTiles.length; i++) {
         var it = infoTiles[i];
@@ -2197,7 +2312,38 @@ var Pages = {
         for (var i = 0; i < items.length; i++) {
           var obj = items[i];
           for (var k in obj) {
-            if (obj.hasOwnProperty(k) && map[k]) subs[map[k]] = obj[k];
+            if (!obj.hasOwnProperty(k)) continue;
+            if (map[k]) subs[map[k]] = obj[k];
+            /* Capture outage summary for overview card */
+            var kl = k.toLowerCase();
+            if (/number of outages/i.test(k)) {
+              var cnt = parseInt(obj[k], 10);
+              if (!S._overviewOutageDate) {
+                S._overviewOutageText = (isNaN(cnt) || cnt === 0)
+                  ? 'No outage has occurred since program launched.'
+                  : cnt + ' outage' + (cnt > 1 ? 's' : '') + ' since program launched.';
+              }
+            }
+            if (/last\s*outage/i.test(k) && !/log/i.test(k)) {
+              var raw = String(obj[k]).trim();
+              if (raw && raw !== '--' && raw.toLowerCase() !== 'unknown' && raw.toLowerCase() !== 'none') {
+                S._overviewOutageDate = raw;
+                var outDate = new Date(raw);
+                if (!isNaN(outDate.getTime())) {
+                  var diffDays = Math.floor((new Date() - outDate) / 86400000);
+                  S._overviewOutageText = diffDays > 30
+                    ? 'No outage in the last month. (Last: ' + raw + ')'
+                    : 'Last outage: ' + raw;
+                } else {
+                  S._overviewOutageText = 'Last outage: ' + raw;
+                }
+              }
+            }
+            if (kl === 'system in outage') {
+              if (String(obj[k]).toLowerCase() === 'yes') {
+                S._overviewOutageText = 'System is currently in an outage!';
+              }
+            }
           }
         }
         if (Object.keys(subs).length) S._outageSubs = subs;
