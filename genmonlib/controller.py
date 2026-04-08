@@ -1205,8 +1205,8 @@ class GeneratorController(MySupport):
                             else:
                                 self.LogDebug("Error in ExecuteCommandSequence: invalid type if value list")
                                 return "Command not found."
-                        self.LogDebug("Write List: len: " + str(int(len(Data)  / 2)) + " : "  + self.LogHexList(Data, prefix=command["reg"], nolog = True))
-                        self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data, IsCoil = IsCoil, IsSingle = IsSingle)
+                        self.LogDebug("Write List: len: " + str(int(len(Data)  // 2)) + " : "  + self.LogHexList(Data, prefix=command["reg"], nolog = True))
+                        self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) // 2, Data, IsCoil = IsCoil, IsSingle = IsSingle)
 
                     elif isinstance(command["value"], str):
                         # only supports single word writes
@@ -1216,8 +1216,8 @@ class GeneratorController(MySupport):
                         Data = []
                         Data.append(HighByte)  
                         Data.append(LowByte)  
-                        self.LogDebug("Write Str: len: "+ str(int(len(Data)  / 2)) + " : " + command["reg"] + ": "+ ("%04x %04x" % (HighByte, LowByte)))
-                        self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data, IsCoil = IsCoil, IsSingle = IsSingle)
+                        self.LogDebug("Write Str: len: "+ str(int(len(Data)  // 2)) + " : " + command["reg"] + ": "+ ("%04x %04x" % (HighByte, LowByte)))
+                        self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) // 2, Data, IsCoil = IsCoil, IsSingle = IsSingle)
                     elif isinstance(command["value"], int):
                         # only supports single word writes
                         value = command["value"]
@@ -1226,8 +1226,8 @@ class GeneratorController(MySupport):
                         Data = []
                         Data.append(HighByte)  
                         Data.append(LowByte)  
-                        self.LogDebug("Write Int: len: "+ str(int(len(Data)  / 2)) + " : " + command["reg"]+ ": "+ ("%04x %04x" % (HighByte, LowByte)))
-                        self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) / 2, Data, IsCoil = IsCoil, IsSingle = IsSingle)
+                        self.LogDebug("Write Int: len: "+ str(int(len(Data)  // 2)) + " : " + command["reg"]+ ": "+ ("%04x %04x" % (HighByte, LowByte)))
+                        self.ModBus.ProcessWriteTransaction(command["reg"], len(Data) // 2, Data, IsCoil = IsCoil, IsSingle = IsSingle)
                     else:
                         self.LogDebug("Error in ExecuteCommandSequence: invalid value type")
                         return "Command not found."
@@ -1579,7 +1579,7 @@ class GeneratorController(MySupport):
             Data = []
             Data.append(HighByte)
             Data.append(LowByte)
-            RegValue = self.ModBus.ProcessWriteTransaction(Register, len(Data) / 2, Data)
+            RegValue = self.ModBus.ProcessWriteTransaction(Register, len(Data) // 2, Data)
 
             if RegValue == "":
                 msgbody = "OK"

@@ -675,7 +675,7 @@ class CustomController(GeneratorController):
                             return
                         localTimeoutCount = self.ModBus.ComTimoutError
                         localSyncError = self.ModBus.ComSyncError
-                        self.ModBus.ProcessTransaction(Register, Length / 2, IsInput = IsInput)
+                        self.ModBus.ProcessTransaction(Register, Length // 2, IsInput = IsInput)
                         if (
                             localSyncError != self.ModBus.ComSyncError
                             or localTimeoutCount != self.ModBus.ComTimoutError
@@ -709,7 +709,7 @@ class CustomController(GeneratorController):
                             return
                         localTimeoutCount = self.ModBus.ComTimoutError
                         localSyncError = self.ModBus.ComSyncError
-                        self.ModBus.ProcessTransaction(Register, Length / 2)
+                        self.ModBus.ProcessTransaction(Register, Length // 2)
                         if (
                             localSyncError != self.ModBus.ComSyncError
                             or localTimeoutCount != self.ModBus.ComTimoutError
@@ -729,7 +729,7 @@ class CustomController(GeneratorController):
                             return
                         localTimeoutCount = self.ModBus.ComTimoutError
                         localSyncError = self.ModBus.ComSyncError
-                        self.ModBus.ProcessTransaction(Register, Length / 2, IsInput = True)
+                        self.ModBus.ProcessTransaction(Register, Length // 2, IsInput = True)
                         if (
                             localSyncError != self.ModBus.ComSyncError
                             or localTimeoutCount != self.ModBus.ComTimoutError
@@ -908,7 +908,7 @@ class CustomController(GeneratorController):
     def ValidateRegister(self, type, Register, Value):
 
         try:
-            datalength = int(len(Value) / 2)
+            datalength = int(len(Value) // 2)
             if not type in self.controllerimport.keys():
                 self.LogError("Error in ValidateRegister: register " + str(Register) + ", type " + str(type) + " not in import data.")
                 return False 

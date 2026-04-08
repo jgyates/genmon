@@ -373,7 +373,7 @@ class Evolution(GeneratorController):
                 if self.IsStopping:
                     break
                 self.ModBus.ProcessTransaction(
-                    PrimeReg, int(PrimeInfo[self.REGLEN] / 2)
+                    PrimeReg, int(PrimeInfo[self.REGLEN] // 2)
                 )
 
             for Reg, Info in self.BaseRegisters.items():
@@ -382,7 +382,7 @@ class Evolution(GeneratorController):
                 # The divide by 2 is due to the diference in the values in our dict are bytes
                 # but modbus makes register request in word increments so the request needs to
                 # in word multiples, not bytes
-                self.ModBus.ProcessTransaction(Reg, int(Info[self.REGLEN] / 2))
+                self.ModBus.ProcessTransaction(Reg, int(Info[self.REGLEN] // 2))
 
             # check for model specific info in read from conf file, if not there then add some defaults
             if not self.IsStopping:
@@ -1395,7 +1395,7 @@ class Evolution(GeneratorController):
                     localTimeoutCount = self.ModBus.ComTimoutError
                     localSyncError = self.ModBus.ComSyncError
                     self.ModBus.ProcessTransaction(
-                        PrimeReg, int(PrimeInfo[self.REGLEN] / 2)
+                        PrimeReg, int(PrimeInfo[self.REGLEN] // 2)
                     )
                     if self.IsStopping:
                         return
@@ -1423,7 +1423,7 @@ class Evolution(GeneratorController):
             # The divide by 2 is due to the diference in the values in our dict are bytes
             # but modbus makes register request in word increments so the request needs to
             # in word multiples, not bytes
-            self.ModBus.ProcessTransaction(Reg, int(Info[self.REGLEN] / 2))
+            self.ModBus.ProcessTransaction(Reg, int(Info[self.REGLEN] // 2))
             counter += 1
 
         # check that we have the serial number, if we do not then retry
@@ -1610,7 +1610,7 @@ class Evolution(GeneratorController):
                     Data.append(HighByte)  # Value for indexed register (High byte)
                     Data.append(LowByte)  # Value for indexed register (Low byte)
 
-                    self.ModBus.ProcessWriteTransaction("0004", len(Data) / 2, Data)
+                    self.ModBus.ProcessWriteTransaction("0004", len(Data) // 2, Data)
 
                 LowByte = register & 0x00FF
                 HighByte = register >> 8
@@ -1618,7 +1618,7 @@ class Evolution(GeneratorController):
                 Data.append(HighByte)  # indexed register to be written (High byte)
                 Data.append(LowByte)  # indexed register to be written (Low byte)
 
-                self.ModBus.ProcessWriteTransaction("0003", len(Data) / 2, Data)
+                self.ModBus.ProcessWriteTransaction("0003", len(Data) // 2, Data)
         except Exception as e1:
             self.LogErrorLine("Error in WriteIndexedRegister: " + str(e1))
 
@@ -1785,20 +1785,20 @@ class Evolution(GeneratorController):
                         "Validation Error: Invalid exercise frequency. " + CmdString
                     )
                     return msgbody
-                self.ModBus.ProcessWriteTransaction("002d", len(Data) / 2, Data)
+                self.ModBus.ProcessWriteTransaction("002d", len(Data) // 2, Data)
 
             Data = []
             Data.append(0x00)  #
             Data.append(Day)  # Day
 
-            self.ModBus.ProcessWriteTransaction("002e", len(Data) / 2, Data)
+            self.ModBus.ProcessWriteTransaction("002e", len(Data) // 2, Data)
 
             #
             Data = []
             Data.append(Hour)  #
             Data.append(Minute)  #
 
-            self.ModBus.ProcessWriteTransaction("002c", len(Data) / 2, Data)
+            self.ModBus.ProcessWriteTransaction("002c", len(Data) // 2, Data)
 
         return "Set Exercise Time Command sent"
 
@@ -1972,7 +1972,7 @@ class Evolution(GeneratorController):
         Data = []
         Data.append(0x00)
         Data.append(ModeValue)
-        self.ModBus.ProcessWriteTransaction("002f", len(Data) / 2, Data)
+        self.ModBus.ProcessWriteTransaction("002f", len(Data) // 2, Data)
 
         return "Set Quiet Mode Command sent"
 
@@ -1999,7 +1999,7 @@ class Evolution(GeneratorController):
         # Note: Day of week should always be zero when setting time
         Data.append(0)  # 0010
         Data.append(d.year - 2000)
-        self.ModBus.ProcessWriteTransaction("000e", len(Data) / 2, Data)
+        self.ModBus.ProcessWriteTransaction("000e", len(Data) // 2, Data)
 
     # ------------ Evolution:GetRegisterLength ----------------------------------
     def GetRegisterLength(self, Register):
@@ -2038,11 +2038,11 @@ class Evolution(GeneratorController):
         RegLength = self.GetRegisterLength(Register)
         if RegLength:  # if this is a base register
             if RegLength != (
-                len(Value) / 2
+                len(Value) // 2
             ):  # note: the divide here compensates between the len of hex values vs string data
                 self.LogError(
                     "Validation Error: Invalid register length (base) %s:%s %d %d"
-                    % (Register, Value, RegLength, len(Value) / 2)
+                    % (Register, Value, RegLength, len(Value) // 2)
                 )
                 ValidationOK = False
         # appears to be Start/Stop Log or service log
