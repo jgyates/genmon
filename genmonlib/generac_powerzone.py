@@ -640,7 +640,7 @@ class PowerZone(GeneratorController):
             Data = []
             Data.append(0x00)
             Data.append(0x13)
-            self.ModBus.ProcessFileWriteTransaction(Register, len(Data) / 2, Data)
+            self.ModBus.ProcessFileWriteTransaction(Register, len(Data) // 2, Data)
             """
             self.CheckModelSpecificInfo()
             self.SetupTiles()
@@ -881,7 +881,7 @@ class PowerZone(GeneratorController):
                     localTimeoutCount = self.ModBus.ComTimoutError
                     localSyncError = self.ModBus.ComSyncError
                     self.ModBus.ProcessFileReadTransaction(
-                        RegisterList[REGISTER], RegisterList[LENGTH] / 2
+                        RegisterList[REGISTER], RegisterList[LENGTH] // 2
                     )
                     if (
                         localSyncError != self.ModBus.ComSyncError
@@ -921,7 +921,7 @@ class PowerZone(GeneratorController):
                 Register = "%04x" % RegValue
                 localTimeoutCount = self.ModBus.ComTimoutError
                 localSyncError = self.ModBus.ComSyncError
-                self.ModBus.ProcessFileReadTransaction(Register, EVENT_LOG_LENGTH / 2)
+                self.ModBus.ProcessFileReadTransaction(Register, EVENT_LOG_LENGTH // 2)
                 if (
                     localSyncError != self.ModBus.ComSyncError
                     or localTimeoutCount != self.ModBus.ComTimoutError
@@ -934,7 +934,7 @@ class PowerZone(GeneratorController):
                 Register = "%04x" % RegValue
                 localTimeoutCount = self.ModBus.ComTimoutError
                 localSyncError = self.ModBus.ComSyncError
-                self.ModBus.ProcessFileReadTransaction(Register, ALARM_LOG_LENGTH / 2)
+                self.ModBus.ProcessFileReadTransaction(Register, ALARM_LOG_LENGTH // 2)
                 if (
                     localSyncError != self.ModBus.ComSyncError
                     or localTimeoutCount != self.ModBus.ComTimoutError
@@ -955,7 +955,7 @@ class PowerZone(GeneratorController):
                     localTimeoutCount = self.ModBus.ComTimoutError
                     localSyncError = self.ModBus.ComSyncError
                     self.ModBus.ProcessTransaction(
-                        RegisterList[REGISTER], RegisterList[LENGTH] / 2
+                        RegisterList[REGISTER], RegisterList[LENGTH] // 2
                     )
                     if (
                         localSyncError != self.ModBus.ComSyncError
@@ -984,7 +984,7 @@ class PowerZone(GeneratorController):
                     localTimeoutCount = self.ModBus.ComTimoutError
                     localSyncError = self.ModBus.ComSyncError
                     self.ModBus.ProcessTransaction(
-                        RegisterList[REGISTER], RegisterList[LENGTH] / 2
+                        RegisterList[REGISTER], RegisterList[LENGTH] // 2
                     )
                     if (
                         localSyncError != self.ModBus.ComSyncError
@@ -2852,7 +2852,7 @@ class PowerZone(GeneratorController):
             Data.append(d.hour)  # GEN_TIME_HR_MIN
             Data.append(d.minute)
             self.ModBus.ProcessWriteTransaction(
-                self.Reg.GEN_TIME_HR_MIN[REGISTER], len(Data) / 2, Data
+                self.Reg.GEN_TIME_HR_MIN[REGISTER], len(Data) // 2, Data
             )
 
             DayOfWeek = d.weekday()  # returns Monday is 0 and Sunday is 6
@@ -2865,14 +2865,14 @@ class PowerZone(GeneratorController):
             Data.append(d.second)  # GEN_TIME_SEC_DYWK
             Data.append(DayOfWeek)  # Day of Week is always zero
             self.ModBus.ProcessWriteTransaction(
-                self.Reg.GEN_TIME_SEC_DYWK[REGISTER], len(Data) / 2, Data
+                self.Reg.GEN_TIME_SEC_DYWK[REGISTER], len(Data) // 2, Data
             )
 
             Data = []
             Data.append(d.month)  # GEN_TIME_MONTH_DAY
             Data.append(d.day)  # low byte is day of month
             self.ModBus.ProcessWriteTransaction(
-                self.Reg.GEN_TIME_MONTH_DAY[REGISTER], len(Data) / 2, Data
+                self.Reg.GEN_TIME_MONTH_DAY[REGISTER], len(Data) // 2, Data
             )
 
             Data = []
@@ -2880,7 +2880,7 @@ class PowerZone(GeneratorController):
             Data.append(d.year - 2000)  # GEN_TIME_YR
             Data.append(0)  #
             self.ModBus.ProcessWriteTransaction(
-                self.Reg.GEN_TIME_YR[REGISTER], len(Data) / 2, Data
+                self.Reg.GEN_TIME_YR[REGISTER], len(Data) // 2, Data
             )
 
         except Exception as e1:
@@ -2960,7 +2960,7 @@ class PowerZone(GeneratorController):
                 Data.append(0)
                 Data.append(1)
                 self.ModBus.ProcessWriteTransaction(
-                    self.Reg.QUIET_TEST_REQUEST[REGISTER], len(Data) / 2, Data
+                    self.Reg.QUIET_TEST_REQUEST[REGISTER], len(Data) // 2, Data
                 )
                 return "Remote command sent successfully (quiettest)"
             elif Command == "quietteststop":
@@ -2968,7 +2968,7 @@ class PowerZone(GeneratorController):
                 Data.append(0)
                 Data.append(0)
                 self.ModBus.ProcessWriteTransaction(
-                    self.Reg.QUIET_TEST_REQUEST[REGISTER], len(Data) / 2, Data
+                    self.Reg.QUIET_TEST_REQUEST[REGISTER], len(Data) // 2, Data
                 )
                 return "Remote command sent successfully (quietteststop)"
             elif Command == "ackalarm":
@@ -2981,7 +2981,7 @@ class PowerZone(GeneratorController):
                 # 6 : Reset All Alarms
                 # 8 : Silence Horn
                 self.ModBus.ProcessWriteTransaction(
-                    self.Reg.ALARM_GLOBALS[REGISTER], len(Data) / 2, Data
+                    self.Reg.ALARM_GLOBALS[REGISTER], len(Data) // 2, Data
                 )
 
                 return "Remote command sent successfully (ackalarm)"
@@ -2990,7 +2990,7 @@ class PowerZone(GeneratorController):
                 Data.append(0)
                 Data.append(4)
                 self.ModBus.ProcessWriteTransaction(
-                    self.Reg.ALARM_GLOBALS[REGISTER], len(Data) / 2, Data
+                    self.Reg.ALARM_GLOBALS[REGISTER], len(Data) // 2, Data
                 )
                 return "Remote command sent successfully (ackalarm)"
             elif Command == "resetallalarm":
@@ -2998,7 +2998,7 @@ class PowerZone(GeneratorController):
                 Data.append(0)
                 Data.append(6)
                 self.ModBus.ProcessWriteTransaction(
-                    self.Reg.ALARM_GLOBALS[REGISTER], len(Data) / 2, Data
+                    self.Reg.ALARM_GLOBALS[REGISTER], len(Data) // 2, Data
                 )
                 return "Remote command sent successfully (ackalarm)"
             elif Command == "silencetalarm":
@@ -3006,7 +3006,7 @@ class PowerZone(GeneratorController):
                 Data.append(0)
                 Data.append(8)
                 self.ModBus.ProcessWriteTransaction(
-                    self.Reg.ALARM_GLOBALS[REGISTER], len(Data) / 2, Data
+                    self.Reg.ALARM_GLOBALS[REGISTER], len(Data) // 2, Data
                 )
                 return "Remote command sent successfully (ackalarm)"
                 """
@@ -3015,19 +3015,19 @@ class PowerZone(GeneratorController):
                     Data = []
                     Data.append(0)
                     Data.append(0)
-                    self.ModBus.ProcessWriteTransaction(self.Reg.SWITCH_STATE[REGISTER], len(Data) / 2, Data)
+                    self.ModBus.ProcessWriteTransaction(self.Reg.SWITCH_STATE[REGISTER], len(Data) // 2, Data)
                     return "Remote command sent successfully (off)"
                 elif Command == "auto":
                     Data = []
                     Data.append(1)
                     Data.append(0)
-                    self.ModBus.ProcessWriteTransaction(self.Reg.SWITCH_STATE[REGISTER], len(Data) / 2, Data)
+                    self.ModBus.ProcessWriteTransaction(self.Reg.SWITCH_STATE[REGISTER], len(Data) // 2, Data)
                     return "Remote command sent successfully (auto)"
                 elif Command == "manual":
                     Data = []
                     Data.append(0)
                     Data.append(1)
-                    self.ModBus.ProcessWriteTransaction(self.Reg.SWITCH_STATE[REGISTER], len(Data) / 2, Data)
+                    self.ModBus.ProcessWriteTransaction(self.Reg.SWITCH_STATE[REGISTER], len(Data) // 2, Data)
                     return "Remote command sent successfully (manual)"
                 """
             else:
@@ -3037,7 +3037,7 @@ class PowerZone(GeneratorController):
             Data.append(Value & 0x00FF)  # value written (Low byte)
 
             self.ModBus.ProcessWriteTransaction(
-                self.Reg.REMOTE_START[REGISTER], len(Data) / 2, Data
+                self.Reg.REMOTE_START[REGISTER], len(Data) // 2, Data
             )
 
             return "Remote command sent successfully"
