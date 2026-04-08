@@ -215,6 +215,9 @@ def csrf_check():
     """Block cross-origin state-changing requests (CSRF protection)."""
     if request.method in ("GET", "HEAD", "OPTIONS"):
         return  # safe methods — SameSite cookie handles GET-based CSRF
+    # Login endpoints are protected by credentials, not session — exempt from CSRF
+    if request.endpoint in ("do_admin_login", "passkey_login_begin", "passkey_login_complete"):
+        return
     origin = request.headers.get("Origin")
     referer = request.headers.get("Referer")
     if not origin and not referer:
@@ -1013,14 +1016,14 @@ def LoginActive():
 def SendTestEmail(query_string):
     try:
         if query_string == None or not len(query_string):
-            return "No parameters given for email test."
+            return jsonify({"error": "No parameters given for email test."})
         parameters = json.loads(query_string)
         if not len(parameters):
-            return "No parameters"  # nothing to change return
+            return jsonify({"error": "No parameters"})  # nothing to change return
 
     except Exception as e1:
         LogErrorLine("Error getting parameters in SendTestEmail: " + str(e1))
-        return "Error getting parameters in email test: " + str(e1)
+        return jsonify({"error": "Error getting parameters in email test: " + str(e1)})
     try:
         smtp_server = str(parameters["smtp_server"])
         smtp_server = smtp_server.strip()
@@ -1045,7 +1048,7 @@ def SendTestEmail(query_string):
     except Exception as e1:
         LogErrorLine("Error parsing parameters in SendTestEmail: " + str(e1))
         LogError(str(parameters))
-        return "Error parsing parameters in email test: " + str(e1)
+        return jsonify({"error": "Error parsing parameters in email test: " + str(e1)})
 
     try:
         ReturnMessage = MyMail.TestSendSettings(
@@ -1060,10 +1063,10 @@ def SendTestEmail(query_string):
             tls_disable=tls_disable,
             smtpauth_disable=smtpauth_disable,
         )
-        return ReturnMessage
+        return jsonify({"message": ReturnMessage})
     except Exception as e1:
         LogErrorLine("Error sending test email : " + str(e1))
-        return "Error sending test email : " + str(e1)
+        return jsonify({"error": "Error sending test email : " + str(e1)})
 
 
 # -------------------------------------------------------------------------------

@@ -4935,7 +4935,10 @@ var Pages = {
             smtpauth_disable:($w.find('#f_smtpauth_disable').is(':checked'))
           });
           API.get('test_email?test_email=' + encodeURIComponent(payload), 15000)
-            .done(function(r) { Modal.alert('Test Email', r || 'Test email sent successfully.'); })
+            .done(function(r) {
+              if (r && r.error) Modal.alert('Test Email', r.error);
+              else Modal.alert('Test Email', (r && r.message) || 'Test email sent successfully.');
+            })
             .fail(function()  { Modal.alert('Test Email', 'Failed to send test email.'); });
         });
       });
