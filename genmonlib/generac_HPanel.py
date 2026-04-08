@@ -189,11 +189,11 @@ class HPanelIO(object):
     }
     Outputs = {
         # Output1
-        ("0082", 0x8000): "Genertor in Alarm",
-        ("0082", 0x4000): "Genertor in Warning",
+        ("0082", 0x8000): "Generator in Alarm",
+        ("0082", 0x4000): "Generator in Warning",
         ("0082", 0x2000): "Running",
         ("0082", 0x1000): "Alarms Enabled",
-        ("0082", 0x0800): "Read for Load",
+        ("0082", 0x0800): "Ready for Load",
         ("0082", 0x0400): "Ready to Run",
         ("0082", 0x0200): "Stopped in Alarm",
         ("0082", 0x0100): "Stopped",
@@ -204,15 +204,15 @@ class HPanelIO(object):
         # Output6
         ("0087", 0x0400): "Digital Input Key in Auto Active",
         ("0087", 0x0200): "Digital Input Key in Manual Active",
-        ("0087", 0x0100): "Emergency Stop Digitial Input Active",
+        ("0087", 0x0100): "Emergency Stop Digital Input Active",
         ("0087", 0x0080): "Remote Start Digital Input Active",
-        ("0087", 0x0040): "DI-1, Digitial Input #5 Active / Battery Charger Fail",
+        ("0087", 0x0040): "DI-1, Digital Input #5 Active / Battery Charger Fail",
         (
             "0087",
             0x0020,
-        ): "DI-2, Digitial Input #6 Active / Ruptured Basin, Gas Leak, Low Fuel Pressure",
-        ("0087", 0x0010): "DI-3, Digitial Input #7 Active / Line Power",
-        ("0087", 0x0008): "DI-4, Digitial Input #8 Active / Generator Power",
+        ): "DI-2, Digital Input #6 Active / Ruptured Basin, Gas Leak, Low Fuel Pressure",
+        ("0087", 0x0010): "DI-3, Digital Input #7 Active / Line Power",
+        ("0087", 0x0008): "DI-4, Digital Input #8 Active / Generator Power",
         ("0087", 0x0004): "Line Power",
         ("0087", 0x0002): "Generator Power",
         # Output 7
@@ -699,8 +699,8 @@ class GPanelIO(object):
     }
     Outputs = {
         # Output1
-        ("0082", 0x8000): "Genertor in Alarm",
-        ("0082", 0x4000): "Genertor in Warning",
+        ("0082", 0x8000): "Generator in Alarm",
+        ("0082", 0x4000): "Generator in Warning",
         # Output 2
         # Output 3
         ("0084", 0x0002): "Switch in Auto",
