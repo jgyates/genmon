@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Updates for Briggs and Stratton to support more info and three phase
 - Added "ignore_alarms" config parameter for custom controllers
 - Update for pyowm to support API version 3.5 or 2.10 for weather
+- Various bug fixes and typo corrections
 
 ## V1.20.00 -2026-03-10
 - Added HA addon JSON files for all current custom controller variants
