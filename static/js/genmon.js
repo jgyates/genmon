@@ -1935,7 +1935,7 @@ var Pages = {
         '<button class="tile-font-btn ov-reverse-btn" title="Toggle coloured background">' + (rev ? '\u25cb' : '\u25cf') + '</button>' +
         '</div>' +
         '</div>' +
-        '<div class="overview-headline" id="overview-headline" data-level="ok">--</div>' +
+        '<div class="overview-headline" id="overview-headline" data-level="ready">--</div>' +
         '<div class="overview-sub" id="overview-sub"></div></div>';
     },
 
@@ -1948,14 +1948,13 @@ var Pages = {
       var base = S.getBase || d.basestatus || S.baseStatus || 'READY';
 
       /* Map the 8 canonical getbase states to color levels */
-      var level = 'ok';
       var bl = base.toUpperCase();
-      if (bl === 'ALARM')                            level = 'alarm';
-      else if (bl === 'SERVICEDUE')                  level = 'warn';
-      else if (bl === 'OFF' || bl === 'MANUAL')      level = 'warn';
-      else if (bl === 'RUNNING' || bl === 'RUNNING-MANUAL') level = 'warn';
-      else if (bl === 'EXERCISING')                  level = 'ok';
-      else /* READY */                               level = 'ok';
+      var levelMap = {
+        'READY': 'ready', 'ALARM': 'alarm', 'EXERCISING': 'exercise',
+        'RUNNING': 'run', 'RUNNING-MANUAL': 'runmanual',
+        'SERVICEDUE': 'service', 'OFF': 'off', 'MANUAL': 'manual'
+      };
+      var level = levelMap[bl] || 'ready';
 
       /* Build headline — omit base state when READY (already implied by green) */
       var headline = 'Switch ' + sw + ' \u2013 Engine ' + eng;

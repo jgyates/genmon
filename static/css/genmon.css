@@ -913,17 +913,30 @@ input, select, textarea { font: inherit; color: inherit; }
 .tile-overview.ov-font-md .overview-sub { font-size: 1rem; }
 .tile-overview.ov-font-lg .overview-headline { font-size: 2.6rem; }
 .tile-overview.ov-font-lg .overview-sub { font-size: 1.15rem; }
-/* Status colours — normal mode */
-.overview-headline[data-level="ok"]    { color: #22c55e; }
-.overview-headline[data-level="warn"]  { color: #f59e0b; }
-.overview-headline[data-level="alarm"] { color: #ef4444; }
+/* Status colours — normal mode (8 canonical getbase states) */
+.overview-headline[data-level="ready"]      { color: #4CAF50; }
+.overview-headline[data-level="alarm"]      { color: #DE0F0F; }
+.overview-headline[data-level="exercise"]   { color: #415BDA; }
+.overview-headline[data-level="off"]        { color: #160101; }
+.overview-headline[data-level="manual"]     { color: #BAADAD; }
+.overview-headline[data-level="run"]        { color: #2E5D5A; }
+.overview-headline[data-level="runmanual"]  { color: #14423F; }
+.overview-headline[data-level="service"]    { color: #d6b744; }
+/* Dark theme overrides for low-contrast states */
+[data-theme="dark"] .overview-headline[data-level="off"]    { color: #888; }
+[data-theme="dark"] .overview-headline[data-level="manual"] { color: #BAADAD; }
 /* Reversed mode — coloured background, white text */
 .tile-overview.ov-reversed { border-color: transparent; }
 .tile-overview.ov-reversed .overview-headline,
 .tile-overview.ov-reversed .overview-sub { color: #fff; }
-.tile-overview.ov-reversed[data-ov-level="ok"]    { background: #22c55e; }
-.tile-overview.ov-reversed[data-ov-level="warn"]  { background: #f59e0b; }
-.tile-overview.ov-reversed[data-ov-level="alarm"] { background: #ef4444; }
+.tile-overview.ov-reversed[data-ov-level="ready"]      { background: #4CAF50; }
+.tile-overview.ov-reversed[data-ov-level="alarm"]      { background: #DE0F0F; }
+.tile-overview.ov-reversed[data-ov-level="exercise"]   { background: #415BDA; }
+.tile-overview.ov-reversed[data-ov-level="off"]        { background: #160101; }
+.tile-overview.ov-reversed[data-ov-level="manual"]     { background: #BAADAD; }
+.tile-overview.ov-reversed[data-ov-level="run"]        { background: #2E5D5A; }
+.tile-overview.ov-reversed[data-ov-level="runmanual"]  { background: #14423F; }
+.tile-overview.ov-reversed[data-ov-level="service"]    { background: #d6b744; }
 
 /* --- Temperature thermometer gauge --- */
 :root {
