@@ -216,7 +216,7 @@ def csrf_check():
     if request.method in ("GET", "HEAD", "OPTIONS"):
         return  # safe methods — SameSite cookie handles GET-based CSRF
     # Login endpoints are protected by credentials, not session — exempt from CSRF
-    if request.endpoint in ("do_admin_login", "passkey_login_begin", "passkey_login_complete"):
+    if request.endpoint in ("do_admin_login", "passkey_login_begin", "passkey_login_complete", "mfa_auth"):
         return
     origin = request.headers.get("Origin")
     referer = request.headers.get("Referer")
