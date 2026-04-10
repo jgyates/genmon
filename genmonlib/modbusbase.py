@@ -21,6 +21,35 @@ from genmonlib.mylog import SetupLogger
 from genmonlib.mysupport import MySupport
 from genmonlib.program_defaults import ProgramDefaults
 
+'''
+Modbus data addresses typically range from 0 to 65,535 per data type, 
+structured into four main tables: Coils (0x), Discrete Inputs (1x), 
+Input Registers (3x), and Holding Registers (4x). While older systems 
+used 5-digit addressing (1–9999), modern systems allow 6-digit addressing 
+(000001–065536) to utilize the full range. 
+
+Key Modbus Address Types & Ranges (1-Based):
+00001 - 065536 (Output Coils): Read/Write single-bit boolean values.
+10001 - 165536 (Discrete Inputs): Read-only single-bit boolean values.
+30001 - 365536 (Input Registers): Read-only 16-bit word values.
+40001 - 465536 (Holding Registers): Read/Write 16-bit word values. 
+
+This modbus only deals with the lower 16 bit values. The upper bit is covered
+by the modbus command for each transaction.
+
+Important Notes:
+0-Based vs. 1-Based: The physical Modbus protocol ("on the wire") uses 
+addresses 0 to 65535. However, documentation frequently uses 1-based 
+indexing, where 40001 refers to the first holding register.
+
+This moduble assumes 0 based addressing
+
+Data Types: While registers are 16-bit, multiple registers can be combined 
+to hold 32-bit integers or floating-point values.
+
+Register Limitations: Although 65,536 is the maximum theoretical range, 
+many devices only implement a small fraction of this memory.
+'''
 
 # ------------ ModbusBase class -------------------------------------------------
 class ModbusBase(MySupport):
