@@ -406,6 +406,19 @@ var Modal = {
               'Click here to open ' + esc(newUrl) + '</a><br>' +
               '<span style="font-size:.85em;color:var(--text-muted)">If you see a certificate warning, accept it and import the CA certificate from Settings.</span>'
             );
+          } else if (!redirectMode && elapsed >= 45) {
+            /* Non-redirect mode: server may have restarted but
+               the browser cannot connect (e.g. new self-signed cert). */
+            clearInterval(timer);
+            clearInterval(poller);
+            $('.restart-spinner').hide();
+            $('.restart-countdown').html(
+              'The service may have restarted but the browser cannot connect.<br>' +
+              'This can happen when a self-signed certificate has changed.<br><br>' +
+              '<a href="' + esc(location.href) + '" style="color:var(--accent);font-weight:600">' +
+              'Click here to reload</a><br>' +
+              '<span style="font-size:.85em;color:var(--text-muted)">If you see a certificate warning, accept it and then reload again.</span>'
+            );
           }
         });
     }

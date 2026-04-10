@@ -123,6 +123,7 @@ loglocation = ProgramDefaults.LogPath
 clientport = ProgramDefaults.ServerPort
 log = None
 console = None
+debug = False
 AppPath = ""
 favicon = "favicon.ico"
 ConfigFilePath = ProgramDefaults.ConfPath
@@ -183,7 +184,7 @@ def StartHTTPRedirectServer():
         RedirectServer = socketserver.TCPServer(
             (ListenIPAddress, redirect_port), RedirectHandler
         )
-        LogError(
+        LogDebug(
             "HTTP->HTTPS redirect active on port "
             + str(redirect_port)
             + " -> "
@@ -212,7 +213,12 @@ def HasWriteAccess():
 # -------------------------------------------------------------------------------
 @app.before_request
 def csrf_check():
-    """Block cross-origin state-changing requests (CSRF protection)."""
+    """Block cross-origin state-changing requests (CSRF protection).
+
+    Reverse-proxy aware: trusts X-Forwarded-Host so that the browser's
+    Origin (the public domain) matches even when Flask sees the backend
+    address as request.host.
+    """
     if request.method in ("GET", "HEAD", "OPTIONS"):
         return  # safe methods — SameSite cookie handles GET-based CSRF
     # Login endpoints are protected by credentials, not session — exempt from CSRF
@@ -223,15 +229,25 @@ def csrf_check():
     if not origin and not referer:
         LogError("CSRF blocked: missing Origin and Referer")
         return jsonify({"error": "CSRF validation failed"}), 403
+    # Build the set of hosts we trust: the direct host Flask sees plus
+    # any X-Forwarded-Host a reverse proxy (Caddy, nginx, etc.) provides.
+    trusted_hosts = {request.host}
+    fwd_host = request.headers.get("X-Forwarded-Host")
+    if fwd_host:
+        # X-Forwarded-Host may be a comma-separated list; trust all entries
+        for h in fwd_host.split(","):
+            trusted_hosts.add(h.strip())
     if origin:
         parsed = urlparse(origin)
-        if parsed.netloc != request.host:
-            LogError("CSRF blocked: Origin mismatch: " + origin)
+        if parsed.netloc not in trusted_hosts:
+            LogError("CSRF blocked: Origin mismatch: " + origin
+                     + " (trusted: " + ", ".join(sorted(trusted_hosts)) + ")")
             return jsonify({"error": "Cross-origin request blocked"}), 403
     elif referer:
         parsed = urlparse(referer)
-        if parsed.netloc != request.host:
-            LogError("CSRF blocked: Referer mismatch: " + referer)
+        if parsed.netloc not in trusted_hosts:
+            LogError("CSRF blocked: Referer mismatch: " + referer
+                     + " (trusted: " + ", ".join(sorted(trusted_hosts)) + ")")
             return jsonify({"error": "Cross-origin request blocked"}), 403
 
 
@@ -5130,7 +5146,7 @@ def generate_local_ca(config_path):
             ca_key = crypto.load_privatekey(crypto.FILETYPE_PEM, f.read())
         with open(ca_crt_path, "rb") as f:
             ca_cert = crypto.load_certificate(crypto.FILETYPE_PEM, f.read())
-        LogConsole("Local CA loaded from " + ca_crt_path)
+        LogDebug("Local CA loaded from " + ca_crt_path)
         return ca_cert, ca_key
 
     # Generate new CA
@@ -5167,7 +5183,7 @@ def generate_local_ca(config_path):
     with open(ca_crt_path, "wb") as f:
         f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, ca_cert))
 
-    LogConsole("Local CA created: " + ca_crt_path)
+    LogDebug("Local CA created: " + ca_crt_path)
     return ca_cert, ca_key
 
 
@@ -5247,7 +5263,7 @@ def generate_server_cert(ca_cert, ca_key, config_path):
                     expiry_str.decode("ascii"), "%Y%m%d%H%M%SZ"
                 )
                 if expiry - datetime.datetime.utcnow() < datetime.timedelta(days=30):
-                    LogConsole("Server cert expiring soon, regenerating.")
+                    LogDebug("Server cert expiring soon, regenerating.")
                     regen = True
             # Check for required extensions (added in v2)
             has_eku = False
@@ -5262,24 +5278,30 @@ def generate_server_cert(ca_cert, ca_key, config_path):
                     has_san = True
                     existing_san = str(ext)
             if not has_eku:
-                LogConsole("Server cert missing extendedKeyUsage, regenerating.")
+                LogDebug("Server cert missing extendedKeyUsage, regenerating.")
                 regen = True
             elif not has_san:
-                LogConsole("Server cert missing subjectAltName, regenerating.")
+                LogDebug("Server cert missing subjectAltName, regenerating.")
                 regen = True
             else:
-                # Verify current IPs are in the SAN
+                # Log any IPs not covered by the SAN but do NOT
+                # regenerate — that would invalidate every browser
+                # that already trusts the current cert and leave the
+                # user stuck on a spinner after a settings-save restart.
                 local_ips = _get_all_local_ips()
-                for addr in local_ips:
-                    if addr not in existing_san:
-                        LogConsole("Server cert SAN missing IP " + addr + ", regenerating.")
-                        regen = True
-                        break
+                missing = [a for a in local_ips if a not in existing_san]
+                if missing:
+                    LogDebug(
+                        "Note: IP(s) " + ", ".join(sorted(missing))
+                        + " not in server cert SAN.  Cert kept to preserve"
+                        + " browser trust.  Re-enable HTTPS in settings to"
+                        + " force a new certificate."
+                    )
         except Exception:
             regen = True
 
     if not regen:
-        LogConsole("Server cert reused: " + srv_crt_path)
+        LogDebug("Server cert reused: " + srv_crt_path)
         return srv_crt_path, srv_key_path
 
     # Build SAN list
@@ -5345,7 +5367,7 @@ def generate_server_cert(ca_cert, ca_key, config_path):
     with open(srv_crt_path, "wb") as f:
         f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, srv_cert))
 
-    LogConsole("Server cert generated: " + srv_crt_path + " SAN=" + san_string)
+    LogDebug("Server cert generated: " + srv_crt_path + " SAN=" + san_string)
     return srv_crt_path, srv_key_path
 
 
@@ -5497,6 +5519,7 @@ def LoadConfig():
     global RememberMeDays
     global MfaTrustDays
     global bMfaTrustExtend
+    global debug
 
     HTTPAuthPass = None
     HTTPAuthUser = None
@@ -5509,6 +5532,9 @@ def LoadConfig():
 
     try:
 
+        debug = ConfigFiles[GENMON_CONFIG].ReadValue(
+            "debug", return_type=bool, default=False
+        )
         # heartbeat server port, must match value in check_generator_system.py and any calling client apps
         if ConfigFiles[GENMON_CONFIG].HasOption("server_port"):
             clientport = ConfigFiles[GENMON_CONFIG].ReadValue(
@@ -5688,7 +5714,7 @@ def LoadConfig():
         if bUseSecureHTTP:
             OldHTTPPort = HTTPPort
             HTTPPort = HTTPSPort
-            LogError("HTTPS enabled: will redirect HTTP port " + str(OldHTTPPort) + " -> HTTPS port " + str(HTTPPort))
+            LogDebug("HTTPS enabled: will redirect HTTP port " + str(OldHTTPPort) + " -> HTTPS port " + str(HTTPPort))
 
             # --- cert_mode migration (backward compat) ---
             # DEPRECATED: "useselfsignedcert" (bool) was replaced by "cert_mode"
@@ -5751,7 +5777,7 @@ def LoadConfig():
 
         return True
     except Exception as e1:
-        LogConsole("Missing config file or config file entries: " + str(e1))
+        LogError("Missing config file or config file entries: " + str(e1))
         return False
 
 
@@ -6258,7 +6284,16 @@ def LogConsole(Message):
         console.error(Message)
 
 
-# ---------------------LogError--------------------------------------------------
+# ---------------------LogDebug-------------------------------------------------
+def LogDebug(Message):
+    global debug
+
+    if debug == False:
+        return
+    if not log == None:
+        log.error(Message)
+
+# ---------------------LogError-------------------------------------------------
 def LogError(Message):
     if not log == None:
         log.error(Message)
@@ -6397,6 +6432,7 @@ if __name__ == "__main__":
     AppPath = sys.argv[0]
     if not LoadConfig():
         LogConsole("Error reading configuraiton file.")
+        LogDebug("Error reading configuraiton file.")
         sys.exit(1)
 
     for ConfigFile in ConfigFileList:
