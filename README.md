@@ -82,7 +82,7 @@ This project is free to use under the posted license agreement. It was written a
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=8Z4TSR22RLMWQ&lc=US&item_name=jgyates&item_number=jgyates&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_LG%2egif%3aNonHosted)
 
 ## System Requirements
-- Python 3.7 or higher
+- Genmon 2.0 and higher requires Python 3.9 or higher. Version 1.20.00 could use Python 3.7 or higher. The "bullseye" and higher version of the Raspberry Pi OS support Python 3.9 and higher. The "buster" version supported python 3.7.
 - A linux based operating system (mostly for file system storage location)
 - A TCP/IP network connection (either wired or wireless) for communicating generator status
 
