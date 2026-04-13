@@ -5490,6 +5490,76 @@ def generate_adhoc_ssl_context():
 
 
 # -------------------------------------------------------------------------------
+def generate_persistent_selfsigned(config_path):
+    """Generate (or load existing) a persistent self-signed certificate.
+
+    Files: {config_path}/selfsigned.key, {config_path}/selfsigned.crt
+    Returns an ssl.SSLContext, or None on failure.
+    """
+    import ssl
+
+    from OpenSSL import crypto
+
+    key_path = os.path.join(config_path, "selfsigned.key")
+    crt_path = os.path.join(config_path, "selfsigned.crt")
+
+    need_generate = False
+    if os.path.isfile(key_path) and os.path.isfile(crt_path):
+        try:
+            with open(crt_path, "rb") as f:
+                cert = crypto.load_certificate(crypto.FILETYPE_PEM, f.read())
+            if cert.has_expired():
+                LogError("Self-signed certificate expired, regenerating.")
+                need_generate = True
+            else:
+                LogDebug("Persistent self-signed cert loaded from " + crt_path)
+        except Exception as e1:
+            LogErrorLine("Error loading self-signed cert, regenerating: " + str(e1))
+            need_generate = True
+    else:
+        need_generate = True
+
+    if need_generate:
+        try:
+            pkey = crypto.PKey()
+            pkey.generate_key(crypto.TYPE_RSA, 2048)
+
+            cert = crypto.X509()
+            cert.set_serial_number(int.from_bytes(os.urandom(16), "big"))
+            cert.gmtime_adj_notBefore(0)
+            cert.gmtime_adj_notAfter(60 * 60 * 24 * 365)  # 1 year
+
+            subject = cert.get_subject()
+            subject.CN = "*"
+            subject.O = "Genmon Self-Signed"
+
+            cert.set_issuer(subject)
+            cert.set_pubkey(pkey)
+            cert.sign(pkey, "sha256")
+
+            with open(key_path, "wb") as f:
+                f.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, pkey))
+            os.chmod(key_path, 0o600)
+            with open(crt_path, "wb") as f:
+                f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
+
+            LogDebug("Persistent self-signed cert created: " + crt_path)
+        except Exception as e1:
+            LogError("Error generating persistent self-signed cert: " + str(e1))
+            return None
+
+    try:
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS)
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        ctx.load_cert_chain(crt_path, key_path)
+        return ctx
+    except Exception as e1:
+        LogError("Error loading persistent self-signed cert into SSLContext: " + str(e1))
+        return None
+
+
+# -------------------------------------------------------------------------------
 def LoadConfig():
 
     global log
@@ -5741,9 +5811,11 @@ def LoadConfig():
                     CertMode = "selfsigned"
 
             if CertMode == "selfsigned":
-                SSLContext = generate_adhoc_ssl_context()
+                SSLContext = generate_persistent_selfsigned(ConfigFilePath)
                 if SSLContext is None:
-                    SSLContext = "adhoc"
+                    SSLContext = generate_adhoc_ssl_context()
+                    if SSLContext is None:
+                        SSLContext = "adhoc"
             elif CertMode == "localca":
                 try:
                     ca_cert, ca_key = generate_local_ca(ConfigFilePath)

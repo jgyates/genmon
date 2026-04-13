@@ -363,7 +363,7 @@ var Modal = {
     /* disable normal close */
     this._$ov.find('[data-action]').off('click');
     this._cb = null;
-    var total = secs, elapsed = 0;
+    var total = secs, elapsed = 0, showedFallback = false;
     function tick() {
       elapsed++;
       var rem = total - elapsed;
@@ -371,8 +371,20 @@ var Modal = {
       var pct = Math.min(elapsed / total * 100, 100);
       $('#restart-bar').css('width', pct + '%');
       if (rem <= 0 && !alive) {
-        /* extend — keep waiting */
+        if (!showedFallback && !redirectMode) {
+          showedFallback = true;
+          $('.restart-bar-track').hide();
+          $('.restart-countdown').html(
+            'Service is taking longer than expected\u2026<br><br>' +
+            '<button class="btn btn-primary" onclick="location.reload()" ' +
+            'style="margin-top:8px">Reload Now</button>');
+        }
         total += 10;
+      }
+      if (!redirectMode && elapsed >= 40 && !alive) {
+        clearInterval(timer);
+        clearInterval(poller);
+        location.reload();
       }
     }
     function poll() {
@@ -394,8 +406,7 @@ var Modal = {
         })
         .fail(function() {
           if (redirectMode && elapsed >= 30) {
-            /* Server not reachable at new URL after extended wait.
-               Show a manual link instead of redirecting to an error page. */
+            /* Server not reachable at new URL after extended wait. */
             clearInterval(timer);
             clearInterval(poller);
             $('.restart-spinner').hide();
@@ -406,20 +417,8 @@ var Modal = {
               'Click here to open ' + esc(newUrl) + '</a><br>' +
               '<span style="font-size:.85em;color:var(--text-muted)">If you see a certificate warning, accept it and import the CA certificate from Settings.</span>'
             );
-          } else if (!redirectMode && elapsed >= 45) {
-            /* Non-redirect mode: server may have restarted but
-               the browser cannot connect (e.g. new self-signed cert). */
-            clearInterval(timer);
-            clearInterval(poller);
-            $('.restart-spinner').hide();
-            $('.restart-countdown').html(
-              'The service may have restarted but the browser cannot connect.<br>' +
-              'This can happen when a self-signed certificate has changed.<br><br>' +
-              '<a href="/" style="color:var(--accent);font-weight:600">' +
-              'Click here to reload</a><br>' +
-              '<span style="font-size:.85em;color:var(--text-muted)">If you see a certificate warning, accept it and then reload again.</span>'
-            );
           }
+          /* Non-redirect fallback is handled by tick() auto-reload at 40s */
         });
     }
     /* Start after 3s grace period (backend needs time to enter restart state) */
