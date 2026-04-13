@@ -300,12 +300,17 @@ class GeneratorController(MySupport):
                     self.bWifiIsPercent = self.config.ReadValue(
                         "wifiispercent", return_type=bool, default=False
                     )
+                    self.PreferredNetworkAdapter = self.config.ReadValue(
+                        "preferred_network_adapter", default=None
+                    )
+                    if self.PreferredNetworkAdapter != None:
+                        self.PreferredNetworkAdapter = self.PreferredNetworkAdapter.strip()
         except Exception as e1:
             self.FatalError("Missing config file or config file entries: " + str(e1))
 
         try:
             if not self.bDisablePlatformStats:
-                self.Platform = MyPlatform(log=self.log, usemetric=self.UseMetric, debug = self.debug)
+                self.Platform = MyPlatform(log=self.log, usemetric=self.UseMetric, net_adapter=self.PreferredNetworkAdapter, debug = self.debug)
                 if self.Platform.GetRaspberryPiTemp(ReturnFloat=True) == 0.0:
                     self.LogError("CPU Temp not supported.")
                     self.bUseRaspberryPiCpuTempGauge = False

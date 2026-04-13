@@ -456,13 +456,16 @@ class MyPlatform(MyCommon):
             if not self.IsOSLinux():  # call staticfuntion
                 return DefaultReturn
 
-            adapter = (
-                os.popen(
-                    "ip link | grep BROADCAST | grep -v NO-CARRIER | grep -m 1 LOWER_UP  | awk -F'[:. ]' '{print $3}'"
+            if self.PreferredNetworkAdapter == None or len(self.PreferredNetworkAdapter) == 0:
+                adapter = (
+                    os.popen(
+                        "ip link | grep BROADCAST | grep -v NO-CARRIER | grep -m 1 LOWER_UP  | awk -F'[:. ]' '{print $3}'"
+                    )
+                    .readline()
+                    .rstrip("\n")
                 )
-                .readline()
-                .rstrip("\n")
-            )
+            else:
+                adapter = self.PreferredNetworkAdapter
 
             if not adapter.startswith("wl"):
                 return DefaultReturn
