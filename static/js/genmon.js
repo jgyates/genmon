@@ -4590,8 +4590,8 @@ var Pages = {
           $('.set-panel[data-cat="'+$first.data('cat')+'"]').addClass('active');
         } else {
           Modal.confirm('Enable Advanced Settings',
-            '<strong>'+btnIcon('warning',16)+' Warning:</strong> Advanced settings are intended for experienced users. ' +
-            'Incorrect changes can break your system.<br><br>Enable Advanced Settings?',
+            Modal.html('<strong>'+btnIcon('warning',16)+' Warning:</strong> Advanced settings are intended for experienced users. ' +
+            'Incorrect changes can break your system.<br><br>Enable Advanced Settings?'),
             function() {
               Store.set('devMode', true);
               Store._flush();
