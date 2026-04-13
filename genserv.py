@@ -3902,7 +3902,7 @@ def ReadAdvancedSettingsFromFile():
                 ]
                 ConfigSettings["preferred_network_adapter"] = [
                     "string",
-                    "Preferred Netowk Adapater",
+                    "Preferred Network Adapter",
                     108,
                     "",
                     "",
