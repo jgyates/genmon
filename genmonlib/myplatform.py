@@ -25,10 +25,11 @@ from genmonlib.mycommon import MyCommon
 class MyPlatform(MyCommon):
 
     # ------------ MyPlatform::init----------------------------------------------
-    def __init__(self, log=None, usemetric=True, debug=None):
+    def __init__(self, log=None, usemetric=True, net_adapter=None, debug=None):
         self.log = log
         self.UseMetric = usemetric
         self.debug = debug
+        self.PreferredNetworkAdapter = net_adapter
 
     # ------------ MyPlatform::GetInfo-------------------------------------------
     def GetInfo(self, JSONNum=False):
@@ -418,13 +419,16 @@ class MyPlatform(MyCommon):
                 pass
 
             try:
-                adapter = (
-                    os.popen(
-                        "ip link | grep BROADCAST | grep -v NO-CARRIER | grep -m 1 LOWER_UP  | awk -F'[:. ]' '{print $3}'"
+                if self.PreferredNetworkAdapter == None or len(self.PreferredNetworkAdapter) == 0:
+                    adapter = (
+                        os.popen(
+                            "ip link | grep BROADCAST | grep -v NO-CARRIER | grep -m 1 LOWER_UP  | awk -F'[:. ]' '{print $3}'"
+                        )
+                        .readline()
+                        .rstrip("\n")
                     )
-                    .readline()
-                    .rstrip("\n")
-                )
+                else:
+                    adapter = self.PreferredNetworkAdapter
                 # output, _error = process.communicate()
                 LinuxInfo.append({"Network Interface Used": adapter})
                 try:
@@ -433,7 +437,7 @@ class MyPlatform(MyCommon):
                 except Exception as e1:
                     pass
 
-            except:
+            except Exception as e1:
                 pass
         except Exception as e1:
             self.LogErrorLine("Error in GetLinuxInfo: " + str(e1))

@@ -3900,6 +3900,17 @@ def ReadAdvancedSettingsFromFile():
                     GENMON_SECTION,
                     "wifiispercent",
                 ]
+                ConfigSettings["preferred_network_adapter"] = [
+                    "string",
+                    "Preferred Netowk Adapater",
+                    108,
+                    "",
+                    "",
+                    0,
+                    GENMON_CONFIG,
+                    GENMON_SECTION,
+                    "preferred_network_adapter",
+                ]
             if GStartInfo["Linux"]:
                 ConfigSettings["useraspberrypicputempgauge"] = [
                     "boolean",
@@ -4984,7 +4995,6 @@ def SaveSettings(query_string):
 def UpdateConfigFile(FileName, section, Entry, Value):
 
     try:
-
         if FileName == None or section == None or Entry == None or Value == None:
             return False
         if FileName == "" or section == "" or Entry == "":

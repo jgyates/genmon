@@ -113,14 +113,14 @@ class MySupport(MyCommon):
             return False
 
     # ------------ MySupport::GetPlatformStats ----------------------------------
-    def GetPlatformStats(self, usemetric=None, JSONNum=False):
+    def GetPlatformStats(self, usemetric=None, JSONNum=False, net_adapter = None):
 
         try:
             if not usemetric == None:
                 bMetric = usemetric
             else:
                 bMetric = self.UseMetric
-            Platform = MyPlatform(self.log, bMetric)
+            Platform = MyPlatform(log = self.log, usemetric = bMetric, net_adapter = net_adapter)
 
             return Platform.GetInfo(JSONNum=JSONNum)
         except Exception as e1:

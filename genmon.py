@@ -472,6 +472,11 @@ class Monitor(MySupport):
             )
             self.UserURL = self.config.ReadValue("user_url", default="").strip()
 
+            self.PreferredNetworkAdapter = self.config.ReadValue(
+                "preferred_network_adapter", default=None
+            )
+            if self.PreferredNetworkAdapter != None:
+                self.PreferredNetworkAdapter = self.PreferredNetworkAdapter.strip()
         except Exception as e1:
             self.Console(
                 "Missing config file or config file entries (genmon): " + str(e1)
@@ -561,7 +566,7 @@ class Monitor(MySupport):
                 if not self.bDisablePlatformStats:
                     msgbody += self.printToString(
                         self.ProcessDispatch(
-                            {"Platform Stats": self.GetPlatformStats()}, ""
+                            {"Platform Stats": self.GetPlatformStats(net_adapter=self.PreferredNetworkAdapter)}, ""
                         )
                     )
                 msgbody += self.printToString(
@@ -614,7 +619,7 @@ class Monitor(MySupport):
             SupportData["StartInfo"] = self.GetStartInfo(NoTile=True)
             SupportData["Comm Stats"] = self.Controller.GetCommStatus()
             if not self.bDisablePlatformStats:
-                SupportData["PlatformStats"] = self.GetPlatformStats()
+                SupportData["PlatformStats"] = self.GetPlatformStats(net_adapter=self.PreferredNetworkAdapter)
             #SupportData["Data"] = self.Controller.DisplayRegisters(AllRegs=True, DictOut=True)
             # Raw Modbus data
             SupportData["Holding"] = self.Controller.Holding
@@ -705,7 +710,7 @@ class Monitor(MySupport):
             if not self.bDisablePlatformStats:
                 msgbody += self.printToString(
                     self.ProcessDispatch(
-                        {"Platform Stats": self.GetPlatformStats()}, ""
+                        {"Platform Stats": self.GetPlatformStats(net_adapter=self.PreferredNetworkAdapter)}, ""
                     )
                 )
             msgbody += self.printToString(
@@ -1156,7 +1161,7 @@ class Monitor(MySupport):
             )
 
             if not self.bDisablePlatformStats:
-                PlatformStats = self.GetPlatformStats(JSONNum=False)
+                PlatformStats = self.GetPlatformStats(JSONNum=False, net_adapter=self.PreferredNetworkAdapter)
                 if not PlatformStats == None:
                     MonitorData.append({"Platform Stats": PlatformStats})
 
@@ -1221,7 +1226,7 @@ class Monitor(MySupport):
             Status["UnsentFeedback"] = str(os.path.isfile(self.FeedbackLogFile))
 
             if not self.bDisablePlatformStats:
-                PlatformStats = self.GetPlatformStats(usemetric=True)
+                PlatformStats = self.GetPlatformStats(usemetric=True,net_adapter=self.PreferredNetworkAdapter)
                 if not PlatformStats == None and len(PlatformStats):
                     Status["PlatformStats"] = PlatformStats
             WeatherData = self.GetWeatherData(ForUI=True)
