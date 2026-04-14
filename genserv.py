@@ -166,7 +166,7 @@ def StartHTTPRedirectServer():
                 location = "https://" + host + self.path
             else:
                 location = "https://" + host + ":" + str(target_port) + self.path
-            self.send_response(301)
+            self.send_response(302)
             self.send_header("Location", location)
             self.end_headers()
 
@@ -4974,6 +4974,7 @@ def SaveSettings(query_string):
         if http_user_ro is not None and http_user_ro.strip() == "":
             settings["http_pass_ro"] = [""]
 
+        changed = False
         with CriticalLock:
             for Entry in settings.keys():
                 ConfigEntry = CurrentConfigSettings.get(Entry, None)
@@ -4981,11 +4982,17 @@ def SaveSettings(query_string):
                     ConfigFile = CurrentConfigSettings[Entry][6]
                     Value = settings[Entry][0]
                     Section = CurrentConfigSettings[Entry][7]
+                    # CurrentConfigSettings[Entry][3] is the current value
+                    CurrentValue = str(CurrentConfigSettings[Entry][3]) if CurrentConfigSettings[Entry][3] is not None else ""
+                    if Value == CurrentValue:
+                        continue  # skip unchanged settings to reduce SD card writes
                 else:
                     LogError("Invalid setting: " + str(Entry))
                     continue
                 UpdateConfigFile(ConfigFile, Section, Entry, Value)
-        Restart()
+                changed = True
+        if changed:
+            Restart()
     except Exception as e1:
         LogErrorLine("Error Update Config File (SaveSettings): " + str(e1))
 
@@ -4995,6 +5002,10 @@ def SaveSettings(query_string):
 def UpdateConfigFile(FileName, section, Entry, Value):
 
     try:
+        LogDebug("Filename: " + str(FileName))
+        LogDebug("section: " + str(section))
+        LogDebug("Entry: " + str(Entry))
+        LogDebug("Value: " + str(Value))
         if FileName == None or section == None or Entry == None or Value == None:
             return False
         if FileName == "" or section == "" or Entry == "":

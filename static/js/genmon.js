@@ -838,9 +838,7 @@ var UI = {
   _INVERT_KEYS: {
     disableweather: 'Enable Weather',
     disablesmtp: 'Enable Outbound Email (SMTP)',
-    disableimap: 'Enable Inbound Email Commands (IMAP)',
-    disableoutagecheck: 'Enable Outage Checking',
-    disablepowerlog: 'Enable Power Log'
+    disableimap: 'Enable Inbound Email Commands (IMAP)'
   },
 
   formField: function(name, def, value) {
@@ -966,7 +964,7 @@ var UI = {
       if ($e.is(':checkbox') && $e.attr('data-invert') === '1') {
         v = (v === 'true') ? 'false' : 'true';
       }
-      parts.push(n + '=' + v);
+      parts.push(encodeURIComponent(n) + '=' + encodeURIComponent(v));
     });
     return parts.join('&');
   },
@@ -5724,6 +5722,36 @@ var Pages = {
 
       /* --- Event handlers --- */
       $('#a-update-banner').on('click', function() { $('#a-update').trigger('click'); });
+
+      /* --- Probe for update on About page load (client-side, no server call) --- */
+      (function() {
+        var curVer = (S.startInfo && S.startInfo.version) || CFG.version || '';
+        var url = "https://raw.githubusercontent.com/jgyates/genmon/master/genmonlib/program_defaults.py";
+        $.ajax({ dataType: "html", url: url, timeout: 4000,
+          error: function() { console.log("Error checking for latest version"); },
+          success: function(result) {
+            var lines = result.split("\n");
+            var match = jQuery.grep(lines, function(a) { return a.indexOf("GENMON_VERSION") >= 0; });
+            if (!match.length) return;
+            var latest = match[0].split("=")[1].replace(/"/g, '').trim();
+            var changed = S.updateAvailable !== (latest !== curVer);
+            S.updateAvailable = (latest !== curVer);
+            S.updateVersion = latest;
+            UI.updatePill();
+            if (changed && S.updateAvailable) {
+              if (!$('#a-update-banner').length) {
+                var ban = '<div class="about-update-banner">' +
+                  '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
+                  '<span>A software update is available! (v' + esc(S.updateVersion) + ')</span>' +
+                  '<button class="btn btn-sm about-update-btn" id="a-update-banner">Update Now</button>' +
+                '</div>';
+                $c.find('.page-title').after(ban);
+                $('#a-update-banner').on('click', function() { $('#a-update').trigger('click'); });
+              }
+            }
+          }
+        });
+      })();
       $('#a-changelog').on('click', function(){
         Pages.about._showChangelog();
       });
@@ -5781,38 +5809,74 @@ var Pages = {
       });
       $('#a-logs').on('click', function(){ Pages.about._download('get_logs', 'Download Logs'); });
       $('#a-update').on('click', function(){
-        Modal.confirm('Update Software',
-          'Download and install the latest version of Genmon? The service will restart automatically when done.',
-          function(){
-            /* Phase 1: show downloading progress */
-            Modal.show('Updating', Modal.html(
-              '<div class="restart-modal">' +
-                '<div class="restart-spinner"></div>' +
-                '<p class="restart-msg">Downloading &amp; installing update\u2026</p>' +
-                '<p class="restart-countdown" style="font-size:.82rem;color:var(--text-2)">This may take a minute. Do not close the browser.</p>' +
-                '<div class="restart-bar-track"><div class="restart-bar-fill" id="upd-bar" style="width:0%"></div></div>' +
-              '</div>'), []);
-            /* Indeterminate progress animation */
-            var updPct = 0, updDir = 1, updTimer = setInterval(function(){
-              updPct += updDir * 1.5;
-              if (updPct >= 90) updDir = 0.2;
-              $('#upd-bar').css('width', Math.min(updPct, 95) + '%');
-            }, 300);
-            /* Fire update request (timeout: 0 — server restarts before replying) */
-            $.ajax({ url: CFG.baseUrl + 'updatesoftware', dataType: 'json', timeout: 0, cache: false })
-              .done(function(){
-                /* Unexpected — server shouldn't reply before restarting */
-                clearInterval(updTimer);
-                Modal.close();
-                Modal.alert('Note', 'Genmon may not have updated. Please verify manually or try again.');
-              })
-              .fail(function(){
-                /* Expected — server restarted; switch to restart modal */
-                clearInterval(updTimer);
-                Modal.close();
-                Modal.restart('Update installed. Service is restarting\u2026');
-              });
+        /* Fetch upgrade warnings before confirming */
+        var _doUpdate = function(warnings) {
+          if (!warnings || typeof warnings !== 'object') warnings = {};
+          var curVer = (S.startInfo && S.startInfo.version) || CFG.version;
+          /* Collect warnings for versions > current version */
+          function cmpVer(a, b) {
+            var pa = a.split('.'), pb = b.split('.');
+            for (var i = 0; i < Math.max(pa.length, pb.length); i++) {
+              var na = parseInt(pa[i] || '0', 10), nb = parseInt(pb[i] || '0', 10);
+              if (na !== nb) return na - nb;
+            }
+            return 0;
+          }
+          var msgs = [];
+          Object.keys(warnings).sort(cmpVer).forEach(function(ver) {
+            if (cmpVer(ver, curVer) > 0 && warnings[ver]) {
+              msgs.push('<b>v' + esc(ver) + ':</b> ' + esc(warnings[ver]));
+            }
           });
+          var body = 'Download and install the latest version of Genmon? The service will restart automatically when done.';
+          if (msgs.length) {
+            body = Modal.html(
+              '<p>' + esc('Download and install the latest version of Genmon? The service will restart automatically when done.') + '</p>' +
+              '<div style="background:var(--bg-2);border-left:3px solid var(--warning);padding:10px 12px;border-radius:var(--radius);margin-top:10px;font-size:.85rem">' +
+              '<strong>' + btnIcon('warning', 14) + ' Upgrade Notes:</strong><br>' +
+              msgs.join('<br>') +
+              '</div>');
+          }
+          Modal.confirm('Update Software', body,
+            function(){
+              /* Phase 1: show downloading progress */
+              Modal.show('Updating', Modal.html(
+                '<div class="restart-modal">' +
+                  '<div class="restart-spinner"></div>' +
+                  '<p class="restart-msg">Downloading &amp; installing update\u2026</p>' +
+                  '<p class="restart-countdown" style="font-size:.82rem;color:var(--text-2)">This may take a minute. Do not close the browser.</p>' +
+                  '<div class="restart-bar-track"><div class="restart-bar-fill" id="upd-bar" style="width:0%"></div></div>' +
+                '</div>'), []);
+              /* Indeterminate progress animation */
+              var updPct = 0, updDir = 1, updTimer = setInterval(function(){
+                updPct += updDir * 1.5;
+                if (updPct >= 90) updDir = 0.2;
+                $('#upd-bar').css('width', Math.min(updPct, 95) + '%');
+              }, 300);
+              /* Fire update request (timeout: 0 — server restarts before replying) */
+              $.ajax({ url: CFG.baseUrl + 'updatesoftware', dataType: 'json', timeout: 0, cache: false })
+                .done(function(){
+                  /* Unexpected — server shouldn't reply before restarting */
+                  clearInterval(updTimer);
+                  Modal.close();
+                  Modal.alert('Note', 'Genmon may not have updated. Please verify manually or try again.');
+                })
+                .fail(function(){
+                  /* Expected — server restarted; switch to restart modal */
+                  clearInterval(updTimer);
+                  Modal.close();
+                  Modal.restart('Update installed. Service is restarting\u2026');
+                });
+            });
+        };
+        /* Fetch messages/warnings directly from GitHub (not from genmon) */
+        $.ajax({ url: 'https://raw.githubusercontent.com/jgyates/genmon/master/data/messages.json',
+          dataType: 'json', timeout: 8000, cache: false
+        }).done(function(d) {
+          _doUpdate(d || {});
+        }).fail(function() {
+          _doUpdate({});
+        });
       });
       $('#a-restart').on('click', function(){
         Modal.confirm('Restart','Restart the genmon service?', function(){

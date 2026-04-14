@@ -1,7 +1,7 @@
 [ToolTips]
 disableemail = Disable all email use by the program.
-disablesmtp = Disable outgoing email. See the project wiki Tips and Trick page for info on setting up outbound email.
-disableimap = Disable incoming email. See the project wiki Tips and Trick page for info on setting up inbound email.
+disablesmtp = Enable outgoing email. See the project wiki Tips and Trick page for info on setting up outbound email.
+disableimap = Enable incoming email. See the project wiki Tips and Trick page for info on setting up inbound email.
 email_pw = Password for the email account used for sending and receiving email
 email_account = Email account username
 email_recipient = Address that email are sent
@@ -61,7 +61,7 @@ currentoffset = This value provides an offset to compensate for mis-calibrated c
 legacy_power = If enabled this will allow the use of the older method to calculate current / power for Evolution Air Cooled controllers
 disableplatformstats = If enabled, platform statistics will not be displayed in the user interface
 optimizeforslowercpu = If enabled, minor optimizations for slower CPUs will be used. Note that this is a design trade off for responsiveness vs CPU utilization.
-disableweather= Disable weather feature
+disableweather= Enable the weather feature. Requires an OpenWeatherMap API key and location to be configured.
 weatherkey = Openweathermap.org API Key. This is required to enable weather reporting. See https://openweathermap.org/appid. Requires openweathermap library. If you installed the Generator Monitor Software before V1.9.6 and are upgrading you must run this command: "sudo pip install pyowm" from the console before the weather features will be functional
 weatherlocation = The location to report weather. Either enter City,State,Country or a openweathermap.org city ID. Automatic lookup of location requires location services to be enabled in your browser, a https connection, and a valid API key.
 metricweather = If enabled, metric units will be displayed when applicable.
