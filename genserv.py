@@ -5022,10 +5022,7 @@ def SaveSettings(query_string):
 def UpdateConfigFile(FileName, section, Entry, Value):
 
     try:
-        LogDebug("Filename: " + str(FileName))
-        LogDebug("section: " + str(section))
-        LogDebug("Entry: " + str(Entry))
-        LogDebug("Value: " + str(Value))
+
         if FileName == None or section == None or Entry == None or Value == None:
             return False
         if FileName == "" or section == "" or Entry == "":
