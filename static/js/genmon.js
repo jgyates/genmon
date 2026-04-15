@@ -346,6 +346,12 @@ var Modal = {
   restart: function(msg, newUrl) {
     var self = this, secs = 20, timer = null, poller = null, alive = false;
     var redirectMode = !!newUrl;
+    /* Detect cross-protocol switch (HTTPS↔HTTP). AJAX polling cannot work
+       cross-protocol: mixed-content blocks HTTP polls from an HTTPS page, and
+       self-signed certs block HTTPS polls from an HTTP page. In this case we
+       skip polling entirely and show a clickable link after a countdown. */
+    var crossProto = redirectMode &&
+      (new URL(newUrl)).protocol !== location.protocol;
     var body = '<div class="restart-modal">' +
       '<div class="restart-spinner"></div>' +
       '<p class="restart-msg">' + esc(msg || 'Settings saved. Service is restarting…') + '</p>' +
@@ -371,6 +377,22 @@ var Modal = {
       var pct = Math.min(elapsed / total * 100, 100);
       $('#restart-bar').css('width', pct + '%');
       if (rem <= 0 && !alive) {
+        if (crossProto) {
+          /* Cross-protocol: countdown done, show link immediately */
+          clearInterval(timer);
+          $('.restart-spinner').hide();
+          var toHttps = (new URL(newUrl)).protocol === 'https:';
+          var hint = toHttps
+            ? 'If you see a certificate warning, accept it and import the CA certificate from Settings.'
+            : 'Your browser may have cached the old HTTPS redirect. If the link does not work, ' +
+              'try an incognito/private window or clear your browser cache.';
+          $('.restart-countdown').html(
+            '<a href="' + esc(newUrl) + '" style="color:var(--accent);font-weight:600">' +
+            'Click here to open ' + esc(newUrl) + '</a><br>' +
+            '<span style="font-size:.85em;color:var(--text-muted)">' + hint + '</span>'
+          );
+          return;
+        }
         if (!showedFallback && !redirectMode) {
           showedFallback = true;
           $('.restart-bar-track').hide();
@@ -424,7 +446,8 @@ var Modal = {
     /* Start after 3s grace period (backend needs time to enter restart state) */
     setTimeout(function() {
       timer = setInterval(tick, 1000);
-      poller = setInterval(poll, 2500);
+      /* Only poll if same protocol — cross-protocol AJAX is unreliable */
+      if (!crossProto) poller = setInterval(poll, 2500);
     }, 3000);
   }
 };
@@ -5810,8 +5833,12 @@ var Pages = {
       $('#a-logs').on('click', function(){ Pages.about._download('get_logs', 'Download Logs'); });
       $('#a-update').on('click', function(){
         /* Fetch upgrade warnings before confirming */
-        var _doUpdate = function(warnings) {
-          if (!warnings || typeof warnings !== 'object') warnings = {};
+        var _doUpdate = function(data) {
+          if (!data || typeof data !== 'object') data = {};
+          /* Support categorized format: {"update": {"ver": "msg"}}
+             with backward compat for flat format: {"ver": "msg"} */
+          var warnings = (data.update && typeof data.update === 'object')
+            ? data.update : data;
           var curVer = (S.startInfo && S.startInfo.version) || CFG.version;
           /* Collect warnings for versions > current version */
           function cmpVer(a, b) {

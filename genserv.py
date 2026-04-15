@@ -166,9 +166,23 @@ def StartHTTPRedirectServer():
                 location = "https://" + host + self.path
             else:
                 location = "https://" + host + ":" + str(target_port) + self.path
-            self.send_response(302)
-            self.send_header("Location", location)
+            # Serve an HTML page with JS redirect instead of a raw 302.
+            # Chrome aggressively caches 301/302 redirects for IP addresses,
+            # making it impossible to reach the HTTP site after HTTPS is disabled.
+            # An HTML page is not cached as a redirect by the browser.
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html")
+            self.send_header("Cache-Control", "no-store")
             self.end_headers()
+            page = (
+                "<!DOCTYPE html><html><head>"
+                '<meta http-equiv="refresh" content="1;url={loc}">'
+                "</head><body>"
+                '<p>Redirecting to <a href="{loc}">{loc}</a>&hellip;</p>'
+                "<script>location.replace('{loc}');</script>"
+                "</body></html>"
+            ).format(loc=location)
+            self.wfile.write(page.encode("utf-8"))
 
         do_POST = do_GET
         do_PUT = do_GET
@@ -290,6 +304,10 @@ def add_header(r):
         "connect-src 'self' https://raw.githubusercontent.com; "
         "frame-ancestors 'none'"
     )
+
+    # When HTTPS is off, tell browsers to stop forcing HTTPS (clears cached HSTS)
+    if not bUseSecureHTTP:
+        r.headers["Strict-Transport-Security"] = "max-age=0"
 
     return r
 
@@ -4984,7 +5002,9 @@ def SaveSettings(query_string):
                     Section = CurrentConfigSettings[Entry][7]
                     # CurrentConfigSettings[Entry][3] is the current value
                     CurrentValue = str(CurrentConfigSettings[Entry][3]) if CurrentConfigSettings[Entry][3] is not None else ""
-                    if Value == CurrentValue:
+                    # Normalize for comparison: JS sends 'true'/'false' lowercase,
+                    # Python str(True) gives 'True' — case-insensitive compare
+                    if Value.strip().lower() == CurrentValue.strip().lower():
                         continue  # skip unchanged settings to reduce SD card writes
                 else:
                     LogError("Invalid setting: " + str(Entry))
