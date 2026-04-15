@@ -5029,13 +5029,16 @@ def UpdateConfigFile(FileName, section, Entry, Value):
 # -------------------------------------------------------------------------------
 # This will reboot the pi
 def Reboot():
-    os.system("sudo reboot now")
+
+    subprocess.run(["sudo", "reboot"])
 
 
 # -------------------------------------------------------------------------------
 # This will shutdown the pi
 def Shutdown():
-    os.system("sudo shutdown -h now")
+
+    subprocess.run(["sudo", "shutdown", "-h"])
+
 
 
 # -------------------------------------------------------------------------------
