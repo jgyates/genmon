@@ -1629,13 +1629,15 @@ var Pages = {
         var $tile = $(this).closest('.tile-overview');
         var dir = $(this).data('dir');
         var spans = Pages.status.OV_SPANS;
-        var cur = parseInt($tile.attr('data-ov-span'), 10) || 5;
-        var ci = spans.indexOf(cur);
+        var cur = $tile.attr('data-ov-span') || 'full';
+        if (cur !== 'full') cur = parseInt(cur, 10);
+        var ci = -1;
+        for (var i = 0; i < spans.length; i++) { if (spans[i] === cur || spans[i] == cur) { ci = i; break; } }
         if (ci < 0) ci = spans.length - 1;
         var ni = dir === 'up' ? Math.min(ci+1, spans.length-1) : Math.max(ci-1, 0);
         var ns = spans[ni];
         $tile.attr('data-ov-span', ns)
-          .removeClass('ov-span-2 ov-span-3 ov-span-4 ov-span-5')
+          .removeClass('ov-span-2 ov-span-3 ov-span-4 ov-span-full')
           .addClass('ov-span-' + ns);
         Store.set('ovSpan', ns);
       });
@@ -1943,10 +1945,11 @@ var Pages = {
         '</div></div>';
     },
 
-    OV_SPANS: [2, 3, 4, 5],
+    OV_SPANS: [2, 3, 4, 'full'],
     OV_FONTS: ['sm', 'md', 'lg'],
     _overviewTileHtml: function() {
-      var span = Store.get('ovSpan') || 5;
+      var span = Store.get('ovSpan') || 'full';
+      if (span == 5) span = 'full';  // migrate old default
       var font = Store.get('ovFont') || 'md';
       var rev  = !!Store.get('ovReversed');
       return '<div class="tile tile-overview ov-span-' + span + ' ov-font-' + esc(font) + (rev ? ' ov-reversed' : '') + '" ' +

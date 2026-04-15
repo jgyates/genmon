@@ -880,7 +880,7 @@ input, select, textarea { font: inherit; color: inherit; }
 
 /* --- Overview status tile --- */
 .tile-overview {
-  grid-column: span 5;
+  grid-column: 1 / -1;
   min-height: 80px;
   justify-content: center;
   text-align: center;
@@ -890,7 +890,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .tile-overview.ov-span-2 { grid-column: span 2; }
 .tile-overview.ov-span-3 { grid-column: span 3; }
 .tile-overview.ov-span-4 { grid-column: span 4; }
-.tile-overview.ov-span-5 { grid-column: span 5; }
+.tile-overview.ov-span-full { grid-column: 1 / -1; }
 .overview-headline {
   font-size: 2rem;
   font-weight: 800;
