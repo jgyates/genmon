@@ -884,14 +884,15 @@ class GenHALink(MySupport):
 
     def _extract_unit(self, value_str):
         match = re.search(
-            r"[\d.]+\s*(V|A|W|kW|kVA|Hz|°[CF]|dBm|%|RPM|gal|hours|h|C|F)\s*$",
+            r"[\d.]+\s*(V|A|mA|W|kW|kVA|Hz|°[CF]|dBm|%|RPM|gal|hours|h|C|F)\s*$",
             str(value_str),
         )
         return match.group(1) if match else None
 
     def _unit_to_device_class(self, unit):
         mapping = {
-            "V": "voltage", "A": "current", "W": "power", "kW": "power",
+            "V": "voltage", "A": "current", "mA": "current", 
+            "W": "power", "kW": "power",
             "kVA": "apparent_power",
             "Hz": "frequency",
             "°C": "temperature", "°F": "temperature",
