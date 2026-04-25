@@ -533,7 +533,7 @@ class GenMopekaData(MySupport):
                 self.LogDebug(
                     "No tank dimensions found for tank type " + str(self.tank_type)
                 )
-                if self.max_mm != None or self.min_mm != None:
+                if self.max_mm == None or self.min_mm == None:
                     self.LogDebug(
                         "Error: min: "
                         + str(self.min_mm)
