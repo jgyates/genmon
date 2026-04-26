@@ -488,7 +488,7 @@ class GenSNMP(MySupport):
                 self.LogDebug(self.UserDefinedSNMPConfigFileName)
                 self.UserDefinedSNMP = self.ReadJSONConfig(self.UserDefinedSNMPConfigFileName)
                 if self.UserDefinedSNMP == None:
-                    self.LogError("Fatal Error: Unable to get base controller SNMP config data from " + self.ControllerSNMPConfigFileName)
+                    self.LogError("Fatal Error: Unable to get base controller SNMP config data from " + self.UserDefinedSNMPConfigFileName)
                     return 
                 if not self.SetSNMPData(self.UserDefinedSNMP, "user defined", ControllerID = self.externaldataID):
                     self.LogError("Error parsing user defined SNMP data, exiting")
