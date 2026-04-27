@@ -884,15 +884,14 @@ class GenHALink(MySupport):
 
     def _extract_unit(self, value_str):
         match = re.search(
-            r"[\d.]+\s*(V|A|mA|W|kW|kVA|Hz|°[CF]|dBm|%|RPM|gal|hours|h|C|F)\s*$",
+            r"[\d.]+\s*(V|A|W|kW|kVA|Hz|°[CF]|dBm|%|RPM|gal|hours|h|C|F)\s*$",
             str(value_str),
         )
         return match.group(1) if match else None
 
     def _unit_to_device_class(self, unit):
         mapping = {
-            "V": "voltage", "A": "current", "mA": "current", 
-            "W": "power", "kW": "power",
+            "V": "voltage", "A": "current", "W": "power", "kW": "power",
             "kVA": "apparent_power",
             "Hz": "frequency",
             "°C": "temperature", "°F": "temperature",
@@ -901,6 +900,64 @@ class GenHALink(MySupport):
             "%": None, "RPM": None, "gal": None,
         }
         return mapping.get(unit)
+
+    # Default unit per HA device_class when state has not yet supplied one.
+    # Required because HA validates device_class/unit at entity registration
+    # time. Imperial defaults match genmon's default UseMetric=False.
+    _DEFAULT_UNIT_BY_DEVICE_CLASS = {
+        "temperature": "°F",
+        "voltage": "V",
+        "current": "A",
+        "power": "kW",
+        "apparent_power": "kVA",
+        "energy": "kWh",
+        "frequency": "Hz",
+        "humidity": "%",
+        "pressure": "hPa",
+        "duration": "s",
+        "signal_strength": "dBm",
+    }
+
+    def _lookup_path_value(self, path):
+        """Walk CurrentState by '/'-separated path. Returns the leaf value
+        (which may be a _num_json dict, scalar, or None)."""
+        try:
+            data = self.CurrentState
+            for part in path.split("/"):
+                if isinstance(data, dict):
+                    data = data.get(part)
+                else:
+                    return None
+                if data is None:
+                    return None
+            return data
+        except Exception:
+            return None
+
+    def _resolve_missing_units(self, sensors):
+        """For sensor defs that declare a unit-required device_class but no
+        unit, try to discover the unit from the current state, otherwise
+        apply a sensible default. Mutates the dicts in place."""
+        try:
+            for defn in sensors:
+                dc = defn.get("device_class")
+                if not dc or dc not in self._DEFAULT_UNIT_BY_DEVICE_CLASS:
+                    continue
+                if defn.get("unit"):
+                    continue
+                unit = None
+                path = defn.get("path", "")
+                if path:
+                    leaf = self._lookup_path_value(path)
+                    if self._is_num_json(leaf):
+                        unit = leaf.get("unit") or None
+                    elif isinstance(leaf, str):
+                        unit = self._extract_unit(leaf)
+                if not unit:
+                    unit = self._DEFAULT_UNIT_BY_DEVICE_CLASS[dc]
+                defn["unit"] = unit
+        except Exception as e1:
+            self.LogErrorLine("Error in _resolve_missing_units: " + str(e1))
 
     # ---------- WebSocket Notifications ----------------------------------------
     def _notify_ws_clients(self, message):
@@ -977,6 +1034,11 @@ class GenHALink(MySupport):
             for ds in self.DynamicSensors.values():
                 if ds.get("entity_id") not in existing_ids:
                     entities.setdefault("sensors", []).append(ds)
+
+        # Resolve missing units for sensors that declare a device_class which
+        # requires one (HA emits a registration warning otherwise). Tries to
+        # discover the unit from current state; falls back to a sensible default.
+        self._resolve_missing_units(entities.get("sensors", []))
 
         entities["capabilities"] = capabilities
         entities["buttons_from_controller"] = self.StartInfo.get("buttons", [])

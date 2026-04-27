@@ -231,6 +231,7 @@
       "name": "CPU Temperature",
       "path": "Tiles/CPU Temp/value",
       "device_class": "temperature",
+      "unit": "°C",
       "icon": "mdi:cpu-64-bit",
       "state_class": "measurement",
       "category": "diagnostic",
