@@ -613,7 +613,7 @@ class GenHALink(MySupport):
             cpu_temp = indicators.get("cpuTemp")
             if cpu_temp is not None:
                 # indicators.cpuTemp is always Celsius (float)
-                temp_str = "%.1f C" % float(cpu_temp)
+                temp_str = "%.1f °C" % float(cpu_temp)
                 if "Tiles" not in state:
                     state["Tiles"] = {}
                 if "CPU Temp" not in state["Tiles"]:
@@ -839,6 +839,12 @@ class GenHALink(MySupport):
                             self.DynamicSensors[entity_id]["state_class"] = "measurement"
 
                     if unit:
+                        # Normalize bare C/F to °C/°F (HA temperature class
+                        # rejects unit strings without the degree symbol).
+                        if unit == "C":
+                            unit = "°C"
+                        elif unit == "F":
+                            unit = "°F"
                         self.DynamicSensors[entity_id]["unit"] = unit
                         self.DynamicSensors[entity_id]["state_class"] = "measurement"
                         dc = self._unit_to_device_class(unit)
@@ -938,6 +944,9 @@ class GenHALink(MySupport):
         """For sensor defs that declare a unit-required device_class but no
         unit, try to discover the unit from the current state, otherwise
         apply a sensible default. Mutates the dicts in place."""
+        # HA requires the degree symbol for temperature units; genmon often
+        # emits plain "C"/"F". Normalize before assigning.
+        unit_aliases = {"C": "°C", "F": "°F"}
         try:
             for defn in sensors:
                 dc = defn.get("device_class")
@@ -953,6 +962,8 @@ class GenHALink(MySupport):
                         unit = leaf.get("unit") or None
                     elif isinstance(leaf, str):
                         unit = self._extract_unit(leaf)
+                if unit in unit_aliases:
+                    unit = unit_aliases[unit]
                 if not unit:
                     unit = self._DEFAULT_UNIT_BY_DEVICE_CLASS[dc]
                 defn["unit"] = unit
