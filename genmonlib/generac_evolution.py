@@ -5002,9 +5002,9 @@ class Evolution(GeneratorController):
                 if self.AdditionalRunHours != None:
                     RunHours = float(RunHours) + float(self.AdditionalRunHours)
             if ReturnFloat:
-                return float(RunHours)
+                return round(float(RunHours), 2)
             else:
-                return str(RunHours)
+                return "%.2f" % float(RunHours)
         except Exception as e1:
             self.LogErrorLine(
                 "Error getting run hours: "
