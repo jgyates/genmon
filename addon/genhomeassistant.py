@@ -284,7 +284,7 @@ SENSOR_DEFINITIONS = {
         "name": "Fuel Consumption (30 Days)",
         "path": "Maintenance/Fuel Consumption in last 30 days",
         "device_class": None,
-        "unit": "gal",
+        "unit": None,  # Will be set based on metric setting
         "icon": "mdi:gas-station",
         "state_class": "total",
     },
@@ -2041,6 +2041,9 @@ class MyHomeAssistant(MySupport):
             elif entity_def.get("device_class") == "temperature":
                 # Temperature sensors require a unit - set based on metric setting
                 payload["unit_of_measurement"] = "°C" if self.UseMetric else "°F"
+            elif entity_def.get("device_class") == "consumption":
+                # Fuel consumption sensors require a unit - set based on metric setting
+                payload["unit_of_measurement"] = "l" if self.UseMetric else "gal"
             if entity_def.get("icon"):
                 payload["icon"] = entity_def["icon"]
             if entity_def.get("state_class"):
