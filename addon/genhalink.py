@@ -100,6 +100,7 @@ class GenHALink(MySupport):
         self._entities_pruned = False
         self._last_resource_check_time = 0
         self._cached_resource_info = {}
+        self._skipped_paths = set()  # paths suppressed as name-duplicates
 
         self._load_config()
         self._ensure_api_key()
@@ -539,6 +540,11 @@ class GenHALink(MySupport):
         # Discover dynamic sensors
         self._discover_dynamic_sensors(new_state)
 
+        # Remove paths that were suppressed as duplicates so HA never
+        # receives a value for them and stale entities become unavailable.
+        for _dup_path in self._skipped_paths:
+            self._remove_state_path(new_state, _dup_path)
+
         # Detect changes and notify WebSocket clients
         changes = {}
         flat_new = self._flatten_state(new_state)
@@ -801,6 +807,20 @@ class GenHALink(MySupport):
                 for entity in self.EntityDefinitions.get(category, []):
                     known_paths.add(entity.get("path", ""))
 
+            # Build set of already-registered leaf names (predefined + dynamic)
+            # so that duplicate concepts (e.g. "Utility Voltage" in both
+            # Status/Line and Outage) produce only a single HA sensor.
+            seen_leaf_names = set()
+            for category in ("sensors", "binary_sensors"):
+                for entity in self.EntityDefinitions.get(category, []):
+                    ename = entity.get("name", "")
+                    if ename:
+                        seen_leaf_names.add(ename.lower())
+            for ds in self.DynamicSensors.values():
+                ename = ds.get("name", "")
+                if ename:
+                    seen_leaf_names.add(ename.lower())
+
             for path, value in flat.items():
                 if any(bl.lower() in path.lower() for bl in self.BlackList):
                     continue
@@ -820,9 +840,19 @@ class GenHALink(MySupport):
 
                 entity_id = self._path_to_entity_id(path)
                 if entity_id not in self.DynamicSensors:
+                    name = self._path_to_name(path)
+                    # Skip if another sensor already uses this leaf name.
+                    # Genmon reports the same value (e.g. "Utility Voltage")
+                    # in multiple sections (Status/Line and Outage); we keep
+                    # only the first occurrence so HA shows a single entity.
+                    if name.lower() in seen_leaf_names:
+                        self.LogDebug("Skipping duplicate dynamic sensor: %s (path=%s)" % (name, path))
+                        self._skipped_paths.add(path)
+                        continue
+                    seen_leaf_names.add(name.lower())
                     self.DynamicSensors[entity_id] = {
                         "entity_id": entity_id,
-                        "name": self._path_to_name(path),
+                        "name": name,
                         "path": path,
                         "dynamic": True,
                     }
@@ -880,6 +910,18 @@ class GenHALink(MySupport):
                         elif isinstance(value, (dict, list)):
                             result.update(self._extract_num_json_units(value, new_prefix))
         return result
+
+    def _remove_state_path(self, state, path):
+        """Remove a '/'-separated path from the nested state dict in-place."""
+        parts = path.split("/")
+        node = state
+        for part in parts[:-1]:
+            if isinstance(node, dict) and part in node:
+                node = node[part]
+            else:
+                return
+        if isinstance(node, dict):
+            node.pop(parts[-1], None)
 
     def _path_to_entity_id(self, path):
         return re.sub(r"[^a-z0-9]+", "_", path.lower()).strip("_")
