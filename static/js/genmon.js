@@ -3977,7 +3977,7 @@ var Pages = {
     _notifData: null,
     /* Category mapping: field key → category id */
     _CAT_MAP: {
-      sitename:'general', favicon:'general', fueltype:'general', tanksize:'general',
+      sitename:'general', fueltype:'general', tanksize:'general',
       nominalfrequency:'general', nominalkw:'general', nominalrpm:'general',
       smart_transfer_switch:'general', enhancedexercise:'general',
       http_user:'security', http_pass:'security', http_user_ro:'security', http_pass_ro:'security',
@@ -3991,17 +3991,18 @@ var Pages = {
       weatherkey:'weather', weatherlocation:'weather',
       incoming_mail_folder:'email', processed_mail_folder:'email',
       readonlyemailcommands:'email',
+      favicon:'system',
       autofeedback:'system', update_check:'system', synctime:'system',
       syncdst:'system', disableoutagecheck:'system', optimizeforslowercpu:'system',
       disablepowerlog:'system', displayunknown:'system'
     },
     _CATEGORIES: [
-      { id:'general',  label:'General',        icon:'home' },
+      { id:'general',  label:'Generator',      icon:'zap' },
       { id:'security', label:'Security',       icon:'shield' },
       { id:'comms',    label:'Communication',  icon:'wifi' },
       { id:'email',    label:'Email',          icon:'mail' },
       { id:'weather',  label:'Weather',        icon:'cloud' },
-      { id:'system',   label:'System',         icon:'cpu' }
+      { id:'system',   label:'Monitor',        icon:'cpu' }
     ],
     render: function($c) {
       $c.html('<div class="page-title">'+icon('settings')+' Settings</div>' +
@@ -4118,7 +4119,7 @@ var Pages = {
       h += '<button class="set-cat set-cat-adv'+(devMode?'':' hidden')+'" data-cat="__advanced__">' +
         icon('advanced') + '<span class="set-cat-label">Advanced</span></button>';
       h += '<button class="set-cat set-cat-adv'+(devMode?'':' hidden')+'" data-cat="__sysactions__">' +
-        icon('power') + '<span class="set-cat-label">System</span></button>';
+        icon('power') + '<span class="set-cat-label">System Actions</span></button>';
       h += '</div>';
 
       /* --- Setting panels --- */
@@ -4436,8 +4437,8 @@ var Pages = {
         } else {
           (buckets[c.id] || []).forEach(function(s) { h += UI.formField(s.key, s.def, s.def[3]); });
         }
-        /* Inject Modbus page toggle into General panel */
-        if (c.id === 'general') {
+        /* Inject Modbus page toggle into Monitor panel */
+        if (c.id === 'system') {
           h += '<div class="form-group setting-field" data-label="show modbus page">' +
             '<div class="setting-toggle-row">' +
             '<label class="toggle"><input type="checkbox" id="set-modbus-toggle"' +
