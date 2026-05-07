@@ -733,17 +733,17 @@ def doLdapLogin(username, password):
                 elif group.upper().find("CN=" + LdapReadOnlyGroup.upper() + ",") >= 0:
                     HasReadOnly = True
         conn.unbind()
-    except Exception:
-        LogError("Error in LDAP login. Check credentials and config parameters")
+    except Exception as e1:
+        LogError("Error in LDAP login. Check credentials and config parameters: " + str(e1))
 
     session["logged_in"] = HasAdmin or HasReadOnly
     session["write_access"] = HasAdmin
     if HasAdmin:
-        LogError("Admin Login via LDAP")
+        LogError("Admin Login via LDAP for user: " + AccountName)
     elif HasReadOnly:
-        LogError("Limited Rights Login via LDAP")
+        LogError("Limited Rights Login via LDAP: " + AccountName)
     else:
-        LogError("No rights for login via LDAP")
+        LogError("No rights for login via LDAP: " + AccountName)
 
     return HasAdmin or HasReadOnly
 
