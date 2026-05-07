@@ -689,7 +689,7 @@ def doLdapLogin(username, password):
     if LdapServer == None or LdapServer == "":
         return False
     try:
-        from ldap3 import ALL, NTLM, Connection, Server
+        from ldap3 import ALL, Connection, Server
         from ldap3.utils.dn import escape_rdn
         from ldap3.utils.conv import escape_filter_chars
     except ImportError as importException:
@@ -717,10 +717,10 @@ def doLdapLogin(username, password):
             server,
             user="{}\\{}".format(DomainName, AccountName),
             password=password,
-            authentication=NTLM,
             auto_bind=True,
         )
-        loginbasestr = escape_filter_chars("(&(objectclass=user)(sAMAccountName=" + AccountName + "))")
+        escaped_account = escape_filter_chars(AccountName)
+        loginbasestr = "(&(objectclass=user)(sAMAccountName=%s))" % escaped_account
         conn.search(
             LdapBase,
             loginbasestr,
@@ -733,17 +733,20 @@ def doLdapLogin(username, password):
                 elif group.upper().find("CN=" + LdapReadOnlyGroup.upper() + ",") >= 0:
                     HasReadOnly = True
         conn.unbind()
-    except Exception as e1:
-        LogError("Error in LDAP login. Check credentials and config parameters: " + str(e1))
+    except Exception as eld1:
+        import traceback
+        LogError("Error in LDAP login. Check credentials and config parameters")
+        LogDebug("LDAP login exception: " + repr(eld1))
+        LogDebug("LDAP login traceback: " + traceback.format_exc())
 
     session["logged_in"] = HasAdmin or HasReadOnly
     session["write_access"] = HasAdmin
     if HasAdmin:
         LogError("Admin Login via LDAP for user: " + AccountName)
     elif HasReadOnly:
-        LogError("Limited Rights Login via LDAP: " + AccountName)
+        LogError("Limited Rights Login via LDAP for user: " + AccountName)
     else:
-        LogError("No rights for login via LDAP: " + AccountName)
+        LogError("No rights for login via LDAP for user: " + AccountName)
 
     return HasAdmin or HasReadOnly
 
