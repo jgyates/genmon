@@ -207,6 +207,8 @@ class Loader(MySupport):
         MinPython=None,
     ):
 
+        # ImportName is the module name used by importlib. InstallName is the
+        # package name used by pip, which can differ (e.g. serial -> pyserial).
         return {
             "import": ImportName,
             "install": InstallName if InstallName != None else ImportName,
@@ -218,6 +220,17 @@ class Loader(MySupport):
     # ---------------------------------------------------------------------------
     def GetDependencyRegistry(self):
 
+        # Dependency groups:
+        #   base     - always required for normal genmon/genserv startup
+        #   addons   - required only when at least one listed add-on is enabled
+        #   features - required only when a config option is enabled; a feature
+        #              may also list modules when both an add-on and an option
+        #              must be enabled before installing the dependency.
+        #
+        # Keep optional or unusually large packages out of base. For example,
+        # fluids is only needed by genmopeka, and zeroconf is only needed when
+        # genhalink mDNS discovery is enabled.
+        #
         # we will not use the check for configparser as this look like it is in backports on 2.7
         # and our myconfig modules uses the default so this generates an error that is not warranted
         # ['configparser','configparser',None],   # reading config files
@@ -293,6 +306,8 @@ class Loader(MySupport):
             ],
             "features": [
                 {
+                    # zeroconf is optional within genhalink. Do not install it
+                    # unless the add-on is enabled and mDNS discovery is on.
                     "modules": ["genhalink"],
                     "config": {
                         "file": "genhalink.conf",
@@ -305,6 +320,8 @@ class Loader(MySupport):
                     ],
                 },
                 {
+                    # webauthn is used for passkeys, which are only available
+                    # when MFA is enabled.
                     "config": {
                         "file": "genmon.conf",
                         "section": "GenMon",
@@ -326,9 +343,12 @@ class Loader(MySupport):
         DependencyRegistry = self.GetDependencyRegistry()
 
         try:
+            # Start with the unconditional core dependencies.
             for Module in DependencyRegistry["base"]:
                 ModuleList.append(Module)
 
+            # Add dependencies for enabled add-ons only. This keeps disabled
+            # add-ons from triggering pip installs during every genloader start.
             for AddOn in DependencyRegistry["addons"]:
                 if not self.IsModuleEnabled(AddOn["modules"]):
                     continue
@@ -337,6 +357,8 @@ class Loader(MySupport):
                     Module["modules"] = AddOn["modules"]
                     ModuleList.append(Module)
 
+            # Add dependencies for enabled feature flags. Some features also
+            # have an add-on owner, so both gates must pass before inclusion.
             for Feature in DependencyRegistry["features"]:
                 if "modules" in Feature:
                     if not self.IsModuleEnabled(Feature["modules"]):
@@ -355,6 +377,9 @@ class Loader(MySupport):
                     Module["config"] = Feature["config"]
                     ModuleList.append(Module)
 
+            # A package can be required through more than one path. Check it
+            # once so shared dependencies do not produce duplicate log/install
+            # attempts.
             DedupedList = []
             for Module in ModuleList:
                 Key = (Module["import"], Module["install"], Module["version"])
@@ -371,6 +396,9 @@ class Loader(MySupport):
     def ShouldCheckLibrary(self, Module):
 
         try:
+            # Final platform/version/config guard before importing or installing.
+            # GetModuleList already filters add-ons and features, but keeping
+            # this here preserves one validation path for any direct callers.
             if "linuxonly" in Module and self.bSystemIsNotLinux and Module["linuxonly"]:
                 return False
             if "minpython" in Module and Module["minpython"] != None:
