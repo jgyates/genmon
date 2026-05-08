@@ -91,11 +91,6 @@ class Loader(MySupport):
         self.console = SetupLogger("genloader_console", log_file="", stream=True)
 
         try:
-            if self.Start:
-                if not self.CheckSystem():
-                    self.LogInfo("Error check system readiness. Exiting")
-                    sys.exit(2)
-
             self.CachedConfig = {}
 
             if not os.path.isdir(self.ConfigFilePath):
@@ -146,6 +141,11 @@ class Loader(MySupport):
                     self.LogInfo("Error validating config file, Exiting")
                     sys.exit(2)
 
+            if self.Start:
+                if not self.CheckSystem():
+                    self.LogInfo("Error check system readiness. Exiting")
+                    sys.exit(2)
+
             self.LoadOrder = self.GetLoadOrder()
 
             if self.Stop:
@@ -169,61 +169,110 @@ class Loader(MySupport):
             sys.exit(2)
 
     # ---------------------------------------------------------------------------
+    def IsModuleEnabled(self, ModuleList):
+
+        try:
+            if ModuleList == None or not len(ModuleList):
+                return True
+            for Module in ModuleList:
+                if Module in self.CachedConfig and self.CachedConfig[Module]["enable"]:
+                    return True
+            return False
+        except Exception as e1:
+            self.LogInfo("Error in IsModuleEnabled: " + str(e1), LogLine=True)
+            return False
+
+    # ---------------------------------------------------------------------------
+    def IsConfigOptionEnabled(self, ConfigFile, Section, Option, default=False):
+
+        try:
+            ConfigPath = os.path.join(self.ConfigFilePath, ConfigFile)
+            if not os.path.isfile(ConfigPath):
+                ConfigPath = os.path.join(self.ConfPath, ConfigFile)
+            if not os.path.isfile(ConfigPath):
+                return default
+            config = MyConfig(filename=ConfigPath, section=Section, log=self.log)
+            return config.ReadValue(Option, return_type=bool, default=default)
+        except Exception as e1:
+            self.LogInfo("Error in IsConfigOptionEnabled: " + str(e1), LogLine=True)
+            return default
+
+    # ---------------------------------------------------------------------------
+    def ShouldCheckLibrary(self, Module):
+
+        try:
+            if "linuxonly" in Module and self.bSystemIsNotLinux and Module["linuxonly"]:
+                return False
+            if not self.IsModuleEnabled(Module.get("modules", None)):
+                return False
+            if "config" in Module:
+                Config = Module["config"]
+                return self.IsConfigOptionEnabled(
+                    Config["file"],
+                    Config["section"],
+                    Config["option"],
+                    default=Config.get("default", False),
+                )
+            return True
+        except Exception as e1:
+            self.LogInfo("Error in ShouldCheckLibrary: " + str(e1), LogLine=True)
+            return True
+
+    # ---------------------------------------------------------------------------
     def CheckSystem(self):
 
         # this function checks the system to see if the required libraries are
         # installed. If they are not then an attempt is made to install them.
 
         ModuleList = [
-            # [import name , install name, required version, linux only if true]
-            ["flask", "flask", None],  # Web server
+            # Required modules are always checked. Optional modules are checked
+            # only when their owning add-on or feature is enabled.
+            {"import": "flask", "install": "flask", "version": None},  # Web server
             # we will not use the check for configparser as this look like it is in backports on 2.7
             # and our myconfig modules uses the default so this generates an error that is not warranted
             # ['configparser','configparser',None],   # reading config files
-            ["serial", "pyserial", None],  # Serial
-            ["crcmod", "crcmod", None],  # Modbus CRC
-            ["pyowm", "pyowm", None],  # Open Weather API
-            ["pytz", "pytz", None],  # Time zone support
-            ["pysnmp", "pysnmp", "5.1.0"],  # SNMP
-            ["ldap3", "ldap3", None],  # LDAP
-            ["smbus", "smbus", None, True],  # SMBus reading of temp sensors
-            ["pyotp", "pyotp", "2.3.0"],  # 2FA support
-            ["psutil", "psutil", None],  # process utilities
-            ["chump", "chump", None],  # for genpushover
-            ["twilio", "twilio", None],  # for gensms
-            ["paho.mqtt.client", "paho-mqtt", "1.6.1"],  # for genmqtt
-            ["OpenSSL", "pyopenssl", None],  # SSL
-            ["spidev", "spidev", None, True],  # spidev
-            ["zeroconf", "zeroconf", None],     # used in genhomassistant  
-            ["aiohttp", "aiohttp", None],       # used in genhomassistant  
-            ["webauthn", "webauthn", "2.7.0"],  # used in MFA in genserv.py
-            ["voipms", "voipms", "0.2.5"]       # voipms for gensms_voip
+            {"import": "serial", "install": "pyserial", "version": None},  # Serial
+            {"import": "crcmod", "install": "crcmod", "version": None},  # Modbus CRC
+            {"import": "pyowm", "install": "pyowm", "version": None},  # Open Weather API
+            {"import": "pytz", "install": "pytz", "version": None},  # Time zone support
+            {"import": "pyotp", "install": "pyotp", "version": "2.3.0"},  # 2FA support
+            {"import": "psutil", "install": "psutil", "version": None},  # process utilities
+            {"import": "OpenSSL", "install": "pyopenssl", "version": None},  # SSL
+            {"import": "ldap3", "install": "ldap3", "version": None},  # LDAP
+            {"import": "pysnmp", "install": "pysnmp", "version": "5.1.0", "modules": ["gensnmp"]},  # SNMP
+            {"import": "smbus", "install": "smbus", "version": None, "linuxonly": True, "modules": ["gentankdiy"]},  # SMBus reading of tank sensors
+            {"import": "chump", "install": "chump", "version": None, "modules": ["genpushover"]},  # for genpushover
+            {"import": "twilio", "install": "twilio", "version": None, "modules": ["gensms"]},  # for gensms
+            {"import": "paho.mqtt.client", "install": "paho-mqtt", "version": "1.6.1", "modules": ["genmqtt", "genmqttin", "genhomeassistant"]},  # MQTT add-ons
+            {"import": "spidev", "install": "spidev", "version": None, "linuxonly": True, "modules": ["gencthat"]},  # spidev
+            {"import": "aiohttp", "install": "aiohttp", "version": None, "modules": ["genhalink"]},  # used in genhalink
+            {"import": "zeroconf", "install": "zeroconf", "version": None, "modules": ["genhalink"], "config": {"file": "genhalink.conf", "section": "genhalink", "option": "zeroconf_enabled", "default": True}},  # genhalink mDNS discovery
+            {"import": "webauthn", "install": "webauthn", "version": "2.7.0", "config": {"file": "genmon.conf", "section": "GenMon", "option": "usemfa", "default": False}},  # passkeys for MFA in genserv.py
+            {"import": "voipms", "install": "voipms", "version": "0.2.5", "modules": ["gensms_voip"]}       # voipms for gensms_voip
             # ['fluids', 'fluids', None]              # fluids for genmopeka
         ]
         try:
             ErrorOccured = False
-            if not self.bSystemIsNotLinux:
-                self.CheckToolsNeeded()
 
             for Module in ModuleList:
 
-                if len(Module) > 3:
-                    if self.bSystemIsNotLinux & Module[3]:
-                        # skip the verification as it will not be loaded on this platform
-                        continue 
-                # fluids is only for Python 3.6 and higher
-                if (Module[0] == "fluids") and sys.version_info < (3, 6):
+                if not self.ShouldCheckLibrary(Module):
                     continue
-                if not self.LibraryIsInstalled(Module[0]):
+                # fluids is only for Python 3.6 and higher
+                if (Module["import"] == "fluids") and sys.version_info < (3, 6):
+                    continue
+                if not self.LibraryIsInstalled(Module["import"]):
                     self.LogInfo(
                         "Warning: required library "
-                        + Module[1]
+                        + Module["install"]
                         + " not installed. Attempting to install...."
                     )
-                    if not self.InstallLibrary(Module[1], version=Module[2]):
-                        self.LogInfo("Error: unable to install library " + Module[1])
+                    if not self.bSystemIsNotLinux:
+                        self.CheckToolsNeeded()
+                    if not self.InstallLibrary(Module["install"], version=Module["version"]):
+                        self.LogInfo("Error: unable to install library " + Module["install"])
                         ErrorOccured = True
-                    if Module[0] == "ldap3":
+                    if Module["import"] == "ldap3":
                         # This will correct and issue with the ldap3 modbule not being recogonized in LibrayIsInstalled
                         self.InstallLibrary("pyasn1", update=True)
 
