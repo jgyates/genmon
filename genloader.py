@@ -198,11 +198,184 @@ class Loader(MySupport):
             return default
 
     # ---------------------------------------------------------------------------
+    def LibraryDependency(
+        self,
+        ImportName,
+        InstallName=None,
+        Version=None,
+        LinuxOnly=False,
+        MinPython=None,
+    ):
+
+        return {
+            "import": ImportName,
+            "install": InstallName if InstallName != None else ImportName,
+            "version": Version,
+            "linuxonly": LinuxOnly,
+            "minpython": MinPython,
+        }
+
+    # ---------------------------------------------------------------------------
+    def GetDependencyRegistry(self):
+
+        # we will not use the check for configparser as this look like it is in backports on 2.7
+        # and our myconfig modules uses the default so this generates an error that is not warranted
+        # ['configparser','configparser',None],   # reading config files
+        return {
+            "base": [
+                self.LibraryDependency("flask"),  # Web server
+                self.LibraryDependency("serial", "pyserial"),  # Serial
+                self.LibraryDependency("crcmod"),  # Modbus CRC
+                self.LibraryDependency("pyowm"),  # Open Weather API
+                self.LibraryDependency("pytz"),  # Time zone support
+                self.LibraryDependency("pyotp", Version="2.3.0"),  # 2FA support
+                self.LibraryDependency("psutil"),  # process utilities
+                self.LibraryDependency("OpenSSL", "pyopenssl"),  # SSL
+                self.LibraryDependency("ldap3"),  # LDAP
+            ],
+            "addons": [
+                {
+                    "modules": ["gensnmp"],
+                    "dependencies": [
+                        self.LibraryDependency("pysnmp", Version="5.1.0"),
+                    ],
+                },
+                {
+                    "modules": ["gentankdiy"],
+                    "dependencies": [
+                        self.LibraryDependency("smbus", LinuxOnly=True),
+                    ],
+                },
+                {
+                    "modules": ["genpushover"],
+                    "dependencies": [
+                        self.LibraryDependency("chump"),
+                    ],
+                },
+                {
+                    "modules": ["gensms"],
+                    "dependencies": [
+                        self.LibraryDependency("twilio"),
+                    ],
+                },
+                {
+                    "modules": ["genmqtt", "genmqttin", "genhomeassistant"],
+                    "dependencies": [
+                        self.LibraryDependency(
+                            "paho.mqtt.client", "paho-mqtt", Version="1.6.1"
+                        ),
+                    ],
+                },
+                {
+                    "modules": ["gencthat"],
+                    "dependencies": [
+                        self.LibraryDependency("spidev", LinuxOnly=True),
+                    ],
+                },
+                {
+                    "modules": ["genhalink"],
+                    "dependencies": [
+                        self.LibraryDependency("aiohttp"),
+                    ],
+                },
+                {
+                    "modules": ["gensms_voip"],
+                    "dependencies": [
+                        self.LibraryDependency("voipms", Version="0.2.5"),
+                    ],
+                },
+                {
+                    "modules": ["genmopeka"],
+                    "dependencies": [
+                        self.LibraryDependency("fluids", MinPython=(3, 6)),
+                    ],
+                },
+            ],
+            "features": [
+                {
+                    "modules": ["genhalink"],
+                    "config": {
+                        "file": "genhalink.conf",
+                        "section": "genhalink",
+                        "option": "zeroconf_enabled",
+                        "default": True,
+                    },
+                    "dependencies": [
+                        self.LibraryDependency("zeroconf"),
+                    ],
+                },
+                {
+                    "config": {
+                        "file": "genmon.conf",
+                        "section": "GenMon",
+                        "option": "usemfa",
+                        "default": False,
+                    },
+                    "dependencies": [
+                        self.LibraryDependency("webauthn", Version="2.7.0"),
+                    ],
+                },
+            ],
+        }
+
+    # ---------------------------------------------------------------------------
+    def GetModuleList(self):
+
+        ModuleList = []
+        Seen = set()
+        DependencyRegistry = self.GetDependencyRegistry()
+
+        try:
+            for Module in DependencyRegistry["base"]:
+                ModuleList.append(Module)
+
+            for AddOn in DependencyRegistry["addons"]:
+                if not self.IsModuleEnabled(AddOn["modules"]):
+                    continue
+                for Module in AddOn["dependencies"]:
+                    Module = Module.copy()
+                    Module["modules"] = AddOn["modules"]
+                    ModuleList.append(Module)
+
+            for Feature in DependencyRegistry["features"]:
+                if "modules" in Feature:
+                    if not self.IsModuleEnabled(Feature["modules"]):
+                        continue
+                if not self.IsConfigOptionEnabled(
+                    Feature["config"]["file"],
+                    Feature["config"]["section"],
+                    Feature["config"]["option"],
+                    default=Feature["config"].get("default", False),
+                ):
+                    continue
+                for Module in Feature["dependencies"]:
+                    Module = Module.copy()
+                    if "modules" in Feature:
+                        Module["modules"] = Feature["modules"]
+                    Module["config"] = Feature["config"]
+                    ModuleList.append(Module)
+
+            DedupedList = []
+            for Module in ModuleList:
+                Key = (Module["import"], Module["install"], Module["version"])
+                if Key in Seen:
+                    continue
+                Seen.add(Key)
+                DedupedList.append(Module)
+            return DedupedList
+        except Exception as e1:
+            self.LogInfo("Error in GetModuleList: " + str(e1), LogLine=True)
+            return ModuleList
+
+    # ---------------------------------------------------------------------------
     def ShouldCheckLibrary(self, Module):
 
         try:
             if "linuxonly" in Module and self.bSystemIsNotLinux and Module["linuxonly"]:
                 return False
+            if "minpython" in Module and Module["minpython"] != None:
+                if sys.version_info < Module["minpython"]:
+                    return False
             if not self.IsModuleEnabled(Module.get("modules", None)):
                 return False
             if "config" in Module:
@@ -224,42 +397,13 @@ class Loader(MySupport):
         # this function checks the system to see if the required libraries are
         # installed. If they are not then an attempt is made to install them.
 
-        ModuleList = [
-            # Required modules are always checked. Optional modules are checked
-            # only when their owning add-on or feature is enabled.
-            {"import": "flask", "install": "flask", "version": None},  # Web server
-            # we will not use the check for configparser as this look like it is in backports on 2.7
-            # and our myconfig modules uses the default so this generates an error that is not warranted
-            # ['configparser','configparser',None],   # reading config files
-            {"import": "serial", "install": "pyserial", "version": None},  # Serial
-            {"import": "crcmod", "install": "crcmod", "version": None},  # Modbus CRC
-            {"import": "pyowm", "install": "pyowm", "version": None},  # Open Weather API
-            {"import": "pytz", "install": "pytz", "version": None},  # Time zone support
-            {"import": "pyotp", "install": "pyotp", "version": "2.3.0"},  # 2FA support
-            {"import": "psutil", "install": "psutil", "version": None},  # process utilities
-            {"import": "OpenSSL", "install": "pyopenssl", "version": None},  # SSL
-            {"import": "ldap3", "install": "ldap3", "version": None},  # LDAP
-            {"import": "pysnmp", "install": "pysnmp", "version": "5.1.0", "modules": ["gensnmp"]},  # SNMP
-            {"import": "smbus", "install": "smbus", "version": None, "linuxonly": True, "modules": ["gentankdiy"]},  # SMBus reading of tank sensors
-            {"import": "chump", "install": "chump", "version": None, "modules": ["genpushover"]},  # for genpushover
-            {"import": "twilio", "install": "twilio", "version": None, "modules": ["gensms"]},  # for gensms
-            {"import": "paho.mqtt.client", "install": "paho-mqtt", "version": "1.6.1", "modules": ["genmqtt", "genmqttin", "genhomeassistant"]},  # MQTT add-ons
-            {"import": "spidev", "install": "spidev", "version": None, "linuxonly": True, "modules": ["gencthat"]},  # spidev
-            {"import": "aiohttp", "install": "aiohttp", "version": None, "modules": ["genhalink"]},  # used in genhalink
-            {"import": "zeroconf", "install": "zeroconf", "version": None, "modules": ["genhalink"], "config": {"file": "genhalink.conf", "section": "genhalink", "option": "zeroconf_enabled", "default": True}},  # genhalink mDNS discovery
-            {"import": "webauthn", "install": "webauthn", "version": "2.7.0", "config": {"file": "genmon.conf", "section": "GenMon", "option": "usemfa", "default": False}},  # passkeys for MFA in genserv.py
-            {"import": "voipms", "install": "voipms", "version": "0.2.5", "modules": ["gensms_voip"]}       # voipms for gensms_voip
-            # ['fluids', 'fluids', None]              # fluids for genmopeka
-        ]
+        ModuleList = self.GetModuleList()
         try:
             ErrorOccured = False
 
             for Module in ModuleList:
 
                 if not self.ShouldCheckLibrary(Module):
-                    continue
-                # fluids is only for Python 3.6 and higher
-                if (Module["import"] == "fluids") and sys.version_info < (3, 6):
                     continue
                 if not self.LibraryIsInstalled(Module["import"]):
                     self.LogInfo(
