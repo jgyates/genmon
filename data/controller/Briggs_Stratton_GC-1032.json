@@ -1676,6 +1676,15 @@
       "title": "Run Hours",
       "units": "h"
     },
+    "batteryvoltage": {
+      "reg": "0038",
+      "reg_type": "input",
+      "mask": "ffff",
+      "multiplier": 0.1,
+      "type": "float",
+      "title": "Battery",
+      "units": "V"
+    },
     "datetime":{
       "comment":"Used to print the date and time of the controller",
       "type" : "list",

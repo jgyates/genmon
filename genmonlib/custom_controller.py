@@ -1132,6 +1132,23 @@ class CustomController(GeneratorController):
             Status["switchstate"] = self.GetSwitchState()
             Status["enginestate"] = self.GetEngineState()
             Status["kwOutput"] = self.GetPowerOutput()
+            # TODO 
+            value = self.GetVoltageOutput()
+            if value != None:
+                Status["OutputVoltage"] = value
+            value = self.GetBatteryVoltage()
+            if value != None:
+                Status["BatteryVoltage"] = value
+            value = self.GetUtilityVoltage()
+            if value != None:
+                Status["UtilityVoltage"] = value
+            value = self.GetFrequency()
+            if value != None:
+                Status["Frequency"] = value
+            value = self.GetRPM()
+            if value != None:
+                Status["RPM"] = value
+
             # Exercise Info is a dict containing the following:
             # Not supported
             ExerciseInfo = collections.OrderedDict()
@@ -2170,7 +2187,83 @@ class CustomController(GeneratorController):
 
         return self.Model       # this should be the "controller_name" object
 
-    # ----------  CustomController:ComminicationsIsActive  ----------------------
+    # ----------  CustomController:GetVoltageOutput  ---------------------------
+    def GetVoltageOutput(self, ReturnInt=False):
+
+        try:
+            # get Output Voltage
+            bSuccess, Voltage = self.GetSingleEntry("outputvoltage")
+            if not bSuccess:
+                return None
+            
+            if ReturnInt:
+                return int(self.removeAlpha(Voltage))
+            return Voltage
+        except Exception as e1:
+            self.LogErrorLine("Error in GetVoltageOutput: " + str(e1))
+            return None
+
+    # ----------  CustomController:GetBatteryVoltage  --------------------------
+    def GetBatteryVoltage(self, ReturnFloat=False):
+        try:
+            # get Battery Voltage
+            bSuccess, Voltage = self.GetSingleEntry("batteryvoltage")
+            if not bSuccess:
+                return None
+            
+            if ReturnFloat:
+                return float(self.removeAlpha(Voltage))
+            return Voltage
+        except Exception as e1:
+            self.LogErrorLine("Error in GetBatteryVoltage: " + str(e1))
+            return None
+
+    # ----------  CustomController:GetUtilityVoltage  --------------------------
+    def GetUtilityVoltage(self, ReturnInt=False):
+        try:
+            # get Utility Voltage
+            bSuccess, Voltage = self.GetSingleEntry("linevoltage")
+            if not bSuccess:
+                return None
+            
+            if ReturnInt:
+                return int(self.removeAlpha(Voltage))
+            return Voltage
+        except Exception as e1:
+            self.LogErrorLine("Error in GetUtilityVoltage: " + str(e1))
+            return None
+
+    # ----------  CustomController:GetFrequency  -------------------------------
+    def GetFrequency(self, Calculate=False, ReturnFloat=False):
+        try:
+            # get Frequency
+            bSuccess, Frequency = self.GetSingleEntry("frequency")
+            if not bSuccess:
+                return None
+            
+            if ReturnFloat:
+                return float(self.removeAlpha(Frequency))
+            return Frequency
+        except Exception as e1:
+            self.LogErrorLine("Error in GetFrequency: " + str(e1))
+            return None
+
+    # ----------  CustomController:GetRPM  -------------------------------------
+    def GetRPM(self, ReturnInt=True):
+        try:
+            # get Utility Voltage
+            bSuccess, RPM = self.GetSingleEntry("rpm")
+            if not bSuccess:
+                return None
+            
+            if ReturnInt:
+                return int(self.removeAlpha(RPM))
+            return RPM
+        except Exception as e1:
+            self.LogErrorLine("Error in GetRPM: " + str(e1))
+            return None
+
+    # ----------  CustomController:ComminicationsIsActive  ---------------------
     # Called every few seconds, if communictions are failing, return False, otherwise
     # True
     def ComminicationsIsActive(self):
