@@ -1223,35 +1223,67 @@ class GenHALink(MySupport):
         """Generate (or reuse) a self-signed TLS certificate for the API server.
 
         Returns (crt_path, key_path) or None on failure.
+
+        Uses the modern ``cryptography`` library directly. The legacy
+        ``pyOpenSSL`` X509 helpers (``add_extensions``/``get_extension``) were
+        removed in pyOpenSSL 25+, so we no longer rely on them.
         """
         try:
-            from OpenSSL import crypto
+            import ipaddress as _ipaddr
+            from cryptography import x509
+            from cryptography.x509.oid import NameOID, ExtensionOID, ExtendedKeyUsageOID
+            from cryptography.hazmat.primitives import hashes, serialization
+            from cryptography.hazmat.primitives.asymmetric import rsa
         except ImportError:
             self.LogError(
-                "pyOpenSSL not installed — cannot generate TLS certificate. "
-                "Install with: sudo pip3 install pyOpenSSL"
+                "cryptography package not installed — cannot generate TLS "
+                "certificate. Install with: sudo pip3 install cryptography"
             )
             return None
 
         import socket as _sock
+        import datetime as _dt
 
         key_path = os.path.join(self.ConfigFilePath, "genhalink.key")
         crt_path = os.path.join(self.ConfigFilePath, "genhalink.crt")
+
+        def _build_san_entries():
+            entries = set()
+            entries.add(("DNS", "localhost"))
+            try:
+                hn = _sock.gethostname()
+                if hn:
+                    entries.add(("DNS", hn))
+                    entries.add(("DNS", hn + ".local"))
+                fqdn = _sock.getfqdn()
+                if fqdn and fqdn != hn:
+                    entries.add(("DNS", fqdn))
+            except Exception:
+                pass
+            for addr in self._get_local_ips():
+                entries.add(("IP", addr))
+            entries.add(("IP", "127.0.0.1"))
+            return entries
 
         # Check existing cert: reuse if present and IPs still match
         if os.path.isfile(key_path) and os.path.isfile(crt_path):
             try:
                 with open(crt_path, "rb") as f:
-                    existing = crypto.load_certificate(crypto.FILETYPE_PEM, f.read())
-                existing_san = ""
-                for i in range(existing.get_extension_count()):
-                    ext = existing.get_extension(i)
-                    if ext.get_short_name() == b"subjectAltName":
-                        existing_san = str(ext)
-                        break
+                    existing = x509.load_pem_x509_certificate(f.read())
+                existing_names = set()
+                try:
+                    san_ext = existing.extensions.get_extension_for_oid(
+                        ExtensionOID.SUBJECT_ALTERNATIVE_NAME
+                    ).value
+                    for name in san_ext.get_values_for_type(x509.DNSName):
+                        existing_names.add(name)
+                    for ip in san_ext.get_values_for_type(x509.IPAddress):
+                        existing_names.add(str(ip))
+                except x509.ExtensionNotFound:
+                    pass
                 missing = False
                 for addr in self._get_local_ips():
-                    if addr not in existing_san:
+                    if addr not in existing_names:
                         missing = True
                         break
                 if not missing:
@@ -1265,60 +1297,85 @@ class GenHALink(MySupport):
 
         # Generate new self-signed cert
         try:
-            san_entries = set()
-            san_entries.add("DNS:localhost")
-            try:
-                hn = _sock.gethostname()
-                if hn:
-                    san_entries.add("DNS:" + hn)
-                    san_entries.add("DNS:" + hn + ".local")
-                fqdn = _sock.getfqdn()
-                if fqdn and fqdn != hn:
-                    san_entries.add("DNS:" + fqdn)
-            except Exception:
-                pass
-            for addr in self._get_local_ips():
-                san_entries.add("IP:" + addr)
-            san_entries.add("IP:127.0.0.1")
-            san_string = ", ".join(sorted(san_entries))
+            san_entries = _build_san_entries()
+            san_objects = []
+            for kind, value in san_entries:
+                if kind == "DNS":
+                    san_objects.append(x509.DNSName(value))
+                else:
+                    try:
+                        san_objects.append(
+                            x509.IPAddress(_ipaddr.ip_address(value))
+                        )
+                    except ValueError:
+                        continue
+            san_string = ", ".join(
+                sorted(kind + ":" + value for kind, value in san_entries)
+            )
 
-            key = crypto.PKey()
-            key.generate_key(crypto.TYPE_RSA, 2048)
+            key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
-            cert = crypto.X509()
-            cert.set_version(2)
-            cert.set_serial_number(int.from_bytes(os.urandom(16), "big"))
-            cert.gmtime_adj_notBefore(0)
-            cert.gmtime_adj_notAfter(10 * 365 * 24 * 60 * 60)  # 10 years
-
-            subj = cert.get_subject()
-            subj.CN = _sock.gethostname() if _sock.gethostname() else "genhalink"
-            subj.O = "Genmon"
-            cert.set_issuer(subj)
-            cert.set_pubkey(key)
-
-            cert.add_extensions([
-                crypto.X509Extension(b"basicConstraints", False, b"CA:FALSE"),
-                crypto.X509Extension(
-                    b"keyUsage", True, b"digitalSignature, keyEncipherment"
-                ),
-                crypto.X509Extension(
-                    b"extendedKeyUsage", False, b"serverAuth"
-                ),
-                crypto.X509Extension(
-                    b"subjectAltName", False, san_string.encode("ascii")
-                ),
+            cn = _sock.gethostname() or "genhalink"
+            subject = issuer = x509.Name([
+                x509.NameAttribute(NameOID.COMMON_NAME, cn),
+                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Genmon"),
             ])
-            cert.sign(key, "sha256")
+
+            # Use naive UTC for not_valid_before/after: cryptography <42 requires
+            # it; >=42 accepts it with a DeprecationWarning (not an error as of 48).
+            now = _dt.datetime.now(_dt.timezone.utc).replace(tzinfo=None)
+            builder = (
+                x509.CertificateBuilder()
+                .subject_name(subject)
+                .issuer_name(issuer)
+                .public_key(key.public_key())
+                .serial_number(int.from_bytes(os.urandom(16), "big"))
+                .not_valid_before(now - _dt.timedelta(minutes=5))
+                .not_valid_after(now + _dt.timedelta(days=10 * 365))
+                .add_extension(
+                    x509.BasicConstraints(ca=False, path_length=None),
+                    critical=True,
+                )
+                .add_extension(
+                    x509.KeyUsage(
+                        digital_signature=True,
+                        key_encipherment=True,
+                        content_commitment=False,
+                        data_encipherment=False,
+                        key_agreement=False,
+                        key_cert_sign=False,
+                        crl_sign=False,
+                        encipher_only=False,
+                        decipher_only=False,
+                    ),
+                    critical=True,
+                )
+                .add_extension(
+                    x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH]),
+                    critical=False,
+                )
+            )
+            if san_objects:
+                builder = builder.add_extension(
+                    x509.SubjectAlternativeName(san_objects), critical=False
+                )
+
+            cert = builder.sign(private_key=key, algorithm=hashes.SHA256())
 
             with open(key_path, "wb") as f:
-                f.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, key))
+                f.write(
+                    key.private_bytes(
+                        encoding=serialization.Encoding.PEM,
+                        format=serialization.PrivateFormat.TraditionalOpenSSL,
+                        encryption_algorithm=serialization.NoEncryption(),
+                    )
+                )
             try:
                 os.chmod(key_path, 0o600)
             except Exception:
                 pass
             with open(crt_path, "wb") as f:
-                f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
+                f.write(cert.public_bytes(serialization.Encoding.PEM))
 
             self.LogError(
                 "Generated TLS certificate: " + crt_path + " SAN=" + san_string
