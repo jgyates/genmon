@@ -5178,54 +5178,82 @@ def generate_local_ca(config_path):
     """Generate (or load existing) a local CA key + self-signed CA certificate.
 
     Files: {config_path}/ca.key, {config_path}/ca.crt
-    Returns (ca_cert, ca_key) as OpenSSL objects.
+    Returns (ca_cert, ca_key) as cryptography x509.Certificate / RSAPrivateKey.
+
+    Uses the modern ``cryptography`` library directly because pyOpenSSL 25+
+    removed ``X509.add_extensions()`` / ``X509Extension``.
     """
-    from OpenSSL import crypto
+    import datetime as _dt
+    from cryptography import x509
+    from cryptography.x509.oid import NameOID
+    from cryptography.hazmat.primitives import hashes, serialization
+    from cryptography.hazmat.primitives.asymmetric import rsa
 
     ca_key_path = os.path.join(config_path, "ca.key")
     ca_crt_path = os.path.join(config_path, "ca.crt")
 
     if os.path.isfile(ca_key_path) and os.path.isfile(ca_crt_path):
         with open(ca_key_path, "rb") as f:
-            ca_key = crypto.load_privatekey(crypto.FILETYPE_PEM, f.read())
+            ca_key = serialization.load_pem_private_key(f.read(), password=None)
         with open(ca_crt_path, "rb") as f:
-            ca_cert = crypto.load_certificate(crypto.FILETYPE_PEM, f.read())
+            ca_cert = x509.load_pem_x509_certificate(f.read())
         LogDebug("Local CA loaded from " + ca_crt_path)
         return ca_cert, ca_key
 
     # Generate new CA
-    ca_key = crypto.PKey()
-    ca_key.generate_key(crypto.TYPE_RSA, 2048)
+    ca_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
-    ca_cert = crypto.X509()
-    ca_cert.set_version(2)  # X509v3
-    ca_cert.set_serial_number(int.from_bytes(os.urandom(16), "big"))
-    ca_cert.gmtime_adj_notBefore(0)
-    ca_cert.gmtime_adj_notAfter(10 * 365 * 24 * 60 * 60)  # 10 years
+    subject = issuer = x509.Name([
+        x509.NameAttribute(NameOID.COMMON_NAME, "Genmon Local CA"),
+        x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Genmon"),
+    ])
 
-    subj = ca_cert.get_subject()
-    subj.CN = "Genmon Local CA"
-    subj.O = "Genmon"
-    ca_cert.set_issuer(subj)
-    ca_cert.set_pubkey(ca_key)
-
-    ca_cert.add_extensions(
-        [
-            crypto.X509Extension(b"basicConstraints", True, b"CA:TRUE, pathlen:0"),
-            crypto.X509Extension(b"keyUsage", True, b"keyCertSign, cRLSign"),
-            crypto.X509Extension(
-                b"subjectKeyIdentifier", False, b"hash", subject=ca_cert
+    # Use naive UTC for not_valid_before/after: cryptography <42 requires it;
+    # >=42 accepts it with a DeprecationWarning (still not an error as of 48).
+    now = _dt.datetime.now(_dt.timezone.utc).replace(tzinfo=None)
+    ca_cert = (
+        x509.CertificateBuilder()
+        .subject_name(subject)
+        .issuer_name(issuer)
+        .public_key(ca_key.public_key())
+        .serial_number(int.from_bytes(os.urandom(16), "big"))
+        .not_valid_before(now - _dt.timedelta(minutes=5))
+        .not_valid_after(now + _dt.timedelta(days=10 * 365))
+        .add_extension(
+            x509.BasicConstraints(ca=True, path_length=0), critical=True,
+        )
+        .add_extension(
+            x509.KeyUsage(
+                digital_signature=False,
+                content_commitment=False,
+                key_encipherment=False,
+                data_encipherment=False,
+                key_agreement=False,
+                key_cert_sign=True,
+                crl_sign=True,
+                encipher_only=False,
+                decipher_only=False,
             ),
-        ]
+            critical=True,
+        )
+        .add_extension(
+            x509.SubjectKeyIdentifier.from_public_key(ca_key.public_key()),
+            critical=False,
+        )
+        .sign(private_key=ca_key, algorithm=hashes.SHA256())
     )
 
-    ca_cert.sign(ca_key, "sha256")
-
     with open(ca_key_path, "wb") as f:
-        f.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, ca_key))
+        f.write(
+            ca_key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.TraditionalOpenSSL,
+                encryption_algorithm=serialization.NoEncryption(),
+            )
+        )
     os.chmod(ca_key_path, 0o600)
     with open(ca_crt_path, "wb") as f:
-        f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, ca_cert))
+        f.write(ca_cert.public_bytes(serialization.Encoding.PEM))
 
     LogDebug("Local CA created: " + ca_crt_path)
     return ca_cert, ca_key
@@ -5284,11 +5312,18 @@ def generate_server_cert(ca_cert, ca_key, config_path):
     Files: {config_path}/server.key, {config_path}/server.crt
     Auto-regenerates if missing or expiring within 30 days.
     Returns (server_crt_path, server_key_path) file paths.
+
+    Uses the modern ``cryptography`` library directly (pyOpenSSL 25+ removed
+    ``X509.add_extensions`` / ``X509Extension`` / ``get_extension``).
     """
-    import datetime
+    import datetime as _dt
+    import ipaddress as _ipaddr
     import socket
 
-    from OpenSSL import crypto
+    from cryptography import x509
+    from cryptography.x509.oid import NameOID, ExtensionOID, ExtendedKeyUsageOID
+    from cryptography.hazmat.primitives import hashes, serialization
+    from cryptography.hazmat.primitives.asymmetric import rsa
 
     srv_key_path = os.path.join(config_path, "server.key")
     srv_crt_path = os.path.join(config_path, "server.crt")
@@ -5300,27 +5335,39 @@ def generate_server_cert(ca_cert, ca_key, config_path):
         # Check expiry and required extensions
         try:
             with open(srv_crt_path, "rb") as f:
-                existing = crypto.load_certificate(crypto.FILETYPE_PEM, f.read())
-            expiry_str = existing.get_notAfter()
-            if expiry_str is not None:
-                expiry = datetime.datetime.strptime(
-                    expiry_str.decode("ascii"), "%Y%m%d%H%M%SZ"
-                )
-                if expiry - datetime.datetime.utcnow() < datetime.timedelta(days=30):
-                    LogDebug("Server cert expiring soon, regenerating.")
-                    regen = True
-            # Check for required extensions (added in v2)
+                existing = x509.load_pem_x509_certificate(f.read())
+            try:
+                expiry = existing.not_valid_after_utc
+                now_utc = _dt.datetime.now(_dt.timezone.utc)
+            except AttributeError:
+                # cryptography < 42 fallback
+                expiry = existing.not_valid_after.replace(tzinfo=_dt.timezone.utc)
+                now_utc = _dt.datetime.now(_dt.timezone.utc)
+            if expiry - now_utc < _dt.timedelta(days=30):
+                LogDebug("Server cert expiring soon, regenerating.")
+                regen = True
+            # Check for required extensions
             has_eku = False
             has_san = False
-            existing_san = ""
-            for i in range(existing.get_extension_count()):
-                ext = existing.get_extension(i)
-                sn = ext.get_short_name()
-                if sn == b"extendedKeyUsage":
-                    has_eku = True
-                if sn == b"subjectAltName":
-                    has_san = True
-                    existing_san = str(ext)
+            existing_san_names = set()
+            try:
+                existing.extensions.get_extension_for_oid(
+                    ExtensionOID.EXTENDED_KEY_USAGE
+                )
+                has_eku = True
+            except x509.ExtensionNotFound:
+                pass
+            try:
+                san = existing.extensions.get_extension_for_oid(
+                    ExtensionOID.SUBJECT_ALTERNATIVE_NAME
+                ).value
+                has_san = True
+                for n in san.get_values_for_type(x509.DNSName):
+                    existing_san_names.add(n)
+                for ip in san.get_values_for_type(x509.IPAddress):
+                    existing_san_names.add(str(ip))
+            except x509.ExtensionNotFound:
+                pass
             if not has_eku:
                 LogDebug("Server cert missing extendedKeyUsage, regenerating.")
                 regen = True
@@ -5333,7 +5380,7 @@ def generate_server_cert(ca_cert, ca_key, config_path):
                 # that already trusts the current cert and leave the
                 # user stuck on a spinner after a settings-save restart.
                 local_ips = _get_all_local_ips()
-                missing = [a for a in local_ips if a not in existing_san]
+                missing = [a for a in local_ips if a not in existing_san_names]
                 if missing:
                     LogDebug(
                         "Note: IP(s) " + ", ".join(sorted(missing))
@@ -5349,67 +5396,98 @@ def generate_server_cert(ca_cert, ca_key, config_path):
         return srv_crt_path, srv_key_path
 
     # Build SAN list
-    san_entries = set()
-    san_entries.add("DNS:localhost")
+    san_dns = set()
+    san_ip = set()
+    san_dns.add("localhost")
     try:
         hn = socket.gethostname()
         if hn:
-            san_entries.add("DNS:" + hn)
-            san_entries.add("DNS:" + hn + ".local")   # mDNS / Avahi
+            san_dns.add(hn)
+            san_dns.add(hn + ".local")   # mDNS / Avahi
         try:
             fqdn = socket.getfqdn()
             if fqdn and fqdn != hn:
-                san_entries.add("DNS:" + fqdn)
+                san_dns.add(fqdn)
         except Exception:
             pass
     except Exception:
         pass
     for addr in _get_all_local_ips():
-        san_entries.add("IP:" + addr)
-    san_entries.add("IP:127.0.0.1")
-    san_string = ", ".join(sorted(san_entries))
+        san_ip.add(addr)
+    san_ip.add("127.0.0.1")
 
-    srv_key = crypto.PKey()
-    srv_key.generate_key(crypto.TYPE_RSA, 2048)
-
-    srv_cert = crypto.X509()
-    srv_cert.set_version(2)
-    srv_cert.set_serial_number(int.from_bytes(os.urandom(16), "big"))
-    srv_cert.gmtime_adj_notBefore(0)
-    srv_cert.gmtime_adj_notAfter(365 * 24 * 60 * 60)  # 1 year
-
-    subj = srv_cert.get_subject()
-    subj.CN = socket.gethostname() if socket.gethostname() else "genmon"
-    subj.O = "Genmon"
-    srv_cert.set_issuer(ca_cert.get_subject())
-    srv_cert.set_pubkey(srv_key)
-
-    srv_cert.add_extensions(
-        [
-            crypto.X509Extension(b"basicConstraints", False, b"CA:FALSE"),
-            crypto.X509Extension(
-                b"keyUsage", True, b"digitalSignature, keyEncipherment"
-            ),
-            crypto.X509Extension(
-                b"extendedKeyUsage", False, b"serverAuth"
-            ),
-            crypto.X509Extension(
-                b"subjectAltName", False, san_string.encode("ascii")
-            ),
-            crypto.X509Extension(
-                b"authorityKeyIdentifier", False, b"keyid:always",
-                issuer=ca_cert,
-            ),
-        ]
+    san_objects = [x509.DNSName(n) for n in sorted(san_dns)]
+    for addr in sorted(san_ip):
+        try:
+            san_objects.append(x509.IPAddress(_ipaddr.ip_address(addr)))
+        except ValueError:
+            continue
+    san_string = ", ".join(
+        sorted(["DNS:" + n for n in san_dns] + ["IP:" + a for a in san_ip])
     )
 
-    srv_cert.sign(ca_key, "sha256")
+    srv_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+
+    cn = socket.gethostname() or "genmon"
+    subject = x509.Name([
+        x509.NameAttribute(NameOID.COMMON_NAME, cn),
+        x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Genmon"),
+    ])
+
+    # Use naive UTC for not_valid_before/after: cryptography <42 requires it;
+    # >=42 accepts it with a DeprecationWarning (still not an error as of 48).
+    now = _dt.datetime.now(_dt.timezone.utc).replace(tzinfo=None)
+    builder = (
+        x509.CertificateBuilder()
+        .subject_name(subject)
+        .issuer_name(ca_cert.subject)
+        .public_key(srv_key.public_key())
+        .serial_number(int.from_bytes(os.urandom(16), "big"))
+        .not_valid_before(now - _dt.timedelta(minutes=5))
+        .not_valid_after(now + _dt.timedelta(days=365))
+        .add_extension(
+            x509.BasicConstraints(ca=False, path_length=None), critical=True,
+        )
+        .add_extension(
+            x509.KeyUsage(
+                digital_signature=True,
+                key_encipherment=True,
+                content_commitment=False,
+                data_encipherment=False,
+                key_agreement=False,
+                key_cert_sign=False,
+                crl_sign=False,
+                encipher_only=False,
+                decipher_only=False,
+            ),
+            critical=True,
+        )
+        .add_extension(
+            x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH]),
+            critical=False,
+        )
+        .add_extension(
+            x509.SubjectAlternativeName(san_objects), critical=False,
+        )
+        .add_extension(
+            x509.AuthorityKeyIdentifier.from_issuer_public_key(ca_key.public_key()),
+            critical=False,
+        )
+    )
+
+    srv_cert = builder.sign(private_key=ca_key, algorithm=hashes.SHA256())
 
     with open(srv_key_path, "wb") as f:
-        f.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, srv_key))
+        f.write(
+            srv_key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.TraditionalOpenSSL,
+                encryption_algorithm=serialization.NoEncryption(),
+            )
+        )
     os.chmod(srv_key_path, 0o600)
     with open(srv_crt_path, "wb") as f:
-        f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, srv_cert))
+        f.write(srv_cert.public_bytes(serialization.Encoding.PEM))
 
     LogDebug("Server cert generated: " + srv_crt_path + " SAN=" + san_string)
     return srv_crt_path, srv_key_path
@@ -5421,6 +5499,51 @@ def _get_cert_info():
     import json as _json
 
     info = {"mode": CertMode}
+
+    def _load_cert(path):
+        from cryptography import x509
+        with open(path, "rb") as f:
+            return x509.load_pem_x509_certificate(f.read())
+
+    def _cn(cert):
+        from cryptography.x509.oid import NameOID
+        try:
+            attrs = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)
+            return attrs[0].value if attrs else ""
+        except Exception:
+            return ""
+
+    def _date(dt):
+        return dt.strftime("%Y-%m-%d") if dt is not None else ""
+
+    def _not_before(cert):
+        try:
+            return cert.not_valid_before_utc
+        except AttributeError:
+            return cert.not_valid_before
+
+    def _not_after(cert):
+        try:
+            return cert.not_valid_after_utc
+        except AttributeError:
+            return cert.not_valid_after
+
+    def _san_string(cert):
+        from cryptography import x509
+        from cryptography.x509.oid import ExtensionOID
+        try:
+            san = cert.extensions.get_extension_for_oid(
+                ExtensionOID.SUBJECT_ALTERNATIVE_NAME
+            ).value
+        except x509.ExtensionNotFound:
+            return ""
+        parts = []
+        for n in san.get_values_for_type(x509.DNSName):
+            parts.append("DNS:" + n)
+        for ip in san.get_values_for_type(x509.IPAddress):
+            parts.append("IP:" + str(ip))
+        return ", ".join(sorted(parts))
+
     try:
         if CertMode == "selfsigned":
             info["detail"] = "Ephemeral \u2014 regenerated on each restart"
@@ -5428,50 +5551,23 @@ def _get_cert_info():
             ca_path = os.path.join(ConfigFilePath, "ca.crt")
             srv_path = os.path.join(ConfigFilePath, "server.crt")
             if os.path.isfile(ca_path):
-                from OpenSSL import crypto
-                import datetime
-
-                with open(ca_path, "rb") as f:
-                    ca = crypto.load_certificate(crypto.FILETYPE_PEM, f.read())
-                info["ca_cn"] = ca.get_subject().CN or ""
-                nb = ca.get_notBefore()
-                if nb:
-                    info["ca_created"] = datetime.datetime.strptime(
-                        nb.decode("ascii"), "%Y%m%d%H%M%SZ"
-                    ).strftime("%Y-%m-%d")
+                ca = _load_cert(ca_path)
+                info["ca_cn"] = _cn(ca)
+                info["ca_created"] = _date(_not_before(ca))
             if os.path.isfile(srv_path):
-                from OpenSSL import crypto
-                import datetime
-
-                with open(srv_path, "rb") as f:
-                    srv = crypto.load_certificate(crypto.FILETYPE_PEM, f.read())
-                na = srv.get_notAfter()
-                if na:
-                    info["srv_expiry"] = datetime.datetime.strptime(
-                        na.decode("ascii"), "%Y%m%d%H%M%SZ"
-                    ).strftime("%Y-%m-%d")
-                # Extract SAN
-                for i in range(srv.get_extension_count()):
-                    ext = srv.get_extension(i)
-                    if ext.get_short_name() == b"subjectAltName":
-                        info["san"] = str(ext)
-                        break
+                srv = _load_cert(srv_path)
+                info["srv_expiry"] = _date(_not_after(srv))
+                san = _san_string(srv)
+                if san:
+                    info["san"] = san
         elif CertMode == "custom":
             cert_file = ConfigFiles[GENMON_CONFIG].ReadValue("certfile") if GENMON_CONFIG in ConfigFiles else ""
             key_file = ConfigFiles[GENMON_CONFIG].ReadValue("keyfile") if GENMON_CONFIG in ConfigFiles else ""
             info["certfile"] = cert_file or ""
             info["keyfile"] = key_file or ""
             if cert_file and os.path.isfile(cert_file):
-                from OpenSSL import crypto
-                import datetime
-
-                with open(cert_file, "rb") as f:
-                    c = crypto.load_certificate(crypto.FILETYPE_PEM, f.read())
-                na = c.get_notAfter()
-                if na:
-                    info["expiry"] = datetime.datetime.strptime(
-                        na.decode("ascii"), "%Y%m%d%H%M%SZ"
-                    ).strftime("%Y-%m-%d")
+                c = _load_cert(cert_file)
+                info["expiry"] = _date(_not_after(c))
     except Exception as e1:
         info["error"] = str(e1)
     return _json.dumps(info)
