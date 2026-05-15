@@ -9,7 +9,7 @@ All notable changes to this project will be documented in this file.
 - Updates to HTTPs and many security improvements
 - New HA addon (genhalink) @buschauer
 - New HA custom component @buschauer
-- Restore previous back from Web Interface
+- Restore previous backup from Web Interface
 - Updates for Briggs and Stratton to support more info and three phase
 - Added "ignore_alarms" config parameter for custom controllers
 - Update for pyowm to support API version 3.5 or 2.10 for weather
