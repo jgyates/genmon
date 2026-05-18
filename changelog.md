@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 2.0.01 -2026-05-18
+- Various bug fixes and typo corrections
+- Added per module dependancy checking that should help with quicker updates when new modules are added. Thanks @klinquist
+
 ## 2.0.00 -2026-04-05
 - Major update to UI Thanks @buschauer
 - Dark / Light Mode
@@ -13,8 +17,6 @@ All notable changes to this project will be documented in this file.
 - Updates for Briggs and Stratton to support more info and three phase
 - Added "ignore_alarms" config parameter for custom controllers
 - Update for pyowm to support API version 3.5 or 2.10 for weather
-- Various bug fixes and typo corrections
-- Added per module dependancy checking that should help with quicker updates when new modules are added. Thanks @klinquist
 
 ## V1.20.00 -2026-03-10
 - Added HA addon JSON files for all current custom controller variants
