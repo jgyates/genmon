@@ -343,7 +343,7 @@ var Modal = {
     });
   },
   /* Restart modal: shows spinner + countdown, polls backend, auto-dismiss */
-  restart: function(msg, newUrl) {
+  restart: function(msg, newUrl, reloadOnAlive) {
     var self = this, secs = 20, timer = null, poller = null, alive = false;
     var redirectMode = !!newUrl;
     /* Detect cross-protocol switch (HTTPS↔HTTP). AJAX polling cannot work
@@ -419,6 +419,11 @@ var Modal = {
             clearInterval(poller);
             if (redirectMode) {
               location.href = newUrl;
+            } else if (reloadOnAlive) {
+              /* Full page reload — needed after software update so the
+                 browser picks up new HTML/JS/CSS and the version banner
+                 refreshes. */
+              location.reload();
             } else {
               self.close();
               S.connected = true; UI.connBadge(); API._errs = 0;
@@ -5681,7 +5686,7 @@ var Pages = {
 
       /* --- Software & Info card --- */
       h += '<div class="card mb-2"><div class="card-header">' + icon('cpu') + ' Software</div><div class="card-body">';
-      [['Genmon Version', info.version], ['UI Version', CFG.version],
+      [['Genmon Version', info.version],
        ['Python', info.python], ['Platform', info.platform],
        ['OS Architecture', (info.os_bits||'')], ['Install Date', info.install]
       ].forEach(function(f){
@@ -5896,7 +5901,7 @@ var Pages = {
                   /* Expected — server restarted; switch to restart modal */
                   clearInterval(updTimer);
                   Modal.close();
-                  Modal.restart('Update installed. Service is restarting\u2026');
+                  Modal.restart('Update installed. Service is restarting\u2026', null, true);
                 });
             });
         };
