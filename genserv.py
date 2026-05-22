@@ -798,6 +798,8 @@ def ProcessCommand(command):
             "start_info_json",
             "gui_status_json",
             "power_log_json",
+            "temp_log_json",
+            "temp_sensor_names_json",
             "power_log_clear",
             "getbase",
             "getsitename",
@@ -856,6 +858,12 @@ def ProcessCommand(command):
                     setlogstr = request.args.get("power_log_json", 0, type=str)
                     if setlogstr:
                         finalcommand += "=" + setlogstr
+                if command == "temp_log_json":
+                    # example: /cmd/temp_log_json?temp_log_json=1440&sensor=Oil+Temp
+                    minutes = request.args.get("temp_log_json", 0, type=str)
+                    sensor = request.args.get("sensor", "", type=str)
+                    if minutes and sensor:
+                        finalcommand += "=" + minutes + "&sensor=" + sensor
                 # Sanitize command parameters: strip null bytes and newlines
                 # to prevent header/log injection, cap length to limit abuse.
                 if command == "add_maint_log":
@@ -893,6 +901,8 @@ def ProcessCommand(command):
                 "start_info_json",
                 "gui_status_json",
                 "power_log_json",
+                "temp_log_json",
+                "temp_sensor_names_json",
                 "status_num_json",
                 "maint_num_json",
                 "monitor_num_json",

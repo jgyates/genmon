@@ -840,6 +840,16 @@ class Monitor(MySupport):
                     (command.lower(),False, True),
                     True,
                 ],
+                "temp_log_json": [
+                    self.Controller.GetTempHistory,
+                    (command.lower(),),
+                    True,
+                ],
+                "temp_sensor_names_json": [
+                    self.Controller.GetTempSensorNames,
+                    (),
+                    True,
+                ],
                 "power_log_clear": [self.Controller.ClearPowerLog, (), True],
                 "fuel_log_clear": [self.Controller.ClearFuelLog, (), True],
                 "start_info_json": [self.GetStartInfo, (), True],

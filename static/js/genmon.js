@@ -1388,6 +1388,14 @@ var Pages = {
       if (info.PowerGraph && window.Chart) specialKeys.push('chart');
       specialKeys.push('clock');
       specialKeys.push('weather');
+      /* Temperature chart tiles — one per sensor, hidden by default */
+      S.tempSensors = info.TempSensors || [];
+      for (var ts = 0; ts < S.tempSensors.length; ts++) {
+        var tcKey = 'tempchart-' + Store.slugify(S.tempSensors[ts]);
+        specialKeys.push(tcKey);
+        if (!Store.get('tempChartsInit')) Store.setTileHidden(tcKey, true);
+      }
+      if (S.tempSensors.length && !Store.get('tempChartsInit')) Store.set('tempChartsInit', true);
       S.specialKeys = specialKeys;
 
       /* Overview tile is hidden by default until user explicitly shows it */
@@ -1415,6 +1423,12 @@ var Pages = {
           h += self._overviewTileHtml();
         } else if (key === 'chart') {
           h += self._chartTileHtml();
+        } else if (key.indexOf('tempchart-') === 0) {
+          var tcSensor = null;
+          for (var tci = 0; tci < S.tempSensors.length; tci++) {
+            if ('tempchart-' + Store.slugify(S.tempSensors[tci]) === key) { tcSensor = S.tempSensors[tci]; break; }
+          }
+          if (tcSensor) h += self._tempChartTileHtml(tcSensor);
         } else if (key === 'clock') {
           h += self._clockTileHtml();
         } else if (key === 'weather') {
@@ -1476,6 +1490,17 @@ var Pages = {
       if (info.PowerGraph && window.Chart && !Store.isTileHidden('chart')) {
         self._initChart();
         self._fetchChartData();
+      }
+
+      /* Init temperature charts */
+      if (window.Chart && S.tempSensors.length) {
+        for (var tci2 = 0; tci2 < S.tempSensors.length; tci2++) {
+          var tcKey2 = 'tempchart-' + Store.slugify(S.tempSensors[tci2]);
+          if (!Store.isTileHidden(tcKey2)) {
+            self._initTempChart(S.tempSensors[tci2]);
+            self._fetchTempChartData(S.tempSensors[tci2]);
+          }
+        }
       }
 
       /* Init clock */
@@ -1714,6 +1739,13 @@ var Pages = {
         var $new;
         if (key === 'overview') $new = $(self._overviewTileHtml());
         else if (key === 'chart') $new = $(self._chartTileHtml());
+        else if (key.indexOf('tempchart-') === 0) {
+          var tcSensor2 = null;
+          for (var tci3 = 0; tci3 < S.tempSensors.length; tci3++) {
+            if ('tempchart-' + Store.slugify(S.tempSensors[tci3]) === key) { tcSensor2 = S.tempSensors[tci3]; break; }
+          }
+          if (tcSensor2) $new = $(self._tempChartTileHtml(tcSensor2));
+        }
         else if (key === 'clock') $new = $(self._clockTileHtml());
         else if (key === 'weather') $new = $(self._weatherTileHtml());
         else if (km.keyToGauge[key] !== undefined) {
@@ -1738,6 +1770,13 @@ var Pages = {
         }
         if (key === 'chart' && S.startInfo.PowerGraph && window.Chart) {
           self._initChart(); self._fetchChartData();
+        }
+        if (key.indexOf('tempchart-') === 0 && window.Chart) {
+          var tcSensor3 = null;
+          for (var tci4 = 0; tci4 < S.tempSensors.length; tci4++) {
+            if ('tempchart-' + Store.slugify(S.tempSensors[tci4]) === key) { tcSensor3 = S.tempSensors[tci4]; break; }
+          }
+          if (tcSensor3) { self._initTempChart(tcSensor3); self._fetchTempChartData(tcSensor3); }
         }
         if (key === 'clock') self._initClock();
         if (key === 'weather' && S.weather) self._updateWeatherTile();
@@ -1853,10 +1892,17 @@ var Pages = {
         e.stopPropagation();
       });
 
-      /* Chart buttons */
+      /* Chart buttons (power + temperature) */
       $c.on('click', '.chart-btn', function() {
-        $('.chart-btn').removeClass('active'); $(this).addClass('active');
-        Pages.status._loadChart($(this).data('mins'));
+        var sensor = $(this).data('sensor');
+        var $tile = $(this).closest('.tile-chart');
+        $tile.find('.chart-btn').removeClass('active');
+        $(this).addClass('active');
+        if (sensor) {
+          Pages.status._loadTempChart(sensor, $(this).data('mins'));
+        } else {
+          Pages.status._loadChart($(this).data('mins'));
+        }
       });
 
       /* Chart size buttons */
@@ -1869,6 +1915,11 @@ var Pages = {
         $(this).addClass('active');
         Store.setChartSize(sz);
         if (S.chart) S.chart.resize();
+        /* Resize temp charts too */
+        var sensor = $tile.data('sensor');
+        if (sensor && Pages.status._tempCharts[sensor]) {
+          Pages.status._tempCharts[sensor].chart.resize();
+        }
       });
 
       /* Initial data fetch */
@@ -2223,6 +2274,13 @@ var Pages = {
       var km = S.keyMap;
       if (!km) return;
       var specialTitles = {overview: 'Status Overview', chart: S.chartTitle || 'Power Output', clock: 'Clock', weather: 'Weather'};
+      /* Add temp chart titles */
+      if (S.tempSensors) {
+        for (var tdi = 0; tdi < S.tempSensors.length; tdi++) {
+          var tdKey = 'tempchart-' + Store.slugify(S.tempSensors[tdi]);
+          specialTitles[tdKey] = S.tempSensors[tdi] + ' Graph';
+        }
+      }
       for (var i = 0; i < km.allKeys.length; i++) {
         var key = km.allKeys[i];
         /* Show weather in drawer if auto-hidden (no data) or explicitly hidden */
@@ -2681,6 +2739,156 @@ var Pages = {
       S.chart.options.scales.x.max = now.getTime();
       S.chart.data.datasets[0].data = points;
       S.chart.update();
+    },
+
+    /* --- Temperature chart tiles --- */
+    _tempCharts: {},  /* { sensorName: { chart, rawData } } */
+
+    _tempChartTileHtml: function(sensorName) {
+      var key = 'tempchart-' + Store.slugify(sensorName);
+      var chartSize = Store.getChartSize() || 'xl';
+      return '<div class="tile tile-chart tile-' + esc(chartSize) + '" data-tile="' + esc(key) + '" data-size="' + esc(chartSize) + '" data-sensor="' + esc(sensorName) + '" draggable="false">' +
+        '<button class="tile-hide-btn" title="Hide tile">&times;</button>' +
+        '<div class="tile-drag-handle" title="Drag to reorder">' + icon('monitor') + '</div>' +
+        '<div class="tile-edit-controls" style="display:none"><div class="tile-ctrl-row">' +
+        '<span class="tile-ctrl-label">Width</span>' +
+        '<button class="chart-size-btn' + (chartSize==='md'?' active':'') + '" data-csz="md" title="1 column">1</button>' +
+        '<button class="chart-size-btn' + (chartSize==='lg'?' active':'') + '" data-csz="lg" title="2 columns">2</button>' +
+        '<button class="chart-size-btn' + (chartSize==='xl'?' active':'') + '" data-csz="xl" title="3 columns">3</button>' +
+        '</div></div>' +
+        '<div class="tile-title">' + esc(sensorName) + '</div>' +
+        '<div class="chart-wrap"><canvas id="temp-chart-' + esc(Store.slugify(sensorName)) + '"></canvas></div>' +
+        '<div class="chart-controls">' +
+        '<button class="chart-btn" data-mins="60" data-sensor="' + esc(sensorName) + '">1h</button>' +
+        '<button class="chart-btn" data-mins="360" data-sensor="' + esc(sensorName) + '">6h</button>' +
+        '<button class="chart-btn active" data-mins="1440" data-sensor="' + esc(sensorName) + '">24h</button>' +
+        '<button class="chart-btn" data-mins="10080" data-sensor="' + esc(sensorName) + '">7d</button>' +
+        '<button class="chart-btn" data-mins="43200" data-sensor="' + esc(sensorName) + '">30d</button>' +
+        '</div></div>';
+    },
+
+    _initTempChart: function(sensorName) {
+      var slug = Store.slugify(sensorName);
+      var ctx = document.getElementById('temp-chart-' + slug);
+      if (!ctx || !window.Chart) return;
+      var cs = getComputedStyle(document.documentElement);
+      var gridC = cs.getPropertyValue('--chart-grid').trim() || 'rgba(148,163,184,.1)';
+      var tickC = cs.getPropertyValue('--chart-tick').trim() || '#94a3b8';
+      var chart = new Chart(ctx, {
+        type:'line',
+        data:{ datasets:[{
+          label:'°', data:[], borderColor:'#f59e0b',
+          backgroundColor:'rgba(245,158,11,.1)', tension:0, fill:true,
+          pointRadius:0, pointBackgroundColor:'#f59e0b', pointBorderColor:'#f59e0b'
+        }]},
+        options:{
+          responsive:true, maintainAspectRatio:false,
+          scales:{
+            x:{type:'linear', display:true, grid:{color:gridC}, ticks:{
+              color:tickC, maxTicksLimit:8, maxRotation:0, autoSkip:true, font:{size:10},
+              callback: function(val) {
+                var d = new Date(val);
+                var mm = String(d.getMonth()+1).padStart(2,'0');
+                var dd = String(d.getDate()).padStart(2,'0');
+                var hh = String(d.getHours()).padStart(2,'0');
+                var mi = String(d.getMinutes()).padStart(2,'0');
+                var span = this.max - this.min;
+                if (span > 6 * 86400000) return mm+'/'+dd;
+                if (span > 86400000) return mm+'/'+dd+' '+hh+':'+mi;
+                return hh+':'+mi;
+              }
+            },
+            afterBuildTicks: function(axis) {
+              var span = axis.max - axis.min;
+              if (span > 6 * 86400000) {
+                var step = span > 20 * 86400000 ? 3 : 1;
+                var ticks = [];
+                var d = new Date(axis.min);
+                d.setHours(0,0,0,0); d.setDate(d.getDate()+1);
+                while (d.getTime() <= axis.max) {
+                  ticks.push({value: d.getTime()});
+                  d.setDate(d.getDate() + step);
+                }
+                axis.ticks = ticks;
+              }
+            }},
+            y:{display:true, grid:{color:gridC}, ticks:{color:tickC}}
+          },
+          plugins:{legend:{display:false},tooltip:{callbacks:{title:function(items){
+            if(!items.length)return '';
+            var d=new Date(items[0].parsed.x);
+            var mm=String(d.getMonth()+1).padStart(2,'0');
+            var dd=String(d.getDate()).padStart(2,'0');
+            var hh=String(d.getHours()).padStart(2,'0');
+            var mi=String(d.getMinutes()).padStart(2,'0');
+            return mm+'/'+dd+' '+hh+':'+mi;
+          }}}}, animation:{duration:400}
+        }
+      });
+      this._tempCharts[sensorName] = { chart: chart, rawData: null };
+    },
+
+    _fetchTempChartData: function(sensorName, mins) {
+      var self = Pages.status;
+      if (!mins) {
+        var key = 'tempchart-' + Store.slugify(sensorName);
+        var $active = $('[data-tile="' + key + '"] .chart-btn.active');
+        mins = $active.length ? $active.data('mins') : 1440;
+      }
+      API.get('temp_log_json?temp_log_json=' + mins + '&sensor=' + encodeURIComponent(sensorName), 20000).done(function(d) {
+        if (!d || !Array.isArray(d)) return;
+        var parsed = [];
+        for (var i = d.length - 1; i >= 0; i--) {
+          var p = d[i];
+          var raw = p[0] || '';
+          var val = parseFloat(p[1]) || 0;
+          var dt = null;
+          try {
+            var parts = raw.split(' ');
+            if (parts.length === 2) {
+              var dp = parts[0].split('/');
+              var tp = parts[1].split(':');
+              if (dp.length === 3 && tp.length >= 2) {
+                var yr = parseInt(dp[2], 10);
+                if (yr < 100) yr += 2000;
+                dt = new Date(yr, parseInt(dp[0], 10) - 1, parseInt(dp[1], 10),
+                              parseInt(tp[0], 10), parseInt(tp[1], 10), parseInt(tp[2] || 0, 10));
+              }
+            }
+          } catch(e) {}
+          parsed.push({ raw: raw, val: val, date: dt });
+        }
+        self._loadTempChart(sensorName, mins, parsed);
+      });
+    },
+
+    _loadTempChart: function(sensorName, mins, parsed) {
+      var entry = this._tempCharts[sensorName];
+      if (!entry || !entry.chart) return;
+      if (!parsed) { this._fetchTempChartData(sensorName, mins); return; }
+      var now = new Date();
+      var cutoff = new Date(now.getTime() - mins * 60000);
+      var points = [];
+      for (var i = 0; i < parsed.length; i++) {
+        var p = parsed[i];
+        if (!p.date) continue;
+        points.push({x: p.date.getTime(), y: p.val});
+      }
+      if (!points.length) {
+        points = [{x: cutoff.getTime(), y: 0}, {x: now.getTime(), y: 0}];
+      }
+      if (points.length) {
+        if (points[0].x > cutoff.getTime()) {
+          points.unshift({x: cutoff.getTime(), y: points[0].y});
+        }
+        if (points[points.length-1].x < now.getTime()) {
+          points.push({x: now.getTime(), y: points[points.length-1].y});
+        }
+      }
+      entry.chart.options.scales.x.min = cutoff.getTime();
+      entry.chart.options.scales.x.max = now.getTime();
+      entry.chart.data.datasets[0].data = points;
+      entry.chart.update();
     },
 
     /* --- Clock tile (dual-time: Monitor + Generator) --- */

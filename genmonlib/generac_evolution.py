@@ -5316,6 +5316,7 @@ class Evolution(GeneratorController):
             StartInfo["Actual"] = self.GetController(Actual=True)
             StartInfo["NominalBatteryVolts"] = "12"
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
+            StartInfo["TempSensors"] = self.GetTempSensorNames()
             StartInfo["FuelCalculation"] = self.FuelTankCalculationSupported()
             StartInfo["FuelSensor"] = self.FuelSensorSupported()
             StartInfo["FuelConsumption"] = self.FuelConsumptionSupported()

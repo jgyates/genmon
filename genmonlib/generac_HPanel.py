@@ -2211,6 +2211,7 @@ class HPanel(GeneratorController):
             StartInfo["nominalfrequency"] = self.NominalFreq
             StartInfo["phase"] = self.Phase
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
+            StartInfo["TempSensors"] = self.GetTempSensorNames()
             StartInfo["NominalBatteryVolts"] = self.NominalBatteryVolts
             StartInfo["FuelCalculation"] = self.FuelTankCalculationSupported()
             StartInfo["FuelSensor"] = self.FuelSensorSupported()
