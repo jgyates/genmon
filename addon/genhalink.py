@@ -611,15 +611,43 @@ class GenHALink(MySupport):
             self.LogErrorLine("Error in _filter_state: " + str(e1))
 
     def _inject_cpu_temp(self, state):
-        """Extract CPU temperature from gui_status indicators and inject into
-        the Tiles/CPU Temp/value path that the base entity definition expects."""
+        """Extract CPU temperature from gui_status and inject into the
+        Tiles/CPU Temp/value path that the base entity definition expects.
+
+        Genmon 2.x exposes the CPU temperature as a formatted string under
+        gui_status/PlatformStats/CPU Temperature (e.g. "28.70 C" when
+        usemetric=True, "83.66 F" otherwise). Older builds exposed a numeric
+        gui_status/indicators/cpuTemp in Celsius. Both are supported here for
+        backwards compatibility, and the value is normalized to include the
+        degree symbol so Home Assistant's temperature device_class accepts it.
+        """
         try:
             gui = state.get("gui_status", {})
-            indicators = gui.get("indicators", {})
-            cpu_temp = indicators.get("cpuTemp")
-            if cpu_temp is not None:
-                # indicators.cpuTemp is always Celsius (float)
-                temp_str = "%.1f °C" % float(cpu_temp)
+            temp_str = None
+
+            # Newer location: PlatformStats holds a pre-formatted string.
+            pstats = gui.get("PlatformStats", {}) if isinstance(gui, dict) else {}
+            if isinstance(pstats, dict):
+                raw = pstats.get("CPU Temperature")
+                if raw is not None and str(raw).strip():
+                    s = str(raw).strip()
+                    # Normalize bare "C"/"F" suffix to "°C"/"°F".
+                    if s.endswith(" C") or s.endswith(" F"):
+                        s = s[:-2] + " °" + s[-1]
+                    elif s.endswith("C") and not s.endswith("°C"):
+                        s = s[:-1] + "°C"
+                    elif s.endswith("F") and not s.endswith("°F"):
+                        s = s[:-1] + "°F"
+                    temp_str = s
+
+            # Fallback: older indicators.cpuTemp (numeric Celsius).
+            if temp_str is None:
+                indicators = gui.get("indicators", {}) if isinstance(gui, dict) else {}
+                cpu_temp = indicators.get("cpuTemp") if isinstance(indicators, dict) else None
+                if cpu_temp is not None:
+                    temp_str = "%.1f °C" % float(cpu_temp)
+
+            if temp_str is not None:
                 if "Tiles" not in state:
                     state["Tiles"] = {}
                 if "CPU Temp" not in state["Tiles"]:

@@ -362,7 +362,7 @@ function restoregenmon() {
     sudo sh -c "printf '%s\n' $current_time >> $RESTORE_HISTORY"
 
     tar -xzf $restore_file
-    sudo cp ./genmon_backup/* $config_path
+    sudo cp -r ./genmon_backup/* $config_path
     sudo rm -r genmon_backup
     sudo rm $restore_file
 
@@ -377,7 +377,7 @@ function backupgenmon() {
     sudo rm genmon_backup.tar.gz
     mkdir genmon_backup
 
-    sudo cp "$config_path"*  ./genmon_backup
+    sudo cp -r "$config_path"*  ./genmon_backup
     tar -zcvf genmon_backup.tar.gz genmon_backup/
     sudo rm -r genmon_backup
     echo "Done."
