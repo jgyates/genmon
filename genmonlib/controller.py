@@ -1262,6 +1262,7 @@ class GeneratorController(MySupport):
             StartInfo["phase"] = self.Phase
             StartInfo["Controller"] = "Generic Controller Name"
             StartInfo["PowerGraph"] = self.PowerMeterIsSupported()
+            StartInfo["TempSensors"] = self.GetTempSensorNames()
             StartInfo["NominalBatteryVolts"] = "12"
             StartInfo["UtilityVoltageDisplayed"] = True
             StartInfo["RemoteCommands"] = True
