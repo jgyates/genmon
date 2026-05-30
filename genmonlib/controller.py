@@ -2203,6 +2203,7 @@ class GeneratorController(MySupport):
             self.LogErrorLine("Error in _ParseTempLogFile: " + str(e1))
         return TempList
 
+    # ----------  GeneratorController::ReadTempLogFromFile-----------------------
     def ReadTempLogFromFile(self, sensor_name, Minutes=0):
         LogFile = self.GetTempLogFile(sensor_name)
         cache_key = self.GetTempCacheKey(sensor_name)
