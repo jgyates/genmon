@@ -94,6 +94,9 @@ additionalrunhours= Nexus controllers (not Evolution) do not have the ability to
 additional_modbus_timeout=Add this value (in seconds) to the modbus timeout value. Floating point value.
 watchdog_addition=Additional delay before a communication timeout notification
 disablepowerlog=Enable to disable the power log and current reading. Not supported on Nexus.
+disablesensorlog = If enabled, the logging of sensor data will be disabled. This also disbles the graphs of sensors in the web interface.
+sensorlogmax = Override the maximum size of each sensor log. The default is 5MB.
+max_sensorlog_entries = The maximum number of entries in each sensor log. Note the log file will not be truncated until the maximum file size is reached. In most cases the default is the preferred value.
 estimated_load=The percent load (expresses a a decimal value i.e. .5 = 50 percent) used when estimating the run hours left until the tank is empty.
 subtractfuel=The amount of fuel (gal or L, depending on 'Use Metric' setting) to subtract from the fuel in tank estimate
 half_rate=The unit of fuel for Half and Full Rate parameters. Use this fuel consumption stats for non Evolution units or to override the fuel consumption defaults for Evolution controllers.

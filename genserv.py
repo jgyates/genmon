@@ -798,8 +798,9 @@ def ProcessCommand(command):
             "start_info_json",
             "gui_status_json",
             "power_log_json",
-            "temp_log_json",
-            "temp_sensor_names_json",
+            "sensor_log_json",
+            "sensor_names_json",
+            "sensor_log_clear",
             "power_log_clear",
             "getbase",
             "getsitename",
@@ -858,9 +859,9 @@ def ProcessCommand(command):
                     setlogstr = request.args.get("power_log_json", 0, type=str)
                     if setlogstr:
                         finalcommand += "=" + setlogstr
-                if command == "temp_log_json":
-                    # example: /cmd/temp_log_json?temp_log_json=1440&sensor=Oil+Temp
-                    minutes = request.args.get("temp_log_json", 0, type=str)
+                if command == "sensor_log_json":
+                    # example: /cmd/sensor_log_json?sensor_log_json=1440&sensor=Oil+Temp
+                    minutes = request.args.get("sensor_log_json", 0, type=str)
                     sensor = request.args.get("sensor", "", type=str)
                     if minutes and sensor:
                         finalcommand += "=" + minutes + "&sensor=" + sensor
@@ -901,8 +902,8 @@ def ProcessCommand(command):
                 "start_info_json",
                 "gui_status_json",
                 "power_log_json",
-                "temp_log_json",
-                "temp_sensor_names_json",
+                "sensor_log_json",
+                "sensor_names_json",
                 "status_num_json",
                 "maint_num_json",
                 "monitor_num_json",
@@ -4195,6 +4196,39 @@ def ReadSettingsFromFile():
         GENMON_SECTION,
         "disablepowerlog",
     ]
+    ConfigSettings["disablesensorlog"] = [
+        "boolean",
+        "Disable Sensor Log",
+        27,
+        False,
+        "",
+        "",
+        GENMON_CONFIG,
+        GENMON_SECTION,
+        "disablesensorlog",
+    ]
+    ConfigSettings["sensorlogmax"] = [
+            "string",
+            "Maximum size Sensor Log (MB)",
+            70,
+            "5",
+            "",
+            0,
+            GENMON_CONFIG,
+            GENMON_SECTION,
+            "sensorlogmax",
+        ]
+    ConfigSettings["max_sensorlog_entries"] = [
+            "int",
+            "Maximum Entries in Sensor Log",
+            71,
+            "8000",
+            "digits",
+            0,
+            GENMON_CONFIG,
+            GENMON_SECTION,
+            "min_sensorlog_entries",
+        ]
     ConfigSettings["autofeedback"] = [
         "boolean",
         "Automated Feedback",

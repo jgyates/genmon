@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 - Added per module dependancy checking that should help with quicker updates when new modules are added. Thanks @klinquist
 - Bug fixes to genhalink add on. Thanks MichaelB2018 and @jmActifio
 - Added temperature graphs to Dashboard. Thanks @zachliu
+- Minor bug fix for temperature graphs
 
 ## 2.0.00 -2026-04-05
 - Major update to UI Thanks @buschauer

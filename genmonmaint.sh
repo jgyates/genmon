@@ -92,11 +92,15 @@ function checkmanagedpackages() {
 
   if [ -f $managedfile ]; then
       managedpackages=true
-      echo "Managed system packages found, installing python virtual environment"
+      echo "Managed system packages found"
       sudo apt-get -yqq install python3-venv
-      # create the virtual environment 
-      echo "Setting up virtual python environment for genmon"
-      $pythoncommand -m venv $genmondir/genenv
+      if [ ! -d $genmondir/genenv ]; then
+        # create the virtual environment 
+        echo "Setting up virtual python environment for genmon"
+        $pythoncommand -m venv $genmondir/genenv
+      else
+        echo "Python virtual environment found"
+      fi
       pythoncommand="$genmondir/genenv/bin/python"
   fi
 }

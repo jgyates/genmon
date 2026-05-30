@@ -152,6 +152,8 @@ class Loader(MySupport):
                 self.StopModules()
                 time.sleep(2)
 
+            self.Maintenance()
+
             if self.Start:
                 self.StartModules()
         except Exception as e1:
@@ -919,6 +921,34 @@ class Loader(MySupport):
 
         except Exception as e1:
             self.LogInfo("Error in UpdateIfNeeded: " + str(e1), LogLine=True)
+
+    # ---------------------------------------------------------------------------
+    # Misc maint to perform when genmon is stopped
+    def Maintenance(self):
+
+        # rename templogs folder to sensordata
+        self.OldSensorLogPath = os.path.join(ConfigFilePath, "templogs")
+        if os.path.isdir(self.OldSensorLogPath):
+            self.NewSensorLogPath = os.path.join(ConfigFilePath, "sensordata")
+            os.rename(self.OldSensorLogPath, self.NewSensorLogPath)
+            try:
+                from pathlib import Path
+                directory = Path(self.NewSensorLogPath)
+
+                # 2. Use wildcard to find files and rename them in a loop
+                old_prefix = "templog"
+                new_prefix = "sensor"
+                for file_path in directory.glob(f"{old_prefix}*"):
+                    if file_path.is_file():
+                        new_name = file_path.name.removeprefix(old_prefix)
+                        new_file_path = file_path.with_name(f"{new_prefix}{new_name}")
+                        
+                        # Rename the file
+                        file_path.rename(new_file_path)
+                        self.LogError(f"Renamed: {file_path.name} -> {new_file_path.name}")
+
+            except Exception as e1:
+                self.LogError("Error renaming sensor data files: " + str(e1))
 
     # ---------------------------------------------------------------------------
     def GetConfig(self):

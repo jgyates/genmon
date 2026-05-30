@@ -1389,13 +1389,13 @@ var Pages = {
       specialKeys.push('clock');
       specialKeys.push('weather');
       /* Temperature chart tiles — one per sensor, hidden by default */
-      S.tempSensors = info.TempSensors || [];
-      for (var ts = 0; ts < S.tempSensors.length; ts++) {
-        var tcKey = 'tempchart-' + Store.slugify(S.tempSensors[ts]);
+      S.sensors = info.Sensors || [];
+      for (var ts = 0; ts < S.sensors.length; ts++) {
+        var tcKey = 'tempchart-' + Store.slugify(S.sensors[ts]);
         specialKeys.push(tcKey);
         if (!Store.get('tempChartsInit')) Store.setTileHidden(tcKey, true);
       }
-      if (S.tempSensors.length && !Store.get('tempChartsInit')) Store.set('tempChartsInit', true);
+      if (S.sensors.length && !Store.get('tempChartsInit')) Store.set('tempChartsInit', true);
       S.specialKeys = specialKeys;
 
       /* Overview tile is hidden by default until user explicitly shows it */
@@ -1425,8 +1425,8 @@ var Pages = {
           h += self._chartTileHtml();
         } else if (key.indexOf('tempchart-') === 0) {
           var tcSensor = null;
-          for (var tci = 0; tci < S.tempSensors.length; tci++) {
-            if ('tempchart-' + Store.slugify(S.tempSensors[tci]) === key) { tcSensor = S.tempSensors[tci]; break; }
+          for (var tci = 0; tci < S.sensors.length; tci++) {
+            if ('tempchart-' + Store.slugify(S.sensors[tci]) === key) { tcSensor = S.sensors[tci]; break; }
           }
           if (tcSensor) h += self._tempChartTileHtml(tcSensor);
         } else if (key === 'clock') {
@@ -1493,12 +1493,12 @@ var Pages = {
       }
 
       /* Init temperature charts */
-      if (window.Chart && S.tempSensors.length) {
-        for (var tci2 = 0; tci2 < S.tempSensors.length; tci2++) {
-          var tcKey2 = 'tempchart-' + Store.slugify(S.tempSensors[tci2]);
+      if (window.Chart && S.sensors.length) {
+        for (var tci2 = 0; tci2 < S.sensors.length; tci2++) {
+          var tcKey2 = 'tempchart-' + Store.slugify(S.sensors[tci2]);
           if (!Store.isTileHidden(tcKey2)) {
-            self._initTempChart(S.tempSensors[tci2]);
-            self._fetchTempChartData(S.tempSensors[tci2]);
+            self._initTempChart(S.sensors[tci2]);
+            self._fetchTempChartData(S.sensors[tci2]);
           }
         }
       }
@@ -1741,8 +1741,8 @@ var Pages = {
         else if (key === 'chart') $new = $(self._chartTileHtml());
         else if (key.indexOf('tempchart-') === 0) {
           var tcSensor2 = null;
-          for (var tci3 = 0; tci3 < S.tempSensors.length; tci3++) {
-            if ('tempchart-' + Store.slugify(S.tempSensors[tci3]) === key) { tcSensor2 = S.tempSensors[tci3]; break; }
+          for (var tci3 = 0; tci3 < S.sensors.length; tci3++) {
+            if ('tempchart-' + Store.slugify(S.sensors[tci3]) === key) { tcSensor2 = S.sensors[tci3]; break; }
           }
           if (tcSensor2) $new = $(self._tempChartTileHtml(tcSensor2));
         }
@@ -1773,8 +1773,8 @@ var Pages = {
         }
         if (key.indexOf('tempchart-') === 0 && window.Chart) {
           var tcSensor3 = null;
-          for (var tci4 = 0; tci4 < S.tempSensors.length; tci4++) {
-            if ('tempchart-' + Store.slugify(S.tempSensors[tci4]) === key) { tcSensor3 = S.tempSensors[tci4]; break; }
+          for (var tci4 = 0; tci4 < S.sensors.length; tci4++) {
+            if ('tempchart-' + Store.slugify(S.sensors[tci4]) === key) { tcSensor3 = S.sensors[tci4]; break; }
           }
           if (tcSensor3) { self._initTempChart(tcSensor3); self._fetchTempChartData(tcSensor3); }
         }
@@ -2275,10 +2275,10 @@ var Pages = {
       if (!km) return;
       var specialTitles = {overview: 'Status Overview', chart: S.chartTitle || 'Power Output', clock: 'Clock', weather: 'Weather'};
       /* Add temp chart titles */
-      if (S.tempSensors) {
-        for (var tdi = 0; tdi < S.tempSensors.length; tdi++) {
-          var tdKey = 'tempchart-' + Store.slugify(S.tempSensors[tdi]);
-          specialTitles[tdKey] = S.tempSensors[tdi] + ' Graph';
+      if (S.sensors) {
+        for (var tdi = 0; tdi < S.sensors.length; tdi++) {
+          var tdKey = 'tempchart-' + Store.slugify(S.sensors[tdi]);
+          specialTitles[tdKey] = S.sensors[tdi] + ' Graph';
         }
       }
       for (var i = 0; i < km.allKeys.length; i++) {
@@ -2835,7 +2835,7 @@ var Pages = {
         var $active = $('[data-tile="' + key + '"] .chart-btn.active');
         mins = $active.length ? $active.data('mins') : 1440;
       }
-      API.get('temp_log_json?temp_log_json=' + mins + '&sensor=' + encodeURIComponent(sensorName), 20000).done(function(d) {
+      API.get('sensor_log_json?sensor_log_json=' + mins + '&sensor=' + encodeURIComponent(sensorName), 20000).done(function(d) {
         if (!d || !Array.isArray(d)) return;
         var parsed = [];
         for (var i = d.length - 1; i >= 0; i--) {
