@@ -247,8 +247,10 @@ var Theme = {
     this.apply($('html').attr('data-theme') === 'dark' ? 'light' : 'dark');
   },
   apply: function(t) {
-    $('html').attr('data-theme', t);
-    Store.set('theme', t);
+    if (!($('html').attr('data-theme').split(/\s+/).includes('system'))) {
+      $('html').attr('data-theme', t);
+      Store.set('theme', t);
+    }
 
     /* refresh Chart.js colors that can't use CSS var() */
     if (S.chart) {
@@ -4204,7 +4206,7 @@ var Pages = {
       weatherkey:'weather', weatherlocation:'weather',
       incoming_mail_folder:'email', processed_mail_folder:'email',
       readonlyemailcommands:'email',
-      favicon:'system',
+      favicon:'system', system_theme: 'system',
       autofeedback:'system', update_check:'system', synctime:'system',
       syncdst:'system', disableoutagecheck:'system', optimizeforslowercpu:'system',
       disablepowerlog:'system', displayunknown:'system'
@@ -5060,7 +5062,7 @@ var Pages = {
         var ctx = cv.getContext('2d'); ctx.scale(dpr,dpr);
 
         /* Theme palette — always dark-on-light for scanner compatibility */
-        var dk = document.documentElement.getAttribute('data-theme')==='dark';
+        var dk = document.documentElement.getAttribute('data-theme').split(/\s+/).includes('dark');
         var bg  = dk ? '#d6dded' : '#f0f4fa';
         var dot = dk ? '#16203a' : '#1a2640';
         var acc = dk ? '#4f8ffa' : '#3b82f6';
