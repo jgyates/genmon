@@ -4625,9 +4625,13 @@ class Evolution(GeneratorController):
     # ------------ Evolution:GetUtilityVoltage ----------------------------------
     def GetUtilityVoltage(self, ReturnInt=False):
 
-        if self.GetModelInfo("phase") == "3" and not self.LiquidCooled:
-            return self.GetParameter("0009", ReturnInt=ReturnInt, Label="V", Divider=2)
-        return self.GetParameter("0009", ReturnInt=ReturnInt, Label="V")
+        Divider = None
+
+        if self.GetModelInfo("phase") == "3" and not self.LiquidCooled and not self.ThreePhaseUtilityVoltageCompensation:
+            # This is for air cooled 3 phase units. See this thread: https://github.com/jgyates/genmon/issues/686
+            Divider = 2
+
+        return self.GetParameter("0009", ReturnInt=ReturnInt, Label="V", Divider=Divider)
 
     # ------------ Evolution:GetBatteryVoltage -------------------------
     def GetBatteryVoltage(self, ReturnFloat=False):
@@ -5471,6 +5475,9 @@ class Evolution(GeneratorController):
                 )
                 self.NominalLineVolts = self.config.ReadValue(
                     "nominallinevolts", return_type=int, default=240
+                )
+                self.ThreePhaseUtilityVoltageCompensation = self.config.ReadValue(
+                    "threephaseutilitycompensation", return_type=bool, default=False
                 )
 
         except Exception as e1:

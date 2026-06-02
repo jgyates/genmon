@@ -80,6 +80,7 @@ controllertype = Set to h_100 for H-100 mode or powerzone for PowerZone or custo
 import_config_file = Only used for custom controller type. Select the controller configuration to use for the custom controller type. See the project wiki for more info on custom controller support
 ignore_alarms= Only used for custom controller type. List the exact text description for alarms that should be ignored separated by commas if multiple alarms are ignored.
 phase = Set the phase of the controller for genmon's use. This value is used only by genmon. It does not set the phase of the controller, but tells genmon the phase of the generator (e.g. 1 for single phase, 3 for three phase). For most controllers this value is ignored, however some custom config based controllers, like MEBAY can set this value based on the controller configuration.
+threephaseutilitycompensation = If enabled, the Utility Voltage will not be divided by 2 for three phase Evolution Air Cooled systems.
 autofeedback = If enabled, an email will be sent to the software maintainer if critical data is missing in the software for your generator. The email will contain the contents of the generator registers. Enabling this option helps support the widest possible set of features and supported generators.
 update_check = If enabled the software will send an email notice when a software update is available.
 use_serial_tcp = If enabled, the software will use TCP over serial instead of direct serial communications

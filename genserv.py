@@ -3511,6 +3511,18 @@ def ReadAdvancedSettingsFromFile():
             GENMON_SECTION,
             "phase",
         ]
+        if ControllerType == "generac_evo_nexus":
+            ConfigSettings["threephaseutilitycompensation"] = [
+                "boolean",
+                "Three Phase Utility Volts Compensation",
+                23,
+                False,
+                "",
+                0,
+                GENMON_CONFIG,
+                GENMON_SECTION,
+                "threephaseutilitycompensation",
+            ]
         ConfigSettings["loglocation"] = [
             "string",
             "Log Directory",

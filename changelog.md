@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - Bug fixes to genhalink add on. Thanks MichaelB2018 and @jmActifio
 - Added temperature graphs to Dashboard. Thanks @zachliu
 - Minor bug fix for temperature graphs
+- Added option to not divided utility volts for 3 phase Evoltuion Air Cooled units.
 
 ## 2.0.00 -2026-04-05
 - Major update to UI Thanks @buschauer
