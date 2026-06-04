@@ -85,7 +85,6 @@ class SerialTCPDevice(MySupport):
 
             if self.keepalive:
                 try:
-                    self.LogError("KEEPALIVE")
                     self.Socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
                 except Exception as e1:
                     self.LogErrorLine("Error: Connect failed keep alive : " + str(e1))
