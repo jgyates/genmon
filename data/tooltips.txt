@@ -86,6 +86,7 @@ update_check = If enabled the software will send an email notice when a software
 use_serial_tcp = If enabled, the software will use TCP over serial instead of direct serial communications
 serial_tcp_address = If Serial over TCP/IP is enabled, this parameter sets the IP address (or fully qualified domain name) used for the serial server.
 serial_tcp_port = If Serial over TCP/IP is enabled, this parameter sets the IP port used for the serial server.
+serial_tcp_keepalive = If enabled, the TCP connection will set the keep alive flag within the TCP protocol.
 modbus_tcp = If enabled, the modbus TCP protocol will be used. If disabled modbus RTU (serial) over TCP is used.
 use_modbus_fc4 = Use modbus function code 4 instead of 3 for reading modbus registers. This is only needed for controllers that do not support function code 3.
 hts_transfer_switch=Enable if you have a HTS, MTS or STS transfer switch to enable reading additional data from the transfer switch

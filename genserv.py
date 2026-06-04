@@ -4128,6 +4128,17 @@ def ReadSettingsFromFile():
         GENMON_SECTION,
         "serial_tcp_port",
     ]
+    ConfigSettings["serial_tcp_keepalive"] = [
+        "boolean",
+        "Enable TCP Keep Alive",
+        6,
+        False,
+        "",
+        "",
+        GENMON_CONFIG,
+        GENMON_SECTION,
+        "serial_tcp_keepalive",
+    ]
     ConfigSettings["modbus_tcp"] = [
         "boolean",
         "Use Modbus TCP protocol",

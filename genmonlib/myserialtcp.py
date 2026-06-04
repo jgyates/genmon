@@ -53,6 +53,9 @@ class SerialTCPDevice(MySupport):
             self.port = self.config.ReadValue(
                 "serial_tcp_port", return_type=int, default=None, NoLog=True
             )
+            self.keepalive = self.config.ReadValue(
+                "serial_tcp_keepalive", return_type=bool, default=False, NoLog=True
+            )
         else:
             self.loglocation = default = "./"
 
@@ -79,6 +82,14 @@ class SerialTCPDevice(MySupport):
         try:
             # create an INET, STREAMing socket
             self.Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+            if self.keepalive:
+                try:
+                    self.LogError("KEEPALIVE")
+                    self.Socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+                except Exception as e1:
+                    self.LogErrorLine("Error: Connect failed keep alive : " + str(e1))
+
             self.Socket.settimeout(self.SocketTimeout)
             # now connect to the server on our port
             self.Socket.connect((self.host, self.port))
