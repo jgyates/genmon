@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Minor bug fix for temperature graphs
 - Added option to not divided utility volts for 3 phase Evoltuion Air Cooled units.
 - Added TCP keep alive option
+- Added setting in Web UI to adjust light / dark theme based on broswer settings Thanks @soumya92
 
 ## 2.0.00 -2026-04-05
 - Major update to UI Thanks @buschauer
