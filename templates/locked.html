@@ -12,7 +12,7 @@
       --text: #e4eaf4; --text-muted: #7e8fa8; --danger: #f05252;
       --radius: 12px; --shadow: 0 8px 28px rgba(0,0,0,.55);
     }
-    [data-theme="light"] {
+    [data-theme~="light"] {
       --bg: #f0f2f5; --card: #ffffff; --border: #d1d5db;
       --text: #1a1a2e; --text-muted: #6b7280; --danger: #dc2626;
       --shadow: 0 4px 16px rgba(0,0,0,.1);
@@ -32,6 +32,7 @@
     p { color: var(--text-muted); font-size: .9rem; line-height: 1.5; }
     .countdown { font-size: 1.6rem; font-weight: 700; color: var(--danger); margin-top: .75rem; }
   </style>
+  <script src="js/system-theme.js"></script>
 </head>
 <body>
   <div class="card">

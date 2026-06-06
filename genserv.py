@@ -321,7 +321,7 @@ def root():
             session["logged_in"] = False
             session["write_access"] = False
             session["mfa_ok"] = False
-    return ServePage("index.html")
+    return RenderPage("index.html", theme=get_theme_pref())
 
 
 # -------------------------------------------------------------------------------
@@ -460,6 +460,11 @@ def download_ca_pem():
 # -------------------------------------------------------------------------------
 def get_theme_pref():
     try:
+        system_theme = ConfigFiles[GENMON_CONFIG].ReadValue(
+            "system_theme", return_type=bool, section="GenMon", default=False
+        )
+        if system_theme:
+            return "system"
         raw = ConfigFiles[GENMON_CONFIG].ReadValue(
             "ui_prefs", return_type=str, section="GenMon", default="{}"
         )
@@ -509,15 +514,15 @@ def _check_mfa_trust_cookie():
 
 
 # -------------------------------------------------------------------------------
-def ServePage(page_file):
+def RenderPage(page_file, **kwargs):
 
     if LoginActive():
         if not session.get("logged_in"):
             return _render_login()
         else:
-            return app.send_static_file(page_file)
+            return render_template(page_file, **kwargs)
     else:
-        return app.send_static_file(page_file)
+        return render_template(page_file, **kwargs)
 
 
 # -------------------------------------------------------------------------------
@@ -1046,10 +1051,10 @@ def ProcessCommand(command):
             if HasWriteAccess():
                 return SendTestEmail(request.args.get("test_email", default=None, type=str))
         else:
-            return render_template("command_template.html", command=command)
+            return render_template("command_template.html", command=command, theme=get_theme_pref())
     except Exception as e1:
         LogErrorLine("Error in Process Command: " + command + ": " + str(e1))
-        return render_template("command_template.html", command=command)
+        return render_template("command_template.html", command=command, theme=get_theme_pref())
 
 
 # -------------------------------------------------------------------------------
@@ -4556,6 +4561,17 @@ def ReadSettingsFromFile():
         GENMON_CONFIG,
         GENMON_SECTION,
         "favicon",
+    ]
+    ConfigSettings["system_theme"] = [
+        "boolean",
+        "Select light or dark theme based on the browser/system setting",
+        221,
+        False,
+        "",
+        "",
+        GENMON_CONFIG,
+        GENMON_SECTION,
+        "system_theme",
     ]
     ConfigSettings["usemfa"] = [
         "boolean",

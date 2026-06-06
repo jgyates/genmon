@@ -13,7 +13,7 @@
       --input-bg: #080c18; --radius: 12px; --shadow: 0 8px 28px rgba(0,0,0,.55);
       --green: #4CAF50;
     }
-    [data-theme="light"] {
+    [data-theme~="light"] {
       --bg: #f0f2f5; --card: #ffffff; --border: #d1d5db;
       --text: #1a1a2e; --text-muted: #6b7280; --accent: #3b82f6; --accent-hover: #2563eb;
       --input-bg: #f9fafb; --shadow: 0 4px 16px rgba(0,0,0,.1);
@@ -62,6 +62,7 @@
     .btn-passkey svg { width:20px; height:20px; fill:currentColor; }
     .passkey-error { text-align:center; color:#f05252; font-size:.85rem; margin-top:.5rem; }
   </style>
+  <script src="js/system-theme.js"></script>
 </head>
 <body>
 {% block body %}
