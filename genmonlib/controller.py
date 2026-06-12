@@ -2221,48 +2221,41 @@ class GeneratorController(MySupport):
 
     # ----------  GeneratorController::ReadSensorLogFromFile-----------------------
     def ReadSensorLogFromFile(self, sensor_name, Minutes=0):
-        LogFile = self.GetSensorLogFile(sensor_name)
-        cache_key = self.GetSensorCacheKey(sensor_name)
-        if not os.path.isfile(LogFile):
-            return []
 
-        with self.SensorLogLock:
-            if Minutes:
-                return self.GetSensorLogForMinutes(sensor_name, cache_key, LogFile, Minutes)
-
-            if cache_key in self.SensorLogLists and len(self.SensorLogLists[cache_key]):
-                return self.SensorLogLists[cache_key]
-
-            TempList = self._ParseSensorLogFile(LogFile)
-            if len(TempList) > self.MaxSensorLogEntries:
-                TempList = self.DecimateList(TempList, self.MaxSensorLogEntries)
-            self.SensorLogLists[cache_key] = TempList
-        return TempList
-
-    # ----------  GeneratorController::GetSensorLogForMinutes-----------------------
-    def GetSensorLogForMinutes(self, sensor_name, cache_key, LogFile, Minutes):
-        ReturnList = []
         try:
-            CutoffEpoch = time.time() - (Minutes * 60)
-            # Check if the cache covers the requested window
-            CachedList = self.SensorLogLists.get(cache_key, [])
-            if len(CachedList):
+            LogFile = self.GetSensorLogFile(sensor_name)
+            cache_key = self.GetSensorCacheKey(sensor_name)
+            if not os.path.isfile(LogFile):
+                return []
+
+            with self.SensorLogLock:
+                CachedList = self.EnsureSensorCache(cache_key, LogFile)
+                if not Minutes:
+                    return CachedList
+                # Cache is newest-first, so we can stop once we pass the cutoff
+                ReturnList = []
+                CutoffEpoch = time.time() - (Minutes * 60)
                 for entry in CachedList:
                     if entry[2] >= CutoffEpoch:
                         ReturnList.append(entry)
                     else:
                         break
                 return ReturnList
-            # No cache yet, read from file
-            TempList = self._ParseSensorLogFile(LogFile)
-            for entry in TempList:
-                if entry[2] >= CutoffEpoch:
-                    ReturnList.append(entry)
-                else:
-                    break
         except Exception as e1:
-            self.LogErrorLine("Error in GetSensorLogForMinutes: " + str(e1))
-        return ReturnList
+            self.LogErrorLine(f"Error in ReadSensorLogFromFile: {e1}")
+            return []
+
+    # ----------  GeneratorController::EnsureSensorCache---------------------------
+    # Populate (once) and return the cached full sensor log for a sensor.
+    # Caller must hold self.SensorLogLock.
+    def EnsureSensorCache(self, cache_key, LogFile):
+        if cache_key in self.SensorLogLists and len(self.SensorLogLists[cache_key]):
+            return self.SensorLogLists[cache_key]
+        TempList = self._ParseSensorLogFile(LogFile)
+        if len(TempList) > self.MaxSensorLogEntries:
+            TempList = self.DecimateList(TempList, self.MaxSensorLogEntries)
+        self.SensorLogLists[cache_key] = TempList
+        return TempList
 
     # ----------  GeneratorController::GetSensorHistory-----------------------------
     def GetSensorHistory(self, CmdString):
@@ -2390,15 +2383,12 @@ class GeneratorController(MySupport):
             if self.WaitForExit("SensorCollectionThread", 60):
                 return
 
-        # Pre-warm temperature log caches
+        # Pre-warm sensor log caches so the first chart request is fast
         try:
-            if os.path.isdir(self.SensorLogPath):
-                for fname in os.listdir(self.SensorLogPath):
-                    if fname.startswith("templog_") and fname.endswith(".txt"):
-                        safe_name = fname[len("templog_"):-len(".txt")]
-                        self.ReadSensorLogFromFile(safe_name)
+            for sensor_name in self.GetSensorNames():
+                self.ReadSensorLogFromFile(sensor_name)
         except Exception as e1:
-            self.LogErrorLine("Error pre-warming temp log cache: " + str(e1))
+            self.LogErrorLine("Error pre-warming sensor log cache: " + str(e1))
 
         LastCpuTemp = 0.0
 

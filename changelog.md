@@ -4,21 +4,22 @@ All notable changes to this project will be documented in this file.
 ## 2.0.01 -2026-05-18
 - Various bug fixes and typo corrections
 - Added per module dependancy checking that should help with quicker updates when new modules are added. Thanks @klinquist
-- Bug fixes to genhalink add on. Thanks MichaelB2018 and @jmActifio
+- Bug fixes to genhalink add on. Thanks @MichaelB2018 and @jmActifio
 - Added temperature graphs to Dashboard. Thanks @zachliu
 - Minor bug fix for temperature graphs
 - Added option to not divided utility volts for 3 phase Evoltuion Air Cooled units.
 - Added TCP keep alive option
 - Added setting in Web UI to adjust light / dark theme based on broswer settings Thanks @soumya92
+- Performance improvement for temperature graphs, Thanks @MichaelB2018
 
 ## 2.0.00 -2026-04-05
-- Major update to UI Thanks @buschauer
+- Major update to UI Thanks @MichaelB2018
 - Dark / Light Mode
 - New ability to resize and select gauge types
 - Movement to gauge position and size is remembered
 - Updates to HTTPs and many security improvements
-- New HA addon (genhalink) @buschauer
-- New HA custom component @buschauer
+- New HA addon (genhalink) @MichaelB2018
+- New HA custom component @MichaelB2018
 - Restore previous backup from Web Interface
 - Updates for Briggs and Stratton to support more info and three phase
 - Added "ignore_alarms" config parameter for custom controllers
@@ -35,7 +36,7 @@ All notable changes to this project will be documented in this file.
 ## V1.19.08 -2026-01-29
 - Added "Generator State" value for Evolution 2.0 and power pact models on the Status page
 - Added a new add on for Home Assistant auto discovery. Thanks @jtubb
-- Fix for Chrome for Windows status bar issue in web UI. Thanks @buschauer
+- Fix for Chrome for Windows status bar issue in web UI. Thanks @MichaelB2018
 - Update to correct negative temp values for Briggs and Stratton
 - Updates to better support genmon running under Windows
 - Added remote commands for Mebay controller
@@ -179,14 +180,14 @@ All notable changes to this project will be documented in this file.
 - Corrected with with MQTT Numerics for custom controllers
 
 ## V1.18.18 -2023-07-05
-- Added new add on program gencallmebot (thanks @buschauer)
+- Added new add on program gencallmebot (thanks @MichaelB2018)
 - Added preliminary support for PowerZone 410 controller
 - Modification to allow JSON for Numerics for external temp sensors when using MQTT add on
 - Corrected issue with some systems not updating from the About page properly (if you have this issue you may need to update once via ssh to get the fix)
 - Update to gensnmp.py to allow integer values to be returned when applicable
 - Update to gensnmp,py to support custom controller definitions
 - Added advanced setting for alternate date format
-- Updated jquery to 3.7 (thanks @buschauer)
+- Updated jquery to 3.7 (thanks @MichaelB2018)
 - Minor update to mytile.py to improve handling of gauges with values out of range
 - modified gengpio.py add on to optionally support GPIO signaling for out of range CPU temperature 
 - Update for Power Zone 410. 
@@ -226,7 +227,7 @@ All notable changes to this project will be documented in this file.
 - Added the ability to send SMS via https://voip.ms (see https://github.com/jgyates/genmon/wiki/1----Software-Overview#gensms_voippy-optional)
 - Added additional remote command to reset active alarms for Evolution 2.0 air cooled controllers
 - Updated install script to changing cryptography requirements
-- Updated icons for new add ons (thanks @buschauer)
+- Updated icons for new add ons (thanks @MichaelB2018)
 - Update to attempt to display WiFi signal strength consistent across various network drivers
 - Minor update in genloader to better support older distros of Raspbian
 - Updated response to remote email commands to avoid email loop problem
@@ -267,7 +268,7 @@ All notable changes to this project will be documented in this file.
 - Updated alarm code for Evo 2.0
 - Updated alarm code for Synergy
 - Added support Briggs & Stratton GC-1032 Controller via custom controller method (thanks @marklitwin)
-- Minor javascript update to correct security warning (thanks @buschauer)
+- Minor javascript update to correct security warning (thanks @MichaelB2018)
 - Code cleanup
 - Improved error handing in mymail.py to better support older versions of SSL libraries
 - Added run hours in the last year to the maint page. Note that this the last 365 days, not the last calendar year.
@@ -344,7 +345,7 @@ All notable changes to this project will be documented in this file.
 - Fixed minor issue with serialtest.py
 - Added support for multiple tanks in gentankutil.py
 - Updated Evolution Liquid Cooled Alarm Log code for ignition fault
-- Corrected issue with log calendar heat map not showing the current month (thanks @buschauer)
+- Corrected issue with log calendar heat map not showing the current month (thanks @MichaelB2018)
 
 ## V1.18.03  -2021-12-06
 - Fixed issue with exclusive serial port check with older versions of pyserial (pre pyserial v3.3)
@@ -568,8 +569,8 @@ All notable changes to this project will be documented in this file.
 - Added more info to upgrade and communications failure notice emails
 
 ## V1.14.28 - 2020-08-31
-- Added logout button in top right if using username/password to login to the web interface. Thanks @buschauer
-- Made the service journal editable. Thanks @buschauer
+- Added logout button in top right if using username/password to login to the web interface. Thanks @MichaelB2018
+- Made the service journal editable. Thanks @MichaelB2018
 
 ## V1.14.27 - 2020-08-29
 - Design update in preparation for future updates
