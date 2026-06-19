@@ -372,6 +372,46 @@ class MyPlatform(MyCommon):
             self.LogError("Error in GetHwMonParamPath: " + str(e1))
         return None
 
+    # ------------ MyPlatform::ReadCPUUtilization -------------------------------
+    @staticmethod
+    def ReadCPUUtilization(stat_path="/proc/stat"):
+        # Instantaneous CPU utilization percent read directly from /proc/stat,
+        # replacing a "grep 'cpu ' /proc/stat | awk ..." shell pipeline (sh+grep+awk).
+        # Same formula: (user+system)*100/(user+system+idle).
+        with open(stat_path) as f:
+            fields = f.readline().split()  # ['cpu', user, nice, system, idle, ...]
+        user, system, idle = float(fields[1]), float(fields[3]), float(fields[4])
+        return round((user + system) * 100.0 / (user + system + idle), 2)
+
+    # ------------ MyPlatform::GetActiveNetworkAdapter --------------------------
+    @staticmethod
+    def GetActiveNetworkAdapter(sysnet_base="/sys/class/net"):
+        # First broadcast, link-up (carrier present) interface, read directly from
+        # /sys/class/net, replacing an "ip link | grep BROADCAST | grep -v NO-CARRIER
+        # | grep -m1 LOWER_UP | awk ..." shell pipeline (sh+ip+grep x3+awk). Iterated
+        # in ifindex order to match `ip link`.
+        IFF_BROADCAST = 0x2
+        try:
+            ifaces = sorted(
+                os.listdir(sysnet_base),
+                key=lambda i: int(open(os.path.join(sysnet_base, i, "ifindex")).read()),
+            )
+        except OSError:
+            return ""
+        for iface in ifaces:
+            if iface == "lo":
+                continue
+            try:
+                flags = int(open(os.path.join(sysnet_base, iface, "flags")).read().strip(), 16)
+                if not (flags & IFF_BROADCAST):
+                    continue
+                if open(os.path.join(sysnet_base, iface, "carrier")).read().strip() != "1":
+                    continue  # LOWER_UP and not NO-CARRIER
+            except OSError:
+                continue
+            return iface
+        return ""
+
     # ------------ MyPlatform::GetLinuxInfo -------------------------------------
     def GetLinuxInfo(self, JSONNum=False):
 
@@ -380,16 +420,7 @@ class MyPlatform(MyCommon):
         LinuxInfo = []
 
         try:
-            CPU_Pct = str(
-                round(
-                    float(
-                        os.popen(
-                            """grep 'cpu ' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage }' """
-                        ).readline()
-                    ),
-                    2,
-                )
-            )
+            CPU_Pct = str(self.ReadCPUUtilization())
             if len(CPU_Pct):
                 LinuxInfo.append({"CPU Utilization": CPU_Pct + "%"})
         except:
@@ -420,13 +451,7 @@ class MyPlatform(MyCommon):
 
             try:
                 if self.PreferredNetworkAdapter == None or len(self.PreferredNetworkAdapter) == 0:
-                    adapter = (
-                        os.popen(
-                            "ip link | grep BROADCAST | grep -v NO-CARRIER | grep -m 1 LOWER_UP  | awk -F'[:. ]' '{print $3}'"
-                        )
-                        .readline()
-                        .rstrip("\n")
-                    )
+                    adapter = self.GetActiveNetworkAdapter()
                 else:
                     adapter = self.PreferredNetworkAdapter
                 # output, _error = process.communicate()
@@ -457,13 +482,7 @@ class MyPlatform(MyCommon):
                 return DefaultReturn
 
             if self.PreferredNetworkAdapter == None or len(self.PreferredNetworkAdapter) == 0:
-                adapter = (
-                    os.popen(
-                        "ip link | grep BROADCAST | grep -v NO-CARRIER | grep -m 1 LOWER_UP  | awk -F'[:. ]' '{print $3}'"
-                    )
-                    .readline()
-                    .rstrip("\n")
-                )
+                adapter = self.GetActiveNetworkAdapter()
             else:
                 adapter = self.PreferredNetworkAdapter
 
