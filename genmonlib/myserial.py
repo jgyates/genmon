@@ -158,16 +158,15 @@ class SerialDevice(MySupport):
             try:
                 self.Flush()
                 while True:
-                    for c in self.Read():
+                    data = self.Read()
+                    if len(data):
                         with self.BufferLock:
                             if sys.version_info[0] < 3:
-                                self.Buffer.append(ord(c))  # PYTHON2
+                                self.Buffer.extend(ord(c) for c in data)  # PYTHON2
                             else:
-                                self.Buffer.append(c)  # PYTHON3
-                        # first check for SignalStopped is when we are receiving
-                        if self.IsStopSignaled("SerialReadThread"):
-                            return
-                    # second check for SignalStopped is when we are not receiving
+                                self.Buffer.extend(data)  # PYTHON3 (bytes -> ints)
+                    # check for SignalStopped once per read (the read above blocks up
+                    # to the configured timeout, so this is not a busy loop)
                     if self.IsStopSignaled("SerialReadThread"):
                         return
 
@@ -227,8 +226,13 @@ class SerialDevice(MySupport):
 
     # ---------- SerialDevice::Read---------------------------------------------
     def Read(self):
-        # self.SerialDevice.inWaiting returns number of bytes ready
-        return (self.SerialDevice.read())  
+        # Read every byte currently available in a single syscall (or block for one
+        # byte when idle, preserving the configured read timeout). Reading one byte
+        # per call ("self.SerialDevice.read()" defaults to size=1) issued ~200
+        # read() syscalls/sec on a live system; in_waiting collapses a full frame
+        # into one read.
+        waiting = self.SerialDevice.in_waiting
+        return self.SerialDevice.read(waiting if waiting else 1)
 
     # ---------- SerialDevice::Write--------------------------------------------
     def Write(self, data):
