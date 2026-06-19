@@ -1940,7 +1940,12 @@ class GeneratorController(MySupport):
                 return PowerList
             CurrentTime = datetime.datetime.now()
 
-            for Time, Power in reversed(PowerList):
+            # PowerList is newest-first (ReadPowerLogFromFile inserts each appended
+            # power-log line at index 0). Iterate newest-first and stop at the first
+            # entry older than the requested window -- every later entry is older
+            # too -- instead of strptime-parsing the entire power log (up to
+            # MaxPowerLogEntries) on every call. Output is unchanged.
+            for Time, Power in PowerList:
                 try:
                     struct_time = time.strptime(Time, "%x %X")
                     LogEntryTime = datetime.datetime.fromtimestamp(time.mktime(struct_time))
@@ -1949,7 +1954,9 @@ class GeneratorController(MySupport):
                     continue
                 Delta = CurrentTime - LogEntryTime
                 if self.GetDeltaTimeMinutes(Delta) < Minutes:
-                    ReturnList.insert(0, [Time, Power])
+                    ReturnList.append([Time, Power])
+                else:
+                    break
             return ReturnList
         except Exception as e1:
             self.LogErrorLine("Error in GetPowerLogForMinutes: " + str(e1))
