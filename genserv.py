@@ -2955,6 +2955,80 @@ def GetAddOns():
     return AddOnCfg
 
 
+        # GENOTODATA
+        if sys.version_info >= (3, 7):
+            Description = "Support Otodata TM6030 Propane Tank Sensor"
+            try:
+                import bleak
+            except Exception as e1:
+                Description = (
+                    Description
+                    + "<br/><font color='red'>The required libraries for this add on "
+                    "are not installed, please run the installation script.</font>"
+                )
+
+            AddOnCfg["genotodata"] = collections.OrderedDict()
+            AddOnCfg["genotodata"]["enable"] = ConfigFiles[GENLOADER_CONFIG].ReadValue(
+                "enable", return_type=bool, section="genotodata", default=False
+            )
+            AddOnCfg["genotodata"]["title"] = "Otodata TM6030 Propane Tank Sensor"
+            AddOnCfg["genotodata"]["description"] = Description
+            AddOnCfg["genotodata"]["icon"] = "mopeka"
+            AddOnCfg["genotodata"]["url"] = (
+                "https://github.com/jgyates/genmon/wiki/"
+                "1----Software-Overview#genototadatapy-optional"
+            )
+            AddOnCfg["genotodata"]["parameters"] = collections.OrderedDict()
+
+            AddOnCfg["genotodata"]["parameters"]["tank_name"] = CreateAddOnParam(
+                ConfigFiles[GENOTODATA_CONFIG].ReadValue(
+                    "tank_name", return_type=str, default="Propane Tank"
+                ),
+                "string",
+                "Display name for this tank in the genmon web interface.",
+                bounds="",
+                display_name="Tank Name",
+            )
+            AddOnCfg["genotodata"]["parameters"]["capacity"] = CreateAddOnParam(
+                ConfigFiles[GENOTODATA_CONFIG].ReadValue(
+                    "capacity", return_type=int, default=0
+                ),
+                "int",
+                "Tank capacity in gallons. Set to 0 to omit from genmon data.",
+                bounds="number",
+                display_name="Tank Capacity (gallons)",
+            )
+            AddOnCfg["genotodata"]["parameters"]["poll_frequency"] = CreateAddOnParam(
+                ConfigFiles[GENOTODATA_CONFIG].ReadValue(
+                    "poll_frequency", return_type=int, default=5
+                ),
+                "int",
+                "The time in minutes between BLE scan cycles. Default is 5 minutes.",
+                bounds="number",
+                display_name="Poll Interval (minutes)",
+            )
+            AddOnCfg["genotodata"]["parameters"]["scan_time"] = CreateAddOnParam(
+                ConfigFiles[GENOTODATA_CONFIG].ReadValue(
+                    "scan_time", return_type=float, default=30.0
+                ),
+                "float",
+                "Seconds to listen for BLE advertisements per scan cycle. "
+                "Increase if the sensor is far from the Pi.",
+                bounds="number",
+                display_name="Scan Duration (seconds)",
+            )
+            AddOnCfg["genotodata"]["parameters"]["mac_address"] = CreateAddOnParam(
+                ConfigFiles[GENOTODATA_CONFIG].ReadValue(
+                    "mac_address", return_type=str, default=""
+                ),
+                "string",
+                "Optional: restrict readings to a specific sensor MAC address "
+                "(e.g. aa:bb:cc:dd:ee:ff). Leave blank to use the first Otodata device found.",
+                bounds="",
+                display_name="Sensor MAC Address",
+            )
+
+
 # ------------ AddNotificationAddOnParam ----------------------------------------
 def AddNotificationAddOnParam(AddOnCfg, addon_name, config_file):
 
@@ -3129,6 +3203,7 @@ def SaveAddOnSettings(query_string):
             "gentemp": ConfigFiles[GENTEMP_CONFIG],
             "gencthat": ConfigFiles[GENCTHAT_CONFIG],
             "genmopeka": ConfigFiles[GENMOPEKA_CONFIG],
+            "genotodata": ConfigFiles[GENOTODATA_CONFIG],
             "gensms_voip": ConfigFiles[GENSMS_VOIP_CONFIG],
             "genhomeassistant": ConfigFiles[GENHOMEASSISTANT_CONFIG],
             "genhalink": ConfigFiles[GENHALINK_CONFIG],
@@ -6679,6 +6754,7 @@ if __name__ == "__main__":
     GENTEMP_CONFIG = os.path.join(ConfigFilePath, "gentemp.conf")
     GENCTHAT_CONFIG = os.path.join(ConfigFilePath, "gencthat.conf")
     GENMOPEKA_CONFIG = os.path.join(ConfigFilePath, "genmopeka.conf")
+    GENOTODATA_CONFIG = os.path.join(ConfigFilePath, "genotodata.conf")
     GENSMS_VOIP_CONFIG = os.path.join(ConfigFilePath, "gensms_voip.conf")
     GENHOMEASSISTANT_CONFIG = os.path.join(ConfigFilePath, "genhomeassistant.conf")
     GENHALINK_CONFIG = os.path.join(ConfigFilePath, "genhalink.conf")
