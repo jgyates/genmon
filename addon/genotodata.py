@@ -122,8 +122,9 @@ class GenOtodataData(MySupport):
             self.Generator = None
 
         self.Threads["TankCheckThread"] = MyThread(
-            self.TankCheckThread, Name="TankCheckThread"
-        )
+                self.TankCheckThread, Name="TankCheckThread", start=False
+            )
+        self.Threads["TankCheckThread"].Start()
         self.LogError("GenOtodataData: Started.")
 
     # ------------------------------------------------------------------

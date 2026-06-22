@@ -1305,7 +1305,7 @@ def GetAddOns():
         except Exception as e1:
             Description = (
                 Description
-                + "<br/><font color='red'>The required libraries for this add on are not installed, please run the installation script.</font>"
+                + "<br/><font color='red'>The required libraries for this add on are not installed. They will be installaled on the when the proram is restarted.</font>"
             )
 
         AddOnCfg["gensms_voip"] = collections.OrderedDict()
@@ -2812,7 +2812,7 @@ def GetAddOns():
             except Exception as e1:
                 Description = (
                     Description
-                    + "<br/><font color='red'>The required libraries for this add on are not installed, please run the installation script.</font>"
+                    + "<br/><font color='red'>The required libraries for this add on are not installed. They will be installaled on the when the proram is restarted.</font>"
                 )
 
             AddOnCfg["genmopeka"] = collections.OrderedDict()
@@ -2961,7 +2961,7 @@ def GetAddOns():
             Description = (
                 Description
                 + "<br/><font color='red'>The required libraries for this add on "
-                "are not installed, please run the installation script.</font>"
+                "are not installed. They will be installaled on the when the proram is restarted.</font>"
             )
 
         AddOnCfg["genotodata"] = collections.OrderedDict()
