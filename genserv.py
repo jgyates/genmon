@@ -6780,6 +6780,7 @@ if __name__ == "__main__":
         GENTEMP_CONFIG,
         GENCTHAT_CONFIG,
         GENMOPEKA_CONFIG,
+        GENOTODATA_CONFIG,
         GENSMS_VOIP_CONFIG,
         GENHOMEASSISTANT_CONFIG,
         GENHALINK_CONFIG,
