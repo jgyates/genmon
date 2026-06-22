@@ -305,6 +305,12 @@ class Loader(MySupport):
                         self.LibraryDependency("fluids", MinPython=(3, 6)),
                     ],
                 },
+                {
+                    "modules": ["genotodata"],
+                    "dependencies": [
+                        self.LibraryDependency("bleak"),
+                    ],
+                },
             ],
             "features": [
                 {
@@ -981,6 +987,7 @@ class Loader(MySupport):
                 "gengpioledblink",
                 "gencthat",
                 "genmopeka",
+                "genotodata",
                 "gencustomgpio",
                 "gensms_voip",
                 "genloader",
@@ -1124,6 +1131,15 @@ class Loader(MySupport):
                             section=entry,
                             module="genmopeka.py",
                             conffile="genmopeka.conf",
+                        )
+                    if entry == "genotodata":
+                        self.LogError(
+                            "Warning: Missing entry: " + entry + " , adding entry"
+                        )
+                        self.AddEntry(
+                            section=entry,
+                            module="genotodata.py",
+                            conffile="genotodata.conf",
                         )
                     if entry == "gensms_voip":
                         self.LogError(
